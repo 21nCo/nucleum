@@ -26,7 +26,7 @@
 >
   <Icon
     icon={status === GoalStatus.COMPLETED
-      ? "ph:check-circle-light"
+      ? "check-circle"
       : resolveGoalStatusIcon(status)}
     size={Size.sm}
     class={cn({

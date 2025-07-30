@@ -114,7 +114,7 @@
           ? "svg-spinners:3-dots-fade"
           : isSaved
             ? "ph:check"
-            : "ph:plus"}
+            : "plus"}
         size={isSaved ? Size.xs : Size.sm}
         class={cn({
           "fill-abg": isHovering || isSaved,

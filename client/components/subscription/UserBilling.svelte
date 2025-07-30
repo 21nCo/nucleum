@@ -123,7 +123,7 @@
         <div class="flex flex-col gap-2">
           <div>
             <Button
-              icon="ph:sparkle-light"
+              icon="sparkle"
               label="Upgrade"
               type={ButtonVariant.PRIMARY}
               on:click={() => {
@@ -142,7 +142,7 @@
         <div class="flex gap-2">
           {#if $account.plan.status === PlanStatus.REFUNDED}
             <Button
-              icon="ph:arrow-counter-clockwise-light"
+              icon="reload"
               label="Reactivate"
               type={ButtonVariant.PRIMARY}
               on:click={() => {
@@ -153,7 +153,7 @@
             <Button
               type={ButtonVariant.DANGER}
               style={ButtonStyle.OUTLINED}
-              icon="ph:x-light"
+              icon="cross"
               label="Cancel Subscription"
               on:click={() => {
                 appStore.runAction(Action.USER_PLAN_CANCELATION);
@@ -161,7 +161,7 @@
             />
             <!-- {#if $account.plan?.cycle !== BillingCycle.LIFETIME}
             <Button
-              icon="ph:arrow-right-light"
+              icon="proceed"
               parentBgIndex={2}
               label="Change Plan"
               on:click={() => {

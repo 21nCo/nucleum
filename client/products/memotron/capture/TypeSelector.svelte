@@ -30,18 +30,18 @@
   const contentTypes: (ISelectItem & { value: string })[] = [
     {
       value: CaptureType.MARKDOWN,
-      icon: "ph:markdown-logo-light"
+      icon: "markdown"
     },
     {
-      icon: "ph:microphone-light",
+      icon: "microphone",
       value: CaptureType.AUDIO
     },
     {
-      icon: "ph:camera-light",
+      icon: "camera",
       value: CaptureType.CAMERA
     },
     {
-      icon: "ph:upload-light",
+      icon: "upload",
       value: CaptureType.UPLOAD
     }
   ];
@@ -127,7 +127,7 @@
     <Button
       label="edit"
       isPreventMinWidth={true}
-      icon="ph:pencil-simple-line-light"
+      icon="edit"
       size={Size.sm}
       on:click={() => {
         appStore.runAction(MemotronAction.LIBRARY);

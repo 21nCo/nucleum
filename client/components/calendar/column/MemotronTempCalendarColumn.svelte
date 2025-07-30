@@ -75,7 +75,7 @@
       <InlineFeedbackText {feedback} size={Size.sm} />
     </div>
     <Button
-      icon="ph:clock-counter-clockwise-light"
+      icon="history"
       tooltip="History"
       on:click={() => {
         appStore.openResource(Action.HISTORY, ResourceAccessMode.POP, {

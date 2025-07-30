@@ -22,15 +22,15 @@
   export let isRightPanelCollapsed = true;
   export let pane = NodeRightPaneType.OUTLINE;
   let verticalSwitcherItems: ISelectItem[] = [
-    { value: NodeRightPaneType.OUTLINE, icon: "ph:text-align-left-light" },
-    { value: NodeRightPaneType.PROPERTIES, icon: "ph:shapes-light" },
-    { value: NodeRightPaneType.LINKS, icon: "ph:link-light" }
+    { value: NodeRightPaneType.OUTLINE, icon: "text-align-left" },
+    { value: NodeRightPaneType.PROPERTIES, icon: "shapes" },
+    { value: NodeRightPaneType.LINKS, icon: "link" }
   ];
 
   if (canHaveTraces.includes($node?.contentType ?? NodeType.UNKNOWN)) {
     verticalSwitcherItems.push({
       value: NodeRightPaneType.TRACES,
-      icon: "ph:bookmark-simple-light"
+      icon: "bookmark"
     });
   }
 

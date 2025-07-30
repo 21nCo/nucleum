@@ -20,6 +20,7 @@
   import account from "$lib/client/stores/account.store";
   import { UserDataMode } from "$lib/client/types/account.type";
   import { tooltip } from "$lib/client/actions/popover.action";
+  import TopNavLeftMenuItem from "./TopNavLeftMenuItem.svelte";
 
   let isInFocusMode = false;
   let pinnedItems: IRecordId[] = tabs.get() ?? [];
@@ -89,7 +90,7 @@
         </button>
       </div>
     {/if}
-    <div class="flex items-center justify-end gap-3">
+    <div class="flex items-center justify-end gap-1 h-full">
       {#if isInterimTab && currentTab}
         {#key currentTab}
           <TopBarResourceItem
@@ -104,37 +105,33 @@
       {/if}
       {#if pinnedItems.length > 0 || isInterimTab}
         <div
+          class="flex h-full"
           transition:fly={{
             duration: 300,
             x: -60
           }}
         >
-          <Button
-            icon="ph:magnifying-glass"
+          <TopNavLeftMenuItem
+            icon="search"
             tooltip="Search"
-            style={ButtonStyle.PLAIN}
             shortcut={Action.GLOBAL_SEARCH}
-            parentBgIndex={2}
             on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
           />
         </div>
       {/if}
       <slot name="topnav" />
-      <Button
-        icon="ph:terminal"
+      <TopNavLeftMenuItem
+        icon="terminal-window"
         tooltip="Command bar"
-        style={ButtonStyle.PLAIN}
         shortcut={Action.CMD}
-        parentBgIndex={2}
         on:click={() => appStore.runAction(Action.CMD)}
       />
-      <Button
-        icon="ph:question"
+      <TopNavLeftMenuItem
+        icon="question"
         tooltip="Help"
-        style={ButtonStyle.PLAIN}
-        parentBgIndex={2}
         on:click={() => appStore.runAction(Action.HELP)}
       />
+      <span class="px-1" />
       <!-- <FocusPlayer /> -->
       <TrailLeftIndicator />
       <button

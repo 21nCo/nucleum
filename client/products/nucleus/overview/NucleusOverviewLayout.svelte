@@ -50,17 +50,17 @@
         {
           label: "Focus",
           value: OverviewPanel.FOCUS,
-          icon: "ph:circle-light"
+          icon: "circle"
         },
         {
           label: "Memory",
           value: OverviewPanel.MEMORY,
-          icon: "ph:hexagon-light"
+          icon: "hexagon"
         }
         // {
         //   label: "Self",
         //   value: OverviewPanel.SELF,
-        //   icon: "ph:heart-light"
+        //   icon: "heart"
         // },
         // {
         //   label: "Finance",

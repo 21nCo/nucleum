@@ -80,7 +80,7 @@
         "This will clear all data from your local cache and log you out. Your data will be lost if you are using offline mode.",
       confirmAction: {
         label: "Confirm",
-        icon: "ph:trash-light",
+        icon: "trash",
         variant: ButtonVariant.DANGER,
         callback: async () => {
           await flux.clear();
@@ -116,7 +116,7 @@
     <div class="flex items-center gap-4">
       <Button
         label="Backup"
-        icon="ph:download-simple-light"
+        icon="download"
         type={ButtonVariant.PRIMARY}
         on:click={handleBackup}
         isLoading={isBackupInProgress}
@@ -124,7 +124,7 @@
       <div use:fileDrop={{ accept: "application/json", onDrop: handleDrop }}>
         <Button
           label="Restore"
-          icon="ph:arrow-u-up-left-light"
+          icon="restore"
           on:click
           isLoading={isRestoreInProgress}
         />
@@ -147,7 +147,7 @@
       {#if $appStore.product !== Product.POINTRON}
         <Button
           label="Import from other apps"
-          icon="ph:download-simple-light"
+          icon="download"
           on:click={() => {
             appStore.runAction(Action.IMPORT_FROM_OTHER_APPS);
           }}
@@ -160,20 +160,20 @@
     <div class="flex items-center gap-4">
       <Button
         label="Resync data"
-        icon="ph:arrow-counter-clockwise-light"
+        icon="reload"
         isLoading={isResyncInProgress}
         on:click={handleResync}
       />
       {#if !$context.isEmbed}
         <Button
           label="Reload"
-          icon="ph:arrow-counter-clockwise-light"
+          icon="reload"
           on:click={() => window.location.reload()}
         />
       {/if}
       <Button
         label="Clear local cache"
-        icon="ph:trash-light"
+        icon="trash"
         on:click={handleClear}
         type={ButtonVariant.DANGER}
       />

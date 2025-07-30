@@ -48,7 +48,7 @@
       : {
           label: "New " + resource,
           callback: addAction,
-          icon: "ph:plus-light",
+          icon: "plus",
           shortcut: createShortcut,
           variant: ButtonVariant.PRIMARY
         };

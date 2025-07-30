@@ -87,7 +87,7 @@ export const globalActions: IAction[] = [
   {
     action: Action.CREDITS,
     label: "Credits",
-    icon: "ph:heart-light",
+    icon: "heart",
     type: ActionType.MODAL,
     component: Credits,
     modalParams: {
@@ -149,7 +149,7 @@ export const globalActions: IAction[] = [
   {
     action: Action.DOCS,
     label: "Guides and docs",
-    icon: "ph:book-open-text-light",
+    icon: "book-open",
     isMeta: true,
     type: ActionType.FUNCTION,
     fn: async (params?: IActionFnParams) => {
@@ -166,14 +166,14 @@ export const globalActions: IAction[] = [
   {
     action: Action.DOCS + "mobile",
     label: "Guides and docs",
-    icon: "ph:book-open-text-light",
+    icon: "book-open",
     isMeta: true,
     type: ActionType.LINK
   },
   {
     action: Action.DOCS + "docusaurus",
     label: "Guides and docs",
-    icon: "ph:book-open-text-light",
+    icon: "book-open",
     cmdLabel: [
       { variant: "documentation", label: "Documentation" },
       { variant: "guides", label: "Guides" }
@@ -194,19 +194,19 @@ export const globalActions: IAction[] = [
   {
     action: "tutorials",
     label: "Tutorials",
-    icon: "ph:youtube-logo-light",
+    icon: "youtube",
     type: ActionType.LINK
   },
   {
     action: "downloads",
     label: "Downloads",
-    icon: "ph:download-simple-light",
+    icon: "download",
     type: ActionType.LINK
   },
   {
     action: "chat",
     label: "Chat with us",
-    icon: "ph:chats-light",
+    icon: "chats",
     type: ActionType.FUNCTION,
     isMeta: true,
     fn: async () => {
@@ -227,14 +227,14 @@ export const globalActions: IAction[] = [
   {
     action: "call",
     label: "Book a call",
-    icon: "ph:video-conference-light",
+    icon: "video-conference",
     type: ActionType.MODAL,
     component: BookACall
   },
   {
     action: "faqs",
     label: "FAQs",
-    icon: "ph:question-light",
+    icon: "question",
     type: ActionType.MODAL,
     handsetBehaviorType: ActionType.LINK,
     component: DocusaurusEmbed,
@@ -252,7 +252,7 @@ export const globalActions: IAction[] = [
   {
     action: Action.CHANGELOG,
     label: "What's new",
-    icon: "ph:sparkle-light",
+    icon: "sparkle",
     cmdLabel: [
       { variant: "whatsNew", label: "What's new" },
       { variant: "changelog", label: "Changelog" }
@@ -274,7 +274,7 @@ export const globalActions: IAction[] = [
   {
     action: Action.ROADMAP,
     label: "Roadmap",
-    icon: "ph:map-trifold-light",
+    icon: "map",
     type: ActionType.MODAL,
     handsetBehaviorType: ActionType.LINK,
     component: DocusaurusEmbed,
@@ -293,44 +293,44 @@ export const globalActions: IAction[] = [
   {
     action: "discord",
     label: "Join us on discord",
-    icon: "ph:discord-logo-light",
+    icon: "discord",
     type: ActionType.LINK
   },
   {
     action: "opencollective",
     label: "Support us",
-    icon: "ph:gift-light",
+    icon: "gift",
     isInactive: true,
     type: ActionType.LINK
   },
   {
     action: "twitter",
     label: "Twitter",
-    icon: "ph:x-logo-light",
+    icon: "twitter",
     type: ActionType.LINK
   },
   {
     action: "reddit",
     label: "Reddit",
-    icon: "ph:reddit-logo-light",
+    icon: "reddit",
     type: ActionType.LINK
   },
   {
     action: "bluesky",
     label: "Bluesky",
-    icon: "ph:butterfly-light",
+    icon: "butterfly",
     type: ActionType.LINK
   },
   {
     action: "instagram",
     label: "Instagram",
-    icon: "ph:instagram-logo-light",
+    icon: "instagram",
     type: ActionType.LINK
   },
   {
     action: "git",
     label: "Star us on git",
-    icon: "ph:star-light",
+    icon: "star",
     isInactive: true,
     type: ActionType.LINK
   },
@@ -339,7 +339,7 @@ export const globalActions: IAction[] = [
     get label() {
       return this.modalParams?.title;
     },
-    icon: "ph:lock-simple-light",
+    icon: "lock",
     type: ActionType.LINK,
     // contentType: ContentType.SPACE_DOC,
     component: PrivacyPolicy,
@@ -355,7 +355,7 @@ export const globalActions: IAction[] = [
     get label() {
       return this.modalParams?.title;
     },
-    icon: "ph:lock-simple-light",
+    icon: "lock",
     isMeta: true,
     type: ActionType.LINK,
     contentType: ContentType.SPACE_DOC,
@@ -374,14 +374,14 @@ export const globalActions: IAction[] = [
   {
     action: "feedback",
     label: "Give feedback",
-    icon: "ph:chat-centered-dots-light",
+    icon: "chat-three",
     isInactive: true,
     type: ActionType.LINK
   },
   {
     action: "requestfeature",
     label: "Request a feature",
-    icon: "ph:lightbulb-light",
+    icon: "lightbulb",
     type: ActionType.LINK
   },
   {
@@ -391,7 +391,7 @@ export const globalActions: IAction[] = [
       { variant: "report", label: "Report an issue" },
       { variant: "feedback", label: "Give feedback" }
     ],
-    icon: "ph:flag-light",
+    icon: "flag",
     type: ActionType.LINK
   },
   {
@@ -471,7 +471,7 @@ export const globalActions: IAction[] = [
   {
     action: "calendar",
     label: "Calendar",
-    icon: "ph:calendar-light",
+    icon: "calendar",
     type: ActionType.PAGE,
     component: Calendar
   },
@@ -628,7 +628,7 @@ export const globalActions: IAction[] = [
     action: resourceAction(Resource.collection, ResourceActionType.BROWSE),
     component: ResourceBrowser,
     label: "Collections",
-    icon: "ph:brackets-round-light",
+    icon: "collection",
     type: ActionType.PAGE,
     componentParams: {
       resource: Resource.collection
@@ -639,7 +639,7 @@ export const globalActions: IAction[] = [
     action: resourceAction(Resource.tag, ResourceActionType.BROWSE),
     component: ResourceBrowser,
     label: "Tags",
-    icon: "ph:tag-light",
+    icon: "tag",
     isInactive: true,
     type: ActionType.PAGE,
     componentParams: {
@@ -737,7 +737,7 @@ export const globalActions: IAction[] = [
         orientation: Orientation.Horizontal,
         primaryAction: {
           label: "Upgrade now",
-          icon: "ph:sparkle-light",
+          icon: "sparkle",
           variant: ButtonVariant.PRIMARY,
           callback: async () => {
             appStore.runAction(Action.USER_PLAN);
@@ -745,7 +745,7 @@ export const globalActions: IAction[] = [
         },
         secondaryAction: {
           label: "Chat with us",
-          icon: "ph:chat-centered-dots-light",
+          icon: "chat-three",
           variant: ButtonVariant.SECONDARY,
           callback: async () => {
             appStore.runAction("chat");
@@ -774,7 +774,7 @@ export const globalActions: IAction[] = [
   {
     action: Action.USER_BILLING,
     label: "Billing",
-    icon: "ph:wallet-light",
+    icon: "wallet",
     type: ActionType.MODAL,
     component: UserBilling,
     modalParams: {
@@ -976,7 +976,7 @@ export const globalActions: IAction[] = [
   {
     action: Action.HISTORY,
     label: "History",
-    icon: "ph:clock-counter-clockwise-light",
+    icon: "history",
     type: ActionType.RESOURCE,
     component: HistoryModal,
     modalParams: {
@@ -997,7 +997,7 @@ export const globalActions: IAction[] = [
     action: Action.DATA_SETTINGS,
     type: ActionType.MODAL,
     label: "Data Settings",
-    icon: "ph:database-light",
+    icon: "database",
     component: DataSettings,
     hideContext: [Embed.HANDSET],
     modalParams: {
@@ -1012,7 +1012,7 @@ export const globalActions: IAction[] = [
     action: Action.CALENDAR_SETTINGS,
     type: ActionType.MODAL,
     label: "Calendar Settings",
-    icon: "ph:sliders-light",
+    icon: "sliders",
     component: CalendarSettings,
     modalParams: {
       title: "Calendar Settings",

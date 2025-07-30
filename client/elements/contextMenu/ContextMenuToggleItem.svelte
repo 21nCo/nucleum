@@ -42,7 +42,7 @@
   )}
 >
   <Icon
-    icon={on ? item.activeIcon : item.icon}
+    icon={on ? (item.activeIcon ?? item.icon) : item.icon}
     size={size === Size.lg ? Size.md : size}
     isFilled={on && !isPreventFillOnActive}
     class={cn({

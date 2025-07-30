@@ -105,22 +105,22 @@
     // {
     //   label: "Ask",
     //   value: "ask",
-    //   icon: "ph:sparkle-light"
+    //   icon: "sparkle"
     // },
     {
       label: "Clips",
       value: "clips",
-      icon: "heroicons:bookmark"
+      icon: "bookmark"
     },
     {
       label: "Page notes",
       value: "notes",
-      icon: "ph:note-light"
+      icon: "note"
     }
     // {
     //   label: "History",
     //   value: "history",
-    //   icon: "ph:clock-light"
+    //   icon: "clock"
     // }
   ];
   const channel = getPort("channel");
@@ -398,7 +398,7 @@
                 <span> Toolbar is hidden </span>
                 <Button
                   label="Show toolbar"
-                  icon="ph:eye-light"
+                  icon="show"
                   size={Size.sm}
                   isPreventMinWidth={true}
                   on:click={() => {
@@ -421,7 +421,7 @@
                     <div
                       class="min-w-fit bg-bgs2 border rounded-md px-3 py-1.5 border-brs3 flex items-center gap-2"
                     >
-                      <Icon icon="ph:check-light" size={Size.sm} />
+                      <Icon icon="check" size={Size.sm} />
                       <span>Saved</span>
                     </div>
                   {:else}
@@ -529,7 +529,7 @@
               <span> Please login to continue. </span>
               <Button
                 label="Login"
-                icon="ph:sign-in-light"
+                icon="log-in"
                 type={ButtonVariant.PRIMARY}
                 on:click={() => openAppPath("signup?ext=true")}
               />
@@ -543,14 +543,14 @@
             <!-- <Button
             tooltip="Settings"
             {tooltipOptions}
-            icon="ph:gear-fine-light"
+            icon="gear"
             size={Size.sm}
             style={ButtonStyle.OUTLINED}
           /> -->
             <Button
               tooltip="Go to app"
               {tooltipOptions}
-              icon="ph:hexagon-light"
+              icon="hexagon"
               size={Size.sm}
               style={ButtonStyle.OUTLINED}
               on:click={() => openAppPath("")}
@@ -558,7 +558,7 @@
             <Button
               tooltip="Help center"
               {tooltipOptions}
-              icon="ph:question-light"
+              icon="question"
               size={Size.sm}
               type={isShowHelp
                 ? ButtonVariant.PRIMARY
@@ -570,7 +570,7 @@
               <Button
                 tooltip="Logout"
                 {tooltipOptions}
-                icon="ph:sign-out-light"
+                icon="log-out"
                 id="logout"
                 size={Size.sm}
                 type={ButtonVariant.DANGER}
@@ -588,7 +588,7 @@
             {:else if !isLoggedIn}
               <Button
                 tooltip="Login"
-                icon="ph:sign-in-light"
+                icon="log-in"
                 type={ButtonVariant.PRIMARY}
                 size={Size.sm}
                 style={ButtonStyle.OUTLINED}

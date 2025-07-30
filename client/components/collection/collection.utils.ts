@@ -25,9 +25,9 @@ export const UNASSIGNED_LABEL = "Unassigned";
 export function resolveCollectionTypeIcon(type: CollectionType) {
   switch (type) {
     case CollectionType.UNTYPED:
-      return "ph:brackets-round-light";
+      return "collection";
     case CollectionType.TYPED:
-      return "ph:cube-light";
+      return "cube";
     case CollectionType.QUERY:
       return "ph:database-light";
   }

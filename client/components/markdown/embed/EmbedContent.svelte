@@ -325,7 +325,7 @@
             <div class="flex gap-2 items-center shrink-0">
               {#if !$mdStore.params?.isReadOnly}
                 <Button
-                  icon="ph:pencil-simple-light"
+                  icon="edit"
                   tooltip="Edit title"
                   size={Size.sm}
                   style={ButtonStyle.OUTLINED}
@@ -336,7 +336,7 @@
               {/if}
               {#if _mediaBlock?.contentType !== NodeType.FILE}
                 <Button
-                  icon="ph:circle-light"
+                  icon="circle"
                   tooltip="Go to node"
                   size={Size.sm}
                   style={ButtonStyle.OUTLINED}
@@ -348,7 +348,7 @@
               {/if}
               {#if mediaNodeTypeList.includes(_mediaBlock?.contentType)}
                 <Button
-                  icon="ph:download-simple-light"
+                  icon="download"
                   tooltip="Download"
                   size={Size.sm}
                   style={ButtonStyle.OUTLINED}
@@ -362,7 +362,7 @@
               {/if}
               {#if _mediaBlock?.url}
                 <Button
-                  icon="ph:arrow-up-right-light"
+                  icon="weblink"
                   tooltip="Go to external link"
                   size={Size.sm}
                   style={ButtonStyle.OUTLINED}
@@ -376,7 +376,7 @@
               {/if}
               {#if !$mdStore.params?.isReadOnly}
                 <Button
-                  icon="ph:trash-light"
+                  icon="trash"
                   tooltip="Delete"
                   size={Size.sm}
                   type={ButtonVariant.DANGER}

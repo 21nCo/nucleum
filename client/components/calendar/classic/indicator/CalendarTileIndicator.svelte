@@ -120,39 +120,20 @@
 
 {#if type === CalendarTileIndicatorDisplayType.METRICS}
   <div
-    class={cn("flex flex-col items-start justify-center text-b3", {
+    class={cn("flex flex-col items-start justify-center text-b3 w-full", {
       "text-fgs3": !isActive,
       "gap-1": isActive
     })}
   >
-    {#if tasks.length > 0}
-      <MonthTileIndicator
-        text={`${tasks.length} task${tasks.length > 1 ? "s" : ""}`}
-        color={getColor(Resource.task)}
-        {isActive}
-      />
-    {/if}
-    {#if focusSessions.length > 0}
-      <MonthTileIndicator
-        text={`F: ${formatSeconds(summary.focus + summary.break)}`}
-        color={getColor(Resource.session)}
-        {isActive}
-      />
-    {/if}
-    {#if nodes.length > 0}
-      <MonthTileIndicator
-        text={`${nodes.length} node${nodes.length > 1 ? "s" : ""}`}
-        color={getColor(Resource.node)}
-        {isActive}
-      />
-    {/if}
-    {#if calendarNotes.length > 0}
-      <MonthTileIndicator
-        text="Notes"
-        color={getColor(Resource.node)}
-        {isActive}
-      />
-    {/if}
+    <MonthTileIndicator
+      data={{
+        tasks,
+        focusSummary: summary,
+        nodes,
+        calendarNotes
+      }}
+      {isActive}
+    />
   </div>
 {:else if type === CalendarTileIndicatorDisplayType.DOTS}
   <div class="flex items-center justify-center gap-0.5">
@@ -166,7 +147,7 @@
       <YearTileIndicatorDot
         color={getColor(Resource.node)}
         {isActive}
-        isBorderedVariant={true}
+        isMemory={true}
       />
     {/if}
   </div>

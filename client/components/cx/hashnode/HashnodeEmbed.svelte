@@ -23,7 +23,7 @@
   <div class="absolute bottom-0 left-0 m-2 flex gap-2 items-center">
     <Button
       label="Open in browser"
-      icon="arrow-up-right"
+      icon="weblink"
       size={Size.sm}
       type={ButtonVariant.PRIMARY}
       style={ButtonStyle.OUTLINED}

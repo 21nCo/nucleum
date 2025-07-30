@@ -74,7 +74,7 @@
         </div>
         <Button
           label="Add"
-          icon="ph:plus-light"
+          icon="plus"
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.DEFAULT}
           on:click={addValue}
@@ -103,7 +103,7 @@
             >
             <Button
               on:click={() => removeValue(index)}
-              icon="ph:x"
+              icon="cross"
               parentBgIndex={parentBgIndex + 1}
             />
           </div>

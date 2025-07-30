@@ -93,7 +93,7 @@
           >
             {date}
           </h3>
-          <!-- <Button icon="ph:plus" size={Size.sm} tooltip="Add task" /> -->
+          <!-- <Button icon="plus" size={Size.sm} tooltip="Add task" /> -->
         </div>
         <div class="flex flex-col gap-2">
           {#each tasks as item}

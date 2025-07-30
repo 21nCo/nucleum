@@ -138,7 +138,7 @@
               class={cn(
                 "flex items-center gap-2",
                 {
-                  "cursor-default text-h4 font-medium text-fgs2 px-3 py-0.5":
+                  "cursor-default text-h4 text-fgs2 px-3 py-0.5":
                     !isEnableTitleActionResolved,
                   "text-h5 px-8 border-r border-brs3":
                     isEnableTitleActionResolved
@@ -157,7 +157,7 @@
             >
               {#if isEnableTitleActionResolved}
                 <Icon
-                  icon="ph:house-light"
+                  icon="home"
                   class={cn({
                     "text-aps1": value === titleValue
                   })}

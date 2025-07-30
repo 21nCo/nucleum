@@ -199,7 +199,7 @@
           >
             {#if isValidLink}
               <Icon
-                icon={type === "email" ? "ph:at" : "ph:link"}
+                icon={type === "email" ? "at" : "link"}
                 size={Size.sm}
                 class="stroke-fgs3"
               />
@@ -260,7 +260,7 @@
         <div class="flex items-center">
           {#if isShowSaveControl}
             <Button
-              icon="ph:check"
+              icon="check"
               id="input-save-control"
               size={Size.sm}
               on:click={(e) => dispatch("save", { event: e, value })}
@@ -268,7 +268,7 @@
           {/if}
           {#if (isShowSaveControl || isShowClearControl) && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
             <Button
-              icon="ph:x"
+              icon="cross"
               id="input-cancel-control"
               size={Size.sm}
               on:click={(e) => dispatch("cancel", { event: e })}
@@ -284,14 +284,14 @@
   <KeyboardToolbar class="bg-bgs2 h-14 px-4 flex items-center justify-between">
     <div class="flex items-center justify-center gap-2">
       <!-- <Button
-        icon="ph:arrow-u-up-left-light"
+        icon="undo"
         parentBgIndex={2}
         on:click={() => {
           // TODO: undo
         }}
       />
       <Button
-        icon="ph:arrow-u-up-right-light"
+        icon="redo"
         parentBgIndex={2}
         on:click={() => {
           // TODO: redo
@@ -312,7 +312,7 @@
     </div>
     <div class="flex items-center justify-center gap-2">
       <Button
-        icon="ph:x-light"
+        icon="cross"
         label="clear"
         parentBgIndex={2}
         size={Size.sm}
@@ -325,7 +325,7 @@
         on:mousedown={(e) => e.preventDefault()}
       />
       <Button
-        icon="ph:caret-line-down-light"
+        icon="chevron-down"
         label="close"
         parentBgIndex={2}
         size={Size.sm}

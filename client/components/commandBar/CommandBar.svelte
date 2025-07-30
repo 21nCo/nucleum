@@ -70,7 +70,7 @@
     placeholder =
       typeof searchAction.searchActionParams?.placeholder === "function"
         ? searchAction.searchActionParams.placeholder(componentParams)
-        : searchAction.searchActionParams?.placeholder ?? "select an item";
+        : (searchAction.searchActionParams?.placeholder ?? "select an item");
   }
   function close() {
     value = "";
@@ -209,7 +209,7 @@
   </div>
   <div class="flex items-center justify-center gap-2">
     <Button
-      icon="ph:x-light"
+      icon="cross"
       label="clear"
       parentBgIndex={2}
       size={Size.sm}

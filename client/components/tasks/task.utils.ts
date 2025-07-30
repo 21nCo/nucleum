@@ -4,27 +4,27 @@ export function resolveTaskSubTypesForSwitcher() {
   const overdue = {
     label: "Overdue",
     value: TaskSubTypeForSwitcher.OVERDUE,
-    icon: "ph:alarm-light"
+    icon: "alarm"
   };
   const withoutDueDate = {
     label: "Without due date",
     value: TaskSubTypeForSwitcher.WITHOUT_DUE_DATE,
-    icon: "ph:question-light"
+    icon: "question"
   };
   const byDate = {
     label: "By date",
     value: TaskSubTypeForSwitcher.BY_DATE,
-    icon: "ph:calendar-light"
+    icon: "calendar"
   };
   const byMonth = {
     label: "By month",
     value: TaskSubTypeForSwitcher.BY_MONTH,
-    icon: "ph:calendar-blank-light"
+    icon: "calendar"
   };
   const withoutGoal = {
     label: "Without goal",
     value: TaskSubTypeForSwitcher.WITHOUT_GOAL,
-    icon: "ph:circle-dashed-light"
+    icon: "circle-dashed"
   };
   return [byDate, byMonth];
 }
@@ -35,18 +35,18 @@ export function resolveTaskDueDateFilters(params?: {
   const withoutDueDate = {
     label: "Without due date",
     value: TaskDueDateFilter.WITHOUT_DUE_DATE,
-    icon: "ph:question-light"
+    icon: "question"
   };
   return [
     {
       label: "All",
       value: TaskDueDateFilter.ALL,
-      icon: "ph:asterisk-light"
+      icon: "asterisk"
     },
     {
       label: "Overdue",
       value: TaskDueDateFilter.OVERDUE,
-      icon: "ph:alarm-light"
+      icon: "alarm"
     },
     ...(!params?.isDatedContext ? [withoutDueDate] : [])
   ];

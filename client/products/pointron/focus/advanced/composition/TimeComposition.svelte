@@ -98,13 +98,13 @@
       <!-- TODO -->
       <div class="py-8 flex flex-col items-center gap-4">
         <div class="flex flex-col gap-2 items-center">
-          <Icon icon="ph:clock-light" />
+          <Icon icon="clock" />
           <div class="text-fgs2">End time selected.</div>
         </div>
         <Button
           label="Clear"
           size={Size.sm}
-          icon="ph:x-light"
+          icon="cross"
           on:click={() => {
             activeSession.resetComposition();
           }}

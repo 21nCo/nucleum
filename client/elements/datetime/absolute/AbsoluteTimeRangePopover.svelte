@@ -735,7 +735,7 @@
             {/if}
           </div>
         </div>
-        <Icon icon="arrow-right" />
+        <Icon icon="proceed" />
         <div class="flex flex-col w-4/10">
           <div class="text-b2">End</div>
           <div

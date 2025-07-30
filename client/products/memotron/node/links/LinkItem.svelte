@@ -30,10 +30,7 @@
     isAlwaysShowContextMenuOnTouchDevice={true}
   >
     <span slot="right" class="flex bg-bgs2 rounded-md border border-brs3">
-      <Toggle
-        icon="ph:link-simple-horizontal-light"
-        bind:on={isShowLinkTagger}
-      />
+      <Toggle icon="relation" bind:on={isShowLinkTagger} />
     </span>
     <span
       slot="bottom"

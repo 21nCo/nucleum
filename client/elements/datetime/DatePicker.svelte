@@ -161,7 +161,7 @@
     }}
   >
     {#if variant === "icon-only" || variant === "inline-with-icon"}
-      <Icon icon="ph:calendar-light" />
+      <Icon icon="calendar-blank" />
     {/if}
     {#if variant === "inline" || variant === "inline-with-icon"}
       {date ? parseAndFormatDate(date) : placeholder}

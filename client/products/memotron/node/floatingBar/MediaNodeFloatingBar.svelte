@@ -119,7 +119,7 @@
         <span class="flex gap-5">
           {#if !isConstrainedWidth}
             <Toggle
-              icon="ph:bird-light"
+              icon="bird"
               tooltip="Bird view"
               on={nodeView === NodeView.BIRD}
               on:change={(e) => {

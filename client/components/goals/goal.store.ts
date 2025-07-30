@@ -464,7 +464,7 @@ class GoalActions {
   focusNow = {
     value: "focusNow",
     label: "Focus now",
-    icon: "ph:circle-light",
+    icon: "circle",
     callback: async () => {
       await activeSession.focusGoal(this.goal.id);
     }
@@ -473,7 +473,7 @@ class GoalActions {
   convertToSubGoal = {
     value: PointronAction.CONVERT_TO_SUBGOAL,
     label: "Convert to sub goal",
-    icon: "ph:arrow-bend-down-right-light",
+    icon: "to-sub",
     callback: async () => {
       appStore.runAction(PointronAction.SELECT_PARENT_GOAL, {
         componentParams: {
@@ -487,7 +487,7 @@ class GoalActions {
   moveSubgoal = {
     value: ResourceActionType.MOVE,
     label: "Move",
-    icon: "ph:arrow-bend-up-right-light",
+    icon: "move",
     callback: async () => {
       appStore.runAction(PointronAction.SELECT_PARENT_GOAL, {
         componentParams: {
@@ -501,7 +501,7 @@ class GoalActions {
   convertToRootGoal = {
     value: PointronAction.CONVERT_TO_ROOT_GOAL,
     label: "Convert to top level goal",
-    icon: "ph:arrow-fat-lines-up-light",
+    icon: "level-up",
     callback: async () => {
       return goalStore.convertToRoot(this.goal);
     }
@@ -511,7 +511,7 @@ class GoalActions {
     return {
       value: "pinToQuickFocus",
       label: "Pin to quick focus",
-      icon: "ph:circle-light",
+      icon: "circle",
       type: ContextMenuType.SWITCH,
       initialValue: this.goal.isPinnedForQuickFocus,
       callback: async (checked: boolean) => {

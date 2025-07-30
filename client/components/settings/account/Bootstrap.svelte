@@ -71,7 +71,7 @@
           label="Complete setup"
           isLoading={isBootstrapInProgress}
           type={ButtonVariant.PRIMARY}
-          icon="ph:rocket-light"
+          icon="rocket"
           on:click={async () => {
             try {
               isBootstrapInProgress = true;

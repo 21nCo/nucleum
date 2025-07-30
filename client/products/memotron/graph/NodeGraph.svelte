@@ -11,6 +11,7 @@
   } = { nodes: [], edges: [], combos: [] };
   let isRendered = false;
   let graphRef: NodeGraphUsingG6;
+  $: hasData = data?.nodes && data.nodes.length > 0;
 
   export function rerender() {
     graphRef?.rerender();
@@ -30,10 +31,10 @@
     <div
       class="absolute z-10 inset-0 w-full h-full flex justify-center items-center bg-bgs1"
     >
-      <EmptyStatusView isLoadingState={true} />
+      <EmptyStatusView isLoadingState={hasData} subText="No links found." />
     </div>
   {/if}
-  {#if data?.nodes && data.nodes.length > 0}
+  {#if hasData}
     <NodeGraphUsingG6
       bind:this={graphRef}
       {data}

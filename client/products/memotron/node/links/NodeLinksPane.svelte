@@ -367,7 +367,7 @@
           {
             label: "Mentions",
             value: LinkType.MENTION,
-            icon: "ph:at-light"
+            icon: "at"
           }
         ]}
         size={Size.sm}
@@ -379,12 +379,12 @@
         <slot name="right" slot="right">
           <div class="flex items-center">
             <!-- <Toggle
-              icon="ph:lightbulb-light"
+              icon="lightbulb"
               tooltip="Link suggestions"
               bind:on={isShowLinkSuggestions}
             /> -->
             <Toggle
-              icon="ph:link-simple-horizontal-light"
+              icon="relation"
               tooltip="Relations"
               bind:on={isShowLinkTagFilters}
               count={selectedLinkTags.length > 0
@@ -404,12 +404,12 @@
           {
             value: "incoming",
             label: "Incoming",
-            icon: "ph:arrow-down-left"
+            icon: "incoming"
           },
           {
             label: "Outgoing",
             value: "outgoing",
-            icon: "ph:arrow-up-right"
+            icon: "outgoing"
           }
         ]}
       />

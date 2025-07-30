@@ -35,7 +35,7 @@
         )}
         on:click={() => appStore.runAction(Action.SETTINGS)}
       >
-        <Icon icon="ph:gear-fine-light" isAccentBgContext={isCpActive} {size} />
+        <Icon icon="gear" isAccentBgContext={isCpActive} {size} />
       </button>
       <!-- <button
         class={cn(
@@ -49,7 +49,7 @@
           appStore.runAction(Action.HELP);
         }}
       >
-        <Icon icon="ph:question-light" {size} />
+        <Icon icon="question" {size} />
         {#if !isInThinMode}
           <span class="text-b3 text-fgs2">Help</span>
         {/if}

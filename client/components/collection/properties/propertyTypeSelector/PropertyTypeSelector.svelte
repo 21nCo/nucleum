@@ -120,7 +120,7 @@
     </span>
   </span>
   <Icon
-    icon={isPopoverVisible ? "ph:caret-right-light" : "ph:caret-down-light"}
+    icon={isPopoverVisible ? "chevron-right" : "chevron-down"}
     size={Size.sm}
   />
 </div>

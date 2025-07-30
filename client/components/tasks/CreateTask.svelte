@@ -162,13 +162,13 @@
       {action}
       primaryAction={{
         label: "Create",
-        icon: "ph:arrow-right-light",
+        icon: "proceed",
         callback: handleCreate,
         size: Size.sm
       }}
       secondaryAction={{
         label: "Cancel",
-        icon: "ph:x-light",
+        icon: "cross",
         size: Size.sm
       }}
     />

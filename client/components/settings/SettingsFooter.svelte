@@ -11,7 +11,7 @@
   {#if $account.dataMode === UserDataMode.CLOUD}
     <span class="flex justify-center w-3/5">
       <Button
-        icon="ph:sign-out-light"
+        icon="log-out"
         label="Sign out"
         style={ButtonStyle.OUTLINED}
         {parentBgIndex}

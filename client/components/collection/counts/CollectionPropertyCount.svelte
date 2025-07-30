@@ -10,7 +10,7 @@
   <div class="flex gap-2">
     <CountBadge
       count={item.properties?.length}
-      icon="ph:cube-light"
+      icon="cube"
       label="properties"
     />
   </div>

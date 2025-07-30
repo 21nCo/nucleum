@@ -154,7 +154,7 @@
               {#if context === "mainpanel"}
                 <Button
                   label="See all"
-                  icon="ph:arrow-right-light"
+                  icon="proceed"
                   size={Size.sm}
                   style={ButtonStyle.PLAIN}
                   on:click={(e) => {
@@ -164,7 +164,7 @@
                 />
               {/if}
               <Button
-                icon={isCollapsed ? "ph:caret-down-light" : "ph:caret-up-light"}
+                icon={isCollapsed ? "chevron-down" : "chevron-up"}
                 tooltip={isCollapsed ? "Expand" : "Collapse"}
               />
             {/if}

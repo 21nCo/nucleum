@@ -43,32 +43,32 @@
   }[] = [
     {
       value: BlockAction.MOVEUP,
-      icon: "ph:arrow-up-light",
+      icon: "arrow-up",
       label: "Move up"
     },
     {
       value: BlockAction.MOVEDOWN,
-      icon: "ph:arrow-down-light",
+      icon: "arrow-down",
       label: "Move down"
     },
     {
       value: BlockAction.DUPLICATE,
-      icon: "ph:copy-light",
+      icon: "copy",
       label: "Duplicate"
     },
     // {
     //   value: BlockAction.CONVERT,
-    //   icon: "ph:arrow-right-light",
+    //   icon: "proceed",
     //   label: "Convert"
     // },
     {
       value: BlockAction.COPY_BLOCK_TEXT,
-      icon: "ph:clipboard-light",
+      icon: "clipboard",
       label: "Copy block text"
     },
     {
       value: BlockAction.DELETE,
-      icon: "ph:trash-light",
+      icon: "trash",
       label: "Delete"
     }
   ];
@@ -80,17 +80,17 @@
   }[] = [
     // {
     //   value: BlockAction.DUPLICATE,
-    //   icon: "ph:copy-light",
+    //   icon: "copy",
     //   label: "Duplicate"
     // },
     // {
     //   value: BlockAction.COPY_BLOCK_TEXT,
-    //   icon: "ph:clipboard-light",
+    //   icon: "clipboard",
     //   label: "Copy block text"
     // },
     {
       value: BlockAction.DELETE,
-      icon: "ph:trash-light",
+      icon: "trash",
       label: "Delete"
     }
   ];
@@ -282,7 +282,7 @@
     >
       {#if selectedBlocks.length <= 1}
         <Toggle
-          icon="ph:plus-circle-light"
+          icon="plus-circle"
           parentBgIndex={2}
           on={keyboardToolbarPanelSelection === "insert"}
           on:mousedown={(e) => e.preventDefault()}
@@ -313,7 +313,7 @@
         </div>
       {:else}
         <Toggle
-          icon="ph:command-light"
+          icon="command"
           parentBgIndex={2}
           on={keyboardToolbarPanelSelection === "actions"}
           on:mousedown={(e) => e.preventDefault()}

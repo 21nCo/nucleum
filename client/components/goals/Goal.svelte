@@ -111,33 +111,33 @@
       {
         label: "Analytics",
         value: "analytics",
-        icon: "ph:chart-line-up-light"
+        icon: "chart-line-up"
       },
       {
         label: "History",
         value: "history",
-        icon: "ph:clock-counter-clockwise-light"
+        icon: "history"
       }
     ];
     if (isConstrainedWidth) {
       items.unshift({
         label: "Info",
         value: "info",
-        icon: "ph:info-light"
+        icon: "info"
       });
     }
     if (goal?.types && goal?.types?.length > 0) {
       items.push({
         label: "Properties",
         value: "properties",
-        icon: "ph:shapes-light"
+        icon: "shapes"
       });
     }
     if ($appStore.product === Product.NUCLEUS) {
       items.push({
         label: "Links",
         value: "links",
-        icon: "ph:link-light"
+        icon: "link"
       });
     }
     if (goal?.uiState?.tabsOrder) {
@@ -242,7 +242,7 @@
               <div slot="right">
                 {#if $goal.accessMode === ResourceAccessMode.FULL}
                   <Button
-                    icon="ph:x-light"
+                    icon="cross"
                     tooltip="Close full screen"
                     parentBgIndex={2}
                     on:click={() => {

@@ -175,7 +175,7 @@
     />
   {/if}
   <Toggle
-    icon="ph:crop-light"
+    icon="crop"
     tooltip="**Snip** (Cmd/Ctrl + Shift + I)"
     bgSize={Size.sm}
     bind:on={isSnipActive}
@@ -206,7 +206,7 @@
           : Orientation.Horizontal}
       />
       <Toggle
-        icon="ph:highlighter-light"
+        icon="highlight"
         tooltip="Auto highlighter"
         bgSize={Size.sm}
         bind:on={isAutoHighlighterExpanded}
@@ -254,7 +254,7 @@
     />
   {/if}
   <!-- <Button
-    icon="ph:minus-circle-light"
+    icon="minus-circle"
     tooltip="Collapse"
     {...buttonParams}
     on:click={() => {
@@ -278,7 +278,7 @@
     }}
     class="p-1 hover:bg-bgs2 rounded-md flex justify-center items-center"
   >
-    <Icon icon="ph:minus-circle-light" class="text-ass1" />
+    <Icon icon="minus-circle" class="text-ass1" />
   </button>
   <button
     on:click={() => {
@@ -290,7 +290,7 @@
     }}
     class="p-1 hover:bg-bgs2 rounded-md flex justify-center items-center"
   >
-    <Icon icon="ph:x-circle-light" class="text-ars1" />
+    <Icon icon="x-circle" class="text-ars1" />
   </button>
   <button
     use:tooltip={{
@@ -300,6 +300,6 @@
     }}
     class="flex justify-center items-center"
   >
-    <Icon icon={isHovering ? "ph:dots-six" : "ph:dots-six-light"} />
+    <Icon icon="rearrange-horizontal" />
   </button>
 </button>

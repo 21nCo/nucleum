@@ -281,7 +281,7 @@
                   }}
                 >
                   <Icon
-                    icon="ph:caret-up-light"
+                    icon="chevron-up"
                     on:click={clickHandler}
                     isTabbable={true}
                     isFilled={hoverState.caretHovering}

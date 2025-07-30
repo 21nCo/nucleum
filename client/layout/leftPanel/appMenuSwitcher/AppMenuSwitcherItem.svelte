@@ -115,7 +115,7 @@
     const pinAction = {
       label: "Unpin from App menu",
       value: "pin",
-      icon: "ph:minus-circle-light",
+      icon: "minus-circle",
       callback: async () => {
         appMenuStore.removeUserMenuItem(resource);
         popRef.dispatchEvent(new CustomEvent("hide"));
@@ -181,6 +181,12 @@
       "gap-2 rounded-lg p-2 h-9": layoutContext === LayoutContext.DEFAULT,
       "px-2 py-1": !isShowLabel,
       "justify-between": isShowHotKeyHint
+    },
+    layoutContext === LayoutContext.THIN_WITH_LABEL && {
+      "bg-aps3 border-aps2 border-y text-aps1 hover:bg-aps2 hover:bg-opacity-70":
+        isActive && !isShowLabel,
+      "border border-transparent hover:bg-bgs3 transition-all":
+        !isActive && !isShowLabel
     }
   )}
   on:click={onClick}

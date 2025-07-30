@@ -19,6 +19,7 @@
   import { defaultsMigrationFocus } from "../../pointron/migrations";
   import { defaultsMigrationTidy } from "$lib/client/components/migrations";
   import { defaultsMigrationForNodes } from "../../memotron/base/migrations";
+  import TopNavLeftMenuItem from "$lib/client/layout/topNav/TopNavLeftMenuItem.svelte";
 
   let isLiteMode = $context.isEmbed && $context.isSheet;
   const isDebug = import.meta.env?.DEV;
@@ -63,14 +64,12 @@
 </script>
 
 <UserBaseLayer on:ready={onReady}>
-  <div slot="topnav" class="flex gap-2 items-center">
+  <div slot="topnav" class="flex gap-1 items-center h-full">
     <FocusTopNavWidget />
-    <Button
+    <TopNavLeftMenuItem
       icon="mynaui:plus-hexagon"
       tooltip="Capture"
-      style={ButtonStyle.PLAIN}
       shortcut={resourceAction(Resource.node, ResourceActionType.CREATE)}
-      parentBgIndex={2}
       on:click={() =>
         appStore.runAction(
           resourceAction(Resource.node, ResourceActionType.CREATE)

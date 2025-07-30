@@ -16,11 +16,11 @@
     <BasicInfoItem label="Device">
       <span class="flex text-b2 gap-1">
         {#if ["iPhone"].some((m) => metadata?.deviceInfo?.model?.includes(m))}
-          <Icon icon="ph:device-mobile-light" size={Size.sm} />
+          <Icon icon="device-mobile" size={Size.sm} />
         {:else if ["iPad"].some( (m) => metadata?.deviceInfo?.model?.includes(m) )}
-          <Icon icon="ph:device-tablet-light" size={Size.sm} />
+          <Icon icon="device-tablet" size={Size.sm} />
         {:else if ["Mac"].some((m) => metadata?.deviceInfo?.model?.includes(m))}
-          <Icon icon="ph:desktop-light" size={Size.sm} />
+          <Icon icon="desktop" size={Size.sm} />
         {/if}
         <span>
           {metadata?.deviceInfo?.make ?? ""}
@@ -36,7 +36,7 @@
     {#if metadata?.cameraSettings?.aperture}
       <BasicInfoItem label="Aperture">
         <span class="flex gap-1">
-          <Icon icon="ph:aperture-light" size={Size.sm} />
+          <Icon icon="aperture" size={Size.sm} />
           {metadata?.cameraSettings?.aperture}
         </span>
       </BasicInfoItem>

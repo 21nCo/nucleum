@@ -74,7 +74,7 @@
     {searchCallback}
     style={InputStyle.PLAIN}
     {placeholder}
-    icon="ph:plus-light"
+    icon="plus"
     emptyStateLabel={{
       mainText: "No tasks found.",
       subText: "Press **Enter** to create a new task."
@@ -87,14 +87,14 @@
           <Button
             on:click={createNew}
             size={Size.xs}
-            icon="ph:plus-light"
+            icon="plus"
             label="add"
             isPreventMinWidth={true}
           />
         {/if}
         <Button
           on:click={reset}
-          icon="ph:x-light"
+          icon="cross"
           size={Size.xs}
           tooltip="Clear"
           tooltipOptions={{

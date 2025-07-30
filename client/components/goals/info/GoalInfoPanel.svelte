@@ -76,7 +76,7 @@
       goal.toggleEditMode(false);
     }}
   >
-    <Icon icon="ph:x" size={Size.sm} class="text-abg" />
+    <Icon icon="cross" size={Size.sm} class="text-abg" />
     <span> Close edit mode </span>
   </button>
 {/if}
@@ -125,7 +125,8 @@
     </div>
     {#if $goal.status === GoalStatus.COMPLETED}
       <InlineInfoBanner
-        icon="ph:check-circle-fill"
+        icon="check-circle"
+        isIconFilled={true}
         content="This goal is marked as completed. It will not appear in focus items search results."
       />
     {/if}

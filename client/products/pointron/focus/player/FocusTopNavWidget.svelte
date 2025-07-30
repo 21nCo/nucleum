@@ -10,6 +10,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
   import { Product } from "$lib/client/types/product.type";
+  import TopNavLeftMenuItem from "$lib/client/layout/topNav/TopNavLeftMenuItem.svelte";
   export let ctx: Product = Product.NUCLEUS;
   const action =
     ctx === Product.NUCLEUS ? PointronAction.FOCUS : PointronAction.FOCUS_MODAL;
@@ -21,7 +22,7 @@
 {#if $activeSession.isSessionRunning}
   <button
     class={cn(
-      "flex items-center tabular-nums text-b3 font-mono border hover:bg-bgs3 py-1 px-2 rounded-md",
+      "flex items-center tabular-nums text-b3 font-mono border hover:bg-bgs3 py-1 px-2 mx-2 rounded-md",
       {
         "text-aps1 border-aps1":
           $activeSession.state === SessionState.FOCUS_RUNNING,
@@ -37,12 +38,10 @@
     {formatSeconds($activeSession.timeElapsed, TimeFormat.CLOCK)}
   </button>
 {:else}
-  <Button
+  <TopNavLeftMenuItem
     icon="ph:circle"
     tooltip="Focus"
-    style={ButtonStyle.PLAIN}
     shortcut={action}
-    parentBgIndex={2}
     on:click={handleClick}
   />
 {/if}

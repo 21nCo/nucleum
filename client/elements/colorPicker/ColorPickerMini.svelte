@@ -57,7 +57,7 @@
     }}
   >
     <Icon
-      icon="ph:paint-brush-light"
+      icon="paint-brush"
       class={hue !== undefined ? "text-cbg" : "text-fgs3"}
       size={Size.sm}
     />

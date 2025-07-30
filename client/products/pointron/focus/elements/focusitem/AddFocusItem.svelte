@@ -77,7 +77,7 @@
     on:empty-enter={handleEmptyEnter}
     bind:value={label}
     bind:this={inputRef}
-    icon="ph:plus-light"
+    icon="plus"
     emptyStateLabel={{
       mainText: "No goals or tasks found.",
       subText:

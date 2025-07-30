@@ -101,7 +101,7 @@
           }}
         />
         <Button
-          icon="ph:trash"
+          icon="trash"
           style={ButtonStyle.PLAIN}
           type={ButtonVariant.DANGER}
           tooltip="Delete this group"

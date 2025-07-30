@@ -92,7 +92,7 @@
   <Button
     type={ButtonVariant.SECONDARY}
     style={ButtonStyle.DEFAULT}
-    icon="ph:caret-left-light"
+    icon="chevron-left"
     size={Size.sm}
     {parentBgIndex}
     on:click={goToPrevious}
@@ -121,7 +121,7 @@
   <Button
     type={ButtonVariant.SECONDARY}
     style={ButtonStyle.DEFAULT}
-    icon="ph:caret-right-light"
+    icon="chevron-right"
     size={Size.sm}
     {parentBgIndex}
     on:click={goToNext}

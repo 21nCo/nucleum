@@ -200,7 +200,7 @@
                   <div
                     class="flex justify-center items-center bg-bgs2 w-full h-full rounded-md"
                   >
-                    <Icon icon="ph:file-light" class="text-fgs3" />
+                    <Icon icon="file" class="text-fgs3" />
                   </div>
                 {/if}
               </div>

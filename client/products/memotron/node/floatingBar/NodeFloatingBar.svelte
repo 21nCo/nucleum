@@ -86,7 +86,7 @@
     {:else}
       <Button
         label="Back"
-        icon="ph:arrow-left-light"
+        icon="back-sm"
         size={Size.sm}
         style={ButtonStyle.PLAIN}
         on:click={() => {
@@ -172,9 +172,7 @@
       {#if $node.accessMode !== ResourceAccessMode.SPLIT && $node.accessMode !== ResourceAccessMode.FSPLIT && nodeView === NodeView.CONTENT}
         <Button
           {...buttonCommonProps}
-          icon={isWidened
-            ? "ph:arrows-in-line-horizontal-light"
-            : "ph:arrows-out-line-horizontal-light"}
+          icon={isWidened ? "shrink" : "widen"}
           tooltip={isWidened ? "Collapse" : "Expand to full width"}
           on:click={() => {
             nodeStore.modify($node.id, {

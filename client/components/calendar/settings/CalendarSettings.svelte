@@ -84,7 +84,7 @@
           style={TextStyle.PANEL_HEADING}
         />
         <Button
-          icon="ph:x-light"
+          icon="cross"
           size={Size.sm}
           on:click={() => (editingTemplate = null)}
         />
@@ -111,7 +111,7 @@
         <Button
           type={ButtonVariant.PRIMARY}
           label="Update"
-          icon="ph:floppy-disk-light"
+          icon="save"
           on:click={saveTemplate}
         />
       </div>

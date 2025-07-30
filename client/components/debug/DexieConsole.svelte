@@ -267,7 +267,7 @@
     <h2 class="text-b1 font-semibold text-fgs1">Dexie Console</h2>
     <Button
       size={Size.sm}
-      icon="ph:arrow-clockwise-light"
+      icon="refresh"
       on:click={loadDatabaseInfo}
       label="Refresh"
     />
@@ -352,7 +352,7 @@
               <Button
                 size={Size.sm}
                 type={ButtonVariant.SECONDARY}
-                icon="ph:copy-light"
+                icon="copy"
                 label="Copy Results"
                 on:click={copyResultsToClipboard}
               />

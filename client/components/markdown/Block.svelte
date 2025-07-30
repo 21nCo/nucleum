@@ -993,11 +993,11 @@
               delay: 500
             }}
           >
-            <Icon icon="ph:arrows-out-cardinal-light" />
+            <Icon icon="grab" />
           </div>
         {:else}
           <Icon
-            icon={isSelected ? "ph:check-circle-fill" : "ph:circle-light"}
+            icon={isSelected ? "check-circle" : "circle"}
             class={isSelected ? "" : "text-fgs4/50"}
           />
         {/if}
@@ -1064,7 +1064,7 @@
     <div class="flex items-center justify-center">
       {#if isHovering && !isFocusing && !isSoleBlock && [...simpleTextNodeTypeList, ...headingNodeTypes, ...listNodeTypes, NodeType.DIVIDER, NodeType.DOUBLE_DIVIDER].includes(block.contentType)}
         <Button
-          icon="ph:trash-light"
+          icon="trash"
           size={Size.md}
           tooltip="Delete block"
           on:click={deleteBlock}

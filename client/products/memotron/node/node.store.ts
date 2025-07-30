@@ -659,7 +659,7 @@ const nodeStaticActions = {
   },
   propertiesPane: {
     value: NodeRightPaneType.PROPERTIES,
-    icon: "ph:shapes-light",
+    icon: "shapes",
     label: "Show properties",
     tooltip: "Show properties"
   },
@@ -711,38 +711,38 @@ class NodeActions {
   };
   trashFromClipper = {
     value: ResourceActionType.DELETE,
-    icon: "ph:trash-light",
+    icon: "trash",
     callback: async () => {}
   };
   editNotesOnClipper = {
     value: ResourceActionType.EDIT_NOTES,
     label: "Edit notes",
-    icon: "ph:note-light",
+    icon: "note",
     callback: async () => {}
   };
   editLinksOnClipper = {
     value: ResourceActionType.EDIT_LINKS,
     label: "Edit links",
-    icon: "ph:link-light",
+    icon: "link",
     callback: async () => {}
   };
   editTitleOnClipper = {
     value: ResourceActionType.EDIT_TITLE,
     label: "Edit title",
-    icon: "ph:text-light",
+    icon: "text",
     callback: async () => {}
   };
   goToResourceFromClipper = {
     value: ResourceActionType.OPEN,
     label: "Open in app",
-    icon: "ph:arrow-square-out-light",
+    icon: "weblink-two",
     callback: async () => {}
   };
 
   sideNotesPane() {
     return {
       value: NodeRightPaneType.SIDENOTES,
-      icon: this.node.notes ? "ph:note-light" : "ph:note-blank-light",
+      icon: this.node.notes ? "note" : "note-blank",
       label: "Side notes",
       tooltip: "Side notes"
     };
@@ -751,7 +751,7 @@ class NodeActions {
   linksPane() {
     return {
       value: NodeRightPaneType.LINKS,
-      icon: "ph:link-light",
+      icon: "link",
       label: "Show links",
       tooltip: "Show links",
       count:
@@ -767,7 +767,7 @@ class NodeActions {
   tracesPane() {
     return {
       value: NodeRightPaneType.TRACES,
-      icon: "heroicons:bookmark",
+      icon: "bookmark",
       label: "Show traces",
       tooltip: "Show traces",
       count:
@@ -784,7 +784,7 @@ class NodeActions {
     return {
       value: "toggleFullWidth",
       label: "Expand to full width",
-      icon: "ph:arrows-out-line-horizontal-light",
+      icon: "widen",
       type: ContextMenuType.SWITCH,
       initialValue: this.node.config?.isWidened,
       callback: async (checked: boolean) => {

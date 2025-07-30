@@ -336,7 +336,7 @@
           on:click={onGoalClicked}
         >
           {selectedGoal.label}
-          <Button icon="ph:x-light" />
+          <Button icon="cross" />
         </CustomColorPropagator>
       </div>
     {:else}

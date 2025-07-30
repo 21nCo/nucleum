@@ -14,7 +14,7 @@
     items={[
       {
         value: SubGoalsLayout.DEFAULT,
-        icon: "ph:circle-dashed-light",
+        icon: "circle-dashed",
         label: "Default"
       },
       {
@@ -24,7 +24,7 @@
       },
       {
         value: SubGoalsLayout.TABS,
-        icon: "ph:tabs-light",
+        icon: "tabs",
         label: "Tabs",
         isDisabled: true,
         badge: "planned"

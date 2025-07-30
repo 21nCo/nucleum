@@ -93,7 +93,7 @@
         // });
       }}
     >
-      <Icon icon="ph:caret-left-light" size={Size.lg} />
+      <Icon icon="chevron-left" size={Size.lg} />
     </button>
   {/if}
   {#if $collection.type === CollectionType.TYPED}
@@ -169,7 +169,7 @@
           text: "Collection description"
         }}
       >
-        <Icon icon="ph:info-light" size={Size.sm} />
+        <Icon icon="info" size={Size.sm} />
       </span>
     {/if}
     {#if $collection.isStarred && isDetailsBesideTitleRenderable}
@@ -251,7 +251,7 @@
         >
           {#if isMiniSearch && !isSearchFocused}
             <Button
-              icon="ph:magnifying-glass"
+              icon="search"
               tooltip={resolveSearchPlaceholder($collection.totalItemCount)}
               on:click={() => {
                 isSearchFocused = true;
@@ -265,7 +265,7 @@
               style={InputStyle.PLAIN}
               bind:value={searchQuery}
               bind:this={searchBoxRef}
-              icon="ph:magnifying-glass"
+              icon="search"
               placeholder={resolveSearchPlaceholder($collection.totalItemCount)}
               on:focus={() => (isSearchFocused = true)}
               on:blur={() => (isSearchFocused = false)}
@@ -285,7 +285,7 @@
         {/if}
         {#if !$collection.isInEditMode}
           <Toggle
-            icon="ph:pencil-simple-line-light"
+            icon="edit"
             tooltip="Enter edit mode"
             bind:on={$collection.isInEditMode}
           />

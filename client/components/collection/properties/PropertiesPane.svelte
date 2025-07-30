@@ -180,7 +180,7 @@
               style={ButtonStyle.OUTLINED}
               type={ButtonVariant.SECONDARY}
               size={Size.xs}
-              icon="ph:pencil-simple-line-light"
+              icon="edit"
               isPreventMinWidth={true}
               on:click={onEditProperties}
             />

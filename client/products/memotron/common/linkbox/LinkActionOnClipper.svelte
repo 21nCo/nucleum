@@ -45,7 +45,7 @@
 </button> -->
 <Tag
   label="Links"
-  icon="ph:link-light"
+  icon="link"
   isActive={isLinkboxOpened}
   count={links?.length ?? 0}
   isShowExpandFeedbackOnActive={true}

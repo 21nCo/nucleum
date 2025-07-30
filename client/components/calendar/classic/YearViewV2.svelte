@@ -42,7 +42,7 @@
   const VISIBLE_YEARS = getVisibleYears();
 
   let visibleYears: ReturnType<typeof getYearData>[] = [];
-  let visibleYear: number;
+  let visibleYear: number = selectedDate.getFullYear();
   let lastScrollTop = 0;
   let scrollTimeout: ReturnType<typeof setTimeout> | undefined;
   let containerRef: HTMLDivElement;
@@ -276,13 +276,17 @@
   }
 
   export function navigatePrevYear() {
-    if (!visibleYear) return;
-    navigateToYear(visibleYear - 1);
+    const currentYear = visibleYear || selectedDate.getFullYear();
+    const targetYear = currentYear - 1;
+    visibleYear = targetYear;
+    navigateToYear(targetYear);
   }
 
   export function navigateNextYear() {
-    if (!visibleYear) return;
-    navigateToYear(visibleYear + 1);
+    const currentYear = visibleYear || selectedDate.getFullYear();
+    const targetYear = currentYear + 1;
+    visibleYear = targetYear;
+    navigateToYear(targetYear);
   }
 
   $: {
@@ -298,6 +302,12 @@
   $: {
     if (containerRef && selectedDate && isExplicitNavigation) {
       scrollToYear(selectedDate.getFullYear(), selectedDate.getMonth());
+    }
+  }
+
+  $: {
+    if (selectedDate) {
+      visibleYear = selectedDate.getFullYear();
     }
   }
 

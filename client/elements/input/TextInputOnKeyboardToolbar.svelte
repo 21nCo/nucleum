@@ -31,7 +31,7 @@
   </div>
   <div class="flex items-center justify-center gap-2">
     <Button
-      icon="ph:floppy-disk-light"
+      icon="save"
       parentBgIndex={2}
       style={ButtonStyle.OUTLINED}
       type={ButtonVariant.PRIMARY}
@@ -42,7 +42,7 @@
       on:mousedown={(e) => e.preventDefault()}
     />
     <Button
-      icon="ph:x-light"
+      icon="cross"
       parentBgIndex={2}
       style={ButtonStyle.OUTLINED}
       isPreventMinWidth={true}

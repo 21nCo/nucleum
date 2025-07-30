@@ -125,7 +125,7 @@
         <span class="text-sm font-semibold">Fallback Status</span>
         <Button
           size={Size.xs}
-          icon="ph:arrow-clockwise-light"
+          icon="reload"
           on:click={loadFallbackStatuses}
           label="Refresh"
         />
@@ -133,7 +133,7 @@
           size={Size.xs}
           type={ButtonVariant.DANGER}
           style={ButtonStyle.OUTLINED}
-          icon="ph:trash-light"
+          icon="trash"
           on:click={resetAllFallbacks}
           label="Reset All"
         />
@@ -161,7 +161,7 @@
           appStore.runAction("dexie-console");
         }}
         size={Size.sm}
-        icon="ph:terminal"
+        icon="terminal"
         label="Dexie console"
       />
       <Button
@@ -169,7 +169,7 @@
           appStore.runAction("surreal-local");
         }}
         size={Size.sm}
-        icon="ph:terminal"
+        icon="terminal"
         label="Surreal console"
       />
       <Button
@@ -177,7 +177,7 @@
           appStore.runAction("signaldb-console");
         }}
         size={Size.sm}
-        icon="ph:terminal"
+        icon="terminal"
         label="SignalDB console"
       />
       <Button

@@ -73,7 +73,7 @@
         class="flex-shrink-0 p-1 flex items-center justify-center hover:bg-bgs3 rounded-md"
       >
         <Icon
-          icon="ph:x-circle"
+          icon="x-circle"
           size={Size.xs}
           class="stroke-ars1"
           on:click={handleClear}

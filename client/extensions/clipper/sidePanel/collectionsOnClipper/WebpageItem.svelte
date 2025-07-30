@@ -54,7 +54,7 @@
         on:error={handleImageError}
       />
     {:else}
-      <Icon icon="ph:globe" size={Size.sm} />
+      <Icon icon="globe" size={Size.sm} />
     {/if}
   </div>
   {#if item.contentType === NodeType.TWEET}

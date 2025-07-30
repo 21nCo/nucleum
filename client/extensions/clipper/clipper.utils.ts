@@ -18,7 +18,10 @@ import {
   generateHash,
   generateSHA256Hash
 } from "$lib/shared/utils/crypto.utils";
-import { contentTypeMap, fetchYouTubeMetadata } from "$lib/client/products/memotron/node/url.utils";
+import {
+  contentTypeMap,
+  fetchYouTubeMetadata
+} from "$lib/client/products/memotron/node/url.utils";
 
 export function isYoutubeVideoUrl(url) {
   const regex = /^https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/;
@@ -195,7 +198,9 @@ export async function extractYoutubeVideoData() {
   let metadata;
   let youtubeMetadataFromOEmbedAPI;
   try {
-    youtubeMetadataFromOEmbedAPI = await fetchYouTubeMetadata(window.location.href);
+    youtubeMetadataFromOEmbedAPI = await fetchYouTubeMetadata(
+      window.location.href
+    );
   } catch (e) {
     logger.error({ at: "extractYoutubeVideoData", error: e });
   }
@@ -205,7 +210,7 @@ export async function extractYoutubeVideoData() {
       authorName: youtubeMetadataFromOEmbedAPI.author_name,
       authorUrl: youtubeMetadataFromOEmbedAPI.author_url,
       thumbnailUrl: youtubeMetadataFromOEmbedAPI.thumbnail_url
-    }
+    };
   }
   return {
     label: title,
@@ -216,15 +221,22 @@ export async function extractYoutubeVideoData() {
   };
 }
 
+/**
+ * UaData is causing below dexie error when insert - 
+ * Failed to execute 'put' on 'IDBObjectStore': NavigatorUAData object could not be cloned.
+ DataCloneError: Failed to execute 'put' on 'IDBObjectStore': NavigatorUAData object could not be cloned.
+
+ * @returns 
+ */
 function extractBrowserDetails() {
   const userAgent = navigator.userAgent;
-  const uAData = navigator.userAgentData;
+  const uAData = {}; //navigator.userAgentData;
   return { userAgent, uAData };
 }
 
 export function resolveUrl(url?: string) {
   if (!url) url = window.location.href;
-  url = url.split('#')[0];
+  url = url.split("#")[0];
   if (url.includes("youtube.com")) {
     return url.split("&")[0];
   }

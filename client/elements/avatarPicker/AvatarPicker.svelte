@@ -525,11 +525,7 @@
           />
         </div>
       {/if}
-      <Button
-        icon="ph:dice-three-light"
-        tooltip="Randomize"
-        on:click={ShufflePick}
-      />
+      <Button icon="randomize" tooltip="Randomize" on:click={ShufflePick} />
       <Button
         icon="trash"
         tooltip="Delete"
@@ -540,7 +536,7 @@
       />
       {#if $view.isConstrainedWidth}
         <Button
-          icon="ph:x"
+          icon="cross"
           on:click={() => {
             eventDispatcher("close");
             closeCallback();

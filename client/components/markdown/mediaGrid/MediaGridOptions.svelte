@@ -96,7 +96,7 @@
         </div>
         <div class="h-full border border-r-brs3"></div>
         <Icon
-          icon="ph:plus-light"
+          icon="plus"
           on:click={() => {
             if (columnArray.length == config.noOfColumns)
               config.noOfColumns += 1;
@@ -129,7 +129,7 @@
     > -->
 
       <!-- <Button
-      icon="ph:text"
+              icon="text"
       on:click={() => (isAltTextEnabled = !isAltTextEnabled)}
     />
     {#if isAltTextEnabled}
@@ -172,10 +172,10 @@
             />
           </div>
         {/if}
-        <Icon icon="ph:sliders-horizontal" />
+        <Icon icon="sliders-horizontal" />
       </button>
       <Button
-        icon="ph:trash"
+        icon="trash"
         tooltip="Delete"
         type={ButtonVariant.DANGER}
         style={ButtonStyle.OUTLINED}

@@ -229,7 +229,7 @@
             dispatch("howToUse");
           }}
         >
-          <Icon icon="ph:question-light" />
+          <Icon icon="question" />
           <span> How to use this wheel? </span>
         </button>
       </div>

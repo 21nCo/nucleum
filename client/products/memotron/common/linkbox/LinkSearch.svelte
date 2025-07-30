@@ -63,7 +63,7 @@
           placement: Placement.BottomCenter
         };
         placeholder = "Start searching to add a direct link";
-        icon = "ph:link-light";
+        icon = "link";
         inputStyle = InputStyle.BORDERED;
         break;
       case ResourceAccessPoint.CLIPPER:
@@ -73,7 +73,7 @@
           placement: resultsPlacement
         };
         placeholder = "Link to a node or add to a collection";
-        icon = "ph:link-light";
+        icon = "link";
         inputStyle = InputStyle.BORDERED;
         break;
     }

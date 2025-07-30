@@ -52,7 +52,7 @@
       .filter((x) => x && !x.includes("browse"))
       .map((x) => resourceAction(x as Resource, ResourceActionType.BROWSE));
     const contextualMenu = [...defaultMenu, ...userPinnedMenu];
-    // console.log({ contextualMenu });
+    // console.log({ defaultMenu, contextualMenu });
     if (layoutContext === LayoutContext.PORTRAIT) {
       items = contextualMenu.slice(
         0,

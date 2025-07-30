@@ -37,12 +37,12 @@
     switch (action) {
       case TableCellDefaultAction.REORDER:
         return {
-          key: "ph:dots-six",
+          key: "rearrange-horizontal",
           type: TableCellType.ACTION
         };
       case TableCellDefaultAction.REMOVE:
         return {
-          key: "ph:x-light",
+          key: "cross",
           type: TableCellType.ACTION,
           actionTooltip: {
             body: "Remove"
@@ -53,7 +53,7 @@
         };
       case TableCellDefaultAction.SELECT_ROW:
         return {
-          key: "ph:circle-light",
+          key: "circle",
           type: TableCellType.ACTION,
           action: (row: any) => {
             dispatch("select", row);
@@ -188,7 +188,7 @@
     <div class="flex justify--center items-center p-3 pt-6 w-full">
       <Button
         label={addAction}
-        icon="ph:plus"
+        icon="plus"
         style={ButtonStyle.PLAIN}
         type={ButtonVariant.SECONDARY}
         on:click={() => {

@@ -38,7 +38,7 @@
       class="flex items-center rounded-full bg-bgs2 notouch:hover:bg-bgs3 active:bg-bgs3 p-3"
       on:click={() => onClose()}
     >
-      <Icon icon="ph:x-light" />
+      <Icon icon="cross" />
     </button>
   </div>
 </div>

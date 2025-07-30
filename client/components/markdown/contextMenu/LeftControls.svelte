@@ -100,7 +100,7 @@
     },
     [BlockAction.INSERT]: {
       value: BlockAction.INSERT,
-      icon: "ph:arrow-elbow-down-right-light",
+      icon: "insert-down",
       secondStepComponent: {
         component: BlockBrowser,
         props: {
@@ -119,12 +119,12 @@
     },
     [BlockAction.INSERT_ABOVE]: {
       value: BlockAction.INSERT_ABOVE,
-      icon: "ph:arrow-up",
+      icon: "arrow-up",
       callback: async () => {}
     },
     [BlockAction.INSERT_BELOW]: {
       value: BlockAction.INSERT_BELOW,
-      icon: "ph:arrow-down",
+      icon: "arrow-down",
       callback: async () => {}
     },
     [BlockAction.COPY_BLOCK_TEXT]: {
@@ -136,7 +136,7 @@
     },
     [BlockAction.GO_TO_EXTERNAL_LINK]: {
       value: BlockAction.GO_TO_EXTERNAL_LINK,
-      icon: "arrow-up-right",
+      icon: "weblink",
       callback: async () => {
         dispatch("action", { action: BlockAction.GO_TO_EXTERNAL_LINK });
       }
@@ -150,7 +150,7 @@
     },
     [BlockAction.FOCUS]: {
       value: BlockAction.FOCUS,
-      icon: "ph:circle-light",
+      icon: "circle",
       callback: async () => {
         onNodularize();
       }
@@ -164,7 +164,7 @@
     },
     [BlockAction.OPEN_IN_FULL_SCREEN]: {
       value: BlockAction.OPEN_IN_FULL_SCREEN,
-      icon: "ph:arrows-out-light",
+      icon: "fullscreen",
       callback: async () => {
         // appStore.closeResource({ isRestrictToModals: true });
         appStore.openResource(block.id, ResourceAccessMode.FULL);
@@ -172,7 +172,7 @@
     },
     [BlockAction.OPEN_AS_TAB]: {
       value: BlockAction.OPEN_AS_TAB,
-      icon: "ph:tabs-light",
+      icon: "tabs",
       callback: async () => {
         tabs.open(block.id);
       }
@@ -195,12 +195,12 @@
     },
     [BlockAction.SHORTCUTS]: {
       value: BlockAction.SHORTCUTS,
-      icon: "ph:command-light",
+      icon: "command",
       action: Action.MARKDOWN_SHORTCUTS
     },
     [BlockAction.DOWNLOAD]: {
       value: BlockAction.DOWNLOAD,
-      icon: "ph:download-simple-light",
+      icon: "download",
       callback: async () => {
         nodeStore.download(block.body.id);
       }
@@ -210,7 +210,7 @@
   function resolveEmbedPreviewToggleAction() {
     return {
       value: BlockAction.EMBED_PREVIEW_TOGGLE,
-      icon: "ph:eye-slash-light",
+      icon: "hide",
       label: "Hide preview",
       type: ContextMenuType.SWITCH,
       initialValue: block.body?.isHidePreview ?? false,
@@ -449,7 +449,7 @@
           )
         })}
       >
-        <Icon icon="ph:dots-six-vertical" size={Size.lg} class="fill-fgs3" />
+        <Icon icon="rearrange" size={Size.lg} class="fill-fgs3" />
       </span>
     {/if}
   </button>

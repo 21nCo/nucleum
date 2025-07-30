@@ -22,7 +22,7 @@
   on:input
 />
 <Button
-  icon="ph:upload"
+  icon="upload"
   label="Upload"
   {size}
   {type}

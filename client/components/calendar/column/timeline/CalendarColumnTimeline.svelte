@@ -144,7 +144,7 @@
         />
       </div>
       <Button
-        icon="ph:clock-counter-clockwise-light"
+        icon="history"
         tooltip="History"
         on:click={() => {
           appStore.openResource(Action.HISTORY, ResourceAccessMode.POP, {
@@ -167,7 +167,7 @@
         <div slot="right">
           {#if layout === CalendarColumnLayout.TABS}
             <Button
-              icon="ph:clock-counter-clockwise-light"
+              icon="history"
               tooltip="History"
               on:click={() => {
                 appStore.openResource(Action.HISTORY, ResourceAccessMode.POP, {

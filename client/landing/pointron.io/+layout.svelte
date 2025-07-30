@@ -41,7 +41,7 @@
       {
         label: "",
         href: "https://github.com/21nOrg/tidigit",
-        icon: "ph:github-logo-light",
+        icon: "github-logo",
         type: "secondary"
       },
       {

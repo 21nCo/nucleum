@@ -9,7 +9,7 @@
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import view from "$lib/client/stores/view.store";
   export let info: InputLabelInfoToolTip;
-  export let icon: string = "ph:info-light";
+  export let icon: string = "info";
   let ref: HTMLElement;
 
   function closeTooltip() {

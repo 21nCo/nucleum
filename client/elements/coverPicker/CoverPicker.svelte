@@ -132,7 +132,7 @@
       {
         label: "AI",
         value: Method.AI,
-        icon: "ph:magic-wand-light",
+        icon: "magic-wand",
         isDisabled: true,
         badge: "soon"
       }
@@ -143,7 +143,7 @@
     const fromLibary = {
       label: "Library",
       value: Method.LIBRARY,
-      icon: "ph:globe-light"
+      icon: "globe"
     };
     return [...baseItems.slice(0, 3), fromLibary, ...baseItems.slice(3)];
   }
@@ -218,7 +218,7 @@
         }}
       >
         <!-- <div slot="right">
-          <Button icon="ph:dice-three" tooltip="Randomize" />
+          <Button icon="randomize" tooltip="Randomize" />
         </div> -->
       </PanelSwitcher>
       {#if selectedMethod === Method.COLOR}

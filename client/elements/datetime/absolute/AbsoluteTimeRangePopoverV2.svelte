@@ -315,7 +315,7 @@
   <div class="flex items-center w-full justify-between text-b2">
     <div class="flex gap-2 items-center">
       <Button
-        icon="ph:caret-left"
+        icon="chevron-left"
         size={Size.xs}
         on:click={() => navigateYear(-1)}
       />
@@ -328,7 +328,7 @@
         on:change={handleYearChange}
       />
       <Button
-        icon="ph:caret-right"
+        icon="chevron-right"
         size={Size.xs}
         on:click={() => navigateYear(1)}
       />

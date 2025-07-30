@@ -33,7 +33,7 @@
       <div
         class="h-8 w-8 rounded-full bg-aps1 flex items-center justify-center"
       >
-        <Icon icon="ph:calendar-blank-light" class="text-abg" />
+        <Icon icon="calendar-blank" class="text-abg" />
       </div>
     </div>
 

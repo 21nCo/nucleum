@@ -60,7 +60,7 @@
         class="w-full flex justify-center opacity-30 hover:opacity--100 transition-opacity duration-200 py-2"
       >
         <!-- <Button
-          icon="ph:magnifying-glass-light"
+          icon="search"
           parentBgIndex={2}
           size={Size.lg}
           on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
@@ -68,7 +68,11 @@
         <SubAtomLogo size={isHideMenuLabels ? Size.sm : Size.md} />
       </div>
       <!-- <TrailLeftIndicator orientation={Orientation.Vertical} /> -->
-      <div class="flex flex-col gap-3 items-center w-full p-2 overflow-auto">
+      <div
+        class={cn("flex flex-col gap-3 items-center w-full overflow-auto", {
+          "p-2": !isHideMenuLabels
+        })}
+      >
         <AppMenuSwitcher
           parentBackgroundIndex={1}
           layoutContext={LayoutContext.THIN_WITH_LABEL}
@@ -89,7 +93,7 @@
             class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-bgs3 transition-colors duration-200"
           >
             <Icon
-              icon="ph:dots-three-outline"
+              icon="more-outline-horizontal"
               size={Size.md}
               class="text-fgs3"
             />

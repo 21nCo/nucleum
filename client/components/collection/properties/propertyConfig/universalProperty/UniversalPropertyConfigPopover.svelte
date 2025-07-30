@@ -37,7 +37,7 @@
           <span class="text-b2">{option.label}</span>
         </span>
         {#if config.type === option.value}
-          <Icon icon="ph:check-circle-light" size={Size.sm} />
+          <Icon icon="check-circle" size={Size.sm} />
         {/if}
       </button>
     {/each}

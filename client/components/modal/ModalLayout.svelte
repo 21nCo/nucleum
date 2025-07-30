@@ -150,7 +150,7 @@
         on:click={() => handleClose(ResourceAccessMode.POP)}
         use:tooltip={{ text: "Close", direction: Placement.Left }}
       >
-        <Icon icon="ph:x-light" size={Size.lg} class="stroke-abg" />
+        <Icon icon="cross" size={Size.lg} class="stroke-abg" />
       </button>
     {/if}
     {#if params.layout?.isShowBackButton && !isInFocusMode}
@@ -159,11 +159,7 @@
         on:click={() => appStore.goBack(resource)}
         use:tooltip={{ text: "Go back", direction: Placement.Left }}
       >
-        <Icon
-          icon="ph:arrow-bend-down-left-light"
-          size={Size.lg}
-          class="stroke-fgs1"
-        />
+        <Icon icon="back" size={Size.lg} class="stroke-fgs1" />
       </button>
     {/if}
   </div>

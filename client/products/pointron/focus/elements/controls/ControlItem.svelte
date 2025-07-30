@@ -76,7 +76,7 @@
   >
     {#if control === Control.START || control === Control.RESUME || control === Control.SKIPBREAK}
       <!-- <Start {width} /> -->
-      <ControlIcon icon="play-circled" {...iconProps} />
+      <ControlIcon icon="play-circle" {...iconProps} />
     {:else if control === Control.BREAK}
       <ControlIcon icon="clock" {...iconProps} />
       <!-- <Break {width} /> -->
@@ -84,7 +84,7 @@
       <Extend minutes={extendDuration} />
     {:else if control === Control.FINISH}
       <!-- <Finish {width} /> -->
-      <ControlIcon icon="arrow-right-circled" {...iconProps} />
+      <ControlIcon icon="arrow-circle-right" {...iconProps} />
     {:else if control === Control.ABANDON}
       <ControlIcon icon="cross" {...iconProps} />
     {/if}

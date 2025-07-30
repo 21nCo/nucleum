@@ -50,7 +50,7 @@
   <div class="bg-bgs2 p-8 rounded-xl mb-8 w-4/5 text-left">
     {#if $account.plan?.cycle !== BillingCycle.LIFETIME}
       <div class="flex items-center gap-2 mb-4">
-        <Icon icon="ph:check-circle" class="text-ags1" />
+        <Icon icon="check-circle" class="text-ags1" />
         <p class="text-h3 text-fgs2">Your subscription is now active.</p>
       </div>
     {/if}
@@ -77,7 +77,7 @@
     <div class="mt-12">
       <Button
         type={ButtonVariant.PRIMARY}
-        icon="ph:rocket-light"
+        icon="rocket"
         label="Get started"
         on:click={() => {
           modalEvent.hide(Action.PLAN_ONBOARDING);

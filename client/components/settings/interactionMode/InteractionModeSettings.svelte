@@ -76,18 +76,18 @@
     options={[
       {
         value: InteractionMode.DEFAULT,
-        icon: "ph:circle-dashed-light",
+        icon: "circle-dashed",
         tooltip: resolveInfo(InteractionMode.DEFAULT)
       },
       {
         value: InteractionMode.COMMAND_ONLY,
         label: "Command only",
-        icon: "ph:terminal-window-light"
+        icon: "terminal-window"
       },
       {
         value: InteractionMode.AGENT,
         label: "Agent",
-        icon: "ph:sparkle-light",
+        icon: "sparkle",
         badge: "planned",
         isDisabled: true,
         tooltip: resolveInfo(InteractionMode.AGENT)

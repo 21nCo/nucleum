@@ -193,7 +193,7 @@
           />
           <Button
             tooltip="Reset to old value"
-            icon="sync"
+            icon="reload"
             size={Size.sm}
             {parentBgIndex}
             on:click={resetToOldValue}

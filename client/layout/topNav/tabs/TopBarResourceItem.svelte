@@ -121,7 +121,7 @@
           }}
         />
         <Button
-          icon="ph:x-light"
+          icon="cross"
           tooltip="Close"
           size={Size.sm}
           parentBgIndex={2}
@@ -153,7 +153,7 @@
           }}
           class="h-full flex justify-center items-center pr-2"
         >
-          <Icon icon="ph:x" size={Size.sm} class="stroke-fgs2" />
+          <Icon icon="cross" size={Size.sm} class="stroke-fgs2" />
         </button>
       </button>
     {/if}

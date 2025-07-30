@@ -19,7 +19,6 @@ import {
 import PasteConfirmationModal from "./capture/PasteConfirmationModal.svelte";
 import Chat from "$lib/client/products/memotron/taco/Chat.svelte";
 import CaptureDnD from "./capture/CaptureDnD.svelte";
-import MemotronHome from "./home/MemotronHome.svelte";
 import MemotronOnboarding from "./base/MemotronOnboarding.svelte";
 import NodeTitleLabelPart from "./node/title/NodeTitleLabelPart.svelte";
 import MemotronGreenUse from "./base/MemotronGreenUse.svelte";
@@ -53,18 +52,14 @@ export const memotronActions: IAction[] = [
     action: resourceAction(Resource.node, ResourceActionType.CREATE),
     component: Capture,
     label: "Capture",
-    // icon: "ph:plus-circle-light",
     icon: "mynaui:plus-hexagon",
     type: ActionType.RESOURCE,
     accessMode: ResourceAccessMode.POP,
-    // isRenderAsPageInPortrait: true,
     modalParams: {
       layout: {
-        size: Size.xxl,
+        size: Size.full,
         orientation: Orientation.Horizontal,
-        ignoreSafeArea: true,
-        isShowCantileverClose: true,
-        isShowBackButton: false
+        ignoreSafeArea: true
       }
     }
   },
@@ -149,7 +144,7 @@ export const memotronActions: IAction[] = [
   {
     action: MemotronAction.LIBRARY,
     label: "Library",
-    icon: "ph:stack-light",
+    icon: "stack",
     component: MemotronLibrary,
     type: ActionType.PAGE,
     modalParams: {
@@ -158,14 +153,6 @@ export const memotronActions: IAction[] = [
         orientation: Orientation.Horizontal
       }
     }
-  },
-  {
-    action: "rewind",
-    type: ActionType.MODAL,
-    label: "Rewind",
-    isInactive: true,
-    icon: "sync",
-    component: ComingSoonView
   },
   {
     action: "serendipity",
@@ -210,14 +197,6 @@ export const memotronActions: IAction[] = [
     componentParams: {
       resource: Resource.relation
     }
-  },
-  {
-    action: "home",
-    type: ActionType.PAGE,
-    label: "Home",
-    isInactive: true,
-    icon: "ph:house",
-    component: MemotronHome
   },
   {
     action: Action.OVERVIEW,

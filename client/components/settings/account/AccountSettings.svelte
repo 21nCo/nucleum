@@ -169,7 +169,7 @@
       <div class="self-center flex min-h-8 gap-2 items-center">
         {#if !isEditing}
           <Button
-            icon="ph:pencil-simple"
+            icon="edit"
             size={Size.sm}
             isPreventMinWidth={true}
             label="Edit"
@@ -179,7 +179,7 @@
           />
         {:else}
           <Button
-            icon="ph:check"
+            icon="check"
             size={Size.sm}
             type={ButtonVariant.PRIMARY}
             style={ButtonStyle.OUTLINED}
@@ -187,7 +187,7 @@
             on:click={onSave}
           />
           <Button
-            icon="ph:x"
+            icon="cross"
             size={Size.sm}
             style={ButtonStyle.OUTLINED}
             tooltip="Cancel"
@@ -243,7 +243,7 @@
         {#if !$view.isConstrainedWidth}
           <Button
             label="Go to billing"
-            icon="ph:wallet-light"
+            icon="wallet"
             on:click={() => {
               appStore.toggleSearchParam({
                 [AppSearchParam.SETTING]: Action.USER_BILLING
@@ -257,14 +257,14 @@
 
   <div class="flex justify-center w-full gap-4">
     <Button
-      icon="ph:sign-out-light"
+      icon="log-out"
       label="Sign out"
       on:click={async () => {
         await account.signOut();
       }}
     />
     <Button
-      icon="ph:trash-light"
+      icon="trash"
       label="Delete account"
       type={ButtonVariant.DANGER}
       on:click={async () => {

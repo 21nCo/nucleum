@@ -70,7 +70,7 @@
     parentBackgroundIndex={parentBgIndex}
     isRounded={true}
     height="h-10"
-    icon={style === InputStyle.PLAIN ? undefined : "ph:magnifying-glass-light"}
+    icon={style === InputStyle.PLAIN ? undefined : "search"}
     isShowClearControl={query !== ""}
     on:focus={() => {
       isSearchFocused = true;

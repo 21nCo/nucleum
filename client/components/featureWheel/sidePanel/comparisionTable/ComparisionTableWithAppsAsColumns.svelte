@@ -218,7 +218,7 @@
                 {:else if feature.isPlanned}
                   -
                 {:else}
-                  <Icon icon="ph:x" class="text-ars1" />
+                  <Icon icon="cross" class="text-ars1" />
                 {/if}
               </td>
             {/each}

@@ -331,7 +331,7 @@
             }}
             type={ButtonVariant.PRIMARY}
             style={ButtonStyle.OUTLINED}
-            icon="ph:play-light"
+            icon="play"
             tooltip="Play"
           />
         {:else if recordingState === PlayActionState.PREVIEWING}
@@ -344,7 +344,7 @@
               }}
               type={ButtonVariant.PRIMARY}
               style={ButtonStyle.OUTLINED}
-              icon="ph:pause-light"
+              icon="pause"
               tooltip="Pause"
             />
           {:else}
@@ -356,7 +356,7 @@
               }}
               type={ButtonVariant.PRIMARY}
               style={ButtonStyle.OUTLINED}
-              icon="ph:play-light"
+              icon="play"
               tooltip="Resume"
             />
           {/if}

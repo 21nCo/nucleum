@@ -34,14 +34,14 @@
   {/if}
   <div class="flex items-center gap-2">
     <Button
-      icon="ph:keyboard-light"
+      icon="keyboard"
       label="See hot keys"
       on:click={() => {
         appStore.runAction(Action.HOT_KEYS);
       }}
     />
     <Button
-      icon="ph:markdown-logo-light"
+      icon="markdown"
       label="See markdown shortcuts"
       on:click={() => {
         appStore.runAction(Action.MARKDOWN_SHORTCUTS);

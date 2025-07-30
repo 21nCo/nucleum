@@ -1,24 +1,12 @@
+// Phosphor icons that are NOT in icons.map.ts (these will still use phosphor directly)
 const phosphorIcons = [
   // Star variants
-  "star",
   "star-half",
 
   // Navigation and Arrows
-  "arrow-left",
-  "arrow-right",
-  "arrow-up",
-  "arrow-down",
-  "arrow-up-right",
-  "arrow-down-left",
-  "arrow-elbow-down-left",
-  "arrow-elbow-right-up",
   "arrow-elbow-left-up",
-  "arrows-left-right",
-  "arrows-out",
-  "arrows-out-simple",
   "arrows-out-cardinal",
   "arrows-out-line-horizontal",
-  "arrows-in-line-horizontal",
   "arrows-clockwise",
   "arrow-line-down",
   "arrow-line-up",
@@ -28,37 +16,22 @@ const phosphorIcons = [
   "arrow-line-down-left",
   "arrow-line-down-left",
   "arrow-line-down-right",
-  "arrow-u-up-right",
-  "arrow-u-up-left",
-  "arrow-clockwise",
   "arrow-counter-clockwise",
-  "arrow-elbow-down-right",
   "arrow-arc-left",
-  "arrow-square-out",
   "arrow-square-in",
   "arrow-square-up-right",
-  "flow-arrow",
   "arrow-fat-up",
   "arrow-fat-down",
   "arrow-fat-line-up",
   "arrow-fat-line-down",
-  "arrow-fat-lines-up",
   "arrow-fat-lines-down",
-  "arrow-bend-down-left",
-  "arrow-bend-down-right",
-  "arrow-bend-up-right",
   "arrow-bend-up-left",
   "arrow-bend-left-up",
   "arrow-bend-right-up",
   "arrow-bend-double-up-right",
+  "arrow-u-down-left",
 
   //Carets
-  "caret-down",
-  "caret-up",
-  "caret-left",
-  "caret-right",
-  "caret-circle-up",
-  "caret-circle-down",
   "caret-circle-left",
   "caret-circle-right",
   "caret-line-down",
@@ -75,29 +48,12 @@ const phosphorIcons = [
   "caret-circle-double-right",
 
   // UI Controls
-  "x",
-  "x-circle",
-  "x-bold",
-  "plus",
-  "minus-circle",
-  "check",
-  "check-circle",
   "dots-nine",
-  "dots-three-vertical",
-  "dots-three",
-  "dots-six-vertical",
-  "dots-six-vertical-bold",
-  "dots-six",
   "dots-three-circle",
   "dots-three-circle-vertical",
   "dots-three-outline",
   "dots-three-outline-vertical",
   // Media and Files
-  "image",
-  "video",
-  "music-note",
-  "file",
-  "file-pdf",
   "file-csv",
   "file-html",
   "file-txt",
@@ -109,218 +65,77 @@ const phosphorIcons = [
   "file-audio",
 
   // Actions
-  "crop",
-  "highlighter",
-  "highlighter-circle",
-  "bookmark-simple",
-  "bookmarks",
   "download-simple",
-  "upload",
-  "trash",
-  "archive",
-  "pencil-simple",
-  "pencil-simple-line",
-  "eye",
-  "eye-slash",
-  "copy",
-  "link",
-  "link-break",
-  "link-simple",
-  "link-simple-horizontal",
   "link-simple-break",
   "link-simple-horizontal-break",
   "faders",
-  "sliders-horizontal",
-
-  // Logos and Brands
-  "x-logo",
-  "youtube-logo",
-  "amazon-logo",
-  "discord-logo",
-  "markdown-logo",
 
   // Layout and View
-  "table",
-  "tabs",
-  "squares-four",
-  "square-split-horizontal",
   "align-left-simple",
   "align-top-simple",
   "align-right-simple",
-  "bounding-box",
 
   // Status and Info
-  "info",
-  "question",
-  "lock",
-  "lock-open",
   "lock-simple",
-  "circle",
   "circle-bold",
   "circles-four",
 
   // Misc
-  "book",
   "book-open-text",
   "brain",
-  "bird",
-  "butterfly",
   "cube",
-  "database",
-  "globe",
-  "graph",
-  "house",
-  "keyboard",
   "leaf",
-  "lightbulb",
-  "magic-wand",
-  "map-trifold",
-  "note",
-  "palette",
-  "person-simple",
-  "rocket",
-  "share",
-  "tag",
-  "terminal",
-  "text",
-  "chat",
-  "chat-teardrop-text",
-  "clock",
   "clock-countdown",
   "clock-afternoon",
   "clock-clockwise",
   "clock-counter-clockwise",
   "gradient",
-  "list",
-  "magnifying-glass",
-  "magnifying-glass-minus",
-  "magnifying-glass-plus",
-  "microphone",
-  "pause",
-  "play",
-  "camera",
-  "at",
-  "asterisk",
-  "money",
-  "currency-dollar",
-  "translate",
-  "floppy-disk",
-  "calendar",
   "calendar-range",
   "calendar-blank",
-  "tree-view",
-  "github-logo",
   "dev-to-logo",
   "google-drive-logo",
-  "instagram-logo",
-  "reddit-logo",
-  "brackets-round",
   "brackets-square",
-  "code",
   "code-simple",
-  "paragraph",
-  "quotes",
-  "gear",
-  "gear-fine",
   "gear-six",
-  "text-h-one",
-  "text-h-two",
-  "text-h-three",
-  "text-h-four",
   "text-h-five",
   "text-h-six",
-  "terminal-window",
-  "stack",
-  "list-checks",
-  "code-block",
   "circuitry",
-  "head-circuit",
   "cpu",
-  "video-conference",
-  "video-camera",
   "gift",
-  "chats",
-  "sparkle",
   "chat-centered-dots",
-  "plus-circle",
-  "cursor-click",
-  "sign-out",
   "sign-in",
-  "target",
-  "smiley",
-  "thumbs-up",
-  "cloud-sun",
-  "hash",
-  "envelope",
-  "link",
-  "list-bullets",
-  "list-dashes",
-  "list-numbers",
-  "tree-view",
-  "timer",
-  "math-operations",
-  "check-square",
-  "check-square-offset",
-  "map-pin",
-  "book-open",
-  "pencil-simple-slash",
-  "stop",
-  "text-align-left",
-  "shapes",
-  "sigma",
-  "circle-dashed",
-
-  "warning",
-  "info",
-  "lightbulb",
   "error",
-  "device-mobile",
-  "device-tablet",
-  "desktop",
-  "aperture",
   "android-logo",
   "apple-logo",
   "windows-logo",
   "linux-logo",
   "chrome-logo",
-  "infinity",
-  "rss",
   "rss-simple",
   "piggy-bank",
-  "bicycle",
   "umbrella-simple",
   "coffee",
   "armchair",
-  "bank",
   "currency-circle-dollar",
   "note-blank",
-  "clipboard",
   "clipboard-text",
-  "command",
-  "sidebar",
-  "chalkboard-simple",
   "cloud",
   "cloud-check",
-  "wallet",
   "scroll",
   "columns",
   "rows",
   "sliders",
   "slideshow",
   "rectangle",
-  "square",
   "steps",
   "rectangles-two",
   "push-pin-slash",
   "push-pin-simple-slash",
-  "alarm",
   "wifi-high",
   "wifi-x",
   "wifi-slash",
   "key",
   "keyhole",
   "perspective",
-  "picture-in-picture",
   "paper-plane",
   "paper-plane-right",
   "paper-plane-tilt",
@@ -330,21 +145,16 @@ const phosphorIcons = [
 
   //Git
   "git-fork",
-  "git-branch",
   "git-commit",
   "git-merge",
   "git-diff",
 
   //Charts
-  "chart-bar",
   "chart-bar-horizontal",
-  "chart-line",
   "chart-polar",
   "chart-donut",
   "chart-scatter",
-  "chart-line-up",
   "chart-line-down",
-  "chart-pie",
   "presentation-chart"
 ];
 
@@ -460,6 +270,8 @@ const hugeiconsIcons = [
   "sidebar-right"
 ];
 
+const lucideIcons: string[] = [];
+
 const logos = [
   //Used in Markdown embed placeholder
   "google-drive",
@@ -478,10 +290,41 @@ const logos = [
   "reddit-icon"
 ];
 
-const solarIcons = [
+const solarIconsNotInMap = [
   "rewind-10-seconds-back-linear",
   "rewind-10-seconds-forward-linear"
 ];
+
+import { iconMappings } from "./icons.map";
+
+const phosphorIconsFromMap = Object.values(iconMappings).map(
+  (mapping) => mapping.phosphor
+);
+const lucideIconsFromMap = Object.values(iconMappings).map(
+  (mapping) => mapping.lucide
+);
+const solarIconsFromMap = Object.values(iconMappings)
+  .filter((mapping) => mapping.solar)
+  .map((mapping) => mapping.solar!);
+
+export const allPhosphorIcons = Array.from(
+  new Set([...phosphorIcons, ...phosphorRatingIcons, ...phosphorIconsFromMap])
+);
+export const allLucideIcons = Array.from(
+  new Set([...lucideIcons, ...lucideIconsFromMap])
+);
+export const allSolarIcons = Array.from(
+  new Set([...solarIconsNotInMap, ...solarIconsFromMap])
+);
+
+export const solarLinearIcons = allSolarIcons.map((icon) => icon + "-linear");
+export const solarBoldIcons = allSolarIcons.map((icon) => icon + "-bold");
+export const solarLineDuotoneIcons = allSolarIcons.map(
+  (icon) => icon + "-line-duotone"
+);
+export const solarBoldDuotoneIcons = allSolarIcons.map(
+  (icon) => icon + "-bold-duotone"
+);
 
 const simpleIcons = ["wikipedia", "googledocs", "abstract", "mixpanel"];
 
@@ -492,7 +335,8 @@ const heroiconsIcons = [
   "rectangle-group",
   "rectangle-stack",
   "bookmark",
-  "copy"
+  "copy",
+  "calendar"
 ];
 const heroiconsSolid = heroiconsIcons.map((icon) => icon + "-solid");
 
@@ -528,7 +372,13 @@ const mynaUiIcons = [
   "git-merge",
   "git-branch",
   "brand-pocket",
-  "brand-pocket-solid"
+  "brand-pocket-solid",
+  "terminal",
+  "calendar"
+];
+const mynaUiAllIcons = [
+  ...mynaUiIcons,
+  ...mynaUiIcons.map((icon) => icon + "-solid")
 ];
 
 export const iconSets = {
@@ -547,19 +397,26 @@ export const iconSets = {
   "fluent-emoji": fluentEmojiIcons,
   tabler: tablerIcons,
   uil: uilIcons,
-  mynaui: mynaUiIcons,
-  solar: solarIcons
+  mynaui: mynaUiAllIcons
 };
 
 export const phIcons = {
-  base: [...phosphorIcons, ...phosphorRatingIcons],
-  light: [...phosphorIcons, ...phosphorRatingIcons].map(
-    (icon) => icon + "-light"
-  ),
-  fill: [...phosphorIcons, ...phosphorRatingIcons].map((icon) => icon + "-fill")
-  // duotone: [...phosphorIcons, ...phosphorRatingIcons].map(
-  //   (icon) => icon + "-duotone"
-  // )
+  base: allPhosphorIcons,
+  light: allPhosphorIcons.map((icon) => icon + "-light"),
+  fill: allPhosphorIcons.map((icon) => icon + "-fill"),
+  duotone: allPhosphorIcons.map((icon) => icon + "-duotone")
 };
 
-export const bundleNumber = 35;
+export const lucideIconsForBundling = {
+  base: allLucideIcons
+};
+
+export const solarIconsForBundling = {
+  base: allSolarIcons,
+  linear: solarLinearIcons,
+  bold: solarBoldIcons,
+  "line-duotone": solarLineDuotoneIcons,
+  "bold-duotone": solarBoldDuotoneIcons
+};
+
+export const bundleNumber = 46;

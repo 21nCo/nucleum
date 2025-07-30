@@ -13,6 +13,7 @@
   import Link from "./Link.svelte";
   export let content: string | undefined = undefined;
   export let icon: string | undefined = undefined;
+  export let isIconFilled: boolean = false;
   export let type: InfoTextType = InfoTextType.INFO;
   export let action: IButtonParams | undefined = undefined;
   export let parentBgIndex: number = 1;
@@ -40,7 +41,8 @@
   )}
 >
   <Icon
-    icon={icon ?? (type === InfoTextType.ERROR ? "help" : `ph:${type}-light`)}
+    icon={icon ?? (type === InfoTextType.ERROR ? "help" : type)}
+    isFilled={isIconFilled}
     class={cn(
       size === Size.md && {
         "stroke-ars1": type === InfoTextType.ERROR,

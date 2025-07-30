@@ -241,7 +241,7 @@
           <div class="flex items-center gap-2">
             <CardSelector {accessPoint} bind:selected={chartType} on:select />
             <Toggle
-              icon="ph:sliders-horizontal-light"
+              icon="sliders"
               bgSize={Size.sm}
               bind:on={isShowOptions}
             />

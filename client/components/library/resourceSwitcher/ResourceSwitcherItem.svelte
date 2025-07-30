@@ -56,9 +56,7 @@
         ? "Unpin from App menu"
         : "Pin to App menu",
       value: "pin",
-      icon: isCurrentResourcePinned
-        ? "ph:minus-circle-light"
-        : "ph:push-pin-light",
+      icon: isCurrentResourcePinned ? "minus-circle" : "pin",
       callback: async () => {
         if (!isCurrentResourcePinned) appMenuStore.addUserMenuItem(resource);
         else appMenuStore.removeUserMenuItem(resource);

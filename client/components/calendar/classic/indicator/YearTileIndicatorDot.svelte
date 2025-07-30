@@ -2,15 +2,15 @@
   import { cn } from "$lib/client/utils/ui.utils";
   export let color: string;
   export let isActive: boolean = false;
-  export let isBorderedVariant: boolean = false;
+  export let isMemory: boolean = false;
 </script>
 
 <div
-  class={cn(" rounded-full", {
+  class={cn("rounded-full", {
     "w-1.5 h-1.5 border-[0.5px] border-brs2": isActive,
     "w-1 h-1": !isActive,
-    [`bg-${color}`]: !isBorderedVariant,
-    border: isBorderedVariant,
-    [`border-${color}`]: !isActive && isBorderedVariant
+    [`bg-${color}`]: !isMemory,
+    border: isMemory,
+    "border-fgs3": !isActive && isMemory
   })}
 ></div>

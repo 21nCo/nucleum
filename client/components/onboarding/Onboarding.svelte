@@ -57,13 +57,13 @@
         <div class="flex w-full cw:justify-center gap-4">
           <Button
             label="Get started"
-            icon="ph:arrow-right-light"
+            icon="proceed"
             type={ButtonVariant.PRIMARY}
             on:click={() => appStore.gotoPath("/")}
           />
           <Button
             label="Read the docs"
-            icon="ph:book-open-text-light"
+            icon="book-open"
             on:click={() =>
               appStore.openLink(
                 $appStore.appData?.urls?.docs ?? $appStore.appData?.urls?.guides

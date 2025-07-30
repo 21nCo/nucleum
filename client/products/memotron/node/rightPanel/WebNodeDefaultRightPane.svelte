@@ -30,10 +30,12 @@
   export let node: IActiveNodeStore;
   export let pane: NodeRightPaneType | undefined = undefined;
   let links: { link: INodeLinkThumb; node: INode }[] = [];
+  let _notes = $node.notes;
   const notesInputId = generateSimpleRandomId();
   const contentContext = getContext<any>("content");
+
   function onNotesChange(e: any) {
-    if ($node.notes) node.modify({ notes: $node.notes });
+    if (_notes !== undefined) node.modify({ notes: _notes });
   }
 
   async function refreshLinks(linksParam: INodeLinkThumb[] | undefined) {
@@ -74,13 +76,13 @@
     >
       <RightPaneOverviewMetricCard
         label="Links"
-        icon="ph:link-simple-light"
+        icon="link"
         value={$node.links?.length || 0}
         on:click={() => (pane = NodeRightPaneType.LINKS)}
       />
       <RightPaneOverviewMetricCard
         label="Clips"
-        icon="heroicons:bookmark"
+        icon="bookmark"
         value={$node.clips?.length || 0}
         on:click={() => (pane = NodeRightPaneType.TRACES)}
       />
@@ -98,7 +100,7 @@
           <span>
             <Button
               size={Size.xs}
-              icon="ph:arrow-right-light"
+              icon="proceed"
               label="View all"
               style={ButtonStyle.PLAIN}
               on:click={() => (pane = NodeRightPaneType.TRACES)}
@@ -137,7 +139,7 @@
         <span>
           <Button
             size={Size.xs}
-            icon="ph:arrow-right-light"
+            icon="proceed"
             label="View all"
             style={ButtonStyle.PLAIN}
             on:click={() => (pane = NodeRightPaneType.LINKS)}
@@ -173,7 +175,7 @@
       </span>
       <span>
         <Button
-          icon="ph:arrows-out-simple-light"
+          icon="expand"
           size={Size.sm}
           on:click={() => (pane = NodeRightPaneType.SIDENOTES)}
         />
@@ -186,7 +188,7 @@
       <InlineMarkdownTextInput
         id={notesInputId}
         placeholder="Add notes"
-        bind:content={$node.notes}
+        bind:content={_notes}
         on:debouncedChange={onNotesChange}
       />
     </button>

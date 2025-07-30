@@ -66,7 +66,7 @@
         {
           label: "Graph",
           value: MemotronOverviewPanel.GRAPH,
-          icon: "ph:graph-light"
+          icon: "graph"
         },
         {
           label: "Map",

@@ -5,6 +5,7 @@ import { pointronActions } from "$lib/client/products/pointron/pointron.actions"
 import NucleusLibrary from "./NucleusLibrary.svelte";
 import NucleusOverview from "./overview/NucleusOverview.svelte";
 import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
 
 const actionsToFilterInSub = [
   Action.LIBRARY,
@@ -32,7 +33,7 @@ export const nucleusActions: IAction[] = [
   {
     action: Action.LIBRARY,
     label: "Library",
-    icon: "ph:stack-light",
+    icon: "stack",
     component: NucleusLibrary,
     type: ActionType.PAGE
   },
@@ -41,6 +42,13 @@ export const nucleusActions: IAction[] = [
     label: "Overview",
     icon: "heroicons:rectangle-group",
     component: NucleusOverview,
+    type: ActionType.PAGE
+  },
+  {
+    action: Action.HOME,
+    label: "Home",
+    icon: "home",
+    component: ComingSoonView,
     type: ActionType.PAGE
   }
 ];

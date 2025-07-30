@@ -62,7 +62,7 @@
     {#if isHovering || $context.isTouchDevice}
       {#if resourceType === Resource.task && !$context.isTouchDevice}
         <Button
-          icon="ph:arrows-out-light"
+          icon="pop"
           tooltip="Open task"
           size={Size.sm}
           style={ButtonStyle.OUTLINED}
@@ -76,14 +76,14 @@
         <span class="text-b3 text-fgs3"> Added </span>
       {:else}
         <Button
-          icon="ph:play-light"
+          icon="circle"
           tooltip="Start focusing"
           style={ButtonStyle.OUTLINED}
           size={Size.sm}
           on:click={onStartFocusing}
         />
         <Button
-          icon="ph:plus-light"
+          icon="plus"
           tooltip="Add to focus items"
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
@@ -98,7 +98,7 @@
       <span class="text-b3 text-fgs3 userdata">
         {#if isAdded}
           <div class="flex gap-1 items-center">
-            <Icon icon="ph:check-circle-fill" size={Size.sm} />
+            <Icon icon="check-circle" isFilled={true} size={Size.sm} />
             <span> Added to focus items </span>
           </div>
         {:else if startUnix}
@@ -109,7 +109,7 @@
   </div>
 {:else if resourceType === Resource.task && !$context.isTouchDevice && isHovering}
   <Button
-    icon="ph:arrows-out-light"
+    icon="pop"
     tooltip="Open task"
     size={Size.sm}
     style={ButtonStyle.OUTLINED}

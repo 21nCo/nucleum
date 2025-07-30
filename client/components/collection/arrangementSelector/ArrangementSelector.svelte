@@ -22,12 +22,12 @@
     {
       value: Arrangement.LIST,
       label: "List",
-      icon: "ph:list-light"
+      icon: "list"
     },
     {
       value: Arrangement.GRID,
       label: "Grid",
-      icon: "ph:squares-four-light"
+      icon: "grid"
     }
   ];
   $: if (

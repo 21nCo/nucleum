@@ -34,18 +34,18 @@
 
   $: height = isConstrainedWidth ? 100 : (size?.height ?? $view.height / 5);
 
-  function onReplace(e: CustomEvent) {
+  function onReplace(e: MouseEvent) {
     isCoverPickerOpen = true;
     dispatch("pick");
     if (e instanceof MouseEvent) e.stopPropagation();
   }
 
-  function onClose(e: CustomEvent) {
+  function onClose(e: MouseEvent) {
     isCoverPickerOpen = false;
     if (e instanceof MouseEvent) e.stopPropagation();
   }
 
-  function onRemove(e: CustomEvent) {
+  function onRemove(e: MouseEvent) {
     cover = undefined;
     dispatch("change", cover);
     if (e instanceof MouseEvent) e.stopPropagation();
@@ -157,11 +157,7 @@
         <span
           class="absolute flex gap-1 items-center text-fgs1 bg-bgs2 bg-opacity-60 dark:bg-opacity-50 py-1 px-2 rounded-md backdrop-blur-sm dark:backdrop-blur-none"
         >
-          <Icon
-            icon="ph:arrows-out-cardinal-light"
-            class="stroke-fgs1"
-            size={Size.sm}
-          />
+          <Icon icon="grab" class="stroke-fgs1" size={Size.sm} />
           Pan to reposition</span
         >
       {/if}
@@ -211,15 +207,13 @@
           {/if}
           <Button
             label={isCoverPickerOpen ? "Close" : "Replace"}
-            icon={isCoverPickerOpen
-              ? "ph:x-circle-light"
-              : "ph:arrows-clockwise-light"}
+            icon={isCoverPickerOpen ? "x-circle" : "reset"}
             size={Size.sm}
             on:click={isCoverPickerOpen ? onClose : onReplace}
           />
           <Button
             label="Remove"
-            icon="ph:trash-light"
+            icon="trash"
             type={ButtonVariant.DANGER}
             size={Size.sm}
             on:click={onRemove}
@@ -232,7 +226,8 @@
 
 <style>
   .custom-gradient {
-    background-image: linear-gradient(
+    background-image:
+      linear-gradient(
         to top,
         rgba(var(--colors-fgs1), 0.8) 0%,
         rgba(var(--colors-fgs1), 0.7) 10%,

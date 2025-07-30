@@ -500,19 +500,19 @@ export const collectionLayoutOptions = [
   },
   {
     value: CollectionLayout.TABLE,
-    icon: "ph:table-light",
+    icon: "table",
     // badge: "Planned",
     isDisabled: true
   },
   {
     value: CollectionLayout.CALENDAR,
-    icon: "ph:calendar-dots-light",
+    icon: "calendar",
     // badge: "Planned",
     isDisabled: true
   },
   {
     value: CollectionLayout.MAP,
-    icon: "ph:map-trifold-light",
+    icon: "map",
     // badge: "Planned",
     isDisabled: true
   }
@@ -569,7 +569,7 @@ export function resolveCollectionContextMenu(
   } else if (collection.type === CollectionType.TYPED) {
     const captureToggle = {
       value: "captureshortcut",
-      icon: "ph:arrow-up-right-light",
+      icon: "command",
       label: "Capture shortcut",
       type: ContextMenuType.SWITCH,
       initialValue: collection.isCaptureShortcutEnabled,
@@ -599,7 +599,7 @@ export function resolveCollectionContextMenu(
           resourceActions.copyLink(),
           {
             value: "convert",
-            icon: "ph:arrows-clockwise-light",
+            icon: "convert",
             label: "Convert as Simple",
             callback: async () => {
               const result = await collectionStore.modify(collection.id, {
@@ -643,7 +643,7 @@ export function resolveCollectionContextMenu(
         resourceActions.copyLink(),
         {
           value: "convert",
-          icon: "ph:arrows-clockwise-light",
+          icon: "convert",
           label: "Convert to Typed",
           callback: async () => {
             console.log({ at: "resolveCollectionContextMenu.convert" });

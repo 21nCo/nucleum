@@ -88,7 +88,7 @@
   >
     {#if photoTaken}
       <Button
-        icon="ph:arrow-clockwise-light"
+        icon="reset"
         label="Retake"
         type={ButtonVariant.DANGER}
         size={Size.sm}
@@ -96,7 +96,7 @@
         on:click={retakePhoto}
       />
       <Button
-        icon="ph:floppy-disk"
+        icon="save"
         label="Save"
         type={ButtonVariant.PRIMARY}
         size={Size.sm}
@@ -104,7 +104,7 @@
         on:click={savePhoto}
       />
       <Button
-        icon="ph:x"
+        icon="cross"
         label="Cancel"
         size={Size.sm}
         isPreventMinWidth={true}
@@ -116,7 +116,7 @@
     {:else}
       <div class="col-span-2"></div>
       <Button
-        icon="ph:x"
+        icon="cross"
         label="Cancel"
         size={Size.sm}
         isPreventMinWidth={true}

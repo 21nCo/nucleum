@@ -142,7 +142,7 @@
     <slot name="right" slot="right">
       {#if isShowSave}
         <Button
-          icon="ph:bookmark-simple-light"
+          icon="bookmark"
           on:click={() => {
             appStore.runAction(PointronAction.SAVE_PRESET_MODAL);
           }}

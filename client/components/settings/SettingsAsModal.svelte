@@ -58,53 +58,55 @@
     <div class="pl-4">
       <Text content="Settings" style={TextStyle.PAGE_HEADING} />
     </div>
-    <ProfileCpSection
-      context="modal"
-      parentBackgroundIndex={2}
-      on:click={() => {
-        appStore.toggleSearchParam({
-          [AppSearchParam.SETTING]: Action.ACCOUNT
-        });
-      }}
-    />
-    {#if config}
-      <div class=" flex flex-col w-full gap-8">
-        {#each config as section}
-          <div class="flex flex-col w-full gap-2 items-start">
-            {#if !section.isHideTitle}
-              <div class="pl-4">
-                <Text
-                  content={section.section}
-                  style={TextStyle.SECTION_HEADING}
-                />
-              </div>
-              <!-- <div class="text-fgs3 text-b2 font-medium pl-4">
+    <div class="flex flex-col overflow-auto gap-8 w-full">
+      <ProfileCpSection
+        context="modal"
+        parentBackgroundIndex={2}
+        on:click={() => {
+          appStore.toggleSearchParam({
+            [AppSearchParam.SETTING]: Action.ACCOUNT
+          });
+        }}
+      />
+      {#if config}
+        <div class=" flex flex-col w-full gap-8">
+          {#each config as section}
+            <div class="flex flex-col w-full gap-2 items-start">
+              {#if !section.isHideTitle}
+                <div class="pl-4">
+                  <Text
+                    content={section.section}
+                    style={TextStyle.SECTION_HEADING}
+                  />
+                </div>
+                <!-- <div class="text-fgs3 text-b2 font-medium pl-4">
                 {section.section}
               </div> -->
-            {/if}
-            <div class="flex flex-col w-full">
-              {#if section.children}
-                {#each section.children as item}
-                  <SettingThumbnail
-                    parentBackgroundIndex={2}
-                    orientation={Orientation.Horizontal}
-                    action={item}
-                    isActive={selected === item}
-                    width="w-40"
-                    on:click={() => {
-                      appStore.toggleSearchParam({
-                        [AppSearchParam.SETTING]: item
-                      });
-                    }}
-                  />
-                {/each}
               {/if}
+              <div class="flex flex-col w-full">
+                {#if section.children}
+                  {#each section.children as item}
+                    <SettingThumbnail
+                      parentBackgroundIndex={2}
+                      orientation={Orientation.Horizontal}
+                      action={item}
+                      isActive={selected === item}
+                      width="w-40"
+                      on:click={() => {
+                        appStore.toggleSearchParam({
+                          [AppSearchParam.SETTING]: item
+                        });
+                      }}
+                    />
+                  {/each}
+                {/if}
+              </div>
             </div>
-          </div>
-        {/each}
-        <SettingsFooter {parentBgIndex} />
-      </div>
-    {/if}
+          {/each}
+          <SettingsFooter {parentBgIndex} />
+        </div>
+      {/if}
+    </div>
   </div>
   <div class="flex flex-col items-start flex-grow h-full p-4">
     {#if pageAction}

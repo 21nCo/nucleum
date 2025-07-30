@@ -42,8 +42,8 @@
     <span class="flex gap-2 text-fgs2 text-b2">
       <Icon
         icon={$propertyEditorStore.properties.length > 0
-          ? "ph:pencil-simple-line-light"
-          : "ph:plus-light"}
+          ? "edit"
+          : "plus"}
         size={Size.sm}
       />
       {$propertyEditorStore.properties.length > 0

@@ -97,7 +97,7 @@
       <div class="flex gap-2 items-center">
         {#if !isEditingGroupName}
           <Button
-            icon="ph:pencil-simple-line-light"
+            icon="edit"
             label={$view.isConstrainedWidth ? undefined : "Edit group name"}
             {...buttonProps}
             on:click={() => {
@@ -108,7 +108,7 @@
         {/if}
         <Popover bind:this={addTagPopover}>
           <Button
-            icon="ph:plus"
+            icon="plus"
             label={$view.isConstrainedWidth ? undefined : "Add tag"}
             {...buttonProps}
             on:click={() => {}}
@@ -128,7 +128,7 @@
           </div>
         </Popover>
         <Button
-          icon="ph:trash-light"
+          icon="trash"
           label={$view.isConstrainedWidth ? undefined : "Delete all"}
           {...buttonProps}
           type={ButtonVariant.DANGER}
@@ -165,7 +165,7 @@
         >
           <Tag
             label={item.label}
-            icon="ph:link-simple-horizontal-light"
+            icon="relation"
             on:click={() => {
               inputValueWithinGroup = item.label ?? "";
             }}
@@ -181,7 +181,7 @@
             <span class="flex gap-2">
               <Button
                 label="Update"
-                icon="ph:check-light"
+                icon="check"
                 isPreventMinWidth={true}
                 on:click={(e) => {
                   dispatch("update", {
@@ -195,7 +195,7 @@
               />
               <Button
                 label="Delete"
-                icon="ph:trash-light"
+                icon="trash"
                 isPreventMinWidth={true}
                 type={ButtonVariant.DANGER}
                 on:click={(e) => {

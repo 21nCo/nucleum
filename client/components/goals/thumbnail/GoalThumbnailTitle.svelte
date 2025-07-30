@@ -12,7 +12,7 @@
 
 <div class="flex items-center gap-1.5 userdata">
   {#if item.status === GoalStatus.COMPLETED}
-    <Icon icon="ph:check-circle-fill" class="text-ccs1" />
+    <Icon icon="check-circle" class="text-ccs1" isFilled={true} />
   {:else}
     <Icon
       icon={resolveGoalTypeIcon(item.type)}

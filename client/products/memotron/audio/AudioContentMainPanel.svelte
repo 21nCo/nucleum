@@ -122,14 +122,14 @@
       {
         value: AudioView.MARKDOWN,
         label: "Markdown",
-        icon: "ph:markdown-logo-light"
+        icon: "markdown"
       }
     ];
     if (isEnableSummarization) {
       items.push({
         value: AudioView.SUMMARY,
         label: "Summary",
-        icon: "ph:sparkle-light"
+        icon: "sparkle"
       });
     }
     if ($view.isConstrainedWidth) {
@@ -169,27 +169,23 @@
             placeholder="Search transcription..."
             size={Size.sm}
             style={InputStyle.PLAIN}
-            icon="ph:magnifying-glass-light"
+            icon="search"
             isShowClearControl={searchQuery !== ""}
             on:cancel={() => {
               searchQuery = "";
             }}
           />
-          <Button
-            icon="ph:x-light"
-            tooltip="Close search"
-            on:click={toggleSearch}
-          />
+          <Button icon="cross" tooltip="Close search" on:click={toggleSearch} />
         </div>
       {:else if selectedView === AudioView.TRANSCRIPTION && body?.transcription}
         <Button
-          icon="ph:magnifying-glass-light"
+          icon="search"
           tooltip="Search transcription"
           on:click={toggleSearch}
         />
         {#if import.meta.env?.DEV}
           <Button
-            icon="ph:code-light"
+            icon="code"
             tooltip="Reparse markdown"
             on:click={() => {
               dispatch("reparse");
@@ -198,7 +194,7 @@
         {/if}
         {#if isTranscribeAvailable}
           <Button
-            icon="ph:arrow-counter-clockwise-light"
+            icon="reload"
             tooltip="Retranscribe"
             on:click={() => {
               dispatch("retranscribe");

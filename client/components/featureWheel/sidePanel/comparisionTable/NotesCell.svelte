@@ -24,7 +24,7 @@
     }}
   >
     {#if isShort}
-      <Icon icon="ph:note-light" size={Size.sm} />
+      <Icon icon="note" size={Size.sm} />
     {:else}
       See notes
     {/if}

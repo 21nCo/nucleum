@@ -10,7 +10,7 @@
 
 <InlineInfoBanner
   type={InfoTextType.ERROR}
-  icon="ph:trash-light"
+  icon="trash"
   content={"This resource was moved to trash on: *" +
     formatDatetime($userPreferences, new Date(deletedAt)) +
     "*"}

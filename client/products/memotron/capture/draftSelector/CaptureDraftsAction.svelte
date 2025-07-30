@@ -62,7 +62,7 @@
         }
       }}
     >
-      <Icon icon="ph:file-light" size={Size.sm} class="text-ass1" />
+      <Icon icon="file" size={Size.sm} class="text-ass1" />
       {drafts.length}
       {drafts.length === 1 ? "draft" : "drafts"} available
     </button>

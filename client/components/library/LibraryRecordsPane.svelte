@@ -524,7 +524,7 @@
       >
         <Toggle
           bind:on={isRefineShown}
-          icon="ph:sliders-horizontal-light"
+          icon="sliders-horizontal"
           tooltip="Settings & filters"
           size={Size.lg}
           bgSize={Size.sm}
@@ -561,12 +561,12 @@
             items={[
               {
                 label: "List",
-                icon: "ph:list-light",
+                icon: "list",
                 value: Arrangement.LIST
               },
               {
                 label: "Grid",
-                icon: "ph:squares-four-light",
+                icon: "grid",
                 value: Arrangement.GRID
               }
             ]}

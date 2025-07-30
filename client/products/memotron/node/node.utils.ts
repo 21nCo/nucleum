@@ -109,55 +109,52 @@ export function resolveNodeIcon(contentType: NodeType, url?: string) {
     case NodeType.IMAGE:
       return "ph:image-light";
     case NodeType.WEB_SCREENSHOT_CLIP:
-      return "ph:crop-light";
+      return "crop";
     case NodeType.NODULAR_MARKDOWN:
-      return "ph:markdown-logo-light";
+      return "markdown";
     case NodeType.TEXT_CLIP:
-      return "ph:highlighter-circle-light";
+      return "highlighter-circle";
     case NodeType.WEB_PAGE:
       return url && isValidUrl(url)
         ? resolveFallbackIconForUrl(url)
         : "ph:globe-light";
     case NodeType.PDF:
-      return "ph:file-pdf-light";
+      return "file-pdf";
     case NodeType.AUDIO:
-      return "ph:music-note-light";
+      return "music-note";
     case NodeType.VIDEO:
-      return "ph:video-light";
+      return "video";
     case NodeType.FILE:
       return "ph:file-light";
     case NodeType.YOUTUBE_VIDEO:
-      return "ph:youtube-logo-light";
+      return "youtube";
     case NodeType.YOUTUBE_CHANNEL:
-      return "ph:youtube-logo-light";
+      return "youtube";
     case NodeType.YOUTUBE_TIMESTAMP_CLIP:
-      return "ph:youtube-logo-light";
+      return "youtube";
     case NodeType.TWEET:
-      return "ph:x-logo-light";
     case NodeType.TWITTER_PROFILE:
-      return "ph:x-logo-light";
+      return "twitter";
     case NodeType.KINDLE_BOOK:
-      return "ph:amazon-logo-light";
+      return "amazon-logo";
     case NodeType.KINDLE_HIGHLIGHT:
       return "ph:bookmark-simple-light";
     case NodeType.CODE:
     case NodeType.GIST:
       return "ph:code-light";
     default:
-      return url && isValidUrl(url)
-        ? resolveFallbackIconForUrl(url)
-        : "ph:book-light";
+      return url && isValidUrl(url) ? resolveFallbackIconForUrl(url) : "book";
   }
 }
 
 export function resolveFallbackIconForUrl(url: string | undefined) {
   let hostPart;
   try {
-    if (!url) return "ph:globe";
+    if (!url) return "globe";
     hostPart = new URL(url).host;
   } catch (e) {
     logger.error({ at: "resolveFallbackIconForUrl", e });
-    return "ph:globe";
+    return "globe";
   }
   if (hostPart === "replit.com" || hostPart.endsWith(".replit.com"))
     return "logos:replit-icon";
@@ -170,9 +167,9 @@ export function resolveFallbackIconForUrl(url: string | undefined) {
   if (hostPart === "youtube.com" || hostPart.endsWith(".youtube.com"))
     return "logos:youtube-icon";
   if (hostPart === "twitter.com" || hostPart.endsWith(".twitter.com"))
-    return "ph:x-logo";
+    return "twitter";
   if (hostPart === "instagram.com" || hostPart.endsWith(".instagram.com"))
-    return "ph:instagram-logo";
+    return "instagram";
   if (hostPart === "linkedin.com" || hostPart.endsWith(".linkedin.com"))
     return "logos:linkedin-icon";
   if (hostPart === "facebook.com" || hostPart.endsWith(".facebook.com"))
@@ -194,7 +191,7 @@ export function resolveFallbackIconForUrl(url: string | undefined) {
     return "ph:dev-to-logo";
   if (hostPart === "drive.google.com" || hostPart.endsWith(".drive.google.com"))
     return "logos:google-drive";
-  return "ph:globe";
+  return "globe";
 }
 
 export function resolveNodeContentLabel(contentType: NodeType) {

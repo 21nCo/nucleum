@@ -17,12 +17,12 @@
       options={[
         {
           label: "All",
-          icon: "ph:asterisk-light",
+          icon: "asterisk",
           value: "all"
         },
         {
           label: "Focus sessions",
-          icon: "ph:circle-light",
+          icon: "circle",
           value: "focus"
         }
       ]}

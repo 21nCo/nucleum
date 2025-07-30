@@ -46,7 +46,7 @@
         dispatch("goBack");
       }}
     >
-      <Icon icon="ph:arrow-left-light" />
+      <Icon icon="back-sm" />
       Go back
     </button>
   {/if}
@@ -88,7 +88,7 @@
         dispatch("close");
       }}
     >
-      <SvgIcon icon="ph:x" phIconSize={Size.lg} />
+      <SvgIcon icon="cross" phIconSize={Size.lg} />
     </button>
   </div>
   <div class="overflow-y-auto flex flex-col flex-1 w-full gap-8">

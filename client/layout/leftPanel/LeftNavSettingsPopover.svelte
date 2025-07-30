@@ -110,7 +110,7 @@
               <span
                 class="cursor-grab text-fgs3 flex items-center justify-center"
               >
-                <Icon icon="ph:dots-six-vertical" size={Size.sm} />
+                <Icon icon="rearrange" size={Size.sm} />
               </span>
               <span class="text-fgs2">{resource.name}</span>
             </div>

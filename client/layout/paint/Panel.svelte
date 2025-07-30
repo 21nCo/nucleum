@@ -123,7 +123,7 @@
                 }}
               >
                 <Icon
-                  icon="ph:caret-left-light"
+                  icon="chevron-left"
                   class="text-fgs3"
                   size={Size.lg}
                 />
