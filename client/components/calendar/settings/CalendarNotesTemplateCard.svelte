@@ -33,7 +33,7 @@
       size={Size.sm}
       label="Edit"
       isPreventMinWidth={true}
-      icon="ph:pencil-simple-light"
+      icon="edit"
       on:click={onEdit}
     />
   {/if}

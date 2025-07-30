@@ -67,7 +67,7 @@
       <span class="flex items-center">
         {#if !isEditingGroupLabel}
           <Button
-            icon="ph:pencil-simple-light"
+            icon="edit"
             tooltip="Edit group label"
             size={Size.sm}
             on:click={() => {
@@ -89,7 +89,7 @@
           }}
         />
         <Button
-          icon="ph:arrow-down"
+          icon="arrow-down"
           style={ButtonStyle.PLAIN}
           tooltip="Move this group down"
           size={Size.sm}
