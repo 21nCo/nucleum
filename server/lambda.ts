@@ -60,11 +60,9 @@ export async function lambdaUsingNode(
       if (contentType === "multipart/form-data") {
         // Parse form data - might need to use a library like `busboy` or `formidable` here
       } else if (contentType === "application/x-www-form-urlencoded") {
-        console.log("parsing form data", { body: event.body });
         body = parse(event.body ?? "");
       } else {
         body = parseJson(event.body ?? "");
-        console.log("parsing json data", { bodyRaw: event.body, body });
       }
     }
     const result = await callback(body, agent);

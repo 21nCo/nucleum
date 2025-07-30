@@ -1517,7 +1517,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const expressionAttributeNames: Record<string, string> = {};
       const expressionAttributeValues: Record<string, any> = {};
       let attrIndex = 0;
-
+      console.log({ mergeData, sortKey, partitionKey, fallbackAttributes });
       // Build update expressions - separate SET and REMOVE operations
       Object.keys(mergeData).forEach((key) => {
         const value = mergeData[key];
