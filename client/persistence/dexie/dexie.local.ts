@@ -246,8 +246,13 @@ export class DexiePersistence implements IPersistence {
           if (searchIndex) {
             const text = this.extractFlatText(params.record, resource);
             if (params.record.id && text) {
-              searchIndex.index.updateAsync(params.record.id, text);
-              searchIndex.contextualIndex.updateAsync(params.record.id, text);
+              try {
+                searchIndex.index.updateAsync(params.record.id, text);
+                searchIndex.contextualIndex.updateAsync(params.record.id, text);
+              } catch (error) {
+                searchIndex.index.addAsync(params.record.id, text);
+                searchIndex.contextualIndex.addAsync(params.record.id, text);
+              }
             }
           }
         }
