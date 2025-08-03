@@ -116,5 +116,5 @@ class ViewStore extends ObservableStore<IViewStore> {
   }
 }
 
-export const view = new ViewStore();
+const view = new ViewStore();
 export default view;

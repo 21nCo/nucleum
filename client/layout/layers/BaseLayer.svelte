@@ -35,7 +35,7 @@
   import { getSettingsAsModal } from "../settingsActionMap";
   import { globalActions } from "$lib/client/stores/actionMap";
   import { localActions } from "$local/localActionMap";
-  import { version, build } from "$local/local";
+  import { version, build, product } from "$local/local";
   import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
   import { parse } from "$lib/shared/utils/json.utils";
   let timer: any;
@@ -111,11 +111,15 @@
     try {
       const dapId = await getDapId();
       $context.dapId = dapId;
-      const appDetails = extractProduct(
+      const appDataFromUrl = extractProduct(
         import.meta.env?.VITE_HOST ??
           process.env.PLASMO_PUBLIC_APP_URL ??
           window.location.host
       );
+      const appDetails = {
+        product,
+        env: appDataFromUrl.env ?? "live"
+      };
       if (appDetails) appStore.initializeProductInformation(appDetails);
       const cachedAppData = await clientStorage.get(ClientStorageKey.APP_DATA);
       const cachedAppDataJson = parse(cachedAppData ?? "{}");
@@ -305,6 +309,18 @@
     console.log("Received from Chrome Webview:", messageFromChromeWebView);
   }
 
+  function handleViewportChange() {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const hasKeyboard = window.innerHeight > viewport.height;
+    if (hasKeyboard) {
+      document.documentElement.style.setProperty(
+        "--viewport-height",
+        `${viewport.height}px`
+      );
+    }
+  }
+
   function addWindowEventListeners() {
     // setupGlobalErrorHandler();
     // window.addEventListener("unhandledrejection", handleUnhandledRejection);
@@ -334,6 +350,11 @@
     //     error
     //   });
     // }
+    if ("visualViewport" in window) {
+      const viewport = window.visualViewport;
+      viewport?.addEventListener("resize", handleViewportChange);
+      viewport?.addEventListener("scroll", handleViewportChange);
+    }
   }
   function removeWindowEventListeners() {
     // window.removeEventListener("unhandledrejection", handleUnhandledRejection);
@@ -349,6 +370,11 @@
     window.onpopstate = null;
     window.removeEventListener("online", updateOnlineStatus);
     window.removeEventListener("offline", updateOnlineStatus);
+    if ("visualViewport" in window) {
+      const viewport = window.visualViewport;
+      viewport?.removeEventListener("resize", handleViewportChange);
+      viewport?.removeEventListener("scroll", handleViewportChange);
+    }
     // try {
     //   //@ts-ignore
     //   window.chrome.webview.removeEventListener(

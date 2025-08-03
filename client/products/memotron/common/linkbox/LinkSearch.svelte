@@ -35,7 +35,7 @@
   let searchInputRef: TextSearchInput;
   let isCreationInProgress = false;
 
-  $: accessPoint, isCollectionsLane, resolveOptions();
+  $: (accessPoint, isCollectionsLane, resolveOptions());
 
   export function focus() {
     searchInputRef?.focus();
@@ -116,7 +116,8 @@
   function onSelect(e: CustomEvent) {
     onSelectCallback?.(e.detail.item);
     dispatch("select", e.detail);
-    if (searchInputRef) searchInputRef.reset();
+    if (searchInputRef && typeof searchInputRef.reset === "function")
+      searchInputRef.reset();
   }
 
   function onHide() {
@@ -124,7 +125,9 @@
     dispatch("hide");
   }
 
-  function resolveResourceForCreation(accessPoint: ResourceAccessPoint): Resource | undefined {
+  function resolveResourceForCreation(
+    accessPoint: ResourceAccessPoint
+  ): Resource | undefined {
     switch (accessPoint) {
       case ResourceAccessPoint.CAPTURE:
       case ResourceAccessPoint.CLIPPER:
@@ -171,7 +174,8 @@
     }
     if (result && isValidArrayWithData(result)) {
       onSelect({ detail: { item: result[0] } } as CustomEvent);
-      searchInputRef?.reset();
+      if (searchInputRef && typeof searchInputRef.reset === "function")
+        searchInputRef.reset();
     } else {
       toasts.error("Something went wrong. Please try again later.");
     }

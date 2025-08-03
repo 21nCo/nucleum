@@ -19,12 +19,10 @@ import {
   propertyEditorStore,
   propertyStore
 } from "./properties/property.store";
-import { Arrangement } from "$lib/client/types/direction.enum";
 import {
   ResourceAccessMode,
   ResourceAccessPoint,
   ResourceActionType,
-  type OmitForCapture,
   type OmitForCaptureWithId
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import { ResourceActions } from "$lib/client/components/record/resource.actions";
@@ -42,7 +40,8 @@ import type { IProperty } from "./properties/property.type";
 import {
   ContextMenuType,
   type IContextMenu,
-  type IContextMenuItem
+  type IContextMenuItem,
+  type ISelectItem
 } from "$lib/client/types/select.type";
 import context from "$lib/client/stores/context.store";
 import { get } from "svelte/store";
@@ -58,6 +57,8 @@ import { Embed } from "$lib/client/types/context.type";
 import { appStore } from "$lib/client/stores/app.store";
 import { resolveCollectionResource } from "./collection.utils";
 import { viewStore } from "./view.store";
+import { uiState } from "$lib/client/stores/uiState/uiState.store";
+import { UIState } from "$lib/client/stores/uiState/uiState.type";
 
 const defaults: Partial<ICollection> = {
   type: CollectionType.UNTYPED,
@@ -103,7 +104,12 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
           : undefined,
       ...(this.collectibleResource
         ? {
-            resource: this.collectibleResource
+            resource:
+              params?.filters &&
+              "resource" in params.filters &&
+              params?.filters?.resource
+                ? params.filters.resource
+                : this.collectibleResource
           }
         : {})
     };
@@ -250,6 +256,45 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
         typeToExtend: collectionId.toString()
       }
     });
+  }
+
+  async resolveCaptureShortcuts(): Promise<
+    (ISelectItem & { value: string; isShortcut?: boolean })[]
+  > {
+    const data = await this.selectMany({
+      filters: {
+        type: CollectionType.TYPED,
+        isCaptureShortcutEnabled: true
+      }
+    });
+
+    const recents =
+      uiState
+        .getState(UIState.captureShortcutRecents)
+        ?.map((x) => x.toString()) ?? [];
+    const _types = data
+      .filter((x) => !x.resource || x.resource === Resource.node)
+      .map((type: any) => ({
+        value: type.id,
+        label: type.label,
+        icon: type.avatar,
+        isShortcut: true
+      }));
+    const types = _types.sort((a, b) => {
+      const aIndex = recents.indexOf(a.value.toString());
+      const bIndex = recents.indexOf(b.value.toString());
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex;
+      }
+      if (aIndex !== -1) {
+        return -1;
+      }
+      if (bIndex !== -1) {
+        return 1;
+      }
+      return 0;
+    });
+    return types;
   }
 }
 

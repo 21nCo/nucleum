@@ -19,7 +19,7 @@
 </script>
 
 <div
-  class="flex flex-col gap-2 w-full bg-bgs1 rounded-md p-4 dp:w-[32rem] dp:min-w-[32rem] border border-brs2"
+  class="flex flex-col gap-2 w-full bg-bgs1 rounded-md cw:px-2 py-4 px-4 dp:w-[32rem] dp:min-w-[32rem]"
 >
   <div class="px-2">
     <Text content="Drafts" style={TextStyle.SECTION_HEADING} />

@@ -3,12 +3,14 @@ import type { IAvatar } from "$lib/client/types/avatar.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import type { IMarkdown } from "$lib/client/components/markdown/md.type";
 import type {
-  INodePropertyValue,
   INodeStructure,
   NodeType
 } from "$lib/client/products/memotron/node/node.type";
 import type { LinkType } from "$lib/client/products/memotron/linking/link.type";
-import type { CollectionType } from "$lib/client/components/collection/collection.type";
+import type {
+  CollectionType,
+  ICollectionItemPropertyValue
+} from "$lib/client/components/collection/collection.type";
 import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import type {
   IActiveResource,
@@ -16,7 +18,7 @@ import type {
   IResourceShareable
 } from "$lib/client/components/flux/resourceStores/resource.type";
 
-export enum CaptureType {
+export enum CaptureMethod {
   MARKDOWN = "MARKDOWN",
   AUDIO = "AUDIO",
   CAMERA = "CAMERA",
@@ -26,22 +28,19 @@ export enum CaptureType {
 
 export type ICaptureBase = {
   label: string | null;
+  method: CaptureMethod;
   /**
    * @deprecated
    * There will no avatar for non type based entries. Use type.avatar instead
    */
   avatar?: IAvatar | null;
-  /**
-   * @deprecated
-   */
-  captureType?: CaptureType | string;
   body?: IMarkdown;
   file?: IRecordId;
   childrenWithStructure: INodeStructure[];
   rootStructure: string[];
   links?: ICaptureLink[];
   propertyConfig?: IProperty[];
-  properties?: INodePropertyValue[];
+  properties?: ICollectionItemPropertyValue[];
   /**
    * To trigger refresh of capture page when on appear or reset etc...
    * as change of body object in markdown is not detected by svelte
@@ -63,7 +62,19 @@ export type ICaptureCapture = ICaptureBase;
 type IResourcePropertiesForCapture = IResource & IResourceShareable;
 export type ICapture = ICaptureBase & IResourcePropertiesForCapture;
 
-export type IActiveCapture = IActiveResource & ICapture;
+export type IActiveCapture = IActiveResource &
+  ICapture & {
+    isEmpty?: boolean;
+    isWindowDnD?: boolean;
+    isAvoidSaveLeaks?: boolean;
+    isSaving?: boolean;
+    isLinksExpanded?: boolean;
+    isCaptureFromCollectionPage?: boolean;
+    bulkQueryParam?: string | null;
+    linkQueryParam?: string | null;
+    expandedType?: IRecordId | null;
+    isProcessingClipboard?: boolean;
+  };
 
 export type ICaptureLink = {
   from: IRecordId | "root";

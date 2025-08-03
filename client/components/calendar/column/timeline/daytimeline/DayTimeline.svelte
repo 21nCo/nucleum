@@ -21,7 +21,7 @@
   } from "$lib/client/stores/uiState/uiState.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   export let date: Date = new Date();
   export let data: Array<CalendarTimelineEntry> = [];
   export let layout: CalendarColumnLayout;

@@ -185,7 +185,7 @@
         {captureStore}
         accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
         creationContext={nodeContext?.id}
-        on:save={onAudioCaptureSave}
+        on:saved={onAudioCaptureSave}
         on:cancel={() => (isAudioCaptureInProgress = false)}
         bind:isSaveInProgress
       />

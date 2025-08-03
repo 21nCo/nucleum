@@ -24,6 +24,7 @@
   import OverviewCardsPulse from "./animations/DashboardPulse/OverviewCardsPulse.svelte";
   import OnThisDayPulse from "./animations/DashboardPulse/OnThisDayPulse.svelte";
   import AnalyticsChartPulse from "./animations/DashboardPulse/AnalyticsChartPulse.svelte";
+  import { setEmbedBg } from "$lib/client/utils/embed.utils";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
@@ -38,6 +39,10 @@
   export let pulseCount: number = 0;
   export let parentBgIndex: number = 1;
   export let emptyIllustration: string | undefined = undefined;
+  export let isFullPage: boolean = false;
+  if (isFullPage) {
+    setEmbedBg(parentBgIndex);
+  }
 </script>
 
 <div

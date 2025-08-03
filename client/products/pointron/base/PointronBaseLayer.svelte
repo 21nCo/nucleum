@@ -20,7 +20,7 @@
   import { FallbackTracker } from "$lib/client/utils/fallbackTracker.utils";
   import FocusTopNavWidget from "../focus/player/FocusTopNavWidget.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
 
   let isLiteMode = $context.isEmbed && $context.isSheet;
   const isDebug = import.meta.env?.DEV;

@@ -44,6 +44,10 @@ export enum UIState {
    * List of recently used capture shortcuts on capture page
    */
   captureShortcutRecents = "captureShortcutRecents",
+  /**
+   * Whether to open nodes upon save in capture
+   */
+  openNodesUponSave = "openNodesUponSave",
   memotronOverviewPanel = "memotronOverviewPanel",
   calendarLayout = "calendarLayout",
   classicCalendarScale = "classicCalendarScale",

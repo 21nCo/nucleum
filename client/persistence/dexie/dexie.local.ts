@@ -50,6 +50,7 @@ export class DexiePersistence implements IPersistence {
   constructor() {}
 
   async initialize(params: IPersistenceInitParams): Promise<number> {
+    logger.info({ at: "DexiePersistence.initialize", params });
     const user = params.userId ?? params.dapId;
     if (this.userId === user && this.instance) return -1;
     const dbName = `${user}-${dbVersion}`;
@@ -155,11 +156,13 @@ export class DexiePersistence implements IPersistence {
   }
 
   async reinitialize() {
+    logger.info({ at: "DexiePersistence.reinitialize" });
     await this.terminate();
     return true;
   }
 
   async terminate() {
+    logger.info({ at: "DexiePersistence.terminate" });
     await this.instance?.close();
     this.instance = undefined;
     return true;
@@ -179,12 +182,22 @@ export class DexiePersistence implements IPersistence {
       (x) => x.name === resource
     )?.searchIndices;
     if (!searchIndices) return "";
-    const text = Object.entries(record)
-      .filter(([key]) => searchIndices.includes(key))
-      .map(([key, value]) => String(value))
-      .join(" ")
-      .trim();
-    return isValidString(text) ? text : undefined;
+    try {
+      const text = Object.entries(record)
+        .filter(([key]) => searchIndices.includes(key))
+        .map(([key, value]) => String(value))
+        .join(" ")
+        .trim();
+      return isValidString(text) ? text : undefined;
+    } catch (e) {
+      logger.error({
+        at: "DexiePersistence.extractFlatText",
+        tables: this.tables,
+        searchIndices,
+        e
+      });
+      return "";
+    }
   }
 
   async mutation<T extends IResource | IMetaResource>(
@@ -782,8 +795,9 @@ export class DexiePersistence implements IPersistence {
           } else if (item[prop]) {
             const result = expandedResult.find((y) => y.id === item[prop]);
             if (result) {
-              item[prop] = result;
-              item[prop.split("Id")[0]] = result;
+              const parts = prop.split("Id");
+              if (parts.length === 2) item[parts[0]] = result;
+              else item[prop] = result;
             }
           }
           return item;

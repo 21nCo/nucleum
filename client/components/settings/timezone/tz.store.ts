@@ -49,7 +49,7 @@ class TimezoneStore extends ResourceStore<ITimezone, ITimezoneCapture> {
 
   resolveTimePeriodFilterForMonth(day: Date) {
     const localDay = new Date(day.getFullYear(), day.getMonth(), 1);
-    const end = new Date(localDay.getFullYear(), localDay.getMonth() + 1, 0);
+    const end = new Date(localDay.getFullYear(), localDay.getMonth() + 1, 1);
     return this.resolveCorrectedTimePeriodFilter({
       begin: resolveUnixTimestamp(localDay),
       end: resolveUnixTimestamp(end)

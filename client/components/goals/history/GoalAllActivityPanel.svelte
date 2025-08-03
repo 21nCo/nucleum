@@ -105,11 +105,7 @@
         ];
       }
 
-      // Get focus sessions and logs
       const sessionLogs = await sessionLogStore.selectMany({
-        properties: {
-          expand: ["taskId"]
-        },
         filters: {
           goalId: goalId.toString()
         }
@@ -164,9 +160,9 @@
             "cursor-pointer hover:bg-bgs2": accessLog.type === "focus"
           })}
           on:click={() => {
-            if (accessLog.type === "focus") {
+            if (accessLog.type === "focus" && accessLog.session?.id) {
               appStore.openResource(
-                accessLog.session?.id,
+                accessLog.session.id,
                 ResourceAccessMode.POP
               );
             }

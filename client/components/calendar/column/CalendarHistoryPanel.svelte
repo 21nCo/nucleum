@@ -11,7 +11,7 @@
     UIStateScope
   } from "$lib/client/stores/uiState/uiState.type";
   import view from "$lib/client/stores/view.store";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import { Size } from "$lib/client/types/size.enum";
   import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
   import { CalendarHistoryTab } from "../calendar.type";

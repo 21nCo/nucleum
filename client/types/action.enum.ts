@@ -39,6 +39,8 @@ export enum Action {
   LIBRARY = "library",
   OVERVIEW = "overview",
   HOME = "home",
+  MOBILEHOME = "mobilehome",
+  CALENDAR = "calendar",
   BULK_LINK = "bulk-link",
   EDIT_TASK_GOAL = "edit-task-goal",
   CALENDAR_DAY = "calendar-day",

@@ -22,6 +22,7 @@
   import { createEventDispatcher } from "svelte";
   import { clipboard, type IActiveCaptureStore } from "./capture.store";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import { fly } from "svelte/transition";
   export let captureStore: IActiveCaptureStore;
   const dispatch = createEventDispatcher();
 
@@ -47,7 +48,6 @@
   ].join(",");
 
   let multipleFilesData: IMultiFileCaptureData | undefined = undefined;
-  let isSaveInProgress: boolean = false;
   let error: string | undefined = undefined;
 
   let isValidMultipleFiles = false;
@@ -72,9 +72,8 @@
         return;
       }
       if (all.length === 1) {
-        isSaveInProgress = true;
         let file = all[0];
-        const result = await captureStore.saveFile(file);
+        await captureStore.saveFile(file);
       } else if (all.length > 1) {
         multipleFilesData = resolveMultipleFilesData(all, MAX_FILE_SIZE_MB);
         if (multipleFilesData && multipleFilesData.sizeExceededCount > 0) {
@@ -87,19 +86,17 @@
       logger.error({ at: "FileUploader.handleDrop", error: e });
       error = "Something went wrong";
     } finally {
-      isSaveInProgress = false;
+      $captureStore.isSaving = false;
     }
   }
 
   async function saveAll(e: MouseEvent) {
     if (e) e.stopPropagation();
     if (!multipleFilesData) return;
-    isSaveInProgress = true;
     await wait(10);
     await captureStore.saveMultipleFiles(multipleFilesData.files, {
       uploadProgressId: uploadProgressElementId
     });
-    isSaveInProgress = false;
   }
 
   /**
@@ -124,15 +121,18 @@
   }
 </script>
 
-<div class="w-full h-full flex flex-col items-center justify-center">
-  {#if isSaveInProgress && !isValidMultipleFiles}
+<div
+  class="w-full h-full flex flex-col items-center justify-center"
+  in:fly={{ duration: 300, y: 100 }}
+>
+  {#if $captureStore.isSaving && !isValidMultipleFiles}
     <EmptyStatusView
       isLoadingState={true}
       loadingText="Processing and uploading..."
     />
   {:else}
     <div
-      class="flex flex-col gap-6 w-full mo:h-9/10 h-9/10 justify-between items-center border border-dashed border-brs3 bg-bgs2/50 rounded-md"
+      class="flex flex-col gap-6 w-full mo:h-9/10 h-full justify-between items-center border border-dashed border-brs3 bg-bgs2/50 rounded-md"
       use:fileDrop={{
         accept: supportedFileTypes,
         multiple: true,
@@ -144,16 +144,16 @@
       <div class="flex w-full justify-end p-3">
         <div>
           <Button
-            icon="cross"
-            tooltip="Cancel"
+            icon="back"
+            tooltip="Go back"
             parentBgIndex={2}
-            on:click={() => dispatch("cancel")}
+            on:click={() => dispatch("clear")}
           />
         </div>
       </div>
       <div class="flex flex-col items-center gap-6 w-full">
         <div class="flex flex-col items-center gap-2">
-          {#if isSaveInProgress}
+          {#if $captureStore.isSaving}
             <div class="flex items-center gap-1">
               <span class="text-fgs3 text-b3">Processing and uploading...</span>
               <span id={uploadProgressElementId} class="text-fgs3 text-b3"
@@ -186,7 +186,7 @@
           {#if isValidMultipleFiles}
             <Button
               label="Save all"
-              isLoading={isSaveInProgress}
+              isLoading={$captureStore.isSaving}
               type={ButtonVariant.PRIMARY}
               icon="proceed"
               parentBgIndex={2}

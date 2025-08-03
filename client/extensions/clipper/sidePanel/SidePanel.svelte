@@ -49,7 +49,7 @@
   } from "$lib/client/types/notification.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import { fly } from "svelte/transition";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import ExtensionHelp from "../../shared/ExtensionHelp.svelte";
   import { FluxMethod } from "$lib/client/components/flux/flux.type";
   import { clipperCacheableStores } from "../clipper.config";
@@ -385,7 +385,6 @@
             <div class="flex w-full justify-center items-center p-3">
               <InlineSyncingFeedbackBase
                 isSyncing={true}
-                isFullWidthVariant={true}
               />
             </div>
           {/if}

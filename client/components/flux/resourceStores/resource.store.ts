@@ -711,6 +711,13 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
     else return result.filter(activeResourceFilter);
   }
 
+  /**
+   * TODO - expand props usage in .select() - ex: Task.svelte
+   * @param resourceId
+   * @param properties
+   * @param params
+   * @returns
+   */
   select(
     resourceId: IRecordId,
     properties?: IResourceSelectProperties,

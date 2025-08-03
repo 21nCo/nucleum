@@ -38,7 +38,8 @@ import { compareVersions } from "$lib/shared/utils/utils";
 import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
-import { Product } from "$lib/client/types/product.type";
+import { Product } from "$lib/client/products/product.type";
+import { resolveProductConfig } from "$lib/client/products/product.config";
 import { postDataToParent } from "$lib/client/utils/embed.utils";
 import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
 
@@ -49,14 +50,7 @@ const loadSurrealDB = async () => {
 
 function resolveDatabaseId(product: Product) {
   if (!product) return "nativeone";
-  switch (product) {
-    case Product.POINTRON:
-      return "pointone";
-    case Product.MEMOTRON:
-      return "nativeone";
-    default:
-      return "nativeone";
-  }
+  return resolveProductConfig(product).databaseName;
 }
 
 export class SurrealPersistence implements IPersistence {

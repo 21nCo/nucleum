@@ -444,7 +444,7 @@
     <BulkEditBar
       isExpandedMode={containerWidth > 800}
       context={multiSelectContext}
-      on:action={(e) => onBulkAction(e.detail)}
+      on:action={(e) => onBulkAction(e.detail.action, e.detail.data)}
       on:actionWithContext={(e) =>
         onBulkAction(e.detail.action, e.detail.context)}
       on:selectAll={selectAll}

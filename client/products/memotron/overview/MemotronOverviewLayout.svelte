@@ -13,7 +13,7 @@
     UIStateScope
   } from "$lib/client/stores/uiState/uiState.type";
   import { MemotronOverviewPanel } from "./overview.type";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { cn } from "$lib/client/utils/ui.utils";
 

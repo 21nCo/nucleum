@@ -122,6 +122,10 @@
 
     console.time("init");
     const initState = await initializeDatabase();
+    if (initState === 1) {
+      $appLoadingState.isBaseLoaded = true;
+      dispatch("ready");
+    }
     let userDataState: any;
     if (initState !== undefined)
       userDataState = await initializeEssentialUserData(initState);
@@ -132,24 +136,20 @@
     } else if (userDataState?.cursors) {
       await flux.paginateResourcesV2(userDataState.cursors);
     }
-    $appLoadingState.isBaseLoaded = true;
     await Promise.all([
       recentsStore.refresh(searcheableResources),
       initializeUserConfig()
     ]);
-    dispatch("ready");
+    if (initState !== 1) {
+      $appLoadingState.isBaseLoaded = true;
+      dispatch("ready");
+    }
     console.timeEnd("init");
 
     safeRequestIdleCallback(async () => {
       if (userDataState?.counts && !isDebug) {
-        if (!$view.isConstrainedWidth) {
-          toasts.showProgress("reconcile", "Syncing in the background");
-        }
         await flux.reconcile({ counts: userDataState.counts });
         dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
-        if (!$view.isConstrainedWidth) {
-          toasts.closeProgress("reconcile");
-        }
       }
       await recentsStore.refresh(searcheableResources);
       await syncAccountPaidPlanFromExternalProvider();

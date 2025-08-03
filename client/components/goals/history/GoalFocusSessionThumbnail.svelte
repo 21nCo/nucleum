@@ -1,6 +1,6 @@
 <script lang="ts">
   import type {
-    ISessionLog,
+    ISessionLogThumb,
     ISessionThumb
   } from "$lib/client/products/pointron/logs/log.type";
   import { appStore } from "$lib/client/stores/app.store";
@@ -8,7 +8,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
   export let session: ISessionThumb;
-  export let logs: ISessionLog[] = [];
+  export let logs: ISessionLogThumb[] = [];
 
   function formatTime(date: Date) {
     return date.toLocaleTimeString("en-US", {

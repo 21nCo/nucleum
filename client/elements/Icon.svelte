@@ -220,11 +220,11 @@
     isAbgContext: boolean | undefined,
     isCuBgContext: boolean | undefined
   ) {
-    let classes = "stroke-fgs1";
-    if (isAbgContext != undefined) {
-      classes = isAbgContext ? "fill-abg" : "stroke-fgs1";
-    } else if (isCuBgContext != undefined) {
-      classes = isCuBgContext ? "fill-cbg" : "stroke-fgs1";
+    let classes = "stroke-fgs2";
+    if (isAbgContext !== undefined) {
+      classes = isAbgContext ? "fill-abg" : "stroke-fgs2";
+    } else if (isCuBgContext !== undefined) {
+      classes = isCuBgContext ? "fill-cbg" : "stroke-fgs2";
     } else if (clParam) {
       classes = clParam;
     }
@@ -284,21 +284,27 @@
       return undefined;
     }
     let renderedIcon = icon;
-    if (icon.includes("fa6-brands") || icon.includes("lets-icons")) {
+    if (icon.startsWith("fa6-brands") || icon.startsWith("lets-icons")) {
       renderedIcon = icon;
-    } else if (icon.includes("-light")) {
-      renderedIcon = isFilled ? icon.replace("-light", "-fill") : icon;
-    } else if (icon.includes("-thin")) {
-      renderedIcon = isFilled ? icon.replace("-thin", "-fill") : icon;
-    } else if (icon.includes("-linear")) {
-      renderedIcon = isFilled ? icon.replace("-linear", "-bold") : icon;
-    } else if (icon.includes("-line-duotone")) {
-      renderedIcon = isFilled
-        ? icon.replace("-line-duotone", "-bold-duotone")
-        : icon;
-    } else if (icon.includes("heroicons")) {
+    } else if (icon.startsWith("ph:")) {
+      if (icon.endsWith("-light")) {
+        renderedIcon = isFilled ? icon.replace("-light", "-fill") : icon;
+      } else if (icon.endsWith("-thin")) {
+        renderedIcon = isFilled ? icon.replace("-thin", "-fill") : icon;
+      } else if (!icon.endsWith("-fill")) {
+        renderedIcon = isFilled ? icon + "-fill" : icon;
+      }
+    } else if (icon.startsWith("solar:")) {
+      if (icon.endsWith("-linear")) {
+        renderedIcon = isFilled ? icon.replace("-linear", "-bold") : icon;
+      } else if (icon.endsWith("-line-duotone")) {
+        renderedIcon = isFilled
+          ? icon.replace("-line-duotone", "-bold-duotone")
+          : icon;
+      }
+    } else if (icon.startsWith("heroicons:")) {
       renderedIcon = isFilled ? icon + "-solid" : icon;
-    } else if (icon.includes("mynaui:")) {
+    } else if (icon.startsWith("mynaui:")) {
       renderedIcon = isFilled ? icon + "-solid" : icon;
     }
     if (dev_useIconifyTailwind) {

@@ -4,10 +4,10 @@
   import view from "../stores/view.store";
   import { cn } from "../utils/ui.utils";
   import { generateRandomId } from "$lib/shared/utils/crypto.utils";
-  export let isAppMenuHidden: boolean = false;
   export let margin: string | undefined = undefined;
   export let zIndex: string = "z-20";
   export let containerId: string | undefined = undefined;
+  let isAppMenuHidden: boolean = resolveIfAppMenuHidden();
   const fallbackContainerId = generateRandomId();
   let classList: string = "";
   export { classList as class };
@@ -15,6 +15,7 @@
   let portal: HTMLElement | undefined = undefined;
 
   onMount(() => {
+    isAppMenuHidden = resolveIfAppMenuHidden();
     if (!classList.includes("justify")) {
       classList += " justify-center";
     }
@@ -39,6 +40,10 @@
       }
     }
   });
+
+  function resolveIfAppMenuHidden() {
+    return !document.getElementById("app-menu");
+  }
 </script>
 
 <div id={fallbackContainerId} />
@@ -51,7 +56,7 @@
       !margin && {
         "mb-8": $view.isPortrait && isAppMenuHidden,
         "mb-[10.5rem]": $view.isPortrait && $player.isMiniOn,
-        "mb-24": $view.isPortrait,
+        "mb-24": $view.isPortrait && !isAppMenuHidden,
         "mb-4": !$view.isPortrait
       },
       classList

@@ -867,7 +867,7 @@ class Flux {
 
     for (let record of syncRecords) {
       const resourceType = determineResourceType(record.id);
-      if (!resourceType) continue;
+      if (!resourceType || resourceType === Resource.unknown) continue;
 
       if (!recordsByResource.has(resourceType)) {
         recordsByResource.set(resourceType, []);

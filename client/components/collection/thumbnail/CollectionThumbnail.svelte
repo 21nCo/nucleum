@@ -39,11 +39,19 @@
     >
       <CollectionThumbnailAvatar {item} size={Size.lg} />
       <div class="flex flex-col gap-1 flex-grow">
-        <CollectionThumbnailLabel
-          {item}
-          isShowAvatar={false}
-          isShowStarStatus={accessPoint !== ResourceAccessPoint.BROWSER}
-        />
+        <div class="flex items-center gap-2">
+          <CollectionThumbnailLabel
+            {item}
+            isShowAvatar={false}
+            isShowStarStatus={accessPoint !== ResourceAccessPoint.BROWSER}
+          />
+          <span class="flex gap-1">
+            {#if accessPointState === ResourceAccessPointState.DEFAULT}
+              <CollectionNodeCount {item} isShowLabel={true} />
+            {/if}
+            <CollectionPropertyCount {item} isShowLabel={false} />
+          </span>
+        </div>
         {#if item.description}
           <span class="text-b3 text-fgs3 truncate text-left">
             {item.description}

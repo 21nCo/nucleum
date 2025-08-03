@@ -2,7 +2,7 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { sessionLogStore } from "$lib/client/products/pointron/logs/log.store";
   import type {
-    ISessionLog,
+    ISessionLogThumb,
     ISessionThumb
   } from "$lib/client/products/pointron/logs/log.type";
   import type { IRecordId } from "$lib/client/types/data.type";
@@ -19,7 +19,7 @@
   export let id: IRecordId;
   export let isIncludeSubGoals = false;
   let sessions: ISessionThumb[] = [];
-  let sessionLogs: ISessionLog[] = [];
+  let sessionLogs: ISessionLogThumb[] = [];
   let isLoading = true;
 
   async function refresh() {

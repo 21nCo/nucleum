@@ -9,7 +9,7 @@
   import { tooltip } from "$lib/client/actions/popover.action";
   import { cn } from "$lib/client/utils/ui.utils";
   import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import TopNavLeftMenuItem from "$lib/client/layout/topNav/TopNavLeftMenuItem.svelte";
   export let ctx: Product = Product.NUCLEUS;
   const action =

@@ -19,7 +19,6 @@
   import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
   export let captureStore: IActiveCaptureStore;
-  export let isSaveInProgress: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CAPTURE;
   export let creationContext: IRecordId | undefined = undefined;
 
@@ -134,7 +133,6 @@
 
   async function onFinish() {
     const waveformBlob = await resolveWaveFormBlob();
-    isSaveInProgress = true;
     const result = await captureStore.saveAudioRecording(
       blobRefernce,
       recordingDuration,
@@ -144,8 +142,7 @@
         thumbnailBlob: waveformBlob
       }
     );
-    isSaveInProgress = false;
-    dispatch("save", result);
+    dispatch("saved", result);
   }
 
   async function resolveWaveFormBlob() {
@@ -159,8 +156,8 @@
   }
 </script>
 
-<div class="flex flex-col h-full justify-center w-11/12 gap-8">
-  <div class="flex min-h-64">
+<div class="grid grid-rows-2 h-full w-full">
+  <div class="flex min-h-64 w-full">
     {#if isShowPreview}
       <div
         class:hidden={recordingState === PlayActionState.STOPPED ||
@@ -184,53 +181,74 @@
     {/if}
   </div>
   {#if $view.isConstrainedWidth || recordingState === PlayActionState.NOT_STARTED}
-    <div
-      class={cn("flex w-full justify-center gap-6", {
-        "flex-col": recordingState === PlayActionState.NOT_STARTED
-      })}
-    >
-      {#if recordingState === PlayActionState.NOT_STARTED}
+    <div class="flex flex-col w-full justify-center">
+      <div class="flex w-full justify-center gap-6 mb-auto">
+        {#if recordingState === PlayActionState.NOT_STARTED}
+          <PlayerControl
+            on:click={startRecording}
+            icon="microphone"
+            type={ButtonVariant.PRIMARY}
+            label="Start"
+            size={Size.lg}
+          />
+        {:else if recordingState === PlayActionState.RUNNING}
+          <PlayerControl
+            on:click={toggleRecording}
+            icon="pause"
+            label="Pause"
+          />
+          <PlayerControl
+            on:click={stopRecording}
+            type={ButtonVariant.PRIMARY}
+            icon="stop"
+            label="Finish"
+          />
+        {:else if recordingState === PlayActionState.PAUSED}
+          <PlayerControl
+            on:click={toggleRecording}
+            icon="play"
+            label="Resume"
+          />
+          <PlayerControl
+            on:click={stopRecording}
+            type={ButtonVariant.PRIMARY}
+            icon="stop"
+            label="Finish"
+          />
+        {/if}
+      </div>
+      <div class="pb-8">
         <PlayerControl
-          on:click={startRecording}
-          icon="microphone"
-          type={ButtonVariant.PRIMARY}
-          label="Start"
-          size={Size.lg}
-        />
-      {:else if recordingState === PlayActionState.RUNNING}
-        <PlayerControl on:click={toggleRecording} icon="pause" label="Pause" />
-        <PlayerControl
-          on:click={stopRecording}
-          type={ButtonVariant.PRIMARY}
-          icon="stop"
-          label="Finish"
-        />
-      {:else if recordingState === PlayActionState.PAUSED}
-        <PlayerControl on:click={toggleRecording} icon="play" label="Resume" />
-        <PlayerControl
-          on:click={stopRecording}
-          type={ButtonVariant.PRIMARY}
-          icon="stop"
-          label="Finish"
-        />
-      {/if}
-      {#if !$view.isConstrainedWidth && recordingState === PlayActionState.NOT_STARTED}
-        <PlayerControl
-          on:click={() => {
+          on:click={(e) => {
+            e.stopPropagation();
             cleanup();
-            dispatch("cancel");
+            dispatch("clear");
           }}
-          icon="cross"
+          icon="back"
+          tooltip="Go back"
           size={Size.sm}
-          type={ButtonVariant.DANGER}
           style={ButtonStyle.OUTLINED}
         />
-      {/if}
+      </div>
     </div>
   {:else}
     <div class="flex w-full justify-center gap-6">
+      <Button
+        on:click={() => {
+          cleanup();
+          dispatch("clear");
+        }}
+        icon="back"
+        style={ButtonStyle.OUTLINED}
+        label="Go back"
+      />
       {#if recordingState === PlayActionState.RUNNING}
-        <Button on:click={toggleRecording} icon="pause" label="Pause" />
+        <Button
+          on:click={toggleRecording}
+          icon="pause"
+          style={ButtonStyle.OUTLINED}
+          label="Pause"
+        />
         <Button
           on:click={stopRecording}
           type={ButtonVariant.PRIMARY}
@@ -246,16 +264,6 @@
           label="Finish"
         />
       {/if}
-      <Button
-        on:click={() => {
-          cleanup();
-          dispatch("cancel");
-        }}
-        icon="cross"
-        type={ButtonVariant.DANGER}
-        style={ButtonStyle.OUTLINED}
-        label="Cancel"
-      />
     </div>
   {/if}
   {#if error}

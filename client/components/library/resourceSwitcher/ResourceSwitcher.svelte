@@ -7,14 +7,14 @@
   import ResourceSwitcherItem from "./ResourceSwitcherItem.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
+  import { resolveProductConfig } from "$lib/client/products/product.config";
   import { resolveResourceSwitcher } from "../../flux/resourceStores/resource.utils";
   const dispatch = createEventDispatcher();
   export let resources: Resource[] = [];
   export let selected: ISelectValue | undefined = undefined;
   export let parentBgIndex: number = 1;
   export let isShowCount: boolean = false;
-  let refs: Record<Resource, ResourceSwitcherItem> = {};
 
   const resourceList: IResourceSwitchItem[] = resolveResourceSwitcher();
 
@@ -37,68 +37,16 @@
     // Product.FELLOTRON
   ];
   if (selected === undefined) selected = options[0]?.value;
-  export async function refresh(resource: Resource) {
-    await refs[resource]?.refresh();
-  }
 
   function resolveResourcesForSection(section: Product) {
-    let resources = [];
-    switch (section) {
-      case Product.NUCLEUS:
-        resources = [
-          Resource.collection
-          // Resource.combination,
-          // Resource.event
-        ];
-        break;
-      case Product.POINTRON:
-        resources = [Resource.goal, Resource.task];
-        break;
-      case Product.MEMOTRON:
-        resources = [Resource.node, Resource.relation];
-        break;
-      case Product.SELFTRON:
-        resources = [Resource.habit, Resource.quest, Resource.input];
-        break;
-      case Product.FEEDTRON:
-        resources = [Resource.source, Resource.feed];
-        break;
-      case Product.HOMETRON:
-        resources = [Resource.thing, Resource.place];
-        break;
-      case Product.FINATRON:
-        resources = [Resource.account];
-        break;
-      case Product.FELLOTRON:
-        resources = [Resource.fellow];
-        break;
-      default:
-        return [];
-    }
+    const resources = resolveProductConfig(section).resources;
     return resources
       .map((x) => resourceList.find((y) => y.value === x))
       .filter((x) => x !== undefined);
   }
 
   function resolveSectionLabel(section: Product) {
-    switch (section) {
-      case Product.POINTRON:
-        return "Focus";
-      case Product.MEMOTRON:
-        return "Memory";
-      case Product.SELFTRON:
-        return "Self";
-      case Product.FEEDTRON:
-        return "Feed";
-      case Product.HOMETRON:
-        return "Home";
-      case Product.FINATRON:
-        return "Finance";
-      case Product.FELLOTRON:
-        return "Fellow";
-      default:
-        return "";
-    }
+    return resolveProductConfig(section).sectionLabel;
   }
 </script>
 
@@ -116,7 +64,6 @@
         >
           {#each resolveResourcesForSection(section) as item, index (item.value)}
             <ResourceSwitcherItem
-              bind:this={refs[item.value]}
               {item}
               {isShowCount}
               {parentBgIndex}
@@ -138,7 +85,6 @@
   >
     {#each options as item, index (item.value)}
       <ResourceSwitcherItem
-        bind:this={refs[item.value]}
         {item}
         {isShowCount}
         {parentBgIndex}

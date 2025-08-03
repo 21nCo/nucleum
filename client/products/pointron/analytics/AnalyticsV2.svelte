@@ -34,7 +34,7 @@
     UIStateScope
   } from "$lib/client/stores/uiState/uiState.type";
   import { bg, cn } from "$lib/client/utils/ui.utils";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
 
   const bgIndex = 2;
   const isNucleusContext = $appStore.product === Product.NUCLEUS;

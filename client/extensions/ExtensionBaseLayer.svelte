@@ -48,9 +48,10 @@
   export let stores: IStore[] = [];
   export let isLoggedIn: boolean = false;
   export let product: { product: string; env: string };
-  $: product = extractProduct(window.location.hostname);
+  $: currentPage = extractProduct(window.location.hostname);
   $: isSelfPage =
-    product.product === "memotron" || process.env.NODE_ENV === "development";
+    currentPage.product === "memotron" ||
+    process.env.NODE_ENV === "development";
 
   const sprites = [
     "sprite",

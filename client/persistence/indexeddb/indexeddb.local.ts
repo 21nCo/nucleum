@@ -17,18 +17,12 @@ import {
   type IResourceSelectProperties
 } from "../../types/data.type";
 import { compareVersions } from "$lib/shared/utils/utils";
-import { Product } from "$lib/client/types/product.type";
+import { Product } from "$lib/client/products/product.type";
+import { resolveProductConfig } from "$lib/client/products/product.config";
 
 function resolveDatabaseName(product: Product) {
   if (!product) return "nativeone";
-  switch (product) {
-    case Product.POINTRON:
-      return "pointone";
-    case Product.MEMOTRON:
-      return "nativeone";
-    default:
-      return "nativeone";
-  }
+  return resolveProductConfig(product).databaseName;
 }
 
 interface IndexedDBStore {

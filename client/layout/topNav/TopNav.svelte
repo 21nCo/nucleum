@@ -21,6 +21,8 @@
   import { UserDataMode } from "$lib/client/types/account.type";
   import { tooltip } from "$lib/client/actions/popover.action";
   import TopNavLeftMenuItem from "./TopNavLeftMenuItem.svelte";
+  import InlineSyncingFeedback from "$lib/client/elements/feedback/InlineSyncingFeedback.svelte";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
   let isInFocusMode = false;
   let pinnedItems: IRecordId[] = tabs.get() ?? [];
@@ -131,12 +133,15 @@
         tooltip="Help"
         on:click={() => appStore.runAction(Action.HELP)}
       />
-      <span class="px-1" />
-      <!-- <FocusPlayer /> -->
+      <InlineSyncingFeedback
+        resource={Resource.everything}
+        isShorter={true}
+        text="Syncing..."
+      />
       <TrailLeftIndicator />
       <button
         class={cn(
-          "flex items-center gap-2 rounded-full overflow-hidden border border-transparent",
+          "flex items-center gap-2 rounded-full overflow-hidden border border-transparent ml-2",
           {
             "outline outline-ags1 hover:outline-ags2": isSubscriber,
             "hover:outline hover:outline-brs3": !isSubscriber

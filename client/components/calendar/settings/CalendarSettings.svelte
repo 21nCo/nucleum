@@ -90,7 +90,7 @@
         />
       </div>
 
-      <div class="bg-bgs2 pr-12 rounded-lg min-h-0 flex-grow flex-1">
+      <div class="border border-brs3 p-1 rounded-lg min-h-0 flex-grow flex-1">
         <NodularMarkdown
           isNodular={true}
           mdId={generateSimpleRandomId()}

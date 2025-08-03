@@ -1,6 +1,6 @@
 <script lang="ts">
   import view from "$lib/client/stores/view.store";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import { PlanType } from "../userPlan.type";
 
   export let type: PlanType;

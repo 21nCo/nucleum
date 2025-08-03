@@ -41,11 +41,20 @@ export type IAppData = {
   cp?: any;
   shortcuts?: any;
   configurableShortcuts?: string[];
+  /**
+   * @deprecated - use product.config instead
+   */
   appMenu?: string[];
+  /**
+   * @deprecated - use product.config instead
+   */
   appMenuMobile?: string[];
   oAuthConfig?: any[];
   isAnalyticsEnabled?: boolean;
   isCmdBarEnabled?: boolean;
+  /**
+   * @deprecated - use product.config instead
+   */
   isShowCaptureOnMobile?: boolean;
   leftPanelFooter?: string;
   bottomRightAction?: string;

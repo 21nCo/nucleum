@@ -8,7 +8,7 @@
     UIState,
     UIStateScope
   } from "$lib/client/stores/uiState/uiState.type";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { TimeScaleUnit } from "$lib/client/types/time.type";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -24,7 +24,11 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { page } from "$app/stores";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import { Size } from "$lib/client/types/size.enum";
   const dispatch = createEventDispatcher();
+
   export let scale: TimeScaleUnit;
   export let date: Date;
   export let expansionMode: CalendarExpansionMode =
@@ -32,6 +36,7 @@
   export let isRewind: boolean = false;
   export let isCwContext: boolean = false;
   let mdId = generateSimpleRandomId();
+  const backPath = $page.url.searchParams.get("back");
 
   let selectedPanel: CalendarColumnPanel = resolvePanelSelection();
 
@@ -144,6 +149,16 @@
   {#if layout === CalendarColumnLayout.TABS}
     <div class="flex items-center justify-between">
       <div class="flex items-center gap-2">
+        {#if isCwContext && backPath}
+          <Icon
+            icon="ph:caret-left"
+            class="text-fgs3"
+            size={Size.lg}
+            on:click={() => {
+              appStore.gotoPath(backPath);
+            }}
+          />
+        {/if}
         <div class="text-h4 font-medium text-fgs3">
           <!-- {formatDate(date)} -->
           <DatePicker bind:date on:change={handleDateChange} variant="inline" />

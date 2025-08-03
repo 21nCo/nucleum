@@ -12,9 +12,11 @@
   import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
   import { Action } from "$lib/client/types/action.enum";
   import { Size } from "$lib/client/types/size.enum";
+  import { resolveProductConfig } from "$lib/client/products/product.config";
 
   let isInFocusMode = false;
   let isRounded = false;
+  const productConfig = resolveProductConfig();
   // $: isRounded = $appearance.skin === AppSkin.Glassy ? true : false;
   function handleFocusMode(e: CustomEvent<boolean>) {
     if (typeof e.detail === "boolean") {
@@ -24,39 +26,44 @@
 </script>
 
 {#if !$appStore.isMenuHidden && !isInFocusMode}
-  {#if $view.isPortrait}
+  {#if $view.isPortrait && productConfig.appMenuPt.length > 0}
     <PortraitBottomNav />
-  {:else if variant === "expandable"}
-    <LeftNavExpandable {isRounded}>
-      <slot name="header" slot="header">
-        <div class="flex flex-col w-full justify-center items-center gap-4">
-          <ProfileLeftPanelSection />
-          <div class="px-3 w-full mt-4">
-            <button
-              class="h-10 w-full flex justify-between items-center px-2 border border-brs3 rounded-md hover:bg-bgs3 text-b2 text-fgs2 font-light"
-              on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
-            >
-              <span class="flex gap-2 items-center">
-                <Icon icon="search" size={Size.sm} />
-                <span> Search </span>
-              </span>
-              <ShortcutText shortcut={Action.GLOBAL_SEARCH} parentBgIndex={2} />
-            </button>
+  {:else if !$view.isPortrait && productConfig.appMenu.length > 0}
+    {#if variant === "expandable"}
+      <LeftNavExpandable {isRounded}>
+        <slot name="header" slot="header">
+          <div class="flex flex-col w-full justify-center items-center gap-4">
+            <ProfileLeftPanelSection />
+            <div class="px-3 w-full mt-4">
+              <button
+                class="h-10 w-full flex justify-between items-center px-2 border border-brs3 rounded-md hover:bg-bgs3 text-b2 text-fgs2 font-light"
+                on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
+              >
+                <span class="flex gap-2 items-center">
+                  <Icon icon="search" size={Size.sm} />
+                  <span> Search </span>
+                </span>
+                <ShortcutText
+                  shortcut={Action.GLOBAL_SEARCH}
+                  parentBgIndex={2}
+                />
+              </button>
+            </div>
           </div>
-        </div>
-      </slot>
-      <slot name="header-thin" slot="header-thin">
-        <div class="w-full flex justify-center">
-          <Button
-            icon="search"
-            parentBgIndex={2}
-            on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
-          />
-        </div>
-      </slot>
-    </LeftNavExpandable>
-  {:else if variant === "fixed"}
-    <LeftNavFixed {isRounded} />
+        </slot>
+        <slot name="header-thin" slot="header-thin">
+          <div class="w-full flex justify-center">
+            <Button
+              icon="search"
+              parentBgIndex={2}
+              on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
+            />
+          </div>
+        </slot>
+      </LeftNavExpandable>
+    {:else if variant === "fixed"}
+      <LeftNavFixed {isRounded} />
+    {/if}
   {/if}
 {/if}
 <svelte:window on:focusMode={handleFocusMode} />

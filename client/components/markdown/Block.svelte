@@ -999,6 +999,7 @@
           <Icon
             icon={isSelected ? "check-circle" : "circle"}
             class={isSelected ? "" : "text-fgs4/50"}
+            isFilled={isSelected}
           />
         {/if}
       </button>

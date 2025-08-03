@@ -8,7 +8,7 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   import { onMount } from "svelte";
   import { appEvents } from "$lib/client/stores/notification.store";
   import { GlobalEvent } from "$lib/client/types/event.enum";
@@ -31,6 +31,7 @@
   export let panelSize: Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   export let isNavActivated: boolean = false;
   export let isShowBackButton: boolean = false;
+  export let parentBgIndex: number = 1;
   /**
    * If true, the panel will be expanded by default and there will be no right slot for record view.
    */
@@ -95,7 +96,8 @@
         >
           <div
             class={cn("flex items-center gap-2", {
-              "active:bg-bgs2 rounded-md px-1": isShowBackButton
+              "rounded-md px-1": isShowBackButton,
+              [`active:${bg(parentBgIndex)}`]: isShowBackButton
             })}
           >
             {#if isShowBackButton}
@@ -122,11 +124,7 @@
                   isExplicitlyCollapsed = true;
                 }}
               >
-                <Icon
-                  icon="chevron-left"
-                  class="text-fgs3"
-                  size={Size.lg}
-                />
+                <Icon icon="chevron-left" class="text-fgs3" size={Size.lg} />
               </button>
             {/if}
           </slot>

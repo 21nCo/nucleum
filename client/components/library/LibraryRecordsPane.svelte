@@ -181,10 +181,6 @@
     await _refreshFilteredRecordsTotalCount(filters);
   }
 
-  function refreshTotalRecordsCount() {
-    dispatch("refreshTotalCount");
-  }
-
   async function refresh(isPagination?: boolean) {
     if (isCustom) return;
 
@@ -229,8 +225,8 @@
         const cachedData = cache.retrieve(cacheKey);
         if (cachedData) {
           isRefreshing = false;
-          data = cachedData[CacheSubKey.DATA];
-          starredData = cachedData[CacheSubKey.STARRED];
+          data = cachedData[CacheSubKey.DATA] ?? [];
+          starredData = cachedData[CacheSubKey.STARRED] ?? [];
         }
         const cachedTotalCount = cache.retrieve(
           resourceCacheKey(resource, CacheKey.COUNT)
@@ -258,14 +254,15 @@
           cache.replaceUsingSubKey(cacheKey, CacheSubKey.DATA, data);
       }
       if (isConstrainedWidth && !searchQuery) {
-        starredData = await searchStore.select({
-          resource,
-          filters: {
-            ...filters,
-            isStarred: true
-          },
-          signal
-        });
+        starredData =
+          (await searchStore.select({
+            resource,
+            filters: {
+              ...filters,
+              isStarred: true
+            },
+            signal
+          })) ?? [];
         if (isDefaultLoad)
           cache.replaceUsingSubKey(cacheKey, CacheSubKey.STARRED, starredData);
       }
@@ -441,7 +438,6 @@
       Object.values(RemovalProperty).some((x) => mutation.record[x])
     ) {
       const id = mutation.record.id;
-      refreshTotalRecordsCount();
       await refreshFilteredRecordsCount();
       if (id) data = data.filter((x) => !isSameResource(x.id, id));
       if (id)
@@ -624,7 +620,7 @@
     class="flex flex-col gap-4 px-4 overflow-auto grow"
     id="records-container"
   >
-    <InlineSyncingFeedback {resource} isFullWidthVariant={true} />
+    <InlineSyncingFeedback {resource} />
     {#if isConstrainedWidth && !searchQuery && starredData && starredData.length > 0}
       <div class="flex flex-col gap-2">
         <Text content="Starred" style={TextStyle.SECTION_HEADING} />

@@ -291,8 +291,8 @@ const logos = [
 ];
 
 const solarIconsNotInMap = [
-  "rewind-10-seconds-back-linear",
-  "rewind-10-seconds-forward-linear"
+  "rewind-10-seconds-back",
+  "rewind-10-seconds-forward"
 ];
 
 import { iconMappings } from "./icons.map";
@@ -419,4 +419,4 @@ export const solarIconsForBundling = {
   "bold-duotone": solarBoldDuotoneIcons
 };
 
-export const bundleNumber = 46;
+export const bundleNumber = 50;

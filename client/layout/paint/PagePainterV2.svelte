@@ -5,13 +5,15 @@
   import type { IAction } from "$lib/client/types/action.type";
   import { onDestroy, onMount } from "svelte";
   import ComponentResolver from "./ComponentResolver.svelte";
-  import { logger } from "$lib/client/components/debug/logger.client";
+  import { resolveProductConfig } from "$lib/client/products/product.config";
+  import view from "$lib/client/stores/view.store";
   export let prefix: string | undefined = undefined;
   export let cmdPageLaunch: string | undefined = undefined;
 
   let action: IAction | null = null;
   let pageSub: any;
   const fileBasedRoutes = ["cparchived"];
+  const productConfig = resolveProductConfig();
   function resolvePath() {
     if (cmdPageLaunch) {
       return cmdPageLaunch;
@@ -41,7 +43,10 @@
       return;
     }
     if (path === "" || path === "index.html") {
-      appStore.gotoPath($appStore.appData.homePath ?? "/home");
+      const homePath = $view.isPortrait
+        ? productConfig.homePathPt
+        : productConfig.homePath;
+      appStore.gotoPath(homePath);
       return;
     } else if (!path) {
       appStore.gotoPath("/404");

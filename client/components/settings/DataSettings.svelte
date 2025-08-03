@@ -14,7 +14,7 @@
   } from "$lib/client/stores/notification.store";
   import { Action } from "$lib/client/types/action.enum";
   import { ButtonVariant } from "$lib/client/types/button.type";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { InfoTextType } from "$lib/client/types/text.type";

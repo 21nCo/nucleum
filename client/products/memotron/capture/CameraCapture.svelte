@@ -190,7 +190,7 @@
   </div>
   <div
     class={cn(
-      "absolute mo:bottom-20 bottom-0 left-0 right-0 h-24  flex  gap-4 items-center bg-bgs1 px-4",
+      "absolute mo:bottom-20 bottom-0 left-0 right-0 h-24 flex gap-4 items-center bg-bgs1 px-4",
       {
         "grid grid-cols-3": $view.isConstrainedWidth || !photoTaken,
         "flex justify-center": !$view.isConstrainedWidth
@@ -220,11 +220,11 @@
         on:click={savePhoto}
       />
       <Button
-        icon="cross"
-        label="Cancel"
+        icon="back"
+        label="Go back"
         size={$view.isConstrainedWidth ? Size.sm : Size.md}
         isPreventMinWidth={true}
-        on:click={() => dispatch("cancel")}
+        on:click={() => dispatch("clear")}
       />
     {:else}
       <div class="col-span-1"></div>
@@ -238,11 +238,11 @@
       </div>
       <div class="col-span-1 flex justify-center">
         <Button
-          icon="cross"
-          label="Cancel"
+          icon="back"
+          label="Go back"
           size={$view.isConstrainedWidth ? Size.sm : Size.md}
           isPreventMinWidth={true}
-          on:click={() => dispatch("cancel")}
+          on:click={() => dispatch("clear")}
         />
       </div>
     {/if}

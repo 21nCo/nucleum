@@ -9,7 +9,9 @@
   } from "$lib/client/stores/uiState/uiState.type";
   import view from "$lib/client/stores/view.store";
   import CalendarCw from "./CalendarCW.svelte";
+  import { setEmbedBg } from "$lib/client/utils/embed.utils";
   export let panel: CalendarLayout = resolvePanelSelection();
+  setEmbedBg(1);
 
   function resolvePanelSelection() {
     const layoutState = uiState.getState(UIState.calendarLayout, {
