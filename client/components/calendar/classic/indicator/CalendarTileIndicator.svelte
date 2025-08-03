@@ -18,9 +18,8 @@
   import MonthTileIndicator from "./MonthTileIndicator.svelte";
   import { resolveSessionTimeSplit } from "$lib/client/products/pointron/pointron.utils";
   import { generateSummary } from "$lib/client/products/pointron/focus/session.utils";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
   import { logger } from "$lib/client/components/debug/logger.client";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import { appStore } from "$lib/client/stores/app.store";
 
   export let date: Date;
@@ -120,10 +119,13 @@
 
 {#if type === CalendarTileIndicatorDisplayType.METRICS}
   <div
-    class={cn("flex flex-col items-start justify-center text-b3 w-full", {
-      "text-fgs3": !isActive,
-      "gap-1": isActive
-    })}
+    class={cn(
+      "flex flex-col items-start justify-center text-b3 w-full h-full",
+      {
+        "text-fgs3": !isActive,
+        "gap-1": isActive
+      }
+    )}
   >
     <MonthTileIndicator
       data={{

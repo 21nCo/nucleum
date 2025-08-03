@@ -135,12 +135,12 @@
       isSaveInProgress = true;
       if (data.text) {
         await captureStore.saveWebpage(data.text, {
-          isPreventOpenOnSave: !isOpenOnSave,
-          contentType: nodeType
+          contentType: nodeType,
+          isOpenOnSave: isOpenOnSave
         });
       } else if (data.file) {
         await captureStore.saveFile(data.file, nodeType, {
-          isPreventOpenOnSave: !isOpenOnSave
+          isOpenOnSave: isOpenOnSave
         });
       } else if (data.multipleFiles && data.multipleFiles.files.length > 1) {
         await captureStore.saveMultipleFiles(data.multipleFiles.files);
@@ -208,8 +208,6 @@
       })
       ?.join(", ");
   }
-
-  $: console.log({ data, nodeType, nodeTypeLabel });
 </script>
 
 <div class="flex flex-col justify-between items-center w-full h-full">

@@ -1,6 +1,7 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
+  import { ButtonStyle } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -20,8 +21,8 @@
   {#if isShowClose}
     <div class="w-full flex justify-end text-b2">
       <Button
-        icon="cross-circled"
-        size={Size.lg}
+        icon="cross"
+        style={ButtonStyle.OUTLINED}
         on:click={() => dispatch("close")}
       />
     </div>

@@ -9,12 +9,13 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import { userPreferences } from "../userPreferences.store";
   import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   export let context:
     | "cmd-page"
     | "cp-profile"
     | "account-settings"
-    | "topbar" = "cp-profile";
+    | "topbar"
+    | "mobile-topbar" = "cp-profile";
   export let fileId: IRecordId | undefined = undefined;
   export let isEditing = false;
   export let isLoading = false;
@@ -46,7 +47,11 @@
 
   async function refresh(x: any) {
     if (fileId && renderFileBasedProfilePicture) return;
-    if (isValidString(x.userInfo?.profilePictureUrl) && !import.meta.env.DEV && x.userInfo?.profilePictureUrl.startsWith('https://')) {
+    if (
+      isValidString(x.userInfo?.profilePictureUrl) &&
+      !import.meta.env.DEV &&
+      x.userInfo?.profilePictureUrl.startsWith("https://")
+    ) {
       try {
         let response = await fetch(x.userInfo?.profilePictureUrl!, {
           method: "GET"
@@ -77,6 +82,7 @@
     "rounded-full w-7 h-7 lp:w-6 lp:h-6": context === "topbar",
     "rounded-full w-16 h-16": context === "cp-profile",
     "rounded-md w-20 h-20": context === "cmd-page",
+    "rounded-full w-10 h-10": context === "mobile-topbar",
     "rounded-md w-full border-4": context === "account-settings",
     "border-transparent": context === "account-settings" && !isEditing,
     "outline-2 outline-dashed outline-fgs3 border-bgs1":
@@ -91,7 +97,10 @@
       isLazyLoad={false}
       class={cn("object-cover w-full h-full", {
         "rounded-md": context === "cmd-page" || context === "account-settings",
-        "rounded-full": context === "cp-profile" || context === "topbar"
+        "rounded-full":
+          context === "cp-profile" ||
+          context === "topbar" ||
+          context === "mobile-topbar"
       })}
     />
   {:else if initials}
@@ -108,7 +117,9 @@
       class={cn("w-full h-full", {
         "rounded-md": context === "cmd-page",
         "rounded-full":
-          context === "cp-profile" || context === "account-settings"
+          context === "cp-profile" ||
+          context === "account-settings" ||
+          context === "mobile-topbar"
       })}
       src={$account.userInfo?.profilePictureUrl}
       alt="Profile"

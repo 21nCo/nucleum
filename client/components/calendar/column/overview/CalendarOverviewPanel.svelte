@@ -1,7 +1,7 @@
 <script lang="ts">
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import CalendarOverviewPanelNucleus from "./CalendarOverviewPanelNucleus.svelte";
   import CalendarOverviewPanelPointron from "./CalendarOverviewPanelPointron.svelte";
   export let date: Date;

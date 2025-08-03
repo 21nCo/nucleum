@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { Arrangement } from "$lib/client/types/direction.enum";
@@ -23,8 +24,15 @@
   import { isHideCreateAction, resolveResourceTooltip } from "../library.utils";
   import { keyboardShortcuts } from "../../shortcuts/shortcuts.store";
   import ComponentShortcutListener from "../../shortcuts/ComponentShortcutListener.svelte";
+  import { setEmbedBg } from "$lib/client/utils/embed.utils";
   export let resource: Resource;
-  export let isLibraryNavContext: boolean = false;
+  export let onBack: (() => void) | undefined = undefined;
+  const backPath = $page.url.searchParams.get("back");
+  const hasBack = onBack !== undefined || backPath !== null;
+
+  onMount(() => {
+    setEmbedBg(1);
+  });
   let searchQuery: string = "";
   let id: string | null = null;
   let arrangement: Arrangement =
@@ -80,12 +88,17 @@
 
 {#key resource}
   <Panel
-    {floatingButton}
+    floatingButton={hasBack && resource === Resource.node
+      ? undefined
+      : floatingButton}
     title={resource + "s"}
     isExpanded={determineExpansionType(resource)}
-    on:back
+    on:back={() => {
+      if (onBack) onBack();
+      else if (backPath) appStore.gotoPath(backPath);
+    }}
     info={tooltip ? { body: tooltip } : undefined}
-    isShowBackButton={isLibraryNavContext}
+    isShowBackButton={hasBack}
     panelSize={determineSize(resource)}
   >
     <div

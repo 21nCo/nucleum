@@ -16,7 +16,7 @@ import { ResourceActions } from "../record/resource.actions";
 import { appStore } from "$lib/client/stores/app.store";
 import { Action } from "$lib/client/types/action.enum";
 import { getUtcSafeDay } from "$lib/client/elements/datetime/datetime.utils";
-import { Product } from "$lib/client/types/product.type";
+import { Product } from "$lib/client/products/product.type";
 import { get } from "svelte/store";
 import view from "$lib/client/stores/view.store";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";

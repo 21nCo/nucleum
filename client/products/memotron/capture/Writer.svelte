@@ -1,19 +1,21 @@
 <script lang="ts">
-  import { CaptureType } from "$lib/client/products/memotron/capture/capture.type";
+  import { CaptureMethod } from "$lib/client/products/memotron/capture/capture.type";
   import AudioCapture from "./AudioCapture.svelte";
   import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
-  export let captureType: CaptureType = CaptureType.MARKDOWN;
-  export let isEmptyState: boolean = true;
-  export let isSaveInProgress: boolean = false;
+
   import { setContext } from "svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
   import CameraCapture from "./CameraCapture.svelte";
   import { createEventDispatcher } from "svelte";
-  import { activeHeight } from "$lib/client/actions/viewport";
   import context from "$lib/client/stores/context.store";
   import type { IActiveCaptureStore } from "./capture.store";
+  import { fly } from "svelte/transition";
+  import PlayerControl from "$lib/client/elements/player/controls/PlayerControl.svelte";
+  import { Size } from "$lib/client/types/size.enum";
+  import { ButtonStyle } from "$lib/client/types/button.type";
   const dispatch = createEventDispatcher();
+
   export let captureStore: IActiveCaptureStore;
   let mdRef: NodularMarkdown | undefined = undefined;
 
@@ -38,7 +40,9 @@
     resolveDynamicParams: (isFirstAndEmpty?: boolean) => {
       return {
         placeholder:
-          isFirstAndEmpty || isEmptyState ? "Start typing..." : undefined
+          isFirstAndEmpty || $captureStore.isEmpty
+            ? "Start typing to capture..."
+            : undefined
       };
     },
     publish: handleEvent
@@ -53,16 +57,21 @@
   let isShowTOC: boolean = false;
 </script>
 
-<div class="flex w-full max-h-full justify-between">
-  {#if captureType === CaptureType.AUDIO}
+<div
+  class="flex w-full max-h-full h-full justify-between transition-all duration-250"
+>
+  {#if $captureStore.method === CaptureMethod.AUDIO}
+    <div
+      class="w-full h-full flex items-center justify-center"
+      in:fly={{ y: 50, duration: 250 }}
+    >
+      <AudioCapture {captureStore} on:clear on:saved />
+    </div>
+  {:else if $captureStore.method === CaptureMethod.CAMERA}
     <div class="w-full h-full flex items-center justify-center">
-      <AudioCapture {captureStore} bind:isSaveInProgress on:cancel />
+      <CameraCapture {captureStore} on:clear on:saved />
     </div>
-  {:else if captureType === CaptureType.CAMERA}
-    <div class="w-full h-full flex items-center justify-center text-fgs4">
-      <CameraCapture {captureStore} on:cancel />
-    </div>
-  {:else if "blocks" in $captureStore.body}
+  {:else if $captureStore.body && "blocks" in $captureStore.body}
     <div class="overflow-auto h-full w-full dp:px--10">
       <!-- TODO - check if on syncdown the kv:capture is reloaded in the background - whether this is automatically updated - if not subscribe to syncDown from ComponentBaseLayer and refresh -->
       <NodularMarkdown
@@ -93,5 +102,18 @@
         </div>
       </aside>
     {/if}
+  {:else}
+    <div class="pb-8">
+      <PlayerControl
+        on:click={(e) => {
+          e.stopPropagation();
+          dispatch("clear");
+        }}
+        icon="back"
+        tooltip="Go back"
+        size={Size.sm}
+        style={ButtonStyle.OUTLINED}
+      />
+    </div>
   {/if}
 </div>

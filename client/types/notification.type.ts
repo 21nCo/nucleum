@@ -47,3 +47,11 @@ export type IInlineStatus = {
   message: string;
   type: AlertType;
 };
+
+export type InlineToast = {
+  id: string;
+  type: AlertType;
+  message: string;
+  title?: string;
+  data?: any;
+};

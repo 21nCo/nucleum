@@ -46,7 +46,7 @@
   <CustomColorPropagator
     color={goal.color}
     type={accessPoint !== ResourceAccessPoint.GOAL ? "button" : "div"}
-    class={cn("flex items-center gap-1 text-ccs1 w-fit", {
+    class={cn("flex items-center gap-1 text-ccs1 flex-grow min-w-0", {
       "text-b3 ": accessPoint !== ResourceAccessPoint.SELF,
       "notouch:hover:underline focus:underline":
         accessPoint !== ResourceAccessPoint.GOAL
@@ -60,7 +60,7 @@
         class="text-ccs1"
       />
     {/if}
-    <div class="flex items-center gap-1 text-left truncate flex-1 min-w-0">
+<div class="flex items-center gap-1 text-left truncate flex-grow min-w-0">
       <div class="truncate">
         {goal.label || "Untitled"}
       </div>

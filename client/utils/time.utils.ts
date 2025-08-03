@@ -110,6 +110,14 @@ export function formatSeconds(
     const ss = secs.toString().padStart(2, "0");
     if (hours > 0) return `${hh}:${mm}:${ss}`;
     else return `${mm}:${ss}`;
+  } else if (format === TimeFormat.DECIMALS) {
+    if (hours > 0) {
+      return `${hours}h`;
+    } else if (minutes > 0) {
+      return `${minutes}m`;
+    } else {
+      return `${secs}s`;
+    }
   }
 }
 

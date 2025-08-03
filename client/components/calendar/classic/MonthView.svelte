@@ -93,7 +93,7 @@
       {@const isNotCurrentMonth = day.getMonth() !== selectedDate.getMonth()}
       <button
         class={cn(
-          "p-2 border-b border-r border-brs3 relative group flex flex-col items-start",
+          "p-1.5 border-b border-r border-brs3 relative group flex flex-col items-start",
           {
             "bg-bgs2/50": isNotCurrentMonth,
             "notouch:hover:bg-bgs2": !isToday && !isSelected,
@@ -110,9 +110,9 @@
         <span class="flex items-center justify-center">
           <span
             class={cn(
-              "text-b2 text-left w-7 h-7 rounded-full flex items-center justify-center default-typeface",
+              "text-left w-7 h-7 rounded-full flex items-center justify-center default-typeface",
               {
-                "text-fgs3": isNotCurrentMonth,
+                "text-fgs3": isNotCurrentMonth && !isToday && !isSelected,
                 "bg-aps1 text-abg": isSelected,
                 "bg-ass1 text-abg": isToday && !isSelected
               }
@@ -125,7 +125,7 @@
           {/if}
         </span>
         {#if indicatorData.length > 0}
-          <div class="pl-1 pt-1 w-full">
+          <div class="pl-1 pt-1 w-full flex-1">
             <CalendarTileIndicator
               date={day}
               isActive={isSelected}

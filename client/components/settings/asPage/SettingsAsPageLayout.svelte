@@ -18,7 +18,7 @@
   import appearance from "$lib/client/stores/appearance.store";
   import NavigationHeader from "$lib/client/elements/NavigationHeader.svelte";
   import SettingsFooter from "../SettingsFooter.svelte";
-
+  export let isShowBackButton: boolean = false;
   $: isCpHome = $page.url.searchParams.get("setting") === null;
   let cpConfiguration: any;
   let color = retrieveCurrentColors($appearance)?.aps1;
@@ -49,18 +49,20 @@
   </div>
 {:else if isCpHome || !$view.isPortrait}
   <div class="flex w-full h-full bg-bgs2">
-    <Panel title="Settings">
+    <Panel title="Settings" {isShowBackButton} on:back parentBgIndex={2}>
       <div
         slot="nonpadded"
         class="flex flex-col gap-8 grow overflow-auto portrait:pb-40 pb-20"
       >
-        <ProfileCpSection
-          on:click={() =>
-            appStore.toggleSearchParam({
-              [AppSearchParam.SETTING]: "account"
-            })}
-          parentBackgroundIndex={0}
-        />
+        <div class="pt-4">
+          <ProfileCpSection
+            on:click={() =>
+              appStore.toggleSearchParam({
+                [AppSearchParam.SETTING]: "account"
+              })}
+            parentBackgroundIndex={0}
+          />
+        </div>
         {#if cpConfiguration}
           {#each cpConfiguration as item}
             <SettingsList

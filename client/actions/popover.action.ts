@@ -410,7 +410,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
 
       if (cwModalPosition === Placement.Bottom) {
         popoverElement.style.top = `${window.innerHeight}px`;
-        popoverElement.style.bottom = "auto";
+        // popoverElement.style.bottom = "auto";
+        popoverElement.style.bottom = "0px";
       } else {
         popoverElement.style.top = `-${popRect.height}px`;
         popoverElement.style.bottom = "auto";
@@ -681,6 +682,18 @@ export function popover(node: HTMLElement, params: PopoverParams) {
         console.error("hidePopover", e);
       }
       popoverElement = null;
+      if (isRenderAsModalForCW && window.innerWidth < 800) {
+        window.dispatchEvent(
+          new CustomEvent("event", {
+            detail: {
+              event: "nav",
+              value: {
+                path: id
+              }
+            }
+          })
+        );
+      }
       if (component) {
         component.$destroy();
         component = null;

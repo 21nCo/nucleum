@@ -3,7 +3,8 @@ import {
   AlertType,
   type ConfirmationNotification,
   type ScheduledNotification,
-  type Toast
+  type Toast,
+  type InlineToast
 } from "../types/notification.type";
 import { postMessageToParent } from "$lib/client/utils/embed.utils";
 import { EmbedMessage } from "../types/embedMessage.enum";
@@ -14,6 +15,7 @@ import { ObservableStore } from "./client.store";
 import { logger } from "../components/debug/logger.client";
 import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 import { ErrorMessage } from "../components/error/error.type";
+import { dispatchCustomEvent } from "../utils/browser.utils";
 
 export const toastDefaultDuration = 3500;
 class AppEventStore extends ObservableStore<IEvent> {
@@ -29,6 +31,12 @@ class AppEventStore extends ObservableStore<IEvent> {
       return { event: m, value };
     });
     this.reset();
+    if (typeof window !== "undefined") {
+      dispatchCustomEvent(GlobalEvent.EVENT, {
+        event: m,
+        value
+      });
+    }
   }
 }
 
@@ -187,6 +195,9 @@ function initConfirmationStore() {
           return undefined;
         });
       }, 100);
+      appEvents.publish(GlobalEvent.NAV, {
+        action: "confirmation"
+      });
     },
     notify: (event: ConfirmationNotification) => {
       update(() => {
@@ -220,6 +231,58 @@ function initFullPageLoadingScreen() {
     hide: () => {
       update(() => {
         return { isShow: false, text: "loading..." };
+      });
+    }
+  };
+}
+
+export const inlineToasts = initInlineToastStore();
+
+function initInlineToastStore() {
+  const { subscribe, set, update } = writable<InlineToast[]>([]);
+
+  const trigger = (toast: InlineToast) => {
+    logger.log({ at: "inlineToast", toast });
+
+    update((toasts: InlineToast[]) => {
+      const filtered = toasts.filter((t) => t.id !== toast.id);
+      return [...filtered, toast];
+    });
+
+    if (typeof window !== "undefined") {
+      dispatchCustomEvent(GlobalEvent.INLINE_TOAST, toast);
+    }
+  };
+
+  const remove = (id: string) => {
+    update((toasts: InlineToast[]) => {
+      return toasts.filter((t) => t.id !== id);
+    });
+  };
+
+  return {
+    subscribe,
+    set,
+    trigger,
+    remove,
+    success: (params: Omit<InlineToast, "type">) => {
+      trigger({
+        ...params,
+        type: AlertType.SUCCESS
+      });
+    },
+
+    error: (params: Omit<InlineToast, "type">) => {
+      trigger({
+        ...params,
+        type: AlertType.ERROR
+      });
+    },
+
+    info: (params: Omit<InlineToast, "type">) => {
+      trigger({
+        ...params,
+        type: AlertType.INFO
       });
     }
   };

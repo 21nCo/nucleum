@@ -15,7 +15,7 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { createEventDispatcher } from "svelte";

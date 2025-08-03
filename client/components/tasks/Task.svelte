@@ -30,7 +30,7 @@
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
   import type { IGoal } from "../goals/goal.type";
   import { SearchStore } from "../record/record.store";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import { goalStore } from "../goals/goal.store";
   import {
     activeSession,

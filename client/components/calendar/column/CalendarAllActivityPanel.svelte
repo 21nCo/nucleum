@@ -13,7 +13,7 @@
   import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
   import { resolveProductResources } from "../../flux/resourceStores/resource.utils";
   import { rootNodeTypeList } from "$lib/client/products/memotron/node/node.type";

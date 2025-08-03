@@ -55,7 +55,7 @@
   import { resolvePropertyDefaultConfig } from "./property.utils";
   import { objIsEmpty } from "$lib/shared/utils/obj.utils";
   import CollectionTitleLabelPart from "../thumbnail/CollectionThumbnailLabel.svelte";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   export let id: IRecordId | undefined = undefined;
   let collection: IActiveCollectionStore | undefined = id
     ? ActiveCollectionStore.resolve(id)

@@ -19,14 +19,14 @@ import {
   type IClip
 } from "$lib/client/products/memotron/node/node.type";
 import {
-  CaptureType,
+  CaptureMethod,
   type IActiveCapture,
   type ICapture,
   type ICaptureCapture,
   type IPasteCaptureData
 } from "$lib/client/products/memotron/capture/capture.type";
 import account from "$lib/client/stores/account.store";
-import { toasts } from "$lib/client/stores/notification.store";
+import { toasts, inlineToasts } from "$lib/client/stores/notification.store";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import {
   generateMarkdownText,
@@ -61,6 +61,8 @@ import {
   generateSimpleRandomId
 } from "$lib/shared/utils/crypto.utils";
 import { appStore } from "$lib/client/stores/app.store";
+import { uiState } from "$lib/client/stores/uiState/uiState.store";
+import { UIState, UIStateScope } from "$lib/client/stores/uiState/uiState.type";
 import { UserDataMode } from "$lib/client/types/account.type";
 import { MemotronAction } from "../memotronAction.enum";
 import { Persistence } from "$lib/client/persistence/persistence";
@@ -76,6 +78,8 @@ import { getDeviceInfo, getGeoLocation } from "$lib/client/utils/browser.utils";
 import {
   extractRootStructure,
   extractStructureForChildren,
+  isEmptyMd,
+  resolveDefaultBodyForBlock,
   textToMdBlocks
 } from "$lib/client/components/markdown/markdown.utils";
 import type { IBlock } from "$lib/client/components/markdown/md.type";
@@ -90,6 +94,9 @@ import { TimeScaleUnit } from "$lib/client/types/time.type";
 import { resolveCalendarNotesId } from "$lib/client/components/calendar/calendar.utils";
 import { getUtcSafeDay } from "$lib/client/elements/datetime/datetime.utils";
 import type { IMarkdownTemplate } from "$lib/client/components/markdown/md.type";
+import { isValidString } from "$lib/shared/utils/text.utils";
+import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
+import { debouncer } from "$lib/client/utils/utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
@@ -101,6 +108,7 @@ function generateSeedStore(): IActiveCapture {
   const nodeId = generateResourceId(Resource.node);
   return {
     id: generateResourceId(Resource.capture),
+    method: CaptureMethod.MARKDOWN,
     nodeId,
     refreshId: new Date().getTime(),
     label: "",
@@ -136,11 +144,6 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   CaptureStore,
   IActiveCapture
 > {
-  private saveFeedbackTimeout: NodeJS.Timeout | null = null;
-  /**
-   * Disabling vector generation on save for now - as it is delaying the save process significantly sometimes.
-   */
-  private dev_isEnableVectorGenOnSave = false;
   // constructor() {
   //   super(Resource.capture, { ...generateSeedStore() });
   // }
@@ -165,10 +168,158 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   //   }, 1500);
   // }
 
-  init(draft: ICapture) {
-    this.modify({
-      ...draft,
-      refreshId: new Date().getTime()
+  async init(params?: {
+    isWindowDnD?: boolean;
+    captureType?: CaptureMethod;
+    linkQueryParam?: string | null;
+    bulkQueryParam?: string | null;
+    clipBoardQueryParam?: string | null;
+  }) {
+    this.update((store) => {
+      return {
+        ...store,
+        ...params
+      };
+    });
+    if (params?.linkQueryParam) {
+      await this.setTypeFromLinkParam(params.linkQueryParam);
+    } else {
+      this.refreshEmptyState();
+    }
+    if (params?.clipBoardQueryParam === "true") {
+      await this.onClipboard();
+    }
+  }
+
+  /**
+   * Handles clipboard event - insert into markdown option via global paste or file uploader
+   */
+  async onClipboard() {
+    try {
+      const data = get(clipboard);
+      logger.debug({
+        at: "Capture.svelte - onClipboard",
+        data
+      });
+      const val = this.get();
+      const ogEmptyState = val.isEmpty;
+      this.update((store) => ({
+        ...store,
+        isEmpty: false,
+        isProcessingClipboard: true
+      }));
+      if (!data) return;
+      let newBlock: IBlock[] | undefined = undefined;
+      if (data.multipleFiles) {
+        const result = await this.saveMultipleFiles(data.multipleFiles.files, {
+          isEmbedContext: true
+        });
+        if (!result || "error" in result) return;
+        result.forEach((x) => {
+          const block: IBlock = {
+            id: generateResourceId(Resource.node),
+            contentType: NodeType.EMBED,
+            body: {
+              id: x.id,
+              subType: x.contentType
+            }
+          };
+          newBlock = [...(newBlock ?? []), block];
+          this.addMentionLink("root", x as INodeThumb, {
+            location: block.id
+          });
+        });
+      } else if (data.file) {
+        const result = await this.saveFile(data.file, data.contentType, {
+          isEmbedContext: true
+        });
+        if (!result || "error" in result) return;
+        newBlock = [
+          {
+            id: generateResourceId(Resource.node),
+            contentType: NodeType.EMBED,
+            body: {
+              id: result.id,
+              subType: result.contentType
+            }
+          }
+        ];
+        this.addMentionLink("root", result as INodeThumb, {
+          location: newBlock[0].id
+        });
+      } else if (data.text) {
+        if (data.textMetadata?.isMultiBlockText) {
+          newBlock = textToMdBlocks(data.text);
+        } else if (data.textMetadata?.isUrl) {
+          const saveResult = await this.saveWebpage(data.text, {
+            contentType: data.contentType,
+            isEmbedContext: true
+          });
+          if (
+            !saveResult ||
+            !Array.isArray(saveResult) ||
+            "error" in saveResult
+          )
+            return;
+          newBlock = [
+            {
+              id: generateResourceId(Resource.node),
+              contentType: NodeType.EMBED,
+              body: {
+                id: saveResult[0].id,
+                subType: saveResult[0].contentType
+              }
+            }
+          ];
+          this.addMentionLink("root", saveResult[0] as INodeThumb, {
+            location: newBlock[0].id
+          });
+        } else {
+          const contentType = data.contentType ?? NodeType.SIMPLE_TEXT;
+          newBlock = [
+            {
+              id: generateResourceId(Resource.node),
+              contentType,
+              body: resolveDefaultBodyForBlock(contentType, data.text)
+            }
+          ];
+        }
+      }
+
+      if (!newBlock) return;
+      if (val.body) {
+        if (ogEmptyState) {
+          val.body.blocks.unshift(...newBlock);
+        } else {
+          val.body.blocks.push(...newBlock);
+        }
+      }
+      this.update((store) => ({
+        ...store,
+        body: val.body,
+        refreshId: new Date().getTime()
+      }));
+      this.persistContent();
+    } catch (e) {
+      logger.error({ at: "Capture.svelte - onClipboard", error: e });
+    } finally {
+      this.update((store) => ({
+        ...store,
+        isEmpty: false,
+        isProcessingClipboard: false
+      }));
+      clipboard.set(null);
+    }
+  }
+
+  load(draft: ICapture) {
+    this.update((store) => {
+      return {
+        ...store,
+        ...draft,
+        isEmpty: false,
+        refreshId: new Date().getTime()
+      };
     });
   }
 
@@ -178,29 +329,27 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     this.update(() => {
       return {
         ...seedStore,
+        isEmpty: true,
+        method: CaptureMethod.MARKDOWN,
         refreshId: new Date().getTime()
       };
     });
   }
 
-  /**
-   * @deprecated - use init instead
-   * @param data
-   * @returns
-   */
-  loader(data: any) {
-    if (!data) return;
-    const val = {
-      ...data,
-      id: Resource.capture,
-      refreshId: new Date().getTime()
-    };
-    this.modify(val, { isPersist: false });
-  }
-
-  async onTypeSelect(val: CaptureType | IRecordId) {
-    logger.log({ context: "onTypeSelect", val });
-    if (!val.toString().startsWith(Resource.collection)) return;
+  async onTypeSelect(val: CaptureMethod | IRecordId) {
+    logger.debug({ context: "onTypeSelect", val });
+    if (!val) return;
+    const isCollection = isRecordId(val, Resource.collection);
+    if (!isCollection) {
+      this.update((store) => {
+        return {
+          ...store,
+          method: val as CaptureMethod,
+          isEmpty: false
+        };
+      });
+      return;
+    }
     const type: ICollection = await collectionStore.select(val);
     if (!type) return;
     const link = {
@@ -210,10 +359,164 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       toType: Resource.collection,
       toSubType: CollectionType.TYPED
     };
+    //TODO - use captureMethod from type settings if available
+    this.update((store) => {
+      return {
+        ...store,
+        isLinksExpanded: true,
+        isEmpty: false,
+        expandedType: val
+      };
+    });
     const store = this.get();
     this.modify({
       links: [...(store.links ?? []), link]
     });
+  }
+
+  refreshEmptyState(e?: CustomEvent) {
+    logger.log({
+      at: "Capture.svelte - refreshEmptyState",
+      e
+    });
+    const val = this.get();
+    const isNonEmptyMd =
+      val.body &&
+      "blocks" in val.body &&
+      !isEmptyMd(e?.detail?.md?.blocks ?? val.body.blocks);
+    const isNonEmptyLabel = isValidString(val.label);
+    const hasLinks = val.links && val.links.length > 0;
+    if (
+      val.isWindowDnD ||
+      isNonEmptyLabel ||
+      isNonEmptyMd ||
+      val.method === CaptureMethod.AUDIO ||
+      hasLinks
+    ) {
+      this.update((store) => {
+        return {
+          ...store,
+          isEmpty: false
+        };
+      });
+    } else {
+      this.update((store) => {
+        return {
+          ...store,
+          isEmpty: true
+        };
+      });
+    }
+  }
+
+  private setIsSaving(val: boolean) {
+    this.update((store) => {
+      return {
+        ...store,
+        isSaving: val
+      };
+    });
+  }
+
+  private async setTypeFromLinkParam(linkQueryParam: string) {
+    await this.directLink(linkQueryParam);
+    this.update((store) => {
+      return {
+        ...store,
+        isLinksExpanded: true,
+        isCaptureFromCollectionPage: true
+      };
+    });
+  }
+
+  /**
+   * Notes: isAvoidSaveLeaks is used to prevent save after delete action of capture. This is happening when using shortcut to save which is in turn triggering keyboard events -> onContentChange -> persist or persistLabel.
+   */
+  persistContent() {
+    const val = this.get();
+    if (val.isSaving || val.isAvoidSaveLeaks) return;
+    this.modify(
+      {
+        body: val.body,
+        childrenWithStructure: val.childrenWithStructure,
+        rootStructure: val.rootStructure
+      },
+      { isPreventBackPropagation: true }
+    );
+  }
+
+  private debouncedPersistContent = debouncer(this.persistContent, 1000);
+
+  /**
+   * Note: Timeout is added to refreshEmptyState as the the captureStore.body is not populated immediately in case of pasting something into capture.
+   * @param e
+   */
+  onMdContentChanges(e: CustomEvent) {
+    const val = this.get();
+    if (val.isSaving) return;
+    this.debouncedPersistContent();
+    setTimeout(() => {
+      this.refreshEmptyState();
+    }, 100);
+  }
+
+  async save() {
+    this.setIsSaving(true);
+    await this.saveMarkdownCapture();
+    const val = this.get();
+    if (val.bulkQueryParam === "true" && val.linkQueryParam) {
+      await this.setTypeFromLinkParam(val.linkQueryParam);
+    } else {
+      this.update((store) => {
+        return {
+          ...store,
+          isEmpty: true
+        };
+      });
+    }
+    this.setIsSaving(false);
+  }
+
+  async handleCapture(event: Event) {
+    logger.log({ at: "Capture.svelte - handleCapture", event });
+    try {
+      this.setIsSaving(true);
+      const input = event.target as HTMLInputElement;
+      if (input.files && input.files[0]) {
+        const file = input.files[0];
+        if (file) {
+          await this.saveFile(file);
+          this.setIsSaving(false);
+          return;
+        }
+        console.log({
+          at: "Capture.svelte - handleCapture - file",
+          file,
+          message: "file not present"
+        });
+        // const reader = new FileReader();
+        // reader.onload = (e) => {
+        //   const result = e.target?.result;
+        //   if (typeof result === "string") {
+        //     fetch(result)
+        //       .then((res) => res.blob())
+        //       .then(async (blob) => {
+        //         await captureStore.saveCameraCapture(blob);
+        //         isSaving = false;
+        //       });
+        //   }
+        // };
+        // reader.readAsDataURL(file);
+      } else {
+        logger.log({
+          at: "Capture.svelte - handleCapture - no file present"
+        });
+        // reset();
+      }
+    } catch (e) {
+      logger.error({ at: "Capture.svelte - handleCapture", error: e });
+      this.setIsSaving(false);
+    }
   }
 
   addMentionLink(
@@ -385,19 +688,21 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     file: File,
     contentType?: NodeType,
     params?: {
-      isPreventOpenOnSave?: boolean;
+      isOpenOnSave?: boolean;
       isEmbedContext?: boolean;
       creationContext?: IRecordId;
     }
   ) {
     contentType = contentType ?? resolveContentTypeForFile(file);
     if (!contentType) return { error: "File type not supported" };
+    this.setIsSaving(true);
     if (contentType === NodeType.NODULAR_MARKDOWN && !params?.isEmbedContext) {
       const result = await this.saveMarkdownFromMdFile(file);
       this.postSave(result?.slice(0, 1), {
-        isOpenUponSuccess: !params?.isPreventOpenOnSave,
+        isOpenOnSave: params?.isOpenOnSave,
         isEmbedContext: params?.isEmbedContext
       });
+      this.setIsSaving(false);
       return result?.[0];
     }
     const response = await account.uploadFileV2(
@@ -408,8 +713,11 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         isGenerateThumbnail: true
       }
     );
-    if (!response) return;
-    if (!response[0].id) return;
+
+    if (!response || !response[0].id) {
+      this.setIsSaving(false);
+      return;
+    }
     const id = generateResourceId(Resource.node);
     const collections = params?.isEmbedContext ? [] : this.resolveCollections();
     const fileId = response[0].id;
@@ -420,7 +728,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       id,
       contentType,
       file: fileId,
-      label: file.name,
+      label: captureStore.label ?? file.name,
       body: {},
       metadata: {
         ...metadata
@@ -438,9 +746,10 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       await this.saveLinks(id);
     }
     this.postSave(result, {
-      isOpenUponSuccess: !params?.isPreventOpenOnSave,
+      isOpenOnSave: params?.isOpenOnSave,
       isEmbedContext: params?.isEmbedContext
     });
+    this.setIsSaving(false);
     return result?.[0];
   }
 
@@ -527,6 +836,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       uploadProgressId?: string;
     }
   ) {
+    this.setIsSaving(true);
     if (
       files.every((x) => x.contentType === NodeType.NODULAR_MARKDOWN) &&
       !params?.isEmbedContext
@@ -537,6 +847,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       this.postSave(result, {
         isEmbedContext: params?.isEmbedContext
       });
+      this.setIsSaving(false);
       return result;
     }
     let nodes: INodeCapture<IMediaNode>[] = [];
@@ -600,6 +911,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     this.postSave(result, {
       isEmbedContext: params?.isEmbedContext
     });
+    this.setIsSaving(false);
     return result;
   }
   // TODO - check for persistance need here
@@ -613,12 +925,13 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     data: Blob,
     duration: number,
     params?: {
-      isPreventOpenOnSave?: boolean;
+      isOpenOnSave?: boolean;
       isEmbedContext?: boolean;
       creationContext?: IRecordId;
       thumbnailBlob?: Blob;
     }
   ) {
+    this.setIsSaving(true);
     const contentType = "audio/wav";
     const wavData = await convertWebMToWav(data);
     const id = generateResourceId(Resource.node);
@@ -652,7 +965,9 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       creationContext: params?.isEmbedContext
         ? (params?.creationContext ?? this.get().nodeId)
         : undefined,
-      label: `Audio Recording - ${new Date().toLocaleString()}`,
+      label:
+        captureStore.label ??
+        `Audio Recording - ${new Date().toLocaleString()}`,
       body: {
         duration
       }
@@ -662,9 +977,10 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     });
     await this.saveLinks(id);
     this.postSave(result2, {
-      isOpenUponSuccess: !params?.isPreventOpenOnSave,
+      isOpenOnSave: params?.isOpenOnSave,
       isEmbedContext: params?.isEmbedContext
     });
+    this.setIsSaving(false);
     return result2?.[0];
   }
 
@@ -715,7 +1031,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       id,
       contentType: NodeType.IMAGE,
       file: fileId,
-      label: `Image Capture - ${new Date().toLocaleString()}`,
+      label:
+        captureStore.label ?? `Image Capture - ${new Date().toLocaleString()}`,
       body: {},
       properties: captureStore.properties,
       collections,
@@ -743,14 +1060,14 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     if (params?.isMediaDeviceCapture && ctx.os === OperatingSystem.MACOS) {
       return result2;
     }
-    this.postSave(result2, { isOpenUponSuccess: true });
+    this.postSave(result2, {});
   }
 
   async saveWebpage(
     text: string,
     params?: {
       contentType?: IWebNodeType;
-      isPreventOpenOnSave?: boolean;
+      isOpenOnSave?: boolean;
       isEmbedContext?: boolean;
       creationContext?: IRecordId;
     }
@@ -808,7 +1125,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       context: captureAction
     });
     this.postSave(result, {
-      isOpenUponSuccess: !params?.isPreventOpenOnSave,
+      isOpenOnSave: params?.isOpenOnSave,
       isEmbedContext: params?.isEmbedContext
     });
     return result;
@@ -817,17 +1134,26 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   async postSave(
     result: any,
     params?: {
-      isOpenUponSuccess?: boolean;
       isEmbedContext?: boolean;
+      isOpenOnSave?: boolean;
     }
   ) {
-    logger.debug({ at: "CaptureStore.postSave", result });
+    logger.debug({ at: "CaptureStore.postSave", result, params });
     const node = result?.[0];
     if (!result || result.error || !node || !node.id) {
       logger.error({ at: "CaptureStore.postSave", result });
       toasts.error("Something went wrong. Please try again later.");
       return;
     }
+
+    // Get the global setting for opening nodes upon save
+    const shouldOpenUponSave =
+      params?.isOpenOnSave ??
+      uiState.getState(UIState.openNodesUponSave, {
+        scope: UIStateScope.PRODUCT
+      }) ??
+      true;
+
     const viewStore = get(view);
     if (result.length === 1) {
       appStore.addToRecents({
@@ -837,17 +1163,22 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       });
       if (!viewStore.isConstrainedWidth && !params?.isEmbedContext)
         toasts.success("Node saved successfully!");
-      if (
-        !viewStore.isConstrainedWidth &&
-        params?.isOpenUponSuccess &&
-        !params?.isEmbedContext
-      )
+
+      if (!params?.isEmbedContext && !shouldOpenUponSave) {
+        inlineToasts.success({
+          id: "nodecapture",
+          message: "Node saved successfully",
+          data: node
+        });
+      }
+
+      if (shouldOpenUponSave && !params?.isEmbedContext)
         appStore.openResource(node.id, ResourceAccessMode.POP);
     } else if (!viewStore.isConstrainedWidth && !params?.isEmbedContext) {
       toasts.success(`${result.length} nodes saved successfully!`);
     }
     if (params?.isEmbedContext) return;
-    if (!params?.isOpenUponSuccess || viewStore.isConstrainedWidth) {
+    if (!shouldOpenUponSave) {
       appStore.closeResource({
         id: captureAction,
         accessMode: ResourceAccessMode.POP

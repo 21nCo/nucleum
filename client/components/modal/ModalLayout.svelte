@@ -97,10 +97,12 @@
     class={cn(
       "relative modal flex flex-col items-center justify-between w-full h-full  rounded-md",
       {
-        "dark:border border-brs3": !isInFocusMode && !$view.isConstrainedWidth,
-        "gap-4": !params.layout?.ignoreSafeArea && size === Size.xs,
-        "gap-4 lg:gap-6": !params.layout?.ignoreSafeArea && size !== Size.xs,
-        "pt-6": !params.title && !params.layout?.ignoreSafeArea
+        "dark:border border-brs3": !isInFocusMode && !$view.isConstrainedWidth
+      },
+      !params.layout?.ignoreSafeArea && {
+        "gap-4": size === Size.xs,
+        "gap-6": size !== Size.xs,
+        "pt-6": !params.title
       }
     )}
     in:fly={{

@@ -4,7 +4,8 @@
 
   import { formatSeconds } from "$lib/client/utils/time.utils";
   import { activeSession } from "../focus/session.store";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
+  import { resolveProductConfig } from "$lib/client/products/product.config";
   export let ctx: Product = Product.NUCLEUS;
 </script>
 
@@ -18,14 +19,13 @@
           $activeSession.timeElapsed,
           TimeFormat.CLOCK
         )}
-        - {ctx === Product.POINTRON ? "Pointron" : "Nucleus"}
+        - {resolveProductConfig(ctx).displayName}
       </title>
     {/key}
   {:else}
     <title>
-      {ctx === Product.POINTRON
-        ? "Pointron - Your focus haven"
-        : "Nucleus - Your digital harmony"}
+      {resolveProductConfig(ctx).displayName} - {resolveProductConfig(ctx)
+        .tagline}
     </title>
   {/if}
 </svelte:head>

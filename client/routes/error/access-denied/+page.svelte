@@ -1,7 +1,7 @@
 <script lang="ts">
   import PageError from "$lib/client/components/error/PageError.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import { Action } from "$lib/client/types/action.enum";
   import { ButtonVariant } from "$lib/client/types/button.type";
   function resolveMessage(product: Product) {

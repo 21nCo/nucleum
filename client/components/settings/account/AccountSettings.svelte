@@ -39,7 +39,7 @@
   import RestorePurchaseAction from "../../subscription/RestorePurchaseAction.svelte";
   import view from "$lib/client/stores/view.store";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   let name = "";
   let emailParts: EmailParts | undefined = undefined;
   let isEditing = false;

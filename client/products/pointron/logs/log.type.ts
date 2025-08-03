@@ -111,8 +111,9 @@ type IResourcePropertiesForSessionLog = IResource & IResourceShareable;
 export type ISessionLog = ISessionLogBase & IResourcePropertiesForSessionLog;
 
 export type ISessionLogThumb = ISessionLog & {
-  goal: IGoal;
-  session: ISession;
+  goal?: IGoal;
+  session?: ISession;
+  task?: ITask;
 };
 
 export interface IManualLogStore {

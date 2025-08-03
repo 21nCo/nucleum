@@ -9,6 +9,7 @@ export type Event =
 
 export enum GlobalEvent {
   NONE = "NONE",
+  EVENT = "event",
   SHOW_APPEARANCE_PREVIEW = "SHOW_APPEARANCE_PREVIEW",
   /**
    * @deprecated - using flux.terminate and flux.init to load or invalidate stores.
@@ -47,7 +48,9 @@ export enum GlobalEvent {
   TOGGLE_SEARCH_PARAM = "toggleSearchParam",
   CACHE_UPDATE = "cacheUpdate",
   COLLAPSE_PANEL = "collapsePanel",
-  EXPAND_PANEL = "expandPanel"
+  EXPAND_PANEL = "expandPanel",
+  INLINE_TOAST = "inlinetoast",
+  NAV = "nav"
 }
 
 export enum PlayActionState {

@@ -4,7 +4,7 @@ import type { IRecordId } from "$lib/client/types/data.type";
 import { logger } from "../../debug/logger.client";
 import { properCase } from "$lib/shared/utils/text.utils";
 import type { IResourceSwitchItem } from "$lib/client/types/select.type";
-import { Product } from "$lib/client/types/product.type";
+import { Product } from "$lib/client/products/product.type";
 
 export function resourceAction(resource: Resource, action: ResourceActionType) {
   return `${resource}_${action}`;
@@ -306,15 +306,15 @@ export function resolveResourceActionIcon(action: ResourceActionType) {
     case ResourceActionType.EDIT:
       return "edit";
     case ResourceActionType.DUPLICATE:
-      return "copy";
+      return "duplicate";
     case ResourceActionType.COPY_LINK:
-      return "copy"; // clipboard equivalent
+      return "copy";
     case ResourceActionType.COPY_CONTENTS:
       return "copy";
     case ResourceActionType.TOGGLE_READ_MODE:
       return "book-open";
     case ResourceActionType.TOGGLE_FOCUS_MODE:
-      return "circle"; // focus equivalent
+      return "circle";
     case ResourceActionType.LOCK:
       return "lock";
     case ResourceActionType.UNLOCK:

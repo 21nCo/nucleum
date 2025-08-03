@@ -40,7 +40,7 @@ import type { IRecordId } from "../types/data.type";
 import account from "./account.store";
 import { tabs } from "../layout/topNav/tabs/tabs.store";
 import { resourceAction } from "../components/flux/resourceStores/resource.utils";
-import { Product } from "../types/product.type";
+import { Product } from "$lib/client/products/product.type";
 import { EmbedDataMessage } from "../types/embedMessage.enum";
 
 // export const app = writable<{ product: string; env: string }>({
@@ -359,14 +359,20 @@ function initAppStore(seed: IAppStore) {
         toggleSearchParam(params.searchParams);
       }
     } else if (action.component) {
-      logger.log({ at: "running action", action });
+      logger.log({
+        at: "running action",
+        action,
+        searchParams: params?.searchParams
+      });
       if (
         store.interactionMode === InteractionMode.COMMAND_ONLY &&
         ctx.embed !== Embed.HANDSET
       ) {
         toggleSearchParam({ tab: "page:" + action.action });
       } else {
-        gotoPath("/" + (action.path ?? action.action));
+        gotoPath("/" + (action.path ?? action.action), {
+          queryParams: params?.searchParams
+        });
       }
       return;
     }
@@ -640,6 +646,7 @@ function initAppStore(seed: IAppStore) {
       searchParams?: Record<string, string | boolean | number | null>;
     }
   ) => {
+    logger.log({ at: "openResource", id, accessMode, params });
     if (!id) return;
     let url = new URL(window.location.href);
     if (accessMode === ResourceAccessMode.FULL) {
@@ -665,7 +672,7 @@ function initAppStore(seed: IAppStore) {
       if (isFullOrPop) accessMode = ResourceAccessMode.FSPLIT;
       else accessMode = ResourceAccessMode.SPLIT;
     }
-
+    logger.log({ at: "openResource", accessMode });
     url =
       toggleSearchParam(recordSpecificSearchParams, {
         isPreventRefresh: true,
@@ -713,6 +720,9 @@ function initAppStore(seed: IAppStore) {
   };
 
   const goBack = (resource?: IRecordId) => {
+    appEvents.publish(GlobalEvent.NAV, {
+      resource: resource
+    });
     if (window.history.length > 1) {
       window.history.back();
     }
@@ -772,6 +782,9 @@ function initAppStore(seed: IAppStore) {
     isRestrictToModals?: boolean;
     inlineRestoreId?: IRecordId;
   }) => {
+    appEvents.publish(GlobalEvent.NAV, {
+      resource: props?.id
+    });
     const url =
       toggleSearchParam(recordSpecificSearchParams, {
         isPreventRefresh: true

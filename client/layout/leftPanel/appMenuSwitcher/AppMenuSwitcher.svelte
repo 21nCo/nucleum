@@ -12,12 +12,11 @@
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import view from "$lib/client/stores/view.store";
-  import context from "$lib/client/stores/context.store";
-  import { OperatingSystem } from "$lib/client/types/context.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import AppMenuSwitcherItemGroup from "./AppMenuSwitcherItemGroup.svelte";
   import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
   import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { resolveProductConfig } from "$lib/client/products/product.config";
   import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
@@ -27,6 +26,7 @@
   let defaultPages: IAction[] = [];
   let userPinnedPages: IAction[] = [];
   let current: string;
+  const productConfig = resolveProductConfig();
 
   refresh(appMenuStore.get());
   onMount(() => {
@@ -42,9 +42,9 @@
     allPages = [];
     let items = [];
     const app = $appStore.product;
-    let defaultMenu = $appStore.appData?.appMenu ?? [];
-    if ($view.isConstrainedWidth || $context.os === OperatingSystem.IOS) {
-      defaultMenu = $appStore.appData?.appMenuMobile ?? [];
+    let defaultMenu = productConfig.appMenu;
+    if ($view.isConstrainedWidth || $view.isPortrait) {
+      defaultMenu = productConfig.appMenuPt;
     }
     let userPinnedMenu: string[] = [];
     if (!$view.isConstrainedWidth) userPinnedMenu = x[app]?.user ?? [];
@@ -56,7 +56,7 @@
     if (layoutContext === LayoutContext.PORTRAIT) {
       items = contextualMenu.slice(
         0,
-        $appStore?.appData?.isShowCaptureOnMobile ? 3 : 4
+        productConfig.isShowCaptureOnMobile ? 3 : 4
       );
       items.push("cp");
     } else {
@@ -105,12 +105,13 @@
 
 {#if layoutContext === LayoutContext.PORTRAIT}
   <div
+    id="app-menu"
     class={cn("flex justify-around items-center min-w-min w-full", {
       "px-2": allPages.length < 4
     })}
   >
     {#each allPages as item, index (item.action)}
-      {#if index == Math.floor(allPages.length / 2) && $appStore.appData?.isShowCaptureOnMobile}
+      {#if index == Math.floor(allPages.length / 2) && productConfig.isShowCaptureOnMobile}
         <CaptureComponent />
       {/if}
       <AppMenuSwitcherItem
@@ -123,6 +124,7 @@
   </div>
 {:else}
   <div
+    id="app-menu"
     class={cn("flex flex-col justify-center rounded-lg min-w-min w-full", {
       "gap-3": layoutContext === LayoutContext.THIN_WITH_LABEL,
       "gap-1": layoutContext !== LayoutContext.THIN_WITH_LABEL

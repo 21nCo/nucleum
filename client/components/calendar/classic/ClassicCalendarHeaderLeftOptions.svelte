@@ -13,7 +13,7 @@
   import { OptionSelectorStyle } from "$lib/client/types/select.type";
   import view from "$lib/client/stores/view.store";
   import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   const dispatch = createEventDispatcher();
 
   export let selectedView: TimeScaleUnit = TimeScaleUnit.MONTH;

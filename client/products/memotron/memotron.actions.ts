@@ -30,8 +30,18 @@ import MemotronOverview from "./overview/MemotronOverview.svelte";
 import { Action } from "$lib/client/types/action.enum";
 import ImportAppData from "./import/ImportAppData.svelte";
 import MemotronImportSettings from "./import/MemotronImportSettings.svelte";
+import MemotronHomeOnMobile from "./home/MemotronHomeOnMobile.svelte";
+import EditCaptureShortcuts from "./capture/EditCaptureShortcuts.svelte";
+import CaptureSettings from "./capture/CaptureSettings.svelte";
 
 export const memotronActions: IAction[] = [
+  {
+    action: Action.MOBILEHOME,
+    component: MemotronHomeOnMobile,
+    type: ActionType.PAGE,
+    isMeta: true,
+    isMenuHidden: true
+  },
   {
     action: MemotronAction.OPEN_CHAT,
     component: Chat,
@@ -129,7 +139,7 @@ export const memotronActions: IAction[] = [
     action: resourceAction(Resource.node, ResourceActionType.BROWSE),
     component: ResourceBrowser,
     label: "Nodes",
-    icon: "ph:hexagon-light",
+    icon: "hexagon",
     type: ActionType.PAGE,
     loadingComponent: NodeLoadingPulse,
     componentParams: {
@@ -274,6 +284,34 @@ export const memotronActions: IAction[] = [
       layout: {
         size: Size.xl,
         orientation: Orientation.Horizontal,
+        isShowCantileverClose: true
+      }
+    }
+  },
+  {
+    action: MemotronAction.EDIT_CAPTURE_SHORTCUTS,
+    label: "Edit Capture Shortcuts",
+    type: ActionType.MODAL,
+    component: EditCaptureShortcuts,
+    modalParams: {
+      title: "Capture Shortcuts",
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Vertical,
+        isShowCantileverClose: true
+      }
+    }
+  },
+  {
+    action: MemotronAction.CAPTURE_SETTINGS,
+    label: "Capture Settings",
+    type: ActionType.MODAL,
+    component: CaptureSettings,
+    modalParams: {
+      title: "Capture Settings",
+      layout: {
+        size: Size.lg,
+        orientation: Orientation.Vertical,
         isShowCantileverClose: true
       }
     }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tooltip as tooltipAction } from "$lib/client/actions/popover.action";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -6,6 +7,7 @@
   export let icon: string;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let label: string | undefined = undefined;
+  export let tooltip: string | undefined = undefined;
   export let type: ButtonVariant = ButtonVariant.SECONDARY;
   export let style: ButtonStyle = ButtonStyle.DEFAULT;
 </script>
@@ -28,9 +30,12 @@
         border: true,
         "border-aps1": type === ButtonVariant.PRIMARY,
         "border-ars1": type === ButtonVariant.DANGER,
-        "border-bgs2": type === ButtonVariant.SECONDARY
+        "border-brs3": type === ButtonVariant.SECONDARY
       }
     )}
+    use:tooltipAction={{
+      text: tooltip
+    }}
     on:click
   >
     <Icon

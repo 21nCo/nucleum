@@ -446,7 +446,6 @@
 
   <InlineSyncingFeedback
     resource={Resource.task}
-    isFullWidthVariant={true}
     padding="cw:px-0 px-4"
   />
 

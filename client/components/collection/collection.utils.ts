@@ -16,7 +16,7 @@ import {
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 import type { ISelectItem } from "$lib/client/types/select.type";
 import { Resource } from "../flux/resourceStores/resource.enum";
-import { Product } from "$lib/client/types/product.type";
+import { Product } from "$lib/client/products/product.type";
 import type { IAvatar } from "$lib/client/types/avatar.type";
 
 export const UNASSIGNED_VALUE = "unassigned";

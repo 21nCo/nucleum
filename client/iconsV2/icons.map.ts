@@ -182,6 +182,11 @@ export const iconMappings: Record<string, IconMapping> = {
     solar: "trash-bin-minimalistic"
   },
   copy: {
+    phosphor: "clipboard",
+    lucide: "copy",
+    solar: "copy"
+  },
+  duplicate: {
     phosphor: "copy",
     lucide: "copy",
     solar: "copy"
@@ -1021,7 +1026,7 @@ export const iconMappings: Record<string, IconMapping> = {
     solar: "arrow-right-up"
   },
   back: {
-    phosphor: "arrow-bend-down-left",
+    phosphor: "arrow-u-up-left",
     lucide: "corner-down-left",
     solar: "arrow-left-down"
   },

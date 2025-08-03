@@ -469,7 +469,7 @@ export const globalActions: IAction[] = [
     component: Bootstrap
   },
   {
-    action: "calendar",
+    action: Action.CALENDAR,
     label: "Calendar",
     icon: "calendar",
     type: ActionType.PAGE,
@@ -1020,6 +1020,19 @@ export const globalActions: IAction[] = [
         size: Size.lg,
         orientation: Orientation.Horizontal
       }
+    }
+  },
+  {
+    action: ResourceActionType.BROWSE,
+    component: ResourceBrowser,
+    type: ActionType.FUNCTION,
+    fn: async (params?: IActionFnParams) => {
+      const resource = params?.componentParams?.resource;
+      appStore.runAction(resourceAction(resource, ResourceActionType.BROWSE), {
+        searchParams: {
+          back: params?.componentParams?.back ?? "home"
+        }
+      });
     }
   }
 ];

@@ -25,7 +25,7 @@
   import PropertiesPane from "../collection/properties/PropertiesPane.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import appearance from "$lib/client/stores/appearance.store";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import type { IActiveGoal } from "./goal.type";
   import GoalAnalytics from "./GoalAnalytics.svelte";
   import { AppSearchParam } from "$lib/client/types/appStore.type";

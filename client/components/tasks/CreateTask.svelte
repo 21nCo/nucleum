@@ -21,7 +21,7 @@
   import { taskStore } from "./task.store";
   import { goalStore } from "../goals/goal.store";
   import TaskThumbnailGoalLabel from "./TaskThumbnailGoalLabel.svelte";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
   import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";

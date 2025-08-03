@@ -11,7 +11,7 @@
   import ScrollView from "$lib/client/layout/scrollView/ScrollView.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
-  import { view } from "$lib/client/stores/view.store";
+  import view from "$lib/client/stores/view.store";
   import TypefaceSelector from "$lib/client/components/settings/appearance/TypefaceSelector.svelte";
   export let parentBackgroundIndex: number = 1;
   let selectedSkinIndex: number = 0;

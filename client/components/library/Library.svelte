@@ -5,10 +5,8 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import ResourceSwitcher from "./resourceSwitcher/ResourceSwitcher.svelte";
-  import { type IResourceSwitchItem } from "$lib/client/types/select.type";
   import { appStore } from "$lib/client/stores/app.store";
   import {
-    resolveResourceSwitcher,
     resourceAction,
     availableResources,
     resolveResourceIcon
@@ -32,7 +30,7 @@
   import { Action } from "$lib/client/types/action.enum";
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
   import ResourceBrowser from "./resourceBrowser/ResourceBrowser.svelte";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import { isHideCreateAction } from "./library.utils";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import ComponentShortcutListener from "../shortcuts/ComponentShortcutListener.svelte";
@@ -43,7 +41,6 @@
   let selectedResource: Resource = $view.isConstrainedWidth
     ? Resource.unknown
     : resources[0];
-  let resourceSwitcherRef: ResourceSwitcher;
   let availableResourcesSet: Set<Resource> = new Set(availableResources);
   let syncFeedbackRef: InlineSyncingFeedback;
   let recordsPaneRef: LibraryRecordsPane;
@@ -150,10 +147,6 @@
       }
     ];
   }
-
-  async function refreshTotalRecordCounts() {
-    await resourceSwitcherRef?.refresh(selectedResource);
-  }
 </script>
 
 <Panel
@@ -166,7 +159,6 @@
     <InlineSyncingFeedback
       bind:this={syncFeedbackRef}
       resource={selectedResource}
-      isFullWidthVariant={true}
     />
   {/if}
   <div class="flex mo:py-3 py-5 w-full h-fit shrink-0">
@@ -174,7 +166,6 @@
       {resources}
       selected={selectedResource}
       isShowCount={true}
-      bind:this={resourceSwitcherRef}
       on:select={(e) => {
         appStore.toggleSearchParam({
           [AppSearchParam.RESOURCE]: e.detail,
@@ -219,8 +210,7 @@
   <div slot="nav" class="flex flex-grow">
     <ResourceBrowser
       resource={selectedResource}
-      isLibraryNavContext={true}
-      on:back={() => {
+      onBack={() => {
         selectedResource = Resource.unknown;
         appStore.toggleSearchParam([AppSearchParam.RESOURCE]);
       }}
@@ -231,7 +221,6 @@
       <LibraryRecordsPane
         resource={selectedResource}
         bind:this={recordsPaneRef}
-        on:refreshTotalCount={refreshTotalRecordCounts}
       />
     {/key}
   </div>

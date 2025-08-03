@@ -1,7 +1,7 @@
 <script lang="ts">
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import {
     BarStyle,
     PanelSwitcherStyle

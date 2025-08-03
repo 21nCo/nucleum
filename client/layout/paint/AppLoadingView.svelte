@@ -8,7 +8,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { fade } from "svelte/transition";
   import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import NucleusAnimation from "$lib/client/branding/NucleusAnimation.svelte";
   export let message: string | undefined = undefined;
   export let subMessage: string | undefined = undefined;

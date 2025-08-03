@@ -10,7 +10,9 @@
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import { setEmbedBg } from "$lib/client/utils/embed.utils";
+  import { appStore } from "$lib/client/stores/app.store";
   $: route = $page.url.searchParams.get(AppSearchParam.SETTING);
+  const backPath = $page.url.searchParams.get("back");
   $: if (route && $context.embed == Embed.HANDSET) {
     setEmbedBg(1);
   } else if ($context.embed == Embed.HANDSET) {
@@ -24,7 +26,12 @@
 </script>
 
 {#if $view.isConstrainedWidth}
-  <SettingsAsPageLayout>
+  <SettingsAsPageLayout
+    isShowBackButton={backPath !== null}
+    on:back={() => {
+      if (backPath) appStore.gotoPath(backPath);
+    }}
+  >
     {#if route}
       <ComponentResolver path={route} />
     {:else}

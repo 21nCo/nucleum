@@ -27,7 +27,7 @@
   import CoverPickerFromLibrary from "./CoverPickerFromLibrary.svelte";
   import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/types/product.type";
+  import { resolveProductConfig } from "$lib/client/products/product.config";
 
   const dispatch = createEventDispatcher();
 
@@ -42,9 +42,8 @@
   export let orientation: Orientation = Orientation.Vertical;
   export let value: IRecordId | undefined = undefined;
 
-  $: isFileUploadAvailable =
-    $appStore.product === Product.MEMOTRON ||
-    $appStore.product === Product.NUCLEUS;
+  $: isFileUploadAvailable = resolveProductConfig($appStore.product).features
+    .fileUploadAvailable;
 
   let selectedMethod: Method = Method.COLOR;
   let _value: string | undefined = transformValue(value);

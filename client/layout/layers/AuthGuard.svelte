@@ -13,7 +13,7 @@
     UserDataMode,
     UserSessionType
   } from "$lib/client/types/account.type";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import { postTokenToExtension } from "$lib/client/utils/embed.utils";
   import { wait } from "$lib/client/utils/time.utils";
   import { onMount } from "svelte";

@@ -4,6 +4,8 @@ import { logger } from "../debug/logger.client";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { appStore } from "$lib/client/stores/app.store";
 import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
+import { appEvents } from "$lib/client/stores/notification.store";
+import { GlobalEvent } from "$lib/client/types/event.enum";
 
 const defaultModal = {
   path: "",
@@ -30,6 +32,7 @@ function initModalStore(seed: ModalEvent) {
       update((n: ModalEvent) => {
         return { path: action, isShow: false };
       });
+      appEvents.publish(GlobalEvent.NAV, { action, context });
     },
     notify: (event: ModalEvent) => {
       update((n: ModalEvent) => {

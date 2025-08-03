@@ -29,7 +29,7 @@
   import { onDestroy, onMount } from "svelte";
   import { toolbarUnavailableUrlsList } from "$lib/client/products/memotron/common/urlMap";
   import type { IHighlighter } from "$lib/client/products/memotron/common/highlighters/highlight.type";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import { clipperCacheableStores } from "../clipper.config";
   import ClipperInMemoryCache from "../ClipperInMemoryCache.svelte";
   import { parse } from "$lib/shared/utils/json.utils";

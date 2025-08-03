@@ -27,7 +27,7 @@
   import { compareObjects } from "$lib/shared/utils/obj.utils";
   import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
   import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/types/product.type";
+  import { Product } from "$lib/client/products/product.type";
   import { NodeMetaType } from "$lib/client/products/memotron/node/node.type";
   import { cache } from "$lib/client/layout/layers/cache/cache.store";
   import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
@@ -211,7 +211,6 @@
             select: properties
           },
           filters,
-          isExpand: false,
           isIncludeMetaItems: resource === MetaResource.calendarNotes
         });
       });

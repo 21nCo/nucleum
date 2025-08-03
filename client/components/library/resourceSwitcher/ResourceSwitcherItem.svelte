@@ -11,10 +11,7 @@
     resourceAction,
     resourceCacheKey
   } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import {
-    ResourceAccessPoint,
-    ResourceActionType
-  } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { appMenuStore } from "$lib/client/stores/appMenu/appMenu.store";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
   import Tag from "$lib/client/elements/text/Tag.svelte";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
@@ -23,20 +22,18 @@
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CLIPPER;
   let item: any;
 
-  function resolveItem() {
+  async function resolveItem() {
     const resource = determineResourceType(id);
     if (resource === Resource.collection) {
-      return collectionStore.select(
+      item = await collectionStore.select(
         id,
         isExtensionEnvironment() ? { select: [] } : { expand: ["typeToExtend"] }
       );
     } else {
-      return nodeStore.select(id);
+      item = await nodeStore.select(id);
     }
+    if (!item) throw new Error("Item not found");
   }
-  onMount(async () => {
-    item = await resolveItem();
-  });
 
   function resovleIcon() {
     if (item.avatar) {
@@ -86,7 +83,9 @@
   }
 </script>
 
-{#if item?.label || item?.text}
+{#await resolveItem()}
+  <span />
+{:then}
   <div
     use:popover={{
       content: ContextMenu,
@@ -110,7 +109,7 @@
   >
     <Tag
       {id}
-      label={item?.label || item?.text}
+      label={item?.label || item?.text || "Untitled"}
       {parentBgIndex}
       {isActive}
       isShowExpandFeedbackOnActive={true}
@@ -121,4 +120,4 @@
       on:remove
     />
   </div>
-{/if}
+{/await}
