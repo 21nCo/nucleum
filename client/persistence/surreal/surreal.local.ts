@@ -50,7 +50,7 @@ const loadSurrealDB = async () => {
 
 function resolveDatabaseId(product: Product) {
   if (!product) return "nativeone";
-  return resolveProductConfig(product).databaseName;
+  return resolveProductConfig(product)?.databaseName ?? "nativeone";
 }
 
 export class SurrealPersistence implements IPersistence {

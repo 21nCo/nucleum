@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import BirdCalendar from "./birdViewV2/BirdCalendar.svelte";
   import ClassicCalendar from "./classic/ClassicCalendar.svelte";
   import { CalendarLayout } from "./calendar.type";
@@ -11,7 +12,10 @@
   import CalendarCw from "./CalendarCW.svelte";
   import { setEmbedBg } from "$lib/client/utils/embed.utils";
   export let panel: CalendarLayout = resolvePanelSelection();
-  setEmbedBg(1);
+
+  onMount(() => {
+    setEmbedBg(1);
+  });
 
   function resolvePanelSelection() {
     const layoutState = uiState.getState(UIState.calendarLayout, {

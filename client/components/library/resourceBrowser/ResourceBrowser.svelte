@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { Arrangement } from "$lib/client/types/direction.enum";
@@ -28,7 +29,10 @@
   export let onBack: (() => void) | undefined = undefined;
   const backPath = $page.url.searchParams.get("back");
   const hasBack = onBack !== undefined || backPath !== null;
-  setEmbedBg(1);
+
+  onMount(() => {
+    setEmbedBg(1);
+  });
   let searchQuery: string = "";
   let id: string | null = null;
   let arrangement: Arrangement =

@@ -33,7 +33,7 @@ const loadSignalDB = async () => {
 
 function resolveDatabaseName(product: Product) {
   if (!product) return "nativeone";
-  return resolveProductConfig(product).databaseName;
+  return resolveProductConfig(product)?.databaseName ?? "nativeone";
 }
 
 export class SignalDBPersistence implements IPersistence {

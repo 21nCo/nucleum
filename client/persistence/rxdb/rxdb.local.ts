@@ -37,7 +37,7 @@ const loadRxDB = async () => {
 
 function resolveDatabaseName(product: Product) {
   if (!product) return "nativeone";
-  return resolveProductConfig(product).databaseName;
+  return resolveProductConfig(product)?.databaseName ?? "nativeone";
 }
 
 const resourceSchema = {

@@ -22,7 +22,7 @@ import { resolveProductConfig } from "$lib/client/products/product.config";
 
 function resolveDatabaseName(product: Product) {
   if (!product) return "nativeone";
-  return resolveProductConfig(product).databaseName;
+  return resolveProductConfig(product)?.databaseName ?? "nativeone";
 }
 
 interface IndexedDBStore {

@@ -318,6 +318,8 @@
         "--viewport-height",
         `${viewport.height}px`
       );
+    } else {
+      document.documentElement.style.removeProperty("--viewport-height");
     }
   }
 

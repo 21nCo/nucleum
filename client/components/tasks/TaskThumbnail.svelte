@@ -271,7 +271,7 @@
         <div
           class="flex gap-2 shrink-0"
           use:tooltip={{
-            text: "Set date",
+            text: item.dateUnix ? "Change date" : "Set date",
             delay: 0
           }}
         >
