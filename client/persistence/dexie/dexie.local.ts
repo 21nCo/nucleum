@@ -814,64 +814,11 @@ export class DexiePersistence implements IPersistence {
     }
   }
 
-  async selectRecursion(
-    record: unknown,
-    recurse: string,
-    isFlatten: boolean = false
-  ): Promise<unknown[] | undefined> {
-    try {
-      let result: unknown[] | undefined = [];
-      if (!record || typeof record !== "object" || !(recurse in record)) return;
-      const recurseVal = record[recurse];
-      if (!recurseVal || !Array.isArray(recurseVal) || recurseVal.length === 0)
-        return;
-      const recordsResult = await this.selectMany(
-        this.resolveResource(recurseVal[0]),
-        {
-          filters: {
-            id: recurseVal
-          }
-        }
-      );
-      if (!Array.isArray(recordsResult)) return;
-      const records = recurseVal.map((x) =>
-        recordsResult.find((y) => y.id === x)
-      );
-      result.push(...records);
-      for (const record of records) {
-        const recurseResult = await this.selectRecursion(record, recurse);
-        if (recurseResult) {
-          if (isFlatten) {
-            const parentIndex = result.findIndex(
-              (x: unknown) =>
-                x && typeof x === "object" && "id" in x && x.id === record.id
-            );
-            result.splice(parentIndex + 1, 0, ...recurseResult);
-          } else {
-            result.map((x: unknown) => {
-              if (
-                x &&
-                typeof x === "object" &&
-                "id" in x &&
-                x.id === record.id
-              ) {
-                x[recurse] = recurseResult;
-              }
-              return x;
-            });
-          }
-        }
-      }
-      return result;
-    } catch (e) {
-      logger.error({ at: "DexiePersistence.selectRecursion", e });
-    }
-  }
-
   async selectRecursionv2(
     record: unknown,
     recurse: string,
-    isFlatten: boolean = false
+    isFlatten: boolean = false,
+    maxDepth: number = 10
   ): Promise<unknown[] | undefined> {
     try {
       console.time("recursionv2");
@@ -883,11 +830,22 @@ export class DexiePersistence implements IPersistence {
       const resourceType = this.resolveResource(recurseVal[0]);
       const allIdsToFetch = new Set<string>();
       const recordsMap = new Map<string, unknown>();
+      const depthMap = new Map<string, number>();
 
-      const collectIds = (ids: string[]) => {
-        ids.forEach((id) => allIdsToFetch.add(id));
+      const collectIds = (ids: string[], depth: number = 0) => {
+        if (depth >= maxDepth) {
+          logger.info({
+            at: "DexiePersistence.selectRecursionv2",
+            message: `Maximum recursion depth ${maxDepth} reached`
+          });
+          return;
+        }
+        ids.forEach((id) => {
+          allIdsToFetch.add(id);
+          depthMap.set(id, depth);
+        });
       };
-      collectIds(recurseVal);
+      collectIds(recurseVal, 0);
 
       let foundNewIds = true;
       while (foundNewIds) {
@@ -901,11 +859,12 @@ export class DexiePersistence implements IPersistence {
           if (record?.id) {
             recordsMap.set(record.id, record);
             if (record[recurse] && Array.isArray(record[recurse])) {
+              const currentDepth = depthMap.get(record.id) || 0;
               const childIds = record[recurse].filter(
                 (childId: string) => !allIdsToFetch.has(childId)
               );
-              if (childIds.length > 0) {
-                collectIds(childIds);
+              if (childIds.length > 0 && currentDepth < maxDepth - 1) {
+                collectIds(childIds, currentDepth + 1);
                 foundNewIds = true;
               }
             }
@@ -961,7 +920,7 @@ export class DexiePersistence implements IPersistence {
         result,
         properties.recurse
       );
-      console.log({ recurseResult });
+      logger.log({ at: "DexiePersistence.select", recurseResult });
       result[properties.recurse] = recurseResult;
     }
     if (properties?.expand && properties.expand.length > 0) {

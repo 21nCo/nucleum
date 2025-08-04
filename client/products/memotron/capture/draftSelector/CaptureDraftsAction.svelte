@@ -13,7 +13,6 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { appEvents } from "$lib/client/stores/notification.store";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
   export let size: Size = Size.md;
   const dispatch = createEventDispatcher();
   let drafts: ICapture[] = [];

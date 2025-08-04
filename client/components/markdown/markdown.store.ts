@@ -4,6 +4,7 @@ import {
   structuralNodeTypes
 } from "$lib/client/products/memotron/node/node.type";
 import { get, writable } from "svelte/store";
+import { tick } from "svelte";
 import {
   type IBlockInterface,
   type IMarkdownParams,
@@ -247,9 +248,9 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
       n.blocks[siblingIndex] = currentBlock;
       return n;
     });
-    setTimeout(() => {
+    tick().then(() => {
       this.focus.set({ id });
-    }, 100);
+    });
     return changedBlocks;
   }
 

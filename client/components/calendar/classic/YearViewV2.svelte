@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher, onMount, onDestroy, tick } from "svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { compareDates, isSameDay } from "$lib/client/utils/time.utils";
   import CalendarTileIndicator from "./indicator/CalendarTileIndicator.svelte";
@@ -68,12 +68,17 @@
       }
     });
 
-    setTimeout(() => {
+    let timeoutId: ReturnType<typeof setTimeout>;
+    timeoutId = setTimeout(() => {
       scrollToYear(selectedDate.getFullYear(), selectedDate.getMonth());
-      setTimeout(() => {
+      tick().then(() => {
         isMounted = true;
-      }, 1000);
+      });
     }, 500);
+    
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   });
 
   function getYearFromIndex(index: number): number {

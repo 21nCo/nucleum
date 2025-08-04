@@ -7,19 +7,9 @@
     Graph,
     GraphEvent,
     NodeEvent,
-    CanvasEvent,
-    register,
-    DragCanvas,
-    ZoomCanvas,
-    DragElement,
-    ClickSelect,
-    HoverActivate,
-    Circle,
-    Line,
-    ForceLayout,
-    RadialLayout,
-    D3ForceLayout
+    CanvasEvent
   } from "@antv/g6";
+  import { ensureG6Registered } from "./g6-registry";
   import { onMount, createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
 
@@ -30,17 +20,8 @@
   const currentColors: any = retrieveCurrentColors($appearance);
 
   onMount(() => {
-    register("behavior", "drag-canvas", DragCanvas);
-    register("behavior", "zoom-canvas", ZoomCanvas);
-    register("behavior", "drag-element", DragElement);
-    register("behavior", "click-select", ClickSelect);
-    register("behavior", "hover-activate", HoverActivate);
-    register("node", "circle", Circle);
-    register("edge", "line", Line);
-    register("layout", "force", ForceLayout);
-    register("layout", "radial", RadialLayout);
-    register("layout", "d3-force", D3ForceLayout);
-
+    ensureG6Registered();
+    
     preProcessData();
     renderGraph();
   });
