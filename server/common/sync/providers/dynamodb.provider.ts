@@ -784,6 +784,7 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       const mutations: any[] = [];
       const records: any[] = [];
       const deleted: any[] = [];
+      const resourcesSet = new Set(resources);
       let latestTimestamp = lastSyncDown;
       console.time("syncDown-mutations");
       const params = {
@@ -793,48 +794,69 @@ export class DynamoDBSyncProvider implements ISyncProvider {
           ":pk": `${spaceId}#mutation`,
           ":lastSync": `${lastSyncDown + 1}#`
         },
-        ScanIndexForward: false // Sort descending by timestamp
+        ScanIndexForward: false
       };
 
-      const allMutationsResult = await dynamoClient.send(
-        new QueryCommand(params)
-      );
+      // Process mutations page by page to avoid high memory usage
+      let lastEvaluatedKey = undefined;
+      const processedMutations: any[] = [];
+      const uniqueRecordKeys = new Set<string>();
+      const recordKeysToFetch: { key: { PK: string; SK: string } }[] = [];
+
+      do {
+        const queryParams: any = { ...params };
+        if (lastEvaluatedKey) {
+          queryParams.ExclusiveStartKey = lastEvaluatedKey;
+        }
+
+        const mutationsResult = await dynamoClient.send(
+          new QueryCommand(queryParams)
+        );
+
+        if (mutationsResult.Items) {
+          // Process this page immediately
+          for (const item of mutationsResult.Items) {
+            if (!resourcesSet.has(item.resource)) {
+              continue;
+            }
+            if (item.dapId && item.dapId === dapId) {
+              continue;
+            }
+            processedMutations.push(this.getResourceData(item));
+            if (item.timestamp > latestTimestamp) {
+              latestTimestamp = item.timestamp;
+            }
+            if (item.action !== ResourceActionType.DELETE) {
+              const mutation = this.getResourceData(item);
+              const recordIds = Array.isArray(mutation.resourceId)
+                ? mutation.resourceId
+                : [mutation.resourceId];
+              for (const recordId of recordIds) {
+                const pk = `${spaceId}#${item.resource}`;
+                const sk = recordId;
+                const uniqueKey = `${pk}#${sk}`;
+
+                if (!uniqueRecordKeys.has(uniqueKey)) {
+                  uniqueRecordKeys.add(uniqueKey);
+                  recordKeysToFetch.push({
+                    key: { PK: pk, SK: sk }
+                  });
+                }
+              }
+            } else {
+              deleted.push(this.getResourceData(item));
+            }
+          }
+        }
+
+        lastEvaluatedKey = mutationsResult.LastEvaluatedKey;
+      } while (lastEvaluatedKey);
+
+      // Update mutations array with processed results
+      mutations.push(...processedMutations);
       console.timeEnd("syncDown-mutations");
 
       console.time("syncDown-records");
-      const recordKeysToFetch: { key: { PK: string; SK: string } }[] = [];
-      const resourcesSet = new Set(resources);
-
-      if (allMutationsResult.Items) {
-        for (const item of allMutationsResult.Items) {
-          if (!resourcesSet.has(item.resource)) {
-            continue;
-          }
-          if (item.dapId && item.dapId === dapId) {
-            continue;
-          }
-          mutations.push(this.getResourceData(item));
-          if (item.timestamp > latestTimestamp) {
-            latestTimestamp = item.timestamp;
-          }
-          if (item.action !== ResourceActionType.DELETE) {
-            const mutation = this.getResourceData(item);
-            const recordIds = Array.isArray(mutation.resourceId)
-              ? mutation.resourceId
-              : [mutation.resourceId];
-            for (const recordId of recordIds) {
-              recordKeysToFetch.push({
-                key: {
-                  PK: `${spaceId}#${item.resource}`,
-                  SK: recordId
-                }
-              });
-            }
-          } else {
-            deleted.push(this.getResourceData(item));
-          }
-        }
-      }
       if (recordKeysToFetch.length > 0) {
         const batchedRecords = await this.batchGetItems(
           recordKeysToFetch.map((item) => item.key),
@@ -845,11 +867,12 @@ export class DynamoDBSyncProvider implements ISyncProvider {
       console.timeEnd("syncDown-records");
 
       console.time("syncDown-counts");
-      const counts = isReturnCount
-        ? await this.getResourceCounts(resources, spaceId, dynamoClient)
-        : null;
+      const counts =
+        isReturnCount && isReturnCount !== "$NONE"
+          ? await this.getResourceCounts(resources, spaceId, dynamoClient)
+          : null;
       console.timeEnd("syncDown-counts");
-      return {
+      const response = {
         latestTimestamp:
           latestTimestamp > lastSyncDown
             ? { timestamp: latestTimestamp }
@@ -858,6 +881,18 @@ export class DynamoDBSyncProvider implements ISyncProvider {
         deleted,
         counts
       };
+
+      const responseSize = Buffer.byteLength(JSON.stringify(response), "utf8");
+      const maxResponseSize = 5 * 1024 * 1024;
+
+      if (responseSize > maxResponseSize) {
+        console.warn(
+          `SyncDown response size (${responseSize} bytes) exceeds API Gateway limit (${maxResponseSize} bytes). Requesting re-clone.`
+        );
+        return { needsReclone: true };
+      }
+
+      return response;
     } catch (e) {
       console.error({ at: "DynamoDB syncDown - error", error: e });
       return { error: "Sync failed" };

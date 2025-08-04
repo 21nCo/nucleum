@@ -45,7 +45,8 @@
           )
           .map((t) => ({
             ...t,
-            icon: resolveGoalStatusIcon(t.status)
+            icon: resolveGoalStatusIcon(t.status),
+            isIconFilled: t.status === GoalStatus.COMPLETED
           }))
       : []),
     ...($goal.subGoalsLayout === SubGoalsLayout.STEPS && isActiveResource

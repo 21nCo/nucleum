@@ -814,57 +814,89 @@ export class DexiePersistence implements IPersistence {
     }
   }
 
-  async selectRecursion(
+  async selectRecursionv2(
     record: unknown,
     recurse: string,
-    isFlatten: boolean = false
+    isFlatten: boolean = false,
+    maxDepth: number = 10
   ): Promise<unknown[] | undefined> {
     try {
-      let result: unknown[] | undefined = [];
+      console.time("recursionv2");
       if (!record || typeof record !== "object" || !(recurse in record)) return;
       const recurseVal = record[recurse];
       if (!recurseVal || !Array.isArray(recurseVal) || recurseVal.length === 0)
         return;
-      const recordsResult = await this.selectMany(
-        this.resolveResource(recurseVal[0]),
-        {
-          filters: {
-            id: recurseVal
-          }
+
+      const resourceType = this.resolveResource(recurseVal[0]);
+      const allIdsToFetch = new Set<string>();
+      const recordsMap = new Map<string, unknown>();
+      const depthMap = new Map<string, number>();
+
+      const collectIds = (ids: string[], depth: number = 0) => {
+        if (depth >= maxDepth) {
+          logger.info({
+            at: "DexiePersistence.selectRecursionv2",
+            message: `Maximum recursion depth ${maxDepth} reached`
+          });
+          return;
         }
-      );
-      if (!Array.isArray(recordsResult)) return;
-      const records = recurseVal.map((x) =>
-        recordsResult.find((y) => y.id === x)
-      );
-      result.push(...records);
-      for (const record of records) {
-        const recurseResult = await this.selectRecursion(record, recurse);
-        if (recurseResult) {
-          if (isFlatten) {
-            const parentIndex = result.findIndex(
-              (x: unknown) =>
-                x && typeof x === "object" && "id" in x && x.id === record.id
-            );
-            result.splice(parentIndex + 1, 0, ...recurseResult);
-          } else {
-            result.map((x: unknown) => {
-              if (
-                x &&
-                typeof x === "object" &&
-                "id" in x &&
-                x.id === record.id
-              ) {
-                x[recurse] = recurseResult;
+        ids.forEach((id) => {
+          allIdsToFetch.add(id);
+          depthMap.set(id, depth);
+        });
+      };
+      collectIds(recurseVal, 0);
+
+      let foundNewIds = true;
+      while (foundNewIds) {
+        foundNewIds = false;
+        const currentIds = Array.from(allIdsToFetch);
+        const batchResult = await this.selectMany(resourceType, {
+          filters: { id: currentIds.filter((id) => !recordsMap.has(id)) }
+        });
+        if (!Array.isArray(batchResult)) break;
+        batchResult.forEach((record: any) => {
+          if (record?.id) {
+            recordsMap.set(record.id, record);
+            if (record[recurse] && Array.isArray(record[recurse])) {
+              const currentDepth = depthMap.get(record.id) || 0;
+              const childIds = record[recurse].filter(
+                (childId: string) => !allIdsToFetch.has(childId)
+              );
+              if (childIds.length > 0 && currentDepth < maxDepth - 1) {
+                collectIds(childIds, currentDepth + 1);
+                foundNewIds = true;
               }
-              return x;
-            });
+            }
           }
-        }
+        });
       }
+
+      const buildHierarchy = (ids: string[]): unknown[] => {
+        return ids
+          .map((id) => recordsMap.get(id))
+          .filter(Boolean)
+          .map((record: any) => {
+            const clonedRecord = { ...record };
+
+            if (clonedRecord[recurse] && Array.isArray(clonedRecord[recurse])) {
+              const childIds = clonedRecord[recurse];
+              if (isFlatten) {
+                return [clonedRecord, ...buildHierarchy(childIds)];
+              } else {
+                clonedRecord[recurse] = buildHierarchy(childIds);
+              }
+            }
+            return isFlatten ? [clonedRecord] : clonedRecord;
+          })
+          .flat();
+      };
+
+      const result = buildHierarchy(recurseVal);
+      console.timeEnd("recursionv2");
       return result;
     } catch (e) {
-      logger.error({ at: "DexiePersistence.selectRecursion", e });
+      logger.error({ at: "DexiePersistence.selectRecursionv2", e });
     }
   }
 
@@ -884,11 +916,11 @@ export class DexiePersistence implements IPersistence {
     let result = await this.instance?.table(resource).get(id);
     if (!result) return;
     if (properties?.recurse) {
-      const recurseResult = await this.selectRecursion(
+      const recurseResult = await this.selectRecursionv2(
         result,
         properties.recurse
       );
-      console.log({ recurseResult });
+      logger.log({ at: "DexiePersistence.select", recurseResult });
       result[properties.recurse] = recurseResult;
     }
     if (properties?.expand && properties.expand.length > 0) {

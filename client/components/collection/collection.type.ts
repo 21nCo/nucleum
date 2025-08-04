@@ -29,7 +29,8 @@ export enum CollectionLayout {
 }
 
 export enum CollectionObjectKey {
-  typeToExtend = "typeToExtend"
+  typeToExtend = "typeToExtend",
+  isCaptureShortcutEnabled = "isCaptureShortcutEnabled"
 }
 
 export type ICoverLayout = {
@@ -51,7 +52,7 @@ interface ICollectionBase extends IResourceLabeled, IResourceImportable {
   coverLayout?: ICoverLayout;
   description?: string;
   isStarred?: boolean;
-  isCaptureShortcutEnabled?: boolean;
+  [CollectionObjectKey.isCaptureShortcutEnabled]?: boolean;
   query?: string;
   avatar?: IAvatar;
 }

@@ -32,7 +32,7 @@ function initModalStore(seed: ModalEvent) {
       update((n: ModalEvent) => {
         return { path: action, isShow: false };
       });
-      appEvents.publish(GlobalEvent.NAV, { action, context });
+      appEvents.nav(action);
     },
     notify: (event: ModalEvent) => {
       update((n: ModalEvent) => {

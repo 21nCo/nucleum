@@ -161,9 +161,9 @@
       "brs3": "hsl(0 0% 90%)",
       "brs4": "hsl(0 0% 86%)",
       "fgs1": "hsl(0 0% 0%)",
-      "fgs2": "hsl(0 0% 20%)",
-      "fgs3": "hsl(0 0% 33%)",
-      "fgs4": "hsl(0 0% 50%)",
+      "fgs2": "hsl(0 0% 33%)",
+      "fgs3": "hsl(0 0% 50%)",
+      "fgs4": "hsl(0 0% 60%)",
       "bgg1": "hsla(126, 100%, 69%,0.04)"
     },
     "id": "colorscheme:clean_tidymono_light",

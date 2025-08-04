@@ -13,6 +13,7 @@
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { MemotronAction } from "../../memotronAction.enum";
+  import { CollectionObjectKey } from "$lib/client/components/collection/collection.type";
 
   const dispatch = createEventDispatcher();
   export let selected: CaptureMethod | undefined = undefined;
@@ -49,7 +50,7 @@
         <Icon icon="svg-spinners:3-dots-fade" />
       </div>
     {:then}
-      {#each types as item, index}
+      {#each types as item, index (item.value)}
         <div
           class={cn({
             "col-span-2": types.length % 3 === 1 && index === types.length - 1
@@ -103,6 +104,8 @@
 </div>
 <ComponentBaseLayer
   subscribeToResource={new Set([Resource.collection])}
-  subscriptionPropsForMergeAction={["isCaptureShortcutEnabled"]}
+  subscriptionPropsForMergeAction={[
+    CollectionObjectKey.isCaptureShortcutEnabled
+  ]}
   on:change={refreshTypes}
 />

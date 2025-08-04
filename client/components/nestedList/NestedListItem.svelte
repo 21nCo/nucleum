@@ -104,6 +104,7 @@
                 "fill-ccs1": isActive,
                 "stroke-fgs1": !isActive
               })}
+              isFilled={content.isIconFilled ?? false}
             />
           {:else if children?.length > 0}
             <Icon

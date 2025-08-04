@@ -52,6 +52,8 @@
     });
     if (result && "error" in result) {
       error = result.error;
+      isLoading = false;
+      return;
     }
     nodeContext.parent = $node?.parent;
     nodeContext.contentType = $node?.contentType;

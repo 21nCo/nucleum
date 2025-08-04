@@ -155,7 +155,7 @@
     </div>
   {/if}
   {#if timelinePanelSubItems.length > 0}
-    <div class="flex justify-center">
+    <div class="flex justify-center pb-2">
       <PanelSwitcher
         items={timelinePanelSubItems}
         bind:value={timelinePanelSubItem}

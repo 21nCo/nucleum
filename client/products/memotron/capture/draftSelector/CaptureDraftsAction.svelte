@@ -13,7 +13,6 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { appEvents } from "$lib/client/stores/notification.store";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
   export let size: Size = Size.md;
   const dispatch = createEventDispatcher();
   let drafts: ICapture[] = [];
@@ -43,9 +42,7 @@
   }
   function hidePopover() {
     ref.dispatchEvent(new Event("hide"));
-    appEvents.publish(GlobalEvent.NAV, {
-      path: "capture-drafts-popover"
-    });
+    appEvents.nav("capture-drafts-popover");
   }
 </script>
 

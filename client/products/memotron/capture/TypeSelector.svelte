@@ -11,9 +11,14 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { ButtonStyle } from "$lib/client/types/button.type";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { CollectionObjectKey } from "$lib/client/components/collection/collection.type";
   export let selected: string;
   export let isHideTypeShortcuts: boolean = false;
   let dev_isEnableEditShortcuts: boolean = true;
+  let refreshId: number = new Date().getTime();
 
   const contentTypes: (ISelectItem & { value: string })[] = [
     {
@@ -45,23 +50,26 @@
   <div class="self-start">
     <Text content="Select a type" style={TextStyle.SECTION_HEADING} />
   </div>
-  {#await refreshTypes()}
-    <!--  -->
-  {:then result}
-    <div
-      class="grid mo:grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-2 dp:gap-4 w-full"
-    >
-      {#each result as item}
-        <TypeSelectorItem
-          {item}
-          isActive={selected === item.value}
-          on:select
-          on:capture
-        />
-      {/each}
-    </div>
-  {/await}
-
+  {#key refreshId}
+    {#await refreshTypes()}
+      <div class="flex justify-center bg-bgs1" role="status" aria-label="Loading">
+        <Icon icon="svg-spinners:3-dots-fade" />
+      </div>
+    {:then result}
+      <div
+        class="grid mo:grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-2 dp:gap-4 w-full"
+      >
+        {#each result as item}
+          <TypeSelectorItem
+            {item}
+            isActive={selected === item.value}
+            on:select
+            on:capture
+          />
+        {/each}
+      </div>
+    {/await}
+  {/key}
   {#if dev_isEnableEditShortcuts}
     <Button
       label="Edit shortcuts"
@@ -74,3 +82,13 @@
     />
   {/if}
 </div>
+
+<ComponentBaseLayer
+  subscribeToResource={new Set([Resource.collection])}
+  subscriptionPropsForMergeAction={[
+    CollectionObjectKey.isCaptureShortcutEnabled
+  ]}
+  on:change={() => {
+    refreshId = new Date().getTime();
+  }}
+/>

@@ -362,11 +362,11 @@
       <div
         class={cn("flex-1 min-h-0 overflow-y-auto", {
           "mt-4": mode === undefined,
-          "bg-bgs1 border-t border-brs2 pt-3": isBoxedLayout,
+          "bg-bgs1 border-t border-brs2": isBoxedLayout,
           "rounded-t-[32px]": dev_isExpandableCaptureSection
         })}
       >
-        <div class="flex-1 flex flex-col justify-between h-full w-full pt-4">
+        <div class="flex-1 flex flex-col justify-between h-full w-full pt-3">
           <div class="flex flex-col justify-center px-4 w-full h-full">
             <div
               class={cn(
@@ -378,16 +378,22 @@
                 }
               )}
             >
-              {#if mode === undefined}
+              <!-- Double entry here to avoid keyboard adjustment issues on iOS Webview -->
+              <button
+                class={cn("absolute w-full h-full", {
+                  "z-50": mode === undefined
+                })}
+                on:click={() => {
+                  focusWriter();
+                }}
+              >
                 <button
-                  class="absolute w-full h-full z-50"
+                  class="w-full h-full"
                   on:click={() => {
                     if (!mode) mode = "capture";
-                    //TODO - causing iOS keyboard overflow issue and doesn't work if timeout is used due to iOS webview limitations
-                    focusWriter();
                   }}
                 />
-              {/if}
+              </button>
               {#if $captureStore.method === CaptureMethod.CAMERA && dev_iosCameraCaptureMethod === "input" && $context.isEmbed && $context.os === OperatingSystem.IOS}
                 <!-- <CameraCaptureUsingInput {captureStore} /> -->
                 <input
@@ -435,7 +441,7 @@
 {/if}
 
 <NotificationListener
-  event={[GlobalEvent.INLINE_TOAST, GlobalEvent.NAV]}
+  event={[GlobalEvent.INLINE_TOAST]}
   inlineToastId="nodecapture"
   on:inlinetoast={onInlineToastEvent}
 />

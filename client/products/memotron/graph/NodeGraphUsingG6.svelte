@@ -8,6 +8,7 @@
     type EdgeData,
     CanvasEvent
   } from "@antv/g6";
+  import { ensureG6Registered } from "./g6-registry";
   import { onMount, createEventDispatcher } from "svelte";
   import { truncateString } from "$lib/shared/utils/text.utils";
   import appearance from "$lib/client/stores/appearance.store";
@@ -29,6 +30,8 @@
   };
   const currentColors: any = $appearance.colorScheme.colors;
   onMount(() => {
+    ensureG6Registered();
+    
     preProcessData();
     renderGraph();
   });

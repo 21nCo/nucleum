@@ -70,7 +70,7 @@
       linkQueryParam,
       bulkQueryParam,
       clipBoardQueryParam,
-      captureType
+      method: captureType
     });
   });
 

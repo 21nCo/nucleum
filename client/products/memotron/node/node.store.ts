@@ -364,6 +364,11 @@ export class ActiveNodeStore extends CollectibleStore<
       ) {
         blocks = recursivelyExtractAllChildrenIntoArray(node) as INode[];
       }
+      if (blocks.some((x) => !x?.id)) {
+        return {
+          error: "Node has invalid blocks"
+        };
+      }
       let types: any[] = [];
       if (params.accessPoint !== ResourceAccessPoint.CALENDAR) {
         types = await collectionStore.resolveTypes(node.collections ?? []);

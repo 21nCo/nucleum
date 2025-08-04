@@ -8,4 +8,5 @@ export type NestedItemContent = {
   childrenCount: number;
   color?: number;
   icon?: string;
+  isIconFilled?: boolean;
 };

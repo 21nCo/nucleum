@@ -170,7 +170,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
 
   async init(params?: {
     isWindowDnD?: boolean;
-    captureType?: CaptureMethod;
+    method?: CaptureMethod;
     linkQueryParam?: string | null;
     bulkQueryParam?: string | null;
     clipBoardQueryParam?: string | null;
