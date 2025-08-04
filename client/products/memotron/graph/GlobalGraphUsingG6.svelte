@@ -3,7 +3,23 @@
   import appearance from "$lib/client/stores/appearance.store";
   import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import { truncateString } from "$lib/shared/utils/text.utils";
-  import { Graph, GraphEvent, NodeEvent, CanvasEvent } from "@antv/g6";
+  import {
+    Graph,
+    GraphEvent,
+    NodeEvent,
+    CanvasEvent,
+    register,
+    DragCanvas,
+    ZoomCanvas,
+    DragElement,
+    ClickSelect,
+    HoverActivate,
+    Circle,
+    Line,
+    ForceLayout,
+    RadialLayout,
+    D3ForceLayout
+  } from "@antv/g6";
   import { onMount, createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
 
@@ -14,6 +30,17 @@
   const currentColors: any = retrieveCurrentColors($appearance);
 
   onMount(() => {
+    register("behavior", "drag-canvas", DragCanvas);
+    register("behavior", "zoom-canvas", ZoomCanvas);
+    register("behavior", "drag-element", DragElement);
+    register("behavior", "click-select", ClickSelect);
+    register("behavior", "hover-activate", HoverActivate);
+    register("node", "circle", Circle);
+    register("edge", "line", Line);
+    register("layout", "force", ForceLayout);
+    register("layout", "radial", RadialLayout);
+    register("layout", "d3-force", D3ForceLayout);
+
     preProcessData();
     renderGraph();
   });

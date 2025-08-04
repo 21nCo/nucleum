@@ -18,10 +18,13 @@
 </script>
 
 <div
-  class={cn("grid grid-rows-[1fr_auto] text-b3 gap-1 w-full h-full", {
-    "text-aps1": isActive,
-    "text-fgs3 group-hover:text-fgs2": !isActive
-  })}
+  class={cn(
+    "grid grid-rows-[1fr_auto] text-b3 2k:text-b2 gap-1 w-full h-full",
+    {
+      "text-aps1": isActive,
+      "text-fgs3 group-hover:text-fgs2": !isActive
+    }
+  )}
 >
   {#if data.tasks.length > 0 || data.focusSummary.focus > 0}
     <div class="flex flex-col items-start">

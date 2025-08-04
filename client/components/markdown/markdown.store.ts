@@ -247,7 +247,9 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
       n.blocks[siblingIndex] = currentBlock;
       return n;
     });
-    this.focus.set({ id });
+    setTimeout(() => {
+      this.focus.set({ id });
+    }, 100);
     return changedBlocks;
   }
 

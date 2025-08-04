@@ -38,6 +38,10 @@ class AppEventStore extends ObservableStore<IEvent> {
       });
     }
   }
+
+  nav(path: string) {
+    this.publish(GlobalEvent.NAV, { path });
+  }
 }
 
 export const appEvents = new AppEventStore();
@@ -195,9 +199,7 @@ function initConfirmationStore() {
           return undefined;
         });
       }, 100);
-      appEvents.publish(GlobalEvent.NAV, {
-        action: "confirmation"
-      });
+      appEvents.nav("confirmation");
     },
     notify: (event: ConfirmationNotification) => {
       update(() => {

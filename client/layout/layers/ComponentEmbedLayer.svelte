@@ -7,7 +7,9 @@
   if (bg) setEmbedBg(bg);
 
   function onNav(event: CustomEvent) {
+    const path = event.detail.path;
     if (bg) setEmbedBg(bg);
+    else if (["popover", "tooltip"].includes(path)) setEmbedBg(1);
   }
 </script>
 

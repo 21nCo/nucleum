@@ -43,9 +43,7 @@
   }
   function hidePopover() {
     ref.dispatchEvent(new Event("hide"));
-    appEvents.publish(GlobalEvent.NAV, {
-      path: "capture-drafts-popover"
-    });
+    appEvents.nav("capture-drafts-popover");
   }
 </script>
 

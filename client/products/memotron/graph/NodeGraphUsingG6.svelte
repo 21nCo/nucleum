@@ -6,7 +6,19 @@
     type GraphData,
     type NodeData,
     type EdgeData,
-    CanvasEvent
+    CanvasEvent,
+    register,
+    DragCanvas,
+    ZoomCanvas,
+    DragElement,
+    ClickSelect,
+    HoverActivate,
+    Circle,
+    Line,
+    ForceLayout,
+    RadialLayout,
+    DendrogramLayout,
+    D3ForceLayout
   } from "@antv/g6";
   import { onMount, createEventDispatcher } from "svelte";
   import { truncateString } from "$lib/shared/utils/text.utils";
@@ -29,6 +41,18 @@
   };
   const currentColors: any = $appearance.colorScheme.colors;
   onMount(() => {
+    register("behavior", "drag-canvas", DragCanvas);
+    register("behavior", "zoom-canvas", ZoomCanvas);
+    register("behavior", "drag-element", DragElement);
+    register("behavior", "click-select", ClickSelect);
+    register("behavior", "hover-activate", HoverActivate);
+    register("node", "circle", Circle);
+    register("edge", "line", Line);
+    register("layout", "force", ForceLayout);
+    register("layout", "radial", RadialLayout);
+    register("layout", "dendrogram", DendrogramLayout);
+    register("layout", "d3-force", D3ForceLayout);
+
     preProcessData();
     renderGraph();
   });

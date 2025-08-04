@@ -720,9 +720,7 @@ function initAppStore(seed: IAppStore) {
   };
 
   const goBack = (resource?: IRecordId) => {
-    appEvents.publish(GlobalEvent.NAV, {
-      resource: resource
-    });
+    appEvents.nav(resource?.toString() ?? "");
     if (window.history.length > 1) {
       window.history.back();
     }
@@ -782,9 +780,7 @@ function initAppStore(seed: IAppStore) {
     isRestrictToModals?: boolean;
     inlineRestoreId?: IRecordId;
   }) => {
-    appEvents.publish(GlobalEvent.NAV, {
-      resource: props?.id
-    });
+    appEvents.nav(props?.id?.toString() ?? "");
     const url =
       toggleSearchParam(recordSpecificSearchParams, {
         isPreventRefresh: true

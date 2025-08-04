@@ -4,6 +4,7 @@ import { PopoverTriggerMethod } from "../types/popover.type";
 import { detectTouchDevice, getEventPath } from "../utils/browser.utils";
 import { renderMdAsHtml } from "../components/markdown/markdown.utils";
 import { setEmbedBg } from "../utils/embed.utils";
+import { GlobalEvent } from "../types/event.enum";
 
 interface TooltipReturn {
   update: (newParams: TooltipParams) => void;
@@ -28,6 +29,19 @@ interface TooltipParams {
 interface TooltipReturn {
   update: (newParams: TooltipParams) => void;
   destroy: () => void;
+}
+
+function propagateNavEvent(id: string) {
+  window.dispatchEvent(
+    new CustomEvent(GlobalEvent.EVENT, {
+      detail: {
+        event: GlobalEvent.NAV,
+        value: {
+          path: id
+        }
+      }
+    })
+  );
 }
 
 export function tooltip(
@@ -682,18 +696,6 @@ export function popover(node: HTMLElement, params: PopoverParams) {
         console.error("hidePopover", e);
       }
       popoverElement = null;
-      if (isRenderAsModalForCW && window.innerWidth < 800) {
-        window.dispatchEvent(
-          new CustomEvent("event", {
-            detail: {
-              event: "nav",
-              value: {
-                path: id
-              }
-            }
-          })
-        );
-      }
       if (component) {
         component.$destroy();
         component = null;
@@ -703,6 +705,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       cwModalOverlay.style.opacity = "0";
       cwModalOverlay.remove();
       setEmbedBg(1);
+      propagateNavEvent("popover");
     }
     isShown = false;
     triggerChangeEvent();

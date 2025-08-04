@@ -703,11 +703,13 @@
         actionText={resource === Resource.node &&
         $context.embed !== Embed.HANDSET
           ? "Install chrome extension"
-          : "Create new " + resource}
+          : resource !== Resource.node
+            ? "Create new " + resource
+            : undefined}
         on:click={() => {
           if (resource === Resource.node) {
             appStore.openLink(
-              $appStore.appData?.urls?.chromeExtension ?? "https://memotron.io"
+              $appStore.appData?.urls?.chromeExtension ?? "https://memotron.app"
             );
           } else {
             appStore.runAction(

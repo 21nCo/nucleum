@@ -40,10 +40,13 @@
       });
     }
     node = ActiveNodeStore.resolve(id);
-    await node.init({
+    const nodeInitResult = await node.init({
       accessMode: ResourceAccessMode.INLINE,
       accessPoint: ResourceAccessPoint.CALENDAR
     });
+    if (nodeInitResult?.error) {
+      throw new Error(nodeInitResult.error);
+    }
     nodeContext.id = id;
   }
 
@@ -66,9 +69,10 @@
   <div class="flex w-full h-full overflow-y-auto">
     <NodeContent {node} {mdId} />
   </div>
-{:catch _}
+{:catch err}
   <EmptyStatusView
     mainText="Error loading calendar notes. Please try again after sometime."
+    subText={err.message}
   />
 {/await}
 

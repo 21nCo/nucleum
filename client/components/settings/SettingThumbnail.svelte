@@ -56,10 +56,12 @@
         <div>{component.label}</div>
       </div>
       <Icon
-        icon={component.type === ActionType.LINK ? "link" : "chevright"}
+        icon={component.type === ActionType.LINK
+          ? "weblink-two"
+          : "chevron-right"}
         class={cn({
-          "stroke-abg": isActive && !dev_isOutlineStyle,
-          "stroke-aps1": isActive && dev_isOutlineStyle
+          "text-abg": isActive && !dev_isOutlineStyle,
+          "text-aps1": isActive && dev_isOutlineStyle
         })}
       />
     {:else}

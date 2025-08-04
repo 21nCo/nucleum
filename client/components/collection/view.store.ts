@@ -48,7 +48,7 @@ class CollectionViewStore extends ResourceStore<
         out: collectionId.toString()
       }
     });
-    const ids = items.map((x: any) => x.in).filter((x: any) => x);
+    const ids = items.map((x: any) => x.in).filter(Boolean);
     //TODO - other view filters will be applied here - if filters are present - totalCount should be queried separately without expansion of the items and only with active status filter.
     if (!resource || resource === Resource.node) {
       const nodes = await resourceStore.selectMany(

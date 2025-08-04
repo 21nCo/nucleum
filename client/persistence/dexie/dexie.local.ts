@@ -868,6 +868,79 @@ export class DexiePersistence implements IPersistence {
     }
   }
 
+  async selectRecursionv2(
+    record: unknown,
+    recurse: string,
+    isFlatten: boolean = false
+  ): Promise<unknown[] | undefined> {
+    try {
+      console.time("recursionv2");
+      if (!record || typeof record !== "object" || !(recurse in record)) return;
+      const recurseVal = record[recurse];
+      if (!recurseVal || !Array.isArray(recurseVal) || recurseVal.length === 0)
+        return;
+
+      const resourceType = this.resolveResource(recurseVal[0]);
+      const allIdsToFetch = new Set<string>();
+      const recordsMap = new Map<string, unknown>();
+
+      const collectIds = (ids: string[]) => {
+        ids.forEach((id) => allIdsToFetch.add(id));
+      };
+      collectIds(recurseVal);
+
+      let foundNewIds = true;
+      while (foundNewIds) {
+        foundNewIds = false;
+        const currentIds = Array.from(allIdsToFetch);
+        const batchResult = await this.selectMany(resourceType, {
+          filters: { id: currentIds.filter((id) => !recordsMap.has(id)) }
+        });
+        if (!Array.isArray(batchResult)) break;
+        batchResult.forEach((record: any) => {
+          if (record?.id) {
+            recordsMap.set(record.id, record);
+            if (record[recurse] && Array.isArray(record[recurse])) {
+              const childIds = record[recurse].filter(
+                (childId: string) => !allIdsToFetch.has(childId)
+              );
+              if (childIds.length > 0) {
+                collectIds(childIds);
+                foundNewIds = true;
+              }
+            }
+          }
+        });
+      }
+
+      const buildHierarchy = (ids: string[]): unknown[] => {
+        return ids
+          .map((id) => recordsMap.get(id))
+          .filter(Boolean)
+          .map((record: any) => {
+            const clonedRecord = { ...record };
+
+            if (clonedRecord[recurse] && Array.isArray(clonedRecord[recurse])) {
+              const childIds = clonedRecord[recurse];
+              if (isFlatten) {
+                return [clonedRecord, ...buildHierarchy(childIds)];
+              } else {
+                clonedRecord[recurse] = buildHierarchy(childIds);
+              }
+            }
+            return isFlatten ? [clonedRecord] : clonedRecord;
+          })
+          .flat();
+      };
+
+      const result = buildHierarchy(recurseVal);
+      console.timeEnd("recursionv2");
+      return result;
+    } catch (e) {
+      logger.error({ at: "DexiePersistence.selectRecursionv2", e });
+    }
+  }
+
   async select(resourceId: IRecordId, properties?: IResourceSelectProperties) {
     const resource = this.resolveResource(resourceId);
     const debugResource: Resource[] = [];
@@ -884,7 +957,7 @@ export class DexiePersistence implements IPersistence {
     let result = await this.instance?.table(resource).get(id);
     if (!result) return;
     if (properties?.recurse) {
-      const recurseResult = await this.selectRecursion(
+      const recurseResult = await this.selectRecursionv2(
         result,
         properties.recurse
       );

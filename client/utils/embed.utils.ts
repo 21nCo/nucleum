@@ -29,7 +29,10 @@ export function postMessageToParent(message: EmbedMessage) {
 
 export function postDataToParent(key: EmbedDataMessage, data: any) {
   postToParent({
-    [key]: stringify(data, { isPreventReplacer: true })
+    [key]:
+      typeof data === "object"
+        ? stringify(data, { isPreventReplacer: true })
+        : data
   });
 }
 
@@ -56,10 +59,10 @@ function isParentOriginTrusted(origin: string): boolean {
   if (TRUSTED_PARENT_ORIGINS.includes(origin)) {
     return true;
   }
-  
+
   try {
     const url = new URL(origin);
-    return url.hostname.endsWith('.memotron.app');
+    return url.hostname.endsWith(".memotron.app");
   } catch {
     return false;
   }
@@ -68,12 +71,15 @@ function isParentOriginTrusted(origin: string): boolean {
 function postToParent(message: any) {
   logger.log({
     at: "posting message to parent",
-    message
+    ...message
   });
-  
+
   const parentOrigin = getParentOrigin();
-  const targetOrigin = parentOrigin && isParentOriginTrusted(parentOrigin) ? parentOrigin : window.location.origin;
-  
+  const targetOrigin =
+    parentOrigin && isParentOriginTrusted(parentOrigin)
+      ? parentOrigin
+      : window.location.origin;
+
   try {
     window?.parent?.postMessage(message, targetOrigin);
   } catch (error) {

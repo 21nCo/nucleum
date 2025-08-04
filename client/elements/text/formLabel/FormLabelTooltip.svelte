@@ -8,12 +8,14 @@
   import { popover } from "$lib/client/actions/popover.action";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import view from "$lib/client/stores/view.store";
+  import { appEvents } from "$lib/client/stores/notification.store";
   export let info: InputLabelInfoToolTip;
   export let icon: string = "info";
   let ref: HTMLElement;
 
   function closeTooltip() {
     ref?.dispatchEvent(new CustomEvent("hide"));
+    appEvents.nav("tooltip");
   }
 </script>
 

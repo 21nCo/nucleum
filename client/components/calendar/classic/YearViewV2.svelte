@@ -49,10 +49,9 @@
   let isExplicitNavigation = false;
   let virtualScrollTop = 0;
   let startYearIndex = 0;
-
+  let isMounted = false;
   onMount(() => {
     updateVisibleYears();
-
     requestAnimationFrame(() => {
       const yearElement = document.querySelector(
         '[id^="year-"]'
@@ -69,10 +68,12 @@
       }
     });
 
-    setTimeout(
-      () => scrollToYear(selectedDate.getFullYear(), selectedDate.getMonth()),
-      500
-    );
+    setTimeout(() => {
+      scrollToYear(selectedDate.getFullYear(), selectedDate.getMonth());
+      setTimeout(() => {
+        isMounted = true;
+      }, 1000);
+    }, 500);
   });
 
   function getYearFromIndex(index: number): number {
@@ -141,14 +142,6 @@
     };
   }
 
-  function updateSelectedDate(year: number) {
-    selectedDate = createSafeDate(
-      year,
-      selectedDate.getMonth(),
-      selectedDate.getDate()
-    );
-  }
-
   function scrollToYear(year: number, month?: number) {
     if (!containerRef) return;
 
@@ -175,6 +168,7 @@
   }
 
   function onScroll(e: Event) {
+    if (!isMounted) return;
     const target = e.target as HTMLElement;
     const { scrollTop } = target;
 

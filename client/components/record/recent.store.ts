@@ -55,12 +55,13 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
     const recents = this.get().recents;
     if (params?.type && params.type !== Resource.everything) {
       return recents
-        .filter((x) => x.type === params.type)
+        .filter((x) => x.type === params.type && x.timestamp)
         .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
         .map((x) => x.record)
         .filter((x) => !params.exclude?.some(resourceInList(x.id)));
     }
     return recents
+      .filter((x) => x.record && x.timestamp)
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
       .map((x) => x.record);
   }
