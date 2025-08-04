@@ -73,7 +73,10 @@ async function performRegistration(): Promise<void> {
 
     isG6Registered = true;
   } catch (error) {
-    console.warn("Some G6 extensions failed to register with ExtensionCategory:", error);
+    console.warn(
+      "Some G6 extensions failed to register with ExtensionCategory:",
+      error
+    );
     // Fallback to legacy registration syntax if ExtensionCategory is not available
     try {
       register("behavior", "drag-canvas", DragCanvas);
@@ -81,7 +84,9 @@ async function performRegistration(): Promise<void> {
       register("behavior", "drag-element", DragElement);
       register("behavior", "click-select", ClickSelect);
       register("behavior", "hover-activate", HoverActivate);
+      register("behavior", "collapse-expand", CollapseExpand);
       register("node", "circle", Circle);
+      register("node", "hexagon", Hexagon);
       register("edge", "line", Line);
       register("layout", "force", ForceLayout);
       register("layout", "radial", RadialLayout);
@@ -89,7 +94,10 @@ async function performRegistration(): Promise<void> {
       register("layout", "d3-force", D3ForceLayout);
       isG6Registered = true;
     } catch (fallbackError) {
-      console.error("Failed to register G6 extensions with fallback:", fallbackError);
+      console.error(
+        "Failed to register G6 extensions with fallback:",
+        fallbackError
+      );
       throw fallbackError;
     }
   } finally {
