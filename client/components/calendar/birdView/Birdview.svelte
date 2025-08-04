@@ -659,7 +659,7 @@
     panelsContainer.addEventListener("wheel", (e) => {
       e.preventDefault();
       waitUntilDisenganged(e);
-    });
+    }, { passive: false });
     panelsContainer.addEventListener(
       "mousedown",
       handleMouseDownOnPanelsContainer

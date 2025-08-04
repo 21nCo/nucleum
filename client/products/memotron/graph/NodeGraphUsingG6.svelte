@@ -29,15 +29,16 @@
     combos: []
   };
   const currentColors: any = $appearance.colorScheme.colors;
-  onMount(() => {
-    ensureG6Registered();
+  onMount(async () => {
+    await ensureG6Registered();
     
     preProcessData();
     renderGraph();
   });
 
-  export function rerender() {
+  export async function rerender() {
     if (!graph) return;
+    await ensureG6Registered();
     graph.destroy();
     preProcessData();
     renderGraph();
@@ -181,6 +182,7 @@
       autoFit: "center",
       data: _data,
       animation: false,
+      theme: "light",
       node: {
         style: {
           badgeBackgroundFill: currentColors["bgs4"],

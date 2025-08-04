@@ -19,15 +19,16 @@
   let graph: Graph;
   const currentColors: any = retrieveCurrentColors($appearance);
 
-  onMount(() => {
-    ensureG6Registered();
+  onMount(async () => {
+    await ensureG6Registered();
     
     preProcessData();
     renderGraph();
   });
 
-  export function rerender() {
+  export async function rerender() {
     if (!graph) return;
+    await ensureG6Registered();
     graph.destroy();
     preProcessData();
     renderGraph();
@@ -106,6 +107,7 @@
       data: _data,
       autoFit: "view",
       animation: false,
+      theme: "light",
       node: {
         // palette: {
         //   type: "group",
