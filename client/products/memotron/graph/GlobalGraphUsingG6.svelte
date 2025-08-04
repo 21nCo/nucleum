@@ -3,13 +3,7 @@
   import appearance from "$lib/client/stores/appearance.store";
   import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import { truncateString } from "$lib/shared/utils/text.utils";
-  import {
-    Graph,
-    GraphEvent,
-    NodeEvent,
-    CanvasEvent
-  } from "@antv/g6";
-  import { ensureG6Registered } from "./g6-registry";
+  import { Graph, GraphEvent, NodeEvent, CanvasEvent } from "@antv/g6";
   import { onMount, createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
 
@@ -19,16 +13,13 @@
   let graph: Graph;
   const currentColors: any = retrieveCurrentColors($appearance);
 
-  onMount(async () => {
-    await ensureG6Registered();
-    
+  onMount(() => {
     preProcessData();
     renderGraph();
   });
 
-  export async function rerender() {
+  export function rerender() {
     if (!graph) return;
-    await ensureG6Registered();
     graph.destroy();
     preProcessData();
     renderGraph();
@@ -107,7 +98,6 @@
       data: _data,
       autoFit: "view",
       animation: false,
-      theme: "light",
       node: {
         // palette: {
         //   type: "group",

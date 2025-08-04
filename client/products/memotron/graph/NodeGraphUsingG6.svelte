@@ -8,7 +8,6 @@
     type EdgeData,
     CanvasEvent
   } from "@antv/g6";
-  import { ensureG6Registered } from "./g6-registry";
   import { onMount, createEventDispatcher } from "svelte";
   import { truncateString } from "$lib/shared/utils/text.utils";
   import appearance from "$lib/client/stores/appearance.store";
@@ -29,16 +28,13 @@
     combos: []
   };
   const currentColors: any = $appearance.colorScheme.colors;
-  onMount(async () => {
-    await ensureG6Registered();
-    
+  onMount(() => {
     preProcessData();
     renderGraph();
   });
 
-  export async function rerender() {
+  export function rerender() {
     if (!graph) return;
-    await ensureG6Registered();
     graph.destroy();
     preProcessData();
     renderGraph();
@@ -182,7 +178,6 @@
       autoFit: "center",
       data: _data,
       animation: false,
-      theme: "light",
       node: {
         style: {
           badgeBackgroundFill: currentColors["bgs4"],
