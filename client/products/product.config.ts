@@ -6,6 +6,13 @@ import { MemotronAction } from "./memotron/memotronAction.enum";
 
 const isDev = import.meta.env.DEV;
 
+interface SettingsSection {
+  children: (Action | MemotronAction | string)[];
+  isHideTitle?: boolean;
+  orientation?: "horizontal" | "vertical";
+  section: string;
+}
+
 interface ProductConfig {
   /**
    * App menu for landscape mode
@@ -24,7 +31,7 @@ interface ProductConfig {
    */
   homePathPt: string;
   isShowCaptureOnMobile?: boolean;
-  settings?: any;
+  settings?: SettingsSection[];
   databaseName: string;
   resources: Resource[];
   sectionLabel: string;

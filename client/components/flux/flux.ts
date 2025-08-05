@@ -852,7 +852,7 @@ class Flux {
     if (
       typeof response === "number" ||
       (Array.isArray(response) && response.length === 0) ||
-      !("records" in response)
+      (typeof response === "object" && response !== null && !Array.isArray(response) && !("records" in response))
     ) {
       console.log("large sync down detected: ", response);
       await this.reconcile({ reCloneAll: true });
