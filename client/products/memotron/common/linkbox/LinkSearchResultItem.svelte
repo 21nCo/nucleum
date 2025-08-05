@@ -19,7 +19,7 @@
 <!-- TODO - improve search results - to show image preview, tweet preview, etc -->
 <button
   class={cn(
-    "flex w-full gap-6 justify-between items-center px-1 py-2 min-h-fit"
+    "flex w-full gap-6 justify-between items-center px-1 cw:py-1 py-2 min-h-fit"
   )}
   on:click
   on:mousedown={(e) => e.preventDefault()}
@@ -57,7 +57,8 @@
     {/if}
   </span>
   {#if !isHideResourceType && isValidString(resourceType)}
-    <span class="text-b3 text-fgs3 border border-brs2 rounded-md px-2 py-0.5"
+    <span
+      class="cw:text-b4 text-b3 text-fgs3 border border-brs2 rounded-md cw:px-1.5 px-2 py-0.5"
       >{properCase(resourceType)}</span
     >
   {/if}

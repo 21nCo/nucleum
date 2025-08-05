@@ -12,6 +12,7 @@
   export let style: InputStyle = InputStyle.BORDERED;
   export let label: InputLabel | undefined = undefined;
   export let isReadOnlyMode: boolean = false;
+  export let parentBgIndex: number = 1;
   if (typeof avatar !== "string") {
     avatar = "star";
   }
@@ -32,9 +33,9 @@
     </span>
   {/if}
 {:else}
-  <InputBaseElement {style} {label}>
+  <InputBaseElement {style} {label} {parentBgIndex}>
     {#if typeof count === "number" && count <= 6}
-      <div class={cn("flex gap-1")}>
+      <div class={cn("flex gap-2")}>
         {#each Array(count) as _, item}
           {@const _icon = +item + 1 <= value ? avatar + "-fill" : avatar}
           <button

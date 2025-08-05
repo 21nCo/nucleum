@@ -16,6 +16,8 @@
   import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import MemoryBase from "./MemoryBase.svelte";
+  import { defaultsMigrationForNodes } from "./migrations";
+  import { defaultsMigrationTidy } from "$lib/client/components/migrations";
 
   let isLiteMode = $context.isEmbed && $context.isSheet;
   const isDebug = import.meta.env?.DEV;
@@ -27,27 +29,25 @@
   }
 
   async function runFallbacks() {
+    let runs = 0;
     try {
-      dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
-        message: "Updating the app...",
-        subMessage: ""
-      });
-      await FallbackTracker.runIfNotCompleted(
+      await defaultsMigrationTidy();
+      await defaultsMigrationForNodes();
+      runs += await FallbackTracker.runIfNotCompleted(
         "clipTextSearchFallback",
         clipTextSearchFallback
       );
-      await FallbackTracker.runIfNotCompleted(
+      runs += await FallbackTracker.runIfNotCompleted(
         "collectionResourceBackPropagation",
         collectionResourceBackPropagation
       );
-      await FallbackTracker.runIfNotCompleted(
+      runs += await FallbackTracker.runIfNotCompleted(
         "headingNodeParentBackPropagation",
         headingNodeParentBackPropagation
       );
       await collectionsListOnRecords();
       if (!$context.isEmbed) {
-        toasts.showProgress("update", "Updating the app");
-        await FallbackTracker.runIfNotCompleted(
+        runs += await FallbackTracker.runIfNotCompleted(
           "lowResThumbnailsBackPropagation",
           lowResThumbnailsBackPropagation
         );
@@ -57,11 +57,13 @@
       logger.error({ at: "runFallbacks", error });
     } finally {
       toasts.closeProgress("update");
-      dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
-        message: "Update completed.",
-        subMessage: "",
-        isFinished: true
-      });
+      if (runs > 0) {
+        dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
+          message: "Update completed",
+          subMessage: "",
+          isFinished: true
+        });
+      }
     }
   }
 </script>

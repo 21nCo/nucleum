@@ -15,8 +15,8 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import type { IActiveCaptureStore } from "./capture.store";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
   import { Size } from "$lib/client/types/size.enum";
+  import { confirmationNotification } from "$lib/client/stores/notification.store";
   const dispatch = createEventDispatcher();
   export let captureStore: IActiveCaptureStore;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CAPTURE;
@@ -154,10 +154,32 @@
       return undefined;
     }
   }
+
+  function onGoBack() {
+    if (recordingState !== PlayActionState.NOT_STARTED) {
+      confirmationNotification.notify({
+        title: "Are you sure you want to go back?",
+        message: "You will lose your recording.",
+        confirmAction: {
+          label: "Go back",
+          callback: async () => {
+            proceedToGoBack();
+          }
+        }
+      });
+    } else {
+      proceedToGoBack();
+    }
+  }
+
+  function proceedToGoBack() {
+    cleanup();
+    dispatch("clear");
+  }
 </script>
 
 <div class="grid grid-rows-2 h-full w-full">
-  <div class="flex min-h-64 w-full">
+  <div class="flex w-full">
     {#if isShowPreview}
       <div
         class:hidden={recordingState === PlayActionState.STOPPED ||
@@ -174,7 +196,7 @@
               : "border-right:2px solid " + currentColors["aps1"]}
           />
         </div>
-        <p class="text-h1 font-bold text-fgs2 text-center">
+        <p class="text-h1 font-medium text-fgs2 text-center">
           {formatSeconds(recordingDuration, TimeFormat.CLOCK)}
         </p>
       </div>
@@ -183,6 +205,15 @@
   {#if $view.isConstrainedWidth || recordingState === PlayActionState.NOT_STARTED}
     <div class="flex flex-col w-full justify-center">
       <div class="flex w-full justify-center gap-6 mb-auto">
+        <PlayerControl
+          on:click={onGoBack}
+          icon="back"
+          label="Go back"
+          size={recordingState === PlayActionState.NOT_STARTED
+            ? Size.lg
+            : Size.md}
+          style={ButtonStyle.OUTLINED}
+        />
         {#if recordingState === PlayActionState.NOT_STARTED}
           <PlayerControl
             on:click={startRecording}
@@ -194,6 +225,7 @@
         {:else if recordingState === PlayActionState.RUNNING}
           <PlayerControl
             on:click={toggleRecording}
+            style={ButtonStyle.OUTLINED}
             icon="pause"
             label="Pause"
           />
@@ -217,27 +249,11 @@
           />
         {/if}
       </div>
-      <div class="pb-8">
-        <PlayerControl
-          on:click={(e) => {
-            e.stopPropagation();
-            cleanup();
-            dispatch("clear");
-          }}
-          icon="back"
-          tooltip="Go back"
-          size={Size.sm}
-          style={ButtonStyle.OUTLINED}
-        />
-      </div>
     </div>
   {:else}
     <div class="flex w-full justify-center gap-6">
       <Button
-        on:click={() => {
-          cleanup();
-          dispatch("clear");
-        }}
+        on:click={onGoBack}
         icon="back"
         style={ButtonStyle.OUTLINED}
         label="Go back"

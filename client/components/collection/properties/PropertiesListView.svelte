@@ -32,6 +32,7 @@
   export let values: ICollectionItemPropertyValue[] = [];
   export let item: ICollectionItem | null = null;
   export let resource: Resource;
+  export let parentBgIndex: number = 1;
   export let context: "capture" | "clip" | "mainpanel" | "rightpanel" =
     "capture";
   export let isReadOnlyMode: boolean = false;
@@ -188,6 +189,7 @@
               {item}
               isPropertiesPaneContext={isRenderAsColumn}
               {isReadOnlyMode}
+              {parentBgIndex}
               on:change={(e) => {
                 dispatch("change", {
                   id: property.id,

@@ -33,7 +33,7 @@
       : `Pending ${itemsPendingForSync?.length} items`}</span
   >
   {#if lastSyncedAt}
-    <span class="text-b3 text-fgs3"
+    <span class="text-b3 text-fgs3 text-end"
       >- Last synced at:
       {formatDatetime($userPreferences, new Date(+lastSyncedAt))}</span
     >

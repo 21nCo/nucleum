@@ -92,6 +92,7 @@
     class="w-full"
     style={isIconSelectType ? InputStyle.PLAIN : style}
     {label}
+    parentBgIndex={parentBackgroundIndex}
     isFocused={isOptionsVisible}
   >
     {#if isIconSelectType}

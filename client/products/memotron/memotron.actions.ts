@@ -33,6 +33,7 @@ import MemotronImportSettings from "./import/MemotronImportSettings.svelte";
 import MemotronHomeOnMobile from "./home/MemotronHomeOnMobile.svelte";
 import EditCaptureShortcuts from "./capture/EditCaptureShortcuts.svelte";
 import CaptureSettings from "./capture/CaptureSettings.svelte";
+import LinkTagsControlPanel from "./linking/LinkTagsControlPanel.svelte";
 
 export const memotronActions: IAction[] = [
   {
@@ -202,11 +203,19 @@ export const memotronActions: IAction[] = [
     action: resourceAction(Resource.relation, ResourceActionType.BROWSE),
     type: ActionType.PAGE,
     label: "Relations",
-    icon: "ph:link-simple-horizontal-light",
+    icon: "relation",
     component: ResourceBrowser,
     componentParams: {
       resource: Resource.relation
     }
+  },
+  {
+    action: MemotronAction.RELATIONS_AS_SETTINGS,
+    type: ActionType.PAGE,
+    label: "Relations",
+    isMeta: true,
+    icon: "relation",
+    component: LinkTagsControlPanel
   },
   {
     action: Action.OVERVIEW,

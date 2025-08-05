@@ -14,6 +14,7 @@
   export let size: Size = Size.md;
   export let isExpanded: boolean = false;
   export let isDisabled: boolean = false;
+  export let parentBgIndex: number = 1;
   if (!label.orientation) {
     label = {
       ...label,
@@ -42,7 +43,7 @@
     />
   </button>
 {:else}
-  <InputBaseElement {style} {label}>
+  <InputBaseElement {style} {label} {parentBgIndex}>
     <Switch bind:on={checked} {size} on:change {isDisabled} />
   </InputBaseElement>
 {/if}

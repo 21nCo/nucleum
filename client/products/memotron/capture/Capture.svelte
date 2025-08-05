@@ -35,6 +35,7 @@
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import CaptureTopBar from "./CaptureTopBar.svelte";
   import { fly } from "svelte/transition";
+  import { Placement } from "$lib/client/types/direction.enum";
   export let captureId: IRecordId = generateResourceId(Resource.capture);
   export let isWindowDnD = false;
   const captureContext = {
@@ -144,7 +145,7 @@
             {/if}
           </div>
           {#if $captureStore.isEmpty}
-            <div class="flex flex-col gap-8 w-full dp:px-10 dp:my-10">
+            <div class="flex flex-col gap-8 w-full dp:px-12 dp:my-10">
               <TypeSelector
                 selected={$captureStore.method}
                 isHideTypeShortcuts={$captureStore.isCaptureFromCollectionPage}
@@ -185,6 +186,7 @@
             <Button
               icon="cross"
               tooltip="Close capture"
+              tooltipOptions={{ placement: Placement.TopCenter }}
               type={ButtonVariant.DANGER}
               shortcut={{
                 key: KeyboardKey.ESCAPE,

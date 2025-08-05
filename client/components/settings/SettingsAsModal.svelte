@@ -6,29 +6,20 @@
   import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
   import type { IAction } from "$lib/client/types/action.type";
   import { onMount } from "svelte";
-  import {
-    AppSearchParam,
-    type IAppStore
-  } from "$lib/client/types/appStore.type";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   import { appStore } from "$lib/client/stores/app.store";
-  import { isValidArray, sortArrayByOrder } from "$lib/shared/utils/obj.utils";
   import ProfileCpSection from "./account/ProfileCPSection.svelte";
   import SettingsFooter from "./SettingsFooter.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { Action } from "$lib/client/types/action.enum";
   import { page } from "$app/stores";
+  import { resolveProductConfig } from "$lib/client/products/product.config";
   let selected: string = "";
   let parentBgIndex: number = 2;
   // resolveAction("theme");
   let pageAction: IAction | null = null;
-  let config: any;
+  const config = resolveProductConfig().settings;
   onMount(() => {
-    const sub = appStore.subscribe((x: IAppStore) => {
-      if (x?.appData?.cp) {
-        let cp = x.appData.cp;
-        if (isValidArray(cp)) config = sortArrayByOrder(cp);
-      }
-    });
     const pageSub = page.subscribe((x) => {
       const settingSearchParam = x?.url?.searchParams?.get("setting");
       if (settingSearchParam) {
@@ -37,7 +28,6 @@
       }
     });
     return () => {
-      sub();
       pageSub();
     };
   });

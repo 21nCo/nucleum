@@ -1,8 +1,17 @@
 import { Product } from "./product.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { product } from "$local/local";
+import { Action } from "../types/action.enum";
+import { MemotronAction } from "./memotron/memotronAction.enum";
 
 const isDev = import.meta.env.DEV;
+
+interface SettingsSection {
+  children: (Action | MemotronAction | string)[];
+  isHideTitle?: boolean;
+  orientation?: "horizontal" | "vertical";
+  section: string;
+}
 
 interface ProductConfig {
   /**
@@ -22,6 +31,7 @@ interface ProductConfig {
    */
   homePathPt: string;
   isShowCaptureOnMobile?: boolean;
+  settings?: SettingsSection[];
   databaseName: string;
   resources: Resource[];
   sectionLabel: string;
@@ -47,7 +57,45 @@ export const products: Record<Product, ProductConfig> = {
     tagline: "Your digital harmony",
     features: {
       fileUploadAvailable: true
-    }
+    },
+    settings: [
+      {
+        children: [
+          Action.SYNC_SETTINGS,
+          Action.ARTIFICIAL_INTELLIGENCE,
+          Action.DATA_SETTINGS,
+          Action.USER_BILLING
+        ],
+        isHideTitle: true,
+        orientation: "horizontal",
+        section: "app"
+      },
+      {
+        children: [
+          Action.MODE_OF_INTERACTION,
+          Action.APPEARANCE_SETTINGS,
+          "analytics-settings",
+          "session-settings",
+          Action.DATETIME_SETTINGS,
+          Action.SHORTCUTS,
+          Action.ACCESSIBILITY
+        ],
+        section: "customization"
+      },
+      {
+        children: [
+          "about",
+          "green",
+          "share",
+          "guides",
+          "feedback",
+          "privacy",
+          "discord"
+        ],
+        isHideTitle: true,
+        section: "other"
+      }
+    ]
   },
   [Product.MEMOTRON]: {
     appMenu: ["node_create", "calendar", "overview", "library"],
@@ -62,7 +110,44 @@ export const products: Record<Product, ProductConfig> = {
     tagline: "Your memory partner",
     features: {
       fileUploadAvailable: true
-    }
+    },
+    settings: [
+      {
+        children: [
+          MemotronAction.RELATIONS_AS_SETTINGS,
+          Action.SYNC_SETTINGS,
+          Action.ARTIFICIAL_INTELLIGENCE,
+          Action.DATA_SETTINGS,
+          Action.USER_BILLING
+        ],
+        isHideTitle: true,
+        orientation: "horizontal",
+        section: "app"
+      },
+      {
+        children: [
+          Action.MODE_OF_INTERACTION,
+          Action.APPEARANCE_SETTINGS,
+          Action.DATETIME_SETTINGS,
+          Action.SHORTCUTS,
+          Action.ACCESSIBILITY
+        ],
+        section: "customization"
+      },
+      {
+        children: [
+          "about",
+          "green",
+          "share",
+          "guides",
+          "feedback",
+          "privacy",
+          "discord"
+        ],
+        isHideTitle: true,
+        section: "other"
+      }
+    ]
   },
   [Product.POINTRON]: {
     appMenu: ["focus", "calendar", "overview", "library"],
@@ -76,7 +161,44 @@ export const products: Record<Product, ProductConfig> = {
     tagline: "Your focus haven",
     features: {
       fileUploadAvailable: false
-    }
+    },
+    settings: [
+      {
+        children: [
+          Action.SYNC_SETTINGS,
+          Action.DATA_SETTINGS,
+          Action.USER_BILLING
+        ],
+        isHideTitle: true,
+        orientation: "horizontal",
+        section: "app"
+      },
+      {
+        children: [
+          Action.MODE_OF_INTERACTION,
+          Action.APPEARANCE_SETTINGS,
+          "analytics-settings",
+          "session-settings",
+          Action.DATETIME_SETTINGS,
+          Action.SHORTCUTS,
+          Action.ACCESSIBILITY
+        ],
+        section: "customization"
+      },
+      {
+        children: [
+          "about",
+          "green",
+          "share",
+          "guides",
+          "feedback",
+          "privacy",
+          "discord"
+        ],
+        isHideTitle: true,
+        section: "other"
+      }
+    ]
   },
   [Product.SELFTRON]: {
     appMenu: ["overview", "library"],

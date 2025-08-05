@@ -48,5 +48,9 @@ export enum Action {
   CREDITS = "credits",
   DATA_SETTINGS = "data-settings",
   CALENDAR_SETTINGS = "calendar-settings",
+  APPEARANCE_SETTINGS = "appearance-settings",
+  DATETIME_SETTINGS = "datetime-settings",
+  SHORTCUTS = "shortcuts",
+  ACCESSIBILITY = "accessibility",
   IMPORT_FROM_OTHER_APPS = "import-from-other-apps"
 }

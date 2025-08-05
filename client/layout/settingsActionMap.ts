@@ -68,7 +68,7 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     hideContext: [Embed.HANDSET]
   },
   {
-    action: "theme",
+    action: Action.APPEARANCE_SETTINGS,
     label: "Appearance",
     cmdLabel: [
       { variant: "appearanceSettings", label: "Appearance Settings" },
@@ -127,21 +127,21 @@ const settings: (Required<Pick<IAction, "action">> & Partial<IAction>)[] = [
     component: AppMenuSettings
   },
   {
-    action: "shortcuts",
+    action: Action.SHORTCUTS,
     label: "Keyboard shortcuts",
     icon: "keyboard",
     component: ShortcutSettings,
     hideContext: [Embed.HANDSET]
   },
   {
-    action: "datetime-settings",
+    action: Action.DATETIME_SETTINGS,
     cmdLabel: "Date & Time Settings",
     label: "Date & Time",
     icon: "calendar-blank",
     component: DateTimeSettings
   },
   {
-    action: "accessibility",
+    action: Action.ACCESSIBILITY,
     get cmdLabel() {
       return this.modalParams?.title;
     },

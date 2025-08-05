@@ -42,6 +42,7 @@
   export let value: IPropertyValue | null = null;
   export let property: IProperty;
   export let item: ICollectionItem | null = null;
+  export let parentBgIndex: number = 1;
   /**
    * @deprecated - use context instead
    */
@@ -193,6 +194,7 @@
   {:else if property.type === PropertyType.TEXT}
     <TextInput
       {style}
+      parentBackgroundIndex={parentBgIndex}
       bind:value={_value}
       {label}
       placeholder="Enter text"
@@ -201,6 +203,7 @@
   {:else if property.type === PropertyType.NUMBER || property.type === PropertyType.EMAIL || property.type === PropertyType.URL}
     <TextInput
       {style}
+      parentBackgroundIndex={parentBgIndex}
       bind:value={_value}
       {label}
       placeholder={`Enter ${property.type}`}
@@ -209,9 +212,16 @@
     />
   {:else if property.type === PropertyType.CHECKBOX && typeof _value === "boolean"}
     <!-- <CheckboxInput bind:checked={property.value} label={details.label} /> -->
-    <SwitchInput bind:checked={_value} {label} {style} on:change />
+    <SwitchInput
+      {parentBgIndex}
+      bind:checked={_value}
+      {label}
+      {style}
+      on:change
+    />
   {:else if property.type === PropertyType.RATING && typeof _value === "number"}
     <Rating
+      {parentBgIndex}
       {label}
       {style}
       avatar={property.config?.avatar}
@@ -245,6 +255,7 @@
         {label}
         {property}
         {options}
+        parentBackgroundIndex={parentBgIndex}
         bind:value={_value}
         on:change
         on:newOption
@@ -252,7 +263,13 @@
       />
     {/if}
   {:else if property.type === PropertyType.DATE}
-    <DatePicker bind:date={_value} {label} {style} on:change />
+    <DatePicker
+      parentBackgroundIndex={parentBgIndex}
+      bind:date={_value}
+      {label}
+      {style}
+      on:change
+    />
   {:else if item}
     <MetaPropertyItem {property} {item} />
   {/if}

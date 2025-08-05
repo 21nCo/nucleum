@@ -22,6 +22,9 @@
   import context from "$lib/client/stores/context.store";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import type { ICollectionItemPropertyValue } from "$lib/client/components/collection/collection.type";
+  import { fly } from "svelte/transition";
+  import { quintOut } from "svelte/easing";
+  import view from "$lib/client/stores/view.store";
   const dispatch = createEventDispatcher();
   export let links: IRecordId[];
   export let propertyValues: ICollectionItemPropertyValue[] = [];
@@ -153,11 +156,16 @@
     {#if expansionState === "loading" || expansionState === "not-type" || expansionState === "no-props" || expansionState === "error"}
       <div
         class={cn(
-          "flex justify-center items-center w-full h-full text-fgs3 text-b2",
+          "flex justify-center items-center w-full h-full text-fgs3 cw:text-b3 px-1 py-2 text-b2",
           {
             "text-ars1": expansionState === "error"
           }
         )}
+        in:fly={{
+          y: -20,
+          duration: 300,
+          easing: quintOut
+        }}
       >
         {#if expansionState === "loading"}
           loading...
@@ -183,6 +191,11 @@
             accessPoint === ResourceAccessPoint.CLIPPER,
           "h-fit max-h-96": accessPoint === ResourceAccessPoint.CAPTURE
         })}
+        in:fly={{
+          y: -20,
+          duration: 300,
+          easing: quintOut
+        }}
       >
         <Text
           content={`${types[0]?.label ? types[0].label + ":" : ""} Properties (${propertyCount ?? ""})`}
@@ -190,8 +203,13 @@
         />
         <div class="overflow-y-auto h-full w-full styledscroll">
           <PropertiesListView
+            parentBgIndex={accessPoint === ResourceAccessPoint.CAPTURE &&
+            $view.isPortrait
+              ? 2
+              : 1}
             {types}
             values={propertyValues}
+            resource={Resource.node}
             context="clip"
             on:change={(e) => {
               dispatch("propertyChange", e.detail);

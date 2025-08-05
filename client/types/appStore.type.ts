@@ -38,6 +38,9 @@ export type IAppData = {
   release?: any;
   availability?: any;
   help?: any;
+  /**
+   * @deprecated - use product.config instead
+   */
   cp?: any;
   shortcuts?: any;
   configurableShortcuts?: string[];
