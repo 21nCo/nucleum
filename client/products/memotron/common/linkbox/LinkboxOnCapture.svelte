@@ -1,8 +1,5 @@
 <script lang="ts">
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
   import LinkItems from "./LinkItems.svelte";
   import LinkSearch from "./LinkSearch.svelte";
   import { createEventDispatcher } from "svelte";
@@ -11,6 +8,7 @@
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
   import type { IActiveCaptureStore } from "../../capture/capture.store";
+  import { cn } from "$lib/client/utils/ui.utils";
   export let captureStore: IActiveCaptureStore;
   export let expand: IRecordId | null = null;
   const dispatch = createEventDispatcher();
@@ -22,15 +20,17 @@
       value: e.detail.value
     });
   }
+  $: hasLinks = isValidArrayWithData($captureStore.links);
 </script>
 
 <section
   class="flex flex-col gap-4 w-full bg--bgs2 border border-brs3 rounded-md p-2"
 >
-  <div class={cn("flex", "gap-2")}>
-    <div class="flex gap-1">
-      <Icon icon="link" size={Size.sm} />
-    </div>
+  <div
+    class={cn({
+      "px-1 pt-1": hasLinks
+    })}
+  >
     <LinkSearch
       accessPoint={ResourceAccessPoint.CAPTURE}
       searchQuery={link}
@@ -43,7 +43,7 @@
     />
   </div>
 
-  {#if isValidArrayWithData($captureStore.links)}
+  {#if hasLinks}
     <div class="flex flex-col gap-2 overflow-y-auto styledscroll">
       <LinkItems
         {expand}

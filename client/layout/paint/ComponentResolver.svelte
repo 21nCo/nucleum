@@ -20,7 +20,13 @@
         const pathWithPrefixStripped = path.split("/")[1];
         action = appStore.resolveComponentFromPath(pathWithPrefixStripped);
       }
-      if (action) $appStore.currentComponent = action;
+      if (action) {
+        $appStore.currentComponent = action;
+        params = {
+          ...(action.componentParams ?? {}),
+          ...(params ?? {})
+        };
+      }
     }
     if ($context.isSheet) postMessageToParent(EmbedMessage.SHEET_MOUNTED);
   });

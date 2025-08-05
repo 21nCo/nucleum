@@ -5,7 +5,7 @@
     type InputLabel,
     type PopoverInputOptions
   } from "../types/input.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   import Popover from "./popover/Popover.svelte";
   import FormControlLabelWrapper from "./text/formLabel/FormControlLabelWrapper.svelte";
   import { Size } from "../types/size.enum";
@@ -14,6 +14,7 @@
   export let style: InputStyle = InputStyle.BORDERED;
   export let size: Size.md | Size.sm = Size.md;
   export let label: InputLabel | undefined = undefined;
+  export let parentBgIndex: number = 1;
   export let isFocused: boolean = false;
   export let popoverOptions: PopoverInputOptions | undefined = undefined;
   let popoverRef: any;
@@ -50,7 +51,7 @@
       "border border-aps1":
         isActive &&
         (style === InputStyle.BORDERED || style === InputStyle.FILLED),
-      "bg-bgs2": style === InputStyle.FILLED,
+      [bg(parentBgIndex)]: style === InputStyle.FILLED,
       "border border-bgs2 ": style === InputStyle.FILLED && !isActive
     })}
   >

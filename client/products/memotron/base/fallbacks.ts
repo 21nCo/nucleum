@@ -12,7 +12,6 @@ import {
   PersistenceActionType,
   type IRecordId
 } from "$lib/client/types/data.type";
-import { compressImageToTargetSize } from "$lib/client/utils/ui.utils";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { headingNodeTypes, NodeType, type INode } from "../node/node.type";
 
@@ -219,7 +218,7 @@ export async function headingNodeParentBackPropagation() {
  */
 export async function collectionsListOnRecords() {
   const nodes = await flux.selectMany(Resource.node, {
-    properties: ["id", "avatar"]
+    properties: { select: ["id", "avatar"] }
   });
   console.log({ at: "collectionsListOnRecords", nodes });
   const nodesWithAvatars = nodes.filter((x) => x.avatar);
@@ -234,11 +233,11 @@ export async function collectionsListOnRecords() {
   });
 
   const collections = await flux.selectMany(Resource.collection, {
-    properties: ["id"]
+    properties: { select: ["id"] }
   });
 
   const records = await flux.selectMany(Resource.link, {
-    properties: ["in.* as in", "*"],
+    properties: { expand: ["in"] },
     filters: {
       out: collections.map((x) => x.id.toString())
     }

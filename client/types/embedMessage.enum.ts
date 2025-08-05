@@ -30,5 +30,6 @@ export enum EmbedDataMessage {
   NOTIFICATIONS = "notifications",
   ACCOUNT = "account",
   OAUTH = "oauth",
-  LINK = "link"
+  LINK = "link",
+  LOG = "log"
 }

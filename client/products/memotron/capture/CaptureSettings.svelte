@@ -8,6 +8,8 @@
   import { Size } from "$lib/client/types/size.enum";
   import { InputStyle } from "$lib/client/types/input.type";
   import EditCaptureShortcuts from "./EditCaptureShortcuts.svelte";
+  import Text from "$lib/client/elements/text/Text.svelte";
+  import { TextStyle } from "$lib/client/types/text.enum";
 
   let openNodesUponSave =
     uiState.getState(UIState.openNodesUponSave, {
@@ -22,7 +24,7 @@
   }
 </script>
 
-<div class="flex flex-col gap-6">
+<div class="flex flex-col gap-6 h-full w-full">
   <SwitchInput
     bind:checked={openNodesUponSave}
     size={Size.md}
@@ -36,8 +38,8 @@
     }}
     on:change={handleToggleChange}
   />
-  <div class="flex flex-col gap-4">
-    <h3 class="text-h5 text-fgs1">Capture Shortcuts</h3>
+  <div class="flex flex-col flex-grow w-full">
+    <Text content="Shortcuts" style={TextStyle.PANEL_HEADING_SMALL} />
     <EditCaptureShortcuts />
   </div>
 </div>

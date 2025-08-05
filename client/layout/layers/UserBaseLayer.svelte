@@ -396,7 +396,6 @@
         //   return result.ifrCloneResult;
         // }
       } else {
-        loadingMessage = loadingMessages.syncDown;
         return flux.initialSyncDown();
       }
     }

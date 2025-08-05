@@ -45,6 +45,11 @@
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import { quintOut } from "svelte/easing";
   import ResourceSearchBase from "../library/search/ResourceSearchBase.svelte";
+  import account from "$lib/client/stores/account.store";
+  import { UserDataMode } from "$lib/client/types/account.type";
+  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
+  import { InfoTextType } from "$lib/client/types/text.type";
+  import { resolveProductConfig } from "../../product.config";
   export let captureId: IRecordId = generateResourceId(Resource.capture);
   let mode: "search" | "capture" | undefined = undefined;
   let searchQuery = "";
@@ -60,6 +65,7 @@
   const searchStore = new SearchStore();
   let searchBaseRef: ResourceSearchBase;
   let resource: Resource = Resource.everything;
+  const homePathPt = resolveProductConfig().homePathPt;
 
   function initializeCaptureStore() {
     captureId = generateResourceId(Resource.capture);
@@ -102,7 +108,7 @@
 
   const commonActionParams = {
     searchParams: {
-      back: "mobilehome"
+      back: homePathPt
     }
   };
 
@@ -118,7 +124,7 @@
       appStore.runAction(ResourceActionType.BROWSE, {
         componentParams: {
           resource: item.id === "nodes" ? Resource.node : Resource.collection,
-          back: "mobilehome"
+          back: homePathPt
         }
       });
     }
@@ -367,13 +373,13 @@
         })}
       >
         <div class="flex-1 flex flex-col justify-between h-full w-full pt-3">
-          <div class="flex flex-col justify-center px-4 w-full h-full">
+          <div class="flex flex-col justify-start px-4 w-full h-full">
             <div
               class={cn(
                 "w-full flex items-start bg-bgs1 text-left mb-4 relative",
                 {
                   "p-4 rounded-lg": !isBoxedLayout,
-                  "h-32": mode === undefined,
+                  "min-h-32 grow": mode === undefined,
                   "h-full": mode === "capture"
                 }
               )}
@@ -422,6 +428,15 @@
                 {/key}
               {/if}
             </div>
+            {#if mode === undefined && $account.dataMode !== UserDataMode.LOCAL && $context.isInOfflineMode}
+              <div class="py-1.5">
+                <InlineInfoBanner
+                  type={InfoTextType.WARNING}
+                  size={Size.sm}
+                  content="File uploads are not supported yet when offline."
+                />
+              </div>
+            {/if}
           </div>
           {#if !mode}
             <TypeSelectorOnMobile

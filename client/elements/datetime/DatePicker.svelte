@@ -80,7 +80,12 @@
     </slot:fragment>
   </InputBaseElement> -->
 
-  <FormElement {style} {label} isFocused={isPopoverVisible}>
+  <FormElement
+    {style}
+    {label}
+    isFocused={isPopoverVisible}
+    parentBgIndex={parentBackgroundIndex}
+  >
     <button
       class={cn("flex items-center gap-2 p-2 w-full default-typeface", {
         "justify-center": variant == "wide-center",

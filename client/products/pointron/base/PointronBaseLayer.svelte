@@ -21,6 +21,8 @@
   import FocusTopNavWidget from "../focus/player/FocusTopNavWidget.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { Product } from "$lib/client/products/product.type";
+  import { defaultsMigrationTidy } from "$lib/client/components/migrations";
+  import { defaultsMigrationFocus } from "../migrations";
 
   let isLiteMode = $context.isEmbed && $context.isSheet;
   const isDebug = import.meta.env?.DEV;
@@ -60,6 +62,8 @@
 
   async function runFallbacks() {
     try {
+      await defaultsMigrationTidy();
+      await defaultsMigrationFocus();
       await FallbackTracker.runIfNotCompleted(
         "nestedGoalCorrection",
         nestedGoalCorrection

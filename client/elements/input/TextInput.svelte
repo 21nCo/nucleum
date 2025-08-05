@@ -131,6 +131,7 @@
 {:else}
   <InputBaseElement
     {style}
+    parentBgIndex={parentBackgroundIndex}
     {isFocused}
     {label}
     class={cn(height, { "!rounded-full": isRounded })}

@@ -32,5 +32,6 @@ export enum MemotronAction {
   CALLOUT_SETTINGS = "edit-callout-settings",
   IMPORT_APP_DATA = "import-app-data",
   EDIT_CAPTURE_SHORTCUTS = "edit-capture-shortcuts",
-  CAPTURE_SETTINGS = "capture-settings"
+  CAPTURE_SETTINGS = "capture-settings",
+  RELATIONS_AS_SETTINGS = "relations-as-settings"
 }

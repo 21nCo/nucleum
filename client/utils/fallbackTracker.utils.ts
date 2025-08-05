@@ -113,7 +113,7 @@ export class FallbackTracker {
     fallbackName: string,
     fallbackFunction: () => Promise<void>,
     version?: string
-  ): Promise<void> {
+  ): Promise<number> {
     const hasAlreadyRun = await this.hasRun(fallbackName);
 
     if (hasAlreadyRun) {
@@ -122,7 +122,7 @@ export class FallbackTracker {
         fallbackName,
         message: "Skipping - already completed"
       });
-      return;
+      return 0;
     }
 
     try {
@@ -134,12 +134,12 @@ export class FallbackTracker {
 
       await fallbackFunction();
       await this.markAsRun(fallbackName, version);
-
       logger.info({
         at: "FallbackTracker.runIfNotCompleted",
         fallbackName,
         message: "Completed successfully"
       });
+      return 1;
     } catch (error) {
       logger.error({
         at: "FallbackTracker.runIfNotCompleted",

@@ -41,7 +41,7 @@
   }
 </script>
 
-<div class="flex flex-col items-center w-full">
+<div class="flex flex-col gap-4 dp:pb-4 items-center w-full">
   <header
     class={cn("flex justify-between gap-4 items-center w-full", {
       "px-12":
@@ -80,6 +80,7 @@
           <Toggle
             icon="link"
             parentBgIndex={2}
+            count={resolveDirectLinksCount($captureStore.links)}
             on={$captureStore.isLinksExpanded}
             bgSize={Size.md}
             on:change={() => {
@@ -135,7 +136,7 @@
 
   {#if (isHomeContext && $captureStore.isLinksExpanded) || (!isHomeContext && ($captureStore.method !== CaptureMethod.MARKDOWN || ($captureStore.method === CaptureMethod.MARKDOWN && !$captureStore.isEmpty && $captureStore.isLinksExpanded)))}
     <div
-      class={cn("w-full py-3 h-fit", {
+      class={cn("w-full h-fit", {
         "dp:px-12": $captureStore.method === CaptureMethod.MARKDOWN
       })}
     >

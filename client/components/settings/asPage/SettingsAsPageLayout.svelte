@@ -1,38 +1,23 @@
 <script lang="ts">
   import { appStore } from "$lib/client/stores/app.store";
-  import {
-    AppSearchParam,
-    type IAppStore
-  } from "$lib/client/types/appStore.type";
-  import { onMount } from "svelte";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   import { Orientation } from "$lib/client/types/direction.enum";
   import SettingsList from "./SettingsList.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import ProfileCpSection from "../account/ProfileCPSection.svelte";
   import { page } from "$app/stores";
-  import { isValidArray, sortArrayByOrder } from "$lib/shared/utils/obj.utils";
   import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import view from "$lib/client/stores/view.store";
   import appearance from "$lib/client/stores/appearance.store";
   import NavigationHeader from "$lib/client/elements/NavigationHeader.svelte";
   import SettingsFooter from "../SettingsFooter.svelte";
+  import { resolveProductConfig } from "$lib/client/products/product.config";
   export let isShowBackButton: boolean = false;
   $: isCpHome = $page.url.searchParams.get("setting") === null;
-  let cpConfiguration: any;
   let color = retrieveCurrentColors($appearance)?.aps1;
-  onMount(() => {
-    const unsubscribe = appStore.subscribe((x: IAppStore) => {
-      if (x?.appData?.cp) {
-        let cp = x.appData.cp;
-        if (isValidArray(cp)) cpConfiguration = sortArrayByOrder(cp);
-      }
-    });
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  });
+  const cpConfiguration = resolveProductConfig().settings;
 </script>
 
 {#if $view.isPortrait && !isCpHome}

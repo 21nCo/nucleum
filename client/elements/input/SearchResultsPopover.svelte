@@ -245,7 +245,7 @@
   </div>
   {#if !isInlineContext}
     <div
-      class={cn("w-full flex items-center px-4 py-1", {
+      class={cn("w-full flex items-center gap-6 cw:px-2 px-4 cw:py-2 py-1", {
         "justify-between bg-bgs2": bottomMessage,
         "justify-center": !bottomMessage
       })}

@@ -15,18 +15,20 @@
 <div class="flex flex-col gap-1 items-center justify-center">
   <button
     class={cn(
-      "flex items-center justify-center rounded-full notouch:hover:brightness-90 active:brightness-90",
+      "flex items-center justify-center rounded-full",
       {
         "w-16 h-16": size === Size.lg,
         "w-14 h-14": size === Size.md,
         "w-10 h-10": size === Size.sm
       },
       style === ButtonStyle.DEFAULT && {
+        "notouch:hover:brightness-110 active:brightness-110": true,
         "bg-aps1": type === ButtonVariant.PRIMARY,
         "bg-ars1": type === ButtonVariant.DANGER,
         "bg-bgs2": type === ButtonVariant.SECONDARY
       },
       style === ButtonStyle.OUTLINED && {
+        "notouch:hover:brightness-90 active:brightness-90": true,
         border: true,
         "border-aps1": type === ButtonVariant.PRIMARY,
         "border-ars1": type === ButtonVariant.DANGER,

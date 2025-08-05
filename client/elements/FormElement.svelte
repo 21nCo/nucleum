@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Orientation } from "../types/direction.enum";
   import { InputStyle, type InputLabel } from "../types/input.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { bg, cn } from "$lib/client/utils/ui.utils";
   import FormControlLabelWrapper from "./text/formLabel/FormControlLabelWrapper.svelte";
   import { Size } from "../types/size.enum";
   let classList = "";
@@ -10,6 +10,7 @@
   export let size: Size.md | Size.sm = Size.md;
   export let label: InputLabel | undefined = undefined;
   export let isFocused: boolean = false;
+  export let parentBgIndex: number = 1;
 </script>
 
 <FormControlLabelWrapper props={label} {size}>
@@ -23,7 +24,7 @@
       "border border-aps1":
         isFocused &&
         (style === InputStyle.BORDERED || style === InputStyle.FILLED),
-      "bg-bgs2": style === InputStyle.FILLED,
+      [bg(parentBgIndex)]: style === InputStyle.FILLED,
       "border border-bgs2 ": style === InputStyle.FILLED && !isFocused
     })}
   >
