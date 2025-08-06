@@ -46,7 +46,7 @@
   export let parentBgIndex: number = 1;
   export let heightAdjuster: string = "2.85rem";
   let cardBgIndex: number = parentBgIndex - 1;
-  let data: AnalyticsDataRecord[];
+  let data: AnalyticsDataRecord[] = [];
   let previousTimePeriodData: AnalyticsDataRecord[] = [];
   let goalColors: IAnalyticsLabelColor[] = [];
   const dispatch = createEventDispatcher();
@@ -107,7 +107,6 @@
     isRefreshing = true;
     try {
       const colors: IAnalyticsLabelColor[] = [];
-      let goalIds: IRecordId[] = [];
       if (!card.period || !card.period.value) {
         isRefreshing = false;
         return;
@@ -134,30 +133,48 @@
           log.startUnix >= correctedTimePeriod.correctedBegin &&
           log.startUnix <= correctedTimePeriod.correctedEnd
       );
+      const randomColor = () => Math.floor(Math.random() * 360);
 
-      const processedLogs: AnalyticsDataRecord[] = filteredLogs.map(
-        (log: ISessionLog) => {
-          const goal = log.goalId ? resolveGoalFromId(log.goalId) : undefined;
-          const tzCorrectedStart = tzStore.resolveTimezoneCorrectedTimestamp(
-            log.startUnix,
-            {
-              tzRecords: $tzStore
-            }
-          );
-          return {
-            brek: log.breakTime || 0,
-            focus: log.focus || 0,
-            goal: goal ? goal.label || "Unknown Goal" : "No Goal",
-            goalId: log.goalId || "",
-            start: new Date(tzCorrectedStart),
-            topLevelGoal: goal?.parent?.[0]?.label ?? "Unknown"
-          };
+      const dataMapper = (log: ISessionLog) => {
+        const goal = log.goalId ? resolveGoalFromId(log.goalId) : undefined;
+        const tzCorrectedStart = tzStore.resolveTimezoneCorrectedTimestamp(
+          log.startUnix,
+          {
+            tzRecords: $tzStore
+          }
+        );
+        if (goal && !colors.some((x) => x.label === goal.label)) {
+          const color = resolveGoalColor(goal);
+          colors.push({
+            label: goal.label,
+            color: color ?? randomColor()
+          });
         }
-      );
+        const topLevelGoal = goal?.parent?.[0];
+        if (
+          topLevelGoal &&
+          !colors.some((x) => x.label === topLevelGoal.label)
+        ) {
+          const color = resolveGoalColor(topLevelGoal);
+          colors.push({
+            label: topLevelGoal.label,
+            color: color ?? randomColor()
+          });
+        }
+        const goalLabel = goal ? goal.label || "Unknown Goal" : "No Goal";
+        return {
+          brek: log.breakTime || 0,
+          focus: log.focus || 0,
+          goal: goalLabel,
+          goalId: log.goalId || "",
+          start: new Date(tzCorrectedStart),
+          topLevelGoal: topLevelGoal?.label ?? goalLabel
+        };
+      };
 
-      data = processedLogs;
-      goalIds.push(...processedLogs.map((x: any) => x.goalId));
-      goalIds.push(...processedLogs.map((x: any) => x.topLevelGoal?.[0]?.id));
+      filteredLogs.forEach((log: ISessionLog) => {
+        data.push(dataMapper(log));
+      });
 
       if (
         card.type === AnalyticsCardType.TOP_N ||
@@ -177,44 +194,22 @@
               log.startUnix >= correctedPreviousBegin &&
               log.startUnix <= correctedTimePeriod.begin
           );
-          const processedPreviousLogs = previousLogs.map((log: ISessionLog) => {
-            const goal = log.goalId ? resolveGoalFromId(log.goalId) : undefined;
-            const tzCorrectedStart = tzStore.resolveTimezoneCorrectedTimestamp(
-              log.startUnix,
-              {
-                tzRecords: $tzStore
-              }
-            );
-            return {
-              brek: log.breakTime || 0,
-              focus: log.focus || 0,
-              goal: goal ? goal.label || "Unknown Goal" : "No Goal",
-              goalId: log.goalId || "",
-              start: new Date(tzCorrectedStart),
-              topLevelGoal: goal?.parent?.[0]?.label ?? "Unknown"
-            };
+          previousLogs.forEach((log: ISessionLog) => {
+            previousTimePeriodData.push(dataMapper(log));
           });
-
-          previousTimePeriodData = processedPreviousLogs;
-          goalIds.push(...processedPreviousLogs.map((x: any) => x.goalId));
         }
       }
-
-      if (isValidArrayWithData(goalIds)) {
-        goalIds.filter(removeDuplicatesFilter).forEach((goalId: IRecordId) => {
-          const goal = resolveGoalFromId(goalId);
-          if (!goal) return;
-          let color = resolveGoalColor(goal);
-          color = color ?? Math.floor(Math.random() * 360);
-          if (!colors.some((x) => x.label === goal.label)) {
-            colors.push({
-              label: goal.label,
-              color: color
-            });
-          }
-        });
-      }
-      goalColors = colors;
+      goalColors = [
+        ...colors.filter((x) => x.color),
+        {
+          label: "No Goal",
+          color: 250
+        },
+        {
+          label: "Unknown Goal",
+          color: 250
+        }
+      ];
       refreshId = new Date().getTime();
       isRefreshing = false;
     } catch (error) {
@@ -317,7 +312,7 @@
         <span class="font-medium">
           {card.type === AnalyticsCardType.TARGETS
             ? "Targets"
-            : card.label ?? timePeriod.title}
+            : (card.label ?? timePeriod.title)}
         </span>
         {#if card.type != AnalyticsCardType.TARGETS && card.label}
           <span class="text-fgs2 text-b2">
