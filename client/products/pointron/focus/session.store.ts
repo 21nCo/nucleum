@@ -627,7 +627,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         ...currentLastBar,
         duration: currentLastBar.start
           ? (new Date().getTime() - currentLastBar.start) / 1000
-          : currentLastBar.duration ?? 0 + params.timeElapsed
+          : (currentLastBar.duration ?? 0) + params.timeElapsed
       };
       return { intervals: [...session.intervals, lastBar], isContinueSession };
     }
