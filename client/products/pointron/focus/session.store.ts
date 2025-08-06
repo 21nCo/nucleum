@@ -1114,7 +1114,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     if (this.isCurrentFocusItem(taskId)) return;
     try {
       await focusItemsStore.addTask(taskId, goalId);
-    } catch (err) {}
+    } catch (err) { logger.error({ at: "focusTask", error: err }); }
     const session = this.get();
     if (!session.isSessionRunning) {
       await this.startSession();
