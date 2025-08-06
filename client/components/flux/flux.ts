@@ -754,6 +754,7 @@ class Flux {
     });
     const previousSyncUp =
       local?.previousSyncUp ?? new Date().getTime() - 1000 * 60 * 60 * 24;
+    const limit = import.meta?.env?.VITE_SYNC_UP_LIMIT ?? 20;
     let mutations: IMutation[] = await this.persistence.selectMany(
       Resource.mutation,
       {
@@ -762,7 +763,7 @@ class Flux {
             greaterThan: +previousSyncUp
           }
         },
-        limit: 50,
+        limit,
         orderBy: {
           timestamp: "asc"
         }
@@ -852,7 +853,10 @@ class Flux {
     if (
       typeof response === "number" ||
       (Array.isArray(response) && response.length === 0) ||
-      (typeof response === "object" && response !== null && !Array.isArray(response) && !("records" in response))
+      (typeof response === "object" &&
+        response !== null &&
+        !Array.isArray(response) &&
+        !("records" in response))
     ) {
       console.log("large sync down detected: ", response);
       await this.reconcile({ reCloneAll: true });
