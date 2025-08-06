@@ -18,6 +18,7 @@
   import { CollectionType } from "$lib/client/components/collection/collection.type";
   import { createEventDispatcher } from "svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import { haptic } from "$lib/client/utils/embed.utils";
   export let captureStore: IActiveCaptureStore;
   export let isHomeContext: boolean = $view.isConstrainedWidth;
   const dispatch = createEventDispatcher();
@@ -36,8 +37,15 @@
     if (len && len > 0) return len;
     return undefined;
   }
+
   function onSave() {
+    haptic();
     dispatch("save");
+  }
+
+  function toggleLinkExpansion() {
+    haptic();
+    $captureStore.isLinksExpanded = !$captureStore.isLinksExpanded;
   }
 </script>
 
@@ -83,9 +91,7 @@
             count={resolveDirectLinksCount($captureStore.links)}
             on={$captureStore.isLinksExpanded}
             bgSize={Size.md}
-            on:change={() => {
-              $captureStore.isLinksExpanded = !$captureStore.isLinksExpanded;
-            }}
+            on:change={toggleLinkExpansion}
           />
         {:else}
           <Tag
@@ -95,8 +101,7 @@
             count={resolveDirectLinksCount($captureStore.links)}
             isShowExpandFeedbackOnActive={true}
             isRemovable={false}
-            on:click={() =>
-              ($captureStore.isLinksExpanded = !$captureStore.isLinksExpanded)}
+            on:click={toggleLinkExpansion}
           />
           <div class="h-full py-2">
             <Divider
@@ -126,6 +131,7 @@
             size={isHomeContext ? Size.md : Size.sm}
             icon="cross"
             on:click={() => {
+              haptic();
               dispatch("clear");
             }}
           />

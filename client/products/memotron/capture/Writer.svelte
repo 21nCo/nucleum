@@ -105,8 +105,7 @@
   {:else}
     <div class="pb-8">
       <PlayerControl
-        on:click={(e) => {
-          e.stopPropagation();
+        on:click={() => {
           dispatch("clear");
         }}
         icon="back"

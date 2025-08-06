@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     BlockAction,
+    type IBlock,
     type IMarkdown,
     type IMarkdownParams
   } from "$lib/client/components/markdown/md.type";
@@ -86,7 +87,7 @@
   let mdId: string = id ?? generateSimpleRandomId();
   const mdStore = getMdStore(mdId);
   const containerId = `mdcontainer-${mdId}`;
-  mdStore.load(md, { isPreventFocus: params?.isPreventFocusOnLoad });
+  load(md);
   $: if (params) mdStore?.setParams(params);
   // $: console.log("blocks", $mdStore.blocks);
   let keyboardToolbarPanelSelection: string | undefined = undefined;
@@ -117,6 +118,29 @@
   const dispatchDebouncedChangeEvent = debouncer(() => {
     dispatch("debouncedChange", md);
   }, 1000);
+
+  function load(md: IMarkdown | undefined) {
+    let isSeeded = false;
+    let newBlock: IBlock | undefined = undefined;
+    if (!md || !md.blocks || md.blocks.length === 0) {
+      newBlock = {
+        id: generateResourceId(Resource.node),
+        contentType: NodeType.SIMPLE_TEXT,
+        body: ""
+      };
+      md = {
+        ...md,
+        blocks: [newBlock]
+      };
+      isSeeded = true;
+    }
+    mdStore.load(md, { isPreventFocus: params?.isPreventFocusOnLoad });
+    if (isSeeded) {
+      setTimeout(() => {
+        propagate("action", { action: BlockAction.INSERT, ...newBlock });
+      }, 500);
+    }
+  }
 
   function onKeyDown(event: KeyboardEvent) {
     const focus = get(mdStore.focus);

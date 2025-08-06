@@ -22,6 +22,7 @@
   import type { InputLabelInfoToolTip } from "$lib/client/types/input.type";
   import FormLabelTooltip from "$lib/client/elements/text/formLabel/FormLabelTooltip.svelte";
   import { fly } from "svelte/transition";
+  import { haptic } from "$lib/client/utils/embed.utils";
   const dispatch = createEventDispatcher();
 
   export let title: string | undefined = undefined;
@@ -91,7 +92,10 @@
           )}
           tabindex={isShowBackButton ? 0 : -1}
           on:click={() => {
-            if (isShowBackButton) dispatch("back");
+            if (isShowBackButton) {
+              haptic();
+              dispatch("back");
+            }
           }}
         >
           <div

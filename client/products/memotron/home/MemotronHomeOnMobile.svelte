@@ -19,7 +19,7 @@
   } from "../capture/capture.store";
   import { generateResourceId } from "$lib/client/components/flux/flux.utils";
   import HomeTopNav from "./mobile/HomeTopNav.svelte";
-  import { setEmbedBg } from "$lib/client/utils/embed.utils";
+  import { haptic, setEmbedBg } from "$lib/client/utils/embed.utils";
   import TypeSelectorOnMobile from "../capture/typeSelector/TypeSelectorOnMobile.svelte";
   import { fly } from "svelte/transition";
   import HomeQuickAccess from "$lib/client/components/home/mobile/HomeQuickAccess.svelte";
@@ -113,11 +113,13 @@
   };
 
   function handleSettingsClick() {
+    haptic();
     appStore.runAction(Action.SETTINGS, commonActionParams);
     mode = undefined;
   }
 
   function handleQuickAccessClick(item: IQuickAccessItem) {
+    haptic();
     if (item.id === "calendar") {
       appStore.runAction(Action.CALENDAR, commonActionParams);
     } else {
@@ -131,6 +133,7 @@
   }
 
   async function onTypeSelect(e: CustomEvent) {
+    haptic("capture");
     if (
       e.detail === CaptureMethod.CAMERA &&
       $context.isEmbed &&
@@ -161,7 +164,7 @@
     const draft = event.detail;
     captureStore = ActiveCaptureStore.resolve(draft.id);
     captureStore.load(draft);
-    mode = "capture";
+    setModeToCapture();
   }
 
   function onClear() {
@@ -181,6 +184,7 @@
   }
 
   function onInlineToastEvent(event: CustomEvent<InlineToast>) {
+    haptic("success");
     inlineToast = event.detail;
   }
 
@@ -207,6 +211,10 @@
     if (writerRef) {
       writerRef.focus();
     }
+  }
+  function setModeToCapture() {
+    mode = "capture";
+    haptic("capture");
   }
 </script>
 
@@ -387,7 +395,8 @@
               <!-- Double entry here to avoid keyboard adjustment issues on iOS Webview -->
               <button
                 class={cn("absolute w-full h-full", {
-                  "z-50": mode === undefined
+                  "z-50": mode === undefined,
+                  "-z-10": mode === "capture"
                 })}
                 on:click={() => {
                   focusWriter();
@@ -396,7 +405,7 @@
                 <button
                   class="w-full h-full"
                   on:click={() => {
-                    if (!mode) mode = "capture";
+                    if (!mode) setModeToCapture();
                   }}
                 />
               </button>

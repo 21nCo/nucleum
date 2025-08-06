@@ -267,7 +267,6 @@
   }
 
   function onAction(e: CustomEvent) {
-    console.log("onAction", e);
     if (e.detail.action === "unlink") {
       filtered = filtered.filter(
         (x) => !isSameResource(x.node.id, e.detail.id)
@@ -362,12 +361,15 @@
           {
             value: LinkType.DIRECT,
             label: "Direct",
-            icon: "ph:arrows-left-right-light"
+            icon: "ph:arrows-left-right-light",
+            badge: all.filter((x) => x.link.linkType === LinkType.DIRECT).length
           },
           {
             label: "Mentions",
             value: LinkType.MENTION,
-            icon: "at"
+            icon: "at",
+            badge: all.filter((x) => x.link.linkType === LinkType.MENTION)
+              .length
           }
         ]}
         size={Size.sm}

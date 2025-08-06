@@ -111,7 +111,7 @@
       <EmptyStatus {size} />
     {/if}
     <div class="flex flex-col gap-0.5 items-center">
-      <div class="text-center">
+      <div class="text-fgs2 text-b2 text-center">
         {mainText ?? (isSearchContext ? "No results found." : "")}
       </div>
       <div class="text-fgs3 text-center text-b3">

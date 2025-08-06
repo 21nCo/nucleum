@@ -40,6 +40,12 @@ export function setEmbedBg(bg: number) {
   postDataToParent(EmbedDataMessage.BG, bg);
 }
 
+export function haptic(type?: string) {
+  postToParent({
+    haptic: type ?? "default"
+  });
+}
+
 const TRUSTED_PARENT_ORIGINS = [
   "http://localhost:5555",
   "http://localhost:5002",

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { TextStyle } from "../types/text.enum";
+  import { haptic } from "$lib/client/utils/embed.utils";
   import BackButton from "./button/BackButton.svelte";
   import Text from "./text/Text.svelte";
   export let label: string;
@@ -11,6 +12,7 @@
 <div class="flex justify-between items-center w-full {height}">
   <BackButton
     on:click={() => {
+      haptic();
       backCallback();
     }}
   />
