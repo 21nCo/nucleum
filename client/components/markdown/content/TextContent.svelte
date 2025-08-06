@@ -92,7 +92,7 @@
   let isRenderMentionSearch: boolean = false;
   let blockSearchQuery = "";
   let mentionSearchQuery = "";
-  let previousVal = deepCopy(text);
+  let previousVal = text ? deepCopy(text) : "";
   let mentionTriggerKey: string;
   let mentionSearchPopoverId: string = generateSimpleRandomId();
   let caretPositionT2:

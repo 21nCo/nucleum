@@ -224,7 +224,10 @@
         if (block.contentType === NodeType.EMBED) {
           block.body.isHidePreview = data.isHidePreview;
           propagate(BlockAction.CHANGE, {
-            body: { isHidePreview: data.isHidePreview }
+            body: {
+              ...block.body,
+              isHidePreview: data.isHidePreview
+            }
           });
         }
         break;
@@ -546,6 +549,7 @@
     }
     propagate(BlockAction.CHANGE, {
       body: {
+        ...currentBody,
         indent: currentBody.indent,
         order: currentBody.order
       }
