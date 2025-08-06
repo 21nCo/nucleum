@@ -289,8 +289,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     function scheduleBreakReminderNotification(isNotified: boolean = false) {
       let breakReminderSetting =
         session.composition.breakType === BreakCompositionType.REMINDER
-          ? (session.composition?.breakReminder ??
-            get(pointronPreferences)?.breakReminder)
+          ? session.composition?.breakReminder ??
+            get(pointronPreferences)?.breakReminder
           : undefined;
       if (!breakReminderSetting) return isNotified;
       timeRemainingToTakeBreak = breakReminderSetting - session.timeElapsed;
@@ -627,7 +627,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
         ...currentLastBar,
         duration: currentLastBar.start
           ? (new Date().getTime() - currentLastBar.start) / 1000
-          : (currentLastBar.duration ?? 0 + params.timeElapsed)
+          : (currentLastBar.duration ?? 0) + params.timeElapsed
       };
       return { intervals: [...session.intervals, lastBar], isContinueSession };
     }
@@ -1112,7 +1112,9 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
 
   async focusTask(taskId: IRecordId, goalId?: IRecordId) {
     if (this.isCurrentFocusItem(taskId)) return;
-    await focusItemsStore.addTask(taskId, goalId);
+    try {
+      await focusItemsStore.addTask(taskId, goalId);
+    } catch (err) { logger.error({ at: "focusTask", error: err }); }
     const session = this.get();
     if (!session.isSessionRunning) {
       await this.startSession();
@@ -1481,7 +1483,6 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
     const toIndex = items.findIndex((item) => isSameResource(item.id, toId));
     const [movedItem] = items.splice(fromIndex, 1);
     items.splice(toIndex, 0, movedItem);
-    console.log({ items, fromIndex, toIndex });
     this.modify({ items });
   }
 
@@ -1638,8 +1639,8 @@ class SessionStore extends ResourceStore<ISession, ISessionCapture> {
       const goalId =
         resourceType === Resource.goal
           ? item.id
-          : (allItems.find((x) => x.tasks?.some(resourceInList(item.id)))?.id ??
-            "");
+          : allItems.find((x) => x.tasks?.some(resourceInList(item.id)))?.id ??
+            "";
       const taskId = resourceType === Resource.task ? item.id : "";
       if (item.blocks && item.blocks.length > 0) {
         logs.push(

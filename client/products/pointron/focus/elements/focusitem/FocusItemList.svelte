@@ -206,6 +206,20 @@
     focusItemsStore.rearrangeFocusItems(fromId, toId);
     focusItems = shiftResourceInArray(focusItems, fromId, toId);
   }
+
+  function onReorderTasksInGoal(event: any) {
+    const { fromId, toId, goalId } = event.detail;
+    focusItemsStore.rearrangeTasksInGoal(goalId, fromId, toId);
+    focusItems = focusItems.map(item => {
+      if (isSameResource(item.id, goalId) && item.tasks) {
+        return {
+          ...item,
+          tasks: shiftResourceInArray(item.tasks, fromId, toId)
+        };
+      }
+      return item;
+    });
+  }
 </script>
 
 <div
@@ -254,6 +268,7 @@
             on:createNew={onCreateNewGoalTask}
             on:select={onSelect}
             on:remove={onRemove}
+            on:reorderTasks={onReorderTasksInGoal}
             isFocusAddTask={$lastActiveGoalIdForEditing
               ? $lastActiveGoalIdForEditing === focusItem.id
               : index === $focusItemsStore.items.length - 1}

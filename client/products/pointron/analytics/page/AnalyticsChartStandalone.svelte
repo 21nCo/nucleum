@@ -123,8 +123,11 @@
       if (goalId) {
         goalIds.push(goalId);
         if (isIncludeSubgoals) {
-          const subGoals = goals.filter((x) =>
-            x.parent?.some(resourceInList(goalId))
+          const subGoals = goals.filter(
+            (x) =>
+              x.parent &&
+              Array.isArray(x.parent) &&
+              x.parent?.some(resourceInList(goalId))
           );
           if (subGoals) {
             goalIds.push(...subGoals.map((x) => x.id));
@@ -240,11 +243,7 @@
           </div>
           <div class="flex items-center gap-2">
             <CardSelector {accessPoint} bind:selected={chartType} on:select />
-            <Toggle
-              icon="sliders"
-              bgSize={Size.sm}
-              bind:on={isShowOptions}
-            />
+            <Toggle icon="sliders" bgSize={Size.sm} bind:on={isShowOptions} />
           </div>
         </div>
       </div>

@@ -188,6 +188,7 @@
           />
         {:else if $recentsStore.recents && $recentsStore.recents.length > 0}
           {@const recentsData = $recentsStore.recents
+            .filter((x) => x && x.timestamp)
             .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
             .map((x) => x.record)}
           <Records
