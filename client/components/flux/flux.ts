@@ -754,7 +754,7 @@ class Flux {
     });
     const previousSyncUp =
       local?.previousSyncUp ?? new Date().getTime() - 1000 * 60 * 60 * 24;
-    const limit = import.meta?.env?.VITE_SYNC_UP_LIMIT ?? 20;
+    const limit = +(import.meta.env.VITE_SYNC_UP_LIMIT ?? 20);
     let mutations: IMutation[] = await this.persistence.selectMany(
       Resource.mutation,
       {
