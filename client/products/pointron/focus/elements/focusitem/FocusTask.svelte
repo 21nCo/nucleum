@@ -144,7 +144,7 @@
     on:click={clickHandler}
   >
     {#if isInEditMode}
-      <span class="absolute left-2 top-3">
+      <span class="absolute left-2 top-3.5">
         <Icon
           icon="rearrange"
           class={cn({

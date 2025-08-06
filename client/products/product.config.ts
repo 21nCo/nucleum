@@ -153,7 +153,7 @@ export const products: Record<Product, ProductConfig> = {
     appMenu: ["focus", "calendar", "overview", "library"],
     appMenuPt: ["overview", "calendar", "focus", "library"],
     homePath: "calendar",
-    homePathPt: "mobilehome",
+    homePathPt: "focus",
     databaseName: "pointone",
     resources: [Resource.goal, Resource.task],
     sectionLabel: "Focus",

@@ -60,7 +60,7 @@
   }
 </script>
 
-<div class="flex items-center gap-2 w-full px-4 {goalId ? 'h-12' : 'h-14'}">
+<div class="flex items-center gap-1 w-full pl-3 {goalId ? 'h-12' : 'h-14'}">
   <!-- <div class="flex justify-center items-center">
     <Check isChecked={false} size={Size.sm} />
   </div> -->
@@ -88,7 +88,7 @@
             on:click={createNew}
             size={Size.xs}
             icon="plus"
-            label="add"
+            tooltip="Add"
             isPreventMinWidth={true}
           />
         {/if}

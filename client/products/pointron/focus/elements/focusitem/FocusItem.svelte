@@ -131,8 +131,7 @@
   function onReorderTasks(event: any) {
     const { fromId, toId } = event;
     if (!goal || !focusItem.tasks) return;
-    tasksUnderGoal = shiftResourceInArray(tasksUnderGoal, fromId, toId);
-    focusItemsStore.rearrangeTasksInGoal(focusItem.id, fromId, toId);
+    dispatch("reorderTasks", { fromId, toId, goalId: focusItem.id });
   }
 </script>
 
