@@ -771,6 +771,11 @@ class Flux {
     let mutations: IMutation[] = await this.persistence.selectMany(
       Resource.mutation,
       {
+        filters: {
+          timestamp: {
+            greaterThan: 1754491035000
+          }
+        },
         limit,
         orderBy: {
           timestamp: "asc"
