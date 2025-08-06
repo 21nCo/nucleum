@@ -15,7 +15,7 @@ class TabStore {
   replace(id: IRecordId, replaceId: IRecordId) {
     if (!id || !replaceId) return;
     const tabs = this.get();
-    if (tabs && tabs.some(resourceInList(replaceId))) {
+    if (tabs?.some(resourceInList(replaceId))) {
       this.remove(replaceId);
       uiState.addResourceToTabs(id);
     }
