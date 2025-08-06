@@ -693,42 +693,58 @@ class Flux {
           dapId
         });
       } else {
-        let { mutations, lastSyncUp, lastSyncUpMutations } =
-          await this.resolveItemsForSyncUp();
-        if (!mutations || mutations.length === 0) {
-          this.isSyncUpPending = false;
-          return;
-        }
-        logger.log({
-          at: "flux.sync",
-          mutationsLength: mutations.length,
-          lastSyncUpMutations,
-          lastSyncUp,
-          mutations: mutations.map((x) => x.id)
-        });
         const resources = this.resolveSyncResources();
-        mutations = mutations.filter(
-          (x) => !lastSyncUpMutations?.includes(x.id.toString())
-        );
-        if (mutations.length > 0)
-          response = await this.performSync(SyncMethod.SYNC_UP, {
+        let totalSyncedMutations = 0;
+
+        while (true) {
+          let { mutations } = await this.resolveItemsForSyncUp();
+          if (!mutations || mutations.length === 0) {
+            break;
+          }
+
+          logger.log({
+            at: "flux.sync - batch",
+            mutationsLength: mutations.length,
+            mutations: mutations.map((x) => x.id)
+          });
+
+          const batchResponse = await this.performSync(SyncMethod.SYNC_UP, {
             mutations,
             lastSyncDown,
             resources,
             dapId
           });
-        if (response && !response.response?.error) {
-          await this.persistence.mutation(Resource.kv, {
-            record: {
-              id: "kv:local",
-              lastSyncUp: mutations[mutations.length - 1].timestamp,
-              previousSyncUp: local?.lastSyncUp,
-              lastSyncUpMutations: mutations.map((x) => x.id.toString()),
-              lastSyncUpCompletedAt: new Date().getTime()
-            },
-            action: PersistenceActionType.MERGE
-          });
+
+          if (batchResponse && !batchResponse.response?.error) {
+            const mutationIds = mutations.map((x) => x.id);
+            await this.persistence.mutation(Resource.mutation, {
+              recordIds: mutationIds,
+              action: PersistenceActionType.BULK_DELETE
+            });
+            totalSyncedMutations += mutations.length;
+            logger.debug({
+              at: "flux.sync - completed mutations batch",
+              mutationIds,
+              batchSize: mutations.length,
+              totalSynced: totalSyncedMutations
+            });
+
+            if (batchResponse.syncDownData) {
+              response = batchResponse;
+            }
+          } else {
+            logger.error({
+              at: "flux.sync - batch failed",
+              error: batchResponse?.response?.error
+            });
+            break;
+          }
         }
+
+        logger.log({
+          at: "flux.sync - completed",
+          totalSyncedMutations
+        });
       }
       logger.log({ at: "flux.sync - response", mutation, response });
       if (response?.syncDownData) {
@@ -743,26 +759,18 @@ class Flux {
   }
 
   async resolveItemsForSyncUp() {
-    // const lastSyncedAt = await clientStorage.get(ClientStorageKey.LAST_SYNC_UP);
     const local = await this.resolveLocal();
-    if (!local) return { mutations: [], lastSyncUp: 0 };
+    if (!local) return { mutations: [] };
     const dapId = await this.resolveDapId(local);
     logger.log({
       at: "flux.resolveItemsForSyncUp",
       local,
       dapId
     });
-    const previousSyncUp =
-      local?.previousSyncUp ?? new Date().getTime() - 1000 * 60 * 60 * 24;
     const limit = +(import.meta.env.VITE_SYNC_UP_LIMIT ?? 20);
     let mutations: IMutation[] = await this.persistence.selectMany(
       Resource.mutation,
       {
-        filters: {
-          timestamp: {
-            greaterThan: +previousSyncUp
-          }
-        },
         limit,
         orderBy: {
           timestamp: "asc"
@@ -770,12 +778,9 @@ class Flux {
       }
     );
     mutations = mutations.map((x) => ({ ...x, dapId }));
-    logger.log({ at: "flux.resolveItemsForSyncUp", previousSyncUp, mutations });
+    logger.log({ at: "flux.resolveItemsForSyncUp", mutations });
     return {
-      mutations,
-      previousSyncUp,
-      lastSyncUp: local?.lastSyncUp ?? previousSyncUp,
-      lastSyncUpMutations: local?.lastSyncUpMutations
+      mutations
     };
   }
 
@@ -1165,8 +1170,7 @@ class Flux {
     await this.persistence.mutation(Resource.kv, {
       record: {
         id: "kv:local",
-        lastSyncDown: new Date().getTime(),
-        lastSyncUp: new Date().getTime()
+        lastSyncDown: new Date().getTime()
       },
       action: PersistenceActionType.MERGE
     });
