@@ -1,7 +1,9 @@
 <script lang="ts">
+  import { createEventDispatcher } from "svelte";
   import { tooltip as tooltipAction } from "$lib/client/actions/popover.action";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Size } from "$lib/client/types/size.enum";
+  import { haptic } from "$lib/client/utils/embed.utils";
   import { cn } from "$lib/client/utils/ui.utils";
   import Icon from "../../Icon.svelte";
   export let icon: string;
@@ -10,6 +12,7 @@
   export let tooltip: string | undefined = undefined;
   export let type: ButtonVariant = ButtonVariant.SECONDARY;
   export let style: ButtonStyle = ButtonStyle.DEFAULT;
+  const dispatch = createEventDispatcher();
 </script>
 
 <div class="flex flex-col gap-1 items-center justify-center">
@@ -38,7 +41,10 @@
     use:tooltipAction={{
       text: tooltip
     }}
-    on:click
+    on:click={() => {
+      haptic();
+      dispatch("click");
+    }}
   >
     <Icon
       {icon}

@@ -17,6 +17,7 @@
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { confirmationNotification } from "$lib/client/stores/notification.store";
+  import { cn } from "$lib/client/utils/ui.utils";
   const dispatch = createEventDispatcher();
   export let captureStore: IActiveCaptureStore;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CAPTURE;
@@ -204,14 +205,20 @@
   </div>
   {#if $view.isConstrainedWidth || recordingState === PlayActionState.NOT_STARTED}
     <div class="flex flex-col w-full justify-center">
-      <div class="flex w-full justify-center gap-6 mb-auto">
+      <div
+        class={cn("flex w-full justify-center gap-6 mb-auto", {
+          "flex-col-reverse": recordingState === PlayActionState.NOT_STARTED
+        })}
+      >
         <PlayerControl
           on:click={onGoBack}
           icon="back"
-          label="Go back"
-          size={recordingState === PlayActionState.NOT_STARTED
-            ? Size.lg
-            : Size.md}
+          label={recordingState === PlayActionState.NOT_STARTED
+            ? undefined
+            : "Go back"}
+          tooltip={recordingState === PlayActionState.NOT_STARTED
+            ? "Go back"
+            : undefined}
           style={ButtonStyle.OUTLINED}
         />
         {#if recordingState === PlayActionState.NOT_STARTED}

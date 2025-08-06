@@ -85,9 +85,8 @@
       on:blur
     />
   {:else}
-    <span class="flex text-fgs3 text-b2"
-      >This block is not available yet. Kindly refer the documentation or
-      contact us.</span
+    <span class="flex text-ars1 text-b2"
+      >Unable to load this block's content.</span
     >
   {/if}
 </div>

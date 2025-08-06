@@ -27,6 +27,11 @@
   import { page } from "$app/stores";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { ButtonStyle } from "$lib/client/types/button.type";
+  import view from "$lib/client/stores/view.store";
+  import { resolveCalendarNotesId } from "../calendar.utils";
+  import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
 
   export let scale: TimeScaleUnit;
@@ -134,6 +139,12 @@
   function handleDateChange(e: CustomEvent<Date>) {
     dispatch("dateChange", e.detail);
   }
+
+  function openNotesInFullScreen() {
+    const id = resolveCalendarNotesId(date, scale);
+    if (!id) return;
+    appStore.openResource(id, ResourceAccessMode.FULL);
+  }
 </script>
 
 <div
@@ -168,12 +179,23 @@
       {enumToString(selectedPanel)}
       </div> -->
       </div>
-      <CalendarColumnPanelSelector
-        bind:selectedPanel
-        {layout}
-        {panels}
-        {isCwContext}
-      />
+      <div class="flex items-center gap-2">
+        {#if !$view.isPortrait && selectedPanel === CalendarColumnPanel.Notes}
+          <Button
+            icon="fullscreen"
+            tooltip="Open notes in full screen"
+            style={ButtonStyle.OUTLINED}
+            size={Size.sm}
+            on:click={openNotesInFullScreen}
+          />
+        {/if}
+        <CalendarColumnPanelSelector
+          bind:selectedPanel
+          {layout}
+          {panels}
+          {isCwContext}
+        />
+      </div>
     </div>
   {/if}
   <div class="flex gap-4 flex-grow w-full">
@@ -187,6 +209,8 @@
         />
       {/if}
       {#if layout !== CalendarColumnLayout.TABS}
+        {@const isShowNotesFullScreenButton =
+          !$view.isPortrait && selectedPanel === CalendarColumnPanel.Notes}
         <Divider orientation={Orientation.Vertical} />
         <div class="flex flex-col gap-4 flex-grow pt-2">
           {#if panels.length === 1}
@@ -195,12 +219,33 @@
               style={TextStyle.PANEL_HEADING_SMALL}
             />
           {:else}
-            <CalendarColumnPanelSelector
-              bind:selectedPanel
-              {layout}
-              {panels}
-              {isCwContext}
-            />
+            <div
+              class={cn("grid", {
+                "grid-cols-1": !isShowNotesFullScreenButton,
+                "grid-cols-3": isShowNotesFullScreenButton
+              })}
+            >
+              {#if isShowNotesFullScreenButton}
+                <span />
+              {/if}
+              <CalendarColumnPanelSelector
+                bind:selectedPanel
+                {layout}
+                {panels}
+                {isCwContext}
+              />
+              {#if isShowNotesFullScreenButton}
+                <div class="flex items-center justify-end">
+                  <Button
+                    icon="fullscreen"
+                    tooltip="Open notes in full screen"
+                    style={ButtonStyle.OUTLINED}
+                    size={Size.sm}
+                    on:click={openNotesInFullScreen}
+                  />
+                </div>
+              {/if}
+            </div>
           {/if}
           <CalendarColumnPanelResolver
             {mdId}
