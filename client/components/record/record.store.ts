@@ -436,7 +436,12 @@ export class SearchStore {
                   query
                 }
               : undefined,
-            limit: 100
+            limit: 100,
+            orderBy: !isValidSearchQuery
+            ? {
+                modifiedAt: "desc"
+              }
+            : undefined
           }
         }
       });
@@ -448,13 +453,21 @@ export class SearchStore {
         args: {
           resource: Resource.collection,
           params: {
+            filters: {
+              resource: Resource.node
+            },
             search: isValidSearchQuery
               ? {
                   properties: ["label"],
                   query
                 }
               : undefined,
-            limit: 100
+            limit: 100,
+            orderBy: !isValidSearchQuery
+            ? {
+                modifiedAt: "desc"
+              }
+            : undefined
           }
         }
       });

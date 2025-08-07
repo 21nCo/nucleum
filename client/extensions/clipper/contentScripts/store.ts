@@ -96,6 +96,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       n.notes = page?.notes ?? "";
       n.title = page?.label ?? window.document.title;
       n.properties = page?.properties ?? [];
+      n.collections = page?.collections ?? [];
       return n;
     });
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);

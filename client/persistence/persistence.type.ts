@@ -139,6 +139,7 @@ export interface IPersistenceInitParams {
   dbo?: string[];
   tables?: ITable[];
   appVersion?: string;
+  isExtensionEnvironment?: boolean;
 }
 
 export type ITable = {

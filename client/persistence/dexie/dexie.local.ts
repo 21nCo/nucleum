@@ -67,7 +67,9 @@ export class DexiePersistence implements IPersistence {
     this.userId = user;
     if (params.tables) {
       this.tables = params.tables;
-      this.initializeSearchIndices();
+      if (!params.isExtensionEnvironment) {
+        this.initializeSearchIndices();
+      }
     }
     const initLog = await this.select("kv:local");
     logger.log({ at: "DexiePersistence.initialize", initLog });

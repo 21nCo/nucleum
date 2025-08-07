@@ -141,7 +141,7 @@
           dispatch("saved");
         }}
       >
-        <Icon icon="check-circle" class="fill-fgs2" />
+        <Icon icon="check-circle" class="fill-fgs2" isFilled={true} />
       </button>
     {:else}
       <button

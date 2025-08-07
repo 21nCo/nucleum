@@ -255,7 +255,7 @@
     function appendIconfiyClasses(classes: string) {
       if (resolvedIcon?.includes(":")) {
         const color = classes.split("stroke-")[1] || classes.split("fill-")[1];
-        return ` text-${color}`;
+        if (color) return ` text-${color}`;
       }
       return "";
     }

@@ -1107,6 +1107,11 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "log-out",
     solar: "logout"
   },
+  "log-in": {
+    phosphor: "sign-in",
+    lucide: "log-in",
+    solar: "login"
+  },
   undo: {
     phosphor: "arrow-u-up-left",
     lucide: "corner-up-left",

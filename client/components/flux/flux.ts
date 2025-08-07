@@ -138,6 +138,7 @@ class Flux {
     console.log({ tables });
     return this.persistence.initialize({
       ...params,
+      isExtensionEnvironment: this.isExtensionEnvironment,
       tables
     });
   }
