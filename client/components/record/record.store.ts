@@ -437,11 +437,10 @@ export class SearchStore {
                 }
               : undefined,
             limit: 100,
-            orderBy: !isValidSearchQuery
-            ? {
-                modifiedAt: "desc"
-              }
-            : undefined
+            orderBy: isValidSearchQuery ? undefined : {
+                                     modifiedAt: "desc"
+                                   }
+
           }
         }
       });
