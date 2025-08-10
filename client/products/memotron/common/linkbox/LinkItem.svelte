@@ -5,7 +5,6 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { collectionStore } from "$lib/client/components/collection/collection.store";
   import { nodeStore } from "$lib/client/products/memotron/node/node.store";
-  import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
   import { popover } from "$lib/client/actions/popover.action";
   import context from "$lib/client/stores/context.store";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
@@ -25,10 +24,7 @@
   async function resolveItem() {
     const resource = determineResourceType(id);
     if (resource === Resource.collection) {
-      item = await collectionStore.select(
-        id,
-        isExtensionEnvironment() ? { select: [] } : { expand: ["typeToExtend"] }
-      );
+      item = await collectionStore.select(id, { expand: ["typeToExtend"] });
     } else {
       item = await nodeStore.select(id);
     }
