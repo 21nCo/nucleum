@@ -19,6 +19,7 @@
   import HowToUse from "./HowToUse.svelte";
   import { renderMdAsHtml } from "../../markdown/markdown.utils";
   import FooterInfo from "./comparisionTable/FooterInfo.svelte";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
 
   export let product: string;
   export let features: IFwFeature[] = [];
@@ -88,7 +89,7 @@
         dispatch("close");
       }}
     >
-      <SvgIcon icon="cross" phIconSize={Size.lg} />
+      <SvgIcon icon="ph:x" phIconSize={Size.lg} />
     </button>
   </div>
   <div class="overflow-y-auto flex flex-col flex-1 w-full gap-8">
@@ -103,6 +104,11 @@
             feature.label.toLowerCase().replaceAll(" ", "")}
           learnMoreLink={feature.learnMoreLink}
         />
+        <div class="flex flex-col gap-2">
+          {#key selectedCompare?.length}
+            <ComparisonTable {feature} {selectedCompare} {contemporaries} />
+          {/key}
+        </div>
         {#if feature.ratingCriteria}
           <TextCard title="Our rating criteria">
             <CardListContent items={feature.ratingCriteria} />
@@ -121,11 +127,7 @@
             >
           </TextCard>
         {/if}
-        <div class="flex flex-col gap-2">
-          {#key selectedCompare?.length}
-            <ComparisonTable {feature} {selectedCompare} {contemporaries} />
-          {/key}
-        </div>
+        <ScrollViewBottomSpacer />
         <div class="flex mt-auto">
           <FooterInfo />
         </div>

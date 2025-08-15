@@ -423,8 +423,19 @@ export const contemporaries: IContemporary[] = [
   },
   {
     label: Contemporary.Liner,
-    url: "",
-    isHideForComparer: true
+    url: "https://getliner.com/",
+    price: 15,
+    sourcingType: SourcingType.CLOSED,
+    distribution: {
+      link: "https://getliner.com/download",
+      available: [
+        Distribution.WEB,
+        Distribution.IOS,
+        Distribution.ANDROID,
+        Distribution.CHROMIUM
+      ]
+    },
+    latestAnalysisDate: "2025-08-12"
   },
   {
     label: Contemporary.AudioPen,
@@ -2180,17 +2191,19 @@ export const features: IFwFeature[] = [
       },
       {
         label: Contemporary.Raindrop,
-        value: 0.8,
+        value: 0.7,
         notes:
           "Raindrop mostly excels at this feature of web clipping. Saving a web page, text highlighting, adding notes and retaining of text highlights are all available. Raindrop also supports saving a bookmark using keyboard shortcut. However, despite having side panel on their extension, all highlights of a web page cannot be viewed intuitively, clicked and scrolled to from the side panel. Highlights can be scrolled to by clicking on small breadcrumbs on the right side of the web page. Screenshot to save is not available."
       },
       {
-        label: Contemporary.Instapaper,
-        value: 0.7
+        label: Contemporary.Liner,
+        value: 0.45,
+        notes:
+          "Liner has limited web clipping capabilities. A web page cannot be saved directly unless text highlighting or summarization is used. Text highlighting, adding notes and retaining of text highlights are available. However, all highlights of a web page cannot be viewed intuitively, clicked and scrolled to from the side panel. Highlights can be scrolled to by clicking on small breadcrumbs on the right side of the web page. Screenshot to save is not available. Also, Liner has pivoted from a clipper to AI based research tool. This means, retrieving clipped highlights has become more difficult than ever before."
       },
       {
-        label: Contemporary.Liner,
-        value: 0.8
+        label: Contemporary.Instapaper,
+        value: 0.3
       },
       {
         label: Contemporary.Evernote,
@@ -2225,17 +2238,20 @@ export const features: IFwFeature[] = [
     ]
   },
   {
-    label: "Youtube clipping",
+    label: "Video clipping",
     category: MemotronFeatureCategory.Clipping,
     progress: 0.75,
     description:
       "YouTube video clipping with timestamp marking and transcription capabilities",
+    notes:
+      "Memotron offers a comprehensive video clipping experience that allows users to highlight points in the video and save them on all popular video and learning platforms like Youtube, Vimeo, Udemy, etc. \n \n Supported platforms: \n - Youtube \n - Vimeo \n - Udemy \n - Coursera \n - Skillshare",
     ratingCriteria: [
       {
-        label: "Quick and frictionless saving of any YouTube video"
+        label:
+          "Ability to highlight points in the video and save them on all popular video and learning platforms like Youtube, Vimeo, Udemy, etc"
       },
       {
-        label: "Ability to highlight points in the video and save them"
+        label: "Quick and frictionless saving of any YouTube video link"
       },
       {
         label: "Ability to add additional notes to the video"
@@ -2252,35 +2268,37 @@ export const features: IFwFeature[] = [
     contemporaries: [
       {
         label: Contemporary.Liner,
-        value: 0.75
+        value: 0.5,
+        notes:
+          "Liner has among all the clippers the ability to save, timestamp Youtube videos. But, its only restricted to Youtube platform."
       },
       {
         label: Contemporary.Capacities,
-        value: 0.35,
+        value: 0.3,
         notes:
           "Capacities has a basic clipper extension which can save Youtube videos and has the ability to add notes."
       },
       {
         label: Contemporary.Obsidian,
-        value: 0.35,
+        value: 0.3,
         notes:
           "Obsidian clipper can be used to save Youtube videos like any other web page. This creates a youtube embed in the saved markdown. Video timestamp highlighting and viewing the list of highlights is not available."
       },
       {
         label: Contemporary.Notion,
-        value: 0.4,
+        value: 0.35,
         notes:
           "Notion clipper extension can be used to save Youtube videos. It lacks all other abilities from our rating criteria. However, some third party [extensions](https://chromewebstore.google.com/detail/youtube-notes-to-notion-w/kojibkalenabblnhoihknojdfapbbmig?hl=en-US&utm_source=ext_sidebar) can be used to save Youtube videos and take notes."
       },
       {
         label: Contemporary.Evernote,
-        value: 0.2,
+        value: 0.25,
         notes:
           "Clips webpage of YouTube video with description, not actual video content"
       },
       {
         label: Contemporary.Readwise,
-        value: 0.6,
+        value: 0.3,
         notes:
           "Captures specific YouTube video page and auto-generates summary of video content"
       },
@@ -2299,34 +2317,37 @@ export const features: IFwFeature[] = [
     ]
   },
   {
-    label: "Tweet clipping",
+    label: "Social clipping",
     category: MemotronFeatureCategory.Clipping,
     progress: 0.75,
-    description: "Clipping tweets",
+    description:
+      "Clipping posts across regularly used social media platforms like Twitter, Reddit, Facebook, and LinkedIn.",
+    notes:
+      "Memotron has first-class support for social clipping. Memotron supports clipping from home page timeline, individual post page, clipping from replies and individual profile page for all the below platforms. \n \n __Supported platforms:__ \n - Twitter \n - Reddit \n - Bluesky \n - LinkedIn \n - Threads \n - Facebook \n - Instagram",
     ratingCriteria: [
       {
         label:
-          "Ability to save tweets from Twitter in a quick and frictionless manner."
+          "Ability to save posts from popular social media platforms like Twitter, Reddit, Facebook, and LinkedIn in a quick and frictionless manner."
       },
       {
-        label: "Ability to add additional notes to the tweet."
+        label: "Ability to add additional notes to the clipped items."
       },
       {
-        label: "First class viewing support for saved tweets."
+        label: "First class viewing support for saved posts."
       },
       {
         label:
-          "Capture tweets more efficiently from home page or replies section without the need to open a tweet page just to clip."
+          "Capture posts more efficiently from home page or replies section without the need to open a post page just to clip."
       }
     ],
     contemporaries: [
       {
         label: Contemporary.Readwise,
-        value: 0.6
+        value: 0.3
       },
       {
         label: Contemporary.Capacities,
-        value: 0.35,
+        value: 0.3,
         notes:
           "Capacities clipper can be used to save tweets like any other web page and add notes to it. The saved tweets can be viewed in the app using native Twitter API. The clipper lacks an efficient way to capture individual tweets on the web page."
       },
@@ -2344,7 +2365,7 @@ export const features: IFwFeature[] = [
       },
       {
         label: Contemporary.Mymind,
-        value: 0.4,
+        value: 0.35,
         notes:
           "Mymind extension can be used to save tweets and has first-class viewing support for saved tweets. But, doesn't support taking notes on the tweet or capturing more efficiently."
       },
@@ -2353,20 +2374,13 @@ export const features: IFwFeature[] = [
         value: 0.25,
         notes:
           "Raindrop extension can be used to save tweets and take notes. But, the app just like youtube videos doesn't support first-class viewing of saved tweets. At the time of this analysis, the preview showed the following error on web app `x.com not reachable or blocks site preview.`."
+      },
+      {
+        label: Contemporary.Liner,
+        value: 0.25,
+        notes:
+          "Liner's text highlighting capability can be used to save parts of tweets or other social posts. But, it is very limited in capability and doesn't have first-class viewing support."
       }
-    ]
-  },
-  {
-    label: "Other socials clipping",
-    category: MemotronFeatureCategory.Clipping,
-    progress: 0,
-    isPlanned: true,
-    description: "Clipping other social posts like Linkedin, Reddit, etc.",
-    contemporaries: [
-      // {
-      //   label: Contemporary.Readwise,
-      //   value: 0.6
-      // }
     ]
   },
   {
@@ -2444,30 +2458,25 @@ export const features: IFwFeature[] = [
     ]
   },
   {
-    label: "Web video clipping",
-    category: MemotronFeatureCategory.Clipping,
-    progress: 0,
-    isPlanned: true,
-    description: "",
-    contemporaries: []
-  },
-  {
-    label: "Audible highlights",
+    label: "Audio clipping",
     category: MemotronFeatureCategory.Clipping,
     progress: 0,
     isPlanned: true,
     isHideForComparer: true,
     description:
-      "Import and organization of Audible highlights and notes with audiobook metadata",
-    contemporaries: []
-  },
-  {
-    label: "Spotify highlights",
-    category: MemotronFeatureCategory.Clipping,
-    progress: 0,
-    isPlanned: true,
-    description:
-      "Capture and organization of highlights from podcast and music content on Spotify",
+      "Capture and organization of highlights from podcast and music content on popular platforms like Spotify, Apple Music, and SoundCloud. Import and organization of Audible highlights and notes with audiobook metadata",
+    ratingCriteria: [
+      {
+        label: "Integration with Audible"
+      },
+      {
+        label: "Import and organization of Audible highlights and notes"
+      },
+      {
+        label:
+          "Support clipping on platforms like Audible, Spotify, Scribd, and more"
+      }
+    ],
     contemporaries: []
   },
 
@@ -2539,6 +2548,12 @@ export const features: IFwFeature[] = [
         value: 0.5,
         notes:
           "Raindrop extension provides the ability to quickly add tags, and also assign to a collection when clipping web pages. This is a useful way to curate while linking. However, it is limited to only adding tags and collections."
+      },
+      {
+        label: Contemporary.Liner,
+        value: 0.3,
+        notes:
+          "Liner extension has a feature to add a highlight to a collection when clipped. However, this is mostly unsuable due to Liner's emphasis on AI research over organization and retrieval."
       }
     ]
   },
@@ -3156,6 +3171,12 @@ export const features: IFwFeature[] = [
       {
         label: Contemporary.Raindrop,
         value: 0.65
+      },
+      {
+        label: Contemporary.Liner,
+        value: 0.3,
+        notes:
+          "Liner's search is concealed in a page which is not accessible from UI (https://getliner.com/workspace/search)."
       }
     ]
   },

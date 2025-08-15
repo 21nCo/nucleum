@@ -124,7 +124,11 @@
       feature: "Capture",
       title: "Capturing at its finest",
       desc: "Capture in any format and from any device with our seamless capture experience - always one interaction away.",
-      visualRenderComponent: "captureFeature"
+      visualRenderComponent: "captureFeature",
+      videoElement: {
+        title: "Fastest capture ever built",
+        url: "https://youtu.be/7KHEG8QSv6w"
+      }
     },
     {
       image: "clipFeature.png",

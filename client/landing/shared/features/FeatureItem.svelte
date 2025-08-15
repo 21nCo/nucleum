@@ -5,6 +5,20 @@
   import VisualRender from "../VisualRender.svelte";
   export let feature: IFeature;
   export let isReversed: boolean = false;
+
+  function extractVideoId(url: string): string | null {
+    const youtubeRegex =
+      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(youtubeRegex);
+    return match && match[2].length === 11 ? match[2] : null;
+  }
+
+  function getYoutubeThumbnail(videoId: string): string {
+    return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+  }
+
+  $: videoId = feature.videoElement?.url ? extractVideoId(feature.videoElement.url) : null;
+  $: thumbnailUrl = videoId ? getYoutubeThumbnail(videoId) : null;
 </script>
 
 <div
@@ -41,18 +55,24 @@
         <VisualRender name={feature.visualRenderComponent} />
       </div>
     </div>
-    {#if feature.tutorialUrl}
+    {#if feature.videoElement}
       <div
-        class="flex items-center gap-3 mt-4 border border-brs3 rounded-md py-2 px-4 w-1/2"
+        class="flex items-center gap-3 mt-4 border border-brs3 rounded-md py-2 px-4 w-fit"
       >
-        <div class="w-20 h-11 bg-bgs3 rounded-md">
-          <!-- TODO video thumbnail -->
+        <div class="w-20 h-11 bg-bgs3 rounded-md overflow-hidden">
+          {#if videoId && thumbnailUrl}
+            <img 
+              src={thumbnailUrl} 
+              alt="{feature.videoElement?.title ?? feature.feature} thumbnail" 
+              class="w-full h-full object-cover"
+            />
+          {/if}
         </div>
         <div class="flex flex-col gap-1">
           <div class="text-lb2 text-left font-medium">
-            {feature.feature}
+            {feature.videoElement.title ?? feature.feature}
           </div>
-          <div class="text-b3 text-fgs3 text-left">Watch tutorial</div>
+          <div class="text-b3 text-fgs3 text-left">Watch video</div>
         </div>
       </div>
     {/if}

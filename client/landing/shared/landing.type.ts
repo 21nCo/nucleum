@@ -77,6 +77,13 @@ export type IFeature = {
   title: string;
   desc: string;
   visualRenderComponent: string;
+  videoElement?: {
+    title?: string;
+    url: string;
+  };
+  /**
+   * @deprecated - use videoElement instead
+   */
   tutorialUrl?: string;
 };
 
