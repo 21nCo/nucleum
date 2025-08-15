@@ -1,6 +1,8 @@
+![hero](tidigit-github.png)
+
 <div align="center">
-  <h1>Tidigit (Tidy digital kit)</h1>
-  <p>This is an open source library that's powering tools built at 21n</p>
+  <h1>Tidigit</h1>
+  <p>Tidy Digital Kit aka. Tidigit is an open source library that's powering tools built at 21n</p>
 </div>
 
 <div align="center">
@@ -10,12 +12,13 @@
 
 </div>
 
-### Tools built with Tidigit
-1. [Memotron](https://memotron.app)
-2. [Pointron](https://pointron.app)
-3. [Nuclues](https://nucleus.to)
+### Tools
+1. [Memotron](https://memotron.app) - Your memory atlas
+2. [Pointron](https://pointron.app) - Your focus haven
+3. [Nuclues](https://nucleus.to) - Your digital harmony
 
-More tools coming soon...
+More coming soon...
+
 
 ### License
 This project is licensed under the AGPL-3.0 license. See the [LICENSE](LICENSE) file for details.
