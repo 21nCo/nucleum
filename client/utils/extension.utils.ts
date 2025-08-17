@@ -74,26 +74,28 @@ export async function relayToBackgroundScript(message: {
   //   });
   // });
   try {
-    logger.log({
+    logger.debug({
       at: "relayToBackgroundScript",
       message,
       chromeRuntimeId: chrome.runtime.id
     });
-    
+
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => {
-        reject(new Error("Background script communication timeout after 5 seconds"));
+        reject(
+          new Error("Background script communication timeout after 5 seconds")
+        );
       }, 5000);
     });
-    
+
     const backgroundPromise = sendToBackground({
       name: message.event,
       body: message.data,
       extensionId: chrome.runtime.id
     });
-    
+
     const response = await Promise.race([backgroundPromise, timeoutPromise]);
-    
+
     logger.log({
       at: "relayToBackgroundScript - response",
       response

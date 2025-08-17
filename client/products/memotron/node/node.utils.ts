@@ -25,12 +25,14 @@ import type { IFile } from "$lib/client/components/files/file.type";
 import { resolveUrlData } from "./url.utils";
 import { isValidUrl } from "$lib/shared/utils/utils";
 import type { IRecordId } from "$lib/client/types/data.type";
+import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 
 export function resolveContentPreview(node: INode) {
   const { body, contentType, metadata } = node;
   logger.log({ at: "contentPreview", body, contentType });
 
-  if (contentType === NodeType.TWEET && "content" in body) {
+  if ((contentType === NodeType.TWEET || contentType === NodeType.BLUESKY_POST || contentType === NodeType.THREADS_POST) && "content" in body) {
     if (body.content) return body.content;
     else if (metadata && "ogTitle" in metadata) return metadata.ogTitle;
   } else if (contentType === NodeType.TWITTER_PROFILE) {
@@ -133,6 +135,7 @@ export function resolveNodeIcon(contentType: NodeType, url?: string) {
     case NodeType.YOUTUBE_TIMESTAMP_CLIP:
       return "youtube";
     case NodeType.TWEET:
+    case NodeType.BLUESKY_POST:
     case NodeType.TWITTER_PROFILE:
       return "twitter";
     case NodeType.KINDLE_BOOK:
@@ -207,6 +210,7 @@ export function resolveNodeContentLabel(contentType: NodeType) {
     case NodeType.YOUTUBE_TIMESTAMP_CLIP:
       return "Youtube Clip";
     case NodeType.TWEET:
+    case NodeType.BLUESKY_POST:
       return "X Post";
     case NodeType.TWITTER_PROFILE:
       return "X Profile";
@@ -323,6 +327,7 @@ export function resolveNodeLabel(item: INodeThumb) {
         text: timestamp
       };
     case NodeType.TWEET:
+    case NodeType.BLUESKY_POST:
       parent = parent as ITwitterProfile;
       const twitterProfileLabel = isValidString(
         parent?.label ?? parent?.body?.name
@@ -490,4 +495,12 @@ export function resolveHeadingParent(
     logger.error({ at: "resolveHeadingParent", e });
     return scopedParent;
   }
+}
+
+
+export function generateNodeIdPrefixed(contentType: NodeType, id: string) {
+  return generateResourceId(Resource.node, {
+    prefix: contentType.split("_").join("").toLowerCase(),
+    id
+  });
 }

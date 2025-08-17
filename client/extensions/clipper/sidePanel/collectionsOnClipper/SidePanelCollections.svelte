@@ -36,7 +36,7 @@
     NodeType.YOUTUBE_CHANNEL,
     NodeType.TWEET,
     NodeType.TWITTER_PROFILE,
-    NodeType.REDDIT_THREAD,
+    NodeType.REDDIT_POST,
     NodeType.DISCORD_THREAD,
     NodeType.TED_VIDEO,
     NodeType.INSTAGRAM_POST,

@@ -38,7 +38,7 @@
       label: "See what's new",
       icon: "sparkle",
       isAwayAction: true,
-      callback: () => openDocs("changelog/memotron/tags/memotron-web-clipper")
+      callback: () => openDocs("changelog/clipper/new")
     },
     {
       label: "Leave feedback",
@@ -77,7 +77,7 @@
     <a href="mailto:hello@21n.org" class="text-aps1">hello@21n.org</a>
   </div>
   <div class="flex flex-col items-center gap-1 mt-auto text-fgs3 text-b3">
-    <div>Memotron web clipper v0.57.2</div>
-    <div>Last updated: June 27, 2025</div>
+    <div>Memotron clipper v0.58.0</div>
+    <div>Last updated: August 11, 2025</div>
   </div>
 </div>

@@ -1,31 +1,42 @@
-import { nodeStore } from "$lib/client/products/memotron/node/node.store";
-import { ObservableStore } from "$lib/client/stores/client.store";
+import { logger } from "$lib/client/components/debug/logger.client";
+import {
+  ErrorMessage,
+  ResourceErrorCode
+} from "$lib/client/components/error/error.type";
+import { ResourceError } from "$lib/client/components/error/errors";
+import { FluxMethod } from "$lib/client/components/flux/flux.type";
+import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
-import { appEvents } from "$lib/client/stores/notification.store";
-import {
-  PersistenceActionType,
-  type IRecordId
-} from "$lib/client/types/data.type";
-import { Placement } from "$lib/client/types/direction.enum";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
-import { AlertType } from "$lib/client/types/notification.type";
-import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
-import { activeResourceFilter } from "$lib/client/utils/utils";
-import { removeHighlight } from "./highlightV4";
+import type {
+  CaptureOmittedFields,
+  OmitFields,
+  OmitForCapture,
+  OmitForCaptureWithId
+} from "$lib/client/components/flux/resourceStores/resource.type";
 import {
-  SyncStatus,
-  type IFeedbackPaneStore,
-  type ISyncStore,
-  type IWebpageStore
-} from "./types";
-import { linker } from "$lib/client/products/memotron/linking/link.store";
+  determineResourceType,
+  isSameResource,
+  resourceInList
+} from "$lib/client/components/flux/resourceStores/resource.utils";
+import { Persistence } from "$lib/client/persistence/persistence";
+import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
+import {
+  linker,
+  linkTagStore
+} from "$lib/client/products/memotron/linking/link.store";
+import { nodeStore } from "$lib/client/products/memotron/node/node.store";
 import {
   NodeIdPrefix,
   NodeType,
   type IClip,
   type IClipCapture,
   type ITweet,
+  type IThreadsPost,
+  type ILinkedInPost,
+  type ILinkedInProfile,
+  type IBlueskyProfile,
   type ITwitterProfile,
   type IWebScreenshotClip,
   type IWebPage,
@@ -33,45 +44,50 @@ import {
   type IKindleHighlight,
   type ITextClip,
   type IVideoTimestampClip,
-  type INodePropertyValue
+  type INodePropertyValue,
+  type INode,
+  socialProfileNodeTypeList,
+  socialPostNodeTypeList
 } from "$lib/client/products/memotron/node/node.type";
-import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+import { generateNodeIdPrefixed } from "$lib/client/products/memotron/node/node.utils";
 import {
-  extractFullTabData,
-  extractMinimalTabData,
-  extractYoutubeVideoData,
-  resolveUrl
-} from "../clipper.utils";
-import type {
-  CaptureOmittedFields,
-  OmitFields,
-  OmitForCapture,
-  OmitForCaptureWithId
-} from "$lib/client/components/flux/resourceStores/resource.type";
-import { logger } from "$lib/client/components/debug/logger.client";
+  fetchYouTubeMetadata,
+  isSameAsCurrentUrl,
+  resolveUrlData
+} from "$lib/client/products/memotron/node/url.utils";
+import { ObservableStore } from "$lib/client/stores/client.store";
+import { appEvents } from "$lib/client/stores/notification.store";
+import {
+  PersistenceActionType,
+  type IRecordId
+} from "$lib/client/types/data.type";
+import { Placement } from "$lib/client/types/direction.enum";
 import { ExtensionEvent } from "$lib/client/types/extension.type";
+import { AlertType } from "$lib/client/types/notification.type";
 import {
   relayToBackgroundScript,
   relayToSidePanel
 } from "$lib/client/utils/extension.utils";
-import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
-import { FluxMethod } from "$lib/client/components/flux/flux.type";
-import {
-  determineResourceType,
-  isSameResource,
-  resourceInList
-} from "$lib/client/components/flux/resourceStores/resource.utils";
-import { ResourceError } from "$lib/client/components/error/errors";
-import {
-  ErrorMessage,
-  ResourceErrorCode
-} from "$lib/client/components/error/error.type";
-import {
-  fetchYouTubeMetadata,
-  resolveUrlData
-} from "$lib/client/products/memotron/node/url.utils";
-import { Persistence } from "$lib/client/persistence/persistence";
+import { activeResourceFilter } from "$lib/client/utils/utils";
 import { parse, stringify } from "$lib/shared/utils/json.utils";
+import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
+import { enumToString } from "$lib/shared/utils/text.utils";
+import type { ISocialPost } from "../clipper.type";
+import {
+  extractFullTabData,
+  extractMinimalTabData,
+  extractYoutubeVideoData,
+  resolveParser,
+  resolveInlineSocialPostParser,
+  resolveUrl
+} from "../clipper.utils";
+import { removeHighlight } from "./highlightV4";
+import {
+  SyncStatus,
+  type IFeedbackPaneStore,
+  type ISyncStore,
+  type IWebpageStore
+} from "./types";
 
 class WebpageStore extends ObservableStore<IWebpageStore> {
   previousValue: string = "";
@@ -194,16 +210,35 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
    * @returns
    */
   async savePage(params?: {
-    creationContext?: IRecordId;
     contentType?: NodeType;
+    creationContext?: IRecordId;
   }) {
-    let data: OmitForCapture<IWebPage> = await extractData();
+    const contentType = params?.contentType ?? NodeType.WEB_PAGE;
+    const parser = resolveParser(contentType);
+    let data: OmitForCapture<IWebPage>;
+    logger.debug({ at: "savePage", contentType, parser });
+    if (parser) {
+      const result = parser();
+      console.log({ parserResult: result });
+      if (!result) return;
+      if (socialProfileNodeTypeList.has(contentType)) {
+        return this.saveSocialProfile(result as IWebPage);
+      } else if (socialPostNodeTypeList.has(contentType)) {
+        return this.saveSocialPost({
+          main: {
+            ...result
+          } as ISocialPost
+        });
+      }
+    }
+    data = await extractData();
     const id = generateResourceId(Resource.node);
     const node = {
       id,
       ...data,
       creationContext: params?.creationContext
     };
+    console.log({ node });
     const response = await nodeStore.create([node]);
     if (!response) return;
     logger.log({ at: "savePage", response });
@@ -336,6 +371,60 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     }
   }
 
+  private socialIdMapper = (item: any) => {
+    let id;
+    if (item.id) id = item.id;
+    else if (socialProfileNodeTypeList.has(item.contentType))
+      id = generateNodeIdPrefixed(
+        item.contentType,
+        item.body.username as string
+      );
+    else if (socialPostNodeTypeList.has(item.contentType))
+      id = generateNodeIdPrefixed(
+        item.contentType,
+        `${item.metadata.username}_${item.metadata.postId}`
+      );
+    return {
+      ...item,
+      id
+    };
+  };
+
+  async saveInlineSocialPost(target: HTMLElement, contentType: NodeType) {
+    const parser = resolveInlineSocialPostParser(contentType);
+    logger.debug({ at: "saveInlineSocialPost", contentType, parser });
+    if (!parser) {
+      logger.error("No parser found for social post");
+      return;
+    }
+    const parsed = parser(target);
+    if (!parsed) {
+      logger.error("Data not found");
+      return;
+    }
+    let main;
+    let posts: ISocialPost[] = [];
+    if (!parsed.data || !parsed.data.url) return;
+    const isMainPost = isSameAsCurrentUrl(parsed.data.url);
+    console.log({ isMainPost, parsed });
+    if (isMainPost) {
+      main = parsed;
+    } else {
+      if (parsed.isPostPage) {
+        const mainPostResolver = resolveParser(contentType);
+        main = mainPostResolver?.() as ISocialPost;
+      }
+      posts = [parsed];
+    }
+    return this.saveSocialPost({ main, posts });
+  }
+
+  /**
+   * @deprecated - use savePage or saveSocialPost instead
+   * @param data
+   * @param isFromTweetPage
+   * @returns
+   */
   async saveTweet(
     data: OmitFields<
       ITweet & {
@@ -409,13 +498,13 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     return tweetNode;
   }
 
-  focus(url: string, message: string | { message: string; type: AlertType }) {
-    logger.log({ at: "focus", url, message });
+  focus(id: string, message: string | { message: string; type: AlertType }) {
+    logger.log({ at: "focus", id, message });
     const webpage = this.get();
-    if (webpage.url === url) {
+    if (webpage.id === id) {
       feedbackPane.toggle({ isUserInitiated: true });
     } else {
-      const clip = webpage.clips?.find((c) => c.url === url);
+      const clip = webpage.clips?.find((c) => c.id === id);
       if (clip) {
         feedbackPane.focus(clip, message);
       }
@@ -423,6 +512,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   }
 
   /**
+   * @deprecated - use savePage or saveSocialProfile instead
    * Triggers from twitter profile page.
    * @param data
    * @returns
@@ -430,10 +520,10 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   async saveTwitterProfile(
     data: OmitForCapture<ITwitterProfile & { username: string }>
   ) {
-    const twitterProfileId = generateResourceId(Resource.node, {
-      prefix: NodeIdPrefix.TWITTER_PROFILE,
-      id: data.username as string
-    });
+    const twitterProfileId = generateNodeIdPrefixed(
+      NodeType.TWITTER_PROFILE,
+      data.username as string
+    );
     logger.log({ at: "saveTwitterProfile", data, twitterProfileId });
     const response = await nodeStore.create([
       { ...data, id: twitterProfileId }
@@ -447,6 +537,112 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     });
     feedbackPane.focus(node, {
       message: "Twitter profile saved!",
+      type: AlertType.SUCCESS
+    });
+    return node;
+  }
+
+  private async saveSocialPost(params: {
+    main?: ISocialPost;
+    posts?: ISocialPost[];
+  }) {
+    if (!params.posts && !params.main) return;
+    logger.debug({ at: "saveSocialPost", params });
+    let posts =
+      params.posts?.map((x) => x.data)?.map(this.socialIdMapper) ?? [];
+    const profiles =
+      params.posts?.map((x) => x.parent)?.map(this.socialIdMapper) ?? [];
+    posts = posts.map((x, index) => ({ ...x, parent: profiles[index].id }));
+    let mainPost = params.main ? this.socialIdMapper(params.main.data) : null;
+    let mainParent = params.main
+      ? this.socialIdMapper(params.main.parent)
+      : null;
+    console.log({ mainPost, mainParent, posts, profiles });
+    if (mainPost && posts.length > 0) {
+      const threadRelationId = await linkTagStore.save("thread", "social");
+      const content = {
+        tags:
+          !Array.isArray(threadRelationId) && threadRelationId?.id
+            ? [threadRelationId?.id]
+            : []
+      };
+      for (const post of posts) {
+        await linker.link(post.id, mainPost.id, {
+          content
+        });
+      }
+    }
+    if (mainPost) {
+      const genericData = extractMinimalTabData();
+      mainPost = {
+        ...genericData,
+        ...mainPost,
+        metadata: {
+          ...genericData.metadata,
+          ...(mainPost?.metadata ?? {})
+        }
+      };
+    }
+    logger.debug({ at: "saveSocialPost", mainPost });
+    const main = mainPost ? [mainPost, mainParent] : [];
+    const response = await nodeStore.create([...main, ...posts, ...profiles]);
+    if (!response || !Array.isArray(response)) return;
+    this.update((n) => {
+      n.clips = [
+        ...(n.clips ?? []),
+        ...posts.map((x) => ({ ...x, links: [] }))
+      ];
+      if (mainPost) n.id = mainPost.id;
+      return n;
+    });
+    if (mainPost) {
+      relayToSidePanel({
+        event: ExtensionEvent.PAGE_STATE,
+        data: {
+          page: this.get(),
+          toolbar: toolbarState.get()
+        }
+      });
+      feedbackPane.focus(mainPost, {
+        message: "Post saved!",
+        type: AlertType.SUCCESS
+      });
+      return mainPost;
+    } else if (posts[0]) {
+      feedbackPane.focus(posts[0], {
+        message: "Post saved!",
+        type: AlertType.SUCCESS
+      });
+      return posts[0];
+    }
+  }
+
+  private async saveSocialProfile(data: OmitForCapture<INode>) {
+    if (!data.body.username) return;
+    const profileId = generateNodeIdPrefixed(
+      data.contentType,
+      data.body.username
+    );
+    const genericData = extractMinimalTabData();
+    const profile = {
+      ...genericData,
+      ...data,
+      metadata: {
+        ...genericData.metadata,
+        ...(data?.metadata ?? {})
+      }
+    };
+    logger.debug({ at: "saveSocialProfile", profile, profileId });
+    const response = await nodeStore.create([{ ...data, id: profileId }]);
+    if (!response || !Array.isArray(response)) return;
+    const node = response[0] as INode;
+    this.update((n) => {
+      n.clips = [...(n.clips ?? []), { ...node, links: [] }];
+      n.id = node.id;
+      return n;
+    });
+    feedbackPane.focus(node, {
+      message: `${enumToString(data.contentType)} saved!`,
       type: AlertType.SUCCESS
     });
     return node;
@@ -948,14 +1144,14 @@ class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
     });
   }
 
-  onPageSaveSuccess(message: string) {
+  onPageSaved(message: string, type: AlertType = AlertType.SUCCESS) {
     this.update((n) => {
       n.feedback = {
         message,
-        type: AlertType.SUCCESS
+        type
       };
       n.isPreventAutoClose = false;
-      n.isShowStatusOnly = false;
+      n.isShowStatusOnly = type === AlertType.SUCCESS ? false : true;
       return n;
     });
   }

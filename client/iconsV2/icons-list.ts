@@ -1,3 +1,5 @@
+import { iconMappings } from "./icons.map";
+
 // Phosphor icons that are NOT in icons.map.ts (these will still use phosphor directly)
 const phosphorIcons = [
   // Star variants
@@ -295,8 +297,6 @@ const solarIconsNotInMap = [
   "rewind-10-seconds-forward"
 ];
 
-import { iconMappings } from "./icons.map";
-
 const phosphorIconsFromMap = Object.values(iconMappings).map(
   (mapping) => mapping.phosphor
 );
@@ -368,6 +368,7 @@ const uilIcons = ["keyboard-hide"];
 
 const mynaUiIcons = [
   "plus-hexagon",
+  "check-hexagon",
   "git-commit",
   "git-merge",
   "git-branch",
@@ -419,4 +420,4 @@ export const solarIconsForBundling = {
   "bold-duotone": solarBoldDuotoneIcons
 };
 
-export const bundleNumber = 51;
+export const bundleNumber = 52;

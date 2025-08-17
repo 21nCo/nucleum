@@ -3,7 +3,12 @@
  */
 export const screenShotOnlyPages = [
   /^https:\/\/app\.[^\/]+\/.*/,
-  /^https:\/\/(?:twitter\.com|x\.com)\/(?:(i|jobs|explore|home|settings|messages|notifications|search|hashtag|compose)(?:\/(.+))?|([^\/]+)\/lists)?\/?$/
+  /^https:\/\/(?:twitter\.com|x\.com)\/(?:(i|jobs|explore|home|settings|messages|notifications|search|hashtag|compose)(?:\/(.+))?|([^\/]+)\/lists)?\/?$/,
+  /^https:\/\/bsky\.app\/?$/,
+  /^https:\/\/www\.linkedin\.com\/feed\/?$/,
+  /^https:\/\/www\.linkedin\.com\/mynetwork\/?$/,
+  /^https:\/\/www\.linkedin\.com\/jobs\/?$/,
+  /^https:\/\/www\.threads\.com\/?$/
 ];
 
 /**

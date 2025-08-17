@@ -7,6 +7,9 @@
   import { fly } from "svelte/transition";
   import { toolbarState } from "../contentScripts/store";
   let isHovering = false;
+  if ($toolbarState.position === undefined) {
+    toolbarState.changePosition(Placement.Right);
+  }
 </script>
 
 <div
