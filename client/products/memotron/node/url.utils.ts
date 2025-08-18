@@ -328,3 +328,81 @@ export function isSameAsCurrentUrl(
     return false;
   }
 }
+
+/**
+ * Safely checks if a URL string has a valid HTTP/HTTPS protocol
+ * @param url - URL string to check
+ * @returns boolean indicating if URL is valid and uses HTTP/HTTPS
+ */
+function isValidHttpUrl(url: string): boolean {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.protocol === "https:" || urlObj.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Safely checks if a URL belongs to a specific hostname or its subdomains
+ * @param url - URL string to check
+ * @param hostname - hostname to check against (e.g., "example.com")
+ * @returns boolean indicating if URL belongs to hostname or its subdomains
+ */
+export function isHostnameMatch(url: string, hostname: string): boolean {
+  try {
+    const urlObj = new URL(url);
+    const urlHost = urlObj.hostname.toLowerCase();
+    const targetHost = hostname.toLowerCase();
+    return urlHost === targetHost || urlHost.endsWith("." + targetHost);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Safely checks if a URL belongs to any of the specified hostnames or their subdomains
+ * @param url - URL string to check
+ * @param hostnames - array of hostnames to check against
+ * @returns boolean indicating if URL belongs to any of the hostnames
+ */
+export function isAnyHostnameMatch(url: string, hostnames: string[]): boolean {
+  return hostnames.some((hostname) => isHostnameMatch(url, hostname));
+}
+
+/**
+ * Filter function for excluding URLs from specific platforms/domains
+ * Commonly used in social media parsers to filter out internal links
+ * @param excludeHostnames - array of hostnames to exclude
+ * @param excludePatterns - array of path patterns to exclude (checked with includes())
+ * @param currentUrl - current page URL to exclude (optional)
+ * @returns filter function that can be used with Array.filter()
+ */
+export function createUrlFilter(
+  excludeHostnames: string[] = [],
+  excludePatterns: string[] = [],
+  currentUrl?: string
+) {
+  return (url: string): boolean => {
+    if (!isValidHttpUrl(url)) {
+      return false;
+    }
+
+    if (currentUrl && url === currentUrl) {
+      return false;
+    }
+
+    if (
+      excludeHostnames.length > 0 &&
+      isAnyHostnameMatch(url, excludeHostnames)
+    ) {
+      return false;
+    }
+
+    if (excludePatterns.some((pattern) => url.includes(pattern))) {
+      return false;
+    }
+
+    return true;
+  };
+}

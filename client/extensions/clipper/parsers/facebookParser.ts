@@ -4,6 +4,10 @@ import {
   type IFacebookPost,
   type IFacebookProfile
 } from "$lib/client/products/memotron/node/node.type";
+import {
+  createUrlFilter,
+  isHostnameMatch
+} from "$lib/client/products/memotron/node/url.utils";
 import { csuiSelector } from "../clipper.constants";
 import type { ISocialPost, ISocialPostBase } from "../clipper.type";
 import { findAncestorOrSelf, resolveParentNLevel } from "./shared/domUtils";
@@ -153,14 +157,14 @@ function parseFacebookPost(
     if (match) reactions = match[0];
   }
 
+  const urlFilter = createUrlFilter(
+    ["facebook.com", "instagram.com"],
+    [],
+    window.location.href
+  );
   const links = Array.from(root.querySelectorAll('a[href^="http"]'))
     .map((a: any) => a.href)
-    .filter(
-      (href: string) =>
-        !href.includes("facebook.com/") &&
-        !href.includes("instagram.com/") &&
-        href !== window.location.href
-    );
+    .filter(urlFilter);
 
   const media: string[] = [];
   const imageElements = root.querySelectorAll(
@@ -170,7 +174,7 @@ function parseFacebookPost(
     const imgElement = img as HTMLImageElement;
     if (
       imgElement.src &&
-      imgElement.src.includes("fbcdn.net") &&
+      isHostnameMatch(imgElement.src, "fbcdn.net") &&
       !imgElement.src.includes("profile")
     ) {
       media.push(imgElement.src);

@@ -4,6 +4,7 @@ import {
   type IThreadsPost,
   type IThreadsProfile
 } from "$lib/client/products/memotron/node/node.type";
+import { createUrlFilter } from "$lib/client/products/memotron/node/url.utils";
 import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
 import { csuiSelector } from "../clipper.constants";
 import type { ISocialPost, ISocialPostBase } from "../clipper.type";
@@ -82,14 +83,14 @@ function parseThreadsPost(
 
   const postLink = root.querySelector('a[href*="/post/"]') as HTMLAnchorElement;
 
+  const urlFilter = createUrlFilter(
+    ["threads.net"],
+    ["/@", "/post/"],
+    window.location.href
+  );
   const links = Array.from(root.querySelectorAll('a[href^="http"]'))
     .map((a: any) => a.href)
-    .filter(
-      (href: string) =>
-        !href.includes("/@") &&
-        !href.includes("/post/") &&
-        !href.includes("threads.net")
-    );
+    .filter(urlFilter);
 
   const authorHandle = authorLink?.pathname?.startsWith("/@")
     ? authorLink.pathname.substring(2)
@@ -188,13 +189,10 @@ export function extractThreadsProfile(): OmitForCapture<IThreadsProfile> {
     followersCount = followersText.split(" ")[0] || "0";
   }
 
+  const websiteUrlFilter = createUrlFilter(["threads.com", "instagram.com"]);
   const websiteLinks = Array.from(document.querySelectorAll('a[href^="http"]'))
-    .filter(
-      (link) =>
-        !link.href.includes("threads.com") &&
-        !link.href.includes("instagram.com/")
-    )
-    .map((link) => link.href);
+    .map((link) => link.href)
+    .filter(websiteUrlFilter);
   const websiteUrl = websiteLinks.length > 0 ? websiteLinks[0] : "";
 
   const label = displayName || handle;

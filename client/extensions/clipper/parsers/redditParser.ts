@@ -1,4 +1,3 @@
-import { logger } from "$lib/client/components/debug/logger.client";
 import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
 import {
   NodeType,
@@ -6,6 +5,7 @@ import {
   type IRedditProfile,
   type IRedditSub
 } from "$lib/client/products/memotron/node/node.type";
+import { createUrlFilter } from "$lib/client/products/memotron/node/url.utils";
 import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
 import type { ISocialPost, ISocialPostBase } from "../clipper.type";
 import { findAncestorOrSelf } from "./shared/domUtils";
@@ -142,14 +142,14 @@ function parseRedditPost(
       domain;
   }
 
+  const urlFilter = createUrlFilter(
+    ["reddit.com", "redd.it"],
+    [],
+    window.location.href
+  );
   const links = Array.from(root.querySelectorAll('a[href^="http"]'))
     .map((a: any) => a.href)
-    .filter(
-      (href: string) =>
-        !href.includes("reddit.com/") &&
-        !href.includes("redd.it/") &&
-        href !== window.location.href
-    );
+    .filter(urlFilter);
 
   const finalPostUrl = postUrl.includes("/comments/")
     ? postUrl

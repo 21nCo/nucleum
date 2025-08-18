@@ -4,6 +4,10 @@ import {
   type IInstagramPost,
   type IInstagramProfile
 } from "$lib/client/products/memotron/node/node.type";
+import {
+  createUrlFilter,
+  isHostnameMatch
+} from "$lib/client/products/memotron/node/url.utils";
 import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
 import type { ISocialPost, ISocialPostBase } from "../clipper.type";
 import { findAncestorOrSelf } from "./shared/domUtils";
@@ -83,16 +87,15 @@ export function extractInstagramProfileFromPage(): OmitForCapture<IInstagramProf
     "meta.com",
     "meta.ai"
   ];
+  const websiteUrlFilter = createUrlFilter(
+    igWebsites.filter((domain) => domain !== "instagram.com")
+  );
   const websiteLinks = Array.from(document.querySelectorAll('a[href^="http"]'))
-    .filter((link) => {
-      const url = new URL((link as HTMLAnchorElement).href);
-      const hostname = url.hostname;
-      if (hostname === "l.instagram.com") return true;
-      return !igWebsites.some(
-        (domain) => hostname === domain || hostname.endsWith("." + domain)
-      );
-    })
-    .map((link) => (link as HTMLAnchorElement).href);
+    .map((link) => (link as HTMLAnchorElement).href)
+    .filter((url) => {
+      if (isHostnameMatch(url, "l.instagram.com")) return true;
+      return websiteUrlFilter(url);
+    });
   const websiteUrl = websiteLinks.length > 0 ? websiteLinks[0] : "";
 
   const label = displayName || handle;
@@ -190,14 +193,14 @@ function parseInstagramPost(
   const likesText = likesElement?.textContent?.trim();
   const likes = likesText?.replace(/[^0-9,]/g, "") ?? "0";
 
+  const urlFilter = createUrlFilter(
+    ["instagram.com"],
+    ["/p/"],
+    window.location.href
+  );
   const links = Array.from(root.querySelectorAll('a[href^="http"]'))
     .map((a: any) => a.href)
-    .filter(
-      (href: string) =>
-        !href.includes("/p/") &&
-        !href.includes("instagram.com/") &&
-        href !== window.location.href
-    );
+    .filter(urlFilter);
 
   const videoElement = root.querySelector("video");
   const imageElements = root.querySelectorAll(
@@ -214,7 +217,7 @@ function parseInstagramPost(
     if (
       imgElement.src &&
       !imgElement.alt?.includes("profile") &&
-      imgElement.src.includes("fbcdn.net")
+      isHostnameMatch(imgElement.src, "fbcdn.net")
     ) {
       media.push(imgElement.src);
     }
@@ -367,14 +370,14 @@ export function parseInstagramPostFromPage(
     }
   }
 
+  const urlFilter = createUrlFilter(
+    ["instagram.com"],
+    ["/p/"],
+    window.location.href
+  );
   const links = Array.from(root.querySelectorAll('a[href^="http"]'))
     .map((a: any) => a.href)
-    .filter(
-      (href: string) =>
-        !href.includes("/p/") &&
-        !href.includes("instagram.com/") &&
-        href !== window.location.href
-    );
+    .filter(urlFilter);
 
   const media: string[] = [];
 
@@ -392,7 +395,7 @@ export function parseInstagramPostFromPage(
     const imgElement = img as HTMLImageElement;
     if (
       imgElement.src &&
-      imgElement.src.includes("fbcdn.net") &&
+      isHostnameMatch(imgElement.src, "fbcdn.net") &&
       !imgElement.alt?.toLowerCase().includes("profile") &&
       !imgElement.alt?.toLowerCase().includes("avatar")
     ) {

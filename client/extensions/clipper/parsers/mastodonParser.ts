@@ -74,13 +74,13 @@ function parseMastodonPost(
     "";
 
   const mediaImages = Array.from(root.querySelectorAll(".media-gallery img"))
-    .map((img: any) => img.src)
+    .map((img) => (img as HTMLImageElement).src)
     .filter(Boolean);
 
   const links = Array.from(
     root.querySelectorAll('.status__content a[href^="http"]')
   )
-    .map((a: any) => a.href)
+    .map((a) => (a as HTMLAnchorElement).href)
     .filter((href: string) => {
       const url = new URL(href);
       return !href.includes("/@") && !href.includes("/web/statuses/");
@@ -137,7 +137,9 @@ function parseMastodonPost(
   };
 }
 
-export function extractMastodonProfile(): OmitForCapture<IMastodonProfile> {
+export function extractMastodonProfile():
+  | OmitForCapture<IMastodonProfile>
+  | undefined {
   const url = window.location.href;
   const username = url.split("/@")[1]?.split("/")[0] || "";
 
@@ -147,6 +149,8 @@ export function extractMastodonProfile(): OmitForCapture<IMastodonProfile> {
     ),
     ".account__header"
   );
+
+  if (!root) return;
 
   const displayNameElement = root.querySelector("h1 span");
   const displayName = displayNameElement?.textContent?.trim() || "";
