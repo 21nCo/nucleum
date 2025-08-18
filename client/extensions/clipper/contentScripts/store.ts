@@ -77,10 +77,9 @@ import {
   extractFullTabData,
   extractMinimalTabData,
   extractYoutubeVideoData,
-  resolveParser,
-  resolveInlineSocialPostParser,
   resolveUrl
 } from "../clipper.utils";
+import { resolveParser, resolveInlineSocialPostParser } from "../parsers";
 import { removeHighlight } from "./highlightV4";
 import {
   SyncStatus,
@@ -219,7 +218,6 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     logger.debug({ at: "savePage", contentType, parser });
     if (parser) {
       const result = parser();
-      console.log({ parserResult: result });
       if (!result) return;
       if (socialProfileNodeTypeList.has(contentType)) {
         return this.saveSocialProfile(result as IWebPage);
@@ -238,7 +236,6 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       ...data,
       creationContext: params?.creationContext
     };
-    console.log({ node });
     const response = await nodeStore.create([node]);
     if (!response) return;
     logger.log({ at: "savePage", response });
@@ -304,7 +301,6 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
             }
           }
         });
-        console.log({ at: "screenshotWebpage", result });
         return result;
       }
     }
@@ -406,7 +402,6 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     let posts: ISocialPost[] = [];
     if (!parsed.data || !parsed.data.url) return;
     const isMainPost = isSameAsCurrentUrl(parsed.data.url);
-    console.log({ isMainPost, parsed });
     if (isMainPost) {
       main = parsed;
     } else {
@@ -557,7 +552,6 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     let mainParent = params.main
       ? this.socialIdMapper(params.main.parent)
       : null;
-    console.log({ mainPost, mainParent, posts, profiles });
     if (mainPost && posts.length > 0) {
       const threadRelationId = await linkTagStore.save("thread", "social");
       const content = {
@@ -866,7 +860,6 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     }
   ) {
     const response = await nodeStore.trash(id);
-    console.log({ response });
     if (!response)
       return { message: "Clip removal failed", type: AlertType.ERROR };
     this.update((n) => {
@@ -889,7 +882,6 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       body: { highlighterId }
     });
     if (!updateResult) return;
-    console.log({ updateResult });
     this.update((n) => {
       n.clips = n.clips?.map((x) => {
         if (isSameResource(x.id, id)) {
@@ -898,7 +890,6 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         }
         return x;
       });
-      console.log({ clips: n.clips, id, highlighterId });
       return n;
     });
     relayToSidePanel({
@@ -987,7 +978,6 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     this.update((n) => {
       n.clips = n.clips?.map((c) => {
         if (isSameResource(c, id)) {
-          console.log({ at: "persistClipNotes", c, notes });
           c.notes = notes;
           return c;
         }
@@ -1387,7 +1377,6 @@ class SyncStore extends ObservableStore<ISyncStore> {
           }
         }
       });
-      console.log({ resultWithMerge });
     } catch (e) {
       logger.error(e);
     }

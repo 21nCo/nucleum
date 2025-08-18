@@ -18,7 +18,8 @@ export function getQuery(element) {
 }
 
 function escapeCSSString(cssString) {
-  return cssString.replace(/(:)/gu, "\\$1");
+  // Escape all CSS meta-characters for security
+  return cssString.replace(/(["'\\\n\r\f:]|\s)/gu, "\\$1");
 }
 
 export function elementFromQuery(storedQuery) {
