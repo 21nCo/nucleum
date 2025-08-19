@@ -10,15 +10,17 @@ export function frameNonSensitiveUserInfo(userInfo: IUserProfileInfo) {
     region,
     isBootstrapped
   } = userInfo;
-  return {
+
+  const data: any = {
     id,
     emailParts,
     nickName,
     profilePictureUrl,
-    joinDate,
-    region,
-    isBootstrapped
+    joinDate
   };
+  if(isBootstrapped !== undefined && isBootstrapped !== null) data.isBootstrapped = isBootstrapped
+  if(region !== undefined && region !== null) data.region = region;
+  return data;
 }
 
 export function getEmailParts(email: string) {
