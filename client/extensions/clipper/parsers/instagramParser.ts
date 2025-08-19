@@ -114,7 +114,8 @@ export function extractInstagramProfileFromPage(): OmitForCapture<IInstagramProf
       displayName,
       followersCount,
       postsCount,
-      websiteUrl
+      websiteUrl,
+      isVerified
     },
     contentType: NodeType.INSTAGRAM_PROFILE
   };

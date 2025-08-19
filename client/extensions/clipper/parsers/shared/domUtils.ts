@@ -67,8 +67,7 @@ export function resolveOgData(doc?: Document) {
  */
 export function extractBrowserDetails() {
   const userAgent = navigator.userAgent;
-  const uAData = {}; //navigator.userAgentData;
-  return { userAgent, uAData };
+  return { userAgent };
 }
 
 export function parseRelativeTimeToISO(relativeTime: string): string | null {

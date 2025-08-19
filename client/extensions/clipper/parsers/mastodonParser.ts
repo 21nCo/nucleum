@@ -28,9 +28,10 @@ export function extractMastodonPostFromInlineClip(
     if (article) isPostPage = true;
   }
   if (!article) return;
-  isPostPage =
-    window.location.pathname.includes("/@") &&
-    /\/\d+$/.test(window.location.pathname);
+  if (!isPostPage)
+    isPostPage =
+      window.location.pathname.includes("/@") &&
+      /\/\d+$/.test(window.location.pathname);
 
   const data = parseMastodonPost(article);
   if (!data) return;
@@ -82,7 +83,6 @@ function parseMastodonPost(
   )
     .map((a) => (a as HTMLAnchorElement).href)
     .filter((href: string) => {
-      const url = new URL(href);
       return !href.includes("/@") && !href.includes("/web/statuses/");
     });
 

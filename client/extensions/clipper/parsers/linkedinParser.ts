@@ -188,7 +188,7 @@ export function extractLinkedInProfile(): OmitForCapture<ILinkedInProfile> {
       .join("\n") || "";
 
   const memberIdMatch = url.match(/\/in\/([^/?]+)/);
-  const memberId = memberIdMatch ? memberIdMatch[1] : "";
+  const memberId = memberIdMatch ? memberIdMatch[1] : username;
 
   const text = `${name}\n${headline}\n${bio}`.trim();
   const { ogTitle } = resolveOgData();

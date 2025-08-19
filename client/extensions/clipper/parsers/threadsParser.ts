@@ -52,7 +52,7 @@ function parseThreadsPost(
   const textElements = root.querySelectorAll('[data-lexical-text="true"]');
   let text = "";
   textElements.forEach((el) => {
-    if (el.textContent && el.textContent.trim()) {
+    if (el.textContent?.trim()) {
       text += el.textContent.trim() + " ";
     }
   });

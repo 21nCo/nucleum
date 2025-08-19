@@ -882,6 +882,7 @@ export type ISocialProfileMetadata = IWebPageMetadata & {
   postsCount?: string;
   bannerImageUrl?: string;
   websiteUrl?: string;
+  isVerified?: boolean;
 };
 
 export type ILinkedInProfileMetadata = IWebPageMetadata & {
