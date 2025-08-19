@@ -70,7 +70,7 @@
     } catch (e) {
       logger.error({ at: "ScreenShot - saveSnip", error: e });
     } finally {
-      feedbackPane.onPageSaveSuccess("Screenshot saved!");
+      feedbackPane.onPageSaved("Screenshot saved!");
     }
   }
 

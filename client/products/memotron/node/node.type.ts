@@ -1,10 +1,9 @@
-import type { IAvatar } from "$lib/client/types/avatar.type";
 import type {
-  IBlockBody,
-  IMarkdown
-} from "$lib/client/components/markdown/md.type";
-import type { IRecordId, IStore } from "$lib/client/types/data.type";
+  ICollectible,
+  ICollectionExpanded
+} from "$lib/client/components/collection/collection.type";
 import type { IPropertyValue } from "$lib/client/components/collection/properties/property.type";
+import type { IFile } from "$lib/client/components/files/file.type";
 import {
   ResourceAccessMode,
   type CaptureOmittedFields,
@@ -18,11 +17,12 @@ import {
   type OmitFields,
   type OmitForCapture
 } from "$lib/client/components/flux/resourceStores/resource.type";
-import type { IFile } from "$lib/client/components/files/file.type";
 import type {
-  ICollectible,
-  ICollectionExpanded
-} from "$lib/client/components/collection/collection.type";
+  IBlockBody,
+  IMarkdown
+} from "$lib/client/components/markdown/md.type";
+import type { IAvatar } from "$lib/client/types/avatar.type";
+import type { IRecordId, IStore } from "$lib/client/types/data.type";
 import type { ILink, ILinkBase, LinkType } from "../linking/link.type";
 
 type IResourcePropertiesForNode = IResource &
@@ -179,14 +179,26 @@ export enum NodeType {
   KINDLE_HIGHLIGHT = "KINDLE_HIGHLIGHT",
   TWEET = "TWEET",
   TWITTER_PROFILE = "TWITTER_PROFILE",
-  REDDIT_THREAD = "REDDIT_THREAD",
+  MASTODON_POST = "MASTODON_POST",
+  MASTODON_PROFILE = "MASTODON_PROFILE",
+  BLUESKY_POST = "BLUESKY_POST",
+  BLUESKY_PROFILE = "BLUESKY_PROFILE",
+  THREADS_POST = "THREADS_POST",
+  THREADS_PROFILE = "THREADS_PROFILE",
+  LINKEDIN_POST = "LINKEDIN_POST",
+  LINKEDIN_PROFILE = "LINKEDIN_PROFILE",
+  INSTAGRAM_POST = "INSTAGRAM_POST",
+  INSTAGRAM_PROFILE = "INSTAGRAM_PROFILE",
+  FACEBOOK_POST = "FACEBOOK_POST",
+  FACEBOOK_PROFILE = "FACEBOOK_PROFILE",
+  REDDIT_POST = "REDDIT_POST",
+  REDDIT_PROFILE = "REDDIT_PROFILE",
+  REDDIT_SUB = "REDDIT_SUB",
   DISCORD_THREAD = "DISCORD_THREAD",
   YOUTUBE_VIDEO = "YOUTUBE_VIDEO",
   YOUTUBE_TIMESTAMP_CLIP = "YOUTUBE_TIMESTAMP_CLIP",
   YOUTUBE_CHANNEL = "YOUTUBE_CHANNEL",
   TED_VIDEO = "TED_VIDEO",
-  INSTAGRAM_POST = "INSTAGRAM_POST",
-  FACEBOOK_POST = "FACEBOOK_POST",
   TWITCH_STREAM = "TWITCH_STREAM",
   STACKOVERFLOW_THREAD = "STACKOVERFLOW_THREAD",
   GITHUB_REPO = "GITHUB_REPO",
@@ -248,6 +260,28 @@ export const embedNodeTypeList = [
   NodeType.CALENDAR_AS_EMBED,
   NodeType.TOC
 ];
+
+export const socialProfileNodeTypeList = new Set([
+  NodeType.TWITTER_PROFILE,
+  NodeType.LINKEDIN_PROFILE,
+  NodeType.GITHUB_PROFILE,
+  NodeType.BLUESKY_PROFILE,
+  NodeType.THREADS_PROFILE,
+  NodeType.INSTAGRAM_PROFILE,
+  NodeType.FACEBOOK_PROFILE,
+  NodeType.MASTODON_PROFILE
+]);
+
+export const socialPostNodeTypeList = new Set([
+  NodeType.TWEET,
+  NodeType.LINKEDIN_POST,
+  NodeType.BLUESKY_POST,
+  NodeType.THREADS_POST,
+  NodeType.INSTAGRAM_POST,
+  NodeType.REDDIT_POST,
+  NodeType.FACEBOOK_POST,
+  NodeType.MASTODON_POST
+]);
 
 export type SimpleTextNodeType =
   | NodeType.SIMPLE_TEXT
@@ -496,7 +530,14 @@ export const webNodeTypeList = [
   NodeType.YOUTUBE_CHANNEL,
   NodeType.YOUTUBE_TIMESTAMP_CLIP,
   NodeType.TWEET,
+  NodeType.BLUESKY_POST,
+  NodeType.THREADS_POST,
+  NodeType.LINKEDIN_POST,
+  NodeType.INSTAGRAM_POST,
+  NodeType.REDDIT_POST,
   NodeType.TWITTER_PROFILE,
+  NodeType.LINKEDIN_PROFILE,
+  NodeType.INSTAGRAM_PROFILE,
   NodeType.KINDLE_BOOK,
   NodeType.KINDLE_HIGHLIGHT
 ];
@@ -513,7 +554,13 @@ export type IWebNodeType =
   | NodeType.YOUTUBE_CHANNEL
   | NodeType.YOUTUBE_TIMESTAMP_CLIP
   | NodeType.TWEET
+  | NodeType.BLUESKY_POST
+  | NodeType.THREADS_POST
+  | NodeType.LINKEDIN_POST
+  | NodeType.INSTAGRAM_POST
   | NodeType.TWITTER_PROFILE
+  | NodeType.LINKEDIN_PROFILE
+  | NodeType.INSTAGRAM_PROFILE
   | NodeType.KINDLE_BOOK
   | NodeType.KINDLE_HIGHLIGHT;
 
@@ -676,17 +723,20 @@ export type IMultimediaClip = INodeInterface<
   any
 >;
 
-type ITweetBody = {
+type ITweetBody = ISocialPostBody & {
   /**
    * @deprecated - use text field of node instead
    */
   content: string;
-  postedAt: string;
 };
-type ITweetMetadata = IWebPageMetadata & {
+type ITweetMetadata = ISocialPostMetadata & {
+  /**
+   * @deprecated - use postId instead
+   */
   tweetId?: string;
-  media?: string[];
-  externalLinks?: string[];
+  /**
+   * @deprecated
+   */
   replyTo?: string;
 };
 export type ITweet = INodeInterface<
@@ -698,13 +748,101 @@ export type ITweet = INodeInterface<
   INodeHasParent &
   INodeHasText;
 
-export type ITwitterProfileBody = {
+export type IBlueskyPost = INodeInterface<
+  NodeType.BLUESKY_POST,
+  ISocialPostBody,
+  ISocialPostMetadata
+> &
+  INodeHasUrl &
+  INodeHasParent &
+  INodeHasText;
+
+export type IThreadsPost = INodeInterface<
+  NodeType.THREADS_POST,
+  ISocialPostBody,
+  ISocialPostMetadata
+> &
+  INodeHasUrl &
+  INodeHasParent &
+  INodeHasText;
+
+type ILinkedInPostMetadata = ISocialPostMetadata & {
+  headline?: string;
+  links?: string[];
+};
+export type ILinkedInPost = INodeInterface<
+  NodeType.LINKEDIN_POST,
+  ISocialPostBody,
+  ILinkedInPostMetadata
+> &
+  INodeHasUrl &
+  INodeHasParent &
+  INodeHasText;
+
+type IInstagramPostMetadata = ISocialPostMetadata & {
+  likes?: string;
+  isVerified?: boolean;
+};
+export type IInstagramPost = INodeInterface<
+  NodeType.INSTAGRAM_POST,
+  ISocialPostBody,
+  IInstagramPostMetadata
+> &
+  INodeHasUrl &
+  INodeHasParent &
+  INodeHasText;
+
+type IRedditPostMetadata = ISocialPostMetadata & {
+  subreddit: string;
+  upvotes?: string;
+  commentsCount?: string;
+  flair?: string;
+  domain?: string;
+};
+export type IRedditPost = INodeInterface<
+  NodeType.REDDIT_POST,
+  ISocialPostBody,
+  IRedditPostMetadata
+> &
+  INodeHasUrl &
+  INodeHasParent &
+  INodeHasText;
+
+type IFacebookPostMetadata = ISocialPostMetadata & {
+  likes?: string;
+  reactions?: string;
+  shares?: string;
+  comments?: string;
+};
+export type IFacebookPost = INodeInterface<
+  NodeType.FACEBOOK_POST,
+  ISocialPostBody,
+  IFacebookPostMetadata
+> &
+  INodeHasUrl &
+  INodeHasParent &
+  INodeHasText;
+
+type IMastodonPostMetadata = ISocialPostMetadata & {
+  likes?: string;
+  boosts?: string;
+  replies?: string;
+  visibility?: string;
+};
+export type IMastodonPost = INodeInterface<
+  NodeType.MASTODON_POST,
+  ISocialPostBody,
+  IMastodonPostMetadata
+> &
+  INodeHasUrl &
+  INodeHasParent &
+  INodeHasText;
+
+export type ITwitterProfileBody = ISocialProfileBody & {
   /**
    * @deprecated - use label field of node instead
    */
   name: string;
-  bio?: string;
-  profileImageUrl: string;
 };
 export type ITwitterProfileMetadata = IWebPageMetadata & {
   bioLink?: string;
@@ -714,6 +852,109 @@ export type ITwitterProfile = INodeInterface<
   NodeType.TWITTER_PROFILE,
   ITwitterProfileBody,
   ITwitterProfileMetadata
+> &
+  INodeHasUrl &
+  INodeHasLabel;
+
+export type ISocialPostBody = {
+  postedAt: number;
+  links?: string[];
+};
+
+export type ISocialPostMetadata = IWebPageMetadata & {
+  postId: string;
+  username: string;
+  postedAt?: string;
+  media?: string[];
+  externalLinks?: string[];
+};
+
+export type ISocialProfileBody = {
+  username: string;
+  profileImageUrl: string;
+  bio?: string;
+};
+
+export type ISocialProfileMetadata = IWebPageMetadata & {
+  displayName?: string;
+  followersCount?: string;
+  followingCount?: string;
+  postsCount?: string;
+  bannerImageUrl?: string;
+  websiteUrl?: string;
+  isVerified?: boolean;
+};
+
+export type ILinkedInProfileMetadata = IWebPageMetadata & {
+  currentPosition?: string;
+  currentCompany?: string;
+  headline?: string;
+  education?: string;
+  location?: string;
+  connectionCount?: string;
+  publicProfileUrl?: string;
+};
+
+export type ILinkedInProfile = INodeInterface<
+  NodeType.LINKEDIN_PROFILE,
+  ISocialProfileBody,
+  ILinkedInProfileMetadata
+> &
+  INodeHasUrl &
+  INodeHasLabel;
+
+export type IBlueskyProfile = INodeInterface<
+  NodeType.BLUESKY_PROFILE,
+  ISocialProfileBody,
+  ISocialProfileMetadata
+> &
+  INodeHasUrl &
+  INodeHasLabel;
+
+export type IThreadsProfile = INodeInterface<
+  NodeType.THREADS_PROFILE,
+  ISocialProfileBody,
+  ISocialProfileMetadata
+> &
+  INodeHasUrl &
+  INodeHasLabel;
+
+export type IRedditProfile = INodeInterface<
+  NodeType.REDDIT_PROFILE,
+  ISocialProfileBody,
+  ISocialProfileMetadata
+> &
+  INodeHasUrl &
+  INodeHasLabel;
+
+export type IRedditSub = INodeInterface<
+  NodeType.REDDIT_SUB,
+  ISocialProfileBody,
+  ISocialProfileMetadata
+> &
+  INodeHasUrl &
+  INodeHasLabel;
+
+export type IInstagramProfile = INodeInterface<
+  NodeType.INSTAGRAM_PROFILE,
+  ISocialProfileBody,
+  ISocialProfileMetadata
+> &
+  INodeHasUrl &
+  INodeHasLabel;
+
+export type IFacebookProfile = INodeInterface<
+  NodeType.FACEBOOK_PROFILE,
+  ISocialProfileBody,
+  ISocialProfileMetadata
+> &
+  INodeHasUrl &
+  INodeHasLabel;
+
+export type IMastodonProfile = INodeInterface<
+  NodeType.MASTODON_PROFILE,
+  ISocialProfileBody,
+  ISocialProfileMetadata
 > &
   INodeHasUrl &
   INodeHasLabel;
@@ -755,6 +996,11 @@ export type IKindleHighlight = INodeInterface<
 
 export type IClip =
   | ITweet
+  | IBlueskyPost
+  | IThreadsPost
+  | ILinkedInPost
+  | IInstagramPost
+  | IRedditPost
   | IMultimediaClip
   | IVideoTimestampClip
   | ITextClip
@@ -766,6 +1012,11 @@ export type IWebPage =
   | IYoutubeChannel
   | IYoutubeVideo
   | ITwitterProfile
+  | ILinkedInProfile
+  | IBlueskyProfile
+  | IThreadsProfile
+  | IInstagramProfile
+  | IRedditProfile
   | IKindleBook
   | IGist;
 
@@ -773,7 +1024,13 @@ export type INodeBody =
   | IBlockBody
   | IMarkdown
   | ITweetBody
+  | IBlueskyPostBody
+  | IThreadsPostBody
+  | ILinkedInPostBody
+  | IInstagramPostBody
+  | IRedditPostBody
   | ITwitterProfileBody
+  | ISocialProfileBody
   | IMultimediaClipBody
   | IVideoTimestampClipBody
   | ITextClipBody
@@ -782,7 +1039,13 @@ export type INodeBody =
 
 export type IClipCapture = OmitFields<
   IClip,
-  CaptureOmittedFields | "label" | "url" | "parent"
+  | Extract<
+      CaptureOmittedFields,
+      "createdAt" | "modifiedAt" | "createdBy" | "modifiedBy" | "id"
+    >
+  | "label"
+  | "url"
+  | "parent"
 >;
 
 export enum NodeIdPrefix {

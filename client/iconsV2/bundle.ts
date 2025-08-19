@@ -1,6 +1,4 @@
-import { getIconData } from "@iconify/utils";
-import { readFile, unlink, writeFile } from "fs/promises";
-import { locate } from "@iconify/json";
+import { parse } from "$lib/shared/utils/json.utils";
 import {
   bundleNumber,
   iconSets,
@@ -8,7 +6,9 @@ import {
   lucideIconsForBundling,
   solarIconsForBundling
 } from "./icons-list";
-import { parse } from "$lib/shared/utils/json.utils";
+import { locate } from "@iconify/json";
+import { getIconData } from "@iconify/utils";
+import { readFile, unlink, writeFile } from "fs/promises";
 
 const version = bundleNumber;
 const isExtension = false;

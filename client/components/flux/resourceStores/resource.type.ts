@@ -287,7 +287,8 @@ export type CaptureOmittedFields =
   | "createdBy"
   | "modifiedBy"
   | "interactedAt"
-  | "id";
+  | "id"
+  | "parent";
 
 export type OmitForCapture<T> = {
   [K in keyof T as Exclude<K, CaptureOmittedFields>]: T[K];

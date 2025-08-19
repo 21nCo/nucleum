@@ -1,27 +1,18 @@
-import type {
-  OmitForCapture,
-  OmitFields,
-  CaptureOmittedFields
-} from "$lib/client/components/flux/resourceStores/resource.type";
+import { logger } from "$lib/client/components/debug/logger.client";
+import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
 import {
   NodeType,
-  type ITweet,
-  type ITwitterProfile,
   type IWebPage
 } from "$lib/client/products/memotron/node/node.type";
-import { ExtensionEvent, type TabData } from "$lib/client/types/extension.type";
-import { relayToContentScript } from "$lib/client/utils/extension.utils";
-import { enumToString } from "$lib/shared/utils/text.utils";
-import { logger } from "$lib/client/components/debug/logger.client";
-import { ClipperElementIdentifier } from "$lib/client/products/memotron/common/clip.type";
-import {
-  generateHash,
-  generateSHA256Hash
-} from "$lib/shared/utils/crypto.utils";
 import {
   contentTypeMap,
   fetchYouTubeMetadata
 } from "$lib/client/products/memotron/node/url.utils";
+import {
+  generateHash,
+  generateSHA256Hash
+} from "$lib/shared/utils/crypto.utils";
+import { enumToString } from "$lib/shared/utils/text.utils";
 
 export function isYoutubeVideoUrl(url) {
   const regex = /^https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/;
@@ -148,7 +139,6 @@ export async function extractFullTabData(
   )?.content;
   const { ogTitle, ogImage, ogDescription, ogUrl } = resolveOgData(doc);
   const browser = extractBrowserDetails();
-  // console.log({ innerHTML: doc.body?.innerHTML, docText: params?.docText });
   const hash = await generateSHA256Hash(doc.body?.innerHTML ?? params?.docText);
   const url = params?.url ? resolveUrl(params.url) : resolveUrl();
   const contentType = resolveContentTypeForUrl(url);
@@ -221,19 +211,6 @@ export async function extractYoutubeVideoData() {
   };
 }
 
-/**
- * UaData is causing below dexie error when insert - 
- * Failed to execute 'put' on 'IDBObjectStore': NavigatorUAData object could not be cloned.
- DataCloneError: Failed to execute 'put' on 'IDBObjectStore': NavigatorUAData object could not be cloned.
-
- * @returns 
- */
-function extractBrowserDetails() {
-  const userAgent = navigator.userAgent;
-  const uAData = {}; //navigator.userAgentData;
-  return { userAgent, uAData };
-}
-
 export function resolveUrl(url?: string) {
   if (!url) url = window.location.href;
   url = url.split("#")[0];
@@ -274,216 +251,4 @@ export function resolveContentTypeForUrl(url: string) {
     contentTypeMap.find((item) => item.regex.some((regex) => regex.test(url)))
       ?.contentType ?? NodeType.WEB_PAGE
   );
-}
-
-/**
- *
- * Note: media is not currently included in the content of the tweet as it might require reuploading the media to s3 and using in the app.
- *
- * @param tweetArticle
- * @returns
- */
-function parseTweetContent(
-  tweetArticle: Element,
-  isMainTweetPost: boolean = false
-): OmitFields<ITweet, "parent" | "label" | CaptureOmittedFields> | undefined {
-  if (!tweetArticle) return;
-  const tweetBody = tweetArticle.querySelector('[data-testid="tweetText"]');
-  const linkElements = tweetArticle.querySelectorAll("a");
-  const timeElements = tweetArticle.querySelectorAll("time");
-
-  let tweetContent = tweetBody
-    ? tweetBody.textContent
-    : "No tweet content found";
-  let tweetLinks = Array.from(linkElements).map((link) => ({
-    text: link.textContent,
-    href: link.getAttribute("href")
-  }));
-  let tweetTime = Array.from(timeElements).map((time) => {
-    return {
-      text: time.textContent,
-      datetime: time.getAttribute("datetime")
-    };
-  });
-  const { ogTitle } = resolveOgData();
-
-  logger.log({
-    at: "parsedTweetContent",
-    tweetContent,
-    tweetLinks,
-    tweetTime
-  });
-  const domain = contentTypeMap.find(
-    (item) => item.contentType === NodeType.TWEET
-  )?.currentDomain;
-  const {
-    username,
-    authorName,
-    tweetId,
-    externalLinks,
-    profileImageUrl,
-    replyTo
-  } = extractInfoFromLinks(tweetLinks, isMainTweetPost);
-  return {
-    contentType: NodeType.TWEET,
-    url: `https://${domain}/${username}/status/${tweetId}`,
-    body: {
-      content: tweetContent ?? "",
-      postedAt: tweetTime[0]?.datetime ?? ""
-    },
-    text: tweetContent ?? "",
-    metadata: {
-      tweetId,
-      ogTitle,
-      externalLinks,
-      replyTo
-    },
-    username,
-    profileUrl: `https://${domain}/${username}`,
-    authorName,
-    profileImageUrl
-  };
-
-  function extractInfoFromLinks(data: any, isMainTweetPost: boolean = false) {
-    let username = "";
-    let authorName = "";
-    let tweetId = "";
-    let replyTo = "";
-    const currentUrl = window.location.pathname;
-    const urlMatch = currentUrl.match(/\/(\w+)\/status\/(\d+)/);
-    if (urlMatch && isMainTweetPost) {
-      username = urlMatch[1];
-      tweetId = urlMatch[2];
-    } else {
-      if (urlMatch) replyTo = window.location.href;
-      const statusItem = data.find((item) => item.href.includes("/status/"));
-      if (statusItem) {
-        const match = statusItem.href.match(/\/(\w+)\/status\/(\d+)/);
-        if (match) {
-          username = match[1];
-          tweetId = match[2];
-        }
-      }
-    }
-    if (username) {
-      const authorItem = data.find(
-        (item) =>
-          item.href === `/${username}` &&
-          item.text &&
-          item.text !== `@${username}`
-      );
-      if (authorItem) {
-        authorName = authorItem.text;
-      }
-    }
-    const media = data
-      .filter((item) => item.href.includes("/photo"))
-      .map((item) => item.href);
-    const imgElements = tweetArticle.querySelectorAll("img");
-    if (imgElements) {
-      media.push(...Array.from(imgElements).map((img) => img.src));
-    }
-    const externalLinks = data
-      .filter((item) => item.href.includes("https://"))
-      .map((item) => item.href);
-    const profileImageUrl = media.find((item) =>
-      item.includes("profile_images")
-    );
-    return {
-      username,
-      authorName,
-      tweetId,
-      externalLinks,
-      profileImageUrl,
-      replyTo
-    };
-  }
-}
-
-export function extractTweet(
-  element: Element,
-  isMainTweetPost: boolean = false
-) {
-  const tweetArticle = findAncestorOrSelf(
-    element,
-    'article[data-testid="tweet"]'
-  );
-  if (!tweetArticle) return;
-  return parseTweetContent(tweetArticle, isMainTweetPost);
-
-  function findAncestorOrSelf(element, selector) {
-    if (element.matches(selector)) {
-      return element;
-    }
-    let currentElement = element;
-    while (currentElement) {
-      if (
-        currentElement.nodeType === Node.DOCUMENT_FRAGMENT_NODE &&
-        currentElement.host
-      ) {
-        currentElement = currentElement.host;
-      } else {
-        currentElement = currentElement.parentNode;
-      }
-      if (!currentElement || currentElement === document) {
-        return null;
-      }
-      if (currentElement.matches && currentElement.matches(selector)) {
-        return currentElement;
-      }
-    }
-    return null;
-  }
-}
-
-export function extractTweetFromTweeetPage() {
-  const tweetElement = document.getElementById(
-    ClipperElementIdentifier.MAIN_TWEET_POST
-  );
-  const tweetId = window.location.pathname.split("/status/")[1];
-  const regex = new RegExp(tweetId, "i");
-  const allLinks = document.querySelectorAll("a");
-  const element = Array.from(allLinks).find((link) =>
-    regex.test(link.getAttribute("href"))
-  );
-  if (!tweetElement && !element) return;
-  return extractTweet(tweetElement ?? element, true);
-}
-
-/**
- * This function is triggered from twitter profile page.
- * @returns
- */
-export function extractTwitterProfile(): OmitForCapture<
-  ITwitterProfile & {
-    username: string;
-  }
-> {
-  const url = window.location.href;
-  const username = url.split("https://")[1].split("/")[1];
-  const bioElement = document.querySelector('[data-testid="UserDescription"]');
-  const nameElement = document.querySelector('[data-testid="UserName"]');
-  const linkElement = document.querySelector('[data-testid="UserUrl"]');
-  const avatarElement = document.querySelector(
-    `[data-testid^="UserAvatar-Container-${username}"]`
-  );
-  const imgElement = avatarElement?.querySelector("img");
-  const profileImageUrl = imgElement?.src;
-  const { ogTitle } = resolveOgData();
-  const name = nameElement?.textContent?.split("@")[0];
-  const bio = bioElement?.textContent;
-  const bioLink = linkElement?.href;
-  const bioLinkText = linkElement?.textContent;
-  return {
-    url,
-    label: name ?? "",
-    body: {
-      name: name ?? "",
-      bio: bio ?? "",
-      profileImageUrl: profileImageUrl ?? ""
-    },
-    metadata: { ogTitle, bioLink, bioLinkText: bioLinkText ?? "" },
-    username,
-    contentType: NodeType.TWITTER_PROFILE
-  };
 }

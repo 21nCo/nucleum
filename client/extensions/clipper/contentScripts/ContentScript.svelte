@@ -1,8 +1,6 @@
 <script lang="ts">
   import ToolbarOpener from "$lib/client/extensions/clipper/toolbar/ToolbarOpener.svelte";
-  import {
-    extractTweetFromTweeetPage,
-    extractTwitterProfile,
+import {
     resolveContentTypeForUrl,
     resolveContentTypeString
   } from "$lib/client/extensions/clipper/clipper.utils";
@@ -15,8 +13,6 @@
   import ExtensionBaseLayer from "$lib/client/extensions/ExtensionBaseLayer.svelte";
   import ScreenShot from "./ScreenShot.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import { AlertType } from "$lib/client/types/notification.type";
   import SyncPane from "../syncPane/SyncPane.svelte";
   import LoginNotification from "../feedbackPane/LoginNotification.svelte";
   import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
@@ -51,6 +47,8 @@
   });
   $: contentType = resolveContentTypeForUrl($webpage.url);
   $: contentTypeStr = resolveContentTypeString(contentType);
+
+
   function onActivateColor(e: CustomEvent<IHighlighter | number>) {
     textClipperRef.onActivateColor(e);
   }
@@ -81,25 +79,14 @@
         });
         return;
       }
-      let result;
-      if (contentType === NodeType.TWEET) {
-        const tweetNode = extractTweetFromTweeetPage();
-        if (!tweetNode) return;
-        result = await webpage.saveTweet(tweetNode, true);
-      } else if (contentType === NodeType.TWITTER_PROFILE) {
-        const data = extractTwitterProfile();
-        if (!data) return;
-        result = await webpage.saveTwitterProfile(data);
-      } else {
-        result = await webpage.savePage({ contentType });
-      }
+      let result = await webpage.savePage({ contentType });
       if (!result || result.error) {
         feedbackPane.setErrorFeedback({
           isPreventAutoClose: false
         });
         return;
       }
-      feedbackPane.onPageSaveSuccess(`${contentTypeStr} saved!`);
+      feedbackPane.onPageSaved(`${contentTypeStr} saved!`);
     } catch (error) {
       feedbackPane.setErrorFeedback({
         isPreventAutoClose: false
@@ -221,7 +208,7 @@
               };
             }
             if ($webpage.id) {
-              feedbackPane.onPageSaveSuccess("Page already saved!");
+              feedbackPane.onPageSaved("Page already saved!");
               feedbackPane.toggle({ isUserInitiated: true });
             } else {
               await onSaveClick();
@@ -328,10 +315,7 @@
           on:color={onActivateColor}
           on:save={onSaveClick}
           on:saved={() => {
-            $feedbackPane.feedback = {
-              message: `${contentTypeStr} already saved!`,
-              type: AlertType.SUCCESS
-            };
+            feedbackPane.onPageSaved(`${contentTypeStr} already saved!`);
             feedbackPane.toggle({ isUserInitiated: true });
           }}
           on:summarize

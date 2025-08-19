@@ -1,14 +1,29 @@
-import { sanitize } from "$lib/shared/utils/utils";
 import { NodeType } from "$lib/client/products/memotron/node/node.type";
+import { sanitize } from "$lib/shared/utils/utils";
 import { isValidUrl } from "$lib/shared/utils/utils";
 
 export const contentTypeMap: {
   contentType:
     | NodeType.TWEET
+    | NodeType.LINKEDIN_POST
+    | NodeType.LINKEDIN_PROFILE
+    | NodeType.REDDIT_POST
+    | NodeType.REDDIT_PROFILE
+    | NodeType.BLUESKY_POST
+    | NodeType.BLUESKY_PROFILE
+    | NodeType.THREADS_POST
+    | NodeType.THREADS_PROFILE
+    | NodeType.INSTAGRAM_POST
+    | NodeType.INSTAGRAM_PROFILE
+    | NodeType.FACEBOOK_POST
+    | NodeType.FACEBOOK_PROFILE
+    | NodeType.MASTODON_POST
+    | NodeType.MASTODON_PROFILE
     | NodeType.TWITTER_PROFILE
     | NodeType.YOUTUBE_VIDEO
     | NodeType.YOUTUBE_CHANNEL
-    | NodeType.GIST;
+    | NodeType.GIST
+    | NodeType.REDDIT_SUB;
   regex: RegExp[];
   currentDomain?: string;
 }[] = [
@@ -46,6 +61,91 @@ export const contentTypeMap: {
       /^https:\/\/gitlab\.com\/-\/snippets\/(\d+)$/,
       /^https:\/\/gitlab\.com\/([^/]+)\/([^/]+)\/-\/snippets\/(\d+)$/
     ]
+  },
+  {
+    contentType: NodeType.LINKEDIN_POST,
+    regex: [
+      /^https:\/\/(?:www\.)?linkedin\.com\/feed\/update\/urn:li:activity:\d+\/?$/,
+      /^https:\/\/(?:www\.)?linkedin\.com\/posts\/activity-\d+(-[a-zA-Z0-9]+)?\/?$/
+    ]
+  },
+  {
+    contentType: NodeType.LINKEDIN_PROFILE,
+    regex: [/^https:\/\/(?:www\.)?linkedin\.com\/in\/[a-zA-Z0-9-]+\/?$/]
+  },
+  {
+    contentType: NodeType.BLUESKY_POST,
+    regex: [/^https:\/\/bsky\.app\/profile\/[^/]+\/post\/[A-Za-z0-9]+\/?$/]
+  },
+  {
+    contentType: NodeType.BLUESKY_PROFILE,
+    regex: [/^https:\/\/bsky\.app\/profile\/[^/]+\/?$/]
+  },
+  {
+    contentType: NodeType.THREADS_POST,
+    regex: [/^https:\/\/(?:www\.)?threads\.com\/@[^/]+\/post\/[A-Za-z0-9]+\/?$/]
+  },
+  {
+    contentType: NodeType.THREADS_PROFILE,
+    regex: [/^https:\/\/(?:www\.)?threads\.com\/@[^/]+\/?$/]
+  },
+  {
+    contentType: NodeType.INSTAGRAM_POST,
+    regex: [
+      /^https:\/\/(?:www\.)?instagram\.com\/p\/[A-Za-z0-9_-]+\/?(?:\?.*)?$/
+    ]
+  },
+  {
+    contentType: NodeType.INSTAGRAM_PROFILE,
+    regex: [/^https:\/\/(?:www\.)?instagram\.com\/[a-zA-Z0-9_.]+\/?$/]
+  },
+  {
+    contentType: NodeType.FACEBOOK_POST,
+    regex: [
+      /^https:\/\/(?:www\.)?facebook\.com\/[^/]+\/posts\/[^/]+\/?.*$/,
+      /^https:\/\/(?:www\.)?facebook\.com\/permalink\.php\?story_fbid=[^\s&]+.*$/,
+      /^https:\/\/(?:www\.)?facebook\.com\/photo\.php\?fbid=[^\s&]+.*$/
+    ]
+  },
+  {
+    contentType: NodeType.FACEBOOK_PROFILE,
+    regex: [
+      /^https:\/\/(?:www\.)?facebook\.com\/[a-zA-Z0-9_.]+\/?(?:\?.*)?$/,
+      /^https:\/\/(?:www\.)?facebook\.com\/profile\.php\?id=\d+.*$/
+    ]
+  },
+  {
+    contentType: NodeType.MASTODON_POST,
+    regex: [
+      /^https:\/\/[^/]+\/@[^/]+\/[0-9]+\/?$/,
+      /^https:\/\/[^/]+\/users\/[^/]+\/statuses\/[0-9]+\/?$/,
+      /^https:\/\/[^/]+\/web\/statuses\/[0-9]+\/?$/
+    ]
+  },
+  {
+    contentType: NodeType.MASTODON_PROFILE,
+    regex: [
+      /^https:\/\/[^/]+\/@[^/]+\/?$/,
+      /^https:\/\/[^/]+\/users\/[^/]+\/?$/
+    ]
+  },
+  {
+    contentType: NodeType.REDDIT_POST,
+    regex: [
+      /^https:\/\/(?:www\.)?reddit\.com\/r\/[^/]+\/comments\/[a-zA-Z0-9]+\/?.*$/,
+      /^https:\/\/(?:www\.)?reddit\.com\/r\/[^/]+\/comments\/[a-zA-Z0-9]+\/[^/]+\/?.*$/
+    ]
+  },
+  {
+    contentType: NodeType.REDDIT_PROFILE,
+    regex: [
+      /^https:\/\/(?:www\.)?reddit\.com\/user\/[a-zA-Z0-9_-]+\/?.*$/,
+      /^https:\/\/(?:www\.)?reddit\.com\/u\/[a-zA-Z0-9_-]+\/?.*$/
+    ]
+  },
+  {
+    contentType: NodeType.REDDIT_SUB,
+    regex: [/^https:\/\/(?:www\.)?reddit\.com\/r\/[a-zA-Z0-9_-]+\/?.*$/]
   }
 ];
 
@@ -192,4 +292,117 @@ export async function fetchYouTubeMetadata(url: string): Promise<{
     console.error("Error fetching YouTube title:", error);
     return null;
   }
+}
+
+export function isSameAsCurrentUrl(
+  url: string,
+  compareParams: boolean = false,
+  compareHash: boolean = false
+): boolean {
+  if (typeof window === "undefined" || !window.location) {
+    return false;
+  }
+  try {
+    const providedUrl = new URL(url, window.location.origin);
+    const currentUrl = new URL(window.location.href);
+    if (
+      providedUrl.protocol !== currentUrl.protocol ||
+      providedUrl.hostname !== currentUrl.hostname ||
+      providedUrl.port !== currentUrl.port ||
+      providedUrl.pathname !== currentUrl.pathname
+    ) {
+      return false;
+    }
+
+    if (compareParams && providedUrl.search !== currentUrl.search) {
+      return false;
+    }
+
+    if (compareHash && providedUrl.hash !== currentUrl.hash) {
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.warn("Error comparing URLs:", error);
+    return false;
+  }
+}
+
+/**
+ * Safely checks if a URL string has a valid HTTP/HTTPS protocol
+ * @param url - URL string to check
+ * @returns boolean indicating if URL is valid and uses HTTP/HTTPS
+ */
+function isValidHttpUrl(url: string): boolean {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.protocol === "https:" || urlObj.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Safely checks if a URL belongs to a specific hostname or its subdomains
+ * @param url - URL string to check
+ * @param hostname - hostname to check against (e.g., "example.com")
+ * @returns boolean indicating if URL belongs to hostname or its subdomains
+ */
+export function isHostnameMatch(url: string, hostname: string): boolean {
+  try {
+    const urlObj = new URL(url);
+    const urlHost = urlObj.hostname.toLowerCase();
+    const targetHost = hostname.toLowerCase();
+    return urlHost === targetHost || urlHost.endsWith("." + targetHost);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Safely checks if a URL belongs to any of the specified hostnames or their subdomains
+ * @param url - URL string to check
+ * @param hostnames - array of hostnames to check against
+ * @returns boolean indicating if URL belongs to any of the hostnames
+ */
+export function isAnyHostnameMatch(url: string, hostnames: string[]): boolean {
+  return hostnames.some((hostname) => isHostnameMatch(url, hostname));
+}
+
+/**
+ * Filter function for excluding URLs from specific platforms/domains
+ * Commonly used in social media parsers to filter out internal links
+ * @param excludeHostnames - array of hostnames to exclude
+ * @param excludePatterns - array of path patterns to exclude (checked with includes())
+ * @param currentUrl - current page URL to exclude (optional)
+ * @returns filter function that can be used with Array.filter()
+ */
+export function createUrlFilter(
+  excludeHostnames: string[] = [],
+  excludePatterns: string[] = [],
+  currentUrl?: string
+) {
+  return (url: string): boolean => {
+    if (!isValidHttpUrl(url)) {
+      return false;
+    }
+
+    if (currentUrl && url === currentUrl) {
+      return false;
+    }
+
+    if (
+      excludeHostnames.length > 0 &&
+      isAnyHostnameMatch(url, excludeHostnames)
+    ) {
+      return false;
+    }
+
+    if (excludePatterns.some((pattern) => url.includes(pattern))) {
+      return false;
+    }
+
+    return true;
+  };
 }

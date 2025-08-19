@@ -72,6 +72,8 @@
    * _Notes on extension context:_
    * `shadowRoot.host.style.fontSize` doesn't effect the font size of the extension as tailwind relies on root font size for rem units and in a shadow root extention context, rem units are not reliable as web pages may have different root font size. For now, @thedutchcoder/postcss-rem-to-px is being used as a postcss plugin to convert rem to px during build time as a workaround.
    *
+   * visibility is set to visible with important to handle cases where the web pages override extension styles like on Reddit website.
+   * 
    */
   function refreshSizing() {
     if (accessibilitySizingFactor == 0) {
@@ -88,10 +90,24 @@
     rootFontSize = defaultRootFontSize + 0.6 * $view.scale;
 
     const dom = document.getElementById(extensionContext + "-root");
-    if (extensionContext && dom) {
-      const shadowRoot = dom.shadowRoot;
-      if (!shadowRoot) return;
-      shadowRoot.host.style.fontSize = `${rootFontSize + 20}px`;
+    if (extensionContext) {
+      if(dom){
+        const shadowRoot = dom.shadowRoot;
+        if (!shadowRoot) return;
+        shadowRoot.host.style.fontSize = `${rootFontSize + 20}px`;
+        shadowRoot.host.style.setProperty("visibility", "visible", "important");
+      } else {
+        const csui = document.querySelectorAll("plasmo-csui");
+        if(csui.length > 0) {
+          Array.from(csui).forEach(element => {
+            const htmlElement = element as HTMLElement;
+            if (!htmlElement.style.fontSize) {
+              htmlElement.style.setProperty("font-size", `${rootFontSize + 20}px`, "important");
+              htmlElement.style.setProperty("visibility", "visible", "important");
+            }
+          });
+        }
+      }
     } else if (!extensionContext) {
       document.documentElement.style.fontSize = `${rootFontSize}px`;
     }
