@@ -54,7 +54,7 @@
         id = result.id;
       }
     } catch (err) {
-      logger.error("Error saving LinkedIn post", err);
+      logger.error(`Error saving ${enumToString(contentType)} post`, err);
     } finally {
       isSaving = false;
     }

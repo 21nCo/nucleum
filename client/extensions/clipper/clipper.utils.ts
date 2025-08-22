@@ -13,6 +13,7 @@ import {
   generateSHA256Hash
 } from "$lib/shared/utils/crypto.utils";
 import { enumToString } from "$lib/shared/utils/text.utils";
+import { extractBrowserDetails } from "./parsers/shared/domUtils";
 
 export function isYoutubeVideoUrl(url) {
   const regex = /^https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/;
