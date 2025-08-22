@@ -3,6 +3,8 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Arrangement } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { isValidUrl } from "$lib/shared/utils/utils";
+  import { resolveFallbackIconForUrl } from "../node.utils";
 
   export let src: string;
   export let arrangement: Arrangement | undefined = undefined;
@@ -29,5 +31,7 @@
     "py-2": arrangement === Arrangement.MASONRY
   })}
 >
-  <Icon icon="globe" />
+  <Icon
+    icon={src && isValidUrl(src) ? resolveFallbackIconForUrl(src) : "globe"}
+  />
 </div>

@@ -1,29 +1,7 @@
 <script lang="ts">
   import appearance from "$lib/client/stores/appearance.store";
-  import context from "$lib/client/stores/context.store";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { onMount } from "svelte";
-
-  interface TwitterWidget {
-    widgets: {
-      createTweet(
-        tweetId: string,
-        element: HTMLElement | null,
-        options?: {
-          theme?: string;
-          width?: number;
-          conversation?: string;
-          cards?: string;
-        }
-      ): Promise<any>;
-    };
-  }
-
-  declare global {
-    interface Window {
-      twttr: TwitterWidget;
-    }
-  }
 
   export let tweetUrl: string;
   let id: string = generateSimpleRandomId();
@@ -78,9 +56,4 @@
   }
 </script>
 
-<div class="relative w-full h-full">
-  {#if $context.isEmbed}
-    <button class="absolute inset-0 z-10" on:click></button>
-  {/if}
-  <div {id} class="w-full h-full flex justify-center items-center"></div>
-</div>
+<div {id} class="w-full h-full flex justify-center items-center"></div>

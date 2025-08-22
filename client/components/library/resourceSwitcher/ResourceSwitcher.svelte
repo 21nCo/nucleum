@@ -10,6 +10,7 @@
   import { Product } from "$lib/client/products/product.type";
   import { resolveProductConfig } from "$lib/client/products/product.config";
   import { resolveResourceSwitcher } from "../../flux/resourceStores/resource.utils";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   const dispatch = createEventDispatcher();
   export let resources: Resource[] = [];
   export let selected: ISelectValue | undefined = undefined;
@@ -19,6 +20,7 @@
   const resourceList: IResourceSwitchItem[] = resolveResourceSwitcher();
 
   let options: IResourceSwitchItem[] = [];
+  const isDev = import.meta.env.DEV;
 
   $: options = resources.map((x) => {
     const resource = resourceList.find((y) => y.value === x);
@@ -29,19 +31,20 @@
   let sections = [
     Product.NUCLEUS,
     Product.POINTRON,
-    Product.MEMOTRON
-    // Product.SELFTRON
-    // Product.FEEDTRON,
-    // Product.HOMETRON,
-    // Product.FINATRON,
-    // Product.FELLOTRON
+    Product.MEMOTRON,
+    Product.SELFTRON,
+    Product.FEEDTRON,
+    Product.HOMETRON,
+    Product.FINATRON,
+    Product.FELLOTRON
   ];
   if (selected === undefined) selected = options[0]?.value;
 
-  function resolveResourcesForSection(section: Product) {
+  function resolveResourcesForSection(section: Product): IResourceSwitchItem[] {
     const resources = resolveProductConfig(section).resources;
     return resources
       .map((x) => resourceList.find((y) => y.value === x))
+      .filter((x) => isDev || !x?.isDisabled)
       .filter((x) => x !== undefined);
   }
 
@@ -53,8 +56,9 @@
 {#if $appStore.product === Product.NUCLEUS}
   <div class="flex flex-col gap-6 w-full overflow-y-auto">
     {#each sections as section (section)}
+      {@const items = resolveResourcesForSection(section)}
       <div class="flex flex-col gap-2">
-        {#if section !== Product.NUCLEUS}
+        {#if section !== Product.NUCLEUS && items.length > 0}
           <div class="text-fgs3 text-b2">
             {resolveSectionLabel(section)}
           </div>
@@ -62,7 +66,7 @@
         <div
           class="w-full grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] mo:mb-1 gap-3"
         >
-          {#each resolveResourcesForSection(section) as item, index (item.value)}
+          {#each items as item (item.value)}
             <ResourceSwitcherItem
               {item}
               {isShowCount}
@@ -78,12 +82,13 @@
         </div>
       </div>
     {/each}
+    <ScrollViewBottomSpacer />
   </div>
 {:else}
   <div
     class="w-full grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] mo:mb-1 gap-3"
   >
-    {#each options as item, index (item.value)}
+    {#each options as item (item.value)}
       <ResourceSwitcherItem
         {item}
         {isShowCount}

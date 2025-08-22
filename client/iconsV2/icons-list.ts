@@ -112,6 +112,8 @@ const phosphorIcons = [
   "windows-logo",
   "linux-logo",
   "chrome-logo",
+  "firefox-logo",
+  "threads-logo",
   "rss-simple",
   "piggy-bank",
   "umbrella-simple",
@@ -287,9 +289,31 @@ const logos = [
   "medium-icon",
   "stackoverflow-icon",
   "quora",
+  "x",
   "linkedin-icon",
   "facebook",
-  "reddit-icon"
+  "reddit-icon",
+  "mastodon-icon",
+  "bluesky",
+  "vimeo-icon",
+  "udemy-icon",
+  "openai-icon",
+  "claude-icon",
+  "mistral-ai-icon",
+  "google-icon",
+  "google-photos",
+  "google-play-icon",
+  "google-bard-icon",
+  "microsoft-onedrive",
+  "perplexity-icon",
+  "chrome",
+  "firefox",
+  "chrome-web-store",
+  "digital-ocean-icon",
+  "discord-icon",
+  "pinterest",
+  "scribd-icon",
+  "whatsapp-icon"
 ];
 
 const solarIconsNotInMap = [
@@ -327,6 +351,19 @@ export const solarBoldDuotoneIcons = allSolarIcons.map(
 );
 
 const simpleIcons = ["wikipedia", "googledocs", "abstract", "mixpanel"];
+
+const skillIcons = [
+  "python",
+  "javascript",
+  "typescript",
+  "react",
+  "nodejs",
+  "svelte",
+  "instagram",
+  "gmail-light",
+  "github-light",
+  "mastodon-light"
+];
 
 const svgSpinnersIcons = ["90-ring-with-bg", "3-dots-fade", "180-ring-with-bg"];
 
@@ -390,6 +427,7 @@ export const iconSets = {
   ri: remixIcons,
   proicons: proIcons,
   "simple-icons": simpleIcons,
+  "skill-icons": skillIcons,
   logos,
   "fa6-brands": fa6BrandsIcons,
   "material-symbols-light": materialSymbolsLightIcons,
@@ -420,4 +458,4 @@ export const solarIconsForBundling = {
   "bold-duotone": solarBoldDuotoneIcons
 };
 
-export const bundleNumber = 52;
+export const bundleNumber = 55;

@@ -2,15 +2,13 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import Library from "$lib/client/components/library/Library.svelte";
 
+  const isDev = import.meta.env.DEV;
   function resolveLibraryItems() {
-    return [
-      Resource.goal,
-      Resource.task,
-      Resource.collection
-      // Resource.habit,
-      // Resource.event,
-      // Resource.combination
-    ];
+    const items = [Resource.goal, Resource.task, Resource.collection];
+    if (isDev) {
+      items.push(Resource.event);
+    }
+    return items;
   }
 </script>
 
