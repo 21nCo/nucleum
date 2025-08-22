@@ -3,6 +3,7 @@
 
   export let loading: boolean;
   export let error: string;
+  export let platform: string = "social";
 </script>
 
 <div
@@ -11,5 +12,7 @@
     "text-ars1": error
   })}
 >
-  {loading ? "Loading Reddit post..." : error || "Unable to load Reddit post"}
+  {loading
+    ? `Loading ${platform} post...`
+    : error || `Unable to load ${platform} post`}
 </div>

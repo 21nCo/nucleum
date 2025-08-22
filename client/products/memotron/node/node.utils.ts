@@ -149,11 +149,13 @@ const nodeIconMap = new Map<NodeType, string>([
 ]);
 
 export function resolveNodeIcon(contentType: NodeType, url?: string) {
-  if (nodeIconMap.has(contentType) && contentType !== NodeType.WEB_PAGE)
+  if (nodeIconMap.has(contentType)) {
+    if (contentType === NodeType.WEB_PAGE && url && isValidUrl(url)) {
+      return resolveFallbackIconForUrl(url);
+    }
     return nodeIconMap.get(contentType);
+  }
   if (url && isValidUrl(url)) return resolveFallbackIconForUrl(url);
-  else if (contentType === NodeType.WEB_PAGE)
-    return nodeIconMap.get(NodeType.WEB_PAGE);
   else return "book";
 }
 
@@ -183,19 +185,27 @@ export function resolveFallbackIconForUrl(url: string | undefined) {
     hostPart.endsWith(".x.com")
   )
     return nodeIconMap.get(NodeType.TWEET);
-  if (hostPart === "instagram.com" || hostPart.endsWith(".instagram.com"))
+  const linkedinHosts = ["linkedin.com", "linkedin.net"];
+  const threadsHosts = ["threads.com", "threads.net"];
+  const mastodonHosts = ["mastodon.social", "mastodon.online", "mastodon.world", "mas.to"];
+  const facebookHosts = ["facebook.com", "facebook.net", "fb.com"];
+  const redditHosts = ["reddit.com", "reddit.net"];
+  const bskyHosts = ["bsky.app"];
+  const instagramHosts = ["instagram.com", "instagr.am"];
+  
+  if (instagramHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
     return nodeIconMap.get(NodeType.INSTAGRAM_POST);
-  if (hostPart === "linkedin.com" || hostPart.endsWith(".linkedin.com"))
+  if (linkedinHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
     return nodeIconMap.get(NodeType.LINKEDIN_POST);
-  if (hostPart === "threads.com" || hostPart.endsWith(".threads.com"))
+  if (threadsHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
     return nodeIconMap.get(NodeType.THREADS_POST);
-  if (hostPart === "mastodon.social" || hostPart.endsWith(".mastodon.social"))
+  if (mastodonHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
     return nodeIconMap.get(NodeType.MASTODON_POST);
-  if (hostPart === "facebook.com" || hostPart.endsWith(".facebook.com"))
+  if (facebookHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
     return nodeIconMap.get(NodeType.FACEBOOK_POST);
-  if (hostPart === "reddit.com" || hostPart.endsWith(".reddit.com"))
+  if (redditHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
     return nodeIconMap.get(NodeType.REDDIT_POST);
-  if (hostPart === "bsky.app" || hostPart.endsWith(".bsky.app"))
+  if (bskyHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
     return nodeIconMap.get(NodeType.BLUESKY_POST);
   if (hostPart === "quora.com" || hostPart.endsWith(".quora.com"))
     return "logos:quora";

@@ -65,8 +65,15 @@
   }
 
   function extractLinkedInPostId(url: string): string | null {
-    const matches = url.match(/activity[:-](\d+)/);
-    return matches ? matches[1] : null;
+    const activityMatch = url.match(/activity[:-](\d+)/);
+    if (activityMatch) {
+      return activityMatch[1];
+    }
+    const postsMatch = url.match(/posts\/(\d+)/);
+    if (postsMatch) {
+      return postsMatch[1];
+    }
+    return null;
   }
 
   function tryIframeApproach() {
@@ -104,5 +111,5 @@
 </script>
 
 <div {id} class="w-full max-w-2xl h-full flex justify-center items-center">
-  <SocialPostLoadingInfo {loading} {error} />
+  <SocialPostLoadingInfo {loading} {error} platform="LinkedIn" />
 </div>

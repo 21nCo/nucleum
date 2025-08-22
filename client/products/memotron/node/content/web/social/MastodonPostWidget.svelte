@@ -84,8 +84,8 @@
           dispatch("error", parsed.error);
         } else if (parsed && parsed.html) {
           embedHtml = parsed.html
-            .replace(/max-width:\s*\d+px;?/g, "")
-            .replace(/style="([^"]*)"/, 'style="$1; width: 80%"');
+            .replace(/style="[^"]*"/g, 'style="width: 80%"')
+            .replace(/max-width:\s*\d+px;?/g, "");
         }
       }
     } catch (err) {
@@ -140,7 +140,7 @@
   {#if embedHtml}
     {@html embedHtml}
   {:else}
-    <SocialPostLoadingInfo {loading} {error} />
+    <SocialPostLoadingInfo {loading} {error} platform="Mastodon" />
   {/if}
 </div>
 

@@ -90,7 +90,7 @@
   {#if embedHtml && dev_isUseOEmbedAPI}
     {@html embedHtml}
   {:else if dev_isUseOEmbedAPI}
-    <SocialPostLoadingInfo {loading} {error} />
+    <SocialPostLoadingInfo {loading} {error} platform="Threads" />
   {/if}
   <blockquote
     class="text-post-media"

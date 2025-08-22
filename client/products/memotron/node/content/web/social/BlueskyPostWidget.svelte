@@ -106,7 +106,7 @@
   {#if embedHtml}
     {@html embedHtml}
   {:else}
-    <SocialPostLoadingInfo {loading} {error} />
+    <SocialPostLoadingInfo {loading} {error} platform="Bluesky" />
   {/if}
 </div>
 

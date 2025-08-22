@@ -45,7 +45,7 @@
   {#if embedHtml}
     {@html embedHtml}
   {:else}
-    <SocialPostLoadingInfo {loading} {error} />
+    <SocialPostLoadingInfo {loading} {error} platform="Reddit" />
   {/if}
 </div>
 

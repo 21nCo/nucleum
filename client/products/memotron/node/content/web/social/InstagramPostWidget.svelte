@@ -45,18 +45,11 @@
 
   async function tryOEmbedApproach(): Promise<boolean> {
     try {
-      const oembedUrl = `https://graph.facebook.com/v16.0/instagram_oembed?url=${encodeURIComponent(postUrl)}&access_token=PLACEHOLDER_TOKEN`;
       const fallbackOembedUrl = `https://api.instagram.com/oembed/?url=${encodeURIComponent(postUrl)}`;
 
-      let urlData = await new Persistence().retrieveUrlData(oembedUrl, {
+      const urlData = await new Persistence().retrieveUrlData(fallbackOembedUrl, {
         isReturnRawData: true
       });
-
-      if (!urlData) {
-        urlData = await new Persistence().retrieveUrlData(fallbackOembedUrl, {
-          isReturnRawData: true
-        });
-      }
       console.log({ urlData });
       if (urlData) {
         const data = parse(urlData.text);
@@ -108,7 +101,7 @@
   {#if embedHtml}
     {@html embedHtml}
   {:else if dev_isUseOEmbedAPI}
-    <SocialPostLoadingInfo {loading} {error} />
+    <SocialPostLoadingInfo {loading} {error} platform="Instagram" />
   {/if}
   <blockquote
     class="instagram-media"

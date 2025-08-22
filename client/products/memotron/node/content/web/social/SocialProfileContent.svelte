@@ -36,38 +36,77 @@
   }
 
   function resolveUsername() {
-    const urlPatterns = [
-      { domain: "x.com", split: "x.com/" },
-      { domain: "twitter.com", split: "twitter.com/" },
-      { domain: "bsky.app", split: "bsky.app/profile/" },
-      { domain: "threads.net", split: "threads.net/@" },
-      { domain: "linkedin.com", split: "linkedin.com/in/" },
-      { domain: "instagram.com", split: "instagram.com/" },
-      { domain: "facebook.com", split: "facebook.com/" },
-      { domain: "reddit.com", split: "reddit.com/u/" }
-    ];
+    if (!node.url) {
+      return node.body?.username || "unknown";
+    }
 
-    for (const pattern of urlPatterns) {
-      if (node.url?.includes(pattern.domain)) {
-        const username = node.url.split(pattern.split)[1];
-        if (username) {
-          return username.split("/")[0];
+    try {
+      const url = new URL(node.url);
+      const hostname = url.hostname.toLowerCase();
+      const pathname = url.pathname;
+
+      // Remove query parameters and hash fragments
+      const cleanPath = pathname.split('?')[0].split('#')[0];
+      
+      // Handle different social platforms
+      if (hostname.includes('twitter.com') || hostname.includes('x.com')) {
+        const match = cleanPath.match(/^\/([^/]+)/);
+        return match ? match[1] : "unknown";
+      }
+      
+      if (hostname.includes('bsky.app')) {
+        const match = cleanPath.match(/^\/profile\/([^/]+)/);
+        return match ? match[1] : "unknown";
+      }
+      
+      if (hostname.includes('threads.')) {
+        const match = cleanPath.match(/^\/@([^/]+)/);
+        return match ? match[1] : "unknown";
+      }
+      
+      if (hostname.includes('linkedin.com')) {
+        const match = cleanPath.match(/^\/in\/([^/]+)/);
+        return match ? match[1] : "unknown";
+      }
+      
+      if (hostname.includes('instagram.com')) {
+        const match = cleanPath.match(/^\/([^/]+)/);
+        return match ? match[1] : "unknown";
+      }
+      
+      if (hostname.includes('facebook.com')) {
+        const match = cleanPath.match(/^\/([^/]+)/);
+        return match ? match[1] : "unknown";
+      }
+      
+      if (hostname.includes('reddit.com')) {
+        const match = cleanPath.match(/^\/u(?:ser)?\/([^/]+)/);
+        return match ? match[1] : "unknown";
+      }
+      
+      // Handle Mastodon instances (various domains)
+      if (node.contentType === NodeType.MASTODON_PROFILE) {
+        const match = cleanPath.match(/^\/@([^/]+)/);
+        return match ? match[1] : "unknown";
+      }
+      
+      // Fallback: try to extract username from path
+      const pathSegments = cleanPath.split('/').filter(segment => segment.length > 0);
+      if (pathSegments.length > 0) {
+        // Remove common prefixes and get the first meaningful segment
+        const username = pathSegments[pathSegments[0] === 'profile' ? 1 : 0];
+        if (username && username.startsWith('@')) {
+          return username.substring(1);
         }
+        return username || "unknown";
       }
+      
+    } catch (error) {
+      console.warn('Failed to parse profile URL:', node.url, error);
     }
 
-    if (node.url && node.contentType === NodeType.MASTODON_PROFILE) {
-      const mastodonMatch = node.url.match(/\/@([^/]+)/);
-      if (mastodonMatch) {
-        return mastodonMatch[1];
-      }
-    }
-
-    if (node.body?.username) {
-      return node.body.username;
-    }
-
-    return "unknown";
+    // Final fallback to body username
+    return node.body?.username || "unknown";
   }
 
   function getDisplayName() {
