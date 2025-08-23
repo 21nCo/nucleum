@@ -5,7 +5,11 @@
   import { Size } from "$lib/client/types/size.enum";
   import type { IActiveNodeStore } from "../node.store";
   import { getContext } from "svelte";
-  import { canHaveTraces, NodeType } from "../node.type";
+  import {
+    canHaveTraces,
+    NodeType,
+    socialProfileNodeTypeList
+  } from "../node.type";
   import { highlightStore } from "../../common/highlighters/highlight.store";
   import { AnnotationType } from "../../pdfAnnotator/pdfAnnotator.type";
   import Resources from "../../../../components/record/Records.svelte";
@@ -15,6 +19,7 @@
   import { convertDateStringToArray } from "$lib/client/utils/utils";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import NodeTasksPane from "./NodeTasksPane.svelte";
+  import { resolveNodeIcon } from "../node.utils";
   const contentContext = getContext<any>("content");
 
   export let node: IActiveNodeStore | null = null;
@@ -52,12 +57,12 @@
         }
         // tasks
       ];
-    } else if (contentType === NodeType.TWITTER_PROFILE) {
+    } else if (socialProfileNodeTypeList.has(contentType)) {
       return [
         {
           value: "clips",
-          label: "Tweets",
-          icon: "twitter"
+          label: "Posts",
+          icon: resolveNodeIcon(contentType)
         }
         // tasks
       ];

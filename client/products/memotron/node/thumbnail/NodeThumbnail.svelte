@@ -3,7 +3,9 @@
   import {
     headingNodeTypes,
     type INodeThumb,
-    NodeType
+    NodeType,
+    socialProfileNodeTypeList,
+    socialProfileWithImageUnavailable
   } from "$lib/client/products/memotron/node/node.type";
   import {
     resolveContentPreview,
@@ -272,7 +274,7 @@
               isApplyBgColor={false}
               class="absolute inset-0 w-full rounded-t-md object-cover h-full"
             />
-          {:else if urlPreview && item.contentType === NodeType.TWITTER_PROFILE}
+          {:else if urlPreview && socialProfileNodeTypeList.has(item.contentType) && !socialProfileWithImageUnavailable.has(item.contentType)}
             <NodeThumbnailTwitterProfilePreview src={urlPreview} />
           {:else if urlPreview}
             <ImagePreview
@@ -299,7 +301,7 @@
               {/if}
             </div>
           {/if}
-          {#if contentPreview && ![NodeType.TWITTER_PROFILE].includes(item.contentType)}
+          {#if contentPreview && !socialProfileNodeTypeList.has(item.contentType)}
             <span
               class={cn(
                 "absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent",
@@ -344,7 +346,7 @@
         })}
         on:load
       />
-    {:else if urlPreview && item.contentType === NodeType.TWITTER_PROFILE}
+    {:else if urlPreview && socialProfileNodeTypeList.has(item.contentType) && !socialProfileWithImageUnavailable.has(item.contentType)}
       <div class="relative h-20">
         <NodeThumbnailTwitterProfilePreview src={urlPreview} />
       </div>

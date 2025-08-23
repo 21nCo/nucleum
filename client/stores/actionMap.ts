@@ -600,7 +600,7 @@ export const globalActions: IAction[] = [
     component: CreateCombination,
     label: "Create a new combination",
     type: ActionType.MODAL,
-    isInactive: true,
+    isInactive: false,
     modalParams: {
       title: "Create a new combination",
       layout: {

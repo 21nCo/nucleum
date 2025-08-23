@@ -4,8 +4,15 @@
   import { appStore } from "$lib/client/stores/app.store";
   import { Size } from "$lib/client/types/size.enum";
   import WebPagePreview from "./web/WebPagePreview.svelte";
-  import { type IClip, type IWebPage, NodeType } from "../node.type";
-  import TweetPreview from "./web/TweetPreview.svelte";
+  import {
+    type IClip,
+    type IWebPage,
+    NodeType,
+    socialPostNodeTypeList,
+    socialProfileNodeTypeList
+  } from "../node.type";
+  import SocialPostContent from "./web/social/SocialPostContent.svelte";
+  import SocialProfileContent from "./web/social/SocialProfileContent.svelte";
   import WebClipPreview from "./web/WebClipPreview.svelte";
   import YoutubeVideoPreview from "./web/YoutubeVideoPreview.svelte";
   import KindleBookPreview from "./web/KindleBookPreview.svelte";
@@ -13,7 +20,6 @@
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import type { IContextMenu } from "$lib/client/types/select.type";
-  import TwitterProfilePreview from "./web/TwitterProfilePreview.svelte";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import GistPreview from "./web/GistPreview.svelte";
   export let node: IClip | IWebPage;
@@ -63,10 +69,10 @@
     <GistPreview {node} {accessPoint} />
   {:else if node.contentType === NodeType.TEXT_CLIP || node.contentType === NodeType.WEB_SCREENSHOT_CLIP || node.contentType === NodeType.KINDLE_HIGHLIGHT}
     <WebClipPreview {node} {accessPoint} />
-  {:else if node.contentType === NodeType.TWEET}
-    <TweetPreview {node} {accessPoint} />
-  {:else if node.contentType === NodeType.TWITTER_PROFILE}
-    <TwitterProfilePreview {node} />
+  {:else if socialPostNodeTypeList.has(node.contentType)}
+    <SocialPostContent {node} {accessPoint} />
+  {:else if socialProfileNodeTypeList.has(node.contentType)}
+    <SocialProfileContent {node} />
   {:else if node.contentType === NodeType.KINDLE_BOOK}
     <KindleBookPreview {node} />
   {:else if (node.contentType === NodeType.YOUTUBE_VIDEO || node.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP) && node.url}
@@ -78,7 +84,7 @@
       bind:this={youtubeVideoRef}
     />
   {/if}
-  {#if "url" in node && node.url && accessPoint === ResourceAccessPoint.SELF && node.contentType !== NodeType.TWEET}
+  {#if "url" in node && node.url && accessPoint === ResourceAccessPoint.SELF && !socialPostNodeTypeList.has(node.contentType)}
     <div
       class="absolute bottom-0 left-0 m-2 flex gap-2 items-center max-w-full"
     >

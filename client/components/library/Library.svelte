@@ -41,7 +41,6 @@
   let selectedResource: Resource = $view.isConstrainedWidth
     ? Resource.unknown
     : resources[0];
-  let availableResourcesSet: Set<Resource> = new Set(availableResources);
   let syncFeedbackRef: InlineSyncingFeedback;
   let recordsPaneRef: LibraryRecordsPane;
   const createShortcut = keyboardShortcuts?.resolveShortcutForAction("create");
@@ -72,7 +71,7 @@
             icon: "plus-circle"
           }
         ]
-      : !availableResourcesSet.has(selectedResource) ||
+      : !availableResources.has(selectedResource) ||
           isHideCreateAction(selectedResource)
         ? undefined
         : {

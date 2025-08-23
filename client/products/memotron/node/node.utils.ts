@@ -6,15 +6,17 @@ import {
 } from "$lib/shared/utils/text.utils";
 import {
   NodeType,
-  type INodeMetadata,
-  ListType,
   type INode,
   type ITwitterProfileBody,
   type ITextClipBody,
   type IVideoTimestampClipBody,
   type ITwitterProfile,
   type INodeThumb,
-  type INodeStructure
+  type INodeStructure,
+  webNodeTypeList,
+  socialPostNodeTypeList,
+  socialProfileNodeTypeList,
+  socialProfileWithImageUnavailable
 } from "$lib/client/products/memotron/node/node.type";
 import { getGeoLocation } from "$lib/client/utils/browser.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
@@ -32,7 +34,12 @@ export function resolveContentPreview(node: INode) {
   const { body, contentType, metadata } = node;
   logger.log({ at: "contentPreview", body, contentType });
 
-  if ((contentType === NodeType.TWEET || contentType === NodeType.BLUESKY_POST || contentType === NodeType.THREADS_POST) && "content" in body) {
+  if (
+    (contentType === NodeType.TWEET ||
+      contentType === NodeType.BLUESKY_POST ||
+      contentType === NodeType.THREADS_POST) &&
+    "content" in body
+  ) {
     if (body.content) return body.content;
     else if (metadata && "ogTitle" in metadata) return metadata.ogTitle;
   } else if (contentType === NodeType.TWITTER_PROFILE) {
@@ -106,48 +113,50 @@ export function generateMarkdownText(blocks: IBlock[]) {
   return blocks.map((b) => getMarkdownSymbolPrepended(b)).join("\n");
 }
 
+const nodeIconMap = new Map<NodeType, string>([
+  [NodeType.IMAGE, "ph:image-light"],
+  [NodeType.WEB_SCREENSHOT_CLIP, "crop"],
+  [NodeType.NODULAR_MARKDOWN, "markdown"],
+  [NodeType.TEXT_CLIP, "highlighter-circle"],
+  [NodeType.WEB_PAGE, "ph:globe-light"],
+  [NodeType.PDF, "file-pdf"],
+  [NodeType.AUDIO, "music-note"],
+  [NodeType.VIDEO, "video"],
+  [NodeType.FILE, "ph:file-light"],
+  [NodeType.YOUTUBE_VIDEO, "logos:youtube-icon"],
+  [NodeType.YOUTUBE_CHANNEL, "logos:youtube-icon"],
+  [NodeType.YOUTUBE_TIMESTAMP_CLIP, "logos:youtube-icon"],
+  [NodeType.TWEET, "twitter"],
+  [NodeType.TWITTER_PROFILE, "twitter"],
+  [NodeType.KINDLE_BOOK, "amazon-logo"],
+  [NodeType.KINDLE_HIGHLIGHT, "ph:bookmark-simple-light"],
+  [NodeType.CODE, "ph:code-light"],
+  [NodeType.GIST, "ph:code-light"],
+  [NodeType.BLUESKY_POST, "logos:bluesky"],
+  [NodeType.BLUESKY_PROFILE, "logos:bluesky"],
+  [NodeType.THREADS_POST, "ph:threads-logo"],
+  [NodeType.THREADS_PROFILE, "ph:threads-logo"],
+  [NodeType.INSTAGRAM_POST, "skill-icons:instagram"],
+  [NodeType.INSTAGRAM_PROFILE, "skill-icons:instagram"],
+  [NodeType.LINKEDIN_POST, "logos:linkedin-icon"],
+  [NodeType.LINKEDIN_PROFILE, "logos:linkedin-icon"],
+  [NodeType.FACEBOOK_POST, "logos:facebook"],
+  [NodeType.FACEBOOK_PROFILE, "logos:facebook"],
+  [NodeType.MASTODON_POST, "logos:mastodon-icon"],
+  [NodeType.MASTODON_PROFILE, "logos:mastodon-icon"],
+  [NodeType.REDDIT_POST, "logos:reddit-icon"],
+  [NodeType.REDDIT_PROFILE, "logos:reddit-icon"]
+]);
+
 export function resolveNodeIcon(contentType: NodeType, url?: string) {
-  switch (contentType) {
-    case NodeType.IMAGE:
-      return "ph:image-light";
-    case NodeType.WEB_SCREENSHOT_CLIP:
-      return "crop";
-    case NodeType.NODULAR_MARKDOWN:
-      return "markdown";
-    case NodeType.TEXT_CLIP:
-      return "highlighter-circle";
-    case NodeType.WEB_PAGE:
-      return url && isValidUrl(url)
-        ? resolveFallbackIconForUrl(url)
-        : "ph:globe-light";
-    case NodeType.PDF:
-      return "file-pdf";
-    case NodeType.AUDIO:
-      return "music-note";
-    case NodeType.VIDEO:
-      return "video";
-    case NodeType.FILE:
-      return "ph:file-light";
-    case NodeType.YOUTUBE_VIDEO:
-      return "youtube";
-    case NodeType.YOUTUBE_CHANNEL:
-      return "youtube";
-    case NodeType.YOUTUBE_TIMESTAMP_CLIP:
-      return "youtube";
-    case NodeType.TWEET:
-    case NodeType.BLUESKY_POST:
-    case NodeType.TWITTER_PROFILE:
-      return "twitter";
-    case NodeType.KINDLE_BOOK:
-      return "amazon-logo";
-    case NodeType.KINDLE_HIGHLIGHT:
-      return "ph:bookmark-simple-light";
-    case NodeType.CODE:
-    case NodeType.GIST:
-      return "ph:code-light";
-    default:
-      return url && isValidUrl(url) ? resolveFallbackIconForUrl(url) : "book";
+  if (nodeIconMap.has(contentType)) {
+    if (contentType === NodeType.WEB_PAGE && url && isValidUrl(url)) {
+      return resolveFallbackIconForUrl(url);
+    }
+    return nodeIconMap.get(contentType);
   }
+  if (url && isValidUrl(url)) return resolveFallbackIconForUrl(url);
+  else return "book";
 }
 
 export function resolveFallbackIconForUrl(url: string | undefined) {
@@ -168,17 +177,36 @@ export function resolveFallbackIconForUrl(url: string | undefined) {
   if (hostPart === "pinterest.com" || hostPart.endsWith(".pinterest.com"))
     return "logos:pinterest-icon";
   if (hostPart === "youtube.com" || hostPart.endsWith(".youtube.com"))
-    return "logos:youtube-icon";
-  if (hostPart === "twitter.com" || hostPart.endsWith(".twitter.com"))
-    return "twitter";
-  if (hostPart === "instagram.com" || hostPart.endsWith(".instagram.com"))
-    return "instagram";
-  if (hostPart === "linkedin.com" || hostPart.endsWith(".linkedin.com"))
-    return "logos:linkedin-icon";
-  if (hostPart === "facebook.com" || hostPart.endsWith(".facebook.com"))
-    return "logos:facebook";
-  if (hostPart === "reddit.com" || hostPart.endsWith(".reddit.com"))
-    return "logos:reddit-icon";
+    return nodeIconMap.get(NodeType.YOUTUBE_VIDEO);
+  if (
+    hostPart === "twitter.com" ||
+    hostPart.endsWith(".twitter.com") ||
+    hostPart === "x.com" ||
+    hostPart.endsWith(".x.com")
+  )
+    return nodeIconMap.get(NodeType.TWEET);
+  const linkedinHosts = ["linkedin.com", "linkedin.net"];
+  const threadsHosts = ["threads.com", "threads.net"];
+  const mastodonHosts = ["mastodon.social", "mastodon.online", "mastodon.world", "mas.to"];
+  const facebookHosts = ["facebook.com", "facebook.net", "fb.com"];
+  const redditHosts = ["reddit.com", "reddit.net"];
+  const bskyHosts = ["bsky.app"];
+  const instagramHosts = ["instagram.com", "instagr.am"];
+  
+  if (instagramHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
+    return nodeIconMap.get(NodeType.INSTAGRAM_POST);
+  if (linkedinHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
+    return nodeIconMap.get(NodeType.LINKEDIN_POST);
+  if (threadsHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
+    return nodeIconMap.get(NodeType.THREADS_POST);
+  if (mastodonHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
+    return nodeIconMap.get(NodeType.MASTODON_POST);
+  if (facebookHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
+    return nodeIconMap.get(NodeType.FACEBOOK_POST);
+  if (redditHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
+    return nodeIconMap.get(NodeType.REDDIT_POST);
+  if (bskyHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
+    return nodeIconMap.get(NodeType.BLUESKY_POST);
   if (hostPart === "quora.com" || hostPart.endsWith(".quora.com"))
     return "logos:quora";
   if (hostPart === "wikipedia.org" || hostPart.endsWith(".wikipedia.org"))
@@ -210,7 +238,6 @@ export function resolveNodeContentLabel(contentType: NodeType) {
     case NodeType.YOUTUBE_TIMESTAMP_CLIP:
       return "Youtube Clip";
     case NodeType.TWEET:
-    case NodeType.BLUESKY_POST:
       return "X Post";
     case NodeType.TWITTER_PROFILE:
       return "X Profile";
@@ -255,7 +282,13 @@ export function resolveUrlPreview(node: INode) {
     contentType === NodeType.YOUTUBE_CHANNEL
   ) {
     return metadata?.ogImage ?? metadata?.thumbnailUrl;
-  } else if (contentType === NodeType.TWITTER_PROFILE) {
+  } else if (socialProfileNodeTypeList.has(contentType)) {
+    if (socialProfileWithImageUnavailable.has(contentType)) {
+      if (contentType === NodeType.INSTAGRAM_PROFILE)
+        return "https://instagram.com";
+      else if (contentType === NodeType.THREADS_PROFILE)
+        return "https://threads.com";
+    }
     return body?.profileImageUrl;
   } else if (contentType === NodeType.KINDLE_BOOK) {
     return body?.imageUrl;
@@ -304,6 +337,21 @@ export function resolveNodeLabel(item: INodeThumb) {
     [NodeType.KINDLE_HIGHLIGHT]: "Kindle highlight"
   };
 
+  if (socialPostNodeTypeList.has(item.contentType)) {
+    parent = parent as ITwitterProfile;
+    const twitterProfileLabel = isValidString(
+      parent?.label ?? parent?.body?.name
+    )
+      ? (parent.label ?? parent.body.name)
+      : "Unknown";
+    const prefix = enumToString(item.contentType);
+    return {
+      label: ` ${item.label ? item.label + " - " : ""} ${prefix} by: `,
+      parent: { id: parent?.id, label: twitterProfileLabel },
+      text: item.body?.content ?? item.text ?? `Tweet: ${twitterProfileLabel}`
+    };
+  }
+
   switch (item.contentType) {
     case NodeType.TEXT_CLIP:
     case NodeType.WEB_SCREENSHOT_CLIP:
@@ -325,19 +373,6 @@ export function resolveNodeLabel(item: INodeThumb) {
         label: `${item.label ? item.label + " - " : "At "}${timestamp}: `,
         parent,
         text: timestamp
-      };
-    case NodeType.TWEET:
-    case NodeType.BLUESKY_POST:
-      parent = parent as ITwitterProfile;
-      const twitterProfileLabel = isValidString(
-        parent?.label ?? parent?.body?.name
-      )
-        ? (parent.label ?? parent.body.name)
-        : "Unknown";
-      return {
-        label: ` ${item.label ? item.label + " - " : ""} Tweet by: `,
-        parent: { id: parent?.id, label: twitterProfileLabel },
-        text: item.body?.content ?? item.text ?? `Tweet: ${twitterProfileLabel}`
       };
     case NodeType.TWITTER_PROFILE:
       item = item as ITwitterProfile;
@@ -361,7 +396,8 @@ export function resolveNodeLabel(item: INodeThumb) {
 export function resolveNodeFavicon(node: INode) {
   try {
     if (
-      node.contentType === NodeType.TWITTER_PROFILE &&
+      socialProfileNodeTypeList.has(node.contentType) &&
+      !socialProfileWithImageUnavailable.has(node.contentType) &&
       "profileImageUrl" in node.body &&
       node.body.profileImageUrl
     ) {
@@ -445,16 +481,7 @@ export function resolveNodeSubTypesForSwitcher() {
     NodeType.IMAGE,
     NodeType.AUDIO,
     NodeType.VIDEO,
-    NodeType.WEB_PAGE,
-    NodeType.GIST,
-    NodeType.TEXT_CLIP,
-    NodeType.WEB_SCREENSHOT_CLIP,
-    NodeType.TWEET,
-    NodeType.TWITTER_PROFILE,
-    NodeType.YOUTUBE_VIDEO,
-    NodeType.YOUTUBE_TIMESTAMP_CLIP,
-    NodeType.KINDLE_BOOK,
-    NodeType.KINDLE_HIGHLIGHT
+    ...webNodeTypeList
   ].map((x) => {
     return {
       label: resolveNodeContentLabel(x),
@@ -496,7 +523,6 @@ export function resolveHeadingParent(
     return scopedParent;
   }
 }
-
 
 export function generateNodeIdPrefixed(contentType: NodeType, id: string) {
   return generateResourceId(Resource.node, {

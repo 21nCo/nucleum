@@ -51,7 +51,7 @@ export const products: Record<Product, ProductConfig> = {
     homePath: "calendar",
     homePathPt: "mobilehome",
     databaseName: "nativeone",
-    resources: [Resource.collection],
+    resources: [Resource.collection, Resource.combination, Resource.event],
     sectionLabel: "Nucleus",
     displayName: "Nucleus",
     tagline: "Your digital harmony",

@@ -17,6 +17,7 @@
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
+  import { generateGoogleFontsUrl } from "./fonts.config";
 
   export let extensionContext: string | undefined = undefined;
   let fontFamily: string = "Avenir";
@@ -73,7 +74,7 @@
    * `shadowRoot.host.style.fontSize` doesn't effect the font size of the extension as tailwind relies on root font size for rem units and in a shadow root extention context, rem units are not reliable as web pages may have different root font size. For now, @thedutchcoder/postcss-rem-to-px is being used as a postcss plugin to convert rem to px during build time as a workaround.
    *
    * visibility is set to visible with important to handle cases where the web pages override extension styles like on Reddit website.
-   * 
+   *
    */
   function refreshSizing() {
     if (accessibilitySizingFactor == 0) {
@@ -91,19 +92,27 @@
 
     const dom = document.getElementById(extensionContext + "-root");
     if (extensionContext) {
-      if(dom){
+      if (dom) {
         const shadowRoot = dom.shadowRoot;
         if (!shadowRoot) return;
         shadowRoot.host.style.fontSize = `${rootFontSize + 20}px`;
         shadowRoot.host.style.setProperty("visibility", "visible", "important");
       } else {
         const csui = document.querySelectorAll("plasmo-csui");
-        if(csui.length > 0) {
-          Array.from(csui).forEach(element => {
+        if (csui.length > 0) {
+          Array.from(csui).forEach((element) => {
             const htmlElement = element as HTMLElement;
             if (!htmlElement.style.fontSize) {
-              htmlElement.style.setProperty("font-size", `${rootFontSize + 20}px`, "important");
-              htmlElement.style.setProperty("visibility", "visible", "important");
+              htmlElement.style.setProperty(
+                "font-size",
+                `${rootFontSize + 20}px`,
+                "important"
+              );
+              htmlElement.style.setProperty(
+                "visibility",
+                "visible",
+                "important"
+              );
             }
           });
         }
@@ -164,7 +173,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
-    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&family=Sen:wght@400..800&family=Parkinsans:wght@300..800&family=Sora:wght@100..800&family=Outfit:wght@100..900&family=Didact+Gothic&family=Fredoka:wght@300..700&family=Lexend:wght@100..900&family=Parkinsans:wght@300..800&family=Maven+Pro:wght@400..900&family=AR+One+Sans:wght@400..700&family=Quicksand:wght@300..700&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&family=Recursive:wght@300..1000&family=Red+Hat+Text:ital,wght@0,300..700;1,300..700&family=Oxygen:wght@300;400;700&family=Questrial&family=Varela&family=Varela+Round&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Nunito:ital,wght@0,200..1000;1,200..1000&family=Teachers:ital,wght@0,400..800;1,400..800&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+    href={generateGoogleFontsUrl()}
     rel="stylesheet"
   />
 </svelte:head>

@@ -215,16 +215,6 @@ export const headingNodeTypes = [
   NodeType.HEADING5
 ];
 
-export const canHaveTraces = [
-  // NodeType.NODULAR_MARKDOWN,
-  NodeType.PDF,
-  NodeType.WEB_PAGE,
-  NodeType.TWITTER_PROFILE,
-  NodeType.YOUTUBE_VIDEO,
-  NodeType.YOUTUBE_CHANNEL,
-  NodeType.KINDLE_BOOK
-];
-
 export const structuralNodeTypes = [
   NodeType.DIVIDER,
   NodeType.DOUBLE_DIVIDER,
@@ -514,10 +504,7 @@ export type IMediaGridNode = INodeInterface<
 
 // ===== Web node types =====
 
-/**
- * Web node types with body.url present.
- */
-export const webNodeTypeList = [
+const webNodeTypes = [
   NodeType.WEB_PAGE,
   NodeType.GIST,
   NodeType.TEXT_CLIP,
@@ -529,18 +516,24 @@ export const webNodeTypeList = [
   NodeType.YOUTUBE_VIDEO,
   NodeType.YOUTUBE_CHANNEL,
   NodeType.YOUTUBE_TIMESTAMP_CLIP,
-  NodeType.TWEET,
-  NodeType.BLUESKY_POST,
-  NodeType.THREADS_POST,
-  NodeType.LINKEDIN_POST,
-  NodeType.INSTAGRAM_POST,
-  NodeType.REDDIT_POST,
-  NodeType.TWITTER_PROFILE,
-  NodeType.LINKEDIN_PROFILE,
-  NodeType.INSTAGRAM_PROFILE,
   NodeType.KINDLE_BOOK,
   NodeType.KINDLE_HIGHLIGHT
 ];
+/**
+ * Web node types with body.url present.
+ */
+export const webNodeTypeList = [
+  ...webNodeTypes,
+  ...Array.from(socialPostNodeTypeList),
+  ...Array.from(socialProfileNodeTypeList)
+];
+
+export const socialProfileWithImageUnavailable = new Set([
+  NodeType.THREADS_POST,
+  NodeType.THREADS_PROFILE,
+  NodeType.INSTAGRAM_POST,
+  NodeType.INSTAGRAM_PROFILE
+]);
 
 export type IWebNodeType =
   | NodeType.WEB_PAGE
@@ -1024,11 +1017,7 @@ export type INodeBody =
   | IBlockBody
   | IMarkdown
   | ITweetBody
-  | IBlueskyPostBody
-  | IThreadsPostBody
-  | ILinkedInPostBody
-  | IInstagramPostBody
-  | IRedditPostBody
+  | ISocialPostBody
   | ITwitterProfileBody
   | ISocialProfileBody
   | IMultimediaClipBody
@@ -1113,3 +1102,17 @@ export enum NodeView {
   CONTENT = "content",
   BIRD = "bird"
 }
+
+const canHaveTracesBase = [
+  // NodeType.NODULAR_MARKDOWN,
+  NodeType.PDF,
+  NodeType.WEB_PAGE,
+  NodeType.YOUTUBE_VIDEO,
+  NodeType.YOUTUBE_CHANNEL,
+  NodeType.KINDLE_BOOK
+];
+
+export const canHaveTraces = [
+  ...canHaveTracesBase,
+  ...Array.from(socialProfileNodeTypeList)
+];

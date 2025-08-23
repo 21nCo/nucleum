@@ -165,11 +165,32 @@
       link: "https://github.com/niteeshy/ar-one-sans"
     },
     {
+      name: "Comic Neue",
+      description:
+        "Comic Neue is a casual script typeface that is a more modern and refined version of Comic Sans.",
+      creator: "Craig Rozynski",
+      link: "https://fonts.google.com/specimen/Comic+Neue"
+    },
+    {
       name: "Didact Gothic",
       description:
         "Didact Gothic is a sans-serif font designed to present each letter in the form most often used in elementary classrooms.",
       creator: "Daniel Johnson",
       link: "https://fonts.google.com/specimen/Didact+Gothic"
+    },
+    {
+      name: "DM Sans",
+      description:
+        "DM Sans is a low-contrast geometric sans serif designed for better reading at small sizes.",
+      creator: "Colophon Foundry",
+      link: "https://fonts.google.com/specimen/DM+Sans"
+    },
+    {
+      name: "Figtree",
+      description:
+        "Figtree is a friendly humanist sans serif with a playful character.",
+      creator: "Erik Kennedy",
+      link: "https://github.com/erikdkennedy/figtree"
     },
     {
       name: "Fredoka",
@@ -179,6 +200,20 @@
       link: "https://github.com/hafontia-zz/Fredoka-One"
     },
     {
+      name: "Funnel Sans",
+      description:
+        "Funnel Sans is a rounded sans-serif typeface designed for better legibility.",
+      creator: "NDISCOVER",
+      link: "https://fonts.google.com/specimen/Funnel+Sans"
+    },
+    {
+      name: "Geist",
+      description:
+        "Geist is a new font family created specifically for developers and designers.",
+      creator: "Vercel",
+      link: "https://vercel.com/font"
+    },
+    {
       name: "Hanken Grotesk",
       description:
         "A clean geometric sans serif typeface inspired by the classic grotesques.",
@@ -186,11 +221,39 @@
       link: "https://github.com/marcologous/hanken-grotesk"
     },
     {
+      name: "Host Grotesk",
+      description:
+        "Host Grotesk is a contemporary take on classic grotesque typefaces.",
+      creator: "Future Fonts",
+      link: "https://www.futurefonts.xyz/atlas-font-foundry/host-grotesk"
+    },
+    {
+      name: "IBM Plex Sans",
+      description:
+        "IBM Plex Sans is a humanist sans serif typeface designed by Mike Abbink.",
+      creator: "IBM",
+      link: "https://github.com/IBM/plex"
+    },
+    {
+      name: "Inter",
+      description:
+        "Inter is a typeface carefully crafted and designed for computer screens.",
+      creator: "Rasmus Andersson",
+      link: "https://rsms.me/inter/"
+    },
+    {
       name: "Lexend",
       description:
         "Lexend fonts are intended to reduce visual stress and so improve reading performance.",
       creator: "Bonnie Shaver-Troup",
       link: "https://github.com/googlefonts/lexend"
+    },
+    {
+      name: "Manrope",
+      description:
+        "Manrope is an open-source modern sans-serif font family, designed by Mikhail Sharanda.",
+      creator: "Mikhail Sharanda",
+      link: "https://github.com/sharanda/manrope"
     },
     {
       name: "Maven Pro",
@@ -220,6 +283,13 @@
       link: "https://github.com/googlefonts/nunito"
     },
     {
+      name: "Onest",
+      description:
+        "Onest is a geometric sans-serif typeface with a modern and clean appearance.",
+      creator: "Andrey Kudryavtsev",
+      link: "https://github.com/EvgeniyKudryavtsev/onest-font"
+    },
+    {
       name: "Outfit",
       description: "A geometric sans-serif typeface",
       creator: "Outfit.io",
@@ -239,17 +309,17 @@
       link: "https://github.com/redstonedesign/parkinsans"
     },
     {
+      name: "Plus Jakarta Sans",
+      description:
+        "Plus Jakarta Sans is a sans-serif typeface that is geometric yet friendly.",
+      creator: "Gumpita Rahayu",
+      link: "https://fonts.google.com/specimen/Plus+Jakarta+Sans"
+    },
+    {
       name: "Poppins",
       description: "A geometric sans-serif typeface",
       creator: "Indian Type Foundry",
       link: "https://github.com/itfoundry/poppins"
-    },
-    {
-      name: "Questrial",
-      description:
-        "A geometric sans-serif typeface influenced by Swiss design, similar to a grotesk style which is closely found in Helvetica.",
-      creator: "Joe Prince",
-      link: "https://github.com/googlefonts/questrial"
     },
     {
       name: "Quicksand",
@@ -257,6 +327,13 @@
         "Quicksand is a display sans serif with rounded terminals but legible enough to use in small sizes as well",
       creator: "Andrew Paglinawan",
       link: "https://github.com/andrew-paglinawan/QuicksandFamily"
+    },
+    {
+      name: "Questrial",
+      description:
+        "A geometric sans-serif typeface influenced by Swiss design, similar to a grotesk style which is closely found in Helvetica.",
+      creator: "Joe Prince",
+      link: "https://github.com/googlefonts/questrial"
     },
     {
       name: "Recursive",
@@ -271,6 +348,13 @@
         "Red Hat is a fresh take on the geometric sans genre, taking inspiration from a range of American sans serifs including Tempo and Highway Gothic.",
       creator: "Red Hat",
       link: "https://github.com/RedHatOfficial/RedHatFont"
+    },
+    {
+      name: "Rubik",
+      description:
+        "Rubik is a sans serif font family with slightly rounded corners designed by Philipp Hubert and Sebastian Fischer.",
+      creator: "Philipp Hubert & Sebastian Fischer",
+      link: "https://fonts.google.com/specimen/Rubik"
     },
     {
       name: "Sen",
@@ -306,6 +390,13 @@
         "Varela is a modern sans-serif font that blends styles of many great typefaces.",
       creator: "Joe Prince",
       link: "https://fonts.google.com/specimen/Varela"
+    },
+    {
+      name: "Varela Round",
+      description:
+        "Varela Round is a rounded version of Varela, providing a more friendly and approachable feel.",
+      creator: "Joe Prince",
+      link: "https://fonts.google.com/specimen/Varela+Round"
     }
   ];
 </script>

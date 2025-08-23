@@ -231,13 +231,13 @@ export function resolveResourceIcon(resource: Resource) {
   }
 }
 
-export const availableResources = [
+export const availableResources = new Set([
   Resource.collection,
   Resource.node,
   Resource.relation,
   Resource.goal,
   Resource.task
-];
+]);
 
 export function resolveResourceSwitcher(): IResourceSwitchItem[] {
   const resources = [
@@ -260,13 +260,12 @@ export function resolveResourceSwitcher(): IResourceSwitchItem[] {
     Resource.place,
     Resource.input
   ];
-
   return resources.map((resource) => ({
     label: properCase(resource) + "s",
     value: resource,
     icon: resolveResourceIcon(resource),
-    isDisabled: !availableResources.includes(resource),
-    badge: !availableResources.includes(resource) ? "Planned" : undefined
+    isDisabled: !availableResources.has(resource),
+    badge: !availableResources.has(resource) ? "Planned" : undefined
   }));
 }
 

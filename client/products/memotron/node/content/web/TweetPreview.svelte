@@ -8,7 +8,7 @@
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { Persistence } from "$lib/client/persistence/persistence";
-  import TweetPreviewUsingWidget from "./Twitter/TweetPreviewUsingWidget.svelte";
+  import TweetPreviewUsingWidget from "./social/TweetPreviewUsingWidget.svelte";
   import account from "$lib/client/stores/account.store";
   import { InfoTextType } from "$lib/client/types/text.type";
   import { parse } from "$lib/shared/utils/json.utils";

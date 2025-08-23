@@ -104,7 +104,6 @@
   let isRefreshing: boolean = true;
   let totalCountAfterFilter: number = 0;
   let isRefreshingTotalCount: boolean = false;
-  let availableResourcesSet: Set<Resource> = new Set(availableResources);
   let refreshResetTimeout: any;
   let searchInputRef: InlineSearchBar;
   let isRefineShown = false;
@@ -198,7 +197,7 @@
       selectedSubType
     });
     console.time("LibraryRecordsPane - refresh");
-    if (!availableResourcesSet.has(resource)) {
+    if (!availableResources.has(resource)) {
       data = [];
       return;
     }
