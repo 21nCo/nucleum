@@ -83,9 +83,7 @@
         if (parsed && parsed.error) {
           dispatch("error", parsed.error);
         } else if (parsed && parsed.html) {
-          embedHtml = parsed.html
-            .replace(/style="[^"]*"/g, 'style="width: 80%"')
-            .replace(/max-width:\s*\d+px;?/g, "");
+          embedHtml = sanitizeAndStyleHTML(parsed.html);
         }
       }
     } catch (err) {
@@ -133,6 +131,47 @@
   function extractPostId(url: string): string | null {
     const match = url.match(/\/@[^/]+\/(\d+)/);
     return match ? match[1] : null;
+  }
+
+  function sanitizeAndStyleHTML(htmlString: string): string {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlString, 'text/html');
+    
+    const elements = doc.querySelectorAll('*');
+    elements.forEach(element => {
+      const currentStyle = element.getAttribute('style') || '';
+      const styleObj = parseStyleString(currentStyle);
+      
+      styleObj.width = '80%';
+      delete styleObj['max-width'];
+      
+      const newStyleString = Object.entries(styleObj)
+        .filter(([, value]) => value !== undefined && value !== '')
+        .map(([prop, value]) => `${prop}: ${value}`)
+        .join('; ');
+        
+      if (newStyleString) {
+        element.setAttribute('style', newStyleString);
+      } else {
+        element.removeAttribute('style');
+      }
+    });
+    
+    return doc.body.innerHTML;
+  }
+
+  function parseStyleString(styleString: string) {
+    const styles: Record<string, string> = {};
+    if (!styleString) return styles;
+    
+    styleString.split(';').forEach(rule => {
+      const [property, value] = rule.split(':').map(s => s.trim());
+      if (property && value) {
+        styles[property] = value;
+      }
+    });
+    
+    return styles;
   }
 </script>
 

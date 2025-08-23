@@ -7,7 +7,7 @@
 </script>
 
 <div
-  class={cn("mt-12", {
+  class={cn("mt-16", {
     "text-fgs3": loading,
     "text-ars1": error
   })}
