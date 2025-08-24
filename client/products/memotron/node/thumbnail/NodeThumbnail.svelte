@@ -4,6 +4,7 @@
     headingNodeTypes,
     type INodeThumb,
     NodeType,
+    socialPostNodeTypeList,
     socialProfileNodeTypeList,
     socialProfileWithImageUnavailable
   } from "$lib/client/products/memotron/node/node.type";
@@ -27,7 +28,6 @@
     formatTime
   } from "$lib/client/utils/time.utils";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import NodeThumbnailTweetPreview from "./NodeThumbnailTweetPreview.svelte";
   import NodeThumbnailAudioPreview from "./NodeThumbnailAudioPreview.svelte";
   import NodeThumbnailPdfPreview from "./NodeThumbnailPdfPreview.svelte";
   import { TimeFormat } from "$lib/client/types/time.type";
@@ -42,6 +42,7 @@
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import NodeThumbnailTwitterProfilePreview from "./NodeThumbnailTwitterProfilePreview.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
+  import NodeThumbnailSocialPostPreview from "./NodeThumbnailSocialPostPreview.svelte";
   export let item: INodeThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let isHidePreview: boolean = false;
@@ -187,10 +188,11 @@
                   "p-2": !isLinkContext && contentPreview
                 })}
               >
-                {#if item.contentType === NodeType.TWEET && contentPreview}
-                  <NodeThumbnailTweetPreview
+                {#if socialPostNodeTypeList.has(item.contentType) && contentPreview}
+                  <NodeThumbnailSocialPostPreview
                     text={contentPreview}
                     {accessPoint}
+                    contentType={item.contentType}
                   />
                 {:else if isTextClip && contentPreview}
                   <TextClipPreview node={item} {contentPreview} {accessPoint} />
@@ -374,11 +376,12 @@
       >
         {#if isTextClip}
           <TextClipPreview node={item} {contentPreview} {accessPoint} />
-        {:else if item.contentType === NodeType.TWEET}
+        {:else if socialPostNodeTypeList.has(item.contentType)}
           <span class="text-fgs3">
-            <NodeThumbnailTweetPreview
+            <NodeThumbnailSocialPostPreview
               text={contentPreview}
               {accessPoint}
+              contentType={item.contentType}
               isFullExpand={true}
             />
           </span>

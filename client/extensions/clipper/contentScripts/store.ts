@@ -548,9 +548,11 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     const profiles =
       params.posts?.map((x) => x.parent)?.map(this.socialIdMapper) ?? [];
     posts = posts.map((x, index) => ({ ...x, parent: profiles[index].id }));
-    let mainPost = params.main ? this.socialIdMapper(params.main.data) : null;
     let mainParent = params.main
       ? this.socialIdMapper(params.main.parent)
+      : null;
+    let mainPost = params.main
+      ? { ...this.socialIdMapper(params.main.data), parent: mainParent?.id }
       : null;
     if (mainPost && posts.length > 0) {
       const threadRelationId = await linkTagStore.save("thread", "social");
@@ -584,12 +586,20 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     this.update((n) => {
       n.clips = [
         ...(n.clips ?? []),
-        ...posts.map((x) => ({ ...x, links: [] }))
+        ...posts.map((x) => ({ ...x, links: [] })),
+        ...(mainPost ? [{ ...mainPost, links: [] }] : [])
       ];
       if (mainPost) n.id = mainPost.id;
       return n;
     });
-    if (mainPost) {
+
+    if (posts[0]) {
+      feedbackPane.focus(posts[0], {
+        message: "Post saved!",
+        type: AlertType.SUCCESS
+      });
+      return posts[0];
+    } else if (mainPost) {
       relayToSidePanel({
         event: ExtensionEvent.PAGE_STATE,
         data: {
@@ -602,12 +612,6 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         type: AlertType.SUCCESS
       });
       return mainPost;
-    } else if (posts[0]) {
-      feedbackPane.focus(posts[0], {
-        message: "Post saved!",
-        type: AlertType.SUCCESS
-      });
-      return posts[0];
     }
   }
 

@@ -1,9 +1,9 @@
+import { logger } from "$lib/client/components/debug/logger.client";
+import type { IFile } from "$lib/client/components/files/file.type";
+import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
 import type { IBlock } from "$lib/client/components/markdown/md.type";
-import {
-  enumToString,
-  isValidString,
-  properCase
-} from "$lib/shared/utils/text.utils";
 import {
   NodeType,
   type INode,
@@ -18,28 +18,23 @@ import {
   socialProfileNodeTypeList,
   socialProfileWithImageUnavailable
 } from "$lib/client/products/memotron/node/node.type";
-import { getGeoLocation } from "$lib/client/utils/browser.utils";
-import { logger } from "$lib/client/components/debug/logger.client";
-import { formatSeconds } from "$lib/client/utils/time.utils";
-import { TimeFormat } from "$lib/client/types/time.type";
-import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
-import type { IFile } from "$lib/client/components/files/file.type";
-import { resolveUrlData } from "./url.utils";
-import { isValidUrl } from "$lib/shared/utils/utils";
 import type { IRecordId } from "$lib/client/types/data.type";
-import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { TimeFormat } from "$lib/client/types/time.type";
+import { getGeoLocation } from "$lib/client/utils/browser.utils";
+import { formatSeconds } from "$lib/client/utils/time.utils";
+import {
+  enumToString,
+  isValidString,
+  properCase
+} from "$lib/shared/utils/text.utils";
+import { isValidUrl } from "$lib/shared/utils/utils";
+import { resolveUrlData } from "./url.utils";
 
 export function resolveContentPreview(node: INode) {
   const { body, contentType, metadata } = node;
   logger.log({ at: "contentPreview", body, contentType });
 
-  if (
-    (contentType === NodeType.TWEET ||
-      contentType === NodeType.BLUESKY_POST ||
-      contentType === NodeType.THREADS_POST) &&
-    "content" in body
-  ) {
+  if (contentType === NodeType.TWEET && "content" in body) {
     if (body.content) return body.content;
     else if (metadata && "ogTitle" in metadata) return metadata.ogTitle;
   } else if (contentType === NodeType.TWITTER_PROFILE) {
@@ -187,25 +182,30 @@ export function resolveFallbackIconForUrl(url: string | undefined) {
     return nodeIconMap.get(NodeType.TWEET);
   const linkedinHosts = ["linkedin.com", "linkedin.net"];
   const threadsHosts = ["threads.com", "threads.net"];
-  const mastodonHosts = ["mastodon.social", "mastodon.online", "mastodon.world", "mas.to"];
+  const mastodonHosts = [
+    "mastodon.social",
+    "mastodon.online",
+    "mastodon.world",
+    "mas.to"
+  ];
   const facebookHosts = ["facebook.com", "facebook.net", "fb.com"];
   const redditHosts = ["reddit.com", "reddit.net"];
   const bskyHosts = ["bsky.app"];
   const instagramHosts = ["instagram.com", "instagr.am"];
-  
-  if (instagramHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
+
+  if (instagramHosts.some((h) => hostPart === h || hostPart.endsWith(`.${h}`)))
     return nodeIconMap.get(NodeType.INSTAGRAM_POST);
-  if (linkedinHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
+  if (linkedinHosts.some((h) => hostPart === h || hostPart.endsWith(`.${h}`)))
     return nodeIconMap.get(NodeType.LINKEDIN_POST);
-  if (threadsHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
+  if (threadsHosts.some((h) => hostPart === h || hostPart.endsWith(`.${h}`)))
     return nodeIconMap.get(NodeType.THREADS_POST);
-  if (mastodonHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
+  if (mastodonHosts.some((h) => hostPart === h || hostPart.endsWith(`.${h}`)))
     return nodeIconMap.get(NodeType.MASTODON_POST);
-  if (facebookHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
+  if (facebookHosts.some((h) => hostPart === h || hostPart.endsWith(`.${h}`)))
     return nodeIconMap.get(NodeType.FACEBOOK_POST);
-  if (redditHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
+  if (redditHosts.some((h) => hostPart === h || hostPart.endsWith(`.${h}`)))
     return nodeIconMap.get(NodeType.REDDIT_POST);
-  if (bskyHosts.some(h => hostPart === h || hostPart.endsWith(`.${h}`)))
+  if (bskyHosts.some((h) => hostPart === h || hostPart.endsWith(`.${h}`)))
     return nodeIconMap.get(NodeType.BLUESKY_POST);
   if (hostPart === "quora.com" || hostPart.endsWith(".quora.com"))
     return "logos:quora";
@@ -342,7 +342,7 @@ export function resolveNodeLabel(item: INodeThumb) {
     const twitterProfileLabel = isValidString(
       parent?.label ?? parent?.body?.name
     )
-      ? (parent.label ?? parent.body.name)
+      ? parent.label ?? parent.body.name
       : "Unknown";
     const prefix = enumToString(item.contentType);
     return {

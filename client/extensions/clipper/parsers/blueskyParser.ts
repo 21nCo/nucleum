@@ -134,7 +134,10 @@ function parseBlueSkyPost(
   const avatarLink = root.querySelector(
     'div[data-testid="userAvatarImage"]'
   ) as HTMLDivElement;
-  const authorName = avatarLink?.closest("a")?.ariaLabel?.trim();
+  const authorName = avatarLink
+    ?.closest("a")
+    ?.ariaLabel?.trim()
+    ?.replace(/'s avatar$/, "");
   const authorImgUrl = avatarLink?.querySelector("img")?.src;
   const avatarImg = root.querySelector(
     'img[alt*="avatar" i], img[alt*="profile" i]'

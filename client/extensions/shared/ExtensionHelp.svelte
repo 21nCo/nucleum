@@ -78,6 +78,6 @@
   </div>
   <div class="flex flex-col items-center gap-1 mt-auto text-fgs3 text-b3">
     <div>Memotron clipper v0.58.0</div>
-    <div>Last updated: August 11, 2025</div>
+    <div>Last updated: August 24, 2025</div>
   </div>
 </div>
