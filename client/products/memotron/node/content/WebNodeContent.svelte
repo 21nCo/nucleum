@@ -9,7 +9,8 @@
     type IWebPage,
     NodeType,
     socialPostNodeTypeList,
-    socialProfileNodeTypeList
+    socialProfileNodeTypeList,
+    socialSubNodeTypeList
   } from "../node.type";
   import SocialPostContent from "./web/social/SocialPostContent.svelte";
   import SocialProfileContent from "./web/social/SocialProfileContent.svelte";
@@ -22,6 +23,7 @@
   import type { IContextMenu } from "$lib/client/types/select.type";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import GistPreview from "./web/GistPreview.svelte";
+  import SocialSubContent from "./web/social/SocialSubContent.svelte";
   export let node: IClip | IWebPage;
   export let isLinkHovering: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -73,6 +75,8 @@
     <SocialPostContent {node} {accessPoint} />
   {:else if socialProfileNodeTypeList.has(node.contentType)}
     <SocialProfileContent {node} />
+  {:else if socialSubNodeTypeList.has(node.contentType)}
+    <SocialSubContent {node} />
   {:else if node.contentType === NodeType.KINDLE_BOOK}
     <KindleBookPreview {node} />
   {:else if (node.contentType === NodeType.YOUTUBE_VIDEO || node.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP) && node.url}
