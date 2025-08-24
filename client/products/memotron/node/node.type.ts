@@ -259,7 +259,8 @@ export const socialProfileNodeTypeList = new Set([
   NodeType.THREADS_PROFILE,
   NodeType.INSTAGRAM_PROFILE,
   NodeType.FACEBOOK_PROFILE,
-  NodeType.MASTODON_PROFILE
+  NodeType.MASTODON_PROFILE,
+  NodeType.REDDIT_PROFILE
 ]);
 
 export const socialPostNodeTypeList = new Set([
@@ -270,7 +271,8 @@ export const socialPostNodeTypeList = new Set([
   NodeType.INSTAGRAM_POST,
   NodeType.REDDIT_POST,
   NodeType.FACEBOOK_POST,
-  NodeType.MASTODON_POST
+  NodeType.MASTODON_POST,
+  NodeType.REDDIT_POST
 ]);
 
 export type SimpleTextNodeType =

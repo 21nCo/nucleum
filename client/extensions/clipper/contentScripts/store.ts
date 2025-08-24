@@ -369,17 +369,24 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
 
   private socialIdMapper = (item: any) => {
     let id;
+    if (!item) return;
     if (item.id) id = item.id;
-    else if (socialProfileNodeTypeList.has(item.contentType))
+    else if (socialProfileNodeTypeList.has(item.contentType)) {
       id = generateNodeIdPrefixed(
         item.contentType,
         item.body.username as string
       );
-    else if (socialPostNodeTypeList.has(item.contentType))
+    } else if (socialPostNodeTypeList.has(item.contentType)) {
       id = generateNodeIdPrefixed(
         item.contentType,
         `${item.metadata.username}_${item.metadata.postId}`
       );
+    } else if (!id && item.body.username) {
+      id = generateNodeIdPrefixed(
+        item.contentType,
+        item.body.username as string
+      );
+    }
     return {
       ...item,
       id
@@ -544,9 +551,20 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     if (!params.posts && !params.main) return;
     logger.debug({ at: "saveSocialPost", params });
     let posts =
-      params.posts?.map((x) => x.data)?.map(this.socialIdMapper) ?? [];
+      params.posts
+        ?.map((x) => x.data)
+        ?.filter(Boolean)
+        ?.map(this.socialIdMapper) ?? [];
     const profiles =
-      params.posts?.map((x) => x.parent)?.map(this.socialIdMapper) ?? [];
+      params.posts
+        ?.map((x) => x.parent)
+        ?.filter(Boolean)
+        ?.map(this.socialIdMapper) ?? [];
+    const subs =
+      params.posts
+        ?.map((x) => x.sub)
+        ?.filter(Boolean)
+        ?.map(this.socialIdMapper) ?? [];
     posts = posts.map((x, index) => ({ ...x, parent: profiles[index].id }));
     let mainParent = params.main
       ? this.socialIdMapper(params.main.parent)
@@ -568,6 +586,22 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         });
       }
     }
+    if (posts.length > 0 && subs.length > 0) {
+      const subRelationId = await linkTagStore.save("sub", "social");
+      const content = {
+        tags:
+          !Array.isArray(subRelationId) && subRelationId?.id
+            ? [subRelationId?.id]
+            : []
+      };
+      for (const [index, post] of posts.entries()) {
+        const sub = subs[index];
+        if (sub)
+          await linker.link(post.id, sub.id, {
+            content
+          });
+      }
+    }
     if (mainPost) {
       const genericData = extractMinimalTabData();
       mainPost = {
@@ -581,7 +615,12 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     }
     logger.debug({ at: "saveSocialPost", mainPost });
     const main = mainPost ? [mainPost, mainParent] : [];
-    const response = await nodeStore.create([...main, ...posts, ...profiles]);
+    const response = await nodeStore.create([
+      ...main,
+      ...posts,
+      ...profiles,
+      ...subs
+    ]);
     if (!response || !Array.isArray(response)) return;
     this.update((n) => {
       n.clips = [
