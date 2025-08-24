@@ -8,7 +8,7 @@
   import InlineFeedbackText from "../InlineFeedbackText.svelte";
   import { AlertType } from "$lib/client/types/notification.type";
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
+  import { NodeType, socialPostNodeTypeList } from "$lib/client/products/memotron/node/node.type";
   import { resolveContentTypeString } from "../clipper.utils";
   import FeedbackPaneBase from "./FeedbackPaneBase.svelte";
   import FileView from "$lib/client/components/files/FileView.svelte";
@@ -24,6 +24,7 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { ResourceError } from "$lib/client/components/error/errors";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import NodeThumbnailSocialPostPreview from "$lib/client/products/memotron/node/thumbnail/NodeThumbnailSocialPostPreview.svelte";
 
   export let pageContentType: NodeType | undefined = undefined;
 
@@ -327,14 +328,15 @@
           id={$feedbackPane.focusedClip.body?.file}
           class="h-full w-full max-h-40 object-cover"
         />
-      {:else if $feedbackPane.focusedClip?.contentType === NodeType.TWEET}
+      {:else if socialPostNodeTypeList.has($feedbackPane.focusedClip?.contentType ?? NodeType.UNKNOWN)}
         <span
           class="text-b2 p-1 border border-brs2 rounded-md overflow-clip max-h-40"
         >
-          <NodeThumbnailTweetPreview
+          <NodeThumbnailSocialPostPreview
             text={$feedbackPane.focusedClip.body.content ??
               $feedbackPane.focusedClip.text}
             accessPoint={ResourceAccessPoint.CLIPPER}
+            contentType={$feedbackPane.focusedClip?.contentType ?? NodeType.UNKNOWN}
           />
         </span>
       {/if}
