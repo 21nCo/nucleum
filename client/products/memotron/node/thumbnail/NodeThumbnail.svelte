@@ -70,7 +70,7 @@
     item.contentType === NodeType.KINDLE_HIGHLIGHT;
   $: isFullExpand =
     isTextClip ||
-    item.contentType === NodeType.TWEET ||
+    socialPostNodeTypeList.has(item.contentType) ||
     accessPoint === ResourceAccessPoint.NODE_TRACES;
   $: isShouldContainImage = resolveIfImageShouldContain(item.contentType);
 

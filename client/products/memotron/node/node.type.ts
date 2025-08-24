@@ -187,10 +187,12 @@ export enum NodeType {
   THREADS_PROFILE = "THREADS_PROFILE",
   LINKEDIN_POST = "LINKEDIN_POST",
   LINKEDIN_PROFILE = "LINKEDIN_PROFILE",
+  LINKEDIN_GROUP = "LINKEDIN_GROUP",
   INSTAGRAM_POST = "INSTAGRAM_POST",
   INSTAGRAM_PROFILE = "INSTAGRAM_PROFILE",
   FACEBOOK_POST = "FACEBOOK_POST",
   FACEBOOK_PROFILE = "FACEBOOK_PROFILE",
+  FACEBOOK_GROUP = "FACEBOOK_GROUP",
   REDDIT_POST = "REDDIT_POST",
   REDDIT_PROFILE = "REDDIT_PROFILE",
   REDDIT_SUB = "REDDIT_SUB",
@@ -273,6 +275,15 @@ export const socialPostNodeTypeList = new Set([
   NodeType.FACEBOOK_POST,
   NodeType.MASTODON_POST,
   NodeType.REDDIT_POST
+]);
+
+/**
+ * A sub in social platforms - it can be a subreddit, a facebook group, a twitter group, etc.
+ */
+export const socialSubNodeTypeList = new Set([
+  NodeType.REDDIT_SUB,
+  NodeType.FACEBOOK_GROUP,
+  NodeType.LINKEDIN_GROUP
 ]);
 
 export type SimpleTextNodeType =
@@ -527,14 +538,17 @@ const webNodeTypes = [
 export const webNodeTypeList = [
   ...webNodeTypes,
   ...Array.from(socialPostNodeTypeList),
-  ...Array.from(socialProfileNodeTypeList)
+  ...Array.from(socialProfileNodeTypeList),
+  ...Array.from(socialSubNodeTypeList)
 ];
 
 export const socialProfileWithImageUnavailable = new Set([
   NodeType.THREADS_POST,
   NodeType.THREADS_PROFILE,
   NodeType.INSTAGRAM_POST,
-  NodeType.INSTAGRAM_PROFILE
+  NodeType.INSTAGRAM_PROFILE,
+  NodeType.REDDIT_POST,
+  NodeType.REDDIT_PROFILE
 ]);
 
 export type IWebNodeType =
