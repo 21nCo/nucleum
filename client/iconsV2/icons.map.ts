@@ -869,6 +869,16 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "minimize",
     solar: "minimize"
   },
+  "widen-vertical": {
+    phosphor: "arrows-out-line-vertical",
+    lucide: "maximize-2",
+    solar: "maximize"
+  },
+  "shrink-vertical": {
+    phosphor: "arrows-in-line-vertical",
+    lucide: "minimize",
+    solar: "minimize"
+  },
   graph: {
     phosphor: "graph",
     lucide: "activity",

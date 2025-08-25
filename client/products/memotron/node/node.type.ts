@@ -1124,7 +1124,6 @@ const canHaveTracesBase = [
   NodeType.PDF,
   NodeType.WEB_PAGE,
   NodeType.YOUTUBE_VIDEO,
-  NodeType.YOUTUBE_CHANNEL,
   NodeType.KINDLE_BOOK
 ];
 

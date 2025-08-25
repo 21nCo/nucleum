@@ -7,12 +7,15 @@
   const fontFace = new FontFace("SenVariable", `url(${fontUrl})`);
   document.fonts.add(fontFace);
   export let id: string;
+  let classList: string = "";
+  export {classList as class};
 </script>
 
 <div
   {id}
   class={cn(
     "text-base text-fgs1 relative",
+    classList,
     $appearance.theme,
     $appearance.colorScheme.tailwindSelector
   )}
