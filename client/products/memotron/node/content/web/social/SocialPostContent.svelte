@@ -19,6 +19,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
+  import { properCase } from "$lib/shared/utils/text.utils";
 
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -47,11 +48,29 @@
       NodeType.THREADS_POST
     ];
 
-    return supportedWidgets.includes(node.contentType);
+    const supportedWidgetsOnEmbed = [
+      NodeType.TWEET,
+      NodeType.INSTAGRAM_POST,
+      NodeType.MASTODON_POST,
+      NodeType.BLUESKY_POST,
+      NodeType.THREADS_POST
+    ];
+
+    if ($context.isEmbed) {
+      return supportedWidgetsOnEmbed.includes(node.contentType);
+    } else {
+      return supportedWidgets.includes(node.contentType);
+    }
   }
 
   function onError(event: CustomEvent) {
     error = event.detail;
+  }
+  function resolveOpenInButtonLabel() {
+    let suffix = "";
+    if (node.contentType === NodeType.TWEET) suffix = "Twitter";
+    else suffix = properCase(node.contentType.split("_POST")[0]);
+    return `Open on ${suffix}`;
   }
 </script>
 
@@ -59,7 +78,7 @@
   {@html oembedHtml}
 {:else if shouldShowWidget() && node.url && !error}
   <button
-    class="relative w-full h-full px-4 flex justify-center items-center overflow-y-auto"
+    class="relative w-full h-full px-4 flex flex-col justify-center items-center overflow-y-auto"
     on:click={() => {
       if (node.url) appStore.openLink(node.url);
     }}
@@ -68,7 +87,7 @@
       <Icon icon="svg-spinners:3-dots-fade" size={Size.lg} />
     </div>
     <div
-      class="relative w-full h-full flex flex-col items-center max-w-2xl py-6 z-10"
+      class="relative w-9/10 flex-grow flex flex-col items-center max-w-2xl py-6 z-10"
     >
       {#if $context.isEmbed}
         <button class="absolute inset-0 z-20" on:click></button>
@@ -102,6 +121,8 @@
           on:fallback={onError}
         />
       {/if}
+    </div>
+    <div class="flex justify-center items-center w-full gap-4 pt-4 pb-8">
       <Button
         style={ButtonStyle.PLAIN}
         label="View permanent copy"
@@ -111,6 +132,13 @@
           e.stopPropagation();
           onError(new CustomEvent("fallback", { detail: "fallback" }));
         }}
+      />
+      <Button
+        style={ButtonStyle.PLAIN}
+        label={resolveOpenInButtonLabel()}
+        isUnderlined={true}
+        size={Size.sm}
+        on:click
       />
     </div>
   </button>
