@@ -83,7 +83,7 @@
       if (node.url) appStore.openLink(node.url);
     }}
   >
-    <div class="absolute inset-0 flex justify-center items-center z-0">
+    <div class="absolute inset-0 flex justify-center items-center z-0 mb-12">
       <Icon icon="svg-spinners:3-dots-fade" size={Size.lg} />
     </div>
     <div
