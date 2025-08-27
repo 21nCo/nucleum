@@ -88,7 +88,11 @@
           on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
         >
           <span>Search</span>
-          <ShortcutText shortcut={Action.GLOBAL_SEARCH} parentBgIndex={2} />
+          <ShortcutText
+            shortcut={Action.GLOBAL_SEARCH}
+            parentBgIndex={2}
+            isAlwaysShown={true}
+          />
         </button>
       </div>
     {/if}

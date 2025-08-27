@@ -42,6 +42,10 @@ export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
     key: "Space",
     code: "Space"
   },
+  ACTIVATE_LINK_BOX: {
+    key: "l",
+    modifiers: [ModifierKey.META]
+  },
   TOGGLE_FOCUS_SESSION: {
     key: "Space",
     code: "Space",

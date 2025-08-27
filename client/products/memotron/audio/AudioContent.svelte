@@ -84,7 +84,7 @@
       ) {
         jobId = result.jobId as string;
       }
-      logger.info({
+      logger.log({
         at: "AudioContent.svelte - initiateTranscription",
         result,
         jobId

@@ -16,12 +16,15 @@
   import type { IActiveCaptureStore } from "./capture.store";
   import { LinkType } from "../linking/link.type";
   import { CollectionType } from "$lib/client/components/collection/collection.type";
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, tick } from "svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { haptic } from "$lib/client/utils/embed.utils";
+  import { MemotronAction } from "../memotronAction.enum";
+  const dispatch = createEventDispatcher();
   export let captureStore: IActiveCaptureStore;
   export let isHomeContext: boolean = $view.isConstrainedWidth;
-  const dispatch = createEventDispatcher();
+  let linkBoxRef: LinkboxOnCapture;
+
   async function onLink(e: CustomEvent) {
     if (e.detail.id && e.detail.type === CollectionType.TYPED) {
       $captureStore.expandedType = e.detail.id;
@@ -41,6 +44,13 @@
   function onSave() {
     haptic();
     dispatch("save");
+  }
+
+  export async function toggleLinkBox() {
+    toggleLinkExpansion();
+    if (!$captureStore.isLinksExpanded) return;
+    await tick();
+    linkBoxRef?.focus();
   }
 
   function toggleLinkExpansion() {
@@ -92,6 +102,7 @@
             on={$captureStore.isLinksExpanded}
             bgSize={Size.md}
             on:change={toggleLinkExpansion}
+            shortcut={MemotronAction.ACTIVATE_LINK_BOX}
           />
         {:else}
           <Tag
@@ -102,6 +113,7 @@
             isShowExpandFeedbackOnActive={true}
             isRemovable={false}
             on:click={toggleLinkExpansion}
+            shortcut={MemotronAction.ACTIVATE_LINK_BOX}
           />
           <div class="h-full py-2">
             <Divider
@@ -147,6 +159,7 @@
       })}
     >
       <LinkboxOnCapture
+        bind:this={linkBoxRef}
         {captureStore}
         on:linked={onLink}
         expand={$captureStore.expandedType}

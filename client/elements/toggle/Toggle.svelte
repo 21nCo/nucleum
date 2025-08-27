@@ -9,6 +9,8 @@
   import { hoverable } from "$lib/client/actions/hover.action";
   import { tooltip as tooltipAction } from "$lib/client/actions/popover.action";
   import { Placement } from "$lib/client/types/direction.enum";
+  import type { IKeyboardShortcut } from "$lib/client/components/shortcuts/shortcut.type";
+  import ShortcutText from "../text/ShortcutText.svelte";
   const dispatch = createEventDispatcher();
   export let icon: string;
   export let on: boolean = false;
@@ -19,6 +21,7 @@
   export let isPreventFillOnActive: boolean = false;
   export let count: number | undefined = undefined;
   export let bgSize: Size.sm | Size.md | Size.lg = Size.md;
+  export let shortcut: string | IKeyboardShortcut | undefined = undefined;
   let isHovering: boolean = false;
   function onclick() {
     on = !on;
@@ -59,5 +62,8 @@
     <div class="absolute bottom-1 right-1">
       <Badge text={count} size={Size.sm} />
     </div>
+  {/if}
+  {#if shortcut}
+    <ShortcutText {shortcut} {size} {parentBgIndex} />
   {/if}
 </button>

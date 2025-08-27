@@ -120,7 +120,7 @@
 {#if type === CalendarTileIndicatorDisplayType.METRICS}
   <div
     class={cn(
-      "flex flex-col items-start justify-center text-b3 2k:text-b2 w-full h-full",
+      "flex flex-col items-start justify-center text-b3 w-full h-full",
       {
         "text-fgs3": !isActive,
         "gap-1": isActive

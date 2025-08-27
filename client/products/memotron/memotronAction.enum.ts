@@ -33,5 +33,6 @@ export enum MemotronAction {
   IMPORT_APP_DATA = "import-app-data",
   EDIT_CAPTURE_SHORTCUTS = "edit-capture-shortcuts",
   CAPTURE_SETTINGS = "capture-settings",
-  RELATIONS_AS_SETTINGS = "relations-as-settings"
+  RELATIONS_AS_SETTINGS = "relations-as-settings",
+  ACTIVATE_LINK_BOX = "ACTIVATE_LINK_BOX"
 }

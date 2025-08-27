@@ -11,6 +11,8 @@
   import type { IRecordId } from "$lib/client/types/data.type";
   import { Placement } from "$lib/client/types/direction.enum";
   import context from "$lib/client/stores/context.store";
+  import type { IKeyboardShortcut } from "$lib/client/components/shortcuts/shortcut.type";
+  import ShortcutText from "./ShortcutText.svelte";
   const dispatch = createEventDispatcher();
   export let label: string;
   export let parentBgIndex: number = 1;
@@ -19,6 +21,7 @@
   export let isRemovable = true;
   export let isActive = false;
   export let count: number | undefined = undefined;
+  export let shortcut: string | IKeyboardShortcut | undefined = undefined;
   export let id: IRecordId | undefined = undefined;
   export let isShowExpandFeedbackOnActive = false;
   export let expandFeedbackPosition:
@@ -60,6 +63,9 @@
     {label ? truncateString(label, 24) : ""}
     {#if count !== undefined}
       <Badge text={count} size={size === Size.sm ? Size.xs : Size.sm} />
+    {/if}
+    {#if shortcut}
+      <ShortcutText {shortcut} {size} {parentBgIndex} />
     {/if}
     {#if isRemoveIconRenderedInline}
       <button

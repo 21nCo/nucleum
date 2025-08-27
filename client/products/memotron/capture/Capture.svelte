@@ -36,18 +36,21 @@
   import CaptureTopBar from "./CaptureTopBar.svelte";
   import { fly } from "svelte/transition";
   import { Placement } from "$lib/client/types/direction.enum";
+  import ComponentShortcutListener from "$lib/client/components/shortcuts/ComponentShortcutListener.svelte";
+  import { MemotronAction } from "../memotronAction.enum";
   export let captureId: IRecordId = generateResourceId(Resource.capture);
   export let isWindowDnD = false;
   const captureContext = {
     id: captureId
   };
+
   setContext("capture", captureContext);
   let captureStore: IActiveCaptureStore;
   if (captureId) captureStore = ActiveCaptureStore.resolve(captureId);
   isInEditMode.set(true);
   let writerRef: Writer | undefined = undefined;
   let subs: any[] = [];
-
+  let captureTopBarRef: CaptureTopBar | undefined = undefined;
   onMount(async () => {
     const appEventSub = appEvents.subscribe(async (x: IEvent) => {
       if (x.event === GlobalEvent.ENTER && x.value.metaKey === true) {
@@ -118,6 +121,7 @@
       <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">
         {#if !$captureStore.isSaving}
           <CaptureTopBar
+            bind:this={captureTopBarRef}
             {captureStore}
             on:focusBody={() => writerRef?.focus()}
             on:clear={reset}
@@ -206,3 +210,14 @@
 {/if}
 
 <ComponentBaseLayer hasDragAndDrop={!isWindowDnD} />
+<ComponentShortcutListener
+  isAllowFromTextInput={true}
+  shortcuts={[
+    {
+      shortcut: MemotronAction.ACTIVATE_LINK_BOX,
+      callback: () => {
+        captureTopBarRef?.toggleLinkBox();
+      }
+    }
+  ]}
+/>

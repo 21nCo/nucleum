@@ -150,6 +150,7 @@
         <span>Press</span>
         <ShortcutText
           parentBgIndex={1}
+          isAlwaysShown={true}
           shortcut={{
             key: "Enter",
             modifiers: [ModifierKey.SHIFT]
