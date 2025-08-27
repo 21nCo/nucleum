@@ -37,10 +37,19 @@ interface ProductConfig {
   sectionLabel: string;
   displayName: string;
   tagline: string;
+  configurableShortcuts?: string[];
   features: {
     fileUploadAvailable: boolean;
   };
 }
+
+const commonConfigurableShortcuts = [
+  Action.EDIT_MODE,
+  Action.CMD,
+  Action.GLOBAL_SEARCH,
+  Action.GO_BACK,
+  Action.GO_FORWARD
+];
 
 export const products: Record<Product, ProductConfig> = {
   [Product.NUCLEUS]: {
@@ -58,6 +67,11 @@ export const products: Record<Product, ProductConfig> = {
     features: {
       fileUploadAvailable: true
     },
+    configurableShortcuts: [
+      ...commonConfigurableShortcuts,
+      "SAVE_CAPTURE_SHORTCUT",
+      "ACTIVATE_LINK_BOX"
+    ],
     settings: [
       {
         children: [
@@ -111,6 +125,11 @@ export const products: Record<Product, ProductConfig> = {
     features: {
       fileUploadAvailable: true
     },
+    configurableShortcuts: [
+      ...commonConfigurableShortcuts,
+      "SAVE_CAPTURE_SHORTCUT",
+      "ACTIVATE_LINK_BOX"
+    ],
     settings: [
       {
         children: [

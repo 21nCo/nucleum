@@ -37,11 +37,13 @@
   import { fly } from "svelte/transition";
   import { Placement } from "$lib/client/types/direction.enum";
   import ComponentShortcutListener from "$lib/client/components/shortcuts/ComponentShortcutListener.svelte";
+  import { MemotronAction } from "../memotronAction.enum";
   export let captureId: IRecordId = generateResourceId(Resource.capture);
   export let isWindowDnD = false;
   const captureContext = {
     id: captureId
   };
+
   setContext("capture", captureContext);
   let captureStore: IActiveCaptureStore;
   if (captureId) captureStore = ActiveCaptureStore.resolve(captureId);
@@ -212,7 +214,7 @@
   isAllowFromTextInput={true}
   shortcuts={[
     {
-      shortcut: { key: "l", modifiers: [ModifierKey.META, ModifierKey.SHIFT] },
+      shortcut: MemotronAction.ACTIVATE_LINK_BOX,
       callback: () => {
         captureTopBarRef?.toggleLinkBox();
       }

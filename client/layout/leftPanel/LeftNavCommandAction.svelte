@@ -22,7 +22,11 @@
         class="text-fgs2 px-1 py-[1px] rounded-md border border-brs3 hover:bg-bgs3"
         on:click={() => appStore.runAction(Action.CMD)}
       >
-        <ShortcutText shortcut={Action.CMD} isPlainText={true} />
+        <ShortcutText
+          shortcut={Action.CMD}
+          isPlainText={true}
+          isAlwaysShown={true}
+        />
       </button> for cmd bar
     </div>
   {/if}

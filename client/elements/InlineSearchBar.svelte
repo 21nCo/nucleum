@@ -3,7 +3,6 @@
   import TextInput from "./input/TextInput.svelte";
   import { Size } from "$lib/client/types/size.enum";
   import { createEventDispatcher, onMount, tick } from "svelte";
-  import { uiStateDerived } from "../stores/uiState/uiState.store";
   import ShortcutText from "./text/ShortcutText.svelte";
   import { GlobalEvent } from "../types/event.enum";
   import { appEvents } from "../stores/notification.store";
@@ -85,14 +84,12 @@
     on:enter
   >
     <slot>
-      {#if $uiStateDerived.isShowHotKeyHints}
-        <span>
-          <ShortcutText
-            shortcut={GlobalEvent.ACTIVATE_SEARCH_BOX}
-            {parentBgIndex}
-          />
-        </span>
-      {/if}
+      <span>
+        <ShortcutText
+          shortcut={GlobalEvent.ACTIVATE_SEARCH_BOX}
+          {parentBgIndex}
+        />
+      </span>
     </slot>
   </TextInput>
 </div>

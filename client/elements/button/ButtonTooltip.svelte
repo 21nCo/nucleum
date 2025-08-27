@@ -2,9 +2,6 @@
   import { Size } from "$lib/client/types/size.enum";
   import ShortcutText from "../text/ShortcutText.svelte";
   import type { IKeyboardShortcut } from "$lib/client/components/shortcuts/shortcut.type";
-  import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
-  import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
   import { fade } from "svelte/transition";
 
   export let tooltip: string;
@@ -20,7 +17,7 @@
   <div class="whitespace-nowrap">
     {tooltip}
   </div>
-  {#if $uiStateDerived?.isShowHotKeyHints && shortcut && $context.embed !== Embed.HANDSET}
+  {#if shortcut}
     <div class="border border-brs3 rounded-md">
       <ShortcutText {shortcut} {size} {parentBgIndex} isPlainText={true} />
     </div>

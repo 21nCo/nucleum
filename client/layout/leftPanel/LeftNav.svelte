@@ -46,6 +46,7 @@
                 <ShortcutText
                   shortcut={Action.GLOBAL_SEARCH}
                   parentBgIndex={2}
+                  isAlwaysShown={true}
                 />
               </button>
             </div>

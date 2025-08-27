@@ -19,6 +19,7 @@
   import { createEventDispatcher } from "svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { haptic } from "$lib/client/utils/embed.utils";
+  import { MemotronAction } from "../memotronAction.enum";
   const dispatch = createEventDispatcher();
   export let captureStore: IActiveCaptureStore;
   export let isHomeContext: boolean = $view.isConstrainedWidth;
@@ -102,6 +103,7 @@
             on={$captureStore.isLinksExpanded}
             bgSize={Size.md}
             on:change={toggleLinkExpansion}
+            shortcut={MemotronAction.ACTIVATE_LINK_BOX}
           />
         {:else}
           <Tag
@@ -112,6 +114,7 @@
             isShowExpandFeedbackOnActive={true}
             isRemovable={false}
             on:click={toggleLinkExpansion}
+            shortcut={MemotronAction.ACTIVATE_LINK_BOX}
           />
           <div class="h-full py-2">
             <Divider

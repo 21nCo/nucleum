@@ -14,7 +14,6 @@
   import type { IEvent } from "$lib/client/types/event.type";
   import { appEvents } from "$lib/client/stores/notification.store";
   import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
   import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
   const dispatch = createEventDispatcher();
   export let resource: Resource;
@@ -62,14 +61,12 @@
       placeholder={"Search " + resource + "s"}
     />
     <div class="flex items-center gap-2">
-      {#if $uiStateDerived.isShowHotKeyHints}
-        <span>
-          <ShortcutText
-            shortcut={GlobalEvent.ACTIVATE_SEARCH_BOX}
-            parentBgIndex={0}
-          />
-        </span>
-      {/if}
+      <span>
+        <ShortcutText
+          shortcut={GlobalEvent.ACTIVATE_SEARCH_BOX}
+          parentBgIndex={0}
+        />
+      </span>
       {#if dev_enableSemanticSearch && $userPreferences.localAI.semanticSearch && (selectedSubType === "nodular_markdown" || selectedSubType === "all")}
         <SwitchInput
           label={{ label: "Semantic", orientation: Orientation.Horizontal }}
