@@ -19,9 +19,11 @@
   import { createEventDispatcher } from "svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { haptic } from "$lib/client/utils/embed.utils";
+  const dispatch = createEventDispatcher();
   export let captureStore: IActiveCaptureStore;
   export let isHomeContext: boolean = $view.isConstrainedWidth;
-  const dispatch = createEventDispatcher();
+  let linkBoxRef: LinkboxOnCapture;
+
   async function onLink(e: CustomEvent) {
     if (e.detail.id && e.detail.type === CollectionType.TYPED) {
       $captureStore.expandedType = e.detail.id;
@@ -41,6 +43,14 @@
   function onSave() {
     haptic();
     dispatch("save");
+  }
+
+  export function toggleLinkBox() {
+    toggleLinkExpansion();
+    if (!$captureStore.isLinksExpanded) return;
+    setTimeout(() => {
+      linkBoxRef?.focus();
+    }, 100);
   }
 
   function toggleLinkExpansion() {
@@ -147,6 +157,7 @@
       })}
     >
       <LinkboxOnCapture
+        bind:this={linkBoxRef}
         {captureStore}
         on:linked={onLink}
         expand={$captureStore.expandedType}

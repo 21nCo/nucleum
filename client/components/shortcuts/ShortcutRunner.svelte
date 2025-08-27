@@ -1,6 +1,9 @@
 <script lang="ts">
   import { appStore } from "$lib/client/stores/app.store";
-  import { isTextElement } from "$lib/client/utils/browser.utils";
+  import {
+    hasActivePopovers,
+    isTextElement
+  } from "$lib/client/utils/browser.utils";
   import { keyboardShortcuts } from "./shortcuts.store";
   import { appEvents } from "$lib/client/stores/notification.store";
   import { GlobalEvent } from "$lib/client/types/event.enum";
@@ -33,9 +36,11 @@
   const shortcutListener = (event: KeyboardEvent) => {
     if ($context.embed === Embed.HANDSET) return;
     const target = event.target || event.srcElement;
+    const isPopoverActive = hasActivePopovers();
     const isTextInputSource = isTextElement(target);
     const isSystemShortcut = checkIfSystemShortcut(event);
     if (isSystemShortcut) {
+      if (isPopoverActive && event.key === KeyboardKey.ESCAPE) return;
       appEvents.publish(event.key.toString() as GlobalEvent, event);
       return;
     }

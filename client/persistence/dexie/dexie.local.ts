@@ -244,18 +244,28 @@ export class DexiePersistence implements IPersistence {
           return Promise.reject(new Error("Record id is required for merge"));
         }
         if (this.searchIndices.has(resource)) {
-          const searchIndex = this.searchIndices.get(resource);
-          if (searchIndex) {
-            const text = this.extractFlatText(params.record, resource);
-            if (params.record.id && text) {
-              try {
-                searchIndex.index.updateAsync(params.record.id, text);
-                searchIndex.contextualIndex.updateAsync(params.record.id, text);
-              } catch (error) {
-                searchIndex.index.addAsync(params.record.id, text);
-                searchIndex.contextualIndex.addAsync(params.record.id, text);
+          try {
+            const searchIndex = this.searchIndices.get(resource);
+            if (searchIndex) {
+              const text = this.extractFlatText(params.record, resource);
+              if (params.record.id && text) {
+                try {
+                  searchIndex.index.updateAsync(params.record.id, text);
+                  searchIndex.contextualIndex.updateAsync(
+                    params.record.id,
+                    text
+                  );
+                } catch (error) {
+                  searchIndex.index.addAsync(params.record.id, text);
+                  searchIndex.contextualIndex.addAsync(params.record.id, text);
+                }
               }
             }
+          } catch (error) {
+            logger.error({
+              at: "DexiePersistence.mutation merge - searchIndex update error",
+              error
+            });
           }
         }
         return this.merge(resource, params.record.id, params.record);

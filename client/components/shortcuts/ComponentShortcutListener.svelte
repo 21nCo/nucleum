@@ -2,6 +2,7 @@
   import { isTextElement } from "$lib/client/utils/browser.utils";
   import type { IKeyboardShortcut } from "./shortcut.type";
   import { keyboardShortcuts } from "./shortcuts.store";
+  export let isAllowFromTextInput: boolean = false;
   export let shortcuts: {
     shortcut: string | IKeyboardShortcut;
     callback: () => void;
@@ -9,7 +10,7 @@
 
   function shortcutListener(event: KeyboardEvent) {
     const isTextInputSource = isTextElement(event.target);
-    if (isTextInputSource) return;
+    if (isTextInputSource && !isAllowFromTextInput) return;
     const result = shortcuts.find((s) =>
       keyboardShortcuts.checkShortcut(event, s.shortcut)
     );

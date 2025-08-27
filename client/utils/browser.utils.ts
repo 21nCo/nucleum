@@ -238,6 +238,14 @@ export function isTextElement(target: EventTarget | null) {
   );
 }
 
+export function hasActivePopovers(): boolean {
+  const popovers = document.querySelectorAll("div.popover");
+  return Array.from(popovers).some((popover) => {
+    const element = popover as HTMLElement;
+    return getComputedStyle(element).display !== "none";
+  });
+}
+
 /**
  *
  *
