@@ -264,6 +264,7 @@ export class DexiePersistence implements IPersistence {
           } catch (error) {
             logger.error({
               at: "DexiePersistence.mutation merge - searchIndex update error",
+              id: params.record.id,
               error
             });
           }

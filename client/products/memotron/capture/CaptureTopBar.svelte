@@ -16,7 +16,7 @@
   import type { IActiveCaptureStore } from "./capture.store";
   import { LinkType } from "../linking/link.type";
   import { CollectionType } from "$lib/client/components/collection/collection.type";
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, tick } from "svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { haptic } from "$lib/client/utils/embed.utils";
   import { MemotronAction } from "../memotronAction.enum";
@@ -46,12 +46,11 @@
     dispatch("save");
   }
 
-  export function toggleLinkBox() {
+  export async function toggleLinkBox() {
     toggleLinkExpansion();
     if (!$captureStore.isLinksExpanded) return;
-    setTimeout(() => {
-      linkBoxRef?.focus();
-    }, 100);
+    await tick();
+    linkBoxRef?.focus();
   }
 
   function toggleLinkExpansion() {

@@ -525,7 +525,12 @@
         }
       }
     } catch (e) {
-      logger.error({ at: "handleMessageFromParent", error: e, event });
+      logger.error({
+        at: "handleMessageFromParent",
+        error: e,
+        eventType: event?.data?.type,
+        origin: event?.origin
+      });
     }
   }
 
