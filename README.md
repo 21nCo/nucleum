@@ -13,32 +13,32 @@
 </div>
 
 # Tools
-The below is the list of tools built using Tidigit library.
+Below is the list of tools built using the Tidigit library.
 
-| Name | Website | Description | Topics
-|------|---------|-------------|-------|
-| Memotron | [memotron.app](https://memotron.app) | **Your memory atlas**, a tool for managing your knowledge. | PKM, Note taking, Knowledge management. |
-| Pointron | [pointron.app](https://pointron.app) | **Your focus haven**, a tool for tracking goals and managing your time. | Focus, Time management |
-| Nucleus | [nucleus.to](https://nucleus.to) | **Your digital harmony**, a tool for managing your digital life. This is a super app which is made by combining all the tools listed above. | Digital life, Personal productivity |
+| Name     | Website                          | Description                                                                 | Topics                                    |
+|----------|----------------------------------|-----------------------------------------------------------------------------|-------------------------------------------|
+| Memotron | [memotron.app](https://memotron.app) | **Your memory atlas**, a tool for managing your knowledge.                  | PKM, note‑taking, knowledge management    |
+| Pointron | [pointron.app](https://pointron.app) | **Your focus haven**, a tool for tracking goals and managing your time.     | Focus, time management                    |
+| Nucleus  | [nucleus.to](https://nucleus.to)     | **Your digital harmony**, a super app that combines all the tools above.    | Digital life, personal productivity       |
 
-All of the above tools are intended for personal use and lacks collaboration, sharing, and other team features.
+All of the above tools are intended for personal use and lack collaboration, sharing, and other team features.
 
 *More tools coming soon...*
 
 
 # Self hosting
-At the moment, only frontend app can be self-hosted on your own server. Therefore, it is not possible to sync your data between devices using self-hosted app. To self-host and access the offline-only frontend app using your own web URL - Please follow the instructions below.
+Currently, only the frontend app can be self‑hosted on your own server. This means you cannot sync data between devices when self‑hosting. To deploy the offline‑only frontend at your own URL, follow these steps.
 
 1. Clone/Fork the [client](https://gitlab.com/21nOrg/client) repository
 2. Set Environment Variables. Use any of `memotron`, `pointron`, or `nucleus` for `VITE_PRODUCT`
-```
+```bash
 VITE_PRODUCT=memotron
 VITE_STATIC_URL=https://cdn.21n.co
 ```
-3. Deploy to the provider of your choice
+1. Deploy to the provider of your choice
 
 # Contributing
-We welcome contributions! Please see the [CONTRIBUTING](CONTRIBUTING.md) file for details.
+We welcome contributions! Please see the [CONTRIBUTING](https://github.com/21nOrg/tidigit?tab=contributing-ov-file) file for details.
 
 The project is built with [SvelteKit](https://kit.svelte.dev/) and [TailwindCSS](https://tailwindcss.com/) for the frontend client, and [Node.js](https://nodejs.org/) for the backend.
 

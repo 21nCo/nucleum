@@ -317,7 +317,7 @@ export const products: Record<Product, ProductConfig> = {
   }
 };
 
-export const product = import.meta.env.VITE_PRODUCT;
+export const product = import.meta.env.VITE_PRODUCT || Product.NUCLEUS;
 
 export const resolveProductConfig = (
   productOverride?: Product

@@ -5,6 +5,7 @@
   import view from "$lib/client/stores/view.store";
   import LibraryRecordsPane from "./LibraryRecordsPane.svelte";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import { isValidEnumValue } from "$lib/shared/utils/text.utils";
 
   export let defaultResource: Resource = Resource.node;
 
@@ -17,8 +18,9 @@
     const pageSub = page.subscribe(async (p) => {
       const resourceParam = p.url.searchParams.get(AppSearchParam.RESOURCE);
       if (resourceParam && resourceParam !== selectedResource) {
-        selectedResource =
-          (resourceParam as Resource) ?? selectedResource ?? Resource.node;
+        selectedResource = isValidEnumValue(resourceParam, Resource)
+          ? (resourceParam as Resource)
+          : (selectedResource ?? Resource.node);
       }
       if (!resourceParam && $view.isConstrainedWidth) {
         selectedResource = Resource.unknown;

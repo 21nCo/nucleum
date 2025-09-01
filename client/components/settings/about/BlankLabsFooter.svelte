@@ -9,7 +9,7 @@
     {isComingSoon ? "In works at" : "Built at"}
   </span>
 
-  <a href="https://21n.org" target="_blank">
+  <a href="https://21n.org" target="_blank" rel="noopener noreferrer">
     <div class="flex items-center gap-2">
       <!-- <BlankLogo size={Size.xs} fill="fgs2" /> -->
       <A21nLogo size={Size.xs} fill="fgs2" />

@@ -32,7 +32,8 @@
     "pointron.app",
     "nucleus.to"
   ];
-  let isSelfHosted = resolveIfSelfHostedInstance();
+  let isSelfHosted =
+    typeof window !== "undefined" ? resolveIfSelfHostedInstance() : false;
   let messageParam = $page.url.searchParams.get(AppSearchParam.MSG);
   $: productName = properCase($appStore.product);
   if (messageParam) {
@@ -67,7 +68,7 @@
 
   function resolveIfSelfHostedInstance() {
     const host = window.location.hostname;
-    return !managedSyncHosts.some((h) => host.endsWith(h));
+    return !managedSyncHosts.some((h) => host === h || host.endsWith(`.${h}`));
   }
 
   async function handleMessageFromParent(event: MessageEvent) {

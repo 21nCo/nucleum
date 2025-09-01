@@ -29,12 +29,12 @@
   export let isActive: boolean = false;
   export let parentBgIndex: number = 1;
   export let isShowCount: boolean = false;
-  let isConstrainedWidth = $view.isConstrainedWidth;
   let isHovering: boolean = false;
   let count: number = 0;
   let popRef: HTMLButtonElement;
   const resource = item.value as Resource;
   const cacheKey = resourceCacheKey(resource, CacheKey.COUNT);
+  $: isConstrainedWidth = $view.isConstrainedWidth;
 
   refreshCount();
 
