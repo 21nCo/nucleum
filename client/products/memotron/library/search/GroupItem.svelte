@@ -1,0 +1,111 @@
+<script lang="ts">
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import Text from "$lib/client/elements/text/Text.svelte";
+  import { TextStyle } from "$lib/client/types/text.enum";
+  import { Size } from "$lib/client/types/size.enum";
+  import LinkSearchResultItem from "../../common/linkbox/LinkSearchResultItem.svelte";
+  import SearchResultsPopover from "$lib/client/elements/input/SearchResultsPopover.svelte";
+  import { createEventDispatcher } from "svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import Badge from "$lib/client/elements/text/Badge.svelte";
+  import { isValidNumber } from "$lib/shared/utils/text.utils";
+  const dispatch = createEventDispatcher();
+  export let group: any;
+  export let isActive: boolean = false;
+  export let isDefaultState: boolean = false;
+  export let searchCallback: (query: string) => void;
+  let searchResultsPopover: SearchResultsPopover;
+  let count: number | undefined = undefined;
+  export function keydown(event: KeyboardEvent) {
+    searchResultsPopover?.keydown(event);
+  }
+
+  export function keyup(event: KeyboardEvent) {
+    searchResultsPopover?.keyup(event);
+  }
+
+  export function search(query?: string) {
+    searchResultsPopover?.search(query);
+  }
+
+  export function resetSelectedIndex() {
+    searchResultsPopover?.resetSelectedIndex();
+  }
+</script>
+
+<div
+  class={cn(
+    "flex flex-col rounded-md border bg-bgs1 min-h-96 grow overflow-y-auto",
+    {
+      "border-brs3": isActive,
+      "border-transparent": !isActive
+    }
+  )}
+>
+  <div
+    class={cn(
+      "flex items-center justify-between px-3 py-2 border-b min-h-11 h-11",
+      {
+        "border-brs2 bg-aps3": isActive,
+        "border-brs1": !isActive
+      }
+    )}
+  >
+    <div
+      class={cn("flex items-center gap-2", {
+        "text-fgs3": !isActive,
+        "text-aps1": isActive
+      })}
+    >
+      <Icon
+        icon={group.icon}
+        size={Size.sm}
+        class={cn({
+          "text-fgs2": !isActive,
+          "text-aps1": isActive
+        })}
+        isFilled={isActive}
+      />
+      <div>
+        {group.label}
+      </div>
+      {#if !isDefaultState && count !== undefined}
+        <Badge text={count} />
+      {/if}
+    </div>
+    {#if count && count >= 5}
+      <Button
+        icon="expand"
+        tooltip="Expand results"
+        type={isActive ? ButtonVariant.PRIMARY : ButtonVariant.SECONDARY}
+        style={isActive ? ButtonStyle.OUTLINED : ButtonStyle.DEFAULT}
+        size={isActive ? Size.sm : Size.md}
+        on:click={() => dispatch("expand", { group })}
+      />
+    {/if}
+  </div>
+  <div class="flex-grow w-full pb-2">
+    <SearchResultsPopover
+      bind:this={searchResultsPopover}
+      isPreventAutoSelectZeroIndex={!isActive}
+      {searchCallback}
+      emptyStateLabel="No results found"
+      searchResultComponent={LinkSearchResultItem}
+      isInlineContext={true}
+      isAlwaysShowSearchFeedback={true}
+      on:count={(e) => {
+        if (isValidNumber(e?.detail?.count)) {
+          count = +e?.detail?.count;
+        }
+      }}
+      on:select={(e) => {
+        dispatch("select", { ...e.detail, group });
+      }}
+      on:empty-enter
+      on:reset
+      on:hide
+    />
+  </div>
+</div>

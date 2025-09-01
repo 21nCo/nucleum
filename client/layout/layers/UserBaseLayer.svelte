@@ -19,10 +19,6 @@
   import Intercom from "./Intercom.svelte";
   import SyncLayer from "./SyncLayer.svelte";
   import {
-    localCacheableStores,
-    remoteOnlyStores
-  } from "$local/localStoresMap";
-  import {
     dispatchCustomEvent,
     isExtensionEnvironment,
     safeRequestIdleCallback
@@ -70,7 +66,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import { DexiePersistence } from "$lib/client/persistence/dexie/dexie.local";
   import { parse } from "$lib/shared/utils/json.utils";
-
+  import { productData } from "$lib/client/products/product.resolver";
   const loadingMessages = {
     cloneUp: {
       message: "Syncing your local data with the cloud...",
@@ -341,10 +337,10 @@
     const initParams = {
       ...params,
       appVersion: $appStore.version + "." + $appStore.build,
-      remoteOnlyStores: [...remoteOnlyStores],
+      remoteOnlyStores: [...productData.stores.remoteOnlyStores],
       product: $appStore.product
     };
-    const stores = [...cacheableStores, ...localCacheableStores];
+    const stores = [...productData.stores.cacheableStores, ...cacheableStores];
     const provider: PersistenceProvider = PersistenceProvider.DEXIE;
     return initFlux(stores, provider, resolveLocalPersistence(), initParams);
 

@@ -12,8 +12,10 @@ import { fileStore } from "$lib/client/components/files/file.store";
 import { linkTagStore } from "$lib/client/products/memotron/linking/link.store";
 import { accessLogStore } from "$lib/client/components/accessLogging/accesslog.store";
 import { markdownSettings } from "$lib/client/components/markdown/markdown.settings";
+import { memotronActions } from "./memotron.actions";
+import MemotronBaseLayer from "./base/MemotronBaseLayer.svelte";
 
-export const memotronCacheableStores: IStore[] = [
+const memotronCacheableStores: IStore[] = [
   nodeStore,
   collectionStore,
   propertyStore,
@@ -25,7 +27,16 @@ export const memotronCacheableStores: IStore[] = [
   markdownSettings
 ];
 
-export const memotronRemoteOnlyStores: IStore[] = [
+const memotronRemoteOnlyStores: IStore[] = [
   vectorResourceStore,
   accessLogStore
 ];
+
+export default {
+  actions: memotronActions,
+  base: MemotronBaseLayer,
+  stores: {
+    cacheableStores: memotronCacheableStores,
+    remoteOnlyStores: memotronRemoteOnlyStores
+  }
+};

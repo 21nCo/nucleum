@@ -1,12 +1,12 @@
 <script lang="ts">
   import AuthGuard from "$lib/client/layout/layers/AuthGuard.svelte";
-  import ProductLayer from "$local/LocalBaseLayer.svelte";
+  import { productData } from "$lib/client/products/product.resolver";
 </script>
 
 <AuthGuard let:isLoggedIn>
   {#if isLoggedIn}
-    <ProductLayer>
+    <svelte:component this={productData.base}>
       <slot />
-    </ProductLayer>
+    </svelte:component>
   {/if}
 </AuthGuard>

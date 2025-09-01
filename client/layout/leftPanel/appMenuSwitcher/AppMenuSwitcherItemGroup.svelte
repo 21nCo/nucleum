@@ -4,6 +4,7 @@
   import AppMenuSwitcherItem from "./AppMenuSwitcherItem.svelte";
   import type { IAction } from "$lib/client/types/action.type";
   import { createEventDispatcher } from "svelte";
+  import { appStore } from "$lib/client/stores/app.store";
   const dispatch = createEventDispatcher();
   export let items: IAction[];
   export let layoutContext: LayoutContext;
@@ -13,7 +14,10 @@
 <div
   class={cn("flex flex-col", {
     "gap-2 items-center": layoutContext === LayoutContext.THIN_WITH_LABEL,
-    "gap-1": layoutContext !== LayoutContext.THIN_WITH_LABEL
+    "gap-1": layoutContext !== LayoutContext.THIN_WITH_LABEL,
+    "px-1":
+      $appStore.currentComponent?.panel &&
+      layoutContext !== LayoutContext.THIN_WITH_LABEL
   })}
 >
   {#each items as item (item.action)}

@@ -5,9 +5,9 @@
   const isDev = import.meta.env.DEV;
   function resolveLibraryItems() {
     const items = [
+      Resource.collection,
       Resource.goal,
       Resource.node,
-      Resource.collection,
       Resource.relation
     ];
     if (isDev) {

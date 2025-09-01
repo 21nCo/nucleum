@@ -34,6 +34,7 @@ import MemotronHomeOnMobile from "./home/MemotronHomeOnMobile.svelte";
 import EditCaptureShortcuts from "./capture/EditCaptureShortcuts.svelte";
 import CaptureSettings from "./capture/CaptureSettings.svelte";
 import LinkTagsControlPanel from "./linking/LinkTagsControlPanel.svelte";
+import LibraryPanelContentResolver from "$lib/client/components/library/LibraryPanelContentResolver.svelte";
 
 export const memotronActions: IAction[] = [
   {
@@ -156,8 +157,12 @@ export const memotronActions: IAction[] = [
     action: MemotronAction.LIBRARY,
     label: "Library",
     icon: "stack",
-    component: MemotronLibrary,
+    component: LibraryPanelContentResolver,
+    panel: MemotronLibrary,
     type: ActionType.PAGE,
+    componentParams: {
+      defaultResource: Resource.node
+    },
     modalParams: {
       layout: {
         size: Size.lg,

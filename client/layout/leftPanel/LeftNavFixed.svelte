@@ -38,73 +38,86 @@
 </script>
 
 <div
-  class={cn("leftnav flex justify-center items-center h-full", {
-    "w-[5.5rem] min-w-[5.5rem]": !isHideMenuLabels,
-    "w-[3.5rem] min-w-[3.5rem]": isHideMenuLabels,
-    "ml-2": isRounded,
-    "border--r border-r-brs2": !isRounded
-  })}
+  class={cn(
+    "leftnav flex justify-center items-center h-full",
+    !$$slots.panel && {
+      // "w-[5.5rem] min-w-[5.5rem]": !isHideMenuLabels,
+      // "w-[3.5rem] min-w-[3.5rem]": isHideMenuLabels,
+      "ml-2": isRounded,
+      "border--r border-r-brs2": !isRounded
+    }
+  )}
 >
   <div
-    class={cn(
-      "flex flex-col items-center justify-between overflow-auto w-full bg-bgs2",
-      {
-        "rounded-lg border-none": isRounded,
-        "border-r border-bgs4": !isRounded
-      }
-    )}
-    style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
+    class={cn("flex items-center justify-center h-full w-full bg-bgs2", {
+      "rounded-lg border-none": isRounded,
+      "border-r border-bgs4": !isRounded
+    })}
   >
-    <div class="w-full flex flex-col gap-8 overflow-auto">
-      <div
-        class="w-full flex justify-center opacity-30 hover:opacity--100 transition-opacity duration-200 py-2"
-      >
-        <!-- <Button
+    <div
+      class={cn(
+        "flex flex-col items-center justify-between overflow-auto bg-bgs2",
+        {
+          "w-[5.5rem] min-w-[5.5rem]": !isHideMenuLabels,
+          "w-[3.5rem] min-w-[3.5rem]": isHideMenuLabels
+          // "rounded-lg border-none": isRounded,
+          // "border-r border-bgs4": !isRounded
+        }
+      )}
+      style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
+    >
+      <div class="w-full flex flex-col gap-8 overflow-auto">
+        <div
+          class="w-full flex justify-center opacity-30 hover:opacity--100 transition-opacity duration-200 py-2"
+        >
+          <!-- <Button
           icon="search"
           parentBgIndex={2}
           size={Size.lg}
           on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
         /> -->
-        <SubAtomLogo size={isHideMenuLabels ? Size.sm : Size.md} />
-      </div>
-      <!-- <TrailLeftIndicator orientation={Orientation.Vertical} /> -->
-      <div
-        class={cn("flex flex-col gap-3 items-center w-full overflow-auto", {
-          "p-2": !isHideMenuLabels
-        })}
-      >
-        <AppMenuSwitcher
-          parentBackgroundIndex={1}
-          layoutContext={LayoutContext.THIN_WITH_LABEL}
-        />
+          <SubAtomLogo size={isHideMenuLabels ? Size.sm : Size.md} />
+        </div>
+        <!-- <TrailLeftIndicator orientation={Orientation.Vertical} /> -->
         <div
-          class="flex justify-center items-center w-full mt-2"
-          use:popover={{
-            content: LeftNavSettingsPopover,
-            placement: Placement.Right,
-            triggerMethod: [PopoverTriggerMethod.CLICK],
-            offsetInPx: 10
-          }}
-          use:tooltip={{
-            text: "Menu settings"
-          }}
+          class={cn("flex flex-col gap-3 items-center w-full overflow-auto", {
+            "p-2": !isHideMenuLabels
+          })}
         >
-          <button
-            class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-bgs3 transition-colors duration-200"
+          <AppMenuSwitcher
+            parentBackgroundIndex={1}
+            layoutContext={LayoutContext.THIN_WITH_LABEL}
+          />
+          <div
+            class="flex justify-center items-center w-full mt-2"
+            use:popover={{
+              content: LeftNavSettingsPopover,
+              placement: Placement.Right,
+              triggerMethod: [PopoverTriggerMethod.CLICK],
+              offsetInPx: 10
+            }}
+            use:tooltip={{
+              text: "Menu settings"
+            }}
           >
-            <Icon
-              icon="more-outline-horizontal"
-              size={Size.md}
-              class="text-fgs3"
-            />
-          </button>
+            <button
+              class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-bgs3 transition-colors duration-200"
+            >
+              <Icon
+                icon="more-outline-horizontal"
+                size={Size.md}
+                class="text-fgs3"
+              />
+            </button>
+          </div>
         </div>
       </div>
+      <div class="w-full flex flex-col gap-2 items-center">
+        <LeftNavOfflineStatus isInThinMode={true} />
+        <!-- <LeftNavCommandAction isInThinMode={true} size={Size.lg} /> -->
+        <LeftBottomBar isInThinMode={true} {isRounded} size={Size.lg} />
+      </div>
     </div>
-    <div class="w-full flex flex-col gap-2 items-center">
-      <LeftNavOfflineStatus isInThinMode={true} />
-      <!-- <LeftNavCommandAction isInThinMode={true} size={Size.lg} /> -->
-      <LeftBottomBar isInThinMode={true} {isRounded} size={Size.lg} />
-    </div>
+    <slot name="panel" />
   </div>
 </div>

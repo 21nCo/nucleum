@@ -54,7 +54,7 @@
 </script>
 
 {#if $appStore.product === Product.NUCLEUS}
-  <div class="flex flex-col gap-6 w-full overflow-y-auto">
+  <div class="flex flex-col gap-8 w-full overflow-y-auto">
     {#each sections as section (section)}
       {@const items = resolveResourcesForSection(section)}
       <div class="flex flex-col gap-2">
@@ -64,7 +64,7 @@
           </div>
         {/if}
         <div
-          class="w-full grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] mo:mb-1 gap-3"
+          class="w-full grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] mo:mb-1 gap-2"
         >
           {#each items as item (item.value)}
             <ResourceSwitcherItem
@@ -86,7 +86,7 @@
   </div>
 {:else}
   <div
-    class="w-full grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] mo:mb-1 gap-3"
+    class="w-full grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] mo:mb-1 gap-3"
   >
     {#each options as item (item.value)}
       <ResourceSwitcherItem

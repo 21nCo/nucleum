@@ -392,7 +392,7 @@ function initAppStore(seed: IAppStore) {
         postDataToParent(EmbedDataMessage.LINK, url);
       }
     } else {
-      let win = window?.open(url, "_blank");
+      let win = window?.open(url, "_blank", "noopener,noreferrer");
       if (win) {
         win.focus();
       }

@@ -1,0 +1,91 @@
+<script lang="ts">
+  import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import context from "$lib/client/stores/context.store";
+  import { Embed } from "$lib/client/types/context.type";
+  import { KeyboardKey } from "$lib/client/types/keyboard.type";
+  import GroupItem from "./GroupItem.svelte";
+
+  export let searchCallback: (query: string, resourceType: Resource) => void;
+  export let groups: any[] = [];
+  export let isDefaultState: boolean = false;
+  let groupRefs: GroupItem[] = [];
+  let activeGroupIndex: number = 0;
+
+  const groupSwitcherKeys = new Set([
+    KeyboardKey.ARROW_LEFT,
+    KeyboardKey.ARROW_RIGHT
+  ]);
+  const resultNavigatorKeys = new Set([
+    KeyboardKey.ARROW_UP,
+    KeyboardKey.ARROW_DOWN
+  ]);
+
+  export function keydown(event: KeyboardEvent) {
+    if (groupSwitcherKeys.has(event.key as KeyboardKey)) {
+      if (!event.metaKey) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const prevVal = activeGroupIndex;
+      if (event.key === KeyboardKey.ARROW_LEFT) {
+        activeGroupIndex = Math.max(0, activeGroupIndex - 1);
+        if (prevVal === activeGroupIndex) {
+          activeGroupIndex = groups.length - 1;
+        }
+      } else {
+        activeGroupIndex = Math.min(groups.length - 1, activeGroupIndex + 1);
+        if (prevVal === activeGroupIndex) {
+          activeGroupIndex = 0;
+        }
+      }
+      setTimeout(() => {
+        groupRefs[prevVal]?.resetSelectedIndex();
+      }, 100);
+      return;
+    }
+    if (resultNavigatorKeys.has(event.key as KeyboardKey)) {
+      event.preventDefault();
+      event.stopPropagation();
+      const activeGroup = groupRefs[activeGroupIndex];
+      activeGroup.keydown(event);
+      return;
+    }
+    groupRefs.forEach((group) => group.keydown(event));
+  }
+
+  export function keyup(event: KeyboardEvent) {
+    if (groupSwitcherKeys.has(event.key as KeyboardKey)) return;
+    if (resultNavigatorKeys.has(event.key as KeyboardKey)) {
+      event.preventDefault();
+      event.stopPropagation();
+      const activeGroup = groupRefs[activeGroupIndex];
+      activeGroup.keyup(event);
+      return;
+    }
+    if (event.key === KeyboardKey.ENTER) {
+      const activeGroup = groupRefs[activeGroupIndex];
+      activeGroup.keyup(event);
+      return;
+    }
+    groupRefs.forEach((group) => group.keyup(event));
+  }
+
+  export function search(query?: string) {
+    groupRefs.forEach((group) => group.search(query));
+  }
+</script>
+
+<div class="grid grid-cols-2 cw:grid-cols-1 gap-2 w-full flex-grow">
+  {#each groups as group, index}
+    <GroupItem
+      bind:this={groupRefs[index]}
+      isActive={activeGroupIndex === index && $context.embed !== Embed.HANDSET}
+      {isDefaultState}
+      {group}
+      searchCallback={(query) => {
+        return searchCallback(query, group.value);
+      }}
+      on:expand
+      on:select
+    />
+  {/each}
+</div>
