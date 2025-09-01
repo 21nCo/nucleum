@@ -30,7 +30,7 @@
     "21n.dev",
     "memotron.app",
     "pointron.app",
-    "nucleus.to"
+    "nucleus.to",
   ];
   let isSelfHosted =
     typeof window !== "undefined" ? resolveIfSelfHostedInstance() : false;
@@ -77,7 +77,7 @@
         const parsed = parse(event.data.payload);
         console.log({
           at: "Signup - handleMessageFromParent - SWIFT_MESSAGE",
-          parsed
+          parsed,
         });
         if (parsed.oauth) {
           currentProgress = undefined;
@@ -130,7 +130,7 @@
           <div
             class="w-full flex flex-col justify-center items-center cw:h-fit h-40"
           >
-            <SubAtomLogo />
+            <SubAtomLogo subatom={$appStore.product} />
             <div class="font-medium">
               {properCase($appStore.product)}
             </div>
