@@ -29,13 +29,13 @@ All of the above tools are intended for personal use and lack collaboration, sha
 # Self hosting
 Currently, only the frontend app can be self‑hosted on your own server. This means you cannot sync data between devices when self‑hosting. To deploy the offline‑only frontend at your own URL, follow these steps.
 
-1. Clone/Fork the [client](https://gitlab.com/21nOrg/client) repository
+1. Clone/Fork the [client](https://github.com/21nOrg/client) repository
 2. Set Environment Variables. Use any of `memotron`, `pointron`, or `nucleus` for `VITE_PRODUCT`
 ```bash
 VITE_PRODUCT=memotron
 VITE_STATIC_URL=https://cdn.21n.co
 ```
-1. Deploy to the provider of your choice
+3. Deploy to the provider of your choice
 
 # Contributing
 We welcome contributions! Please see the [CONTRIBUTING](https://github.com/21nOrg/tidigit?tab=contributing-ov-file) file for details.
