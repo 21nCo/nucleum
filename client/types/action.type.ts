@@ -33,6 +33,8 @@ export type IAction = {
    * Svelte component associated with the action. This is required if the type is {@link ActionType.MODAL} or {@link ActionType.PAGE}
    */
   component?: any;
+
+  panel?: any;
   /**
    * Label to be shown in command bar or anywhere else in the app.
    */

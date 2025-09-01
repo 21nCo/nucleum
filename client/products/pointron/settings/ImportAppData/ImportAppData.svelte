@@ -16,7 +16,6 @@
   import { lastImportTime } from "../../pointron.store";
   import CheckboxInput from "$lib/client/elements/toggle/CheckboxInput.svelte";
   import { isEmptyArray, isValidArray } from "$lib/shared/utils/obj.utils";
-  import { PointronPersistence } from "../../pointron.persistence";
   import { performApiCall } from "$lib/client/utils/network.utils";
   import { ImportSource, StepType } from "../data/data.type";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
@@ -258,11 +257,12 @@
             }
             if (!jsonData) toasts.error("Please select a valid file");
             else {
-              response = await new PointronPersistence().importData(
-                jsonData,
-                fileName,
-                fileSize
-              );
+              //TODO - use latest persistence
+              // response = await new PointronPersistence().importData(
+              //   jsonData,
+              //   fileName,
+              //   fileSize
+              // );
               isEverythingUploaded = true;
               isUploading = false;
               $lastImportTime = Date.now();

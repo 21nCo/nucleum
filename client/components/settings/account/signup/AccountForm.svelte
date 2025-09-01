@@ -18,29 +18,41 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import { performApiCall } from "$lib/client/utils/network.utils";
   import { Action } from "$lib/client/types/action.enum";
+  import Icon from "$lib/client/elements/Icon.svelte";
+  import { cn } from "$lib/client/utils/ui.utils";
   import { ButtonStyle } from "$lib/client/types/button.type";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import { Size } from "$lib/client/types/size.enum";
   export let isSignup = false;
   export let currentProgress: string | undefined = undefined;
+  export let isLoginFromExtension = false;
+  export let isSelfHosted = false;
+  let mode: "offline-only" | "all" | "cloud-only" = "all";
   let email = "";
   let pass = "";
   let nickName = "";
   let error: string | null = null;
   let isTrusted = true;
   let actionInProgress = false;
-  let isLoginFromExtension = false;
+  $: mode = resolveMode(isLoginFromExtension, isSelfHosted);
+
   onMount(() => {
     postMessageToParent(EmbedMessage.MOUNT);
     const isSignupQueryParam = $page.url.searchParams.get("signup");
     if (isSignupQueryParam && isSignupQueryParam === "true") isSignup = true;
-    const isLoginFromExtensionParam = $page.url.searchParams.get(
-      AppSearchParam.EXT
-    );
-    if (isLoginFromExtensionParam && isLoginFromExtensionParam === "true") {
-      isLoginFromExtension = true;
-      console.log("isLoginFromExtension", isLoginFromExtension);
-    }
   });
+
+  function resolveMode(
+    isLoginFromExtensionParam: boolean,
+    isSelfHostedParam: boolean
+  ) {
+    if (isLoginFromExtensionParam) {
+      return "cloud-only";
+    } else if (isSelfHostedParam) {
+      return "offline-only";
+    }
+    return "all";
+  }
+
   async function handleClick() {
     if (!isValidFormData()) return;
     actionInProgress = true;
@@ -119,9 +131,15 @@
     }
     return true;
   }
+
   function showError(message: string | null = null) {
     actionInProgress = false;
     error = message ?? "Something went wrong. Please try again later.";
+  }
+
+  async function onOfflineClick() {
+    await account.startOfflineSession();
+    appStore.gotoPath("/");
   }
 </script>
 
@@ -188,16 +206,6 @@
       />
     </div>
   {/if}
-  {#if isLoginFromExtension}
-    <div class="flex flex-col gap-2 justify-center items-center w-full">
-      <div class="text-h4 text-center w-full">
-        Thanks for installing Memotron extension.
-      </div>
-      <div class="text-fgs3 text-b2 text-center">
-        Click continue to login to your account.
-      </div>
-    </div>
-  {/if}
   {#if $appStore.isDebugMode}
     <div class="w-full flex justify-center items-center text-fgs3 text-b3 px-4">
       <hr class="grow border-t border-bgs4" />
@@ -205,20 +213,71 @@
       <hr class="grow border-t border-bgs4" />
     </div>
   {/if}
-  <div class="flex flex-col gap-8 justify-center self-center w-80">
-    {#if isValidArrayWithData($appStore?.appData?.oAuthConfig)}
-      <OAuthButtons bind:currentProgress />
+
+  <div class="flex flex-col justify-center self-center cw:w-80 w-96">
+    {#if mode !== "offline-only"}
+      <div
+        class={cn("group flex flex-col justify-between gap-4 p-4", {
+          "cw:h-fit h-72 bg-bgs1 border-t-transparent border-x-transparent border-t border-x border-brs3 hover:border-t-brs3 hover:border-x-brs3 hover:rounded-t-md rounded-t-md":
+            mode === "all"
+        })}
+      >
+        {#if mode === "all" && !$view.isConstrainedWidth}
+          <div class="text-fgs3 text-center">Sync across devices</div>
+        {/if}
+        {#if isValidArrayWithData($appStore?.appData?.oAuthConfig)}
+          <OAuthButtons bind:currentProgress />
+        {/if}
+        {#if !$view.isConstrainedWidth}
+          <div
+            class={cn(
+              "text-fgs3 text-b3 text-center transition-opacity duration-300",
+              {
+                "opacity-0 group-hover:opacity-100": mode === "all"
+              }
+            )}
+          >
+            Includes a 14-day free trial. No credit card required.
+          </div>
+        {/if}
+      </div>
     {/if}
-    {#if !isLoginFromExtension}
-      <Button
-        label="Continue offline"
-        icon="proceed"
-        style={ButtonStyle.OUTLINED}
-        on:click={async () => {
-          await account.startOfflineSession();
-          appStore.gotoPath("/");
-        }}
-      />
+    {#if mode !== "cloud-only" && $view.isConstrainedWidth}
+      <div class="flex items-center w-72 mx-auto">
+        <Button
+          label="Continue offline"
+          icon="proceed"
+          size={Size.lg}
+          isExpandToFullWidth={true}
+          style={ButtonStyle.OUTLINED}
+          on:click={onOfflineClick}
+        />
+      </div>
+    {:else if mode !== "cloud-only" && !$view.isConstrainedWidth}
+      <button
+        class={cn(
+          "group flex flex-col justify-center items-center w-full  p-3",
+          {
+            "cw:h-48 h-60 bg-bgs1 hover:border-x-brs3 hover:border-b-brs3 rounded-b-md border border-x-transparent border-b-transparent border-brs3":
+              mode === "all"
+          }
+        )}
+        on:click={onOfflineClick}
+      >
+        <div
+          class="flex items-center gap-2 group-hover:translate-x-1 transition-transform duration-300 my-auto"
+        >
+          <Icon icon="proceed" />
+          Continue offline
+        </div>
+        {#if mode === "all"}
+          <div
+            class="text-fgs3 text-b3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          >
+            Single device use & free forever. No signup required.
+          </div>
+        {/if}
+      </button>
     {/if}
   </div>
 </div>

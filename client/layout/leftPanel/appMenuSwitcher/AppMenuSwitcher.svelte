@@ -143,7 +143,11 @@
           "gap-1": layoutContext !== LayoutContext.THIN_WITH_LABEL
         })}
       >
-        <Divider colorStrength={ColorStrength.Strong} />
+        <div class="w-full flex justify-center">
+          <div class="w-1/2">
+            <Divider colorStrength={ColorStrength.Strong} />
+          </div>
+        </div>
         <AppMenuSwitcherItemGroup
           {parentBackgroundIndex}
           {layoutContext}

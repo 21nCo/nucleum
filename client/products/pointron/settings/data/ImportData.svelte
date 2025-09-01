@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PointronPersistence } from "$lib/client/products/pointron/pointron.persistence";
+  // import { PointronPersistence } from "$lib/client/products/pointron/pointron.persistence";
   import Icon from "$lib/client/elements/Icon.svelte";
   import Button from "$lib/client/elements/button/Button.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
@@ -63,18 +63,18 @@
       isProcessingImport = false;
       return;
     }
-    const response = await new PointronPersistence().importData(
-      jsonData,
-      fileName,
-      fileSize
-    );
-    if (response) {
-      toasts.success("Data imported successfully");
-      dispatch("refresh");
-      resetFile();
-    } else {
-      toasts.error("Error importing data. Please try again");
-    }
+    // const response = await new PointronPersistence().importData(
+    //   jsonData,
+    //   fileName,
+    //   fileSize
+    // );
+    // if (response) {
+    //   toasts.success("Data imported successfully");
+    //   dispatch("refresh");
+    //   resetFile();
+    // } else {
+    //   toasts.error("Error importing data. Please try again");
+    // }
     isProcessingImport = false;
   }
 

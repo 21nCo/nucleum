@@ -94,7 +94,6 @@
                 mode = e.detail === "Quick Focus" ? 0 : 1;
               }}
             />
-            <!-- <TopBarActions /> -->
             <!-- {#if mode === 0}
               <QuickStartActions context="topright" />
             {/if} -->

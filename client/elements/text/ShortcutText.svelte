@@ -19,6 +19,14 @@
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let isAlwaysShown: boolean = false;
   let detail: IKeyboardShortcut | undefined = undefined;
+  const iconKeys = new Map<KeyboardKey, string>([
+    [KeyboardKey.ENTER, "arrow-turn-down-left"],
+    [KeyboardKey.ARROW_LEFT, "arrow-left"],
+    [KeyboardKey.ARROW_RIGHT, "arrow-right"],
+    [KeyboardKey.ARROW_UP, "arrow-up"],
+    [KeyboardKey.ARROW_DOWN, "arrow-down"]
+  ]);
+  const textReplacements = [{ key: KeyboardKey.ESCAPE, text: "Esc" }];
 
   $: text = resolveText(shortcut);
   function resolveText(shortcut: string | IKeyboardShortcut | undefined) {
@@ -66,11 +74,10 @@
         }
     )}
   >
-    {text?.replace("ENTER", "") ?? ""}
-    {#if detail?.key === KeyboardKey.ENTER}
-      &nbsp;
+    {#if detail?.key && iconKeys.has(detail?.key)}
+      {text?.replace(detail?.key?.toUpperCase(), "") ?? ""}
       <Icon
-        icon="arrow-turn-down-left"
+        icon={iconKeys.get(detail?.key)}
         size={Size.xs}
         class={cn({
           "stroke-fgs3": parentBgIndex !== undefined,
@@ -80,6 +87,16 @@
             parentBgIndex === undefined && isAccentOutlined
         })}
       />
+    {:else if text && textReplacements.some( (x) => text?.includes(x.key.toUpperCase()) )}
+      {@const replacement = textReplacements.find((x) =>
+        text?.includes(x.key.toUpperCase())
+      )}
+      {text.replace(
+        replacement?.key?.toUpperCase() ?? "",
+        replacement?.text ?? ""
+      ) ?? ""}
+    {:else}
+      {text ?? ""}
     {/if}
   </span>
 {/if}

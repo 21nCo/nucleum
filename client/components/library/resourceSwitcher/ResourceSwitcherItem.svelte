@@ -29,6 +29,7 @@
   export let isActive: boolean = false;
   export let parentBgIndex: number = 1;
   export let isShowCount: boolean = false;
+  let isConstrainedWidth = $view.isConstrainedWidth;
   let isHovering: boolean = false;
   let count: number = 0;
   let popRef: HTMLButtonElement;
@@ -100,15 +101,17 @@
     groupId: "resourceSwitcherContextMenuGroup"
   }}
   class={cn(
-    "relative flex-1 flex gap-1 items-center whitespace-nowrap border px-4 py-3 rounded-md text-b2",
+    "relative flex-1 flex gap-1 items-center whitespace-nowrap border rounded-md text-b2",
     {
+      "px-4 py-3": isConstrainedWidth,
+      "px-3 py-2": !isConstrainedWidth,
       "border border-aps1 bg-aps3 hover:bg--aps2": isActive,
       "opacity-80 cursor-not-allowed": item.isDisabled
     },
     !isActive && {
-      "outline-transparent bg-bgs2 border-brs3": true,
-      "text-fgs2": !$view.isConstrainedWidth,
-      "text-fgs1": $view.isConstrainedWidth,
+      "outline-transparent ": true,
+      "text-fgs2 bg-bgs1 border-brs2": !isConstrainedWidth,
+      "text-fgs1 bg-bgs2 border-brs3": isConstrainedWidth,
       "notouch:hover:bg-bgs3 active:bg-bgs3 focus:bg-bgs3 hover:text-fgs1":
         !item.isDisabled
     }
@@ -116,22 +119,23 @@
   on:click
 >
   <div
-    class={cn("flex flex-col items-start gap-3", {
-      "text-aps1": isActive
+    class={cn("flex flex-col items-start", {
+      "text-aps1": isActive,
+      "gap-2": !isConstrainedWidth,
+      "gap-3": isConstrainedWidth
     })}
   >
     {#if item.icon && typeof item.icon === "string"}
       <Icon
         icon={item.icon}
-        size={Size.lg}
+        size={isConstrainedWidth ? Size.lg : Size.md}
         class={cn({
           "fill-aps1": isActive,
           "stroke-fgs2":
-            (!$view.isConstrainedWidth && !isActive && !isHovering) ||
+            (!isConstrainedWidth && !isActive && !isHovering) ||
             item.isDisabled,
           "stroke-fgs1":
-            (!isActive && isHovering && !item.isDisabled) ||
-            $view.isConstrainedWidth
+            (!isActive && isHovering && !item.isDisabled) || isConstrainedWidth
         })}
       />
     {:else if item.icon && typeof item.icon === "object"}
@@ -149,7 +153,11 @@
   {#if isShowCount && count > 0}
     <span class="absolute right-0 top-0 m-3 leading-none default-typeface">
       <span
-        class={cn("text-h4", { "text-aps1": isActive, "text-fgs3": !isActive })}
+        class={cn({
+          "text-h4": isConstrainedWidth,
+          "text-aps1": isActive,
+          "text-fgs3": !isActive
+        })}
       >
         {count}
       </span>

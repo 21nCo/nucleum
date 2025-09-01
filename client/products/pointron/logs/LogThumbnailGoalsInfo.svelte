@@ -17,7 +17,7 @@
           class="flex w-full gap-2 text-base items-center"
         >
           <div class="w-2 h-2 rounded-sm bg-ccs1" />
-          <div class="text-left mo:text-b2 text-ccs1 truncate w-4/5">
+          <div class="text-left text-b2 text-ccs1 truncate w-4/5">
             <!-- {truncateString(goal.label, $view.isPortrait ? 20 : 25)} -->
             {item.label}
           </div>

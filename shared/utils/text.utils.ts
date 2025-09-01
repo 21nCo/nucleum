@@ -74,6 +74,10 @@ export function isValidString(str: string | undefined | null) {
   return undefined;
 }
 
+export function isValidNumber(str: string) {
+  return !isNaN(new Date(str).getTime());
+}
+
 export function isValidDataString(str: string) {
   return isValidString(str) && !isNaN(new Date(str).getTime());
 }

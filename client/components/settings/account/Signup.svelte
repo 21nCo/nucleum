@@ -3,13 +3,10 @@
   import AccountForm from "./signup/AccountForm.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import Link from "$lib/client/elements/text/Link.svelte";
   import { page } from "$app/stores";
   import { onMount } from "svelte";
-  import view from "$lib/client/stores/view.store";
   import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
   import { properCase } from "$lib/shared/utils/text.utils";
-  import { Action } from "$lib/client/types/action.enum";
   import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
   import { clientStorage } from "$lib/client/persistence/persistence.utils";
   import { isTokenExpired } from "$lib/client/utils/account.utils";
@@ -19,11 +16,25 @@
   import { toasts } from "$lib/client/stores/notification.store";
   import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
   import { parse } from "$lib/shared/utils/json.utils";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { ButtonStyle } from "$lib/client/types/button.type";
+  import { Size } from "$lib/client/types/size.enum";
+  import view from "$lib/client/stores/view.store";
   let isSignup = true;
   let message: string | undefined = undefined;
   let currentProgress: string | undefined = undefined;
   let isSigningIn = false;
+  let isLoginFromExtension = false;
+  const managedSyncHosts = [
+    "localhost",
+    "21n.dev",
+    "memotron.app",
+    "pointron.app",
+    "nucleus.to"
+  ];
+  let isSelfHosted = resolveIfSelfHostedInstance();
   let messageParam = $page.url.searchParams.get(AppSearchParam.MSG);
+  $: productName = properCase($appStore.product);
   if (messageParam) {
     if (messageParam === "deleted") {
       message = "Your account has been deleted.";
@@ -35,11 +46,13 @@
       message = "User not found. Please login again.";
     }
   }
+
   onMount(async () => {
     const isLoginFromExtensionParam = $page.url.searchParams.get(
       AppSearchParam.EXT
     );
-    if (isLoginFromExtensionParam) {
+    if (isLoginFromExtensionParam && isLoginFromExtensionParam === "true") {
+      isLoginFromExtension = true;
       clientStorage.setForSession(ClientStorageKey.IS_EXTENSION_LOGIN, true);
     }
     const token = await clientStorage.get(ClientStorageKey.STOKEN);
@@ -51,6 +64,11 @@
     }
     appStore.gotoPath("/");
   });
+
+  function resolveIfSelfHostedInstance() {
+    const host = window.location.hostname;
+    return !managedSyncHosts.some((h) => host.endsWith(h));
+  }
 
   async function handleMessageFromParent(event: MessageEvent) {
     try {
@@ -81,11 +99,9 @@
 {#if isSigningIn}
   <AppLoadingView message={"Signing you in..."} />
 {:else}
-  <div class="flex flex-col w-full h-full justify-center pt-8 dp:pt-12">
+  <div class="flex flex-col w-full h-full justify-center cw:pt-8">
     <div
-      class="w-full flex flex-col justify-start items-center {$view.scale > 0.6
-        ? 'gap-16'
-        : 'gap-12'}"
+      class="w-full h-full grid grid-cols-2 cw:grid-cols-1 cw:justify-start justify-center items-center gap-12 cw:gap-6"
     >
       <!-- <div class="flex flex-col items-center">
       <SubAtomLogo subatom="pointron" isDark={true} />
@@ -94,7 +110,7 @@
       </div>
     </div> -->
 
-      <div class="flex flex-col gap-6">
+      <div class="flex flex-col justify-center gap-6 h-full">
         <!-- TODO - reenable email signin/signup upon completion of forgot password flow -->
         {#if $appStore.isDebugMode}
           <PanelSwitcher
@@ -110,7 +126,9 @@
             }}
           />
         {:else}
-          <div class="w-full flex flex-col justify-center items-center h-40">
+          <div
+            class="w-full flex flex-col justify-center items-center cw:h-fit h-40"
+          >
             <SubAtomLogo />
             <div class="font-medium">
               {properCase($appStore.product)}
@@ -123,17 +141,102 @@
           </div>
         {/if}
       </div>
-      {#if $appStore.appData.auth?.isInviteOnly}
-        <div class="font-medium px-4 text-center text-ass1 text-b2 -mb-4">
-          This product is invite only. Please use the invite link to sign up.
-        </div>
-      {:else}
-        <AccountForm {isSignup} bind:currentProgress />
-      {/if}
-
-      {#if isSignup}
-        <PoliciesFooter pretext="By signing up, you agree to our" />
-      {/if}
+      <div
+        class="w-full grid cw:grid-rows-[1fr,auto] grid-rows-[auto,1fr,auto] cw:bg-bgs1 bg-bgs2 h-full"
+      >
+        {#if !$view.isConstrainedWidth}
+          {#if isLoginFromExtension}
+            <div
+              class="flex flex-col gap-2 justify-center items-center w-full cw:pt-6 pt-12"
+            >
+              <div class="text-h4 text-center w-full">
+                Thanks for installing {productName} extension.
+              </div>
+              <div class="text-fgs3 text-b2 text-center">
+                Click continue to login to your account.
+              </div>
+            </div>
+          {:else}
+            <div class="flex flex-col items-center gap-1 cw:pt-6 pt-12">
+              <h3 class="text-h3 text-center font-medium">
+                Welcome to {productName}
+              </h3>
+              <div class="text-fgs3 text-b2 text-center">
+                {isSelfHosted ? "[Self-hosted instance]" : "Sign up or Log in"}
+              </div>
+            </div>
+          {/if}
+        {/if}
+        {#if $appStore.appData.auth?.isInviteOnly}
+          <div class="font-medium px-4 text-center text-ass1 text-b2 -mb-4">
+            This product is invite only. Please use the invite link to sign up.
+          </div>
+        {:else}
+          <div class="flex w-full justify-center items-center">
+            <AccountForm
+              {isSignup}
+              bind:currentProgress
+              {isLoginFromExtension}
+              {isSelfHosted}
+            />
+          </div>
+        {/if}
+        {#if isSignup}
+          <div class="flex flex-col items-center gap-6 pb-12">
+            {#if !isSelfHosted}
+              <PoliciesFooter pretext="By signing up, you agree to our" />
+            {/if}
+            <div class="flex items-center gap-12">
+              {#if isSelfHosted}
+                <Button
+                  label="Github"
+                  style={ButtonStyle.PLAIN}
+                  icon="weblink-two"
+                  size={Size.sm}
+                  on:click={() => {
+                    if ($appStore.appData?.urls?.git)
+                      appStore.openLink($appStore.appData?.urls?.git);
+                  }}
+                />
+              {/if}
+              <Button
+                label="Pricing"
+                style={ButtonStyle.PLAIN}
+                icon="weblink-two"
+                size={Size.sm}
+                on:click={() => {
+                  if ($appStore.appData?.urls?.pricing)
+                    appStore.openLink($appStore.appData?.urls?.pricing);
+                  else if ($appStore.appData?.urls?.landing)
+                    appStore.openLink(
+                      `https://${$appStore.appData?.urls?.landing}/pricing`
+                    );
+                }}
+              />
+              <Button
+                label="Docs"
+                icon="weblink-two"
+                style={ButtonStyle.PLAIN}
+                size={Size.sm}
+                on:click={() => {
+                  if ($appStore.appData?.urls?.docs)
+                    appStore.openLink($appStore.appData?.urls?.docs);
+                }}
+              />
+              <Button
+                label="Discord"
+                icon="weblink-two"
+                style={ButtonStyle.PLAIN}
+                size={Size.sm}
+                on:click={() => {
+                  if ($appStore.appData?.urls?.discord)
+                    appStore.openLink($appStore.appData?.urls?.discord);
+                }}
+              />
+            </div>
+          </div>
+        {/if}
+      </div>
     </div>
   </div>
 {/if}

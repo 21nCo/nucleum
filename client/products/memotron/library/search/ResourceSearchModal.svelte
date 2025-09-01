@@ -2,6 +2,8 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { onMount } from "svelte";
   import ResourceSearchBase from "./ResourceSearchBase.svelte";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { Action } from "$lib/client/types/action.enum";
 
   let resource: Resource = Resource.everything;
   let searchQuery: string = "";
@@ -15,7 +17,13 @@
 <ResourceSearchBase
   bind:this={searchBaseRef}
   bind:resource
+  {searchQuery}
   isGlobalSearchModal={true}
+  on:close={() => {
+    appStore.closeResource({
+      id: Action.GLOBAL_SEARCH
+    });
+  }}
 >
   <input
     bind:this={inputRef}

@@ -19,7 +19,7 @@
   } from "$lib/client/types/tableCell.type";
   import { onMount } from "svelte";
   import ExportData from "./ExportData.svelte";
-  import { PointronPersistence } from "$lib/client/products/pointron/pointron.persistence";
+  // import { PointronPersistence } from "$lib/client/products/pointron/pointron.persistence";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import Table2 from "$lib/client/elements/table/Table2.svelte";
   import {
@@ -45,17 +45,18 @@
       message: "Are you sure you want to revert this import?",
       confirmAction: {
         label: "Revert",
-        variant: ButtonVariant.DANGER,
-        callback: () => revertImport(rowId)
+        variant: ButtonVariant.DANGER
+        // callback: () => revertImport(rowId)
       }
     });
   }
   async function revertImport(id: string) {
-    let response = await new PointronPersistence().revertImport(id);
-    if (response) {
-      toasts.success("Import reverted successfully");
-      refreshImportHistory();
-    }
+    //TODO - use latest persistence
+    // let response = await new PointronPersistence().revertImport(id);
+    // if (response) {
+    //   toasts.success("Import reverted successfully");
+    //   refreshImportHistory();
+    // }
   }
 
   const columns: TableColumn[] = [
@@ -91,8 +92,9 @@
   let importHistoryData: TableRowItem[] = [];
 
   async function refreshImportHistory() {
-    let response = await new PointronPersistence().fetchImportHistory();
-    importHistoryData = response;
+    //TODO - use latest persistence
+    // let response = await new PointronPersistence().fetchImportHistory();
+    // importHistoryData = response;
     if (importHistoryData.length > 0) {
       importHistoryData = importHistoryData.map((item) => {
         return {
