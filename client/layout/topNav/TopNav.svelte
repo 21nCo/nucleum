@@ -2,8 +2,6 @@
   import { uiState } from "$lib/client/stores/uiState/uiState.store";
   import { onMount } from "svelte";
   import type { IRecordId } from "$lib/client/types/data.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
   import { appStore } from "$lib/client/stores/app.store";
   import { Action } from "$lib/client/types/action.enum";
   import ProfilePicture from "$lib/client/components/settings/account/ProfilePicture.svelte";
@@ -23,6 +21,11 @@
   import TopNavLeftMenuItem from "./TopNavLeftMenuItem.svelte";
   import InlineSyncingFeedback from "$lib/client/elements/feedback/InlineSyncingFeedback.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
+  import TopNavLeftLogo from "./TopNavLeftLogo.svelte";
 
   let isInFocusMode = false;
   let pinnedItems: IRecordId[] = tabs.get() ?? [];
@@ -36,6 +39,10 @@
       ? determineIfActiveSubscriber($account.plan)
       : false;
 
+  let isHideMenuLabels = uiState.getState(UIState.hideLeftNavMenuLabels, {
+    scope: UIStateScope.DAP
+  });
+
   function handleFocusMode(e: CustomEvent<boolean>) {
     if (typeof e.detail === "boolean") {
       isInFocusMode = e.detail;
@@ -45,6 +52,9 @@
   onMount(() => {
     const unsubscribe = uiState.subscribe((x) => {
       pinnedItems = tabs.get() ?? [];
+      isHideMenuLabels = uiState.getState(UIState.hideLeftNavMenuLabels, {
+        scope: UIStateScope.DAP
+      });
     });
     return () => {
       if (unsubscribe) unsubscribe();
@@ -55,7 +65,7 @@
 {#if !isInFocusMode}
   <div
     class={cn(
-      "w-full lp:h-10 lp:max-h-10 lp:min-h-10 h-11 max-h-11 min-h-11 2k:h-12 2k:max-h-12 2k:min-h-12 bg-bgs2 pr-4 border-b border-brs3 userdata",
+      "w-full h-11 max-h-11 min-h-11 2k:h-12 2k:max-h-12 2k:min-h-12 bg-bgs2 pr-4 border-b border-brs3 userdata",
       {
         "flex gap-3 justify-between items-center":
           pinnedItems.length > 0 || isInterimTab,
@@ -64,7 +74,8 @@
     )}
   >
     {#if pinnedItems.length > 0}
-      <div class="relative h-full overflow-x-auto">
+      <div class="flex items-center relative h-full overflow-x-auto">
+        <TopNavLeftLogo {isHideMenuLabels} />
         <Tabs {pinnedItems} />
         <div
           class="absolute right-0 top-0 bottom-0 flex items-center pointer-events-none"
@@ -75,7 +86,7 @@
         </div>
       </div>
     {:else}
-      <div class="w-1 h-full"></div>
+      <TopNavLeftLogo {isHideMenuLabels} />
     {/if}
     {#if pinnedItems.length === 0 && !isInterimTab}
       <div class="flex items-center justify-center">

@@ -44,7 +44,7 @@
 
 <div class="flex flex-col h-full w-full">
   <div
-    class="flex items-center gap-4 border-b border-brs3 h-[3.2rem] 2k:h-14 px-4 bg-bgs2"
+    class="flex items-center gap-4 border-b border-brs3 h-[3.2rem] 2k:h-14 px-4"
   >
     <header class="grid grid-cols-3 w-full sticky top-0 z-10">
       <div class="flex items-center gap-4">

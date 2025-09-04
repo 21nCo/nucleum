@@ -76,7 +76,7 @@
           {#if accessPointState === ResourceAccessPointState.DEFAULT}
             <CollectionNodeCount {item} isShowLabel={true} />
           {/if}
-          <CollectionPropertyCount {item} />
+          <CollectionPropertyCount {item} isShowLabel={size === Size.md} />
         </span>
       </slot>
     </ResourceGridThumbnail>

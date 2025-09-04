@@ -32,9 +32,7 @@
   });
 </script>
 
-{#if selectedPanel === MemotronOverviewPanel.TITLE}
-  <MemotronDefaultOverview />
-{:else if selectedPanel === MemotronOverviewPanel.GRAPH}
+{#if selectedPanel === MemotronOverviewPanel.GRAPH}
   <GlobalGraph />
 {:else if selectedPanel === MemotronOverviewPanel.MAP}
   <MemotronMapOverview />

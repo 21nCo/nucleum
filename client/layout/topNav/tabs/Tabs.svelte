@@ -20,7 +20,7 @@
 >
   {#if isShowHome}
     <div
-      class={cn("flex justify-center items-center px-2 border-r border-bgs3", {
+      class={cn("flex justify-center items-center px-2 border-r border-brs3", {
         "bg-bgs1": !activeTab
       })}
     >

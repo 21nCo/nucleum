@@ -13,10 +13,11 @@
 </script>
 
 <div
-  class={cn("w-full bg-bgs3", {
+  class={cn("w-full", {
     "h-16": isInThinMode && size === Size.lg,
     "h-24": isInThinMode && size === Size.md,
-    "h-12": !isInThinMode
+    "h-12": !isInThinMode,
+    "bg-bgs3": !$appStore.currentComponent?.panel
   })}
 >
   {#if $appStore.appData?.leftPanelFooter === "simple" || !$appStore.appData?.leftPanelFooter}
@@ -26,13 +27,12 @@
       })}
     >
       <button
-        class={cn(
-          "flex gap-2 h-full w-full items-center justify-center px-2 hover:bg-bgs4",
-          {
-            "rounded-bl-lg": !isInThinMode && isRounded,
-            "bg-aps1": isCpActive
-          }
-        )}
+        class={cn("flex gap-2 h-full w-full items-center justify-center px-2", {
+          "rounded-bl-lg": !isInThinMode && isRounded,
+          "bg-aps1": isCpActive,
+          "hover:bg-bgs4": !$appStore.currentComponent?.panel,
+          "hover:bg-bgs3 rounded-tr-lg": $appStore.currentComponent?.panel
+        })}
         on:click={() => appStore.runAction(Action.SETTINGS)}
       >
         <Icon icon="gear" isAccentBgContext={isCpActive} {size} />

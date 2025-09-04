@@ -7,7 +7,6 @@
   } from "$lib/client/stores/uiState/uiState.type";
   import { OverviewPanel } from "./overview.type";
   import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-  import NucleusOverviewLayout from "./NucleusOverviewLayout.svelte";
   import AnalyticsV2 from "../../pointron/analytics/AnalyticsV2.svelte";
   import MemotronOverview from "../../memotron/overview/MemotronOverview.svelte";
 
@@ -29,14 +28,10 @@
   });
 </script>
 
-<NucleusOverviewLayout>
-  {#if selectedPanel === OverviewPanel.TITLE}
-    <ComingSoonView />
-  {:else if selectedPanel === OverviewPanel.FOCUS}
-    <div class="w-full h-[90vh]">
-      <AnalyticsV2 />
-    </div>
-  {:else if selectedPanel === OverviewPanel.MEMORY}
-    <MemotronOverview />
-  {/if}
-</NucleusOverviewLayout>
+{#if selectedPanel === OverviewPanel.FOCUS}
+  <AnalyticsV2 />
+{:else if selectedPanel === OverviewPanel.MEMORY}
+  <MemotronOverview />
+{:else}
+  <ComingSoonView />
+{/if}

@@ -515,7 +515,7 @@
         padding="px-2"
         on:search={() => refresh()}
         placeholder={"Search " + resource + "s"}
-        style={InputStyle.FILLED}
+        style={InputStyle.BORDERED}
       >
         <Toggle
           bind:on={isRefineShown}
@@ -632,8 +632,12 @@
           $view.isConstrainedWidth
             ? ResourceAccessMode.POP
             : ResourceAccessMode.INLINE}
-          size={$view.isConstrainedWidth ? Size.sm : Size.md}
+          size={$view.isConstrainedWidth ||
+          accessPoint === ResourceAccessPoint.BROWSER
+            ? Size.sm
+            : Size.md}
           arrangement={resolveArrangement(arrangement)}
+          width={accessPoint === ResourceAccessPoint.BROWSER ? 120 : undefined}
         />
         {#if data.length > 0}
           <div class="mt-4 -mb-2">
@@ -670,10 +674,14 @@
           $view.isConstrainedWidth
             ? ResourceAccessMode.POP
             : ResourceAccessMode.INLINE}
-          size={$view.isConstrainedWidth ? Size.sm : Size.md}
+          size={$view.isConstrainedWidth ||
+          accessPoint === ResourceAccessPoint.BROWSER
+            ? Size.sm
+            : Size.md}
           isShowLoadingPulseAtTheEnd={data.length < totalCountAfterFilter &&
             !searchQuery}
           arrangement={resolveArrangement(arrangement)}
+          width={accessPoint === ResourceAccessPoint.BROWSER ? 120 : undefined}
         />
       </div>
       <div

@@ -8,6 +8,7 @@ import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
 import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
 import LibraryPanelContentResolver from "$lib/client/components/library/LibraryPanelContentResolver.svelte";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import NucleusOverviewPanel from "./overview/NucleusOverviewPanel.svelte";
 
 const actionsToFilterInSub = [
   Action.LIBRARY,
@@ -48,6 +49,7 @@ export const nucleusActions: IAction[] = [
     label: "Overview",
     icon: "heroicons:rectangle-group",
     component: NucleusOverview,
+    panel: NucleusOverviewPanel,
     type: ActionType.PAGE
   },
   {

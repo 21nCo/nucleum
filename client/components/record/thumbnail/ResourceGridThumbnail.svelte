@@ -24,12 +24,15 @@
   <slot />
   {#if !isMasonry}
     <div
-      class={cn("flex flex-col h-fit gap-2 w-full items-start p-3 truncate", {
-        "border-t rounded-b-md": !isHidePreview,
-        "border rounded-md": isHidePreview,
-        "bg-ccs4 border-ccs2": isApplyCustomColor,
-        "bg-bgs2 border-brs2": !isApplyCustomColor
-      })}
+      class={cn(
+        "flex flex-col h-fit gap-1.5 w-full items-start px-3 py-2 truncate",
+        {
+          "border-t rounded-b-md": !isHidePreview,
+          "border rounded-md": isHidePreview,
+          "bg-ccs4 border-ccs2": isApplyCustomColor,
+          "bg-bgs2 border-brs2": !isApplyCustomColor
+        }
+      )}
     >
       <slot name="bottom" />
     </div>

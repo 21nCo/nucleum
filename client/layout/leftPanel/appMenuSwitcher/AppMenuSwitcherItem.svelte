@@ -33,6 +33,7 @@
   export let item: IAction;
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
+  const dev_mixedPanel = false;
   $: isShowHotKeyHint =
     $uiStateDerived?.isShowHotKeyHints &&
     (layoutContext === LayoutContext.DEFAULT || hideMenuLabels);
@@ -187,9 +188,11 @@
         isActive && !isShowLabel,
       "border border-transparent hover:bg-bgs3 transition-all":
         !isActive && !isShowLabel,
-      "border-aps2": isActive && !$appStore.currentComponent?.panel,
-      "border-transparent": isActive && $appStore.currentComponent?.panel,
-      "rounded-md": $appStore.currentComponent?.panel
+      "border-aps2":
+        isActive && (!dev_mixedPanel || !$appStore.currentComponent?.panel),
+      "border-transparent":
+        isActive && dev_mixedPanel && $appStore.currentComponent?.panel,
+      "rounded-r-md": dev_mixedPanel && $appStore.currentComponent?.panel
     }
   )}
   on:click={onClick}
