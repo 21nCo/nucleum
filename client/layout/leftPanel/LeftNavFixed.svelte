@@ -5,9 +5,6 @@
   import LeftBottomBar from "./LeftBottomBar.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import LeftNavOfflineStatus from "./LeftNavOfflineStatus.svelte";
-  import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
-  import TrailLeftIndicator from "../topNav/TrailLeftIndicator.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
   import { popover, tooltip } from "$lib/client/actions/popover.action";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import LeftNavSettingsPopover from "./LeftNavSettingsPopover.svelte";
@@ -76,16 +73,7 @@
       <div class="w-full flex flex-col gap-8 overflow-auto">
         <div
           class="w-full flex justify-center opacity-30 hover:opacity--100 transition-opacity duration-200 py-2"
-        >
-          <!-- <Button
-          icon="search"
-          parentBgIndex={2}
-          size={Size.lg}
-          on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
-        /> -->
-          <!-- <SubAtomLogo size={isHideMenuLabels ? Size.sm : Size.md} /> -->
-        </div>
-        <!-- <TrailLeftIndicator orientation={Orientation.Vertical} /> -->
+        ></div>
         <div
           class={cn("flex flex-col gap-3 items-center w-full overflow-auto", {
             "p-2": !isHideMenuLabels
@@ -123,7 +111,12 @@
       <div class="w-full flex flex-col gap-2 items-center">
         <LeftNavOfflineStatus isInThinMode={true} />
         <!-- <LeftNavCommandAction isInThinMode={true} size={Size.lg} /> -->
-        <LeftBottomBar isInThinMode={true} {isRounded} size={Size.lg} />
+        <LeftBottomBar
+          isInThinMode={true}
+          {isRounded}
+          size={Size.lg}
+          {dev_mixedPanel}
+        />
       </div>
     </div>
     <slot name="panel" />
