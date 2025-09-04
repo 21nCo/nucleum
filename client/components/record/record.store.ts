@@ -266,7 +266,7 @@ export class SearchStore {
       }
       return data;
     } else {
-      toasts.error("Something went wrong. Please try again later.");
+      toasts.error();
       return [];
     }
   }
@@ -437,10 +437,11 @@ export class SearchStore {
                 }
               : undefined,
             limit: 100,
-            orderBy: isValidSearchQuery ? undefined : {
-                                     modifiedAt: "desc"
-                                   }
-
+            orderBy: isValidSearchQuery
+              ? undefined
+              : {
+                  modifiedAt: "desc"
+                }
           }
         }
       });
@@ -462,10 +463,11 @@ export class SearchStore {
                 }
               : undefined,
             limit: 100,
-            orderBy: isValidSearchQuery ? undefined : {
-                                     modifiedAt: "desc"
-                                   }
-
+            orderBy: isValidSearchQuery
+              ? undefined
+              : {
+                  modifiedAt: "desc"
+                }
           }
         }
       });
@@ -690,7 +692,7 @@ export class BulkEditor {
         switch (action) {
           case "unlink":
             if (!accessPointId) {
-              toasts.error("Something went wrong. Please try again later.");
+              toasts.error();
               return;
             }
             const result = await this.bulkUnlink(items, accessPointId);

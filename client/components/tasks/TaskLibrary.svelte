@@ -71,6 +71,12 @@
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
   import { dragSelection } from "$lib/client/actions/dragSelection.action";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
+  import { logger } from "../debug/logger.client";
   export let goalId: IRecordId | undefined = undefined;
   export let collectionId: IRecordId | undefined = undefined;
   export let accessPoint: ResourceAccessPoint | undefined = undefined;
@@ -85,8 +91,8 @@
   let isHideCompletedFilterSelected = false;
   let isHideGoalTasksFilterSelected = false;
   let dueDateFilter: TaskDueDateFilter = TaskDueDateFilter.ALL;
-  let isFiltersExpanded = false;
-  let selectedSubType: SubType = "all";
+  let isFiltersExpanded = resolveFiltersExpandedState();
+  let selectedSubType: SubType = resolveSelectedSubTypeState();
   let selectedDate: Date = new Date();
   let viewDate: Date = new Date();
   let taskRecordsRef: TaskRecords | undefined;
@@ -101,6 +107,34 @@
   };
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
+  function resolveFiltersExpandedState() {
+    return (
+      uiState.getState(UIState.taskLibraryFiltersExpanded, {
+        scope: UIStateScope.DAP
+      }) ?? false
+    );
+  }
+
+  function resolveSelectedSubTypeState() {
+    return (
+      uiState.getState(UIState.taskLibrarySelectedSubType, {
+        scope: UIStateScope.DAP
+      }) ?? "all"
+    );
+  }
+
+  function persistFiltersExpandedState() {
+    uiState.setState(UIState.taskLibraryFiltersExpanded, isFiltersExpanded, {
+      scope: UIStateScope.DAP
+    });
+  }
+
+  function persistSelectedSubTypeState() {
+    uiState.setState(UIState.taskLibrarySelectedSubType, selectedSubType, {
+      scope: UIStateScope.DAP
+    });
+  }
+
   onMount(() => {
     refresh();
 
@@ -111,6 +145,7 @@
       let isRefreshNeeded = false;
       if (subResourceParam && subResourceParam !== selectedSubType) {
         selectedSubType = (subResourceParam as SubType) ?? "all";
+        persistSelectedSubTypeState();
         selectedDate = new Date();
         viewDate = new Date();
         isRefreshNeeded = true;
@@ -135,39 +170,44 @@
     isPagination?: boolean;
     scrollToDate?: boolean;
   }) {
-    if (!params?.isPagination) {
-      isRefreshing = true;
-      tasks = [];
-    }
-    const filters = resolveFilters();
-    let result = await searchStore.select({
-      filters,
-      searchQuery,
-      limit:
-        selectedSubType !== TaskSubTypeForSwitcher.BY_MONTH &&
-        selectedSubType !== TaskSubTypeForSwitcher.BY_DATE
-          ? 50
-          : undefined,
-      offset: params?.isPagination ? tasks.length : undefined,
-      isIgnoreParentInactive: goalId ? true : false
-    });
-    if (isValidArray(result)) {
-      //TODO - for by_month case + overdue - the date filter has 2 conditions with AND operator - below is temporary fix until complex filters are implemented
-      if (dueDateFilter === TaskDueDateFilter.OVERDUE) {
-        result = result.filter((x: any) => {
-          return (
-            x.dateUnix && compareDates(new Date(x.dateUnix), new Date(), "<")
-          );
-        });
+    try {
+      if (!params?.isPagination) {
+        isRefreshing = true;
+        tasks = [];
       }
-      if (params?.isPagination)
-        tasks = [...tasks, ...result].filter(removeDuplicatesFilter);
-      else tasks = [...result];
-    } else if (!params?.isPagination) {
-      tasks = [];
+      const filters = resolveFilters();
+      let result = await searchStore.select({
+        filters,
+        searchQuery,
+        limit:
+          selectedSubType !== TaskSubTypeForSwitcher.BY_MONTH &&
+          selectedSubType !== TaskSubTypeForSwitcher.BY_DATE
+            ? 50
+            : undefined,
+        offset: params?.isPagination ? tasks.length : undefined,
+        isIgnoreParentInactive: goalId ? true : false
+      });
+      if (isValidArray(result)) {
+        //TODO - for by_month case + overdue - the date filter has 2 conditions with AND operator - below is temporary fix until complex filters are implemented
+        if (dueDateFilter === TaskDueDateFilter.OVERDUE) {
+          result = result.filter((x: any) => {
+            return (
+              x.dateUnix && compareDates(new Date(x.dateUnix), new Date(), "<")
+            );
+          });
+        }
+        if (params?.isPagination)
+          tasks = [...tasks, ...result].filter(removeDuplicatesFilter);
+        else tasks = [...result];
+      } else if (!params?.isPagination) {
+        tasks = [];
+      }
+      isRefreshing = false;
+      if (params?.scrollToDate) scrollToDate();
+    } catch (e) {
+      isRefreshing = false;
+      logger.error({ at: "TaskLibrary - refresh", e });
     }
-    isRefreshing = false;
-    if (params?.scrollToDate) scrollToDate();
   }
 
   function resolveBaseFilters() {
@@ -308,12 +348,14 @@
   <LibrarySubTypeSwitcher
     resource={Resource.task}
     accessPoint={resolveAccessPoint()}
+    {selectedSubType}
     subContext={goalId ? instance : undefined}
   >
     <Toggle
       bind:on={isFiltersExpanded}
       icon="ph:sliders-light"
       tooltip="Filters and options"
+      on:change={() => persistFiltersExpandedState()}
     />
   </LibrarySubTypeSwitcher>
 
@@ -415,7 +457,7 @@
           accessPoint === ResourceAccessPoint.LIBRARY
       })}
       placeholder={"Search tasks"}
-      style={InputStyle.FILLED}
+      style={InputStyle.BORDERED}
     />
     {#if !isPreventAddNew && ((!$view.isConstrainedWidth && accessPoint === ResourceAccessPoint.LIBRARY) || accessPoint === ResourceAccessPoint.GOAL)}
       <Button
@@ -444,10 +486,7 @@
     {/if}
   </div>
 
-  <InlineSyncingFeedback
-    resource={Resource.task}
-    padding="cw:px-0 px-4"
-  />
+  <InlineSyncingFeedback resource={Resource.task} padding="cw:px-0 px-4" />
 
   {#if tasks && tasks.length > 0}
     <div

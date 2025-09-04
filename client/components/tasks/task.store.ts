@@ -1,9 +1,13 @@
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
-import { type IRecordId } from "$lib/client/types/data.type";
+import {
+  type IRecordId,
+  type IResourceSelectAdditionalParams,
+  type IResourceSelectParams
+} from "$lib/client/types/data.type";
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
-import type { ITask, ITaskCapture } from "./task.type";
+import type { ITask, ITaskCapture, ITaskThumb } from "./task.type";
 import {
   ResourceAccessMode,
   ResourceAccessPoint
@@ -22,6 +26,9 @@ import view from "$lib/client/stores/view.store";
 import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 import { resolveResourceIcon } from "../flux/resourceStores/resource.utils";
 import { activeSession } from "$lib/client/products/pointron/focus/session.store";
+import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+import { goalStore } from "../goals/goal.store";
+import type { IGoalThumb } from "../goals/goal.type";
 
 const defaults = {
   dateUnix: 0,
@@ -36,6 +43,34 @@ class TaskStore extends ResourceStore<ITask, ITaskCapture> {
       expandProps: ["goalId"],
       defaultProps: defaults
     });
+  }
+
+  async selectMany(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
+    if (!additionalParams?.isExpand)
+      return super.selectMany(params, additionalParams);
+    const result = await super.selectMany(params, additionalParams);
+    if (!isValidArrayWithData(result)) return result;
+    const goalIds = result.map((x: ITaskThumb) => x.goalId);
+    if (!isValidArrayWithData(goalIds)) return result;
+    const goals = await goalStore.selectMany(
+      {
+        filters: {
+          id: goalIds
+        }
+      },
+      {
+        isExpand: true
+      }
+    );
+    result.map((x: ITaskThumb) => {
+      if (x.goalId) {
+        x.goal = goals?.find((g: IGoalThumb) => g.id === x.goalId);
+      }
+    });
+    return result;
   }
 
   async save(

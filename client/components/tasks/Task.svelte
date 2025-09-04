@@ -28,7 +28,7 @@
   import TaskThumbnailGoalLabel from "./TaskThumbnailGoalLabel.svelte";
   import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
-  import type { IGoal } from "../goals/goal.type";
+  import type { IGoalThumb } from "../goals/goal.type";
   import { SearchStore } from "../record/record.store";
   import { Product } from "$lib/client/products/product.type";
   import { goalStore } from "../goals/goal.store";
@@ -55,7 +55,7 @@
     $appStore.product === Product.POINTRON ||
     $appStore.product === Product.NUCLEUS;
   let goalSearchQuery = "";
-  let goal: IGoal | undefined = undefined;
+  let goal: IGoalThumb | undefined = undefined;
   const searchStore = new SearchStore(Resource.goal);
 
   $: isCurrentlyFocusing = activeSession.isCurrentFocusItem(
@@ -85,7 +85,19 @@
       if (task.dateUnix) date = new Date(task.dateUnix);
       if (task.completedAtUnix) completedDate = new Date(task.completedAtUnix);
       if (task.goalId && !task.goal) {
-        goal = await goalStore.select(task.goalId as IRecordId);
+        const result = await goalStore.selectMany(
+          {
+            filters: {
+              id: task.goalId as IRecordId
+            }
+          },
+          {
+            isExpand: true
+          }
+        );
+        if (isValidArrayWithData(result)) {
+          goal = result[0];
+        }
         isShowGoalPicker = false;
       } else if (task.goal) {
         goal = task.goal;
@@ -177,7 +189,7 @@
     });
   }
 
-  async function onGoalSelect(e: CustomEvent<{ item: IGoal }>) {
+  async function onGoalSelect(e: CustomEvent<{ item: IGoalThumb }>) {
     goal = e.detail.item;
     isShowGoalPicker = false;
     if (!task) return;
