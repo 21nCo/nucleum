@@ -56,7 +56,10 @@ export enum UIState {
   calendarHistoryTab = "calendarHistoryTab",
   calendarDayTimelineScale = "calendarDayTimelineScale",
   calendarDayTimelinePanelSelection = "calendarDayTimelinePanelSelection",
-  showCompletedCalendarTasks = "showCompletedCalendarTasks"
+  showCompletedCalendarTasks = "showCompletedCalendarTasks",
+  taskLibraryFiltersExpanded = "taskLibraryFiltersExpanded",
+  taskLibrarySelectedSubType = "taskLibrarySelectedSubType",
+  analyticsChartStandaloneShowOptions = "analyticsChartStandaloneShowOptions"
 }
 
 export enum UIStateScope {

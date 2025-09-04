@@ -4,7 +4,7 @@ import type {
   IResourceInActivableFromParent,
   IResourceLabeled
 } from "../flux/resourceStores/resource.type";
-import type { IGoal } from "../goals/goal.type";
+import type { IGoalThumb } from "../goals/goal.type";
 
 interface ITaskBase extends IResourceLabeled {
   isChecked?: boolean;
@@ -50,7 +50,7 @@ export type ITask = IResourcePropertiesForTask &
 
 export interface ITaskThumb extends ITaskBase, IResourcePropertiesForTask {
   goalId?: IRecordId;
-  goal?: IGoal;
+  goal?: IGoalThumb;
 }
 
 export enum TaskSubTypeForSwitcher {

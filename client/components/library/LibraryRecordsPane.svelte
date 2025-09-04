@@ -547,41 +547,40 @@
               isPreventMinWidth={true}
             />
           </div> -->
-        {#if resource !== Resource.goal}
-          <DropDown
-            label={{
-              label: "Arrangement",
-              orientation: Orientation.Horizontal
-            }}
-            items={[
-              {
-                label: "List",
-                icon: "list",
-                value: Arrangement.LIST
-              },
-              {
-                label: "Grid",
-                icon: "grid",
-                value: Arrangement.GRID
-              }
-            ]}
-            width="w-40"
-            isDisableSearch={true}
-            size={Size.sm}
-            value={arrangement ?? undefined}
-            on:select={(e) => {
-              if (!e?.detail) return;
-              const newArrangement = e.detail;
-              uiState.setResourceState(
-                resource,
-                ResourceAccessPoint.BROWSER,
-                UIState.arrangement,
-                newArrangement
-              );
-              arrangement = newArrangement;
-            }}
-          />
-        {/if}
+
+        <DropDown
+          label={{
+            label: "Arrangement",
+            orientation: Orientation.Horizontal
+          }}
+          items={[
+            {
+              label: "List",
+              icon: "list",
+              value: Arrangement.LIST
+            },
+            {
+              label: "Grid",
+              icon: "grid",
+              value: Arrangement.GRID
+            }
+          ]}
+          width="w-40"
+          isDisableSearch={true}
+          size={Size.sm}
+          value={arrangement ?? undefined}
+          on:select={(e) => {
+            if (!e?.detail) return;
+            const newArrangement = e.detail;
+            uiState.setResourceState(
+              resource,
+              ResourceAccessPoint.BROWSER,
+              UIState.arrangement,
+              newArrangement
+            );
+            arrangement = newArrangement;
+          }}
+        />
 
         <SwitchInput
           bind:checked={isArchivedFilterSelected}

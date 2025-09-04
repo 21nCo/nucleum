@@ -53,6 +53,11 @@
   import { LoadingAnimationType } from "$lib/client/types/feedback.type";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import {
+    UIState,
+    UIStateScope
+  } from "$lib/client/stores/uiState/uiState.type";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CALENDAR;
   export let date: Date | undefined = undefined;
   export let scale: TimeScale | undefined = undefined;
@@ -80,12 +85,26 @@
     TimeScale.MONTHS,
     TimeScale.YEARS
   ];
-  let isShowOptions = false;
+  let isShowOptions = resolveShowOptionsState();
   let isIncludeSubgoals = false;
 
   $: timePeriodOptions = resolveRelativeTimePeriodOptions(
     scale ?? TimeScale.DAYS
   );
+
+  function resolveShowOptionsState() {
+    return (
+      uiState.getState(UIState.analyticsChartStandaloneShowOptions, {
+        scope: UIStateScope.DAP
+      }) ?? false
+    );
+  }
+
+  function persistShowOptionsState() {
+    uiState.setState(UIState.analyticsChartStandaloneShowOptions, isShowOptions, {
+      scope: UIStateScope.DAP
+    });
+  }
 
   onMount(() => {
     refresh();
@@ -243,7 +262,7 @@
           </div>
           <div class="flex items-center gap-2">
             <CardSelector {accessPoint} bind:selected={chartType} on:select />
-            <Toggle icon="sliders" bgSize={Size.sm} bind:on={isShowOptions} />
+            <Toggle icon="sliders" bgSize={Size.sm} bind:on={isShowOptions} on:change={() => persistShowOptionsState()} />
           </div>
         </div>
       </div>

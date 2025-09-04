@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IGoal } from "../goals/goal.type";
+  import type { IGoalThumb } from "../goals/goal.type";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import { resolveResourceIcon } from "../flux/resourceStores/resource.utils";
   import { Size } from "$lib/client/types/size.enum";
@@ -16,8 +16,10 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { logger } from "../debug/logger.client";
-  export let goal: IGoal;
+  import { resolveGoalColor } from "../goals/goal.utils";
+  export let goal: IGoalThumb;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  const color = resolveGoalColor(goal);
   const dispatch = createEventDispatcher();
 
   function onGoalClick(e: MouseEvent) {
@@ -32,9 +34,9 @@
       const record = e?.detail?.params?.record;
       if (!record) return;
       if ("label" in record && record.label !== goal.label) {
-        goal.label = record.label;
+        goal = { ...goal, label: record.label };
       } else if ("color" in record && record.color !== goal.color) {
-        goal.color = record.color;
+        goal = { ...goal, color: record.color };
       }
     } catch (error) {
       logger.error({ at: "TaskThumbnailGoalLabel.onGoalChange", error });
@@ -44,7 +46,7 @@
 
 <div class="flex items-center gap-2 w-full">
   <CustomColorPropagator
-    color={goal.color}
+    {color}
     type={accessPoint !== ResourceAccessPoint.GOAL ? "button" : "div"}
     class={cn("flex items-center gap-1 text-ccs1 flex-grow min-w-0", {
       "text-b3 ": accessPoint !== ResourceAccessPoint.SELF,
@@ -60,7 +62,7 @@
         class="text-ccs1"
       />
     {/if}
-<div class="flex items-center gap-1 text-left truncate flex-grow min-w-0">
+    <div class="flex items-center gap-1 text-left truncate flex-grow min-w-0">
       <div class="truncate">
         {goal.label || "Untitled"}
       </div>

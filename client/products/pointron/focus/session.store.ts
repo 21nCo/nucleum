@@ -289,8 +289,8 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     function scheduleBreakReminderNotification(isNotified: boolean = false) {
       let breakReminderSetting =
         session.composition.breakType === BreakCompositionType.REMINDER
-          ? session.composition?.breakReminder ??
-            get(pointronPreferences)?.breakReminder
+          ? (session.composition?.breakReminder ??
+            get(pointronPreferences)?.breakReminder)
           : undefined;
       if (!breakReminderSetting) return isNotified;
       timeRemainingToTakeBreak = breakReminderSetting - session.timeElapsed;
@@ -1114,7 +1114,9 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     if (this.isCurrentFocusItem(taskId)) return;
     try {
       await focusItemsStore.addTask(taskId, goalId);
-    } catch (err) { logger.error({ at: "focusTask", error: err }); }
+    } catch (err) {
+      logger.error({ at: "focusTask", error: err });
+    }
     const session = this.get();
     if (!session.isSessionRunning) {
       await this.startSession();
@@ -1544,11 +1546,16 @@ class SessionStore extends ResourceStore<ISession, ISessionCapture> {
       const taskIds = itemIds.filter(
         (x) => determineResourceType(x) === Resource.task
       );
-      const goals = await goalStore.selectMany({
-        filters: {
-          id: goalIds
+      const goals = await goalStore.selectMany(
+        {
+          filters: {
+            id: goalIds
+          }
+        },
+        {
+          isExpand: true
         }
-      });
+      );
       const tasks = await taskStore.selectMany({
         filters: {
           id: taskIds
@@ -1639,8 +1646,8 @@ class SessionStore extends ResourceStore<ISession, ISessionCapture> {
       const goalId =
         resourceType === Resource.goal
           ? item.id
-          : allItems.find((x) => x.tasks?.some(resourceInList(item.id)))?.id ??
-            "";
+          : (allItems.find((x) => x.tasks?.some(resourceInList(item.id)))?.id ??
+            "");
       const taskId = resourceType === Resource.task ? item.id : "";
       if (item.blocks && item.blocks.length > 0) {
         logs.push(
