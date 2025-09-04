@@ -72,11 +72,19 @@
     <TaskRecords {data} {arrangement} {accessPoint} {parentBgIndex} />
   {:else}
     <div
+      style={arrangement === Arrangement.GRID &&
+      accessPoint !== ResourceAccessPoint.BROWSER
+        ? `--colw: ${width}px`
+        : undefined}
       class={cn(`h-full w-full content-start`, {
         "flex flex-col gap-2": arrangement === Arrangement.LIST,
-        [`grid grid-cols-[repeat(auto-fill,minmax(${width}px,1fr))]`]:
-          arrangement === Arrangement.GRID,
-        "gap-4": arrangement === Arrangement.GRID
+        "grid grid-cols-[repeat(auto-fill,minmax(var(--colw),1fr))]":
+          arrangement === Arrangement.GRID &&
+          accessPoint !== ResourceAccessPoint.BROWSER,
+        "grid grid-cols-2":
+          arrangement === Arrangement.GRID &&
+          accessPoint === ResourceAccessPoint.BROWSER,
+        "cw:gap-3 gap-4": arrangement === Arrangement.GRID
       })}
     >
       {#each data as item (item)}

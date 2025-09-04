@@ -8,6 +8,7 @@
   export let isInThinMode: boolean = false;
   export let isRounded: boolean = false;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
+  export let dev_mixedPanel: boolean = false;
   $: isCpActive =
     $page.params.route?.includes("/cp") || $page.route.id?.includes("/cp");
 </script>
@@ -17,7 +18,7 @@
     "h-16": isInThinMode && size === Size.lg,
     "h-24": isInThinMode && size === Size.md,
     "h-12": !isInThinMode,
-    "bg-bgs3": !$appStore.currentComponent?.panel
+    "bg-bgs3": !dev_mixedPanel || !$appStore.currentComponent?.panel
   })}
 >
   {#if $appStore.appData?.leftPanelFooter === "simple" || !$appStore.appData?.leftPanelFooter}
@@ -30,8 +31,10 @@
         class={cn("flex gap-2 h-full w-full items-center justify-center px-2", {
           "rounded-bl-lg": !isInThinMode && isRounded,
           "bg-aps1": isCpActive,
-          "hover:bg-bgs4": !$appStore.currentComponent?.panel,
-          "hover:bg-bgs3 rounded-tr-lg": $appStore.currentComponent?.panel
+          "hover:bg-bgs4":
+            !dev_mixedPanel || !$appStore.currentComponent?.panel,
+          "hover:bg-bgs3 rounded-tr-lg":
+            dev_mixedPanel && $appStore.currentComponent?.panel
         })}
         on:click={() => appStore.runAction(Action.SETTINGS)}
       >

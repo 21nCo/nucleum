@@ -155,10 +155,12 @@
   {/if}
   {#if !$view.isConstrainedWidth && !isExpanded}
     <!-- Right split -->
-    <Divider
-      orientation={Orientation.Vertical}
-      colorStrength={ColorStrength.Normal}
-    />
+    {#if $$slots.right}
+      <Divider
+        orientation={Orientation.Vertical}
+        colorStrength={ColorStrength.Normal}
+      />
+    {/if}
     {#if isProminentDivider}
       <div class="w-0.5 bg-bgs2"></div>
       <Divider

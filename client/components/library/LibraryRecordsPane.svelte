@@ -636,7 +636,6 @@
             ? Size.sm
             : Size.md}
           arrangement={resolveArrangement(arrangement)}
-          width={accessPoint === ResourceAccessPoint.BROWSER ? 120 : undefined}
         />
         {#if data.length > 0}
           <div class="mt-4 -mb-2">
@@ -680,7 +679,6 @@
           isShowLoadingPulseAtTheEnd={data.length < totalCountAfterFilter &&
             !searchQuery}
           arrangement={resolveArrangement(arrangement)}
-          width={accessPoint === ResourceAccessPoint.BROWSER ? 120 : undefined}
         />
       </div>
       <div

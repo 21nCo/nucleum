@@ -219,7 +219,7 @@
       <div
         class={cn("group flex flex-col justify-between gap-4 p-4", {
           "cw:h-fit h-72 bg-bgs1 border-t-transparent border-x-transparent border-t border-x border-brs3 hover:border-t-brs3 hover:border-x-brs3 hover:rounded-t-md rounded-t-md":
-            mode === "all"
+            mode === "all" && !$view.isConstrainedWidth
         })}
       >
         {#if mode === "all" && !$view.isConstrainedWidth}
