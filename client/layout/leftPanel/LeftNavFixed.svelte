@@ -19,7 +19,9 @@
     UIStateScope
   } from "$lib/client/stores/uiState/uiState.type";
   import { onMount } from "svelte";
+  import { appStore } from "$lib/client/stores/app.store";
   export let isRounded = false;
+  const dev_mixedPanel = false;
   let isHideMenuLabels = uiState.getState(UIState.hideLeftNavMenuLabels, {
     scope: UIStateScope.DAP
   });
@@ -40,7 +42,7 @@
 <div
   class={cn(
     "leftnav flex justify-center items-center h-full",
-    !$$slots.panel && {
+    !$appStore.currentComponent?.panel && {
       // "w-[5.5rem] min-w-[5.5rem]": !isHideMenuLabels,
       // "w-[3.5rem] min-w-[3.5rem]": isHideMenuLabels,
       "ml-2": isRounded,
@@ -49,10 +51,13 @@
   )}
 >
   <div
-    class={cn("flex items-center justify-center h-full w-full bg-bgs2", {
-      "rounded-lg border-none": isRounded,
-      "border-r border-bgs4": !isRounded
-    })}
+    class={cn(
+      "flex items-center justify-center h-full w-full bg-bgs2",
+      $appStore.currentComponent?.panel && {
+        "rounded-lg border-none": isRounded,
+        "border-r border-bgs4": !isRounded
+      }
+    )}
   >
     <div
       class={cn(
@@ -60,8 +65,10 @@
         {
           "w-[5.5rem] min-w-[5.5rem]": !isHideMenuLabels,
           "w-[3.5rem] min-w-[3.5rem]": isHideMenuLabels
-          // "rounded-lg border-none": isRounded,
-          // "border-r border-bgs4": !isRounded
+        },
+        (!dev_mixedPanel || !$appStore.currentComponent?.panel) && {
+          "rounded-lg border-none": isRounded,
+          "border-r border-bgs4": !isRounded
         }
       )}
       style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
@@ -76,7 +83,7 @@
           size={Size.lg}
           on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
         /> -->
-          <SubAtomLogo size={isHideMenuLabels ? Size.sm : Size.md} />
+          <!-- <SubAtomLogo size={isHideMenuLabels ? Size.sm : Size.md} /> -->
         </div>
         <!-- <TrailLeftIndicator orientation={Orientation.Vertical} /> -->
         <div
@@ -92,6 +99,7 @@
             class="flex justify-center items-center w-full mt-2"
             use:popover={{
               content: LeftNavSettingsPopover,
+              id: "leftnav-settings-popover",
               placement: Placement.Right,
               triggerMethod: [PopoverTriggerMethod.CLICK],
               offsetInPx: 10

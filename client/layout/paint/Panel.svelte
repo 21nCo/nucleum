@@ -26,7 +26,7 @@
   const dispatch = createEventDispatcher();
 
   export let title: string | undefined = undefined;
-  export let titleStyle: TextStyle = TextStyle.PAGE_HEADING_SUBTLE;
+  export let titleStyle: TextStyle = TextStyle.PANEL_HEADING;
   export let floatingButton: IButtonParams | IButtonParams[] | undefined =
     undefined;
   export let panelSize: Size.sm | Size.md | Size.lg | Size.xl = Size.md;

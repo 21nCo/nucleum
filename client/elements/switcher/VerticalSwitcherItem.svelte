@@ -174,7 +174,7 @@
         "flex-col": labelOrientation === Orientation.Vertical,
         [activeClasses]: isActive,
         [inactiveClasses]: !isActive,
-        "border-ccs1": isActive,
+        "border-ccs1 text-ccs1": isActive,
         "bg-aps1": style === VerticalSwitcherStyle.BG && isActive
       })}
       {...commonVerticalLabelOptions}

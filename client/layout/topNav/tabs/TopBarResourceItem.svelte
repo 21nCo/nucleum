@@ -65,7 +65,7 @@
   }
 </script>
 
-<div class="p-1 border-x border-r-brs3 border-l-transparent">
+<div class="p-1 border--x border--r-brs3 border-l-transparent max-h-full">
   <button
     use:popover={{
       placement: Placement.BottomCenter,
@@ -90,7 +90,7 @@
       {
         "px-4 py-1.5": !isInterimTab,
         "px-2 py-0.5 border border-dashed border-fgs4": isInterimTab,
-        "hover:bg-bgs3": !isActive,
+        "hover:bg-bgs3 text-fgs2 hover:text-fgs1": !isActive,
         "bg-bgs1": isActive
       }
     )}

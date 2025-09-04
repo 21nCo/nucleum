@@ -74,12 +74,12 @@ export function isValidString(str: string | undefined | null) {
   return undefined;
 }
 
-export function isValidNumber(str: string) {
-  if (typeof str !== "string") return false;
+export function isValidNumber(str: string | number) {
+  if (typeof str !== "string" && typeof str !== "number") return false;
+  if (typeof str === "number") return Number.isFinite(str);
   const s = str.trim();
   if (s === "") return false;
-  const n = Number(s);
-  return Number.isFinite(n);
+  return Number.isFinite(Number(s));
 }
 
 export function isValidEnumValue(
