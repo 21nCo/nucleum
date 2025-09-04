@@ -275,6 +275,7 @@
           parentBgIndex={2}
           on:close={() => {
             mode = undefined;
+            searchQuery = "";
           }}
         >
           <div
