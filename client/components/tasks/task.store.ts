@@ -53,8 +53,10 @@ class TaskStore extends ResourceStore<ITask, ITaskCapture> {
       return super.selectMany(params, additionalParams);
     const result = await super.selectMany(params, additionalParams);
     if (!isValidArrayWithData(result)) return result;
-    const goalIds = result.map((x: ITaskThumb) => x.goalId);
-    if (!isValidArrayWithData(goalIds)) return result;
+    const goalIds = Array.from(
+      new Set((result as ITaskThumb[]).map((x) => x.goalId).filter(Boolean))
+    ) as IRecordId[];
+    if (goalIds.length === 0) return result;
     const goals = await goalStore.selectMany(
       {
         filters: {
@@ -65,10 +67,11 @@ class TaskStore extends ResourceStore<ITask, ITaskCapture> {
         isExpand: true
       }
     );
-    result.map((x: ITaskThumb) => {
-      if (x.goalId) {
-        x.goal = goals?.find((g: IGoalThumb) => g.id === x.goalId);
-      }
+    const goalMap = new Map<IRecordId, IGoalThumb>(
+      (goals ?? []).map((g: IGoalThumb) => [g.id, g])
+    );
+    (result as ITaskThumb[]).forEach((x) => {
+      if (x.goalId) x.goal = goalMap.get(x.goalId);
     });
     return result;
   }

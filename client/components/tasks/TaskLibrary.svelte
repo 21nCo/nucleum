@@ -91,8 +91,8 @@
   let isHideCompletedFilterSelected = false;
   let isHideGoalTasksFilterSelected = false;
   let dueDateFilter: TaskDueDateFilter = TaskDueDateFilter.ALL;
-  let isFiltersExpanded = resolveFiltersExpandedState();
-  let selectedSubType: SubType = resolveSelectedSubTypeState();
+  let isFiltersExpanded = false;
+  let selectedSubType: SubType = "all";
   let selectedDate: Date = new Date();
   let viewDate: Date = new Date();
   let taskRecordsRef: TaskRecords | undefined;
@@ -136,6 +136,9 @@
   }
 
   onMount(() => {
+    isFiltersExpanded = resolveFiltersExpandedState();
+    selectedSubType = resolveSelectedSubTypeState();
+
     refresh();
 
     const pageSub = page.subscribe(async (p) => {
@@ -207,6 +210,7 @@
     } catch (e) {
       isRefreshing = false;
       logger.error({ at: "TaskLibrary - refresh", e });
+      toasts.error("Failed to refresh tasks. Please try again.");
     }
   }
 

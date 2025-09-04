@@ -92,6 +92,7 @@
       } else {
         isArchivedFilterSelected = false;
       }
+      refreshSubTypeSwitcher();
     });
     refreshSubTypeSwitcher();
     return () => unsubscribe();

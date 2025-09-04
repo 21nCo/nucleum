@@ -266,7 +266,7 @@ export class SearchStore {
       }
       return data;
     } else {
-      toasts.error();
+      toasts.error("An error occurred while fetching data.");
       return [];
     }
   }
@@ -692,7 +692,7 @@ export class BulkEditor {
         switch (action) {
           case "unlink":
             if (!accessPointId) {
-              toasts.error();
+              toasts.error("Unable to unlink items. Missing context information.");
               return;
             }
             const result = await this.bulkUnlink(items, accessPointId);

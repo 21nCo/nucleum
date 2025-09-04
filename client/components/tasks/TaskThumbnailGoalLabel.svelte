@@ -34,9 +34,9 @@
       const record = e?.detail?.params?.record;
       if (!record) return;
       if ("label" in record && record.label !== goal.label) {
-        goal.label = record.label;
+        goal = { ...goal, label: record.label };
       } else if ("color" in record && record.color !== goal.color) {
-        goal.color = record.color;
+        goal = { ...goal, color: record.color };
       }
     } catch (error) {
       logger.error({ at: "TaskThumbnailGoalLabel.onGoalChange", error });
