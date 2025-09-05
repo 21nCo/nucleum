@@ -22,20 +22,16 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import type { IRecordId } from "$lib/client/types/data.type";
   import type { ISessionLog } from "../../logs/log.type";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import {
-    removeDuplicatesFilter,
-    resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
   import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
-  import { ErrorMessage } from "$lib/client/components/error/error.type";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
   import type { ITimePeriodResolved } from "$lib/client/types/time.type";
   import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { ErrorMessage } from "$lib/client/components/error/error.type";
   export let card: IAnalyticsCard;
   export let position: { index: number; total: number };
   export let pageId: string;
@@ -52,7 +48,7 @@
   const dispatch = createEventDispatcher();
   let isRefreshing = false;
   let refreshId = new Date().getTime();
-  let errorMessage: string = ErrorMessage.DEFAULT;
+  let errorMessage: string | undefined = undefined;
   $: isCarbonChart =
     card.type === AnalyticsCardType.PIE ||
     card.type === AnalyticsCardType.DONUT ||
@@ -107,9 +103,11 @@
     isRefreshing = true;
     data = [];
     previousTimePeriodData = [];
+    errorMessage = undefined;
     try {
       const colors: IAnalyticsLabelColor[] = [];
       if (!card.period || !card.period.value) {
+        errorMessage = "Invalid time period.";
         isRefreshing = false;
         return;
       }
@@ -221,6 +219,7 @@
         },
         error
       );
+      errorMessage = ErrorMessage.DEFAULT;
       isRefreshing = false;
     }
   }
@@ -329,7 +328,7 @@
       <div class="h-8 w-full bg-bgs3 rounded-md"></div>
       <div class="h-4 w-1/2 bg-bgs3 rounded-md"></div>
     </div>
-  {:else if !data}
+  {:else if errorMessage}
     <div class="flex w-full h-full justify-center items-center">
       <EmptyStatusView
         size={Size.sm}
