@@ -106,7 +106,7 @@
   }
 
   function setAppVersion() {
-    appStore.setVersion(productConfig.version, productConfig.build);
+    appStore.setVersion(productData.version, productData.build);
   }
 
   /**
@@ -141,8 +141,8 @@
       data = {
         ...data,
         name: productConfig.name,
-        version: productConfig.version,
-        build: productConfig.build
+        version: productData.version,
+        build: productData.build
       };
       appStore.loadAppData(data, {
         isDefaultData: true

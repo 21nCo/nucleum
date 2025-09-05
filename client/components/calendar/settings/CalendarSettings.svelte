@@ -19,6 +19,7 @@
   import { Preference } from "$lib/client/stores/preferences/preferences.type";
   import CalendarNotesTemplateCard from "./CalendarNotesTemplateCard.svelte";
   import { generateMarkdownText } from "$lib/client/products/memotron/node/node.utils";
+  import Switch from "$lib/client/elements/toggle/Switch.svelte";
   let editingTemplate: TimeScaleUnit | null = null;
   let templateMarkdown: IMarkdownTemplate = getDefaultTemplate();
 
@@ -73,6 +74,34 @@
       }) as IMarkdownTemplate | undefined
     )?.text;
   }
+
+  let showMonthIndicators =
+    preferences.resolve(Preference.CALENDAR_TILE_INDICATORS_MONTH) ?? true;
+  let showYearIndicators =
+    preferences.resolve(Preference.CALENDAR_TILE_INDICATORS_YEAR) ?? true;
+
+  const indicatorSettings = [
+    {
+      key: "month",
+      title: "Month View Indicators",
+      description: "Show activity indicators on calendar tiles in month view",
+      preference: Preference.CALENDAR_TILE_INDICATORS_MONTH,
+      value: () => showMonthIndicators,
+      setValue: (val: boolean) => {
+        showMonthIndicators = val;
+      }
+    },
+    {
+      key: "year",
+      title: "Year View Indicators",
+      description: "Show activity indicators on calendar tiles in year view",
+      preference: Preference.CALENDAR_TILE_INDICATORS_YEAR,
+      value: () => showYearIndicators,
+      setValue: (val: boolean) => {
+        showYearIndicators = val;
+      }
+    }
+  ];
 </script>
 
 <div class="flex flex-col gap-6 w-full h-full p-6">
@@ -129,8 +158,39 @@
           />
           <CalendarNotesTemplateCard
             scale={TimeScaleUnit.MONTH}
+            description={resolveDescription(TimeScaleUnit.MONTH)}
             onEdit={() => editTemplate(TimeScaleUnit.MONTH)}
           />
+          <CalendarNotesTemplateCard
+            scale={TimeScaleUnit.YEAR}
+            description={resolveDescription(TimeScaleUnit.YEAR)}
+            onEdit={() => editTemplate(TimeScaleUnit.YEAR)}
+          />
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-4">
+        <Text content="Calendar Indicators" style={TextStyle.SECTION_HEADING} />
+
+        <div class="flex flex-col gap-3">
+          {#each indicatorSettings as setting (setting.key)}
+            <div
+              class="flex items-center justify-between p-3 rounded-md border border-brs2 bg-bgs2"
+            >
+              <div class="flex flex-col gap-1">
+                <Text content={setting.title} style={TextStyle.FORM_LABEL} />
+                <span class="text-b2 text-fgs3">{setting.description}</span>
+              </div>
+              <Switch
+                on={setting.value()}
+                on:change={() => {
+                  const newValue = !setting.value();
+                  setting.setValue(newValue);
+                  preferences.save(setting.preference, newValue);
+                }}
+              />
+            </div>
+          {/each}
         </div>
       </div>
     </div>

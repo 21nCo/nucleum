@@ -21,7 +21,6 @@
         action = appStore.resolveComponentFromPath(pathWithPrefixStripped);
       }
       if (action) {
-        $appStore.currentComponent = action;
         params = {
           ...(action.componentParams ?? {}),
           ...(params ?? {})
