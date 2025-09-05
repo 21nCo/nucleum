@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AnalyticsPersistence } from "$lib/client/products/pointron/analytics/analytics.persistence";
+  // import { AnalyticsPersistence } from "$lib/client/products/pointron/analytics/analytics.persistence";
   import { getCorrespoingHorizonFrequencyLabel } from "$lib/client/utils/time.utils";
   import Guage from "../charts/Guage.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -27,7 +27,7 @@
     actual: number;
     streak: number;
   }[];
-  const aggPersistance = new AnalyticsPersistence();
+  // const aggPersistance = new AnalyticsPersistence();
   refresh();
   async function refresh() {
     let items: {
@@ -37,7 +37,8 @@
       streak: number;
     }[] = [];
     if (!isValidArrayWithData(data)) {
-      data = await aggPersistance.fetchTargetsData();
+      //TODO - use latest persistence
+      // data = await aggPersistance.fetchTargetsData();
     }
     if (!isValidArrayWithData(data)) return;
     Object.keys(TimeScale).forEach((key) => {

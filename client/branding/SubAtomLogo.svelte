@@ -15,7 +15,7 @@
   $: height = size === Size.md ? 61 : size === Size.sm ? 40 : 61;
 </script>
 
-<button on:click>
+<div>
   <svg
     class={cn({
       "w-16 h-16": size === Size.md,
@@ -201,4 +201,4 @@
       />
     {/if}
   </svg>
-</button>
+</div>

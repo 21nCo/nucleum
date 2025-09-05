@@ -35,12 +35,8 @@
   });
   let searchQuery: string = "";
   let id: string | null = null;
-  let arrangement: Arrangement =
-    uiState?.getResourceState(
-      resource,
-      ResourceAccessPoint.BROWSER,
-      UIState.arrangement
-    ) ?? Arrangement.LIST;
+  let arrangement: Arrangement = resolveArrangement();
+
   const createShortcut = keyboardShortcuts?.resolveShortcutForAction("create");
 
   $: tooltip = resolveResourceTooltip(resource);
@@ -66,6 +62,16 @@
     : ResourceAccessPointState.DEFAULT;
 
   let recordsPaneRef: LibraryRecordsPane | null = null;
+
+  function resolveArrangement() {
+    return (
+      uiState?.getResourceState(
+        resource,
+        ResourceAccessPoint.BROWSER,
+        UIState.arrangement
+      ) ?? Arrangement.LIST
+    );
+  }
 
   const addAction = async () => {
     appStore.runAction(resourceAction(resource, ResourceActionType.CREATE), {

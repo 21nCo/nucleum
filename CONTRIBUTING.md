@@ -4,10 +4,15 @@ Thank you for your interest in contributing to Tidigit! This guide will help you
 
 ## Getting Started
 
-1. Fork the repository
-2. Clone your fork: `git clone https://github.com/21nOrg/tidigit.git`
+1. Fork the [client](https://github.com/21nOrg/client) repository.
+2. Clone your fork: `git clone <your-fork-url>`
 3. Install dependencies: `npm install`
 4. Create a new branch: `git checkout -b feature/your-feature-name`
+5. Use the below for environment variables:
+```
+VITE_PRODUCT=memotron
+VITE_STATIC_URL=https://cdn.21n.co
+```
 
 ## Submitting a Pull Request
 

@@ -5,7 +5,7 @@
   export let item: IListItem;
 </script>
 
-<a class="flex items-center gap-1.5 text-lb2" href={item.href} target="_blank">
+<a class="flex items-center gap-1.5 text-lb2" href={item.href} target="_blank" rel="noopener noreferrer">
   {#if item.icon}
     <SVGIcon
       icon={item.icon}

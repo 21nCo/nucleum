@@ -57,19 +57,28 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
   ) {
     const key = this.resolveKey(keyParam, params);
     if (params?.scope === UIStateScope.DAP) {
-      if (typeof window !== "undefined") {
-        const savedState = window.localStorage.getItem("uiState");
-        const savedStateObj = savedState ? parse(savedState) : {};
-        savedStateObj[key] = value;
-        window.localStorage.setItem("uiState", stringify(savedStateObj));
-        this.update((x) => {
-          return {
-            ...x,
-            $local: {
-              ...x.$local,
-              [key]: value
-            }
-          };
+      try {
+        if (typeof window !== "undefined") {
+          const savedState = window.localStorage.getItem("uiState");
+          const savedStateObj = savedState ? parse(savedState) : {};
+          savedStateObj[key] = value;
+          window.localStorage.setItem("uiState", stringify(savedStateObj));
+          this.update((x) => {
+            return {
+              ...x,
+              $local: {
+                ...x.$local,
+                [key]: value
+              }
+            };
+          });
+        }
+      } catch (error) {
+        logger.error({
+          context: "uiState.store - setState",
+          key,
+          value,
+          error
         });
       }
     } else {
@@ -85,10 +94,18 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
   ) {
     const key = this.resolveKey(keyParam, params);
     if (params?.scope === UIStateScope.DAP) {
-      const savedState = window.localStorage.getItem("uiState");
-      if (!savedState) return undefined;
-      const savedStateObj = parse(savedState);
-      return savedStateObj[key] ?? undefined;
+      try {
+        if (typeof window === "undefined") {
+          return undefined;
+        }
+        const savedState = window.localStorage.getItem("uiState");
+        if (!savedState) return undefined;
+        const savedStateObj = parse(savedState);
+        return savedStateObj[key] ?? undefined;
+      } catch (error) {
+        logger.error({ context: "uiState.store - getState", key, error });
+        return undefined;
+      }
     }
     return this.get()[key];
   }

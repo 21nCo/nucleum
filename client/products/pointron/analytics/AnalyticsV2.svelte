@@ -106,11 +106,7 @@
         </div>
       {:else}
         <div class="flex overflow-hidden w-full">
-          <div
-            class={cn("overflow-x-auto w-full", {
-              "px-4": isNucleusContext
-            })}
-          >
+          <div class="overflow-x-auto w-full">
             <PanelSwitcher
               title={isNucleusContext ? "Focus analytics" : "Overview"}
               items={pages}

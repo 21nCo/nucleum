@@ -31,15 +31,19 @@
   import appearance from "$lib/client/stores/appearance.store";
   import MetadataLayer from "./MetadataLayer.svelte";
   import PosthogTelemetry from "./analytics/PosthogTelemetry.svelte";
-  import productData from "$lib/product.json";
+  import dynamicProductData from "$lib/product.json";
   import { getSettingsAsModal } from "../settingsActionMap";
   import { globalActions } from "$lib/client/stores/actionMap";
-  import { localActions } from "$local/localActionMap";
-  import { version, build, product } from "$local/local";
   import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
   import { parse } from "$lib/shared/utils/json.utils";
+  import { productData } from "$lib/client/products/product.resolver";
+  import {
+    product,
+    resolveProductConfig
+  } from "$lib/client/products/product.config";
   let timer: any;
   let isMounted = false;
+  const productConfig = resolveProductConfig();
   pingParent();
   addWindowEventListeners();
 
@@ -92,6 +96,7 @@
 
   function initActions() {
     const isSheet = $context.isSheet;
+    const localActions = productData.actions;
     const modifiedGlobalActions = globalActions.filter(
       (x) => !localActions.some((y) => y.action === x.action)
     );
@@ -101,7 +106,7 @@
   }
 
   function setAppVersion() {
-    appStore.setVersion(version, build);
+    appStore.setVersion(productConfig.version, productConfig.build);
   }
 
   /**
@@ -123,18 +128,25 @@
       if (appDetails) appStore.initializeProductInformation(appDetails);
       const cachedAppData = await clientStorage.get(ClientStorageKey.APP_DATA);
       const cachedAppDataJson = parse(cachedAppData ?? "{}");
-      if (
+
+      let data =
         cachedAppDataJson &&
-        cachedAppDataJson?.dataVersion >= productData?.dataVersion
-      ) {
-        appStore.loadAppData(cachedAppDataJson, {
-          isDefaultData: true
-        });
-      } else {
-        appStore.loadAppData(productData, {
-          isDefaultData: true
-        });
-      }
+        cachedAppDataJson?.dataVersion >= dynamicProductData?.dataVersion
+          ? {
+              ...cachedAppDataJson
+            }
+          : {
+              ...dynamicProductData
+            };
+      data = {
+        ...data,
+        name: productConfig.name,
+        version: productConfig.version,
+        build: productConfig.build
+      };
+      appStore.loadAppData(data, {
+        isDefaultData: true
+      });
       clientStorage.set(
         ClientStorageKey.PRODUCT,
         appDetails?.product ?? "tidigit"

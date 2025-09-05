@@ -62,7 +62,9 @@
   let addTaskInputRef: any;
   // let workedTime: number = 0;
   $: isInprogress =
-    ($currentFocusItem && isSameResource(focusItem, $currentFocusItem)) ??
+    (contxt !== "history" &&
+      $currentFocusItem &&
+      isSameResource(focusItem, $currentFocusItem)) ??
     false;
 
   $: parentHierarchy = goal?.parent

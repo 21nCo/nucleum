@@ -112,7 +112,11 @@
       <div class="flex flex-col items-center gap-4">
         <span class="flex flex-row text-fgs3 gap-1">
           Press
-          <ShortcutText shortcut={Action.GLOBAL_SEARCH} parentBgIndex={2} />
+          <ShortcutText
+            shortcut={Action.GLOBAL_SEARCH}
+            parentBgIndex={2}
+            isAlwaysShown={true}
+          />
           to search
         </span>
         <Button

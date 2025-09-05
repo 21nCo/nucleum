@@ -155,7 +155,11 @@
               key: "Space",
               os: $context.os
             })} -->
-            <ShortcutText shortcut={Action.CMD} parentBgIndex={1} />
+            <ShortcutText
+              shortcut={Action.CMD}
+              parentBgIndex={1}
+              isAlwaysShown={true}
+            />
           {:else if isFullPageContext && isFocusing}
             Press <b>Esc</b> to close
           {:else}
@@ -198,7 +202,11 @@
       )}
     >
       <span> Press <b>Esc</b> to close </span>
-      <ShortcutText shortcut={Action.CMD} parentBgIndex={1} />
+      <ShortcutText
+        shortcut={Action.CMD}
+        parentBgIndex={1}
+        isAlwaysShown={true}
+      />
     </div>
   {/if}
 </div>

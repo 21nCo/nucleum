@@ -426,6 +426,7 @@
       direction: Placement.Bottom,
       delay: 500
     }}
+    tabindex="-1"
   >
     {#if isNodularizable && (isBlockHovering || isDebugLeftControls || isPopoverVisible || isHovering || isFocusing)}
       <FocusRing on:click={onNodularize} />

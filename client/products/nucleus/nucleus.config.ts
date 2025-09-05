@@ -26,8 +26,10 @@ import {
   sessionLogStore
 } from "$lib/client/products/pointron/logs/log.store";
 import { pointronPreferences } from "../pointron/pointron.store";
+import { nucleusActions } from "./nucleus.actions";
+import NucleusBaseLayer from "./base/NucleusBaseLayer.svelte";
 
-export const nucleusCacheableStores: IStore[] = [
+const nucleusCacheableStores: IStore[] = [
   nodeStore,
   goalStore,
   taskStore,
@@ -48,7 +50,13 @@ export const nucleusCacheableStores: IStore[] = [
   sessionStore
 ];
 
-export const nucleusRemoteOnlyStores: IStore[] = [
-  vectorResourceStore,
-  accessLogStore
-];
+const nucleusRemoteOnlyStores: IStore[] = [vectorResourceStore, accessLogStore];
+
+export default {
+  actions: nucleusActions,
+  base: NucleusBaseLayer,
+  stores: {
+    cacheableStores: nucleusCacheableStores,
+    remoteOnlyStores: nucleusRemoteOnlyStores
+  }
+};

@@ -832,7 +832,7 @@ export const globalActions: IAction[] = [
             componentParams?.multiSelectStore?.get() ?? componentParams?.items;
           const context = componentParams?.multiSelectStore?.context;
           if (!items) {
-            toasts.error("Something went wrong. Please try again later.", {
+            toasts.error(undefined, {
               closeProgressId: "bulklink"
             });
             return;
@@ -872,7 +872,7 @@ export const globalActions: IAction[] = [
             result
           });
           if (!result) {
-            toasts.error("Something went wrong. Please try again later.", {
+            toasts.error(undefined, {
               closeProgressId: "bulklink"
             });
             return;
@@ -899,7 +899,7 @@ export const globalActions: IAction[] = [
           }
         } catch (e) {
           logger.error({ at: "bulkLink", error: e });
-          toasts.error("Something went wrong. Please try again later.", {
+          toasts.error(undefined, {
             closeProgressId: "bulklink"
           });
         }

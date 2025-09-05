@@ -77,6 +77,7 @@ import Goal from "$lib/client/components/goals/Goal.svelte";
 import GoalTitleLabelPart from "$lib/client/components/goals/GoalTitleLabelPart.svelte";
 import { AppSearchParam } from "$lib/client/types/appStore.type";
 import type { IGoal } from "$lib/client/components/goals/goal.type";
+import LibraryPanelContentResolver from "$lib/client/components/library/LibraryPanelContentResolver.svelte";
 
 const isSessionRunningPreCondition = () => get(activeSession).isSessionRunning;
 
@@ -392,7 +393,6 @@ export const pointronActions: IAction[] = [
     path: "cp/importexport",
     icon: "data",
     type: ActionType.MODAL,
-    // isInactive: true,
     component: StorageSettings,
     modalParams: {
       title: "Import / Export data",
@@ -659,14 +659,25 @@ export const pointronActions: IAction[] = [
     action: Action.LIBRARY,
     label: "Library",
     icon: "stack",
-    component: PointronLibrary,
+    panel: PointronLibrary,
+    component: LibraryPanelContentResolver,
     type: ActionType.PAGE,
+    componentParams: {
+      defaultResource: Resource.goal
+    },
     modalParams: {
       layout: {
         size: Size.lg,
         orientation: Orientation.Horizontal
       }
     }
+  },
+  {
+    action: Action.LIBRARY_PORTRAIT,
+    label: "Library",
+    icon: "stack",
+    component: PointronLibrary,
+    type: ActionType.PAGE
   },
   {
     action: resourceCacheComponentKey(Resource.goal),

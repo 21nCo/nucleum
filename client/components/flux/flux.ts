@@ -155,7 +155,7 @@ class Flux {
     kvRecords?: string[];
     resources?: Resource[];
   }) {
-    logger.info({ at: "flux.loadInMemoryStores", params });
+    logger.log({ at: "flux.loadInMemoryStores", params });
     try {
       let kvStores = this.stores.filter(
         (x) => x.dataType === StoreDataType.KVO
@@ -240,7 +240,7 @@ class Flux {
    * @returns
    */
   async seed() {
-    logger.info({ at: "flux.seed" });
+    logger.log({ at: "flux.seed" });
     try {
     } catch (e) {
       logger.error({ at: "flux.seed", error: e });
@@ -257,7 +257,7 @@ class Flux {
     additionalParams: IMutationAdditionalParams = {}
   ) {
     let response;
-    logger.info({
+    logger.log({
       at: "flux.mutation",
       resource,
       params: {
@@ -312,7 +312,7 @@ class Flux {
       });
       throw e;
     }
-    logger.info({
+    logger.log({
       at: "flux.mutation - result",
       resource,
       action: params.action,
@@ -515,7 +515,7 @@ class Flux {
       ...data,
       id: `kv:${storeId}`
     };
-    logger.info({ at: "kvMerge", storeId, record });
+    logger.log({ at: "kvMerge", storeId, record });
     const result = await this.persistence.mutation(Resource.kv, {
       record,
       action: PersistenceActionType.MERGE
@@ -857,7 +857,7 @@ class Flux {
     response: any,
     params?: { isInitialSyncdown?: boolean; src?: string }
   ) {
-    logger.info({ at: "flux.processSyncDown", ...params });
+    logger.log({ at: "flux.processSyncDown", ...params });
     if (!response) {
       return;
     }

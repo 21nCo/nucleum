@@ -15,6 +15,7 @@
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { appStore } from "$lib/client/stores/app.store";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
   export let searchStoreId: string | undefined = undefined;
   export let searchCallback: Function | undefined = undefined;
   export let searchResultComponent: any = undefined;
@@ -34,26 +35,37 @@
   export let onReset: Function | undefined = undefined;
   export let isApplyPopoverStyling: boolean = false;
   export let id: string = generateSimpleRandomId();
+  export let isPreventAutoSelectZeroIndex: boolean = false;
 
   let value: string;
   type SearchItem = Partial<IResource & Record<string, unknown>>;
   let results: SearchItem[] = [];
-  let selectedIndex: number = 0;
+  let selectedIndex: number = resolveDefaultIndexSelection();
   let previousValue: string = "";
   let currentValue: string;
   let isSearchInProgress: boolean = !isPreventDefaultResults;
+
   export function reset() {
     resetSearch();
     value = "";
     dispatch("reset");
     if (onReset) onReset();
   }
+
+  export function resetSelectedIndex() {
+    selectedIndex = resolveDefaultIndexSelection();
+  }
+
+  function resolveDefaultIndexSelection() {
+    return isPreventAutoSelectZeroIndex ? -1 : 0;
+  }
+
   const dispatch = createEventDispatcher();
 
   function onSearchResultSelection(item: SearchItem, e?: MouseEvent) {
     dispatch("select", { item, event: e });
     if (onSelect) onSelect({ detail: { item, event: e } });
-    if (item.id) {
+    if (item?.id) {
       const type = determineResourceType(item.id);
       appStore.addToRecents({
         record: {
@@ -69,19 +81,19 @@
   }
   function resetSearch() {
     results = [];
-    selectedIndex = 0;
+    selectedIndex = resolveDefaultIndexSelection();
     hide();
   }
 
   export function keydown(event: any) {
     logger.log({ at: "SearchResultsPopover - keydown", event });
-    if (event.key === "ArrowDown") {
+    if (event.key === KeyboardKey.ARROW_DOWN) {
       selectedIndex = Math.min(selectedIndex + 1);
       if (selectedIndex === results?.length) {
         selectedIndex = 0;
       }
       event.preventDefault();
-    } else if (event.key === "ArrowUp") {
+    } else if (event.key === KeyboardKey.ARROW_UP) {
       selectedIndex = Math.max(selectedIndex - 1, -1);
       if (selectedIndex === -1) {
         selectedIndex = results?.length;
@@ -90,7 +102,14 @@
     }
   }
 
+  const modifierKeys = [
+    ModifierKey.META,
+    ModifierKey.CTRL,
+    ModifierKey.ALT,
+    ModifierKey.SHIFT
+  ];
   export function keyup(event: any) {
+    if (modifierKeys.includes(event.key as ModifierKey)) return;
     value =
       (event.target as HTMLInputElement).value ??
       (event.target as HTMLElement).innerText;
@@ -108,11 +127,11 @@
       }
     }
     // console.log("keyup - search results popover", { event, value });
-    if (event.key === "Escape") {
+    if (event.key === KeyboardKey.ESCAPE) {
       resetSearch();
       // inputRef.blur();
       dispatch("blur");
-    } else if (event.key === "Backspace") {
+    } else if (event.key === KeyboardKey.BACKSPACE) {
       previousValue = currentValue;
       currentValue = value;
       if (previousValue?.length > currentValue?.length) {
@@ -122,47 +141,54 @@
         }
       }
       debouncedSearch();
-    } else if (event.key === "Enter") {
+    } else if (event.key === KeyboardKey.ENTER) {
       if (results && results.length > 0) {
         onSearchResultSelection(results[selectedIndex]);
       } else {
         //save();
         dispatch("empty-enter", { event, value });
       }
-    } else if (event.key !== "ArrowDown" && event.key !== "ArrowUp") {
+    } else if (
+      event.key !== KeyboardKey.ARROW_DOWN &&
+      event.key !== KeyboardKey.ARROW_UP
+    ) {
       currentValue = value;
       debouncedSearch();
     }
     // dispatch("keyup", { value, event });
   }
+
   let debouncedSearch = debouncer(search, 500);
-  export async function search() {
+
+  export async function search(newValue?: string) {
+    const val = newValue ?? value;
     isSearchInProgress = true;
-    selectedIndex = 0;
+    selectedIndex = resolveDefaultIndexSelection();
     results = [];
-    if (!value && isPreventDefaultResults) {
+    if (!val && isPreventDefaultResults) {
       results = [];
       hide();
       isSearchInProgress = false;
       return;
     }
     if (searchCallback) {
-      let result = await searchCallback(value);
+      let result = await searchCallback(val);
       if (result) results = result;
       isSearchInProgress = false;
       if (results.length > 0) {
         show();
       }
+      dispatch("count", { count: results?.length });
       return;
     }
     if (searchStoreId) {
       if (isExtensionEnvironment()) {
         results = await extensionFlux({
           method: FluxMethod.SEARCH,
-          args: { storeId: searchStoreId, query: value }
+          args: { storeId: searchStoreId, query: val }
         });
       } else {
-        results = await flux.search(searchStoreId, value);
+        results = await flux.search(searchStoreId, val);
       }
     }
 
@@ -170,10 +196,13 @@
     if (results?.length > 0) {
       show();
     }
+    dispatch("count", { count: results?.length });
   }
+
   function show() {
     dispatch("show");
   }
+
   function hide() {
     dispatch("hide");
   }

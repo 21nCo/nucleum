@@ -69,7 +69,7 @@
     ? true
     : false;
   let allSubTypes: ISelectItem[] = [];
-  let renderedSubTypes: ISelectItem[] = [allSubTypeSwitcherItem];
+  let renderedSubTypes: ISelectItem[] = [];
   let searchStore = new SearchStore();
 
   $: isExpandableSubTypes = [Resource.node].includes(resource);
@@ -92,6 +92,7 @@
       } else {
         isArchivedFilterSelected = false;
       }
+      refreshSubTypeSwitcher();
     });
     refreshSubTypeSwitcher();
     return () => unsubscribe();
@@ -218,20 +219,22 @@
   >
     <div class="flex-1 min-w-0">
       {#if resource === Resource.task}
-        <PanelSwitcher
-          items={renderedSubTypes.map((x) => ({
-            label: x.label,
-            value: x.value
-          }))}
-          value={selectedSubType}
-          size={Size.sm}
-          style={PanelSwitcherStyle.BAR}
-          barStyle={BarStyle.DOT}
-          on:switch={(e) => {
-            if (!e?.detail) return;
-            onSelect(e.detail);
-          }}
-        />
+        {#if renderedSubTypes.length > 0}
+          <PanelSwitcher
+            items={renderedSubTypes.map((x) => ({
+              label: x.label,
+              value: x.value
+            }))}
+            value={selectedSubType}
+            size={Size.sm}
+            style={PanelSwitcherStyle.BAR}
+            barStyle={BarStyle.DOT}
+            on:switch={(e) => {
+              if (!e?.detail) return;
+              onSelect(e.detail);
+            }}
+          />
+        {/if}
       {:else}
         <div class="flex gap-2 items-center h-full">
           {#if !isNonStarrable}

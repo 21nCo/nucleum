@@ -74,6 +74,21 @@ export function isValidString(str: string | undefined | null) {
   return undefined;
 }
 
+export function isValidNumber(str: string | number) {
+  if (typeof str !== "string" && typeof str !== "number") return false;
+  if (typeof str === "number") return Number.isFinite(str);
+  const s = str.trim();
+  if (s === "") return false;
+  return Number.isFinite(Number(s));
+}
+
+export function isValidEnumValue(
+  str: string,
+  enumType: Record<string, string>
+) {
+  return Object.values(enumType).includes(str);
+}
+
 export function isValidDataString(str: string) {
   return isValidString(str) && !isNaN(new Date(str).getTime());
 }

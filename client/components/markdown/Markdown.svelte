@@ -320,9 +320,12 @@
   }
 </script>
 
-<button
+<div
   id="markDown-{mdId}"
   class="relative flex flex-col justify-start items-start text-start w-full h-full"
+  aria-label="Markdown editor"
+  role="textbox"
+  tabindex="-1"
   on:keydown={onKeyDown}
   use:resizeListener={(e) => {
     containerWidth = e.width;
@@ -462,7 +465,7 @@
       />
     {/if}
   </div>
-</button>
+</div>
 {#if $multiSelectStore.length > 0}
   <BottomFloat zIndex="z-30" {containerId}>
     <BulkEditBar

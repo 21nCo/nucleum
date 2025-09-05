@@ -70,7 +70,8 @@
       scope: UIStateScope.DAP,
       subVariables: [view.toString()]
     });
-    return widthState ?? 450;
+    const defaultVal = $appStore.product === Product.MEMOTRON ? 650 : 450;
+    return widthState ?? defaultVal;
   }
 
   function handleYearChange(event: CustomEvent) {

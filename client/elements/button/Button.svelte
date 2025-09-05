@@ -6,12 +6,9 @@
   import { Placement } from "$lib/client/types/direction.enum";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
-  import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
   import Badge from "../text/Badge.svelte";
   import { hoverable } from "$lib/client/actions/hover.action";
   import { popover } from "$lib/client/actions/popover.action";
-  import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
   import ShortcutText from "../text/ShortcutText.svelte";
   import type { IKeyboardShortcut } from "$lib/client/components/shortcuts/shortcut.type";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
@@ -176,19 +173,17 @@
       <div class="min-w-fit whitespace-nowrap">
         {label}
       </div>
-      {#if $uiStateDerived?.isShowHotKeyHints && shortcut && $context.embed !== Embed.HANDSET}
-        <ShortcutText
-          {shortcut}
-          {size}
-          parentBgIndex={style === ButtonStyle.PLAIN
-            ? parentBgIndex
-            : style === ButtonStyle.OUTLINED && type !== ButtonVariant.PRIMARY
-              ? parentBgIndex + 1
-              : undefined}
-          isAccentOutlined={style === ButtonStyle.OUTLINED &&
-            type === ButtonVariant.PRIMARY}
-        />
-      {/if}
+      <ShortcutText
+        {shortcut}
+        {size}
+        parentBgIndex={style === ButtonStyle.PLAIN
+          ? parentBgIndex
+          : style === ButtonStyle.OUTLINED && type !== ButtonVariant.PRIMARY
+            ? parentBgIndex + 1
+            : undefined}
+        isAccentOutlined={style === ButtonStyle.OUTLINED &&
+          type === ButtonVariant.PRIMARY}
+      />
       {#if badge}
         <Badge text={badge} />
       {/if}

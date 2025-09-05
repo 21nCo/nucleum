@@ -1,6 +1,5 @@
 import { Product } from "./product.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { product } from "$local/local";
 import { Action } from "../types/action.enum";
 import { MemotronAction } from "./memotron/memotronAction.enum";
 
@@ -14,6 +13,9 @@ interface SettingsSection {
 }
 
 interface ProductConfig {
+  name: string;
+  version: string;
+  build?: number;
   /**
    * App menu for landscape mode
    */
@@ -37,13 +39,24 @@ interface ProductConfig {
   sectionLabel: string;
   displayName: string;
   tagline: string;
+  configurableShortcuts?: string[];
   features: {
     fileUploadAvailable: boolean;
   };
 }
 
+const commonConfigurableShortcuts = [
+  Action.EDIT_MODE,
+  Action.CMD,
+  Action.GLOBAL_SEARCH,
+  Action.GO_BACK,
+  Action.GO_FORWARD
+];
+
 export const products: Record<Product, ProductConfig> = {
   [Product.NUCLEUS]: {
+    name: "Nucleus",
+    version: "0.3.2",
     appMenu: isDev
       ? ["home", "calendar", "overview", "library"]
       : ["calendar", "overview", "library"],
@@ -58,6 +71,11 @@ export const products: Record<Product, ProductConfig> = {
     features: {
       fileUploadAvailable: true
     },
+    configurableShortcuts: [
+      ...commonConfigurableShortcuts,
+      "SAVE_CAPTURE_SHORTCUT",
+      "ACTIVATE_LINK_BOX"
+    ],
     settings: [
       {
         children: [
@@ -98,6 +116,8 @@ export const products: Record<Product, ProductConfig> = {
     ]
   },
   [Product.MEMOTRON]: {
+    name: "Memotron",
+    version: "0.61.3",
     appMenu: ["node_create", "calendar", "overview", "library"],
     appMenuPt: [],
     homePath: "calendar",
@@ -111,6 +131,11 @@ export const products: Record<Product, ProductConfig> = {
     features: {
       fileUploadAvailable: true
     },
+    configurableShortcuts: [
+      ...commonConfigurableShortcuts,
+      "SAVE_CAPTURE_SHORTCUT",
+      "ACTIVATE_LINK_BOX"
+    ],
     settings: [
       {
         children: [
@@ -150,8 +175,10 @@ export const products: Record<Product, ProductConfig> = {
     ]
   },
   [Product.POINTRON]: {
+    name: "Pointron",
+    version: "0.83.1",
     appMenu: ["focus", "calendar", "overview", "library"],
-    appMenuPt: ["overview", "calendar", "focus", "library"],
+    appMenuPt: ["overview", "calendar", "focus", "librarypt"],
     homePath: "calendar",
     homePathPt: "focus",
     databaseName: "pointone",
@@ -201,6 +228,8 @@ export const products: Record<Product, ProductConfig> = {
     ]
   },
   [Product.SELFTRON]: {
+    name: "Selftron",
+    version: "0.1.0",
     appMenu: ["overview", "library"],
     appMenuPt: [],
     homePath: "home",
@@ -215,6 +244,8 @@ export const products: Record<Product, ProductConfig> = {
     }
   },
   [Product.FEEDTRON]: {
+    name: "Feedtron",
+    version: "0.1.0",
     appMenu: ["overview", "library"],
     appMenuPt: [],
     homePath: "feed",
@@ -229,6 +260,8 @@ export const products: Record<Product, ProductConfig> = {
     }
   },
   [Product.HOMETRON]: {
+    name: "Hometron",
+    version: "0.1.0",
     appMenu: ["overview", "library"],
     appMenuPt: [],
     homePath: "home",
@@ -243,6 +276,8 @@ export const products: Record<Product, ProductConfig> = {
     }
   },
   [Product.FINATRON]: {
+    name: "Finatron",
+    version: "0.1.0",
     appMenu: ["overview", "library"],
     appMenuPt: [],
     homePath: "home",
@@ -257,6 +292,8 @@ export const products: Record<Product, ProductConfig> = {
     }
   },
   [Product.FELLOTRON]: {
+    name: "Fellotron",
+    version: "0.1.0",
     appMenu: ["overview", "library"],
     appMenuPt: [],
     homePath: "home",
@@ -272,8 +309,23 @@ export const products: Record<Product, ProductConfig> = {
   }
 };
 
+export const product = import.meta.env.VITE_PRODUCT || Product.NUCLEUS;
+
 export const resolveProductConfig = (
   productOverride?: Product
 ): ProductConfig => {
-  return products[productOverride ?? (product as Product)];
+  const base = products[productOverride ?? (product as Product)];
+
+  const getFallbackBuildNumber = (): number => {
+    const buildDate = import.meta.env.VITE_BUILD_DATE;
+    if (buildDate) {
+      return parseInt(buildDate, 10);
+    }
+    return new Date().getMonth() + 1;
+  };
+
+  return {
+    ...base,
+    build: import.meta.env.VITE_BUILD ?? getFallbackBuildNumber()
+  };
 };

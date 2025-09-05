@@ -60,25 +60,26 @@
   {:else}
     <div class="flex flex-col w-full h-full">
       <div class="flex w-full flex-grow">
-        {#if !isHideLeftNavBar || $context.embed === Embed.HANDSET}
+        {#if $context.embed === Embed.HANDSET}
           <LeftNav variant="fixed" />
         {/if}
-        <div
-          class="flex flex-col h-full {$view.isPortrait
-            ? 'w-full'
-            : 'flex-grow'}"
-        >
+        <div class="flex flex-col h-full w-full">
           {#if !$view.isPortrait}
             <TopNav>
               <slot name="topnav" slot="topnav" />
             </TopNav>
           {/if}
-          <div class="w-full flex-grow">
-            <AppSplitView>
-              <slot name="main" slot="main">
-                <slot />
-              </slot>
-            </AppSplitView>
+          <div class="flex w-full flex-grow">
+            {#if $context.embed !== Embed.HANDSET && !isHideLeftNavBar}
+              <LeftNav variant="fixed" />
+            {/if}
+            <div class="min-w-0 flex-grow">
+              <AppSplitView>
+                <slot name="main" slot="main">
+                  <slot />
+                </slot>
+              </AppSplitView>
+            </div>
           </div>
         </div>
         <!-- <RightPanel /> -->

@@ -515,7 +515,7 @@
         padding="px-2"
         on:search={() => refresh()}
         placeholder={"Search " + resource + "s"}
-        style={InputStyle.FILLED}
+        style={InputStyle.BORDERED}
       >
         <Toggle
           bind:on={isRefineShown}
@@ -547,41 +547,40 @@
               isPreventMinWidth={true}
             />
           </div> -->
-        {#if resource !== Resource.goal}
-          <DropDown
-            label={{
-              label: "Arrangement",
-              orientation: Orientation.Horizontal
-            }}
-            items={[
-              {
-                label: "List",
-                icon: "list",
-                value: Arrangement.LIST
-              },
-              {
-                label: "Grid",
-                icon: "grid",
-                value: Arrangement.GRID
-              }
-            ]}
-            width="w-40"
-            isDisableSearch={true}
-            size={Size.sm}
-            value={arrangement ?? undefined}
-            on:select={(e) => {
-              if (!e?.detail) return;
-              const newArrangement = e.detail;
-              uiState.setResourceState(
-                resource,
-                ResourceAccessPoint.BROWSER,
-                UIState.arrangement,
-                newArrangement
-              );
-              arrangement = newArrangement;
-            }}
-          />
-        {/if}
+
+        <DropDown
+          label={{
+            label: "Arrangement",
+            orientation: Orientation.Horizontal
+          }}
+          items={[
+            {
+              label: "List",
+              icon: "list",
+              value: Arrangement.LIST
+            },
+            {
+              label: "Grid",
+              icon: "grid",
+              value: Arrangement.GRID
+            }
+          ]}
+          width="w-40"
+          isDisableSearch={true}
+          size={Size.sm}
+          value={arrangement ?? undefined}
+          on:select={(e) => {
+            if (!e?.detail) return;
+            const newArrangement = e.detail;
+            uiState.setResourceState(
+              resource,
+              ResourceAccessPoint.BROWSER,
+              UIState.arrangement,
+              newArrangement
+            );
+            arrangement = newArrangement;
+          }}
+        />
 
         <SwitchInput
           bind:checked={isArchivedFilterSelected}
@@ -632,7 +631,10 @@
           $view.isConstrainedWidth
             ? ResourceAccessMode.POP
             : ResourceAccessMode.INLINE}
-          size={$view.isConstrainedWidth ? Size.sm : Size.md}
+          size={$view.isConstrainedWidth ||
+          accessPoint === ResourceAccessPoint.BROWSER
+            ? Size.sm
+            : Size.md}
           arrangement={resolveArrangement(arrangement)}
         />
         {#if data.length > 0}
@@ -670,7 +672,10 @@
           $view.isConstrainedWidth
             ? ResourceAccessMode.POP
             : ResourceAccessMode.INLINE}
-          size={$view.isConstrainedWidth ? Size.sm : Size.md}
+          size={$view.isConstrainedWidth ||
+          accessPoint === ResourceAccessPoint.BROWSER
+            ? Size.sm
+            : Size.md}
           isShowLoadingPulseAtTheEnd={data.length < totalCountAfterFilter &&
             !searchQuery}
           arrangement={resolveArrangement(arrangement)}

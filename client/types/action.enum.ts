@@ -37,6 +37,7 @@ export enum Action {
   GO_FORWARD = "GO_FORWARD",
   ADD_ITEM_TO_COLLECTION = "add-item-to-collection",
   LIBRARY = "library",
+  LIBRARY_PORTRAIT = "librarypt",
   OVERVIEW = "overview",
   HOME = "home",
   MOBILEHOME = "mobilehome",

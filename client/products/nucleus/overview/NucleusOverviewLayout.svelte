@@ -40,7 +40,7 @@
 
 <div class="relative w-full h-full flex flex-col justify-center items-center">
   <div
-    class="flex justify-between items-end gap-4 rounded-md w-full bg-bgs2"
+    class="flex justify-between items-end gap-4 rounded-md w-full"
     use:resizeListener={(e) => {
       containerWidth = e.width;
     }}
@@ -70,7 +70,6 @@
       ]}
       style={PanelSwitcherStyle.BAR}
       title="Overview"
-      parentBgIndex={2}
       isExpandToFullWidth={true}
       isShowNumberShortcut={$uiStateDerived.isShowHotKeyHints}
       size={Size.sm}

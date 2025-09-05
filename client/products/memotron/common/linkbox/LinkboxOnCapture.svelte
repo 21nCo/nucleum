@@ -13,12 +13,17 @@
   export let expand: IRecordId | null = null;
   const dispatch = createEventDispatcher();
   let link: string;
+  let searchRef: LinkSearch;
   async function propagatePropertyChanges(e: CustomEvent) {
     if (!e.detail || !e.detail?.id || e.detail?.value === undefined) return;
     captureStore.updateProperty({
       id: e.detail.id,
       value: e.detail.value
     });
+  }
+
+  export function focus() {
+    searchRef?.focus();
   }
   $: hasLinks = isValidArrayWithData($captureStore.links);
 </script>
@@ -40,6 +45,7 @@
         link = "";
         dispatch("linked", e.detail.item);
       }}
+      bind:this={searchRef}
     />
   </div>
 

@@ -4,7 +4,6 @@
   import { TextStyle } from "$lib/client/types/text.enum";
   import { isInEditMode } from "$lib/client/stores/app.store";
   import { focusItemsStore } from "../session.store";
-  import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
   import { Action } from "$lib/client/types/action.enum";
   import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
 </script>
@@ -14,9 +13,7 @@
     <Text style={TextStyle.PANEL_HEADING_SMALL} content="Focus Items" />
     <span class="flex items-center gap-1">
       <EditToggleButton />
-      {#if $uiStateDerived.isShowHotKeyHints}
-        <ShortcutText shortcut={Action.EDIT_MODE} parentBgIndex={1} />
-      {/if}
+      <ShortcutText shortcut={Action.EDIT_MODE} parentBgIndex={1} />
     </span>
   </div>
   <div class="flex flex-col items-center gap-1 text-fgs3">

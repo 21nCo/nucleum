@@ -17,8 +17,10 @@ import { goalStore } from "$lib/client/components/goals/goal.store";
 import { taskStore } from "$lib/client/components/tasks/task.store";
 import { linker } from "../memotron/linking/link.store";
 import { propertyStore } from "$lib/client/components/collection/properties/property.store";
+import { pointronActions } from "./pointron.actions";
+import PointronBaseLayer from "./base/PointronBaseLayer.svelte";
 
-export const pointronCacheableStores: IStore[] = [
+const pointronCacheableStores: IStore[] = [
   analyticsConfigStore,
   pointronPreferences,
   focusItemsStore,
@@ -34,4 +36,13 @@ export const pointronCacheableStores: IStore[] = [
   propertyStore
 ];
 
-export const pointronRemoteOnlyStores: IStore[] = [accessLogStore];
+const pointronRemoteOnlyStores: IStore[] = [accessLogStore];
+
+export default {
+  actions: pointronActions,
+  base: PointronBaseLayer,
+  stores: {
+    cacheableStores: pointronCacheableStores,
+    remoteOnlyStores: pointronRemoteOnlyStores
+  }
+};

@@ -46,6 +46,7 @@
                 <ShortcutText
                   shortcut={Action.GLOBAL_SEARCH}
                   parentBgIndex={2}
+                  isAlwaysShown={true}
                 />
               </button>
             </div>
@@ -62,7 +63,13 @@
         </slot>
       </LeftNavExpandable>
     {:else if variant === "fixed"}
-      <LeftNavFixed {isRounded} />
+      <LeftNavFixed {isRounded}>
+        <div slot="panel" class="h-full overflow-auto relative">
+          {#if $appStore.currentComponent?.panel}
+            <svelte:component this={$appStore.currentComponent.panel} />
+          {/if}
+        </div>
+      </LeftNavFixed>
     {/if}
   {/if}
 {/if}

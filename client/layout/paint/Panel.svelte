@@ -26,7 +26,7 @@
   const dispatch = createEventDispatcher();
 
   export let title: string | undefined = undefined;
-  export let titleStyle: TextStyle = TextStyle.PAGE_HEADING_SUBTLE;
+  export let titleStyle: TextStyle = TextStyle.PANEL_HEADING;
   export let floatingButton: IButtonParams | IButtonParams[] | undefined =
     undefined;
   export let panelSize: Size.sm | Size.md | Size.lg | Size.xl = Size.md;
@@ -155,10 +155,12 @@
   {/if}
   {#if !$view.isConstrainedWidth && !isExpanded}
     <!-- Right split -->
-    <Divider
-      orientation={Orientation.Vertical}
-      colorStrength={ColorStrength.Normal}
-    />
+    {#if $$slots.right}
+      <Divider
+        orientation={Orientation.Vertical}
+        colorStrength={ColorStrength.Normal}
+      />
+    {/if}
     {#if isProminentDivider}
       <div class="w-0.5 bg-bgs2"></div>
       <Divider

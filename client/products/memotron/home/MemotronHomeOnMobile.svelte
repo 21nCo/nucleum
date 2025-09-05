@@ -273,8 +273,17 @@
           bind:resource
           isExpanded={mode === "search"}
           parentBgIndex={2}
+          on:close={() => {
+            mode = undefined;
+            searchQuery = "";
+          }}
         >
-          <div class="flex items-center gap-2 px-4 pt-3 pb-3">
+          <div
+            class={cn("flex items-center gap-2  pt-3 pb-3", {
+              "px-4": mode !== "search",
+              "pl-4": mode === "search"
+            })}
+          >
             <TextInput
               bind:value={searchQuery}
               placeholder={resource === Resource.everything
@@ -293,16 +302,6 @@
                 searchBaseRef?.keyup(e.detail.event);
               }}
             />
-            {#if mode === "search"}
-              <Button
-                icon="cross"
-                size={Size.lg}
-                style={ButtonStyle.OUTLINED}
-                on:click={() => {
-                  mode = undefined;
-                }}
-              />
-            {/if}
           </div>
         </ResourceSearchBase>
       </div>
