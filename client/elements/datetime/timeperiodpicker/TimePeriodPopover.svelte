@@ -61,7 +61,7 @@
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <button
-  class="flex flex-col items-center gap-4 bg-bgs1 p-4 cw:w-full w-96 h-96 min-h-fit"
+  class="flex flex-col items-center gap-4 bg-bgs1 p-4 cw:w-full w-96 cw:h-[30rem] h-96 min-h-fit"
   on:click|stopPropagation
 >
   <PanelSwitcher
@@ -139,6 +139,7 @@
         scale={selectedScale}
         initialStartDate={period.value.param.start}
         initialEndDate={period.value.param.end}
+        isInline={true}
         on:rangePicked={(e) => {
           period = {
             scale: selectedScale,

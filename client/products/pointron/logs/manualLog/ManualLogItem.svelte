@@ -335,7 +335,7 @@
           class="flex justify-between items-center w-full text-ccs1"
           on:click={onGoalClicked}
         >
-          {selectedGoal.label}
+          {selectedGoal.label || "Untitled"}
           <Button icon="cross" />
         </CustomColorPropagator>
       </div>
@@ -362,7 +362,7 @@
                 onGoalSelect(goal);
               }}
             >
-              {goal.label}
+              {goal.label || "Untitled"}
             </CustomColorPropagator>
           {/each}
         </div>

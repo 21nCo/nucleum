@@ -36,6 +36,7 @@
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import { createEventDispatcher } from "svelte";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
 
   const dispatch = createEventDispatcher();
 
@@ -144,6 +145,10 @@
       }
       return;
     }
+    if ($view.isConstrainedWidth) {
+      appStore.openResource(item.id, ResourceAccessMode.POP);
+      return;
+    }
     const clickAccessMode = e.detail.event
       ? appStore.determineClickAccessMode(e.detail.event)
       : undefined;
@@ -171,7 +176,11 @@
   })}
 >
   <header class={"flex flex-col w-full"}>
-    <div class="flex gap-1" class:p-4={isGlobalSearchModal}>
+    <div
+      class={cn("flex gap-1", {
+        "py-4": isGlobalSearchModal
+      })}
+    >
       <span class="min-w-0 flex-1">
         <slot />
       </span>

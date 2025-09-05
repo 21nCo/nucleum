@@ -40,6 +40,7 @@
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import RecordTrashBanner from "../record/RecordTrashBanner.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import view from "$lib/client/stores/view.store";
 
   export let id: IRecordId;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -242,6 +243,17 @@
       };
     }
   }
+
+  function onClose() {
+    if (accessPoint === ResourceAccessPoint.GOAL) {
+      if (accessPointId)
+        appStore.toggleSearchParamRecordSpecific(accessPointId, ["task"]);
+    } else {
+      appStore.closeResource({
+        accessMode: accessMode
+      });
+    }
+  }
 </script>
 
 <div
@@ -257,6 +269,15 @@
       class="w-full flex flex-col justify-between gap-4 h-full userdata ph-no-capture"
     >
       <div class="flex flex-col gap-6 mt-4">
+        {#if $view.isConstrainedWidth}
+          <div class="flex justify-end w-full">
+            <Button
+              icon="cross"
+              style={ButtonStyle.OUTLINED}
+              on:click={onClose}
+            />
+          </div>
+        {/if}
         <div class="flex flex-col gap-1">
           {#if isShowGoalPicker}
             <TextSearchInput
@@ -343,7 +364,7 @@
       </div>
       <div class="flex flex-col gap-3 justify-center w-full">
         <InlineFeedbackText feedback={status} />
-        <div class="flex gap-2 justify-center w-full">
+        <div class="flex gap-2 justify-center w-full cw:pb-6">
           <Button
             icon="trash"
             label="Delete"
@@ -358,23 +379,9 @@
               });
             }}
           />
-
-          <Button
-            icon="x-circle"
-            label="Close"
-            on:click={() => {
-              if (accessPoint === ResourceAccessPoint.GOAL) {
-                if (accessPointId)
-                  appStore.toggleSearchParamRecordSpecific(accessPointId, [
-                    "task"
-                  ]);
-              } else {
-                appStore.closeResource({
-                  accessMode: accessMode
-                });
-              }
-            }}
-          />
+          {#if !$view.isConstrainedWidth}
+            <Button icon="x-circle" label="Close" on:click={onClose} />
+          {/if}
         </div>
       </div>
     </div>

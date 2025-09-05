@@ -93,6 +93,3 @@
     {/if}
   </div>
 </div>
-{#if !isInline && $view.isConstrainedWidth}
-  <FullScreenCloseButton accessMode={ResourceAccessMode.POP} />
-{/if}

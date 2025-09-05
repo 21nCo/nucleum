@@ -98,7 +98,6 @@
         isRenderAsModalForCW: true,
         componentProps: {
           isDatePickerMode: true,
-          isCWPopoverContext: $view.isConstrainedWidth,
           selectedDate: _date,
           onDateChange: (val) => {
             date = val;
@@ -146,7 +145,6 @@
       isRenderAsModalForCW: true,
       componentProps: {
         isDatePickerMode: true,
-        isCWPopoverContext: $view.isConstrainedWidth,
         selectedDate: _date,
         onDateChange: (val) => {
           date = val;

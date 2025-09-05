@@ -15,12 +15,11 @@
   export let parentBgIndex: number = 0;
   export let isDatePickerMode: boolean = false;
   export let selectedDate: Date = new Date();
-
+  export let isInline: boolean = false;
   export let initialStartDate: Date | null = null;
   export let initialEndDate: Date | null = null;
   export let onDateChange: (val: Date) => void;
   export let onRangeChange: (val: { start: string; end: string }) => void;
-  export let isCWPopoverContext: boolean = false;
 
   const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
   const MONTHS = Array.from({ length: 12 }, (_, i) =>
@@ -279,14 +278,11 @@
 </script>
 
 <button
-  class={cn(
-    "flex flex-col gap-4 p-4 text-fgs3 cw:rounded-none rounded-md cw:shadow-none shadow-lg cw:border-none border border-brs2",
-    {
-      [bg(parentBgIndex)]: true,
-      "w-[20rem]": !isCWPopoverContext,
-      "w-full": isCWPopoverContext
-    }
-  )}
+  class={cn("flex flex-col gap-4 text-fgs3 cw:w-full w-[20rem]", {
+    [bg(parentBgIndex)]: true,
+    "p-3 cw:rounded-none rounded-md cw:shadow-none shadow-lg cw:border-none border border-brs2":
+      !isInline
+  })}
   on:click|stopPropagation
 >
   {#if !isDatePickerMode}
@@ -398,7 +394,7 @@
                 {#if day !== null}
                   {@const date = currentView.date(day)}
                   <div
-                    class="flex w-full h-7 justify-center items-center relative"
+                    class="flex w-full h-9 justify-center items-center relative"
                   >
                     {#if startDate && endDate && isDateInRange(date)}
                       <div class="absolute inset-0 bg-aps2/20" />
@@ -409,7 +405,7 @@
                     <button
                       data-day={date}
                       class={cn(
-                        "rounded-md w-6 h-6 flex items-center justify-center relative z-10 border border-transparent",
+                        "rounded-md w-7 h-7 text-b2 flex items-center justify-center relative z-10 border border-transparent",
                         {
                           "text-abg bg-aps1 !border-aps1":
                             (isDatePickerMode &&

@@ -198,7 +198,6 @@
           componentProps: {
             isDatePickerMode: true,
             selectedDate: item.dateUnix ? new Date(item.dateUnix) : undefined,
-            isCWPopoverContext: true,
             onDateChange: (val) => {
               onDateChange(val);
             }
