@@ -43,6 +43,7 @@
 
   let selectedDate = new Date();
   let selectedView: TimeScaleUnit = resolveSavedScaleSelection();
+  let selectedScale: TimeScaleUnit = TimeScaleUnit.DAY;
   let events: any[] = [];
   let yearViewRef: YearViewV2;
   let weekViewRef: WeekView;
@@ -88,6 +89,18 @@
   function handleMonthChange(event: CustomEvent) {
     if (!event.detail) return;
     setDate(event.detail);
+  }
+
+  function handleMonthSelect(event: CustomEvent) {
+    if (!event.detail || $appStore.product === Product.POINTRON) return;
+    selectedScale = TimeScaleUnit.MONTH;
+    setDate(event.detail.date);
+  }
+
+  function handleYearSelect(event: CustomEvent) {
+    if (!event.detail || $appStore.product === Product.POINTRON) return;
+    selectedScale = TimeScaleUnit.YEAR;
+    setDate(event.detail.date);
   }
 
   function handleVisibleDatesChange(event: CustomEvent) {
@@ -340,10 +353,16 @@
         <YearViewV2
           bind:this={yearViewRef}
           bind:selectedDate
+          {selectedScale}
           {indicatorData}
           {indicatorRefreshId}
           on:yearChange={handleYearChange}
-          on:dateChange={onDateChange}
+          on:dateChange={(e) => {
+            selectedScale = TimeScaleUnit.DAY;
+            onDateChange(e);
+          }}
+          on:monthSelect={handleMonthSelect}
+          on:yearSelect={handleYearSelect}
         />
       {/if}
     </div>
@@ -368,11 +387,14 @@
         }}
       >
         {#key selectedDate.toISOString()}
-          {#if $appStore.product === Product.MEMOTRON}
-            <MemotronTempCalendarColumn date={selectedDate} />
+          {#if $appStore.product === Product.MEMOTRON || (selectedScale !== TimeScaleUnit.DAY && $appStore.product === Product.NUCLEUS)}
+            <MemotronTempCalendarColumn
+              date={selectedDate}
+              scale={selectedScale}
+            />
           {:else}
             <CalendarColumn
-              scale={TimeScaleUnit.DAY}
+              scale={selectedScale}
               date={selectedDate}
               on:dateChange={(e) => {
                 if (e.detail) {

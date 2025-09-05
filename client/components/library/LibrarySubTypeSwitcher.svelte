@@ -198,18 +198,21 @@
 </script>
 
 {#if isConstrainedWidth}
-  <OptionSelector
-    size={Size.sm}
-    options={renderedSubTypes}
-    selected={selectedSubType}
-    isPreventWrap={true}
-    on:select={(e) => {
-      if (!e?.detail) return;
-      appStore.toggleSearchParam({
-        [AppSearchParam.TYPE]: e.detail.toLowerCase()
-      });
-    }}
-  />
+  <div class="flex gap-2 items-center justify-between">
+    <OptionSelector
+      size={Size.sm}
+      options={renderedSubTypes}
+      selected={selectedSubType}
+      isPreventWrap={true}
+      on:select={(e) => {
+        if (!e?.detail) return;
+        appStore.toggleSearchParam({
+          [AppSearchParam.TYPE]: e.detail.toLowerCase()
+        });
+      }}
+    />
+    <slot />
+  </div>
 {:else}
   <div
     class={cn("flex gap-2 min-h-fit w-full", {

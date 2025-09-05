@@ -37,6 +37,7 @@
   import { Embed } from "$lib/client/types/context.type";
   import { createEventDispatcher } from "svelte";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { setEmbedBg } from "$lib/client/utils/embed.utils";
 
   const dispatch = createEventDispatcher();
 
@@ -60,13 +61,11 @@
       value: Resource.everything,
       icon: "asterisk"
     },
-    ...(resources ?? [])
-      .filter((x) => !($view.isConstrainedWidth && x === Resource.task))
-      .map((x) => ({
-        label: properCase(x) + "s",
-        value: x,
-        icon: resolveResourceIcon(x)
-      }))
+    ...(resources ?? []).map((x) => ({
+      label: properCase(x) + "s",
+      value: x,
+      icon: resolveResourceIcon(x)
+    }))
   ];
   onMount(async () => {
     if (isExpanded) {
@@ -248,8 +247,10 @@
         on:switch={() => {
           setTimeout(() => {
             if (resource === Resource.everything) {
+              setEmbedBg(2);
               groupedSearchRef?.search(searchQuery);
             } else {
+              setEmbedBg(1);
               searchResultsPopover?.search(searchQuery);
             }
           }, 100);

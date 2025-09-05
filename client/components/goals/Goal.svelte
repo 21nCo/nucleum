@@ -201,7 +201,9 @@
     </div>
   {:else if $goal}
     <div
-      class="flex w-full h-full gap-4 p-4 overflow-auto"
+      class={cn("flex w-full h-full gap-4 overflow-auto", {
+        "p-4": !isConstrainedWidth
+      })}
       use:resizeListener={(e) => {
         containerWidth = e.width;
       }}
@@ -219,7 +221,13 @@
       {/if}
       <main class="flex flex-col gap-4 flex-1 overflow-auto">
         <div
-          class="relative flex flex-col w-full overflow-auto gap-3 bg-bgs2 rounded-lg border border-brs3 shrink-0"
+          class={cn(
+            "relative flex flex-col w-full overflow-auto gap-3 bg-bgs2 shrink-0",
+            {
+              "rounded-lg border border-brs3": !isConstrainedWidth,
+              "border-b border-brs3": isConstrainedWidth
+            }
+          )}
         >
           {#if isConstrainedWidth}
             <GoalTitleRow {goal} isConstrainedWidth={true} bind:status />
@@ -259,7 +267,11 @@
             {/if}
           </div>
         </div>
-        <div class="flex-1 overflow-auto">
+        <div
+          class={cn("flex-1 overflow-auto", {
+            "px-3": isConstrainedWidth
+          })}
+        >
           {#if selectedPanel === "info"}
             <GoalInfoPanel
               {goal}

@@ -35,7 +35,8 @@
   const contentContext = getContext<any>("content");
 
   function onNotesChange(e: any) {
-    if (_notes !== undefined) node.modify({ notes: _notes });
+    if (_notes !== undefined)
+      node.modify({ notes: _notes }, { isPreventBackPropagation: true });
   }
 
   async function refreshLinks(linksParam: INodeLinkThumb[] | undefined) {

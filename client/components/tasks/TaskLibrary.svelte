@@ -365,7 +365,7 @@
 
   {#if isFiltersExpanded}
     <div
-      class="flex flex-col gap-4 bg-bgs2 rounded-md p-4 mx-4"
+      class="flex flex-col gap-4 bg-bgs2 rounded-md p-4 cw:mx-0 mx-4"
       in:fly={{ y: -20, duration: 300 }}
     >
       {#if selectedSubType !== TaskSubTypeForSwitcher.BY_DATE}

@@ -7,6 +7,8 @@ export interface IPreferencesStore {
   [Preference.TRANSCRIPTION_LANGUAGE]?: string;
   [Preference.NOTES_TEMPLATE]?: string;
   [Preference.IMPORT_HISTORY]?: ImportHistoryItem[];
+  [Preference.CALENDAR_TILE_INDICATORS_MONTH]?: boolean;
+  [Preference.CALENDAR_TILE_INDICATORS_YEAR]?: boolean;
   [key: string]: unknown;
 }
 
@@ -16,7 +18,9 @@ export enum Preference {
   AUTO_TRANSCRIBE = "autoTranscribe",
   TRANSCRIPTION_LANGUAGE = "transcriptionLanguage",
   NOTES_TEMPLATE = "notesTemplate",
-  IMPORT_HISTORY = "importHistory"
+  IMPORT_HISTORY = "importHistory",
+  CALENDAR_TILE_INDICATORS_MONTH = "calendarTileIndicatorsMonth",
+  CALENDAR_TILE_INDICATORS_YEAR = "calendarTileIndicatorsYear"
 }
 
 export enum PreferencesScope {

@@ -1,12 +1,14 @@
 <script lang="ts">
   import { cn } from "$lib/client/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onDestroy } from "svelte";
   import {
     CalendarTileIndicatorDisplayType,
     type ICalendarIndicatorData
   } from "../calendar.type";
   import CalendarTileIndicator from "./indicator/CalendarTileIndicator.svelte";
   import { resizeListener } from "$lib/client/actions/resize.action";
+  import { preferences } from "$lib/client/stores/preferences/preferences.store";
+  import { Preference } from "$lib/client/stores/preferences/preferences.type";
 
   export let selectedDate: Date;
   export let indicatorData: ICalendarIndicatorData[] = [];
@@ -21,6 +23,14 @@
   let today = new Date();
 
   $: isConstrainedWidth = containerWidth < 600;
+  
+  let showMonthIndicators = preferences.resolve(Preference.CALENDAR_TILE_INDICATORS_MONTH) ?? true;
+  
+  const unsubscribe = preferences.subscribe((prefs) => {
+    showMonthIndicators = prefs[Preference.CALENDAR_TILE_INDICATORS_MONTH] ?? true;
+  });
+  
+  onDestroy(unsubscribe);
   function handleWheel(event: WheelEvent) {
     if (isScrolling) return;
 
@@ -124,7 +134,7 @@
             <span class="text-b3 p-1"> Today </span>
           {/if}
         </span>
-        {#if indicatorData.length > 0}
+        {#if indicatorData.length > 0 && showMonthIndicators}
           <div class="pl-1 pt-1 w-full flex-1">
             <CalendarTileIndicator
               date={day}

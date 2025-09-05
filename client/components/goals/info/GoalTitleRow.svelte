@@ -18,6 +18,7 @@
     AlertType,
     type IInlineStatus
   } from "$lib/client/types/notification.type";
+  import { ButtonStyle } from "$lib/client/types/button.type";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
   export let status: IInlineStatus | undefined = undefined;
@@ -134,6 +135,7 @@
     {#if isConstrainedWidth}
       <Button
         icon="cross"
+        style={ButtonStyle.OUTLINED}
         parentBgIndex={2}
         on:click={() => {
           appStore.closeResource({ id: $goal.id });
