@@ -247,10 +247,10 @@
         on:switch={() => {
           setTimeout(() => {
             if (resource === Resource.everything) {
-              setEmbedBg(2);
+              if ($context.embed === Embed.HANDSET) setEmbedBg(2);
               groupedSearchRef?.search(searchQuery);
             } else {
-              setEmbedBg(1);
+              if ($context.embed === Embed.HANDSET) setEmbedBg(1);
               searchResultsPopover?.search(searchQuery);
             }
           }, 100);

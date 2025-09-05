@@ -206,9 +206,7 @@
       isPreventWrap={true}
       on:select={(e) => {
         if (!e?.detail) return;
-        appStore.toggleSearchParam({
-          [AppSearchParam.TYPE]: e.detail.toLowerCase()
-        });
+        onSelect(e.detail);
       }}
     />
     <slot />

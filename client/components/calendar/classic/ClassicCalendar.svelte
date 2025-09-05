@@ -359,7 +359,7 @@
           on:yearChange={handleYearChange}
           on:dateChange={(e) => {
             selectedScale = TimeScaleUnit.DAY;
-            onDateChange(e);
+            onDateChange();
           }}
           on:monthSelect={handleMonthSelect}
           on:yearSelect={handleYearSelect}
