@@ -72,12 +72,7 @@
       >
         <button class="flex w-full items-center h-16 truncate" on:click>
           <div class="flex flex-col gap-1 p-3 w-full">
-            <GoalThumbnailTitle
-              {item}
-              {isCurrentlyFocusing}
-              {color}
-              isShowStarStatus={accessPoint !== ResourceAccessPoint.BROWSER}
-            />
+            <GoalThumbnailTitle {item} {isCurrentlyFocusing} {color} />
             <GoalThumbnailSub {item} {isCurrentlyFocusing} {accessPoint} />
           </div>
           {#if accessPoint === ResourceAccessPoint.PICKER}
@@ -95,12 +90,7 @@
       >
         <div slot="bottom" class="flex flex-col w-full min-h-12">
           <div class="flex flex-col gap-2">
-            <GoalThumbnailTitle
-              {item}
-              {isCurrentlyFocusing}
-              {color}
-              isShowStarStatus={accessPoint !== ResourceAccessPoint.BROWSER}
-            />
+            <GoalThumbnailTitle {item} {isCurrentlyFocusing} {color} />
             <GoalThumbnailSub {item} {isCurrentlyFocusing} {accessPoint} />
           </div>
         </div>

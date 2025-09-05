@@ -36,6 +36,6 @@
     }}
     type="text"
     placeholder={`Search ${resource === Resource.everything ? "anything" : resource + "s"}`}
-    class="text-h3 w-full bg-transparent focus:outline-none focus:border-none"
+    class="pl-4 text-h3 w-full bg-transparent focus:outline-none focus:border-none"
   />
 </ResourceSearchBase>

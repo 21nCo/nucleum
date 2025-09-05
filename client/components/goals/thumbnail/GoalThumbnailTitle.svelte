@@ -7,7 +7,6 @@
   export let item: IGoalThumb;
   export let isCurrentlyFocusing: boolean = false;
   export let color: number | undefined = undefined;
-  export let isShowStarStatus: boolean = false;
 </script>
 
 <div class="flex items-center gap-1.5 userdata">
@@ -28,9 +27,7 @@
           "text-ccs1": isCurrentlyFocusing
         })}>{item.label ? item.label : "Untitled"}</span
       >
-      {#if isShowStarStatus}
-        <RecordStarStatusFeedback isStarred={item.isStarred} />
-      {/if}
+      <RecordStarStatusFeedback isStarred={item.isStarred} />
     </div>
   </div>
 </div>
