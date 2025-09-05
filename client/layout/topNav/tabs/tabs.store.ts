@@ -37,7 +37,8 @@ class TabStore {
           : undefined;
     appStore.gotoPath(`/${resource}/tab`, {
       queryParams: {
-        tab: id
+        tab: id,
+        back: window.location.pathname
       }
     });
   }

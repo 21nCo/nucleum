@@ -115,7 +115,7 @@
             on:click
             isInterimTab
             on:close={() => {
-              appStore.gotoPath("/");
+              appStore.goBack();
             }}
           />
         {/key}

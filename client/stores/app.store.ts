@@ -721,6 +721,13 @@ function initAppStore(seed: IAppStore) {
 
   const goBack = (resource?: IRecordId) => {
     appEvents.nav(resource?.toString() ?? "");
+    const backQueryParam = new URLSearchParams(window.location.search).get(
+      "back"
+    );
+    if (backQueryParam) {
+      appStore.gotoPath(backQueryParam);
+      return;
+    }
     if (window.history.length > 1) {
       window.history.back();
     }

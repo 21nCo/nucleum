@@ -105,6 +105,8 @@
 
   async function refresh() {
     isRefreshing = true;
+    data = [];
+    previousTimePeriodData = [];
     try {
       const colors: IAnalyticsLabelColor[] = [];
       if (!card.period || !card.period.value) {
