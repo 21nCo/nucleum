@@ -113,7 +113,7 @@
   >
     {#if isPerformingSearchAction}
       <div
-        class="h-5/6 cw:w-full cw:flex cw:justify-between cw:max-w-full max-w-60 cw:ml-0 ml-2 bg-bgs3 flex items-center cw:justify-start justify-center px-4 cw:rounded-none rounded-md truncate"
+        class="h-5/6 cw:w-full cw:flex cw:justify-between cw:max-w-full max-w-60 cw:ml-0 ml-2 bg-bgs3 flex items-center justify-center px-4 cw:rounded-none rounded-md truncate"
       >
         <span class="truncate">
           {@html renderMdAsHtml(
