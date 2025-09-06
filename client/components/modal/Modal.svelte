@@ -153,6 +153,7 @@
       )}
       {id}
       data-blank-modal={index}
+      data-modal-size={size}
       transition:fade={{ duration: 100 }}
       on:click={overlayClicked}
       role="button"

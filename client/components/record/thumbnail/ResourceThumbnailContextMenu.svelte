@@ -13,6 +13,7 @@
   import { resolveGoalContextMenu } from "$lib/client/components/goals/goal.store";
   import { resolveTaskContextMenu } from "../../tasks/task.store";
   import context from "$lib/client/stores/context.store";
+  import view from "$lib/client/stores/view.store";
 
   const dispatch = createEventDispatcher();
   export let item: any;
@@ -90,7 +91,7 @@
         actionSize={bgSize ?? size}
         on:action={onAction}
         position={Placement.BottomCenter}
-        isRenderAsSibling={true}
+        isRenderAsSibling={!$view.isConstrainedWidth}
         {icon}
       />
     </div>

@@ -222,7 +222,7 @@
       <main class="flex flex-col gap-4 flex-1 overflow-auto">
         <div
           class={cn(
-            "relative flex flex-col w-full overflow-auto gap-3 bg-bgs2 shrink-0",
+            "relative flex flex-col w-full overflow-auto gap-3 bg-bgs2 cw:pt-12 shrink-0",
             {
               "rounded-lg border border-brs3": !isConstrainedWidth,
               "border-b border-brs3": isConstrainedWidth

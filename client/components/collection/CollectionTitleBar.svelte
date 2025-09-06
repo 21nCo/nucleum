@@ -157,6 +157,7 @@
           content: $collection.isInEditMode
             ? CollectionDescriptionEditPopover
             : Tooltip,
+          isRenderAsModalForCW: $view.isConstrainedWidth,
           componentProps: {
             collection,
             info: {

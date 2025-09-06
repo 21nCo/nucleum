@@ -438,7 +438,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
           if (cwModalPosition === Placement.Bottom) {
             element.style.top = `${finalTop}px`;
           } else {
-            element.style.top = "12px";
+            element.style.top = "60px";
             element.style.height = "fit-content";
           }
           element.style.opacity = "1";

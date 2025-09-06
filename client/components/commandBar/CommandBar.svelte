@@ -22,7 +22,6 @@
   import { resolveShortcutText } from "../shortcuts/shortcut.utils";
   import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
   import KeyboardToolbar from "$lib/client/elements/keyboardToolbar/KeyboardToolbar.svelte";
-  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
 
   export let command: string | undefined = undefined;
   export let commandType: ActionType | undefined = undefined;
@@ -70,7 +69,7 @@
     placeholder =
       typeof searchAction.searchActionParams?.placeholder === "function"
         ? searchAction.searchActionParams.placeholder(componentParams)
-        : (searchAction.searchActionParams?.placeholder ?? "select an item");
+        : searchAction.searchActionParams?.placeholder ?? "select an item";
   }
   function close() {
     value = "";
@@ -102,7 +101,7 @@
 </script>
 
 <div
-  class={cn("flex flex-col w-full", {
+  class={cn("flex flex-col w-full cw:pt-12", {
     "border border-brs2 rounded-md": isFullPageContext,
     "h-full": !isFullPageContext || (isFullPageContext && isFocusing)
   })}
@@ -114,17 +113,17 @@
   >
     {#if isPerformingSearchAction}
       <div
-        class="h-5/6 cw:w-full cw:max-w-full max-w-60 cw:ml-0 ml-2 bg-bgs3 flex items-center cw:justify-start justify-center px-4 cw:rounded-none rounded-md truncate"
+        class="h-5/6 cw:w-full cw:flex cw:justify-between cw:max-w-full max-w-60 cw:ml-0 ml-2 bg-bgs3 flex items-center cw:justify-start justify-center px-4 cw:rounded-none rounded-md truncate"
       >
         <span class="truncate">
           {@html renderMdAsHtml(
             componentParams?.label ?? searchAction.cmdLabel
           )}
         </span>
+        {#if $view.isConstrainedWidth}
+          <Button icon="cross" tooltip="Close" on:click={close} />
+        {/if}
       </div>
-      {#if $view.isConstrainedWidth}
-        <FullScreenCloseButton path={Action.CMD} />
-      {/if}
     {/if}
     <input
       bind:this={inputRef}

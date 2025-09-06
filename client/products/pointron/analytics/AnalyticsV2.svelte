@@ -68,7 +68,7 @@
   }
 </script>
 
-<div class={cn("flex flex-col w-full h-full", bg(bgIndex - 1))}>
+<main class={cn("flex flex-col w-full h-full cw:pt-12", bg(bgIndex - 1))}>
   <div
     class="flex gap-8 w-full items-center justify-between portrait:px-4 portrait:py-2 portrait:pt-4 portrait:pb-2"
   >
@@ -168,4 +168,4 @@
       />
     {/if}
   {/key}
-</div>
+</main>

@@ -32,7 +32,7 @@
       cover?.toString().includes("unsplash_")) &&
     isInEditMode;
 
-  $: height = isConstrainedWidth ? 100 : (size?.height ?? $view.height / 5);
+  $: height = isConstrainedWidth ? 180 : size?.height ?? $view.height / 5;
 
   function onReplace(e: MouseEvent) {
     isCoverPickerOpen = true;
@@ -226,8 +226,7 @@
 
 <style>
   .custom-gradient {
-    background-image:
-      linear-gradient(
+    background-image: linear-gradient(
         to top,
         rgba(var(--colors-fgs1), 0.8) 0%,
         rgba(var(--colors-fgs1), 0.7) 10%,
