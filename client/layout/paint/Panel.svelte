@@ -40,6 +40,7 @@
   export let isProminentDivider: boolean = false;
   export let extraLargeScreenComponent: string | undefined = undefined;
   export let info: InputLabelInfoToolTip | undefined = undefined;
+  export let isPreventCwPadding: boolean = false;
   let isExplicitlyCollapsed = false;
 
   onMount(() => {
@@ -66,7 +67,7 @@
   $: isExtraLargeScreen = $view.landscapiness > 1.7 && $view.scale > 1.8;
 </script>
 
-<div class="flex w-full h-full">
+<div class={cn("flex w-full h-full", { "cw:pt-12": !isPreventCwPadding })}>
   {#if !isCollapsed}
     <div
       class={cn(

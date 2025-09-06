@@ -171,7 +171,8 @@
 
 <div
   class={cn("flex flex-col gap-4 w-full h-full", {
-    "bg-bgs2": isGlobalSearchModal && resource === Resource.everything
+    "bg-bgs2": isGlobalSearchModal && resource === Resource.everything,
+    "cw:pt-12": isGlobalSearchModal
   })}
 >
   <header class={"flex flex-col w-full"}>

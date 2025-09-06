@@ -2,6 +2,7 @@
   import { popover } from "$lib/client/actions/popover.action";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { createEventPropagator } from "$lib/client/components/events/event.utils";
+  import view from "$lib/client/stores/view.store";
   import { Placement } from "$lib/client/types/direction.enum";
   import {
     type IPopoverRenderBaseParams,
@@ -104,6 +105,7 @@
   use:popover={{
     placement: position,
     isSpanToTriggerWidth: false,
+    isRenderAsModalForCW: $view.isConstrainedWidth,
     offsetInPx,
     content: ContextMenu,
     triggerMethod: triggerMethod

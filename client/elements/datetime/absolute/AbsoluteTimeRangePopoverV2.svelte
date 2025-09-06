@@ -342,8 +342,8 @@
     {/if} -->
   </div>
 
-  <div class="grid grid-rows-2 gap-1">
-    <div class="grid grid-cols-6 gap-1">
+  <div class="grid grid-rows-2 gap-1 w-full">
+    <div class="grid grid-cols-6 gap-1 w-full">
       {#each MONTHS.slice(0, 6) as month, i}
         <button
           class={cn(
@@ -356,7 +356,7 @@
         </button>
       {/each}
     </div>
-    <div class="grid grid-cols-6 gap-1">
+    <div class="grid grid-cols-6 gap-1 w-full">
       {#each MONTHS.slice(6) as month, i}
         <button
           class={cn(

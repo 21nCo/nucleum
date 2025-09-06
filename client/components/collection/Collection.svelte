@@ -532,13 +532,14 @@
 </script>
 
 {#if !$collection || $collection.isPageLoading || !isReady}
-  <div class="w-full h-full p-4">
+  <div class="w-full h-full p-4 cw:pt-12">
     <PageLoadingPulse />
   </div>
 {:else if $collection}
   <div
     class={cn("relative flex w-full h-full", {
-      "flex-col overflow-auto": coverPlacement === Placement.Top
+      "flex-col overflow-auto": coverPlacement === Placement.Top,
+      "cw:pt-12": !$collection.cover
     })}
     on:scroll={onScroll}
     use:resizeListener={(e) => {

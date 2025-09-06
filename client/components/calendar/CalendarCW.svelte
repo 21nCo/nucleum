@@ -9,7 +9,7 @@
   let viewDate = new Date();
 </script>
 
-<div class="flex flex-col gap-6 w-full p-4">
+<main class="flex flex-col gap-6 w-full p-4 cw:pt-16">
   <!-- <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Calendar" /> -->
   <!-- <DatePickerRow
     density={Size.lg}
@@ -36,4 +36,4 @@
       />
     {/key}
   </div>
-</div>
+</main>

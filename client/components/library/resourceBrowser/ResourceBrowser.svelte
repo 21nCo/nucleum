@@ -106,6 +106,7 @@
     info={tooltip ? { body: tooltip } : undefined}
     isShowBackButton={hasBack}
     panelSize={determineSize(resource)}
+    isPreventCwPadding={true}
   >
     <div
       class="relative flex flex-col gap-4 h-full overflow-auto py-3"
