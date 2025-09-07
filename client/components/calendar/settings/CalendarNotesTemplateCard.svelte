@@ -12,12 +12,9 @@
     scale === TimeScaleUnit.DAY
       ? "Daily notes"
       : scale === TimeScaleUnit.MONTH
-        ? "Monthly & yearly notes"
+        ? "Monthly notes"
         : "Yearly notes";
-  const defaultDescription =
-    scale === TimeScaleUnit.DAY
-      ? "Customize the template used when creating new daily notes"
-      : "Coming soon";
+  const defaultDescription = `Customize the template used when creating new ${title.toLowerCase()}`;
 </script>
 
 <div
@@ -27,14 +24,12 @@
     <Text content={title} style={TextStyle.FORM_LABEL} />
     <span class="text-b2 text-fgs3">{description || defaultDescription}</span>
   </div>
-  {#if scale === TimeScaleUnit.DAY}
-    <Button
-      style={ButtonStyle.OUTLINED}
-      size={Size.sm}
-      label="Edit"
-      isPreventMinWidth={true}
-      icon="edit"
-      on:click={onEdit}
-    />
-  {/if}
+  <Button
+    style={ButtonStyle.OUTLINED}
+    size={Size.sm}
+    label="Edit"
+    isPreventMinWidth={true}
+    icon="edit"
+    on:click={onEdit}
+  />
 </div>

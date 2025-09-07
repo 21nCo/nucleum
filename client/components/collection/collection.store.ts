@@ -376,7 +376,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       });
       if (!result) return;
       this.update((val) => {
-        val.properties = result.properties;
+        val.properties = result.properties ?? [];
         val.typeToExtend = result.typeToExtend;
         return val;
       });

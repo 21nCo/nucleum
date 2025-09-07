@@ -26,16 +26,16 @@
   let node: IActiveNodeStore;
   const captureStore = ActiveCaptureStore.resolve(mdId);
 
-  async function initialize() {
-    const id = resolveCalendarNotesId(date, scale);
+  async function initialize(scaleParam: TimeScaleUnit) {
+    const id = resolveCalendarNotesId(date, scaleParam);
     const result = await nodeStore.select(id);
     const savedTemplate = preferences.resolve(Preference.NOTES_TEMPLATE, {
-      subVariables: [scale]
+      subVariables: [scaleParam]
     });
     if (!result?.id) {
       await captureStore.saveCalendarNotes({
         date,
-        scale,
+        scale: scaleParam,
         template: savedTemplate as IMarkdownTemplate | undefined
       });
     }
@@ -58,7 +58,7 @@
   setContext("node", nodeContext);
 </script>
 
-{#await initialize()}
+{#await initialize(scale)}
   <div class="flex items-center justify-center h-full mo:px-0 px-10 pt-6">
     <EmptyStatusView
       isLoadingState={true}

@@ -19,7 +19,7 @@
   import type { ModalEvent, ModalParams } from "$lib/client/types/popup.type";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import type { IEvent } from "$lib/client/types/event.type";
-  import { postDataToParent, setEmbedBg } from "$lib/client/utils/embed.utils";
+  import { postDataToParent } from "$lib/client/utils/embed.utils";
   import ToastNotification from "$lib/client/elements/feedback/ToastNotification.svelte";
   import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
   import ModalLayout from "$lib/client/components/modal/ModalLayout.svelte";
@@ -77,7 +77,7 @@
     });
     const modalEventSub = modalEvent.subscribe(modalEventSubscriber);
 
-    () => {
+    return () => {
       appEventSub();
       modalEventSub();
       pageSub();
@@ -117,7 +117,7 @@
         // modals = [x];
         modals = [...modals, x];
         if ($view.isPortrait) toasts.reset();
-        setEmbedBg(1);
+        postDataToParent(EmbedDataMessage.ENABLE_GESTURE_NAVIGATION, false);
       }
       logger.log({ modals });
     }
@@ -134,7 +134,6 @@
         ...action.modalParams
       }
     };
-    setEmbedBg(1);
   }
 
   const visibilityChangeListener = () => {

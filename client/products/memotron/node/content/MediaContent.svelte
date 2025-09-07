@@ -26,7 +26,6 @@
   let contentRef: MediaContentResolver;
 
   function contextEventListener(event: string, data: any) {
-    console.log({ event, data });
     if (event === "pdf-trace-click" || event === "yt-trace-click") {
       if ($view.isPortrait && isRecordId(data.id)) {
         appStore.openResource(data.id, ResourceAccessMode.POP);
@@ -46,7 +45,7 @@
   }
 </script>
 
-<div class="flex w-full flex-grow">
+<div class="flex w-full flex-grow cw:mb-8">
   {#if !(isConstrainedWidth && rightPane)}
     <main
       class={cn("relative flex w-full justify-center flex-1", {

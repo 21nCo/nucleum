@@ -3,7 +3,6 @@ import { Placement } from "../types/direction.enum";
 import { PopoverTriggerMethod } from "../types/popover.type";
 import { detectTouchDevice, getEventPath } from "../utils/browser.utils";
 import { renderMdAsHtml } from "../components/markdown/markdown.utils";
-import { setEmbedBg } from "../utils/embed.utils";
 import { GlobalEvent } from "../types/event.enum";
 
 interface TooltipReturn {
@@ -438,11 +437,10 @@ export function popover(node: HTMLElement, params: PopoverParams) {
           if (cwModalPosition === Placement.Bottom) {
             element.style.top = `${finalTop}px`;
           } else {
-            element.style.top = "12px";
+            element.style.top = "60px";
             element.style.height = "fit-content";
           }
           element.style.opacity = "1";
-          setEmbedBg(100);
           if (cwModalOverlay) cwModalOverlay.style.opacity = "1";
         }
       });
@@ -704,7 +702,6 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     if (cwModalOverlay) {
       cwModalOverlay.style.opacity = "0";
       cwModalOverlay.remove();
-      setEmbedBg(1);
       propagateNavEvent("popover");
     }
     isShown = false;

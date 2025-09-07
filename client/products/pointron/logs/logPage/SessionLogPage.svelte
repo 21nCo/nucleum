@@ -17,7 +17,7 @@
   import Text from "$lib/client/elements/text/Text.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
+  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
   import FocusItem from "../../focus/elements/focusitem/FocusItem.svelte";
   import { appStore } from "$lib/client/stores/app.store";
@@ -41,6 +41,7 @@
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import Button from "$lib/client/elements/button/Button.svelte";
 
   export let id: string;
   export let log: any = undefined;
@@ -104,13 +105,20 @@
     loadingText="Loading..."
   />
 {:then}
-  <div class="flex flex-col gap-4 flex-grow w-full items-center p-4 userdata">
-    {#if accessMode === ResourceAccessMode.SPLIT || accessMode === ResourceAccessMode.FSPLIT || $view.isConstrainedWidth}
-      <div class="flex gap-4 w-full justify-between">
-        <Text content="Session details" style={TextStyle.PANEL_HEADING} />
-      </div>
-      <FullScreenCloseButton {accessMode} />
-    {/if}
+  <div
+    class="flex flex-col gap-6 flex-grow w-full items-center userdata cw:pt-12"
+  >
+    <div class="flex gap-4 w-full items-center justify-between">
+      <Text content="Session details" style={TextStyle.PANEL_HEADING} />
+      {#if accessMode === ResourceAccessMode.SPLIT || accessMode === ResourceAccessMode.FSPLIT || $view.isConstrainedWidth}
+        <Button
+          icon="cross"
+          style={ButtonStyle.OUTLINED}
+          tooltip="Close"
+          on:click={() => appStore.closeResource({ accessMode })}
+        />
+      {/if}
+    </div>
     <LogIntervalBar {log} />
     {#if log?.plannedEndUnix && !isSameDateTime( new Date(log.endUnix), new Date(log.plannedEndUnix), { isIgnoreSeconds: true } ) && new Date(log.endUnix).getTime() < new Date(log.plannedEndUnix).getTime()}
       <InlineInfoBanner>

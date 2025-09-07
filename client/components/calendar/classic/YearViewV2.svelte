@@ -4,10 +4,15 @@
   import { compareDates, isSameDay } from "$lib/client/utils/time.utils";
   import CalendarTileIndicator from "./indicator/CalendarTileIndicator.svelte";
   import type { ICalendarIndicatorData } from "../calendar.type";
+  import { preferences } from "$lib/client/stores/preferences/preferences.store";
+  import { Preference } from "$lib/client/stores/preferences/preferences.type";
+  import { TimeScaleUnit } from "$lib/client/types/time.type";
+  import { logger } from "$lib/client/components/debug/logger.client";
 
   export let selectedDate: Date;
   export let indicatorData: ICalendarIndicatorData[] = [];
   export let indicatorRefreshId: number = 0;
+  export let selectedScale: TimeScaleUnit = TimeScaleUnit.DAY;
 
   const dispatch = createEventDispatcher();
 
@@ -50,6 +55,16 @@
   let virtualScrollTop = 0;
   let startYearIndex = 0;
   let isMounted = false;
+
+  let showYearIndicators =
+    preferences.resolve(Preference.CALENDAR_TILE_INDICATORS_YEAR) ?? true;
+
+  const unsubscribe = preferences.subscribe((prefs) => {
+    showYearIndicators =
+      prefs[Preference.CALENDAR_TILE_INDICATORS_YEAR] ?? true;
+  });
+
+  onDestroy(unsubscribe);
   onMount(() => {
     updateVisibleYears();
     requestAnimationFrame(() => {
@@ -75,7 +90,7 @@
         isMounted = true;
       });
     }, 500);
-    
+
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
     };
@@ -236,9 +251,12 @@
     const targetYear = date.getFullYear();
 
     if (targetYear < BASE_YEAR || targetYear >= BASE_YEAR + YEAR_RANGE) {
-      console.warn(
-        `Year ${targetYear} is outside the supported range (${BASE_YEAR} - ${BASE_YEAR + YEAR_RANGE - 1})`
-      );
+      logger.error({
+        at: "YearViewV2.scrollToDate",
+        message: `Year ${targetYear} is outside the supported range (${BASE_YEAR} - ${BASE_YEAR + YEAR_RANGE - 1})`,
+        targetYear,
+        supportedRange: { min: BASE_YEAR, max: BASE_YEAR + YEAR_RANGE - 1 }
+      });
       return;
     }
 
@@ -337,6 +355,16 @@
     const today = new Date();
     return year === today.getFullYear() && monthIndex === today.getMonth();
   }
+
+  function handleMonthSelect(year: number, monthIndex: number) {
+    const monthDate = new Date(year, monthIndex, 1);
+    dispatch("monthSelect", { date: monthDate });
+  }
+
+  function handleYearSelect(year: number) {
+    const yearDate = new Date(year, 0, 1);
+    dispatch("yearSelect", { date: yearDate });
+  }
 </script>
 
 <div
@@ -351,42 +379,68 @@
     >
       {#each visibleYears as { year, months }}
         {@const isFutureYear = year > new Date().getFullYear()}
+        {@const isSelectedYear =
+          selectedScale === TimeScaleUnit.YEAR &&
+          selectedDate.getFullYear() === year}
         <div class="px-6 py-3" id="year-{year}">
           <div class="mb-2">
-            <h2 class="text-h2 font-medium ml-3" class:text-fgs4={isFutureYear}>
+            <button
+              class={cn(
+                "text-h2 font-medium ml-3 hover:text-aps1 transition-colors cursor-pointer",
+                {
+                  "text-fgs4": isFutureYear && !isSelectedYear,
+                  "text-aps1 font-bold": isSelectedYear
+                }
+              )}
+              on:click={() => handleYearSelect(year)}
+            >
               {year}
-            </h2>
+            </button>
           </div>
           <div
-            class="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-x-16 gap-y-12 default-typeface"
+            class="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-x-12 gap-y-8 default-typeface"
           >
             {#each months as { days, monthIndex }}
               {@const isFutureMonth = resolveIfFutureMonth(year, monthIndex)}
               {@const isCurrentMonth = resolveIfCurrentMonth(year, monthIndex)}
+              {@const isSelectedMonth =
+                selectedScale === TimeScaleUnit.MONTH &&
+                selectedDate.getFullYear() === year &&
+                selectedDate.getMonth() === monthIndex}
               <div
-                class="flex flex-col min-w-[240px]"
+                class={cn(
+                  "flex flex-col min-w-[240px] p-4 transition-all duration-300 has-[.first:hover]:bg-bgs2 rounded-md",
+                  {
+                    "bg-bgs2": isSelectedMonth
+                  }
+                )}
                 id="month-{year}-{monthIndex}"
               >
-                <div
+                <button
                   class={cn(
-                    "flex items-center gap-1 mb-1 ml-3 font-medium text-h5",
+                    "first flex items-center gap-1 mb-1 ml-3 font-medium text-h5 hover:text-aps1 transition-colors cursor-pointer text-left",
                     {
-                      "text-fgs4": isFutureMonth,
-                      "text-fgs1": !isFutureMonth && !isCurrentMonth,
-                      "text-ass1": isCurrentMonth
+                      "text-fgs4": isFutureMonth && !isSelectedMonth,
+                      "text-fgs1":
+                        !isFutureMonth && !isCurrentMonth && !isSelectedMonth,
+                      "text-ass1": isCurrentMonth && !isSelectedMonth,
+                      "text-aps1 font-bold": isSelectedMonth
                     }
                   )}
+                  on:click={() => handleMonthSelect(year, monthIndex)}
                 >
                   <span>{monthNames[monthIndex]}</span>
                   <span class="text-fgs4">{year}</span>
-                </div>
+                </button>
                 <div class="grid grid-cols-7 gap-x-1 text-center text-b2">
                   {#each weekDays as day}
                     <div class="text-fgs4 mb-1 text-b4">{day}</div>
                   {/each}
                   {#each days as date}
                     {#if date}
-                      {@const isSelected = isSameDay(selectedDate, date)}
+                      {@const isSelected =
+                        selectedScale === TimeScaleUnit.DAY &&
+                        isSameDay(selectedDate, date)}
                       {@const isCurrentDay = isToday(date)}
                       {@const isPastDay = isPastDate(date)}
                       <button
@@ -399,7 +453,11 @@
                           },
                           !isSelected &&
                             !isCurrentDay && {
-                              "hover:text-fgs1 border-transparent notouch:hover:bg-bgs2 active:bg-bgs2": true,
+                              "hover:text-fgs1 border-transparent": true,
+                              "notouch:hover:bg-bgs2 active:bg-bgs2":
+                                !isSelectedMonth,
+                              "notouch:hover:bg-bgs3 active:bg-bgs3":
+                                isSelectedMonth,
                               "text-fgs1 border-transparent": isPastDay,
                               "text-fgs3": !isPastDay
                             }
@@ -410,7 +468,7 @@
                         }}
                       >
                         {date.getDate()}
-                        {#if indicatorData.length > 0}
+                        {#if indicatorData.length > 0 && showYearIndicators}
                           <CalendarTileIndicator
                             {date}
                             {indicatorRefreshId}

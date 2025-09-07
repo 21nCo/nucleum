@@ -11,12 +11,13 @@
   import ContextMenuItem from "./ContextMenuItem.svelte";
   import { onMount } from "svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
+  import view from "$lib/client/stores/view.store";
   export let menuResolver: () => { group: string; items: IContextMenuItem[] }[];
   export let size: Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   export let heading: string | undefined = undefined;
   export let onSelect: (item: IContextMenuItem) => void = () => {};
   export let parentBgIndex: number = 1;
-  export let isFullWidth: boolean = false;
+  export let isFullWidth: boolean = $view.isConstrainedWidth;
   export let bottomRender: string | undefined = undefined;
   let menu: IContextMenuGroup[] = [];
 
@@ -30,8 +31,8 @@
 <div
   class={cn(
     "flex flex-col gap-1 p-1 rounded-md",
-    bg(parentBgIndex),
     {
+      [bg(parentBgIndex)]: !$view.isConstrainedWidth,
       "w-full": isFullWidth,
       "border border-brs2": !isFullWidth,
       "text-b3": size === Size.sm,

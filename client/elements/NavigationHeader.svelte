@@ -11,6 +11,7 @@
 
 <div class="flex justify-between items-center w-full {height}">
   <BackButton
+    isPreventDefault={true}
     on:click={() => {
       haptic();
       backCallback();

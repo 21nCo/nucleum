@@ -211,6 +211,7 @@
   <div slot="nav" class="flex flex-grow">
     <ResourceBrowser
       resource={selectedResource}
+      isPreventCwPadding={true}
       onBack={() => {
         selectedResource = Resource.unknown;
         appStore.toggleSearchParam([AppSearchParam.RESOURCE]);

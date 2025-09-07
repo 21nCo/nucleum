@@ -35,7 +35,7 @@
 </script>
 
 <div
-  class="flex flex-col gap-3 p-3 w-96 max-w-full bg-bgs1 border border-brs2 rounded-md"
+  class="flex flex-col gap-3 p-3 w-96 cw:w-full max-w-full bg-bgs1 cw:border-transparent border border-brs2 rounded-md"
 >
   <TextArea
     placeholder="Add a description"

@@ -70,7 +70,7 @@
 </script>
 
 {#if $view.isPortrait}
-  <div class="relative flex w-full h-full">
+  <main class="relative flex w-full h-full cw:pt-12">
     <div class="flex flex-col h-full w-full">
       {#if $activeSession.isSessionRunning && !$activeSession.isQuickStartOn && isInlineEnabled}
         <Zen isInline={true} />
@@ -112,7 +112,7 @@
     <!-- {#if mode === 0}
       <FloatingButton params={addManualLogButton} />
     {/if} -->
-  </div>
+  </main>
 {:else}
   <div class="flex w-full h-full">
     {#if $activeSession.isSessionRunning && !$activeSession.isQuickStartOn}

@@ -63,7 +63,7 @@
         accessPoint !== ResourceAccessPoint.TABS &&
         accessPoint !== ResourceAccessPoint.SELF,
       "text-fgs2": accessPoint === ResourceAccessPoint.MARKDOWN_EMBED,
-      "text-h4 font-medium": accessPoint === ResourceAccessPoint.SELF
+      "text-h4 cw:text-h5 font-medium": accessPoint === ResourceAccessPoint.SELF
     })}
     on:click
   >

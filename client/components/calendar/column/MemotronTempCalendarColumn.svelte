@@ -20,6 +20,7 @@
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
   export let date: Date;
+  export let scale: TimeScaleUnit;
   let mdId = generateSimpleRandomId();
   let feedback: IInlineStatus | undefined = undefined;
 
@@ -68,7 +69,14 @@
   <div class="flex justify-between px-12 pt-3">
     <div class="flex items-center gap-2 whitespace-nowrap">
       <Text
-        content={parseAndFormatDate(date)}
+        content={parseAndFormatDate(
+          date,
+          scale === TimeScaleUnit.DAY
+            ? "verbose"
+            : scale === TimeScaleUnit.MONTH
+              ? "mmm-yy"
+              : "yyyy"
+        )}
         style={TextStyle.PANEL_HEADING_SMALL}
       />
       <span class="text-b2 text-fgs3">| Notes </span>
@@ -85,6 +93,6 @@
     />
   </div>
   <div class="px-1 flex-grow">
-    <CalendarNotesPanel {date} scale={TimeScaleUnit.DAY} {mdId} />
+    <CalendarNotesPanel {date} {scale} {mdId} />
   </div>
 </div>

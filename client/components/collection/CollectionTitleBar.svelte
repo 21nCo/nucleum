@@ -33,6 +33,7 @@
   import { Resource } from "../flux/resourceStores/resource.enum";
   import CollectionDescriptionEditPopover from "./CollectionDescriptionEditPopover.svelte";
   import RecordStarStatusFeedback from "../record/RecordStarStatusFeedback.svelte";
+  import BackButton from "$lib/client/elements/button/BackButton.svelte";
 
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";
@@ -84,144 +85,135 @@
   class="w-full flex gap-1 justify-between items-center sticky- top--0 py--6"
 >
   <!-- TODO breadcrumbs - if launched as child from a combination i.e. if parent present, back button to previous resource - if launched from a mention or links -->
-  {#if isConstrainedWidth && accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
-    <button
-      class="flex active:bg-bgs2 rounded-md p-1"
-      on:click={() => {
-        appStore.goBack();
-        // appStore.closeResource({
-        //   id: collection.id
-        // });
-      }}
-    >
-      <Icon icon="chevron-left" size={Size.lg} />
-    </button>
-  {/if}
-  {#if $collection.type === CollectionType.TYPED}
-    {@const avatar =
-      !$collection.avatar || objIsEmpty($collection.avatar)
-        ? $collection.typeToExtend?.avatar
-        : $collection.avatar}
-    {@const isAvatarPresent = isValidAvatar(avatar)}
-    <span
-      class={cn("flex h-12 items-center justify-center", {
-        "w-12": $collection.isInEditMode,
-        "w-8": isAvatarPresent && !$collection.isInEditMode
-      })}
-    >
-      {#if $collection.isInEditMode}
-        <Avatar
-          bind:avatar={$collection.avatar}
-          isInEditMode={true}
-          on:change={onAvatarChange}
-          size={Size.lg}
-        />
-      {:else if isAvatarPresent}
-        <Avatar {avatar} isInEditMode={false} size={Size.lg} />
-      {/if}
-    </span>
-  {/if}
-  <span
-    class={cn(
-      "flex items-center gap-4 font-medium cw:text-h4 cw:h-12 text-h1 whitespace-nowrap flex-1 min-w-0 border rounded-md text-left cw:mr-0 mr-6",
-      {
-        "border-transparent": !$collection.isInEditMode,
-        "border-brs3 px-2": $collection.isInEditMode
-      }
-    )}
+
+  <BackButton
+    isEnabled={!$collection.isInEditMode &&
+      isConstrainedWidth &&
+      accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
+    accessMode={$collection.accessMode}
   >
-    <!-- {#if $collection.avatar}
-      <AvatarView avatar={$collection.avatar} size={Size.lg} />
-    {/if} -->
-    {#if $collection.isInEditMode}
-      <TextInput
-        size={Size.lg}
-        bind:value={$collection.label}
-        placeholder="Collection title"
-        style={InputStyle.PLAIN}
-        width="w-full"
-        on:debouncedChange={onLabelChange}
-      />
-    {:else}
-      <div class="truncate userdata">
-        {$collection.label ?? "Untitled collection"}
-      </div>
-    {/if}
-    {#if ($collection.description && isDetailsBesideTitleRenderable) || $collection.isInEditMode}
+    {#if $collection.type === CollectionType.TYPED}
+      {@const avatar =
+        !$collection.avatar || objIsEmpty($collection.avatar)
+          ? $collection.typeToExtend?.avatar
+          : $collection.avatar}
+      {@const isAvatarPresent = isValidAvatar(avatar)}
       <span
-        class="flex justify-center items-center"
-        use:popover={{
-          triggerMethod: $collection.isInEditMode
-            ? [PopoverTriggerMethod.CLICK]
-            : [PopoverTriggerMethod.HOVER, PopoverTriggerMethod.CLICK],
-          content: $collection.isInEditMode
-            ? CollectionDescriptionEditPopover
-            : Tooltip,
-          componentProps: {
-            collection,
-            info: {
-              body: $collection.description,
-              size: Size.sm
-            }
-          }
-        }}
-        use:tooltip={{
-          disabled: !$collection.isInEditMode,
-          text: "Collection description"
-        }}
+        class={cn("flex h-12 items-center justify-center", {
+          "w-12": $collection.isInEditMode,
+          "w-8": isAvatarPresent && !$collection.isInEditMode
+        })}
       >
-        <Icon icon="info" size={Size.sm} />
+        {#if $collection.isInEditMode}
+          <Avatar
+            bind:avatar={$collection.avatar}
+            isInEditMode={true}
+            on:change={onAvatarChange}
+            size={Size.lg}
+          />
+        {:else if isAvatarPresent}
+          <Avatar {avatar} isInEditMode={false} size={Size.lg} />
+        {/if}
       </span>
     {/if}
-    {#if $collection.isStarred && isDetailsBesideTitleRenderable}
-      <button
-        class="flex items-center justify-center"
-        use:tooltip={{
-          text: "Unstar collection"
-        }}
-      >
-        <RecordStarStatusFeedback
-          isStarred={$collection.isStarred}
-          size={Size.md}
-          on:click={() => {
-            collection.modify({ isStarred: false });
-          }}
+    <span
+      class={cn(
+        "flex items-center gap-4 font-medium cw:text-h4 cw:h-12 text-h1 whitespace-nowrap flex-1 min-w-0 border rounded-md text-left cw:mr-0 mr-6",
+        {
+          "border-transparent": !$collection.isInEditMode,
+          "border-brs3 px-2": $collection.isInEditMode
+        }
+      )}
+    >
+      <!-- {#if $collection.avatar}
+      <AvatarView avatar={$collection.avatar} size={Size.lg} />
+    {/if} -->
+      {#if $collection.isInEditMode}
+        <TextInput
+          size={Size.lg}
+          bind:value={$collection.label}
+          placeholder="Collection title"
+          style={InputStyle.PLAIN}
+          width="w-full"
+          on:debouncedChange={onLabelChange}
         />
-      </button>
-    {/if}
-    {#if !$collection.isInEditMode && $collection.type === CollectionType.TYPED && isDetailsBesideTitleRenderable}
-      <button
-        class="flex text-b3 text-fgs3 rounded-md border border-brs3"
-        on:click={openPropertiesEditor}
-        use:tooltip={{
-          text: "Edit properties"
-        }}
-      >
-        <span class="flex gap-2 items-center px-2 py-0.5">
-          <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
-          {$collection.properties?.length ?? 0}
-          {#if !isConstrainedWidth && !isMiniSearch}
-            {($collection.properties?.length ?? 0) === 1
-              ? "property"
-              : "properties"}
-          {/if}
-        </span>
-        {#if $collection.typeToExtend}
-          <span class="flex rounded-r-md bg-bgs2 px-2 py-0.5">
-            + {$collection.typeToExtend.properties?.length ?? 0}
+      {:else}
+        {@const title = ($collection.label ?? "").trim() || "Untitled collection"}
+        <div class="truncate userdata">{title}</div>
+      {/if}
+      {#if ($collection.description && isDetailsBesideTitleRenderable) || $collection.isInEditMode}
+        {@const popoverComponent = $collection.isInEditMode ? CollectionDescriptionEditPopover : Tooltip}
+        {@const popoverProps = $collection.isInEditMode 
+          ? { collection } 
+          : { info: { body: $collection.description, size: Size.sm } }}
+        <button
+          class="flex justify-center items-center"
+          use:popover={{
+            triggerMethod: $collection.isInEditMode
+              ? [PopoverTriggerMethod.CLICK]
+              : [PopoverTriggerMethod.HOVER, PopoverTriggerMethod.CLICK],
+            content: popoverComponent,
+            isRenderAsModalForCW: isConstrainedWidth,
+            componentProps: popoverProps
+          }}
+          use:tooltip={{
+            disabled: !$collection.isInEditMode,
+            text: "Collection description"
+          }}
+          type="button"
+          aria-label="Collection description"
+        >
+          <Icon icon="info" size={Size.sm} />
+        </button>
+      {/if}
+      {#if $collection.isStarred && isDetailsBesideTitleRenderable}
+        <button
+          class="flex items-center justify-center"
+          type="button"
+          aria-pressed={$collection.isStarred}
+          on:click={() => { collection.modify({ isStarred: false }); }}
+          use:tooltip={{ text: "Unstar collection" }}
+        >
+          <RecordStarStatusFeedback
+            isStarred={$collection.isStarred}
+            size={Size.md}
+          />
+        </button>
+      {/if}
+      {#if !$collection.isInEditMode && $collection.type === CollectionType.TYPED && isDetailsBesideTitleRenderable}
+        <button
+          class="flex text-b3 text-fgs3 rounded-md border border-brs3"
+          on:click={openPropertiesEditor}
+          use:tooltip={{
+            text: "Edit properties"
+          }}
+        >
+          <span class="flex gap-2 items-center px-2 py-0.5">
+            <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
+            {$collection.properties?.length ?? 0}
+            {#if !isConstrainedWidth && !isMiniSearch}
+              {($collection.properties?.length ?? 0) === 1
+                ? "property"
+                : "properties"}
+            {/if}
           </span>
-        {/if}
-      </button>
-    {:else if $collection.isInEditMode && $collection.type === CollectionType.TYPED && !isConstrainedWidth}
-      <button
-        class="flex text-b3 text-fgs3 rounded-md border border-brs3 px-2 py-0.5 items-center gap-1 hover:bg-bgs2"
-        on:click={openPropertiesEditor}
-      >
-        <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
-        edit properties ({$collection.properties?.length ?? 0})
-      </button>
-    {/if}
-  </span>
+          {#if $collection.typeToExtend}
+            <span class="flex rounded-r-md bg-bgs2 px-2 py-0.5">
+              + {$collection.typeToExtend.properties?.length ?? 0}
+            </span>
+          {/if}
+        </button>
+      {:else if $collection.isInEditMode && $collection.type === CollectionType.TYPED && !isConstrainedWidth}
+        <button
+          class="flex text-b3 text-fgs3 rounded-md border border-brs3 px-2 py-0.5 items-center gap-1 hover:bg-bgs2"
+          on:click={openPropertiesEditor}
+        >
+          <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
+          Edit properties ({$collection.properties?.length ?? 0})
+        </button>
+      {/if}
+    </span>
+  </BackButton>
 
   {#if isConstrainedWidth && accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
     <ContextMenuAction

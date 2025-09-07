@@ -32,5 +32,6 @@ export enum EmbedDataMessage {
   ACCOUNT = "account",
   OAUTH = "oauth",
   LINK = "link",
-  LOG = "log"
+  LOG = "log",
+  ENABLE_GESTURE_NAVIGATION = "enableGestureNavigation"
 }

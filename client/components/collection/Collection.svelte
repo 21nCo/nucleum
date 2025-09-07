@@ -84,6 +84,7 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import { resolveResourceStore } from "../flux/resourceStores/store.resolver";
+  import ComponentEmbedLayer from "$lib/client/layout/layers/ComponentEmbedLayer.svelte";
 
   export let id: string = "";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -272,10 +273,11 @@
     );
   }
 
+  let positionFromTop: number | undefined = undefined;
   function onScroll() {
-    var elementTarget = document.querySelector(".stickyheader");
-    var positionFromTop = elementTarget?.getBoundingClientRect().top;
-    isStickied = positionFromTop ? positionFromTop <= 0 : false;
+    const elementTarget = document.querySelector(".stickyheader");
+    positionFromTop = elementTarget?.getBoundingClientRect().top;
+    isStickied = positionFromTop !== undefined ? positionFromTop <= 0 : false;
   }
 
   async function onViewSwitch() {
@@ -383,7 +385,6 @@
   }
 
   async function onTabSwitch(e: CustomEvent) {
-    // console.log("onTabSwitch", selectedTab);
     await refresh();
   }
 
@@ -532,7 +533,7 @@
 </script>
 
 {#if !$collection || $collection.isPageLoading || !isReady}
-  <div class="w-full h-full p-4">
+  <div class="w-full h-full p-4 cw:pt-12">
     <PageLoadingPulse />
   </div>
 {:else if $collection}
@@ -601,7 +602,7 @@
           </button>
         {/if}
         <div
-          class={cn("px-4 stickyheader", {
+          class={cn("px-4 stickyheader transition-all duration-300", {
             "sticky top-0": isSingleViewMode,
             [bg(parentBgIndex - 1)]: isSingleViewMode,
             // When in edit mode, interfering with view settings dropdown when the dropdown opens on top if z-20 is set
@@ -609,6 +610,9 @@
             "pb-8": isSingleViewMode && !isShowMetaViews && !isConstrainedWidth,
             "pt-6": !isConstrainedWidth,
             "p-2": isConstrainedWidth,
+            "cw:pt-12":
+              isConstrainedWidth &&
+              (!$collection.cover || positionFromTop === 0),
             "max-w-full overflow-x-auto":
               accessPoint === ResourceAccessPoint.MARKDOWN_EMBED
           })}
@@ -654,17 +658,18 @@
                 {$collection.description}
               </div>
             {/if} -->
-            <div class="flex items-center justify-center">
+            <div class="flex items-center justify-center gap-1.5">
               <InlineSearchBar
                 bind:query={searchQuery}
                 style={InputStyle.FILLED}
                 on:search={onSearch}
-                placeholder={`Search this collection (${$collection.totalItemCount ?? 0} items)`}
-              >
-                {#if !$collection.isInEditMode}
-                  <AddResourceAction on:add={onAddResource} variant="minimal" />
-                {/if}
-              </InlineSearchBar>
+                placeholder={$collection.totalItemCount
+                  ? `Search this collection (${$collection.totalItemCount ?? 0} items)`
+                  : "No items found"}
+              />
+              {#if !$collection.isInEditMode}
+                <AddResourceAction on:add={onAddResource} variant="minimal" />
+              {/if}
             </div>
           </div>
         {/if}
@@ -701,10 +706,10 @@
         {#if (activeView && isValidString(activeView.tabBy)) || $collection.isInEditMode || !isSingleViewMode}
           <header
             class={cn(
-              "sticky top-0 z-10 flex flex-col gap-6 w-full",
+              "sticky top-0 z-10 flex flex-col gap-6 w-full transition-all duration-300",
               bg(parentBgIndex - 1),
               {
-                "pt-4": isStickied
+                "pt-4 cw:pt-12": isStickied
               }
             )}
           >
@@ -718,7 +723,6 @@
                 isExpandToFullWidth={true}
                 barStyle={BarStyle.EXACT}
                 isInEditMode={$collection.isInEditMode}
-                isRenderDropdownForCW={true}
                 {parentBgIndex}
                 bind:triggerItemEdit
                 on:remove={onViewRemove}
@@ -855,3 +859,4 @@
   subscribeToContext={new Set([id.toString()])}
   on:change={() => refresh()}
 />
+<ComponentEmbedLayer isBackNavigable={true} />

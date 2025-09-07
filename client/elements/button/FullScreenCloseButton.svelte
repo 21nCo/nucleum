@@ -20,7 +20,7 @@
 <!-- TODO - watch - changing z-[1000] to z-40 as this is showing close button on top of resource modal when something is in split screen inline -->
 <button
   class={cn(
-    "absolute w-10 h-10 bg-ars1 opacity-70 hover:opacity-100 flex justify-center items-center z-40 top-0 right-0",
+    "absolute w-10 h-10 bg-ars1 opacity-70 hover:opacity-100 flex justify-center items-center z-40 top-0 right-0 cw:mt-12",
     {
       "rounded-full m-3": isFloat,
       "m-0 rounded-bl-md": !isFloat,

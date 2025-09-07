@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import Panel from "$lib/client/layout/paint/Panel.svelte";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import { Arrangement } from "$lib/client/types/direction.enum";
@@ -24,15 +23,14 @@
   import { isHideCreateAction, resolveResourceTooltip } from "../library.utils";
   import { keyboardShortcuts } from "../../shortcuts/shortcuts.store";
   import ComponentShortcutListener from "../../shortcuts/ComponentShortcutListener.svelte";
-  import { setEmbedBg } from "$lib/client/utils/embed.utils";
+  import ComponentEmbedLayer from "$lib/client/layout/layers/ComponentEmbedLayer.svelte";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   export let resource: Resource;
   export let onBack: (() => void) | undefined = undefined;
-  const backPath = $page.url.searchParams.get("back");
+  export let isPreventCwPadding: boolean = false;
+  const backPath = $page.url.searchParams.get(AppSearchParam.RETURN_TO);
   const hasBack = onBack !== undefined || backPath !== null;
 
-  onMount(() => {
-    setEmbedBg(1);
-  });
   let searchQuery: string = "";
   let id: string | null = null;
   let arrangement: Arrangement = resolveArrangement();
@@ -106,6 +104,7 @@
     info={tooltip ? { body: tooltip } : undefined}
     isShowBackButton={hasBack}
     panelSize={determineSize(resource)}
+    {isPreventCwPadding}
   >
     <div
       class="relative flex flex-col gap-4 h-full overflow-auto py-3"
@@ -146,3 +145,4 @@
     ]}
   />
 {/if}
+<ComponentEmbedLayer isBackNavigable={true} />

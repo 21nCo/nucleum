@@ -6,23 +6,10 @@
   import view from "$lib/client/stores/view.store";
   import SettingsAsModal from "../SettingsAsModal.svelte";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import { onMount } from "svelte";
-  import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
-  import { setEmbedBg } from "$lib/client/utils/embed.utils";
   import { appStore } from "$lib/client/stores/app.store";
+  import ComponentEmbedLayer from "$lib/client/layout/layers/ComponentEmbedLayer.svelte";
   $: route = $page.url.searchParams.get(AppSearchParam.SETTING);
-  const backPath = $page.url.searchParams.get("back");
-  $: if (route && $context.embed == Embed.HANDSET) {
-    setEmbedBg(1);
-  } else if ($context.embed == Embed.HANDSET) {
-    setEmbedBg(2);
-  }
-  onMount(async () => {
-    if ($context.embed == Embed.HANDSET) {
-      setEmbedBg(2);
-    }
-  });
+  const backPath = $page.url.searchParams.get(AppSearchParam.RETURN_TO);
 </script>
 
 {#if $view.isConstrainedWidth}
@@ -43,3 +30,4 @@
 {:else}
   <SettingsAsModal />
 {/if}
+<ComponentEmbedLayer isBackNavigable={true} />
