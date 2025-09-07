@@ -87,7 +87,7 @@
       in:fly={{ x: -10 }}
     >
       {#if !isNavActivated && (title || isShowCollapseButton)}
-        <button
+        <div
           class={cn(
             "flex justify-between items-center w-full px-4 pt-2 overflow-auto min-h-fit mo:min-h-14"
           )}
@@ -95,10 +95,7 @@
           <BackButton
             isEnabled={isShowBackButton}
             isPreventDefault={true}
-            on:click={() => {
-              if (!isShowBackButton) return;
-              dispatch("back");
-            }}
+            on:click={() => dispatch("back")}
           >
             <Text style={titleStyle} content={title || ""} />
             {#if info}
@@ -121,7 +118,7 @@
               </button>
             {/if}
           </slot>
-        </button>
+        </div>
       {/if}
       {#if $$slots.nonpadded}
         <slot name="nonpadded" />

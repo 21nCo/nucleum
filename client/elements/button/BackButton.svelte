@@ -36,13 +36,15 @@
     class={cn(
       "flex items-center gap-2 rounded-md px-1",
       classList,
-      `active:${bg(parentBgIndex)}`,
       {
+[`active:${bg(parentBgIndex)}`]: isEnabled,
         "cursor-pointer": isEnabled,
         "cursor-default": !isEnabled
       }
     )}
     tabindex={isEnabled ? 0 : -1}
+    aria-disabled={!isEnabled}
+    disabled={!isEnabled}
     on:click={onBack}
   >
     {#if isEnabled}
@@ -53,6 +55,8 @@
 {:else}
   <button
     class="flex items-center active:bg-bgs2 notouch:hover:bg-bgs2 rounded-r-md rounded-l-full p-1"
+    aria-disabled={!isEnabled}
+    disabled={!isEnabled}
     on:click={onBack}
   >
     <Icon icon="chevleft" size={Size.sm} />

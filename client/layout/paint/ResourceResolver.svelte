@@ -13,7 +13,8 @@
   export let componentParams: any = {};
   export let accessMode: ResourceAccessMode = ResourceAccessMode.INLINE;
   let refreshId: number = new Date().getTime();
-  setCurrentComponent();
+
+  $: if (accessMode === ResourceAccessMode.TAB && id) setCurrentComponent();
 
   function onReloadResource(e: CustomEvent) {
     const resource = e?.detail?.id;
@@ -21,7 +22,9 @@
     if (isSameResource(resource, id)) {
       refreshId = new Date().getTime();
     }
-    setCurrentComponent();
+    if (accessMode === ResourceAccessMode.TAB && isSameResource(resource, id)) {
+      setCurrentComponent();
+    }
   }
 
   function setCurrentComponent() {

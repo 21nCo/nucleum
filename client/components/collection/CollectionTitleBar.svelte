@@ -138,50 +138,45 @@
           on:debouncedChange={onLabelChange}
         />
       {:else}
-        <div class="truncate userdata">
-          {$collection.label ?? "Untitled collection"}
-        </div>
+        {@const title = ($collection.label ?? "").trim() || "Untitled collection"}
+        <div class="truncate userdata">{title}</div>
       {/if}
       {#if ($collection.description && isDetailsBesideTitleRenderable) || $collection.isInEditMode}
-        <span
+        {@const popoverComponent = $collection.isInEditMode ? CollectionDescriptionEditPopover : Tooltip}
+        {@const popoverProps = $collection.isInEditMode 
+          ? { collection } 
+          : { info: { body: $collection.description, size: Size.sm } }}
+        <button
           class="flex justify-center items-center"
           use:popover={{
             triggerMethod: $collection.isInEditMode
               ? [PopoverTriggerMethod.CLICK]
               : [PopoverTriggerMethod.HOVER, PopoverTriggerMethod.CLICK],
-            content: $collection.isInEditMode
-              ? CollectionDescriptionEditPopover
-              : Tooltip,
-            isRenderAsModalForCW: $view.isConstrainedWidth,
-            componentProps: {
-              collection,
-              info: {
-                body: $collection.description,
-                size: Size.sm
-              }
-            }
+            content: popoverComponent,
+            isRenderAsModalForCW: isConstrainedWidth,
+            componentProps: popoverProps
           }}
           use:tooltip={{
             disabled: !$collection.isInEditMode,
             text: "Collection description"
           }}
+          type="button"
+          aria-label="Collection description"
         >
           <Icon icon="info" size={Size.sm} />
-        </span>
+        </button>
       {/if}
       {#if $collection.isStarred && isDetailsBesideTitleRenderable}
         <button
           class="flex items-center justify-center"
-          use:tooltip={{
-            text: "Unstar collection"
-          }}
+          type="button"
+          aria-pressed={$collection.isStarred}
+          on:click={() => { collection.modify({ isStarred: false }); }}
+          use:tooltip={{ text: "Unstar collection" }}
         >
           <RecordStarStatusFeedback
             isStarred={$collection.isStarred}
             size={Size.md}
-            on:click={() => {
-              collection.modify({ isStarred: false });
-            }}
           />
         </button>
       {/if}
@@ -214,7 +209,7 @@
           on:click={openPropertiesEditor}
         >
           <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
-          edit properties ({$collection.properties?.length ?? 0})
+          Edit properties ({$collection.properties?.length ?? 0})
         </button>
       {/if}
     </span>

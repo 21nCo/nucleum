@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from "svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
+  import { browser } from "$app/environment";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import { Embed } from "$lib/client/types/context.type";
   import { pingParent, postDataToParent } from "$lib/client/utils/embed.utils";
@@ -81,10 +82,10 @@
       }, 1000);
     }
     function initializeServiceWorker() {
-      if (!$context.isEmbed) {
-        if ("serviceWorker" in navigator) {
-          navigator.serviceWorker.register("/worker.js");
-        }
+      if (!$context.isEmbed && browser && "serviceWorker" in navigator) {
+        navigator.serviceWorker
+          .register("/worker.js")
+          .catch((e) => logger.error({ at: "BaseLayer.sw.register", error: e }));
       }
     }
   }
@@ -186,7 +187,10 @@
       if (isInLowDataMode)
         $context.isInLowDataMode = isInLowDataMode === "true";
     } catch (e) {
-      postDataToParent(EmbedDataMessage.ERROR, { type: "ERROR", message: e });
+      postDataToParent(EmbedDataMessage.ERROR, {
+        type: "ERROR",
+        message: e?.message ?? String(e)
+      });
     }
   }
 
@@ -195,7 +199,6 @@
    */
   async function checkForEnvironmentChange() {
     const envCachedOnMachine = await clientStorage.get(ClientStorageKey.ENV);
-    console.log("checkForEnvironmentChange", $appStore.env, envCachedOnMachine);
     if (envCachedOnMachine === null) {
       clientStorage.set(ClientStorageKey.ENV, $appStore.env);
       return;

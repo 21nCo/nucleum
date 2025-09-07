@@ -36,7 +36,7 @@
 
 {#if $node}
   <div
-    class="relative flex flex-col cw:flex-col-reverse w-full h-full"
+    class="relative flex flex-col cw:flex-col-reverse cw:gap-8 w-full h-full"
     use:resizeListener={(e) => {
       containerWidth = e.width;
     }}

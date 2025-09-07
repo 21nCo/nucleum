@@ -80,7 +80,6 @@
       const createdBlock = await node.createBlock(id, NodeType.SIMPLE_TEXT, {
         body: ""
       });
-      console.log({ createdBlock });
       if (createdBlock?.[0]) {
         await node.modify(
           {
@@ -102,7 +101,6 @@
       if (!x) return;
       const currentAccessMode = appStore.determineResourceAccessMode($node.id);
       const clickedAccessMode = appStore.determineClickAccessMode(x.event);
-      console.log({ currentAccessMode, clickedAccessMode });
       if (clickedAccessMode && clickedAccessMode !== currentAccessMode) {
         appStore.openResource(x.id, clickedAccessMode);
         node.eventStore.set(undefined);
@@ -134,6 +132,9 @@
       currentAccessMode?: ResourceAccessMode;
     }
   ) {
+
+    if (id === $node.id) return;
+    
     const currentAccessMode =
       params?.currentAccessMode ??
       appStore.determineResourceAccessMode($node.id);

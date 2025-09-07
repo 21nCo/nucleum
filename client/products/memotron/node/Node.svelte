@@ -18,6 +18,7 @@
   import { page } from "$app/stores";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import ComponentEmbedLayer from "$lib/client/layout/layers/ComponentEmbedLayer.svelte";
+  import context from "$lib/client/stores/context.store";
 
   export let id: string;
   export let accessMode: ResourceAccessMode;
@@ -96,4 +97,6 @@
   subscribeToResource={new Set([Resource.property])}
   on:change={debouncedInitialize}
 />
-<ComponentEmbedLayer isBackNavigable={true} />
+{#if $context.isEmbed && accessMode !== ResourceAccessMode.POP && !isFromSplitView}
+  <ComponentEmbedLayer isBackNavigable={true} />
+{/if}

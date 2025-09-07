@@ -26,7 +26,6 @@
   let contentRef: MediaContentResolver;
 
   function contextEventListener(event: string, data: any) {
-    console.log({ event, data });
     if (event === "pdf-trace-click" || event === "yt-trace-click") {
       if ($view.isPortrait && isRecordId(data.id)) {
         appStore.openResource(data.id, ResourceAccessMode.POP);

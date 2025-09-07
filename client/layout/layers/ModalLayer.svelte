@@ -77,7 +77,7 @@
     });
     const modalEventSub = modalEvent.subscribe(modalEventSubscriber);
 
-    () => {
+    return () => {
       appEventSub();
       modalEventSub();
       pageSub();
