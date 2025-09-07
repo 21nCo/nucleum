@@ -20,9 +20,6 @@
     onRemovePageClicked,
     onPageRearrange
   } from "./analytics.utils";
-  import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
-  import { setEmbedBg } from "$lib/client/utils/embed.utils";
   import { confirmationNotification } from "$lib/client/stores/notification.store";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import {
@@ -40,9 +37,6 @@
   const isNucleusContext = $appStore.product === Product.NUCLEUS;
   $selectedPageId = resolvePageSelection();
   onMount(async () => {
-    if ($context.embed == Embed.HANDSET) {
-      setEmbedBg(2);
-    }
     if (!$selectedPageId) {
       $selectedPageId = $analyticsConfigStore.pages[0]?.id;
     }

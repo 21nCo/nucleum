@@ -35,7 +35,9 @@
    * If set to true, the context menu will be rendered as a sibling of the trigger button. By default, popovers are rendered in popovers container to avoid z-index issues with other elements in the DOM.
    */
   export let isRenderAsSibling = false;
-  export let icon: string = "more";
+  export let icon: string = $view.isConstrainedWidth
+    ? "more-outline-horizontal"
+    : "more";
   let classList: string = "";
   export { classList as class };
   let contextMenuPopoverRef: any;

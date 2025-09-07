@@ -31,6 +31,7 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { isShowStatusBanner } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import BackButton from "$lib/client/elements/button/BackButton.svelte";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let isHovering: boolean = false;
@@ -59,8 +60,7 @@
   class={cn("flex flex-col w-full justify-center items-center", {
     "mb-6 absolute z-10 bottom-0":
       $node.accessMode === ResourceAccessMode.SLIDESHOW,
-    "relative mo:mb-8 cw:mb-8":
-      $node.accessMode !== ResourceAccessMode.SLIDESHOW
+    relative: $node.accessMode !== ResourceAccessMode.SLIDESHOW
   })}
 >
   <div
@@ -89,7 +89,7 @@
     {/if}
     <div
       class={cn(
-        "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 mo:p-2 p-3 border-t border-t-brs2",
+        "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 mo:p-2 p-3 cw:border-b cw:border-b-brs2 cw:border-t-transparent cw:rounded-none cw:bg-bgs2 cw:pt-12 border-t border-t-brs2",
         {
           "rounded-b-md": $node.accessMode === ResourceAccessMode.POP,
           "w-full": $node.accessMode !== ResourceAccessMode.SLIDESHOW,
@@ -100,16 +100,22 @@
     >
       <div class="flex gap-3 justify-between items-center w-full">
         <span class="flex items-center gap-4 flex-1 min-w-0">
-          <NodeTitle
-            node={$node}
-            on:labelChange={(e) => {
-              if ($node.label !== undefined)
-                node.modify({ label: $node.label });
-            }}
-            on:editModeChange={(e) => {
-              node.toggleEditMode(e.detail);
-            }}
-          />
+          <BackButton
+            isEnabled={$view.isConstrainedWidth && !$node.isInEditMode}
+            accessMode={$node.accessMode}
+            class="min-w-0 flex-1"
+          >
+            <NodeTitle
+              node={$node}
+              on:labelChange={(e) => {
+                if ($node.label !== undefined)
+                  node.modify({ label: $node.label });
+              }}
+              on:editModeChange={(e) => {
+                node.toggleEditMode(e.detail);
+              }}
+            />
+          </BackButton>
           {#if !isConstrainedWidth && !$node.isInEditMode}
             <div class="text-b3 text-fgs3 whitespace-nowrap default-typeface">
               {formatDatetime($userPreferences, $node.createdAt)}

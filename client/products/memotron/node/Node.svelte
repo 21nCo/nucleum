@@ -17,6 +17,7 @@
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import { page } from "$app/stores";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import ComponentEmbedLayer from "$lib/client/layout/layers/ComponentEmbedLayer.svelte";
 
   export let id: string;
   export let accessMode: ResourceAccessMode;
@@ -86,7 +87,7 @@
     <NonMediaNode {node} selectedView={view} />
   {/if}
 {:else}
-  <div class="w-full h-full pt-4 mo:px-4 px-20">
+  <div class="w-full h-full cw:pt-12 pt-4 mo:px-4 px-20">
     <NodeLoadingPulse />
   </div>
 {/if}
@@ -95,3 +96,4 @@
   subscribeToResource={new Set([Resource.property])}
   on:change={debouncedInitialize}
 />
+<ComponentEmbedLayer isBackNavigable={true} />

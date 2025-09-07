@@ -29,11 +29,12 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   import type { IRecordId } from "$lib/client/types/data.type";
-  import type { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
   import view from "$lib/client/stores/view.store";
   import context from "$lib/client/stores/context.store";
   import { generateMarkdownText, resolveHeadingParent } from "../node.utils";
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { tabs } from "$lib/client/layout/topNav/tabs/tabs.store";
 
   export let node: IActiveNodeStore;
   export let mdId: string;
@@ -108,7 +109,7 @@
         return;
       }
       //TODO - temp direct reload instead of within focus
-      temp_Focus(x.id, currentAccessMode);
+      temp_Focus(x.id, { currentAccessMode, accessMode: clickedAccessMode });
       node.eventStore.set(undefined);
       return;
       const result = markdownRef?.focus(x.id);
@@ -126,8 +127,24 @@
     refreshId = Date.now();
   });
 
-  function temp_Focus(id: IRecordId, accessMode: ResourceAccessMode) {
-    appStore.openResource(id, accessMode);
+  function temp_Focus(
+    id: IRecordId,
+    params?: {
+      accessMode?: ResourceAccessMode;
+      currentAccessMode?: ResourceAccessMode;
+    }
+  ) {
+    const currentAccessMode =
+      params?.currentAccessMode ??
+      appStore.determineResourceAccessMode($node.id);
+    if (
+      currentAccessMode === ResourceAccessMode.TAB &&
+      (!params?.accessMode || params?.accessMode === ResourceAccessMode.TAB)
+    ) {
+      tabs.replace(id, $node.id);
+      return;
+    }
+    appStore.openResource(id, currentAccessMode);
   }
 
   onDestroy(() => {
@@ -262,7 +279,7 @@
   function onFocus(e: CustomEvent) {
     logger.debug({ at: "NodeContent - onFocus", ...e.detail });
     if (e.detail.id && e.detail.parent) {
-      temp_Focus(e.detail.id, appStore.determineResourceAccessMode($node.id));
+      temp_Focus(e.detail.id);
       // node.onFocus(e.detail.id, e.detail.parent);
     }
   }

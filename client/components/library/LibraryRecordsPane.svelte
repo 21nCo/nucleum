@@ -515,7 +515,7 @@
         padding="px-2"
         on:search={() => refresh()}
         placeholder={"Search " + resource + "s"}
-        style={InputStyle.BORDERED}
+        style={InputStyle.FILLED}
       >
         <Toggle
           bind:on={isRefineShown}

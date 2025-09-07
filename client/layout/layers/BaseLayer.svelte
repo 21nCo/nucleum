@@ -4,11 +4,7 @@
   import { goto } from "$app/navigation";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import { Embed } from "$lib/client/types/context.type";
-  import {
-    pingParent,
-    postDataToParent,
-    setEmbedBg
-  } from "$lib/client/utils/embed.utils";
+  import { pingParent, postDataToParent } from "$lib/client/utils/embed.utils";
   import account from "$lib/client/stores/account.store";
   import { appStore, currentTime } from "$lib/client/stores/app.store";
   import { toasts } from "$lib/client/stores/notification.store";
@@ -49,7 +45,6 @@
 
   onMount(async () => {
     try {
-      setEmbedBg(1);
       await bootup();
     } catch (e) {
       logger.error({ at: "BaseLayer.onMount", error: e });

@@ -19,7 +19,7 @@
   } from "../capture/capture.store";
   import { generateResourceId } from "$lib/client/components/flux/flux.utils";
   import HomeTopNav from "./mobile/HomeTopNav.svelte";
-  import { haptic, setEmbedBg } from "$lib/client/utils/embed.utils";
+  import { haptic } from "$lib/client/utils/embed.utils";
   import TypeSelectorOnMobile from "../capture/typeSelector/TypeSelectorOnMobile.svelte";
   import { fly } from "svelte/transition";
   import HomeQuickAccess from "$lib/client/components/home/mobile/HomeQuickAccess.svelte";
@@ -180,7 +180,6 @@
     mode = undefined;
     captureStore.reset();
     initializeCaptureStore();
-    if (inlineToast) setEmbedBg(2);
   }
 
   function onInlineToastEvent(event: CustomEvent<InlineToast>) {
@@ -225,7 +224,7 @@
     isFullPage={true}
   />
 {:else}
-  <div class="flex flex-col w-full bg-bgs2">
+  <div class="flex flex-col w-full bg-bgs2 pt-12">
     <div
       class={cn("transition-all duration-250 ease-out overflow-hidden", {
         "max-h-96 opacity-100": !mode,
