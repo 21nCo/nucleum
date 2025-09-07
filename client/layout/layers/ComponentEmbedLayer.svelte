@@ -1,15 +1,36 @@
 <script lang="ts">
   import NotificationListener from "$lib/client/elements/listeners/NotificationListener.svelte";
+  import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
   import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { setEmbedBg } from "$lib/client/utils/embed.utils";
+  import { postDataToParent } from "$lib/client/utils/embed.utils";
+  import { onMount } from "svelte";
+  /**
+   * @deprecated
+   */
   export let bg: number | undefined = undefined;
+  export let isBackNavigable: boolean = false;
 
-  if (bg) setEmbedBg(bg);
+  onMount(() => {
+    postDataToParent(
+      EmbedDataMessage.ENABLE_GESTURE_NAVIGATION,
+      isBackNavigable
+    );
+
+    return () => {
+      postDataToParent(EmbedDataMessage.ENABLE_GESTURE_NAVIGATION, false);
+    };
+  });
 
   function onNav(event: CustomEvent) {
     const path = event.detail.path;
-    if (bg) setEmbedBg(bg);
-    else if (["popover", "tooltip"].includes(path)) setEmbedBg(1);
+    setTimeout(
+      () =>
+        postDataToParent(
+          EmbedDataMessage.ENABLE_GESTURE_NAVIGATION,
+          isBackNavigable
+        ),
+      200
+    );
   }
 </script>
 

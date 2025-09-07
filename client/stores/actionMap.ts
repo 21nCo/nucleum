@@ -82,6 +82,7 @@ import { resolveResourceStore } from "../components/flux/resourceStores/store.re
 import CollectionCache from "../components/collection/CollectionCache.svelte";
 import DataSettings from "../components/settings/DataSettings.svelte";
 import DexieConsole from "../components/debug/DexieConsole.svelte";
+import { AppSearchParam } from "../types/appStore.type";
 
 export const globalActions: IAction[] = [
   {
@@ -1030,7 +1031,8 @@ export const globalActions: IAction[] = [
       const resource = params?.componentParams?.resource;
       appStore.runAction(resourceAction(resource, ResourceActionType.BROWSE), {
         searchParams: {
-          back: params?.componentParams?.back ?? "home"
+          [AppSearchParam.RETURN_TO]:
+            params?.componentParams?.[AppSearchParam.RETURN_TO] ?? "home"
         }
       });
     }

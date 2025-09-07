@@ -12,7 +12,7 @@
   export let query: string = "";
   export let size: Size = Size.md;
   export let placeholder: string = "Search";
-  export let parentBgIndex: number = 0;
+  export let parentBgIndex: number = 1;
   export let style: InputStyle = InputStyle.PLAIN;
   export let isPadded: boolean = false;
   export let padding: string = "";

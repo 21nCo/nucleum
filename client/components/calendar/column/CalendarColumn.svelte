@@ -32,6 +32,7 @@
   import view from "$lib/client/stores/view.store";
   import { resolveCalendarNotesId } from "../calendar.utils";
   import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   const dispatch = createEventDispatcher();
 
   export let scale: TimeScaleUnit;
@@ -41,7 +42,7 @@
   export let isRewind: boolean = false;
   export let isCwContext: boolean = false;
   let mdId = generateSimpleRandomId();
-  const backPath = $page.url.searchParams.get("back");
+  const backPath = $page.url.searchParams.get(AppSearchParam.RETURN_TO);
 
   let selectedPanel: CalendarColumnPanel = resolvePanelSelection();
 

@@ -22,7 +22,7 @@
   import type { InputLabelInfoToolTip } from "$lib/client/types/input.type";
   import FormLabelTooltip from "$lib/client/elements/text/formLabel/FormLabelTooltip.svelte";
   import { fly } from "svelte/transition";
-  import { haptic } from "$lib/client/utils/embed.utils";
+  import BackButton from "$lib/client/elements/button/BackButton.svelte";
   const dispatch = createEventDispatcher();
 
   export let title: string | undefined = undefined;
@@ -87,36 +87,22 @@
       in:fly={{ x: -10 }}
     >
       {#if !isNavActivated && (title || isShowCollapseButton)}
-        <button
+        <div
           class={cn(
             "flex justify-between items-center w-full px-4 pt-2 overflow-auto min-h-fit mo:min-h-14"
           )}
-          tabindex={isShowBackButton ? 0 : -1}
-          on:click={() => {
-            if (isShowBackButton) {
-              haptic();
-              dispatch("back");
-            }
-          }}
         >
-          <div
-            class={cn("flex items-center gap-2", {
-              "rounded-md px-1": isShowBackButton,
-              [`active:${bg(parentBgIndex)}`]: isShowBackButton
-            })}
+          <BackButton
+            isEnabled={isShowBackButton}
+            parentBgIndex={parentBgIndex}
+            isPreventDefault={true}
+            on:click={() => dispatch("back")}
           >
-            {#if isShowBackButton}
-              <Icon
-                icon="ph:caret-left"
-                class="text-fgs3 opacity-40"
-                size={Size.lg}
-              />
-            {/if}
             <Text style={titleStyle} content={title || ""} />
             {#if info}
               <FormLabelTooltip {info} />
             {/if}
-          </div>
+          </BackButton>
           <slot name="toprightactions">
             {#if !isExpanded && isShowCollapseButton}
               <button
@@ -133,7 +119,7 @@
               </button>
             {/if}
           </slot>
-        </button>
+        </div>
       {/if}
       {#if $$slots.nonpadded}
         <slot name="nonpadded" />

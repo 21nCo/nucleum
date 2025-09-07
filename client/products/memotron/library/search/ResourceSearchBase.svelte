@@ -37,7 +37,6 @@
   import { Embed } from "$lib/client/types/context.type";
   import { createEventDispatcher } from "svelte";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { setEmbedBg } from "$lib/client/utils/embed.utils";
 
   const dispatch = createEventDispatcher();
 
@@ -248,10 +247,8 @@
         on:switch={() => {
           setTimeout(() => {
             if (resource === Resource.everything) {
-              if ($context.embed === Embed.HANDSET) setEmbedBg(2);
               groupedSearchRef?.search(searchQuery);
             } else {
-              if ($context.embed === Embed.HANDSET) setEmbedBg(1);
               searchResultsPopover?.search(searchQuery);
             }
           }, 100);

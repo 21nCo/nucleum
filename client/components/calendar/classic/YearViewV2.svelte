@@ -7,6 +7,7 @@
   import { preferences } from "$lib/client/stores/preferences/preferences.store";
   import { Preference } from "$lib/client/stores/preferences/preferences.type";
   import { TimeScaleUnit } from "$lib/client/types/time.type";
+  import { logger } from "$lib/client/components/debug/logger.client";
 
   export let selectedDate: Date;
   export let indicatorData: ICalendarIndicatorData[] = [];
@@ -250,9 +251,12 @@
     const targetYear = date.getFullYear();
 
     if (targetYear < BASE_YEAR || targetYear >= BASE_YEAR + YEAR_RANGE) {
-      console.warn(
-        `Year ${targetYear} is outside the supported range (${BASE_YEAR} - ${BASE_YEAR + YEAR_RANGE - 1})`
-      );
+      logger.error({
+        at: "YearViewV2.scrollToDate",
+        message: `Year ${targetYear} is outside the supported range (${BASE_YEAR} - ${BASE_YEAR + YEAR_RANGE - 1})`,
+        targetYear,
+        supportedRange: { min: BASE_YEAR, max: BASE_YEAR + YEAR_RANGE - 1 }
+      });
       return;
     }
 
@@ -394,7 +398,7 @@
             </button>
           </div>
           <div
-            class="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-x-16 gap-y-12 default-typeface"
+            class="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-x-12 gap-y-8 default-typeface"
           >
             {#each months as { days, monthIndex }}
               {@const isFutureMonth = resolveIfFutureMonth(year, monthIndex)}
@@ -404,14 +408,17 @@
                 selectedDate.getFullYear() === year &&
                 selectedDate.getMonth() === monthIndex}
               <div
-                class={cn("flex flex-col min-w-[240px]", {
-                  "bg-bgs2 rounded-md": isSelectedMonth
-                })}
+                class={cn(
+                  "flex flex-col min-w-[240px] p-4 transition-all duration-300 has-[.first:hover]:bg-bgs2 rounded-md",
+                  {
+                    "bg-bgs2": isSelectedMonth
+                  }
+                )}
                 id="month-{year}-{monthIndex}"
               >
                 <button
                   class={cn(
-                    "flex items-center gap-1 mb-1 ml-3 font-medium text-h5 hover:text-aps1 transition-colors cursor-pointer text-left",
+                    "first flex items-center gap-1 mb-1 ml-3 font-medium text-h5 hover:text-aps1 transition-colors cursor-pointer text-left",
                     {
                       "text-fgs4": isFutureMonth && !isSelectedMonth,
                       "text-fgs1":

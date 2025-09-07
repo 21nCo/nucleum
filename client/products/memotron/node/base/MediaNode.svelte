@@ -36,7 +36,7 @@
 
 {#if $node}
   <div
-    class="relative flex flex-col w-full h-full"
+    class="relative flex flex-col cw:flex-col-reverse cw:gap-8 w-full h-full"
     use:resizeListener={(e) => {
       containerWidth = e.width;
     }}
@@ -58,7 +58,7 @@
         bind:bottomAction={panelAction}
       />
     {/if}
-    {#if ($view.isConstrainedWidth || $node.accessMode === ResourceAccessMode.SPLIT || $node.accessMode === ResourceAccessMode.FSPLIT) && !panelAction}
+    {#if ($node.accessMode === ResourceAccessMode.SPLIT || $node.accessMode === ResourceAccessMode.FSPLIT) && !panelAction}
       <FullScreenCloseButton accessMode={$node.accessMode} isFloat={true} />
     {/if}
   </div>

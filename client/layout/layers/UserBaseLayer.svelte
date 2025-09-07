@@ -581,19 +581,7 @@
   });
 </script>
 
-{#if isOfflineBannerIsShown}
-  <div
-    class="flex gap-2 w-full p-2 bg-ass2/30 text-ass1 items-center justify-center text-b2"
-  >
-    <Icon icon="ph:wifi-slash" class="text-ass1" />
-    {#if $account.dataMode === UserDataMode.LOCAL}
-      You are using offline mode on a browser. Please use Desktop/mobile app to
-      avoid loss of data or signup as cloud user.
-    {:else}
-      You are using offline mode.
-    {/if}
-  </div>
-{/if}
+
 {#if $appStore?.appData?.isAnalyticsEnabled && $account?.dataMode === UserDataMode.CLOUD && !$context.isInOfflineMode}
   <AnalyticsLayer />
 {/if}
@@ -637,6 +625,19 @@
   {/if}
 {/if}
 <Intercom />
+{#if isOfflineBannerIsShown}
+  <div
+    class="flex gap-2 w-full p-2 cw:pb-4 bg-ass2/30 text-ass1 items-center justify-center text-b2"
+  >
+    <Icon icon="ph:wifi-slash" class="text-ass1" />
+    {#if $account.dataMode === UserDataMode.LOCAL}
+      You are using offline mode on a browser. Please use Desktop/mobile app to
+      avoid loss of data or signup as cloud user.
+    {:else}
+      You are using offline mode.
+    {/if}
+  </div>
+{/if}
 
 <svelte:window
   on:resize={windowResizeListener}
