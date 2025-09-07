@@ -41,10 +41,12 @@
   let timer: any;
   let isMounted = false;
   const productConfig = resolveProductConfig();
-  pingParent();
-  addWindowEventListeners();
 
   onMount(async () => {
+    if (browser) {
+      pingParent();
+      addWindowEventListeners();
+    }
     try {
       await bootup();
     } catch (e) {
@@ -82,11 +84,38 @@
       }, 1000);
     }
     function initializeServiceWorker() {
-      if (!$context.isEmbed && browser && "serviceWorker" in navigator) {
-        navigator.serviceWorker
-          .register("/worker.js")
-          .catch((e) => logger.error({ at: "BaseLayer.sw.register", error: e }));
+      if (!browser || $context.isEmbed) return;
+      if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
+        logger.debug({
+          at: "BaseLayer.sw.register",
+          message: "Service workers not supported"
+        });
+        return;
       }
+
+      navigator.serviceWorker
+        .register("/worker.js")
+        .then((registration) => {
+          logger.debug({
+            at: "BaseLayer.sw.register",
+            message: "Service worker registered",
+            registration
+          });
+        })
+        .catch((error) => {
+          logger.error({
+            at: "BaseLayer.sw.register",
+            error,
+            message: "Service worker registration failed"
+          });
+          if (error.name === "NetworkError") {
+            logger.error({
+              at: "BaseLayer.sw.register",
+              message:
+                "Network error during SW registration - offline features may be limited"
+            });
+          }
+        });
     }
   }
 
@@ -187,9 +216,16 @@
       if (isInLowDataMode)
         $context.isInLowDataMode = isInLowDataMode === "true";
     } catch (e) {
+      const errorMessage =
+        e instanceof Error
+          ? e.message
+          : typeof e === "string"
+            ? e
+            : JSON.stringify(e);
+
       postDataToParent(EmbedDataMessage.ERROR, {
         type: "ERROR",
-        message: e?.message ?? String(e)
+        message: errorMessage
       });
     }
   }
@@ -285,7 +321,9 @@
    */
   function handleCustomAlert(event: any) {
     try {
-      if (event.detail) console.log("custom alert:", event.detail);
+      if (event.detail) {
+        logger.info({ at: "handleCustomAlert", detail: event.detail });
+      }
       if (event.detail?.error === "networkerror") {
         if (
           $context.isEmbed &&
@@ -316,7 +354,11 @@
 
   function handleMessageFromChromeWebview(event: any) {
     const messageFromChromeWebView = event.data;
-    console.log("Received from Chrome Webview:", messageFromChromeWebView);
+    logger.debug({
+      at: "handleMessageFromChromeWebview",
+      message: "Received from Chrome Webview",
+      data: messageFromChromeWebView
+    });
   }
 
   function handleViewportChange() {

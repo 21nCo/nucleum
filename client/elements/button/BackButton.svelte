@@ -23,43 +23,45 @@
     haptic();
     if (isPreventDefault) {
       dispatch("click");
+      dispatch("back");
       return;
     }
-    if ($view.isConstrainedWidth && !path) appStore.goBack();
-    appStore.closeResource({ accessMode });
-    if (path) modalEvent.hide(path, "ModalCloseButton.svelte");
+    if ($view.isConstrainedWidth && !path) {
+      appStore.goBack();
+    } else {
+      appStore.closeResource({ accessMode });
+    }
+    if (path) modalEvent.hide(path, "BackButton.svelte");
   }
 </script>
 
-{#if $$slots.default}
-  <button
-    class={cn(
-      "flex items-center gap-2 rounded-md px-1",
-      classList,
-      {
-[`active:${bg(parentBgIndex)}`]: isEnabled,
-        "cursor-pointer": isEnabled,
-        "cursor-default": !isEnabled
-      }
-    )}
-    tabindex={isEnabled ? 0 : -1}
-    aria-disabled={!isEnabled}
-    disabled={!isEnabled}
-    on:click={onBack}
-  >
+<button
+  class={cn(
+    "flex items-center rounded-md",
+    $$slots.default
+      ? "gap-2 px-1"
+      : "gap-0 p-1 rounded-r-md rounded-l-full active:bg-bgs2 notouch:hover:bg-bgs2",
+    classList,
+    {
+      "cursor-pointer": isEnabled,
+      "cursor-default": !isEnabled,
+      [`active:${bg(parentBgIndex)}`]: isEnabled && $$slots.default
+    }
+  )}
+  type="button"
+  tabindex={isEnabled ? 0 : -1}
+  aria-disabled={!isEnabled}
+  disabled={!isEnabled}
+  aria-label={$$slots.default ? undefined : (text ?? "Back")}
+  on:click={onBack}
+>
+  {#if $$slots.default}
     {#if isEnabled}
       <Icon icon="chevron-left" class="text-fgs3 opacity-40" size={Size.lg} />
     {/if}
     <slot />
-  </button>
-{:else}
-  <button
-    class="flex items-center active:bg-bgs2 notouch:hover:bg-bgs2 rounded-r-md rounded-l-full p-1"
-    aria-disabled={!isEnabled}
-    disabled={!isEnabled}
-    on:click={onBack}
-  >
-    <Icon icon="chevleft" size={Size.sm} />
+  {:else}
+    <Icon icon="chevron-left" size={Size.sm} />
     <div class="pr-1 text-fgs1">{text ?? "Back"}</div>
-  </button>
-{/if}
+  {/if}
+</button>

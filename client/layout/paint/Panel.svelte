@@ -94,6 +94,7 @@
         >
           <BackButton
             isEnabled={isShowBackButton}
+            parentBgIndex={parentBgIndex}
             isPreventDefault={true}
             on:click={() => dispatch("back")}
           >

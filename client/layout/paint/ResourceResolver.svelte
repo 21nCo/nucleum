@@ -34,7 +34,7 @@
       if (!resource || resource === Resource.unknown) return;
       const action = appStore.resolveAction(resource);
       if (!action) return;
-      $appStore.currentComponent = action;
+      appStore.update(s => ({ ...s, currentComponent: action }));
     } catch (e) {
       logger.error("ResourceResolver.setCurrentComponent - error", e);
     }

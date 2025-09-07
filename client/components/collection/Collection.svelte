@@ -275,9 +275,9 @@
 
   let positionFromTop: number | undefined = undefined;
   function onScroll() {
-    var elementTarget = document.querySelector(".stickyheader");
+    const elementTarget = document.querySelector(".stickyheader");
     positionFromTop = elementTarget?.getBoundingClientRect().top;
-    isStickied = positionFromTop ? positionFromTop <= 0 : false;
+    isStickied = positionFromTop !== undefined ? positionFromTop <= 0 : false;
   }
 
   async function onViewSwitch() {
@@ -385,7 +385,6 @@
   }
 
   async function onTabSwitch(e: CustomEvent) {
-    // console.log("onTabSwitch", selectedTab);
     await refresh();
   }
 

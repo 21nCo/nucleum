@@ -7,6 +7,7 @@
   import { preferences } from "$lib/client/stores/preferences/preferences.store";
   import { Preference } from "$lib/client/stores/preferences/preferences.type";
   import { TimeScaleUnit } from "$lib/client/types/time.type";
+  import { logger } from "$lib/client/components/debug/logger.client";
 
   export let selectedDate: Date;
   export let indicatorData: ICalendarIndicatorData[] = [];
@@ -250,9 +251,12 @@
     const targetYear = date.getFullYear();
 
     if (targetYear < BASE_YEAR || targetYear >= BASE_YEAR + YEAR_RANGE) {
-      console.warn(
-        `Year ${targetYear} is outside the supported range (${BASE_YEAR} - ${BASE_YEAR + YEAR_RANGE - 1})`
-      );
+      logger.error({
+        at: "YearViewV2.scrollToDate",
+        message: `Year ${targetYear} is outside the supported range (${BASE_YEAR} - ${BASE_YEAR + YEAR_RANGE - 1})`,
+        targetYear,
+        supportedRange: { min: BASE_YEAR, max: BASE_YEAR + YEAR_RANGE - 1 }
+      });
       return;
     }
 
