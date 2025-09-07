@@ -50,6 +50,7 @@
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import { InfoTextType } from "$lib/client/types/text.type";
   import { resolveProductConfig } from "../../product.config";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   export let captureId: IRecordId = generateResourceId(Resource.capture);
   let mode: "search" | "capture" | undefined = undefined;
   let searchQuery = "";
@@ -108,7 +109,7 @@
 
   const commonActionParams = {
     searchParams: {
-      back: homePathPt
+      [AppSearchParam.RETURN_TO]: homePathPt
     }
   };
 
@@ -126,7 +127,7 @@
       appStore.runAction(ResourceActionType.BROWSE, {
         componentParams: {
           resource: item.id === "nodes" ? Resource.node : Resource.collection,
-          back: homePathPt
+          [AppSearchParam.RETURN_TO]: homePathPt
         }
       });
     }

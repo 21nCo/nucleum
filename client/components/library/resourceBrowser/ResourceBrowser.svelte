@@ -24,10 +24,11 @@
   import { keyboardShortcuts } from "../../shortcuts/shortcuts.store";
   import ComponentShortcutListener from "../../shortcuts/ComponentShortcutListener.svelte";
   import ComponentEmbedLayer from "$lib/client/layout/layers/ComponentEmbedLayer.svelte";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
   export let resource: Resource;
   export let onBack: (() => void) | undefined = undefined;
   export let isPreventCwPadding: boolean = false;
-  const backPath = $page.url.searchParams.get("back");
+  const backPath = $page.url.searchParams.get(AppSearchParam.RETURN_TO);
   const hasBack = onBack !== undefined || backPath !== null;
 
   let searchQuery: string = "";

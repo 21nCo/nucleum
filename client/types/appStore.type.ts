@@ -103,6 +103,8 @@ export type IAppData = {
 };
 
 export enum AppSearchParam {
+  RETURN_TO = "returnTo",
+  BACK = "back",
   EDIT = "edit",
   TYPE = "type",
   /**

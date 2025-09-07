@@ -9,7 +9,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import ComponentEmbedLayer from "$lib/client/layout/layers/ComponentEmbedLayer.svelte";
   $: route = $page.url.searchParams.get(AppSearchParam.SETTING);
-  const backPath = $page.url.searchParams.get("back");
+  const backPath = $page.url.searchParams.get(AppSearchParam.RETURN_TO);
 </script>
 
 {#if $view.isConstrainedWidth}
