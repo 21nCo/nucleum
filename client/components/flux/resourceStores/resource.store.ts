@@ -144,14 +144,17 @@ export class ActiveResourceStore<
   }
   /**
    * Removed dependency on appStore to avoid circular dependency issues on Clipper extension.
+   *
+   * Note: Disabling url search param due to circular loop issue on back click on mobile devices
+   *
    * @param val
    * @returns
    */
   toggleEditMode(val: boolean) {
-    dispatchCustomEvent(
-      GlobalEvent.TOGGLE_SEARCH_PARAM,
-      val ? { [AppSearchParam.EDIT]: true } : [AppSearchParam.EDIT]
-    );
+    // dispatchCustomEvent(
+    //   GlobalEvent.TOGGLE_SEARCH_PARAM,
+    //   val ? { [AppSearchParam.EDIT]: true } : [AppSearchParam.EDIT]
+    // );
     return this.update((prev) => ({ ...prev, isInEditMode: val }));
   }
   toggleLock(val: boolean) {
