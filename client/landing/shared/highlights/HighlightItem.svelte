@@ -23,6 +23,7 @@
   )}
   href={highlight.link ?? "#"}
   target={highlight.link?.startsWith("http") ? "_blank" : "_self"}
+  rel={highlight.link?.startsWith("http") ? "noopener noreferrer" : undefined}
 >
   <div class="flex flex-col gap-2 flex-1 cw:items-start">
     <div class="flex flex-col gap-3 cw:items-start">

@@ -308,8 +308,8 @@ function getDefaultContemporaryData(contemporary: Contemporary): IContemporary {
       label: Contemporary.Typora,
       url: "https://typora.io/"
     } as IContemporary,
-    [Contemporary.Hypothes]: {
-      label: Contemporary.Hypothes,
+    [Contemporary.Hypothesis]: {
+      label: Contemporary.Hypothesis,
       url: "https://web.hypothes.is/"
     } as IContemporary,
     [Contemporary.Dendron]: {

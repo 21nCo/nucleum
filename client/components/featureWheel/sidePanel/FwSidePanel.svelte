@@ -73,7 +73,7 @@
           (c) => c.label === selectedCompare[0]
         )}
         <div class="flex items-center gap-1">
-          <span> Comparision with </span>
+          <span> Comparison with </span>
           {#if contemporary}
             <div class="w-5 h-5 border border-brs3 rounded-full">
               <ExternalLogo provider={contemporary} url={contemporary.url} />
@@ -82,7 +82,7 @@
           {properCase(selectedCompare[0])}
         </div>
       {:else}
-        Comparision report
+        Comparison report
       {/if}
     </div>
     <button

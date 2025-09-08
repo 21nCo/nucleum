@@ -20,7 +20,7 @@
   },
   "faqs": [
     {
-      "title": "Does Memotron has equivalent of relation property?",
+      "title": "Does Memotron have an equivalent of the relation property?",
       "body": "Memotron doesn't have a relation property. But this is intentional. As per the design of the app where relationships between nodes is required, you can use link tags instead."
     }
   ],

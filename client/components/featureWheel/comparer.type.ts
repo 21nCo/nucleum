@@ -89,7 +89,6 @@ export enum Contemporary {
   StandardNotes = "Standard notes",
   Trilium = "Trilium",
   Typora = "Typora",
-  Hypothes = "Hypothes",
   Dendron = "Dendron",
   DEVONThink = "DEVONThink",
   Mendeley = "Mendeley",

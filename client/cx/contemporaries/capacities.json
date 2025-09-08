@@ -47,7 +47,7 @@
     {
       "feature": "maintenance",
       "rating": 0.65,
-      "notes": "Capacities has medium level setup and maintenance requirement due to its object centric design. Users have to keep their objects upto date as per their requirement."
+      "notes": "Capacities has a medium level of setup and maintenance due to its object-centric design. Users have to keep their objects up to date as per their requirement."
     },
     {
       "feature": "sustainability",
@@ -100,7 +100,7 @@
     {
       "feature": "audio-capture",
       "rating": 0.3,
-      "notes": "Capacities doesnot have native audio recording. Uploading audio file is only way to capture audio."
+      "notes": "Capacities does not have native audio recording. Uploading an audio file is the only way to capture audio."
     },
     {
       "feature": "type-capture",
