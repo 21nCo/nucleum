@@ -10,16 +10,20 @@
   export let isFullWidth: boolean = false;
 </script>
 
-<div
+<a
   class={cn(
     "flex cw:gap-6 bg-bgs1 mo:h-fit h-64 rounded-xl cw:p-4 pt-6 pl-6 mo:flex-col mo:text-center overflow-hidden",
     {
       "flex-col gap-4 pr-6":
         highlight.isVisualAtBottom || !highlight.visualRenderComponent,
       "gap-8": !highlight.isVisualAtBottom,
-      "w-full": isFullWidth
+      "w-full": isFullWidth,
+      "hover:brightness-95": highlight.link
     }
   )}
+  href={highlight.link ?? "#"}
+  target={highlight.link?.startsWith("http") ? "_blank" : "_self"}
+  rel={highlight.link?.startsWith("http") ? "noopener noreferrer" : undefined}
 >
   <div class="flex flex-col gap-2 flex-1 cw:items-start">
     <div class="flex flex-col gap-3 cw:items-start">
@@ -50,4 +54,4 @@
       <VisualRender name={highlight.visualRenderComponent} />
     </div>
   {/if}
-</div>
+</a>

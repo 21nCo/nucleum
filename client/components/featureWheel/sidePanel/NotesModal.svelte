@@ -5,7 +5,7 @@
 </script>
 
 <div class="h-full flex flex-col justify-between w-96 p-4 space-y-4">
-  <div class="flex space-y-2">
+  <div class="flex space-y-2 overflow-y-auto">
     <div class="text-b2 leading-relaxed prose prose-sm max-w-none">
       {@html renderedContent}
     </div>

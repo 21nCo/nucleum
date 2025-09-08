@@ -15,7 +15,8 @@
       title: "Who owns Memotron?",
       body: "Memotron is owned and built by 21n - 21st century native organization. Go to [21n.org](https://21n.org) to learn more about us."
     },
-    faqs.whatHappensToMyData
+    faqs.whatHappensToMyData,
+    faqs.canISelfHost
   ];
 </script>
 
@@ -23,7 +24,7 @@
 <FaQs faqs={faqItems} />
 <BottomCta
   title="Your memory atlas"
-  body="Transform the way you think, learn and manage your knowledge."
+  body="Switch to Memotron to replace stress, 10+ scattered apps and save ~ $100 /month."
   primaryAction={{
     isDownloadButton: true,
     type: "primary"

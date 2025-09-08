@@ -14,7 +14,7 @@
     // },
     {
       title: "MCP server (soon)",
-      icon: "rocket"
+      icon: "ph:rocket-launch-light"
     }
   ];
 </script>

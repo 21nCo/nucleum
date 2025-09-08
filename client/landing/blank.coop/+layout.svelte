@@ -46,7 +46,7 @@
   let metadata: IMetadata = {
     title: "21n - 21st century native organization",
     description:
-      "21st century native organization. Building impressive products with triple bottom line at its core.",
+      "21st century native organization. Building impressive products with triple bottom line at our core.",
     keywords:
       "21n, 21 native, phi native, phinative, 21st century native, organization, products, triple bottom line",
     url: "https://21n.org",

@@ -28,5 +28,9 @@ export const faqs: { [key: string]: IFaq } = {
   whatHappensToMyData: {
     title: "What happens to my data if the app is shutdown for some reason?",
     body: "We immensely value your data as much as you do. Therefore we prioritized building interoperability features on our roadmap. Even if our product doesn't exist in 2 years down the line, you will still have access to all the your data safely exported or backed up on to your personal cloud."
+  },
+  canISelfHost: {
+    title: "Can I self-host the app?",
+    body: "Yes, you can self-host the app. Please read instructions [here](https://github.com/21nOrg/tidigit)."
   }
 };

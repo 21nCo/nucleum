@@ -36,7 +36,7 @@ export const highlights: { [key: string]: IHighlight } = {
   reliable: {
     icon: "ph:lightning",
     title: "Insanely reliable",
-    desc: "Try finding an action that takes more than 1/2 a second. We will wait for you.",
+    desc: "Performance should never be an afterthought. Try finding an action that takes more than 1/2 a second. We will wait for you.",
     isVisualAtBottom: true
   },
   intuitive: {
@@ -44,6 +44,13 @@ export const highlights: { [key: string]: IHighlight } = {
     title: "Surprisingly intuitive",
     desc: "Power doesn't always have to be intimidating. Give us a try.",
     isVisualAtBottom: true
+  },
+  humane: {
+    icon: "ph:leaf",
+    title: "Humane by design",
+    desc: "No manipulative design, no dark patterns.",
+    isVisualAtBottom: true,
+    link: "https://humanebydesign.com"
   },
   laast: {
     icon: "infinity",

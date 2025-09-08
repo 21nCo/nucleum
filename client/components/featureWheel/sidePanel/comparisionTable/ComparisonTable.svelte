@@ -8,7 +8,6 @@
   import HeaderTitle from "./HeaderTitle.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
 
   export let feature: IFwFeature;
@@ -56,6 +55,7 @@
           {#if isSelected(String(contemporary.label))}
             <ComparisonRow
               {contemporary}
+              {feature}
               contemporaryDetail={contemporaries.find(
                 (c) => c.label === contemporary.label
               ) ?? {}}
@@ -84,5 +84,4 @@
       )}
     </span>
   </div>
-  <ScrollViewBottomSpacer />
 </div>

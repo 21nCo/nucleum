@@ -79,11 +79,16 @@
           }))
           .map((spoke) => ({
             ...spoke,
-            contemporaries: spoke.contemporaries.map((contemporary) => ({
-              ...contemporary,
-              icon: contemporaries.find((c) => c.label === contemporary.label)
-                ?.icon
-            }))
+            contemporaries: spoke.contemporaries.map((contemporary) => {
+              const data = contemporaries.find(
+                (c) => c.label === contemporary.label
+              );
+              return {
+                ...contemporary,
+                url: data?.url,
+                icon: data?.icon
+              };
+            })
           }))
       };
       groups.push(group);

@@ -1,6 +1,5 @@
 <script lang="ts">
   import { properCase } from "$lib/shared/utils/text.utils";
-  import CategorySection from "./CategorySection.svelte";
   import type {
     IContemporary,
     IFwCategory,
@@ -211,6 +210,7 @@
                           contemporary.label
                         )}
                         {contemporary}
+                        {feature}
                         isShort={true}
                       />
                     {/if}

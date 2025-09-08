@@ -11,10 +11,6 @@
   export let features: IFwFeature[];
   export let categories: IFwCategory[];
   export let contemporaries: IContemporary[];
-  contemporaries = contemporaries.map((c) => ({
-    ...c,
-    icon: c.icon ?? `svg:${c.label.toLowerCase().replaceAll(" ", "")}`
-  }));
 </script>
 
 <FeatureWheel
