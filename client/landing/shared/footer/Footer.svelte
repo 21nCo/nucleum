@@ -80,7 +80,7 @@
     title: "Read our white paper",
     href: org.whitepaper,
     description:
-      "Discover our mission to enable human progress by building technology with triple bottom line at its core."
+      "Discover our mission of building technology with triple bottom line at our core."
   };
 
   let ourStory = {

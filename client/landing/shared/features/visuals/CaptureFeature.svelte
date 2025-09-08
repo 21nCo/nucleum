@@ -7,11 +7,15 @@
       icon: "check"
     },
     {
-      title: "Camera capture",
+      title: "Capture using camera",
       icon: "check"
     },
     {
-      title: "Capture using audio",
+      title: "Audio recording & transcription",
+      icon: "check"
+    },
+    {
+      title: "PDF upload and annotation",
       icon: "check"
     },
     {
@@ -20,6 +24,10 @@
     },
     {
       title: "Capture properties",
+      icon: "check"
+    },
+    {
+      title: "Capture from clipboard",
       icon: "check"
     }
   ];

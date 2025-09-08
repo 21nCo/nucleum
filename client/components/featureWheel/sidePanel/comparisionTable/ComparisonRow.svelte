@@ -5,18 +5,25 @@
   import { properCase } from "$lib/shared/utils/text.utils";
   import {
     type IContemporary,
-    type IFeatureWheelContemporary
+    type IFeatureWheelContemporary,
+    type IFwFeature
   } from "$lib/client/types/featureWheel.type";
   import { mapValue } from "./table.utils";
   export let contemporary: IFeatureWheelContemporary;
+  export let feature: IFwFeature;
   export let contemporaryDetail: IContemporary;
   export let additionalProperties: string[] = [];
 </script>
 
 <tr>
   <td class="border-b border-l border-brs3 p-2 flex items-center gap-2">
-    {#if contemporaryDetail.icon}
-      <ExternalLogo provider={contemporaryDetail.icon} />
+    {#if contemporaryDetail}
+      <div class="w-5 h-5">
+        <ExternalLogo
+          provider={contemporaryDetail.icon}
+          url={contemporaryDetail.url}
+        />
+      </div>
     {/if}
     {properCase(contemporary.label)}</td
   >
@@ -34,6 +41,10 @@
     <RatingCell value={contemporary.value} />
   </td>
   <td class="border border-brs3 p-2">
-    <NotesCell notes={contemporary.notes} contemporary={contemporaryDetail} />
+    <NotesCell
+      {feature}
+      notes={contemporary.notes}
+      contemporary={contemporaryDetail}
+    />
   </td>
 </tr>

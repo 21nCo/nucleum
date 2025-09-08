@@ -102,6 +102,8 @@ export enum Contemporary {
   Confluence = "Confluence",
   Qatalog = "Qatalog",
   WeavaHighlighter = "Weava highligher",
+  Diigo = "Diigo",
+  Hypothesis = "Hypothesis",
   Vivasnote = "Vivasnote",
   Lazy = "Lazy"
 }

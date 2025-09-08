@@ -1,7 +1,10 @@
 <script lang="ts">
+  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   import view from "$lib/client/stores/view.store";
+  import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IFeature } from "../landing.type";
+  import { landing } from "../store/shared.store";
   import VisualRender from "../VisualRender.svelte";
   export let feature: IFeature;
   export let isReversed: boolean = false;
@@ -17,7 +20,9 @@
     return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
   }
 
-  $: videoId = feature.videoElement?.url ? extractVideoId(feature.videoElement.url) : null;
+  $: videoId = feature.videoElement?.url
+    ? extractVideoId(feature.videoElement.url)
+    : null;
   $: thumbnailUrl = videoId ? getYoutubeThumbnail(videoId) : null;
 </script>
 
@@ -56,14 +61,18 @@
       </div>
     </div>
     {#if feature.videoElement}
-      <div
-        class="flex items-center gap-3 mt-4 border border-brs3 rounded-md py-2 px-4 w-fit"
+      <button
+        class="group flex items-center gap-3 mt-4 border border-brs3 rounded-md py-2 px-4 w-fit hover:bg-bgs1"
+        on:click={() => {
+          if (feature.videoElement?.url)
+            landing.openLink(feature.videoElement.url);
+        }}
       >
         <div class="w-20 h-11 bg-bgs3 rounded-md overflow-hidden">
           {#if videoId && thumbnailUrl}
-            <img 
-              src={thumbnailUrl} 
-              alt="{feature.videoElement?.title ?? feature.feature} thumbnail" 
+            <img
+              src={thumbnailUrl}
+              alt="{feature.videoElement?.title ?? feature.feature} thumbnail"
               class="w-full h-full object-cover"
             />
           {/if}
@@ -72,9 +81,11 @@
           <div class="text-lb2 text-left font-medium">
             {feature.videoElement.title ?? feature.feature}
           </div>
-          <div class="text-b3 text-fgs3 text-left">Watch video</div>
+          <div class="flex items-center gap-1 text-b3 text-fgs3 text-left">
+            Watch video
+          </div>
         </div>
-      </div>
+      </button>
     {/if}
   </div>
 </div>

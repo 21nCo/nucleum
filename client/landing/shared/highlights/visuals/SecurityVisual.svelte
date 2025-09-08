@@ -6,11 +6,11 @@
   const items: IListItem[] = [
     {
       title: "Open source",
-      icon: "code"
+      icon: "ph:code-light"
     },
     {
       title: "End-to-end encryption (soon)",
-      icon: "lock"
+      icon: "ph:lock-light"
     },
     {
       title: "Offline-only version",

@@ -75,7 +75,9 @@
         <div class="flex items-center gap-1">
           <span> Comparision with </span>
           {#if contemporary}
-            <ExternalLogo provider={contemporary} />
+            <div class="w-5 h-5 border border-brs3 rounded-full">
+              <ExternalLogo provider={contemporary} url={contemporary.url} />
+            </div>
           {/if}
           {properCase(selectedCompare[0])}
         </div>

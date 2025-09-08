@@ -69,6 +69,7 @@ export type IHighlight = {
   visualRenderComponent?: string;
   isVisualAtBottom?: boolean;
   isJustifyEndOnCw?: boolean;
+  link?: string;
 };
 
 export type IFeature = {

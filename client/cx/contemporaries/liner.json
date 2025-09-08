@@ -1,0 +1,63 @@
+{
+  "label": "Liner",
+  "url": "liner.com",
+  "icon": "svg:liner",
+  "price": 15,
+  "sourcingType": "CLOSED",
+  "distribution": {
+    "link": "https://getliner.com/download",
+    "available": ["WEB", "IOS", "ANDROID", "CHROMIUM"]
+  },
+  "latestAnalysisDate": "2025-08-12",
+  "features": [
+    {
+      "feature": "source",
+      "rating": 0
+    },
+    {
+      "feature": "privacy",
+      "rating": 0.25,
+      "notes": "Liner is a cloud-based app and does not have end-to-end encryption for cloud sync. There is no evidence of a bug bounty program. Liner's privacy practices indicate decent protection against data selling, email consent and user control mechanisms."
+    },
+    {
+      "feature": "reliability",
+      "rating": 0.5,
+      "notes": "Liner has a [status page](https://status.liner.com/) and the historical uptime stands good at > 99%. However, Liner's reliability is decent with some performance issues and crashes reported by users."
+    },
+    {
+      "feature": "maintenance",
+      "rating": 0.25,
+      "notes": "Liner is easy to get started and use. However, prolonged use of Liner becomes difficult very quickly due to the lack of efficient organization and retrieval capabilities. The default home screen lacks basic controls like searching previously clipped information or going to history page."
+    },
+    {
+      "feature": "sustainability",
+      "rating": 0.05,
+      "notes": "Liner stands poor in terms of sustainability. Liner doesn't support self-hosting and do not have at least one export option (The basic one which was working earlier is no longer supported). On funding and financials, Liner is subject to closure or acquisition by other companies due to its [funding model](https://www.kedglobal.com/banking-finance/newsView/ked202410110004)."
+    },
+    {
+      "feature": "web-clipping",
+      "rating": 0.45,
+      "notes": "Liner has limited web clipping capabilities. A web page cannot be saved directly unless text highlighting or summarization is used. Text highlighting, adding notes and retaining of text highlights are available. However, all highlights of a web page cannot be viewed intuitively, clicked and scrolled to from the side panel. Highlights can be scrolled to by clicking on small breadcrumbs on the right side of the web page. Screenshot to save is not available. Also, Liner has pivoted from a clipper to AI based research tool. This means, retrieving clipped highlights has become more difficult than ever before."
+    },
+    {
+      "feature": "video-clipping",
+      "rating": 0.5,
+      "notes": "Liner has among all the clippers the ability to save, timestamp Youtube videos. But, its only restricted to Youtube platform."
+    },
+    {
+      "feature": "social-clipping",
+      "rating": 0.25,
+      "notes": "Liner's text highlighting capability can be used to save parts of tweets or other social posts. But, it is very limited in capability and doesn't have first-class viewing support."
+    },
+    {
+      "feature": "link-to-curate",
+      "rating": 0.3,
+      "notes": "Liner extension has a feature to add a highlight to a collection when clipped. However, this is mostly unsuable due to Liner's emphasis on AI research over organization and retrieval."
+    },
+    {
+      "feature": "search",
+      "rating": 0.3,
+      "notes": "Liner's search is concealed in a page which is not accessible from UI (https://getliner.com/workspace/search)."
+    }
+  ]
+}

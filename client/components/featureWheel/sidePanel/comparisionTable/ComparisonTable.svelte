@@ -55,6 +55,7 @@
           {#if isSelected(String(contemporary.label))}
             <ComparisonRow
               {contemporary}
+              {feature}
               contemporaryDetail={contemporaries.find(
                 (c) => c.label === contemporary.label
               ) ?? {}}

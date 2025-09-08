@@ -72,6 +72,7 @@ export type IFeatureWheelSpoke = {
 
 export type IContemporaryBase = {
   label: Contemporary;
+  url: string;
   /**
    * Additional way to specify the icon if the label.toLowerCase() is not
    * the same as the icon name - in cases like label having spaces or special characters
@@ -86,7 +87,6 @@ export type IFeatureWheelContemporary = IContemporaryBase & {
 };
 
 export type IContemporary = IContemporaryBase & {
-  url: string;
   /**
    * Price in USD per month billed annually
    */
@@ -110,6 +110,25 @@ export type IContemporary = IContemporaryBase & {
   whenToChoose?: IListContentItem[];
   switchFromDocumentation?: string;
   latestAnalysisDate?: string;
+  /**
+   * Feature ratings and notes specific to this contemporary
+   */
+  features?: IContemporaryFeature[];
+};
+
+export type IContemporaryFeature = {
+  /**
+   * The slug of the feature this rating applies to
+   */
+  feature: string;
+  /**
+   * Rating value between 0 and 1
+   */
+  rating: number;
+  /**
+   * Optional notes explaining the rating
+   */
+  notes?: string;
 };
 
 export enum SourcingType {

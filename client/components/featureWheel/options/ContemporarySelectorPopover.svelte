@@ -99,11 +99,15 @@
           }}
         >
           {#if isUseExternalLogoForIcon && typeof option.icon === "string"}
-            <ExternalLogo
-              provider={option.icon}
-              width={32}
-              class="border border-brs3 rounded-full"
-            />
+            {@const isUrl = option.icon.includes(".")}
+            <div class="w-8 h-8 border border-brs3 rounded-full">
+              <ExternalLogo
+                provider={isUrl ? undefined : option.icon}
+                url={isUrl ? option.icon : undefined}
+                width={32}
+                class="border border-brs3 rounded-full"
+              />
+            </div>
           {:else if typeof option.icon === "string"}
             <SvgIcon icon={option.icon} />
           {/if}

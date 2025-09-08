@@ -45,11 +45,14 @@
   import Raindrop from "./logos/Raindrop.svelte";
 
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  export let provider: IdentityProvider | string | IContemporary;
+  export let provider: IdentityProvider | string | IContemporary | undefined =
+    undefined;
+  export let url: string | undefined = undefined;
   export let width = 20;
   let className = "";
   export { className as class };
   let selected: any = Link;
+  const brandfetchKey = import.meta.env.VITE_BRANDFETCH_KEY;
   $: {
     if (provider === IdentityProvider.GenericLink) selected = Link;
     else if (provider === IdentityProvider.Behance) selected = Behance;
@@ -73,13 +76,21 @@
   $: icon =
     typeof provider === "string"
       ? provider
-      : provider.icon || provider.label.toLowerCase();
+      : provider
+        ? provider?.icon || provider?.label?.toLowerCase()
+        : undefined;
   // $: console.log({ provider });
 </script>
 
-{#if icon.includes(":") && !icon.includes("svg:")}
+{#if icon && icon.includes(":") && !icon.includes("svg:")}
   <Icon {icon} class={className} />
-{:else}
+{:else if url && !icon?.includes("svg:")}
+  <img
+    src={`https://cdn.brandfetch.io/${url}/w/400/h/400?c=${brandfetchKey}`}
+    class="rounded-full w-full h-full"
+    alt={icon}
+  />
+{:else if icon}
   <svg
     {width}
     height={width}

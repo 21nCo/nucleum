@@ -1,0 +1,66 @@
+{
+  "label": "Weava",
+  "url": "weavatools.com",
+  "price": 3.33,
+  "sourcingType": "CLOSED",
+  "distribution": {
+    "link": "https://chromewebstore.google.com/detail/weava-highlighter-pdf-web/cbnaodkpfinfiipjblikofhlhlcickei?hl=en",
+    "available": ["WEB", "IOS", "CHROMIUM"]
+  },
+  "latestAnalysisDate": "2025-08-15",
+  "features": [
+    {
+      "feature": "source",
+      "rating": 0
+    },
+    {
+      "feature": "privacy",
+      "rating": 0.25,
+      "notes": {
+        "offline": "Weave is primarily a cloud-based app with no offline support",
+        "e2ee": "Weava doesn't have end-to-end encryption for cloud sync",
+        "bug-bounty": "Weava doesn't have a bug bounty program",
+        "data-selling": "Weava doesn't sell user data for external use by other companies as per their [privacy policy](https://www.weavatools.com/terms-and-privacy/)",
+        "email-consent": "Weava requires an email address, username and password to use the service. While they collect email for service functionality, their privacy policy doesn't explicitly detail promotional email consent mechanisms, though they appear to follow standard practices.",
+        "spam-rate": "No specific information found about promotional email frequency or spam rates. User reviews don't mention significant issues with promotional emails.",
+        "anonymous-data-collection": "Weava collects analytics information including 'web request, Internet Protocol (IP) address, device type, number of highlights and how you interact with links on the Service' but states this is collected 'in aggregate form such that it cannot reasonably be manipulated to identify any particular individual user'",
+        "misuse": "While Weava states they 'take the privacy of our users very seriously' and use 'commercially reasonable safeguards', there's no explicit zero tolerance' policy statement regarding data misuse. Their privacy policy is standard but doesn't demonstrate exceptional data protection measures."
+      }
+    },
+    {
+      "feature": "reliability",
+      "rating": 0.5,
+      "notes": "Weava generally receives positive reviews for stability and user experience, with 2M+ installs. However, some users report issues with cloud sync, intermittent bugs, and highlight rendering inconsistencies on certain sites[9]."
+    },
+    {
+      "feature": "maintenance",
+      "rating": 0.7,
+      "notes": "Weava is actively maintained, with updates on features. Dashboard and sidebar for highlight management help with organization. However, limitations exist, such as highlights sometimes failing to render if the source URL structure changes."
+    },
+    {
+      "feature": "sustainability",
+      "rating": 0.2,
+      "notes": "Weava does not support self-hosting. Export to file is available (TXT, Word, CSV), but some users find export options limited compared to competitors[8]. Sustainability is dependent on their subscription business model."
+    },
+    {
+      "feature": "web-clipping",
+      "rating": 0.45,
+      "notes": "Weava can be used to highlight text on web pages. Adding notes to the text highlights is available and the text highlights persists on returning to the web pages. However, no screenshot or full-page save function; it relies on selective highlight/clip only."
+    },
+    {
+      "feature": "social-clipping",
+      "rating": 0.25,
+      "notes": "Partially supports clipping text from social platforms, but lacks platform-specific integrations or advanced options."
+    },
+    {
+      "feature": "link-to-curate",
+      "rating": 0.3,
+      "notes": "Supports highlight collections and organizing multiple sources into folders/sub folders."
+    },
+    {
+      "feature": "search",
+      "rating": 0.5,
+      "notes": "Weava enables search over highlights and notes within dashboard/folders. The search is functional but lacks performance."
+    }
+  ]
+}

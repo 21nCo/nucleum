@@ -92,7 +92,7 @@
                 .map((item) => ({
                   label: properCase(item.label),
                   value: item.label,
-                  icon: item.icon
+                  icon: item.icon ?? item.url
                 })),
               comingsoonOptions: contemporaries
                 .filter((item) => item.isHideForComparer)
@@ -122,7 +122,12 @@
                   (c) => c.label === item
                 )}
                 {#if contemporary}
-                  <ExternalLogo provider={contemporary} />
+                  <div class="w-5 h-5 border border-brs3 rounded-full">
+                    <ExternalLogo
+                      provider={contemporary}
+                      url={contemporary.url}
+                    />
+                  </div>
                 {/if}
                 {#if selectedCompare.length === 1}
                   <span>

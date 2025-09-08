@@ -60,7 +60,7 @@
       }}
       class="flex"
     >
-      <Contemporary {width} icon={contemporary.icon} />
+      <Contemporary {width} icon={contemporary.icon} url={contemporary.url} />
     </button>
   {/if}
 </foreignObject>
@@ -73,7 +73,7 @@
   >
     <div class="flex gap-2 bg-bgs1 rounded-md px-3 py-2">
       {#each group as item}
-        <Contemporary {width} icon={item.icon} />
+        <Contemporary {width} icon={item.icon} url={item.url} />
       {/each}
     </div>
   </foreignObject>

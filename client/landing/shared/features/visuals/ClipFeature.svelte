@@ -3,7 +3,7 @@
   import TwoColumnList from "./TwoColumnList.svelte";
   const items: IListItem[] = [
     {
-      title: "Text clipping",
+      title: "Text highlighting",
       icon: "check"
     },
     {
@@ -15,7 +15,7 @@
       icon: "check"
     },
     {
-      title: "Tweet clipping",
+      title: "Social media clipping",
       icon: "check"
     },
     {
