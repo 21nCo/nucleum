@@ -36,7 +36,7 @@ export const highlights: { [key: string]: IHighlight } = {
   reliable: {
     icon: "ph:lightning",
     title: "Insanely reliable",
-    desc: "Performance should never be an afterthought. Try finding an action that takes more than 1/2 a second. We will wait for you.",
+    desc: "Performance should never be an afterthought. Try finding an action that takes more than 1/2 a second.",
     isVisualAtBottom: true
   },
   intuitive: {
