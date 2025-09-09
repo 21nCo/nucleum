@@ -98,7 +98,6 @@ jobs:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: |
-            ../package-lock.json
             package-lock.json
             client/products/${{ matrix.project }}/package-lock.json
 
