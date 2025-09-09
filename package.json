@@ -22,6 +22,8 @@
     "build:packages": "turbo run build --filter='./packages/*'",
     "build:products": "turbo run build --filter='./client/products/*'",
     "build:nucleus": "turbo run build --filter=nucleus-app",
+    "build:memotron": "turbo run build --filter=memotron-app",
+    "build:pointron": "turbo run build --filter=pointron-app",
     "clean": "turbo run clean"
   },
   "packageManager": "npm@10.0.0"

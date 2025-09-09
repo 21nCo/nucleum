@@ -1,0 +1,18 @@
+{
+  "name": "Memotron",
+  "short_name": "Memotron",
+  "description": "Your digital second brain",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#fff",
+  "theme_color": "#000",
+  "icons": [
+    {
+      "src": "memotron.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "apple-touch-icon": "memotron.png"
+}

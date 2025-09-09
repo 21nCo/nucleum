@@ -12,7 +12,6 @@ on:
           - nucleus
           - memotron
           - pointron
-          - gathery
           - all
       environment:
         description: 'Environment to deploy to'
@@ -51,7 +50,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             # Manual trigger
             if [ "${{ github.event.inputs.project }}" = "all" ]; then
-              echo "projects=[\"nucleus\", \"memotron\", \"pointron\", \"gathery\"]" >> $GITHUB_OUTPUT
+              echo "projects=[\"nucleus\", \"memotron\", \"pointron\"]" >> $GITHUB_OUTPUT
             else
               echo "projects=[\"${{ github.event.inputs.project }}\"]" >> $GITHUB_OUTPUT
             fi
@@ -59,7 +58,7 @@ jobs:
             echo "deploy-type=manual" >> $GITHUB_OUTPUT
           else
             # Auto-deploy all projects to dev on dev branch push
-            echo "projects=[\"nucleus\", \"memotron\", \"pointron\", \"gathery\"]" >> $GITHUB_OUTPUT
+            echo "projects=[\"nucleus\", \"memotron\", \"pointron\"]" >> $GITHUB_OUTPUT
             echo "environment=dev" >> $GITHUB_OUTPUT
             echo "deploy-type=auto" >> $GITHUB_OUTPUT
           fi
