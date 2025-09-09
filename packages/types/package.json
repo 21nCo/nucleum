@@ -1,5 +1,5 @@
 {
-  "name": "@nucleus/types",
+  "name": "types",
   "version": "0.0.0",
   "private": true,
   "type": "module",

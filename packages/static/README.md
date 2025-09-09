@@ -1,12 +1,12 @@
-# @nucleus/static
+# static
 
-Shared static assets package for all Nucleus apps.
+Shared static assets package for all product apps.
 
 ## Usage
 
 ### Basic Import
 ```javascript
-import { assets, assetPath } from '@nucleus/static';
+import { assets, assetPath } from 'static';
 
 // Use predefined assets
 const logoSrc = assets.nucleusLogo;
@@ -20,7 +20,7 @@ const customPath = assetPath('my-custom-asset.png');
 ### In Svelte Components
 ```svelte
 <script>
-  import { assets } from '@nucleus/static';
+  import { assets } from 'static';
 </script>
 
 <img src={assets.nucleusLogo} alt="Nucleus Logo" />
@@ -51,7 +51,7 @@ const customPath = assetPath('my-custom-asset.png');
 ```json
 {
   "dependencies": {
-    "@nucleus/static": "*"
+    "static": "*"
   }
 }
 ```
@@ -61,7 +61,7 @@ const customPath = assetPath('my-custom-asset.png');
 **For SvelteKit apps:**
 ```javascript
 // vite.config.js
-import { nucleusStaticPlugin } from '@nucleus/static/vite-plugin.js';
+import { nucleusStaticPlugin } from 'static/vite-plugin.js';
 
 export default defineConfig({
   plugins: [
@@ -74,7 +74,7 @@ export default defineConfig({
 **Manual setup:**
 Copy assets to your app's static directory during build:
 ```javascript
-import { copyAssetsTo } from '@nucleus/static/build.js';
+import { copyAssetsTo } from 'static/build.js';
 copyAssetsTo('./static');
 ```
 

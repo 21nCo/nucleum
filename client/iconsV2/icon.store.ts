@@ -1,7 +1,7 @@
 import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
 import { bundleNumber } from "./icons-list";
 import { iconMappings, type IconSet } from "./icons.map";
-import { assetPath } from "@nucleus/static";
+import { assetPath } from "static";
 
 export const spriteVersion = bundleNumber;
 export const extensionSprites = new Map<string, string>();

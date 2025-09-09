@@ -1,4 +1,4 @@
-// @nucleus/static - Shared static assets
+// static - Shared static assets
 // This package provides access to shared static assets across all apps
 
 // Asset path helpers

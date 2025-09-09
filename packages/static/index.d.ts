@@ -1,4 +1,4 @@
-// Type definitions for @nucleus/static
+// Type definitions for static
 
 export declare function assetPath(path: string): string;
 

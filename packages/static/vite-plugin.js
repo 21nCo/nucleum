@@ -1,4 +1,4 @@
-// Vite plugin to handle shared static assets from @nucleus/static
+// Vite plugin to handle shared static assets from static
 
 import fs from 'fs';
 import path from 'path';

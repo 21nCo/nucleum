@@ -88,7 +88,7 @@ export default defineConfig({
     // (monacoEditorPlugin as any).default({
     //   languageWorkers: ["json", "editorWorkerService"]
     // })
-    fetchJsonPlugin("../../../product.json"),
+    fetchJsonPlugin("product.json"),
     nucleusStaticPlugin()
   ]
 });
