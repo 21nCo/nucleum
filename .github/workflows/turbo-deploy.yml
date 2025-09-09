@@ -115,8 +115,8 @@ jobs:
       - name: Create environment file with fallback
         run: |
           # Check if project-specific env vars exist, fallback to default
-          PROJECT_ENV_VARS="${{ secrets[env.APP_ENV_VARS_SECRET] }}"
-          DEFAULT_ENV_VARS="${{ secrets.DEFAULT_APP_ENV_VARS }}"
+          PROJECT_ENV_VARS="${{ vars[env.APP_ENV_VARS_SECRET] }}"
+          DEFAULT_ENV_VARS="${{ vars.DEFAULT_APP_ENV_VARS }}"
           
           if [ -n "$PROJECT_ENV_VARS" ]; then
             echo "$PROJECT_ENV_VARS" > .env
@@ -202,8 +202,8 @@ jobs:
 
       - name: Set CDK environment variables with fallback
         run: |
-          PROJECT_CDK_ENV_VARS="${{ secrets[env.CDK_ENV_VARS_SECRET] }}"
-          DEFAULT_CDK_ENV_VARS="${{ secrets.DEFAULT_CDK_ENV_VARS }}"
+          PROJECT_CDK_ENV_VARS="${{ vars[env.CDK_ENV_VARS_SECRET] }}"
+          DEFAULT_CDK_ENV_VARS="${{ vars.DEFAULT_CDK_ENV_VARS }}"
           
           if [ -n "$PROJECT_CDK_ENV_VARS" ]; then
             echo "$PROJECT_CDK_ENV_VARS" >> $GITHUB_ENV
