@@ -1,0 +1,28 @@
+{
+  "name": "@nucleus/lib-workspace",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "client/products/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.0.0"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "dev:nucleus": "turbo run dev --filter=@nucleus/nucleus-app",
+    "dev:memotron": "turbo run dev --filter=@nucleus/memotron-app",
+    "dev:gathery": "turbo run dev --filter=@nucleus/gathery-app",
+    "dev:pointron": "turbo run dev --filter=@nucleus/pointron-app",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "build:packages": "turbo run build --filter='./packages/*'",
+    "build:products": "turbo run build --filter='./client/products/*'",
+    "build:nucleus": "turbo run build --filter=@nucleus/nucleus-app",
+    "clean": "turbo run clean"
+  },
+  "packageManager": "npm@10.0.0"
+}

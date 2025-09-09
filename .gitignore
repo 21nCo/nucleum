@@ -22,3 +22,7 @@ product.json
 product.updated.json
 
 client/cx/contemporaries/glasp-*
+
+**/.svelte-kit
+**/build
+.turbo

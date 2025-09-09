@@ -1,0 +1,20 @@
+{
+  "name": "@nucleus/types",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "scripts": {
+    "build": "echo 'Types package - no build needed'",
+    "dev": "echo 'Types package in dev mode'",
+    "clean": "echo 'Types package cleaned'"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

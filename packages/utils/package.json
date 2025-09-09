@@ -1,0 +1,20 @@
+{
+  "name": "@nucleus/utils",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "scripts": {
+    "build": "echo 'Utils package - no build needed'",
+    "dev": "echo 'Utils package in dev mode'",
+    "clean": "echo 'Utils package cleaned'"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
