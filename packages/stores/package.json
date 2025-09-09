@@ -1,0 +1,13 @@
+{
+  "name": "stores",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.ts",
+  "exports": { ".": "./index.ts", "./*": "./*" },
+  "scripts": {
+    "build": "echo 'Stores package - no build needed'",
+    "dev": "echo 'Stores package in dev mode'",
+    "clean": "echo 'Stores package cleaned'"
+  }
+}

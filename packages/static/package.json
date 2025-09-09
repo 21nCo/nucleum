@@ -1,0 +1,27 @@
+{
+  "name": "static",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": "./index.js",
+    "./*": "./*",
+    "./assets/*": "./assets/*",
+    "./icons/*": "./icons/*",
+    "./sounds/*": "./sounds/*"
+  },
+  "files": [
+    "assets/**/*",
+    "icons/**/*", 
+    "sounds/**/*",
+    "index.js",
+    "index.d.ts"
+  ],
+  "scripts": {
+    "build": "node build.js",
+    "dev": "echo 'Static assets package in dev mode'",
+    "clean": "rm -rf dist"
+  }
+}

@@ -1,5 +1,5 @@
-import colorSchemes from "./colorschemes.json";
-import colorSchemesBranding from "./colorschemes-branding.json";
+import colorSchemes from "./colorschemes.json" with { type: "json" };
+import colorSchemesBranding from "./colorschemes-branding.json" with { type: "json" };
 
 const themes = [
   {
@@ -31,8 +31,16 @@ const mappedColorSchemes = colorSchemes.map((cs) => {
   };
 });
 
-module.exports = {
-  content: ["./src/**/*.{html,js,svelte,ts}", "./lib/**/*.{html,js,svelte,ts}"],
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+
+export default {
+  content: [
+    "./src/**/*.{html,js,svelte,ts}",
+    "./lib/**/*.{html,js,svelte,ts}",
+    "../../../client/**/*.{html,js,svelte,ts}",
+    "../../../packages/**/*.{html,js,svelte,ts}"
+  ],
   theme: {
     screens: {
       /**
@@ -216,7 +224,12 @@ module.exports = {
   },
   darkMode: "selector",
   purge: {
-    content: ["./lib/**/*.html", "./lib/**/*.svelte"],
+    content: [
+      "./lib/**/*.html",
+      "./lib/**/*.svelte",
+      "../../../client/**/*.html",
+      "../../../client/**/*.svelte"
+    ],
     options: {
       safelist: [
         "cs_dracula",

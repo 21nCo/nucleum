@@ -1,0 +1,21 @@
+{
+  "name": "components",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "scripts": {
+    "build": "echo 'Components package - no build needed'",
+    "dev": "echo 'Components package in dev mode'",
+    "clean": "echo 'Components package cleaned'"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "svelte": "^4.0.0"
+  }
+}

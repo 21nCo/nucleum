@@ -1,0 +1,21 @@
+{
+  "name": "elements",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./*": "./*"
+  },
+  "scripts": {
+    "build": "echo 'Elements package - no build needed'",
+    "dev": "echo 'Elements package in dev mode'",
+    "clean": "echo 'Elements package cleaned'"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "svelte": "^4.0.0"
+  }
+}
