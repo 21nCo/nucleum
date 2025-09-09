@@ -170,6 +170,7 @@ jobs:
           PROJECT_UPPER=$(echo "${{ matrix.project }}" | tr '[:lower:]' '[:upper:]')
           echo "AWS_ACCESS_KEY_SECRET=${PROJECT_UPPER}_AWS_ACCESS_KEY_ID" >> $GITHUB_ENV
           echo "AWS_SECRET_KEY_SECRET=${PROJECT_UPPER}_AWS_SECRET_ACCESS_KEY" >> $GITHUB_ENV
+          echo "CDK_ENV_VARS_SECRET=${PROJECT_UPPER}_CDK_ENV_VARS" >> $GITHUB_ENV
 
       - name: Configure AWS credentials with fallback
         uses: aws-actions/configure-aws-credentials@a03048d87541d1d9fcf2ecf528a4a65ba9bd7838  # v5.0.0
@@ -199,6 +200,23 @@ jobs:
           rm -rf node_modules package-lock.json
           npm install && npm run build
 
+      - name: Set CDK environment variables with fallback
+        run: |
+          PROJECT_CDK_ENV_VARS="${{ secrets[env.CDK_ENV_VARS_SECRET] }}"
+          DEFAULT_CDK_ENV_VARS="${{ secrets.DEFAULT_CDK_ENV_VARS }}"
+          
+          if [ -n "$PROJECT_CDK_ENV_VARS" ]; then
+            echo "$PROJECT_CDK_ENV_VARS" >> $GITHUB_ENV
+            echo "✅ Using ${{ matrix.project }}-specific CDK environment variables"
+          elif [ -n "$DEFAULT_CDK_ENV_VARS" ]; then
+            echo "$DEFAULT_CDK_ENV_VARS" >> $GITHUB_ENV
+            echo "⚠️ Using default CDK environment variables for ${{ matrix.project }}"
+          else
+            echo "❌ No CDK environment variables found, using defaults"
+            echo "domain=tidigit.dev" >> $GITHUB_ENV
+            echo "isUseParentZone=true" >> $GITHUB_ENV
+          fi
+
       - name: Verify AWS configuration
         run: |
           echo "🔍 AWS Configuration:"
@@ -211,6 +229,9 @@ jobs:
         env:
           PROJECT_NAME: ${{ matrix.project }}
           ENVIRONMENT: ${{ needs.detect-config.outputs.environment }}
+          domain: ${{ env.domain }}
+          subdomain: ${{ env.subdomain }}
+          isUseParentZone: ${{ env.isUseParentZone }}
 
       - name: Deploy status
         run: |
