@@ -104,8 +104,8 @@ jobs:
       - name: Install dependencies (workspace)
         run: |
           cd ../../../
-          rm -rf node_modules package-lock.json lib/node_modules lib/package-lock.json client/products/${{ matrix.project }}/node_modules client/products/${{ matrix.project }}/package-lock.json
-          npm ci --workspaces
+          rm -rf node_modules package-lock.json
+          npm install
 
       - name: Set dynamic secret names
         run: |
