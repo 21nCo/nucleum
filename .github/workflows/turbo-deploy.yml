@@ -102,7 +102,7 @@ jobs:
 
       - name: Install dependencies (workspace)
         run: |
-          cd ../../../
+          cd ../../
           rm -rf node_modules package-lock.json
           npm install
 
