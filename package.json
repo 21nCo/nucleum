@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "workspaces": [
-    "client/products/*",
+    "apps/*",
     "packages/*"
   ],
   "devDependencies": {
@@ -20,7 +20,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "build:packages": "turbo run build --filter='./packages/*'",
-    "build:products": "turbo run build --filter='./client/products/*'",
+    "build:products": "turbo run build --filter='./apps/*'",
     "build:nucleus": "turbo run build --filter=nucleus-app",
     "build:memotron": "turbo run build --filter=memotron-app",
     "build:pointron": "turbo run build --filter=pointron-app",

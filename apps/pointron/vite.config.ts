@@ -1,9 +1,7 @@
 import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig } from "vite";
-// import topLevelAwait from "vite-plugin-top-level-await";
-import fetchJsonPlugin from "./../fetch-json-data.js";
-// import monacoEditorPlugin from "vite-plugin-monaco-editor";
-import { staticPlugin } from "../../../packages/static/vite-plugin.js";
+import fetchJsonPlugin from "../fetch-json-data.js";
+import { staticPlugin } from "../../packages/static/vite-plugin.js";
 
 export default defineConfig({
   build: {
@@ -71,24 +69,5 @@ export default defineConfig({
       "top-level-await": true,
     },
   },
-  plugins: [
-    // sentrySvelteKit({
-    //   sourceMapsUploadOptions: {
-    //     org: "21n",
-    //     project: "memotron-live"
-    //   }
-    // }),
-    // topLevelAwait({
-    //   // The export name of top-level await promise for each chunk module
-    //   promiseExportName: "__tla",
-    //   // The function to generate import names of top-level await promise in each chunk module
-    //   promiseImportName: (i) => `__tla_${i}`
-    // }),
-    sveltekit(), // monacoEditorPlugin({})
-    // (monacoEditorPlugin as any).default({
-    //   languageWorkers: ["json", "editorWorkerService"]
-    // })
-    fetchJsonPlugin("product.json"),
-    staticPlugin(),
-  ],
+  plugins: [sveltekit(), fetchJsonPlugin("product.json"), staticPlugin()],
 });

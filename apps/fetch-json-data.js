@@ -8,7 +8,7 @@ function validatePath(inputPath) {
   const normalizedPath = path.normalize(inputPath);
   
   // Find the project root (lib directory)
-  const projectRoot = path.resolve(process.cwd(), '../../../');
+  const projectRoot = path.resolve(process.cwd(), '../../');
   const resolvedPath = path.resolve(projectRoot, normalizedPath);
   
   // Ensure the resolved path is within the project root

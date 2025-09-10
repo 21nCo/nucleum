@@ -6,17 +6,17 @@ const config = {
   preprocess: vitePreprocess(),
   kit: {
     adapter: adapter({
-      fallback: "index.html",
+      fallback: "index.html"
     }),
     alias: {
       $local: "./src",
-      $lib: "../../../",
+      $lib: "../../"
     },
     files: {
-      lib: "../../../",
-      routes: "../../../client/routes",
-    },
-  },
+      lib: "../../",
+      routes: "../../client/routes"
+    }
+  }
 };
 
 export default config;

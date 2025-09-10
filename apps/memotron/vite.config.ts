@@ -1,7 +1,7 @@
 import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig } from "vite";
-import fetchJsonPlugin from "./../fetch-json-data.js";
-import { staticPlugin } from "../../../packages/static/vite-plugin.js";
+import fetchJsonPlugin from "../fetch-json-data.js";
+import { staticPlugin } from "../../packages/static/vite-plugin.js";
 
 export default defineConfig({
   build: {

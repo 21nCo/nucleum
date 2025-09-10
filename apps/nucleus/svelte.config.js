@@ -11,13 +11,13 @@ const config = {
     }),
     alias: {
       $local: "./src",
-      // Point $lib to the parent lib directory (3 levels up)
-      $lib: "../../../"
+      // Point $lib to the parent lib directory (2 levels up)
+      $lib: "../../"
     },
     files: {
       // lib points to the parent lib for this product
-      lib: "../../../",
-      routes: "../../../client/routes"
+      lib: "../../",
+      routes: "../../client/routes"
     }
   }
 };
