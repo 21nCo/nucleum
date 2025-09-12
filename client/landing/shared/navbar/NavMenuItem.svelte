@@ -5,12 +5,17 @@
   import { page } from "$app/stores";
   export let item: ITopNavBarItem;
   export let isStickedContext: boolean = false;
-  $: isActive = $page.url.pathname.includes(item.href.toLowerCase());
+  export let renderAs: "a" | "button" = "a";
+
+  $: isActive = item.href
+    ? $page.url.pathname.includes(item.href.toLowerCase())
+    : false;
 </script>
 
-<a
+<svelte:element
+  this={renderAs}
   class={cn(
-    "flex items-center gap-1 text-b2 2k:text-lb2 px-3 py-1 rounded-full",
+    "flex items-center gap-1 text-b2 2k:text-lb2 px-3 py-1 rounded-full cursor-pointer",
     {
       "text-aps1 bg-bgs3": isActive && !isStickedContext,
       "text-aps1 bg-bgs2": isActive && isStickedContext,
@@ -24,11 +29,13 @@
       item.callback();
     }
   }}
-  href={item.href}
+  href={renderAs === "a" ? item.href : undefined}
+  role={renderAs === "button" ? "button" : undefined}
+  tabindex="0"
   >{item.label}
   {#if item.expandRender}
     <span class="w-3">
       <SvgIcon icon="chevdown" isRenderRaw={true} />
     </span>
   {/if}
-</a>
+</svelte:element>

@@ -165,6 +165,13 @@ function resolveProductData(product: string) {
         topNavBarValues: pointronTopNavBarValues,
         footerValues: pointronFooterValues
       };
+    default:
+      return {
+        website: "https://21n.org",
+        urls: nUrls,
+        topNavBarValues: nTopNavBarValues,
+        footerValues: nFooterValues
+      };
   }
 }
 

@@ -3,6 +3,7 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IFeature } from "../landing.type";
   import VisualRender from "../VisualRender.svelte";
+  import { sanitizeUrl } from "../utils/url-sanitizer";
   export let feature: IFeature;
   export let isReversed: boolean = false;
 
@@ -57,17 +58,17 @@
         <VisualRender name={feature.visualRenderComponent} />
       </div>
     </div>
-    {#if feature.videoElement}
+    {#if feature.videoElement && sanitizeUrl(feature.videoElement?.url)}
       <a
         class="group flex items-center gap-3 mt-4 border border-brs3 rounded-md py-2 px-4 w-fit hover:bg-bgs1"
-        href={feature.videoElement?.url}
+        href={sanitizeUrl(feature.videoElement?.url)}
         target={feature.videoElement?.url?.startsWith("http")
           ? "_blank"
           : "_self"}
         rel={feature.videoElement?.url?.startsWith("http")
           ? "noopener noreferrer"
           : undefined}
-        title={feature.videoElement?.url ? "Click to watch video" : ""}
+        title="Click to watch video"
       >
         <div class="w-20 h-11 bg-bgs3 rounded-md overflow-hidden">
           {#if videoId && thumbnailUrl}

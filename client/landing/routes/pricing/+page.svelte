@@ -4,25 +4,37 @@
   import PageSeo from "../../shared/seo/PageSEO.svelte";
   import PricingSection from "../../shared/pricing/PricingSection.svelte";
   import { landing } from "../../shared/store/shared.store";
-  export let data;
-  const productName = data.product ?? "";
+
+  export let data: {
+    product?: string;
+    pricingPlans?: any[];
+    faqItems?: any[];
+    bottomCta?: { title?: string; body?: string };
+    website: string;
+    urls?: { downloads?: { all?: string } };
+  };
+
+  const productName = data?.product ?? "";
+
+  $: downloadsUrl =
+    data?.urls?.downloads?.all || ($landing?.urls?.downloads?.all ?? "");
 </script>
 
 <PricingSection
-  plans={data.pricingPlans}
+  plans={data?.pricingPlans ?? []}
   title="Pick a plan that's right for you"
 />
-<FaQs faqs={data.faqItems} />
+<FaQs faqs={data?.faqItems ?? []} />
 <BottomCta
-  title={data.bottomCta.title}
-  body={data.bottomCta.body}
+  title={data?.bottomCta?.title ?? "Get Started"}
+  body={data?.bottomCta?.body ?? "Start using our platform today"}
   primaryAction={{
     isDownloadButton: true,
     type: "primary"
   }}
   secondaryAction={{
     label: "See all downloads",
-    href: $landing.urls.downloads?.all,
+    href: downloadsUrl,
     icon: "arrowright",
     type: "secondary"
   }}
@@ -38,6 +50,6 @@
       "free self hosting",
       "nucleus plan"
     ],
-    canonicalUrl: data.website + "/pricing"
+    canonicalUrl: (data?.website ?? "") + "/pricing"
   }}
 />

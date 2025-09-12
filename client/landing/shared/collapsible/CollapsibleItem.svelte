@@ -38,9 +38,9 @@
         transition:fly={{ y: -20, duration: 200, easing: cubicOut }}
         class="pb-4 text-fgs2"
       >
-        <p class="text-lb2 text-fgs2 max-w-3xl">
+        <div class="text-lb2 text-fgs2 max-w-3xl">
           <MarkdownRenderer text={body} />
-        </p>
+        </div>
       </div>
     {/if}
   </div>

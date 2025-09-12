@@ -101,7 +101,7 @@
   on:mouseenter={handleHover}
   on:mouseleave={handleLeave}
   class={cn(
-    "box-border flex items-center justify-center gap-2 rounded-full mo:text-[16px] leading--[33px] mo:leading--[22px]",
+    "box-border flex items-center justify-center gap-2 rounded-full mo:text-[16px] leading--[33px] mo:leading--[22px] cursor-pointer",
     {
       "bg-fgs1 hover:bg-fgs2 text-bgs1": type === "primary",
       "border border-fgs2 hover:bg-bgs3 text-fgs1 leading-7":
@@ -111,9 +111,9 @@
       "flex-row-reverse": iconPosition === "start"
     }
   )}
-  href={isDownloadButton && !href ? $landing.urls.web : href}
-  target="_blank"
-  rel="noopener noreferrer"
+  href={isDownloadButton && !href ? $landing?.urls?.web : href}
+  target={href ? "_blank" : "_self"}
+  rel={href ? "noopener noreferrer" : undefined}
   on:click={handleClick}
 >
   {#if icon}
