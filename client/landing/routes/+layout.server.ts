@@ -24,7 +24,7 @@ const nTopNavBarValues: ITopNavBar = {
   cta: [
     {
       label: "Contribute",
-      icon: "github-logo",
+      icon: "ph:github-logo",
       href: org.github,
       type: "primary"
     }
@@ -123,7 +123,7 @@ let pointronTopNavBarValues: ITopNavBar = {
     {
       label: "",
       href: "https://github.com/21nOrg/nucleus",
-      icon: "github-logo",
+      icon: "ph:github-logo",
       type: "secondary"
     },
     {
