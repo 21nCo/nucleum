@@ -21,6 +21,7 @@
       "hover:brightness-95": highlight.link
     }
   )}
+  title={highlight.link ? "Click to learn more" : ""}
   href={highlight.link ?? "#"}
   target={highlight.link?.startsWith("http") ? "_blank" : "_self"}
   rel={highlight.link?.startsWith("http") ? "noopener noreferrer" : undefined}

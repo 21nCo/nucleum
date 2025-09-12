@@ -55,6 +55,6 @@
   landing.load(urls);
 </script>
 
-<BlankLandingLayout {topNavBarValues} {footerValues} {metadata}>
+<BlankLandingLayout {topNavBarValues} {footerValues}>
   <slot />
 </BlankLandingLayout>

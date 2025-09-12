@@ -23,7 +23,7 @@
               {@html renderMdAsHtml(content)}
             </div>
             {#if learnMoreLink}
-              <div>
+              <div class="w-fit">
                 <Button
                   label="Learn more"
                   href={learnMoreLink}

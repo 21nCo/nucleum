@@ -3,7 +3,7 @@ import type { IFaq } from "./landing.type";
 export const faqs: { [key: string]: IFaq } = {
   paymentInformationNotRequired: {
     title: "Do I need to enter my payment information to use free trial?",
-    body: "No, you can use the free trial without entering your payment information or subscribing to any plan. Your free trial auto starts once your signup on the app."
+    body: "No, you can use the free trial without entering your payment information or subscribing to any plan. Your free trial auto starts once your signup on the app. You will be required to enter payment information only when you explicitly decided to upgrade."
   },
   offlineVersionLimitations: {
     title: "Are there any limits on offline version of the app?",
@@ -19,7 +19,7 @@ export const faqs: { [key: string]: IFaq } = {
   },
   cancelSubscription: {
     title: "Can I cancel once I subscribe?",
-    body: "Yes, you can cancel within grace period for yearly and lifetime plans. The grace period is 14 days for yearly plans and 1 month for lifetime plans. We do not have any hidden fees or contracts. Kindly email us at hello@21n.org if you have any questions."
+    body: "Yes, you can cancel anytime once you subscribe. However, you will receive a full refund only if you cancel within the grace period for yearly and lifetime plans. This is purely because of our current system limitation where we cannot process partial refunds. This might change in the future. The grace period for full refund is 14 days for yearly plans and 1 month for lifetime plans. We do not have any hidden fees or contracts. Kindly email us at [hello@21n.org](mailto:hello@21n.org) if you have any questions."
   },
   whoOwnsThisProduct: {
     title: "Who owns this product?",
@@ -27,10 +27,10 @@ export const faqs: { [key: string]: IFaq } = {
   },
   whatHappensToMyData: {
     title: "What happens to my data if the app is shutdown for some reason?",
-    body: "We immensely value your data as much as you do. Therefore we prioritized building interoperability features on our roadmap. Even if our product doesn't exist in 2 years down the line, you will still have access to all the your data safely exported or backed up on to your personal cloud."
+    body: "First of all, we dramatically reduced the odds of the app being shutdown due to [how we function](https://21n.org) as a company. We immensely value your data as much as you do. Therefore we prioritized building interoperability features on our roadmap. Even if our product doesn't exist in 2 years down the line, you will still have access to all the your data safely exported or backed up on to your personal cloud."
   },
   canISelfHost: {
     title: "Can I self-host the app?",
-    body: "Yes, you can self-host the app. Please read instructions [here](https://github.com/21nOrg/tidigit)."
+    body: "Self-hosting is currently available for the offline-only client app. Please read instructions [here](https://github.com/21nOrg/nucleus)."
   }
 };

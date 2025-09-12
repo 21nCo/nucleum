@@ -2,4 +2,4 @@
   import PrivacyPolicy from "../../shared/PrivacyPolicy.svelte";
 </script>
 
-<PrivacyPolicy />
+<PrivacyPolicy productName="21n" />
