@@ -41,7 +41,7 @@ VITE_STATIC_URL=https://cdn.21n.co
 *Full app deployment including backend on Cloudflare (Cloudflare workers + Cloudflare D1 + Cloudflare R2) will be available soon...*
 
 # Contributing
-We welcome contributions! Please see the [CONTRIBUTING](https://github.com/21nOrg/tidigit?tab=contributing-ov-file) file for details.
+We welcome contributions! Please see the [CONTRIBUTING](https://github.com/21nOrg/nucleus?tab=contributing-ov-file) file for details.
 
 The project is built with [SvelteKit](https://kit.svelte.dev/) and [TailwindCSS](https://tailwindcss.com/) for the frontend client, and [Node.js](https://nodejs.org/) for the backend.
 
@@ -52,4 +52,4 @@ This project is licensed under the AGPL-3.0 license. See the [LICENSE](LICENSE) 
 ### Contact
 For any questions or feedback, please contact us at [hello@21n.org](mailto:hello@21n.org).
 
-❤️ We extend our gratitude to all the [OSS libraries and tools](https://github.com/21nOrg/tidigit/network/dependencies) that made this project possible.
+❤️ We extend our gratitude to all the [OSS libraries and tools](https://github.com/21nOrg/nucleus/network/dependencies) that made this project possible.

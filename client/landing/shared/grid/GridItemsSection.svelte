@@ -4,7 +4,6 @@
   import Item from "./Item.svelte";
   import Title from "../Title.svelte";
   import Button from "../elements/Button.svelte";
-  import { landing } from "../store/shared.store";
   export let title: string;
   export let items: IGridItem[];
   export let whitePaperUrl: string;
@@ -20,6 +19,6 @@
   <Button
     label="Read our white paper"
     icon="ph:arrow-right"
-    on:click={() => landing.openLink(whitePaperUrl)}
+    href={whitePaperUrl}
   />
 </Section>

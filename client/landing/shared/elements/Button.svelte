@@ -40,15 +40,7 @@
   }
 
   function handleClick() {
-    if (href) {
-      landing.openLink(href);
-    } else if (isDownloadButton) {
-      if (!href) {
-        landing.openLink($landing.urls.web ?? "");
-      } else {
-        landing.openLink(href);
-      }
-    } else {
+    if (!href && !isDownloadButton) {
       dispatch("click");
     }
   }
@@ -105,7 +97,7 @@
   }
 </script>
 
-<button
+<a
   on:mouseenter={handleHover}
   on:mouseleave={handleLeave}
   class={cn(
@@ -119,6 +111,9 @@
       "flex-row-reverse": iconPosition === "start"
     }
   )}
+  href={isDownloadButton && !href ? $landing.urls.web : href}
+  target="_blank"
+  rel="noopener noreferrer"
   on:click={handleClick}
 >
   {#if icon}
@@ -134,4 +129,4 @@
   {#if label}
     <span class="text-nowrap">{label}</span>
   {/if}
-</button>
+</a>

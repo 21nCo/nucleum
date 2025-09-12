@@ -2,13 +2,13 @@
   import type { ITopNavBarItem } from "../landing.type";
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { page } from "$app/stores";
   export let item: ITopNavBarItem;
   export let isStickedContext: boolean = false;
-  const currentPath = typeof window !== "undefined" ? window.location.href : "";
-  const isActive = currentPath.includes(item.href.toLowerCase());
+  $: isActive = $page.url.pathname.includes(item.href.toLowerCase());
 </script>
 
-<button
+<a
   class={cn(
     "flex items-center gap-1 text-b2 2k:text-lb2 px-3 py-1 rounded-full",
     {
@@ -19,11 +19,16 @@
       "hover:bg-bgs2": !isActive && isStickedContext
     }
   )}
-  on:click
+  on:click={() => {
+    if (item.callback) {
+      item.callback();
+    }
+  }}
+  href={item.href}
   >{item.label}
   {#if item.expandRender}
     <span class="w-3">
       <SvgIcon icon="chevdown" isRenderRaw={true} />
     </span>
   {/if}
-</button>
+</a>

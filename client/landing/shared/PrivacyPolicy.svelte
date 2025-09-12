@@ -1,3 +1,21 @@
+<script lang="ts">
+  import PageSeo from "./seo/PageSEO.svelte";
+  export let productName: string;
+</script>
+
+<PageSeo
+  data={{
+    title: `Privacy Policy - ${productName}`,
+    description: `Privacy Policy for ${productName} - learn how we collect, use, and protect your personal information while using Memotron's knowledge management services.`,
+    keywords: [
+      "privacy policy",
+      "privacy",
+      "data protection",
+      "personal information"
+    ],
+    canonicalUrl: "https://21n.org/privacy"
+  }}
+/>
 <div
   class="relative flex flex-col justify-start items-start text-start w-full h-auto p-8"
 >

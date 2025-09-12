@@ -13,6 +13,7 @@
   import HeroVideoV2 from "../shared/elements/HeroVideoV2.svelte";
   import Features from "../shared/features/Features.svelte";
   import { highlights } from "../shared/highlights/highlights.data";
+  import PageSeo from "../shared/seo/PageSEO.svelte";
   let heroInputs: IHeroInputs = {
     tagline: "Your memory atlas",
     description:
@@ -148,8 +149,24 @@
       visualRenderComponent: "synthesizeFeature"
     }
   ];
+  let metadata = {
+    title: "Memotron - Open source personal knowledge management for everyone",
+    description:
+      "Memotron is a digital notes app that helps user's manage personal knowledge, research and learning.",
+    keywords: [
+      "memotron",
+      "note-taking",
+      "digital memory management",
+      "knowledge management",
+      "PKM",
+      "NCCL PKM system"
+    ],
+    canonicalUrl: "https://memotron.app",
+    image: "https://cdn.21n.co/memotron/ogImage.png"
+  };
 </script>
 
+<PageSeo data={metadata} />
 <HeroSection {heroInputs} />
 <HeroVideoV2
   url="https://www.youtube.com/embed/SeWdndc7y4A?si=Wa0Kdg22N205iOLJ"

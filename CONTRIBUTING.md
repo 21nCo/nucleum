@@ -21,7 +21,7 @@ VITE_STATIC_URL=https://cdn.21n.co
 
 ## Reporting Issues
 
-If you find any issues or have any suggestions, please report them in the [issues](https://github.com/21nOrg/tidigit/issues) section.
+If you find any issues or have any suggestions, please report them in the [issues](https://github.com/21nOrg/nucleus/issues) section.
 
 ## License
 

@@ -94,7 +94,7 @@
   });
 </script>
 
-<div class="flex flex-col gap-16 w-full">
+<section class="flex flex-col gap-16 w-full">
   <div
     class={cn("flex flex-col gap-2 w-full", {
       "gap-3": title,
@@ -146,4 +146,4 @@
       <Button {...secondaryAction} />
     {/if}
   </div>
-</div>
+</section>
