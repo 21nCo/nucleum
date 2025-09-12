@@ -32,7 +32,7 @@
 </script>
 
 {#if icon?.includes("ph:")}
-  <Icon {icon} size={phIconSize} class={isAccentBg ? "text-abg" : ""} />
+  <Icon {icon} size={phIconSize} class={isAccentBg ? "text-bgs1" : ""} />
 {:else if size === "fit" && icon}
   {#await importIcon(icon)}
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" />
