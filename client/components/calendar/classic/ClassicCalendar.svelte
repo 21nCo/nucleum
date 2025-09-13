@@ -53,6 +53,7 @@
   let indicatorRefreshId: number = new Date().getTime();
   let currentDateFilterForIndicatorData: any = {};
   let isRefreshing = false;
+  let yearViewRefreshId = new Date().getTime();
 
   onMount(() => {
     refreshIndicatorDataWithDelay();
@@ -279,6 +280,14 @@
   function onDateChange() {
     refreshIndicatorDataWithDelay();
   }
+
+  function onWindowResize() {
+    if (selectedView !== TimeScaleUnit.YEAR) return;
+    debouncedYearViewRefresh();
+  }
+  const debouncedYearViewRefresh = debouncer(() => {
+    yearViewRefreshId = new Date().getTime();
+  }, 500);
 </script>
 
 <CalendarLayoutView
@@ -332,7 +341,7 @@
 
   <div class="flex h-full">
     <!-- <CalendarSidebar {events} /> -->
-    <div class="flex-1 overflow-auto">
+    <div class="flex-1 overflow-auto min-w-60">
       {#if selectedView === TimeScaleUnit.MONTH}
         <MonthView
           bind:selectedDate
@@ -350,20 +359,22 @@
           on:visibleDatesChange={handleVisibleDatesChange}
         />
       {:else if selectedView === TimeScaleUnit.YEAR}
-        <YearViewV2
-          bind:this={yearViewRef}
-          bind:selectedDate
-          {selectedScale}
-          {indicatorData}
-          {indicatorRefreshId}
-          on:yearChange={handleYearChange}
-          on:dateChange={(e) => {
-            selectedScale = TimeScaleUnit.DAY;
-            onDateChange();
-          }}
-          on:monthSelect={handleMonthSelect}
-          on:yearSelect={handleYearSelect}
-        />
+        {#key yearViewRefreshId}
+          <YearViewV2
+            bind:this={yearViewRef}
+            bind:selectedDate
+            {selectedScale}
+            {indicatorData}
+            {indicatorRefreshId}
+            on:yearChange={handleYearChange}
+            on:dateChange={(e) => {
+              selectedScale = TimeScaleUnit.DAY;
+              onDateChange();
+            }}
+            on:monthSelect={handleMonthSelect}
+            on:yearSelect={handleYearSelect}
+          />
+        {/key}
       {/if}
     </div>
     {#if (selectedView !== TimeScaleUnit.WEEK && !$view.isConstrainedWidth) || selectedView === TimeScaleUnit.DAY}
@@ -372,7 +383,8 @@
           "w-[28rem]": selectedView !== TimeScaleUnit.DAY,
           "w-full": selectedView === TimeScaleUnit.DAY
         })}
-        style={selectedView !== TimeScaleUnit.DAY
+        style={selectedView !== TimeScaleUnit.DAY &&
+        $view.display !== Display.TP
           ? `min-width: ${width}px; width: ${width}px; max-width: ${width}px;`
           : ""}
         use:resizable={{
@@ -444,3 +456,4 @@
     refreshIndicatorDataWithDelay([Resource.node, MetaResource.calendarNotes]);
   }}
 />
+<svelte:window on:resize={onWindowResize} />

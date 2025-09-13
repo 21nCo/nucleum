@@ -1019,7 +1019,8 @@ export const globalActions: IAction[] = [
       title: "Calendar Settings",
       layout: {
         size: Size.lg,
-        orientation: Orientation.Horizontal
+        orientation: Orientation.Horizontal,
+        isShowCantileverClose: true
       }
     }
   },

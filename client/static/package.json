@@ -1,5 +1,5 @@
 {
-  "name": "static",
+  "name": "@21n/static",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -10,12 +10,14 @@
     "./*": "./*",
     "./assets/*": "./assets/*",
     "./icons/*": "./icons/*",
-    "./sounds/*": "./sounds/*"
+    "./sounds/*": "./sounds/*",
+    "./monaco-editor/*": "./monaco-editor/*"
   },
   "files": [
     "assets/**/*",
-    "icons/**/*", 
+    "icons/**/*",
     "sounds/**/*",
+    "monaco-editor/**/*",
     "index.js",
     "index.d.ts"
   ],

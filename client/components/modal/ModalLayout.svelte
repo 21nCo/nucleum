@@ -67,7 +67,7 @@
 
 {#if size === Size.full}
   <div
-    class="w-full h-full flex justify-center items-center cw:pt-12"
+    class="w-full h-full flex justify-center items-center embed-ios:pt-12"
     in:fly={{
       duration: 400,
       delay: 0,
@@ -98,7 +98,7 @@
       "relative modal flex flex-col items-center justify-between w-full h-full  rounded-md",
       {
         "dark:border border-brs3": !isInFocusMode && !$view.isConstrainedWidth,
-        "cw:pt-12": !resource || params.title
+        "embed-ios:pt-12": !resource || params.title
       },
       !params.layout?.ignoreSafeArea && {
         "gap-4": size === Size.xs,

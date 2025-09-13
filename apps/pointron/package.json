@@ -40,7 +40,6 @@
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
     "@tauri-apps/cli": "^2.1.0",
     "@types/node": "^22.9.1",
-    "@vercel/analytics": "^1.0.2",
     "autoprefixer": "^10.4.13",
     "axe-playwright": "^1.2.3",
     "chromatic": "^10.0.0",
@@ -67,6 +66,14 @@
   },
   "type": "module",
   "dependencies": {
+    "@21n/actions": "*",
+    "@21n/components": "*",
+    "@21n/elements": "*",
+    "@21n/products": "*",
+    "@21n/static": "*",
+    "@21n/stores": "*",
+    "@21n/types": "*",
+    "@21n/utils": "*",
     "@antv/g6": "^5.0.26",
     "@carbon/charts-svelte": "1.13.6",
     "@fontsource-variable/hanken-grotesk": "^5.1.0",
@@ -117,6 +124,7 @@
     "rxdb": "^16.15.0",
     "surrealdb": "^1.1.0",
     "svelte-gestures": "^1.5.2",
+    "svelte-markdown": "^0.4.1",
     "wavesurfer.js": "^7.7.2"
   }
 }

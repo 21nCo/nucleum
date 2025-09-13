@@ -273,10 +273,6 @@
     }
   }
 
-  const windowResizeListener = (event: Event) => {
-    view.refresh(window.innerWidth, window.innerHeight);
-  };
-
   /**
    * Initializes the app with necessary data and runs dbo update. For this, the app should have already mounted and all stores should be available.
    *
@@ -581,7 +577,6 @@
   });
 </script>
 
-
 {#if $appStore?.appData?.isAnalyticsEnabled && $account?.dataMode === UserDataMode.CLOUD && !$context.isInOfflineMode}
   <AnalyticsLayer />
 {/if}
@@ -640,7 +635,6 @@
 {/if}
 
 <svelte:window
-  on:resize={windowResizeListener}
   on:focus={onAppear}
   on:beforeunload={handleBeforeUnload}
   on:unload={handleBeforeUnload}

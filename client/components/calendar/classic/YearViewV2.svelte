@@ -382,7 +382,7 @@
         {@const isSelectedYear =
           selectedScale === TimeScaleUnit.YEAR &&
           selectedDate.getFullYear() === year}
-        <div class="px-6 py-3" id="year-{year}">
+        <div class="px-4 py-2 dp:px-6 dp:py-3" id="year-{year}">
           <div class="mb-2">
             <button
               class={cn(
@@ -409,7 +409,7 @@
                 selectedDate.getMonth() === monthIndex}
               <div
                 class={cn(
-                  "flex flex-col min-w-[240px] p-4 transition-all duration-300 has-[.first:hover]:bg-bgs2 rounded-md",
+                  "flex flex-col min-w-[240px] p-2 dp:p-4 transition-all duration-300 has-[.first:hover]:bg-bgs2 rounded-md",
                   {
                     "bg-bgs2": isSelectedMonth
                   }

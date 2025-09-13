@@ -158,7 +158,7 @@
     {#if selectedView === NodeView.CONTENT}
       {#key refreshId}
         <div
-          class={cn("h-full w-full mo:gap-0 cw:gap-0 gap-4 cw:pt-12", {
+          class={cn("h-full w-full mo:gap-0 cw:gap-0 gap-4 embed-ios:pt-12", {
             "flex px-4 justify-center": !isWidened,
             "dp:grid dp:grid-cols-[1fr_auto_1fr] dp:gap-2":
               !isWidened && !isConstrainedWidth,
@@ -356,7 +356,7 @@
       </BottomFloat>
     {/if}
   {:else}
-    <div class="w-full h-full pt-4 px-20 cw:pt-12">
+    <div class="w-full h-full pt-4 px-20 embed-ios:pt-12">
       <NodeLoadingPulse />
     </div>
   {/if}

@@ -88,7 +88,7 @@
     <NonMediaNode {node} selectedView={view} />
   {/if}
 {:else}
-  <div class="w-full h-full cw:pt-12 pt-4 mo:px-4 px-20">
+  <div class="w-full h-full embed-ios:pt-12 pt-4 mo:px-4 px-20">
     <NodeLoadingPulse />
   </div>
 {/if}

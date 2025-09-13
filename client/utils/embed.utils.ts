@@ -37,7 +37,7 @@ export function postDataToParent(key: EmbedDataMessage, data: any) {
 }
 
 /**
- * @deprecated - No longer required - using direct cw:pt-12 at relevant places
+ * @deprecated - No longer required - using direct embed-ios:pt-12 at relevant places
  * @param bg
  */
 export function setEmbedBg(bg: number) {

@@ -4,9 +4,17 @@
   "version": "0.0.0",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "client/stores",
+    "client/components",
+    "client/elements",
+    "client/types",
+    "client/utils",
+    "client/actions",
+    "client/products",
+    "client/static"
   ],
   "devDependencies": {
+    "@tsconfig/svelte": "^5.0.5",
     "turbo": "^2.0.0",
     "typescript": "^5.0.0"
   },
