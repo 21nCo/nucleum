@@ -76,16 +76,23 @@
       accessPoint !== ResourceAccessPoint.BROWSER
         ? `--colw: ${width}px`
         : undefined}
-      class={cn(`h-full w-full content-start`, {
-        "flex flex-col gap-2": arrangement === Arrangement.LIST,
-        "grid grid-cols-[repeat(auto-fill,minmax(var(--colw),1fr))]":
-          arrangement === Arrangement.GRID &&
-          accessPoint !== ResourceAccessPoint.BROWSER,
-        "grid grid-cols-2":
-          arrangement === Arrangement.GRID &&
-          accessPoint === ResourceAccessPoint.BROWSER,
-        "cw:gap-3 gap-4": arrangement === Arrangement.GRID
-      })}
+      class={cn(
+        `h-full w-full content-start`,
+        {
+          "flex flex-col": arrangement === Arrangement.LIST,
+          "grid grid-cols-[repeat(auto-fill,minmax(var(--colw),1fr))]":
+            arrangement === Arrangement.GRID &&
+            accessPoint !== ResourceAccessPoint.BROWSER,
+          "grid grid-cols-2":
+            arrangement === Arrangement.GRID &&
+            accessPoint === ResourceAccessPoint.BROWSER,
+          "cw:gap-3 gap-4": arrangement === Arrangement.GRID
+        },
+        arrangement === Arrangement.LIST && {
+          "gap-2": resource !== Resource.node,
+          "gap-6": resource === Resource.node
+        }
+      )}
     >
       {#each data as item (item)}
         {#if resource === Resource.everything || resource === Resource.unknown}

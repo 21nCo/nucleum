@@ -146,7 +146,9 @@
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
   onMount(async () => {
-    const viewQueryParam = new URLSearchParams(location.search).get("view");
+    const viewQueryParam = new URLSearchParams(location.search).get(
+      AppSearchParam.VIEW
+    );
     if (viewQueryParam) {
       selectedViewId = viewQueryParam;
     }
@@ -285,7 +287,6 @@
     resetViewSelections();
     const view = loadActiveView();
     if (!view) return;
-    appStore.toggleSearchParam({ [AppSearchParam.VIEW]: view.id?.toString() });
     await refresh({ isNewView: true });
   }
 
@@ -533,7 +534,7 @@
 </script>
 
 {#if !$collection || $collection.isPageLoading || !isReady}
-  <div class="w-full h-full p-4 cw:pt-12">
+  <div class="w-full h-full p-4 embed-ios:pt-12">
     <PageLoadingPulse />
   </div>
 {:else if $collection}
@@ -610,9 +611,7 @@
             "pb-8": isSingleViewMode && !isShowMetaViews && !isConstrainedWidth,
             "pt-6": !isConstrainedWidth,
             "p-2": isConstrainedWidth,
-            "cw:pt-12":
-              isConstrainedWidth &&
-              (!$collection.cover || positionFromTop === 0),
+            "embed-ios:pt-12": !$collection.cover || positionFromTop === 0,
             "max-w-full overflow-x-auto":
               accessPoint === ResourceAccessPoint.MARKDOWN_EMBED
           })}
@@ -709,7 +708,7 @@
               "sticky top-0 z-10 flex flex-col gap-6 w-full transition-all duration-300",
               bg(parentBgIndex - 1),
               {
-                "pt-4 cw:pt-12": isStickied
+                "pt-4 embed-ios:pt-12": isStickied
               }
             )}
           >

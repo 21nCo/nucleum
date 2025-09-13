@@ -1,10 +1,8 @@
 <script lang="ts">
   import Button from "$lib/client/elements/button/Button.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
-  import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { Size } from "$lib/client/types/size.enum";
-  import { Action } from "$lib/client/types/action.enum";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { preferences } from "$lib/client/stores/preferences/preferences.store";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
@@ -20,6 +18,9 @@
   import CalendarNotesTemplateCard from "./CalendarNotesTemplateCard.svelte";
   import { generateMarkdownText } from "$lib/client/products/memotron/node/node.utils";
   import Switch from "$lib/client/elements/toggle/Switch.svelte";
+  import { Product } from "@21n/products/product.type.js";
+  import { appStore } from "@21n/stores/app.store";
+  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   let editingTemplate: TimeScaleUnit | null = null;
   let templateMarkdown: IMarkdownTemplate = getDefaultTemplate();
 
@@ -146,30 +147,31 @@
       </div>
     </div>
   {:else}
-    <div class="flex flex-col gap-4">
-      <div class="flex flex-col gap-4">
-        <Text content="Templates" style={TextStyle.SECTION_HEADING} />
+    <div class="flex flex-col gap-12">
+      {#if [Product.NUCLEUS, Product.MEMOTRON].includes($appStore.product)}
+        <div class="flex flex-col gap-3">
+          <Text content="Templates" style={TextStyle.SECTION_HEADING} />
 
-        <div class="flex flex-wrap w-full gap-3">
-          <CalendarNotesTemplateCard
-            scale={TimeScaleUnit.DAY}
-            description={resolveDescription(TimeScaleUnit.DAY)}
-            onEdit={() => editTemplate(TimeScaleUnit.DAY)}
-          />
-          <CalendarNotesTemplateCard
-            scale={TimeScaleUnit.MONTH}
-            description={resolveDescription(TimeScaleUnit.MONTH)}
-            onEdit={() => editTemplate(TimeScaleUnit.MONTH)}
-          />
-          <CalendarNotesTemplateCard
-            scale={TimeScaleUnit.YEAR}
-            description={resolveDescription(TimeScaleUnit.YEAR)}
-            onEdit={() => editTemplate(TimeScaleUnit.YEAR)}
-          />
+          <div class="flex flex-wrap w-full gap-3">
+            <CalendarNotesTemplateCard
+              scale={TimeScaleUnit.DAY}
+              description={resolveDescription(TimeScaleUnit.DAY)}
+              onEdit={() => editTemplate(TimeScaleUnit.DAY)}
+            />
+            <CalendarNotesTemplateCard
+              scale={TimeScaleUnit.MONTH}
+              description={resolveDescription(TimeScaleUnit.MONTH)}
+              onEdit={() => editTemplate(TimeScaleUnit.MONTH)}
+            />
+            <CalendarNotesTemplateCard
+              scale={TimeScaleUnit.YEAR}
+              description={resolveDescription(TimeScaleUnit.YEAR)}
+              onEdit={() => editTemplate(TimeScaleUnit.YEAR)}
+            />
+          </div>
         </div>
-      </div>
-
-      <div class="flex flex-col gap-4">
+      {/if}
+      <div class="flex flex-col gap-3">
         <Text content="Calendar Indicators" style={TextStyle.SECTION_HEADING} />
 
         <div class="flex flex-col gap-3">
@@ -193,13 +195,7 @@
           {/each}
         </div>
       </div>
+      <ScrollViewBottomSpacer />
     </div>
-
-    <ModalFooter
-      action={Action.CALENDAR_SETTINGS}
-      secondaryAction={{
-        label: "Done"
-      }}
-    />
   {/if}
 </div>

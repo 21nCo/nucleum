@@ -57,7 +57,7 @@
 >
   {#if $$slots.default}
     {#if isEnabled}
-      <Icon icon="chevron-left" class="text-fgs3 opacity-40" size={Size.lg} />
+      <Icon icon="chevron-left" size={Size.lg} />
     {/if}
     <slot />
   {:else}

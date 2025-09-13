@@ -1,7 +1,7 @@
 import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig } from "vite";
 import fetchJsonPlugin from "../fetch-json-data.js";
-import { staticPlugin } from "../../packages/static/vite-plugin.js";
+import { staticPlugin } from "../../client/static/vite-plugin.js";
 
 export default defineConfig({
   build: {
@@ -29,7 +29,7 @@ export default defineConfig({
           if (id.includes("maplibre-gl")) {
             return "maps";
           }
-        },
+        }
       },
       external: (id) => {
         // Prevent G6 from being tree-shaken too aggressively
@@ -47,10 +47,10 @@ export default defineConfig({
             return true; // Preserve side effects for G6
           }
           return false;
-        },
-      },
+        }
+      }
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 1000
   },
   optimizeDeps: {
     exclude: ["@surrealdb/wasm", "surrealql.wasm"],
@@ -58,16 +58,16 @@ export default defineConfig({
       "@antv/g6",
       "@carbon/charts-svelte",
       "highlight.js",
-      "maplibre-gl",
+      "maplibre-gl"
     ],
     esbuildOptions: {
-      target: "esnext",
-    },
+      target: "esnext"
+    }
   },
   esbuild: {
     supported: {
-      "top-level-await": true,
-    },
+      "top-level-await": true
+    }
   },
-  plugins: [sveltekit(), fetchJsonPlugin("product.json"), staticPlugin()],
+  plugins: [sveltekit(), fetchJsonPlugin("product.json"), staticPlugin()]
 });

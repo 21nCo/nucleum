@@ -759,7 +759,7 @@ function initAppStore(seed: IAppStore) {
     }
   ) => {
     if (!id) return;
-    toggleSearchParam(["view"]);
+    toggleSearchParam([AppSearchParam.VIEW]);
     let accessMode;
     const defaultTo =
       params?.defaultTo ??

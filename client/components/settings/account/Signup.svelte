@@ -30,7 +30,7 @@
     "21n.dev",
     "memotron.app",
     "pointron.app",
-    "nucleus.to",
+    "nucleus.to"
   ];
   let isSelfHosted =
     typeof window !== "undefined" ? resolveIfSelfHostedInstance() : false;
@@ -77,7 +77,7 @@
         const parsed = parse(event.data.payload);
         console.log({
           at: "Signup - handleMessageFromParent - SWIFT_MESSAGE",
-          parsed,
+          parsed
         });
         if (parsed.oauth) {
           currentProgress = undefined;
@@ -102,7 +102,7 @@
 {:else}
   <div class="flex flex-col w-full h-full justify-center cw:pt-8">
     <div
-      class="w-full h-full grid grid-cols-2 cw:grid-cols-1 cw:justify-start justify-center items-center gap-12 cw:gap-6"
+      class="w-full h-full grid grid-cols-2 portrait:grid-cols-1 portrait:justify-start justify-center items-center gap-12 portrait:gap-6"
     >
       <!-- <div class="flex flex-col items-center">
       <SubAtomLogo subatom="pointron" isDark={true} />
@@ -143,9 +143,9 @@
         {/if}
       </div>
       <div
-        class="w-full grid cw:grid-rows-[1fr,auto] grid-rows-[auto,1fr,auto] cw:bg-bgs1 bg-bgs2 h-full"
+        class="w-full grid portrait:grid-rows-[1fr,auto] grid-rows-[auto,1fr,auto] portrait:bg-bgs1 bg-bgs2 h-full"
       >
-        {#if !$view.isConstrainedWidth}
+        {#if !$view.isPortrait}
           {#if isLoginFromExtension}
             <div
               class="flex flex-col gap-2 justify-center items-center w-full cw:pt-6 pt-12"

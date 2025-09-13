@@ -18,5 +18,18 @@
       "$lib": ["../../*"],
       "$lib/*": ["../../*"]
     }
-  }
+  },
+  "exclude": [
+    "../../node_modules",
+    "../../**/node_modules",
+    "../../deployment/**/*",
+    "../../server/**/*",
+    "../../tests/**/*",
+    "../memotron/**/*",
+    "../nucleus/**/*",
+    "build/**/*",
+    "dist/**/*",
+    ".svelte-kit/**/*",
+    "../../packages/static/**/*"
+  ]
 }

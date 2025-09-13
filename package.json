@@ -4,7 +4,14 @@
   "version": "0.0.0",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "client/stores",
+    "client/components",
+    "client/elements",
+    "client/types",
+    "client/utils",
+    "client/actions",
+    "client/products",
+    "client/static"
   ],
   "devDependencies": {
     "turbo": "^2.0.0",

@@ -45,7 +45,7 @@
   }
 </script>
 
-<div class="flex w-full flex-grow cw:mb-8">
+<div class="flex w-full flex-grow cw:mb-8 tp:embed-ios:pt-12">
   {#if !(isConstrainedWidth && rightPane)}
     <main
       class={cn("relative flex w-full justify-center flex-1", {

@@ -7,7 +7,7 @@
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
   import {
     postMessageToParent,
-    postTokenToExtension,
+    postTokenToExtension
   } from "$lib/client/utils/embed.utils";
   import { isValidEmail } from "$lib/shared/utils/text.utils";
   import { onMount } from "svelte";
@@ -63,7 +63,7 @@
         email: email.toLowerCase(),
         pass,
         isTrusted,
-        nickName,
+        nickName
       }
     );
     if (!response || !response.ok) {
@@ -159,9 +159,9 @@
                   body:
                     $appStore.appData.name +
                     " doesn't store your email or password.",
-                  action: $appStore.appData?.urls?.privacy,
+                  action: $appStore.appData?.urls?.privacy
                 }
-              : undefined,
+              : undefined
           }}
           placeholder="username@email.com"
         />
@@ -173,9 +173,9 @@
             orientation: Orientation.Vertical,
             tooltip: isSignup
               ? {
-                  body: "Password must be 8-16 characters long and contain at least one lowercase letter, one uppercase letter, one number and one special character.",
+                  body: "Password must be 8-16 characters long and contain at least one lowercase letter, one uppercase letter, one number and one special character."
                 }
-              : undefined,
+              : undefined
           }}
           type="password"
           placeholder="********"
@@ -219,21 +219,21 @@
       <div
         class={cn("group flex flex-col justify-between gap-4 p-4", {
           "cw:h-fit h-72 bg-bgs1 border-t-transparent border-x-transparent border-t border-x border-brs3 hover:border-t-brs3 hover:border-x-brs3 hover:rounded-t-md rounded-t-md":
-            mode === "all" && !$view.isConstrainedWidth,
+            mode === "all" && !$view.isPortrait
         })}
       >
-        {#if mode === "all" && !$view.isConstrainedWidth}
+        {#if mode === "all" && !$view.isPortrait}
           <div class="text-fgs3 text-center">Sync across devices</div>
         {/if}
         {#if isValidArrayWithData($appStore?.appData?.oAuthConfig)}
           <OAuthButtons bind:currentProgress />
         {/if}
-        {#if !$view.isConstrainedWidth}
+        {#if !$view.isPortrait}
           <div
             class={cn(
               "text-fgs3 text-b3 text-center transition-opacity duration-300",
               {
-                "opacity-80 group-hover:opacity-100": mode === "all",
+                "opacity-80 group-hover:opacity-100": mode === "all"
               }
             )}
           >
@@ -242,8 +242,8 @@
         {/if}
       </div>
     {/if}
-    {#if mode !== "cloud-only" && $view.isConstrainedWidth}
-      <div class="flex items-center w-72 mx-auto">
+    {#if mode !== "cloud-only" && $view.isPortrait}
+      <div class="flex items-center cw:w-80 w-96 p-4 mx-auto">
         <Button
           label="Continue offline"
           icon="proceed"
@@ -253,13 +253,13 @@
           on:click={onOfflineClick}
         />
       </div>
-    {:else if mode !== "cloud-only" && !$view.isConstrainedWidth}
+    {:else if mode !== "cloud-only" && !$view.isPortrait}
       <button
         class={cn(
           "group flex flex-col justify-center items-center w-full  p-3",
           {
             "cw:h-48 h-60 bg-bgs1 hover:border-x-brs3 hover:border-b-brs3 rounded-b-md border border-x-transparent border-b-transparent border-brs3":
-              mode === "all",
+              mode === "all"
           }
         )}
         on:click={onOfflineClick}

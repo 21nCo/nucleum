@@ -74,13 +74,14 @@
     "vitest": "^2.0.5"
   },
   "dependencies": {
-    "components": "*",
-    "elements": "*",
-    "types": "*",
-    "utils": "*",
-    "stores": "*",
-    "actions": "*",
-    "static": "*",
+    "@21n/actions": "*",
+    "@21n/components": "*",
+    "@21n/elements": "*",
+    "@21n/products": "*",
+    "@21n/static": "*",
+    "@21n/stores": "*",
+    "@21n/types": "*",
+    "@21n/utils": "*",
     "@antv/g6": "^5.0.26",
     "@carbon/charts-svelte": "1.13.6",
     "@fontsource-variable/hanken-grotesk": "^5.1.0",
@@ -131,6 +132,7 @@
     "rxdb": "^15.39.0",
     "surrealdb": "^1.1.0",
     "svelte-gestures": "^1.5.2",
+    "svelte-markdown": "^0.4.1",
     "wavesurfer.js": "^7.7.2"
   },
   "type": "module"

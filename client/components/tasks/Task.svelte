@@ -257,7 +257,7 @@
 </script>
 
 <div
-  class={cn("flex p-4 mo:w-full mo:h-full cw:pt-12 h-[28rem]", {
+  class={cn("flex p-4 mo:w-full mo:h-full embed-ios:pt-12 h-[28rem]", {
     "w-[32rem]": accessMode !== ResourceAccessMode.INLINE,
     "w-full": accessMode === ResourceAccessMode.INLINE
   })}

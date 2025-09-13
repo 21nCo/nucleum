@@ -7,27 +7,27 @@ const themes = [
     extend: {
       fontFamily: {
         sans: ["Avenir", "sans-serif"],
-        serif: ["Merriweather", "serif"],
-      },
-    },
+        serif: ["Merriweather", "serif"]
+      }
+    }
   },
   {
     name: "Colorful",
     extend: {
       fontFamily: {
         sans: ["Roboto", "sans-serif"],
-        serif: ["Merriweather", "serif"],
-      },
-    },
-  },
+        serif: ["Merriweather", "serif"]
+      }
+    }
+  }
 ];
 
 const mappedColorSchemes = colorSchemes.map((cs) => {
   return {
     name: cs.tailwindSelector,
     extend: {
-      colors: cs.colors,
-    },
+      colors: cs.colors
+    }
   };
 });
 
@@ -39,7 +39,7 @@ export default {
     "./src/**/*.{html,js,svelte,ts}",
     "./lib/**/*.{html,js,svelte,ts}",
     "../../client/**/*.{html,js,svelte,ts}",
-    "../../packages/**/*.{html,js,svelte,ts}",
+    "../../packages/**/*.{html,js,svelte,ts}"
   ],
   theme: {
     screens: {
@@ -97,12 +97,12 @@ export default {
       /**
        * Vertical monitor
        */
-      vm: { raw: "(min-height: 1500px)" },
+      vm: { raw: "(min-height: 1500px)" }
     },
     extend: {
       backgroundImage: {
         dividerHorizontal:
-          "linear-gradient(90deg, rgba(209, 208, 208, 0.18) 0%, #D1D0D0 50.5%, rgba(209, 208, 208, 0.16) 100%)",
+          "linear-gradient(90deg, rgba(209, 208, 208, 0.18) 0%, #D1D0D0 50.5%, rgba(209, 208, 208, 0.16) 100%)"
       },
       fontSize: {
         title: "5rem",
@@ -119,7 +119,7 @@ export default {
         b4: "0.7rem",
         b5: "0.6rem",
         lbase: "17px",
-        lb2: "0.95rem",
+        lb2: "0.95rem"
       },
       spacing: {
         // 12-grid system
@@ -144,7 +144,7 @@ export default {
         "6/10": "60%",
         "7/10": "70%",
         "8/10": "80%",
-        "9/10": "90%",
+        "9/10": "90%"
       },
       animation: {
         "bounce-r": "bounce-r 0.3s ease-in-out",
@@ -158,69 +158,69 @@ export default {
         "close-right": "close-right 0.3s ease-in-out forwards",
         rotate45: "rotate45 0.2s forwards",
         fadeIn: "fadeIn 1s forwards",
-        fadeOut: "fadeOut 0.2s forwards",
+        fadeOut: "fadeOut 0.2s forwards"
       },
       keyframes: {
         "bounce-r": {
           "40%": { transform: "translateX(10px)" },
           "60%": { transform: "translateX(5px)" },
-          "100%": { transform: "translateX(0px)" },
+          "100%": { transform: "translateX(0px)" }
         },
         "bounce-l": {
           "40%": { transform: "translateX(-10px)" },
           "60%": { transform: "translateX(-5px)" },
-          "100%": { transform: "translateX(0px)" },
+          "100%": { transform: "translateX(0px)" }
         },
         "pulse-subtle": {
           "0%, 100%": { filter: "saturate(80%)" },
-          "50%": { filter: "saturate(120%)" },
+          "50%": { filter: "saturate(120%)" }
         },
         "slide-down": {
           "0%": { height: "0", opacity: "0" },
-          "100%": { height: "100%", opacity: "1" },
+          "100%": { height: "100%", opacity: "1" }
         },
         "slide-up": {
           "0%": { height: "100%", opacity: "1" },
-          "100%": { height: "0", opacity: "0" },
+          "100%": { height: "0", opacity: "0" }
         },
         "open-left": {
           "0%": { transform: "translateX(100%)", opacity: "0" },
-          "100%": { transform: "translateX(0%)", opacity: "1" },
+          "100%": { transform: "translateX(0%)", opacity: "1" }
         },
         "open-right": {
           "0%": { transform: "translateX(-100%)", opacity: "0" },
-          "100%": { transform: "translateX(0%)", opacity: "1" },
+          "100%": { transform: "translateX(0%)", opacity: "1" }
         },
         "close-right": {
           "0%": { transform: "translateX(0%)", opacity: "1" },
-          "100%": { transform: "translateX(100%)", opacity: "0" },
+          "100%": { transform: "translateX(100%)", opacity: "0" }
         },
         rotate45: {
           "0%": {
-            transform: "rotate(0deg)",
+            transform: "rotate(0deg)"
           },
           "100%": {
-            transform: "rotate(45deg)",
-          },
+            transform: "rotate(45deg)"
+          }
         },
         fadeIn: {
           "0%": {
-            opacity: 0,
+            opacity: 0
           },
           "100%": {
-            opacity: 1,
-          },
+            opacity: 1
+          }
         },
         fadeOut: {
           "0%": {
-            opacity: 1,
+            opacity: 1
           },
           "100%": {
-            opacity: 0,
-          },
-        },
-      },
-    },
+            opacity: 0
+          }
+        }
+      }
+    }
   },
   darkMode: "selector",
   purge: {
@@ -228,7 +228,7 @@ export default {
       "./lib/**/*.html",
       "./lib/**/*.svelte",
       "../../client/**/*.html",
-      "../../client/**/*.svelte",
+      "../../client/**/*.svelte"
     ],
     options: {
       safelist: [
@@ -271,8 +271,8 @@ export default {
         "cursor-row-resize",
         "text-abg",
         {
-          pattern: /(from|via|to)-(.+)/,
-        },
+          pattern: /(from|via|to)-(.+)/
+        }
         // {
         //   pattern: /ph--.*/
         // },
@@ -280,8 +280,8 @@ export default {
         // /^cs_.*$/,
         // /^bg-/,
         // /^text-/
-      ],
-    },
+      ]
+    }
   },
   plugins: [
     require("tailwindcss-themer")({
@@ -289,25 +289,45 @@ export default {
         extend: {
           fontFamily: {
             sans: ["Roboto", "sans-serif"],
-            serif: ["Merriweather", "serif"],
+            serif: ["Merriweather", "serif"]
           },
           colors: mappedColorSchemes[0].colors,
           rotate: {
-            270: "270deg",
-          },
-        },
+            270: "270deg"
+          }
+        }
       },
       themes: [
         ...themes,
         ...mappedColorSchemes,
         // ...lightThemes,
         // ...darkThemes,
-        ...colorSchemesBranding,
-      ],
+        ...colorSchemesBranding
+      ]
     }),
+    function ({ addVariant }) {
+      addVariant("os-macos", ".os-macos &");
+      addVariant("os-windows", ".os-windows &");
+      addVariant("os-android", ".os-android &");
+      addVariant("os-ios", ".os-ios &");
+      addVariant("os-linux", ".os-linux &");
+      addVariant("browser-safari", ".browser-safari &");
+      addVariant("browser-chrome", ".browser-chrome &");
+      addVariant("browser-firefox", ".browser-firefox &");
+      addVariant("mac-safari", ".os-macos.browser-safari &");
+      addVariant("windows-chrome", ".os-windows.browser-chrome &");
+      addVariant("embed", ".embed &");
+      addVariant("embed-handset", ".embed-handset &");
+      addVariant("embed-tablet", ".embed-tablet &");
+      addVariant("embed-ios", ".embed.os-ios &");
+      addVariant("embed-macos", ".embed.os-macos &");
+      addVariant("embed-windows", ".embed.os-windows &");
+      addVariant("embed-android", ".embed.os-android &");
+      addVariant("embed-linux", ".embed.os-linux &");
+    }
     // require("@iconify/tailwind").addIconSelectors({
     //   prefixes: ["ph"]
     // }
     // )
-  ],
+  ]
 };

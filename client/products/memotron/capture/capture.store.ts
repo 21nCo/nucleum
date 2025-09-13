@@ -695,7 +695,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   ) {
     contentType = contentType ?? resolveContentTypeForFile(file);
     if (!contentType) return { error: "File type not supported" };
-    this.setIsSaving(true);
+    if (!params?.isEmbedContext) this.setIsSaving(true);
     if (contentType === NodeType.NODULAR_MARKDOWN && !params?.isEmbedContext) {
       const result = await this.saveMarkdownFromMdFile(file);
       this.postSave(result?.slice(0, 1), {
@@ -836,7 +836,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       uploadProgressId?: string;
     }
   ) {
-    this.setIsSaving(true);
+    if (!params?.isEmbedContext) this.setIsSaving(true);
     if (
       files.every((x) => x.contentType === NodeType.NODULAR_MARKDOWN) &&
       !params?.isEmbedContext
@@ -931,7 +931,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       thumbnailBlob?: Blob;
     }
   ) {
-    this.setIsSaving(true);
+    if (!params?.isEmbedContext) this.setIsSaving(true);
     const contentType = "audio/wav";
     const wavData = await convertWebMToWav(data);
     const id = generateResourceId(Resource.node);
@@ -1057,7 +1057,11 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     });
     await this.saveLinks(id);
     const ctx = get(context);
-    if (params?.isMediaDeviceCapture && ctx.os === OperatingSystem.MACOS) {
+    if (
+      params?.isMediaDeviceCapture &&
+      ctx.isEmbed === true &&
+      ctx.os === OperatingSystem.MACOS
+    ) {
       return result2;
     }
     this.postSave(result2, {});

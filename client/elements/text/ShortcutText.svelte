@@ -56,7 +56,7 @@
   });
 </script>
 
-{#if ($uiStateDerived?.isShowHotKeyHints || isAlwaysShown) && shortcut && $context.embed !== Embed.HANDSET}
+{#if ($uiStateDerived?.isShowHotKeyHints || isAlwaysShown) && shortcut && $context.embed !== Embed.HANDSET && $context.embed !== Embed.TABLET}
   <span
     class={cn(
       "flex justify-center items-center whitespace-nowrap rounded-md",
