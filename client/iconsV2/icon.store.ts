@@ -44,7 +44,7 @@ export function resolveSpriteSheetPath(sheet: string) {
   if (isExtensionEnvironment()) {
     return `assets/icons/${sheet}.svg`;
   }
-  return assetPath(`/icons/${sheet}-v${spriteVersion}.svg`);
+  return assetPath(`icons/${sheet}-v${spriteVersion}.svg`);
 }
 
 // function assetPath(arg0: string) {
