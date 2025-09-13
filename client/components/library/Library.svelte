@@ -154,6 +154,7 @@
   panelSize={Size.sm}
   isNavActivated={selectedResource !== Resource.unknown &&
     $view.isConstrainedWidth}
+  isHideRightSplit={!$view.isPortrait}
 >
   {#if $view.isConstrainedWidth}
     <InlineSyncingFeedback
@@ -217,6 +218,14 @@
         appStore.toggleSearchParam([AppSearchParam.RESOURCE]);
       }}
     />
+  </div>
+  <div slot="right" class="flex flex-col gap-4 w-full">
+    {#key selectedResource}
+      <LibraryRecordsPane
+        resource={selectedResource}
+        bind:this={recordsPaneRef}
+      />
+    {/key}
   </div>
 </Panel>
 

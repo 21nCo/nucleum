@@ -38,8 +38,8 @@ export default {
   content: [
     "./src/**/*.{html,js,svelte,ts}",
     "./lib/**/*.{html,js,svelte,ts}",
-    "../../../client/**/*.{html,js,svelte,ts}",
-    "../../../packages/**/*.{html,js,svelte,ts}"
+    "../../client/**/*.{html,js,svelte,ts}",
+    "../../packages/**/*.{html,js,svelte,ts}"
   ],
   theme: {
     screens: {
@@ -227,8 +227,8 @@ export default {
     content: [
       "./lib/**/*.html",
       "./lib/**/*.svelte",
-      "../../../client/**/*.html",
-      "../../../client/**/*.svelte"
+      "../../client/**/*.html",
+      "../../client/**/*.svelte"
     ],
     options: {
       safelist: [
@@ -304,7 +304,27 @@ export default {
         // ...darkThemes,
         ...colorSchemesBranding
       ]
-    })
+    }),
+    function ({ addVariant }) {
+      addVariant("os-macos", ".os-macos &");
+      addVariant("os-windows", ".os-windows &");
+      addVariant("os-android", ".os-android &");
+      addVariant("os-ios", ".os-ios &");
+      addVariant("os-linux", ".os-linux &");
+      addVariant("browser-safari", ".browser-safari &");
+      addVariant("browser-chrome", ".browser-chrome &");
+      addVariant("browser-firefox", ".browser-firefox &");
+      addVariant("mac-safari", ".os-macos.browser-safari &");
+      addVariant("windows-chrome", ".os-windows.browser-chrome &");
+      addVariant("embed", ".embed &");
+      addVariant("embed-handset", ".embed-handset &");
+      addVariant("embed-tablet", ".embed-tablet &");
+      addVariant("embed-ios", ".embed.os-ios &");
+      addVariant("embed-macos", ".embed.os-macos &");
+      addVariant("embed-windows", ".embed.os-windows &");
+      addVariant("embed-android", ".embed.os-android &");
+      addVariant("embed-linux", ".embed.os-linux &");
+    }
     // require("@iconify/tailwind").addIconSelectors({
     //   prefixes: ["ph"]
     // }

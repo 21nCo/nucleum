@@ -695,62 +695,63 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   ) {
     contentType = contentType ?? resolveContentTypeForFile(file);
     if (!contentType) return { error: "File type not supported" };
-    this.setIsSaving(true);
-    if (contentType === NodeType.NODULAR_MARKDOWN && !params?.isEmbedContext) {
-      const result = await this.saveMarkdownFromMdFile(file);
-      this.postSave(result?.slice(0, 1), {
+    if (!params?.isEmbedContext) this.setIsSaving(true);
+    try {
+      if (contentType === NodeType.NODULAR_MARKDOWN && !params?.isEmbedContext) {
+        const result = await this.saveMarkdownFromMdFile(file);
+        this.postSave(result?.slice(0, 1), {
+          isOpenOnSave: params?.isOpenOnSave,
+          isEmbedContext: params?.isEmbedContext
+        });
+        return result?.[0];
+      }
+      const response = await account.uploadFileV2(
+        file.type,
+        file.name,
+        new Blob([file], { type: file.type }),
+        {
+          isGenerateThumbnail: true
+        }
+      );
+
+      if (!response || !response[0].id) {
+        return;
+      }
+      const id = generateResourceId(Resource.node);
+      const collections = params?.isEmbedContext ? [] : this.resolveCollections();
+      const fileId = response[0].id;
+      const metadata = (await this.parseMetadata(file)) ?? {};
+      if (!metadata?.location) metadata.location = await this.resolveLocation();
+      const captureStore = this.get();
+      const node = {
+        id,
+        contentType,
+        file: fileId,
+        label: captureStore.label ?? file.name,
+        body: {},
+        metadata: {
+          ...metadata
+        },
+        properties: params?.isEmbedContext ? [] : captureStore.properties,
+        collections,
+        creationContext: params?.isEmbedContext
+          ? (params?.creationContext ?? this.get().nodeId)
+          : undefined
+      } as INodeCapture<IMediaNode>;
+      const result = await nodeStore.create([node], {
+        context: captureAction
+      });
+      if (!params?.isEmbedContext) {
+        await this.saveLinks(id);
+      }
+      this.postSave(result, {
         isOpenOnSave: params?.isOpenOnSave,
         isEmbedContext: params?.isEmbedContext
       });
-      this.setIsSaving(false);
       return result?.[0];
+    } finally {
+      if (!params?.isEmbedContext) this.setIsSaving(false);
     }
-    const response = await account.uploadFileV2(
-      file.type,
-      file.name,
-      new Blob([file], { type: file.type }),
-      {
-        isGenerateThumbnail: true
-      }
-    );
-
-    if (!response || !response[0].id) {
-      this.setIsSaving(false);
-      return;
-    }
-    const id = generateResourceId(Resource.node);
-    const collections = params?.isEmbedContext ? [] : this.resolveCollections();
-    const fileId = response[0].id;
-    const metadata = (await this.parseMetadata(file)) ?? {};
-    if (!metadata?.location) metadata.location = await this.resolveLocation();
-    const captureStore = this.get();
-    const node = {
-      id,
-      contentType,
-      file: fileId,
-      label: captureStore.label ?? file.name,
-      body: {},
-      metadata: {
-        ...metadata
-      },
-      properties: params?.isEmbedContext ? [] : captureStore.properties,
-      collections,
-      creationContext: params?.isEmbedContext
-        ? (params?.creationContext ?? this.get().nodeId)
-        : undefined
-    } as INodeCapture<IMediaNode>;
-    const result = await nodeStore.create([node], {
-      context: captureAction
-    });
-    if (!params?.isEmbedContext) {
-      await this.saveLinks(id);
-    }
-    this.postSave(result, {
-      isOpenOnSave: params?.isOpenOnSave,
-      isEmbedContext: params?.isEmbedContext
-    });
-    this.setIsSaving(false);
-    return result?.[0];
   }
 
   async saveMarkdownFromMdFile(file: File) {
@@ -836,83 +837,85 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       uploadProgressId?: string;
     }
   ) {
-    this.setIsSaving(true);
-    if (
-      files.every((x) => x.contentType === NodeType.NODULAR_MARKDOWN) &&
-      !params?.isEmbedContext
-    ) {
-      const result = await this.saveMarkdownFromMdFiles(
-        files.map((x) => x.file)
-      );
+    if (!params?.isEmbedContext) this.setIsSaving(true);
+    try {
+      if (
+        files.every((x) => x.contentType === NodeType.NODULAR_MARKDOWN) &&
+        !params?.isEmbedContext
+      ) {
+        const result = await this.saveMarkdownFromMdFiles(
+          files.map((x) => x.file)
+        );
+        this.postSave(result, {
+          isEmbedContext: params?.isEmbedContext
+        });
+        return result;
+      }
+      let nodes: INodeCapture<IMediaNode>[] = [];
+      let mdNodesResult: any[] = [];
+      const captureStore = this.get();
+      const collections = params?.isEmbedContext ? [] : this.resolveCollections();
+      for (const [index, item] of files.entries()) {
+        if (params?.uploadProgressId) {
+          const progressElement = document.getElementById(
+            params.uploadProgressId
+          );
+          if (progressElement) {
+            progressElement.dataset.progress = `${(index + 1) / files.length}`;
+            progressElement.innerHTML = `${index + 1} / ${files.length}`;
+          }
+        }
+        if (!item.contentType) continue;
+        if (
+          item.contentType === NodeType.NODULAR_MARKDOWN &&
+          !params?.isEmbedContext
+        ) {
+          const result = await this.saveMarkdownFromMdFile(item.file);
+          mdNodesResult.push(result?.[0]);
+          continue;
+        }
+        const response = await account.uploadFileV2(
+          item.file.type,
+          item.file.name,
+          new Blob([item.file], { type: item.file.type }),
+          {
+            isGenerateThumbnail: true
+          }
+        );
+        if (!response) continue;
+        if (!response[0].id) continue;
+        const fileId = response[0].id;
+        const id = generateResourceId(Resource.node);
+        const metadata = await this.parseMetadata(item.file);
+        const node = {
+          id,
+          contentType: item.contentType,
+          file: fileId,
+          body: {},
+          label: item.file.name,
+          metadata,
+          collections,
+          properties: params?.isEmbedContext ? [] : captureStore.properties,
+          creationContext: params?.isEmbedContext
+            ? (params?.creationContext ?? this.get().nodeId)
+            : undefined
+        } as INodeCapture<IMediaNode>;
+        nodes.push(node);
+      }
+      const mediaNodesResult = await nodeStore.create(nodes, {
+        context: captureAction
+      });
+      const result = [...(mediaNodesResult ?? []), ...(mdNodesResult ?? [])];
+      if (!params?.isEmbedContext) {
+        await this.saveLinksForMultiFileCapture(nodes);
+      }
       this.postSave(result, {
         isEmbedContext: params?.isEmbedContext
       });
-      this.setIsSaving(false);
       return result;
+    } finally {
+      if (!params?.isEmbedContext) this.setIsSaving(false);
     }
-    let nodes: INodeCapture<IMediaNode>[] = [];
-    let mdNodesResult: any[] = [];
-    const captureStore = this.get();
-    const collections = params?.isEmbedContext ? [] : this.resolveCollections();
-    for (const [index, item] of files.entries()) {
-      if (params?.uploadProgressId) {
-        const progressElement = document.getElementById(
-          params.uploadProgressId
-        );
-        if (progressElement) {
-          progressElement.dataset.progress = `${(index + 1) / files.length}`;
-          progressElement.innerHTML = `${index + 1} / ${files.length}`;
-        }
-      }
-      if (!item.contentType) continue;
-      if (
-        item.contentType === NodeType.NODULAR_MARKDOWN &&
-        !params?.isEmbedContext
-      ) {
-        const result = await this.saveMarkdownFromMdFile(item.file);
-        mdNodesResult.push(result?.[0]);
-        continue;
-      }
-      const response = await account.uploadFileV2(
-        item.file.type,
-        item.file.name,
-        new Blob([item.file], { type: item.file.type }),
-        {
-          isGenerateThumbnail: true
-        }
-      );
-      if (!response) continue;
-      if (!response[0].id) continue;
-      const fileId = response[0].id;
-      const id = generateResourceId(Resource.node);
-      const metadata = await this.parseMetadata(item.file);
-      const node = {
-        id,
-        contentType: item.contentType,
-        file: fileId,
-        body: {},
-        label: item.file.name,
-        metadata,
-        collections,
-        properties: params?.isEmbedContext ? [] : captureStore.properties,
-        creationContext: params?.isEmbedContext
-          ? (params?.creationContext ?? this.get().nodeId)
-          : undefined
-      } as INodeCapture<IMediaNode>;
-      nodes.push(node);
-    }
-    const mediaNodesResult = await nodeStore.create(nodes, {
-      context: captureAction
-    });
-    const result = [...(mediaNodesResult ?? []), ...(mdNodesResult ?? [])];
-    if (!params?.isEmbedContext) {
-      await this.saveLinksForMultiFileCapture(nodes);
-    }
-    this.postSave(result, {
-      isEmbedContext: params?.isEmbedContext
-    });
-    this.setIsSaving(false);
-    return result;
   }
   // TODO - check for persistance need here
   updateProperty = async (property: ICollectionItemPropertyValue) => {
@@ -931,57 +934,62 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       thumbnailBlob?: Blob;
     }
   ) {
-    this.setIsSaving(true);
-    const contentType = "audio/wav";
-    const wavData = await convertWebMToWav(data);
-    const id = generateResourceId(Resource.node);
-    const collections = this.resolveCollections();
-    const fileName = generateSimpleRandomId();
-    const result = await account.uploadFileV2(
-      contentType,
-      `${fileName}.wav`,
-      wavData,
-      {
-        thumbnailBlob: params?.thumbnailBlob
+    if (!params?.isEmbedContext) this.setIsSaving(true);
+    try {
+      const contentType = "audio/wav";
+      const wavData = await convertWebMToWav(data);
+      const id = generateResourceId(Resource.node);
+      const collections = params?.isEmbedContext ? [] : this.resolveCollections();
+      const fileName = generateSimpleRandomId();
+      const result = await account.uploadFileV2(
+        contentType,
+        `${fileName}.wav`,
+        wavData,
+        {
+          thumbnailBlob: params?.thumbnailBlob
+        }
+      );
+      if (!result) return;
+      const fileId = result[0].id;
+      const location = await this.resolveLocation();
+      const metadata = await this.parseMetadata(
+        new File([wavData], `${fileName}.wav`, { type: contentType })
+      );
+      const captureStore = this.get();
+      const node: INodeCapture<IMediaNode> = {
+        id,
+        contentType: NodeType.AUDIO,
+        file: fileId,
+        metadata: {
+          location,
+          ...metadata
+        },
+        collections,
+        properties: params?.isEmbedContext ? [] : captureStore.properties,
+        creationContext: params?.isEmbedContext
+          ? (params?.creationContext ?? this.get().nodeId)
+          : undefined,
+        label:
+          captureStore.label ??
+          `Audio Recording - ${new Date().toLocaleString()}`,
+        body: {
+          duration
+        }
+      };
+      const result2 = await nodeStore.create(node, {
+        context: captureAction
+      });
+      if (!params?.isEmbedContext) {
+        await this.saveLinks(id);
       }
-    );
-    if (!result) return;
-    const fileId = result[0].id;
-    const location = await this.resolveLocation();
-    const metadata = await this.parseMetadata(
-      new File([wavData], `${fileName}.wav`, { type: contentType })
-    );
-    const captureStore = this.get();
-    const node: INodeCapture<IMediaNode> = {
-      id,
-      contentType: NodeType.AUDIO,
-      file: fileId,
-      metadata: {
-        location,
-        ...metadata
-      },
-      collections,
-      properties: captureStore.properties,
-      creationContext: params?.isEmbedContext
-        ? (params?.creationContext ?? this.get().nodeId)
-        : undefined,
-      label:
-        captureStore.label ??
-        `Audio Recording - ${new Date().toLocaleString()}`,
-      body: {
-        duration
-      }
-    };
-    const result2 = await nodeStore.create(node, {
-      context: captureAction
-    });
-    await this.saveLinks(id);
-    this.postSave(result2, {
-      isOpenOnSave: params?.isOpenOnSave,
-      isEmbedContext: params?.isEmbedContext
-    });
-    this.setIsSaving(false);
-    return result2?.[0];
+      this.postSave(result2, {
+        isOpenOnSave: params?.isOpenOnSave,
+        isEmbedContext: params?.isEmbedContext
+      });
+      return result2?.[0];
+    } finally {
+      if (!params?.isEmbedContext) this.setIsSaving(false);
+    }
   }
 
   /**
@@ -1057,7 +1065,11 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     });
     await this.saveLinks(id);
     const ctx = get(context);
-    if (params?.isMediaDeviceCapture && ctx.os === OperatingSystem.MACOS) {
+    if (
+      params?.isMediaDeviceCapture &&
+      ctx.isEmbed === true &&
+      ctx.os === OperatingSystem.MACOS
+    ) {
       return result2;
     }
     this.postSave(result2, {});

@@ -2,8 +2,7 @@
   import { fly } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-
+  import MarkdownRenderer from "../elements/MarkdownRenderer.svelte";
   export let title: string = "";
   export let body: string = "";
   export let isExpanded: boolean = false;
@@ -39,9 +38,9 @@
         transition:fly={{ y: -20, duration: 200, easing: cubicOut }}
         class="pb-4 text-fgs2"
       >
-        <p class="text-lb2 text-fgs2 max-w-3xl">
-          {@html renderMdAsHtml(body)}
-        </p>
+        <div class="text-lb2 text-fgs2 max-w-3xl">
+          <MarkdownRenderer text={body} />
+        </div>
       </div>
     {/if}
   </div>

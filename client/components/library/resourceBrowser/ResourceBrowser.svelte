@@ -25,6 +25,8 @@
   import ComponentShortcutListener from "../../shortcuts/ComponentShortcutListener.svelte";
   import ComponentEmbedLayer from "$lib/client/layout/layers/ComponentEmbedLayer.svelte";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import view from "$lib/client/stores/view.store";
+  import { Display } from "$lib/client/types/view.type";
   export let resource: Resource;
   export let onBack: (() => void) | undefined = undefined;
   export let isPreventCwPadding: boolean = false;
@@ -86,6 +88,7 @@
 
   function determineSize(resource: Resource) {
     if (resource === Resource.task) return Size.xl;
+    else if ($view.display === Display.TP) return Size.sm;
     return Size.md;
   }
 </script>

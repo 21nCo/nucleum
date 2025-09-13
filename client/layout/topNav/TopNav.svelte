@@ -26,6 +26,8 @@
     UIStateScope
   } from "$lib/client/stores/uiState/uiState.type";
   import TopNavLeftLogo from "./TopNavLeftLogo.svelte";
+  import { Embed } from "$lib/client/types/context.type";
+  import context from "$lib/client/stores/context.store";
 
   let isInFocusMode = false;
   let pinnedItems: IRecordId[] = tabs.get() ?? [];
@@ -65,7 +67,7 @@
 {#if !isInFocusMode}
   <div
     class={cn(
-      "w-full h-11 max-h-11 min-h-11 2k:h-12 2k:max-h-12 2k:min-h-12 bg-bgs2 pr-4 border-b border-brs3 userdata",
+      "w-full h-11 max-h-11 min-h-11 2k:h-12 2k:max-h-12 2k:min-h-12 bg-bgs2 pr-4 border-b border-brs3 userdata embed-ios:mt-12 embed-tablet:mt-12 relative embed-ios:before:absolute embed-ios:before:-top-12 embed-ios:before:bottom-0 embed-ios:before:left-0 embed-ios:before:right-0 embed-ios:before:bg-bgs2",
       {
         "flex gap-3 justify-between items-center":
           pinnedItems.length > 0 || isInterimTab,
@@ -75,7 +77,9 @@
   >
     {#if pinnedItems.length > 0}
       <div class="flex items-center relative h-full overflow-x-auto">
-        <TopNavLeftLogo {isHideMenuLabels} />
+        {#if $context.embed !== Embed.HANDSET}
+          <TopNavLeftLogo {isHideMenuLabels} />
+        {/if}
         <Tabs {pinnedItems} />
         <div
           class="absolute right-0 top-0 bottom-0 flex items-center pointer-events-none"

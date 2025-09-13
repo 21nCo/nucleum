@@ -16,7 +16,7 @@
   }
 </script>
 
-<div class={cn("w-full flex flex-col gap-20 mo:gap-10")}>
+<section class={cn("w-full flex flex-col gap-20 mo:gap-10")}>
   <div class="flex flex-col justify-center items-center">
     <Title {title} {subtitle} />
   </div>
@@ -40,4 +40,4 @@
       {/if}
     {/each}
   </div>
-</div>
+</section>

@@ -1,0 +1,30 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "target": "ESNext",
+    "module": "ESNext",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": false,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": false,
+    "baseUrl": "."
+  },
+  "exclude": [
+    "**/node_modules/**",
+    "**/build/**",
+    "**/dist/**",
+    "**/.svelte-kit/**",
+    "**/coverage/**",
+    "deployment/**",
+    "server/**",
+    "tests/**",
+    "client/static/**",
+    "**/*.d.ts"
+  ],
+  "include": ["client/**/*", "apps/**/*", "packages/**/*", "shared/**/*"]
+}

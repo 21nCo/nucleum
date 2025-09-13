@@ -44,7 +44,7 @@
   });
 </script>
 
-<div class="relative">
+<header class="relative">
   <div
     class={cn(
       "flex w-full items-center justify-center bg-bgs2 mo:pt-3 mo:pb-2 lp:border-b border-brs3 py-3"
@@ -87,4 +87,4 @@
       {isPreventSticky}
     />
   {/if}
-</div>
+</header>

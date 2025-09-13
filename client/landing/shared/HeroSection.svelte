@@ -12,7 +12,7 @@
   export let heroInputs: IHeroInputs;
 </script>
 
-<div
+<section
   class={cn("relative flex justify-center w-full overflow-clip", {
     "min-h-[90vh]": !$isProductPage,
     "min-h-[400px] 2k:min-h-[500px]": $isProductPage
@@ -83,4 +83,4 @@
       </div>
     {/if}
   </div>
-</div>
+</section>

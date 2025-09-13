@@ -4,7 +4,11 @@
   import { goto } from "$app/navigation";
   import { browser } from "$app/environment";
   import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { Embed } from "$lib/client/types/context.type";
+  import {
+    Embed,
+    OperatingSystem,
+    type IAppContext
+  } from "$lib/client/types/context.type";
   import { pingParent, postDataToParent } from "$lib/client/utils/embed.utils";
   import account from "$lib/client/stores/account.store";
   import { appStore, currentTime } from "$lib/client/stores/app.store";
@@ -38,6 +42,7 @@
     product,
     resolveProductConfig
   } from "$lib/client/products/product.config";
+  import view from "@21n/stores/view.store";
   let timer: any;
   let isMounted = false;
   const productConfig = resolveProductConfig();
@@ -215,6 +220,7 @@
       );
       if (isInLowDataMode)
         $context.isInLowDataMode = isInLowDataMode === "true";
+      initUserAgentClasses($context);
     } catch (e) {
       const errorMessage =
         e instanceof Error
@@ -227,6 +233,30 @@
         type: "ERROR",
         message: errorMessage
       });
+    }
+  }
+
+  function initUserAgentClasses(ctx: IAppContext) {
+    const userAgent = navigator.userAgent;
+    const html = document.documentElement;
+
+    if (userAgent.includes("Safari") && !userAgent.includes("Chrome")) {
+      html.classList.add("browser-safari");
+    }
+    if (userAgent.includes("Chrome")) html.classList.add("browser-chrome");
+    if (userAgent.includes("Firefox")) html.classList.add("browser-firefox");
+    if (ctx.os === OperatingSystem.IOS) html.classList.add("os-ios");
+    else if (ctx.os === OperatingSystem.ANDROID)
+      html.classList.add("os-android");
+    else if (ctx.os === OperatingSystem.MACOS) html.classList.add("os-macos");
+    else if (ctx.os === OperatingSystem.WINDOWS)
+      html.classList.add("os-windows");
+    else if (ctx.os === OperatingSystem.LINUX) html.classList.add("os-linux");
+
+    if (userAgent.includes("embed")) {
+      html.classList.add("embed");
+      if (userAgent.includes("handset")) html.classList.add("embed-handset");
+      if (userAgent.includes("tablet")) html.classList.add("embed-tablet");
     }
   }
 
@@ -375,6 +405,17 @@
     }
   }
 
+  const windowResizeListener = (event: Event) => {
+    view.refresh(window.innerWidth, window.innerHeight);
+  };
+
+  const handleScreenOrientationChange = () => {
+    setTimeout(() => {
+      view.refresh(window.innerWidth, window.innerHeight);
+      appStore.gotoPath("/");
+    }, 100);
+  };
+
   function addWindowEventListeners() {
     // setupGlobalErrorHandler();
     // window.addEventListener("unhandledrejection", handleUnhandledRejection);
@@ -409,6 +450,13 @@
       viewport?.addEventListener("resize", handleViewportChange);
       viewport?.addEventListener("scroll", handleViewportChange);
     }
+
+    if (screen?.orientation) {
+      screen.orientation.addEventListener(
+        "change",
+        handleScreenOrientationChange
+      );
+    }
   }
   function removeWindowEventListeners() {
     // window.removeEventListener("unhandledrejection", handleUnhandledRejection);
@@ -441,6 +489,13 @@
     //     error
     //   });
     // }
+
+    if (screen?.orientation) {
+      screen.orientation.removeEventListener(
+        "change",
+        handleScreenOrientationChange
+      );
+    }
   }
   onDestroy(() => {
     removeWindowEventListeners();
@@ -472,6 +527,7 @@
 <svelte:document on:visibilitychange={visibilityChangeListener} />
 <!-- Fallback for md links click handling -->
 <svelte:window
+  on:resize={windowResizeListener}
   on:click={(e) => {
     if (e?.target?.tagName === "PLACEHOLDER" && e?.target?.dataset?.href) {
       appStore.openLink(e.target.dataset.href);

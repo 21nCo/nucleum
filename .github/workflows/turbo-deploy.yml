@@ -26,7 +26,7 @@ on:
     branches:
       - dev
     paths:
-      - 'client/products/**'
+      - 'apps/**'
       - 'packages/**'
       - 'shared/**'
       - 'server/**'
@@ -74,7 +74,7 @@ jobs:
       fail-fast: false
     defaults:
       run:
-        working-directory: ./client/products/${{ matrix.project }}
+        working-directory: ./apps/${{ matrix.project }}
     
     steps:
       - name: Checkout repository
@@ -98,11 +98,11 @@ jobs:
           cache: 'npm'
           cache-dependency-path: |
             package-lock.json
-            client/products/${{ matrix.project }}/package-lock.json
+            apps/${{ matrix.project }}/package-lock.json
 
       - name: Install dependencies (workspace)
         run: |
-          cd ../../../
+          cd ../../
           rm -rf node_modules package-lock.json
           npm install
 
@@ -135,7 +135,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.project }}-${{ needs.detect-config.outputs.environment }}
-          path: client/products/${{ matrix.project }}/build/
+          path: apps/${{ matrix.project }}/build/
           retention-days: 1
 
   deploy:
@@ -182,7 +182,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-${{ matrix.project }}-${{ needs.detect-config.outputs.environment }}
-          path: client/products/${{ matrix.project }}/build/
+          path: apps/${{ matrix.project }}/build/
 
       - name: Install CDK CLI
         run: npm install -g aws-cdk

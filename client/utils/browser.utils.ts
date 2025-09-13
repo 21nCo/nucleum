@@ -283,6 +283,8 @@ export function detectSystemOS() {
     os = OperatingSystem.MACOS;
   } else if (platform.includes("android")) {
     os = OperatingSystem.ANDROID;
+  } else if (platform.includes("linux")) {
+    os = OperatingSystem.LINUX;
   } else {
     os = OperatingSystem.UNDETERMINED;
   }

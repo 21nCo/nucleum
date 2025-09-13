@@ -31,9 +31,9 @@
     style={InputStyle.PLAIN}
     isExpanded={true}
     label={{
-      label: "Open nodes upon save",
+      label: "Automatically open newly created nodes after saving",
       tooltip: {
-        body: "Automatically open newly created nodes after saving"
+        body: "Disabling this will save the nodes in the background without opening."
       }
     }}
     on:change={handleToggleChange}

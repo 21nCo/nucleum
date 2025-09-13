@@ -5,14 +5,11 @@
   // import AnalyticsLayer from "../layout/layers/analytics/AnalyticsLayer.svelte";
   import MetadataLayer from "../layout/layers/MetadataLayer.svelte";
   import appearance from "$lib/client/stores/appearance.store";
-  import DynamicMetadataLayer from "../layout/layers/DynamicMetadataLayer.svelte";
-  import type { IMetadata } from "../layout/metadata.type";
   import context from "../stores/context.store";
   import { detectSystemOS, detectTouchDevice } from "../utils/browser.utils";
   import PosthogTelemetry from "../layout/layers/analytics/PosthogTelemetry.svelte";
   import BottomModal from "../components/bottomModal/BottomModal.svelte";
   import { landing } from "./shared/store/shared.store";
-  export let metadata: IMetadata;
   export let bgColor: string = "bg-bgs1";
 
   onMount(() => {
@@ -45,7 +42,6 @@
     bgColor
   )}
 >
-  <DynamicMetadataLayer {metadata} />
   <MetadataLayer />
   <PosthogTelemetry />
   <!-- <AnalyticsLayer isLanding={true} /> -->

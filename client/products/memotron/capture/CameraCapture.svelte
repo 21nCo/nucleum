@@ -10,6 +10,12 @@
   import { appStore } from "$lib/client/stores/app.store";
   import type { IRecordId } from "$lib/client/types/data.type";
   import type { IActiveCaptureStore } from "./capture.store";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import {
+    ResourceAccessMode,
+    ResourceActionType
+  } from "@21n/components/flux/resourceStores/resource.type";
   export let captureStore: IActiveCaptureStore;
   let videoElement: HTMLVideoElement;
   let canvasElement: HTMLCanvasElement;
@@ -198,18 +204,36 @@
     )}
   >
     {#if savedResource}
-      <div class="flex items-center justify-center text-fgs3">
-        Node saved successfully!
+      <div class="flex flex-col items-center justify-center text-fgs3">
+        <p>Node saved successfully!</p>
+        <Button
+          icon="cross"
+          label="Close"
+          size={$view.isConstrainedWidth ? Size.sm : Size.md}
+          isPreventMinWidth={true}
+          on:click={() => {
+            const captureAction = resourceAction(
+              Resource.node,
+              ResourceActionType.CREATE
+            );
+            appStore.closeResource({
+              id: captureAction,
+              accessMode: ResourceAccessMode.POP
+            });
+          }}
+        />
       </div>
     {:else if photoTaken}
-      <Button
-        icon="reset"
-        label="Retake"
-        type={ButtonVariant.DANGER}
-        size={$view.isConstrainedWidth ? Size.sm : Size.md}
-        isPreventMinWidth={true}
-        on:click={retakePhoto}
-      />
+      {#if !isSaving}
+        <Button
+          icon="reset"
+          label="Retake"
+          type={ButtonVariant.DANGER}
+          size={$view.isConstrainedWidth ? Size.sm : Size.md}
+          isPreventMinWidth={true}
+          on:click={retakePhoto}
+        />
+      {/if}
       <Button
         icon="save"
         label="Save"
@@ -219,13 +243,15 @@
         isPreventMinWidth={true}
         on:click={savePhoto}
       />
-      <Button
-        icon="back"
-        label="Go back"
-        size={$view.isConstrainedWidth ? Size.sm : Size.md}
-        isPreventMinWidth={true}
-        on:click={() => dispatch("clear")}
-      />
+      {#if !isSaving}
+        <Button
+          icon="back"
+          label="Go back"
+          size={$view.isConstrainedWidth ? Size.sm : Size.md}
+          isPreventMinWidth={true}
+          on:click={() => dispatch("clear")}
+        />
+      {/if}
     {:else}
       <div class="col-span-1"></div>
       <div class="col-span-1 flex justify-center">

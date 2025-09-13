@@ -1,12 +1,20 @@
 {
-  "name": "lib-workspace",
+  "name": "tidigit",
   "private": true,
   "version": "0.0.0",
   "workspaces": [
-    "client/products/*",
-    "packages/*"
+    "apps/*",
+    "client/stores",
+    "client/components",
+    "client/elements",
+    "client/types",
+    "client/utils",
+    "client/actions",
+    "client/products",
+    "client/static"
   ],
   "devDependencies": {
+    "@tsconfig/svelte": "^5.0.5",
     "turbo": "^2.0.0",
     "typescript": "^5.0.0"
   },
@@ -20,7 +28,7 @@
     "lint": "turbo run lint",
     "test": "turbo run test",
     "build:packages": "turbo run build --filter='./packages/*'",
-    "build:products": "turbo run build --filter='./client/products/*'",
+    "build:products": "turbo run build --filter='./apps/*'",
     "build:nucleus": "turbo run build --filter=nucleus-app",
     "build:memotron": "turbo run build --filter=memotron-app",
     "build:pointron": "turbo run build --filter=pointron-app",

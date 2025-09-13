@@ -1,11 +1,9 @@
 <script lang="ts">
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   import view from "$lib/client/stores/view.store";
-  import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IFeature } from "../landing.type";
-  import { landing } from "../store/shared.store";
   import VisualRender from "../VisualRender.svelte";
+  import { sanitizeUrl } from "../utils/url-sanitizer";
   export let feature: IFeature;
   export let isReversed: boolean = false;
 
@@ -60,13 +58,17 @@
         <VisualRender name={feature.visualRenderComponent} />
       </div>
     </div>
-    {#if feature.videoElement}
-      <button
+    {#if feature.videoElement && sanitizeUrl(feature.videoElement?.url)}
+      <a
         class="group flex items-center gap-3 mt-4 border border-brs3 rounded-md py-2 px-4 w-fit hover:bg-bgs1"
-        on:click={() => {
-          if (feature.videoElement?.url)
-            landing.openLink(feature.videoElement.url);
-        }}
+        href={sanitizeUrl(feature.videoElement?.url)}
+        target={feature.videoElement?.url?.startsWith("http")
+          ? "_blank"
+          : "_self"}
+        rel={feature.videoElement?.url?.startsWith("http")
+          ? "noopener noreferrer"
+          : undefined}
+        title="Click to watch video"
       >
         <div class="w-20 h-11 bg-bgs3 rounded-md overflow-hidden">
           {#if videoId && thumbnailUrl}
@@ -85,7 +87,7 @@
             Watch video
           </div>
         </div>
-      </button>
+      </a>
     {/if}
   </div>
 </div>

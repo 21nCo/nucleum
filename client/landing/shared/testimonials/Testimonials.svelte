@@ -13,7 +13,9 @@
   export let twitter: string = $landing.urls.socials?.twitter ?? org.twitter;
 </script>
 
-<div class="w-full flex flex-col gap-20 mo:gap-10 overflow--x-hidden relative">
+<section
+  class="w-full flex flex-col gap-20 mo:gap-10 overflow--x-hidden relative"
+>
   <div class="flex flex-col justify-center items-center">
     <Title {title} {subtitle} />
   </div>
@@ -61,4 +63,4 @@
   <div
     class="mo:hidden w-20 bg-gradient-to-l from-bgs2/20 to-bgs2 absolute left-0 top-0 h-full"
   ></div>
-</div>
+</section>

@@ -124,7 +124,6 @@
     viewBox="-250 -250 500 500"
     use:resizeListener={(e) => {
       svgWidth = e.width;
-      console.log({ svgWidth });
     }}
   >
     {#each groups as group, i (group.label)}
