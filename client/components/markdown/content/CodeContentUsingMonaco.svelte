@@ -148,8 +148,7 @@
     };
   });
 
-  function handleLanguageChange(e: CustomEvent<string>) {
-    console.log("handleLanguageChange", e, language);
+  function handleLanguageChange(_e: CustomEvent<string>) {
     if (editor) {
       monaco.editor.setModelLanguage(editor.getModel()!, language);
     }

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, createEventDispatcher } from "svelte";
+  import { onMount, createEventDispatcher, tick } from "svelte";
   import type { ICodeBlockBody } from "../md.type";
   import hljs from "highlight.js";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
@@ -20,8 +20,10 @@
   let code = body?.text ?? "";
   let codeElement: HTMLElement;
   let textareaElement: HTMLTextAreaElement;
+  let containerElement: HTMLDivElement;
   let isHovering: boolean = false;
   let isEditing: boolean = false;
+  let containerHeight: string = 'auto';
 
   const languages = [
     { label: "ABAP", value: "abap" },
@@ -71,17 +73,19 @@
     }
   }
 
-  onMount(() => {
+  onMount(async () => {
+    await tick();
     highlightCode();
+    await tick();
+    updateContainerHeight();
   });
 
-  function handleLanguageChange(e: CustomEvent<string>) {
+  async function handleLanguageChange() {
     dispatch("update", {
       language
     });
-    setTimeout(() => {
-      highlightCode();
-    }, 0);
+    await tick();
+    highlightCode();
   }
 
   function handleCodeChange() {
@@ -91,20 +95,31 @@
   }
 
   function handleFocus() {
+    updateContainerHeight();
     isEditing = true;
   }
   
-  function handleBlur() {
+  async function handleBlur() {
     isEditing = false;
-    setTimeout(() => {
-      highlightCode();
-    }, 0);
+    await tick();
+    highlightCode();
+  }
+
+  function updateContainerHeight() {
+    if (containerElement) {
+      const currentHeight = containerElement.offsetHeight;
+      if (currentHeight > 0) {
+        containerHeight = currentHeight + 'px';
+      }
+    }
   }
 
   function autoResize() {
     if (textareaElement) {
       textareaElement.style.height = 'auto';
-      textareaElement.style.height = textareaElement.scrollHeight + 'px';
+      const newHeight = Math.max(300, textareaElement.scrollHeight);
+      textareaElement.style.height = newHeight + 'px';
+      containerHeight = newHeight + 'px';
     }
   }
 
@@ -117,9 +132,7 @@
   }
 
   $: if (code !== undefined && !isEditing) {
-    setTimeout(() => {
-      highlightCode();
-    }, 0);
+    tick().then(highlightCode);
   }
 </script>
 
@@ -169,9 +182,13 @@
     </div>
   {/if}
 
-  <div class="relative rounded-md overflow-hidden">
+  <div 
+    bind:this={containerElement}
+    class="relative rounded-md overflow-hidden code-container"
+    style="min-height: 300px; height: {containerHeight};"
+  >
     {#if $mdStore.params?.isReadOnly}
-      <pre class="hljs m-0 p-4 text-sm font-mono leading-relaxed overflow-x-auto"><code 
+      <pre class="hljs m-0 p-4 text-sm font-mono leading-relaxed overflow-x-auto h-full"><code 
         bind:this={codeElement} 
         class="language-{language || 'plaintext'}"
       >{code}</code></pre>
@@ -180,24 +197,24 @@
       <textarea
         bind:this={textareaElement}
         bind:value={code}
-        on:input={handleCodeChange}
-        on:input={autoResize}
+        on:input={() => { handleCodeChange(); autoResize(); }}
         on:focus={handleFocus}
         on:blur={handleBlur}
-        class="bg-[#1e1e1e] text-[#d4d4d4] p-4 text-sm font-mono leading-relaxed resize-none w-full min-h-[300px] border-none outline-none rounded-md"
+        class="bg-[#1e1e1e] text-[#d4d4d4] p-4 text-sm font-mono leading-relaxed resize-none w-full h-full border-none outline-none rounded-md"
         placeholder="Enter your code here..."
         spellcheck={false}
-        style="font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;"
+        style="font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace; min-height: 300px;"
       />
     {:else}
       <!-- Syntax highlighted view -->
       <pre 
-        class="hljs m-0 p-4 text-sm font-mono leading-relaxed overflow-x-auto cursor-text"
-        on:click={() => {
+        class="hljs m-0 p-4 text-sm font-mono leading-relaxed overflow-x-auto cursor-text h-full"
+        style="min-height: 300px;"
+        on:click={async () => {
           isEditing = true;
-          setTimeout(() => {
-            textareaElement?.focus();
-          }, 0);
+          await tick();
+          textareaElement?.focus();
+          autoResize();
         }}
       ><code 
         bind:this={codeElement} 
@@ -208,6 +225,37 @@
 </div>
 
 <style>
+  .code-container {
+    transition: height 0.1s ease-out;
+    box-sizing: border-box;
+  }
+  
+  .code-container pre,
+  .code-container textarea {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  }
+  
+  .code-container pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+  }
+  
+  .code-container textarea {
+    resize: none;
+    outline: none;
+    border: none;
+    background: #1e1e1e;
+    color: #d4d4d4;
+  }
+  
+  .code-container textarea::placeholder {
+    color: #6a6a6a;
+  }
 
   :global(.hljs) {
     background: #1e1e1e !important;

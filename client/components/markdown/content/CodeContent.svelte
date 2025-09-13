@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import type { ICodeBlockBody } from "../md.type";
   import type { MdStoreType } from "../markdown.store";
   import CodeContentUsingMonaco from "./CodeContentUsingMonaco.svelte";
@@ -8,8 +7,6 @@
   export let mdStore: MdStoreType;
   export let body: ICodeBlockBody;
   export let useMonacoEditor: boolean = false;
-  
-  const dispatch = createEventDispatcher();
 </script>
 
 {#if useMonacoEditor}

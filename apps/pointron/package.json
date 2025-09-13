@@ -40,7 +40,6 @@
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
     "@tauri-apps/cli": "^2.1.0",
     "@types/node": "^22.9.1",
-    "@vercel/analytics": "^1.0.2",
     "autoprefixer": "^10.4.13",
     "axe-playwright": "^1.2.3",
     "chromatic": "^10.0.0",
