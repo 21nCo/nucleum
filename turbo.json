@@ -5,7 +5,7 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["dist/**", ".next/**", "build/**", ".svelte-kit/**"],
-      "env": ["NODE_ENV", "VITE_*"]
+      "env": ["NODE_ENV", "VITE_*", "GITMODULES_URL"]
     },
     "dev": {
       "cache": false,
