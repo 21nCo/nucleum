@@ -74,7 +74,7 @@
   <p>
     All content, features, and functionality of our services, including but not
     limited to text, graphics, logos, and software, are the exclusive property
-    of <strong>Blank Labs Private Limited</strong> and are protected by international
+    of <strong>Phinative Soft Private Limited</strong> and are protected by international
     copyright, trademark, and other intellectual property laws.
   </p>
 

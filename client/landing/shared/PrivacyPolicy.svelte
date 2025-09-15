@@ -59,8 +59,9 @@
             class="w-full h-full outline-none font-medium p-2"
             style="max-width: 100%; width: 100%;  word-break: break-word;"
           >
-            "We", "Us" or "Our" in this Agreement refers to Blank labs Private
-            limited, registered H-no: 4-4/B, Kappapahad, Telangana, India.
+            "We", "Us" or "Our" in this Agreement refers to Phinative Soft
+            Private limited, registered Pent house, Plot 492, Venkataramana
+            colony, Telangana, India.
           </div>
           <div class="absolute top-0 left-0 h-full w-0.5 bg-a1"></div>
         </div>
