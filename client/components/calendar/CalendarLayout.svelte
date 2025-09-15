@@ -46,7 +46,7 @@
   }
 </script>
 
-<div class="flex flex-col h-full w-full">
+<div class="flex flex-col h-full w-full otop:pt-12">
   <div
     class="flex items-center gap-4 border-b border-brs3 h-[3.2rem] 2k:h-14 px-4"
   >

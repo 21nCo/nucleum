@@ -202,13 +202,16 @@
       {:else}
         <div
           id={id + "-modal"}
-          class={cn("bg-bgs1 max-h-full cursor-default", {
-            ...resolveSizeClasses(),
-            "rounded-md": size !== Size.full,
-            "mo:rounded-none": size !== Size.full && size !== Size.xs,
-            "mo:w-9/10": size === Size.xs,
-            "mo:w-full mo:h-full": size !== Size.xs
-          })}
+          class={cn(
+            "bg-bgs1 max-h-full cursor-default landscape:embed-ios:pt-12 landscape:embed-ios:bg-transparent",
+            {
+              ...resolveSizeClasses(),
+              "rounded-md": size !== Size.full,
+              "mo:rounded-none": size !== Size.full && size !== Size.xs,
+              "mo:w-9/10": size === Size.xs,
+              "mo:w-full mo:h-full": size !== Size.xs
+            }
+          )}
         >
           <ColorLayer>
             <slot />
