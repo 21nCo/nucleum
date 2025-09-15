@@ -75,7 +75,7 @@
         "relative flex flex-col h-full",
         {
           "w-full": $view.isConstrainedWidth || isExpanded,
-          "embed-ios:pt-12": !isPreventCwPadding
+          "otop:pt-12": !isPreventCwPadding
         },
         !$view.isConstrainedWidth &&
           !isExpanded && {

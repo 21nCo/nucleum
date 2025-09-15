@@ -67,7 +67,7 @@
 
 {#if size === Size.full}
   <div
-    class="w-full h-full flex justify-center items-center embed-ios:pt-12"
+    class="w-full h-full flex justify-center items-center embed-ios:pt-12 embed-ios:bg-bgs1"
     in:fly={{
       duration: 400,
       delay: 0,
@@ -95,10 +95,10 @@
 {:else}
   <div
     class={cn(
-      "relative modal flex flex-col items-center justify-between w-full h-full  rounded-md",
+      "relative modal flex flex-col items-center justify-between w-full h-full  rounded-md embed-ios:bg-bgs1",
       {
         "dark:border border-brs3": !isInFocusMode && !$view.isConstrainedWidth,
-        "embed-ios:pt-12": !resource || params.title
+        "otop:pt-12": !resource || params.title
       },
       !params.layout?.ignoreSafeArea && {
         "gap-4": size === Size.xs,

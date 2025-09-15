@@ -101,7 +101,7 @@
 </script>
 
 <div
-  class={cn("flex flex-col w-full embed-ios:pt-12", {
+  class={cn("flex flex-col w-full otop:pt-12", {
     "border border-brs2 rounded-md": isFullPageContext,
     "h-full": !isFullPageContext || (isFullPageContext && isFocusing)
   })}
