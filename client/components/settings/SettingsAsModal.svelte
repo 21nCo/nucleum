@@ -45,7 +45,7 @@
 
 <div class="flex w-full h-full">
   <div
-    class="flex flex-col overflow-auto gap-8 w-72 min-w-72 dp:w-[21rem] dp:min-w-[21rem] shrink-0 bg-bgs2 rounded-l-md py-4 items-start embed-ios:pt-12"
+    class="flex flex-col overflow-auto gap-8 w-72 min-w-72 dp:w-[21rem] dp:min-w-[21rem] shrink-0 bg-bgs2 rounded-l-md py-4 items-start otop:pt-12"
   >
     <div class="pl-4">
       <BackButton
@@ -112,7 +112,7 @@
       {/if}
     </div>
   </div>
-  <div class="flex flex-col items-start flex-grow h-full p-4 embed-ios:pt-12">
+  <div class="flex flex-col items-start flex-grow h-full p-4 otop:pt-12">
     {#if pageAction}
       <div class="flex justify-start h-10">
         <Text

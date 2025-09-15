@@ -45,6 +45,7 @@
   import view from "@21n/stores/view.store";
   let timer: any;
   let isMounted = false;
+  let lastOrientation: 'portrait' | 'landscape' | null = null;
   const productConfig = resolveProductConfig();
 
   onMount(async () => {
@@ -221,6 +222,7 @@
       if (isInLowDataMode)
         $context.isInLowDataMode = isInLowDataMode === "true";
       initUserAgentClasses($context);
+      updateOrientationClasses();
     } catch (e) {
       const errorMessage =
         e instanceof Error
@@ -258,6 +260,25 @@
       if (userAgent.includes("handset")) html.classList.add("embed-handset");
       if (userAgent.includes("tablet")) html.classList.add("embed-tablet");
     }
+  }
+
+  function updateOrientationClasses(): boolean {
+    const html = document.documentElement;
+    const isPortrait = window.innerHeight > window.innerWidth;
+    const currentOrientation = isPortrait ? 'portrait' : 'landscape';
+    
+    const hasOrientationChanged = lastOrientation !== null && lastOrientation !== currentOrientation;
+    lastOrientation = currentOrientation;
+    
+    html.classList.remove("device-portrait", "device-landscape");
+    
+    if (isPortrait) {
+      html.classList.add("device-portrait");
+    } else {
+      html.classList.add("device-landscape");
+    }
+    
+    return hasOrientationChanged;
   }
 
   /**
@@ -407,11 +428,16 @@
 
   const windowResizeListener = (event: Event) => {
     view.refresh(window.innerWidth, window.innerHeight);
+    const hasOrientationChanged = updateOrientationClasses();
+    if (hasOrientationChanged) {
+      appStore.gotoPath("/");
+    }
   };
 
   const handleScreenOrientationChange = () => {
     setTimeout(() => {
       view.refresh(window.innerWidth, window.innerHeight);
+      updateOrientationClasses();
       appStore.gotoPath("/");
     }, 100);
   };

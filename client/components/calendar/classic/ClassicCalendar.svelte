@@ -341,7 +341,11 @@
 
   <div class="flex h-full">
     <!-- <CalendarSidebar {events} /> -->
-    <div class="flex-1 overflow-auto min-w-60">
+    <div
+      class={cn("flex-1 overflow-auto", {
+        "min-w-60": selectedView !== TimeScaleUnit.DAY
+      })}
+    >
       {#if selectedView === TimeScaleUnit.MONTH}
         <MonthView
           bind:selectedDate
