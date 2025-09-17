@@ -1,5 +1,5 @@
 import packageJson from "../package.json";
-import config from "$lib/client/products/memotron/memotron.config";
+import config from "$lib/client/products/nucleus/nucleus.config";
 
 const { version, build } = packageJson;
 
