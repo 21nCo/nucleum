@@ -170,12 +170,9 @@
             size={Size.sm}
             style={InputStyle.PLAIN}
             icon="search"
-            isShowClearControl={searchQuery !== ""}
-            on:cancel={() => {
-              searchQuery = "";
-            }}
+            isShowClearControl={true}
+            on:cancel={toggleSearch}
           />
-          <Button icon="cross" tooltip="Close search" on:click={toggleSearch} />
         </div>
       {:else if selectedView === AudioView.TRANSCRIPTION && body?.transcription}
         <Button

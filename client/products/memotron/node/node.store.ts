@@ -832,27 +832,37 @@ export function resolveNodeContextMenu(
     ];
   }
   const ctx = get(context);
+  const viewStore = get(view);
   let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];
+  const moreGroup = {
+    group: "more",
+    items: [resourceActions.archive(), resourceActions.trash()]
+  };
   if (ctx.isEmbed && ctx.embed === Embed.HANDSET) {
-    commonGroups = [
-      {
-        group: "more",
-        items: [resourceActions.archive(), resourceActions.trash()]
-      }
-    ];
+    commonGroups = [moreGroup];
   } else if (
     accessPoint === ResourceAccessPoint.SELF &&
-    params?.accessMode !== ResourceAccessMode.SPLIT
+    params?.accessMode !== ResourceAccessMode.SPLIT &&
+    !viewStore.isPortrait
   ) {
     commonGroups = [
       {
         group: "open",
         items: [resourceActions.openAsTab(), resourceActions.openAsFull()]
       },
+      moreGroup
+    ];
+  } else if (
+    accessPoint === ResourceAccessPoint.SELF &&
+    params?.accessMode === ResourceAccessMode.INLINE &&
+    viewStore.isPortrait
+  ) {
+    commonGroups = [
       {
-        group: "more",
-        items: [resourceActions.archive(), resourceActions.trash()]
-      }
+        group: "open",
+        items: [resourceActions.openAsFull()]
+      },
+      moreGroup
     ];
   } else {
     commonGroups = [
@@ -864,10 +874,7 @@ export function resolveNodeContextMenu(
           resourceActions.openAsFull()
         ]
       },
-      {
-        group: "more",
-        items: [resourceActions.archive(), resourceActions.trash()]
-      }
+      moreGroup
     ];
   }
   let mediaShareAndExportGroup = {
@@ -985,7 +992,6 @@ export function resolveNodeContextMenu(
           resourceActions.toggleFocusMode()
         ]
       : [resourceActions.toggleFocusMode()];
-  const viewStore = get(view);
   const secondGroupItems = viewStore.isConstrainedWidth
     ? [
         resourceActions.toggleReadMode(),

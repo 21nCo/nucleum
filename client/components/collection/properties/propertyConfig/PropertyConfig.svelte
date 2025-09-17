@@ -19,7 +19,7 @@
 
 {#if propertyTypesWithConfiguration.includes(row.type)}
   <div
-    class={cn("rounded-md w-full border flex items-center", {
+    class={cn("rounded-md w-full border flex items-center h-11", {
       "border-aps1": isPopoverOpen,
       "border-brs3": !isPopoverOpen
     })}

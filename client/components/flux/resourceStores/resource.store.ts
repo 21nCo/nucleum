@@ -21,12 +21,13 @@ import {
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { ObservableStore } from "../../../stores/client.store";
 import { resolveCurrentUserId } from "../../../utils/account.utils";
-import type {
-  IMultiSelectContext,
-  IMultiSelectStore,
-  IResource,
-  IResourceMutationParams,
-  IResourceCaptureV2
+import {
+  type IMultiSelectContext,
+  type IMultiSelectStore,
+  type IResource,
+  type IResourceMutationParams,
+  type IResourceCaptureV2,
+  ResourceAccessMode
 } from "./resource.type";
 import { flux } from "../flux";
 import {
@@ -38,10 +39,13 @@ import { FluxMethod } from "../flux.type";
 import { generateResourceId } from "../flux.utils";
 import { toasts } from "$lib/client/stores/notification.store";
 import { logger } from "../../debug/logger.client";
-import { isSameResource, resourceInList } from "./resource.utils";
+import {
+  determineResourceAccessMode,
+  isSameResource,
+  resourceInList
+} from "./resource.utils";
 import { GlobalEvent } from "$lib/client/types/event.enum";
 import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { AppSearchParam } from "$lib/client/types/appStore.type";
 import { stringify } from "$lib/shared/utils/json.utils";
 
 const activeResources = new Map<string, ActiveResourceStore<any, any, any>>();
@@ -180,7 +184,20 @@ export class ActiveResourceStore<
     return val! as T;
   }
 
-  static destroy(id: IRecordId) {
+  static destroy(id: IRecordId, accessMode?: ResourceAccessMode) {
+    if (accessMode === ResourceAccessMode.FULL) {
+      const _accessMode = determineResourceAccessMode(id);
+      if (_accessMode !== ResourceAccessMode.FULL) {
+        const resource = activeResources.get(id.toString());
+        if (resource) {
+          resource.update((prev) => ({
+            ...prev,
+            accessMode: _accessMode
+          }));
+        }
+        return;
+      }
+    }
     activeResources.delete(id.toString());
   }
 }

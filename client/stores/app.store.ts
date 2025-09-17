@@ -39,7 +39,10 @@ import { Size } from "../types/size.enum";
 import type { IRecordId } from "../types/data.type";
 import account from "./account.store";
 import { tabs } from "../layout/topNav/tabs/tabs.store";
-import { resourceAction } from "../components/flux/resourceStores/resource.utils";
+import {
+  determineResourceAccessMode,
+  resourceAction
+} from "../components/flux/resourceStores/resource.utils";
 import { Product } from "$lib/client/products/product.type";
 import { EmbedDataMessage } from "../types/embedMessage.enum";
 
@@ -611,15 +614,6 @@ function initAppStore(seed: IAppStore) {
     else return ResourceAccessMode.INLINE;
   };
 
-  const determineResourceAccessMode = (id: IRecordId): ResourceAccessMode => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const mode = (Object.values(ResourceAccessMode) as string[]).find(
-      (m) =>
-        m !== ResourceAccessMode.INLINE && searchParams.get(m) === id.toString()
-    );
-    return (mode as ResourceAccessMode) || ResourceAccessMode.INLINE;
-  };
-
   /**
    *
    * TODO - shortcuts from user settings
@@ -785,7 +779,6 @@ function initAppStore(seed: IAppStore) {
     id?: IRecordId;
     accessMode?: ResourceAccessMode;
     isRestrictToModals?: boolean;
-    inlineRestoreId?: IRecordId;
   }) => {
     appEvents.nav(props?.id?.toString() ?? "");
     const url =
@@ -794,11 +787,13 @@ function initAppStore(seed: IAppStore) {
       }) ?? new URL(window.location.href);
     if (props?.accessMode) {
       toggleSearchParam([props.accessMode], { url });
+      restoreInlineResourceIfPrev();
       return;
     } else if (props?.id) {
       const accessMode = determineResourceAccessMode(props.id);
       if (accessMode) {
         toggleSearchParam([accessMode], { url });
+        restoreInlineResourceIfPrev();
       }
       return;
     }
@@ -808,9 +803,7 @@ function initAppStore(seed: IAppStore) {
       });
       return;
     }
-    const prevMode = url.searchParams.get("prev");
-    if (prevMode === ResourceAccessMode.INLINE && props?.inlineRestoreId)
-      url.searchParams.set(prevMode, props?.inlineRestoreId.toString());
+    restoreInlineResourceIfPrev();
     removeSearchParam("prev");
     removeSearchParam(ResourceAccessMode.SPLIT);
     removeSearchParam(ResourceAccessMode.FULL);
@@ -821,6 +814,12 @@ function initAppStore(seed: IAppStore) {
     function removeSearchParam(param: string) {
       if (!url.searchParams.get(param)) return;
       url.searchParams.delete(param);
+    }
+
+    function restoreInlineResourceIfPrev() {
+      const prevMode = url.searchParams.get("prev");
+      if (prevMode === ResourceAccessMode.INLINE && props?.id)
+        url.searchParams.set(prevMode, props?.id.toString());
     }
   };
 
@@ -957,7 +956,6 @@ function initAppStore(seed: IAppStore) {
     resourceClickHandlerForGraph,
     openResource,
     toggleFullScreen: toggleFullAccessMode,
-    determineResourceAccessMode,
     determineClickAccessMode,
     isOverlay,
     closeResource,

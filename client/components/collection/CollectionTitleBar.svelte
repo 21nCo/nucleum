@@ -7,6 +7,7 @@
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import { resolveCollectionContextMenu } from "./collection.store";
   import {
+    ResourceAccessMode,
     ResourceAccessPoint,
     ResourceActionType
   } from "$lib/client/components/flux/resourceStores/resource.type";
@@ -28,12 +29,12 @@
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import FormLabelTooltip from "$lib/client/elements/text/formLabel/FormLabelTooltip.svelte";
   import { isValidAvatar } from "$lib/client/elements/avatarPicker/avatar.utils";
-  import { fade } from "svelte/transition";
   import { resourceAction } from "../flux/resourceStores/resource.utils";
   import { Resource } from "../flux/resourceStores/resource.enum";
   import CollectionDescriptionEditPopover from "./CollectionDescriptionEditPopover.svelte";
   import RecordStarStatusFeedback from "../record/RecordStarStatusFeedback.svelte";
   import BackButton from "$lib/client/elements/button/BackButton.svelte";
+  import ResourceInlineCloseButton from "$lib/client/elements/button/ResourceInlineCloseButton.svelte";
 
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";
@@ -82,15 +83,28 @@
 </script>
 
 <div
-  class="w-full flex gap-1 justify-between items-center sticky- top--0 py--6"
+  class={cn(
+    "min-w-0 flex-1 gap-2 items-center sticky- top--0 py--6",
+    {
+      "flex justify-between": isConstrainedWidth,
+      grid: !isConstrainedWidth
+    },
+    !isConstrainedWidth && {
+      "grid-cols-[auto_1fr]": !$collection.isInEditMode,
+      "grid-cols-[1fr_auto]": $collection.isInEditMode
+    }
+  )}
 >
   <!-- TODO breadcrumbs - if launched as child from a combination i.e. if parent present, back button to previous resource - if launched from a mention or links -->
 
   <BackButton
     isEnabled={!$collection.isInEditMode &&
       isConstrainedWidth &&
-      accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
+      accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED &&
+      $collection.accessMode !== ResourceAccessMode.INLINE &&
+      $collection.accessMode !== ResourceAccessMode.FULL}
     accessMode={$collection.accessMode}
+    class="truncate"
   >
     {#if $collection.type === CollectionType.TYPED}
       {@const avatar =
@@ -99,7 +113,7 @@
           : $collection.avatar}
       {@const isAvatarPresent = isValidAvatar(avatar)}
       <span
-        class={cn("flex h-12 items-center justify-center", {
+        class={cn("flex h-10 items-center justify-center", {
           "w-12": $collection.isInEditMode,
           "w-8": isAvatarPresent && !$collection.isInEditMode
         })}
@@ -109,19 +123,19 @@
             bind:avatar={$collection.avatar}
             isInEditMode={true}
             on:change={onAvatarChange}
-            size={Size.lg}
+            size={Size.md}
           />
         {:else if isAvatarPresent}
-          <Avatar {avatar} isInEditMode={false} size={Size.lg} />
+          <Avatar {avatar} isInEditMode={false} size={Size.md} />
         {/if}
       </span>
     {/if}
     <span
       class={cn(
-        "flex items-center gap-4 font-medium cw:text-h4 cw:h-12 text-h1 whitespace-nowrap flex-1 min-w-0 border rounded-md text-left cw:mr-0 mr-6",
+        "flex items-center gap-4 font-medium cw:text-h4 cw:h-12 text-h2 whitespace-nowrap flex-1 min-w-0 border rounded-md text-left cw:mr-0 mr-6",
         {
           "border-transparent": !$collection.isInEditMode,
-          "border-brs3 px-2": $collection.isInEditMode
+          "border-brs3 px-2 max-w-xl": $collection.isInEditMode
         }
       )}
     >
@@ -130,7 +144,7 @@
     {/if} -->
       {#if $collection.isInEditMode}
         <TextInput
-          size={Size.lg}
+          size={Size.md}
           bind:value={$collection.label}
           placeholder="Collection title"
           style={InputStyle.PLAIN}
@@ -138,13 +152,16 @@
           on:debouncedChange={onLabelChange}
         />
       {:else}
-        {@const title = ($collection.label ?? "").trim() || "Untitled collection"}
+        {@const title =
+          ($collection.label ?? "").trim() || "Untitled collection"}
         <div class="truncate userdata">{title}</div>
       {/if}
       {#if ($collection.description && isDetailsBesideTitleRenderable) || $collection.isInEditMode}
-        {@const popoverComponent = $collection.isInEditMode ? CollectionDescriptionEditPopover : Tooltip}
-        {@const popoverProps = $collection.isInEditMode 
-          ? { collection } 
+        {@const popoverComponent = $collection.isInEditMode
+          ? CollectionDescriptionEditPopover
+          : Tooltip}
+        {@const popoverProps = $collection.isInEditMode
+          ? { collection }
           : { info: { body: $collection.description, size: Size.sm } }}
         <button
           class="flex justify-center items-center"
@@ -171,7 +188,9 @@
           class="flex items-center justify-center"
           type="button"
           aria-pressed={$collection.isStarred}
-          on:click={() => { collection.modify({ isStarred: false }); }}
+          on:click={() => {
+            collection.modify({ isStarred: false });
+          }}
           use:tooltip={{ text: "Unstar collection" }}
         >
           <RecordStarStatusFeedback
@@ -191,7 +210,7 @@
           <span class="flex gap-2 items-center px-2 py-0.5">
             <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
             {$collection.properties?.length ?? 0}
-            {#if !isConstrainedWidth && !isMiniSearch}
+            {#if !isConstrainedWidth && rightPartWidth > 1000}
               {($collection.properties?.length ?? 0) === 1
                 ? "property"
                 : "properties"}
@@ -216,45 +235,54 @@
   </BackButton>
 
   {#if isConstrainedWidth && accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
-    <ContextMenuAction
-      menuResolver={() =>
-        resolveCollectionContextMenu($collection, ResourceAccessPoint.SELF)}
-      position={Placement.Left}
-      id="collectionContextMenu"
-      size={Size.lg}
-    />
+    <div class="flex gap-2 justify-center items-center">
+      <ContextMenuAction
+        menuResolver={() =>
+          resolveCollectionContextMenu($collection, ResourceAccessPoint.SELF, {
+            accessMode: $collection.accessMode
+          })}
+        position={Placement.Left}
+        id="collectionContextMenu"
+        size={Size.lg}
+      />
+      <ResourceInlineCloseButton
+        accessMode={$collection.accessMode}
+        id={$collection.id}
+      />
+    </div>
   {:else if accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED}
     <span
-      class={cn("flex gap-3 justify-end items-center", {
-        "w-1/2": !$collection.isInEditMode && !isMiniSearch,
-        "w-2/3": !$collection.isInEditMode && isMiniSearch && isSearchFocused,
-        "w-1/3": $collection.isInEditMode
-      })}
+      class="flex gap-3 justify-end items-center"
       use:resizeListener={(e) => {
+        if (isSearchFocused) return;
         rightPartWidth = e.width;
       }}
     >
       {#if !$collection.isInEditMode && $collection.totalItemCount}
         <div
-          class={cn("flex rounded-full", {
-            "border-aps1": isSearchFocused,
-            "border-brs3": !isSearchFocused,
-            // "ml-2": isSingleViewMode && !isMiniSearch,
-            "flex-1 border px-3 py-2": !isMiniSearch || isSearchFocused
-          })}
-          transition:fade={{ duration: 100 }}
+          class={cn(
+            "flex rounded-full h-full transition-all duration-250 ease-in-out",
+            {
+              "border-aps1": isSearchFocused,
+              "border-brs3 max-w-2xl": !isSearchFocused,
+              "min-w-0 flex-1 border px-3 py-1.5":
+                !isMiniSearch || isSearchFocused
+            }
+          )}
         >
           {#if isMiniSearch && !isSearchFocused}
-            <Button
-              icon="search"
-              tooltip={resolveSearchPlaceholder($collection.totalItemCount)}
+            <button
               on:click={() => {
                 isSearchFocused = true;
                 setTimeout(() => {
                   searchBoxRef?.focus();
                 }, 10);
               }}
-            />
+              class="flex items-center justify-center"
+              title={resolveSearchPlaceholder($collection.totalItemCount)}
+            >
+              <Icon icon="search" />
+            </button>
           {:else}
             <TextInput
               style={InputStyle.PLAIN}
@@ -263,7 +291,13 @@
               icon="search"
               placeholder={resolveSearchPlaceholder($collection.totalItemCount)}
               on:focus={() => (isSearchFocused = true)}
-              on:blur={() => (isSearchFocused = false)}
+              on:blur={(e) => (isSearchFocused = false)}
+              isShowClearControl={searchQuery !== "" || isSearchFocused}
+              on:cancel={() => {
+                searchQuery = "";
+                dispatch("search");
+                isSearchFocused = false;
+              }}
               on:input={onSearchQueryChange}
             />
           {/if}
@@ -287,7 +321,13 @@
         {/if}
         <ContextMenuAction
           menuResolver={() =>
-            resolveCollectionContextMenu($collection, ResourceAccessPoint.SELF)}
+            resolveCollectionContextMenu(
+              $collection,
+              ResourceAccessPoint.SELF,
+              {
+                accessMode: $collection.accessMode
+              }
+            )}
           position={Placement.BottomCenter}
           id="collectionContextMenu"
           size={Size.lg}
@@ -295,6 +335,10 @@
         {#if isSingleViewMode}
           <AddResourceAction on:add variant="default" />
         {/if}
+        <ResourceInlineCloseButton
+          accessMode={$collection.accessMode}
+          id={$collection.id}
+        />
       {/if}
     </span>
   {/if}

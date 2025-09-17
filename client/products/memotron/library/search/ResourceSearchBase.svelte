@@ -134,6 +134,10 @@
     }
   }
 
+  /**
+   * Defaulting to FULL access mode for portrait - since in this layout - tab bar isn't available
+   * @param e
+   */
   function onSelect(
     e: CustomEvent<{ item: any; event: MouseEvent | undefined; group?: any }>
   ) {
@@ -147,8 +151,8 @@
       }
       return;
     }
-    if ($view.isConstrainedWidth) {
-      appStore.openResource(item.id, ResourceAccessMode.POP);
+    if ($view.isPortrait) {
+      appStore.openResource(item.id, ResourceAccessMode.FULL);
       return;
     }
     const clickAccessMode = e.detail.event
