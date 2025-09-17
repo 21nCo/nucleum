@@ -49,6 +49,13 @@
   export function resetToggle() {
     toggleGroupRef?.reset();
   }
+
+  function close() {
+    appStore.closeResource({
+      id: $node.id,
+      accessMode: $node.accessMode
+    });
+  }
 </script>
 
 <div
@@ -84,17 +91,15 @@
         />
       </div>
     {:else}
+      {@const isCloseVariant =
+        $node.accessMode === ResourceAccessMode.FULL ||
+        $node.accessMode === ResourceAccessMode.INLINE}
       <Button
-        label="Back"
-        icon="back-sm"
+        label={isCloseVariant ? "Close" : "Back"}
+        icon={isCloseVariant ? "cross" : "chevron-left"}
         size={Size.sm}
         style={ButtonStyle.PLAIN}
-        on:click={() => {
-          appStore.closeResource({
-            id: $node.id,
-            accessMode: $node.accessMode
-          });
-        }}
+        on:click={close}
       />
     {/if}
   {:else}
@@ -200,9 +205,7 @@
           {...buttonCommonProps}
           icon="cross-circled"
           tooltip="Close split view"
-          on:click={() => {
-            appStore.closeResource({ accessMode: $node.accessMode });
-          }}
+          on:click={close}
         />
       {/if}
     {/if}

@@ -95,10 +95,12 @@
     }
     dispatch("keyup", { value, event });
   }
-  function onBlur() {
+  function onBlur(e: any) {
     if (isLinkType) {
       isValidLink = isValidHyperlink(value);
     }
+    if (isShowClearControl && e.relatedTarget?.id === "input-cancel-control")
+      return;
     isFocused = false;
     dispatch("blur");
   }
@@ -258,21 +260,22 @@
         </div>
       {/if} -->
       {#if isShowSaveControl || isShowClearControl}
-        <div class="flex items-center">
+        <div class="flex items-center gap-1">
           {#if isShowSaveControl}
-            <Button
+            <Icon
               icon="check"
               id="input-save-control"
-              size={Size.sm}
               on:click={(e) => dispatch("save", { event: e, value })}
             />
           {/if}
-          {#if (isShowSaveControl || isShowClearControl) && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
-            <Button
+          {#if isShowSaveControl || isShowClearControl}
+            <Icon
               icon="cross"
               id="input-cancel-control"
-              size={Size.sm}
-              on:click={(e) => dispatch("cancel", { event: e })}
+              on:click={(e) => {
+                e.stopPropagation();
+                dispatch("cancel", { event: e });
+              }}
             />
           {/if}
         </div>

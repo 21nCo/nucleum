@@ -88,7 +88,7 @@
         "gap-2":
           iconOrientation === Orientation.Horizontal ||
           (size === Size.sm && iconOrientation === Orientation.Vertical),
-        "portrait:text-base portrait:font-medium": size === Size.md,
+        "portrait:text-base": size === Size.md,
         "text-b3": size === Size.sm,
         "text-base": size === Size.lg,
         "text-aps1": isActive,

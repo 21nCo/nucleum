@@ -33,7 +33,10 @@
   import view from "$lib/client/stores/view.store";
   import context from "$lib/client/stores/context.store";
   import { generateMarkdownText, resolveHeadingParent } from "../node.utils";
-  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    determineResourceAccessMode,
+    resourceInList
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { tabs } from "$lib/client/layout/topNav/tabs/tabs.store";
 
   export let node: IActiveNodeStore;
@@ -99,7 +102,7 @@
         id: $node.id
       });
       if (!x) return;
-      const currentAccessMode = appStore.determineResourceAccessMode($node.id);
+      const currentAccessMode = determineResourceAccessMode($node.id);
       const clickedAccessMode = appStore.determineClickAccessMode(x.event);
       if (clickedAccessMode && clickedAccessMode !== currentAccessMode) {
         appStore.openResource(x.id, clickedAccessMode);
@@ -132,12 +135,10 @@
       currentAccessMode?: ResourceAccessMode;
     }
   ) {
-
     if (id === $node.id) return;
-    
+
     const currentAccessMode =
-      params?.currentAccessMode ??
-      appStore.determineResourceAccessMode($node.id);
+      params?.currentAccessMode ?? determineResourceAccessMode($node.id);
     if (
       currentAccessMode === ResourceAccessMode.TAB &&
       (!params?.accessMode || params?.accessMode === ResourceAccessMode.TAB)

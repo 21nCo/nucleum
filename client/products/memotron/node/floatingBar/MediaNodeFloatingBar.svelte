@@ -32,6 +32,7 @@
   import { isShowStatusBanner } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import BackButton from "$lib/client/elements/button/BackButton.svelte";
+  import ResourceInlineCloseButton from "$lib/client/elements/button/ResourceInlineCloseButton.svelte";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let isHovering: boolean = false;
@@ -101,7 +102,10 @@
       <div class="flex gap-3 justify-between items-center w-full">
         <span class="flex items-center gap-4 flex-1 min-w-0">
           <BackButton
-            isEnabled={$view.isConstrainedWidth && !$node.isInEditMode}
+            isEnabled={$view.isConstrainedWidth &&
+              !$node.isInEditMode &&
+              $node.accessMode !== ResourceAccessMode.INLINE &&
+              $node.accessMode !== ResourceAccessMode.FULL}
             accessMode={$node.accessMode}
             class="min-w-0 flex-1"
           >
@@ -122,7 +126,12 @@
             </div>
           {/if}
         </span>
-        <span class="flex gap-5">
+        <span
+          class={cn("flex", {
+            "gap-5": !isConstrainedWidth,
+            "gap-2": isConstrainedWidth
+          })}
+        >
           {#if !isConstrainedWidth}
             <Toggle
               icon="bird"
@@ -191,16 +200,10 @@
               }}
             />
           {/if}
-          {#if $node.accessMode === ResourceAccessMode.FULL || $node.accessMode === ResourceAccessMode.SLIDESHOW}
-            <Button
-              {...buttonCommonProps}
-              icon="cross-circled"
-              tooltip="Close"
-              on:click={() => {
-                appStore.closeResource({ inlineRestoreId: $node.id });
-              }}
-            />
-          {/if}
+          <ResourceInlineCloseButton
+            accessMode={$node.accessMode}
+            id={$node.id}
+          />
         </span>
       </div>
       {#if dev_isShowMainProperties}

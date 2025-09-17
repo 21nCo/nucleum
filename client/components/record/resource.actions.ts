@@ -8,11 +8,13 @@ import { copyResourceLinkToClipboard } from "../../products/memotron/memotron.ut
 import {
   ResourceAccessPoint,
   ResourceAccessMode,
-  ResourceActionType
+  ResourceActionType,
+  type IResourceCaptureV2
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import { uiState } from "$lib/client/stores/uiState/uiState.store";
 import { get } from "svelte/store";
 import {
+  determineResourceAccessMode,
   determineResourceType,
   isSameResource,
   resolveResourceActionIcon,
@@ -34,14 +36,20 @@ import { AppSearchParam } from "$lib/client/types/appStore.type";
 import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
 
 export class ResourceActions<T extends IMemotronItemBase> {
+  accessPoint?: ResourceAccessPoint;
+  accessMode?: ResourceAccessMode;
   constructor(
     private resource: T,
-    private store: ResourceStore<T>,
-    private accessPoint: ResourceAccessPoint
+    private store: ResourceStore<T, IResourceCaptureV2<T>>,
+    params?: {
+      accessPoint?: ResourceAccessPoint;
+      accessMode?: ResourceAccessMode;
+    }
   ) {
     this.resource = resource;
     this.store = store;
-    this.accessPoint = accessPoint;
+    this.accessPoint = params?.accessPoint;
+    this.accessMode = params?.accessMode;
   }
   copyLink(): IContextMenuItem {
     return {
@@ -271,7 +279,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
     };
   }
   openAsSplit(): IContextMenuItem {
-    const currentMode = appStore.determineResourceAccessMode(this.resource.id);
+    const currentMode = determineResourceAccessMode(this.resource.id);
     return {
       value: "open-as-split",
       label:
@@ -295,7 +303,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
     };
   }
   openAsFull(): IContextMenuItem {
-    const currentMode = appStore.determineResourceAccessMode(this.resource.id);
+    const currentMode = determineResourceAccessMode(this.resource.id);
     return {
       value: "open-in-full-screen",
       label:
