@@ -38,6 +38,7 @@
       $context.os === OperatingSystem.IOS
     ) {
       inputRef?.click();
+      return;
     }
     const val = item.value;
     if (typeof val !== "string") return;

@@ -23,13 +23,12 @@
     type IProperty
   } from "$lib/client/components/collection/properties/property.type";
   import { activeResourceFilter } from "$lib/client/utils/utils";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
   import type {
     ISelectItem,
     ISelectValue
   } from "$lib/client/types/select.type";
-  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
   import {
     ResourceAccessMode,
     ResourceAccessPoint,
@@ -120,6 +119,7 @@
 
   $: isConstrainedWidth =
     $view.isConstrainedWidth ||
+    $view.isPortrait ||
     $collection?.accessMode === ResourceAccessMode.SPLIT ||
     $collection?.accessMode === ResourceAccessMode.FSPLIT ||
     (containerWidth < 1000 &&
@@ -129,8 +129,7 @@
   $: coverPlacement =
     $collection?.coverLayout?.placement === Placement.Top ||
     !$collection?.coverLayout?.placement ||
-    isConstrainedWidth ||
-    $view.isPortrait
+    isConstrainedWidth
       ? Placement.Top
       : $collection?.coverLayout?.placement;
 
@@ -146,7 +145,9 @@
   $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
   onMount(async () => {
-    const viewQueryParam = new URLSearchParams(location.search).get("view");
+    const viewQueryParam = new URLSearchParams(location.search).get(
+      AppSearchParam.VIEW
+    );
     if (viewQueryParam) {
       selectedViewId = viewQueryParam;
     }
@@ -162,6 +163,10 @@
     refreshViewsLane();
     isReady = true;
     await refresh({ isNewView: true });
+  });
+
+  onDestroy(() => {
+    ActiveCollectionStore.destroy(id, accessMode);
   });
 
   async function resolvePropertyList() {
@@ -285,7 +290,6 @@
     resetViewSelections();
     const view = loadActiveView();
     if (!view) return;
-    appStore.toggleSearchParam({ [AppSearchParam.VIEW]: view.id?.toString() });
     await refresh({ isNewView: true });
   }
 
@@ -533,7 +537,7 @@
 </script>
 
 {#if !$collection || $collection.isPageLoading || !isReady}
-  <div class="w-full h-full p-4 cw:pt-12">
+  <div class="w-full h-full p-4 otop:pt-12">
     <PageLoadingPulse />
   </div>
 {:else if $collection}
@@ -584,7 +588,7 @@
     {:else}
       <div
         class={cn("flex flex-col flex-1", {
-          "mo:gap-4 gap-8": !isSingleViewMode || isShowMetaViews,
+          "mo:gap-4 gap-6": !isSingleViewMode || isShowMetaViews,
           "h-full overflow-auto": coverPlacement !== Placement.Top,
           "w-full": coverPlacement === Placement.Top
         })}
@@ -608,11 +612,9 @@
             // When in edit mode, interfering with view settings dropdown when the dropdown opens on top if z-20 is set
             "z-20": isSingleViewMode && !$collection.isInEditMode,
             "pb-8": isSingleViewMode && !isShowMetaViews && !isConstrainedWidth,
-            "pt-6": !isConstrainedWidth,
+            "pt-4": !isConstrainedWidth,
             "p-2": isConstrainedWidth,
-            "cw:pt-12":
-              isConstrainedWidth &&
-              (!$collection.cover || positionFromTop === 0),
+            "otop:pt-12": !$collection.cover || positionFromTop === 0,
             "max-w-full overflow-x-auto":
               accessPoint === ResourceAccessPoint.MARKDOWN_EMBED
           })}
@@ -709,7 +711,7 @@
               "sticky top-0 z-10 flex flex-col gap-6 w-full transition-all duration-300",
               bg(parentBgIndex - 1),
               {
-                "pt-4 cw:pt-12": isStickied
+                "pt-4 otop:pt-12": isStickied
               }
             )}
           >
@@ -832,12 +834,6 @@
         on:repositionDebounced={onCoverRepositionDebounced}
         on:resize={onCoverResize}
         on:resizeDebounced={onCoverResizeDebounced}
-      />
-    {/if}
-    {#if $collection?.accessMode === ResourceAccessMode.SPLIT || $collection?.accessMode === ResourceAccessMode.FULL || $collection?.accessMode === ResourceAccessMode.FSPLIT}
-      <FullScreenCloseButton
-        style={ButtonVariant.DANGER}
-        accessMode={$collection.accessMode}
       />
     {/if}
   </div>

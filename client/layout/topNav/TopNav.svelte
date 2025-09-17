@@ -26,6 +26,8 @@
     UIStateScope
   } from "$lib/client/stores/uiState/uiState.type";
   import TopNavLeftLogo from "./TopNavLeftLogo.svelte";
+  import { Embed } from "$lib/client/types/context.type";
+  import context from "$lib/client/stores/context.store";
 
   let isInFocusMode = false;
   let pinnedItems: IRecordId[] = tabs.get() ?? [];
@@ -63,6 +65,7 @@
 </script>
 
 {#if !isInFocusMode}
+  <div class="hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
   <div
     class={cn(
       "w-full h-11 max-h-11 min-h-11 2k:h-12 2k:max-h-12 2k:min-h-12 bg-bgs2 pr-4 border-b border-brs3 userdata",
@@ -75,7 +78,9 @@
   >
     {#if pinnedItems.length > 0}
       <div class="flex items-center relative h-full overflow-x-auto">
-        <TopNavLeftLogo {isHideMenuLabels} />
+        {#if $context.embed !== Embed.HANDSET}
+          <TopNavLeftLogo {isHideMenuLabels} />
+        {/if}
         <Tabs {pinnedItems} />
         <div
           class="absolute right-0 top-0 bottom-0 flex items-center pointer-events-none"

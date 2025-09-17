@@ -4,7 +4,6 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IGridItem } from "../landing.type";
-  import { landing } from "../store/shared.store";
 
   export let item: IGridItem;
 
@@ -15,16 +14,12 @@
   function onMouseLeave() {
     isHovered = false;
   }
-  function onClick() {
-    if (item.href) {
-      landing.openLink(item.href);
-    }
-  }
 </script>
 
-<button
+<a
   class="flex flex-col items-start justify--center gap-[14px] w-[480px] mo:w-[342px] max-w-full"
-  on:click={onClick}
+  href={item.href}
+  target="_blank"
   on:mouseenter={onMouseEnter}
   on:mouseleave={onMouseLeave}
 >
@@ -52,4 +47,4 @@
       {description}
     </p>
   {/if}
-</button>
+</a>

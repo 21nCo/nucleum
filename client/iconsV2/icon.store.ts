@@ -1,6 +1,8 @@
 import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
 import { bundleNumber } from "./icons-list";
 import { iconMappings, type IconSet } from "./icons.map";
+//TODO - temp for landing
+import { assetPath } from "@21n/static";
 
 export const spriteVersion = bundleNumber;
 export const extensionSprites = new Map<string, string>();
@@ -42,5 +44,9 @@ export function resolveSpriteSheetPath(sheet: string) {
   if (isExtensionEnvironment()) {
     return `assets/icons/${sheet}.svg`;
   }
-  return `/icons/${sheet}-v${spriteVersion}.svg`;
+  return assetPath(`icons/${sheet}-v${spriteVersion}.svg`);
 }
+
+// function assetPath(arg0: string) {
+//   return arg0;
+// }

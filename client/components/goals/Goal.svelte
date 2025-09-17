@@ -20,7 +20,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import GoalHistory from "./history/GoalHistory.svelte";
   import GoalTasks from "./tasks/GoalTasks.svelte";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { page } from "$app/stores";
   import PropertiesPane from "../collection/properties/PropertiesPane.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -63,6 +63,10 @@
     return () => {
       pageSub();
     };
+  });
+
+  onDestroy(() => {
+    ActiveGoalStore.destroy(id);
   });
 
   async function initialize() {
@@ -222,7 +226,7 @@
       <main class="flex flex-col gap-4 flex-1 overflow-auto">
         <div
           class={cn(
-            "relative flex flex-col w-full overflow-auto gap-3 bg-bgs2 cw:pt-12 shrink-0",
+            "relative flex flex-col w-full overflow-auto gap-3 bg-bgs2 otop:pt-12 shrink-0",
             {
               "rounded-lg border border-brs3": !isConstrainedWidth,
               "border-b border-brs3": isConstrainedWidth

@@ -21,7 +21,7 @@
 </script>
 
 {#if $view.isPortrait && !isCpHome}
-  <div class="flex flex-col h-full w-full gap-2 px-4 py-2 cw:pt-12">
+  <div class="flex flex-col h-full w-full gap-2 px-4 py-2 otop:pt-12">
     <NavigationHeader
       label={$appStore.currentComponent?.label ?? ""}
       backCallback={() => {

@@ -106,7 +106,7 @@
   />
 {:then}
   <div
-    class="flex flex-col gap-6 flex-grow w-full items-center userdata cw:pt-12"
+    class="flex flex-col gap-6 flex-grow w-full items-center userdata otop:pt-12"
   >
     <div class="flex gap-4 w-full items-center justify-between">
       <Text content="Session details" style={TextStyle.PANEL_HEADING} />

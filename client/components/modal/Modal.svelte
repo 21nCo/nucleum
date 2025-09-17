@@ -133,6 +133,7 @@
       </div>
     </div>
   {:else}
+    {@const isBlurredBg = $userPreferences.appearance?.isBlurredBgForPopups}
     <div
       class={cn(
         "pop-overlay fixed w-screen h-screen inset-0 z-50",
@@ -145,10 +146,9 @@
         isShowOverlay &&
           !isUseDialog &&
           !isInFocusMode && {
-            "bg-black bg-opacity-70":
-              !$userPreferences.appearance?.isBlurredBgForPopups,
+            "bg-black bg-opacity-70": !isBlurredBg,
             "backdrop-blur-2xl backdrop-opacity--80 backdrop-brightness--50 backdrop-grayscale bg-fgs4 bg-opacity-50 backdrop-saturate--50":
-              $userPreferences.appearance?.isBlurredBgForPopups
+              isBlurredBg
           }
       )}
       {id}
@@ -202,12 +202,14 @@
       {:else}
         <div
           id={id + "-modal"}
-          class={cn("bg-bgs1 max-h-full cursor-default", {
+          class={cn("bg-bgs1 max-h-full cursor-default otopl:pt-12", {
             ...resolveSizeClasses(),
-            "rounded-md": size !== Size.full,
+            "rounded-md otopl:bg-transparent": size !== Size.full,
+            "otopl:bg-bgs1": size === Size.full,
             "mo:rounded-none": size !== Size.full && size !== Size.xs,
             "mo:w-9/10": size === Size.xs,
-            "mo:w-full mo:h-full": size !== Size.xs
+            "mo:w-full mo:h-full": size !== Size.xs,
+            "portrait:w-full": size !== Size.xs && size !== Size.sm
           })}
         >
           <ColorLayer>

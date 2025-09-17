@@ -1,0 +1,89 @@
+{
+  "label": "Mymind",
+  "url": "mymind.com",
+  "price": 6.58,
+  "icon": "svg:mymind",
+  "sourcingType": "CLOSED",
+  "whenToChoose": [
+    {
+      "label": ""
+    }
+  ],
+  "latestAnalysisDate": "2025-07-18",
+  "features": [
+    {
+      "feature": "source",
+      "rating": 0
+    },
+    {
+      "feature": "privacy",
+      "rating": 0.4,
+      "notes": "Mymind demonstrates strong performance in core privacy [commitments](https://mymind.com/our-promise), particularly around data ownership and protection from commercial exploitation. The app has transparent privacy policies with user consent requirements. However, the app doesn't provide end-to-end encryption and offline-first functionality. There is no bug bounty program as well."
+    },
+    {
+      "feature": "reliability",
+      "rating": 0.25,
+      "notes": "Mymind app is overall performant. However, Mymind shows poor transparency regarding reliability metrics. The service lacks fundamental reliability indicators like a public status page or uptime statistics. Mymind also has instances where users have reported multiple reliability issues on social forums and other platforms."
+    },
+    {
+      "feature": "maintenance",
+      "rating": 0.8,
+      "notes": "Mymind has a very simple installation and setup process. Users can start saving content immediately after account creation without complex setup procedures. The app is designed around a **no folders, no tags** approach, eliminating traditional organizational setup that other tools require. Users did report that as content volume grows, search becomes increasingly difficult and running into the problem of **library overload**."
+    },
+    {
+      "feature": "sustainability",
+      "rating": 0.55,
+      "notes": "Mymind demonstrates a highly [sustainable](https://mymind.com/will-your-app-stick-around) business model with independent funding, transparent pricing, and values-aligned operations that support long-term growth without compromising user privacy. However, self-hosting is not available and interoperability with other apps is limited."
+    },
+    {
+      "feature": "offlinability",
+      "rating": 0
+    },
+    {
+      "feature": "basic-markdown",
+      "rating": 0.7
+    },
+    {
+      "feature": "pdf",
+      "rating": 0.5,
+      "notes": "Mymind supports PDF files viewing and getting more context from the PDF files using features like TLDR, AI tags, summaries etc. However, PDF annotation is not supported."
+    },
+    {
+      "feature": "text-capture",
+      "rating": 0.85
+    },
+    {
+      "feature": "camera-capture",
+      "rating": 0.75,
+      "notes": "Mymind supports capturing content using camera and also has OCR text recognition."
+    },
+    {
+      "feature": "web-clipping",
+      "rating": 0.5,
+      "notes": "Mymind has a very intuitive browser extension to clip web pages and text from web pages into Mymind app. However, the extension does not persist text highlights on the web page when returning to the page, doesn't show the list of highlights, doesn't support screenshot and the ability to take notes"
+    },
+    {
+      "feature": "video-clipping",
+      "rating": 0.25,
+      "notes": "Mymind extension can be used to save Youtube videos. But, doesn't support highlighting and taking notes on the video."
+    },
+    {
+      "feature": "social-clipping",
+      "rating": 0.35,
+      "notes": "Mymind extension can be used to save tweets and has first-class viewing support for saved tweets. But, doesn't support taking notes on the tweet or capturing more efficiently."
+    },
+    {
+      "feature": "link-to-curate",
+      "rating": 0.4,
+      "notes": "Mymind extension provides the ability to quickly add tags when clipping web pages. This is a useful way to curate while linking. However, it is limited to only adding tags."
+    },
+    {
+      "feature": "collections",
+      "rating": 0.8
+    },
+    {
+      "feature": "search",
+      "rating": 0.7
+    }
+  ]
+}

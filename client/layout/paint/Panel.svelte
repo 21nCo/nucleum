@@ -41,6 +41,7 @@
   export let extraLargeScreenComponent: string | undefined = undefined;
   export let info: InputLabelInfoToolTip | undefined = undefined;
   export let isPreventCwPadding: boolean = false;
+  export let isHideRightSplit: boolean = false;
   let isExplicitlyCollapsed = false;
 
   onMount(() => {
@@ -67,13 +68,14 @@
   $: isExtraLargeScreen = $view.landscapiness > 1.7 && $view.scale > 1.8;
 </script>
 
-<div class={cn("flex w-full h-full", { "cw:pt-12": !isPreventCwPadding })}>
+<div class="flex w-full h-full">
   {#if !isCollapsed}
     <div
       class={cn(
         "relative flex flex-col h-full",
         {
-          "w-full": $view.isConstrainedWidth || isExpanded
+          "w-full": $view.isConstrainedWidth || isExpanded,
+          "otop:pt-12": !isPreventCwPadding
         },
         !$view.isConstrainedWidth &&
           !isExpanded && {
@@ -94,7 +96,7 @@
         >
           <BackButton
             isEnabled={isShowBackButton}
-            parentBgIndex={parentBgIndex}
+            {parentBgIndex}
             isPreventDefault={true}
             on:click={() => dispatch("back")}
           >
@@ -104,7 +106,7 @@
             {/if}
           </BackButton>
           <slot name="toprightactions">
-            {#if !isExpanded && isShowCollapseButton}
+            {#if !isExpanded && isShowCollapseButton && !isShowBackButton}
               <button
                 class="flex items-center text-fgs3 p-1 hover:bg-bgs2 rounded-md"
                 use:tooltip={{
@@ -140,7 +142,7 @@
       {/if}
     </div>
   {/if}
-  {#if !$view.isConstrainedWidth && !isExpanded}
+  {#if !$view.isConstrainedWidth && !isExpanded && !isHideRightSplit}
     <!-- Right split -->
     {#if $$slots.right}
       <Divider

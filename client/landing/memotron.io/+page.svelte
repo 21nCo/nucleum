@@ -13,10 +13,11 @@
   import HeroVideoV2 from "../shared/elements/HeroVideoV2.svelte";
   import Features from "../shared/features/Features.svelte";
   import { highlights } from "../shared/highlights/highlights.data";
+  import PageSeo from "../shared/seo/PageSEO.svelte";
   let heroInputs: IHeroInputs = {
     tagline: "Your memory atlas",
     description:
-      "Transform the way you think, learn and manage your knowledge.",
+      "A thoughtfully crafted super app for your personal knowledge management.",
     primaryButton: {
       isDownloadButton: true,
       type: "primary"
@@ -33,15 +34,11 @@
       desc: "Finally, a place where personal knowledge management feels complete.",
       visualRenderComponent: "memotronFeaturesRadial"
     },
-    // highlights.reliable,
-    {
-      ...highlights.powerful,
-      desc: "Unlock next-level of your digital memory with a powerhouse of features.",
-      visualRenderComponent: ""
-    },
+    highlights.reliable,
     highlights.offline,
     highlights.zerotrust,
     highlights.ainative,
+    highlights.humane,
     highlights.intuitive,
     highlights.laast
   ];
@@ -122,14 +119,18 @@
     {
       image: "captureFeature.png",
       feature: "Capture",
-      title: "Capturing at its finest",
-      desc: "Capture in any format and from any device with our seamless capture experience - always one interaction away.",
-      visualRenderComponent: "captureFeature"
+      title: "Fastest capture ever built",
+      desc: "Capture your fleeting thoughts and ideas in any format and from any device. With Memotron, capturing is frictionless - always one interaction away.",
+      visualRenderComponent: "captureFeature",
+      videoElement: {
+        title: "It takes <5 sec to start capturing",
+        url: "https://youtu.be/7KHEG8QSv6w"
+      }
     },
     {
       image: "clipFeature.png",
       feature: "Clipping",
-      title: "Clip anything, anywhere",
+      title: "Web clipper extension",
       desc: "Clip anything, anywhere with the most intuitive clipping experience using our browser extension.",
       visualRenderComponent: "clipFeature"
     },
@@ -137,19 +138,35 @@
       image: "organizeFeature.png",
       feature: "Curation",
       title: "Organize like a breeze",
-      desc: "Organize your knowledge in a breeze with our link to curate capability, collections, properties and relations.",
+      desc: "Organizing your knowledge isn't another additional step on Memotron. With our link to curate capability - your notes will auto-organize during capture itself. It gets even better with collections, properties and relations.",
       visualRenderComponent: "organizeFeature"
     },
     {
       image: "synthesizeFeature.png",
       feature: "Synthesize",
-      title: "Synthesize can't get any better",
-      desc: "Synthesize your memory at the right moments when you need it the most.",
+      title: "Search, retrieve, and recall",
+      desc: "Search from your digital memory at the right moments when you need it the most.",
       visualRenderComponent: "synthesizeFeature"
     }
   ];
+  let metadata = {
+    title: "Memotron - Open source personal knowledge management for everyone",
+    description:
+      "Memotron is a digital notes app that helps user's manage personal knowledge, research and learning.",
+    keywords: [
+      "memotron",
+      "note-taking",
+      "digital memory management",
+      "knowledge management",
+      "PKM",
+      "NCCL PKM system"
+    ],
+    canonicalUrl: "https://memotron.app",
+    image: "https://cdn.21n.co/memotron/ogImage.png"
+  };
 </script>
 
+<PageSeo data={metadata} />
 <HeroSection {heroInputs} />
 <HeroVideoV2
   url="https://www.youtube.com/embed/SeWdndc7y4A?si=Wa0Kdg22N205iOLJ"
@@ -163,7 +180,7 @@
 />
 <Features
   {features}
-  title="Explore PKM in a whole new way"
+  title="Your digital notes, at a whole new level"
   subtitle="Thoughtfully crafted, one feature at a time"
 />
 <Testimonials
@@ -173,7 +190,7 @@
 />
 <BottomCta
   {deviceImages}
-  body="Start using Memotron to simplify your knowledge management and take control of your scattered thoughts journey."
+  body="Start using Memotron to replace scattered workflows with a cohesive memory atlas."
   primaryAction={{ isDownloadButton: true, type: "primary" }}
   secondaryAction={{
     label: "See all downloads",

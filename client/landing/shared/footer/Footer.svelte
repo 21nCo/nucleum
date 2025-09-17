@@ -1,15 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { IFooter, IListItem, ITileItem } from "../landing.type";
-  import Section from "../Section.svelte";
   import Button from "../elements/Button.svelte";
   import Box from "./Box.svelte";
   import ListWithTitle from "./ListWithTitle.svelte";
-  import { paintQRCode } from "$lib/client/utils/ui.utils";
-  import { goto } from "$app/navigation";
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import Icon from "$lib/client/elements/Icon.svelte";
   import appearance from "$lib/client/stores/appearance.store";
   import view from "$lib/client/stores/view.store";
   import { Theme } from "$lib/client/types/appearance.type";
@@ -80,7 +76,7 @@
     title: "Read our white paper",
     href: org.whitepaper,
     description:
-      "Discover our mission to enable human progress by building technology with triple bottom line at its core."
+      "Discover our mission of building technology with triple bottom line at our core."
   };
 
   let ourStory = {
@@ -99,7 +95,7 @@
     },
     {
       title: "Refund policy",
-      href: "/refundpolicy"
+      href: "/policies/refundpolicy"
     }
   ];
   let information: any[] = [{ title: "Information" }];
@@ -154,7 +150,7 @@
   ];
 </script>
 
-<div class="flex flex-col items-center gap-6 w-full pb-20">
+<footer class="flex flex-col items-center gap-6 w-full pb-20">
   {#if $view.isPortrait}
     <div class="flex flex-col bg-bgs2 w-full rounded-[20px] p-7">
       <ListWithTitle items={combinedLI} />
@@ -197,12 +193,12 @@
           <p class="text-fgs2 text-left">
             {joinUs.description}
           </p>
-          <div>
+          <div class="w-fit">
             <Button
               label={joinUs.title}
               isShort={true}
               type="secondary"
-              on:click={() => landing.openLink(joinUs.href)}
+              href={joinUs.href}
             />
           </div>
         </Box>
@@ -213,22 +209,20 @@
     class="w-full rounded-xl flex mo:flex-col mo:gap-y-4 items-center bg-bgs1 px-7 py-4 mo:px-0 mo:py-4 min-w-0 flex-1 text-b2 2k:text-lb2"
   >
     {#if !$view.isPortrait}
-      <div class="flex items-center gap-2 text-fgs3">
+      <a
+        class="flex items-center gap-2 text-fgs3"
+        href={org.website}
+        target="_blank"
+      >
         {#if $isProductPage}
           <span class="-mb-0.5">Built at</span>
         {/if}
-        <SvgIcon
-          icon="21n-temp"
-          size={Size.xl}
-          on:click={() => {
-            landing.openLink(org.website);
-          }}
-        />
-      </div>
+        <SvgIcon icon="21n-temp" size={Size.xl} />
+      </a>
     {/if}
     <div class="flex mx-auto gap-5 mo:gap-3">
       {#each socials as social, index}
-        <button
+        <a
           style="--bg-color:{social.isHovered
             ? social.primary
             : $appearance.theme == Theme.DARK
@@ -242,12 +236,14 @@
           on:mouseenter={() => handleHover(index)}
           on:mouseleave={() => handleLeave(index)}
           tabindex="0"
-          on:click={() => landing.openLink(social.href)}
+          href={social.href}
+          target="_blank"
+          rel="noopener noreferrer"
         >
           <SvgIcon icon={social.icon} size={Size.xl} />
-        </button>
+        </a>
       {/each}
     </div>
     <p class="text-fgs3">{org.incorporation}</p>
   </div>
-</div>
+</footer>

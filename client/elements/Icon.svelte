@@ -137,8 +137,10 @@
   import One80RingWithBg from "../iconsV2/svgSpinners/One80RingWithBg.svelte";
   import NinetyRingWithBg from "../iconsV2/svgSpinners/NinetyRingWithBg.svelte";
   import ThreeDotsFade from "../iconsV2/svgSpinners/ThreeDotsFade.svelte";
+  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
   export let icon: string | undefined = undefined;
+  export let id: string = generateSimpleRandomId();
   export let size:
     | Size.xs
     | Size.sm
@@ -359,6 +361,7 @@
 </script>
 
 <button
+  {id}
   class={cn("relative inline-flex items-center justify-center")}
   tabindex={isTabbable ? 0 : -1}
   on:click

@@ -20,6 +20,9 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { createEventDispatcher } from "svelte";
   import { Action } from "$lib/client/types/action.enum";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import { page } from "$app/stores";
+  import BackButton from "$lib/client/elements/button/BackButton.svelte";
   export let panel: CalendarLayout = CalendarLayout.Classic;
   const dispatch = createEventDispatcher();
   const panelOptions: ISelectItem[] = [
@@ -31,6 +34,7 @@
       // isDisabled: true
     }
   ];
+  const backPath = $page.url.searchParams.get(AppSearchParam.RETURN_TO);
   const dev_enableBirdView = import.meta.env?.DEV;
 
   function onPanelSwitch(event: CustomEvent) {
@@ -42,24 +46,32 @@
   }
 </script>
 
-<div class="flex flex-col h-full w-full">
+<div class="flex flex-col h-full w-full otop:pt-12">
   <div
     class="flex items-center gap-4 border-b border-brs3 h-[3.2rem] 2k:h-14 px-4"
   >
     <header class="grid grid-cols-3 w-full sticky top-0 z-10">
       <div class="flex items-center gap-4">
-        {#if $appStore.product === Product.NUCLEUS && dev_enableBirdView}
-          <PanelSwitcher
-            items={panelOptions}
-            bind:value={panel}
-            style={PanelSwitcherStyle.TRAIN}
-            size={Size.sm}
-            activeItemStrength={PanelSwitcherActiveItemStrength.STRONG}
-            on:switch={onPanelSwitch}
-          />
-        {:else}
-          <Text content="Calendar" style={TextStyle.PANEL_HEADING_SMALL} />
-        {/if}
+        <BackButton
+          isEnabled={backPath !== null}
+          isPreventDefault={true}
+          on:click={() => {
+            if (backPath) appStore.gotoPath(backPath);
+          }}
+        >
+          {#if $appStore.product === Product.NUCLEUS && dev_enableBirdView}
+            <PanelSwitcher
+              items={panelOptions}
+              bind:value={panel}
+              style={PanelSwitcherStyle.TRAIN}
+              size={Size.sm}
+              activeItemStrength={PanelSwitcherActiveItemStrength.STRONG}
+              on:switch={onPanelSwitch}
+            />
+          {:else}
+            <Text content="Calendar" style={TextStyle.PANEL_HEADING_SMALL} />
+          {/if}
+        </BackButton>
         <slot name="header-left-options" />
       </div>
       <slot name="header" />

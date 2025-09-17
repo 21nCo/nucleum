@@ -219,21 +219,21 @@
       <div
         class={cn("group flex flex-col justify-between gap-4 p-4", {
           "cw:h-fit h-72 bg-bgs1 border-t-transparent border-x-transparent border-t border-x border-brs3 hover:border-t-brs3 hover:border-x-brs3 hover:rounded-t-md rounded-t-md":
-            mode === "all" && !$view.isConstrainedWidth
+            mode === "all" && !$view.isPortrait
         })}
       >
-        {#if mode === "all" && !$view.isConstrainedWidth}
+        {#if mode === "all" && !$view.isPortrait}
           <div class="text-fgs3 text-center">Sync across devices</div>
         {/if}
         {#if isValidArrayWithData($appStore?.appData?.oAuthConfig)}
           <OAuthButtons bind:currentProgress />
         {/if}
-        {#if !$view.isConstrainedWidth}
+        {#if !$view.isPortrait}
           <div
             class={cn(
               "text-fgs3 text-b3 text-center transition-opacity duration-300",
               {
-                "opacity-0 group-hover:opacity-100": mode === "all"
+                "opacity-80 group-hover:opacity-100": mode === "all"
               }
             )}
           >
@@ -242,8 +242,8 @@
         {/if}
       </div>
     {/if}
-    {#if mode !== "cloud-only" && $view.isConstrainedWidth}
-      <div class="flex items-center w-72 mx-auto">
+    {#if mode !== "cloud-only" && $view.isPortrait}
+      <div class="flex items-center cw:w-80 w-96 p-4 mx-auto">
         <Button
           label="Continue offline"
           icon="proceed"
@@ -253,7 +253,7 @@
           on:click={onOfflineClick}
         />
       </div>
-    {:else if mode !== "cloud-only" && !$view.isConstrainedWidth}
+    {:else if mode !== "cloud-only" && !$view.isPortrait}
       <button
         class={cn(
           "group flex flex-col justify-center items-center w-full  p-3",
@@ -272,7 +272,7 @@
         </div>
         {#if mode === "all"}
           <div
-            class="text-fgs3 text-b3 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            class="text-fgs3 text-b3 opacity-80 group-hover:opacity-100 transition-opacity duration-300"
           >
             Single device use & free forever. No signup required.
           </div>

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Table2 from "$lib/client/elements/table/Table2.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   import {
@@ -56,6 +55,7 @@
   import { objIsEmpty } from "$lib/shared/utils/obj.utils";
   import CollectionTitleLabelPart from "../thumbnail/CollectionThumbnailLabel.svelte";
   import { Product } from "$lib/client/products/product.type";
+  import Table3 from "$lib/client/elements/table/Table3.svelte";
   export let id: IRecordId | undefined = undefined;
   let collection: IActiveCollectionStore | undefined = id
     ? ActiveCollectionStore.resolve(id)
@@ -355,7 +355,7 @@
       </div>
       <div class="flex flex-col items-start w-full gap-2 flex-grow">
         <Text content="Properties" style={TextStyle.SECTION_HEADING} />
-        <Table2
+        <Table3
           id={tableId}
           isStyled={true}
           width="min-w-[60rem]"

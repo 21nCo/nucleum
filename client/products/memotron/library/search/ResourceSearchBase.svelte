@@ -66,6 +66,10 @@
       icon: resolveResourceIcon(x)
     }))
   ];
+
+  $: isGroupedResultsMode =
+    !$view.isConstrainedWidth && resource === Resource.everything;
+
   onMount(async () => {
     if (isExpanded) {
       searchResultsPopover?.search();
@@ -75,7 +79,7 @@
   });
 
   export function search() {
-    if (resource === Resource.everything) {
+    if (isGroupedResultsMode) {
       groupedSearchRef?.search();
     } else {
       searchResultsPopover?.search();
@@ -83,7 +87,7 @@
   }
 
   export function keydown(event: KeyboardEvent) {
-    if (resource === Resource.everything) {
+    if (isGroupedResultsMode) {
       groupedSearchRef?.keydown(event);
     } else {
       searchResultsPopover?.keydown(event);
@@ -91,7 +95,7 @@
   }
 
   export function keyup(event: KeyboardEvent) {
-    if (resource === Resource.everything) {
+    if (isGroupedResultsMode) {
       groupedSearchRef?.keyup(event);
     } else {
       searchResultsPopover?.keyup(event);
@@ -130,6 +134,10 @@
     }
   }
 
+  /**
+   * Defaulting to FULL access mode for portrait - since in this layout - tab bar isn't available
+   * @param e
+   */
   function onSelect(
     e: CustomEvent<{ item: any; event: MouseEvent | undefined; group?: any }>
   ) {
@@ -143,8 +151,8 @@
       }
       return;
     }
-    if ($view.isConstrainedWidth) {
-      appStore.openResource(item.id, ResourceAccessMode.POP);
+    if ($view.isPortrait) {
+      appStore.openResource(item.id, ResourceAccessMode.FULL);
       return;
     }
     const clickAccessMode = e.detail.event
@@ -171,7 +179,7 @@
 <div
   class={cn("flex flex-col gap-4 w-full h-full", {
     "bg-bgs2": isGlobalSearchModal && resource === Resource.everything,
-    "cw:pt-12": isGlobalSearchModal
+    "otop:pt-12": isGlobalSearchModal
   })}
 >
   <header class={"flex flex-col w-full"}>
@@ -185,7 +193,7 @@
       </span>
       {#if isExpanded}
         <div class="flex h-full items-center gap-2 pr-4">
-          {#if $view.isConstrainedWidth}
+          {#if !isGlobalSearchModal}
             <Button
               icon="cross"
               size={Size.lg}
@@ -246,7 +254,7 @@
         size={Size.sm}
         on:switch={() => {
           setTimeout(() => {
-            if (resource === Resource.everything) {
+            if (isGroupedResultsMode) {
               groupedSearchRef?.search(searchQuery);
             } else {
               searchResultsPopover?.search(searchQuery);
@@ -279,7 +287,7 @@
         <SearchResults items={recents} />
       </div>
     {/if} -->
-      {#if resource === Resource.everything}
+      {#if isGroupedResultsMode}
         <div class="flex flex-col justify-between w-full h-full p-2">
           <div class="flex flex-grow w-full">
             <GroupedSearchResults
@@ -330,7 +338,7 @@
           />
           to close
         </span>
-        {#if resource === Resource.everything}
+        {#if isGroupedResultsMode}
           <span class="inline-flex items-center gap-1">
             Press
             <ShortcutText

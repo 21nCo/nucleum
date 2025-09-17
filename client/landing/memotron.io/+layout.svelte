@@ -1,6 +1,5 @@
 <script lang="ts">
   import "$lib/client/app.css";
-  import type { IMetadata } from "$lib/client/layout/metadata.type";
   import BlankLandingLayout from "../shared/BlankLandingLayout.svelte";
   import type {
     IFooter,
@@ -45,8 +44,8 @@
     cta: [
       {
         label: "",
-        href: "https://github.com/21nOrg/tidigit",
-        icon: "github-logo",
+        href: "https://github.com/21nOrg/nucleus",
+        icon: "ph:github-logo",
         type: "secondary"
       },
       {
@@ -64,23 +63,9 @@
     roadmapUrl: urls.roadmap,
     changelogUrl: urls.changelog
   };
-  let metadata: IMetadata = {
-    title: "Memotron - Open source personal knowledge management for everyone",
-    description:
-      "Memotron is a memory atlas that helps you remember everything. Personal knowledge management redefined.",
-    keywords:
-      "memotron, memory, atlas, remember, knowledge management, PKM, NCCL PKM system",
-    url: "https://memotron.app",
-    image: "https://cdn.21n.co/memotron/ogImage.png"
-  };
   landing.load(urls);
 </script>
 
-<BlankLandingLayout
-  {topNavBarValues}
-  {footerValues}
-  isProduct={true}
-  {metadata}
->
+<BlankLandingLayout {topNavBarValues} {footerValues} isProduct={true}>
   <slot />
 </BlankLandingLayout>

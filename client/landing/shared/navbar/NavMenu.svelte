@@ -3,7 +3,7 @@
   import NavMenuItem from "./NavMenuItem.svelte";
   import { popover } from "$lib/client/actions/popover.action";
   import NavBarExpandPopover from "./NavBarExpandPopover.svelte";
-  import { landing } from "../store/shared.store";
+
   export let topNavBarValues: ITopNavBar;
   export let isStickedContext: boolean = false;
 </script>
@@ -26,16 +26,6 @@
       <NavMenuItem {item} {isStickedContext} />
     </button>
   {:else}
-    <NavMenuItem
-      {item}
-      {isStickedContext}
-      on:click={() => {
-        if (item.callback) {
-          item.callback();
-        } else {
-          landing.openLink(item.href);
-        }
-      }}
-    />
+    <NavMenuItem {item} {isStickedContext} />
   {/if}
 {/each}

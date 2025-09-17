@@ -3,8 +3,25 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IFeature } from "../landing.type";
   import VisualRender from "../VisualRender.svelte";
+  import { sanitizeUrl } from "../utils/url-sanitizer";
   export let feature: IFeature;
   export let isReversed: boolean = false;
+
+  function extractVideoId(url: string): string | null {
+    const youtubeRegex =
+      /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(youtubeRegex);
+    return match && match[2].length === 11 ? match[2] : null;
+  }
+
+  function getYoutubeThumbnail(videoId: string): string {
+    return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+  }
+
+  $: videoId = feature.videoElement?.url
+    ? extractVideoId(feature.videoElement.url)
+    : null;
+  $: thumbnailUrl = videoId ? getYoutubeThumbnail(videoId) : null;
 </script>
 
 <div
@@ -41,20 +58,36 @@
         <VisualRender name={feature.visualRenderComponent} />
       </div>
     </div>
-    {#if feature.tutorialUrl}
-      <div
-        class="flex items-center gap-3 mt-4 border border-brs3 rounded-md py-2 px-4 w-1/2"
+    {#if feature.videoElement && sanitizeUrl(feature.videoElement?.url)}
+      <a
+        class="group flex items-center gap-3 mt-4 border border-brs3 rounded-md py-2 px-4 w-fit hover:bg-bgs1"
+        href={sanitizeUrl(feature.videoElement?.url)}
+        target={feature.videoElement?.url?.startsWith("http")
+          ? "_blank"
+          : "_self"}
+        rel={feature.videoElement?.url?.startsWith("http")
+          ? "noopener noreferrer"
+          : undefined}
+        title="Click to watch video"
       >
-        <div class="w-20 h-11 bg-bgs3 rounded-md">
-          <!-- TODO video thumbnail -->
+        <div class="w-20 h-11 bg-bgs3 rounded-md overflow-hidden">
+          {#if videoId && thumbnailUrl}
+            <img
+              src={thumbnailUrl}
+              alt="{feature.videoElement?.title ?? feature.feature} thumbnail"
+              class="w-full h-full object-cover"
+            />
+          {/if}
         </div>
         <div class="flex flex-col gap-1">
           <div class="text-lb2 text-left font-medium">
-            {feature.feature}
+            {feature.videoElement.title ?? feature.feature}
           </div>
-          <div class="text-b3 text-fgs3 text-left">Watch tutorial</div>
+          <div class="flex items-center gap-1 text-b3 text-fgs3 text-left">
+            Watch video
+          </div>
         </div>
-      </div>
+      </a>
     {/if}
   </div>
 </div>

@@ -6,7 +6,9 @@
 
 <th class="border border-bgs3 p-2 text-left">
   <div class="flex items-center gap-1">
-    <ExternalLogo provider={contemporary} />
+    <div class="w-5 h-5">
+      <ExternalLogo provider={contemporary} url={contemporary.url} />
+    </div>
     <span class="font-medium">{contemporary.label}</span>
   </div>
 </th>

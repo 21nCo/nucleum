@@ -95,7 +95,7 @@ export class ClientStack extends Stack {
     });
 
     new s3deploy.BucketDeployment(this, "DeployWithInvalidation", {
-      sources: [s3deploy.Source.asset("./../../../../build")],
+      sources: [s3deploy.Source.asset("../../../apps/" + (process.env.PROJECT_NAME || "nucleus") + "/build")],
       destinationBucket: siteBucket,
       distribution,
       distributionPaths: ["/*"],

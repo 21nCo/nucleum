@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import MarkdownRenderer from "$lib/client/landing/shared/elements/MarkdownRenderer.svelte";
+
   export let notes: string;
-  $: renderedContent = renderMdAsHtml(notes);
 </script>
 
 <div class="h-full flex flex-col justify-between w-96 p-4 space-y-4">
-  <div class="flex space-y-2">
+  <div class="flex space-y-2 overflow-y-auto">
     <div class="text-b2 leading-relaxed prose prose-sm max-w-none">
-      {@html renderedContent}
+      <MarkdownRenderer text={notes} />
     </div>
   </div>
   <div class="flex text-b3 text-fgs3">

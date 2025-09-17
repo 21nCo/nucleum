@@ -70,7 +70,7 @@
 </script>
 
 {#if $view.isPortrait}
-  <main class="relative flex w-full h-full cw:pt-12">
+  <main class="relative flex w-full h-full otop:pt-12">
     <div class="flex flex-col h-full w-full">
       {#if $activeSession.isSessionRunning && !$activeSession.isQuickStartOn && isInlineEnabled}
         <Zen isInline={true} />

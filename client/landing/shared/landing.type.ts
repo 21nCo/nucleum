@@ -69,6 +69,7 @@ export type IHighlight = {
   visualRenderComponent?: string;
   isVisualAtBottom?: boolean;
   isJustifyEndOnCw?: boolean;
+  link?: string;
 };
 
 export type IFeature = {
@@ -77,6 +78,13 @@ export type IFeature = {
   title: string;
   desc: string;
   visualRenderComponent: string;
+  videoElement?: {
+    title?: string;
+    url: string;
+  };
+  /**
+   * @deprecated - use videoElement instead
+   */
   tutorialUrl?: string;
 };
 

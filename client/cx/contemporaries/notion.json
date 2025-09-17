@@ -1,0 +1,183 @@
+{
+  "label": "Notion",
+  "url": "notion.so",
+  "icon": "svg:notion",
+  "price": 10,
+  "sourcingType": "CLOSED",
+  "latestAnalysisDate": "2025-07-24",
+  "distribution": {
+    "available": [
+      "WEB",
+      "MAC",
+      "WINDOWS",
+      "LINUX",
+      "IOS",
+      "ANDROID",
+      "CHROMIUM",
+      "FIREFOX",
+      "SAFARI"
+    ]
+  },
+  "faqs": [
+    {
+      "title": "Does Memotron have an equivalent of the relation property?",
+      "body": "Memotron doesn't have a relation property. But this is intentional. As per the design of the app where relationships between nodes is required, you can use link tags instead."
+    }
+  ],
+  "switchFromDocumentation": "https://docs.memotron.app/memotron/switch-from-other-tools/notion",
+  "whenToChoose": [
+    {
+      "label": "Team collaboration and sharing"
+    },
+    {
+      "label": "Enterprise features"
+    },
+    {
+      "label": "If you don't mind spending extra time on setup and maintenance or spending extra money buying Notion templates from the community."
+    }
+  ],
+  "features": [
+    {
+      "feature": "source",
+      "rating": 0
+    },
+    {
+      "feature": "privacy",
+      "rating": 0.3,
+      "notes": "Notion doesn't take offline-first approach and does not have end-to-end encryption for cloud sync. Notion does have a [bug bounty program](https://www.notion.so/notion/Responsible-Disclosure-Policy-5f18bb6b86804eaf989c006131778b9c) and [discloses](https://www.notion.so/notion/Privacy-Policy-3468d120cf614d4c9014c09f6adc9091) that it does not sell user data for external use by other companies."
+    },
+    {
+      "feature": "reliability",
+      "rating": 0.55,
+      "notes": "While Notion maintains reliability in all other aspects, it has been historically plagued with suboptimal performance especially when dealing with large databases. Notion has a [status page](https://www.notion-status.com/) and the historical uptime stands good at > 99%."
+    },
+    {
+      "feature": "maintenance",
+      "rating": 0.15,
+      "notes": "By design, Notion requires its users to constantly setup and maintain the workflows inside the app. This consumes a lot of time and effort. While this level of customization might benefit teams or organizations, it is not ideal for individual users."
+    },
+    {
+      "feature": "sustainability",
+      "rating": 0.4,
+      "notes": "Notion does not have a way to self-host on user's private cloud and it does not have full offline support to enable user's manual backups. Notion does provide an [API](https://developers.notion.com/) for integration with other apps and a robust [export feature](https://www.notion.com/help/export-your-content) which exports all the workspace content. On funding and financials, Notion is subject to closure or acquisition by other companies due to its [funding model](https://www.reddit.com/r/Notion/comments/q4c8wf/notion_raised_275m_in_new_capital_and_reaches_10/)."
+    },
+    {
+      "feature": "offlinability",
+      "rating": 0.25,
+      "notes": "Notion has very limited support for offline-use."
+    },
+    {
+      "feature": "basic-markdown",
+      "rating": 0.8
+    },
+    {
+      "feature": "advanced-markdown",
+      "rating": 0.8
+    },
+    {
+      "feature": "audio",
+      "rating": 0.4,
+      "notes": "Notion has Meeting notes AI feature which records and transcribes audio. However, it is not timestamped, doesn't auto convert text to markdown and there is no playback for the audio."
+    },
+    {
+      "feature": "version-control",
+      "rating": 0.7
+    },
+    {
+      "feature": "comments",
+      "rating": 0.7
+    },
+    {
+      "feature": "metadata",
+      "rating": 0.4
+    },
+    {
+      "feature": "text-capture",
+      "rating": 0.8
+    },
+    {
+      "feature": "camera-capture",
+      "rating": 0.55,
+      "notes": "While Notion does support triggering of native camera, it has to be done from markdown -> image -> Take a picture. This is not as frictionless as per our rating criteria. Also, this is only available on mobile apps."
+    },
+    {
+      "feature": "audio-capture",
+      "rating": 0.5,
+      "notes": "While Notion does support triggering of native audio recorder, it has to be done from markdown -> AI Meeting notes. This is Notion's new transcription feature and doesn't support audio playback. The only way to have audio that has playback is to upload audio files in Notion."
+    },
+    {
+      "feature": "type-capture",
+      "rating": 0.5,
+      "notes": "Notion does have types functionality with name `Databases`. However, there isn't an easy way to capture an instance of a type with ease. \n See [Round trip capture](https://docs.memotron.app/memotron/anti-productivity/round-trip-capture) for more information."
+    },
+    {
+      "feature": "web-clipping",
+      "rating": 0.35,
+      "notes": "Notion has a very rudimentary clipper extension which can save web pages. It doesn't support text highlighting, screenshot, adding notes, etc. There are some community created extensions which can be used to clip web pages, screenshots etc which are much better and reliable than the official extension."
+    },
+    {
+      "feature": "video-clipping",
+      "rating": 0.35,
+      "notes": "Notion clipper extension can be used to save Youtube videos. It lacks all other abilities from our rating criteria. However, some third party [extensions](https://chromewebstore.google.com/detail/youtube-notes-to-notion-w/kojibkalenabblnhoihknojdfapbbmig?hl=en-US&utm_source=ext_sidebar) can be used to save Youtube videos and take notes."
+    },
+    {
+      "feature": "social-clipping",
+      "rating": 0.3,
+      "notes": "Notion clipper extension can be used to save tweets. It lacks all other abilities from our rating criteria. Some third party extensions can be used to save tweets more efficiently."
+    },
+    {
+      "feature": "kindle-sync",
+      "rating": 0.4,
+      "notes": "Notion doesn't provide direct sync from Kindle. Some third party paid solutions and manual scraping workflows are available to sync from kindle."
+    },
+    {
+      "feature": "link-to-curate",
+      "rating": 0.35,
+      "notes": "Notion clipper has database selection option for curation while clipping. Apart from that, there is no other ways to link to other entries."
+    },
+    {
+      "feature": "nodularity",
+      "rating": 0.3,
+      "notes": "Notion doesn't have outlining or granular approach for markdown. Ability to copy the link to a block and then reference it in another markdown is the only feature available in this area."
+    },
+    {
+      "feature": "collections",
+      "rating": 0.65,
+      "notes": "Notion doesn't support collections or tags separately. However, a Notion database without any properties can be used as a simple collection"
+    },
+    {
+      "feature": "types",
+      "rating": 0.9,
+      "notes": "Notion has the most robust types/objects system with solid support for wide variety of properties via its database feature."
+    },
+    {
+      "feature": "backlinking",
+      "rating": 0.85
+    },
+    {
+      "feature": "calendar",
+      "rating": 0.4,
+      "notes": "Notion has calendar capability. However, this capability is heavily centered towards events, reminders etc and doesn't support any of the rating criteria that we have for calendar. Also, Notion calendar is a separate app altogether which requires additional installation."
+    },
+    {
+      "feature": "board-view",
+      "rating": 0.85
+    },
+    {
+      "feature": "table",
+      "rating": 0.85
+    },
+    {
+      "feature": "search",
+      "rating": 0.8
+    },
+    {
+      "feature": "semantic-search",
+      "rating": 0.6
+    },
+    {
+      "feature": "public-api",
+      "rating": 0.8
+    }
+  ]
+}

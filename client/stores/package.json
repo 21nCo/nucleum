@@ -1,0 +1,11 @@
+{
+  "name": "@21n/stores",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./app.store": "./app.store.ts",
+    "./view.store": "./view.store.ts",
+    "./*": "./*"
+  }
+}

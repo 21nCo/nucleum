@@ -74,7 +74,7 @@
   setContext("node", nodeContext);
 
   onDestroy(() => {
-    ActiveNodeStore.destroy(id);
+    ActiveNodeStore.destroy(id, accessMode);
   });
   const debouncedInitialize = debouncer(initialize, 1500);
 </script>
@@ -88,7 +88,7 @@
     <NonMediaNode {node} selectedView={view} />
   {/if}
 {:else}
-  <div class="w-full h-full cw:pt-12 pt-4 mo:px-4 px-20">
+  <div class="w-full h-full otop:pt-12 pt-4 mo:px-4 px-20">
     <NodeLoadingPulse />
   </div>
 {/if}

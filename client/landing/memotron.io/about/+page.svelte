@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-
+  import MarkdownRenderer from "$lib/client/landing/shared/elements/MarkdownRenderer.svelte";
   const text = `
   In our age of unprecedented information access and potential for intellectual growth, **digital memory and thinking tools** have become invaluable for optimizing cognitive capabilities and enhancing quality of life. The future of these tools brims with exciting potential to unlock new dimensions of serendipity, creativity, reflection and collaboration.
         
@@ -16,7 +15,7 @@
       class="bg-bgs2 rounded-[20px] mo:text-base text-h4 p-7 flex flex-col gap-4 w-full"
     >
       <div class="w-full">
-        {@html renderMdAsHtml(text)}
+        <MarkdownRenderer {text} />
       </div>
       <div>
         <div class="text-fgs2 text-b2 w-full justify-end">- Team Memotron</div>

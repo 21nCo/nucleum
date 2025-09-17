@@ -1,3 +1,21 @@
+<script lang="ts">
+  import PageSeo from "./seo/PageSEO.svelte";
+  export let productName: string;
+</script>
+
+<PageSeo
+  data={{
+    title: `Privacy Policy - ${productName}`,
+    description: `Privacy Policy for ${productName} - learn how we collect, use, and protect your personal information while using Memotron's knowledge management services.`,
+    keywords: [
+      "privacy policy",
+      "privacy",
+      "data protection",
+      "personal information"
+    ],
+    canonicalUrl: "https://21n.org/privacy"
+  }}
+/>
 <div
   class="relative flex flex-col justify-start items-start text-start w-full h-auto p-8"
 >
@@ -41,8 +59,9 @@
             class="w-full h-full outline-none font-medium p-2"
             style="max-width: 100%; width: 100%;  word-break: break-word;"
           >
-            "We", "Us" or "Our" in this Agreement refers to Blank labs Private
-            limited, registered H-no: 4-4/B, Kappapahad, Telangana, India.
+            "We", "Us" or "Our" in this Agreement refers to Phinative Soft
+            Private limited, registered Pent house, Plot 492, Venkataramana
+            colony, Telangana, India.
           </div>
           <div class="absolute top-0 left-0 h-full w-0.5 bg-a1"></div>
         </div>

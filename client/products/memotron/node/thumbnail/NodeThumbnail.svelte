@@ -141,7 +141,7 @@
           <div
             class={cn(
               {
-                "w-full h-full p-2 flex justify-start": isFullExpand
+                "w-full h-full flex justify-start": isFullExpand
               },
               !isFullExpand && {
                 "min-w-10 w-1/10 max-w-1/10": true,
@@ -185,7 +185,7 @@
             {:else}
               <div
                 class={cn("h-full text-wrap text-left text-b3 overflow-clip", {
-                  "p-2": !isLinkContext && contentPreview
+                  "p-1 min-h-12": !isLinkContext && contentPreview
                 })}
               >
                 {#if socialPostNodeTypeList.has(item.contentType) && contentPreview}

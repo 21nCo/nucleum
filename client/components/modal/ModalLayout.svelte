@@ -58,7 +58,7 @@
     if (path === Action.CONFIRMATION) confirmationNotification.reset();
     else if (resource)
       appStore.closeResource({
-        inlineRestoreId: resource,
+        id: resource,
         accessMode: accessMode
       });
     else modalEvent.hide(path, "ModalLayout.svelte");
@@ -67,7 +67,7 @@
 
 {#if size === Size.full}
   <div
-    class="w-full h-full flex justify-center items-center cw:pt-12"
+    class="w-full h-full flex justify-center items-center embed-ios:bg-bgs1"
     in:fly={{
       duration: 400,
       delay: 0,
@@ -78,7 +78,11 @@
     }}
   >
     {#if $context.embed === Embed.HANDSET && !$context.isSheet}
-      <div class="flex flex-col w-full h-full gap-2 p-2">
+      <div
+        class={cn("flex flex-col w-full h-full gap-2", {
+          "p-2 otop:pt-12": params.title
+        })}
+      >
         {#if params.title}
           <ModalHeader
             title={params.title}
@@ -95,10 +99,10 @@
 {:else}
   <div
     class={cn(
-      "relative modal flex flex-col items-center justify-between w-full h-full  rounded-md",
+      "relative modal flex flex-col items-center justify-between w-full h-full  rounded-md embed-ios:bg-bgs1",
       {
         "dark:border border-brs3": !isInFocusMode && !$view.isConstrainedWidth,
-        "cw:pt-12": !resource || params.title
+        "otop:pt-12": !resource || params.title
       },
       !params.layout?.ignoreSafeArea && {
         "gap-4": size === Size.xs,

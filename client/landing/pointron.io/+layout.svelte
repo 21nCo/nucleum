@@ -40,7 +40,7 @@
     cta: [
       {
         label: "",
-        href: "https://github.com/21nOrg/tidigit",
+        href: "https://github.com/21nOrg/nucleus",
         icon: "github-logo",
         type: "secondary"
       },
@@ -70,11 +70,6 @@
   landing.load(urls);
 </script>
 
-<BlankLandingLayout
-  {topNavBarValues}
-  {footerValues}
-  isProduct={true}
-  {metadata}
->
+<BlankLandingLayout {topNavBarValues} {footerValues} isProduct={true}>
   <slot />
 </BlankLandingLayout>

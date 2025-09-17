@@ -1,5 +1,9 @@
 import { Resource } from "./resource.enum";
-import { ResourceActionType, type ResourceAccessPoint } from "./resource.type";
+import {
+  ResourceAccessMode,
+  ResourceActionType,
+  type ResourceAccessPoint
+} from "./resource.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 import { logger } from "../../debug/logger.client";
 import { properCase } from "$lib/shared/utils/text.utils";
@@ -324,3 +328,14 @@ export function resolveResourceActionIcon(action: ResourceActionType) {
       return "question";
   }
 }
+
+export const determineResourceAccessMode = (
+  id: IRecordId
+): ResourceAccessMode => {
+  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const mode = (Object.values(ResourceAccessMode) as string[]).find(
+    (m) =>
+      m !== ResourceAccessMode.INLINE && searchParams.get(m) === id.toString()
+  );
+  return (mode as ResourceAccessMode) || ResourceAccessMode.INLINE;
+};

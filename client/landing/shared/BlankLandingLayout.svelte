@@ -10,15 +10,16 @@
   import { currentProductsStore, isProductPage } from "./store/shared.store";
   import Footer from "./footer/Footer.svelte";
   import { afterNavigate } from "$app/navigation";
-  import type { IMetadata } from "$lib/client/layout/metadata.type";
   import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
+  import { page } from "$app/stores";
+
   let id: string = "main";
   let centralContainerRef: HTMLDivElement;
   export let topNavBarValues: ITopNavBar;
   export let isComingSoon: boolean = false;
   export let isProduct: boolean = false;
   export let footerValues: IFooter;
-  export let metadata: IMetadata;
+  export let isComparePage: boolean = false;
   let scrollY: number = 0;
   let isShowLoadingOverlay: boolean = false;
   let transformedProducts: IListItem[] = [
@@ -30,9 +31,6 @@
   ];
 
   $: isShowGrid = !isComparePage && scrollY < 70;
-  $: isComparePage =
-    typeof window !== "undefined" &&
-    window.location.pathname.includes("compare");
 
   function addEntryAnimation(id: string) {
     if (isProduct) addAnimateClass("animate-open-left", id);
@@ -70,7 +68,7 @@
   }
 </script>
 
-<LandingBaseLayer {metadata} bgColor={"bg-bgs2"}>
+<LandingBaseLayer bgColor={"bg-bgs2"}>
   <!-- {#if import.meta.env.DEV}
   <div class="fixed bottom-0 right-0 bg-bgs1 text-fgs1 p-2 text-xs z-50">
     Theme: {$appearance.theme}<br />
@@ -96,7 +94,7 @@
     on:scroll={handleScroll}
   >
     <TopNavBar {topNavBarValues} {scrollY} isPreventSticky={isComparePage} />
-    <div class="flex w-full justify-center flex-1 min-h-0">
+    <main class="flex w-full justify-center flex-1 min-h-0">
       <div
         class={cn("w-full flex flex-col", {
           "max-w-[1240px] mo:min-w-[320px] gap-40 px-8": !isComparePage,
@@ -108,7 +106,7 @@
           <Footer products={transformedProducts} {footerValues} />
         {/if}
       </div>
-    </div>
+    </main>
   </div>
   {#if isShowGrid}
     <RightPanel />

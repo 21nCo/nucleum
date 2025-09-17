@@ -8,8 +8,7 @@
   import HeaderTitle from "./HeaderTitle.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import MarkdownRenderer from "$lib/client/landing/shared/elements/MarkdownRenderer.svelte";
 
   export let feature: IFwFeature;
   export let contemporaries: IContemporary[] = [];
@@ -56,6 +55,7 @@
           {#if isSelected(String(contemporary.label))}
             <ComparisonRow
               {contemporary}
+              {feature}
               contemporaryDetail={contemporaries.find(
                 (c) => c.label === contemporary.label
               ) ?? {}}
@@ -79,10 +79,9 @@
       <Icon icon="question" size={Size.sm} class="text-fgs2" />
     </div>
     <span class="text-fgs2 text-b3">
-      {@html renderMdAsHtml(
-        "If you don't see an app in the table, it may be because the app doesn't have the feature being discussed or it is not present in the *Compare with* filter that you selected."
-      )}
+      <MarkdownRenderer
+        text="If you don't see an app in the table, it may be because the app doesn't have the feature being discussed or it is not present in the *Compare with* filter that you selected."
+      />
     </span>
   </div>
-  <ScrollViewBottomSpacer />
 </div>

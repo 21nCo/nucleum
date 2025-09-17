@@ -4,7 +4,6 @@
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import type { ITileItem } from "../landing.type";
-  import { landing } from "../store/shared.store";
 
   export let item: ITileItem;
   export let isPanelView: Boolean = false;
@@ -20,14 +19,9 @@
   function onMouseLeave() {
     isHovered = false;
   }
-  function onClick() {
-    if (item.href) {
-      landing.openLink(item.href);
-    }
-  }
 </script>
 
-<button
+<a
   class={cn(
     "relative flex flex-col items-start justify-start",
     !isPanelView &&
@@ -43,9 +37,10 @@
     isPanelView && !isEnableBackground && item.href && "hover:bg-bgs2",
     className
   )}
+  href={item.href}
+  target="_blank"
   on:mouseenter={onMouseEnter}
   on:mouseleave={onMouseLeave}
-  on:click={onClick}
 >
   {#if item?.title}
     {@const title = item.title}
@@ -116,7 +111,7 @@
       )}
     />
   {/if}
-</button>
+</a>
 
 <style>
   @keyframes rotate30 {

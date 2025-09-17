@@ -9,12 +9,7 @@
   export let size: Size.sm | Size.md = Size.md;
 </script>
 
-<button
-  class="flex items-center gap-1"
-  on:click={() => {
-    landing.openLink("/");
-  }}
->
+<a class="flex items-center gap-1" href="/" title="Go to home">
   {#if topNavBarValues.icon}
     {@const icon = topNavBarValues.icon}
     {@const size = $view.isPortrait
@@ -46,4 +41,4 @@
       </p>
     {/if}
   </div>
-</button>
+</a>

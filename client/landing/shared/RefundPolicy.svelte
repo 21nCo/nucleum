@@ -6,7 +6,9 @@
     >.
   </p>
 
-  <p>Thank you for shopping at <strong>Blank Labs Private Limited</strong>.</p>
+  <p>
+    Thank you for shopping at <strong>Phinative Soft Private Limited</strong>.
+  </p>
 
   <p>
     The following terms are applicable for any products that you have purchased

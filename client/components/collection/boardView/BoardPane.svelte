@@ -57,17 +57,20 @@
   }
 </script>
 
-<CustomColorPropagator color={group.color}>
+<CustomColorPropagator
+  class="h-full min-w-[24rem] dp:min-w-[28rem] 2k:w-[30rem]"
+  color={group.color}
+>
   <div
     class={cn(
-      "board relative h-full min-w-[24rem] dp:w-[28rem] 2k:w-[30rem] flex flex-col gap-2 border border-brs3 px-4 mb-2 rounded-md",
+      "board relative h-full w-full flex flex-col gap-2 border border-brs3 px-4 mb-2 rounded-md",
       {
         "overflow-y-auto": isBoardOverflow,
         "border-ccs3 bg-ccs5": group.color && dev_isRenderColors,
         "border-brs3 bg-bgs1": !group.color || !dev_isRenderColors
       }
     )}
-    style="height: calc(100vh - 120px);"
+    style="height: calc(100vh - 150px);"
     use:dropzone={{
       duringDragoverClasses: "!border-ccs1",
       itemRequirement: "resource",

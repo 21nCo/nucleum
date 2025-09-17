@@ -36,7 +36,7 @@
         resolveCollectionTypeLabel(subType as CollectionType) + " collection"
       );
     } else if (resourceType === Resource.goal) {
-      return resolveGoalTypeLabel(subType as GoalType);
+      return resolveGoalTypeLabel(subType as GoalType) + " goal";
     } else return "";
   }
 </script>

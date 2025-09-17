@@ -14,10 +14,12 @@
   import { Action } from "$lib/client/types/action.enum";
   import { page } from "$app/stores";
   import { resolveProductConfig } from "$lib/client/products/product.config";
+  import BackButton from "$lib/client/elements/button/BackButton.svelte";
   let selected: string = "";
   let parentBgIndex: number = 2;
   // resolveAction("theme");
   let pageAction: IAction | null = null;
+  const backPath = $page.url.searchParams.get(AppSearchParam.RETURN_TO);
   const config = resolveProductConfig().settings;
   onMount(() => {
     const pageSub = page.subscribe((x) => {
@@ -43,10 +45,22 @@
 
 <div class="flex w-full h-full">
   <div
-    class="flex flex-col overflow-auto gap-8 w-[21rem] min-w-[21rem] shrink-0 bg-bgs2 rounded-l-md py-4 items-start"
+    class="flex flex-col overflow-auto gap-8 w-72 min-w-72 dp:w-[21rem] dp:min-w-[21rem] shrink-0 bg-bgs2 rounded-l-md py-4 items-start otop:pt-12"
   >
     <div class="pl-4">
-      <Text content="Settings" style={TextStyle.PAGE_HEADING} />
+      <BackButton
+        isEnabled={backPath !== null}
+        {parentBgIndex}
+        isPreventDefault={true}
+        on:click={() => {
+          if (backPath) appStore.gotoPath(backPath);
+        }}
+      >
+        <Text
+          content="Settings"
+          style={backPath ? TextStyle.PANEL_HEADING : TextStyle.PAGE_HEADING}
+        />
+      </BackButton>
     </div>
     <div class="flex flex-col overflow-auto gap-8 w-full">
       <ProfileCpSection
@@ -98,7 +112,7 @@
       {/if}
     </div>
   </div>
-  <div class="flex flex-col items-start flex-grow h-full p-4">
+  <div class="flex flex-col items-start flex-grow h-full p-4 otop:pt-12">
     {#if pageAction}
       <div class="flex justify-start h-10">
         <Text
