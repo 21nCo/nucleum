@@ -20,7 +20,7 @@
   import { appStore } from "$lib/client/stores/app.store";
   import GoalHistory from "./history/GoalHistory.svelte";
   import GoalTasks from "./tasks/GoalTasks.svelte";
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { page } from "$app/stores";
   import PropertiesPane from "../collection/properties/PropertiesPane.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
@@ -63,6 +63,10 @@
     return () => {
       pageSub();
     };
+  });
+
+  onDestroy(() => {
+    ActiveGoalStore.destroy(id);
   });
 
   async function initialize() {
