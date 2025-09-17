@@ -151,7 +151,7 @@
 </script>
 
 <div class="flex w-full h-full items-start">
-  {#if !$view.isConstrainedWidth}
+  {#if !$view.isConstrainedWidth && !$view.isPortrait}
     <button
       class="relative flex flex-col items-center justify-center w-48 h-full"
       use:hoverable={{

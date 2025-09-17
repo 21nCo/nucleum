@@ -74,7 +74,7 @@
   setContext("node", nodeContext);
 
   onDestroy(() => {
-    ActiveNodeStore.destroy(id);
+    ActiveNodeStore.destroy(id, accessMode);
   });
   const debouncedInitialize = debouncer(initialize, 1500);
 </script>

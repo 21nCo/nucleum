@@ -1,7 +1,7 @@
-import config from "$lib/client/products/pointron/pointron.config";
+import packageJson from "../package.json";
+import config from "$lib/client/products/memotron/memotron.config";
 
-const version = "0.83.1";
-const build = 9;
+const { version, build } = packageJson;
 
 export default {
   version,

@@ -1,7 +1,7 @@
-import config from "$lib/client/products/nucleus/nucleus.config";
+import packageJson from "../package.json";
+import config from "$lib/client/products/memotron/memotron.config";
 
-const version = "0.3.2";
-const build = 10;
+const { version, build } = packageJson;
 
 export default {
   version,

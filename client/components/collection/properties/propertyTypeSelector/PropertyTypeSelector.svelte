@@ -86,7 +86,7 @@
 
 <div
   class={cn(
-    "flex w-full justify-between items-center gap-2 rounded-md border p-2",
+    "flex w-full justify-between items-center gap-2 rounded-md border p-2 h-11",
     {
       "border-brs3": !isPopoverVisible,
       "border-aps1": isPopoverVisible

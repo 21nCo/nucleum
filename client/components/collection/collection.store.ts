@@ -59,6 +59,7 @@ import { resolveCollectionResource } from "./collection.utils";
 import { viewStore } from "./view.store";
 import { uiState } from "$lib/client/stores/uiState/uiState.store";
 import { UIState } from "$lib/client/stores/uiState/uiState.type";
+import view from "$lib/client/stores/view.store";
 
 const defaults: Partial<ICollection> = {
   type: CollectionType.UNTYPED,
@@ -565,7 +566,13 @@ export const collectionLayoutOptions = [
 
 export function resolveCollectionContextMenu(
   collection: ICollection,
-  accessPoint: ResourceAccessPoint
+  accessPoint: ResourceAccessPoint,
+  params?: {
+    accessPointId?: IRecordId;
+    accessMode?: ResourceAccessMode;
+    accessPointContext?: string;
+    isConstrainedWidth?: boolean;
+  }
 ): IContextMenu {
   const resourceActions = new ResourceActions(
     collection,
@@ -573,12 +580,24 @@ export function resolveCollectionContextMenu(
     accessPoint
   );
   const ctx = get(context);
+  const viewStore = get(view);
   let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];
+  const moreGroup = {
+    group: "more",
+    items: [resourceActions.archive(), resourceActions.trash()]
+  };
   if (ctx.isEmbed && ctx.embed === Embed.HANDSET) {
+    commonGroups = [moreGroup];
+  } else if (
+    viewStore.isPortrait &&
+    accessPoint === ResourceAccessPoint.SELF &&
+    params?.accessMode === ResourceAccessMode.INLINE
+  ) {
     commonGroups = [
+      moreGroup,
       {
-        group: "more",
-        items: [resourceActions.archive(), resourceActions.trash()]
+        group: "open",
+        items: [resourceActions.openAsFull()]
       }
     ];
   } else {
@@ -591,10 +610,7 @@ export function resolveCollectionContextMenu(
           resourceActions.openAsFull()
         ]
       },
-      {
-        group: "more",
-        items: [resourceActions.archive(), resourceActions.trash()]
-      }
+      moreGroup
     ];
   }
   if (accessPoint != ResourceAccessPoint.SELF) {
@@ -619,7 +635,6 @@ export function resolveCollectionContextMenu(
       type: ContextMenuType.SWITCH,
       initialValue: collection.isCaptureShortcutEnabled,
       callback: async (checked) => {
-        console.log({ checked });
         const result = await collectionStore.modify(collection.id, {
           isCaptureShortcutEnabled: checked
         });

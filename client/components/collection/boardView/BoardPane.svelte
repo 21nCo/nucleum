@@ -70,7 +70,7 @@
         "border-brs3 bg-bgs1": !group.color || !dev_isRenderColors
       }
     )}
-    style="height: calc(100vh - 120px);"
+    style="height: calc(100vh - 150px);"
     use:dropzone={{
       duringDragoverClasses: "!border-ccs1",
       itemRequirement: "resource",

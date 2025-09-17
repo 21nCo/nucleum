@@ -65,9 +65,10 @@
 </script>
 
 {#if !isInFocusMode}
+  <div class="hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
   <div
     class={cn(
-      "w-full h-11 max-h-11 min-h-11 2k:h-12 2k:max-h-12 2k:min-h-12 bg-bgs2 pr-4 border-b border-brs3 userdata embed-ios:mt-6 embed-tablet:mt-6 relative embed-ios:before:absolute embed-ios:before:-top-6 embed-ios:before:bottom-0 embed-ios:before:left-0 embed-ios:before:right-0 embed-ios:before:bg-bgs2",
+      "w-full h-11 max-h-11 min-h-11 2k:h-12 2k:max-h-12 2k:min-h-12 bg-bgs2 pr-4 border-b border-brs3 userdata",
       {
         "flex gap-3 justify-between items-center":
           pinnedItems.length > 0 || isInterimTab,
