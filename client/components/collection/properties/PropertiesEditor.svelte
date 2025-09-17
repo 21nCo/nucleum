@@ -1,5 +1,4 @@
 <script lang="ts">
-  import Table2 from "$lib/client/elements/table/Table2.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   import {

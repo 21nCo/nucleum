@@ -816,11 +816,11 @@ function initAppStore(seed: IAppStore) {
       url.searchParams.delete(param);
     }
 
-    function restoreInlineResourceIfPrev() {
+    const restoreInlineResourceIfPrev = () => {
       const prevMode = url.searchParams.get("prev");
       if (prevMode === ResourceAccessMode.INLINE && props?.id)
         url.searchParams.set(prevMode, props?.id.toString());
-    }
+    };
   };
 
   const toggleFullAccessMode = (

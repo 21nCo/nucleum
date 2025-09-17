@@ -59,7 +59,7 @@ import { resolveCollectionResource } from "./collection.utils";
 import { viewStore } from "./view.store";
 import { uiState } from "$lib/client/stores/uiState/uiState.store";
 import { UIState } from "$lib/client/stores/uiState/uiState.type";
-import view from "@21n/stores/view.store";
+import view from "$lib/client/stores/view.store";
 
 const defaults: Partial<ICollection> = {
   type: CollectionType.UNTYPED,

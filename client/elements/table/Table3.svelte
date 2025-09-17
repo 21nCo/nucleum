@@ -10,7 +10,6 @@
   } from "$lib/client/types/table.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import Button from "../button/Button.svelte";
-  import Divider from "../Divider.svelte";
   import DropDown from "../dropdown/DropDown.svelte";
   import TextInput from "../input/TextInput.svelte";
   import FormLabelTooltip from "../text/formLabel/FormLabelTooltip.svelte";
@@ -24,16 +23,28 @@
   export let addAction: string | undefined = undefined;
   export let id: string = "table";
   export let width: string = "";
-  $: if (actions.length > 0) {
+
+  $: renderColumns =
+    actions.length > 0 ? injectDefaultActions(columns, actions) : columns;
+
+  function injectDefaultActions(
+    base: TableColumn[],
+    actions: { action: TableCellDefaultAction; index: number }[]
+  ): TableColumn[] {
+    let result = base;
     actions.forEach((action) => {
-      columns = [
-        ...columns.slice(0, action.index),
+      result = [
+        ...result.slice(0, action.index),
         resolveDefaultAction(action.action),
-        ...columns.slice(action.index)
-      ].filter((column) => column);
+        ...result.slice(action.index)
+      ].filter((column) => column !== undefined);
     });
+    return result;
   }
-  function resolveDefaultAction(action: string) {
+
+  function resolveDefaultAction(
+    action: TableCellDefaultAction
+  ): TableColumn | undefined {
     switch (action) {
       case TableCellDefaultAction.REORDER:
         return {
@@ -83,7 +94,7 @@
   <div class={cn("table w-full text-b2", { "bg--bgs2 rounded-md": isStyled })}>
     <div class="table-header-group">
       <div class="table-row text-fgs3">
-        {#each columns as column (column.key)}
+        {#each renderColumns as column (column.key)}
           <div
             class={cn("table-cell border-b border-brs2 align-middle p-3", {
               "w-8": column.type === TableCellType.ACTION
@@ -114,7 +125,7 @@
     >
       {#each data as row, i (row.id)}
         <div class="table-row" draggable="true" data-index={i}>
-          {#each columns as column}
+          {#each renderColumns as column}
             <div class="table-cell align-middle px-3 py-2 text-left">
               {#if column.type === TableCellType.TEXT_INPUT}
                 <TextInput
