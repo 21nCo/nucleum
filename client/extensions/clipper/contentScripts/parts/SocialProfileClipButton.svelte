@@ -2,13 +2,16 @@
   import Icon from "$lib/client/elements/Icon.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import { logger } from "$lib/client/components/debug/logger.client";
-  import { feedbackPane, webpage } from "$lib/client/extensions/clipper/contentScripts/store";
+  import {
+    feedbackPane,
+    webpage
+  } from "$lib/client/extensions/clipper/contentScripts/store";
   import { AlertType } from "$lib/client/types/notification.type";
   import type { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { enumToString } from "$lib/shared/utils/text.utils";
   export let contentType: NodeType;
   let classList: string | undefined = undefined;
-  export {classList as class};
+  export { classList as class };
   export let isHideLabel: boolean = false;
   let isSaving: boolean = false;
   let isSaved: boolean = false;
@@ -28,7 +31,7 @@
         isSaving = false;
         return;
       }
-      await webpage.savePage({contentType});
+      await webpage.savePage({ contentType });
       feedbackPane.onPageSaved(`${contentTypeStr} saved!`);
     } catch (err) {
       logger.error(`Error saving ${contentTypeStr}`, err);

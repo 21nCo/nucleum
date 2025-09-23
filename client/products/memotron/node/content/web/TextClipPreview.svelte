@@ -25,7 +25,10 @@
   }
 
   function resolveTextHighlightColor(item: any) {
-    if (item.contentType === NodeType.TEXT_CLIP && item.body.highlighterId) {
+    if (
+      item.contentType === NodeType.WEB_TEXT_BOOKMARK &&
+      item.body.highlighterId
+    ) {
       const color = $highlightStore?.highlighters?.find(
         (x) => x.id === item.body.highlighterId
       )?.color;

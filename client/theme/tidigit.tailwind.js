@@ -1,5 +1,8 @@
-import colorSchemes from "./colorschemes.json" with { type: "json" };
-import colorSchemesBranding from "./colorschemes-branding.json" with { type: "json" };
+// import colorSchemes from "./colorschemes.json" with { type: "json" };
+// import colorSchemesBranding from "./colorschemes-branding.json" with { type: "json" };
+import colorSchemesBranding from "./colorschemes-branding.json";
+import colorSchemes from "./colorschemes.json";
+import { createRequire } from "module";
 
 const themes = [
   {
@@ -31,7 +34,6 @@ const mappedColorSchemes = colorSchemes.map((cs) => {
   };
 });
 
-import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
 export default {

@@ -1,10 +1,15 @@
 import { NodeType } from "$lib/client/products/memotron/node/node.type";
-import type { IWebpageParser, ISocialPostParser } from "../clipper.type";
+import type {
+  IWebpageParser,
+  ISocialPostParser,
+  IVideoBookmarkParser
+} from "../clipper.type";
 import {
   extractBskyPostFromPage,
   extractBskyPostFromInlineClip,
   extractBlueskyProfile
 } from "./blueskyParser";
+import { extractCourseraBookmark } from "./courseraParser";
 import {
   extractFacebookPostFromPage,
   extractFacebookPostFromInlineClip,
@@ -39,6 +44,8 @@ import {
   extractTweetFromInlineClip,
   extractTwitterProfile
 } from "./twitterParser";
+import { extractUdemyBookmark } from "./udemyParser";
+import { extractYoutubeBookmark } from "./youtubeParser";
 
 const parserMap = new Map<NodeType, IWebpageParser>([
   [NodeType.TWEET, extractTweetFromTweetPage],
@@ -69,6 +76,12 @@ const inlineSocialPostParserMap = new Map<NodeType, ISocialPostParser>([
   [NodeType.MASTODON_POST, extractMastodonPostFromInlineClip]
 ]);
 
+const videoBookmarkParserMap = new Map<NodeType, IVideoBookmarkParser>([
+  [NodeType.YOUTUBE_VIDEO, extractYoutubeBookmark],
+  [NodeType.COURSERA_VIDEO, extractCourseraBookmark],
+  [NodeType.UDEMY_VIDEO, extractUdemyBookmark]
+]);
+
 export function resolveParser(
   contentType: NodeType
 ): IWebpageParser | undefined {
@@ -81,4 +94,11 @@ export function resolveInlineSocialPostParser(
 ): ISocialPostParser | undefined {
   if (!inlineSocialPostParserMap.has(contentType)) return;
   return inlineSocialPostParserMap.get(contentType);
+}
+
+export function resolveVideoBookmarkParser(
+  contentType: NodeType
+): IVideoBookmarkParser | undefined {
+  if (!videoBookmarkParserMap.has(contentType)) return;
+  return videoBookmarkParserMap.get(contentType);
 }

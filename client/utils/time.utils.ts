@@ -70,26 +70,26 @@ export function formatSeconds(
       size === Size.sm
         ? "m"
         : size === Size.md
-        ? "min"
-        : minutes > 1
-        ? "minutes"
-        : "minute";
+          ? "min"
+          : minutes > 1
+            ? "minutes"
+            : "minute";
     const secondsLabel =
       size === Size.sm
         ? "s"
         : size === Size.md
-        ? "sec"
-        : secs > 1
-        ? "seconds"
-        : "second";
+          ? "sec"
+          : secs > 1
+            ? "seconds"
+            : "second";
     const hoursLabel =
       size === Size.sm
         ? "h"
         : size === Size.md
-        ? "hr"
-        : hours > 1
-        ? "hours"
-        : "hour";
+          ? "hr"
+          : hours > 1
+            ? "hours"
+            : "hour";
     if (hours > 0) {
       return (
         `${hours} ${hoursLabel}` +
@@ -128,9 +128,7 @@ export function formatSecondsToTimeInDecimals(
   isShowUnits: boolean = true
 ) {
   if (scale === "hrs") {
-    return `${(seconds / (60 * 60)).toFixed(toFixed)} ${
-      isShowUnits ? "hr" : ""
-    }`;
+    return `${(seconds / (60 * 60)).toFixed(toFixed)} ${isShowUnits ? "hr" : ""}`;
   } else if (scale === "min") {
     return `${(seconds / 60).toFixed(toFixed)} ${isShowUnits ? "m" : ""}`;
   }

@@ -143,6 +143,7 @@ export enum NodeType {
   PDF = "PDF",
   FILE = "FILE",
   SKETCH = "SKETCH",
+
   //EMBED
   EMBED = "EMBED",
   TOC = "TOC",
@@ -165,18 +166,36 @@ export enum NodeType {
   CARDS = "CARDS",
   ACCORDION = "ACCORDION",
 
-  //CLIPS
-  WEB_PAGE = "WEB_PAGE",
-  TEXT_CLIP = "TEXT_CLIP",
-  IMAGE_CLIP = "IMAGE_CLIP",
-  AUDIO_CLIP = "AUDIO_CLIP",
-  VIDEO_CLIP = "VIDEO_CLIP",
-  PDF_CLIP = "PDF_CLIP",
-  WEB_SCREENSHOT_CLIP = "WEB_SCREENSHOT_CLIP",
+  //BOOKMARKS
+  /**
+   * Legacy support - Used "PDF_CLIP" as value until Memotron v0.62
+   */
+  PDF_BOOKMARK = "PDF_CLIP",
+  AUDIO_BOOKMARK = "AUDIO_BOOKMARK",
+  VIDEO_BOOKMARK = "VIDEO_BOOKMARK",
+  /**
+   * Legacy support - Used "TEXT_CLIP" as value until Memotron v0.62
+   */
+  WEB_TEXT_BOOKMARK = "TEXT_CLIP",
+  /**
+   * Legacy support - Used "WEB_SCREENSHOT_CLIP" as value until Memotron v0.62
+   */
+  WEB_SCREENSHOT = "WEB_SCREENSHOT_CLIP",
+  KINDLE_HIGHLIGHT = "KINDLE_HIGHLIGHT",
+  /**
+   * Legacy support - Used "YOUTUBE_TIMESTAMP_CLIP" as value until Memotron v0.62
+   */
+  YOUTUBE_BOOKMARK = "YOUTUBE_TIMESTAMP_CLIP",
+  /**
+   * Used for all video timestamp bookmarks on all other platforms other than Youtube
+   */
+  WEB_VIDEO_BOOKMARK = "WEB_VIDEO_BOOKMARK",
 
   //EXTERNAL
+  WEB_PAGE = "WEB_PAGE",
   KINDLE_BOOK = "KINDLE_BOOK",
-  KINDLE_HIGHLIGHT = "KINDLE_HIGHLIGHT",
+
+  //SOCIAL
   TWEET = "TWEET",
   TWITTER_PROFILE = "TWITTER_PROFILE",
   MASTODON_POST = "MASTODON_POST",
@@ -197,11 +216,23 @@ export enum NodeType {
   REDDIT_PROFILE = "REDDIT_PROFILE",
   REDDIT_SUB = "REDDIT_SUB",
   DISCORD_THREAD = "DISCORD_THREAD",
+
+  //WEB VIDEO
   YOUTUBE_VIDEO = "YOUTUBE_VIDEO",
-  YOUTUBE_TIMESTAMP_CLIP = "YOUTUBE_TIMESTAMP_CLIP",
   YOUTUBE_CHANNEL = "YOUTUBE_CHANNEL",
+  COURSERA_VIDEO = "COURSERA_VIDEO",
+  UDEMY_VIDEO = "UDEMY_VIDEO",
+  EDX_VIDEO = "EDX_VIDEO",
+  SKILLSHARE_VIDEO = "SKILLSHARE_VIDEO",
+  VIMEO_VIDEO = "VIMEO_VIDEO",
+  RUMBLE_VIDEO = "RUMBLE_VIDEO",
+  INSTRUCTURE_VIDEO = "INSTRUCTURE_VIDEO",
+  KHAN_VIDEO = "KHAN_VIDEO",
+  MOODLE_VIDEO = "MOODLE_VIDEO",
   TED_VIDEO = "TED_VIDEO",
   TWITCH_STREAM = "TWITCH_STREAM",
+
+  //OTHER WEB
   STACKOVERFLOW_THREAD = "STACKOVERFLOW_THREAD",
   GITHUB_REPO = "GITHUB_REPO",
   GITHUB_PROFILE = "GITHUB_PROFILE",
@@ -520,15 +551,12 @@ export type IMediaGridNode = INodeInterface<
 const webNodeTypes = [
   NodeType.WEB_PAGE,
   NodeType.GIST,
-  NodeType.TEXT_CLIP,
-  NodeType.IMAGE_CLIP,
-  // NodeType.AUDIO_CLIP,
-  // NodeType.VIDEO_CLIP,
-  NodeType.WEB_SCREENSHOT_CLIP,
+  NodeType.WEB_TEXT_BOOKMARK,
+  NodeType.WEB_SCREENSHOT,
 
   NodeType.YOUTUBE_VIDEO,
   NodeType.YOUTUBE_CHANNEL,
-  NodeType.YOUTUBE_TIMESTAMP_CLIP,
+  NodeType.YOUTUBE_BOOKMARK,
   NodeType.KINDLE_BOOK,
   NodeType.KINDLE_HIGHLIGHT
 ];
@@ -554,14 +582,11 @@ export const socialProfileWithImageUnavailable = new Set([
 export type IWebNodeType =
   | NodeType.WEB_PAGE
   | NodeType.GIST
-  | NodeType.TEXT_CLIP
-  | NodeType.IMAGE_CLIP
-  // | NodeType.AUDIO_CLIP
-  // | NodeType.VIDEO_CLIP
-  | NodeType.WEB_SCREENSHOT_CLIP
+  | NodeType.WEB_TEXT_BOOKMARK
+  | NodeType.WEB_SCREENSHOT
   | NodeType.YOUTUBE_VIDEO
   | NodeType.YOUTUBE_CHANNEL
-  | NodeType.YOUTUBE_TIMESTAMP_CLIP
+  | NodeType.YOUTUBE_BOOKMARK
   | NodeType.TWEET
   | NodeType.BLUESKY_POST
   | NodeType.THREADS_POST
@@ -628,7 +653,7 @@ type ITextClipMetadata = {
   focusOffset: number;
 };
 export type ITextClip = INodeInterface<
-  NodeType.TEXT_CLIP,
+  NodeType.WEB_TEXT_BOOKMARK,
   ITextClipBody,
   ITextClipMetadata
 > &
@@ -636,7 +661,7 @@ export type ITextClip = INodeInterface<
   INodeHasText &
   INodeHasParent;
 
-export type IVideoTimestampClipBody = {
+export type IVideoBookmarkBody = {
   timestamp: number;
   /**
    * The thumbnail of the video. - file id
@@ -647,10 +672,13 @@ export type IVideoTimestampClipBody = {
    */
   s3Url?: string;
 };
+
+export type IVideoBookmarkMetadata = {};
+
 export type IVideoTimestampClip = INodeInterface<
-  NodeType.YOUTUBE_TIMESTAMP_CLIP,
-  IVideoTimestampClipBody,
-  any
+  NodeType.YOUTUBE_BOOKMARK | NodeType.WEB_VIDEO_BOOKMARK,
+  IVideoBookmarkBody,
+  IVideoBookmarkMetadata
 > &
   INodeHasParent;
 
@@ -710,25 +738,8 @@ type IWebScreenshotClipBody = {
   s3Url?: string;
 };
 export type IWebScreenshotClip = INodeInterface<
-  NodeType.WEB_SCREENSHOT_CLIP,
+  NodeType.WEB_SCREENSHOT,
   IWebScreenshotClipBody,
-  any
->;
-
-type IMultimediaClipBody = {
-  /**
-   * file id
-   */
-  file: IRecordId;
-  /**
-   * @deprecated - use file instead
-   */
-  s3Url: string;
-  color: string;
-};
-export type IMultimediaClip = INodeInterface<
-  NodeType.IMAGE_CLIP,
-  IMultimediaClipBody,
   any
 >;
 
@@ -1010,7 +1021,6 @@ export type IClip =
   | ILinkedInPost
   | IInstagramPost
   | IRedditPost
-  | IMultimediaClip
   | IVideoTimestampClip
   | ITextClip
   | IWebScreenshotClip
@@ -1036,8 +1046,7 @@ export type INodeBody =
   | ISocialPostBody
   | ITwitterProfileBody
   | ISocialProfileBody
-  | IMultimediaClipBody
-  | IVideoTimestampClipBody
+  | IVideoBookmarkBody
   | ITextClipBody
   | IWebScreenshotClipBody
   | IKindleHighlightBody;
@@ -1131,3 +1140,10 @@ export const canHaveTraces = [
   ...canHaveTracesBase,
   ...Array.from(socialProfileNodeTypeList)
 ];
+
+export type IVideoBookmarkCapture = INodeHasUrl &
+  INodeHasText & {
+    contentType: NodeType.YOUTUBE_BOOKMARK | NodeType.VIDEO_BOOKMARK;
+    body: IVideoBookmarkBody;
+    metadata: IVideoBookmarkMetadata;
+  };

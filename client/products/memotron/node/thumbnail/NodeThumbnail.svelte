@@ -66,7 +66,7 @@
   $: urlPreview = resolveUrlPreview(item);
   $: contentPreview = resolveContentPreview(item);
   $: isTextClip =
-    item.contentType === NodeType.TEXT_CLIP ||
+    item.contentType === NodeType.WEB_TEXT_BOOKMARK ||
     item.contentType === NodeType.KINDLE_HIGHLIGHT;
   $: isFullExpand =
     isTextClip ||
@@ -240,7 +240,7 @@
           </div>
         {/if}
       </button>
-      {#if item.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP && accessPoint === ResourceAccessPoint.NODE_TRACES}
+      {#if item.contentType === NodeType.YOUTUBE_BOOKMARK && accessPoint === ResourceAccessPoint.NODE_TRACES}
         <span
           class={cn(
             "absolute bottom-3 left-3 bg-bgs2 rounded-md px-1 py-0.5 text-b2"

@@ -39,13 +39,13 @@
     let textClips: ITextClip[] = [];
     let videoTimestampClips: IVideoTimestampClip[] = [];
     textClips = rawClips.filter(
-      (clip) => clip.contentType === NodeType.TEXT_CLIP
+      (clip) => clip.contentType === NodeType.WEB_TEXT_BOOKMARK
     );
     videoTimestampClips = rawClips
-      .filter((clip) => clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP)
+      .filter((clip) => clip.contentType === NodeType.YOUTUBE_BOOKMARK)
       ?.sort((a, b) => a.body.timestamp - b.body.timestamp);
     let webScreenshotClips = rawClips.filter(
-      (clip) => clip.contentType === NodeType.WEB_SCREENSHOT_CLIP
+      (clip) => clip.contentType === NodeType.WEB_SCREENSHOT
     );
     await wait(1000);
     return resolveOrderAndRenderClips();
@@ -97,13 +97,13 @@
   {#if transformedClips?.length > 0}
     <div class="flex flex-col h-full w-full gap-3 overflow-y-auto">
       {#each transformedClips as clip, index (clip.id)}
-        <!-- {#if clip.contentType === NodeType.TEXT_CLIP || clip.contentType === NodeType.WEB_SCREENSHOT_CLIP}
+        <!-- {#if clip.contentType === NodeType.WEB_TEXT_BOOKMARK || clip.contentType === NodeType.WEB_SCREENSHOT}
           <TextClip
             {clip}
             on:click={() => onThumbnailClick(clip.id)}
             on:keydown
           />
-        {:else if clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP && "timestamp" in clip.body} -->
+        {:else if clip.contentType === NodeType.YOUTUBE_BOOKMARK && "timestamp" in clip.body} -->
         <Clip
           {clip}
           on:click={() => onThumbnailClick(clip.id)}

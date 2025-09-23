@@ -44,7 +44,7 @@ export function resolveContentPreview(node: INode) {
     const ogImageUrl = resolveUrlData(node.url)?.ogImage;
     return ogImageUrl ?? "";
   } else if (
-    contentType === NodeType.TEXT_CLIP &&
+    contentType === NodeType.WEB_TEXT_BOOKMARK &&
     "text" in body &&
     body.text
   ) {
@@ -110,9 +110,9 @@ export function generateMarkdownText(blocks: IBlock[]) {
 
 const nodeIconMap = new Map<NodeType, string>([
   [NodeType.IMAGE, "ph:image-light"],
-  [NodeType.WEB_SCREENSHOT_CLIP, "crop"],
+  [NodeType.WEB_SCREENSHOT, "crop"],
   [NodeType.NODULAR_MARKDOWN, "markdown"],
-  [NodeType.TEXT_CLIP, "highlighter-circle"],
+  [NodeType.WEB_TEXT_BOOKMARK, "highlighter-circle"],
   [NodeType.WEB_PAGE, "ph:globe-light"],
   [NodeType.PDF, "file-pdf"],
   [NodeType.AUDIO, "music-note"],
@@ -120,7 +120,7 @@ const nodeIconMap = new Map<NodeType, string>([
   [NodeType.FILE, "ph:file-light"],
   [NodeType.YOUTUBE_VIDEO, "logos:youtube-icon"],
   [NodeType.YOUTUBE_CHANNEL, "logos:youtube-icon"],
-  [NodeType.YOUTUBE_TIMESTAMP_CLIP, "logos:youtube-icon"],
+  [NodeType.YOUTUBE_BOOKMARK, "logos:youtube-icon"],
   [NodeType.TWEET, "twitter"],
   [NodeType.TWITTER_PROFILE, "twitter"],
   [NodeType.KINDLE_BOOK, "amazon-logo"],
@@ -231,11 +231,11 @@ export function resolveNodeContentLabel(contentType: NodeType) {
       return "Markdown";
     case NodeType.SIMPLE_TEXT:
       return "Text";
-    case NodeType.TEXT_CLIP:
+    case NodeType.WEB_TEXT_BOOKMARK:
       return "Web Text clip";
-    case NodeType.WEB_SCREENSHOT_CLIP:
+    case NodeType.WEB_SCREENSHOT:
       return "Web Screenshot";
-    case NodeType.YOUTUBE_TIMESTAMP_CLIP:
+    case NodeType.YOUTUBE_BOOKMARK:
       return "Youtube Clip";
     case NodeType.TWEET:
       return "X Post";
@@ -254,9 +254,9 @@ export function resolveFilePreview(node: INode) {
     contentType === NodeType.VIDEO
   ) {
     return file;
-  } else if (contentType === NodeType.WEB_SCREENSHOT_CLIP) {
+  } else if (contentType === NodeType.WEB_SCREENSHOT) {
     return body.file;
-  } else if (contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP) {
+  } else if (contentType === NodeType.YOUTUBE_BOOKMARK) {
     return body.thumbnail;
   } else if (contentType === NodeType.AUDIO) {
     if (file?.thumbnailUrl) return file;
@@ -327,12 +327,12 @@ export function resolveNodeLabel(item: INodeThumb) {
   if (item.parent && item.parent.id && !isRecordId(item.parent))
     parent = item.parent;
   const defaultLabels = {
-    [NodeType.TEXT_CLIP]:
+    [NodeType.WEB_TEXT_BOOKMARK]:
       "Clipped Text - " + (item.body as ITextClipBody)?.text,
-    [NodeType.YOUTUBE_TIMESTAMP_CLIP]:
+    [NodeType.YOUTUBE_BOOKMARK]:
       "Video timestamp - " +
       resolveVideoTimeStampStr(item.body as IVideoTimestampClipBody),
-    [NodeType.WEB_SCREENSHOT_CLIP]: "Web screenshot",
+    [NodeType.WEB_SCREENSHOT]: "Web screenshot",
     [NodeType.TWEET]: "Unknown tweet",
     [NodeType.KINDLE_HIGHLIGHT]: "Kindle highlight"
   };
@@ -342,7 +342,7 @@ export function resolveNodeLabel(item: INodeThumb) {
     const twitterProfileLabel = isValidString(
       parent?.label ?? parent?.body?.name
     )
-      ? parent.label ?? parent.body.name
+      ? (parent.label ?? parent.body.name)
       : "Unknown";
     const prefix = enumToString(item.contentType);
     return {
@@ -353,8 +353,8 @@ export function resolveNodeLabel(item: INodeThumb) {
   }
 
   switch (item.contentType) {
-    case NodeType.TEXT_CLIP:
-    case NodeType.WEB_SCREENSHOT_CLIP:
+    case NodeType.WEB_TEXT_BOOKMARK:
+    case NodeType.WEB_SCREENSHOT:
     case NodeType.KINDLE_HIGHLIGHT:
       if (!parent?.label) return item.label ?? defaultLabels[item.contentType];
       const weburl = item.url?.split("://").pop()?.split("/")[0];
@@ -363,7 +363,7 @@ export function resolveNodeLabel(item: INodeThumb) {
         parent,
         text: item.body?.text ?? item.text ?? `Clip: ${parent?.label ?? weburl}`
       };
-    case NodeType.YOUTUBE_TIMESTAMP_CLIP:
+    case NodeType.YOUTUBE_BOOKMARK:
       const timestamp = formatSeconds(item.body.timestamp, TimeFormat.CLOCK);
       if (!parent?.label)
         return item.label
@@ -530,3 +530,102 @@ export function generateNodeIdPrefixed(contentType: NodeType, id: string) {
     id
   });
 }
+
+/**
+ * Content type priority list for sorting nodes by importance (descending order)
+ * Higher priority content types appear first in results
+ */
+const contentTypePriority: NodeType[] = [
+  NodeType.NODULAR_MARKDOWN,
+  NodeType.NON_NODULAR_MARKDOWN,
+  NodeType.PDF,
+  NodeType.IMAGE,
+  NodeType.VIDEO,
+  NodeType.AUDIO,
+  NodeType.FILE,
+
+  // Web pages and external content
+  NodeType.WEB_PAGE,
+  NodeType.GIST,
+
+  // Social media posts (high engagement content)
+  NodeType.TWEET,
+  NodeType.LINKEDIN_POST,
+  NodeType.BLUESKY_POST,
+  NodeType.THREADS_POST,
+  NodeType.INSTAGRAM_POST,
+  NodeType.REDDIT_POST,
+  NodeType.FACEBOOK_POST,
+  NodeType.MASTODON_POST,
+
+  // Video content
+  NodeType.YOUTUBE_VIDEO,
+  NodeType.COURSERA_VIDEO,
+  NodeType.UDEMY_VIDEO,
+  NodeType.EDX_VIDEO,
+  NodeType.SKILLSHARE_VIDEO,
+  NodeType.VIMEO_VIDEO,
+  NodeType.TED_VIDEO,
+  NodeType.KHAN_VIDEO,
+  NodeType.TWITCH_STREAM,
+  NodeType.RUMBLE_VIDEO,
+  NodeType.INSTRUCTURE_VIDEO,
+  NodeType.MOODLE_VIDEO,
+
+  // Bookmarks and highlights
+  NodeType.KINDLE_BOOK,
+  NodeType.KINDLE_HIGHLIGHT,
+  NodeType.WEB_TEXT_BOOKMARK,
+  NodeType.PDF_BOOKMARK,
+  NodeType.AUDIO_BOOKMARK,
+  NodeType.VIDEO_BOOKMARK,
+  NodeType.YOUTUBE_BOOKMARK,
+  NodeType.WEB_VIDEO_BOOKMARK,
+  NodeType.WEB_SCREENSHOT,
+
+  // Social profiles
+  NodeType.TWITTER_PROFILE,
+  NodeType.LINKEDIN_PROFILE,
+  NodeType.YOUTUBE_CHANNEL,
+  NodeType.GITHUB_PROFILE,
+  NodeType.BLUESKY_PROFILE,
+  NodeType.THREADS_PROFILE,
+  NodeType.INSTAGRAM_PROFILE,
+  NodeType.REDDIT_PROFILE,
+  NodeType.FACEBOOK_PROFILE,
+  NodeType.MASTODON_PROFILE,
+
+  // Text content types
+  NodeType.HEADING1,
+  NodeType.HEADING2,
+  NodeType.HEADING3,
+  NodeType.HEADING4,
+  NodeType.HEADING5,
+  NodeType.SIMPLE_TEXT,
+  NodeType.QUOTE,
+  NodeType.CODE,
+  NodeType.CALLOUT
+];
+
+/**
+ * Sort nodes by contentType priority in descending order
+ * Nodes with higher priority content types appear first
+ *
+ * @param a First node to compare
+ * @param b Second node to compare
+ * @returns Comparison result for sorting
+ */
+export const contentTypeSort = (a: any, b: any) => {
+  if (!a?.contentType || !b?.contentType) {
+    if (!a?.contentType && !b?.contentType) return 0;
+    if (!a?.contentType) return 1;
+    if (!b?.contentType) return -1;
+  }
+
+  const aPriority = contentTypePriority.indexOf(a.contentType);
+  const bPriority = contentTypePriority.indexOf(b.contentType);
+  const aIndex = aPriority === -1 ? contentTypePriority.length : aPriority;
+  const bIndex = bPriority === -1 ? contentTypePriority.length : bPriority;
+
+  return aIndex - bIndex;
+};

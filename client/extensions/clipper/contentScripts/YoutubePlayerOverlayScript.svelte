@@ -2,29 +2,22 @@
   import { onDestroy, onMount } from "svelte";
   import { createClipPointer } from "$lib/client/extensions/clipper/clipper.utils";
   import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import {
-    NodeType,
-    type IClipCapture
-  } from "$lib/client/products/memotron/node/node.type";
+  import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
   import { webpage } from "./store";
   import { appEvents } from "$lib/client/stores/notification.store";
   import { logger } from "$lib/client/components/debug/logger.client";
-  import {
-    relayToBackgroundScript,
-    relayToSidePanel
-  } from "$lib/client/utils/extension.utils";
+  import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
   import Icon from "$lib/client/elements/Icon.svelte";
-  import { getPort } from "@plasmohq/messaging/port";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { TimeFormat } from "$lib/client/types/time.type";
+  import { checkIfAdPlaying } from "../parsers/shared/video.utils";
   export let isRenderedAsOverlay: boolean = false;
   let clipCount = 0;
   let isClipInProgress = false;
-  const channel = getPort("channel");
+  let _isAdPlaying = false;
 
   function refreshTimestamps() {
+    if (_isAdPlaying) return;
     removeAllPointers();
     clipCount = 0;
     const clips = $webpage.clips;
@@ -40,85 +33,10 @@
     }
   }
 
-  async function clip() {
-    if (
-      window.location.hostname === "www.youtube.com" &&
-      window.location.pathname === "/watch"
-    ) {
-      const videoId = new URLSearchParams(window.location.search).get("v");
-      const videoPlayer = document.querySelector("video");
-      if (videoPlayer && !isNaN(videoPlayer.currentTime)) {
-        const adModuleElement = document.querySelector(".ytp-ad-module");
-        const videoAdElement = document.querySelector(".video-ads");
-        if (adModuleElement || videoAdElement) {
-          const childrenCount = adModuleElement?.children.length;
-          const videoAdChildrenCount = videoAdElement?.children.length;
-          console.log({
-            at: "adModuleElement",
-            childrenCount,
-            videoAdChildrenCount
-          });
-          if (
-            (childrenCount && childrenCount > 0) ||
-            (videoAdChildrenCount && videoAdChildrenCount > 0)
-          ) {
-            window.alert(
-              `Cannot clip video while an ad is playing. Please wait for the ad to finish.`
-            );
-            return null;
-          }
-        }
-        const timestamp = Math.floor(videoPlayer.currentTime);
-        //if already exists, don't create a new pointer
-        const isExists = $webpage.clips?.find(
-          (clip) => clip.body?.timestamp === timestamp
-        );
-        if (isExists) {
-          window.alert(
-            `Clip already exists at this timestamp: ${formatSeconds(timestamp, TimeFormat.CLOCK)}`
-          );
-          return null;
-        }
-        placePointerOnPlayer(timestamp);
-        const contentType = "image/png";
-        const dataUrl = captureVideoFrame(videoPlayer);
-        let s3Url;
-        const response = await relayToBackgroundScript({
-          event: ExtensionEvent.UPLOAD_FILE,
-          data: { dataUrl, contentType }
-        });
-        const videoUrlWithTimestamp = `https://www.youtube.com/watch?v=${videoId}&t=${timestamp}s`;
-        const fileId =
-          response && typeof response === "object" && "id" in response
-            ? response.id
-            : "";
-        return { videoUrlWithTimestamp, timestamp, fileId };
-      } else {
-        console.error(
-          "YouTube video player not found or no video is currently playing."
-        );
-        return null;
-      }
-    } else {
-      console.error("Not on a YouTube video page.");
-      return null;
-    }
-
-    function captureVideoFrame(video) {
-      var canvas = document.createElement("canvas");
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      var ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0);
-      var imageURL = canvas.toDataURL("image/png");
-      return imageURL;
-    }
-  }
-
   /**
    * Places pointer at the timestamp location above the progress bar.
    */
-  function placePointerOnPlayer(timestamp) {
+  function placePointerOnPlayer(timestamp: number) {
     const playerControls = document.querySelector(".ytp-chrome-bottom");
     if (playerControls && playerControls instanceof HTMLElement) {
       const pointer = createClipPointer();
@@ -127,10 +45,6 @@
       pointer.style.left = `${position - 5}px`;
       pointer.addEventListener("click", function () {
         const player = document.querySelector("video");
-        console.log("Seeking to timestamp: ", {
-          timestamp,
-          player
-        });
         if (player && timestamp) {
           player.currentTime = timestamp;
         }
@@ -160,15 +74,10 @@
     ) {
       const player = document.querySelector("video");
       if (player && message.data.clip?.body?.timestamp) {
-        console.log("Seeking to timestamp: ", message.data.clip.body.timestamp);
         player.currentTime = message.data.clip.body.timestamp;
       }
     }
   };
-
-  function onChannelMessage(msg: any) {
-    logger.debug({ at: "YoutubeContentScript - channel listener", msg });
-  }
 
   let sizeButtonListener: () => void;
   let fullscreenButtonListener: () => void;
@@ -201,10 +110,19 @@
     return false;
   }
 
+  function updateVideoMetadata() {
+    const isAdPlayingNewVal = checkIfAdPlaying();
+    if (isAdPlayingNewVal !== _isAdPlaying) {
+      _isAdPlaying = isAdPlayingNewVal;
+      refreshTimestamps();
+    }
+  }
+
   onMount(() => {
     clipCount = 0;
+    updateVideoMetadata();
+    const timeInterval = setInterval(updateVideoMetadata, 1000);
     chrome.runtime.onMessage.addListener(messageListener);
-    channel.onMessage.addListener(onChannelMessage);
     if (!attachPlayerControlListeners()) {
       setTimeout(() => {
         attachPlayerControlListeners();
@@ -224,12 +142,12 @@
       }
     });
     return () => {
+      clearInterval(timeInterval);
       sub();
     };
   });
 
   onDestroy(() => {
-    channel.onMessage.removeListener(onChannelMessage);
     chrome.runtime.onMessage.removeListener(messageListener);
     if (attachedElements && sizeButtonListener && fullscreenButtonListener) {
       attachedElements.sizeButton?.removeEventListener(
@@ -251,26 +169,25 @@
 
   async function onClick() {
     try {
-      if (isClipInProgress) return;
+      if (isClipInProgress || _isAdPlaying) return;
       isClipInProgress = true;
-      const clipDetails = await clip();
-      if (!clipDetails) {
+      const promises = webpage.saveVideoBookmark(NodeType.YOUTUBE_VIDEO);
+      const result = await promises[0];
+      if (result) {
         isClipInProgress = false;
-        return;
+        setTimeout(() => {
+          refreshTimestamps();
+        }, 500);
+        promises[1].then((response) => {
+          const thumbnail =
+            response && typeof response === "object" && "id" in response
+              ? response.id
+              : "";
+          if (thumbnail) {
+            webpage.updateClipBody(result.id, { thumbnail });
+          }
+        });
       }
-      const clipItem: IClipCapture = {
-        contentType: NodeType.YOUTUBE_BOOKMARK,
-        url: clipDetails.videoUrlWithTimestamp,
-        body: {
-          timestamp: clipDetails.timestamp,
-          thumbnail: clipDetails.fileId
-        },
-        metadata: {}
-      };
-      await webpage.saveClip(clipItem);
-      clipCount++;
-      //TODO - show feedback
-      isClipInProgress = false;
     } catch (e) {
       logger.error({ at: "YoutubeContentScript - onClick", error: e });
       isClipInProgress = false;
@@ -320,15 +237,27 @@
       refreshTimestamps();
     }}
   >
-    <span class="text-b2 shadow-none px-3">
-      {clipCount} clips
-    </span>
-    <button
-      on:click|stopPropagation={onClick}
-      class="bg-aps3 hover:bg-aps2 border border-aps2 flex w-12 justify-center items-center h-full rounded-r-md"
-    >
-      <Icon icon={isClipInProgress ? "svg-spinners:3-dots-fade" : "plus"} />
-    </button>
+    {#if _isAdPlaying}
+      <span class="text-b2 shadow-none px-3"> Ad... </span>
+    {:else}
+      <span class="text-b2 shadow-none px-3">
+        {#if clipCount > 0}
+          {clipCount} bookmark{clipCount > 1 ? "s" : ""}
+        {:else}
+          No bookmarks found.
+        {/if}
+      </span>
+      <button
+        on:click|stopPropagation={onClick}
+        class="bg-aps3 hover:bg-aps2 border border-aps2 flex w-12 justify-center items-center h-full rounded-r-md"
+      >
+        <Icon
+          icon={isClipInProgress
+            ? "svg-spinners:3-dots-fade"
+            : "mynaui:plus-hexagon"}
+        />
+      </button>
+    {/if}
   </button>
 </div>
 <svelte:window on:resize={resizeEventListener} />

@@ -383,9 +383,7 @@
           />
           {#if isBootupSyncInProgress}
             <div class="flex w-full justify-center items-center p-3">
-              <InlineSyncingFeedbackBase
-                isSyncing={true}
-              />
+              <InlineSyncingFeedbackBase isSyncing={true} />
             </div>
           {/if}
           {#if isToolbarHidden}

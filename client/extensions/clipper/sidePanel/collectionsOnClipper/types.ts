@@ -18,4 +18,4 @@ export interface CollectionItem {
   contentType: NodeType;
   parent?: string;
   body?: any;
-} 
+}

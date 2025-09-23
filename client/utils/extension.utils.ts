@@ -83,7 +83,7 @@ export async function relayToBackgroundScript(message: {
     const timeoutPromise = new Promise((_, reject) => {
       setTimeout(() => {
         reject(
-          new Error("Background script communication timeout after 5 seconds")
+          new Error("Background script communication timeout after 10 seconds")
         );
       }, 5000);
     });
@@ -123,7 +123,11 @@ export async function openLink(url: string) {
 }
 
 export async function openAppPath(path: string) {
+  return openLink(resolveAppPath(path));
+}
+
+export function resolveAppPath(path: string) {
   const appUrl =
     process.env.PLASMO_PUBLIC_APP_URL ?? "https://web.memotron.app";
-  return openLink(appUrl + "/" + path);
+  return appUrl + "/" + path;
 }

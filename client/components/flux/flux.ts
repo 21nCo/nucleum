@@ -5,6 +5,13 @@ import {
   type IResource
 } from "$lib/client/components/flux/resourceStores/resource.type";
 import {
+  type ILocal,
+  type IPersistence,
+  type ITable,
+  PersistenceProvider
+} from "$lib/client/persistence/persistence.type";
+import { getDapId } from "$lib/client/persistence/persistence.utils";
+import {
   type IStore,
   PersistenceActionType,
   type IMutationParamsv2,
@@ -18,47 +25,40 @@ import {
   type IResourceSelectProperties,
   type IResourceStore
 } from "$lib/client/types/data.type";
-import { wait } from "$lib/client/utils/time.utils";
-import {
-  type ILocal,
-  type IPersistence,
-  type ITable,
-  PersistenceProvider
-} from "$lib/client/persistence/persistence.type";
+import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
+import { GlobalEvent } from "$lib/client/types/event.enum";
+import { ExtensionEvent } from "$lib/client/types/extension.type";
+import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
 import {
   dispatchCustomEvent,
   isExtensionEnvironment,
   getEnvVal
 } from "$lib/client/utils/browser.utils";
-import { getDapId } from "$lib/client/persistence/persistence.utils";
-import {
-  generateRandomIdv2,
-  generateSimpleRandomId
-} from "$lib/shared/utils/crypto.utils";
-import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
-import { GlobalEvent } from "$lib/client/types/event.enum";
-import {
-  determineIfOffline,
-  performApiCall
-} from "$lib/client/utils/network.utils";
-import { ExtensionEvent } from "$lib/client/types/extension.type";
+import { postDataToParent } from "$lib/client/utils/embed.utils";
 import {
   relayToContentScript,
   relayToSidePanel
 } from "$lib/client/utils/extension.utils";
-import { SyncMethod } from "$lib/shared/types/sync.type";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { FluxMethod, type IDataMapper, type IFluxMethod } from "./flux.type";
+import {
+  determineIfOffline,
+  performApiCall
+} from "$lib/client/utils/network.utils";
+import { wait } from "$lib/client/utils/time.utils";
 import { interceptSurrealResponse } from "$lib/client/utils/utils";
+import { SyncMethod } from "$lib/shared/types/sync.type";
+import {
+  generateRandomIdv2,
+  generateSimpleRandomId
+} from "$lib/shared/utils/crypto.utils";
+import { reparse } from "$lib/shared/utils/json.utils";
+import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+import { DataMapper } from "./dataMapper";
+import { FluxMethod, type IDataMapper, type IFluxMethod } from "./flux.type";
 import {
   determineResourceType,
   isRecordId,
   removeDuplicatesFilter
 } from "./resourceStores/resource.utils";
-import { postDataToParent } from "$lib/client/utils/embed.utils";
-import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
-import { reparse } from "$lib/shared/utils/json.utils";
-import { DataMapper } from "./dataMapper";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -135,7 +135,6 @@ class Flux {
         indices: ["id", "timestamp"]
       }
     ];
-    console.log({ tables });
     return this.persistence.initialize({
       ...params,
       isExtensionEnvironment: this.isExtensionEnvironment,

@@ -58,7 +58,7 @@
     NodeType.TWITTER_PROFILE,
     NodeType.KINDLE_BOOK,
     NodeType.KINDLE_HIGHLIGHT,
-    NodeType.TEXT_CLIP
+    NodeType.WEB_TEXT_BOOKMARK
   ];
 
   const nonUploadTypes = [

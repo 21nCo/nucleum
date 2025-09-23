@@ -75,9 +75,9 @@
     NodeType.IMAGE,
     NodeType.PDF,
     NodeType.WEB_PAGE,
-    NodeType.WEB_SCREENSHOT_CLIP,
+    NodeType.WEB_SCREENSHOT,
     NodeType.YOUTUBE_VIDEO,
-    NodeType.YOUTUBE_TIMESTAMP_CLIP,
+    NodeType.YOUTUBE_BOOKMARK,
     NodeType.GIST
   ];
 
