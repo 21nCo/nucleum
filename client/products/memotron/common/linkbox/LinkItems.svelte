@@ -35,6 +35,7 @@
   export let isReadOnlyMode: boolean = false;
   export let expand: IRecordId | null = null;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CLIPPER;
+  export let subContext: "clipper-modal" | undefined = undefined;
   // export let ctx: "clip" | "capture" = "clip";
   let expansionState:
     | "not-type"
@@ -188,7 +189,11 @@
       <div
         class={cn("w-full p-2 rounded-md flex flex-col gap-3 items-start", {
           "h-96 bg-bgs2 bg-opacity-30":
-            accessPoint === ResourceAccessPoint.CLIPPER,
+            accessPoint === ResourceAccessPoint.CLIPPER &&
+            subContext !== "clipper-modal",
+          "h-60":
+            accessPoint === ResourceAccessPoint.CLIPPER &&
+            subContext === "clipper-modal",
           "h-fit max-h-96": accessPoint === ResourceAccessPoint.CAPTURE
         })}
         in:fly={{

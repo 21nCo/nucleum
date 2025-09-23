@@ -1,13 +1,10 @@
-import {
-  type IPersistence,
-  type IPersistenceInitParams,
-  type ITable
-} from "../persistence.type";
+import { logger } from "$lib/client/components/debug/logger.client";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import type {
   IMetaResource,
   IResource
 } from "$lib/client/components/flux/resourceStores/resource.type";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { removeDuplicatesFilter } from "$lib/client/components/flux/resourceStores/resource.utils";
 import {
   FilterCombinationMethod,
   IResourceFilterOperator,
@@ -19,11 +16,18 @@ import {
   type IResourceSelectParams,
   type IResourceSelectProperties
 } from "$lib/client/types/data.type";
-import { Dexie, type Collection, type Table, type WhereClause } from "dexie";
-import { logger } from "$lib/client/components/debug/logger.client";
-import { IndexedDB, Index, Document } from "flexsearch";
-import { removeDuplicatesFilter } from "$lib/client/components/flux/resourceStores/resource.utils";
+import { parse } from "$lib/shared/utils/json.utils";
 import { isValidString } from "$lib/shared/utils/text.utils";
+import {
+  ClientStorageKey,
+  type IPersistence,
+  type IPersistenceInitParams,
+  type ITable
+} from "../persistence.type";
+import { clientStorage } from "../persistence.utils";
+import { Dexie, type Collection, type Table, type WhereClause } from "dexie";
+import { IndexedDB, Index, Document } from "flexsearch";
+
 // import {
 //   Worker as WorkerIndex,
 //   Document as DocumentWorkerIndex
@@ -55,20 +59,27 @@ export class DexiePersistence implements IPersistence {
     if (this.userId === user && this.instance) return -1;
     const dbName = `${user}-${dbVersion}`;
     this.instance = new Dexie(dbName);
+    let tables = params.tables;
+    if (
+      params.isExtensionEnvironment &&
+      (!tables || tables.length === 0 || tables.length === 2)
+    ) {
+      const tablesVal = await clientStorage.get(ClientStorageKey.TABLES);
+      if (tablesVal) tables = [...(tables ?? []), ...parse(tablesVal)];
+    }
     const stores =
-      params.tables?.reduce(
-        (acc, table) => {
-          acc[table.name] = table.indices.join(", ");
-          return acc;
-        },
-        {} as { [key: string]: string }
-      ) ?? {};
+      tables?.reduce((acc, table) => {
+        acc[table.name] = table.indices.join(", ");
+        return acc;
+      }, {} as { [key: string]: string }) ?? {};
     this.instance.version(version).stores(stores);
     this.userId = user;
-    if (params.tables) {
-      this.tables = params.tables;
+    if (tables) {
+      this.tables = tables;
       if (!params.isExtensionEnvironment) {
         this.initializeSearchIndices();
+      } else if (params.tables) {
+        await clientStorage.set(ClientStorageKey.TABLES, params.tables);
       }
     }
     const initLog = await this.select("kv:local");
@@ -416,9 +427,10 @@ export class DexiePersistence implements IPersistence {
       if (orderBy && filters && !("condition" in filters)) {
         const entries = Object.entries(orderBy);
         if (entries.length > 0) {
+          const [key, order] = entries[0];
           orderByConfig = {
-            key: entries[0][0],
-            order: entries[0][1] as string
+            key,
+            order: order as string
           };
         }
       }
@@ -460,7 +472,7 @@ export class DexiePersistence implements IPersistence {
           return {
             toArray: async () => {
               const arr = await (query as Collection).toArray();
-              const groupKey = groupBy[0];
+              const [groupKey] = groupBy;
               const counts: { [key: string]: number } = {};
               for (const item of arr) {
                 const key = item[groupKey] ?? "undefined";

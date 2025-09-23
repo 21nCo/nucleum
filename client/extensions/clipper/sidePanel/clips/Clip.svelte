@@ -239,13 +239,13 @@
     }
   }}
 >
-  {#if clip.contentType === NodeType.TEXT_CLIP || clip.contentType === NodeType.WEB_SCREENSHOT_CLIP}
+  {#if clip.contentType === NodeType.WEB_TEXT_BOOKMARK || clip.contentType === NodeType.WEB_SCREENSHOT}
     <div class="flex flex-col gap-2 text-left w-full">
       {#key clip.body.highlighterId}
         <TextClip {clip} on:click={onClick} on:keydown />
       {/key}
     </div>
-  {:else if clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP && "timestamp" in clip.body}
+  {:else if clip.contentType === NodeType.YOUTUBE_BOOKMARK && "timestamp" in clip.body}
     <button class="flex gap-4 w-full" on:click={onClick}>
       <FileView
         id={clip.body.thumbnail}
@@ -271,7 +271,7 @@
     </button>
   {/if}
   <div class="flex flex-col gap-2">
-    {#if clip.contentType !== NodeType.YOUTUBE_TIMESTAMP_CLIP}
+    {#if clip.contentType !== NodeType.YOUTUBE_BOOKMARK}
       <div class="flex w-full truncate overflow-x-auto">
         <NodeTitle
           node={clip}

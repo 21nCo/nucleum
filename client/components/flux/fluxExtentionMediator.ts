@@ -1,25 +1,33 @@
 import { logger } from "$lib/client/components/debug/logger.client";
 import { flux, initFlux } from "$lib/client/components/flux/flux";
 import { DexiePersistence } from "$lib/client/persistence/dexie/dexie.local";
-import {
-  RemotePersistenceProvider,
-  type PersistenceProvider
-} from "$lib/client/persistence/persistence.type";
-// import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
+import { PersistenceProvider } from "$lib/client/persistence/persistence.type";
+import { getDapId } from "$lib/client/persistence/persistence.utils";
 import { StoreDataType, type IStore } from "$lib/client/types/data.type";
 import { ExtensionEvent } from "$lib/client/types/extension.type";
+import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
 import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
 import { FluxMethod, type IFluxMethod } from "./flux.type";
 import { Resource } from "./resourceStores/resource.enum";
+
 // import { getPort } from "@plasmohq/messaging/port"
 
 export async function delegateToFlux(method: IFluxMethod) {
   try {
-    logger.log({ at: "delegateToFlux", ...method });
+    logger.log({ at: "delegateToFlux", ...method, flux });
     // return flux?.[method]?.(...args);
     if (method.method !== FluxMethod.INIT_FLUX && !flux) {
-      while (!flux) {
+      logger.debug({ at: "delegateToFlux - flux is not available", flux });
+      let timeElapsed = 0;
+      while (!flux && timeElapsed < 1000) {
         await new Promise((resolve) => setTimeout(resolve, 100));
+        timeElapsed += 100;
+      }
+      if (!flux) {
+        await initializeFlux();
+      }
+      if (!flux) {
+        logger.error({ at: "delegateToFlux - Flux is not responding" });
       }
     }
     switch (method.method) {
@@ -38,13 +46,7 @@ export async function delegateToFlux(method: IFluxMethod) {
           counts: method.args.counts
         });
       case FluxMethod.INIT_FLUX:
-        return initFlux(
-          method.args.stores,
-          method.args.provider,
-          new DexiePersistence(RemotePersistenceProvider.SURREAL),
-          // new SurrealPersistence(),
-          method.args.params
-        );
+        return initializeFlux(method.args.stores);
       case FluxMethod.SELECT_MANY:
         return flux?.selectMany(method.args.resource, method.args.params);
       case FluxMethod.SELECT:
@@ -66,25 +68,27 @@ export async function delegateToFlux(method: IFluxMethod) {
     logger.error({ at: "delegateToFlux", method, error });
     return null;
   }
+
+  async function initializeFlux(stores: any[] = []) {
+    logger.debug({ at: "delegateToFlux - initializeFlux" });
+    const currentUserId = await resolveCurrentUserId();
+    const dapId = await getDapId();
+    return initFlux(stores, PersistenceProvider.DEXIE, new DexiePersistence(), {
+      dapId,
+      userId: currentUserId,
+      product: "extension"
+    });
+  }
 }
 
-export function initExtensionFlux(
-  stores: IStore[],
-  provider: PersistenceProvider,
-  params: {
-    dapId: string;
-    userId?: string;
-  }
-) {
+export function initExtensionFlux(stores: IStore[]) {
   return relayToBackgroundScript({
     event: ExtensionEvent.FLUX_DELEGATION,
     data: {
       method: {
         method: FluxMethod.INIT_FLUX,
         args: {
-          stores,
-          provider,
-          params
+          stores
         }
       }
     }

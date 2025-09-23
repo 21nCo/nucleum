@@ -243,7 +243,7 @@ function resolveOgData(doc?: Document) {
 
 export function resolveContentTypeString(contentType: NodeType | null) {
   if (!contentType) return "web page";
-  else if (contentType === NodeType.WEB_SCREENSHOT_CLIP) return "screenshot";
+  else if (contentType === NodeType.WEB_SCREENSHOT) return "screenshot";
   else return enumToString(contentType);
 }
 

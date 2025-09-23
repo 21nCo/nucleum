@@ -70,26 +70,26 @@ export function formatSeconds(
       size === Size.sm
         ? "m"
         : size === Size.md
-        ? "min"
-        : minutes > 1
-        ? "minutes"
-        : "minute";
+          ? "min"
+          : minutes > 1
+            ? "minutes"
+            : "minute";
     const secondsLabel =
       size === Size.sm
         ? "s"
         : size === Size.md
-        ? "sec"
-        : secs > 1
-        ? "seconds"
-        : "second";
+          ? "sec"
+          : secs > 1
+            ? "seconds"
+            : "second";
     const hoursLabel =
       size === Size.sm
         ? "h"
         : size === Size.md
-        ? "hr"
-        : hours > 1
-        ? "hours"
-        : "hour";
+          ? "hr"
+          : hours > 1
+            ? "hours"
+            : "hour";
     if (hours > 0) {
       return (
         `${hours} ${hoursLabel}` +
@@ -128,9 +128,7 @@ export function formatSecondsToTimeInDecimals(
   isShowUnits: boolean = true
 ) {
   if (scale === "hrs") {
-    return `${(seconds / (60 * 60)).toFixed(toFixed)} ${
-      isShowUnits ? "hr" : ""
-    }`;
+    return `${(seconds / (60 * 60)).toFixed(toFixed)} ${isShowUnits ? "hr" : ""}`;
   } else if (scale === "min") {
     return `${(seconds / 60).toFixed(toFixed)} ${isShowUnits ? "m" : ""}`;
   }
@@ -176,7 +174,7 @@ export function timePeriodLabel(period: TimePeriod) {
     } else if (value.param < 0) {
       return `Last ${Math.abs(value.param)} ${scale.toLowerCase()}`;
     } else if (value.param > 0) {
-      return `Next ${value} ${scale.toLowerCase()}`;
+      return `Next ${value.param} ${scale.toLowerCase()}`;
     }
   } else if (value.type === TimePeriodType.ABSOLUTE) {
     let start = value.param.start.toString();
@@ -232,6 +230,7 @@ export function determinePreviousTimePeriod(period: TimePeriod) {
       const numberOfYears = Math.floor(
         (val.end.getTime() - val.begin.getTime()) / (1000 * 60 * 60 * 24) / 365
       );
+      previous.setFullYear(val.begin.getFullYear() - numberOfYears);
       break;
   }
   return previous;

@@ -24,7 +24,7 @@ export function handleMarkdownActions(
         if (options.onLinkClick) {
           options.onLinkClick(href);
         } else {
-          window.open(href, "_blank");
+          window.open(href, "_blank", "noopener,noreferrer");
         }
       }
     }
@@ -36,7 +36,7 @@ export function handleMarkdownActions(
         if (options.onMentionClick) {
           options.onMentionClick(mentionId);
         } else {
-          window.open(`?pop=${mentionId}`);
+          window.open(`?pop=${mentionId}`, "_blank", "noopener,noreferrer");
         }
       }
     }

@@ -882,9 +882,7 @@ export function resolveNodeContextMenu(
     items: [resourceActions.copyLink()]
   };
   if (
-    [...mediaNodeTypeList, NodeType.WEB_SCREENSHOT_CLIP].includes(
-      node.contentType
-    )
+    [...mediaNodeTypeList, NodeType.WEB_SCREENSHOT].includes(node.contentType)
   ) {
     mediaShareAndExportGroup.items.unshift(nodeActions.download);
   }

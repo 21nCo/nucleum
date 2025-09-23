@@ -28,42 +28,39 @@ import {
 } from "$lib/client/products/memotron/linking/link.store";
 import { nodeStore } from "$lib/client/products/memotron/node/node.store";
 import {
-  NodeIdPrefix,
-  NodeType,
   type IClip,
   type IClipCapture,
-  type ITweet,
-  type IThreadsPost,
-  type ILinkedInPost,
-  type ILinkedInProfile,
-  type IBlueskyProfile,
-  type ITwitterProfile,
-  type IWebScreenshotClip,
-  type IWebPage,
   type IKindleBook,
   type IKindleHighlight,
-  type ITextClip,
-  type IVideoTimestampClip,
-  type INodePropertyValue,
   type INode,
-  socialProfileNodeTypeList,
-  socialPostNodeTypeList
+  type INodePropertyValue,
+  type ITextClip,
+  type ITweet,
+  type ITwitterProfile,
+  type IVideoBookmarkCapture,
+  type IVideoTimestampClip,
+  type IWebPage,
+  type IWebScreenshotClip,
+  NodeIdPrefix,
+  NodeType,
+  socialPostNodeTypeList,
+  socialProfileNodeTypeList
 } from "$lib/client/products/memotron/node/node.type";
 import { generateNodeIdPrefixed } from "$lib/client/products/memotron/node/node.utils";
 import {
-  fetchYouTubeMetadata,
   isSameAsCurrentUrl,
   resolveUrlData
 } from "$lib/client/products/memotron/node/url.utils";
 import { ObservableStore } from "$lib/client/stores/client.store";
 import { appEvents } from "$lib/client/stores/notification.store";
 import {
-  PersistenceActionType,
-  type IRecordId
+  type IRecordId,
+  PersistenceActionType
 } from "$lib/client/types/data.type";
 import { Placement } from "$lib/client/types/direction.enum";
 import { ExtensionEvent } from "$lib/client/types/extension.type";
 import { AlertType } from "$lib/client/types/notification.type";
+
 import {
   relayToBackgroundScript,
   relayToSidePanel
@@ -79,13 +76,18 @@ import {
   extractYoutubeVideoData,
   resolveUrl
 } from "../clipper.utils";
-import { resolveParser, resolveInlineSocialPostParser } from "../parsers";
+import {
+  resolveInlineSocialPostParser,
+  resolveParser,
+  resolveVideoBookmarkParser
+} from "../parsers";
+import { captureVideoFrame } from "../parsers/shared/video.utils";
 import { removeHighlight } from "./highlightV4";
 import {
-  SyncStatus,
   type IFeedbackPaneStore,
   type ISyncStore,
-  type IWebpageStore
+  type IWebpageStore,
+  SyncStatus
 } from "./types";
 
 class WebpageStore extends ObservableStore<IWebpageStore> {
@@ -314,7 +316,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
    * @param tabData
    * @returns
    */
-  async saveClip(data: IClipCapture) {
+  async saveClip(data: IClipCapture | IVideoBookmarkCapture) {
     let webpage = this.get();
     logger.debug({ at: "saveClip", webpage, data });
 
@@ -353,7 +355,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       event: ClipperExtensionEvent.CLIPS_CHANGED,
       data: clips
     });
-    if (clip.contentType === NodeType.WEB_SCREENSHOT_CLIP) {
+    if (clip.contentType === NodeType.WEB_SCREENSHOT) {
       feedbackPane.focus(clipNode, {
         message: "Clip saved!",
         type: AlertType.SUCCESS
@@ -363,7 +365,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
 
     function resolveClipUrl(data: any) {
       if ("url" in data && data.url) return data.url;
-      else return (webpage.url ?? window.location.href) + "#" + id;
+      else return `${webpage.url ?? window.location.href}#${id}`;
     }
   }
 
@@ -443,7 +445,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     // const id = generateResourceId(Resource.node);
     const tweetId = generateResourceId(Resource.node, {
       prefix: NodeIdPrefix.TWEET,
-      id: data.username + "_" + data.metadata?.tweetId
+      id: `${data.username}_${data.metadata?.tweetId}`
     });
     const twitterProfileId = generateResourceId(Resource.node, {
       prefix: NodeIdPrefix.TWITTER_PROFILE,
@@ -566,7 +568,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
         ?.filter(Boolean)
         ?.map(this.socialIdMapper) ?? [];
     posts = posts.map((x, index) => ({ ...x, parent: profiles[index].id }));
-    let mainParent = params.main
+    const mainParent = params.main
       ? this.socialIdMapper(params.main.parent)
       : null;
     let mainPost = params.main
@@ -683,6 +685,35 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       type: AlertType.SUCCESS
     });
     return node;
+  }
+
+  /**
+   * Saves a video bookmark from video platforms (YouTube, Coursera, Udemy)
+   * Uses platform-specific parsers to extract video metadata and current timestamp
+   * Follows the same pattern as social post clipping with content type detection
+   */
+  saveVideoBookmark(contentType: NodeType) {
+    const parser = resolveVideoBookmarkParser(contentType);
+    if (!parser) {
+      throw new Error("No video bookmark parser found for content type");
+    }
+    logger.debug({
+      at: "saveVideoBookmark",
+      parser,
+      contentType
+    });
+
+    const bookmarkData = parser();
+    if (!bookmarkData) {
+      throw new Error("Failed to extract video bookmark data");
+    }
+
+    const dataUrl = captureVideoFrame();
+    const uploadPromise = relayToBackgroundScript({
+      event: ExtensionEvent.UPLOAD_FILE,
+      data: { dataUrl, contentType: "image/png" }
+    });
+    return [this.saveClip(bookmarkData), uploadPromise];
   }
 
   async linkPage(to: string) {
@@ -816,13 +847,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     }
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     if (!params?.isFromSidePanel) {
-      relayToSidePanel({
-        event: ClipperExtensionEvent.REFRESH_CLIP,
-        data: {
-          clipId: from,
-          clip: this.get().clips?.find(resourceInList(from))
-        }
-      });
+      this.refreshClip(from);
       if (resourceType === Resource.collection) {
         relayToSidePanel({
           event: ClipperExtensionEvent.ON_COLLECTION_LINK_CHANGES,
@@ -876,13 +901,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
     }
     appEvents.publish(ClipperExtensionEvent.REFRESH_CLIPS_RENDERING);
     if (!params?.isFromSidePanel) {
-      relayToSidePanel({
-        event: ClipperExtensionEvent.REFRESH_CLIP,
-        data: {
-          clipId: from,
-          clip: this.get().clips?.find(resourceInList(from))
-        }
-      });
+      this.refreshClip(from);
       if (resourceType === Resource.collection) {
         relayToSidePanel({
           event: ClipperExtensionEvent.ON_COLLECTION_LINK_CHANGES,
@@ -935,10 +954,8 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       });
       return n;
     });
-    relayToSidePanel({
-      event: ClipperExtensionEvent.REFRESH_CLIP,
-      data: { clipId: id, clip: this.get().clips?.find(resourceInList(id)) }
-    });
+    this.refreshClip(id);
+
     return { message: "Color updated!", type: AlertType.SUCCESS };
   }
 
@@ -962,9 +979,9 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
   }
 
   set(newValue: IWebpageStore) {
-    let changedProperties: any = {};
+    const changedProperties: any = {};
     if (this.previousValue) {
-      let differences = shallowDiff(newValue, parse(this.previousValue));
+      const differences = shallowDiff(newValue, parse(this.previousValue));
       differences.forEach((key: string) => {
         changedProperties[key] = newValue[key as keyof IWebpageStore];
       });
@@ -1028,12 +1045,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       });
       return n;
     });
-    if (!params?.isFromSidePanel) {
-      relayToSidePanel({
-        event: ClipperExtensionEvent.REFRESH_CLIP,
-        data: { clipId: id, clip: this.get().clips?.find(resourceInList(id)) }
-      });
-    }
+    this.refreshClip(id, params?.isFromSidePanel);
     return response;
   }
 
@@ -1056,12 +1068,34 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       });
       return n;
     });
-    if (!params?.isFromSidePanel) {
-      relayToSidePanel({
-        event: ClipperExtensionEvent.REFRESH_CLIP,
-        data: { clipId: id, clip: this.get().clips?.find(resourceInList(id)) }
-      });
+    this.refreshClip(id, params?.isFromSidePanel);
+    return response;
+  }
+
+  async updateClipBody(
+    id: IRecordId,
+    body: any,
+    params?: {
+      isFromSidePanel?: boolean;
     }
+  ) {
+    const clip = this.get().clips?.find(resourceInList(id));
+    if (!clip) return;
+    const response = await nodeStore.modify(id, {
+      body: { ...clip.body, ...body }
+    });
+    if (!response) return;
+    this.update((n) => {
+      n.clips = n.clips?.map((c) => {
+        if (isSameResource(c, id)) {
+          c.body = { ...clip.body, ...body };
+          return c;
+        }
+        return c;
+      });
+      return n;
+    });
+    this.refreshClip(id, params?.isFromSidePanel);
     return response;
   }
 
@@ -1113,12 +1147,7 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       });
       return n;
     });
-    if (!params?.isFromSidePanel) {
-      relayToSidePanel({
-        event: ClipperExtensionEvent.REFRESH_CLIP,
-        data: { clipId: id, clip: this.get().clips?.find(resourceInList(id)) }
-      });
-    }
+    this.refreshClip(id, params?.isFromSidePanel);
     return response;
   }
 
@@ -1127,17 +1156,47 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
       properties: [...properties]
     });
   }
+
+  openInModal(id: string, params?: { isResumeVideoOnClose?: boolean }) {
+    const clip = this.get().clips?.find(resourceInList(id));
+    if (!clip) return;
+    feedbackPane.openInModal({
+      ...clip,
+      isResumeVideoOnClose: params?.isResumeVideoOnClose
+    });
+  }
+
+  private refreshClip(id: string, isFromSidePanel: boolean = false) {
+    const clip = this.get().clips?.find(resourceInList(id));
+    if (!isFromSidePanel) {
+      relayToSidePanel({
+        event: ClipperExtensionEvent.REFRESH_CLIP,
+        data: { clipId: id, clip }
+      });
+    }
+    appEvents.publish(ClipperExtensionEvent.REFRESH_CLIP, clip);
+  }
 }
 export const webpage = new WebpageStore();
 
 class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
   constructor() {
     super("feedbackPane");
-    this.set({ isShown: false, feedback: "", focusedClip: null });
+    this.set({
+      isShown: false,
+      feedback: "",
+      focusedClip: null,
+      modalClip: null
+    });
   }
   reset() {
     this.update(() => {
-      return { isShown: false, feedback: "", focusedClip: null };
+      return {
+        isShown: false,
+        feedback: "",
+        focusedClip: null,
+        modalClip: null
+      };
     });
   }
   toggle(params?: { isUserInitiated?: boolean }) {
@@ -1159,7 +1218,18 @@ class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
       return n;
     });
   }
-
+  openInModal(clip: IClip | null) {
+    this.update((n) => {
+      n.modalClip = clip;
+      return n;
+    });
+  }
+  closeModalClip() {
+    this.update((n) => {
+      n.modalClip = null;
+      return n;
+    });
+  }
   /**
    * Sets saving status with single message and prevents auto close.
    * @param text
@@ -1184,7 +1254,7 @@ class FeedbackPaneStore extends ObservableStore<IFeedbackPaneStore> {
         type
       };
       n.isPreventAutoClose = false;
-      n.isShowStatusOnly = type === AlertType.SUCCESS ? false : true;
+      n.isShowStatusOnly = type !== AlertType.SUCCESS;
       return n;
     });
   }
@@ -1258,10 +1328,10 @@ class ClipperToolbarState extends KeyValueStore<{
     const result = await extensionFlux({
       method: FluxMethod.SELECT,
       args: {
-        resourceId: "kv:" + Resource.clipperToolbarState
+        resourceId: `kv:${Resource.clipperToolbarState}`
       }
     });
-    if (result && result.id) {
+    if (result?.id) {
       this.update((n) => {
         n.isOpen = result.isOpen;
         n.position = result.position;
@@ -1351,7 +1421,7 @@ class SyncStore extends ObservableStore<ISyncStore> {
       n.message = message;
       return n;
     });
-    if (status == SyncStatus.SYNCED) {
+    if (status === SyncStatus.SYNCED) {
       this.update((n) => {
         n.lastSyncedAt = new Date().toISOString();
         return n;

@@ -2,22 +2,28 @@
   import { appearance } from "$lib/client/stores/appearance.store";
   import ThemeLayer from "$lib/client/layout/layers/themeLayer/ThemeLayer.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import fontUrl from "data-url:~/assets/fonts/SenVariable.ttf";
+  import fontUrl from "data-url:~assets/fonts/SenVariable.ttf";
 
   const fontFace = new FontFace("SenVariable", `url(${fontUrl})`);
   document.fonts.add(fontFace);
   export let id: string;
+  let classList: string = "";
+  export { classList as class };
+  export let isInlineExtensionContext: boolean = false;
 </script>
 
 <div
   {id}
   class={cn(
     "text-base text-fgs1 relative",
+    classList,
     $appearance.theme,
     $appearance.colorScheme.tailwindSelector
   )}
+  on:keydown|stopPropagation
+  on:keyup|stopPropagation
 >
-  <ThemeLayer extensionContext={id}>
+  <ThemeLayer extensionContext={id} {isInlineExtensionContext}>
     <slot />
     <div id="popovers"></div>
     <div id="secondary-popovers"></div>

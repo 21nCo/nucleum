@@ -22,9 +22,9 @@
     "justify-center": accessPoint === ResourceAccessPoint.SELF
   })}
 >
-  {#if node.contentType === NodeType.TEXT_CLIP || node.contentType === NodeType.KINDLE_HIGHLIGHT}
+  {#if node.contentType === NodeType.WEB_TEXT_BOOKMARK || node.contentType === NodeType.KINDLE_HIGHLIGHT}
     <TextClipPreview {node} {contentPreview} {truncateLength} {accessPoint} />
-  {:else if node.contentType === NodeType.WEB_SCREENSHOT_CLIP && node.body.file}
+  {:else if node.contentType === NodeType.WEB_SCREENSHOT && node.body.file}
     <!-- <img
       alt="..."
       class="absolute inset-0 w-full rounded-t-md object-contain h-full"

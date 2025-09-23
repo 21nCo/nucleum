@@ -82,8 +82,8 @@
     if (
       ![
         NodeType.IMAGE,
-        NodeType.WEB_SCREENSHOT_CLIP,
-        NodeType.YOUTUBE_TIMESTAMP_CLIP,
+        NodeType.WEB_SCREENSHOT,
+        NodeType.YOUTUBE_BOOKMARK,
         NodeType.WEB_PAGE,
         NodeType.KINDLE_BOOK,
         NodeType.YOUTUBE_VIDEO,

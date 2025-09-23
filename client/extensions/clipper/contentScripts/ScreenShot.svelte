@@ -60,7 +60,7 @@
     try {
       if (!uploadResponse || !uploadResponse.id) return;
       const snip: OmitForCapture<IWebScreenshotClip> = {
-        contentType: NodeType.WEB_SCREENSHOT_CLIP,
+        contentType: NodeType.WEB_SCREENSHOT,
         body: {
           file: uploadResponse.id
         }

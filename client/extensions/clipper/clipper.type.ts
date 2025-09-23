@@ -1,12 +1,16 @@
 import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
 import type {
   INode,
+  IVideoBookmarkCapture,
   IWebPage
 } from "$lib/client/products/memotron/node/node.type";
 
 export type ISocialPostParser = (
   target: HTMLElement
 ) => ISocialPost | undefined;
+
+export type IVideoBookmarkParser = () => IVideoBookmarkCapture | null;
+
 export type IWebpageParser = () =>
   | OmitForCapture<IWebPage>
   | ISocialPost

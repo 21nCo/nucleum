@@ -69,7 +69,7 @@
     <WebPagePreview {node} {accessPoint} />
   {:else if node.contentType === NodeType.GIST}
     <GistPreview {node} {accessPoint} />
-  {:else if node.contentType === NodeType.TEXT_CLIP || node.contentType === NodeType.WEB_SCREENSHOT_CLIP || node.contentType === NodeType.KINDLE_HIGHLIGHT}
+  {:else if node.contentType === NodeType.WEB_TEXT_BOOKMARK || node.contentType === NodeType.WEB_SCREENSHOT || node.contentType === NodeType.KINDLE_HIGHLIGHT}
     <WebClipPreview {node} {accessPoint} />
   {:else if socialPostNodeTypeList.has(node.contentType)}
     <SocialPostContent {node} {accessPoint} />
@@ -79,7 +79,7 @@
     <SocialSubContent {node} />
   {:else if node.contentType === NodeType.KINDLE_BOOK}
     <KindleBookPreview {node} />
-  {:else if (node.contentType === NodeType.YOUTUBE_VIDEO || node.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP) && node.url}
+  {:else if (node.contentType === NodeType.YOUTUBE_VIDEO || node.contentType === NodeType.YOUTUBE_BOOKMARK) && node.url}
     <YoutubeVideoPreview
       url={node.url}
       timestamp={node.body && "timestamp" in node.body
