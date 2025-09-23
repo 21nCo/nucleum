@@ -427,9 +427,10 @@ export class DexiePersistence implements IPersistence {
       if (orderBy && filters && !("condition" in filters)) {
         const entries = Object.entries(orderBy);
         if (entries.length > 0) {
+          const [key, order] = entries[0];
           orderByConfig = {
-            key: entries[0][0],
-            order: entries[0][1] as string
+            key,
+            order: order as string
           };
         }
       }
@@ -471,7 +472,7 @@ export class DexiePersistence implements IPersistence {
           return {
             toArray: async () => {
               const arr = await (query as Collection).toArray();
-              const groupKey = groupBy[0];
+              const [groupKey] = groupBy;
               const counts: { [key: string]: number } = {};
               for (const item of arr) {
                 const key = item[groupKey] ?? "undefined";

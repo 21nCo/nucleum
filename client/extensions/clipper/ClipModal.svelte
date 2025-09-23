@@ -48,7 +48,9 @@
       message: "Title updated!",
       type: AlertType.SUCCESS
     };
-    if (result.clip.label) clip.label = result.clip.label;
+    if (result.clip?.label) {
+      clip.label = result.clip.label;
+    }
   }
 
   async function onLinkAction(e: CustomEvent, action: string = "link") {

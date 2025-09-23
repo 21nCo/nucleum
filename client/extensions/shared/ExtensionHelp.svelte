@@ -9,7 +9,7 @@
 
   function openDiscord() {
     const discordUrl = "https://discord.com/invite/9HJqKYTZKg";
-    window.open(discordUrl, "_blank");
+    window.open(discordUrl, "_blank", "noopener,noreferrer");
   }
   function openDocs(path: string) {
     window.open(`https://docs.memotron.app/${path}`, "_blank");

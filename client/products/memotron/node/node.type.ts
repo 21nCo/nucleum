@@ -1143,7 +1143,7 @@ export const canHaveTraces = [
 
 export type IVideoBookmarkCapture = INodeHasUrl &
   INodeHasText & {
-    contentType: NodeType.YOUTUBE_BOOKMARK | NodeType.VIDEO_BOOKMARK;
+    contentType: NodeType.YOUTUBE_BOOKMARK | NodeType.VIDEO_BOOKMARK | NodeType.WEB_VIDEO_BOOKMARK;
     body: IVideoBookmarkBody;
     metadata: IVideoBookmarkMetadata;
   };

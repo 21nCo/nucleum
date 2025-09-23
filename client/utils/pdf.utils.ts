@@ -15,6 +15,9 @@ export async function generateImagePreviewFromPdf(pdfBlob: Blob) {
     const viewport = page.getViewport({ scale });
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d");
+    if (!context) {
+      throw new Error("Failed to get 2D context from canvas");
+    }
     canvas.height = viewport.height;
     canvas.width = viewport.width;
     const renderContext = {
@@ -23,8 +26,12 @@ export async function generateImagePreviewFromPdf(pdfBlob: Blob) {
     };
     await page.render(renderContext).promise;
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       canvas.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error("Failed to generate blob from canvas"));
+          return;
+        }
         resolve(blob);
       }, "image/png");
     });

@@ -19,7 +19,9 @@ export function extractYouTubeVideoId(url: string): string | null {
  */
 export function extractCourseraVideoId(url: string): string | null {
   const match = url.match(/coursera\.org\/learn\/([^/]+)\/lecture\/([^/]+)/);
-  return match ? `${match[1]}_${match[2]}` : null;
+  if (!match) return null;
+  const [, courseId, lectureId] = match;
+  return `${courseId}_${lectureId}`;
 }
 
 /**
@@ -29,7 +31,9 @@ export function extractUdemyVideoId(url: string): string | null {
   const match = url.match(
     /udemy\.com\/course\/[^/]+\/learn\/lecture\/([0-9]+)/
   );
-  return match ? match[1] : null;
+  if (!match) return null;
+  const [, lectureId] = match;
+  return lectureId;
 }
 
 /**
@@ -75,8 +79,9 @@ export function captureVideoFrame(): string | null {
   }
 
   const canvas = document.createElement("canvas");
-  canvas.width = videoPlayer.videoWidth || 640;
-  canvas.height = videoPlayer.videoHeight || 360;
+  const { videoWidth = 640, videoHeight = 360 } = videoPlayer;
+  canvas.width = videoWidth;
+  canvas.height = videoHeight;
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 

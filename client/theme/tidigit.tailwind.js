@@ -293,7 +293,7 @@ export default {
             sans: ["Roboto", "sans-serif"],
             serif: ["Merriweather", "serif"]
           },
-          colors: mappedColorSchemes[0].colors,
+          colors: mappedColorSchemes[0].extend.colors,
           rotate: {
             270: "270deg"
           }
