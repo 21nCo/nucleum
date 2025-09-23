@@ -12,8 +12,9 @@ import {
 export function extractCourseraBookmark(): IVideoBookmarkCapture | null {
   try {
     // Check if we're on a Coursera video page
+    const hostname = window.location.hostname;
     if (
-      !window.location.hostname.includes("coursera.org") ||
+      !(hostname === "www.coursera.org" || hostname === "coursera.org") ||
       !window.location.pathname.includes("/lecture/")
     ) {
       logger.error("Not on a Coursera video page");

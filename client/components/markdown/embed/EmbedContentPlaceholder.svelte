@@ -114,7 +114,12 @@
     valid: File[],
     errors: { file: File; type: string }[]
   ) {
-    console.log({ at: "EmbedContentPlaceholder - handleDrop", event });
+    console.log({
+      at: "EmbedContentPlaceholder - handleDrop",
+      all,
+      valid,
+      errors
+    });
     try {
       error = undefined;
       if (errors && errors.length > 0) {

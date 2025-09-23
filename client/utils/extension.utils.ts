@@ -85,7 +85,7 @@ export async function relayToBackgroundScript(message: {
         reject(
           new Error("Background script communication timeout after 10 seconds")
         );
-      }, 5000);
+      }, 10000);
     });
 
     const backgroundPromise = sendToBackground({

@@ -69,14 +69,24 @@ export function captureVideoFrame(): string | null {
   const videoPlayer = document.querySelector("video") as HTMLVideoElement;
   if (!videoPlayer) return null;
 
+  if (videoPlayer.readyState < 2) {
+    logger.error("Video not ready for frame capture");
+    return null;
+  }
+
   const canvas = document.createElement("canvas");
   canvas.width = videoPlayer.videoWidth || 640;
   canvas.height = videoPlayer.videoHeight || 360;
   const ctx = canvas.getContext("2d");
   if (!ctx) return null;
 
-  ctx.drawImage(videoPlayer, 0, 0);
-  return canvas.toDataURL("image/png");
+  try {
+    ctx.drawImage(videoPlayer, 0, 0);
+    return canvas.toDataURL("image/png");
+  } catch (error) {
+    logger.error("Error capturing video frame (possible CORS issue):", error);
+    return null;
+  }
 }
 
 /**
@@ -204,13 +214,13 @@ export function getVideoMetadata() {
   let platform = "unknown";
   let videoId = null;
 
-  if (hostname.includes("youtube.com")) {
+  if (hostname === "www.youtube.com" || hostname === "youtube.com") {
     platform = "youtube";
     videoId = extractYouTubeVideoId(currentUrl);
-  } else if (hostname.includes("coursera.org")) {
+  } else if (hostname === "www.coursera.org" || hostname === "coursera.org") {
     platform = "coursera";
     videoId = extractCourseraVideoId(currentUrl);
-  } else if (hostname.includes("udemy.com")) {
+  } else if (hostname === "www.udemy.com" || hostname === "udemy.com") {
     platform = "udemy";
     videoId = extractUdemyVideoId(currentUrl);
   }

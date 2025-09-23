@@ -20,6 +20,10 @@
   let elementRef: HTMLElement;
   export function scrollIntoView(timelineElement: HTMLElement) {
     try {
+      if (!elementRef) {
+        console.error("scrollIntoView: elementRef not yet rendered");
+        return;
+      }
       const scrollLeft =
         elementRef.offsetLeft -
         timelineElement.clientWidth / 2 +

@@ -174,7 +174,7 @@ export function timePeriodLabel(period: TimePeriod) {
     } else if (value.param < 0) {
       return `Last ${Math.abs(value.param)} ${scale.toLowerCase()}`;
     } else if (value.param > 0) {
-      return `Next ${value} ${scale.toLowerCase()}`;
+      return `Next ${value.param} ${scale.toLowerCase()}`;
     }
   } else if (value.type === TimePeriodType.ABSOLUTE) {
     let start = value.param.start.toString();
@@ -230,6 +230,7 @@ export function determinePreviousTimePeriod(period: TimePeriod) {
       const numberOfYears = Math.floor(
         (val.end.getTime() - val.begin.getTime()) / (1000 * 60 * 60 * 24) / 365
       );
+      previous.setFullYear(val.begin.getFullYear() - numberOfYears);
       break;
   }
   return previous;

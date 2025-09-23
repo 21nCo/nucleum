@@ -12,8 +12,9 @@ import {
 export function extractUdemyBookmark(): IVideoBookmarkCapture | null {
   try {
     // Check if we're on a Udemy video page
+    const hostname = window.location.hostname;
     if (
-      !window.location.hostname.includes("udemy.com") ||
+      !(hostname === "www.udemy.com" || hostname === "udemy.com") ||
       !window.location.pathname.includes("/learn/lecture/")
     ) {
       logger.error("Not on a Udemy video page");

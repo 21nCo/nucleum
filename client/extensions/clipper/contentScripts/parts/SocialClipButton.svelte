@@ -70,7 +70,6 @@
         placement: Placement.TopCenter
       }}
       class="relative flex justify-center items-center"
-      on:click
     >
       <Button
         icon={isSaving
@@ -98,7 +97,6 @@
         placement: Placement.TopCenter
       }}
       class="relative flex justify-center items-center"
-      on:click
     >
       <div
         class={cn(
