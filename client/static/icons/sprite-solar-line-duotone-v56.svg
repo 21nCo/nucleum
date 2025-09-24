@@ -112,7 +112,7 @@
         </symbol>
       
         <symbol id="solar:minimalistic-magnifer-line-duotone" viewBox="0 0 24 24">
-          <defs><mask id="solarMinimalisticMagniferLineDuotone0"><g fill="none" stroke-width="1.5"><circle cx="11.5" cy="11.5" r="9.5" stroke="gray"/><path stroke="#fff" stroke-linecap="round" d="m20 20l2 2"/></g></mask></defs><path fill="currentColor" d="M0 0h24v24H0z" mask="url(#solarMinimalisticMagniferLineDuotone0)"/>
+          <defs><mask id="SVG5qFtHdgM"><g fill="none" stroke-width="1.5"><circle cx="11.5" cy="11.5" r="9.5" stroke="gray"/><path stroke="#fff" stroke-linecap="round" d="m20 20l2 2"/></g></mask></defs><path fill="currentColor" d="M0 0h24v24H0z" mask="url(#SVG5qFtHdgM)"/>
         </symbol>
       
         <symbol id="solar:info-circle-line-duotone" viewBox="0 0 24 24">
@@ -336,11 +336,11 @@
         </symbol>
       
         <symbol id="solar:magnifer-zoom-in-line-duotone" viewBox="0 0 24 24">
-          <defs><mask id="solarMagniferZoomInLineDuotone0"><g fill="none" stroke-width="1.5"><circle cx="11.5" cy="11.5" r="9.5" stroke="gray"/><path stroke="#fff" stroke-linecap="round" d="M18.5 18.5L22 22M9 11.5h2.5m0 0H14m-2.5 0V14m0-2.5V9"/></g></mask></defs><path fill="currentColor" d="M0 0h24v24H0z" mask="url(#solarMagniferZoomInLineDuotone0)"/>
+          <defs><mask id="SVG2GlueH5m"><g fill="none" stroke-width="1.5"><circle cx="11.5" cy="11.5" r="9.5" stroke="gray"/><path stroke="#fff" stroke-linecap="round" d="M18.5 18.5L22 22M9 11.5h2.5m0 0H14m-2.5 0V14m0-2.5V9"/></g></mask></defs><path fill="currentColor" d="M0 0h24v24H0z" mask="url(#SVG2GlueH5m)"/>
         </symbol>
       
         <symbol id="solar:magnifer-zoom-out-line-duotone" viewBox="0 0 24 24">
-          <defs><mask id="solarMagniferZoomOutLineDuotone0"><g fill="none" stroke-width="1.5"><circle cx="11.5" cy="11.5" r="9.5" stroke="gray"/><path stroke="#fff" stroke-linecap="round" d="M18.5 18.5L22 22M9 11.5h5"/></g></mask></defs><path fill="currentColor" d="M0 0h24v24H0z" mask="url(#solarMagniferZoomOutLineDuotone0)"/>
+          <defs><mask id="SVGyu90jhRQ"><g fill="none" stroke-width="1.5"><circle cx="11.5" cy="11.5" r="9.5" stroke="gray"/><path stroke="#fff" stroke-linecap="round" d="M18.5 18.5L22 22M9 11.5h5"/></g></mask></defs><path fill="currentColor" d="M0 0h24v24H0z" mask="url(#SVGyu90jhRQ)"/>
         </symbol>
       
         <symbol id="solar:text-underline-line-duotone" viewBox="0 0 24 24">
@@ -364,7 +364,7 @@
         </symbol>
       
         <symbol id="solar:restart-line-duotone" viewBox="0 0 24 24">
-          <g fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" clip-path="url(#solarRestartLineDuotone0)"><path d="M19.729 10.929a8 8 0 1 1-2.072-3.585l.707.706" opacity=".5"/><path d="M14.121 8.05h4.243V3.808"/></g><defs><clipPath id="solarRestartLineDuotone0"><path fill="#fff" d="M0 0h24v24H0z"/></clipPath></defs></g>
+          <g fill="none"><g stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" clip-path="url(#SVGXv8lpc2Y)"><path d="M19.729 10.929a8 8 0 1 1-2.072-3.585l.707.706" opacity=".5"/><path d="M14.121 8.05h4.243V3.808"/></g><defs><clipPath id="SVGXv8lpc2Y"><path fill="#fff" d="M0 0h24v24H0z"/></clipPath></defs></g>
         </symbol>
       
         <symbol id="solar:refresh-line-duotone" viewBox="0 0 24 24">

@@ -21,20 +21,6 @@
         value: SubGoalsLayout.STEPS,
         icon: "ph:steps-light",
         label: "Steps"
-      },
-      {
-        value: SubGoalsLayout.TABS,
-        icon: "tabs",
-        label: "Tabs",
-        isDisabled: true,
-        badge: "planned"
-      },
-      {
-        value: SubGoalsLayout.BOARDS,
-        icon: "ph:columns-light",
-        label: "Boards",
-        isDisabled: true,
-        badge: "planned"
       }
     ]}
     on:select

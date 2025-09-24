@@ -1,7 +1,8 @@
 import {
   headingNodeTypes,
   NodeType,
-  rootNodeTypeList
+  rootNodeTypeList,
+  type INode
 } from "$lib/client/products/memotron/node/node.type";
 import {
   activeResourceFilter,
@@ -330,7 +331,7 @@ export class SearchStore {
       }
       return items;
     }
-    let nodes = [];
+    let nodes: INode[] = [];
     if (params?.resource === Resource.node || !params?.resource) {
       nodes = await flux.selectMany(Resource.node, {
         properties: {
@@ -357,7 +358,10 @@ export class SearchStore {
       });
       if (nodes && isValidArrayWithData(nodes)) {
         try {
-          const parentIds = nodes.map((x) => x.mdParent ?? [])?.flat();
+          const parentIds: IRecordId[] = nodes
+            .map((x) => x?.mdParent ?? [])
+            ?.flat()
+            ?.filter(Boolean);
           const parentItems = await nodeStore.selectMany({
             properties: {
               select: ["label", "id", "body"]
@@ -367,9 +371,9 @@ export class SearchStore {
               id: parentIds?.map((x) => x.toString())
             }
           });
-          nodes = nodes.map((x) => {
+          nodes = nodes.map((x: INode) => {
             if (!x.mdParent) return x;
-            const parent = x.mdParent.map((y) => {
+            const parent = x.mdParent.map((y: IRecordId) => {
               const parentItem = parentItems.find(resourceInList(y));
               return parentItem;
             });
@@ -410,7 +414,7 @@ export class SearchStore {
     if (isValidString(query) && isValidArray(data)) {
       data = highlightSearchQuery(data, query);
       data = data.filter((x) => x.labelSearch || x.bodySearch);
-      data = data.sort(contentTypeSort).sort(searchSort);
+      data = data.sort(contentTypeSort);
     }
     if (params?.exclude) {
       data = data.filter((x) => !params.exclude?.some(resourceInList(x.id)));
@@ -502,7 +506,7 @@ export class SearchStore {
     if (isValidString(query) && isValidArray(data)) {
       data = highlightSearchQuery(data, query);
       data = data.filter((x) => x.labelSearch || x.bodySearch);
-      data = data.sort(contentTypeSort).sort(searchSort);
+      data = data.sort(contentTypeSort);
     }
     return data;
   }

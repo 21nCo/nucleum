@@ -20,11 +20,15 @@
   import { ActiveCaptureStore } from "$lib/client/products/memotron/capture/capture.store";
   import { Preference } from "$lib/client/stores/preferences/preferences.type";
   import type { IMarkdownTemplate } from "$lib/client/components/markdown/md.type";
+  import SyncStatusListener from "$lib/client/elements/listeners/SyncStatusListener.svelte";
+  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { Size } from "$lib/client/types/size.enum";
   export let date: Date;
   export let scale: TimeScaleUnit;
   export let mdId: string;
   let node: IActiveNodeStore;
   const captureStore = ActiveCaptureStore.resolve(mdId);
+  let isSyncing: boolean = false;
 
   async function initialize(scaleParam: TimeScaleUnit) {
     const id = resolveCalendarNotesId(date, scaleParam);
@@ -33,6 +37,7 @@
       subVariables: [scaleParam]
     });
     if (!result?.id) {
+      if (isSyncing) return;
       await captureStore.saveCalendarNotes({
         date,
         scale: scaleParam,
@@ -58,22 +63,31 @@
   setContext("node", nodeContext);
 </script>
 
-{#await initialize(scale)}
-  <div class="flex items-center justify-center h-full mo:px-0 px-10 pt-6">
-    <EmptyStatusView
-      isLoadingState={true}
-      loadingAnimation={LoadingAnimationType.PAGE_PULSE}
-    />
-  </div>
-{:then _}
-  <div class="flex w-full h-full overflow-y-auto">
-    <NodeContent {node} {mdId} />
-  </div>
-{:catch err}
+{#if isSyncing}
   <EmptyStatusView
-    mainText="Error loading calendar notes. Please try again after sometime."
-    subText={err.message}
+    size={Size.sm}
+    mainText="Temporarily unavailable."
+    subText={"Calendar notes is not available when sync is in progress"}
   />
-{/await}
+{:else}
+  {#await initialize(scale)}
+    <div class="flex items-center justify-center h-full mo:px-0 px-10 pt-6">
+      <EmptyStatusView
+        isLoadingState={true}
+        loadingAnimation={LoadingAnimationType.PAGE_PULSE}
+      />
+    </div>
+  {:then _}
+    <div class="flex w-full h-full overflow-y-auto">
+      <NodeContent {node} {mdId} />
+    </div>
+  {:catch err}
+    <EmptyStatusView
+      mainText="Error loading calendar notes. Please try again after sometime."
+      subText={err.message}
+    />
+  {/await}
+{/if}
 
 <ComponentBaseLayer hasDragAndDrop={true} />
+<SyncStatusListener resource={Resource.everything} bind:isSyncing />

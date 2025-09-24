@@ -146,7 +146,7 @@ function resolveFullPath(prefix: string, versionParam?: number) {
   if (isExtension) {
     return `./../../../assets/icons/${prefix}.svg`;
   }
-  return `./../../../static/icons/${prefix}-v${versionParam ?? version}.svg`;
+  return `./../static/icons/${prefix}-v${versionParam ?? version}.svg`;
 }
 
 buildIconSprite();

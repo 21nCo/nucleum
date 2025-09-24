@@ -156,6 +156,7 @@
     <PropertiesPane
       item={goal}
       resource={Resource.goal}
+      parentBgIndex={isConstrainedWidth ? 1 : 2}
       isVisibleProps={true}
       on:showAll={() => {
         dispatch("showAllProperties");

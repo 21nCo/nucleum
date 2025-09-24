@@ -114,7 +114,7 @@ class Flux {
   }) {
     logger.log({ at: "flux.initializePersistence", params });
     const tables: ITable[] = [
-      ...this.stores
+      ...[...this.stores, ...this.remoteOnlyStores]
         .filter(
           (x) =>
             x.dataType === StoreDataType.FIR || x.dataType === StoreDataType.IFR

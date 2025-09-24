@@ -44,6 +44,7 @@
     type IActiveCaptureStore
   } from "$lib/client/products/memotron/capture/capture.store";
   import Task from "../../tasks/Task.svelte";
+  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
 
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
@@ -60,9 +61,13 @@
   export let body: IEmbedBlockBody;
   export let mdStore: MdStoreType;
   export let isHovering = false;
+  const embedResourceType: Resource | undefined = body.id
+    ? determineResourceType(body.id)
+    : undefined;
 
   let linkInputValue = "";
   let _mediaBlock: INode | undefined;
+  let refreshId = new Date().getTime();
   let _mediaBlockFile: IFile | undefined;
   let height = body?.height ?? 300;
   let isLoading = true;
@@ -133,8 +138,8 @@
     try {
       isLoading = true;
       if (!body?.id) return;
-      const resource = determineResourceType(body.id);
-      if (resource === Resource.node) await assignNodeMediaContent(body.id);
+      if (embedResourceType === Resource.node)
+        await assignNodeMediaContent(body.id);
     } catch (e) {
       logger.error({ at: "EmbedContent onMount", e });
     } finally {
@@ -202,196 +207,204 @@
       titleInputRef?.focus();
     }, 100);
   }
+
+  async function onNodeChange(e: any) {
+    if (body.id) await assignNodeMediaContent(body.id);
+    refreshId = new Date().getTime();
+  }
 </script>
 
 {#if body.id && _mediaBlock && !isLoading}
-  <button
-    class={cn("flex flex-col w-full", {
-      "pt-4": isShowTitle && isShowPreview,
-      "py-2": !isShowTitle,
-      "my-4": $view.isConstrainedWidth
-    })}
-    style={isResizable
-      ? `min-height: ${height}px; height: ${height}px; max-height: ${height}px;`
-      : ""}
-    use:resizable={{
-      enabled: !$context.isTouchDevice && isResizable && !isEditingTitle,
-      minHeight: 300,
-      maxHeight: 1600,
-      edges: ["bottom"],
-      onResize: onResize
-    }}
-    on:click={(e) => {
-      if (e.target && e.target.classList.contains("resizer")) return;
-      if (_mediaBlock?.contentType === NodeType.FILE) return;
-      if (body.id) appStore.openResource(body.id, ResourceAccessMode.POP);
-    }}
-  >
-    {#if isShowPreview}
-      <div
-        class={cn("flex w-full", {
-          // "min-h-[40rem] h-[40rem]": _mediaBlock.contentType === NodeType.PDF,
-          "flex-grow justify-center": isResizable,
-          "h-auto max-h-[20rem]":
-            !isResizable &&
-            ![NodeType.TWEET].includes(_mediaBlock?.contentType),
-          "overflow-auto": _mediaBlock?.contentType === NodeType.GIST
-        })}
-      >
-        <MediaContentResolver
-          node={_mediaBlock}
-          accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
-          on:delete
-        />
-      </div>
-    {/if}
-    {#if isShowTitle}
-      {#if isEditingTitle && !$mdStore.params?.isReadOnly}
-        <button
-          class="flex justify-center items-center w-full h-16 rounded-md"
-          on:click|stopPropagation
+  {#key refreshId}
+    <button
+      class={cn("flex flex-col w-full", {
+        "pt-4": isShowTitle && isShowPreview,
+        "py-2": !isShowTitle,
+        "my-4": $view.isConstrainedWidth
+      })}
+      style={isResizable
+        ? `min-height: ${height}px; height: ${height}px; max-height: ${height}px;`
+        : ""}
+      use:resizable={{
+        enabled: !$context.isTouchDevice && isResizable && !isEditingTitle,
+        minHeight: 300,
+        maxHeight: 1600,
+        edges: ["bottom"],
+        onResize: onResize
+      }}
+      on:click={(e) => {
+        if (e.target && e.target.classList.contains("resizer")) return;
+        if (_mediaBlock?.contentType === NodeType.FILE) return;
+        if (body.id) appStore.openResource(body.id, ResourceAccessMode.POP);
+      }}
+    >
+      {#if isShowPreview}
+        <div
+          class={cn("flex w-full", {
+            // "min-h-[40rem] h-[40rem]": _mediaBlock.contentType === NodeType.PDF,
+            "flex-grow justify-center": isResizable,
+            "h-auto max-h-[20rem]":
+              !isResizable &&
+              ![NodeType.TWEET].includes(_mediaBlock?.contentType),
+            "overflow-auto": _mediaBlock?.contentType === NodeType.GIST
+          })}
         >
-          <TextInput
-            bind:value={titleInputValue}
-            bind:this={titleInputRef}
-            parentBackgroundIndex={2}
-            placeholder="Title"
-            width="w-full"
-            size={Size.sm}
-            on:save={() => {
-              if (_mediaBlock) {
-                _mediaBlock.label = titleInputValue;
-                nodeStore.modify(_mediaBlock.id, { label: titleInputValue });
-              }
-              setTimeout(() => {
-                isEditingTitle = false;
-              }, 100);
-            }}
-            on:cancel={() => {
-              setTimeout(() => {
-                titleInputValue = _mediaBlock?.label ?? "";
-                isEditingTitle = false;
-              }, 100);
-            }}
-            isShowSaveControl={true}
+          <MediaContentResolver
+            node={_mediaBlock}
+            accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
+            on:delete
           />
-        </button>
-      {:else}
-        <button
-          class={cn(
-            "flex w-full justify-between items-center gap-2 rounded-md",
-            {
-              "h-16 px-3": !isShowPreview,
-              "bg-bgs2":
-                !isShowPreview && (!isHovering || $mdStore.params?.isReadOnly),
-              "h-20": isShowPreview
-            }
-          )}
-          on:click={onEditTitle}
-        >
-          <div
-            class={cn("flex w-96 mo:w-full", {
-              "flex-col gap-1": _mediaBlock?.url,
-              "gap-2 items-center": _mediaBlockFile
-            })}
+        </div>
+      {/if}
+      {#if isShowTitle}
+        {#if isEditingTitle && !$mdStore.params?.isReadOnly}
+          <button
+            class="flex justify-center items-center w-full h-16 rounded-md"
+            on:click|stopPropagation
           >
-            <NodeTitleLabelPart
-              item={_mediaBlock}
-              accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
+            <TextInput
+              bind:value={titleInputValue}
+              bind:this={titleInputRef}
+              parentBackgroundIndex={2}
+              placeholder="Title"
+              width="w-full"
+              size={Size.sm}
+              on:save={() => {
+                if (_mediaBlock) {
+                  _mediaBlock.label = titleInputValue;
+                  nodeStore.modify(_mediaBlock.id, { label: titleInputValue });
+                }
+                setTimeout(() => {
+                  isEditingTitle = false;
+                }, 100);
+              }}
+              on:cancel={() => {
+                setTimeout(() => {
+                  titleInputValue = _mediaBlock?.label ?? "";
+                  isEditingTitle = false;
+                }, 100);
+              }}
+              isShowSaveControl={true}
             />
-            {#if !isShowPreview && _mediaBlockFile}
-              <span
-                class="text-left text-b4 text-fgs4 whitespace-nowrap shrink-0"
-              >
-                {_mediaBlockFile.size
-                  ? formatBytes(_mediaBlockFile.size)
-                  : "Unknown size"}
-              </span>
-            {:else if !isShowPreview && _mediaBlock?.url}
-              <button
-                class="text-xs text-left text-fgs4 whitespace-nowrap shrink-0 hover:underline"
-                on:click={(e) => {
-                  if (_mediaBlock?.url) {
-                    appStore.openLink(_mediaBlock.url);
-                  }
-                  e.stopPropagation();
-                }}
-              >
-                {_mediaBlock.url.replace(/^https?:\/\//, "").split("?")[0]}
-              </button>
-            {/if}
-          </div>
-          {#if isHovering}
-            <div class="flex gap-2 items-center shrink-0">
-              {#if !$mdStore.params?.isReadOnly}
-                <Button
-                  icon="edit"
-                  tooltip="Edit title"
-                  size={Size.sm}
-                  style={ButtonStyle.OUTLINED}
-                  on:click={(e) => {
-                    onEditTitle(e.detail);
-                  }}
-                />
-              {/if}
-              {#if _mediaBlock?.contentType !== NodeType.FILE}
-                <Button
-                  icon="circle"
-                  tooltip="Go to node"
-                  size={Size.sm}
-                  style={ButtonStyle.OUTLINED}
-                  on:click={() => {
-                    if (body.id)
-                      appStore.openResource(body.id, ResourceAccessMode.POP);
-                  }}
-                />
-              {/if}
-              {#if mediaNodeTypeList.includes(_mediaBlock?.contentType)}
-                <Button
-                  icon="download"
-                  tooltip="Download"
-                  size={Size.sm}
-                  style={ButtonStyle.OUTLINED}
-                  on:click={(e) => {
-                    if (_mediaBlock?.file) {
-                      fileStore.download(_mediaBlock.file);
-                    }
-                    e.stopPropagation();
-                  }}
-                />
-              {/if}
-              {#if _mediaBlock?.url}
-                <Button
-                  icon="weblink"
-                  tooltip="Go to external link"
-                  size={Size.sm}
-                  style={ButtonStyle.OUTLINED}
+          </button>
+        {:else}
+          <button
+            class={cn(
+              "flex w-full justify-between items-center gap-2 rounded-md",
+              {
+                "h-16 px-3": !isShowPreview,
+                "bg-bgs2":
+                  !isShowPreview &&
+                  (!isHovering || $mdStore.params?.isReadOnly),
+                "h-20": isShowPreview
+              }
+            )}
+            on:click={onEditTitle}
+          >
+            <div
+              class={cn("flex w-96 mo:w-full", {
+                "flex-col gap-1": _mediaBlock?.url,
+                "gap-2 items-center": _mediaBlockFile
+              })}
+            >
+              <NodeTitleLabelPart
+                item={_mediaBlock}
+                accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
+              />
+              {#if !isShowPreview && _mediaBlockFile}
+                <span
+                  class="text-left text-b4 text-fgs4 whitespace-nowrap shrink-0"
+                >
+                  {_mediaBlockFile.size
+                    ? formatBytes(_mediaBlockFile.size)
+                    : "Unknown size"}
+                </span>
+              {:else if !isShowPreview && _mediaBlock?.url}
+                <button
+                  class="text-xs text-left text-fgs4 whitespace-nowrap shrink-0 hover:underline"
                   on:click={(e) => {
                     if (_mediaBlock?.url) {
                       appStore.openLink(_mediaBlock.url);
                     }
                     e.stopPropagation();
                   }}
-                />
-              {/if}
-              {#if !$mdStore.params?.isReadOnly}
-                <Button
-                  icon="trash"
-                  tooltip="Delete"
-                  size={Size.sm}
-                  type={ButtonVariant.DANGER}
-                  style={ButtonStyle.OUTLINED}
-                  on:click={() => {
-                    dispatch("delete");
-                  }}
-                />
+                >
+                  {_mediaBlock.url.replace(/^https?:\/\//, "").split("?")[0]}
+                </button>
               {/if}
             </div>
-          {/if}
-        </button>
+            {#if isHovering}
+              <div class="flex gap-2 items-center shrink-0">
+                {#if !$mdStore.params?.isReadOnly}
+                  <Button
+                    icon="edit"
+                    tooltip="Edit title"
+                    size={Size.sm}
+                    style={ButtonStyle.OUTLINED}
+                    on:click={(e) => {
+                      onEditTitle(e.detail);
+                    }}
+                  />
+                {/if}
+                {#if _mediaBlock?.contentType !== NodeType.FILE}
+                  <Button
+                    icon="circle"
+                    tooltip="Go to node"
+                    size={Size.sm}
+                    style={ButtonStyle.OUTLINED}
+                    on:click={() => {
+                      if (body.id)
+                        appStore.openResource(body.id, ResourceAccessMode.POP);
+                    }}
+                  />
+                {/if}
+                {#if mediaNodeTypeList.includes(_mediaBlock?.contentType)}
+                  <Button
+                    icon="download"
+                    tooltip="Download"
+                    size={Size.sm}
+                    style={ButtonStyle.OUTLINED}
+                    on:click={(e) => {
+                      if (_mediaBlock?.file) {
+                        fileStore.download(_mediaBlock.file);
+                      }
+                      e.stopPropagation();
+                    }}
+                  />
+                {/if}
+                {#if _mediaBlock?.url}
+                  <Button
+                    icon="weblink"
+                    tooltip="Go to external link"
+                    size={Size.sm}
+                    style={ButtonStyle.OUTLINED}
+                    on:click={(e) => {
+                      if (_mediaBlock?.url) {
+                        appStore.openLink(_mediaBlock.url);
+                      }
+                      e.stopPropagation();
+                    }}
+                  />
+                {/if}
+                {#if !$mdStore.params?.isReadOnly}
+                  <Button
+                    icon="trash"
+                    tooltip="Delete"
+                    size={Size.sm}
+                    type={ButtonVariant.DANGER}
+                    style={ButtonStyle.OUTLINED}
+                    on:click={() => {
+                      dispatch("delete");
+                    }}
+                  />
+                {/if}
+              </div>
+            {/if}
+          </button>
+        {/if}
       {/if}
-    {/if}
-  </button>
+    </button>
+  {/key}
 {:else if body?.url && body?.subType === NodeType.YOUTUBE_VIDEO}
   <YoutubeVideoPreview url={body.url} />
 {:else if body?.subType === NodeType.COLLECTION_AS_EMBED && body?.id}
@@ -421,4 +434,7 @@
     on:select={onSelectFromLibrary}
     on:linkInput={onLinkInput}
   />
+{/if}
+{#if body?.id && embedResourceType === Resource.node}
+  <ComponentBaseLayer subscribeToRecords={[body.id]} on:change={onNodeChange} />
 {/if}

@@ -247,7 +247,23 @@
     });
   }
 
+  function isScrollRequired(targetId: string) {
+    try {
+      const targetElement = document.getElementById(targetId);
+      const rect = targetElement?.getBoundingClientRect();
+      const domRect = document?.documentElement?.getBoundingClientRect();
+      const isElementHiddenOnTop = rect && (rect.top < 0 || rect.bottom < 0);
+      const isElementHiddenOnBottom =
+        rect && (rect.top > domRect.height || rect.bottom > domRect.height);
+      return isElementHiddenOnTop || isElementHiddenOnBottom;
+    } catch (e) {
+      logger.error(e);
+    }
+  }
+
   export function scrollToDate(date: Date) {
+    const elementId = `month-${date.getFullYear()}-${date.getMonth()}`;
+    const isPreventScroll = !isScrollRequired(elementId);
     const targetYear = date.getFullYear();
 
     if (targetYear < BASE_YEAR || targetYear >= BASE_YEAR + YEAR_RANGE) {
@@ -264,12 +280,13 @@
     virtualScrollTop = targetPosition;
     updateVisibleYears();
 
-    containerRef.scrollTop = targetPosition;
+    if (!isPreventScroll) containerRef.scrollTop = targetPosition;
 
     requestAnimationFrame(() => {
       navigateToYear(targetYear, {
         month: date.getMonth(),
-        day: date.getDate()
+        day: date.getDate(),
+        isPreventScroll
       });
     });
   }
@@ -279,6 +296,7 @@
     props?: {
       month?: number;
       day?: number;
+      isPreventScroll?: boolean;
     }
   ) {
     isExplicitNavigation = true;
@@ -287,7 +305,8 @@
       props?.month ?? selectedDate.getMonth(),
       props?.day ?? selectedDate.getDate()
     );
-    scrollToYear(targetYear, selectedDate.getMonth());
+    if (!props?.isPreventScroll)
+      scrollToYear(targetYear, selectedDate.getMonth());
     dispatch("yearChange", { year: targetYear });
     isExplicitNavigation = false;
   }

@@ -205,16 +205,14 @@
     </div>
   {:else if $goal}
     <div
-      class={cn("flex w-full h-full gap-4 overflow-auto", {
-        "p-4": !isConstrainedWidth
-      })}
+      class="flex w-full h-full gap-4 overflow-auto"
       use:resizeListener={(e) => {
         containerWidth = e.width;
       }}
     >
       {#if !isConstrainedWidth}
         <aside
-          class="flex flex-col gap-4 bg--bgs2 border border-brs3 rounded-lg p-4 w-96 2k:w-[30rem] overflow-auto"
+          class="flex flex-col gap-4 bg-bgs2 border-r border-brs2 p-4 w-96 2k:w-[30rem] overflow-auto"
         >
           <GoalInfoPanel
             {goal}
@@ -223,7 +221,11 @@
           />
         </aside>
       {/if}
-      <main class="flex flex-col gap-4 flex-1 overflow-auto">
+      <main
+        class={cn("flex flex-col gap-4 flex-1 overflow-auto", {
+          "py-4 pr-4": !isConstrainedWidth
+        })}
+      >
         <div
           class={cn(
             "relative flex flex-col w-full overflow-auto gap-3 bg-bgs2 otop:pt-12 shrink-0",

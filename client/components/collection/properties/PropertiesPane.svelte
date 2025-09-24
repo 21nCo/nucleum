@@ -26,6 +26,7 @@
   export let item: IActiveNodeStore | IActiveGoalStore;
   export let resource: Resource;
   export let isVisibleProps: boolean = false;
+  export let parentBgIndex: number = 1;
   let _types: ICollectionExpanded[] | null = null;
   let multipleTypesList: ICollectionExpanded[] = [];
   let refreshId: number = new Date().getTime();
@@ -170,6 +171,7 @@
           isIncludeExtendedProperties={isVisibleProps}
           {isReadOnlyMode}
           item={$item}
+          {parentBgIndex}
           on:change={propagateChanges}
           on:showAll
         />

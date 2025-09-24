@@ -53,5 +53,6 @@ export enum Action {
   DATETIME_SETTINGS = "datetime-settings",
   SHORTCUTS = "shortcuts",
   ACCESSIBILITY = "accessibility",
-  IMPORT_FROM_OTHER_APPS = "import-from-other-apps"
+  IMPORT_FROM_OTHER_APPS = "import-from-other-apps",
+  OFFLINE_STATUS = "offline-status"
 }

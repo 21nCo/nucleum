@@ -1261,6 +1261,11 @@ export const iconMappings: Record<string, IconMapping> = {
     phosphor: "terminal-window",
     lucide: "terminal",
     solar: "programming"
+  },
+  offline: {
+    phosphor: "cloud-slash",
+    lucide: "cloud-off",
+    solar: "cloud-off"
   }
 };
 
