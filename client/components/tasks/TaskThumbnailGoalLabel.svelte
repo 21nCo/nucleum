@@ -17,13 +17,17 @@
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { logger } from "../debug/logger.client";
   import { resolveGoalColor } from "../goals/goal.utils";
+  import { Embed } from "$lib/client/types/context.type";
   export let goal: IGoalThumb;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   const color = resolveGoalColor(goal);
   const dispatch = createEventDispatcher();
 
   function onGoalClick(e: MouseEvent) {
-    if (!$context.isEmbed && accessPoint !== ResourceAccessPoint.GOAL) {
+    if (
+      !($context.isEmbed && $context.embed === Embed.HANDSET) &&
+      accessPoint !== ResourceAccessPoint.GOAL
+    ) {
       appStore.openResource(goal.id, ResourceAccessMode.POP);
       e.stopPropagation();
     }

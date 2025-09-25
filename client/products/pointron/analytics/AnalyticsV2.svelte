@@ -109,10 +109,6 @@
               isEnableAnimationForTitle={false}
               isInEditMode={$isInEditMode}
               parentBgIndex={bgIndex}
-              isShowNumberShortcut={!isNucleusContext &&
-                $uiStateDerived.isShowHotKeyHints}
-              isPreventNumberShortcut={isNucleusContext}
-              isEnableTitleAction={true}
               tempTitleWithActionDisabled={true}
               bind:value={$selectedPageId}
               on:switch={onPageSwitch}

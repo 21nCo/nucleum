@@ -697,7 +697,10 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     if (!contentType) return { error: "File type not supported" };
     if (!params?.isEmbedContext) this.setIsSaving(true);
     try {
-      if (contentType === NodeType.NODULAR_MARKDOWN && !params?.isEmbedContext) {
+      if (
+        contentType === NodeType.NODULAR_MARKDOWN &&
+        !params?.isEmbedContext
+      ) {
         const result = await this.saveMarkdownFromMdFile(file);
         this.postSave(result?.slice(0, 1), {
           isOpenOnSave: params?.isOpenOnSave,
@@ -718,10 +721,14 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         return;
       }
       const id = generateResourceId(Resource.node);
-      const collections = params?.isEmbedContext ? [] : this.resolveCollections();
+      const collections = params?.isEmbedContext
+        ? []
+        : this.resolveCollections();
       const fileId = response[0].id;
       const metadata = (await this.parseMetadata(file)) ?? {};
-      if (!metadata?.location) metadata.location = await this.resolveLocation();
+      if (!metadata?.location) {
+        metadata.location = await this.resolveLocation();
+      }
       const captureStore = this.get();
       const node = {
         id,
@@ -854,7 +861,9 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       let nodes: INodeCapture<IMediaNode>[] = [];
       let mdNodesResult: any[] = [];
       const captureStore = this.get();
-      const collections = params?.isEmbedContext ? [] : this.resolveCollections();
+      const collections = params?.isEmbedContext
+        ? []
+        : this.resolveCollections();
       for (const [index, item] of files.entries()) {
         if (params?.uploadProgressId) {
           const progressElement = document.getElementById(
@@ -939,7 +948,9 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       const contentType = "audio/wav";
       const wavData = await convertWebMToWav(data);
       const id = generateResourceId(Resource.node);
-      const collections = params?.isEmbedContext ? [] : this.resolveCollections();
+      const collections = params?.isEmbedContext
+        ? []
+        : this.resolveCollections();
       const fileName = generateSimpleRandomId();
       const result = await account.uploadFileV2(
         contentType,
@@ -1258,30 +1269,36 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   private async resolveLocation() {
     const ctx = get(context);
     if (ctx.isEmbed) {
-      const locationResult = await embedBridge.fetch(
-        generateMiniRandomId(),
-        EmbedMessage.LOCATION,
-        {}
-      );
-      if (locationResult && !locationResult.error) {
-        return locationResult;
+      try {
+        const locationResult = await embedBridge.fetch(
+          generateMiniRandomId(),
+          EmbedMessage.LOCATION,
+          {}
+        );
+        if (locationResult && !locationResult.error) {
+          return locationResult;
+        }
+      } catch (e) {
+        logger.debug({
+          at: "CaptureStore.resolveLocation - embed timeout",
+          error: e
+        });
+        return undefined;
       }
     } else {
-      return await resolveLocationForWeb();
-    }
-
-    async function resolveLocationForWeb() {
-      let geoLocation: GeolocationPosition | undefined;
       try {
-        geoLocation = await getGeoLocation();
-        const location = {
+        const geoLocation = await getGeoLocation();
+        return {
           latitude: geoLocation?.coords.latitude ?? 0,
           longitude: geoLocation?.coords.longitude ?? 0,
           accuracy: geoLocation?.coords.accuracy ?? 0
         };
-        return location;
       } catch (e) {
-        console.error({ e });
+        logger.debug({
+          at: "CaptureStore.resolveLocation - geolocation error",
+          error: e
+        });
+        return undefined;
       }
     }
   }
@@ -1292,7 +1309,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     //TODO - extract nodes from markdown blocks and save
     const ctx = get(context);
     console.time("metadata");
-    let location = await this.resolveLocation();
+    const location = await this.resolveLocation();
     let metadata = {
       location
     };
@@ -1438,7 +1455,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         }));
       }
 
-      let location = await this.resolveLocation();
+      const location = await this.resolveLocation();
       let metadata = {
         location
       };

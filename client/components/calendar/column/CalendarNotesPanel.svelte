@@ -31,6 +31,7 @@
   let isSyncing: boolean = false;
 
   async function initialize(scaleParam: TimeScaleUnit) {
+    if (isSyncing) return;
     const id = resolveCalendarNotesId(date, scaleParam);
     const result = await nodeStore.select(id);
     const savedTemplate = preferences.resolve(Preference.NOTES_TEMPLATE, {
@@ -63,11 +64,12 @@
   setContext("node", nodeContext);
 </script>
 
+<SyncStatusListener resource={Resource.everything} bind:isSyncing />
 {#if isSyncing}
   <EmptyStatusView
     size={Size.sm}
     mainText="Temporarily unavailable."
-    subText={"Calendar notes is not available when sync is in progress"}
+    subText={"Calendar notes are not available while sync is in progress."}
   />
 {:else}
   {#await initialize(scale)}
@@ -83,11 +85,10 @@
     </div>
   {:catch err}
     <EmptyStatusView
-      mainText="Error loading calendar notes. Please try again after sometime."
-      subText={err.message}
+      mainText="Error loading calendar notes. Please try again after some time."
+      subText="Something went wrong."
     />
   {/await}
 {/if}
 
 <ComponentBaseLayer hasDragAndDrop={true} />
-<SyncStatusListener resource={Resource.everything} bind:isSyncing />

@@ -200,7 +200,15 @@
         "flex w-full h-8 min-h-[2rem] bg-bgs2 justify-between items-center text-b3 text-fgs3 px-4 rounded-b-md"
       )}
     >
-      <span> Press <b>Esc</b> to close </span>
+      <span class="inline-flex items-center gap-1">
+        Press
+        <ShortcutText
+          shortcut={Action.CLOSE}
+          parentBgIndex={1}
+          isAlwaysShown={true}
+        />
+        to close
+      </span>
       <ShortcutText
         shortcut={Action.CMD}
         parentBgIndex={1}

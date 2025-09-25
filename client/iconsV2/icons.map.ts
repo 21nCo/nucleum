@@ -1265,7 +1265,7 @@ export const iconMappings: Record<string, IconMapping> = {
   offline: {
     phosphor: "cloud-slash",
     lucide: "cloud-off",
-    solar: "cloud-off"
+    solar: "cloud-cross"
   }
 };
 

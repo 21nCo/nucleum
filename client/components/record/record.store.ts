@@ -60,6 +60,22 @@ import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
 import { parse } from "$lib/shared/utils/json.utils";
 import { contentTypeSort } from "$lib/client/products/memotron/node/node.utils";
 
+const resolveSearchPriority = (item: any) => {
+  if (isValidString(item?.labelSearch)) return 0;
+  if (isValidString(item?.bodySearch)) return 1;
+  return 2;
+};
+
+const combinedSearchSort = (a: any, b: any) => {
+  const priorityDiff = resolveSearchPriority(a) - resolveSearchPriority(b);
+  if (priorityDiff !== 0) return priorityDiff;
+
+  const contentTypeDiff = contentTypeSort(a, b);
+  if (contentTypeDiff !== 0) return contentTypeDiff;
+
+  return searchSort(a, b);
+};
+
 export const MAX_FILE_SIZE_MB = 100;
 
 export function resolveResource(id: IRecordId) {
@@ -264,7 +280,7 @@ export class SearchStore {
                 ("bodySearch" in x && x.bodySearch))
           );
         }
-        data = data.sort(contentTypeSort).sort(searchSort);
+        data = data.sort(combinedSearchSort);
       }
       return data;
     } else {
@@ -358,10 +374,17 @@ export class SearchStore {
       });
       if (nodes && isValidArrayWithData(nodes)) {
         try {
-          const parentIds: IRecordId[] = nodes
-            .map((x) => x?.mdParent ?? [])
-            ?.flat()
-            ?.filter(Boolean);
+          const parentIds: IRecordId[] = Array.from(
+            new Set(
+              nodes
+                .flatMap((x) =>
+                  x?.mdParent && Array.isArray(x.mdParent)
+                    ? (x.mdParent as IRecordId[])
+                    : []
+                )
+                .filter(Boolean) as IRecordId[]
+            )
+          );
           const parentItems = await nodeStore.selectMany({
             properties: {
               select: ["label", "id", "body"]
@@ -372,15 +395,14 @@ export class SearchStore {
             }
           });
           nodes = nodes.map((x: INode) => {
-            if (!x.mdParent) return x;
-            const parent = x.mdParent.map((y: IRecordId) => {
-              const parentItem = parentItems.find(resourceInList(y));
-              return parentItem;
-            });
+            if (!("mdParent" in x) || !Array.isArray(x.mdParent)) return x;
+            const parents = x.mdParent
+              .map((y: IRecordId) => parentItems.find(resourceInList(y)))
+              .filter(Boolean) as INode[];
             return {
               ...x,
-              mdParent: parent
-            };
+              mdParent: parents
+            } as any;
           });
         } catch (e) {
           logger.error({ at: "searchForLinking - parentItems", error: e });
@@ -414,7 +436,7 @@ export class SearchStore {
     if (isValidString(query) && isValidArray(data)) {
       data = highlightSearchQuery(data, query);
       data = data.filter((x) => x.labelSearch || x.bodySearch);
-      data = data.sort(contentTypeSort);
+      data = data.sort(combinedSearchSort);
     }
     if (params?.exclude) {
       data = data.filter((x) => !params.exclude?.some(resourceInList(x.id)));
@@ -506,7 +528,7 @@ export class SearchStore {
     if (isValidString(query) && isValidArray(data)) {
       data = highlightSearchQuery(data, query);
       data = data.filter((x) => x.labelSearch || x.bodySearch);
-      data = data.sort(contentTypeSort);
+      data = data.sort(combinedSearchSort);
     }
     return data;
   }

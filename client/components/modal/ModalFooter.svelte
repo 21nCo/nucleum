@@ -16,6 +16,7 @@
   import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { Action } from "$lib/client/types/action.enum";
   const dispatch = createEventDispatcher();
   export let action: string;
   export let isShowClose: boolean = false;
@@ -108,7 +109,7 @@
         shortcut={!isHideSecondaryShortcut &&
         (!secondaryAction.variant ||
           secondaryAction.variant === ButtonVariant.SECONDARY)
-          ? GlobalEvent.ESCAPE
+          ? Action.CLOSE
           : undefined}
       />
     {:else if isShowClose}
@@ -116,7 +117,7 @@
         on:click={() => close("close")}
         style={ButtonStyle.OUTLINED}
         label="Close"
-        shortcut={GlobalEvent.ESCAPE}
+        shortcut={Action.CLOSE}
       />
     {/if}
   </div>

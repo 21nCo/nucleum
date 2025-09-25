@@ -247,17 +247,18 @@
     });
   }
 
-  function isScrollRequired(targetId: string) {
+  function isScrollRequired(targetId: string): boolean {
     try {
       const targetElement = document.getElementById(targetId);
-      const rect = targetElement?.getBoundingClientRect();
-      const domRect = document?.documentElement?.getBoundingClientRect();
-      const isElementHiddenOnTop = rect && (rect.top < 0 || rect.bottom < 0);
-      const isElementHiddenOnBottom =
-        rect && (rect.top > domRect.height || rect.bottom > domRect.height);
-      return isElementHiddenOnTop || isElementHiddenOnBottom;
+      if (!targetElement || !containerRef) return true;
+      const elRect = targetElement.getBoundingClientRect();
+      const containerRect = containerRef.getBoundingClientRect();
+      return (
+        elRect.top < containerRect.top || elRect.bottom > containerRect.bottom
+      );
     } catch (e) {
       logger.error(e);
+      return true;
     }
   }
 
@@ -277,10 +278,11 @@
     }
 
     const targetPosition = getVirtualPosition(targetYear);
-    virtualScrollTop = targetPosition;
-    updateVisibleYears();
-
-    if (!isPreventScroll) containerRef.scrollTop = targetPosition;
+    if (!isPreventScroll) {
+      virtualScrollTop = targetPosition;
+      updateVisibleYears();
+      containerRef.scrollTop = targetPosition;
+    }
 
     requestAnimationFrame(() => {
       navigateToYear(targetYear, {

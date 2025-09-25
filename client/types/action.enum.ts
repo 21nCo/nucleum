@@ -1,5 +1,6 @@
 export enum Action {
   CMD = "CMD",
+  CLOSE = "CLOSE",
   MODE_OF_INTERACTION = "MODE_OF_INTERACTION",
   EDIT_MODE = "EDIT_MODE",
   USER_LOGIN = "USER_LOGIN",

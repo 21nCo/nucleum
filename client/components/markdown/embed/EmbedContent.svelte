@@ -61,9 +61,8 @@
   export let body: IEmbedBlockBody;
   export let mdStore: MdStoreType;
   export let isHovering = false;
-  const embedResourceType: Resource | undefined = body.id
-    ? determineResourceType(body.id)
-    : undefined;
+  let embedResourceType: Resource | undefined;
+  $: embedResourceType = body?.id ? determineResourceType(body.id) : undefined;
 
   let linkInputValue = "";
   let _mediaBlock: INode | undefined;
@@ -341,9 +340,7 @@
                     tooltip="Edit title"
                     size={Size.sm}
                     style={ButtonStyle.OUTLINED}
-                    on:click={(e) => {
-                      onEditTitle(e.detail);
-                    }}
+                    on:click={onEditTitle}
                   />
                 {/if}
                 {#if _mediaBlock?.contentType !== NodeType.FILE}
