@@ -11,7 +11,7 @@
   import type { ISelectItem } from "$lib/client/types/select.type";
   import Popover from "../popover/Popover.svelte";
   import TextInput from "../input/TextInput.svelte";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
+  import { cn } from "$lib/client/utils/ui.utils";
   import AddNewButton from "../button/AddNewButton.svelte";
   import { tooltip } from "$lib/client/actions/popover.action";
   import { isValidString } from "$lib/shared/utils/text.utils";
@@ -26,8 +26,6 @@
     undefined;
   export let isActive: boolean = false;
   export let triggerItemEdit: string | null = null;
-  export let isShowNumberShortcut: boolean = false;
-  export let index: number = 0;
   export let parentBgIndex: number = 1;
   export let activeItemStrength: PanelSwitcherActiveItemStrength =
     PanelSwitcherActiveItemStrength.DEFAULT;
@@ -174,19 +172,6 @@
         </span>
       {/if}
     </div>
-    {#if isShowNumberShortcut && index < 9}
-      <Badge
-        size={Size.xs}
-        text={index + 1}
-        isApplyCustomColor={isActive}
-        {parentBgIndex}
-      />
-      <!-- <span
-        class={cn("text-b4 text-fgs3 w-4 h-4 rounded-md", bg(parentBgIndex))}
-      >
-        {index + 1}
-      </span> -->
-    {/if}
   </span>
 {/if}
 

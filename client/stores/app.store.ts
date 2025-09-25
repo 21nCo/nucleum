@@ -780,6 +780,11 @@ function initAppStore(seed: IAppStore) {
     accessMode?: ResourceAccessMode;
     isRestrictToModals?: boolean;
   }) => {
+    const restoreInlineResourceIfPrev = () => {
+      const prevMode = url.searchParams.get("prev");
+      if (prevMode === ResourceAccessMode.INLINE && props?.id)
+        url.searchParams.set(prevMode, props?.id.toString());
+    };
     appEvents.nav(props?.id?.toString() ?? "");
     const url =
       toggleSearchParam(recordSpecificSearchParams, {
@@ -816,11 +821,7 @@ function initAppStore(seed: IAppStore) {
       url.searchParams.delete(param);
     }
 
-    const restoreInlineResourceIfPrev = () => {
-      const prevMode = url.searchParams.get("prev");
-      if (prevMode === ResourceAccessMode.INLINE && props?.id)
-        url.searchParams.set(prevMode, props?.id.toString());
-    };
+
   };
 
   const toggleFullAccessMode = (

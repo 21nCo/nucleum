@@ -4,7 +4,6 @@
   import { Size } from "$lib/client/types/size.enum";
   import LeftBottomBar from "./LeftBottomBar.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import LeftNavOfflineStatus from "./LeftNavOfflineStatus.svelte";
   import { popover, tooltip } from "$lib/client/actions/popover.action";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import LeftNavSettingsPopover from "./LeftNavSettingsPopover.svelte";
@@ -17,6 +16,7 @@
   } from "$lib/client/stores/uiState/uiState.type";
   import { onMount } from "svelte";
   import { appStore } from "$lib/client/stores/app.store";
+  import OfflineStatusMessage from "$lib/client/elements/feedback/OfflineStatusMessage.svelte";
   export let isRounded = false;
   const dev_mixedPanel = false;
   let isHideMenuLabels = uiState.getState(UIState.hideLeftNavMenuLabels, {
@@ -109,7 +109,7 @@
         </div>
       </div>
       <div class="w-full flex flex-col gap-2 items-center">
-        <LeftNavOfflineStatus isInThinMode={true} />
+        <OfflineStatusMessage isIconOnly={true} />
         <!-- <LeftNavCommandAction isInThinMode={true} size={Size.lg} /> -->
         <LeftBottomBar
           isInThinMode={true}

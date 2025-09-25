@@ -120,7 +120,7 @@
         ]}
         style={PanelSwitcherStyle.BAR}
         barStyle={BarStyle.DOT}
-        isPreventNumberShortcut={true}
+        isPreventTabShortcut={true}
         on:switch={(e) => {
           dispatch("view", e.detail);
         }}

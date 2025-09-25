@@ -3,7 +3,6 @@
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import { detectTimeZone } from "$lib/client/utils/time.utils";
   import { Persistence } from "$lib/client/persistence/persistence";
-  import view from "$lib/client/stores/view.store";
   import account from "$lib/client/stores/account.store";
   import { appLoadingState, appStore } from "$lib/client/stores/app.store";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
@@ -23,7 +22,6 @@
     isExtensionEnvironment,
     safeRequestIdleCallback
   } from "$lib/client/utils/browser.utils";
-  import { appMenuStore } from "../../stores/appMenu/appMenu.store";
   import { AlertType } from "$lib/client/types/notification.type";
   import { cacheableStores } from "$lib/client/stores/globalStoresMap";
   import AppLoadingView from "../paint/AppLoadingView.svelte";
@@ -54,7 +52,6 @@
   import { embedBridge } from "$lib/client/components/embed/embed.store";
   import { postMessageToParent } from "$lib/client/utils/embed.utils";
   import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-  import Icon from "$lib/client/elements/Icon.svelte";
   import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
   import { OperatingSystem } from "$lib/client/types/context.type";
   import InMemoryCache from "./cache/InMemoryCache.svelte";
@@ -63,7 +60,6 @@
   import { compareVersions } from "$lib/shared/utils/utils";
   import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
   import { RxDBPersistence } from "$lib/client/persistence/rxdb/rxdb.local";
-  import { cn } from "$lib/client/utils/ui.utils";
   import { DexiePersistence } from "$lib/client/persistence/dexie/dexie.local";
   import { parse } from "$lib/shared/utils/json.utils";
   import { productData } from "$lib/client/products/product.resolver";
@@ -95,13 +91,6 @@
   const isDebug = import.meta.env?.DEV;
   $: searcheableResources =
     resolveProductResources($appStore.product, "search") ?? [];
-  $: isOfflineBannerIsShown =
-    ($view.isPortrait &&
-      $account.dataMode !== UserDataMode.LOCAL &&
-      $context.isInOfflineMode) ||
-    (!$view.isPortrait &&
-      $account.dataMode === UserDataMode.LOCAL &&
-      !$context.isEmbed);
 
   onMount(async () => {
     postMessageToParent(EmbedMessage.MOUNT);
@@ -580,12 +569,7 @@
 {#if $appStore?.appData?.isAnalyticsEnabled && $account?.dataMode === UserDataMode.CLOUD && !$context.isInOfflineMode}
   <AnalyticsLayer />
 {/if}
-<div
-  class={cn("flex w-screen", {
-    "h-screen": !isOfflineBannerIsShown,
-    "flex-grow": isOfflineBannerIsShown
-  })}
->
+<div class="flex w-screen h-screen">
   {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded || isAppLoading}
     <AppLoadingView
       message={loadingMessage.message}
@@ -620,19 +604,6 @@
   {/if}
 {/if}
 <Intercom />
-{#if isOfflineBannerIsShown}
-  <div
-    class="flex gap-2 w-full p-2 cw:pb-4 bg-ass2/30 text-ass1 items-center justify-center text-b2"
-  >
-    <Icon icon="ph:wifi-slash" class="text-ass1" />
-    {#if $account.dataMode === UserDataMode.LOCAL}
-      You are using offline mode on a browser. Please use Desktop/mobile app to
-      avoid loss of data or signup as cloud user.
-    {:else}
-      You are using offline mode.
-    {/if}
-  </div>
-{/if}
 
 <svelte:window
   on:focus={onAppear}

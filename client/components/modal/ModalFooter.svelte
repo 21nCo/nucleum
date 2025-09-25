@@ -14,6 +14,9 @@
   import { logger } from "../debug/logger.client";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
+  import { Orientation } from "$lib/client/types/direction.enum";
+  import { cn } from "$lib/client/utils/ui.utils";
+  import { Action } from "$lib/client/types/action.enum";
   const dispatch = createEventDispatcher();
   export let action: string;
   export let isShowClose: boolean = false;
@@ -21,6 +24,8 @@
   export let primaryAction: IButtonParams | undefined = undefined;
   export let secondaryAction: IButtonParams | undefined = undefined;
   export let isDelegateClose: boolean = false;
+  export let orientation: Orientation = Orientation.Horizontal;
+  export let isHideSecondaryShortcut: boolean = false;
   let isPrimaryActionInProgress = false;
   let error: string | undefined = undefined;
   onMount(() => {
@@ -72,7 +77,11 @@
   {#if error}
     <InlineErrorMessage bind:error />
   {/if}
-  <div class="flex w-full gap-2 justify-center">
+  <div
+    class={cn("flex w-full gap-2 justify-center", {
+      "flex-col mx-auto": orientation === Orientation.Vertical
+    })}
+  >
     {#if primaryAction}
       <Button
         type={primaryAction.variant ?? ButtonVariant.PRIMARY}
@@ -97,9 +106,10 @@
         style={ButtonStyle.OUTLINED}
         on:click={onSecondaryClick}
         label={secondaryAction?.label}
-        shortcut={!secondaryAction.variant ||
-        secondaryAction.variant === ButtonVariant.SECONDARY
-          ? GlobalEvent.ESCAPE
+        shortcut={!isHideSecondaryShortcut &&
+        (!secondaryAction.variant ||
+          secondaryAction.variant === ButtonVariant.SECONDARY)
+          ? Action.CLOSE
           : undefined}
       />
     {:else if isShowClose}
@@ -107,7 +117,7 @@
         on:click={() => close("close")}
         style={ButtonStyle.OUTLINED}
         label="Close"
-        shortcut={GlobalEvent.ESCAPE}
+        shortcut={Action.CLOSE}
       />
     {/if}
   </div>

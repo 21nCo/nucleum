@@ -37,7 +37,7 @@ const dbVersion = 1;
 /**
  * Stores version
  */
-const version = 115;
+const version = 116;
 export class DexiePersistence implements IPersistence {
   instance: Dexie | undefined = undefined;
   tables: ITable[] = [];
@@ -68,10 +68,13 @@ export class DexiePersistence implements IPersistence {
       if (tablesVal) tables = [...(tables ?? []), ...parse(tablesVal)];
     }
     const stores =
-      tables?.reduce((acc, table) => {
-        acc[table.name] = table.indices.join(", ");
-        return acc;
-      }, {} as { [key: string]: string }) ?? {};
+      tables?.reduce(
+        (acc, table) => {
+          acc[table.name] = table.indices.join(", ");
+          return acc;
+        },
+        {} as { [key: string]: string }
+      ) ?? {};
     this.instance.version(version).stores(stores);
     this.userId = user;
     if (tables) {
@@ -682,6 +685,7 @@ export class DexiePersistence implements IPersistence {
       limit?: number;
     }
   ) {
+    console.time("preSearchUsingIndex");
     const searchIndex = this.searchIndices.get(resource);
     if (searchIndex) {
       let result: any;
@@ -713,6 +717,7 @@ export class DexiePersistence implements IPersistence {
       const ids = result.map((x) => x.result.map((y) => y))?.flat();
       if (ids.length > 0) return ids;
     }
+    console.timeEnd("preSearchUsingIndex");
   }
 
   /**

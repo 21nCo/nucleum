@@ -1,5 +1,6 @@
 export enum Action {
   CMD = "CMD",
+  CLOSE = "CLOSE",
   MODE_OF_INTERACTION = "MODE_OF_INTERACTION",
   EDIT_MODE = "EDIT_MODE",
   USER_LOGIN = "USER_LOGIN",
@@ -53,5 +54,6 @@ export enum Action {
   DATETIME_SETTINGS = "datetime-settings",
   SHORTCUTS = "shortcuts",
   ACCESSIBILITY = "accessibility",
-  IMPORT_FROM_OTHER_APPS = "import-from-other-apps"
+  IMPORT_FROM_OTHER_APPS = "import-from-other-apps",
+  OFFLINE_STATUS = "offline-status"
 }

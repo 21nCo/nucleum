@@ -9,6 +9,7 @@
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { fly } from "svelte/transition";
   import { quintOut } from "svelte/easing";
+  import OfflineStatusMessage from "$lib/client/elements/feedback/OfflineStatusMessage.svelte";
   export let transitionDuration: number = 250;
   const dispatch = createEventDispatcher();
 
@@ -42,10 +43,13 @@
       </div>
     </button>
   </div>
-  <Button
-    icon="gear"
-    style={ButtonStyle.OUTLINED}
-    size={Size.lg}
-    on:click={handleSettingsClick}
-  />
+  <div class="flex items-center gap-2">
+    <OfflineStatusMessage />
+    <Button
+      icon="gear"
+      style={ButtonStyle.OUTLINED}
+      size={Size.lg}
+      on:click={handleSettingsClick}
+    />
+  </div>
 </div>

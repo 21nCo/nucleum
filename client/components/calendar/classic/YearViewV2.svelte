@@ -247,7 +247,24 @@
     });
   }
 
+  function isScrollRequired(targetId: string): boolean {
+    try {
+      const targetElement = document.getElementById(targetId);
+      if (!targetElement || !containerRef) return true;
+      const elRect = targetElement.getBoundingClientRect();
+      const containerRect = containerRef.getBoundingClientRect();
+      return (
+        elRect.top < containerRect.top || elRect.bottom > containerRect.bottom
+      );
+    } catch (e) {
+      logger.error(e);
+      return true;
+    }
+  }
+
   export function scrollToDate(date: Date) {
+    const elementId = `month-${date.getFullYear()}-${date.getMonth()}`;
+    const isPreventScroll = !isScrollRequired(elementId);
     const targetYear = date.getFullYear();
 
     if (targetYear < BASE_YEAR || targetYear >= BASE_YEAR + YEAR_RANGE) {
@@ -261,15 +278,17 @@
     }
 
     const targetPosition = getVirtualPosition(targetYear);
-    virtualScrollTop = targetPosition;
-    updateVisibleYears();
-
-    containerRef.scrollTop = targetPosition;
+    if (!isPreventScroll) {
+      virtualScrollTop = targetPosition;
+      updateVisibleYears();
+      containerRef.scrollTop = targetPosition;
+    }
 
     requestAnimationFrame(() => {
       navigateToYear(targetYear, {
         month: date.getMonth(),
-        day: date.getDate()
+        day: date.getDate(),
+        isPreventScroll
       });
     });
   }
@@ -279,6 +298,7 @@
     props?: {
       month?: number;
       day?: number;
+      isPreventScroll?: boolean;
     }
   ) {
     isExplicitNavigation = true;
@@ -287,7 +307,8 @@
       props?.month ?? selectedDate.getMonth(),
       props?.day ?? selectedDate.getDate()
     );
-    scrollToYear(targetYear, selectedDate.getMonth());
+    if (!props?.isPreventScroll)
+      scrollToYear(targetYear, selectedDate.getMonth());
     dispatch("yearChange", { year: targetYear });
     isExplicitNavigation = false;
   }

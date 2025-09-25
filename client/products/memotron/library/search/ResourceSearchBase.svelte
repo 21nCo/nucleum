@@ -37,6 +37,7 @@
   import { Embed } from "$lib/client/types/context.type";
   import { createEventDispatcher } from "svelte";
   import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { Action } from "$lib/client/types/action.enum";
 
   const dispatch = createEventDispatcher();
 
@@ -330,9 +331,7 @@
         <span class="inline-flex items-center gap-1">
           Press
           <ShortcutText
-            shortcut={{
-              key: KeyboardKey.ESCAPE
-            }}
+            shortcut={Action.CLOSE}
             parentBgIndex={1}
             isAlwaysShown={true}
           />
