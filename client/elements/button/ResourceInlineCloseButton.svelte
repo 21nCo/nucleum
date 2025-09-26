@@ -15,7 +15,7 @@
     accessMode === ResourceAccessMode.FULL ? "Close full screen" : "Close";
 </script>
 
-{#if accessMode === ResourceAccessMode.SPLIT || accessMode === ResourceAccessMode.FULL || accessMode === ResourceAccessMode.FSPLIT || additionalAccessModes.includes(accessMode)}
+{#if accessMode === ResourceAccessMode.SPLIT || accessMode === ResourceAccessMode.FULL || accessMode === ResourceAccessMode.FSPLIT || accessMode === ResourceAccessMode.SHEET || additionalAccessModes.includes(accessMode)}
   <div
     class="flex justify-center items-center"
     id={elementId}

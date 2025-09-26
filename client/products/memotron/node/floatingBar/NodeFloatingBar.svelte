@@ -198,7 +198,11 @@
           }}
         />
       {/if}
-      <ResourceInlineCloseButton accessMode={$node.accessMode} id={$node.id} />
+      <ResourceInlineCloseButton
+        accessMode={$node.accessMode}
+        id={$node.id}
+        parentBgIndex={bgIndex}
+      />
     {/if}
 
     {#if $node.accessMode != ResourceAccessMode.INLINE}

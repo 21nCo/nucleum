@@ -8,7 +8,7 @@
   } from "$lib/client/products/memotron/node/node.store";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import type { TimeScaleUnit } from "$lib/client/types/time.type";
-  import { onMount, setContext } from "svelte";
+  import { setContext } from "svelte";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
@@ -33,17 +33,11 @@
   let isSyncing: boolean = false;
   let isFullScreenActive: boolean = false;
 
-  onMount(() => {
-    const sub = page.subscribe((p) => {
-      const fullScreenParam = p.url.searchParams.get(ResourceAccessMode.FULL);
-      const nodeId = resolveCalendarNotesId(date, scale);
-      isFullScreenActive = fullScreenParam === nodeId;
-    });
-
-    return () => {
-      sub();
-    };
-  });
+  $: {
+    const fullScreenParam = $page.url.searchParams.get(ResourceAccessMode.FULL);
+    const nodeId = resolveCalendarNotesId(date, scale);
+    isFullScreenActive = fullScreenParam === nodeId;
+  }
 
   async function initialize(scaleParam: TimeScaleUnit) {
     if (isSyncing) return;
@@ -84,7 +78,11 @@
   <EmptyStatusView
     size={Size.sm}
     mainText="Temporarily unavailable."
-    subText={"Calendar notes are not available while sync is in progress."}
+    subText={
+      isSyncing
+        ? "Calendar notes are not available while sync is in progress."
+        : "Calendar notes are hidden while full screen mode is active."
+    }
   />
 {:else}
   {#await initialize(scale)}

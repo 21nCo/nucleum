@@ -153,7 +153,7 @@
           <Text content="Templates" style={TextStyle.SECTION_HEADING} />
 
           <div
-            style={"--colw: 400px"}
+            style={"--colw: min(100%, 400px)"}
             class="grid grid-cols-[repeat(auto-fill,minmax(var(--colw),1fr))] w-full gap-3"
           >
             <CalendarNotesTemplateCard

@@ -120,7 +120,7 @@
           parentBgIndex={2}
           on:click={() => {
             const backParam = $page.url.searchParams.get(AppSearchParam.BACK);
-            tabs.open(item, backParam);
+            tabs.open(item, backParam ?? undefined);
           }}
         />
         <Button

@@ -78,8 +78,26 @@ import GoalTitleLabelPart from "$lib/client/components/goals/GoalTitleLabelPart.
 import { AppSearchParam } from "$lib/client/types/appStore.type";
 import type { IGoal } from "$lib/client/components/goals/goal.type";
 import LibraryPanelContentResolver from "$lib/client/components/library/LibraryPanelContentResolver.svelte";
+import type { IRecordId } from "$lib/client/types/data.type";
 
 const isSessionRunningPreCondition = () => get(activeSession).isSessionRunning;
+
+const deleteSessionCascade = async (sessionId: IRecordId) => {
+  await sessionStore.delete(sessionId, {
+    context: PointronAction.DELETE_SESSION
+  });
+  const sessionLogs = await sessionLogStore.selectMany({
+    properties: {
+      select: ["id"]
+    },
+    filters: {
+      sessionId: String(sessionId)
+    }
+  });
+  if (sessionLogs?.length) {
+    await sessionLogStore.deleteMany(sessionLogs.map((log: any) => log.id));
+  }
+};
 
 export const pointronActions: IAction[] = [
   {
@@ -609,28 +627,19 @@ export const pointronActions: IAction[] = [
           icon: "trash",
           variant: ButtonVariant.DANGER,
           callback: async () => {
+            const sessionId = params?.componentParams?.id;
+            if (sessionId == null) {
+              toasts.error("Missing session id. Aborting delete.");
+              return false;
+            }
             try {
-              await sessionStore.delete(params?.componentParams?.id, {
-                context: PointronAction.DELETE_SESSION
-              });
-              const sessionLogs = await sessionLogStore.selectMany({
-                properties: {
-                  select: ["id"]
-                },
-                filters: {
-                  sessionId: params?.componentParams?.id?.toString()
-                }
-              });
-              if (sessionLogs) {
-                await sessionLogStore.deleteMany(
-                  sessionLogs.map((log: any) => log.id)
-                );
-              }
+              await deleteSessionCascade(sessionId);
               toasts.success("Session log deleted successfully");
-              appStore.closeResource({ id: params?.componentParams?.id });
+              appStore.closeResource({ id: sessionId });
               return true;
             } catch (e) {
               toasts.error("Failed to delete session log");
+              return false;
             }
           }
         }

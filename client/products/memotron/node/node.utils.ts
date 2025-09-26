@@ -304,9 +304,10 @@ export function resolveIfImageShouldContain(contentType: NodeType) {
 }
 
 export function resolveNodeLabelString(item: INodeThumb): string {
-  if (item?.label && typeof item.label === "string") return item.label;
+  if (typeof item?.label === "string" && isValidString(item.label))
+    return item.label;
   const label = resolveNodeLabel(item);
-  if (typeof label === "string") return label ? label : "Untitled";
+  if (typeof label === "string") return isValidString(label) ? label : "Untitled";
   if (
     label &&
     typeof label === "object" &&

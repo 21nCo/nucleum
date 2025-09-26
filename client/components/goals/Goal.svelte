@@ -66,7 +66,8 @@
   });
 
   onDestroy(() => {
-    ActiveGoalStore.destroy(id, accessMode);
+    const latestAccessMode = $goal?.accessMode ?? accessMode;
+    ActiveGoalStore.destroy(id, latestAccessMode);
   });
 
   async function initialize() {
