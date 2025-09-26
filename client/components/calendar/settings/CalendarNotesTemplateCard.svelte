@@ -18,7 +18,7 @@
 </script>
 
 <div
-  class="flex flex-col gap-8 items-center justify-between p-4 rounded-md border border-brs2 bg-bgs2 min-w-64 max-w-96"
+  class="flex flex-col gap-8 items-center justify-between p-4 rounded-md border border-brs2 bg-bgs2"
 >
   <div class="flex flex-col gap-3 items-start w-full">
     <Text content={title} style={TextStyle.FORM_LABEL} />

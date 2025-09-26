@@ -35,8 +35,8 @@
     isRenderAsModalForCW: param.popoverAction?.isRenderAsModalForCW,
     id: `floating-button-popover-${index}`,
     componentProps: {
-      ...param.popoverAction?.componentProps,
-      onSelect: (e) => {
+      ...(param.popoverAction?.componentProps ?? {}),
+      onSelect: () => {
         hideContextMenu();
       }
     }

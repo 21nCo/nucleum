@@ -5,20 +5,21 @@
     type IActiveGoalStore
   } from "$lib/client/components/goals/goal.store";
   import Breadcrumbs from "$lib/client/elements/breadcrumbsV2/Breadcrumbs.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
   import { Placement } from "$lib/client/types/direction.enum";
   import { Size } from "$lib/client/types/size.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { ResourceAccessPoint } from "../../flux/resourceStores/resource.type";
+  import {
+    ResourceAccessMode,
+    ResourceAccessPoint
+  } from "../../flux/resourceStores/resource.type";
   import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
   import {
     AlertType,
     type IInlineStatus
   } from "$lib/client/types/notification.type";
-  import { ButtonStyle } from "$lib/client/types/button.type";
+  import ResourceInlineCloseButton from "$lib/client/elements/button/ResourceInlineCloseButton.svelte";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
   export let status: IInlineStatus | undefined = undefined;
@@ -133,13 +134,11 @@
       actionBgSize={isConstrainedWidth ? Size.sm : undefined}
     />
     {#if isConstrainedWidth}
-      <Button
-        icon="cross"
-        style={ButtonStyle.OUTLINED}
+      <ResourceInlineCloseButton
+        accessMode={$goal.accessMode}
+        additionalAccessModes={[ResourceAccessMode.POP]}
         parentBgIndex={2}
-        on:click={() => {
-          appStore.closeResource({ id: $goal.id });
-        }}
+        id={$goal.id}
       />
     {/if}
   </div>

@@ -609,32 +609,29 @@ export const pointronActions: IAction[] = [
           icon: "trash",
           variant: ButtonVariant.DANGER,
           callback: async () => {
-            const response = await sessionStore.delete(
-              params?.componentParams?.id,
-              {
+            try {
+              await sessionStore.delete(params?.componentParams?.id, {
                 context: PointronAction.DELETE_SESSION
+              });
+              const sessionLogs = await sessionLogStore.selectMany({
+                properties: {
+                  select: ["id"]
+                },
+                filters: {
+                  sessionId: params?.componentParams?.id?.toString()
+                }
+              });
+              if (sessionLogs) {
+                await sessionLogStore.deleteMany(
+                  sessionLogs.map((log: any) => log.id)
+                );
               }
-            );
-            const sessionLogs = await sessionLogStore.selectMany({
-              properties: {
-                select: ["id"]
-              },
-              filters: {
-                sessionId: params?.componentParams?.id?.toString()
-              }
-            });
-            if (sessionLogs) {
-              await sessionLogStore.deleteMany(
-                sessionLogs.map((log: any) => log.id)
-              );
-            }
-            if (response) {
               toasts.success("Session log deleted successfully");
-            } else {
+              appStore.closeResource({ id: params?.componentParams?.id });
+              return true;
+            } catch (e) {
               toasts.error("Failed to delete session log");
             }
-            appStore.closeResource({ id: params?.componentParams?.id });
-            return true;
           }
         }
       });

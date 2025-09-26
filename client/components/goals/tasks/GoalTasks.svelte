@@ -14,6 +14,7 @@
   import Divider from "$lib/client/elements/Divider.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import view from "$lib/client/stores/view.store";
+  import context from "$lib/client/stores/context.store";
 
   export let id: IRecordId;
   export let isActiveResource: boolean = true;
@@ -53,7 +54,7 @@
     isPreventAddNew={!isActiveResource}
     accessPoint={ResourceAccessPoint.GOAL}
   />
-  {#if !$view.isConstrainedWidth}
+  {#if !$view.isPortrait && !$context.isTouchDevice}
     <Divider orientation={Orientation.Vertical} />
     <div class="w-1/2 min-w-96 h-full">
       {#if selectedTaskId}

@@ -25,6 +25,8 @@
   import { createEventDispatcher } from "svelte";
   import { isValidString } from "$lib/shared/utils/text.utils";
   import Button from "$lib/client/elements/button/Button.svelte";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import context from "$lib/client/stores/context.store";
   const dispatch = createEventDispatcher();
   export let item: IRecordId;
   export let isInterimTab: boolean = false;
@@ -117,7 +119,8 @@
           size={Size.sm}
           parentBgIndex={2}
           on:click={() => {
-            tabs.open(item);
+            const backParam = $page.url.searchParams.get(AppSearchParam.BACK);
+            tabs.open(item, backParam);
           }}
         />
         <Button
@@ -131,12 +134,13 @@
         />
       </div>
     {/if}
-    {#if isHovering && !isInterimTab}
+    {#if !isInterimTab && (isHovering || $context.isTouchDevice)}
       <button
         class={cn(
           "absolute right-0 h-full rounded-r-md bg-gradient-to-l  to-transparent pl-10",
           {
-            "from-bgs3 via-bgs3": !isActive,
+            "from-bgs3 via-bgs3": !isActive && !$context.isTouchDevice,
+            "from-bgs2 via-bgs2": !isActive && $context.isTouchDevice,
             "from-bgs1 via-bgs1": isActive
           }
         )}

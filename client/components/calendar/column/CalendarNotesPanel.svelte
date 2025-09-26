@@ -8,7 +8,7 @@
   } from "$lib/client/products/memotron/node/node.store";
   import { NodeType } from "$lib/client/products/memotron/node/node.type";
   import type { TimeScaleUnit } from "$lib/client/types/time.type";
-  import { setContext } from "svelte";
+  import { onMount, setContext } from "svelte";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
@@ -23,12 +23,27 @@
   import SyncStatusListener from "$lib/client/elements/listeners/SyncStatusListener.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
+  import { page } from "$app/stores";
+
   export let date: Date;
   export let scale: TimeScaleUnit;
   export let mdId: string;
   let node: IActiveNodeStore;
   const captureStore = ActiveCaptureStore.resolve(mdId);
   let isSyncing: boolean = false;
+  let isFullScreenActive: boolean = false;
+
+  onMount(() => {
+    const sub = page.subscribe((p) => {
+      const fullScreenParam = p.url.searchParams.get(ResourceAccessMode.FULL);
+      const nodeId = resolveCalendarNotesId(date, scale);
+      isFullScreenActive = fullScreenParam === nodeId;
+    });
+
+    return () => {
+      sub();
+    };
+  });
 
   async function initialize(scaleParam: TimeScaleUnit) {
     if (isSyncing) return;
@@ -65,7 +80,7 @@
 </script>
 
 <SyncStatusListener resource={Resource.everything} bind:isSyncing />
-{#if isSyncing}
+{#if isSyncing || isFullScreenActive}
   <EmptyStatusView
     size={Size.sm}
     mainText="Temporarily unavailable."

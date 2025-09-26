@@ -579,7 +579,7 @@
           value={$collection.cover}
           on:change={onCoverChange}
           on:select={persistCoverChange}
-          orientation={coverPlacement === Placement.Top
+          orientation={coverPlacement === Placement.Top && !isConstrainedWidth
             ? Orientation.Horizontal
             : Orientation.Vertical}
           on:close={() => (isCoverPickerOpen = false)}
