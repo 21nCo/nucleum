@@ -8,6 +8,7 @@
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import context from "$lib/client/stores/context.store";
+  import { ButtonStyle } from "$lib/client/types/button.type";
 </script>
 
 <div class="flex flex-col justify-between gap-4 h-full w-full p-4">
@@ -55,8 +56,9 @@
   {:else}
     <ModalFooter
       action={Action.OFFLINE_STATUS}
-      secondaryAction={{
-        label: "I understand"
+      primaryAction={{
+        label: "I understand",
+        style: ButtonStyle.OUTLINED
       }}
     />
   {/if}

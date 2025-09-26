@@ -49,11 +49,11 @@
         undefined,
         undefined
       )}
-    class="flex flex-col w-full h-full px-4 py-8 glassthick bg-bgs1"
+    class="flex flex-col w-full h-full px-4 py-8 glassthick bg-bgs1 otop:pt-12"
   >
     <div class="flex flex-col gap-6 flex-grow w-full items-center">
-      <IntervalBar />
       {#if !$isInEditMode}
+        <IntervalBar />
         <div
           class="flex flex-col w-full items-center transition-all duration-300"
         >
