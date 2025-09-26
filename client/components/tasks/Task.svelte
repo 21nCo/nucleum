@@ -257,10 +257,14 @@
 </script>
 
 <div
-  class={cn("flex p-4 mo:w-full mo:h-full otop:pt-12 h-[28rem]", {
-    "w-[32rem]": accessMode !== ResourceAccessMode.INLINE,
-    "w-full": accessMode === ResourceAccessMode.INLINE
-  })}
+  class={cn(
+    "flex p-4 cw:w-full portrait:w-full cw:h-full otop:pt-12 h-[28rem]",
+    {
+      "landscape:w-[32rem]": accessMode !== ResourceAccessMode.INLINE,
+      "w-full": accessMode === ResourceAccessMode.INLINE,
+      "w-full min-h-[28rem]": accessMode === ResourceAccessMode.SHEET
+    }
+  )}
 >
   {#if isRefreshing}
     <EmptyStatusView isLoadingState={isRefreshing} />

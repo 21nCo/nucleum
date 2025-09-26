@@ -11,7 +11,7 @@
 </script>
 
 <div
-  class="w-full h-full bg-bgs1 flex flex-col justify-between items-center mo:p-4 p-8"
+  class="w-full h-full bg-bgs1 flex flex-col justify-between items-center mo:p-4 p-8 otop:pt-12"
 >
   <div
     class="w-full text-h5 flex-grow flex justify-center portrait:flex-col-reverse"

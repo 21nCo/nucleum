@@ -16,7 +16,6 @@
   import GoalTitleRow from "./info/GoalTitleRow.svelte";
   import SubGoalsPanel from "./sub/SubGoalsPanel.svelte";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
   import { appStore } from "$lib/client/stores/app.store";
   import GoalHistory from "./history/GoalHistory.svelte";
   import GoalTasks from "./tasks/GoalTasks.svelte";
@@ -33,6 +32,7 @@
   import { logger } from "../debug/logger.client";
   import { Size } from "$lib/client/types/size.enum";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import ResourceInlineCloseButton from "$lib/client/elements/button/ResourceInlineCloseButton.svelte";
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
@@ -66,7 +66,8 @@
   });
 
   onDestroy(() => {
-    ActiveGoalStore.destroy(id);
+    const latestAccessMode = $goal?.accessMode ?? accessMode;
+    ActiveGoalStore.destroy(id, latestAccessMode);
   });
 
   async function initialize() {
@@ -254,14 +255,11 @@
               }}
             >
               <div slot="right">
-                {#if $goal.accessMode === ResourceAccessMode.FULL}
-                  <Button
-                    icon="cross"
-                    tooltip="Close full screen"
+                {#if $goal.accessMode === ResourceAccessMode.FULL && !isConstrainedWidth}
+                  <ResourceInlineCloseButton
+                    accessMode={$goal.accessMode}
                     parentBgIndex={2}
-                    on:click={() => {
-                      appStore.closeResource({ id: $goal.id });
-                    }}
+                    id={$goal.id}
                   />
                 {/if}
               </div>

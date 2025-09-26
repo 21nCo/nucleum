@@ -104,7 +104,7 @@
         //   field: "cluster"
         // }
         style: {
-          // size: 10,
+          size: 10,
           fill: currentColors["fgs2"],
           labelFill: currentColors["fgs3"],
           stroke: currentColors["aps1"]

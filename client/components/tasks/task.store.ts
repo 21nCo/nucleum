@@ -8,10 +8,7 @@ import {
 import { generateResourceId } from "$lib/client/components/flux/flux.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
 import type { ITask, ITaskCapture, ITaskThumb } from "./task.type";
-import {
-  ResourceAccessMode,
-  ResourceAccessPoint
-} from "../flux/resourceStores/resource.type";
+import { ResourceAccessPoint } from "../flux/resourceStores/resource.type";
 import type {
   IContextMenu,
   IContextMenuItem
@@ -177,10 +174,7 @@ class TaskActions {
     return {
       value: "openTask",
       icon: "pop",
-      label: "Open task",
-      callback: async () => {
-        appStore.openResource(this.task.id, ResourceAccessMode.POP);
-      }
+      label: "Open task"
     };
   }
 

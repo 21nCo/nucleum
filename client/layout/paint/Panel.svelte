@@ -136,7 +136,7 @@
       {#if floatingButton}
         <FloatingButton
           params={Array.isArray(floatingButton)
-            ? floatingButton
+            ? [...floatingButton]
             : [floatingButton]}
         />
       {/if}

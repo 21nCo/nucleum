@@ -190,13 +190,13 @@
               />
             </div>
           {/if}
-          {#if $node.contentType != NodeType.VIDEO && !isConstrainedWidth}
+          {#if $node.contentType !== NodeType.VIDEO && !isConstrainedWidth && $node.accessMode !== ResourceAccessMode.FULL}
             <Button
               {...buttonCommonProps}
               icon="full-screen"
               tooltip="Full screen"
               on:click={() => {
-                dispatch("fullscreen");
+                appStore.toggleFullScreen($node.accessMode, $node.id);
               }}
             />
           {/if}

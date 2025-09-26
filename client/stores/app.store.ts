@@ -820,8 +820,6 @@ function initAppStore(seed: IAppStore) {
       if (!url.searchParams.get(param)) return;
       url.searchParams.delete(param);
     }
-
-
   };
 
   const toggleFullAccessMode = (
@@ -829,14 +827,18 @@ function initAppStore(seed: IAppStore) {
     resourceId: IRecordId
   ) => {
     logger.log({ at: "toggleFullAccessMode", currentMode, resourceId });
-    const url = new URL(window.location.href);
+    const url =
+      toggleSearchParam(recordSpecificSearchParams, {
+        isPreventRefresh: true
+      }) ?? new URL(window.location.href);
     removeSearchParam(currentMode);
     if (currentMode === ResourceAccessMode.FULL) {
       const prevMode = url.searchParams.get("prev");
       logger.log({ at: "toggleFocusAccessMode", currentMode, prevMode });
-      if (prevMode) url.searchParams.set(prevMode, resourceId.toString());
-      else url.searchParams.set(ResourceAccessMode.POP, resourceId.toString());
-      removeSearchParam("prev");
+      if (prevMode) {
+        url.searchParams.set(prevMode, resourceId.toString());
+        removeSearchParam("prev");
+      }
     } else {
       url.searchParams.set(ResourceAccessMode.FULL, resourceId.toString());
       url.searchParams.set("prev", currentMode);

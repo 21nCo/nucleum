@@ -23,12 +23,21 @@
   import SyncStatusListener from "$lib/client/elements/listeners/SyncStatusListener.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
+  import { page } from "$app/stores";
+
   export let date: Date;
   export let scale: TimeScaleUnit;
   export let mdId: string;
   let node: IActiveNodeStore;
   const captureStore = ActiveCaptureStore.resolve(mdId);
   let isSyncing: boolean = false;
+  let isFullScreenActive: boolean = false;
+
+  $: {
+    const fullScreenParam = $page.url.searchParams.get(ResourceAccessMode.FULL);
+    const nodeId = resolveCalendarNotesId(date, scale);
+    isFullScreenActive = fullScreenParam === nodeId;
+  }
 
   async function initialize(scaleParam: TimeScaleUnit) {
     if (isSyncing) return;
@@ -65,11 +74,15 @@
 </script>
 
 <SyncStatusListener resource={Resource.everything} bind:isSyncing />
-{#if isSyncing}
+{#if isSyncing || isFullScreenActive}
   <EmptyStatusView
     size={Size.sm}
     mainText="Temporarily unavailable."
-    subText={"Calendar notes are not available while sync is in progress."}
+    subText={
+      isSyncing
+        ? "Calendar notes are not available while sync is in progress."
+        : "Calendar notes are hidden while full screen mode is active."
+    }
   />
 {:else}
   {#await initialize(scale)}

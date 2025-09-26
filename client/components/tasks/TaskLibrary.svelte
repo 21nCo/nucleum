@@ -530,7 +530,9 @@
         : !isPreventAddNew
           ? "Create a task to get started."
           : "You can't add tasks to this goal when it is archived/deleted."}
-      actionText={!isPreventAddNew ? "Create new task" : undefined}
+      actionText={!isPreventAddNew && !$view.isConstrainedWidth
+        ? "Create new task"
+        : undefined}
       on:click={() => {
         appStore.runAction(
           resourceAction(Resource.task, ResourceActionType.CREATE)

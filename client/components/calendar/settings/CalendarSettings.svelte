@@ -152,7 +152,10 @@
         <div class="flex flex-col gap-3">
           <Text content="Templates" style={TextStyle.SECTION_HEADING} />
 
-          <div class="flex flex-wrap w-full gap-3">
+          <div
+            style={"--colw: min(100%, 400px)"}
+            class="grid grid-cols-[repeat(auto-fill,minmax(var(--colw),1fr))] w-full gap-3"
+          >
             <CalendarNotesTemplateCard
               scale={TimeScaleUnit.DAY}
               description={resolveDescription(TimeScaleUnit.DAY)}
