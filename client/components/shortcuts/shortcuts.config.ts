@@ -1,4 +1,4 @@
-import { ModifierKey } from "$lib/client/types/keyboard.type";
+import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
 import type { IKeyboardShortcut } from "./shortcut.type";
 
 export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
@@ -39,16 +39,16 @@ export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
     modifiers: [ModifierKey.META]
   },
   ACTIVATE_SEARCH_BOX: {
-    key: "Space",
-    code: "Space"
+    key: KeyboardKey.SPACE,
+    code: KeyboardKey.SPACE
   },
   ACTIVATE_LINK_BOX: {
     key: "l",
     modifiers: [ModifierKey.META]
   },
   TOGGLE_FOCUS_SESSION: {
-    key: "Space",
-    code: "Space",
+    key: KeyboardKey.SPACE,
+    code: KeyboardKey.SPACE,
     modifiers: [ModifierKey.META, ModifierKey.ALT]
   },
   "global-search": {
@@ -62,5 +62,10 @@ export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
   GO_FORWARD: {
     key: "f",
     modifiers: [ModifierKey.META, ModifierKey.SHIFT]
+  },
+  CLOSE: {
+    key: KeyboardKey.ESCAPE,
+    code: KeyboardKey.ESCAPE,
+    modifiers: [ModifierKey.META]
   }
 };

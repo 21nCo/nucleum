@@ -166,9 +166,7 @@ async function _renderPopoverUsingFixedPositioning(
     if (isSpanToTriggerWidth) {
       popRef.style.left = triggerRect.left + "px";
     } else {
-      popRef.style.left = `${
-        triggerRect.left + triggerRect.width / 2 - popRect.width / 2
-      }px`;
+      popRef.style.left = `${triggerRect.left + triggerRect.width / 2 - popRect.width / 2}px`;
     }
   }
   popRect = popRef.getBoundingClientRect();

@@ -22,7 +22,6 @@
   overflow: hidden;
 }
 
-
 @layer base {
   /* @font-face {
         font-family: 'Space Grotesk';
@@ -145,7 +144,7 @@
   }
 
   .default-typeface {
-    font-family:  "Sen", "Hanken Grotesk", system-ui, sans-serif;
+    font-family: "Sen", "Hanken Grotesk", system-ui, sans-serif;
   }
 }
 

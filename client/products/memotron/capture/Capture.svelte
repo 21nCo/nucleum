@@ -31,13 +31,14 @@
   import CaptureDraftsAction from "./draftSelector/CaptureDraftsAction.svelte";
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import CaptureTopBar from "./CaptureTopBar.svelte";
   import { fly } from "svelte/transition";
   import { Placement } from "$lib/client/types/direction.enum";
   import ComponentShortcutListener from "$lib/client/components/shortcuts/ComponentShortcutListener.svelte";
   import { MemotronAction } from "../memotronAction.enum";
+  import { Action } from "$lib/client/types/action.enum";
+
   export let captureId: IRecordId = generateResourceId(Resource.capture);
   export let isWindowDnD = false;
   const captureContext = {
@@ -192,10 +193,7 @@
               tooltip="Close capture"
               tooltipOptions={{ placement: Placement.TopCenter }}
               type={ButtonVariant.DANGER}
-              shortcut={{
-                key: KeyboardKey.ESCAPE,
-                modifiers: []
-              }}
+              shortcut={Action.CLOSE}
               on:click={() => {
                 appStore.closeResource({ isRestrictToModals: true });
               }}

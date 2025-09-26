@@ -30,6 +30,10 @@ export interface IFeedbackPaneStore {
    * The clip that is currently focused in the feedback pane.
    */
   focusedClip: IClip | null;
+  /**
+   * The clip that is currently open in the modal
+   */
+  modalClip: IClip | null;
   isPreventAutoClose?: boolean;
   isShowStatusOnly?: boolean;
   /**

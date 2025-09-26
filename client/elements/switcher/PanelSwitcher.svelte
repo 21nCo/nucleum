@@ -1,3 +1,12 @@
+<script lang="ts" context="module">
+  let panelSwitcherCounter = 0;
+
+  export const resolvePanelSwitcherId = () => {
+    panelSwitcherCounter += 1;
+    return `panel-switcher-${panelSwitcherCounter}`;
+  };
+</script>
+
 <script lang="ts">
   import {
     BarStyle,
@@ -21,7 +30,10 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import Icon from "../Icon.svelte";
   import TrainPanelSwitcher from "./train/TrainPanelSwitcher.svelte";
+  import { KeyboardKey } from "$lib/client/types/keyboard.type";
   const dispatch = createEventDispatcher();
+
+  const PANEL_SWITCHER_ATTR = "data-panel-switcher-id";
   export let items: ISelectItem[] | string[];
   export let value: ISelectValue | undefined = undefined;
   export let isDisableEnabled: boolean = false;
@@ -40,7 +52,6 @@
    */
   export let isInversePlacement: boolean = false;
   export let triggerItemEdit: string | null = null;
-  export let isShowNumberShortcut: boolean = false;
   export let addText: string | undefined = undefined;
   export let isRenderDropdownForCW: boolean = false;
   /**
@@ -49,16 +60,18 @@
   export let isBgBar: boolean = false;
   export let isRearrangeableByDefault: boolean = false;
   export let isEnableTitleAction: boolean = false;
-  export let isPreventNumberShortcut: boolean = false;
+  export let isPreventTabShortcut: boolean = false;
   export let tempTitleWithActionDisabled: boolean = false;
 
   let _items: ISelectItem[];
   const titleValue = "$title";
+  const switcherId = resolvePanelSwitcherId();
   $: _items = items.every((x) => typeof x === "string")
     ? items.map((x) => ({ label: x, value: x }))
     : items;
   $: isRenderAsDropdown = $view.isConstrainedWidth && isRenderDropdownForCW;
   onMount(() => {
+    parent?.setAttribute(PANEL_SWITCHER_ATTR, switcherId);
     if (
       value === undefined ||
       items.find((x) =>
@@ -76,6 +89,26 @@
     }
     return emptyTranstition();
   }
+
+  const isTopmostPanelSwitcher = () => {
+    if (typeof document === "undefined") return false;
+    if (!parent || !parent.isConnected) return false;
+    const switchers = Array.from(
+      document.querySelectorAll(`[${PANEL_SWITCHER_ATTR}]`)
+    ).filter(
+      (element): element is HTMLElement => element instanceof HTMLElement
+    );
+    const visibleSwitchers = switchers.filter((element) => {
+      if (!element.isConnected) return false;
+      const style = getComputedStyle(element);
+      if (style.display === "none" || style.visibility === "hidden")
+        return false;
+      const rect = element.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    });
+    if (!visibleSwitchers.length) return false;
+    return visibleSwitchers[visibleSwitchers.length - 1] === parent;
+  };
 </script>
 
 {#if style === PanelSwitcherStyle.TRAIN && !isRenderAsDropdown}
@@ -193,8 +226,6 @@
             {barStyle}
             {isInversePlacement}
             {parentBgIndex}
-            {isShowNumberShortcut}
-            {index}
             {isRearrangeableByDefault}
             bind:triggerItemEdit
             isActive={value === item.value}
@@ -226,8 +257,6 @@
             {barStyle}
             {isInversePlacement}
             {parentBgIndex}
-            {isShowNumberShortcut}
-            index={_items.length}
             bind:triggerItemEdit
             on:add
           />
@@ -247,23 +276,65 @@
 <svelte:document
   on:keydown={(event) => {
     try {
-      if (style === PanelSwitcherStyle.TRAIN) return;
-      let index;
-      if (event.code.includes("Digit")) index = +event.key;
+      if (isPreventTabShortcut || event.key !== KeyboardKey.TAB) return;
+      if (!isTopmostPanelSwitcher()) return;
       const isMetaShiftCombination = event.metaKey && event.shiftKey;
-      if (isPreventNumberShortcut && !isMetaShiftCombination) return;
       const isTextInputSource = isTextElement(event.target);
       if (isTextInputSource && !isMetaShiftCombination) return;
-      if (index === 0 && isEnableTitleAction) {
-        value = titleValue;
-        dispatch("switch", titleValue);
+      const isBackward = event.shiftKey;
+      event.preventDefault();
+      event.stopPropagation();
+      const dispatchSwitch = (val) => {
+        value = val;
+        dispatch("switch", val);
+      };
+
+      const isTitleActive = isEnableTitleAction && value === titleValue;
+      if (isBackward) {
+        if (isTitleActive) {
+          const previous = _items[_items.length - 1]?.value;
+          if (previous) dispatchSwitch(previous);
+          return;
+        }
+        const currentIndex = _items.findIndex((item) => item.value === value);
+        if (currentIndex === -1) {
+          const fallback = _items[_items.length - 1]?.value;
+          if (fallback) dispatchSwitch(fallback);
+          return;
+        }
+        if (currentIndex === 0) {
+          if (isEnableTitleAction) {
+            dispatchSwitch(titleValue);
+            return;
+          }
+          const previous = _items[_items.length - 1]?.value;
+          if (previous) dispatchSwitch(previous);
+          return;
+        }
+        const previous = _items[currentIndex - 1]?.value;
+        if (previous) dispatchSwitch(previous);
         return;
       }
-      if (!index) return;
-      const val = _items[index - 1]?.value;
-      if (!val) return;
-      value = val;
-      dispatch("switch", val);
+
+      if (isTitleActive) {
+        const next = _items[0]?.value;
+        if (next) dispatchSwitch(next);
+        return;
+      }
+
+      const currentIndex = _items.findIndex((item) => item.value === value);
+      if (currentIndex === -1 || currentIndex + 1 >= _items.length) {
+        if (isEnableTitleAction) {
+          dispatchSwitch(titleValue);
+          return;
+        }
+        const next = _items[0]?.value;
+        if (next) dispatchSwitch(next);
+        return;
+      }
+
+      const next = _items[currentIndex + 1]?.value;
+      if (next) dispatchSwitch(next);
     } catch (error) {
       logger.error({ at: "PanelSwitcher - number shortcut listener", error });
     }

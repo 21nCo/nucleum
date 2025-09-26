@@ -72,13 +72,9 @@
       style={PanelSwitcherStyle.BAR}
       title={isNucleusContext ? "Memory" : "Overview"}
       isExpandToFullWidth={true}
-      isShowNumberShortcut={!isNucleusContext &&
-        $uiStateDerived.isShowHotKeyHints}
-      isPreventNumberShortcut={isNucleusContext}
       size={Size.sm}
       bind:value={selectedPanel}
       on:switch={onPanelSwitch}
-      isEnableTitleAction={true}
       tempTitleWithActionDisabled={true}
     >
       <div slot="right" class="mr-3">

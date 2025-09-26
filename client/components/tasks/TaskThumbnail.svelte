@@ -42,6 +42,8 @@
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { Resource } from "../flux/resourceStores/resource.enum";
   import { resolveMultiSelectStore } from "../flux/resourceStores/resource.store";
+  import Task from "./Task.svelte";
+  import context from "$lib/client/stores/context.store";
   const dispatch = createEventDispatcher();
   export let item: ITaskThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -54,7 +56,9 @@
   let isHovering = false;
   let isDatePickerOpen = false;
   let isShowDatePickerOnCw = false;
+  let isTaskOpened = false;
   const dev_isEnableBorderAnimation = false;
+  const dev_isRenderTaskAsSheetOnMobile = false;
   $: isOverdue =
     !item.isChecked &&
     item.dateUnix &&
@@ -100,8 +104,13 @@
   }
 
   function onContextMenuAction(event: CustomEvent) {
-    if (event.detail.action === "editDate") {
+    const action = event.detail.action;
+    if (action === "editDate") {
       isShowDatePickerOnCw = true;
+    } else if (action === "openTask") {
+      if ($view.isConstrainedWidth && dev_isRenderTaskAsSheetOnMobile)
+        isTaskOpened = true;
+      else appStore.openResource(item.id, ResourceAccessMode.POP);
     }
     dispatch("action", event.detail);
   }
@@ -128,6 +137,29 @@
   {isDraggable}
   isPreventDefaultContextMenu={true}
 >
+  {#if $view.isConstrainedWidth && isTaskOpened}
+    <div
+      use:popover={{
+        content: Task,
+        triggerMethod: [PopoverTriggerMethod.SHOW_BY_DEFAULT],
+        isRenderAsModalForCW: true,
+        componentProps: {
+          id: item.id,
+          accessPoint,
+          accessPointId,
+          accessMode: ResourceAccessMode.SHEET
+        }
+      }}
+      on:change={(e) => {
+        const isPopoverVisible = e.detail?.open;
+        if (isPopoverVisible) {
+          isTaskOpened = true;
+        } else {
+          isTaskOpened = false;
+        }
+      }}
+    />
+  {/if}
   <div
     class={cn("flex gap-2 items-center pr-1 pl-3 py-2 h-16 h--14 rounded-md", {
       "m-4 min-w-[30rem]": accessPoint === ResourceAccessPoint.SELF,
@@ -250,7 +282,7 @@
         {/if}
       </div>
 
-      {#if isHovering || isDatePickerOpen}
+      {#if isHovering || isDatePickerOpen || ($context.isTouchDevice && !$view.isPortrait)}
         {@const isInlineContext =
           (accessPoint === ResourceAccessPoint.BROWSER ||
             accessPoint === ResourceAccessPoint.GOAL) &&

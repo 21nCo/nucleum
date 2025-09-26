@@ -20,7 +20,7 @@ export async function clipTextSearchFallback() {
     const clips = await flux.selectMany(Resource.node, {
       filters: {
         contentType: [
-          NodeType.TEXT_CLIP,
+          NodeType.WEB_TEXT_BOOKMARK,
           NodeType.TWEET,
           NodeType.KINDLE_HIGHLIGHT,
           NodeType.NODULAR_MARKDOWN,

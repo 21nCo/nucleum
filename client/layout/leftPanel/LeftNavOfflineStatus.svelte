@@ -11,10 +11,13 @@
 
 {#if $account.dataMode === UserDataMode.LOCAL || $context.isInOfflineMode}
   <button
-    class={cn("text-ass1 bg-ass2/30 rounded-md px-2 py-1 my-1", {
-      "text-b4": isInThinMode,
-      "text-b3": !isInThinMode
-    })}
+    class={cn(
+      "text-ass1 border border-dashed dark:border-ass2/50 border-ass2 hover:bg-ass2/10 rounded-md px-2 py-1 my-1",
+      {
+        "text-b4": isInThinMode,
+        "text-b3": !isInThinMode
+      }
+    )}
     on:click={() => {
       if ($account.dataMode === UserDataMode.LOCAL) {
         appStore.runAction(Action.SETTINGS);

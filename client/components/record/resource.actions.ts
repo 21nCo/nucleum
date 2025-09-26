@@ -313,14 +313,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       icon:
         currentMode === ResourceAccessMode.FULL ? "minus-circle" : "fullscreen",
       callback: async () => {
-        if (currentMode === ResourceAccessMode.FULL) {
-          appStore.closeResource({
-            id: this.resource.id,
-            accessMode: ResourceAccessMode.FULL
-          });
-        } else {
-          appStore.openResource(this.resource.id, ResourceAccessMode.FULL);
-        }
+        appStore.toggleFullScreen(currentMode, this.resource.id);
       }
     };
   }

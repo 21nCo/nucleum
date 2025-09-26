@@ -61,7 +61,8 @@ export enum ClientStorageKey {
   /**
    * Used to track the bootup status of the extension.
    */
-  EXTENSION_BOOTUP = "extensionBootup"
+  EXTENSION_BOOTUP = "extensionBootup",
+  TABLES = "tables"
 }
 
 export interface IPersistence {

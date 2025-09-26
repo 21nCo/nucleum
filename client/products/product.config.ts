@@ -65,9 +65,9 @@ export const products: Record<Product, ProductConfig> = {
     appMenu: isDev
       ? ["home", "calendar", "overview", "library"]
       : ["calendar", "overview", "library"],
-    appMenuPt: [],
+    appMenuPt: ["calendar", "librarypt", "overview"],
     homePath: "calendar",
-    homePathPt: "mobilehome",
+    homePathPt: "librarypt",
     databaseName: "nativeone",
     resources: [Resource.collection, Resource.combination, Resource.event],
     sectionLabel: "Nucleus",

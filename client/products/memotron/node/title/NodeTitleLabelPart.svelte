@@ -33,9 +33,9 @@
   const dynamicLabelNodeTypes = [
     NodeType.TWEET,
     NodeType.TWITTER_PROFILE,
-    NodeType.TEXT_CLIP,
-    NodeType.WEB_SCREENSHOT_CLIP,
-    NodeType.YOUTUBE_TIMESTAMP_CLIP,
+    NodeType.WEB_TEXT_BOOKMARK,
+    NodeType.WEB_SCREENSHOT,
+    NodeType.YOUTUBE_BOOKMARK,
     NodeType.KINDLE_HIGHLIGHT
   ];
   function resolveEmptyLabel() {

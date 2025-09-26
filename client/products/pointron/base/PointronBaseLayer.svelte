@@ -79,7 +79,7 @@
 </script>
 
 <UserBaseLayer on:ready={onReady}>
-  <div slot="topnav">
+  <div slot="topnav" class="flex gap-1 items-center h-full">
     <FocusTopNavWidget ctx={Product.POINTRON} />
   </div>
   <slot />

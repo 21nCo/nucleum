@@ -6,10 +6,10 @@ import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
 import type { IRecordId } from "$lib/client/types/data.type";
 
 class TabStore {
-  open(id: IRecordId) {
+  open(id: IRecordId, backParam?: string) {
     if (!id) return;
     uiState.addResourceToTabs(id);
-    this.activate(id);
+    this.activate(id, backParam);
   }
 
   replace(id: IRecordId, replaceId: IRecordId) {
@@ -27,7 +27,7 @@ class TabStore {
     uiState.addResourceToTabs(id);
   }
 
-  activate(id: IRecordId) {
+  activate(id: IRecordId, backParam?: string) {
     appStore.closeResource({ isRestrictToModals: true });
     const resource =
       typeof id === "string"
@@ -38,7 +38,7 @@ class TabStore {
     appStore.gotoPath(`/${resource}/tab`, {
       queryParams: {
         tab: id,
-        back: window.location.pathname
+        back: backParam ?? window.location.pathname
       }
     });
   }

@@ -35,7 +35,7 @@
   let searchInputRef: TextSearchInput;
   let isCreationInProgress = false;
 
-  $: accessPoint, isCollectionsLane, resolveOptions();
+  $: (accessPoint, isCollectionsLane, resultsPlacement, resolveOptions());
 
   export function focus() {
     searchInputRef?.focus();
@@ -94,7 +94,10 @@
       : accessPoint === ResourceAccessPoint.NODE_LINKS
         ? Resource.node
         : undefined;
-    if (searchQuery?.startsWith("@")) {
+    if (
+      searchQuery?.startsWith("@") &&
+      accessPoint !== ResourceAccessPoint.NODE_LINKS
+    ) {
       resource = Resource.collection;
       query = searchQuery.slice(1);
     }

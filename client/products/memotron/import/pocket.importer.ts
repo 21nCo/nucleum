@@ -486,7 +486,7 @@ export class PocketImporter {
               const id = generateResourceId(Resource.node);
               const annotationNode = {
                 id,
-                contentType: NodeType.TEXT_CLIP,
+                contentType: NodeType.WEB_TEXT_BOOKMARK,
                 url: `${annotation.url}#${id.toString()}`,
                 label: `Highlight from ${annotation.title}`,
                 body: {

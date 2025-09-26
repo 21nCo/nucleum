@@ -39,7 +39,7 @@ let embedSection: IBlockBrowserSection = {
     {
       label: "Web text clip",
       description: "Embed web text clip",
-      type: NodeType.TEXT_CLIP,
+      type: NodeType.WEB_TEXT_BOOKMARK,
       icon: "highlighter-circle"
     },
     {

@@ -20,10 +20,12 @@
   import { logger } from "../debug/logger.client";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { appStore } from "$lib/client/stores/app.store";
-  import { tooltip } from "$lib/client/actions/popover.action";
+  import { popover, tooltip } from "$lib/client/actions/popover.action";
   import { Placement } from "$lib/client/types/direction.enum";
   import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
   import view from "$lib/client/stores/view.store";
+  import ButtonTooltip from "$lib/client/elements/button/ButtonTooltip.svelte";
+  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
 
   export let path: string;
   export let resource: string | undefined = undefined;
@@ -155,7 +157,19 @@
       <button
         class="absolute top-2 -right-10 bg-ars1 w-10 h-12 rounded-r-md flex justify-center items-center hover:brightness-110"
         on:click={() => handleClose(ResourceAccessMode.POP)}
-        use:tooltip={{ text: "Close", direction: Placement.Left }}
+        use:popover={{
+          content: ButtonTooltip,
+          triggerMethod: [PopoverTriggerMethod.HOVER],
+          placement: Placement.Left,
+          offsetInPx: 5,
+          isSecondary: true,
+          id: `modal-close`,
+          componentProps: {
+            tooltip: "Close",
+            shortcut: Action.CLOSE,
+            size: Size.sm
+          }
+        }}
       >
         <Icon icon="cross" size={Size.lg} class="stroke-abg" />
       </button>

@@ -27,16 +27,16 @@
     class="flex cw:flex-col w-full justify-center items-center gap-4 h-full max-h-full overflow-auto"
   >
     <main
-      class={cn("flex flex-col items-center cw:w-full", {
+      class={cn("flex flex-col h-full items-center cw:w-full", {
         "w-1/2": isShowVideo
       })}
     >
-      <div class="flex flex-col cw:items-center gap-32">
-        <div class="flex flex-col cw:items-center gap-4">
+      <div class="flex flex-col cw:items-center justify-around h-full">
+        <div class="flex flex-col cw:items-center gap-2">
           <div class="-ml-4">
             <SubAtomLogo />
           </div>
-          <div class="text-fgs1 cw:text-h3 text-4xl font-medium">
+          <div class="text-fgs1 cw:text-h3 text-3xl font-medium">
             {config.headline}
           </div>
           <span class="text-fgs3 text-b2">
@@ -54,7 +54,7 @@
             on:select={saveColorScheme}
           />
         </div>
-        <div class="flex w-full cw:justify-center gap-4">
+        <div class="flex cw:flex-col w-full cw:justify-center gap-4">
           <Button
             label="Get started"
             icon="proceed"

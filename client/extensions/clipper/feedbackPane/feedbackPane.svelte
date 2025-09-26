@@ -8,7 +8,10 @@
   import InlineFeedbackText from "../InlineFeedbackText.svelte";
   import { AlertType } from "$lib/client/types/notification.type";
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
-  import { NodeType, socialPostNodeTypeList } from "$lib/client/products/memotron/node/node.type";
+  import {
+    NodeType,
+    socialPostNodeTypeList
+  } from "$lib/client/products/memotron/node/node.type";
   import { resolveContentTypeString } from "../clipper.utils";
   import FeedbackPaneBase from "./FeedbackPaneBase.svelte";
   import FileView from "$lib/client/components/files/FileView.svelte";
@@ -318,7 +321,7 @@
           }}
         />
       </div>
-      {#if $feedbackPane.focusedClip?.contentType === NodeType.WEB_SCREENSHOT_CLIP}
+      {#if $feedbackPane.focusedClip?.contentType === NodeType.WEB_SCREENSHOT}
         <!-- <img
       src={$feedbackPane.focusedClip.body.s3Url}
       alt="Screenshot"
@@ -336,7 +339,8 @@
             text={$feedbackPane.focusedClip.body.content ??
               $feedbackPane.focusedClip.text}
             accessPoint={ResourceAccessPoint.CLIPPER}
-            contentType={$feedbackPane.focusedClip?.contentType ?? NodeType.UNKNOWN}
+            contentType={$feedbackPane.focusedClip?.contentType ??
+              NodeType.UNKNOWN}
           />
         </span>
       {/if}

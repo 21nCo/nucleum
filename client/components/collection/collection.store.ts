@@ -161,12 +161,14 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
       label: "Default"
     });
     record.views = [viewId];
-    appStore.addToRecents({
-      record,
-      type: Resource.collection,
-      timestamp: new Date()
-    });
-    return super.create(record, additionalParams);
+    const result = await super.create(record, additionalParams);
+    if (Array.isArray(result) && result?.[0])
+      appStore.addToRecents({
+        record: result[0],
+        type: Resource.collection,
+        timestamp: new Date()
+      });
+    return result;
   }
 
   /**
