@@ -20,6 +20,7 @@
   import { generateGoogleFontsUrl } from "./fonts.config";
 
   export let extensionContext: string | undefined = undefined;
+  export let isInlineExtensionContext: boolean = false;
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
   let rootFontSize: number = defaultRootFontSize + 0.6 * $view?.scale;
@@ -97,6 +98,11 @@
         if (!shadowRoot) return;
         shadowRoot.host.style.fontSize = `${rootFontSize + 20}px`;
         shadowRoot.host.style.setProperty("visibility", "visible", "important");
+        if (isInlineExtensionContext) {
+          shadowRoot
+            .querySelector("#plasmo-shadow-container")
+            ?.style.setProperty("z-index", "0");
+        }
       } else {
         const csui = document.querySelectorAll("plasmo-csui");
         if (csui.length > 0) {
@@ -172,10 +178,7 @@
 <svelte:head>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href={generateGoogleFontsUrl()}
-    rel="stylesheet"
-  />
+  <link href={generateGoogleFontsUrl()} rel="stylesheet" />
 </svelte:head>
 
 <!--Note: The font weight and tracking corrections are applied for each typeface. Space Grotesk is falling back to next available typeface if font-normal (or 400) is used. For some reason, 401 and beyond is working fine. -->

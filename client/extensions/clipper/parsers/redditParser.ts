@@ -96,8 +96,8 @@ function parseRedditPost(
     if (!postId || postId === "")
       postId = postElement.id
         ? postElement.id.replace("t3_", "")
-        : postElement.permalink.match(/\/comments\/([a-zA-Z0-9]+)/)?.[1] ??
-          `unknown_${generateRandomIdv2()}`;
+        : (postElement.permalink.match(/\/comments\/([a-zA-Z0-9]+)/)?.[1] ??
+          `unknown_${generateRandomIdv2()}`);
     if (!title || title === "") {
       title = postElement.getAttribute("post-title") ?? "";
     }

@@ -28,6 +28,7 @@
   import TopNavLeftLogo from "./TopNavLeftLogo.svelte";
   import { Embed } from "$lib/client/types/context.type";
   import context from "$lib/client/stores/context.store";
+  import OfflineStatusMessage from "$lib/client/elements/feedback/OfflineStatusMessage.svelte";
 
   let isInFocusMode = false;
   let pinnedItems: IRecordId[] = tabs.get() ?? [];
@@ -159,6 +160,7 @@
         text="Syncing..."
       />
       <TrailLeftIndicator />
+      <OfflineStatusMessage />
       <button
         class={cn(
           "flex items-center gap-2 rounded-full overflow-hidden border border-transparent ml-2",

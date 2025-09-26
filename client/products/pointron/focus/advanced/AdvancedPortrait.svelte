@@ -22,7 +22,7 @@
   >
     <span class="underline-dotted">
       {focusItemsCount > 0
-        ? focusItemsCount + " focus Items added"
+        ? `${focusItemsCount} focus ${focusItemsCount === 1 ? "item" : "items"} added`
         : "+ add focus items"}
     </span>
     {#if focusItemsCount > 0}

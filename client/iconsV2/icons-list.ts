@@ -458,4 +458,4 @@ export const solarIconsForBundling = {
   "bold-duotone": solarBoldDuotoneIcons
 };
 
-export const bundleNumber = 55;
+export const bundleNumber = 56;

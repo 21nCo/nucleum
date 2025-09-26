@@ -9,7 +9,7 @@
 
   function openDiscord() {
     const discordUrl = "https://discord.com/invite/9HJqKYTZKg";
-    window.open(discordUrl, "_blank");
+    window.open(discordUrl, "_blank", "noopener,noreferrer");
   }
   function openDocs(path: string) {
     window.open(`https://docs.memotron.app/${path}`, "_blank");
@@ -77,7 +77,7 @@
     <a href="mailto:hello@21n.org" class="text-aps1">hello@21n.org</a>
   </div>
   <div class="flex flex-col items-center gap-1 mt-auto text-fgs3 text-b3">
-    <div>Memotron clipper v0.58.0</div>
-    <div>Last updated: August 24, 2025</div>
+    <div>Memotron clipper v0.58.1</div>
+    <div>Last updated: Sept 21, 2025</div>
   </div>
 </div>

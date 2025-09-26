@@ -83,6 +83,7 @@ import CollectionCache from "../components/collection/CollectionCache.svelte";
 import DataSettings from "../components/settings/DataSettings.svelte";
 import DexieConsole from "../components/debug/DexieConsole.svelte";
 import { AppSearchParam } from "../types/appStore.type";
+import OfflineStatusModal from "../components/settings/sync/OfflineStatusModal.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -1036,6 +1037,16 @@ export const globalActions: IAction[] = [
             params?.componentParams?.[AppSearchParam.RETURN_TO] ?? "home"
         }
       });
+    }
+  },
+  {
+    action: Action.OFFLINE_STATUS,
+    type: ActionType.MODAL,
+    component: OfflineStatusModal,
+    modalParams: {
+      layout: {
+        size: Size.sm
+      }
     }
   }
 ];

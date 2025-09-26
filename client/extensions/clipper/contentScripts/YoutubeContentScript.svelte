@@ -31,7 +31,7 @@
     logger.log({ at: "refreshTimestamps", clips });
     if (clips && clips.length > 0) {
       const timestamps = clips.filter(
-        (clip) => clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP
+        (clip) => clip.contentType === NodeType.YOUTUBE_BOOKMARK
       );
       clipCount = timestamps.length;
       for (let i = 0; i < timestamps.length; i++) {
@@ -259,7 +259,7 @@
         return;
       }
       const clipItem: IClipCapture = {
-        contentType: NodeType.YOUTUBE_TIMESTAMP_CLIP,
+        contentType: NodeType.YOUTUBE_BOOKMARK,
         url: clipDetails.videoUrlWithTimestamp,
         body: {
           timestamp: clipDetails.timestamp,
@@ -285,7 +285,7 @@
       );
       const renderedPointerCount = existingPointers.length;
       const actualPointerCount = $webpage.clips?.filter(
-        (clip) => clip.contentType === NodeType.YOUTUBE_TIMESTAMP_CLIP
+        (clip) => clip.contentType === NodeType.YOUTUBE_BOOKMARK
       ).length;
       if (renderedPointerCount !== actualPointerCount) {
         console.log({

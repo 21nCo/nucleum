@@ -147,7 +147,7 @@
             <!-- <Icon icon="widget" size={Size.sm} /> -->
             <span class="text-b2 text-fgs3"> Properties </span>
             {#if isCollapsed}
-              <Badge text={values.length} />
+              <Badge text={properties.length} />
             {/if}
           </span>
           <span class="h-3 flex gap-3 items-center">

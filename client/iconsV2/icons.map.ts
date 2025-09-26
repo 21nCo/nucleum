@@ -869,6 +869,16 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "minimize",
     solar: "minimize"
   },
+  "widen-vertical": {
+    phosphor: "arrows-out-line-vertical",
+    lucide: "maximize-2",
+    solar: "maximize"
+  },
+  "shrink-vertical": {
+    phosphor: "arrows-in-line-vertical",
+    lucide: "minimize",
+    solar: "minimize"
+  },
   graph: {
     phosphor: "graph",
     lucide: "activity",
@@ -1251,6 +1261,11 @@ export const iconMappings: Record<string, IconMapping> = {
     phosphor: "terminal-window",
     lucide: "terminal",
     solar: "programming"
+  },
+  offline: {
+    phosphor: "cloud-slash",
+    lucide: "cloud-off",
+    solar: "cloud-cross"
   }
 };
 

@@ -14,6 +14,7 @@
   import NavigationHeader from "$lib/client/elements/NavigationHeader.svelte";
   import SettingsFooter from "../SettingsFooter.svelte";
   import { resolveProductConfig } from "$lib/client/products/product.config";
+  import OfflineStatusMessage from "$lib/client/elements/feedback/OfflineStatusMessage.svelte";
   export let isShowBackButton: boolean = false;
   $: isCpHome = $page.url.searchParams.get("setting") === null;
   let color = retrieveCurrentColors($appearance)?.aps1;
@@ -60,6 +61,9 @@
           {/each}
         {/if}
         <SettingsFooter />
+      </div>
+      <div slot="toprightactions">
+        <OfflineStatusMessage />
       </div>
       <slot name="right" slot="right">
         <div class="p-4 flex flex-col gap-4 w-full h-full items-start">

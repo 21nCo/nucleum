@@ -10,14 +10,12 @@
 
 <BottomFloat class={classList}>
   {#if params.length === 1}
-    {@const param = params[0]}
     <Button
-      {...param}
-      parentBgIndex={param.parentBgIndex}
-      type={param.variant}
-      style={param.style}
+      {...params[0]}
+      parentBgIndex={params[0].parentBgIndex}
+      type={params[0].variant}
       on:click={async () => {
-        if (param.callback) await param?.callback();
+        if (params[0].callback) await params[0]?.callback();
       }}
     />
   {:else}

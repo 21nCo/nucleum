@@ -49,28 +49,32 @@
         undefined,
         undefined
       )}
-    class="flex flex-col w-full h-full px-4 py-8 glassthick bg-bgs1"
+    class="flex flex-col w-full h-full px-4 py-8 glassthick bg-bgs1 otop:pt-12"
   >
     <div class="flex flex-col gap-6 flex-grow w-full items-center">
-      <IntervalBar />
-      <div class="flex flex-col w-full items-center">
-        <SessionTimeText size={Size.sm} />
-        {#if $activeSession.type != SessionType.COUNTUP && isShowTimeLeftOnMobile}
-          <div class="w-full px-6">
-            <TimeleftIndicator parentBgIndex={0} />
-          </div>
-        {/if}
-      </div>
+      {#if !$isInEditMode}
+        <IntervalBar />
+        <div
+          class="flex flex-col w-full items-center transition-all duration-300"
+        >
+          <SessionTimeText size={Size.sm} />
+          {#if $activeSession.type != SessionType.COUNTUP && isShowTimeLeftOnMobile}
+            <div class="w-full px-6">
+              <TimeleftIndicator parentBgIndex={0} />
+            </div>
+          {/if}
+        </div>
+      {/if}
       <div
         id="focusItems"
         on:touchstart|stopPropagation={startTouch}
-        class="flex flex-col flex-grow gap-2 p-2 w-full h-64 overflow-auto styledscroll rounded-md bg-bgs1"
+        class="flex flex-col flex-grow gap-2 p-2 w-full h-64 overflow-auto styledscroll rounded-md bg-bgs1 transition-all duration-300"
       >
         <FocusItemsHeading />
         <FocusItemList isInEditMode={$isInEditMode} />
       </div>
     </div>
-    {#if !isInline}
+    {#if !isInline && !$isInEditMode}
       <div class="flex flex-col gap-12">
         <div class="flex w-full justify-center">
           <ControlBar />

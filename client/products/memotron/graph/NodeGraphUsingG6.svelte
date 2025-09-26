@@ -182,8 +182,8 @@
         style: {
           badgeBackgroundFill: currentColors["bgs4"],
           badgeFontSize: 12,
-          badgeFill: currentColors["fgs1"]
-          // size: 10
+          badgeFill: currentColors["fgs1"],
+          size: 20
           // labelFill: "orange",
           // labelFill: "white"
           // labelClass: "text-fgs1 fill-fgs1 stroke-fgs1",

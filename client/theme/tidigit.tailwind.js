@@ -1,5 +1,8 @@
-import colorSchemes from "./colorschemes.json" with { type: "json" };
-import colorSchemesBranding from "./colorschemes-branding.json" with { type: "json" };
+// import colorSchemes from "./colorschemes.json" with { type: "json" };
+// import colorSchemesBranding from "./colorschemes-branding.json" with { type: "json" };
+import colorSchemesBranding from "./colorschemes-branding.json";
+import colorSchemes from "./colorschemes.json";
+import { createRequire } from "module";
 
 const themes = [
   {
@@ -31,7 +34,6 @@ const mappedColorSchemes = colorSchemes.map((cs) => {
   };
 });
 
-import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
 export default {
@@ -291,7 +293,7 @@ export default {
             sans: ["Roboto", "sans-serif"],
             serif: ["Merriweather", "serif"]
           },
-          colors: mappedColorSchemes[0].colors,
+          colors: mappedColorSchemes[0].extend.colors,
           rotate: {
             270: "270deg"
           }

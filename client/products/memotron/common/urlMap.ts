@@ -79,7 +79,13 @@ export const sidePanelUnavailableUrlsList = [
   /^https:\/\/(?:www\.)?(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/(\d+)\/?$/,
   /^https:\/\/(?:.*\.)?amazon\.[a-z]{2,3}(?:\/.*)?$/,
   /^https:\/\/(?:.*\.)?twitter\.[a-z]{2,3}(?:\/.*)?$/,
-  /^https:\/\/(?:.*\.)?x\.[a-z]{2,3}(?:\/.*)?$/
+  /^https:\/\/(?:.*\.)?x\.[a-z]{2,3}(?:\/.*)?$/,
+  /^https:\/\/(?:.*\.)?bsky\.app(?:\/.*)?$/,
+  /^https:\/\/(?:.*\.)?threads\.[a-z]{2,3}(?:\/.*)?$/,
+  /^https:\/\/(?:.*\.)?linkedin\.[a-z]{2,3}(?:\/.*)?$/,
+  /^https:\/\/(?:.*\.)?instagram\.[a-z]{2,3}(?:\/.*)?$/,
+  /^https:\/\/(?:.*\.)?facebook\.[a-z]{2,3}(?:\/.*)?$/,
+  /^https:\/\/(?:.*\.)?reddit\.[a-z]{2,3}(?:\/.*)?$/
 ]
 
 export const toolbarUnavailableUrlsList = [

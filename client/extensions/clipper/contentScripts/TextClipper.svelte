@@ -125,7 +125,7 @@
     const focusOffset = selection.focusOffset;
     try {
       const data: IClipCapture = {
-        contentType: NodeType.TEXT_CLIP,
+        contentType: NodeType.WEB_TEXT_BOOKMARK,
         body: {
           text: selectedText,
           highlighterId
@@ -192,7 +192,7 @@
     try {
       // removeAllHighlights();
       const clips: ITextClip[] = $webpage.clips
-        ?.filter((clip) => clip.contentType === NodeType.TEXT_CLIP)
+        ?.filter((clip) => clip.contentType === NodeType.WEB_TEXT_BOOKMARK)
         ?.filter(activeResourceFilter) as ITextClip[];
       logger.debug({ at: "refreshPageClips", clips });
       const removedHighlights = renderedHighlights.filter(

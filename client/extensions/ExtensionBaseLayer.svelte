@@ -152,22 +152,7 @@
         account: $account
       });
 
-      const currentUserId = await resolveCurrentUserId();
-      // const initResult = await initFlux(
-      //   stores,
-      //   PersistenceProvider.DEXIE_SURREAL,
-      //   new DexiePersistence(RemotePersistenceProvider.SURREAL),
-      //   currentUserId
-      // );
-      const dapId = await getDapId();
-      const initResult = await initExtensionFlux(
-        stores,
-        PersistenceProvider.DEXIE,
-        {
-          dapId,
-          userId: currentUserId
-        }
-      );
+      const initResult = await initExtensionFlux(stores);
       logger.log({ at: "initFlux", initResult });
       await clientStorage.set(ClientStorageKey.EXTENSION_BOOTUP, {
         inProgress: true

@@ -8,8 +8,7 @@
   import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import EditToggleButton from "$lib/client/elements/toggle/EditModeToggle.svelte";
-  import { appStore, isInEditMode } from "$lib/client/stores/app.store";
+  import { appStore } from "$lib/client/stores/app.store";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { Orientation, Placement } from "$lib/client/types/direction.enum";
   import {
@@ -25,11 +24,12 @@
   } from "../node.store";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import { Size } from "$lib/client/types/size.enum";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  import { ButtonStyle } from "$lib/client/types/button.type";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
   import { NodeRightPaneType, NodeView } from "../node.type";
   import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
+  import ResourceInlineCloseButton from "$lib/client/elements/button/ResourceInlineCloseButton.svelte";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let nodeView: NodeView = NodeView.CONTENT;
@@ -120,7 +120,7 @@
         ]}
         style={PanelSwitcherStyle.BAR}
         barStyle={BarStyle.DOT}
-        isPreventNumberShortcut={true}
+        isPreventTabShortcut={true}
         on:switch={(e) => {
           dispatch("view", e.detail);
         }}
@@ -188,26 +188,21 @@
           }}
         />
       {/if}
-      <Button
-        {...buttonCommonProps}
-        icon={$node.accessMode === ResourceAccessMode.FULL
-          ? "collapse"
-          : "full-screen"}
-        tooltip={$node.accessMode === ResourceAccessMode.FULL
-          ? "Minimize"
-          : "Full screen"}
-        on:click={() => {
-          appStore.toggleFullScreen($node.accessMode, $node.id);
-        }}
-      />
-      {#if $node.accessMode === ResourceAccessMode.SPLIT || $node.accessMode === ResourceAccessMode.FSPLIT}
+      {#if $node.accessMode !== ResourceAccessMode.FULL}
         <Button
           {...buttonCommonProps}
-          icon="cross-circled"
-          tooltip="Close split view"
-          on:click={close}
+          icon="full-screen"
+          tooltip="Full screen"
+          on:click={() => {
+            appStore.toggleFullScreen($node.accessMode, $node.id);
+          }}
         />
       {/if}
+      <ResourceInlineCloseButton
+        accessMode={$node.accessMode}
+        id={$node.id}
+        parentBgIndex={bgIndex}
+      />
     {/if}
 
     {#if $node.accessMode != ResourceAccessMode.INLINE}

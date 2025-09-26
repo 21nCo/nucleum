@@ -71,11 +71,9 @@
       style={PanelSwitcherStyle.BAR}
       title="Overview"
       isExpandToFullWidth={true}
-      isShowNumberShortcut={$uiStateDerived.isShowHotKeyHints}
       size={Size.sm}
       bind:value={selectedPanel}
       on:switch={onPanelSwitch}
-      isEnableTitleAction={true}
     >
       <div slot="right" class="mr-3">
         <slot name="right" />

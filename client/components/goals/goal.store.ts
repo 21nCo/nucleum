@@ -83,6 +83,10 @@ class GoalStore extends ResourceStore<IGoal, IGoalCapture> {
     return super.selectMany(params, additionalParams);
   }
 
+  /**
+   * TODO
+   * addToRecents() is not implemented for goals due to the nature of the goal saving process - the label will always be empty during creation of goal due to inplace creation
+   */
   async save(params?: {
     isQuickFocus?: boolean;
     context?: string;

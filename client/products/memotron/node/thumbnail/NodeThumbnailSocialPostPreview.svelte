@@ -2,7 +2,7 @@
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { cn } from "$lib/client/utils/ui.utils";
-  import { Size } from "@21n/types/size.enum.js";
+  import { Size } from "$lib/client/types/size.enum";
   import { NodeType } from "../node.type";
   import { resolveNodeIcon } from "../node.utils";
   export let text: string;

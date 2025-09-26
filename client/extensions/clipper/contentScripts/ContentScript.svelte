@@ -1,6 +1,6 @@
 <script lang="ts">
   import ToolbarOpener from "$lib/client/extensions/clipper/toolbar/ToolbarOpener.svelte";
-import {
+  import {
     resolveContentTypeForUrl,
     resolveContentTypeString
   } from "$lib/client/extensions/clipper/clipper.utils";
@@ -29,6 +29,7 @@ import {
   import { clipperCacheableStores } from "../clipper.config";
   import ClipperInMemoryCache from "../ClipperInMemoryCache.svelte";
   import { parse } from "$lib/shared/utils/json.utils";
+  import ClipModal from "../ClipModal.svelte";
 
   export let id: string;
   let textClipperRef: TextClipper;
@@ -47,7 +48,6 @@ import {
   });
   $: contentType = resolveContentTypeForUrl($webpage.url);
   $: contentTypeStr = resolveContentTypeString(contentType);
-
 
   function onActivateColor(e: CustomEvent<IHighlighter | number>) {
     textClipperRef.onActivateColor(e);
@@ -94,37 +94,37 @@ import {
     }
   }
 
-  async function onMutationRelayFromSidePanel(data: any) {
+  async function onMutationRelay(data: any, isFromSidePanel: boolean = false) {
     try {
-      logger.log({ at: "onMutationRelayFromSidePanel", data });
+      logger.log({ at: "onMutationRelay", data });
       let result;
       if (data.action === "link") {
         result = await webpage.linkClip(data.clipId, data.linkTo, {
-          isFromSidePanel: true
+          isFromSidePanel
         });
       } else if (data.action === "unlink") {
         result = await webpage.removeLinkForClip(data.clipId, data.linkTo, {
-          isFromSidePanel: true
+          isFromSidePanel
         });
       } else if (data.action === "notes") {
         result = await webpage.persistClipNotes(data.clipId, data.notes, {
-          isFromSidePanel: true
+          isFromSidePanel
         });
       } else if (data.action === "webpageNotes") {
         result = await webpage.persistPageNotes(data.notes, {
-          isFromSidePanel: true
+          isFromSidePanel
         });
       } else if (data.action === "delete") {
         result = await webpage.removeClip(data.clipId, {
-          isFromSidePanel: true
+          isFromSidePanel
         });
       } else if (data.action === "property") {
         result = await webpage.updateClipProperty(data.clipId, data.property, {
-          isFromSidePanel: true
+          isFromSidePanel
         });
       } else if (data.action === "label") {
         result = await webpage.updateClipLabel(data.clipId, data.label, {
-          isFromSidePanel: true
+          isFromSidePanel
         });
       }
       if (data.clipId && result) {
@@ -135,7 +135,7 @@ import {
         };
       } else return result;
     } catch (error) {
-      logger.error({ at: "onMutationRelayFromSidePanel", error });
+      logger.error({ at: "onMutationRelay", error });
       let errMessage = "Mutation failed";
       if (error instanceof ResourceError) {
         errMessage = error.message;
@@ -246,7 +246,7 @@ import {
             return { status: "success", message: "Toolbar closed" };
 
           case ClipperExtensionEvent.MUTATION_RELAY:
-            const result = await onMutationRelayFromSidePanel(message.data);
+            const result = await onMutationRelay(message.data, true);
             return result;
           case ExtensionEvent.MUTATION:
             await extensionBaseRef.loadInMemoryStore(message.data?.resource);
@@ -376,6 +376,9 @@ import {
         <ToolbarPlacementHintBlock position={Placement.Right} />
         <ToolbarPlacementHintBlock position={Placement.Bottom} />
       {/if}
+    {/if}
+    {#if $feedbackPane.modalClip}
+      <ClipModal clip={$feedbackPane.modalClip} onAction={onMutationRelay} />
     {/if}
   {/if}
 

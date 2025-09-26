@@ -437,7 +437,6 @@
           ]}
           style={PanelSwitcherStyle.TRAIN}
           activeItemStrength={PanelSwitcherActiveItemStrength.STRONG}
-          isShowNumberShortcut={true}
           bind:value={selectedView}
         />
       {/if}

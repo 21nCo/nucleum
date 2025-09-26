@@ -16,9 +16,9 @@
 </script>
 
 <span class="shrink-0 flex items-center justify-center">
-  {#if node.contentType === NodeType.TEXT_CLIP}
+  {#if node.contentType === NodeType.WEB_TEXT_BOOKMARK}
     <Icon icon="highlighter-circle" {size} />
-  {:else if node.contentType === NodeType.WEB_SCREENSHOT_CLIP}
+  {:else if node.contentType === NodeType.WEB_SCREENSHOT}
     <Icon icon="crop" {size} />
   {:else if node.contentType === NodeType.KINDLE_HIGHLIGHT}
     <Icon icon="book-open" {size} />
