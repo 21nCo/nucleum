@@ -1,0 +1,17 @@
+{
+  "name": "Memotron Share",
+  "short_name": "MemShare",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#03120f",
+  "theme_color": "#34d399",
+  "description": "Preview build of the Memotron share extension for Tidigit.",
+  "icons": [
+    {
+      "src": "/memotron-share.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
