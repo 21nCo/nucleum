@@ -1,8 +1,9 @@
 <script lang="ts">
   import { Arrangement } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
-  import CollectionThumbnail from "$lib/client/components/collection/thumbnail/CollectionThumbnail.svelte";
-  import NodeThumbnail from "$lib/client/products/memotron/node/thumbnail/NodeThumbnail.svelte";
+import CollectionThumbnail from "$lib/client/components/collection/thumbnail/CollectionThumbnail.svelte";
+import CombinationThumbnail from "$lib/client/components/combination/thumbnail/CombinationThumbnail.svelte";
+import NodeThumbnail from "$lib/client/products/memotron/node/thumbnail/NodeThumbnail.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { Size } from "$lib/client/types/size.enum";
   import {
@@ -15,7 +16,8 @@
   import FileView from "$lib/client/components/files/FileView.svelte";
   import { createEventDispatcher } from "svelte";
   import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
-  import type { ICollection } from "$lib/client/components/collection/collection.type";
+import type { ICollection } from "$lib/client/components/collection/collection.type";
+import type { ISideNavCombination } from "$lib/client/components/combination/combination.type";
   import type { IFile } from "$lib/client/components/files/file.type";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import NodeItems from "$lib/client/products/memotron/node/NodeRecords.svelte";
@@ -30,7 +32,8 @@
   export let data: (
     | INodeThumb
     | ICollection
-    | IFile
+  | IFile
+  | ISideNavCombination
     | IGoalThumb
     | ITaskThumb
   )[] = [];
@@ -114,6 +117,15 @@
               {arrangement}
               on:click={(e) => onClick(e, item)}
             />
+          {:else if resourceType === Resource.combination}
+            <CombinationThumbnail
+              {item}
+              {size}
+              {accessPoint}
+              {accessPointState}
+              {arrangement}
+              on:click={(e) => onClick(e, item)}
+            />
           {:else if resourceType === Resource.goal}
             <GoalThumbnail
               {item}
@@ -157,6 +169,15 @@
           />
         {:else if resource === Resource.collection}
           <CollectionThumbnail
+            {item}
+            {size}
+            {accessPoint}
+            {accessPointState}
+            {arrangement}
+            on:click={(e) => onClick(e, item)}
+          />
+        {:else if resource === Resource.combination}
+          <CombinationThumbnail
             {item}
             {size}
             {accessPoint}

@@ -37,7 +37,7 @@ const dbVersion = 1;
 /**
  * Stores version
  */
-const version = 116;
+const version = 117;
 export class DexiePersistence implements IPersistence {
   instance: Dexie | undefined = undefined;
   tables: ITable[] = [];

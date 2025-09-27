@@ -1,5 +1,6 @@
 import { collectionStore } from "$lib/client/components/collection/collection.store";
 import { viewStore } from "$lib/client/components/collection/view.store";
+import { combinationStore } from "$lib/client/components/combination/combination.store";
 import {
   nodeStore,
   vectorResourceStore
@@ -18,6 +19,7 @@ import MemotronBaseLayer from "./base/MemotronBaseLayer.svelte";
 const memotronCacheableStores: IStore[] = [
   nodeStore,
   collectionStore,
+  combinationStore,
   propertyStore,
   viewStore,
   captureStore,

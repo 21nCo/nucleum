@@ -28,12 +28,14 @@ import {
 import { pointronPreferences } from "../pointron/pointron.store";
 import { nucleusActions } from "./nucleus.actions";
 import NucleusBaseLayer from "./base/NucleusBaseLayer.svelte";
+import { combinationStore } from "$lib/client/components/combination/combination.store";
 
 const nucleusCacheableStores: IStore[] = [
   nodeStore,
   goalStore,
   taskStore,
   collectionStore,
+  combinationStore,
   propertyStore,
   viewStore,
   captureStore,

@@ -30,14 +30,21 @@ export function resolveProductResources(
     case Product.POINTRON:
       return [Resource.goal, Resource.task, Resource.collection];
     case Product.MEMOTRON:
-      if (context === "search") return [Resource.node, Resource.collection];
-      else return [Resource.node, Resource.collection, Resource.relation];
+      if (context === "search")
+        return [Resource.node, Resource.collection, Resource.combination];
+      else
+        return [
+          Resource.node,
+          Resource.collection,
+          Resource.combination,
+          Resource.relation
+        ];
     case Product.NUCLEUS:
       if (context === "search")
         return [
           Resource.node,
           Resource.goal,
-          // Resource.combination,
+          Resource.combination,
           Resource.task,
           Resource.collection
         ];
@@ -239,8 +246,10 @@ export const availableResources = new Set([
   Resource.collection,
   Resource.node,
   Resource.relation,
+  Resource.combination,
   Resource.goal,
-  Resource.task
+  Resource.task,
+  Resource.combination
 ]);
 
 export function resolveResourceSwitcher(): IResourceSwitchItem[] {
@@ -332,7 +341,10 @@ export function resolveResourceActionIcon(action: ResourceActionType) {
 export const determineResourceAccessMode = (
   id: IRecordId
 ): ResourceAccessMode => {
-  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const searchParams =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : new URLSearchParams();
   const mode = (Object.values(ResourceAccessMode) as string[]).find(
     (m) =>
       m !== ResourceAccessMode.INLINE && searchParams.get(m) === id.toString()
