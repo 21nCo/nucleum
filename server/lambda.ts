@@ -16,7 +16,7 @@ import {
 import { stringify } from "$lib/shared/utils/json.utils";
 
 export const accessControlHeaders = {
-  "Access-Control-Allow-Origin": "*", //TODO - dynamic origin
+  "Access-Control-Allow-Origin": process.env.ALLOWED_ORIGINS || "*", // TODO - restrict to specific origins in production
   "Access-Control-Allow-Headers": "Content-Type Authorization",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
 };

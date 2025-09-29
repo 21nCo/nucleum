@@ -542,15 +542,13 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
   }
 
   /**
-   * Hashes a password using SHA256 with salt
+   * Hashes a password using bcrypt
    * @param password - The plain text password to hash
    * @returns The hashed password string
    */
-  private hashPassword(password: string): string {
-    // Simplified password hashing - in production use bcrypt or similar
-    return crypto
-      .createHash("sha256")
-      .update(password + process.env.PASSWORD_SALT)
-      .digest("hex");
+  private async hashPassword(password: string): Promise<string> {
+    const bcrypt = require('bcrypt');
+    const saltRounds = 12;
+    return await bcrypt.hash(password, saltRounds);
   }
 }

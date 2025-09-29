@@ -5,7 +5,7 @@ export const defaults = {
   rootDomain: "tidigit.com",
   timeout: 10,
   longRunningJobTimeout: 200,
-  jwtSecret: "secret",
+  jwtSecret: process.env.JWT_SECRET || "CHANGE_THIS_SECRET_IN_PRODUCTION",
   subatom: "POINTRON",
   tidyTokenKey: "tokenone",
   adminNamespace: "TIDYADMINDEV",
