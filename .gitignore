@@ -26,3 +26,7 @@ client/cx/contemporaries/glasp-*
 **/.svelte-kit
 **/build
 .turbo
+.aider*
+
+.vscode/tasks.json
+.ar
