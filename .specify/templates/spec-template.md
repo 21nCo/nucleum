@@ -6,7 +6,7 @@
 **Input**: User description: "$ARGUMENTS"
 
 ## Execution Flow (main)
-```
+```text
 1. Parse user description from Input
    → If empty: ERROR "No feature description provided"
 2. Confirm product context (Memotron, Pointron, Nucleus, Gathery, cross-product)

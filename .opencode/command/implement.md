@@ -8,7 +8,7 @@ User input:
 
 $ARGUMENTS
 
-1. Run `.specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks` from repo root and parse FEATURE_DIR and AVAILABLE_DOCS list. All paths must be absolute.
+1. Run `.specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks` from repo root and parse FEATURE_DIR and AVAILABLE_DOCS list. All paths must be absolute. If the script fails or returns an error, halt execution and report the error to the user.
 
 2. Load and analyze the implementation context:
    - **REQUIRED**: Read tasks.md for the complete task list and execution plan
@@ -44,7 +44,7 @@ $ARGUMENTS
    - For parallel tasks [P], continue with successful tasks, report failed ones
    - Provide clear error messages with context for debugging
    - Suggest next steps if implementation cannot proceed
-   - **IMPORTANT** For completed tasks, make sure to mark the task off as [X] in the tasks file.
+   - **IMPORTANT** For completed tasks, mark them as complete using `- [X]` checkbox syntax in tasks.md.
 
 7. Completion validation:
    - Verify all required tasks are completed

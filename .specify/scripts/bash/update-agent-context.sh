@@ -53,7 +53,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
 # Get all paths and variables from common functions
-eval $(get_feature_paths)
+eval "$(get_feature_paths)"
 
 NEW_PLAN="$IMPL_PLAN"  # Alias for compatibility with existing code
 AGENT_TYPE="${1:-}"
@@ -138,8 +138,9 @@ validate_environment() {
     
     # Check if template exists (needed for new files)
     if [[ ! -f "$TEMPLATE_FILE" ]]; then
-        log_warning "Template file not found at $TEMPLATE_FILE"
-        log_warning "Creating new agent files will fail"
+        log_error "Template file not found at $TEMPLATE_FILE"
+        log_error "Cannot create new agent files without a template. Exiting."
+        exit 1
     fi
 }
 
@@ -296,9 +297,12 @@ create_new_agent_file() {
     
     # Perform substitutions with error checking using safer approach
     # Escape special characters for sed by using a different delimiter or escaping
-    local escaped_lang=$(printf '%s\n' "$NEW_LANG" | sed 's/[\[\.*^$()+{}|]/\\&/g')
-    local escaped_framework=$(printf '%s\n' "$NEW_FRAMEWORK" | sed 's/[\[\.*^$()+{}|]/\\&/g')
-    local escaped_branch=$(printf '%s\n' "$CURRENT_BRANCH" | sed 's/[\[\.*^$()+{}|]/\\&/g')
+    local escaped_lang
+    local escaped_framework
+    local escaped_branch
+    escaped_lang=$(printf '%s\n' "$NEW_LANG" | sed 's/[\[\.*^$()+{}|]/\\&/g')
+    escaped_framework=$(printf '%s\n' "$NEW_FRAMEWORK" | sed 's/[\[\.*^$()+{}|]/\\&/g')
+    escaped_branch=$(printf '%s\n' "$CURRENT_BRANCH" | sed 's/[\[\.*^$()+{}|]/\\&/g')
     
     # Build technology stack and recent change strings conditionally
     local tech_stack
@@ -364,6 +368,7 @@ update_existing_agent_file() {
     local temp_file
     temp_file=$(mktemp) || {
         log_error "Failed to create temporary file"
+        [[ -n "$temp_file" && -f "$temp_file" ]] && rm -f "$temp_file"
         return 1
     }
     
