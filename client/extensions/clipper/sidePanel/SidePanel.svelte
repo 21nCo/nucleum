@@ -128,9 +128,45 @@
 
   const stores = [...clipperCacheableStores];
   async function onSavePageClick() {
-    const page = await relayToContentScript({
+    feedback = {
+      type: AlertType.PROGRESS,
+      message: `Saving ${contentTypeStr.toLowerCase()}...`
+    };
+    const result = await relayToContentScript({
       event: ClipperExtensionEvent.SAVE_WEBPAGE
     });
+    logger.log({ at: "onSavePageClick", result });
+    if (result?.status === "error") {
+      if (result.message === "Page already saved" && result.pageId) {
+        isPageSaved = true;
+        feedback = {
+          type: AlertType.SUCCESS,
+          message: "Page already saved!"
+        };
+      } else {
+        feedback = {
+          type: AlertType.ERROR,
+          message: result.message || "Failed to save page"
+        };
+      }
+    } else if (result?.status === "success") {
+      isPageSaved = true;
+      feedback = {
+        type: AlertType.SUCCESS,
+        message: `${contentTypeStr} saved!`
+      };
+      await relayToContentScript({
+        event: ExtensionEvent.PAGE_STATE_TRIGGER
+      });
+    } else {
+      feedback = {
+        type: AlertType.ERROR,
+        message: "Failed to save page"
+      };
+    }
+    setTimeout(() => {
+      feedback = undefined;
+    }, 3000);
   }
   const messageListener = (message: any, sender: any, sendResponse: any) => {
     if (message.event === ExtensionEvent.PAGE_STATE) {
