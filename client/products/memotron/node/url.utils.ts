@@ -200,7 +200,7 @@ const urlMap = [
   },
   {
     domain:
-      /^https?:\/\/(?:www\.)?canva\.com\/design\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/view\?embed(?:&.*)?$/,
+      /^https?:\/\/(?:www\.)?canva\.com\/design\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/view\?embed(?:=true)?(?:&.*)?$/,
     isIframeable: true
   },
   {

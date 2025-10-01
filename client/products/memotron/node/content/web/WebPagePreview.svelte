@@ -35,6 +35,7 @@
       isIframeable = data.isIframeable || false;
       if (isIframeable) {
         isIframeShown = true;
+        isCheckingIframability = false;
       }
       if (!customMessage && !isIframeable) {
         const result = await resolveIframability(node.url, {
@@ -137,7 +138,7 @@
         No preview available for this page. Please use the link below to view
         the page.
       {:else}
-        -
+        Preview
       {/if}
     </div>
   {/if}

@@ -1484,16 +1484,25 @@ class Flux {
           resource,
           data: data[resource]
         });
-        const mutationResult = await this.persistence.mutation(
-          resource as Resource,
-          {
-            records: data[resource],
-            action:
-              resource === Resource.kv || resource === Resource.link
-                ? PersistenceActionType.INSERT
-                : PersistenceActionType.BULK_INSERT
-          }
-        );
+        let mutationResult;
+        try {
+          mutationResult = await this.persistence.mutation(
+            resource as Resource,
+            {
+              records: data[resource],
+              action:
+                resource === Resource.kv || resource === Resource.link
+                  ? PersistenceActionType.INSERT
+                  : PersistenceActionType.BULK_INSERT
+            }
+          );
+        } catch (error) {
+          logger.error({
+            at: "flux.import - bulkInsert failed, falling back",
+            resource,
+            error
+          });
+        }
         if (!mutationResult) {
           await this.persistence.mutation(resource as Resource, {
             records: data[resource],
