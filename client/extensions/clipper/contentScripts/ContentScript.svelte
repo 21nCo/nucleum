@@ -106,7 +106,7 @@
       if (!result || result.error) {
         return { error: result?.error ?? "Failed to save page" };
       }
-      return { success: true, pageId: $webpage.id };
+      return { status: "success", pageId: $webpage.id };
     } catch (error) {
       return { error: "Failed to save page" };
     }
@@ -232,12 +232,18 @@
                 message: saveResult.error,
                 pageId: saveResult.pageId
               };
+            } else if (saveResult.status === "success") {
+              return {
+                status: "success",
+                message: "Page saved",
+                pageId: saveResult.pageId
+              };
+            } else {
+              return {
+                status: "error",
+                message: "Unexpected response"
+              };
             }
-            return {
-              status: "success",
-              message: "Page saved",
-              pageId: saveResult.pageId
-            };
 
           case ClipperExtensionEvent.TAKE_SCREENSHOT_SHORTCUT:
             isSnipActive = true;

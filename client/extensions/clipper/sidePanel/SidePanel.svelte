@@ -83,6 +83,8 @@
   let isShowHelp = false;
   let isResyncing = false;
   let isBootupSyncInProgress = false;
+  let isSaving = false;
+  let feedbackTimeoutId: number | undefined = undefined;
 
   $: contentType = resolveContentTypeForUrl(currentUrl);
   $: contentTypeStr = resolveContentTypeString(contentType);
@@ -128,6 +130,8 @@
 
   const stores = [...clipperCacheableStores];
   async function onSavePageClick() {
+    if (isSaving) return;
+    isSaving = true;
     feedback = {
       type: AlertType.PROGRESS,
       message: `Saving ${contentTypeStr.toLowerCase()}...`
@@ -164,8 +168,13 @@
         message: "Failed to save page"
       };
     }
-    setTimeout(() => {
+    isSaving = false;
+    if (feedbackTimeoutId !== undefined) {
+      clearTimeout(feedbackTimeoutId);
+    }
+    feedbackTimeoutId = window.setTimeout(() => {
       feedback = undefined;
+      feedbackTimeoutId = undefined;
     }, 3000);
   }
   const messageListener = (message: any, sender: any, sendResponse: any) => {
@@ -234,6 +243,9 @@
       chrome.runtime.onMessage.removeListener(messageListener);
     }
     port?.disconnect();
+    if (feedbackTimeoutId !== undefined) {
+      clearTimeout(feedbackTimeoutId);
+    }
   });
 
   function sendPing() {
