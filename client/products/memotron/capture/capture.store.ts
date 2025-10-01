@@ -1095,13 +1095,10 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       creationContext?: IRecordId;
     }
   ) {
-    if (params?.isEmbedContext) {
-      const urlData = resolveUrlData(text);
-      if (urlData?.convertToEmbedUrl) {
-        text = urlData.convertToEmbedUrl(text);
-      }
+    const urlData = resolveUrlData(text);
+    if (urlData?.convertToEmbedUrl) {
+      text = urlData.convertToEmbedUrl(text);
     }
-
     let node: INodeCapture<IWebPage | IClip> = {
       contentType: params?.contentType ?? NodeType.WEB_PAGE,
       label: text.split("://").pop() ?? "",

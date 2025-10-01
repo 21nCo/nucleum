@@ -160,7 +160,64 @@ const urlMap = [
     isIframeable: false
   },
   {
-    domain: "wikipedia.org",
+    domain: /^https:\/\/(?:www\.)?tldraw\.com\/f\/[a-zA-Z0-9_-]+(?:\?.*)?$/,
+    faviconUrl: "https://www.tldraw.com/favicon.ico",
+    isIframeable: true
+  },
+  {
+    domain:
+      /^https:\/\/(?:www\.)?excalidraw\.com(?:\/(?:[a-zA-Z0-9_-]+)?)?(?:\?.*)?$/,
+    faviconUrl: "https://excalidraw.com/favicon.ico",
+    isIframeable: true
+  },
+  {
+    domain:
+      /^https:\/\/(?:www\.)?miro\.com\/app\/board\/[a-zA-Z0-9_=-]+(?:\/.*)?(?:\?.*)?$/,
+    faviconUrl: "https://miro.com/favicon.ico",
+    isIframeable: true
+  },
+  {
+    domain:
+      /^https:\/\/(?:www\.)?whimsical\.com\/embed\/[a-zA-Z0-9_-]+(?:\?.*)?$/,
+    faviconUrl: "https://whimsical.com/favicon.ico",
+    isIframeable: true
+  },
+  {
+    domain: /^https:\/\/(?:www\.)?draw\.io\/(?:\?.*)?$/,
+    faviconUrl: "https://app.diagrams.net/favicon.ico",
+    isIframeable: true
+  },
+  {
+    domain: /^https:\/\/(?:viewer|embed)\.diagrams\.net\/.*$/,
+    faviconUrl: "https://app.diagrams.net/favicon.ico",
+    isIframeable: true
+  },
+  {
+    domain:
+      /^https:\/\/lucid\.app\/documents\/embedded\/[a-zA-Z0-9_-]+(?:\?.*)?$/,
+    faviconUrl: "https://lucid.app/favicon.ico",
+    isIframeable: true
+  },
+  {
+    domain:
+      /^https?:\/\/(?:www\.)?canva\.com\/design\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/view\?embed(?:&.*)?$/,
+    isIframeable: true
+  },
+  {
+    domain:
+      /^https?:\/\/(?:www\.)?canva\.com\/design\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/view(?:\?.*)?$/,
+    customMessage:
+      "Preview not available for this Canva URL. Please use the embed URL instead.",
+    convertToEmbedUrl: (url: string) => {
+      const urlObj = new URL(url);
+      if (!urlObj.searchParams.has("embed")) {
+        urlObj.searchParams.set("embed", "true");
+      }
+      return urlObj.toString();
+    }
+  },
+  {
+    domain: /^https:\/\/(?:[\w-]+\.)?wikipedia\.org\/.+$/,
     faviconUrl: "https://en.wikipedia.org/static/apple-touch/wikipedia.png",
     isIframeable: true
   },
