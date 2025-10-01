@@ -94,6 +94,24 @@
     }
   }
 
+  async function savePageFromSidePanel() {
+    try {
+      if (isDisableClipper || !isLoggedIn || !isBaseMounted) {
+        return { error: "Cannot save page at this time" };
+      }
+      if ($webpage.id) {
+        return { error: "Page already saved", pageId: $webpage.id };
+      }
+      let result = await webpage.savePage({ contentType });
+      if (!result || result.error) {
+        return { error: result?.error ?? "Failed to save page" };
+      }
+      return { status: "success", pageId: $webpage.id };
+    } catch (error) {
+      return { error: "Failed to save page" };
+    }
+  }
+
   async function onMutationRelay(data: any, isFromSidePanel: boolean = false) {
     try {
       logger.log({ at: "onMutationRelay", data });
@@ -207,13 +225,25 @@
                 message: "You are not logged in"
               };
             }
-            if ($webpage.id) {
-              feedbackPane.onPageSaved("Page already saved!");
-              feedbackPane.toggle({ isUserInitiated: true });
+            const saveResult = await savePageFromSidePanel();
+            if (saveResult.error) {
+              return {
+                status: "error",
+                message: saveResult.error,
+                pageId: saveResult.pageId
+              };
+            } else if (saveResult.status === "success") {
+              return {
+                status: "success",
+                message: "Page saved",
+                pageId: saveResult.pageId
+              };
             } else {
-              await onSaveClick();
+              return {
+                status: "error",
+                message: "Unexpected response"
+              };
             }
-            return { status: "success", message: "Page saved" };
 
           case ClipperExtensionEvent.TAKE_SCREENSHOT_SHORTCUT:
             isSnipActive = true;

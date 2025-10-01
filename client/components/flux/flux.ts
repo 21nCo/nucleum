@@ -1484,14 +1484,36 @@ class Flux {
           resource,
           data: data[resource]
         });
-        await this.persistence.mutation(resource as Resource, {
-          records: data[resource],
-          action:
-            resource === Resource.kv || resource === Resource.link
-              ? PersistenceActionType.INSERT
-              : PersistenceActionType.BULK_INSERT
-        });
-        if (!(await determineIfOffline()) && data[resource].length > 0) {
+        let mutationResult;
+        try {
+          mutationResult = await this.persistence.mutation(
+            resource as Resource,
+            {
+              records: data[resource],
+              action:
+                resource === Resource.kv || resource === Resource.link
+                  ? PersistenceActionType.INSERT
+                  : PersistenceActionType.BULK_INSERT
+            }
+          );
+        } catch (error) {
+          logger.error({
+            at: "flux.import - bulkInsert failed, falling back",
+            resource,
+            error
+          });
+        }
+        if (!mutationResult) {
+          await this.persistence.mutation(resource as Resource, {
+            records: data[resource],
+            action: PersistenceActionType.INSERT
+          });
+        }
+        if (
+          !this.isLocalMode &&
+          !(await determineIfOffline()) &&
+          data[resource].length > 0
+        ) {
           await this.performSync(SyncMethod.CLONE_UP, {
             resource,
             records: data[resource]
@@ -1506,6 +1528,9 @@ class Flux {
       }
     }
     await this.loadInMemoryStores();
+    if (!this.isExtensionEnvironment) {
+      dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
+    }
     return true;
   }
 }
