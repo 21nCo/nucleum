@@ -14,6 +14,7 @@
   import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
   import { resolveUrlData } from "../../url.utils";
   import { parse } from "$lib/shared/utils/json.utils";
+  import context from "$lib/client/stores/context.store";
 
   export let node: IWebPage;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -29,8 +30,14 @@
 
   async function initialize() {
     try {
-      customMessage = resolveCustomMessage(node.url);
-      if (!customMessage) {
+      const data = resolveCustomSettings(node.url);
+      customMessage = data.customMessage;
+      isIframeable = data.isIframeable || false;
+      if (isIframeable) {
+        isIframeShown = true;
+        isCheckingIframability = false;
+      }
+      if (!customMessage && !isIframeable) {
         const result = await resolveIframability(node.url, {
           isUseCloud: $account.dataMode === UserDataMode.CLOUD
         });
@@ -90,9 +97,12 @@
     }
   }
 
-  function resolveCustomMessage(url: string) {
+  function resolveCustomSettings(url: string) {
     const urlData = resolveUrlData(url);
-    return urlData?.customMessage;
+    return {
+      customMessage: urlData?.customMessage,
+      isIframeable: urlData?.isIframeable
+    };
   }
 </script>
 
@@ -124,8 +134,12 @@
     <FileView id={node.metadata.screenshotFile} />
   {:else}
     <div class="text-center text-b3 text-fgs3">
-      No preview available for this page. Please use the link below to view the
-      page.
+      {#if !isIframeable}
+        No preview available for this page. Please use the link below to view
+        the page.
+      {:else}
+        Preview
+      {/if}
     </div>
   {/if}
 
@@ -145,7 +159,7 @@
       />
     </div>
   {/if}
-  {#if isIframeable && isHovering && !isIframeShown}
+  {#if isIframeable && (isHovering || $context.isTouchDevice) && !isIframeShown}
     <div class="absolute m-2 flex gap-2 items-center justify-center">
       <Button
         icon="play"

@@ -247,6 +247,8 @@ export class DexiePersistence implements IPersistence {
           }
         }
         return this.instance?.table(resource).bulkPut(records);
+      case PersistenceActionType.BULK_INSERT:
+        return this.bulkInsert(resource, params.records);
       case PersistenceActionType.REPLACE:
         return this.instance?.table(resource).put(params.record);
       case PersistenceActionType.MERGE:
@@ -303,7 +305,6 @@ export class DexiePersistence implements IPersistence {
       case PersistenceActionType.BULK_MERGE:
         return this.bulkMerge(resource, params.recordIds, params.changes);
       case PersistenceActionType.CUSTOM:
-        //TODO
         return;
     }
   }
@@ -318,6 +319,57 @@ export class DexiePersistence implements IPersistence {
       return result;
     } catch (e) {
       logger.error({ at: "DexiePersistence.merge", id, data, e });
+    }
+  }
+
+  async bulkInsert(resource: Resource, records: any[]) {
+    try {
+      const table = this.instance?.table(resource);
+      if (!table) return;
+
+      const formattedRecords = records.map((record) => ({
+        ...record,
+        id: record.id?.toString()
+      }));
+
+      if (this.searchIndices.has(resource)) {
+        const searchIndex = this.searchIndices.get(resource);
+        if (searchIndex) {
+          formattedRecords.forEach((record) => {
+            const text = this.extractFlatText(record, resource);
+            if (record.id && text) {
+              searchIndex.index.addAsync(record.id, text);
+              searchIndex.contextualIndex.addAsync(record.id, text);
+            }
+          });
+        }
+      }
+
+      if (this.documentSearchIndices.has(resource)) {
+        const documentSearchIndex = this.documentSearchIndices.get(resource);
+        if (documentSearchIndex) {
+          documentSearchIndex.add(formattedRecords as any);
+        }
+      }
+
+      const result = await table.bulkAdd(formattedRecords);
+
+      logger.log({
+        at: "DexiePersistence.bulkInsert",
+        resource,
+        totalRecords: records.length,
+        result
+      });
+
+      return result;
+    } catch (e) {
+      logger.error({
+        at: "DexiePersistence.bulkInsert",
+        resource,
+        totalRecords: records.length,
+        e
+      });
+      throw e;
     }
   }
 
