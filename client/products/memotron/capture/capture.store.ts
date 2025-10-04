@@ -734,7 +734,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         id,
         contentType,
         file: fileId,
-        label: captureStore.label ?? file.name,
+        label: (isValidString(captureStore.label) ? captureStore.label : null) ?? file.name,
         body: {},
         metadata: {
           ...metadata
@@ -981,7 +981,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           ? (params?.creationContext ?? this.get().nodeId)
           : undefined,
         label:
-          captureStore.label ??
+          (isValidString(captureStore.label) ? captureStore.label : null) ??
           `Audio Recording - ${new Date().toLocaleString()}`,
         body: {
           duration
@@ -1051,7 +1051,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       contentType: NodeType.IMAGE,
       file: fileId,
       label:
-        captureStore.label ?? `Image Capture - ${new Date().toLocaleString()}`,
+        (isValidString(captureStore.label) ? captureStore.label : null) ??
+        `Image Capture - ${new Date().toLocaleString()}`,
       body: {},
       properties: captureStore.properties,
       collections,
