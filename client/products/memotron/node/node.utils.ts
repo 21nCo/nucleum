@@ -37,6 +37,22 @@ export function resolveContentPreview(node: INode) {
   if (contentType === NodeType.TWEET && "content" in body) {
     if (body.content) return body.content;
     else if (metadata && "ogTitle" in metadata) return metadata.ogTitle;
+  } else if (
+    contentType === NodeType.YOUTUBE_VIDEO ||
+    contentType === NodeType.YOUTUBE_SHORT
+  ) {
+    if ("title" in body && body.title) return body.title;
+    if (metadata && "ogTitle" in metadata && metadata.ogTitle)
+      return metadata.ogTitle;
+    if (metadata && "title" in metadata && metadata.title)
+      return metadata.title;
+  } else if (socialPostNodeTypeList.has(contentType)) {
+    if (node.text && typeof node.text === "string") return node.text;
+    if (node.label && typeof node.label === "string") return node.label;
+    if (metadata && "ogTitle" in metadata && metadata.ogTitle)
+      return metadata.ogTitle;
+    if (metadata && "title" in metadata && metadata.title)
+      return metadata.title;
   } else if (contentType === NodeType.TWITTER_PROFILE) {
     if ("bio" in body && body.bio) return body.bio;
     if (!node.url) return "";

@@ -50,7 +50,7 @@
   on:mousedown={(e) => e.preventDefault()}
 >
   <span
-    class={cn("flex flex-col h-full", {
+    class={cn("flex flex-col h-full truncate", {
       "w-full": isHideResourceType,
       "mo:w--4/5 w--3/4 min-w-0 flex-1": !isHideResourceType,
       "font--mono italic-":

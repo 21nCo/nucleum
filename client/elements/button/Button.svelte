@@ -2,7 +2,6 @@
   import { Size } from "$lib/client/types/size.enum";
   import Icon from "../Icon.svelte";
   import { ButtonStyle, ButtonVariant } from "../../types/button.type";
-  import InlineLoadingAnimation from "../feedback/animations/InlineLoadingAnimation.svelte";
   import { Placement } from "$lib/client/types/direction.enum";
   import { bg, cn } from "$lib/client/utils/ui.utils";
   import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
@@ -46,6 +45,27 @@
   export let isBoxed: boolean = false;
   $: isIconOnlyButton = !label && !$$slots.default;
   $: shortcutSize = size === Size.xs ? Size.sm : Size.md;
+  $: iconSize = size === Size.xs ? Size.sm : size;
+  $: iconClass = {
+    "text-aps1":
+      (style === ButtonStyle.OUTLINED && type === ButtonVariant.PRIMARY) ||
+      (isHovering &&
+        style === ButtonStyle.PLAIN &&
+        type === ButtonVariant.SECONDARY),
+    "text-ars1":
+      (style === ButtonStyle.OUTLINED ||
+        style === ButtonStyle.PLAIN ||
+        (isIconOnlyButton && style === ButtonStyle.DEFAULT)) &&
+      type === ButtonVariant.DANGER,
+    "text-fgs2": type === ButtonVariant.SECONDARY,
+    "text-abg":
+      style === ButtonStyle.DEFAULT &&
+      (type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER),
+    "text-fgs1":
+      style === ButtonStyle.DEFAULT &&
+      type === ButtonVariant.SECONDARY &&
+      isHovering
+  };
 </script>
 
 <button
@@ -141,38 +161,14 @@
   disabled={isDisabled || isLoading}
 >
   {#if isLoading}
-    <InlineLoadingAnimation
-      variant={type === ButtonVariant.SECONDARY
-        ? "bg-background"
-        : "accent-background"}
+    <Icon
+      icon="svg-spinners:bars-scale-fade"
+      class={cn(iconClass)}
+      size={iconSize}
     />
   {:else}
     {#if icon}
-      <Icon
-        {icon}
-        size={size === Size.xs ? Size.sm : size}
-        class={cn({
-          "stroke-aps1":
-            (style === ButtonStyle.OUTLINED &&
-              type === ButtonVariant.PRIMARY) ||
-            (isHovering &&
-              style === ButtonStyle.PLAIN &&
-              type === ButtonVariant.SECONDARY),
-          "stroke-ars1":
-            (style === ButtonStyle.OUTLINED ||
-              style === ButtonStyle.PLAIN ||
-              (isIconOnlyButton && style === ButtonStyle.DEFAULT)) &&
-            type === ButtonVariant.DANGER,
-          "stroke-fgs2": type === ButtonVariant.SECONDARY,
-          "stroke-abg":
-            style === ButtonStyle.DEFAULT &&
-            (type === ButtonVariant.PRIMARY || type === ButtonVariant.DANGER),
-          "stroke-fgs1":
-            style === ButtonStyle.DEFAULT &&
-            type === ButtonVariant.SECONDARY &&
-            isHovering
-        })}
-      />
+      <Icon {icon} size={iconSize} class={cn(iconClass)} />
     {/if}
     {#if label}
       <div class="min-w-fit whitespace-nowrap">

@@ -150,7 +150,10 @@ export class DexiePersistence implements IPersistence {
         await Promise.all(indexPromises);
 
         indexedRecords += batch.length;
-        const progress = Math.floor((indexedRecords / totalRecords) * 100);
+        const progress =
+          totalRecords > 0
+            ? Math.floor((indexedRecords / totalRecords) * 100)
+            : 100;
         this.indexingProgress = progress;
 
         indexingStore.updateProgress({

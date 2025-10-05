@@ -252,7 +252,7 @@
     if (data?.file && nodeType === NodeType.FILE)
       return "Unsupported file type. Can't be saved as node.";
     if (data?.text) return "Text detected";
-    return "Nothing";
+    return "Content not recognized. Please try again.";
   }
 
   function resolveInsertIntoMdLabel(data: IPasteCaptureData | undefined) {
@@ -415,6 +415,12 @@
             label={resolveInsertIntoMdLabel(data)}
             icon="markdown"
             on:click={handleInsertIntoMarkdown}
+            isExpandToFullWidth={true}
+          />
+          <Button
+            label="Close"
+            icon="cross"
+            on:click={handleClose}
             isExpandToFullWidth={true}
           />
         {/if}

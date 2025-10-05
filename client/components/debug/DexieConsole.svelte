@@ -262,10 +262,23 @@
   }
 
   async function reIndexDatabase() {
+    if (isReindexing) return;
     isReindexing = true;
-    const persistence = flux.persistence as DexiePersistence;
-    await persistence.triggerBackgroundIndexing(true);
-    isReindexing = false;
+    try {
+      const persistence = flux.persistence as DexiePersistence;
+      if (!persistence || typeof persistence.triggerBackgroundIndexing !== "function") {
+        logger.warn({
+          at: "DexieConsole.reIndexDatabase",
+          message: "Dexie persistence is not available"
+        });
+        return;
+      }
+      await persistence.triggerBackgroundIndexing(true);
+    } catch (e) {
+      logger.error({ at: "DexieConsole.reIndexDatabase", error: e });
+    } finally {
+      isReindexing = false;
+    }
   }
 </script>
 

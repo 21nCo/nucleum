@@ -301,9 +301,12 @@ async function indexWithFlexSearch(
     }
 
     currentProgress.indexedRecords += batch.length;
-    currentProgress.progress = Math.floor(
-      (currentProgress.indexedRecords / currentProgress.totalRecords) * 100
-    );
+    currentProgress.progress =
+      currentProgress.totalRecords > 0
+        ? Math.floor(
+            (currentProgress.indexedRecords / currentProgress.totalRecords) * 100
+          )
+        : 100;
 
     if (i % (batchSize * 5) === 0) {
       broadcastProgress(port);
@@ -361,9 +364,12 @@ async function indexWithCustomLogic(
     }
 
     currentProgress.indexedRecords += batch.length;
-    currentProgress.progress = Math.floor(
-      (currentProgress.indexedRecords / currentProgress.totalRecords) * 100
-    );
+    currentProgress.progress =
+      currentProgress.totalRecords > 0
+        ? Math.floor(
+            (currentProgress.indexedRecords / currentProgress.totalRecords) * 100
+          )
+        : 100;
 
     if (i % (batchSize * 5) === 0) {
       broadcastProgress(port);

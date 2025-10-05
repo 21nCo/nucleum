@@ -102,7 +102,7 @@
 {:else}
   <div
     class={cn(
-      "relative modal flex flex-col items-center justify-between rounded-md embed-ios:bg-bgs1",
+      "relative modal flex flex-col items-center justify-between rounded-md embed-ios:bg-bgs1 cw:w-full cw:h-full",
       {
         "dark:border border-brs3": !isInFocusMode && !$view.isConstrainedWidth,
         "otop:pt-12": !resource || params.title,
@@ -135,7 +135,7 @@
 
     <div
       class={cn(
-        "flex flex-col gap-4 flex-grow overflow-hidden mo:rounded-none rounded-md",
+        "flex flex-col gap-4 flex-grow overflow-hidden mo:rounded-none rounded-md cw:w-full",
         {
           "w-full": !params.layout?.isDynamicSize
         }

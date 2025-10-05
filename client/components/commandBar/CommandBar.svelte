@@ -110,10 +110,11 @@
 
 <div
   class={cn(
-    "flex flex-col cw:w-full w-[40rem] max-w-full overflow-y-auto otop:pt-12",
+    "flex flex-col cw:w-full cw:min-w-full w-[40rem] max-w-full overflow-auto",
     {
       "border border-brs2 rounded-md": isFullPageContext,
-      "h-[30rem]": !isFullPageContext || (isFullPageContext && isFocusing)
+      "cw:h-full h-[30rem]":
+        !isFullPageContext || (isFullPageContext && isFocusing)
     }
   )}
 >

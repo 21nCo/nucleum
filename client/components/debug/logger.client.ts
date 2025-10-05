@@ -61,7 +61,7 @@ class Logger {
     }
   }
   warn(message: any) {
-    this._console(message, LogType.WARN);
+    this._log(message, LogType.WARN);
   }
   debug(message: any) {
     this._console(message, LogType.DEBUG);

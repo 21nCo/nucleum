@@ -31,8 +31,14 @@
     UserDataMode,
     UserSessionType
   } from "$lib/client/types/account.type";
-  import { PersistenceProvider } from "$lib/client/persistence/persistence.type";
-  import { getDapId } from "$lib/client/persistence/persistence.utils";
+  import {
+    ClientStorageKey,
+    PersistenceProvider
+  } from "$lib/client/persistence/persistence.type";
+  import {
+    clientStorage,
+    getDapId
+  } from "$lib/client/persistence/persistence.utils";
   import PageError from "$lib/client/components/error/PageError.svelte";
   import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
   import { SignalDBPersistence } from "$lib/client/persistence/signaldb/signaldb.local";
@@ -77,6 +83,8 @@
     }
   };
 
+  const ONE_WEEK_IN_MS = 7 * 24 * 60 * 60 * 1000;
+
   let loadingMessage: {
     message: string;
     subMessage?: string;
@@ -92,6 +100,26 @@
   const isDebug = import.meta.env?.DEV;
   $: searcheableResources =
     resolveProductResources($appStore.product, "search") ?? [];
+
+  async function shouldRunFluxIndex() {
+    const lastIndexedAt = await clientStorage.get(
+      ClientStorageKey.LAST_INDEXED_AT
+    );
+    if (!lastIndexedAt) return true;
+
+    const lastIndexedTimestamp = Number(lastIndexedAt);
+    if (Number.isNaN(lastIndexedTimestamp)) return true;
+
+    return Date.now() - lastIndexedTimestamp >= ONE_WEEK_IN_MS;
+  }
+
+  async function runFluxIndexWithTracking() {
+    await flux.index();
+    await clientStorage.set(
+      ClientStorageKey.LAST_INDEXED_AT,
+      Date.now().toString()
+    );
+  }
 
   onMount(async () => {
     postMessageToParent(EmbedMessage.MOUNT);
@@ -129,11 +157,15 @@
         userDataState.isFirstInitialLoad
       );
     }
-    await Promise.all([
+    const shouldTriggerIndex = await shouldRunFluxIndex();
+    const initializationTasks = [
       recentsStore.refresh(searcheableResources),
-      flux.index(),
       initializeUserConfig()
-    ]);
+    ];
+    if (shouldTriggerIndex) {
+      initializationTasks.push(runFluxIndexWithTracking());
+    }
+    await Promise.all(initializationTasks);
     if (initState !== 1) {
       $appLoadingState.isBaseLoaded = true;
       dispatch("ready");

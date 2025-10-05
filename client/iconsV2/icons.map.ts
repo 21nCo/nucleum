@@ -1271,6 +1271,11 @@ export const iconMappings: Record<string, IconMapping> = {
     phosphor: "backspace",
     lucide: "backspace",
     solar: "backspace"
+  },
+  scan: {
+    phosphor: "scan",
+    lucide: "scan",
+    solar: "scanner"
   }
 };
 

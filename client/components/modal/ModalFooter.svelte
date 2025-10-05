@@ -34,12 +34,11 @@
   const dev_isUseExpandedButtons = !$view.isConstrainedWidth;
   let isPrimaryActionInProgress = false;
 
-  resolveButtons();
-
   function resolveButtons() {
-    if (buttons && buttons.length > 0) return;
+    let _buttons = buttons;
+    if (_buttons && _buttons.length > 0) return _buttons;
     if (primaryAction)
-      buttons = [
+      _buttons = [
         {
           ...primaryAction,
           variant: primaryAction.variant ?? ButtonVariant.PRIMARY,
@@ -58,8 +57,8 @@
         }
       ];
     if (secondaryAction) {
-      buttons = [
-        ...(buttons ?? []),
+      _buttons = [
+        ...(_buttons ?? []),
         {
           ...secondaryAction,
           variant: secondaryAction.variant ?? ButtonVariant.SECONDARY,
@@ -74,8 +73,8 @@
         }
       ];
     } else if (isShowClose) {
-      buttons = [
-        ...(buttons ?? []),
+      _buttons = [
+        ...(_buttons ?? []),
         {
           label: "Close",
           callback: () => close("close"),
@@ -83,6 +82,7 @@
         }
       ];
     }
+    return _buttons;
   }
 
   onMount(() => {
@@ -146,7 +146,9 @@
     })}
   >
     {#if dev_isUseExpandedButtons}
-      <ButtonGroup {buttons} {size} />
+      {#key `${$isPrimaryActionDisabled}-${isPrimaryActionInProgress}`}
+        <ButtonGroup buttons={resolveButtons()} {size} />
+      {/key}
     {:else}
       {#if primaryAction}
         <Button

@@ -143,13 +143,17 @@
         "pop-overlay fixed w-screen h-screen z-50",
         {
           "inset-0 m-auto flex justify-center items-center":
-            alignment === Placement.Center || !alignment,
-          "inset-x-0":
-            alignment === Placement.TopCenter ||
-            alignment === Placement.BottomCenter,
+            alignment === Placement.Center ||
+            !alignment ||
+            $view.isConstrainedWidth,
           "bg-opacity-0": !isShowOverlay,
           "bg-bgs1": isInFocusMode,
           "mo:p-0 p-3": !isUseDialog && size !== Size.full
+        },
+        !$view.isConstrainedWidth && {
+          "inset-x-0":
+            alignment === Placement.TopCenter ||
+            alignment === Placement.BottomCenter
         },
         isShowOverlay &&
           !isUseDialog &&
@@ -210,23 +214,28 @@
       {:else}
         <div
           id={id + "-modal"}
-          class={cn("bg-bgs1 max-h-full cursor-default otopl:pt-12", {
-            ...resolveSizeClasses(),
-            "shadow-xl cw:border-none border border-brs3": !isShowOverlay,
-            "w-fit h-fit": isDynamicSize,
-            "m-auto": alignment === Placement.Center || !alignment,
-            "mx-auto":
-              alignment === Placement.TopCenter ||
-              alignment === Placement.BottomCenter,
-            "mt-[12vh] mb-auto": alignment === Placement.TopCenter,
-            "mt-auto": alignment === Placement.BottomCenter,
-            "rounded-md otopl:bg-transparent": size !== Size.full,
-            "otopl:bg-bgs1": size === Size.full,
-            "mo:rounded-none": size !== Size.full && size !== Size.xs,
-            "mo:w-9/10": size === Size.xs,
-            "mo:w-full mo:h-full": size !== Size.xs,
-            "portrait:w-full": size !== Size.xs && size !== Size.sm
-          })}
+          class={cn(
+            "bg-bgs1 max-h-full cursor-default otopl:pt-12",
+            {
+              ...resolveSizeClasses(),
+              "rounded-md otopl:bg-transparent": size !== Size.full,
+              "otopl:bg-bgs1": size === Size.full,
+              "mo:rounded-none": size !== Size.full && size !== Size.xs,
+              "mo:w-9/10": size === Size.xs,
+              "mo:w-full mo:h-full": size !== Size.xs,
+              "portrait:w-full": size !== Size.xs && size !== Size.sm
+            },
+            !$view.isConstrainedWidth && {
+              "shadow-xl cw:border-none border border-brs3": !isShowOverlay,
+              "w-fit h-fit": isDynamicSize,
+              "m-auto": alignment === Placement.Center || !alignment,
+              "mx-auto":
+                alignment === Placement.TopCenter ||
+                alignment === Placement.BottomCenter,
+              "mt-[12vh] mb-auto": alignment === Placement.TopCenter,
+              "mt-auto": alignment === Placement.BottomCenter
+            }
+          )}
         >
           <ColorLayer>
             <slot />

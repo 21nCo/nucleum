@@ -5,10 +5,21 @@
   import Button from "./Button.svelte";
   export let buttons: IButtonParams[] = [];
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
+
+  function resolveGridColumns(count: number) {
+    if (count <= 1) return "grid-cols-1";
+    if (count === 2) return "grid-cols-2";
+    if (count === 3) return "grid-cols-3";
+    if (count === 4) return "grid-cols-4";
+    if (count === 5) return "grid-cols-5";
+    return "grid-cols-6";
+  }
+
+  $: columnsClass = resolveGridColumns(buttons.length);
 </script>
 
 <div
-  class={cn("grid", `grid-cols-${buttons.length} w-full`, {
+  class={cn("grid w-full", columnsClass, {
     "h-10": size === Size.xs,
     "h-12": size === Size.sm,
     "h-14": size === Size.md,

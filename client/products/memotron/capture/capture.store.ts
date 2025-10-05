@@ -342,6 +342,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     if (!val) return;
     if (val === CaptureMethod.PASTE) {
       await openPasteConfirmationModalFromClipboard();
+      appStore.closeResource({ accessMode: ResourceAccessMode.POP });
       return;
     }
     const isCollection = isRecordId(val, Resource.collection);
