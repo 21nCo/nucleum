@@ -81,4 +81,4 @@ class CollectionViewStore extends ResourceStore<
   }
 }
 
-export const viewStore = new CollectionViewStore();
+export const viewStore = CollectionViewStore.resolve(Resource.view);

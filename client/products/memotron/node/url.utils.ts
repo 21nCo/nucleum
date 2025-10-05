@@ -14,6 +14,7 @@ export const contentTypeMap: {
     | NodeType.THREADS_POST
     | NodeType.THREADS_PROFILE
     | NodeType.INSTAGRAM_POST
+    | NodeType.INSTAGRAM_REEL
     | NodeType.INSTAGRAM_PROFILE
     | NodeType.FACEBOOK_POST
     | NodeType.FACEBOOK_PROFILE
@@ -21,6 +22,7 @@ export const contentTypeMap: {
     | NodeType.MASTODON_PROFILE
     | NodeType.TWITTER_PROFILE
     | NodeType.YOUTUBE_VIDEO
+    | NodeType.YOUTUBE_SHORT
     | NodeType.YOUTUBE_CHANNEL
     | NodeType.GIST
     | NodeType.REDDIT_SUB;
@@ -30,7 +32,7 @@ export const contentTypeMap: {
   {
     contentType: NodeType.TWEET,
     regex: [
-      /^https:\/\/(?:www\.)?(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/(\d+)\/?$/
+      /^https:\/\/(?:www\.)?(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/(\d+)(?:\/)?(?:\?.*)?$/
     ],
     currentDomain: "x.com"
   },
@@ -44,6 +46,12 @@ export const contentTypeMap: {
       /^https:\/\/(?:www\.)?(youtube\.com)\/watch\?v=([a-zA-Z0-9_-]+)/,
       /^https:\/\/youtu\.be\/([a-zA-Z0-9_-]+)(\?.*)?$/,
       /^https:\/\/(?:www\.)?(youtube\.com)\/embed\/([a-zA-Z0-9_-]+)/
+    ]
+  },
+  {
+    contentType: NodeType.YOUTUBE_SHORT,
+    regex: [
+      /^https:\/\/(?:www\.|m\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]+)(?:\?.*)?$/
     ]
   },
   {
@@ -93,6 +101,12 @@ export const contentTypeMap: {
     contentType: NodeType.INSTAGRAM_POST,
     regex: [
       /^https:\/\/(?:www\.)?instagram\.com\/p\/[A-Za-z0-9_-]+\/?(?:\?.*)?$/
+    ]
+  },
+  {
+    contentType: NodeType.INSTAGRAM_REEL,
+    regex: [
+      /^https:\/\/(?:www\.)?instagram\.com\/reel\/[A-Za-z0-9_-]+\/?(?:\?.*)?$/
     ]
   },
   {

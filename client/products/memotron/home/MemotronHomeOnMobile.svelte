@@ -142,7 +142,7 @@
       dev_iosCameraCaptureMethod === "input"
     ) {
       triggerNativeCameraCaptureUsingInputAPI();
-    } else if (e.detail !== CaptureMethod.UPLOAD) {
+    } else if (e.detail !== CaptureMethod.UPLOAD && e.detail !== CaptureMethod.PASTE) {
       mode = "capture";
     }
     await captureStore.onTypeSelect(e.detail);

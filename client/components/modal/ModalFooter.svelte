@@ -17,17 +17,74 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import { Action } from "$lib/client/types/action.enum";
+  import ButtonGroup from "$lib/client/elements/button/ButtonGroup.svelte";
+  import view from "$lib/client/stores/view.store";
   const dispatch = createEventDispatcher();
   export let action: string;
   export let isShowClose: boolean = false;
   export let isPreventAutoClose: boolean = false;
   export let primaryAction: IButtonParams | undefined = undefined;
   export let secondaryAction: IButtonParams | undefined = undefined;
+  export let buttons: IButtonParams[] | undefined = undefined;
   export let isDelegateClose: boolean = false;
   export let orientation: Orientation = Orientation.Horizontal;
   export let isHideSecondaryShortcut: boolean = false;
+  export let error: string | undefined = undefined;
+  export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
+  const dev_isUseExpandedButtons = !$view.isConstrainedWidth;
   let isPrimaryActionInProgress = false;
-  let error: string | undefined = undefined;
+
+  resolveButtons();
+
+  function resolveButtons() {
+    if (buttons && buttons.length > 0) return;
+    if (primaryAction)
+      buttons = [
+        {
+          ...primaryAction,
+          variant: primaryAction.variant ?? ButtonVariant.PRIMARY,
+          style:
+            !primaryAction.variant ||
+            primaryAction.variant === ButtonVariant.PRIMARY
+              ? ButtonStyle.OUTLINED
+              : (primaryAction.style ?? ButtonStyle.DEFAULT),
+          shortcut: primaryAction.shortcut ?? {
+            key: KeyboardKey.ENTER,
+            modifiers: [ModifierKey.META]
+          },
+          callback: onPrimaryClick,
+          isLoading: isPrimaryActionInProgress,
+          isDisabled: $isPrimaryActionDisabled
+        }
+      ];
+    if (secondaryAction) {
+      buttons = [
+        ...(buttons ?? []),
+        {
+          ...secondaryAction,
+          variant: secondaryAction.variant ?? ButtonVariant.SECONDARY,
+          style: secondaryAction.style ?? ButtonStyle.OUTLINED,
+          callback: onSecondaryClick,
+          shortcut:
+            !isHideSecondaryShortcut &&
+            (!secondaryAction.variant ||
+              secondaryAction.variant === ButtonVariant.SECONDARY)
+              ? Action.CLOSE
+              : undefined
+        }
+      ];
+    } else if (isShowClose) {
+      buttons = [
+        ...(buttons ?? []),
+        {
+          label: "Close",
+          callback: () => close("close"),
+          shortcut: Action.CLOSE
+        }
+      ];
+    }
+  }
+
   onMount(() => {
     const appEventSub = appEvents.subscribe((x) => {
       const frontModal = resolveModalOnFront();
@@ -73,52 +130,62 @@
   }
 </script>
 
-<footer class="flex flex-col w-full gap-2 justify-center p-4 mo:pb-8">
+<footer
+  class={cn("flex flex-col w-full gap-2 justify-center mo:pb-8", {
+    "p-4": !dev_isUseExpandedButtons,
+    "rounded-b-md overflow-hidden": dev_isUseExpandedButtons
+  })}
+>
   {#if error}
     <InlineErrorMessage bind:error />
   {/if}
   <div
-    class={cn("flex w-full gap-2 justify-center", {
-      "flex-col mx-auto": orientation === Orientation.Vertical
+    class={cn("flex w-full gap-2", {
+      "flex-col mx-auto": orientation === Orientation.Vertical,
+      "justify-center": !dev_isUseExpandedButtons
     })}
   >
-    {#if primaryAction}
-      <Button
-        type={primaryAction.variant ?? ButtonVariant.PRIMARY}
-        icon={primaryAction.icon}
-        style={primaryAction.style ?? ButtonStyle.DEFAULT}
-        isLoading={isPrimaryActionInProgress}
-        isDisabled={$isPrimaryActionDisabled}
-        size={primaryAction.size ?? Size.md}
-        on:click={onPrimaryClick}
-        label={primaryAction.label}
-        shortcut={primaryAction.shortcut ?? {
-          key: KeyboardKey.ENTER,
-          modifiers: [ModifierKey.META]
-        }}
-      />
-    {/if}
-    {#if secondaryAction}
-      <Button
-        type={secondaryAction.variant ?? ButtonVariant.SECONDARY}
-        icon={secondaryAction.icon}
-        size={secondaryAction.size ?? Size.md}
-        style={ButtonStyle.OUTLINED}
-        on:click={onSecondaryClick}
-        label={secondaryAction?.label}
-        shortcut={!isHideSecondaryShortcut &&
-        (!secondaryAction.variant ||
-          secondaryAction.variant === ButtonVariant.SECONDARY)
-          ? Action.CLOSE
-          : undefined}
-      />
-    {:else if isShowClose}
-      <Button
-        on:click={() => close("close")}
-        style={ButtonStyle.OUTLINED}
-        label="Close"
-        shortcut={Action.CLOSE}
-      />
+    {#if dev_isUseExpandedButtons}
+      <ButtonGroup {buttons} {size} />
+    {:else}
+      {#if primaryAction}
+        <Button
+          type={primaryAction.variant ?? ButtonVariant.PRIMARY}
+          icon={primaryAction.icon}
+          style={primaryAction.style ?? ButtonStyle.DEFAULT}
+          isLoading={isPrimaryActionInProgress}
+          isDisabled={$isPrimaryActionDisabled}
+          size={primaryAction.size ?? Size.md}
+          on:click={onPrimaryClick}
+          label={primaryAction.label}
+          shortcut={primaryAction.shortcut ?? {
+            key: KeyboardKey.ENTER,
+            modifiers: [ModifierKey.META]
+          }}
+        />
+      {/if}
+      {#if secondaryAction}
+        <Button
+          type={secondaryAction.variant ?? ButtonVariant.SECONDARY}
+          icon={secondaryAction.icon}
+          size={secondaryAction.size ?? Size.md}
+          style={ButtonStyle.OUTLINED}
+          on:click={onSecondaryClick}
+          label={secondaryAction?.label}
+          shortcut={!isHideSecondaryShortcut &&
+          (!secondaryAction.variant ||
+            secondaryAction.variant === ButtonVariant.SECONDARY)
+            ? Action.CLOSE
+            : undefined}
+        />
+      {:else if isShowClose}
+        <Button
+          on:click={() => close("close")}
+          style={ButtonStyle.OUTLINED}
+          label="Close"
+          shortcut={Action.CLOSE}
+        />
+      {/if}
     {/if}
   </div>
 </footer>

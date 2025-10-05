@@ -317,6 +317,10 @@ interface PopoverParams {
    * If set to true, the popover will be rendered in the secondary popovers container.
    */
   isSecondary?: boolean;
+  /**
+   * Delay in milliseconds before showing the popover on hover.
+   */
+  delay?: number;
 }
 
 export function popover(node: HTMLElement, params: PopoverParams) {
@@ -335,7 +339,8 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     id = "popover",
     isRenderAsSibling = false,
     classForHoverDismissal = "",
-    isSecondary = false
+    isSecondary = false,
+    delay = 0
   } = params;
 
   let isShown = false;
@@ -347,6 +352,15 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     document.getElementById("secondary-popovers") ??
     node?.getRootNode()?.getElementById("secondary-popovers");
   let cwModalOverlay: HTMLDivElement | null = null;
+  let hoverDelay = delay ?? 0;
+  let hoverDelayTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  function clearHoverDelayTimeout() {
+    if (hoverDelayTimeout) {
+      clearTimeout(hoverDelayTimeout);
+      hoverDelayTimeout = null;
+    }
+  }
 
   async function createPopover(): Promise<void> {
     popoverElement = document.createElement("div");
@@ -667,6 +681,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
 
   async function showPopover(e?: any): Promise<void> {
     try {
+      clearHoverDelayTimeout();
       const element = document.getElementById(id);
       if (!element) await createPopover();
       positionPopover();
@@ -680,6 +695,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
 
   function hidePopover(e?: any): void {
     // console.log("hidePopover", e);
+    clearHoverDelayTimeout();
     if (popoverElement) {
       try {
         if (isRenderAsSibling && node.parentNode) {
@@ -802,12 +818,20 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       triggerMethod.includes(PopoverTriggerMethod.HOVER) &&
       event.type === "mouseenter"
     ) {
-      // triggeredBy = PopoverTriggerMethod.HOVER;
-      showPopover();
+      clearHoverDelayTimeout();
+      if (hoverDelay > 0) {
+        hoverDelayTimeout = window.setTimeout(() => {
+          showPopover();
+          hoverDelayTimeout = null;
+        }, hoverDelay);
+      } else {
+        showPopover();
+      }
     } else if (
       triggerMethod.includes(PopoverTriggerMethod.HOVER) &&
       event.type === "mouseleave"
     ) {
+      clearHoverDelayTimeout();
       if (
         isShown &&
         !classForHoverDismissal &&
@@ -873,6 +897,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
         true
       );
     }
+    clearHoverDelayTimeout();
   }
 
   setupEventListeners();
@@ -898,8 +923,10 @@ export function popover(node: HTMLElement, params: PopoverParams) {
         isRenderAsModalForCW = false,
         cwModalPosition = Placement.Bottom,
         classForHoverDismissal = "",
-        isSecondary = false
+        isSecondary = false,
+        delay = 0
       } = newParams);
+      hoverDelay = delay ?? 0;
       //TODO - troubleshoot the root casue. Temporary fix added for date picker popover when rendered as bottom on mobile is adding many overlays on update trigger.
       if (popoverElement && !isRenderAsModalForCW) {
         positionPopover();

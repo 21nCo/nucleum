@@ -46,7 +46,7 @@ export async function delegateToFlux(method: IFluxMethod) {
           counts: method.args.counts
         });
       case FluxMethod.INIT_FLUX:
-        return initializeFlux(method.args.stores);
+        return initializeFlux(method.args.tables);
       case FluxMethod.SELECT_MANY:
         return flux?.selectMany(method.args.resource, method.args.params);
       case FluxMethod.SELECT:
@@ -59,8 +59,6 @@ export async function delegateToFlux(method: IFluxMethod) {
         );
       case FluxMethod.KV_MERGE:
         return flux?.kvMerge(method.args.storeId, method.args.data);
-      case FluxMethod.SEARCH:
-        return flux?.search(method.args.storeId, method.args.query);
       default:
         return null;
     }
@@ -69,11 +67,13 @@ export async function delegateToFlux(method: IFluxMethod) {
     return null;
   }
 
-  async function initializeFlux(stores: any[] = []) {
+  async function initializeFlux(tables: any[] = []) {
     logger.debug({ at: "delegateToFlux - initializeFlux" });
     const currentUserId = await resolveCurrentUserId();
     const dapId = await getDapId();
-    return initFlux(stores, PersistenceProvider.DEXIE, new DexiePersistence(), {
+    return initFlux(new DexiePersistence(), {
+      tables,
+      loaderCallback: () => {},
       dapId,
       userId: currentUserId,
       product: "extension"

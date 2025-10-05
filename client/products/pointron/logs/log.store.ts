@@ -29,14 +29,13 @@ const defaults = {
 class SessionLogStore extends ResourceStore<ISessionLog, ISessionLogCapture> {
   constructor() {
     super(Resource.sessionLog, {
-      indices: ["startUnix", "goalId", "sessionId", "taskId"],
       defaultProps: defaults,
       expandProps: ["goalId", "sessionId"]
     });
   }
 }
 
-export const sessionLogStore = new SessionLogStore();
+export const sessionLogStore = SessionLogStore.resolve(Resource.sessionLog);
 
 class ManualLogStore extends ObservableStore<IManualLogStore> {
   constructor() {

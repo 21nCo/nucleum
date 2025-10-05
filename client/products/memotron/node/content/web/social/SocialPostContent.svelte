@@ -20,6 +20,7 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { ButtonStyle } from "$lib/client/types/button.type";
   import { properCase } from "$lib/shared/utils/text.utils";
+  import { resolveContentPreview } from "../../../node.utils";
 
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -27,6 +28,7 @@
   const nodeContext = getContext<any>("node");
   let oembedHtml: string | null = null;
   let error: string = "";
+  let hasPermanentCopy = false;
   onMount(async () => {
     await resolveParent();
   });
@@ -35,12 +37,15 @@
     if (nodeContext?.parent) parent = nodeContext.parent;
   }
 
+  $: hasPermanentCopy = !!resolveContentPreview(node);
+
   function shouldShowWidget() {
     if (!account.isCloudUserAndOnline()) return false;
 
     const supportedWidgets = [
       NodeType.TWEET,
       NodeType.INSTAGRAM_POST,
+      NodeType.INSTAGRAM_REEL,
       NodeType.LINKEDIN_POST,
       NodeType.REDDIT_POST,
       NodeType.MASTODON_POST,
@@ -51,6 +56,7 @@
     const supportedWidgetsOnEmbed = [
       NodeType.TWEET,
       NodeType.INSTAGRAM_POST,
+      NodeType.INSTAGRAM_REEL,
       NodeType.MASTODON_POST,
       NodeType.BLUESKY_POST,
       NodeType.THREADS_POST
@@ -69,6 +75,11 @@
   function resolveOpenInButtonLabel() {
     let suffix = "";
     if (node.contentType === NodeType.TWEET) suffix = "Twitter";
+    else if (
+      node.contentType === NodeType.INSTAGRAM_POST ||
+      node.contentType === NodeType.INSTAGRAM_REEL
+    )
+      suffix = "Instagram";
     else suffix = properCase(node.contentType.split("_POST")[0]);
     return `Open on ${suffix}`;
   }
@@ -94,7 +105,8 @@
       {/if}
       {#if node.contentType === NodeType.TWEET}
         <TweetPreviewUsingWidget tweetUrl={node.url} />
-      {:else if node.contentType === NodeType.INSTAGRAM_POST}
+      {:else if node.contentType === NodeType.INSTAGRAM_POST ||
+        node.contentType === NodeType.INSTAGRAM_REEL}
         <InstagramPostWidget postUrl={node.url} />
       {:else if node.contentType === NodeType.LINKEDIN_POST}
         <LinkedInPostWidget postUrl={node.url} />
@@ -123,16 +135,18 @@
       {/if}
     </div>
     <div class="flex justify-center items-center w-full gap-4 pt-4 pb-8">
-      <Button
-        style={ButtonStyle.PLAIN}
-        label="View permanent copy"
-        isUnderlined={true}
-        size={Size.sm}
-        on:click={(e) => {
-          e.stopPropagation();
-          onError(new CustomEvent("fallback", { detail: "fallback" }));
-        }}
-      />
+      {#if hasPermanentCopy}
+        <Button
+          style={ButtonStyle.PLAIN}
+          label="View permanent copy"
+          isUnderlined={true}
+          size={Size.sm}
+          on:click={(e) => {
+            e.stopPropagation();
+            onError(new CustomEvent("fallback", { detail: "fallback" }));
+          }}
+        />
+      {/if}
       <Button
         style={ButtonStyle.PLAIN}
         label={resolveOpenInButtonLabel()}

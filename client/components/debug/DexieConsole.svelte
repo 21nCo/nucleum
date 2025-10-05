@@ -31,7 +31,7 @@
   let selectedTable: string | null = null;
   let kvLocalData: any = null;
   let expandedTables: Set<string> = new Set();
-
+  let isReindexing = false;
   // Record query functionality
   let queryTable: string = "";
   let queryIds: string = "";
@@ -260,17 +260,33 @@
     }
     return String(value);
   }
+
+  async function reIndexDatabase() {
+    isReindexing = true;
+    const persistence = flux.persistence as DexiePersistence;
+    await persistence.triggerBackgroundIndexing(true);
+    isReindexing = false;
+  }
 </script>
 
 <div class="w-full h-full flex flex-col gap-4 p-4">
   <div class="flex items-center justify-between">
     <h2 class="text-b1 font-semibold text-fgs1">Dexie Console</h2>
-    <Button
-      size={Size.sm}
-      icon="refresh"
-      on:click={loadDatabaseInfo}
-      label="Refresh"
-    />
+    <div class="flex items-center gap-2">
+      <Button
+        size={Size.sm}
+        isLoading={isReindexing}
+        icon="reload"
+        on:click={reIndexDatabase}
+        label="Reindex"
+      />
+      <Button
+        size={Size.sm}
+        icon="refresh"
+        on:click={loadDatabaseInfo}
+        label="Refresh"
+      />
+    </div>
   </div>
 
   {#if isLoading}

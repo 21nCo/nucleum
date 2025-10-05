@@ -22,6 +22,7 @@ export enum CaptureMethod {
   MARKDOWN = "MARKDOWN",
   AUDIO = "AUDIO",
   CAMERA = "CAMERA",
+  PASTE = "PASTE",
   SKETCH = "SKETCH",
   UPLOAD = "UPLOAD"
 }

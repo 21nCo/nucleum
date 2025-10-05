@@ -14,6 +14,7 @@ import { extensionFlux } from "../fluxExtentionMediator";
 import { FluxMethod } from "../flux.type";
 import { parse, stringify } from "$lib/shared/utils/json.utils";
 
+export const kvStores = new Map<Resource, KeyValueStore<any>>();
 export class KeyValueStore<T>
   extends ObservableStore<T>
   implements IObservableStore<T>
@@ -133,5 +134,15 @@ export class KeyValueStore<T>
     this.__set({ ...val, ...n });
     if (params?.isDebouncedPersist) return this._debouncedPersist(n);
     else if (params?.isPersist) return this.persist(n);
+  }
+
+  static resolve<T extends KeyValueStore<any>>(
+    this: new () => T,
+    item: Resource
+  ) {
+    if (!kvStores.has(item)) {
+      kvStores.set(item, new this());
+    }
+    return kvStores.get(item)! as T;
   }
 }

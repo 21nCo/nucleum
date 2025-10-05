@@ -1027,7 +1027,9 @@
       data.textMetadata?.isMultiBlockText ||
       data.textMetadata?.isEmbed ||
       (data.contentType &&
-        [NodeType.YOUTUBE_VIDEO, NodeType.CODE].includes(data.contentType))
+        [NodeType.YOUTUBE_VIDEO, NodeType.YOUTUBE_SHORT, NodeType.CODE].includes(
+          data.contentType
+        ))
     ) {
       dispatch("paste", event);
       return;

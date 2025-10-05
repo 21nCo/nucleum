@@ -325,7 +325,8 @@
         block.body.subType === NodeType.WEB_PAGE ||
         block.body.subType === NodeType.PDF ||
         block.body.subType === NodeType.GIST ||
-        block.body.subType === NodeType.YOUTUBE_VIDEO
+        block.body.subType === NodeType.YOUTUBE_VIDEO ||
+        block.body.subType === NodeType.YOUTUBE_SHORT
       ) {
         items.forEach((group) => {
           if (group.group === "base") {

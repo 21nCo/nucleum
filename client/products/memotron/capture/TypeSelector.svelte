@@ -36,6 +36,10 @@
     {
       icon: "upload",
       value: CaptureMethod.UPLOAD
+    },
+    {
+      icon: "clipboard",
+      value: CaptureMethod.PASTE
     }
   ];
 
@@ -52,7 +56,11 @@
   </div>
   {#key refreshId}
     {#await refreshTypes()}
-      <div class="flex justify-center bg-bgs1" role="status" aria-label="Loading">
+      <div
+        class="flex justify-center bg-bgs1"
+        role="status"
+        aria-label="Loading"
+      >
         <Icon icon="svg-spinners:3-dots-fade" />
       </div>
     {:then result}

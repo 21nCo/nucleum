@@ -259,7 +259,10 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
      * @returns
      */
     async function extractData() {
-      if (params?.contentType === NodeType.YOUTUBE_VIDEO) {
+      if (
+        params?.contentType === NodeType.YOUTUBE_VIDEO ||
+        params?.contentType === NodeType.YOUTUBE_SHORT
+      ) {
         return extractYoutubeVideoData();
       } else if (params?.contentType === NodeType.YOUTUBE_CHANNEL) {
         const urlData = await new Persistence().retrieveUrlData(

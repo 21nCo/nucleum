@@ -30,6 +30,7 @@
   import context from "$lib/client/stores/context.store";
   import { Embed } from "$lib/client/types/context.type";
   import GoalSearchResultItem from "../goals/GoalSearchResultItem.svelte";
+  import ModalContentPadded from "$lib/client/components/modal/ModalContentPadded.svelte";
   export let date: Date | undefined = undefined;
   export let goalId: IRecordId | undefined = undefined;
   const action = resourceAction(Resource.task, ResourceActionType.CREATE);
@@ -92,9 +93,9 @@
 </script>
 
 <div
-  class="cw:w-full w-[32rem] h-auto min-h-[16rem] flex flex-col justify-between gap-4 p-4 rounded-lg bg-bgs1"
+  class="cw:w-full w-[32rem] h-auto min-h-[16rem] flex flex-col justify-between gap-4 rounded-lg bg-bgs1"
 >
-  <div class="flex flex-col gap-3">
+  <ModalContentPadded class="flex flex-col gap-3">
     {#if isShowGoalPicker}
       <div class="transition-all duration-200">
         <TextSearchInput
@@ -143,7 +144,7 @@
         />
       </span>
     </div>
-  </div>
+  </ModalContentPadded>
   <div class="flex flex-col gap-3 mt-2">
     {#if $context.embed !== Embed.HANDSET}
       <div class="text-b3 text-fgs3 flex gap-1 justify-center py-1">
@@ -161,16 +162,15 @@
     {/if}
     <ModalFooter
       {action}
+      size={Size.sm}
       primaryAction={{
         label: "Create",
         icon: "proceed",
-        callback: handleCreate,
-        size: Size.sm
+        callback: handleCreate
       }}
       secondaryAction={{
         label: "Cancel",
-        icon: "cross",
-        size: Size.sm
+        icon: "cross"
       }}
     />
   </div>

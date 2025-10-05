@@ -22,6 +22,8 @@
   import { resolveShortcutText } from "../shortcuts/shortcut.utils";
   import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
   import KeyboardToolbar from "$lib/client/elements/keyboardToolbar/KeyboardToolbar.svelte";
+  import { fly } from "svelte/transition";
+  import { quadInOut } from "svelte/easing";
 
   export let command: string | undefined = undefined;
   export let commandType: ActionType | undefined = undefined;
@@ -35,7 +37,7 @@
   let isFocusing: boolean = false;
   let defaultPlaceholder = isFullPageContext
     ? "Search for a command"
-    : "Run a command or scroll to see list of all commands";
+    : "Search for a command or scroll to see full list";
   let placeholder = defaultPlaceholder;
   onMount(() => {
     inputRef?.focus();
@@ -54,14 +56,20 @@
       resultsRef.select();
     }
   }
+
   function handleKeyDown(event: any) {
     if (event.key === "Backspace" && !$view.isConstrainedWidth) {
       if (value == "" && isPerformingSearchAction) {
-        isPerformingSearchAction = false;
-        placeholder = defaultPlaceholder;
+        resetContext();
       } else if (value == "") close();
     }
   }
+
+  function resetContext() {
+    isPerformingSearchAction = false;
+    placeholder = defaultPlaceholder;
+  }
+
   function onSearchAction(event: any) {
     value = "";
     isPerformingSearchAction = true;
@@ -101,30 +109,41 @@
 </script>
 
 <div
-  class={cn("flex flex-col w-full otop:pt-12", {
-    "border border-brs2 rounded-md": isFullPageContext,
-    "h-full": !isFullPageContext || (isFullPageContext && isFocusing)
-  })}
+  class={cn(
+    "flex flex-col cw:w-full w-[40rem] max-w-full overflow-y-auto otop:pt-12",
+    {
+      "border border-brs2 rounded-md": isFullPageContext,
+      "h-[30rem]": !isFullPageContext || (isFullPageContext && isFocusing)
+    }
+  )}
 >
+  {#if isPerformingSearchAction}
+    <div
+      class="h-fit min-h-fit flex gap-2 justify-between items-center cw:w-full cw:max-w-full w-fit max-w-60 cw:ml-0 ml-2 mt-2 bg-bgs2 cw:px-3 pr-1 pl-3 cw:rounded-none rounded-md truncate"
+      in:fly={{ y: -10, easing: quadInOut, duration: 250 }}
+    >
+      <span class="truncate">
+        {@html renderMdAsHtml(componentParams?.label ?? searchAction.cmdLabel)}
+      </span>
+      {#if $view.isConstrainedWidth}
+        <Button icon="cross" tooltip="Close" on:click={close} />
+      {:else}
+        <Button
+          icon="backspace"
+          tooltip="Clear"
+          on:click={() => {
+            value = "";
+            resetContext();
+          }}
+        />
+      {/if}
+    </div>
+  {/if}
   <div
     class={cn(
-      "flex mo:flex-col w-full bg-bgs2 justify-between items-center mo:rounded-none rounded-t-md"
+      "flex mo:flex-col w-full bg-bgs1 justify-between items-center mo:rounded-none rounded-t-md"
     )}
   >
-    {#if isPerformingSearchAction}
-      <div
-        class="h-5/6 cw:w-full cw:flex cw:justify-between cw:max-w-full max-w-60 cw:ml-0 ml-2 bg-bgs3 flex items-center justify-center px-4 cw:rounded-none rounded-md truncate"
-      >
-        <span class="truncate">
-          {@html renderMdAsHtml(
-            componentParams?.label ?? searchAction.cmdLabel
-          )}
-        </span>
-        {#if $view.isConstrainedWidth}
-          <Button icon="cross" tooltip="Close" on:click={close} />
-        {/if}
-      </div>
-    {/if}
     <input
       bind:this={inputRef}
       type="text"
@@ -134,7 +153,7 @@
       on:focus={() => {
         isFocusing = true;
       }}
-      class="h-[3.6rem] mo:h-20 mo:w-full bg-transparent px-4 grow focus:border-none focus:outline-none text-h5"
+      class="h-[3.6rem] mo:h-20 mo:w-full bg-transparent px-4 grow focus:border-none focus:outline-none text-h5 transition-all duration-300"
       {placeholder}
     />
     {#if !$view.isConstrainedWidth && $context.embed !== Embed.HANDSET}
@@ -143,7 +162,7 @@
           class={cn(
             "px-2 flex justify-center items-center gap-2 rounded-md py-1 text-b3 text-fgs3 min-w-fit w-fit",
             {
-              "bg-bgs3": !(isFullPageContext && !isFocusing)
+              "bg-bgs2": !(isFullPageContext && !isFocusing)
             }
           )}
         >
@@ -204,14 +223,14 @@
         Press
         <ShortcutText
           shortcut={Action.CLOSE}
-          parentBgIndex={1}
+          parentBgIndex={2}
           isAlwaysShown={true}
         />
         to close
       </span>
       <ShortcutText
         shortcut={Action.CMD}
-        parentBgIndex={1}
+        parentBgIndex={2}
         isAlwaysShown={true}
       />
     </div>

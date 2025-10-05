@@ -47,6 +47,7 @@
       [NodeType.THREADS_POST]: { name: "threads", display: "Threads" },
       [NodeType.LINKEDIN_POST]: { name: "linkedin", display: "LinkedIn" },
       [NodeType.INSTAGRAM_POST]: { name: "instagram", display: "Instagram" },
+      [NodeType.INSTAGRAM_REEL]: { name: "instagram", display: "Instagram" },
       [NodeType.FACEBOOK_POST]: { name: "facebook", display: "Facebook" },
       [NodeType.REDDIT_POST]: { name: "reddit", display: "Reddit" }
     };

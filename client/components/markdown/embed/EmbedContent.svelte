@@ -81,6 +81,7 @@
     NodeType.WEB_PAGE,
     NodeType.WEB_SCREENSHOT,
     NodeType.YOUTUBE_VIDEO,
+    NodeType.YOUTUBE_SHORT,
     NodeType.YOUTUBE_BOOKMARK,
     NodeType.GIST
   ];
@@ -178,9 +179,9 @@
         isEmbedContext: true,
         creationContext: nodeContext?.id ?? undefined
       });
-      if (!result) return;
-      dispatchUpdateEvent({ id: result[0].id, subType: sanitized.contentType });
-      _mediaBlock = result[0];
+      if (!result || !("id" in result)) return;
+      dispatchUpdateEvent({ id: result.id, subType: sanitized.contentType });
+      _mediaBlock = result;
     } catch (e) {
       logger.error({ at: "EmbedContent onLinkInput", e });
       toasts.error(ErrorMessage.DEFAULT);
@@ -402,7 +403,7 @@
       {/if}
     </button>
   {/key}
-{:else if body?.url && body?.subType === NodeType.YOUTUBE_VIDEO}
+{:else if body?.url && [NodeType.YOUTUBE_VIDEO, NodeType.YOUTUBE_SHORT].includes(body?.subType)}
   <YoutubeVideoPreview url={body.url} />
 {:else if body?.subType === NodeType.COLLECTION_AS_EMBED && body?.id}
   <div class="h-96 w-[90vw] py-4 max-w-full overflow-x-auto">

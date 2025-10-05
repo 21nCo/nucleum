@@ -22,7 +22,8 @@
   const baseTypes = [
     { icon: "microphone", label: "Record", value: CaptureMethod.AUDIO },
     { icon: "camera", label: "Camera", value: CaptureMethod.CAMERA },
-    { icon: "upload", label: "File", value: CaptureMethod.UPLOAD }
+    { icon: "upload", label: "File", value: CaptureMethod.UPLOAD },
+    { icon: "clipboard", label: "Paste", value: CaptureMethod.PASTE }
   ];
 
   async function refreshTypes() {

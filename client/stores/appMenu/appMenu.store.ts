@@ -51,4 +51,4 @@ class AppMenuStore extends KeyValueStore<IAppMenuStore> {
   }
 }
 
-export const appMenuStore = new AppMenuStore();
+export const appMenuStore = AppMenuStore.resolve(Resource.appMenu);

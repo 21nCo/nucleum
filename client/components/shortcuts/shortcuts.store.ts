@@ -97,4 +97,6 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
   }
 }
 
-export const keyboardShortcuts = new KeyboardShortcuts();
+export const keyboardShortcuts = KeyboardShortcuts.resolve(
+  Resource.keyboardShortcuts
+);

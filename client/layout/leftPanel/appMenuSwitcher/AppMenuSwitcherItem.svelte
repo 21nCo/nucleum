@@ -19,7 +19,7 @@
     UIStateScope
   } from "$lib/client/stores/uiState/uiState.type";
   import { keyboardShortcuts } from "$lib/client/components/shortcuts/shortcuts.store";
-  import { popover, tooltip } from "$lib/client/actions/popover.action";
+  import { popover } from "$lib/client/actions/popover.action";
   import { hoverable } from "$lib/client/actions/hover.action";
   import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
@@ -29,6 +29,7 @@
   import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
   import { isHideCreateAction } from "$lib/client/components/library/library.utils";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import ButtonTooltip from "$lib/client/elements/button/ButtonTooltip.svelte";
   const dispatch = createEventDispatcher();
   export let item: IAction;
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
@@ -76,11 +77,6 @@
     let rawPad = ($view.width / 10) * $view.scale;
     pad = rawPad > 30 ? 30 : rawPad;
   }
-  $: tooltipText =
-    layoutContext === LayoutContext.THIN ||
-    (layoutContext === LayoutContext.THIN_WITH_LABEL && !isShowLabel)
-      ? `${item.label} ${resolveHotKey() ? `[**${resolveHotKey()?.toUpperCase()}**]` : ""}`
-      : undefined;
 
   function onClick() {
     postMessageToParent(EmbedMessage.MENU_ITEM_SELECTED);
@@ -158,151 +154,177 @@
       groupId: "resourceSwitcherContextMenuGroup"
     };
   }
+
+  function resolveTooltipPopover(layoutContext: LayoutContext) {
+    const shortcutDetail = keyboardShortcuts.resolveShortcutForAction(
+      item.action
+    );
+    const tooltipText =
+      layoutContext === LayoutContext.THIN ||
+      layoutContext === LayoutContext.THIN_WITH_LABEL
+        ? item.label
+        : undefined;
+    return {
+      placement: Placement.Right,
+      content: tooltipText ? ButtonTooltip : "",
+      triggerMethod: tooltipText ? [PopoverTriggerMethod.HOVER] : [],
+      offsetInPx: 8,
+      delay: 400,
+      id: `appmenu-tooltip-${item.action ?? "default"}`,
+      componentProps: tooltipText
+        ? {
+            tooltip: tooltipText,
+            shortcut: shortcutDetail,
+            parentBgIndex: parentBackgroundIndex,
+            size: Size.sm
+          }
+        : {}
+    };
+  }
 </script>
 
-<button
-  bind:this={popRef}
-  use:tooltip={{
-    text: tooltipText ?? "",
-    direction: Placement.Right
-  }}
-  class={cn(
-    "appmenuitem flex items-center cursor-pointer w-full",
-    (layoutContext === LayoutContext.DEFAULT ||
-      layoutContext === LayoutContext.MINIMIZED) && {
-      "bg-aps3 border-aps2 border text-aps1 hover:bg-aps2 hover:bg-opacity-70":
-        isActive && isOutlineStyle,
-      "hover:bg-bgs3": !isActive,
-      [abg()]: isActive && !isOutlineStyle,
-      "border border-transparent": !isActive && isOutlineStyle
-    },
-    {
-      "w-12 flex-col gap-1 rounded-lg":
-        isShowLabel && layoutContext === LayoutContext.PORTRAIT,
-      "gap-2 rounded-lg p-2 h-9": layoutContext === LayoutContext.DEFAULT,
-      "px-2 py-1": !isShowLabel,
-      "justify-between": isShowHotKeyHint
-    },
-    layoutContext === LayoutContext.THIN_WITH_LABEL && {
-      "bg-aps3 border-y text-aps1 hover:bg-aps2 hover:bg-opacity-70":
-        isActive && !isShowLabel,
-      "border border-transparent hover:bg-bgs3 transition-all":
-        !isActive && !isShowLabel,
-      "border-aps2":
-        isActive && (!dev_mixedPanel || !$appStore.currentComponent?.panel),
-      "border-transparent":
-        isActive && dev_mixedPanel && $appStore.currentComponent?.panel,
-      "rounded-r-md": dev_mixedPanel && $appStore.currentComponent?.panel
-    }
-  )}
-  on:click={onClick}
-  use:hoverable={{
-    onHover: (isHoveringParam) => {
-      isHovering = isHoveringParam;
-    }
-  }}
-  use:popover={resolvePopover()}
->
-  <div
-    class={cn("flex gap-1", {
-      "flex-col items-center":
-        layoutContext === LayoutContext.PORTRAIT ||
-        layoutContext === LayoutContext.THIN_WITH_LABEL,
-      "w-full py-2 rounded-md": layoutContext === LayoutContext.THIN_WITH_LABEL,
-      "hover:bg-bgs3 border":
-        layoutContext === LayoutContext.THIN_WITH_LABEL && isShowLabel,
-      "border-transparent":
-        layoutContext === LayoutContext.THIN_WITH_LABEL && !isActive,
-      "bg-bgs3 border-brs3":
-        layoutContext === LayoutContext.THIN_WITH_LABEL &&
-        isActive &&
-        isShowLabel
-    })}
+<div class="w-full" use:popover={resolveTooltipPopover(layoutContext)}>
+  <button
+    bind:this={popRef}
+    class={cn(
+      "appmenuitem flex items-center cursor-pointer w-full",
+      (layoutContext === LayoutContext.DEFAULT ||
+        layoutContext === LayoutContext.MINIMIZED) && {
+        "bg-aps3 border-aps2 border text-aps1 hover:bg-aps2 hover:bg-opacity-70":
+          isActive && isOutlineStyle,
+        "hover:bg-bgs3": !isActive,
+        [abg()]: isActive && !isOutlineStyle,
+        "border border-transparent": !isActive && isOutlineStyle
+      },
+      {
+        "w-12 flex-col gap-1 rounded-lg":
+          isShowLabel && layoutContext === LayoutContext.PORTRAIT,
+        "gap-2 rounded-lg p-2 h-9": layoutContext === LayoutContext.DEFAULT,
+        "px-2 py-1": !isShowLabel,
+        "justify-between": isShowHotKeyHint
+      },
+      layoutContext === LayoutContext.THIN_WITH_LABEL && {
+        "bg-aps3 border-y text-aps1 hover:bg-aps2 hover:bg-opacity-70":
+          isActive && !isShowLabel,
+        "border border-transparent hover:bg-bgs3 transition-all":
+          !isActive && !isShowLabel,
+        "border-aps2":
+          isActive && (!dev_mixedPanel || !$appStore.currentComponent?.panel),
+        "border-transparent":
+          isActive && dev_mixedPanel && $appStore.currentComponent?.panel,
+        "rounded-r-md": dev_mixedPanel && $appStore.currentComponent?.panel
+      }
+    )}
+    on:click={onClick}
+    use:hoverable={{
+      onHover: (isHoveringParam) => {
+        isHovering = isHoveringParam;
+      }
+    }}
+    use:popover={resolvePopover()}
   >
-    {#if item.icon}
-      <!-- <RiveAnimatedIcon icon={item.icon ?? ""} bind:this={rive} /> -->
-      <div
-        class="w-6 flex flex-col gap-1 items-center justify-center"
-        bind:this={buttonRef}
-      >
-        <Icon
-          icon={item.icon}
-          isFilled={isActive ||
-            (!isActive &&
-              layoutContext === LayoutContext.THIN_WITH_LABEL &&
-              isHovering)}
-          size={resolveIconSize(layoutContext)}
-          class={cn(
-            (layoutContext === LayoutContext.DEFAULT ||
-              layoutContext === LayoutContext.MINIMIZED) && {
-              "fill-aps1": isActive && isOutlineStyle,
-              "fill-abg": isActive && !isOutlineStyle
-            },
-            (layoutContext === LayoutContext.PORTRAIT ||
-              layoutContext === LayoutContext.THIN ||
-              layoutContext === LayoutContext.THIN_WITH_LABEL) && {
-              "fill-aps1": isActive,
-              "fill-fgs2":
-                !isActive &&
-                (layoutContext === LayoutContext.THIN_WITH_LABEL ||
-                  layoutContext === LayoutContext.PORTRAIT) &&
-                !isHovering,
-              "text-fgs3":
-                !isActive &&
+    <div
+      class={cn("flex gap-1", {
+        "flex-col items-center":
+          layoutContext === LayoutContext.PORTRAIT ||
+          layoutContext === LayoutContext.THIN_WITH_LABEL,
+        "w-full py-2 rounded-md":
+          layoutContext === LayoutContext.THIN_WITH_LABEL,
+        "hover:bg-bgs3 border":
+          layoutContext === LayoutContext.THIN_WITH_LABEL && isShowLabel,
+        "border-transparent":
+          layoutContext === LayoutContext.THIN_WITH_LABEL && !isActive,
+        "bg-bgs3 border-brs3":
+          layoutContext === LayoutContext.THIN_WITH_LABEL &&
+          isActive &&
+          isShowLabel
+      })}
+    >
+      {#if item.icon}
+        <!-- <RiveAnimatedIcon icon={item.icon ?? ""} bind:this={rive} /> -->
+        <div
+          class="w-6 flex flex-col gap-1 items-center justify-center"
+          bind:this={buttonRef}
+        >
+          <Icon
+            icon={item.icon}
+            isFilled={isActive ||
+              (!isActive &&
                 layoutContext === LayoutContext.THIN_WITH_LABEL &&
-                isHovering
+                isHovering)}
+            size={resolveIconSize(layoutContext)}
+            class={cn(
+              (layoutContext === LayoutContext.DEFAULT ||
+                layoutContext === LayoutContext.MINIMIZED) && {
+                "fill-aps1": isActive && isOutlineStyle,
+                "fill-abg": isActive && !isOutlineStyle
+              },
+              (layoutContext === LayoutContext.PORTRAIT ||
+                layoutContext === LayoutContext.THIN ||
+                layoutContext === LayoutContext.THIN_WITH_LABEL) && {
+                "fill-aps1": isActive,
+                "fill-fgs2":
+                  !isActive &&
+                  (layoutContext === LayoutContext.THIN_WITH_LABEL ||
+                    layoutContext === LayoutContext.PORTRAIT) &&
+                  !isHovering,
+                "text-fgs3":
+                  !isActive &&
+                  layoutContext === LayoutContext.THIN_WITH_LABEL &&
+                  isHovering
+              }
+            )}
+          />
+          {#if layoutContext === LayoutContext.THIN}
+            <div
+              class={cn("w-1.5 h-1.5 bg-aps1 rounded-full", {
+                "bg-aps1": isActive,
+                "bg-transparent": !isActive
+              })}
+            />
+          {/if}
+        </div>
+      {/if}
+      {#if isShowLabel}
+        <div
+          class={cn({
+            "text-b2": layoutContext === LayoutContext.DEFAULT,
+            "text-b4 w-18 truncate":
+              layoutContext === LayoutContext.THIN_WITH_LABEL,
+            "text-b4": layoutContext === LayoutContext.PORTRAIT,
+            "text-aps1":
+              (layoutContext === LayoutContext.THIN_WITH_LABEL ||
+                layoutContext === LayoutContext.PORTRAIT) &&
+              isActive,
+            "text-fgs2":
+              layoutContext === LayoutContext.THIN_WITH_LABEL &&
+              !isActive &&
+              !isHovering,
+            "text-fgs1":
+              layoutContext === LayoutContext.THIN_WITH_LABEL &&
+              isHovering &&
+              !isActive
+          })}
+        >
+          {item.label}
+        </div>
+      {/if}
+    </div>
+    {#if isShowHotKeyHint && layoutContext === LayoutContext.DEFAULT}
+      {@const hotKey = resolveHotKey()}
+      {#if hotKey}
+        <span
+          class={cn(
+            "flex justify-center items-center w-5 h-5 text-b4 rounded-md",
+            {
+              "bg-aps2 text-fgs1": isActive,
+              "bg-bgs3": !isActive
             }
           )}
-        />
-        {#if layoutContext === LayoutContext.THIN}
-          <div
-            class={cn("w-1.5 h-1.5 bg-aps1 rounded-full", {
-              "bg-aps1": isActive,
-              "bg-transparent": !isActive
-            })}
-          />
-        {/if}
-      </div>
+        >
+          {hotKey.toUpperCase()}
+        </span>
+      {/if}
     {/if}
-    {#if isShowLabel}
-      <div
-        class={cn({
-          "text-b2": layoutContext === LayoutContext.DEFAULT,
-          "text-b4 w-18 truncate":
-            layoutContext === LayoutContext.THIN_WITH_LABEL,
-          "text-b4": layoutContext === LayoutContext.PORTRAIT,
-          "text-aps1":
-            (layoutContext === LayoutContext.THIN_WITH_LABEL ||
-              layoutContext === LayoutContext.PORTRAIT) &&
-            isActive,
-          "text-fgs2":
-            layoutContext === LayoutContext.THIN_WITH_LABEL &&
-            !isActive &&
-            !isHovering,
-          "text-fgs1":
-            layoutContext === LayoutContext.THIN_WITH_LABEL &&
-            isHovering &&
-            !isActive
-        })}
-      >
-        {item.label}
-      </div>
-    {/if}
-  </div>
-  {#if isShowHotKeyHint && layoutContext === LayoutContext.DEFAULT}
-    {@const hotKey = resolveHotKey()}
-    {#if hotKey}
-      <span
-        class={cn(
-          "flex justify-center items-center w-5 h-5 text-b4 rounded-md",
-          {
-            "bg-aps2 text-fgs1": isActive,
-            "bg-bgs3": !isActive
-          }
-        )}
-      >
-        {hotKey.toUpperCase()}
-      </span>
-    {/if}
-  {/if}
-</button>
+  </button>
+</div>

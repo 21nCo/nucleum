@@ -46,6 +46,8 @@
   import TextArea from "$lib/client/elements/input/TextArea.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
   import { tooltip } from "$lib/client/actions/popover.action";
+  import ModalContentPadded from "$lib/client/components/modal/ModalContentPadded.svelte";
+
   export let context: ResourceAccessPoint | undefined = undefined;
   let title: string;
   let description: string;
@@ -209,14 +211,14 @@
     <div
       class="flex flex-col h-full gap-4 flex-1 items-center justify-between overflow-auto"
     >
-      <div class="flex flex-col gap-11 mo:p-4 p-10 w-full overflow-auto">
+      <ModalContentPadded class="flex flex-col gap-8 w-full overflow-auto mt-4">
         <div class="flex items-center justify-between w-full gap-2">
           <Text content="Create collection" style={TextStyle.PANEL_HEADING} />
           <span use:tooltip={{ text: "Star collection" }}>
             <Toggle icon="star" bind:on={isStarred} />
           </span>
         </div>
-        <div class="flex flex-col gap-6">
+        <div class="flex flex-col w-full gap-6 flex-grow">
           <OptionSelector
             options={[
               CollectionType.UNTYPED,
@@ -308,8 +310,7 @@
           }}
           bind:selected={selectedView}
         /> -->
-      </div>
-
+      </ModalContentPadded>
       <ModalFooter
         action={resourceAction(Resource.collection, ResourceActionType.CREATE)}
         primaryAction={{

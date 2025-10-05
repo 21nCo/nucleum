@@ -306,6 +306,7 @@
     isDynamicSize={modal.layout?.isDynamicSize}
     orientation={modal.layout?.orientation ?? Orientation.Vertical}
     isOnRight={modal?.isOnRight}
+    alignment={modal.layout?.alignment}
     hasCantileverButtons={modal.layout?.isShowCantileverClose ||
       modal.layout?.isShowBackButton}
   >
@@ -332,7 +333,8 @@
         title: $confirmationNotification.title,
         layout: {
           size: $confirmationNotification.size ?? Size.xs,
-          orientation: Orientation.Horizontal
+          orientation: Orientation.Horizontal,
+          isOveriddenFooter: true
         }
       }}
     >

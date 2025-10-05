@@ -67,8 +67,6 @@ class NodeStore extends ResourceStore<INode, INodeCapture<INode>> {
   searchStore: any;
   constructor() {
     super(Resource.node, {
-      indices: ["contentType", "metaType", "parent"],
-      searchIndices: ["label", "text", "notes"],
       expandProps: ["parent", "file", "mdParent"],
       defaultProps: defaults
     });
@@ -258,11 +256,9 @@ class NodeStore extends ResourceStore<INode, INodeCapture<INode>> {
   }
 }
 
-export const nodeStore = new NodeStore();
+export const nodeStore = NodeStore.resolve(Resource.node);
 
-export const vectorResourceStore = new ResourceStore(Resource.vector, {
-  isCloudOnlyResource: true
-});
+export const vectorResourceStore = new ResourceStore(Resource.vector);
 
 export type IActiveNodeStore = InstanceType<typeof ActiveNodeStore>;
 
@@ -436,7 +432,9 @@ export class ActiveNodeStore extends CollectibleStore<
           clips = result.filter(activeResourceFilterIgnoreParentInactive);
         }
         if (
-          node.contentType === NodeType.YOUTUBE_VIDEO &&
+          [NodeType.YOUTUBE_VIDEO, NodeType.YOUTUBE_SHORT].includes(
+            node.contentType
+          ) &&
           clips &&
           Array.isArray(clips)
         ) {

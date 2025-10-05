@@ -17,9 +17,9 @@
   export let label: string | undefined = undefined;
   export let className: string = "";
   export { className as class };
+  export let variant: ButtonVariant = ButtonVariant.SECONDARY;
   /** button type description to be rendered in stories and code editor tooltips*/
-  export let type: "primary" | "secondary" | "danger" | ButtonVariant =
-    ButtonVariant.SECONDARY;
+  export let type: "primary" | "secondary" | "danger" | ButtonVariant = variant;
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let isExpandToFullWidth: boolean = false;
   export let style: ButtonStyle = ButtonStyle.DEFAULT;
@@ -43,7 +43,9 @@
   export let isHovering: boolean = false;
   export let shortcut: string | IKeyboardShortcut | undefined = undefined;
   export let badge: string | undefined = undefined;
+  export let isBoxed: boolean = false;
   $: isIconOnlyButton = !label && !$$slots.default;
+  $: shortcutSize = size === Size.xs ? Size.sm : Size.md;
 </script>
 
 <button
@@ -55,7 +57,7 @@
   }}
   type="button"
   class={cn(
-    "relative flex flex-row justify-center items-center rounded-full",
+    "relative flex flex-row justify-center items-center",
     {
       "w-full": isExpandToFullWidth,
       "opacity-70 cursor-not-allowed hover:opacity-50": isDisabled || isLoading,
@@ -64,6 +66,8 @@
       "gap-2 text-b3 dp:text-b2": size === Size.sm,
       "gap-1 text-b4 dp:text-b3": size === Size.xs,
       "p-1.5 rounded-md": isIconOnlyButton,
+      "w-full h-full": isBoxed,
+      "rounded-full": !isBoxed,
       [bg(parentBgIndex)]:
         isHovering && isIconOnlyButton && style !== ButtonStyle.PLAIN,
       "underline-dotted hover:underline-dotted-primary":
@@ -81,6 +85,7 @@
         "min-w-fit": size === Size.xs
       },
     style !== ButtonStyle.PLAIN &&
+      !isBoxed &&
       !isIconOnlyButton && {
         "shadow--md": true,
         "h-12 py-4 px-6": size === Size.lg,
@@ -128,7 +133,7 @@
       ? {
           tooltip,
           shortcut,
-          size,
+          size: shortcutSize,
           parentBgIndex
         }
       : {}
@@ -175,7 +180,7 @@
       </div>
       <ShortcutText
         {shortcut}
-        {size}
+        size={shortcutSize}
         parentBgIndex={style === ButtonStyle.PLAIN
           ? parentBgIndex
           : style === ButtonStyle.OUTLINED && type !== ButtonVariant.PRIMARY

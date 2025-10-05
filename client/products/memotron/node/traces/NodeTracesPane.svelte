@@ -66,7 +66,10 @@
         }
         // tasks
       ];
-    } else if (contentType === NodeType.YOUTUBE_VIDEO) {
+    } else if (
+      contentType === NodeType.YOUTUBE_VIDEO ||
+      contentType === NodeType.YOUTUBE_SHORT
+    ) {
       return [
         {
           value: "clips",
@@ -201,9 +204,17 @@
         accessPoint={ResourceAccessPoint.NODE_TRACES}
         resource={Resource.node}
         size={Size.sm}
-        isPreventDefault={$node.contentType === NodeType.YOUTUBE_VIDEO}
+        isPreventDefault={
+          $node.contentType === NodeType.YOUTUBE_VIDEO ||
+          $node.contentType === NodeType.YOUTUBE_SHORT
+        }
         on:click={(e) => {
           if (!e?.detail) return;
+          if (
+            $node.contentType !== NodeType.YOUTUBE_VIDEO &&
+            $node.contentType !== NodeType.YOUTUBE_SHORT
+          )
+            return;
           contentContext.publish("yt-trace-click", {
             id: e.detail.id,
             timestamp: e.detail.body.timestamp

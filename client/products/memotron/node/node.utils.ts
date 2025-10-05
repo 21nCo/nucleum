@@ -119,6 +119,7 @@ const nodeIconMap = new Map<NodeType, string>([
   [NodeType.VIDEO, "video"],
   [NodeType.FILE, "ph:file-light"],
   [NodeType.YOUTUBE_VIDEO, "logos:youtube-icon"],
+  [NodeType.YOUTUBE_SHORT, "logos:youtube-icon"],
   [NodeType.YOUTUBE_CHANNEL, "logos:youtube-icon"],
   [NodeType.YOUTUBE_BOOKMARK, "logos:youtube-icon"],
   [NodeType.TWEET, "twitter"],
@@ -132,6 +133,7 @@ const nodeIconMap = new Map<NodeType, string>([
   [NodeType.THREADS_POST, "ph:threads-logo"],
   [NodeType.THREADS_PROFILE, "ph:threads-logo"],
   [NodeType.INSTAGRAM_POST, "skill-icons:instagram"],
+  [NodeType.INSTAGRAM_REEL, "skill-icons:instagram"],
   [NodeType.INSTAGRAM_PROFILE, "skill-icons:instagram"],
   [NodeType.LINKEDIN_POST, "logos:linkedin-icon"],
   [NodeType.LINKEDIN_PROFILE, "logos:linkedin-icon"],
@@ -279,6 +281,7 @@ export function resolveUrlPreview(node: INode) {
     return metadata?.ogImage ?? metadata?.screenshotUrl;
   } else if (
     contentType === NodeType.YOUTUBE_VIDEO ||
+    contentType === NodeType.YOUTUBE_SHORT ||
     contentType === NodeType.YOUTUBE_CHANNEL
   ) {
     return metadata?.ogImage ?? metadata?.thumbnailUrl;
@@ -555,12 +558,14 @@ const contentTypePriority: NodeType[] = [
   NodeType.BLUESKY_POST,
   NodeType.THREADS_POST,
   NodeType.INSTAGRAM_POST,
+  NodeType.INSTAGRAM_REEL,
   NodeType.REDDIT_POST,
   NodeType.FACEBOOK_POST,
   NodeType.MASTODON_POST,
 
   // Video content
   NodeType.YOUTUBE_VIDEO,
+  NodeType.YOUTUBE_SHORT,
   NodeType.COURSERA_VIDEO,
   NodeType.UDEMY_VIDEO,
   NodeType.EDX_VIDEO,

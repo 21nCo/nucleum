@@ -5,10 +5,10 @@
   import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
   import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import { toasts } from "$lib/client/stores/notification.store";
   import { Orientation } from "$lib/client/types/direction.enum";
   import type { ISelectItem } from "$lib/client/types/select.type";
+  import ModalContentPadded from "$lib/client/components/modal/ModalContentPadded.svelte";
   import { combinationStore } from "./combination.store";
   import { CombinationType } from "./combination.type";
 
@@ -64,30 +64,30 @@
 </script>
 
 <div class="flex flex-col gap-6 justify-between w-full h-full">
-  <div class="flex flex-col gap-6 w-full h-full">
-    <TextInput
-      label={{
-        label: "Name of the combination",
-        orientation: Orientation.Vertical
-      }}
-      placeholder="Some combination"
-      bind:value={name}
-    />
-    <OptionSelector
-      labelProps={{ label: "Type of combination" }}
-      options={typeOptions}
-      bind:selected={type}
-    />
-  </div>
-  <footer class="w-full flex flex-col gap-3">
-    <InlineErrorMessage bind:error />
-    <ModalFooter
-      action={resourceAction(Resource.combination, ResourceActionType.CREATE)}
-      primaryAction={{
-        label: "Save",
-        callback: onSave
-      }}
-      secondaryAction={{ label: "Cancel" }}
-    />
-  </footer>
+  <ModalContentPadded>
+    <div class="flex flex-col gap-6 w-full h-full">
+      <TextInput
+        label={{
+          label: "Name of the combination",
+          orientation: Orientation.Vertical
+        }}
+        placeholder="Some combination"
+        bind:value={name}
+      />
+      <OptionSelector
+        labelProps={{ label: "Type of combination" }}
+        options={typeOptions}
+        bind:selected={type}
+      />
+    </div>
+  </ModalContentPadded>
+  <ModalFooter
+    action={resourceAction(Resource.combination, ResourceActionType.CREATE)}
+    bind:error
+    primaryAction={{
+      label: "Save",
+      callback: onSave
+    }}
+    secondaryAction={{ label: "Cancel" }}
+  />
 </div>
