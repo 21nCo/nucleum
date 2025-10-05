@@ -12,13 +12,23 @@
   import LinkSearch from "../../common/linkbox/LinkSearch.svelte";
   import type { IActiveNodeStore } from "../node.store";
   import { resolveNodeContentLabel, resolveNodeIcon } from "../node.utils";
-  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import {
+    resourceAction,
+    resourceInList
+  } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { popover, tooltip } from "$lib/client/actions/popover.action";
   import { headingNodeTypes, NodeType } from "../node.type";
   import { logger } from "$lib/client/components/debug/logger.client";
   import { ResourceError } from "$lib/client/components/error/errors";
   import { ResourceErrorCode } from "$lib/client/components/error/error.type";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import {
+    ResourceAccessPoint,
+    ResourceActionType
+  } from "$lib/client/components/flux/resourceStores/resource.type";
+  import view from "$lib/client/stores/view.store";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import { resolveProductConfig } from "$lib/client/products/product.config";
+  import { Action } from "$lib/client/types/action.enum";
 
   export let node: IActiveNodeStore;
   export let isReadOnlyMode: boolean = false;
@@ -72,10 +82,14 @@
       class="flex items-center gap-2 h-full border border-bgs4 hover:border-fgs3 rounded-full px-2 py-0.5 text-b2 whitespace-nowrap bg-bgs2 text-fgs1"
       on:click={() => {
         appStore.closeResource();
-        appStore.gotoPath("/library", {
+        const path = $view.isPortrait
+          ? resourceAction(Resource.node, ResourceActionType.BROWSE)
+          : Action.LIBRARY;
+        appStore.gotoPath(`/${path}`, {
           queryParams: {
             resource: Resource.node,
-            type: $node.contentType.toLowerCase()
+            type: $node.contentType.toLowerCase(),
+            [AppSearchParam.RETURN_TO]: resolveProductConfig().homePathPt
           }
         });
       }}

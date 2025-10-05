@@ -28,7 +28,7 @@
 <div class="flex justify-between w-full">
   {#if currentStep > 0}
     {#if $view.isPortrait}
-      <Icon on:click={handleBack} icon="chevleft" />
+      <Icon on:click={handleBack} icon="chevron-left" />
     {:else}
       <Button size={Size.sm} on:click={handleBack} icon="back-sm">Back</Button>
     {/if}

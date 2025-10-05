@@ -164,7 +164,10 @@
             />
           {/if}
         {/if}
-        <Icon icon={isOptionsVisible ? "chevup" : "chevdown"} size={Size.sm} />
+        <Icon
+          icon={isOptionsVisible ? "chevron-up" : "chevron-down"}
+          size={Size.sm}
+        />
       </div>
     {/if}
   </FormElement>

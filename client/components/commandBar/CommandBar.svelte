@@ -120,7 +120,7 @@
 >
   {#if isPerformingSearchAction}
     <div
-      class="h-fit min-h-fit flex gap-2 justify-between items-center cw:w-full cw:max-w-full w-fit max-w-60 cw:ml-0 ml-2 mt-2 bg-bgs2 cw:px-3 pr-1 pl-3 cw:rounded-none rounded-md truncate"
+      class="h-fit min-h-fit flex gap-2 justify-between items-center cw:w-full cw:max-w-full w-fit max-w-60 cw:ml-0 ml-2 mt-2 bg-bgs2 cw:px-3 cw:py-2 pr-1 pl-3 cw:rounded-none rounded-md truncate"
       in:fly={{ y: -10, easing: quadInOut, duration: 250 }}
     >
       <span class="truncate">

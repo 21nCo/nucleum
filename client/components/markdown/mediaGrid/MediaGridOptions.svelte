@@ -91,8 +91,8 @@
           {config.noOfColumns}
         </div>
         <div class="inline-flex flex-col">
-          <Icon icon="chevup" size={Size.xs} on:click={chevUp} />
-          <Icon icon="chevdown" size={Size.xs} on:click={chevDown} />
+          <Icon icon="chevron-up" size={Size.xs} on:click={chevUp} />
+          <Icon icon="chevron-down" size={Size.xs} on:click={chevDown} />
         </div>
         <div class="h-full border border-r-brs3"></div>
         <Icon

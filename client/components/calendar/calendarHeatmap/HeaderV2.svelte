@@ -40,15 +40,15 @@
       {#if $isTouchDevice == false}
         {#if orientation === Orientation.Vertical}
           <div class="flex flex-col">
-            <Button icon="chevup" size={Size.sm} on:click={chevleft} />
-            <Button icon="chevdown" size={Size.sm} on:click={chevright} />
+            <Button icon="chevron-up" size={Size.sm} on:click={chevleft} />
+            <Button icon="chevron-down" size={Size.sm} on:click={chevright} />
           </div>
         {:else}
           <div class="self-center">
-            <Button icon="chevleft" on:click={chevleft} />
+            <Button icon="chevron-left" on:click={chevleft} />
           </div>
           <div class="self-center mr-2">
-            <Button icon="chevright" on:click={chevright} />
+            <Button icon="chevron-right" on:click={chevright} />
           </div>
         {/if}
       {/if}

@@ -133,7 +133,7 @@
 <footer
   class={cn("flex flex-col w-full gap-2 justify-center mo:pb-8", {
     "p-4": !dev_isUseExpandedButtons,
-    "rounded-b-md overflow-hidden": dev_isUseExpandedButtons
+    "rounded-b-md overflow-clip": dev_isUseExpandedButtons
   })}
 >
   {#if error}
