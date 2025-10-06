@@ -11,8 +11,8 @@
   import { ButtonStyle } from "$lib/client/types/button.type";
 </script>
 
-<div class="flex flex-col justify-between gap-4 h-full w-full p-4">
-  <div class="flex flex-col gap-4 w-full">
+<div class="flex flex-col justify-between gap-4 h-full w-full">
+  <div class="flex flex-col gap-4 w-full p-4">
     <div class="flex flex-col gap-2 items-center">
       <Icon icon="offline" size={Size.xxl} />
       <h1 class="text-h4">You seem to be offline</h1>

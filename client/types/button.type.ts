@@ -18,6 +18,8 @@ export type IButtonParams = {
   shortcut?: string | IKeyboardShortcut;
   isPreventMinWidth?: boolean;
   popoverAction?: any;
+  isLoading?: boolean;
+  isDisabled?: boolean;
 };
 
 export enum ButtonVariant {

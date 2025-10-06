@@ -90,10 +90,6 @@ export type IAction = {
    * Search action params to be used when the action type is {@link ActionType.SEARCH_CMD}
    */
   searchActionParams?: {
-    /**
-     * @deprecated - use searchCallback instead
-     */
-    searchStoreId?: string;
     searchCallback?: (search: string, componentParams?: any) => Promise<any>;
     /**
      * @deprecated - use placeholder instead

@@ -137,6 +137,7 @@ export enum PersistenceActionType {
 export type IInsertMutation<T> = {
   action: PersistenceActionType.INSERT | PersistenceActionType.BULK_INSERT;
   records: T[];
+  isSkipFlexSearchIndexing?: boolean;
 };
 
 export type IReplaceMutation<T> = {
@@ -390,11 +391,6 @@ export type IMutationAdditionalParams = {
    * Whether the mutation should prevent cloud persistence - will be saved locally if true.
    */
   isPreventCloudPersistence?: boolean;
-
-  /**
-   * Whether the resource is cloud only. If true, the mutation will be directly relayed to the cloud and not saved locally.
-   */
-  isCloudOnlyResource?: boolean;
 };
 
 export type IResourceSelectAdditionalParams = {

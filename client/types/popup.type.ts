@@ -1,5 +1,5 @@
 import type { IButtonParams } from "./button.type";
-import type { Orientation } from "./direction.enum";
+import type { Orientation, Placement } from "./direction.enum";
 import type { Size } from "./size.enum";
 
 export type ModalEvent = ModalParams & {
@@ -17,10 +17,16 @@ export type ModalEvent = ModalParams & {
 export type ModalParams = {
   isShowAsSheet?: boolean;
   isDismissable?: boolean;
+  /**
+   * If set to false, the modal will have a transparent background and will have a shadow.
+   */
   isShowOverlay?: boolean;
   title?: string;
   componentParams?: any;
   layout?: ModalLayoutParams;
+  /**
+   * @deprecated - use layout.alignment instead
+   */
   isOnRight?: boolean;
 };
 
@@ -34,6 +40,18 @@ export type ModalLayoutParams = {
   isShowClose?: boolean;
   isShowCantileverClose?: boolean;
   isShowBackButton?: boolean;
+  /**
+   * If set to true, padding will be ignored for modal content area. Therefore, the component should make use of ModalContentPadded for the content.
+   */
+  isOveriddenFooter?: boolean;
+  /**
+   * Top: The modal will be aligned on the top of the screen with a margin instead of the default center aligned.
+   */
+  alignment?:
+    | Placement.Center
+    | Placement.TopCenter
+    | Placement.BottomCenter
+    | Placement.Right;
 };
 
 export type IPlayer = {

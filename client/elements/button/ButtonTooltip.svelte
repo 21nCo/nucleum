@@ -6,7 +6,7 @@
 
   export let tooltip: string;
   export let shortcut: string | IKeyboardShortcut | undefined = undefined;
-  export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
+  export let size: Size.sm | Size.md = Size.md;
   export let parentBgIndex: number = 1;
 </script>
 

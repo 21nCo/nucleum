@@ -133,10 +133,7 @@
     resolveGenericIcon
   } from "../iconsV2/icon.store";
   import { iconMappings } from "../iconsV2/icons.map";
-  import EclipseHalf from "../iconsV2/svgSpinners/EclipseHalf.svelte";
-  import One80RingWithBg from "../iconsV2/svgSpinners/One80RingWithBg.svelte";
-  import NinetyRingWithBg from "../iconsV2/svgSpinners/NinetyRingWithBg.svelte";
-  import ThreeDotsFade from "../iconsV2/svgSpinners/ThreeDotsFade.svelte";
+  import SvgSpinnerIcon from "../iconsV2/svgSpinners/SvgSpinnerIcon.svelte";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
 
   export let icon: string | undefined = undefined;
@@ -383,15 +380,7 @@
                   : "w-2 h-2"}
     {#if resolvedIcon.startsWith("svg-spinners")}
       <div class={cn(_classList, "iconifysvg", sizeClass, renderedIconifyIcon)}>
-        {#if resolvedIcon.includes("3-dots-fade")}
-          <ThreeDotsFade />
-        {:else if resolvedIcon.includes("90-ring-with-bg")}
-          <NinetyRingWithBg />
-        {:else if resolvedIcon.includes("180-ring-with-bg")}
-          <One80RingWithBg />
-        {:else if resolvedIcon.includes("eclipse-half")}
-          <EclipseHalf />
-        {/if}
+        <SvgSpinnerIcon icon={resolvedIcon} />
       </div>
     {:else if isUseIconifySprite}
       <svg class={cn(_classList, "iconifysvg", sizeClass)}>

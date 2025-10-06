@@ -19,11 +19,28 @@
   export let selected: CaptureMethod | undefined = undefined;
   export let isBoxedLayout = true;
   let types: any[] = [];
+  const isDev = import.meta.env.DEV;
   const baseTypes = [
     { icon: "microphone", label: "Record", value: CaptureMethod.AUDIO },
     { icon: "camera", label: "Camera", value: CaptureMethod.CAMERA },
-    { icon: "upload", label: "File", value: CaptureMethod.UPLOAD }
-  ];
+    isDev && {
+      icon: "ri:sketching",
+      label: "Sketch",
+      value: CaptureMethod.SKETCH
+    },
+    isDev && {
+      icon: "globe",
+      label: "Web",
+      value: CaptureMethod.WEB
+    },
+    isDev && {
+      icon: "scan",
+      label: "Scan",
+      value: CaptureMethod.SCAN
+    },
+    { icon: "upload", label: "File", value: CaptureMethod.UPLOAD },
+    { icon: "clipboard", label: "Paste", value: CaptureMethod.PASTE }
+  ].filter(Boolean);
 
   async function refreshTypes() {
     const typesResult = await collectionStore.resolveCaptureShortcuts();

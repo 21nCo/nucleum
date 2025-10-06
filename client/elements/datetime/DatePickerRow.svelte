@@ -470,7 +470,7 @@
       on:click={handlePrevious}
       disabled={!canGoPrev}
     >
-      <Icon icon="chevleft" size={Size.sm} />
+      <Icon icon="chevron-left" size={Size.sm} />
     </button>
 
     <div class="flex gap-2 flex-grow justify-center overflow-hidden">
@@ -506,7 +506,7 @@
       on:click={handleNext}
       disabled={!canGoNext}
     >
-      <Icon icon="chevright" size={Size.sm} />
+      <Icon icon="chevron-right" size={Size.sm} />
     </button>
   </div>
 </div>

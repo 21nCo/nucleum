@@ -139,7 +139,7 @@
               <span class="text-fgs2 whitespace-nowrap"> All apps </span>
             {/if}
           </div>
-          <SvgIcon icon="chevdown" isRenderRaw={true} />
+          <SvgIcon icon="chevron-down" isRenderRaw={true} />
         </button>
       </div>
 
@@ -193,7 +193,7 @@
                 <Badge text={selectedCategories.length} />
               {/if}
             </div>
-            <SvgIcon icon="chevdown" isRenderRaw={true} />
+            <SvgIcon icon="chevron-down" isRenderRaw={true} />
           </button>
         </div>
       {/if}

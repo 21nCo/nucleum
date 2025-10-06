@@ -94,7 +94,7 @@
       <div class="flex w-full justify-start items-center gap-8">
         <div class="flex grow justify-between gap-4 px-4">
           <Icon
-            icon="chevleft"
+            icon="chevron-left"
             size={Size.lg}
             on:click={() => {
               let newDate = new Date(date.getTime());
@@ -123,7 +123,7 @@
             }}
           />
           <Icon
-            icon="chevright"
+            icon="chevron-right"
             size={Size.lg}
             on:click={() => {
               let newDate = new Date(date.getTime());

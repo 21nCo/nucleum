@@ -71,7 +71,7 @@
             </div>
           </div>
         </div>
-        <Button icon="chevright" />
+        <Button icon="chevron-right" />
       </div>
       <div class="flex w-full justify-end">
         <div

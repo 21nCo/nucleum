@@ -3,6 +3,7 @@
   import view from "$lib/client/stores/view.store";
   import { TextStyle } from "$lib/client/types/text.enum";
   import { properCase } from "$lib/shared/utils/text.utils";
+  import MarkdownRenderer from "$lib/client/landing/shared/elements/MarkdownRenderer.svelte";
   import { onMount } from "svelte";
   export let content: string;
   export let style: TextStyle;
@@ -47,10 +48,7 @@
 </script>
 
 <div style={customStyle} class={`${classList}`}>
-  {#if !isPreventProperCasing}
-    {properCase(content)}
-  {:else}
-    {content}
-  {/if}
-  <!-- <slot /> -->
+  <MarkdownRenderer
+    text={!isPreventProperCasing ? properCase(content) : content}
+  />
 </div>

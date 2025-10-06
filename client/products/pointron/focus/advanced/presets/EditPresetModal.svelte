@@ -19,6 +19,7 @@
   import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import PresetGoalsSelector from "./PresetGoalsSelector.svelte";
+  import ModalContentPadded from "$lib/client/components/modal/ModalContentPadded.svelte";
 
   export let id: string;
   let composition: SessionComposition;
@@ -79,9 +80,9 @@
   }
 </script>
 
-<div class="flex flex-col justify-between w-full h-full">
+<div class="flex flex-col gap-6 justify-between w-full h-full">
   {#if composition}
-    <div class="flex flex-col gap-4 flex-grow">
+    <ModalContentPadded class="flex flex-col gap-4 flex-grow">
       <TextInput
         bind:value={composition.name}
         label={{ label: "Preset name", orientation: Orientation.Vertical }}
@@ -93,7 +94,7 @@
         on:change={() => (composition = composition)}
       />
       <PresetGoalsSelector bind:selectedGoals />
-    </div>
+    </ModalContentPadded>
     <ModalFooter
       action={PointronAction.EDIT_PRESET}
       primaryAction={{

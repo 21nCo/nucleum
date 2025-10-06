@@ -97,6 +97,7 @@ import type { IMarkdownTemplate } from "$lib/client/components/markdown/md.type"
 import { isValidString } from "$lib/shared/utils/text.utils";
 import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { debouncer } from "$lib/client/utils/utils";
+import { openPasteConfirmationModalFromClipboard } from "./paste.utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
@@ -135,7 +136,7 @@ class CaptureStore extends ResourceStore<ICapture, ICaptureCapture> {
   }
 }
 
-export const captureStore = new CaptureStore();
+export const captureStore = CaptureStore.resolve(Resource.capture);
 
 export type IActiveCaptureStore = InstanceType<typeof ActiveCaptureStore>;
 
@@ -339,6 +340,11 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   async onTypeSelect(val: CaptureMethod | IRecordId) {
     logger.debug({ context: "onTypeSelect", val });
     if (!val) return;
+    if (val === CaptureMethod.PASTE) {
+      await openPasteConfirmationModalFromClipboard();
+      appStore.closeResource({ accessMode: ResourceAccessMode.POP });
+      return;
+    }
     const isCollection = isRecordId(val, Resource.collection);
     if (!isCollection) {
       this.update((store) => {
@@ -755,7 +761,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         isOpenOnSave: params?.isOpenOnSave,
         isEmbedContext: params?.isEmbedContext
       });
-      return result?.[0];
+      return Array.isArray(result) ? result?.[0] : result;
     } finally {
       if (!params?.isEmbedContext) this.setIsSaving(false);
     }
@@ -775,7 +781,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     }
   }
 
-  private async saveMarkdownFromText(text: string, title?: string) {
+  async saveMarkdownFromText(text: string, title?: string) {
     const blocks: IBlock[] = textToMdBlocks(text);
     const structure = extractStructureForChildren(blocks);
     const rootStructure = extractRootStructure(structure, hierarchyFactorLimit);
@@ -787,7 +793,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     const mdText = generateMarkdownText(rootBlocks);
     let root: INodeCapture<INode> = {
       id,
-      label: title ?? "",
+      label: title ?? text.split("\n")[0].trim().slice(0, 100),
       properties: [],
       body: "",
       text: mdText,
@@ -1114,7 +1120,10 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     };
     const accountVal = account.get();
     if (accountVal?.dataMode === UserDataMode.CLOUD) {
-      if (params?.contentType === NodeType.YOUTUBE_VIDEO) {
+      if (
+        params?.contentType === NodeType.YOUTUBE_VIDEO ||
+        params?.contentType === NodeType.YOUTUBE_SHORT
+      ) {
         const youtubeMetadata = await fetchYouTubeMetadata(text);
         if (youtubeMetadata) {
           node.label = youtubeMetadata.title;
@@ -1149,7 +1158,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       isOpenOnSave: params?.isOpenOnSave,
       isEmbedContext: params?.isEmbedContext
     });
-    return result;
+    return Array.isArray(result) ? result?.[0] : result;
   }
 
   async postSave(

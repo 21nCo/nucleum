@@ -19,7 +19,7 @@ class PropertyStore extends ResourceStore<IProperty, IPropertyCapture> {
   }
 }
 
-export const propertyStore = new PropertyStore();
+export const propertyStore = PropertyStore.resolve(Resource.property);
 
 export class PropertyEditorStore extends ObservableStore<IPropertyEditorStore> {
   constructor() {

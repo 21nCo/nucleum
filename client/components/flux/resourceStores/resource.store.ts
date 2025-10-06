@@ -49,6 +49,7 @@ import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
 import { stringify } from "$lib/shared/utils/json.utils";
 
 const activeResources = new Map<string, ActiveResourceStore<any, any, any>>();
+export const resourceStores = new Map<Resource, ResourceStore<any, any>>();
 
 const multiSelectStores = new Map<string, MultiSelectStore>();
 
@@ -214,7 +215,6 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
   indices?: string[];
   searchIndices?: string[];
   isInMemory?: boolean = false;
-  isCloudOnlyResource?: boolean = false;
   defaultProps?: Partial<T> = {};
   expandProps?: string[];
   /**
@@ -231,30 +231,13 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
   private isExtensionEnvironment: boolean = false;
   constructor(
     resourceType: Resource,
-    params?: Pick<
-      IResourceStore<T>,
-      | "isInMemory"
-      | "isCloudOnlyResource"
-      | "indices"
-      | "searchIndices"
-      | "defaultProps"
-      | "expandProps"
-    > &
+    params?: Pick<IResourceStore<T>, "defaultProps" | "expandProps"> &
       Partial<Pick<IResourceStore<T>, "dataType">>
   ) {
     this.id = resourceType;
     resolveCurrentUserId().then((x) => {
       this.currentUserId = x;
     });
-    this.indices = [
-      "id",
-      "createdAt",
-      "modifiedAt",
-      ...(params?.indices ?? [])
-    ];
-    this.searchIndices = params?.searchIndices;
-    this.isInMemory = params?.isInMemory;
-    this.isCloudOnlyResource = params?.isCloudOnlyResource;
     this.dataType = params?.dataType ?? StoreDataType.IFR;
     this.defaultProps = params?.defaultProps ?? {};
     this.expandProps = params?.expandProps;
@@ -305,17 +288,13 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
         method: FluxMethod.MUTATION,
         args: {
           resource: this.id,
-          params: data,
-          additionalParams: {
-            isCloudOnlyResource: this.isCloudOnlyResource
-          }
+          params: data
         }
       });
       if (result) return resources;
       return result;
     }
     await flux.mutation<T>(this.id, data, {
-      isCloudOnlyResource: this.isCloudOnlyResource,
       context: params?.context
     });
     return resources;
@@ -334,10 +313,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
             action: PersistenceActionType.MERGE,
             record: data
           },
-          additionalParams: {
-            ...additionalParams,
-            isCloudOnlyResource: this.isCloudOnlyResource
-          }
+          additionalParams
         }
       });
     }
@@ -348,8 +324,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
         record: data
       },
       {
-        ...additionalParams,
-        isCloudOnlyResource: this.isCloudOnlyResource
+        ...additionalParams
       }
     );
   }
@@ -484,9 +459,6 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
               modifiedBy: this.currentUserId,
               modifiedAt: new Date()
             }))
-          },
-          additionalParams: {
-            isCloudOnlyResource: this.isCloudOnlyResource
           }
         }
       });
@@ -509,8 +481,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
         })) as unknown as T[]
       },
       {
-        ...additionalParams,
-        isCloudOnlyResource: this.isCloudOnlyResource
+        ...additionalParams
       }
     );
   }
@@ -612,9 +583,6 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
           params: {
             action: PersistenceActionType.DELETE,
             recordId: id
-          },
-          additionalParams: {
-            isCloudOnlyResource: this.isCloudOnlyResource
           }
         }
       });
@@ -626,8 +594,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
         recordId: id
       },
       {
-        ...additionalParams,
-        isCloudOnlyResource: this.isCloudOnlyResource
+        ...additionalParams
       }
     );
   }
@@ -638,10 +605,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
         method: FluxMethod.MUTATION,
         args: {
           resource: this.id,
-          params: { action: PersistenceActionType.BULK_DELETE, recordIds: ids },
-          additionalParams: {
-            isCloudOnlyResource: this.isCloudOnlyResource
-          }
+          params: { action: PersistenceActionType.BULK_DELETE, recordIds: ids }
         }
       });
     }
@@ -652,8 +616,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
         recordIds: ids
       },
       {
-        ...additionalParams,
-        isCloudOnlyResource: this.isCloudOnlyResource
+        ...additionalParams
       }
     );
   }
@@ -713,8 +676,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
     }
 
     const result = await flux.selectMany(this.id, params, {
-      isCloudOnlyResource:
-        this.isCloudOnlyResource ?? additionalParams?.isUseCloud,
+      isUseCloud: additionalParams?.isUseCloud,
       signal: additionalParams?.signal
     });
     if (
@@ -756,7 +718,6 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
       });
     }
     return flux.select(resourceId, properties, {
-      isCloudOnlyResource: this.isCloudOnlyResource,
       signal: params?.signal
     });
   }
@@ -809,5 +770,16 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
     } else {
       toasts.error("Something went wrong. Please try again.");
     }
+  }
+
+  static resolve<T extends ResourceStore<any, any>>(
+    this: new () => T,
+    resource: Resource
+  ): T {
+    if (!resourceStores.has(resource)) {
+      resourceStores.set(resource, new this());
+    }
+    let val = resourceStores.get(resource);
+    return val! as T;
   }
 }

@@ -23,7 +23,6 @@
     safeRequestIdleCallback
   } from "$lib/client/utils/browser.utils";
   import { AlertType } from "$lib/client/types/notification.type";
-  import { cacheableStores } from "$lib/client/stores/globalStoresMap";
   import AppLoadingView from "../paint/AppLoadingView.svelte";
   import DynamicMetadataLayer from "./DynamicMetadataLayer.svelte";
   import { logger } from "$lib/client/components/debug/logger.client";
@@ -32,8 +31,14 @@
     UserDataMode,
     UserSessionType
   } from "$lib/client/types/account.type";
-  import { PersistenceProvider } from "$lib/client/persistence/persistence.type";
-  import { getDapId } from "$lib/client/persistence/persistence.utils";
+  import {
+    ClientStorageKey,
+    PersistenceProvider
+  } from "$lib/client/persistence/persistence.type";
+  import {
+    clientStorage,
+    getDapId
+  } from "$lib/client/persistence/persistence.utils";
   import PageError from "$lib/client/components/error/PageError.svelte";
   import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
   import { SignalDBPersistence } from "$lib/client/persistence/signaldb/signaldb.local";
@@ -62,7 +67,9 @@
   import { RxDBPersistence } from "$lib/client/persistence/rxdb/rxdb.local";
   import { DexiePersistence } from "$lib/client/persistence/dexie/dexie.local";
   import { parse } from "$lib/shared/utils/json.utils";
-  import { productData } from "$lib/client/products/product.resolver";
+  import { resolveProductConfig } from "$lib/client/products/product.config";
+  import { resourceStores } from "$lib/client/components/flux/resourceStores/resource.store";
+  import { kvStores } from "$lib/client/components/flux/resourceStores/kv.store";
   const loadingMessages = {
     cloneUp: {
       message: "Syncing your local data with the cloud...",
@@ -75,6 +82,8 @@
       message: "First login detected. Syncing your data..."
     }
   };
+
+  const ONE_WEEK_IN_MS = 7 * 24 * 60 * 60 * 1000;
 
   let loadingMessage: {
     message: string;
@@ -91,6 +100,26 @@
   const isDebug = import.meta.env?.DEV;
   $: searcheableResources =
     resolveProductResources($appStore.product, "search") ?? [];
+
+  async function shouldRunFluxIndex() {
+    const lastIndexedAt = await clientStorage.get(
+      ClientStorageKey.LAST_INDEXED_AT
+    );
+    if (!lastIndexedAt) return true;
+
+    const lastIndexedTimestamp = Number(lastIndexedAt);
+    if (Number.isNaN(lastIndexedTimestamp)) return true;
+
+    return Date.now() - lastIndexedTimestamp >= ONE_WEEK_IN_MS;
+  }
+
+  async function runFluxIndexWithTracking() {
+    await flux.index();
+    await clientStorage.set(
+      ClientStorageKey.LAST_INDEXED_AT,
+      Date.now().toString()
+    );
+  }
 
   onMount(async () => {
     postMessageToParent(EmbedMessage.MOUNT);
@@ -117,14 +146,26 @@
     if (userDataState?.paginateResources) {
       // loadingMessage.duration = userDataState.paginateResources.length * 2;
       //TODO - calculate estimated time to paginate using total length of records for each resource and resource type
-      await flux.paginateResources(userDataState.paginateResources, 100);
+      await flux.paginateResources(
+        userDataState.paginateResources,
+        100,
+        userDataState.isFirstInitialLoad
+      );
     } else if (userDataState?.cursors) {
-      await flux.paginateResourcesV2(userDataState.cursors);
+      await flux.paginateResourcesV2(
+        userDataState.cursors,
+        userDataState.isFirstInitialLoad
+      );
     }
-    await Promise.all([
+    const shouldTriggerIndex = await shouldRunFluxIndex();
+    const initializationTasks = [
       recentsStore.refresh(searcheableResources),
       initializeUserConfig()
-    ]);
+    ];
+    if (shouldTriggerIndex) {
+      initializationTasks.push(runFluxIndexWithTracking());
+    }
+    await Promise.all(initializationTasks);
     if (initState !== 1) {
       $appLoadingState.isBaseLoaded = true;
       dispatch("ready");
@@ -291,7 +332,7 @@
           at: "UserBaseLayer.initializeData - local",
           initState
         });
-        if (initState === 0) await flux.kvSeed();
+        if (initState === 0) await kvSeedDelegate();
         else await flux.loadInMemoryStores();
         return initState;
       }
@@ -318,16 +359,35 @@
     }
   }
 
+  async function kvSeedDelegate() {
+    const data = Array.from(kvStores.values()).map((x) => {
+      return { id: `kv:${x.id}`, ...x.seed };
+    });
+    await flux.kvSeed(data);
+  }
+
   async function initializeFlux(params: { dapId: string; userId?: string }) {
+    const tables = resolveProductConfig().tableConfig;
+    const allStores = [...resourceStores.values(), ...kvStores.values()];
+    const loaderCallback = (resource: string, data: any) => {
+      const store = allStores.find(
+        (s) => s.id === resource || `kv:${s.id}` === resource
+      );
+      if (store?.loader) {
+        store.loader(data);
+      }
+    };
+
     const initParams = {
       ...params,
       appVersion: $appStore.version + "." + $appStore.build,
-      remoteOnlyStores: [...productData.stores.remoteOnlyStores],
-      product: $appStore.product
+      product: $appStore.product,
+      tables,
+      loaderCallback
     };
-    const stores = [...productData.stores.cacheableStores, ...cacheableStores];
+
     const provider: PersistenceProvider = PersistenceProvider.DEXIE;
-    return initFlux(stores, provider, resolveLocalPersistence(), initParams);
+    return initFlux(resolveLocalPersistence(), initParams);
 
     function resolveLocalPersistence() {
       switch (provider) {
@@ -363,7 +423,7 @@
         loadingMessage = loadingMessages.cloneUp;
         await flux.cloneUp();
       } else {
-        await flux.kvSeed();
+        await kvSeedDelegate();
       }
     } else if ($account.sessionType === UserSessionType.RETURNING) {
       if (initState === 0) {

@@ -70,7 +70,7 @@
       <span class="text-fgs3">{placeholder}</span>
     {/if}
   </div>
-  <Icon icon={isActive ? "chevup" : "chevdown"} size={Size.sm} />
+  <Icon icon={isActive ? "chevron-up" : "chevron-down"} size={Size.sm} />
   <slot name="popover" slot="popover">
     {#each options as item, index}
       <button

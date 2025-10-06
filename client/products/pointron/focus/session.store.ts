@@ -1526,7 +1526,7 @@ export const focusItemsStore = new FocusItemsStore();
 
 class SessionStore extends ResourceStore<ISession, ISessionCapture> {
   constructor() {
-    super(Resource.session, { indices: ["startUnix", "type"] });
+    super(Resource.session);
   }
 
   async selectManyWithItemsExpansion(
@@ -1727,4 +1727,4 @@ class SessionStore extends ResourceStore<ISession, ISessionCapture> {
   }
 }
 
-export const sessionStore = new SessionStore();
+export const sessionStore = SessionStore.resolve(Resource.session);

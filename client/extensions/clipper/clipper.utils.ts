@@ -203,9 +203,12 @@ export async function extractYoutubeVideoData() {
       thumbnailUrl: youtubeMetadataFromOEmbedAPI.thumbnail_url
     };
   }
+  const contentType = /\/shorts\//.test(url)
+    ? NodeType.YOUTUBE_SHORT
+    : NodeType.YOUTUBE_VIDEO;
   return {
     label: title,
-    contentType: NodeType.YOUTUBE_VIDEO,
+    contentType,
     url,
     body: { hash },
     metadata

@@ -47,7 +47,7 @@
   onMount(() => {
     const unsubscribe = appEvents.subscribe((e) => {
       if (e.event === GlobalEvent.APP_MENU_SWITCHED) {
-        isCollapsed = false;
+        isCollapsed = !isCollapsed;
         isExplicitlyCollapsed = false;
       }
     });

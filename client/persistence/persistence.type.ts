@@ -62,6 +62,7 @@ export enum ClientStorageKey {
    * Used to track the bootup status of the extension.
    */
   EXTENSION_BOOTUP = "extensionBootup",
+  LAST_INDEXED_AT = "lastIndexedAt",
   TABLES = "tables"
 }
 

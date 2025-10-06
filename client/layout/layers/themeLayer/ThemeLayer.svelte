@@ -21,6 +21,7 @@
 
   export let extensionContext: string | undefined = undefined;
   export let isInlineExtensionContext: boolean = false;
+  export let isSheetContext: boolean = false;
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
   let rootFontSize: number = defaultRootFontSize + 0.6 * $view?.scale;
@@ -76,20 +77,27 @@
    *
    * visibility is set to visible with important to handle cases where the web pages override extension styles like on Reddit website.
    *
+   *Note: Setting default root font size (16) as root size for Sheet context as regular calculation is yiedling 14.xx as root size which is resulting in smaller and hard to read text.
+   TODO - test other $view.scale cases and the need for having less defaultRootFontSize for $view.scale < 0.55 
+   *
    */
   function refreshSizing() {
-    if (accessibilitySizingFactor == 0) {
-      if ($view.scale > 0.55) defaultRootFontSize = 14;
-      else defaultRootFontSize = 12;
-    } else if (accessibilitySizingFactor == 1) {
-      if ($view.scale > 0.55) defaultRootFontSize = 16;
-      else if ($view.scale > 0.45) defaultRootFontSize = 14;
-      else defaultRootFontSize = 13;
-    } else if (accessibilitySizingFactor == 2) {
-      if ($view.scale > 0.55) defaultRootFontSize = 18;
-      else defaultRootFontSize = 16;
+    if (isSheetContext) {
+      rootFontSize = defaultRootFontSize;
+    } else {
+      if (accessibilitySizingFactor == 0) {
+        if ($view.scale > 0.55) defaultRootFontSize = 14;
+        else defaultRootFontSize = 12;
+      } else if (accessibilitySizingFactor == 1) {
+        if ($view.scale > 0.55) defaultRootFontSize = 16;
+        else if ($view.scale > 0.45) defaultRootFontSize = 14;
+        else defaultRootFontSize = 13;
+      } else if (accessibilitySizingFactor == 2) {
+        if ($view.scale > 0.55) defaultRootFontSize = 18;
+        else defaultRootFontSize = 16;
+      }
+      rootFontSize = defaultRootFontSize + 0.6 * $view.scale;
     }
-    rootFontSize = defaultRootFontSize + 0.6 * $view.scale;
 
     const dom = document.getElementById(extensionContext + "-root");
     if (extensionContext) {

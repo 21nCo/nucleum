@@ -31,7 +31,7 @@
         }}
       >
         {selected.label}
-        <Icon icon="chevdown" />
+        <Icon icon="chevron-down" />
       </button>
     </div>
   {:else}

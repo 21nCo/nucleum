@@ -27,6 +27,7 @@ import {
 import { clientStorage } from "../persistence.utils";
 import { Dexie, type Collection, type Table, type WhereClause } from "dexie";
 import { IndexedDB, Index, Document } from "flexsearch";
+import { indexingStore } from "./indexing.store";
 
 // import {
 //   Worker as WorkerIndex,
@@ -34,9 +35,6 @@ import { IndexedDB, Index, Document } from "flexsearch";
 // } from "./dist/flexsearch.bundle.module.min.js";
 type QueryableType = Table | Collection<any, any> | WhereClause<any, any>;
 const dbVersion = 1;
-/**
- * Stores version
- */
 const version = 116;
 export class DexiePersistence implements IPersistence {
   instance: Dexie | undefined = undefined;
@@ -50,6 +48,9 @@ export class DexiePersistence implements IPersistence {
     }
   > = new Map();
   documentSearchIndices: Map<string, Document> = new Map();
+  private indexingWorker: SharedWorker | undefined = undefined;
+  private isIndexingInProgress: boolean = false;
+  private indexingProgress: number = 0;
 
   constructor() {}
 
@@ -80,7 +81,7 @@ export class DexiePersistence implements IPersistence {
     if (tables) {
       this.tables = tables;
       if (!params.isExtensionEnvironment) {
-        this.initializeSearchIndices();
+        await this.initializeSearchIndices();
       } else if (params.tables) {
         await clientStorage.set(ClientStorageKey.TABLES, params.tables);
       }
@@ -94,51 +95,387 @@ export class DexiePersistence implements IPersistence {
     return 0;
   }
 
-  async reindex() {
+  async performBatchedIndexing() {
+    const clearPromises = [];
     this.searchIndices.forEach((x) => {
-      x.index.clear();
+      clearPromises.push(x.index.clear());
+      clearPromises.push(x.contextualIndex.clear());
     });
     this.documentSearchIndices.forEach((x) => {
-      x.clear();
+      clearPromises.push(x.clear());
     });
+    await Promise.all(clearPromises);
+
     this.searchIndices.clear();
     this.documentSearchIndices.clear();
-    this.initializeSearchIndices();
-    for (const table of this.tables ?? []) {
+    await this.initializeSearchIndices();
+
+    let totalRecords = 0;
+    const tablesToIndex = this.tables.filter(
+      (t) => t.searchIndices && t.searchIndices.length > 0
+    );
+
+    for (const table of tablesToIndex) {
+      const count = await this.instance?.table(table.name).count();
+      totalRecords += count || 0;
+    }
+
+    indexingStore.setTotalRecords(totalRecords);
+    let indexedRecords = 0;
+
+    for (const table of tablesToIndex) {
+      indexingStore.setCurrentTable(table.name as string);
+
       const records = await this.instance?.table(table.name).toArray();
-      for (const record of records ?? []) {
-        const text = this.extractFlatText(record, table.name);
-        const searchIndex = this.searchIndices.get(table.name);
-        if (searchIndex && text) {
-          searchIndex.index.addAsync(record.id, text);
-          searchIndex.contextualIndex.addAsync(record.id, text);
+      if (!records) continue;
+
+      const searchIndex = this.searchIndices.get(table.name);
+      if (!searchIndex) continue;
+
+      const batchSize = 100;
+      for (let i = 0; i < records.length; i += batchSize) {
+        const batch = records.slice(i, Math.min(i + batchSize, records.length));
+
+        const indexPromises = [];
+        for (const record of batch) {
+          const text = this.extractFlatText(record, table.name);
+          if (record.id && text) {
+            indexPromises.push(searchIndex.index.addAsync(record.id, text));
+            indexPromises.push(
+              searchIndex.contextualIndex.addAsync(record.id, text)
+            );
+          }
         }
+
+        await Promise.all(indexPromises);
+
+        indexedRecords += batch.length;
+        const progress =
+          totalRecords > 0
+            ? Math.floor((indexedRecords / totalRecords) * 100)
+            : 100;
+        this.indexingProgress = progress;
+
+        indexingStore.updateProgress({
+          progress,
+          indexedRecords,
+          totalRecords,
+          currentTable: table.name as string
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 0));
       }
     }
   }
 
-  initializeSearchIndices() {
-    const dbName = `${this.userId}-${dbVersion}`;
-    const name = `${dbName}-${version}-#tableName#-search`;
-    this.initializeFlatSearchIndexes(name);
-    // this.initializeMultifieldSearchIndexes(name);
+  async triggerBackgroundIndexing(
+    useSharedWorker: boolean = false
+  ): Promise<void> {
+    if (this.isIndexingInProgress) {
+      logger.info({
+        at: "DexiePersistence.triggerBackgroundIndexing",
+        message: "Indexing already in progress"
+      });
+      return;
+    }
+
+    if (!useSharedWorker) {
+      try {
+        this.isIndexingInProgress = true;
+        this.indexingProgress = 0;
+        indexingStore.setIndexing(true);
+        indexingStore.reset();
+
+        logger.info({
+          at: "DexiePersistence.triggerBackgroundIndexing",
+          message:
+            "Starting in-process FlexSearch indexing with IndexedDB persistence"
+        });
+
+        await this.performBatchedIndexing();
+
+        this.isIndexingInProgress = false;
+        this.indexingProgress = 100;
+        indexingStore.complete();
+      } catch (error) {
+        logger.error({
+          at: "DexiePersistence.triggerBackgroundIndexing",
+          error
+        });
+        this.isIndexingInProgress = false;
+        indexingStore.setError(error as string);
+        indexingStore.setIndexing(false);
+      }
+      return;
+    }
+
+    try {
+      this.isIndexingInProgress = true;
+      this.indexingProgress = 0;
+      indexingStore.setIndexing(true);
+      indexingStore.reset();
+
+      if (typeof SharedWorker === "undefined") {
+        logger.warn({
+          at: "DexiePersistence.triggerBackgroundIndexing",
+          message:
+            "SharedWorker not supported, falling back to batched indexing"
+        });
+        await this.performBatchedIndexing();
+        this.isIndexingInProgress = false;
+        indexingStore.complete();
+        return;
+      }
+
+      const workerPath = new URL("./dexie.indexing.worker.ts", import.meta.url)
+        .href;
+
+      logger.info({
+        at: "DexiePersistence.triggerBackgroundIndexing",
+        message: "Creating SharedWorker for background indexing",
+        workerPath
+      });
+
+      this.indexingWorker = new SharedWorker(workerPath, {
+        type: "module",
+        name: "dexie-indexing-worker"
+      });
+
+      this.indexingWorker.port.onmessage = (event: MessageEvent) => {
+        const { type, payload } = event.data;
+
+        switch (type) {
+          case "LOG":
+            logger.info({
+              at: "DexiePersistence.worker-log",
+              message: payload.message,
+              data: payload.data,
+              timestamp: payload.timestamp
+            });
+            break;
+
+          case "PROGRESS":
+            this.indexingProgress = payload.progress ?? 0;
+            indexingStore.updateProgress({
+              progress: payload.progress,
+              currentTable: payload.currentTable,
+              indexedRecords: payload.indexedRecords,
+              totalRecords: payload.totalRecords
+            });
+            logger.debug({
+              at: "DexiePersistence.triggerBackgroundIndexing - progress",
+              progress: this.indexingProgress,
+              currentTable: payload.currentTable,
+              indexedRecords: payload.indexedRecords,
+              totalRecords: payload.totalRecords
+            });
+            break;
+
+          case "COMPLETE":
+            logger.info({
+              at: "DexiePersistence.triggerBackgroundIndexing - complete",
+              totalRecords: payload.totalRecords
+            });
+            this.isIndexingInProgress = false;
+            this.indexingProgress = 100;
+            indexingStore.complete();
+
+            logger.info({
+              at: "DexiePersistence.triggerBackgroundIndexing",
+              message:
+                "Worker indexing complete, importing worker-exported indices"
+            });
+
+            this.importWorkerExportedIndices().catch((error) => {
+              logger.error({
+                at: "DexiePersistence.triggerBackgroundIndexing - import error",
+                error
+              });
+            });
+
+            break;
+
+          case "ERROR":
+            logger.error({
+              at: "DexiePersistence.triggerBackgroundIndexing - error",
+              error: payload.error
+            });
+            this.isIndexingInProgress = false;
+            indexingStore.setError(payload.error);
+            indexingStore.setIndexing(false);
+            break;
+        }
+      };
+
+      this.indexingWorker.port.postMessage({
+        type: "START_INDEXING",
+        payload: {
+          userId: this.userId,
+          dbVersion,
+          dexieVersion: version,
+          indexMethod: "flexsearch",
+          tables: this.tables
+            .filter((t) => t.searchIndices && t.searchIndices.length > 0)
+            .map((t) => ({
+              name: t.name as string,
+              indices: t.indices,
+              searchIndices: t.searchIndices ?? []
+            }))
+        }
+      });
+
+      this.indexingWorker.port.start();
+    } catch (error) {
+      logger.error({
+        at: "DexiePersistence.triggerBackgroundIndexing",
+        error
+      });
+      this.isIndexingInProgress = false;
+      await this.performBatchedIndexing();
+    }
   }
 
-  initializeFlatSearchIndexes(dbName: string) {
+  getIndexingProgress(): { isIndexing: boolean; progress: number } {
+    return {
+      isIndexing: this.isIndexingInProgress,
+      progress: this.indexingProgress
+    };
+  }
+
+  async initializeSearchIndices() {
+    const dbName = `${this.userId}-${dbVersion}`;
+    const name = `${dbName}-${version}-#tableName#-search`;
+    await this.initializeFlatSearchIndexes(name);
+    // await this.initializeMultifieldSearchIndexes(name);
+  }
+
+  private async importWorkerExportedIndices(): Promise<void> {
+    const dbName = `${this.userId}-${dbVersion}`;
+
     for (const table of this.tables ?? []) {
       if (!table.searchIndices || table.searchIndices.length === 0) continue;
+
+      const searchIndex = this.searchIndices.get(table.name);
+      if (!searchIndex) continue;
+
+      const indexDbName = `${dbName}-${version}-${table.name}-search`;
+
+      try {
+        await this.importFromFlexSearchDB(
+          searchIndex.index,
+          indexDbName + "-flat"
+        );
+        await this.importFromFlexSearchDB(
+          searchIndex.contextualIndex,
+          indexDbName + "-contextual"
+        );
+
+        try {
+          if (typeof searchIndex.index.commit === "function") {
+            await searchIndex.index.commit();
+          }
+          if (typeof searchIndex.contextualIndex.commit === "function") {
+            await searchIndex.contextualIndex.commit();
+          }
+        } catch (commitError) {
+          logger.warn({
+            at: "DexiePersistence.importWorkerExportedIndices",
+            message: "Commit not available or failed",
+            error: commitError
+          });
+        }
+
+        logger.info({
+          at: "DexiePersistence.importWorkerExportedIndices",
+          table: table.name,
+          message: "Successfully imported worker-exported indices"
+        });
+      } catch (error) {
+        logger.error({
+          at: "DexiePersistence.importWorkerExportedIndices",
+          table: table.name,
+          error
+        });
+      }
+    }
+  }
+
+  private async importFromFlexSearchDB(
+    index: Index,
+    storeName: string
+  ): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const openRequest = indexedDB.open("flexsearch");
+      openRequest.onsuccess = async () => {
+        const db = openRequest.result;
+
+        try {
+          if (!db.objectStoreNames.contains(storeName)) {
+            logger.error({
+              at: "DexiePersistence.importFromFlexSearchDB",
+              storeName,
+              message: "No worker data to import"
+            });
+            db.close();
+            resolve();
+            return;
+          }
+
+          const transaction = db.transaction([storeName], "readonly");
+          const store = transaction.objectStore(storeName);
+          const getAllRequest = store.getAllKeys();
+
+          const keys = await new Promise<IDBValidKey[]>((res, rej) => {
+            getAllRequest.onsuccess = () => res(getAllRequest.result);
+            getAllRequest.onerror = () => rej(getAllRequest.error);
+          });
+          for (const key of keys) {
+            const getRequest = store.get(key);
+            const data = await new Promise<string>((res, rej) => {
+              getRequest.onsuccess = () => res(getRequest.result);
+              getRequest.onerror = () => rej(getRequest.error);
+            });
+            index.import(key as string, data);
+          }
+
+          db.close();
+          resolve();
+        } catch (error) {
+          db.close();
+          reject(error);
+        }
+      };
+
+      openRequest.onerror = () => {
+        logger.error({
+          at: "DexiePersistence.importFromFlexSearchDB",
+          storeName,
+          message: "Database doesn't exist - no worker data to import"
+        });
+        resolve();
+      };
+    });
+  }
+
+  async initializeFlatSearchIndexes(dbName: string) {
+    for (const table of this.tables ?? []) {
+      if (!table.searchIndices || table.searchIndices.length === 0) continue;
+
+      const dbPrefix = dbName.replace("#tableName#", table.name);
+
       const flatSearchIndex = new Index({
         tokenize: "full",
         cache: true
       });
-      const dbPrefix = dbName.replace("#tableName#", table.name);
-      flatSearchIndex.mount(new IndexedDB(dbPrefix + "-flat"));
+
       const contextualIndex = new Index({
         tokenize: "strict",
         context: true,
         cache: true
       });
-      contextualIndex.mount(new IndexedDB(dbPrefix + "-contextual"));
+      await flatSearchIndex.mount(new IndexedDB(dbPrefix + "-flat"));
+      await contextualIndex.mount(new IndexedDB(dbPrefix + "-contextual"));
+
       this.searchIndices.set(table.name, {
         index: flatSearchIndex,
         contextualIndex
@@ -146,7 +483,7 @@ export class DexiePersistence implements IPersistence {
     }
   }
 
-  initializeMultifieldSearchIndexes(dbName: string) {
+  async initializeMultifieldSearchIndexes(dbName: string) {
     for (const table of this.tables ?? []) {
       if (!table.searchIndices || table.searchIndices.length === 0) continue;
       const hasLabel = table.searchIndices?.includes("label");
@@ -164,7 +501,7 @@ export class DexiePersistence implements IPersistence {
           store: hasLabel ? "label" : []
         }
       });
-      documentSearchIndex.mount(
+      await documentSearchIndex.mount(
         new IndexedDB(dbName.replace("#tableName#", table.name))
       );
       this.documentSearchIndices.set(table.name, documentSearchIndex);
@@ -192,7 +529,6 @@ export class DexiePersistence implements IPersistence {
       dapId: params?.dapId
     });
   }
-
   private extractFlatText(record: any, resource: Resource): string | undefined {
     const searchIndices = this.tables.find(
       (x) => x.name === resource
@@ -204,7 +540,10 @@ export class DexiePersistence implements IPersistence {
         .map(([key, value]) => String(value))
         .join(" ")
         .trim();
-      return isValidString(text) ? text : undefined;
+
+      const cleanedText = text.replace(/\b\w+:[a-zA-Z0-9_-]+\b/g, "").trim();
+
+      return isValidString(cleanedText) ? cleanedText : undefined;
     } catch (e) {
       logger.error({
         at: "DexiePersistence.extractFlatText",
@@ -228,19 +567,21 @@ export class DexiePersistence implements IPersistence {
             id: record.id?.toString()
           };
         });
-        if (this.searchIndices.has(resource)) {
+        const shouldSkipIndexing = (params as any).isSkipFlexSearchIndexing;
+        if (!shouldSkipIndexing && this.searchIndices.has(resource)) {
           const searchIndex = this.searchIndices.get(resource);
           if (searchIndex) {
-            records.forEach((x) => {
+            const indexPromises = records.map(async (x) => {
               const text = this.extractFlatText(x, resource);
               if (x.id && text) {
-                searchIndex.index.addAsync(x.id, text);
-                searchIndex.contextualIndex.addAsync(x.id, text);
+                await searchIndex.index.addAsync(x.id, text);
+                await searchIndex.contextualIndex.addAsync(x.id, text);
               }
             });
+            await Promise.all(indexPromises);
           }
         }
-        if (this.documentSearchIndices.has(resource)) {
+        if (!shouldSkipIndexing && this.documentSearchIndices.has(resource)) {
           const documentSearchIndex = this.documentSearchIndices.get(resource);
           if (documentSearchIndex) {
             documentSearchIndex.add(records as any);
@@ -248,7 +589,11 @@ export class DexiePersistence implements IPersistence {
         }
         return this.instance?.table(resource).bulkPut(records);
       case PersistenceActionType.BULK_INSERT:
-        return this.bulkInsert(resource, params.records);
+        return this.bulkInsert(
+          resource,
+          params.records,
+          (params as any).isSkipFlexSearchIndexing
+        );
       case PersistenceActionType.REPLACE:
         return this.instance?.table(resource).put(params.record);
       case PersistenceActionType.MERGE:
@@ -266,14 +611,17 @@ export class DexiePersistence implements IPersistence {
               const text = this.extractFlatText(params.record, resource);
               if (params.record.id && text) {
                 try {
-                  searchIndex.index.updateAsync(params.record.id, text);
-                  searchIndex.contextualIndex.updateAsync(
+                  await searchIndex.index.updateAsync(params.record.id, text);
+                  await searchIndex.contextualIndex.updateAsync(
                     params.record.id,
                     text
                   );
                 } catch (error) {
-                  searchIndex.index.addAsync(params.record.id, text);
-                  searchIndex.contextualIndex.addAsync(params.record.id, text);
+                  await searchIndex.index.addAsync(params.record.id, text);
+                  await searchIndex.contextualIndex.addAsync(
+                    params.record.id,
+                    text
+                  );
                 }
               }
             }
@@ -291,8 +639,10 @@ export class DexiePersistence implements IPersistence {
         if (this.searchIndices.has(resource) && params.recordId) {
           const searchIndex = this.searchIndices.get(resource);
           if (searchIndex) {
-            searchIndex.index.removeAsync(params.recordId.toString());
-            searchIndex.contextualIndex.removeAsync(params.recordId.toString());
+            await searchIndex.index.removeAsync(params.recordId.toString());
+            await searchIndex.contextualIndex.removeAsync(
+              params.recordId.toString()
+            );
           }
         }
         return this.instance
@@ -322,7 +672,11 @@ export class DexiePersistence implements IPersistence {
     }
   }
 
-  async bulkInsert(resource: Resource, records: any[]) {
+  async bulkInsert(
+    resource: Resource,
+    records: any[],
+    isSkipFlexSearchIndexing?: boolean
+  ) {
     try {
       const table = this.instance?.table(resource);
       if (!table) return;
@@ -332,20 +686,24 @@ export class DexiePersistence implements IPersistence {
         id: record.id?.toString()
       }));
 
-      if (this.searchIndices.has(resource)) {
+      if (!isSkipFlexSearchIndexing && this.searchIndices.has(resource)) {
         const searchIndex = this.searchIndices.get(resource);
         if (searchIndex) {
-          formattedRecords.forEach((record) => {
+          const indexPromises = formattedRecords.map(async (record) => {
             const text = this.extractFlatText(record, resource);
             if (record.id && text) {
-              searchIndex.index.addAsync(record.id, text);
-              searchIndex.contextualIndex.addAsync(record.id, text);
+              await searchIndex.index.addAsync(record.id, text);
+              await searchIndex.contextualIndex.addAsync(record.id, text);
             }
           });
+          await Promise.all(indexPromises);
         }
       }
 
-      if (this.documentSearchIndices.has(resource)) {
+      if (
+        !isSkipFlexSearchIndexing &&
+        this.documentSearchIndices.has(resource)
+      ) {
         const documentSearchIndex = this.documentSearchIndices.get(resource);
         if (documentSearchIndex) {
           documentSearchIndex.add(formattedRecords as any);
@@ -756,8 +1114,10 @@ export class DexiePersistence implements IPersistence {
         });
       }
       const ids = result;
-      if (Array.isArray(ids) && ids.length > 0)
+      if (Array.isArray(ids) && ids.length > 0) {
+        console.timeEnd("preSearchUsingIndex");
         return ids.filter(removeDuplicatesFilter);
+      }
     }
     const documentSearchIndex = this.documentSearchIndices.get(resource);
     if (documentSearchIndex) {
@@ -767,9 +1127,13 @@ export class DexiePersistence implements IPersistence {
         suggest: true
       });
       const ids = result.map((x) => x.result.map((y) => y))?.flat();
-      if (ids.length > 0) return ids;
+      if (ids.length > 0) {
+        console.timeEnd("preSearchUsingIndex");
+        return ids;
+      }
     }
     console.timeEnd("preSearchUsingIndex");
+    return undefined;
   }
 
   /**
@@ -801,11 +1165,12 @@ export class DexiePersistence implements IPersistence {
         resource,
         ids
       });
-      if (ids) {
+      if (ids && ids.length > 0) {
         params.filters = {
           id: ids,
           ...params.filters
         };
+        delete params.search;
       }
     }
 

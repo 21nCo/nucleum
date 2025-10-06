@@ -1,5 +1,5 @@
 import { ActionType, type IAction } from "$lib/client/types/action.type";
-import { Orientation } from "$lib/client/types/direction.enum";
+import { Orientation, Placement } from "$lib/client/types/direction.enum";
 import { Size } from "$lib/client/types/size.enum";
 import Capture from "$lib/client/products/memotron/capture/Capture.svelte";
 import Node from "$lib/client/products/memotron/node/Node.svelte";
@@ -54,9 +54,9 @@ export const memotronActions: IAction[] = [
         size: Size.xxl,
         orientation: Orientation.Horizontal,
         ignoreSafeArea: true,
-        isShowClose: true
+        isShowClose: true,
+        alignment: Placement.Right
       },
-      isOnRight: true,
       title: "Taco"
     }
   },
@@ -198,9 +198,9 @@ export const memotronActions: IAction[] = [
     isMeta: true,
     component: PasteConfirmationModal,
     modalParams: {
-      title: "Paste Confirmation",
       layout: {
-        size: Size.sm
+        ignoreSafeArea: true,
+        size: Size.md
       }
     }
   },
@@ -256,7 +256,8 @@ export const memotronActions: IAction[] = [
       title: "Callout Settings",
       layout: {
         orientation: Orientation.Vertical,
-        size: Size.lg
+        size: Size.lg,
+        isOveriddenFooter: true
       }
     }
   },

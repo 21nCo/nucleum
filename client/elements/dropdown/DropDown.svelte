@@ -117,7 +117,7 @@
       {selected?.label ?? properCase(selected?.value.toString())}
     </span>
   </div>
-  <Icon icon={isActive ? "chevup" : "chevdown"} size={Size.sm} />
+  <Icon icon={isActive ? "chevron-up" : "chevron-down"} size={Size.sm} />
   <div class={cn("flex flex-col gap-2", popoverWidth)} slot="popover">
     {#if !isDisableSearch}
       <div class="px-3 w-full">

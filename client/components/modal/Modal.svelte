@@ -5,7 +5,7 @@
   import ModalHeader from "./ModalHeader.svelte";
   import { generateUID } from "$lib/client/utils/utils";
   import { Size } from "$lib/client/types/size.enum";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import { Orientation, Placement } from "$lib/client/types/direction.enum";
   import { cn } from "$lib/client/utils/ui.utils";
   import appearance from "$lib/client/stores/appearance.store";
   import ColorLayer from "$lib/client/layout/layers/themeLayer/ColorLayer.svelte";
@@ -21,7 +21,11 @@
   export let show = true;
   export let title: string = "";
   export let isShowOverlay: boolean = true;
+  /**
+   * @deprecated - use alignment instead
+   */
   export let isOnRight: boolean = false;
+  export let alignment: Placement = Placement.Center;
   export let isDismissable: boolean = true;
   export let isUseDialog: boolean = false;
   export let size: Size = Size.md;
@@ -113,7 +117,7 @@
 </script>
 
 {#if show}
-  {#if isOnRight}
+  {#if alignment === Placement.Right}
     <div
       class="popover-container fixed right-8 bg-bgs2 z-50 rounded-md overflow-y-auto"
       style="height:min-content;bottom: 5%;"
@@ -136,18 +140,26 @@
     {@const isBlurredBg = $userPreferences.appearance?.isBlurredBgForPopups}
     <div
       class={cn(
-        "pop-overlay fixed w-screen h-screen inset-0 z-50",
+        "pop-overlay fixed w-screen h-screen z-50",
         {
+          "inset-0 m-auto flex justify-center items-center":
+            alignment === Placement.Center ||
+            !alignment ||
+            $view.isConstrainedWidth,
           "bg-opacity-0": !isShowOverlay,
           "bg-bgs1": isInFocusMode,
-          "flex justify-center items-center mo:p-0 p-3":
-            !isUseDialog && size !== Size.full
+          "mo:p-0 p-3": !isUseDialog && size !== Size.full
+        },
+        !$view.isConstrainedWidth && {
+          "inset-x-0":
+            alignment === Placement.TopCenter ||
+            alignment === Placement.BottomCenter
         },
         isShowOverlay &&
           !isUseDialog &&
           !isInFocusMode && {
             "bg-black bg-opacity-70": !isBlurredBg,
-            "backdrop-blur-2xl backdrop-opacity--80 backdrop-brightness--50 backdrop-grayscale bg-fgs4 bg-opacity-50 backdrop-saturate--50":
+            "backdrop-blur-xl backdrop-opacity--80 backdrop-brightness--50 backdrop-grayscale bg-fgs4 bg-opacity-50 backdrop-saturate--50":
               isBlurredBg
           }
       )}
@@ -160,7 +172,7 @@
       on:keydown
       tabindex="0"
     >
-      <!-- {#if isOnRight}
+      <!-- {#if alignment === Placement.Right}
         <div
           class="popover-container fixed right-8 w-72 bg-bgs2 z-50 rounded-md overflow-y-auto"
           style="height: 90%; top: 5%;"
@@ -189,7 +201,7 @@
               "bg-bgs1 overlay": isShowOverlay,
               "overlay-light": isShowOverlay && !$appearance.colorScheme.isDark,
               "overlay-dark": isShowOverlay && $appearance.colorScheme.isDark,
-              "bg-none": !isShowOverlay,
+              "bg-none shadow-lg": !isShowOverlay,
               ...resolveSizeClasses()
             }
           )}
@@ -202,15 +214,28 @@
       {:else}
         <div
           id={id + "-modal"}
-          class={cn("bg-bgs1 max-h-full cursor-default otopl:pt-12", {
-            ...resolveSizeClasses(),
-            "rounded-md otopl:bg-transparent": size !== Size.full,
-            "otopl:bg-bgs1": size === Size.full,
-            "mo:rounded-none": size !== Size.full && size !== Size.xs,
-            "mo:w-9/10": size === Size.xs,
-            "mo:w-full mo:h-full": size !== Size.xs,
-            "portrait:w-full": size !== Size.xs && size !== Size.sm
-          })}
+          class={cn(
+            "bg-bgs1 max-h-full cursor-default otopl:pt-12",
+            {
+              ...resolveSizeClasses(),
+              "rounded-md otopl:bg-transparent": size !== Size.full,
+              "otopl:bg-bgs1": size === Size.full,
+              "mo:rounded-none": size !== Size.full && size !== Size.xs,
+              "mo:w-9/10": size === Size.xs,
+              "mo:w-full mo:h-full": size !== Size.xs,
+              "portrait:w-full": size !== Size.xs && size !== Size.sm
+            },
+            !$view.isConstrainedWidth && {
+              "shadow-xl cw:border-none border border-brs3": !isShowOverlay,
+              "w-fit h-fit": isDynamicSize,
+              "m-auto": alignment === Placement.Center || !alignment,
+              "mx-auto":
+                alignment === Placement.TopCenter ||
+                alignment === Placement.BottomCenter,
+              "mt-[12vh] mb-auto": alignment === Placement.TopCenter,
+              "mt-auto": alignment === Placement.BottomCenter
+            }
+          )}
         >
           <ColorLayer>
             <slot />

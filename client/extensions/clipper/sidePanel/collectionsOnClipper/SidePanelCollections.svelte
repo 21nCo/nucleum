@@ -33,6 +33,7 @@
   const webContentTypes = [
     NodeType.WEB_PAGE,
     NodeType.YOUTUBE_VIDEO,
+    NodeType.YOUTUBE_SHORT,
     NodeType.YOUTUBE_CHANNEL,
     NodeType.TWEET,
     NodeType.TWITTER_PROFILE,
@@ -40,6 +41,7 @@
     NodeType.DISCORD_THREAD,
     NodeType.TED_VIDEO,
     NodeType.INSTAGRAM_POST,
+    NodeType.INSTAGRAM_REEL,
     NodeType.FACEBOOK_POST,
     NodeType.TWITCH_STREAM,
     NodeType.STACKOVERFLOW_THREAD,

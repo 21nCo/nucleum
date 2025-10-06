@@ -790,6 +790,8 @@ export function resolveDefaultBodyForBlock(
     case NodeType.CODE:
     case NodeType.CALLOUT:
       return { text };
+    case NodeType.SIMPLE_TEXT:
+      return text;
     default:
       return { text };
   }

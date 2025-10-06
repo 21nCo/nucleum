@@ -57,6 +57,7 @@ const parserMap = new Map<NodeType, IWebpageParser>([
   [NodeType.THREADS_POST, extractThreadsPostFromPage],
   [NodeType.THREADS_PROFILE, extractThreadsProfile],
   [NodeType.INSTAGRAM_POST, extractInstagramPostFromPage],
+  [NodeType.INSTAGRAM_REEL, extractInstagramPostFromPage],
   [NodeType.INSTAGRAM_PROFILE, extractInstagramProfileFromPage],
   [NodeType.REDDIT_POST, extractRedditPostFromPage],
   [NodeType.FACEBOOK_POST, extractFacebookPostFromPage],
@@ -71,6 +72,7 @@ const inlineSocialPostParserMap = new Map<NodeType, ISocialPostParser>([
   [NodeType.BLUESKY_POST, extractBskyPostFromInlineClip],
   [NodeType.THREADS_POST, extractThreadsPostFromInlineClip],
   [NodeType.INSTAGRAM_POST, extractInstagramPostFromInlineClip],
+  [NodeType.INSTAGRAM_REEL, extractInstagramPostFromInlineClip],
   [NodeType.REDDIT_POST, extractRedditPostFromInlineClip],
   [NodeType.FACEBOOK_POST, extractFacebookPostFromInlineClip],
   [NodeType.MASTODON_POST, extractMastodonPostFromInlineClip]
@@ -78,6 +80,7 @@ const inlineSocialPostParserMap = new Map<NodeType, ISocialPostParser>([
 
 const videoBookmarkParserMap = new Map<NodeType, IVideoBookmarkParser>([
   [NodeType.YOUTUBE_VIDEO, extractYoutubeBookmark],
+  [NodeType.YOUTUBE_SHORT, extractYoutubeBookmark],
   [NodeType.COURSERA_VIDEO, extractCourseraBookmark],
   [NodeType.UDEMY_VIDEO, extractUdemyBookmark]
 ]);

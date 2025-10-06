@@ -7,10 +7,7 @@ import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
 
 class TimezoneStore extends ResourceStore<ITimezone, ITimezoneCapture> {
   constructor() {
-    super(Resource.tz, {
-      isInMemory: true,
-      indices: ["dateUnix"]
-    });
+    super(Resource.tz);
   }
 
   resolveTimePeriodFilter(
@@ -142,4 +139,4 @@ class TimezoneStore extends ResourceStore<ITimezone, ITimezoneCapture> {
   }
 }
 
-export const tzStore = new TimezoneStore();
+export const tzStore = TimezoneStore.resolve(Resource.tz);

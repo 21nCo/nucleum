@@ -8,6 +8,10 @@ export type IAppContext = {
   dapId: string;
   isInOfflineMode?: boolean;
   isInLowDataMode?: boolean;
+  /**
+   * Cases like share sheets on mobile devices, iframe embeds on web pages etc.
+   */
+  isStandaloneSheet?: boolean;
 };
 
 /**
