@@ -18,6 +18,7 @@
   import { pingParent } from "$lib/client/utils/embed.utils";
   import SheetDebugLogs from "./SheetDebugLogs.svelte";
   import context from "$lib/client/stores/context.store";
+  import { Size } from "$lib/client/types/size.enum";
   import view from "$lib/client/stores/view.store";
 
   export let extension: Extension;
@@ -26,12 +27,18 @@
   let error: string | undefined = undefined;
   let token = new URLSearchParams(window.location.search).get("token");
   let debugLog: string[] = [];
+  let tokenCheckTimeout: ReturnType<typeof setTimeout> | undefined;
   view.refresh(window.innerWidth, window.innerHeight);
 
   onMount(async () => {
     addToDebugLog("Mounted");
     pingParent();
     addToDebugLog("Pinged parent");
+    tokenCheckTimeout = setTimeout(() => {
+      if (!token) {
+        error = "Session not found. Please login on the app.";
+      }
+    }, 5000);
     try {
       await bootup();
     } catch (e) {
@@ -51,11 +58,19 @@
 
   onDestroy(() => {
     clearInterval(interval);
+    clearTokenCheckTimeout();
   });
 
   function proceedSync() {
     if (isInitialized) {
       flux?.sync();
+    }
+  }
+
+  function clearTokenCheckTimeout() {
+    if (tokenCheckTimeout) {
+      clearTimeout(tokenCheckTimeout);
+      tokenCheckTimeout = undefined;
     }
   }
 
@@ -66,6 +81,7 @@
           const parsed = JSON.parse(event.data.payload);
           if (parsed.type === "SHARE_EXTENSION_AUTH_TOKEN" && parsed.token) {
             addToDebugLog("Received auth token");
+            token = parsed.token;
             await authenticateWithToken(parsed.token);
           }
         }
@@ -90,6 +106,8 @@
     await account.init();
     if (await isSessionActive()) {
       addToDebugLog("User session already active");
+      clearTokenCheckTimeout();
+      error = undefined;
       await initializeFlux();
     } else if (token) {
       addToDebugLog("Authenticating using URL param token");
@@ -99,6 +117,8 @@
 
   async function authenticateWithToken(token: string) {
     try {
+      clearTokenCheckTimeout();
+      error = undefined;
       if (await isSessionActive()) return;
       isAuthenticating = true;
       await account.embedOAuthSignin(token);
@@ -157,14 +177,12 @@
     <SheetDebugLogs logs={debugLog} isShowLogs={false}>
       initialized: {isInitialized}
     </SheetDebugLogs>
-    {#if isAuthenticating && !error}
-      <EmptyStatusView isLoadingState={true} loadingText="Authenticating..." />
-    {:else if error}
-      <div class="flex items-center justify-center h-full">
-        <span class="text-ars1">{error}</span>
-      </div>
+    {#if error}
+      <EmptyStatusView subText={error} size={Size.sm} />
     {:else if isInitialized}
       <slot />
+    {:else}
+      <EmptyStatusView isLoadingState={true} loadingText="Authenticating..." />
     {/if}
     <div id="popovers"></div>
     <div id="secondary-popovers"></div>

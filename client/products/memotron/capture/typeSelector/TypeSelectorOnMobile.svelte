@@ -14,7 +14,7 @@
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { MemotronAction } from "../../memotronAction.enum";
   import { CollectionObjectKey } from "$lib/client/components/collection/collection.type";
-
+  import context from "$lib/client/stores/context.store";
   const dispatch = createEventDispatcher();
   export let selected: CaptureMethod | undefined = undefined;
   export let isBoxedLayout = true;
@@ -39,7 +39,11 @@
       value: CaptureMethod.SCAN
     },
     { icon: "upload", label: "File", value: CaptureMethod.UPLOAD },
-    { icon: "clipboard", label: "Paste", value: CaptureMethod.PASTE }
+    !$context.isEmbed && {
+      icon: "clipboard",
+      label: "Paste",
+      value: CaptureMethod.PASTE
+    }
   ].filter(Boolean);
 
   async function refreshTypes() {

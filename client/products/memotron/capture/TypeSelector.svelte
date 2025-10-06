@@ -15,6 +15,7 @@
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import { CollectionObjectKey } from "$lib/client/components/collection/collection.type";
+  import context from "$lib/client/stores/context.store";
   export let selected: string;
   export let isHideTypeShortcuts: boolean = false;
   let dev_isEnableEditShortcuts: boolean = true;
@@ -37,7 +38,7 @@
       icon: "upload",
       value: CaptureMethod.UPLOAD
     },
-    {
+    !$context.isEmbed && {
       icon: "clipboard",
       value: CaptureMethod.PASTE
     }

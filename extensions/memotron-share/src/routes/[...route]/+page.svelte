@@ -296,7 +296,10 @@
           on:close={handleClose}
         />
       {:else}
-        <EmptyStatusView isLoadingState={true} />
+        <EmptyStatusView
+          isLoadingState={true}
+          subText="Logged in. Reading data..."
+        />
       {/if}
     </div>
   {/if}
