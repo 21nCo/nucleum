@@ -7,7 +7,6 @@
   import ResultItem from "./ResultItem.svelte";
   import type { IResource } from "../flux/resourceStores/resource.type";
   import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
-  import { flux } from "$lib/client/components/flux/flux";
   import { debouncer } from "$lib/client/utils/utils";
   import { logger } from "../debug/logger.client";
   import BreadcrumbMini from "$lib/client/elements/breadcrumb/BreadcrumbMini.svelte";
@@ -28,19 +27,10 @@
   async function searchResources() {
     try {
       resetSearch();
-      if (
-        !action.searchActionParams?.searchStoreId &&
-        !action.searchActionParams?.searchCallback
-      )
-        return;
+      if (!action.searchActionParams?.searchCallback) return;
       isSearchInProgress = true;
       selectedIndex = 0;
-      if (action.searchActionParams?.searchStoreId) {
-        results = await flux.search(
-          action.searchActionParams.searchStoreId,
-          search
-        );
-      } else if (action.searchActionParams?.searchCallback) {
+      if (action.searchActionParams?.searchCallback) {
         results = await action.searchActionParams.searchCallback(
           search,
           componentParams

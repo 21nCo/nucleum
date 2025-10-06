@@ -16,6 +16,7 @@
   import view from "$lib/client/stores/view.store";
   import { resolveProductConfig } from "../../product.config";
   import CollectionThumbnailLabel from "$lib/client/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
+  import { AppSearchParam } from "$lib/client/types/appStore.type";
 
   let collections: ICollectionThumb[] = [];
 
@@ -96,16 +97,19 @@
             on:click={() => {
               modalEvent.hide(MemotronAction.EDIT_CAPTURE_SHORTCUTS);
               modalEvent.hide(MemotronAction.CAPTURE_SETTINGS);
-              appStore.runAction(
-                resourceAction(Resource.collection, ResourceActionType.BROWSE),
-                {
-                  searchParams: $view.isPortrait
-                    ? {
-                        back: resolveProductConfig().homePathPt
-                      }
-                    : undefined
-                }
-              );
+              if ($view.isPortrait) {
+                appStore.runAction(ResourceActionType.BROWSE, {
+                  componentParams: {
+                    resource: Resource.collection,
+                    [AppSearchParam.RETURN_TO]:
+                      resolveProductConfig().homePathPt
+                  }
+                });
+              } else {
+                appStore.runAction(
+                  resourceAction(Resource.collection, ResourceActionType.BROWSE)
+                );
+              }
             }}
           />
         </div>

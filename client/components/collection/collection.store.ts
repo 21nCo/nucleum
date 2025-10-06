@@ -72,8 +72,7 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
     super(Resource.collection, {
       dataType: StoreDataType.FIR,
       defaultProps: defaults,
-      indices: ["type", "resource", CollectionObjectKey.typeToExtend],
-      searchIndices: ["label"],
+
       expandProps: [CollectionObjectKey.typeToExtend]
     });
     this.refreshCollectibleResource();
@@ -301,7 +300,7 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
   }
 }
 
-export const collectionStore = new CollectionStore();
+export const collectionStore = CollectionStore.resolve(Resource.collection);
 
 export type IActiveCollectionStore = InstanceType<typeof ActiveCollectionStore>;
 

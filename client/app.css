@@ -49,7 +49,7 @@
 
   .styledscroll::-webkit-scrollbar {
     height: 2px;
-    width: 0.3em;
+    width: 0.3em !important;
   }
   /* .styledscroll::-webkit-scrollbar:hover {
     height: 2px;

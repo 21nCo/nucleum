@@ -6,6 +6,7 @@
   import { Placement } from "$lib/client/types/direction.enum";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
   import { cn } from "$lib/client/utils/ui.utils";
+  import { Size } from "$lib/client/types/size.enum";
   export let icon: string;
   export let tooltip: string;
   export let shortcut: string | undefined = undefined;
@@ -30,7 +31,8 @@
       ? {
           tooltip,
           shortcut,
-          parentBgIndex: 2
+          parentBgIndex: 2,
+          size: Size.sm
         }
       : {}
   }}

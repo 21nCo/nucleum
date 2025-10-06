@@ -1,6 +1,6 @@
 {
   "name": "memotron-app",
-  "version": "0.61.4",
+  "version": "0.62.0",
   "build": 1,
   "private": true,
   "scripts": {

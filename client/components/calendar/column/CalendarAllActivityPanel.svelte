@@ -48,7 +48,7 @@
           }
         },
         {
-          isCloudOnlyResource: true
+          isUseCloud: true
         }
       );
       if (isValidArrayWithData(mutations)) {

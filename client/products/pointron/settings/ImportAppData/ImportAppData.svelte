@@ -424,7 +424,7 @@
   {#if $view.display === Display.MO}
     <div class="header flex justify-between">
       {#if activeStepIndex !== 0}
-        <Icon size={Size.sm} on:click={onBack} icon={"chevleft"} />
+        <Icon size={Size.sm} on:click={onBack} icon={"chevron-left"} />
       {/if}
       <div class="ml-auto">
         <Button

@@ -6,17 +6,12 @@
   import { cn } from "$lib/client/utils/ui.utils";
   import type { IResource } from "$lib/client/components/flux/resourceStores/resource.type";
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-  import { flux } from "$lib/client/components/flux/flux";
-  import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
-  import { FluxMethod } from "$lib/client/components/flux/flux.type";
-  import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
   import { logger } from "$lib/client/components/debug/logger.client";
   import Icon from "../Icon.svelte";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { appStore } from "$lib/client/stores/app.store";
   import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
   import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
-  export let searchStoreId: string | undefined = undefined;
   export let searchCallback: Function | undefined = undefined;
   export let searchResultComponent: any = undefined;
   export let searchResultComponentProps: Record<string, unknown> = {};
@@ -180,16 +175,6 @@
       }
       dispatch("count", { count: results?.length });
       return;
-    }
-    if (searchStoreId) {
-      if (isExtensionEnvironment()) {
-        results = await extensionFlux({
-          method: FluxMethod.SEARCH,
-          args: { storeId: searchStoreId, query: val }
-        });
-      } else {
-        results = await flux.search(searchStoreId, val);
-      }
     }
 
     isSearchInProgress = false;

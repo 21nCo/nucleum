@@ -208,6 +208,7 @@ export enum NodeType {
   LINKEDIN_PROFILE = "LINKEDIN_PROFILE",
   LINKEDIN_GROUP = "LINKEDIN_GROUP",
   INSTAGRAM_POST = "INSTAGRAM_POST",
+  INSTAGRAM_REEL = "INSTAGRAM_REEL",
   INSTAGRAM_PROFILE = "INSTAGRAM_PROFILE",
   FACEBOOK_POST = "FACEBOOK_POST",
   FACEBOOK_PROFILE = "FACEBOOK_PROFILE",
@@ -219,6 +220,7 @@ export enum NodeType {
 
   //WEB VIDEO
   YOUTUBE_VIDEO = "YOUTUBE_VIDEO",
+  YOUTUBE_SHORT = "YOUTUBE_SHORT",
   YOUTUBE_CHANNEL = "YOUTUBE_CHANNEL",
   COURSERA_VIDEO = "COURSERA_VIDEO",
   UDEMY_VIDEO = "UDEMY_VIDEO",
@@ -302,10 +304,10 @@ export const socialPostNodeTypeList = new Set([
   NodeType.BLUESKY_POST,
   NodeType.THREADS_POST,
   NodeType.INSTAGRAM_POST,
+  NodeType.INSTAGRAM_REEL,
   NodeType.REDDIT_POST,
   NodeType.FACEBOOK_POST,
-  NodeType.MASTODON_POST,
-  NodeType.REDDIT_POST
+  NodeType.MASTODON_POST
 ]);
 
 /**
@@ -555,6 +557,7 @@ const webNodeTypes = [
   NodeType.WEB_SCREENSHOT,
 
   NodeType.YOUTUBE_VIDEO,
+  NodeType.YOUTUBE_SHORT,
   NodeType.YOUTUBE_CHANNEL,
   NodeType.YOUTUBE_BOOKMARK,
   NodeType.KINDLE_BOOK,
@@ -574,6 +577,7 @@ export const socialProfileWithImageUnavailable = new Set([
   NodeType.THREADS_POST,
   NodeType.THREADS_PROFILE,
   NodeType.INSTAGRAM_POST,
+  NodeType.INSTAGRAM_REEL,
   NodeType.INSTAGRAM_PROFILE,
   NodeType.REDDIT_POST,
   NodeType.REDDIT_PROFILE
@@ -585,6 +589,7 @@ export type IWebNodeType =
   | NodeType.WEB_TEXT_BOOKMARK
   | NodeType.WEB_SCREENSHOT
   | NodeType.YOUTUBE_VIDEO
+  | NodeType.YOUTUBE_SHORT
   | NodeType.YOUTUBE_CHANNEL
   | NodeType.YOUTUBE_BOOKMARK
   | NodeType.TWEET
@@ -592,6 +597,7 @@ export type IWebNodeType =
   | NodeType.THREADS_POST
   | NodeType.LINKEDIN_POST
   | NodeType.INSTAGRAM_POST
+  | NodeType.INSTAGRAM_REEL
   | NodeType.TWITTER_PROFILE
   | NodeType.LINKEDIN_PROFILE
   | NodeType.INSTAGRAM_PROFILE
@@ -726,6 +732,13 @@ export type IYoutubeVideo = INodeInterface<
 > &
   INodeHasUrl &
   INodeHasLabel;
+export type IYoutubeShort = INodeInterface<
+  NodeType.YOUTUBE_SHORT,
+  IYoutubeVideoBody,
+  IYoutubeVideoMetadata
+> &
+  INodeHasUrl &
+  INodeHasLabel;
 
 type IWebScreenshotClipBody = {
   /**
@@ -805,6 +818,14 @@ type IInstagramPostMetadata = ISocialPostMetadata & {
 };
 export type IInstagramPost = INodeInterface<
   NodeType.INSTAGRAM_POST,
+  ISocialPostBody,
+  IInstagramPostMetadata
+> &
+  INodeHasUrl &
+  INodeHasParent &
+  INodeHasText;
+export type IInstagramReel = INodeInterface<
+  NodeType.INSTAGRAM_REEL,
   ISocialPostBody,
   IInstagramPostMetadata
 > &
@@ -1020,6 +1041,7 @@ export type IClip =
   | IThreadsPost
   | ILinkedInPost
   | IInstagramPost
+  | IInstagramReel
   | IRedditPost
   | IVideoTimestampClip
   | ITextClip
@@ -1030,11 +1052,13 @@ export type IWebPage =
   | IGenericWebPage
   | IYoutubeChannel
   | IYoutubeVideo
+  | IYoutubeShort
   | ITwitterProfile
   | ILinkedInProfile
   | IBlueskyProfile
   | IThreadsProfile
   | IInstagramProfile
+  | IInstagramReel
   | IRedditProfile
   | IKindleBook
   | IGist;
@@ -1133,6 +1157,7 @@ const canHaveTracesBase = [
   NodeType.PDF,
   NodeType.WEB_PAGE,
   NodeType.YOUTUBE_VIDEO,
+  NodeType.YOUTUBE_SHORT,
   NodeType.KINDLE_BOOK
 ];
 

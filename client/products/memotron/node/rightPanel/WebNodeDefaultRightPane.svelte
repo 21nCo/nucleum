@@ -115,9 +115,16 @@
           accessPoint={ResourceAccessPoint.NODE_TRACES}
           resource={Resource.node}
           size={Size.sm}
-          isPreventDefault={$node.contentType === NodeType.YOUTUBE_VIDEO}
+          isPreventDefault={
+            $node.contentType === NodeType.YOUTUBE_VIDEO ||
+            $node.contentType === NodeType.YOUTUBE_SHORT
+          }
           on:click={(e) => {
-            if ($node.contentType !== NodeType.YOUTUBE_VIDEO) return;
+            if (
+              $node.contentType !== NodeType.YOUTUBE_VIDEO &&
+              $node.contentType !== NodeType.YOUTUBE_SHORT
+            )
+              return;
             contentContext.publish("yt-trace-click", {
               id: e.detail.id,
               timestamp: e.detail.body.timestamp

@@ -37,7 +37,7 @@
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import NodeThumbnailProperties from "./NodeThumbnailProperties.svelte";
   import type { IProperty } from "$lib/client/components/collection/properties/property.type";
-  import { isValidString } from "$lib/shared/utils/text.utils";
+  import { enumToString, isValidString } from "$lib/shared/utils/text.utils";
   import ImagePreview from "../content/ImagePreview.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import NodeThumbnailTwitterProfilePreview from "./NodeThumbnailTwitterProfilePreview.svelte";
@@ -77,6 +77,18 @@
   $: isLinkContext =
     accessPoint === ResourceAccessPoint.NODE_LINKS ||
     accessPoint === ResourceAccessPoint.DEFAULT_RIGHT_PANE_LINKS;
+
+  $: socialFallbackText =
+    socialPostNodeTypeList.has(item.contentType) &&
+    !isValidString(contentPreview)
+      ? `Unknown ${enumToString(item.contentType)}`
+      : undefined;
+
+  $: socialPreviewText = socialPostNodeTypeList.has(item.contentType)
+    ? isValidString(contentPreview)
+      ? contentPreview
+      : socialFallbackText
+    : undefined;
 
   onMount(async () => {
     await resolveUrl();
@@ -185,12 +197,13 @@
             {:else}
               <div
                 class={cn("h-full text-wrap text-left text-b3 overflow-clip", {
-                  "p-1 min-h-12": !isLinkContext && contentPreview
+                  "p-1 min-h-12":
+                    !isLinkContext && (contentPreview || socialPreviewText)
                 })}
               >
-                {#if socialPostNodeTypeList.has(item.contentType) && contentPreview}
+                {#if socialPreviewText}
                   <NodeThumbnailSocialPostPreview
-                    text={contentPreview}
+                    text={socialPreviewText}
                     {accessPoint}
                     contentType={item.contentType}
                   />

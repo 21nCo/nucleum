@@ -685,22 +685,25 @@
       }
       if (
         data.textMetadata?.isEmbed ||
-        data.contentType === NodeType.YOUTUBE_VIDEO
+        (data.contentType &&
+          [NodeType.YOUTUBE_VIDEO, NodeType.YOUTUBE_SHORT].includes(
+            data.contentType
+          ))
       ) {
         const webpageNode = await captureStore?.saveWebpage(data.text, {
           contentType: data.contentType,
           isEmbedContext: true,
           creationContext: nodeContext?.id ?? undefined
         });
-        if (!webpageNode) return;
+        if (!webpageNode || webpageNode.error) return;
         newBlock = {
           contentType: NodeType.EMBED,
           body: {
-            id: webpageNode[0].id,
-            subType: webpageNode[0].contentType
+            id: webpageNode.id,
+            subType: webpageNode.contentType
           }
         };
-        processPasteOrDrop(newBlock, webpageNode[0]);
+        processPasteOrDrop(newBlock, webpageNode);
         progressState = undefined;
         return;
       }

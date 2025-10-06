@@ -39,17 +39,23 @@
     Product.FELLOTRON
   ];
   if (selected === undefined) selected = options[0]?.value;
-
+  const nucleusResources = resolveProductConfig(Product.NUCLEUS).resources
+    .browse;
   function resolveResourcesForSection(section: Product): IResourceSwitchItem[] {
-    const resources = resolveProductConfig(section).resources;
+    const resources = resolveProductConfig(section).resources.browse;
     return resources
       .map((x) => resourceList.find((y) => y.value === x))
       .filter((x) => isDev || !x?.isDisabled)
+      .filter(
+        (x) =>
+          section === Product.NUCLEUS ||
+          !nucleusResources.includes(x?.value as Resource)
+      )
       .filter((x) => x !== undefined);
   }
 
   function resolveSectionLabel(section: Product) {
-    return resolveProductConfig(section).sectionLabel;
+    return resolveProductConfig(section).librarySectionLabel;
   }
 </script>
 

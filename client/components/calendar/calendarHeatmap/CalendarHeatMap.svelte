@@ -110,7 +110,7 @@
 
 <div class="flex h-full w-full flex-col gap-2 items-center">
   {#if variant === CalendarHmVariant.PLAIN}
-    <!-- <Icon icon="chevup" on:click={prev} /> -->
+    <!-- <Icon icon="chevron-up" on:click={prev} /> -->
   {:else if variant === CalendarHmVariant.YEARS_SWITCH}
     <HeaderV1 {provider} {options} />
   {:else if variant === CalendarHmVariant.SCALE_SWITCH}
@@ -154,7 +154,7 @@
     {/if}
   </div>
   {#if variant === CalendarHmVariant.PLAIN}
-    <!-- <Icon icon="chevdown" on:click={next} /> -->
+    <!-- <Icon icon="chevron-down" on:click={next} /> -->
   {:else}
     <Footer />
   {/if}

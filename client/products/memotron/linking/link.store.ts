@@ -23,9 +23,7 @@ import { ResourceErrorCode } from "$lib/client/components/error/error.type";
 
 class Linker extends ResourceStore<ILink, ILinkCapture> {
   constructor() {
-    super(Resource.link, {
-      indices: ["in", "out", "linkType", "location", "tags"]
-    });
+    super(Resource.link);
   }
 
   async link(
@@ -186,17 +184,14 @@ class Linker extends ResourceStore<ILink, ILinkCapture> {
   get() {}
 }
 
-export const linker = new Linker();
+export const linker = Linker.resolve(Resource.link);
 
 class LinkTagStore extends ResourceStore<
   ILinkTag,
   IResourceCaptureV2<ILinkTag>
 > {
   constructor() {
-    super(Resource.linkTag, {
-      isInMemory: true,
-      dataType: StoreDataType.FIR
-    });
+    super(Resource.linkTag);
   }
 
   async save(tag: string, group?: string) {
@@ -247,4 +242,4 @@ class LinkTagStore extends ResourceStore<
   }
 }
 
-export const linkTagStore = new LinkTagStore();
+export const linkTagStore = LinkTagStore.resolve(Resource.linkTag);

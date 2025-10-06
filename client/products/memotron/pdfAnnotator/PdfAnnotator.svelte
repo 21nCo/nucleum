@@ -87,7 +87,8 @@
   let pageNumber = 1;
   let totalPages = 1;
   let annotationMode: AnnotationType = AnnotationType.NONE;
-  enum SpreadModes { //init display modes.
+  enum SpreadModes {
+    //init display modes.
     "NONE",
     "ODD",
     "EVEN"
@@ -890,8 +891,8 @@
           </div>
           <!-- <button on:click={onSearch}>Search</button> -->
           <div class="flex gap-2 items-center">
-            <Button icon="chevdown" on:click={findNext} />
-            <Button icon="chevup" on:click={findPrevious} />
+            <Button icon="chevron-down" on:click={findNext} />
+            <Button icon="chevron-up" on:click={findPrevious} />
           </div>
         </div>
         <!-- <input type="text" bind:value={searchText} placeholder="Search text" /> -->

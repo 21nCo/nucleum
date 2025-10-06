@@ -1,6 +1,6 @@
 {
   "name": "pointron-app",
-  "version": "0.83.2",
+  "version": "0.83.3",
   "build": 1,
   "private": true,
   "scripts": {

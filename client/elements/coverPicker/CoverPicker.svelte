@@ -42,8 +42,9 @@
   export let orientation: Orientation = Orientation.Vertical;
   export let value: IRecordId | undefined = undefined;
 
-  $: isFileUploadAvailable = resolveProductConfig($appStore.product).features
-    .fileUploadAvailable;
+  $: isFileUploadAvailable = resolveProductConfig(
+    $appStore.product
+  ).tables.includes(Resource.file);
 
   let selectedMethod: Method = Method.COLOR;
   let _value: string | undefined = transformValue(value);

@@ -22,6 +22,9 @@ export function resourceCacheKey(resource: Resource, key: string) {
   return `${resource}-${key}`;
 }
 
+/**
+ * TODO - using product.config
+ *  */
 export function resolveProductResources(
   product: Product,
   context: "search" | "cache" | "library" | undefined = undefined
@@ -332,7 +335,10 @@ export function resolveResourceActionIcon(action: ResourceActionType) {
 export const determineResourceAccessMode = (
   id: IRecordId
 ): ResourceAccessMode => {
-  const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+  const searchParams =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : new URLSearchParams();
   const mode = (Object.values(ResourceAccessMode) as string[]).find(
     (m) =>
       m !== ResourceAccessMode.INLINE && searchParams.get(m) === id.toString()

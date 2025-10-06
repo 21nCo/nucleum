@@ -83,7 +83,7 @@
           }
         },
         {
-          isCloudOnlyResource: true
+          isUseCloud: true
         }
       );
       console.log({ mutations });

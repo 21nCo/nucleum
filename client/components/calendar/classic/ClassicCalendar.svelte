@@ -352,7 +352,10 @@
           {indicatorData}
           {indicatorRefreshId}
           on:monthChange={handleMonthChange}
-          on:dateChange={onDateChange}
+          on:dateChange={(e) => {
+            selectedScale = TimeScaleUnit.DAY;
+            onDateChange();
+          }}
         />
       {:else if selectedView === TimeScaleUnit.WEEK}
         <WeekView

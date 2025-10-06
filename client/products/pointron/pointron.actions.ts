@@ -39,7 +39,7 @@ import SessionLogPage from "$lib/client/products/pointron/logs/logPage/SessionLo
 import ManualLogPane from "$lib/client/products/pointron/logs/manualLog/ManualLogPane.svelte";
 import LogsPane from "$lib/client/products/pointron/logs/LogsPane.svelte";
 import AnalyticsV2 from "$lib/client/products/pointron/analytics/AnalyticsV2.svelte";
-import { Orientation } from "$lib/client/types/direction.enum";
+import { Orientation, Placement } from "$lib/client/types/direction.enum";
 import PresetSettings from "$lib/client/products/pointron/focus/advanced/presets/PresetSettings.svelte";
 import {
   sessionStore,
@@ -158,7 +158,10 @@ export const pointronActions: IAction[] = [
     type: ActionType.MODAL,
     isMeta: true,
     modalParams: {
-      title: "Save as preset"
+      title: "Save as preset",
+      layout: {
+        isOveriddenFooter: true
+      }
     }
   },
   {
@@ -170,7 +173,8 @@ export const pointronActions: IAction[] = [
       layout: {
         size: Size.lg,
         isShowCantileverClose: true,
-        isShowBackButton: true
+        isShowBackButton: true,
+        isOveriddenFooter: true
       }
     }
   },
@@ -243,7 +247,8 @@ export const pointronActions: IAction[] = [
     modalParams: {
       title: "Edit Preset",
       layout: {
-        size: Size.lg
+        size: Size.lg,
+        isOveriddenFooter: true
       }
     }
   },
@@ -774,7 +779,9 @@ export const pointronActions: IAction[] = [
     component: CreateTask,
     modalParams: {
       layout: {
-        isDynamicSize: true
+        isDynamicSize: true,
+        isOveriddenFooter: true,
+        alignment: Placement.TopCenter
       }
     }
   },

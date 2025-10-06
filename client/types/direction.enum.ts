@@ -8,7 +8,8 @@ export enum Placement {
   TopLeft = "top-left",
   TopRight = "top-right",
   BottomCenter = "bottom-center",
-  TopCenter = "top-center"
+  TopCenter = "top-center",
+  Center = "center"
 }
 
 export enum Orientation {

@@ -21,9 +21,10 @@
 <button
   bind:this={ref}
   on:click
-  class={cn("w-full flex items-center px-4 py-2 truncate", {
-    "bg-bgs3": isActive,
-    "h-14": !isSearchAction
+  class={cn("w-full flex items-center px-3 py-2 truncate border-l-[3px]", {
+    "bg-bgs2 border-fgs1": isActive,
+    "border-transparent text-fgs2": !isActive,
+    "h-12": !isSearchAction
   })}
   in:fly={{
     duration: 500,

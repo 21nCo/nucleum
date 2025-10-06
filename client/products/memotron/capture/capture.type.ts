@@ -23,7 +23,10 @@ export enum CaptureMethod {
   AUDIO = "AUDIO",
   CAMERA = "CAMERA",
   SKETCH = "SKETCH",
-  UPLOAD = "UPLOAD"
+  WEB = "WEB",
+  UPLOAD = "UPLOAD",
+  SCAN = "SCAN",
+  PASTE = "PASTE"
 }
 
 export type ICaptureBase = {

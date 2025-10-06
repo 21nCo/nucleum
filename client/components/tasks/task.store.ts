@@ -35,8 +35,6 @@ const defaults = {
 class TaskStore extends ResourceStore<ITask, ITaskCapture> {
   constructor() {
     super(Resource.task, {
-      indices: ["dateUnix", "goalId"],
-      searchIndices: ["label"],
       expandProps: ["goalId"],
       defaultProps: defaults
     });
@@ -118,7 +116,7 @@ class TaskStore extends ResourceStore<ITask, ITaskCapture> {
   }
 }
 
-export const taskStore = new TaskStore();
+export const taskStore = TaskStore.resolve(Resource.task);
 
 class TaskActions {
   constructor(

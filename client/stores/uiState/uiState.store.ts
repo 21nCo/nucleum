@@ -184,7 +184,7 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
   }
 }
 
-export const uiState = new UiStateStore();
+export const uiState = UiStateStore.resolve(Resource.uiState);
 
 /**
  *

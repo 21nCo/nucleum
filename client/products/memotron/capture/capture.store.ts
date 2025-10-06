@@ -97,6 +97,7 @@ import type { IMarkdownTemplate } from "$lib/client/components/markdown/md.type"
 import { isValidString } from "$lib/shared/utils/text.utils";
 import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
 import { debouncer } from "$lib/client/utils/utils";
+import { openPasteConfirmationModalFromClipboard } from "./paste.utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
@@ -135,7 +136,7 @@ class CaptureStore extends ResourceStore<ICapture, ICaptureCapture> {
   }
 }
 
-export const captureStore = new CaptureStore();
+export const captureStore = CaptureStore.resolve(Resource.capture);
 
 export type IActiveCaptureStore = InstanceType<typeof ActiveCaptureStore>;
 
@@ -339,6 +340,11 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   async onTypeSelect(val: CaptureMethod | IRecordId) {
     logger.debug({ context: "onTypeSelect", val });
     if (!val) return;
+    if (val === CaptureMethod.PASTE) {
+      await openPasteConfirmationModalFromClipboard();
+      appStore.closeResource({ accessMode: ResourceAccessMode.POP });
+      return;
+    }
     const isCollection = isRecordId(val, Resource.collection);
     if (!isCollection) {
       this.update((store) => {
@@ -734,7 +740,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         id,
         contentType,
         file: fileId,
-        label: captureStore.label ?? file.name,
+        label: (isValidString(captureStore.label) ? captureStore.label : null) ?? file.name,
         body: {},
         metadata: {
           ...metadata
@@ -755,7 +761,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         isOpenOnSave: params?.isOpenOnSave,
         isEmbedContext: params?.isEmbedContext
       });
-      return result?.[0];
+      return Array.isArray(result) ? result?.[0] : result;
     } finally {
       if (!params?.isEmbedContext) this.setIsSaving(false);
     }
@@ -775,7 +781,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     }
   }
 
-  private async saveMarkdownFromText(text: string, title?: string) {
+  async saveMarkdownFromText(text: string, title?: string) {
     const blocks: IBlock[] = textToMdBlocks(text);
     const structure = extractStructureForChildren(blocks);
     const rootStructure = extractRootStructure(structure, hierarchyFactorLimit);
@@ -787,7 +793,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     const mdText = generateMarkdownText(rootBlocks);
     let root: INodeCapture<INode> = {
       id,
-      label: title ?? "",
+      label: title ?? text.split("\n")[0].trim().slice(0, 100),
       properties: [],
       body: "",
       text: mdText,
@@ -981,7 +987,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           ? (params?.creationContext ?? this.get().nodeId)
           : undefined,
         label:
-          captureStore.label ??
+          (isValidString(captureStore.label) ? captureStore.label : null) ??
           `Audio Recording - ${new Date().toLocaleString()}`,
         body: {
           duration
@@ -1051,7 +1057,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       contentType: NodeType.IMAGE,
       file: fileId,
       label:
-        captureStore.label ?? `Image Capture - ${new Date().toLocaleString()}`,
+        (isValidString(captureStore.label) ? captureStore.label : null) ??
+        `Image Capture - ${new Date().toLocaleString()}`,
       body: {},
       properties: captureStore.properties,
       collections,
@@ -1095,13 +1102,10 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       creationContext?: IRecordId;
     }
   ) {
-    if (params?.isEmbedContext) {
-      const urlData = resolveUrlData(text);
-      if (urlData?.convertToEmbedUrl) {
-        text = urlData.convertToEmbedUrl(text);
-      }
+    const urlData = resolveUrlData(text);
+    if (urlData?.convertToEmbedUrl) {
+      text = urlData.convertToEmbedUrl(text);
     }
-
     let node: INodeCapture<IWebPage | IClip> = {
       contentType: params?.contentType ?? NodeType.WEB_PAGE,
       label: text.split("://").pop() ?? "",
@@ -1116,7 +1120,10 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     };
     const accountVal = account.get();
     if (accountVal?.dataMode === UserDataMode.CLOUD) {
-      if (params?.contentType === NodeType.YOUTUBE_VIDEO) {
+      if (
+        params?.contentType === NodeType.YOUTUBE_VIDEO ||
+        params?.contentType === NodeType.YOUTUBE_SHORT
+      ) {
         const youtubeMetadata = await fetchYouTubeMetadata(text);
         if (youtubeMetadata) {
           node.label = youtubeMetadata.title;
@@ -1151,7 +1158,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       isOpenOnSave: params?.isOpenOnSave,
       isEmbedContext: params?.isEmbedContext
     });
-    return result;
+    return Array.isArray(result) ? result?.[0] : result;
   }
 
   async postSave(

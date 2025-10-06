@@ -36,7 +36,7 @@
     <span class="text-wrap">
       {label}
     </span>
-    <Icon icon={isActive ? "chevup" : "chevdown"} />
+    <Icon icon={isActive ? "chevron-up" : "chevron-down"} />
 
     <!-- <TimePeriodPopover bind:period on:change /> -->
   </div>

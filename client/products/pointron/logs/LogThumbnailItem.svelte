@@ -185,7 +185,7 @@
     class="absolute right-0 mr-4 rounded-r-md h-full flex flex-col pr-2 justify-center"
   >
     {#if context == "logs" || (isHovering && !$view.isPortrait)}
-      <Icon icon="chevright" />
+      <Icon icon="chevron-right" />
     {/if}
   </div>
 </HoverableElement>

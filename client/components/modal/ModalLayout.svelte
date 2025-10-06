@@ -26,6 +26,7 @@
   import view from "$lib/client/stores/view.store";
   import ButtonTooltip from "$lib/client/elements/button/ButtonTooltip.svelte";
   import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
+  import ModalContentPadded from "./ModalContentPadded.svelte";
 
   export let path: string;
   export let resource: string | undefined = undefined;
@@ -101,10 +102,11 @@
 {:else}
   <div
     class={cn(
-      "relative modal flex flex-col items-center justify-between w-full h-full  rounded-md embed-ios:bg-bgs1",
+      "relative modal flex flex-col items-center justify-between rounded-md embed-ios:bg-bgs1 cw:w-full cw:h-full",
       {
         "dark:border border-brs3": !isInFocusMode && !$view.isConstrainedWidth,
-        "otop:pt-12": !resource || params.title
+        "otop:pt-12": !resource || params.title,
+        "w-full h-full": !params.layout?.isDynamicSize
       },
       !params.layout?.ignoreSafeArea && {
         "gap-4": size === Size.xs,
@@ -130,21 +132,35 @@
           : params.layout?.isShowClose}
       />
     {/if}
+
     <div
       class={cn(
-        "flex flex-col gap-4 w-full flex-grow overflow-hidden mo:rounded-none rounded-md",
+        "flex flex-col gap-4 flex-grow overflow-hidden mo:rounded-none rounded-md cw:w-full",
         {
-          "p-2 lg:p-4": !params.layout?.ignoreSafeArea && size === Size.xs,
-          "px-3 tp:px-8 lg:px-12":
-            !params.layout?.ignoreSafeArea && size !== Size.xs
+          "w-full": !params.layout?.isDynamicSize
         }
       )}
     >
-      <slot />
+      {#if !params.layout?.ignoreSafeArea && !params.layout?.isOveriddenFooter}
+        <ModalContentPadded
+          isExtraSmall={size === Size.xs}
+          isDynamicSize={params.layout?.isDynamicSize}
+        >
+          <slot />
+        </ModalContentPadded>
+      {:else}
+        <slot />
+      {/if}
     </div>
-    {#if params.layout?.primaryAction || params.layout?.secondaryAction}
+
+    {#if params.layout?.primaryAction || params.layout?.secondaryAction || params.layout?.isShowClose}
       <ModalFooter
         action={path}
+        size={size === Size.xl || size === Size.xxl
+          ? Size.lg
+          : size === Size.xxs
+            ? Size.xs
+            : size}
         primaryAction={params.layout?.primaryAction}
         secondaryAction={params.layout?.secondaryAction}
         isDelegateClose={true}

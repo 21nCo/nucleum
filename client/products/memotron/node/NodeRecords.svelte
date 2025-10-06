@@ -87,6 +87,7 @@
         NodeType.WEB_PAGE,
         NodeType.KINDLE_BOOK,
         NodeType.YOUTUBE_VIDEO,
+        NodeType.YOUTUBE_SHORT,
         NodeType.TWITTER_PROFILE,
         NodeType.AUDIO
       ].includes(itemContentType)
