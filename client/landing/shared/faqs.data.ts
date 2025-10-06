@@ -31,6 +31,6 @@ export const faqs: { [key: string]: IFaq } = {
   },
   canISelfHost: {
     title: "Can I self-host the app?",
-    body: "Self-hosting is currently available for the offline-only client app. Please read instructions [here](https://github.com/21nOrg/nucleus)."
+    body: "Self-hosting is currently available for the offline-only client app. Please read instructions [here](https://github.com/21nOrg/tidigit)."
   }
 };

@@ -40,7 +40,7 @@
     cta: [
       {
         label: "",
-        href: "https://github.com/21nOrg/nucleus",
+        href: "https://github.com/21nOrg/tidigit",
         icon: "github-logo",
         type: "secondary"
       },
