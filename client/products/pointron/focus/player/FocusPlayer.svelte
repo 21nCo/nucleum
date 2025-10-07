@@ -255,7 +255,7 @@
                     }}
                   >
                     <Icon
-                      icon="ph:picture-in-picture-light"
+                      icon="pip"
                       isTabbable={true}
                       isFilled={hoverState.pipHovering}
                       class={cn({

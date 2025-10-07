@@ -849,6 +849,11 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "maximize",
     solar: "maximize"
   },
+  exitfullscreen: {
+    phosphor: "arrows-in",
+    lucide: "minimize",
+    solar: "minimize"
+  },
   pop: {
     phosphor: "arrow-line-up-right",
     lucide: "maximize",
@@ -1276,6 +1281,11 @@ export const iconMappings: Record<string, IconMapping> = {
     phosphor: "scan",
     lucide: "scan",
     solar: "scanner"
+  },
+  pip: {
+    phosphor: "picture-in-picture",
+    lucide: "picture-in-picture",
+    solar: "pip"
   }
 };
 

@@ -53,7 +53,7 @@
     on:click={() => appStore.runAction(PointronEventEnum.BACKGROUND_MUSIC)}
   /> -->
   <Button
-    icon="zen"
+    icon="ph:flower-lotus-light"
     tooltip="Think mode"
     {...buttonProps}
     on:click={() => {
@@ -62,7 +62,7 @@
   />
   {#if $activeSession.type !== SessionType.PREDEFINED_INTERVALS}
     <Button
-      icon="cross-circled"
+      icon="x-circle"
       tooltip="Abandon focus session"
       {...buttonProps}
       on:click={() => {
@@ -81,7 +81,7 @@
     />
   {/if}
   <Button
-    icon={isInFullScreen ? "collapse" : "full-screen"}
+    icon={isInFullScreen ? "exitfullscreen" : "fullscreen"}
     tooltip={isInFullScreen ? "Exit full screen" : "Full screen"}
     {...buttonProps}
     on:click={onFullScreenToggle}

@@ -1269,8 +1269,9 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     }
   }
 }
-
-export const activeSession = new ActiveSessionStore();
+export const activeSession = ActiveSessionStore.resolve(
+  Resource.pointSessionSnapshotv2
+);
 
 export const lastActiveGoalIdForEditing = writable<IRecordId | undefined>(
   undefined
@@ -1522,7 +1523,9 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
   }
 }
 
-export const focusItemsStore = new FocusItemsStore();
+export const focusItemsStore = FocusItemsStore.resolve(
+  Resource.sessionFocusItems
+);
 
 class SessionStore extends ResourceStore<ISession, ISessionCapture> {
   constructor() {

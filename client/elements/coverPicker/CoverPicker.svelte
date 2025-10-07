@@ -44,7 +44,7 @@
 
   $: isFileUploadAvailable = resolveProductConfig(
     $appStore.product
-  ).tables.includes(Resource.file);
+  ).tableConfig.some((table) => table.name === Resource.file);
 
   let selectedMethod: Method = Method.COLOR;
   let _value: string | undefined = transformValue(value);

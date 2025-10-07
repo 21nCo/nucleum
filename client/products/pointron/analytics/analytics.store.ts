@@ -128,7 +128,9 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
 }
 
 // export const analyticsConfigStore = initAnalyticsConfigStore();
-export const analyticsConfigStore = new AnalyticsConfigStore();
+export const analyticsConfigStore = AnalyticsConfigStore.resolve(
+  analyticsConfigStoreId
+);
 
 export type AnalyticsPageStoreType = ReturnType<typeof initAnalyticsPageStore>;
 

@@ -28,5 +28,6 @@ class MarkdownSettingsStore extends KeyValueStore<IMarkdownSettings> {
     return this.modify(this.get());
   }
 }
-
-export const markdownSettings = new MarkdownSettingsStore();
+export const markdownSettings = MarkdownSettingsStore.resolve(
+  Resource.markdownSettings
+);

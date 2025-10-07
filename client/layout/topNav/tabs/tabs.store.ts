@@ -28,6 +28,16 @@ class TabStore {
   }
 
   activate(id: IRecordId, backParam?: string) {
+    if (!id) return;
+    const currentParams = new URLSearchParams(window.location.search);
+    const tabParam = currentParams.get("tab");
+    if (tabParam === id) return;
+
+    const existingBack = currentParams.get("back");
+    const resolvedBack = tabParam
+      ? (existingBack ?? undefined)
+      : (backParam ?? window.location.pathname);
+
     appStore.closeResource({ isRestrictToModals: true });
     const resource =
       typeof id === "string"
@@ -35,11 +45,14 @@ class TabStore {
         : typeof id === "object" && "tb" in id
           ? id.tb
           : undefined;
+    const queryParams: Record<string, IRecordId | string> = {
+      tab: id
+    };
+    if (resolvedBack !== undefined && resolvedBack !== null) {
+      queryParams.back = resolvedBack;
+    }
     appStore.gotoPath(`/${resource}/tab`, {
-      queryParams: {
-        tab: id,
-        back: backParam ?? window.location.pathname
-      }
+      queryParams
     });
   }
 
