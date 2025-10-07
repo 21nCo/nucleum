@@ -152,7 +152,7 @@ class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
     super(Resource.pointronPreferences, seedLocalPreferences);
   }
   loader(data: IPointronPreferences) {
-    if (!data.id) return;
+    if (!data || typeof data !== 'object') return;
     if (!data.uiStates) data.uiStates = seedLocalPreferences.uiStates;
     if (!data.presets) data.presets = generateSeedPresets();
     //m.horizonCharts = defaultHorizonChartConfiguration;

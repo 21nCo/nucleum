@@ -73,7 +73,7 @@ export class KeyValueStore<T>
    */
   loader(data: T) {
     // console.log({ context: "kv.store loader", id: this.id, data });
-    if (!data.id) return;
+    if (!data || typeof data !== 'object') return;
     this.isInitialized = true;
     this.__set({ ...data });
   }
