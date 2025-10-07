@@ -20,9 +20,13 @@ export interface IStore {
    */
   dataType: StoreDataType;
 
+  /**
+   * @deprecated - use tables config to determine if the store is in memory
+   */
   isInMemory?: boolean;
 
   /**
+   * @deprecated - use tables config to determine if the store is cloud only
    * Whether the resource is cloud only. If true, mutations or select queries will be directly relayed to the cloud and not saved locally
    */
   isCloudOnlyResource?: boolean;
@@ -44,6 +48,7 @@ export interface IStore {
 
 export interface IResourceStore<T> extends IStore, Writable<T[]> {
   /**
+   * @deprecated - use tables config instead
    * The indices to be created on the database for the store
    *
    * Follows dexie.js format
@@ -53,6 +58,7 @@ export interface IResourceStore<T> extends IStore, Writable<T[]> {
   indices?: string[];
 
   /**
+   * @deprecated - use tables config instead
    * The fields to be indexed by FlexSearch for full-text search
    * These fields will be extracted and indexed for search operations
    * Example: ["label", "text", "body"] for searchable text fields
@@ -69,6 +75,7 @@ export interface IResourceStore<T> extends IStore, Writable<T[]> {
    */
   expandProps?: string[];
   /**
+   * @deprecated - use tables config instead
    * Properties to be encrypted
    */
   encrypt?: string[];
