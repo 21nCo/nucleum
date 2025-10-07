@@ -45,17 +45,25 @@ export default function fetchJsonPlugin(outputPath) {
     },
     async buildStart() {
       console.log("Fetching JSON from:", url);
+      
+      if (!url || url.startsWith("/")) {
+        console.log("Skipping JSON fetch in test mode or when VITE_STATIC_URL is not set");
+        
+        const fullOutputPath = validatePath(outputPath);
+        await fs.writeFile(fullOutputPath, JSON.stringify({}, null, 2));
+        console.log("Created empty JSON file for test mode:", fullOutputPath);
+        return;
+      }
+      
       try {
         const response = await fetch(url);
         
-        // Check for HTTP errors
         if (!response.ok) {
           throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
         }
         
         const data = await response.json();
 
-        // Use validated path to prevent directory traversal
         const fullOutputPath = validatePath(outputPath);
         await fs.writeFile(fullOutputPath, JSON.stringify(data, null, 2));
 
