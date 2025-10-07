@@ -144,7 +144,11 @@
   }
 
   .default-typeface {
-    font-family: "Sen", "Hanken Grotesk", system-ui, sans-serif;
+    font-family: var(--typeface, "Sen"), "Hanken Grotesk", system-ui, sans-serif;
+  }
+  
+  body {
+    font-family: var(--typeface, "Sen"), "Hanken Grotesk", system-ui, sans-serif;
   }
 }
 

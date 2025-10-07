@@ -43,10 +43,15 @@
     resolveProductConfig
   } from "$lib/client/products/product.config";
   import view from "@21n/stores/view.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   let timer: any;
   let isMounted = false;
   let lastOrientation: 'portrait' | 'landscape' | null = null;
   const productConfig = resolveProductConfig();
+
+  $: if (browser && $userPreferences?.appearance?.typeface) {
+    document.documentElement.style.setProperty('--typeface', $userPreferences.appearance.typeface);
+  }
 
   onMount(async () => {
     if (browser) {
