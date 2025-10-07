@@ -45,6 +45,13 @@ export default function fetchJsonPlugin(outputPath) {
     },
     async buildStart() {
       console.log("Fetching JSON from:", url);
+      
+      if (!url || !url.startsWith('http')) {
+        console.log("🔄 Setting up shared static assets...");
+        console.log("⚠️  Skipping fetch in test/dev mode - VITE_STATIC_URL not configured");
+        return;
+      }
+      
       try {
         const response = await fetch(url);
         
