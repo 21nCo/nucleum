@@ -43,10 +43,19 @@
     resolveProductConfig
   } from "$lib/client/products/product.config";
   import view from "@21n/stores/view.store";
+  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   let timer: any;
   let isMounted = false;
   let lastOrientation: 'portrait' | 'landscape' | null = null;
   const productConfig = resolveProductConfig();
+
+  // Reactive statement to update typeface CSS variable
+  $: if (browser && $userPreferences?.appearance?.typeface) {
+    const typefaceValue = $userPreferences.appearance.typeface === "Sen" 
+      ? '"Sen", "Hanken Grotesk", system-ui, sans-serif'
+      : `"${$userPreferences.appearance.typeface}", "Sen", "Hanken Grotesk", system-ui, sans-serif`;
+    document.documentElement.style.setProperty('--typeface', typefaceValue);
+  }
 
   onMount(async () => {
     if (browser) {

@@ -99,7 +99,7 @@
       label: "Overview",
       // tooltip: "Overview",
       value: CalendarColumnPanel.Overview,
-      icon: "heroicons:rectangle-group"
+      icon: "ph:grid-four"
       // icon: "grid"
     };
     const notes = {

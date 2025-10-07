@@ -53,7 +53,7 @@
     on:click={() => appStore.runAction(PointronEventEnum.BACKGROUND_MUSIC)}
   /> -->
   <Button
-    icon="zen"
+    icon="ph:flower-lotus"
     tooltip="Think mode"
     {...buttonProps}
     on:click={() => {
@@ -81,7 +81,7 @@
     />
   {/if}
   <Button
-    icon={isInFullScreen ? "collapse" : "full-screen"}
+    icon={isInFullScreen ? "ph:corners-in" : "ph:corners-out"}
     tooltip={isInFullScreen ? "Exit full screen" : "Full screen"}
     {...buttonProps}
     on:click={onFullScreenToggle}

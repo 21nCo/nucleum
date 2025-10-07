@@ -193,7 +193,7 @@
           {#if $node.contentType !== NodeType.VIDEO && !isConstrainedWidth && $node.accessMode !== ResourceAccessMode.FULL}
             <Button
               {...buttonCommonProps}
-              icon="full-screen"
+              icon="ph:corners-out"
               tooltip="Full screen"
               on:click={() => {
                 appStore.toggleFullScreen($node.accessMode, $node.id);
