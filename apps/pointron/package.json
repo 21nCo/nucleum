@@ -18,7 +18,10 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test-storybook": "test-storybook --browsers firefox chromium webkit"
+    "test-storybook": "test-storybook --browsers firefox chromium webkit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "svelte-check --tsconfig ./tsconfig.json"
   },
   "devDependencies": {
     "@iconify-json/ph": "^1.2.0",
@@ -63,7 +66,8 @@
     "vite": "^5.0.3",
     "vite-plugin-monaco-editor": "^1.1.0",
     "vite-plugin-top-level-await": "^1.4.4",
-    "vitest": "^2.0.5"
+    "vitest": "^2.0.5",
+    "jsdom": "^25.0.1"
   },
   "type": "module",
   "dependencies": {
