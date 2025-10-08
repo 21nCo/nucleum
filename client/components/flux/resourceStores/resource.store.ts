@@ -212,9 +212,6 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
   id: Resource;
   dataType: StoreDataType = StoreDataType.IFR;
   currentUserId?: string;
-  indices?: string[];
-  searchIndices?: string[];
-  isInMemory?: boolean = false;
   defaultProps?: Partial<T> = {};
   expandProps?: string[];
   /**
@@ -728,7 +725,6 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
    * @returns
    */
   loader(data: T[]) {
-    if (!this.isInMemory) return;
     this._setInMemoryItems(data);
   }
 

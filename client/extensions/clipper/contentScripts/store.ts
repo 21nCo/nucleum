@@ -1343,8 +1343,9 @@ class ClipperToolbarState extends KeyValueStore<{
     }
   }
 }
-
-export const toolbarState = new ClipperToolbarState();
+export const toolbarState = ClipperToolbarState.resolve(
+  Resource.clipperToolbarState
+);
 
 class SyncStore extends ObservableStore<ISyncStore> {
   constructor() {

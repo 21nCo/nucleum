@@ -133,7 +133,6 @@
           id: links?.map((x) => x.linkedTo.toString())
         }
       });
-      console.log({ linkedNodes });
     } catch (error) {
       logger.error({ at: "loadLinkedNodesData", error });
     }

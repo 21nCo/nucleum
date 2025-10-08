@@ -6,6 +6,9 @@ import fetchJsonPlugin from "../fetch-json-data.js";
 import { staticPlugin } from "../../client/static/vite-plugin.js";
 
 export default defineConfig({
+  worker: {
+    format: "es"
+  },
   build: {
     target: "esnext",
     rollupOptions: {

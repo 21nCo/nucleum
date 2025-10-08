@@ -698,13 +698,10 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     clearHoverDelayTimeout();
     if (popoverElement) {
       try {
-        if (isRenderAsSibling && node.parentNode) {
-          node.parentNode.removeChild(popoverElement);
-        } else {
-          (isSecondary
-            ? secondaryPopoverContainer
-            : popoverContainer
-          )?.removeChild(popoverElement);
+        if (typeof popoverElement.remove === "function") {
+          popoverElement.remove();
+        } else if (popoverElement.parentNode) {
+          popoverElement.parentNode.removeChild(popoverElement);
         }
       } catch (e) {
         console.error("hidePopover", e);

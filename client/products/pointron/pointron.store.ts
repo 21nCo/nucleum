@@ -213,8 +213,9 @@ class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
     return this.modify({ manualEntryQuickDurations: durations });
   }
 }
-
-export const pointronPreferences = new PointronPreferencesStore();
+export const pointronPreferences = PointronPreferencesStore.resolve(
+  Resource.pointronPreferences
+);
 export const pointronConstants = initPointronConstants({
   timerModes: ["Minimal", "Journal"],
   focusPlaceholderText: [

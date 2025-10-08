@@ -191,7 +191,7 @@
       {#if $node.accessMode !== ResourceAccessMode.FULL}
         <Button
           {...buttonCommonProps}
-          icon="full-screen"
+          icon="fullscreen"
           tooltip="Full screen"
           on:click={() => {
             appStore.toggleFullScreen($node.accessMode, $node.id);

@@ -210,7 +210,7 @@
   function onReorderTasksInGoal(event: any) {
     const { fromId, toId, goalId } = event.detail;
     focusItemsStore.rearrangeTasksInGoal(goalId, fromId, toId);
-    focusItems = focusItems.map(item => {
+    focusItems = focusItems.map((item) => {
       if (isSameResource(item.id, goalId) && item.tasks) {
         return {
           ...item,
