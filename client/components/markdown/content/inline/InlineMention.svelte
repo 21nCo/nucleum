@@ -36,7 +36,7 @@
   class="inline-mention px-1 bg-bgs2 notouch:hover:bg-bgs3 active:bg-bgs3 rounded-md max-w-48 truncate"
   data-record-id={id}
   data-label={label}
-  href={`?pop=${id}`}
+  href={`${window.location.pathname}${window.location.search}${window.location.search ? "&" : "?"}pop=${id}`}
   contenteditable="false"
   use:hoverable={{
     onHover: (val) => {

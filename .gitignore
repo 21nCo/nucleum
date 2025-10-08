@@ -31,3 +31,4 @@ client/cx/contemporaries/glasp-*
 .vscode/tasks.json
 .ar
 .sample_*
+.notes*
