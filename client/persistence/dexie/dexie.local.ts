@@ -227,17 +227,16 @@ export class DexiePersistence implements IPersistence {
         return;
       }
 
-      const workerPath = new URL("./dexie.indexing.worker.ts", import.meta.url)
-        .href;
+      const WorkerConstructor = (
+        await import("./dexie.indexing.worker.ts?sharedworker")
+      ).default;
 
       logger.info({
         at: "DexiePersistence.triggerBackgroundIndexing",
-        message: "Creating SharedWorker for background indexing",
-        workerPath
+        message: "Creating SharedWorker for background indexing"
       });
 
-      this.indexingWorker = new SharedWorker(workerPath, {
-        type: "module",
+      this.indexingWorker = new WorkerConstructor({
         name: "dexie-indexing-worker"
       });
 
