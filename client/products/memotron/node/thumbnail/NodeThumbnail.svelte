@@ -61,6 +61,7 @@
 
   let isHovering: boolean = false;
   let _url: string;
+  $: previewImageFile = item.previewImage;
   $: filePreview = resolveFilePreview(item);
   $: hasFullFileDetails = filePreview?.url || filePreview?.data;
   $: urlPreview = resolveUrlPreview(item);
@@ -166,6 +167,17 @@
           >
             {#if item.bodySearch}
               {@html renderMdAsHtml(item.bodySearch)}
+            {:else if previewImageFile}
+              <FileView
+                id={previewImageFile}
+                isHideControls={true}
+                isLazyLoad={true}
+                isUseThumbnailIfAvailable={true}
+                class={cn("object-cover h-full w-full rounded-md", {
+                  // "rounded-md": isLinkContext,
+                  // "rounded-full": !isLinkContext
+                })}
+              />
             {:else if filePreview}
               <FileView
                 file={hasFullFileDetails ? filePreview : undefined}
@@ -211,7 +223,11 @@
                   <TextClipPreview node={item} {contentPreview} {accessPoint} />
                 {:else if contentPreview}
                   <span class="text-fgs3 userdata">
-                    {contentPreview}
+                    {#if item.contentType === NodeType.NODULAR_MARKDOWN}
+                      {@html renderMdAsHtml(contentPreview)}
+                    {:else}
+                      {contentPreview}
+                    {/if}
                   </span>
                 {:else}
                   <div
@@ -279,6 +295,15 @@
             <span class="text-b2 text-fgs2">
               {@html renderMdAsHtml(item.bodySearch)}
             </span>
+          {:else if previewImageFile}
+            <FileView
+              id={previewImageFile}
+              isLazyLoad={true}
+              isHideControls={true}
+              isUseThumbnailIfAvailable={true}
+              isApplyBgColor={false}
+              class="absolute inset-0 w-full rounded-t-md object-cover h-full"
+            />
           {:else if filePreview}
             <FileView
               file={hasFullFileDetails ? filePreview : undefined}
@@ -311,7 +336,11 @@
                 <NodeThumbnailAudioPreview url={_url} />
               {:else if contentPreview}
                 <span class="text-fgs3 userdata">
-                  {contentPreview}
+                  {#if item.contentType === NodeType.NODULAR_MARKDOWN}
+                    {@html renderMdAsHtml(contentPreview)}
+                  {:else}
+                    {contentPreview}
+                  {/if}
                 </span>
               {/if}
             </div>
@@ -348,7 +377,19 @@
       </div>
     </ResourceGridThumbnail>
   {:else if arrangement === Arrangement.MASONRY}
-    {#if filePreview}
+    {#if previewImageFile}
+      <FileView
+        id={previewImageFile}
+        isHideControls={true}
+        isLazyLoad={true}
+        isUseThumbnailIfAvailable={true}
+        class={cn("w-full h-auto", {
+          "rounded-md": isHideTitle,
+          "rounded-t-md": !isHideTitle
+        })}
+        on:load
+      />
+    {:else if filePreview}
       <FileView
         file={hasFullFileDetails ? filePreview : undefined}
         id={hasFullFileDetails ? undefined : filePreview}
@@ -400,7 +441,11 @@
           </span>
         {:else}
           <span class="text-fgs3 userdata">
-            {contentPreview}
+            {#if item.contentType === NodeType.NODULAR_MARKDOWN}
+              {@html renderMdAsHtml(contentPreview)}
+            {:else}
+              {contentPreview}
+            {/if}
           </span>
         {/if}
       </div>

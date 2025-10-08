@@ -26,6 +26,14 @@ import {
 import { ResourceActions } from "$lib/client/components/record/resource.actions";
 import { get, writable } from "svelte/store";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
+
+export const previewImageUploaderStore = writable<{
+  isOpen: boolean;
+  nodeId?: IRecordId;
+}>({
+  isOpen: false,
+  nodeId: undefined
+});
 import {
   ContextMenuType,
   type IContextMenu,
@@ -742,6 +750,29 @@ class NodeActions {
     callback: async () => {}
   };
 
+  setCustomPreview = {
+    value: "setCustomPreview",
+    label: "Set custom preview",
+    icon: "ph:image",
+    callback: async () => {
+      previewImageUploaderStore.set({
+        isOpen: true,
+        nodeId: this.node.id
+      });
+    }
+  };
+
+  removeCustomPreview = {
+    value: "removeCustomPreview",
+    label: "Remove custom preview",
+    icon: "trash",
+    callback: async () => {
+      return this.store.modify(this.node.id, {
+        previewImage: undefined
+      });
+    }
+  };
+
   sideNotesPane() {
     return {
       value: NodeRightPaneType.SIDENOTES,
@@ -988,17 +1019,25 @@ export function resolveNodeContextMenu(
           resourceActions.toggleFocusMode()
         ]
       : [resourceActions.toggleFocusMode()];
+  const previewImageAction =
+    node.contentType === NodeType.NODULAR_MARKDOWN
+      ? node.previewImage
+        ? nodeActions.removeCustomPreview
+        : nodeActions.setCustomPreview
+      : undefined;
   const secondGroupItems = viewStore.isConstrainedWidth
     ? [
         resourceActions.toggleReadMode(),
         nodeStaticActions.metadataPane,
-        nodeStaticActions.historyPane
+        nodeStaticActions.historyPane,
+        ...(previewImageAction ? [previewImageAction] : [])
       ]
     : [
         resourceActions.toggleReadMode(),
         nodeActions.toggleFullWidth(),
         nodeStaticActions.metadataPane,
-        nodeStaticActions.historyPane
+        nodeStaticActions.historyPane,
+        ...(previewImageAction ? [previewImageAction] : [])
       ];
   return [
     {

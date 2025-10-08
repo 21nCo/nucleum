@@ -59,6 +59,10 @@ type INodeInterface<
   url?: string;
   file?: IRecordId;
   /**
+   * Custom preview image for node thumbnails (especially for markdown nodes)
+   */
+  previewImage?: IRecordId;
+  /**
    * Calculated avatar from linked type collections
    */
   avatar?: IAvatar[];
