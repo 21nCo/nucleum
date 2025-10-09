@@ -4,6 +4,8 @@ import {
   OperatingSystem,
   type IAppContext
 } from "../types/context.type";
+import { clientStorage } from "$lib/client/persistence/persistence.utils";
+import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
 
 const context = initContextStore({
   isEmbed: false,
@@ -20,7 +22,17 @@ function initContextStore(val: IAppContext) {
   return {
     subscribe,
     set,
-    update
+    update,
+    toggleOfflineMode: async (value: boolean) => {
+      try {
+        await clientStorage.set(ClientStorageKey.OFFLINE_MODE, value);
+        update((ctx) => {
+          return  {...ctx, isInOfflineMode: value }
+        });
+      } catch (error) {
+        console.error("Failed to set offline mode in clientStorage:", error);
+      }
+    }
   };
 }
 
