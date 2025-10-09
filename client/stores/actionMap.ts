@@ -84,6 +84,7 @@ import DataSettings from "../components/settings/DataSettings.svelte";
 import DexieConsole from "../components/debug/DexieConsole.svelte";
 import { AppSearchParam } from "../types/appStore.type";
 import OfflineStatusModal from "../components/settings/sync/OfflineStatusModal.svelte";
+import context from "./context.store";
 
 export const globalActions: IAction[] = [
   {
@@ -734,6 +735,7 @@ export const globalActions: IAction[] = [
     action: Action.INACTIVE_PLAN,
     type: ActionType.MODAL,
     isMeta: true,
+    // label: "inactive plan",
     component: InactivePlan,
     modalParams: {
       isDismissable: false,
@@ -749,11 +751,12 @@ export const globalActions: IAction[] = [
           }
         },
         secondaryAction: {
-          label: "Chat with us",
-          icon: "chat-three",
+          label: "Use offline",
+          icon: "offline",
           variant: ButtonVariant.SECONDARY,
           callback: async () => {
-            appStore.runAction("chat");
+             await context.toggleOfflineMode(true);
+              modalEvent.hide(Action.INACTIVE_PLAN);
           }
         }
       }

@@ -333,7 +333,7 @@
           initState
         });
         if (initState === 0) await kvSeedDelegate();
-        else await flux.loadInMemoryStores();
+        await flux.loadInMemoryStores();
         return initState;
       }
       if (!$account.userId) {

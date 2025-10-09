@@ -1,6 +1,5 @@
 import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { appStore } from "$lib/client/stores/app.store";
 import { get } from "svelte/store";
 import type {
   IKeyboardShortcut,
@@ -12,6 +11,7 @@ import context from "$lib/client/stores/context.store";
 import { OperatingSystem } from "$lib/client/types/context.type";
 import { shortcutsConfig } from "./shortcuts.config";
 import { replacer } from "$lib/shared/utils/json.utils";
+import { resolveProductConfig } from "$lib/client/products/product.config";
 
 export type KeyboardShortcutsStoreType = InstanceType<typeof KeyboardShortcuts>;
 
@@ -41,7 +41,8 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
   }
 
   fetchConfiguratbleShortcuts() {
-    const configurableShortcuts = get(appStore)?.appData?.configurableShortcuts;
+    const config = resolveProductConfig();
+    const configurableShortcuts = config.configurableShortcuts;
     return this.fetchKeyMap().filter((x) =>
       configurableShortcuts?.includes(x.action)
     );

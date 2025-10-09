@@ -102,6 +102,15 @@
     <div class="flex justify-center gap-8">
       <RestorePurchaseAction />
       <Button
+      label="Chat with us"
+      icon="chat-three"
+      size={Size.sm}
+      style={ButtonStyle.PLAIN}
+      on:click={async () => {
+          appStore.runAction("chat");
+      }}
+    />
+      <Button
         label="Logout"
         icon="log-out"
         size={Size.sm}
