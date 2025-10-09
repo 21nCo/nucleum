@@ -34,49 +34,49 @@
       "size": 196663,
       "modified": "2025-10-09T03:29:05.690Z"
     },
-    "icons/sprite-ph-duotone-v58.svg": {
+    "icons/sprite-lucide-base-v60.svg": {
+      "size": 57857,
+      "modified": "2025-10-09T03:29:05.688Z"
+    },
+    "icons/sprite-ph-base-v60.svg": {
+      "size": 196663,
+      "modified": "2025-10-09T03:29:05.690Z"
+    },
+    "icons/sprite-ph-duotone-v60.svg": {
       "size": 245117,
       "modified": "2025-10-09T03:29:05.690Z"
     },
-    "icons/sprite-ph-fill-v58.svg": {
+    "icons/sprite-ph-fill-v60.svg": {
       "size": 177803,
       "modified": "2025-10-09T03:29:05.691Z"
     },
-    "icons/sprite-ph-light-v58.svg": {
+    "icons/sprite-ph-light-v60.svg": {
       "size": 207008,
       "modified": "2025-10-09T03:29:05.691Z"
     },
-    "icons/sprite-solar-base-v58.svg": {
+    "icons/sprite-solar-base-v60.svg": {
       "size": 1532,
       "modified": "2025-10-09T03:29:05.691Z"
     },
-    "icons/sprite-solar-bold-duotone-v58.svg": {
+    "icons/sprite-solar-bold-duotone-v60.svg": {
       "size": 100055,
       "modified": "2025-10-09T03:29:05.692Z"
     },
-    "icons/sprite-solar-bold-v58.svg": {
+    "icons/sprite-solar-bold-v60.svg": {
       "size": 92339,
       "modified": "2025-10-09T03:29:05.692Z"
     },
-    "icons/sprite-solar-line-duotone-v58.svg": {
+    "icons/sprite-solar-line-duotone-v60.svg": {
       "size": 82130,
       "modified": "2025-10-09T03:29:05.693Z"
     },
-    "icons/sprite-solar-linear-v58.svg": {
+    "icons/sprite-solar-linear-v60.svg": {
       "size": 78501,
       "modified": "2025-10-09T03:29:05.693Z"
     },
-    "icons/sprite-v58.svg": {
+    "icons/sprite-v60.svg": {
       "size": 192828,
       "modified": "2025-10-09T03:29:05.693Z"
-    },
-    "icons/sprite.svg": {
-      "size": 365707,
-      "modified": "2025-10-09T03:29:05.695Z"
-    },
-    "index.d.ts": {
-      "size": 421,
-      "modified": "2025-10-09T03:29:05.695Z"
     },
     "sounds/dingding.mp3": {
       "size": 13945,

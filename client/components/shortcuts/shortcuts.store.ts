@@ -41,8 +41,8 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
   }
 
   fetchConfiguratbleShortcuts() {
-    const config = resolveProductConfig();
-    const configurableShortcuts = config.configurableShortcuts;
+  const config = resolveProductConfig();
+  const { configurableShortcuts } = config;
     return this.fetchKeyMap().filter((x) =>
       configurableShortcuts?.includes(x.action)
     );

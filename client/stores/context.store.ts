@@ -24,10 +24,14 @@ function initContextStore(val: IAppContext) {
     set,
     update,
     toggleOfflineMode: async (value: boolean) => {
-      await clientStorage.set(ClientStorageKey.OFFLINE_MODE, value);
-      update((ctx) => {
-        return  {...ctx, isInOfflineMode: value }
-      })  
+      try {
+        await clientStorage.set(ClientStorageKey.OFFLINE_MODE, value);
+        update((ctx) => {
+          return  {...ctx, isInOfflineMode: value }
+        });
+      } catch (error) {
+        console.error("Failed to set offline mode in clientStorage:", error);
+      }
     }
   };
 }
