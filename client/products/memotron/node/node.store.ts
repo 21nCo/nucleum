@@ -26,6 +26,7 @@ import {
 import { ResourceActions } from "$lib/client/components/record/resource.actions";
 import { get, writable } from "svelte/store";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
+
 import {
   ContextMenuType,
   type IContextMenu,
@@ -57,6 +58,8 @@ import view from "$lib/client/stores/view.store";
 import { CollectibleStore } from "$lib/client/components/collection/collectible.store";
 import { appStore } from "$lib/client/stores/app.store";
 import type { ILink } from "../linking/link.type";
+import { MemotronAction } from "../memotronAction.enum";
+import { toasts } from "$lib/client/stores/notification.store";
 
 export const hierarchyFactorLimit = 5;
 const defaults: Partial<INode> = {
@@ -742,6 +745,30 @@ class NodeActions {
     callback: async () => {}
   };
 
+  setCustomPreview = {
+    value: "setCustomPreview",
+    label: "Set custom preview",
+    icon: "ph:image",
+    callback: async () => {
+      appStore.runAction(MemotronAction.PREVIEW_IMAGE_UPLOADER, {
+        componentParams: { nodeId: this.node.id, nodeLabel: this.node.label }
+      });
+    }
+  };
+
+  removeCustomPreview = {
+    value: "removeCustomPreview",
+    label: "Remove custom preview",
+    icon: "trash",
+    callback: async () => {
+      await this.store.modify(this.node.id, {
+        previewImage: undefined
+      });
+      toasts.success("Custom preview removed");
+      return true;
+    }
+  };
+
   sideNotesPane() {
     return {
       value: NodeRightPaneType.SIDENOTES,
@@ -988,17 +1015,25 @@ export function resolveNodeContextMenu(
           resourceActions.toggleFocusMode()
         ]
       : [resourceActions.toggleFocusMode()];
+  const previewImageAction =
+    node.contentType === NodeType.NODULAR_MARKDOWN
+      ? node.previewImage
+        ? nodeActions.removeCustomPreview
+        : nodeActions.setCustomPreview
+      : undefined;
   const secondGroupItems = viewStore.isConstrainedWidth
     ? [
         resourceActions.toggleReadMode(),
         nodeStaticActions.metadataPane,
-        nodeStaticActions.historyPane
+        nodeStaticActions.historyPane,
+        ...(previewImageAction ? [previewImageAction] : [])
       ]
     : [
         resourceActions.toggleReadMode(),
         nodeActions.toggleFullWidth(),
         nodeStaticActions.metadataPane,
-        nodeStaticActions.historyPane
+        nodeStaticActions.historyPane,
+        ...(previewImageAction ? [previewImageAction] : [])
       ];
   return [
     {

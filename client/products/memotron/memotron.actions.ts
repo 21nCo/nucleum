@@ -35,8 +35,22 @@ import EditCaptureShortcuts from "./capture/EditCaptureShortcuts.svelte";
 import CaptureSettings from "./capture/CaptureSettings.svelte";
 import LinkTagsControlPanel from "./linking/LinkTagsControlPanel.svelte";
 import LibraryPanelContentResolver from "$lib/client/components/library/LibraryPanelContentResolver.svelte";
+import PreviewImageUploader from "./node/PreviewImageUploader.svelte";
 
 export const memotronActions: IAction[] = [
+  {
+    action: MemotronAction.PREVIEW_IMAGE_UPLOADER,
+    type: ActionType.MODAL,
+    isMeta: true,
+    component: PreviewImageUploader,
+    modalParams: {
+      layout: {
+        size: Size.md,
+        orientation: Orientation.Vertical,
+        isShowCantileverClose: true
+      }
+    }
+  },
   {
     action: Action.MOBILEHOME,
     component: MemotronHomeOnMobile,

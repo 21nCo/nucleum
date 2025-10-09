@@ -149,7 +149,7 @@
         )}
         on:click
       >
-        {#if item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType)}
+        {#if item.previewImage || (item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType))}
           <div
             class={cn(
               {
@@ -211,7 +211,7 @@
                   <TextClipPreview node={item} {contentPreview} {accessPoint} />
                 {:else if contentPreview}
                   <span class="text-fgs3 userdata">
-                    {contentPreview}
+                      {@html renderMdAsHtml(contentPreview)}
                   </span>
                 {:else}
                   <div
@@ -310,13 +310,13 @@
               {:else if item.contentType === NodeType.AUDIO && _url}
                 <NodeThumbnailAudioPreview url={_url} />
               {:else if contentPreview}
-                <span class="text-fgs3 userdata">
-                  {contentPreview}
-                </span>
+                <div class="text-fgs3 text-left userdata">
+                  {@html renderMdAsHtml(contentPreview)}
+                </div>
               {/if}
             </div>
           {/if}
-          {#if contentPreview && !socialProfileNodeTypeList.has(item.contentType)}
+          {#if !filePreview && contentPreview && !socialProfileNodeTypeList.has(item.contentType)}
             <span
               class={cn(
                 "absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent",
@@ -400,7 +400,11 @@
           </span>
         {:else}
           <span class="text-fgs3 userdata">
-            {contentPreview}
+            {#if item.contentType === NodeType.NODULAR_MARKDOWN}
+              {@html renderMdAsHtml(contentPreview)}
+            {:else}
+              {contentPreview}
+            {/if}
           </span>
         {/if}
       </div>
