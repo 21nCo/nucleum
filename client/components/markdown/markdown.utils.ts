@@ -179,7 +179,25 @@ export const symbolPatterns = [
 ];
 
 /**
- * Renders markdown as html. It replaces symbols, inline styles and spaces with html entities.
+ * Escapes HTML characters to prevent XSS attacks
+ * @param text Text to escape
+ * @returns Escaped text
+ */
+function escapeHtml(text: string): string {
+  const htmlEscapes: Record<string, string> = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#x27;",
+    "/": "&#x2F;"
+  };
+  return text.replace(/[&<>"'\/]/g, (match) => htmlEscapes[match] || match);
+}
+
+/**
+ * Renders markdown as html with proper sanitization. It replaces symbols, inline styles and spaces with html entities.
+ * All user content is escaped to prevent XSS attacks.
  *
  * In cases of search results, where parts of the text are highlighted, plain text spaces are not rendered correctly. To avoid this, spaces are rendered as &nbsp; when isIncludeSpaces is true.
  *
@@ -196,21 +214,49 @@ export function renderMdAsHtml(
   let parsedText = text;
   parsedText = replaceSymbolPatterns(parsedText);
   parsedText = replaceInlineStylePatterns(parsedText);
-  parsedText = parsedText.replace(/^#### (.*)$/gm, '<h4 class="text-h4">$1</h4>');
-  parsedText = parsedText.replace(/^### (.*)$/gm, '<h3 class="text-h3">$1</h3>');
-  parsedText = parsedText.replace(/^## (.*)$/gm, '<h2 class="text-h2">$1</h2>');
-  parsedText = parsedText.replace(/^# (.*)$/gm, '<h1 class="text-h1">$1</h1>');
-  parsedText = parsedText.replace(/^> (.*)$/gm, '<div class="font-bold">" $1</div>');
-  parsedText = parsedText.replace(/^---\s*$/gm, '<hr>');
-  parsedText = parsedText.replace(/^===\s*$/gm, '<hr>');
 
-  parsedText = parsedText.replace(/((^|\n)\s*[-*] .*(\n\s*[-*] .*)*)/gm, function(match: string) {
-    const items = match.split(/\n/).filter((line: string) => /^\s*[-*] /.test(line));
-    if (items.length === 0) return match;
-    const lis = items.map((line: string) => `<li>${line.replace(/^\s*[-*] /, '')}</li>`).join('');
-    return `<ul>${lis}</ul>`;
-  });
-  
+  // Escape HTML in heading content to prevent XSS
+  parsedText = parsedText.replace(
+    /^#### (.*)$/gm,
+    (match, content) => `<h4 class="text-h4">${escapeHtml(content)}</h4>`
+  );
+  parsedText = parsedText.replace(
+    /^### (.*)$/gm,
+    (match, content) => `<h3 class="text-h3">${escapeHtml(content)}</h3>`
+  );
+  parsedText = parsedText.replace(
+    /^## (.*)$/gm,
+    (match, content) => `<h2 class="text-h2">${escapeHtml(content)}</h2>`
+  );
+  parsedText = parsedText.replace(
+    /^# (.*)$/gm,
+    (match, content) => `<h1 class="text-h1">${escapeHtml(content)}</h1>`
+  );
+
+  parsedText = parsedText.replace(
+    /^> (.*)$/gm,
+    (match, content) => `<blockquote>${escapeHtml(content)}</blockquote>`
+  );
+
+  parsedText = parsedText.replace(/^---\s*$/gm, "<hr>");
+  parsedText = parsedText.replace(/^===\s*$/gm, "<hr>");
+
+  parsedText = parsedText.replace(
+    /((^|\n)\s*[-*] .*(\n\s*[-*] .*)*)/gm,
+    function (match: string) {
+      const items = match
+        .split(/\n/)
+        .filter((line: string) => /^\s*[-*] /.test(line));
+      if (items.length === 0) return match;
+      const lis = items
+        .map(
+          (line: string) =>
+            `<li class="md-list-item">${line.replace(/^\s*[-*] /, "")}</li>`
+        )
+        .join("");
+      return `<ul>${lis}</ul>`;
+    }
+  );
   parsedText = parsedText.replace(/\n/g, "<br>");
   parsedText = replaceInlineLinkPatterns(parsedText);
   // parsedText = parsedText.replace(

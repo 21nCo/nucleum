@@ -137,7 +137,7 @@
       class={cn(
         "flex flex-col gap-4 flex-grow overflow-hidden mo:rounded-none rounded-md cw:w-full",
         {
-          "w-full": !params.layout?.isDynamicSize
+          "w-full h-full": !params.layout?.isDynamicSize
         }
       )}
     >

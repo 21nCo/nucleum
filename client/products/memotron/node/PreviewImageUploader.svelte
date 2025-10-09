@@ -14,6 +14,7 @@
   import modalStore from "$lib/client/components/modal/modal.store";
   import { Size } from "$lib/client/types/size.enum";
   import { toasts } from "$lib/client/stores/notification.store";
+  import { onDestroy } from "svelte";
 
   export let nodeId: IRecordId;
   export let nodeLabel: string | undefined = undefined;
@@ -50,6 +51,9 @@
         return;
       }
       if (all.length > 0) {
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl);
+        }
         selectedFile = all[0];
         previewUrl = URL.createObjectURL(selectedFile);
       }
@@ -62,6 +66,13 @@
   async function handleSave() {
     if (!selectedFile) {
       error = "Please select an image file";
+      return;
+    }
+
+    const fileName = selectedFile.name.toLowerCase();
+    const isValidType = imageFileTypes.some((ext) => fileName.endsWith(ext));
+    if (!isValidType) {
+      error = "Unsupported file type. Please select a valid image file.";
       return;
     }
 
@@ -79,7 +90,6 @@
       );
       if (response && response.length > 0) {
         const fileId = response[0].id;
-        
         // Update the node with the preview image
         await nodeStore.modify(nodeId, {
           previewImage: fileId
@@ -98,6 +108,9 @@
   }
 
   function handleClose() {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
     selectedFile = undefined;
     previewUrl = undefined;
     error = undefined;
@@ -105,25 +118,33 @@
   }
 
   function handleRemovePreview() {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
     selectedFile = undefined;
     previewUrl = undefined;
   }
+
+  onDestroy(() => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+  });
 </script>
 
-<div class="flex flex-col gap-4 w-full max-w-md">
+<div class="flex flex-col gap-4 w-full h-full pb-12">
   <div class="flex items-center justify-between">
-    <h2 class="text-h5 text-fgs2">Custom preview image {nodeLabel ? `: ${nodeLabel}` : ""}</h2>
+    <h2 class="text-h5 text-fgs2">
+      Custom preview image {nodeLabel ? `: ${nodeLabel}` : ""}
+    </h2>
     <Button icon="close" on:click={handleClose} parentBgIndex={1} />
   </div>
 
   {#if isSaving}
-    <EmptyStatusView
-      isLoadingState={true}
-      loadingText="Uploading image..."
-    />
+    <EmptyStatusView isLoadingState={true} loadingText="Uploading image..." />
   {:else}
     <div
-      class="flex flex-col gap-4 w-full min-h-48 justify-center items-center border border-dashed border-brs3 bg-bgs2/50 rounded-md p-4"
+      class="flex flex-col gap-4 w-full min-h-48 flex-grow justify-center items-center border border-dashed border-brs3 bg-bgs2/50 rounded-md p-4"
       use:fileDrop={{
         accept: imageFileTypes.join(","),
         multiple: false,
@@ -152,8 +173,11 @@
           <Icon icon="ph:image" class="stroke-fgs3 w-12 h-12" />
           <div class="text-fgs1">Drag and drop your image here</div>
           <div class="text-fgs3 text-b3">or</div>
-          <Button label="Select image" icon="upload" parentBgIndex={2}
-          size={Size.sm}
+          <Button
+            label="Select image"
+            icon="upload"
+            parentBgIndex={2}
+            size={Size.sm}
           />
         </div>
       {/if}
@@ -169,8 +193,11 @@
     </div>
 
     <div class="flex gap-2 justify-end">
-      <Button label="Cancel" on:click={handleClose} parentBgIndex={1} 
-      size={Size.sm}
+      <Button
+        label="Cancel"
+        on:click={handleClose}
+        parentBgIndex={1}
+        size={Size.sm}
       />
       <Button
         label="Save"
@@ -181,6 +208,5 @@
         parentBgIndex={1}
       />
     </div>
-
   {/if}
 </div>
