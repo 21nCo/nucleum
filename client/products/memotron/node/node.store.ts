@@ -27,13 +27,6 @@ import { ResourceActions } from "$lib/client/components/record/resource.actions"
 import { get, writable } from "svelte/store";
 import { linker } from "$lib/client/products/memotron/linking/link.store";
 
-export const previewImageUploaderStore = writable<{
-  isOpen: boolean;
-  nodeId?: IRecordId;
-}>({
-  isOpen: false,
-  nodeId: undefined
-});
 import {
   ContextMenuType,
   type IContextMenu,
@@ -65,6 +58,8 @@ import view from "$lib/client/stores/view.store";
 import { CollectibleStore } from "$lib/client/components/collection/collectible.store";
 import { appStore } from "$lib/client/stores/app.store";
 import type { ILink } from "../linking/link.type";
+import { MemotronAction } from "../memotronAction.enum";
+import { toasts } from "$lib/client/stores/notification.store";
 
 export const hierarchyFactorLimit = 5;
 const defaults: Partial<INode> = {
@@ -755,9 +750,8 @@ class NodeActions {
     label: "Set custom preview",
     icon: "ph:image",
     callback: async () => {
-      previewImageUploaderStore.set({
-        isOpen: true,
-        nodeId: this.node.id
+      appStore.runAction(MemotronAction.PREVIEW_IMAGE_UPLOADER, {
+        componentParams: { nodeId: this.node.id, nodeLabel: this.node.label }
       });
     }
   };
@@ -767,9 +761,11 @@ class NodeActions {
     label: "Remove custom preview",
     icon: "trash",
     callback: async () => {
-      return this.store.modify(this.node.id, {
+      await this.store.modify(this.node.id, {
         previewImage: undefined
       });
+      toasts.success("Custom preview removed");
+      return true;
     }
   };
 

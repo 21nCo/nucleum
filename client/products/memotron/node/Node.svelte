@@ -1,6 +1,6 @@
 <script lang="ts">
   import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
-  import { ActiveNodeStore, type IActiveNodeStore, previewImageUploaderStore } from "./node.store";
+  import { ActiveNodeStore, type IActiveNodeStore } from "./node.store";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
@@ -19,7 +19,6 @@
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import ComponentEmbedLayer from "$lib/client/layout/layers/ComponentEmbedLayer.svelte";
   import context from "$lib/client/stores/context.store";
-  import PreviewImageUploader from "./PreviewImageUploader.svelte";
 
   export let id: string;
   export let accessMode: ResourceAccessMode;
@@ -100,16 +99,4 @@
 />
 {#if $context.isEmbed && accessMode !== ResourceAccessMode.POP && !isFromSplitView}
   <ComponentEmbedLayer isBackNavigable={true} />
-{/if}
-
-{#if $previewImageUploaderStore.isOpen && $previewImageUploaderStore.nodeId}
-  <PreviewImageUploader
-    bind:isOpen={$previewImageUploaderStore.isOpen}
-    nodeId={$previewImageUploaderStore.nodeId}
-    on:close={() => previewImageUploaderStore.set({ isOpen: false, nodeId: undefined })}
-    on:saved={() => {
-      previewImageUploaderStore.set({ isOpen: false, nodeId: undefined });
-      initialize("preview-image-saved");
-    }}
-  />
 {/if}

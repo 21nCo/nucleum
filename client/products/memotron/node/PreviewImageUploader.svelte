@@ -1,23 +1,22 @@
 <script lang="ts">
   import { fileDrop } from "$lib/client/actions/fileDrop.action";
   import { logger } from "$lib/client/components/debug/logger.client";
-  import { fileStore } from "$lib/client/components/files/file.store";
   import Button from "$lib/client/elements/button/Button.svelte";
   import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import Modal from "$lib/client/components/modal/Modal.svelte";
   import account from "$lib/client/stores/account.store";
   import { ButtonVariant } from "$lib/client/types/button.type";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { MAX_FILE_SIZE_MB } from "$lib/client/components/record/record.store";
-  import { createEventDispatcher } from "svelte";
   import { nodeStore } from "./node.store";
+  import { MemotronAction } from "../memotronAction.enum";
+  import modalStore from "$lib/client/components/modal/modal.store";
+  import { Size } from "$lib/client/types/size.enum";
+  import { toasts } from "$lib/client/stores/notification.store";
 
-  export let isOpen: boolean = false;
   export let nodeId: IRecordId;
-
-  const dispatch = createEventDispatcher();
+  export let nodeLabel: string | undefined = undefined;
 
   const imageFileTypes = [
     ".jpg",
@@ -70,25 +69,22 @@
       isSaving = true;
       error = undefined;
 
-      // Upload the file
-      const fileResult = await fileStore.create([
+      const response = await account.uploadFileV2(
+        selectedFile.type,
+        selectedFile.name,
+        new Blob([selectedFile], { type: selectedFile.type }),
         {
-          file: selectedFile,
-          label: selectedFile.name,
-          name: selectedFile.name,
-          type: selectedFile.type
+          isGenerateThumbnail: true
         }
-      ]);
-
-      if (fileResult && fileResult.length > 0) {
-        const fileId = fileResult[0].id;
+      );
+      if (response && response.length > 0) {
+        const fileId = response[0].id;
         
         // Update the node with the preview image
         await nodeStore.modify(nodeId, {
           previewImage: fileId
         });
-
-        dispatch("saved");
+        toasts.success("Preview image updated successfully");
         handleClose();
       } else {
         error = "Failed to upload image";
@@ -102,11 +98,10 @@
   }
 
   function handleClose() {
-    isOpen = false;
     selectedFile = undefined;
     previewUrl = undefined;
     error = undefined;
-    dispatch("close");
+    modalStore.hide(MemotronAction.PREVIEW_IMAGE_UPLOADER);
   }
 
   function handleRemovePreview() {
@@ -115,75 +110,77 @@
   }
 </script>
 
-{#if isOpen}
-  <Modal on:close={handleClose}>
-    <div class="flex flex-col gap-4 p-6 w-full max-w-md">
-      <div class="flex items-center justify-between">
-        <h2 class="text-h4 text-fgs1">Set Custom Preview Image</h2>
-        <Button icon="close" on:click={handleClose} parentBgIndex={1} />
-      </div>
+<div class="flex flex-col gap-4 w-full max-w-md">
+  <div class="flex items-center justify-between">
+    <h2 class="text-h5 text-fgs2">Custom preview image {nodeLabel ? `: ${nodeLabel}` : ""}</h2>
+    <Button icon="close" on:click={handleClose} parentBgIndex={1} />
+  </div>
 
-      {#if isSaving}
-        <EmptyStatusView
-          isLoadingState={true}
-          loadingText="Uploading image..."
-        />
-      {:else}
-        <div
-          class="flex flex-col gap-4 w-full min-h-48 justify-center items-center border border-dashed border-brs3 bg-bgs2/50 rounded-md p-4"
-          use:fileDrop={{
-            accept: imageFileTypes.join(","),
-            multiple: false,
-            maxSize: MAX_FILE_SIZE_MB * 1024 * 1024,
-            onDrop: handleDrop,
-            dragOverClass: ["bg-bgs2/100", "border-fgs3"]
-          }}
-        >
-          {#if previewUrl}
-            <div class="flex flex-col gap-2 items-center w-full">
-              <img
-                src={previewUrl}
-                alt="Preview"
-                class="max-h-48 max-w-full object-contain rounded-md"
-              />
-              <Button
-                label="Remove"
-                icon="trash"
-                on:click={handleRemovePreview}
-                parentBgIndex={2}
-              />
-            </div>
-          {:else}
-            <div class="flex flex-col items-center gap-2">
-              <Icon icon="ph:image" class="stroke-fgs3 w-12 h-12" />
-              <div class="text-fgs1">Drag and drop your image here</div>
-              <div class="text-fgs3 text-b3">or</div>
-              <Button label="Select image" icon="upload" parentBgIndex={2} />
-            </div>
-          {/if}
-        </div>
-
-        {#if error}
-          <InlineErrorMessage {error} isDissappear={false} />
-        {/if}
-
-        <div class="flex gap-2 justify-end">
-          <Button label="Cancel" on:click={handleClose} parentBgIndex={1} />
+  {#if isSaving}
+    <EmptyStatusView
+      isLoadingState={true}
+      loadingText="Uploading image..."
+    />
+  {:else}
+    <div
+      class="flex flex-col gap-4 w-full min-h-48 justify-center items-center border border-dashed border-brs3 bg-bgs2/50 rounded-md p-4"
+      use:fileDrop={{
+        accept: imageFileTypes.join(","),
+        multiple: false,
+        maxSize: MAX_FILE_SIZE_MB * 1024 * 1024,
+        onDrop: handleDrop,
+        dragOverClass: ["bg-bgs2/100", "border-fgs3"]
+      }}
+    >
+      {#if previewUrl}
+        <div class="flex flex-col gap-2 items-center w-full">
+          <img
+            src={previewUrl}
+            alt="Preview"
+            class="max-h-48 max-w-full object-contain rounded-md"
+          />
           <Button
-            label="Save"
-            type={ButtonVariant.PRIMARY}
-            on:click={handleSave}
-            isDisabled={!selectedFile}
-            parentBgIndex={1}
+            label="Remove"
+            icon="trash"
+            size={Size.sm}
+            on:click={handleRemovePreview}
+            parentBgIndex={2}
           />
         </div>
-
-        <div class="text-fgs3 text-b3">
-          Accepted file types: image (jpg, png, jpeg, webp, gif, svg, heic)
-          <br />
-          Max size: {MAX_FILE_SIZE_MB}MB
+      {:else}
+        <div class="flex flex-col items-center gap-2">
+          <Icon icon="ph:image" class="stroke-fgs3 w-12 h-12" />
+          <div class="text-fgs1">Drag and drop your image here</div>
+          <div class="text-fgs3 text-b3">or</div>
+          <Button label="Select image" icon="upload" parentBgIndex={2}
+          size={Size.sm}
+          />
         </div>
       {/if}
     </div>
-  </Modal>
-{/if}
+
+    {#if error}
+      <InlineErrorMessage {error} isDissappear={false} />
+    {/if}
+    <div class="text-fgs3 text-b3">
+      Accepted file types: image (jpg, png, jpeg, webp, gif, svg, heic)
+      <br />
+      Max size: {MAX_FILE_SIZE_MB}MB
+    </div>
+
+    <div class="flex gap-2 justify-end">
+      <Button label="Cancel" on:click={handleClose} parentBgIndex={1} 
+      size={Size.sm}
+      />
+      <Button
+        label="Save"
+        type={ButtonVariant.PRIMARY}
+        on:click={handleSave}
+        size={Size.sm}
+        isDisabled={!selectedFile}
+        parentBgIndex={1}
+      />
+    </div>
+
+  {/if}
+</div>

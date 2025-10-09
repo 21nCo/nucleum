@@ -196,6 +196,21 @@ export function renderMdAsHtml(
   let parsedText = text;
   parsedText = replaceSymbolPatterns(parsedText);
   parsedText = replaceInlineStylePatterns(parsedText);
+  parsedText = parsedText.replace(/^#### (.*)$/gm, '<h4 class="text-h4">$1</h4>');
+  parsedText = parsedText.replace(/^### (.*)$/gm, '<h3 class="text-h3">$1</h3>');
+  parsedText = parsedText.replace(/^## (.*)$/gm, '<h2 class="text-h2">$1</h2>');
+  parsedText = parsedText.replace(/^# (.*)$/gm, '<h1 class="text-h1">$1</h1>');
+  parsedText = parsedText.replace(/^> (.*)$/gm, '<div class="font-bold">" $1</div>');
+  parsedText = parsedText.replace(/^---\s*$/gm, '<hr>');
+  parsedText = parsedText.replace(/^===\s*$/gm, '<hr>');
+
+  parsedText = parsedText.replace(/((^|\n)\s*[-*] .*(\n\s*[-*] .*)*)/gm, function(match: string) {
+    const items = match.split(/\n/).filter((line: string) => /^\s*[-*] /.test(line));
+    if (items.length === 0) return match;
+    const lis = items.map((line: string) => `<li>${line.replace(/^\s*[-*] /, '')}</li>`).join('');
+    return `<ul>${lis}</ul>`;
+  });
+  
   parsedText = parsedText.replace(/\n/g, "<br>");
   parsedText = replaceInlineLinkPatterns(parsedText);
   // parsedText = parsedText.replace(

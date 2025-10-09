@@ -61,7 +61,6 @@
 
   let isHovering: boolean = false;
   let _url: string;
-  $: previewImageFile = item.previewImage;
   $: filePreview = resolveFilePreview(item);
   $: hasFullFileDetails = filePreview?.url || filePreview?.data;
   $: urlPreview = resolveUrlPreview(item);
@@ -150,7 +149,7 @@
         )}
         on:click
       >
-        {#if item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType)}
+        {#if item.previewImage || (item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType))}
           <div
             class={cn(
               {
@@ -167,17 +166,6 @@
           >
             {#if item.bodySearch}
               {@html renderMdAsHtml(item.bodySearch)}
-            {:else if previewImageFile}
-              <FileView
-                id={previewImageFile}
-                isHideControls={true}
-                isLazyLoad={true}
-                isUseThumbnailIfAvailable={true}
-                class={cn("object-cover h-full w-full rounded-md", {
-                  // "rounded-md": isLinkContext,
-                  // "rounded-full": !isLinkContext
-                })}
-              />
             {:else if filePreview}
               <FileView
                 file={hasFullFileDetails ? filePreview : undefined}
@@ -223,11 +211,7 @@
                   <TextClipPreview node={item} {contentPreview} {accessPoint} />
                 {:else if contentPreview}
                   <span class="text-fgs3 userdata">
-                    {#if item.contentType === NodeType.NODULAR_MARKDOWN}
                       {@html renderMdAsHtml(contentPreview)}
-                    {:else}
-                      {contentPreview}
-                    {/if}
                   </span>
                 {:else}
                   <div
@@ -295,15 +279,6 @@
             <span class="text-b2 text-fgs2">
               {@html renderMdAsHtml(item.bodySearch)}
             </span>
-          {:else if previewImageFile}
-            <FileView
-              id={previewImageFile}
-              isLazyLoad={true}
-              isHideControls={true}
-              isUseThumbnailIfAvailable={true}
-              isApplyBgColor={false}
-              class="absolute inset-0 w-full rounded-t-md object-cover h-full"
-            />
           {:else if filePreview}
             <FileView
               file={hasFullFileDetails ? filePreview : undefined}
@@ -335,17 +310,13 @@
               {:else if item.contentType === NodeType.AUDIO && _url}
                 <NodeThumbnailAudioPreview url={_url} />
               {:else if contentPreview}
-                <span class="text-fgs3 userdata">
-                  {#if item.contentType === NodeType.NODULAR_MARKDOWN}
-                    {@html renderMdAsHtml(contentPreview)}
-                  {:else}
-                    {contentPreview}
-                  {/if}
-                </span>
+                <div class="text-fgs3 text-left userdata">
+                  {@html renderMdAsHtml(contentPreview)}
+                </div>
               {/if}
             </div>
           {/if}
-          {#if contentPreview && !socialProfileNodeTypeList.has(item.contentType)}
+          {#if !filePreview && contentPreview && !socialProfileNodeTypeList.has(item.contentType)}
             <span
               class={cn(
                 "absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent",
@@ -377,19 +348,7 @@
       </div>
     </ResourceGridThumbnail>
   {:else if arrangement === Arrangement.MASONRY}
-    {#if previewImageFile}
-      <FileView
-        id={previewImageFile}
-        isHideControls={true}
-        isLazyLoad={true}
-        isUseThumbnailIfAvailable={true}
-        class={cn("w-full h-auto", {
-          "rounded-md": isHideTitle,
-          "rounded-t-md": !isHideTitle
-        })}
-        on:load
-      />
-    {:else if filePreview}
+    {#if filePreview}
       <FileView
         file={hasFullFileDetails ? filePreview : undefined}
         id={hasFullFileDetails ? undefined : filePreview}
