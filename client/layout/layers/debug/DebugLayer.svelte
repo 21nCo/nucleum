@@ -71,7 +71,7 @@
         class="absolute top-0 right-0 flex flex-col p-1 bg-bgs3 text-fgs1 rounded-lg z-50"
         on:click={() => (isShowDebugOverlay = false)}
       >
-        <Icon icon="minus-circled" />
+        <Icon icon="minus-circle" />
       </button>
     {/if}
     <DebugInfoItem
@@ -214,7 +214,7 @@
       class="absolute top-0 right-0 flex flex-col p-1 text-fgs1 rounded-lg z-50"
       on:click={() => (isShowLogs = false)}
     >
-      <Icon icon="minus-circled" size={Size.lg} />
+      <Icon icon="minus-circle" size={Size.lg} />
     </button>
     <span> Replaced with telemetry. </span>
     <!-- <div class="flex flex-col items-start gap-2 overflow-y-auto">

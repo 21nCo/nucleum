@@ -22,6 +22,14 @@
   overflow: hidden;
 }
 
+li.md-list-item::before {
+  content: "• ";
+}
+blockquote {
+  padding-left: 1rem;
+  border-left: 2px solid rgba(var(--colors-fgs3), 1);
+}
+
 @layer base {
   /* @font-face {
         font-family: 'Space Grotesk';

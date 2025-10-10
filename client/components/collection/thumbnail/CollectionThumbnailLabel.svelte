@@ -20,7 +20,7 @@
     <CollectionThumbnailAvatar {item} {isShowFallbackIcons} />
   {/if}
   <span
-    class="text-left truncate userdata text-b2"
+    class="text-left truncate userdata"
     use:tooltip={{
       text: item.label,
       isEnableOnlyOnTruncate: true

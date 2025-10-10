@@ -1,4 +1,5 @@
 export enum MemotronAction {
+  PREVIEW_IMAGE_UPLOADER = "preview-image-uploader",
   /**
    * @deprecated - use resourceAction(Resource.collection, ResourceActionType.CREATE) instead
    */

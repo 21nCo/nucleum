@@ -1,14 +1,20 @@
 <script lang="ts">
   import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
   import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
-  import { clientStorage } from "$lib/client/persistence/persistence.utils";
   import context from "$lib/client/stores/context.store";
   import { Size } from "$lib/client/types/size.enum";
   import SyncStatus from "./SyncStatus.svelte";
+  import account from "$lib/client/stores/account.store";
+  import { PlanType } from "$lib/client/components/subscription/userPlan.type";
+
   let isInOfflineMode = $context.isInOfflineMode;
   let isInLowDataMode = $context.isInLowDataMode;
   const isNetworkInducedOfflineMode = !navigator.onLine;
+  $: trialExpiry =
+  $account.plan?.plan === PlanType.TRIAL && $account.plan?.trialPlan?.expiry
+    ? new Date($account.plan.trialPlan.expiry)
+    : null;
+  $: isTrialExpired = trialExpiry ? new Date() > trialExpiry : false;
 </script>
 
 <div class="flex flex-col gap-4">
@@ -20,9 +26,12 @@
     checked={isInOfflineMode}
     isDisabled={isNetworkInducedOfflineMode}
     on:change={async () => {
+      if(isTrialExpired && isInOfflineMode) {
+        window.alert("Your trial has expired. Please upgrade to a paid plan to continue using cloud sync.");
+        return;
+      }
       isInOfflineMode = !isInOfflineMode;
-      await clientStorage.set(ClientStorageKey.OFFLINE_MODE, isInOfflineMode);
-      $context.isInOfflineMode = isInOfflineMode;
+      await context.toggleOfflineMode(isInOfflineMode);
     }}
   />
   <!-- <SwitchInput
@@ -42,7 +51,7 @@
   /> -->
 
   <InlineInfoBanner
-    content="Note: Offline mode will be automatically turned on when you are not connected to the internet."
+    content="Note: Offline mode will be automatically turned on when you are not connected to the internet or if your cloud sync trial expires."
     size={Size.sm}
   />
   <div class="flex w-full justify-center mt-8">
