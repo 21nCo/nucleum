@@ -211,7 +211,7 @@
                   <TextClipPreview node={item} {contentPreview} {accessPoint} />
                 {:else if contentPreview}
                   <span class="text-fgs3 userdata">
-                      {@html renderMdAsHtml(contentPreview)}
+                    {@html renderMdAsHtml(contentPreview)}
                   </span>
                 {:else}
                   <div

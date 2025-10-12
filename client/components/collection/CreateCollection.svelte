@@ -211,14 +211,16 @@
     <div
       class="flex flex-col h-full gap-4 flex-1 items-center justify-between overflow-auto"
     >
-      <ModalContentPadded class="flex flex-col gap-8 w-full overflow-auto mt-4">
+      <ModalContentPadded
+        class="flex flex-col gap-8 w-full flex-grow overflow-auto mt-4"
+      >
         <div class="flex items-center justify-between w-full gap-2">
           <Text content="Create collection" style={TextStyle.PANEL_HEADING} />
           <span use:tooltip={{ text: "Star collection" }}>
             <Toggle icon="star" bind:on={isStarred} />
           </span>
         </div>
-        <div class="flex flex-col w-full gap-6 flex-grow">
+        <div class="flex flex-col w-full gap-6">
           <OptionSelector
             options={[
               CollectionType.UNTYPED,

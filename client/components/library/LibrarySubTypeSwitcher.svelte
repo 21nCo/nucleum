@@ -199,16 +199,18 @@
 
 {#if isConstrainedWidth}
   <div class="flex gap-2 items-center justify-between">
-    <OptionSelector
-      size={Size.sm}
-      options={renderedSubTypes}
-      selected={selectedSubType}
-      isPreventWrap={true}
-      on:select={(e) => {
-        if (!e?.detail) return;
-        onSelect(e.detail);
-      }}
-    />
+    <div class="flex-1 min-w-0">
+      <OptionSelector
+        size={Size.sm}
+        options={renderedSubTypes}
+        selected={selectedSubType}
+        isPreventWrap={true}
+        on:select={(e) => {
+          if (!e?.detail) return;
+          onSelect(e.detail);
+        }}
+      />
+    </div>
     <slot />
   </div>
 {:else}
@@ -272,10 +274,10 @@
         </div>
       {/if}
     </div>
-    {#if !isExpandSubTypes}
+    {#if !isExpandSubTypes && resource === Resource.node}
       <Divider orientation={Orientation.Vertical} />
     {/if}
-    <div class="flex gap-1">
+    <div class="flex items-center gap-1">
       {#if !isExpandSubTypes}
         {#if !isNonArchivable}
           <Toggle

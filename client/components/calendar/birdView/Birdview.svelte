@@ -656,10 +656,11 @@
     panelsContainer.addEventListener("touchmove", handleTouchMove, {
       passive: false
     });
-    panelsContainer.addEventListener("wheel", (e) => {
+    const wheelHandler = (e: WheelEvent) => {
       e.preventDefault();
       waitUntilDisenganged(e);
-    }, { passive: false });
+    };
+    panelsContainer.addEventListener("wheel", wheelHandler, { passive: false });
     panelsContainer.addEventListener(
       "mousedown",
       handleMouseDownOnPanelsContainer
@@ -672,10 +673,7 @@
         "mousedown",
         handleMouseDownOnPanelsContainer
       );
-      panelsContainer.removeEventListener("wheel", (e) => {
-        e.preventDefault();
-        waitUntilDisenganged(e);
-      });
+      panelsContainer.removeEventListener("wheel", wheelHandler as EventListener);
       document.removeEventListener("mousedown", handleMouseDownOthers);
       document.removeEventListener("mousemove", handleMouseMove);
     };

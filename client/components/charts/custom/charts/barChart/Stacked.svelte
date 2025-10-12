@@ -839,36 +839,42 @@
       );
   }
 
+  let barMouseOverHandler: ((e: any) => void) | null = null;
+  let barMouseOutHandler: ((e: any) => void) | null = null;
+  let docMouseMoveHandler: ((event: MouseEvent) => void) | null = null;
   function handleEventListeningForBars() {
     if (informationModal && document) {
       const allBars = document.querySelectorAll(".cc-bar");
+      barMouseOverHandler = (e: any) => {
+        mouseHoverData = {
+          key: e.target.__data__.key,
+          value: e.target.__data__.value,
+          group: e.target.__data__.group
+        };
+      };
+      barMouseOutHandler = (_e: any) => {
+        mouseHoverData = {
+          key: "",
+          value: 0,
+          group: ""
+        };
+      };
       allBars.forEach((bar) => {
-        bar.addEventListener("mouseover", (e: any) => {
-          mouseHoverData = {
-            key: e.target.__data__.key,
-            value: e.target.__data__.value,
-            group: e.target.__data__.group
-          };
-        });
+        bar.addEventListener("mouseover", barMouseOverHandler!);
+        bar.addEventListener("mouseout", barMouseOutHandler!);
       });
-      allBars.forEach((bar) => {
-        bar.addEventListener("mouseout", (e: any) => {
-          mouseHoverData = {
-            key: "",
-            value: 0,
-            group: ""
-          };
-        });
-      });
-      document.addEventListener("mousemove", (event) => {
-        // this will move with the mouse
+      if (docMouseMoveHandler) {
+        document.removeEventListener("mousemove", docMouseMoveHandler);
+      }
+      docMouseMoveHandler = (event: MouseEvent) => {
         if (informationModal) {
           informationModal.setAttribute(
             "style",
             `top:${event.clientY - 90}px;left:${event.clientX - 130}px;`
           );
         }
-      });
+      };
+      document.addEventListener("mousemove", docMouseMoveHandler);
     }
   }
 
@@ -897,6 +903,7 @@
     }
   }
 
+  import { onDestroy } from "svelte";
   onMount(() => {
     filteredData = sanitizedData;
     // console.log("options is", options);
@@ -922,6 +929,22 @@
       scrollableElementContainerRef.addEventListener("scroll", detectScrollEnd);
     }
     handleEventListeningForBars();
+  });
+
+  onDestroy(() => {
+    if (scrollableElementContainerRef) {
+      scrollableElementContainerRef.removeEventListener("scroll", detectScrollEnd);
+    }
+    const allBars = document?.querySelectorAll?.(".cc-bar");
+    if (allBars && barMouseOverHandler && barMouseOutHandler) {
+      allBars.forEach((bar) => {
+        bar.removeEventListener("mouseover", barMouseOverHandler!);
+        bar.removeEventListener("mouseout", barMouseOutHandler!);
+      });
+    }
+    if (docMouseMoveHandler) {
+      document.removeEventListener("mousemove", docMouseMoveHandler);
+    }
   });
 </script>
 

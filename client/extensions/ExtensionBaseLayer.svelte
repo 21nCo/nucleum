@@ -68,38 +68,35 @@
     extensionSprites.set(key, url);
   });
 
+  let windowMessageHandler: (event: MessageEvent) => void;
   onMount(async () => {
     dispatch("mount");
     appStore.initializeProductInformation(product);
     addEventListeners();
-    window.addEventListener(
-      "message",
-      async function (event) {
-        // console.log("message - extension", event);
-        if (event.source != window || !isSelfPage) return;
-        if (event.data.type && event.data.type == "signin") {
-          await clientStorage.set(
-            ClientStorageKey.STOKEN,
-            event.data.token.token
-          );
-          await clientStorage.set(
-            ClientStorageKey.USER_INFO,
-            event.data.token.userInfo
-          );
-          dispatch("login", {
-            code: 1
-          });
-          await bootup();
-        }
-      },
-      false
-    );
+    windowMessageHandler = async function (event: MessageEvent) {
+      if (event.source != window || !isSelfPage) return;
+      if (event.data.type && event.data.type == "signin") {
+        await clientStorage.set(ClientStorageKey.STOKEN, event.data.token.token);
+        await clientStorage.set(
+          ClientStorageKey.USER_INFO,
+          event.data.token.userInfo
+        );
+        dispatch("login", {
+          code: 1
+        });
+        await bootup();
+      }
+    };
+    window.addEventListener("message", windowMessageHandler, false);
     await refreshUserSession();
   });
 
   onDestroy(() => {
     cleanExtensionSprites();
     removeEventListeners();
+    if (windowMessageHandler) {
+      window.removeEventListener("message", windowMessageHandler, false);
+    }
   });
 
   function addEventListeners() {

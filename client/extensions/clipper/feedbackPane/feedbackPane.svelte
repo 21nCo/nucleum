@@ -110,6 +110,9 @@
   }
 
   onMount(() => {
+    nowTimer = setInterval(() => {
+      now = Date.now();
+    }, 1000);
     restartCloseTimer();
     const sub = feedbackPane.subscribe((n) => {
       if (n.isPreventAutoClose === false) {
@@ -118,6 +121,7 @@
     });
     return () => {
       clearTimeout(closeTimer);
+      clearInterval(nowTimer);
       sub();
     };
   });
@@ -207,9 +211,7 @@
         }
       : { message: "Unlinking failed", type: AlertType.ERROR };
   }
-  setInterval(() => {
-    now = Date.now();
-  }, 1000);
+  let nowTimer: ReturnType<typeof setInterval>;
   $: countdown =
     autoCloseDuration - 1 - Math.floor((now - closeActionTimestamp) / 1000);
   function onLinkClick(e: CustomEvent) {

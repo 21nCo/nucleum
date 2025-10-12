@@ -838,6 +838,7 @@
    * keydown for escape key to close the inline toolbar
    * mousedown for on spot annotations(Task and Comment)
    */
+  let onViewerMouseDown: ((event: MouseEvent) => void) | null = null;
   onMount(async () => {
     annots = (await pdfPersistence.fetchAllClips()).sort(
       (a: any, b: any) => a.startPageNumber - b.startPageNumber
@@ -845,19 +846,18 @@
     dispatch("annotation", annots);
     viewerContainerElement = document.getElementById("viewerContainer")!;
     document.addEventListener("keydown", handleKeyDown);
-    viewerContainerElement?.addEventListener("mousedown", (event) =>
-      handleMouseDown(event, viewerContainerElement)
-    );
+    onViewerMouseDown = (event: MouseEvent) =>
+      handleMouseDown(event, viewerContainerElement);
+    viewerContainerElement?.addEventListener("mousedown", onViewerMouseDown);
     viewerContainerElement?.addEventListener("scroll", handleScroll);
     viewerContainerElement?.addEventListener("mousemove", handleMouseMove);
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      viewerContainerElement?.addEventListener("mousedown", (event) =>
-        handleMouseDown(event, viewerContainerElement)
-      );
+      if (onViewerMouseDown) {
+        viewerContainerElement?.removeEventListener("mousedown", onViewerMouseDown);
+      }
       viewerContainerElement?.removeEventListener("scroll", handleScroll);
-
-      viewerContainerElement.removeEventListener("mousemove", handleMouseMove);
+      viewerContainerElement?.removeEventListener("mousemove", handleMouseMove);
     };
   });
 </script>
