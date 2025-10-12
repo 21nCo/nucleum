@@ -158,6 +158,9 @@
       abortController.abort();
       abortController = null;
     }
+    if (refreshResetTimeout) {
+      clearTimeout(refreshResetTimeout);
+    }
   });
 
   function onSelectAll() {

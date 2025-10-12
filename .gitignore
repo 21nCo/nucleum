@@ -32,3 +32,6 @@ client/cx/contemporaries/glasp-*
 .ar
 .sample_*
 .notes*
+
+# Generated static assets manifest
+client/static/assets-manifest.json
