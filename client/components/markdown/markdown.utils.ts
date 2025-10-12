@@ -209,6 +209,7 @@ export function renderMdAsHtml(
   text: string,
   params?: {
     isIncludeSpaces?: boolean;
+    isPageRender?: boolean;
   }
 ) {
   let parsedText = text;
@@ -222,15 +223,18 @@ export function renderMdAsHtml(
   );
   parsedText = parsedText.replace(
     /^### (.*)$/gm,
-    (match, content) => `<h3 class="text-h3">${escapeHtml(content)}</h3>`
+    (match, content) =>
+      `<h3 class="${params?.isPageRender ? "text-h3" : "text-h4"}">${escapeHtml(content)}</h3>`
   );
   parsedText = parsedText.replace(
     /^## (.*)$/gm,
-    (match, content) => `<h2 class="text-h2">${escapeHtml(content)}</h2>`
+    (match, content) =>
+      `<h2 class="${params?.isPageRender ? "text-h2" : "text-h4"}">${escapeHtml(content)}</h2>`
   );
   parsedText = parsedText.replace(
     /^# (.*)$/gm,
-    (match, content) => `<h1 class="text-h1">${escapeHtml(content)}</h1>`
+    (match, content) =>
+      `<h1 class="${params?.isPageRender ? "text-h1" : "text-h4"}">${escapeHtml(content)}</h1>`
   );
 
   parsedText = parsedText.replace(

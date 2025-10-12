@@ -118,6 +118,7 @@
     });
     return () => {
       clearTimeout(closeTimer);
+      clearInterval(nowTimer);
       sub();
     };
   });
@@ -207,7 +208,8 @@
         }
       : { message: "Unlinking failed", type: AlertType.ERROR };
   }
-  setInterval(() => {
+  let nowTimer: ReturnType<typeof setInterval>;
+  nowTimer = setInterval(() => {
     now = Date.now();
   }, 1000);
   $: countdown =

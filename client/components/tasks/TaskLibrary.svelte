@@ -100,6 +100,7 @@
   let addNewTaskInlineRef: AddNewTaskInline | undefined;
   let isRefreshing = false;
   let isInSelectionMode = false;
+  let isShowSearchBar = false;
   $: multiSelectContext = {
     resource: Resource.task,
     accessPoint: resolveAccessPoint(),
@@ -355,17 +356,45 @@
     {selectedSubType}
     subContext={goalId ? instance : undefined}
   >
+    <Toggle bind:on={isShowSearchBar} icon="search" tooltip="Search" />
     <Toggle
       bind:on={isFiltersExpanded}
       icon="ph:sliders-light"
       tooltip="Filters and options"
       on:change={() => persistFiltersExpandedState()}
     />
+    {#if !isPreventAddNew && ((!$view.isConstrainedWidth && accessPoint === ResourceAccessPoint.LIBRARY) || accessPoint === ResourceAccessPoint.GOAL)}
+      <Button
+        icon="plus"
+        type={ButtonVariant.PRIMARY}
+        style={ButtonStyle.OUTLINED}
+        size={Size.md}
+        isPreventMinWidth={true}
+        on:click={() => {
+          appStore.runAction(
+            resourceAction(Resource.task, ResourceActionType.CREATE),
+            {
+              componentParams: {
+                date:
+                  selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
+                  selectedSubType === TaskSubTypeForSwitcher.BY_MONTH
+                    ? selectedDate
+                    : undefined,
+                goalId: goalId,
+                collectionId: collectionId
+              }
+            }
+          );
+        }}
+      />
+    {/if}
   </LibrarySubTypeSwitcher>
 
   {#if isFiltersExpanded}
     <div
-      class="flex flex-col gap-4 bg-bgs2 rounded-md p-4 cw:mx-0 mx-4"
+      class={cn("flex flex-col gap-4 bg-bgs2 rounded-md p-4", {
+        "cw:mx-0 mx-4": accessPoint === ResourceAccessPoint.LIBRARY
+      })}
       in:fly={{ y: -20, duration: 300 }}
     >
       {#if selectedSubType !== TaskSubTypeForSwitcher.BY_DATE}
@@ -402,93 +431,73 @@
   {/if}
 
   {#if selectedSubType === TaskSubTypeForSwitcher.BY_DATE || selectedSubType === TaskSubTypeForSwitcher.BY_MONTH}
-    <div class="flex flex-col gap-6 border border-brs2 rounded-md p-4">
-      <div class="flex justify-center w-full gap-2 px-2">
-        <button
-          class="text-h3 w-fit flex items-center gap-2 text-aps1 font-medium"
-          bind:this={dateSelectionPopoverRef}
-          use:popover={{
-            content: AbsoluteTimeRangePopoverV2,
-            placement: Placement.BottomCenter,
-            id: "date-picker-popover",
-            isRenderAsModalForCW: true,
-            componentProps: {
-              isDatePickerMode: true,
-              selectedDate: selectedDate,
-              onDateChange: (val) => {
-                selectedDate = val;
-                viewDate = selectedDate;
-                refresh({ scrollToDate: true });
-                hidePopover();
-              }
+    <div
+      class={cn("flex border border-brs2 rounded-md", {
+        "mx-4": accessPoint === ResourceAccessPoint.LIBRARY
+      })}
+    >
+      <button
+        class="w-32 flex items-center justify-center gap-2 text-b2 text-fgs2 font-medium tabular-nums h-full whitespace-nowrap cw:py-1 py-2 cw:px-2 px-4 rounded-l-md bg-bgs2 border-r border-brs2"
+        bind:this={dateSelectionPopoverRef}
+        use:popover={{
+          content: AbsoluteTimeRangePopoverV2,
+          placement: Placement.BottomCenter,
+          id: "date-picker-popover",
+          isRenderAsModalForCW: true,
+          componentProps: {
+            isDatePickerMode: true,
+            selectedDate: selectedDate,
+            onDateChange: (val) => {
+              selectedDate = val;
+              viewDate = selectedDate;
+              refresh({ scrollToDate: true });
+              hidePopover();
             }
+          }
+        }}
+      >
+        <!-- <Icon icon="ph:calendar" /> -->
+        {selectedSubType === TaskSubTypeForSwitcher.BY_DATE &&
+        isSameDay(viewDate, selectedDate)
+          ? parseAndFormatDate(viewDate)
+          : selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
+              (selectedSubType === TaskSubTypeForSwitcher.BY_MONTH &&
+                isSameDay(viewDate, selectedDate))
+            ? parseAndFormatDate(viewDate, "mmm-yyyy")
+            : parseAndFormatDate(viewDate, "yyyy")}
+      </button>
+      <div class="flex-grow h-full">
+        <DatePickerRow
+          isDateMode={selectedSubType === TaskSubTypeForSwitcher.BY_DATE}
+          date={selectedDate}
+          on:pageChange={(e) => {
+            viewDate = e.detail.viewDate;
           }}
-        >
-          <!-- <Icon icon="ph:calendar" /> -->
-          {selectedSubType === TaskSubTypeForSwitcher.BY_DATE &&
-          isSameDay(viewDate, selectedDate)
-            ? parseAndFormatDate(viewDate)
-            : selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
-                (selectedSubType === TaskSubTypeForSwitcher.BY_MONTH &&
-                  isSameDay(viewDate, selectedDate))
-              ? parseAndFormatDate(viewDate, "mmm-yyyy")
-              : parseAndFormatDate(viewDate, "yyyy")}
-        </button>
+          on:change={(e) => {
+            selectedDate = e.detail;
+            viewDate = selectedDate;
+            refresh({ scrollToDate: true });
+          }}
+        />
       </div>
-      <DatePickerRow
-        isDateMode={selectedSubType === TaskSubTypeForSwitcher.BY_DATE}
-        date={selectedDate}
-        on:pageChange={(e) => {
-          console.log({ e });
-          viewDate = e.detail.viewDate;
-        }}
-        on:change={(e) => {
-          selectedDate = e.detail;
-          viewDate = selectedDate;
-          refresh({ scrollToDate: true });
-        }}
+    </div>
+  {/if}
+  {#if isShowSearchBar}
+    <div class="flex gap-2 items-center" in:fly={{ y: -20, duration: 300 }}>
+      <InlineSearchBar
+        bind:this={searchInputRef}
+        bind:query={searchQuery}
+        on:search={() => refresh()}
+        padding={cn({
+          "pl-4":
+            !$view.isConstrainedWidth &&
+            accessPoint === ResourceAccessPoint.LIBRARY
+        })}
+        placeholder={"Search tasks"}
+        style={InputStyle.BORDERED}
       />
     </div>
   {/if}
-  <div class="flex gap-2 items-center">
-    <InlineSearchBar
-      bind:this={searchInputRef}
-      bind:query={searchQuery}
-      on:search={() => refresh()}
-      padding={cn({
-        "pl-4":
-          !$view.isConstrainedWidth &&
-          accessPoint === ResourceAccessPoint.LIBRARY
-      })}
-      placeholder={"Search tasks"}
-      style={InputStyle.BORDERED}
-    />
-    {#if !isPreventAddNew && ((!$view.isConstrainedWidth && accessPoint === ResourceAccessPoint.LIBRARY) || accessPoint === ResourceAccessPoint.GOAL)}
-      <Button
-        icon="plus"
-        type={ButtonVariant.PRIMARY}
-        style={ButtonStyle.OUTLINED}
-        size={Size.md}
-        isPreventMinWidth={true}
-        on:click={() => {
-          appStore.runAction(
-            resourceAction(Resource.task, ResourceActionType.CREATE),
-            {
-              componentParams: {
-                date:
-                  selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
-                  selectedSubType === TaskSubTypeForSwitcher.BY_MONTH
-                    ? selectedDate
-                    : undefined,
-                goalId: goalId,
-                collectionId: collectionId
-              }
-            }
-          );
-        }}
-      />
-    {/if}
-  </div>
 
   <InlineSyncingFeedback resource={Resource.task} padding="cw:px-0 px-4" />
 

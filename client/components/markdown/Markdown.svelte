@@ -156,10 +156,14 @@
   }
 
   export function focus(blockId?: IRecordId) {
-    if (blockId) {
-      mdStore.focus.set({ id: blockId });
-    } else {
-      mdStore.focus.set({ id: md?.blocks[0].id });
+    try {
+      if (blockId) {
+        mdStore.focus.set({ id: blockId });
+      } else {
+        mdStore.focus.set({ id: md?.blocks[0].id });
+      }
+    } catch (e) {
+      logger.error(e);
     }
   }
 

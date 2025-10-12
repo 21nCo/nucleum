@@ -455,15 +455,15 @@
   ];
 </script>
 
-<div class="flex flex-col gap-2 w-full">
+<div class="flex w-full h-full">
   <div
-    class="flex items-center w-full"
+    class="grid grid-cols-[1fr,auto,1fr] w-full h-full"
     bind:clientWidth={containerWidth}
     bind:this={containerRef}
   >
     <button
       class={cn(
-        "flex items-center justify-center rounded-full w-8 h-8 shrink-0",
+        "flex items-center justify-center h-full shrink-0",
         "hover:bg-bgs2 active:bg-bgs3",
         { "opacity-50 cursor-not-allowed": !canGoPrev }
       )}
@@ -473,14 +473,14 @@
       <Icon icon="chevron-left" size={Size.sm} />
     </button>
 
-    <div class="flex gap-2 flex-grow justify-center overflow-hidden">
+    <div class="flex justify-center overflow-hidden h-full">
       {#if items && items.length > 0}
         {#each items as item}
           <button
             class={cn(
-              "flex items-center justify-center rounded-full h-8 text-b2 shrink-0",
+              "flex items-center justify-center h-full text-b2 shrink-0",
               {
-                "bg-aps1 text-abg":
+                "bg-aps3 text-aps1":
                   isSelectedDateVisible && selectedValue === item,
                 "hover:bg-bgs2 active:bg-bgs3":
                   !isSelectedDateVisible || selectedValue !== item
@@ -499,7 +499,7 @@
 
     <button
       class={cn(
-        "flex items-center justify-center rounded-full w-8 h-8 shrink-0",
+        "flex items-center justify-center h-full shrink-0",
         "hover:bg-bgs2 active:bg-bgs3",
         { "opacity-50 cursor-not-allowed": !canGoNext }
       )}

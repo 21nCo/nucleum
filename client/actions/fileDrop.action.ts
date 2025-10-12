@@ -128,6 +128,7 @@ export function fileDrop(node: HTMLElement, options = {}) {
       node.removeEventListener("dragleave", handleDragLeave);
       node.removeEventListener("drop", handleDrop);
       node.removeEventListener("click", handleClick);
+      node.removeEventListener("browse", handleBrowse);
       input.removeEventListener("change", handleChange);
       node.removeChild(input);
     }

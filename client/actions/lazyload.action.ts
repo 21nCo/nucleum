@@ -38,6 +38,7 @@ export function fileLoader(
   let observer: IntersectionObserver;
   let source = params.source;
   let isLazyLoad = params.isLazyLoad ?? true;
+  let lastBlobUrl: string | null = null;
 
   setupLazyLoad();
 
@@ -46,6 +47,12 @@ export function fileLoader(
       source: string | (() => Promise<string>);
       isLazyLoad?: boolean;
     }) {
+      if (lastBlobUrl) {
+        try {
+          URL.revokeObjectURL(lastBlobUrl);
+        } catch {}
+        lastBlobUrl = null;
+      }
       source = newParams.source;
       isLazyLoad = newParams.isLazyLoad ?? true;
 
@@ -58,6 +65,12 @@ export function fileLoader(
     destroy() {
       if (observer) {
         observer.unobserve(node);
+      }
+      if (lastBlobUrl) {
+        try {
+          URL.revokeObjectURL(lastBlobUrl);
+        } catch {}
+        lastBlobUrl = null;
       }
     }
   };
@@ -84,15 +97,22 @@ export function fileLoader(
   async function loadSource() {
     try {
       if (node instanceof HTMLImageElement) {
-        //TODO - placeholder until loading...
-        //slateblue
         node.src = "https://placehold.co/60x40/darkgrey/darkgrey?text=...";
       }
       const sourceValue =
         typeof source === "function" ? await source() : source;
 
       if (node instanceof HTMLImageElement) {
+        if (lastBlobUrl && lastBlobUrl !== node.src) {
+          try {
+            URL.revokeObjectURL(lastBlobUrl);
+          } catch {}
+          lastBlobUrl = null;
+        }
         node.src = sourceValue;
+        if (typeof sourceValue === "string" && sourceValue.startsWith("blob:")) {
+          lastBlobUrl = sourceValue;
+        }
       } else if (
         node instanceof HTMLAudioElement ||
         node instanceof HTMLVideoElement
@@ -104,6 +124,9 @@ export function fileLoader(
         sourceElement.src = sourceValue;
         node.appendChild(sourceElement);
         node.load();
+        if (typeof sourceValue === "string" && sourceValue.startsWith("blob:")) {
+          lastBlobUrl = sourceValue;
+        }
       }
     } catch (e) {
       logger.error({ at: "fileLoader.svelte - loadSource", error: e });
@@ -126,6 +149,7 @@ export function fileLoaderv2(
   let isLazyLoad = params.isLazyLoad ?? true;
   let currentId = params.id;
   let dominantColor: string;
+  let lastBlobUrl: string | null = null;
 
   async function loadSource() {
     node.id = `${currentId?.toString() ?? ""}-${generateRandomId()}`;
@@ -140,6 +164,12 @@ export function fileLoaderv2(
         typeof source === "function" ? await source() : source;
       if (node instanceof HTMLImageElement && isValidString(sourceValue)) {
         try {
+          if (lastBlobUrl && lastBlobUrl !== node.src) {
+            try {
+              URL.revokeObjectURL(lastBlobUrl);
+            } catch {}
+            lastBlobUrl = null;
+          }
           if (params.isApplyBgColorFromImage) {
             node.src = sourceValue;
             const colors = await getImageColors(node);
@@ -152,6 +182,9 @@ export function fileLoaderv2(
             }
           } else {
             node.src = sourceValue;
+          }
+          if (typeof sourceValue === "string" && sourceValue.startsWith("blob:")) {
+            lastBlobUrl = sourceValue;
           }
           node.classList.remove("bg-bgs3");
           node.style.opacity = "1";
@@ -172,6 +205,9 @@ export function fileLoaderv2(
         sourceElement.src = sourceValue;
         node.appendChild(sourceElement);
         node.load();
+        if (typeof sourceValue === "string" && sourceValue.startsWith("blob:")) {
+          lastBlobUrl = sourceValue;
+        }
       }
     } catch (e) {
       console.error("Error in fileLoader - loadSource:", e);
@@ -207,6 +243,12 @@ export function fileLoaderv2(
       isApplyBgColorFromImage?: boolean;
       isApplyBgColorToParent?: boolean;
     }) {
+      if (lastBlobUrl) {
+        try {
+          URL.revokeObjectURL(lastBlobUrl);
+        } catch {}
+        lastBlobUrl = null;
+      }
       source = newParams.source;
       isLazyLoad = newParams.isLazyLoad ?? true;
 
@@ -234,6 +276,12 @@ export function fileLoaderv2(
     destroy() {
       if (observer) {
         observer.unobserve(node);
+      }
+      if (lastBlobUrl) {
+        try {
+          URL.revokeObjectURL(lastBlobUrl);
+        } catch {}
+        lastBlobUrl = null;
       }
     }
   };
