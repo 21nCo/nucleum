@@ -333,7 +333,6 @@
           initState
         });
         if (initState === 0) await kvSeedDelegate();
-        await flux.loadInMemoryStores();
         return initState;
       }
       if (!$account.userId) {
@@ -364,6 +363,7 @@
       return { id: `kv:${x.id}`, ...x.seed };
     });
     await flux.kvSeed(data);
+    await flux.loadInMemoryStores();
   }
 
   async function initializeFlux(params: { dapId: string; userId?: string }) {

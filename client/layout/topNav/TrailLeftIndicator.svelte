@@ -48,7 +48,7 @@
         {trialDaysLeft === 1 ? "day" : "days"}
         {orientation === Orientation.Horizontal ? "trial" : ""} left
       {:else}
-        expired
+        Trial expired
       {/if}
     </span>
   </button>

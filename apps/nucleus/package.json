@@ -1,7 +1,7 @@
 {
   "name": "nucleus-app",
   "version": "0.3.4",
-  "build": 2,
+  "build": 3,
   "private": true,
   "scripts": {
     "dev": "vite dev --port 5050",

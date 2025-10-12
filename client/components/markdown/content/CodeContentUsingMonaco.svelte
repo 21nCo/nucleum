@@ -110,6 +110,7 @@
     }
   };
 
+  let onDarkModeChange: ((e: MediaQueryListEvent) => void) | null = null;
   onMount(() => {
     editor = monaco.editor.create(element, {
       value: code,
@@ -139,11 +140,15 @@
     const darkModeMediaQuery = window.matchMedia(
       "(prefers-color-scheme: dark)"
     );
-    darkModeMediaQuery.addEventListener("change", (e) => {
+    onDarkModeChange = (e: MediaQueryListEvent) => {
       editor?.updateOptions({ theme: e.matches ? "vs-dark" : "vs" });
-    });
+    };
+    darkModeMediaQuery.addEventListener("change", onDarkModeChange);
 
     return () => {
+      if (onDarkModeChange) {
+        darkModeMediaQuery.removeEventListener("change", onDarkModeChange);
+      }
       editor?.dispose();
     };
   });
