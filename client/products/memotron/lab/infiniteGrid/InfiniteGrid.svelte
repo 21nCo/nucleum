@@ -43,6 +43,9 @@
     isPanning = false;
   }
   let wheelHandler = (event: WheelEvent) => {
+    if (!canvas || !(event.target instanceof Node) || !canvas.contains(event.target)) {
+      return;
+    }
     event.preventDefault();
     let zoomDirection = Math.sign(event.deltaY);
     prevHeight = canvasHeight;

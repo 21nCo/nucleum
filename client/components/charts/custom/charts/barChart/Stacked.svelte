@@ -863,6 +863,9 @@
         bar.addEventListener("mouseover", barMouseOverHandler!);
         bar.addEventListener("mouseout", barMouseOutHandler!);
       });
+      if (docMouseMoveHandler) {
+        document.removeEventListener("mousemove", docMouseMoveHandler);
+      }
       docMouseMoveHandler = (event: MouseEvent) => {
         if (informationModal) {
           informationModal.setAttribute(

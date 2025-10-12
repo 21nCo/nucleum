@@ -38,7 +38,7 @@ export function fileLoader(
   let observer: IntersectionObserver;
   let source = params.source;
   let isLazyLoad = params.isLazyLoad ?? true;
-  let lastBlobUrl: string | null = null;
+  let blobUrls: string[] = [];
 
   setupLazyLoad();
 
@@ -47,11 +47,13 @@ export function fileLoader(
       source: string | (() => Promise<string>);
       isLazyLoad?: boolean;
     }) {
-      if (lastBlobUrl) {
-        try {
-          URL.revokeObjectURL(lastBlobUrl);
-        } catch {}
-        lastBlobUrl = null;
+      if (blobUrls.length) {
+        for (const url of blobUrls) {
+          try {
+            URL.revokeObjectURL(url);
+          } catch {}
+        }
+        blobUrls = [];
       }
       source = newParams.source;
       isLazyLoad = newParams.isLazyLoad ?? true;
@@ -66,11 +68,13 @@ export function fileLoader(
       if (observer) {
         observer.unobserve(node);
       }
-      if (lastBlobUrl) {
-        try {
-          URL.revokeObjectURL(lastBlobUrl);
-        } catch {}
-        lastBlobUrl = null;
+      if (blobUrls.length) {
+        for (const url of blobUrls) {
+          try {
+            URL.revokeObjectURL(url);
+          } catch {}
+        }
+        blobUrls = [];
       }
     }
   };
@@ -103,15 +107,19 @@ export function fileLoader(
         typeof source === "function" ? await source() : source;
 
       if (node instanceof HTMLImageElement) {
-        if (lastBlobUrl && lastBlobUrl !== node.src) {
-          try {
-            URL.revokeObjectURL(lastBlobUrl);
-          } catch {}
-          lastBlobUrl = null;
+        if (blobUrls.length) {
+          for (const url of blobUrls) {
+            if (url !== node.src) {
+              try {
+                URL.revokeObjectURL(url);
+              } catch {}
+            }
+          }
+          blobUrls = [];
         }
         node.src = sourceValue;
         if (typeof sourceValue === "string" && sourceValue.startsWith("blob:")) {
-          lastBlobUrl = sourceValue;
+          blobUrls.push(sourceValue);
         }
       } else if (
         node instanceof HTMLAudioElement ||
@@ -125,7 +133,7 @@ export function fileLoader(
         node.appendChild(sourceElement);
         node.load();
         if (typeof sourceValue === "string" && sourceValue.startsWith("blob:")) {
-          lastBlobUrl = sourceValue;
+          blobUrls.push(sourceValue);
         }
       }
     } catch (e) {
@@ -149,7 +157,7 @@ export function fileLoaderv2(
   let isLazyLoad = params.isLazyLoad ?? true;
   let currentId = params.id;
   let dominantColor: string;
-  let lastBlobUrl: string | null = null;
+  let blobUrls: string[] = [];
 
   async function loadSource() {
     node.id = `${currentId?.toString() ?? ""}-${generateRandomId()}`;
@@ -164,11 +172,15 @@ export function fileLoaderv2(
         typeof source === "function" ? await source() : source;
       if (node instanceof HTMLImageElement && isValidString(sourceValue)) {
         try {
-          if (lastBlobUrl && lastBlobUrl !== node.src) {
-            try {
-              URL.revokeObjectURL(lastBlobUrl);
-            } catch {}
-            lastBlobUrl = null;
+          if (blobUrls.length) {
+            for (const url of blobUrls) {
+              if (url !== node.src) {
+                try {
+                  URL.revokeObjectURL(url);
+                } catch {}
+              }
+            }
+            blobUrls = [];
           }
           if (params.isApplyBgColorFromImage) {
             node.src = sourceValue;
@@ -184,7 +196,7 @@ export function fileLoaderv2(
             node.src = sourceValue;
           }
           if (typeof sourceValue === "string" && sourceValue.startsWith("blob:")) {
-            lastBlobUrl = sourceValue;
+            blobUrls.push(sourceValue);
           }
           node.classList.remove("bg-bgs3");
           node.style.opacity = "1";
@@ -206,7 +218,7 @@ export function fileLoaderv2(
         node.appendChild(sourceElement);
         node.load();
         if (typeof sourceValue === "string" && sourceValue.startsWith("blob:")) {
-          lastBlobUrl = sourceValue;
+          blobUrls.push(sourceValue);
         }
       }
     } catch (e) {
@@ -243,11 +255,13 @@ export function fileLoaderv2(
       isApplyBgColorFromImage?: boolean;
       isApplyBgColorToParent?: boolean;
     }) {
-      if (lastBlobUrl) {
-        try {
-          URL.revokeObjectURL(lastBlobUrl);
-        } catch {}
-        lastBlobUrl = null;
+      if (blobUrls.length) {
+        for (const url of blobUrls) {
+          try {
+            URL.revokeObjectURL(url);
+          } catch {}
+        }
+        blobUrls = [];
       }
       source = newParams.source;
       isLazyLoad = newParams.isLazyLoad ?? true;
@@ -277,11 +291,13 @@ export function fileLoaderv2(
       if (observer) {
         observer.unobserve(node);
       }
-      if (lastBlobUrl) {
-        try {
-          URL.revokeObjectURL(lastBlobUrl);
-        } catch {}
-        lastBlobUrl = null;
+      if (blobUrls.length) {
+        for (const url of blobUrls) {
+          try {
+            URL.revokeObjectURL(url);
+          } catch {}
+        }
+        blobUrls = [];
       }
     }
   };

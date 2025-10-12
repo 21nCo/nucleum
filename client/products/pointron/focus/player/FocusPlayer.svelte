@@ -62,7 +62,9 @@
     if (pipWindowRef && pipWindowPageHideHandler) {
       try {
         pipWindowRef.removeEventListener("pagehide", pipWindowPageHideHandler);
-      } catch {}
+      } catch (e) {
+        logger.error({ at: "closePip:removeEventListener", e });
+      }
     }
     pipWindowPageHideHandler = null;
     if ("documentPictureInPicture" in window)
