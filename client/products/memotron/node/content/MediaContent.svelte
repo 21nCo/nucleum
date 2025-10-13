@@ -20,7 +20,7 @@
   export let isConstrainedWidth: boolean = false;
   export let rightPane: NodeRightPaneType | undefined =
     $node?.contentType === NodeType.PDF && !isConstrainedWidth
-      ? NodeRightPaneType.TRACES
+      ? NodeRightPaneType.BOOKMARKS
       : undefined;
   let renderingDetails: any;
   let contentRef: MediaContentResolver;

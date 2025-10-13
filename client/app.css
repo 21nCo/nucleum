@@ -18,8 +18,26 @@
   @apply overflow-x-auto-raw no-scrollbar;
 }
 
+.overflow-auto-scrollbar {
+  @apply overflow-auto-raw styledscroll;
+}
+
+.overflow-y-auto-scrollbar {
+  @apply overflow-y-auto-raw styledscroll;
+}
+
 :root {
   overflow: hidden;
+}
+
+  /**
+* user-select: none is used to provide native experience for touch devices
+*/
+:root {
+  -webkit-user-select: none; /* Safari */
+  -moz-user-select: none; /* Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
 }
 
 li.md-list-item::before {
@@ -37,9 +55,9 @@ blockquote {
     } */
 
   /* Hide scrollbar for IOS webview and other scenarios */
-  ::-webkit-scrollbar {
+  /* ::-webkit-scrollbar {
     width: 0em;
-  }
+  } */
 
   .no-scrollbar {
     -webkit-overflow-scrolling: touch;
@@ -65,7 +83,7 @@ blockquote {
   } */
   .styledscroll::-webkit-scrollbar-thumb {
     border-radius: 9999px;
-    background-color: rgba(var(--colors-bgs3));
+    background-color: rgba(var(--colors-bgs4));
   }
 
   .styledscroll::-webkit-scrollbar-thumb:hover {
@@ -153,6 +171,13 @@ blockquote {
 
   .default-typeface {
     font-family: "Sen", "Hanken Grotesk", system-ui, sans-serif;
+  }
+
+  .selectable {
+    -webkit-user-select: text; /* Safari */
+    -moz-user-select: text; /* Firefox */
+    -ms-user-select: text; /* Internet Explorer/Edge */
+    user-select: text; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
   }
 }
 

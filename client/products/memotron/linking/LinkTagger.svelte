@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
   import { InputStyle } from "$lib/client/types/input.type";
   import { createEventDispatcher } from "svelte";
@@ -7,6 +6,7 @@
   import type { INodeLinkThumb } from "../node/node.type";
   import type { IRecordId } from "$lib/client/types/data.type";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { LinkType } from "./link.type";
   const dispatch = createEventDispatcher();
 
   export let link: INodeLinkThumb;
@@ -19,7 +19,11 @@
 
   async function processSelect(id: IRecordId) {
     link.tags = [...(link.tags || []), id];
-    const result = await linker.modify(link.id, {
+    const linkId =
+      link.links?.find((x) => x.linkType === LinkType.DIRECT)?.id ??
+      link.links?.[0].id;
+    if (!linkId) return;
+    const result = await linker.modify(linkId, {
       tags: link.tags
     });
     logger.log({ at: "processSelect", result });

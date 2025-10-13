@@ -151,6 +151,7 @@ export const products: Record<Product, IAppConfigBase> = {
           Action.APPEARANCE_SETTINGS,
           "analytics-settings",
           "session-settings",
+          MemotronAction.NODE_SETTINGS,
           Action.DATETIME_SETTINGS,
           Action.SHORTCUTS,
           Action.ACCESSIBILITY
@@ -214,6 +215,7 @@ export const products: Record<Product, IAppConfigBase> = {
         children: [
           Action.MODE_OF_INTERACTION,
           Action.APPEARANCE_SETTINGS,
+          MemotronAction.NODE_SETTINGS,
           Action.DATETIME_SETTINGS,
           Action.SHORTCUTS,
           Action.ACCESSIBILITY

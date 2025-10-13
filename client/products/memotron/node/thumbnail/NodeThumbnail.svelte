@@ -71,7 +71,8 @@
   $: isFullExpand =
     isTextClip ||
     socialPostNodeTypeList.has(item.contentType) ||
-    accessPoint === ResourceAccessPoint.NODE_TRACES;
+    (accessPoint === ResourceAccessPoint.NODE_TRACES &&
+      item.contentType !== NodeType.YOUTUBE_BOOKMARK);
   $: isShouldContainImage = resolveIfImageShouldContain(item.contentType);
 
   $: isLinkContext =
@@ -132,17 +133,18 @@
           !isApplyCustomColor,
         "bg-bgs2 px-2":
           !isApplyCustomColor &&
-          (accessPoint === ResourceAccessPoint.LIBRARY ||
-            accessPoint === ResourceAccessPoint.NODE_LINKS ||
-            accessPoint === ResourceAccessPoint.DEFAULT_RIGHT_PANE_LINKS),
-        "p-2": isLinkContext
+          (accessPoint === ResourceAccessPoint.LIBRARY || isLinkContext),
+        "pb-2": isLinkContext,
+        "pt-2": isLinkContext && (isFullExpand || filePreview || urlPreview)
       })}
     >
       <button
         class={cn(
           "flex w-full items-center border- rounded--md truncate",
           !isFullExpand && {
-            "h-16": !visibleProps || visibleProps.length === 0
+            "h-16":
+              (!isLinkContext || isFullExpand) &&
+              (!visibleProps || visibleProps.length === 0)
             // "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
             // "bg-bgs2 border-brs3 hover:border-fgs4": !isApplyCustomColor
           }
@@ -208,7 +210,12 @@
                     contentType={item.contentType}
                   />
                 {:else if isTextClip && contentPreview}
-                  <TextClipPreview node={item} {contentPreview} {accessPoint} />
+                  <TextClipPreview
+                    node={item}
+                    {contentPreview}
+                    {accessPoint}
+                    {arrangement}
+                  />
                 {:else if contentPreview}
                   <span class="text-fgs3 userdata">
                     {@html renderMdAsHtml(contentPreview)}
@@ -233,14 +240,16 @@
                 {accessPoint}
               />
             {/key}
-            <div class="text-b4 text-fgs3 default-typeface">
-              {#if accessPoint === ResourceAccessPoint.CALENDAR}
-                {formatTime($userPreferences, item.createdAt)}
-              {:else}
-                {formatDatetime($userPreferences, item.createdAt)}
-              {/if}
-            </div>
-            {#if visibleProps.length > 0}
+            {#if !isLinkContext}
+              <div class="text-b4 text-fgs3 default-typeface">
+                {#if accessPoint === ResourceAccessPoint.CALENDAR}
+                  {formatTime($userPreferences, item.createdAt)}
+                {:else}
+                  {formatDatetime($userPreferences, item.createdAt)}
+                {/if}
+              </div>
+            {/if}
+            {#if visibleProps.length > 0 && !isLinkContext}
               <div class="py-1">
                 <NodeThumbnailProperties
                   values={item.properties}
@@ -306,7 +315,12 @@
           {:else}
             <div class="h-full overflow-clip text-b2">
               {#if isTextClip && contentPreview}
-                <TextClipPreview node={item} {contentPreview} {accessPoint} />
+                <TextClipPreview
+                  node={item}
+                  {contentPreview}
+                  {accessPoint}
+                  {arrangement}
+                />
               {:else if item.contentType === NodeType.AUDIO && _url}
                 <NodeThumbnailAudioPreview url={_url} />
               {:else if contentPreview}
@@ -388,7 +402,12 @@
         class="h-auto p-2 overflow-clip text-wrap max-h-48 text-left text-b3"
       >
         {#if isTextClip}
-          <TextClipPreview node={item} {contentPreview} {accessPoint} />
+          <TextClipPreview
+            node={item}
+            {contentPreview}
+            {accessPoint}
+            {arrangement}
+          />
         {:else if socialPostNodeTypeList.has(item.contentType)}
           <span class="text-fgs3">
             <NodeThumbnailSocialPostPreview

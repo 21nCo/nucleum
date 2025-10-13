@@ -445,7 +445,7 @@ class AccountStore extends ObservableStore<UserAccount> {
       logger.log({ at: "uploadFileV2", id, contentType, fileName });
       fileName = fileName
         .replace(/\s+/g, "_")
-        .replace(/[()@#$%&*!?<>{}[\]\\\/\^~`+=;:]/g, "_");
+        .replace(/[()@#$%&*!?<>{}[\]\\\/\^~`+=;:,'"|]/g, "_");
 
       // Convert HEIC files to PNG
       const isHeicFile = fileName.toLowerCase().endsWith(".heic");
