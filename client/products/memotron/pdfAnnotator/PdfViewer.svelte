@@ -14,6 +14,7 @@
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { fileEmbedChannel } from "$lib/client/components/files/fileEmbedChannel.store";
   import { OperatingSystem } from "$lib/client/types/context.type";
+  import { pdfCache } from "$lib/client/utils/pdfCache.utils";
 
   // pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
   // pdfjs.GlobalWorkerOptions.workerSrc =
@@ -64,6 +65,8 @@
   let load_error_messge: string | null = null;
   let _prev_gap_top = "8px";
   let _prev_gap_bottom = "8px";
+  let loadingProgress = 0;
+  let isLoading = false;
 
   //Init button handlers (some require hydration on mount)
   let onPasswordSubmit: () => void;
@@ -155,19 +158,66 @@
     );
 
     const { pdf_viewer, pdf_link_service } = await init_promise;
-    // Loading document.
     try {
       if (isDataViaEmbed) {
         if (!dataViaEmbed) return;
         pdfData = fileEmbedChannel.base64ToUint8Array(dataViaEmbed);
       } else {
-        const arrayBuffer = await fetch(url.toString()).then((response) =>
-          response.arrayBuffer()
-        );
-        pdfData = new Uint8Array(arrayBuffer);
+        const cachedData = await pdfCache.get(url.toString());
+        
+        if (cachedData) {
+          pdfData = cachedData;
+        } else {
+          isLoading = true;
+          loadingProgress = 0;
+          const response = await fetch(url.toString());
+          if (!response.ok) {
+            throw new Error(
+              `Failed to fetch PDF: ${response.status} ${response.statusText}`
+            );
+          }
+          const ct = response.headers.get("content-type") || "";
+          if (!ct.toLowerCase().includes("application/pdf")) {
+            throw new Error("Fetched content is not a PDF");
+          }
+
+          const contentLength = response.headers.get("content-length");
+          if (contentLength && response.body) {
+            const total = parseInt(contentLength, 10);
+            let loaded = 0;
+            const reader = response.body.getReader();
+            const chunks: Uint8Array[] = [];
+
+            while (true) {
+              const { done, value } = await reader.read();
+
+              if (done) break;
+
+              chunks.push(value);
+              loaded += value.length;
+              loadingProgress = Math.round((loaded / total) * 100);
+            }
+
+            const allChunks = new Uint8Array(loaded);
+            let position = 0;
+            for (const chunk of chunks) {
+              allChunks.set(chunk, position);
+              position += chunk.length;
+            }
+
+            pdfData = allChunks;
+          } else {
+            const arrayBuffer = await response.arrayBuffer();
+            pdfData = new Uint8Array(arrayBuffer);
+          }
+
+          await pdfCache.set(url.toString(), pdfData);
+          isLoading = false;
+        }
       }
     } catch (error) {
       console.error("Error loading PDF:", error);
+      isLoading = false;
       load_error_messge = "Error loading PDF. Please try again.";
       return;
     }
@@ -190,8 +240,12 @@
         });
       })
       .catch(function (error) {
-        password_error = true;
-        load_error_messge = error.message;
+        const name = (error && (error.name || error.toString())) || "";
+        const message =
+          error && error.message ? error.message : String(error || "");
+        const isPwd = typeof name === "string" && name.includes("Password");
+        password_error = isPwd;
+        load_error_messge = message;
       });
 
     onZoomIn = () => {
@@ -257,7 +311,7 @@
         {/if}
         <p>{load_error_messge}</p>
       </div>
-    {:else}<!-- svelte-ignore a11y-click-events-have-key-events -->
+    {:else}
       <!-- <div class="spdfbanner">
         <span class="toolbarbutton" on:click={onZoomIn}>
           <img
@@ -305,6 +359,14 @@
         </span>
       </div> -->
       <!-- <div class="spdfinner"> -->
+      {#if isLoading}
+        <div
+          class="bg-bgs1 absolute inset-0 z-50 flex flex-col items-center justify-center w-full h-full gap-4"
+        >
+          <div class="text-fg1 text-sm">Loading PDF...</div>
+          <div class="text-fg2 text-xs">{loadingProgress}%</div>
+        </div>
+      {/if}
       <div id="viewerContainer" bind:this={container}>
         <div id="viewer" class="pdfViewer" />
         <!-- <slot /> -->

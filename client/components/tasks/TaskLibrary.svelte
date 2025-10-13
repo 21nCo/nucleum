@@ -503,9 +503,12 @@
 
   {#if tasks && tasks.length > 0}
     <div
-      class={cn("flex flex-col gap-4 overflow-auto grow userdata", {
-        "px-4": accessPoint === ResourceAccessPoint.LIBRARY
-      })}
+      class={cn(
+        "flex flex-col gap-4 pr-1.5 overflow-auto-scrollbar grow userdata",
+        {
+          "px-4": accessPoint === ResourceAccessPoint.LIBRARY
+        }
+      )}
     >
       <!-- {#if selectedSubType !== TaskSubTypeForSwitcher.BY_MONTH}
       <AddNewTaskInline on:add={onAdd} bind:this={addNewTaskInlineRef} />

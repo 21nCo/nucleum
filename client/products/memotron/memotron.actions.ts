@@ -36,6 +36,7 @@ import CaptureSettings from "./capture/CaptureSettings.svelte";
 import LinkTagsControlPanel from "./linking/LinkTagsControlPanel.svelte";
 import LibraryPanelContentResolver from "$lib/client/components/library/LibraryPanelContentResolver.svelte";
 import PreviewImageUploader from "./node/PreviewImageUploader.svelte";
+import NodeSettings from "./node/NodeSettings.svelte";
 
 export const memotronActions: IAction[] = [
   {
@@ -340,6 +341,20 @@ export const memotronActions: IAction[] = [
       title: "Capture Settings",
       layout: {
         size: Size.lg,
+        orientation: Orientation.Vertical,
+        isShowCantileverClose: true
+      }
+    }
+  },
+  {
+    action: MemotronAction.NODE_SETTINGS,
+    label: "Node Settings",
+    type: ActionType.MODAL,
+    component: NodeSettings,
+    modalParams: {
+      title: "Node Settings",
+      layout: {
+        size: Size.md,
         orientation: Orientation.Vertical,
         isShowCantileverClose: true
       }

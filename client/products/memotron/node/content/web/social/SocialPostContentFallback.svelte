@@ -15,6 +15,10 @@
   import { Persistence } from "$lib/client/persistence/persistence";
   import { InfoTextType } from "$lib/client/types/text.type";
   import { parse } from "$lib/shared/utils/json.utils";
+  import Button from "$lib/client/elements/button/Button.svelte";
+  import { ButtonStyle } from "$lib/client/types/button.type";
+  import { Size } from "$lib/client/types/size.enum";
+  import { toasts } from "$lib/client/stores/notification.store";
 
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -134,6 +138,13 @@
     }
     return "Unknown";
   }
+
+  async function copyTextContent() {
+    if (contentPreview) {
+      await navigator.clipboard.writeText(contentPreview);
+      toasts.success("Text copied to clipboard");
+    }
+  }
 </script>
 
 <div
@@ -174,4 +185,18 @@
       {getPostedAtTime()}
     </div>
   </button>
+  {#if contentPreview}
+    <div class="flex justify-center items-center w-full gap-4">
+      <Button
+        style={ButtonStyle.PLAIN}
+        label="Copy text content"
+        isUnderlined={true}
+        size={Size.sm}
+        on:click={(e) => {
+          e.stopPropagation();
+          copyTextContent();
+        }}
+      />
+    </div>
+  {/if}
 </div>

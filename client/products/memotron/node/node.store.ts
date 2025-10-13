@@ -11,6 +11,7 @@ import {
   headingNodeTypes,
   mediaNodeTypeList,
   rootNodeTypeList,
+  socialPostNodeTypeList,
   type INodeCapture
 } from "$lib/client/products/memotron/node/node.type";
 import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
@@ -46,7 +47,8 @@ import { isValidString } from "$lib/shared/utils/text.utils";
 import {
   resourceInList,
   isSameResource,
-  isRecordId
+  isRecordId,
+  removeDuplicatesFilter
 } from "$lib/client/components/flux/resourceStores/resource.utils";
 
 import context from "$lib/client/stores/context.store";
@@ -409,14 +411,28 @@ export class ActiveNodeStore extends CollectibleStore<
       );
       console.timeEnd("ActiveNodeStore.afterInit - links");
       if (linksResult && isValidArrayWithData(linksResult)) {
-        const links: INodeLinkThumb[] = linksResult.map((x: ILink) => {
+        let uniqueLinkIds = new Set();
+        linksResult.forEach((x: ILink) => {
           const id = x.in.toString() === this.id ? x.out : x.in;
+          uniqueLinkIds.add(id);
+        });
+        const links: INodeLinkThumb[] = Array.from(uniqueLinkIds).map((id) => {
+          const allLinks = linksResult.filter(
+            (y) => y.out === id || y.in === id
+          );
           return {
             linkedTo: id,
-            linkType: x.linkType,
-            id: x.id,
-            tags: x.tags,
-            direction: x.in.toString() === this.id ? "outgoing" : "incoming"
+            links: allLinks.map((y) => ({
+              id: y.id,
+              linkType: y.linkType,
+              direction: y.in.toString() === this.id ? "outgoing" : "incoming",
+              tags: y.tags
+            })),
+            tags: allLinks
+              .map((y) => y.tags)
+              .flat()
+              .filter(Boolean)
+              .filter(removeDuplicatesFilter)
           } as INodeLinkThumb;
         });
         this.update((n) => {
@@ -769,6 +785,19 @@ class NodeActions {
     }
   };
 
+  copyHighlightText = {
+    value: "copyHighlightText",
+    label: "Copy content",
+    icon: "copy",
+    callback: async () => {
+      const text = this.node.text || this.node.mdText || "";
+      if (text) {
+        await navigator.clipboard.writeText(text);
+        toasts.success("Highlight text copied to clipboard");
+      }
+    }
+  };
+
   sideNotesPane() {
     return {
       value: NodeRightPaneType.SIDENOTES,
@@ -796,10 +825,10 @@ class NodeActions {
 
   tracesPane() {
     return {
-      value: NodeRightPaneType.TRACES,
+      value: NodeRightPaneType.BOOKMARKS,
       icon: "bookmark",
-      label: "Show traces",
-      tooltip: "Show traces",
+      label: "Show bookmarks",
+      tooltip: "Show bookmarks",
       count:
         "clips" in this.node &&
         this.node.clips &&
@@ -904,19 +933,32 @@ export function resolveNodeContextMenu(
   }
   let mediaShareAndExportGroup = {
     group: "shareAndExport",
-    items: [resourceActions.copyLink()]
+    items: [
+      resourceActions.copyLink(),
+      ...(node.url ? [resourceActions.copyExternalLink()] : [])
+    ]
   };
   if (
     [...mediaNodeTypeList, NodeType.WEB_SCREENSHOT].includes(node.contentType)
   ) {
     mediaShareAndExportGroup.items.unshift(nodeActions.download);
   }
+  const isTextBookmarkOrSocialPost =
+    node.contentType === NodeType.WEB_TEXT_BOOKMARK ||
+    node.contentType === NodeType.KINDLE_HIGHLIGHT ||
+    socialPostNodeTypeList.has(node.contentType);
+  if (isTextBookmarkOrSocialPost) {
+    mediaShareAndExportGroup.items.unshift(nodeActions.copyHighlightText);
+  }
   if (
     (accessPoint === ResourceAccessPoint.NODE_LINKS ||
       accessPoint === ResourceAccessPoint.DEFAULT_RIGHT_PANE_LINKS) &&
     params?.accessPointId
   ) {
-    let baseItems = [resourceActions.copyLink()];
+    let baseItems = [
+      resourceActions.copyLink(),
+      ...(node.url ? [resourceActions.copyExternalLink()] : [])
+    ];
     if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
       baseItems.unshift(
         resourceActions.select(accessPoint, params?.accessPointId)
@@ -932,15 +974,19 @@ export function resolveNodeContextMenu(
       },
       ...commonGroups
     ];
-  } else if (accessPoint != ResourceAccessPoint.SELF) {
+  } else if (accessPoint !== ResourceAccessPoint.SELF) {
     let primaryItems = [
       resourceActions.select(accessPoint, params?.accessPointId),
       resourceActions.star(),
       resourceActions.addToCollection(),
       resourceActions.link(),
       resourceActions.edit(accessPoint),
-      resourceActions.copyLink()
+      resourceActions.copyLink(),
+      ...(node.url ? [resourceActions.copyExternalLink()] : [])
     ];
+    if (isTextBookmarkOrSocialPost) {
+      primaryItems.splice(5, 0, nodeActions.copyHighlightText);
+    }
     if (
       accessPoint === ResourceAccessPoint.COLLECTION &&
       params?.accessPointId
@@ -950,7 +996,8 @@ export function resolveNodeContextMenu(
         resourceActions.select(accessPoint, params?.accessPointId),
         resourceActions.star(),
         resourceActions.edit(accessPoint),
-        resourceActions.copyLink()
+        resourceActions.copyLink(),
+        ...(node.url ? [resourceActions.copyExternalLink()] : [])
       ];
     }
     return [
@@ -1047,7 +1094,11 @@ export function resolveNodeContextMenu(
     },
     {
       group: "shareAndExport",
-      items: [resourceActions.copyLink(), resourceActions.copyContents()]
+      items: [
+        resourceActions.copyLink(),
+        ...(node.url ? [resourceActions.copyExternalLink()] : []),
+        resourceActions.copyContents()
+      ]
     },
     ...commonGroups
   ];

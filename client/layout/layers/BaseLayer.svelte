@@ -45,7 +45,7 @@
   import view from "@21n/stores/view.store";
   let timer: any;
   let isMounted = false;
-  let lastOrientation: 'portrait' | 'landscape' | null = null;
+  let lastOrientation: "portrait" | "landscape" | null = null;
   const productConfig = resolveProductConfig();
 
   onMount(async () => {
@@ -265,19 +265,20 @@
   function updateOrientationClasses(): boolean {
     const html = document.documentElement;
     const isPortrait = window.innerHeight > window.innerWidth;
-    const currentOrientation = isPortrait ? 'portrait' : 'landscape';
-    
-    const hasOrientationChanged = lastOrientation !== null && lastOrientation !== currentOrientation;
+    const currentOrientation = isPortrait ? "portrait" : "landscape";
+
+    const hasOrientationChanged =
+      lastOrientation !== null && lastOrientation !== currentOrientation;
     lastOrientation = currentOrientation;
-    
+
     html.classList.remove("device-portrait", "device-landscape");
-    
+
     if (isPortrait) {
       html.classList.add("device-portrait");
     } else {
       html.classList.add("device-landscape");
     }
-    
+
     return hasOrientationChanged;
   }
 
@@ -560,15 +561,3 @@
     }
   }}
 />
-
-<style>
-  /**
-* user-select: none is used to provide native experience for touch devices
-*/
-  :global(body) {
-    -webkit-user-select: none; /* Safari */
-    -moz-user-select: none; /* Firefox */
-    -ms-user-select: none; /* Internet Explorer/Edge */
-    user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */
-  }
-</style>
