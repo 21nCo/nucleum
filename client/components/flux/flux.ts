@@ -167,7 +167,7 @@ class Flux {
           )
             return;
           const storeId = record.id.toString().replace("kv:", "");
-          this.loaderCallback(storeId, record);
+          if (this.loaderCallback) this.loaderCallback(storeId, record);
         });
       }
       const inMemoryResources = this.tables
@@ -183,7 +183,7 @@ class Flux {
             id: resource,
             data
           });
-          this.loaderCallback(resource, data);
+          if (this.loaderCallback) this.loaderCallback(resource, data);
         }
       }
     } catch (e) {
@@ -194,7 +194,7 @@ class Flux {
   private async loadInMemoryResourceStore(resource: Resource) {
     logger.log({ at: "flux.loadInMemoryResourceStore", resource });
     const data = await this.persistence.selectMany(resource);
-    this.loaderCallback(resource, data);
+    if (this.loaderCallback) this.loaderCallback(resource, data);
   }
 
   /**

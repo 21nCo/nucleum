@@ -1,31 +1,14 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import { StoreDataType, type IStore } from "../types/data.type";
-  import {
-    isTokenExpired,
-    resolveCurrentUserId,
-    resolveToken
-  } from "../utils/account.utils";
+  import { isTokenExpired, resolveToken } from "../utils/account.utils";
   import account from "../stores/account.store";
   import ExtensionThemeBase from "./ExtensionThemeBase.svelte";
-  import {
-    ClientStorageKey,
-    PersistenceProvider
-  } from "../persistence/persistence.type";
+  import { ClientStorageKey } from "../persistence/persistence.type";
   import { logger } from "../components/debug/logger.client";
-  import {
-    extensionFlux,
-    initExtensionFlux,
-    loadInMemoryResourceStore,
-    loadInMemoryStores
-  } from "../components/flux/fluxExtentionMediator";
   import { clientStorage, getDapId } from "../persistence/persistence.utils";
-  import { FluxMethod } from "../components/flux/flux.type";
   import { createEventDispatcher } from "svelte";
   import { Resource } from "../components/flux/resourceStores/resource.enum";
   import { extractProduct } from "$lib/shared/utils/utils";
-  import { relayToSidePanel } from "../utils/extension.utils";
-  import { ExtensionEvent } from "../types/extension.type";
   import {
     cleanExtensionSprites,
     extensionSprites
@@ -42,10 +25,11 @@
     removeDuplicatesFilter
   } from "../components/flux/resourceStores/resource.utils";
   import { parse } from "$lib/shared/utils/json.utils";
-
+  import { ExtensionStore } from "./extension.store";
+  import { Extension } from "../products/product.type";
   const dispatch = createEventDispatcher();
   export let id: string;
-  export let stores: IStore[] = [];
+  export let extention: Extension;
   export let isLoggedIn: boolean = false;
   export let product: { product: string; env: string };
   $: currentPage = extractProduct(window.location.hostname);
@@ -76,7 +60,10 @@
     windowMessageHandler = async function (event: MessageEvent) {
       if (event.source != window || !isSelfPage) return;
       if (event.data.type && event.data.type == "signin") {
-        await clientStorage.set(ClientStorageKey.STOKEN, event.data.token.token);
+        await clientStorage.set(
+          ClientStorageKey.STOKEN,
+          event.data.token.token
+        );
         await clientStorage.set(
           ClientStorageKey.USER_INFO,
           event.data.token.userInfo
@@ -135,7 +122,7 @@
   export async function onTabUpdate() {
     const token = await resolveToken();
     if (token) {
-      await extensionFlux({ method: FluxMethod.SYNC_DOWN });
+      await ExtensionStore.getInstance()?.syncDown();
     }
     return token;
   }
@@ -148,26 +135,8 @@
         at: "ExtensionBaseLayer.svelte bootup",
         account: $account
       });
-
-      const initResult = await initExtensionFlux(stores);
-      logger.log({ at: "initFlux", initResult });
-      await clientStorage.set(ClientStorageKey.EXTENSION_BOOTUP, {
-        inProgress: true
-      });
-      if (initResult === 0) {
-        await extensionFlux({ method: FluxMethod.CLONE_DOWN });
-      } else {
-        await extensionFlux({
-          method: FluxMethod.SYNC_DOWN
-        });
-      }
-      await loadInMemoryStores(stores);
-      await clientStorage.set(ClientStorageKey.EXTENSION_BOOTUP, {
-        inProgress: false
-      });
-      relayToSidePanel({
-        event: ExtensionEvent.BOOTUP
-      });
+      const ext = ExtensionStore.getInstance(extention);
+      await ext?.bootup(extention);
     } catch (e) {
       logger.error({
         at: "ExtensionBaseLayer.bootup",
@@ -182,65 +151,7 @@
       resource
     });
     if (!resource) return;
-    const store = stores.find((x) => x.id === resource);
-    if (!store || !store.isInMemory || !store.loader) return;
-    await loadInMemoryResourceStore(store);
-  }
-
-  async function loadInMemoryStoresv1() {
-    try {
-      let kvStores = stores.filter((x) => x.dataType === StoreDataType.KVO);
-      logger.log({
-        at: "ExtensionBaseLayer.loadInMemoryStores",
-        kvStores
-      });
-      if (!kvStores) return;
-      const data = await extensionFlux({
-        method: FluxMethod.SELECT_MANY,
-        args: {
-          resource: Resource.kv
-        }
-      });
-      logger.log({
-        at: "ExtensionBaseLayer.loadInMemoryStores",
-        data
-      });
-      if (!data || !Array.isArray(data)) return;
-      data.forEach((record: any) => {
-        const store = kvStores.find(
-          (x) => "kv:" + x.id === record.id.toString()
-        );
-        if (!store?.loader) return;
-        store.loader(record);
-      });
-      let inMemoryResouceStores = stores.filter((x) => x.isInMemory);
-      logger.log({
-        at: "loadInMemorystores - resource stores",
-        inMemoryResouceStores
-      });
-      if (!inMemoryResouceStores) return;
-      for (const store of inMemoryResouceStores) {
-        const data = await extensionFlux({
-          method: FluxMethod.SELECT_MANY,
-          args: {
-            resource: store.id as Resource
-          }
-        });
-        if (data && Array.isArray(data) && store?.loader) {
-          logger.log({
-            at: "ExtensionBaseLayer.loadInMemoryStores - loading resource store",
-            id: store.id,
-            data
-          });
-          store.loader(data);
-        }
-      }
-    } catch (e) {
-      logger.error({
-        at: "ExtensionBaseLayer.loadInMemoryStores",
-        error: e
-      });
-    }
+    await ExtensionStore.getInstance()?.loadInMemoryResourceStore(resource);
   }
 
   async function handleAddToRecents(event: any) {

@@ -5,6 +5,7 @@ class Logger {
   constructor() {
     try {
       if (
+        window &&
         typeof window !== "undefined" &&
         window?.location?.search?.includes("log=")
       ) {
@@ -49,7 +50,7 @@ class Logger {
   }
   error(message: any, error?: any) {
     this._log({ message, error }, LogType.ERROR);
-    if (typeof window !== undefined) {
+    if (window && typeof window !== undefined) {
       window.dispatchEvent(
         new CustomEvent("errorLog", {
           detail: {

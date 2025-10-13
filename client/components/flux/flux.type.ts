@@ -110,13 +110,13 @@ interface IFluxMutationArgs<T> {
   };
 }
 
-interface IFluxInitArgs {
+export interface IFluxInitArgs {
   tables: IResourceTableConfig[];
-  provider: PersistenceProvider;
   params: {
     dapId: string;
     userId?: string;
     isLocalMode?: boolean;
+    loaderCallback: LoaderCallback;
   };
 }
 
