@@ -29,7 +29,7 @@
 
   if (canHaveTraces.includes($node?.contentType ?? NodeType.UNKNOWN)) {
     verticalSwitcherItems.push({
-      value: NodeRightPaneType.TRACES,
+      value: NodeRightPaneType.BOOKMARKS,
       icon: "bookmark"
     });
   }

@@ -20,12 +20,24 @@
   import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import NodeTasksPane from "./NodeTasksPane.svelte";
   import { resolveNodeIcon } from "../node.utils";
+  import { preferences } from "$lib/client/stores/preferences/preferences.store";
+  import { Preference } from "$lib/client/stores/preferences/preferences.type";
+  import { appStore } from "$lib/client/stores/app.store";
+  import { derived } from "svelte/store";
   const contentContext = getContext<any>("content");
 
   export let node: IActiveNodeStore | null = null;
   $: pdfAnnotations = $node?.pdfAnnotations ?? [];
   let options = resolveOptions($node?.contentType);
   let selectedType: string | undefined = undefined;
+
+  const hideHighlightColors = derived(
+    [preferences, appStore],
+    ([$preferences, $appStore]) => {
+      const key = `${$appStore.product}-${Preference.HIDE_HIGHLIGHT_COLORS}`;
+      return ($preferences[key] as boolean) ?? false;
+    }
+  );
 
   function resolveOptions(contentType: NodeType | undefined) {
     const tasks = {
@@ -39,20 +51,15 @@
       icon: "chat-two"
     };
 
-    if (contentType === NodeType.PDF) {
+    if (
+      contentType === NodeType.PDF ||
+      contentType === NodeType.WEB_PAGE ||
+      contentType === NodeType.KINDLE_BOOK
+    ) {
       return [
         {
           value: "clips",
-          label: "Highlights",
-          icon: "bookmark"
-        }
-        // tasks
-      ];
-    } else if (contentType === NodeType.WEB_PAGE) {
-      return [
-        {
-          value: "clips",
-          label: "Clips",
+          label: "Bookmarks",
           icon: "bookmark"
         }
         // tasks
@@ -73,17 +80,8 @@
       return [
         {
           value: "clips",
-          label: "Clips",
+          label: "Bookmarks",
           icon: "youtube"
-        }
-        // tasks
-      ];
-    } else if (contentType === NodeType.KINDLE_BOOK) {
-      return [
-        {
-          value: "clips",
-          label: "Highlights",
-          icon: "bookmark"
         }
         // tasks
       ];
@@ -93,7 +91,7 @@
   }
 </script>
 
-{#if options}
+{#if options && options.length > 1}
   <OptionSelector {options} size={Size.sm} bind:selected={selectedType} />
 {/if}
 
@@ -154,16 +152,19 @@
               </div>
             </div>
           {:else}
-            {@const color = highlightStore.resolveColor(trace.color)}
+            {@const color = $hideHighlightColors
+              ? undefined
+              : highlightStore.resolveColor(trace.color)}
             <div
               class="w-full min-h-fit p-2 rounded-md text-fgs2"
-              style="text-decoration: 2px {trace.annotType?.toLowerCase()} {trace.annotType !==
-              AnnotationType.HIGHLIGHT
+              style="text-decoration: 2px {trace.annotType?.toLowerCase()} {!$hideHighlightColors &&
+              trace.annotType !== AnnotationType.HIGHLIGHT
                 ? color
                 : ''}; "
             >
               <span
-                style={trace.annotType === AnnotationType.HIGHLIGHT
+                style={!$hideHighlightColors &&
+                trace.annotType === AnnotationType.HIGHLIGHT
                   ? `background-color: ${hexToRGBA(color, 0.2)};`
                   : ""}
               >
@@ -196,7 +197,7 @@
       />
     {/if}
   </div>
-{:else if canHaveTraces.includes($node?.contentType ?? NodeType.UNKNOWN) && selectedType === "clips"}
+{:else if canHaveTraces.includes($node?.contentType ?? NodeType.UNKNOWN) && (selectedType === "clips" || !selectedType)}
   {#if $node?.clips && $node?.clips?.length > 0}
     <div class="h-full w-full overflow-y-auto">
       <Resources
@@ -204,10 +205,8 @@
         accessPoint={ResourceAccessPoint.NODE_TRACES}
         resource={Resource.node}
         size={Size.sm}
-        isPreventDefault={
-          $node.contentType === NodeType.YOUTUBE_VIDEO ||
-          $node.contentType === NodeType.YOUTUBE_SHORT
-        }
+        isPreventDefault={$node.contentType === NodeType.YOUTUBE_VIDEO ||
+          $node.contentType === NodeType.YOUTUBE_SHORT}
         on:click={(e) => {
           if (!e?.detail) return;
           if (
@@ -225,8 +224,8 @@
     </div>
   {:else}
     <EmptyStatusView
-      mainText="No clips found"
-      subText="This page doesn't have any clips yet"
+      mainText="No bookmarks found"
+      subText="This page doesn't have any bookmarks yet"
     />
   {/if}
 {:else if selectedType === "tasks"}
@@ -237,5 +236,5 @@
     subText="Commenting will be available soon"
   />
 {:else}
-  <EmptyStatusView size={Size.sm} mainText="No traces found" />
+  <EmptyStatusView size={Size.sm} mainText="No bookmarks found" />
 {/if}

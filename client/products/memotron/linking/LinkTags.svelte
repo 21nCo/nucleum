@@ -9,15 +9,27 @@
   import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
   const dispatch = createEventDispatcher();
   export let link: INodeLinkThumb;
-  $: _tags = $linkTagStore
-    ?.filter((x) => link.tags?.some(resourceInList(x)))
-    ?.map(linkTagLabelMapper);
+  $: _tags =
+    $linkTagStore
+      ?.filter((x) => link.tags?.some(resourceInList(x)))
+      ?.map(linkTagLabelMapper) ?? [];
 
   async function onRemove(tagId: IRecordId) {
     link.tags = link.tags?.filter((x) => x.toString() !== tagId.toString());
-    await linker.modify(link.id, {
-      tags: link.tags
-    });
+    const linksWithThisTag = link.links?.filter((x) =>
+      x.tags?.some(resourceInList(tagId))
+    );
+    if (linksWithThisTag && linksWithThisTag.length > 0) {
+      link.links = link.links?.map((x) => ({
+        ...x,
+        tags: x.tags?.filter((y) => y.toString() !== tagId.toString())
+      }));
+      linksWithThisTag.forEach(async (x) => {
+        await linker.modify(x.id, {
+          tags: x.tags?.filter((y) => y.toString() !== tagId.toString())
+        });
+      });
+    }
   }
   function onTagClick(tagId: IRecordId, e: MouseEvent) {
     dispatch("tagClick", tagId);

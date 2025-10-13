@@ -15,7 +15,7 @@
 </script>
 
 <div class="flex flex-col gap-3 w-full">
-  {#each links as item (item.link.id)}
+  {#each links as item (item.link.linkedTo)}
     <LinkItem
       link={item.link}
       item={item.node}
@@ -25,6 +25,7 @@
       on:click={(e) => {
         dispatch("click", { event: e, id: item.node.id });
       }}
+      on:linkTypeSelect
       on:action
       on:tagClick
     />

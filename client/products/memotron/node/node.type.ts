@@ -341,7 +341,7 @@ export enum NodeRightPaneType {
   NONE = "NONE",
   OUTLINE = "OUTLINE",
   PROPERTIES = "PROPERTIES",
-  TRACES = "TRACES",
+  BOOKMARKS = "BOOKMARKS",
   SIDENOTES = "SIDENOTES",
   METADATA = "METADATA",
   LINKS = "LINKS",
@@ -365,9 +365,13 @@ type INodeLinkBase = {
 };
 
 export type INodeLinkThumb = ILinkBase & {
-  id: IRecordId;
   linkedTo: IRecordId;
-  direction: "incoming" | "outgoing";
+  links?: {
+    id: IRecordId;
+    linkType: LinkType;
+    direction: "incoming" | "outgoing";
+    tags?: IRecordId[];
+  }[];
 };
 
 export type LinkThumbnail = ILink & {
@@ -1172,7 +1176,10 @@ export const canHaveTraces = [
 
 export type IVideoBookmarkCapture = INodeHasUrl &
   INodeHasText & {
-    contentType: NodeType.YOUTUBE_BOOKMARK | NodeType.VIDEO_BOOKMARK | NodeType.WEB_VIDEO_BOOKMARK;
+    contentType:
+      | NodeType.YOUTUBE_BOOKMARK
+      | NodeType.VIDEO_BOOKMARK
+      | NodeType.WEB_VIDEO_BOOKMARK;
     body: IVideoBookmarkBody;
     metadata: IVideoBookmarkMetadata;
   };
