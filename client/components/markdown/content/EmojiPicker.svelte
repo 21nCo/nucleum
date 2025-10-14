@@ -17,6 +17,8 @@
 
   let storeEmojis = emojisWithCategories;
   let storeEmojisKey = Object.keys(storeEmojis);
+  console.log("EmojiPicker initialized, storeEmojisKey:", storeEmojisKey);
+  console.log("First category sample:", storeEmojis[storeEmojisKey[1]]?.slice(0, 3));
 
   let displayEmojis: any = {};
   let emojisParentContainer: HTMLDivElement;
