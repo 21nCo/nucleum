@@ -343,6 +343,9 @@
     type: "keyup" | "keydown" = "keydown"
   ) {
     if (!$mdStore.params?.canUseSlashShortcut) return false;
+    
+    const hasColon = text.includes(":");
+    
     if (
       type === "keydown" &&
       event.key === ":"
@@ -352,14 +355,16 @@
         key: event.key
       });
       return true;
-    } else if (!isRenderEmojiPicker) {
+    } else if (!hasColon && !isRenderEmojiPicker) {
       return false;
     } else if (
       type === "keyup" &&
-      (event.key === "Escape" || !text.includes(":"))
+      (event.key === "Escape" || !hasColon)
     ) {
-      hidePopover("emojiPicker");
-    } else if (type === "keyup") {
+      if (isRenderEmojiPicker) {
+        hidePopover("emojiPicker");
+      }
+    } else if (type === "keyup" && hasColon) {
       const colonIndex = text.lastIndexOf(":");
       if (colonIndex !== -1) {
         emojiSearchQuery = text.substring(colonIndex + 1);
@@ -375,6 +380,7 @@
       }
     } else if (
       type === "keydown" &&
+      isRenderEmojiPicker &&
       (event.key === "ArrowDown" ||
         event.key === "ArrowUp" ||
         event.key === "Enter")
@@ -382,7 +388,7 @@
       emojiPickerRef?.key(event.key);
       event.preventDefault();
     }
-    return true;
+    return hasColon || isRenderEmojiPicker;
   }
 
   function handleKeyDown(
