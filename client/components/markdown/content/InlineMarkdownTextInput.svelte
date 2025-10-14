@@ -269,6 +269,16 @@
     // refreshMentions();
   }
 
+  export function addEmoji(emoji: any, searchQuery: string) {
+    const codeMatch = emoji.code.match(/&#X([0-9A-F]+)/i);
+    if (codeMatch) {
+      const emojiChar = String.fromCodePoint(parseInt(codeMatch[1], 16));
+      content = content?.replace(":" + searchQuery, emojiChar);
+      innerHTML = innerHTML.replace(":" + searchQuery, emojiChar);
+      dispatchChangeEvent();
+    }
+  }
+
   export function set(content: string) {
     innerHTML = content;
   }
