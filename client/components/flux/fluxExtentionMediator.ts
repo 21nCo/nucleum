@@ -1,34 +1,25 @@
 import { logger } from "$lib/client/components/debug/logger.client";
 import { flux, initFlux } from "$lib/client/components/flux/flux";
 import { DexiePersistence } from "$lib/client/persistence/dexie/dexie.local";
-import { PersistenceProvider } from "$lib/client/persistence/persistence.type";
-import { getDapId } from "$lib/client/persistence/persistence.utils";
 import { StoreDataType, type IStore } from "$lib/client/types/data.type";
 import { ExtensionEvent } from "$lib/client/types/extension.type";
-import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
 import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
-import { FluxMethod, type IFluxMethod } from "./flux.type";
+import { ExtensionStore } from "$lib/client/extensions/extension.store";
+import { FluxMethod, type IFluxInitArgs, type IFluxMethod } from "./flux.type";
 import { Resource } from "./resourceStores/resource.enum";
+import { clientStorage } from "$lib/client/persistence/persistence.utils";
+import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
+import { Extension } from "$lib/client/products/product.type";
 
 // import { getPort } from "@plasmohq/messaging/port"
 
 export async function delegateToFlux(method: IFluxMethod) {
   try {
     logger.log({ at: "delegateToFlux", ...method, flux });
-    // return flux?.[method]?.(...args);
     if (method.method !== FluxMethod.INIT_FLUX && !flux) {
-      logger.debug({ at: "delegateToFlux - flux is not available", flux });
-      let timeElapsed = 0;
-      while (!flux && timeElapsed < 1000) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        timeElapsed += 100;
-      }
-      if (!flux) {
-        await initializeFlux();
-      }
-      if (!flux) {
-        logger.error({ at: "delegateToFlux - Flux is not responding" });
-      }
+      return {
+        init: -1
+      };
     }
     switch (method.method) {
       case FluxMethod.CLONE_DOWN:
@@ -46,7 +37,7 @@ export async function delegateToFlux(method: IFluxMethod) {
           counts: method.args.counts
         });
       case FluxMethod.INIT_FLUX:
-        return initializeFlux(method.args.tables);
+        return initializeFlux(method.args);
       case FluxMethod.SELECT_MANY:
         return flux?.selectMany(method.args.resource, method.args.params);
       case FluxMethod.SELECT:
@@ -67,20 +58,24 @@ export async function delegateToFlux(method: IFluxMethod) {
     return null;
   }
 
-  async function initializeFlux(tables: any[] = []) {
+  async function initializeFlux(params: IFluxInitArgs) {
     logger.debug({ at: "delegateToFlux - initializeFlux" });
-    const currentUserId = await resolveCurrentUserId();
-    const dapId = await getDapId();
+
     return initFlux(new DexiePersistence(), {
-      tables,
-      loaderCallback: () => {},
-      dapId,
-      userId: currentUserId,
-      product: "extension"
+      tables: params.tables,
+      product: "extension",
+      dapId: params.params.dapId,
+      userId: params.params.userId,
+      appVersion: "1.0.0"
     });
   }
 }
 
+/**
+ * @deprecated - use extension.store instead
+ * @param stores
+ * @returns
+ */
 export function initExtensionFlux(stores: IStore[]) {
   return relayToBackgroundScript({
     event: ExtensionEvent.FLUX_DELEGATION,
@@ -95,15 +90,18 @@ export function initExtensionFlux(stores: IStore[]) {
   });
 }
 
-export function extensionFlux(method: IFluxMethod) {
-  return relayToBackgroundScript({
-    event: ExtensionEvent.FLUX_DELEGATION,
-    data: {
-      method
-    }
-  });
+export async function extensionFlux(method: IFluxMethod) {
+  const prod = await clientStorage.get(ClientStorageKey.PRODUCT);
+  if (!prod) {
+    return { init: -1 } as any;
+  }
+  return ExtensionStore.getInstance(prod as Extension).delegateFlux(method);
 }
 
+/**
+ * @deprecated - use extension.store instead
+ * @param store
+ */
 export async function loadInMemoryResourceStore(store: IStore) {
   logger.log({
     at: "fluxExtentionMediator.loadInMemoryResourceStore",
@@ -118,6 +116,11 @@ export async function loadInMemoryResourceStore(store: IStore) {
   }
 }
 
+/**
+ * @deprecated - use extension.store instead
+ * @param stores
+ * @returns
+ */
 export async function loadInMemoryStores(stores: IStore[]) {
   try {
     let kvStores = stores.filter((x) => x.dataType === StoreDataType.KVO);

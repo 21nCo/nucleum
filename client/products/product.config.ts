@@ -5,7 +5,7 @@ import { MemotronAction } from "./memotron/memotronAction.enum";
 import { resourceConfig } from "$lib/client/components/flux/resourceStores/resource.config";
 import type { IResourceTableConfig } from "$lib/client/components/flux/flux.type";
 
-const isDev = import.meta.env.DEV;
+const isDev = import.meta.env?.DEV || false;
 
 interface SettingsSection {
   children: (Action | MemotronAction | string)[];
@@ -384,7 +384,10 @@ const tableConfigMapper = (resource: Resource) => {
   };
 };
 
-export const product = import.meta.env.VITE_PRODUCT || Product.NUCLEUS;
+export const product =
+  import.meta.env?.VITE_PRODUCT ||
+  process.env.PLASMO_PUBLIC_PRODUCT ||
+  Product.NUCLEUS;
 
 export const resolveProductConfig = (productOverride?: Product): IAppConfig => {
   const base = products[productOverride ?? (product as Product)];
@@ -401,7 +404,12 @@ const extensions: Record<Extension, IProductConfigBase> = {
     name: "Memotron Clipper",
     resources: {
       browse: [],
-      table: [Resource.collection]
+      table: [
+        ...commonTables,
+        ...resourceTableMap[Product.MEMOTRON],
+        ...linkabilityTables,
+        ...filesAbilityTables
+      ]
     },
     displayName: "Memotron Clipper",
     tagline: ""
