@@ -92,11 +92,15 @@ export function initExtensionFlux(stores: IStore[]) {
 }
 
 export async function extensionFlux(method: IFluxMethod) {
-  const extension =
-    (await clientStorage.get(ClientStorageKey.PRODUCT)) ?? undefined;
-  return ExtensionStore.getInstance(extension as Extension).delegateFlux(
-    method
-  );
+  const prod = await clientStorage.get(ClientStorageKey.PRODUCT);
+  if (!prod) {
+    return { init: -1 } as any;
+  }
+  const ext = ExtensionStore.getInstance();
+  if (!ext) {
+    return { init: -1 } as any;
+  }
+  return ext.delegateFlux(method);
 }
 
 /**

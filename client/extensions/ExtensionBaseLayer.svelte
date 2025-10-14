@@ -95,7 +95,6 @@
   }
 
   async function refreshUserSession() {
-    const dapId = await getDapId();
     const token = await resolveToken();
     let isSessionExpired = false;
     if (token) isSessionExpired = await checkIfSessionExpired(token);
@@ -156,7 +155,7 @@
 
   async function handleAddToRecents(event: any) {
     try {
-      const { record, type, timestamp } = event.detail;
+      const { record } = event.detail;
       if (!record || !record.id) return;
       const currentRecents = await clientStorage.get(ClientStorageKey.RECENTS);
       const newRecents = [

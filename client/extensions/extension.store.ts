@@ -12,13 +12,12 @@ import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
 import { clientStorage } from "$lib/client/persistence/persistence.utils";
 import { getDapId } from "$lib/client/persistence/persistence.utils";
 import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
-import { logger } from "components/debug/logger.client";
-import { Resource } from "components/flux/resourceStores/resource.enum";
-import { StoreDataType } from "types/data.type";
-import { resourceStores } from "components/flux/resourceStores/resource.store";
-import { kvStores } from "components/flux/resourceStores/kv.store";
-import type { Extension } from "products/product.type";
-import { resolveExtensionConfig } from "products/product.config";
+import { logger } from "$lib/client/components/debug/logger.client";
+import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { resourceStores } from "$lib/client/components/flux/resourceStores/resource.store";
+import { kvStores } from "$lib/client/components/flux/resourceStores/kv.store";
+import type { Extension } from "$lib/client/products/product.type";
+import { resolveExtensionConfig } from "$lib/client/products/product.config";
 
 export class ExtensionStore {
   static _extension: ExtensionStore | null = null;
@@ -85,6 +84,12 @@ export class ExtensionStore {
     );
     if (store?.loader) {
       store.loader(data);
+    } else {
+      logger.error({
+        at: "ExtensionStore.loaderCallback",
+        message: `No matching store found for resource "${resource}"`,
+        data
+      });
     }
   }
 
@@ -94,7 +99,22 @@ export class ExtensionStore {
       id
     });
     const table = this.tableConfig.find((x) => x.name === id);
-    if (!table || !table.isInMemory) return;
+    if (!table) {
+      logger.warn({
+        at: "loadInMemoryResourceStore",
+        id,
+        message: "Table not found in tableConfig, skipping in-memory load."
+      });
+      return;
+    }
+    if (!table.isInMemory) {
+      logger.warn({
+        at: "loadInMemoryResourceStore",
+        id,
+        message: "Table is not marked as in-memory, skipping in-memory load."
+      });
+      return;
+    }
     const data = await this.delegateFlux({
       method: FluxMethod.SELECT_MANY,
       args: { resource: table.name as Resource }
@@ -104,15 +124,6 @@ export class ExtensionStore {
 
   async loadInMemoryStores() {
     try {
-      let stores = this.tableConfig.filter(
-        (x) => x.isInMemory && x.dataType === StoreDataType.KVO
-      );
-      let kvStores = stores.filter((x) => x.dataType === StoreDataType.KVO);
-      logger.log({
-        at: "fluxExtentionMediator.loadInMemoryStores",
-        kvStores
-      });
-      if (!kvStores) return;
       const data = await this.delegateFlux({
         method: FluxMethod.SELECT_MANY,
         args: {
@@ -127,12 +138,14 @@ export class ExtensionStore {
       data.forEach((record: any) => {
         this.loaderCallback(record.id.toString(), record);
       });
-      let inMemoryResouceStores = stores.filter((x) => x.isInMemory);
+      const inMemoryResouceStores = this.tableConfig.filter(
+        (x) => x.isInMemory
+      );
       logger.debug({
         at: "fluxExtentionMediator.loadInMemoryStores - resource stores",
         inMemoryResouceStores
       });
-      if (!inMemoryResouceStores) return;
+      if (!inMemoryResouceStores.length) return;
       for (const store of inMemoryResouceStores) {
         const data = await this.delegateFlux({
           method: FluxMethod.SELECT_MANY,
@@ -165,6 +178,13 @@ export class ExtensionStore {
       }
     });
     if (result && result.init === -1) {
+      if (method.method === FluxMethod.INIT_FLUX) {
+        logger.error({
+          at: "extensionStore.delegateFlux",
+          message: "Flux initialization failed, not retrying."
+        });
+        return result;
+      }
       logger.debug({
         at: "extensionStore.delegateFlux",
         message: "reinit flux"

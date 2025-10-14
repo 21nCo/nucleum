@@ -125,8 +125,6 @@
   ];
   const channel = getPort("channel");
   const port = chrome.runtime.connect({ name: "sidePanel" });
-
-  const stores = [...clipperCacheableStores];
   async function onSavePageClick() {
     if (isSaving) return;
     isSaving = true;
@@ -327,7 +325,10 @@
       resource
     });
     if (!resource) return;
-    await ExtensionStore.getInstance()?.loadInMemoryResourceStore(resource);
+    const ext = ExtensionStore.getInstance();
+    if (ext) {
+      await ext.loadInMemoryResourceStore(resource);
+    }
   }
 
   async function onBootup() {
@@ -335,8 +336,10 @@
     await relayToContentScript({
       event: ExtensionEvent.PAGE_STATE_TRIGGER
     });
-    let ext = ExtensionStore.getInstance(Extension.MEMOTRON_CLIPPER);
-    await ext.loadInMemoryStores();
+    const ext = ExtensionStore.getInstance();
+    if (ext) {
+      await ext.loadInMemoryStores();
+    }
     await refreshSyncStatus();
   }
 
@@ -399,8 +402,8 @@
 <ExtensionBaseLayer
   id="sidePanel"
   on:mount={() => (isMounted = true)}
+  extention={Extension.MEMOTRON_CLIPPER}
   product={{ product: Product.MEMOTRON, env: "live" }}
-  {stores}
 >
   {#if isMounted}
     <ClipperInMemoryCache />
