@@ -33,6 +33,8 @@
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import { GlobalEvent } from "$lib/client/types/event.enum";
   import CaptureTopBar from "./CaptureTopBar.svelte";
+  import WebCaptureModal from "./web/WebCaptureModal.svelte";
+  import type { WebArtifact } from "./web/webCapture.types";
   import { fly } from "svelte/transition";
   import { Placement } from "$lib/client/types/direction.enum";
   import ComponentShortcutListener from "$lib/client/components/shortcuts/ComponentShortcutListener.svelte";
@@ -51,6 +53,7 @@
   isInEditMode.set(true);
   let writerRef: Writer | undefined = undefined;
   let subs: any[] = [];
+  let isWebModalOpen = false;
   let captureTopBarRef: CaptureTopBar | undefined = undefined;
   onMount(async () => {
     const appEventSub = appEvents.subscribe(async (x: IEvent) => {
@@ -94,7 +97,13 @@
   });
 
   async function onTypeSelect(e: CustomEvent) {
-    await captureStore.onTypeSelect(e.detail);
+    const selected = e.detail;
+    await captureStore.onTypeSelect(selected);
+    if (selected === CaptureMethod.WEB) {
+      isWebModalOpen = true;
+    } else {
+      isWebModalOpen = false;
+    }
   }
 
   function reset() {
@@ -108,6 +117,26 @@
   async function onSave() {
     await captureStore.save();
     reset();
+  }
+
+  function handleWebArtifactAdd(event: CustomEvent<{ item: WebArtifact; tab: string }>) {
+    const artifact = event.detail?.item;
+    if (!artifact) return;
+    // TODO: integrate artifact data into capture content or node creation flow.
+    isWebModalOpen = false;
+  }
+
+  function handleWebArtifactPreview(event: CustomEvent<{ item: WebArtifact; tab: string }>) {
+    const artifact = event.detail?.item;
+    if (!artifact) return;
+    const url = artifact.externalUrl ?? artifact.providers?.find((provider) => provider.url)?.url;
+    if (url && typeof window !== "undefined") {
+      window.open(url, "_blank", "noopener");
+    }
+  }
+
+  $: if ($captureStore.method !== CaptureMethod.WEB && isWebModalOpen) {
+    isWebModalOpen = false;
   }
 </script>
 
@@ -138,6 +167,21 @@
           >
             {#if $captureStore.method === CaptureMethod.UPLOAD && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
               <FileUploader {captureStore} on:clear={reset} />
+            {:else if $captureStore.method === CaptureMethod.WEB}
+              <div class="flex h-full w-full flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-brs3 bg-bgs2/60 px-6 text-center">
+                <Icon icon="globe-alt" size={Size.lg} class="text-fgs3" />
+                <div class="max-w-md text-b3 text-fgs3">
+                  Search movies, books, podcasts, and recipes from the web and add them to this capture.
+                </div>
+                <Button
+                  label="Open Add from Web"
+                  type={ButtonVariant.PRIMARY}
+                  size={Size.md}
+                  on:click={() => {
+                    isWebModalOpen = true;
+                  }}
+                />
+              </div>
             {:else}
               <Writer
                 {captureStore}
@@ -206,6 +250,15 @@
     </div>
   {/key}
 {/if}
+
+<WebCaptureModal
+  open={isWebModalOpen}
+  on:close={() => {
+    isWebModalOpen = false;
+  }}
+  on:add={handleWebArtifactAdd}
+  on:preview={handleWebArtifactPreview}
+/>
 
 <ComponentBaseLayer hasDragAndDrop={!isWindowDnD} />
 <ComponentShortcutListener
