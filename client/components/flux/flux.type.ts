@@ -116,7 +116,7 @@ export interface IFluxInitArgs {
     dapId: string;
     userId?: string;
     isLocalMode?: boolean;
-    loaderCallback: LoaderCallback;
+    loaderCallback?: LoaderCallback;
   };
 }
 

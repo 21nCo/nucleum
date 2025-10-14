@@ -69,7 +69,7 @@ import {
 class Flux {
   static _instance: Flux | null = null;
   tables!: IResourceTableConfig[];
-  loaderCallback!: LoaderCallback;
+  loaderCallback: LoaderCallback | undefined;
   persistence!: IPersistence;
   dataMapper!: IDataMapper;
   private isLocalMode: boolean = false;
@@ -90,7 +90,7 @@ class Flux {
       userId?: string;
       appVersion?: string;
       tables: IResourceTableConfig[];
-      loaderCallback: LoaderCallback;
+      loaderCallback?: LoaderCallback;
     }
   ): Promise<number> {
     logger.log({ at: "flux.initialize", params });
@@ -98,7 +98,7 @@ class Flux {
     Flux._instance.isLocalMode = !params.userId;
     Flux._instance.persistence = persistence;
     Flux._instance.tables = params.tables;
-    Flux._instance.loaderCallback = params.loaderCallback;
+    Flux._instance.loaderCallback = params.loaderCallback ?? undefined;
     Flux._instance.initializeDataMapper();
     logger.log({ at: "flux.initialized", instance: Flux._instance });
     return Flux._instance.initializePersistence(params);
@@ -1630,7 +1630,10 @@ export async function initFlux(
     product: string;
     userId?: string;
     appVersion?: string;
-    loaderCallback: LoaderCallback;
+    /**
+     * Will not be present in extension environment
+     */
+    loaderCallback?: LoaderCallback;
   }
 ) {
   logger.log({ at: "initFlux", persistence, params });

@@ -9,7 +9,6 @@ import { FluxMethod, type IFluxInitArgs, type IFluxMethod } from "./flux.type";
 import { Resource } from "./resourceStores/resource.enum";
 import { clientStorage } from "$lib/client/persistence/persistence.utils";
 import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
-import type { Extension } from "$lib/client/products/product.type";
 
 // import { getPort } from "@plasmohq/messaging/port"
 
@@ -66,7 +65,6 @@ export async function delegateToFlux(method: IFluxMethod) {
       product: "extension",
       dapId: params.params.dapId,
       userId: params.params.userId,
-      loaderCallback: params.params.loaderCallback,
       appVersion: "1.0.0"
     });
   }

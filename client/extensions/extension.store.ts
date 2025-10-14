@@ -63,8 +63,7 @@ export class ExtensionStore {
         tables: this.tableConfig,
         params: {
           dapId,
-          userId: currentUserId,
-          loaderCallback: this.loaderCallback
+          userId: currentUserId
         }
       }
     });
