@@ -157,7 +157,7 @@
     bind:this={emojisParentContainer}
     class="flex-1 overflow-y-auto py-1"
   >
-    {#if Object.keys(displayEmojis).length === 0}
+    {#if flatEmojiList.length === 0}
       <div class="text-center text-fgs3 py-4 text-b3">No emojis found</div>
     {:else}
       {#each flatEmojiList as emoji, index}
