@@ -852,7 +852,7 @@
   options={{
     isPlaceAtCaret: $view.isConstrainedWidth ? false : true,
     offsetInPx: 10,
-    id: isRenderMentionSearch ? "mentionSearchPopover" : "blockBrowserPopover",
+    id: isRenderEmojiPicker ? "emojiPickerPopover" : (isRenderMentionSearch ? "mentionSearchPopover" : "blockBrowserPopover"),
     class: cn({
       "w-72": blockSearchQuery,
       "w-[30rem]": !blockSearchQuery
