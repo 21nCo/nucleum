@@ -9,6 +9,7 @@ import { FluxMethod, type IFluxInitArgs, type IFluxMethod } from "./flux.type";
 import { Resource } from "./resourceStores/resource.enum";
 import { clientStorage } from "$lib/client/persistence/persistence.utils";
 import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
+import { Extension } from "$lib/client/products/product.type";
 
 // import { getPort } from "@plasmohq/messaging/port"
 
@@ -94,11 +95,7 @@ export async function extensionFlux(method: IFluxMethod) {
   if (!prod) {
     return { init: -1 } as any;
   }
-  const ext = ExtensionStore.getInstance();
-  if (!ext) {
-    return { init: -1 } as any;
-  }
-  return ext.delegateFlux(method);
+  return ExtensionStore.getInstance(prod as Extension).delegateFlux(method);
 }
 
 /**

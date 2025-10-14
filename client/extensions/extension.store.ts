@@ -34,24 +34,32 @@ export class ExtensionStore {
   }
 
   async bootup(extension: Extension) {
-    const initResult = await this.initFlux();
-    // logger.log({ at: "initFlux", initResult });
-    await clientStorage.set(ClientStorageKey.EXTENSION_BOOTUP, {
-      inProgress: true
-    });
-    await clientStorage.set(ClientStorageKey.PRODUCT, extension);
-    if (initResult === 0) {
-      await this.delegateFlux({ method: FluxMethod.CLONE_DOWN });
-    } else {
-      await this.syncDown();
+    try {
+      const initResult = await this.initFlux();
+      // logger.log({ at: "initFlux", initResult });
+      await clientStorage.set(ClientStorageKey.EXTENSION_BOOTUP, {
+        inProgress: true
+      });
+      await clientStorage.set(ClientStorageKey.PRODUCT, extension);
+      if (initResult === 0) {
+        await this.delegateFlux({ method: FluxMethod.CLONE_DOWN });
+      } else {
+        await this.syncDown();
+      }
+      await this.loadInMemoryStores();
+      relayToSidePanel({
+        event: ExtensionEvent.BOOTUP
+      });
+    } catch (e) {
+      logger.error({
+        at: "ExtensionStore.bootup",
+        error: e
+      });
+    } finally {
+      await clientStorage.set(ClientStorageKey.EXTENSION_BOOTUP, {
+        inProgress: false
+      });
     }
-    await this.loadInMemoryStores();
-    await clientStorage.set(ClientStorageKey.EXTENSION_BOOTUP, {
-      inProgress: false
-    });
-    relayToSidePanel({
-      event: ExtensionEvent.BOOTUP
-    });
   }
 
   async initFlux() {
