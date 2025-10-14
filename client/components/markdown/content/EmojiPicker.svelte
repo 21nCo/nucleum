@@ -17,8 +17,6 @@
 
   let storeEmojis = emojisWithCategories;
   let storeEmojisKey = Object.keys(storeEmojis);
-  console.log("EmojiPicker initialized, storeEmojisKey:", storeEmojisKey);
-  console.log("First category sample:", storeEmojis[storeEmojisKey[1]]?.slice(0, 3));
 
   let displayEmojis: any = {};
   let emojisParentContainer: HTMLDivElement;
@@ -57,7 +55,6 @@
 
   function filterEmojis(query: string) {
     const searchValue = query.trim().toLowerCase();
-    console.log("filterEmojis called with query:", query, "searchValue:", searchValue);
     if (!searchValue) {
       displayEmojis = {};
       selectedIndex = 0;
@@ -65,7 +62,6 @@
     }
     
     let tempEmojis: any = {};
-    let matchCount = 0;
     for (let key of storeEmojisKey) {
       const emojiList = storeEmojis[key as keyof typeof storeEmojis];
       if (!emojiList) continue;
@@ -75,12 +71,9 @@
         if (emojiName && emojiName.includes(searchValue)) {
           if (tempEmojis[key] === undefined) tempEmojis[key] = [];
           tempEmojis[key].push(emoji);
-          matchCount++;
         }
       }
     }
-    console.log("Found", matchCount, "matches for", searchValue);
-    console.log("tempEmojis:", tempEmojis);
     displayEmojis = tempEmojis;
     selectedIndex = 0;
   }
