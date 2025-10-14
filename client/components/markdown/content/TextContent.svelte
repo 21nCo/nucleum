@@ -351,7 +351,6 @@
         at: "handleEmojiShortcut - triggered",
         key: event.key
       });
-      showPopover("emojiPicker");
       return true;
     } else if (!isRenderEmojiPicker) {
       return false;
@@ -364,6 +363,15 @@
       const colonIndex = text.lastIndexOf(":");
       if (colonIndex !== -1) {
         emojiSearchQuery = text.substring(colonIndex + 1);
+        if (emojiSearchQuery.trim()) {
+          if (!isRenderEmojiPicker) {
+            showPopover("emojiPicker");
+          }
+        } else {
+          if (isRenderEmojiPicker) {
+            hidePopover("emojiPicker");
+          }
+        }
       }
     } else if (
       type === "keydown" &&
