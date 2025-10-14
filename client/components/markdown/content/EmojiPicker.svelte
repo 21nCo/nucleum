@@ -26,12 +26,15 @@
   $: {
     flatEmojiList = [];
     const keys = Object.keys(displayEmojis);
+    console.log("Building flatEmojiList, displayEmojis keys:", keys);
     for (const category of keys) {
       const emojiList = displayEmojis[category];
+      console.log(`Category ${category}:`, emojiList?.length, "emojis");
       if (Array.isArray(emojiList)) {
         flatEmojiList.push(...emojiList);
       }
     }
+    console.log("Built flatEmojiList with", flatEmojiList.length, "emojis");
   }
 
   $: {
@@ -55,6 +58,7 @@
 
   function filterEmojis(query: string) {
     const searchValue = query.trim().toLowerCase();
+    console.log("filterEmojis called with query:", query, "searchValue:", searchValue);
     if (!searchValue) {
       displayEmojis = {};
       selectedIndex = 0;
@@ -82,6 +86,8 @@
         }
       }
     }
+    console.log("Filter found", totalCount, "emojis");
+    console.log("tempEmojis keys:", Object.keys(tempEmojis));
     displayEmojis = tempEmojis;
     selectedIndex = 0;
   }
@@ -158,8 +164,12 @@
     class="flex-1 overflow-y-auto py-1"
   >
     {#if flatEmojiList.length === 0}
-      <div class="text-center text-fgs3 py-4 text-b3">No emojis found</div>
+      <div class="text-center text-fgs3 py-4 text-b3">
+        No emojis found
+        {console.log("Rendering: No emojis found, flatEmojiList.length =", flatEmojiList.length)}
+      </div>
     {:else}
+      {console.log("Rendering emoji list, flatEmojiList.length =", flatEmojiList.length)}
       {#each flatEmojiList as emoji, index}
         {@const isFirstInCategory = index === 0 || (index > 0 && getCategoryForEmoji(emoji) !== getCategoryForEmoji(flatEmojiList[index - 1]))}
         {#if isFirstInCategory}
