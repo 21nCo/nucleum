@@ -25,13 +25,13 @@
 
   $: {
     flatEmojiList = [];
-    Object.entries(displayEmojis).forEach(([category, emojiList]: [string, any]) => {
+    const keys = Object.keys(displayEmojis);
+    for (const category of keys) {
+      const emojiList = displayEmojis[category];
       if (Array.isArray(emojiList)) {
-        emojiList.forEach((emoji) => {
-          flatEmojiList.push(emoji);
-        });
+        flatEmojiList.push(...emojiList);
       }
-    });
+    }
   }
 
   $: {
@@ -141,6 +141,15 @@
       });
     }
   }
+
+  function getCategoryForEmoji(emoji: any): string {
+    for (const [category, emojiList] of Object.entries(displayEmojis)) {
+      if (Array.isArray(emojiList) && emojiList.includes(emoji)) {
+        return category;
+      }
+    }
+    return "";
+  }
 </script>
 
 <div class="flex flex-col bg-bgs1 max-h-80 w-80 shadow-lg rounded-md border border-brs1">
@@ -151,42 +160,30 @@
     {#if Object.keys(displayEmojis).length === 0}
       <div class="text-center text-fgs3 py-4 text-b3">No emojis found</div>
     {:else}
-      {@const emojiKeys = Object.keys(displayEmojis)}
-      {#each emojiKeys as category, categoryIndex}
-        {#if displayEmojis[category] && displayEmojis[category].length > 0}
-          <div
-            class="emoji-category"
-            id={"EMOJI" + categoryIndex}
-          >
-            {#if categoryIndex === 0 || emojiKeys.length > 1}
-              <div class="text-b4 font-medium text-fgs3 px-3 py-1 bg-bgs2">
-                {category}
-              </div>
-            {/if}
-            <div class="flex flex-col">
-              {#each displayEmojis[category] as emoji, emojiIndex}
-                {@const globalIndex = flatEmojiList.indexOf(emoji)}
-                <button
-                  class={cn(
-                    "emoji-item px-3 py-2 text-left flex items-center gap-3 hover:bg-bgs2 transition-colors cursor-pointer",
-                    {
-                      "bg-bgs2": globalIndex === selectedIndex
-                    }
-                  )}
-                  data-index={globalIndex}
-                  on:click={() => itemClickHandler(emoji)}
-                >
-                  <span class="text-2xl flex-shrink-0">
-                    {@html emoji[0]?.code}
-                  </span>
-                  <span class="text-b2 text-fgs2 truncate">
-                    {emoji[0]?.name}
-                  </span>
-                </button>
-              {/each}
-            </div>
+      {#each flatEmojiList as emoji, index}
+        {@const isFirstInCategory = index === 0 || (index > 0 && getCategoryForEmoji(emoji) !== getCategoryForEmoji(flatEmojiList[index - 1]))}
+        {#if isFirstInCategory}
+          <div class="text-b4 font-medium text-fgs3 px-3 py-1 bg-bgs2">
+            {getCategoryForEmoji(emoji)}
           </div>
         {/if}
+        <button
+          class={cn(
+            "emoji-item px-3 py-2 text-left flex items-center gap-3 hover:bg-bgs2 transition-colors cursor-pointer",
+            {
+              "bg-bgs2": index === selectedIndex
+            }
+          )}
+          data-index={index}
+          on:click={() => itemClickHandler(emoji)}
+        >
+          <span class="text-2xl flex-shrink-0">
+            {@html emoji[0]?.code}
+          </span>
+          <span class="text-b2 text-fgs2 truncate">
+            {emoji[0]?.name}
+          </span>
+        </button>
       {/each}
     {/if}
   </div>
