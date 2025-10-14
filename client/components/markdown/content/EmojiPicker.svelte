@@ -24,20 +24,6 @@
   let flatEmojiList: any[] = [];
 
   $: {
-    flatEmojiList = [];
-    const keys = Object.keys(displayEmojis);
-    console.log("Building flatEmojiList, displayEmojis keys:", keys);
-    for (const category of keys) {
-      const emojiList = displayEmojis[category];
-      console.log(`Category ${category}:`, emojiList?.length, "emojis");
-      if (Array.isArray(emojiList)) {
-        flatEmojiList.push(...emojiList);
-      }
-    }
-    console.log("Built flatEmojiList with", flatEmojiList.length, "emojis");
-  }
-
-  $: {
     filterEmojis(searchQuery);
   }
 
@@ -61,11 +47,13 @@
     console.log("filterEmojis called with query:", query, "searchValue:", searchValue);
     if (!searchValue) {
       displayEmojis = {};
+      flatEmojiList = [];
       selectedIndex = 0;
       return;
     }
     
     let tempEmojis: any = {};
+    let tempFlatList: any[] = [];
     let totalCount = 0;
     const maxResults = 50;
     
@@ -82,6 +70,7 @@
         if (emojiName && emojiName.includes(searchValue)) {
           if (tempEmojis[key] === undefined) tempEmojis[key] = [];
           tempEmojis[key].push(emoji);
+          tempFlatList.push(emoji);
           totalCount++;
         }
       }
@@ -89,7 +78,9 @@
     console.log("Filter found", totalCount, "emojis");
     console.log("tempEmojis keys:", Object.keys(tempEmojis));
     displayEmojis = tempEmojis;
+    flatEmojiList = tempFlatList;
     selectedIndex = 0;
+    console.log("Set flatEmojiList to", flatEmojiList.length, "emojis");
   }
 
   function addToUsedList(emoji: any) {
