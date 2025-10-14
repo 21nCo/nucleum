@@ -368,17 +368,20 @@
       const colonIndex = text.lastIndexOf(":");
       if (colonIndex !== -1) {
         emojiSearchQuery = text.substring(colonIndex + 1);
+        console.log("Emoji search query extracted:", emojiSearchQuery, "from text:", text);
         if (emojiSearchQuery.trim()) {
+          console.log("Showing emoji picker with query:", emojiSearchQuery);
           if (!isRenderEmojiPicker) {
             showPopover("emojiPicker");
           }
         } else {
+          console.log("Query empty, hiding picker");
           if (isRenderEmojiPicker) {
             hidePopover("emojiPicker");
           }
         }
       }
-    } else if (
+    }else if (
       type === "keydown" &&
       isRenderEmojiPicker &&
       (event.key === "ArrowDown" ||

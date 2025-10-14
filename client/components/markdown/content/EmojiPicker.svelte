@@ -55,6 +55,7 @@
 
   function filterEmojis(query: string) {
     const searchValue = query.trim().toLowerCase();
+    console.log("filterEmojis called with query:", query, "searchValue:", searchValue);
     if (!searchValue) {
       displayEmojis = {};
       selectedIndex = 0;
@@ -62,15 +63,22 @@
     }
     
     let tempEmojis: any = {};
+    let matchCount = 0;
     for (let key of storeEmojisKey) {
-      for (let emoji of storeEmojis[key as keyof typeof storeEmojis]) {
+      const emojiList = storeEmojis[key as keyof typeof storeEmojis];
+      if (!emojiList) continue;
+      
+      for (let emoji of emojiList) {
         let emojiName = emoji[0]?.name?.toLowerCase();
         if (emojiName && emojiName.includes(searchValue)) {
           if (tempEmojis[key] === undefined) tempEmojis[key] = [];
           tempEmojis[key].push(emoji);
+          matchCount++;
         }
       }
     }
+    console.log("Found", matchCount, "matches for", searchValue);
+    console.log("tempEmojis:", tempEmojis);
     displayEmojis = tempEmojis;
     selectedIndex = 0;
   }
