@@ -15,6 +15,10 @@
     "client/products",
     "client/static"
   ],
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "@types/bcrypt": "^6.0.0"
+  },
   "devDependencies": {
     "@tsconfig/svelte": "^5.0.5",
     "turbo": "^2.0.0",

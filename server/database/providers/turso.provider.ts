@@ -9,6 +9,7 @@ import {
 } from "./types";
 import { DatabaseError } from "$lib/server/common/errors";
 import * as crypto from "crypto";
+import * as bcrypt from "bcrypt";
 import {
   Agent,
   CONTEXT,
@@ -138,7 +139,7 @@ export class TursoProvider implements IDatabaseProvider {
     `;
 
     const passwordHash = userData.password
-      ? this.hashPassword(userData.password)
+      ? await this.hashPassword(userData.password)
       : null;
 
     await db.execute(insertQuery, [
@@ -236,8 +237,7 @@ export class TursoProvider implements IDatabaseProvider {
    */
   async authenticateUser(email: string, password: string): Promise<any> {
     const emailHash = this.resolveEmailHash(email);
-    const passwordHash = this.hashPassword(password);
-
+    
     console.warn("authenticateUser requires workspace context in per-workspace architecture");
     
     return null;
@@ -421,13 +421,11 @@ export class TursoProvider implements IDatabaseProvider {
   }
 
   /**
-   * Helper: Hashes password
+   * Helper: Hashes password using bcrypt
    */
-  private hashPassword(password: string): string {
-    return crypto
-      .createHash("sha256")
-      .update(password + (process.env.PASSWORD_SALT || ""))
-      .digest("hex");
+  private async hashPassword(password: string): Promise<string> {
+    const saltRounds = 10;
+    return bcrypt.hash(password, saltRounds);
   }
 
   /**
