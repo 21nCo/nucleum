@@ -152,7 +152,7 @@
         )}
         on:click
       >
-        {#if item.cover || (item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType))}
+        {#if item.cover || item.previewImage || (item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType))}
           <div
             class={cn(
               {

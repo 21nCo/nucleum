@@ -29,7 +29,7 @@
   export let pdfDocument: any;
   export let url: string | URL; //url of pdf.
   const INTERNAL_URL = url.toString();
-  let currentPGNumber: Number = 1;
+  let currentPGNumber: number = 1;
   let embed_message_id = generateSimpleRandomId();
   let dataViaEmbed: any;
   $: isDataViaEmbed =
@@ -270,6 +270,7 @@
       }
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
+        isLoading = false;
         return;
       }
       console.error("Error loading PDF:", error);

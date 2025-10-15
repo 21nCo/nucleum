@@ -51,10 +51,9 @@ export class PdfHandler {
     });
     logger.log({ at: "PdfHandler.fetchAllClips", response });
     if (!response || !response.length) return [];
-    let annots = response.map((annot: any) => {
+    return response.map((annot: any) => {
       return { ...annot.body, id: "annot" + annot.id };
     });
-    return annots;
   }
 
   async deleteClip(id: string) {

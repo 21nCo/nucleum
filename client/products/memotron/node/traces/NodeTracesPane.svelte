@@ -35,8 +35,6 @@
   let options = resolveOptions($node?.contentType);
   let selectedType: string | undefined = undefined;
   let searchQuery: string = "";
-  let pdfAnnotations: IPdfBookmarkBody[] = $node?.pdfAnnotations ?? [];
-  let clips: IClip[] = $node?.clips ?? [];
   const hideHighlightColors = derived(
     [preferences, appStore],
     ([$preferences, $appStore]) => {
@@ -96,30 +94,33 @@
     }
   }
 
-  function filterBySearchQuery() {
-    if (searchQuery) {
-      if (pdfAnnotations.length > 0) {
-        pdfAnnotations = pdfAnnotations.filter(
-          (trace) =>
-            trace.selectedText
-              ?.toLowerCase()
-              .includes(searchQuery.toLowerCase()) ||
-            trace.comment?.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      }
-      if (clips && clips.length > 0) {
-        clips = clips.filter((clip) =>
-          clip.text?.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      }
-    } else {
-      pdfAnnotations =
-        $node?.pdfAnnotations?.filter(
-          (trace) => trace.annotType !== AnnotationType.TASK
-        ) ?? [];
-      clips = $node?.clips ?? [];
+  $: pdfAnnotations = (() => {
+    const baseAnnots = $node?.pdfAnnotations ?? [];
+    const q = searchQuery.trim().toLowerCase();
+    
+    if (q) {
+      return baseAnnots.filter(
+        (trace) =>
+          trace.selectedText?.toLowerCase().includes(q) ||
+          trace.comment?.toLowerCase().includes(q)
+      );
     }
-  }
+    
+    return baseAnnots;
+  })();
+
+  $: clips = (() => {
+    const baseClips = $node?.clips ?? [];
+    const q = searchQuery.trim().toLowerCase();
+    
+    if (q) {
+      return baseClips.filter((clip) =>
+        clip.text?.toLowerCase().includes(q)
+      );
+    }
+    
+    return baseClips;
+  })();
 </script>
 
 {#if options && options.length > 1}
@@ -131,9 +132,6 @@
     bind:query={searchQuery}
     placeholder="Search bookmarks"
     style={InputStyle.FILLED}
-    on:search={() => {
-      filterBySearchQuery();
-    }}
   />
 {/if}
 {#if pdfAnnotations.length > 0}

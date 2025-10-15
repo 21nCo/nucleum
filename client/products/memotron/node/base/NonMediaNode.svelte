@@ -203,7 +203,7 @@
               })}
             >
               {#if $node.contentType === NodeType.NODULAR_MARKDOWN && cover && !$node.focusedBlock}
-                <button
+                <div
                   class="relative flex w-full h-72 justify-center items-center"
                   use:hoverable={{
                     onHover: (e) => {
@@ -233,7 +233,7 @@
                       />
                     </div>
                   {/if}
-                </button>
+                </div>
               {/if}
               {#if headingNodeTypes.includes($node.contentType)}
                 {#key $node.mdParent?.map((x) => x.toString())?.join(".")}

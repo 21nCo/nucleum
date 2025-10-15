@@ -9,7 +9,6 @@
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
   import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
   import { InputStyle } from "$lib/client/types/input.type";
   import { resolveAnnotationModes } from "../pdfAnnotator.utils";
   import HighlightColors from "../../common/highlighters/HighlightColors.svelte";

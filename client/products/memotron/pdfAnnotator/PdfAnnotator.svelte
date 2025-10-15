@@ -879,11 +879,14 @@
 
   const handleFindControlStateUpdate = (data: any) => {
     if (data?.state === FindState.FOUND || data?.state === FindState.WRAPPED) {
-      const element = document.getElementsByClassName("highlight selected")[0];
-      const top = (element as HTMLElement | undefined)?.scrollTop ?? 0;
+      const element = document.getElementsByClassName("highlight selected")[0] as HTMLElement | undefined;
       if (element && viewerContainerElement) {
+        const containerRect = viewerContainerElement.getBoundingClientRect();
+        const elRect = element.getBoundingClientRect();
+        const offset = 100;
+        const targetTop = viewerContainerElement.scrollTop + (elRect.top - containerRect.top) - offset;
         viewerContainerElement.scrollTo({
-          top,
+          top: Math.max(0, targetTop),
           left: 0,
           behavior: "smooth"
         });

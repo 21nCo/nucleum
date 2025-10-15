@@ -49,6 +49,7 @@ export async function generateImagePreviewFromPdf(pdfBlob: Blob) {
       } catch {
         // no-op
       }
+      page = null;
     }
     if (pdfDoc) {
       try {
