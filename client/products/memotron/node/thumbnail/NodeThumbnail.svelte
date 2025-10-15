@@ -43,6 +43,7 @@
   import NodeThumbnailTwitterProfilePreview from "./NodeThumbnailTwitterProfilePreview.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import NodeThumbnailSocialPostPreview from "./NodeThumbnailSocialPostPreview.svelte";
+  import CoverRenderer from "$lib/client/elements/coverPicker/CoverRenderer.svelte";
   export let item: INodeThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let isHidePreview: boolean = false;
@@ -151,7 +152,7 @@
         )}
         on:click
       >
-        {#if item.previewImage || (item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType))}
+        {#if item.cover || item.previewImage || (item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType))}
           <div
             class={cn(
               {
@@ -179,6 +180,11 @@
                   // "rounded-md": isLinkContext,
                   // "rounded-full": !isLinkContext
                 })}
+              />
+            {:else if item.cover}
+              <CoverRenderer
+                cover={item.cover}
+                class={cn("object-cover h-full w-full rounded-md")}
               />
             {:else if urlPreview}
               <ImagePreview
@@ -288,6 +294,11 @@
             <span class="text-b2 text-fgs2">
               {@html renderMdAsHtml(item.bodySearch)}
             </span>
+          {:else if item.cover}
+            <CoverRenderer
+              cover={item.cover}
+              class="absolute inset-0 w-full rounded-t-md object-cover h-full"
+            />
           {:else if filePreview}
             <FileView
               file={hasFullFileDetails ? filePreview : undefined}
@@ -362,7 +373,12 @@
       </div>
     </ResourceGridThumbnail>
   {:else if arrangement === Arrangement.MASONRY}
-    {#if filePreview}
+    {#if item.cover}
+      <CoverRenderer
+        cover={item.cover}
+        class="absolute inset-0 w-full rounded-t-md object-cover h-full"
+      />
+    {:else if filePreview}
       <FileView
         file={hasFullFileDetails ? filePreview : undefined}
         id={hasFullFileDetails ? undefined : filePreview}

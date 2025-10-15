@@ -38,6 +38,10 @@
   // if (rects !== undefined) console.log("x1 ", rects[0].x1, " left ", left);
   // if (annotType == AnnotationType.TASK) console.log("TASK ", left);
   const dispatchEvent = createEventDispatcher();
+
+  function handleClick() {
+    dispatchEvent("click", id);
+  }
 </script>
 
 <!-- <div
@@ -64,13 +68,11 @@
   style="position: absolute; left: {left - tally}px; top: {top -
     tally}px; opacity: 0.5;"
   on:click|stopPropagation={() => {
-    dispatchEvent("click", id);
-    console.log("comment clicked");
+    handleClick();
   }}
   on:keydown|stopPropagation={(e) => {
     if (e.key === "Enter" || e.key === " ") {
-      dispatchEvent("click", id);
-      console.log("comment clicked");
+      handleClick();
     }
   }}
   on:mousedown|stopPropagation

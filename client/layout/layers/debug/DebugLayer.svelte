@@ -6,6 +6,7 @@
   import DebugInfoItem from "./DebugInfoItem.svelte";
   import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
   import { logger } from "$lib/client/components/debug/logger.client";
+  import { LogType } from "$lib/client/components/debug/debug.type";
   import appearance from "$lib/client/stores/appearance.store";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { ColorStrength } from "$lib/client/types/appearance.type";
@@ -20,6 +21,8 @@
   let isShowDebugOverlay: boolean = false;
   let environment: string = $appStore.env;
   let isShowLogs: boolean = false;
+  const defaultLogLevel = logger.level ?? LogType.INFO;
+  let isTraceLoggingEnabled = logger.level >= LogType.TRACE;
   let isDboUpdateInProgress: boolean = false;
   let storageQuota: number | undefined;
   let storageUsage: number | undefined;
@@ -55,6 +58,17 @@
       await loadFallbackStatuses();
     } catch (error) {
       console.error("Failed to reset fallbacks:", error);
+    }
+  }
+
+  function toggleTraceLogging() {
+    console.log("toggleTraceLogging", isTraceLoggingEnabled, defaultLogLevel);
+    if (isTraceLoggingEnabled) {
+      logger.setDefaultLevel();
+      isTraceLoggingEnabled = logger.level >= LogType.TRACE;
+    } else {
+      logger.setLevel(LogType.TRACE);
+      isTraceLoggingEnabled = true;
     }
   }
 </script>
@@ -165,20 +179,12 @@
         label="Dexie console"
       />
       <Button
-        on:click={() => {
-          appStore.runAction("surreal-local");
-        }}
+        on:click={toggleTraceLogging}
         size={Size.sm}
-        icon="terminal"
-        label="Surreal console"
-      />
-      <Button
-        on:click={() => {
-          appStore.runAction("signaldb-console");
-        }}
-        size={Size.sm}
-        icon="terminal"
-        label="SignalDB console"
+        icon={isTraceLoggingEnabled ? "check" : "terminal"}
+        label={isTraceLoggingEnabled
+          ? "Trace logging enabled"
+          : "Enable trace logging"}
       />
       <Button
         icon="trash"

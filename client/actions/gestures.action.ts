@@ -42,6 +42,7 @@ export function longpress(node: HTMLElement, params: LongPressParams) {
       node.removeEventListener("touchstart", handleTouchStart);
       node.removeEventListener("touchend", handleTouchEnd);
       node.removeEventListener("touchmove", handleTouchMove);
+      clearTimeout(timerId);
     },
     update(newParams: LongPressParams) {
       params = newParams;
