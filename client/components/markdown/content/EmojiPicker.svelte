@@ -44,7 +44,6 @@
 
   function filterEmojis(query: string) {
     const searchValue = query.trim().toLowerCase();
-    console.log("filterEmojis called with query:", query, "searchValue:", searchValue);
     if (!searchValue) {
       displayEmojis = {};
       flatEmojiList = [];
@@ -75,12 +74,9 @@
         }
       }
     }
-    console.log("Filter found", totalCount, "emojis");
-    console.log("tempEmojis keys:", Object.keys(tempEmojis));
     displayEmojis = tempEmojis;
     flatEmojiList = tempFlatList;
     selectedIndex = 0;
-    console.log("Set flatEmojiList to", flatEmojiList.length, "emojis");
   }
 
   function addToUsedList(emoji: any) {
@@ -149,7 +145,7 @@
   }
 </script>
 
-<div class="flex flex-col bg-bgs1 max-h-80 w-80 shadow-lg rounded-md border border-brs1">
+<div class="flex flex-col bg-bgs1 max-h-80 w-full shadow-lg rounded-md border border-brs1">
   <div
     bind:this={emojisParentContainer}
     class="flex-1 overflow-y-auto py-1"
@@ -157,20 +153,12 @@
     {#if flatEmojiList.length === 0}
       <div class="text-center text-fgs3 py-4 text-b3">
         No emojis found
-        {console.log("Rendering: No emojis found, flatEmojiList.length =", flatEmojiList.length)}
       </div>
     {:else}
-      {console.log("Rendering emoji list, flatEmojiList.length =", flatEmojiList.length)}
       {#each flatEmojiList as emoji, index}
-        {@const isFirstInCategory = index === 0 || (index > 0 && getCategoryForEmoji(emoji) !== getCategoryForEmoji(flatEmojiList[index - 1]))}
-        {#if isFirstInCategory}
-          <div class="text-b4 font-medium text-fgs3 px-3 py-1 bg-bgs2">
-            {getCategoryForEmoji(emoji)}
-          </div>
-        {/if}
         <button
           class={cn(
-            "emoji-item px-3 py-2 text-left flex items-center gap-3 hover:bg-bgs2 transition-colors cursor-pointer",
+            "emoji-item w-full px-3 py-1.5 text-left flex items-center gap-2 hover:bg-bgs2 transition-colors cursor-pointer",
             {
               "bg-bgs2": index === selectedIndex
             }
@@ -178,10 +166,10 @@
           data-index={index}
           on:click={() => itemClickHandler(emoji)}
         >
-          <span class="text-2xl flex-shrink-0">
+          <span class="text-lg flex-shrink-0">
             {@html emoji[0]?.code}
           </span>
-          <span class="text-b2 text-fgs2 truncate">
+          <span class="text-b3 text-fgs2 truncate">
             {emoji[0]?.name}
           </span>
         </button>
