@@ -1,5 +1,8 @@
 import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
-import { NodeType } from "$lib/client/products/memotron/node/node.type";
+import {
+  NodeType,
+  type IPdfBookmarkBody
+} from "$lib/client/products/memotron/node/node.type";
 import {
   AnnotationType,
   type Coords,
@@ -23,11 +26,13 @@ export class PdfHandler {
     this.id = id;
   }
 
-  async saveClip(content: any) {
+  async saveClip(content: IPdfBookmarkBody) {
     let node = {
       body: { ...content },
-      contentType: NodeType.PDF_CLIP,
-      parent: this.id
+      contentType: NodeType.PDF_BOOKMARK,
+      parent: this.id,
+      text: content.selectedText ?? "",
+      notes: content.comment ?? ""
     };
     logger.log({ at: "PdfHandler.saveClip", node });
     let response = await nodeStore.create(node);
@@ -38,7 +43,7 @@ export class PdfHandler {
    * TODO - this is being called too many times when scrolling the PDF
    * @returns
    */
-  async fetchAllClips() {
+  async fetchAllClips(): Promise<IPdfBookmarkBody[]> {
     let response = await flux.selectMany(Resource.node, {
       filters: {
         parent: this.id.toString()
@@ -47,21 +52,22 @@ export class PdfHandler {
     logger.log({ at: "PdfHandler.fetchAllClips", response });
     if (!response || !response.length) return [];
     let annots = response.map((annot: any) => {
-      return { ...annot.body, id: "annot" + annot.id.id };
+      return { ...annot.body, id: "annot" + annot.id };
     });
     return annots;
   }
 
   async deleteClip(id: string) {
-    let nodeId = "node:" + id.split("annot")[1];
+    let nodeId = id.split("annot")[1];
     logger.debug({ at: "PdfHandler.deleteClip", nodeId });
     let response = await nodeStore.delete(nodeId);
     logger.debug({ at: "PdfHandler.deleteClip", response });
     return response;
   }
-  async updateClip(id: string, content: any) {
-    let nodeId = "node:" + id.split("annot")[1];
-    let contentToUpdate: any = {
+
+  async updateClip(id: string, content: IPdfBookmarkBody) {
+    let nodeId = id.split("annot")[1];
+    let contentToUpdate = {
       body: { ...content }
     };
     let response = await nodeStore.modify(nodeId, contentToUpdate);
@@ -522,6 +528,11 @@ export function getBoundingRectSE(start: Coords, end: Coords): LTWH {
   };
 }
 
+/**
+ *
+ * TODO - re enable tasks only in Nucleus and to use task: resource instead
+ * @returns
+ */
 export function resolveAnnotationModes(): IToggleItem[] {
   return [
     {
@@ -538,11 +549,11 @@ export function resolveAnnotationModes(): IToggleItem[] {
     },
     {
       value: AnnotationType.COMMENT,
-      icon: "chat-bubble-bottom-center"
-    },
-    {
-      value: AnnotationType.TASK,
-      icon: "check-circle"
+      icon: "chat-three"
     }
+    // {
+    //   value: AnnotationType.TASK,
+    //   icon: "check-circle"
+    // }
   ];
 }

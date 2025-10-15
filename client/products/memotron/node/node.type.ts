@@ -24,6 +24,7 @@ import type {
 import type { IAvatar } from "$lib/client/types/avatar.type";
 import type { IRecordId, IStore } from "$lib/client/types/data.type";
 import type { ILink, ILinkBase, LinkType } from "../linking/link.type";
+import type { AnnotationType, Scaled } from "../pdfAnnotator/pdfAnnotator.type";
 
 type IResourcePropertiesForNode = IResource &
   IResourceLabeled &
@@ -59,9 +60,14 @@ type INodeInterface<
   url?: string;
   file?: IRecordId;
   /**
+   * @deprecated - use cover instead
    * Custom preview image for node thumbnails (especially for markdown nodes)
    */
   previewImage?: IRecordId;
+  /**
+   * Cover photo for markdown nodes (rendered at the top above title)
+   */
+  cover?: string;
   /**
    * Calculated avatar from linked type collections
    */
@@ -1139,7 +1145,7 @@ export type IActiveNode = INode &
     collections?: IRecordId[];
     types?: ICollectionExpanded[];
     wordCount?: number;
-    pdfAnnotations?: any[];
+    pdfAnnotations?: IPdfBookmarkBody[];
     links?: INodeLinkThumb[];
     children?: IActiveNode[];
     childrenHierarchy?: IRecordId[];
@@ -1183,3 +1189,22 @@ export type IVideoBookmarkCapture = INodeHasUrl &
     body: IVideoBookmarkBody;
     metadata: IVideoBookmarkMetadata;
   };
+
+export type IPdfBookmarkBody = {
+  startPageNumber?: number;
+  endPageNumber?: number;
+  pageNumber?: number;
+  date?: string;
+  selectedText?: string;
+  /**
+   * Highlight color id
+   */
+  color?: IRecordId;
+  comment?: string;
+  annotType?: AnnotationType;
+  boundingRect?: Scaled;
+  rect?: Scaled;
+  rects?: Scaled[];
+};
+
+export type IPdfBookmarkMetadata = {};

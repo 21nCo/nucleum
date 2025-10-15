@@ -1,8 +1,12 @@
 import { LogType } from "./debug.type";
 
 class Logger {
-  level: LogType;
+  level: LogType = LogType.ERROR;
   constructor() {
+    this.setDefaultLevel();
+  }
+
+  setDefaultLevel() {
     try {
       if (
         typeof window !== "undefined" &&
@@ -65,6 +69,10 @@ class Logger {
   }
   debug(message: any) {
     this._console(message, LogType.DEBUG);
+  }
+
+  setLevel(level: LogType) {
+    this.level = level;
   }
 }
 

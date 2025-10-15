@@ -2,6 +2,8 @@ import { logger } from "$lib/client/components/debug/logger.client";
 
 const CACHE_NAME = "pdf-cache-v1";
 const CACHE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
+const MAX_CACHE_SIZE_MB = 100;
+const MAX_CACHE_SIZE_BYTES = MAX_CACHE_SIZE_MB * 1024 * 1024;
 
 interface ICacheMetadata {
   timestamp: number;
@@ -126,6 +128,7 @@ class PdfCache {
       });
 
       await this.cleanupOldEntries();
+      await this.enforceMaxSize();
     } catch (error) {
       logger.error({ at: "PdfCache.set", error, url });
     }
@@ -225,6 +228,49 @@ class PdfCache {
       }
     } catch (error) {
       logger.error({ at: "PdfCache.cleanupOldEntries", error });
+    }
+  }
+
+  private async enforceMaxSize(): Promise<void> {
+    if (!this.isSupported) return;
+
+    try {
+      const stats = await this.getStats();
+      
+      if (stats.totalSize > MAX_CACHE_SIZE_BYTES) {
+        const cache = await caches.open(CACHE_NAME);
+        const requests = await cache.keys();
+        
+        const pdfRequests = requests.filter(req => 
+          !req.url.includes('_cache_metadata=true')
+        );
+
+        const entries = await Promise.all(
+          pdfRequests.map(async (req) => ({
+            url: req.url,
+            metadata: await this.getMetadata(req.url)
+          }))
+        );
+
+        entries.sort((a, b) => 
+          (a.metadata?.timestamp || 0) - (b.metadata?.timestamp || 0)
+        );
+
+        let currentSize = stats.totalSize;
+        for (const entry of entries) {
+          if (currentSize <= MAX_CACHE_SIZE_BYTES * 0.8) break;
+          
+          await this.delete(entry.url);
+          currentSize -= entry.metadata?.size || 0;
+        }
+
+        logger.info({
+          at: "PdfCache.enforceMaxSize",
+          message: `Reduced cache from ${Math.round(stats.totalSize / 1024 / 1024)}MB to ${Math.round(currentSize / 1024 / 1024)}MB`
+        });
+      }
+    } catch (error) {
+      logger.error({ at: "PdfCache.enforceMaxSize", error });
     }
   }
 }

@@ -2,11 +2,15 @@
   import { createEventDispatcher } from "svelte";
   import { AnnotationType } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.type";
   import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
+  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
   import Divider from "$lib/client/elements/Divider.svelte";
   import { Orientation } from "$lib/client/types/direction.enum";
   import { ColorStrength } from "$lib/client/types/appearance.type";
   import { Size } from "$lib/client/types/size.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
+  import TextInput from "$lib/client/elements/input/TextInput.svelte";
+  import { ButtonVariant } from "$lib/client/types/button.type";
+  import { InputStyle } from "$lib/client/types/input.type";
   import { resolveAnnotationModes } from "../pdfAnnotator.utils";
   import HighlightColors from "../../common/highlighters/HighlightColors.svelte";
   import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
@@ -19,12 +23,29 @@
   export let totalPages = 1;
   export let selectedAnnotationMode: AnnotationType;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  export let isSearchActive = false;
   $: isExpanded =
     accessPoint === ResourceAccessPoint.SELF &&
     $context.embed !== Embed.HANDSET &&
     $context.os !== OperatingSystem.IOS;
   let dispatchEvent = createEventDispatcher();
   const annotationModes: IToggleItem[] = resolveAnnotationModes();
+  let pageInput = "";
+  let isEditingPage = false;
+
+  $: if (!isEditingPage) {
+    pageInput = `${pageNumber}`;
+  }
+
+  function commitPageInput() {
+    const parsed = Number.parseInt(pageInput, 10);
+    if (Number.isNaN(parsed)) {
+      pageInput = `${pageNumber}`;
+      return;
+    }
+    const limited = Math.min(Math.max(parsed, 1), totalPages || 1);
+    dispatchEvent("goToPage", { page: limited });
+  }
 </script>
 
 <div
@@ -43,6 +64,16 @@
         selectedAnnotationMode = AnnotationType.NONE;
       }}
     />
+    <Toggle
+      icon="search"
+      tooltip="Search"
+      parentBgIndex={2}
+      on={isSearchActive}
+      on:change={() => {
+        dispatchEvent("searchToggle", !isSearchActive);
+      }}
+    />
+    <span class="px-1" />
     <Divider
       orientation={Orientation.Vertical}
       colorStrength={ColorStrength.Strong}
@@ -56,9 +87,32 @@
         dispatchEvent("pageRerender", "ZOOMIN");
       }}
     />
-    <span class="text-fgs1 text-b2 pt-1 font-sans min-w-fit"
-      >{pageNumber} / {totalPages}</span
+    <div
+      class="flex items-center gap-2 min-w-fit text-fgs1 text-b2 pt-1 font-sans"
     >
+      <div class="w-12">
+        <TextInput
+          bind:value={pageInput}
+          type="number"
+          style={InputStyle.PLAIN}
+          size={Size.sm}
+          parentBackgroundIndex={2}
+          numberInputParams={{ min: 1, max: totalPages, step: 1 }}
+          on:focus={() => {
+            isEditingPage = true;
+          }}
+          on:blur={() => {
+            commitPageInput();
+            isEditingPage = false;
+          }}
+          on:enter={() => {
+            commitPageInput();
+            isEditingPage = false;
+          }}
+        />
+      </div>
+      <span>/ {totalPages}</span>
+    </div>
     <Button
       icon="magnifying-glass-minus"
       parentBgIndex={2}

@@ -67,6 +67,56 @@
   let _prev_gap_bottom = "8px";
   let loadingProgress = 0;
   let isLoading = false;
+  let loadingTask: any = null;
+  let fetchController: AbortController | null = null;
+  let pageChangeHandler: ((event: any) => void) | null = null;
+  let renderToken = 0;
+
+  const abortOngoingFetch = () => {
+    if (fetchController) {
+      fetchController.abort();
+      fetchController = null;
+    }
+  };
+
+  const detachPageChangeListener = () => {
+    if (pageChangeHandler && pdfViewer?.eventBus?.off) {
+      pdfViewer.eventBus.off("pagechanging", pageChangeHandler);
+      pageChangeHandler = null;
+    }
+  };
+
+  const cleanupPdfResources = async () => {
+    abortOngoingFetch();
+    detachPageChangeListener();
+
+    if (pdfViewer?.cleanup) {
+      try {
+        pdfViewer.cleanup();
+      } catch (_) {
+        // no-op: cleanup failures should not break unmount flow
+      }
+    }
+    pdfViewer = null;
+
+    const destroyers: Promise<unknown>[] = [];
+
+    if (pdfDocument && typeof pdfDocument.destroy === "function") {
+      destroyers.push(pdfDocument.destroy().catch(() => undefined));
+    } else if (loadingTask && typeof loadingTask.destroy === "function") {
+      destroyers.push(loadingTask.destroy().catch(() => undefined));
+    }
+
+    pdfDocument = null;
+
+    if (destroyers.length > 0) {
+      await Promise.allSettled(destroyers);
+    }
+
+    loadingTask = null;
+    isLoading = false;
+    loadingProgress = 0;
+  };
 
   //Init button handlers (some require hydration on mount)
   let onPasswordSubmit: () => void;
@@ -116,30 +166,30 @@
         return;
       }
     }
-    const render = renderDocument("onMount");
+    renderDocument("onMount");
     onPasswordSubmit = () => {
       renderDocument("onPasswordSubmit");
     };
 
     return () => {
-      render.then((pdf_viewer) => {
-        pdf_viewer.cleanup();
-      });
+      cleanupPdfResources();
     };
   });
 
   const renderDocument = async (from: string) => {
-    // const init_promise = import("pdfjs-dist/web/pdf_viewer.js").then(
+    const currentToken = ++renderToken;
+    await cleanupPdfResources();
+    password_error = false;
+    load_error_messge = null;
+
     const init_promise = import("pdfjs-dist/web/pdf_viewer.mjs").then(
       (pdfjs_viewer) => {
         const event_bus = new pdfjs_viewer.EventBus();
 
-        // (Optionally) enable hyperlinks within PDF files.
         const pdf_link_service = new pdfjs_viewer.PDFLinkService({
           eventBus: event_bus
         });
 
-        // (Optionally) enable find controller.
         const pdf_find_controller = new pdfjs_viewer.PDFFindController({
           eventBus: event_bus,
           linkService: pdf_link_service
@@ -164,13 +214,16 @@
         pdfData = fileEmbedChannel.base64ToUint8Array(dataViaEmbed);
       } else {
         const cachedData = await pdfCache.get(url.toString());
-        
+
         if (cachedData) {
           pdfData = cachedData;
         } else {
           isLoading = true;
           loadingProgress = 0;
-          const response = await fetch(url.toString());
+          fetchController = new AbortController();
+          const response = await fetch(url.toString(), {
+            signal: fetchController.signal
+          });
           if (!response.ok) {
             throw new Error(
               `Failed to fetch PDF: ${response.status} ${response.statusText}`
@@ -216,37 +269,53 @@
         }
       }
     } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
       console.error("Error loading PDF:", error);
       isLoading = false;
       load_error_messge = "Error loading PDF. Please try again.";
       return;
+    } finally {
+      fetchController = null;
     }
-    console.log({ pdfData: pdfData?.length });
     if (!pdfData) return;
-    const loading_task = pdfjs.getDocument({
+    loadingTask = pdfjs.getDocument({
       data: pdfData,
       password,
       isEvalSupported: false
     });
-    loading_task.promise
-      .then((pdf_document) => {
-        pdf_viewer.setDocument(pdf_document);
-        pdf_link_service.setDocument(pdf_document, null);
-        pdf_viewer.currentScale = scale;
-        pdf_viewer.spreadMode = _spread_mode;
-        pdfDocument = pdf_document;
-        pdfViewer.eventBus.on("pagechanging", (eventt: any) => {
-          currentPGNumber = eventt.pageNumber;
-        });
-      })
-      .catch(function (error) {
-        const name = (error && (error.name || error.toString())) || "";
-        const message =
-          error && error.message ? error.message : String(error || "");
-        const isPwd = typeof name === "string" && name.includes("Password");
-        password_error = isPwd;
-        load_error_messge = message;
-      });
+    try {
+      const pdf_document = await loadingTask.promise;
+
+      if (currentToken !== renderToken) {
+        await pdf_document.destroy().catch(() => undefined);
+        return pdf_viewer;
+      }
+
+      pdf_viewer.setDocument(pdf_document);
+      pdf_link_service.setDocument(pdf_document, null);
+      pdf_viewer.currentScale = scale;
+      pdf_viewer.spreadMode = _spread_mode;
+      pdfDocument = pdf_document;
+      loadingTask = null;
+
+      pageChangeHandler = (eventt: any) => {
+        currentPGNumber = eventt.pageNumber;
+      };
+      pdf_viewer.eventBus.on("pagechanging", pageChangeHandler);
+      pdfViewer = pdf_viewer;
+      eventDispatcher("ready");
+    } catch (error) {
+      const name = (error && (error.name || error.toString())) || "";
+      const message =
+        error && error.message ? error.message : String(error || "");
+      const isPwd = typeof name === "string" && name.includes("Password");
+      password_error = isPwd;
+      load_error_messge = message;
+      await cleanupPdfResources();
+      return pdf_viewer;
+    }
 
     onZoomIn = () => {
       if (scale <= MAX_SCALE) {
