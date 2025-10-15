@@ -1,0 +1,35 @@
+{
+  "name": "timear-linear",
+  "displayName": "Timear for Linear",
+  "version": "0.1.0",
+  "description": "Time tracking for Linear issues",
+  "author": "Timear",
+  "private": true,
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "package": "plasmo package"
+  },
+  "dependencies": {
+    "plasmo": "^0.88.0",
+    "svelte": "^4.2.7"
+  },
+  "devDependencies": {
+    "@plasmohq/prettier-plugin-sort-imports": "^4.0.1",
+    "@types/chrome": "^0.0.268",
+    "@types/node": "^20.0.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.0.0"
+  },
+  "manifest": {
+    "host_permissions": [
+      "https://linear.app/*",
+      "https://api.linear.app/*",
+      "http://localhost:3000/*"
+    ],
+    "permissions": [
+      "storage",
+      "activeTab"
+    ]
+  }
+}

@@ -5,6 +5,7 @@
   "workspaces": [
     "apps/*",
     "extensions/*",
+    "services/*",
     "client/stores",
     "client/components",
     "client/elements",
