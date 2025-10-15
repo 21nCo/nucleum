@@ -87,7 +87,6 @@
   const MAX_SCALE = $context.os == OperatingSystem.WINDOWS ? 2.3 : 1.8;
   let scrollTop = 0;
   let pageNumber = node?.config?.pdfPage ?? 1;
-  let totalPages = 1;
   let annotationMode: AnnotationType = AnnotationType.NONE;
   let isSearchActive = false;
   enum SpreadModes {
@@ -414,7 +413,6 @@
       ranOnce = true;
     }
     scale = pdfViewer.currentScale;
-    totalPages = pdfViewer.pagesCount;
     for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber++) {
       // if (!pageNumbers.includes(pageNumber)) {
       //   pageNumbers.push(pageNumber);
@@ -611,11 +609,10 @@
     if (!pdfViewer) return;
     const clampedPage = Math.min(
       Math.max(targetPage, 1),
-      totalPages || pdfViewer.pagesCount || 1
+      pdfViewer.pagesCount || 1
     );
 
     pageNumber = clampedPage;
-
     if (pdfViewer.currentPageNumber !== clampedPage) {
       pdfViewer.currentPageNumber = clampedPage;
     }
@@ -879,12 +876,17 @@
 
   const handleFindControlStateUpdate = (data: any) => {
     if (data?.state === FindState.FOUND || data?.state === FindState.WRAPPED) {
-      const element = document.getElementsByClassName("highlight selected")[0] as HTMLElement | undefined;
+      const element = document.getElementsByClassName(
+        "highlight selected"
+      )[0] as HTMLElement | undefined;
       if (element && viewerContainerElement) {
         const containerRect = viewerContainerElement.getBoundingClientRect();
         const elRect = element.getBoundingClientRect();
         const offset = 100;
-        const targetTop = viewerContainerElement.scrollTop + (elRect.top - containerRect.top) - offset;
+        const targetTop =
+          viewerContainerElement.scrollTop +
+          (elRect.top - containerRect.top) -
+          offset;
         viewerContainerElement.scrollTo({
           top: Math.max(0, targetTop),
           left: 0,
@@ -952,7 +954,7 @@
   function restorePagePosition() {
     if (node?.config?.pdfPage && pdfViewer) {
       setTimeout(() => {
-        pdfViewer.scrollPageIntoView({ pageNumber: +node.config.pdfPage });
+        handlePageNavigation(+node.config.pdfPage);
       }, 100);
     }
   }
@@ -1140,7 +1142,7 @@
       bind:selectedAnnotationMode={annotationMode}
       bind:selectedColor
       {pageNumber}
-      {totalPages}
+      totalPages={pdfViewer?.pagesCount ?? 1}
       {accessPoint}
       {isSearchActive}
       on:pageRerender={(event) => handleRenderOptions(event.detail)}

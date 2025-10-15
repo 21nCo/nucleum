@@ -399,7 +399,9 @@
               ) {
                 openRightPane(e);
               } else if (e.detail === ResourceActionType.SET_COVER_PHOTO) {
-                isShowCoverPicker = true;
+                if (!isReadOnlyMode) {
+                  isShowCoverPicker = true;
+                }
               }
             }}
             on:view={onViewSwitch}
