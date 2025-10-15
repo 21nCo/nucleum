@@ -366,7 +366,11 @@
     } else if (type === "keyup" && hasColon) {
       const colonIndex = text.lastIndexOf(":");
       if (colonIndex !== -1) {
-        emojiSearchQuery = text.substring(colonIndex + 1);
+        // Extract query from colon until next space or end of text
+        const afterColon = text.substring(colonIndex + 1);
+        const spaceIndex = afterColon.search(/\s/);
+        emojiSearchQuery = spaceIndex === -1 ? afterColon : afterColon.substring(0, spaceIndex);
+        
         if (emojiSearchQuery.trim()) {
           if (!isRenderEmojiPicker) {
             showPopover("emojiPicker");

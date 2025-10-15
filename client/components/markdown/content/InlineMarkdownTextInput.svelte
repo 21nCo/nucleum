@@ -273,9 +273,22 @@
     const codeMatch = emoji.code.match(/&#X([0-9A-F]+)/i);
     if (codeMatch) {
       const emojiChar = String.fromCodePoint(parseInt(codeMatch[1], 16));
-      content = content?.replace(":" + searchQuery, emojiChar);
-      innerHTML = innerHTML.replace(":" + searchQuery, emojiChar);
+      const searchText = ":" + searchQuery;
+      
+      // Find the position where the emoji will be inserted
+      const searchIndex = content?.indexOf(searchText) ?? -1;
+      
+      content = content?.replace(searchText, emojiChar);
+      innerHTML = innerHTML.replace(searchText, emojiChar);
       dispatchChangeEvent();
+      
+      // Set caret position after the inserted emoji
+      if (searchIndex !== -1) {
+        setTimeout(() => {
+          const newCaretPosition = searchIndex + emojiChar.length;
+          setCaretPosition(blockRef, newCaretPosition);
+        }, 10);
+      }
     }
   }
 
