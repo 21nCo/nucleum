@@ -3,7 +3,7 @@ import { handle } from "@hono/vercel";
 import app from "../src/router";
 
 export const config = {
-  runtime: "nodejs18.x"
+  runtime: "nodejs20.x"
 };
 
 export default function handler(req: VercelRequest, res: VercelResponse) {

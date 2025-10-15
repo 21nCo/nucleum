@@ -36,7 +36,7 @@ export function ensureQuery(query?: string) {
 
 export function isoDurationToMinutes(duration: string | undefined): number | undefined {
   if (!duration) return undefined;
-  const regex = /P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/;
+  const regex = /^P(?:(\d+)D)?T?(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?$/;
   const match = duration.match(regex);
   if (!match) return undefined;
   const days = Number(match[1] ?? 0);

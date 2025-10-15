@@ -37,7 +37,7 @@ export async function searchMovies(
     return createEmptyResult(params);
   }
 
-  const limit = clampLimit(params.limit, 20, 10);
+  const limit = 20;
   const page = Math.max(1, params.page ?? 1);
 
   try {
@@ -70,7 +70,6 @@ export async function searchMovies(
 
     const data = (await response.json()) as TmdbResult;
     const items: WebArtifact[] = (data.results ?? [])
-      .slice(0, limit)
       .map((movie) => {
         const tmdbUrl = `${TMDB_SITE_BASE}/${movie.id}`;
         return {

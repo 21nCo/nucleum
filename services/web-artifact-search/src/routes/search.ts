@@ -29,7 +29,19 @@ searchRoute.get("/search", async (c) => {
 
   const params: WebArtifactSearchQuery = parsed.data;
 
-  const result = await webArtifactRepository.search(params);
+  let result;
+  try {
+    result = await webArtifactRepository.search(params);
+  } catch (error) {
+    console.error("Repository search failed:", error);
+    return c.json(
+      {
+        error: "SEARCH_FAILED",
+        message: "Failed to fetch artifacts from provider"
+      },
+      500
+    );
+  }
 
   return c.json({
     data: result,

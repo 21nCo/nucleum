@@ -26,17 +26,21 @@ function buildSearchUrl(
   limit?: number
 ): string {
   const isAbsolute = /^https?:\/\//i.test(baseUrl);
-  const resolvedBase = isAbsolute
-    ? baseUrl
-    : typeof window !== "undefined"
-      ? new URL(baseUrl, window.location.origin).toString()
-      : baseUrl;
-
-  const url = new URL(`${resolvedBase}/search`);
+  let resolvedBase = baseUrl.replace(/\/$/, "");
+  if (!isAbsolute) {
+    if (typeof window !== "undefined") {
+      resolvedBase = new URL(baseUrl, window.location.origin)
+        .toString()
+        .replace(/\/$/, "");
+    } else {
+      throw new Error("VITE_WEB_ARTIFACT_SERVICE_URL must be absolute for SSR/tests");
+    }
+  }
+  const url = new URL("search", resolvedBase.endsWith("/") ? resolvedBase : `${resolvedBase}/`);
   url.searchParams.set("category", category);
-  if (query) url.searchParams.set("query", query);
-  if (page) url.searchParams.set("page", String(page));
-  if (limit) url.searchParams.set("limit", String(limit));
+  if (query !== undefined) url.searchParams.set("query", query);
+  if (page !== undefined) url.searchParams.set("page", String(page));
+  if (limit !== undefined) url.searchParams.set("limit", String(limit));
   return url.toString();
 }
 
@@ -104,7 +108,7 @@ export async function searchWebArtifacts(params: {
       throw error;
     }
 
-    if (error instanceof DOMException && error.name === "AbortError") {
+    if (error instanceof Error && error.name === "AbortError") {
       throw error;
     }
 

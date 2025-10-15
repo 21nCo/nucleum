@@ -145,7 +145,17 @@
         query
       });
     } catch (error) {
-      if (controller.signal.aborted || activeRequestKey !== requestKey) return;
+      if (error instanceof Error && error.name === "AbortError") {
+        if (activeRequestKey === requestKey) {
+          updateState(category, {
+            status: "idle",
+            query
+          });
+        }
+        return;
+      }
+
+      if (activeRequestKey !== requestKey) return;
 
       let message = "Something went wrong while searching.";
       if (error instanceof WebCaptureServiceError) {
@@ -154,8 +164,6 @@
         } else {
           message = error.message;
         }
-      } else if (error instanceof DOMException && error.name === "AbortError") {
-        return;
       }
 
       updateState(category, {

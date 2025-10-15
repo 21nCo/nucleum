@@ -131,7 +131,11 @@
     if (!artifact) return;
     const url = artifact.externalUrl ?? artifact.providers?.find((provider) => provider.url)?.url;
     if (url && typeof window !== "undefined") {
-      window.open(url, "_blank", "noopener");
+      if (url.startsWith("https://")) {
+        window.open(url, "_blank", "noopener");
+      } else {
+        console.warn("Blocked non-HTTPS URL:", url);
+      }
     }
   }
 

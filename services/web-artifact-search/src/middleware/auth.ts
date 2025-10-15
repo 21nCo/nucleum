@@ -9,7 +9,7 @@ export async function requireAuth(c: Context<AppBindings>, next: Next) {
     throw new HTTPException(401, { message: "Missing authorization header" });
   }
 
-  const token = authHeader.substring("bearer ".length).trim();
+  const token = authHeader.substring(7).trim();
   if (!token) {
     throw new HTTPException(401, { message: "Missing bearer token" });
   }

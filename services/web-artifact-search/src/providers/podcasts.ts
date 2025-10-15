@@ -21,6 +21,7 @@ export async function searchPodcasts(
     url.searchParams.set("q", query);
     url.searchParams.set("type", "podcast");
     url.searchParams.set("offset", String(offset));
+    url.searchParams.set("page_size", String(limit));
     url.searchParams.set("len_min", "0");
     url.searchParams.set("len_max", "240");
     url.searchParams.set("sort_by_date", "0");
@@ -55,7 +56,7 @@ export async function searchPodcasts(
     };
 
     const data = (await response.json()) as ListenNotesResponse;
-    const items: WebArtifact[] = (data.results ?? []).slice(0, limit).map((show) => ({
+    const items: WebArtifact[] = (data.results ?? []).map((show) => ({
       id: `listennotes:${show.id}`,
       category: "PODCASTS",
       title: show.title_original,

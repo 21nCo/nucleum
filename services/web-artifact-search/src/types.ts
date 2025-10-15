@@ -19,21 +19,16 @@ export const WebArtifactSearchQuerySchema = z.object({
     .max(200)
     .optional()
     .transform((value) => value ?? ""),
-  page: z
-    .preprocess((value) => (value === undefined ? undefined : Number(value)), z
-      .number()
-      .int()
-      .min(1)
-      .default(1)
-    ),
-  limit: z
-    .preprocess((value) => (value === undefined ? undefined : Number(value)), z
-      .number()
-      .int()
-      .min(1)
-      .max(50)
-      .default(10)
-    )
+  page: z.preprocess((value) => {
+    if (value === undefined || value === null || value === "") return undefined;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : undefined;
+  }, z.number().int().min(1).default(1)),
+  limit: z.preprocess((value) => {
+    if (value === undefined || value === null || value === "") return undefined;
+    const n = Number(value);
+    return Number.isFinite(n) ? n : undefined;
+  }, z.number().int().min(1).max(50).default(10))
 });
 
 export type WebArtifactSearchQuery = z.infer<typeof WebArtifactSearchQuerySchema>;
