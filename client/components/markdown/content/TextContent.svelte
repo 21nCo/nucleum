@@ -342,13 +342,10 @@
     type: "keyup" | "keydown" = "keydown"
   ) {
     if (!$mdStore.params?.canUseSlashShortcut) return false;
-    
+
     const hasColon = text.includes(":");
-    
-    if (
-      type === "keydown" &&
-      event.key === ":"
-    ) {
+
+    if (type === "keydown" && event.key === ":") {
       logger.log({
         at: "handleEmojiShortcut - triggered",
         key: event.key
@@ -356,10 +353,7 @@
       return true;
     } else if (!hasColon && !isRenderEmojiPicker) {
       return false;
-    } else if (
-      type === "keyup" &&
-      (event.key === "Escape" || !hasColon)
-    ) {
+    } else if (type === "keyup" && (event.key === "Escape" || !hasColon)) {
       if (isRenderEmojiPicker) {
         hidePopover("emojiPicker");
       }
@@ -369,8 +363,9 @@
         // Extract query from colon until next space or end of text
         const afterColon = text.substring(colonIndex + 1);
         const spaceIndex = afterColon.search(/\s/);
-        emojiSearchQuery = spaceIndex === -1 ? afterColon : afterColon.substring(0, spaceIndex);
-        
+        emojiSearchQuery =
+          spaceIndex === -1 ? afterColon : afterColon.substring(0, spaceIndex);
+
         if (emojiSearchQuery.trim()) {
           if (!isRenderEmojiPicker) {
             showPopover("emojiPicker");
@@ -381,7 +376,7 @@
           }
         }
       }
-    }else if (
+    } else if (
       type === "keydown" &&
       isRenderEmojiPicker &&
       (event.key === "ArrowDown" ||
@@ -855,13 +850,17 @@
   options={{
     isPlaceAtCaret: $view.isConstrainedWidth ? false : true,
     offsetInPx: 10,
-    id: isRenderEmojiPicker ? "emojiPickerPopover" : (isRenderMentionSearch ? "mentionSearchPopover" : "blockBrowserPopover"),
+    id: isRenderEmojiPicker
+      ? "emojiPickerPopover"
+      : isRenderMentionSearch
+        ? "mentionSearchPopover"
+        : "blockBrowserPopover",
     class: cn({
       "w-72": blockSearchQuery,
       "w-[30rem]": !blockSearchQuery
     })
   }}
-  triggerClass="w-full"
+  triggerClass="w-full cursor-text"
   isPreventDefault={true}
 >
   <div class="relative w-full flex justify-start">

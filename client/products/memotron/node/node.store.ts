@@ -1014,7 +1014,9 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
-          nodeActions.tracesPane(),
+          ...(canHaveTraces.includes(node.contentType)
+            ? [nodeActions.tracesPane()]
+            : []),
           nodeActions.linksPane(),
           nodeActions.sideNotesPane(),
           nodeStaticActions.propertiesPane,

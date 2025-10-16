@@ -28,6 +28,7 @@
       on:linkTypeSelect
       on:action
       on:tagClick
+      on:tag
     />
   {/each}
 </div>

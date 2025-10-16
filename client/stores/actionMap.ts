@@ -581,8 +581,8 @@ export const globalActions: IAction[] = [
     type: ActionType.MODAL,
     modalParams: {
       layout: {
-        size: Size.lg,
-        orientation: Orientation.Horizontal,
+        size: Size.md,
+        orientation: Orientation.Vertical,
         ignoreSafeArea: true
       }
     }
@@ -755,8 +755,8 @@ export const globalActions: IAction[] = [
           icon: "offline",
           variant: ButtonVariant.SECONDARY,
           callback: async () => {
-             await context.toggleOfflineMode(true);
-              modalEvent.hide(Action.INACTIVE_PLAN);
+            await context.toggleOfflineMode(true);
+            modalEvent.hide(Action.INACTIVE_PLAN);
           }
         }
       }
