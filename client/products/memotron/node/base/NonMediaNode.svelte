@@ -128,7 +128,8 @@
   }
 
   function onRightPaneSwitch() {
-    if ($node.accessMode !== ResourceAccessMode.INLINE) return;
+    if ($node.accessMode !== ResourceAccessMode.INLINE || isConstrainedWidth)
+      return;
     if (isRightPanelCollapsed) {
       dispatchCustomEvent(GlobalEvent.EXPAND_PANEL, {});
     } else {

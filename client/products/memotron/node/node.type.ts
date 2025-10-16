@@ -375,7 +375,7 @@ export type INodeLinkThumb = ILinkBase & {
   links?: {
     id: IRecordId;
     linkType: LinkType;
-    direction: "incoming" | "outgoing";
+    direction?: "incoming" | "outgoing";
     tags?: IRecordId[];
   }[];
 };
