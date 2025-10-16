@@ -1,14 +1,8 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
+  import type { TimerDisplayState } from '../types';
 
-  interface TimerState {
-    active: boolean;
-    issueId: string | null;
-    startTime: string | null;
-    elapsed: number;
-  }
-
-  let timerState: TimerState = {
+  let timerState: TimerDisplayState = {
     active: false,
     issueId: null,
     startTime: null,

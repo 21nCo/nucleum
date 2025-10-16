@@ -13,8 +13,8 @@ const config = {
       $lib: "../../"
     },
     files: {
-      lib: "../../",
-      routes: "../../client/routes"
+      lib: "../../"
+      // routes: "../../client/routes"
     }
   }
 };

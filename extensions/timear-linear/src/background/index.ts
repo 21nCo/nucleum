@@ -1,27 +1,6 @@
-/**
- * Background Service Worker for Timear Extension
- * 
- * Handles:
- * - Communication with Timear backend API
- * - Timer state management
- * - Message passing between content scripts
- */
+import type { TimeEntry, TimerState } from '../types';
 
 const BACKEND_URL = 'http://localhost:3000';
-
-interface TimeEntry {
-  id: string;
-  issueId: string;
-  startTime: string;
-  endTime: string | null;
-  duration: number | null;
-}
-
-interface TimerState {
-  active: boolean;
-  entry: TimeEntry | null;
-  issueId: string | null;
-}
 
 let timerState: TimerState = {
   active: false,
@@ -151,9 +130,4 @@ setInterval(() => {
   }
 }, 60000); // Refresh every minute
 
-/**
- * Initialize on startup
- */
 initializeTimerState();
-
-export {};
