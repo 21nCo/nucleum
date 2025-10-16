@@ -123,8 +123,12 @@
       linkStatus.type = AlertType.SUCCESS;
       const link: INodeLinkThumb = {
         linkedTo: e.detail.item.id,
-        linkType: LinkType.DIRECT,
-        id: result[0]?.id ?? ""
+        links: [
+          {
+            linkType: LinkType.DIRECT,
+            id: result[0]?.id ?? ""
+          }
+        ]
       };
       _links = [...(_links ?? []), link];
       $node.links = [...($node.links ?? []), link];
@@ -363,21 +367,23 @@
         selectedLinkType.linkType,
         selectedLinkType.direction
       )}
-      <Tag
-        label={config.label}
-        icon={config.icon}
-        size={Size.md}
-        isActive={true}
-        isRemovable={true}
-        on:remove={() => {
-          selectedLinkType = undefined;
-          applyFilters();
-        }}
-        on:click={(e) => {
-          selectedLinkType = undefined;
-          applyFilters();
-        }}
-      />
+      <div>
+        <Tag
+          label={config.label}
+          icon={config.icon}
+          size={Size.md}
+          isActive={true}
+          isRemovable={true}
+          on:remove={() => {
+            selectedLinkType = undefined;
+            applyFilters();
+          }}
+          on:click={(e) => {
+            selectedLinkType = undefined;
+            applyFilters();
+          }}
+        />
+      </div>
     {/if}
     {#if availableLinkTags.length > 0}
       <div class="flex flex-col gap-3">
@@ -398,6 +404,9 @@
           on:click={onClick}
           on:action={onAction}
           on:tagClick={onTagClick}
+          on:tag={() => {
+            applyFilters();
+          }}
           on:linkTypeSelect={onLinkTypeSelect}
         />
         <ScrollViewBottomSpacer />

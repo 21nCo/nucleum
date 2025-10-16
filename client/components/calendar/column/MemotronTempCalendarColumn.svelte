@@ -18,6 +18,7 @@
   import { Size } from "$lib/client/types/size.enum";
   import { debouncer } from "$lib/client/utils/utils";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { resolveCalendarNotesId } from "../calendar.utils";
 
   export let date: Date;
   export let scale: TimeScaleUnit;
@@ -60,6 +61,12 @@
   };
 
   setContext("calendar-content", calendarContentContext);
+
+  function openNotesInFullScreen() {
+    const id = resolveCalendarNotesId(date, scale);
+    if (!id) return;
+    appStore.openResource(id, ResourceAccessMode.FULL);
+  }
 </script>
 
 <div
@@ -82,15 +89,22 @@
       <span class="text-b2 text-fgs3">| Notes </span>
       <InlineFeedbackText {feedback} size={Size.sm} />
     </div>
-    <Button
-      icon="history"
-      tooltip="History"
-      on:click={() => {
-        appStore.openResource(Action.HISTORY, ResourceAccessMode.POP, {
-          searchParams: { [AppSearchParam.DATE]: date.toISOString() }
-        });
-      }}
-    />
+    <div class="flex items-center">
+      <Button
+        icon="fullscreen"
+        tooltip="Open notes in full screen"
+        on:click={openNotesInFullScreen}
+      />
+      <Button
+        icon="history"
+        tooltip="History"
+        on:click={() => {
+          appStore.openResource(Action.HISTORY, ResourceAccessMode.POP, {
+            searchParams: { [AppSearchParam.DATE]: date.toISOString() }
+          });
+        }}
+      />
+    </div>
   </div>
   <div class="px-1 flex-grow">
     <CalendarNotesPanel {date} {scale} {mdId} />

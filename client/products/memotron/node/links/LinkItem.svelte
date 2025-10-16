@@ -51,7 +51,10 @@
     <span
       slot="bottom"
       class={cn("flex flex-col gap-2", {
-        "pt-3": (link.tags && link.tags.length > 0) || isShowLinkTagger
+        "pt-3":
+          (link.tags && link.tags.length > 0) ||
+          (link.links && link.links.length > 0) ||
+          isShowLinkTagger
       })}
     >
       <span class="flex gap-2">
@@ -75,7 +78,7 @@
       </span>
       {#if isShowLinkTagger}
         <div class="w-full py-2">
-          <LinkTagger bind:link />
+          <LinkTagger bind:link on:tag />
         </div>
       {/if}
     </span>
