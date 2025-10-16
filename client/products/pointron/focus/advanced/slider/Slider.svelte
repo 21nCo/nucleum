@@ -547,7 +547,7 @@
     window.addEventListener("resize", resizeHandler);
     window.addEventListener("mouseup", handleGlobalMouseUp); //to stop dragging if the mouse is released outside the slider, otherwise the slider will keep on moving
 
-    activeSession.subscribe((x: IActiveSessionStore) => {
+    const activeSessionUnsub = activeSession.subscribe((x: IActiveSessionStore) => {
       isSessionRunning =
         x.state !== SessionState.NOT_STARTED &&
         x.state !== SessionState.FINISHED;
@@ -575,6 +575,7 @@
     });
 
     return () => {
+      activeSessionUnsub();
       window.removeEventListener("resize", resizeHandler);
       window.removeEventListener("mouseup", handleGlobalMouseUp);
     };

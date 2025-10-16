@@ -278,7 +278,11 @@
         />
         <span class="h-6 w-6 flex justify-center items-center">
           {#if isHovering || $feedbackPane.isUserInitiated}
-            <Button icon="cross-circled" tooltip="Close" on:click={closePane} />
+            <Button
+              icon="ph:x-circle-light"
+              tooltip="Close"
+              on:click={closePane}
+            />
           {:else if $feedbackPane.isShown && countdown > 0 && !Number.isNaN(countdown)}
             <!-- TODO closing animation circle -->
             <span
@@ -310,7 +314,7 @@
     </div>
     {#if !isPropsExpanded}
       <div
-        class="flex w-full justify-center bg-bgs2 rounded-md px-2 py-1 overflow-y-auto"
+        class="flex w-full justify-center bg-bgs2 rounded-md px-2 py-1 flex-grow overflow-y-auto"
       >
         <!-- Fix placeholder color issue -->
         <InlineMarkdownTextInput

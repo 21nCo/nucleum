@@ -83,6 +83,7 @@ export function hoverable(node: HTMLElement, params: HoverableParams = {}) {
       node.removeEventListener("focus", toggleHoveringState);
       node.removeEventListener("blur", toggleHoveringState);
       node.removeEventListener("click", handleClick);
+      if (toolTipTimeout) clearTimeout(toolTipTimeout);
       if (toolTipRef) document.body.removeChild(toolTipRef);
     },
     update(newParams: HoverableParams) {

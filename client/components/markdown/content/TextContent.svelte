@@ -6,6 +6,7 @@
   } from "$lib/client/components/markdown/md.type";
   import { mdContentChangeEvent, type MdStoreType } from "../markdown.store";
   import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
+  import EmojiPicker from "./EmojiPicker.svelte";
 
   import {
     headingNodeTypes,
@@ -90,11 +91,14 @@
   let blockBrowserRef: any;
   let isBlockBrowserRendered: boolean = false;
   let isRenderMentionSearch: boolean = false;
+  let isRenderEmojiPicker: boolean = false;
   let blockSearchQuery = "";
   let mentionSearchQuery = "";
+  let emojiSearchQuery = "";
   let previousVal = text ? deepCopy(text) : "";
   let mentionTriggerKey: string;
   let mentionSearchPopoverId: string = generateSimpleRandomId();
+  let emojiPickerRef: any;
   let caretPositionT2:
     | {
         element?: any;
@@ -200,10 +204,11 @@
   }
 
   function hidePopover(
-    popover: "blockBrowser" | "mentionSearch" = "blockBrowser"
+    popover: "blockBrowser" | "mentionSearch" | "emojiPicker" = "blockBrowser"
   ) {
     if (popover === "blockBrowser") isBlockBrowserRendered = false;
-    else isRenderMentionSearch = false;
+    else if (popover === "mentionSearch") isRenderMentionSearch = false;
+    else if (popover === "emojiPicker") isRenderEmojiPicker = false;
     popoverRef.hide();
   }
   /**
@@ -219,12 +224,14 @@
    * @param popover
    */
   function showPopover(
-    popover: "blockBrowser" | "mentionSearch" = "blockBrowser"
+    popover: "blockBrowser" | "mentionSearch" | "emojiPicker" = "blockBrowser"
   ) {
     if (popover === "blockBrowser") isBlockBrowserRendered = true;
-    else {
+    else if (popover === "mentionSearch") {
       isRenderMentionSearch = true;
       appendZeroWidthSpace();
+    } else if (popover === "emojiPicker") {
+      isRenderEmojiPicker = true;
     }
     if ($view.isConstrainedWidth) return;
     setTimeout(() => {
@@ -330,6 +337,63 @@
     return true;
   }
 
+  function handleEmojiShortcut(
+    event: KeyboardEvent,
+    type: "keyup" | "keydown" = "keydown"
+  ) {
+    if (!$mdStore.params?.canUseSlashShortcut) return false;
+    
+    const hasColon = text.includes(":");
+    
+    if (
+      type === "keydown" &&
+      event.key === ":"
+    ) {
+      logger.log({
+        at: "handleEmojiShortcut - triggered",
+        key: event.key
+      });
+      return true;
+    } else if (!hasColon && !isRenderEmojiPicker) {
+      return false;
+    } else if (
+      type === "keyup" &&
+      (event.key === "Escape" || !hasColon)
+    ) {
+      if (isRenderEmojiPicker) {
+        hidePopover("emojiPicker");
+      }
+    } else if (type === "keyup" && hasColon) {
+      const colonIndex = text.lastIndexOf(":");
+      if (colonIndex !== -1) {
+        // Extract query from colon until next space or end of text
+        const afterColon = text.substring(colonIndex + 1);
+        const spaceIndex = afterColon.search(/\s/);
+        emojiSearchQuery = spaceIndex === -1 ? afterColon : afterColon.substring(0, spaceIndex);
+        
+        if (emojiSearchQuery.trim()) {
+          if (!isRenderEmojiPicker) {
+            showPopover("emojiPicker");
+          }
+        } else {
+          if (isRenderEmojiPicker) {
+            hidePopover("emojiPicker");
+          }
+        }
+      }
+    }else if (
+      type === "keydown" &&
+      isRenderEmojiPicker &&
+      (event.key === "ArrowDown" ||
+        event.key === "ArrowUp" ||
+        event.key === "Enter")
+    ) {
+      emojiPickerRef?.key(event.key);
+      event.preventDefault();
+    }
+    return hasColon || isRenderEmojiPicker;
+  }
+
   function handleKeyDown(
     e: CustomEvent<{
       event: KeyboardEvent;
@@ -346,6 +410,7 @@
     const functions = [
       () => handleBlockBrowser(event),
       () => handleMentionShortcut(event),
+      () => handleEmojiShortcut(event),
       () =>
         handleBackspace(event, {
           inBlockPosition: e.detail.position
@@ -565,6 +630,7 @@
     const steps = [
       () => handleBlockBrowser(event, "keyup"),
       () => handleMentionShortcut(event, "keyup"),
+      () => handleEmojiShortcut(event, "keyup"),
       performEscapeShortcutsT2
       // () =>
       //   handleBackspace(event, {
@@ -741,6 +807,15 @@
     });
   }
 
+  function onEmojiSelect(event: CustomEvent) {
+    const emoji = event.detail.emoji;
+    logger.log({ at: "onEmojiSelect", emoji });
+    textRef.addEmoji(emoji, emojiSearchQuery);
+    hidePopover("emojiPicker");
+    emojiSearchQuery = "";
+    dispatchChangeEvent();
+  }
+
   function onFocus() {
     isFocusing = true;
     markdownContext({ event: "focus", id });
@@ -780,7 +855,7 @@
   options={{
     isPlaceAtCaret: $view.isConstrainedWidth ? false : true,
     offsetInPx: 10,
-    id: isRenderMentionSearch ? "mentionSearchPopover" : "blockBrowserPopover",
+    id: isRenderEmojiPicker ? "emojiPickerPopover" : (isRenderMentionSearch ? "mentionSearchPopover" : "blockBrowserPopover"),
     class: cn({
       "w-72": blockSearchQuery,
       "w-[30rem]": !blockSearchQuery
@@ -838,6 +913,12 @@
           hidePopover("mentionSearch");
         }}
       />
+    {:else if !$view.isConstrainedWidth && isRenderEmojiPicker}
+      <EmojiPicker
+        bind:this={emojiPickerRef}
+        bind:searchQuery={emojiSearchQuery}
+        on:select={onEmojiSelect}
+      />
     {/if}
   </slot>
 </Popover>
@@ -859,6 +940,22 @@
         onReset: () => {
           hidePopover("mentionSearch");
         }
+      }
+    }}
+  />
+{/if}
+{#if $view.isConstrainedWidth && isRenderEmojiPicker}
+  <div
+    class="w-full"
+    use:popover={{
+      content: EmojiPicker,
+      isSpanToTriggerWidth: true,
+      isRenderAsModalForCW: true,
+      triggerMethod: [PopoverTriggerMethod.SHOW_BY_DEFAULT],
+      componentProps: {
+        searchQuery: emojiSearchQuery,
+        onSelect: onEmojiSelect,
+        isPopoverContext: true
       }
     }}
   />

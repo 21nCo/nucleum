@@ -35,7 +35,7 @@ import { indexingStore } from "./indexing.store";
 // } from "./dist/flexsearch.bundle.module.min.js";
 type QueryableType = Table | Collection<any, any> | WhereClause<any, any>;
 const dbVersion = 1;
-const version = 116;
+const version = 118;
 export class DexiePersistence implements IPersistence {
   instance: Dexie | undefined = undefined;
   tables: ITable[] = [];

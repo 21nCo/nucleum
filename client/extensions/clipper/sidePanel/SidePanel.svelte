@@ -23,11 +23,7 @@
     PanelSwitcherStyle
   } from "$lib/client/types/switcher.enum";
   import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
-  import {
-    extensionFlux,
-    loadInMemoryResourceStore,
-    loadInMemoryStores
-  } from "$lib/client/components/flux/fluxExtentionMediator";
+  import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import {
     blankUrls,
@@ -49,7 +45,7 @@
   } from "$lib/client/types/notification.type";
   import { cn } from "$lib/client/utils/ui.utils";
   import { fly } from "svelte/transition";
-  import { Product } from "$lib/client/products/product.type";
+  import { Extension, Product } from "$lib/client/products/product.type";
   import ExtensionHelp from "../../shared/ExtensionHelp.svelte";
   import { FluxMethod } from "$lib/client/components/flux/flux.type";
   import { clipperCacheableStores } from "../clipper.config";
@@ -65,6 +61,8 @@
     resolveContentTypeString
   } from "../clipper.utils";
   import { parse } from "$lib/shared/utils/json.utils";
+  import { ExtensionStore } from "$lib/client/extensions/extension.store";
+
   let mainPanel: "page" | "collections" = "page";
   let mode: "clips" | "notes" | "history" = "clips";
   let title = "";
@@ -127,8 +125,6 @@
   ];
   const channel = getPort("channel");
   const port = chrome.runtime.connect({ name: "sidePanel" });
-
-  const stores = [...clipperCacheableStores];
   async function onSavePageClick() {
     if (isSaving) return;
     isSaving = true;
@@ -329,9 +325,10 @@
       resource
     });
     if (!resource) return;
-    const store = stores.find((x) => x.id === resource);
-    if (!store || !store.isInMemory || !store.loader) return;
-    await loadInMemoryResourceStore(store);
+    const ext = ExtensionStore.getInstance();
+    if (ext) {
+      await ext.loadInMemoryResourceStore(resource);
+    }
   }
 
   async function onBootup() {
@@ -339,7 +336,10 @@
     await relayToContentScript({
       event: ExtensionEvent.PAGE_STATE_TRIGGER
     });
-    await loadInMemoryStores(stores);
+    const ext = ExtensionStore.getInstance();
+    if (ext) {
+      await ext.loadInMemoryStores();
+    }
     await refreshSyncStatus();
   }
 
@@ -402,8 +402,8 @@
 <ExtensionBaseLayer
   id="sidePanel"
   on:mount={() => (isMounted = true)}
+  extention={Extension.MEMOTRON_CLIPPER}
   product={{ product: Product.MEMOTRON, env: "live" }}
-  {stores}
 >
   {#if isMounted}
     <ClipperInMemoryCache />

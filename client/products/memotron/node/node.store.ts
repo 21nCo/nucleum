@@ -761,29 +761,29 @@ class NodeActions {
     callback: async () => {}
   };
 
-  setCustomPreview = {
-    value: "setCustomPreview",
-    label: "Set custom preview",
-    icon: "ph:image",
-    callback: async () => {
-      appStore.runAction(MemotronAction.PREVIEW_IMAGE_UPLOADER, {
-        componentParams: { nodeId: this.node.id, nodeLabel: this.node.label }
-      });
-    }
-  };
+  setCoverPhoto() {
+    return {
+      value: ResourceActionType.SET_COVER_PHOTO,
+      label: "Set cover photo",
+      icon: "ph:image",
+      callback: async () => {}
+    };
+  }
 
-  removeCustomPreview = {
-    value: "removeCustomPreview",
-    label: "Remove custom preview",
-    icon: "trash",
-    callback: async () => {
-      await this.store.modify(this.node.id, {
-        previewImage: undefined
-      });
-      toasts.success("Custom preview removed");
-      return true;
-    }
-  };
+  removeCoverPhoto() {
+    return {
+      value: "removeCoverPhoto",
+      label: "Remove cover photo",
+      icon: "trash",
+      callback: async () => {
+        await this.store.modify(this.node.id, {
+          cover: undefined
+        });
+        toasts.success("Cover photo removed");
+        return true;
+      }
+    };
+  }
 
   copyHighlightText = {
     value: "copyHighlightText",
@@ -1062,25 +1062,26 @@ export function resolveNodeContextMenu(
           resourceActions.toggleFocusMode()
         ]
       : [resourceActions.toggleFocusMode()];
-  const previewImageAction =
+
+  const coverPhotoAction =
     node.contentType === NodeType.NODULAR_MARKDOWN
-      ? node.previewImage
-        ? nodeActions.removeCustomPreview
-        : nodeActions.setCustomPreview
+      ? node.cover
+        ? nodeActions.removeCoverPhoto()
+        : nodeActions.setCoverPhoto()
       : undefined;
   const secondGroupItems = viewStore.isConstrainedWidth
     ? [
         resourceActions.toggleReadMode(),
         nodeStaticActions.metadataPane,
         nodeStaticActions.historyPane,
-        ...(previewImageAction ? [previewImageAction] : [])
+        ...(coverPhotoAction ? [coverPhotoAction] : [])
       ]
     : [
         resourceActions.toggleReadMode(),
         nodeActions.toggleFullWidth(),
         nodeStaticActions.metadataPane,
         nodeStaticActions.historyPane,
-        ...(previewImageAction ? [previewImageAction] : [])
+        ...(coverPhotoAction ? [coverPhotoAction] : [])
       ];
   return [
     {

@@ -22,9 +22,13 @@
   }
 
   onMount(() => {
-    uiState.subscribe((x) => {
+    const uiStateUnsub = uiState.subscribe(() => {
       selectedPanel = resolveSavedState() ?? OverviewPanel.FOCUS;
     });
+
+    return () => {
+      uiStateUnsub();
+    };
   });
 </script>
 

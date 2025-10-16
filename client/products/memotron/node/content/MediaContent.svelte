@@ -43,6 +43,16 @@
     if ($node.contentType === NodeType.PDF && e.detail)
       $node.pdfAnnotations = e.detail;
   }
+
+  function onConfigUpdate(e: CustomEvent<any>) {
+    if ($node.contentType === NodeType.PDF && e.detail?.config)
+      node.modify({
+        config: {
+          ...($node.config ?? {}),
+          ...e.detail.config
+        }
+      });
+  }
 </script>
 
 <div class="flex w-full flex-grow cw:mb-8 tp:otop:pt-12">
@@ -68,6 +78,7 @@
         bind:this={contentRef}
         bind:renderingDetails
         on:annotation={onAnnotation}
+        on:configUpdate={onConfigUpdate}
       />
     </main>
   {/if}
