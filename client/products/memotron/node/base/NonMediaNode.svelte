@@ -184,13 +184,17 @@
 >
   {#if $node}
     {#if selectedView === NodeView.CONTENT}
+      {@const isRenderCover =
+        $node.contentType === NodeType.NODULAR_MARKDOWN &&
+        cover &&
+        !$node.focusedBlock}
       {#key refreshId}
         <div
-          class={cn("h-full w-full mo:gap-0 cw:gap-0 gap-4 otop:pt-12", {
-            "flex px-4 justify-center": !isWidened,
+          class={cn("h-full w-full flex mo:gap-0 cw:gap-0 gap-4", {
+            "px-4 otop:pt-12": !isRenderCover,
+            "justify-center": !isWidened,
             "dp:grid dp:grid-cols-[1fr_auto_1fr] dp:gap-2":
               !isWidened && !isConstrainedWidth,
-            "flex px-4": isWidened,
             "px-0": isConstrainedWidth && rightPane !== NodeRightPaneType.NONE
           })}
         >
@@ -203,9 +207,9 @@
                 "dp:min-w-[50rem]": !isWidened && !isConstrainedWidth
               })}
             >
-              {#if $node.contentType === NodeType.NODULAR_MARKDOWN && cover && !$node.focusedBlock}
+              {#if isRenderCover}
                 <div
-                  class="relative flex w-full h-72 justify-center items-center"
+                  class="relative flex w-full cw:h-32 h-72 justify-center items-center"
                   use:hoverable={{
                     onHover: (e) => {
                       isCoverPickerHovered = e;
@@ -264,7 +268,12 @@
                 </div>
               {:else}
                 <main
-                  class="relative flex flex-col gap-6 mo:pr-0 h-full w-full overflow-auto"
+                  class={cn(
+                    "relative flex flex-col gap-6 mo:pr-0 h-full w-full overflow-auto",
+                    {
+                      "cw:px-4": isRenderCover
+                    }
+                  )}
                   on:scroll={onScroll}
                 >
                   {#if !$node.focusedBlock}
