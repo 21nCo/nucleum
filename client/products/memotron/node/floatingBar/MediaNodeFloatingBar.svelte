@@ -176,7 +176,7 @@
                 e.detail === NodeRightPaneType.PROPERTIES ||
                 e.detail === NodeRightPaneType.SIDENOTES ||
                 e.detail === NodeRightPaneType.LINKS ||
-                e.detail === NodeRightPaneType.TRACES
+                e.detail === NodeRightPaneType.BOOKMARKS
               ) {
                 bottomAction = e.detail;
               }
@@ -193,7 +193,7 @@
           {#if $node.contentType !== NodeType.VIDEO && !isConstrainedWidth && $node.accessMode !== ResourceAccessMode.FULL}
             <Button
               {...buttonCommonProps}
-              icon="full-screen"
+              icon="fullscreen"
               tooltip="Full screen"
               on:click={() => {
                 appStore.toggleFullScreen($node.accessMode, $node.id);

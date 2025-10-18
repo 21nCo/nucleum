@@ -27,6 +27,7 @@
     "elements/**/*",
     "stores/**/*",
     "products/**/*",
-    "layout/**/*"
+    "layout/**/*",
+    "extensions/**/*"
   ]
 }

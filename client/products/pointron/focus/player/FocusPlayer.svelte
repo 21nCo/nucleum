@@ -59,9 +59,20 @@
     if ($player.isPipOn) {
       player.togglePip(PointronAction.FOCUS_PLAYER);
     }
+    if (pipWindowRef && pipWindowPageHideHandler) {
+      try {
+        pipWindowRef.removeEventListener("pagehide", pipWindowPageHideHandler);
+      } catch (e) {
+        logger.error({ at: "closePip:removeEventListener", e });
+      }
+    }
+    pipWindowPageHideHandler = null;
     if ("documentPictureInPicture" in window)
       (window.documentPictureInPicture as any).window?.close();
+    pipWindowRef = null;
   }
+  let pipWindowRef: any = null;
+  let pipWindowPageHideHandler: ((event: any) => void) | null = null;
   async function showPip(event: any) {
     event?.stopPropagation();
     if (!playerRef) return;
@@ -81,9 +92,11 @@
           width: playerContainerRef.clientWidth - 20,
           height: playerContainerRef.clientHeight + 80
         });
-        pipWindow.addEventListener("pagehide", (event: any) => {
+        pipWindowPageHideHandler = (_event: any) => {
           closePip();
-        });
+        };
+        pipWindow.addEventListener("pagehide", pipWindowPageHideHandler);
+        pipWindowRef = pipWindow;
 
         [...document.styleSheets].forEach((styleSheet) => {
           try {
@@ -255,7 +268,7 @@
                     }}
                   >
                     <Icon
-                      icon="ph:picture-in-picture-light"
+                      icon="pip"
                       isTabbable={true}
                       isFilled={hoverState.pipHovering}
                       class={cn({

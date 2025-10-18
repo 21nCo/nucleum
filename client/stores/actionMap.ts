@@ -11,7 +11,7 @@ import Signup from "../components/settings/account/Signup.svelte";
 import ToastModalPortrait from "../elements/feedback/ToastModalPortrait.svelte";
 import CommandBar from "../components/commandBar/CommandBar.svelte";
 import { Size } from "../types/size.enum";
-import { Orientation } from "../types/direction.enum";
+import { Orientation, Placement } from "../types/direction.enum";
 import { appStore, intercomId, isInEditMode } from "./app.store";
 import Help from "../components/help/Help.svelte";
 import ExtensionLoginStatusPage from "../components/settings/ExtensionLoginStatusPage.svelte";
@@ -84,6 +84,7 @@ import DataSettings from "../components/settings/DataSettings.svelte";
 import DexieConsole from "../components/debug/DexieConsole.svelte";
 import { AppSearchParam } from "../types/appStore.type";
 import OfflineStatusModal from "../components/settings/sync/OfflineStatusModal.svelte";
+import context from "./context.store";
 
 export const globalActions: IAction[] = [
   {
@@ -436,10 +437,11 @@ export const globalActions: IAction[] = [
     type: ActionType.MODAL,
     isMeta: true,
     modalParams: {
+      isShowOverlay: false,
       layout: {
-        size: Size.md,
-        orientation: Orientation.Horizontal,
-        ignoreSafeArea: true
+        ignoreSafeArea: true,
+        isDynamicSize: true,
+        alignment: Placement.TopCenter
       }
     }
   },
@@ -579,8 +581,8 @@ export const globalActions: IAction[] = [
     type: ActionType.MODAL,
     modalParams: {
       layout: {
-        size: Size.lg,
-        orientation: Orientation.Horizontal,
+        size: Size.md,
+        orientation: Orientation.Vertical,
         ignoreSafeArea: true
       }
     }
@@ -593,7 +595,8 @@ export const globalActions: IAction[] = [
     modalParams: {
       layout: {
         size: Size.xxl,
-        orientation: Orientation.Horizontal
+        orientation: Orientation.Horizontal,
+        isOveriddenFooter: true
       }
     }
   },
@@ -607,7 +610,8 @@ export const globalActions: IAction[] = [
       title: "Create a new combination",
       layout: {
         size: Size.md,
-        orientation: Orientation.Horizontal
+        orientation: Orientation.Horizontal,
+        isOveriddenFooter: true
       }
     }
   },
@@ -731,6 +735,7 @@ export const globalActions: IAction[] = [
     action: Action.INACTIVE_PLAN,
     type: ActionType.MODAL,
     isMeta: true,
+    // label: "inactive plan",
     component: InactivePlan,
     modalParams: {
       isDismissable: false,
@@ -746,11 +751,12 @@ export const globalActions: IAction[] = [
           }
         },
         secondaryAction: {
-          label: "Chat with us",
-          icon: "chat-three",
+          label: "Use offline",
+          icon: "offline",
           variant: ButtonVariant.SECONDARY,
           callback: async () => {
-            appStore.runAction("chat");
+            await context.toggleOfflineMode(true);
+            modalEvent.hide(Action.INACTIVE_PLAN);
           }
         }
       }
@@ -1045,7 +1051,8 @@ export const globalActions: IAction[] = [
     component: OfflineStatusModal,
     modalParams: {
       layout: {
-        size: Size.sm
+        size: Size.sm,
+        isOveriddenFooter: true
       }
     }
   }

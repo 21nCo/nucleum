@@ -62,7 +62,7 @@ import { UIState } from "$lib/client/stores/uiState/uiState.type";
 import view from "$lib/client/stores/view.store";
 
 const defaults: Partial<ICollection> = {
-  type: CollectionType.UNTYPED,
+  type: CollectionType.TYPED,
   typeToExtend: "",
   resource: Resource.node
 };
@@ -72,8 +72,7 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
     super(Resource.collection, {
       dataType: StoreDataType.FIR,
       defaultProps: defaults,
-      indices: ["type", "resource", CollectionObjectKey.typeToExtend],
-      searchIndices: ["label"],
+
       expandProps: [CollectionObjectKey.typeToExtend]
     });
     this.refreshCollectibleResource();
@@ -266,7 +265,6 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
   > {
     const data = await this.selectMany({
       filters: {
-        type: CollectionType.TYPED,
         isCaptureShortcutEnabled: true
       }
     });
@@ -301,7 +299,7 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
   }
 }
 
-export const collectionStore = new CollectionStore();
+export const collectionStore = CollectionStore.resolve(Resource.collection);
 
 export type IActiveCollectionStore = InstanceType<typeof ActiveCollectionStore>;
 
@@ -659,20 +657,6 @@ export function resolveCollectionContextMenu(
           //   callback: async () => {}
           // },
           resourceActions.copyLink(),
-          {
-            value: "convert",
-            icon: "convert",
-            label: "Convert as Simple",
-            callback: async () => {
-              const result = await collectionStore.modify(collection.id, {
-                type: CollectionType.UNTYPED
-              });
-              if (result) {
-                toasts.success("Collection converted to simple");
-              }
-              return result;
-            }
-          },
           ...(!collection.resource || collection.resource === Resource.node
             ? [captureToggle]
             : []),

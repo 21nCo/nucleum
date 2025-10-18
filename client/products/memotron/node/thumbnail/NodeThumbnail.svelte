@@ -37,12 +37,13 @@
   import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
   import NodeThumbnailProperties from "./NodeThumbnailProperties.svelte";
   import type { IProperty } from "$lib/client/components/collection/properties/property.type";
-  import { isValidString } from "$lib/shared/utils/text.utils";
+  import { enumToString, isValidString } from "$lib/shared/utils/text.utils";
   import ImagePreview from "../content/ImagePreview.svelte";
   import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
   import NodeThumbnailTwitterProfilePreview from "./NodeThumbnailTwitterProfilePreview.svelte";
   import Icon from "$lib/client/elements/Icon.svelte";
   import NodeThumbnailSocialPostPreview from "./NodeThumbnailSocialPostPreview.svelte";
+  import CoverRenderer from "$lib/client/elements/coverPicker/CoverRenderer.svelte";
   export let item: INodeThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let isHidePreview: boolean = false;
@@ -71,12 +72,25 @@
   $: isFullExpand =
     isTextClip ||
     socialPostNodeTypeList.has(item.contentType) ||
-    accessPoint === ResourceAccessPoint.NODE_TRACES;
+    (accessPoint === ResourceAccessPoint.NODE_TRACES &&
+      item.contentType !== NodeType.YOUTUBE_BOOKMARK);
   $: isShouldContainImage = resolveIfImageShouldContain(item.contentType);
 
   $: isLinkContext =
     accessPoint === ResourceAccessPoint.NODE_LINKS ||
     accessPoint === ResourceAccessPoint.DEFAULT_RIGHT_PANE_LINKS;
+
+  $: socialFallbackText =
+    socialPostNodeTypeList.has(item.contentType) &&
+    !isValidString(contentPreview)
+      ? `Unknown ${enumToString(item.contentType)}`
+      : undefined;
+
+  $: socialPreviewText = socialPostNodeTypeList.has(item.contentType)
+    ? isValidString(contentPreview)
+      ? contentPreview
+      : socialFallbackText
+    : undefined;
 
   onMount(async () => {
     await resolveUrl();
@@ -120,24 +134,25 @@
           !isApplyCustomColor,
         "bg-bgs2 px-2":
           !isApplyCustomColor &&
-          (accessPoint === ResourceAccessPoint.LIBRARY ||
-            accessPoint === ResourceAccessPoint.NODE_LINKS ||
-            accessPoint === ResourceAccessPoint.DEFAULT_RIGHT_PANE_LINKS),
-        "p-2": isLinkContext
+          (accessPoint === ResourceAccessPoint.LIBRARY || isLinkContext),
+        "pb-2": isLinkContext,
+        "pt-2": isLinkContext && (isFullExpand || filePreview || urlPreview)
       })}
     >
       <button
         class={cn(
           "flex w-full items-center border- rounded--md truncate",
           !isFullExpand && {
-            "h-16": !visibleProps || visibleProps.length === 0
+            "h-16":
+              (!isLinkContext || isFullExpand) &&
+              (!visibleProps || visibleProps.length === 0)
             // "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
             // "bg-bgs2 border-brs3 hover:border-fgs4": !isApplyCustomColor
           }
         )}
         on:click
       >
-        {#if item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType)}
+        {#if item.cover || item.previewImage || (item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType))}
           <div
             class={cn(
               {
@@ -166,6 +181,11 @@
                   // "rounded-full": !isLinkContext
                 })}
               />
+            {:else if item.cover}
+              <CoverRenderer
+                cover={item.cover}
+                class={cn("object-cover h-full w-full rounded-md")}
+              />
             {:else if urlPreview}
               <ImagePreview
                 src={urlPreview}
@@ -185,20 +205,26 @@
             {:else}
               <div
                 class={cn("h-full text-wrap text-left text-b3 overflow-clip", {
-                  "p-1 min-h-12": !isLinkContext && contentPreview
+                  "p-1 min-h-12":
+                    !isLinkContext && (contentPreview || socialPreviewText)
                 })}
               >
-                {#if socialPostNodeTypeList.has(item.contentType) && contentPreview}
+                {#if socialPreviewText}
                   <NodeThumbnailSocialPostPreview
-                    text={contentPreview}
+                    text={socialPreviewText}
                     {accessPoint}
                     contentType={item.contentType}
                   />
                 {:else if isTextClip && contentPreview}
-                  <TextClipPreview node={item} {contentPreview} {accessPoint} />
+                  <TextClipPreview
+                    node={item}
+                    {contentPreview}
+                    {accessPoint}
+                    {arrangement}
+                  />
                 {:else if contentPreview}
                   <span class="text-fgs3 userdata">
-                    {contentPreview}
+                    {@html renderMdAsHtml(contentPreview)}
                   </span>
                 {:else}
                   <div
@@ -220,14 +246,16 @@
                 {accessPoint}
               />
             {/key}
-            <div class="text-b4 text-fgs3 default-typeface">
-              {#if accessPoint === ResourceAccessPoint.CALENDAR}
-                {formatTime($userPreferences, item.createdAt)}
-              {:else}
-                {formatDatetime($userPreferences, item.createdAt)}
-              {/if}
-            </div>
-            {#if visibleProps.length > 0}
+            {#if !isLinkContext}
+              <div class="text-b4 text-fgs3 default-typeface">
+                {#if accessPoint === ResourceAccessPoint.CALENDAR}
+                  {formatTime($userPreferences, item.createdAt)}
+                {:else}
+                  {formatDatetime($userPreferences, item.createdAt)}
+                {/if}
+              </div>
+            {/if}
+            {#if visibleProps.length > 0 && !isLinkContext}
               <div class="py-1">
                 <NodeThumbnailProperties
                   values={item.properties}
@@ -266,6 +294,11 @@
             <span class="text-b2 text-fgs2">
               {@html renderMdAsHtml(item.bodySearch)}
             </span>
+          {:else if item.cover}
+            <CoverRenderer
+              cover={item.cover}
+              class="absolute inset-0 w-full rounded-t-md object-cover h-full"
+            />
           {:else if filePreview}
             <FileView
               file={hasFullFileDetails ? filePreview : undefined}
@@ -293,17 +326,22 @@
           {:else}
             <div class="h-full overflow-clip text-b2">
               {#if isTextClip && contentPreview}
-                <TextClipPreview node={item} {contentPreview} {accessPoint} />
+                <TextClipPreview
+                  node={item}
+                  {contentPreview}
+                  {accessPoint}
+                  {arrangement}
+                />
               {:else if item.contentType === NodeType.AUDIO && _url}
                 <NodeThumbnailAudioPreview url={_url} />
               {:else if contentPreview}
-                <span class="text-fgs3 userdata">
-                  {contentPreview}
-                </span>
+                <div class="text-fgs3 text-left userdata">
+                  {@html renderMdAsHtml(contentPreview)}
+                </div>
               {/if}
             </div>
           {/if}
-          {#if contentPreview && !socialProfileNodeTypeList.has(item.contentType)}
+          {#if !filePreview && contentPreview && !socialProfileNodeTypeList.has(item.contentType)}
             <span
               class={cn(
                 "absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent",
@@ -335,7 +373,12 @@
       </div>
     </ResourceGridThumbnail>
   {:else if arrangement === Arrangement.MASONRY}
-    {#if filePreview}
+    {#if item.cover}
+      <CoverRenderer
+        cover={item.cover}
+        class="absolute inset-0 w-full rounded-t-md object-cover h-full"
+      />
+    {:else if filePreview}
       <FileView
         file={hasFullFileDetails ? filePreview : undefined}
         id={hasFullFileDetails ? undefined : filePreview}
@@ -375,7 +418,12 @@
         class="h-auto p-2 overflow-clip text-wrap max-h-48 text-left text-b3"
       >
         {#if isTextClip}
-          <TextClipPreview node={item} {contentPreview} {accessPoint} />
+          <TextClipPreview
+            node={item}
+            {contentPreview}
+            {accessPoint}
+            {arrangement}
+          />
         {:else if socialPostNodeTypeList.has(item.contentType)}
           <span class="text-fgs3">
             <NodeThumbnailSocialPostPreview
@@ -387,7 +435,11 @@
           </span>
         {:else}
           <span class="text-fgs3 userdata">
-            {contentPreview}
+            {#if item.contentType === NodeType.NODULAR_MARKDOWN}
+              {@html renderMdAsHtml(contentPreview)}
+            {:else}
+              {contentPreview}
+            {/if}
           </span>
         {/if}
       </div>

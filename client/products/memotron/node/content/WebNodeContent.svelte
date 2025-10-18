@@ -79,7 +79,11 @@
     <SocialSubContent {node} />
   {:else if node.contentType === NodeType.KINDLE_BOOK}
     <KindleBookPreview {node} />
-  {:else if (node.contentType === NodeType.YOUTUBE_VIDEO || node.contentType === NodeType.YOUTUBE_BOOKMARK) && node.url}
+  {:else if ((
+      node.contentType === NodeType.YOUTUBE_VIDEO ||
+      node.contentType === NodeType.YOUTUBE_SHORT ||
+      node.contentType === NodeType.YOUTUBE_BOOKMARK
+    ) && node.url)}
     <YoutubeVideoPreview
       url={node.url}
       timestamp={node.body && "timestamp" in node.body

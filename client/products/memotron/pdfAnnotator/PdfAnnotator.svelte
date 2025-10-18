@@ -20,7 +20,7 @@
     viewportToScaled
   } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.utils";
   import { debouncer } from "$lib/client/utils/utils";
-  import { onMount, createEventDispatcher } from "svelte";
+  import { onMount, onDestroy, createEventDispatcher } from "svelte";
   import TextHiglighter from "./TextHiglighter.svelte";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import InlineToolBar from "./toolbar/InlineToolBar.svelte";
@@ -42,10 +42,12 @@
   import { fileStore } from "$lib/client/components/files/file.store";
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import { fileEmbedChannel } from "$lib/client/components/files/fileEmbedChannel.store";
+  import { fly } from "svelte/transition";
+  import type { IPdfBookmarkBody } from "$lib/client/products/memotron/node/node.type";
   const dispatch = createEventDispatcher();
   export let url: string;
   export let node: any;
-  export let annots: any[] = [];
+  export let annots: IPdfBookmarkBody[] = [];
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
 
   const pdfPersistence = new PdfHandler(node.id);
@@ -66,7 +68,6 @@
   const mouseUpHandler = (event: any) =>
     handleMouseUp(event, viewerContainerElement);
   let shapeVisible = false;
-
   /**
    * render variables
    * DPR-Device Pixel Ratio
@@ -74,20 +75,22 @@
   let DPR = window.devicePixelRatio;
   let ranOnce: boolean = false;
   let scale: number =
-    $context.os == OperatingSystem.WINDOWS
+    node?.config?.pdfScale ??
+    ($context.os == OperatingSystem.WINDOWS
       ? 1
       : $context.os == OperatingSystem.IOS && $context.embed === Embed.HANDSET
         ? 0.15
         : $context.os == OperatingSystem.IOS && $context.embed === Embed.TABLET
           ? 0.3
-          : 0.5;
+          : 0.5);
   const MIN_SCALE = $context.os == OperatingSystem.WINDOWS ? 0.5 : 0.1;
   const MAX_SCALE = $context.os == OperatingSystem.WINDOWS ? 2.3 : 1.8;
   let scrollTop = 0;
-  let pageNumber = 1;
-  let totalPages = 1;
+  let pageNumber = node?.config?.pdfPage ?? 1;
   let annotationMode: AnnotationType = AnnotationType.NONE;
-  enum SpreadModes { //init display modes.
+  let isSearchActive = false;
+  enum SpreadModes {
+    //init display modes.
     "NONE",
     "ODD",
     "EVEN"
@@ -129,9 +132,9 @@
   let selectedColor = $highlightStore.highlighters[0].id;
   let annotClickedComment = "";
   let clickBoundingRect: LTWH | null;
-  $: if (pdfViewer) {
-    pdfViewer.eventBus.on("textlayerrendered", renderHighlightLayers);
-  }
+  let eventBusViewer: any = null;
+  let textLayerRenderedHandler: (() => void) | null = null;
+  let findControlStateHandler: ((data: any) => void) | null = null;
   let pdfDocument: any;
 
   let mainRects: any = [];
@@ -241,10 +244,7 @@
     annotation.startPageNumber = startPageNumber;
     annotation.endPageNumber = endPageNumber;
     await pdfPersistence.saveClip(annotation);
-    annots = (await pdfPersistence.fetchAllClips()).sort(
-      (a: any, b: any) => a.startPageNumber - b.startPageNumber
-    );
-    dispatch("annotation", annots);
+    await refreshAnnotations();
     renderHighlightLayers();
     if (removeAllRanges) removeAllRanges();
     annotation = {};
@@ -413,7 +413,6 @@
       ranOnce = true;
     }
     scale = pdfViewer.currentScale;
-    totalPages = pdfViewer.pagesCount;
     for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber++) {
       // if (!pageNumbers.includes(pageNumber)) {
       //   pageNumbers.push(pageNumber);
@@ -455,10 +454,7 @@
     else deleteAnnot = annotClickedId;
     await pdfPersistence.deleteClip(deleteAnnot);
     annotClickedComment = "";
-    annots = (await pdfPersistence.fetchAllClips()).sort(
-      (a: any, b: any) => a.startPageNumber - b.startPageNumber
-    );
-    dispatch("annotation", annots);
+    await refreshAnnotations();
     renderHighlightLayers();
     isInlineEditBarVisible = false;
   }
@@ -468,12 +464,15 @@
    * @param highlighter
    */
   async function handleColorChange(highlighter: IHighlighter) {
-    await pdfPersistence.updateClip(annotClickedId, { color: highlighter.id });
+    const annotation = annots.find((annot: any) => annot.id === annotClickedId);
+    if (!annotation) return;
+    annotation.color = highlighter.id;
+    await pdfPersistence.updateClip(annotClickedId, {
+      ...annotation,
+      color: highlighter.id
+    });
     selectedColor = highlighter.id;
-    annots = (await pdfPersistence.fetchAllClips()).sort(
-      (a: any, b: any) => a.startPageNumber - b.startPageNumber
-    );
-    dispatch("annotation", annots);
+    await refreshAnnotations();
     renderHighlightLayers();
     isInlineEditBarVisible = false;
   }
@@ -483,12 +482,15 @@
    * @param comment
    */
   async function handleUpdateComment(comment: string) {
-    await pdfPersistence.updateClip(annotClickedId, { comment: comment });
+    const annotation = annots.find((annot: any) => annot.id === annotClickedId);
+    if (!annotation) return;
+    annotation.comment = comment;
+    await pdfPersistence.updateClip(annotClickedId, {
+      ...annotation,
+      comment: comment
+    });
     annotClickedComment = "";
-    annots = (await pdfPersistence.fetchAllClips()).sort(
-      (a: any, b: any) => a.startPageNumber - b.startPageNumber
-    );
-    dispatch("annotation", annots);
+    await refreshAnnotations();
     renderHighlightLayers();
   }
 
@@ -517,45 +519,6 @@
       source: "searchFunctionality",
       type: "find",
       ...searchParams
-    });
-
-    // pdfViewer.eventBus.on("updatefindmatchescount", function (data) {
-    //   console.log("Matches found:", data.matchesCount);
-    // });
-    // // pdfViewer.eventBus.on("updatefindcontrolstate", function (data) {
-    // //   console.log("Search state updated:", data.state);
-    // // });
-
-    pdfViewer.eventBus.on("updatefindcontrolstate", function (data) {
-      if (data.state === FindState.FOUND || data.state === FindState.WRAPPED) {
-        // console.log(
-        //   "element selected",
-        //   document.getElementsByClassName("highlight selected")[0]
-        // );
-        // pdfViewer.findController.scrollMatchIntoView({
-        //   // element: document.getElementById(`match-${data.currentMatchIndex}`),
-        //   element: document.getElementsByClassName("highlight selected")[0],
-        //   pageIndex: data.currentPageIndex
-        // });
-        const element =
-          document.getElementsByClassName("highlight selected")[0];
-        let top = element?.scrollTop;
-        // console.log("scrolltop element ", top, element?.clientTop);
-        if (element) {
-          viewerContainerElement.scrollTo({
-            top: top,
-            left: 0,
-            behavior: "smooth"
-          });
-          // console.log("element present", element);
-
-          // element?.scrollIntoView({
-          //   behavior: "smooth",
-          //   block: "start",
-          //   inline: "nearest"
-          // });
-        }
-      }
     });
 
     // pdfViewer.eventBus.on("updatetextlayermatches", function (data) {
@@ -618,6 +581,50 @@
     });
   }
 
+  function resetSearch() {
+    const clearParams = {
+      ...searchParams,
+      query: "",
+      highlightAll: false,
+      findPrevious: false
+    };
+    searchText = "";
+    if (pdfViewer?.eventBus) {
+      pdfViewer.eventBus.dispatch("find", {
+        source: "searchFunctionality",
+        type: "find",
+        ...clearParams
+      });
+    }
+  }
+
+  function handleSearchToggle(isActive: boolean) {
+    isSearchActive = isActive;
+    if (!isActive) {
+      resetSearch();
+    }
+  }
+
+  function handlePageNavigation(targetPage: number) {
+    if (!pdfViewer) return;
+    const clampedPage = Math.min(
+      Math.max(targetPage, 1),
+      pdfViewer.pagesCount || 1
+    );
+
+    pageNumber = clampedPage;
+    if (pdfViewer.currentPageNumber !== clampedPage) {
+      pdfViewer.currentPageNumber = clampedPage;
+    }
+
+    const linkService = pdfViewer.linkService ?? pdfViewer._linkService;
+    if (linkService?.goToPage) {
+      linkService.goToPage(clampedPage);
+    } else if (pdfViewer.scrollPageIntoView) {
+      pdfViewer.scrollPageIntoView({ pageNumber: clampedPage });
+    }
+  }
+
   /**
    * Fix for PDF getting cropped/skewed in larger screens for deployed version.
    */
@@ -630,28 +637,45 @@
    * To handle events provided by pdfjs library itself, for now used for zooming later rotation can also be added here.
    * @param option
    */
-  function handleRenderOptions(option: string) {
+  async function handleRenderOptions(option: string) {
     if (option === "ZOOMIN") {
       if (scale <= MAX_SCALE) {
         scale = scale + 0.1;
         pdfViewer.currentScale = scale;
         updateScaleFactor();
+        await persistPdfState();
       }
     } else if (option === "ZOOMOUT") {
       if (scale >= MIN_SCALE) {
         scale = scale - 0.1;
         pdfViewer.currentScale = scale;
         updateScaleFactor();
+        await persistPdfState();
       }
     }
+  }
+
+  async function persistPdfState() {
+    if (!node?.id) return;
+    dispatch("configUpdate", {
+      config: {
+        pdfScale: scale,
+        pdfPage: pageNumber
+      }
+    });
   }
 
   /**
    * To get the current page number and the scroll top value whenever a scroll event happens
    */
+  const debouncedPersistPdfState = debouncer(async () => {
+    await persistPdfState();
+  }, 1000);
+
   function handleScroll(event: any) {
     pageNumber = pdfViewer.currentPageNumber;
     scrollTop = event?.target?.scrollTop || scrollTop;
+    debouncedPersistPdfState();
   }
   /**
    * To get the coordinates of the mousedown or mouseup relative to the pdf viewer container used for drawing shapes
@@ -830,6 +854,68 @@
     renderHighlightLayers();
   }
 
+  const detachPdfViewerListeners = () => {
+    if (eventBusViewer?.eventBus?.off) {
+      if (textLayerRenderedHandler) {
+        eventBusViewer.eventBus.off(
+          "textlayerrendered",
+          textLayerRenderedHandler
+        );
+      }
+      if (findControlStateHandler) {
+        eventBusViewer.eventBus.off(
+          "updatefindcontrolstate",
+          findControlStateHandler
+        );
+      }
+    }
+    eventBusViewer = null;
+    textLayerRenderedHandler = null;
+    findControlStateHandler = null;
+  };
+
+  const handleFindControlStateUpdate = (data: any) => {
+    if (data?.state === FindState.FOUND || data?.state === FindState.WRAPPED) {
+      const element = document.getElementsByClassName(
+        "highlight selected"
+      )[0] as HTMLElement | undefined;
+      if (element && viewerContainerElement) {
+        const containerRect = viewerContainerElement.getBoundingClientRect();
+        const elRect = element.getBoundingClientRect();
+        const offset = 100;
+        const targetTop =
+          viewerContainerElement.scrollTop +
+          (elRect.top - containerRect.top) -
+          offset;
+        viewerContainerElement.scrollTo({
+          top: Math.max(0, targetTop),
+          left: 0,
+          behavior: "smooth"
+        });
+      }
+    }
+  };
+
+  async function refreshAnnotations() {
+    annots = (await pdfPersistence.fetchAllClips())
+      .filter((annot: any) => annot.startPageNumber)
+      .sort((a: any, b: any) => a.startPageNumber - b.startPageNumber);
+    dispatch("annotation", annots);
+  }
+
+  $: {
+    if (pdfViewer) {
+      detachPdfViewerListeners();
+      eventBusViewer = pdfViewer;
+      textLayerRenderedHandler = renderHighlightLayers;
+      findControlStateHandler = handleFindControlStateUpdate;
+      pdfViewer.eventBus.on("textlayerrendered", textLayerRenderedHandler);
+      pdfViewer.eventBus.on("updatefindcontrolstate", findControlStateHandler);
+    } else {
+      detachPdfViewerListeners();
+    }
+  }
+
   /**
    * Getting viewerContainer that is the parent of the pdf viewer to listen to scroll events and get scroll properties later on.
    * Adding event listeners for selection change, keydown, mousedown and scroll
@@ -837,34 +923,52 @@
    * keydown for escape key to close the inline toolbar
    * mousedown for on spot annotations(Task and Comment)
    */
+  let onViewerMouseDown: ((event: MouseEvent) => void) | null = null;
   onMount(async () => {
-    annots = (await pdfPersistence.fetchAllClips()).sort(
-      (a: any, b: any) => a.startPageNumber - b.startPageNumber
-    );
-    dispatch("annotation", annots);
+    await refreshAnnotations();
     viewerContainerElement = document.getElementById("viewerContainer")!;
     document.addEventListener("keydown", handleKeyDown);
-    viewerContainerElement?.addEventListener("mousedown", (event) =>
-      handleMouseDown(event, viewerContainerElement)
-    );
+    onViewerMouseDown = (event: MouseEvent) =>
+      handleMouseDown(event, viewerContainerElement);
+    viewerContainerElement?.addEventListener("mousedown", onViewerMouseDown);
     viewerContainerElement?.addEventListener("scroll", handleScroll);
     viewerContainerElement?.addEventListener("mousemove", handleMouseMove);
+
+    if (node?.config?.pdfPage) {
+      restorePagePosition();
+    }
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      viewerContainerElement?.addEventListener("mousedown", (event) =>
-        handleMouseDown(event, viewerContainerElement)
-      );
+      if (onViewerMouseDown) {
+        viewerContainerElement?.removeEventListener(
+          "mousedown",
+          onViewerMouseDown
+        );
+      }
       viewerContainerElement?.removeEventListener("scroll", handleScroll);
-
-      viewerContainerElement.removeEventListener("mousemove", handleMouseMove);
+      viewerContainerElement?.removeEventListener("mousemove", handleMouseMove);
+      detachPdfViewerListeners();
     };
+  });
+
+  function restorePagePosition() {
+    if (node?.config?.pdfPage && pdfViewer) {
+      setTimeout(() => {
+        handlePageNavigation(+node.config.pdfPage);
+      }, 100);
+    }
+  }
+
+  onDestroy(() => {
+    detachPdfViewerListeners();
   });
 </script>
 
 <div class="relative flex flex-col h-full w-full">
-  {#if $context.embed !== Embed.HANDSET && $context.os !== OperatingSystem.IOS}
+  {#if $context.embed !== Embed.HANDSET && $context.os !== OperatingSystem.IOS && isSearchActive}
     <div
       class="flex items-center justify-between w-full h-14 px-4 gap-8 border-b border-b-brs2"
+      in:fly={{ y: -20, duration: 300 }}
     >
       <div class="flex gap-6 items-center justify-between search-bar flex-1">
         <div class="w-6/10 flex gap-4 items-center">
@@ -890,8 +994,8 @@
           </div>
           <!-- <button on:click={onSearch}>Search</button> -->
           <div class="flex gap-2 items-center">
-            <Button icon="chevdown" on:click={findNext} />
-            <Button icon="chevup" on:click={findPrevious} />
+            <Button icon="chevron-down" on:click={findNext} />
+            <Button icon="chevron-up" on:click={findPrevious} />
           </div>
         </div>
         <!-- <input type="text" bind:value={searchText} placeholder="Search text" /> -->
@@ -959,7 +1063,14 @@
     </div>
   {/if}
   <div class="w-full flex-1">
-    <PdfViewer bind:pdfViewer bind:pdfDocument bind:scale {url}
+    <PdfViewer
+      bind:pdfViewer
+      bind:pdfDocument
+      bind:scale
+      {url}
+      on:ready={() => {
+        restorePagePosition();
+      }}
       >{#if shapeVisible}
         <div
           style="position:absolute;top: {clickBoundingRect?.top}px; left: {clickBoundingRect?.left}px; width: {clickBoundingRect?.width}px; height: {clickBoundingRect?.height}px; border: 2px solid red;z-index:1000;pointer-events:none;"
@@ -1031,9 +1142,12 @@
       bind:selectedAnnotationMode={annotationMode}
       bind:selectedColor
       {pageNumber}
-      {totalPages}
+      totalPages={pdfViewer?.pagesCount ?? 1}
       {accessPoint}
+      {isSearchActive}
       on:pageRerender={(event) => handleRenderOptions(event.detail)}
+      on:searchToggle={(event) => handleSearchToggle(event.detail)}
+      on:goToPage={(event) => handlePageNavigation(event.detail.page)}
     />
   </div>
 </div>

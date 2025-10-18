@@ -16,9 +16,16 @@ import type { Resource } from "../flux/resourceStores/resource.enum";
 import type { IGoalThumb } from "../goals/goal.type";
 
 export enum CollectionType {
+  /**
+   * All collection will have the ability for properties, templates etc. Therefore the older version "TYPED" collection is deprecated and is now "DEFAULT"
+   */
   TYPED = "TYPED",
+  /**
+   * @deprecated
+   */
   UNTYPED = "UNTYPED",
-  QUERY = "QUERY"
+  QUERY = "QUERY",
+  SYNCED = "SYNCED"
 }
 
 export enum CollectionLayout {

@@ -42,6 +42,7 @@
   import { logger } from "$lib/client/components/debug/logger.client";
   import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
   import Button from "$lib/client/elements/button/Button.svelte";
+  import ModalContentPadded from "$lib/client/components/modal/ModalContentPadded.svelte";
 
   export let id: string;
   export let log: any = undefined;
@@ -108,89 +109,94 @@
   <div
     class="flex flex-col gap-6 flex-grow w-full items-center userdata otop:pt-12"
   >
-    <div class="flex gap-4 w-full items-center justify-between">
-      <Text content="Session details" style={TextStyle.PANEL_HEADING} />
-      {#if accessMode === ResourceAccessMode.SPLIT || accessMode === ResourceAccessMode.FSPLIT || $view.isConstrainedWidth}
-        <Button
-          icon="cross"
-          style={ButtonStyle.OUTLINED}
-          tooltip="Close"
-          on:click={() => appStore.closeResource({ accessMode })}
-        />
-      {/if}
-    </div>
-    <LogIntervalBar {log} />
-    {#if log?.plannedEndUnix && !isSameDateTime( new Date(log.endUnix), new Date(log.plannedEndUnix), { isIgnoreSeconds: true } ) && new Date(log.endUnix).getTime() < new Date(log.plannedEndUnix).getTime()}
-      <InlineInfoBanner>
-        <span>
-          This Session was planned to end at <b>
-            {formatTime($userPreferences, new Date(log.plannedEndUnix))}</b
-          >
-          but was finished early at
-          <b>{formatTime($userPreferences, new Date(log.endUnix))}.</b>
-        </span>
-      </InlineInfoBanner>
-    {/if}
-    {#if log.type === SessionType.MANUAL_ENTRY && log.modifiedAt}
-      <span class="text-fgs2 text-b2">
-        This session was created from a manual entry at
-        <b>{formatDatetime($userPreferences, new Date(log.modifiedAt))}</b>
-      </span>
-    {/if}
-    <div class="flex flex-col gap-6 w-full flex-grow items-center">
-      <div>
-        <PanelSwitcher
-          items={["Summary", "Notes"]}
-          style={PanelSwitcherStyle.TRAIN}
-          bind:value={selectedTab}
-          activeItemStrength={PanelSwitcherActiveItemStrength.SUBTLE}
-        />
+    <ModalContentPadded
+      class="flex flex-col gap-6 flex-grow w-full items-center"
+    >
+      <div class="flex gap-4 w-full items-center justify-between">
+        <Text content="Session details" style={TextStyle.PANEL_HEADING} />
+        {#if accessMode === ResourceAccessMode.SPLIT || accessMode === ResourceAccessMode.FSPLIT || $view.isConstrainedWidth}
+          <Button
+            icon="cross"
+            style={ButtonStyle.OUTLINED}
+            tooltip="Close"
+            on:click={() => appStore.closeResource({ accessMode })}
+          />
+        {/if}
       </div>
-      {#if selectedTab === "Notes" && isValidMarkdown(log.notes)}
-        <div class="flex flex-col h-full w-full rounded-md overflow-auto">
-          <Markdown
-            md={log.notes}
-            params={{
-              isReadOnly: true,
-              actions: ["copy"],
-              title: "Think Notes"
-            }}
+      <LogIntervalBar {log} />
+      {#if log?.plannedEndUnix && !isSameDateTime( new Date(log.endUnix), new Date(log.plannedEndUnix), { isIgnoreSeconds: true } ) && new Date(log.endUnix).getTime() < new Date(log.plannedEndUnix).getTime()}
+        <InlineInfoBanner>
+          <span>
+            This Session was planned to end at <b>
+              {formatTime($userPreferences, new Date(log.plannedEndUnix))}</b
+            >
+            but was finished early at
+            <b>{formatTime($userPreferences, new Date(log.endUnix))}.</b>
+          </span>
+        </InlineInfoBanner>
+      {/if}
+      {#if log.type === SessionType.MANUAL_ENTRY && log.modifiedAt}
+        <span class="text-fgs2 text-b2">
+          This session was created from a manual entry at
+          <b>{formatDatetime($userPreferences, new Date(log.modifiedAt))}</b>
+        </span>
+      {/if}
+      <div class="flex flex-col gap-6 w-full flex-grow items-center">
+        <div>
+          <PanelSwitcher
+            items={["Summary", "Notes"]}
+            style={PanelSwitcherStyle.TRAIN}
+            bind:value={selectedTab}
+            activeItemStrength={PanelSwitcherActiveItemStrength.SUBTLE}
           />
         </div>
-      {:else if selectedTab === "Notes"}
-        <EmptyStatusView
-          size={Size.sm}
-          subText="No notes taken during this session"
-        />
-      {:else}
-        <div class="flex flex-col gap-6 overflow-auto w-full flex-grow">
-          <LogTotals {log} />
-          <div class="flex flex-col items-start gap-2 w-full">
-            <Text content="Focus items" style={TextStyle.SECTION_HEADING} />
-            <div class="flex flex-col gap-2 h-full w-full pb-40">
-              {#if log.items.length > 0}
-                {#each focusItems as item (item.id)}
-                  <FocusItem
-                    focusItem={item}
-                    {goals}
-                    {tasks}
-                    focusItemsList={log.items}
-                    intervals={log.blocks}
-                    contxt="history"
+        {#if selectedTab === "Notes" && isValidMarkdown(log.notes)}
+          <div class="flex flex-col h-full w-full rounded-md overflow-auto">
+            <Markdown
+              md={log.notes}
+              params={{
+                isReadOnly: true,
+                actions: ["copy"],
+                title: "Think Notes"
+              }}
+            />
+          </div>
+        {:else if selectedTab === "Notes"}
+          <EmptyStatusView
+            size={Size.sm}
+            subText="No notes taken during this session"
+          />
+        {:else}
+          <div class="flex flex-col gap-6 overflow-auto w-full flex-grow">
+            <LogTotals {log} />
+            <div class="flex flex-col items-start gap-2 w-full">
+              <Text content="Focus items" style={TextStyle.SECTION_HEADING} />
+              <div class="flex flex-col gap-2 h-full w-full pb-40">
+                {#if log.items.length > 0}
+                  {#each focusItems as item (item.id)}
+                    <FocusItem
+                      focusItem={item}
+                      {goals}
+                      {tasks}
+                      focusItemsList={log.items}
+                      intervals={log.blocks}
+                      contxt="history"
+                    />
+                  {/each}
+                {:else}
+                  <EmptyStatusView
+                    size={Size.sm}
+                    {isLoadingState}
+                    subText="No focus items found"
                   />
-                {/each}
-              {:else}
-                <EmptyStatusView
-                  size={Size.sm}
-                  {isLoadingState}
-                  subText="No focus items found"
-                />
-              {/if}
+                {/if}
+              </div>
             </div>
           </div>
-        </div>
-      {/if}
-    </div>
+        {/if}
+      </div>
+    </ModalContentPadded>
+
     <ModalFooter
       action={Resource.session + "-resource"}
       primaryAction={{
@@ -202,6 +208,11 @@
             componentParams: { id: log.id }
           });
         }
+      }}
+      secondaryAction={{
+        label: "Close",
+        icon: "cross",
+        callback: async () => appStore.closeResource({ accessMode })
       }}
     />
   </div>

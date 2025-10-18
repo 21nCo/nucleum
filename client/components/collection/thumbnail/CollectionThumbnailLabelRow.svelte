@@ -25,7 +25,7 @@
   })}
 >
   <div
-    class={cn({
+    class={cn("text-b2",{
       "flex items-center gap-3 min-w-0": arrangement === Arrangement.LIST,
       "flex w-full justify-between":
         arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY

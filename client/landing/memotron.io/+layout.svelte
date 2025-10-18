@@ -44,7 +44,7 @@
     cta: [
       {
         label: "",
-        href: "https://github.com/21nOrg/nucleus",
+        href: "https://github.com/21nOrg/tidigit",
         icon: "ph:github-logo",
         type: "secondary"
       },

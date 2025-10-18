@@ -20,7 +20,7 @@
   export let isConstrainedWidth: boolean = false;
   export let rightPane: NodeRightPaneType | undefined =
     $node?.contentType === NodeType.PDF && !isConstrainedWidth
-      ? NodeRightPaneType.TRACES
+      ? NodeRightPaneType.BOOKMARKS
       : undefined;
   let renderingDetails: any;
   let contentRef: MediaContentResolver;
@@ -42,6 +42,16 @@
   function onAnnotation(e: CustomEvent<any[]>) {
     if ($node.contentType === NodeType.PDF && e.detail)
       $node.pdfAnnotations = e.detail;
+  }
+
+  function onConfigUpdate(e: CustomEvent<any>) {
+    if ($node.contentType === NodeType.PDF && e.detail?.config)
+      node.modify({
+        config: {
+          ...($node.config ?? {}),
+          ...e.detail.config
+        }
+      });
   }
 </script>
 
@@ -68,6 +78,7 @@
         bind:this={contentRef}
         bind:renderingDetails
         on:annotation={onAnnotation}
+        on:configUpdate={onConfigUpdate}
       />
     </main>
   {/if}

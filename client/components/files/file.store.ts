@@ -19,8 +19,6 @@ import account from "$lib/client/stores/account.store";
 class FileStore extends ResourceStore<IFile, IFileCapture> {
   constructor() {
     super(Resource.file, {
-      indices: ["type"],
-      searchIndices: ["label"],
       defaultProps: {
         type: ""
       }
@@ -198,4 +196,4 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
   }
 }
 
-export const fileStore = new FileStore();
+export const fileStore = FileStore.resolve(Resource.file);

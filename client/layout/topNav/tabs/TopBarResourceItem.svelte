@@ -27,6 +27,8 @@
   import Button from "$lib/client/elements/button/Button.svelte";
   import { AppSearchParam } from "$lib/client/types/appStore.type";
   import context from "$lib/client/stores/context.store";
+  import { ResourceActions } from "$lib/client/components/record/resource.actions";
+  import { resolveResourceStore } from "$lib/client/components/flux/resourceStores/store.resolver";
   const dispatch = createEventDispatcher();
   export let item: IRecordId;
   export let isInterimTab: boolean = false;
@@ -34,12 +36,14 @@
   let action: any;
   let isHovering: boolean = false;
   let resourceType: Resource = Resource.unknown;
+  const dev_isFullHeightTabStyle = true;
   let contextMenu = [
     {
       group: "all",
       items: [
         {
           value: "remove",
+          label: "Remove from tabs",
           icon: "cross",
           callback: async () => uiState.removeResourceFromTabs(item)
         }
@@ -55,7 +59,19 @@
   });
 
   function resolveContextMenu() {
-    return contextMenu;
+    const resourceStore = resolveResourceStore(resourceType);
+    if (!resource || !resourceStore) return contextMenu;
+    const resourceActions = new ResourceActions(resource, resourceStore, {
+      accessPoint: ResourceAccessPoint.SELF,
+      accessMode: ResourceAccessMode.TAB
+    });
+    return [
+      ...contextMenu,
+      {
+        group: "open",
+        items: [resourceActions.openAsSplit(), resourceActions.openAsFull()]
+      }
+    ];
   }
 
   function handleRearrange(displacement: number) {
@@ -67,7 +83,12 @@
   }
 </script>
 
-<div class="p-1 border--x border--r-brs3 border-l-transparent max-h-full">
+<div
+  class={cn("border--x border--r-brs3 border-l-transparent max-h-full", {
+    "h-full": !isInterimTab && dev_isFullHeightTabStyle,
+    "p-1": !dev_isFullHeightTabStyle || isInterimTab
+  })}
+>
   <button
     use:popover={{
       placement: Placement.BottomCenter,
@@ -87,14 +108,21 @@
       threshold: 30
     }}
     class={cn(
-      "relative flex items-center rounded-md text-b2 gap-2 max-w-48 min-w-20 truncate",
+      "relative flex items-center text-b2 gap-2 max-w-48 min-w-20 truncate",
       // abg(isActive, 1),
       {
+        "rounded-md": !dev_isFullHeightTabStyle || isInterimTab,
         "px-4 py-1.5": !isInterimTab,
         "px-2 py-0.5 border border-dashed border-fgs4": isInterimTab,
         "hover:bg-bgs3 text-fgs2 hover:text-fgs1": !isActive,
         "bg-bgs1": isActive
-      }
+      },
+      !isInterimTab &&
+        dev_isFullHeightTabStyle && {
+          "h-full border-b": true,
+          "border-transparent": !isActive,
+          "border-aps1": isActive
+        }
     )}
     on:click
   >

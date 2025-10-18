@@ -116,7 +116,7 @@
 {:else}
   {#key $captureStore.refreshId}
     <div
-      class="w-full h-full flex justify-center"
+      class="w-full h-full flex justify-center otop:pt-12"
       id={`mdcontainer-${$captureStore.id}`}
     >
       <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">

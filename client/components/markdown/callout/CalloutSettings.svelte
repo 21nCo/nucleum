@@ -3,7 +3,6 @@
   import ColorPickerMini from "$lib/client/elements/colorPicker/ColorPickerMini.svelte";
   import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
   import Table2 from "$lib/client/elements/table/Table2.svelte";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
   import Text from "$lib/client/elements/text/Text.svelte";
   import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
   import {
@@ -20,7 +19,7 @@
   import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
   import ModalFooter from "../../modal/ModalFooter.svelte";
   import { markdownSettings } from "../markdown.settings";
-
+  import ModalContentPadded from "$lib/client/components/modal/ModalContentPadded.svelte";
   let previewId: string | undefined = $markdownSettings.callout[0]?.id;
   let error: string | undefined = undefined;
   const columns: TableColumn[] = [
@@ -106,7 +105,7 @@
 </script>
 
 <div class="flex flex-col gap-4 w-full h-full">
-  <div class="w-full flex flex-1 overflow-y-auto">
+  <ModalContentPadded class="w-full flex flex-1 overflow-y-auto">
     <Table2
       {columns}
       bind:data={$markdownSettings.callout}
@@ -114,7 +113,7 @@
       addAction="Add"
       on:add={addCallout}
     />
-  </div>
+  </ModalContentPadded>
   <!-- Callout Preview -->
   {#if previewId}
     {@const preview = $markdownSettings.callout.find(
@@ -122,10 +121,10 @@
     )}
     <CustomColorPropagator
       color={preview?.color}
-      class="flex flex-col gap-3 w-full text-left border border-brs2 rounded-md p-4"
+      class="flex flex-col gap-3 w-full text-left border-t p-4"
     >
       <Text
-        content={`Preview for "${preview?.label ?? "Untitled Callout"}"`}
+        content={`Preview for **${preview?.label ?? "Untitled Callout"}** callout - Click on the play button to preview it here.`}
         style={TextStyle.SECTION_HEADING_SMALL}
       />
       <div
@@ -145,9 +144,10 @@
       </div>
     </CustomColorPropagator>
   {/if}
-  <InlineErrorMessage bind:error />
+
   <ModalFooter
     action={MemotronAction.CALLOUT_SETTINGS}
+    bind:error
     primaryAction={{
       label: "Save",
       callback: onSave

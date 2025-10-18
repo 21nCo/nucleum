@@ -332,7 +332,7 @@
           Press
           <ShortcutText
             shortcut={Action.CLOSE}
-            parentBgIndex={1}
+            parentBgIndex={2}
             isAlwaysShown={true}
           />
           to close
@@ -343,9 +343,9 @@
             <ShortcutText
               shortcut={{
                 key: KeyboardKey.ARROW_RIGHT,
-                modifiers: [ModifierKey.META]
+                modifiers: [ModifierKey.META, ModifierKey.SHIFT]
               }}
-              parentBgIndex={1}
+              parentBgIndex={2}
               isAlwaysShown={true}
             /> to switch between result groups
           </span>

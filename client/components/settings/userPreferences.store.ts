@@ -117,5 +117,6 @@ class UserPreferencesStore extends KeyValueStore<IUserGlobalPreferences> {
     this.modify({ ...x });
   }
 }
-
-export const userPreferences = new UserPreferencesStore();
+export const userPreferences = UserPreferencesStore.resolve(
+  Resource.globalPreferences
+);

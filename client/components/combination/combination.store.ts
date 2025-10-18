@@ -6,17 +6,18 @@ import {
 import type { IRecordId } from "$lib/client/types/data.type";
 import type { IActiveCombination, ICombination } from "./combination.type";
 
-class CombinationStore extends ResourceStore<ICombination> {
+class CombinationStore extends ResourceStore<ICombination, ICombination> {
   constructor() {
     super(Resource.combination);
   }
 }
 
-export const combinationStore = new CombinationStore();
+export const combinationStore = CombinationStore.resolve(Resource.combination);
 
 export class ActiveCombinationStore extends ActiveResourceStore<
   IActiveCombination,
-  CombinationStore
+  CombinationStore,
+  ICombination
 > {
   constructor(combinationId: IRecordId) {
     super(combinationId, combinationStore);

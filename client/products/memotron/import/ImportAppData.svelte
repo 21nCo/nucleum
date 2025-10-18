@@ -164,8 +164,10 @@
     }
   }
 
+  let progressInterval: ReturnType<typeof setInterval> | null = null;
   function keepIncreasingProgress() {
-    const interval = setInterval(() => {
+    if (progressInterval) clearInterval(progressInterval);
+    progressInterval = setInterval(() => {
       if (tempFileList) {
         tempFileList = tempFileList?.map((item) => {
           if (item.uploadProgress < 90) {
@@ -178,7 +180,7 @@
         });
 
         if (isEverythingUploaded) {
-          clearInterval(interval);
+          if (progressInterval) clearInterval(progressInterval);
           tempFileList = tempFileList.map((item) => {
             return {
               ...item,
@@ -269,8 +271,10 @@
       toasts.success(
         `Successfully imported ${totalCreated} items from ${config.name} archive`
       );
+      if (progressInterval) clearInterval(progressInterval);
     } catch (error) {
       console.error("Error during import:", error);
+      if (progressInterval) clearInterval(progressInterval);
       importResult = {
         success: false,
         totalCreated: 0,
@@ -425,7 +429,7 @@
   {#if $view.display === Display.MO}
     <div class="header flex justify-between">
       {#if activeStepIndex !== 0}
-        <Icon size={Size.sm} on:click={onBack} icon={"chevleft"} />
+        <Icon size={Size.sm} on:click={onBack} icon={"chevron-left"} />
       {/if}
       <div class="ml-auto">
         <Button

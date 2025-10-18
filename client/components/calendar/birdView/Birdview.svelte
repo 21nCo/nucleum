@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { onMount, onDestroy, tick } from "svelte";
   import RollerPicker from "./RollerPicker.svelte";
   import Zone from "./Zone.svelte";
   import {
@@ -37,6 +37,7 @@
     e: WheelEvent | ProgrammedVerticalWheelEvent
   ) => {};
   let reverseScrollInAction: boolean = false;
+  let reverseScrollCheckInterval: ReturnType<typeof setInterval> | null = null;
   let isNotToday: boolean = false;
   let isMouseWheelMoveEnabled: boolean = false;
   let prevScrollLeft: number = 0;
@@ -274,9 +275,16 @@
     });
   function waitForReverseScrollInAction(): Promise<void> {
     return new Promise((resolve) => {
-      const checkReverseScroll = setInterval(() => {
+      if (reverseScrollCheckInterval) {
+        clearInterval(reverseScrollCheckInterval);
+      }
+      
+      reverseScrollCheckInterval = setInterval(() => {
         if (!reverseScrollInAction) {
-          clearInterval(checkReverseScroll);
+          if (reverseScrollCheckInterval) {
+            clearInterval(reverseScrollCheckInterval);
+            reverseScrollCheckInterval = null;
+          }
           resolve();
         }
       }, 200);
@@ -656,10 +664,11 @@
     panelsContainer.addEventListener("touchmove", handleTouchMove, {
       passive: false
     });
-    panelsContainer.addEventListener("wheel", (e) => {
+    const wheelHandler = (e: WheelEvent) => {
       e.preventDefault();
       waitUntilDisenganged(e);
-    }, { passive: false });
+    };
+    panelsContainer.addEventListener("wheel", wheelHandler, { passive: false });
     panelsContainer.addEventListener(
       "mousedown",
       handleMouseDownOnPanelsContainer
@@ -672,13 +681,17 @@
         "mousedown",
         handleMouseDownOnPanelsContainer
       );
-      panelsContainer.removeEventListener("wheel", (e) => {
-        e.preventDefault();
-        waitUntilDisenganged(e);
-      });
+      panelsContainer.removeEventListener("wheel", wheelHandler as EventListener);
       document.removeEventListener("mousedown", handleMouseDownOthers);
       document.removeEventListener("mousemove", handleMouseMove);
     };
+  });
+
+  onDestroy(() => {
+    if (reverseScrollCheckInterval) {
+      clearInterval(reverseScrollCheckInterval);
+      reverseScrollCheckInterval = null;
+    }
   });
 </script>
 

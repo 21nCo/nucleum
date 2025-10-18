@@ -3,6 +3,7 @@
   import { Action } from "$lib/client/types/action.enum";
   import ModalFooter from "../../components/modal/ModalFooter.svelte";
   import { toasts } from "../../stores/notification.store";
+  import { Size } from "../../types/size.enum";
   import type { Toast } from "../../types/notification.type";
   import ToastNotification from "./ToastNotification.svelte";
   export let id: string;
@@ -15,6 +16,7 @@
 {/if}
 <ModalFooter
   action={Action.MOBILE_TOAST}
+  size={Size.sm}
   primaryAction={{
     label: "Done",
     callback: async () => {

@@ -27,6 +27,7 @@
     on = !on;
     dispatch("change", on);
   }
+  $: shortcutSize = size === Size.lg ? Size.md : size;
 </script>
 
 <button
@@ -64,6 +65,6 @@
     </div>
   {/if}
   {#if shortcut}
-    <ShortcutText {shortcut} {size} {parentBgIndex} />
+    <ShortcutText {shortcut} size={shortcutSize} {parentBgIndex} />
   {/if}
 </button>

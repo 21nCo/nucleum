@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "workspaces": [
     "apps/*",
+    "extensions/*",
     "client/stores",
     "client/components",
     "client/elements",
@@ -25,6 +26,7 @@
     "dev:memotron": "turbo run dev --filter=memotron-app",
     "dev:gathery": "turbo run dev --filter=gathery-app",
     "dev:pointron": "turbo run dev --filter=pointron-app",
+    "dev:memotron-share": "turbo run dev --filter=memotron-share",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "build:packages": "turbo run build --filter='./packages/*'",
@@ -32,6 +34,7 @@
     "build:nucleus": "turbo run build --filter=nucleus-app",
     "build:memotron": "turbo run build --filter=memotron-app",
     "build:pointron": "turbo run build --filter=pointron-app",
+    "build:memotron-share": "turbo run build --filter=memotron-share",
     "clean": "turbo run clean"
   },
   "packageManager": "npm@10.0.0"

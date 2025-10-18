@@ -5,6 +5,7 @@
   import { Orientation } from "$lib/client/types/direction.enum";
   import { createEventDispatcher } from "svelte";
   import HighlightColors from "../../common/highlighters/HighlightColors.svelte";
+  import { ButtonVariant } from "$lib/client/types/button.type";
   let dispatch = createEventDispatcher();
   export let style = "";
   export let selectedColor = "";
@@ -17,17 +18,9 @@
   on:click|stopPropagation
   on:mousedown|stopPropagation
 >
-  <Button
-    icon="trash"
-    parentBgIndex={2}
-    tooltip="Delete"
-    on:click={() => {
-      dispatch("delete");
-    }}
-  />
   {#if editable}
     <Button
-      icon="pencil-square"
+      icon="edit"
       tooltip="Edit"
       parentBgIndex={2}
       on:click={() => {
@@ -35,6 +28,15 @@
       }}
     />
   {/if}
+  <Button
+    icon="trash"
+    parentBgIndex={2}
+    tooltip="Delete"
+    type={ButtonVariant.DANGER}
+    on:click={() => {
+      dispatch("delete");
+    }}
+  />
   <Divider
     orientation={Orientation.Vertical}
     colorStrength={ColorStrength.Strong}

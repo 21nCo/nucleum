@@ -26,7 +26,7 @@
 </script>
 
 <Button
-  icon={layout === Layout.LIST ? "bars" : "squares-2x2"}
+  icon={layout === Layout.LIST ? "bars" : "grid"}
   size={Size.lg}
   on:click={() => {
     uiState.setState(

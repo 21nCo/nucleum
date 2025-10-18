@@ -49,7 +49,7 @@
   on:keydown={onKey}
   on:keyup={onKey}
   class={cn(
-    "fixed w-96 h-fit max-h-[40rem] mo:max-h-full flex flex-col items-center justify-center gap-4 p-4 bg-bgs1 shadow-md rounded-md border border-brs2",
+    "fixed w-96 min-h-80 h-fit max-h-[40rem] mo:max-h-full flex flex-col items-center justify-center gap-4 p-4 bg-bgs1 shadow-md rounded-md border border-brs2",
     {
       "inset-y-0 my-auto":
         $toolbarState.position === Placement.Right ||

@@ -52,7 +52,10 @@
       {subGroup.label}
       <Badge text={_data.length} {isApplyCustomColor} />
     </span>
-    <Button icon={!isCollapsed ? "chevdown" : "chevup"} size={Size.sm} />
+    <Button
+      icon={!isCollapsed ? "chevron-down" : "chevron-up"}
+      size={Size.sm}
+    />
   </button>
   {#if !isCollapsed}
     <div class="w-full flex flex-col gap-4">

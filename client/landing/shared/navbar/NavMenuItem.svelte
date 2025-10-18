@@ -35,7 +35,7 @@
   >{item.label}
   {#if item.expandRender}
     <span class="w-3">
-      <SvgIcon icon="chevdown" isRenderRaw={true} />
+      <SvgIcon icon="chevron-down" isRenderRaw={true} />
     </span>
   {/if}
 </svelte:element>

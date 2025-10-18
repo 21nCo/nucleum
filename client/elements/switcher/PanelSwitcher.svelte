@@ -276,12 +276,9 @@
 <svelte:document
   on:keydown={(event) => {
     try {
-      if (isPreventTabShortcut || event.key !== KeyboardKey.TAB) return;
-      if (!isTopmostPanelSwitcher()) return;
-      const isMetaShiftCombination = event.metaKey && event.shiftKey;
-      const isTextInputSource = isTextElement(event.target);
-      if (isTextInputSource && !isMetaShiftCombination) return;
-      const isBackward = event.shiftKey;
+      if (isPreventTabShortcut || ![KeyboardKey.ARROW_LEFT, KeyboardKey.ARROW_RIGHT].includes(event.key)) return;
+      if (!isTopmostPanelSwitcher() || isTextElement(event.target)) return;;
+      const isBackward = event.key === KeyboardKey.ARROW_LEFT;
       event.preventDefault();
       event.stopPropagation();
       const dispatchSwitch = (val) => {

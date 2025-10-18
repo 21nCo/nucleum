@@ -56,6 +56,8 @@
   import CollectionTitleLabelPart from "../thumbnail/CollectionThumbnailLabel.svelte";
   import { Product } from "$lib/client/products/product.type";
   import Table3 from "$lib/client/elements/table/Table3.svelte";
+  import ModalContentPadded from "$lib/client/components/modal/ModalContentPadded.svelte";
+
   export let id: IRecordId | undefined = undefined;
   let collection: IActiveCollectionStore | undefined = id
     ? ActiveCollectionStore.resolve(id)
@@ -289,16 +291,16 @@
 </script>
 
 <div class="flex flex-col justify-between gap-4 w-full h-full text-b2">
-  <div class="flex flex-col gap-8 flex-grow">
+  <ModalContentPadded class="flex flex-col gap-8 flex-grow">
     <Text content={resolveTitle(collection)} style={TextStyle.PANEL_HEADING} />
     <div class="flex flex-col items-start w-full flex-grow gap-6">
       <div class="flex flex-col items-start w-full gap-3">
         <SwitchInput
           label={{
-            label: "Extend an existing Type collection",
+            label: "Extend an existing collection",
             orientation: Orientation.Horizontal,
             tooltip: {
-              body: "You can extend an existing type by adding additional properties on top. Editing the properties on base type will reflect in all extended types.",
+              body: "You can extend an existing collection by adding additional properties on top. Editing the properties on base collection will reflect in all extended collections.",
               actionText: "Learn more about advanced filter query",
               action: "/kb/advanced-filter-query"
             }
@@ -371,7 +373,7 @@
         />
       </div>
     </div>
-  </div>
+  </ModalContentPadded>
   <ModalFooter
     action={propertiesEditAction}
     primaryAction={collection

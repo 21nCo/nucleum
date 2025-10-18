@@ -41,7 +41,7 @@
   >
 </span>
 {#if item.secondStepComponent || item.action}
-  <Icon icon="chevright" size={Size.sm} />
+  <Icon icon="chevron-right" size={Size.sm} />
 {/if}
 {#if item.badge && !item.action && !item.secondStepComponent}
   <Badge text={item.badge} />

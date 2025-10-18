@@ -20,5 +20,6 @@ class HighlightColorsStore extends KeyValueStore<IHighlightStore> {
     return this.get().highlighters.find((x) => x.id === id)?.color ?? "#f6e05e";
   }
 }
-
-export const highlightStore = new HighlightColorsStore();
+export const highlightStore = HighlightColorsStore.resolve(
+  Resource.highlight
+);

@@ -44,4 +44,4 @@ class PreferencesStore extends KeyValueStore<IPreferencesStore> {
   }
 }
 
-export const preferences = new PreferencesStore();
+export const preferences = PreferencesStore.resolve(Resource.preferences);

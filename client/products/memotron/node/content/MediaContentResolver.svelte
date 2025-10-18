@@ -32,7 +32,10 @@
   export function onTraceClick(details: any) {
     if (node.contentType === NodeType.PDF) {
       pdfContent.scrollToAnnot(details.id, details.pageNumber);
-    } else if (node.contentType === NodeType.YOUTUBE_VIDEO) {
+    } else if (
+      node.contentType === NodeType.YOUTUBE_VIDEO ||
+      node.contentType === NodeType.YOUTUBE_SHORT
+    ) {
       webContentRef.onTrace(details);
     }
   }
@@ -78,5 +81,6 @@
     {node}
     {accessPoint}
     on:annotation
+    on:configUpdate
   />
 {/if}

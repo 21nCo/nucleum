@@ -48,8 +48,6 @@ const defaults: Partial<IGoal> = {
 class GoalStore extends ResourceStore<IGoal, IGoalCapture> {
   constructor() {
     super(Resource.goal, {
-      indices: ["type", "status", "*parent"],
-      searchIndices: ["label"],
       defaultProps: defaults,
       expandProps: ["parent"]
     });
@@ -362,7 +360,7 @@ class GoalStore extends ResourceStore<IGoal, IGoalCapture> {
   }
 }
 
-export const goalStore = new GoalStore();
+export const goalStore = GoalStore.resolve(Resource.goal);
 
 export class ActiveGoalStore extends CollectibleStore<
   IGoal,
