@@ -342,7 +342,6 @@
     type: "keyup" | "keydown" = "keydown"
   ) {
     if (!$mdStore.params?.canUseSlashShortcut) return false;
-
     const hasColon = text.includes(":");
 
     if (type === "keydown" && event.key === ":") {
@@ -365,7 +364,6 @@
         const spaceIndex = afterColon.search(/\s/);
         emojiSearchQuery =
           spaceIndex === -1 ? afterColon : afterColon.substring(0, spaceIndex);
-
         if (emojiSearchQuery.trim()) {
           if (!isRenderEmojiPicker) {
             showPopover("emojiPicker");
@@ -386,7 +384,7 @@
       emojiPickerRef?.key(event.key);
       event.preventDefault();
     }
-    return hasColon || isRenderEmojiPicker;
+    return isRenderEmojiPicker;
   }
 
   function handleKeyDown(

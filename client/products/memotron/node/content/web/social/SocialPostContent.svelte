@@ -171,7 +171,10 @@
         label={resolveOpenInButtonLabel()}
         isUnderlined={true}
         size={Size.sm}
-        on:click
+        on:click={() => {
+          if (!node.url) return;
+          appStore.openLink(node.url);
+        }}
       />
     </div>
   </div>
