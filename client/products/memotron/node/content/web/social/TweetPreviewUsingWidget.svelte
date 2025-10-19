@@ -1,6 +1,6 @@
 <script lang="ts">
-  import appearance from "$lib/client/stores/appearance.store";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import appearance from "@21n/stores/appearance.store";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { onMount } from "svelte";
 
   export let tweetUrl: string;

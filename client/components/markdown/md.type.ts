@@ -1,5 +1,5 @@
-import type { IAvatar } from "$lib/client/types/avatar.type";
-import type { IRecordId } from "$lib/client/types/data.type";
+import type { IAvatar } from "@21n/types/avatar.type";
+import type { IRecordId } from "@21n/types/data.type";
 import type {
   NodeType,
   ListType,
@@ -7,8 +7,8 @@ import type {
   ListNodeType,
   INodeStructure,
   INodeMetadata
-} from "../../products/memotron/node/node.type";
-import type { IResourceBase } from "../flux/resourceStores/resource.type";
+} from "@21n/products/memotron/node/node.type";
+import type { IResourceBase } from "@21n/components/flux/resourceStores/resource.type";
 
 export type IMarkdownStore = IMarkdown & {
   /**

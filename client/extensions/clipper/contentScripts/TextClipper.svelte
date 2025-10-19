@@ -3,30 +3,30 @@
     changeColor,
     highlight,
     removeHighlights
-  } from "$lib/client/extensions/clipper/contentScripts/highlightV4";
-  import InlineTextToolbar from "$lib/client/extensions/clipper/InlineTextToolbar.svelte";
+  } from "@21n/extensions/clipper/contentScripts/highlightV4";
+  import InlineTextToolbar from "@21n/extensions/clipper/InlineTextToolbar.svelte";
   import {
     elementFromQuery,
     getQuery
-  } from "$lib/client/extensions/clipper/contentScripts/getQuery";
+  } from "@21n/extensions/clipper/contentScripts/getQuery";
   import { onMount } from "svelte";
-  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
+  import { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
   import {
     NodeType,
     type IClipCapture,
     type ITextClip
-  } from "$lib/client/products/memotron/node/node.type";
-  import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import { webpage } from "./store";
-  import { appEvents } from "$lib/client/stores/notification.store";
-  import { AlertType } from "$lib/client/types/notification.type";
-  import type { IHighlighter } from "$lib/client/products/memotron/common/highlighters/highlight.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
-  import { relayToSidePanel } from "$lib/client/utils/extension.utils";
-  import { activeResourceFilter } from "$lib/client/utils/utils";
-  import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import InlineFeedbackText from "../InlineFeedbackText.svelte";
+  } from "@21n/products/memotron/node/node.type";
+  import { ExtensionEvent } from "@21n/types/extension.type";
+  import { webpage } from "@21n/extensions/clipper/contentScripts/store";
+  import { appEvents } from "@21n/stores/notification.store";
+  import { AlertType } from "@21n/types/notification.type";
+  import type { IHighlighter } from "@21n/products/memotron/common/highlighters/highlight.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
+  import { relayToSidePanel } from "@21n/utils/extension.utils";
+  import { activeResourceFilter } from "@21n/utils/utils";
+  import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
+  import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
 
   let isShowInlineToolbar: boolean = false;
   let popoverPosition: { top: number; left: number } = { top: 0, left: 0 };

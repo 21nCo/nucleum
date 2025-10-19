@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
-  import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
-  import type { TimeScale } from "$lib/client/types/time.type";
-  import { getCorrespoingHorizonFrequencyLabel } from "$lib/client/utils/time.utils";
+  import { pointronPreferences } from "@21n/products/pointron/pointron.store";
+  import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
+  import type { TimeScale } from "@21n/types/time.type";
+  import { getCorrespoingHorizonFrequencyLabel } from "@21n/utils/time.utils";
   import { onMount } from "svelte";
   export let item: TimeScale;
   let value: number;

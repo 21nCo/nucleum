@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { ButtonVariant } from "@21n/types/button.type";
   import { onMount } from "svelte";
-  import { flux } from "../flux/flux";
-  import { Size } from "$lib/client/types/size.enum";
-  import { parse, stringify } from "$lib/shared/utils/json.utils";
+  import { flux } from "@21n/components/flux/flux";
+  import { Size } from "@21n/types/size.enum";
+  import { parse, stringify } from "@21n/shared-utils/json.utils";
 
   let query = "";
   let result: any;

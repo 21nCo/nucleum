@@ -1,7 +1,7 @@
-import type { UserDate } from "$lib/client/types/userDate.type";
-import { FileSizeMeasurement } from "$lib/client/types/fileSizeMeasurement.enum";
-import { ActionType } from "$lib/client/types/action.type";
-import { isValidArrayWithData } from "../../shared/utils/obj.utils";
+import type { UserDate } from "@21n/types/userDate.type";
+import { FileSizeMeasurement } from "@21n/types/fileSizeMeasurement.enum";
+import { ActionType } from "@21n/types/action.type";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
 
 /**
  * @deprecated - use lib/shared/crypto.utils instead

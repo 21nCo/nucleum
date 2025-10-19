@@ -1,13 +1,13 @@
 <script lang="ts">
   import maplibregl from "maplibre-gl";
   import "maplibre-gl/dist/maplibre-gl.css";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import { Persistence } from "$lib/client/persistence/persistence";
-  import account from "$lib/client/stores/account.store";
-  import { UserDataMode } from "$lib/client/types/account.type";
-  import context from "$lib/client/stores/context.store";
-  import { mapTileStyles } from "./map.styles";
-  import { mount } from "$lib/client/actions/mount.action";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import { Persistence } from "@21n/persistence/persistence";
+  import account from "@21n/stores/account.store";
+  import { UserDataMode } from "@21n/types/account.type";
+  import context from "@21n/stores/context.store";
+  import { mapTileStyles } from "@21n/components/maps/map.styles";
+  import { mount } from "@21n/actions/mount.action";
   export let location:
     | {
         latitude?: number;

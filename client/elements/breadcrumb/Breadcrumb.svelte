@@ -1,14 +1,14 @@
 <script lang="ts">
-  import BreadcrumbItemView from "./BreadcrumbItemView.svelte";
-  import type { IBreadcrumbItem } from "$lib/client/elements/breadcrumbsV2/breadcrumbItem.type";
-  import { textTruncateMapper } from "$lib/client/utils/utils";
-  import view from "$lib/client/stores/view.store";
-  import { Display } from "$lib/client/types/view.type";
-  import { determineTruncateLength } from "$lib/shared/utils/text.utils";
-  import { appStore } from "$lib/client/stores/app.store";
+  import BreadcrumbItemView from "@21n/elements/breadcrumb/BreadcrumbItemView.svelte";
+  import type { IBreadcrumbItem } from "@21n/elements/breadcrumbsV2/breadcrumbItem.type";
+  import { textTruncateMapper } from "@21n/utils/utils";
+  import view from "@21n/stores/view.store";
+  import { Display } from "@21n/types/view.type";
+  import { determineTruncateLength } from "@21n/shared-utils/text.utils";
+  import { appStore } from "@21n/stores/app.store";
   import { createEventDispatcher } from "svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { Size } from "$lib/client/types/size.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Size } from "@21n/types/size.enum";
   const dispatch = createEventDispatcher();
   export let items: IBreadcrumbItem[] = [];
   export let isPreventDefault: boolean = false;

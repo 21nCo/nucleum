@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
-  import Icon from "../Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { bg, cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
   import { createEventDispatcher } from "svelte";
-  import Badge from "../text/Badge.svelte";
-  import type { IContextMenuItem } from "$lib/client/types/select.type";
-  import { hoverable } from "$lib/client/actions/hover.action";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import type { IContextMenuItem } from "@21n/types/select.type";
+  import { hoverable } from "@21n/actions/hover.action";
   const dispatch = createEventDispatcher();
   export let item: IContextMenuItem;
   export let on: boolean = item.initialValue ?? false;

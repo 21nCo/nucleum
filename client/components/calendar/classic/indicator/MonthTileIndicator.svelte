@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import type { DaySummary } from "$lib/client/products/pointron/logs/log.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TimeFormat } from "$lib/client/types/time.type";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import TinyPieChart from "./TinyPieChart.svelte";
+  import { tooltip } from "@21n/actions/popover.action";
+  import type { ITaskThumb } from "@21n/components/tasks/task.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import type { DaySummary } from "@21n/products/pointron/logs/log.type";
+  import { Size } from "@21n/types/size.enum";
+  import { TimeFormat } from "@21n/types/time.type";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import TinyPieChart from "@21n/components/calendar/classic/indicator/TinyPieChart.svelte";
   export let data: {
     tasks: ITaskThumb[];
     focusSummary: DaySummary;

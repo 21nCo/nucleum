@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { cn } from "@21n/utils/ui.utils";
   import { tweened } from "svelte/motion";
   import {
     toastDefaultDuration,
     toasts
-  } from "../../stores/notification.store";
-  import { AlertType, type Toast } from "../../types/notification.type";
-  import Icon from "../Icon.svelte";
+  } from "@21n/stores/notification.store";
+  import { AlertType, type Toast } from "@21n/types/notification.type";
+  import Icon from "@21n/elements/Icon.svelte";
   import { linear } from "svelte/easing";
   import { onMount } from "svelte";
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
   export let notification: Toast;
   export let isShownAsModal = false;
 

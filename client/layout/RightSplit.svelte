@@ -1,11 +1,11 @@
 <script lang="ts">
   import { cubicOut } from "svelte/easing";
   import { fly } from "svelte/transition";
-  import Divider from "../elements/Divider.svelte";
-  import { Orientation } from "../types/direction.enum";
-  import { ColorStrength } from "../types/appearance.type";
-  import ResourceResolver from "./paint/ResourceResolver.svelte";
-  import { ResourceAccessMode } from "../components/flux/resourceStores/resource.type";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import ResourceResolver from "@21n/layout/paint/ResourceResolver.svelte";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
   export let split: string;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.SPLIT;
 </script>

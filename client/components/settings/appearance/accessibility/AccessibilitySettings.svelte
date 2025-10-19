@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SizeFactorSetting from "./sizeFactor/SizeFactorSetting.svelte";
+  import SizeFactorSetting from "@21n/components/settings/appearance/accessibility/sizeFactor/SizeFactorSetting.svelte";
   export let parentBackgroundIndex: number = 1;
 </script>
 

@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { generateUID } from "$lib/client/utils/utils";
-  import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
-  import Markdown from "$lib/client/components/markdown/Markdown.svelte";
-  import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
-  import type { INode } from "$lib/client/products/memotron/node/node.type";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { performApiCall } from "$lib/client/utils/network.utils";
-  import type { IMarkdown } from "$lib/client/components/markdown/md.type";
+  import { generateUID } from "@21n/utils/utils";
+  import NodeLoadingPulse from "@21n/elements/feedback/animations/NodeLoadingPulse.svelte";
+  import Markdown from "@21n/components/markdown/Markdown.svelte";
+  import NodularMarkdown from "@21n/components/markdown/NodularMarkdown.svelte";
+  import type { INode } from "@21n/products/memotron/node/node.type";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { performApiCall } from "@21n/utils/network.utils";
+  import type { IMarkdown } from "@21n/components/markdown/md.type";
   export let params: { spaceId: string; documentId: string };
   export let mdId = generateUID();
   let document: INode;

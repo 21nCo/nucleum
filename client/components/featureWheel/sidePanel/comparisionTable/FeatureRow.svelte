@@ -2,9 +2,9 @@
   import type {
     IContemporary,
     IFwFeature
-  } from "$lib/client/types/featureWheel.type";
-  import RatingCell from "./RatingCell.svelte";
-  import NotesCell from "./NotesCell.svelte";
+  } from "@21n/types/featureWheel.type";
+  import RatingCell from "@21n/components/featureWheel/sidePanel/comparisionTable/RatingCell.svelte";
+  import NotesCell from "@21n/components/featureWheel/sidePanel/comparisionTable/NotesCell.svelte";
 
   export let feature: IFwFeature;
   export let contemporaries: IContemporary[] = [];

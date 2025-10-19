@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { fileLoaderv2 } from "$lib/client/actions/lazyload.action";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Arrangement } from "$lib/client/types/direction.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { isValidUrl } from "$lib/shared/utils/utils";
-  import { resolveFallbackIconForUrl } from "../node.utils";
+  import { fileLoaderv2 } from "@21n/actions/lazyload.action";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Arrangement } from "@21n/types/direction.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { isValidUrl } from "@21n/shared-utils/utils";
+  import { resolveFallbackIconForUrl } from "@21n/products/memotron/node/node.utils";
 
   export let src: string;
   export let arrangement: Arrangement | undefined = undefined;

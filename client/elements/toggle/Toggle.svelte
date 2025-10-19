@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
-  import HoverableElement from "../HoverableElement.svelte";
-  import Icon from "../Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { bg, cn } from "@21n/utils/ui.utils";
+  import HoverableElement from "@21n/elements/HoverableElement.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
   import { createEventDispatcher } from "svelte";
-  import type { IToolTipOptions } from "../text/text.type";
-  import Badge from "../text/Badge.svelte";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { tooltip as tooltipAction } from "$lib/client/actions/popover.action";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import type { IKeyboardShortcut } from "$lib/client/components/shortcuts/shortcut.type";
-  import ShortcutText from "../text/ShortcutText.svelte";
+  import type { IToolTipOptions } from "@21n/elements/text/text.type";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { tooltip as tooltipAction } from "@21n/actions/popover.action";
+  import { Placement } from "@21n/types/direction.enum";
+  import type { IKeyboardShortcut } from "@21n/components/shortcuts/shortcut.type";
+  import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
   const dispatch = createEventDispatcher();
   export let icon: string;
   export let on: boolean = false;

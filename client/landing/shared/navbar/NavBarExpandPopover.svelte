@@ -1,7 +1,7 @@
 <script lang="ts">
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import type { ILandingProductUrls } from "../landing.type";
-  import { landing } from "../store/shared.store";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import type { ILandingProductUrls } from "@21n/landing/shared/landing.type";
+  import { landing } from "@21n/landing/shared/store/shared.store";
 
   export let type: "resources" | "compare";
   let urls: ILandingProductUrls = $landing.urls;

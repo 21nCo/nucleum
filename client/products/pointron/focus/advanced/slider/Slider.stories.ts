@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
-import Slider from "./Slider.svelte";
+import Slider from "@21n/products/pointron/focus/advanced/slider/Slider.svelte";
 
 /**
  * some description

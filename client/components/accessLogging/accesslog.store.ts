@@ -1,7 +1,7 @@
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
-import type { IRecordId } from "$lib/client/types/data.type";
-import type { IAccessLog } from "./accessLog.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import type { IRecordId } from "@21n/types/data.type";
+import type { IAccessLog } from "@21n/components/accessLogging/accessLog.type";
 
 class AccessLogStore extends ResourceStore<IAccessLog, IAccessLog> {
   constructor() {

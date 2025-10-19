@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { ISessionThumb } from "./log.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
+  import type { ISessionThumb } from "@21n/products/pointron/logs/log.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
+  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
   export let session: ISessionThumb;
 </script>
 

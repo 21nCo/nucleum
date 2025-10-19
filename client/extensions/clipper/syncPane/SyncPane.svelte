@@ -1,18 +1,18 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { syncStore } from "../contentScripts/store";
-  import FeedbackPaneBase from "../feedbackPane/FeedbackPaneBase.svelte";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { SyncStatus } from "../contentScripts/types";
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import { appEvents } from "$lib/client/stores/notification.store";
-  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { formatDatetime } from "$lib/client/utils/time.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import { syncStore } from "@21n/extensions/clipper/contentScripts/store";
+  import FeedbackPaneBase from "@21n/extensions/clipper/feedbackPane/FeedbackPaneBase.svelte";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { SyncStatus } from "@21n/extensions/clipper/contentScripts/types";
+  import { ButtonVariant } from "@21n/types/button.type";
+  import { appEvents } from "@21n/stores/notification.store";
+  import { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
+  import { Size } from "@21n/types/size.enum";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import { formatDatetime } from "@21n/utils/time.utils";
+  import Icon from "@21n/elements/Icon.svelte";
 
   onMount(() => {
     logger.log({ at: "SyncPane onMount", syncStore: $syncStore });

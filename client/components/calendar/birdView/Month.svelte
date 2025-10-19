@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { isSameDay } from "$lib/client/utils/time.utils";
-  import { abg, cn } from "$lib/client/utils/ui.utils";
+  import { isSameDay } from "@21n/utils/time.utils";
+  import { abg, cn } from "@21n/utils/ui.utils";
   import {
     getDaysInMonth,
     getFirstAlphabetPosition,
     monthNames
-  } from "./Birdview.utils";
+  } from "@21n/components/calendar/birdView/Birdview.utils";
   const monthNamesFull = [
     "January",
     "February",

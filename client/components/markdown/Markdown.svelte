@@ -4,50 +4,50 @@
     type IBlock,
     type IMarkdown,
     type IMarkdownParams
-  } from "$lib/client/components/markdown/md.type";
+  } from "@21n/components/markdown/md.type";
   import { createEventDispatcher, onMount } from "svelte";
-  import Block from "./Block.svelte";
-  import { getMdStore, mdContentChangeEvent } from "./markdown.store";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { isValidAndUniqueArray } from "$lib/shared/utils/obj.utils";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
+  import Block from "@21n/components/markdown/Block.svelte";
+  import { getMdStore, mdContentChangeEvent } from "@21n/components/markdown/markdown.store";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { isValidAndUniqueArray } from "@21n/shared-utils/obj.utils";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
   import { setContext } from "svelte";
-  import { generateMarkdownText } from "$lib/client/products/memotron/node/node.utils";
-  import { logger } from "../debug/logger.client";
+  import { generateMarkdownText } from "@21n/products/memotron/node/node.utils";
+  import { logger } from "@21n/components/debug/logger.client";
   import { get } from "svelte/store";
-  import { KeyboardKey } from "$lib/client/types/keyboard.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { KeyboardKey } from "@21n/types/keyboard.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import {
     reorderList,
     type DragDropEvent
-  } from "$lib/client/actions/rearrange.action";
+  } from "@21n/actions/rearrange.action";
   import {
     isSameResource,
     resourceInList,
     shiftResourceInArray
-  } from "../flux/resourceStores/resource.utils";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import context from "$lib/client/stores/context.store";
-  import MarkdownkeyboardToolbar from "./toolbar/MarkdownkeyboardToolbar.svelte";
-  import { debouncer } from "$lib/client/utils/utils";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import { dragSelection } from "$lib/client/actions/dragSelection.action";
-  import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
-  import BulkEditBar from "../record/BulkEditBar.svelte";
-  import { Resource } from "../flux/resourceStores/resource.enum";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
+  import context from "@21n/stores/context.store";
+  import MarkdownkeyboardToolbar from "@21n/components/markdown/toolbar/MarkdownkeyboardToolbar.svelte";
+  import { debouncer } from "@21n/utils/utils";
+  import { toasts } from "@21n/stores/notification.store";
+  import { dragSelection } from "@21n/actions/dragSelection.action";
+  import BottomFloat from "@21n/elements/BottomFloat.svelte";
+  import BulkEditBar from "@21n/components/record/BulkEditBar.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
     ResourceAccessPoint,
     ResourceActionType
-  } from "../flux/resourceStores/resource.type";
-  import { resolveMultiSelectStore } from "../flux/resourceStores/resource.store";
-  import { generateResourceId } from "../flux/flux.utils";
-  import { ErrorMessage } from "../error/error.type";
-  import { resizeListener } from "$lib/client/actions/resize.action";
-  import { stringify } from "$lib/shared/utils/json.utils";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
+  import { generateResourceId } from "@21n/components/flux/flux.utils";
+  import { ErrorMessage } from "@21n/components/error/error.type";
+  import { resizeListener } from "@21n/actions/resize.action";
+  import { stringify } from "@21n/shared-utils/json.utils";
 
   /**
    * Propagates the event to the parent component.

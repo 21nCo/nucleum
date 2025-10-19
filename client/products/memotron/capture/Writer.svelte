@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { CaptureMethod } from "$lib/client/products/memotron/capture/capture.type";
-  import AudioCapture from "./AudioCapture.svelte";
-  import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
-  import { logger } from "$lib/client/components/debug/logger.client";
+  import { CaptureMethod } from "@21n/products/memotron/capture/capture.type";
+  import AudioCapture from "@21n/products/memotron/capture/AudioCapture.svelte";
+  import NodularMarkdown from "@21n/components/markdown/NodularMarkdown.svelte";
+  import { logger } from "@21n/components/debug/logger.client";
 
   import { setContext } from "svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import CameraCapture from "./CameraCapture.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
+  import CameraCapture from "@21n/products/memotron/capture/CameraCapture.svelte";
   import { createEventDispatcher } from "svelte";
-  import context from "$lib/client/stores/context.store";
-  import type { IActiveCaptureStore } from "./capture.store";
+  import context from "@21n/stores/context.store";
+  import type { IActiveCaptureStore } from "@21n/products/memotron/capture/capture.store";
   import { fly } from "svelte/transition";
-  import PlayerControl from "$lib/client/elements/player/controls/PlayerControl.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { ButtonStyle } from "$lib/client/types/button.type";
+  import PlayerControl from "@21n/elements/player/controls/PlayerControl.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { ButtonStyle } from "@21n/types/button.type";
   const dispatch = createEventDispatcher();
 
   export let captureStore: IActiveCaptureStore;

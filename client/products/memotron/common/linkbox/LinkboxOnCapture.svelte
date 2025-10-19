@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import LinkItems from "./LinkItems.svelte";
-  import LinkSearch from "./LinkSearch.svelte";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import LinkItems from "@21n/products/memotron/common/linkbox/LinkItems.svelte";
+  import LinkSearch from "@21n/products/memotron/common/linkbox/LinkSearch.svelte";
   import { createEventDispatcher } from "svelte";
-  import { LinkType } from "$lib/client/products/memotron/linking/link.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import type { IActiveCaptureStore } from "../../capture/capture.store";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { LinkType } from "@21n/products/memotron/linking/link.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import type { IActiveCaptureStore } from "@21n/products/memotron/capture/capture.store";
+  import { cn } from "@21n/utils/ui.utils";
   export let captureStore: IActiveCaptureStore;
   export let expand: IRecordId | null = null;
   const dispatch = createEventDispatcher();

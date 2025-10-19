@@ -1,19 +1,19 @@
-import type { ICollection } from "$lib/client/components/collection/collection.type";
-import { logger } from "$lib/client/components/debug/logger.client";
-import { flux } from "$lib/client/components/flux/flux";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import type { ICollection } from "@21n/components/collection/collection.type";
+import { logger } from "@21n/components/debug/logger.client";
+import { flux } from "@21n/components/flux/flux";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
   determineResourceType,
   isSameResource,
   removeDuplicatesFilter,
   resourceInList
-} from "$lib/client/components/flux/resourceStores/resource.utils";
+} from "@21n/components/flux/resourceStores/resource.utils";
 import {
   PersistenceActionType,
   type IRecordId
-} from "$lib/client/types/data.type";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { headingNodeTypes, NodeType, type INode } from "../node/node.type";
+} from "@21n/types/data.type";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+import { headingNodeTypes, NodeType, type INode } from "@21n/products/memotron/node/node.type";
 
 export async function clipTextSearchFallback() {
   try {

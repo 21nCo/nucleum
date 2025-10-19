@@ -1,38 +1,38 @@
 <script lang="ts">
-  import { ActiveGoalStore, type IActiveGoalStore } from "./goal.store";
-  import PageLoadingPulse from "$lib/client/elements/feedback/animations/PageLoadingPulse.svelte";
+  import { ActiveGoalStore, type IActiveGoalStore } from "@21n/components/goals/goal.store";
+  import PageLoadingPulse from "@21n/elements/feedback/animations/PageLoadingPulse.svelte";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "$lib/client/components/flux/resourceStores/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
 
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import { resolveResourceIcon } from "../flux/resourceStores/resource.utils";
-  import { Resource } from "../flux/resourceStores/resource.enum";
-  import GoalInfoPanel from "./info/GoalInfoPanel.svelte";
-  import view from "$lib/client/stores/view.store";
-  import { resizeListener } from "$lib/client/actions/resize.action";
-  import GoalTitleRow from "./info/GoalTitleRow.svelte";
-  import SubGoalsPanel from "./sub/SubGoalsPanel.svelte";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import GoalHistory from "./history/GoalHistory.svelte";
-  import GoalTasks from "./tasks/GoalTasks.svelte";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
+  import { resolveResourceIcon } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import GoalInfoPanel from "@21n/components/goals/info/GoalInfoPanel.svelte";
+  import view from "@21n/stores/view.store";
+  import { resizeListener } from "@21n/actions/resize.action";
+  import GoalTitleRow from "@21n/components/goals/info/GoalTitleRow.svelte";
+  import SubGoalsPanel from "@21n/components/goals/sub/SubGoalsPanel.svelte";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import GoalHistory from "@21n/components/goals/history/GoalHistory.svelte";
+  import GoalTasks from "@21n/components/goals/tasks/GoalTasks.svelte";
   import { onDestroy, onMount } from "svelte";
   import { page } from "$app/stores";
-  import PropertiesPane from "../collection/properties/PropertiesPane.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import appearance from "$lib/client/stores/appearance.store";
-  import { Product } from "$lib/client/products/product.type";
-  import type { IActiveGoal } from "./goal.type";
-  import GoalAnalytics from "./GoalAnalytics.svelte";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import { type IInlineStatus } from "$lib/client/types/notification.type";
-  import { logger } from "../debug/logger.client";
-  import { Size } from "$lib/client/types/size.enum";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import ResourceInlineCloseButton from "$lib/client/elements/button/ResourceInlineCloseButton.svelte";
+  import PropertiesPane from "@21n/components/collection/properties/PropertiesPane.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import appearance from "@21n/stores/appearance.store";
+  import { Product } from "@21n/products/product.type";
+  import type { IActiveGoal } from "@21n/components/goals/goal.type";
+  import GoalAnalytics from "@21n/components/goals/GoalAnalytics.svelte";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import { type IInlineStatus } from "@21n/types/notification.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { Size } from "@21n/types/size.enum";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;

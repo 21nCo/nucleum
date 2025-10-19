@@ -2,32 +2,32 @@
   import {
     selectedTimePeriod,
     isTouchDevice
-  } from "$lib/client/stores/app.store";
+  } from "@21n/stores/app.store";
   import {
     CalendarHeatMapData,
     CalendarHeatMapLayout
-  } from "./calendarHeatmap.store";
+  } from "@21n/components/calendar/calendarHeatmap/calendarHeatmap.store";
   import {
     TileScale,
     CalendarHmVariant,
     type ICalendarHeatMapDataProvider,
     type CalendarHeatmapOptions
-  } from "./calendarHeatmap.types";
-  import { CalendarHeatmapDataManager } from "$lib/client/components/calendar/calendarHeatmap/calendarHeatMap.utils";
+  } from "@21n/components/calendar/calendarHeatmap/calendarHeatmap.types";
+  import { CalendarHeatmapDataManager } from "@21n/components/calendar/calendarHeatmap/calendarHeatMap.utils";
   import { onMount } from "svelte";
-  import Footer from "./Footer.svelte";
-  import HeaderV1 from "./HeaderV1.svelte";
-  import HeaderV2 from "./HeaderV2.svelte";
-  import HorizontalCalendarLayout from "./HorizontalCalendarLayout.svelte";
-  import MonthsLayout from "./MonthsLayout.svelte";
-  import QuadrennialLayout from "./QuadrennialLayout.svelte";
-  import VerticalCalendarLayout from "./VerticalCalendarLayout.svelte";
-  import VerticalQuadrennialLayout from "./VerticalQuadrennialLayout.svelte";
-  import VerticalYearsLayout from "./VerticalYearsLayout.svelte";
-  import YearsLayout from "./YearsLayout.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import Footer from "@21n/components/calendar/calendarHeatmap/Footer.svelte";
+  import HeaderV1 from "@21n/components/calendar/calendarHeatmap/HeaderV1.svelte";
+  import HeaderV2 from "@21n/components/calendar/calendarHeatmap/HeaderV2.svelte";
+  import HorizontalCalendarLayout from "@21n/components/calendar/calendarHeatmap/HorizontalCalendarLayout.svelte";
+  import MonthsLayout from "@21n/components/calendar/calendarHeatmap/MonthsLayout.svelte";
+  import QuadrennialLayout from "@21n/components/calendar/calendarHeatmap/QuadrennialLayout.svelte";
+  import VerticalCalendarLayout from "@21n/components/calendar/calendarHeatmap/VerticalCalendarLayout.svelte";
+  import VerticalQuadrennialLayout from "@21n/components/calendar/calendarHeatmap/VerticalQuadrennialLayout.svelte";
+  import VerticalYearsLayout from "@21n/components/calendar/calendarHeatmap/VerticalYearsLayout.svelte";
+  import YearsLayout from "@21n/components/calendar/calendarHeatmap/YearsLayout.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/types/size.enum";
   export let variant: CalendarHmVariant = CalendarHmVariant.PLAIN;
   export let orientation: Orientation;
   export let touchDevice: boolean;

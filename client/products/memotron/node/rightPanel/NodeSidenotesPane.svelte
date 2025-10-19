@@ -1,8 +1,8 @@
 <script lang="ts">
-  import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
-  import type { IActiveNodeStore } from "../node.store";
-  import { focusById } from "$lib/client/actions/focusById.action";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
+  import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import { focusById } from "@21n/actions/focusById.action";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 
   export let node: IActiveNodeStore;
   const inputId = generateSimpleRandomId();

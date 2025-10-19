@@ -11,7 +11,7 @@ Thank you for your interest in contributing to Tidigit! This guide will help you
 5. Use the below for environment variables:
 ```
 VITE_PRODUCT=memotron
-VITE_STATIC_URL=https://cdn.21n.co
+VITE_STATIC_URL=https://cdn.21n.org
 ```
 
 ## Submitting a Pull Request

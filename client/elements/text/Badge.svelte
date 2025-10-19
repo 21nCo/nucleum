@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import { abg, bg, cn } from "$lib/client/utils/ui.utils";
+  import { Size } from "@21n/types/size.enum";
+  import { abg, bg, cn } from "@21n/utils/ui.utils";
   export let size: Size = Size.md;
   export let text: string | number;
   export let parentBgIndex: number = 1;

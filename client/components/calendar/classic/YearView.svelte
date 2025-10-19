@@ -1,9 +1,9 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { compareDates, isSameDay } from "$lib/client/utils/time.utils";
-  import CalendarTileIndicator from "./indicator/CalendarTileIndicator.svelte";
-  import type { ICalendarIndicatorData } from "../calendar.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import { compareDates, isSameDay } from "@21n/utils/time.utils";
+  import CalendarTileIndicator from "@21n/components/calendar/classic/indicator/CalendarTileIndicator.svelte";
+  import type { ICalendarIndicatorData } from "@21n/components/calendar/calendar.type";
 
   export let selectedDate: Date;
   export let indicatorData: ICalendarIndicatorData[] = [];

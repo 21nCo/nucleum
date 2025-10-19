@@ -3,7 +3,7 @@ import type {
   ILandingProductUrls,
   ILandingStoreSubject,
   ITileItem
-} from "../landing.type";
+} from "@21n/landing/shared/landing.type";
 
 export const staticUrl = import.meta.env.VITE_STATIC_URL;
 export const org = {

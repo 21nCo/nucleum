@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IListItem } from "../landing.type";
-  import ListItem from "./ListItem.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IListItem } from "@21n/landing/shared/landing.type";
+  import ListItem from "@21n/landing/shared/list/ListItem.svelte";
   export let items: IListItem[];
   export let orientation: Orientation = Orientation.Vertical;
 </script>

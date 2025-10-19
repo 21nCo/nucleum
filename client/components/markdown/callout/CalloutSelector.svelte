@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Avatar from "$lib/client/elements/avatarPicker/Avatar.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { markdownSettings } from "../markdown.settings";
-  import type { ICalloutSetting } from "../md.type";
+  import Avatar from "@21n/elements/avatarPicker/Avatar.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { markdownSettings } from "@21n/components/markdown/markdown.settings";
+  import type { ICalloutSetting } from "@21n/components/markdown/md.type";
   export let selected: ICalloutSetting;
   export let onSelect: (callout: ICalloutSetting) => void;
   export let onEdit: () => void;

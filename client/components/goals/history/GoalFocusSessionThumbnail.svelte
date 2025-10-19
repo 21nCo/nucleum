@@ -2,11 +2,11 @@
   import type {
     ISessionLogThumb,
     ISessionThumb
-  } from "$lib/client/products/pointron/logs/log.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
+  } from "@21n/products/pointron/logs/log.type";
+  import { appStore } from "@21n/stores/app.store";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
   export let session: ISessionThumb;
   export let logs: ISessionLogThumb[] = [];
 

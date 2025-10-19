@@ -4,17 +4,17 @@
     TimeScale,
     TimePeriodType,
     type RelativeTimePeriodValue
-  } from "$lib/client/types/time.type";
+  } from "@21n/types/time.type";
   import { createEventDispatcher, onMount } from "svelte";
-  import OptionSelector from "../../select/OptionSelector.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import RelativeTimeRangeSelector from "./RelativeTimeRangeSelector.svelte";
-  import PanelSwitcher from "../../switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import { OptionSelectorStyle } from "$lib/client/types/select.type";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import AbsoluteTimeRangePopoverV2 from "../absolute/AbsoluteTimeRangePopoverV2.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import RelativeTimeRangeSelector from "@21n/elements/datetime/timeperiodpicker/RelativeTimeRangeSelector.svelte";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
+  import { OptionSelectorStyle } from "@21n/types/select.type";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import AbsoluteTimeRangePopoverV2 from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
   const dispatch = createEventDispatcher();
   export let period: TimePeriod;
   export let onChange: (period: TimePeriod) => void;

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { addAnimateClass } from "$lib/client/utils/ui.utils";
-  import PanelButton from "./elements/PanelButton.svelte";
-  import { org, landing } from "$lib/client/landing/shared/store/shared.store";
+  import { addAnimateClass } from "@21n/utils/ui.utils";
+  import PanelButton from "@21n/landing/shared/elements/PanelButton.svelte";
+  import { org, landing } from "@21n/landing/shared/store/shared.store";
   export let isProduct: boolean = false;
   const id: string = "left-panel";
 </script>

@@ -1,22 +1,22 @@
 <script lang="ts">
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { enumToString, formatBytes } from "$lib/shared/utils/text.utils";
-  import type { IActiveNodeStore } from "../node.store";
-  import { headingNodeTypes, NodeType, webNodeTypeList } from "../node.type";
-  import BasicInfoItem from "./BasicInfoItem.svelte";
-  import InfoCard from "./InfoCard.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { enumToString, formatBytes } from "@21n/shared-utils/text.utils";
+  import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import { headingNodeTypes, NodeType, webNodeTypeList } from "@21n/products/memotron/node/node.type";
+  import BasicInfoItem from "@21n/products/memotron/node/metadata/BasicInfoItem.svelte";
+  import InfoCard from "@21n/products/memotron/node/metadata/InfoCard.svelte";
 
   import { onMount } from "svelte";
-  import { accessLogStore } from "$lib/client/components/accessLogging/accesslog.store";
-  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
-  import type { IAccessLog } from "$lib/client/components/accessLogging/accessLog.type";
+  import { accessLogStore } from "@21n/components/accessLogging/accesslog.store";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+  import type { IAccessLog } from "@21n/components/accessLogging/accessLog.type";
   import { page } from "$app/stores";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import AudioMetadata from "./AudioMetadata.svelte";
-  import ImageMetadata from "./ImageMetadata.svelte";
-  import LocationProperty from "$lib/client/components/collection/properties/locationProperty/LocationProperty.svelte";
+  import { logger } from "@21n/components/debug/logger.client";
+  import AudioMetadata from "@21n/products/memotron/node/metadata/AudioMetadata.svelte";
+  import ImageMetadata from "@21n/products/memotron/node/metadata/ImageMetadata.svelte";
+  import LocationProperty from "@21n/components/collection/properties/locationProperty/LocationProperty.svelte";
   export let node: IActiveNodeStore;
   export let renderingDetails: any = undefined;
   let lastAccessLog: IAccessLog | undefined = undefined;

@@ -1,14 +1,14 @@
 <script lang="ts">
-  import ExternalLogo from "$lib/client/branding/external/ExternalLogo.svelte";
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import Button from "$lib/client/landing/shared/elements/Button.svelte";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
+  import ExternalLogo from "@21n/branding/external/ExternalLogo.svelte";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import Button from "@21n/landing/shared/elements/Button.svelte";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
   import type {
     ISelectItem,
     ISelectValue
-  } from "$lib/client/types/select.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Divider from "$lib/client/elements/Divider.svelte";
+  } from "@21n/types/select.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import Divider from "@21n/elements/Divider.svelte";
 
   export let title: string;
   export let options: ISelectItem[] = [];

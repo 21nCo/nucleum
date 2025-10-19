@@ -1,5 +1,5 @@
 <script>
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
 </script>
 
 <div class="flex flex-col gap-4 pb-32">

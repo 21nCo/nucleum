@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { TimeUnit } from "$lib/client/types/time.type";
-  import TimeUnitItem from "./TimeUnitItem.svelte";
+  import type { TimeUnit } from "@21n/types/time.type";
+  import TimeUnitItem from "@21n/elements/input/durationInput/TimeUnitItem.svelte";
   export let units: TimeUnit[];
   export let currentTimeUnit: TimeUnit;
   export let selectedIndex: number;

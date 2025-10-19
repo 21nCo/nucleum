@@ -1,9 +1,9 @@
-import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
-import type { IAppMenuStore } from "./appMenu.type";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { appStore } from "$lib/client/stores/app.store";
+import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
+import type { IAppMenuStore } from "@21n/stores/appMenu/appMenu.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { appStore } from "@21n/stores/app.store";
 import { get } from "svelte/store";
-import { logger } from "$lib/client/components/debug/logger.client";
+import { logger } from "@21n/components/debug/logger.client";
 
 class AppMenuStore extends KeyValueStore<IAppMenuStore> {
   constructor() {

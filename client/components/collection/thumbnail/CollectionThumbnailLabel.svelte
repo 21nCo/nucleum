@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-  import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
-  import type { ICollectionThumb } from "../collection.type";
-  import CollectionThumbnailAvatar from "./CollectionThumbnailAvatar.svelte";
+  import { tooltip } from "@21n/actions/popover.action";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
+  import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
+  import type { ICollectionThumb } from "@21n/components/collection/collection.type";
+  import CollectionThumbnailAvatar from "@21n/components/collection/thumbnail/CollectionThumbnailAvatar.svelte";
   export let item: ICollectionThumb;
   export let isShowFallbackIcons: boolean = false;
   export let isShowAvatar: boolean = true;

@@ -1,11 +1,11 @@
 <script lang="ts">
-  import BottomCta from "../../shared/bottomCta/BottomCta.svelte";
-  import { faqs } from "../../shared/faqs.data";
-  import FaQs from "../../shared/FAQs.svelte";
-  import type { IFaq } from "../../shared/landing.type";
-  import PricingSection from "../../shared/pricing/PricingSection.svelte";
-  import { landing } from "../../shared/store/shared.store";
-  import { pricingPlans } from "./pricing.config";
+  import BottomCta from "@21n/landing/shared/bottomCta/BottomCta.svelte";
+  import { faqs } from "@21n/landing/shared/faqs.data";
+  import FaQs from "@21n/landing/shared/FAQs.svelte";
+  import type { IFaq } from "@21n/landing/shared/landing.type";
+  import PricingSection from "@21n/landing/shared/pricing/PricingSection.svelte";
+  import { landing } from "@21n/landing/shared/store/shared.store";
+  import { pricingPlans } from "@21n/landing/memotron.io/pricing/pricing.config";
   const faqItems: IFaq[] = [
     faqs.paymentInformationNotRequired,
     faqs.offlineVersionLimitations,

@@ -1,31 +1,31 @@
 <script lang="ts">
-  import { Arrangement } from "$lib/client/types/direction.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import CollectionThumbnail from "$lib/client/components/collection/thumbnail/CollectionThumbnail.svelte";
-  import NodeThumbnail from "$lib/client/products/memotron/node/thumbnail/NodeThumbnail.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { Size } from "$lib/client/types/size.enum";
+  import { Arrangement } from "@21n/types/direction.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import CollectionThumbnail from "@21n/components/collection/thumbnail/CollectionThumbnail.svelte";
+  import NodeThumbnail from "@21n/products/memotron/node/thumbnail/NodeThumbnail.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Size } from "@21n/types/size.enum";
   import {
     ResourceAccessPoint,
     ResourceAccessMode,
     ResourceAccessPointState
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
-  import { appStore } from "$lib/client/stores/app.store";
-  import FileView from "$lib/client/components/files/FileView.svelte";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
+  import { appStore } from "@21n/stores/app.store";
+  import FileView from "@21n/components/files/FileView.svelte";
   import { createEventDispatcher } from "svelte";
-  import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
-  import type { ICollection } from "$lib/client/components/collection/collection.type";
-  import type { IFile } from "$lib/client/components/files/file.type";
-  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import NodeItems from "$lib/client/products/memotron/node/NodeRecords.svelte";
-  import LibraryLoadingPulse from "$lib/client/components/library/LibraryLoadingPulse.svelte";
-  import GoalThumbnail from "../goals/thumbnail/GoalThumbnail.svelte";
-  import TaskThumbnail from "../tasks/TaskThumbnail.svelte";
-  import TaskRecords from "../tasks/TaskRecords.svelte";
-  import type { IGoalThumb } from "../goals/goal.type";
-  import type { ITaskThumb } from "../tasks/task.type";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import type { INodeThumb } from "@21n/products/memotron/node/node.type";
+  import type { ICollection } from "@21n/components/collection/collection.type";
+  import type { IFile } from "@21n/components/files/file.type";
+  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
+  import NodeItems from "@21n/products/memotron/node/NodeRecords.svelte";
+  import LibraryLoadingPulse from "@21n/components/library/LibraryLoadingPulse.svelte";
+  import GoalThumbnail from "@21n/components/goals/thumbnail/GoalThumbnail.svelte";
+  import TaskThumbnail from "@21n/components/tasks/TaskThumbnail.svelte";
+  import TaskRecords from "@21n/components/tasks/TaskRecords.svelte";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import type { ITaskThumb } from "@21n/components/tasks/task.type";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   const dispatch = createEventDispatcher();
   export let data: (
     | INodeThumb

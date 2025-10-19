@@ -1,14 +1,14 @@
-import { flux } from "$lib/client/components/flux/flux";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { PersistenceActionType } from "$lib/client/types/data.type";
+import { flux } from "@21n/components/flux/flux";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { PersistenceActionType } from "@21n/types/data.type";
 import {
   determineResourceType,
   isSameResource,
   removeDuplicatesFilter,
   resourceInList
-} from "$lib/client/components/flux/resourceStores/resource.utils";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import type { IGoal } from "$lib/client/components/goals/goal.type";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+import type { IGoal } from "@21n/components/goals/goal.type";
 
 /**
  * Correction for incorrect migration of old goals to new goals in Pointron v0.82.0

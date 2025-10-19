@@ -3,18 +3,18 @@
     NodeRightPaneType,
     NodeType,
     webNodeTypeList
-  } from "$lib/client/products/memotron/node/node.type";
-  import { type IActiveNodeStore } from "../node.store";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import MediaNodeRightPane from "../rightPanel/MediaNodeRightPane.svelte";
+  } from "@21n/products/memotron/node/node.type";
+  import { type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import MediaNodeRightPane from "@21n/products/memotron/node/rightPanel/MediaNodeRightPane.svelte";
   import { setContext } from "svelte";
-  import view from "$lib/client/stores/view.store";
-  import MediaContentResolver from "./MediaContentResolver.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import context from "$lib/client/stores/context.store";
-  import { OperatingSystem } from "$lib/client/types/context.type";
+  import view from "@21n/stores/view.store";
+  import MediaContentResolver from "@21n/products/memotron/node/content/MediaContentResolver.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
+  import context from "@21n/stores/context.store";
+  import { OperatingSystem } from "@21n/types/context.type";
 
   export let node: IActiveNodeStore;
   export let isConstrainedWidth: boolean = false;

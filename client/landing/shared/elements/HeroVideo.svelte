@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
   let isVideoPlaying = false;
   export let videoUrl: string;
   export let thumbnailUrl: string | undefined = undefined;

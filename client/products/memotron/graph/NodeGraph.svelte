@@ -1,6 +1,6 @@
 <script lang="ts">
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import NodeGraphUsingG6 from "./NodeGraphUsingG6.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import NodeGraphUsingG6 from "@21n/products/memotron/graph/NodeGraphUsingG6.svelte";
 
   export let nodeId: string;
   export let layout: string;

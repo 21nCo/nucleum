@@ -1,4 +1,4 @@
-import GridInputElement from "./GridInputElement.svelte";
+import GridInputElement from "@21n/products/memotron/lab/infiniteGrid/GridInputElement.svelte";
 
 export default {
   //   title: "GridInputElement",

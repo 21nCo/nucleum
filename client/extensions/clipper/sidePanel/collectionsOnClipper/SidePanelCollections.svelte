@@ -1,23 +1,23 @@
 <script lang="ts">
-  import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
-  import { FluxMethod } from "$lib/client/components/flux/flux.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { CollectionType } from "$lib/client/components/collection/collection.type";
-  import type { ICollection } from "$lib/client/components/collection/collection.type";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import { activeResourceFilter } from "$lib/client/utils/utils";
-  import CollectionsList from "./CollectionsList.svelte";
-  import CollectionItemsView from "./CollectionItemsView.svelte";
-  import type { CollectionData, CollectionItem } from "./types";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import NewCollectionWizard from "./NewCollectionWizard.svelte";
-  import { collectionStore } from "$lib/client/components/collection/collection.store";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import ErrorStatusPane from "$lib/client/elements/feedback/ErrorStatusPane.svelte";
+  import { extensionFlux } from "@21n/components/flux/fluxExtentionMediator";
+  import { FluxMethod } from "@21n/components/flux/flux.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { CollectionType } from "@21n/components/collection/collection.type";
+  import type { ICollection } from "@21n/components/collection/collection.type";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
+  import { activeResourceFilter } from "@21n/utils/utils";
+  import CollectionsList from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/CollectionsList.svelte";
+  import CollectionItemsView from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/CollectionItemsView.svelte";
+  import type { CollectionData, CollectionItem } from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/types";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import NewCollectionWizard from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/NewCollectionWizard.svelte";
+  import { collectionStore } from "@21n/components/collection/collection.store";
+  import { logger } from "@21n/components/debug/logger.client";
+  import ErrorStatusPane from "@21n/elements/feedback/ErrorStatusPane.svelte";
 
   export let currentUrl: string;
 

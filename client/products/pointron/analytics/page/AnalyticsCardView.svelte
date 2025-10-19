@@ -1,37 +1,37 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import TimePeriodPicker from "$lib/client/elements/datetime/timeperiodpicker/TimePeriodPicker.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { isInEditMode } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
-  import { Size } from "$lib/client/types/size.enum";
-  import { determinePreviousTimePeriod } from "$lib/client/utils/time.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import TimePeriodPicker from "@21n/elements/datetime/timeperiodpicker/TimePeriodPicker.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { isInEditMode } from "@21n/stores/app.store";
+  import view from "@21n/stores/view.store";
+  import { Size } from "@21n/types/size.enum";
+  import { determinePreviousTimePeriod } from "@21n/utils/time.utils";
+  import { cn } from "@21n/utils/ui.utils";
   import {
     AnalyticsCardType,
     type IAnalyticsCard,
     type AnalyticsDataRecord,
     type IAnalyticsLabelColor
-  } from "../analytics.types";
-  import { analyticsConfigStore } from "../analytics.store";
+  } from "@21n/products/pointron/analytics/analytics.types";
+  import { analyticsConfigStore } from "@21n/products/pointron/analytics/analytics.store";
   import { createEventDispatcher } from "svelte";
-  import CardSelector from "./CardSelector.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import GroupingAndFilters from "./GroupingAndFilters.svelte";
-  import CardResolver from "./CardResolver.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import type { ISessionLog } from "../../logs/log.type";
-  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
-  import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
-  import type { ITimePeriodResolved } from "$lib/client/types/time.type";
-  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { ErrorMessage } from "$lib/client/components/error/error.type";
+  import CardSelector from "@21n/products/pointron/analytics/page/CardSelector.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import GroupingAndFilters from "@21n/products/pointron/analytics/page/GroupingAndFilters.svelte";
+  import CardResolver from "@21n/products/pointron/analytics/page/CardResolver.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  import type { ISessionLog } from "@21n/products/pointron/logs/log.type";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
+  import type { ITimePeriodResolved } from "@21n/types/time.type";
+  import { tzStore } from "@21n/components/settings/timezone/tz.store";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ErrorMessage } from "@21n/components/error/error.type";
   export let card: IAnalyticsCard;
   export let position: { index: number; total: number };
   export let pageId: string;

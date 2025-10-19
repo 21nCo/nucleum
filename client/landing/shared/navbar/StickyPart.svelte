@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { cn } from "@21n/utils/ui.utils";
   import { fly } from "svelte/transition";
-  import type { ITopNavBar } from "../landing.type";
-  import NavBarCta from "./NavBarCta.svelte";
-  import NavBarLogo from "./NavBarLogo.svelte";
-  import NavMenu from "./NavMenu.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import type { ITopNavBar } from "@21n/landing/shared/landing.type";
+  import NavBarCta from "@21n/landing/shared/navbar/NavBarCta.svelte";
+  import NavBarLogo from "@21n/landing/shared/navbar/NavBarLogo.svelte";
+  import NavMenu from "@21n/landing/shared/navbar/NavMenu.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
   export let topNavBarValues: ITopNavBar;
   export let isStickied: boolean = false;
   export let isShowCta: boolean = false;

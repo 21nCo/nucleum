@@ -1,0 +1,12 @@
+{
+  "name": "@21n/legacy",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "types": "./index.d.ts"
+    },
+    "./*": "./*"
+  }
+}

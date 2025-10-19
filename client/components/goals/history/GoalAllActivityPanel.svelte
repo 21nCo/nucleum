@@ -1,29 +1,29 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { accessLogStore } from "$lib/client/components/accessLogging/accesslog.store";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import type { IAccessLog } from "$lib/client/components/accessLogging/accessLog.type";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { flux } from "$lib/client/components/flux/flux";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { logger } from "$lib/client/components/debug/logger.client";
+  import { accessLogStore } from "@21n/components/accessLogging/accesslog.store";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import type { IAccessLog } from "@21n/components/accessLogging/accessLog.type";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { flux } from "@21n/components/flux/flux";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { logger } from "@21n/components/debug/logger.client";
   import {
     PersistenceActionType,
     type IMutation
-  } from "$lib/client/types/data.type";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { resolveMutationAction } from "$lib/client/components/flux/flux.utils";
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
-  import { sessionLogStore } from "$lib/client/products/pointron/logs/log.store";
+  } from "@21n/types/data.type";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { resolveMutationAction } from "@21n/components/flux/flux.utils";
+  import { sessionStore } from "@21n/products/pointron/focus/session.store";
+  import { sessionLogStore } from "@21n/products/pointron/logs/log.store";
   import type {
     ISessionThumb,
     ISessionLog
-  } from "$lib/client/products/pointron/logs/log.type";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/products/pointron/logs/log.type";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import { appStore } from "@21n/stores/app.store";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { cn } from "@21n/utils/ui.utils";
 
   export let goalId: string;
   export let createdAt: string;

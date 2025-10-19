@@ -1,31 +1,31 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { cn } from "@21n/utils/ui.utils";
   import { getContext } from "svelte";
-  import Resources from "../../../../components/record/Records.svelte";
-  import LinkThumbnailItems from "../links/LinkThumbnailItems.svelte";
-  import { nodeStore, type IActiveNodeStore } from "../node.store";
+  import Resources from "@21n/components/record/Records.svelte";
+  import LinkThumbnailItems from "@21n/products/memotron/node/links/LinkThumbnailItems.svelte";
+  import { nodeStore, type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
   import {
     canHaveTraces,
     NodeRightPaneType,
     NodeType,
     type INode,
     type INodeLinkThumb
-  } from "../node.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { focusById } from "$lib/client/actions/focusById.action";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import RightPaneOverviewMetricCard from "./RightPaneOverviewMetricCard.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
+  } from "@21n/products/memotron/node/node.type";
+  import { appStore } from "@21n/stores/app.store";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { focusById } from "@21n/actions/focusById.action";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import RightPaneOverviewMetricCard from "@21n/products/memotron/node/rightPanel/RightPaneOverviewMetricCard.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
 
   export let node: IActiveNodeStore;
   export let pane: NodeRightPaneType | undefined = undefined;

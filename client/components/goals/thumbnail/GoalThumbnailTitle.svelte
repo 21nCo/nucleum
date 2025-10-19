@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
-  import { GoalStatus, type IGoalThumb } from "../goal.type";
-  import { resolveGoalTypeIcon } from "../goal.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
+  import { GoalStatus, type IGoalThumb } from "@21n/components/goals/goal.type";
+  import { resolveGoalTypeIcon } from "@21n/components/goals/goal.utils";
   export let item: IGoalThumb;
   export let isCurrentlyFocusing: boolean = false;
   export let color: number | undefined = undefined;

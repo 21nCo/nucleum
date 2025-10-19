@@ -1,9 +1,9 @@
-import { globalDbo } from "$lib/shared/dbo/global.dbo";
-import { memotronDboDefinitions } from "$lib/shared/dbo/memotron.dbo";
-import { memotronTables } from "$lib/shared/dbo/memotron.tables";
-import { pointronDboDefinitions } from "$lib/shared/dbo/pointron.dbo";
-import { pointronTables } from "$lib/shared/dbo/pointron.tables";
-import { globalTables } from "../dbo/global.tables";
+import { globalDbo } from "@21n/shared-dbo/global.dbo";
+import { memotronDboDefinitions } from "@21n/shared-dbo/memotron.dbo";
+import { memotronTables } from "@21n/shared-dbo/memotron.tables";
+import { pointronDboDefinitions } from "@21n/shared-dbo/pointron.dbo";
+import { pointronTables } from "@21n/shared-dbo/pointron.tables";
+import { globalTables } from "@21n/shared-dbo/global.tables";
 import {
   type IPrimitiveDbDataType,
   type IResourceSelectParams,
@@ -15,9 +15,9 @@ import {
   IResourceFilterOperator,
   IResourceFilterDateGrouping,
   type IResourceSelectProperties
-} from "$lib/client/types/data.type";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { generateRandomId } from "./crypto.utils";
+} from "@21n/types/data.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { generateRandomId } from "@21n/shared-utils/crypto.utils";
 
 /**
  * Resolves a dbo update query based on the provided dependencies from the database operations.

@@ -1,12 +1,12 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { appStore } from "$lib/client/stores/app.store";
-  import context from "$lib/client/stores/context.store";
-  import type { IAction } from "$lib/client/types/action.type";
+  import { appStore } from "@21n/stores/app.store";
+  import context from "@21n/stores/context.store";
+  import type { IAction } from "@21n/types/action.type";
   import { onDestroy, onMount } from "svelte";
-  import ComponentResolver from "./ComponentResolver.svelte";
-  import { resolveProductConfig } from "$lib/client/products/product.config";
-  import view from "$lib/client/stores/view.store";
+  import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
+  import { resolveProductConfig } from "@21n/products/product.config";
+  import view from "@21n/stores/view.store";
   export let prefix: string | undefined = undefined;
   export let cmdPageLaunch: string | undefined = undefined;
 

@@ -1,5 +1,5 @@
-import type { IDataMapper } from "./flux.type";
-import { Resource } from "./resourceStores/resource.enum";
+import type { IDataMapper } from "@21n/components/flux/flux.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 
 /**
  * DataMapper service handles data transformation operations such as:

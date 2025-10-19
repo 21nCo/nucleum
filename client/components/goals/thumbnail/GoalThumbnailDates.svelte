@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
-  import type { IGoalThumb } from "../goal.type";
+  import { parseAndFormatDate } from "@21n/utils/time.utils";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
   export let item: IGoalThumb;
 </script>
 

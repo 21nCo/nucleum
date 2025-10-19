@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import {
     isSameResource,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import type { IProperty } from "$lib/client/components/collection/properties/property.type";
-  import PropertyItem from "$lib/client/components/collection/properties/PropertyItem.svelte";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import type { IRecordId } from "@21n/types/data.type";
+  import type { IProperty } from "@21n/components/collection/properties/property.type";
+  import PropertyItem from "@21n/components/collection/properties/PropertyItem.svelte";
   import {
     ActiveNodeStore,
     nodeStore
-  } from "$lib/client/products/memotron/node/node.store";
-  import type { INodePropertyValue } from "$lib/client/products/memotron/node/node.type";
+  } from "@21n/products/memotron/node/node.store";
+  import type { INodePropertyValue } from "@21n/products/memotron/node/node.type";
   export let values: INodePropertyValue[] = [];
   export let properties: IProperty[] = [];
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;

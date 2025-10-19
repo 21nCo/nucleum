@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { internalUrlNodeTypeList, type INode } from "../node.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { internalUrlNodeTypeList, type INode } from "@21n/products/memotron/node/node.type";
   export let item: INode;
   function extractDomain(url: string) {
     const domain = new URL(url).hostname;

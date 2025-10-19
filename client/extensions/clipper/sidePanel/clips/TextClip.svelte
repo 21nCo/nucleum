@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import WebClipPreview from "$lib/client/products/memotron/node/content/web/WebClipPreview.svelte";
-  import type { ITextClip } from "$lib/client/products/memotron/node/node.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import WebClipPreview from "@21n/products/memotron/node/content/web/WebClipPreview.svelte";
+  import type { ITextClip } from "@21n/products/memotron/node/node.type";
   export let clip: ITextClip;
   export let id: string = "";
 </script>

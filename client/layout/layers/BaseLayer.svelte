@@ -3,45 +3,45 @@
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
   import { browser } from "$app/environment";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
+  import { GlobalEvent } from "@21n/types/event.enum";
   import {
     Embed,
     OperatingSystem,
     type IAppContext
-  } from "$lib/client/types/context.type";
-  import { pingParent, postDataToParent } from "$lib/client/utils/embed.utils";
-  import account from "$lib/client/stores/account.store";
-  import { appStore, currentTime } from "$lib/client/stores/app.store";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import context from "$lib/client/stores/context.store";
-  import ThemeLayer from "./themeLayer/ThemeLayer.svelte";
+  } from "@21n/types/context.type";
+  import { pingParent, postDataToParent } from "@21n/utils/embed.utils";
+  import account from "@21n/stores/account.store";
+  import { appStore, currentTime } from "@21n/stores/app.store";
+  import { toasts } from "@21n/stores/notification.store";
+  import context from "@21n/stores/context.store";
+  import ThemeLayer from "@21n/layout/layers/themeLayer/ThemeLayer.svelte";
   import {
     detectSystemOS,
     detectTouchDevice
-  } from "$lib/client/utils/browser.utils";
-  import { extractProduct } from "$lib/shared/utils/utils";
-  import { AlertType } from "$lib/client/types/notification.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { LogType } from "$lib/client/components/debug/debug.type";
+  } from "@21n/utils/browser.utils";
+  import { extractProduct } from "@21n/shared-utils/utils";
+  import { AlertType } from "@21n/types/notification.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { LogType } from "@21n/components/debug/debug.type";
   import {
     clientStorage,
     getDapId
-  } from "$lib/client/persistence/persistence.utils";
-  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import appearance from "$lib/client/stores/appearance.store";
-  import MetadataLayer from "./MetadataLayer.svelte";
-  import PosthogTelemetry from "./analytics/PosthogTelemetry.svelte";
+  } from "@21n/persistence/persistence.utils";
+  import { ClientStorageKey } from "@21n/persistence/persistence.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import appearance from "@21n/stores/appearance.store";
+  import MetadataLayer from "@21n/layout/layers/MetadataLayer.svelte";
+  import PosthogTelemetry from "@21n/layout/layers/analytics/PosthogTelemetry.svelte";
   import dynamicProductData from "$lib/product.json";
-  import { getSettingsAsModal } from "../settingsActionMap";
-  import { globalActions } from "$lib/client/stores/actionMap";
-  import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
-  import { parse } from "$lib/shared/utils/json.utils";
-  import { productData } from "$lib/client/products/product.resolver";
+  import { getSettingsAsModal } from "@21n/layout/settingsActionMap";
+  import { globalActions } from "@21n/stores/actionMap";
+  import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
+  import { parse } from "@21n/shared-utils/json.utils";
+  import { productData } from "@21n/products/product.resolver";
   import {
     product,
     resolveProductConfig
-  } from "$lib/client/products/product.config";
+  } from "@21n/products/product.config";
   import view from "@21n/stores/view.store";
   let timer: any;
   let isMounted = false;

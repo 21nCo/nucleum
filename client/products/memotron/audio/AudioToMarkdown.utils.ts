@@ -1,15 +1,15 @@
-import { prefixTable } from "$lib/shared/utils/text.utils";
-import { NodeType } from "../node/node.type";
+import { prefixTable } from "@21n/shared-utils/text.utils";
+import { NodeType } from "@21n/products/memotron/node/node.type";
 import {
   HeadingKeys,
   InlineKeys,
   ListKeys,
   type A2MDBlock,
   BlockKeys
-} from "../audio/AudioToMarkdown.type";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
-import { reparse } from "$lib/shared/utils/json.utils";
+} from "@21n/products/memotron/audio/AudioToMarkdown.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { generateRandomIdv2 } from "@21n/shared-utils/crypto.utils";
+import { reparse } from "@21n/shared-utils/json.utils";
 class AudioToMarkdown {
   words: string[] | undefined;
   word: string | undefined;

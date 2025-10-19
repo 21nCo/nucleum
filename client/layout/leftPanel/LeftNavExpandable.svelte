@@ -1,17 +1,17 @@
 <script lang="ts">
-  import AppMenuSwitcher from "$lib/client/layout/leftPanel/appMenuSwitcher/AppMenuSwitcher.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
-  import { LayoutContext } from "$lib/client/types/layout.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import LeftBottomBar from "./LeftBottomBar.svelte";
+  import AppMenuSwitcher from "@21n/layout/leftPanel/appMenuSwitcher/AppMenuSwitcher.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import view from "@21n/stores/view.store";
+  import { LayoutContext } from "@21n/types/layout.type";
+  import { Size } from "@21n/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import LeftBottomBar from "@21n/layout/leftPanel/LeftBottomBar.svelte";
   import { onMount } from "svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
-  import LeftNavCommandAction from "./LeftNavCommandAction.svelte";
-  import LeftNavOfflineStatus from "./LeftNavOfflineStatus.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import { UIState } from "@21n/stores/uiState/uiState.type";
+  import LeftNavCommandAction from "@21n/layout/leftPanel/LeftNavCommandAction.svelte";
+  import LeftNavOfflineStatus from "@21n/layout/leftPanel/LeftNavOfflineStatus.svelte";
 
   export let isRounded = false;
   let isMinimized: boolean = false;

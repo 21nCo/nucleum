@@ -1,22 +1,22 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { feedbackPane } from "$lib/client/extensions/clipper/contentScripts/store";
-  import LinkBoxOnClipper from "$lib/client/products/memotron/common/linkbox/LinkBoxOnClipper.svelte";
-  import LinkItems from "$lib/client/products/memotron/common/linkbox/LinkItems.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { feedbackPane } from "@21n/extensions/clipper/contentScripts/store";
+  import LinkBoxOnClipper from "@21n/products/memotron/common/linkbox/LinkBoxOnClipper.svelte";
+  import LinkItems from "@21n/products/memotron/common/linkbox/LinkItems.svelte";
   import {
     NodeType,
     type IClip
-  } from "$lib/client/products/memotron/node/node.type";
-  import NodeTitle from "$lib/client/products/memotron/node/title/NodeTitle.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  } from "@21n/products/memotron/node/node.type";
+  import NodeTitle from "@21n/products/memotron/node/title/NodeTitle.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { fly } from "svelte/transition";
-  import { resumeVideo } from "./parsers/shared/video.utils";
-  import InlineFeedbackText from "./InlineFeedbackText.svelte";
-  import { AlertType } from "$lib/client/types/notification.type";
-  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { resumeVideo } from "@21n/extensions/clipper/parsers/shared/video.utils";
+  import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
+  import { AlertType } from "@21n/types/notification.type";
+  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   export let clip: IClip;
   export let onAction: (data: any) => Promise<any>;
   let feedback: string | { message: string; type: AlertType } = "";

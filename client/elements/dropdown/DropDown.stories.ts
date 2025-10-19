@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
 
-import DropDown from "./DropDown.svelte";
+import DropDown from "@21n/elements/dropdown/DropDown.svelte";
 import {
   DropDownStyle,
   type DropdownItem
-} from "$lib/client/types/dropdownItem.type";
+} from "@21n/types/dropdownItem.type";
 const meta = {
   component: DropDown,
   argTypes: {

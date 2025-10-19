@@ -1,6 +1,6 @@
 <script>
-  import MicroIndicatorTile from "./MicroIndicatorTile.svelte";
-  import { TileAppearance } from "./calendarHeatmap.types";
+  import MicroIndicatorTile from "@21n/components/calendar/calendarHeatmap/MicroIndicatorTile.svelte";
+  import { TileAppearance } from "@21n/components/calendar/calendarHeatmap/calendarHeatmap.types";
 </script>
 
 <div class="flex gap-2 justify-end mr-5 text-sm">

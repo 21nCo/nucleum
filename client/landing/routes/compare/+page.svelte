@@ -1,6 +1,6 @@
 <script lang="ts">
-  import FeatureWheelComparer from "../../shared/FeatureWheelComparer.svelte";
-  import PageSeo from "../../shared/seo/PageSEO.svelte";
+  import FeatureWheelComparer from "@21n/landing/shared/FeatureWheelComparer.svelte";
+  import PageSeo from "@21n/landing/shared/seo/PageSEO.svelte";
 
   export let data: {
     product?: string;

@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
-  import { player } from "../components/modal/modal.store";
-  import view from "../stores/view.store";
-  import { cn } from "../utils/ui.utils";
-  import { generateRandomId } from "$lib/shared/utils/crypto.utils";
+  import { player } from "@21n/components/modal/modal.store";
+  import view from "@21n/stores/view.store";
+  import { cn } from "@21n/utils/ui.utils";
+  import { generateRandomId } from "@21n/shared-utils/crypto.utils";
   export let margin: string | undefined = undefined;
   export let zIndex: string = "z-20";
   export let containerId: string | undefined = undefined;

@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { ITopNavBar } from "../landing.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { ITopNavBar } from "@21n/landing/shared/landing.type";
   export let topNavBarValues: ITopNavBar;
-  import view from "$lib/client/stores/view.store";
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { isProductPage, landing } from "../store/shared.store";
+  import view from "@21n/stores/view.store";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { isProductPage, landing } from "@21n/landing/shared/store/shared.store";
   export let size: Size.sm | Size.md = Size.md;
 </script>
 

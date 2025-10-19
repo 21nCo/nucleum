@@ -1,7 +1,7 @@
 <script lang="ts">
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import Button from "$lib/client/landing/shared/elements/Button.svelte";
-  import { renderMdAsHtml } from "../../../markdown/markdown.utils";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import Button from "@21n/landing/shared/elements/Button.svelte";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
 
   export let title: string | undefined = undefined;
   export let content: string | undefined = undefined;

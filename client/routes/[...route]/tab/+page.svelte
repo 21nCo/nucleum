@@ -1,7 +1,7 @@
 <script>
   import { page } from "$app/stores";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import ResourceResolver from "$lib/client/layout/paint/ResourceResolver.svelte";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import ResourceResolver from "@21n/layout/paint/ResourceResolver.svelte";
 
   $: tab = $page.url.searchParams.get(ResourceAccessMode.TAB);
 </script>

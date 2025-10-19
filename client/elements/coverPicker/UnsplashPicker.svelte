@@ -1,15 +1,15 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { removeDuplicatesFilter } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { persistenceInstance } from "$lib/client/persistence/persistence";
-  import { safeRequestIdleCallback } from "$lib/client/utils/browser.utils";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { InputStyle } from "@21n/types/input.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { removeDuplicatesFilter } from "@21n/components/flux/resourceStores/resource.utils";
+  import { appStore } from "@21n/stores/app.store";
+  import { persistenceInstance } from "@21n/persistence/persistence";
+  import { safeRequestIdleCallback } from "@21n/utils/browser.utils";
 
   const dispatch = createEventDispatcher();
   let searchQuery = "";

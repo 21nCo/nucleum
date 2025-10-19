@@ -1,16 +1,16 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { flux } from "$lib/client/components/flux/flux";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import type { DexiePersistence } from "$lib/client/persistence/dexie/dexie.local";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { stringify } from "$lib/shared/utils/json.utils";
+  import { flux } from "@21n/components/flux/flux";
+  import { logger } from "@21n/components/debug/logger.client";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { ButtonVariant } from "@21n/types/button.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import type { DexiePersistence } from "@21n/persistence/dexie/dexie.local";
+  import { cn } from "@21n/utils/ui.utils";
+  import { stringify } from "@21n/shared-utils/json.utils";
 
   interface TableInfo {
     name: string;

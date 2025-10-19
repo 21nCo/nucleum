@@ -1,9 +1,9 @@
 <script lang="ts">
-  import PageError from "$lib/client/components/error/PageError.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/products/product.type";
-  import { Action } from "$lib/client/types/action.enum";
-  import { ButtonVariant } from "$lib/client/types/button.type";
+  import PageError from "@21n/components/error/PageError.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { Product } from "@21n/products/product.type";
+  import { Action } from "@21n/types/action.enum";
+  import { ButtonVariant } from "@21n/types/button.type";
   function resolveMessage(product: Product) {
     if (product === Product.NUCLEUS) {
       return "You don't have access to Nucleus. Please upgrade to a Nucleus plan to continue.";

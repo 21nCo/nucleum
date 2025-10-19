@@ -1,8 +1,8 @@
 <script lang="ts">
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { ITestimonial } from "../landing.type";
-  import { sanitizeUrl } from "../utils/url-sanitizer";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { ITestimonial } from "@21n/landing/shared/landing.type";
+  import { sanitizeUrl } from "@21n/landing/shared/utils/url-sanitizer";
   export let testimonial: ITestimonial;
 
   $: sanitizedLink = sanitizeUrl(testimonial.link);

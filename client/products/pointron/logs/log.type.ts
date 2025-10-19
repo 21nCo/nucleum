@@ -1,16 +1,16 @@
 import type {
   IFocusItem,
   ISessionInterval
-} from "$lib/client/types/pointron/session.type";
-import type { IRecordId } from "$lib/client/types/data.type";
-import type { IMarkdown } from "$lib/client/components/markdown/md.type";
-import type { TimeScale } from "$lib/client/types/time.type";
+} from "@21n/types/pointron/session.type";
+import type { IRecordId } from "@21n/types/data.type";
+import type { IMarkdown } from "@21n/components/markdown/md.type";
+import type { TimeScale } from "@21n/types/time.type";
 import type {
   IResource,
   IResourceShareable
-} from "$lib/client/components/flux/resourceStores/resource.type";
-import type { IGoal } from "$lib/client/components/goals/goal.type";
-import type { ITask } from "$lib/client/components/tasks/task.type";
+} from "@21n/components/flux/resourceStores/resource.type";
+import type { IGoal } from "@21n/components/goals/goal.type";
+import type { ITask } from "@21n/components/tasks/task.type";
 
 export enum SessionType {
   PREDEFINED_INTERVALS = "PREDEFINED_INTERVALS",

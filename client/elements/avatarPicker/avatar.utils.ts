@@ -1,6 +1,6 @@
-import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
-import type { IAvatar } from "$lib/client/types/avatar.type";
-import { isValidString } from "$lib/shared/utils/text.utils";
+import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
+import type { IAvatar } from "@21n/types/avatar.type";
+import { isValidString } from "@21n/shared-utils/text.utils";
 
 export function isValidAvatar(avatar: IAvatar | undefined) {
   return (

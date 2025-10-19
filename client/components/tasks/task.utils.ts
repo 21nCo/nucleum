@@ -1,4 +1,4 @@
-import { TaskDueDateFilter, TaskSubTypeForSwitcher } from "./task.type";
+import { TaskDueDateFilter, TaskSubTypeForSwitcher } from "@21n/components/tasks/task.type";
 
 export function resolveTaskSubTypesForSwitcher() {
   const byDate = {

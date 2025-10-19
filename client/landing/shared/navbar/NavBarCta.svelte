@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { IButton } from "../landing.type";
-  import Button from "../elements/Button.svelte";
+  import type { IButton } from "@21n/landing/shared/landing.type";
+  import Button from "@21n/landing/shared/elements/Button.svelte";
   export let cta: IButton[] = [];
 </script>
 

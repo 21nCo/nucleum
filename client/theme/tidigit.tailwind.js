@@ -1,7 +1,7 @@
 // import colorSchemes from "./colorschemes.json" with { type: "json" };
 // import colorSchemesBranding from "./colorschemes-branding.json" with { type: "json" };
-import colorSchemesBranding from "./colorschemes-branding.json";
-import colorSchemes from "./colorschemes.json";
+import colorSchemesBranding from "@21n/theme/colorschemes-branding.json";
+import colorSchemes from "@21n/theme/colorschemes.json";
 import { createRequire } from "module";
 
 const themes = [

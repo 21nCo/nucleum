@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { hexToRGBA } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { hexToRGBA } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.utils";
   import { createEventDispatcher } from "svelte";
   let dispatchEvent = createEventDispatcher();
   // function hexToRGBA(hex: string, opacity: number) {

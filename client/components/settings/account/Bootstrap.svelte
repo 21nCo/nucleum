@@ -1,14 +1,14 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import account from "$lib/client/stores/account.store";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { properCase } from "$lib/shared/utils/text.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import account from "@21n/stores/account.store";
+  import { appStore } from "@21n/stores/app.store";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { properCase } from "@21n/shared-utils/text.utils";
   import { onMount } from "svelte";
-  import RegionSetting from "./RegionSetting.svelte";
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import { InfoTextType } from "$lib/client/types/text.type";
+  import RegionSetting from "@21n/components/settings/account/RegionSetting.svelte";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import { InfoTextType } from "@21n/types/text.type";
   let region: string = "useast";
   let isBootstrapInProgress: boolean = false;
   let isAlreadyBootstrapped: boolean = false;

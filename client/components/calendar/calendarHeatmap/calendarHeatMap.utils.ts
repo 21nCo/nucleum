@@ -1,18 +1,18 @@
-import { TileAppearance } from "./calendarHeatmap.types";
+import { TileAppearance } from "@21n/components/calendar/calendarHeatmap/calendarHeatmap.types";
 import { get } from "svelte/store";
 import {
   isArrayWithSameValue,
   isValidArrayWithData
-} from "$lib/shared/utils/obj.utils";
+} from "@21n/shared-utils/obj.utils";
 import type {
   ICalendarHeatMapDataProvider,
   CalendarHeatmapOptions,
   DailyData,
   MonthlyData,
   YearlyData
-} from "./calendarHeatmap.types";
-import { CalendarHeatMapData } from "./calendarHeatmap.store";
-import { TimeScale } from "$lib/client/types/time.type";
+} from "@21n/components/calendar/calendarHeatmap/calendarHeatmap.types";
+import { CalendarHeatMapData } from "@21n/components/calendar/calendarHeatmap/calendarHeatmap.store";
+import { TimeScale } from "@21n/types/time.type";
 import { kmeans } from "ml-kmeans";
 
 let profileStartdate = "2023-02-19"; //replace the value with with logs start date variable

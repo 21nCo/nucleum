@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Button from "../elements/Button.svelte";
-  import Title from "../Title.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import Button from "@21n/landing/shared/elements/Button.svelte";
+  import Title from "@21n/landing/shared/Title.svelte";
   import { onMount } from "svelte";
-  import type { IButton } from "../landing.type";
-  import view from "$lib/client/stores/view.store";
+  import type { IButton } from "@21n/landing/shared/landing.type";
+  import view from "@21n/stores/view.store";
   export let deviceImages: string[] = [];
   export let body: string =
     "Sign up for a free trial and see how Pointron can help you get more done.";

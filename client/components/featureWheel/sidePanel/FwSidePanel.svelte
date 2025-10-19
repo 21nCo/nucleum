@@ -1,25 +1,25 @@
 <script lang="ts">
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
   import { createEventDispatcher } from "svelte";
   import type {
     IFwFeature,
     IFwCategory,
     IContemporary
-  } from "$lib/client/types/featureWheel.type";
-  import ComparisonTable from "./comparisionTable/ComparisonTable.svelte";
-  import CollapsibleList from "$lib/client/landing/shared/collapsible/CollapsibleList.svelte";
-  import ExternalLogo from "$lib/client/branding/external/ExternalLogo.svelte";
-  import { properCase } from "$lib/shared/utils/text.utils";
-  import TextCard from "./card/TextCard.svelte";
-  import CardListContent from "./card/CardListContent.svelte";
-  import ComparisionTableWithAppsAsColumns from "./comparisionTable/ComparisionTableWithAppsAsColumns.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
-  import HowToUse from "./HowToUse.svelte";
-  import { renderMdAsHtml } from "../../markdown/markdown.utils";
-  import FooterInfo from "./comparisionTable/FooterInfo.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  } from "@21n/types/featureWheel.type";
+  import ComparisonTable from "@21n/components/featureWheel/sidePanel/comparisionTable/ComparisonTable.svelte";
+  import CollapsibleList from "@21n/landing/shared/collapsible/CollapsibleList.svelte";
+  import ExternalLogo from "@21n/branding/external/ExternalLogo.svelte";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import TextCard from "@21n/components/featureWheel/sidePanel/card/TextCard.svelte";
+  import CardListContent from "@21n/components/featureWheel/sidePanel/card/CardListContent.svelte";
+  import ComparisionTableWithAppsAsColumns from "@21n/components/featureWheel/sidePanel/comparisionTable/ComparisionTableWithAppsAsColumns.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import HowToUse from "@21n/components/featureWheel/sidePanel/HowToUse.svelte";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
+  import FooterInfo from "@21n/components/featureWheel/sidePanel/comparisionTable/FooterInfo.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
 
   export let product: string;
   export let features: IFwFeature[] = [];

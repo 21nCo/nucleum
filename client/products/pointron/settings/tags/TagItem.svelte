@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { appStore } from "$lib/client/stores/app.store";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import { appStore } from "@21n/stores/app.store";
   export let label: string | undefined = undefined;
   export let id: string | undefined = undefined;
   export let isAddNew: boolean = false;

@@ -1,19 +1,19 @@
-import { AppSkin, Theme } from "$lib/client/types/appearance.type";
+import { AppSkin, Theme } from "@21n/types/appearance.type";
 import type {
   IUserGlobalPreferences,
   UserAppearanceSettings
-} from "$lib/client/types/preferences.type";
-import { TimeScale } from "$lib/client/types/time.type";
+} from "@21n/types/preferences.type";
+import { TimeScale } from "@21n/types/time.type";
 import {
   detectTimeZone,
   detectTimeZoneFallback
-} from "$lib/client/utils/time.utils";
+} from "@21n/utils/time.utils";
 import { get } from "svelte/store";
-import { KeyValueStore } from "../flux/resourceStores/kv.store";
-import { Resource } from "../flux/resourceStores/resource.enum";
-import { TranscriptionModel } from "$lib/client/products/memotron/taco/taco.types";
-import { tzStore } from "./timezone/tz.store";
-import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
+import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { TranscriptionModel } from "@21n/products/memotron/taco/taco.types";
+import { tzStore } from "@21n/components/settings/timezone/tz.store";
+import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
 
 // const userPreferencesId = Item.globalPreferences;
 const defaultColorSchemeId = "colorscheme:clean_tidyblue_light";

@@ -3,19 +3,19 @@
     PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle,
     type PanelSwitcherEditModeOptions
-  } from "$lib/client/types/switcher.enum";
+  } from "@21n/types/switcher.enum";
   import { createEventDispatcher } from "svelte";
-  import Icon from "../Icon.svelte";
-  import Button from "../button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import type { ISelectItem } from "$lib/client/types/select.type";
-  import Popover from "../popover/Popover.svelte";
-  import TextInput from "../input/TextInput.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import AddNewButton from "../button/AddNewButton.svelte";
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import { isValidString } from "$lib/shared/utils/text.utils";
-  import Badge from "../text/Badge.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import type { ISelectItem } from "@21n/types/select.type";
+  import Popover from "@21n/elements/popover/Popover.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import AddNewButton from "@21n/elements/button/AddNewButton.svelte";
+  import { tooltip } from "@21n/actions/popover.action";
+  import { isValidString } from "@21n/shared-utils/text.utils";
+  import Badge from "@21n/elements/text/Badge.svelte";
   const dispatch = createEventDispatcher();
   export let item: ISelectItem;
   export let isInEditMode: boolean = false;

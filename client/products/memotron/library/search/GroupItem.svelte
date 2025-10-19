@@ -1,16 +1,16 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import LinkSearchResultItem from "../../common/linkbox/LinkSearchResultItem.svelte";
-  import SearchResultsPopover from "$lib/client/elements/input/SearchResultsPopover.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { Size } from "@21n/types/size.enum";
+  import LinkSearchResultItem from "@21n/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
+  import SearchResultsPopover from "@21n/elements/input/SearchResultsPopover.svelte";
   import { createEventDispatcher } from "svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
-  import { isValidNumber } from "$lib/shared/utils/text.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import { isValidNumber } from "@21n/shared-utils/text.utils";
   const dispatch = createEventDispatcher();
   export let group: any;
   export let isActive: boolean = false;

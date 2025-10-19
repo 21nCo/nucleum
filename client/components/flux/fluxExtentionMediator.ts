@@ -1,15 +1,19 @@
-import { logger } from "$lib/client/components/debug/logger.client";
-import { flux, initFlux } from "$lib/client/components/flux/flux";
-import { DexiePersistence } from "$lib/client/persistence/dexie/dexie.local";
-import { StoreDataType, type IStore } from "$lib/client/types/data.type";
-import { ExtensionEvent } from "$lib/client/types/extension.type";
-import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
-import { ExtensionStore } from "$lib/client/extensions/extension.store";
-import { FluxMethod, type IFluxInitArgs, type IFluxMethod } from "./flux.type";
-import { Resource } from "./resourceStores/resource.enum";
-import { clientStorage } from "$lib/client/persistence/persistence.utils";
-import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
-import { Extension } from "$lib/client/products/product.type";
+import { logger } from "@21n/components/debug/logger.client";
+import { flux, initFlux } from "@21n/components/flux/flux";
+import { DexiePersistence } from "@21n/persistence/dexie/dexie.local";
+import { StoreDataType, type IStore } from "@21n/types/data.type";
+import { ExtensionEvent } from "@21n/types/extension.type";
+import { relayToBackgroundScript } from "@21n/utils/extension.utils";
+import {
+  FluxMethod,
+  type IFluxInitArgs,
+  type IFluxMethod
+} from "@21n/components/flux/flux.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { clientStorage } from "@21n/persistence/persistence.utils";
+import { ClientStorageKey } from "@21n/persistence/persistence.type";
+import { Extension } from "@21n/products/product.type";
+import { ExtensionStore } from "@21n/extensions/extension.store";
 
 // import { getPort } from "@plasmohq/messaging/port"
 

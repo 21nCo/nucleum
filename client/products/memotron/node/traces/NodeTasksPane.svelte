@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { taskStore } from "$lib/client/components/tasks/task.store";
+  import { taskStore } from "@21n/components/tasks/task.store";
   import { onMount } from "svelte";
-  import type { IActiveNodeStore } from "../node.store";
-  import { NodeType } from "../node.type";
-  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import TaskThumbnail from "$lib/client/components/tasks/TaskThumbnail.svelte";
-  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
+  import type { ITaskThumb } from "@21n/components/tasks/task.type";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import TaskThumbnail from "@21n/components/tasks/TaskThumbnail.svelte";
+  import { LoadingAnimationType } from "@21n/types/feedback.type";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
 
   export let node: IActiveNodeStore | null = null;
   let tasks: ITaskThumb[] = [];

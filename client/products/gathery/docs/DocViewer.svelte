@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import Node from "$lib/client/products/memotron/node/Node.svelte";
+  import Node from "@21n/products/memotron/node/Node.svelte";
   import { onMount } from "svelte";
   export let id: string = "";
   onMount(() => {

@@ -2,29 +2,29 @@
   import {
     activeSession,
     currentFocusItem
-  } from "$lib/client/products/pointron/focus/session.store";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { Layout } from "$lib/client/types/layout.type";
-  import { TimeFormat } from "$lib/client/types/time.type";
-  import { formatTime, formatSeconds } from "$lib/client/utils/time.utils";
+  } from "@21n/products/pointron/focus/session.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import { Layout } from "@21n/types/layout.type";
+  import { TimeFormat } from "@21n/types/time.type";
+  import { formatTime, formatSeconds } from "@21n/utils/time.utils";
   import { onMount } from "svelte";
-  import BreadcrumbMini from "$lib/client/elements/breadcrumb/BreadcrumbMini.svelte";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { resolveTaskFocus } from "../session.utils";
-  import UnpinAction from "./actions/UnpinAction.svelte";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { goalStore } from "$lib/client/components/goals/goal.store";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { focusAggregates } from "../../analytics/analytics.store";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import BreadcrumbMini from "@21n/elements/breadcrumb/BreadcrumbMini.svelte";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { resolveTaskFocus } from "@21n/products/pointron/focus/session.utils";
+  import UnpinAction from "@21n/products/pointron/focus/quickstart/actions/UnpinAction.svelte";
+  import { toasts } from "@21n/stores/notification.store";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { goalStore } from "@21n/components/goals/goal.store";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { focusAggregates } from "@21n/products/pointron/analytics/analytics.store";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { createEventDispatcher } from "svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import context from "$lib/client/stores/context.store";
+  import { appStore } from "@21n/stores/app.store";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import context from "@21n/stores/context.store";
   const dispatch = createEventDispatcher();
 
   export let item: Pick<IGoalThumb, "id" | "label" | "color" | "parent"> & {

@@ -1,13 +1,13 @@
 <script lang="ts">
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import InlineFeedbackText from "$lib/client/extensions/clipper/InlineFeedbackText.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
   import {
     AlertType,
     type IInlineStatus
-  } from "$lib/client/types/notification.type";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { activeSession } from "../session.store";
-  import FocusNotes from "./FocusNotes.svelte";
+  } from "@21n/types/notification.type";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
+  import FocusNotes from "@21n/products/pointron/focus/notes/FocusNotes.svelte";
 
   let feedback: IInlineStatus | undefined = undefined;
   const mountTs = new Date().getTime();

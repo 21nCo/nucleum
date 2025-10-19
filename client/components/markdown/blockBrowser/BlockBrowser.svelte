@@ -1,17 +1,17 @@
 <script lang="ts">
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { properCase } from "$lib/shared/utils/text.utils";
-  import BlockItem from "./BlockItem.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import BlockItem from "@21n/components/markdown/blockBrowser/BlockItem.svelte";
   import { createEventDispatcher, getContext } from "svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
-  import context from "$lib/client/stores/context.store";
-  import type { IBlockBrowserSection } from "./blockBrowser.type";
-  import { resolveBlockBrowserConfig } from "./blockBrowser.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import context from "@21n/stores/context.store";
+  import type { IBlockBrowserSection } from "@21n/components/markdown/blockBrowser/blockBrowser.type";
+  import { resolveBlockBrowserConfig } from "@21n/components/markdown/blockBrowser/blockBrowser.utils";
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
 

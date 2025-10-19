@@ -1,24 +1,24 @@
 <script lang="ts">
-  import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
-  import { ActiveNodeStore, type IActiveNodeStore } from "./node.store";
+  import NodeLoadingPulse from "@21n/elements/feedback/animations/NodeLoadingPulse.svelte";
+  import { ActiveNodeStore, type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { mediaNodeTypeList, NodeView, webNodeTypeList } from "./node.type";
-  import MediaNode from "./base/MediaNode.svelte";
-  import NonMediaNode from "./base/NonMediaNode.svelte";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import { mediaNodeTypeList, NodeView, webNodeTypeList } from "@21n/products/memotron/node/node.type";
+  import MediaNode from "@21n/products/memotron/node/base/MediaNode.svelte";
+  import NonMediaNode from "@21n/products/memotron/node/base/NonMediaNode.svelte";
   import { onDestroy, setContext } from "svelte";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { debouncer } from "$lib/client/utils/utils";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { appStore } from "$lib/client/stores/app.store";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { debouncer } from "@21n/utils/utils";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { appStore } from "@21n/stores/app.store";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { page } from "$app/stores";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import ComponentEmbedLayer from "$lib/client/layout/layers/ComponentEmbedLayer.svelte";
-  import context from "$lib/client/stores/context.store";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import ComponentEmbedLayer from "@21n/layout/layers/ComponentEmbedLayer.svelte";
+  import context from "@21n/stores/context.store";
 
   export let id: string;
   export let accessMode: ResourceAccessMode;

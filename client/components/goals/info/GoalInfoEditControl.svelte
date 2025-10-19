@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import ColorPickerMini from "$lib/client/elements/colorPicker/ColorPickerMini.svelte";
-  import type { IActiveGoalStore } from "../goal.store";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import ColorPickerMini from "@21n/elements/colorPicker/ColorPickerMini.svelte";
+  import type { IActiveGoalStore } from "@21n/components/goals/goal.store";
   import {
     AlertType,
     type IInlineStatus
-  } from "$lib/client/types/notification.type";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import { resolveGoalSubTypesForSwitcher } from "../goal.utils";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import type { GoalType } from "../goal.type";
+  } from "@21n/types/notification.type";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import { resolveGoalSubTypesForSwitcher } from "@21n/components/goals/goal.utils";
+  import { InputStyle } from "@21n/types/input.type";
+  import type { GoalType } from "@21n/components/goals/goal.type";
   export let goal: IActiveGoalStore;
   export let control: "color" | "type";
   export let status: IInlineStatus | undefined = undefined;

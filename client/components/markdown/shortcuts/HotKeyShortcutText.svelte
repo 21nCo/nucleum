@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
+  import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
 
   export let row: any;
 </script>

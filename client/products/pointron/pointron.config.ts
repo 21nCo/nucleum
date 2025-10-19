@@ -1,5 +1,5 @@
-import { pointronActions } from "./pointron.actions";
-import PointronBaseLayer from "./base/PointronBaseLayer.svelte";
+import { pointronActions } from "@21n/products/pointron/pointron.actions";
+import PointronBaseLayer from "@21n/products/pointron/base/PointronBaseLayer.svelte";
 
 export default {
   actions: pointronActions,

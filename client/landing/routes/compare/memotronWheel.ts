@@ -3,14 +3,14 @@ import {
   type IContemporary,
   type IFwCategory,
   type IFwFeature
-} from "$lib/client/types/featureWheel.type";
+} from "@21n/types/featureWheel.type";
 import {
   getContemporaries,
   getContemporariesForFeature
-} from "$lib/client/cx/contemporaries/loader";
-import { Contemporary } from "$lib/client/components/featureWheel/comparer.type";
+} from "@21n/cx/contemporaries/loader";
+import { Contemporary } from "@21n/components/featureWheel/comparer.type";
 
-const cdn = "https://cdn.21n.co/images/features/";
+const cdn = "https://cdn.21n.org/images/features/";
 
 enum MemotronFeatureCategory {
   App = "App",

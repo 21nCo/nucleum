@@ -1,24 +1,24 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
   import {
     ButtonStyle,
     ButtonVariant,
     type IButtonParams
-  } from "$lib/client/types/button.type";
+  } from "@21n/types/button.type";
   import { createEventDispatcher, onMount } from "svelte";
-  import modalEvent, { isPrimaryActionDisabled } from "./modal.store";
-  import { appEvents } from "$lib/client/stores/notification.store";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { resolveModalOnFront } from "$lib/client/utils/browser.utils";
-  import { Size } from "$lib/client/types/size.enum";
-  import { logger } from "../debug/logger.client";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Action } from "$lib/client/types/action.enum";
-  import ButtonGroup from "$lib/client/elements/button/ButtonGroup.svelte";
-  import view from "$lib/client/stores/view.store";
+  import modalEvent, { isPrimaryActionDisabled } from "@21n/components/modal/modal.store";
+  import { appEvents } from "@21n/stores/notification.store";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import { resolveModalOnFront } from "@21n/utils/browser.utils";
+  import { Size } from "@21n/types/size.enum";
+  import { logger } from "@21n/components/debug/logger.client";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import { KeyboardKey, ModifierKey } from "@21n/types/keyboard.type";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Action } from "@21n/types/action.enum";
+  import ButtonGroup from "@21n/elements/button/ButtonGroup.svelte";
+  import view from "@21n/stores/view.store";
   const dispatch = createEventDispatcher();
   export let action: string;
   export let isShowClose: boolean = false;

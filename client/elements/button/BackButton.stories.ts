@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
 
-import BackButton from "./BackButton.svelte";
+import BackButton from "@21n/elements/button/BackButton.svelte";
 
 const meta = {
   component: BackButton,

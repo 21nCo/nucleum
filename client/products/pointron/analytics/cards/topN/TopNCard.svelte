@@ -1,23 +1,23 @@
 <script lang="ts">
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import Table2 from "$lib/client/elements/table/Table2.svelte";
-  import view from "$lib/client/stores/view.store";
-  import { Size } from "$lib/client/types/size.enum";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import Table2 from "@21n/elements/table/Table2.svelte";
+  import view from "@21n/stores/view.store";
+  import { Size } from "@21n/types/size.enum";
   import {
     TableCellType,
     type TableColumn
-  } from "$lib/client/types/table.type";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { isValidString } from "$lib/shared/utils/text.utils";
+  } from "@21n/types/table.type";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { isValidString } from "@21n/shared-utils/text.utils";
   import {
     AnalyticsCardGrouping,
     type IAnalyticsCard,
     type AnalyticsDataRecord,
     type TopNCardDataRecord
-  } from "../../analytics.types";
-  import LabelColumnCell from "./LabelColumnCell.svelte";
-  import PreviousValueColumnCell from "./PreviousValueColumnCell.svelte";
-  import ValueColumnCell from "./ValueColumnCell.svelte";
+  } from "@21n/products/pointron/analytics/analytics.types";
+  import LabelColumnCell from "@21n/products/pointron/analytics/cards/topN/LabelColumnCell.svelte";
+  import PreviousValueColumnCell from "@21n/products/pointron/analytics/cards/topN/PreviousValueColumnCell.svelte";
+  import ValueColumnCell from "@21n/products/pointron/analytics/cards/topN/ValueColumnCell.svelte";
 
   export let card: IAnalyticsCard;
   export let data: AnalyticsDataRecord[];

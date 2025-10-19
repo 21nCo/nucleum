@@ -1,15 +1,15 @@
 <script lang="ts">
-  import FileView from "$lib/client/components/files/FileView.svelte";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import FileView from "@21n/components/files/FileView.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { cn } from "@21n/utils/ui.utils";
   import {
     type IKindleHighlight,
     type ITextClip,
     type IWebScreenshotClip,
     NodeType
-  } from "../../node.type";
-  import { resolveContentPreview } from "../../node.utils";
-  import TextClipPreview from "./TextClipPreview.svelte";
+  } from "@21n/products/memotron/node/node.type";
+  import { resolveContentPreview } from "@21n/products/memotron/node/node.utils";
+  import TextClipPreview from "@21n/products/memotron/node/content/web/TextClipPreview.svelte";
   export let node: ITextClip | IWebScreenshotClip | IKindleHighlight;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let truncateLength: number | undefined = undefined;

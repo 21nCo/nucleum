@@ -1,5 +1,5 @@
 <script>
-  import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
+  import SubAtomLogo from "@21n/branding/SubAtomLogo.svelte";
 
   let radius = 280;
   let spokes = [

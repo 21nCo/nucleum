@@ -1,40 +1,40 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import type { IActiveCollectionStore } from "./collection.store";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
-  import { resolveCollectionContextMenu } from "./collection.store";
+  import type { IActiveCollectionStore } from "@21n/components/collection/collection.store";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { InputStyle } from "@21n/types/input.type";
+  import ContextMenuAction from "@21n/elements/contextMenu/ContextMenuAction.svelte";
+  import { resolveCollectionContextMenu } from "@21n/components/collection/collection.store";
   import {
     ResourceAccessMode,
     ResourceAccessPoint,
     ResourceActionType
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-  import AddResourceAction from "./AddResourceAction.svelte";
-  import { CollectionType } from "./collection.type";
-  import Avatar from "$lib/client/elements/avatarPicker/Avatar.svelte";
-  import { objIsEmpty } from "$lib/shared/utils/obj.utils";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { resizeListener } from "$lib/client/actions/resize.action";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { popover, tooltip } from "$lib/client/actions/popover.action";
-  import view from "$lib/client/stores/view.store";
-  import Tooltip from "$lib/client/elements/text/Tooltip.svelte";
-  import TextArea from "$lib/client/elements/input/TextArea.svelte";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
-  import FormLabelTooltip from "$lib/client/elements/text/formLabel/FormLabelTooltip.svelte";
-  import { isValidAvatar } from "$lib/client/elements/avatarPicker/avatar.utils";
-  import { resourceAction } from "../flux/resourceStores/resource.utils";
-  import { Resource } from "../flux/resourceStores/resource.enum";
-  import CollectionDescriptionEditPopover from "./CollectionDescriptionEditPopover.svelte";
-  import RecordStarStatusFeedback from "../record/RecordStarStatusFeedback.svelte";
-  import BackButton from "$lib/client/elements/button/BackButton.svelte";
-  import ResourceInlineCloseButton from "$lib/client/elements/button/ResourceInlineCloseButton.svelte";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import AddResourceAction from "@21n/components/collection/AddResourceAction.svelte";
+  import { CollectionType } from "@21n/components/collection/collection.type";
+  import Avatar from "@21n/elements/avatarPicker/Avatar.svelte";
+  import { objIsEmpty } from "@21n/shared-utils/obj.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { resizeListener } from "@21n/actions/resize.action";
+  import { Placement } from "@21n/types/direction.enum";
+  import { appStore } from "@21n/stores/app.store";
+  import { popover, tooltip } from "@21n/actions/popover.action";
+  import view from "@21n/stores/view.store";
+  import Tooltip from "@21n/elements/text/Tooltip.svelte";
+  import TextArea from "@21n/elements/input/TextArea.svelte";
+  import { PopoverTriggerMethod } from "@21n/types/popover.type";
+  import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
+  import { isValidAvatar } from "@21n/elements/avatarPicker/avatar.utils";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import CollectionDescriptionEditPopover from "@21n/components/collection/CollectionDescriptionEditPopover.svelte";
+  import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
+  import BackButton from "@21n/elements/button/BackButton.svelte";
+  import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
 
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";

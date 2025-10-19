@@ -1,16 +1,16 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import UploadButton from "$lib/client/elements/button/UploadButton.svelte";
-  import Slider from "$lib/client/elements/slider/Slider.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
+  import UploadButton from "@21n/elements/button/UploadButton.svelte";
+  import Slider from "@21n/elements/slider/Slider.svelte";
   import { createEventDispatcher } from "svelte";
-  import { MediaGridType } from "$lib/client/products/memotron/node/node.type";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import InlineFeedbackText from "$lib/client/extensions/clipper/InlineFeedbackText.svelte";
-  import { AlertType } from "$lib/client/types/notification.type";
+  import { MediaGridType } from "@21n/products/memotron/node/node.type";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
+  import { AlertType } from "@21n/types/notification.type";
 
   export let config: any;
   export let handleFileUpload;

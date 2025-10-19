@@ -1,20 +1,20 @@
 <script lang="ts">
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
   import { onMount } from "svelte";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "../../flux/resourceStores/resource.type";
-  import TaskLibrary from "../../tasks/TaskLibrary.svelte";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import TaskLibrary from "@21n/components/tasks/TaskLibrary.svelte";
   import { page } from "$app/stores";
-  import { appStore } from "$lib/client/stores/app.store";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import Task from "../../tasks/Task.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import view from "$lib/client/stores/view.store";
-  import context from "$lib/client/stores/context.store";
+  import { appStore } from "@21n/stores/app.store";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import Task from "@21n/components/tasks/Task.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import view from "@21n/stores/view.store";
+  import context from "@21n/stores/context.store";
 
   export let id: IRecordId;
   export let isActiveResource: boolean = true;

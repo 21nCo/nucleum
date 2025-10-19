@@ -1,9 +1,9 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import { IconVariant } from "../types/icon.type";
-  import Icon from "./Icon.svelte";
-  import { generateUID } from "$lib/client/utils/utils";
-  import { Size } from "../types/size.enum";
+  import { IconVariant } from "@21n/types/icon.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { generateUID } from "@21n/utils/utils";
+  import { Size } from "@21n/types/size.enum";
 
   export let isVisible: boolean = false;
   export let hideCloseButton: boolean = false;

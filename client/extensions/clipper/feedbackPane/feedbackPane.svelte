@@ -1,33 +1,33 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
-  import LinkBoxOnClipper from "$lib/client/products/memotron/common/linkbox/LinkBoxOnClipper.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
+  import LinkBoxOnClipper from "@21n/products/memotron/common/linkbox/LinkBoxOnClipper.svelte";
   import { onMount } from "svelte";
-  import { feedbackPane, webpage } from "../contentScripts/store";
-  import LinkItems from "$lib/client/products/memotron/common/linkbox/LinkItems.svelte";
-  import InlineFeedbackText from "../InlineFeedbackText.svelte";
-  import { AlertType } from "$lib/client/types/notification.type";
-  import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
+  import { feedbackPane, webpage } from "@21n/extensions/clipper/contentScripts/store";
+  import LinkItems from "@21n/products/memotron/common/linkbox/LinkItems.svelte";
+  import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
+  import { AlertType } from "@21n/types/notification.type";
+  import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
   import {
     NodeType,
     socialPostNodeTypeList
-  } from "$lib/client/products/memotron/node/node.type";
-  import { resolveContentTypeString } from "../clipper.utils";
-  import FeedbackPaneBase from "./FeedbackPaneBase.svelte";
-  import FileView from "$lib/client/components/files/FileView.svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  } from "@21n/products/memotron/node/node.type";
+  import { resolveContentTypeString } from "@21n/extensions/clipper/clipper.utils";
+  import FeedbackPaneBase from "@21n/extensions/clipper/feedbackPane/FeedbackPaneBase.svelte";
+  import FileView from "@21n/components/files/FileView.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
   import {
     determineResourceType,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import NodeThumbnailTweetPreview from "$lib/client/products/memotron/node/thumbnail/NodeThumbnailTweetPreview.svelte";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import type { IWebpageStore } from "../contentScripts/types";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { ResourceError } from "$lib/client/components/error/errors";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import NodeThumbnailSocialPostPreview from "$lib/client/products/memotron/node/thumbnail/NodeThumbnailSocialPostPreview.svelte";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import NodeThumbnailTweetPreview from "@21n/products/memotron/node/thumbnail/NodeThumbnailTweetPreview.svelte";
+  import { Placement } from "@21n/types/direction.enum";
+  import type { IWebpageStore } from "@21n/extensions/clipper/contentScripts/types";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { ResourceError } from "@21n/components/error/errors";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import NodeThumbnailSocialPostPreview from "@21n/products/memotron/node/thumbnail/NodeThumbnailSocialPostPreview.svelte";
 
   export let pageContentType: NodeType | undefined = undefined;
 

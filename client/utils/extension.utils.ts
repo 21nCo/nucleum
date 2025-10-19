@@ -1,6 +1,6 @@
-import { logger } from "../components/debug/logger.client";
-import type { ClipperExtensionEvent } from "../products/memotron/common/clip.type";
-import type { ExtensionEvent } from "../types/extension.type";
+import { logger } from "@21n/components/debug/logger.client";
+import type { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
+import type { ExtensionEvent } from "@21n/types/extension.type";
 import { sendToBackground } from "@plasmohq/messaging";
 
 //TODO - Temp - use utils.ts after lib refactoring

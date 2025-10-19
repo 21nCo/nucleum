@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
-import ModalCloseButton from "./FullScreenCloseButton.svelte";
+import ModalCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
 const meta = {
   component: ModalCloseButton,
   argTypes: {

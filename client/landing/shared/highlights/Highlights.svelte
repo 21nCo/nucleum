@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import HighlightItem from "./HighlightItem.svelte";
-  import type { IHighlight } from "../landing.type";
-  import Title from "../Title.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import HighlightItem from "@21n/landing/shared/highlights/HighlightItem.svelte";
+  import type { IHighlight } from "@21n/landing/shared/landing.type";
+  import Title from "@21n/landing/shared/Title.svelte";
 
   export let title: string = "Details that matter";
   export let subtitle: string =

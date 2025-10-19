@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import type { DaySummary } from "../log.type";
-  import DaySummaryTotalItem from "./DaySummaryTotalItem.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import type { DaySummary } from "@21n/products/pointron/logs/log.type";
+  import DaySummaryTotalItem from "@21n/products/pointron/logs/daySummary/DaySummaryTotalItem.svelte";
   export let summary: DaySummary;
 </script>
 

@@ -1,5 +1,5 @@
 <script>
-  import TermsofService from "../../shared/TermsofService.svelte";
+  import TermsofService from "@21n/landing/shared/TermsofService.svelte";
 </script>
 
 <div

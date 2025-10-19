@@ -2,18 +2,18 @@
   import {
     SessionCompositionType,
     type SessionComposition
-  } from "$lib/client/types/pointron/sessionComposition.type";
+  } from "@21n/types/pointron/sessionComposition.type";
   import { createEventDispatcher } from "svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { SelectionItemActiveStyle } from "$lib/client/types/switcher.enum";
-  import { getTotalsFromComposition } from "$lib/client/products/pointron/pointron.utils";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import PresetDurationText from "./PresetDurationText.svelte";
-  import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
-  import { abg, cn } from "$lib/client/utils/ui.utils";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { SelectionItemActiveStyle } from "@21n/types/switcher.enum";
+  import { getTotalsFromComposition } from "@21n/products/pointron/pointron.utils";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import PresetDurationText from "@21n/products/pointron/focus/advanced/presets/PresetDurationText.svelte";
+  import { pointronPreferences } from "@21n/products/pointron/pointron.store";
+  import { abg, cn } from "@21n/utils/ui.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import TextWithHoverTooltip from "@21n/elements/text/TextWithHoverTooltip.svelte";
   const dispatch = createEventDispatcher();
   export let preset: SessionComposition;
   export let isActive: boolean = false;

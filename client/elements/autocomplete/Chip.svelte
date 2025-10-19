@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { ChipVariant } from "$lib/client/types/chipVariant.enum";
-  import Icon from "../Icon.svelte";
+  import { ChipVariant } from "@21n/types/chipVariant.enum";
+  import Icon from "@21n/elements/Icon.svelte";
   export let hideCloseIcon: boolean = false;
   export let variant: ChipVariant;
 

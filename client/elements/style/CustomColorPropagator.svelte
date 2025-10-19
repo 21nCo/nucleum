@@ -1,10 +1,10 @@
 <script lang="ts">
-  import appearance from "$lib/client/stores/appearance.store";
+  import appearance from "@21n/stores/appearance.store";
   import {
     generateCustomColorShades,
     resolveIfActiveFgFg,
     retrieveCurrentColors
-  } from "$lib/client/utils/theme.utils";
+  } from "@21n/utils/theme.utils";
   export let type: string = "div";
   export let id: string = "";
   export let color: number | undefined = undefined;

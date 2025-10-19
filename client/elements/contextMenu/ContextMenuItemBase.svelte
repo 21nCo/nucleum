@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { enumToString, properCase } from "$lib/shared/utils/text.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Icon from "../Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import { enumToString, properCase } from "@21n/shared-utils/text.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
   import {
     ContextMenuType,
     type IContextMenuItem
-  } from "$lib/client/types/select.type";
-  import Badge from "../text/Badge.svelte";
-  import Switch from "../toggle/Switch.svelte";
+  } from "@21n/types/select.type";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import Switch from "@21n/elements/toggle/Switch.svelte";
   import { createEventDispatcher, onMount } from "svelte";
   const dispatch = createEventDispatcher();
   export let item: IContextMenuItem;

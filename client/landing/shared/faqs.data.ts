@@ -1,4 +1,4 @@
-import type { IFaq } from "./landing.type";
+import type { IFaq } from "@21n/landing/shared/landing.type";
 
 export const faqs: { [key: string]: IFaq } = {
   paymentInformationNotRequired: {

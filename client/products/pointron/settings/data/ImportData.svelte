@@ -1,16 +1,16 @@
 <script lang="ts">
   // import { PointronPersistence } from "$lib/client/products/pointron/pointron.persistence";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import { AlertType } from "$lib/client/types/notification.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { isEmptyArray, isValidArray } from "$lib/shared/utils/obj.utils";
-  import { generateUID } from "$lib/client/utils/utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { toasts } from "@21n/stores/notification.store";
+  import { ButtonVariant } from "@21n/types/button.type";
+  import { AlertType } from "@21n/types/notification.type";
+  import { Size } from "@21n/types/size.enum";
+  import { isEmptyArray, isValidArray } from "@21n/shared-utils/obj.utils";
+  import { generateUID } from "@21n/utils/utils";
   import { createEventDispatcher } from "svelte";
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import { parse } from "$lib/shared/utils/json.utils";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import { parse } from "@21n/shared-utils/json.utils";
   const dispatch = createEventDispatcher();
   let fileInput: HTMLInputElement;
   let isProcessingImport: boolean = false;

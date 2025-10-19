@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Badge from "$lib/client/elements/text/Badge.svelte";
-  import type { ISessionThumb } from "$lib/client/products/pointron/logs/log.type";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import type { ISessionThumb } from "@21n/products/pointron/logs/log.type";
   export let item: ISessionThumb;
 </script>
 

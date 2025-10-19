@@ -1,17 +1,17 @@
 <script lang="ts">
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
-  import type { InputLabel } from "$lib/client/types/input.type";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import type { DropdownItem } from "@21n/types/dropdownItem.type";
+  import type { InputLabel } from "@21n/types/input.type";
   import {
     CollectionLayout,
     type ICollectionView
-  } from "$lib/client/components/collection/collection.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { collectionLayoutOptions } from "$lib/client/components/collection/collection.store";
+  } from "@21n/components/collection/collection.type";
+  import { Size } from "@21n/types/size.enum";
+  import { collectionLayoutOptions } from "@21n/components/collection/collection.store";
   import { createEventDispatcher } from "svelte";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
-  import MultiselectDropdown from "$lib/client/elements/dropdown/MultiselectDropdown.svelte";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import MultiselectDropdown from "@21n/elements/dropdown/MultiselectDropdown.svelte";
   const dispatch = createEventDispatcher();
 
   export let view: ICollectionView;

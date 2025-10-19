@@ -1,14 +1,14 @@
 <script lang="ts">
-  import BirdCalendar from "./birdViewV2/BirdCalendar.svelte";
-  import ClassicCalendar from "./classic/ClassicCalendar.svelte";
-  import { CalendarLayout } from "./calendar.type";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import BirdCalendar from "@21n/components/calendar/birdViewV2/BirdCalendar.svelte";
+  import ClassicCalendar from "@21n/components/calendar/classic/ClassicCalendar.svelte";
+  import { CalendarLayout } from "@21n/components/calendar/calendar.type";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import view from "$lib/client/stores/view.store";
-  import CalendarCw from "./CalendarCW.svelte";
+  } from "@21n/stores/uiState/uiState.type";
+  import view from "@21n/stores/view.store";
+  import CalendarCw from "@21n/components/calendar/CalendarCW.svelte";
   export let panel: CalendarLayout = resolvePanelSelection();
 
   function resolvePanelSelection() {

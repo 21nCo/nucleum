@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { IconVariant } from "../types/icon.type";
+  import { IconVariant } from "@21n/types/icon.type";
 
   export let variant: IconVariant = IconVariant.Outline;
   export let _variant: "duotone" | "light" | "thin" = "light";

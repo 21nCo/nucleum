@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
-  import HightlightColorItem from "./HightlightColorItem.svelte";
+  import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
+  import HightlightColorItem from "@21n/products/memotron/common/highlighters/HightlightColorItem.svelte";
   import { createEventDispatcher } from "svelte";
   export let selected: string | null = null;
   const dispatch = createEventDispatcher();

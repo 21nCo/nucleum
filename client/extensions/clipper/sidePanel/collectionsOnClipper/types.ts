@@ -1,5 +1,5 @@
-import { CollectionType } from "$lib/client/components/collection/collection.type";
-import type { NodeType } from "$lib/client/products/memotron/node/node.type";
+import { CollectionType } from "@21n/components/collection/collection.type";
+import type { NodeType } from "@21n/products/memotron/node/node.type";
 
 export interface CollectionData {
   id: string;

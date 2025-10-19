@@ -2,9 +2,9 @@ import type {
   IResource,
   IResourceShareable,
   OmitForCaptureWithId
-} from "$lib/client/components/flux/resourceStores/resource.type";
-import type { AvatarWithCode, IconAvatar } from "$lib/client/types/avatar.type";
-import type { ICollection } from "../collection.type";
+} from "@21n/components/flux/resourceStores/resource.type";
+import type { AvatarWithCode, IconAvatar } from "@21n/types/avatar.type";
+import type { ICollection } from "@21n/components/collection/collection.type";
 
 /**
  * @deprecated Use IProperty instead

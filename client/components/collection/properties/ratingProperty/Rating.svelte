@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import InputBaseElement from "$lib/client/elements/InputBaseElement.svelte";
+  import { InputStyle, type InputLabel } from "@21n/types/input.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import InputBaseElement from "@21n/elements/InputBaseElement.svelte";
   import { createEventDispatcher } from "svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
   const dispatch = createEventDispatcher();
   export let avatar: string = "star";
   export let count: number;

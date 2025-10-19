@@ -1,17 +1,24 @@
 <script lang="ts">
-  import { collectionStore } from "$lib/client/components/collection/collection.store";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import type { ICollectionThumb } from "$lib/client/components/collection/collection.type";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import Switch from "$lib/client/elements/toggle/Switch.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import CollectionThumbnailLabel from "$lib/client/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
-  import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-
+  import { collectionStore } from "@21n/components/collection/collection.store";
+  import { CollectionType } from "@21n/components/collection/collection.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import type { ICollectionThumb } from "@21n/components/collection/collection.type";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import Switch from "@21n/elements/toggle/Switch.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import modalEvent from "@21n/components/modal/modal.store";
+  import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import view from "@21n/stores/view.store";
+  import { resolveProductConfig } from "@21n/products/product.config";
+  import CollectionThumbnailLabel from "@21n/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
+  import { InputStyle } from "@21n/types/input.type";
   let collections: ICollectionThumb[] = [];
   let filteredCollections: ICollectionThumb[] = [];
   let query: string = "";

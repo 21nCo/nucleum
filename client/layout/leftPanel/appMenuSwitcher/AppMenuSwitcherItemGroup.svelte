@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { LayoutContext } from "$lib/client/types/layout.type";
-  import AppMenuSwitcherItem from "./AppMenuSwitcherItem.svelte";
-  import type { IAction } from "$lib/client/types/action.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import { LayoutContext } from "@21n/types/layout.type";
+  import AppMenuSwitcherItem from "@21n/layout/leftPanel/appMenuSwitcher/AppMenuSwitcherItem.svelte";
+  import type { IAction } from "@21n/types/action.type";
   import { createEventDispatcher } from "svelte";
-  import { appStore } from "$lib/client/stores/app.store";
+  import { appStore } from "@21n/stores/app.store";
   const dispatch = createEventDispatcher();
   export let items: IAction[];
   export let layoutContext: LayoutContext;

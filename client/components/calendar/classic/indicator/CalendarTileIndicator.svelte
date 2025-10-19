@@ -2,25 +2,25 @@
   import {
     MetaResource,
     Resource
-  } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
-  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
+  } from "@21n/components/flux/resourceStores/resource.enum";
+  import type { ITaskThumb } from "@21n/components/tasks/task.type";
+  import { tzStore } from "@21n/components/settings/timezone/tz.store";
   import type {
     DaySummary,
     ISessionThumb
-  } from "$lib/client/products/pointron/logs/log.type";
+  } from "@21n/products/pointron/logs/log.type";
   import {
     CalendarTileIndicatorDisplayType,
     type ICalendarIndicatorData
-  } from "../../calendar.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import YearTileIndicatorDot from "./YearTileIndicatorDot.svelte";
-  import MonthTileIndicator from "./MonthTileIndicator.svelte";
-  import { resolveSessionTimeSplit } from "$lib/client/products/pointron/pointron.utils";
-  import { generateSummary } from "$lib/client/products/pointron/focus/session.utils";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { Product } from "$lib/client/products/product.type";
-  import { appStore } from "$lib/client/stores/app.store";
+  } from "@21n/components/calendar/calendar.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import YearTileIndicatorDot from "@21n/components/calendar/classic/indicator/YearTileIndicatorDot.svelte";
+  import MonthTileIndicator from "@21n/components/calendar/classic/indicator/MonthTileIndicator.svelte";
+  import { resolveSessionTimeSplit } from "@21n/products/pointron/pointron.utils";
+  import { generateSummary } from "@21n/products/pointron/focus/session.utils";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { Product } from "@21n/products/product.type";
+  import { appStore } from "@21n/stores/app.store";
 
   export let date: Date;
   export let data: ICalendarIndicatorData[] = [];

@@ -1,31 +1,31 @@
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
 import {
   type IRecordId,
   type IResourceSelectAdditionalParams,
   type IResourceSelectParams
-} from "$lib/client/types/data.type";
-import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-import { logger } from "$lib/client/components/debug/logger.client";
-import type { ITask, ITaskCapture, ITaskThumb } from "./task.type";
-import { ResourceAccessPoint } from "../flux/resourceStores/resource.type";
+} from "@21n/types/data.type";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
+import { logger } from "@21n/components/debug/logger.client";
+import type { ITask, ITaskCapture, ITaskThumb } from "@21n/components/tasks/task.type";
+import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
 import type {
   IContextMenu,
   IContextMenuItem
-} from "$lib/client/types/select.type";
-import { ResourceActions } from "../record/resource.actions";
-import { appStore } from "$lib/client/stores/app.store";
-import { Action } from "$lib/client/types/action.enum";
-import { getUtcSafeDay } from "$lib/client/elements/datetime/datetime.utils";
-import { Product } from "$lib/client/products/product.type";
+} from "@21n/types/select.type";
+import { ResourceActions } from "@21n/components/record/resource.actions";
+import { appStore } from "@21n/stores/app.store";
+import { Action } from "@21n/types/action.enum";
+import { getUtcSafeDay } from "@21n/elements/datetime/datetime.utils";
+import { Product } from "@21n/products/product.type";
 import { get } from "svelte/store";
-import view from "$lib/client/stores/view.store";
-import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
-import { resolveResourceIcon } from "../flux/resourceStores/resource.utils";
-import { activeSession } from "$lib/client/products/pointron/focus/session.store";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { goalStore } from "../goals/goal.store";
-import type { IGoalThumb } from "../goals/goal.type";
+import view from "@21n/stores/view.store";
+import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
+import { resolveResourceIcon } from "@21n/components/flux/resourceStores/resource.utils";
+import { activeSession } from "@21n/products/pointron/focus/session.store";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+import { goalStore } from "@21n/components/goals/goal.store";
+import type { IGoalThumb } from "@21n/components/goals/goal.type";
 
 const defaults = {
   dateUnix: 0,

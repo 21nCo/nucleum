@@ -2,8 +2,8 @@ import type {
   IResource,
   IResourceLabeled,
   IResourceShareable
-} from "$lib/client/components/flux/resourceStores/resource.type";
-import type { IRecordId } from "$lib/client/types/data.type";
+} from "@21n/components/flux/resourceStores/resource.type";
+import type { IRecordId } from "@21n/types/data.type";
 
 export interface ILinkTag
   extends IResource,

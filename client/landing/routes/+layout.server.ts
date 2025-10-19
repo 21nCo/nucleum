@@ -3,8 +3,8 @@ import type {
   IFooter,
   ILandingProductUrls,
   ITopNavBar
-} from "../shared/landing.type";
-import { org } from "../shared/store/shared.store";
+} from "@21n/landing/shared/landing.type";
+import { org } from "@21n/landing/shared/store/shared.store";
 
 const nUrls: ILandingProductUrls = {
   socials: {

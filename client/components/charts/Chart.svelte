@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { ChartType } from "$lib/client/types/analytics.type";
-  import { ChartVariant } from "$lib/client/types/chartVariant.enum";
-  import CarbonChart from "./CarbonChart.svelte";
-  import CustomChart from "./custom/CustomChart.svelte";
+  import type { ChartType } from "@21n/types/analytics.type";
+  import { ChartVariant } from "@21n/types/chartVariant.enum";
+  import CarbonChart from "@21n/components/charts/CarbonChart.svelte";
+  import CustomChart from "@21n/components/charts/custom/CustomChart.svelte";
   export let type: ChartType;
   export let data: any;
   export let options: any;

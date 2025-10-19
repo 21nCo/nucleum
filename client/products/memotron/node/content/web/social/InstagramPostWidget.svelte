@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { createEventDispatcher } from "svelte";
-  import { Persistence } from "$lib/client/persistence/persistence";
-  import { parse } from "$lib/shared/utils/json.utils";
-  import SocialPostLoadingInfo from "./SocialPostLoadingInfo.svelte";
+  import { Persistence } from "@21n/persistence/persistence";
+  import { parse } from "@21n/shared-utils/json.utils";
+  import SocialPostLoadingInfo from "@21n/products/memotron/node/content/web/social/SocialPostLoadingInfo.svelte";
 
   const dispatch = createEventDispatcher();
 

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { popover } from "$lib/client/actions/popover.action";
-  import type { TimeUnit } from "$lib/client/types/time.type";
-  import TimeUnitDropdownPopover from "./TimeUnitDropdownPopover.svelte";
+  import { popover } from "@21n/actions/popover.action";
+  import type { TimeUnit } from "@21n/types/time.type";
+  import TimeUnitDropdownPopover from "@21n/elements/input/durationInput/TimeUnitDropdownPopover.svelte";
   import { createEventDispatcher } from "svelte";
 
   export let units: TimeUnit[];

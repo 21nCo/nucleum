@@ -5,17 +5,17 @@ import {
   type ScheduledNotification,
   type Toast,
   type InlineToast
-} from "../types/notification.type";
-import { postMessageToParent } from "$lib/client/utils/embed.utils";
-import { EmbedMessage } from "../types/embedMessage.enum";
-import { GlobalEvent } from "../types/event.enum";
-import type { IEvent } from "../types/event.type";
-import type { Event } from "../types/event.enum";
-import { ObservableStore } from "./client.store";
-import { logger } from "../components/debug/logger.client";
-import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-import { ErrorMessage } from "../components/error/error.type";
-import { dispatchCustomEvent } from "../utils/browser.utils";
+} from "@21n/types/notification.type";
+import { postMessageToParent } from "@21n/utils/embed.utils";
+import { EmbedMessage } from "@21n/types/embedMessage.enum";
+import { GlobalEvent } from "@21n/types/event.enum";
+import type { IEvent } from "@21n/types/event.type";
+import type { Event } from "@21n/types/event.enum";
+import { ObservableStore } from "@21n/stores/client.store";
+import { logger } from "@21n/components/debug/logger.client";
+import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+import { ErrorMessage } from "@21n/components/error/error.type";
+import { dispatchCustomEvent } from "@21n/utils/browser.utils";
 
 export const toastDefaultDuration = 3500;
 class AppEventStore extends ObservableStore<IEvent> {

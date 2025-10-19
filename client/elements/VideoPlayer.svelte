@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { IconVariant } from "../types/icon.type";
-  import Icon from "./Icon.svelte";
+  import { IconVariant } from "@21n/types/icon.type";
+  import Icon from "@21n/elements/Icon.svelte";
 
   export let time = 0;
   export let duration: number;

@@ -1,6 +1,6 @@
 <script lang="ts">
   import SvelteMarkdown from "svelte-markdown";
-  import Link from "./markdownRenderer/Link.svelte";
+  import Link from "@21n/landing/shared/elements/markdownRenderer/Link.svelte";
 
   export let text: string = "";
 </script>

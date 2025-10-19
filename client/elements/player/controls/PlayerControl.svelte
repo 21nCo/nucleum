@@ -1,11 +1,11 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { tooltip as tooltipAction } from "$lib/client/actions/popover.action";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { haptic } from "$lib/client/utils/embed.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Icon from "../../Icon.svelte";
+  import { tooltip as tooltipAction } from "@21n/actions/popover.action";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import { haptic } from "@21n/utils/embed.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
   export let icon: string;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let label: string | undefined = undefined;

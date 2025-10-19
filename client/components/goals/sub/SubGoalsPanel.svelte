@@ -2,34 +2,34 @@
   import {
     reorderList,
     type DragDropEvent
-  } from "$lib/client/actions/rearrange.action";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/actions/rearrange.action";
+  import Button from "@21n/elements/button/Button.svelte";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { Size } from "@21n/types/size.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { cn } from "@21n/utils/ui.utils";
   import {
     activeResourceFilterIgnoreParentInactive,
     archivedResourceFilter
-  } from "$lib/client/utils/utils";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
+  } from "@21n/utils/utils";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import {
     resourceInList,
     shiftResourceInArray
-  } from "../../flux/resourceStores/resource.utils";
-  import NestedList from "../../nestedList/NestedList.svelte";
-  import { NestedListStyle } from "../../nestedList/nestedList.type";
-  import { goalStore, type IActiveGoalStore } from "../goal.store";
-  import { GoalStatus, SubGoalsLayout, type IGoal } from "../goal.type";
-  import { resolveGoalStatusIcon } from "../goal.utils";
-  import SubGoalItem from "./SubGoalItem.svelte";
-  import SubGoalsLayoutSwitcher from "./SubGoalsLayoutSwitcher.svelte";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import NestedList from "@21n/components/nestedList/NestedList.svelte";
+  import { NestedListStyle } from "@21n/components/nestedList/nestedList.type";
+  import { goalStore, type IActiveGoalStore } from "@21n/components/goals/goal.store";
+  import { GoalStatus, SubGoalsLayout, type IGoal } from "@21n/components/goals/goal.type";
+  import { resolveGoalStatusIcon } from "@21n/components/goals/goal.utils";
+  import SubGoalItem from "@21n/components/goals/sub/SubGoalItem.svelte";
+  import SubGoalsLayoutSwitcher from "@21n/components/goals/sub/SubGoalsLayoutSwitcher.svelte";
   export let goal: IActiveGoalStore;
   export let isActiveResource: boolean = true;
   let isExpandArchiveSubGoals = false;
