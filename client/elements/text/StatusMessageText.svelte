@@ -2,7 +2,7 @@
   import {
     StatusMessageType,
     type StatusMessage
-  } from "$lib/client/types/statusMessage.type";
+  } from "@21n/types/statusMessage.type";
   import { onMount } from "svelte";
   export let message: StatusMessage;
   $: {

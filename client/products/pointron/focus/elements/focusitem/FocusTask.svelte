@@ -3,32 +3,32 @@
     focusItemsStore,
     activeSession,
     currentFocusItem
-  } from "$lib/client/products/pointron/focus/session.store";
+  } from "@21n/products/pointron/focus/session.store";
   import type {
     ISessionInterval,
     IFocusItem,
     ICurrentFocusItem
-  } from "$lib/client/types/pointron/session.type";
-  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import view from "$lib/client/stores/view.store";
-  import { Size } from "$lib/client/types/size.enum";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
+  } from "@21n/types/pointron/session.type";
+  import { SessionState } from "@21n/types/pointron/sessionState.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import view from "@21n/stores/view.store";
+  import { Size } from "@21n/types/size.enum";
+  import { formatSeconds } from "@21n/utils/time.utils";
   import { onMount } from "svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { SessionType } from "../../../logs/log.type";
-  import { resolveTaskFocus } from "../../session.utils";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
-  import { taskStore } from "$lib/client/components/tasks/task.store";
-  import TaskCheckbox from "$lib/client/components/tasks/TaskCheckbox.svelte";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { popover } from "$lib/client/actions/popover.action";
-  import FocusTaskEstimatedTimePopover from "./FocusTaskEstimatedTimePopover.svelte";
-  import type { TimeUnit } from "$lib/client/types/time.type";
+  import { InputStyle } from "@21n/types/input.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import { SessionType } from "@21n/products/pointron/logs/log.type";
+  import { resolveTaskFocus } from "@21n/products/pointron/focus/session.utils";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import type { ITaskThumb } from "@21n/components/tasks/task.type";
+  import { taskStore } from "@21n/components/tasks/task.store";
+  import TaskCheckbox from "@21n/components/tasks/TaskCheckbox.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { popover } from "@21n/actions/popover.action";
+  import FocusTaskEstimatedTimePopover from "@21n/products/pointron/focus/elements/focusitem/FocusTaskEstimatedTimePopover.svelte";
+  import type { TimeUnit } from "@21n/types/time.type";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let task: ITaskThumb;

@@ -1,18 +1,18 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import type { IBillingAddress } from "./userPlan.type";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import Dropdown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import type { InputLabel } from "$lib/client/types/input.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import { isValidEmail } from "$lib/shared/utils/text.utils";
+  import type { IBillingAddress } from "@21n/components/subscription/userPlan.type";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import Dropdown from "@21n/elements/dropdown/DropDown.svelte";
+  import type { InputLabel } from "@21n/types/input.type";
+  import { Orientation } from "@21n/types/direction.enum";
+  import type { DropdownItem } from "@21n/types/dropdownItem.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonVariant } from "@21n/types/button.type";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import { isValidEmail } from "@21n/shared-utils/text.utils";
 
   const dispatch = createEventDispatcher();
   let error: string | undefined = undefined;

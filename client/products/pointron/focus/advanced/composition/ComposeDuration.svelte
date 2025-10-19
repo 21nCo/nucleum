@@ -1,31 +1,31 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { generateUID } from "$lib/client/utils/utils";
-  import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { generateUID } from "@21n/utils/utils";
+  import { pointronPreferences } from "@21n/products/pointron/pointron.store";
   import {
     SessionCompositionType,
     type SessionComposition,
     BreakCompositionType
-  } from "$lib/client/types/pointron/sessionComposition.type";
+  } from "@21n/types/pointron/sessionComposition.type";
   import {
     BarStyle,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { getTotalsFromComposition } from "$lib/client/products/pointron/pointron.utils";
-  import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import PomodoroUnitView from "../presets/PomodoroUnitView.svelte";
-  import ComposeBreak from "./ComposeBreak.svelte";
+  } from "@21n/types/switcher.enum";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { getTotalsFromComposition } from "@21n/products/pointron/pointron.utils";
+  import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import PomodoroUnitView from "@21n/products/pointron/focus/advanced/presets/PomodoroUnitView.svelte";
+  import ComposeBreak from "@21n/products/pointron/focus/advanced/composition/ComposeBreak.svelte";
   import { createEventDispatcher } from "svelte";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import Divider from "@21n/elements/Divider.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   const dispatch = createEventDispatcher();
   export let composition: SessionComposition;
   export let isShowSave: boolean = false;

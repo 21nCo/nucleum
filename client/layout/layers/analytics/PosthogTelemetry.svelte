@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import posthog from "posthog-js";
-  import { stringify } from "$lib/shared/utils/json.utils";
+  import { stringify } from "@21n/shared-utils/json.utils";
   onMount(() => {
     initializePosthog(import.meta.env.VITE_POSTHOG_PROJECT_KEY);
     return () => {

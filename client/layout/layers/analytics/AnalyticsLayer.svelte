@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { onMount } from "svelte";
-  import AnalyticsTags from "./AnalyticsTags.svelte";
+  import AnalyticsTags from "@21n/layout/layers/analytics/AnalyticsTags.svelte";
   export let isLanding: boolean = false;
   let isAnalyticsTagsMapped = false;
   onMount(() => {

@@ -1,23 +1,23 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import FormLabelTooltip from "$lib/client/elements/text/formLabel/FormLabelTooltip.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import Badge from "@21n/elements/text/Badge.svelte";
   import type {
     DropdownGroup,
     DropdownItem
-  } from "$lib/client/types/dropdownItem.type";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  } from "@21n/types/dropdownItem.type";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import {
     PropertyTypeMode,
     type IPropertyTypeSelectorGroup
-  } from "./propertyTypeSelector.type";
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import { Placement } from "$lib/client/types/direction.enum";
+  } from "@21n/components/collection/properties/propertyTypeSelector/propertyTypeSelector.type";
+  import { tooltip } from "@21n/actions/popover.action";
+  import { Placement } from "@21n/types/direction.enum";
   export let groups: IPropertyTypeSelectorGroup[];
   export let options: DropdownItem[];
   export let onSelect: (e: string) => void;

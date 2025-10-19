@@ -1,4 +1,4 @@
-import type { IAction } from "./action.type";
+import type { IAction } from "@21n/types/action.type";
 
 export type IViewStore = {
   height: number;

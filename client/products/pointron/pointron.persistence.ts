@@ -1,5 +1,5 @@
-import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import { interceptSurrealResponse } from "$lib/client/utils/utils";
+import { SurrealDatabase } from "@21n/persistence/surrealHelper";
+import { interceptSurrealResponse } from "@21n/utils/utils";
 
 const surrealDb = new SurrealDatabase();
 export class PointronPersistence {

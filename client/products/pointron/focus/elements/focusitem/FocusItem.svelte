@@ -3,40 +3,40 @@
     focusItemsStore,
     activeSession,
     currentFocusItem
-  } from "$lib/client/products/pointron/focus/session.store";
+  } from "@21n/products/pointron/focus/session.store";
   import { onMount } from "svelte";
-  import AddTodo from "./AddTodo.svelte";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { Embed } from "$lib/client/types/context.type";
-  import context from "$lib/client/stores/context.store";
-  import BreadcrumbMini from "$lib/client/elements/breadcrumb/BreadcrumbMini.svelte";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { SessionType } from "../../../logs/log.type";
+  import AddTodo from "@21n/products/pointron/focus/elements/focusitem/AddTodo.svelte";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import { SessionState } from "@21n/types/pointron/sessionState.enum";
+  import { Size } from "@21n/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { Embed } from "@21n/types/context.type";
+  import context from "@21n/stores/context.store";
+  import BreadcrumbMini from "@21n/elements/breadcrumb/BreadcrumbMini.svelte";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { SessionType } from "@21n/products/pointron/logs/log.type";
   import type {
     IFocusItem,
     ISessionInterval
-  } from "$lib/client/types/pointron/session.type";
-  import { resolveTaskFocus } from "../../session.utils";
-  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
+  } from "@21n/types/pointron/session.type";
+  import { resolveTaskFocus } from "@21n/products/pointron/focus/session.utils";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
   import {
     isSameResource,
     resourceInList,
     shiftResourceInArray
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import FocusTask from "./FocusTask.svelte";
-  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import FocusTask from "@21n/products/pointron/focus/elements/focusitem/FocusTask.svelte";
+  import type { ITaskThumb } from "@21n/components/tasks/task.type";
+  import { appStore } from "@21n/stores/app.store";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
   import { createEventDispatcher } from "svelte";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import { reorderList } from "$lib/client/actions/rearrange.action";
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import { toasts } from "@21n/stores/notification.store";
+  import { reorderList } from "@21n/actions/rearrange.action";
+  import Icon from "@21n/elements/Icon.svelte";
   const dispatch = createEventDispatcher();
 
   export let focusItem: IFocusItem;

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import RocketLaunch from "../illustrations/RocketLaunch.svelte";
-  import { Size } from "../types/size.enum";
-  import view from "$lib/client/stores/view.store";
-  import Link from "./text/Link.svelte";
-  import { Action } from "../types/action.enum";
-  import ComingSoon from "../illustrations/pixelsmarket/ComingSoon.svelte";
+  import RocketLaunch from "@21n/illustrations/RocketLaunch.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import view from "@21n/stores/view.store";
+  import Link from "@21n/elements/text/Link.svelte";
+  import { Action } from "@21n/types/action.enum";
+  import ComingSoon from "@21n/illustrations/pixelsmarket/ComingSoon.svelte";
   export let mainText: string | undefined = undefined;
   export let subText: string | undefined = undefined;
   export let size: Size = Size.md;

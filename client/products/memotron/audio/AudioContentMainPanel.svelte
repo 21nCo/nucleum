@@ -1,31 +1,31 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
   import { createEventDispatcher } from "svelte";
-  import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
-  import { nodeStore } from "../node/node.store";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import view from "$lib/client/stores/view.store";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { type IJobStatus } from "$lib/client/components/taco/taco.type";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import TranscriptionWithTimestamps from "./TranscriptionWithTimestamps.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { copyToClipboard } from "$lib/client/utils/utils";
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
+  import NodularMarkdown from "@21n/components/markdown/NodularMarkdown.svelte";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
+  import { InputStyle } from "@21n/types/input.type";
+  import view from "@21n/stores/view.store";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { type IJobStatus } from "@21n/components/taco/taco.type";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import TranscriptionWithTimestamps from "@21n/products/memotron/audio/TranscriptionWithTimestamps.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { copyToClipboard } from "@21n/utils/utils";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
+  import { toasts } from "@21n/stores/notification.store";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import {
     PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
-  import { AudioView } from "./audio.type";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { Action } from "$lib/client/types/action.enum";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { generateMarkdownText } from "../node/node.utils";
-  import type { IAudioBody, IAudioMetadata } from "../node/node.type";
+  } from "@21n/types/switcher.enum";
+  import { AudioView } from "@21n/products/memotron/audio/audio.type";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { Action } from "@21n/types/action.enum";
+  import { appStore } from "@21n/stores/app.store";
+  import { generateMarkdownText } from "@21n/products/memotron/node/node.utils";
+  import type { IAudioBody, IAudioMetadata } from "@21n/products/memotron/node/node.type";
   const dispatch = createEventDispatcher();
 
   export let body: IAudioBody;

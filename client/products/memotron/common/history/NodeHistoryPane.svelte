@@ -1,20 +1,20 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { IActiveNodeStore } from "../../node/node.store";
-  import { accessLogStore } from "$lib/client/components/accessLogging/accesslog.store";
-  import HistoryItem from "./HistoryItem.svelte";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import type { IAccessLog } from "$lib/client/components/accessLogging/accessLog.type";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { flux } from "$lib/client/components/flux/flux";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { logger } from "$lib/client/components/debug/logger.client";
+  import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import { accessLogStore } from "@21n/components/accessLogging/accesslog.store";
+  import HistoryItem from "@21n/products/memotron/common/history/HistoryItem.svelte";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import type { IAccessLog } from "@21n/components/accessLogging/accessLog.type";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { flux } from "@21n/components/flux/flux";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { logger } from "@21n/components/debug/logger.client";
   import {
     PersistenceActionType,
     type IMutation
-  } from "$lib/client/types/data.type";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { resolveMutationAction } from "$lib/client/components/flux/flux.utils";
+  } from "@21n/types/data.type";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { resolveMutationAction } from "@21n/components/flux/flux.utils";
   export let node: IActiveNodeStore | null = null;
   let accessLogs: { action: string; timestamp: Date }[] = [];
   let isLoading: boolean = false;

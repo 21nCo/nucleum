@@ -1,13 +1,13 @@
 <script lang="ts">
-  import type { IBreadcrumbItem } from "$lib/client/elements/breadcrumbsV2/breadcrumbItem.type";
-  import { appStore } from "$lib/client/stores/app.store";
+  import type { IBreadcrumbItem } from "@21n/elements/breadcrumbsV2/breadcrumbItem.type";
+  import { appStore } from "@21n/stores/app.store";
   import { createEventDispatcher } from "svelte";
-  import BreadcrumbItem from "./BreadcrumbItem.svelte";
-  import { popover } from "$lib/client/actions/popover.action";
-  import BreadcrumbsOverflowPopover from "./BreadcrumbsOverflowPopover.svelte";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import BreadcrumbItem from "@21n/elements/breadcrumbsV2/BreadcrumbItem.svelte";
+  import { popover } from "@21n/actions/popover.action";
+  import BreadcrumbsOverflowPopover from "@21n/elements/breadcrumbsV2/BreadcrumbsOverflowPopover.svelte";
+  import { PopoverTriggerMethod } from "@21n/types/popover.type";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { cn } from "@21n/utils/ui.utils";
   const dispatch = createEventDispatcher();
   export let items: IBreadcrumbItem[] = [];
   /**

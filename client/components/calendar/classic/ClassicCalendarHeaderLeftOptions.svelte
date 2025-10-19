@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import Icon from "@21n/elements/Icon.svelte";
   import { createEventDispatcher } from "svelte";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import { TimeScaleUnit } from "$lib/client/types/time.type";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import { TimeScaleUnit } from "@21n/types/time.type";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { OptionSelectorStyle } from "$lib/client/types/select.type";
-  import view from "$lib/client/stores/view.store";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/products/product.type";
+  } from "@21n/stores/uiState/uiState.type";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import { OptionSelectorStyle } from "@21n/types/select.type";
+  import view from "@21n/stores/view.store";
+  import { appStore } from "@21n/stores/app.store";
+  import { Product } from "@21n/products/product.type";
   const dispatch = createEventDispatcher();
 
   export let selectedView: TimeScaleUnit = TimeScaleUnit.MONTH;

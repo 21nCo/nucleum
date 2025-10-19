@@ -1,38 +1,38 @@
 <script lang="ts">
-  import { resizeListener } from "$lib/client/actions/resize.action";
-  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { resizeListener } from "@21n/actions/resize.action";
+  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import { Product } from "$lib/client/products/product.type";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { TimeScaleUnit } from "$lib/client/types/time.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/stores/uiState/uiState.type";
+  import { Product } from "@21n/products/product.type";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { TimeScaleUnit } from "@21n/types/time.type";
+  import { cn } from "@21n/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
   import {
     CalendarColumnLayout,
     CalendarColumnPanel,
     CalendarExpansionMode
-  } from "../calendar.type";
-  import CalendarColumnPanelResolver from "./CalendarColumnPanelResolver.svelte";
-  import CalendarColumnPanelSelector from "./CalendarColumnPanelSelector.svelte";
-  import CalendarColumnTimeline from "./timeline/CalendarColumnTimeline.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  } from "@21n/components/calendar/calendar.type";
+  import CalendarColumnPanelResolver from "@21n/components/calendar/column/CalendarColumnPanelResolver.svelte";
+  import CalendarColumnPanelSelector from "@21n/components/calendar/column/CalendarColumnPanelSelector.svelte";
+  import CalendarColumnTimeline from "@21n/components/calendar/column/timeline/CalendarColumnTimeline.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { page } from "$app/stores";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import view from "$lib/client/stores/view.store";
-  import { resolveCalendarNotesId } from "../calendar.utils";
-  import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import view from "@21n/stores/view.store";
+  import { resolveCalendarNotesId } from "@21n/components/calendar/calendar.utils";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AppSearchParam } from "@21n/types/appStore.type";
   const dispatch = createEventDispatcher();
 
   export let scale: TimeScaleUnit;

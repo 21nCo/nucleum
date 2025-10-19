@@ -1,5 +1,5 @@
 <script lang="ts">
-  import PdfViewer from "./PdfViewer.svelte";
+  import PdfViewer from "@21n/products/memotron/pdfAnnotator/PdfViewer.svelte";
 
   import {
     AnnotationType,
@@ -7,7 +7,7 @@
     type LTWH,
     type LTWHP,
     type ScaledPosition
-  } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.type";
+  } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
   import {
     asElement,
     embedAnnotationsandDownload,
@@ -18,30 +18,30 @@
     isHTMLElement,
     PdfHandler,
     viewportToScaled
-  } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.utils";
-  import { debouncer } from "$lib/client/utils/utils";
+  } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.utils";
+  import { debouncer } from "@21n/utils/utils";
   import { onMount, createEventDispatcher } from "svelte";
-  import TextHiglighter from "./TextHiglighter.svelte";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import InlineToolBar from "./toolbar/InlineToolBar.svelte";
-  import Comment from "./comment/Comment.svelte";
-  import InlineEditToolBar from "./toolbar/InlineEditToolBar.svelte";
-  import CommentEditor from "./comment/CommentEditor.svelte";
-  import ToolBar from "./toolbar/ToolBar.svelte";
+  import TextHiglighter from "@21n/products/memotron/pdfAnnotator/TextHiglighter.svelte";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import InlineToolBar from "@21n/products/memotron/pdfAnnotator/toolbar/InlineToolBar.svelte";
+  import Comment from "@21n/products/memotron/pdfAnnotator/comment/Comment.svelte";
+  import InlineEditToolBar from "@21n/products/memotron/pdfAnnotator/toolbar/InlineEditToolBar.svelte";
+  import CommentEditor from "@21n/products/memotron/pdfAnnotator/comment/CommentEditor.svelte";
+  import ToolBar from "@21n/products/memotron/pdfAnnotator/toolbar/ToolBar.svelte";
   import { FindState } from "pdfjs-dist/web/pdf_viewer.mjs";
-  import { Size } from "$lib/client/types/size.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import type { IHighlighter } from "../common/highlighters/highlight.type";
-  import { highlightStore } from "../common/highlighters/highlight.store";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import context from "$lib/client/stores/context.store";
-  import { Embed, OperatingSystem } from "$lib/client/types/context.type";
-  import view from "$lib/client/stores/view.store";
-  import { fileStore } from "$lib/client/components/files/file.store";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import { fileEmbedChannel } from "$lib/client/components/files/fileEmbedChannel.store";
+  import { Size } from "@21n/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import type { IHighlighter } from "@21n/products/memotron/common/highlighters/highlight.type";
+  import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import context from "@21n/stores/context.store";
+  import { Embed, OperatingSystem } from "@21n/types/context.type";
+  import view from "@21n/stores/view.store";
+  import { fileStore } from "@21n/components/files/file.store";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import { fileEmbedChannel } from "@21n/components/files/fileEmbedChannel.store";
   const dispatch = createEventDispatcher();
   export let url: string;
   export let node: any;

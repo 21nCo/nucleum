@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IFeature } from "../landing.type";
-  import Title from "../Title.svelte";
-  import FeatureItem from "./FeatureItem.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IFeature } from "@21n/landing/shared/landing.type";
+  import Title from "@21n/landing/shared/Title.svelte";
+  import FeatureItem from "@21n/landing/shared/features/FeatureItem.svelte";
   export let title: string = "";
   export let subtitle: string = "";
   export let features: IFeature[] = [];

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { ActionType } from "$lib/client/types/action.type";
-  import { generateCmdType } from "$lib/client/utils/utils";
-  import { renderMdAsHtml } from "../markdown/markdown.utils";
-  import type { ICommandAction } from "./cmd.type";
-  import ResultItem from "./ResultItem.svelte";
+  import { ActionType } from "@21n/types/action.type";
+  import { generateCmdType } from "@21n/utils/utils";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
+  import type { ICommandAction } from "@21n/components/commandBar/cmd.type";
+  import ResultItem from "@21n/components/commandBar/ResultItem.svelte";
   export let search: string = "";
   export let action: ICommandAction;
   export let isActive: boolean = false;

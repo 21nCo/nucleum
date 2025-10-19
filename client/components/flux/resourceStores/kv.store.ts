@@ -1,18 +1,18 @@
-import { ObservableStore } from "$lib/client/stores/client.store";
-import { logger } from "$lib/client/components/debug/logger.client";
+import { ObservableStore } from "@21n/stores/client.store";
+import { logger } from "@21n/components/debug/logger.client";
 import {
   type IObservableStore,
   type IStore,
   StoreDataType
-} from "$lib/client/types/data.type";
-import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { debouncer } from "$lib/client/utils/utils";
-import { deepCopy, objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
-import { flux } from "../flux";
-import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
-import { extensionFlux } from "../fluxExtentionMediator";
-import { FluxMethod } from "../flux.type";
-import { parse, stringify } from "$lib/shared/utils/json.utils";
+} from "@21n/types/data.type";
+import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { debouncer } from "@21n/utils/utils";
+import { deepCopy, objIsEmpty, shallowDiff } from "@21n/shared-utils/obj.utils";
+import { flux } from "@21n/components/flux/flux";
+import { isExtensionEnvironment } from "@21n/utils/browser.utils";
+import { extensionFlux } from "@21n/components/flux/fluxExtentionMediator";
+import { FluxMethod } from "@21n/components/flux/flux.type";
+import { parse, stringify } from "@21n/shared-utils/json.utils";
 
 export const kvStores = new Map<Resource, KeyValueStore<any>>();
 export class KeyValueStore<T>

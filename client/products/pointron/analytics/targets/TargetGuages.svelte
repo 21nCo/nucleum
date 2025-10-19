@@ -1,14 +1,14 @@
 <script lang="ts">
   // import { AnalyticsPersistence } from "$lib/client/products/pointron/analytics/analytics.persistence";
-  import { getCorrespoingHorizonFrequencyLabel } from "$lib/client/utils/time.utils";
-  import Guage from "../charts/Guage.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TimeScale } from "$lib/client/types/time.type";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+  import { getCorrespoingHorizonFrequencyLabel } from "@21n/utils/time.utils";
+  import Guage from "@21n/products/pointron/analytics/charts/Guage.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { TimeScale } from "@21n/types/time.type";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   export let size: Size = Size.sm;
   export let type: "semi" | "full" = "semi";
   export let parentBgIndex: number = 1;

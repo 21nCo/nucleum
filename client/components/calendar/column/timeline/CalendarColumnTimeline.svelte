@@ -1,35 +1,35 @@
 <script lang="ts">
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/products/product.type";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { Product } from "@21n/products/product.type";
   import {
     BarStyle,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import CalendarColumnTasksPanel from "../CalendarColumnTasksPanel.svelte";
+  } from "@21n/types/switcher.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import CalendarColumnTasksPanel from "@21n/components/calendar/column/CalendarColumnTasksPanel.svelte";
   import {
     CalendarColumnLayout,
     type CalendarTimelineEntry
-  } from "../../calendar.type";
-  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import type { ISessionThumb } from "$lib/client/products/pointron/logs/log.type";
-  import { resolveSessionTimeSplit } from "$lib/client/products/pointron/pointron.utils";
-  import DayTimeline from "./daytimeline/DayTimeline.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Action } from "$lib/client/types/action.enum";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  } from "@21n/components/calendar/calendar.type";
+  import { tzStore } from "@21n/components/settings/timezone/tz.store";
+  import { sessionStore } from "@21n/products/pointron/focus/session.store";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import type { ISessionThumb } from "@21n/products/pointron/logs/log.type";
+  import { resolveSessionTimeSplit } from "@21n/products/pointron/pointron.utils";
+  import DayTimeline from "@21n/components/calendar/column/timeline/daytimeline/DayTimeline.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Action } from "@21n/types/action.enum";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
+  } from "@21n/stores/uiState/uiState.type";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let date: Date;

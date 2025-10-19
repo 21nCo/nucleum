@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { taskStore } from "./task.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { taskStore } from "@21n/components/tasks/task.store";
   import { createEventDispatcher } from "svelte";
-  import type { ResourceAccessPoint } from "../flux/resourceStores/resource.type";
+  import type { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
   export let isChecked = false;
   export let id: IRecordId;

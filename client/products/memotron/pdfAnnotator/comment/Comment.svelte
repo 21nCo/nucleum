@@ -1,10 +1,10 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
   import { createEventDispatcher } from "svelte";
-  import TextHiglighter from "../TextHiglighter.svelte";
-  import { AnnotationType } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.type";
+  import TextHiglighter from "@21n/products/memotron/pdfAnnotator/TextHiglighter.svelte";
+  import { AnnotationType } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
   import { page } from "$app/stores";
-  import { highlightStore } from "../../common/highlighters/highlight.store";
+  import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
 
   export let rects: any;
   export let rect: any;

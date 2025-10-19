@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CollapsibleList from "./CollapsibleList.svelte";
+  import CollapsibleList from "@21n/landing/shared/collapsible/CollapsibleList.svelte";
 
   // Example data
   const faqItems = [

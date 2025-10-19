@@ -1,8 +1,8 @@
 <script>
   import { page } from "$app/stores";
-  import PageError from "$lib/client/components/error/PageError.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { ButtonVariant } from "$lib/client/types/button.type";
+  import PageError from "@21n/components/error/PageError.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { ButtonVariant } from "@21n/types/button.type";
   $: errorParam = $page?.url?.searchParams?.get("error");
   $: isBetaAccessError = errorParam && errorParam.includes("beta");
   $: actions = isBetaAccessError

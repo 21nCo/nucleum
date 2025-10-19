@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import type { LinkThumbnail } from "$lib/client/products/memotron/node/node.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import type { LinkThumbnail } from "@21n/products/memotron/node/node.type";
+  import { cn } from "@21n/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let link: LinkThumbnail;

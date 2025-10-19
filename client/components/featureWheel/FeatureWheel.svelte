@@ -6,11 +6,11 @@
     type IFeatureWheelGroup,
     type IFwCategory,
     type IFwFeature
-  } from "$lib/client/types/featureWheel.type";
-  import Wheel from "./wheel/Wheel.svelte";
-  import FwOptionsPanel from "./options/FwOptionsPanel.svelte";
-  import FwSidePanel from "./sidePanel/FwSidePanel.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/types/featureWheel.type";
+  import Wheel from "@21n/components/featureWheel/wheel/Wheel.svelte";
+  import FwOptionsPanel from "@21n/components/featureWheel/options/FwOptionsPanel.svelte";
+  import FwSidePanel from "@21n/components/featureWheel/sidePanel/FwSidePanel.svelte";
+  import { cn } from "@21n/utils/ui.utils";
   export let product: string;
   export let title: string | undefined = undefined;
   export let features: IFwFeature[];

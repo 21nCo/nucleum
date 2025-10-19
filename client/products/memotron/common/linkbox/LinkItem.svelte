@@ -1,16 +1,16 @@
 <script lang="ts">
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import Tag from "$lib/client/elements/text/Tag.svelte";
-  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { collectionStore } from "$lib/client/components/collection/collection.store";
-  import { nodeStore } from "$lib/client/products/memotron/node/node.store";
-  import { popover } from "$lib/client/actions/popover.action";
-  import context from "$lib/client/stores/context.store";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  import Tag from "@21n/elements/text/Tag.svelte";
+  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { collectionStore } from "@21n/components/collection/collection.store";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
+  import { popover } from "@21n/actions/popover.action";
+  import context from "@21n/stores/context.store";
+  import { PopoverTriggerMethod } from "@21n/types/popover.type";
   import { createEventDispatcher } from "svelte";
-  import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
 
   export let id: IRecordId;

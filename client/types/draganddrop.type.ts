@@ -1,4 +1,4 @@
-import type { DragStatus } from "./dragstatus.enum";
+import type { DragStatus } from "@21n/types/dragstatus.enum";
 
 export type DragAndDrop = {
   dragItem: any;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AccordionState } from "../types/accordionState.enum";
+  import { AccordionState } from "@21n/types/accordionState.enum";
 
   export let width: number = 10;
   export let height: number = 7;

@@ -2,15 +2,15 @@
   import {
     ListType,
     NodeType
-  } from "$lib/client/products/memotron/node/node.type";
-  import TextContent from "../content/TextContent.svelte";
-  import type { MdStoreType } from "../markdown.store";
-  import type { IListBlockBody } from "../md.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  } from "@21n/products/memotron/node/node.type";
+  import TextContent from "@21n/components/markdown/content/TextContent.svelte";
+  import type { MdStoreType } from "@21n/components/markdown/markdown.store";
+  import type { IListBlockBody } from "@21n/components/markdown/md.type";
+  import type { IRecordId } from "@21n/types/data.type";
   import { createEventDispatcher } from "svelte";
-  import Check from "$lib/client/icons/Check.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Size } from "$lib/client/types/size.enum";
+  import Check from "@21n/icons/Check.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/types/size.enum";
   const dispatch = createEventDispatcher();
   export let id: IRecordId;
   export let body: IListBlockBody;

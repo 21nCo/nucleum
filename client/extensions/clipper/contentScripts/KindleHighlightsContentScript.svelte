@@ -4,21 +4,21 @@
     type AmazonAccount,
     type AmazonAccountRegion,
     type NextPageState
-  } from "./KindleHighlights.types";
-  import { syncStore } from "./store";
+  } from "@21n/extensions/clipper/contentScripts/KindleHighlights.types";
+  import { syncStore } from "@21n/extensions/clipper/contentScripts/store";
   import {
     NodeType,
     type IKindleBook,
     type IKindleHighlight,
     type IKindleHighlightBody
-  } from "$lib/client/products/memotron/node/node.type";
-  import { appEvents } from "$lib/client/stores/notification.store";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
-  import { SyncStatus } from "./types";
-  import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { generateHash } from "$lib/shared/utils/crypto.utils";
-  import { generateSyncedResourceId } from "$lib/client/products/memotron/memotron.utils";
+  } from "@21n/products/memotron/node/node.type";
+  import { appEvents } from "@21n/stores/notification.store";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
+  import { SyncStatus } from "@21n/extensions/clipper/contentScripts/types";
+  import type { OmitForCaptureWithId } from "@21n/components/flux/resourceStores/resource.type";
+  import { generateHash } from "@21n/shared-utils/crypto.utils";
+  import { generateSyncedResourceId } from "@21n/products/memotron/memotron.utils";
   let region: AmazonAccount;
   const amazonRegions: Record<AmazonAccountRegion, AmazonAccount> = {
     global: {

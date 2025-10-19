@@ -1,21 +1,21 @@
 <script lang="ts">
-  import type { IRecordId } from "$lib/client/types/data.type";
+  import type { IRecordId } from "@21n/types/data.type";
   import {
     FileType,
     type IFile,
     type IImageRepositionerOptions
-  } from "./file.type";
-  import { fileStore } from "./file.store";
-  import { logger } from "../debug/logger.client";
+  } from "@21n/components/files/file.type";
+  import { fileStore } from "@21n/components/files/file.store";
+  import { logger } from "@21n/components/debug/logger.client";
   import { onMount } from "svelte";
   import {
     fileLoader,
     fileLoaderv2
-  } from "$lib/client/actions/lazyload.action";
-  import { imageRepositioner } from "$lib/client/actions/imageRepositioning.action";
+  } from "@21n/actions/lazyload.action";
+  import { imageRepositioner } from "@21n/actions/imageRepositioning.action";
   import { createEventDispatcher } from "svelte";
-  import { isSameResource } from "../flux/resourceStores/resource.utils";
-  import { debouncer } from "$lib/client/utils/utils";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { debouncer } from "@21n/utils/utils";
 
   const dispatch = createEventDispatcher();
 

@@ -1,15 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
-  import { appEvents } from "$lib/client/stores/notification.store";
-  import type { IEvent } from "$lib/client/types/event.type";
-  import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
-  import { postNotificationToParent } from "$lib/client/utils/embed.utils";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import context from "$lib/client/stores/context.store";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
+  import { appStore } from "@21n/stores/app.store";
+  import { pointronPreferences } from "@21n/products/pointron/pointron.store";
+  import { appEvents } from "@21n/stores/notification.store";
+  import type { IEvent } from "@21n/types/event.type";
+  import { PointronEvent } from "@21n/types/pointron/pointronEvent.enum";
+  import { postNotificationToParent } from "@21n/utils/embed.utils";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import context from "@21n/stores/context.store";
+  import { GlobalEvent } from "@21n/types/event.enum";
 
   let src: string | null = null;
   let body: string = "";

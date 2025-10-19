@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { cn } from "@21n/utils/ui.utils";
   import { createEventDispatcher, onDestroy } from "svelte";
   import {
     CalendarTileIndicatorDisplayType,
     type ICalendarIndicatorData
-  } from "../calendar.type";
-  import CalendarTileIndicator from "./indicator/CalendarTileIndicator.svelte";
-  import { resizeListener } from "$lib/client/actions/resize.action";
-  import { preferences } from "$lib/client/stores/preferences/preferences.store";
-  import { Preference } from "$lib/client/stores/preferences/preferences.type";
+  } from "@21n/components/calendar/calendar.type";
+  import CalendarTileIndicator from "@21n/components/calendar/classic/indicator/CalendarTileIndicator.svelte";
+  import { resizeListener } from "@21n/actions/resize.action";
+  import { preferences } from "@21n/stores/preferences/preferences.store";
+  import { Preference } from "@21n/stores/preferences/preferences.type";
 
   export let selectedDate: Date;
   export let indicatorData: ICalendarIndicatorData[] = [];

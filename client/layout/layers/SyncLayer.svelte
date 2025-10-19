@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { flux } from "$lib/client/components/flux/flux";
-  import account from "$lib/client/stores/account.store";
-  import context from "$lib/client/stores/context.store";
-  import { UserDataMode } from "$lib/client/types/account.type";
+  import { flux } from "@21n/components/flux/flux";
+  import account from "@21n/stores/account.store";
+  import context from "@21n/stores/context.store";
+  import { UserDataMode } from "@21n/types/account.type";
   import { onDestroy } from "svelte";
   let interval: any;
   interval = setInterval(() => {

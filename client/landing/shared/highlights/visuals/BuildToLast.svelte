@@ -1,6 +1,6 @@
 <script lang="ts">
-  import appearance from "$lib/client/stores/appearance.store";
-  import { staticUrl } from "../../store/shared.store";
+  import appearance from "@21n/stores/appearance.store";
+  import { staticUrl } from "@21n/landing/shared/store/shared.store";
 
   $: url = `${staticUrl}/images/landing/highlights/${$appearance.colorScheme.isDark ? "sunset-dark.gif" : "sunset.gif"}`;
 </script>

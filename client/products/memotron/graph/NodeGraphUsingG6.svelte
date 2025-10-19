@@ -9,9 +9,9 @@
     CanvasEvent
   } from "@antv/g6";
   import { onMount, createEventDispatcher } from "svelte";
-  import { truncateString } from "$lib/shared/utils/text.utils";
-  import appearance from "$lib/client/stores/appearance.store";
-  import { resizeListener } from "$lib/client/actions/resize.action";
+  import { truncateString } from "@21n/shared-utils/text.utils";
+  import appearance from "@21n/stores/appearance.store";
+  import { resizeListener } from "@21n/actions/resize.action";
   const dispatch = createEventDispatcher();
 
   export let data: {

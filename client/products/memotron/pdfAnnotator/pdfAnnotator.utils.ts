@@ -1,5 +1,5 @@
-import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
-import { NodeType } from "$lib/client/products/memotron/node/node.type";
+import type { IToggleItem } from "@21n/elements/toggle/toggle.type";
+import { NodeType } from "@21n/products/memotron/node/node.type";
 import {
   AnnotationType,
   type Coords,
@@ -8,14 +8,14 @@ import {
   type Page,
   type Scaled,
   type WIDTH_HEIGHT
-} from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.type";
+} from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
 import { PDFDocument, rgb } from "pdf-lib";
-import { nodeStore } from "../node/node.store";
-import type { IRecordId } from "$lib/client/types/data.type";
-import { logger } from "$lib/client/components/debug/logger.client";
-import { flux } from "$lib/client/components/flux/flux";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import type { IHighlighter } from "../common/highlighters/highlight.type";
+import { nodeStore } from "@21n/products/memotron/node/node.store";
+import type { IRecordId } from "@21n/types/data.type";
+import { logger } from "@21n/components/debug/logger.client";
+import { flux } from "@21n/components/flux/flux";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import type { IHighlighter } from "@21n/products/memotron/common/highlighters/highlight.type";
 
 export class PdfHandler {
   id: IRecordId;

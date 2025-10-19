@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
-  import ComposeDuration from "./ComposeDuration.svelte";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
+  import ComposeDuration from "@21n/products/pointron/focus/advanced/composition/ComposeDuration.svelte";
   function onCompositionChanges() {
     activeSession.onComposeComplete();
   }

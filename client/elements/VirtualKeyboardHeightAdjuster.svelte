@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { virtualKeyboard } from "$lib/client/actions/viewport";
+  import { virtualKeyboard } from "@21n/actions/viewport";
   let height = 0;
 </script>
 

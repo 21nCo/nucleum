@@ -1,6 +1,6 @@
-import { TimeScaleUnit } from "$lib/client/types/time.type";
-import { generateResourceId } from "../flux/flux.utils";
-import { Resource } from "../flux/resourceStores/resource.enum";
+import { TimeScaleUnit } from "@21n/types/time.type";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 
 export function resolveCalendarNotesId(date: Date, scale: TimeScaleUnit) {
   let idPart = "";

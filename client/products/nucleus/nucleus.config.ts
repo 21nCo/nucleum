@@ -1,5 +1,5 @@
-import { nucleusActions } from "./nucleus.actions";
-import NucleusBaseLayer from "./base/NucleusBaseLayer.svelte";
+import { nucleusActions } from "@21n/products/nucleus/nucleus.actions";
+import NucleusBaseLayer from "@21n/products/nucleus/base/NucleusBaseLayer.svelte";
 
 export default {
   actions: nucleusActions,

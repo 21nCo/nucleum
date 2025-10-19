@@ -2,7 +2,7 @@ import type {
   AppSkin,
   ColorScheme,
   ColorSchemeSLValues
-} from "./appearance.type";
+} from "@21n/types/appearance.type";
 export type AppConstants = {
   themes: AppSkin[];
   colorSchemes: ColorScheme[];

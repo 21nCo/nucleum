@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
+  import { InputStyle } from "@21n/types/input.type";
   import { createEventDispatcher } from "svelte";
-  import { linker, linkTagStore } from "./link.store";
-  import type { INodeLinkThumb } from "../node/node.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
+  import { linker, linkTagStore } from "@21n/products/memotron/linking/link.store";
+  import type { INodeLinkThumb } from "@21n/products/memotron/node/node.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { logger } from "@21n/components/debug/logger.client";
   const dispatch = createEventDispatcher();
 
   export let link: INodeLinkThumb;

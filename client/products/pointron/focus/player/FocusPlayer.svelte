@@ -1,34 +1,34 @@
 <script lang="ts">
-  import { startTouch, moveTouch } from "$lib/client/utils/touchGesture";
+  import { startTouch, moveTouch } from "@21n/utils/touchGesture";
   import {
     activeSession,
     currentFocusItem
-  } from "$lib/client/products/pointron/focus/session.store";
-  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import view from "$lib/client/stores/view.store";
-  import ControlBar from "../elements/controls/ControlBar.svelte";
+  } from "@21n/products/pointron/focus/session.store";
+  import { SessionUIContext } from "@21n/types/pointron/session.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import view from "@21n/stores/view.store";
+  import ControlBar from "@21n/products/pointron/focus/elements/controls/ControlBar.svelte";
   import { onMount } from "svelte";
-  import FocusPlayerTimeText from "./FocusPlayerTimeText.svelte";
-  import InlineLoadingAnimation from "$lib/client/elements/feedback/animations/InlineLoadingAnimation.svelte";
-  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import context from "$lib/client/stores/context.store";
-  import ThemeLayer from "$lib/client/layout/layers/themeLayer/ThemeLayer.svelte";
+  import FocusPlayerTimeText from "@21n/products/pointron/focus/player/FocusPlayerTimeText.svelte";
+  import InlineLoadingAnimation from "@21n/elements/feedback/animations/InlineLoadingAnimation.svelte";
+  import { SessionState } from "@21n/types/pointron/sessionState.enum";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import context from "@21n/stores/context.store";
+  import ThemeLayer from "@21n/layout/layers/themeLayer/ThemeLayer.svelte";
   import appearance, {
     fallBackTypefaceString
-  } from "$lib/client/stores/appearance.store";
-  import IntervalBar from "../elements/intervalbar/IntervalBar.svelte";
-  import { fullScreen, player } from "$lib/client/components/modal/modal.store";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
-  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
+  } from "@21n/stores/appearance.store";
+  import IntervalBar from "@21n/products/pointron/focus/elements/intervalbar/IntervalBar.svelte";
+  import { fullScreen, player } from "@21n/components/modal/modal.store";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { tooltip } from "@21n/actions/popover.action";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import type { ITaskThumb } from "@21n/components/tasks/task.type";
   let playerContainerRef: any;
   let playerRef: HTMLElement | null = document.getElementById("focusplayer");
   let playerContainer: HTMLElement | null =

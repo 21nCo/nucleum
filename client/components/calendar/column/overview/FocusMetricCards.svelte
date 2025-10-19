@@ -1,6 +1,6 @@
 <script lang="ts">
-  import MetricItem from "$lib/client/products/pointron/analytics/cards/metrics/MetricItem.svelte";
-  import type { ISessionLog } from "$lib/client/products/pointron/logs/log.type";
+  import MetricItem from "@21n/products/pointron/analytics/cards/metrics/MetricItem.svelte";
+  import type { ISessionLog } from "@21n/products/pointron/logs/log.type";
 
   export let data: ISessionLog[];
   export let previousTimePeriodData: ISessionLog[];

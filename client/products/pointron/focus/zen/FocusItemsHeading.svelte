@@ -1,11 +1,11 @@
 <script lang="ts">
-  import EditToggleButton from "$lib/client/elements/toggle/EditModeToggle.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { isInEditMode } from "$lib/client/stores/app.store";
-  import { focusItemsStore } from "../session.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
+  import EditToggleButton from "@21n/elements/toggle/EditModeToggle.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { isInEditMode } from "@21n/stores/app.store";
+  import { focusItemsStore } from "@21n/products/pointron/focus/session.store";
+  import { Action } from "@21n/types/action.enum";
+  import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
 </script>
 
 <div class="flex flex-col w-full items-center gap-2">

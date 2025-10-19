@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
   import {
     type INode,
     NodeType
-  } from "$lib/client/products/memotron/node/node.type";
-  import { cn, convertToRGBA } from "$lib/client/utils/ui.utils";
-  import { truncateString } from "$lib/shared/utils/text.utils";
+  } from "@21n/products/memotron/node/node.type";
+  import { cn, convertToRGBA } from "@21n/utils/ui.utils";
+  import { truncateString } from "@21n/shared-utils/text.utils";
   export let node: INode;
   export let contentPreview: string;
   export let truncateLength: number | undefined = undefined;

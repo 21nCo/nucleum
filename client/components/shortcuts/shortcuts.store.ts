@@ -1,17 +1,17 @@
-import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { appStore } from "$lib/client/stores/app.store";
+import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { appStore } from "@21n/stores/app.store";
 import { get } from "svelte/store";
 import type {
   IKeyboardShortcut,
   IKeyboardShortcutsStore
-} from "./shortcut.type";
-import { logger } from "../debug/logger.client";
-import { resolveModifiers } from "./shortcut.utils";
-import context from "$lib/client/stores/context.store";
-import { OperatingSystem } from "$lib/client/types/context.type";
-import { shortcutsConfig } from "./shortcuts.config";
-import { replacer } from "$lib/shared/utils/json.utils";
+} from "@21n/components/shortcuts/shortcut.type";
+import { logger } from "@21n/components/debug/logger.client";
+import { resolveModifiers } from "@21n/components/shortcuts/shortcut.utils";
+import context from "@21n/stores/context.store";
+import { OperatingSystem } from "@21n/types/context.type";
+import { shortcutsConfig } from "@21n/components/shortcuts/shortcuts.config";
+import { replacer } from "@21n/shared-utils/json.utils";
 
 export type KeyboardShortcutsStoreType = InstanceType<typeof KeyboardShortcuts>;
 

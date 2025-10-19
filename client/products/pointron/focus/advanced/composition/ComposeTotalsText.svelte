@@ -3,10 +3,10 @@
     BreakCompositionType,
     SessionCompositionType,
     type SessionComposition
-  } from "$lib/client/types/pointron/sessionComposition.type";
-  import { getTotalsFromComposition } from "$lib/client/products/pointron/pointron.utils";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/types/pointron/sessionComposition.type";
+  import { getTotalsFromComposition } from "@21n/products/pointron/pointron.utils";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import { bg, cn } from "@21n/utils/ui.utils";
   // export let totals: { duration: number; focus: number; brek: number };
   // export let compositionType: SessionCompositionType;
   export let composition: SessionComposition;

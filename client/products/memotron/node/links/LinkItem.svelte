@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { cn } from "@21n/utils/ui.utils";
   import type {
     INode,
     INodeLinkThumb
-  } from "$lib/client/products/memotron/node/node.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import LinkTagger from "../../linking/LinkTagger.svelte";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-  import LinkTags from "../../linking/LinkTags.svelte";
-  import NodeThumbnail from "../thumbnail/NodeThumbnail.svelte";
+  } from "@21n/products/memotron/node/node.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  import LinkTagger from "@21n/products/memotron/linking/LinkTagger.svelte";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import LinkTags from "@21n/products/memotron/linking/LinkTags.svelte";
+  import NodeThumbnail from "@21n/products/memotron/node/thumbnail/NodeThumbnail.svelte";
   export let accessPointId: IRecordId;
   export let link: INodeLinkThumb;
   export let item: INode;

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
-  import { KeyboardKey } from "$lib/client/types/keyboard.type";
-  import GroupItem from "./GroupItem.svelte";
+  import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import context from "@21n/stores/context.store";
+  import { Embed } from "@21n/types/context.type";
+  import { KeyboardKey } from "@21n/types/keyboard.type";
+  import GroupItem from "@21n/products/memotron/library/search/GroupItem.svelte";
 
   export let searchCallback: (query: string, resourceType: Resource) => void;
   export let groups: any[] = [];

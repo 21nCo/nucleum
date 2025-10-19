@@ -1,5 +1,5 @@
-import type { IStore } from "$lib/client/types/data.type";
-import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
+import type { IStore } from "@21n/types/data.type";
+import type { INodeThumb } from "@21n/products/memotron/node/node.type";
 
 export type DocStore = IStore & {
   docs: INodeThumb[];

@@ -1,13 +1,13 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { TileScale } from "./calendarHeatmap.types";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { TileScale } from "@21n/components/calendar/calendarHeatmap/calendarHeatmap.types";
   import { createEventDispatcher } from "svelte";
-  import { isTouchDevice } from "$lib/client/stores/app.store";
-  import { moveTouch } from "$lib/client/utils/touchGesture";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import { isTouchDevice } from "@21n/stores/app.store";
+  import { moveTouch } from "@21n/utils/touchGesture";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { Orientation } from "@21n/types/direction.enum";
   export let orientation: Orientation;
   let dispatch = createEventDispatcher();
   let activeButton: TileScale = TileScale.DAYS;

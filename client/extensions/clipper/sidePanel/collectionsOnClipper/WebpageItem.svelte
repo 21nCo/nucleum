@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { CollectionItem } from "./types";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { CollectionItem } from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/types";
 
   export let item: CollectionItem;
   export let currentUrl: string;

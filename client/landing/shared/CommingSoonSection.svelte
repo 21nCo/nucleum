@@ -1,8 +1,8 @@
 <script lang="ts">
-  import EarlyAccess from "$lib/client/components/EarlyAccess.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import Section from "./Section.svelte";
-  import Button from "./elements/Button.svelte";
+  import EarlyAccess from "@21n/components/EarlyAccess.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import Section from "@21n/landing/shared/Section.svelte";
+  import Button from "@21n/landing/shared/elements/Button.svelte";
   export let commingSoonSectionInputs: any;
   let email: string = "";
 </script>

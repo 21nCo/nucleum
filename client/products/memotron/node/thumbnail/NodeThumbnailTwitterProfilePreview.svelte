@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { fileLoaderv2 } from "$lib/client/actions/lazyload.action";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { fileLoaderv2 } from "@21n/actions/lazyload.action";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { cn } from "@21n/utils/ui.utils";
   export let src: string;
 </script>
 

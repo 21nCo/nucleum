@@ -1,10 +1,10 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { TimeScaleUnit } from "$lib/client/types/time.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { TimeScaleUnit } from "@21n/types/time.type";
   export let scale: TimeScaleUnit;
   export let description: string | null = null;
   export let onEdit: () => void;

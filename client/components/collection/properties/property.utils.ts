@@ -1,21 +1,21 @@
-import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
 import {
   type IProperty,
   type IPropertyConfig,
   type IPropertyConfigOption,
   PropertyType,
   UniversalPropertyType
-} from "./property.type";
-import type { ISelectItem } from "$lib/client/types/select.type";
-import type { IRecordId } from "$lib/client/types/data.type";
-import { enumToString, isValidString } from "$lib/shared/utils/text.utils";
-import type { OmitForCaptureWithId } from "$lib/client/components/flux/resourceStores/resource.type";
-import { propertyOptions, universalPropertyOptions } from "./property.store";
-import { AvatarType } from "$lib/client/types/avatar.type";
-import { iso31661CountryCodes } from "./countries";
-import { languages } from "./languages";
-import type { ICollectionItemPropertyValue } from "../collection.type";
+} from "@21n/components/collection/properties/property.type";
+import type { ISelectItem } from "@21n/types/select.type";
+import type { IRecordId } from "@21n/types/data.type";
+import { enumToString, isValidString } from "@21n/shared-utils/text.utils";
+import type { OmitForCaptureWithId } from "@21n/components/flux/resourceStores/resource.type";
+import { propertyOptions, universalPropertyOptions } from "@21n/components/collection/properties/property.store";
+import { AvatarType } from "@21n/types/avatar.type";
+import { iso31661CountryCodes } from "@21n/components/collection/properties/countries";
+import { languages } from "@21n/components/collection/properties/languages";
+import type { ICollectionItemPropertyValue } from "@21n/components/collection/collection.type";
 
 export function resolvePropertyDefaultValue(type: PropertyType) {
   switch (type) {

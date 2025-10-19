@@ -1,9 +1,9 @@
-import { logger } from "$lib/client/components/debug/logger.client";
-import type { IFile } from "$lib/client/components/files/file.type";
-import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
-import type { IBlock } from "$lib/client/components/markdown/md.type";
+import { logger } from "@21n/components/debug/logger.client";
+import type { IFile } from "@21n/components/files/file.type";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
+import type { IBlock } from "@21n/components/markdown/md.type";
 import {
   NodeType,
   type INode,
@@ -17,18 +17,18 @@ import {
   socialPostNodeTypeList,
   socialProfileNodeTypeList,
   socialProfileWithImageUnavailable
-} from "$lib/client/products/memotron/node/node.type";
-import type { IRecordId } from "$lib/client/types/data.type";
-import { TimeFormat } from "$lib/client/types/time.type";
-import { getGeoLocation } from "$lib/client/utils/browser.utils";
-import { formatSeconds } from "$lib/client/utils/time.utils";
+} from "@21n/products/memotron/node/node.type";
+import type { IRecordId } from "@21n/types/data.type";
+import { TimeFormat } from "@21n/types/time.type";
+import { getGeoLocation } from "@21n/utils/browser.utils";
+import { formatSeconds } from "@21n/utils/time.utils";
 import {
   enumToString,
   isValidString,
   properCase
-} from "$lib/shared/utils/text.utils";
-import { isValidUrl } from "$lib/shared/utils/utils";
-import { resolveUrlData } from "./url.utils";
+} from "@21n/shared-utils/text.utils";
+import { isValidUrl } from "@21n/shared-utils/utils";
+import { resolveUrlData } from "@21n/products/memotron/node/url.utils";
 
 export function resolveContentPreview(node: INode) {
   const { body, contentType, metadata } = node;

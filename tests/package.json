@@ -1,0 +1,7 @@
+{
+  "name": "tidigit-tests",
+  "private": true,
+  "scripts": {
+    "test": "vitest run unit/eslint/alias-imports.spec.ts"
+  }
+}

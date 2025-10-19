@@ -1,20 +1,20 @@
 <script lang="ts">
-  import { properCase } from "$lib/shared/utils/text.utils";
+  import { properCase } from "@21n/shared-utils/text.utils";
   import type {
     IContemporary,
     IFwCategory,
     IFwFeature
-  } from "$lib/client/types/featureWheel.type";
-  import TableHeader from "./TableHeader.svelte";
-  import RatingCell from "./RatingCell.svelte";
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import NotesCell from "./NotesCell.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
+  } from "@21n/types/featureWheel.type";
+  import TableHeader from "@21n/components/featureWheel/sidePanel/comparisionTable/TableHeader.svelte";
+  import RatingCell from "@21n/components/featureWheel/sidePanel/comparisionTable/RatingCell.svelte";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import NotesCell from "@21n/components/featureWheel/sidePanel/comparisionTable/NotesCell.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
   import { createEventDispatcher } from "svelte";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import FooterInfo from "./FooterInfo.svelte";
-  import { mapValue } from "./table.utils";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import FooterInfo from "@21n/components/featureWheel/sidePanel/comparisionTable/FooterInfo.svelte";
+  import { mapValue } from "@21n/components/featureWheel/sidePanel/comparisionTable/table.utils";
 
   const dispatch = createEventDispatcher();
   export let product: string;

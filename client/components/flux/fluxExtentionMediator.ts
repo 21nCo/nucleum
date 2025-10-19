@@ -1,14 +1,14 @@
-import { logger } from "$lib/client/components/debug/logger.client";
-import { flux, initFlux } from "$lib/client/components/flux/flux";
-import { DexiePersistence } from "$lib/client/persistence/dexie/dexie.local";
-import { PersistenceProvider } from "$lib/client/persistence/persistence.type";
-import { getDapId } from "$lib/client/persistence/persistence.utils";
-import { StoreDataType, type IStore } from "$lib/client/types/data.type";
-import { ExtensionEvent } from "$lib/client/types/extension.type";
-import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
-import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
-import { FluxMethod, type IFluxMethod } from "./flux.type";
-import { Resource } from "./resourceStores/resource.enum";
+import { logger } from "@21n/components/debug/logger.client";
+import { flux, initFlux } from "@21n/components/flux/flux";
+import { DexiePersistence } from "@21n/persistence/dexie/dexie.local";
+import { PersistenceProvider } from "@21n/persistence/persistence.type";
+import { getDapId } from "@21n/persistence/persistence.utils";
+import { StoreDataType, type IStore } from "@21n/types/data.type";
+import { ExtensionEvent } from "@21n/types/extension.type";
+import { resolveCurrentUserId } from "@21n/utils/account.utils";
+import { relayToBackgroundScript } from "@21n/utils/extension.utils";
+import { FluxMethod, type IFluxMethod } from "@21n/components/flux/flux.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 
 // import { getPort } from "@plasmohq/messaging/port"
 

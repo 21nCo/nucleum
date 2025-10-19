@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SomethingWentWrongIllustration from "$lib/client/illustrations/SomethingWentWrongIllustration.svelte";
+  import SomethingWentWrongIllustration from "@21n/illustrations/SomethingWentWrongIllustration.svelte";
   export let error: string | undefined = undefined;
   export let subText: string | undefined = undefined;
 </script>

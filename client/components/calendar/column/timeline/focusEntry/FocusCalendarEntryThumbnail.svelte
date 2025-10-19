@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { resizeListener } from "$lib/client/actions/resize.action";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import type { ISessionThumb } from "$lib/client/products/pointron/logs/log.type";
-  import LogThumbnailGoalsInfo from "$lib/client/products/pointron/logs/LogThumbnailGoalsInfo.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { formatSeconds, formatTime } from "$lib/client/utils/time.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import FocusEntryGoalsInfoShort from "./FocusEntryGoalsInfoShort.svelte";
-  import FocusEntryFocusSplitInfo from "./FocusEntryFocusSplitInfo.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import { resizeListener } from "@21n/actions/resize.action";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import type { ISessionThumb } from "@21n/products/pointron/logs/log.type";
+  import LogThumbnailGoalsInfo from "@21n/products/pointron/logs/LogThumbnailGoalsInfo.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { formatSeconds, formatTime } from "@21n/utils/time.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import FocusEntryGoalsInfoShort from "@21n/components/calendar/column/timeline/focusEntry/FocusEntryGoalsInfoShort.svelte";
+  import FocusEntryFocusSplitInfo from "@21n/components/calendar/column/timeline/focusEntry/FocusEntryFocusSplitInfo.svelte";
+  import { Size } from "@21n/types/size.enum";
   export let item: ISessionThumb & {
     splits: {
       focus: number;

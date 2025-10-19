@@ -1,5 +1,5 @@
-import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
-import type { IKeyboardShortcut } from "./shortcut.type";
+import { KeyboardKey, ModifierKey } from "@21n/types/keyboard.type";
+import type { IKeyboardShortcut } from "@21n/components/shortcuts/shortcut.type";
 
 export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
   calendar: {

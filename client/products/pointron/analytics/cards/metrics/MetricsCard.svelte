@@ -2,8 +2,8 @@
   import type {
     IAnalyticsCard,
     AnalyticsDataRecord
-  } from "../../analytics.types";
-  import MetricItem from "./MetricItem.svelte";
+  } from "@21n/products/pointron/analytics/analytics.types";
+  import MetricItem from "@21n/products/pointron/analytics/cards/metrics/MetricItem.svelte";
   export let card: IAnalyticsCard;
   export let data: AnalyticsDataRecord[];
   export let goalColors: { label: string; color: number }[] = [];

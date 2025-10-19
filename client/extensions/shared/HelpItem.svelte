@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import { hoverable } from "@21n/actions/hover.action";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
 
   export let label: string;
   export let icon: string;

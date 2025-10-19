@@ -2,9 +2,9 @@
   import {
     FeatureWheelMode,
     type IFeatureWheelSpoke
-  } from "$lib/client/types/featureWheel.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/types/featureWheel.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
   export let spoke: IFeatureWheelSpoke;
   export let mode: FeatureWheelMode;
   export let xCoord: number;

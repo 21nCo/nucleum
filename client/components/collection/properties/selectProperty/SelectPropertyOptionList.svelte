@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import type { IPropertyConfigOption } from "../property.type";
-  import SelectPropertyOption from "./SelectPropertyOption.svelte";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import type { IPropertyConfigOption } from "@21n/components/collection/properties/property.type";
+  import SelectPropertyOption from "@21n/components/collection/properties/selectProperty/SelectPropertyOption.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let options: IPropertyConfigOption[];

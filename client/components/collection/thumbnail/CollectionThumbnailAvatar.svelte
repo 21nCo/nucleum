@@ -1,8 +1,8 @@
 <script lang="ts">
-  import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { CollectionType, type ICollectionThumb } from "../collection.type";
+  import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { CollectionType, type ICollectionThumb } from "@21n/components/collection/collection.type";
   export let item: ICollectionThumb;
   export let isShowFallbackIcons: boolean = false;
   export let size: Size.sm | Size.md | Size.lg = Size.sm;

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Size } from "$lib/client/types/size.enum";
-  import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/types/size.enum";
+  import SubAtomLogo from "@21n/branding/SubAtomLogo.svelte";
   export let isHideMenuLabels: boolean = false;
 </script>
 

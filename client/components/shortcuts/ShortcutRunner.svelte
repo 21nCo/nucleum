@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { appStore } from "$lib/client/stores/app.store";
-  import { isTextElement } from "$lib/client/utils/browser.utils";
-  import { keyboardShortcuts } from "./shortcuts.store";
-  import { appEvents } from "$lib/client/stores/notification.store";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { KeyboardKey } from "$lib/client/types/keyboard.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import { InteractionMode } from "../settings/interactionMode/interactionMode.type";
-  import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
-  import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
-  import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
+  import { appStore } from "@21n/stores/app.store";
+  import { isTextElement } from "@21n/utils/browser.utils";
+  import { keyboardShortcuts } from "@21n/components/shortcuts/shortcuts.store";
+  import { appEvents } from "@21n/stores/notification.store";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import { KeyboardKey } from "@21n/types/keyboard.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import { Action } from "@21n/types/action.enum";
+  import { InteractionMode } from "@21n/components/settings/interactionMode/interactionMode.type";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { UIStateScope } from "@21n/stores/uiState/uiState.type";
+  import context from "@21n/stores/context.store";
+  import { Embed } from "@21n/types/context.type";
 
   function checkIfSystemShortcut(event: KeyboardEvent) {
     return (

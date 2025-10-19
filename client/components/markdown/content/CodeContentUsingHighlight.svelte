@@ -1,15 +1,15 @@
 <script lang="ts">
   import { onMount, createEventDispatcher, tick } from "svelte";
-  import type { ICodeBlockBody } from "../md.type";
+  import type { ICodeBlockBody } from "@21n/components/markdown/md.type";
   import hljs from "highlight.js";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { copyToClipboard } from "$lib/client/utils/utils";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import type { MdStoreType } from "../markdown.store";
-  import { hoverable } from "$lib/client/actions/hover.action";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import { Size } from "@21n/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { copyToClipboard } from "@21n/utils/utils";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import type { MdStoreType } from "@21n/components/markdown/markdown.store";
+  import { hoverable } from "@21n/actions/hover.action";
 
   export let mdStore: MdStoreType;
   export let body: ICodeBlockBody;

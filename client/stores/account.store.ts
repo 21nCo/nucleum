@@ -6,44 +6,44 @@ import {
   type IUserPlan,
   type UserAccount,
   type UserInformation
-} from "../types/account.type";
-import { postDataToParent } from "$lib/client/utils/embed.utils";
-import { Persistence } from "../persistence/persistence";
-import { ButtonVariant } from "../types/button.type";
+} from "@21n/types/account.type";
+import { postDataToParent } from "@21n/utils/embed.utils";
+import { Persistence } from "@21n/persistence/persistence";
+import { ButtonVariant } from "@21n/types/button.type";
 import {
   determineIfOffline,
   performApiCall
-} from "$lib/client/utils/network.utils";
+} from "@21n/utils/network.utils";
 import {
   confirmationNotification,
   toasts
-} from "$lib/client/stores/notification.store";
-import { appStore } from "./app.store";
+} from "@21n/stores/notification.store";
+import { appStore } from "@21n/stores/app.store";
 import jwt_decode from "jwt-decode";
-import { getBucketNameandKey, signout } from "../utils/account.utils";
+import { getBucketNameandKey, signout } from "@21n/utils/account.utils";
 import {
   determineIfPlanIsActive,
   determineIfSubscriptionExpired
-} from "$lib/client/components/subscription/userPlan.utils";
-import { ObservableStore } from "./client.store";
-import { StoreDataType } from "$lib/client/types/data.type";
-import { clientStorage } from "../persistence/persistence.utils";
-import { ClientStorageKey } from "../persistence/persistence.type";
-import { logger } from "../components/debug/logger.client";
-import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-import { fileStore } from "../components/files/file.store";
-import { flux } from "../components/flux/flux";
-import { generateResourceId } from "../components/flux/flux.utils";
-import { Resource } from "../components/flux/resourceStores/resource.enum";
-import { dispatchCustomEvent } from "../utils/browser.utils";
-import { GlobalEvent } from "../types/event.enum";
-import context from "./context.store";
-import { compressImageToTargetSize } from "../utils/ui.utils";
-import { convertHeicToPng } from "../utils/ui.utils";
-import { generateImagePreviewFromPdf } from "../utils/pdf.utils";
-import { Action } from "../types/action.enum";
-import { EmbedDataMessage } from "../types/embedMessage.enum";
-import { parse } from "$lib/shared/utils/json.utils";
+} from "@21n/components/subscription/userPlan.utils";
+import { ObservableStore } from "@21n/stores/client.store";
+import { StoreDataType } from "@21n/types/data.type";
+import { clientStorage } from "@21n/persistence/persistence.utils";
+import { ClientStorageKey } from "@21n/persistence/persistence.type";
+import { logger } from "@21n/components/debug/logger.client";
+import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+import { fileStore } from "@21n/components/files/file.store";
+import { flux } from "@21n/components/flux/flux";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { dispatchCustomEvent } from "@21n/utils/browser.utils";
+import { GlobalEvent } from "@21n/types/event.enum";
+import context from "@21n/stores/context.store";
+import { compressImageToTargetSize } from "@21n/utils/ui.utils";
+import { convertHeicToPng } from "@21n/utils/ui.utils";
+import { generateImagePreviewFromPdf } from "@21n/utils/pdf.utils";
+import { Action } from "@21n/types/action.enum";
+import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
+import { parse } from "@21n/shared-utils/json.utils";
 
 export const isRefreshingToken = writable(false);
 

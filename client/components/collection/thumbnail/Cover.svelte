@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { ICollectionThumb } from "../collection.type";
-  import { Arrangement } from "$lib/client/types/direction.enum";
-  import CoverRenderer from "$lib/client/elements/coverPicker/CoverRenderer.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { ICollectionThumb } from "@21n/components/collection/collection.type";
+  import { Arrangement } from "@21n/types/direction.enum";
+  import CoverRenderer from "@21n/elements/coverPicker/CoverRenderer.svelte";
   export let item: ICollectionThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
 </script>

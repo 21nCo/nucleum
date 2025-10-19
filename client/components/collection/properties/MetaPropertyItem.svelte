@@ -1,14 +1,14 @@
 <script lang="ts">
-  import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { formatDatetime } from "$lib/client/utils/time.utils";
+  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import { formatDatetime } from "@21n/utils/time.utils";
   import {
     type IProperty,
     PropertyType
-  } from "../../collection/properties/property.type";
-  import ColorsProperty from "./colorsProperty/ColorsProperty.svelte";
-  import LocationProperty from "./locationProperty/LocationProperty.svelte";
-  import type { ICollectionItem } from "../collection.type";
+  } from "@21n/components/collection/properties/property.type";
+  import ColorsProperty from "@21n/components/collection/properties/colorsProperty/ColorsProperty.svelte";
+  import LocationProperty from "@21n/components/collection/properties/locationProperty/LocationProperty.svelte";
+  import type { ICollectionItem } from "@21n/components/collection/collection.type";
   export let property: IProperty;
   export let item: ICollectionItem;
 

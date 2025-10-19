@@ -1,49 +1,49 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
   import {
     BlockAction,
     type IBlock
-  } from "$lib/client/components/markdown/md.type";
+  } from "@21n/components/markdown/md.type";
   import {
     headingNodeTypes,
     mediaNodeTypeList,
     NodeType,
     structuralNodeTypes,
     webNodeTypeList
-  } from "$lib/client/products/memotron/node/node.type";
+  } from "@21n/products/memotron/node/node.type";
   import { createEventDispatcher, onMount } from "svelte";
-  import type { MdStoreType } from "../markdown.store";
-  import { Size } from "$lib/client/types/size.enum";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
+  import type { MdStoreType } from "@21n/components/markdown/markdown.store";
+  import { Size } from "@21n/types/size.enum";
+  import { PopoverTriggerMethod } from "@21n/types/popover.type";
   import {
     ContextMenuType,
     type IContextMenu,
     type IContextMenuItem
-  } from "$lib/client/types/select.type";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import FocusRing from "./FocusRing.svelte";
-  import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
+  } from "@21n/types/select.type";
+  import { Placement } from "@21n/types/direction.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import FocusRing from "@21n/components/markdown/contextMenu/FocusRing.svelte";
+  import BlockBrowser from "@21n/components/markdown/blockBrowser/BlockBrowser.svelte";
+  import { appStore } from "@21n/stores/app.store";
   import {
     ResourceAccessMode,
     ResourceActionType
-  } from "../../flux/resourceStores/resource.type";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import { MemotronEvent } from "$lib/client/products/memotron/memotron.type";
-  import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
-  import { tabs } from "$lib/client/layout/topNav/tabs/tabs.store";
-  import { popover, tooltip } from "$lib/client/actions/popover.action";
-  import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { nodeStore } from "$lib/client/products/memotron/node/node.store";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import { Action } from "@21n/types/action.enum";
+  import { MemotronEvent } from "@21n/products/memotron/memotron.type";
+  import { dispatchCustomEvent } from "@21n/utils/browser.utils";
+  import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
+  import { popover, tooltip } from "@21n/actions/popover.action";
+  import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
   import {
     parseAndFormatDate,
     formatDatetime
-  } from "$lib/client/utils/time.utils";
-  import { userPreferences } from "../../settings/userPreferences.store";
-  import { resolveResourceActionIcon } from "../../flux/resourceStores/resource.utils";
+  } from "@21n/utils/time.utils";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import { resolveResourceActionIcon } from "@21n/components/flux/resourceStores/resource.utils";
   const dispatch = createEventDispatcher();
   export let block: IBlock;
   export let isFocusing: boolean = false;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { KeyboardShortcut } from "$lib/client/types/preferences.type";
+  import type { KeyboardShortcut } from "@21n/types/preferences.type";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   let defaultKeyMap: KeyboardShortcut[] = [

@@ -1,5 +1,5 @@
 <script>
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
+  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
 </script>
 
 <ComingSoonView />

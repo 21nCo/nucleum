@@ -5,7 +5,7 @@ import {
   activeResourceFilterV2,
   archivedResourceFilter,
   debouncer
-} from "../../../utils/utils";
+} from "@21n/utils/utils";
 import {
   PersistenceActionType,
   StoreDataType,
@@ -17,10 +17,10 @@ import {
   type IResourceSelectFilters,
   type IResourceSelectProperties,
   type IResourceStore
-} from "../../../types/data.type";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { ObservableStore } from "../../../stores/client.store";
-import { resolveCurrentUserId } from "../../../utils/account.utils";
+} from "@21n/types/data.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { ObservableStore } from "@21n/stores/client.store";
+import { resolveCurrentUserId } from "@21n/utils/account.utils";
 import {
   type IMultiSelectContext,
   type IMultiSelectStore,
@@ -28,25 +28,25 @@ import {
   type IResourceMutationParams,
   type IResourceCaptureV2,
   ResourceAccessMode
-} from "./resource.type";
-import { flux } from "../flux";
+} from "@21n/components/flux/resourceStores/resource.type";
+import { flux } from "@21n/components/flux/flux";
 import {
   dispatchCustomEvent,
   isExtensionEnvironment
-} from "$lib/client/utils/browser.utils";
-import { extensionFlux } from "../fluxExtentionMediator";
-import { FluxMethod } from "../flux.type";
-import { generateResourceId } from "../flux.utils";
-import { toasts } from "$lib/client/stores/notification.store";
-import { logger } from "../../debug/logger.client";
+} from "@21n/utils/browser.utils";
+import { extensionFlux } from "@21n/components/flux/fluxExtentionMediator";
+import { FluxMethod } from "@21n/components/flux/flux.type";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
+import { toasts } from "@21n/stores/notification.store";
+import { logger } from "@21n/components/debug/logger.client";
 import {
   determineResourceAccessMode,
   isSameResource,
   resourceInList
-} from "./resource.utils";
-import { GlobalEvent } from "$lib/client/types/event.enum";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { stringify } from "$lib/shared/utils/json.utils";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { GlobalEvent } from "@21n/types/event.enum";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+import { stringify } from "@21n/shared-utils/json.utils";
 
 const activeResources = new Map<string, ActiveResourceStore<any, any, any>>();
 export const resourceStores = new Map<Resource, ResourceStore<any, any>>();

@@ -3,11 +3,11 @@
     calloutBrowserItem,
     codeBrowserItem,
     quoteBrowserItem
-  } from "./blockBrowser.utils";
-  import { Size } from "$lib/client/types/size.enum";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import BlockBrowserKeyboardItem from "./BlockBrowserKeyboardItem.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  } from "@21n/components/markdown/blockBrowser/blockBrowser.utils";
+  import { Size } from "@21n/types/size.enum";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
+  import BlockBrowserKeyboardItem from "@21n/components/markdown/blockBrowser/BlockBrowserKeyboardItem.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { fly } from "svelte/transition";
 
   export let configData: any;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import { Orientation } from "@21n/types/direction.enum";
   import type { BarChartOptions } from "@carbon/charts-svelte";
   import {
     select,
@@ -11,14 +11,14 @@
   } from "d3";
   import { createEventDispatcher, onMount } from "svelte";
   //TODO - import dependency on local
-  import { roundOffToNdigitsAfterDecimal } from "$lib/client/products/pointron/pointron.utils";
+  import { roundOffToNdigitsAfterDecimal } from "@21n/products/pointron/pointron.utils";
   import {
     customColor,
     retrieveCurrentColors
-  } from "$lib/client/utils/theme.utils";
-  import type { ChartDataPoint } from "$lib/client/types/chartDataPoint.type";
-  import { generateUID } from "$lib/client/utils/utils";
-  import appearance from "$lib/client/stores/appearance.store";
+  } from "@21n/utils/theme.utils";
+  import type { ChartDataPoint } from "@21n/types/chartDataPoint.type";
+  import { generateUID } from "@21n/utils/utils";
+  import appearance from "@21n/stores/appearance.store";
 
   export let data: ChartDataPoint[] = [];
   export let options: BarChartOptions;

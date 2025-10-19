@@ -1,13 +1,13 @@
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy, tick } from "svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { compareDates, isSameDay } from "$lib/client/utils/time.utils";
-  import CalendarTileIndicator from "./indicator/CalendarTileIndicator.svelte";
-  import type { ICalendarIndicatorData } from "../calendar.type";
-  import { preferences } from "$lib/client/stores/preferences/preferences.store";
-  import { Preference } from "$lib/client/stores/preferences/preferences.type";
-  import { TimeScaleUnit } from "$lib/client/types/time.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
+  import { cn } from "@21n/utils/ui.utils";
+  import { compareDates, isSameDay } from "@21n/utils/time.utils";
+  import CalendarTileIndicator from "@21n/components/calendar/classic/indicator/CalendarTileIndicator.svelte";
+  import type { ICalendarIndicatorData } from "@21n/components/calendar/calendar.type";
+  import { preferences } from "@21n/stores/preferences/preferences.store";
+  import { Preference } from "@21n/stores/preferences/preferences.type";
+  import { TimeScaleUnit } from "@21n/types/time.type";
+  import { logger } from "@21n/components/debug/logger.client";
 
   export let selectedDate: Date;
   export let indicatorData: ICalendarIndicatorData[] = [];

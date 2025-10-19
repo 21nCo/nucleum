@@ -1,5 +1,5 @@
 <script lang="ts">
-  import MicroIndicatorTile from "./MicroIndicatorTile.svelte";
+  import MicroIndicatorTile from "@21n/components/calendar/calendarHeatmap/MicroIndicatorTile.svelte";
   // export let view: "V1" | "V2";
   // export const days = 30;
   export let data: any;

@@ -1,27 +1,27 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { EmbedMessage } from "@21n/types/embedMessage.enum";
   import {
     postMessageToParent,
     postTokenToExtension
-  } from "$lib/client/utils/embed.utils";
-  import { isValidEmail } from "$lib/shared/utils/text.utils";
+  } from "@21n/utils/embed.utils";
+  import { isValidEmail } from "@21n/shared-utils/text.utils";
   import { onMount } from "svelte";
-  import OAuthButtons from "../../../oauth/OAuthButtons.svelte";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import account from "$lib/client/stores/account.store";
-  import view from "$lib/client/stores/view.store";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { performApiCall } from "$lib/client/utils/network.utils";
-  import { Action } from "$lib/client/types/action.enum";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
+  import OAuthButtons from "@21n/components/oauth/OAuthButtons.svelte";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import account from "@21n/stores/account.store";
+  import view from "@21n/stores/view.store";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { performApiCall } from "@21n/utils/network.utils";
+  import { Action } from "@21n/types/action.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
   export let isSignup = false;
   export let currentProgress: string | undefined = undefined;
   export let isLoginFromExtension = false;

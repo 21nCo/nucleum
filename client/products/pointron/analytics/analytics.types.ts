@@ -1,4 +1,4 @@
-import type { TimePeriod } from "$lib/client/types/time.type";
+import type { TimePeriod } from "@21n/types/time.type";
 
 export type IAnalyticsConfigStore = {
   pages: AnalyticsPage[];

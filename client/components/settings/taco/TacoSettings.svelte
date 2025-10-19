@@ -1,30 +1,30 @@
 <script lang="ts">
-  import ProgressBar from "$lib/client/elements/ProgressBar.svelte";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
-  import { Size } from "$lib/client/types/size.enum";
-  import { userPreferences } from "../userPreferences.store";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import { InfoTextType } from "$lib/client/types/text.type";
+  import ProgressBar from "@21n/elements/ProgressBar.svelte";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import { tacoWorker } from "@21n/products/memotron/memotron.utils";
+  import { Size } from "@21n/types/size.enum";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import Button from "@21n/elements/button/Button.svelte";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import { InfoTextType } from "@21n/types/text.type";
   import {
     TacoActions,
     TacoLocalAIOptions
-  } from "$lib/client/products/memotron/taco/taco.types";
-  import { runVectorGeneration } from "$lib/client/products/memotron/taco/taco.store";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { deleteItemsFromCache } from "$lib/client/products/memotron/taco/taco.utils";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import context from "$lib/client/stores/context.store";
-  import { preferences } from "$lib/client/stores/preferences/preferences.store";
-  import { Preference } from "$lib/client/stores/preferences/preferences.type";
-  import { Taco } from "../../taco/taco";
-  import { embedBridge } from "../../embed/embed.store";
-  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-  import Icon from "$lib/client/elements/Icon.svelte";
+  } from "@21n/products/memotron/taco/taco.types";
+  import { runVectorGeneration } from "@21n/products/memotron/taco/taco.store";
+  import { appStore } from "@21n/stores/app.store";
+  import { deleteItemsFromCache } from "@21n/products/memotron/taco/taco.utils";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import context from "@21n/stores/context.store";
+  import { preferences } from "@21n/stores/preferences/preferences.store";
+  import { Preference } from "@21n/stores/preferences/preferences.type";
+  import { Taco } from "@21n/components/taco/taco";
+  import { embedBridge } from "@21n/components/embed/embed.store";
+  import { EmbedMessage } from "@21n/types/embedMessage.enum";
+  import Icon from "@21n/elements/Icon.svelte";
 
   let progress = 0;
   let label: string;

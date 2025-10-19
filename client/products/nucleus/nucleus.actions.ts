@@ -1,14 +1,14 @@
-import { Action } from "$lib/client/types/action.enum";
-import { ActionType, type IAction } from "$lib/client/types/action.type";
-import { memotronActions } from "$lib/client/products/memotron/memotron.actions";
-import { pointronActions } from "$lib/client/products/pointron/pointron.actions";
-import NucleusLibrary from "./NucleusLibrary.svelte";
-import NucleusOverview from "./overview/NucleusOverview.svelte";
-import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-import LibraryPanelContentResolver from "$lib/client/components/library/LibraryPanelContentResolver.svelte";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import NucleusOverviewPanel from "./overview/NucleusOverviewPanel.svelte";
+import { Action } from "@21n/types/action.enum";
+import { ActionType, type IAction } from "@21n/types/action.type";
+import { memotronActions } from "@21n/products/memotron/memotron.actions";
+import { pointronActions } from "@21n/products/pointron/pointron.actions";
+import NucleusLibrary from "@21n/products/nucleus/NucleusLibrary.svelte";
+import NucleusOverview from "@21n/products/nucleus/overview/NucleusOverview.svelte";
+import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+import LibraryPanelContentResolver from "@21n/components/library/LibraryPanelContentResolver.svelte";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import NucleusOverviewPanel from "@21n/products/nucleus/overview/NucleusOverviewPanel.svelte";
 
 const actionsToFilterInSub = [
   Action.LIBRARY,

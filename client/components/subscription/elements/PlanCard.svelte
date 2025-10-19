@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import PlanFeatureList from "./PlanFeatureList.svelte";
-  import type { IPlan } from "../userPlan.type";
-  import { BillingCycle, PlanType } from "../userPlan.type";
-  import account from "$lib/client/stores/account.store";
+  import { cn } from "@21n/utils/ui.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import PlanFeatureList from "@21n/components/subscription/elements/PlanFeatureList.svelte";
+  import type { IPlan } from "@21n/components/subscription/userPlan.type";
+  import { BillingCycle, PlanType } from "@21n/components/subscription/userPlan.type";
+  import account from "@21n/stores/account.store";
   import { createEventDispatcher } from "svelte";
-  import PlanIcon from "./PlanIcon.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { PlanStatus, type IUserPlan } from "$lib/client/types/account.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { properCase } from "$lib/shared/utils/text.utils";
-  import view from "$lib/client/stores/view.store";
+  import PlanIcon from "@21n/components/subscription/elements/PlanIcon.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { PlanStatus, type IUserPlan } from "@21n/types/account.type";
+  import { appStore } from "@21n/stores/app.store";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import view from "@21n/stores/view.store";
   const dispatch = createEventDispatcher();
 
   export let plans: IPlan[];

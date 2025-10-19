@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
   import { createEventDispatcher } from "svelte";
-  import HelpItem from "./HelpItem.svelte";
+  import HelpItem from "@21n/extensions/shared/HelpItem.svelte";
 
   const dispatch = createEventDispatcher();
 

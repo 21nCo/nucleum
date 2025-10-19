@@ -1,4 +1,4 @@
-import type { IHighlight } from "../landing.type";
+import type { IHighlight } from "@21n/landing/shared/landing.type";
 
 export const highlights: { [key: string]: IHighlight } = {
   powerful: {

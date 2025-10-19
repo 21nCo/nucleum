@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
 
-import PanelSwitcherWithAnimation from "./PanelSwitcherWithAnimation.svelte";
+import PanelSwitcherWithAnimation from "@21n/elements/switcher/PanelSwitcherWithAnimation.svelte";
 
-import { Size } from "$lib/client/types/size.enum";
-import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+import { Size } from "@21n/types/size.enum";
+import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
 const meta = {
   component: PanelSwitcherWithAnimation,
   argTypes: {

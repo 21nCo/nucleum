@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import SettingThumbnail from "../SettingThumbnail.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { ActionType } from "$lib/client/types/action.type";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import SettingThumbnail from "@21n/components/settings/SettingThumbnail.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { ActionType } from "@21n/types/action.type";
+  import { AppSearchParam } from "@21n/types/appStore.type";
   export let items: string[] = [];
   export let sectionName: string;
   export let orientation: Orientation = Orientation.Horizontal;

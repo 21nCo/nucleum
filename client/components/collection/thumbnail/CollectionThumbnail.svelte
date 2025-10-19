@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { Arrangement } from "$lib/client/types/direction.enum";
-  import { type ICollectionThumb } from "$lib/client/components/collection/collection.type";
-  import ResourceGridThumbnail from "$lib/client/components/record/thumbnail/ResourceGridThumbnail.svelte";
-  import Cover from "./Cover.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import { Arrangement } from "@21n/types/direction.enum";
+  import { type ICollectionThumb } from "@21n/components/collection/collection.type";
+  import ResourceGridThumbnail from "@21n/components/record/thumbnail/ResourceGridThumbnail.svelte";
+  import Cover from "@21n/components/collection/thumbnail/Cover.svelte";
+  import { Size } from "@21n/types/size.enum";
   import {
     ResourceAccessPoint,
     ResourceAccessPointState
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import ResourceThumbnailBase from "$lib/client/components/record/thumbnail/ResourceThumbnailBase.svelte";
-  import CollectionThumbnailLabelRow from "./CollectionThumbnailLabelRow.svelte";
-  import ResourceThumbnailContentTypeOverlay from "$lib/client/components/record/thumbnail/ResourceThumbnailContentTypeOverlay.svelte";
-  import CollectionPropertyCount from "../counts/CollectionPropertyCount.svelte";
-  import CollectionNodeCount from "../counts/CollectionItemCount.svelte";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import CollectionThumbnailLabel from "./CollectionThumbnailLabel.svelte";
-  import CollectionThumbnailAvatar from "./CollectionThumbnailAvatar.svelte";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import ResourceThumbnailBase from "@21n/components/record/thumbnail/ResourceThumbnailBase.svelte";
+  import CollectionThumbnailLabelRow from "@21n/components/collection/thumbnail/CollectionThumbnailLabelRow.svelte";
+  import ResourceThumbnailContentTypeOverlay from "@21n/components/record/thumbnail/ResourceThumbnailContentTypeOverlay.svelte";
+  import CollectionPropertyCount from "@21n/components/collection/counts/CollectionPropertyCount.svelte";
+  import CollectionNodeCount from "@21n/components/collection/counts/CollectionItemCount.svelte";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import CollectionThumbnailLabel from "@21n/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
+  import CollectionThumbnailAvatar from "@21n/components/collection/thumbnail/CollectionThumbnailAvatar.svelte";
   export let item: ICollectionThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;

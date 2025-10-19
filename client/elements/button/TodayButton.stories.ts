@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
 
-import TodayButton from "./TodayButton.svelte";
-import { selectedTimePeriod } from "$lib/client/stores/app.store";
+import TodayButton from "@21n/elements/button/TodayButton.svelte";
+import { selectedTimePeriod } from "@21n/stores/app.store";
 
 const currentDate = new Date();
 currentDate.setMonth(currentDate.getMonth() - 1);

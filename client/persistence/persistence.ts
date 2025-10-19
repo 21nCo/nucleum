@@ -1,17 +1,17 @@
 import {
   performApiCall,
   performStaticDataOperation
-} from "$lib/client/utils/network.utils";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { logger } from "$lib/client/components/debug/logger.client";
-import { clientStorage } from "./persistence.utils";
-import { ClientStorageKey } from "./persistence.type";
-import { extractFullTabData } from "../extensions/clipper/clipper.utils";
+} from "@21n/utils/network.utils";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+import { logger } from "@21n/components/debug/logger.client";
+import { clientStorage } from "@21n/persistence/persistence.utils";
+import { ClientStorageKey } from "@21n/persistence/persistence.type";
+import { extractFullTabData } from "@21n/extensions/clipper/clipper.utils";
 import {
   isContentScript,
   isExtensionEnvironment
-} from "../utils/browser.utils";
-import { parse } from "$lib/shared/utils/json.utils";
+} from "@21n/utils/browser.utils";
+import { parse } from "@21n/shared-utils/json.utils";
 
 export class Persistence {
   refreshToken = async () => {
@@ -168,9 +168,7 @@ export class Persistence {
     try {
       const product = await clientStorage.get(ClientStorageKey.PRODUCT);
       if (!product) return;
-      let response = await performStaticDataOperation(
-        `static/${product}/${env}.json`
-      );
+      let response = await performStaticDataOperation(`${product}/${env}.json`);
       if (response?.ok) {
         let jsonValue = await response.json();
         if (!jsonValue) return;

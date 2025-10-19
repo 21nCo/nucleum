@@ -1,9 +1,9 @@
 <script lang="ts">
   // import { PointronPersistence } from "$lib/client/products/pointron/pointron.persistence";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
-  import { fileStore } from "$lib/client/components/files/file.store";
-  import { stringify } from "$lib/shared/utils/json.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { parseAndFormatDate } from "@21n/utils/time.utils";
+  import { fileStore } from "@21n/components/files/file.store";
+  import { stringify } from "@21n/shared-utils/json.utils";
   async function exportData() {
     let response = ""; //await new PointronPersistence().exportData();
     if (response) {

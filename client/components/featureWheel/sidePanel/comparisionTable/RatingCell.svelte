@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
   export let value: number;
   export let showJustAvailability: boolean = false;
 </script>

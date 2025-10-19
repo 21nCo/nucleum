@@ -1,12 +1,12 @@
 <script lang="ts">
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { NestedListStyle, type NestedItemContent } from "./nestedList.type";
-  import NestedListItem from "./NestedListItem.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { InputStyle } from "@21n/types/input.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { NestedListStyle, type NestedItemContent } from "@21n/components/nestedList/nestedList.type";
+  import NestedListItem from "@21n/components/nestedList/NestedListItem.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let items: string[] = [];

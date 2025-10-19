@@ -1,10 +1,10 @@
-import type { IRecordId } from "$lib/client/types/data.type";
+import type { IRecordId } from "@21n/types/data.type";
 import type {
   IResource,
   IResourceInActivableFromParent,
   IResourceLabeled
-} from "../flux/resourceStores/resource.type";
-import type { IGoalThumb } from "../goals/goal.type";
+} from "@21n/components/flux/resourceStores/resource.type";
+import type { IGoalThumb } from "@21n/components/goals/goal.type";
 
 interface ITaskBase extends IResourceLabeled {
   isChecked?: boolean;

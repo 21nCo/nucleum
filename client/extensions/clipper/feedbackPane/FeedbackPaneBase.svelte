@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { toolbarState } from "../contentScripts/store";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { hoverable } from "$lib/client/actions/hover.action";
+  import { toolbarState } from "@21n/extensions/clipper/contentScripts/store";
+  import { Placement } from "@21n/types/direction.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { hoverable } from "@21n/actions/hover.action";
   import { createEventDispatcher } from "svelte";
   import { fly, scale } from "svelte/transition";
   const dispatch = createEventDispatcher();

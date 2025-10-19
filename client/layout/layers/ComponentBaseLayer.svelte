@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { flux } from "$lib/client/components/flux/flux";
-  import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { flux } from "@21n/components/flux/flux";
+  import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
     isSameResource,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import account from "$lib/client/stores/account.store";
-  import { appStore } from "$lib/client/stores/app.store";
-  import context from "$lib/client/stores/context.store";
-  import { UserDataMode } from "$lib/client/types/account.type";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import account from "@21n/stores/account.store";
+  import { appStore } from "@21n/stores/app.store";
+  import context from "@21n/stores/context.store";
+  import { UserDataMode } from "@21n/types/account.type";
   import {
     PersistenceActionType,
     type IRecordId
-  } from "$lib/client/types/data.type";
+  } from "@21n/types/data.type";
   import { createEventDispatcher, onDestroy, onMount } from "svelte";
 
   const dispatch = createEventDispatcher();

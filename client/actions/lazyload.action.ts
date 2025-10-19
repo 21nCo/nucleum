@@ -1,7 +1,7 @@
-import { generateRandomId } from "$lib/shared/utils/crypto.utils";
-import { isValidString } from "$lib/shared/utils/text.utils";
-import { logger } from "../components/debug/logger.client";
-import { getImageColors } from "$lib/client/utils/ui.utils";
+import { generateRandomId } from "@21n/shared-utils/crypto.utils";
+import { isValidString } from "@21n/shared-utils/text.utils";
+import { logger } from "@21n/components/debug/logger.client";
+import { getImageColors } from "@21n/utils/ui.utils";
 
 /**
  * Lazy loads an image when it is in the viewport.

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import appearance from "$lib/client/stores/appearance.store";
-  import view from "$lib/client/stores/view.store";
-  import { Theme } from "$lib/client/types/appearance.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import appearance from "@21n/stores/appearance.store";
+  import view from "@21n/stores/view.store";
+  import { Theme } from "@21n/types/appearance.type";
+  import { cn } from "@21n/utils/ui.utils";
   export { className as class };
 
   $: greenGradient =

@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import type { ISelectValue } from "$lib/client/types/select.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IViewTab } from "./viewTab.type";
+  import { hoverable } from "@21n/actions/hover.action";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import type { ISelectValue } from "@21n/types/select.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IViewTab } from "@21n/components/collection/tabSwitcher/viewTab.type";
   import { createEventDispatcher } from "svelte";
-  import TabCountBadge from "../counts/TabCountBadge.svelte";
+  import TabCountBadge from "@21n/components/collection/counts/TabCountBadge.svelte";
 
   const dispatch = createEventDispatcher();
 

@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { ITileItem } from "../landing.type";
-  import Section from "../Section.svelte";
-  import Title from "../Title.svelte";
-  import Button from "../elements/Button.svelte";
-  import { isProductsPanelOpen } from "../store/shared.store";
-  import IrregularTileItem from "./IrregularTileItem.svelte";
+  import type { ITileItem } from "@21n/landing/shared/landing.type";
+  import Section from "@21n/landing/shared/Section.svelte";
+  import Title from "@21n/landing/shared/Title.svelte";
+  import Button from "@21n/landing/shared/elements/Button.svelte";
+  import { isProductsPanelOpen } from "@21n/landing/shared/store/shared.store";
+  import IrregularTileItem from "@21n/landing/shared/tile/IrregularTileItem.svelte";
 
   export let title: string;
   export let items: ITileItem[];

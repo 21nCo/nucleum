@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { imageRepositioner } from "$lib/client/actions/imageRepositioning.action";
+  import { imageRepositioner } from "@21n/actions/imageRepositioning.action";
   import {
     FileType,
     type IImageRepositionerOptions
-  } from "$lib/client/components/files/file.type";
-  import FileView from "$lib/client/components/files/FileView.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { gradientsList } from "../colorPicker/gradients/gradients";
-  import { debouncer } from "$lib/client/utils/utils";
+  } from "@21n/components/files/file.type";
+  import FileView from "@21n/components/files/FileView.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { gradientsList } from "@21n/elements/colorPicker/gradients/gradients";
+  import { debouncer } from "@21n/utils/utils";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let cover: string;

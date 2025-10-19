@@ -1,17 +1,17 @@
 <script lang="ts">
-  import account from "$lib/client/stores/account.store";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import modalEvent from "../modal/modal.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import { resolveNextRenewalDate, SUBSCRIPTION_PLANS } from "./userPlan.utils";
-  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
-  import PlanFeatureList from "./elements/PlanFeatureList.svelte";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import { PaymentProvider } from "$lib/shared/types/plan.type";
-  import { postMessageToParent } from "$lib/client/utils/embed.utils";
-  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-  import { BillingCycle } from "./userPlan.type";
+  import account from "@21n/stores/account.store";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import modalEvent from "@21n/components/modal/modal.store";
+  import { Action } from "@21n/types/action.enum";
+  import { resolveNextRenewalDate, SUBSCRIPTION_PLANS } from "@21n/components/subscription/userPlan.utils";
+  import { parseAndFormatDate } from "@21n/utils/time.utils";
+  import PlanFeatureList from "@21n/components/subscription/elements/PlanFeatureList.svelte";
+  import { toasts } from "@21n/stores/notification.store";
+  import { PaymentProvider } from "@21n/shared-types/plan.type";
+  import { postMessageToParent } from "@21n/utils/embed.utils";
+  import { EmbedMessage } from "@21n/types/embedMessage.enum";
+  import { BillingCycle } from "@21n/components/subscription/userPlan.type";
 
   let isCancelInProgress = false;
   $: isFullRefundable = resolveIfEligibleForFullRefund(

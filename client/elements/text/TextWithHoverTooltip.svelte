@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import HoverableElement from "../HoverableElement.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import HoverableElement from "@21n/elements/HoverableElement.svelte";
   export let text: string = "";
   export let tooltip: string | undefined = undefined;
   export let delay: number = 1500;

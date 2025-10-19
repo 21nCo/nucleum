@@ -1,6 +1,6 @@
 <script lang="ts">
-  import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
-  import { textTruncateMapper } from "$lib/client/utils/utils";
+  import TextWithHoverTooltip from "@21n/elements/text/TextWithHoverTooltip.svelte";
+  import { textTruncateMapper } from "@21n/utils/utils";
   export let hierarchy: string[] = [];
   export let slice: number | undefined = undefined;
   export let truncateLength: number = 15;

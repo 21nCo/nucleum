@@ -3,7 +3,7 @@ import {
   Embed,
   OperatingSystem,
   type IAppContext
-} from "../types/context.type";
+} from "@21n/types/context.type";
 
 const context = initContextStore({
   isEmbed: false,

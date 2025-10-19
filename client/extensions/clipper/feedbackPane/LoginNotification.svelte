@@ -1,9 +1,9 @@
 <script lang="ts">
-  import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import { extractProduct } from "$lib/shared/utils/utils";
-  import FeedbackPaneBase from "./FeedbackPaneBase.svelte";
+  import SubAtomLogo from "@21n/branding/SubAtomLogo.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonVariant } from "@21n/types/button.type";
+  import { extractProduct } from "@21n/shared-utils/utils";
+  import FeedbackPaneBase from "@21n/extensions/clipper/feedbackPane/FeedbackPaneBase.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let code: number;

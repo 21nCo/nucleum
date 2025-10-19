@@ -1,8 +1,8 @@
 <script lang="ts">
   import { fly } from "svelte/transition";
-  import InlineLoadingAnimation from "./animations/InlineLoadingAnimation.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import Icon from "../Icon.svelte";
+  import InlineLoadingAnimation from "@21n/elements/feedback/animations/InlineLoadingAnimation.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import Icon from "@21n/elements/Icon.svelte";
   export let loadingText: string = "Refreshing";
 </script>
 

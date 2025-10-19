@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { Itemtype, type ProgrammedWheelEvent } from "./Birdview.type";
+  import { Itemtype, type ProgrammedWheelEvent } from "@21n/components/calendar/birdView/Birdview.type";
   import { createEventDispatcher, onMount } from "svelte";
-  import RollerButton from "./RollerButton.svelte";
+  import RollerButton from "@21n/components/calendar/birdView/RollerButton.svelte";
   import {
     getFirstAlphabetPosition,
     getLastAlphabetPosition,
     waitForTimeout
-  } from "./Birdview.utils";
-  import { debouncer } from "$lib/client/utils/utils";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/components/calendar/birdView/Birdview.utils";
+  import { debouncer } from "@21n/utils/utils";
+  import { cn } from "@21n/utils/ui.utils";
   let dispatch = createEventDispatcher();
   export let config: any;
   export let items: any;

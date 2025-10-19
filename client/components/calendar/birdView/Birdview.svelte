@@ -1,12 +1,12 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import RollerPicker from "./RollerPicker.svelte";
-  import Zone from "./Zone.svelte";
+  import RollerPicker from "@21n/components/calendar/birdView/RollerPicker.svelte";
+  import Zone from "@21n/components/calendar/birdView/Zone.svelte";
   import {
     Modes,
     type ProgrammedHorizontalWheelEvent,
     type ProgrammedVerticalWheelEvent
-  } from "./Birdview.type";
+  } from "@21n/components/calendar/birdView/Birdview.type";
   import {
     currentMonthIndex,
     currentYear,
@@ -15,15 +15,15 @@
     monthNames,
     getFirstAlphabetPosition,
     currentDate
-  } from "./Birdview.utils";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import Day from "./Day.svelte";
-  import Month from "./Month.svelte";
-  import Year from "./Year.svelte";
-  import TodayButton from "./TodayButton.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { debouncer } from "$lib/client/utils/utils";
+  } from "@21n/components/calendar/birdView/Birdview.utils";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
+  import Day from "@21n/components/calendar/birdView/Day.svelte";
+  import Month from "@21n/components/calendar/birdView/Month.svelte";
+  import Year from "@21n/components/calendar/birdView/Year.svelte";
+  import TodayButton from "@21n/components/calendar/birdView/TodayButton.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { debouncer } from "@21n/utils/utils";
 
   let startX: number;
   let instaceId = new Date().getTime();

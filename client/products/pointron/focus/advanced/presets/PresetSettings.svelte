@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Presets from "./Presets.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+  import Presets from "@21n/products/pointron/focus/advanced/presets/Presets.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   function handleEdit(event: any) {
     if (!event.detail?.id) return;
     appStore.runAction(PointronAction.EDIT_PRESET, {

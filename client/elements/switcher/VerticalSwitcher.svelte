@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { Orientation, Placement } from "$lib/client/types/direction.enum";
+  import { Orientation, Placement } from "@21n/types/direction.enum";
   import type {
     ISelectItem,
     ISelectValue
-  } from "$lib/client/types/select.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import VerticalSwitcherItem from "./VerticalSwitcherItem.svelte";
+  } from "@21n/types/select.type";
+  import { Size } from "@21n/types/size.enum";
+  import { VerticalSwitcherStyle } from "@21n/types/switcher.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import VerticalSwitcherItem from "@21n/elements/switcher/VerticalSwitcherItem.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let style: VerticalSwitcherStyle = VerticalSwitcherStyle.BAR;

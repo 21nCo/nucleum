@@ -1,7 +1,7 @@
 <script>
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import { tooltip } from "@21n/actions/popover.action";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
 </script>
 
 <div

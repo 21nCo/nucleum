@@ -4,10 +4,10 @@ import type {
   IHeroInputs,
   IHighlight,
   ITestimonial
-} from "../shared/landing.type";
-import { highlights } from "../shared/highlights/highlights.data";
-import { staticUrl } from "../shared/store/shared.store";
-import type { ISEOMetadata } from "../shared/seo/seo.type";
+} from "@21n/landing/shared/landing.type";
+import { highlights } from "@21n/landing/shared/highlights/highlights.data";
+import { staticUrl } from "@21n/landing/shared/store/shared.store";
+import type { ISEOMetadata } from "@21n/landing/shared/seo/seo.type";
 
 const orgName = "Phinative soft private limtied (21n)";
 
@@ -129,7 +129,7 @@ let nMetadata: ISEOMetadata = {
     "21st century native organization. Building impressive products with triple bottom line at our core.",
   keywords: ["21n", "21st century native organization", "triple bottom line"],
   canonicalUrl: "https://21n.org",
-  ogImage: "https://cdn.21n.co/21n/ogImage.png",
+  ogImage: "https://cdn.21n.org/21n/ogImage.png",
   structuredData: [
     {
       "@context": "https://schema.org",
@@ -154,7 +154,7 @@ let nMetadata: ISEOMetadata = {
         "https://pointron.app"
       ],
       logo: "https://21n.org/logo.png",
-      image: "https://cdn.21n.co/21n/ogImage.png",
+      image: "https://cdn.21n.org/21n/ogImage.png",
       foundingDate: "2021-10-26",
       foundingLocation: {
         "@type": "Place",
@@ -424,7 +424,7 @@ const memotronMetadata: ISEOMetadata = {
     "NCCL PKM system"
   ],
   canonicalUrl: "https://memotron.app",
-  ogImage: "https://cdn.21n.co/memotron/ogImage.png",
+  ogImage: "https://cdn.21n.org/memotron/ogImage.png",
   structuredData: [
     {
       "@context": "https://schema.org",
@@ -565,7 +565,7 @@ const pointronMetadata: ISEOMetadata = {
     "PKM"
   ],
   canonicalUrl: "https://pointron.app",
-  ogImage: "https://cdn.21n.co/pointron/ogImage.png",
+  ogImage: "https://cdn.21n.org/pointron/ogImage.png",
   structuredData: [
     {
       "@context": "https://schema.org",

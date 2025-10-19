@@ -1,14 +1,14 @@
 <script lang="ts">
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { InfoTextType } from "$lib/client/types/text.type";
-  import { formatDatetime } from "$lib/client/utils/time.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import type { ActiveResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-  import { isShowStatusBanner } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import RecordTrashBanner from "./RecordTrashBanner.svelte";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import { InfoTextType } from "@21n/types/text.type";
+  import { formatDatetime } from "@21n/utils/time.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import type { ActiveResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
+  import { isShowStatusBanner } from "@21n/components/flux/resourceStores/resource.utils";
+  import RecordTrashBanner from "@21n/components/record/RecordTrashBanner.svelte";
   export let resource: ActiveResourceStore<any, any>;
 </script>
 

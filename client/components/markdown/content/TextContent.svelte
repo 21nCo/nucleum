@@ -3,9 +3,9 @@
   import {
     BlockAction,
     InlineType
-  } from "$lib/client/components/markdown/md.type";
-  import { mdContentChangeEvent, type MdStoreType } from "../markdown.store";
-  import BlockBrowser from "../blockBrowser/BlockBrowser.svelte";
+  } from "@21n/components/markdown/md.type";
+  import { mdContentChangeEvent, type MdStoreType } from "@21n/components/markdown/markdown.store";
+  import BlockBrowser from "@21n/components/markdown/blockBrowser/BlockBrowser.svelte";
 
   import {
     headingNodeTypes,
@@ -13,29 +13,29 @@
     NodeType,
     type ListNodeType,
     type SimpleTextNodeType
-  } from "$lib/client/products/memotron/node/node.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Popover from "$lib/client/elements/popover/Popover.svelte";
-  import InlineMarkdownTextInput from "./InlineMarkdownTextInput.svelte";
-  import SearchResultsPopover from "$lib/client/elements/input/SearchResultsPopover.svelte";
-  import LinkSearchResultItem from "$lib/client/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
-  import { deepCopy } from "$lib/shared/utils/obj.utils";
+  } from "@21n/products/memotron/node/node.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import Popover from "@21n/elements/popover/Popover.svelte";
+  import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
+  import SearchResultsPopover from "@21n/elements/input/SearchResultsPopover.svelte";
+  import LinkSearchResultItem from "@21n/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
+  import { deepCopy } from "@21n/shared-utils/obj.utils";
   import { getContext } from "svelte";
-  import { logger } from "../../debug/logger.client";
-  import { SearchStore } from "$lib/client/components/record/record.store";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import type { IRecordId } from "@21n/types/data.type";
   import {
     inlineLinkPatterns,
     performEscShortcuts,
     renderMdAsHtml
-  } from "../markdown.utils";
-  import view from "$lib/client/stores/view.store";
-  import context from "$lib/client/stores/context.store";
-  import { popover } from "$lib/client/actions/popover.action";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
-  import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  } from "@21n/components/markdown/markdown.utils";
+  import view from "@21n/stores/view.store";
+  import context from "@21n/stores/context.store";
+  import { popover } from "@21n/actions/popover.action";
+  import { PopoverTriggerMethod } from "@21n/types/popover.type";
+  import { dispatchCustomEvent } from "@21n/utils/browser.utils";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 
   const nodeContentContext = getContext<any>("content");
   const blockContext = getContext<any>("block");

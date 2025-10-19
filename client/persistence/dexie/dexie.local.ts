@@ -1,10 +1,10 @@
-import { logger } from "$lib/client/components/debug/logger.client";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { logger } from "@21n/components/debug/logger.client";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import type {
   IMetaResource,
   IResource
-} from "$lib/client/components/flux/resourceStores/resource.type";
-import { removeDuplicatesFilter } from "$lib/client/components/flux/resourceStores/resource.utils";
+} from "@21n/components/flux/resourceStores/resource.type";
+import { removeDuplicatesFilter } from "@21n/components/flux/resourceStores/resource.utils";
 import {
   FilterCombinationMethod,
   IResourceFilterOperator,
@@ -15,19 +15,19 @@ import {
   type IResourceSearch,
   type IResourceSelectParams,
   type IResourceSelectProperties
-} from "$lib/client/types/data.type";
-import { parse } from "$lib/shared/utils/json.utils";
-import { isValidString } from "$lib/shared/utils/text.utils";
+} from "@21n/types/data.type";
+import { parse } from "@21n/shared-utils/json.utils";
+import { isValidString } from "@21n/shared-utils/text.utils";
 import {
   ClientStorageKey,
   type IPersistence,
   type IPersistenceInitParams,
   type ITable
-} from "../persistence.type";
-import { clientStorage } from "../persistence.utils";
+} from "@21n/persistence/persistence.type";
+import { clientStorage } from "@21n/persistence/persistence.utils";
 import { Dexie, type Collection, type Table, type WhereClause } from "dexie";
 import { IndexedDB, Index, Document } from "flexsearch";
-import { indexingStore } from "./indexing.store";
+import { indexingStore } from "@21n/persistence/dexie/indexing.store";
 
 // import {
 //   Worker as WorkerIndex,

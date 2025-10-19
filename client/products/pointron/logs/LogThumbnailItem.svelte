@@ -1,20 +1,20 @@
 <script lang="ts">
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import view from "$lib/client/stores/view.store";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { resolveHoverState } from "$lib/client/utils/browser.utils";
-  import { formatSeconds, formatTime } from "$lib/client/utils/time.utils";
-  import type { ISessionThumb } from "./log.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
-  import LogThumbnailGoalsInfo from "./LogThumbnailGoalsInfo.svelte";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import Divider from "@21n/elements/Divider.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import view from "@21n/stores/view.store";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import { resolveHoverState } from "@21n/utils/browser.utils";
+  import { formatSeconds, formatTime } from "@21n/utils/time.utils";
+  import type { ISessionThumb } from "@21n/products/pointron/logs/log.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import HoverableElement from "@21n/elements/HoverableElement.svelte";
+  import LogThumbnailGoalsInfo from "@21n/products/pointron/logs/LogThumbnailGoalsInfo.svelte";
   export let session: ISessionThumb & {
     splits: { focus: number; brek: number };
   };

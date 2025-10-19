@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Link from "../elements/text/Link.svelte";
+  import Link from "@21n/elements/text/Link.svelte";
   export let body: string;
   export let actionLabel: string | undefined = undefined;
   export let action: string | undefined = undefined;

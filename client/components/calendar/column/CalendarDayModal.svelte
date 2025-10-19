@@ -1,8 +1,8 @@
 <script lang="ts">
-  import CalendarColumn from "./CalendarColumn.svelte";
-  import { TimeScaleUnit } from "$lib/client/types/time.type";
-  import view from "$lib/client/stores/view.store";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import CalendarColumn from "@21n/components/calendar/column/CalendarColumn.svelte";
+  import { TimeScaleUnit } from "@21n/types/time.type";
+  import view from "@21n/stores/view.store";
+  import { AppSearchParam } from "@21n/types/appStore.type";
   import { page } from "$app/stores";
   export let date: Date = new Date(
     $page.url.searchParams.get(AppSearchParam.DATE) ?? new Date().toISOString()

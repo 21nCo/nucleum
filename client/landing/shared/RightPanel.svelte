@@ -1,16 +1,16 @@
 <script lang="ts">
   // import Modal from "$lib/client/components/modal/Modal.svelte";
-  import appearance from "$lib/client/stores/appearance.store";
-  import view from "$lib/client/stores/view.store";
-  import { addAnimateClass, bounce, cn } from "$lib/client/utils/ui.utils";
-  import type { ITileItem } from "./landing.type";
-  import PanelButton from "./elements/PanelButton.svelte";
+  import appearance from "@21n/stores/appearance.store";
+  import view from "@21n/stores/view.store";
+  import { addAnimateClass, bounce, cn } from "@21n/utils/ui.utils";
+  import type { ITileItem } from "@21n/landing/shared/landing.type";
+  import PanelButton from "@21n/landing/shared/elements/PanelButton.svelte";
   import {
     currentProductsStore,
     isProductsPanelOpen,
     upcomingProductsStore
-  } from "./store/shared.store";
-  import TileItemsPanel from "./tile/TileItemsPanel.svelte";
+  } from "@21n/landing/shared/store/shared.store";
+  import TileItemsPanel from "@21n/landing/shared/tile/TileItemsPanel.svelte";
 
   const id: string = "right-panel";
   const currentProducts: ITileItem[] = $currentProductsStore.map((x) => {

@@ -1,23 +1,23 @@
 <script lang="ts">
-  import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import context from "$lib/client/stores/context.store";
-  import { OperatingSystem } from "$lib/client/types/context.type";
-  import type { ISelectItem } from "$lib/client/types/select.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { enumToString } from "$lib/shared/utils/text.utils";
+  import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import context from "@21n/stores/context.store";
+  import { OperatingSystem } from "@21n/types/context.type";
+  import type { ISelectItem } from "@21n/types/select.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { enumToString } from "@21n/shared-utils/text.utils";
   import { fade } from "svelte/transition";
-  import { CaptureMethod } from "../capture.type";
+  import { CaptureMethod } from "@21n/products/memotron/capture/capture.type";
   import { createEventDispatcher } from "svelte";
-  import view from "$lib/client/stores/view.store";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
+  import view from "@21n/stores/view.store";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import { UIState } from "@21n/stores/uiState/uiState.type";
   import {
     isSameResource,
     removeDuplicatesFilter,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   const dispatch = createEventDispatcher();
 
   export let item: ISelectItem & { isShortcut?: boolean };

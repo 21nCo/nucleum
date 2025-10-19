@@ -3,15 +3,15 @@ import {
   SessionCompositionType,
   type SessionComposition,
   BreakCompositionType
-} from "$lib/client/types/pointron/sessionComposition.type";
+} from "@21n/types/pointron/sessionComposition.type";
 import {
   type ISessionInterval,
   BlockType
-} from "$lib/client/types/pointron/session.type";
-import type { ITag } from "$lib/client/types/pointron/tag.type";
-import { activeSession } from "./focus/session.store";
-import { type ISessionBase, SessionType } from "./logs/log.type";
-import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+} from "@21n/types/pointron/session.type";
+import type { ITag } from "@21n/types/pointron/tag.type";
+import { activeSession } from "@21n/products/pointron/focus/session.store";
+import { type ISessionBase, SessionType } from "@21n/products/pointron/logs/log.type";
+import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 
 export function getTotalsFromComposition(
   params: {

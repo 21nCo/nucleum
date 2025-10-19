@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import view from "$lib/client/stores/view.store";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IActiveNodeStore } from "../node.store";
-  import { NodeRightPaneType } from "../node.type";
-  import NodeRightPaneContent from "./NodeRightPaneContent.svelte";
-  import WebpageNodeDefaultRightPane from "./WebNodeDefaultRightPane.svelte";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import view from "@21n/stores/view.store";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import { NodeRightPaneType } from "@21n/products/memotron/node/node.type";
+  import NodeRightPaneContent from "@21n/products/memotron/node/rightPanel/NodeRightPaneContent.svelte";
+  import WebpageNodeDefaultRightPane from "@21n/products/memotron/node/rightPanel/WebNodeDefaultRightPane.svelte";
   export let node: IActiveNodeStore;
   export let pane: NodeRightPaneType | undefined = undefined;
   export let renderingDetails: any = undefined;

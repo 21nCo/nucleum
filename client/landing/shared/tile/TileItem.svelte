@@ -1,9 +1,9 @@
 <script lang="ts">
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import view from "$lib/client/stores/view.store";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { ITileItem } from "../landing.type";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import view from "@21n/stores/view.store";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { ITileItem } from "@21n/landing/shared/landing.type";
 
   export let item: ITileItem;
   export let isPanelView: Boolean = false;

@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import {
     determineResourceType,
     isSameResource
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { appStore } from "$lib/client/stores/app.store";
-  import ComponentResolver from "./ComponentResolver.svelte";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { appStore } from "@21n/stores/app.store";
+  import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
   export let id: string;
   export let isFromSplitView: boolean = false;
   export let componentParams: any = {};

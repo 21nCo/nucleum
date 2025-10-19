@@ -1,7 +1,7 @@
-import { clientStorage } from "$lib/client/persistence/persistence.utils";
-import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
-import { logger } from "$lib/client/components/debug/logger.client";
-import { parse } from "$lib/shared/utils/json.utils";
+import { clientStorage } from "@21n/persistence/persistence.utils";
+import { ClientStorageKey } from "@21n/persistence/persistence.type";
+import { logger } from "@21n/components/debug/logger.client";
+import { parse } from "@21n/shared-utils/json.utils";
 
 interface FallbackRunStatus {
   [fallbackName: string]: {

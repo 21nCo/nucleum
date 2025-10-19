@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { intercomId } from "$lib/client/stores/app.store";
-  import account from "$lib/client/stores/account.store";
-  import view from "$lib/client/stores/view.store";
-  import { isValidString } from "$lib/shared/utils/text.utils";
-  import { clientStorage } from "$lib/client/persistence/persistence.utils";
-  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
+  import { intercomId } from "@21n/stores/app.store";
+  import account from "@21n/stores/account.store";
+  import view from "@21n/stores/view.store";
+  import { isValidString } from "@21n/shared-utils/text.utils";
+  import { clientStorage } from "@21n/persistence/persistence.utils";
+  import { ClientStorageKey } from "@21n/persistence/persistence.type";
   clientStorage.set(ClientStorageKey.INTERCOM_ID, intercomId);
   $: if (!$view.isPortrait && $account.userInfo) {
     (<any>window).intercomSettings = {

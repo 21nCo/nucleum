@@ -1,11 +1,11 @@
 <script lang="ts">
-  import type { IActiveGoalStore } from "$lib/client/components/goals/goal.store";
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import GoalAllActivityPanel from "./GoalAllActivityPanel.svelte";
-  import GoalFocusSessions from "./GoalFocusSessions.svelte";
+  import type { IActiveGoalStore } from "@21n/components/goals/goal.store";
+  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import GoalAllActivityPanel from "@21n/components/goals/history/GoalAllActivityPanel.svelte";
+  import GoalFocusSessions from "@21n/components/goals/history/GoalFocusSessions.svelte";
   export let goal: IActiveGoalStore;
   let selectedOption = "all";
   let isIncludeSubGoals = false;

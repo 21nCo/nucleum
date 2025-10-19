@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { toolbarState } from "../contentScripts/store";
+  import { Placement } from "@21n/types/direction.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { toolbarState } from "@21n/extensions/clipper/contentScripts/store";
   export let position: Placement.Bottom | Placement.Left | Placement.Right =
     Placement.Bottom;
   let isDraggedOver: boolean = false;

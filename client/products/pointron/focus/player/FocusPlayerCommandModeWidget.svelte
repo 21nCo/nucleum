@@ -1,9 +1,9 @@
 <script>
-  import { fullScreen } from "$lib/client/components/modal/modal.store";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
-  import IntervalBar from "../elements/intervalbar/IntervalBar.svelte";
-  import FocusPlayerTimeText from "./FocusPlayerTimeText.svelte";
+  import { fullScreen } from "@21n/components/modal/modal.store";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import { SessionUIContext } from "@21n/types/pointron/session.type";
+  import IntervalBar from "@21n/products/pointron/focus/elements/intervalbar/IntervalBar.svelte";
+  import FocusPlayerTimeText from "@21n/products/pointron/focus/player/FocusPlayerTimeText.svelte";
 </script>
 
 <button

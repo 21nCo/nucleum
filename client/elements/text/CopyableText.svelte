@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { FormLabelInfoTooltip } from "$lib/client/types/text.type";
-  import { copyToClipboard } from "$lib/client/utils/utils";
-  import Icon from "../Icon.svelte";
-  import FormControlLabelWrapper from "./formLabel/FormControlLabelWrapper.svelte";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
+  import type { FormLabelInfoTooltip } from "@21n/types/text.type";
+  import { copyToClipboard } from "@21n/utils/utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
+  import { bg, cn } from "@21n/utils/ui.utils";
   export let parentBackgroundIndex: number = 1;
   export let infoParams: FormLabelInfoTooltip | undefined = undefined;
   export let label: string = "";

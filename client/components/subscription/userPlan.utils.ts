@@ -2,10 +2,10 @@ import {
   LicenseType,
   PlanStatus,
   type IUserPlan
-} from "$lib/client/types/account.type";
-import { parseAndFormatDate } from "$lib/client/utils/time.utils";
-import { enumToString } from "$lib/shared/utils/text.utils";
-import { BillingCycle, PlanType, type IPlan } from "./userPlan.type";
+} from "@21n/types/account.type";
+import { parseAndFormatDate } from "@21n/utils/time.utils";
+import { enumToString } from "@21n/shared-utils/text.utils";
+import { BillingCycle, PlanType, type IPlan } from "@21n/components/subscription/userPlan.type";
 
 const plans = import.meta?.env?.VITE_PLANS;
 let rates: number[] = [7, 60, 200, 15, 144, 450];

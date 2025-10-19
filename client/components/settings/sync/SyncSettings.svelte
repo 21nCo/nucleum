@@ -1,11 +1,11 @@
 <script lang="ts">
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
-  import { clientStorage } from "$lib/client/persistence/persistence.utils";
-  import context from "$lib/client/stores/context.store";
-  import { Size } from "$lib/client/types/size.enum";
-  import SyncStatus from "./SyncStatus.svelte";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import { ClientStorageKey } from "@21n/persistence/persistence.type";
+  import { clientStorage } from "@21n/persistence/persistence.utils";
+  import context from "@21n/stores/context.store";
+  import { Size } from "@21n/types/size.enum";
+  import SyncStatus from "@21n/components/settings/sync/SyncStatus.svelte";
   let isInOfflineMode = $context.isInOfflineMode;
   let isInLowDataMode = $context.isInLowDataMode;
   const isNetworkInducedOfflineMode = !navigator.onLine;

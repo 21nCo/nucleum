@@ -1,15 +1,15 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import view from "$lib/client/stores/view.store";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { ImportSource } from "./data.type";
-  import { MemotronAction } from "../memotronAction.enum";
-  import ExternalLogo from "$lib/client/branding/external/ExternalLogo.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import view from "@21n/stores/view.store";
+  import { appStore } from "@21n/stores/app.store";
+  import { ImportSource } from "@21n/products/memotron/import/data.type";
+  import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
+  import ExternalLogo from "@21n/branding/external/ExternalLogo.svelte";
 
   const dispatch = createEventDispatcher();
 

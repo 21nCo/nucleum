@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
 
-import Birdview from "./Birdview.svelte";
-import Month from "./Month.svelte";
+import Birdview from "@21n/components/calendar/birdView/Birdview.svelte";
+import Month from "@21n/components/calendar/birdView/Month.svelte";
 const meta = {
   component: Month
 } satisfies Meta<Month>;

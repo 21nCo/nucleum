@@ -1,8 +1,8 @@
 <script lang="ts">
-  import view from "$lib/client/stores/view.store";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import type { TopNCardDataRecord } from "../../analytics.types";
-  import PreviousValueColumnCell from "./PreviousValueColumnCell.svelte";
+  import view from "@21n/stores/view.store";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import type { TopNCardDataRecord } from "@21n/products/pointron/analytics/analytics.types";
+  import PreviousValueColumnCell from "@21n/products/pointron/analytics/cards/topN/PreviousValueColumnCell.svelte";
   export let row: TopNCardDataRecord;
 </script>
 

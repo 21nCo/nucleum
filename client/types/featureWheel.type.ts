@@ -1,8 +1,8 @@
 import type {
   Contemporary,
   Distribution
-} from "../components/featureWheel/comparer.type";
-import type { IFaq } from "../landing/shared/landing.type";
+} from "@21n/components/featureWheel/comparer.type";
+import type { IFaq } from "@21n/landing/shared/landing.type";
 
 export type IFwCategory = {
   label: string;

@@ -1,14 +1,14 @@
 <script lang="ts">
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import type { SessionComposition } from "$lib/client/types/pointron/sessionComposition.type";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import type { SessionComposition } from "@21n/types/pointron/sessionComposition.type";
   import { createEventDispatcher, onMount } from "svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
-  import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
+  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
   const dispatch = createEventDispatcher();
   export let composition: SessionComposition;
   export let isShowRemove: boolean = false;

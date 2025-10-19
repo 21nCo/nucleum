@@ -1,10 +1,10 @@
 <script lang="ts">
-  import Icon from "../Icon.svelte";
-  import TextSearchInput from "../input/TextSearchInput.svelte";
-  import { type InputLabel, InputStyle } from "$lib/client/types/input.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
+  import { type InputLabel, InputStyle } from "@21n/types/input.type";
   import { createEventDispatcher } from "svelte";
-  import FormControlLabelWrapper from "../text/formLabel/FormControlLabelWrapper.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
+  import { Size } from "@21n/types/size.enum";
   const dispatch = createEventDispatcher();
   export let selected: any = undefined;
   export let placeholder: string = "Start typing to select";

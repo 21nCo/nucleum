@@ -1,5 +1,5 @@
-import type { DynamicIconProp } from "./dynamicIconProp.type";
-import type { GoalContextMenuAction } from "./goalContextMenuAction.enum";
+import type { DynamicIconProp } from "@21n/types/pointron/dynamicIconProp.type";
+import type { GoalContextMenuAction } from "@21n/types/pointron/goalContextMenuAction.enum";
 
 export type GoalContextMenuItem = {
   label: string;

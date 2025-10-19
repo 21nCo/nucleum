@@ -1,25 +1,25 @@
 <script lang="ts">
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { hexToRGBA } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.utils";
-  import { Size } from "$lib/client/types/size.enum";
-  import type { IActiveNodeStore } from "../node.store";
+  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import { hexToRGBA } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.utils";
+  import { Size } from "@21n/types/size.enum";
+  import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
   import { getContext } from "svelte";
   import {
     canHaveTraces,
     NodeType,
     socialProfileNodeTypeList
-  } from "../node.type";
-  import { highlightStore } from "../../common/highlighters/highlight.store";
-  import { AnnotationType } from "../../pdfAnnotator/pdfAnnotator.type";
-  import Resources from "../../../../components/record/Records.svelte";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { convertDateStringToArray } from "$lib/client/utils/utils";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import NodeTasksPane from "./NodeTasksPane.svelte";
-  import { resolveNodeIcon } from "../node.utils";
+  } from "@21n/products/memotron/node/node.type";
+  import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
+  import { AnnotationType } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
+  import Resources from "@21n/components/record/Records.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { convertDateStringToArray } from "@21n/utils/utils";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import NodeTasksPane from "@21n/products/memotron/node/traces/NodeTasksPane.svelte";
+  import { resolveNodeIcon } from "@21n/products/memotron/node/node.utils";
   const contentContext = getContext<any>("content");
 
   export let node: IActiveNodeStore | null = null;

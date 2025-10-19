@@ -1,9 +1,9 @@
 import type {
   ICollectible,
   ICollectionExpanded
-} from "$lib/client/components/collection/collection.type";
-import type { IPropertyValue } from "$lib/client/components/collection/properties/property.type";
-import type { IFile } from "$lib/client/components/files/file.type";
+} from "@21n/components/collection/collection.type";
+import type { IPropertyValue } from "@21n/components/collection/properties/property.type";
+import type { IFile } from "@21n/components/files/file.type";
 import {
   ResourceAccessMode,
   type CaptureOmittedFields,
@@ -16,14 +16,14 @@ import {
   type IResourceShareable,
   type OmitFields,
   type OmitForCapture
-} from "$lib/client/components/flux/resourceStores/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 import type {
   IBlockBody,
   IMarkdown
-} from "$lib/client/components/markdown/md.type";
-import type { IAvatar } from "$lib/client/types/avatar.type";
-import type { IRecordId, IStore } from "$lib/client/types/data.type";
-import type { ILink, ILinkBase, LinkType } from "../linking/link.type";
+} from "@21n/components/markdown/md.type";
+import type { IAvatar } from "@21n/types/avatar.type";
+import type { IRecordId, IStore } from "@21n/types/data.type";
+import type { ILink, ILinkBase, LinkType } from "@21n/products/memotron/linking/link.type";
 
 type IResourcePropertiesForNode = IResource &
   IResourceLabeled &

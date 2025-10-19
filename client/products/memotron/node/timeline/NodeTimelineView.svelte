@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { nodeStore } from "../node.store";
-  import type { INode, INodeLinkThumb, INodeThumb } from "../node.type";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
+  import type { INode, INodeLinkThumb, INodeThumb } from "@21n/products/memotron/node/node.type";
   import {
     isSameResource,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
-  import { resolveNodeLabelString } from "../node.utils";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { appStore } from "$lib/client/stores/app.store";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { linkTagStore } from "../../linking/link.store";
-  import { linkTagLabelMapper } from "../../linking/link.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { parseAndFormatDate } from "@21n/utils/time.utils";
+  import { resolveNodeLabelString } from "@21n/products/memotron/node/node.utils";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { appStore } from "@21n/stores/app.store";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { linkTagStore } from "@21n/products/memotron/linking/link.store";
+  import { linkTagLabelMapper } from "@21n/products/memotron/linking/link.utils";
 
   export let node: INode;
   let isLoading = false;

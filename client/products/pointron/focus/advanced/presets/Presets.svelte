@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { SessionComposition } from "$lib/client/types/pointron/sessionComposition.type";
-  import PresetItem from "./PresetItem.svelte";
-  import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
+  import type { SessionComposition } from "@21n/types/pointron/sessionComposition.type";
+  import PresetItem from "@21n/products/pointron/focus/advanced/presets/PresetItem.svelte";
+  import { pointronPreferences } from "@21n/products/pointron/pointron.store";
   import { createEventDispatcher, onMount } from "svelte";
-  import { activeSession } from "../../session.store";
-  import { compareObjects } from "$lib/shared/utils/obj.utils";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
+  import { compareObjects } from "@21n/shared-utils/obj.utils";
   const dispatch = createEventDispatcher();
   export let parentBackgroundIndex = 1;
   export let isExpandedVariant: boolean = true;

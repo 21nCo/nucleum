@@ -1,50 +1,50 @@
 <script lang="ts">
-  import MediaContentResolver from "$lib/client/products/memotron/node/content/MediaContentResolver.svelte";
+  import MediaContentResolver from "@21n/products/memotron/node/content/MediaContentResolver.svelte";
   import {
     mediaNodeTypeList,
     NodeType,
     type INode
-  } from "$lib/client/products/memotron/node/node.type";
+  } from "@21n/products/memotron/node/node.type";
   import { getContext, onMount, createEventDispatcher } from "svelte";
-  import type { IEmbedBlockBody } from "../md.type";
-  import EmbedContentPlaceholder from "./EmbedContentPlaceholder.svelte";
-  import { logger } from "../../debug/logger.client";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { nodeStore } from "$lib/client/products/memotron/node/node.store";
+  import type { IEmbedBlockBody } from "@21n/components/markdown/md.type";
+  import EmbedContentPlaceholder from "@21n/components/markdown/embed/EmbedContentPlaceholder.svelte";
+  import { logger } from "@21n/components/debug/logger.client";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "../../flux/resourceStores/resource.type";
-  import YoutubeVideoPreview from "$lib/client/products/memotron/node/content/web/YoutubeVideoPreview.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Resource } from "../../flux/resourceStores/resource.enum";
-  import Collection from "$lib/client/components/collection/Collection.svelte";
-  import { determineResourceType } from "../../flux/resourceStores/resource.utils";
-  import { resizable } from "$lib/client/actions/resize.action";
-  import { appStore } from "$lib/client/stores/app.store";
-  import NodeTitleLabelPart from "$lib/client/products/memotron/node/title/NodeTitleLabelPart.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import type { MdStoreType } from "../markdown.store";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import { formatBytes } from "$lib/shared/utils/text.utils";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { fileStore } from "../../files/file.store";
-  import type { IFile } from "../../files/file.type";
-  import { ErrorMessage } from "../../error/error.type";
-  import { sanitizeAndResolve } from "$lib/client/products/memotron/node/url.utils";
-  import { debouncer } from "$lib/client/utils/utils";
-  import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
-  import view from "$lib/client/stores/view.store";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import YoutubeVideoPreview from "@21n/products/memotron/node/content/web/YoutubeVideoPreview.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import Collection from "@21n/components/collection/Collection.svelte";
+  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
+  import { resizable } from "@21n/actions/resize.action";
+  import { appStore } from "@21n/stores/app.store";
+  import NodeTitleLabelPart from "@21n/products/memotron/node/title/NodeTitleLabelPart.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import type { MdStoreType } from "@21n/components/markdown/markdown.store";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { toasts } from "@21n/stores/notification.store";
+  import { formatBytes } from "@21n/shared-utils/text.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { fileStore } from "@21n/components/files/file.store";
+  import type { IFile } from "@21n/components/files/file.type";
+  import { ErrorMessage } from "@21n/components/error/error.type";
+  import { sanitizeAndResolve } from "@21n/products/memotron/node/url.utils";
+  import { debouncer } from "@21n/utils/utils";
+  import context from "@21n/stores/context.store";
+  import { Embed } from "@21n/types/context.type";
+  import view from "@21n/stores/view.store";
   import {
     ActiveCaptureStore,
     type IActiveCaptureStore
-  } from "$lib/client/products/memotron/capture/capture.store";
-  import Task from "../../tasks/Task.svelte";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  } from "@21n/products/memotron/capture/capture.store";
+  import Task from "@21n/components/tasks/Task.svelte";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
 
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");

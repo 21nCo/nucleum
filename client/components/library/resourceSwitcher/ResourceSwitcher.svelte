@@ -3,14 +3,14 @@
   import type {
     IResourceSwitchItem,
     ISelectValue
-  } from "$lib/client/types/select.type";
-  import ResourceSwitcherItem from "./ResourceSwitcherItem.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/products/product.type";
-  import { resolveProductConfig } from "$lib/client/products/product.config";
-  import { resolveResourceSwitcher } from "../../flux/resourceStores/resource.utils";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  } from "@21n/types/select.type";
+  import ResourceSwitcherItem from "@21n/components/library/resourceSwitcher/ResourceSwitcherItem.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { appStore } from "@21n/stores/app.store";
+  import { Product } from "@21n/products/product.type";
+  import { resolveProductConfig } from "@21n/products/product.config";
+  import { resolveResourceSwitcher } from "@21n/components/flux/resourceStores/resource.utils";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   const dispatch = createEventDispatcher();
   export let resources: Resource[] = [];
   export let selected: ISelectValue | undefined = undefined;

@@ -1,28 +1,28 @@
 <script lang="ts">
-  import Notifications from "./Notifications.svelte";
+  import Notifications from "@21n/products/pointron/base/Notifications.svelte";
   import { onMount } from "svelte";
   import {
     activeSession,
     focusItemsStore
-  } from "$lib/client/products/pointron/focus/session.store";
-  import { appLoadingState, appStore } from "$lib/client/stores/app.store";
-  import BackgroundSoundPlayer from "$lib/client/products/pointron/focus/backgroundMusic/BackgroundSoundPlayer.svelte";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import context from "$lib/client/stores/context.store";
-  import UserBaseLayer from "$lib/client/layout/layers/UserBaseLayer.svelte";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { fullScreen } from "$lib/client/components/modal/modal.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
-  import SessionTitle from "./SessionTitle.svelte";
-  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
-  import { collectionsListOnRecords, nestedGoalCorrection } from "./fallbacks";
-  import { FallbackTracker } from "$lib/client/utils/fallbackTracker.utils";
-  import FocusTopNavWidget from "../focus/player/FocusTopNavWidget.svelte";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { Product } from "$lib/client/products/product.type";
-  import { defaultsMigrationTidy } from "$lib/client/components/migrations";
-  import { defaultsMigrationFocus } from "../migrations";
+  } from "@21n/products/pointron/focus/session.store";
+  import { appLoadingState, appStore } from "@21n/stores/app.store";
+  import BackgroundSoundPlayer from "@21n/products/pointron/focus/backgroundMusic/BackgroundSoundPlayer.svelte";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import context from "@21n/stores/context.store";
+  import UserBaseLayer from "@21n/layout/layers/UserBaseLayer.svelte";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import { fullScreen } from "@21n/components/modal/modal.store";
+  import { UIState } from "@21n/stores/uiState/uiState.type";
+  import SessionTitle from "@21n/products/pointron/base/SessionTitle.svelte";
+  import { SessionState } from "@21n/types/pointron/sessionState.enum";
+  import { PointronEvent } from "@21n/types/pointron/pointronEvent.enum";
+  import { collectionsListOnRecords, nestedGoalCorrection } from "@21n/products/pointron/base/fallbacks";
+  import { FallbackTracker } from "@21n/utils/fallbackTracker.utils";
+  import FocusTopNavWidget from "@21n/products/pointron/focus/player/FocusTopNavWidget.svelte";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { Product } from "@21n/products/product.type";
+  import { defaultsMigrationTidy } from "@21n/components/migrations";
+  import { defaultsMigrationFocus } from "@21n/products/pointron/migrations";
 
   let isLiteMode = $context.isEmbed && $context.isSheet;
   const isDebug = import.meta.env?.DEV;

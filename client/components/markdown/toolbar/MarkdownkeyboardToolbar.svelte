@@ -1,34 +1,34 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import KeyboardToolbar from "$lib/client/elements/keyboardToolbar/KeyboardToolbar.svelte";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import KeyboardToolbar from "@21n/elements/keyboardToolbar/KeyboardToolbar.svelte";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
   import {
     embedNodeTypeList,
     mediaNodeTypeList,
     NodeType,
     structuralNodeTypes,
     webNodeTypeList
-  } from "$lib/client/products/memotron/node/node.type";
-  import context from "$lib/client/stores/context.store";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
+  } from "@21n/products/memotron/node/node.type";
+  import context from "@21n/stores/context.store";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
   import {
     BarStyle,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { properCase } from "$lib/shared/utils/text.utils";
+  } from "@21n/types/switcher.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { properCase } from "@21n/shared-utils/text.utils";
   import { fly } from "svelte/transition";
-  import { resolveBlockBrowserConfigOnKeyboard } from "../blockBrowser/blockBrowser.utils";
-  import BlockBrowserOnKeyboard from "../blockBrowser/BlockBrowserOnKeyboard.svelte";
-  import { BlockAction } from "../md.type";
-  import MdKeyboardKeysRow from "./MdKeyboardKeysRow.svelte";
+  import { resolveBlockBrowserConfigOnKeyboard } from "@21n/components/markdown/blockBrowser/blockBrowser.utils";
+  import BlockBrowserOnKeyboard from "@21n/components/markdown/blockBrowser/BlockBrowserOnKeyboard.svelte";
+  import { BlockAction } from "@21n/components/markdown/md.type";
+  import MdKeyboardKeysRow from "@21n/components/markdown/toolbar/MdKeyboardKeysRow.svelte";
   import { createEventDispatcher, getContext } from "svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  import type { IRecordId } from "@21n/types/data.type";
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
 

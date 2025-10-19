@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import { isValidString } from "$lib/shared/utils/text.utils";
-  import type { IGoalThumb } from "./goal.type";
+  import { tooltip } from "@21n/actions/popover.action";
+  import { isValidString } from "@21n/shared-utils/text.utils";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
   export let item: IGoalThumb;
 </script>
 

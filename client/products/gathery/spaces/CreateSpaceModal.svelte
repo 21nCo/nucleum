@@ -1,9 +1,9 @@
 <script>
-  import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { GatheryEvent } from "$lib/client/types/gathery/gatheryEvent.enum";
-  import { spaceStore } from "../space.store";
+  import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { GatheryEvent } from "@21n/types/gathery/gatheryEvent.enum";
+  import { spaceStore } from "@21n/products/gathery/space.store";
   let spaceName = "";
 </script>
 

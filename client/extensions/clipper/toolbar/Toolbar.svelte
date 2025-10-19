@@ -1,26 +1,26 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import HightlightColorItem from "$lib/client/products/memotron/common/highlighters/HightlightColorItem.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Placement, Orientation } from "$lib/client/types/direction.enum";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { webpage, toolbarState, syncStore } from "../contentScripts/store";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import HightlightColorItem from "@21n/products/memotron/common/highlighters/HightlightColorItem.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Placement, Orientation } from "@21n/types/direction.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { webpage, toolbarState, syncStore } from "@21n/extensions/clipper/contentScripts/store";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import { Size } from "@21n/types/size.enum";
   import {
     saveOnlyPages,
     screenShotOnlyPages
-  } from "$lib/client/products/memotron/common/urlMap";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import { highlightStore } from "$lib/client/products/memotron/common/highlighters/highlight.store";
-  import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
+  } from "@21n/products/memotron/common/urlMap";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
+  import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
+  import { ExtensionEvent } from "@21n/types/extension.type";
+  import { relayToBackgroundScript } from "@21n/utils/extension.utils";
   import { fly, scale } from "svelte/transition";
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { resolveContentTypeString } from "../clipper.utils";
+  import { tooltip } from "@21n/actions/popover.action";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { resolveContentTypeString } from "@21n/extensions/clipper/clipper.utils";
 
   const dispatch = createEventDispatcher();
   export let activeHighlighter: string | null = null;

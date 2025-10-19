@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import FormControlLabel from "../text/formLabel/FormControlLabel.svelte";
-  import Switch from "./Switch.svelte";
-  import InputBaseElement from "../InputBaseElement.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { InputStyle, type InputLabel } from "@21n/types/input.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
+  import Switch from "@21n/elements/toggle/Switch.svelte";
+  import InputBaseElement from "@21n/elements/InputBaseElement.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let label: InputLabel;

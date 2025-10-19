@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
-import VerticalSwitcher from "./VerticalSwitcher.svelte";
-import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
-import { Size } from "$lib/client/types/size.enum";
-import { Placement } from "$lib/client/types/direction.enum";
+import VerticalSwitcher from "@21n/elements/switcher/VerticalSwitcher.svelte";
+import { VerticalSwitcherStyle } from "@21n/types/switcher.enum";
+import { Size } from "@21n/types/size.enum";
+import { Placement } from "@21n/types/direction.enum";
 
 const meta = {
   component: VerticalSwitcher,

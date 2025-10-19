@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import SyncStatusListener from "../listeners/SyncStatusListener.svelte";
-  import InlineSyncingFeedbackBase from "./InlineSyncingFeedbackBase.svelte";
+  import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import SyncStatusListener from "@21n/elements/listeners/SyncStatusListener.svelte";
+  import InlineSyncingFeedbackBase from "@21n/elements/feedback/InlineSyncingFeedbackBase.svelte";
 
   export let resource: Resource;
   export let isShorter: boolean = false;

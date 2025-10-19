@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Size } from "$lib/client/types/size.enum";
-  import { GoalStatus, type IGoal } from "../goal.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { ResourceAccessPoint } from "../../flux/resourceStores/resource.type";
-  import { resolveGoalStatusIcon } from "../goal.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/types/size.enum";
+  import { GoalStatus, type IGoal } from "@21n/components/goals/goal.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { resolveGoalStatusIcon } from "@21n/components/goals/goal.utils";
 
   export let item: IGoal | { label?: string; type: string; status: GoalStatus };
   export let index: number;

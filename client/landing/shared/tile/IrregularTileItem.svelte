@@ -1,11 +1,11 @@
 <script lang="ts">
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import Svg from "$lib/client/products/memotron/pdfAnnotator/Svg.svelte";
-  import view from "$lib/client/stores/view.store";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { ITileItem } from "../landing.type";
-  import { landing } from "../store/shared.store";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import Svg from "@21n/products/memotron/pdfAnnotator/Svg.svelte";
+  import view from "@21n/stores/view.store";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { ITileItem } from "@21n/landing/shared/landing.type";
+  import { landing } from "@21n/landing/shared/store/shared.store";
 
   export let item: ITileItem;
   export let isEnableBackground: Boolean = false;

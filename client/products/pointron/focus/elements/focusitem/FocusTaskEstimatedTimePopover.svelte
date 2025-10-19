@@ -1,6 +1,6 @@
 <script lang="ts">
-  import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
   export let estimatedTime: number;
   export let onChange: (event: CustomEvent<number>) => void;
   if (!estimatedTime) estimatedTime = 0;

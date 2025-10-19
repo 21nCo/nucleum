@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Button from "../elements/button/Button.svelte";
-  import TextInput from "../elements/input/TextInput.svelte";
-  import { Size } from "../types/size.enum";
-  import { isValidEmail } from "$lib/shared/utils/text.utils";
-  import { performApiCall } from "$lib/client/utils/network.utils";
-  import GetEarlyAccess from "../landing/shared/GetEarlyAccess.svelte";
-  import LandingButton from "../landing/shared/elements/Button.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { isValidEmail } from "@21n/shared-utils/text.utils";
+  import { performApiCall } from "@21n/utils/network.utils";
+  import GetEarlyAccess from "@21n/landing/shared/GetEarlyAccess.svelte";
+  import LandingButton from "@21n/landing/shared/elements/Button.svelte";
   import { goto } from "$app/navigation";
   export let url: string | undefined = undefined;
   export let version: "V1" | "V2" | "V3" = "V1";

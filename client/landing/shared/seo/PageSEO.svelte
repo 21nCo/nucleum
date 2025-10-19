@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ISEOMetadata } from "./seo.type";
+  import type { ISEOMetadata } from "@21n/landing/shared/seo/seo.type";
 
   export let data: ISEOMetadata;
 </script>

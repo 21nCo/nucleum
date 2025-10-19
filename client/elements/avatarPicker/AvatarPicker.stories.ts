@@ -1,5 +1,5 @@
 // import CustomDatePicker from "./CustomDatePicker.svelte";
-import AvatarPicker from "./AvatarPicker.svelte";
+import AvatarPicker from "@21n/elements/avatarPicker/AvatarPicker.svelte";
 export default {
   //   title: "Tidy/CustomDatePicker",
   component: AvatarPicker,

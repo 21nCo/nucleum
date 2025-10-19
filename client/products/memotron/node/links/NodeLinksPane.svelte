@@ -1,55 +1,55 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import LinkThumbnailItems from "./LinkThumbnailItems.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import ErrorStatusPane from "$lib/client/elements/feedback/ErrorStatusPane.svelte";
-  import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
+  import LinkThumbnailItems from "@21n/products/memotron/node/links/LinkThumbnailItems.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import ErrorStatusPane from "@21n/elements/feedback/ErrorStatusPane.svelte";
+  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
-  import BulkEditBar from "../../../../components/record/BulkEditBar.svelte";
-  import InlineTimeoutMessage from "$lib/client/elements/text/InlineTimeoutMessage.svelte";
-  import { AlertType } from "$lib/client/types/notification.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import BottomFloat from "@21n/elements/BottomFloat.svelte";
+  import BulkEditBar from "@21n/components/record/BulkEditBar.svelte";
+  import InlineTimeoutMessage from "@21n/elements/text/InlineTimeoutMessage.svelte";
+  import { AlertType } from "@21n/types/notification.type";
   import {
     nodeStore,
     type IActiveNodeStore
-  } from "$lib/client/products/memotron/node/node.store";
+  } from "@21n/products/memotron/node/node.store";
   import {
     type INode,
     type INodeLinkThumb
-  } from "$lib/client/products/memotron/node/node.type";
-  import { LinkType } from "$lib/client/products/memotron/linking/link.type";
-  import { linker } from "$lib/client/products/memotron/linking/link.store";
-  import LinkSearch from "$lib/client/products/memotron/common/linkbox/LinkSearch.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { flux } from "$lib/client/components/flux/flux";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-  import LinkTagFilter from "./LinkTagFilter.svelte";
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
+  } from "@21n/products/memotron/node/node.type";
+  import { LinkType } from "@21n/products/memotron/linking/link.type";
+  import { linker } from "@21n/products/memotron/linking/link.store";
+  import LinkSearch from "@21n/products/memotron/common/linkbox/LinkSearch.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { flux } from "@21n/components/flux/flux";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { logger } from "@21n/components/debug/logger.client";
+  import type { IRecordId } from "@21n/types/data.type";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import LinkTagFilter from "@21n/products/memotron/node/links/LinkTagFilter.svelte";
+  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
   import {
     resourceInList,
     isSameResource
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import { activeResourceFilterV2 } from "$lib/client/utils/utils";
-  import { BulkEditor } from "../../../../components/record/record.store";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import { deepCopy, isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
+  import { activeResourceFilterV2 } from "@21n/utils/utils";
+  import { BulkEditor } from "@21n/components/record/record.store";
+  import { toasts } from "@21n/stores/notification.store";
+  import { deepCopy, isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import {
     ErrorMessage,
     ResourceErrorCode
-  } from "$lib/client/components/error/error.type";
-  import { ResourceError } from "$lib/client/components/error/errors";
-  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
+  } from "@21n/components/error/error.type";
+  import { ResourceError } from "@21n/components/error/errors";
+  import { LoadingAnimationType } from "@21n/types/feedback.type";
   export let node: IActiveNodeStore;
   $: multiSelectContext = {
     resource: Resource.node,

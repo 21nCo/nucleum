@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "../flux/resourceStores/resource.type";
-  import Task from "./Task.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import Task from "@21n/components/tasks/Task.svelte";
   export let id: any;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
 

@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { nodeStore } from "../node/node.store";
-  import MemotronOverviewLayout from "./MemotronOverviewLayout.svelte";
-  import MapOverview from "$lib/client/components/overview/MapOverview.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import type { INode } from "../node/node.type";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
+  import MemotronOverviewLayout from "@21n/products/memotron/overview/MemotronOverviewLayout.svelte";
+  import MapOverview from "@21n/components/overview/MapOverview.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { logger } from "@21n/components/debug/logger.client";
+  import type { INode } from "@21n/products/memotron/node/node.type";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import { Size } from "@21n/types/size.enum";
 
   interface MapDataPoint {
     id: string;

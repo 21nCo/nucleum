@@ -1,70 +1,70 @@
 <script lang="ts">
-  import "$lib/client/app.css";
-  import ClipsPane from "$lib/client/extensions/clipper/sidePanel/clips/ClipsPane.svelte";
-  import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
+  import "@21n/client/app.css";
+  import ClipsPane from "@21n/extensions/clipper/sidePanel/clips/ClipsPane.svelte";
+  import { ExtensionEvent } from "@21n/types/extension.type";
+  import { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
   import { onDestroy, onMount } from "svelte";
-  import { logger } from "$lib/client/components/debug/logger.client";
+  import { logger } from "@21n/components/debug/logger.client";
   import {
     openAppPath,
     relayToContentScript
-  } from "$lib/client/utils/extension.utils";
-  import type { IClip } from "$lib/client/products/memotron/node/node.type";
-  import ExtensionBaseLayer from "../../ExtensionBaseLayer.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import account from "$lib/client/stores/account.store";
-  import { resolveToken } from "$lib/client/utils/account.utils";
+  } from "@21n/utils/extension.utils";
+  import type { IClip } from "@21n/products/memotron/node/node.type";
+  import ExtensionBaseLayer from "@21n/extensions/ExtensionBaseLayer.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import account from "@21n/stores/account.store";
+  import { resolveToken } from "@21n/utils/account.utils";
   import { getPort } from "@plasmohq/messaging/port";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import {
     BarStyle,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
-  import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
+  } from "@21n/types/switcher.enum";
+  import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
   import {
     extensionFlux,
     loadInMemoryResourceStore,
     loadInMemoryStores
-  } from "$lib/client/components/flux/fluxExtentionMediator";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  } from "@21n/components/flux/fluxExtentionMediator";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
     blankUrls,
     memotronUrlsList,
     sidePanelUnavailableUrlsList
-  } from "$lib/client/products/memotron/common/urlMap";
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { Placement } from "$lib/client/types/direction.enum";
+  } from "@21n/products/memotron/common/urlMap";
+  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { Placement } from "@21n/types/direction.enum";
   import {
     OptionSelectorStyle,
     type ISelectItem
-  } from "$lib/client/types/select.type";
-  import InlineFeedbackText from "../InlineFeedbackText.svelte";
+  } from "@21n/types/select.type";
+  import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
   import {
     AlertType,
     type IInlineStatus
-  } from "$lib/client/types/notification.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/types/notification.type";
+  import { cn } from "@21n/utils/ui.utils";
   import { fly } from "svelte/transition";
-  import { Product } from "$lib/client/products/product.type";
-  import ExtensionHelp from "../../shared/ExtensionHelp.svelte";
-  import { FluxMethod } from "$lib/client/components/flux/flux.type";
-  import { clipperCacheableStores } from "../clipper.config";
-  import ClipperInMemoryCache from "../ClipperInMemoryCache.svelte";
-  import SidePanelCollections from "./collectionsOnClipper/SidePanelCollections.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { clientStorage } from "$lib/client/persistence/persistence.utils";
-  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
-  import InlineSyncingFeedbackBase from "$lib/client/elements/feedback/InlineSyncingFeedbackBase.svelte";
-  import { SidePanelPageType } from "./sidePanel.type";
+  import { Product } from "@21n/products/product.type";
+  import ExtensionHelp from "@21n/extensions/shared/ExtensionHelp.svelte";
+  import { FluxMethod } from "@21n/components/flux/flux.type";
+  import { clipperCacheableStores } from "@21n/extensions/clipper/clipper.config";
+  import ClipperInMemoryCache from "@21n/extensions/clipper/ClipperInMemoryCache.svelte";
+  import SidePanelCollections from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/SidePanelCollections.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import { clientStorage } from "@21n/persistence/persistence.utils";
+  import { ClientStorageKey } from "@21n/persistence/persistence.type";
+  import InlineSyncingFeedbackBase from "@21n/elements/feedback/InlineSyncingFeedbackBase.svelte";
+  import { SidePanelPageType } from "@21n/extensions/clipper/sidePanel/sidePanel.type";
   import {
     resolveContentTypeForUrl,
     resolveContentTypeString
-  } from "../clipper.utils";
-  import { parse } from "$lib/shared/utils/json.utils";
+  } from "@21n/extensions/clipper/clipper.utils";
+  import { parse } from "@21n/shared-utils/json.utils";
   let mainPanel: "page" | "collections" = "page";
   let mode: "clips" | "notes" | "history" = "clips";
   let title = "";

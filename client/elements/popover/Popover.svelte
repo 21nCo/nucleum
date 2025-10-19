@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { Placement } from "@21n/types/direction.enum";
+  import { GlobalEvent } from "@21n/types/event.enum";
   import {
     type IPopoverOptions,
     type IPopoverRenderParams,
     PopoverTriggerMethod
-  } from "$lib/client/types/popover.type";
+  } from "@21n/types/popover.type";
   import {
     dispatchCustomEvent,
     renderPopover
-  } from "$lib/client/utils/browser.utils";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  } from "@21n/utils/browser.utils";
+  import { bg, cn } from "@21n/utils/ui.utils";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { createEventDispatcher, onMount } from "svelte";
   const dispatch = createEventDispatcher();
   /**

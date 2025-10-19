@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ChatIconVariant, IconVariant } from "../types/icon.type";
+  import { ChatIconVariant, IconVariant } from "@21n/types/icon.type";
   export let variant: IconVariant = IconVariant.Outline;
   export let chatIconVariant: ChatIconVariant = ChatIconVariant.Default;
 </script>

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Orientation } from "../types/direction.enum";
-  import { ColorStrength } from "../types/appearance.type";
-  import { cn } from "../utils/ui.utils";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import { cn } from "@21n/utils/ui.utils";
   export let colorStrength: ColorStrength = ColorStrength.Normal;
   export let orientation: Orientation = Orientation.Horizontal;
   export let thickness: number = 1;

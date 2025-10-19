@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import view from "$lib/client/stores/view.store";
-  import { resizeListener } from "$lib/client/actions/resize.action";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import { Size } from "@21n/types/size.enum";
+  import view from "@21n/stores/view.store";
+  import { resizeListener } from "@21n/actions/resize.action";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import {
     uiState,
     uiStateDerived
-  } from "$lib/client/stores/uiState/uiState.store";
+  } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import { MemotronOverviewPanel } from "./overview.type";
-  import { Product } from "$lib/client/products/product.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/stores/uiState/uiState.type";
+  import { MemotronOverviewPanel } from "@21n/products/memotron/overview/overview.type";
+  import { Product } from "@21n/products/product.type";
+  import { appStore } from "@21n/stores/app.store";
+  import { cn } from "@21n/utils/ui.utils";
 
   export let isConstrainedWidth = false;
   let selectedPanel: MemotronOverviewPanel =

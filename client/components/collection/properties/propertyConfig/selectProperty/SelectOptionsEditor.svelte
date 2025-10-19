@@ -2,27 +2,27 @@
   import {
     reorderList,
     type DragDropEvent
-  } from "$lib/client/actions/rearrange.action";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { isTextElement } from "$lib/client/utils/browser.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { isValidString } from "$lib/shared/utils/text.utils";
+  } from "@21n/actions/rearrange.action";
+  import { logger } from "@21n/components/debug/logger.client";
+  import Icon from "@21n/elements/Icon.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { isTextElement } from "@21n/utils/browser.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { isValidString } from "@21n/shared-utils/text.utils";
   import type {
     ISelectPropertyConfig,
     IPropertyConfigOption,
     IPropertyConfigOptionGroup
-  } from "../../property.type";
-  import SelectOptionEditListView from "./SelectOptionEditListView.svelte";
+  } from "@21n/components/collection/properties/property.type";
+  import SelectOptionEditListView from "@21n/components/collection/properties/propertyConfig/selectProperty/SelectOptionEditListView.svelte";
   import { createEventDispatcher, onMount } from "svelte";
   const dispatch = createEventDispatcher();
   export let config: ISelectPropertyConfig;

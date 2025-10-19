@@ -1,4 +1,4 @@
-import type { ILinkTag } from "./link.type";
+import type { ILinkTag } from "@21n/products/memotron/linking/link.type";
 
 export function linkTagLabelMapper(tag: ILinkTag) {
   const label = tag.group

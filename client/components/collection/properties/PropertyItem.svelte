@@ -1,15 +1,15 @@
 <script lang="ts">
-  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import Rating from "$lib/client/components/collection/properties/ratingProperty/Rating.svelte";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import view from "$lib/client/stores/view.store";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { enumToString, isValidString } from "$lib/shared/utils/text.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import MetaPropertyItem from "./MetaPropertyItem.svelte";
-  import SelectProperty from "./selectProperty/SelectProperty.svelte";
+  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import Rating from "@21n/components/collection/properties/ratingProperty/Rating.svelte";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import view from "@21n/stores/view.store";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { InputStyle } from "@21n/types/input.type";
+  import { enumToString, isValidString } from "@21n/shared-utils/text.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import MetaPropertyItem from "@21n/components/collection/properties/MetaPropertyItem.svelte";
+  import SelectProperty from "@21n/components/collection/properties/selectProperty/SelectProperty.svelte";
   import {
     type IProperty,
     type IPropertyValue,
@@ -18,25 +18,25 @@
     manualPropertyTypes,
     PropertyType,
     textPropertyTypes
-  } from "./property.type";
+  } from "@21n/components/collection/properties/property.type";
   import {
     PersistenceActionType,
     type IRecordId
-  } from "$lib/client/types/data.type";
-  import SelectPropertyOption from "./selectProperty/SelectPropertyOption.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
+  } from "@21n/types/data.type";
+  import SelectPropertyOption from "@21n/components/collection/properties/selectProperty/SelectPropertyOption.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
   import {
     resolvePropertyDefaultValue,
     resolveUniversalPropertyOptions
-  } from "./property.utils";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { debouncer } from "$lib/client/utils/utils";
+  } from "@21n/components/collection/properties/property.utils";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+  import { debouncer } from "@21n/utils/utils";
   import { createEventDispatcher } from "svelte";
-  import type { ICollectionItem } from "../collection.type";
+  import type { ICollectionItem } from "@21n/components/collection/collection.type";
   const dispatch = createEventDispatcher();
 
   export let value: IPropertyValue | null = null;

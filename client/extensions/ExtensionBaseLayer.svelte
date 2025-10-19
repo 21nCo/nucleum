@@ -1,47 +1,47 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import { StoreDataType, type IStore } from "../types/data.type";
+  import { StoreDataType, type IStore } from "@21n/types/data.type";
   import {
     isTokenExpired,
     resolveCurrentUserId,
     resolveToken
-  } from "../utils/account.utils";
-  import account from "../stores/account.store";
-  import ExtensionThemeBase from "./ExtensionThemeBase.svelte";
+  } from "@21n/utils/account.utils";
+  import account from "@21n/stores/account.store";
+  import ExtensionThemeBase from "@21n/extensions/ExtensionThemeBase.svelte";
   import {
     ClientStorageKey,
     PersistenceProvider
-  } from "../persistence/persistence.type";
-  import { logger } from "../components/debug/logger.client";
+  } from "@21n/persistence/persistence.type";
+  import { logger } from "@21n/components/debug/logger.client";
   import {
     extensionFlux,
     initExtensionFlux,
     loadInMemoryResourceStore,
     loadInMemoryStores
-  } from "../components/flux/fluxExtentionMediator";
-  import { clientStorage, getDapId } from "../persistence/persistence.utils";
-  import { FluxMethod } from "../components/flux/flux.type";
+  } from "@21n/components/flux/fluxExtentionMediator";
+  import { clientStorage, getDapId } from "@21n/persistence/persistence.utils";
+  import { FluxMethod } from "@21n/components/flux/flux.type";
   import { createEventDispatcher } from "svelte";
-  import { Resource } from "../components/flux/resourceStores/resource.enum";
-  import { extractProduct } from "$lib/shared/utils/utils";
-  import { relayToSidePanel } from "../utils/extension.utils";
-  import { ExtensionEvent } from "../types/extension.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { extractProduct } from "@21n/shared-utils/utils";
+  import { relayToSidePanel } from "@21n/utils/extension.utils";
+  import { ExtensionEvent } from "@21n/types/extension.type";
   import {
     cleanExtensionSprites,
     extensionSprites
-  } from "../iconsV2/icon.store";
+  } from "@21n/icons-v2/icon.store";
   //!Below working with dev but not build or package
   // import sprite from "data-text:/assets/icons/sprite.svg";
   // import spritePhBase from "data-text:/assets/icons/sprite-ph-base.svg";
   // import spritePhFill from "data-text:/assets/icons/sprite-ph-fill.svg";
   // import spritePhLight from "data-text:/assets/icons/sprite-ph-light.svg";
-  import { resolveIconSvgSheetText } from "./iconSvgSheetTextResolver";
-  import { appStore } from "../stores/app.store";
+  import { resolveIconSvgSheetText } from "@21n/extensions/iconSvgSheetTextResolver";
+  import { appStore } from "@21n/stores/app.store";
   import {
     isRecordId,
     removeDuplicatesFilter
-  } from "../components/flux/resourceStores/resource.utils";
-  import { parse } from "$lib/shared/utils/json.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { parse } from "@21n/shared-utils/json.utils";
 
   const dispatch = createEventDispatcher();
   export let id: string;

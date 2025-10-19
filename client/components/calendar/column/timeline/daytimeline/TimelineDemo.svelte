@@ -1,5 +1,5 @@
 <script lang="ts">
-  import DayTimeline from "./DayTimeline.svelte";
+  import DayTimeline from "@21n/components/calendar/column/timeline/daytimeline/DayTimeline.svelte";
   import { onMount } from "svelte";
   import dayjs from "dayjs";
 

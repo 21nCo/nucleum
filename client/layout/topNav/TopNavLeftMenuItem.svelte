@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { popover } from "$lib/client/actions/popover.action";
-  import ButtonTooltip from "$lib/client/elements/button/ButtonTooltip.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Size } from "$lib/client/types/size.enum";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { popover } from "@21n/actions/popover.action";
+  import ButtonTooltip from "@21n/elements/button/ButtonTooltip.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Placement } from "@21n/types/direction.enum";
+  import { PopoverTriggerMethod } from "@21n/types/popover.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/types/size.enum";
   export let icon: string;
   export let tooltip: string;
   export let shortcut: string | undefined = undefined;

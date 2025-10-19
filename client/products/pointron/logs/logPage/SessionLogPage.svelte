@@ -1,48 +1,48 @@
 <script lang="ts">
-  import Markdown from "$lib/client/components/markdown/Markdown.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import Markdown from "@21n/components/markdown/Markdown.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/types/size.enum";
   import {
     isValidDataString,
     isValidMarkdown
-  } from "$lib/shared/utils/text.utils";
+  } from "@21n/shared-utils/text.utils";
   import { onMount } from "svelte";
-  import LogIntervalBar from "./LogIntervalBar.svelte";
-  import LogTotals from "./LogTotals.svelte";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
+  import LogIntervalBar from "@21n/products/pointron/logs/logPage/LogIntervalBar.svelte";
+  import LogTotals from "@21n/products/pointron/logs/logPage/LogTotals.svelte";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import {
     PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import FocusItem from "../../focus/elements/focusitem/FocusItem.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  } from "@21n/types/switcher.enum";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import FocusItem from "@21n/products/pointron/focus/elements/focusitem/FocusItem.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import {
     formatDatetime,
     formatTime,
     isSameDateTime
-  } from "$lib/client/utils/time.utils";
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import { sessionStore } from "../../focus/session.store";
-  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
-  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
-  import { goalStore } from "$lib/client/components/goals/goal.store";
-  import { taskStore } from "$lib/client/components/tasks/task.store";
-  import view from "$lib/client/stores/view.store";
-  import { SessionType } from "../log.type";
-  import type { IFocusItem } from "$lib/client/types/pointron/session.type";
-  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import ModalContentPadded from "$lib/client/components/modal/ModalContentPadded.svelte";
+  } from "@21n/utils/time.utils";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import { sessionStore } from "@21n/products/pointron/focus/session.store";
+  import type { ITaskThumb } from "@21n/components/tasks/task.type";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
+  import { goalStore } from "@21n/components/goals/goal.store";
+  import { taskStore } from "@21n/components/tasks/task.store";
+  import view from "@21n/stores/view.store";
+  import { SessionType } from "@21n/products/pointron/logs/log.type";
+  import type { IFocusItem } from "@21n/types/pointron/session.type";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
 
   export let id: string;
   export let log: any = undefined;

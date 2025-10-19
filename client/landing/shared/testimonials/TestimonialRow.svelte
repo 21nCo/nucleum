@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { ITestimonial } from "../landing.type";
-  import TestimonialItem from "./TestimonialItem.svelte";
+  import type { ITestimonial } from "@21n/landing/shared/landing.type";
+  import TestimonialItem from "@21n/landing/shared/testimonials/TestimonialItem.svelte";
   import { onMount, onDestroy } from "svelte";
 
   export let testimonials: ITestimonial[] = [];

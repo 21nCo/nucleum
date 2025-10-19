@@ -1,29 +1,29 @@
 <script lang="ts">
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { properCase } from "$lib/shared/utils/text.utils";
-  import type { IResourceSwitchItem } from "$lib/client/types/select.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
+  import { Placement } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import type { IResourceSwitchItem } from "@21n/types/select.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
+  import { appStore } from "@21n/stores/app.store";
   import {
     resourceAction,
     resourceCacheKey
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { appMenuStore } from "$lib/client/stores/appMenu/appMenu.store";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { popover } from "$lib/client/actions/popover.action";
-  import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
-  import view from "$lib/client/stores/view.store";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { isHideCreateAction } from "../library.utils";
-  import { cache } from "$lib/client/layout/layers/cache/cache.store";
-  import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { appMenuStore } from "@21n/stores/appMenu/appMenu.store";
+  import { PopoverTriggerMethod } from "@21n/types/popover.type";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { popover } from "@21n/actions/popover.action";
+  import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import view from "@21n/stores/view.store";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { isHideCreateAction } from "@21n/components/library/library.utils";
+  import { cache } from "@21n/layout/layers/cache/cache.store";
+  import { CacheKey } from "@21n/layout/layers/cache/cache.type";
 
   export let item: IResourceSwitchItem;
   export let isActive: boolean = false;

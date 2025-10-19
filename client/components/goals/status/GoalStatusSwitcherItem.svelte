@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { enumToString } from "$lib/shared/utils/text.utils";
+  import { tooltip } from "@21n/actions/popover.action";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Placement } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { enumToString } from "@21n/shared-utils/text.utils";
   import { fly } from "svelte/transition";
-  import { GoalStatus } from "../goal.type";
-  import { resolveGoalStatusIcon } from "../goal.utils";
+  import { GoalStatus } from "@21n/components/goals/goal.type";
+  import { resolveGoalStatusIcon } from "@21n/components/goals/goal.utils";
   export let status: GoalStatus;
   export let isActive = false;
   export let isAccent = false;

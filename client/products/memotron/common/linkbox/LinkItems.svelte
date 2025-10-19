@@ -1,30 +1,30 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import LinkItem from "./LinkItem.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  import LinkItem from "@21n/products/memotron/common/linkbox/LinkItem.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IRecordId } from "@21n/types/data.type";
   import {
     determineResourceType,
     isSameResource,
     removeDuplicatesFilter
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { collectionStore } from "$lib/client/components/collection/collection.store";
-  import PropertiesListView from "$lib/client/components/collection/properties/PropertiesListView.svelte";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import LinkTagger from "$lib/client/products/memotron/linking/LinkTagger.svelte";
-  import type { INodeLinkThumb } from "$lib/client/products/memotron/node/node.type";
-  import { linker } from "$lib/client/products/memotron/linking/link.store";
-  import LinkTags from "$lib/client/products/memotron/linking/LinkTags.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import context from "$lib/client/stores/context.store";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import type { ICollectionItemPropertyValue } from "$lib/client/components/collection/collection.type";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { collectionStore } from "@21n/components/collection/collection.store";
+  import PropertiesListView from "@21n/components/collection/properties/PropertiesListView.svelte";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import LinkTagger from "@21n/products/memotron/linking/LinkTagger.svelte";
+  import type { INodeLinkThumb } from "@21n/products/memotron/node/node.type";
+  import { linker } from "@21n/products/memotron/linking/link.store";
+  import LinkTags from "@21n/products/memotron/linking/LinkTags.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import context from "@21n/stores/context.store";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import type { ICollectionItemPropertyValue } from "@21n/components/collection/collection.type";
   import { fly } from "svelte/transition";
   import { quintOut } from "svelte/easing";
-  import view from "$lib/client/stores/view.store";
+  import view from "@21n/stores/view.store";
   const dispatch = createEventDispatcher();
   export let links: IRecordId[];
   export let propertyValues: ICollectionItemPropertyValue[] = [];

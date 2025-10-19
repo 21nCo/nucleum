@@ -1,5 +1,5 @@
-import type { Size } from "./size.enum";
-import type { IKeyboardShortcut } from "$lib/client/components/shortcuts/shortcut.type";
+import type { Size } from "@21n/types/size.enum";
+import type { IKeyboardShortcut } from "@21n/components/shortcuts/shortcut.type";
 export enum ButtonStyle {
   DEFAULT = "default",
   PLAIN = "plain",

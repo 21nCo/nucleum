@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { IFeatureWheelContemporary } from "$lib/client/types/featureWheel.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { resolveHoverState } from "$lib/client/utils/browser.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Contemporary from "./Contemporary.svelte";
+  import type { IFeatureWheelContemporary } from "@21n/types/featureWheel.type";
+  import { Size } from "@21n/types/size.enum";
+  import { resolveHoverState } from "@21n/utils/browser.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import Contemporary from "@21n/components/featureWheel/contemporaries/Contemporary.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let xCoord: number;

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { tooltip } from "@21n/actions/popover.action";
+  import { cn } from "@21n/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
 

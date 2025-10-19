@@ -1,9 +1,9 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import type { IActiveCaptureStore } from "./capture.store";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import type { IActiveCaptureStore } from "@21n/products/memotron/capture/capture.store";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import { cn } from "@21n/utils/ui.utils";
   export let captureStore: IActiveCaptureStore;
   export let isHomeContext: boolean = false;
   const dispatch = createEventDispatcher();

@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import Presets from "../presets/Presets.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+  import { pointronPreferences } from "@21n/products/pointron/pointron.store";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import Presets from "@21n/products/pointron/focus/advanced/presets/Presets.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import { appStore } from "@21n/stores/app.store";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   export let isExpandedVariant: boolean = true;
   let isInEditMode: boolean = false;
   let selectedPresetIndex: number = $activeSession.composition

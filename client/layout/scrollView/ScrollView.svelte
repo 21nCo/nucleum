@@ -1,7 +1,7 @@
 <script lang="ts">
-  import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import RefreshingOverlayFeedback from "@21n/elements/feedback/RefreshingOverlayFeedback.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
   export let isRefreshOnPull: boolean = false;
   export let bottomSpacerSize: Size.sm | Size.md | Size.lg = Size.md;
   export let isEnableScrollbar: boolean = false;
@@ -9,7 +9,7 @@
   let classList: string | object = "";
   export { classList as class };
   import { spring } from "svelte/motion";
-  import ScrollViewBottomSpacer from "./ScrollViewBottomSpacer.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
 

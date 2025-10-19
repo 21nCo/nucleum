@@ -1,8 +1,8 @@
-import { flux } from "$lib/client/components/flux/flux";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { PersistenceActionType } from "$lib/client/types/data.type";
-import type { ICollection } from "./collection/collection.type";
-import { CollectionType } from "./collection/collection.type";
+import { flux } from "@21n/components/flux/flux";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { PersistenceActionType } from "@21n/types/data.type";
+import type { ICollection } from "@21n/components/collection/collection.type";
+import { CollectionType } from "@21n/components/collection/collection.type";
 
 export async function defaultsMigrationTidy() {
   await defaultsMigrationForCollections();

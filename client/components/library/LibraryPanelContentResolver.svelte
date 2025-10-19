@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { page } from "$app/stores";
-  import view from "$lib/client/stores/view.store";
-  import LibraryRecordsPane from "./LibraryRecordsPane.svelte";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import { isValidEnumValue } from "$lib/shared/utils/text.utils";
+  import view from "@21n/stores/view.store";
+  import LibraryRecordsPane from "@21n/components/library/LibraryRecordsPane.svelte";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import { isValidEnumValue } from "@21n/shared-utils/text.utils";
 
   export let defaultResource: Resource = Resource.node;
 

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Celebrate from "$lib/client/icons/Celebrate.svelte";
-  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import IntervalBar from "./intervalbar/IntervalBar.svelte";
-  import SessionTimeText from "./sessionTimeText/SessionTimeText.svelte";
+  import Celebrate from "@21n/icons/Celebrate.svelte";
+  import { SessionUIContext } from "@21n/types/pointron/session.type";
+  import { Size } from "@21n/types/size.enum";
+  import IntervalBar from "@21n/products/pointron/focus/elements/intervalbar/IntervalBar.svelte";
+  import SessionTimeText from "@21n/products/pointron/focus/elements/sessionTimeText/SessionTimeText.svelte";
   //import confetti from "canvas-confetti";
   // confetti({
   //   particleCount: 200,

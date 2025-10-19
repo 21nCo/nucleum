@@ -1,23 +1,23 @@
 <script lang="ts">
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import Divider from "@21n/elements/Divider.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import view from "$lib/client/stores/view.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { OptionSelectorStyle } from "$lib/client/types/select.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import ShortcutSettings from "../../shortcuts/settings/ShortcutSettings.svelte";
-  import { InteractionMode } from "./interactionMode.type";
+  } from "@21n/stores/uiState/uiState.type";
+  import view from "@21n/stores/view.store";
+  import { Action } from "@21n/types/action.enum";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { OptionSelectorStyle } from "@21n/types/select.type";
+  import { Size } from "@21n/types/size.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import ShortcutSettings from "@21n/components/shortcuts/settings/ShortcutSettings.svelte";
+  import { InteractionMode } from "@21n/components/settings/interactionMode/interactionMode.type";
   let selectedMode: InteractionMode = uiState.getState(
     Action.MODE_OF_INTERACTION,
     {

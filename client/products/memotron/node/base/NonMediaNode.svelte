@@ -1,42 +1,42 @@
 <script lang="ts">
-  import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
-  import { nodeStore, type IActiveNodeStore } from "../node.store";
-  import NodeRightPane from "../rightPanel/NodeRightPane.svelte";
-  import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
-  import NodeFloatingBar from "../floatingBar/NodeFloatingBar.svelte";
-  import NodeTitleBreadcrumbs from "../title/NodeTitleBreadcrumbs.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import NodeContent from "../content/NodeContent.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import ResourceStatusBanner from "../../../../components/record/RecordStatusBanner.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import NodeAvatar from "../avatar/NodeAvatar.svelte";
+  import NodeLoadingPulse from "@21n/elements/feedback/animations/NodeLoadingPulse.svelte";
+  import { nodeStore, type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import NodeRightPane from "@21n/products/memotron/node/rightPanel/NodeRightPane.svelte";
+  import BottomFloat from "@21n/elements/BottomFloat.svelte";
+  import NodeFloatingBar from "@21n/products/memotron/node/floatingBar/NodeFloatingBar.svelte";
+  import NodeTitleBreadcrumbs from "@21n/products/memotron/node/title/NodeTitleBreadcrumbs.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import NodeContent from "@21n/products/memotron/node/content/NodeContent.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import ResourceStatusBanner from "@21n/components/record/RecordStatusBanner.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import NodeAvatar from "@21n/products/memotron/node/avatar/NodeAvatar.svelte";
   import { fade } from "svelte/transition";
-  import CollectionsLane from "../floatingBar/CollectionsLane.svelte";
-  import { headingNodeTypes, NodeRightPaneType, NodeView } from "../node.type";
-  import PropertiesPane from "$lib/client/components/collection/properties/PropertiesPane.svelte";
-  import view from "$lib/client/stores/view.store";
-  import NodeRightPaneContent from "../rightPanel/NodeRightPaneContent.svelte";
-  import NodeBirdView from "../birdView/NodeBirdView.svelte";
+  import CollectionsLane from "@21n/products/memotron/node/floatingBar/CollectionsLane.svelte";
+  import { headingNodeTypes, NodeRightPaneType, NodeView } from "@21n/products/memotron/node/node.type";
+  import PropertiesPane from "@21n/components/collection/properties/PropertiesPane.svelte";
+  import view from "@21n/stores/view.store";
+  import NodeRightPaneContent from "@21n/products/memotron/node/rightPanel/NodeRightPaneContent.svelte";
+  import NodeBirdView from "@21n/products/memotron/node/birdView/NodeBirdView.svelte";
   import {
     ResourceAccessMode,
     ResourceAccessPoint,
     ResourceActionType
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { resizeListener } from "$lib/client/actions/resize.action";
-  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
-  import { getMdStore } from "$lib/client/components/markdown/markdown.store";
-  import TableOfContents from "$lib/client/components/markdown/TableOfContents.svelte";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import { appStore } from "$lib/client/stores/app.store";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import { resizeListener } from "@21n/actions/resize.action";
+  import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
+  import { getMdStore } from "@21n/components/markdown/markdown.store";
+  import TableOfContents from "@21n/components/markdown/TableOfContents.svelte";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import context from "@21n/stores/context.store";
+  import { Embed } from "@21n/types/context.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { dispatchCustomEvent } from "@21n/utils/browser.utils";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import { appStore } from "@21n/stores/app.store";
 
   export let node: IActiveNodeStore;
   export let selectedView: NodeView = NodeView.CONTENT;

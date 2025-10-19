@@ -1,10 +1,10 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { CollectionType } from "$lib/client/components/collection/collection.type";
-  import type { CollectionData } from "./types";
+  import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { CollectionType } from "@21n/components/collection/collection.type";
+  import type { CollectionData } from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/types";
 
   export let collection: CollectionData;
 

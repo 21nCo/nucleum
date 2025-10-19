@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { TimeScale } from "$lib/client/types/time.type";
-  import { enumToString } from "$lib/shared/utils/text.utils";
+  import { TimeScale } from "@21n/types/time.type";
+  import { enumToString } from "@21n/shared-utils/text.utils";
   import { createEventDispatcher } from "svelte";
 
   export let scales: TimeScale[];

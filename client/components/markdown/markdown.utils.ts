@@ -6,7 +6,7 @@ import {
   type IListBlockBody,
   type IBlockBody,
   InlineType
-} from "$lib/client/components/markdown/md.type";
+} from "@21n/components/markdown/md.type";
 import {
   type INode,
   type IActiveNode,
@@ -14,8 +14,8 @@ import {
   simpleTextNodeTypeList,
   headingNodeTypes,
   type INodeStructure
-} from "$lib/client/products/memotron/node/node.type";
-import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
+} from "@21n/products/memotron/node/node.type";
+import { generateRandomIdv2 } from "@21n/shared-utils/crypto.utils";
 
 /**
  * Recursively extracts all children of a node and its children. Useful for converting a nested structure of node into a flat array.

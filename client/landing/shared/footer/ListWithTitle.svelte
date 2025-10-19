@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IListItem } from "../landing.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IListItem } from "@21n/landing/shared/landing.type";
 
   export let items: IListItem[];
   const currentPath = typeof window !== "undefined" ? window.location.href : "";

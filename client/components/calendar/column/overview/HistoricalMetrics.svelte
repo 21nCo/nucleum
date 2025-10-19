@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import { TimeFormat } from "$lib/client/types/time.type";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { Action } from "@21n/types/action.enum";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import { TimeFormat } from "@21n/types/time.type";
   import {
     parseAndFormatDate,
     formatSeconds
-  } from "$lib/client/utils/time.utils";
+  } from "@21n/utils/time.utils";
 
   export let date: Date;
   export let title: string;

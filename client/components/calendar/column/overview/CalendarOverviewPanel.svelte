@@ -1,9 +1,9 @@
 <script lang="ts">
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/products/product.type";
-  import CalendarOverviewPanelNucleus from "./CalendarOverviewPanelNucleus.svelte";
-  import CalendarOverviewPanelPointron from "./CalendarOverviewPanelPointron.svelte";
+  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { Product } from "@21n/products/product.type";
+  import CalendarOverviewPanelNucleus from "@21n/components/calendar/column/overview/CalendarOverviewPanelNucleus.svelte";
+  import CalendarOverviewPanelPointron from "@21n/components/calendar/column/overview/CalendarOverviewPanelPointron.svelte";
   export let date: Date;
   export let isRewind: boolean = false;
   $: product = $appStore.product;
