@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { resolveShortcutText } from "$lib/client/components/shortcuts/shortcut.utils";
-  import { keyboardShortcuts } from "$lib/client/components/shortcuts/shortcuts.store";
-  import context from "$lib/client/stores/context.store";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
+  import { resolveShortcutText } from "@21n/components/shortcuts/shortcut.utils";
+  import { keyboardShortcuts } from "@21n/components/shortcuts/shortcuts.store";
+  import context from "@21n/stores/context.store";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { bg, cn } from "@21n/utils/ui.utils";
   import { onMount } from "svelte";
-  import Icon from "../Icon.svelte";
-  import type { IKeyboardShortcut } from "$lib/client/components/shortcuts/shortcut.type";
-  import { KeyboardKey } from "$lib/client/types/keyboard.type";
-  import { Embed } from "$lib/client/types/context.type";
-  import { uiStateDerived } from "$lib/client/stores/uiState/uiState.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import type { IKeyboardShortcut } from "@21n/components/shortcuts/shortcut.type";
+  import { KeyboardKey } from "@21n/types/keyboard.type";
+  import { Embed } from "@21n/types/context.type";
+  import { uiStateDerived } from "@21n/stores/uiState/uiState.store";
 
   export let shortcut: string | IKeyboardShortcut | undefined;
   export let parentBgIndex: number | undefined = undefined;

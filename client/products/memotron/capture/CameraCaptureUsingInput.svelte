@@ -1,9 +1,9 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import type { IActiveCaptureStore } from "./capture.store";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { ButtonVariant } from "@21n/types/button.type";
+  import type { IActiveCaptureStore } from "@21n/products/memotron/capture/capture.store";
   export let captureStore: IActiveCaptureStore;
   let photoTaken = false;
   let imagePreview: string | null = null;

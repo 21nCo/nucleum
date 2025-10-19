@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Arrangement } from "$lib/client/types/direction.enum";
+  import { Arrangement } from "@21n/types/direction.enum";
   import {
     headingNodeTypes,
     type INodeThumb,
@@ -7,42 +7,43 @@
     socialPostNodeTypeList,
     socialProfileNodeTypeList,
     socialProfileWithImageUnavailable
-  } from "$lib/client/products/memotron/node/node.type";
+  } from "@21n/products/memotron/node/node.type";
   import {
     resolveContentPreview,
     resolveFilePreview,
     resolveIfImageShouldContain,
     resolveUrlPreview
-  } from "$lib/client/products/memotron/node/node.utils";
-  import ResourceGridThumbnail from "../../../../components/record/thumbnail/ResourceGridThumbnail.svelte";
-  import ResourceThumbnailBase from "../../../../components/record/thumbnail/ResourceThumbnailBase.svelte";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import NodeThumbnailTitle from "./NodeThumbnailTitle.svelte";
-  import TextClipPreview from "../content/web/TextClipPreview.svelte";
-  import FileView from "$lib/client/components/files/FileView.svelte";
+  } from "@21n/products/memotron/node/node.utils";
+  import ResourceGridThumbnail from "@21n/components/record/thumbnail/ResourceGridThumbnail.svelte";
+  import ResourceThumbnailBase from "@21n/components/record/thumbnail/ResourceThumbnailBase.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import NodeThumbnailTitle from "@21n/products/memotron/node/thumbnail/NodeThumbnailTitle.svelte";
+  import TextClipPreview from "@21n/products/memotron/node/content/web/TextClipPreview.svelte";
+  import FileView from "@21n/components/files/FileView.svelte";
   import {
     formatDatetime,
     formatSeconds,
     formatTime
-  } from "$lib/client/utils/time.utils";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import NodeThumbnailAudioPreview from "./NodeThumbnailAudioPreview.svelte";
-  import NodeThumbnailPdfPreview from "./NodeThumbnailPdfPreview.svelte";
-  import { TimeFormat } from "$lib/client/types/time.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { fileStore } from "$lib/client/components/files/file.store";
+  } from "@21n/utils/time.utils";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import NodeThumbnailAudioPreview from "@21n/products/memotron/node/thumbnail/NodeThumbnailAudioPreview.svelte";
+  import NodeThumbnailPdfPreview from "@21n/products/memotron/node/thumbnail/NodeThumbnailPdfPreview.svelte";
+  import { TimeFormat } from "@21n/types/time.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { fileStore } from "@21n/components/files/file.store";
   import { onMount } from "svelte";
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-  import NodeThumbnailProperties from "./NodeThumbnailProperties.svelte";
-  import type { IProperty } from "$lib/client/components/collection/properties/property.type";
-  import { enumToString, isValidString } from "$lib/shared/utils/text.utils";
-  import ImagePreview from "../content/ImagePreview.svelte";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import NodeThumbnailTwitterProfilePreview from "./NodeThumbnailTwitterProfilePreview.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import NodeThumbnailSocialPostPreview from "./NodeThumbnailSocialPostPreview.svelte";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
+  import NodeThumbnailProperties from "@21n/products/memotron/node/thumbnail/NodeThumbnailProperties.svelte";
+  import type { IProperty } from "@21n/components/collection/properties/property.type";
+  import { enumToString, isValidString } from "@21n/shared-utils/text.utils";
+  import ImagePreview from "@21n/products/memotron/node/content/ImagePreview.svelte";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import NodeThumbnailTwitterProfilePreview from "@21n/products/memotron/node/thumbnail/NodeThumbnailTwitterProfilePreview.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import NodeThumbnailSocialPostPreview from "@21n/products/memotron/node/thumbnail/NodeThumbnailSocialPostPreview.svelte";
+  import CoverRenderer from "@21n/elements/coverPicker/CoverRenderer.svelte";
   export let item: INodeThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let isHidePreview: boolean = false;
@@ -151,7 +152,7 @@
         )}
         on:click
       >
-        {#if item.previewImage || (item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType))}
+        {#if item.cover || item.previewImage || (item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType))}
           <div
             class={cn(
               {
@@ -179,6 +180,11 @@
                   // "rounded-md": isLinkContext,
                   // "rounded-full": !isLinkContext
                 })}
+              />
+            {:else if item.cover}
+              <CoverRenderer
+                cover={item.cover}
+                class={cn("object-cover h-full w-full rounded-md")}
               />
             {:else if urlPreview}
               <ImagePreview
@@ -288,6 +294,11 @@
             <span class="text-b2 text-fgs2">
               {@html renderMdAsHtml(item.bodySearch)}
             </span>
+          {:else if item.cover}
+            <CoverRenderer
+              cover={item.cover}
+              class="absolute inset-0 w-full rounded-t-md object-cover h-full"
+            />
           {:else if filePreview}
             <FileView
               file={hasFullFileDetails ? filePreview : undefined}
@@ -362,7 +373,12 @@
       </div>
     </ResourceGridThumbnail>
   {:else if arrangement === Arrangement.MASONRY}
-    {#if filePreview}
+    {#if item.cover}
+      <CoverRenderer
+        cover={item.cover}
+        class="absolute inset-0 w-full rounded-t-md object-cover h-full"
+      />
+    {:else if filePreview}
       <FileView
         file={hasFullFileDetails ? filePreview : undefined}
         id={hasFullFileDetails ? undefined : filePreview}

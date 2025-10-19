@@ -1,5 +1,5 @@
-import type { DropdownGroup, DropdownItem } from "./dropdownItem.type";
-import type { InputLabelInfoToolTip, InputStyle } from "./input.type";
+import type { DropdownGroup, DropdownItem } from "@21n/types/dropdownItem.type";
+import type { InputLabelInfoToolTip, InputStyle } from "@21n/types/input.type";
 
 export type TableColumn = {
   /**

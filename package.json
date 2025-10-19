@@ -13,7 +13,23 @@
     "client/utils",
     "client/actions",
     "client/products",
-    "client/static"
+    "client/static",
+    "client/layout",
+    "client/persistence",
+    "client/landing",
+    "client/extensions",
+    "client/branding",
+    "client/icons",
+    "client/theme",
+    "client/legacy",
+    "client/data",
+    "client/illustrations",
+    "client/iconsV2",
+    "client/cx",
+    "shared/types",
+    "shared/utils",
+    "shared/dbo",
+    "tests"
   ],
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -21,8 +37,12 @@
   },
   "devDependencies": {
     "@tsconfig/svelte": "^5.0.5",
+    "ts-morph": "^22.0.0",
+    "tslib": "^2.8.0",
     "turbo": "^2.0.0",
-    "typescript": "^5.0.0"
+    "tsx": "^4.19.1",
+    "typescript": "^5.0.0",
+    "vitest": "^2.0.5"
   },
   "scripts": {
     "build": "turbo run build",
@@ -32,6 +52,8 @@
     "dev:gathery": "turbo run dev --filter=gathery-app",
     "dev:pointron": "turbo run dev --filter=pointron-app",
     "dev:memotron-share": "turbo run dev --filter=memotron-share",
+    "dev:memotron-clipper": "turbo run dev --filter=memotron-clipper",
+    "codemod:alias": "tsx tools/codemods/alias-migration/index.ts",
     "lint": "turbo run lint",
     "test": "turbo run test",
     "build:packages": "turbo run build --filter='./packages/*'",

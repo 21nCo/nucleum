@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { appStore } from "$lib/client/stores/app.store";
-  import type { ITwitterProfile } from "../../node.type";
+  import { appStore } from "@21n/stores/app.store";
+  import type { ITwitterProfile } from "@21n/products/memotron/node/node.type";
 
   export let node: ITwitterProfile;
 

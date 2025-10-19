@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import type { DropdownGroup } from "$lib/client/types/dropdownItem.type";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { AnalyticsCardType } from "../analytics.types";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import ContextMenuAction from "@21n/elements/contextMenu/ContextMenuAction.svelte";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import type { DropdownGroup } from "@21n/types/dropdownItem.type";
+  import { InputStyle } from "@21n/types/input.type";
+  import { Size } from "@21n/types/size.enum";
+  import { AnalyticsCardType } from "@21n/products/pointron/analytics/analytics.types";
   export let accessPoint: ResourceAccessPoint;
   export let selected: AnalyticsCardType;
   let chartTypes = [

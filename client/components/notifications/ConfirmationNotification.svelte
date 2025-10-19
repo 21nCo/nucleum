@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { renderMdAsHtml } from "../markdown/markdown.utils";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { confirmationNotification } from "$lib/client/stores/notification.store";
-  import ModalFooter from "../modal/ModalFooter.svelte";
-  import { Action } from "$lib/client/types/action.enum";
-  import { AlertType } from "$lib/client/types/notification.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import ModalContentPadded from "../modal/ModalContentPadded.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { confirmationNotification } from "@21n/stores/notification.store";
+  import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
+  import { Action } from "@21n/types/action.enum";
+  import { AlertType } from "@21n/types/notification.type";
+  import { Orientation } from "@21n/types/direction.enum";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
+  import { Size } from "@21n/types/size.enum";
   let confirmationTextInput: string | undefined;
   let error: string | undefined;
   function resolvePrimaryAction() {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import PointInMap from "$lib/client/components/maps/PointInMap.svelte";
+  import PointInMap from "@21n/components/maps/PointInMap.svelte";
   export let location:
     | {
         latitude?: number;

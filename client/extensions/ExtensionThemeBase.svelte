@@ -1,11 +1,8 @@
 <script lang="ts">
-  import { appearance } from "$lib/client/stores/appearance.store";
-  import ThemeLayer from "$lib/client/layout/layers/themeLayer/ThemeLayer.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import fontUrl from "data-url:~assets/fonts/SenVariable.ttf";
+  import { appearance } from "@21n/stores/appearance.store";
+  import ThemeLayer from "@21n/layout/layers/themeLayer/ThemeLayer.svelte";
+  import { cn } from "@21n/utils/ui.utils";
 
-  const fontFace = new FontFace("SenVariable", `url(${fontUrl})`);
-  document.fonts.add(fontFace);
   export let id: string;
   let classList: string = "";
   export { classList as class };

@@ -1,14 +1,14 @@
 <script lang="ts">
-  import ThreeDotsFade from "./ThreeDotsFade.svelte";
-  import ThreeDotsScale from "./ThreeDotsScale.svelte";
-  import NinetyRingWithBg from "./NinetyRingWithBg.svelte";
-  import One80RingWithBg from "./One80RingWithBg.svelte";
-  import BarsFade from "./BarsFade.svelte";
-  import BarsScaleFade from "./BarsScaleFade.svelte";
-  import BarsRotateFade from "./BarsRotateFade.svelte";
-  import BarsScale from "./BarsScale.svelte";
-  import BarsScaleMiddle from "./BarsScaleMiddle.svelte";
-  import EclipseHalf from "./EclipseHalf.svelte";
+  import ThreeDotsFade from "@21n/icons-v2/svgSpinners/ThreeDotsFade.svelte";
+  import ThreeDotsScale from "@21n/icons-v2/svgSpinners/ThreeDotsScale.svelte";
+  import NinetyRingWithBg from "@21n/icons-v2/svgSpinners/NinetyRingWithBg.svelte";
+  import One80RingWithBg from "@21n/icons-v2/svgSpinners/One80RingWithBg.svelte";
+  import BarsFade from "@21n/icons-v2/svgSpinners/BarsFade.svelte";
+  import BarsScaleFade from "@21n/icons-v2/svgSpinners/BarsScaleFade.svelte";
+  import BarsRotateFade from "@21n/icons-v2/svgSpinners/BarsRotateFade.svelte";
+  import BarsScale from "@21n/icons-v2/svgSpinners/BarsScale.svelte";
+  import BarsScaleMiddle from "@21n/icons-v2/svgSpinners/BarsScaleMiddle.svelte";
+  import EclipseHalf from "@21n/icons-v2/svgSpinners/EclipseHalf.svelte";
   export let icon: string;
 </script>
 

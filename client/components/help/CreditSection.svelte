@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
 
   export let title: string;
   export let items: Array<{

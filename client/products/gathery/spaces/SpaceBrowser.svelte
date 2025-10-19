@@ -1,15 +1,15 @@
 <script lang="ts">
-  import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
+  import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
   import {
     spaceInContext,
     spaceStore
-  } from "$lib/client/products/gathery/space.store";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { GatheryEvent } from "$lib/client/types/gathery/gatheryEvent.enum";
-  import { OptionSelectorStyle } from "$lib/client/types/select.type";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  } from "@21n/products/gathery/space.store";
+  import { appStore } from "@21n/stores/app.store";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { GatheryEvent } from "@21n/types/gathery/gatheryEvent.enum";
+  import { OptionSelectorStyle } from "@21n/types/select.type";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   spaceStore.refresh();
   let selected = $spaceInContext?.label ?? undefined;
 </script>

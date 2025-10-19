@@ -1,56 +1,56 @@
 <script lang="ts">
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { SearchStore } from "$lib/client/components/record/record.store";
-  import { resolveResourceIcon } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import { appStore } from "@21n/stores/app.store";
+  import { Action } from "@21n/types/action.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { resolveResourceIcon } from "@21n/components/flux/resourceStores/resource.utils";
   import {
     ResourceAccessMode,
     ResourceActionType
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import Writer from "../capture/Writer.svelte";
-  import { CaptureMethod } from "../capture/capture.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import Writer from "@21n/products/memotron/capture/Writer.svelte";
+  import { CaptureMethod } from "@21n/products/memotron/capture/capture.type";
   import {
     ActiveCaptureStore,
     type IActiveCaptureStore
-  } from "../capture/capture.store";
-  import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-  import HomeTopNav from "./mobile/HomeTopNav.svelte";
-  import { haptic } from "$lib/client/utils/embed.utils";
-  import TypeSelectorOnMobile from "../capture/typeSelector/TypeSelectorOnMobile.svelte";
+  } from "@21n/products/memotron/capture/capture.store";
+  import { generateResourceId } from "@21n/components/flux/flux.utils";
+  import HomeTopNav from "@21n/products/memotron/home/mobile/HomeTopNav.svelte";
+  import { haptic } from "@21n/utils/embed.utils";
+  import TypeSelectorOnMobile from "@21n/products/memotron/capture/typeSelector/TypeSelectorOnMobile.svelte";
   import { fly } from "svelte/transition";
-  import HomeQuickAccess from "$lib/client/components/home/mobile/HomeQuickAccess.svelte";
-  import type { IQuickAccessItem } from "$lib/client/components/home/home.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import CaptureTopBar from "../capture/CaptureTopBar.svelte";
-  import context from "$lib/client/stores/context.store";
-  import { OperatingSystem } from "$lib/client/types/context.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import HomeQuickAccess from "@21n/components/home/mobile/HomeQuickAccess.svelte";
+  import type { IQuickAccessItem } from "@21n/components/home/home.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  import CaptureTopBar from "@21n/products/memotron/capture/CaptureTopBar.svelte";
+  import context from "@21n/stores/context.store";
+  import { OperatingSystem } from "@21n/types/context.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import {
     AlertType,
     type InlineToast
-  } from "$lib/client/types/notification.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { inlineToasts } from "$lib/client/stores/notification.store";
-  import NotificationListener from "$lib/client/elements/listeners/NotificationListener.svelte";
-  import InlineSyncingFeedback from "$lib/client/elements/feedback/InlineSyncingFeedback.svelte";
-  import FileUploader from "../capture/FileUploader.svelte";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
-  import ComponentEmbedLayer from "$lib/client/layout/layers/ComponentEmbedLayer.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
+  } from "@21n/types/notification.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { inlineToasts } from "@21n/stores/notification.store";
+  import NotificationListener from "@21n/elements/listeners/NotificationListener.svelte";
+  import InlineSyncingFeedback from "@21n/elements/feedback/InlineSyncingFeedback.svelte";
+  import FileUploader from "@21n/products/memotron/capture/FileUploader.svelte";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import ComponentEmbedLayer from "@21n/layout/layers/ComponentEmbedLayer.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
   import { quintOut } from "svelte/easing";
-  import ResourceSearchBase from "../library/search/ResourceSearchBase.svelte";
-  import account from "$lib/client/stores/account.store";
-  import { UserDataMode } from "$lib/client/types/account.type";
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import { InfoTextType } from "$lib/client/types/text.type";
-  import { resolveProductConfig } from "../../product.config";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import ResourceSearchBase from "@21n/products/memotron/library/search/ResourceSearchBase.svelte";
+  import account from "@21n/stores/account.store";
+  import { UserDataMode } from "@21n/types/account.type";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import { InfoTextType } from "@21n/types/text.type";
+  import { resolveProductConfig } from "@21n/products/product.config";
+  import { AppSearchParam } from "@21n/types/appStore.type";
   export let captureId: IRecordId = generateResourceId(Resource.capture);
   let mode: "search" | "capture" | undefined = undefined;
   let searchQuery = "";

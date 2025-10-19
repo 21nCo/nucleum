@@ -1,63 +1,63 @@
 <script lang="ts">
-  import AnalyticsChart from "./AnalyticsChart.svelte";
+  import AnalyticsChart from "@21n/products/pointron/analytics/page/AnalyticsChart.svelte";
   import {
     type AnalyticsDataRecord,
     type IAnalyticsLabelColor,
     AnalyticsCardType
-  } from "../analytics.types";
+  } from "@21n/products/pointron/analytics/analytics.types";
   import {
     TimePeriodType,
     TimeScale,
     type TimePeriodValue
-  } from "$lib/client/types/time.type";
-  import CardSelector from "./CardSelector.svelte";
-  import { sessionLogStore } from "../../logs/log.store";
-  import { resolveRelativeTimePeriodOptions } from "$lib/client/elements/datetime/datetime.utils";
+  } from "@21n/types/time.type";
+  import CardSelector from "@21n/products/pointron/analytics/page/CardSelector.svelte";
+  import { sessionLogStore } from "@21n/products/pointron/logs/log.store";
+  import { resolveRelativeTimePeriodOptions } from "@21n/elements/datetime/datetime.utils";
   import { onMount } from "svelte";
-  import type { ISessionLog } from "../../logs/log.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  import type { ISessionLog } from "@21n/products/pointron/logs/log.type";
+  import type { IRecordId } from "@21n/types/data.type";
   import {
     removeDuplicatesFilter,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { goalStore } from "$lib/client/components/goals/goal.store";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { goalStore } from "@21n/components/goals/goal.store";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { tzStore } from "@21n/components/settings/timezone/tz.store";
   import {
     determineTimePeriodv2,
     resolveUpperRelativeTimePeriodTitle
-  } from "$lib/client/utils/time.utils";
-  import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  } from "@21n/utils/time.utils";
+  import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import { Size } from "@21n/types/size.enum";
   import {
     OptionSelectorStyle,
     type ISelectItem
-  } from "$lib/client/types/select.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
+  } from "@21n/types/select.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
   import { fly } from "svelte/transition";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import view from "$lib/client/stores/view.store";
-  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import view from "@21n/stores/view.store";
+  import { LoadingAnimationType } from "@21n/types/feedback.type";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
+  } from "@21n/stores/uiState/uiState.type";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CALENDAR;
   export let date: Date | undefined = undefined;
   export let scale: TimeScale | undefined = undefined;

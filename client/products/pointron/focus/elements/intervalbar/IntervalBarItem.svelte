@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
   import {
     BlockType,
     SessionUIContext
-  } from "$lib/client/types/pointron/session.type";
-  import { currentTime } from "$lib/client/stores/app.store";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import view from "$lib/client/stores/view.store";
-  import { formatTime } from "$lib/client/utils/time.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/types/pointron/session.type";
+  import { currentTime } from "@21n/stores/app.store";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import view from "@21n/stores/view.store";
+  import { formatTime } from "@21n/utils/time.utils";
+  import { cn } from "@21n/utils/ui.utils";
   export let progress: number = 0;
   export let color: string | undefined = undefined;
   export let type: BlockType = BlockType.FOCUS;

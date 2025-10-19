@@ -1,12 +1,12 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { AnnotationType } from "../pdfAnnotator.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { resolveAnnotationModes } from "../pdfAnnotator.utils";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import HighlightColors from "../../common/highlighters/HighlightColors.svelte";
-  import type { IToggleItem } from "$lib/client/elements/toggle/toggle.type";
+  import { AnnotationType } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { resolveAnnotationModes } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.utils";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import HighlightColors from "@21n/products/memotron/common/highlighters/HighlightColors.svelte";
+  import type { IToggleItem } from "@21n/elements/toggle/toggle.type";
   export let selectedColor = "";
   export let style = "";
   let dispatchEvent = createEventDispatcher();

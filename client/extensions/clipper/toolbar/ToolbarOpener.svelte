@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { hoverable } from "@21n/actions/hover.action";
+  import SubAtomLogo from "@21n/branding/SubAtomLogo.svelte";
+  import { Placement } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
   import { fly } from "svelte/transition";
-  import { toolbarState } from "../contentScripts/store";
+  import { toolbarState } from "@21n/extensions/clipper/contentScripts/store";
   let isHovering = false;
   if ($toolbarState.position === undefined) {
     toolbarState.changePosition(Placement.Right);

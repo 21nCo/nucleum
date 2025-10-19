@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Orientation } from "../types/direction.enum";
-  import { IconVariant } from "../types/icon.type";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { IconVariant } from "@21n/types/icon.type";
   export let orientation: Orientation = Orientation.Horizontal;
   export let variant: IconVariant = IconVariant.Outline;
   export let isCircled: boolean = false;

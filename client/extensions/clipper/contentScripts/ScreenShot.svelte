@@ -1,17 +1,20 @@
 <script lang="ts">
-  import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { ExtensionEvent } from "@21n/types/extension.type";
+  import { cn } from "@21n/utils/ui.utils";
   import { createEventDispatcher, onMount, onDestroy } from "svelte";
-  import type { IArea } from "./types";
-  import { feedbackPane, webpage } from "./store";
+  import type { IArea } from "@21n/extensions/clipper/contentScripts/types";
+  import {
+    feedbackPane,
+    webpage
+  } from "@21n/extensions/clipper/contentScripts/store";
   import {
     NodeType,
     type IWebScreenshotClip
-  } from "$lib/client/products/memotron/node/node.type";
-  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
-  import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
+  } from "@21n/products/memotron/node/node.type";
+  import { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { relayToBackgroundScript } from "@21n/utils/extension.utils";
+  import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
   let screenshotElement: HTMLElement;
   let topValue: number = 0;
@@ -234,6 +237,7 @@
     }
   });
 </script>
+
 <button
   bind:this={screenshotElement}
   class={cn("-z-10 fixed h-dvh w-full")}

@@ -1,17 +1,17 @@
 <script lang="ts">
-  import "$lib/client/app.css";
-  import BlankLandingLayout from "$lib/client/landing/shared/BlankLandingLayout.svelte";
-  import type { IMetadata } from "$lib/client/layout/metadata.type";
+  import "@21n/client/app.css";
+  import BlankLandingLayout from "@21n/landing/shared/BlankLandingLayout.svelte";
+  import type { IMetadata } from "@21n/layout/metadata.type";
   import type {
     IFooter,
     ILandingProductUrls,
     ITopNavBar
-  } from "../shared/landing.type";
+  } from "@21n/landing/shared/landing.type";
   import {
     org,
     landing,
     isProductsPanelOpen
-  } from "../shared/store/shared.store";
+  } from "@21n/landing/shared/store/shared.store";
   const urls: ILandingProductUrls = {
     socials: {
       twitter: org.twitter
@@ -50,7 +50,7 @@
     keywords:
       "21n, 21 native, phi native, phinative, 21st century native, organization, products, triple bottom line",
     url: "https://21n.org",
-    image: "https://cdn.21n.co/21n/ogImage.png"
+    image: "https://cdn.21n.org/21n/ogImage.png"
   };
   landing.load(urls);
 </script>

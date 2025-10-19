@@ -1,17 +1,17 @@
 <script lang="ts">
   // import { goto } from "$app/navigation";
   import { page } from "$app/stores";
-  import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import account from "$lib/client/stores/account.store";
-  import { handleOAuthRedirection } from "$lib/client/components/oauth/oauth.utils";
+  import AppLoadingView from "@21n/layout/paint/AppLoadingView.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import account from "@21n/stores/account.store";
+  import { handleOAuthRedirection } from "@21n/components/oauth/oauth.utils";
   import { onMount } from "svelte";
-  import context from "$lib/client/stores/context.store";
-  import { OperatingSystem } from "$lib/client/types/context.type";
-  import { logger } from "../debug/logger.client";
-  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
-  import { clientStorage } from "$lib/client/persistence/persistence.utils";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import context from "@21n/stores/context.store";
+  import { OperatingSystem } from "@21n/types/context.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { ClientStorageKey } from "@21n/persistence/persistence.type";
+  import { clientStorage } from "@21n/persistence/persistence.utils";
+  import { AppSearchParam } from "@21n/types/appStore.type";
   let debugMessage = "debug";
   $: {
     if (debugMessage) {

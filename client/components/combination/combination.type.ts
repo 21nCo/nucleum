@@ -1,5 +1,5 @@
-import type { IActiveResource } from "$lib/client/components/flux/resourceStores/resource.type";
-import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
+import type { IActiveResource } from "@21n/components/flux/resourceStores/resource.type";
+import type { IMemotronItemBase } from "@21n/products/memotron/memotron.type";
 
 type ICombinationBase = IMemotronItemBase & {
   type: CombinationType;

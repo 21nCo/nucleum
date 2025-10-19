@@ -1,11 +1,11 @@
-import { logger } from "$lib/client/components/debug/logger.client";
-import { NodeType } from "$lib/client/products/memotron/node/node.type";
-import type { IVideoBookmarkCapture } from "$lib/client/products/memotron/node/node.type";
+import { logger } from "@21n/components/debug/logger.client";
+import { NodeType } from "@21n/products/memotron/node/node.type";
+import type { IVideoBookmarkCapture } from "@21n/products/memotron/node/node.type";
 import {
   getVideoMetadata,
   extractTranscriptAtTimestamp,
   checkIfAdPlaying
-} from "./shared/video.utils";
+} from "@21n/extensions/clipper/parsers/shared/video.utils";
 
 export function extractYoutubeBookmark(): IVideoBookmarkCapture | null {
   try {

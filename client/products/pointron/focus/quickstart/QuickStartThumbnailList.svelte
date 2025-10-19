@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { Layout } from "$lib/client/types/layout.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import QuickStartThumbnail from "./QuickStartThumbnail.svelte";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { Layout } from "@21n/types/layout.type";
+  import { Size } from "@21n/types/size.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import QuickStartThumbnail from "@21n/products/pointron/focus/quickstart/QuickStartThumbnail.svelte";
 
   export let items: any[];
   export let layout: Layout;

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
 
   const calendars = [
     { id: 1, name: "Personal", color: "bg-aps1" },

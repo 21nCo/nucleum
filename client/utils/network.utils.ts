@@ -1,22 +1,22 @@
-import { logger } from "../components/debug/logger.client";
-import { ClientStorageKey } from "../persistence/persistence.type";
-import { GlobalEvent } from "../types/event.enum";
-import { resolveToken, signout } from "./account.utils";
+import { logger } from "@21n/components/debug/logger.client";
+import { ClientStorageKey } from "@21n/persistence/persistence.type";
+import { GlobalEvent } from "@21n/types/event.enum";
+import { resolveToken, signout } from "@21n/utils/account.utils";
 import {
   dispatchCustomEvent,
   generateFingerprint,
   isContentScript,
   isExtensionEnvironment
-} from "./browser.utils";
-import { clientStorage } from "../persistence/persistence.utils";
-import { detectTimeZone } from "./time.utils";
+} from "@21n/utils/browser.utils";
+import { clientStorage } from "@21n/persistence/persistence.utils";
+import { detectTimeZone } from "@21n/utils/time.utils";
 import {
   relayToBackgroundScript,
   relayToContentScript
-} from "./extension.utils";
-import { ExtensionEvent } from "../types/extension.type";
-import { relayToSidePanel } from "./extension.utils";
-import { stringify } from "$lib/shared/utils/json.utils";
+} from "@21n/utils/extension.utils";
+import { ExtensionEvent } from "@21n/types/extension.type";
+import { relayToSidePanel } from "@21n/utils/extension.utils";
+import { stringify } from "@21n/shared-utils/json.utils";
 
 export function resolveRegionalApiUrl() {
   try {

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { IListItem } from "../../landing.type";
-  import List from "../../list/List.svelte";
+  import type { IListItem } from "@21n/landing/shared/landing.type";
+  import List from "@21n/landing/shared/list/List.svelte";
   export let items: IListItem[];
   export let slice: number = 4;
   export let color: "aps1" | "ags1" = "ags1";

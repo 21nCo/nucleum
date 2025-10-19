@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { PricingToggleOption } from "./pricing.types";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { PricingToggleOption } from "@21n/landing/shared/pricing/pricing.types";
   export let unit: PricingToggleOption;
 
   let options: { value: PricingToggleOption; label: string }[] = [

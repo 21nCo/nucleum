@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Placement } from "../types/direction.enum";
-  import { IconVariant } from "../types/icon.type";
+  import { Placement } from "@21n/types/direction.enum";
+  import { IconVariant } from "@21n/types/icon.type";
   export let direction: Placement = Placement.Left;
   export let variant: IconVariant = IconVariant.Outline;
   export let isCircled: boolean = false;

@@ -1,13 +1,13 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import type { DropdownItem } from "@21n/types/dropdownItem.type";
   import type {
     FieldMappingConfig,
     FieldMappingValue,
     FieldMappingField
-  } from "./data.type";
-  import { Size } from "$lib/client/types/size.enum";
+  } from "@21n/products/memotron/import/data.type";
+  import { Size } from "@21n/types/size.enum";
 
   export let fieldMappingConfig: FieldMappingConfig;
   export let fieldMappings: Record<string, string> = {};

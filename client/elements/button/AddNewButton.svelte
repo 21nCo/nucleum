@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Icon from "../Icon.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Size } from "$lib/client/types/size.enum";
-  import view from "$lib/client/stores/view.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/types/size.enum";
+  import view from "@21n/stores/view.store";
   export let text: string = "Add new";
   export let size = Size.md;
   export let className: string = "";

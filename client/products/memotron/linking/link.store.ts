@@ -1,25 +1,25 @@
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
 import {
   LinkType,
   type ILink,
   type ILinkCapture,
   type ILinkTag
-} from "./link.type";
-import { StoreDataType, type IRecordId } from "$lib/client/types/data.type";
-import { replaceParams } from "$lib/shared/utils/surreal.utils";
-import { logger } from "$lib/client/components/debug/logger.client";
-import { activeResourceFilter } from "$lib/client/utils/utils";
+} from "@21n/products/memotron/linking/link.type";
+import { StoreDataType, type IRecordId } from "@21n/types/data.type";
+import { replaceParams } from "@21n/shared-utils/surreal.utils";
+import { logger } from "@21n/components/debug/logger.client";
+import { activeResourceFilter } from "@21n/utils/utils";
 import { get } from "svelte/store";
-import { linkTagLabelMapper } from "./link.utils";
-import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+import { linkTagLabelMapper } from "@21n/products/memotron/linking/link.utils";
+import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
 import type {
   IResourceCaptureV2,
   ResourceAccessPoint
-} from "$lib/client/components/flux/resourceStores/resource.type";
-import { ResourceError } from "$lib/client/components/error/errors";
-import { ResourceErrorCode } from "$lib/client/components/error/error.type";
+} from "@21n/components/flux/resourceStores/resource.type";
+import { ResourceError } from "@21n/components/error/errors";
+import { ResourceErrorCode } from "@21n/components/error/error.type";
 
 class Linker extends ResourceStore<ILink, ILinkCapture> {
   constructor() {

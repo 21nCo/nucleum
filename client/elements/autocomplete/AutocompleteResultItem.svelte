@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ClassListProp } from "$lib/client/types/classListProp.type";
+  import type { ClassListProp } from "@21n/types/classListProp.type";
   import { createEventDispatcher } from "svelte";
 
   export let style: string;

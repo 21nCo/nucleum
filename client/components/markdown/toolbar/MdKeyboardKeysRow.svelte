@@ -1,10 +1,10 @@
 <script lang="ts">
-  import context from "$lib/client/stores/context.store";
-  import { OperatingSystem } from "$lib/client/types/context.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import KeyboardToolbarKey from "$lib/client/elements/keyboardToolbar/KeyboardToolbarKey.svelte";
+  import context from "@21n/stores/context.store";
+  import { OperatingSystem } from "@21n/types/context.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import KeyboardToolbarKey from "@21n/elements/keyboardToolbar/KeyboardToolbarKey.svelte";
   import { createEventDispatcher } from "svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
   import { fly } from "svelte/transition";
   const dispatch = createEventDispatcher();
 </script>

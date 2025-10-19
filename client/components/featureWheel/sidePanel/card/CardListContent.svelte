@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { IListContentItem } from "$lib/client/types/featureWheel.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import type { IListContentItem } from "@21n/types/featureWheel.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
 
   export let items: IListContentItem[];
 </script>

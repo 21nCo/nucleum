@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import type { ICapture } from "../capture.type";
-  import DraftItem from "./DraftItem.svelte";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { TextStyle } from "@21n/types/text.enum";
+  import type { ICapture } from "@21n/products/memotron/capture/capture.type";
+  import DraftItem from "@21n/products/memotron/capture/draftSelector/DraftItem.svelte";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
   export let drafts: ICapture[] = [];
   export let onClose: () => void;
   export let onSelect: (draft: ICapture) => void;

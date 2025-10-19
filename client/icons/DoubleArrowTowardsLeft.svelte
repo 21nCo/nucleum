@@ -1,6 +1,6 @@
 <script lang="ts">
   import { afterUpdate } from "svelte";
-  import { IconVariant } from "../types/icon.type";
+  import { IconVariant } from "@21n/types/icon.type";
 
   export let color: string = "";
   export let opacity: number = 1;

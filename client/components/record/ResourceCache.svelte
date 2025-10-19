@@ -1,12 +1,12 @@
 <script lang="ts">
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { cache } from "$lib/client/layout/layers/cache/cache.store";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { cache } from "@21n/layout/layers/cache/cache.store";
   import { onMount } from "svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { SearchStore } from "$lib/client/components/record/record.store";
-  import { resourceCacheKey } from "../flux/resourceStores/resource.utils";
-  import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
-  import { RemovalProperty } from "$lib/client/types/data.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { resourceCacheKey } from "@21n/components/flux/resourceStores/resource.utils";
+  import { CacheKey } from "@21n/layout/layers/cache/cache.type";
+  import { RemovalProperty } from "@21n/types/data.type";
 
   export let resource: Resource;
   const searchStore = new SearchStore(resource);

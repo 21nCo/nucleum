@@ -1,4 +1,4 @@
-import { isValidEmail } from "./text.utils";
+import { isValidEmail } from "@21n/shared-utils/text.utils";
 
 export function extractProductv1(host: string) {
   if (!host) return { product: "", env: "" };

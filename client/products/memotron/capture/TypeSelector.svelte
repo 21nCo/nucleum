@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { CaptureMethod } from "$lib/client/products/memotron/capture/capture.type";
-  import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import type { ISelectItem } from "$lib/client/types/select.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { collectionStore } from "$lib/client/components/collection/collection.store";
+  import { CaptureMethod } from "@21n/products/memotron/capture/capture.type";
+  import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import type { ISelectItem } from "@21n/types/select.type";
+  import { Size } from "@21n/types/size.enum";
+  import { appStore } from "@21n/stores/app.store";
+  import { collectionStore } from "@21n/components/collection/collection.store";
 
-  import TypeSelectorItem from "./typeSelector/TypeSelectorItem.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { CollectionObjectKey } from "$lib/client/components/collection/collection.type";
-  import context from "$lib/client/stores/context.store";
+  import TypeSelectorItem from "@21n/products/memotron/capture/typeSelector/TypeSelectorItem.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { CollectionObjectKey } from "@21n/components/collection/collection.type";
+  import context from "@21n/stores/context.store";
   export let selected: string;
   export let isHideTypeShortcuts: boolean = false;
   let dev_isEnableEditShortcuts: boolean = true;
@@ -38,10 +38,14 @@
       icon: "upload",
       value: CaptureMethod.UPLOAD
     },
-    !$context.isEmbed && {
-      icon: "clipboard",
-      value: CaptureMethod.PASTE
-    }
+    ...(!$context.isEmbed
+      ? [
+          {
+            icon: "clipboard",
+            value: CaptureMethod.PASTE
+          }
+        ]
+      : [])
   ];
 
   async function refreshTypes() {

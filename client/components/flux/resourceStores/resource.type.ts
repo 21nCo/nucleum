@@ -1,9 +1,9 @@
-import type { ObservableStore } from "$lib/client/stores/client.store";
+import type { ObservableStore } from "@21n/stores/client.store";
 import type {
   IMutationAdditionalParams,
   IRecordId
-} from "$lib/client/types/data.type";
-import type { Resource } from "./resource.enum";
+} from "@21n/types/data.type";
+import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 
 export interface IResourceBase {
   id: IRecordId;
@@ -154,7 +154,8 @@ export enum ResourceActionType {
   COPY_LINK = "COPY_LINK",
   COPY_CONTENTS = "COPY_CONTENTS",
   TOGGLE_READ_MODE = "TOGGLE_READ_MODE",
-  TOGGLE_FOCUS_MODE = "TOGGLE_FOCUS_MODE"
+  TOGGLE_FOCUS_MODE = "TOGGLE_FOCUS_MODE",
+  SET_COVER_PHOTO = "SET_COVER_PHOTO"
 }
 
 /**

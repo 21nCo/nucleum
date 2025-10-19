@@ -1,13 +1,13 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import context from "$lib/client/stores/context.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import { Embed } from "$lib/client/types/context.type";
-  import { keyboardShortcuts } from "../shortcuts.store";
-  import ShortcutItem from "./ShortcutItem.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import context from "@21n/stores/context.store";
+  import { Action } from "@21n/types/action.enum";
+  import { Embed } from "@21n/types/context.type";
+  import { keyboardShortcuts } from "@21n/components/shortcuts/shortcuts.store";
+  import ShortcutItem from "@21n/components/shortcuts/settings/ShortcutItem.svelte";
   let error: string | undefined = undefined;
   let keyMap = keyboardShortcuts.fetchConfiguratbleShortcuts();
 </script>

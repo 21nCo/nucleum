@@ -1,10 +1,10 @@
 <!-- <script lang="ts">
   import { goto } from "$app/navigation";
-  import Button from "$lib/client/elements/Button.svelte";
+  import Button from "@21n/elements/Button.svelte";
   import {
     isShowAppearancePreview,
     windowObject,
-  } from "$lib/client/stores/app.store";
+  } from "@21n/stores/app.store";
 </script>
 
 {#if $isShowAppearancePreview}

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { logger } from "$lib/client/components/debug/logger.client";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { logger } from "@21n/components/debug/logger.client";
 
   export let logs: string[] = [];
   export let isShowLogs = import.meta.env.DEV;

@@ -1,10 +1,11 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import { Orientation } from "@21n/types/direction.enum";
   import { createEventDispatcher } from "svelte";
-  import HighlightColors from "../../common/highlighters/HighlightColors.svelte";
+  import HighlightColors from "@21n/products/memotron/common/highlighters/HighlightColors.svelte";
+  import { ButtonVariant } from "@21n/types/button.type";
   let dispatch = createEventDispatcher();
   export let style = "";
   export let selectedColor = "";
@@ -17,17 +18,9 @@
   on:click|stopPropagation
   on:mousedown|stopPropagation
 >
-  <Button
-    icon="trash"
-    parentBgIndex={2}
-    tooltip="Delete"
-    on:click={() => {
-      dispatch("delete");
-    }}
-  />
   {#if editable}
     <Button
-      icon="pencil-square"
+      icon="edit"
       tooltip="Edit"
       parentBgIndex={2}
       on:click={() => {
@@ -35,6 +28,15 @@
       }}
     />
   {/if}
+  <Button
+    icon="trash"
+    parentBgIndex={2}
+    tooltip="Delete"
+    type={ButtonVariant.DANGER}
+    on:click={() => {
+      dispatch("delete");
+    }}
+  />
   <Divider
     orientation={Orientation.Vertical}
     colorStrength={ColorStrength.Strong}

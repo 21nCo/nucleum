@@ -1,10 +1,10 @@
-import type { IStore } from "$lib/client/types/data.type";
-import type { TimePeriod } from "$lib/client/types/time.type";
+import type { IStore } from "@21n/types/data.type";
+import type { TimePeriod } from "@21n/types/time.type";
 import type {
   IResourceBase,
   ITrashInformation
-} from "../../components/flux/resourceStores/resource.type";
-import { TagId } from "./tagId.enum";
+} from "@21n/components/flux/resourceStores/resource.type";
+import { TagId } from "@21n/types/pointron/tagId.enum";
 
 /**
  * @deprecated - use IGoal from goals/goal.type.ts instead

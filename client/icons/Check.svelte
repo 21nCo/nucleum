@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Size } from "../types/size.enum";
+  import { Size } from "@21n/types/size.enum";
 
   export let isChecked: boolean = false;
   export let isAccentBgActive: boolean = false;

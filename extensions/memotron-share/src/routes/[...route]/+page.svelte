@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import ShareContentSaver from "$lib/client/products/memotron/capture/ShareContentSaver.svelte";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import type { IPasteCaptureData } from "$lib/client/products/memotron/capture/capture.type";
-  import { sanitizeAndResolve } from "$lib/client/products/memotron/node/url.utils";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import SheetDebugLogs from "$lib/client/extensions/SheetDebugLogs.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { resolveContentTypeForFile } from "$lib/client/products/memotron/capture/capture.utils";
+  import ShareContentSaver from "@21n/products/memotron/capture/ShareContentSaver.svelte";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
+  import type { IPasteCaptureData } from "@21n/products/memotron/capture/capture.type";
+  import { sanitizeAndResolve } from "@21n/products/memotron/node/url.utils";
+  import { logger } from "@21n/components/debug/logger.client";
+  import SheetDebugLogs from "@21n/extensions/SheetDebugLogs.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { resolveContentTypeForFile } from "@21n/products/memotron/capture/capture.utils";
 
   let data: IPasteCaptureData | undefined = undefined;
   let nodeType: NodeType | undefined = undefined;
@@ -35,6 +35,7 @@
           const parsed = JSON.parse(event.data.payload);
           addToDebugLog(`Parsed data: ${JSON.stringify(parsed)}`);
           if (parsed.type === "SHARED_CONTENT") {
+            if (data) return;
             await processShareData(parsed);
           }
         }
@@ -298,7 +299,7 @@
       {:else}
         <EmptyStatusView
           isLoadingState={true}
-          subText="Logged in. Reading data..."
+          loadingText="Logged in. Reading data..."
         />
       {/if}
     </div>

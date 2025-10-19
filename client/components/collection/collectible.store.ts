@@ -1,21 +1,21 @@
-import { ActiveResourceStore } from "../flux/resourceStores/resource.store";
-import type { ResourceStore } from "../flux/resourceStores/resource.store";
-import type { IRecordId } from "$lib/client/types/data.type";
-import { linker } from "$lib/client/products/memotron/linking/link.store";
-import { isSameResource } from "../flux/resourceStores/resource.utils";
-import { collectionStore } from "../collection/collection.store";
+import { ActiveResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import type { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import type { IRecordId } from "@21n/types/data.type";
+import { linker } from "@21n/products/memotron/linking/link.store";
+import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+import { collectionStore } from "@21n/components/collection/collection.store";
 import type {
   ICollectible,
   ICollectionExpanded,
   ICollectionItemPropertyValue
-} from "./collection.type";
-import { logger } from "../debug/logger.client";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { resolveAvatar } from "./collection.utils";
+} from "@21n/components/collection/collection.type";
+import { logger } from "@21n/components/debug/logger.client";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+import { resolveAvatar } from "@21n/components/collection/collection.utils";
 import type {
   IResource,
   IResourceCaptureV2
-} from "../flux/resourceStores/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 
 export class CollectibleStore<
   T extends IResource & ICollectible,

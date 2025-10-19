@@ -1,7 +1,7 @@
 <script lang="ts">
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
   export let label: string;
   let className: string = "";
   export { className as class };

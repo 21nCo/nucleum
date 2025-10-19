@@ -1,12 +1,12 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import appearance from "$lib/client/stores/appearance.store";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import appearance from "@21n/stores/appearance.store";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { createEventDispatcher } from "svelte";
-  import MastodonWidgetScript from "./MastodonWidgetScript.svelte";
-  import { Persistence } from "$lib/client/persistence/persistence";
-  import { parse } from "$lib/shared/utils/json.utils";
-  import SocialPostLoadingInfo from "./SocialPostLoadingInfo.svelte";
+  import MastodonWidgetScript from "@21n/products/memotron/node/content/web/social/MastodonWidgetScript.svelte";
+  import { Persistence } from "@21n/persistence/persistence";
+  import { parse } from "@21n/shared-utils/json.utils";
+  import SocialPostLoadingInfo from "@21n/products/memotron/node/content/web/social/SocialPostLoadingInfo.svelte";
 
   const dispatch = createEventDispatcher();
 

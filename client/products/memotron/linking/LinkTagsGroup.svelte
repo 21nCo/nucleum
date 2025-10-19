@@ -1,24 +1,24 @@
 <script lang="ts">
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import Popover from "$lib/client/elements/popover/Popover.svelte";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import Tag from "$lib/client/elements/text/Tag.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import context from "$lib/client/stores/context.store";
-  import { confirmationNotification } from "$lib/client/stores/notification.store";
-  import view from "$lib/client/stores/view.store";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { logger } from "@21n/components/debug/logger.client";
+  import Button from "@21n/elements/button/Button.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import Popover from "@21n/elements/popover/Popover.svelte";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import Tag from "@21n/elements/text/Tag.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import context from "@21n/stores/context.store";
+  import { confirmationNotification } from "@21n/stores/notification.store";
+  import view from "@21n/stores/view.store";
   import {
     ButtonStyle,
     ButtonVariant,
     type IButtonParams
-  } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { ILinkTagGroup } from "./link.type";
+  } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { ILinkTagGroup } from "@21n/products/memotron/linking/link.type";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
 

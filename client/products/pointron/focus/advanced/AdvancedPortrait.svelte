@@ -1,9 +1,9 @@
 <script lang="ts">
-  import TimeComposition from "./composition/TimeComposition.svelte";
-  import IntervalBar from "$lib/client/products/pointron/focus/elements/intervalbar/IntervalBar.svelte";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { focusItemsStore } from "$lib/client/products/pointron/focus/session.store";
-  import { appStore } from "$lib/client/stores/app.store";
+  import TimeComposition from "@21n/products/pointron/focus/advanced/composition/TimeComposition.svelte";
+  import IntervalBar from "@21n/products/pointron/focus/elements/intervalbar/IntervalBar.svelte";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import { focusItemsStore } from "@21n/products/pointron/focus/session.store";
+  import { appStore } from "@21n/stores/app.store";
   export let parentBgIndex = 1;
 
   $: focusItemsCount = focusItemsStore.resolveCount($focusItemsStore.items);

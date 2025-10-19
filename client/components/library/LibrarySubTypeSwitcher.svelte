@@ -1,39 +1,39 @@
 <script lang="ts">
-  import { appStore } from "$lib/client/stores/app.store";
+  import { appStore } from "@21n/stores/app.store";
   import {
     OptionSelectorStyle,
     type ISelectItem
-  } from "$lib/client/types/select.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { resolveGoalSubTypesForSwitcher } from "../goals/goal.utils";
-  import { resolveTaskSubTypesForSwitcher } from "../tasks/task.utils";
-  import { resolveNodeSubTypesForSwitcher } from "$lib/client/products/memotron/node/node.utils";
-  import { resolveCollectionSubTypesForSwitcher } from "$lib/client/components/collection/collection.utils";
-  import type { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import type { CollectionType } from "../collection/collection.type";
-  import view from "$lib/client/stores/view.store";
-  import { SearchStore } from "../record/record.store";
-  import { logger } from "../debug/logger.client";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-  import type { SubType } from "./library.type";
+  } from "@21n/types/select.type";
+  import { Size } from "@21n/types/size.enum";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { resolveGoalSubTypesForSwitcher } from "@21n/components/goals/goal.utils";
+  import { resolveTaskSubTypesForSwitcher } from "@21n/components/tasks/task.utils";
+  import { resolveNodeSubTypesForSwitcher } from "@21n/products/memotron/node/node.utils";
+  import { resolveCollectionSubTypesForSwitcher } from "@21n/components/collection/collection.utils";
+  import type { NodeType } from "@21n/products/memotron/node/node.type";
+  import type { CollectionType } from "@21n/components/collection/collection.type";
+  import view from "@21n/stores/view.store";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { Orientation } from "@21n/types/direction.enum";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import type { SubType } from "@21n/components/library/library.type";
   import { onMount } from "svelte";
-  import { ResourceAccessPoint } from "../flux/resourceStores/resource.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import {
     BarStyle,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  } from "@21n/types/switcher.enum";
+  import { AppSearchParam } from "@21n/types/appStore.type";
   import { page } from "$app/stores";
-  import { resourceCacheKey } from "../flux/resourceStores/resource.utils";
-  import { cache } from "$lib/client/layout/layers/cache/cache.store";
-  import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import { resourceCacheKey } from "@21n/components/flux/resourceStores/resource.utils";
+  import { cache } from "@21n/layout/layers/cache/cache.store";
+  import { CacheKey } from "@21n/layout/layers/cache/cache.type";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { fade } from "svelte/transition";
   export let resource: Resource;
   export let isConstrainedWidth: boolean = $view.isConstrainedWidth;

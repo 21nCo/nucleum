@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Highlights from "./Highlights.svelte";
-  import type { IHighlight } from "../landing.type";
+  import Highlights from "@21n/landing/shared/highlights/Highlights.svelte";
+  import type { IHighlight } from "@21n/landing/shared/landing.type";
 
   // Example highlights data
   const highlights: IHighlight[] = [

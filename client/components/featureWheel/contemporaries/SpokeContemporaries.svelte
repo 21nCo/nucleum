@@ -2,9 +2,9 @@
   import type {
     IFeatureWheelContemporary,
     IFeatureWheelSpoke
-  } from "$lib/client/types/featureWheel.type";
-  import type { Size } from "$lib/client/types/size.enum";
-  import SpokeContemporaryItem from "./SpokeContemporaryItem.svelte";
+  } from "@21n/types/featureWheel.type";
+  import type { Size } from "@21n/types/size.enum";
+  import SpokeContemporaryItem from "@21n/components/featureWheel/contemporaries/SpokeContemporaryItem.svelte";
   export let size: Size;
   export let selectedSpoke: string | undefined = undefined;
   export let spoke: IFeatureWheelSpoke;

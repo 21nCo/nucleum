@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { logger } from "$lib/client/components/debug/logger.client";
+  import { logger } from "@21n/components/debug/logger.client";
   import { onMount } from "svelte";
 
   // Extend Window interface to include YouTube specific properties

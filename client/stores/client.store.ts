@@ -3,8 +3,8 @@ import {
   StoreDataType,
   type IObservableStore,
   type IStore
-} from "../types/data.type";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+} from "@21n/types/data.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 
 export class ObservableStore<T> implements IObservableStore<T> {
   id: Resource | string;

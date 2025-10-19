@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { Arrangement } from "$lib/client/types/direction.enum";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import type { IProperty } from "./properties/property.type";
-  import NodeRecords from "$lib/client/products/memotron/node/NodeRecords.svelte";
-  import type { ICollectionItem } from "./collection.type";
-  import { Resource } from "../flux/resourceStores/resource.enum";
-  import Records from "../record/Records.svelte";
+  import { Arrangement } from "@21n/types/direction.enum";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import type { IProperty } from "@21n/components/collection/properties/property.type";
+  import NodeRecords from "@21n/products/memotron/node/NodeRecords.svelte";
+  import type { ICollectionItem } from "@21n/components/collection/collection.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import Records from "@21n/components/record/Records.svelte";
 
   export let items: ICollectionItem[] = [];
   export let resource: Resource | undefined = undefined;

@@ -1,6 +1,6 @@
-import { ObservableStore } from "$lib/client/stores/client.store";
-import { GlobalEvent } from "$lib/client/types/event.enum";
-import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
+import { ObservableStore } from "@21n/stores/client.store";
+import { GlobalEvent } from "@21n/types/event.enum";
+import { dispatchCustomEvent } from "@21n/utils/browser.utils";
 
 class CacheStore extends ObservableStore<{ [key: string]: any }> {
   constructor() {

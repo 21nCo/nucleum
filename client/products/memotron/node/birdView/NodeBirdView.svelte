@@ -3,45 +3,45 @@
     isSameResource,
     removeDuplicatesFilter,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Size } from "$lib/client/types/size.enum";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { Size } from "@21n/types/size.enum";
   import {
     PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
-  import NodeGraph from "../../graph/NodeGraph.svelte";
-  import { linker, linkTagStore } from "../../linking/link.store";
-  import { linkTagLabelMapper } from "../../linking/link.utils";
-  import { nodeStore, type IActiveNodeStore } from "../node.store";
+  } from "@21n/types/switcher.enum";
+  import NodeGraph from "@21n/products/memotron/graph/NodeGraph.svelte";
+  import { linker, linkTagStore } from "@21n/products/memotron/linking/link.store";
+  import { linkTagLabelMapper } from "@21n/products/memotron/linking/link.utils";
+  import { nodeStore, type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
   import {
     NodeRightPaneType,
     NodeView,
     webNodeTypeList,
     type INode
-  } from "../node.type";
-  import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
-  import { LinkType, type ILinkTag } from "../../linking/link.type";
-  import { enumToString } from "$lib/shared/utils/text.utils";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import view from "$lib/client/stores/view.store";
-  import { InputStyle } from "$lib/client/types/input.type";
+  } from "@21n/products/memotron/node/node.type";
+  import type { DropdownItem } from "@21n/types/dropdownItem.type";
+  import { LinkType, type ILinkTag } from "@21n/products/memotron/linking/link.type";
+  import { enumToString } from "@21n/shared-utils/text.utils";
+  import type { IRecordId } from "@21n/types/data.type";
+  import view from "@21n/stores/view.store";
+  import { InputStyle } from "@21n/types/input.type";
   import {
     resolveNodeFavicon,
     resolveNodeGraphFill,
     resolveNodeLabelString
-  } from "../node.utils";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import NodeRightPaneContent from "../rightPanel/NodeRightPaneContent.svelte";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import NodeTimelineView from "../timeline/NodeTimelineView.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { NodeBirdViewMode } from "./birdView.type";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  } from "@21n/products/memotron/node/node.utils";
+  import { logger } from "@21n/components/debug/logger.client";
+  import NodeRightPaneContent from "@21n/products/memotron/node/rightPanel/NodeRightPaneContent.svelte";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import { toasts } from "@21n/stores/notification.store";
+  import NodeTimelineView from "@21n/products/memotron/node/timeline/NodeTimelineView.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { NodeBirdViewMode } from "@21n/products/memotron/node/birdView/birdView.type";
+  import { AppSearchParam } from "@21n/types/appStore.type";
   import { page } from "$app/stores";
   export let node: IActiveNodeStore;
   export let rightPane: NodeRightPaneType | undefined = undefined;

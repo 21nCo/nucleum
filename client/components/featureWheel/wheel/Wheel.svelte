@@ -1,21 +1,21 @@
 <script lang="ts">
-  import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
+  import SubAtomLogo from "@21n/branding/SubAtomLogo.svelte";
   import {
     FeatureWheelMode,
     type IFeatureWheelGroup,
     type IFeatureWheelSpoke,
     type IFeatureWheel
-  } from "$lib/client/types/featureWheel.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import SpokeLabel from "../labels/SpokeLabel.svelte";
-  import SpokeProgressMarker from "../SpokeProgressMarker.svelte";
-  import SpokeContemporaries from "../contemporaries/SpokeContemporaries.svelte";
-  import { deepCopy } from "$lib/shared/utils/obj.utils";
-  import GroupLabel from "../labels/GroupLabel.svelte";
+  } from "@21n/types/featureWheel.type";
+  import { Size } from "@21n/types/size.enum";
+  import SpokeLabel from "@21n/components/featureWheel/labels/SpokeLabel.svelte";
+  import SpokeProgressMarker from "@21n/components/featureWheel/SpokeProgressMarker.svelte";
+  import SpokeContemporaries from "@21n/components/featureWheel/contemporaries/SpokeContemporaries.svelte";
+  import { deepCopy } from "@21n/shared-utils/obj.utils";
+  import GroupLabel from "@21n/components/featureWheel/labels/GroupLabel.svelte";
   import { onMount } from "svelte";
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
   import { createEventDispatcher } from "svelte";
-  import { resizeListener } from "$lib/client/actions/resize.action";
+  import { resizeListener } from "@21n/actions/resize.action";
   const dispatch = createEventDispatcher();
   export let wheel: IFeatureWheel;
   export let mode: FeatureWheelMode = FeatureWheelMode.COMPARER;

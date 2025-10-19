@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { selectedTimePeriod } from "$lib/client/stores/app.store";
-  import { Placement, Orientation } from "$lib/client/types/direction.enum";
-  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
+  import { selectedTimePeriod } from "@21n/stores/app.store";
+  import { Placement, Orientation } from "@21n/types/direction.enum";
+  import { parseAndFormatDate } from "@21n/utils/time.utils";
   import {
     TileAppearance,
     type DailyData,
     type MonthlyData
-  } from "./calendarHeatmap.types";
-  import { CalendarHeatMapLayout } from "./calendarHeatmap.store";
-  import { heatMapColorRange } from "$lib/client/utils/theme.utils";
-  import appearance from "$lib/client/stores/appearance.store";
-  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/components/calendar/calendarHeatmap/calendarHeatmap.types";
+  import { CalendarHeatMapLayout } from "@21n/components/calendar/calendarHeatmap/calendarHeatmap.store";
+  import { heatMapColorRange } from "@21n/utils/theme.utils";
+  import appearance from "@21n/stores/appearance.store";
+  import HoverableElement from "@21n/elements/HoverableElement.svelte";
+  import { cn } from "@21n/utils/ui.utils";
 
   export let data: DailyData | MonthlyData;
   export let classList: string = "";

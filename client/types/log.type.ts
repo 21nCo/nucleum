@@ -1,4 +1,4 @@
-import type { IStore } from "./data.type";
+import type { IStore } from "@21n/types/data.type";
 
 export interface LogStore extends IStore {
   items: DebugLog[];

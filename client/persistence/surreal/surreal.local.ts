@@ -2,12 +2,12 @@ import type {
   ILocal,
   IPersistence,
   IPersistenceInitParams
-} from "../persistence.type";
+} from "@21n/persistence/persistence.type";
 import { ResponseError, Surreal } from "surrealdb";
 // import { surrealdbWasmEngines } from "@surrealdb/wasm";
 // import { Surreal } from "surrealdb.js";
 // import { surrealdbWasmEngines } from "surrealdb.wasm";
-import { logger } from "../../components/debug/logger.client";
+import { logger } from "@21n/components/debug/logger.client";
 import {
   resolveDboUpdateQuery,
   commonQueryReplacements,
@@ -17,12 +17,12 @@ import {
   resolveBulkMergeQuery,
   resolveSelectQuery,
   resolveSelectManyQuery
-} from "$lib/shared/utils/surreal.utils";
-import { Resource } from "../../components/flux/resourceStores/resource.enum";
+} from "@21n/shared-utils/surreal.utils";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import type {
   IMetaResource,
   IResource
-} from "../../components/flux/resourceStores/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 import {
   PersistenceActionType,
   SearchType,
@@ -31,17 +31,17 @@ import {
   type IRecordId,
   type IResourceSelectParams,
   type IResourceSelectProperties
-} from "../../types/data.type";
-import { interceptSurrealResponse } from "../../utils/utils";
-import { LogType } from "$lib/client/components/debug/debug.type";
-import { compareVersions } from "$lib/shared/utils/utils";
-import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
-import { GlobalEvent } from "$lib/client/types/event.enum";
-import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
-import { Product } from "$lib/client/products/product.type";
-import { resolveProductConfig } from "$lib/client/products/product.config";
-import { postDataToParent } from "$lib/client/utils/embed.utils";
-import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
+} from "@21n/types/data.type";
+import { interceptSurrealResponse } from "@21n/utils/utils";
+import { LogType } from "@21n/components/debug/debug.type";
+import { compareVersions } from "@21n/shared-utils/utils";
+import { dispatchCustomEvent } from "@21n/utils/browser.utils";
+import { GlobalEvent } from "@21n/types/event.enum";
+import { generateMiniRandomId } from "@21n/shared-utils/crypto.utils";
+import { Product } from "@21n/products/product.type";
+import { resolveProductConfig } from "@21n/products/product.config";
+import { postDataToParent } from "@21n/utils/embed.utils";
+import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
 
 const loadSurrealDB = async () => {
   const Surreal = await import("@surrealdb/wasm");

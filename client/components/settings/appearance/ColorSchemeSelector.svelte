@@ -1,15 +1,15 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { Theme, type ColorScheme } from "$lib/client/types/appearance.type";
-  import { appConstants } from "$lib/client/stores/app.store";
-  import appearance from "$lib/client/stores/appearance.store";
-  import { sortArrayByOrder } from "$lib/shared/utils/obj.utils";
-  import ColorSchemeSelectorItem from "./ColorSchemeSelectorItem.svelte";
-  import FormControlLabelWrapper from "$lib/client/elements/text/formLabel/FormControlLabelWrapper.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { userPreferences } from "../userPreferences.store";
+  import { Theme, type ColorScheme } from "@21n/types/appearance.type";
+  import { appConstants } from "@21n/stores/app.store";
+  import appearance from "@21n/stores/appearance.store";
+  import { sortArrayByOrder } from "@21n/shared-utils/obj.utils";
+  import ColorSchemeSelectorItem from "@21n/components/settings/appearance/ColorSchemeSelectorItem.svelte";
+  import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
   export let theme: Theme = Theme.LIGHT;
   export let label: string = "Color scheme";
   export let size: Size.sm | Size.md = Size.md;

@@ -1,6 +1,6 @@
-import { NodeType } from "$lib/client/products/memotron/node/node.type";
-import { sanitize } from "$lib/shared/utils/utils";
-import { isValidUrl } from "$lib/shared/utils/utils";
+import { NodeType } from "@21n/products/memotron/node/node.type";
+import { sanitize } from "@21n/shared-utils/utils";
+import { isValidUrl } from "@21n/shared-utils/utils";
 
 export const contentTypeMap: {
   contentType:

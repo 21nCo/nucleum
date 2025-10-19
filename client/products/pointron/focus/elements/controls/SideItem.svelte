@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let item: string;

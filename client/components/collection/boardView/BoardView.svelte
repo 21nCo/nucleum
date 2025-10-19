@@ -3,28 +3,28 @@
     ICollectionItem,
     ICollectionItemPropertyValue,
     ICollectionView
-  } from "$lib/client/components/collection/collection.type";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import BoardPane from "./BoardPane.svelte";
-  import CollectionItems from "../CollectionItems.svelte";
+  } from "@21n/components/collection/collection.type";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import BoardPane from "@21n/components/collection/boardView/BoardPane.svelte";
+  import CollectionItems from "@21n/components/collection/CollectionItems.svelte";
   import {
     calculateGroupingCounts,
     resolveOptionsForGrouping,
     UNASSIGNED_VALUE
-  } from "../collection.utils";
+  } from "@21n/components/collection/collection.utils";
   import {
     extractResourceIdFromElementId,
     isSameResource,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import type { IActiveCollectionStore } from "$lib/client/components/collection/collection.store";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import type { IActiveCollectionStore } from "@21n/components/collection/collection.store";
+  import type { IRecordId } from "@21n/types/data.type";
   import {
     type IPropertyValue,
     PropertyType
-  } from "$lib/client/components/collection/properties/property.type";
+  } from "@21n/components/collection/properties/property.type";
 
   export let collection: IActiveCollectionStore;
   export let view: ICollectionView;

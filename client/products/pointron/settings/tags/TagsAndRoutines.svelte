@@ -1,6 +1,6 @@
 <script>
-  import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
-  import TagsList from "./TagsList.svelte";
+  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
+  import TagsList from "@21n/products/pointron/settings/tags/TagsList.svelte";
 </script>
 
 <div class="flex flex-col gap-8">

@@ -1,12 +1,12 @@
 <script lang="ts">
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { CalendarHeatmapDataManager } from "./calendarHeatMap.utils";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import type { DropdownItem } from "@21n/types/dropdownItem.type";
+  import { InputStyle } from "@21n/types/input.type";
+  import { CalendarHeatmapDataManager } from "@21n/components/calendar/calendarHeatmap/calendarHeatMap.utils";
   import type {
     ICalendarHeatMapDataProvider,
     CalendarHeatmapOptions
-  } from "./calendarHeatmap.types";
+  } from "@21n/components/calendar/calendarHeatmap/calendarHeatmap.types";
   import { getContext } from "svelte";
 
   const handleEvent = getContext<any>("heatmap-event");

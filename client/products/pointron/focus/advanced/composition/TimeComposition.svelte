@@ -1,31 +1,31 @@
 <script lang="ts">
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
-  import Slider from "../slider/Slider.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import AdvancedFocusModeSwitcher from "../modeSwitcher/AdvancedFocusModeSwitcher.svelte";
-  import ComposeDuration from "./ComposeDuration.svelte";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
+  import Slider from "@21n/products/pointron/focus/advanced/slider/Slider.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import AdvancedFocusModeSwitcher from "@21n/products/pointron/focus/advanced/modeSwitcher/AdvancedFocusModeSwitcher.svelte";
+  import ComposeDuration from "@21n/products/pointron/focus/advanced/composition/ComposeDuration.svelte";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import {
     PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
-  import PresetPicker from "./PresetPicker.svelte";
+  } from "@21n/types/switcher.enum";
+  import PresetPicker from "@21n/products/pointron/focus/advanced/composition/PresetPicker.svelte";
   import { onMount } from "svelte";
-  import { SessionCompositionType } from "$lib/client/types/pointron/sessionComposition.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import ComposeTotalsText from "./ComposeTotalsText.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import { SessionCompositionType } from "@21n/types/pointron/sessionComposition.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import ComposeTotalsText from "@21n/products/pointron/focus/advanced/composition/ComposeTotalsText.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { deepCopy } from "$lib/shared/utils/obj.utils";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/stores/uiState/uiState.type";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import { deepCopy } from "@21n/shared-utils/obj.utils";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { cn } from "@21n/utils/ui.utils";
 
   export let parentBgIndex: number = 1;
   let selectedMode: number = refreshAdvancedModeState();
@@ -55,9 +55,13 @@
     });
   }
   onMount(() => {
-    userPreferences.subscribe((value) => {
+    const userPreferencesUnsub = userPreferences.subscribe(() => {
       selectedMode = refreshAdvancedModeState();
     });
+
+    return () => {
+      userPreferencesUnsub();
+    };
   });
 
   function refreshAdvancedModeState() {

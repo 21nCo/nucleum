@@ -1,15 +1,15 @@
 <script lang="ts">
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import type { IAction } from "$lib/client/types/action.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import type { IAction } from "@21n/types/action.type";
+  import { Size } from "@21n/types/size.enum";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import { createEventDispatcher } from "svelte";
-  import ResultItem from "./ResultItem.svelte";
-  import type { IResource } from "../flux/resourceStores/resource.type";
-  import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
-  import { debouncer } from "$lib/client/utils/utils";
-  import { logger } from "../debug/logger.client";
-  import BreadcrumbMini from "$lib/client/elements/breadcrumb/BreadcrumbMini.svelte";
+  import ResultItem from "@21n/components/commandBar/ResultItem.svelte";
+  import type { IResource } from "@21n/components/flux/resourceStores/resource.type";
+  import TextWithHoverTooltip from "@21n/elements/text/TextWithHoverTooltip.svelte";
+  import { debouncer } from "@21n/utils/utils";
+  import { logger } from "@21n/components/debug/logger.client";
+  import BreadcrumbMini from "@21n/elements/breadcrumb/BreadcrumbMini.svelte";
 
   const dispatch = createEventDispatcher();
   export let action: IAction;

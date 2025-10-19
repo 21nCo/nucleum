@@ -1,12 +1,12 @@
 <script lang="ts">
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { OptionSelectorStyle } from "$lib/client/types/select.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TimeScaleUnit } from "$lib/client/types/time.type";
-  import Birdview from "../birdView/Birdview.svelte";
-  import { CalendarLayout } from "../calendar.type";
-  import CalendarLayoutView from "../CalendarLayout.svelte";
-  import CalendarHeader from "../classic/CalendarHeader.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import { OptionSelectorStyle } from "@21n/types/select.type";
+  import { Size } from "@21n/types/size.enum";
+  import { TimeScaleUnit } from "@21n/types/time.type";
+  import Birdview from "@21n/components/calendar/birdView/Birdview.svelte";
+  import { CalendarLayout } from "@21n/components/calendar/calendar.type";
+  import CalendarLayoutView from "@21n/components/calendar/CalendarLayout.svelte";
+  import CalendarHeader from "@21n/components/calendar/classic/CalendarHeader.svelte";
 
   export let panel: CalendarLayout = CalendarLayout.Bird;
   let scale: TimeScaleUnit = TimeScaleUnit.DAY;

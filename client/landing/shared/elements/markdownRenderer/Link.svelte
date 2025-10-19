@@ -1,5 +1,5 @@
 <script>
-  import { sanitizeUrl } from "../../utils/url-sanitizer";
+  import { sanitizeUrl } from "@21n/landing/shared/utils/url-sanitizer";
   export let href = "";
   export let title = undefined;
 

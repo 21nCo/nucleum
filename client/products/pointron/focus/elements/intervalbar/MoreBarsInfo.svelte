@@ -1,5 +1,5 @@
 <script lang="ts">
-  import view from "$lib/client/stores/view.store";
+  import view from "@21n/stores/view.store";
   export let length: number = 0;
 </script>
 

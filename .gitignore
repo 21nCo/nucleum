@@ -33,7 +33,8 @@ client/cx/contemporaries/glasp-*
 .sample_*
 .notes*
 
+.plasmo
+
 # Generated static assets manifest
 client/static/assets-manifest.json
 
-.plasmo

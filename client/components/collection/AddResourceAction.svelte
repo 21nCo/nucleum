@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import Popover from "$lib/client/elements/popover/Popover.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import Popover from "@21n/elements/popover/Popover.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
   import { createEventDispatcher } from "svelte";
 
   export let variant: "minimal" | "default" | "strong" = "default";

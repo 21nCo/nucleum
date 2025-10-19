@@ -1,14 +1,14 @@
-import type { Resource } from "../components/flux/resourceStores/resource.enum";
+import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import type {
   IMetaResource,
   IResource
-} from "../components/flux/resourceStores/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 import type {
   IMutationParamsv2,
   IRecordId,
   IResourceSelectParams,
   IResourceSelectProperties
-} from "../types/data.type";
+} from "@21n/types/data.type";
 
 export enum ClientStorageKey {
   ENV = "env",

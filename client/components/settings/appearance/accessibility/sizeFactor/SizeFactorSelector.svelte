@@ -1,6 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import SizeFactorItem from "./SizeFactorItem.svelte";
+  import SizeFactorItem from "@21n/components/settings/appearance/accessibility/sizeFactor/SizeFactorItem.svelte";
   export let selectedFactor: number = 1;
   export let parentBackgroundIndex: number = 1;
   let dispatch = createEventDispatcher();

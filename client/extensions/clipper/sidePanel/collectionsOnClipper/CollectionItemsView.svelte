@@ -1,15 +1,15 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { CollectionType } from "$lib/client/components/collection/collection.type";
-  import WebpageItem from "./WebpageItem.svelte";
-  import type { CollectionData, CollectionItem } from "./types";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { openAppPath } from "$lib/client/utils/extension.utils";
+  import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { CollectionType } from "@21n/components/collection/collection.type";
+  import WebpageItem from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/WebpageItem.svelte";
+  import type { CollectionData, CollectionItem } from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/types";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { openAppPath } from "@21n/utils/extension.utils";
 
   export let selectedCollection: CollectionData;
   export let collectionItems: CollectionItem[];

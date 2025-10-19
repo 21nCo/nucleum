@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { type INode } from "$lib/client/products/memotron/node/node.type";
-  import type { ICollectionThumb } from "$lib/client/components/collection/collection.type";
-  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
-  import LinkSearchResultItem from "./LinkSearchResultItem.svelte";
-  import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { type INode } from "@21n/products/memotron/node/node.type";
+  import type { ICollectionThumb } from "@21n/components/collection/collection.type";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import LinkSearchResultItem from "@21n/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
+  import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   export let item: INode | ICollectionThumb | IGoalThumb;
   export let isHideResourceType: boolean = false;
   export let resourceType: Resource;

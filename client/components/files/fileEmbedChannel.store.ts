@@ -1,8 +1,8 @@
-import { ObservableStore } from "$lib/client/stores/client.store";
-import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
-import { postDataToParent } from "$lib/client/utils/embed.utils";
-import { wait } from "$lib/client/utils/time.utils";
-import type { IFileEmbedChannel } from "./file.type";
+import { ObservableStore } from "@21n/stores/client.store";
+import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
+import { postDataToParent } from "@21n/utils/embed.utils";
+import { wait } from "@21n/utils/time.utils";
+import type { IFileEmbedChannel } from "@21n/components/files/file.type";
 
 class FileEmbedChannel extends ObservableStore<IFileEmbedChannel> {
   constructor() {

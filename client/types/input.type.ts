@@ -1,6 +1,6 @@
-import type { Orientation, Placement } from "./direction.enum";
-import type { IPopoverOptions } from "./popover.type";
-import type { Size } from "./size.enum";
+import type { Orientation, Placement } from "@21n/types/direction.enum";
+import type { IPopoverOptions } from "@21n/types/popover.type";
+import type { Size } from "@21n/types/size.enum";
 
 export enum InputStyle {
   PLAIN = "plain",

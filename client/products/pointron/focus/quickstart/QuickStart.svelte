@@ -1,37 +1,37 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { Layout } from "$lib/client/types/layout.type";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { appStore } from "$lib/client/stores/app.store";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { Layout } from "@21n/types/layout.type";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import { appStore } from "@21n/stores/app.store";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
-  import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
-  import { SearchStore } from "$lib/client/components/record/record.store";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
-  import { isValidArray } from "$lib/shared/utils/obj.utils";
+  } from "@21n/stores/uiState/uiState.type";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
+  import context from "@21n/stores/context.store";
+  import { Embed } from "@21n/types/context.type";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import { isValidArray } from "@21n/shared-utils/obj.utils";
   import {
     resourceAction,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
-  import { focusAggregates } from "../../analytics/analytics.store";
-  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import QuickStartThumbnailList from "./QuickStartThumbnailList.svelte";
-  import view from "$lib/client/stores/view.store";
-  import QuickStartLayoutToggle from "./actions/QuickStartLayoutToggle.svelte";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
+  import { focusAggregates } from "@21n/products/pointron/analytics/analytics.store";
+  import { LoadingAnimationType } from "@21n/types/feedback.type";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import QuickStartThumbnailList from "@21n/products/pointron/focus/quickstart/QuickStartThumbnailList.svelte";
+  import view from "@21n/stores/view.store";
+  import QuickStartLayoutToggle from "@21n/products/pointron/focus/quickstart/actions/QuickStartLayoutToggle.svelte";
 
   let isLoadingState = false;
   let searchQuery = "";

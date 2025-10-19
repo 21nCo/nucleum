@@ -1,43 +1,43 @@
 <script lang="ts">
-  import Text from "$lib/client/elements/text/Text.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
   import {
     NodeType,
     headingNodeTypes,
     type INodeStructure
-  } from "$lib/client/products/memotron/node/node.type";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { hierarchyFactorLimit, type IActiveNodeStore } from "../node.store";
+  } from "@21n/products/memotron/node/node.type";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { hierarchyFactorLimit, type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
 
   import {
     deepCopy,
     isValidArrayWithData,
     shallowDiff
-  } from "$lib/shared/utils/obj.utils";
-  import NodularMarkdown from "$lib/client/components/markdown/NodularMarkdown.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { formatDatetime } from "$lib/client/utils/time.utils";
+  } from "@21n/shared-utils/obj.utils";
+  import NodularMarkdown from "@21n/components/markdown/NodularMarkdown.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import { formatDatetime } from "@21n/utils/time.utils";
   import { onDestroy, onMount } from "svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { logger } from "$lib/client/components/debug/logger.client";
+  import { appStore } from "@21n/stores/app.store";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import { logger } from "@21n/components/debug/logger.client";
   import { setContext, getContext } from "svelte";
-  import { BlockAction } from "$lib/client/components/markdown/md.type";
-  import { wordCounter } from "$lib/client/actions/counter.action";
-  import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import view from "$lib/client/stores/view.store";
-  import context from "$lib/client/stores/context.store";
-  import { generateMarkdownText, resolveHeadingParent } from "../node.utils";
+  import { BlockAction } from "@21n/components/markdown/md.type";
+  import { wordCounter } from "@21n/actions/counter.action";
+  import { generateResourceId } from "@21n/components/flux/flux.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Size } from "@21n/types/size.enum";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import view from "@21n/stores/view.store";
+  import context from "@21n/stores/context.store";
+  import { generateMarkdownText, resolveHeadingParent } from "@21n/products/memotron/node/node.utils";
   import {
     determineResourceAccessMode,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { tabs } from "$lib/client/layout/topNav/tabs/tabs.store";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
 
   export let node: IActiveNodeStore;
   export let mdId: string;

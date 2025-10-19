@@ -1,9 +1,9 @@
 <script lang="ts">
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import appearance from "$lib/client/stores/appearance.store";
-  import { Theme } from "$lib/client/types/appearance.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import appearance from "@21n/stores/appearance.store";
+  import { Theme } from "@21n/types/appearance.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
   import { onMount } from "svelte";
 
   let className: string = "";

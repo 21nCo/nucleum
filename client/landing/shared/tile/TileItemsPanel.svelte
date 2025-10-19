@@ -1,12 +1,12 @@
 <script lang="ts">
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import view from "$lib/client/stores/view.store";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import view from "@21n/stores/view.store";
   import { onMount } from "svelte";
-  import type { ITileItem } from "../landing.type";
-  import PanelButton from "../elements/PanelButton.svelte";
-  import { isProductsPanelOpen } from "../store/shared.store";
-  import TileItem from "./TileItem.svelte";
-  import { addAnimateClass } from "$lib/client/utils/ui.utils";
+  import type { ITileItem } from "@21n/landing/shared/landing.type";
+  import PanelButton from "@21n/landing/shared/elements/PanelButton.svelte";
+  import { isProductsPanelOpen } from "@21n/landing/shared/store/shared.store";
+  import TileItem from "@21n/landing/shared/tile/TileItem.svelte";
+  import { addAnimateClass } from "@21n/utils/ui.utils";
 
   export let currentProducts: ITileItem[];
   export let upcomingProducts: ITileItem[];

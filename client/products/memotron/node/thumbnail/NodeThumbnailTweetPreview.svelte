@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { cn } from "@21n/utils/ui.utils";
   export let text: string;
   export let isVertical: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;

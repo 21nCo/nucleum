@@ -2,20 +2,20 @@
   import type {
     IBlock,
     IMarkdownStore
-  } from "$lib/client/components/markdown/md.type";
+  } from "@21n/components/markdown/md.type";
   import { onMount } from "svelte";
-  import { getMdStore } from "./markdown.store";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { headingNodeTypes } from "$lib/client/products/memotron/node/node.type";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { tooltip } from "$lib/client/actions/popover.action";
+  import { getMdStore } from "@21n/components/markdown/markdown.store";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { headingNodeTypes } from "@21n/products/memotron/node/node.type";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { tooltip } from "@21n/actions/popover.action";
   import {
     isSameResource,
     resourceInList
-  } from "../flux/resourceStores/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   export let mdId: string;
   const mdStore = getMdStore(mdId);
   let mdcontainerID = "markDown-" + mdId;

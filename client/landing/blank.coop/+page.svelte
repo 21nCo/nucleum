@@ -1,13 +1,13 @@
 <script lang="ts">
-  import GridItemsSection from "../shared/grid/GridItemsSection.svelte";
-  import HeroSection from "../shared/HeroSection.svelte";
+  import GridItemsSection from "@21n/landing/shared/grid/GridItemsSection.svelte";
+  import HeroSection from "@21n/landing/shared/HeroSection.svelte";
   import type {
     IHeroInputs,
     IGridItem,
     ITileItem
-  } from "../shared/landing.type";
-  import { currentProductsStore, org } from "../shared/store/shared.store";
-  import TileItemsSection from "../shared/tile/TileItemsSection.svelte";
+  } from "@21n/landing/shared/landing.type";
+  import { currentProductsStore, org } from "@21n/landing/shared/store/shared.store";
+  import TileItemsSection from "@21n/landing/shared/tile/TileItemsSection.svelte";
 
   const whitePaperUrl = org.whitepaper;
 

@@ -1,4 +1,4 @@
-import type { IAction } from "$lib/client/types/action.type";
+import type { IAction } from "@21n/types/action.type";
 
 export type ICommandAction = IAction & {
   cmdLabel: string;

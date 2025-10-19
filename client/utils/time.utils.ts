@@ -1,13 +1,13 @@
-import type { IUserGlobalPreferences } from "$lib/client/types/preferences.type";
+import type { IUserGlobalPreferences } from "@21n/types/preferences.type";
 import {
   TimePeriodType,
   type TimePeriod,
   TimeScale,
   TimeFormat,
   TimeUnit
-} from "$lib/client/types/time.type";
-import type { UserDate } from "$lib/client/types/userDate.type";
-import { Size } from "../types/size.enum";
+} from "@21n/types/time.type";
+import type { UserDate } from "@21n/types/userDate.type";
+import { Size } from "@21n/types/size.enum";
 import moment from "moment-timezone";
 
 const months = [

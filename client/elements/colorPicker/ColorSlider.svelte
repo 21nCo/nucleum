@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { appConstants } from "$lib/client/stores/app.store";
-  import appearance from "$lib/client/stores/appearance.store";
+  import { appConstants } from "@21n/stores/app.store";
+  import appearance from "@21n/stores/appearance.store";
   import {
     resolveIfActiveFgFg,
     resolveSaturationAndLightness,
     retrieveCurrentColors
-  } from "$lib/client/utils/theme.utils";
-  import { debouncer } from "$lib/client/utils/utils";
+  } from "@21n/utils/theme.utils";
+  import { debouncer } from "@21n/utils/utils";
   import { createEventDispatcher } from "svelte";
 
   export let hue: number | undefined = 0;

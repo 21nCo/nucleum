@@ -1,20 +1,20 @@
 <script lang="ts">
-  import { popover } from "$lib/client/actions/popover.action";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import { popover } from "@21n/actions/popover.action";
+  import Divider from "@21n/elements/Divider.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
   import {
     iconSelectPropertyTypes,
     UniversalPropertyType,
     type IPropertyConfigOption,
     type IUniversalProperty
-  } from "$lib/client/components/collection/properties/property.type";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { enumToString } from "$lib/shared/utils/text.utils";
-  import { universalPropertyOptions } from "../../property.store";
-  import { resolveUniversalPropertyOptions } from "../../property.utils";
-  import UniversalPropertyConfigPopover from "./UniversalPropertyConfigPopover.svelte";
+  } from "@21n/components/collection/properties/property.type";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { enumToString } from "@21n/shared-utils/text.utils";
+  import { universalPropertyOptions } from "@21n/components/collection/properties/property.store";
+  import { resolveUniversalPropertyOptions } from "@21n/components/collection/properties/property.utils";
+  import UniversalPropertyConfigPopover from "@21n/components/collection/properties/propertyConfig/universalProperty/UniversalPropertyConfigPopover.svelte";
   export let property: IUniversalProperty;
   export let isPopoverOpen: boolean = false;
   let ref: HTMLElement;

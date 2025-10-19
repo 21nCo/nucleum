@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import GridInputElement from "./GridInputElement.svelte";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { generateUID } from "$lib/client/utils/utils";
+  import GridInputElement from "@21n/products/memotron/lab/infiniteGrid/GridInputElement.svelte";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import { generateUID } from "@21n/utils/utils";
 
   let canvasWidth = window.innerWidth / 1.5;
   let canvasHeight = window.innerHeight / 1.5;

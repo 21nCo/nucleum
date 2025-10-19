@@ -1,5 +1,5 @@
-import { logger } from "$lib/client/components/debug/logger.client";
-import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
+import { logger } from "@21n/components/debug/logger.client";
+import type { INodeThumb } from "@21n/products/memotron/node/node.type";
 import { Dexie, type Table } from "dexie";
 
 const DB_NAME = "tidigit-sheet-storage";

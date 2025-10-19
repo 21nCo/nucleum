@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { onMount } from "svelte";
-  import Records from "$lib/client/components/record/Records.svelte";
-  import EmptyStatusView from "../feedback/EmptyStatusView.svelte";
-  import TextInput from "../input/TextInput.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import Icon from "../Icon.svelte";
-  import { recentsStore } from "$lib/client/components/record/recent.store";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import { SearchStore } from "$lib/client/components/record/record.store";
-  import { Arrangement } from "$lib/client/types/direction.enum";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import Records from "@21n/components/record/Records.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import { Size } from "@21n/types/size.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { recentsStore } from "@21n/components/record/recent.store";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { Arrangement } from "@21n/types/direction.enum";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
 
   const searchStore = new SearchStore(Resource.node);
   let isLoading = false;

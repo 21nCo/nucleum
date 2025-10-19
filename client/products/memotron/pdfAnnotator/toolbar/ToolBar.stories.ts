@@ -1,4 +1,4 @@
-import ToolBar from "./ToolBar.sveltet default {
+import ToolBar from "@21n/products/memotron/pdfAnnotator/toolbar/ToolBar.sveltet default {{
   component: ToolBar,
   parameters: { layout: "centered" }
 };

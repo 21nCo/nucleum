@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { observeAttributes } from "$lib/client/actions/observe.action";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { observeAttributes } from "@21n/actions/observe.action";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { onMount } from "svelte";
   export let resource: Resource;
   export let isSyncing: boolean = false;

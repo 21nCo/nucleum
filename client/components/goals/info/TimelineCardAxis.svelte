@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { TimeScale } from "$lib/client/types/time.type";
+  import { TimeScale } from "@21n/types/time.type";
 
   export let startDate: Date;
   export let endDate: Date;

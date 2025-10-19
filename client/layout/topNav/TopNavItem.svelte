@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Size } from "$lib/client/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { Size } from "@21n/types/size.enum";
   export let item: string;
   export let isActive: boolean = false;
   export let isShowLabel: boolean = false;

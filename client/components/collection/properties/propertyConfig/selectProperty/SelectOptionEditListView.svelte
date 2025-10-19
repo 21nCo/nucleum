@@ -1,11 +1,11 @@
 <script lang="ts">
-  import type { IPropertyConfigOption } from "../../property.type";
-  import SelectOptionEditItemView from "./SelectOptionEditItemView.svelte";
-  import type { IPropertyConfigOptionGroup } from "../../property.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
+  import type { IPropertyConfigOption } from "@21n/components/collection/properties/property.type";
+  import SelectOptionEditItemView from "@21n/components/collection/properties/propertyConfig/selectProperty/SelectOptionEditItemView.svelte";
+  import type { IPropertyConfigOptionGroup } from "@21n/components/collection/properties/property.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let options: IPropertyConfigOption[];

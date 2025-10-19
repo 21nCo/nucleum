@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import type {
     INode,
     INodeLinkThumb
-  } from "$lib/client/products/memotron/node/node.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import LinkItem from "./LinkItem.svelte";
+  } from "@21n/products/memotron/node/node.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  import LinkItem from "@21n/products/memotron/node/links/LinkItem.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let links: { link: INodeLinkThumb; node: INode }[];
@@ -28,6 +28,7 @@
       on:linkTypeSelect
       on:action
       on:tagClick
+      on:tag
     />
   {/each}
 </div>

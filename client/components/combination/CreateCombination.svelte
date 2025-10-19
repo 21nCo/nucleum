@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import type { ISelectItem } from "$lib/client/types/select.type";
-  import ModalContentPadded from "$lib/client/components/modal/ModalContentPadded.svelte";
-  import { combinationStore } from "./combination.store";
-  import { CombinationType } from "./combination.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
+  import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import { toasts } from "@21n/stores/notification.store";
+  import { Orientation } from "@21n/types/direction.enum";
+  import type { ISelectItem } from "@21n/types/select.type";
+  import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
+  import { combinationStore } from "@21n/components/combination/combination.store";
+  import { CombinationType } from "@21n/components/combination/combination.type";
 
   let name = "";
   let type: CombinationType = CombinationType.SIDENAV;

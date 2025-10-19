@@ -1,8 +1,8 @@
-import type { AppSkin, Theme } from "$lib/client/types/appearance.type";
-import type { TimeScale } from "./time.type";
-import type { IAvatar } from "./avatar.type";
-import type { IRecordId } from "./data.type";
-import type { TranscriptionModel } from "../products/memotron/taco/taco.types";
+import type { AppSkin, Theme } from "@21n/types/appearance.type";
+import type { TimeScale } from "@21n/types/time.type";
+import type { IAvatar } from "@21n/types/avatar.type";
+import type { IRecordId } from "@21n/types/data.type";
+import type { TranscriptionModel } from "@21n/products/memotron/taco/taco.types";
 
 export type IUserGlobalPreferences = {
   name: string;

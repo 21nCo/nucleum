@@ -1,12 +1,12 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
   import { onMount } from "svelte";
-  import { type INode, NodeType } from "../../node/node.type";
-  import { lazyLoad } from "$lib/client/actions/lazyload.action";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { resolveFallbackIconForUrl, resolveNodeFavicon } from "../node.utils";
-  import { isValidUrl } from "$lib/shared/utils/utils";
+  import { type INode, NodeType } from "@21n/products/memotron/node/node.type";
+  import { lazyLoad } from "@21n/actions/lazyload.action";
+  import { cn } from "@21n/utils/ui.utils";
+  import { resolveFallbackIconForUrl, resolveNodeFavicon } from "@21n/products/memotron/node/node.utils";
+  import { isValidUrl } from "@21n/shared-utils/utils";
   export let node: INode;
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   let favicon: string | undefined = undefined;

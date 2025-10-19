@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { phosphorRatingIcons } from "$lib/client/iconsV2/icons-list";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { tooltip } from "@21n/actions/popover.action";
+  import Divider from "@21n/elements/Divider.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { phosphorRatingIcons } from "@21n/icons-v2/icons-list";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { cn } from "@21n/utils/ui.utils";
   export let onAvatarSelect: (icon: string) => void;
   export let onSizeSelect: (size: number) => void;
   export let scale: number = 5;

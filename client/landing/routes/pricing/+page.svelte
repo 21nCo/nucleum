@@ -1,9 +1,9 @@
 <script lang="ts">
-  import BottomCta from "../../shared/bottomCta/BottomCta.svelte";
-  import FaQs from "../../shared/FAQs.svelte";
-  import PageSeo from "../../shared/seo/PageSEO.svelte";
-  import PricingSection from "../../shared/pricing/PricingSection.svelte";
-  import { landing } from "../../shared/store/shared.store";
+  import BottomCta from "@21n/landing/shared/bottomCta/BottomCta.svelte";
+  import FaQs from "@21n/landing/shared/FAQs.svelte";
+  import PageSeo from "@21n/landing/shared/seo/PageSEO.svelte";
+  import PricingSection from "@21n/landing/shared/pricing/PricingSection.svelte";
+  import { landing } from "@21n/landing/shared/store/shared.store";
 
   export let data: {
     product?: string;

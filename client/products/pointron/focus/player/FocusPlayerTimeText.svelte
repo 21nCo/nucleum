@@ -2,18 +2,18 @@
   import {
     activeSession,
     currentFocusItem
-  } from "$lib/client/products/pointron/focus/session.store";
-  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
-  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TimeFormat } from "$lib/client/types/time.type";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/products/pointron/focus/session.store";
+  import { SessionUIContext } from "@21n/types/pointron/session.type";
+  import { SessionState } from "@21n/types/pointron/sessionState.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { TimeFormat } from "@21n/types/time.type";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import { cn } from "@21n/utils/ui.utils";
   import { onMount } from "svelte";
-  import SessionStatusLabel from "../elements/sessionTimeText/SessionStatusLabel.svelte";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  import SessionStatusLabel from "@21n/products/pointron/focus/elements/sessionTimeText/SessionStatusLabel.svelte";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
   export let context: SessionUIContext = SessionUIContext.DEFAULT;
   let currentTask: { id: IRecordId; label: string } | undefined = undefined;
   onMount(() => {

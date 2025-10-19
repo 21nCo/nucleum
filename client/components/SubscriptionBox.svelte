@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Button from "../elements/button/Button.svelte";
-  import TextInput from "../elements/input/TextInput.svelte";
-  import { isValidEmail } from "$lib/shared/utils/text.utils";
-  import { stringify } from "$lib/shared/utils/json.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { isValidEmail } from "@21n/shared-utils/text.utils";
+  import { stringify } from "@21n/shared-utils/json.utils";
 
   export let product: any;
   let emailEntered = "";

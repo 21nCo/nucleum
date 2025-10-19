@@ -2,8 +2,8 @@
   import type {
     IContemporary,
     IFwFeature
-  } from "$lib/client/types/featureWheel.type";
-  import FeatureRow from "./FeatureRow.svelte";
+  } from "@21n/types/featureWheel.type";
+  import FeatureRow from "@21n/components/featureWheel/sidePanel/comparisionTable/FeatureRow.svelte";
 
   export let category: string;
   export let features: IFwFeature[] = [];

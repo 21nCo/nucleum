@@ -1,31 +1,31 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import LinkItems from "$lib/client/products/memotron/common/linkbox/LinkItems.svelte";
-  import LinkSearch from "$lib/client/products/memotron/common/linkbox/LinkSearch.svelte";
-  import InlineFeedbackText from "$lib/client/extensions/clipper/InlineFeedbackText.svelte";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import LinkItems from "@21n/products/memotron/common/linkbox/LinkItems.svelte";
+  import LinkSearch from "@21n/products/memotron/common/linkbox/LinkSearch.svelte";
+  import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import {
     AlertType,
     type IInlineStatus
-  } from "$lib/client/types/notification.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  } from "@21n/types/notification.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
     determineResourceType,
     isSameResource
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import type { ICollectionItemPropertyValue } from "$lib/client/components/collection/collection.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import type { ICollectionItemPropertyValue } from "@21n/components/collection/collection.type";
+  import type { IRecordId } from "@21n/types/data.type";
   import type {
     INodeThumb,
     INodeLinkThumb
-  } from "$lib/client/products/memotron/node/node.type";
-  import { linker } from "$lib/client/products/memotron/linking/link.store";
-  import { LinkType } from "$lib/client/products/memotron/linking/link.type";
-  import { nodeStore } from "$lib/client/products/memotron/node/node.store";
-  import { ResourceError } from "$lib/client/components/error/errors";
-  import { ResourceErrorCode } from "$lib/client/components/error/error.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { Size } from "$lib/client/types/size.enum";
+  } from "@21n/products/memotron/node/node.type";
+  import { linker } from "@21n/products/memotron/linking/link.store";
+  import { LinkType } from "@21n/products/memotron/linking/link.type";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
+  import { ResourceError } from "@21n/components/error/errors";
+  import { ResourceErrorCode } from "@21n/components/error/error.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { Size } from "@21n/types/size.enum";
 
   const dispatcher = createEventDispatcher();
 

@@ -6,19 +6,26 @@ import type {
   IResourceStarrable,
   IResourceShareable,
   IResourceImportable
-} from "$lib/client/components/flux/resourceStores/resource.type";
-import type { IAvatar } from "$lib/client/types/avatar.type";
-import type { IRecordId } from "$lib/client/types/data.type";
-import type { Arrangement, Placement } from "$lib/client/types/direction.enum";
-import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
-import type { IProperty, IPropertyValue } from "./properties/property.type";
-import type { Resource } from "../flux/resourceStores/resource.enum";
-import type { IGoalThumb } from "../goals/goal.type";
+} from "@21n/components/flux/resourceStores/resource.type";
+import type { IAvatar } from "@21n/types/avatar.type";
+import type { IRecordId } from "@21n/types/data.type";
+import type { Arrangement, Placement } from "@21n/types/direction.enum";
+import type { INodeThumb } from "@21n/products/memotron/node/node.type";
+import type { IProperty, IPropertyValue } from "@21n/components/collection/properties/property.type";
+import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import type { IGoalThumb } from "@21n/components/goals/goal.type";
 
 export enum CollectionType {
+  /**
+   * All collection will have the ability for properties, templates etc. Therefore the older version "TYPED" collection is deprecated and is now "DEFAULT"
+   */
   TYPED = "TYPED",
+  /**
+   * @deprecated
+   */
   UNTYPED = "UNTYPED",
-  QUERY = "QUERY"
+  QUERY = "QUERY",
+  SYNCED = "SYNCED"
 }
 
 export enum CollectionLayout {

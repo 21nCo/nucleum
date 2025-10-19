@@ -1,4 +1,4 @@
-import type { PointronAction } from "./pointronAction.enum";
+import type { PointronAction } from "@21n/types/pointron/pointronAction.enum";
 
 /**
  * @deprecated - use IEvent instead

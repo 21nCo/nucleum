@@ -3,8 +3,8 @@
   import {
     type IBlock,
     InlineType
-  } from "$lib/client/components/markdown/md.type";
-  import { debouncer, generateUID } from "$lib/client/utils/utils";
+  } from "@21n/components/markdown/md.type";
+  import { debouncer, generateUID } from "@21n/utils/utils";
   import {
     extractInlineMarkdownFromHtml,
     findInlineStylingPatterns,
@@ -12,22 +12,22 @@
     inlineLinkPatterns,
     replaceInlineStylePatterns,
     replaceSymbolPatterns
-  } from "../markdown.utils";
-  import InlineMention from "./inline/InlineMention.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { logger } from "../../debug/logger.client";
-  import { scrollIntoViewOnFocus } from "$lib/client/actions/scroll.action";
-  import { isValidString, truncateString } from "$lib/shared/utils/text.utils";
-  import { resolveNodeLabelString } from "$lib/client/products/memotron/node/node.utils";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import InlineLink from "./inline/InlineLink.svelte";
-  import { resolvePasteContents } from "$lib/client/products/memotron/capture/capture.utils";
-  import { MAX_FILE_SIZE_MB } from "../../record/record.store";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import view from "$lib/client/stores/view.store";
-  import KeyboardToolbar from "$lib/client/elements/keyboardToolbar/KeyboardToolbar.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  } from "@21n/components/markdown/markdown.utils";
+  import InlineMention from "@21n/components/markdown/content/inline/InlineMention.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { scrollIntoViewOnFocus } from "@21n/actions/scroll.action";
+  import { isValidString, truncateString } from "@21n/shared-utils/text.utils";
+  import { resolveNodeLabelString } from "@21n/products/memotron/node/node.utils";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import InlineLink from "@21n/components/markdown/content/inline/InlineLink.svelte";
+  import { resolvePasteContents } from "@21n/products/memotron/capture/capture.utils";
+  import { MAX_FILE_SIZE_MB } from "@21n/components/record/record.store";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
+  import view from "@21n/stores/view.store";
+  import KeyboardToolbar from "@21n/elements/keyboardToolbar/KeyboardToolbar.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
 
   const dispatch = createEventDispatcher();
   //   export let block: Block<TextContent>;
@@ -267,6 +267,40 @@
       renderMentions();
     }, 10);
     // refreshMentions();
+  }
+
+  export function addEmoji(emoji: any, searchQuery: string) {
+    const codeMatch = emoji.code.match(/&#X([0-9A-F]+)/i);
+    if (codeMatch) {
+      const emojiChar = String.fromCodePoint(parseInt(codeMatch[1], 16));
+      const searchText = ":" + searchQuery;
+      
+      // Find the last occurrence of the search text (most likely the one user is typing)
+      const searchIndex = content?.lastIndexOf(searchText) ?? -1;
+      
+      if (searchIndex !== -1 && content) {
+        // Replace only at the specific position
+        const before = content.substring(0, searchIndex);
+        const after = content.substring(searchIndex + searchText.length);
+        content = before + emojiChar + after;
+        
+        // Do the same for innerHTML
+        const htmlSearchIndex = innerHTML.lastIndexOf(searchText);
+        if (htmlSearchIndex !== -1) {
+          const htmlBefore = innerHTML.substring(0, htmlSearchIndex);
+          const htmlAfter = innerHTML.substring(htmlSearchIndex + searchText.length);
+          innerHTML = htmlBefore + emojiChar + htmlAfter;
+        }
+        
+        dispatchChangeEvent();
+        
+        // Set caret position after the inserted emoji
+        setTimeout(() => {
+          const newCaretPosition = searchIndex + emojiChar.length;
+          setCaretPosition(blockRef, newCaretPosition);
+        }, 10);
+      }
+    }
   }
 
   export function set(content: string) {

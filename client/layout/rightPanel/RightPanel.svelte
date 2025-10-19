@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import view from "$lib/client/stores/view.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import view from "@21n/stores/view.store";
 
   let isInThinMode = true;
 </script>

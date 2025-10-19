@@ -14,7 +14,7 @@
 
 <button
   class={cn(
-    "flex items-center justify-center gap-1 h-6 w-6 rounded-md border text-b4 font-medium hover:bg-bgs2"
+    "flex items-center justify-center gap-1 h-6 w-6 rounded-md border border-brs3 text-b4 font-medium hover:bg-bgs2"
   )}
   use:tooltip={{
     text: linkConfig.label

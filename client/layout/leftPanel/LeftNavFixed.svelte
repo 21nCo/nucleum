@@ -1,22 +1,22 @@
 <script lang="ts">
-  import AppMenuSwitcher from "$lib/client/layout/leftPanel/appMenuSwitcher/AppMenuSwitcher.svelte";
-  import { LayoutContext } from "$lib/client/types/layout.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import LeftBottomBar from "./LeftBottomBar.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { popover, tooltip } from "$lib/client/actions/popover.action";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
-  import LeftNavSettingsPopover from "./LeftNavSettingsPopover.svelte";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import AppMenuSwitcher from "@21n/layout/leftPanel/appMenuSwitcher/AppMenuSwitcher.svelte";
+  import { LayoutContext } from "@21n/types/layout.type";
+  import { Size } from "@21n/types/size.enum";
+  import LeftBottomBar from "@21n/layout/leftPanel/LeftBottomBar.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { popover, tooltip } from "@21n/actions/popover.action";
+  import { PopoverTriggerMethod } from "@21n/types/popover.type";
+  import LeftNavSettingsPopover from "@21n/layout/leftPanel/LeftNavSettingsPopover.svelte";
+  import { Placement } from "@21n/types/direction.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
+  } from "@21n/stores/uiState/uiState.type";
   import { onMount } from "svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import OfflineStatusMessage from "$lib/client/elements/feedback/OfflineStatusMessage.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import OfflineStatusMessage from "@21n/elements/feedback/OfflineStatusMessage.svelte";
   export let isRounded = false;
   const dev_mixedPanel = false;
   let isHideMenuLabels = uiState.getState(UIState.hideLeftNavMenuLabels, {

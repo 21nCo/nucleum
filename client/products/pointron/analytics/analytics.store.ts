@@ -6,23 +6,23 @@ import {
   type AnalyticsPage,
   type IAnalyticsCard,
   AnalyticsCardType
-} from "./analytics.types";
-import { interceptSurrealResponse } from "$lib/client/utils/utils";
-import { TimePeriodType, TimeScale } from "$lib/client/types/time.type";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
+} from "@21n/products/pointron/analytics/analytics.types";
+import { interceptSurrealResponse } from "@21n/utils/utils";
+import { TimePeriodType, TimeScale } from "@21n/types/time.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { SurrealDatabase } from "@21n/persistence/surrealHelper";
 import {
   generateAnalyticsSeedPage,
   generateAnalyticsSeedPages,
   generateParamsForCards
-} from "./analytics.utils";
-import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
-import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-import { sessionLogStore } from "../logs/log.store";
-import type { IRecordId } from "$lib/client/types/data.type";
-import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
-import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
-import { toasts } from "$lib/client/stores/notification.store";
+} from "@21n/products/pointron/analytics/analytics.utils";
+import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
+import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+import { sessionLogStore } from "@21n/products/pointron/logs/log.store";
+import type { IRecordId } from "@21n/types/data.type";
+import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+import { tzStore } from "@21n/components/settings/timezone/tz.store";
+import { toasts } from "@21n/stores/notification.store";
 
 export const selectedPageId = writable<string>();
 const analyticsConfigStoreId = Resource.pointAnalyticsConfig;

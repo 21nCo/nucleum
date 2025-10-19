@@ -1,6 +1,6 @@
-import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import type { IHighlightStore } from "./highlight.type";
+import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import type { IHighlightStore } from "@21n/products/memotron/common/highlighters/highlight.type";
 
 const seedHighlighters: IHighlightStore = {
   highlighters: [

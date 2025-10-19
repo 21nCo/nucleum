@@ -1,10 +1,10 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
   import { createEventDispatcher } from "svelte";
-  import TextHiglighter from "../TextHiglighter.svelte";
-  import { AnnotationType } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.type";
+  import TextHiglighter from "@21n/products/memotron/pdfAnnotator/TextHiglighter.svelte";
+  import { AnnotationType } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
   import { page } from "$app/stores";
-  import { highlightStore } from "../../common/highlighters/highlight.store";
+  import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
 
   export let rects: any;
   export let rect: any;
@@ -38,6 +38,10 @@
   // if (rects !== undefined) console.log("x1 ", rects[0].x1, " left ", left);
   // if (annotType == AnnotationType.TASK) console.log("TASK ", left);
   const dispatchEvent = createEventDispatcher();
+
+  function handleClick() {
+    dispatchEvent("click", id);
+  }
 </script>
 
 <!-- <div
@@ -64,13 +68,11 @@
   style="position: absolute; left: {left - tally}px; top: {top -
     tally}px; opacity: 0.5;"
   on:click|stopPropagation={() => {
-    dispatchEvent("click", id);
-    console.log("comment clicked");
+    handleClick();
   }}
   on:keydown|stopPropagation={(e) => {
     if (e.key === "Enter" || e.key === " ") {
-      dispatchEvent("click", id);
-      console.log("comment clicked");
+      handleClick();
     }
   }}
   on:mousedown|stopPropagation

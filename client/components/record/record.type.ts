@@ -1,4 +1,4 @@
-import type { Resource } from "../flux/resourceStores/resource.enum";
+import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 
 export type IRecentsStore = {
   recents: {

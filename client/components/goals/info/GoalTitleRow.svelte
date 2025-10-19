@@ -1,25 +1,25 @@
 <script lang="ts">
-  import { mount } from "$lib/client/actions/mount.action";
+  import { mount } from "@21n/actions/mount.action";
   import {
     resolveGoalContextMenu,
     type IActiveGoalStore
-  } from "$lib/client/components/goals/goal.store";
-  import Breadcrumbs from "$lib/client/elements/breadcrumbsV2/Breadcrumbs.svelte";
-  import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/components/goals/goal.store";
+  import Breadcrumbs from "@21n/elements/breadcrumbsV2/Breadcrumbs.svelte";
+  import ContextMenuAction from "@21n/elements/contextMenu/ContextMenuAction.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { Placement } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "../../flux/resourceStores/resource.type";
-  import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
   import {
     AlertType,
     type IInlineStatus
-  } from "$lib/client/types/notification.type";
-  import ResourceInlineCloseButton from "$lib/client/elements/button/ResourceInlineCloseButton.svelte";
+  } from "@21n/types/notification.type";
+  import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
   export let status: IInlineStatus | undefined = undefined;

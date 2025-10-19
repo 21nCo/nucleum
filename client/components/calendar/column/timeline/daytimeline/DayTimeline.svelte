@@ -1,27 +1,27 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
   import dayjs from "dayjs";
-  import DayTimelineEntry from "./DayTimelineEntry.svelte";
+  import DayTimelineEntry from "@21n/components/calendar/column/timeline/daytimeline/DayTimelineEntry.svelte";
   import {
     CalendarColumnLayout,
     type CalendarTimelineEntry
-  } from "../../../calendar.type";
-  import { formatTime } from "$lib/client/utils/time.utils";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { player } from "$lib/client/components/modal/modal.store";
-  import RefreshingOverlayFeedback from "$lib/client/elements/feedback/RefreshingOverlayFeedback.svelte";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  } from "@21n/components/calendar/calendar.type";
+  import { formatTime } from "@21n/utils/time.utils";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import { player } from "@21n/components/modal/modal.store";
+  import RefreshingOverlayFeedback from "@21n/elements/feedback/RefreshingOverlayFeedback.svelte";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { Product } from "$lib/client/products/product.type";
+  } from "@21n/stores/uiState/uiState.type";
+  import { appStore } from "@21n/stores/app.store";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import { Product } from "@21n/products/product.type";
   export let date: Date = new Date();
   export let data: Array<CalendarTimelineEntry> = [];
   export let layout: CalendarColumnLayout;

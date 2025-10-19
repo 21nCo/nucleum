@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
-  import { BlockType } from "$lib/client/types/pointron/session.type";
-  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { SessionType } from "$lib/client/products/pointron/logs/log.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
+  import { BlockType } from "@21n/types/pointron/session.type";
+  import { SessionState } from "@21n/types/pointron/sessionState.enum";
+  import { SessionType } from "@21n/products/pointron/logs/log.type";
+  import { Size } from "@21n/types/size.enum";
+  import { formatSeconds } from "@21n/utils/time.utils";
   export let size: Size = Size.md;
   export let isDefaultColor: boolean = false;
   $: extentionElapsed =

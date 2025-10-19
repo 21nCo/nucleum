@@ -1,9 +1,9 @@
 import type {
   ICollectible,
   ICollectionExpanded
-} from "$lib/client/components/collection/collection.type";
-import type { IPropertyValue } from "$lib/client/components/collection/properties/property.type";
-import type { IFile } from "$lib/client/components/files/file.type";
+} from "@21n/components/collection/collection.type";
+import type { IPropertyValue } from "@21n/components/collection/properties/property.type";
+import type { IFile } from "@21n/components/files/file.type";
 import {
   ResourceAccessMode,
   type CaptureOmittedFields,
@@ -16,14 +16,19 @@ import {
   type IResourceShareable,
   type OmitFields,
   type OmitForCapture
-} from "$lib/client/components/flux/resourceStores/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
+import type { IBlockBody, IMarkdown } from "@21n/components/markdown/md.type";
+import type { IAvatar } from "@21n/types/avatar.type";
+import type { IRecordId, IStore } from "@21n/types/data.type";
 import type {
-  IBlockBody,
-  IMarkdown
-} from "$lib/client/components/markdown/md.type";
-import type { IAvatar } from "$lib/client/types/avatar.type";
-import type { IRecordId, IStore } from "$lib/client/types/data.type";
-import type { ILink, ILinkBase, LinkType } from "../linking/link.type";
+  ILink,
+  ILinkBase,
+  LinkType
+} from "@21n/products/memotron/linking/link.type";
+import type {
+  AnnotationType,
+  Scaled
+} from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
 
 type IResourcePropertiesForNode = IResource &
   IResourceLabeled &
@@ -59,9 +64,14 @@ type INodeInterface<
   url?: string;
   file?: IRecordId;
   /**
+   * @deprecated - use cover instead
    * Custom preview image for node thumbnails (especially for markdown nodes)
    */
   previewImage?: IRecordId;
+  /**
+   * Cover photo for markdown nodes (rendered at the top above title)
+   */
+  cover?: string;
   /**
    * Calculated avatar from linked type collections
    */
@@ -369,7 +379,7 @@ export type INodeLinkThumb = ILinkBase & {
   links?: {
     id: IRecordId;
     linkType: LinkType;
-    direction: "incoming" | "outgoing";
+    direction?: "incoming" | "outgoing";
     tags?: IRecordId[];
   }[];
 };
@@ -1139,7 +1149,7 @@ export type IActiveNode = INode &
     collections?: IRecordId[];
     types?: ICollectionExpanded[];
     wordCount?: number;
-    pdfAnnotations?: any[];
+    pdfAnnotations?: IPdfBookmarkBody[];
     links?: INodeLinkThumb[];
     children?: IActiveNode[];
     childrenHierarchy?: IRecordId[];
@@ -1183,3 +1193,22 @@ export type IVideoBookmarkCapture = INodeHasUrl &
     body: IVideoBookmarkBody;
     metadata: IVideoBookmarkMetadata;
   };
+
+export type IPdfBookmarkBody = {
+  startPageNumber?: number;
+  endPageNumber?: number;
+  pageNumber?: number;
+  date?: string;
+  selectedText?: string;
+  /**
+   * Highlight color id
+   */
+  color?: IRecordId;
+  comment?: string;
+  annotType?: AnnotationType;
+  boundingRect?: Scaled;
+  rect?: Scaled;
+  rects?: Scaled[];
+};
+
+export type IPdfBookmarkMetadata = {};

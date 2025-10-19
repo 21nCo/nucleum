@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { reorderList } from "$lib/client/actions/rearrange.action";
-  import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { InputStyle } from "$lib/client/types/input.type";
+  import { reorderList } from "@21n/actions/rearrange.action";
+  import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { InputStyle } from "@21n/types/input.type";
   import {
     TableCellDefaultAction,
     TableCellType,
     type TableColumn
-  } from "$lib/client/types/table.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Button from "../button/Button.svelte";
-  import DropDown from "../dropdown/DropDown.svelte";
-  import TextInput from "../input/TextInput.svelte";
-  import FormLabelTooltip from "../text/formLabel/FormLabelTooltip.svelte";
-  import Switch from "../toggle/Switch.svelte";
+  } from "@21n/types/table.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
+  import Switch from "@21n/elements/toggle/Switch.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let columns: TableColumn[] = [];

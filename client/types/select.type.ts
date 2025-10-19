@@ -1,4 +1,4 @@
-import type { IAvatar } from "./avatar.type";
+import type { IAvatar } from "@21n/types/avatar.type";
 
 export type ISelectItem = {
   value: ISelectValue;

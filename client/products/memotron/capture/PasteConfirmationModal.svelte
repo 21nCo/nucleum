@@ -1,24 +1,24 @@
 <script lang="ts">
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import modalEvent from "$lib/client/components/modal/modal.store";
+  import { logger } from "@21n/components/debug/logger.client";
+  import modalEvent from "@21n/components/modal/modal.store";
   import { onMount } from "svelte";
-  import { MAX_FILE_SIZE_MB } from "../../../components/record/record.store";
-  import { MemotronAction } from "../memotronAction.enum";
-  import { NodeType } from "../node/node.type";
-  import { clipboard } from "./capture.store";
-  import type { IPasteCaptureData } from "./capture.type";
-  import { resolvePasteContents } from "./capture.utils";
-  import account from "$lib/client/stores/account.store";
-  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { MAX_FILE_SIZE_MB } from "@21n/components/record/record.store";
+  import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
+  import { clipboard } from "@21n/products/memotron/capture/capture.store";
+  import type { IPasteCaptureData } from "@21n/products/memotron/capture/capture.type";
+  import { resolvePasteContents } from "@21n/products/memotron/capture/capture.utils";
+  import account from "@21n/stores/account.store";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
     ResourceAccessMode,
     ResourceActionType
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { generateResourceId } from "$lib/shared/utils/surreal.utils";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import ShareContentSaver from "./ShareContentSaver.svelte";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import { generateResourceId } from "@21n/shared-utils/surreal.utils";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import { appStore } from "@21n/stores/app.store";
+  import ShareContentSaver from "@21n/products/memotron/capture/ShareContentSaver.svelte";
 
   export let event: ClipboardEvent;
 

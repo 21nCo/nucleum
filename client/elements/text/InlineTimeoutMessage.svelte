@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { AlertType } from "$lib/client/types/notification.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { AlertType } from "@21n/types/notification.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
   export let message: string | null = null;
   export let type: AlertType = AlertType.INFO;
   export let size: Size.sm | Size.md | Size.lg = Size.md;

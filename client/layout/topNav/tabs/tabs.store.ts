@@ -1,9 +1,9 @@
-import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-import { appStore } from "$lib/client/stores/app.store";
-import { uiState } from "$lib/client/stores/uiState/uiState.store";
-import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
-import type { IRecordId } from "$lib/client/types/data.type";
+import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+import { appStore } from "@21n/stores/app.store";
+import { uiState } from "@21n/stores/uiState/uiState.store";
+import { UIStateScope } from "@21n/stores/uiState/uiState.type";
+import type { IRecordId } from "@21n/types/data.type";
 
 class TabStore {
   open(id: IRecordId, backParam?: string) {

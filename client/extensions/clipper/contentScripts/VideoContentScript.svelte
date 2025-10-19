@@ -1,25 +1,25 @@
 <script lang="ts">
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
   import { onMount } from "svelte";
-  import { webpage } from "./store";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { TimeFormat } from "$lib/client/types/time.type";
-  import { appEvents } from "$lib/client/stores/notification.store";
-  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
+  import { webpage } from "@21n/extensions/clipper/contentScripts/store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import { TimeFormat } from "@21n/types/time.type";
+  import { appEvents } from "@21n/stores/notification.store";
+  import { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
   import {
     seekToTimestamp,
     getVideoPlayData
-  } from "$lib/client/extensions/clipper/parsers/shared/video.utils";
+  } from "@21n/extensions/clipper/parsers/shared/video.utils";
   import {
     relayToBackgroundScript,
     resolveAppPath
-  } from "$lib/client/utils/extension.utils";
-  import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import VideoTimelineClipItem from "./parts/VideoTimelineClipItem.svelte";
+  } from "@21n/utils/extension.utils";
+  import { ExtensionEvent } from "@21n/types/extension.type";
+  import { Size } from "@21n/types/size.enum";
+  import VideoTimelineClipItem from "@21n/extensions/clipper/contentScripts/parts/VideoTimelineClipItem.svelte";
 
   export let contentType: NodeType;
 

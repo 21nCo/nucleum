@@ -1,30 +1,30 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import { deepCopy, isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { deepCopy, isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
   import {
     type ISelectPropertyConfig,
     type IUniversalPropertyConfig,
     type IPropertyConfigOption,
     PropertyType,
     UniversalPropertyType
-  } from "../property.type";
-  import SelectOptionsEditor from "../propertyConfig/selectProperty/SelectOptionsEditor.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import SelectPropertyOptionList from "./SelectPropertyOptionList.svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  } from "@21n/components/collection/properties/property.type";
+  import SelectOptionsEditor from "@21n/components/collection/properties/propertyConfig/selectProperty/SelectOptionsEditor.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import SelectPropertyOptionList from "@21n/components/collection/properties/selectProperty/SelectPropertyOptionList.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
   import {
     resolveSelectPropertySelection,
     isHighVolumeUniversalType,
     resolveUniversalPropertyOptions
-  } from "../property.utils";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  } from "@21n/components/collection/properties/property.utils";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
+  } from "@21n/stores/uiState/uiState.type";
 
   export let property: {
     id: IRecordId;

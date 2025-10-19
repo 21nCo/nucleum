@@ -1,4 +1,4 @@
-import type { EmbedMessage } from "$lib/client/types/embedMessage.enum";
+import type { EmbedMessage } from "@21n/types/embedMessage.enum";
 export type IEmbedChannel = {
   [key: string]: IEmbedChannelData;
 };

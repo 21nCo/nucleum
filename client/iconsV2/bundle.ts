@@ -1,11 +1,11 @@
-import { parse } from "$lib/shared/utils/json.utils";
+import { parse } from "@21n/shared-utils/json.utils";
 import {
   bundleNumber,
   iconSets,
   phIcons,
   lucideIconsForBundling,
   solarIconsForBundling
-} from "./icons-list";
+} from "@21n/icons-v2/icons-list";
 import { locate } from "@iconify/json";
 import { getIconData } from "@iconify/utils";
 import { readFile, unlink, writeFile } from "fs/promises";

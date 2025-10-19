@@ -1,12 +1,12 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import view from "$lib/client/stores/view.store";
-  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
-  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { Display } from "$lib/client/types/view.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { activeSession } from "../../session.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import view from "@21n/stores/view.store";
+  import { SessionUIContext } from "@21n/types/pointron/session.type";
+  import { SessionState } from "@21n/types/pointron/sessionState.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { Display } from "@21n/types/view.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
   export let icon: string;
   export let context: SessionUIContext = SessionUIContext.DEFAULT;
   let iconSize: Size.md | Size.lg | Size.xl = Size.xl;
