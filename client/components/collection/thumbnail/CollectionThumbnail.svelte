@@ -39,7 +39,7 @@
     >
       <CollectionThumbnailAvatar {item} size={Size.lg} />
       <div class="flex flex-col gap-1 flex-grow">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 text-b2">
           <CollectionThumbnailLabel
             {item}
             isShowAvatar={false}

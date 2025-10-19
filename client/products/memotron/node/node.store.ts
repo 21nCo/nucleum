@@ -11,6 +11,7 @@ import {
   headingNodeTypes,
   mediaNodeTypeList,
   rootNodeTypeList,
+  socialPostNodeTypeList,
   type INodeCapture
 } from "@21n/products/memotron/node/node.type";
 import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
@@ -40,12 +41,16 @@ import type {
   IResourceSelectParams
 } from "@21n/types/data.type";
 import type { IToggleItem } from "@21n/elements/toggle/toggle.type";
-import { generateMarkdownText, getMarkdownSymbolPrepended } from "@21n/products/memotron/node/node.utils";
+import {
+  generateMarkdownText,
+  getMarkdownSymbolPrepended
+} from "@21n/products/memotron/node/node.utils";
 import { isValidString } from "@21n/shared-utils/text.utils";
 import {
   resourceInList,
   isSameResource,
-  isRecordId
+  isRecordId,
+  removeDuplicatesFilter
 } from "@21n/components/flux/resourceStores/resource.utils";
 
 import context from "@21n/stores/context.store";
@@ -57,6 +62,8 @@ import view from "@21n/stores/view.store";
 import { CollectibleStore } from "@21n/components/collection/collectible.store";
 import { appStore } from "@21n/stores/app.store";
 import type { ILink } from "@21n/products/memotron/linking/link.type";
+import { MemotronAction } from "../memotronAction.enum";
+import { toasts } from "@21n/stores/notification.store";
 
 export const hierarchyFactorLimit = 5;
 const defaults: Partial<INode> = {
@@ -406,14 +413,28 @@ export class ActiveNodeStore extends CollectibleStore<
       );
       console.timeEnd("ActiveNodeStore.afterInit - links");
       if (linksResult && isValidArrayWithData(linksResult)) {
-        const links: INodeLinkThumb[] = linksResult.map((x: ILink) => {
+        let uniqueLinkIds = new Set();
+        linksResult.forEach((x: ILink) => {
           const id = x.in.toString() === this.id ? x.out : x.in;
+          uniqueLinkIds.add(id);
+        });
+        const links: INodeLinkThumb[] = Array.from(uniqueLinkIds).map((id) => {
+          const allLinks = linksResult.filter(
+            (y) => y.out === id || y.in === id
+          );
           return {
             linkedTo: id,
-            linkType: x.linkType,
-            id: x.id,
-            tags: x.tags,
-            direction: x.in.toString() === this.id ? "outgoing" : "incoming"
+            links: allLinks.map((y) => ({
+              id: y.id,
+              linkType: y.linkType,
+              direction: y.in.toString() === this.id ? "outgoing" : "incoming",
+              tags: y.tags
+            })),
+            tags: allLinks
+              .map((y) => y.tags)
+              .flat()
+              .filter(Boolean)
+              .filter(removeDuplicatesFilter)
           } as INodeLinkThumb;
         });
         this.update((n) => {
@@ -742,6 +763,43 @@ class NodeActions {
     callback: async () => {}
   };
 
+  setCoverPhoto() {
+    return {
+      value: ResourceActionType.SET_COVER_PHOTO,
+      label: "Set cover photo",
+      icon: "ph:image",
+      callback: async () => {}
+    };
+  }
+
+  removeCoverPhoto() {
+    return {
+      value: "removeCoverPhoto",
+      label: "Remove cover photo",
+      icon: "trash",
+      callback: async () => {
+        await this.store.modify(this.node.id, {
+          cover: undefined
+        });
+        toasts.success("Cover photo removed");
+        return true;
+      }
+    };
+  }
+
+  copyHighlightText = {
+    value: "copyHighlightText",
+    label: "Copy content",
+    icon: "copy",
+    callback: async () => {
+      const text = this.node.text || this.node.mdText || "";
+      if (text) {
+        await navigator.clipboard.writeText(text);
+        toasts.success("Highlight text copied to clipboard");
+      }
+    }
+  };
+
   sideNotesPane() {
     return {
       value: NodeRightPaneType.SIDENOTES,
@@ -769,10 +827,10 @@ class NodeActions {
 
   tracesPane() {
     return {
-      value: NodeRightPaneType.TRACES,
+      value: NodeRightPaneType.BOOKMARKS,
       icon: "bookmark",
-      label: "Show traces",
-      tooltip: "Show traces",
+      label: "Show bookmarks",
+      tooltip: "Show bookmarks",
       count:
         "clips" in this.node &&
         this.node.clips &&
@@ -877,19 +935,32 @@ export function resolveNodeContextMenu(
   }
   let mediaShareAndExportGroup = {
     group: "shareAndExport",
-    items: [resourceActions.copyLink()]
+    items: [
+      resourceActions.copyLink(),
+      ...(node.url ? [resourceActions.copyExternalLink()] : [])
+    ]
   };
   if (
     [...mediaNodeTypeList, NodeType.WEB_SCREENSHOT].includes(node.contentType)
   ) {
     mediaShareAndExportGroup.items.unshift(nodeActions.download);
   }
+  const isTextBookmarkOrSocialPost =
+    node.contentType === NodeType.WEB_TEXT_BOOKMARK ||
+    node.contentType === NodeType.KINDLE_HIGHLIGHT ||
+    socialPostNodeTypeList.has(node.contentType);
+  if (isTextBookmarkOrSocialPost) {
+    mediaShareAndExportGroup.items.unshift(nodeActions.copyHighlightText);
+  }
   if (
     (accessPoint === ResourceAccessPoint.NODE_LINKS ||
       accessPoint === ResourceAccessPoint.DEFAULT_RIGHT_PANE_LINKS) &&
     params?.accessPointId
   ) {
-    let baseItems = [resourceActions.copyLink()];
+    let baseItems = [
+      resourceActions.copyLink(),
+      ...(node.url ? [resourceActions.copyExternalLink()] : [])
+    ];
     if (accessPoint === ResourceAccessPoint.NODE_LINKS) {
       baseItems.unshift(
         resourceActions.select(accessPoint, params?.accessPointId)
@@ -905,15 +976,19 @@ export function resolveNodeContextMenu(
       },
       ...commonGroups
     ];
-  } else if (accessPoint != ResourceAccessPoint.SELF) {
+  } else if (accessPoint !== ResourceAccessPoint.SELF) {
     let primaryItems = [
       resourceActions.select(accessPoint, params?.accessPointId),
       resourceActions.star(),
       resourceActions.addToCollection(),
       resourceActions.link(),
       resourceActions.edit(accessPoint),
-      resourceActions.copyLink()
+      resourceActions.copyLink(),
+      ...(node.url ? [resourceActions.copyExternalLink()] : [])
     ];
+    if (isTextBookmarkOrSocialPost) {
+      primaryItems.splice(5, 0, nodeActions.copyHighlightText);
+    }
     if (
       accessPoint === ResourceAccessPoint.COLLECTION &&
       params?.accessPointId
@@ -923,7 +998,8 @@ export function resolveNodeContextMenu(
         resourceActions.select(accessPoint, params?.accessPointId),
         resourceActions.star(),
         resourceActions.edit(accessPoint),
-        resourceActions.copyLink()
+        resourceActions.copyLink(),
+        ...(node.url ? [resourceActions.copyExternalLink()] : [])
       ];
     }
     return [
@@ -940,7 +1016,9 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.star(),
           resourceActions.edit(accessPoint),
-          nodeActions.tracesPane(),
+          ...(canHaveTraces.includes(node.contentType)
+            ? [nodeActions.tracesPane()]
+            : []),
           nodeActions.linksPane(),
           nodeActions.sideNotesPane(),
           nodeStaticActions.propertiesPane,
@@ -988,17 +1066,26 @@ export function resolveNodeContextMenu(
           resourceActions.toggleFocusMode()
         ]
       : [resourceActions.toggleFocusMode()];
+
+  const coverPhotoAction =
+    node.contentType === NodeType.NODULAR_MARKDOWN
+      ? node.cover
+        ? nodeActions.removeCoverPhoto()
+        : nodeActions.setCoverPhoto()
+      : undefined;
   const secondGroupItems = viewStore.isConstrainedWidth
     ? [
         resourceActions.toggleReadMode(),
         nodeStaticActions.metadataPane,
-        nodeStaticActions.historyPane
+        nodeStaticActions.historyPane,
+        ...(coverPhotoAction ? [coverPhotoAction] : [])
       ]
     : [
         resourceActions.toggleReadMode(),
         nodeActions.toggleFullWidth(),
         nodeStaticActions.metadataPane,
-        nodeStaticActions.historyPane
+        nodeStaticActions.historyPane,
+        ...(coverPhotoAction ? [coverPhotoAction] : [])
       ];
   return [
     {
@@ -1012,7 +1099,11 @@ export function resolveNodeContextMenu(
     },
     {
       group: "shareAndExport",
-      items: [resourceActions.copyLink(), resourceActions.copyContents()]
+      items: [
+        resourceActions.copyLink(),
+        ...(node.url ? [resourceActions.copyExternalLink()] : []),
+        resourceActions.copyContents()
+      ]
     },
     ...commonGroups
   ];

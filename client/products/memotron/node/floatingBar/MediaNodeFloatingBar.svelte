@@ -176,7 +176,7 @@
                 e.detail === NodeRightPaneType.PROPERTIES ||
                 e.detail === NodeRightPaneType.SIDENOTES ||
                 e.detail === NodeRightPaneType.LINKS ||
-                e.detail === NodeRightPaneType.TRACES
+                e.detail === NodeRightPaneType.BOOKMARKS
               ) {
                 bottomAction = e.detail;
               }

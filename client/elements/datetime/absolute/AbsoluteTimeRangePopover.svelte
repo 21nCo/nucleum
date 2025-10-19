@@ -728,7 +728,7 @@
             {#if startSelected}
               {startString}<button
                 ><Icon
-                  icon="cross-circled"
+                  icon="ph:x-circle-light"
                   size={Size.xs}
                   class="stroke-ars1"
                   on:click={() => reset(true, false)}
@@ -751,7 +751,7 @@
             {#if endSelected}
               {endString}<button
                 ><Icon
-                  icon="cross-circled"
+                  icon="ph:x-circle-light"
                   size={Size.xs}
                   class="stroke-ars1"
                   on:click={() => reset(false, true)}

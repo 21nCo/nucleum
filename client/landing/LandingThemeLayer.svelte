@@ -27,11 +27,13 @@
       "(prefers-color-scheme: dark)"
     );
     appearance.setSystemTheme(darkModeMediaQuery.matches);
-    darkModeMediaQuery.addEventListener("change", (e) => {
+    const onDarkModeChange = (e: MediaQueryListEvent) => {
       appearance.setSystemTheme(e.matches);
-    });
+    };
+    darkModeMediaQuery.addEventListener("change", onDarkModeChange);
     return () => {
       appearanceSub();
+      darkModeMediaQuery.removeEventListener("change", onDarkModeChange);
     };
   });
 

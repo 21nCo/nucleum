@@ -201,7 +201,7 @@
     "bg-bgs1 rounded-md border border-brs2": isApplyPopoverStyling
   })}
 >
-  <div class="flex flex-col flex-grow items-center w-full">
+  <div class="flex flex-col overflow-y-auto-scrollbar items-center w-full">
     {#if isAlwaysShowSearchFeedback && isSearchInProgress}
       <span class="flex items-center gap-2 p-2">
         <Icon icon="svg-spinners:3-dots-fade" />

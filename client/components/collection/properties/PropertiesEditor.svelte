@@ -297,10 +297,10 @@
       <div class="flex flex-col items-start w-full gap-3">
         <SwitchInput
           label={{
-            label: "Extend an existing Type collection",
+            label: "Extend an existing collection",
             orientation: Orientation.Horizontal,
             tooltip: {
-              body: "You can extend an existing type by adding additional properties on top. Editing the properties on base type will reflect in all extended types.",
+              body: "You can extend an existing collection by adding additional properties on top. Editing the properties on base collection will reflect in all extended collections.",
               actionText: "Learn more about advanced filter query",
               action: "/kb/advanced-filter-query"
             }

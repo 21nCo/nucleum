@@ -40,6 +40,7 @@
   let containerWidth = 0;
   let goal: IActiveGoalStore = ActiveGoalStore.resolve(id);
   let isReady = false;
+  const dev_isEnableLinks = false;
   $: isActiveResource =
     !$goal?.isArchived && !$goal?.trashInformation && !$goal?.isParentInactive;
   $: isConstrainedWidth =
@@ -138,7 +139,7 @@
         icon: "shapes"
       });
     }
-    if ($appStore.product === Product.NUCLEUS) {
+    if ($appStore.product === Product.NUCLEUS && dev_isEnableLinks) {
       items.push({
         label: "Links",
         value: "links",

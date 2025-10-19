@@ -30,12 +30,13 @@
       const clipButton = createClipButton();
       positionButtonOverElement(clipButton, target);
       document.body.appendChild(clipButton);
-      clipButton.addEventListener("click", function (e) {
-      //   new ClipperPersistence().saveMultimedia(target, "");
-      //   clipButton.remove();
-      //   e.stopPropagation();
-      //   e.preventDefault();
-      // });
+      const onClipClick = (e: MouseEvent) => {
+        // placeholder for future save logic
+        clipButton.remove();
+        e.stopPropagation();
+        e.preventDefault();
+      };
+      clipButton.addEventListener("click", onClipClick);
     }
   }
 
@@ -48,16 +49,30 @@
     }
   }
 
+  let mouseOverHandler: (event: Event) => void;
+  let mouseLeaveHandler: (event: Event) => void;
+  let trackedElements: Element[] = [];
+
   onMount(() => {
-    document.querySelectorAll("img, audio").forEach((element) => {
-      element.addEventListener("mouseover", function (event) {
-        renderClipButton(event);
-      });
-      element.addEventListener("mouseleave", function (event) {
-        removeAll(event);
-      });
+    mouseOverHandler = (event: Event) => renderClipButton(event);
+    mouseLeaveHandler = (event: Event) => removeAll(event);
+    trackedElements = Array.from(document.querySelectorAll("img, audio"));
+    trackedElements.forEach((element) => {
+      element.addEventListener("mouseover", mouseOverHandler);
+      element.addEventListener("mouseleave", mouseLeaveHandler);
     });
   });
 </script>
 
 <svelte:window on:scroll={removeAll} on:mouseup={removeAll} />
+
+<script lang="ts">
+  import { onDestroy } from "svelte";
+  onDestroy(() => {
+    trackedElements.forEach((element) => {
+      element.removeEventListener("mouseover", mouseOverHandler);
+      element.removeEventListener("mouseleave", mouseLeaveHandler);
+    });
+    trackedElements = [];
+  });
+</script>

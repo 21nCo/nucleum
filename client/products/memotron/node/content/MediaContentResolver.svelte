@@ -81,5 +81,6 @@
     {node}
     {accessPoint}
     on:annotation
+    on:configUpdate
   />
 {/if}

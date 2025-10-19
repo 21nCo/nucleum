@@ -343,7 +343,7 @@
             <ShortcutText
               shortcut={{
                 key: KeyboardKey.ARROW_RIGHT,
-                modifiers: [ModifierKey.META]
+                modifiers: [ModifierKey.META, ModifierKey.SHIFT]
               }}
               parentBgIndex={2}
               isAlwaysShown={true}

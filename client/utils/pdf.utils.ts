@@ -6,11 +6,15 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 ).toString();
 
 export async function generateImagePreviewFromPdf(pdfBlob: Blob) {
+  let loadingTask = null;
+  let pdfDoc = null;
+  let page = null;
+
   try {
     const pdfData = new Uint8Array(await pdfBlob.arrayBuffer());
-    const loadingTask = pdfjs.getDocument({ data: pdfData });
-    const pdf = await loadingTask.promise;
-    const page = await pdf.getPage(1);
+    loadingTask = pdfjs.getDocument({ data: pdfData });
+    pdfDoc = await loadingTask.promise;
+    page = await pdfDoc.getPage(1);
     const scale = 1.5;
     const viewport = page.getViewport({ scale });
     const canvas = document.createElement("canvas");
@@ -38,5 +42,30 @@ export async function generateImagePreviewFromPdf(pdfBlob: Blob) {
   } catch (error) {
     console.error("Error generating image preview from PDF:", error);
     throw error;
+  } finally {
+    if (page) {
+      try {
+        await page.cleanup();
+      } catch {
+        // no-op
+      }
+      page = null;
+    }
+    if (pdfDoc) {
+      try {
+        await pdfDoc.destroy();
+      } catch {
+        // no-op
+      }
+      pdfDoc = null;
+    }
+    if (loadingTask) {
+      try {
+        await loadingTask.destroy();
+      } catch {
+        // no-op
+      }
+      loadingTask = null;
+    }
   }
 }

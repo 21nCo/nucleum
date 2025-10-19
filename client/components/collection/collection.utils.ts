@@ -30,6 +30,8 @@ export function resolveCollectionTypeIcon(type: CollectionType) {
       return "cube";
     case CollectionType.QUERY:
       return "ph:database-light";
+    case CollectionType.SYNCED:
+      return "sync";
   }
 }
 
@@ -41,6 +43,8 @@ export function resolveCollectionTypeLabel(type: CollectionType) {
       return "Typed";
     case CollectionType.QUERY:
       return "Query";
+    case CollectionType.SYNCED:
+      return "Synced";
   }
 }
 

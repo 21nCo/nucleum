@@ -17,13 +17,18 @@ import {
   type OmitFields,
   type OmitForCapture
 } from "@21n/components/flux/resourceStores/resource.type";
-import type {
-  IBlockBody,
-  IMarkdown
-} from "@21n/components/markdown/md.type";
+import type { IBlockBody, IMarkdown } from "@21n/components/markdown/md.type";
 import type { IAvatar } from "@21n/types/avatar.type";
 import type { IRecordId, IStore } from "@21n/types/data.type";
-import type { ILink, ILinkBase, LinkType } from "@21n/products/memotron/linking/link.type";
+import type {
+  ILink,
+  ILinkBase,
+  LinkType
+} from "@21n/products/memotron/linking/link.type";
+import type {
+  AnnotationType,
+  Scaled
+} from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
 
 type IResourcePropertiesForNode = IResource &
   IResourceLabeled &
@@ -58,6 +63,15 @@ type INodeInterface<
   notes?: string;
   url?: string;
   file?: IRecordId;
+  /**
+   * @deprecated - use cover instead
+   * Custom preview image for node thumbnails (especially for markdown nodes)
+   */
+  previewImage?: IRecordId;
+  /**
+   * Cover photo for markdown nodes (rendered at the top above title)
+   */
+  cover?: string;
   /**
    * Calculated avatar from linked type collections
    */
@@ -337,7 +351,7 @@ export enum NodeRightPaneType {
   NONE = "NONE",
   OUTLINE = "OUTLINE",
   PROPERTIES = "PROPERTIES",
-  TRACES = "TRACES",
+  BOOKMARKS = "BOOKMARKS",
   SIDENOTES = "SIDENOTES",
   METADATA = "METADATA",
   LINKS = "LINKS",
@@ -361,9 +375,13 @@ type INodeLinkBase = {
 };
 
 export type INodeLinkThumb = ILinkBase & {
-  id: IRecordId;
   linkedTo: IRecordId;
-  direction: "incoming" | "outgoing";
+  links?: {
+    id: IRecordId;
+    linkType: LinkType;
+    direction?: "incoming" | "outgoing";
+    tags?: IRecordId[];
+  }[];
 };
 
 export type LinkThumbnail = ILink & {
@@ -1131,7 +1149,7 @@ export type IActiveNode = INode &
     collections?: IRecordId[];
     types?: ICollectionExpanded[];
     wordCount?: number;
-    pdfAnnotations?: any[];
+    pdfAnnotations?: IPdfBookmarkBody[];
     links?: INodeLinkThumb[];
     children?: IActiveNode[];
     childrenHierarchy?: IRecordId[];
@@ -1168,7 +1186,29 @@ export const canHaveTraces = [
 
 export type IVideoBookmarkCapture = INodeHasUrl &
   INodeHasText & {
-    contentType: NodeType.YOUTUBE_BOOKMARK | NodeType.VIDEO_BOOKMARK | NodeType.WEB_VIDEO_BOOKMARK;
+    contentType:
+      | NodeType.YOUTUBE_BOOKMARK
+      | NodeType.VIDEO_BOOKMARK
+      | NodeType.WEB_VIDEO_BOOKMARK;
     body: IVideoBookmarkBody;
     metadata: IVideoBookmarkMetadata;
   };
+
+export type IPdfBookmarkBody = {
+  startPageNumber?: number;
+  endPageNumber?: number;
+  pageNumber?: number;
+  date?: string;
+  selectedText?: string;
+  /**
+   * Highlight color id
+   */
+  color?: IRecordId;
+  comment?: string;
+  annotType?: AnnotationType;
+  boundingRect?: Scaled;
+  rect?: Scaled;
+  rects?: Scaled[];
+};
+
+export type IPdfBookmarkMetadata = {};

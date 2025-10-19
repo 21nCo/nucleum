@@ -269,6 +269,40 @@
     // refreshMentions();
   }
 
+  export function addEmoji(emoji: any, searchQuery: string) {
+    const codeMatch = emoji.code.match(/&#X([0-9A-F]+)/i);
+    if (codeMatch) {
+      const emojiChar = String.fromCodePoint(parseInt(codeMatch[1], 16));
+      const searchText = ":" + searchQuery;
+      
+      // Find the last occurrence of the search text (most likely the one user is typing)
+      const searchIndex = content?.lastIndexOf(searchText) ?? -1;
+      
+      if (searchIndex !== -1 && content) {
+        // Replace only at the specific position
+        const before = content.substring(0, searchIndex);
+        const after = content.substring(searchIndex + searchText.length);
+        content = before + emojiChar + after;
+        
+        // Do the same for innerHTML
+        const htmlSearchIndex = innerHTML.lastIndexOf(searchText);
+        if (htmlSearchIndex !== -1) {
+          const htmlBefore = innerHTML.substring(0, htmlSearchIndex);
+          const htmlAfter = innerHTML.substring(htmlSearchIndex + searchText.length);
+          innerHTML = htmlBefore + emojiChar + htmlAfter;
+        }
+        
+        dispatchChangeEvent();
+        
+        // Set caret position after the inserted emoji
+        setTimeout(() => {
+          const newCaretPosition = searchIndex + emojiChar.length;
+          setCaretPosition(blockRef, newCaretPosition);
+        }, 10);
+      }
+    }
+  }
+
   export function set(content: string) {
     innerHTML = content;
   }

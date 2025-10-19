@@ -1,4 +1,5 @@
 <script lang="ts">
+  import view from "@21n/stores/view.store";
   import Button from "@21n/elements/button/Button.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import PlanExpired from "@21n/illustrations/PlanExpired.svelte";
@@ -100,7 +101,18 @@
       </div>
     {/if}
     <div class="flex justify-center gap-8">
-      <RestorePurchaseAction />
+      {#if !$view.isConstrainedWidth}
+        <RestorePurchaseAction />
+      {/if}
+      <Button
+        label="Chat with us"
+        icon="chat-three"
+        size={Size.sm}
+        style={ButtonStyle.PLAIN}
+        on:click={async () => {
+          appStore.runAction("chat");
+        }}
+      />
       <Button
         label="Logout"
         icon="log-out"

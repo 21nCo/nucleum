@@ -314,7 +314,7 @@
   {#if $manualLogStore.manualLogs.length > 1}
     <div class="absolute bg-bgs1 right-1 -top-3">
       <Button
-        icon="minus-circled"
+        icon="minus-circle"
         size={Size.xs}
         type={ButtonVariant.DANGER}
         style={ButtonStyle.OUTLINED}

@@ -50,6 +50,8 @@
   } from "@21n/components/error/error.type";
   import { ResourceError } from "@21n/components/error/errors";
   import { LoadingAnimationType } from "@21n/types/feedback.type";
+  import Tag from "@21n/elements/text/Tag.svelte";
+  import { resolveLinkTypeConfig } from "@21n/products/memotron/linking/link.utils";
   export let node: IActiveNodeStore;
   $: multiSelectContext = {
     resource: Resource.node,
@@ -62,7 +64,9 @@
   let outgoingMentions: { link: INodeLinkThumb; node: INode }[] = [];
   let filtered: { link: INodeLinkThumb; node: INode }[] = [];
 
-  let selectedLinkType: LinkType = LinkType.DIRECT;
+  let selectedLinkType:
+    | { linkType: LinkType; direction: "incoming" | "outgoing" | undefined }
+    | undefined = undefined;
   let selectedLinkTags: IRecordId[] = [];
   let fetchError: string | undefined = undefined;
   let linkStatus: { message: string; type: AlertType } = {
@@ -71,11 +75,9 @@
   };
   let previousFocus: IRecordId;
   let searchQuery: string = "";
-  let isShowLinkTagFilters = false;
-  let isShowLinkSuggestions = false;
   let dev_linkTagFilter: "and" | "or" = "and";
-  let selectedMentionDirection: "incoming" | "outgoing" = "incoming";
   let isRefreshing = false;
+  let availableLinkTags: IRecordId[] = [];
 
   onMount(() => {
     const unsubscribe = node.subscribe(async (x) => {
@@ -127,8 +129,12 @@
       linkStatus.type = AlertType.SUCCESS;
       const link: INodeLinkThumb = {
         linkedTo: e.detail.item.id,
-        linkType: LinkType.DIRECT,
-        id: result[0]?.id ?? ""
+        links: [
+          {
+            linkType: LinkType.DIRECT,
+            id: result[0]?.id ?? ""
+          }
+        ]
       };
       _links = [...(_links ?? []), link];
       $node.links = [...($node.links ?? []), link];
@@ -216,10 +222,14 @@
       outgoingMentions = result.map((x: any) => ({
         link: {
           linkedTo: x.out,
-          linkType: LinkType.MENTION,
-          id: x.id,
-          tags: x.tags,
-          direction: "outgoing"
+          links: [
+            {
+              linkType: LinkType.MENTION,
+              id: x.id,
+              direction: "outgoing"
+            }
+          ],
+          tags: x.tags
         },
         node: nodes.find((y: any) => isSameResource(y.id, x.out))
       }));
@@ -231,19 +241,25 @@
   }
 
   async function applyFilters() {
-    if (
-      selectedLinkType === LinkType.MENTION &&
-      selectedMentionDirection === "outgoing"
-    ) {
-      filtered = await refreshOutgoingMentions();
-    } else {
-      filtered = all.filter((x) => x.link.linkType === selectedLinkType);
-      if (selectedLinkType === LinkType.MENTION) {
-        filtered = filtered.filter(
-          (x) => x.link.direction === selectedMentionDirection
-        );
-      }
-    }
+    const outgoing = await refreshOutgoingMentions();
+    const combined = [...all, ...outgoing].filter(
+      (item, index, self) =>
+        index ===
+        self.findIndex(
+          (t) => t.link.linkedTo.toString() === item.link.linkedTo.toString()
+        )
+    );
+
+    filtered = combined;
+
+    const allTags = new Set<IRecordId>();
+    combined.forEach((item) => {
+      item.link.tags?.forEach((tag) => {
+        allTags.add(tag);
+      });
+    });
+    availableLinkTags = Array.from(allTags);
+
     if (selectedLinkTags.length > 0) {
       if (dev_linkTagFilter === "or") {
         filtered = filtered.filter((x) =>
@@ -254,6 +270,15 @@
           selectedLinkTags.every((y) => x.link.tags?.some(resourceInList(y)))
         );
       }
+    }
+    if (selectedLinkType) {
+      filtered = filtered.filter((x) =>
+        x.link.links?.some(
+          (y) =>
+            y.linkType === selectedLinkType.linkType &&
+            y.direction === selectedLinkType.direction
+        )
+      );
     }
   }
 
@@ -283,7 +308,12 @@
     if (!e.detail) return;
     if (selectedLinkTags.some(resourceInList(e.detail))) return;
     selectedLinkTags = [...selectedLinkTags, e.detail];
-    isShowLinkTagFilters = true;
+    applyFilters();
+  }
+
+  function onLinkTypeSelect(e: CustomEvent) {
+    if (!e.detail) return;
+    selectedLinkType = e.detail;
     applyFilters();
   }
 
@@ -338,104 +368,52 @@
     </div> -->
   </div>
   <div class="flex flex-col gap-4 w-full flex-grow">
-    <div class="flex gap-4 items-center justify-between">
-      <!-- <OptionSelector
-        size={Size.sm}
-        bind:selected={selectedLinkType}
-        on:select={applyFilters}
-        options={[
-          {
-            value: LinkType.DIRECT,
-            label: "Direct",
-            icon: "arrow-right-left"
-          },
-          {
-            label: "Mentioned",
-            value: LinkType.MENTION,
-            icon: "at-symbol"
-          }
-        ]}
-      /> -->
-      <PanelSwitcher
-        items={[
-          {
-            value: LinkType.DIRECT,
-            label: "Direct",
-            icon: "ph:arrows-left-right-light",
-            badge: all.filter((x) => x.link.linkType === LinkType.DIRECT).length
-          },
-          {
-            label: "Mentions",
-            value: LinkType.MENTION,
-            icon: "at",
-            badge: all.filter((x) => x.link.linkType === LinkType.MENTION)
-              .length
-          }
-        ]}
-        size={Size.sm}
-        bind:value={selectedLinkType}
-        on:switch={applyFilters}
-        isExpandToFullWidth={true}
-        style={PanelSwitcherStyle.BAR}
-      >
-        <slot name="right" slot="right">
-          <div class="flex items-center">
-            <!-- <Toggle
-              icon="lightbulb"
-              tooltip="Link suggestions"
-              bind:on={isShowLinkSuggestions}
-            /> -->
-            <Toggle
-              icon="relation"
-              tooltip="Relations"
-              bind:on={isShowLinkTagFilters}
-              count={selectedLinkTags.length > 0
-                ? selectedLinkTags.length
-                : undefined}
-            />
-          </div>
-        </slot>
-      </PanelSwitcher>
-    </div>
-    {#if selectedLinkType === LinkType.MENTION}
-      <OptionSelector
-        size={Size.sm}
-        bind:selected={selectedMentionDirection}
-        on:select={applyFilters}
-        options={[
-          {
-            value: "incoming",
-            label: "Incoming",
-            icon: "incoming"
-          },
-          {
-            label: "Outgoing",
-            value: "outgoing",
-            icon: "outgoing"
-          }
-        ]}
-      />
+    {#if selectedLinkType}
+      {@const config = resolveLinkTypeConfig(
+        selectedLinkType.linkType,
+        selectedLinkType.direction
+      )}
+      <div>
+        <Tag
+          label={config.label}
+          icon={config.icon}
+          size={Size.md}
+          isActive={true}
+          isRemovable={true}
+          on:remove={() => {
+            selectedLinkType = undefined;
+            applyFilters();
+          }}
+          on:click={(e) => {
+            selectedLinkType = undefined;
+            applyFilters();
+          }}
+        />
+      </div>
     {/if}
-    {#if isShowLinkTagFilters}
-      <LinkTagFilter
-        links={filtered.map((x) => x.link)}
-        bind:selected={selectedLinkTags}
-        on:change={applyFilters}
-      />
+    {#if availableLinkTags.length > 0}
+      <div class="flex flex-col gap-3">
+        <LinkTagFilter
+          links={filtered.map((x) => x.link)}
+          bind:selected={selectedLinkTags}
+          on:change={applyFilters}
+        />
+      </div>
     {/if}
     {#if fetchError}
       <ErrorStatusPane error={fetchError} />
-    {:else if isShowLinkSuggestions}
-      <ComingSoonView mainText="Link suggestions" subText="Coming soon..." />
     {:else if filtered.length > 0 && !isRefreshing}
       <div class="flex flex-col flex-grow w-full">
         <LinkThumbnailItems
           links={filtered}
           accessPointId={node.id}
-          accessPointContext={selectedLinkType}
           on:click={onClick}
           on:action={onAction}
           on:tagClick={onTagClick}
+          on:tag={() => {
+            applyFilters();
+          }}
+          on:linkTypeSelect={onLinkTypeSelect}
         />
         <ScrollViewBottomSpacer />
       </div>
@@ -444,12 +422,8 @@
         isSearchContext={true}
         isLoadingState={isRefreshing}
         loadingAnimation={LoadingAnimationType.FOCUS_ITEMS_PULSE}
-        mainText={selectedLinkType === LinkType.SUGGESTION
-          ? "No suggestions found."
-          : "No links found."}
-        subText={selectedLinkType === LinkType.SUGGESTION
-          ? "Come back later to see link suggestions"
-          : "Try different filters or add links."}
+        mainText="No links found."
+        subText="Try different filters or add links."
       />
     {/if}
   </div>
@@ -457,7 +431,6 @@
     <BottomFloat class="!mb-3" zIndex="z-30">
       <BulkEditBar
         context={multiSelectContext}
-        subContext={selectedLinkType}
         on:selectAll={onSelectAll}
         on:action={onBulkAction}
       />

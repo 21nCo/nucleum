@@ -6,6 +6,7 @@
   import DebugInfoItem from "@21n/layout/layers/debug/DebugInfoItem.svelte";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { logger } from "@21n/components/debug/logger.client";
+  import { LogType } from "@21n/components/debug/debug.type";
   import appearance from "@21n/stores/appearance.store";
   import Divider from "@21n/elements/Divider.svelte";
   import { ColorStrength } from "@21n/types/appearance.type";
@@ -20,6 +21,8 @@
   let isShowDebugOverlay: boolean = false;
   let environment: string = $appStore.env;
   let isShowLogs: boolean = false;
+  const defaultLogLevel = logger.level ?? LogType.INFO;
+  let isTraceLoggingEnabled = logger.level >= LogType.TRACE;
   let isDboUpdateInProgress: boolean = false;
   let storageQuota: number | undefined;
   let storageUsage: number | undefined;
@@ -57,6 +60,17 @@
       console.error("Failed to reset fallbacks:", error);
     }
   }
+
+  function toggleTraceLogging() {
+    console.log("toggleTraceLogging", isTraceLoggingEnabled, defaultLogLevel);
+    if (isTraceLoggingEnabled) {
+      logger.setDefaultLevel();
+      isTraceLoggingEnabled = logger.level >= LogType.TRACE;
+    } else {
+      logger.setLevel(LogType.TRACE);
+      isTraceLoggingEnabled = true;
+    }
+  }
 </script>
 
 {#if isShowDebugOverlay || isShowAsPage}
@@ -71,7 +85,7 @@
         class="absolute top-0 right-0 flex flex-col p-1 bg-bgs3 text-fgs1 rounded-lg z-50"
         on:click={() => (isShowDebugOverlay = false)}
       >
-        <Icon icon="minus-circled" />
+        <Icon icon="minus-circle" />
       </button>
     {/if}
     <DebugInfoItem
@@ -165,20 +179,12 @@
         label="Dexie console"
       />
       <Button
-        on:click={() => {
-          appStore.runAction("surreal-local");
-        }}
+        on:click={toggleTraceLogging}
         size={Size.sm}
-        icon="terminal"
-        label="Surreal console"
-      />
-      <Button
-        on:click={() => {
-          appStore.runAction("signaldb-console");
-        }}
-        size={Size.sm}
-        icon="terminal"
-        label="SignalDB console"
+        icon={isTraceLoggingEnabled ? "check" : "terminal"}
+        label={isTraceLoggingEnabled
+          ? "Trace logging enabled"
+          : "Enable trace logging"}
       />
       <Button
         icon="trash"
@@ -214,7 +220,7 @@
       class="absolute top-0 right-0 flex flex-col p-1 text-fgs1 rounded-lg z-50"
       on:click={() => (isShowLogs = false)}
     >
-      <Icon icon="minus-circled" size={Size.lg} />
+      <Icon icon="minus-circle" size={Size.lg} />
     </button>
     <span> Replaced with telemetry. </span>
     <!-- <div class="flex flex-col items-start gap-2 overflow-y-auto">

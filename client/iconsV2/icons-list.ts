@@ -243,6 +243,7 @@ export const phosphorRatingIcons = [
   "quotes",
   "puzzle-piece",
   "flower",
+  "flower-lotus",
   "plant",
   "potted-plant",
   "music-notes",
@@ -468,4 +469,4 @@ export const solarIconsForBundling = {
   "bold-duotone": solarBoldDuotoneIcons
 };
 
-export const bundleNumber = 58;
+export const bundleNumber = 60;

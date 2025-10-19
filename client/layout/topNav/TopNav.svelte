@@ -97,7 +97,7 @@
     {#if pinnedItems.length === 0 && !isInterimTab}
       <div class="flex items-center justify-center">
         <button
-          class="flex items-center justify-between w-96 bg-bgs3 hover:bg-bgs4 rounded-md px-3 py-1 mx-3 text-b2 text-fgs2"
+          class="flex items-center justify-between w-96 h-full border-x border-brs3 hover:bg-bgs3 px-3 mx-3 text-b2 text-fgs2"
           transition:fly={{
             duration: 300,
             x: 40

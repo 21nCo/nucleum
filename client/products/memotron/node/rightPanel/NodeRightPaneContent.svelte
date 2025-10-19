@@ -53,7 +53,7 @@
     <NodeLinksPane {node} />
   {:else if pane === NodeRightPaneType.PROPERTIES}
     <PropertiesPane item={node} resource={Resource.node} />
-  {:else if pane === NodeRightPaneType.TRACES}
+  {:else if pane === NodeRightPaneType.BOOKMARKS}
     <NodeTracesPane {node} />
   {:else if pane === NodeRightPaneType.HISTORY}
     <NodeHistoryPane {node} />

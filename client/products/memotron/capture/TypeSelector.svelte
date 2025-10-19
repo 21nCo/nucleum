@@ -38,10 +38,14 @@
       icon: "upload",
       value: CaptureMethod.UPLOAD
     },
-    !$context.isEmbed && {
-      icon: "clipboard",
-      value: CaptureMethod.PASTE
-    }
+    ...(!$context.isEmbed
+      ? [
+          {
+            icon: "clipboard",
+            value: CaptureMethod.PASTE
+          }
+        ]
+      : [])
   ];
 
   async function refreshTypes() {

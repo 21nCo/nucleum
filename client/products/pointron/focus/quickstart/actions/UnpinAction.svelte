@@ -10,5 +10,5 @@
     text: "Unpin from quick focus"
   }}
 >
-  <Icon icon="minus-circled" size={Size.md} class="fill-ars1" on:click />
+  <Icon icon="minus-circle" size={Size.md} class="fill-ars1" on:click />
 </div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
 
   let canvas: HTMLCanvasElement;
   let ctx: CanvasRenderingContext2D;
@@ -42,6 +42,29 @@
   function stopPanning() {
     isPanning = false;
   }
+  let wheelHandler = (event: WheelEvent) => {
+    if (!canvas || !(event.target instanceof Node) || !canvas.contains(event.target)) {
+      return;
+    }
+    event.preventDefault();
+    let zoomDirection = Math.sign(event.deltaY);
+    prevHeight = canvasHeight;
+    prevWidth = canvasWidth;
+    if (zoomDirection < 0) {
+      canvasWidth = canvasWidth + canvasWidth / 4;
+      canvasHeight = canvasHeight + canvasHeight / 4;
+      let temp = canvasWidth;
+      let tempCellSize = (canvasWidth - spacing * 3) / 3;
+      cellSize = tempCellSize;
+    } else {
+      canvasWidth = canvasWidth - canvasWidth / 4;
+      canvasHeight = canvasHeight - canvasHeight / 4;
+      let tempCellSize = (canvasWidth - spacing * 3) / 3;
+      cellSize = tempCellSize;
+    }
+    drawGrid();
+  };
+
   onMount(() => {
     canvas = document?.getElementById("gridCanvas") as HTMLCanvasElement;
     ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
@@ -52,7 +75,16 @@
     canvas.addEventListener("mousemove", pan);
     canvas.addEventListener("mouseup", stopPanning);
     canvas.addEventListener("mouseleave", stopPanning);
+    window.addEventListener("wheel", wheelHandler, { passive: false });
     renderHtmlToCanvas(butMakeItLargerForStackOverflowDemoPurposes);
+  });
+
+  onDestroy(() => {
+    canvas?.removeEventListener("mousedown", startPanning);
+    canvas?.removeEventListener("mousemove", pan);
+    canvas?.removeEventListener("mouseup", stopPanning);
+    canvas?.removeEventListener("mouseleave", stopPanning);
+    window.removeEventListener("wheel", wheelHandler as EventListener);
   });
 
   // Calculate canvas size
@@ -103,48 +135,6 @@
   function handleMouseDown(event: MouseEvent) {
     console.log("mouse down", event.clientX, event.clientY);
   }
-  window.addEventListener(
-    "wheel",
-    (event) => {
-      event.preventDefault();
-      console.log("wheeling", event.deltaY);
-      let zoomDirection = Math.sign(event.deltaY);
-      //TODO-Zooming should happen in the pointed area
-      prevHeight = canvasHeight;
-      prevWidth = canvasWidth;
-      if (zoomDirection < 0) {
-        canvasWidth = canvasWidth + canvasWidth / 4;
-        canvasHeight = canvasHeight + canvasHeight / 4;
-        // canvasWidth = canvas.width;
-        // canvasHeight = canvas.height;
-        let temp = canvasWidth;
-        // let tempGrossCellSize=canvasWidth/3;
-        let tempCellSize = (canvasWidth - spacing * 3) / 3;
-        cellSize = tempCellSize;
-
-        // drawGrid();
-      } else {
-        // Zoom out
-        // if (
-        //   canvas.width > window.innerWidth ||
-        //   canvas.height > window.innerHeight
-        // ) {
-        canvasWidth = canvasWidth - canvasWidth / 4;
-        canvasHeight = canvasHeight - canvasHeight / 4;
-        // canvasWidth = canvas.width;
-        // canvasHeight = canvas.height;
-        let tempCellSize = (canvasWidth - spacing * 3) / 3;
-        cellSize = tempCellSize;
-        // cellSize -= 200 / 4;
-        // spacing -= 5 / 4;
-        // }
-      }
-
-      // Redraw grid with new size
-      drawGrid();
-    },
-    { passive: false }
-  );
   function test() {
     console.log("test");
   }

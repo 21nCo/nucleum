@@ -27,6 +27,8 @@
   import Button from "@21n/elements/button/Button.svelte";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import context from "@21n/stores/context.store";
+  import { ResourceActions } from "@21n/components/record/resource.actions";
+  import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
   const dispatch = createEventDispatcher();
   export let item: IRecordId;
   export let isInterimTab: boolean = false;
@@ -41,6 +43,7 @@
       items: [
         {
           value: "remove",
+          label: "Remove from tabs",
           icon: "cross",
           callback: async () => uiState.removeResourceFromTabs(item)
         }
@@ -56,7 +59,19 @@
   });
 
   function resolveContextMenu() {
-    return contextMenu;
+    const resourceStore = resolveResourceStore(resourceType);
+    if (!resource || !resourceStore) return contextMenu;
+    const resourceActions = new ResourceActions(resource, resourceStore, {
+      accessPoint: ResourceAccessPoint.SELF,
+      accessMode: ResourceAccessMode.TAB
+    });
+    return [
+      ...contextMenu,
+      {
+        group: "open",
+        items: [resourceActions.openAsSplit(), resourceActions.openAsFull()]
+      }
+    ];
   }
 
   function handleRearrange(displacement: number) {

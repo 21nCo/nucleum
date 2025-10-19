@@ -1,17 +1,38 @@
 <script lang="ts">
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
-  import {
-    type INode,
-    NodeType
-  } from "@21n/products/memotron/node/node.type";
+  import { type INode, NodeType } from "@21n/products/memotron/node/node.type";
   import { cn, convertToRGBA } from "@21n/utils/ui.utils";
   import { truncateString } from "@21n/shared-utils/text.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import { toasts } from "@21n/stores/notification.store";
+  import { preferences } from "@21n/stores/preferences/preferences.store";
+  import {
+    Preference,
+    PreferencesScope
+  } from "@21n/stores/preferences/preferences.type";
+  import { appStore } from "@21n/stores/app.store";
+  import { derived } from "svelte/store";
+  import { Arrangement } from "@21n/types/direction.enum";
   export let node: INode;
   export let contentPreview: string;
   export let truncateLength: number | undefined = undefined;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  let textHightlightColor = resolveTextHighlightColor(node);
+  export let arrangement: Arrangement = Arrangement.LIST;
+
+  const hideHighlightColors = derived(
+    [preferences, appStore],
+    ([$preferences, $appStore]) => {
+      const key = `${$appStore.product}-${Preference.HIDE_HIGHLIGHT_COLORS}`;
+      return ($preferences[key] as boolean) ?? false;
+    }
+  );
+
+  $: textHightlightColor = $hideHighlightColors
+    ? undefined
+    : resolveTextHighlightColor(node);
 
   function getKindleHighlightRGBA(color: string, opacity: number) {
     const colorMap = {
@@ -42,25 +63,51 @@
       return undefined;
     }
   }
+
+  async function copyTextContent() {
+    const text = node.text || node.mdText || contentPreview || "";
+    if (text) {
+      await navigator.clipboard.writeText(text);
+      toasts.success("Text copied to clipboard");
+    }
+  }
 </script>
 
-<div
-  class={cn("rounded-md text-wrap text-left userdata", {
-    "m-4 p-4 bg--bgs2": accessPoint === ResourceAccessPoint.SELF,
-    "line-clamp-3":
-      accessPoint !== ResourceAccessPoint.SELF &&
-      accessPoint !== ResourceAccessPoint.NODE_TRACES,
-    "line-clamp-5": accessPoint === ResourceAccessPoint.NODE_TRACES
-  })}
->
-  <span
-    class={cn("relative", {
-      "text-b2": accessPoint === ResourceAccessPoint.SELF
+<div class="flex flex-col gap-2">
+  <div
+    class={cn("rounded-md text-wrap text-left userdata selectable", {
+      "m-4 p-4 bg--bgs2": accessPoint === ResourceAccessPoint.SELF,
+      "line-clamp-3":
+        accessPoint !== ResourceAccessPoint.SELF &&
+        accessPoint !== ResourceAccessPoint.NODE_TRACES &&
+        arrangement === Arrangement.LIST,
+      "line-clamp-5": accessPoint === ResourceAccessPoint.NODE_TRACES
     })}
-    style="background-color: {textHightlightColor
-      ? textHightlightColor
-      : 'transparent'};"
   >
-    {truncateString(contentPreview, truncateLength)}
-  </span>
+    <span
+      class={cn("relative", {
+        "text-b2": accessPoint === ResourceAccessPoint.SELF,
+        "text-fgs3":
+          accessPoint !== ResourceAccessPoint.SELF &&
+          !textHightlightColor &&
+          arrangement !== Arrangement.LIST
+      })}
+      style="background-color: {textHightlightColor
+        ? textHightlightColor
+        : 'transparent'};"
+    >
+      {truncateString(contentPreview, truncateLength)}
+    </span>
+  </div>
+  {#if accessPoint === ResourceAccessPoint.SELF}
+    <div class="flex justify-center items-center w-full gap-4 pb-4">
+      <Button
+        style={ButtonStyle.PLAIN}
+        label="Copy text content"
+        isUnderlined={true}
+        size={Size.sm}
+        on:click={copyTextContent}
+      />
+    </div>
+  {/if}
 </div>

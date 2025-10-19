@@ -3,10 +3,14 @@
   import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
   import { InputStyle } from "@21n/types/input.type";
   import { createEventDispatcher } from "svelte";
-  import { linker, linkTagStore } from "@21n/products/memotron/linking/link.store";
+  import {
+    linker,
+    linkTagStore
+  } from "@21n/products/memotron/linking/link.store";
   import type { INodeLinkThumb } from "@21n/products/memotron/node/node.type";
   import type { IRecordId } from "@21n/types/data.type";
   import { logger } from "@21n/components/debug/logger.client";
+  import { LinkType } from "@21n/products/memotron/linking/link.type";
   const dispatch = createEventDispatcher();
 
   export let link: INodeLinkThumb;
@@ -19,7 +23,11 @@
 
   async function processSelect(id: IRecordId) {
     link.tags = [...(link.tags || []), id];
-    const result = await linker.modify(link.id, {
+    const linkId =
+      link.links?.find((x) => x.linkType === LinkType.DIRECT)?.id ??
+      link.links?.[0].id;
+    if (!linkId) return;
+    const result = await linker.modify(linkId, {
       tags: link.tags
     });
     logger.log({ at: "processSelect", result });

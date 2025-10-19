@@ -82,7 +82,7 @@
           }
         });
         if (linkResult && isValidArrayWithData(linkResult)) {
-          link = linkResult[0];
+          link = { links: linkResult, linkedTo: nodeId };
           expansionState = "node";
         } else {
           expansionState = "error";

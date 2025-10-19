@@ -35,6 +35,7 @@
           const parsed = JSON.parse(event.data.payload);
           addToDebugLog(`Parsed data: ${JSON.stringify(parsed)}`);
           if (parsed.type === "SHARED_CONTENT") {
+            if (data) return;
             await processShareData(parsed);
           }
         }
@@ -298,7 +299,7 @@
       {:else}
         <EmptyStatusView
           isLoadingState={true}
-          subText="Logged in. Reading data..."
+          loadingText="Logged in. Reading data..."
         />
       {/if}
     </div>

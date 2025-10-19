@@ -35,8 +35,23 @@ import EditCaptureShortcuts from "@21n/products/memotron/capture/EditCaptureShor
 import CaptureSettings from "@21n/products/memotron/capture/CaptureSettings.svelte";
 import LinkTagsControlPanel from "@21n/products/memotron/linking/LinkTagsControlPanel.svelte";
 import LibraryPanelContentResolver from "@21n/components/library/LibraryPanelContentResolver.svelte";
+import PreviewImageUploader from "@21n/products/memotron/node/PreviewImageUploader.svelte";
+import NodeSettings from "@21n/products/memotron/node/NodeSettings.svelte";
 
 export const memotronActions: IAction[] = [
+  {
+    action: MemotronAction.PREVIEW_IMAGE_UPLOADER,
+    type: ActionType.MODAL,
+    isMeta: true,
+    component: PreviewImageUploader,
+    modalParams: {
+      layout: {
+        size: Size.md,
+        orientation: Orientation.Vertical,
+        isShowCantileverClose: true
+      }
+    }
+  },
   {
     action: Action.MOBILEHOME,
     component: MemotronHomeOnMobile,
@@ -326,6 +341,20 @@ export const memotronActions: IAction[] = [
       title: "Capture Settings",
       layout: {
         size: Size.lg,
+        orientation: Orientation.Vertical,
+        isShowCantileverClose: true
+      }
+    }
+  },
+  {
+    action: MemotronAction.NODE_SETTINGS,
+    label: "Node Settings",
+    type: ActionType.MODAL,
+    component: NodeSettings,
+    modalParams: {
+      title: "Node Settings",
+      layout: {
+        size: Size.md,
         orientation: Orientation.Vertical,
         isShowCantileverClose: true
       }

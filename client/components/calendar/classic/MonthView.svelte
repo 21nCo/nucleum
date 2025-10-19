@@ -23,13 +23,13 @@
   let today = new Date();
 
   $: isConstrainedWidth = containerWidth < 600;
-  
+
   let showMonthIndicators = preferences.resolve(Preference.CALENDAR_TILE_INDICATORS_MONTH) ?? true;
-  
+
   const unsubscribe = preferences.subscribe((prefs) => {
     showMonthIndicators = prefs[Preference.CALENDAR_TILE_INDICATORS_MONTH] ?? true;
   });
-  
+
   onDestroy(unsubscribe);
   function handleWheel(event: WheelEvent) {
     if (isScrolling) return;

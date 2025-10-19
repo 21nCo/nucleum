@@ -265,8 +265,10 @@ export function resolveNodeContentLabel(contentType: NodeType) {
 }
 
 export function resolveFilePreview(node: INode) {
-  const { contentType, body, file, metadata } = node;
-  if (
+  const { contentType, body, file, metadata, previewImage } = node;
+  if(previewImage){
+    return previewImage;
+  } else if (
     contentType === NodeType.IMAGE ||
     contentType === NodeType.FILE ||
     contentType === NodeType.VIDEO

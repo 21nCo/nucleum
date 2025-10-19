@@ -26,9 +26,13 @@
   }
 
   onMount(() => {
-    uiState.subscribe((x) => {
+    const uiStateUnsub = uiState.subscribe(() => {
       selectedPanel = resolveSavedState() ?? MemotronOverviewPanel.GRAPH;
     });
+
+    return () => {
+      uiStateUnsub();
+    };
   });
 </script>
 

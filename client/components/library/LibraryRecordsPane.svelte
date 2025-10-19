@@ -158,6 +158,9 @@
       abortController.abort();
       abortController = null;
     }
+    if (refreshResetTimeout) {
+      clearTimeout(refreshResetTimeout);
+    }
   });
 
   function onSelectAll() {
@@ -615,7 +618,7 @@
     />
   {/if}
   <div
-    class="flex flex-col gap-4 px-4 overflow-auto grow"
+    class="flex flex-col gap-4 px-4 overflow-auto-scrollbar grow"
     id="records-container"
   >
     <InlineSyncingFeedback {resource} />

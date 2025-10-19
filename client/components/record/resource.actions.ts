@@ -62,6 +62,20 @@ export class ResourceActions<T extends IMemotronItemBase> {
       }
     };
   }
+  copyExternalLink(): IContextMenuItem {
+    return {
+      label: "Copy source link",
+      value: "copyExternalLink",
+      icon: "copy",
+      callback: async () => {
+        const url = (this.resource as any)?.url;
+        if (url) {
+          await navigator.clipboard.writeText(url);
+          toasts.success("External link copied to clipboard");
+        }
+      }
+    };
+  }
   copyContents(): IContextMenuItem {
     return {
       label: "Copy contents",

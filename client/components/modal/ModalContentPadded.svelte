@@ -10,7 +10,7 @@
   class={cn(classList, {
     "p-2 lg:p-4": isExtraSmall,
     "px-3 tp:px-8 lg:px-12": !isExtraSmall,
-    "w-full": !isDynamicSize
+    "w-full h-full": !isDynamicSize
   })}
 >
   <slot />

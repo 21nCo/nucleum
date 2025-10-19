@@ -224,8 +224,8 @@
           labelBackground: true,
           labelPadding: [4, 12, 4, 12],
           labelBackgroundOpacity: 1,
-          labelFill: currentColors["bgs1"],
-          labelBackgroundFill: currentColors["ass1"],
+          labelFill: currentColors["aps1"],
+          labelBackgroundFill: currentColors["aps3"],
           padding: [16, 16, 16, 16],
           labelBackgroundRadius: 6
         }

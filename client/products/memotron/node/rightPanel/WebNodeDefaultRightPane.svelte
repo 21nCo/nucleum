@@ -72,9 +72,7 @@
   <Text content="Overview" style={TextStyle.PANEL_HEADING_SMALL} />
 
   {#if canHaveTraces.includes($node.contentType)}
-    <div
-      class="flex flex-row justify-around items-center w-full border border-brs3 rounded-md px-2 py-0.5"
-    >
+    <div class="grid grid-cols-2 w-full border border-brs3 rounded-md h-10">
       <RightPaneOverviewMetricCard
         label="Links"
         icon="link"
@@ -82,10 +80,10 @@
         on:click={() => (pane = NodeRightPaneType.LINKS)}
       />
       <RightPaneOverviewMetricCard
-        label="Clips"
+        label="Bookmarks"
         icon="bookmark"
         value={$node.clips?.length || 0}
-        on:click={() => (pane = NodeRightPaneType.TRACES)}
+        on:click={() => (pane = NodeRightPaneType.BOOKMARKS)}
       />
     </div>
   {/if}
@@ -94,7 +92,7 @@
     <div class="flex flex-col gap-4 items-start w-full h-1/3 min-h-0">
       <span class="flex flex-row justify-between items-center w-full">
         <span class="flex flex-row gap-1 items-center">
-          <Text content="Clips" style={TextStyle.SECTION_HEADING} />
+          <Text content="Bookmarks" style={TextStyle.SECTION_HEADING} />
           <Badge text={$node.clips?.length || 0} size={Size.sm} />
         </span>
         {#if $node.clips?.length > 2}
@@ -104,7 +102,7 @@
               icon="proceed"
               label="View all"
               style={ButtonStyle.PLAIN}
-              on:click={() => (pane = NodeRightPaneType.TRACES)}
+              on:click={() => (pane = NodeRightPaneType.BOOKMARKS)}
             />
           </span>
         {/if}
@@ -115,10 +113,8 @@
           accessPoint={ResourceAccessPoint.NODE_TRACES}
           resource={Resource.node}
           size={Size.sm}
-          isPreventDefault={
-            $node.contentType === NodeType.YOUTUBE_VIDEO ||
-            $node.contentType === NodeType.YOUTUBE_SHORT
-          }
+          isPreventDefault={$node.contentType === NodeType.YOUTUBE_VIDEO ||
+            $node.contentType === NodeType.YOUTUBE_SHORT}
           on:click={(e) => {
             if (
               $node.contentType !== NodeType.YOUTUBE_VIDEO &&

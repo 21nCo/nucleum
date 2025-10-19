@@ -120,10 +120,10 @@
       isSearchContext={true}
       mainText={isMemotronPage
         ? "Hello from the other side of Memotron👋."
-        : "No clips found."}
+        : "No bookmarks found."}
       subText={isMemotronPage
-        ? "Start highlighting to save clips about Memotron to your Memotron."
-        : "Start highlighting to create clips."}
+        ? "Start highlighting to save bookmarks about Memotron to your Memotron."
+        : "Start highlighting to create bookmarks."}
     />
   {/if}
 </main>

@@ -55,9 +55,13 @@
     });
   }
   onMount(() => {
-    userPreferences.subscribe((value) => {
+    const userPreferencesUnsub = userPreferences.subscribe(() => {
       selectedMode = refreshAdvancedModeState();
     });
+
+    return () => {
+      userPreferencesUnsub();
+    };
   });
 
   function refreshAdvancedModeState() {

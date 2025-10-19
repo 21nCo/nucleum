@@ -10,14 +10,12 @@
   import { parseAndFormatDate } from "@21n/utils/time.utils";
   import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import CalendarNotesPanel from "@21n/components/calendar/column/CalendarNotesPanel.svelte";
-  import {
-    AlertType,
-    type IInlineStatus
-  } from "@21n/types/notification.type";
+  import { AlertType, type IInlineStatus } from "@21n/types/notification.type";
   import { setContext } from "svelte";
   import { Size } from "@21n/types/size.enum";
   import { debouncer } from "@21n/utils/utils";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import { resolveCalendarNotesId } from "@21n/components/calendar/calendar.utils";
 
   export let date: Date;
   export let scale: TimeScaleUnit;
@@ -60,6 +58,12 @@
   };
 
   setContext("calendar-content", calendarContentContext);
+
+  function openNotesInFullScreen() {
+    const id = resolveCalendarNotesId(date, scale);
+    if (!id) return;
+    appStore.openResource(id, ResourceAccessMode.FULL);
+  }
 </script>
 
 <div
@@ -82,15 +86,22 @@
       <span class="text-b2 text-fgs3">| Notes </span>
       <InlineFeedbackText {feedback} size={Size.sm} />
     </div>
-    <Button
-      icon="history"
-      tooltip="History"
-      on:click={() => {
-        appStore.openResource(Action.HISTORY, ResourceAccessMode.POP, {
-          searchParams: { [AppSearchParam.DATE]: date.toISOString() }
-        });
-      }}
-    />
+    <div class="flex items-center">
+      <Button
+        icon="fullscreen"
+        tooltip="Open notes in full screen"
+        on:click={openNotesInFullScreen}
+      />
+      <Button
+        icon="history"
+        tooltip="History"
+        on:click={() => {
+          appStore.openResource(Action.HISTORY, ResourceAccessMode.POP, {
+            searchParams: { [AppSearchParam.DATE]: date.toISOString() }
+          });
+        }}
+      />
+    </div>
   </div>
   <div class="px-1 flex-grow">
     <CalendarNotesPanel {date} {scale} {mdId} />

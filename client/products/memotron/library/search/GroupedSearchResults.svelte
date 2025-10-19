@@ -22,7 +22,7 @@
 
   export function keydown(event: KeyboardEvent) {
     if (groupSwitcherKeys.has(event.key as KeyboardKey)) {
-      if (!event.metaKey) return;
+      if (!event.metaKey || !event.shiftKey) return;
       event.preventDefault();
       event.stopPropagation();
       const prevVal = activeGroupIndex;

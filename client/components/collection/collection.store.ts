@@ -62,7 +62,7 @@ import { UIState } from "@21n/stores/uiState/uiState.type";
 import view from "@21n/stores/view.store";
 
 const defaults: Partial<ICollection> = {
-  type: CollectionType.UNTYPED,
+  type: CollectionType.TYPED,
   typeToExtend: "",
   resource: Resource.node
 };
@@ -265,7 +265,6 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
   > {
     const data = await this.selectMany({
       filters: {
-        type: CollectionType.TYPED,
         isCaptureShortcutEnabled: true
       }
     });
@@ -658,20 +657,6 @@ export function resolveCollectionContextMenu(
           //   callback: async () => {}
           // },
           resourceActions.copyLink(),
-          {
-            value: "convert",
-            icon: "convert",
-            label: "Convert as Simple",
-            callback: async () => {
-              const result = await collectionStore.modify(collection.id, {
-                type: CollectionType.UNTYPED
-              });
-              if (result) {
-                toasts.success("Collection converted to simple");
-              }
-              return result;
-            }
-          },
           ...(!collection.resource || collection.resource === Resource.node
             ? [captureToggle]
             : []),
