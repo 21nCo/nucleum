@@ -1,18 +1,18 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import TimeSelector from "../../TimeSelector.svelte";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import MultiselectDropdown from "$lib/client/elements/dropdown/MultiselectDropdown.svelte";
-  import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TimeScale } from "$lib/client/types/time.type";
-  import { properCase } from "$lib/shared/utils/text.utils";
-  import { getTimeZonesWithOffsets } from "$lib/client/utils/time.utils";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import TimeSelector from "@21n/components/TimeSelector.svelte";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import MultiselectDropdown from "@21n/elements/dropdown/MultiselectDropdown.svelte";
+  import type { DropdownItem } from "@21n/types/dropdownItem.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import { TimeScale } from "@21n/types/time.type";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import { getTimeZonesWithOffsets } from "@21n/utils/time.utils";
+  import { InputStyle } from "@21n/types/input.type";
+  import { Orientation } from "@21n/types/direction.enum";
   let timeZones: { label: string; offset: number }[] = [];
   let timeZoneDropdownItems: (Omit<DropdownItem, "value"> & {
     value: string;

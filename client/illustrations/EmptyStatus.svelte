@@ -1,6 +1,6 @@
 <!-- source: https://illustrationkit.com/illustrations/halo -->
 <script lang="ts">
-  import { Size } from "../types/size.enum";
+  import { Size } from "@21n/types/size.enum";
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   let width = 143;
   let height = 156;

@@ -1,19 +1,19 @@
 <script lang="ts">
-  import TableOfContents from "$lib/client/components/markdown/TableOfContents.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { properCase } from "$lib/shared/utils/text.utils";
-  import NodeHistoryPane from "../../common/history/NodeHistoryPane.svelte";
-  import NodeLinksPane from "../links/NodeLinksPane.svelte";
-  import type { IActiveNodeStore } from "../node.store";
-  import { NodeRightPaneType, NodeType } from "../node.type";
-  import NodeTracesPane from "../traces/NodeTracesPane.svelte";
-  import NodeSidenotesPane from "./NodeSidenotesPane.svelte";
-  import PropertiesPane from "$lib/client/components/collection/properties/PropertiesPane.svelte";
-  import NodeMetadataPane from "../metadata/NodeMetadataPane.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
+  import TableOfContents from "@21n/components/markdown/TableOfContents.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import NodeHistoryPane from "@21n/products/memotron/common/history/NodeHistoryPane.svelte";
+  import NodeLinksPane from "@21n/products/memotron/node/links/NodeLinksPane.svelte";
+  import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import { NodeRightPaneType, NodeType } from "@21n/products/memotron/node/node.type";
+  import NodeTracesPane from "@21n/products/memotron/node/traces/NodeTracesPane.svelte";
+  import NodeSidenotesPane from "@21n/products/memotron/node/rightPanel/NodeSidenotesPane.svelte";
+  import PropertiesPane from "@21n/components/collection/properties/PropertiesPane.svelte";
+  import NodeMetadataPane from "@21n/products/memotron/node/metadata/NodeMetadataPane.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
   import { createEventDispatcher } from "svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   const dispatch = createEventDispatcher();
   export let pane: NodeRightPaneType;
   export let node: IActiveNodeStore;
@@ -53,7 +53,7 @@
     <NodeLinksPane {node} />
   {:else if pane === NodeRightPaneType.PROPERTIES}
     <PropertiesPane item={node} resource={Resource.node} />
-  {:else if pane === NodeRightPaneType.TRACES}
+  {:else if pane === NodeRightPaneType.BOOKMARKS}
     <NodeTracesPane {node} />
   {:else if pane === NodeRightPaneType.HISTORY}
     <NodeHistoryPane {node} />

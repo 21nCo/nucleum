@@ -1,6 +1,6 @@
 <script lang="ts">
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import { cn } from "@21n/utils/ui.utils";
   export let url: string;
   export let deviceImages: string[];
   export let frameImage: string;

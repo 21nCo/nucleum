@@ -1,9 +1,9 @@
-import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
 import {
   PersistenceActionType,
   StoreDataType,
   type IMutation
-} from "$lib/client/types/data.type";
+} from "@21n/types/data.type";
 
 /**
  * This is uniform with Surreal time::unix() - for cache invalidation etc

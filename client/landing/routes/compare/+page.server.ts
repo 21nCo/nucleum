@@ -3,7 +3,7 @@ import {
   features,
   categories,
   contemporaries
-} from "$lib/client/landing/memotron.io/compare/memotronWheel";
+} from "@21n/landing/memotron.io/compare/memotronWheel";
 
 export const prerender = IS_PRODUCT_PAGE === "true" && SITE === "Memotron";
 

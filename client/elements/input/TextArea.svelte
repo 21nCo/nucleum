@@ -1,11 +1,11 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import view from "$lib/client/stores/view.store";
-  import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
-  import InputBaseElement from "../InputBaseElement.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Size } from "$lib/client/types/size.enum";
-  import { debouncer } from "$lib/client/utils/utils";
+  import view from "@21n/stores/view.store";
+  import { InputStyle, type InputLabel } from "@21n/types/input.type";
+  import InputBaseElement from "@21n/elements/InputBaseElement.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/types/size.enum";
+  import { debouncer } from "@21n/utils/utils";
   export let size: Size = Size.md;
   export let value: any;
   export let placeholder: string | undefined = undefined;

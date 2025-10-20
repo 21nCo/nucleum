@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { formatSeconds } from "$lib/client/utils/time.utils";
+  import { formatSeconds } from "@21n/utils/time.utils";
   import { onMount } from "svelte";
 
   export let value: number;

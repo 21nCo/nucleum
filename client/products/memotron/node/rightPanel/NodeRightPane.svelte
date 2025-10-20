@@ -1,20 +1,20 @@
 <script lang="ts">
-  import VerticalSwitcher from "$lib/client/elements/switcher/VerticalSwitcher.svelte";
-  import { Placement } from "$lib/client/types/direction.enum";
+  import VerticalSwitcher from "@21n/elements/switcher/VerticalSwitcher.svelte";
+  import { Placement } from "@21n/types/direction.enum";
   import {
     canHaveTraces,
     NodeRightPaneType,
     NodeType
-  } from "$lib/client/products/memotron/node/node.type";
-  import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IActiveNodeStore } from "../node.store";
-  import type { ISelectItem } from "$lib/client/types/select.type";
-  import NodeRightPanelContent from "./NodeRightPaneContent.svelte";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  } from "@21n/products/memotron/node/node.type";
+  import { VerticalSwitcherStyle } from "@21n/types/switcher.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import type { ISelectItem } from "@21n/types/select.type";
+  import NodeRightPanelContent from "@21n/products/memotron/node/rightPanel/NodeRightPaneContent.svelte";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { createEventDispatcher } from "svelte";
-  import view from "$lib/client/stores/view.store";
-  import { Display } from "$lib/client/types/view.type";
+  import view from "@21n/stores/view.store";
+  import { Display } from "@21n/types/view.type";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let mdId: string;
@@ -29,7 +29,7 @@
 
   if (canHaveTraces.includes($node?.contentType ?? NodeType.UNKNOWN)) {
     verticalSwitcherItems.push({
-      value: NodeRightPaneType.TRACES,
+      value: NodeRightPaneType.BOOKMARKS,
       icon: "bookmark"
     });
   }

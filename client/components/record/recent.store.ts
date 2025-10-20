@@ -1,16 +1,16 @@
 import {
   isSameResource,
   resolveProductResources
-} from "../flux/resourceStores/resource.utils";
-import { ObservableStore } from "$lib/client/stores/client.store";
-import type { IRecordId } from "$lib/client/types/data.type";
-import { Resource } from "../flux/resourceStores/resource.enum";
-import { resourceInList } from "../flux/resourceStores/resource.utils";
-import type { IRecentsStore } from "./record.type";
-import { rootNodeTypeList } from "$lib/client/products/memotron/node/node.type";
-import { logger } from "../debug/logger.client";
-import { resolveResourceStore } from "../flux/resourceStores/store.resolver";
-import { appStore } from "$lib/client/stores/app.store";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { ObservableStore } from "@21n/stores/client.store";
+import type { IRecordId } from "@21n/types/data.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+import type { IRecentsStore } from "@21n/components/record/record.type";
+import { rootNodeTypeList } from "@21n/products/memotron/node/node.type";
+import { logger } from "@21n/components/debug/logger.client";
+import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
+import { appStore } from "@21n/stores/app.store";
 import { get } from "svelte/store";
 
 export class RecentsStore extends ObservableStore<IRecentsStore> {

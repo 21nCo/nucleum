@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
-import Focus from "./Focus.svelte";
+import Focus from "@21n/products/pointron/focus/Focus.svelte";
 
 /**
  * some description

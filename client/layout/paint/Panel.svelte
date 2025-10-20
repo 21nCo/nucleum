@@ -1,28 +1,28 @@
 <script lang="ts">
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import view from "$lib/client/stores/view.store";
-  import type { IButtonParams } from "$lib/client/types/button.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
+  import Divider from "@21n/elements/Divider.svelte";
+  import FloatingButton from "@21n/elements/button/FloatingButton.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import view from "@21n/stores/view.store";
+  import type { IButtonParams } from "@21n/types/button.type";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import { Size } from "@21n/types/size.enum";
+  import { bg, cn } from "@21n/utils/ui.utils";
   import { onMount } from "svelte";
-  import { appEvents } from "$lib/client/stores/notification.store";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { Display } from "$lib/client/types/view.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import { appEvents } from "@21n/stores/notification.store";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import { Display } from "@21n/types/view.type";
+  import Icon from "@21n/elements/Icon.svelte";
   import { createEventDispatcher } from "svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { InteractionMode } from "$lib/client/components/settings/interactionMode/interactionMode.type";
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import ComponentResolver from "./ComponentResolver.svelte";
-  import type { InputLabelInfoToolTip } from "$lib/client/types/input.type";
-  import FormLabelTooltip from "$lib/client/elements/text/formLabel/FormLabelTooltip.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { InteractionMode } from "@21n/components/settings/interactionMode/interactionMode.type";
+  import { tooltip } from "@21n/actions/popover.action";
+  import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
+  import type { InputLabelInfoToolTip } from "@21n/types/input.type";
+  import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
   import { fly } from "svelte/transition";
-  import BackButton from "$lib/client/elements/button/BackButton.svelte";
+  import BackButton from "@21n/elements/button/BackButton.svelte";
   const dispatch = createEventDispatcher();
 
   export let title: string | undefined = undefined;
@@ -47,6 +47,8 @@
   onMount(() => {
     const unsubscribe = appEvents.subscribe((e) => {
       if (e.event === GlobalEvent.APP_MENU_SWITCHED) {
+        const currentPath = window?.location?.pathname?.replace("/", "");
+        if (currentPath !== e.value) return;
         isCollapsed = !isCollapsed;
         isExplicitlyCollapsed = false;
       }

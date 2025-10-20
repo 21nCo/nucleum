@@ -1,20 +1,20 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import SearchResultsPopover from "./SearchResultsPopover.svelte";
-  import InputBaseElement from "../InputBaseElement.svelte";
+  import SearchResultsPopover from "@21n/elements/input/SearchResultsPopover.svelte";
+  import InputBaseElement from "@21n/elements/InputBaseElement.svelte";
   import {
     InputStyle,
     type InputLabel,
     type PopoverInputOptions
-  } from "$lib/client/types/input.type";
-  import Icon from "../Icon.svelte";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { mount } from "$lib/client/actions/mount.action";
-  import Tag from "../text/Tag.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
-  import TextInput from "./TextInput.svelte";
+  } from "@21n/types/input.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Placement } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { mount } from "@21n/actions/mount.action";
+  import Tag from "@21n/elements/text/Tag.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { isExtensionEnvironment } from "@21n/utils/browser.utils";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
   const dispatch = createEventDispatcher();
   export let id: string = "";
   export let placeholder: string | undefined = undefined;

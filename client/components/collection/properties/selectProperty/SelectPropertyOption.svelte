@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import type { IPropertyConfigOption } from "../property.type";
-  import { isValidString } from "$lib/shared/utils/text.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import type { IPropertyConfigOption } from "@21n/components/collection/properties/property.type";
+  import { isValidString } from "@21n/shared-utils/text.utils";
+  import Icon from "@21n/elements/Icon.svelte";
   export let item: IPropertyConfigOption;
   export let isSelectedContext: boolean = false;
   export let isSelected: boolean = false;

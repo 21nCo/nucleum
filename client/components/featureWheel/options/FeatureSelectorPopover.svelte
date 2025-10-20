@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IFwFeature } from "$lib/client/types/featureWheel.type";
+  import type { IFwFeature } from "@21n/types/featureWheel.type";
   export let features: IFwFeature[] = [];
   export let selected: string[] = [];
   export let categories: string[] = [];

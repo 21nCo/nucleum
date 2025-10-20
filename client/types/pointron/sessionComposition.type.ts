@@ -1,5 +1,5 @@
-import type { TimeUnit } from "$lib/client/types/time.type";
-import type { IRecordId } from "$lib/client/types/data.type";
+import type { TimeUnit } from "@21n/types/time.type";
+import type { IRecordId } from "@21n/types/data.type";
 
 export type SessionComposition = {
   id: string;

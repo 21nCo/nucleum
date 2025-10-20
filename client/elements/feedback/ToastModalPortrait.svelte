@@ -1,11 +1,11 @@
 <script lang="ts">
-  import modalEvent from "$lib/client/components/modal/modal.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import ModalFooter from "../../components/modal/ModalFooter.svelte";
-  import { toasts } from "../../stores/notification.store";
-  import { Size } from "../../types/size.enum";
-  import type { Toast } from "../../types/notification.type";
-  import ToastNotification from "./ToastNotification.svelte";
+  import modalEvent from "@21n/components/modal/modal.store";
+  import { Action } from "@21n/types/action.enum";
+  import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
+  import { toasts } from "@21n/stores/notification.store";
+  import { Size } from "@21n/types/size.enum";
+  import type { Toast } from "@21n/types/notification.type";
+  import ToastNotification from "@21n/elements/feedback/ToastNotification.svelte";
   export let id: string;
   let notification: Toast | undefined;
   if (id) notification = $toasts.find((x: Toast) => x.id == id);

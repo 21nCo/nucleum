@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
-  import view from "$lib/client/stores/view.store";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TimeFormat } from "$lib/client/types/time.type";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import SessionStatusLabel from "./SessionStatusLabel.svelte";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
-  import { deepCopy } from "$lib/shared/utils/obj.utils";
-  import { SessionCompositionType } from "$lib/client/types/pointron/sessionComposition.type";
-  import { resolveSessionSplitFromIntervals } from "../../../pointron.utils";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
+  import view from "@21n/stores/view.store";
+  import { Size } from "@21n/types/size.enum";
+  import { TimeFormat } from "@21n/types/time.type";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import SessionStatusLabel from "@21n/products/pointron/focus/elements/sessionTimeText/SessionStatusLabel.svelte";
+  import { bg, cn } from "@21n/utils/ui.utils";
+  import { deepCopy } from "@21n/shared-utils/obj.utils";
+  import { SessionCompositionType } from "@21n/types/pointron/sessionComposition.type";
+  import { resolveSessionSplitFromIntervals } from "@21n/products/pointron/pointron.utils";
   export let parentBackgroundIndex: number = 1;
   export let size: Size = Size.md;
   $: splits = resolveSessionSplitFromIntervals($activeSession.intervals);

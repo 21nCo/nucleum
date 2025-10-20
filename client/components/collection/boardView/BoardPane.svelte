@@ -1,27 +1,27 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import type { ICollectionView } from "$lib/client/components/collection/collection.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import SubGroup from "./SubGroup.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import type { ICollectionView } from "@21n/components/collection/collection.type";
+  import { Size } from "@21n/types/size.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import SubGroup from "@21n/components/collection/boardView/SubGroup.svelte";
   import {
     calculateGroupingCounts,
     filterNodesByPropertyValue,
     resolveOptionsForGrouping
-  } from "../collection.utils";
-  import TabCountBadge from "../counts/TabCountBadge.svelte";
-  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { logger } from "$lib/client/components/debug/logger.client";
+  } from "@21n/components/collection/collection.utils";
+  import TabCountBadge from "@21n/components/collection/counts/TabCountBadge.svelte";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+  import { logger } from "@21n/components/debug/logger.client";
   import { createEventDispatcher } from "svelte";
-  import { dropzone } from "$lib/client/actions/dragAndDrop.action";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import type { IActiveCollectionStore } from "../collection.store";
-  import CollectionItems from "../CollectionItems.svelte";
+  import { dropzone } from "@21n/actions/dragAndDrop.action";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import type { IActiveCollectionStore } from "@21n/components/collection/collection.store";
+  import CollectionItems from "@21n/components/collection/CollectionItems.svelte";
   const dispatch = createEventDispatcher();
 
   export let collection: IActiveCollectionStore;

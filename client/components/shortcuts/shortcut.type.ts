@@ -1,4 +1,4 @@
-import { ModifierKey } from "$lib/client/types/keyboard.type";
+import { ModifierKey } from "@21n/types/keyboard.type";
 
 export type IKeyboardShortcut = {
   key: string;

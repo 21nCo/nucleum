@@ -1,10 +1,10 @@
 <script lang="ts">
-  import Roller from "./Roller.svelte";
+  import Roller from "@21n/components/calendar/birdView/Roller.svelte";
   import {
     Itemtype,
     Modes,
     type ProgrammedVerticalWheelEvent
-  } from "./Birdview.type";
+  } from "@21n/components/calendar/birdView/Birdview.type";
   import {
     currentDate,
     currentMonth,
@@ -13,9 +13,9 @@
     getDaysInMonth,
     getLastAlphabetPosition,
     waitForTimeout
-  } from "./Birdview.utils";
+  } from "@21n/components/calendar/birdView/Birdview.utils";
   import { createEventDispatcher, onMount } from "svelte";
-  import { debouncer } from "$lib/client/utils/utils";
+  import { debouncer } from "@21n/utils/utils";
   const dispatch = createEventDispatcher();
   let containerHeight: number;
   let monthNames = [

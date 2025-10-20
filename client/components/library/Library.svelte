@@ -1,40 +1,40 @@
 <script lang="ts">
-  import Records from "$lib/client/components/record/Records.svelte";
+  import Records from "@21n/components/record/Records.svelte";
   import { onMount } from "svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import ResourceSwitcher from "./resourceSwitcher/ResourceSwitcher.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
+  import { Size } from "@21n/types/size.enum";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import ResourceSwitcher from "@21n/components/library/resourceSwitcher/ResourceSwitcher.svelte";
+  import { appStore } from "@21n/stores/app.store";
   import {
     resourceAction,
     availableResources,
     resolveResourceIcon
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import {
     ResourceAccessPoint,
     ResourceActionType
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { recentsStore } from "$lib/client/components/record/recent.store";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import { recentsStore } from "@21n/components/record/recent.store";
   import { page } from "$app/stores";
-  import view from "$lib/client/stores/view.store";
-  import InlineSyncingFeedback from "$lib/client/elements/feedback/InlineSyncingFeedback.svelte";
-  import Panel from "$lib/client/layout/paint/Panel.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import LibraryRecordsPane from "./LibraryRecordsPane.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import LibraryLoadingPulse from "./LibraryLoadingPulse.svelte";
-  import { Arrangement, Placement } from "$lib/client/types/direction.enum";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { Action } from "$lib/client/types/action.enum";
-  import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
-  import ResourceBrowser from "./resourceBrowser/ResourceBrowser.svelte";
-  import { Product } from "$lib/client/products/product.type";
-  import { isHideCreateAction } from "./library.utils";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import ComponentShortcutListener from "../shortcuts/ComponentShortcutListener.svelte";
-  import { keyboardShortcuts } from "../shortcuts/shortcuts.store";
+  import view from "@21n/stores/view.store";
+  import InlineSyncingFeedback from "@21n/elements/feedback/InlineSyncingFeedback.svelte";
+  import Panel from "@21n/layout/paint/Panel.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import LibraryRecordsPane from "@21n/components/library/LibraryRecordsPane.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import LibraryLoadingPulse from "@21n/components/library/LibraryLoadingPulse.svelte";
+  import { Arrangement, Placement } from "@21n/types/direction.enum";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { Action } from "@21n/types/action.enum";
+  import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
+  import ResourceBrowser from "@21n/components/library/resourceBrowser/ResourceBrowser.svelte";
+  import { Product } from "@21n/products/product.type";
+  import { isHideCreateAction } from "@21n/components/library/library.utils";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import ComponentShortcutListener from "@21n/components/shortcuts/ComponentShortcutListener.svelte";
+  import { keyboardShortcuts } from "@21n/components/shortcuts/shortcuts.store";
 
   export let resources: Resource[] = [];
 

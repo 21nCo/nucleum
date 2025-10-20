@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Icon from "../Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
   import { scale } from "svelte/transition";
   import { bounceIn, bounceOut } from "svelte/easing";
 

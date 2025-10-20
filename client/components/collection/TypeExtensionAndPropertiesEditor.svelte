@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Size } from "$lib/client/types/size.enum";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
-  import { propertyEditorStore } from "./properties/property.store";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { Size } from "@21n/types/size.enum";
+  import { Orientation } from "@21n/types/direction.enum";
+  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
+  import { propertyEditorStore } from "@21n/components/collection/properties/property.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
   import { createEventDispatcher } from "svelte";
-  import { type IActiveCollectionStore } from "./collection.store";
-  import { resourceAction } from "../flux/resourceStores/resource.utils";
-  import { Resource } from "../flux/resourceStores/resource.enum";
-  import { ResourceActionType } from "../flux/resourceStores/resource.type";
+  import { type IActiveCollectionStore } from "@21n/components/collection/collection.store";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
   export let isCaptureShortcutEnabled: boolean = false;
   export let collection: IActiveCollectionStore | undefined = undefined;

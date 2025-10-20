@@ -1,35 +1,35 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { LayoutContext } from "$lib/client/types/layout.type";
+  import { LayoutContext } from "@21n/types/layout.type";
   import { createEventDispatcher, onMount } from "svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import view from "$lib/client/stores/view.store";
-  import type { IAction } from "$lib/client/types/action.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { postMessageToParent } from "$lib/client/utils/embed.utils";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { abg, cn } from "$lib/client/utils/ui.utils";
-  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import view from "@21n/stores/view.store";
+  import type { IAction } from "@21n/types/action.type";
+  import { Size } from "@21n/types/size.enum";
+  import { postMessageToParent } from "@21n/utils/embed.utils";
+  import { Placement } from "@21n/types/direction.enum";
+  import { abg, cn } from "@21n/utils/ui.utils";
+  import { EmbedMessage } from "@21n/types/embedMessage.enum";
   import {
     uiState,
     uiStateDerived
-  } from "$lib/client/stores/uiState/uiState.store";
+  } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import { keyboardShortcuts } from "$lib/client/components/shortcuts/shortcuts.store";
-  import { popover } from "$lib/client/actions/popover.action";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
-  import { appMenuStore } from "$lib/client/stores/appMenu/appMenu.store";
-  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { isHideCreateAction } from "$lib/client/components/library/library.utils";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import ButtonTooltip from "$lib/client/elements/button/ButtonTooltip.svelte";
+  } from "@21n/stores/uiState/uiState.type";
+  import { keyboardShortcuts } from "@21n/components/shortcuts/shortcuts.store";
+  import { popover } from "@21n/actions/popover.action";
+  import { hoverable } from "@21n/actions/hover.action";
+  import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
+  import { PopoverTriggerMethod } from "@21n/types/popover.type";
+  import { appMenuStore } from "@21n/stores/appMenu/appMenu.store";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
+  import { appStore } from "@21n/stores/app.store";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+  import { isHideCreateAction } from "@21n/components/library/library.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import ButtonTooltip from "@21n/elements/button/ButtonTooltip.svelte";
   const dispatch = createEventDispatcher();
   export let item: IAction;
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;

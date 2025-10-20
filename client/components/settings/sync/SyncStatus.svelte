@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { cn } from "@21n/utils/ui.utils";
   import { onMount } from "svelte";
-  import { flux } from "../../flux/flux";
-  import { formatDatetime } from "$lib/client/utils/time.utils";
-  import { userPreferences } from "../userPreferences.store";
+  import { flux } from "@21n/components/flux/flux";
+  import { formatDatetime } from "@21n/utils/time.utils";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
   let status: "SYNCED" | "PENDING" = "SYNCED";
   let itemsPendingForSync: any[] = [];
   let lastSyncedAt: string | null = null;

@@ -1,30 +1,30 @@
 <script lang="ts">
-  import view from "$lib/client/stores/view.store";
-  import modalEvent from "$lib/client/components/modal/modal.store";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import FileItem from "./FileItem.svelte";
-  import { UploadStatus } from "$lib/client/types/uploadStatus.enum";
-  import { convertFileSize } from "$lib/client/utils/utils";
-  import { FileSizeMeasurement } from "$lib/client/types/fileSizeMeasurement.enum";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import { ImportSource, StepType, type ImportHistoryItem } from "./data.type";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { Display } from "$lib/client/types/view.type";
-  import { enumToString, properCase } from "$lib/shared/utils/text.utils";
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-  import { generateResourceId } from "$lib/shared/utils/surreal.utils";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { preferences } from "$lib/client/stores/preferences/preferences.store";
-  import { MemotronAction } from "../memotronAction.enum";
-  import { Preference } from "$lib/client/stores/preferences/preferences.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import FieldMapping from "./FieldMapping.svelte";
-  import type { FieldMappingConfig } from "./data.type";
-  import { PocketImporter } from "./pocket.importer";
-  import { Action } from "$lib/client/types/action.enum";
+  import view from "@21n/stores/view.store";
+  import modalEvent from "@21n/components/modal/modal.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import FileItem from "@21n/products/memotron/import/FileItem.svelte";
+  import { UploadStatus } from "@21n/types/uploadStatus.enum";
+  import { convertFileSize } from "@21n/utils/utils";
+  import { FileSizeMeasurement } from "@21n/types/fileSizeMeasurement.enum";
+  import { toasts } from "@21n/stores/notification.store";
+  import { ImportSource, StepType, type ImportHistoryItem } from "@21n/products/memotron/import/data.type";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { Display } from "@21n/types/view.type";
+  import { enumToString, properCase } from "@21n/shared-utils/text.utils";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
+  import { generateResourceId } from "@21n/shared-utils/surreal.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { preferences } from "@21n/stores/preferences/preferences.store";
+  import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
+  import { Preference } from "@21n/stores/preferences/preferences.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import FieldMapping from "@21n/products/memotron/import/FieldMapping.svelte";
+  import type { FieldMappingConfig } from "@21n/products/memotron/import/data.type";
+  import { PocketImporter } from "@21n/products/memotron/import/pocket.importer";
+  import { Action } from "@21n/types/action.enum";
 
   export let importSource: ImportSource = ImportSource.POCKET;
 
@@ -164,8 +164,10 @@
     }
   }
 
+  let progressInterval: ReturnType<typeof setInterval> | null = null;
   function keepIncreasingProgress() {
-    const interval = setInterval(() => {
+    if (progressInterval) clearInterval(progressInterval);
+    progressInterval = setInterval(() => {
       if (tempFileList) {
         tempFileList = tempFileList?.map((item) => {
           if (item.uploadProgress < 90) {
@@ -178,7 +180,7 @@
         });
 
         if (isEverythingUploaded) {
-          clearInterval(interval);
+          if (progressInterval) clearInterval(progressInterval);
           tempFileList = tempFileList.map((item) => {
             return {
               ...item,
@@ -269,8 +271,10 @@
       toasts.success(
         `Successfully imported ${totalCreated} items from ${config.name} archive`
       );
+      if (progressInterval) clearInterval(progressInterval);
     } catch (error) {
       console.error("Error during import:", error);
+      if (progressInterval) clearInterval(progressInterval);
       importResult = {
         success: false,
         totalCreated: 0,

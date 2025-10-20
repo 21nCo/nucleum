@@ -1,14 +1,14 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { logger } from "$lib/client/components/debug/logger.client";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { logger } from "@21n/components/debug/logger.client";
   import {
     feedbackPane,
     webpage
-  } from "$lib/client/extensions/clipper/contentScripts/store";
-  import { AlertType } from "$lib/client/types/notification.type";
-  import type { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import { enumToString } from "$lib/shared/utils/text.utils";
+  } from "@21n/extensions/clipper/contentScripts/store";
+  import { AlertType } from "@21n/types/notification.type";
+  import type { NodeType } from "@21n/products/memotron/node/node.type";
+  import { enumToString } from "@21n/shared-utils/text.utils";
   export let contentType: NodeType;
   let classList: string | undefined = undefined;
   export { classList as class };

@@ -1,14 +1,14 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import Icon from "../elements/Icon.svelte";
-  import { HapticFeedback } from "../types/haptic.enum";
-  import { IconVariant } from "../types/icon.type";
-  import { Size } from "../types/size.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { HapticFeedback } from "@21n/types/haptic.enum";
+  import { IconVariant } from "@21n/types/icon.type";
+  import { Size } from "@21n/types/size.enum";
   import {
     hapticFeedback,
     postMessageToParent
-  } from "$lib/client/utils/embed.utils";
-  import { EmbedMessage } from "../types/embedMessage.enum";
+  } from "@21n/utils/embed.utils";
+  import { EmbedMessage } from "@21n/types/embedMessage.enum";
   type restrictedlengthArray = [string, string, string, string];
   export let IconsList: restrictedlengthArray = [
     "play",

@@ -1,10 +1,10 @@
 <script lang="ts">
   import { createEventDispatcher, tick } from "svelte";
-  import KeyboardToolbar from "../keyboardToolbar/KeyboardToolbar.svelte";
-  import Button from "../button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import TextInput from "./TextInput.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
+  import KeyboardToolbar from "@21n/elements/keyboardToolbar/KeyboardToolbar.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { InputStyle } from "@21n/types/input.type";
   export let value: string = "";
   const dispatch = createEventDispatcher();
   let inputRef: TextInput;

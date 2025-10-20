@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { appStore } from "$lib/client/stores/app.store";
-  import { debouncer } from "$lib/client/utils/utils";
+  import { appStore } from "@21n/stores/app.store";
+  import { debouncer } from "@21n/utils/utils";
   import { onMount, createEventDispatcher } from "svelte";
   export let value: string;
   const dispatch = createEventDispatcher();

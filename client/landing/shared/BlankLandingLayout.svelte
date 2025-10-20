@@ -1,16 +1,16 @@
 <script lang="ts">
-  import RightPanel from "./RightPanel.svelte";
-  import LandingBaseLayer from "../LandingBaseLayer.svelte";
-  import LeftPanel from "./LeftPanel.svelte";
-  import TopNavBar from "./navbar/TopNavBar.svelte";
-  import { addAnimateClass, cn } from "$lib/client/utils/ui.utils";
-  import type { IFooter, IListItem, ITopNavBar } from "./landing.type";
+  import RightPanel from "@21n/landing/shared/RightPanel.svelte";
+  import LandingBaseLayer from "@21n/landing/LandingBaseLayer.svelte";
+  import LeftPanel from "@21n/landing/shared/LeftPanel.svelte";
+  import TopNavBar from "@21n/landing/shared/navbar/TopNavBar.svelte";
+  import { addAnimateClass, cn } from "@21n/utils/ui.utils";
+  import type { IFooter, IListItem, ITopNavBar } from "@21n/landing/shared/landing.type";
   import { onMount } from "svelte";
-  import view from "$lib/client/stores/view.store";
-  import { currentProductsStore, isProductPage } from "./store/shared.store";
-  import Footer from "./footer/Footer.svelte";
+  import view from "@21n/stores/view.store";
+  import { currentProductsStore, isProductPage } from "@21n/landing/shared/store/shared.store";
+  import Footer from "@21n/landing/shared/footer/Footer.svelte";
   import { afterNavigate } from "$app/navigation";
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
   import { page } from "$app/stores";
 
   let id: string = "main";

@@ -1,20 +1,20 @@
 <script lang="ts">
-  import type { IBlock } from "$lib/client/components/markdown/md.type";
+  import type { IBlock } from "@21n/components/markdown/md.type";
   import {
     headingNodeTypes,
     listNodeTypes,
     NodeType,
     simpleTextNodeTypeList
-  } from "$lib/client/products/memotron/node/node.type";
-  import EmbedContent from "../embed/EmbedContent.svelte";
-  import type { MdStoreType } from "../markdown.store";
-  import MediaGrid from "../mediaGrid/MediaGrid.svelte";
-  import Callout from "../callout/Callout.svelte";
-  import TextContent from "./TextContent.svelte";
-  import CodeContent from "./CodeContent.svelte";
-  import ListContent from "../lists/ListContent.svelte";
-  import HeadingContent from "./HeadingContent.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/products/memotron/node/node.type";
+  import EmbedContent from "@21n/components/markdown/embed/EmbedContent.svelte";
+  import type { MdStoreType } from "@21n/components/markdown/markdown.store";
+  import MediaGrid from "@21n/components/markdown/mediaGrid/MediaGrid.svelte";
+  import Callout from "@21n/components/markdown/callout/Callout.svelte";
+  import TextContent from "@21n/components/markdown/content/TextContent.svelte";
+  import CodeContent from "@21n/components/markdown/content/CodeContent.svelte";
+  import ListContent from "@21n/components/markdown/lists/ListContent.svelte";
+  import HeadingContent from "@21n/components/markdown/content/HeadingContent.svelte";
+  import { cn } from "@21n/utils/ui.utils";
   export let mdStore: MdStoreType;
   export let block: IBlock;
   /**

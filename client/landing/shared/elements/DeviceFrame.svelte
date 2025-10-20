@@ -1,5 +1,5 @@
 <script lang="ts">
-  import IphoneFrame from "./frames/IphoneFrame.svelte";
+  import IphoneFrame from "@21n/landing/shared/elements/frames/IphoneFrame.svelte";
 
   export let device: "iphone" | "macbook";
 </script>

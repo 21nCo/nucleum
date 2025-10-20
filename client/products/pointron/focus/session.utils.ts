@@ -1,18 +1,18 @@
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
   determineResourceType,
   isSameResource,
   resourceInList
-} from "$lib/client/components/flux/resourceStores/resource.utils";
-import type { IRecordId } from "$lib/client/types/data.type";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import type { IRecordId } from "@21n/types/data.type";
 import {
   BlockType,
   type ICurrentFocusItem,
   type IFocusItemsStore,
   type ISessionInterval
-} from "$lib/client/types/pointron/session.type";
-import { sortArrayByOrder } from "$lib/shared/utils/obj.utils";
-import type { DaySummary, ISessionThumb } from "../logs/log.type";
+} from "@21n/types/pointron/session.type";
+import { sortArrayByOrder } from "@21n/shared-utils/obj.utils";
+import type { DaySummary, ISessionThumb } from "@21n/products/pointron/logs/log.type";
 
 export function transformFocusItemsV1(rawItems: any[]) {
   let items: any[] = [];

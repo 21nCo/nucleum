@@ -1,4 +1,4 @@
-import type { Placement } from "./direction.enum";
+import type { Placement } from "@21n/types/direction.enum";
 
 export type IPopoverOptions = IPopoverRenderBaseParams & {
   element?: "div" | "button";

@@ -1,32 +1,34 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { popover, tooltip } from "$lib/client/actions/popover.action";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { popover, tooltip } from "@21n/actions/popover.action";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import ContextMenu from "$lib/client/elements/contextMenu/ContextMenu.svelte";
-  import { resolveResource } from "$lib/client/components/record/record.store";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
-  import { abg, cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
+  import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
+  import { resolveResource } from "@21n/components/record/record.store";
+  import { appStore } from "@21n/stores/app.store";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { Placement } from "@21n/types/direction.enum";
+  import { PopoverTriggerMethod } from "@21n/types/popover.type";
+  import { abg, cn } from "@21n/utils/ui.utils";
   import { onMount } from "svelte";
-  import { tabs } from "./tabs.store";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import ComponentBaseLayer from "../../layers/ComponentBaseLayer.svelte";
-  import { rearrangeOnAxis } from "$lib/client/actions/rearrange.action";
+  import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { rearrangeOnAxis } from "@21n/actions/rearrange.action";
   import { createEventDispatcher } from "svelte";
-  import { isValidString } from "$lib/shared/utils/text.utils";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import context from "$lib/client/stores/context.store";
+  import { isValidString } from "@21n/shared-utils/text.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import context from "@21n/stores/context.store";
+  import { ResourceActions } from "@21n/components/record/resource.actions";
+  import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
   const dispatch = createEventDispatcher();
   export let item: IRecordId;
   export let isInterimTab: boolean = false;
@@ -41,6 +43,7 @@
       items: [
         {
           value: "remove",
+          label: "Remove from tabs",
           icon: "cross",
           callback: async () => uiState.removeResourceFromTabs(item)
         }
@@ -56,7 +59,19 @@
   });
 
   function resolveContextMenu() {
-    return contextMenu;
+    const resourceStore = resolveResourceStore(resourceType);
+    if (!resource || !resourceStore) return contextMenu;
+    const resourceActions = new ResourceActions(resource, resourceStore, {
+      accessPoint: ResourceAccessPoint.SELF,
+      accessMode: ResourceAccessMode.TAB
+    });
+    return [
+      ...contextMenu,
+      {
+        group: "open",
+        items: [resourceActions.openAsSplit(), resourceActions.openAsFull()]
+      }
+    ];
   }
 
   function handleRearrange(displacement: number) {

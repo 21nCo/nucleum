@@ -1,13 +1,13 @@
 <script lang="ts">
-  import view from "$lib/client/stores/view.store";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import ButtonAsLink from "./ButtonAsLink.svelte";
-  import DayAndNightToggle from "./DayAndNightToggle.svelte";
-  import type { IHeroInputs } from "./landing.type";
-  import Button from "./elements/Button.svelte";
-  import HeroBackground from "./hero/HeroBackground.svelte";
-  import Pulldown from "./play/Pulldown.svelte";
-  import { isProductPage, isProductsPanelOpen } from "./store/shared.store";
+  import view from "@21n/stores/view.store";
+  import { cn } from "@21n/utils/ui.utils";
+  import ButtonAsLink from "@21n/landing/shared/ButtonAsLink.svelte";
+  import DayAndNightToggle from "@21n/landing/shared/DayAndNightToggle.svelte";
+  import type { IHeroInputs } from "@21n/landing/shared/landing.type";
+  import Button from "@21n/landing/shared/elements/Button.svelte";
+  import HeroBackground from "@21n/landing/shared/hero/HeroBackground.svelte";
+  import Pulldown from "@21n/landing/shared/play/Pulldown.svelte";
+  import { isProductPage, isProductsPanelOpen } from "@21n/landing/shared/store/shared.store";
   export let isComingSoon = false;
   export let heroInputs: IHeroInputs;
 </script>

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import CollapsibleList from "./collapsible/CollapsibleList.svelte";
-  import Title from "./Title.svelte";
-  import type { IFaq } from "./landing.type";
+  import CollapsibleList from "@21n/landing/shared/collapsible/CollapsibleList.svelte";
+  import Title from "@21n/landing/shared/Title.svelte";
+  import type { IFaq } from "@21n/landing/shared/landing.type";
   export let faqs: IFaq[] = [];
 </script>
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ColorPicker from "./ColorPicker.svelte";
+  import ColorPicker from "@21n/elements/colorPicker/ColorPicker.svelte";
   export let hue: number;
   export let onChangeCallback: (value: number | string) => void;
   export let onDebouncedChangeCallback: (value: number | string) => void;

@@ -1,15 +1,15 @@
 <!-- FILEPATH: /Users/ar/dev/devving/Tidigit/pointron/src/lib/tidy/layout/paint/LoadingView.svelte -->
 
 <script lang="ts">
-  import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
-  import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
-  import context from "$lib/client/stores/context.store";
-  import ProgressBar from "$lib/client/elements/ProgressBar.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import SubAtomLogo from "@21n/branding/SubAtomLogo.svelte";
+  import PageLoadingAnimation from "@21n/elements/feedback/animations/PageLoadingAnimation.svelte";
+  import context from "@21n/stores/context.store";
+  import ProgressBar from "@21n/elements/ProgressBar.svelte";
+  import { Size } from "@21n/types/size.enum";
   import { fade } from "svelte/transition";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/products/product.type";
-  import NucleusAnimation from "$lib/client/branding/NucleusAnimation.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { Product } from "@21n/products/product.type";
+  import NucleusAnimation from "@21n/branding/NucleusAnimation.svelte";
   export let message: string | undefined = undefined;
   export let subMessage: string | undefined = undefined;
   export let duration: number | undefined = undefined;

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { type IPropertyConfigOption } from "../property.type";
-  import { resolveSelectPropertySelection } from "../property.utils";
-  import IconSelectOption from "./IconSelectOption.svelte";
+  import { type IPropertyConfigOption } from "@21n/components/collection/properties/property.type";
+  import { resolveSelectPropertySelection } from "@21n/components/collection/properties/property.utils";
+  import IconSelectOption from "@21n/components/collection/properties/selectProperty/IconSelectOption.svelte";
   export let options: IPropertyConfigOption[];
   export let value: string | string[] | null = null;
   export let isMultiSelect: boolean | undefined = undefined;

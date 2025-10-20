@@ -1,10 +1,10 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { Action } from "@21n/types/action.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
   export let isInThinMode: boolean = false;
   export let isRounded: boolean = false;
   export let size: Size.sm | Size.md | Size.lg = Size.md;

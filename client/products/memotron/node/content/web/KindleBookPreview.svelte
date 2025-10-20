@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IKindleBook } from "../../node.type";
+  import type { IKindleBook } from "@21n/products/memotron/node/node.type";
   export let node: IKindleBook;
 </script>
 

@@ -2,16 +2,16 @@
   import type {
     IRatingProperty,
     IRatingPropertyConfig
-  } from "$lib/client/components/collection/properties/property.type";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import RatingPropertyPreview from "./RatingPropertyPreview.svelte";
-  import { resolvePropertyDefaultConfig } from "../../property.utils";
-  import RatingAvatarPicker from "./RatingAvatarPicker.svelte";
-  import { popover } from "$lib/client/actions/popover.action";
+  } from "@21n/components/collection/properties/property.type";
+  import Divider from "@21n/elements/Divider.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import RatingPropertyPreview from "@21n/components/collection/properties/ratingProperty/config/RatingPropertyPreview.svelte";
+  import { resolvePropertyDefaultConfig } from "@21n/components/collection/properties/property.utils";
+  import RatingAvatarPicker from "@21n/components/collection/properties/ratingProperty/config/RatingAvatarPicker.svelte";
+  import { popover } from "@21n/actions/popover.action";
   export let property: IRatingProperty;
   let popoverRef: HTMLElement;
   let isPopoverOpen: boolean = false;

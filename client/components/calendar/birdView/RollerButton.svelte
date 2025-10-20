@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Itemtype } from "./Birdview.type";
-  import { getFirstAlphabetPosition } from "./Birdview.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Itemtype } from "@21n/components/calendar/birdView/Birdview.type";
+  import { getFirstAlphabetPosition } from "@21n/components/calendar/birdView/Birdview.utils";
 
   export let config;
   export let item;

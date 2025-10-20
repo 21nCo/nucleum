@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
   import { onMount } from "svelte";
-  import Spoke from "./Spoke.svelte";
+  import Spoke from "@21n/products/pointron/focus/zen/timeleftindicator/Spoke.svelte";
   export let parentBgIndex: number = 1;
   let numberOfSpokes = 0;
   let minorStops = 6;

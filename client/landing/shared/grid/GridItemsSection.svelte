@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { IGridItem } from "../landing.type";
-  import Section from "../Section.svelte";
-  import Item from "./Item.svelte";
-  import Title from "../Title.svelte";
-  import Button from "../elements/Button.svelte";
+  import type { IGridItem } from "@21n/landing/shared/landing.type";
+  import Section from "@21n/landing/shared/Section.svelte";
+  import Item from "@21n/landing/shared/grid/Item.svelte";
+  import Title from "@21n/landing/shared/Title.svelte";
+  import Button from "@21n/landing/shared/elements/Button.svelte";
   export let title: string;
   export let items: IGridItem[];
   export let whitePaperUrl: string;

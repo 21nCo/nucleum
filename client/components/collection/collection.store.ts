@@ -1,9 +1,9 @@
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
 import {
   ActiveResourceStore,
   ResourceStore
-} from "$lib/client/components/flux/resourceStores/resource.store";
+} from "@21n/components/flux/resourceStores/resource.store";
 import {
   CollectionLayout,
   type IActiveCollection,
@@ -14,55 +14,55 @@ import {
   CollectionObjectKey,
   type ICollectionCapture,
   type ICollectionViewCapture
-} from "$lib/client/components/collection/collection.type";
+} from "@21n/components/collection/collection.type";
 import {
   propertyEditorStore,
   propertyStore
-} from "./properties/property.store";
+} from "@21n/components/collection/properties/property.store";
 import {
   ResourceAccessMode,
   ResourceAccessPoint,
   ResourceActionType,
   type OmitForCaptureWithId
-} from "$lib/client/components/flux/resourceStores/resource.type";
-import { ResourceActions } from "$lib/client/components/record/resource.actions";
-import { logger } from "$lib/client/components/debug/logger.client";
-import { flux } from "$lib/client/components/flux/flux";
+} from "@21n/components/flux/resourceStores/resource.type";
+import { ResourceActions } from "@21n/components/record/resource.actions";
+import { logger } from "@21n/components/debug/logger.client";
+import { flux } from "@21n/components/flux/flux";
 import {
   StoreDataType,
   type IRecordId,
   type IResourceSelectAdditionalParams,
   type IResourceSelectParams
-} from "$lib/client/types/data.type";
-import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-import { assignDefaultLabelAsFallback } from "./properties/property.utils";
-import type { IProperty } from "./properties/property.type";
+} from "@21n/types/data.type";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
+import { assignDefaultLabelAsFallback } from "@21n/components/collection/properties/property.utils";
+import type { IProperty } from "@21n/components/collection/properties/property.type";
 import {
   ContextMenuType,
   type IContextMenu,
   type IContextMenuItem,
   type ISelectItem
-} from "$lib/client/types/select.type";
-import context from "$lib/client/stores/context.store";
+} from "@21n/types/select.type";
+import context from "@21n/stores/context.store";
 import { get } from "svelte/store";
 import {
   isRecordId,
   resourceAction,
   resourceInList
-} from "$lib/client/components/flux/resourceStores/resource.utils";
-import { toasts } from "$lib/client/stores/notification.store";
-import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
-import { GlobalEvent } from "$lib/client/types/event.enum";
-import { Embed } from "$lib/client/types/context.type";
-import { appStore } from "$lib/client/stores/app.store";
-import { resolveCollectionResource } from "./collection.utils";
-import { viewStore } from "./view.store";
-import { uiState } from "$lib/client/stores/uiState/uiState.store";
-import { UIState } from "$lib/client/stores/uiState/uiState.type";
-import view from "$lib/client/stores/view.store";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { toasts } from "@21n/stores/notification.store";
+import { dispatchCustomEvent } from "@21n/utils/browser.utils";
+import { GlobalEvent } from "@21n/types/event.enum";
+import { Embed } from "@21n/types/context.type";
+import { appStore } from "@21n/stores/app.store";
+import { resolveCollectionResource } from "@21n/components/collection/collection.utils";
+import { viewStore } from "@21n/components/collection/view.store";
+import { uiState } from "@21n/stores/uiState/uiState.store";
+import { UIState } from "@21n/stores/uiState/uiState.type";
+import view from "@21n/stores/view.store";
 
 const defaults: Partial<ICollection> = {
-  type: CollectionType.UNTYPED,
+  type: CollectionType.TYPED,
   typeToExtend: "",
   resource: Resource.node
 };
@@ -265,7 +265,6 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
   > {
     const data = await this.selectMany({
       filters: {
-        type: CollectionType.TYPED,
         isCaptureShortcutEnabled: true
       }
     });
@@ -658,20 +657,6 @@ export function resolveCollectionContextMenu(
           //   callback: async () => {}
           // },
           resourceActions.copyLink(),
-          {
-            value: "convert",
-            icon: "convert",
-            label: "Convert as Simple",
-            callback: async () => {
-              const result = await collectionStore.modify(collection.id, {
-                type: CollectionType.UNTYPED
-              });
-              if (result) {
-                toasts.success("Collection converted to simple");
-              }
-              return result;
-            }
-          },
           ...(!collection.resource || collection.resource === Resource.node
             ? [captureToggle]
             : []),

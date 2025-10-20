@@ -1,9 +1,9 @@
 <script lang="ts">
-  import view from "$lib/client/stores/view.store";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IFeature } from "../landing.type";
-  import VisualRender from "../VisualRender.svelte";
-  import { sanitizeUrl } from "../utils/url-sanitizer";
+  import view from "@21n/stores/view.store";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IFeature } from "@21n/landing/shared/landing.type";
+  import VisualRender from "@21n/landing/shared/VisualRender.svelte";
+  import { sanitizeUrl } from "@21n/landing/shared/utils/url-sanitizer";
   export let feature: IFeature;
   export let isReversed: boolean = false;
 

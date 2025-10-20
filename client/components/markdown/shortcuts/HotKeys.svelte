@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Table2 from "$lib/client/elements/table/Table2.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { TableCellType } from "$lib/client/types/table.type";
-  import HotKeyShortcutText from "./HotKeyShortcutText.svelte";
-  import { keyboardShortcuts } from "../../shortcuts/shortcuts.store";
+  import Table2 from "@21n/elements/table/Table2.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { TableCellType } from "@21n/types/table.type";
+  import HotKeyShortcutText from "@21n/components/markdown/shortcuts/HotKeyShortcutText.svelte";
+  import { keyboardShortcuts } from "@21n/components/shortcuts/shortcuts.store";
   const data = keyboardShortcuts
     .fetchKeyMap()
     .filter((x) => x.key !== undefined && x.modifiers === undefined)

@@ -1,15 +1,15 @@
 <script lang="ts">
-  import account from "$lib/client/stores/account.store";
-  import { isValidString } from "$lib/shared/utils/text.utils";
+  import account from "@21n/stores/account.store";
+  import { isValidString } from "@21n/shared-utils/text.utils";
   import { onMount } from "svelte";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import FileView from "../../files/FileView.svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { userPreferences } from "../userPreferences.store";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/products/product.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import FileView from "@21n/components/files/FileView.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import { appStore } from "@21n/stores/app.store";
+  import { Product } from "@21n/products/product.type";
   export let context:
     | "cmd-page"
     | "cp-profile"

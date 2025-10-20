@@ -1,28 +1,28 @@
 <script lang="ts">
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { Size } from "@21n/types/size.enum";
   import {
     PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
-  import type { ISelectItem } from "$lib/client/types/select.type";
-  import { CalendarLayout } from "./calendar.type";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  } from "@21n/types/switcher.enum";
+  import type { ISelectItem } from "@21n/types/select.type";
+  import { CalendarLayout } from "@21n/components/calendar/calendar.type";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/products/product.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  } from "@21n/stores/uiState/uiState.type";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { appStore } from "@21n/stores/app.store";
+  import { Product } from "@21n/products/product.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { createEventDispatcher } from "svelte";
-  import { Action } from "$lib/client/types/action.enum";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import { Action } from "@21n/types/action.enum";
+  import { AppSearchParam } from "@21n/types/appStore.type";
   import { page } from "$app/stores";
-  import BackButton from "$lib/client/elements/button/BackButton.svelte";
+  import BackButton from "@21n/elements/button/BackButton.svelte";
   export let panel: CalendarLayout = CalendarLayout.Classic;
   const dispatch = createEventDispatcher();
   const panelOptions: ISelectItem[] = [

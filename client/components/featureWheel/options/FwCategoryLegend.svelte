@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { IFwCategory } from "$lib/client/types/featureWheel.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import type { IFwCategory } from "@21n/types/featureWheel.type";
+  import { cn } from "@21n/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
   export let categories: IFwCategory[] = [];
   export let selectedCategories: string[] = [];

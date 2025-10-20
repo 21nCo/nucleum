@@ -1,26 +1,26 @@
 <script lang="ts">
-  import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import type { IAvatar } from "$lib/client/types/avatar.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import type { IAvatar } from "@21n/types/avatar.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
   import { onMount } from "svelte";
   import {
     type IActiveNode,
     type INode,
     NodeType,
     webNodeTypeList
-  } from "../node.type";
-  import { resolveFileIcon, resolveNodeIcon } from "../node.utils";
-  import NodeFavicon from "./NodeFavicon.svelte";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { resolveAvatar } from "$lib/client/components/collection/collection.utils";
-  import { cache } from "$lib/client/layout/layers/cache/cache.store";
-  import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
-  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { isValidAvatar } from "$lib/client/elements/avatarPicker/avatar.utils";
+  } from "@21n/products/memotron/node/node.type";
+  import { resolveFileIcon, resolveNodeIcon } from "@21n/products/memotron/node/node.utils";
+  import NodeFavicon from "@21n/products/memotron/node/avatar/NodeFavicon.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { resolveAvatar } from "@21n/components/collection/collection.utils";
+  import { cache } from "@21n/layout/layers/cache/cache.store";
+  import { CacheKey } from "@21n/layout/layers/cache/cache.type";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+  import { logger } from "@21n/components/debug/logger.client";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { isValidAvatar } from "@21n/elements/avatarPicker/avatar.utils";
   export let node: INode | IActiveNode | undefined = undefined;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let isExpandedContext: boolean = false;

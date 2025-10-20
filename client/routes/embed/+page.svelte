@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { clientStorage } from "$lib/client/persistence/persistence.utils";
-  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
+  import { clientStorage } from "@21n/persistence/persistence.utils";
+  import { ClientStorageKey } from "@21n/persistence/persistence.type";
   import { onMount } from "svelte";
   import { page } from "$app/stores";
-  import { appStore } from "$lib/client/stores/app.store";
-  import type { OAuthProviderConfig } from "$lib/client/types/oauth.type";
-  import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
+  import { appStore } from "@21n/stores/app.store";
+  import type { OAuthProviderConfig } from "@21n/types/oauth.type";
+  import SubAtomLogo from "@21n/branding/SubAtomLogo.svelte";
+  import { AppSearchParam } from "@21n/types/appStore.type";
   onMount(async () => {
     clientStorage.setForSession(ClientStorageKey.EMBED_OAUTH, true);
     await triggerOAuth();

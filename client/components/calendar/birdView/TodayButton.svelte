@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
   export let parentBgIndex: number = 1;
 </script>
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import MarkdownRenderer from "$lib/client/landing/shared/elements/MarkdownRenderer.svelte";
+  import MarkdownRenderer from "@21n/landing/shared/elements/MarkdownRenderer.svelte";
 
   export let notes: string;
 </script>

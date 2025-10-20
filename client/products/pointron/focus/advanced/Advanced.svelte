@@ -1,17 +1,17 @@
 <script lang="ts">
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import FocusItemList from "../elements/focusitem/FocusItemList.svelte";
-  import IntervalBar from "$lib/client/products/pointron/focus/elements/intervalbar/IntervalBar.svelte";
-  import view from "$lib/client/stores/view.store";
-  import AdvancedPortrait from "./AdvancedPortrait.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import TimeComposition from "./composition/TimeComposition.svelte";
-  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
-  import FormLabelTooltip from "$lib/client/elements/text/formLabel/FormLabelTooltip.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import FocusItemList from "@21n/products/pointron/focus/elements/focusitem/FocusItemList.svelte";
+  import IntervalBar from "@21n/products/pointron/focus/elements/intervalbar/IntervalBar.svelte";
+  import view from "@21n/stores/view.store";
+  import AdvancedPortrait from "@21n/products/pointron/focus/advanced/AdvancedPortrait.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import TimeComposition from "@21n/products/pointron/focus/advanced/composition/TimeComposition.svelte";
+  import { SessionUIContext } from "@21n/types/pointron/session.type";
+  import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
+  import { Size } from "@21n/types/size.enum";
   $: isExpandedMode =
     ($view.landscapiness > 1.4 && $view.scale > 1) || $view.scale > 1.3;
 </script>

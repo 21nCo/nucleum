@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import appearance from "$lib/client/stores/appearance.store";
-  import { parse } from "$lib/shared/utils/json.utils";
-  import { Persistence } from "$lib/client/persistence/persistence";
-  import RedditWidgetScript from "./RedditWidgetScript.svelte";
-  import SocialPostLoadingInfo from "./SocialPostLoadingInfo.svelte";
+  import appearance from "@21n/stores/appearance.store";
+  import { parse } from "@21n/shared-utils/json.utils";
+  import { Persistence } from "@21n/persistence/persistence";
+  import RedditWidgetScript from "@21n/products/memotron/node/content/web/social/RedditWidgetScript.svelte";
+  import SocialPostLoadingInfo from "@21n/products/memotron/node/content/web/social/SocialPostLoadingInfo.svelte";
 
   export let postUrl: string;
   let embedHtml: string = "";

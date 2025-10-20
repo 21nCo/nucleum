@@ -1,17 +1,17 @@
-import { appStore, isInEditMode } from "$lib/client/stores/app.store";
-import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
+import { appStore, isInEditMode } from "@21n/stores/app.store";
+import type { IMemotronItemBase } from "@21n/products/memotron/memotron.type";
 import {
   resolveMultiSelectStore,
   ResourceStore
-} from "$lib/client/components/flux/resourceStores/resource.store";
-import { copyResourceLinkToClipboard } from "../../products/memotron/memotron.utils";
+} from "@21n/components/flux/resourceStores/resource.store";
+import { copyResourceLinkToClipboard } from "@21n/products/memotron/memotron.utils";
 import {
   ResourceAccessPoint,
   ResourceAccessMode,
   ResourceActionType,
   type IResourceCaptureV2
-} from "$lib/client/components/flux/resourceStores/resource.type";
-import { uiState } from "$lib/client/stores/uiState/uiState.store";
+} from "@21n/components/flux/resourceStores/resource.type";
+import { uiState } from "@21n/stores/uiState/uiState.store";
 import { get } from "svelte/store";
 import {
   determineResourceAccessMode,
@@ -19,21 +19,21 @@ import {
   isSameResource,
   resolveResourceActionIcon,
   resourceInList
-} from "$lib/client/components/flux/resourceStores/resource.utils";
-import { linker } from "$lib/client/products/memotron/linking/link.store";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { linker } from "@21n/products/memotron/linking/link.store";
 import {
   ContextMenuType,
   type IContextMenuItem
-} from "$lib/client/types/select.type";
-import type { IRecordId } from "$lib/client/types/data.type";
-import { tabs } from "$lib/client/layout/topNav/tabs/tabs.store";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { LinkType } from "$lib/client/products/memotron/linking/link.type";
-import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
-import { toasts } from "$lib/client/stores/notification.store";
-import { Action } from "$lib/client/types/action.enum";
-import { AppSearchParam } from "$lib/client/types/appStore.type";
-import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
+} from "@21n/types/select.type";
+import type { IRecordId } from "@21n/types/data.type";
+import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { LinkType } from "@21n/products/memotron/linking/link.type";
+import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
+import { toasts } from "@21n/stores/notification.store";
+import { Action } from "@21n/types/action.enum";
+import { AppSearchParam } from "@21n/types/appStore.type";
+import { UIStateScope } from "@21n/stores/uiState/uiState.type";
 
 export class ResourceActions<T extends IMemotronItemBase> {
   accessPoint?: ResourceAccessPoint;
@@ -59,6 +59,20 @@ export class ResourceActions<T extends IMemotronItemBase> {
       callback: async () => {
         copyResourceLinkToClipboard(this.resource.id);
         toasts.success("Link copied to clipboard");
+      }
+    };
+  }
+  copyExternalLink(): IContextMenuItem {
+    return {
+      label: "Copy source link",
+      value: "copyExternalLink",
+      icon: "copy",
+      callback: async () => {
+        const url = (this.resource as any)?.url;
+        if (url) {
+          await navigator.clipboard.writeText(url);
+          toasts.success("External link copied to clipboard");
+        }
       }
     };
   }

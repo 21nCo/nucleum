@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { SearchStore } from "$lib/client/components/record/record.store";
-  import { tacoWorker } from "$lib/client/products/memotron/memotron.utils";
-  import { SearchType } from "$lib/client/types/data.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { tacoWorker } from "@21n/products/memotron/memotron.utils";
+  import { SearchType } from "@21n/types/data.type";
 
   import { onMount, onDestroy } from "svelte";
-  import { TacoActions } from "./taco.types";
+  import { TacoActions } from "@21n/products/memotron/taco/taco.types";
 
   const QAsearchStore = new SearchStore();
   QAsearchStore.searchType = SearchType.SEMANTIC;

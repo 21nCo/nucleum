@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { IMetadata } from "../metadata.type";
+  import type { IMetadata } from "@21n/layout/metadata.type";
   export let metadata: IMetadata = {
     title: "",
     description: "",

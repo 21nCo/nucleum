@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import type { IButtonParams } from "$lib/client/types/button.type";
-  import BottomFloat from "../BottomFloat.svelte";
-  import FloatingButtonItem from "./floating/FloatingButtonItem.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import type { IButtonParams } from "@21n/types/button.type";
+  import BottomFloat from "@21n/elements/BottomFloat.svelte";
+  import FloatingButtonItem from "@21n/elements/button/floating/FloatingButtonItem.svelte";
   export let params: IButtonParams[];
   let classList: string = "";
   export { classList as class };

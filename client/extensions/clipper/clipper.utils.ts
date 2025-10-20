@@ -1,19 +1,19 @@
-import { logger } from "$lib/client/components/debug/logger.client";
-import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
+import { logger } from "@21n/components/debug/logger.client";
+import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
 import {
   NodeType,
   type IWebPage
-} from "$lib/client/products/memotron/node/node.type";
+} from "@21n/products/memotron/node/node.type";
 import {
   contentTypeMap,
   fetchYouTubeMetadata
-} from "$lib/client/products/memotron/node/url.utils";
+} from "@21n/products/memotron/node/url.utils";
 import {
   generateHash,
   generateSHA256Hash
-} from "$lib/shared/utils/crypto.utils";
-import { enumToString } from "$lib/shared/utils/text.utils";
-import { extractBrowserDetails } from "./parsers/shared/domUtils";
+} from "@21n/shared-utils/crypto.utils";
+import { enumToString } from "@21n/shared-utils/text.utils";
+import { extractBrowserDetails } from "@21n/extensions/clipper/parsers/shared/domUtils";
 
 export function isYoutubeVideoUrl(url) {
   const regex = /^https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/;

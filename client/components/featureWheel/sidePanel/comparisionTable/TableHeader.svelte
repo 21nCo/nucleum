@@ -1,6 +1,6 @@
 <script lang="ts">
-  import ExternalLogo from "$lib/client/branding/external/ExternalLogo.svelte";
-  import type { IContemporary } from "$lib/client/types/featureWheel.type";
+  import ExternalLogo from "@21n/branding/external/ExternalLogo.svelte";
+  import type { IContemporary } from "@21n/types/featureWheel.type";
   export let contemporary: IContemporary;
 </script>
 

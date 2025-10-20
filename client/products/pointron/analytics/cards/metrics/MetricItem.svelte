@@ -1,10 +1,10 @@
 <script lang="ts">
-  import view from "$lib/client/stores/view.store";
-  import { TimeFormat } from "$lib/client/types/time.type";
-  import { properCase } from "$lib/shared/utils/text.utils";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import PreviousValueColumnCell from "../topN/PreviousValueColumnCell.svelte";
+  import view from "@21n/stores/view.store";
+  import { TimeFormat } from "@21n/types/time.type";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import PreviousValueColumnCell from "@21n/products/pointron/analytics/cards/topN/PreviousValueColumnCell.svelte";
   export let value: number;
   export let previousValue: number | undefined = undefined;
   export let type: "total" | "focus" | "break" = "total";

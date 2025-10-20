@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { appStore } from "$lib/client/stores/app.store";
-  import context from "$lib/client/stores/context.store";
-  import { LinkVariant } from "$lib/client/types/button.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { isValidEmail } from "$lib/shared/utils/text.utils";
-  import { isUrlMatchPattern } from "$lib/shared/utils/utils";
+  import { appStore } from "@21n/stores/app.store";
+  import context from "@21n/stores/context.store";
+  import { LinkVariant } from "@21n/types/button.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import { isValidEmail } from "@21n/shared-utils/text.utils";
+  import { isUrlMatchPattern } from "@21n/shared-utils/utils";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   /**

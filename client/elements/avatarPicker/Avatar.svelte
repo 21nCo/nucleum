@@ -1,16 +1,16 @@
 <script lang="ts">
-  import AvatarPicker from "$lib/client/elements/avatarPicker/AvatarPicker.svelte";
+  import AvatarPicker from "@21n/elements/avatarPicker/AvatarPicker.svelte";
   import {
     AvatarPickerContext,
     AvatarType,
     type IAvatar
-  } from "$lib/client/types/avatar.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
+  } from "@21n/types/avatar.type";
+  import { Size } from "@21n/types/size.enum";
+  import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
   import { createEventDispatcher } from "svelte";
-  import { objIsEmpty } from "$lib/shared/utils/obj.utils";
-  import { popover } from "$lib/client/actions/popover.action";
-  import { Placement } from "$lib/client/types/direction.enum";
+  import { objIsEmpty } from "@21n/shared-utils/obj.utils";
+  import { popover } from "@21n/actions/popover.action";
+  import { Placement } from "@21n/types/direction.enum";
   const dispatch = createEventDispatcher();
   export let avatar: IAvatar | undefined = undefined;
   export let size: Size = Size.md;

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { TimeUnit } from "$lib/client/types/time.type";
+  import { TimeUnit } from "@21n/types/time.type";
   import { createEventDispatcher } from "svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import TextSearchInput from "../TextSearchInput.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
+  import { InputStyle } from "@21n/types/input.type";
   const dispatch = createEventDispatcher();
   export let units: TimeUnit[];
   export let duration: number;

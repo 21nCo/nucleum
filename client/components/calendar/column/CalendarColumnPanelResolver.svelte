@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { TimeScaleUnit } from "$lib/client/types/time.type";
-  import { CalendarColumnPanel } from "../calendar.type";
-  import CalendarHistoryPanel from "./CalendarHistoryPanel.svelte";
-  import CalendarNotesPanel from "./CalendarNotesPanel.svelte";
-  import CalendarOverviewPanel from "./overview/CalendarOverviewPanel.svelte";
+  import { TimeScaleUnit } from "@21n/types/time.type";
+  import { CalendarColumnPanel } from "@21n/components/calendar/calendar.type";
+  import CalendarHistoryPanel from "@21n/components/calendar/column/CalendarHistoryPanel.svelte";
+  import CalendarNotesPanel from "@21n/components/calendar/column/CalendarNotesPanel.svelte";
+  import CalendarOverviewPanel from "@21n/components/calendar/column/overview/CalendarOverviewPanel.svelte";
   export let selectedPanel: CalendarColumnPanel;
   export let date: Date;
   export let scale: TimeScaleUnit;

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import { DropDownStyle } from "$lib/client/types/dropdownItem.type";
-  import { appConstants } from "$lib/client/stores/app.store";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import { DropDownStyle } from "@21n/types/dropdownItem.type";
+  import { appConstants } from "@21n/stores/app.store";
   let items = appConstants.colorSchemes.map((x) => ({
     value: x.tailwindSelector,
     label: x.label + " " + (x.isDark ? "dark" : "light")

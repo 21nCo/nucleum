@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ImportAppListPart from "./ImportAppListPart.svelte";
+  import ImportAppListPart from "@21n/products/pointron/settings/data/ImportAppListPart.svelte";
 </script>
 
 <div class="flex flex-col items-start justify-center gap-8 h-full w-full">

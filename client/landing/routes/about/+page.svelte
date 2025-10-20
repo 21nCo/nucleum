@@ -1,5 +1,5 @@
 <script lang="ts">
-  import MarkdownRenderer from "../../shared/elements/MarkdownRenderer.svelte";
+  import MarkdownRenderer from "@21n/landing/shared/elements/MarkdownRenderer.svelte";
 
   const text = `
   In our age of unprecedented information access and potential for intellectual growth, **digital memory and thinking tools** have become invaluable for optimizing cognitive capabilities and enhancing quality of life. The future of these tools brims with exciting potential to unlock new dimensions of serendipity, creativity, reflection and collaboration.

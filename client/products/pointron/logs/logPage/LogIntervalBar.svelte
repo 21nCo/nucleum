@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import view from "$lib/client/stores/view.store";
-  import { isEmptyArray } from "$lib/shared/utils/obj.utils";
-  import { formatTime } from "$lib/client/utils/time.utils";
-  import IntervalBarItem from "$lib/client/products/pointron/focus/elements/intervalbar/IntervalBarItem.svelte";
-  import type { ISessionInterval } from "$lib/client/types/pointron/session.type";
-  import MoreBarsInfo from "../../focus/elements/intervalbar/MoreBarsInfo.svelte";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import view from "@21n/stores/view.store";
+  import { isEmptyArray } from "@21n/shared-utils/obj.utils";
+  import { formatTime } from "@21n/utils/time.utils";
+  import IntervalBarItem from "@21n/products/pointron/focus/elements/intervalbar/IntervalBarItem.svelte";
+  import type { ISessionInterval } from "@21n/types/pointron/session.type";
+  import MoreBarsInfo from "@21n/products/pointron/focus/elements/intervalbar/MoreBarsInfo.svelte";
   export let log: any;
   let blocks = log.blocks;
   $: visibleLimit = $view.isPortrait ? 6 : 12;

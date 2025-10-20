@@ -1,4 +1,4 @@
-import type { PricingPlan } from "./pricing.types";
+import type { PricingPlan } from "@21n/landing/shared/pricing/pricing.types";
 
 export const freePlan: PricingPlan = {
   id: "free",

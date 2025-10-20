@@ -9,9 +9,9 @@
     CanvasEvent
   } from "@antv/g6";
   import { onMount, createEventDispatcher } from "svelte";
-  import { truncateString } from "$lib/shared/utils/text.utils";
-  import appearance from "$lib/client/stores/appearance.store";
-  import { resizeListener } from "$lib/client/actions/resize.action";
+  import { truncateString } from "@21n/shared-utils/text.utils";
+  import appearance from "@21n/stores/appearance.store";
+  import { resizeListener } from "@21n/actions/resize.action";
   const dispatch = createEventDispatcher();
 
   export let data: {
@@ -224,8 +224,8 @@
           labelBackground: true,
           labelPadding: [4, 12, 4, 12],
           labelBackgroundOpacity: 1,
-          labelFill: currentColors["bgs1"],
-          labelBackgroundFill: currentColors["ass1"],
+          labelFill: currentColors["aps1"],
+          labelBackgroundFill: currentColors["aps3"],
           padding: [16, 16, 16, 16],
           labelBackgroundRadius: 6
         }

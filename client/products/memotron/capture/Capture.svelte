@@ -1,45 +1,45 @@
 <script lang="ts">
-  import Writer from "./Writer.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { appStore, isInEditMode } from "$lib/client/stores/app.store";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import TypeSelector from "./TypeSelector.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { CaptureMethod } from "./capture.type";
-  import FileUploader from "./FileUploader.svelte";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import Writer from "@21n/products/memotron/capture/Writer.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { appStore, isInEditMode } from "@21n/stores/app.store";
+  import { cn } from "@21n/utils/ui.utils";
+  import TypeSelector from "@21n/products/memotron/capture/TypeSelector.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { CaptureMethod } from "@21n/products/memotron/capture/capture.type";
+  import FileUploader from "@21n/products/memotron/capture/FileUploader.svelte";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { onDestroy, onMount, setContext } from "svelte";
   import { page } from "$app/stores";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import view from "$lib/client/stores/view.store";
-  import context from "$lib/client/stores/context.store";
-  import { OperatingSystem } from "$lib/client/types/context.type";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-  import { postMessageToParent } from "$lib/client/utils/embed.utils";
-  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-  import { appEvents } from "$lib/client/stores/notification.store";
-  import type { IEvent } from "$lib/client/types/event.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import view from "@21n/stores/view.store";
+  import context from "@21n/stores/context.store";
+  import { OperatingSystem } from "@21n/types/context.type";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { generateResourceId } from "@21n/components/flux/flux.utils";
+  import { postMessageToParent } from "@21n/utils/embed.utils";
+  import { EmbedMessage } from "@21n/types/embedMessage.enum";
+  import { appEvents } from "@21n/stores/notification.store";
+  import type { IEvent } from "@21n/types/event.type";
+  import type { IRecordId } from "@21n/types/data.type";
   import {
     ActiveCaptureStore,
     type IActiveCaptureStore
-  } from "./capture.store";
-  import CaptureDraftsAction from "./draftSelector/CaptureDraftsAction.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
-  import CaptureTopBar from "./CaptureTopBar.svelte";
-  import WebCaptureModal from "./web/WebCaptureModal.svelte";
-  import type { WebArtifact } from "./web/webCapture.types";
+  } from "@21n/products/memotron/capture/capture.store";
+  import CaptureDraftsAction from "@21n/products/memotron/capture/draftSelector/CaptureDraftsAction.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import CaptureTopBar from "@21n/products/memotron/capture/CaptureTopBar.svelte";
+  import WebCaptureModal from "@21n/products/memotron/capture/web/WebCaptureModal.svelte";
+  import type { WebArtifact } from "@21n/products/memotron/capture/web/webCapture.types";
   import { fly } from "svelte/transition";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import ComponentShortcutListener from "$lib/client/components/shortcuts/ComponentShortcutListener.svelte";
-  import { MemotronAction } from "../memotronAction.enum";
-  import { Action } from "$lib/client/types/action.enum";
+  import { Placement } from "@21n/types/direction.enum";
+  import ComponentShortcutListener from "@21n/components/shortcuts/ComponentShortcutListener.svelte";
+  import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
+  import { Action } from "@21n/types/action.enum";
 
   export let captureId: IRecordId = generateResourceId(Resource.capture);
   export let isWindowDnD = false;
@@ -119,17 +119,23 @@
     reset();
   }
 
-  function handleWebArtifactAdd(event: CustomEvent<{ item: WebArtifact; tab: string }>) {
+  function handleWebArtifactAdd(
+    event: CustomEvent<{ item: WebArtifact; tab: string }>
+  ) {
     const artifact = event.detail?.item;
     if (!artifact) return;
     // TODO: integrate artifact data into capture content or node creation flow.
     isWebModalOpen = false;
   }
 
-  function handleWebArtifactPreview(event: CustomEvent<{ item: WebArtifact; tab: string }>) {
+  function handleWebArtifactPreview(
+    event: CustomEvent<{ item: WebArtifact; tab: string }>
+  ) {
     const artifact = event.detail?.item;
     if (!artifact) return;
-    const url = artifact.externalUrl ?? artifact.providers?.find((provider) => provider.url)?.url;
+    const url =
+      artifact.externalUrl ??
+      artifact.providers?.find((provider) => provider.url)?.url;
     if (url && typeof window !== "undefined") {
       if (url.startsWith("https://")) {
         window.open(url, "_blank", "noopener");
@@ -172,10 +178,13 @@
             {#if $captureStore.method === CaptureMethod.UPLOAD && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
               <FileUploader {captureStore} on:clear={reset} />
             {:else if $captureStore.method === CaptureMethod.WEB}
-              <div class="flex h-full w-full flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-brs3 bg-bgs2/60 px-6 text-center">
+              <div
+                class="flex h-full w-full flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-brs3 bg-bgs2/60 px-6 text-center"
+              >
                 <Icon icon="globe-alt" size={Size.lg} class="text-fgs3" />
                 <div class="max-w-md text-b3 text-fgs3">
-                  Search movies, books, podcasts, and recipes from the web and add them to this capture.
+                  Search movies, books, podcasts, and recipes from the web and
+                  add them to this capture.
                 </div>
                 <Button
                   label="Open Add from Web"

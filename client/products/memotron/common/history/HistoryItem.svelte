@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { formatDatetime } from "$lib/client/utils/time.utils";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import { formatDatetime } from "@21n/utils/time.utils";
 
   export let item: { action: string; timestamp: Date };
 </script>

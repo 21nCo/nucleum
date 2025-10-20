@@ -1,9 +1,9 @@
 <script>
   // import PropertiesEditor from "$lib/client/products/memotron/curation/collection/properties/PropertiesEditor.svelte";
-  import RiveAnimatedIcon from "$lib/client/icons/RiveAnimatedIcon.svelte";
-  import CaretPlay from "./CaretPlay.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
+  import RiveAnimatedIcon from "@21n/icons/RiveAnimatedIcon.svelte";
+  import CaretPlay from "@21n/client/routes/play/CaretPlay.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonVariant } from "@21n/types/button.type";
 </script>
 
 <div class="flex w-full h-full justify-center items-start p-8">

@@ -1,19 +1,19 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { appLoadingState, appStore } from "$lib/client/stores/app.store";
-  import { scheduledNotifications } from "$lib/client/stores/notification.store";
-  import { postDataToParent } from "$lib/client/utils/embed.utils";
-  import context from "$lib/client/stores/context.store";
-  import view from "$lib/client/stores/view.store";
-  import { InteractionMode } from "$lib/client/components/settings/interactionMode/interactionMode.type";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import CommandModePage from "$lib/client/components/commandBar/CommandModePage.svelte";
-  import { Embed } from "$lib/client/types/context.type";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
-  import LeftNav from "$lib/client/layout/leftPanel/LeftNav.svelte";
-  import AppSplitView from "$lib/client/layout/AppSplitView.svelte";
-  import TopNav from "$lib/client/layout/topNav/TopNav.svelte";
-  import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
+  import { appLoadingState, appStore } from "@21n/stores/app.store";
+  import { scheduledNotifications } from "@21n/stores/notification.store";
+  import { postDataToParent } from "@21n/utils/embed.utils";
+  import context from "@21n/stores/context.store";
+  import view from "@21n/stores/view.store";
+  import { InteractionMode } from "@21n/components/settings/interactionMode/interactionMode.type";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import CommandModePage from "@21n/components/commandBar/CommandModePage.svelte";
+  import { Embed } from "@21n/types/context.type";
+  import { UIState } from "@21n/stores/uiState/uiState.type";
+  import LeftNav from "@21n/layout/leftPanel/LeftNav.svelte";
+  import AppSplitView from "@21n/layout/AppSplitView.svelte";
+  import TopNav from "@21n/layout/topNav/TopNav.svelte";
+  import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
 
   let isHideLeftNavBar: boolean = refreshSidebarState();
   onMount(() => {

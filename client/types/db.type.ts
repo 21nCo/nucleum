@@ -1,4 +1,4 @@
-import type { QueryParams } from "./persistance.type";
+import type { QueryParams } from "@21n/types/persistance.type";
 
 export interface ISurrealDatabase {
   token: string | null;

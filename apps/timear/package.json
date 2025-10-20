@@ -1,0 +1,37 @@
+{
+  "name": "timear",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite dev --port 5173",
+    "build": "VITE_BUILD_DATE=$(date +%m%d) vite build",
+    "preview": "vite preview",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "typecheck": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "^3.0.4",
+    "@sveltejs/kit": "~2.5.28",
+    "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "@types/node": "^22.9.1",
+    "autoprefixer": "^10.4.13",
+    "postcss": "^8.4.21",
+    "prettier": "^3.2.5",
+    "prettier-plugin-svelte": "^3.1.2",
+    "svelte": "^4.2.7",
+    "svelte-check": "^3.6.0",
+    "tailwindcss": "^3.2.4",
+    "tslib": "^2.4.1",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.3"
+  },
+  "dependencies": {
+    "@21n/components": "*",
+    "@21n/stores": "*",
+    "@21n/types": "*",
+    "@21n/utils": "*",
+    "clsx": "^2.1.0"
+  },
+  "type": "module"
+}

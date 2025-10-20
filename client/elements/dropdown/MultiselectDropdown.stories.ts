@@ -1,10 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
 
-import MultiselectDropdown from "./MultiselectDropdown.svelte";
+import MultiselectDropdown from "@21n/elements/dropdown/MultiselectDropdown.svelte";
 import {
   DropDownStyle,
   type DropdownItem
-} from "$lib/client/types/dropdownItem.type";
+} from "@21n/types/dropdownItem.type";
 const meta = {
   component: MultiselectDropdown,
   argTypes: {

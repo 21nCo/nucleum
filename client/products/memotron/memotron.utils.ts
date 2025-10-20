@@ -1,10 +1,10 @@
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import type { NodeType } from "$lib/client/products/memotron/node/node.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import type { NodeType } from "@21n/products/memotron/node/node.type";
 
-import { copyToClipboard } from "$lib/client/utils/utils";
-import { enumToCamelCase } from "$lib/shared/utils/text.utils";
-import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-import type { IRecordId } from "$lib/client/types/data.type";
+import { copyToClipboard } from "@21n/utils/utils";
+import { enumToCamelCase } from "@21n/shared-utils/text.utils";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
+import type { IRecordId } from "@21n/types/data.type";
 
 function resolveLinkForResource(resource: string) {
   return (
@@ -110,7 +110,7 @@ export const highlightSearchQuery = (items: any[], searchQuery: string) => {
     if (aLabel.includes(normalizedQuery)) {
       labelSearch = item.label.replace(
         new RegExp(`(${searchQuery})`, "gi"),
-        "#$1#"
+        "**$1**"
       );
     }
 
@@ -123,7 +123,7 @@ export const highlightSearchQuery = (items: any[], searchQuery: string) => {
           .replace(/\(resource=[^)]+\)/g, "")
           .replace(/[\r\n\s]+/g, " ")
           .trim()
-          .replace(new RegExp(`(${searchQuery})`, "gi"), "#$1#");
+          .replace(new RegExp(`(${searchQuery})`, "gi"), "**$1**");
       } else {
         const startIndex = Math.max(0, matchIndex - preContextLength);
         const endIndex = Math.min(
@@ -142,7 +142,7 @@ export const highlightSearchQuery = (items: any[], searchQuery: string) => {
 
         bodySearch = truncatedText.replace(
           new RegExp(`(${searchQuery})`, "gi"),
-          "#$1#"
+          "**$1**"
         );
       }
     }

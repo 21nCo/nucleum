@@ -1,4 +1,4 @@
-import { performApiCall } from "$lib/client/utils/network.utils";
+import { performApiCall } from "@21n/utils/network.utils";
 
 export async function handleOAuthRedirection(
   slug: string,

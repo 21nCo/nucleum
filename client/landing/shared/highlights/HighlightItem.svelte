@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import SVGIcon from "$lib/client/elements/SVGIcon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import type { IHighlight } from "../landing.type";
-  import VisualRender from "../VisualRender.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import view from "$lib/client/stores/view.store";
+  import { cn } from "@21n/utils/ui.utils";
+  import SVGIcon from "@21n/elements/SVGIcon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import type { IHighlight } from "@21n/landing/shared/landing.type";
+  import VisualRender from "@21n/landing/shared/VisualRender.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import view from "@21n/stores/view.store";
   export let highlight: IHighlight;
   export let isFullWidth: boolean = false;
 </script>

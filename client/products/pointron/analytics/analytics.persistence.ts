@@ -1,7 +1,7 @@
-import { SurrealDatabase } from "$lib/client/persistence/surrealHelper";
-import { TimeScale, type TimePeriod } from "$lib/client/types/time.type";
-import { interceptSurrealResponse } from "$lib/client/utils/utils";
-import { generateParamsForCharts } from "$lib/client/products/pointron/analytics/analytics.utils";
+import { SurrealDatabase } from "@21n/persistence/surrealHelper";
+import { TimeScale, type TimePeriod } from "@21n/types/time.type";
+import { interceptSurrealResponse } from "@21n/utils/utils";
+import { generateParamsForCharts } from "@21n/products/pointron/analytics/analytics.utils";
 
 const surrealDb = new SurrealDatabase();
 

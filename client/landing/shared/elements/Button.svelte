@@ -1,12 +1,12 @@
 <script lang="ts">
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import context from "$lib/client/stores/context.store";
-  import view from "$lib/client/stores/view.store";
-  import { OperatingSystem } from "$lib/client/types/context.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Size } from "../../../types/size.enum";
-  import { landing } from "../store/shared.store";
-  import QrElement from "./QRElement.svelte";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import context from "@21n/stores/context.store";
+  import view from "@21n/stores/view.store";
+  import { OperatingSystem } from "@21n/types/context.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/types/size.enum";
+  import { landing } from "@21n/landing/shared/store/shared.store";
+  import QrElement from "@21n/landing/shared/elements/QRElement.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
 

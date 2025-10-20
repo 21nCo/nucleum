@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { onMount } from "svelte";
-  import ResourceSearchBase from "./ResourceSearchBase.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Action } from "$lib/client/types/action.enum";
+  import ResourceSearchBase from "@21n/products/memotron/library/search/ResourceSearchBase.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { Action } from "@21n/types/action.enum";
 
   let resource: Resource = Resource.everything;
   let searchQuery: string = "";

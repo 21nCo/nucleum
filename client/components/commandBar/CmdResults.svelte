@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { appStore } from "$lib/client/stores/app.store";
-  import { ActionType } from "$lib/client/types/action.type";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  import { appStore } from "@21n/stores/app.store";
+  import { ActionType } from "@21n/types/action.type";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import { createEventDispatcher } from "svelte";
-  import CmdResultItem from "./CmdResultItem.svelte";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import type { ICommandAction } from "./cmd.type";
+  import CmdResultItem from "@21n/components/commandBar/CmdResultItem.svelte";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import type { ICommandAction } from "@21n/components/commandBar/cmd.type";
   const dispatch = createEventDispatcher();
   export let search: string = "";
   let allActions: ICommandAction[] = [];

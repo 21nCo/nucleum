@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { GoalStatus } from "../goal.type";
-  import GoalStatusSwitcherItem from "./GoalStatusSwitcherItem.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { GoalStatus } from "@21n/components/goals/goal.type";
+  import GoalStatusSwitcherItem from "@21n/components/goals/status/GoalStatusSwitcherItem.svelte";
   import { createEventDispatcher } from "svelte";
   export let status: GoalStatus = GoalStatus.NOT_STARTED;
   export let variant: "spread" | "dropdown" = "spread";

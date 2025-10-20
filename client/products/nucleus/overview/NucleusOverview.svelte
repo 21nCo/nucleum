@@ -1,14 +1,14 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import { OverviewPanel } from "./overview.type";
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-  import AnalyticsV2 from "../../pointron/analytics/AnalyticsV2.svelte";
-  import MemotronOverview from "../../memotron/overview/MemotronOverview.svelte";
+  } from "@21n/stores/uiState/uiState.type";
+  import { OverviewPanel } from "@21n/products/nucleus/overview/overview.type";
+  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+  import AnalyticsV2 from "@21n/products/pointron/analytics/AnalyticsV2.svelte";
+  import MemotronOverview from "@21n/products/memotron/overview/MemotronOverview.svelte";
 
   let selectedPanel: OverviewPanel = resolveSavedState() ?? OverviewPanel.FOCUS;
 
@@ -22,9 +22,13 @@
   }
 
   onMount(() => {
-    uiState.subscribe((x) => {
+    const uiStateUnsub = uiState.subscribe(() => {
       selectedPanel = resolveSavedState() ?? OverviewPanel.FOCUS;
     });
+
+    return () => {
+      uiStateUnsub();
+    };
   });
 </script>
 

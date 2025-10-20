@@ -1,12 +1,12 @@
-import { flux } from "$lib/client/components/flux/flux";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { flux } from "@21n/components/flux/flux";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
   GoalStatus,
   GoalType,
   type IGoal
-} from "$lib/client/components/goals/goal.type";
-import type { ITask } from "$lib/client/components/tasks/task.type";
-import { PersistenceActionType } from "$lib/client/types/data.type";
+} from "@21n/components/goals/goal.type";
+import type { ITask } from "@21n/components/tasks/task.type";
+import { PersistenceActionType } from "@21n/types/data.type";
 
 /**
  * v0.83.0 - replacing "$NONE" which is undefined with 0 or empty string at relevant places - for indexing of non-present values as well

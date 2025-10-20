@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { resizeListener } from "$lib/client/actions/resize.action";
-  import appearance from "$lib/client/stores/appearance.store";
-  import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
-  import { truncateString } from "$lib/shared/utils/text.utils";
+  import { resizeListener } from "@21n/actions/resize.action";
+  import appearance from "@21n/stores/appearance.store";
+  import { retrieveCurrentColors } from "@21n/utils/theme.utils";
+  import { truncateString } from "@21n/shared-utils/text.utils";
   import { Graph, GraphEvent, NodeEvent, CanvasEvent } from "@antv/g6";
   import { onMount, createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();

@@ -1,19 +1,19 @@
 <script lang="ts">
-  import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import ContextMenuAction from "@21n/elements/contextMenu/ContextMenuAction.svelte";
+  import { Size } from "@21n/types/size.enum";
   import { createEventDispatcher } from "svelte";
-  import { resolveCollectionContextMenu } from "$lib/client/components/collection/collection.store";
-  import { resolveNodeContextMenu } from "$lib/client/products/memotron/node/node.store";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { Arrangement, Placement } from "$lib/client/types/direction.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { resolveGoalContextMenu } from "$lib/client/components/goals/goal.store";
-  import { resolveTaskContextMenu } from "../../tasks/task.store";
-  import context from "$lib/client/stores/context.store";
-  import view from "$lib/client/stores/view.store";
+  import { resolveCollectionContextMenu } from "@21n/components/collection/collection.store";
+  import { resolveNodeContextMenu } from "@21n/products/memotron/node/node.store";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Arrangement, Placement } from "@21n/types/direction.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { resolveGoalContextMenu } from "@21n/components/goals/goal.store";
+  import { resolveTaskContextMenu } from "@21n/components/tasks/task.store";
+  import context from "@21n/stores/context.store";
+  import view from "@21n/stores/view.store";
 
   const dispatch = createEventDispatcher();
   export let item: any;

@@ -1,6 +1,6 @@
 <script lang="ts">
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-  import CalendarLayout from "../CalendarLayout.svelte";
+  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+  import CalendarLayout from "@21n/components/calendar/CalendarLayout.svelte";
 
   export let panel: string = "journal";
 </script>

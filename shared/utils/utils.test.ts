@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isValidUrl } from "$lib/shared/utils/utils";
+import { isValidUrl } from "@21n/shared-utils/utils";
 
 describe("isValidUrl", () => {
   it("should return true for valid URLs", () => {

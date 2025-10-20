@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { abg, cn } from "$lib/client/utils/ui.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import { abg, cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
   import { createEventDispatcher } from "svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-  import Tag from "$lib/client/elements/text/Tag.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import Tag from "@21n/elements/text/Tag.svelte";
   const dispatch = createEventDispatcher();
   export let links: string[];
   export let isLinkboxOpened: boolean = false;

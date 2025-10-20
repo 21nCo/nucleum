@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { AnnotationType } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.type";
+  import { AnnotationType } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
   import { createEventDispatcher } from "svelte";
-  import { highlightStore } from "../common/highlighters/highlight.store";
+  import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
   export let id = "";
   export let highlighter: string = "";
   export let rects: any = [];
@@ -28,6 +28,10 @@
       bg = `background-color:${color};opacity:0.3;`;
     return `position:absolute;left: ${left}px;top: ${top}px;width: ${width}px;height: ${height}px;${bg};-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;`;
   }
+
+  function handleClick() {
+    dispatchEvent("click", id);
+  }
 </script>
 
 {#each rects as rect, index}
@@ -38,9 +42,7 @@
     data-highlighter={highlighter}
     data-annotType={annotType}
     style={calculateStyle(rect)}
-    on:click|stopPropagation={() => {
-      dispatchEvent("click", id);
-    }}
+    on:click|stopPropagation={handleClick}
     on:keydown={() => {}}
     on:mousedown|stopPropagation
   >

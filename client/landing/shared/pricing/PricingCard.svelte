@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import Button from "../elements/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import type { PricingPlan, PricingToggleOption } from "./pricing.types";
-  import { landing } from "../store/shared.store";
+  import { cn } from "@21n/utils/ui.utils";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import Button from "@21n/landing/shared/elements/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import type { PricingPlan, PricingToggleOption } from "@21n/landing/shared/pricing/pricing.types";
+  import { landing } from "@21n/landing/shared/store/shared.store";
   export let plan: PricingPlan;
   export let unit: PricingToggleOption;
 </script>

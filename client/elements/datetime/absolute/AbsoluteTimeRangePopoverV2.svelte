@@ -1,14 +1,14 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import Divider from "../../Divider.svelte";
-  import Icon from "../../Icon.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
   import dayjs from "dayjs";
   import "dayjs/locale/en";
-  import { Size } from "../../../types/size.enum";
-  import Button from "../../button/Button.svelte";
-  import { abg, bg, cn } from "$lib/client/utils/ui.utils";
-  import { isSameDay } from "$lib/client/utils/time.utils";
-  import DateInputBox from "./DateInputBox.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { abg, bg, cn } from "@21n/utils/ui.utils";
+  import { isSameDay } from "@21n/utils/time.utils";
+  import DateInputBox from "@21n/elements/datetime/absolute/DateInputBox.svelte";
 
   const dispatch = createEventDispatcher();
 

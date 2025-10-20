@@ -1,7 +1,7 @@
 <script lang="ts">
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import TextWithHoverTooltip from "$lib/client/elements/text/TextWithHoverTooltip.svelte";
-  import type { TopNCardDataRecord } from "../../analytics.types";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import TextWithHoverTooltip from "@21n/elements/text/TextWithHoverTooltip.svelte";
+  import type { TopNCardDataRecord } from "@21n/products/pointron/analytics/analytics.types";
   export let row: TopNCardDataRecord;
 </script>
 

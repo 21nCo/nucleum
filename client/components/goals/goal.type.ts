@@ -1,5 +1,5 @@
-import type { IMarkdown } from "../markdown/md.type";
-import type { IRecordId } from "$lib/client/types/data.type";
+import type { IMarkdown } from "@21n/components/markdown/md.type";
+import type { IRecordId } from "@21n/types/data.type";
 import type {
   IActiveResource,
   IResource,
@@ -8,13 +8,13 @@ import type {
   IResourceLabeled,
   IResourceStarrable,
   IResourceShareable
-} from "../flux/resourceStores/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 import type {
   ICollectible,
   ICollectionExpanded
-} from "../collection/collection.type";
-import type { TimeScale } from "$lib/client/types/time.type";
-import type { ITask } from "../tasks/task.type";
+} from "@21n/components/collection/collection.type";
+import type { TimeScale } from "@21n/types/time.type";
+import type { ITask } from "@21n/components/tasks/task.type";
 
 export enum GoalType {
   INDEFINITE = "INDEFINITE",

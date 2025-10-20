@@ -1,26 +1,26 @@
 <script lang="ts">
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Arrangement } from "$lib/client/types/direction.enum";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { Arrangement } from "@21n/types/direction.enum";
   import {
     NodeType,
     type INodeThumb
-  } from "$lib/client/products/memotron/node/node.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import NodeThumbnail from "$lib/client/products/memotron/node/thumbnail/NodeThumbnail.svelte";
+  } from "@21n/products/memotron/node/node.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import NodeThumbnail from "@21n/products/memotron/node/thumbnail/NodeThumbnail.svelte";
   import { afterUpdate, onMount } from "svelte";
   import { fade } from "svelte/transition";
-  import view from "$lib/client/stores/view.store";
-  import NodeThumbnailTitle from "$lib/client/products/memotron/node/thumbnail/NodeThumbnailTitle.svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import type { IProperty } from "../../../components/collection/properties/property.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { resolveFilePreview } from "$lib/client/products/memotron/node/node.utils";
+  import view from "@21n/stores/view.store";
+  import NodeThumbnailTitle from "@21n/products/memotron/node/thumbnail/NodeThumbnailTitle.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import type { IProperty } from "@21n/components/collection/properties/property.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { resolveFilePreview } from "@21n/products/memotron/node/node.utils";
 
   export let nodes: INodeThumb[] = [];
   export let arrangement: Arrangement = Arrangement.LIST;

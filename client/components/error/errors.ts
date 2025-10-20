@@ -1,4 +1,4 @@
-import { ResourceErrorCode } from "./error.type";
+import { ResourceErrorCode } from "@21n/components/error/error.type";
 
 export class ResourceError extends Error {
   constructor(

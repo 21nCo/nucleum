@@ -1,12 +1,12 @@
 <script lang="ts">
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { nodeStore } from "$lib/client/products/memotron/node/node.store";
-  import type { INodeThumb } from "$lib/client/products/memotron/node/node.type";
-  import { Arrangement } from "$lib/client/types/direction.enum";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { ResourceAccessPoint } from "../../flux/resourceStores/resource.type";
-  import Records from "../../record/Records.svelte";
-  import { tzStore } from "../../settings/timezone/tz.store";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
+  import type { INodeThumb } from "@21n/products/memotron/node/node.type";
+  import { Arrangement } from "@21n/types/direction.enum";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import Records from "@21n/components/record/Records.svelte";
+  import { tzStore } from "@21n/components/settings/timezone/tz.store";
 
   export let date: Date;
   let isLoading: boolean;

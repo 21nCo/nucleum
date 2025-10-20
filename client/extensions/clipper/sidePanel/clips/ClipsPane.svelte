@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
-  import { ExtensionEvent } from "$lib/client/types/extension.type";
+  import { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
+  import { ExtensionEvent } from "@21n/types/extension.type";
   import {
     NodeType,
     type IClip,
     type ITextClip,
     type IVideoTimestampClip
-  } from "$lib/client/products/memotron/node/node.type";
-  import { relayToContentScript } from "$lib/client/utils/extension.utils";
-  import Clip from "./Clip.svelte";
-  import { wait } from "$lib/client/utils/time.utils";
+  } from "@21n/products/memotron/node/node.type";
+  import { relayToContentScript } from "@21n/utils/extension.utils";
+  import Clip from "@21n/extensions/clipper/sidePanel/clips/Clip.svelte";
+  import { wait } from "@21n/utils/time.utils";
   import { onMount } from "svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { logger } from "@21n/components/debug/logger.client";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
 
   export let clips: IClip[] = [];
   export let isMemotronPage: boolean = false;
@@ -120,10 +120,10 @@
       isSearchContext={true}
       mainText={isMemotronPage
         ? "Hello from the other side of Memotron👋."
-        : "No clips found."}
+        : "No bookmarks found."}
       subText={isMemotronPage
-        ? "Start highlighting to save clips about Memotron to your Memotron."
-        : "Start highlighting to create clips."}
+        ? "Start highlighting to save bookmarks about Memotron to your Memotron."
+        : "Start highlighting to create bookmarks."}
     />
   {/if}
 </main>

@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { TimeFormat } from "$lib/client/types/time.type";
+  import { SessionState } from "@21n/types/pointron/sessionState.enum";
+  import { TimeFormat } from "@21n/types/time.type";
 
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { activeSession } from "../focus/session.store";
-  import { Product } from "$lib/client/products/product.type";
-  import { resolveProductConfig } from "$lib/client/products/product.config";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
+  import { Product } from "@21n/products/product.type";
+  import { resolveProductConfig } from "@21n/products/product.config";
   export let ctx: Product = Product.NUCLEUS;
 </script>
 

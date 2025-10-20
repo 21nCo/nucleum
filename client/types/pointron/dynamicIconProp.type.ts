@@ -1,4 +1,4 @@
-import type { IconVariant } from "$lib/client/types/icon.type";
+import type { IconVariant } from "@21n/types/icon.type";
 
 export type DynamicIconProp = {
   name: string;

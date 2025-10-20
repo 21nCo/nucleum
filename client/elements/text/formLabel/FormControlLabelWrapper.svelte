@@ -1,10 +1,10 @@
 <script lang="ts">
-  import view from "$lib/client/stores/view.store";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import type { InputLabel } from "$lib/client/types/input.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import FormControlLabel from "./FormControlLabel.svelte";
+  import view from "@21n/stores/view.store";
+  import { Orientation } from "@21n/types/direction.enum";
+  import type { InputLabel } from "@21n/types/input.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
   export let props: InputLabel | undefined = undefined;
   export let size: Size.md | Size.sm = Size.md;
 </script>

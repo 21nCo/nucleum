@@ -1,40 +1,40 @@
 <script lang="ts">
-  import { fileDrop } from "$lib/client/actions/fileDrop.action";
-  import { popover } from "$lib/client/actions/popover.action";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import AudioCapture from "$lib/client/products/memotron/capture/AudioCapture.svelte";
-  import { MAX_FILE_SIZE_MB } from "$lib/client/components/record/record.store";
-  import { resolveFileUploadErrorMessage } from "$lib/client/products/memotron/memotron.utils";
+  import { fileDrop } from "@21n/actions/fileDrop.action";
+  import { popover } from "@21n/actions/popover.action";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import AudioCapture from "@21n/products/memotron/capture/AudioCapture.svelte";
+  import { MAX_FILE_SIZE_MB } from "@21n/components/record/record.store";
+  import { resolveFileUploadErrorMessage } from "@21n/products/memotron/memotron.utils";
   import {
     mediaNodeTypeList,
     NodeType,
     webNodeTypeList
-  } from "$lib/client/products/memotron/node/node.type";
-  import context from "$lib/client/stores/context.store";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
+  } from "@21n/products/memotron/node/node.type";
+  import context from "@21n/stores/context.store";
+  import { ColorStrength } from "@21n/types/appearance.type";
   import {
     ButtonStyle,
     ButtonVariant,
     type IButtonParams
-  } from "$lib/client/types/button.type";
-  import { Embed } from "$lib/client/types/context.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { enumToString } from "$lib/shared/utils/text.utils";
-  import { logger } from "../../debug/logger.client";
-  import { ResourceAccessPoint } from "../../flux/resourceStores/resource.type";
-  import EmbedLibrarySearch from "./EmbedLibrarySearch.svelte";
+  } from "@21n/types/button.type";
+  import { Embed } from "@21n/types/context.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { enumToString } from "@21n/shared-utils/text.utils";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import EmbedLibrarySearch from "@21n/components/markdown/embed/EmbedLibrarySearch.svelte";
   import { createEventDispatcher, getContext } from "svelte";
-  import view from "$lib/client/stores/view.store";
+  import view from "@21n/stores/view.store";
   import {
     ActiveCaptureStore,
     type IActiveCaptureStore
-  } from "$lib/client/products/memotron/capture/capture.store";
-  import { taskStore } from "../../tasks/task.store";
+  } from "@21n/products/memotron/capture/capture.store";
+  import { taskStore } from "@21n/components/tasks/task.store";
   const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>("node");
   const captureContext = getContext<any>("capture");

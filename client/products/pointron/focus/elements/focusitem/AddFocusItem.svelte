@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { focusItemsStore } from "$lib/client/products/pointron/focus/session.store";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
-  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { SearchStore } from "$lib/client/components/record/record.store";
-  import FocusItemSearchResultItem from "./FocusItemSearchResultItem.svelte";
+  import { focusItemsStore } from "@21n/products/pointron/focus/session.store";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { toasts } from "@21n/stores/notification.store";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Placement } from "@21n/types/direction.enum";
+  import { InputStyle } from "@21n/types/input.type";
+  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import FocusItemSearchResultItem from "@21n/products/pointron/focus/elements/focusitem/FocusItemSearchResultItem.svelte";
   import { createEventDispatcher } from "svelte";
-  import { GoalStatus } from "$lib/client/components/goals/goal.type";
+  import { GoalStatus } from "@21n/components/goals/goal.type";
   let label: string = "";
   let inputRef: any;
   let searchStore = new SearchStore();

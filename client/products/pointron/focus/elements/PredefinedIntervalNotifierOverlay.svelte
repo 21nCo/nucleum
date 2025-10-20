@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import modalEvent from "$lib/client/components/modal/modal.store";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
-  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import modalEvent from "@21n/components/modal/modal.store";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
+  import { SessionState } from "@21n/types/pointron/sessionState.enum";
+  import { cn } from "@21n/utils/ui.utils";
   import { tweened } from "svelte/motion";
   import { linear } from "svelte/easing";
 

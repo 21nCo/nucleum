@@ -1,11 +1,11 @@
-import { Extension, Product } from "./product.type";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { Action } from "../types/action.enum";
-import { MemotronAction } from "./memotron/memotronAction.enum";
-import { resourceConfig } from "$lib/client/components/flux/resourceStores/resource.config";
-import type { IResourceTableConfig } from "$lib/client/components/flux/flux.type";
+import { Extension, Product } from "@21n/products/product.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Action } from "@21n/types/action.enum";
+import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
+import { resourceConfig } from "@21n/components/flux/resourceStores/resource.config";
+import type { IResourceTableConfig } from "@21n/components/flux/flux.type";
 
-const isDev = import.meta.env.DEV;
+const isDev = import.meta.env?.DEV || false;
 
 interface SettingsSection {
   children: (Action | MemotronAction | string)[];
@@ -151,6 +151,7 @@ export const products: Record<Product, IAppConfigBase> = {
           Action.APPEARANCE_SETTINGS,
           "analytics-settings",
           "session-settings",
+          MemotronAction.NODE_SETTINGS,
           Action.DATETIME_SETTINGS,
           Action.SHORTCUTS,
           Action.ACCESSIBILITY
@@ -214,6 +215,7 @@ export const products: Record<Product, IAppConfigBase> = {
         children: [
           Action.MODE_OF_INTERACTION,
           Action.APPEARANCE_SETTINGS,
+          MemotronAction.NODE_SETTINGS,
           Action.DATETIME_SETTINGS,
           Action.SHORTCUTS,
           Action.ACCESSIBILITY
@@ -382,7 +384,10 @@ const tableConfigMapper = (resource: Resource) => {
   };
 };
 
-export const product = import.meta.env.VITE_PRODUCT || Product.NUCLEUS;
+export const product =
+  import.meta.env?.VITE_PRODUCT ||
+  process.env.PLASMO_PUBLIC_PRODUCT ||
+  Product.NUCLEUS;
 
 export const resolveProductConfig = (productOverride?: Product): IAppConfig => {
   const base = products[productOverride ?? (product as Product)];
@@ -399,7 +404,12 @@ const extensions: Record<Extension, IProductConfigBase> = {
     name: "Memotron Clipper",
     resources: {
       browse: [],
-      table: [Resource.collection]
+      table: [
+        ...commonTables,
+        ...resourceTableMap[Product.MEMOTRON],
+        ...linkabilityTables,
+        ...filesAbilityTables
+      ]
     },
     displayName: "Memotron Clipper",
     tagline: ""

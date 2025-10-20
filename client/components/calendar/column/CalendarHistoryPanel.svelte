@@ -1,22 +1,22 @@
 <script lang="ts">
-  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import LogsPane from "$lib/client/products/pointron/logs/LogsPane.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
+  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import LogsPane from "@21n/products/pointron/logs/LogsPane.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import view from "$lib/client/stores/view.store";
-  import { Product } from "$lib/client/products/product.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { ResourceAccessMode } from "../../flux/resourceStores/resource.type";
-  import { CalendarHistoryTab } from "../calendar.type";
-  import CalendarAllActivityPanel from "./CalendarAllActivityPanel.svelte";
-  import CalendarHistoryNodeEntries from "./CalendarHistoryNodeEntries.svelte";
+  } from "@21n/stores/uiState/uiState.type";
+  import view from "@21n/stores/view.store";
+  import { Product } from "@21n/products/product.type";
+  import { Size } from "@21n/types/size.enum";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { CalendarHistoryTab } from "@21n/components/calendar/calendar.type";
+  import CalendarAllActivityPanel from "@21n/components/calendar/column/CalendarAllActivityPanel.svelte";
+  import CalendarHistoryNodeEntries from "@21n/components/calendar/column/CalendarHistoryNodeEntries.svelte";
   export let date: Date;
   export let isInline: boolean = false;
   let tab: CalendarHistoryTab = resolveTabSelection();

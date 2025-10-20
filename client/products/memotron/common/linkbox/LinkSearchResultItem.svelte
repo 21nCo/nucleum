@@ -1,28 +1,28 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { isValidString, properCase } from "$lib/shared/utils/text.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
+  import { isValidString, properCase } from "@21n/shared-utils/text.utils";
   import {
     NodeType,
     type INode
-  } from "$lib/client/products/memotron/node/node.type";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import CollectionTitleLabelPart from "$lib/client/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
+  } from "@21n/products/memotron/node/node.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import CollectionTitleLabelPart from "@21n/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
   import type {
     CollectionType,
     ICollectionThumb
-  } from "$lib/client/components/collection/collection.type";
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-  import NodeTitleLabelPart from "$lib/client/products/memotron/node/title/NodeTitleLabelPart.svelte";
-  import GoalSearchResultItem from "$lib/client/components/goals/GoalSearchResultItem.svelte";
+  } from "@21n/components/collection/collection.type";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
+  import NodeTitleLabelPart from "@21n/products/memotron/node/title/NodeTitleLabelPart.svelte";
+  import GoalSearchResultItem from "@21n/components/goals/GoalSearchResultItem.svelte";
   import type {
     GoalType,
     IGoalThumb
-  } from "$lib/client/components/goals/goal.type";
-  import { resolveNodeContentLabel } from "$lib/client/products/memotron/node/node.utils";
-  import { resolveCollectionTypeLabel } from "$lib/client/components/collection/collection.utils";
-  import { resolveGoalTypeLabel } from "$lib/client/components/goals/goal.utils";
+  } from "@21n/components/goals/goal.type";
+  import { resolveNodeContentLabel } from "@21n/products/memotron/node/node.utils";
+  import { resolveCollectionTypeLabel } from "@21n/components/collection/collection.utils";
+  import { resolveGoalTypeLabel } from "@21n/components/goals/goal.utils";
   export let item: INode | ICollectionThumb | IGoalThumb;
   export let isHideResourceType: boolean = false;
   export let resourceType: Resource = determineResourceType(item.id);

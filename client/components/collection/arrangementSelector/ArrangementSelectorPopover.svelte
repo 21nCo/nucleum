@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { Arrangement, Orientation } from "$lib/client/types/direction.enum";
-  import Slider from "$lib/client/elements/slider/Slider.svelte";
-  import VerticalSwitcher from "$lib/client/elements/switcher/VerticalSwitcher.svelte";
-  import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { Resource } from "../../flux/resourceStores/resource.enum";
+  import { Arrangement, Orientation } from "@21n/types/direction.enum";
+  import Slider from "@21n/elements/slider/Slider.svelte";
+  import VerticalSwitcher from "@21n/elements/switcher/VerticalSwitcher.svelte";
+  import { VerticalSwitcherStyle } from "@21n/types/switcher.enum";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   export let density: number;
   export let arrangement: Arrangement;
   export let isHideThumbnailPreview: boolean = false;

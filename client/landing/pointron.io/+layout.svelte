@@ -1,13 +1,13 @@
 <script lang="ts">
-  import "$lib/client/app.css";
-  import BlankLandingLayout from "$lib/client/landing/shared/BlankLandingLayout.svelte";
+  import "@21n/client/app.css";
+  import BlankLandingLayout from "@21n/landing/shared/BlankLandingLayout.svelte";
   import type {
     IFooter,
     ILandingProductUrls,
     ITopNavBar
-  } from "../shared/landing.type";
-  import type { IMetadata } from "$lib/client/layout/metadata.type";
-  import { org, landing } from "../shared/store/shared.store";
+  } from "@21n/landing/shared/landing.type";
+  import type { IMetadata } from "@21n/layout/metadata.type";
+  import { org, landing } from "@21n/landing/shared/store/shared.store";
 
   const urls: ILandingProductUrls = {
     web: "https://web.pointron.app",
@@ -65,7 +65,7 @@
       "Pointron is a focus time tracker that helps you stay focused and productive.",
     keywords: "pointron, focus, time, tracker, productivity",
     url: "https://pointron.app",
-    image: "https://cdn.21n.co/pointron/ogImage.png"
+    image: "https://cdn.21n.org/pointron/ogImage.png"
   };
   landing.load(urls);
 </script>

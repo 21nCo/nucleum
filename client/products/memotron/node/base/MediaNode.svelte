@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { type IActiveNodeStore } from "../node.store";
-  import MediaContent from "../content/MediaContent.svelte";
-  import MediaNodeFloatingBar from "../floatingBar/MediaNodeFloatingBar.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { NodeView, type NodeRightPaneType } from "../node.type";
-  import view from "$lib/client/stores/view.store";
-  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
-  import NodeBirdView from "../birdView/NodeBirdView.svelte";
-  import { resizeListener } from "$lib/client/actions/resize.action";
+  import { type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import MediaContent from "@21n/products/memotron/node/content/MediaContent.svelte";
+  import MediaNodeFloatingBar from "@21n/products/memotron/node/floatingBar/MediaNodeFloatingBar.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { NodeView, type NodeRightPaneType } from "@21n/products/memotron/node/node.type";
+  import view from "@21n/stores/view.store";
+  import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
+  import NodeBirdView from "@21n/products/memotron/node/birdView/NodeBirdView.svelte";
+  import { resizeListener } from "@21n/actions/resize.action";
   export let node: IActiveNodeStore;
   export let nodeView: NodeView = NodeView.CONTENT;
 

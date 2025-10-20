@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CollapsibleItem from "./CollapsibleItem.svelte";
+  import CollapsibleItem from "@21n/landing/shared/collapsible/CollapsibleItem.svelte";
   export let items: Array<{ title: string; body: string }> = [];
 
   let expandedItems: Record<number, boolean> = {};

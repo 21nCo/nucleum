@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import Button from "./Button.svelte";
+  import { ButtonVariant } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   export let type: ButtonVariant = ButtonVariant.PRIMARY;
   export let parentBackgroundIndex: number = 1;

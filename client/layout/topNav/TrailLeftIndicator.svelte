@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import account from "$lib/client/stores/account.store";
-  import { PlanType } from "$lib/client/components/subscription/userPlan.type";
-  import { resolveTrialDaysLeft } from "$lib/client/components/subscription/userPlan.utils";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { appStore } from "@21n/stores/app.store";
+  import { Action } from "@21n/types/action.enum";
+  import account from "@21n/stores/account.store";
+  import { PlanType } from "@21n/components/subscription/userPlan.type";
+  import { resolveTrialDaysLeft } from "@21n/components/subscription/userPlan.utils";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import { Orientation } from "@21n/types/direction.enum";
   export let orientation: Orientation = Orientation.Horizontal;
 
   $: trialDaysLeft =
@@ -48,7 +48,7 @@
         {trialDaysLeft === 1 ? "day" : "days"}
         {orientation === Orientation.Horizontal ? "trial" : ""} left
       {:else}
-        expired
+        Trial expired
       {/if}
     </span>
   </button>

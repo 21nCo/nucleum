@@ -1,31 +1,31 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import view from "$lib/client/stores/view.store";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import PropertyItem from "./PropertyItem.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import view from "@21n/stores/view.store";
+  import { cn } from "@21n/utils/ui.utils";
+  import PropertyItem from "@21n/components/collection/properties/PropertyItem.svelte";
   import {
     resolvePropertiesForCapture,
     resolvePropertiesForNodePage
-  } from "./property.utils";
+  } from "@21n/components/collection/properties/property.utils";
   import { onMount } from "svelte";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { Size } from "$lib/client/types/size.enum";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { Size } from "@21n/types/size.enum";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
   import { createEventDispatcher } from "svelte";
   import type {
     ICollectionExpanded,
     ICollectionItem,
     ICollectionItemPropertyValue
-  } from "../collection.type";
-  import type { IProperty, IPropertyConfigOption } from "./property.type";
+  } from "@21n/components/collection/collection.type";
+  import type { IProperty, IPropertyConfigOption } from "@21n/components/collection/properties/property.type";
   import {
     removeDuplicatesFilter,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import { propertyStore } from "./property.store";
-  import { Resource } from "../../flux/resourceStores/resource.enum";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import { propertyStore } from "@21n/components/collection/properties/property.store";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   const dispatch = createEventDispatcher();
   export let types: ICollectionExpanded[] | undefined = undefined;
   export let isIncludeExtendedProperties: boolean = true;

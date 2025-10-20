@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Features from "./Features.svelte";
-  import type { IFeature } from "../landing.type";
+  import Features from "@21n/landing/shared/features/Features.svelte";
+  import type { IFeature } from "@21n/landing/shared/landing.type";
 
   const features: IFeature[] = [
     {

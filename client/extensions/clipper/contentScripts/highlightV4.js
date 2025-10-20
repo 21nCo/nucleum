@@ -1,4 +1,4 @@
-import { convertToRGBA } from "$lib/client/utils/ui.utils";
+import { convertToRGBA } from "@21n/utils/ui.utils";
 import $ from "jquery";
 
 1;

@@ -1,21 +1,21 @@
 import { writable } from "svelte/store";
-import type { PointronConstants } from "$lib/client/types/pointron/pointronConstants.type";
+import type { PointronConstants } from "@21n/types/pointron/pointronConstants.type";
 
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { TimerMode } from "$lib/client/types/pointron/timerMode.enum";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { TimerMode } from "@21n/types/pointron/timerMode.enum";
 import {
   SessionCompositionType,
   type SessionComposition,
   BreakCompositionType
-} from "$lib/client/types/pointron/sessionComposition.type";
-import { ChartType } from "$lib/client/types/analytics.type";
-import { TimePeriodType, TimeScale } from "$lib/client/types/time.type";
-import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
-import { Layout } from "$lib/client/types/layout.type";
-import type { IPointronPreferences } from "$lib/client/types/pointron/pointronPreferences.type";
-import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
-import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-import { parse } from "$lib/shared/utils/json.utils";
+} from "@21n/types/pointron/sessionComposition.type";
+import { ChartType } from "@21n/types/analytics.type";
+import { TimePeriodType, TimeScale } from "@21n/types/time.type";
+import { objIsEmpty, shallowDiff } from "@21n/shared-utils/obj.utils";
+import { Layout } from "@21n/types/layout.type";
+import type { IPointronPreferences } from "@21n/types/pointron/pointronPreferences.type";
+import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
+import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+import { parse } from "@21n/shared-utils/json.utils";
 
 /**
  * @deprecated

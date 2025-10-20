@@ -1,4 +1,4 @@
-import type { PersistenceProvider } from "$lib/client/persistence/persistence.type";
+import type { PersistenceProvider } from "@21n/persistence/persistence.type";
 import type {
   IMutationParamsv2,
   IRecordId,
@@ -6,8 +6,8 @@ import type {
   IResourceSelectProperties,
   IStore,
   StoreDataType
-} from "$lib/client/types/data.type";
-import type { Resource } from "./resourceStores/resource.enum";
+} from "@21n/types/data.type";
+import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 
 /**
  * Configuration for a resource table in flux
@@ -110,13 +110,13 @@ interface IFluxMutationArgs<T> {
   };
 }
 
-interface IFluxInitArgs {
+export interface IFluxInitArgs {
   tables: IResourceTableConfig[];
-  provider: PersistenceProvider;
   params: {
     dapId: string;
     userId?: string;
     isLocalMode?: boolean;
+    loaderCallback?: LoaderCallback;
   };
 }
 

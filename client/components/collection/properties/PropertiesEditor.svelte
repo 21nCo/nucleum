@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { Size } from "$lib/client/types/size.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Size } from "@21n/types/size.enum";
   import {
     TableCellDefaultAction,
     TableCellType,
     type TableColumn
-  } from "$lib/client/types/table.type";
-  import { enumToString, isValidString } from "$lib/shared/utils/text.utils";
-  import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+  } from "@21n/types/table.type";
+  import { enumToString, isValidString } from "@21n/shared-utils/text.utils";
+  import { generateResourceId } from "@21n/components/flux/flux.utils";
 
   import {
     manualPropertyTypes,
@@ -16,47 +16,47 @@
     selectOptionsPropertyTypes,
     UniversalPropertyType,
     type IProperty
-  } from "./property.type";
-  import { propertyEditorStore, propertyStore } from "./property.store";
+  } from "@21n/components/collection/properties/property.type";
+  import { propertyEditorStore, propertyStore } from "@21n/components/collection/properties/property.store";
   import {
     ActiveCollectionStore,
     collectionStore,
     type IActiveCollectionStore
-  } from "$lib/client/components/collection/collection.store";
-  import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
+  } from "@21n/components/collection/collection.store";
+  import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
   import {
     ResourceAccessMode,
     ResourceActionType,
     type OmitForCaptureWithId
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import type { IRecordId } from "@21n/types/data.type";
   import { onMount } from "svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import SearchSingleSelect from "$lib/client/elements/select/SearchSingleSelect.svelte";
-  import { CollectionType, type ICollection } from "../collection.type";
-  import { confirmationNotification } from "$lib/client/stores/notification.store";
-  import { AlertType } from "$lib/client/types/notification.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import modalEvent from "$lib/client/components/modal/modal.store";
-  import PropertyTypeSelector from "./propertyTypeSelector/PropertyTypeSelector.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { logger } from "@21n/components/debug/logger.client";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import SearchSingleSelect from "@21n/elements/select/SearchSingleSelect.svelte";
+  import { CollectionType, type ICollection } from "@21n/components/collection/collection.type";
+  import { confirmationNotification } from "@21n/stores/notification.store";
+  import { AlertType } from "@21n/types/notification.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import { appStore } from "@21n/stores/app.store";
+  import modalEvent from "@21n/components/modal/modal.store";
+  import PropertyTypeSelector from "@21n/components/collection/properties/propertyTypeSelector/PropertyTypeSelector.svelte";
   import {
     isSameResource,
     resourceAction,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { resolvePropertyDefaultConfig } from "./property.utils";
-  import { objIsEmpty } from "$lib/shared/utils/obj.utils";
-  import CollectionTitleLabelPart from "../thumbnail/CollectionThumbnailLabel.svelte";
-  import { Product } from "$lib/client/products/product.type";
-  import Table3 from "$lib/client/elements/table/Table3.svelte";
-  import ModalContentPadded from "$lib/client/components/modal/ModalContentPadded.svelte";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { resolvePropertyDefaultConfig } from "@21n/components/collection/properties/property.utils";
+  import { objIsEmpty } from "@21n/shared-utils/obj.utils";
+  import CollectionTitleLabelPart from "@21n/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
+  import { Product } from "@21n/products/product.type";
+  import Table3 from "@21n/elements/table/Table3.svelte";
+  import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
 
   export let id: IRecordId | undefined = undefined;
   let collection: IActiveCollectionStore | undefined = id
@@ -297,10 +297,10 @@
       <div class="flex flex-col items-start w-full gap-3">
         <SwitchInput
           label={{
-            label: "Extend an existing Type collection",
+            label: "Extend an existing collection",
             orientation: Orientation.Horizontal,
             tooltip: {
-              body: "You can extend an existing type by adding additional properties on top. Editing the properties on base type will reflect in all extended types.",
+              body: "You can extend an existing collection by adding additional properties on top. Editing the properties on base collection will reflect in all extended collections.",
               actionText: "Learn more about advanced filter query",
               action: "/kb/advanced-filter-query"
             }

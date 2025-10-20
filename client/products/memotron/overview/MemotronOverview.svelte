@@ -1,14 +1,14 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import GlobalGraph from "../graph/GlobalGraph.svelte";
-  import MemotronMapOverview from "./MemotronMapOverview.svelte";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import GlobalGraph from "@21n/products/memotron/graph/GlobalGraph.svelte";
+  import MemotronMapOverview from "@21n/products/memotron/overview/MemotronMapOverview.svelte";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import MemotronDefaultOverview from "./MemotronDefaultOverview.svelte";
-  import { MemotronOverviewPanel } from "./overview.type";
+  } from "@21n/stores/uiState/uiState.type";
+  import MemotronDefaultOverview from "@21n/products/memotron/overview/MemotronDefaultOverview.svelte";
+  import { MemotronOverviewPanel } from "@21n/products/memotron/overview/overview.type";
 
   let selectedPanel: MemotronOverviewPanel =
     resolveSavedState() ?? MemotronOverviewPanel.GRAPH;
@@ -26,9 +26,13 @@
   }
 
   onMount(() => {
-    uiState.subscribe((x) => {
+    const uiStateUnsub = uiState.subscribe(() => {
       selectedPanel = resolveSavedState() ?? MemotronOverviewPanel.GRAPH;
     });
+
+    return () => {
+      uiStateUnsub();
+    };
   });
 </script>
 

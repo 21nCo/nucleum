@@ -1,16 +1,16 @@
-import { logger } from "$lib/client/components/debug/logger.client";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { logger } from "@21n/components/debug/logger.client";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
   ResourceActionType,
   type IResource
-} from "$lib/client/components/flux/resourceStores/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 import {
   type ILocal,
   type IPersistence,
   type ITable,
   PersistenceProvider
-} from "$lib/client/persistence/persistence.type";
-import { getDapId } from "$lib/client/persistence/persistence.utils";
+} from "@21n/persistence/persistence.type";
+import { getDapId } from "@21n/persistence/persistence.utils";
 import {
   type IStore,
   PersistenceActionType,
@@ -24,52 +24,52 @@ import {
   type IMutationAdditionalParams,
   type IResourceSelectProperties,
   type IResourceStore
-} from "$lib/client/types/data.type";
-import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
-import { GlobalEvent } from "$lib/client/types/event.enum";
-import { ExtensionEvent } from "$lib/client/types/extension.type";
-import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
+} from "@21n/types/data.type";
+import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
+import { GlobalEvent } from "@21n/types/event.enum";
+import { ExtensionEvent } from "@21n/types/extension.type";
+import { resolveCurrentUserId } from "@21n/utils/account.utils";
 import {
   dispatchCustomEvent,
   isExtensionEnvironment,
   getEnvVal
-} from "$lib/client/utils/browser.utils";
-import { postDataToParent } from "$lib/client/utils/embed.utils";
+} from "@21n/utils/browser.utils";
+import { postDataToParent } from "@21n/utils/embed.utils";
 import {
   relayToContentScript,
   relayToSidePanel
-} from "$lib/client/utils/extension.utils";
+} from "@21n/utils/extension.utils";
 import {
   determineIfOffline,
   performApiCall
-} from "$lib/client/utils/network.utils";
-import { wait } from "$lib/client/utils/time.utils";
-import { interceptSurrealResponse } from "$lib/client/utils/utils";
-import { SyncMethod } from "$lib/shared/types/sync.type";
+} from "@21n/utils/network.utils";
+import { wait } from "@21n/utils/time.utils";
+import { interceptSurrealResponse } from "@21n/utils/utils";
+import { SyncMethod } from "@21n/shared-types/sync.type";
 import {
   generateRandomIdv2,
   generateSimpleRandomId
-} from "$lib/shared/utils/crypto.utils";
-import { reparse } from "$lib/shared/utils/json.utils";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { DataMapper } from "./dataMapper";
+} from "@21n/shared-utils/crypto.utils";
+import { reparse } from "@21n/shared-utils/json.utils";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+import { DataMapper } from "@21n/components/flux/dataMapper";
 import {
   FluxMethod,
   type IDataMapper,
   type IFluxMethod,
   type IResourceTableConfig,
   type LoaderCallback
-} from "./flux.type";
+} from "@21n/components/flux/flux.type";
 import {
   determineResourceType,
   isRecordId,
   removeDuplicatesFilter
-} from "./resourceStores/resource.utils";
+} from "@21n/components/flux/resourceStores/resource.utils";
 
 class Flux {
   static _instance: Flux | null = null;
   tables!: IResourceTableConfig[];
-  loaderCallback!: LoaderCallback;
+  loaderCallback: LoaderCallback | undefined;
   persistence!: IPersistence;
   dataMapper!: IDataMapper;
   private isLocalMode: boolean = false;
@@ -90,7 +90,7 @@ class Flux {
       userId?: string;
       appVersion?: string;
       tables: IResourceTableConfig[];
-      loaderCallback: LoaderCallback;
+      loaderCallback?: LoaderCallback;
     }
   ): Promise<number> {
     logger.log({ at: "flux.initialize", params });
@@ -98,7 +98,7 @@ class Flux {
     Flux._instance.isLocalMode = !params.userId;
     Flux._instance.persistence = persistence;
     Flux._instance.tables = params.tables;
-    Flux._instance.loaderCallback = params.loaderCallback;
+    Flux._instance.loaderCallback = params.loaderCallback ?? undefined;
     Flux._instance.initializeDataMapper();
     logger.log({ at: "flux.initialized", instance: Flux._instance });
     return Flux._instance.initializePersistence(params);
@@ -167,7 +167,7 @@ class Flux {
           )
             return;
           const storeId = record.id.toString().replace("kv:", "");
-          this.loaderCallback(storeId, record);
+          if (this.loaderCallback) this.loaderCallback(storeId, record);
         });
       }
       const inMemoryResources = this.tables
@@ -183,7 +183,7 @@ class Flux {
             id: resource,
             data
           });
-          this.loaderCallback(resource, data);
+          if (this.loaderCallback) this.loaderCallback(resource, data);
         }
       }
     } catch (e) {
@@ -194,7 +194,7 @@ class Flux {
   private async loadInMemoryResourceStore(resource: Resource) {
     logger.log({ at: "flux.loadInMemoryResourceStore", resource });
     const data = await this.persistence.selectMany(resource);
-    this.loaderCallback(resource, data);
+    if (this.loaderCallback) this.loaderCallback(resource, data);
   }
 
   /**
@@ -1630,7 +1630,10 @@ export async function initFlux(
     product: string;
     userId?: string;
     appVersion?: string;
-    loaderCallback: LoaderCallback;
+    /**
+     * Will not be present in extension environment
+     */
+    loaderCallback?: LoaderCallback;
   }
 ) {
   logger.log({ at: "initFlux", persistence, params });

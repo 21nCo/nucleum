@@ -1,6 +1,6 @@
-import { ModifierKey } from "$lib/client/types/keyboard.type";
-import { OperatingSystem } from "$lib/client/types/context.type";
-import { logger } from "$lib/client/components/debug/logger.client";
+import { ModifierKey } from "@21n/types/keyboard.type";
+import { OperatingSystem } from "@21n/types/context.type";
+import { logger } from "@21n/components/debug/logger.client";
 
 export function resolveShortcutText(params: {
   key: string;

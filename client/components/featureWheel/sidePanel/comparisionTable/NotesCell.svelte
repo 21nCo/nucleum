@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { bottomModal } from "$lib/client/components/bottomModal/bottomModal.store";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { bottomModal } from "@21n/components/bottomModal/bottomModal.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
   import type {
     IContemporary,
     IFwFeature
-  } from "$lib/client/types/featureWheel.type";
-  import { properCase } from "$lib/shared/utils/text.utils";
+  } from "@21n/types/featureWheel.type";
+  import { properCase } from "@21n/shared-utils/text.utils";
   export let notes: string | Record<string, string> | undefined = undefined;
   export let isShort: boolean = false;
   export let contemporary: IContemporary;

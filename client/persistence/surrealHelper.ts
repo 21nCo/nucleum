@@ -1,20 +1,20 @@
 import jwt_decode from "jwt-decode";
 import { Surreal } from "surrealdb";
-import type { MergeRecord, QueryParams } from "../types/persistance.type";
-import { resolveToken } from "$lib/client/utils/account.utils";
+import type { MergeRecord, QueryParams } from "@21n/types/persistance.type";
+import { resolveToken } from "@21n/utils/account.utils";
 import {
   performApiCall,
   performHttpNetworkOperation
-} from "$lib/client/utils/network.utils";
+} from "@21n/utils/network.utils";
 import {
   replaceParams,
   resolveMutationQuery
-} from "$lib/shared/utils/surreal.utils";
-import { PersistenceActionType } from "../types/data.type";
-import type { ISurrealDatabase } from "../types/db.type";
-import type { IResourceBase } from "../components/flux/resourceStores/resource.type";
-import { clientStorage } from "./persistence.utils";
-import { ClientStorageKey } from "./persistence.type";
+} from "@21n/shared-utils/surreal.utils";
+import { PersistenceActionType } from "@21n/types/data.type";
+import type { ISurrealDatabase } from "@21n/types/db.type";
+import type { IResourceBase } from "@21n/components/flux/resourceStores/resource.type";
+import { clientStorage } from "@21n/persistence/persistence.utils";
+import { ClientStorageKey } from "@21n/persistence/persistence.type";
 
 const isUseSurrealSDK = import.meta?.env?.VITE_IS_USE_SURREAL_SDK ?? true;
 

@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
-  import RollerPicker from "./RollerPicker.svelte";
-  import Zone from "./Zone.svelte";
+  import { onMount, onDestroy, tick } from "svelte";
+  import RollerPicker from "@21n/components/calendar/birdView/RollerPicker.svelte";
+  import Zone from "@21n/components/calendar/birdView/Zone.svelte";
   import {
     Modes,
     type ProgrammedHorizontalWheelEvent,
     type ProgrammedVerticalWheelEvent
-  } from "./Birdview.type";
+  } from "@21n/components/calendar/birdView/Birdview.type";
   import {
     currentMonthIndex,
     currentYear,
@@ -15,15 +15,15 @@
     monthNames,
     getFirstAlphabetPosition,
     currentDate
-  } from "./Birdview.utils";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import Day from "./Day.svelte";
-  import Month from "./Month.svelte";
-  import Year from "./Year.svelte";
-  import TodayButton from "./TodayButton.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { debouncer } from "$lib/client/utils/utils";
+  } from "@21n/components/calendar/birdView/Birdview.utils";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
+  import Day from "@21n/components/calendar/birdView/Day.svelte";
+  import Month from "@21n/components/calendar/birdView/Month.svelte";
+  import Year from "@21n/components/calendar/birdView/Year.svelte";
+  import TodayButton from "@21n/components/calendar/birdView/TodayButton.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { debouncer } from "@21n/utils/utils";
 
   let startX: number;
   let instaceId = new Date().getTime();
@@ -37,6 +37,7 @@
     e: WheelEvent | ProgrammedVerticalWheelEvent
   ) => {};
   let reverseScrollInAction: boolean = false;
+  let reverseScrollCheckInterval: ReturnType<typeof setInterval> | null = null;
   let isNotToday: boolean = false;
   let isMouseWheelMoveEnabled: boolean = false;
   let prevScrollLeft: number = 0;
@@ -274,9 +275,16 @@
     });
   function waitForReverseScrollInAction(): Promise<void> {
     return new Promise((resolve) => {
-      const checkReverseScroll = setInterval(() => {
+      if (reverseScrollCheckInterval) {
+        clearInterval(reverseScrollCheckInterval);
+      }
+
+      reverseScrollCheckInterval = setInterval(() => {
         if (!reverseScrollInAction) {
-          clearInterval(checkReverseScroll);
+          if (reverseScrollCheckInterval) {
+            clearInterval(reverseScrollCheckInterval);
+            reverseScrollCheckInterval = null;
+          }
           resolve();
         }
       }, 200);
@@ -656,10 +664,11 @@
     panelsContainer.addEventListener("touchmove", handleTouchMove, {
       passive: false
     });
-    panelsContainer.addEventListener("wheel", (e) => {
+    const wheelHandler = (e: WheelEvent) => {
       e.preventDefault();
       waitUntilDisenganged(e);
-    }, { passive: false });
+    };
+    panelsContainer.addEventListener("wheel", wheelHandler, { passive: false });
     panelsContainer.addEventListener(
       "mousedown",
       handleMouseDownOnPanelsContainer
@@ -672,13 +681,20 @@
         "mousedown",
         handleMouseDownOnPanelsContainer
       );
-      panelsContainer.removeEventListener("wheel", (e) => {
-        e.preventDefault();
-        waitUntilDisenganged(e);
-      });
+      panelsContainer.removeEventListener(
+        "wheel",
+        wheelHandler as EventListener
+      );
       document.removeEventListener("mousedown", handleMouseDownOthers);
       document.removeEventListener("mousemove", handleMouseMove);
     };
+  });
+
+  onDestroy(() => {
+    if (reverseScrollCheckInterval) {
+      clearInterval(reverseScrollCheckInterval);
+      reverseScrollCheckInterval = null;
+    }
   });
 </script>
 

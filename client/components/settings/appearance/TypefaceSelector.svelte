@@ -1,12 +1,12 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { Orientation, Placement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { popover, TriggerMethod } from "$lib/client/actions/popover.action";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import TypefaceDropdown from "./TypefaceDropdown.svelte";
-  import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
+  import { Orientation, Placement } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { popover, TriggerMethod } from "@21n/actions/popover.action";
+  import { cn } from "@21n/utils/ui.utils";
+  import TypefaceDropdown from "@21n/components/settings/appearance/TypefaceDropdown.svelte";
+  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
 
   export let value: string;
   export let label: { label: string; orientation: Orientation };

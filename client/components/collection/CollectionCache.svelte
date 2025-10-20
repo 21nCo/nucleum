@@ -1,20 +1,20 @@
 <script lang="ts">
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { linker } from "$lib/client/products/memotron/linking/link.store";
-  import { LinkType } from "$lib/client/products/memotron/linking/link.type";
-  import { collectionStore } from "./collection.store";
-  import { cache } from "$lib/client/layout/layers/cache/cache.store";
-  import { logger } from "../debug/logger.client";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { linker } from "@21n/products/memotron/linking/link.store";
+  import { LinkType } from "@21n/products/memotron/linking/link.type";
+  import { collectionStore } from "@21n/components/collection/collection.store";
+  import { cache } from "@21n/layout/layers/cache/cache.store";
+  import { logger } from "@21n/components/debug/logger.client";
   import { onMount } from "svelte";
-  import { Resource } from "../flux/resourceStores/resource.enum";
-  import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { CacheKey } from "@21n/layout/layers/cache/cache.type";
   import {
     CollectionObjectKey,
     CollectionType,
     type ICollection
-  } from "./collection.type";
-  import ResourceCache from "../record/ResourceCache.svelte";
-  import { resourceCacheKey } from "../flux/resourceStores/resource.utils";
+  } from "@21n/components/collection/collection.type";
+  import ResourceCache from "@21n/components/record/ResourceCache.svelte";
+  import { resourceCacheKey } from "@21n/components/flux/resourceStores/resource.utils";
 
   onMount(async () => {
     await refresh();

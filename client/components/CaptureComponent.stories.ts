@@ -1,4 +1,4 @@
-import CaptureComponent from "./CaptureComponent.svelte";
+import CaptureComponent from "@21n/components/CaptureComponent.svelte";
 
 export default {
   component: CaptureComponent,

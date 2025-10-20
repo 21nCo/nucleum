@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { appStore } from "$lib/client/stores/app.store";
+  import { appStore } from "@21n/stores/app.store";
 
   export let href: string;
   export let label: string;

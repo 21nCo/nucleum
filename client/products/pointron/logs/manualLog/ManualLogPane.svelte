@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import ManualLogItem from "./ManualLogItem.svelte";
-  import { postMessageToParent } from "$lib/client/utils/embed.utils";
-  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { manualLogStore } from "../log.store";
+  import ManualLogItem from "@21n/products/pointron/logs/manualLog/ManualLogItem.svelte";
+  import { postMessageToParent } from "@21n/utils/embed.utils";
+  import { EmbedMessage } from "@21n/types/embedMessage.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { manualLogStore } from "@21n/products/pointron/logs/log.store";
 
   onMount(() => {
     postMessageToParent(EmbedMessage.SHEET_MOUNTED);

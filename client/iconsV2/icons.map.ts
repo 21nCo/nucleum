@@ -36,6 +36,11 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "x",
     solar: "close"
   },
+  "cross-circled": {
+    phosphor: "x-circle",
+    lucide: "x",
+    solar: "close"
+  },
   check: {
     phosphor: "check",
     lucide: "check",

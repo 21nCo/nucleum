@@ -3,31 +3,31 @@
   import {
     BarStyle,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
+  } from "@21n/types/switcher.enum";
   import { onMount } from "svelte";
-  import QuickStart from "./quickstart/QuickStart.svelte";
-  import Advanced from "./advanced/Advanced.svelte";
-  import view from "$lib/client/stores/view.store";
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import Zen from "./zen/Zen.svelte";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import Panel from "$lib/client/layout/paint/Panel.svelte";
-  import FloatingButton from "$lib/client/elements/button/FloatingButton.svelte";
-  import AdvancedPortrait from "./advanced/AdvancedPortrait.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
+  import QuickStart from "@21n/products/pointron/focus/quickstart/QuickStart.svelte";
+  import Advanced from "@21n/products/pointron/focus/advanced/Advanced.svelte";
+  import view from "@21n/stores/view.store";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import Zen from "@21n/products/pointron/focus/zen/Zen.svelte";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import Panel from "@21n/layout/paint/Panel.svelte";
+  import FloatingButton from "@21n/elements/button/FloatingButton.svelte";
+  import AdvancedPortrait from "@21n/products/pointron/focus/advanced/AdvancedPortrait.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
   import {
     ButtonStyle,
     ButtonVariant,
     type IButtonParams
-  } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { appStore } from "$lib/client/stores/app.store";
-  import QuickStartLayoutToggle from "./quickstart/actions/QuickStartLayoutToggle.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import ComponentShortcutListener from "$lib/client/components/shortcuts/ComponentShortcutListener.svelte";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import { appStore } from "@21n/stores/app.store";
+  import QuickStartLayoutToggle from "@21n/products/pointron/focus/quickstart/actions/QuickStartLayoutToggle.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import ComponentShortcutListener from "@21n/components/shortcuts/ComponentShortcutListener.svelte";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
   export let accessMode: ResourceAccessMode = ResourceAccessMode.INLINE;
   let mode: number = 0;
   let isInlineEnabled: boolean = true;

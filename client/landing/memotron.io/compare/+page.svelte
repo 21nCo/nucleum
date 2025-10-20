@@ -3,8 +3,8 @@
     features,
     categories,
     contemporaries
-  } from "$lib/client/landing/memotron.io/compare/memotronWheel";
-  import FeatureWheelComparer from "../../shared/FeatureWheelComparer.svelte";
+  } from "@21n/landing/memotron.io/compare/memotronWheel";
+  import FeatureWheelComparer from "@21n/landing/shared/FeatureWheelComparer.svelte";
 </script>
 
 <FeatureWheelComparer

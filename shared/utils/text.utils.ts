@@ -1,10 +1,10 @@
-import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import type { EmailParts } from "$lib/client/types/account.type";
-import type { IMarkdown } from "$lib/client/components/markdown/md.type";
+import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import type { EmailParts } from "@21n/types/account.type";
+import type { IMarkdown } from "@21n/components/markdown/md.type";
 
-import { isValidArrayWithData } from "./obj.utils";
-import { Display } from "../../client/types/view.type";
-import { Size } from "../../client/types/size.enum";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+import { Display } from "@21n/types/view.type";
+import { Size } from "@21n/types/size.enum";
 
 export function properCase(str: string) {
   if (!str) return str;

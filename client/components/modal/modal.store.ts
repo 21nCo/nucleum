@@ -1,11 +1,11 @@
-import type { IPlayer, ModalEvent } from "$lib/client/types/popup.type";
+import type { IPlayer, ModalEvent } from "@21n/types/popup.type";
 import { writable } from "svelte/store";
-import { logger } from "../debug/logger.client";
-import { ObservableStore } from "$lib/client/stores/client.store";
-import { appStore } from "$lib/client/stores/app.store";
-import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
-import { appEvents } from "$lib/client/stores/notification.store";
-import { GlobalEvent } from "$lib/client/types/event.enum";
+import { logger } from "@21n/components/debug/logger.client";
+import { ObservableStore } from "@21n/stores/client.store";
+import { appStore } from "@21n/stores/app.store";
+import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+import { appEvents } from "@21n/stores/notification.store";
+import { GlobalEvent } from "@21n/types/event.enum";
 
 const defaultModal = {
   path: "",

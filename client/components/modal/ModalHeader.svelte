@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { cn } from "@21n/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let title: string;

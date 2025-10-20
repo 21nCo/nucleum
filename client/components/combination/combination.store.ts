@@ -1,10 +1,10 @@
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
   ActiveResourceStore,
   ResourceStore
-} from "$lib/client/components/flux/resourceStores/resource.store";
-import type { IRecordId } from "$lib/client/types/data.type";
-import type { IActiveCombination, ICombination } from "./combination.type";
+} from "@21n/components/flux/resourceStores/resource.store";
+import type { IRecordId } from "@21n/types/data.type";
+import type { IActiveCombination, ICombination } from "@21n/components/combination/combination.type";
 
 class CombinationStore extends ResourceStore<ICombination, ICombination> {
   constructor() {

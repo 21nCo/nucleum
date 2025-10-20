@@ -1,14 +1,14 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import Divider from "../../Divider.svelte";
-  import Icon from "../../Icon.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
   import dayjs from "dayjs";
   import "dayjs/locale/en";
-  import { Size } from "../../../types/size.enum";
-  import { TimeScale } from "../../../types/time.type";
-  import Button from "../../button/Button.svelte";
-  import { abg, bg, cn } from "$lib/client/utils/ui.utils";
-  import { isSameDay } from "$lib/client/utils/time.utils";
+  import { Size } from "@21n/types/size.enum";
+  import { TimeScale } from "@21n/types/time.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { abg, bg, cn } from "@21n/utils/ui.utils";
+  import { isSameDay } from "@21n/utils/time.utils";
   const dispatch = createEventDispatcher();
   // let decadeMode  = false; // true: show decade
   export let scale: TimeScale.DAYS | TimeScale.MONTHS | TimeScale.YEARS =
@@ -728,7 +728,7 @@
             {#if startSelected}
               {startString}<button
                 ><Icon
-                  icon="cross-circled"
+                  icon="ph:x-circle-light"
                   size={Size.xs}
                   class="stroke-ars1"
                   on:click={() => reset(true, false)}
@@ -751,7 +751,7 @@
             {#if endSelected}
               {endString}<button
                 ><Icon
-                  icon="cross-circled"
+                  icon="ph:x-circle-light"
                   size={Size.xs}
                   class="stroke-ars1"
                   on:click={() => reset(false, true)}

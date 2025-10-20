@@ -1,12 +1,12 @@
 <script>
-  import { backgroundSoundStore } from "$lib/client/products/pointron/pointron.store";
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import SystemSounds from "./SystemSounds.svelte";
+  import { backgroundSoundStore } from "@21n/products/pointron/pointron.store";
+  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import SystemSounds from "@21n/products/pointron/focus/backgroundMusic/SystemSounds.svelte";
   let youtubeUrl = $backgroundSoundStore.youtubeUrl;
 </script>
 

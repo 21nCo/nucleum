@@ -1,7 +1,7 @@
 <script lang="ts">
-  import TextCard from "./card/TextCard.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import TextCard from "@21n/components/featureWheel/sidePanel/card/TextCard.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
 </script>
 
 <div class="flex flex-col gap-6 dp:gap-8 2k:gap-10">

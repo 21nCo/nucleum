@@ -1,13 +1,13 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
+  import { Size } from "@21n/types/size.enum";
+  import { bg, cn } from "@21n/utils/ui.utils";
   import type {
     ISelectItem,
     ISelectValue
-  } from "$lib/client/types/select.type";
-  import TrainPanelSwitcherItem from "./TrainPanelSwitcherItem.svelte";
-  import { PanelSwitcherActiveItemStrength } from "$lib/client/types/switcher.enum";
+  } from "@21n/types/select.type";
+  import TrainPanelSwitcherItem from "@21n/elements/switcher/train/TrainPanelSwitcherItem.svelte";
+  import { PanelSwitcherActiveItemStrength } from "@21n/types/switcher.enum";
   const dispatch = createEventDispatcher();
   export let items: ISelectItem[];
   export let value: ISelectValue | undefined = undefined;

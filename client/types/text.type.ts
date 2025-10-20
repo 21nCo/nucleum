@@ -1,4 +1,4 @@
-import type { Size } from "./size.enum";
+import type { Size } from "@21n/types/size.enum";
 
 /**
  * @deprecated - use InputLabel instead

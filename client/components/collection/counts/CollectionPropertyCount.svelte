@@ -1,7 +1,7 @@
 <script lang="ts">
-  import CountBadge from "./CountBadge.svelte";
-  import { CollectionType } from "$lib/client/components/collection/collection.type";
-  import type { ICollectionThumb } from "../collection.type";
+  import CountBadge from "@21n/components/collection/counts/CountBadge.svelte";
+  import { CollectionType } from "@21n/components/collection/collection.type";
+  import type { ICollectionThumb } from "@21n/components/collection/collection.type";
   export let item: ICollectionThumb;
   export let isShowLabel: boolean = true;
 </script>

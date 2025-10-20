@@ -1,5 +1,5 @@
 <script>
-  import RefundPolicy from "../../shared/RefundPolicy.svelte";
+  import RefundPolicy from "@21n/landing/shared/RefundPolicy.svelte";
 </script>
 
 <div

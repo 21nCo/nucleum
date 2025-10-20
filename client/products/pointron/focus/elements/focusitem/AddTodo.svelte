@@ -1,14 +1,14 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
-  import { SearchStore } from "$lib/client/components/record/record.store";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import { ErrorMessage } from "$lib/client/components/error/error.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Placement } from "@21n/types/direction.enum";
+  import { InputStyle } from "@21n/types/input.type";
+  import { Size } from "@21n/types/size.enum";
+  import type { IRecordId } from "@21n/types/data.type";
+  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { toasts } from "@21n/stores/notification.store";
+  import { ErrorMessage } from "@21n/components/error/error.type";
   import { createEventDispatcher } from "svelte";
 
   export let goalId: IRecordId;

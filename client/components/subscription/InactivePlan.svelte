@@ -1,17 +1,18 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import PlanExpired from "$lib/client/illustrations/PlanExpired.svelte";
-  import account from "$lib/client/stores/account.store";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
-  import { properCase } from "$lib/shared/utils/text.utils";
-  import modalEvent from "../modal/modal.store";
-  import RestorePurchaseAction from "./RestorePurchaseAction.svelte";
-  import { PlanType } from "./userPlan.type";
+  import view from "@21n/stores/view.store";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import PlanExpired from "@21n/illustrations/PlanExpired.svelte";
+  import account from "@21n/stores/account.store";
+  import { appStore } from "@21n/stores/app.store";
+  import { Action } from "@21n/types/action.enum";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import { parseAndFormatDate } from "@21n/utils/time.utils";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import modalEvent from "@21n/components/modal/modal.store";
+  import RestorePurchaseAction from "@21n/components/subscription/RestorePurchaseAction.svelte";
+  import { PlanType } from "@21n/components/subscription/userPlan.type";
 
   $: trialExpiry =
     $account.plan?.plan === PlanType.TRIAL && $account.plan?.trialPlan?.expiry
@@ -100,16 +101,18 @@
       </div>
     {/if}
     <div class="flex justify-center gap-8">
-      <RestorePurchaseAction />
+      {#if !$view.isConstrainedWidth}
+        <RestorePurchaseAction />
+      {/if}
       <Button
-      label="Chat with us"
-      icon="chat-three"
-      size={Size.sm}
-      style={ButtonStyle.PLAIN}
-      on:click={async () => {
+        label="Chat with us"
+        icon="chat-three"
+        size={Size.sm}
+        style={ButtonStyle.PLAIN}
+        on:click={async () => {
           appStore.runAction("chat");
-      }}
-    />
+        }}
+      />
       <Button
         label="Logout"
         icon="log-out"

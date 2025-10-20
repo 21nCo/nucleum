@@ -1,5 +1,5 @@
-import type { ISelectItem } from "./select.type";
-import type { FormLabelInfoTooltip } from "./text.type";
+import type { ISelectItem } from "@21n/types/select.type";
+import type { FormLabelInfoTooltip } from "@21n/types/text.type";
 
 export type DropdownItem = ISelectItem & {
   groupId?: string;

@@ -1,22 +1,22 @@
 <script lang="ts">
-  import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
+  import { InputStyle, type InputLabel } from "@21n/types/input.type";
   import { createEventDispatcher } from "svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import SelectPropertyOption from "./SelectPropertyOption.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import SelectPropertyOption from "@21n/components/collection/properties/selectProperty/SelectPropertyOption.svelte";
   import {
     iconSelectPropertyTypes,
     PropertyType,
     type IPropertyConfigOption,
     type ISelectProperty,
     type IUniversalProperty
-  } from "../property.type";
-  import { popover } from "$lib/client/actions/popover.action";
-  import SelectPropertyOptionsPopover from "./SelectPropertyOptionsPopover.svelte";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import FormElement from "$lib/client/elements/FormElement.svelte";
-  import IconSelect from "./IconSelect.svelte";
+  } from "@21n/components/collection/properties/property.type";
+  import { popover } from "@21n/actions/popover.action";
+  import SelectPropertyOptionsPopover from "@21n/components/collection/properties/selectProperty/SelectPropertyOptionsPopover.svelte";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import type { IRecordId } from "@21n/types/data.type";
+  import FormElement from "@21n/elements/FormElement.svelte";
+  import IconSelect from "@21n/components/collection/properties/selectProperty/IconSelect.svelte";
   const dispatch = createEventDispatcher();
   export let property: ISelectProperty | IUniversalProperty;
   export let options: IPropertyConfigOption[];

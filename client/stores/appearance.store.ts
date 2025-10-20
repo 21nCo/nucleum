@@ -1,20 +1,20 @@
 import { get, writable } from "svelte/store";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
   AppSkin,
   Theme,
   type AppearanceStore,
   type ColorScheme
-} from "../types/appearance.type";
-import colorSchemes from "$lib/client/theme/colorschemes.json";
-import { StoreDataType } from "../types/data.type";
-import { dispatchCustomEvent } from "../utils/browser.utils";
+} from "@21n/types/appearance.type";
+import colorSchemes from "@21n/theme/colorschemes.json";
+import { StoreDataType } from "@21n/types/data.type";
+import { dispatchCustomEvent } from "@21n/utils/browser.utils";
 import {
   persistLocally,
   retrieveLocally
-} from "$lib/client/persistence/persistence.utils";
-import type { UserAppearanceSettings } from "../types/preferences.type";
-import { GlobalEvent } from "../types/event.enum";
+} from "@21n/persistence/persistence.utils";
+import type { UserAppearanceSettings } from "@21n/types/preferences.type";
+import { GlobalEvent } from "@21n/types/event.enum";
 
 const defaultLightColorSchemeId = "colorscheme:clean_tidyblue_light";
 // const defaultDarkColorSchemeId = "colorscheme:clean_tidyblue_dark";

@@ -1,13 +1,13 @@
 import type {
   SessionComposition,
   SessionCompositionType
-} from "$lib/client/types/pointron/sessionComposition.type";
-import type { TimerMode } from "$lib/client/types/pointron/timerMode.enum";
-import type { HorizonChart } from "$lib/client/types/analytics.type";
-import type { Cloud } from "$lib/client/types/cloud.enum";
-import type { Layout } from "$lib/client/types/layout.type";
-import type { TimeScale } from "$lib/client/types/time.type";
-import type { AnalyticsFilters } from "./analytics.type";
+} from "@21n/types/pointron/sessionComposition.type";
+import type { TimerMode } from "@21n/types/pointron/timerMode.enum";
+import type { HorizonChart } from "@21n/types/analytics.type";
+import type { Cloud } from "@21n/types/cloud.enum";
+import type { Layout } from "@21n/types/layout.type";
+import type { TimeScale } from "@21n/types/time.type";
+import type { AnalyticsFilters } from "@21n/types/pointron/analytics.type";
 
 export interface IPointronPreferences {
   isEnableAgeCounter: boolean;

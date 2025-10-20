@@ -1,21 +1,21 @@
 <script lang="ts">
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { sessionLogStore } from "$lib/client/products/pointron/logs/log.store";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { sessionLogStore } from "@21n/products/pointron/logs/log.store";
   import type {
     ISessionLogThumb,
     ISessionThumb
-  } from "$lib/client/products/pointron/logs/log.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  } from "@21n/products/pointron/logs/log.type";
+  import type { IRecordId } from "@21n/types/data.type";
   import {
     isValidArray,
     isValidArrayWithData
-  } from "$lib/shared/utils/obj.utils";
+  } from "@21n/shared-utils/obj.utils";
   import { onMount } from "svelte";
-  import { goalStore } from "../goal.store";
-  import { sessionStore } from "$lib/client/products/pointron/focus/session.store";
-  import { isSameResource } from "../../flux/resourceStores/resource.utils";
-  import GoalFocusSessionThumbnail from "./GoalFocusSessionThumbnail.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { goalStore } from "@21n/components/goals/goal.store";
+  import { sessionStore } from "@21n/products/pointron/focus/session.store";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import GoalFocusSessionThumbnail from "@21n/components/goals/history/GoalFocusSessionThumbnail.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   export let id: IRecordId;
   export let isIncludeSubGoals = false;
   let sessions: ISessionThumb[] = [];

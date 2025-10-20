@@ -1,9 +1,9 @@
 <script lang="ts">
-  import appearance from "$lib/client/stores/appearance.store";
-  import view from "$lib/client/stores/view.store";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { properCase } from "$lib/shared/utils/text.utils";
-  import MarkdownRenderer from "$lib/client/landing/shared/elements/MarkdownRenderer.svelte";
+  import appearance from "@21n/stores/appearance.store";
+  import view from "@21n/stores/view.store";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import MarkdownRenderer from "@21n/landing/shared/elements/MarkdownRenderer.svelte";
   import { onMount } from "svelte";
   export let content: string;
   export let style: TextStyle;

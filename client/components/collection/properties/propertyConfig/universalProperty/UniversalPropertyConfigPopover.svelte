@@ -1,10 +1,10 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import type { IUniversalPropertyConfig } from "$lib/client/components/collection/properties/property.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { universalPropertyOptions } from "../../property.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import type { IUniversalPropertyConfig } from "@21n/components/collection/properties/property.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { universalPropertyOptions } from "@21n/components/collection/properties/property.store";
   export let config: IUniversalPropertyConfig;
   export let onChange: (e: Partial<IUniversalPropertyConfig>) => void;
 </script>

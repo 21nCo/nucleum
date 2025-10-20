@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import BreadcrumbItem from "./BreadcrumbItem.svelte";
-  import type { IBreadcrumbItem } from "./breadcrumbItem.type";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { appStore } from "@21n/stores/app.store";
+  import type { IRecordId } from "@21n/types/data.type";
+  import BreadcrumbItem from "@21n/elements/breadcrumbsV2/BreadcrumbItem.svelte";
+  import type { IBreadcrumbItem } from "@21n/elements/breadcrumbsV2/breadcrumbItem.type";
   export let items: IBreadcrumbItem[];
   export let replaceId: IRecordId;
 </script>

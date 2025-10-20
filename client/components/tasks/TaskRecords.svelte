@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { Arrangement } from "$lib/client/types/direction.enum";
-  import { ResourceAccessPoint } from "../flux/resourceStores/resource.type";
-  import { TaskSubTypeForSwitcher, type ITaskThumb } from "./task.type";
-  import TaskThumbnail from "./TaskThumbnail.svelte";
-  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
-  import { Size } from "$lib/client/types/size.enum";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import type { SubType } from "../library/library.type";
+  import { Arrangement } from "@21n/types/direction.enum";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { TaskSubTypeForSwitcher, type ITaskThumb } from "@21n/components/tasks/task.type";
+  import TaskThumbnail from "@21n/components/tasks/TaskThumbnail.svelte";
+  import { parseAndFormatDate } from "@21n/utils/time.utils";
+  import { Size } from "@21n/types/size.enum";
+  import type { IRecordId } from "@21n/types/data.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import type { SubType } from "@21n/components/library/library.type";
   export let data: ITaskThumb[];
   export let arrangement: Arrangement = Arrangement.LIST;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.LIBRARY;
