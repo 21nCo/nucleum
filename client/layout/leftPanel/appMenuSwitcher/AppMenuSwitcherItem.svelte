@@ -10,14 +10,8 @@
   import { Placement } from "@21n/types/direction.enum";
   import { abg, cn } from "@21n/utils/ui.utils";
   import { EmbedMessage } from "@21n/types/embedMessage.enum";
-  import {
-    uiState,
-    uiStateDerived
-  } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { uiState, uiStateDerived } from "@21n/stores/uiState/uiState.store";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { keyboardShortcuts } from "@21n/components/shortcuts/shortcuts.store";
   import { popover } from "@21n/actions/popover.action";
   import { hoverable } from "@21n/actions/hover.action";
@@ -181,6 +175,7 @@
         : {}
     };
   }
+  $: console.log({ isActive, layoutContext, isOutlineStyle });
 </script>
 
 <div class="w-full" use:popover={resolveTooltipPopover(layoutContext)}>
@@ -190,7 +185,7 @@
       "appmenuitem flex items-center cursor-pointer w-full",
       (layoutContext === LayoutContext.DEFAULT ||
         layoutContext === LayoutContext.MINIMIZED) && {
-        "bg-aps3 border-aps2 border text-aps1 hover:bg-aps2 hover:bg-opacity-70":
+        "bg--aps3 active-menu-gradient border-aps2 border text-aps1 hover:bg-aps2 hover:bg-opacity-70":
           isActive && isOutlineStyle,
         "hover:bg-bgs3": !isActive,
         [abg()]: isActive && !isOutlineStyle,
@@ -204,11 +199,11 @@
         "justify-between": isShowHotKeyHint
       },
       layoutContext === LayoutContext.THIN_WITH_LABEL && {
-        "bg-aps3 border-y text-aps1 hover:bg-aps2 hover:bg-opacity-70":
+        "bg-aps3 active-menu-gradient border-y text-aps1 hover:bg-aps2 hover:bg-opacity-70":
           isActive && !isShowLabel,
         "border border-transparent hover:bg-bgs3 transition-all":
           !isActive && !isShowLabel,
-        "border-aps2":
+        "border-aps2 active-menu-gradient":
           isActive && (!dev_mixedPanel || !$appStore.currentComponent?.panel),
         "border-transparent":
           isActive && dev_mixedPanel && $appStore.currentComponent?.panel,
@@ -234,7 +229,7 @@
           layoutContext === LayoutContext.THIN_WITH_LABEL && isShowLabel,
         "border-transparent":
           layoutContext === LayoutContext.THIN_WITH_LABEL && !isActive,
-        "bg-bgs3 border-brs3":
+        "bg--bgs3 border-brs3":
           layoutContext === LayoutContext.THIN_WITH_LABEL &&
           isActive &&
           isShowLabel
@@ -328,3 +323,15 @@
     {/if}
   </button>
 </div>
+
+<style>
+  .active-menu-gradient {
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(var(--colors-aps2), 0.8),
+      rgba(var(--colors-aps2), 0.8) 0.1px,
+      transparent 0.2px,
+      transparent 0.1px
+    );
+  }
+</style>
