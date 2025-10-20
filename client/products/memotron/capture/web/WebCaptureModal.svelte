@@ -146,12 +146,11 @@
       });
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
-        if (activeRequestKey === requestKey) {
-          updateState(category, {
-            status: "idle",
-            query
-          });
-        }
+        updateState(category, {
+          status: "idle",
+          loading: false,
+          query
+        });
         return;
       }
 
@@ -261,9 +260,11 @@
 
   function initials(title: string) {
     if (!title) return "";
-    const parts = title.trim().split(/\s+/).slice(0, 2);
+    const trimmedTitle = title.trim();
+    if (!trimmedTitle) return "";
+    const parts = trimmedTitle.split(/\s+/).slice(0, 2);
     const value = parts.map((part) => part.charAt(0)).join("");
-    return value ? value.toUpperCase() : title.charAt(0).toUpperCase();
+    return value ? value.toUpperCase() : trimmedTitle.charAt(0).toUpperCase();
   }
 
   function resolveMeta(item: WebArtifact): string | undefined {
@@ -315,7 +316,12 @@
 {#if open}
   <div class="fixed inset-0 z-[120] flex items-center justify-center" transition:fade>
     <div class="absolute inset-0 bg-bgs1/80 backdrop-blur-xl" on:click={close} />
-    <div class="relative z-[121] flex h-full w-full max-w-6xl items-stretch justify-center p-6 mo:p-0">
+    <div
+      class="relative z-[121] flex h-full w-full max-w-6xl items-stretch justify-center p-6 mo:p-0"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="web-capture-title"
+    >
       <div class="flex h-full max-h-[90vh] w-full flex-col overflow-hidden rounded-[2rem] bg-bgs1 shadow-xl mo:h-full mo:max-h-full mo:rounded-none">
         <header class="grid grid-cols-[auto,1fr,auto] items-center gap-4 border-b border-brs3 px-6 py-4 mo:px-4">
           <button
@@ -325,7 +331,7 @@
             <Icon icon="arrow-left" size={Size.sm} />
             <span>Back</span>
           </button>
-          <h2 class="text-center text-b1 font-semibold text-fgs1 dp:text-h5">Add from Web</h2>
+          <h2 id="web-capture-title" class="text-center text-b1 font-semibold text-fgs1 dp:text-h5">Add from Web</h2>
           <div class="flex justify-end">
             <button
               class="flex h-10 w-10 items-center justify-center rounded-full border border-brs3 text-fgs3 transition hover:border-aps1 hover:text-aps1"
@@ -349,9 +355,10 @@
               <Icon icon="search" size={Size.sm} class="text-fgs3" />
               <input
                 class="flex-1 bg-transparent text-b2 text-fgs1 placeholder:text-fgs4 focus:outline-none"
-                type="text"
+                type="search"
                 placeholder={searchPlaceholder}
                 bind:value={searchTerm}
+                aria-label="Search web artifacts"
                 autocapitalize="none"
                 autocomplete="off"
                 spellcheck={false}
@@ -367,7 +374,7 @@
                 </button>
               {/if}
             </div>
-            <div class="flex items-center gap-2 overflow-x-auto pb-1">
+            <div class="flex items-center gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Artifact categories">
               {#each tabs as tab}
                 <button
                   class={cn(
@@ -377,6 +384,9 @@
                       "bg-bgs2 text-fgs3 hover:bg-bgs3": tab.id !== activeTab
                     }
                   )}
+                  role="tab"
+                  aria-selected={tab.id === activeTab}
+                  tabindex={tab.id === activeTab ? 0 : -1}
                   on:click={() => selectTab(tab.id)}
                 >
                   <Icon icon={tab.icon} size={Size.sm} isAccentBgContext={tab.id === activeTab} />
@@ -457,8 +467,8 @@
                 {#if item}
                   <div class="flex flex-col gap-4 rounded-2xl border border-brs3 bg-bgs2/60 p-4 transition hover:border-aps1 dp:flex-row dp:items-center dp:gap-6">
                     <div class="h-40 w-full overflow-hidden rounded-2xl bg-bgs3 dp:h-20 dp:w-20 dp:rounded-xl">
-                      {#if item.thumbnailUrl}
-                        <img src={item.thumbnailUrl} alt={item.title} class="h-full w-full object-cover" loading="lazy" />
+                      {#if item.thumbnailUrl && item.thumbnailUrl.startsWith("https://")}
+                        <img src={item.thumbnailUrl} alt={item.title} class="h-full w-full object-cover" loading="lazy" referrerpolicy="no-referrer" />
                       {:else}
                         <div class="flex h-full w-full items-center justify-center text-b3 text-fgs3 uppercase">
                           {initials(item.title)}

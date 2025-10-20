@@ -63,7 +63,6 @@ export async function searchVideos(
     const ids = (searchData.items ?? []).map((item) => item.id.videoId).filter(Boolean);
 
     let durations: Record<string, number | undefined> = {};
-    let thumbnails: Record<string, string | undefined> = {};
 
     if (ids.length > 0) {
       const detailsUrl = new URL(`${YOUTUBE_API_BASE}/videos`);

@@ -12,7 +12,7 @@ export async function searchPodcasts(
     return createEmptyResult(params);
   }
 
-  const limit = clampLimit(params.limit, 20, 10);
+  const limit = clampLimit(params.limit, 10, 10);
   const page = Math.max(1, params.page ?? 1);
   const offset = (page - 1) * limit;
 

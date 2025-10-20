@@ -124,7 +124,15 @@
   ) {
     const artifact = event.detail?.item;
     if (!artifact) return;
-    // TODO: integrate artifact data into capture content or node creation flow.
+    
+    // TODO: CRITICAL - Complete web artifact integration
+    // The artifact data needs to be added to the capture store.
+    // Options:
+    // 1. Add artifact metadata as markdown content: captureStore.appendContent(`[${artifact.title}](${artifact.externalUrl})`)
+    // 2. Create a node with artifact data: captureStore.createNodeFromArtifact(artifact)
+    // 3. Add as structured capture data: captureStore.addArtifact(artifact)
+    // Currently, clicking Add only closes the modal without saving anything.
+    
     isWebModalOpen = false;
   }
 
@@ -137,10 +145,15 @@
       artifact.externalUrl ??
       artifact.providers?.find((provider) => provider.url)?.url;
     if (url && typeof window !== "undefined") {
-      if (url.startsWith("https://")) {
-        window.open(url, "_blank", "noopener");
-      } else {
-        console.warn("Blocked non-HTTPS URL:", url);
+      try {
+        const parsedUrl = new URL(url);
+        if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+          console.warn("Blocked non-HTTP(S) URL:", url);
+          return;
+        }
+        window.open(url, "_blank", "noopener,noreferrer");
+      } catch (error) {
+        console.error("Invalid URL:", url, error);
       }
     }
   }
