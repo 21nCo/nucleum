@@ -51,9 +51,14 @@ export class DatabaseProviderFactory {
   static getProviderType(): DatabaseProvider {
     const providerType =
       process.env.DB_PROVIDER?.toLowerCase() as DatabaseProvider;
-    return providerType === DatabaseProvider.DYNAMODB
-      ? DatabaseProvider.DYNAMODB
-      : DatabaseProvider.SURREAL;
+    
+    if (providerType === DatabaseProvider.DYNAMODB) {
+      return DatabaseProvider.DYNAMODB;
+    }
+    if (providerType === DatabaseProvider.TURSO) {
+      return DatabaseProvider.TURSO;
+    }
+    return DatabaseProvider.SURREAL;
   }
 }
 

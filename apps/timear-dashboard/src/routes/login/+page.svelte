@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { API_BASE_URL } from '$lib/api';
+  
   const handleLogin = () => {
-    window.location.href = 'http://localhost:3000/oauth/linear';
+    window.location.href = `${API_BASE_URL}/oauth/linear`;
   };
 </script>
 

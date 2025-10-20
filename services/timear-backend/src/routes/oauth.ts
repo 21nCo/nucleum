@@ -141,13 +141,6 @@ oauth.get('/callback', async (c) => {
       maxAge: tokenData.expires_in,
     });
 
-    setCookie(c, 'workspace_id', workspaceId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'Lax',
-      maxAge: tokenData.expires_in,
-    });
-
     const dashboardUrl = process.env.DASHBOARD_URL || 'http://localhost:5173';
     return c.redirect(`${dashboardUrl}/auth/success`);
   } catch (error) {
@@ -162,9 +155,8 @@ oauth.get('/callback', async (c) => {
  */
 oauth.get('/session', async (c) => {
   const token = getCookie(c, 'linear_token');
-  const workspaceId = getCookie(c, 'workspace_id');
 
-  if (!token || !workspaceId) {
+  if (!token) {
     return c.json({ authenticated: false }, 401);
   }
 
@@ -183,6 +175,10 @@ oauth.get('/session', async (c) => {
               name
               email
               avatarUrl
+              organization {
+                id
+                name
+              }
             }
           }
         `,
@@ -199,7 +195,7 @@ oauth.get('/session', async (c) => {
     return c.json({
       authenticated: true,
       user: viewer,
-      workspaceId,
+      workspaceId: viewer.organization.id,
     });
   } catch (error) {
     console.error('Session check error:', error);
@@ -213,7 +209,6 @@ oauth.get('/session', async (c) => {
  */
 oauth.post('/logout', (c) => {
   setCookie(c, 'linear_token', '', { maxAge: 0 });
-  setCookie(c, 'workspace_id', '', { maxAge: 0 });
   setCookie(c, 'oauth_state', '', { maxAge: 0 });
 
   return c.json({ success: true });

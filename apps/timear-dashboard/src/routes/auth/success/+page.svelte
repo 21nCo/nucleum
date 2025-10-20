@@ -1,11 +1,19 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { goto } from '$app/navigation';
 
+  let timeoutId: ReturnType<typeof setTimeout>;
+
   onMount(() => {
-    setTimeout(() => {
+    timeoutId = setTimeout(() => {
       goto('/dashboard');
     }, 1000);
+  });
+
+  onDestroy(() => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
   });
 </script>
 

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { apiRequest } from '$lib/api';
 
   interface User {
     id: string;
@@ -30,9 +31,7 @@
 
   async function checkAuth() {
     try {
-      const response = await fetch('http://localhost:3000/oauth/session', {
-        credentials: 'include',
-      });
+      const response = await apiRequest('/oauth/session');
 
       const data = await response.json();
 
@@ -63,27 +62,22 @@
   }
 
   async function loadTimeEntries() {
-    const response = await fetch('http://localhost:3000/api/time-entries', {
-      credentials: 'include',
-    });
+    const response = await apiRequest('/api/time-entries');
 
     const data = await response.json();
     timeEntries = data.entries || [];
   }
 
   async function loadActiveTimer() {
-    const response = await fetch('http://localhost:3000/api/timer/active', {
-      credentials: 'include',
-    });
+    const response = await apiRequest('/api/timer/active');
 
     const data = await response.json();
     activeTimer = data.timer;
   }
 
   async function logout() {
-    await fetch('http://localhost:3000/oauth/logout', {
+    await apiRequest('/oauth/logout', {
       method: 'POST',
-      credentials: 'include',
     });
 
     goto('/login');

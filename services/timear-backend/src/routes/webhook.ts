@@ -32,7 +32,14 @@ function verifyWebhookSignature(
   signature: string,
   secret: string
 ): boolean {
-  return true;
+  const crypto = require('crypto');
+  const hmac = crypto.createHmac('sha256', secret);
+  hmac.update(payload);
+  const expectedSignature = hmac.digest('hex');
+  return crypto.timingSafeEqual(
+    Buffer.from(signature),
+    Buffer.from(expectedSignature)
+  );
 }
 
 /**

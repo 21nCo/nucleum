@@ -51,7 +51,10 @@
   function startElapsedTimer() {
     intervalId = window.setInterval(() => {
       if (timerState.active && timerState.startTime) {
-        timerState.elapsed = Date.now() - new Date(timerState.startTime).getTime();
+        timerState = {
+          ...timerState,
+          elapsed: Date.now() - new Date(timerState.startTime).getTime()
+        };
       }
     }, 1000);
   }

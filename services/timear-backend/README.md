@@ -83,7 +83,7 @@ The backend uses Turso (LibSQL) with per-workspace database isolation. Each work
 
 ## Deployment
 
-The Hono backend can be deployed to multiple platforms:
+The Hono backend is designed for Node.js server deployment:
 
 ### Vercel
 ```bash
@@ -91,14 +91,10 @@ npm install -g vercel
 vercel deploy
 ```
 
-### Cloudflare Workers
-```bash
-npm install -g wrangler
-wrangler deploy
-```
-
 ### Node.js Server
 ```bash
 npm run build
 npm start
 ```
+
+Note: This backend uses @hono/node-server and is not configured for Cloudflare Workers deployment.

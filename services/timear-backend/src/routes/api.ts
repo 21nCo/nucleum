@@ -5,20 +5,50 @@ import { DatabaseProviderFactory } from '../providers/database-factory';
 const api = new Hono();
 
 /**
- * Middleware to verify authentication
+ * Middleware to verify authentication and derive workspace from token
  */
 api.use('/*', async (c, next) => {
   const token = getCookie(c, 'linear_token');
-  const workspaceId = getCookie(c, 'workspace_id');
 
-  if (!token || !workspaceId) {
+  if (!token) {
     return c.json({ error: 'Unauthorized' }, 401);
   }
 
-  c.set('token', token);
-  c.set('workspaceId', workspaceId);
+  try {
+    const userResponse = await fetch('https://api.linear.app/graphql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        query: `
+          query {
+            viewer {
+              organization {
+                id
+              }
+            }
+          }
+        `,
+      }),
+    });
 
-  await next();
+    const userData = await userResponse.json();
+    const workspaceId = userData.data?.viewer?.organization?.id;
+
+    if (!workspaceId) {
+      return c.json({ error: 'Unauthorized' }, 401);
+    }
+
+    c.set('token', token);
+    c.set('workspaceId', workspaceId);
+
+    await next();
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
 });
 
 /**

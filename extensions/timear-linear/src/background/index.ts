@@ -1,6 +1,6 @@
 import type { TimeEntry, TimerState } from '../types';
 
-const BACKEND_URL = 'http://localhost:3000';
+const BACKEND_URL = process.env.PLASMO_PUBLIC_BACKEND_URL || 'http://localhost:3000';
 
 let timerState: TimerState = {
   active: false,

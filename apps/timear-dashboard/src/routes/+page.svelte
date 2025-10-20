@@ -1,15 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { apiRequest } from '$lib/api';
 
   let isLoading = true;
   let isAuthenticated = false;
 
   onMount(async () => {
     try {
-      const response = await fetch('http://localhost:3000/oauth/session', {
-        credentials: 'include',
-      });
+      const response = await apiRequest('/oauth/session');
 
       const data = await response.json();
       isAuthenticated = data.authenticated;
