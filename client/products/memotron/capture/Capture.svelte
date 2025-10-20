@@ -33,6 +33,8 @@
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { GlobalEvent } from "@21n/types/event.enum";
   import CaptureTopBar from "@21n/products/memotron/capture/CaptureTopBar.svelte";
+  import WebCaptureModal from "@21n/products/memotron/capture/web/WebCaptureModal.svelte";
+  import type { WebArtifact } from "@21n/products/memotron/capture/web/webCapture.types";
   import { fly } from "svelte/transition";
   import { Placement } from "@21n/types/direction.enum";
   import ComponentShortcutListener from "@21n/components/shortcuts/ComponentShortcutListener.svelte";
@@ -51,6 +53,7 @@
   isInEditMode.set(true);
   let writerRef: Writer | undefined = undefined;
   let subs: any[] = [];
+  let isWebModalOpen = false;
   let captureTopBarRef: CaptureTopBar | undefined = undefined;
   onMount(async () => {
     const appEventSub = appEvents.subscribe(async (x: IEvent) => {
@@ -94,7 +97,13 @@
   });
 
   async function onTypeSelect(e: CustomEvent) {
-    await captureStore.onTypeSelect(e.detail);
+    const selected = e.detail;
+    await captureStore.onTypeSelect(selected);
+    if (selected === CaptureMethod.WEB) {
+      isWebModalOpen = true;
+    } else {
+      isWebModalOpen = false;
+    }
   }
 
   function reset() {
@@ -108,6 +117,49 @@
   async function onSave() {
     await captureStore.save();
     reset();
+  }
+
+  function handleWebArtifactAdd(
+    event: CustomEvent<{ item: WebArtifact; tab: string }>
+  ) {
+    const artifact = event.detail?.item;
+    if (!artifact) return;
+    
+    // TODO: CRITICAL - Complete web artifact integration
+    // The artifact data needs to be added to the capture store.
+    // Options:
+    // 1. Add artifact metadata as markdown content: captureStore.appendContent(`[${artifact.title}](${artifact.externalUrl})`)
+    // 2. Create a node with artifact data: captureStore.createNodeFromArtifact(artifact)
+    // 3. Add as structured capture data: captureStore.addArtifact(artifact)
+    // Currently, clicking Add only closes the modal without saving anything.
+    
+    isWebModalOpen = false;
+  }
+
+  function handleWebArtifactPreview(
+    event: CustomEvent<{ item: WebArtifact; tab: string }>
+  ) {
+    const artifact = event.detail?.item;
+    if (!artifact) return;
+    const url =
+      artifact.externalUrl ??
+      artifact.providers?.find((provider) => provider.url)?.url;
+    if (url && typeof window !== "undefined") {
+      try {
+        const parsedUrl = new URL(url);
+        if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
+          console.warn("Blocked non-HTTP(S) URL:", url);
+          return;
+        }
+        window.open(url, "_blank", "noopener,noreferrer");
+      } catch (error) {
+        console.error("Invalid URL:", url, error);
+      }
+    }
+  }
+
+  $: if ($captureStore.method !== CaptureMethod.WEB && isWebModalOpen) {
+    isWebModalOpen = false;
   }
 </script>
 
@@ -138,6 +190,24 @@
           >
             {#if $captureStore.method === CaptureMethod.UPLOAD && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
               <FileUploader {captureStore} on:clear={reset} />
+            {:else if $captureStore.method === CaptureMethod.WEB}
+              <div
+                class="flex h-full w-full flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-brs3 bg-bgs2/60 px-6 text-center"
+              >
+                <Icon icon="globe-alt" size={Size.lg} class="text-fgs3" />
+                <div class="max-w-md text-b3 text-fgs3">
+                  Search movies, books, podcasts, and recipes from the web and
+                  add them to this capture.
+                </div>
+                <Button
+                  label="Open Add from Web"
+                  type={ButtonVariant.PRIMARY}
+                  size={Size.md}
+                  on:click={() => {
+                    isWebModalOpen = true;
+                  }}
+                />
+              </div>
             {:else}
               <Writer
                 {captureStore}
@@ -206,6 +276,15 @@
     </div>
   {/key}
 {/if}
+
+<WebCaptureModal
+  open={isWebModalOpen}
+  on:close={() => {
+    isWebModalOpen = false;
+  }}
+  on:add={handleWebArtifactAdd}
+  on:preview={handleWebArtifactPreview}
+/>
 
 <ComponentBaseLayer hasDragAndDrop={!isWindowDnD} />
 <ComponentShortcutListener

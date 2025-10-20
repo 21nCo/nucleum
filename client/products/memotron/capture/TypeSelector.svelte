@@ -35,6 +35,11 @@
       value: CaptureMethod.CAMERA
     },
     {
+      icon: "globe-alt",
+      value: CaptureMethod.WEB,
+      label: "Add from Web"
+    },
+    {
       icon: "upload",
       value: CaptureMethod.UPLOAD
     },
