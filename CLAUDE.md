@@ -17,6 +17,23 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 
 <!-- OPENSPEC:END -->
 
-# AGENTS.md
+<!-- CONDUCT:START -->
+# Conduct Instructions
 
-See the [Tidigit Constitution](.specify/memory/constitution.md) for the authoritative onboarding checklist and operational policies.
+These instructions are for AI assistants working in this project.
+
+Always open `@/conduct/AGENTS.md` when the request:
+- Mentions features, changes, or specifications
+- Introduces new capabilities or significant modifications
+- Requires understanding the project structure and conventions
+- Needs guidance on creating or updating specs
+
+Use `@/conduct/AGENTS.md` to learn:
+- How to create features and changes
+- Spec format and conventions
+- Project structure and guidelines
+- Issue tracker integration
+
+Keep this managed block so 'conduct init' can refresh the instructions.
+
+<!-- CONDUCT:END -->

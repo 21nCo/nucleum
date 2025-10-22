@@ -152,3 +152,22 @@ When asked to fix pull request review comments by providing a PR number:
 - Be thorough and methodical in issue identification
 - Double-check that no critical issues are missed
 - Provide clear summary of what was fixed
+
+
+# Conduct Instructions
+
+These instructions are for Warp AI when working in this project.
+
+When the request mentions features, changes, or specifications:
+- Use `conduct-feature` command to create new features
+- Use `conduct-change` command to create new changes
+- Read `.warp/commands/conduct/feature.md` for feature creation guidance
+- Read `.warp/commands/conduct/change.md` for change creation guidance
+
+The Warp commands handle:
+- Creating proper directory structure
+- Generating spec templates
+- Updating track.json
+- Managing versions
+
+Keep this file so 'conduct init' can refresh the instructions.
