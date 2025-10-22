@@ -30,11 +30,11 @@
       "flex px-4 py-3 w-full items-center justify-between":
         orientation === Orientation.Horizontal,
       "border-y border-transparent": !isActive && dev_isOutlineStyle,
-      "notouch:hover:bg-bgs3": !isActive,
+      "notouch:hover:bg-bgs3-striped": !isActive,
       "bg-aps3 border-y border-aps3 hover:bg-aps2 hover:bg-opacity-50 text-aps1":
         isActive && dev_isOutlineStyle,
       [abg()]: !dev_isOutlineStyle && isActive,
-      "px-2 py-3 rounded-md hover:bg-bgs3":
+      "px-2 py-3 rounded-md hover:bg-bgs3-striped":
         orientation === Orientation.Vertical,
       [bg(
         orientation === Orientation.Vertical

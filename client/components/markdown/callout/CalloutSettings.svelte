@@ -121,7 +121,7 @@
     )}
     <CustomColorPropagator
       color={preview?.color}
-      class="flex flex-col gap-3 w-full text-left border-t p-4"
+      class="flex flex-col gap-3 w-full text-left border-t border-brs2 p-4"
     >
       <Text
         content={`Preview for **${preview?.label ?? "Untitled Callout"}** callout - Click on the play button to preview it here.`}

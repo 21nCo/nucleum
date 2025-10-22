@@ -10,14 +10,8 @@
   import { Placement } from "@21n/types/direction.enum";
   import { abg, cn } from "@21n/utils/ui.utils";
   import { EmbedMessage } from "@21n/types/embedMessage.enum";
-  import {
-    uiState,
-    uiStateDerived
-  } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { uiState, uiStateDerived } from "@21n/stores/uiState/uiState.store";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { keyboardShortcuts } from "@21n/components/shortcuts/shortcuts.store";
   import { popover } from "@21n/actions/popover.action";
   import { hoverable } from "@21n/actions/hover.action";
@@ -192,7 +186,7 @@
         layoutContext === LayoutContext.MINIMIZED) && {
         "bg-aps3 border-aps2 border text-aps1 hover:bg-aps2 hover:bg-opacity-70":
           isActive && isOutlineStyle,
-        "hover:bg-bgs3": !isActive,
+        "hover:bg-bgs3-striped": !isActive,
         [abg()]: isActive && !isOutlineStyle,
         "border border-transparent": !isActive && isOutlineStyle
       },
@@ -206,7 +200,7 @@
       layoutContext === LayoutContext.THIN_WITH_LABEL && {
         "bg-aps3 border-y text-aps1 hover:bg-aps2 hover:bg-opacity-70":
           isActive && !isShowLabel,
-        "border border-transparent hover:bg-bgs3 transition-all":
+        "border border-transparent hover:bg-bgs3-striped transition-all":
           !isActive && !isShowLabel,
         "border-aps2":
           isActive && (!dev_mixedPanel || !$appStore.currentComponent?.panel),
@@ -230,8 +224,11 @@
           layoutContext === LayoutContext.THIN_WITH_LABEL,
         "w-full py-2 rounded-md":
           layoutContext === LayoutContext.THIN_WITH_LABEL,
-        "hover:bg-bgs3 border":
-          layoutContext === LayoutContext.THIN_WITH_LABEL && isShowLabel,
+        border: layoutContext === LayoutContext.THIN_WITH_LABEL && isShowLabel,
+        "hover:bg-bgs3-striped":
+          layoutContext === LayoutContext.THIN_WITH_LABEL &&
+          isShowLabel &&
+          !isActive,
         "border-transparent":
           layoutContext === LayoutContext.THIN_WITH_LABEL && !isActive,
         "bg-bgs3 border-brs3":

@@ -5,10 +5,7 @@
     ResourceActionType
   } from "@21n/components/flux/resourceStores/resource.type";
   import { onMount } from "svelte";
-  import {
-    BulkEditor,
-    SearchStore
-  } from "@21n/components/record/record.store";
+  import { BulkEditor, SearchStore } from "@21n/components/record/record.store";
   import {
     TaskDueDateFilter,
     TaskSubTypeForSwitcher,
@@ -72,10 +69,7 @@
   import { tzStore } from "@21n/components/settings/timezone/tz.store";
   import { dragSelection } from "@21n/actions/dragSelection.action";
   import { uiState } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { logger } from "@21n/components/debug/logger.client";
   export let goalId: IRecordId | undefined = undefined;
   export let collectionId: IRecordId | undefined = undefined;
@@ -437,7 +431,7 @@
       })}
     >
       <button
-        class="w-32 flex items-center justify-center gap-2 text-b2 text-fgs2 font-medium tabular-nums h-full whitespace-nowrap cw:py-1 py-2 cw:px-2 px-4 rounded-l-md bg-bgs2 border-r border-brs2"
+        class="w-32 flex items-center justify-center gap-2 text-b2 text-fgs2 font-medium tabular-nums h-full whitespace-nowrap cw:py-1 py-2 cw:px-2 px-4 rounded-l-md bg-bgs2 hover:bg-bgs3-striped border-r border-brs2"
         bind:this={dateSelectionPopoverRef}
         use:popover={{
           content: AbsoluteTimeRangePopoverV2,

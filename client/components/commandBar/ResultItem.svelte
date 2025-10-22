@@ -23,7 +23,7 @@
   on:click
   class={cn("w-full flex items-center px-3 py-2 truncate border-l-[3px]", {
     "bg-bgs2 border-fgs1": isActive,
-    "border-transparent text-fgs2": !isActive,
+    "hover:bg-bgs2-striped border-transparent text-fgs2": !isActive,
     "h-12": !isSearchAction
   })}
   in:fly={{

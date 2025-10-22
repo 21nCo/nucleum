@@ -60,7 +60,7 @@
     <main
       class={cn("relative flex w-full justify-center flex-1", {
         "h-full": $node.accessMode === ResourceAccessMode.FULL,
-        "border-r border-brs3":
+        "border-r border-brs2":
           rightPane ||
           (webNodeTypeList.includes($node?.contentType) && !isConstrainedWidth),
         grow:

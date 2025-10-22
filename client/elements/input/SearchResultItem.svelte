@@ -11,7 +11,7 @@
 <button
   bind:this={itemRef}
   on:click
-  class={cn("p-2 w-full hover:bg-bgs2 flex items-start", {
+  class={cn("p-2 w-full hover:bg-bgs2-striped flex items-start", {
     "bg-bgs2 font-medium": isActive,
     "min-h-[2.5rem] h-10": !$$slots.default
   })}
