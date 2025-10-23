@@ -39,10 +39,7 @@ import {
   relayToContentScript,
   relayToSidePanel
 } from "@21n/utils/extension.utils";
-import {
-  determineIfOffline,
-  performApiCall
-} from "@21n/utils/network.utils";
+import { determineIfOffline, performApiCall } from "@21n/utils/network.utils";
 import { wait } from "@21n/utils/time.utils";
 import { interceptSurrealResponse } from "@21n/utils/utils";
 import { SyncMethod } from "@21n/shared-types/sync.type";
@@ -249,7 +246,7 @@ class Flux {
         ...params,
         action: params.action,
         recordCount:
-          "records" in params ? (params.records?.length ?? "NA") : "NA",
+          "records" in params ? params.records?.length ?? "NA" : "NA",
         record: "record" in params ? params.record : "NA"
       }
     });
@@ -303,8 +300,7 @@ class Flux {
       at: "flux.mutation - result",
       resource,
       action: params.action,
-      recordCount:
-        "records" in params ? (params.records?.length ?? "NA") : "NA",
+      recordCount: "records" in params ? params.records?.length ?? "NA" : "NA",
       record: "record" in params ? params.record : "NA",
       response
     });
@@ -687,8 +683,11 @@ class Flux {
       } else {
         const resources = this.resolveSyncResources();
         let totalSyncedMutations = 0;
+        let maxIterations = 10;
+        let iterations = 0;
 
-        while (true) {
+        while (iterations < maxIterations) {
+          iterations++;
           let { mutations } = await this.resolveItemsForSyncUp();
           if (!mutations || mutations.length === 0) {
             break;
@@ -697,7 +696,8 @@ class Flux {
           logger.log({
             at: "flux.sync - batch",
             mutationsLength: mutations.length,
-            mutations: mutations.map((x) => x.id)
+            iterations,
+            maxIterations
           });
 
           const batchResponse = await this.performSync(SyncMethod.SYNC_UP, {
@@ -885,6 +885,8 @@ class Flux {
       })
     );
 
+    recordsByResource.clear();
+
     for (let { resource, records } of data) {
       this.propagateSyncStatus(resource);
       records = this.dataMapper.parse(resource, records);
@@ -944,6 +946,7 @@ class Flux {
           recordIds: ids
         });
       }
+      delteRecordsByResource.clear();
     } catch (e) {
       logger.error({ at: "flux.processDeletedRecords", error: e });
     }

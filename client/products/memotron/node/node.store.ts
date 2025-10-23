@@ -641,7 +641,9 @@ export class ActiveNodeStore extends CollectibleStore<
     const node = this.get();
     logger.log({ at: "ActiveNodeStore.resolveExportContent", node });
     if (!node || node?.contentType !== NodeType.NODULAR_MARKDOWN) return "";
-    return node.md?.blocks ? generateMarkdownText(node.md.blocks) : "";
+    return node.md?.blocks
+      ? generateMarkdownText(node.md.blocks, { isIncludeNonSearchBlocks: true })
+      : "";
   }
 }
 

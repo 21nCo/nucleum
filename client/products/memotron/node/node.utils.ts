@@ -120,8 +120,14 @@ export function getMarkdownSymbolPrepended(block: IBlock) {
       return block.body.text;
   }
 }
-export function generateMarkdownText(blocks: IBlock[]) {
-  return blocks.map((b) => getMarkdownSymbolPrepended(b)).join("\n");
+export function generateMarkdownText(
+  blocks: IBlock[],
+  params?: { isIncludeNonSearchBlocks: boolean }
+) {
+  const filteredBlocks = params?.isIncludeNonSearchBlocks
+    ? blocks
+    : blocks.filter((b) => b.contentType !== NodeType.CODE);
+  return filteredBlocks.map((b) => getMarkdownSymbolPrepended(b)).join("\n");
 }
 
 const nodeIconMap = new Map<NodeType, string>([
@@ -266,7 +272,7 @@ export function resolveNodeContentLabel(contentType: NodeType) {
 
 export function resolveFilePreview(node: INode) {
   const { contentType, body, file, metadata, previewImage } = node;
-  if(previewImage){
+  if (previewImage) {
     return previewImage;
   } else if (
     contentType === NodeType.IMAGE ||
@@ -328,7 +334,8 @@ export function resolveNodeLabelString(item: INodeThumb): string {
   if (typeof item?.label === "string" && isValidString(item.label))
     return item.label;
   const label = resolveNodeLabel(item);
-  if (typeof label === "string") return isValidString(label) ? label : "Untitled";
+  if (typeof label === "string")
+    return isValidString(label) ? label : "Untitled";
   if (
     label &&
     typeof label === "object" &&
@@ -364,7 +371,7 @@ export function resolveNodeLabel(item: INodeThumb) {
     const twitterProfileLabel = isValidString(
       parent?.label ?? parent?.body?.name
     )
-      ? (parent.label ?? parent.body.name)
+      ? parent.label ?? parent.body.name
       : "Unknown";
     const prefix = enumToString(item.contentType);
     return {
