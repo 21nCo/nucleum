@@ -29,6 +29,7 @@
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   let youtubeVideoRef: YoutubeVideoPreview;
   let copyLabel: string = "Copy";
+  let copyTimeoutId: ReturnType<typeof setTimeout> | null = null;
   export function onTrace(e: any) {
     youtubeVideoRef.onTrace(e);
   }
@@ -111,8 +112,12 @@
           if (!node.url) return;
           navigator.clipboard.writeText(node.url);
           copyLabel = "Copied!";
-          setTimeout(() => {
+          if (copyTimeoutId !== null) {
+            clearTimeout(copyTimeoutId);
+          }
+          copyTimeoutId = setTimeout(() => {
             copyLabel = "Copy";
+            copyTimeoutId = null;
           }, 1000);
         }}
       >

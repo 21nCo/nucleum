@@ -243,7 +243,8 @@ export const availableResources = new Set([
   Resource.node,
   Resource.relation,
   Resource.goal,
-  Resource.task
+  Resource.task,
+  Resource.combination
 ]);
 
 export function resolveResourceSwitcher(): IResourceSwitchItem[] {
