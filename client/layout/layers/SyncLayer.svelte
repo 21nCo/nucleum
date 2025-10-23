@@ -66,7 +66,6 @@
           MAX_SYNC_DURATION,
           "ms - may be hung"
         );
-        isSyncing = false;
       }
     }, MAX_SYNC_DURATION);
 
