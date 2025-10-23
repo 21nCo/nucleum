@@ -5,6 +5,7 @@ import Capture from "@21n/products/memotron/capture/Capture.svelte";
 import Node from "@21n/products/memotron/node/Node.svelte";
 import NodeLoadingPulse from "@21n/elements/feedback/animations/NodeLoadingPulse.svelte";
 import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+import SideNavCombination from "@21n/components/combination/SideNavCombination.svelte";
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import MemotronLibrary from "@21n/products/memotron/library/MemotronLibrary.svelte";
 import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
@@ -166,7 +167,17 @@ export const memotronActions: IAction[] = [
   {
     action: Resource.combination,
     type: ActionType.MODAL,
-    component: ComingSoonView
+    component: SideNavCombination,
+    accessMode: ResourceAccessMode.POP,
+    modalParams: {
+      layout: {
+        size: Size.xxl,
+        orientation: Orientation.Horizontal,
+        ignoreSafeArea: true,
+        isShowCantileverClose: true,
+        isShowBackButton: true
+      }
+    }
   },
   {
     action: MemotronAction.LIBRARY,

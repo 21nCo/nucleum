@@ -2,6 +2,7 @@
   import { Arrangement } from "@21n/types/direction.enum";
   import { cn } from "@21n/utils/ui.utils";
   import CollectionThumbnail from "@21n/components/collection/thumbnail/CollectionThumbnail.svelte";
+  import CombinationThumbnail from "@21n/components/combination/thumbnail/CombinationThumbnail.svelte";
   import NodeThumbnail from "@21n/products/memotron/node/thumbnail/NodeThumbnail.svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { Size } from "@21n/types/size.enum";
@@ -16,6 +17,7 @@
   import { createEventDispatcher } from "svelte";
   import type { INodeThumb } from "@21n/products/memotron/node/node.type";
   import type { ICollection } from "@21n/components/collection/collection.type";
+  import type { ISideNavCombination } from "@21n/components/combination/combination.type";
   import type { IFile } from "@21n/components/files/file.type";
   import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
   import NodeItems from "@21n/products/memotron/node/NodeRecords.svelte";
@@ -31,6 +33,7 @@
     | INodeThumb
     | ICollection
     | IFile
+    | ISideNavCombination
     | IGoalThumb
     | ITaskThumb
   )[] = [];
@@ -114,6 +117,15 @@
               {arrangement}
               on:click={(e) => onClick(e, item)}
             />
+          {:else if resourceType === Resource.combination}
+            <CombinationThumbnail
+              {item}
+              {size}
+              {accessPoint}
+              {accessPointState}
+              {arrangement}
+              on:click={(e) => onClick(e, item)}
+            />
           {:else if resourceType === Resource.goal}
             <GoalThumbnail
               {item}
@@ -157,6 +169,15 @@
           />
         {:else if resource === Resource.collection}
           <CollectionThumbnail
+            {item}
+            {size}
+            {accessPoint}
+            {accessPointState}
+            {arrangement}
+            on:click={(e) => onClick(e, item)}
+          />
+        {:else if resource === Resource.combination}
+          <CombinationThumbnail
             {item}
             {size}
             {accessPoint}
