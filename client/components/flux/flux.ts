@@ -926,13 +926,13 @@ class Flux {
   }
   private async processDeletedRecords(deletedRecords: any[]) {
     try {
-      const delteRecordsByResource = new Map<Resource, any[]>();
+      const deleteRecordsByResource = new Map<Resource, any[]>();
       for (let record of deletedRecords) {
         if (!record.resource) continue;
-        if (!delteRecordsByResource.has(record.resource)) {
-          delteRecordsByResource.set(record.resource, []);
+        if (!deleteRecordsByResource.has(record.resource)) {
+          deleteRecordsByResource.set(record.resource, []);
         }
-        delteRecordsByResource
+        deleteRecordsByResource
           .get(record.resource)!
           .push(
             Array.isArray(record.resourceId)
@@ -940,13 +940,13 @@ class Flux {
               : [record.resourceId]
           );
       }
-      for (let [resource, ids] of delteRecordsByResource) {
+      for (let [resource, ids] of deleteRecordsByResource) {
         await this.persistence.mutation(resource, {
           action: PersistenceActionType.BULK_DELETE,
           recordIds: ids
         });
       }
-      delteRecordsByResource.clear();
+      deleteRecordsByResource.clear();
     } catch (e) {
       logger.error({ at: "flux.processDeletedRecords", error: e });
     }
@@ -1320,56 +1320,72 @@ class Flux {
     limit: number,
     isFirstInitialLoad?: boolean
   ) {
-    this.propagateSyncStatus(resource);
-    const result = await this.performSync(SyncMethod.CLONE_DOWN_PAGINATE, {
-      resource,
-      isExtension: this.isExtensionEnvironment,
-      offset,
-      limit
-    });
-    console.log("paginateResource - result", resource, offset);
-    if (
-      isValidArrayWithData(result) &&
-      isValidArrayWithData(result[0].result)
-    ) {
-      const records = result[0].result;
-      let mutationResult;
-      try {
-        mutationResult = await this.persistence.mutation(
-          resource as Resource,
-          {
-            records,
-            action:
-              resource === Resource.kv || resource === Resource.link
-                ? PersistenceActionType.INSERT
-                : PersistenceActionType.BULK_INSERT,
-            isSkipFlexSearchIndexing: isFirstInitialLoad
-          } as any
-        );
-      } catch (e) {
-        logger.error({
-          at: "flux.paginateResource - error",
-          resource,
-          error: e
-        });
-      }
-      if (!mutationResult) {
-        await this.persistence.mutation(
-          resource as Resource,
-          {
-            records,
-            action: PersistenceActionType.INSERT,
-            isSkipFlexSearchIndexing: isFirstInitialLoad
-          } as any
-        );
-      }
-      if (records.length === limit) {
-        await this.paginateResource(
-          resource,
-          offset + limit,
-          limit,
-          isFirstInitialLoad
-        );
+    let currentOffset = offset;
+    let hasMore = true;
+
+    while (hasMore) {
+      this.propagateSyncStatus(resource);
+
+      const result = await this.performSync(SyncMethod.CLONE_DOWN_PAGINATE, {
+        resource,
+        isExtension: this.isExtensionEnvironment,
+        offset: currentOffset,
+        limit
+      });
+
+      console.log("paginateResource - result", resource, currentOffset);
+
+      if (
+        isValidArrayWithData(result) &&
+        isValidArrayWithData(result[0].result)
+      ) {
+        const records = result[0].result;
+        let mutationResult;
+
+        try {
+          mutationResult = await this.persistence.mutation(
+            resource as Resource,
+            {
+              records,
+              action:
+                resource === Resource.kv || resource === Resource.link
+                  ? PersistenceActionType.INSERT
+                  : PersistenceActionType.BULK_INSERT,
+              isSkipFlexSearchIndexing: isFirstInitialLoad
+            } as any
+          );
+        } catch (e) {
+          logger.error({
+            at: "flux.paginateResource - error",
+            resource,
+            error: e
+          });
+
+          try {
+            await this.persistence.mutation(
+              resource as Resource,
+              {
+                records,
+                action: PersistenceActionType.INSERT,
+                isSkipFlexSearchIndexing: isFirstInitialLoad
+              } as any
+            );
+          } catch (fallbackError) {
+            logger.error({
+              at: "flux.paginateResource - fallback error",
+              resource,
+              error: fallbackError
+            });
+          }
+        }
+
+        if (records.length === limit) {
+          currentOffset += limit;
+        } else {
+          hasMore = false;
+        }
+      } else {
+        hasMore = false;
       }
     }
   }
@@ -1397,52 +1413,61 @@ class Flux {
     isFirstInitialLoad?: boolean
   ) {
     if (!cursor) return;
-    this.propagateSyncStatus(resource);
-    const result = await this.performSync(SyncMethod.CLONE_DOWN_PAGINATE_V2, {
-      resource,
-      isExtension: this.isExtensionEnvironment,
-      cursor
-    });
 
-    if (isValidArrayWithData(result.data)) {
-      let records = result.data;
-      records = this.dataMapper.parse(resource, records);
-      let mutationResult;
-      try {
-        mutationResult = await this.persistence.mutation(
-          resource as Resource,
-          {
-            records,
-            action:
-              resource === Resource.kv || resource === Resource.link
-                ? PersistenceActionType.INSERT
-                : PersistenceActionType.BULK_INSERT,
-            isSkipFlexSearchIndexing: isFirstInitialLoad
-          } as any
-        );
-      } catch (e) {
-        logger.error({
-          at: "flux.paginateResourceV2 - error",
-          resource,
-          error: e
-        });
-      }
-      if (!mutationResult) {
-        await this.persistence.mutation(
-          resource as Resource,
-          {
-            records,
-            action: PersistenceActionType.INSERT,
-            isSkipFlexSearchIndexing: isFirstInitialLoad
-          } as any
-        );
-      }
-      if (result.nextCursor) {
-        await this.paginateResourceV2(
-          resource,
-          result.nextCursor,
-          isFirstInitialLoad
-        );
+    let currentCursor: string | null = cursor;
+
+    while (currentCursor) {
+      this.propagateSyncStatus(resource);
+
+      const result = await this.performSync(SyncMethod.CLONE_DOWN_PAGINATE_V2, {
+        resource,
+        isExtension: this.isExtensionEnvironment,
+        cursor: currentCursor
+      });
+
+      if (isValidArrayWithData(result.data)) {
+        const parsedRecords = this.dataMapper.parse(resource, result.data);
+
+        let mutationResult;
+        try {
+          mutationResult = await this.persistence.mutation(
+            resource as Resource,
+            {
+              records: parsedRecords,
+              action: isFirstInitialLoad
+                ? PersistenceActionType.BULK_INSERT
+                : PersistenceActionType.INSERT,
+              isSkipFlexSearchIndexing: isFirstInitialLoad
+            } as any
+          );
+        } catch (e) {
+          logger.error({
+            at: "flux.paginateResourceV2 - error",
+            resource,
+            error: e
+          });
+
+          try {
+            await this.persistence.mutation(
+              resource as Resource,
+              {
+                records: parsedRecords,
+                action: PersistenceActionType.INSERT,
+                isSkipFlexSearchIndexing: isFirstInitialLoad
+              } as any
+            );
+          } catch (fallbackError) {
+            logger.error({
+              at: "flux.paginateResourceV2 - fallback error",
+              resource,
+              error: fallbackError
+            });
+          }
+        }
+
+        currentCursor = result.nextCursor || null;
+      } else {
+        currentCursor = null;
       }
     }
   }
