@@ -126,12 +126,15 @@
 
 <div class="flex flex-col w-full" data-id={item.id}>
   <button
-    class={cn("group flex items-center gap-2 px-2 py-2 transition-colors", {
-      "bg-bgs2": isActive,
-      "hover:bg-bgs2-striped": !isActive,
-      "opacity-70 cursor-default":
-        item.type === CombinationNavItemType.SECTION && !item.children?.length
-    })}
+    class={cn(
+      "group flex items-center gap-2 px-2 py-2 transition-colors border-y",
+      {
+        "bg-bgs2 border-brs2": isActive,
+        "hover:bg-bgs2-striped border-transparent": !isActive,
+        "opacity-70 cursor-default":
+          item.type === CombinationNavItemType.SECTION && !item.children?.length
+      }
+    )}
     draggable={isEditMode && !isEditing}
     use:hoverable={{
       onHover: (val) => (isHoveringItem = val)
@@ -167,14 +170,9 @@
       <span class="w-6" />
     {/if}
     {#if isEditMode && !isEditing}
-      <Icon icon="grip-vertical" size={Size.sm} class="stroke-fgs3" />
+      <Icon icon="rearrange" size={Size.sm} class="stroke-fgs3" />
     {/if}
-    {#if avatar}
-      <AvatarRenderer {avatar} size={Size.sm} />
-    {:else if item.type === CombinationNavItemType.RESOURCE}
-      <Icon icon={resourceIcon} size={Size.sm} class="stroke-fgs2" />
-    {/if}
-    <div class="flex-1 min-w-0 text-left">
+    <div class="flex-1 min-w-0 text-left truncate">
       {#if isEditing}
         <TextInput
           bind:value={editLabel}

@@ -33,6 +33,7 @@ import {
   removeItemById,
   updateItemLabel
 } from "./combination.utils";
+import { determineResourceType } from "../flux/resourceStores/resource.utils";
 
 export type ICombinationCapture = {
   label: string;
@@ -101,11 +102,9 @@ export class ActiveCombinationStore extends ActiveResourceStore<
     );
   }
 
-  private async resolveResourceSnapshot(
-    resourceId: IRecordId,
-    resourceType: Resource
-  ) {
+  private async resolveResourceSnapshot(resourceId: IRecordId) {
     try {
+      const resourceType = determineResourceType(resourceId);
       const store = resolveResourceStore(resourceType);
       if (!store) return undefined;
       const record = await store.select(resourceId);
@@ -118,8 +117,7 @@ export class ActiveCombinationStore extends ActiveResourceStore<
       logger.error({
         at: "ActiveCombinationStore.resolveResourceSnapshot",
         error,
-        resourceId,
-        resourceType
+        resourceId
       });
     }
   }
@@ -184,22 +182,18 @@ export class ActiveCombinationStore extends ActiveResourceStore<
 
   async addResource(params: {
     resourceId: IRecordId;
-    resourceType: Resource;
     parentId?: string;
     index?: number;
     label?: string;
   }) {
-    const snapshot = await this.resolveResourceSnapshot(
-      params.resourceId,
-      params.resourceType
-    );
+    const snapshot = await this.resolveResourceSnapshot(params.resourceId);
     const label = params.label ?? snapshot?.label ?? "Untitled";
     const resourceItem: ICombinationNavItem = {
       id: generateSimpleRandomId(),
       type: CombinationNavItemType.RESOURCE,
       label,
       resourceId: params.resourceId,
-      resourceType: params.resourceType,
+      resourceType: determineResourceType(params.resourceId),
       resourceLabel: snapshot?.label ?? label,
       resourceAvatar: snapshot?.avatar,
       avatar: snapshot?.avatar,

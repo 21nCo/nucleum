@@ -11,31 +11,7 @@
 
   const dispatch = createEventDispatcher();
 
-  const resourceOptions: ISelectItem[] = [
-    {
-      label: "Nodes",
-      value: Resource.node,
-      icon: "hexagon"
-    },
-    {
-      label: "Collections",
-      value: Resource.collection,
-      icon: "collection"
-    }
-    // {
-    //   label: "Combinations",
-    //   value: Resource.combination,
-    //   icon: "combination"
-    // }
-  ];
-
-  let resourceType: Resource = Resource.node;
-  let searchStore = new SearchStore(resourceType);
-  $: searchStore = new SearchStore(resourceType);
-  $: searchResultProps = {
-    resourceType,
-    isHideResourceType: false
-  };
+  const searchStore = new SearchStore();
 
   async function searchCallback(value: string) {
     const trimmed = value?.trim();
@@ -43,7 +19,6 @@
       return [];
     }
     const results = await searchStore.select({
-      resource: resourceType,
       searchQuery: trimmed,
       limit: 30,
       isExpand: false
@@ -52,25 +27,16 @@
   }
 </script>
 
-<div class="flex flex-col gap-3">
-  <OptionSelector
-    size={Size.sm}
-    class={cn("w-full")}
-    options={resourceOptions}
-    bind:selected={resourceType}
-  />
+<div class="flex flex-col gap-3 w-full">
   <TextSearchInput
-    placeholder="Search resources"
+    placeholder="Add existing resource"
     icon="magnifying-glass"
     {searchCallback}
     searchResultComponent={LinkSearchResultItem}
-    searchResultComponentProps={searchResultProps}
-    isInline={true}
     on:select={(e) => {
       if (!e.detail?.item) return;
       dispatch("select", {
-        item: e.detail.item,
-        resourceType
+        item: e.detail.item
       });
     }}
   />

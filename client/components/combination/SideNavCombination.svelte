@@ -19,7 +19,7 @@
   import CombinationResourceRenderer from "./CombinationResourceRenderer.svelte";
   import CombinationTOC from "./CombinationTOC.svelte";
   import { findItemPath, getItemByPath } from "./combination.utils";
-  import { isValidArrayWithData } from "@21n/shared/utils/obj.utils";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import ComponentBaseLayer from "@21n/client/layout/layers/ComponentBaseLayer.svelte";
   export let id: IRecordId;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.INLINE;
@@ -156,15 +156,12 @@
     }
   }
 
-  async function addResource(
-    e: CustomEvent<{ item: any; resourceType: Resource }>
-  ) {
+  async function addResource(e: CustomEvent<{ item: any }>) {
     const detail = e.detail;
     if (!detail?.item?.id) return;
     const parentId = resolveTargetParentId();
     const newId = await combinationStore.addResource({
       resourceId: detail.item.id,
-      resourceType: detail.resourceType,
       parentId,
       label: detail.item.label ?? detail.item.name
     });
@@ -230,7 +227,7 @@
       }
     )}
   >
-    <header class="flex flex-col gap-2 px-3 pt-3">
+    <header class="flex flex-col gap-2 px-3 pt-3 w-full">
       {#if isEditMode}
         <TextInput
           value={combination?.label ?? "Untitled combination"}
@@ -258,7 +255,7 @@
         />
       </div>
     </header>
-    <section class="flex-1 overflow-auto">
+    <section class="flex-1 overflow-auto w-full">
       {#if !isValidArrayWithData(items)}
         <div class="flex h-full items-center justify-center">
           <EmptyStatusView
@@ -270,7 +267,7 @@
           />
         </div>
       {:else}
-        <div class="flex flex-col py-2">
+        <div class="flex flex-col py-2 w-full truncate">
           {#each items as navItem}
             <SideNavCombinationNavItem
               item={navItem}
@@ -311,21 +308,17 @@
     </section>
     {#if isEditMode}
       <section class="flex flex-col gap-4 px-3 pb-3">
-        <div class="flex flex-col gap-2">
-          <span class="text-b3 text-fgs3 uppercase">Add resource</span>
-          <SideNavCombinationResourcePicker on:select={addResource} />
-        </div>
-        <div class="flex flex-col gap-2">
-          <span class="text-b3 text-fgs3 uppercase">Add section</span>
-          <TextInput
-            bind:value={newSectionLabel}
-            placeholder="New section"
-            size={Size.sm}
-            isShowSaveControl={true}
-            on:save={addSection}
-            on:enter={addSection}
-          />
-        </div>
+        <SideNavCombinationResourcePicker on:select={addResource} />
+        <TextInput
+          bind:value={newSectionLabel}
+          placeholder="Add new section"
+          size={Size.sm}
+          isShowSaveControl={newSectionLabel}
+          on:save={addSection}
+          on:enter={addSection}
+          on:cancel={() => (newSectionLabel = "")}
+          on:clear={() => (newSectionLabel = "")}
+        />
       </section>
     {/if}
   </aside>
