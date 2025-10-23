@@ -924,9 +924,14 @@ class Flux {
     }
     return syncRecords;
   }
-  private async processDeletedRecords(deletedRecords: any[]) {
+  private async processDeletedRecords(
+    deletedRecords: {
+      resource: Resource;
+      resourceId: IRecordId | IRecordId[];
+    }[]
+  ) {
     try {
-      const deleteRecordsByResource = new Map<Resource, any[]>();
+      const deleteRecordsByResource = new Map<Resource, IRecordId[]>();
       for (let record of deletedRecords) {
         if (!record.resource) continue;
         if (!deleteRecordsByResource.has(record.resource)) {
@@ -935,9 +940,9 @@ class Flux {
         deleteRecordsByResource
           .get(record.resource)!
           .push(
-            Array.isArray(record.resourceId)
+            ...(Array.isArray(record.resourceId)
               ? record.resourceId
-              : [record.resourceId]
+              : [record.resourceId])
           );
       }
       for (let [resource, ids] of deleteRecordsByResource) {

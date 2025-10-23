@@ -715,7 +715,7 @@ export class DexiePersistence implements IPersistence {
         }
       }
 
-      const result = await table.bulkAdd(formattedRecords);
+      const result = await table.bulkPut(formattedRecords);
 
       logger.log({
         at: "DexiePersistence.bulkInsert",
