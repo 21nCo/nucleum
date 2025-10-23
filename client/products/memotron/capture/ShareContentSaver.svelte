@@ -1,47 +1,47 @@
 <script lang="ts">
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import NodeThumbnail from "../node/thumbnail/NodeThumbnail.svelte";
-  import { Arrangement } from "$lib/client/types/direction.enum";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import FileView from "$lib/client/components/files/FileView.svelte";
-  import { NodeType, type INode, type INodeThumb } from "../node/node.type";
-  import { resolveNodeContentLabel, resolveNodeIcon } from "../node/node.utils";
+  import { logger } from "@21n/components/debug/logger.client";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import NodeThumbnail from "@21n/products/memotron/node/thumbnail/NodeThumbnail.svelte";
+  import { Arrangement } from "@21n/types/direction.enum";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { Size } from "@21n/types/size.enum";
+  import FileView from "@21n/components/files/FileView.svelte";
+  import { NodeType, type INode, type INodeThumb } from "@21n/products/memotron/node/node.type";
+  import { resolveNodeContentLabel, resolveNodeIcon } from "@21n/products/memotron/node/node.utils";
   import type {
     IPasteCaptureData,
     IMultiFileCaptureData
-  } from "./capture.type";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
+  } from "@21n/products/memotron/capture/capture.type";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
   import { onMount, createEventDispatcher } from "svelte";
   import {
     ActiveCaptureStore,
     type IActiveCaptureStore
-  } from "./capture.store";
-  import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { nodeStore } from "../node/node.store";
-  import context from "$lib/client/stores/context.store";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
-  import ButtonGroup from "$lib/client/elements/button/ButtonGroup.svelte";
-  import InlineFeedbackText from "$lib/client/extensions/clipper/InlineFeedbackText.svelte";
+  } from "@21n/products/memotron/capture/capture.store";
+  import { generateResourceId } from "@21n/components/flux/flux.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
+  import context from "@21n/stores/context.store";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
+  import ButtonGroup from "@21n/elements/button/ButtonGroup.svelte";
+  import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
   import {
     AlertType,
     type IInlineStatus
-  } from "$lib/client/types/notification.type";
-  import LinkBoxOnSaver from "./LinkBoxOnSaver.svelte";
+  } from "@21n/types/notification.type";
+  import LinkBoxOnSaver from "@21n/products/memotron/capture/LinkBoxOnSaver.svelte";
   import {
     getSheetNodeByUrl,
     saveSheetNode
-  } from "$lib/client/persistence/dexie/sheetStorage";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { Action } from "$lib/client/types/action.enum";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  } from "@21n/persistence/dexie/sheetStorage";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { Action } from "@21n/types/action.enum";
+  import type { IRecordId } from "@21n/types/data.type";
   import { tick } from "svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { cn } from "@21n/utils/ui.utils";
 
   export let data: IPasteCaptureData | undefined = undefined;
   export let nodeType: NodeType;

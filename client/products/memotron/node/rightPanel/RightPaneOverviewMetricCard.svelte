@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
 
   export let label: string;
   export let value: number;
@@ -8,7 +8,7 @@
 </script>
 
 <button
-  class="flex items-center gap-1 hover:bg-bgs2 rounded-md px-4 h-full default-typeface"
+  class="flex items-center justify-center gap-1 hover:bg-bgs2 px-4 h-full default-typeface"
   on:click
 >
   <Icon {icon} size={Size.sm} />

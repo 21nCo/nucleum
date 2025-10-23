@@ -1,31 +1,31 @@
 <script lang="ts">
-  import { appMenuStore } from "$lib/client/stores/appMenu/appMenu.store";
-  import { appStore } from "$lib/client/stores/app.store";
+  import { appMenuStore } from "@21n/stores/appMenu/appMenu.store";
+  import { appStore } from "@21n/stores/app.store";
   import { createEventDispatcher } from "svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
   import {
     reorderList,
     type DragDropEvent
-  } from "$lib/client/actions/rearrange.action";
+  } from "@21n/actions/rearrange.action";
   import {
     resolveProductResources,
     shiftResourceInArray
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import { properCase } from "$lib/shared/utils/text.utils";
-  import ComponentBaseLayer from "../layers/ComponentBaseLayer.svelte";
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import { InfoTextType } from "$lib/client/types/text.type";
+  } from "@21n/stores/uiState/uiState.type";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import { InfoTextType } from "@21n/types/text.type";
 
   const dispatch = createEventDispatcher();
 

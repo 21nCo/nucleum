@@ -1,14 +1,14 @@
-import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { logger } from "$lib/client/components/debug/logger.client";
+import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { logger } from "@21n/components/debug/logger.client";
 import { get } from "svelte/store";
-import { appStore } from "../app.store";
+import { appStore } from "@21n/stores/app.store";
 import {
   Preference,
   PreferencesScope,
   type IPreferencesParams,
   type IPreferencesStore
-} from "./preferences.type";
+} from "@21n/stores/preferences/preferences.type";
 
 class PreferencesStore extends KeyValueStore<IPreferencesStore> {
   constructor() {

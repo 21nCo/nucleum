@@ -1,0 +1,12 @@
+{
+  "name": "@21n/data",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": {
+      "import": "./index.js",
+      "types": "./index.d.ts"
+    },
+    "./*": "./*"
+  }
+}

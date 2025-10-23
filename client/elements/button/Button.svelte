@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import Icon from "../Icon.svelte";
-  import { ButtonStyle, ButtonVariant } from "../../types/button.type";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
-  import type { IPopoverRenderBaseParams } from "$lib/client/types/popover.type";
-  import Badge from "../text/Badge.svelte";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { popover } from "$lib/client/actions/popover.action";
-  import ShortcutText from "../text/ShortcutText.svelte";
-  import type { IKeyboardShortcut } from "$lib/client/components/shortcuts/shortcut.type";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
-  import ButtonTooltip from "./ButtonTooltip.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { Placement } from "@21n/types/direction.enum";
+  import { bg, cn } from "@21n/utils/ui.utils";
+  import type { IPopoverRenderBaseParams } from "@21n/types/popover.type";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { popover } from "@21n/actions/popover.action";
+  import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
+  import type { IKeyboardShortcut } from "@21n/components/shortcuts/shortcut.type";
+  import { PopoverTriggerMethod } from "@21n/types/popover.type";
+  import ButtonTooltip from "@21n/elements/button/ButtonTooltip.svelte";
   export let parentBgIndex: number = 1;
   export let label: string | undefined = undefined;
   export let className: string = "";
@@ -121,19 +121,21 @@
           "bg-aps1": type === ButtonVariant.PRIMARY,
           "bg-ars1": type === ButtonVariant.DANGER,
           "border border-transparent hover:border-brs3":
-            type === ButtonVariant.SECONDARY,
+            type === ButtonVariant.SECONDARY && !isBoxed,
           [bg(parentBgIndex + 1)]: type === ButtonVariant.SECONDARY,
-          [`hover:${bg(parentBgIndex + 2)}`]: type === ButtonVariant.SECONDARY
+          [`hover:${bg(parentBgIndex + 2)}-striped`]:
+            type === ButtonVariant.SECONDARY
         }
       ],
     style === ButtonStyle.OUTLINED && [
       {
-        border: true,
-        "border-aps2 bg-aps3 text-aps1 hover:bg-aps2 hover:border-aps1":
+        border: !isBoxed,
+        "border-aps2 bg-aps3 text-aps1 hover:bg-aps2-striped hover:border-aps1":
           type === ButtonVariant.PRIMARY,
         "border-brs3 text-fgs2 hover:text-fgs1":
           type === ButtonVariant.SECONDARY,
-        [bg(parentBgIndex)]: type === ButtonVariant.SECONDARY && isHovering,
+        [`${bg(parentBgIndex)}-striped`]:
+          type === ButtonVariant.SECONDARY && isHovering,
         "border-ars1 text-ars1": type === ButtonVariant.DANGER
       }
     ],

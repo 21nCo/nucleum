@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { popover } from "$lib/client/actions/popover.action";
-  import type { IButtonParams } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Icon from "../../Icon.svelte";
+  import { popover } from "@21n/actions/popover.action";
+  import type { IButtonParams } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
   export let param: IButtonParams;
   export let index: number;
   export let length: number;

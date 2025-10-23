@@ -9,12 +9,12 @@
   // import zoomoutsvg from "./images/toolbarZoomOut.svg?url";
   // import spreadsvg from "./images/toolbarPageView.svg?url";
   // import gapsvg from "./images/toolbarPageGap.svg?url";
-  import "./pdfviewer.css";
-  import context from "$lib/client/stores/context.store";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import { fileEmbedChannel } from "$lib/client/components/files/fileEmbedChannel.store";
-  import { OperatingSystem } from "$lib/client/types/context.type";
-  import { pdfCache } from "$lib/client/utils/pdfCache.utils";
+  import "@21n/products/memotron/pdfAnnotator/pdfviewer.css";
+  import context from "@21n/stores/context.store";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import { fileEmbedChannel } from "@21n/components/files/fileEmbedChannel.store";
+  import { OperatingSystem } from "@21n/types/context.type";
+  import { pdfCache } from "@21n/utils/pdfCache.utils";
 
   // pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
   // pdfjs.GlobalWorkerOptions.workerSrc =

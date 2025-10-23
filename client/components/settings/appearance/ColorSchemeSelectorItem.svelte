@@ -1,10 +1,10 @@
 <script lang="ts">
-  import appearance from "$lib/client/stores/appearance.store";
-  import { AppSkin, type ColorScheme } from "$lib/client/types/appearance.type";
-  import { properCase } from "$lib/shared/utils/text.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Size } from "$lib/client/types/size.enum";
-  import { userPreferences } from "../userPreferences.store";
+  import appearance from "@21n/stores/appearance.store";
+  import { AppSkin, type ColorScheme } from "@21n/types/appearance.type";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/types/size.enum";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
   export let colorScheme: ColorScheme;
   export let isActive: boolean;
   export let size: Size.sm | Size.md = Size.md;

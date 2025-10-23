@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Rating from "$lib/client/components/collection/properties/ratingProperty/Rating.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import EndText from "../../propertyConfig/EndText.svelte";
+  import Rating from "@21n/components/collection/properties/ratingProperty/Rating.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import EndText from "@21n/components/collection/properties/propertyConfig/EndText.svelte";
   export let avatar: string;
   export let value: number = 0;
   export let count: number = 5;

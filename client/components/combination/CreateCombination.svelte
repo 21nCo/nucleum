@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import type { ISelectItem } from "$lib/client/types/select.type";
-  import ModalContentPadded from "$lib/client/components/modal/ModalContentPadded.svelte";
-  import { combinationStore } from "./combination.store";
-  import { CombinationType } from "./combination.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
+  import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import { toasts } from "@21n/stores/notification.store";
+  import { Orientation } from "@21n/types/direction.enum";
+  import type { ISelectItem } from "@21n/types/select.type";
+  import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
+  import { combinationStore } from "@21n/components/combination/combination.store";
+  import { CombinationType } from "@21n/components/combination/combination.type";
 
-  let name = "";
+  let label = "";
   let type: CombinationType = CombinationType.SIDENAV;
   let error: string | undefined = undefined;
   const typeOptions: ISelectItem[] = [
@@ -24,17 +24,23 @@
     {
       label: "Canvas",
       icon: "canvas",
-      value: CombinationType.WHITEBOARD
+      value: CombinationType.WHITEBOARD,
+      isDisabled: true,
+      badge: "planned"
     },
     {
       label: "Mind map",
       icon: "tree-view",
-      value: CombinationType.MINDMAP
+      value: CombinationType.MINDMAP,
+      isDisabled: true,
+      badge: "planned"
     },
     {
       label: "Timeline",
       icon: "calendar-blank",
-      value: CombinationType.TIMELINE
+      value: CombinationType.TIMELINE,
+      isDisabled: true,
+      badge: "planned"
     },
     {
       label: "Wall",
@@ -47,12 +53,16 @@
 
   async function onSave() {
     error = undefined;
-    if (name.length === 0) {
+    if (label.length === 0) {
       error = "Name is required";
       return;
     }
-    const result = await combinationStore.create({
-      name,
+    if (type !== CombinationType.SIDENAV) {
+      toasts.error("Only side nav combinations are supported currently");
+      return;
+    }
+    const result = await combinationStore.createSideNavCombination({
+      label,
       type
     });
     if (result && result.length > 0) {
@@ -72,7 +82,7 @@
           orientation: Orientation.Vertical
         }}
         placeholder="Some combination"
-        bind:value={name}
+        bind:value={label}
       />
       <OptionSelector
         labelProps={{ label: "Type of combination" }}

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import type { PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import { onMount } from "svelte";
-  import PanelSwitcher from "./PanelSwitcher.svelte";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   export let items: string[];
   export let value: string;
   export let style: PanelSwitcherStyle;

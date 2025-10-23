@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 
   export let postUrl: string;
 

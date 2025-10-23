@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { GlobalEvent, type Event } from "$lib/client/types/event.enum";
+  import { GlobalEvent, type Event } from "@21n/types/event.enum";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
 

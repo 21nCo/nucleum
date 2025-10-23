@@ -1,32 +1,32 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import { isTokenExpired, resolveToken } from "../utils/account.utils";
-  import account from "../stores/account.store";
-  import ExtensionThemeBase from "./ExtensionThemeBase.svelte";
-  import { ClientStorageKey } from "../persistence/persistence.type";
-  import { logger } from "../components/debug/logger.client";
-  import { clientStorage, getDapId } from "../persistence/persistence.utils";
+  import { isTokenExpired, resolveToken } from "@21n/utils/account.utils";
+  import account from "@21n/stores/account.store";
+  import ExtensionThemeBase from "@21n/extensions/ExtensionThemeBase.svelte";
+  import { ClientStorageKey } from "@21n/persistence/persistence.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { clientStorage } from "@21n/persistence/persistence.utils";
   import { createEventDispatcher } from "svelte";
-  import { Resource } from "../components/flux/resourceStores/resource.enum";
-  import { extractProduct } from "$lib/shared/utils/utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { extractProduct } from "@21n/shared-utils/utils";
   import {
     cleanExtensionSprites,
     extensionSprites
-  } from "../iconsV2/icon.store";
+  } from "@21n/icons-v2/icon.store";
   //!Below working with dev but not build or package
   // import sprite from "data-text:/assets/icons/sprite.svg";
   // import spritePhBase from "data-text:/assets/icons/sprite-ph-base.svg";
   // import spritePhFill from "data-text:/assets/icons/sprite-ph-fill.svg";
   // import spritePhLight from "data-text:/assets/icons/sprite-ph-light.svg";
-  import { resolveIconSvgSheetText } from "./iconSvgSheetTextResolver";
-  import { appStore } from "../stores/app.store";
+  import { resolveIconSvgSheetText } from "@21n/extensions/iconSvgSheetTextResolver";
+  import { appStore } from "@21n/stores/app.store";
   import {
     isRecordId,
     removeDuplicatesFilter
-  } from "../components/flux/resourceStores/resource.utils";
-  import { parse } from "$lib/shared/utils/json.utils";
-  import { ExtensionStore } from "./extension.store";
-  import { Extension } from "../products/product.type";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { parse } from "@21n/shared-utils/json.utils";
+  import { ExtensionStore } from "@21n/extensions/extension.store";
+  import { Extension } from "@21n/products/product.type";
   const dispatch = createEventDispatcher();
   export let id: string;
   export let extention: Extension;

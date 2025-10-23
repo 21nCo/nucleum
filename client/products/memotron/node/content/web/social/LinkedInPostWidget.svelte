@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import SocialPostLoadingInfo from "./SocialPostLoadingInfo.svelte";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import SocialPostLoadingInfo from "@21n/products/memotron/node/content/web/social/SocialPostLoadingInfo.svelte";
 
   export let postUrl: string;
 

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IPropertyConfigOption } from "../property.type";
+  import { tooltip } from "@21n/actions/popover.action";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IPropertyConfigOption } from "@21n/components/collection/properties/property.type";
   export let option: IPropertyConfigOption;
   export let value: string | string[] | null = null;
   $: isActive = Array.isArray(value)

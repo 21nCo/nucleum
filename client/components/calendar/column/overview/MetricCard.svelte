@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import view from "$lib/client/stores/view.store";
+  import { cn } from "@21n/utils/ui.utils";
+  import view from "@21n/stores/view.store";
 
   export let label: string;
   export let value: number;

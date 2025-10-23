@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import AppNameWithVersion from "./AppNameWithVersion.svelte";
-  import BlankLabsFooter from "./BlankLabsFooter.svelte";
-  import SystemStatus from "./SystemStatus.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import AppNameWithVersion from "@21n/components/settings/about/AppNameWithVersion.svelte";
+  import BlankLabsFooter from "@21n/components/settings/about/BlankLabsFooter.svelte";
+  import SystemStatus from "@21n/components/settings/about/SystemStatus.svelte";
   export let isHideAppVersion = false;
   export let isComingSoon: boolean = false;
   export let isShowSystemStatus: boolean = false;

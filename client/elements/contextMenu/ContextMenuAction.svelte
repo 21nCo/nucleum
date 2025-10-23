@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { popover } from "$lib/client/actions/popover.action";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { createEventPropagator } from "$lib/client/components/events/event.utils";
-  import view from "$lib/client/stores/view.store";
-  import { Placement } from "$lib/client/types/direction.enum";
+  import { popover } from "@21n/actions/popover.action";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { createEventPropagator } from "@21n/components/events/event.utils";
+  import view from "@21n/stores/view.store";
+  import { Placement } from "@21n/types/direction.enum";
   import {
     type IPopoverRenderBaseParams,
     PopoverTriggerMethod
-  } from "$lib/client/types/popover.type";
-  import type { IContextMenuItem } from "$lib/client/types/select.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import Popover from "../popover/Popover.svelte";
-  import Toggle from "../toggle/Toggle.svelte";
-  import ContextMenu from "./ContextMenu.svelte";
+  } from "@21n/types/popover.type";
+  import type { IContextMenuItem } from "@21n/types/select.type";
+  import { Size } from "@21n/types/size.enum";
+  import Popover from "@21n/elements/popover/Popover.svelte";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let id: string;

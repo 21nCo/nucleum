@@ -1,19 +1,19 @@
 <script lang="ts">
-  import BottomCta from "../shared/bottomCta/BottomCta.svelte";
-  import HeroSection from "../shared/HeroSection.svelte";
-  import Highlights from "../shared/highlights/Highlights.svelte";
+  import BottomCta from "@21n/landing/shared/bottomCta/BottomCta.svelte";
+  import HeroSection from "@21n/landing/shared/HeroSection.svelte";
+  import Highlights from "@21n/landing/shared/highlights/Highlights.svelte";
   import type {
     IFeature,
     IHeroInputs,
     IHighlight,
     ITestimonial,
     ITileItem
-  } from "../shared/landing.type";
-  import Testimonials from "../shared/testimonials/Testimonials.svelte";
-  import { landing, staticUrl } from "../shared/store/shared.store";
-  import HeroVideoV2 from "../shared/elements/HeroVideoV2.svelte";
-  import Features from "../shared/features/Features.svelte";
-  import { highlights } from "../shared/highlights/highlights.data";
+  } from "@21n/landing/shared/landing.type";
+  import Testimonials from "@21n/landing/shared/testimonials/Testimonials.svelte";
+  import { landing, staticUrl } from "@21n/landing/shared/store/shared.store";
+  import HeroVideoV2 from "@21n/landing/shared/elements/HeroVideoV2.svelte";
+  import Features from "@21n/landing/shared/features/Features.svelte";
+  import { highlights } from "@21n/landing/shared/highlights/highlights.data";
   let heroInputs: IHeroInputs = {
     tagline: "Your focus haven",
     description: "Track time, achieve goals and focus like never before.",

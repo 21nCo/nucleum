@@ -1,15 +1,15 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Orientation, Placement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { VerticalSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import { properCase } from "$lib/shared/utils/text.utils";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
-  import type { ISelectItem } from "$lib/client/types/select.type";
-  import HoverableElement from "../HoverableElement.svelte";
-  import Badge from "../text/Badge.svelte";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { tooltip } from "$lib/client/actions/popover.action";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Orientation, Placement } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { VerticalSwitcherStyle } from "@21n/types/switcher.enum";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import { bg, cn } from "@21n/utils/ui.utils";
+  import type { ISelectItem } from "@21n/types/select.type";
+  import HoverableElement from "@21n/elements/HoverableElement.svelte";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { tooltip } from "@21n/actions/popover.action";
   export let item: ISelectItem;
   export let style: VerticalSwitcherStyle = VerticalSwitcherStyle.BAR;
   export let labelOrientation: Orientation = Orientation.Vertical;

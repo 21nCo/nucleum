@@ -1,17 +1,17 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import AddNewButton from "$lib/client/elements/button/AddNewButton.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { debouncer } from "$lib/client/utils/utils";
-  import { analyticsConfigStore } from "./analytics.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import AddNewButton from "@21n/elements/button/AddNewButton.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import { Size } from "@21n/types/size.enum";
+  import { debouncer } from "@21n/utils/utils";
+  import { analyticsConfigStore } from "@21n/products/pointron/analytics/analytics.store";
   import {
     onAddPageClicked,
     onPagelabelChange,
     onRemovePageClicked
-  } from "./analytics.utils";
+  } from "@21n/products/pointron/analytics/analytics.utils";
 
   $: pages =
     $analyticsConfigStore.pages.length > 0

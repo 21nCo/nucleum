@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { Orientation } from "../types/direction.enum";
+  import { Orientation } from "@21n/types/direction.enum";
   import {
     InputStyle,
     type InputLabel,
     type PopoverInputOptions
-  } from "../types/input.type";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
-  import Popover from "./popover/Popover.svelte";
-  import FormControlLabelWrapper from "./text/formLabel/FormControlLabelWrapper.svelte";
-  import { Size } from "../types/size.enum";
+  } from "@21n/types/input.type";
+  import { bg, cn } from "@21n/utils/ui.utils";
+  import Popover from "@21n/elements/popover/Popover.svelte";
+  import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
+  import { Size } from "@21n/types/size.enum";
   let classList = "";
   export { classList as class };
   export let style: InputStyle = InputStyle.BORDERED;

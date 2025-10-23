@@ -1,22 +1,22 @@
 <script lang="ts">
-  import { Arrangement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import ResourceGridThumbnail from "../../record/thumbnail/ResourceGridThumbnail.svelte";
-  import ResourceThumbnailBase from "../../record/thumbnail/ResourceThumbnailBase.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { type IGoalThumb } from "../goal.type";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
+  import { Arrangement } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import ResourceGridThumbnail from "@21n/components/record/thumbnail/ResourceGridThumbnail.svelte";
+  import ResourceThumbnailBase from "@21n/components/record/thumbnail/ResourceThumbnailBase.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { type IGoalThumb } from "@21n/components/goals/goal.type";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
   import {
     activeSession,
     currentFocusItem
-  } from "$lib/client/products/pointron/focus/session.store";
+  } from "@21n/products/pointron/focus/session.store";
 
-  import GoalThumbnailSub from "./GoalThumbnailSub.svelte";
-  import GoalThumbnailTitle from "./GoalThumbnailTitle.svelte";
-  import FocusItemPickOverlay from "$lib/client/products/pointron/focus/elements/focusitem/FocusItemPickOverlay.svelte";
-  import { resolveGoalColor } from "../goal.utils";
+  import GoalThumbnailSub from "@21n/components/goals/thumbnail/GoalThumbnailSub.svelte";
+  import GoalThumbnailTitle from "@21n/components/goals/thumbnail/GoalThumbnailTitle.svelte";
+  import FocusItemPickOverlay from "@21n/products/pointron/focus/elements/focusitem/FocusItemPickOverlay.svelte";
+  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
   export let item: IGoalThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let size: Size.sm | Size.md = Size.md;

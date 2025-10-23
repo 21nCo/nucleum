@@ -1,22 +1,22 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { IFooter, IListItem, ITileItem } from "../landing.type";
-  import Button from "../elements/Button.svelte";
-  import Box from "./Box.svelte";
-  import ListWithTitle from "./ListWithTitle.svelte";
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import appearance from "$lib/client/stores/appearance.store";
-  import view from "$lib/client/stores/view.store";
-  import { Theme } from "$lib/client/types/appearance.type";
-  import QrElement from "../elements/QRElement.svelte";
+  import type { IFooter, IListItem, ITileItem } from "@21n/landing/shared/landing.type";
+  import Button from "@21n/landing/shared/elements/Button.svelte";
+  import Box from "@21n/landing/shared/footer/Box.svelte";
+  import ListWithTitle from "@21n/landing/shared/footer/ListWithTitle.svelte";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import appearance from "@21n/stores/appearance.store";
+  import view from "@21n/stores/view.store";
+  import { Theme } from "@21n/types/appearance.type";
+  import QrElement from "@21n/landing/shared/elements/QRElement.svelte";
   import {
     isProductPage,
     isProductsPanelOpen,
     landing,
     org
-  } from "../store/shared.store";
-  import ButtonAsLink from "../ButtonAsLink.svelte";
+  } from "@21n/landing/shared/store/shared.store";
+  import ButtonAsLink from "@21n/landing/shared/ButtonAsLink.svelte";
   export let products: IListItem[];
   export let footerValues: IFooter;
   export let appStoreUrl: string =

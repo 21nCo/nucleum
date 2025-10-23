@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
-  import GoalSearchResultItem from "$lib/client/components/goals/GoalSearchResultItem.svelte";
-  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import GoalSearchResultItem from "@21n/components/goals/GoalSearchResultItem.svelte";
+  import type { ITaskThumb } from "@21n/components/tasks/task.type";
 
   export let item: IGoalThumb | ITaskThumb;
   $: isGoal = determineResourceType(item.id) === Resource.goal;

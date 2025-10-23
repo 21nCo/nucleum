@@ -1,14 +1,14 @@
 <script lang="ts">
-  import ComparisonRow from "./ComparisonRow.svelte";
+  import ComparisonRow from "@21n/components/featureWheel/sidePanel/comparisionTable/ComparisonRow.svelte";
   import type {
     IContemporary,
     IFeatureWheelContemporary,
     IFwFeature
-  } from "$lib/client/types/featureWheel.type";
-  import HeaderTitle from "./HeaderTitle.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import MarkdownRenderer from "$lib/client/landing/shared/elements/MarkdownRenderer.svelte";
+  } from "@21n/types/featureWheel.type";
+  import HeaderTitle from "@21n/components/featureWheel/sidePanel/comparisionTable/HeaderTitle.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import MarkdownRenderer from "@21n/landing/shared/elements/MarkdownRenderer.svelte";
 
   export let feature: IFwFeature;
   export let contemporaries: IContemporary[] = [];

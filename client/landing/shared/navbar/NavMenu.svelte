@@ -1,8 +1,8 @@
 <script lang="ts">
-  import type { ITopNavBar } from "../landing.type";
-  import NavMenuItem from "./NavMenuItem.svelte";
-  import { popover } from "$lib/client/actions/popover.action";
-  import NavBarExpandPopover from "./NavBarExpandPopover.svelte";
+  import type { ITopNavBar } from "@21n/landing/shared/landing.type";
+  import NavMenuItem from "@21n/landing/shared/navbar/NavMenuItem.svelte";
+  import { popover } from "@21n/actions/popover.action";
+  import NavBarExpandPopover from "@21n/landing/shared/navbar/NavBarExpandPopover.svelte";
 
   export let topNavBarValues: ITopNavBar;
   export let isStickedContext: boolean = false;

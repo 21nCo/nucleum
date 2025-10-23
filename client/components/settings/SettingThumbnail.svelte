@@ -1,12 +1,12 @@
 <script lang="ts">
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
-  import { ActionType } from "$lib/client/types/action.type";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { abg, bg, cn } from "$lib/client/utils/ui.utils";
+  import Divider from "@21n/elements/Divider.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import view from "@21n/stores/view.store";
+  import { ActionType } from "@21n/types/action.type";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { abg, bg, cn } from "@21n/utils/ui.utils";
   export let action: string;
   export let orientation: Orientation = Orientation.Horizontal;
   export let width: string = "w-24";
@@ -30,11 +30,11 @@
       "flex px-4 py-3 w-full items-center justify-between":
         orientation === Orientation.Horizontal,
       "border-y border-transparent": !isActive && dev_isOutlineStyle,
-      "notouch:hover:bg-bgs3": !isActive,
+      "notouch:hover:bg-bgs3-striped": !isActive,
       "bg-aps3 border-y border-aps3 hover:bg-aps2 hover:bg-opacity-50 text-aps1":
         isActive && dev_isOutlineStyle,
       [abg()]: !dev_isOutlineStyle && isActive,
-      "px-2 py-3 rounded-md hover:bg-bgs3":
+      "px-2 py-3 rounded-md hover:bg-bgs3-striped":
         orientation === Orientation.Vertical,
       [bg(
         orientation === Orientation.Vertical

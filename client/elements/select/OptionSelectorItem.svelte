@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { properCase } from "$lib/shared/utils/text.utils";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { properCase } from "@21n/shared-utils/text.utils";
   import { fade, scale } from "svelte/transition";
-  import Icon from "../Icon.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
   import {
     OptionSelectorStyle,
     type ISelectItem
-  } from "$lib/client/types/select.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import AvatarRenderer from "../avatarPicker/AvatarRenderer.svelte";
-  import TextWithHoverTooltip from "../text/TextWithHoverTooltip.svelte";
-  import Badge from "../text/Badge.svelte";
-  import { tooltip } from "$lib/client/actions/popover.action";
+  } from "@21n/types/select.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
+  import TextWithHoverTooltip from "@21n/elements/text/TextWithHoverTooltip.svelte";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import { tooltip } from "@21n/actions/popover.action";
   import { backOut } from "svelte/easing";
   export let item: ISelectItem;
   export let size: Size.lg | Size.md | Size.sm = Size.md;

@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import modalEvent from "$lib/client/components/modal/modal.store";
-  import { appStore } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Icon from "../Icon.svelte";
+  import { tooltip } from "@21n/actions/popover.action";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import modalEvent from "@21n/components/modal/modal.store";
+  import { appStore } from "@21n/stores/app.store";
+  import view from "@21n/stores/view.store";
+  import { ButtonVariant } from "@21n/types/button.type";
+  import { Placement } from "@21n/types/direction.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
   export let path: string | undefined = undefined;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.FULL;
   /**

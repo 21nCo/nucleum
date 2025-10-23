@@ -1,5 +1,5 @@
-import type { PricingPlan } from "../../shared/pricing/pricing.types";
-import { freePlan, nucleusPlan } from "../../shared/pricing/pricing.data";
+import type { PricingPlan } from "@21n/landing/shared/pricing/pricing.types";
+import { freePlan, nucleusPlan } from "@21n/landing/shared/pricing/pricing.data";
 
 const syncPlan: PricingPlan = {
   id: "sync",

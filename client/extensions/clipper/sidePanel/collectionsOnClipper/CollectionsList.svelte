@@ -1,9 +1,9 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import CollectionItem from "./CollectionItem.svelte";
-  import type { CollectionData } from "./types";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import CollectionItem from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/CollectionItem.svelte";
+  import type { CollectionData } from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/types";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
 
   export let collections: CollectionData[];
 

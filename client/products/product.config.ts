@@ -1,9 +1,9 @@
-import { Extension, Product } from "./product.type";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { Action } from "../types/action.enum";
-import { MemotronAction } from "./memotron/memotronAction.enum";
-import { resourceConfig } from "$lib/client/components/flux/resourceStores/resource.config";
-import type { IResourceTableConfig } from "$lib/client/components/flux/flux.type";
+import { Extension, Product } from "@21n/products/product.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Action } from "@21n/types/action.enum";
+import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
+import { resourceConfig } from "@21n/components/flux/resourceStores/resource.config";
+import type { IResourceTableConfig } from "@21n/components/flux/flux.type";
 
 const isDev = import.meta.env?.DEV || false;
 
@@ -122,7 +122,8 @@ export const products: Record<Product, IAppConfigBase> = {
         ...commonTables,
         ...Array.from(Object.values(resourceTableMap)).flat(),
         ...linkabilityTables,
-        ...filesAbilityTables
+        ...filesAbilityTables,
+        Resource.combination
       ]
     },
     librarySectionLabel: "Nucleus",

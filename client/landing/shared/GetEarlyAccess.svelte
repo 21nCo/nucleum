@@ -1,7 +1,7 @@
 <script lang="ts">
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
 
-  import Button from "./elements/Button.svelte";
+  import Button from "@21n/landing/shared/elements/Button.svelte";
 
   export let email: string;
   export let onSubscribe: () => void;

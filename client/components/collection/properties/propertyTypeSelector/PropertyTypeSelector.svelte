@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { popover } from "$lib/client/actions/popover.action";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IProperty, PropertyType } from "../property.type";
-  import PropertyTypeSelectorPopover from "./PropertyTypeSelectorPopover.svelte";
-  import { autoPropertyOptions, propertyOptions } from "../property.store";
-  import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  import { popover } from "@21n/actions/popover.action";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Placement } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IProperty, PropertyType } from "@21n/components/collection/properties/property.type";
+  import PropertyTypeSelectorPopover from "@21n/components/collection/properties/propertyTypeSelector/PropertyTypeSelectorPopover.svelte";
+  import { autoPropertyOptions, propertyOptions } from "@21n/components/collection/properties/property.store";
+  import type { DropdownItem } from "@21n/types/dropdownItem.type";
+  import type { IRecordId } from "@21n/types/data.type";
   import {
     PropertyTypeGroup,
     PropertyTypeMode,
     type IPropertyTypeSelectorGroup
-  } from "./propertyTypeSelector.type";
+  } from "@21n/components/collection/properties/propertyTypeSelector/propertyTypeSelector.type";
 
   export let row: IProperty;
   export let onChange: (e: { id: IRecordId; type: PropertyType }) => void;

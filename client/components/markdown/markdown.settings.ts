@@ -1,7 +1,7 @@
-import { AvatarType } from "$lib/client/types/avatar.type";
-import { KeyValueStore } from "../flux/resourceStores/kv.store";
-import { Resource } from "../flux/resourceStores/resource.enum";
-import type { IMarkdownSettings } from "./md.type";
+import { AvatarType } from "@21n/types/avatar.type";
+import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import type { IMarkdownSettings } from "@21n/components/markdown/md.type";
 
 class MarkdownSettingsStore extends KeyValueStore<IMarkdownSettings> {
   constructor() {

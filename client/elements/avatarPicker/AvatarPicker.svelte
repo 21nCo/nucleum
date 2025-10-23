@@ -1,15 +1,15 @@
 <script lang="ts">
-  import PanelSwitcher from "../switcher/PanelSwitcher.svelte";
-  import { ColorStrength } from "../../types/appearance.type";
-  import { deepCopy } from "$lib/shared/utils/obj.utils";
-  import Divider from "../Divider.svelte";
-  import Button from "../button/Button.svelte";
-  import Icon from "../Icon.svelte";
-  import { appStoreShuffleEmojis } from "../../stores/app.store";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { Size } from "../../types/size.enum";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import { deepCopy } from "@21n/shared-utils/obj.utils";
+  import Divider from "@21n/elements/Divider.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { appStoreShuffleEmojis } from "@21n/stores/app.store";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import { Size } from "@21n/types/size.enum";
   import { createEventDispatcher, onMount, tick } from "svelte";
-  import { debouncer } from "$lib/client/utils/utils";
+  import { debouncer } from "@21n/utils/utils";
   import {
     AvatarType,
     type IAvatar,
@@ -18,17 +18,17 @@
     type IconAvatar,
     type EmojiAvatar,
     AvatarPickerContext
-  } from "../../types/avatar.type";
-  import { PanelSwitcherStyle } from "../../types/switcher.enum";
-  import Text from "../text/Text.svelte";
-  import { TextStyle } from "../../types/text.enum";
-  import AvatarRenderer from "./AvatarRenderer.svelte";
-  import { emojis, materialSymbols } from "$lib/client/data/avatars";
-  import SwitchInput from "../toggle/SwitchInput.svelte";
-  import account from "$lib/client/stores/account.store";
-  import UploadButton from "$lib/client/elements/button/UploadButton.svelte";
-  import { abg, cn } from "$lib/client/utils/ui.utils";
-  import view from "$lib/client/stores/view.store";
+  } from "@21n/types/avatar.type";
+  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
+  import { emojis, materialSymbols } from "@21n/data/avatars";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import account from "@21n/stores/account.store";
+  import UploadButton from "@21n/elements/button/UploadButton.svelte";
+  import { abg, cn } from "@21n/utils/ui.utils";
+  import view from "@21n/stores/view.store";
 
   export let mode: AvatarType.EMOJI | AvatarType.ICON = AvatarType.ICON;
   export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;

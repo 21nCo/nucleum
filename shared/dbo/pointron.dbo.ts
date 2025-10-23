@@ -1,4 +1,4 @@
-import { userDatev4 } from "./global.dbo";
+import { userDatev4 } from "@21n/shared-dbo/global.dbo";
 
 /**
  * Pointron dbo definitions used by the client apps.

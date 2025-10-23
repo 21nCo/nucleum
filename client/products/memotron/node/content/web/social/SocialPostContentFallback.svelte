@@ -1,24 +1,24 @@
 <script lang="ts">
-  import { appStore } from "$lib/client/stores/app.store";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { formatDatetime } from "$lib/client/utils/time.utils";
+  import { appStore } from "@21n/stores/app.store";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import { formatDatetime } from "@21n/utils/time.utils";
   import { getContext, onMount } from "svelte";
-  import { resolveContentPreview } from "../../../node.utils";
+  import { resolveContentPreview } from "@21n/products/memotron/node/node.utils";
   import {
     NodeType,
     socialPostNodeTypeList,
     socialProfileWithImageUnavailable
-  } from "../../../node.type";
-  import type { INode } from "../../../node.type";
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { Persistence } from "$lib/client/persistence/persistence";
-  import { InfoTextType } from "$lib/client/types/text.type";
-  import { parse } from "$lib/shared/utils/json.utils";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { toasts } from "$lib/client/stores/notification.store";
+  } from "@21n/products/memotron/node/node.type";
+  import type { INode } from "@21n/products/memotron/node/node.type";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { Persistence } from "@21n/persistence/persistence";
+  import { InfoTextType } from "@21n/types/text.type";
+  import { parse } from "@21n/shared-utils/json.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import { toasts } from "@21n/stores/notification.store";
 
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;

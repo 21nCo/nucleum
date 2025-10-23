@@ -1,12 +1,12 @@
 <script lang="ts">
-  import FileView from "$lib/client/components/files/FileView.svelte";
-  import context from "$lib/client/stores/context.store";
-  import { AvatarType, type IAvatar } from "$lib/client/types/avatar.type";
-  import { OperatingSystem } from "$lib/client/types/context.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import FileView from "@21n/components/files/FileView.svelte";
+  import context from "@21n/stores/context.store";
+  import { AvatarType, type IAvatar } from "@21n/types/avatar.type";
+  import { OperatingSystem } from "@21n/types/context.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
   import "@fontsource/noto-color-emoji";
-  import Icon from "../Icon.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
   export let avatar: IAvatar;
   export let isHoverDisabled = true;
   export let isHoverEnabled = false;

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
+  import SubAtomLogo from "@21n/branding/SubAtomLogo.svelte";
   import {
     FeatureWheelMode,
     type IFeatureWheelGroup,
     type IFeatureWheelSpoke
-  } from "$lib/client/types/featureWheel.type";
+  } from "@21n/types/featureWheel.type";
   export let mode: FeatureWheelMode = FeatureWheelMode.DEFAULT;
   let categoryColoringStyle: "bg" | "spoke" =
     mode === FeatureWheelMode.PROGRESS ? "spoke" : "bg";

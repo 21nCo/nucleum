@@ -1,18 +1,18 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import OptionSelectorItem from "./OptionSelectorItem.svelte";
-  import FormControlLabelWrapper from "../text/formLabel/FormControlLabelWrapper.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import OptionSelectorItem from "@21n/elements/select/OptionSelectorItem.svelte";
+  import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
   import {
     OptionSelectorStyle,
     type ISelectItem,
     type ISelectValue
-  } from "$lib/client/types/select.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { InputLabel } from "$lib/client/types/input.type";
-  import context from "$lib/client/stores/context.store";
-  import { OperatingSystem } from "$lib/client/types/context.type";
+  } from "@21n/types/select.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { InputLabel } from "@21n/types/input.type";
+  import context from "@21n/stores/context.store";
+  import { OperatingSystem } from "@21n/types/context.type";
   const dispatch = createEventDispatcher();
   export let options: ISelectItem[];
   export let labelProps: InputLabel | undefined = undefined;

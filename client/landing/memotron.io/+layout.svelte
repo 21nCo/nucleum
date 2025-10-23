@@ -1,12 +1,12 @@
 <script lang="ts">
-  import "$lib/client/app.css";
-  import BlankLandingLayout from "../shared/BlankLandingLayout.svelte";
+  import "@21n/client/app.css";
+  import BlankLandingLayout from "@21n/landing/shared/BlankLandingLayout.svelte";
   import type {
     IFooter,
     ILandingProductUrls,
     ITopNavBar
-  } from "../shared/landing.type";
-  import { landing, org } from "../shared/store/shared.store";
+  } from "@21n/landing/shared/landing.type";
+  import { landing, org } from "@21n/landing/shared/store/shared.store";
 
   const urls: ILandingProductUrls = {
     web: "https://web.memotron.app",

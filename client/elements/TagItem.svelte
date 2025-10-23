@@ -1,8 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import Icon from "./Icon.svelte";
-  import { abg, cn } from "../utils/ui.utils";
-  import { Size } from "../types/size.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { abg, cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/types/size.enum";
   export let label: string;
   export let id: string;
   export let icon: string | undefined = "";

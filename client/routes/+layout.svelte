@@ -1,6 +1,6 @@
 <script lang="ts">
-  import "../app.css";
-  import BaseLayer from "../layout/layers/BaseLayer.svelte";
+  import "@21n/client/app.css";
+  import BaseLayer from "@21n/layout/layers/BaseLayer.svelte";
 </script>
 
 <BaseLayer>

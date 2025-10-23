@@ -1,4 +1,4 @@
-import type { IStore } from "$lib/client/types/data.type";
+import type { IStore } from "@21n/types/data.type";
 
 export type SpaceStore = IStore & {
   spaces: Space[];

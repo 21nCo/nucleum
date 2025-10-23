@@ -1,15 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import LandingThemeLayer from "./LandingThemeLayer.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import LandingThemeLayer from "@21n/landing/LandingThemeLayer.svelte";
   // import AnalyticsLayer from "../layout/layers/analytics/AnalyticsLayer.svelte";
-  import MetadataLayer from "../layout/layers/MetadataLayer.svelte";
-  import appearance from "$lib/client/stores/appearance.store";
-  import context from "../stores/context.store";
-  import { detectSystemOS, detectTouchDevice } from "../utils/browser.utils";
-  import PosthogTelemetry from "../layout/layers/analytics/PosthogTelemetry.svelte";
-  import BottomModal from "../components/bottomModal/BottomModal.svelte";
-  import { landing } from "./shared/store/shared.store";
+  import MetadataLayer from "@21n/layout/layers/MetadataLayer.svelte";
+  import appearance from "@21n/stores/appearance.store";
+  import context from "@21n/stores/context.store";
+  import { detectSystemOS, detectTouchDevice } from "@21n/utils/browser.utils";
+  import PosthogTelemetry from "@21n/layout/layers/analytics/PosthogTelemetry.svelte";
+  import BottomModal from "@21n/components/bottomModal/BottomModal.svelte";
+  import { landing } from "@21n/landing/shared/store/shared.store";
   export let bgColor: string = "bg-bgs1";
 
   onMount(() => {

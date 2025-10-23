@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
-  import { SessionCompositionType } from "$lib/client/types/pointron/sessionComposition.type";
-  import TimeSelector from "$lib/client/components/TimeSelector.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { incrementTime } from "$lib/client/utils/time.utils";
-  import ComposeBreak from "./ComposeBreak.svelte";
-  import ComposeTotalsText from "./ComposeTotalsText.svelte";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
+  import { SessionCompositionType } from "@21n/types/pointron/sessionComposition.type";
+  import TimeSelector from "@21n/components/TimeSelector.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { incrementTime } from "@21n/utils/time.utils";
+  import ComposeBreak from "@21n/products/pointron/focus/advanced/composition/ComposeBreak.svelte";
+  import ComposeTotalsText from "@21n/products/pointron/focus/advanced/composition/ComposeTotalsText.svelte";
   export const id: string = "";
   let endTime: Date = new Date(incrementTime(new Date(), 1, true));
   let hour: number = endTime.getHours();

@@ -5,18 +5,18 @@
     type INode,
     type INodeThumb,
     NodeType
-  } from "../node.type";
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/products/memotron/node/node.type";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
+  import { appStore } from "@21n/stores/app.store";
+  import { cn } from "@21n/utils/ui.utils";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import NodeAvatar from "../avatar/NodeAvatar.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { resolveNodeLabel } from "../node.utils";
-  import NodeTitleBreadcrumbs from "./NodeTitleBreadcrumbs.svelte";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import NodeAvatar from "@21n/products/memotron/node/avatar/NodeAvatar.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { resolveNodeLabel } from "@21n/products/memotron/node/node.utils";
+  import NodeTitleBreadcrumbs from "@21n/products/memotron/node/title/NodeTitleBreadcrumbs.svelte";
   export let item: INodeThumb;
   export let isNodePageContext: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;

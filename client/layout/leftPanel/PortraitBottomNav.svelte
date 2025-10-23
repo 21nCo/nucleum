@@ -1,11 +1,11 @@
 <script lang="ts">
-  import AppMenuSwitcher from "$lib/client/layout/leftPanel/appMenuSwitcher/AppMenuSwitcher.svelte";
-  import { LayoutContext } from "$lib/client/types/layout.type";
-  import { player } from "$lib/client/components/modal/modal.store";
-  import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
+  import AppMenuSwitcher from "@21n/layout/leftPanel/appMenuSwitcher/AppMenuSwitcher.svelte";
+  import { LayoutContext } from "@21n/types/layout.type";
+  import { player } from "@21n/components/modal/modal.store";
+  import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
   import { page } from "$app/stores";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import LibrarySearchPortrait from "$lib/client/products/memotron/library/search/LibrarySearchPortrait.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import LibrarySearchPortrait from "@21n/products/memotron/library/search/LibrarySearchPortrait.svelte";
 
   let testingInMobileBrowser: boolean = false;
   let isSearchFocused: boolean = false;

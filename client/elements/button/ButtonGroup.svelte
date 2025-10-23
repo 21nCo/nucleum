@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { type IButtonParams } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Button from "./Button.svelte";
+  import { ButtonStyle, type IButtonParams } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import Button from "@21n/elements/button/Button.svelte";
   export let buttons: IButtonParams[] = [];
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
 
@@ -27,7 +27,7 @@
   })}
 >
   {#each buttons as button}
-    <div class="w-full h-full">
+    <div class="w-full h-full border-t border-brs2">
       <Button
         {...button}
         isBoxed={true}

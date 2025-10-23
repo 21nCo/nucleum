@@ -1,19 +1,19 @@
 <script lang="ts">
-  import BottomCta from "../shared/bottomCta/BottomCta.svelte";
-  import HeroSection from "../shared/HeroSection.svelte";
-  import Highlights from "../shared/highlights/Highlights.svelte";
-  import Testimonials from "../shared/testimonials/Testimonials.svelte";
+  import BottomCta from "@21n/landing/shared/bottomCta/BottomCta.svelte";
+  import HeroSection from "@21n/landing/shared/HeroSection.svelte";
+  import Highlights from "@21n/landing/shared/highlights/Highlights.svelte";
+  import Testimonials from "@21n/landing/shared/testimonials/Testimonials.svelte";
   import {
     currentProductsStore,
     landing,
     org
-  } from "../shared/store/shared.store";
-  import HeroVideoV2 from "../shared/elements/HeroVideoV2.svelte";
-  import Features from "../shared/features/Features.svelte";
-  import PageSeo from "../shared/seo/PageSEO.svelte";
-  import GridItemsSection from "../shared/grid/GridItemsSection.svelte";
-  import TileItemsSection from "../shared/tile/TileItemsSection.svelte";
-  import type { IGridItem, ITileItem } from "../shared/landing.type";
+  } from "@21n/landing/shared/store/shared.store";
+  import HeroVideoV2 from "@21n/landing/shared/elements/HeroVideoV2.svelte";
+  import Features from "@21n/landing/shared/features/Features.svelte";
+  import PageSeo from "@21n/landing/shared/seo/PageSEO.svelte";
+  import GridItemsSection from "@21n/landing/shared/grid/GridItemsSection.svelte";
+  import TileItemsSection from "@21n/landing/shared/tile/TileItemsSection.svelte";
+  import type { IGridItem, ITileItem } from "@21n/landing/shared/landing.type";
 
   export let data;
   const whitePaperUrl = org.whitepaper;

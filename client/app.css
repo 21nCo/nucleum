@@ -220,4 +220,35 @@ blockquote {
       transparent 4px
     );
   }
+
+  .bg-bgs2-striped {
+    background: repeating-linear-gradient(
+      45deg,
+      rgb(var(--colors-bgs3)) 0px,
+      rgb(var(--colors-bgs3)) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+  }
+
+  .bg-bgs3-striped {
+    background: repeating-linear-gradient(
+      45deg,
+      rgb(var(--colors-bgs4)) 0px,
+      rgb(var(--colors-bgs4)) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+  }
+
+  .bg-aps2-striped, .bg-aps3-striped {
+    background: repeating-linear-gradient(
+      /* to top left, */
+      135deg,
+      rgba(var(--colors-aps2), 1) 0px,
+      rgba(var(--colors-aps2), 1) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+  }
 }

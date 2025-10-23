@@ -1,4 +1,4 @@
-import { LogType } from "./debug.type";
+import { LogType } from "@21n/components/debug/debug.type";
 
 class Logger {
   level: LogType = LogType.ERROR;

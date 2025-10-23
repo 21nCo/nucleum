@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Placement } from "../types/direction.enum";
+  import { Placement } from "@21n/types/direction.enum";
   export let direction: Placement = Placement.Left;
 </script>
 

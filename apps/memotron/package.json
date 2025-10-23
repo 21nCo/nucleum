@@ -1,7 +1,7 @@
 {
   "name": "memotron-app",
-  "version": "0.62.0",
-  "build": 7,
+  "version": "0.63.0",
+  "build": 1,
   "private": true,
   "scripts": {
     "dev": "vite dev --host 0.0.0.0 --port 5002",

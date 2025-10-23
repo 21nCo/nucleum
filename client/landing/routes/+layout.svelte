@@ -1,8 +1,8 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import "$lib/client/app.css";
-  import BlankLandingLayout from "../shared/BlankLandingLayout.svelte";
-  import { landing } from "../shared/store/shared.store";
+  import "@21n/client/app.css";
+  import BlankLandingLayout from "@21n/landing/shared/BlankLandingLayout.svelte";
+  import { landing } from "@21n/landing/shared/store/shared.store";
 
   export let data: {
     urls?: any;

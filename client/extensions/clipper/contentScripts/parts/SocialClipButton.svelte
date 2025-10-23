@@ -1,17 +1,17 @@
 <script lang="ts">
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import HoverableElement from "$lib/client/elements/HoverableElement.svelte";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import { webpage } from "../store";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { AlertType } from "$lib/client/types/notification.type";
-  import { enumToString } from "$lib/shared/utils/text.utils";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
+  import { Placement } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import HoverableElement from "@21n/elements/HoverableElement.svelte";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { NodeType } from "@21n/products/memotron/node/node.type";
+  import { webpage } from "@21n/extensions/clipper/contentScripts/store";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { AlertType } from "@21n/types/notification.type";
+  import { enumToString } from "@21n/shared-utils/text.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
 
   export let contentType: NodeType;
   export let size: Size.sm | Size.md | Size.lg = Size.md;

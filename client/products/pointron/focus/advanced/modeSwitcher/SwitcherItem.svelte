@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { cn } from "@21n/utils/ui.utils";
   export let mode: number = 0;
   export let isActive: boolean = false;
 </script>

@@ -1,4 +1,4 @@
-import { iconMappings } from "./icons.map";
+import { iconMappings } from "@21n/icons-v2/icons.map";
 
 // Phosphor icons that are NOT in icons.map.ts (these will still use phosphor directly)
 const phosphorIcons = [

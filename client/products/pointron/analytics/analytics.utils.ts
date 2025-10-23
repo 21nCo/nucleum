@@ -2,22 +2,22 @@ import {
   TimePeriodType,
   TimeScale,
   type TimePeriod
-} from "$lib/client/types/time.type";
-import { deepCopy } from "$lib/shared/utils/obj.utils";
+} from "@21n/types/time.type";
+import { deepCopy } from "@21n/shared-utils/obj.utils";
 import {
   determinePreviousTimePeriod,
   determineTimePeriod,
   determineTimePeriodv2
-} from "$lib/client/utils/time.utils";
+} from "@21n/utils/time.utils";
 import { get } from "svelte/store";
-import { analyticsConfigStore, selectedPageId } from "./analytics.store";
+import { analyticsConfigStore, selectedPageId } from "@21n/products/pointron/analytics/analytics.store";
 import {
   AnalyticsCardGrouping,
   AnalyticsCardType,
   type AnalyticsPage,
   type IAnalyticsCard
-} from "./analytics.types";
-import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+} from "@21n/products/pointron/analytics/analytics.types";
+import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 
 export function onAddPageClicked() {
   analyticsConfigStore.addPage();

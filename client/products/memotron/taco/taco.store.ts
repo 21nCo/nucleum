@@ -1,12 +1,12 @@
-import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+import { userPreferences } from "@21n/components/settings/userPreferences.store";
 import { get } from "svelte/store";
-import { nodeStore, vectorResourceStore } from "../node/node.store";
-import { NodeType } from "../node/node.type";
-import { TacoActions } from "./taco.types";
-import { tacoWorker } from "../memotron.utils";
-import { Embed, OperatingSystem } from "$lib/client/types/context.type";
-import context from "$lib/client/stores/context.store";
-import { deleteAllLocalModels } from "./taco.utils";
+import { nodeStore, vectorResourceStore } from "@21n/products/memotron/node/node.store";
+import { NodeType } from "@21n/products/memotron/node/node.type";
+import { TacoActions } from "@21n/products/memotron/taco/taco.types";
+import { tacoWorker } from "@21n/products/memotron/memotron.utils";
+import { Embed, OperatingSystem } from "@21n/types/context.type";
+import context from "@21n/stores/context.store";
+import { deleteAllLocalModels } from "@21n/products/memotron/taco/taco.utils";
 
 const dev_isEnableSemanticSearch = false;
 

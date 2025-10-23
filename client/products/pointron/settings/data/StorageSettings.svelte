@@ -1,36 +1,36 @@
 <script lang="ts">
-  import view from "$lib/client/stores/view.store";
+  import view from "@21n/stores/view.store";
   import {
     toasts,
     confirmationNotification
-  } from "$lib/client/stores/notification.store";
-  import { lastImportTime } from "$lib/client/products/pointron/pointron.store";
+  } from "@21n/stores/notification.store";
+  import { lastImportTime } from "@21n/products/pointron/pointron.store";
   import {
     StatusMessageType,
     type StatusMessage
-  } from "$lib/client/types/statusMessage.type";
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import context from "$lib/client/stores/context.store";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import Text from "$lib/client/elements/text/Text.svelte";
+  } from "@21n/types/statusMessage.type";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import context from "@21n/stores/context.store";
+  import { TextStyle } from "@21n/types/text.enum";
+  import Text from "@21n/elements/text/Text.svelte";
   import type {
     TableColumnItem,
     TableRowItem
-  } from "$lib/client/types/tableCell.type";
+  } from "@21n/types/tableCell.type";
   import { onMount } from "svelte";
-  import ExportData from "./ExportData.svelte";
+  import ExportData from "@21n/products/pointron/settings/data/ExportData.svelte";
   // import { PointronPersistence } from "$lib/client/products/pointron/pointron.persistence";
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import Table2 from "$lib/client/elements/table/Table2.svelte";
+  import { ButtonVariant } from "@21n/types/button.type";
+  import Table2 from "@21n/elements/table/Table2.svelte";
   import {
     TableCellType,
     type TableColumn
-  } from "$lib/client/types/table.type";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { InfoTextType } from "$lib/client/types/text.type";
-  import ImportAppListPart from "./ImportAppListPart.svelte";
+  } from "@21n/types/table.type";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { InfoTextType } from "@21n/types/text.type";
+  import ImportAppListPart from "@21n/products/pointron/settings/data/ImportAppListPart.svelte";
 
   let clearMessage: string | undefined = undefined;
   let fileInput: HTMLInputElement;

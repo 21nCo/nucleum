@@ -1,12 +1,12 @@
 <script lang="ts">
-  import type { ICollectionThumb } from "../collection.type";
+  import type { ICollectionThumb } from "@21n/components/collection/collection.type";
   import { onMount } from "svelte";
-  import CountBadge from "./CountBadge.svelte";
-  import { cache } from "$lib/client/layout/layers/cache/cache.store";
-  import { resourceCacheKey } from "../../flux/resourceStores/resource.utils";
-  import { Resource } from "../../flux/resourceStores/resource.enum";
-  import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  import CountBadge from "@21n/components/collection/counts/CountBadge.svelte";
+  import { cache } from "@21n/layout/layers/cache/cache.store";
+  import { resourceCacheKey } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { CacheKey } from "@21n/layout/layers/cache/cache.type";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
 
   export let item: ICollectionThumb;
   export let isShowLabel: boolean = false;

@@ -1,18 +1,18 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import view from "$lib/client/stores/view.store";
-  import { resizeListener } from "$lib/client/actions/resize.action";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
+  import { Size } from "@21n/types/size.enum";
+  import view from "@21n/stores/view.store";
+  import { resizeListener } from "@21n/actions/resize.action";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import {
     uiState,
     uiStateDerived
-  } from "$lib/client/stores/uiState/uiState.store";
+  } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import { OverviewPanel } from "./overview.type";
+  } from "@21n/stores/uiState/uiState.type";
+  import { OverviewPanel } from "@21n/products/nucleus/overview/overview.type";
 
   export let isConstrainedWidth = false;
   let selectedPanel: OverviewPanel = resolveSavedState() ?? OverviewPanel.FOCUS;

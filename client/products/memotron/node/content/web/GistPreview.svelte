@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-  import type { IGist } from "../../node.type";
+  import type { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
+  import type { IGist } from "@21n/products/memotron/node/node.type";
   export let node: IGist;
   export let accessPoint: ResourceAccessPoint;
 

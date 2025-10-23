@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
+  import SubAtomLogo from "@21n/branding/SubAtomLogo.svelte";
 
   export let status: string = "";
 </script>

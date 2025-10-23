@@ -1,15 +1,15 @@
-import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
+import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
 import {
   NodeType,
   type IBlueskyPost,
   type IBlueskyProfile
-} from "$lib/client/products/memotron/node/node.type";
-import type { ISocialPost, ISocialPostBase } from "../clipper.type";
+} from "@21n/products/memotron/node/node.type";
+import type { ISocialPost, ISocialPostBase } from "@21n/extensions/clipper/clipper.type";
 import {
   findAncestorOrSelf,
   parseFullDateTimeString,
   resolveOgData
-} from "./shared/domUtils";
+} from "@21n/extensions/clipper/parsers/shared/domUtils";
 
 const blueSkyPostThreadSelector = '[data-testid^="postThreadItem-"]';
 

@@ -1,8 +1,8 @@
 import { get, writable } from "svelte/store";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { StoreDataType } from "../../types/data.type";
-import type { Space, SpaceStore } from "../../types/space.type";
-import { performApiCall } from "$lib/client/utils/network.utils";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { StoreDataType } from "@21n/types/data.type";
+import type { Space, SpaceStore } from "@21n/types/space.type";
+import { performApiCall } from "@21n/utils/network.utils";
 
 const cachedSpaceInContext = null; // TODO: re-enable retrieveLocally(Resource.spaceInContext) once Dexie is integrated
 export const spaceInContext = writable<Space>(cachedSpaceInContext ?? null);

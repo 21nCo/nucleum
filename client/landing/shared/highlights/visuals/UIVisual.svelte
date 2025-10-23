@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { cn } from "@21n/utils/ui.utils";
 
   let className: string = "";
   export { className as class };

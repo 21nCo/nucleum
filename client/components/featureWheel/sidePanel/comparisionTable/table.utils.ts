@@ -1,4 +1,4 @@
-import { SourcingType } from "$lib/client/types/featureWheel.type";
+import { SourcingType } from "@21n/types/featureWheel.type";
 
 export function mapValue(type: string, value: any) {
   if (type === "sourcingType") {

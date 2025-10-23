@@ -1,9 +1,9 @@
-import type { JsonValue } from "$lib/client/types/json.type";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { ClientStorageKey } from "./persistence.type";
-import { isExtensionEnvironment } from "../utils/browser.utils";
-import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-import { parse, stringify } from "$lib/shared/utils/json.utils";
+import type { JsonValue } from "@21n/types/json.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { ClientStorageKey } from "@21n/persistence/persistence.type";
+import { isExtensionEnvironment } from "@21n/utils/browser.utils";
+import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+import { parse, stringify } from "@21n/shared-utils/json.utils";
 
 export function resetLocalStorage() {
   if (import.meta.env?.SSR || !import.meta.env || !window?.localStorage) {

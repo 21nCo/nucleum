@@ -1,16 +1,16 @@
-import { logger } from "$lib/client/components/debug/logger.client";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { logger } from "@21n/components/debug/logger.client";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
   ResourceActionType,
   type IResource
-} from "$lib/client/components/flux/resourceStores/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 import {
   type ILocal,
   type IPersistence,
   type ITable,
   PersistenceProvider
-} from "$lib/client/persistence/persistence.type";
-import { getDapId } from "$lib/client/persistence/persistence.utils";
+} from "@21n/persistence/persistence.type";
+import { getDapId } from "@21n/persistence/persistence.utils";
 import {
   type IStore,
   PersistenceActionType,
@@ -24,47 +24,44 @@ import {
   type IMutationAdditionalParams,
   type IResourceSelectProperties,
   type IResourceStore
-} from "$lib/client/types/data.type";
-import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
-import { GlobalEvent } from "$lib/client/types/event.enum";
-import { ExtensionEvent } from "$lib/client/types/extension.type";
-import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
+} from "@21n/types/data.type";
+import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
+import { GlobalEvent } from "@21n/types/event.enum";
+import { ExtensionEvent } from "@21n/types/extension.type";
+import { resolveCurrentUserId } from "@21n/utils/account.utils";
 import {
   dispatchCustomEvent,
   isExtensionEnvironment,
   getEnvVal
-} from "$lib/client/utils/browser.utils";
-import { postDataToParent } from "$lib/client/utils/embed.utils";
+} from "@21n/utils/browser.utils";
+import { postDataToParent } from "@21n/utils/embed.utils";
 import {
   relayToContentScript,
   relayToSidePanel
-} from "$lib/client/utils/extension.utils";
-import {
-  determineIfOffline,
-  performApiCall
-} from "$lib/client/utils/network.utils";
-import { wait } from "$lib/client/utils/time.utils";
-import { interceptSurrealResponse } from "$lib/client/utils/utils";
-import { SyncMethod } from "$lib/shared/types/sync.type";
+} from "@21n/utils/extension.utils";
+import { determineIfOffline, performApiCall } from "@21n/utils/network.utils";
+import { wait } from "@21n/utils/time.utils";
+import { interceptSurrealResponse } from "@21n/utils/utils";
+import { SyncMethod } from "@21n/shared-types/sync.type";
 import {
   generateRandomIdv2,
   generateSimpleRandomId
-} from "$lib/shared/utils/crypto.utils";
-import { reparse } from "$lib/shared/utils/json.utils";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { DataMapper } from "./dataMapper";
+} from "@21n/shared-utils/crypto.utils";
+import { reparse } from "@21n/shared-utils/json.utils";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+import { DataMapper } from "@21n/components/flux/dataMapper";
 import {
   FluxMethod,
   type IDataMapper,
   type IFluxMethod,
   type IResourceTableConfig,
   type LoaderCallback
-} from "./flux.type";
+} from "@21n/components/flux/flux.type";
 import {
   determineResourceType,
   isRecordId,
   removeDuplicatesFilter
-} from "./resourceStores/resource.utils";
+} from "@21n/components/flux/resourceStores/resource.utils";
 
 class Flux {
   static _instance: Flux | null = null;
@@ -249,7 +246,7 @@ class Flux {
         ...params,
         action: params.action,
         recordCount:
-          "records" in params ? (params.records?.length ?? "NA") : "NA",
+          "records" in params ? params.records?.length ?? "NA" : "NA",
         record: "record" in params ? params.record : "NA"
       }
     });
@@ -303,8 +300,7 @@ class Flux {
       at: "flux.mutation - result",
       resource,
       action: params.action,
-      recordCount:
-        "records" in params ? (params.records?.length ?? "NA") : "NA",
+      recordCount: "records" in params ? params.records?.length ?? "NA" : "NA",
       record: "record" in params ? params.record : "NA",
       response
     });
@@ -687,8 +683,11 @@ class Flux {
       } else {
         const resources = this.resolveSyncResources();
         let totalSyncedMutations = 0;
+        let maxIterations = 10;
+        let iterations = 0;
 
-        while (true) {
+        while (iterations < maxIterations) {
+          iterations++;
           let { mutations } = await this.resolveItemsForSyncUp();
           if (!mutations || mutations.length === 0) {
             break;
@@ -697,7 +696,8 @@ class Flux {
           logger.log({
             at: "flux.sync - batch",
             mutationsLength: mutations.length,
-            mutations: mutations.map((x) => x.id)
+            iterations,
+            maxIterations
           });
 
           const batchResponse = await this.performSync(SyncMethod.SYNC_UP, {
@@ -885,6 +885,8 @@ class Flux {
       })
     );
 
+    recordsByResource.clear();
+
     for (let { resource, records } of data) {
       this.propagateSyncStatus(resource);
       records = this.dataMapper.parse(resource, records);
@@ -922,28 +924,34 @@ class Flux {
     }
     return syncRecords;
   }
-  private async processDeletedRecords(deletedRecords: any[]) {
+  private async processDeletedRecords(
+    deletedRecords: {
+      resource: Resource;
+      resourceId: IRecordId | IRecordId[];
+    }[]
+  ) {
     try {
-      const delteRecordsByResource = new Map<Resource, any[]>();
+      const deleteRecordsByResource = new Map<Resource, IRecordId[]>();
       for (let record of deletedRecords) {
         if (!record.resource) continue;
-        if (!delteRecordsByResource.has(record.resource)) {
-          delteRecordsByResource.set(record.resource, []);
+        if (!deleteRecordsByResource.has(record.resource)) {
+          deleteRecordsByResource.set(record.resource, []);
         }
-        delteRecordsByResource
+        deleteRecordsByResource
           .get(record.resource)!
           .push(
-            Array.isArray(record.resourceId)
+            ...(Array.isArray(record.resourceId)
               ? record.resourceId
-              : [record.resourceId]
+              : [record.resourceId])
           );
       }
-      for (let [resource, ids] of delteRecordsByResource) {
+      for (let [resource, ids] of deleteRecordsByResource) {
         await this.persistence.mutation(resource, {
           action: PersistenceActionType.BULK_DELETE,
           recordIds: ids
         });
       }
+      deleteRecordsByResource.clear();
     } catch (e) {
       logger.error({ at: "flux.processDeletedRecords", error: e });
     }
@@ -1317,56 +1325,72 @@ class Flux {
     limit: number,
     isFirstInitialLoad?: boolean
   ) {
-    this.propagateSyncStatus(resource);
-    const result = await this.performSync(SyncMethod.CLONE_DOWN_PAGINATE, {
-      resource,
-      isExtension: this.isExtensionEnvironment,
-      offset,
-      limit
-    });
-    console.log("paginateResource - result", resource, offset);
-    if (
-      isValidArrayWithData(result) &&
-      isValidArrayWithData(result[0].result)
-    ) {
-      const records = result[0].result;
-      let mutationResult;
-      try {
-        mutationResult = await this.persistence.mutation(
-          resource as Resource,
-          {
-            records,
-            action:
-              resource === Resource.kv || resource === Resource.link
-                ? PersistenceActionType.INSERT
-                : PersistenceActionType.BULK_INSERT,
-            isSkipFlexSearchIndexing: isFirstInitialLoad
-          } as any
-        );
-      } catch (e) {
-        logger.error({
-          at: "flux.paginateResource - error",
-          resource,
-          error: e
-        });
-      }
-      if (!mutationResult) {
-        await this.persistence.mutation(
-          resource as Resource,
-          {
-            records,
-            action: PersistenceActionType.INSERT,
-            isSkipFlexSearchIndexing: isFirstInitialLoad
-          } as any
-        );
-      }
-      if (records.length === limit) {
-        await this.paginateResource(
-          resource,
-          offset + limit,
-          limit,
-          isFirstInitialLoad
-        );
+    let currentOffset = offset;
+    let hasMore = true;
+
+    while (hasMore) {
+      this.propagateSyncStatus(resource);
+
+      const result = await this.performSync(SyncMethod.CLONE_DOWN_PAGINATE, {
+        resource,
+        isExtension: this.isExtensionEnvironment,
+        offset: currentOffset,
+        limit
+      });
+
+      console.log("paginateResource - result", resource, currentOffset);
+
+      if (
+        isValidArrayWithData(result) &&
+        isValidArrayWithData(result[0].result)
+      ) {
+        const records = result[0].result;
+        let mutationResult;
+
+        try {
+          mutationResult = await this.persistence.mutation(
+            resource as Resource,
+            {
+              records,
+              action:
+                resource === Resource.kv || resource === Resource.link
+                  ? PersistenceActionType.INSERT
+                  : PersistenceActionType.BULK_INSERT,
+              isSkipFlexSearchIndexing: isFirstInitialLoad
+            } as any
+          );
+        } catch (e) {
+          logger.error({
+            at: "flux.paginateResource - error",
+            resource,
+            error: e
+          });
+
+          try {
+            await this.persistence.mutation(
+              resource as Resource,
+              {
+                records,
+                action: PersistenceActionType.INSERT,
+                isSkipFlexSearchIndexing: isFirstInitialLoad
+              } as any
+            );
+          } catch (fallbackError) {
+            logger.error({
+              at: "flux.paginateResource - fallback error",
+              resource,
+              error: fallbackError
+            });
+          }
+        }
+
+        if (records.length === limit) {
+          currentOffset += limit;
+        } else {
+          hasMore = false;
+        }
+      } else {
+        hasMore = false;
       }
     }
   }
@@ -1394,52 +1418,61 @@ class Flux {
     isFirstInitialLoad?: boolean
   ) {
     if (!cursor) return;
-    this.propagateSyncStatus(resource);
-    const result = await this.performSync(SyncMethod.CLONE_DOWN_PAGINATE_V2, {
-      resource,
-      isExtension: this.isExtensionEnvironment,
-      cursor
-    });
 
-    if (isValidArrayWithData(result.data)) {
-      let records = result.data;
-      records = this.dataMapper.parse(resource, records);
-      let mutationResult;
-      try {
-        mutationResult = await this.persistence.mutation(
-          resource as Resource,
-          {
-            records,
-            action:
-              resource === Resource.kv || resource === Resource.link
-                ? PersistenceActionType.INSERT
-                : PersistenceActionType.BULK_INSERT,
-            isSkipFlexSearchIndexing: isFirstInitialLoad
-          } as any
-        );
-      } catch (e) {
-        logger.error({
-          at: "flux.paginateResourceV2 - error",
-          resource,
-          error: e
-        });
-      }
-      if (!mutationResult) {
-        await this.persistence.mutation(
-          resource as Resource,
-          {
-            records,
-            action: PersistenceActionType.INSERT,
-            isSkipFlexSearchIndexing: isFirstInitialLoad
-          } as any
-        );
-      }
-      if (result.nextCursor) {
-        await this.paginateResourceV2(
-          resource,
-          result.nextCursor,
-          isFirstInitialLoad
-        );
+    let currentCursor: string | null = cursor;
+
+    while (currentCursor) {
+      this.propagateSyncStatus(resource);
+
+      const result = await this.performSync(SyncMethod.CLONE_DOWN_PAGINATE_V2, {
+        resource,
+        isExtension: this.isExtensionEnvironment,
+        cursor: currentCursor
+      });
+
+      if (isValidArrayWithData(result.data)) {
+        const parsedRecords = this.dataMapper.parse(resource, result.data);
+
+        let mutationResult;
+        try {
+          mutationResult = await this.persistence.mutation(
+            resource as Resource,
+            {
+              records: parsedRecords,
+              action: isFirstInitialLoad
+                ? PersistenceActionType.BULK_INSERT
+                : PersistenceActionType.INSERT,
+              isSkipFlexSearchIndexing: isFirstInitialLoad
+            } as any
+          );
+        } catch (e) {
+          logger.error({
+            at: "flux.paginateResourceV2 - error",
+            resource,
+            error: e
+          });
+
+          try {
+            await this.persistence.mutation(
+              resource as Resource,
+              {
+                records: parsedRecords,
+                action: PersistenceActionType.INSERT,
+                isSkipFlexSearchIndexing: isFirstInitialLoad
+              } as any
+            );
+          } catch (fallbackError) {
+            logger.error({
+              at: "flux.paginateResourceV2 - fallback error",
+              resource,
+              error: fallbackError
+            });
+          }
+        }
+
+        currentCursor = result.nextCursor || null;
+      } else {
+        currentCursor = null;
       }
     }
   }

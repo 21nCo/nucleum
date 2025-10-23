@@ -1,7 +1,7 @@
-import type { ISelectItem } from "$lib/client/types/select.type";
-import { TimePeriodType, TimeScale } from "$lib/client/types/time.type";
-import { timePeriodLabel } from "$lib/client/utils/time.utils";
-import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
+import type { ISelectItem } from "@21n/types/select.type";
+import { TimePeriodType, TimeScale } from "@21n/types/time.type";
+import { timePeriodLabel } from "@21n/utils/time.utils";
+import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
 
 export const activeScales = [
   TimeScale.YEARS,

@@ -1,5 +1,5 @@
-import { GoalStatus, GoalType, type IGoalThumb } from "./goal.type";
-import type { ISelectItem } from "$lib/client/types/select.type";
+import { GoalStatus, GoalType, type IGoalThumb } from "@21n/components/goals/goal.type";
+import type { ISelectItem } from "@21n/types/select.type";
 
 export function resolveGoalTypeIcon(type: GoalType) {
   switch (type) {

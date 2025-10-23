@@ -1,9 +1,9 @@
-import { ResourceStore } from "../../flux/resourceStores/resource.store";
-import { Resource } from "../../flux/resourceStores/resource.enum";
-import type { ITimezone, ITimezoneCapture } from "./tz.type";
-import { TimeScaleUnit, type TimePeriod } from "$lib/client/types/time.type";
-import { determineTimePeriodv2 } from "$lib/client/utils/time.utils";
-import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
+import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import type { ITimezone, ITimezoneCapture } from "@21n/components/settings/timezone/tz.type";
+import { TimeScaleUnit, type TimePeriod } from "@21n/types/time.type";
+import { determineTimePeriodv2 } from "@21n/utils/time.utils";
+import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
 
 class TimezoneStore extends ResourceStore<ITimezone, ITimezoneCapture> {
   constructor() {

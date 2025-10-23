@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import "@carbon/charts-svelte/styles.css";
-  import { ChartType } from "$lib/client/types/analytics.type";
+  import { ChartType } from "@21n/types/analytics.type";
   import {
     AreaChart,
     BarChartSimple,
@@ -16,10 +16,10 @@
     Alignments,
     PieChart
   } from "@carbon/charts-svelte";
-  import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
-  import { determineCarbonChartTimeInterval } from "$lib/client/utils/carbon.utils";
-  import { pieLabelFormatter } from "$lib/client/utils/carbon.utils";
-  import appearance from "$lib/client/stores/appearance.store";
+  import { retrieveCurrentColors } from "@21n/utils/theme.utils";
+  import { determineCarbonChartTimeInterval } from "@21n/utils/carbon.utils";
+  import { pieLabelFormatter } from "@21n/utils/carbon.utils";
+  import appearance from "@21n/stores/appearance.store";
   export let type: ChartType;
   export let data: any;
   export let additionalOptions: any;

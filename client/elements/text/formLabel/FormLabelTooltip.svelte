@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import { trackPosition } from "$lib/client/actions/observe.action";
-  import Icon from "../../Icon.svelte";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import Tooltip from "../Tooltip.svelte";
-  import type { InputLabelInfoToolTip } from "$lib/client/types/input.type";
-  import { popover } from "$lib/client/actions/popover.action";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
-  import view from "$lib/client/stores/view.store";
+  import { Size } from "@21n/types/size.enum";
+  import { trackPosition } from "@21n/actions/observe.action";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Placement } from "@21n/types/direction.enum";
+  import Tooltip from "@21n/elements/text/Tooltip.svelte";
+  import type { InputLabelInfoToolTip } from "@21n/types/input.type";
+  import { popover } from "@21n/actions/popover.action";
+  import { PopoverTriggerMethod } from "@21n/types/popover.type";
+  import view from "@21n/stores/view.store";
   export let info: InputLabelInfoToolTip;
   export let icon: string = "info";
   let ref: HTMLElement;

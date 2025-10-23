@@ -1,8 +1,8 @@
 <!-- DraggableItem.svelte -->
 <script lang="ts">
-  import { dragAndDropStore } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
-  import { DragStatus } from "$lib/client/types/dragstatus.enum";
+  import { dragAndDropStore } from "@21n/stores/app.store";
+  import view from "@21n/stores/view.store";
+  import { DragStatus } from "@21n/types/dragstatus.enum";
   export let item: any;
   export let classList: string;
   export let isDraggable: boolean = false;

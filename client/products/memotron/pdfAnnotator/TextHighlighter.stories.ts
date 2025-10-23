@@ -1,4 +1,4 @@
-import TextHiglighter from "./TextHiglighter.svelte";
+import TextHiglighter from "@21n/products/memotron/pdfAnnotator/TextHiglighter.svelte";
 export default {
   component: TextHiglighter,
   parameters: { layout: "centered" }

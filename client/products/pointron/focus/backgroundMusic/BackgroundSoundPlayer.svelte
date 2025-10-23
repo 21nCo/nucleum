@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { backgroundSoundStore } from "$lib/client/products/pointron/pointron.store";
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
-  import { isValidString } from "$lib/shared/utils/text.utils";
+  import { backgroundSoundStore } from "@21n/products/pointron/pointron.store";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
+  import { isValidString } from "@21n/shared-utils/text.utils";
   import { onMount } from "svelte";
-  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
+  import { SessionState } from "@21n/types/pointron/sessionState.enum";
   let audioRef: HTMLAudioElement;
   let src: string | undefined = undefined;
   onMount(() => {

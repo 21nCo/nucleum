@@ -1,9 +1,9 @@
 <script lang="ts">
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import ErrorStatusPane from "$lib/client/elements/feedback/ErrorStatusPane.svelte";
-  import account from "$lib/client/stores/account.store";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Action } from "$lib/client/types/action.enum";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import ErrorStatusPane from "@21n/elements/feedback/ErrorStatusPane.svelte";
+  import account from "@21n/stores/account.store";
+  import { appStore } from "@21n/stores/app.store";
+  import { Action } from "@21n/types/action.enum";
   import { onMount } from "svelte";
 
   let nonce: string | null;

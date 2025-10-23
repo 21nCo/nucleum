@@ -1,16 +1,16 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import Icon from "../Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
-  import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
-  import InputBaseElement from "../InputBaseElement.svelte";
-  import AbsoluteTimeRangePopover from "./absolute/AbsoluteTimeRangePopover.svelte";
-  import FormElement from "../FormElement.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { popover } from "$lib/client/actions/popover.action";
-  import AbsoluteTimeRangePopoverV2 from "./absolute/AbsoluteTimeRangePopoverV2.svelte";
-  import view from "$lib/client/stores/view.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { parseAndFormatDate } from "@21n/utils/time.utils";
+  import { InputStyle, type InputLabel } from "@21n/types/input.type";
+  import InputBaseElement from "@21n/elements/InputBaseElement.svelte";
+  import AbsoluteTimeRangePopover from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopover.svelte";
+  import FormElement from "@21n/elements/FormElement.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { popover } from "@21n/actions/popover.action";
+  import AbsoluteTimeRangePopoverV2 from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
+  import view from "@21n/stores/view.store";
   const dispatch = createEventDispatcher();
   export let parentBackgroundIndex: number = 1;
   export let date: Date | undefined = undefined;

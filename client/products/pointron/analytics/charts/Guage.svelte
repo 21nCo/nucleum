@@ -1,9 +1,9 @@
 <script lang="ts">
-  import CarbonChart from "$lib/client/components/charts/CarbonChart.svelte";
-  import { ChartType } from "$lib/client/types/analytics.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import CarbonChart from "@21n/components/charts/CarbonChart.svelte";
+  import { ChartType } from "@21n/types/analytics.type";
+  import { Size } from "@21n/types/size.enum";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import { cn } from "@21n/utils/ui.utils";
   import "@carbon/charts-svelte/styles.css";
   export let size: Size = Size.md;
   export let label: string;

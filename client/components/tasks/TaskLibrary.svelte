@@ -1,82 +1,76 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
     ResourceAccessPoint,
     ResourceActionType
-  } from "$lib/client/components/flux/resourceStores/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import { onMount } from "svelte";
-  import {
-    BulkEditor,
-    SearchStore
-  } from "$lib/client/components/record/record.store";
+  import { BulkEditor, SearchStore } from "@21n/components/record/record.store";
   import {
     TaskDueDateFilter,
     TaskSubTypeForSwitcher,
     type ITaskThumb
-  } from "$lib/client/components/tasks/task.type";
+  } from "@21n/components/tasks/task.type";
   import {
     isValidArray,
     isValidArrayWithData
-  } from "$lib/shared/utils/obj.utils";
-  import TaskRecords from "./TaskRecords.svelte";
+  } from "@21n/shared-utils/obj.utils";
+  import TaskRecords from "@21n/components/tasks/TaskRecords.svelte";
   import {
     IResourceFilterDateGrouping,
     RemovalProperty,
     type IRecordId
-  } from "$lib/client/types/data.type";
-  import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
+  } from "@21n/types/data.type";
+  import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
+  import { InputStyle } from "@21n/types/input.type";
   import { page } from "$app/stores";
-  import type { SubType } from "../library/library.type";
-  import LibrarySubTypeSwitcher from "../library/LibrarySubTypeSwitcher.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import DatePickerRow from "$lib/client/elements/datetime/DatePickerRow.svelte";
-  import AbsoluteTimeRangePopoverV2 from "$lib/client/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { popover } from "$lib/client/actions/popover.action";
+  import type { SubType } from "@21n/components/library/library.type";
+  import LibrarySubTypeSwitcher from "@21n/components/library/LibrarySubTypeSwitcher.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import DatePickerRow from "@21n/elements/datetime/DatePickerRow.svelte";
+  import AbsoluteTimeRangePopoverV2 from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
+  import { Placement } from "@21n/types/direction.enum";
+  import { popover } from "@21n/actions/popover.action";
   import {
     compareDates,
     parseAndFormatDate,
     isSameDay
-  } from "$lib/client/utils/time.utils";
-  import AddNewTaskInline from "./AddNewTaskInline.svelte";
-  import { taskStore } from "./task.store";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
+  } from "@21n/utils/time.utils";
+  import AddNewTaskInline from "@21n/components/tasks/AddNewTaskInline.svelte";
+  import { taskStore } from "@21n/components/tasks/task.store";
+  import { toasts } from "@21n/stores/notification.store";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { appStore } from "@21n/stores/app.store";
   import {
     removeDuplicatesFilter,
     resourceAction
-  } from "../flux/resourceStores/resource.utils";
-  import { ButtonVariant, ButtonStyle } from "$lib/client/types/button.type";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
-  import { resolveMultiSelectStore } from "../flux/resourceStores/resource.store";
-  import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
-  import BulkEditBar from "../record/BulkEditBar.svelte";
-  import view from "$lib/client/stores/view.store";
-  import InlineSyncingFeedback from "$lib/client/elements/feedback/InlineSyncingFeedback.svelte";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { ButtonVariant, ButtonStyle } from "@21n/types/button.type";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { generateMiniRandomId } from "@21n/shared-utils/crypto.utils";
+  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
+  import BottomFloat from "@21n/elements/BottomFloat.svelte";
+  import BulkEditBar from "@21n/components/record/BulkEditBar.svelte";
+  import view from "@21n/stores/view.store";
+  import InlineSyncingFeedback from "@21n/elements/feedback/InlineSyncingFeedback.svelte";
   import { fly } from "svelte/transition";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { resolveTaskDueDateFilters } from "./task.utils";
-  import { OptionSelectorStyle } from "$lib/client/types/select.type";
-  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
-  import { intersection } from "$lib/client/actions/intersection.action";
-  import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
-  import { dragSelection } from "$lib/client/actions/dragSelection.action";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import { logger } from "../debug/logger.client";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import { resolveTaskDueDateFilters } from "@21n/components/tasks/task.utils";
+  import { OptionSelectorStyle } from "@21n/types/select.type";
+  import { LoadingAnimationType } from "@21n/types/feedback.type";
+  import { intersection } from "@21n/actions/intersection.action";
+  import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import { tzStore } from "@21n/components/settings/timezone/tz.store";
+  import { dragSelection } from "@21n/actions/dragSelection.action";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
+  import { logger } from "@21n/components/debug/logger.client";
   export let goalId: IRecordId | undefined = undefined;
   export let collectionId: IRecordId | undefined = undefined;
   export let accessPoint: ResourceAccessPoint | undefined = undefined;
@@ -437,7 +431,7 @@
       })}
     >
       <button
-        class="w-32 flex items-center justify-center gap-2 text-b2 text-fgs2 font-medium tabular-nums h-full whitespace-nowrap cw:py-1 py-2 cw:px-2 px-4 rounded-l-md bg-bgs2 border-r border-brs2"
+        class="w-32 flex items-center justify-center gap-2 text-b2 text-fgs2 font-medium tabular-nums h-full whitespace-nowrap cw:py-1 py-2 cw:px-2 px-4 rounded-l-md bg-bgs2 hover:bg-bgs3-striped border-r border-brs2"
         bind:this={dateSelectionPopoverRef}
         use:popover={{
           content: AbsoluteTimeRangePopoverV2,

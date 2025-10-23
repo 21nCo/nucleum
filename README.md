@@ -34,7 +34,7 @@ Currently, only the frontend app can be self‑hosted on your own server. This m
 3. Set the below environment variables.
 ```bash
 VITE_PRODUCT={{memotron | pointron | nucleus }}
-VITE_STATIC_URL=https://cdn.21n.co
+VITE_STATIC_URL=https://cdn.21n.org
 ```
 3. Deploy to the provider of your choice
 

@@ -1,6 +1,7 @@
 import { DatabaseProvider, IDatabaseProvider } from "./types";
 import { SurrealDatabaseProvider } from "./surreal.provider";
 import { DynamoDBDatabaseProvider } from "./dynamodb.provider";
+import { TursoProvider } from "./turso.provider";
 
 /**
  * Provider factory that creates the appropriate database provider based on environment configuration
@@ -21,6 +22,10 @@ export class DatabaseProviderFactory {
         case DatabaseProvider.DYNAMODB:
           console.log("Using DynamoDB database provider");
           this.instance = new DynamoDBDatabaseProvider();
+          break;
+        case DatabaseProvider.TURSO:
+          console.log("Using Turso database provider");
+          this.instance = new TursoProvider();
           break;
         case DatabaseProvider.SURREAL:
         default:
@@ -46,9 +51,14 @@ export class DatabaseProviderFactory {
   static getProviderType(): DatabaseProvider {
     const providerType =
       process.env.DB_PROVIDER?.toLowerCase() as DatabaseProvider;
-    return providerType === DatabaseProvider.DYNAMODB
-      ? DatabaseProvider.DYNAMODB
-      : DatabaseProvider.SURREAL;
+    
+    if (providerType === DatabaseProvider.DYNAMODB) {
+      return DatabaseProvider.DYNAMODB;
+    }
+    if (providerType === DatabaseProvider.TURSO) {
+      return DatabaseProvider.TURSO;
+    }
+    return DatabaseProvider.SURREAL;
   }
 }
 
@@ -56,3 +66,4 @@ export class DatabaseProviderFactory {
 export { DatabaseProvider, IDatabaseProvider } from "./types";
 export { SurrealDatabaseProvider } from "./surreal.provider";
 export { DynamoDBDatabaseProvider } from "./dynamodb.provider";
+export { TursoProvider } from "./turso.provider";

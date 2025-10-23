@@ -1,11 +1,11 @@
 <script lang="ts">
-  import FeatureWheel from "$lib/client/components/featureWheel/FeatureWheel.svelte";
+  import FeatureWheel from "@21n/components/featureWheel/FeatureWheel.svelte";
   import {
     FeatureWheelMode,
     type IFwCategory,
     type IFwFeature,
     type IContemporary
-  } from "$lib/client/types/featureWheel.type";
+  } from "@21n/types/featureWheel.type";
   export let product: string;
   export let title: string;
   export let features: IFwFeature[];

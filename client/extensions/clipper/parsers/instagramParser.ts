@@ -1,17 +1,17 @@
-import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
+import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
 import {
   NodeType,
   type IInstagramPost,
   type IInstagramReel,
   type IInstagramProfile
-} from "$lib/client/products/memotron/node/node.type";
+} from "@21n/products/memotron/node/node.type";
 import {
   createUrlFilter,
   isHostnameMatch
-} from "$lib/client/products/memotron/node/url.utils";
-import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
-import type { ISocialPost, ISocialPostBase } from "../clipper.type";
-import { findAncestorOrSelf } from "./shared/domUtils";
+} from "@21n/products/memotron/node/url.utils";
+import { generateRandomIdv2 } from "@21n/shared-utils/crypto.utils";
+import type { ISocialPost, ISocialPostBase } from "@21n/extensions/clipper/clipper.type";
+import { findAncestorOrSelf } from "@21n/extensions/clipper/parsers/shared/domUtils";
 
 function resolveInstagramContentType(url: string): NodeType {
   return /\/reel\//.test(url) ? NodeType.INSTAGRAM_REEL : NodeType.INSTAGRAM_POST;

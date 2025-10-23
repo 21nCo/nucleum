@@ -2,88 +2,88 @@
   import {
     ActiveCollectionStore,
     type IActiveCollectionStore
-  } from "./collection.store";
-  import Cover from "./Cover.svelte";
-  import CollectionTitleBar from "./CollectionTitleBar.svelte";
-  import View from "./View.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import ViewSettingsBar from "./ViewSettingsBar.svelte";
-  import PageLoadingPulse from "$lib/client/elements/feedback/animations/PageLoadingPulse.svelte";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
-  import ViewTabSwitcher from "./tabSwitcher/ViewTabSwitcher.svelte";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
+  } from "@21n/components/collection/collection.store";
+  import Cover from "@21n/components/collection/Cover.svelte";
+  import CollectionTitleBar from "@21n/components/collection/CollectionTitleBar.svelte";
+  import View from "@21n/components/collection/View.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import ViewSettingsBar from "@21n/components/collection/ViewSettingsBar.svelte";
+  import PageLoadingPulse from "@21n/elements/feedback/animations/PageLoadingPulse.svelte";
+  import { bg, cn } from "@21n/utils/ui.utils";
+  import ViewTabSwitcher from "@21n/components/collection/tabSwitcher/ViewTabSwitcher.svelte";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import {
     BarStyle,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  } from "@21n/types/switcher.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import {
     PropertyType,
     type IProperty
-  } from "$lib/client/components/collection/properties/property.type";
-  import { activeResourceFilter } from "$lib/client/utils/utils";
+  } from "@21n/components/collection/properties/property.type";
+  import { activeResourceFilter } from "@21n/utils/utils";
   import { onDestroy, onMount } from "svelte";
-  import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
+  import type { DropdownItem } from "@21n/types/dropdownItem.type";
   import type {
     ISelectItem,
     ISelectValue
-  } from "$lib/client/types/select.type";
+  } from "@21n/types/select.type";
   import {
     ResourceAccessMode,
     ResourceAccessPoint,
     ResourceActionType
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { isValidString } from "$lib/shared/utils/text.utils";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import { isValidString } from "@21n/shared-utils/text.utils";
   import {
     CollectionLayout,
     CollectionType,
     type ICollectionItem,
     type ICollectionViewWithData
-  } from "$lib/client/components/collection/collection.type";
-  import ResourceStatusBanner from "$lib/client/components/record/RecordStatusBanner.svelte";
+  } from "@21n/components/collection/collection.type";
+  import ResourceStatusBanner from "@21n/components/record/RecordStatusBanner.svelte";
   import {
     Arrangement,
     Orientation,
     Placement
-  } from "$lib/client/types/direction.enum";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import CoverPicker from "$lib/client/elements/coverPicker/CoverPicker.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import ArrangementSelector from "./arrangementSelector/ArrangementSelector.svelte";
-  import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
-  import AddResourceAction from "./AddResourceAction.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  } from "@21n/types/direction.enum";
+  import { logger } from "@21n/components/debug/logger.client";
+  import CoverPicker from "@21n/elements/coverPicker/CoverPicker.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import ArrangementSelector from "@21n/components/collection/arrangementSelector/ArrangementSelector.svelte";
+  import ToggleGroup from "@21n/elements/toggle/ToggleGroup.svelte";
+  import AddResourceAction from "@21n/components/collection/AddResourceAction.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import {
     isNoneResource,
     resourceAction,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import view from "$lib/client/stores/view.store";
-  import Button from "$lib/client/elements/button/Button.svelte";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import view from "@21n/stores/view.store";
+  import Button from "@21n/elements/button/Button.svelte";
   import {
     resolvePropertyIcon,
     tabAndGroupableProperties
-  } from "./properties/property.utils";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { resizeListener } from "$lib/client/actions/resize.action";
-  import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
-  import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
-  import BulkEditBar from "$lib/client/components/record/BulkEditBar.svelte";
-  import { BulkEditor } from "$lib/client/components/record/record.store";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import { resolveResourceStore } from "../flux/resourceStores/store.resolver";
-  import ComponentEmbedLayer from "$lib/client/layout/layers/ComponentEmbedLayer.svelte";
+  } from "@21n/components/collection/properties/property.utils";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import { resizeListener } from "@21n/actions/resize.action";
+  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
+  import BottomFloat from "@21n/elements/BottomFloat.svelte";
+  import BulkEditBar from "@21n/components/record/BulkEditBar.svelte";
+  import { BulkEditor } from "@21n/components/record/record.store";
+  import { toasts } from "@21n/stores/notification.store";
+  import { Action } from "@21n/types/action.enum";
+  import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
+  import ComponentEmbedLayer from "@21n/layout/layers/ComponentEmbedLayer.svelte";
 
   export let id: string = "";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;

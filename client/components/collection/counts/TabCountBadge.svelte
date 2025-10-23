@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { cn } from "@21n/utils/ui.utils";
 
   export let count: number = 0;
   export let isActive: boolean = false;

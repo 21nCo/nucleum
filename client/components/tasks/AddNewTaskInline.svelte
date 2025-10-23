@@ -1,5 +1,5 @@
 <script lang="ts">
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
   import { createEventDispatcher } from "svelte";
 
   const dispatch = createEventDispatcher();

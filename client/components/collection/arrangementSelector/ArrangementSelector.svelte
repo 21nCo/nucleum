@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { Arrangement, Orientation } from "$lib/client/types/direction.enum";
+  import { Arrangement, Orientation } from "@21n/types/direction.enum";
   import { createEventDispatcher } from "svelte";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-  import { popover } from "$lib/client/actions/popover.action";
-  import ArrangementSelectorPopover from "./ArrangementSelectorPopover.svelte";
-  import { Resource } from "../../flux/resourceStores/resource.enum";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import { popover } from "@21n/actions/popover.action";
+  import ArrangementSelectorPopover from "@21n/components/collection/arrangementSelector/ArrangementSelectorPopover.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 
   const dispatch = createEventDispatcher();
 

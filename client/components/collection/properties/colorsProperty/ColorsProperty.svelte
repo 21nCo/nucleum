@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import { rgbToHex } from "$lib/client/utils/ui.utils";
-  import { copyToClipboard } from "$lib/client/utils/utils";
+  import { tooltip } from "@21n/actions/popover.action";
+  import { toasts } from "@21n/stores/notification.store";
+  import { rgbToHex } from "@21n/utils/ui.utils";
+  import { copyToClipboard } from "@21n/utils/utils";
 
   export let colors: string[] | undefined = [];
 </script>

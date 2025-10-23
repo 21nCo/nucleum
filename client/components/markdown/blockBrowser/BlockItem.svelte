@@ -1,12 +1,12 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
   import { createEventDispatcher } from "svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
-  import type { IBlockBrowserItem } from "./blockBrowser.type";
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import MdShortcutText from "../shortcuts/MdShortcutText.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import type { IBlockBrowserItem } from "@21n/components/markdown/blockBrowser/blockBrowser.type";
+  import { tooltip } from "@21n/actions/popover.action";
+  import { Placement } from "@21n/types/direction.enum";
+  import MdShortcutText from "@21n/components/markdown/shortcuts/MdShortcutText.svelte";
 
   export let block: IBlockBrowserItem;
   export let width: string = "w-full";

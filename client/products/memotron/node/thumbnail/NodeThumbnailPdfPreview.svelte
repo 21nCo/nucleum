@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { hideOnOverlay } from "$lib/client/actions/embed.actions";
-  import context from "$lib/client/stores/context.store";
+  import { hideOnOverlay } from "@21n/actions/embed.actions";
+  import context from "@21n/stores/context.store";
 
   export let url: string = "";
 </script>

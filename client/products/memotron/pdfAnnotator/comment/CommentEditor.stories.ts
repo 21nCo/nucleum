@@ -1,4 +1,4 @@
-import CommentEditor from "./CommentEditor.svelte";
+import CommentEditor from "@21n/products/memotron/pdfAnnotator/comment/CommentEditor.svelte";
 export default {
   component: CommentEditor,
   parameters: { layout: "centered" }

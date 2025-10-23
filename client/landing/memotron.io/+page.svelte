@@ -1,19 +1,19 @@
 <script lang="ts">
-  import BottomCta from "../shared/bottomCta/BottomCta.svelte";
-  import HeroSection from "../shared/HeroSection.svelte";
-  import Highlights from "../shared/highlights/Highlights.svelte";
+  import BottomCta from "@21n/landing/shared/bottomCta/BottomCta.svelte";
+  import HeroSection from "@21n/landing/shared/HeroSection.svelte";
+  import Highlights from "@21n/landing/shared/highlights/Highlights.svelte";
   import type {
     IFeature,
     IHeroInputs,
     IHighlight,
     ITestimonial
-  } from "../shared/landing.type";
-  import Testimonials from "../shared/testimonials/Testimonials.svelte";
-  import { landing, staticUrl } from "../shared/store/shared.store";
-  import HeroVideoV2 from "../shared/elements/HeroVideoV2.svelte";
-  import Features from "../shared/features/Features.svelte";
-  import { highlights } from "../shared/highlights/highlights.data";
-  import PageSeo from "../shared/seo/PageSEO.svelte";
+  } from "@21n/landing/shared/landing.type";
+  import Testimonials from "@21n/landing/shared/testimonials/Testimonials.svelte";
+  import { landing, staticUrl } from "@21n/landing/shared/store/shared.store";
+  import HeroVideoV2 from "@21n/landing/shared/elements/HeroVideoV2.svelte";
+  import Features from "@21n/landing/shared/features/Features.svelte";
+  import { highlights } from "@21n/landing/shared/highlights/highlights.data";
+  import PageSeo from "@21n/landing/shared/seo/PageSEO.svelte";
   let heroInputs: IHeroInputs = {
     tagline: "Your memory atlas",
     description:
@@ -162,7 +162,7 @@
       "NCCL PKM system"
     ],
     canonicalUrl: "https://memotron.app",
-    image: "https://cdn.21n.co/memotron/ogImage.png"
+    image: "https://cdn.21n.org/memotron/ogImage.png"
   };
 </script>
 

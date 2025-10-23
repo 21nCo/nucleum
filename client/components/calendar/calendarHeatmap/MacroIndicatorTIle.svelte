@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { YearlyData } from "./calendarHeatmap.types";
+  import type { YearlyData } from "@21n/components/calendar/calendarHeatmap/calendarHeatmap.types";
   export let data: YearlyData;
   export let tileValue: string = "";
   $: if (tileValue == "") {

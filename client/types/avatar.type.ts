@@ -1,4 +1,4 @@
-import type { IRecordId } from "./data.type";
+import type { IRecordId } from "@21n/types/data.type";
 
 export type CustomUploadedAvatar = {
   name: string;

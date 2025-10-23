@@ -1,6 +1,6 @@
 import type { Writable } from "svelte/store";
-import type { ResourceActionType } from "../components/flux/resourceStores/resource.type";
-import type { Resource } from "../components/flux/resourceStores/resource.enum";
+import type { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 
 /**
  * The operations which can be performed on a cacheable store

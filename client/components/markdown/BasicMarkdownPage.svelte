@@ -1,9 +1,9 @@
 <script lang="ts">
-  import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import type { IMarkdown } from "$lib/client/components/markdown/md.type";
+  import AppLoadingView from "@21n/layout/paint/AppLoadingView.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import type { IMarkdown } from "@21n/components/markdown/md.type";
   import { onMount, tick } from "svelte";
-  import MarkdownView from "./Markdown.svelte";
+  import MarkdownView from "@21n/components/markdown/Markdown.svelte";
   export let md: IMarkdown | undefined = undefined;
   export let src: string | undefined = undefined;
   window.scrollTo(0, 0);

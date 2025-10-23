@@ -1,0 +1,23 @@
+{
+  "version": 0,
+  "issueTrackers": [
+    {
+      "name": "GitHub Issues",
+      "slug": "github",
+      "basePath": "21nOrg/tidigit/issues"
+    }
+  ],
+  "features": [
+    {
+      "name": "rigorous-testing",
+      "path": "features/rigorous-testing",
+      "version": 0,
+      "created": "2025-10-21",
+      "issueTrackers": {
+        "github": "",
+        "linear": "TIDY-318"
+      }
+    }
+  ],
+  "changes": []
+}

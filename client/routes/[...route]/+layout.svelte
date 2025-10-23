@@ -1,6 +1,6 @@
 <script lang="ts">
-  import AuthGuard from "$lib/client/layout/layers/AuthGuard.svelte";
-  import { productData } from "$lib/client/products/product.resolver";
+  import AuthGuard from "@21n/layout/layers/AuthGuard.svelte";
+  import { productData } from "@21n/products/product.resolver";
 </script>
 
 <AuthGuard let:isLoggedIn>

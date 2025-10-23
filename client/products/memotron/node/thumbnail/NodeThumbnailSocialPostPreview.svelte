@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Size } from "$lib/client/types/size.enum";
-  import { NodeType } from "../node.type";
-  import { resolveNodeIcon } from "../node.utils";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/types/size.enum";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
+  import { resolveNodeIcon } from "@21n/products/memotron/node/node.utils";
   export let text: string;
   export let contentType: NodeType;
   export let isVertical: boolean = false;

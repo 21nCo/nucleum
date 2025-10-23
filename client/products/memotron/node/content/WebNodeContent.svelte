@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Size } from "$lib/client/types/size.enum";
-  import WebPagePreview from "./web/WebPagePreview.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { appStore } from "@21n/stores/app.store";
+  import { Size } from "@21n/types/size.enum";
+  import WebPagePreview from "@21n/products/memotron/node/content/web/WebPagePreview.svelte";
   import {
     type IClip,
     type IWebPage,
@@ -11,24 +11,25 @@
     socialPostNodeTypeList,
     socialProfileNodeTypeList,
     socialSubNodeTypeList
-  } from "../node.type";
-  import SocialPostContent from "./web/social/SocialPostContent.svelte";
-  import SocialProfileContent from "./web/social/SocialProfileContent.svelte";
-  import WebClipPreview from "./web/WebClipPreview.svelte";
-  import YoutubeVideoPreview from "./web/YoutubeVideoPreview.svelte";
-  import KindleBookPreview from "./web/KindleBookPreview.svelte";
-  import { truncateString } from "$lib/shared/utils/text.utils";
-  import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
-  import type { IContextMenu } from "$lib/client/types/select.type";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import GistPreview from "./web/GistPreview.svelte";
-  import SocialSubContent from "./web/social/SocialSubContent.svelte";
+  } from "@21n/products/memotron/node/node.type";
+  import SocialPostContent from "@21n/products/memotron/node/content/web/social/SocialPostContent.svelte";
+  import SocialProfileContent from "@21n/products/memotron/node/content/web/social/SocialProfileContent.svelte";
+  import WebClipPreview from "@21n/products/memotron/node/content/web/WebClipPreview.svelte";
+  import YoutubeVideoPreview from "@21n/products/memotron/node/content/web/YoutubeVideoPreview.svelte";
+  import KindleBookPreview from "@21n/products/memotron/node/content/web/KindleBookPreview.svelte";
+  import { truncateString } from "@21n/shared-utils/text.utils";
+  import ContextMenuAction from "@21n/elements/contextMenu/ContextMenuAction.svelte";
+  import { PopoverTriggerMethod } from "@21n/types/popover.type";
+  import type { IContextMenu } from "@21n/types/select.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import GistPreview from "@21n/products/memotron/node/content/web/GistPreview.svelte";
+  import SocialSubContent from "@21n/products/memotron/node/content/web/social/SocialSubContent.svelte";
   export let node: IClip | IWebPage;
   export let isLinkHovering: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   let youtubeVideoRef: YoutubeVideoPreview;
-
+  let copyLabel: string = "Copy";
+  let copyTimeoutId: ReturnType<typeof setTimeout> | null = null;
   export function onTrace(e: any) {
     youtubeVideoRef.onTrace(e);
   }
@@ -56,15 +57,9 @@
       ]
     }
   ];
-
-  function trimUrl(url: string, isHovering: boolean) {
-    url = url.split("?")[0];
-    url = url.split("#")[0];
-    return truncateString(url, isHovering ? 150 : 50);
-  }
 </script>
 
-<div class="relative h-full w-full">
+<div class="relative h-full w-full flex flex-col">
   {#if node.contentType === NodeType.WEB_PAGE || node.contentType === NodeType.YOUTUBE_CHANNEL}
     <WebPagePreview {node} {accessPoint} />
   {:else if node.contentType === NodeType.GIST}
@@ -79,11 +74,7 @@
     <SocialSubContent {node} />
   {:else if node.contentType === NodeType.KINDLE_BOOK}
     <KindleBookPreview {node} />
-  {:else if ((
-      node.contentType === NodeType.YOUTUBE_VIDEO ||
-      node.contentType === NodeType.YOUTUBE_SHORT ||
-      node.contentType === NodeType.YOUTUBE_BOOKMARK
-    ) && node.url)}
+  {:else if (node.contentType === NodeType.YOUTUBE_VIDEO || node.contentType === NodeType.YOUTUBE_SHORT || node.contentType === NodeType.YOUTUBE_BOOKMARK) && node.url}
     <YoutubeVideoPreview
       url={node.url}
       timestamp={node.body && "timestamp" in node.body
@@ -93,29 +84,45 @@
     />
   {/if}
   {#if "url" in node && node.url && accessPoint === ResourceAccessPoint.SELF && !socialPostNodeTypeList.has(node.contentType)}
+    <!-- TODO - TIDY-10 -->
     <div
-      class="absolute bottom-0 left-0 m-2 flex gap-2 items-center max-w-full"
+      class="flex items-center max-w-full w-full border-t border-brs2 text-fgs3 text-b2 truncate"
     >
-      <ContextMenuAction
+      <!-- <ContextMenuAction
         id="open-link-context-menu"
         triggerMethod={PopoverTriggerMethod.RIGHT_CLICK}
         menuResolver={() => {
           return linkContextMenu;
         }}
+      > -->
+      <button
+        class="flex border-r border-brs2 px-3 py-1.5 hover:bg-aps2-striped hover:text-aps1 truncate min-w-0 flex-1"
+        title="Open link"
+        on:click={() => {
+          if (!node.url) return;
+          appStore.openLink(node.url);
+        }}
       >
-        <Button
-          icon="weblink"
-          label={trimUrl(node.url, isLinkHovering)}
-          bind:isHovering={isLinkHovering}
-          size={Size.xs}
-          type={ButtonVariant.PRIMARY}
-          style={ButtonStyle.OUTLINED}
-          on:click={() => {
-            if (!node.url) return;
-            appStore.openLink(node.url);
-          }}
-        />
-      </ContextMenuAction>
+        {node.url?.split("?")?.[0]?.split("#")?.[0]}
+      </button>
+      <!-- </ContextMenuAction> -->
+      <button
+        class="flex px-3 py-1.5 hover:bg-bgs2-striped"
+        on:click={() => {
+          if (!node.url) return;
+          navigator.clipboard.writeText(node.url);
+          copyLabel = "Copied!";
+          if (copyTimeoutId !== null) {
+            clearTimeout(copyTimeoutId);
+          }
+          copyTimeoutId = setTimeout(() => {
+            copyLabel = "Copy";
+            copyTimeoutId = null;
+          }, 1000);
+        }}
+      >
+        {copyLabel}
+      </button>
     </div>
   {/if}
 </div>

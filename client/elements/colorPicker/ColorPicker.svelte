@@ -1,13 +1,13 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import ColorSlider from "./ColorSlider.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import appearance from "$lib/client/stores/appearance.store";
-  import FormControlLabelWrapper from "../text/formLabel/FormControlLabelWrapper.svelte";
-  import type { InputLabel } from "$lib/client/types/input.type";
-  import ColorPickerElement from "./ColorPickerElement.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import ColorSlider from "@21n/elements/colorPicker/ColorSlider.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import appearance from "@21n/stores/appearance.store";
+  import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
+  import type { InputLabel } from "@21n/types/input.type";
+  import ColorPickerElement from "@21n/elements/colorPicker/ColorPickerElement.svelte";
   import { createEventDispatcher } from "svelte";
-  import { debouncer } from "$lib/client/utils/utils";
+  import { debouncer } from "@21n/utils/utils";
   const dispatch = createEventDispatcher();
 
   export let hue = 0;

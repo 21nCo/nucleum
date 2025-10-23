@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { paintQRCode } from "$lib/client/utils/ui.utils";
+  import { paintQRCode } from "@21n/utils/ui.utils";
   import { onMount } from "svelte";
-  import { org } from "$lib/client/landing/shared/store/shared.store";
+  import { org } from "@21n/landing/shared/store/shared.store";
   export let url: string = org.website;
   export let enableHover: boolean = true;
   export let width: number = 72;

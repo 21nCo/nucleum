@@ -1,37 +1,37 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import EditModeToggle from "$lib/client/elements/toggle/EditModeToggle.svelte";
-  import { appStore, isInEditMode } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
-  import { Size } from "$lib/client/types/size.enum";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import EditModeToggle from "@21n/elements/toggle/EditModeToggle.svelte";
+  import { appStore, isInEditMode } from "@21n/stores/app.store";
+  import view from "@21n/stores/view.store";
+  import { Size } from "@21n/types/size.enum";
+  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
+  import { TextStyle } from "@21n/types/text.enum";
   import { onMount } from "svelte";
-  import { analyticsConfigStore, selectedPageId } from "./analytics.store";
-  import AnalyticsPageView from "./page/AnalyticsPageView.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+  import { analyticsConfigStore, selectedPageId } from "@21n/products/pointron/analytics/analytics.store";
+  import AnalyticsPageView from "@21n/products/pointron/analytics/page/AnalyticsPageView.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   import {
     onAddPageClicked,
     onPagelabelChange,
     onRemovePageClicked,
     onPageRearrange
-  } from "./analytics.utils";
-  import { confirmationNotification } from "$lib/client/stores/notification.store";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
+  } from "@21n/products/pointron/analytics/analytics.utils";
+  import { confirmationNotification } from "@21n/stores/notification.store";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import {
     uiState,
     uiStateDerived
-  } from "$lib/client/stores/uiState/uiState.store";
+  } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
-  import { Product } from "$lib/client/products/product.type";
+  } from "@21n/stores/uiState/uiState.type";
+  import { bg, cn } from "@21n/utils/ui.utils";
+  import { Product } from "@21n/products/product.type";
 
   const bgIndex = 2;
   const isNucleusContext = $appStore.product === Product.NUCLEUS;

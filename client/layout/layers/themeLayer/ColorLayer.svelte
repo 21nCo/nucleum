@@ -1,9 +1,9 @@
 <script lang="ts">
-  import appearance from "$lib/client/stores/appearance.store";
+  import appearance from "@21n/stores/appearance.store";
   import {
     resolveIfActiveFgFg,
     retrieveCurrentColors
-  } from "$lib/client/utils/theme.utils";
+  } from "@21n/utils/theme.utils";
   $: isActiveFgFg = resolveIfActiveFgFg(undefined, $appearance);
   $: currentColors = retrieveCurrentColors($appearance);
 </script>

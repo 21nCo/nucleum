@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { Size } from "@21n/types/size.enum";
+  import { bg, cn } from "@21n/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
-  import Icon from "../Icon.svelte";
-  import view from "$lib/client/stores/view.store";
-  import { appStore } from "$lib/client/stores/app.store";
-  import modalEvent from "$lib/client/components/modal/modal.store";
-  import { haptic } from "$lib/client/utils/embed.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import view from "@21n/stores/view.store";
+  import { appStore } from "@21n/stores/app.store";
+  import modalEvent from "@21n/components/modal/modal.store";
+  import { haptic } from "@21n/utils/embed.utils";
   const dispatch = createEventDispatcher();
   export let text: string | undefined = undefined;
   export let parentBgIndex: number = 1;

@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import { Orientation } from "@21n/types/direction.enum";
   import { createEventDispatcher } from "svelte";
-  import HighlightColors from "../../common/highlighters/HighlightColors.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
+  import HighlightColors from "@21n/products/memotron/common/highlighters/HighlightColors.svelte";
+  import { ButtonVariant } from "@21n/types/button.type";
   let dispatch = createEventDispatcher();
   export let style = "";
   export let selectedColor = "";

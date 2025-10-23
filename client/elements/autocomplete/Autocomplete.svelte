@@ -1,14 +1,14 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import AutocompleteResultItem from "./AutocompleteResultItem.svelte";
-  import type { AutocompleteListItemType } from "$lib/client/types/autocompleteListItem.type";
-  import { generateUID } from "$lib/client/utils/utils";
-  import Icon from "../Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { appEvents } from "$lib/client/stores/notification.store";
-  import type { IEvent } from "$lib/client/types/event.type";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
+  import AutocompleteResultItem from "@21n/elements/autocomplete/AutocompleteResultItem.svelte";
+  import type { AutocompleteListItemType } from "@21n/types/autocompleteListItem.type";
+  import { generateUID } from "@21n/utils/utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { appEvents } from "@21n/stores/notification.store";
+  import type { IEvent } from "@21n/types/event.type";
+  import { GlobalEvent } from "@21n/types/event.enum";
 
   export let wrapperClassList: string = "w-full";
   export let wrapperStyle: string = "";

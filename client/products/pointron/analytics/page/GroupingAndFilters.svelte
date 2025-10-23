@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { popover } from "$lib/client/actions/popover.action";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import view from "$lib/client/stores/view.store";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { type IAnalyticsCard } from "../analytics.types";
-  import GroupingAndFiltersPopover from "./GroupingAndFiltersPopover.svelte";
+  import { popover } from "@21n/actions/popover.action";
+  import Button from "@21n/elements/button/Button.svelte";
+  import view from "@21n/stores/view.store";
+  import { Placement } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { type IAnalyticsCard } from "@21n/products/pointron/analytics/analytics.types";
+  import GroupingAndFiltersPopover from "@21n/products/pointron/analytics/page/GroupingAndFiltersPopover.svelte";
   export let card: IAnalyticsCard;
   export let onGroupByChange: (e: CustomEvent) => void;
   export let parentBgIndex: number = 1;

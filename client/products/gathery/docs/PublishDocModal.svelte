@@ -1,9 +1,9 @@
 <script lang="ts">
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import CopyableText from "$lib/client/elements/text/CopyableText.svelte";
-  import { spaceInContext } from "$lib/client/products/gathery/space.store";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import { stripTablePrefix } from "$lib/shared/utils/text.utils";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import CopyableText from "@21n/elements/text/CopyableText.svelte";
+  import { spaceInContext } from "@21n/products/gathery/space.store";
+  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
+  import { stripTablePrefix } from "@21n/shared-utils/text.utils";
   export let id: string;
   let docSlug = stripTablePrefix(id);
   let selected = "Access from web";

@@ -1,22 +1,22 @@
 <script lang="ts">
-  import Header from "./OnboardingHeader.svelte";
-  import Footer from "./OnboardingFooter.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import view from "$lib/client/stores/view.store";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
+  import Header from "@21n/products/pointron/onboarding/OnboardingHeader.svelte";
+  import Footer from "@21n/products/pointron/onboarding/OnboardingFooter.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import view from "@21n/stores/view.store";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
   import { onMount } from "svelte";
-  import AppLoadingView from "$lib/client/layout/paint/AppLoadingView.svelte";
-  import { postMessageToParent } from "$lib/client/utils/embed.utils";
-  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import AppLoadingView from "@21n/layout/paint/AppLoadingView.svelte";
+  import { postMessageToParent } from "@21n/utils/embed.utils";
+  import { EmbedMessage } from "@21n/types/embedMessage.enum";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import context from "$lib/client/stores/context.store";
+  } from "@21n/stores/uiState/uiState.type";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import context from "@21n/stores/context.store";
 
   let currentStep = 0;
 

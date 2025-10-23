@@ -1,7 +1,7 @@
-import { Resource } from "./resource.enum";
-import type { IResourceTableConfig } from "../flux.type";
-import { StoreDataType } from "$lib/client/types/data.type";
-import { CollectionObjectKey } from "$lib/client/components/collection/collection.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import type { IResourceTableConfig } from "@21n/components/flux/flux.type";
+import { StoreDataType } from "@21n/types/data.type";
+import { CollectionObjectKey } from "@21n/components/collection/collection.type";
 
 /**
  * Resource configuration map
@@ -31,6 +31,13 @@ export const resourceConfig: Record<string, IResourceTableConfig> = {
     name: Resource.collection,
     dataType: StoreDataType.FIR,
     indices: ["type", "resource", CollectionObjectKey.typeToExtend],
+    searchIndices: ["label"],
+    encrypt: ["label"]
+  },
+
+  [Resource.combination]: {
+    name: Resource.combination,
+    indices: ["type"],
     searchIndices: ["label"],
     encrypt: ["label"]
   },

@@ -1,4 +1,4 @@
-import { Orientation } from "$lib/client/types/direction.enum";
+import { Orientation } from "@21n/types/direction.enum";
 import { readable, writable } from "svelte/store";
 
 /**

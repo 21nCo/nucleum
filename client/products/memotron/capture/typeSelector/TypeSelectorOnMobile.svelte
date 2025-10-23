@@ -1,20 +1,20 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import CaptureDraftsAction from "../../capture/draftSelector/CaptureDraftsAction.svelte";
-  import { CaptureMethod } from "../../capture/capture.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import TypeSelectorItem from "./TypeSelectorItem.svelte";
-  import { collectionStore } from "$lib/client/components/collection/collection.store";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { MemotronAction } from "../../memotronAction.enum";
-  import { CollectionObjectKey } from "$lib/client/components/collection/collection.type";
-  import context from "$lib/client/stores/context.store";
+  import { Size } from "@21n/types/size.enum";
+  import CaptureDraftsAction from "@21n/products/memotron/capture/draftSelector/CaptureDraftsAction.svelte";
+  import { CaptureMethod } from "@21n/products/memotron/capture/capture.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import TypeSelectorItem from "@21n/products/memotron/capture/typeSelector/TypeSelectorItem.svelte";
+  import { collectionStore } from "@21n/components/collection/collection.store";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
+  import { CollectionObjectKey } from "@21n/components/collection/collection.type";
+  import context from "@21n/stores/context.store";
   const dispatch = createEventDispatcher();
   export let selected: CaptureMethod | undefined = undefined;
   export let isBoxedLayout = true;
@@ -28,9 +28,9 @@
       label: "Sketch",
       value: CaptureMethod.SKETCH
     },
-    isDev && {
-      icon: "globe",
-      label: "Web",
+    {
+      icon: "globe-alt",
+      label: "Add from Web",
       value: CaptureMethod.WEB
     },
     isDev && {

@@ -1,7 +1,7 @@
 import type {
   IResource,
   IResourceShareable
-} from "$lib/client/components/flux/resourceStores/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 
 /**
  * @deprecated - directly extend IResource, IResourceShareable etc instead

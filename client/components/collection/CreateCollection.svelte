@@ -1,45 +1,45 @@
 <script lang="ts">
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { collectionStore } from "./collection.store";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-  import { OptionSelectorStyle } from "$lib/client/types/select.type";
-  import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { collectionStore } from "@21n/components/collection/collection.store";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import { OptionSelectorStyle } from "@21n/types/select.type";
+  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
   import {
     CollectionLayout,
     CollectionType
-  } from "$lib/client/components/collection/collection.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import type { IProperty } from "$lib/client/components/collection/properties/property.type";
-  import Avatar from "$lib/client/elements/avatarPicker/Avatar.svelte";
-  import { propertyEditorStore } from "./properties/property.store";
+  } from "@21n/components/collection/collection.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import type { IProperty } from "@21n/components/collection/properties/property.type";
+  import Avatar from "@21n/elements/avatarPicker/Avatar.svelte";
+  import { propertyEditorStore } from "@21n/components/collection/properties/property.store";
   import { onMount } from "svelte";
-  import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
+  import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
   import {
     resolveResourceIcon,
     resourceAction
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import {
     ResourceAccessPoint,
     ResourceActionType
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import { logger } from "@21n/components/debug/logger.client";
   import {
     resolveCollectionResource,
     resolveCollectionTypeIcon,
     resolveCollectionTypeLabel
-  } from "./collection.utils";
-  import TypeExtensionAndPropertiesEditor from "./TypeExtensionAndPropertiesEditor.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
-  import TextArea from "$lib/client/elements/input/TextArea.svelte";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import ModalContentPadded from "$lib/client/components/modal/ModalContentPadded.svelte";
+  } from "@21n/components/collection/collection.utils";
+  import TypeExtensionAndPropertiesEditor from "@21n/components/collection/TypeExtensionAndPropertiesEditor.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import view from "@21n/stores/view.store";
+  import TextArea from "@21n/elements/input/TextArea.svelte";
+  import { toasts } from "@21n/stores/notification.store";
+  import { tooltip } from "@21n/actions/popover.action";
+  import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
 
   export let context: ResourceAccessPoint | undefined = undefined;
   let title: string;

@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { Control } from "$lib/client/types/pointron/control.enum";
-  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import ControlItem from "./ControlItem.svelte";
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { SessionType } from "$lib/client/products/pointron/logs/log.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
+  import { Control } from "@21n/types/pointron/control.enum";
+  import { SessionState } from "@21n/types/pointron/sessionState.enum";
+  import ControlItem from "@21n/products/pointron/focus/elements/controls/ControlItem.svelte";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import { SessionType } from "@21n/products/pointron/logs/log.type";
+  import { appStore } from "@21n/stores/app.store";
+  import { cn } from "@21n/utils/ui.utils";
+  import { SessionUIContext } from "@21n/types/pointron/session.type";
   export let context: SessionUIContext = SessionUIContext.DEFAULT;
   let isOperationInProgress = false;
   $: controlItemProps = { context };

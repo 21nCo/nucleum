@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Section from "../Section.svelte";
-  import Title from "../Title.svelte";
-  import PricingCard from "./PricingCard.svelte";
-  import TimeUnitToggle from "./TimeUnitToggle.svelte";
-  import type { PricingPlan, PricingToggleOption } from "./pricing.types";
+  import { cn } from "@21n/utils/ui.utils";
+  import Section from "@21n/landing/shared/Section.svelte";
+  import Title from "@21n/landing/shared/Title.svelte";
+  import PricingCard from "@21n/landing/shared/pricing/PricingCard.svelte";
+  import TimeUnitToggle from "@21n/landing/shared/pricing/TimeUnitToggle.svelte";
+  import type { PricingPlan, PricingToggleOption } from "@21n/landing/shared/pricing/pricing.types";
 
   export let plans: PricingPlan[] = [];
   export let title = "Pricing";

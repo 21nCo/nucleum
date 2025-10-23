@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { popover } from "$lib/client/actions/popover.action";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Icon from "../Icon.svelte";
-  import CustomColorPropagator from "../style/CustomColorPropagator.svelte";
-  import ColorPickerPopover from "./ColorPickerPopover.svelte";
+  import { popover } from "@21n/actions/popover.action";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import ColorPickerPopover from "@21n/elements/colorPicker/ColorPickerPopover.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let hue: number | undefined = undefined;

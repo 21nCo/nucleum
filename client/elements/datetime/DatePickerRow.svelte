@@ -1,8 +1,8 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import Icon from "../Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
 
   export let isDateMode: boolean = true;
   export let date: Date = new Date();
@@ -482,7 +482,7 @@
               {
                 "bg-aps3 text-aps1":
                   isSelectedDateVisible && selectedValue === item,
-                "hover:bg-bgs2 active:bg-bgs3":
+                "hover:bg-bgs2-striped active:bg-bgs3":
                   !isSelectedDateVisible || selectedValue !== item
               }
             )}

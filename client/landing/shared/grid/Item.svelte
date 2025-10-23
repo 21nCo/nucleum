@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IGridItem } from "../landing.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IGridItem } from "@21n/landing/shared/landing.type";
 
   export let item: IGridItem;
 

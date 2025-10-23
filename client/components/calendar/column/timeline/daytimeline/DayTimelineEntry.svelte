@@ -1,8 +1,8 @@
 <script lang="ts">
   import dayjs from "dayjs";
-  import type { CalendarTimelineEntry } from "../../../calendar.type";
-  import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
-  import { resizeListener } from "$lib/client/actions/resize.action";
+  import type { CalendarTimelineEntry } from "@21n/components/calendar/calendar.type";
+  import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
+  import { resizeListener } from "@21n/actions/resize.action";
   export let entry: CalendarTimelineEntry & {
     top: number;
     height: number;
@@ -33,7 +33,7 @@
 </script>
 
 <button
-  class="event-item absolute bg-bgs2 rounded-md border-l-4 border-aps1 truncate flex userdata"
+  class="event-item absolute bg-bgs2 rounded-r-md border-l-2 border-aps1 truncate flex userdata hover:bg-bgs3-striped"
   style="top: {entry.top}px; height: {entry.height}px; width: {width}; left: {left};"
   use:resizeListener={(el) => {
     height = el.height;
@@ -59,10 +59,5 @@
 <style>
   .event-item {
     transition: transform 0.2s;
-  }
-
-  .event-item:hover {
-    transform: translateX(2px);
-    z-index: 5;
   }
 </style>

@@ -1,15 +1,15 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Size } from "$lib/client/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/types/size.enum";
   import {
     ContextMenuType,
     type IContextMenuItem
-  } from "$lib/client/types/select.type";
-  import ContextMenuItemBase from "./ContextMenuItemBase.svelte";
-  import ContextMenuItemWithSecondary from "./ContextMenuItemWithSecondary.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
+  } from "@21n/types/select.type";
+  import ContextMenuItemBase from "@21n/elements/contextMenu/ContextMenuItemBase.svelte";
+  import ContextMenuItemWithSecondary from "@21n/elements/contextMenu/ContextMenuItemWithSecondary.svelte";
+  import { appStore } from "@21n/stores/app.store";
   import { createEventDispatcher } from "svelte";
-  import ContextMenuToggleItem from "./ContextMenuToggleItem.svelte";
+  import ContextMenuToggleItem from "@21n/elements/contextMenu/ContextMenuToggleItem.svelte";
   const dispatch = createEventDispatcher();
   export let item: IContextMenuItem;
   export let isToggleGroup = false;
@@ -39,7 +39,7 @@
         "p-1.5": size === Size.sm,
         "p-2": size === Size.md,
         "px-3 py-2": size === Size.lg,
-        "notouch:hover:bg-bgs3 active:bg-bgs3": !isRedAccent,
+        "notouch:hover:bg-bgs3-striped active:bg-bgs3-striped": !isRedAccent,
         "notouch:hover:bg-ars3 active:bg-ars3": isRedAccent
       }
     )}

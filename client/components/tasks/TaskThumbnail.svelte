@@ -1,49 +1,49 @@
 <script lang="ts">
-  import type { ITaskThumb } from "./task.type";
-  import { Arrangement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
+  import type { ITaskThumb } from "@21n/components/tasks/task.type";
+  import { Arrangement } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import ResourceThumbnailBase from "../record/thumbnail/ResourceThumbnailBase.svelte";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import ResourceThumbnailBase from "@21n/components/record/thumbnail/ResourceThumbnailBase.svelte";
   import {
     compareDates,
     parseAndFormatDate
-  } from "$lib/client/utils/time.utils";
-  import TaskCheckbox from "./TaskCheckbox.svelte";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
-  import { taskStore } from "./task.store";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import TaskThumbnailGoalLabel from "./TaskThumbnailGoalLabel.svelte";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import ResourceThumbnailContextMenu from "../record/thumbnail/ResourceThumbnailContextMenu.svelte";
-  import view from "$lib/client/stores/view.store";
+  } from "@21n/utils/time.utils";
+  import TaskCheckbox from "@21n/components/tasks/TaskCheckbox.svelte";
+  import { hoverable } from "@21n/actions/hover.action";
+  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
+  import { taskStore } from "@21n/components/tasks/task.store";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IRecordId } from "@21n/types/data.type";
+  import TaskThumbnailGoalLabel from "@21n/components/tasks/TaskThumbnailGoalLabel.svelte";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import ResourceThumbnailContextMenu from "@21n/components/record/thumbnail/ResourceThumbnailContextMenu.svelte";
+  import view from "@21n/stores/view.store";
   import { createEventDispatcher } from "svelte";
-  import { popover, tooltip } from "$lib/client/actions/popover.action";
-  import AbsoluteTimeRangePopoverV2 from "$lib/client/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
-  import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
-  import { goalStore } from "../goals/goal.store";
-  import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
-  import FocusItemPickOverlay from "$lib/client/products/pointron/focus/elements/focusitem/FocusItemPickOverlay.svelte";
+  import { popover, tooltip } from "@21n/actions/popover.action";
+  import AbsoluteTimeRangePopoverV2 from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
+  import { PopoverTriggerMethod } from "@21n/types/popover.type";
+  import { generateMiniRandomId } from "@21n/shared-utils/crypto.utils";
+  import { goalStore } from "@21n/components/goals/goal.store";
+  import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
+  import FocusItemPickOverlay from "@21n/products/pointron/focus/elements/focusitem/FocusItemPickOverlay.svelte";
   import {
     activeSession,
     currentFocusItem
-  } from "$lib/client/products/pointron/focus/session.store";
-  import { movingBorder } from "$lib/client/actions/movingBorder.action";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { Resource } from "../flux/resourceStores/resource.enum";
-  import { resolveMultiSelectStore } from "../flux/resourceStores/resource.store";
-  import Task from "./Task.svelte";
-  import context from "$lib/client/stores/context.store";
+  } from "@21n/products/pointron/focus/session.store";
+  import { movingBorder } from "@21n/actions/movingBorder.action";
+  import { appStore } from "@21n/stores/app.store";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
+  import Task from "@21n/components/tasks/Task.svelte";
+  import context from "@21n/stores/context.store";
   const dispatch = createEventDispatcher();
   export let item: ITaskThumb;
   export let arrangement: Arrangement = Arrangement.LIST;

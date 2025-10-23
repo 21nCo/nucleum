@@ -1,14 +1,14 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Size } from "$lib/client/types/size.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { Size } from "@21n/types/size.enum";
   import {
     NodeType,
     socialProfileNodeTypeList,
     socialProfileWithImageUnavailable
-  } from "../../../node.type";
-  import type { INode } from "../../../node.type";
-  import { resolveNodeIcon } from "../../../node.utils";
+  } from "@21n/products/memotron/node/node.type";
+  import type { INode } from "@21n/products/memotron/node/node.type";
+  import { resolveNodeIcon } from "@21n/products/memotron/node/node.utils";
 
   export let node: INode;
 

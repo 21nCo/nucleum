@@ -1,21 +1,21 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { PlanType } from "$lib/client/components/subscription/userPlan.type";
-  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
-  import { clientStorage } from "$lib/client/persistence/persistence.utils";
-  import account, { isRefreshingToken } from "$lib/client/stores/account.store";
+  import { PlanType } from "@21n/components/subscription/userPlan.type";
+  import { ClientStorageKey } from "@21n/persistence/persistence.type";
+  import { clientStorage } from "@21n/persistence/persistence.utils";
+  import account, { isRefreshingToken } from "@21n/stores/account.store";
   import {
     appStore,
     excludedPathsForRedirectionCheck
-  } from "$lib/client/stores/app.store";
-  import context from "$lib/client/stores/context.store";
+  } from "@21n/stores/app.store";
+  import context from "@21n/stores/context.store";
   import {
     UserDataMode,
     UserSessionType
-  } from "$lib/client/types/account.type";
-  import { Product } from "$lib/client/products/product.type";
-  import { postTokenToExtension } from "$lib/client/utils/embed.utils";
-  import { wait } from "$lib/client/utils/time.utils";
+  } from "@21n/types/account.type";
+  import { Product } from "@21n/products/product.type";
+  import { postTokenToExtension } from "@21n/utils/embed.utils";
+  import { wait } from "@21n/utils/time.utils";
   import { onMount } from "svelte";
 
   let isLoggedIn: boolean = false;

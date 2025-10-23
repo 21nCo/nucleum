@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
-  import Icon from "../Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { bg, cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
   import { createEventDispatcher } from "svelte";
-  import Badge from "../text/Badge.svelte";
-  import type { IContextMenuItem } from "$lib/client/types/select.type";
-  import { hoverable } from "$lib/client/actions/hover.action";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import type { IContextMenuItem } from "@21n/types/select.type";
+  import { hoverable } from "@21n/actions/hover.action";
   const dispatch = createEventDispatcher();
   export let item: IContextMenuItem;
   export let on: boolean = item.initialValue ?? false;
@@ -34,7 +34,7 @@
       "min-h-8 min-w-8": size === Size.sm,
       "min-h-10 min-w-10": size === Size.md,
       "min-h-16 min-w-16": size === Size.lg,
-      [bg(parentBgIndex + 1)]: isHovering,
+      [`${bg(parentBgIndex + 1)}-striped`]: isHovering,
       "bg-aps3 border-aps1 text-aps1": on,
       "border-brs4": !on && isHovering,
       "border-brs3": !on && !isHovering
@@ -42,7 +42,7 @@
   )}
 >
   <Icon
-    icon={on ? (item.activeIcon ?? item.icon) : item.icon}
+    icon={on ? item.activeIcon ?? item.icon : item.icon}
     size={size === Size.lg ? Size.md : size}
     isFilled={on && !isPreventFillOnActive}
     class={cn({

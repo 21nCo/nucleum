@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
   import {
     ButtonStyle,
     ButtonVariant,
     type IButtonParams
-  } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { InfoTextType } from "$lib/client/types/text.type";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
-  import Icon from "../Icon.svelte";
-  import Button from "../button/Button.svelte";
-  import Link from "./Link.svelte";
+  } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import { InfoTextType } from "@21n/types/text.type";
+  import { bg, cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Link from "@21n/elements/text/Link.svelte";
   export let content: string | undefined = undefined;
   export let icon: string | undefined = undefined;
   export let isIconFilled: boolean = false;

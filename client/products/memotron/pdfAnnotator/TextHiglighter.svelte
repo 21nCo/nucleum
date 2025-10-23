@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { AnnotationType } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.type";
+  import { AnnotationType } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
   import { createEventDispatcher } from "svelte";
-  import { highlightStore } from "../common/highlighters/highlight.store";
+  import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
   export let id = "";
   export let highlighter: string = "";
   export let rects: any = [];

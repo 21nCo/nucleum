@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { isInEditMode } from "$lib/client/stores/app.store";
-  import { Size } from "$lib/client/types/size.enum";
-  import Button from "../button/Button.svelte";
-  import Switch from "./Switch.svelte";
+  import { isInEditMode } from "@21n/stores/app.store";
+  import { Size } from "@21n/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Switch from "@21n/elements/toggle/Switch.svelte";
   export let isReadModeVariant: boolean = false;
 </script>
 

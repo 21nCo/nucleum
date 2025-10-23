@@ -1,11 +1,11 @@
-import { ObservableStore } from "$lib/client/stores/client.store";
+import { ObservableStore } from "@21n/stores/client.store";
 import {
   EmbedDataMessage,
   type EmbedMessage
-} from "$lib/client/types/embedMessage.enum";
-import { postDataToParent } from "$lib/client/utils/embed.utils";
-import { wait } from "$lib/client/utils/time.utils";
-import type { IEmbedChannel } from "./embed.type";
+} from "@21n/types/embedMessage.enum";
+import { postDataToParent } from "@21n/utils/embed.utils";
+import { wait } from "@21n/utils/time.utils";
+import type { IEmbedChannel } from "@21n/components/embed/embed.type";
 
 class EmbedBridge extends ObservableStore<IEmbedChannel> {
   constructor() {

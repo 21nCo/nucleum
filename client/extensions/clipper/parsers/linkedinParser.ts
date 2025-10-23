@@ -1,12 +1,12 @@
-import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
+import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
 import {
   NodeType,
   type ILinkedInPost,
   type ILinkedInProfile
-} from "$lib/client/products/memotron/node/node.type";
-import { parseRelativeTimeToISO } from "$lib/client/utils/time.utils";
-import type { ISocialPost } from "../clipper.type";
-import { findAncestorOrSelf, resolveOgData } from "./shared/domUtils";
+} from "@21n/products/memotron/node/node.type";
+import { parseRelativeTimeToISO } from "@21n/utils/time.utils";
+import type { ISocialPost } from "@21n/extensions/clipper/clipper.type";
+import { findAncestorOrSelf, resolveOgData } from "@21n/extensions/clipper/parsers/shared/domUtils";
 
 export function extractLinkedInPostFromPage():
   | ISocialPost<ILinkedInPost, ILinkedInProfile>

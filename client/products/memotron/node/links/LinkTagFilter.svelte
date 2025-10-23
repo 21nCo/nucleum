@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import Tag from "$lib/client/elements/text/Tag.svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { linkTagStore } from "../../linking/link.store";
-  import { linkTagLabelMapper } from "../../linking/link.utils";
-  import type { INodeLinkThumb } from "../node.type";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+  import Tag from "@21n/elements/text/Tag.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { Size } from "@21n/types/size.enum";
+  import { linkTagStore } from "@21n/products/memotron/linking/link.store";
+  import { linkTagLabelMapper } from "@21n/products/memotron/linking/link.utils";
+  import type { INodeLinkThumb } from "@21n/products/memotron/node/node.type";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let links: INodeLinkThumb[] = [];

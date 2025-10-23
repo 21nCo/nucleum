@@ -1,34 +1,31 @@
 <script lang="ts">
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import { onMount } from "svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import ProfilePicture from "$lib/client/components/settings/account/ProfilePicture.svelte";
-  import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
-  import Tabs from "./tabs/Tabs.svelte";
-  import { tabs } from "./tabs/tabs.store";
-  import TrailLeftIndicator from "./TrailLeftIndicator.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { appStore } from "@21n/stores/app.store";
+  import { Action } from "@21n/types/action.enum";
+  import ProfilePicture from "@21n/components/settings/account/ProfilePicture.svelte";
+  import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
+  import Tabs from "@21n/layout/topNav/tabs/Tabs.svelte";
+  import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
+  import TrailLeftIndicator from "@21n/layout/topNav/TrailLeftIndicator.svelte";
   import { fly } from "svelte/transition";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { page } from "$app/stores";
-  import TopBarResourceItem from "./tabs/TopBarResourceItem.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { determineIfActiveSubscriber } from "$lib/client/components/subscription/userPlan.utils";
-  import account from "$lib/client/stores/account.store";
-  import { UserDataMode } from "$lib/client/types/account.type";
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import TopNavLeftMenuItem from "./TopNavLeftMenuItem.svelte";
-  import InlineSyncingFeedback from "$lib/client/elements/feedback/InlineSyncingFeedback.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import {
-    UIState,
-    UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import TopNavLeftLogo from "./TopNavLeftLogo.svelte";
-  import { Embed } from "$lib/client/types/context.type";
-  import context from "$lib/client/stores/context.store";
-  import OfflineStatusMessage from "$lib/client/elements/feedback/OfflineStatusMessage.svelte";
+  import TopBarResourceItem from "@21n/layout/topNav/tabs/TopBarResourceItem.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { determineIfActiveSubscriber } from "@21n/components/subscription/userPlan.utils";
+  import account from "@21n/stores/account.store";
+  import { UserDataMode } from "@21n/types/account.type";
+  import { tooltip } from "@21n/actions/popover.action";
+  import TopNavLeftMenuItem from "@21n/layout/topNav/TopNavLeftMenuItem.svelte";
+  import InlineSyncingFeedback from "@21n/elements/feedback/InlineSyncingFeedback.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
+  import TopNavLeftLogo from "@21n/layout/topNav/TopNavLeftLogo.svelte";
+  import { Embed } from "@21n/types/context.type";
+  import context from "@21n/stores/context.store";
+  import OfflineStatusMessage from "@21n/elements/feedback/OfflineStatusMessage.svelte";
 
   let isInFocusMode = false;
   let pinnedItems: IRecordId[] = tabs.get() ?? [];
@@ -97,7 +94,7 @@
     {#if pinnedItems.length === 0 && !isInterimTab}
       <div class="flex items-center justify-center">
         <button
-          class="flex items-center justify-between w-96 h-full border-x border-brs3 hover:bg-bgs3 px-3 mx-3 text-b2 text-fgs2"
+          class="flex items-center justify-between w-96 h-full border-x border-brs3/70 hover:bg-bgs3-striped px-3 mx-3 text-b2 text-fgs2"
           transition:fly={{
             duration: 300,
             x: 40

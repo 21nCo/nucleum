@@ -1,38 +1,38 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { type IActiveGoalStore } from "$lib/client/components/goals/goal.store";
-  import GoalCollectionsRow from "../GoalCollectionsRow.svelte";
-  import Markdown from "$lib/client/components/markdown/Markdown.svelte";
-  import GoalTitleRow from "./GoalTitleRow.svelte";
-  import GoalStatusSwitcher from "../status/GoalStatusSwitcher.svelte";
-  import { GoalStatus, GoalType } from "../goal.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import TimelineCard from "./TimelineCard.svelte";
-  import RecordStatusBanner from "../../record/RecordStatusBanner.svelte";
+  import { type IActiveGoalStore } from "@21n/components/goals/goal.store";
+  import GoalCollectionsRow from "@21n/components/goals/GoalCollectionsRow.svelte";
+  import Markdown from "@21n/components/markdown/Markdown.svelte";
+  import GoalTitleRow from "@21n/components/goals/info/GoalTitleRow.svelte";
+  import GoalStatusSwitcher from "@21n/components/goals/status/GoalStatusSwitcher.svelte";
+  import { GoalStatus, GoalType } from "@21n/components/goals/goal.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import TimelineCard from "@21n/components/goals/info/TimelineCard.svelte";
+  import RecordStatusBanner from "@21n/components/record/RecordStatusBanner.svelte";
   import {
     activeSession,
     currentFocusItem
-  } from "$lib/client/products/pointron/focus/session.store";
-  import { isEmptyMd } from "../../markdown/markdown.utils";
-  import GoalInfoEditControl from "./GoalInfoEditControl.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { formatDatetime } from "$lib/client/utils/time.utils";
-  import { userPreferences } from "../../settings/userPreferences.store";
-  import PropertiesPane from "../../collection/properties/PropertiesPane.svelte";
-  import { Resource } from "../../flux/resourceStores/resource.enum";
-  import { debouncer } from "$lib/client/utils/utils";
-  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
-  import ControlBar from "$lib/client/products/pointron/focus/elements/controls/ControlBar.svelte";
-  import FocusPlayerTimeText from "$lib/client/products/pointron/focus/player/FocusPlayerTimeText.svelte";
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import InlineFeedbackText from "$lib/client/extensions/clipper/InlineFeedbackText.svelte";
+  } from "@21n/products/pointron/focus/session.store";
+  import { isEmptyMd } from "@21n/components/markdown/markdown.utils";
+  import GoalInfoEditControl from "@21n/components/goals/info/GoalInfoEditControl.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { formatDatetime } from "@21n/utils/time.utils";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import PropertiesPane from "@21n/components/collection/properties/PropertiesPane.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { debouncer } from "@21n/utils/utils";
+  import { SessionUIContext } from "@21n/types/pointron/session.type";
+  import ControlBar from "@21n/products/pointron/focus/elements/controls/ControlBar.svelte";
+  import FocusPlayerTimeText from "@21n/products/pointron/focus/player/FocusPlayerTimeText.svelte";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
   import {
     AlertType,
     type IInlineStatus
-  } from "$lib/client/types/notification.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+  } from "@21n/types/notification.type";
+  import { appStore } from "@21n/stores/app.store";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
   export let status: IInlineStatus | undefined = undefined;

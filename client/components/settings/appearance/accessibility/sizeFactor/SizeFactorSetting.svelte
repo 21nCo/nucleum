@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { onMount } from "svelte";
-  import SizeFactorSelector from "./SizeFactorSelector.svelte";
+  import SizeFactorSelector from "@21n/components/settings/appearance/accessibility/sizeFactor/SizeFactorSelector.svelte";
   export let parentBackgroundIndex: number = 1;
   let selectedFactor: number = 1;
   function onChange(event: any) {

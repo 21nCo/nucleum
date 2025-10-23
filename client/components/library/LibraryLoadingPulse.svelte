@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { Arrangement } from "$lib/client/types/direction.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Arrangement } from "@21n/types/direction.enum";
   export let isTail: boolean = false;
   export let arrangement: Arrangement | null = Arrangement.LIST;
   export let isConstrainedWidth: boolean = false;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import MacroIndicatorTIle from "./MacroIndicatorTIle.svelte";
+  import MacroIndicatorTIle from "@21n/components/calendar/calendarHeatmap/MacroIndicatorTIle.svelte";
   export let data: any;
   let [QD, QDData] = data;
 </script>

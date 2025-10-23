@@ -1,18 +1,18 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
   import "@carbon/charts-svelte/styles.css";
-  import { ChartType } from "$lib/client/types/analytics.type";
+  import { ChartType } from "@21n/types/analytics.type";
   import {
     ChartTheme,
     ScaleTypes,
     type ChartOptions,
     Alignments
   } from "@carbon/charts-svelte";
-  import { retrieveCurrentColors } from "$lib/client/utils/theme.utils";
-  import { determineCarbonChartTimeInterval } from "$lib/client/utils/carbon.utils";
-  import { pieLabelFormatter } from "$lib/client/utils/carbon.utils";
-  import { BarChartSimple, BarChartStacked } from "./charts";
-  import appearance from "$lib/client/stores/appearance.store";
+  import { retrieveCurrentColors } from "@21n/utils/theme.utils";
+  import { determineCarbonChartTimeInterval } from "@21n/utils/carbon.utils";
+  import { pieLabelFormatter } from "@21n/utils/carbon.utils";
+  import { BarChartSimple, BarChartStacked } from "@21n/components/charts/custom/charts";
+  import appearance from "@21n/stores/appearance.store";
   export let type: ChartType;
   export let data: any;
   export let additionalOptions: any;

@@ -1,14 +1,14 @@
-import { Resource } from "./resource.enum";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
   ResourceAccessMode,
   ResourceActionType,
   type ResourceAccessPoint
-} from "./resource.type";
-import type { IRecordId } from "$lib/client/types/data.type";
-import { logger } from "../../debug/logger.client";
-import { properCase } from "$lib/shared/utils/text.utils";
-import type { IResourceSwitchItem } from "$lib/client/types/select.type";
-import { Product } from "$lib/client/products/product.type";
+} from "@21n/components/flux/resourceStores/resource.type";
+import type { IRecordId } from "@21n/types/data.type";
+import { logger } from "@21n/components/debug/logger.client";
+import { properCase } from "@21n/shared-utils/text.utils";
+import type { IResourceSwitchItem } from "@21n/types/select.type";
+import { Product } from "@21n/products/product.type";
 
 export function resourceAction(resource: Resource, action: ResourceActionType) {
   return `${resource}_${action}`;
@@ -33,14 +33,21 @@ export function resolveProductResources(
     case Product.POINTRON:
       return [Resource.goal, Resource.task, Resource.collection];
     case Product.MEMOTRON:
-      if (context === "search") return [Resource.node, Resource.collection];
-      else return [Resource.node, Resource.collection, Resource.relation];
+      if (context === "search")
+        return [Resource.node, Resource.collection, Resource.combination];
+      else
+        return [
+          Resource.node,
+          Resource.collection,
+          Resource.combination,
+          Resource.relation
+        ];
     case Product.NUCLEUS:
       if (context === "search")
         return [
           Resource.node,
           Resource.goal,
-          // Resource.combination,
+          Resource.combination,
           Resource.task,
           Resource.collection
         ];
@@ -242,8 +249,10 @@ export const availableResources = new Set([
   Resource.collection,
   Resource.node,
   Resource.relation,
+  Resource.combination,
   Resource.goal,
-  Resource.task
+  Resource.task,
+  Resource.combination
 ]);
 
 export function resolveResourceSwitcher(): IResourceSwitchItem[] {

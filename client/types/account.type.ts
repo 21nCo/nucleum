@@ -1,8 +1,8 @@
-import type { PaymentProvider } from "$lib/shared/types/plan.type";
+import type { PaymentProvider } from "@21n/shared-types/plan.type";
 import type {
   BillingCycle,
   PlanType
-} from "../components/subscription/userPlan.type";
+} from "@21n/components/subscription/userPlan.type";
 
 export type UserAccount = {
   dataMode: UserDataMode;

@@ -1,9 +1,9 @@
 <script lang="ts">
-  import BreadcrumbMini from "$lib/client/elements/breadcrumb/BreadcrumbMini.svelte";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IGoalThumb } from "./goal.type";
-  import { resolveGoalColor } from "./goal.utils";
+  import BreadcrumbMini from "@21n/elements/breadcrumb/BreadcrumbMini.svelte";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
   export let item: IGoalThumb;
   $: parentLabels = item.parent ? item.parent.map((x) => x.label) : [];
   $: color = resolveGoalColor(item);

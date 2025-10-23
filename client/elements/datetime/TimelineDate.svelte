@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
-  import { selectedTimePeriod } from "$lib/client/stores/app.store";
-  import Icon from "../Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import Popover from "../popover/Popover.svelte";
-  import AbsoluteTimeRangePopover from "./absolute/AbsoluteTimeRangePopover.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { parseAndFormatDate } from "@21n/utils/time.utils";
+  import { selectedTimePeriod } from "@21n/stores/app.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import Popover from "@21n/elements/popover/Popover.svelte";
+  import AbsoluteTimeRangePopover from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopover.svelte";
+  import { cn } from "@21n/utils/ui.utils";
   export let size: Size.sm | Size.md | Size.lg = Size.md;
   let ref: any;
 </script>

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import GoalThumbnailDates from "./GoalThumbnailDates.svelte";
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
-  import { GoalType, type IGoalThumb } from "../goal.type";
-  import GoalThumbnailSubBadge from "./GoalThumbnailSubBadge.svelte";
-  import { ResourceAccessPoint } from "../../flux/resourceStores/resource.type";
+  import GoalThumbnailDates from "@21n/components/goals/thumbnail/GoalThumbnailDates.svelte";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
+  import { parseAndFormatDate } from "@21n/utils/time.utils";
+  import { GoalType, type IGoalThumb } from "@21n/components/goals/goal.type";
+  import GoalThumbnailSubBadge from "@21n/components/goals/thumbnail/GoalThumbnailSubBadge.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   export let item: IGoalThumb;
   export let isCurrentlyFocusing: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;

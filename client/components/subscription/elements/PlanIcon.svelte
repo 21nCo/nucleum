@@ -1,7 +1,7 @@
 <script lang="ts">
-  import view from "$lib/client/stores/view.store";
-  import { Product } from "$lib/client/products/product.type";
-  import { PlanType } from "../userPlan.type";
+  import view from "@21n/stores/view.store";
+  import { Product } from "@21n/products/product.type";
+  import { PlanType } from "@21n/components/subscription/userPlan.type";
 
   export let type: PlanType;
   export let product: Product;

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { cn } from "@21n/utils/ui.utils";
   export let isFocusing: boolean = false;
   export let isHint: boolean = false;
 </script>

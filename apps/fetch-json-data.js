@@ -6,16 +6,16 @@ import { loadEnv } from "vite";
 // Path validation utility to prevent directory traversal
 function validatePath(inputPath) {
   const normalizedPath = path.normalize(inputPath);
-  
+
   // Find the project root (lib directory)
-  const projectRoot = path.resolve(process.cwd(), '../../');
+  const projectRoot = path.resolve(process.cwd(), "../../");
   const resolvedPath = path.resolve(projectRoot, normalizedPath);
-  
+
   // Ensure the resolved path is within the project root
   if (!resolvedPath.startsWith(projectRoot)) {
     throw new Error(`Path traversal attempt detected: ${inputPath}`);
   }
-  
+
   return resolvedPath;
 }
 
@@ -35,7 +35,7 @@ export default function fetchJsonPlugin(outputPath) {
       const baseUrl = env.VITE_STATIC_URL || "";
       const envMode = env.VITE_ENV || "live";
       const product = env.VITE_PRODUCT || "nucleus";
-      url = `${baseUrl}/static/${product}/${envMode}.json`;
+      url = `${baseUrl}/${product}/${envMode}.json`;
 
       console.log({
         at: "fetchJsonPlugin",
@@ -47,12 +47,14 @@ export default function fetchJsonPlugin(outputPath) {
       console.log("Fetching JSON from:", url);
       try {
         const response = await fetch(url);
-        
+
         // Check for HTTP errors
         if (!response.ok) {
-          throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
+          throw new Error(
+            `HTTP Error: ${response.status} ${response.statusText}`
+          );
         }
-        
+
         const data = await response.json();
 
         // Use validated path to prevent directory traversal
