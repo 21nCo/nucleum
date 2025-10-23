@@ -121,19 +121,21 @@
           "bg-aps1": type === ButtonVariant.PRIMARY,
           "bg-ars1": type === ButtonVariant.DANGER,
           "border border-transparent hover:border-brs3":
-            type === ButtonVariant.SECONDARY,
+            type === ButtonVariant.SECONDARY && !isBoxed,
           [bg(parentBgIndex + 1)]: type === ButtonVariant.SECONDARY,
-          [`hover:${bg(parentBgIndex + 2)}`]: type === ButtonVariant.SECONDARY
+          [`hover:${bg(parentBgIndex + 2)}-striped`]:
+            type === ButtonVariant.SECONDARY
         }
       ],
     style === ButtonStyle.OUTLINED && [
       {
-        border: true,
-        "border-aps2 bg-aps3 text-aps1 hover:bg-aps2 hover:border-aps1":
+        border: !isBoxed,
+        "border-aps2 bg-aps3 text-aps1 hover:bg-aps2-striped hover:border-aps1":
           type === ButtonVariant.PRIMARY,
         "border-brs3 text-fgs2 hover:text-fgs1":
           type === ButtonVariant.SECONDARY,
-        [bg(parentBgIndex)]: type === ButtonVariant.SECONDARY && isHovering,
+        [`${bg(parentBgIndex)}-striped`]:
+          type === ButtonVariant.SECONDARY && isHovering,
         "border-ars1 text-ars1": type === ButtonVariant.DANGER
       }
     ],

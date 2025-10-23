@@ -21,10 +21,7 @@
   import TopNavLeftMenuItem from "@21n/layout/topNav/TopNavLeftMenuItem.svelte";
   import InlineSyncingFeedback from "@21n/elements/feedback/InlineSyncingFeedback.svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import TopNavLeftLogo from "@21n/layout/topNav/TopNavLeftLogo.svelte";
   import { Embed } from "@21n/types/context.type";
   import context from "@21n/stores/context.store";
@@ -97,7 +94,7 @@
     {#if pinnedItems.length === 0 && !isInterimTab}
       <div class="flex items-center justify-center">
         <button
-          class="flex items-center justify-between w-96 h-full border-x border-brs3 hover:bg-bgs3 px-3 mx-3 text-b2 text-fgs2"
+          class="flex items-center justify-between w-96 h-full border-x border-brs3/70 hover:bg-bgs3-striped px-3 mx-3 text-b2 text-fgs2"
           transition:fly={{
             duration: 300,
             x: 40

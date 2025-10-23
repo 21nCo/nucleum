@@ -122,7 +122,8 @@ export const products: Record<Product, IAppConfigBase> = {
         ...commonTables,
         ...Array.from(Object.values(resourceTableMap)).flat(),
         ...linkabilityTables,
-        ...filesAbilityTables
+        ...filesAbilityTables,
+        Resource.combination
       ]
     },
     librarySectionLabel: "Nucleus",

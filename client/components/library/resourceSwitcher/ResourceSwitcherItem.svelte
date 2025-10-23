@@ -105,14 +105,14 @@
     {
       "px-4 py-3": isConstrainedWidth,
       "px-3 py-2": !isConstrainedWidth,
-      "border border-aps1 bg-aps3 hover:bg--aps2": isActive,
+      "border border-aps1 bg-aps3": isActive,
       "opacity-80 cursor-not-allowed": item.isDisabled
     },
     !isActive && {
       "outline-transparent ": true,
       "text-fgs2 bg-bgs1 border-brs2": !isConstrainedWidth,
       "text-fgs1 bg-bgs2 border-brs3": isConstrainedWidth,
-      "notouch:hover:bg-bgs3 active:bg-bgs3 focus:bg-bgs3 hover:text-fgs1":
+      "notouch:hover:bg-bgs3-striped active:bg-bgs3-striped focus:bg-bgs3-striped hover:text-fgs1":
         !item.isDisabled
     }
   )}

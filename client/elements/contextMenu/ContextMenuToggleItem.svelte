@@ -34,7 +34,7 @@
       "min-h-8 min-w-8": size === Size.sm,
       "min-h-10 min-w-10": size === Size.md,
       "min-h-16 min-w-16": size === Size.lg,
-      [bg(parentBgIndex + 1)]: isHovering,
+      [`${bg(parentBgIndex + 1)}-striped`]: isHovering,
       "bg-aps3 border-aps1 text-aps1": on,
       "border-brs4": !on && isHovering,
       "border-brs3": !on && !isHovering
@@ -42,7 +42,7 @@
   )}
 >
   <Icon
-    icon={on ? (item.activeIcon ?? item.icon) : item.icon}
+    icon={on ? item.activeIcon ?? item.icon : item.icon}
     size={size === Size.lg ? Size.md : size}
     isFilled={on && !isPreventFillOnActive}
     class={cn({

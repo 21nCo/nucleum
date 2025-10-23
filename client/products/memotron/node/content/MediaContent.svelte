@@ -58,9 +58,9 @@
 <div class="flex w-full flex-grow cw:mb-8 tp:otop:pt-12">
   {#if !(isConstrainedWidth && rightPane)}
     <main
-      class={cn("relative flex w-full justify-center flex-1", {
+      class={cn("relative flex justify-center min-w-0 flex-1", {
         "h-full": $node.accessMode === ResourceAccessMode.FULL,
-        "border-r border-brs3":
+        "border-r border-brs2":
           rightPane ||
           (webNodeTypeList.includes($node?.contentType) && !isConstrainedWidth),
         grow:

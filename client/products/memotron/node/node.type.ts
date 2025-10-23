@@ -349,6 +349,7 @@ export type ListNodeType =
 
 export enum NodeRightPaneType {
   NONE = "NONE",
+  DEFAULT = "DEFAULT",
   OUTLINE = "OUTLINE",
   PROPERTIES = "PROPERTIES",
   BOOKMARKS = "BOOKMARKS",

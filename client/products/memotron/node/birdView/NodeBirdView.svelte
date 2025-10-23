@@ -14,9 +14,15 @@
     PanelSwitcherStyle
   } from "@21n/types/switcher.enum";
   import NodeGraph from "@21n/products/memotron/graph/NodeGraph.svelte";
-  import { linker, linkTagStore } from "@21n/products/memotron/linking/link.store";
+  import {
+    linker,
+    linkTagStore
+  } from "@21n/products/memotron/linking/link.store";
   import { linkTagLabelMapper } from "@21n/products/memotron/linking/link.utils";
-  import { nodeStore, type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import {
+    nodeStore,
+    type IActiveNodeStore
+  } from "@21n/products/memotron/node/node.store";
   import {
     NodeRightPaneType,
     NodeView,
@@ -24,7 +30,10 @@
     type INode
   } from "@21n/products/memotron/node/node.type";
   import type { DropdownItem } from "@21n/types/dropdownItem.type";
-  import { LinkType, type ILinkTag } from "@21n/products/memotron/linking/link.type";
+  import {
+    LinkType,
+    type ILinkTag
+  } from "@21n/products/memotron/linking/link.type";
   import { enumToString } from "@21n/shared-utils/text.utils";
   import type { IRecordId } from "@21n/types/data.type";
   import view from "@21n/stores/view.store";
@@ -386,8 +395,8 @@
   }
 </script>
 
-<div class="flex flex-col gap-3 w-full flex-grow p-3">
-  <div class="flex w-full justify-between bg-bgs2 rounded-md p-2">
+<div class="flex flex-col gap-3 w-full flex-grow">
+  <div class="flex w-full justify-between bg-bgs2 p-2">
     <div class="flex items-center gap-4">
       {#if $view.isConstrainedWidth}
         <div class="w-32">
