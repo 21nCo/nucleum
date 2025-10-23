@@ -8,7 +8,7 @@
 </script>
 
 <button
-  class="flex items-center gap-1 hover:bg-bgs2 rounded-md px-4 h-full default-typeface"
+  class="flex items-center justify-center gap-1 hover:bg-bgs2 px-4 h-full default-typeface"
   on:click
 >
   <Icon {icon} size={Size.sm} />

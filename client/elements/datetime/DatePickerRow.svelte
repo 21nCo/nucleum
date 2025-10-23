@@ -482,7 +482,7 @@
               {
                 "bg-aps3 text-aps1":
                   isSelectedDateVisible && selectedValue === item,
-                "hover:bg-bgs2 active:bg-bgs3":
+                "hover:bg-bgs2-striped active:bg-bgs3":
                   !isSelectedDateVisible || selectedValue !== item
               }
             )}

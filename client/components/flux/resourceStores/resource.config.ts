@@ -35,6 +35,13 @@ export const resourceConfig: Record<string, IResourceTableConfig> = {
     encrypt: ["label"]
   },
 
+  [Resource.combination]: {
+    name: Resource.combination,
+    indices: ["type"],
+    searchIndices: ["label"],
+    encrypt: ["label"]
+  },
+
   [Resource.property]: {
     name: Resource.property,
     dataType: StoreDataType.FIR

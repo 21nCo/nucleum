@@ -12,7 +12,10 @@
   import { getContext } from "svelte";
   import Resources from "@21n/components/record/Records.svelte";
   import LinkThumbnailItems from "@21n/products/memotron/node/links/LinkThumbnailItems.svelte";
-  import { nodeStore, type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import {
+    nodeStore,
+    type IActiveNodeStore
+  } from "@21n/products/memotron/node/node.store";
   import {
     canHaveTraces,
     NodeRightPaneType,
@@ -67,12 +70,14 @@
 </script>
 
 <div
-  class="flex flex-col gap-4 justify-center items-start w-full h-full p-2 dp:p-3"
+  class="flex flex-col gap-4 justify-center items-start w-full h-full cw:p-2"
 >
-  <Text content="Overview" style={TextStyle.PANEL_HEADING_SMALL} />
+  <div class="pt-2 px-2 dp:px-3">
+    <Text content="Overview" style={TextStyle.PANEL_HEADING_SMALL} />
+  </div>
 
   {#if canHaveTraces.includes($node.contentType)}
-    <div class="grid grid-cols-2 w-full border border-brs3 rounded-md h-10">
+    <div class="grid grid-cols-2 w-full border-y border-brs2 h-10">
       <RightPaneOverviewMetricCard
         label="Links"
         icon="link"
@@ -89,7 +94,9 @@
   {/if}
 
   {#if $node.clips?.length > 0}
-    <div class="flex flex-col gap-4 items-start w-full h-1/3 min-h-0">
+    <div
+      class="flex flex-col gap-4 items-start w-full h-1/3 min-h-0 px-2 dp:px-3"
+    >
       <span class="flex flex-row justify-between items-center w-full">
         <span class="flex flex-row gap-1 items-center">
           <Text content="Bookmarks" style={TextStyle.SECTION_HEADING} />
@@ -131,7 +138,7 @@
     </div>
   {:else}
     <div
-      class={cn("flex flex-col gap-2 items-start w-full min-h-0", {
+      class={cn("flex flex-col gap-2 items-start w-full min-h-0 px-2 dp:px-3", {
         "h-1/3": links.length > 0
       })}
     >
@@ -172,8 +179,12 @@
       </div>
     </div>
   {/if}
-  <div class="flex flex-col gap-2 items-start w-full flex-1 min-h-0 max-h-1/2">
-    <span class="flex flex-row justify-between items-center w-full">
+  <div
+    class="flex flex-col gap-1 items-start w-full flex-1 min-h-0 max-h-1/2 border-t border-brs2 pt-1"
+  >
+    <span
+      class="flex flex-row justify-between items-center w-full px-2 dp:px-3"
+    >
       <span class="flex flex-row gap-1 items-center">
         <Text content="Side notes" style={TextStyle.SECTION_HEADING} />
       </span>
@@ -186,7 +197,7 @@
       </span>
     </span>
     <button
-      class="flex w-full flex-1 bg-bgs2 bg-opacity-60 rounded-md p-4 overflow-y-auto"
+      class="flex w-full flex-1 bg-bgs2 bg-opacity-60 p-4 overflow-y-auto"
       use:focusById={notesInputId}
     >
       <InlineMarkdownTextInput

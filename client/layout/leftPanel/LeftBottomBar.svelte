@@ -31,7 +31,7 @@
         class={cn("flex gap-2 h-full w-full items-center justify-center px-2", {
           "rounded-bl-lg": !isInThinMode && isRounded,
           "bg-aps1": isCpActive,
-          "hover:bg-bgs4":
+          "hover:bg-bgs3-striped":
             !dev_mixedPanel || !$appStore.currentComponent?.panel,
           "hover:bg-bgs3 rounded-tr-lg":
             dev_mixedPanel && $appStore.currentComponent?.panel

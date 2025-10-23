@@ -311,7 +311,6 @@ export class DexiePersistence implements IPersistence {
         payload: {
           userId: this.userId,
           dbVersion,
-          dexieVersion: version,
           indexMethod: "flexsearch",
           tables: this.tables
             .filter((t) => t.searchIndices && t.searchIndices.length > 0)
@@ -343,7 +342,7 @@ export class DexiePersistence implements IPersistence {
 
   async initializeSearchIndices() {
     const dbName = `${this.userId}-${dbVersion}`;
-    const name = `${dbName}-${version}-#tableName#-search`;
+    const name = `${dbName}-#tableName#-search`;
     await this.initializeFlatSearchIndexes(name);
     // await this.initializeMultifieldSearchIndexes(name);
   }
@@ -357,7 +356,7 @@ export class DexiePersistence implements IPersistence {
       const searchIndex = this.searchIndices.get(table.name);
       if (!searchIndex) continue;
 
-      const indexDbName = `${dbName}-${version}-${table.name}-search`;
+      const indexDbName = `${dbName}-${table.name}-search`;
 
       try {
         await this.importFromFlexSearchDB(
@@ -540,7 +539,15 @@ export class DexiePersistence implements IPersistence {
         .join(" ")
         .trim();
 
-      const cleanedText = text.replace(/\b\w+:[a-zA-Z0-9_-]+\b/g, "").trim();
+      let cleanedText = text
+        .replace(/\(resource=\w+:[a-zA-Z0-9_-]+\)/g, "")
+        .replace(/\b\w+:[a-zA-Z0-9_-]+\b/g, "")
+        .replace(/https?:\/\/[^\s)]+/g, "")
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+        .replace(/^#{1,6}\s+/gm, "")
+        .replace(/^===+$/gm, "")
+        .replace(/[​\u200B-\u200D\uFEFF]/g, "")
+        .trim();
 
       return isValidString(cleanedText) ? cleanedText : undefined;
     } catch (e) {
@@ -606,22 +613,21 @@ export class DexiePersistence implements IPersistence {
         if (this.searchIndices.has(resource)) {
           try {
             const searchIndex = this.searchIndices.get(resource);
-            if (searchIndex) {
+            if (searchIndex && params.record.id) {
               const text = this.extractFlatText(params.record, resource);
-              if (params.record.id && text) {
+              if (text) {
                 try {
-                  await searchIndex.index.updateAsync(params.record.id, text);
-                  await searchIndex.contextualIndex.updateAsync(
-                    params.record.id,
-                    text
+                  await searchIndex.index.removeAsync(params.record.id);
+                  await searchIndex.contextualIndex.removeAsync(
+                    params.record.id
                   );
-                } catch (error) {
-                  await searchIndex.index.addAsync(params.record.id, text);
-                  await searchIndex.contextualIndex.addAsync(
-                    params.record.id,
-                    text
-                  );
-                }
+                } catch (e) {}
+
+                await searchIndex.index.addAsync(params.record.id, text);
+                await searchIndex.contextualIndex.addAsync(
+                  params.record.id,
+                  text
+                );
               }
             }
           } catch (error) {
@@ -709,7 +715,7 @@ export class DexiePersistence implements IPersistence {
         }
       }
 
-      const result = await table.bulkAdd(formattedRecords);
+      const result = await table.bulkPut(formattedRecords);
 
       logger.log({
         at: "DexiePersistence.bulkInsert",

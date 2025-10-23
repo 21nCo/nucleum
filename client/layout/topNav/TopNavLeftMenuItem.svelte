@@ -14,7 +14,7 @@
 </script>
 
 <button
-  class="flex flex-col items-center justify-center h-full px-2.5 2k:px-3 border-x border-transparent hover:border-brs3 hover:bg-bgs3 transition-colors hover:text-fgs3"
+  class="flex flex-col items-center justify-center h-full px-2.5 2k:px-3 border-x border-transparent hover:border-brs3 hover:bg-bgs3-striped transition-colors hover:text-fgs3"
   use:hoverable={{
     onHover: (val) => {
       isHovered = val;

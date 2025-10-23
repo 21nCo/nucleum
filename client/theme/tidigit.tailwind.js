@@ -268,6 +268,8 @@ export default {
         "bg-ccs3",
         "bg-ccs4",
         "bg-ccs5",
+        "bg-bgs2-striped",
+        "bg-bgs3-striped",
         "styledscroll",
         "cursor-col-resize",
         "cursor-row-resize",

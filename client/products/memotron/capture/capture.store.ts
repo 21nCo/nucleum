@@ -32,7 +32,10 @@ import {
   generateMarkdownText,
   resolveHeadingParent
 } from "@21n/products/memotron/node/node.utils";
-import { hierarchyFactorLimit, nodeStore } from "@21n/products/memotron/node/node.store";
+import {
+  hierarchyFactorLimit,
+  nodeStore
+} from "@21n/products/memotron/node/node.store";
 import { logger } from "@21n/components/debug/logger.client";
 import { linker } from "@21n/products/memotron/linking/link.store";
 import { collectionStore } from "@21n/components/collection/collection.store";
@@ -70,7 +73,10 @@ import view from "@21n/stores/view.store";
 import context from "@21n/stores/context.store";
 import { OperatingSystem } from "@21n/types/context.type";
 import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-import { fetchYouTubeMetadata, resolveUrlData } from "@21n/products/memotron/node/url.utils";
+import {
+  fetchYouTubeMetadata,
+  resolveUrlData
+} from "@21n/products/memotron/node/url.utils";
 import { getImageColorsFromFile } from "@21n/utils/ui.utils";
 import { parseBuffer } from "music-metadata";
 import ExifReader from "exifreader";
@@ -740,7 +746,9 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         id,
         contentType,
         file: fileId,
-        label: (isValidString(captureStore.label) ? captureStore.label : null) ?? file.name,
+        label:
+          (isValidString(captureStore.label) ? captureStore.label : null) ??
+          file.name,
         body: {},
         metadata: {
           ...metadata
@@ -748,7 +756,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         properties: params?.isEmbedContext ? [] : captureStore.properties,
         collections,
         creationContext: params?.isEmbedContext
-          ? (params?.creationContext ?? this.get().nodeId)
+          ? params?.creationContext ?? this.get().nodeId
           : undefined
       } as INodeCapture<IMediaNode>;
       const result = await nodeStore.create([node], {
@@ -912,7 +920,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           collections,
           properties: params?.isEmbedContext ? [] : captureStore.properties,
           creationContext: params?.isEmbedContext
-            ? (params?.creationContext ?? this.get().nodeId)
+            ? params?.creationContext ?? this.get().nodeId
             : undefined
         } as INodeCapture<IMediaNode>;
         nodes.push(node);
@@ -984,7 +992,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         collections,
         properties: params?.isEmbedContext ? [] : captureStore.properties,
         creationContext: params?.isEmbedContext
-          ? (params?.creationContext ?? this.get().nodeId)
+          ? params?.creationContext ?? this.get().nodeId
           : undefined,
         label:
           (isValidString(captureStore.label) ? captureStore.label : null) ??
@@ -1111,7 +1119,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       label: text.split("://").pop() ?? "",
       url: text,
       creationContext: params?.isEmbedContext
-        ? (params?.creationContext ?? this.get().nodeId)
+        ? params?.creationContext ?? this.get().nodeId
         : undefined,
       body: {
         hash: "",
