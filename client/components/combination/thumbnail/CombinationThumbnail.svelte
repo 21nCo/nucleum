@@ -1,16 +1,16 @@
 <script lang="ts">
-  import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import ResourceGridThumbnail from "$lib/client/components/record/thumbnail/ResourceGridThumbnail.svelte";
-  import ResourceThumbnailBase from "$lib/client/components/record/thumbnail/ResourceThumbnailBase.svelte";
+  import AvatarRenderer from "@21n/client/elements/avatarPicker/AvatarRenderer.svelte";
+  import Icon from "@21n/client/elements/Icon.svelte";
+  import ResourceGridThumbnail from "@21n/client/components/record/thumbnail/ResourceGridThumbnail.svelte";
+  import ResourceThumbnailBase from "@21n/client/components/record/thumbnail/ResourceThumbnailBase.svelte";
   import {
     ResourceAccessPoint,
     ResourceAccessPointState
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { Arrangement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  } from "@21n/client/components/flux/resourceStores/resource.type";
+  import { Arrangement } from "@21n/client/types/direction.enum";
+  import { Size } from "@21n/client/types/size.enum";
+  import { cn } from "@21n/client/utils/ui.utils";
+  import ComponentBaseLayer from "@21n/client/layout/layers/ComponentBaseLayer.svelte";
   import { countNavItems } from "../combination.utils";
   import type { ISideNavCombination } from "../combination.type";
 
@@ -44,7 +44,9 @@
       {#if item?.avatar}
         <AvatarRenderer avatar={item.avatar} size={Size.lg} />
       {:else}
-        <div class="flex items-center justify-center w-12 h-12 rounded-md bg-bgs3">
+        <div
+          class="flex items-center justify-center w-12 h-12 rounded-md bg-bgs3"
+        >
           <Icon icon="combination" size={Size.md} class="stroke-fgs2" />
         </div>
       {/if}
@@ -70,7 +72,9 @@
     </button>
   {:else if arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY}
     <ResourceGridThumbnail {item} {size} on:click>
-      <div class="flex flex-1 items-center justify-center w-full h-full bg-bgs2 rounded-t-md">
+      <div
+        class="flex flex-1 items-center justify-center w-full h-full bg-bgs2 rounded-t-md"
+      >
         {#if item?.avatar}
           <AvatarRenderer avatar={item.avatar} size={Size.lg} />
         {:else}

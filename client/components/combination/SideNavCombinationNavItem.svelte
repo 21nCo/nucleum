@@ -1,13 +1,13 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import AvatarRenderer from "$lib/client/elements/avatarPicker/AvatarRenderer.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { resolveResourceIcon } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import type { IAvatar } from "$lib/client/types/avatar.type";
+  import { hoverable } from "@21n/client/actions/hover.action";
+  import Icon from "@21n/client/elements/Icon.svelte";
+  import TextInput from "@21n/client/elements/input/TextInput.svelte";
+  import AvatarRenderer from "@21n/client/elements/avatarPicker/AvatarRenderer.svelte";
+  import { Size } from "@21n/client/types/size.enum";
+  import { cn } from "@21n/client/utils/ui.utils";
+  import { resolveResourceIcon } from "@21n/client/components/flux/resourceStores/resource.utils";
+  import type { IAvatar } from "@21n/client/types/avatar.type";
   import {
     CombinationNavItemType,
     type ICombinationNavItem
@@ -126,17 +126,12 @@
 
 <div class="flex flex-col w-full" data-id={item.id}>
   <button
-    class={cn(
-      "group flex items-center gap-2 px-2 py-2 rounded-md transition-colors",
-      {
-        "bg-aps3 text-abg":
-          isActive && item.type === CombinationNavItemType.RESOURCE,
-        "bg-bgs2": isActive && item.type === CombinationNavItemType.SECTION,
-        "hover:bg-bgs2": !isActive,
-        "opacity-70 cursor-default":
-          item.type === CombinationNavItemType.SECTION && !item.children?.length
-      }
-    )}
+    class={cn("group flex items-center gap-2 px-2 py-2 transition-colors", {
+      "bg-bgs2": isActive,
+      "hover:bg-bgs2-striped": !isActive,
+      "opacity-70 cursor-default":
+        item.type === CombinationNavItemType.SECTION && !item.children?.length
+    })}
     draggable={isEditMode && !isEditing}
     use:hoverable={{
       onHover: (val) => (isHoveringItem = val)
@@ -178,10 +173,8 @@
       <AvatarRenderer {avatar} size={Size.sm} />
     {:else if item.type === CombinationNavItemType.RESOURCE}
       <Icon icon={resourceIcon} size={Size.sm} class="stroke-fgs2" />
-    {:else}
-      <Icon icon="archive" size={Size.sm} class="stroke-fgs2" />
     {/if}
-    <div class="flex-1 min-w-0">
+    <div class="flex-1 min-w-0 text-left">
       {#if isEditing}
         <TextInput
           bind:value={editLabel}

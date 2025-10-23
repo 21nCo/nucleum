@@ -1,13 +1,13 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import type { ISelectItem } from "$lib/client/types/select.type";
-  import { SearchStore } from "$lib/client/components/record/record.store";
-  import LinkSearchResultItem from "$lib/client/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import TextSearchInput from "@21n/client/elements/input/TextSearchInput.svelte";
+  import OptionSelector from "@21n/client/elements/select/OptionSelector.svelte";
+  import type { ISelectItem } from "@21n/client/types/select.type";
+  import { SearchStore } from "@21n/client/components/record/record.store";
+  import LinkSearchResultItem from "@21n/client/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
+  import { Resource } from "@21n/client/components/flux/resourceStores/resource.enum";
+  import { Size } from "@21n/client/types/size.enum";
+  import { cn } from "@21n/client/utils/ui.utils";
 
   const dispatch = createEventDispatcher();
 
@@ -21,12 +21,12 @@
       label: "Collections",
       value: Resource.collection,
       icon: "collection"
-    },
-    {
-      label: "Combinations",
-      value: Resource.combination,
-      icon: "combination"
     }
+    // {
+    //   label: "Combinations",
+    //   value: Resource.combination,
+    //   icon: "combination"
+    // }
   ];
 
   let resourceType: Resource = Resource.node;
@@ -62,7 +62,7 @@
   <TextSearchInput
     placeholder="Search resources"
     icon="magnifying-glass"
-    searchCallback={searchCallback}
+    {searchCallback}
     searchResultComponent={LinkSearchResultItem}
     searchResultComponentProps={searchResultProps}
     isInline={true}

@@ -1,16 +1,16 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import type { IRecordId } from "@21n/client/types/data.type";
+  import { Resource } from "@21n/client/components/flux/resourceStores/resource.enum";
   import {
     ActiveNodeStore,
     type IActiveNodeStore
-  } from "$lib/client/products/memotron/node/node.store";
+  } from "@21n/client/products/memotron/node/node.store";
   import {
     headingNodeTypes,
     NodeType
-  } from "$lib/client/products/memotron/node/node.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/client/products/memotron/node/node.type";
+  import { cn } from "@21n/client/utils/ui.utils";
 
   export let resourceId: IRecordId | undefined = undefined;
   export let resourceType: Resource | undefined = undefined;

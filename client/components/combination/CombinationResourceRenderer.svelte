@@ -1,14 +1,14 @@
 <script lang="ts">
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import Collection from "$lib/client/components/collection/Collection.svelte";
-  import Node from "$lib/client/products/memotron/node/Node.svelte";
+  import EmptyStatusView from "@21n/client/elements/feedback/EmptyStatusView.svelte";
+  import Collection from "@21n/client/components/collection/Collection.svelte";
+  import Node from "@21n/client/products/memotron/node/Node.svelte";
   import SideNavCombination from "./SideNavCombination.svelte";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import type { IRecordId } from "$lib/client/types/data.type";
+  } from "@21n/client/components/flux/resourceStores/resource.type";
+  import { Resource } from "@21n/client/components/flux/resourceStores/resource.enum";
+  import type { IRecordId } from "@21n/client/types/data.type";
 
   export let resourceId: IRecordId | undefined = undefined;
   export let resourceType: Resource | undefined = undefined;
@@ -24,7 +24,8 @@
     visitedCombinationIds.has(resourceId.toString());
 
   function resolveVisitedIds() {
-    if (resourceType !== Resource.combination || !resourceId) return visitedCombinationIds;
+    if (resourceType !== Resource.combination || !resourceId)
+      return visitedCombinationIds;
     const next = new Set(visitedCombinationIds);
     next.add(resourceId.toString());
     if (parentCombinationId) next.add(parentCombinationId.toString());
@@ -45,17 +46,17 @@
     isSearchContext={false}
   />
 {:else if resourceType === Resource.node}
-  <Node id={resourceId} accessMode={accessMode} />
+  <Node id={resourceId} {accessMode} />
 {:else if resourceType === Resource.collection}
   <Collection
     id={resourceId}
-    accessMode={accessMode}
+    {accessMode}
     accessPoint={ResourceAccessPoint.COMBINATION}
   />
 {:else if resourceType === Resource.combination}
   <SideNavCombination
     id={resourceId}
-    accessMode={accessMode}
+    {accessMode}
     isEmbedded={true}
     visitedCombinationIds={resolveVisitedIds()}
   />
