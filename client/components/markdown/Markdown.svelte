@@ -7,7 +7,10 @@
   } from "@21n/components/markdown/md.type";
   import { createEventDispatcher, onMount } from "svelte";
   import Block from "@21n/components/markdown/Block.svelte";
-  import { getMdStore, mdContentChangeEvent } from "@21n/components/markdown/markdown.store";
+  import {
+    getMdStore,
+    mdContentChangeEvent
+  } from "@21n/components/markdown/markdown.store";
   import Button from "@21n/elements/button/Button.svelte";
   import { TextStyle } from "@21n/types/text.enum";
   import Text from "@21n/elements/text/Text.svelte";
@@ -283,7 +286,9 @@
         resetSelection();
         toasts.success(`Duplicated ${blocksLengthText}`);
       } else if (action === ResourceActionType.COPY_CONTENTS) {
-        const markdownText = generateMarkdownText(selectedBlocks);
+        const markdownText = generateMarkdownText(selectedBlocks, {
+          isIncludeNonSearchBlocks: true
+        });
         navigator.clipboard.writeText(markdownText);
         toasts.success(`Copied ${blocksLengthText} to clipboard`);
       } else if (action === ResourceActionType.CONVERT) {
@@ -352,7 +357,9 @@
             size={Size.xs}
             parentBgIndex={parentBackgroundIndex}
             on:click={() => {
-              const markdownAsText = generateMarkdownText($mdStore.blocks);
+              const markdownAsText = generateMarkdownText($mdStore.blocks, {
+                isIncludeNonSearchBlocks: true
+              });
               navigator.clipboard.writeText(markdownAsText);
               toasts.success("Copied to clipboard");
             }}

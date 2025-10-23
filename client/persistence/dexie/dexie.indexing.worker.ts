@@ -12,7 +12,6 @@ console.log("[Worker] FlexSearch imported from local package");
 interface IndexingTask {
   userId: string;
   dbVersion: number;
-  dexieVersion: number;
   indexMethod?: "flexsearch" | "custom";
   tables: Array<{
     name: string;
@@ -170,7 +169,6 @@ async function startIndexing(task: IndexingTask, port: MessagePort) {
         table,
         task.userId,
         task.dbVersion,
-        task.dexieVersion,
         useFlexSearch,
         port
       );
@@ -222,7 +220,6 @@ async function indexTable(
   table: { name: string; searchIndices: string[] },
   userId: string,
   dbVersion: number,
-  dexieVersion: number,
   useFlexSearch: boolean,
   port: MessagePort
 ) {
@@ -246,23 +243,9 @@ async function indexTable(
   );
 
   if (useFlexSearch) {
-    await indexWithFlexSearch(
-      records,
-      table,
-      userId,
-      dbVersion,
-      dexieVersion,
-      port
-    );
+    await indexWithFlexSearch(records, table, userId, dbVersion, port);
   } else {
-    await indexWithCustomLogic(
-      records,
-      table,
-      userId,
-      dbVersion,
-      dexieVersion,
-      port
-    );
+    await indexWithCustomLogic(records, table, userId, dbVersion, port);
   }
 }
 
@@ -271,10 +254,9 @@ async function indexWithFlexSearch(
   table: { name: string; searchIndices: string[] },
   userId: string,
   dbVersion: number,
-  dexieVersion: number,
   port: MessagePort
 ) {
-  const indexDbName = `${userId}-${dbVersion}-${dexieVersion}-${table.name}-search`;
+  const indexDbName = `${userId}-${dbVersion}-${table.name}-search`;
 
   const searchIndex = new FlexSearch.Index({
     tokenize: "full",
@@ -304,7 +286,8 @@ async function indexWithFlexSearch(
     currentProgress.progress =
       currentProgress.totalRecords > 0
         ? Math.floor(
-            (currentProgress.indexedRecords / currentProgress.totalRecords) * 100
+            (currentProgress.indexedRecords / currentProgress.totalRecords) *
+              100
           )
         : 100;
 
@@ -329,7 +312,6 @@ async function indexWithCustomLogic(
   table: { name: string; searchIndices: string[] },
   userId: string,
   dbVersion: number,
-  dexieVersion: number,
   port: MessagePort
 ) {
   // Build search index in memory
@@ -367,7 +349,8 @@ async function indexWithCustomLogic(
     currentProgress.progress =
       currentProgress.totalRecords > 0
         ? Math.floor(
-            (currentProgress.indexedRecords / currentProgress.totalRecords) * 100
+            (currentProgress.indexedRecords / currentProgress.totalRecords) *
+              100
           )
         : 100;
 
@@ -382,8 +365,7 @@ async function indexWithCustomLogic(
     searchIndex,
     recordTexts,
     userId,
-    dbVersion,
-    dexieVersion
+    dbVersion
   );
 }
 
@@ -392,11 +374,10 @@ async function storeCustomSearchIndex(
   searchIndex: Map<string, Set<string>>,
   recordTexts: Map<string, string>,
   userId: string,
-  dbVersion: number,
-  dexieVersion: number
+  dbVersion: number
 ) {
   // Store the search index in a separate IndexedDB database
-  const indexDbName = `${userId}-${dbVersion}-${dexieVersion}-${tableName}-search-index`;
+  const indexDbName = `${userId}-${dbVersion}-${tableName}-search-index`;
 
   // Open or create the index database
   const openRequest = indexedDB.open(indexDbName, 1);
@@ -469,7 +450,15 @@ function extractFlatText(
       .join(" ")
       .trim();
 
-    const cleanedText = text.replace(/\b\w+:[a-zA-Z0-9_-]+\b/g, "").trim();
+    let cleanedText = text
+      .replace(/\(resource=\w+:[a-zA-Z0-9_-]+\)/g, "")
+      .replace(/\b\w+:[a-zA-Z0-9_-]+\b/g, "")
+      .replace(/https?:\/\/[^\s)]+/g, "")
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+      .replace(/^#{1,6}\s+/gm, "")
+      .replace(/^===+$/gm, "")
+      .replace(/[​\u200B-\u200D\uFEFF]/g, "")
+      .trim();
 
     return cleanedText && cleanedText.length > 0 ? cleanedText : undefined;
   } catch (e) {
