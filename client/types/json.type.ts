@@ -1,5 +1,5 @@
-import type { IUserGlobalPreferences } from "./preferences.type";
-import type { SessionStore } from "./session.type";
+import type { IUserGlobalPreferences } from "@21n/types/preferences.type";
+import type { SessionStore } from "@21n/types/session.type";
 
 export type JsonValue =
   | string

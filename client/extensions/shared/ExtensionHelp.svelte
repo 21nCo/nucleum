@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
   import { createEventDispatcher } from "svelte";
-  import HelpItem from "./HelpItem.svelte";
+  import HelpItem from "@21n/extensions/shared/HelpItem.svelte";
 
   const dispatch = createEventDispatcher();
 
@@ -77,7 +77,7 @@
     <a href="mailto:hello@21n.org" class="text-aps1">hello@21n.org</a>
   </div>
   <div class="flex flex-col items-center gap-1 mt-auto text-fgs3 text-b3">
-    <div>Memotron clipper v0.58.1</div>
-    <div>Last updated: Sept 21, 2025</div>
+    <div>Memotron clipper v0.58.2</div>
+    <div>Last updated: Oct 13, 2025</div>
   </div>
 </div>

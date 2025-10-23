@@ -1,6 +1,6 @@
 import { get, writable } from "svelte/store";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { LinkType } from "$lib/client/products/memotron/linking/link.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { LinkType } from "@21n/products/memotron/linking/link.type";
 import {
   NodeType,
   type INodeCapture,
@@ -17,86 +17,87 @@ import {
   type INode,
   type IWebNodeType,
   type IClip
-} from "$lib/client/products/memotron/node/node.type";
+} from "@21n/products/memotron/node/node.type";
 import {
   CaptureMethod,
   type IActiveCapture,
   type ICapture,
   type ICaptureCapture,
   type IPasteCaptureData
-} from "$lib/client/products/memotron/capture/capture.type";
-import account from "$lib/client/stores/account.store";
-import { toasts, inlineToasts } from "$lib/client/stores/notification.store";
-import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+} from "@21n/products/memotron/capture/capture.type";
+import account from "@21n/stores/account.store";
+import { toasts, inlineToasts } from "@21n/stores/notification.store";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
 import {
   generateMarkdownText,
   resolveHeadingParent
-} from "$lib/client/products/memotron/node/node.utils";
-import { hierarchyFactorLimit, nodeStore } from "../node/node.store";
-import { logger } from "$lib/client/components/debug/logger.client";
-import { linker } from "$lib/client/products/memotron/linking/link.store";
-import { collectionStore } from "$lib/client/components/collection/collection.store";
-import { resolveContentTypeForFile } from "./capture.utils";
+} from "@21n/products/memotron/node/node.utils";
+import { hierarchyFactorLimit, nodeStore } from "@21n/products/memotron/node/node.store";
+import { logger } from "@21n/components/debug/logger.client";
+import { linker } from "@21n/products/memotron/linking/link.store";
+import { collectionStore } from "@21n/components/collection/collection.store";
+import { resolveContentTypeForFile } from "@21n/products/memotron/capture/capture.utils";
 import {
   ResourceAccessMode,
   ResourceActionType
-} from "$lib/client/components/flux/resourceStores/resource.type";
-import type { IRecordId } from "$lib/client/types/data.type";
+} from "@21n/components/flux/resourceStores/resource.type";
+import type { IRecordId } from "@21n/types/data.type";
 import {
   CollectionType,
   type ICollection,
   type ICollectionItemPropertyValue,
   type ICollectionThumb
-} from "$lib/client/components/collection/collection.type";
+} from "@21n/components/collection/collection.type";
 import {
   determineResourceType,
   isSameResource,
   resourceAction,
   resourceInList
-} from "$lib/client/components/flux/resourceStores/resource.utils";
-import { resolveResource } from "$lib/client/components/record/record.store";
-import { fileStore } from "$lib/client/components/files/file.store";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { resolveResource } from "@21n/components/record/record.store";
+import { fileStore } from "@21n/components/files/file.store";
 import {
   generateMiniRandomId,
   generateSimpleRandomId
-} from "$lib/shared/utils/crypto.utils";
-import { appStore } from "$lib/client/stores/app.store";
-import { uiState } from "$lib/client/stores/uiState/uiState.store";
-import { UIState, UIStateScope } from "$lib/client/stores/uiState/uiState.type";
-import { UserDataMode } from "$lib/client/types/account.type";
-import { MemotronAction } from "../memotronAction.enum";
-import { Persistence } from "$lib/client/persistence/persistence";
-import view from "$lib/client/stores/view.store";
-import context from "$lib/client/stores/context.store";
-import { OperatingSystem } from "$lib/client/types/context.type";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { fetchYouTubeMetadata, resolveUrlData } from "../node/url.utils";
-import { getImageColorsFromFile } from "$lib/client/utils/ui.utils";
+} from "@21n/shared-utils/crypto.utils";
+import { appStore } from "@21n/stores/app.store";
+import { uiState } from "@21n/stores/uiState/uiState.store";
+import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
+import { UserDataMode } from "@21n/types/account.type";
+import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
+import { Persistence } from "@21n/persistence/persistence";
+import view from "@21n/stores/view.store";
+import context from "@21n/stores/context.store";
+import { OperatingSystem } from "@21n/types/context.type";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+import { fetchYouTubeMetadata, resolveUrlData } from "@21n/products/memotron/node/url.utils";
+import { getImageColorsFromFile } from "@21n/utils/ui.utils";
 import { parseBuffer } from "music-metadata";
 import ExifReader from "exifreader";
-import { getDeviceInfo, getGeoLocation } from "$lib/client/utils/browser.utils";
+import { getDeviceInfo, getGeoLocation } from "@21n/utils/browser.utils";
 import {
   extractRootStructure,
   extractStructureForChildren,
   isEmptyMd,
   resolveDefaultBodyForBlock,
   textToMdBlocks
-} from "$lib/client/components/markdown/markdown.utils";
-import type { IBlock } from "$lib/client/components/markdown/md.type";
+} from "@21n/components/markdown/markdown.utils";
+import type { IBlock } from "@21n/components/markdown/md.type";
 import {
   ActiveResourceStore,
   ResourceStore
-} from "$lib/client/components/flux/resourceStores/resource.store";
-import { embedBridge } from "$lib/client/components/embed/embed.store";
-import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-import { convertWebMToWav } from "$lib/client/utils/audio.utils";
-import { TimeScaleUnit } from "$lib/client/types/time.type";
-import { resolveCalendarNotesId } from "$lib/client/components/calendar/calendar.utils";
-import { getUtcSafeDay } from "$lib/client/elements/datetime/datetime.utils";
-import type { IMarkdownTemplate } from "$lib/client/components/markdown/md.type";
-import { isValidString } from "$lib/shared/utils/text.utils";
-import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
-import { debouncer } from "$lib/client/utils/utils";
+} from "@21n/components/flux/resourceStores/resource.store";
+import { embedBridge } from "@21n/components/embed/embed.store";
+import { EmbedMessage } from "@21n/types/embedMessage.enum";
+import { convertWebMToWav } from "@21n/utils/audio.utils";
+import { TimeScaleUnit } from "@21n/types/time.type";
+import { resolveCalendarNotesId } from "@21n/components/calendar/calendar.utils";
+import { getUtcSafeDay } from "@21n/elements/datetime/datetime.utils";
+import type { IMarkdownTemplate } from "@21n/components/markdown/md.type";
+import { isValidString } from "@21n/shared-utils/text.utils";
+import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
+import { debouncer } from "@21n/utils/utils";
+import { openPasteConfirmationModalFromClipboard } from "@21n/products/memotron/capture/paste.utils";
 
 export const currentUserId: string = get(account)?.userInfo?.id ?? "";
 const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
@@ -135,7 +136,7 @@ class CaptureStore extends ResourceStore<ICapture, ICaptureCapture> {
   }
 }
 
-export const captureStore = new CaptureStore();
+export const captureStore = CaptureStore.resolve(Resource.capture);
 
 export type IActiveCaptureStore = InstanceType<typeof ActiveCaptureStore>;
 
@@ -339,6 +340,11 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   async onTypeSelect(val: CaptureMethod | IRecordId) {
     logger.debug({ context: "onTypeSelect", val });
     if (!val) return;
+    if (val === CaptureMethod.PASTE) {
+      await openPasteConfirmationModalFromClipboard();
+      appStore.closeResource({ accessMode: ResourceAccessMode.POP });
+      return;
+    }
     const isCollection = isRecordId(val, Resource.collection);
     if (!isCollection) {
       this.update((store) => {
@@ -734,7 +740,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         id,
         contentType,
         file: fileId,
-        label: captureStore.label ?? file.name,
+        label: (isValidString(captureStore.label) ? captureStore.label : null) ?? file.name,
         body: {},
         metadata: {
           ...metadata
@@ -755,7 +761,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         isOpenOnSave: params?.isOpenOnSave,
         isEmbedContext: params?.isEmbedContext
       });
-      return result?.[0];
+      return Array.isArray(result) ? result?.[0] : result;
     } finally {
       if (!params?.isEmbedContext) this.setIsSaving(false);
     }
@@ -775,7 +781,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     }
   }
 
-  private async saveMarkdownFromText(text: string, title?: string) {
+  async saveMarkdownFromText(text: string, title?: string) {
     const blocks: IBlock[] = textToMdBlocks(text);
     const structure = extractStructureForChildren(blocks);
     const rootStructure = extractRootStructure(structure, hierarchyFactorLimit);
@@ -787,7 +793,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     const mdText = generateMarkdownText(rootBlocks);
     let root: INodeCapture<INode> = {
       id,
-      label: title ?? "",
+      label: title ?? text.split("\n")[0].trim().slice(0, 100),
       properties: [],
       body: "",
       text: mdText,
@@ -981,7 +987,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           ? (params?.creationContext ?? this.get().nodeId)
           : undefined,
         label:
-          captureStore.label ??
+          (isValidString(captureStore.label) ? captureStore.label : null) ??
           `Audio Recording - ${new Date().toLocaleString()}`,
         body: {
           duration
@@ -1051,7 +1057,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       contentType: NodeType.IMAGE,
       file: fileId,
       label:
-        captureStore.label ?? `Image Capture - ${new Date().toLocaleString()}`,
+        (isValidString(captureStore.label) ? captureStore.label : null) ??
+        `Image Capture - ${new Date().toLocaleString()}`,
       body: {},
       properties: captureStore.properties,
       collections,
@@ -1095,13 +1102,10 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       creationContext?: IRecordId;
     }
   ) {
-    if (params?.isEmbedContext) {
-      const urlData = resolveUrlData(text);
-      if (urlData?.convertToEmbedUrl) {
-        text = urlData.convertToEmbedUrl(text);
-      }
+    const urlData = resolveUrlData(text);
+    if (urlData?.convertToEmbedUrl) {
+      text = urlData.convertToEmbedUrl(text);
     }
-
     let node: INodeCapture<IWebPage | IClip> = {
       contentType: params?.contentType ?? NodeType.WEB_PAGE,
       label: text.split("://").pop() ?? "",
@@ -1116,7 +1120,10 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     };
     const accountVal = account.get();
     if (accountVal?.dataMode === UserDataMode.CLOUD) {
-      if (params?.contentType === NodeType.YOUTUBE_VIDEO) {
+      if (
+        params?.contentType === NodeType.YOUTUBE_VIDEO ||
+        params?.contentType === NodeType.YOUTUBE_SHORT
+      ) {
         const youtubeMetadata = await fetchYouTubeMetadata(text);
         if (youtubeMetadata) {
           node.label = youtubeMetadata.title;
@@ -1151,7 +1158,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       isOpenOnSave: params?.isOpenOnSave,
       isEmbedContext: params?.isEmbedContext
     });
-    return result;
+    return Array.isArray(result) ? result?.[0] : result;
   }
 
   async postSave(

@@ -1,15 +1,15 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import view from "$lib/client/stores/view.store";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { ErrorMessage } from "$lib/client/components/error/error.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import type { IActiveCaptureStore } from "./capture.store";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { ButtonVariant } from "@21n/types/button.type";
+  import view from "@21n/stores/view.store";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { cn } from "@21n/utils/ui.utils";
+  import { ErrorMessage } from "@21n/components/error/error.type";
+  import { appStore } from "@21n/stores/app.store";
+  import type { IRecordId } from "@21n/types/data.type";
+  import type { IActiveCaptureStore } from "@21n/products/memotron/capture/capture.store";
   import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {

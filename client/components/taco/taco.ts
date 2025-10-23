@@ -1,10 +1,10 @@
-import { logger } from "$lib/client/components/debug/logger.client";
-import { embedBridge } from "$lib/client/components/embed/embed.store";
-import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
-import { convertFloat32ArrayToWav } from "$lib/client/utils/audio.utils";
-import { TranscriptionModel } from "$lib/client/products/memotron/taco/taco.types";
-import type { IJobStatus } from "./taco.type";
+import { logger } from "@21n/components/debug/logger.client";
+import { embedBridge } from "@21n/components/embed/embed.store";
+import { EmbedMessage } from "@21n/types/embedMessage.enum";
+import { generateMiniRandomId } from "@21n/shared-utils/crypto.utils";
+import { convertFloat32ArrayToWav } from "@21n/utils/audio.utils";
+import { TranscriptionModel } from "@21n/products/memotron/taco/taco.types";
+import type { IJobStatus } from "@21n/components/taco/taco.type";
 
 export class Taco {
   private static instance: Taco;

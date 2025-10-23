@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { Size } from "@21n/types/size.enum";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import { cn } from "@21n/utils/ui.utils";
 
   export let splits: {
     focus: number;

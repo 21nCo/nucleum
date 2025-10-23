@@ -1,8 +1,8 @@
 <script lang="ts">
   import dayjs from "dayjs";
-  import type { CalendarTimelineEntry } from "../../../calendar.type";
-  import ComponentResolver from "$lib/client/layout/paint/ComponentResolver.svelte";
-  import { resizeListener } from "$lib/client/actions/resize.action";
+  import type { CalendarTimelineEntry } from "@21n/components/calendar/calendar.type";
+  import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
+  import { resizeListener } from "@21n/actions/resize.action";
   export let entry: CalendarTimelineEntry & {
     top: number;
     height: number;

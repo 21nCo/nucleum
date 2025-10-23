@@ -1,16 +1,28 @@
-import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
+import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
 import {
   NodeType,
   type IInstagramPost,
+  type IInstagramReel,
   type IInstagramProfile
-} from "$lib/client/products/memotron/node/node.type";
+} from "@21n/products/memotron/node/node.type";
 import {
   createUrlFilter,
   isHostnameMatch
-} from "$lib/client/products/memotron/node/url.utils";
-import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
-import type { ISocialPost, ISocialPostBase } from "../clipper.type";
-import { findAncestorOrSelf } from "./shared/domUtils";
+} from "@21n/products/memotron/node/url.utils";
+import { generateRandomIdv2 } from "@21n/shared-utils/crypto.utils";
+import type { ISocialPost, ISocialPostBase } from "@21n/extensions/clipper/clipper.type";
+import { findAncestorOrSelf } from "@21n/extensions/clipper/parsers/shared/domUtils";
+
+function resolveInstagramContentType(url: string): NodeType {
+  return /\/reel\//.test(url) ? NodeType.INSTAGRAM_REEL : NodeType.INSTAGRAM_POST;
+}
+
+function extractInstagramPostId(url: string): string {
+  return (
+    url.match(/\/(?:p|reel)\/([A-Za-z0-9_-]+)/)?.[1] ??
+    `unknown_${generateRandomIdv2()}`
+  );
+}
 
 export function extractInstagramProfileFromPage(): OmitForCapture<IInstagramProfile> {
   const url = window.location.href;
@@ -123,10 +135,12 @@ export function extractInstagramProfileFromPage(): OmitForCapture<IInstagramProf
 
 export function extractInstagramPostFromInlineClip(
   element: Element
-): ISocialPost<IInstagramPost, IInstagramProfile> | undefined {
+):
+  | ISocialPost<IInstagramPost | IInstagramReel, IInstagramProfile>
+  | undefined {
   const postArticle = findAncestorOrSelf(element, "article");
   if (!postArticle) return;
-  const isPostPage = window.location.pathname.includes("/p/");
+  const isPostPage = /\/(?:p|reel)\//.test(window.location.pathname);
   const data = parseInstagramPost(postArticle);
   if (!data) return;
   return { ...data, isPostPage };
@@ -134,7 +148,9 @@ export function extractInstagramPostFromInlineClip(
 
 function parseInstagramPost(
   root: Element
-): ISocialPostBase<IInstagramPost, IInstagramProfile> | undefined {
+):
+  | ISocialPostBase<IInstagramPost | IInstagramReel, IInstagramProfile>
+  | undefined {
   const textElement = root.querySelector(
     '[data-lexical-text="true"]'
   ) as HTMLElement;
@@ -159,11 +175,12 @@ function parseInstagramPost(
   const profileImageUrl = profileImageElement?.src ?? "";
 
   const isVerified = !!root.querySelector('svg[aria-label="Verified"]');
-  const postLink = root.querySelector('a[href*="/p/"]') as HTMLAnchorElement;
+  const postLink = root.querySelector(
+    'a[href*="/p/"], a[href*="/reel/"]'
+  ) as HTMLAnchorElement;
   const postUrl = postLink?.href ?? window.location.href;
-  const postId =
-    postUrl.match(/\/p\/([A-Za-z0-9_-]+)/)?.[1] ??
-    `unknown_${generateRandomIdv2()}`;
+  const contentType = resolveInstagramContentType(postUrl);
+  const postId = extractInstagramPostId(postUrl);
 
   let authorHandle = "unknown";
   if (authorLink?.href) {
@@ -196,7 +213,7 @@ function parseInstagramPost(
 
   const urlFilter = createUrlFilter(
     ["instagram.com"],
-    ["/p/"],
+    ["/p/", "/reel/"],
     window.location.href
   );
   const links = Array.from(root.querySelectorAll('a[href^="http"]'))
@@ -224,8 +241,8 @@ function parseInstagramPost(
     }
   });
 
-  const data: OmitForCapture<IInstagramPost> = {
-    contentType: NodeType.INSTAGRAM_POST,
+  const data: OmitForCapture<IInstagramPost | IInstagramReel> = {
+    contentType,
     label: "",
     text,
     body: {
@@ -264,10 +281,12 @@ function parseInstagramPost(
 }
 
 export function extractInstagramPostFromPage():
-  | ISocialPost<IInstagramPost, IInstagramProfile>
+  | ISocialPost<IInstagramPost | IInstagramReel, IInstagramProfile>
   | undefined {
-  const postId = window.location.pathname.split("/p/")[1]?.split("/")[0];
-  if (!postId) return;
+  const contentType = resolveInstagramContentType(window.location.href);
+  const postIdMatch = window.location.pathname.match(/\/(?:p|reel)\/([^/]+)/);
+  if (!postIdMatch) return;
+  const postId = postIdMatch[1];
   const mainContainer = document.querySelector("main");
   const articleContainer = mainContainer
     ?.querySelector("div")
@@ -275,14 +294,14 @@ export function extractInstagramPostFromPage():
   if (!mainContainer || !articleContainer) {
     return {
       data: {
-        contentType: NodeType.INSTAGRAM_POST,
+        contentType,
         label: "",
         text: "",
         body: {
           postedAt: 0
         },
         metadata: {
-          postId: postId,
+          postId: postId ?? extractInstagramPostId(window.location.href),
           username: "unknown"
         },
         url: window.location.href
@@ -304,7 +323,9 @@ export function extractInstagramPostFromPage():
 
 export function parseInstagramPostFromPage(
   root: Element
-): ISocialPostBase<IInstagramPost, IInstagramProfile> | undefined {
+):
+  | ISocialPostBase<IInstagramPost | IInstagramReel, IInstagramProfile>
+  | undefined {
   const textElements = root.querySelectorAll(
     'span[style*="line-height: 18px"]'
   );
@@ -352,9 +373,8 @@ export function parseInstagramPostFromPage(
   const isVerified = !!root.querySelector('svg[aria-label="Verified"]');
 
   const postUrl = window.location.href;
-  const postId =
-    postUrl.match(/\/p\/([A-Za-z0-9_-]+)/)?.[1] ??
-    `unknown_${generateRandomIdv2()}`;
+  const contentType = resolveInstagramContentType(postUrl);
+  const postId = extractInstagramPostId(postUrl);
 
   const authorUrl = `https://www.instagram.com/${authorHandle}/`;
 
@@ -373,7 +393,7 @@ export function parseInstagramPostFromPage(
 
   const urlFilter = createUrlFilter(
     ["instagram.com"],
-    ["/p/"],
+    ["/p/", "/reel/"],
     window.location.href
   );
   const links = Array.from(root.querySelectorAll('a[href^="http"]'))
@@ -404,8 +424,8 @@ export function parseInstagramPostFromPage(
     }
   });
 
-  const data: OmitForCapture<IInstagramPost> = {
-    contentType: NodeType.INSTAGRAM_POST,
+  const data: OmitForCapture<IInstagramPost | IInstagramReel> = {
+    contentType,
     label: "",
     text,
     body: {

@@ -1,30 +1,30 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import view from "$lib/client/stores/view.store";
-  import SessionLogPage from "./logPage/SessionLogPage.svelte";
-  import BackButton from "$lib/client/elements/button/BackButton.svelte";
-  import { postMessageToParent } from "$lib/client/utils/embed.utils";
-  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
-  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
-  import LogThumbnailItem from "./LogThumbnailItem.svelte";
-  import DaySummaryPart from "./daySummary/DaySummaryPart.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import ScrollView from "$lib/client/layout/scrollView/ScrollView.svelte";
-  import type { DaySummary, ISessionThumb } from "./log.type";
-  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { sessionStore } from "../focus/session.store";
-  import { resolveSessionTimeSplit } from "../pointron.utils";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
-  import { generateSummary } from "../focus/session.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import view from "@21n/stores/view.store";
+  import SessionLogPage from "@21n/products/pointron/logs/logPage/SessionLogPage.svelte";
+  import BackButton from "@21n/elements/button/BackButton.svelte";
+  import { postMessageToParent } from "@21n/utils/embed.utils";
+  import { EmbedMessage } from "@21n/types/embedMessage.enum";
+  import { LoadingAnimationType } from "@21n/types/feedback.type";
+  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
+  import LogThumbnailItem from "@21n/products/pointron/logs/LogThumbnailItem.svelte";
+  import DaySummaryPart from "@21n/products/pointron/logs/daySummary/DaySummaryPart.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import ScrollView from "@21n/layout/scrollView/ScrollView.svelte";
+  import type { DaySummary, ISessionThumb } from "@21n/products/pointron/logs/log.type";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { sessionStore } from "@21n/products/pointron/focus/session.store";
+  import { resolveSessionTimeSplit } from "@21n/products/pointron/pointron.utils";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { tzStore } from "@21n/components/settings/timezone/tz.store";
+  import { generateSummary } from "@21n/products/pointron/focus/session.utils";
 
   export let date: Date = new Date();
 
@@ -94,7 +94,7 @@
       <div class="flex w-full justify-start items-center gap-8">
         <div class="flex grow justify-between gap-4 px-4">
           <Icon
-            icon="chevleft"
+            icon="chevron-left"
             size={Size.lg}
             on:click={() => {
               let newDate = new Date(date.getTime());
@@ -123,7 +123,7 @@
             }}
           />
           <Icon
-            icon="chevright"
+            icon="chevron-right"
             size={Size.lg}
             on:click={() => {
               let newDate = new Date(date.getTime());

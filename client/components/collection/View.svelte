@@ -1,15 +1,15 @@
 <script lang="ts">
-  import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import {
     CollectionLayout,
     type ICollectionItem,
     type ICollectionView
-  } from "$lib/client/components/collection/collection.type";
-  import { Arrangement } from "$lib/client/types/direction.enum";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import BoardView from "./boardView/BoardView.svelte";
-  import type { IActiveCollectionStore } from "./collection.store";
+  } from "@21n/components/collection/collection.type";
+  import { Arrangement } from "@21n/types/direction.enum";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import BoardView from "@21n/components/collection/boardView/BoardView.svelte";
+  import type { IActiveCollectionStore } from "@21n/components/collection/collection.store";
   export let collection: IActiveCollectionStore;
   export let view: ICollectionView;
   export let data: ICollectionItem[] = [];

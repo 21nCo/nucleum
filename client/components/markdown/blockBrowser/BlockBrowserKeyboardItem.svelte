@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import type { IBlockBrowserItem } from "./blockBrowser.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import type { IBlockBrowserItem } from "@21n/components/markdown/blockBrowser/blockBrowser.type";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let item: IBlockBrowserItem;

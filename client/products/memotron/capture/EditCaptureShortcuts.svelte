@@ -1,29 +1,31 @@
 <script lang="ts">
-  import { collectionStore } from "$lib/client/components/collection/collection.store";
-  import { CollectionType } from "$lib/client/components/collection/collection.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import type { ICollectionThumb } from "$lib/client/components/collection/collection.type";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import Switch from "$lib/client/elements/toggle/Switch.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { resourceAction } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import modalEvent from "$lib/client/components/modal/modal.store";
-  import { MemotronAction } from "../memotronAction.enum";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import view from "$lib/client/stores/view.store";
-  import { resolveProductConfig } from "../../product.config";
-  import CollectionThumbnailLabel from "$lib/client/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
-
+  import { collectionStore } from "@21n/components/collection/collection.store";
+  import { CollectionType } from "@21n/components/collection/collection.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import type { ICollectionThumb } from "@21n/components/collection/collection.type";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import Switch from "@21n/elements/toggle/Switch.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import modalEvent from "@21n/components/modal/modal.store";
+  import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import view from "@21n/stores/view.store";
+  import { resolveProductConfig } from "@21n/products/product.config";
+  import CollectionThumbnailLabel from "@21n/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
+  import { InputStyle } from "@21n/types/input.type";
   let collections: ICollectionThumb[] = [];
-
+  let filteredCollections: ICollectionThumb[] = [];
+  let query: string = "";
   async function loadCollections() {
     const data = await collectionStore.selectMany(
       {
         filters: {
-          type: CollectionType.TYPED,
           resource: Resource.node
         }
       },
@@ -32,6 +34,7 @@
       }
     );
     collections = data || [];
+    filteredCollections = collections;
   }
 
   async function toggleShortcut(collectionId: string, isEnabled: boolean) {
@@ -44,8 +47,25 @@
           ? { ...collection, isCaptureShortcutEnabled: isEnabled }
           : collection
       );
+      filteredCollections = filteredCollections.map((collection) =>
+        collection.id === collectionId
+          ? { ...collection, isCaptureShortcutEnabled: isEnabled }
+          : collection
+      );
     } catch (error) {
       console.error("Error updating capture shortcut:", error);
+    }
+  }
+
+  function onSearch(event: CustomEvent<string>) {
+    query = event.detail;
+    if (query) {
+      filteredCollections = collections.filter(
+        (collection) =>
+          collection.label?.toLowerCase().includes(query.toLowerCase()) ?? false
+      );
+    } else {
+      filteredCollections = collections;
     }
   }
 </script>
@@ -57,13 +77,13 @@
     </div>
   {:then}
     <div class="text-b2 text-fgs3">
-      Enable typed collections to appear as quick capture options in the capture
+      Enable collections to appear as quick capture options in the capture
       screen.
     </div>
     <div class="flex flex-col gap-2 w-full flex-grow">
       {#if collections.length === 0}
         <EmptyStatusView
-          mainText="No typed collections found. Please create a new collection."
+          mainText="No collections found. Please create a new collection."
           actionText="Create new collection"
           on:click={() => {
             appStore.runAction(
@@ -72,7 +92,12 @@
           }}
         />
       {:else}
-        {#each collections as collection (collection.id)}
+        <InlineSearchBar
+          bind:query
+          on:search={onSearch}
+          style={InputStyle.FILLED}
+        />
+        {#each filteredCollections as collection (collection.id)}
           <div
             class="flex justify-between items-center p-3 rounded-lg bg-bgs2 border border-brs3 w-full"
           >
@@ -88,27 +113,6 @@
             />
           </div>
         {/each}
-        <div class="flex justify-center w-full pt-2">
-          <Button
-            label="See all collections"
-            style={ButtonStyle.PLAIN}
-            isUnderlined={true}
-            on:click={() => {
-              modalEvent.hide(MemotronAction.EDIT_CAPTURE_SHORTCUTS);
-              modalEvent.hide(MemotronAction.CAPTURE_SETTINGS);
-              appStore.runAction(
-                resourceAction(Resource.collection, ResourceActionType.BROWSE),
-                {
-                  searchParams: $view.isPortrait
-                    ? {
-                        back: resolveProductConfig().homePathPt
-                      }
-                    : undefined
-                }
-              );
-            }}
-          />
-        </div>
         <ScrollViewBottomSpacer />
       {/if}
     </div>

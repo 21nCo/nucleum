@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { IListItem } from "../../landing.type";
-  import TwoColumnList from "./TwoColumnList.svelte";
+  import type { IListItem } from "@21n/landing/shared/landing.type";
+  import TwoColumnList from "@21n/landing/shared/features/visuals/TwoColumnList.svelte";
   const items: IListItem[] = [
     {
       title: "Quick focus",

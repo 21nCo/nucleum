@@ -1,9 +1,9 @@
 <script lang="ts">
-  import ColorSlider from "$lib/client/elements/colorPicker/ColorSlider.svelte";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { isValidString, truncateString } from "$lib/shared/utils/text.utils";
+  import ColorSlider from "@21n/elements/colorPicker/ColorSlider.svelte";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { isValidString, truncateString } from "@21n/shared-utils/text.utils";
   export let hue: number | undefined = 0;
   export let label: string = "";
 </script>

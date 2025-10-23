@@ -1,17 +1,17 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import CollectionItems from "$lib/client/components/collection/CollectionItems.svelte";
-  import { dropzone } from "$lib/client/actions/dragAndDrop.action";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import CollectionItems from "@21n/components/collection/CollectionItems.svelte";
+  import { dropzone } from "@21n/actions/dragAndDrop.action";
+  import Badge from "@21n/elements/text/Badge.svelte";
   import { createEventDispatcher } from "svelte";
-  import type { ISelectValue } from "$lib/client/types/select.type";
-  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import type { ICollectionView } from "../collection.type";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import type { IActiveCollectionStore } from "../collection.store";
-  import { filterNodesByPropertyValue } from "../collection.utils";
-  import type { Arrangement } from "$lib/client/types/direction.enum";
+  import type { ISelectValue } from "@21n/types/select.type";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+  import type { ICollectionView } from "@21n/components/collection/collection.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import type { IActiveCollectionStore } from "@21n/components/collection/collection.store";
+  import { filterNodesByPropertyValue } from "@21n/components/collection/collection.utils";
+  import type { Arrangement } from "@21n/types/direction.enum";
   const dispatch = createEventDispatcher();
 
   export let collection: IActiveCollectionStore;
@@ -52,7 +52,10 @@
       {subGroup.label}
       <Badge text={_data.length} {isApplyCustomColor} />
     </span>
-    <Button icon={!isCollapsed ? "chevdown" : "chevup"} size={Size.sm} />
+    <Button
+      icon={!isCollapsed ? "chevron-down" : "chevron-up"}
+      size={Size.sm}
+    />
   </button>
   {#if !isCollapsed}
     <div class="w-full flex flex-col gap-4">

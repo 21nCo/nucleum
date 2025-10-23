@@ -128,6 +128,12 @@ export const rearrangeOnAxis: Action<HTMLElement, RearrangeParams> = (
   return {
     destroy() {
       node.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
     },
     update(newParams: RearrangeParams) {
       params = newParams;

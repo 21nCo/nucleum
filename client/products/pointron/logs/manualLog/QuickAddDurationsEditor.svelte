@@ -1,17 +1,17 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import FormControlLabelWrapper from "../../../../elements/text/formLabel/FormControlLabelWrapper.svelte";
-  import DurationInput from "../../../../elements/input/durationInput/DurationInput.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonVariant, ButtonStyle } from "$lib/client/types/button.type";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
-  import type { InputLabel } from "$lib/client/types/input.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { rearrangeOnAxis } from "$lib/client/actions/rearrange.action";
-  import { moveItemInArray } from "$lib/shared/utils/obj.utils";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { TimeFormat } from "$lib/client/types/time.type";
-  import { Size } from "$lib/client/types/size.enum";
+  import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
+  import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonVariant, ButtonStyle } from "@21n/types/button.type";
+  import { bg, cn } from "@21n/utils/ui.utils";
+  import type { InputLabel } from "@21n/types/input.type";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { rearrangeOnAxis } from "@21n/actions/rearrange.action";
+  import { moveItemInArray } from "@21n/shared-utils/obj.utils";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import { TimeFormat } from "@21n/types/time.type";
+  import { Size } from "@21n/types/size.enum";
 
   export let values: number[] | undefined = undefined;
   export let label: InputLabel = {

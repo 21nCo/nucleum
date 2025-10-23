@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { cn } from "@21n/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
-  import TextWithHoverTooltip from "../text/TextWithHoverTooltip.svelte";
+  import TextWithHoverTooltip from "@21n/elements/text/TextWithHoverTooltip.svelte";
   const dispatch = createEventDispatcher();
   export let label: string = "";
   export let isCollapse: boolean = false;

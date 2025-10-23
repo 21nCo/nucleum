@@ -1,82 +1,82 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
     ResourceAccessPoint,
     ResourceActionType
-  } from "$lib/client/components/flux/resourceStores/resource.type";
+  } from "@21n/components/flux/resourceStores/resource.type";
   import { onMount } from "svelte";
   import {
     BulkEditor,
     SearchStore
-  } from "$lib/client/components/record/record.store";
+  } from "@21n/components/record/record.store";
   import {
     TaskDueDateFilter,
     TaskSubTypeForSwitcher,
     type ITaskThumb
-  } from "$lib/client/components/tasks/task.type";
+  } from "@21n/components/tasks/task.type";
   import {
     isValidArray,
     isValidArrayWithData
-  } from "$lib/shared/utils/obj.utils";
-  import TaskRecords from "./TaskRecords.svelte";
+  } from "@21n/shared-utils/obj.utils";
+  import TaskRecords from "@21n/components/tasks/TaskRecords.svelte";
   import {
     IResourceFilterDateGrouping,
     RemovalProperty,
     type IRecordId
-  } from "$lib/client/types/data.type";
-  import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
+  } from "@21n/types/data.type";
+  import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
+  import { InputStyle } from "@21n/types/input.type";
   import { page } from "$app/stores";
-  import type { SubType } from "../library/library.type";
-  import LibrarySubTypeSwitcher from "../library/LibrarySubTypeSwitcher.svelte";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import DatePickerRow from "$lib/client/elements/datetime/DatePickerRow.svelte";
-  import AbsoluteTimeRangePopoverV2 from "$lib/client/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { popover } from "$lib/client/actions/popover.action";
+  import type { SubType } from "@21n/components/library/library.type";
+  import LibrarySubTypeSwitcher from "@21n/components/library/LibrarySubTypeSwitcher.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import DatePickerRow from "@21n/elements/datetime/DatePickerRow.svelte";
+  import AbsoluteTimeRangePopoverV2 from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
+  import { Placement } from "@21n/types/direction.enum";
+  import { popover } from "@21n/actions/popover.action";
   import {
     compareDates,
     parseAndFormatDate,
     isSameDay
-  } from "$lib/client/utils/time.utils";
-  import AddNewTaskInline from "./AddNewTaskInline.svelte";
-  import { taskStore } from "./task.store";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
+  } from "@21n/utils/time.utils";
+  import AddNewTaskInline from "@21n/components/tasks/AddNewTaskInline.svelte";
+  import { taskStore } from "@21n/components/tasks/task.store";
+  import { toasts } from "@21n/stores/notification.store";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { appStore } from "@21n/stores/app.store";
   import {
     removeDuplicatesFilter,
     resourceAction
-  } from "../flux/resourceStores/resource.utils";
-  import { ButtonVariant, ButtonStyle } from "$lib/client/types/button.type";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
-  import { resolveMultiSelectStore } from "../flux/resourceStores/resource.store";
-  import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
-  import BulkEditBar from "../record/BulkEditBar.svelte";
-  import view from "$lib/client/stores/view.store";
-  import InlineSyncingFeedback from "$lib/client/elements/feedback/InlineSyncingFeedback.svelte";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { ButtonVariant, ButtonStyle } from "@21n/types/button.type";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { generateMiniRandomId } from "@21n/shared-utils/crypto.utils";
+  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
+  import BottomFloat from "@21n/elements/BottomFloat.svelte";
+  import BulkEditBar from "@21n/components/record/BulkEditBar.svelte";
+  import view from "@21n/stores/view.store";
+  import InlineSyncingFeedback from "@21n/elements/feedback/InlineSyncingFeedback.svelte";
   import { fly } from "svelte/transition";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { resolveTaskDueDateFilters } from "./task.utils";
-  import { OptionSelectorStyle } from "$lib/client/types/select.type";
-  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
-  import { intersection } from "$lib/client/actions/intersection.action";
-  import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
-  import { dragSelection } from "$lib/client/actions/dragSelection.action";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import { resolveTaskDueDateFilters } from "@21n/components/tasks/task.utils";
+  import { OptionSelectorStyle } from "@21n/types/select.type";
+  import { LoadingAnimationType } from "@21n/types/feedback.type";
+  import { intersection } from "@21n/actions/intersection.action";
+  import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import { tzStore } from "@21n/components/settings/timezone/tz.store";
+  import { dragSelection } from "@21n/actions/dragSelection.action";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import { logger } from "../debug/logger.client";
+  } from "@21n/stores/uiState/uiState.type";
+  import { logger } from "@21n/components/debug/logger.client";
   export let goalId: IRecordId | undefined = undefined;
   export let collectionId: IRecordId | undefined = undefined;
   export let accessPoint: ResourceAccessPoint | undefined = undefined;
@@ -100,6 +100,7 @@
   let addNewTaskInlineRef: AddNewTaskInline | undefined;
   let isRefreshing = false;
   let isInSelectionMode = false;
+  let isShowSearchBar = false;
   $: multiSelectContext = {
     resource: Resource.task,
     accessPoint: resolveAccessPoint(),
@@ -355,17 +356,45 @@
     {selectedSubType}
     subContext={goalId ? instance : undefined}
   >
+    <Toggle bind:on={isShowSearchBar} icon="search" tooltip="Search" />
     <Toggle
       bind:on={isFiltersExpanded}
       icon="ph:sliders-light"
       tooltip="Filters and options"
       on:change={() => persistFiltersExpandedState()}
     />
+    {#if !isPreventAddNew && ((!$view.isConstrainedWidth && accessPoint === ResourceAccessPoint.LIBRARY) || accessPoint === ResourceAccessPoint.GOAL)}
+      <Button
+        icon="plus"
+        type={ButtonVariant.PRIMARY}
+        style={ButtonStyle.OUTLINED}
+        size={Size.md}
+        isPreventMinWidth={true}
+        on:click={() => {
+          appStore.runAction(
+            resourceAction(Resource.task, ResourceActionType.CREATE),
+            {
+              componentParams: {
+                date:
+                  selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
+                  selectedSubType === TaskSubTypeForSwitcher.BY_MONTH
+                    ? selectedDate
+                    : undefined,
+                goalId: goalId,
+                collectionId: collectionId
+              }
+            }
+          );
+        }}
+      />
+    {/if}
   </LibrarySubTypeSwitcher>
 
   {#if isFiltersExpanded}
     <div
-      class="flex flex-col gap-4 bg-bgs2 rounded-md p-4 cw:mx-0 mx-4"
+      class={cn("flex flex-col gap-4 bg-bgs2 rounded-md p-4", {
+        "cw:mx-0 mx-4": accessPoint === ResourceAccessPoint.LIBRARY
+      })}
       in:fly={{ y: -20, duration: 300 }}
     >
       {#if selectedSubType !== TaskSubTypeForSwitcher.BY_DATE}
@@ -402,101 +431,84 @@
   {/if}
 
   {#if selectedSubType === TaskSubTypeForSwitcher.BY_DATE || selectedSubType === TaskSubTypeForSwitcher.BY_MONTH}
-    <div class="flex flex-col gap-6 border border-brs2 rounded-md p-4">
-      <div class="flex justify-center w-full gap-2 px-2">
-        <button
-          class="text-h3 w-fit flex items-center gap-2 text-aps1 font-medium"
-          bind:this={dateSelectionPopoverRef}
-          use:popover={{
-            content: AbsoluteTimeRangePopoverV2,
-            placement: Placement.BottomCenter,
-            id: "date-picker-popover",
-            isRenderAsModalForCW: true,
-            componentProps: {
-              isDatePickerMode: true,
-              selectedDate: selectedDate,
-              onDateChange: (val) => {
-                selectedDate = val;
-                viewDate = selectedDate;
-                refresh({ scrollToDate: true });
-                hidePopover();
-              }
+    <div
+      class={cn("flex border border-brs2 rounded-md", {
+        "mx-4": accessPoint === ResourceAccessPoint.LIBRARY
+      })}
+    >
+      <button
+        class="w-32 flex items-center justify-center gap-2 text-b2 text-fgs2 font-medium tabular-nums h-full whitespace-nowrap cw:py-1 py-2 cw:px-2 px-4 rounded-l-md bg-bgs2 border-r border-brs2"
+        bind:this={dateSelectionPopoverRef}
+        use:popover={{
+          content: AbsoluteTimeRangePopoverV2,
+          placement: Placement.BottomCenter,
+          id: "date-picker-popover",
+          isRenderAsModalForCW: true,
+          componentProps: {
+            isDatePickerMode: true,
+            selectedDate: selectedDate,
+            onDateChange: (val) => {
+              selectedDate = val;
+              viewDate = selectedDate;
+              refresh({ scrollToDate: true });
+              hidePopover();
             }
+          }
+        }}
+      >
+        <!-- <Icon icon="ph:calendar" /> -->
+        {selectedSubType === TaskSubTypeForSwitcher.BY_DATE &&
+        isSameDay(viewDate, selectedDate)
+          ? parseAndFormatDate(viewDate)
+          : selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
+              (selectedSubType === TaskSubTypeForSwitcher.BY_MONTH &&
+                isSameDay(viewDate, selectedDate))
+            ? parseAndFormatDate(viewDate, "mmm-yyyy")
+            : parseAndFormatDate(viewDate, "yyyy")}
+      </button>
+      <div class="flex-grow h-full">
+        <DatePickerRow
+          isDateMode={selectedSubType === TaskSubTypeForSwitcher.BY_DATE}
+          date={selectedDate}
+          on:pageChange={(e) => {
+            viewDate = e.detail.viewDate;
           }}
-        >
-          <!-- <Icon icon="ph:calendar" /> -->
-          {selectedSubType === TaskSubTypeForSwitcher.BY_DATE &&
-          isSameDay(viewDate, selectedDate)
-            ? parseAndFormatDate(viewDate)
-            : selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
-                (selectedSubType === TaskSubTypeForSwitcher.BY_MONTH &&
-                  isSameDay(viewDate, selectedDate))
-              ? parseAndFormatDate(viewDate, "mmm-yyyy")
-              : parseAndFormatDate(viewDate, "yyyy")}
-        </button>
+          on:change={(e) => {
+            selectedDate = e.detail;
+            viewDate = selectedDate;
+            refresh({ scrollToDate: true });
+          }}
+        />
       </div>
-      <DatePickerRow
-        isDateMode={selectedSubType === TaskSubTypeForSwitcher.BY_DATE}
-        date={selectedDate}
-        on:pageChange={(e) => {
-          console.log({ e });
-          viewDate = e.detail.viewDate;
-        }}
-        on:change={(e) => {
-          selectedDate = e.detail;
-          viewDate = selectedDate;
-          refresh({ scrollToDate: true });
-        }}
+    </div>
+  {/if}
+  {#if isShowSearchBar}
+    <div class="flex gap-2 items-center" in:fly={{ y: -20, duration: 300 }}>
+      <InlineSearchBar
+        bind:this={searchInputRef}
+        bind:query={searchQuery}
+        on:search={() => refresh()}
+        padding={cn({
+          "pl-4":
+            !$view.isConstrainedWidth &&
+            accessPoint === ResourceAccessPoint.LIBRARY
+        })}
+        placeholder={"Search tasks"}
+        style={InputStyle.BORDERED}
       />
     </div>
   {/if}
-  <div class="flex gap-2 items-center">
-    <InlineSearchBar
-      bind:this={searchInputRef}
-      bind:query={searchQuery}
-      on:search={() => refresh()}
-      padding={cn({
-        "pl-4":
-          !$view.isConstrainedWidth &&
-          accessPoint === ResourceAccessPoint.LIBRARY
-      })}
-      placeholder={"Search tasks"}
-      style={InputStyle.BORDERED}
-    />
-    {#if !isPreventAddNew && ((!$view.isConstrainedWidth && accessPoint === ResourceAccessPoint.LIBRARY) || accessPoint === ResourceAccessPoint.GOAL)}
-      <Button
-        icon="plus"
-        type={ButtonVariant.PRIMARY}
-        style={ButtonStyle.OUTLINED}
-        size={Size.md}
-        isPreventMinWidth={true}
-        on:click={() => {
-          appStore.runAction(
-            resourceAction(Resource.task, ResourceActionType.CREATE),
-            {
-              componentParams: {
-                date:
-                  selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
-                  selectedSubType === TaskSubTypeForSwitcher.BY_MONTH
-                    ? selectedDate
-                    : undefined,
-                goalId: goalId,
-                collectionId: collectionId
-              }
-            }
-          );
-        }}
-      />
-    {/if}
-  </div>
 
   <InlineSyncingFeedback resource={Resource.task} padding="cw:px-0 px-4" />
 
   {#if tasks && tasks.length > 0}
     <div
-      class={cn("flex flex-col gap-4 overflow-auto grow userdata", {
-        "px-4": accessPoint === ResourceAccessPoint.LIBRARY
-      })}
+      class={cn(
+        "flex flex-col gap-4 pr-1.5 overflow-auto-scrollbar grow userdata",
+        {
+          "px-4": accessPoint === ResourceAccessPoint.LIBRARY
+        }
+      )}
     >
       <!-- {#if selectedSubType !== TaskSubTypeForSwitcher.BY_MONTH}
       <AddNewTaskInline on:add={onAdd} bind:this={addNewTaskInlineRef} />

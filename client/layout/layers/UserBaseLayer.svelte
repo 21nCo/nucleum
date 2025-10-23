@@ -1,68 +1,75 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { detectTimeZone } from "$lib/client/utils/time.utils";
-  import { Persistence } from "$lib/client/persistence/persistence";
-  import account from "$lib/client/stores/account.store";
-  import { appLoadingState, appStore } from "$lib/client/stores/app.store";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import { detectTimeZone } from "@21n/utils/time.utils";
+  import { Persistence } from "@21n/persistence/persistence";
+  import account from "@21n/stores/account.store";
+  import { appLoadingState, appStore } from "@21n/stores/app.store";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import {
     confirmationNotification,
     toasts
-  } from "$lib/client/stores/notification.store";
-  import context from "$lib/client/stores/context.store";
-  import DebugLayer from "./debug/DebugLayer.svelte";
-  import ModalLayer from "./ModalLayer.svelte";
-  import AnalyticsLayer from "./analytics/AnalyticsLayer.svelte";
-  import ShortcutRunner from "../../components/shortcuts/ShortcutRunner.svelte";
-  import Intercom from "./Intercom.svelte";
-  import SyncLayer from "./SyncLayer.svelte";
+  } from "@21n/stores/notification.store";
+  import context from "@21n/stores/context.store";
+  import DebugLayer from "@21n/layout/layers/debug/DebugLayer.svelte";
+  import ModalLayer from "@21n/layout/layers/ModalLayer.svelte";
+  import AnalyticsLayer from "@21n/layout/layers/analytics/AnalyticsLayer.svelte";
+  import ShortcutRunner from "@21n/components/shortcuts/ShortcutRunner.svelte";
+  import Intercom from "@21n/layout/layers/Intercom.svelte";
+  import SyncLayer from "@21n/layout/layers/SyncLayer.svelte";
   import {
     dispatchCustomEvent,
     isExtensionEnvironment,
     safeRequestIdleCallback
-  } from "$lib/client/utils/browser.utils";
-  import { AlertType } from "$lib/client/types/notification.type";
-  import { cacheableStores } from "$lib/client/stores/globalStoresMap";
-  import AppLoadingView from "../paint/AppLoadingView.svelte";
-  import DynamicMetadataLayer from "./DynamicMetadataLayer.svelte";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { flux, initFlux } from "$lib/client/components/flux/flux";
+  } from "@21n/utils/browser.utils";
+  import { AlertType } from "@21n/types/notification.type";
+  import AppLoadingView from "@21n/layout/paint/AppLoadingView.svelte";
+  import DynamicMetadataLayer from "@21n/layout/layers/DynamicMetadataLayer.svelte";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { flux, initFlux } from "@21n/components/flux/flux";
   import {
     UserDataMode,
     UserSessionType
-  } from "$lib/client/types/account.type";
-  import { PersistenceProvider } from "$lib/client/persistence/persistence.type";
-  import { getDapId } from "$lib/client/persistence/persistence.utils";
-  import PageError from "$lib/client/components/error/PageError.svelte";
-  import { SurrealPersistence } from "$lib/client/persistence/surreal/surreal.local";
-  import { SignalDBPersistence } from "$lib/client/persistence/signaldb/signaldb.local";
-  import { IndexedDBPersistence } from "$lib/client/persistence/indexeddb/indexeddb.local";
+  } from "@21n/types/account.type";
+  import {
+    ClientStorageKey,
+    PersistenceProvider
+  } from "@21n/persistence/persistence.type";
+  import {
+    clientStorage,
+    getDapId
+  } from "@21n/persistence/persistence.utils";
+  import PageError from "@21n/components/error/PageError.svelte";
+  import { SurrealPersistence } from "@21n/persistence/surreal/surreal.local";
+  import { SignalDBPersistence } from "@21n/persistence/signaldb/signaldb.local";
+  import { IndexedDBPersistence } from "@21n/persistence/indexeddb/indexeddb.local";
   import posthog from "posthog-js";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
-  import { recentsStore } from "$lib/client/components/record/recent.store";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import { BillingCycle } from "$lib/client/components/subscription/userPlan.type";
-  import { fileEmbedChannel } from "$lib/client/components/files/fileEmbedChannel.store";
-  import { ErrorMessage } from "$lib/client/components/error/error.type";
-  import modalEvent from "$lib/client/components/modal/modal.store";
-  import { PaymentProvider } from "$lib/shared/types/plan.type";
-  import { embedBridge } from "$lib/client/components/embed/embed.store";
-  import { postMessageToParent } from "$lib/client/utils/embed.utils";
-  import { EmbedMessage } from "$lib/client/types/embedMessage.enum";
-  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
-  import { OperatingSystem } from "$lib/client/types/context.type";
-  import InMemoryCache from "./cache/InMemoryCache.svelte";
-  import { resolveProductResources } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import UserLayout from "./UserLayout.svelte";
-  import { compareVersions } from "$lib/shared/utils/utils";
-  import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
-  import { RxDBPersistence } from "$lib/client/persistence/rxdb/rxdb.local";
-  import { DexiePersistence } from "$lib/client/persistence/dexie/dexie.local";
-  import { parse } from "$lib/shared/utils/json.utils";
-  import { productData } from "$lib/client/products/product.resolver";
+  import { recentsStore } from "@21n/components/record/recent.store";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import { Action } from "@21n/types/action.enum";
+  import { BillingCycle } from "@21n/components/subscription/userPlan.type";
+  import { fileEmbedChannel } from "@21n/components/files/fileEmbedChannel.store";
+  import { ErrorMessage } from "@21n/components/error/error.type";
+  import modalEvent from "@21n/components/modal/modal.store";
+  import { PaymentProvider } from "@21n/shared-types/plan.type";
+  import { embedBridge } from "@21n/components/embed/embed.store";
+  import { postMessageToParent } from "@21n/utils/embed.utils";
+  import { EmbedMessage } from "@21n/types/embedMessage.enum";
+  import { tzStore } from "@21n/components/settings/timezone/tz.store";
+  import { OperatingSystem } from "@21n/types/context.type";
+  import InMemoryCache from "@21n/layout/layers/cache/InMemoryCache.svelte";
+  import { resolveProductResources } from "@21n/components/flux/resourceStores/resource.utils";
+  import UserLayout from "@21n/layout/layers/UserLayout.svelte";
+  import { compareVersions } from "@21n/shared-utils/utils";
+  import { UIStateScope } from "@21n/stores/uiState/uiState.type";
+  import { RxDBPersistence } from "@21n/persistence/rxdb/rxdb.local";
+  import { DexiePersistence } from "@21n/persistence/dexie/dexie.local";
+  import { parse } from "@21n/shared-utils/json.utils";
+  import { resolveProductConfig } from "@21n/products/product.config";
+  import { resourceStores } from "@21n/components/flux/resourceStores/resource.store";
+  import { kvStores } from "@21n/components/flux/resourceStores/kv.store";
   const loadingMessages = {
     cloneUp: {
       message: "Syncing your local data with the cloud...",
@@ -75,6 +82,8 @@
       message: "First login detected. Syncing your data..."
     }
   };
+
+  const ONE_WEEK_IN_MS = 7 * 24 * 60 * 60 * 1000;
 
   let loadingMessage: {
     message: string;
@@ -91,6 +100,26 @@
   const isDebug = import.meta.env?.DEV;
   $: searcheableResources =
     resolveProductResources($appStore.product, "search") ?? [];
+
+  async function shouldRunFluxIndex() {
+    const lastIndexedAt = await clientStorage.get(
+      ClientStorageKey.LAST_INDEXED_AT
+    );
+    if (!lastIndexedAt) return true;
+
+    const lastIndexedTimestamp = Number(lastIndexedAt);
+    if (Number.isNaN(lastIndexedTimestamp)) return true;
+
+    return Date.now() - lastIndexedTimestamp >= ONE_WEEK_IN_MS;
+  }
+
+  async function runFluxIndexWithTracking() {
+    await flux.index();
+    await clientStorage.set(
+      ClientStorageKey.LAST_INDEXED_AT,
+      Date.now().toString()
+    );
+  }
 
   onMount(async () => {
     postMessageToParent(EmbedMessage.MOUNT);
@@ -117,14 +146,26 @@
     if (userDataState?.paginateResources) {
       // loadingMessage.duration = userDataState.paginateResources.length * 2;
       //TODO - calculate estimated time to paginate using total length of records for each resource and resource type
-      await flux.paginateResources(userDataState.paginateResources, 100);
+      await flux.paginateResources(
+        userDataState.paginateResources,
+        100,
+        userDataState.isFirstInitialLoad
+      );
     } else if (userDataState?.cursors) {
-      await flux.paginateResourcesV2(userDataState.cursors);
+      await flux.paginateResourcesV2(
+        userDataState.cursors,
+        userDataState.isFirstInitialLoad
+      );
     }
-    await Promise.all([
+    const shouldTriggerIndex = await shouldRunFluxIndex();
+    const initializationTasks = [
       recentsStore.refresh(searcheableResources),
       initializeUserConfig()
-    ]);
+    ];
+    if (shouldTriggerIndex) {
+      initializationTasks.push(runFluxIndexWithTracking());
+    }
+    await Promise.all(initializationTasks);
     if (initState !== 1) {
       $appLoadingState.isBaseLoaded = true;
       dispatch("ready");
@@ -291,8 +332,7 @@
           at: "UserBaseLayer.initializeData - local",
           initState
         });
-        if (initState === 0) await flux.kvSeed();
-        else await flux.loadInMemoryStores();
+        if (initState === 0) await kvSeedDelegate();
         return initState;
       }
       if (!$account.userId) {
@@ -318,16 +358,36 @@
     }
   }
 
+  async function kvSeedDelegate() {
+    const data = Array.from(kvStores.values()).map((x) => {
+      return { id: `kv:${x.id}`, ...x.seed };
+    });
+    await flux.kvSeed(data);
+    await flux.loadInMemoryStores();
+  }
+
   async function initializeFlux(params: { dapId: string; userId?: string }) {
+    const tables = resolveProductConfig().tableConfig;
+    const allStores = [...resourceStores.values(), ...kvStores.values()];
+    const loaderCallback = (resource: string, data: any) => {
+      const store = allStores.find(
+        (s) => s.id === resource || `kv:${s.id}` === resource
+      );
+      if (store?.loader) {
+        store.loader(data);
+      }
+    };
+
     const initParams = {
       ...params,
       appVersion: $appStore.version + "." + $appStore.build,
-      remoteOnlyStores: [...productData.stores.remoteOnlyStores],
-      product: $appStore.product
+      product: $appStore.product,
+      tables,
+      loaderCallback
     };
-    const stores = [...productData.stores.cacheableStores, ...cacheableStores];
+
     const provider: PersistenceProvider = PersistenceProvider.DEXIE;
-    return initFlux(stores, provider, resolveLocalPersistence(), initParams);
+    return initFlux(resolveLocalPersistence(), initParams);
 
     function resolveLocalPersistence() {
       switch (provider) {
@@ -363,7 +423,7 @@
         loadingMessage = loadingMessages.cloneUp;
         await flux.cloneUp();
       } else {
-        await flux.kvSeed();
+        await kvSeedDelegate();
       }
     } else if ($account.sessionType === UserSessionType.RETURNING) {
       if (initState === 0) {

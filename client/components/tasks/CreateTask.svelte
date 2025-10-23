@@ -1,35 +1,36 @@
 <script lang="ts">
-  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { Size } from "$lib/client/types/size.enum";
+  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { InputStyle } from "@21n/types/input.type";
+  import { Size } from "@21n/types/size.enum";
   import { onMount } from "svelte";
-  import { Resource } from "../flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
     ResourceAccessPoint,
     ResourceActionType
-  } from "../flux/resourceStores/resource.type";
-  import { resourceAction } from "../flux/resourceStores/resource.utils";
-  import { GoalStatus, type IGoal } from "../goals/goal.type";
-  import modalEvent from "../modal/modal.store";
-  import ModalFooter from "../modal/ModalFooter.svelte";
-  import { SearchStore } from "../record/record.store";
-  import { taskStore } from "./task.store";
-  import { goalStore } from "../goals/goal.store";
-  import TaskThumbnailGoalLabel from "./TaskThumbnailGoalLabel.svelte";
-  import { Product } from "$lib/client/products/product.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
-  import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
-  import { ModifierKey } from "$lib/client/types/keyboard.type";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
-  import GoalSearchResultItem from "../goals/GoalSearchResultItem.svelte";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
+  import { GoalStatus, type IGoal } from "@21n/components/goals/goal.type";
+  import modalEvent from "@21n/components/modal/modal.store";
+  import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { taskStore } from "@21n/components/tasks/task.store";
+  import { goalStore } from "@21n/components/goals/goal.store";
+  import TaskThumbnailGoalLabel from "@21n/components/tasks/TaskThumbnailGoalLabel.svelte";
+  import { Product } from "@21n/products/product.type";
+  import { appStore } from "@21n/stores/app.store";
+  import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
+  import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
+  import { ModifierKey } from "@21n/types/keyboard.type";
+  import { toasts } from "@21n/stores/notification.store";
+  import context from "@21n/stores/context.store";
+  import { Embed } from "@21n/types/context.type";
+  import GoalSearchResultItem from "@21n/components/goals/GoalSearchResultItem.svelte";
+  import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
   export let date: Date | undefined = undefined;
   export let goalId: IRecordId | undefined = undefined;
   const action = resourceAction(Resource.task, ResourceActionType.CREATE);
@@ -92,9 +93,9 @@
 </script>
 
 <div
-  class="cw:w-full w-[32rem] h-auto min-h-[16rem] flex flex-col justify-between gap-4 p-4 rounded-lg bg-bgs1"
+  class="cw:w-full w-[32rem] h-auto min-h-[16rem] flex flex-col justify-between gap-4 rounded-lg bg-bgs1"
 >
-  <div class="flex flex-col gap-3">
+  <ModalContentPadded class="flex flex-col gap-3">
     {#if isShowGoalPicker}
       <div class="transition-all duration-200">
         <TextSearchInput
@@ -143,7 +144,7 @@
         />
       </span>
     </div>
-  </div>
+  </ModalContentPadded>
   <div class="flex flex-col gap-3 mt-2">
     {#if $context.embed !== Embed.HANDSET}
       <div class="text-b3 text-fgs3 flex gap-1 justify-center py-1">
@@ -161,16 +162,15 @@
     {/if}
     <ModalFooter
       {action}
+      size={Size.sm}
       primaryAction={{
         label: "Create",
         icon: "proceed",
-        callback: handleCreate,
-        size: Size.sm
+        callback: handleCreate
       }}
       secondaryAction={{
         label: "Cancel",
-        icon: "cross",
-        size: Size.sm
+        icon: "cross"
       }}
     />
   </div>

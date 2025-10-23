@@ -2,18 +2,18 @@
   import {
     isNoneResource,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import {
     calculateGroupingCounts,
     resolveOptionsForGrouping
-  } from "../collection.utils";
-  import type { ICollectionView } from "$lib/client/components/collection/collection.type";
+  } from "@21n/components/collection/collection.utils";
+  import type { ICollectionView } from "@21n/components/collection/collection.type";
   import type {
     ISelectItem,
     ISelectValue
-  } from "$lib/client/types/select.type";
-  import type { IProperty } from "../properties/property.type";
-  import ViewTabs from "./ViewTabs.svelte";
+  } from "@21n/types/select.type";
+  import type { IProperty } from "@21n/components/collection/properties/property.type";
+  import ViewTabs from "@21n/components/collection/tabSwitcher/ViewTabs.svelte";
 
   export let view: ICollectionView;
   export let properties: IProperty[] = [];

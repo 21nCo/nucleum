@@ -1,25 +1,27 @@
 <script lang="ts">
-  import { appStore } from "$lib/client/stores/app.store";
+  import { appStore } from "@21n/stores/app.store";
   import { getContext, onMount } from "svelte";
-  import { NodeType } from "../../../node.type";
-  import type { INode } from "../../../node.type";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import TweetPreviewUsingWidget from "./TweetPreviewUsingWidget.svelte";
-  import InstagramPostWidget from "./InstagramPostWidget.svelte";
-  import LinkedInPostWidget from "./LinkedInPostWidget.svelte";
-  import RedditPostWidget from "./RedditPostWidget.svelte";
-  import FacebookPostWidget from "./FacebookPostWidget.svelte";
-  import MastodonPostWidget from "./MastodonPostWidget.svelte";
-  import BlueskyPostWidget from "./BlueskyPostWidget.svelte";
-  import ThreadsPostWidget from "./ThreadsPostWidget.svelte";
-  import account from "$lib/client/stores/account.store";
-  import SocialPostContentFallback from "./SocialPostContentFallback.svelte";
-  import context from "$lib/client/stores/context.store";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import { properCase } from "$lib/shared/utils/text.utils";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
+  import type { INode } from "@21n/products/memotron/node/node.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import TweetPreviewUsingWidget from "@21n/products/memotron/node/content/web/social/TweetPreviewUsingWidget.svelte";
+  import InstagramPostWidget from "@21n/products/memotron/node/content/web/social/InstagramPostWidget.svelte";
+  import LinkedInPostWidget from "@21n/products/memotron/node/content/web/social/LinkedInPostWidget.svelte";
+  import RedditPostWidget from "@21n/products/memotron/node/content/web/social/RedditPostWidget.svelte";
+  import FacebookPostWidget from "@21n/products/memotron/node/content/web/social/FacebookPostWidget.svelte";
+  import MastodonPostWidget from "@21n/products/memotron/node/content/web/social/MastodonPostWidget.svelte";
+  import BlueskyPostWidget from "@21n/products/memotron/node/content/web/social/BlueskyPostWidget.svelte";
+  import ThreadsPostWidget from "@21n/products/memotron/node/content/web/social/ThreadsPostWidget.svelte";
+  import account from "@21n/stores/account.store";
+  import SocialPostContentFallback from "@21n/products/memotron/node/content/web/social/SocialPostContentFallback.svelte";
+  import context from "@21n/stores/context.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import { resolveContentPreview } from "@21n/products/memotron/node/node.utils";
+  import { toasts } from "@21n/stores/notification.store";
 
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -27,6 +29,7 @@
   const nodeContext = getContext<any>("node");
   let oembedHtml: string | null = null;
   let error: string = "";
+  let hasPermanentCopy = false;
   onMount(async () => {
     await resolveParent();
   });
@@ -35,12 +38,15 @@
     if (nodeContext?.parent) parent = nodeContext.parent;
   }
 
+  $: hasPermanentCopy = !!resolveContentPreview(node);
+
   function shouldShowWidget() {
     if (!account.isCloudUserAndOnline()) return false;
 
     const supportedWidgets = [
       NodeType.TWEET,
       NodeType.INSTAGRAM_POST,
+      NodeType.INSTAGRAM_REEL,
       NodeType.LINKEDIN_POST,
       NodeType.REDDIT_POST,
       NodeType.MASTODON_POST,
@@ -51,6 +57,7 @@
     const supportedWidgetsOnEmbed = [
       NodeType.TWEET,
       NodeType.INSTAGRAM_POST,
+      NodeType.INSTAGRAM_REEL,
       NodeType.MASTODON_POST,
       NodeType.BLUESKY_POST,
       NodeType.THREADS_POST
@@ -69,19 +76,29 @@
   function resolveOpenInButtonLabel() {
     let suffix = "";
     if (node.contentType === NodeType.TWEET) suffix = "Twitter";
+    else if (
+      node.contentType === NodeType.INSTAGRAM_POST ||
+      node.contentType === NodeType.INSTAGRAM_REEL
+    )
+      suffix = "Instagram";
     else suffix = properCase(node.contentType.split("_POST")[0]);
     return `Open on ${suffix}`;
+  }
+
+  async function copyTextContent() {
+    const text = resolveContentPreview(node);
+    if (text) {
+      await navigator.clipboard.writeText(text);
+      toasts.success("Text copied to clipboard");
+    }
   }
 </script>
 
 {#if oembedHtml}
   {@html oembedHtml}
 {:else if shouldShowWidget() && node.url && !error}
-  <button
+  <div
     class="relative w-full h-full px-4 flex flex-col justify-center items-center overflow-y-auto"
-    on:click={() => {
-      if (node.url) appStore.openLink(node.url);
-    }}
   >
     <div class="absolute inset-0 flex justify-center items-center z-0 mb-12">
       <Icon icon="svg-spinners:3-dots-fade" size={Size.lg} />
@@ -94,7 +111,7 @@
       {/if}
       {#if node.contentType === NodeType.TWEET}
         <TweetPreviewUsingWidget tweetUrl={node.url} />
-      {:else if node.contentType === NodeType.INSTAGRAM_POST}
+      {:else if node.contentType === NodeType.INSTAGRAM_POST || node.contentType === NodeType.INSTAGRAM_REEL}
         <InstagramPostWidget postUrl={node.url} />
       {:else if node.contentType === NodeType.LINKEDIN_POST}
         <LinkedInPostWidget postUrl={node.url} />
@@ -122,26 +139,45 @@
         />
       {/if}
     </div>
-    <div class="flex justify-center items-center w-full gap-4 pt-4 pb-8">
-      <Button
-        style={ButtonStyle.PLAIN}
-        label="View permanent copy"
-        isUnderlined={true}
-        size={Size.sm}
-        on:click={(e) => {
-          e.stopPropagation();
-          onError(new CustomEvent("fallback", { detail: "fallback" }));
-        }}
-      />
+    <div
+      class="flex cw:flex-col justify-center items-center w-full gap-4 pt-4 pb-8"
+    >
+      {#if hasPermanentCopy}
+        <Button
+          style={ButtonStyle.PLAIN}
+          label="View permanent copy"
+          isUnderlined={true}
+          size={Size.sm}
+          on:click={(e) => {
+            e.stopPropagation();
+            onError(new CustomEvent("fallback", { detail: "fallback" }));
+          }}
+        />
+      {/if}
+      {#if hasPermanentCopy}
+        <Button
+          style={ButtonStyle.PLAIN}
+          label="Copy text content"
+          isUnderlined={true}
+          size={Size.sm}
+          on:click={(e) => {
+            e.stopPropagation();
+            copyTextContent();
+          }}
+        />
+      {/if}
       <Button
         style={ButtonStyle.PLAIN}
         label={resolveOpenInButtonLabel()}
         isUnderlined={true}
         size={Size.sm}
-        on:click
+        on:click={() => {
+          if (!node.url) return;
+          appStore.openLink(node.url);
+        }}
       />
     </div>
-  </button>
+  </div>
 {:else}
   <SocialPostContentFallback {node} />
 {/if}

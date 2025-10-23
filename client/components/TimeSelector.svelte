@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { Orientation } from "../types/direction.enum";
-  import FormControlLabelWrapper from "../elements/text/formLabel/FormControlLabelWrapper.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
   export let value: string | undefined = undefined;
   export let label: string | undefined = undefined;
   export let info: string | undefined = undefined;

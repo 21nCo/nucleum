@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Toggle from "./Toggle.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
   import { createEventDispatcher } from "svelte";
-  import type { IToggleItem } from "./toggle.type";
-  import { enumToString } from "$lib/shared/utils/text.utils";
+  import type { IToggleItem } from "@21n/elements/toggle/toggle.type";
+  import { enumToString } from "@21n/shared-utils/text.utils";
   const dispatch = createEventDispatcher();
 
   export let items: IToggleItem[] = [];

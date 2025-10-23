@@ -1,6 +1,6 @@
-import type { IToolTipOptions } from "../elements/text/text.type";
-import { Placement } from "../types/direction.enum";
-import { renderPopover, resolveHoverState } from "../utils/browser.utils";
+import type { IToolTipOptions } from "@21n/elements/text/text.type";
+import { Placement } from "@21n/types/direction.enum";
+import { renderPopover, resolveHoverState } from "@21n/utils/browser.utils";
 
 interface HoverableParams {
   tooltip?: string;
@@ -83,6 +83,7 @@ export function hoverable(node: HTMLElement, params: HoverableParams = {}) {
       node.removeEventListener("focus", toggleHoveringState);
       node.removeEventListener("blur", toggleHoveringState);
       node.removeEventListener("click", handleClick);
+      if (toolTipTimeout) clearTimeout(toolTipTimeout);
       if (toolTipRef) document.body.removeChild(toolTipRef);
     },
     update(newParams: HoverableParams) {

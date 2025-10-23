@@ -2,9 +2,9 @@
   import {
     SessionCompositionType,
     type SessionComposition
-  } from "$lib/client/types/pointron/sessionComposition.type";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/types/pointron/sessionComposition.type";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import { bg, cn } from "@21n/utils/ui.utils";
   export let preset: SessionComposition;
   export let isExpandedVariant: boolean;
   export let parentBackgroundIndex: number;

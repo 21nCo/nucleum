@@ -1,31 +1,31 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import InlineMarkdownTextInput from "$lib/client/components/markdown/content/InlineMarkdownTextInput.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { cn } from "@21n/utils/ui.utils";
   import { getContext } from "svelte";
-  import Resources from "../../../../components/record/Records.svelte";
-  import LinkThumbnailItems from "../links/LinkThumbnailItems.svelte";
-  import { nodeStore, type IActiveNodeStore } from "../node.store";
+  import Resources from "@21n/components/record/Records.svelte";
+  import LinkThumbnailItems from "@21n/products/memotron/node/links/LinkThumbnailItems.svelte";
+  import { nodeStore, type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
   import {
     canHaveTraces,
     NodeRightPaneType,
     NodeType,
     type INode,
     type INodeLinkThumb
-  } from "../node.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { isSameResource } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { focusById } from "$lib/client/actions/focusById.action";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import RightPaneOverviewMetricCard from "./RightPaneOverviewMetricCard.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
+  } from "@21n/products/memotron/node/node.type";
+  import { appStore } from "@21n/stores/app.store";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { focusById } from "@21n/actions/focusById.action";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import RightPaneOverviewMetricCard from "@21n/products/memotron/node/rightPanel/RightPaneOverviewMetricCard.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
 
   export let node: IActiveNodeStore;
   export let pane: NodeRightPaneType | undefined = undefined;
@@ -72,9 +72,7 @@
   <Text content="Overview" style={TextStyle.PANEL_HEADING_SMALL} />
 
   {#if canHaveTraces.includes($node.contentType)}
-    <div
-      class="flex flex-row justify-around items-center w-full border border-brs3 rounded-md px-2 py-0.5"
-    >
+    <div class="grid grid-cols-2 w-full border border-brs3 rounded-md h-10">
       <RightPaneOverviewMetricCard
         label="Links"
         icon="link"
@@ -82,10 +80,10 @@
         on:click={() => (pane = NodeRightPaneType.LINKS)}
       />
       <RightPaneOverviewMetricCard
-        label="Clips"
+        label="Bookmarks"
         icon="bookmark"
         value={$node.clips?.length || 0}
-        on:click={() => (pane = NodeRightPaneType.TRACES)}
+        on:click={() => (pane = NodeRightPaneType.BOOKMARKS)}
       />
     </div>
   {/if}
@@ -94,7 +92,7 @@
     <div class="flex flex-col gap-4 items-start w-full h-1/3 min-h-0">
       <span class="flex flex-row justify-between items-center w-full">
         <span class="flex flex-row gap-1 items-center">
-          <Text content="Clips" style={TextStyle.SECTION_HEADING} />
+          <Text content="Bookmarks" style={TextStyle.SECTION_HEADING} />
           <Badge text={$node.clips?.length || 0} size={Size.sm} />
         </span>
         {#if $node.clips?.length > 2}
@@ -104,7 +102,7 @@
               icon="proceed"
               label="View all"
               style={ButtonStyle.PLAIN}
-              on:click={() => (pane = NodeRightPaneType.TRACES)}
+              on:click={() => (pane = NodeRightPaneType.BOOKMARKS)}
             />
           </span>
         {/if}
@@ -115,9 +113,14 @@
           accessPoint={ResourceAccessPoint.NODE_TRACES}
           resource={Resource.node}
           size={Size.sm}
-          isPreventDefault={$node.contentType === NodeType.YOUTUBE_VIDEO}
+          isPreventDefault={$node.contentType === NodeType.YOUTUBE_VIDEO ||
+            $node.contentType === NodeType.YOUTUBE_SHORT}
           on:click={(e) => {
-            if ($node.contentType !== NodeType.YOUTUBE_VIDEO) return;
+            if (
+              $node.contentType !== NodeType.YOUTUBE_VIDEO &&
+              $node.contentType !== NodeType.YOUTUBE_SHORT
+            )
+              return;
             contentContext.publish("yt-trace-click", {
               id: e.detail.id,
               timestamp: e.detail.body.timestamp

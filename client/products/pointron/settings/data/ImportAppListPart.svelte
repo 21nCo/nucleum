@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { ImportSource } from "./data.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import { appStore } from "@21n/stores/app.store";
+  import { ImportSource } from "@21n/products/pointron/settings/data/data.type";
   export let isIncludeSelf: boolean = true;
   const importSources = [
     {

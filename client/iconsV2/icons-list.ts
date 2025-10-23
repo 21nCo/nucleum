@@ -1,4 +1,4 @@
-import { iconMappings } from "./icons.map";
+import { iconMappings } from "@21n/icons-v2/icons.map";
 
 // Phosphor icons that are NOT in icons.map.ts (these will still use phosphor directly)
 const phosphorIcons = [
@@ -243,6 +243,7 @@ export const phosphorRatingIcons = [
   "quotes",
   "puzzle-piece",
   "flower",
+  "flower-lotus",
   "plant",
   "potted-plant",
   "music-notes",
@@ -365,7 +366,17 @@ const skillIcons = [
   "mastodon-light"
 ];
 
-const svgSpinnersIcons = ["90-ring-with-bg", "3-dots-fade", "180-ring-with-bg"];
+const svgSpinnersIcons = [
+  "90-ring-with-bg",
+  "3-dots-fade",
+  "3-dots-scale",
+  "180-ring-with-bg",
+  "bars-fade",
+  "bars-scale-fade",
+  "bars-rotate-fade",
+  "bars-scale",
+  "bars-scale-middle"
+];
 
 const heroiconsIcons = [
   "cog",
@@ -458,4 +469,4 @@ export const solarIconsForBundling = {
   "bold-duotone": solarBoldDuotoneIcons
 };
 
-export const bundleNumber = 56;
+export const bundleNumber = 60;

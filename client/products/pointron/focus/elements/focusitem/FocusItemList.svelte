@@ -4,46 +4,43 @@
     lastActiveGoalIdForEditing,
     activeSession,
     currentFocusItem
-  } from "$lib/client/products/pointron/focus/session.store";
+  } from "@21n/products/pointron/focus/session.store";
   import { setContext } from "svelte";
-  import FocusItem from "./FocusItem.svelte";
-  import AddFocusItem from "./AddFocusItem.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
+  import FocusItem from "@21n/products/pointron/focus/elements/focusitem/FocusItem.svelte";
+  import AddFocusItem from "@21n/products/pointron/focus/elements/focusitem/AddFocusItem.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
   import { onDestroy, onMount } from "svelte";
   import {
     isSameResource,
     removeDuplicatesFilter,
     resourceInList,
     shiftResourceInArray
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import type { ITaskThumb } from "$lib/client/components/tasks/task.type";
-  import type { IFocusItem } from "$lib/client/types/pointron/session.type";
-  import { goalStore } from "$lib/client/components/goals/goal.store";
-  import { taskStore } from "$lib/client/components/tasks/task.store";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { appEvents, toasts } from "$lib/client/stores/notification.store";
-  import { ErrorMessage } from "$lib/client/components/error/error.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { LoadingAnimationType } from "$lib/client/types/feedback.type";
-  import { fullScreen } from "$lib/client/components/modal/modal.store";
-  import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import {
-    BarStyle,
-    PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
-  import Records from "$lib/client/components/record/Records.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
-  import CalendarColumnTasksPanel from "$lib/client/components/calendar/column/CalendarColumnTasksPanel.svelte";
-  import { reorderList } from "$lib/client/actions/rearrange.action";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import type { ITaskThumb } from "@21n/components/tasks/task.type";
+  import type { IFocusItem } from "@21n/types/pointron/session.type";
+  import { goalStore } from "@21n/components/goals/goal.store";
+  import { taskStore } from "@21n/components/tasks/task.store";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { appEvents, toasts } from "@21n/stores/notification.store";
+  import { ErrorMessage } from "@21n/components/error/error.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { LoadingAnimationType } from "@21n/types/feedback.type";
+  import { fullScreen } from "@21n/components/modal/modal.store";
+  import { PointronEvent } from "@21n/types/pointron/pointronEvent.enum";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { BarStyle, PanelSwitcherStyle } from "@21n/types/switcher.enum";
+  import Records from "@21n/components/record/Records.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import { UIState } from "@21n/stores/uiState/uiState.type";
+  import CalendarColumnTasksPanel from "@21n/components/calendar/column/CalendarColumnTasksPanel.svelte";
+  import { reorderList } from "@21n/actions/rearrange.action";
   export let isInEditMode: boolean = false;
   let isFocusingAddGoal: boolean = false;
   let focusItems: IFocusItem[] = [];
@@ -210,7 +207,7 @@
   function onReorderTasksInGoal(event: any) {
     const { fromId, toId, goalId } = event.detail;
     focusItemsStore.rearrangeTasksInGoal(goalId, fromId, toId);
-    focusItems = focusItems.map(item => {
+    focusItems = focusItems.map((item) => {
       if (isSameResource(item.id, goalId) && item.tasks) {
         return {
           ...item,

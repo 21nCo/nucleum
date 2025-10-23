@@ -2,11 +2,11 @@ import type {
   IActiveResource,
   IResourceLabeled,
   IResourceStarrable
-} from "$lib/client/components/flux/resourceStores/resource.type";
-import type { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import type { IMemotronItemBase } from "$lib/client/products/memotron/memotron.type";
-import type { IAvatar } from "$lib/client/types/avatar.type";
-import type { IRecordId } from "$lib/client/types/data.type";
+} from "@21n/components/flux/resourceStores/resource.type";
+import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import type { IMemotronItemBase } from "@21n/products/memotron/memotron.type";
+import type { IAvatar } from "@21n/types/avatar.type";
+import type { IRecordId } from "@21n/types/data.type";
 
 export enum CombinationNavItemType {
   SECTION = "section",
@@ -51,7 +51,9 @@ export interface ISideNavCombination extends ICombinationBase {
 
 export type ICombination = ISideNavCombination;
 
-export interface IActiveCombination extends IActiveResource, ISideNavCombination {
+export interface IActiveCombination
+  extends IActiveResource,
+    ISideNavCombination {
   isPageLoading?: boolean;
 }
 

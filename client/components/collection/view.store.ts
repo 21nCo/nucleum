@@ -1,12 +1,12 @@
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
 import {
   CollectionLayout,
   type ICollectionView,
   type ICollectionViewCapture
-} from "$lib/client/components/collection/collection.type";
-import { flux } from "$lib/client/components/flux/flux";
-import { StoreDataType, type IRecordId } from "$lib/client/types/data.type";
+} from "@21n/components/collection/collection.type";
+import { flux } from "@21n/components/flux/flux";
+import { StoreDataType, type IRecordId } from "@21n/types/data.type";
 
 const defaults = {
   layout: CollectionLayout.BOARD,
@@ -81,4 +81,4 @@ class CollectionViewStore extends ResourceStore<
   }
 }
 
-export const viewStore = new CollectionViewStore();
+export const viewStore = CollectionViewStore.resolve(Resource.view);

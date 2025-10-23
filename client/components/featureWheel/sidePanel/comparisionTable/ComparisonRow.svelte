@@ -1,14 +1,14 @@
 <script lang="ts">
-  import RatingCell from "./RatingCell.svelte";
-  import NotesCell from "./NotesCell.svelte";
-  import ExternalLogo from "$lib/client/branding/external/ExternalLogo.svelte";
-  import { properCase } from "$lib/shared/utils/text.utils";
+  import RatingCell from "@21n/components/featureWheel/sidePanel/comparisionTable/RatingCell.svelte";
+  import NotesCell from "@21n/components/featureWheel/sidePanel/comparisionTable/NotesCell.svelte";
+  import ExternalLogo from "@21n/branding/external/ExternalLogo.svelte";
+  import { properCase } from "@21n/shared-utils/text.utils";
   import {
     type IContemporary,
     type IFeatureWheelContemporary,
     type IFwFeature
-  } from "$lib/client/types/featureWheel.type";
-  import { mapValue } from "./table.utils";
+  } from "@21n/types/featureWheel.type";
+  import { mapValue } from "@21n/components/featureWheel/sidePanel/comparisionTable/table.utils";
   export let contemporary: IFeatureWheelContemporary;
   export let feature: IFwFeature;
   export let contemporaryDetail: IContemporary;

@@ -1,4 +1,4 @@
-import { pointronDboDefinitions } from "./pointron.dbo";
+import { pointronDboDefinitions } from "@21n/shared-dbo/pointron.dbo";
 
 runTest();
 

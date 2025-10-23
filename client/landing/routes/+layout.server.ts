@@ -3,8 +3,8 @@ import type {
   IFooter,
   ILandingProductUrls,
   ITopNavBar
-} from "../shared/landing.type";
-import { org } from "../shared/store/shared.store";
+} from "@21n/landing/shared/landing.type";
+import { org } from "@21n/landing/shared/store/shared.store";
 
 const nUrls: ILandingProductUrls = {
   socials: {
@@ -71,7 +71,7 @@ const memotronTopNavBarValues: ITopNavBar = {
   cta: [
     {
       label: "",
-      href: "https://github.com/21nOrg/nucleus",
+      href: "https://github.com/21nOrg/tidigit",
       icon: "ph:github-logo",
       type: "secondary"
     },
@@ -122,7 +122,7 @@ let pointronTopNavBarValues: ITopNavBar = {
   cta: [
     {
       label: "",
-      href: "https://github.com/21nOrg/nucleus",
+      href: "https://github.com/21nOrg/tidigit",
       icon: "ph:github-logo",
       type: "secondary"
     },

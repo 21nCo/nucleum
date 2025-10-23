@@ -1,26 +1,24 @@
-import { persistenceInstance } from "$lib/client/persistence/persistence";
-import context from "$lib/client/stores/context.store";
-import { toasts } from "$lib/client/stores/notification.store";
-import type { IRecordId } from "$lib/client/types/data.type";
+import { persistenceInstance } from "@21n/persistence/persistence";
+import context from "@21n/stores/context.store";
+import { toasts } from "@21n/stores/notification.store";
+import type { IRecordId } from "@21n/types/data.type";
 import {
   getBucketNameandKey,
   isUrlExpired
-} from "$lib/client/utils/account.utils";
+} from "@21n/utils/account.utils";
 import { get } from "svelte/store";
-import { logger } from "../debug/logger.client";
-import { Resource } from "../flux/resourceStores/resource.enum";
-import { ResourceStore } from "../flux/resourceStores/resource.store";
-import { isRecordId } from "../flux/resourceStores/resource.utils";
-import type { IFile, IFileCapture } from "./file.type";
-import { fileEmbedChannel } from "./fileEmbedChannel.store";
-import { OperatingSystem } from "$lib/client/types/context.type";
-import account from "$lib/client/stores/account.store";
+import { logger } from "@21n/components/debug/logger.client";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
+import type { IFile, IFileCapture } from "@21n/components/files/file.type";
+import { fileEmbedChannel } from "@21n/components/files/fileEmbedChannel.store";
+import { OperatingSystem } from "@21n/types/context.type";
+import account from "@21n/stores/account.store";
 
 class FileStore extends ResourceStore<IFile, IFileCapture> {
   constructor() {
     super(Resource.file, {
-      indices: ["type"],
-      searchIndices: ["label"],
       defaultProps: {
         type: ""
       }
@@ -198,4 +196,4 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
   }
 }
 
-export const fileStore = new FileStore();
+export const fileStore = FileStore.resolve(Resource.file);

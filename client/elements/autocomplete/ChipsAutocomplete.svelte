@@ -1,16 +1,16 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy, onMount } from "svelte";
-  import AutocompleteResultItem from "./AutocompleteResultItem.svelte";
-  import type { AutocompleteListItemType } from "$lib/client/types/autocompleteListItem.type";
-  import { generateUID } from "$lib/client/utils/utils";
-  import { TextInputStyle } from "$lib/client/types/textinput.enum";
-  import Chip from "./Chip.svelte";
-  import { ChipVariant } from "$lib/client/types/chipVariant.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import FormControlLabel from "../text/formLabel/FormControlLabel.svelte";
-  import Button from "../button/Button.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
+  import AutocompleteResultItem from "@21n/elements/autocomplete/AutocompleteResultItem.svelte";
+  import type { AutocompleteListItemType } from "@21n/types/autocompleteListItem.type";
+  import { generateUID } from "@21n/utils/utils";
+  import { TextInputStyle } from "@21n/types/textinput.enum";
+  import Chip from "@21n/elements/autocomplete/Chip.svelte";
+  import { ChipVariant } from "@21n/types/chipVariant.enum";
+  import { Size } from "@21n/types/size.enum";
+  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   export let listContainerStyle: string = "";
   export let listItemStyle: string = "";
   export let size: Size = Size.md;

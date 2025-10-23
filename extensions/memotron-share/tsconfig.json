@@ -1,0 +1,528 @@
+{
+  "extends": "./.svelte-kit/tsconfig.json",
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "target": "ES2022",
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "module": "ESNext",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "allowSyntheticDefaultImports": true,
+    "types": [
+      "svelte",
+      "vite/client"
+    ],
+    "paths": {
+      "@21n/actions": [
+        "../../client/actions/index.ts",
+        "../../client/actions/index.tsx",
+        "../../client/actions/index.js",
+        "../../client/actions/index.mjs",
+        "../../client/actions/index.cjs",
+        "../../client/actions/index.svelte",
+        "../../client/actions/index.d.ts",
+        "../../client/actions/src/index.ts",
+        "../../client/actions/src/index.tsx",
+        "../../client/actions/src/index.js",
+        "../../client/actions/src/index.mjs",
+        "../../client/actions/src/index.cjs",
+        "../../client/actions/src/index.svelte",
+        "../../client/actions/src/index.d.ts",
+        "../../client/actions"
+      ],
+      "@21n/actions/*": [
+        "../../client/actions/*"
+      ],
+      "@21n/components": [
+        "../../client/components/index.ts",
+        "../../client/components/index.tsx",
+        "../../client/components/index.js",
+        "../../client/components/index.mjs",
+        "../../client/components/index.cjs",
+        "../../client/components/index.svelte",
+        "../../client/components/index.d.ts",
+        "../../client/components/src/index.ts",
+        "../../client/components/src/index.tsx",
+        "../../client/components/src/index.js",
+        "../../client/components/src/index.mjs",
+        "../../client/components/src/index.cjs",
+        "../../client/components/src/index.svelte",
+        "../../client/components/src/index.d.ts",
+        "../../client/components"
+      ],
+      "@21n/components/*": [
+        "../../client/components/*"
+      ],
+      "@21n/elements": [
+        "../../client/elements/index.ts",
+        "../../client/elements/index.tsx",
+        "../../client/elements/index.js",
+        "../../client/elements/index.mjs",
+        "../../client/elements/index.cjs",
+        "../../client/elements/index.svelte",
+        "../../client/elements/index.d.ts",
+        "../../client/elements/src/index.ts",
+        "../../client/elements/src/index.tsx",
+        "../../client/elements/src/index.js",
+        "../../client/elements/src/index.mjs",
+        "../../client/elements/src/index.cjs",
+        "../../client/elements/src/index.svelte",
+        "../../client/elements/src/index.d.ts",
+        "../../client/elements"
+      ],
+      "@21n/elements/*": [
+        "../../client/elements/*"
+      ],
+      "@21n/stores": [
+        "../../client/stores/index.ts",
+        "../../client/stores/index.tsx",
+        "../../client/stores/index.js",
+        "../../client/stores/index.mjs",
+        "../../client/stores/index.cjs",
+        "../../client/stores/index.svelte",
+        "../../client/stores/index.d.ts",
+        "../../client/stores/src/index.ts",
+        "../../client/stores/src/index.tsx",
+        "../../client/stores/src/index.js",
+        "../../client/stores/src/index.mjs",
+        "../../client/stores/src/index.cjs",
+        "../../client/stores/src/index.svelte",
+        "../../client/stores/src/index.d.ts",
+        "../../client/stores"
+      ],
+      "@21n/stores/*": [
+        "../../client/stores/*"
+      ],
+      "@21n/utils": [
+        "../../client/utils/index.ts",
+        "../../client/utils/index.tsx",
+        "../../client/utils/index.js",
+        "../../client/utils/index.mjs",
+        "../../client/utils/index.cjs",
+        "../../client/utils/index.svelte",
+        "../../client/utils/index.d.ts",
+        "../../client/utils/src/index.ts",
+        "../../client/utils/src/index.tsx",
+        "../../client/utils/src/index.js",
+        "../../client/utils/src/index.mjs",
+        "../../client/utils/src/index.cjs",
+        "../../client/utils/src/index.svelte",
+        "../../client/utils/src/index.d.ts",
+        "../../client/utils"
+      ],
+      "@21n/utils/*": [
+        "../../client/utils/*"
+      ],
+      "@21n/types": [
+        "../../client/types/index.ts",
+        "../../client/types/index.tsx",
+        "../../client/types/index.js",
+        "../../client/types/index.mjs",
+        "../../client/types/index.cjs",
+        "../../client/types/index.svelte",
+        "../../client/types/index.d.ts",
+        "../../client/types/src/index.ts",
+        "../../client/types/src/index.tsx",
+        "../../client/types/src/index.js",
+        "../../client/types/src/index.mjs",
+        "../../client/types/src/index.cjs",
+        "../../client/types/src/index.svelte",
+        "../../client/types/src/index.d.ts",
+        "../../client/types"
+      ],
+      "@21n/types/*": [
+        "../../client/types/*"
+      ],
+      "@21n/products": [
+        "../../client/products/index.ts",
+        "../../client/products/index.tsx",
+        "../../client/products/index.js",
+        "../../client/products/index.mjs",
+        "../../client/products/index.cjs",
+        "../../client/products/index.svelte",
+        "../../client/products/index.d.ts",
+        "../../client/products/src/index.ts",
+        "../../client/products/src/index.tsx",
+        "../../client/products/src/index.js",
+        "../../client/products/src/index.mjs",
+        "../../client/products/src/index.cjs",
+        "../../client/products/src/index.svelte",
+        "../../client/products/src/index.d.ts",
+        "../../client/products"
+      ],
+      "@21n/products/*": [
+        "../../client/products/*"
+      ],
+      "@21n/static": [
+        "../../client/static/index.ts",
+        "../../client/static/index.tsx",
+        "../../client/static/index.js",
+        "../../client/static/index.mjs",
+        "../../client/static/index.cjs",
+        "../../client/static/index.svelte",
+        "../../client/static/index.d.ts",
+        "../../client/static/src/index.ts",
+        "../../client/static/src/index.tsx",
+        "../../client/static/src/index.js",
+        "../../client/static/src/index.mjs",
+        "../../client/static/src/index.cjs",
+        "../../client/static/src/index.svelte",
+        "../../client/static/src/index.d.ts",
+        "../../client/static"
+      ],
+      "@21n/static/*": [
+        "../../client/static/*"
+      ],
+      "@21n/layout": [
+        "../../client/layout/index.ts",
+        "../../client/layout/index.tsx",
+        "../../client/layout/index.js",
+        "../../client/layout/index.mjs",
+        "../../client/layout/index.cjs",
+        "../../client/layout/index.svelte",
+        "../../client/layout/index.d.ts",
+        "../../client/layout/src/index.ts",
+        "../../client/layout/src/index.tsx",
+        "../../client/layout/src/index.js",
+        "../../client/layout/src/index.mjs",
+        "../../client/layout/src/index.cjs",
+        "../../client/layout/src/index.svelte",
+        "../../client/layout/src/index.d.ts",
+        "../../client/layout"
+      ],
+      "@21n/layout/*": [
+        "../../client/layout/*"
+      ],
+      "@21n/persistence": [
+        "../../client/persistence/index.ts",
+        "../../client/persistence/index.tsx",
+        "../../client/persistence/index.js",
+        "../../client/persistence/index.mjs",
+        "../../client/persistence/index.cjs",
+        "../../client/persistence/index.svelte",
+        "../../client/persistence/index.d.ts",
+        "../../client/persistence/src/index.ts",
+        "../../client/persistence/src/index.tsx",
+        "../../client/persistence/src/index.js",
+        "../../client/persistence/src/index.mjs",
+        "../../client/persistence/src/index.cjs",
+        "../../client/persistence/src/index.svelte",
+        "../../client/persistence/src/index.d.ts",
+        "../../client/persistence"
+      ],
+      "@21n/persistence/*": [
+        "../../client/persistence/*"
+      ],
+      "@21n/landing": [
+        "../../client/landing/index.ts",
+        "../../client/landing/index.tsx",
+        "../../client/landing/index.js",
+        "../../client/landing/index.mjs",
+        "../../client/landing/index.cjs",
+        "../../client/landing/index.svelte",
+        "../../client/landing/index.d.ts",
+        "../../client/landing/src/index.ts",
+        "../../client/landing/src/index.tsx",
+        "../../client/landing/src/index.js",
+        "../../client/landing/src/index.mjs",
+        "../../client/landing/src/index.cjs",
+        "../../client/landing/src/index.svelte",
+        "../../client/landing/src/index.d.ts",
+        "../../client/landing"
+      ],
+      "@21n/landing/*": [
+        "../../client/landing/*"
+      ],
+      "@21n/extensions": [
+        "../../client/extensions/index.ts",
+        "../../client/extensions/index.tsx",
+        "../../client/extensions/index.js",
+        "../../client/extensions/index.mjs",
+        "../../client/extensions/index.cjs",
+        "../../client/extensions/index.svelte",
+        "../../client/extensions/index.d.ts",
+        "../../client/extensions/src/index.ts",
+        "../../client/extensions/src/index.tsx",
+        "../../client/extensions/src/index.js",
+        "../../client/extensions/src/index.mjs",
+        "../../client/extensions/src/index.cjs",
+        "../../client/extensions/src/index.svelte",
+        "../../client/extensions/src/index.d.ts",
+        "../../client/extensions"
+      ],
+      "@21n/extensions/*": [
+        "../../client/extensions/*"
+      ],
+      "@21n/branding": [
+        "../../client/branding/index.ts",
+        "../../client/branding/index.tsx",
+        "../../client/branding/index.js",
+        "../../client/branding/index.mjs",
+        "../../client/branding/index.cjs",
+        "../../client/branding/index.svelte",
+        "../../client/branding/index.d.ts",
+        "../../client/branding/src/index.ts",
+        "../../client/branding/src/index.tsx",
+        "../../client/branding/src/index.js",
+        "../../client/branding/src/index.mjs",
+        "../../client/branding/src/index.cjs",
+        "../../client/branding/src/index.svelte",
+        "../../client/branding/src/index.d.ts",
+        "../../client/branding"
+      ],
+      "@21n/branding/*": [
+        "../../client/branding/*"
+      ],
+      "@21n/icons": [
+        "../../client/icons/index.ts",
+        "../../client/icons/index.tsx",
+        "../../client/icons/index.js",
+        "../../client/icons/index.mjs",
+        "../../client/icons/index.cjs",
+        "../../client/icons/index.svelte",
+        "../../client/icons/index.d.ts",
+        "../../client/icons/src/index.ts",
+        "../../client/icons/src/index.tsx",
+        "../../client/icons/src/index.js",
+        "../../client/icons/src/index.mjs",
+        "../../client/icons/src/index.cjs",
+        "../../client/icons/src/index.svelte",
+        "../../client/icons/src/index.d.ts",
+        "../../client/icons"
+      ],
+      "@21n/icons/*": [
+        "../../client/icons/*"
+      ],
+      "@21n/theme": [
+        "../../client/theme/index.ts",
+        "../../client/theme/index.tsx",
+        "../../client/theme/index.js",
+        "../../client/theme/index.mjs",
+        "../../client/theme/index.cjs",
+        "../../client/theme/index.svelte",
+        "../../client/theme/index.d.ts",
+        "../../client/theme/src/index.ts",
+        "../../client/theme/src/index.tsx",
+        "../../client/theme/src/index.js",
+        "../../client/theme/src/index.mjs",
+        "../../client/theme/src/index.cjs",
+        "../../client/theme/src/index.svelte",
+        "../../client/theme/src/index.d.ts",
+        "../../client/theme"
+      ],
+      "@21n/theme/*": [
+        "../../client/theme/*"
+      ],
+      "@21n/legacy": [
+        "../../client/legacy/index.ts",
+        "../../client/legacy/index.tsx",
+        "../../client/legacy/index.js",
+        "../../client/legacy/index.mjs",
+        "../../client/legacy/index.cjs",
+        "../../client/legacy/index.svelte",
+        "../../client/legacy/index.d.ts",
+        "../../client/legacy/src/index.ts",
+        "../../client/legacy/src/index.tsx",
+        "../../client/legacy/src/index.js",
+        "../../client/legacy/src/index.mjs",
+        "../../client/legacy/src/index.cjs",
+        "../../client/legacy/src/index.svelte",
+        "../../client/legacy/src/index.d.ts",
+        "../../client/legacy"
+      ],
+      "@21n/legacy/*": [
+        "../../client/legacy/*"
+      ],
+      "@21n/data": [
+        "../../client/data/index.ts",
+        "../../client/data/index.tsx",
+        "../../client/data/index.js",
+        "../../client/data/index.mjs",
+        "../../client/data/index.cjs",
+        "../../client/data/index.svelte",
+        "../../client/data/index.d.ts",
+        "../../client/data/src/index.ts",
+        "../../client/data/src/index.tsx",
+        "../../client/data/src/index.js",
+        "../../client/data/src/index.mjs",
+        "../../client/data/src/index.cjs",
+        "../../client/data/src/index.svelte",
+        "../../client/data/src/index.d.ts",
+        "../../client/data"
+      ],
+      "@21n/data/*": [
+        "../../client/data/*"
+      ],
+      "@21n/illustrations": [
+        "../../client/illustrations/index.ts",
+        "../../client/illustrations/index.tsx",
+        "../../client/illustrations/index.js",
+        "../../client/illustrations/index.mjs",
+        "../../client/illustrations/index.cjs",
+        "../../client/illustrations/index.svelte",
+        "../../client/illustrations/index.d.ts",
+        "../../client/illustrations/src/index.ts",
+        "../../client/illustrations/src/index.tsx",
+        "../../client/illustrations/src/index.js",
+        "../../client/illustrations/src/index.mjs",
+        "../../client/illustrations/src/index.cjs",
+        "../../client/illustrations/src/index.svelte",
+        "../../client/illustrations/src/index.d.ts",
+        "../../client/illustrations"
+      ],
+      "@21n/illustrations/*": [
+        "../../client/illustrations/*"
+      ],
+      "@21n/icons-v2": [
+        "../../client/iconsV2/index.ts",
+        "../../client/iconsV2/index.tsx",
+        "../../client/iconsV2/index.js",
+        "../../client/iconsV2/index.mjs",
+        "../../client/iconsV2/index.cjs",
+        "../../client/iconsV2/index.svelte",
+        "../../client/iconsV2/index.d.ts",
+        "../../client/iconsV2/src/index.ts",
+        "../../client/iconsV2/src/index.tsx",
+        "../../client/iconsV2/src/index.js",
+        "../../client/iconsV2/src/index.mjs",
+        "../../client/iconsV2/src/index.cjs",
+        "../../client/iconsV2/src/index.svelte",
+        "../../client/iconsV2/src/index.d.ts",
+        "../../client/iconsV2"
+      ],
+      "@21n/icons-v2/*": [
+        "../../client/iconsV2/*"
+      ],
+      "@21n/cx": [
+        "../../client/cx/index.ts",
+        "../../client/cx/index.tsx",
+        "../../client/cx/index.js",
+        "../../client/cx/index.mjs",
+        "../../client/cx/index.cjs",
+        "../../client/cx/index.svelte",
+        "../../client/cx/index.d.ts",
+        "../../client/cx/src/index.ts",
+        "../../client/cx/src/index.tsx",
+        "../../client/cx/src/index.js",
+        "../../client/cx/src/index.mjs",
+        "../../client/cx/src/index.cjs",
+        "../../client/cx/src/index.svelte",
+        "../../client/cx/src/index.d.ts",
+        "../../client/cx"
+      ],
+      "@21n/cx/*": [
+        "../../client/cx/*"
+      ],
+      "@21n/client": [
+        "../../client/index.ts",
+        "../../client/index.tsx",
+        "../../client/index.js",
+        "../../client/index.mjs",
+        "../../client/index.cjs",
+        "../../client/index.svelte",
+        "../../client/index.d.ts",
+        "../../client/src/index.ts",
+        "../../client/src/index.tsx",
+        "../../client/src/index.js",
+        "../../client/src/index.mjs",
+        "../../client/src/index.cjs",
+        "../../client/src/index.svelte",
+        "../../client/src/index.d.ts",
+        "../../client"
+      ],
+      "@21n/client/*": [
+        "../../client/*"
+      ],
+      "@21n/shared-types": [
+        "../../shared/types/index.ts",
+        "../../shared/types/index.tsx",
+        "../../shared/types/index.js",
+        "../../shared/types/index.mjs",
+        "../../shared/types/index.cjs",
+        "../../shared/types/index.svelte",
+        "../../shared/types/index.d.ts",
+        "../../shared/types/src/index.ts",
+        "../../shared/types/src/index.tsx",
+        "../../shared/types/src/index.js",
+        "../../shared/types/src/index.mjs",
+        "../../shared/types/src/index.cjs",
+        "../../shared/types/src/index.svelte",
+        "../../shared/types/src/index.d.ts",
+        "../../shared/types"
+      ],
+      "@21n/shared-types/*": [
+        "../../shared/types/*"
+      ],
+      "@21n/shared-utils": [
+        "../../shared/utils/index.ts",
+        "../../shared/utils/index.tsx",
+        "../../shared/utils/index.js",
+        "../../shared/utils/index.mjs",
+        "../../shared/utils/index.cjs",
+        "../../shared/utils/index.svelte",
+        "../../shared/utils/index.d.ts",
+        "../../shared/utils/src/index.ts",
+        "../../shared/utils/src/index.tsx",
+        "../../shared/utils/src/index.js",
+        "../../shared/utils/src/index.mjs",
+        "../../shared/utils/src/index.cjs",
+        "../../shared/utils/src/index.svelte",
+        "../../shared/utils/src/index.d.ts",
+        "../../shared/utils"
+      ],
+      "@21n/shared-utils/*": [
+        "../../shared/utils/*"
+      ],
+      "@21n/shared-dbo": [
+        "../../shared/dbo/index.ts",
+        "../../shared/dbo/index.tsx",
+        "../../shared/dbo/index.js",
+        "../../shared/dbo/index.mjs",
+        "../../shared/dbo/index.cjs",
+        "../../shared/dbo/index.svelte",
+        "../../shared/dbo/index.d.ts",
+        "../../shared/dbo/src/index.ts",
+        "../../shared/dbo/src/index.tsx",
+        "../../shared/dbo/src/index.js",
+        "../../shared/dbo/src/index.mjs",
+        "../../shared/dbo/src/index.cjs",
+        "../../shared/dbo/src/index.svelte",
+        "../../shared/dbo/src/index.d.ts",
+        "../../shared/dbo"
+      ],
+      "@21n/shared-dbo/*": [
+        "../../shared/dbo/*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*.d.ts",
+    "src/**/*.js",
+    "src/**/*.ts",
+    "src/**/*.svelte",
+    "vite.config.ts"
+  ],
+  "exclude": [
+    "../../node_modules",
+    "../../deployment/**/*",
+    "../../server/**/*",
+    "../../tests/**/*",
+    "../*/build/**/*",
+    "../*/dist/**/*",
+    "../*/.svelte-kit/**/*",
+    "build/**/*",
+    "dist/**/*",
+    ".svelte-kit/**/*"
+  ]
+}

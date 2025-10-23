@@ -1,9 +1,9 @@
-import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-import { appStore } from "$lib/client/stores/app.store";
-import { uiState } from "$lib/client/stores/uiState/uiState.store";
-import { UIStateScope } from "$lib/client/stores/uiState/uiState.type";
-import type { IRecordId } from "$lib/client/types/data.type";
+import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+import { appStore } from "@21n/stores/app.store";
+import { uiState } from "@21n/stores/uiState/uiState.store";
+import { UIStateScope } from "@21n/stores/uiState/uiState.type";
+import type { IRecordId } from "@21n/types/data.type";
 
 class TabStore {
   open(id: IRecordId, backParam?: string) {
@@ -28,6 +28,16 @@ class TabStore {
   }
 
   activate(id: IRecordId, backParam?: string) {
+    if (!id) return;
+    const currentParams = new URLSearchParams(window.location.search);
+    const tabParam = currentParams.get("tab");
+    if (tabParam === id) return;
+
+    const existingBack = currentParams.get("back");
+    const resolvedBack = tabParam
+      ? (existingBack ?? undefined)
+      : (backParam ?? window.location.pathname);
+
     appStore.closeResource({ isRestrictToModals: true });
     const resource =
       typeof id === "string"
@@ -35,11 +45,14 @@ class TabStore {
         : typeof id === "object" && "tb" in id
           ? id.tb
           : undefined;
+    const queryParams: Record<string, IRecordId | string> = {
+      tab: id
+    };
+    if (resolvedBack !== undefined && resolvedBack !== null) {
+      queryParams.back = resolvedBack;
+    }
     appStore.gotoPath(`/${resource}/tab`, {
-      queryParams: {
-        tab: id,
-        back: backParam ?? window.location.pathname
-      }
+      queryParams
     });
   }
 

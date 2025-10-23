@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import type { IHighlighter } from "$lib/client/products/memotron/common/highlighters/highlight.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import type { IHighlighter } from "@21n/products/memotron/common/highlighters/highlight.type";
   export let highlighter: IHighlighter;
   export let isActive: boolean;
 </script>

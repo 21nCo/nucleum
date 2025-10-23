@@ -1,9 +1,9 @@
-import { logger } from "$lib/client/components/debug/logger.client";
-import { parse } from "$lib/shared/utils/json.utils";
-import { textIsCode } from "$lib/shared/utils/text.utils";
-import { NodeType } from "../node/node.type";
-import { sanitizeAndResolve } from "../node/url.utils";
-import type { IMultiFileCaptureData, IPasteCaptureData } from "./capture.type";
+import { logger } from "@21n/components/debug/logger.client";
+import { parse } from "@21n/shared-utils/json.utils";
+import { textIsCode } from "@21n/shared-utils/text.utils";
+import { NodeType } from "@21n/products/memotron/node/node.type";
+import { sanitizeAndResolve } from "@21n/products/memotron/node/url.utils";
+import type { IMultiFileCaptureData, IPasteCaptureData } from "@21n/products/memotron/capture/capture.type";
 
 export function resolveContentTypeForFile(file: File) {
   let nodeType: NodeType | undefined = undefined;

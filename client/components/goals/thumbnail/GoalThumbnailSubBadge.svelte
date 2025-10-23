@@ -1,7 +1,7 @@
 <script lang="ts">
-  import Badge from "$lib/client/elements/text/Badge.svelte";
-  import { enumToString } from "$lib/shared/utils/text.utils";
-  import type { IGoalThumb } from "../goal.type";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import { enumToString } from "@21n/shared-utils/text.utils";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
   export let item: IGoalThumb;
 </script>
 

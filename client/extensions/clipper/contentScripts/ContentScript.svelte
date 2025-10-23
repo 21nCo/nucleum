@@ -1,35 +1,35 @@
 <script lang="ts">
-  import ToolbarOpener from "$lib/client/extensions/clipper/toolbar/ToolbarOpener.svelte";
+  import ToolbarOpener from "@21n/extensions/clipper/toolbar/ToolbarOpener.svelte";
   import {
     resolveContentTypeForUrl,
     resolveContentTypeString
-  } from "$lib/client/extensions/clipper/clipper.utils";
-  import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import FeedbackPane from "$lib/client/extensions/clipper/feedbackPane/FeedbackPane.svelte";
-  import Toolbar from "$lib/client/extensions/clipper/toolbar/Toolbar.svelte";
-  import TextClipper from "$lib/client/extensions/clipper/contentScripts/TextClipper.svelte";
-  import { webpage, toolbarState, feedbackPane, syncStore } from "./store";
-  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
-  import ExtensionBaseLayer from "$lib/client/extensions/ExtensionBaseLayer.svelte";
-  import ScreenShot from "./ScreenShot.svelte";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import SyncPane from "../syncPane/SyncPane.svelte";
-  import LoginNotification from "../feedbackPane/LoginNotification.svelte";
-  import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
-  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { ResourceError } from "$lib/client/components/error/errors";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import ToolbarPlacementHintBlock from "../toolbar/ToolbarPlacementHintBlock.svelte";
-  import { clientStorage } from "$lib/client/persistence/persistence.utils";
-  import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
+  } from "@21n/extensions/clipper/clipper.utils";
+  import { ExtensionEvent } from "@21n/types/extension.type";
+  import FeedbackPane from "@21n/extensions/clipper/feedbackPane/FeedbackPane.svelte";
+  import Toolbar from "@21n/extensions/clipper/toolbar/Toolbar.svelte";
+  import TextClipper from "@21n/extensions/clipper/contentScripts/TextClipper.svelte";
+  import { webpage, toolbarState, feedbackPane, syncStore } from "@21n/extensions/clipper/contentScripts/store";
+  import { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
+  import ExtensionBaseLayer from "@21n/extensions/ExtensionBaseLayer.svelte";
+  import ScreenShot from "@21n/extensions/clipper/contentScripts/ScreenShot.svelte";
+  import { logger } from "@21n/components/debug/logger.client";
+  import SyncPane from "@21n/extensions/clipper/syncPane/SyncPane.svelte";
+  import LoginNotification from "@21n/extensions/clipper/feedbackPane/LoginNotification.svelte";
+  import { relayToBackgroundScript } from "@21n/utils/extension.utils";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+  import { ResourceError } from "@21n/components/error/errors";
+  import { Placement } from "@21n/types/direction.enum";
+  import ToolbarPlacementHintBlock from "@21n/extensions/clipper/toolbar/ToolbarPlacementHintBlock.svelte";
+  import { clientStorage } from "@21n/persistence/persistence.utils";
+  import { ClientStorageKey } from "@21n/persistence/persistence.type";
   import { onDestroy, onMount } from "svelte";
-  import { toolbarUnavailableUrlsList } from "$lib/client/products/memotron/common/urlMap";
-  import type { IHighlighter } from "$lib/client/products/memotron/common/highlighters/highlight.type";
-  import { Product } from "$lib/client/products/product.type";
-  import { clipperCacheableStores } from "../clipper.config";
-  import ClipperInMemoryCache from "../ClipperInMemoryCache.svelte";
-  import { parse } from "$lib/shared/utils/json.utils";
-  import ClipModal from "../ClipModal.svelte";
+  import { toolbarUnavailableUrlsList } from "@21n/products/memotron/common/urlMap";
+  import type { IHighlighter } from "@21n/products/memotron/common/highlighters/highlight.type";
+  import { Product } from "@21n/products/product.type";
+  import { clipperCacheableStores } from "@21n/extensions/clipper/clipper.config";
+  import ClipperInMemoryCache from "@21n/extensions/clipper/ClipperInMemoryCache.svelte";
+  import { parse } from "@21n/shared-utils/json.utils";
+  import ClipModal from "@21n/extensions/clipper/ClipModal.svelte";
 
   export let id: string;
   let textClipperRef: TextClipper;
@@ -91,6 +91,24 @@
       feedbackPane.setErrorFeedback({
         isPreventAutoClose: false
       });
+    }
+  }
+
+  async function savePageFromSidePanel() {
+    try {
+      if (isDisableClipper || !isLoggedIn || !isBaseMounted) {
+        return { error: "Cannot save page at this time" };
+      }
+      if ($webpage.id) {
+        return { error: "Page already saved", pageId: $webpage.id };
+      }
+      let result = await webpage.savePage({ contentType });
+      if (!result || result.error) {
+        return { error: result?.error ?? "Failed to save page" };
+      }
+      return { status: "success", pageId: $webpage.id };
+    } catch (error) {
+      return { error: "Failed to save page" };
     }
   }
 
@@ -207,13 +225,25 @@
                 message: "You are not logged in"
               };
             }
-            if ($webpage.id) {
-              feedbackPane.onPageSaved("Page already saved!");
-              feedbackPane.toggle({ isUserInitiated: true });
+            const saveResult = await savePageFromSidePanel();
+            if (saveResult.error) {
+              return {
+                status: "error",
+                message: saveResult.error,
+                pageId: saveResult.pageId
+              };
+            } else if (saveResult.status === "success") {
+              return {
+                status: "success",
+                message: "Page saved",
+                pageId: saveResult.pageId
+              };
             } else {
-              await onSaveClick();
+              return {
+                status: "error",
+                message: "Unexpected response"
+              };
             }
-            return { status: "success", message: "Page saved" };
 
           case ClipperExtensionEvent.TAKE_SCREENSHOT_SHORTCUT:
             isSnipActive = true;

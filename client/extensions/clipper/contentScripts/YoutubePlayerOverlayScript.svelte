@@ -1,16 +1,16 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import { createClipPointer } from "$lib/client/extensions/clipper/clipper.utils";
-  import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
-  import { webpage } from "./store";
-  import { appEvents } from "$lib/client/stores/notification.store";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { checkIfAdPlaying } from "../parsers/shared/video.utils";
+  import { createClipPointer } from "@21n/extensions/clipper/clipper.utils";
+  import { ExtensionEvent } from "@21n/types/extension.type";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
+  import { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
+  import { webpage } from "@21n/extensions/clipper/contentScripts/store";
+  import { appEvents } from "@21n/stores/notification.store";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { relayToBackgroundScript } from "@21n/utils/extension.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { checkIfAdPlaying } from "@21n/extensions/clipper/parsers/shared/video.utils";
   export let isRenderedAsOverlay: boolean = false;
   let clipCount = 0;
   let isClipInProgress = false;

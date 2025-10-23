@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { TextStyle } from "../types/text.enum";
-  import { haptic } from "$lib/client/utils/embed.utils";
-  import BackButton from "./button/BackButton.svelte";
-  import Text from "./text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { haptic } from "@21n/utils/embed.utils";
+  import BackButton from "@21n/elements/button/BackButton.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
   export let label: string;
   export let textStyle: TextStyle = TextStyle.PANEL_HEADING;
   export let backCallback: () => void;

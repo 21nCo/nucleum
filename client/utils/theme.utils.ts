@@ -2,7 +2,7 @@ import {
   ColorStrength,
   type ColorSchemeSLValues,
   type AppearanceStore
-} from "$lib/client/types/appearance.type";
+} from "@21n/types/appearance.type";
 
 const selectableColorParams: ColorSchemeSLValues[] = [
   {

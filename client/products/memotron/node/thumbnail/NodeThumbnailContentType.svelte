@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { properCase } from "$lib/shared/utils/text.utils";
-  import { NodeType, type INode } from "../node.type";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import { NodeType, type INode } from "@21n/products/memotron/node/node.type";
   export let item: INode;
   function formatContentType(contentType: string) {
     if (

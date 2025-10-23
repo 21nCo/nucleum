@@ -1,15 +1,15 @@
 <script lang="ts">
   import { onMount, afterUpdate, createEventDispatcher } from "svelte";
-  import { roundOffToNdigitsAfterDecimal } from "$lib/client/products/pointron/pointron.utils";
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
-  import type { IActiveSessionStore } from "$lib/client/types/pointron/session.type";
-  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import Popover from "$lib/client/components/modal/Modal.svelte";
-  import { TimeUnit } from "$lib/client/types/time.type";
-  import { AppSkin } from "$lib/client/types/appearance.type";
-  import appearance from "$lib/client/stores/appearance.store";
-  import { SessionType } from "$lib/client/products/pointron/logs/log.type";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import { roundOffToNdigitsAfterDecimal } from "@21n/products/pointron/pointron.utils";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
+  import type { IActiveSessionStore } from "@21n/types/pointron/session.type";
+  import { SessionState } from "@21n/types/pointron/sessionState.enum";
+  import Popover from "@21n/components/modal/Modal.svelte";
+  import { TimeUnit } from "@21n/types/time.type";
+  import { AppSkin } from "@21n/types/appearance.type";
+  import appearance from "@21n/stores/appearance.store";
+  import { SessionType } from "@21n/products/pointron/logs/log.type";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
 
   export let parentBackgroundIndex: number | undefined = 1;
   export let isShowTextBoxByDefault: boolean = false;
@@ -547,7 +547,7 @@
     window.addEventListener("resize", resizeHandler);
     window.addEventListener("mouseup", handleGlobalMouseUp); //to stop dragging if the mouse is released outside the slider, otherwise the slider will keep on moving
 
-    activeSession.subscribe((x: IActiveSessionStore) => {
+    const activeSessionUnsub = activeSession.subscribe((x: IActiveSessionStore) => {
       isSessionRunning =
         x.state !== SessionState.NOT_STARTED &&
         x.state !== SessionState.FINISHED;
@@ -575,6 +575,7 @@
     });
 
     return () => {
+      activeSessionUnsub();
       window.removeEventListener("resize", resizeHandler);
       window.removeEventListener("mouseup", handleGlobalMouseUp);
     };

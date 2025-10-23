@@ -1,15 +1,15 @@
 <script lang="ts">
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import NodeTitleLabelPart from "./NodeTitleLabelPart.svelte";
-  import type { INode } from "../node.type";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import NodeTitleLabelPart from "@21n/products/memotron/node/title/NodeTitleLabelPart.svelte";
+  import type { INode } from "@21n/products/memotron/node/node.type";
   import { createEventDispatcher } from "svelte";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import context from "$lib/client/stores/context.store";
-  import TextInputOnKeyboardToolbar from "$lib/client/elements/input/TextInputOnKeyboardToolbar.svelte";
-  import RecordStarStatusFeedback from "$lib/client/components/record/RecordStarStatusFeedback.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import context from "@21n/stores/context.store";
+  import TextInputOnKeyboardToolbar from "@21n/elements/input/TextInputOnKeyboardToolbar.svelte";
+  import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   let previousLabel = node.label;

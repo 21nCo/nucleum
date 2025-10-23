@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import { Orientation } from "@21n/types/direction.enum";
   import {
     SelectionItemActiveStyle,
     SwitcherStyle
-  } from "$lib/client/types/switcher.enum";
+  } from "@21n/types/switcher.enum";
   export let selectedSound: string = "";
   let sounds: string[] = [
     "None",

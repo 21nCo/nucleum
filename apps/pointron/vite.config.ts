@@ -1,9 +1,18 @@
 import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig } from "vite";
 import fetchJsonPlugin from "../fetch-json-data.js";
-import { staticPlugin } from "../../client/static/vite-plugin.js";
+import { staticPlugin } from "@21n/static/vite-plugin.js";
+import { buildViteAliases, loadAliasMap } from "../../tools/alias-utils.mjs";
+
+const aliasConfig = buildViteAliases(loadAliasMap());
 
 export default defineConfig({
+  resolve: {
+    alias: aliasConfig
+  },
+  worker: {
+    format: "es"
+  },
   build: {
     target: "esnext",
     rollupOptions: {

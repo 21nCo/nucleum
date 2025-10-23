@@ -1,14 +1,14 @@
-import { logger } from "$lib/client/components/debug/logger.client";
-import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
-import { ClipperElementIdentifier } from "$lib/client/products/memotron/common/clip.type";
+import { logger } from "@21n/components/debug/logger.client";
+import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
+import { ClipperElementIdentifier } from "@21n/products/memotron/common/clip.type";
 import {
   NodeType,
   type ITweet,
   type ITwitterProfile
-} from "$lib/client/products/memotron/node/node.type";
-import { contentTypeMap } from "$lib/client/products/memotron/node/url.utils";
-import type { ISocialPost } from "../clipper.type";
-import { findAncestorOrSelf, resolveOgData } from "./shared/domUtils";
+} from "@21n/products/memotron/node/node.type";
+import { contentTypeMap } from "@21n/products/memotron/node/url.utils";
+import type { ISocialPost } from "@21n/extensions/clipper/clipper.type";
+import { findAncestorOrSelf, resolveOgData } from "@21n/extensions/clipper/parsers/shared/domUtils";
 
 /**
  *

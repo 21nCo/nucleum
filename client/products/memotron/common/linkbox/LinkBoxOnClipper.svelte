@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { toolbarState } from "$lib/client/extensions/clipper/contentScripts/store";
-  import { Placement } from "$lib/client/types/direction.enum";
+  import { toolbarState } from "@21n/extensions/clipper/contentScripts/store";
+  import { Placement } from "@21n/types/direction.enum";
   import { createEventDispatcher } from "svelte";
-  import LinkSearch from "./LinkSearch.svelte";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import LinkSearch from "@21n/products/memotron/common/linkbox/LinkSearch.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
   let searchQuery: string;
   let searchRef: LinkSearch;

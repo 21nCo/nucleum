@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let on = false;

@@ -1,53 +1,53 @@
 <script lang="ts">
-  import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { formatTime } from "$lib/client/utils/time.utils";
+  import { pointronPreferences } from "@21n/products/pointron/pointron.store";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { formatTime } from "@21n/utils/time.utils";
   import { onMount } from "svelte";
-  import DurationSuggestions from "./DurationSuggestions.svelte";
-  import FormControlLabel from "$lib/client/elements/text/formLabel/FormControlLabel.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
-  import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
-  import { manualLogStore } from "../log.store";
-  import TimeInput from "$lib/client/elements/datetime/TimeInput.svelte";
-  import { LastActionPerformed, type IManualSessionLogForm } from "../log.type";
-  import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import FocusNotes from "../../focus/notes/FocusNotes.svelte";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import { isPrimaryActionDisabled } from "$lib/client/components/modal/modal.store";
-  import { SearchStore } from "$lib/client/components/record/record.store";
-  import GoalSearchResultItem from "$lib/client/components/goals/GoalSearchResultItem.svelte";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import DurationSuggestions from "@21n/products/pointron/logs/manualLog/DurationSuggestions.svelte";
+  import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
+  import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
+  import { manualLogStore } from "@21n/products/pointron/logs/log.store";
+  import TimeInput from "@21n/elements/datetime/TimeInput.svelte";
+  import { LastActionPerformed, type IManualSessionLogForm } from "@21n/products/pointron/logs/log.type";
+  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import { Orientation } from "@21n/types/direction.enum";
+  import FocusNotes from "@21n/products/pointron/focus/notes/FocusNotes.svelte";
+  import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
+  import { isPrimaryActionDisabled } from "@21n/components/modal/modal.store";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import GoalSearchResultItem from "@21n/components/goals/GoalSearchResultItem.svelte";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
+  } from "@21n/stores/uiState/uiState.type";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import {
     BarStyle,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
-  import Divider from "$lib/client/elements/Divider.svelte";
+  } from "@21n/types/switcher.enum";
+  import Divider from "@21n/elements/Divider.svelte";
   import {
     GoalStatus,
     type IGoal
-  } from "$lib/client/components/goals/goal.type";
-  import { goalStore } from "$lib/client/components/goals/goal.store";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
+  } from "@21n/components/goals/goal.type";
+  import { goalStore } from "@21n/components/goals/goal.store";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
   import {
     removeDuplicatesFilter,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import view from "$lib/client/stores/view.store";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import view from "@21n/stores/view.store";
+  import { cn } from "@21n/utils/ui.utils";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   export let item: IManualSessionLogForm;
 
   let previousStartDate: Date = item.startDate;
@@ -314,7 +314,7 @@
   {#if $manualLogStore.manualLogs.length > 1}
     <div class="absolute bg-bgs1 right-1 -top-3">
       <Button
-        icon="minus-circled"
+        icon="minus-circle"
         size={Size.xs}
         type={ButtonVariant.DANGER}
         style={ButtonStyle.OUTLINED}

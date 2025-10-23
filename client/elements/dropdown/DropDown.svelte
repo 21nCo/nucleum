@@ -3,20 +3,20 @@
   import type {
     DropdownGroup,
     DropdownItem
-  } from "$lib/client/types/dropdownItem.type";
-  import Icon from "../Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import FormLabelTooltip from "../text/formLabel/FormLabelTooltip.svelte";
-  import TextInput from "../input/TextInput.svelte";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import type { IPopoverOptions } from "$lib/client/types/popover.type";
-  import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
-  import DropDownItemView from "./DropDownItemView.svelte";
-  import InputBaseElement from "../InputBaseElement.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Orientation, Placement } from "$lib/client/types/direction.enum";
-  import { properCase } from "$lib/shared/utils/text.utils";
-  import AvatarRenderer from "../avatarPicker/AvatarRenderer.svelte";
+  } from "@21n/types/dropdownItem.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import type { IPopoverOptions } from "@21n/types/popover.type";
+  import { InputStyle, type InputLabel } from "@21n/types/input.type";
+  import DropDownItemView from "@21n/elements/dropdown/DropDownItemView.svelte";
+  import InputBaseElement from "@21n/elements/InputBaseElement.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Orientation, Placement } from "@21n/types/direction.enum";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
   const dispatch = createEventDispatcher();
   /**
    * items to be displayed in the dropdown
@@ -117,7 +117,7 @@
       {selected?.label ?? properCase(selected?.value.toString())}
     </span>
   </div>
-  <Icon icon={isActive ? "chevup" : "chevdown"} size={Size.sm} />
+  <Icon icon={isActive ? "chevron-up" : "chevron-down"} size={Size.sm} />
   <div class={cn("flex flex-col gap-2", popoverWidth)} slot="popover">
     {#if !isDisableSearch}
       <div class="px-3 w-full">

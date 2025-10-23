@@ -3,19 +3,19 @@
     NodeType,
     webNodeTypeList,
     type INode
-  } from "$lib/client/products/memotron/node/node.type";
-  import WebNodeContent from "./WebNodeContent.svelte";
-  import PdfAnnotator from "$lib/client/products/memotron/pdfAnnotator/PdfAnnotator.svelte";
-  import FileView from "$lib/client/components/files/FileView.svelte";
-  import AudioContent from "../../audio/AudioContent.svelte";
+  } from "@21n/products/memotron/node/node.type";
+  import WebNodeContent from "@21n/products/memotron/node/content/WebNodeContent.svelte";
+  import PdfAnnotator from "@21n/products/memotron/pdfAnnotator/PdfAnnotator.svelte";
+  import FileView from "@21n/components/files/FileView.svelte";
+  import AudioContent from "@21n/products/memotron/audio/AudioContent.svelte";
   import { onMount } from "svelte";
-  import type { IFile } from "$lib/client/components/files/file.type";
-  import { fileStore } from "$lib/client/components/files/file.store";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { formatBytes } from "$lib/shared/utils/text.utils";
-  import { resolveFileIcon } from "../node.utils";
+  import type { IFile } from "@21n/components/files/file.type";
+  import { fileStore } from "@21n/components/files/file.store";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { formatBytes } from "@21n/shared-utils/text.utils";
+  import { resolveFileIcon } from "@21n/products/memotron/node/node.utils";
 
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -32,7 +32,10 @@
   export function onTraceClick(details: any) {
     if (node.contentType === NodeType.PDF) {
       pdfContent.scrollToAnnot(details.id, details.pageNumber);
-    } else if (node.contentType === NodeType.YOUTUBE_VIDEO) {
+    } else if (
+      node.contentType === NodeType.YOUTUBE_VIDEO ||
+      node.contentType === NodeType.YOUTUBE_SHORT
+    ) {
       webContentRef.onTrace(details);
     }
   }
@@ -78,5 +81,6 @@
     {node}
     {accessPoint}
     on:annotation
+    on:configUpdate
   />
 {/if}

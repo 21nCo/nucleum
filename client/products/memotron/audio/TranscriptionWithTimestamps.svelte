@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
 
   export let transcription: string = "";
   export let currentTime: number = 0;

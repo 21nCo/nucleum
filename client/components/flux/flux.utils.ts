@@ -3,10 +3,10 @@ import {
   RemovalProperty,
   type IMutation,
   type IRecordId
-} from "$lib/client/types/data.type";
-import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
-import { Resource } from "./resourceStores/resource.enum";
-import { NodeType } from "$lib/client/products/memotron/node/node.type";
+} from "@21n/types/data.type";
+import { generateRandomIdv2 } from "@21n/shared-utils/crypto.utils";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { NodeType } from "@21n/products/memotron/node/node.type";
 
 export function generateResourceId(
   itemType: Resource,

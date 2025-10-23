@@ -1,9 +1,9 @@
-import { attachTimeToDate, formatTime } from "$lib/client/utils/time.utils";
-import { currentTime } from "$lib/client/stores/app.store";
-import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+import { attachTimeToDate, formatTime } from "@21n/utils/time.utils";
+import { currentTime } from "@21n/stores/app.store";
+import { userPreferences } from "@21n/components/settings/userPreferences.store";
 import { get } from "svelte/store";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { toasts } from "$lib/client/stores/notification.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { toasts } from "@21n/stores/notification.store";
 import {
   SessionType,
   type IManualSessionLogForm,
@@ -11,15 +11,15 @@ import {
   type IManualLogStore,
   type ISessionCapture,
   type ISessionLogCapture
-} from "./log.type";
-import { ObservableStore } from "$lib/client/stores/client.store";
-import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
-import { sessionStore } from "../focus/session.store";
-import { BlockType } from "$lib/client/types/pointron/session.type";
-import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
+} from "@21n/products/pointron/logs/log.type";
+import { ObservableStore } from "@21n/stores/client.store";
+import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import { sessionStore } from "@21n/products/pointron/focus/session.store";
+import { BlockType } from "@21n/types/pointron/session.type";
+import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
+import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
 
 const defaults = {
   goalId: "",
@@ -29,14 +29,13 @@ const defaults = {
 class SessionLogStore extends ResourceStore<ISessionLog, ISessionLogCapture> {
   constructor() {
     super(Resource.sessionLog, {
-      indices: ["startUnix", "goalId", "sessionId", "taskId"],
       defaultProps: defaults,
       expandProps: ["goalId", "sessionId"]
     });
   }
 }
 
-export const sessionLogStore = new SessionLogStore();
+export const sessionLogStore = SessionLogStore.resolve(Resource.sessionLog);
 
 class ManualLogStore extends ObservableStore<IManualLogStore> {
   constructor() {

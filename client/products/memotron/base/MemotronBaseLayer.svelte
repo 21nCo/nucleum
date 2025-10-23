@@ -1,23 +1,23 @@
 <script lang="ts">
-  import { appLoadingState } from "$lib/client/stores/app.store";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import context from "$lib/client/stores/context.store";
-  import MemotronNotifications from "./MemotronNotifications.svelte";
-  import UserBaseLayer from "$lib/client/layout/layers/UserBaseLayer.svelte";
+  import { appLoadingState } from "@21n/stores/app.store";
+  import { toasts } from "@21n/stores/notification.store";
+  import context from "@21n/stores/context.store";
+  import MemotronNotifications from "@21n/products/memotron/base/MemotronNotifications.svelte";
+  import UserBaseLayer from "@21n/layout/layers/UserBaseLayer.svelte";
   import {
     clipTextSearchFallback,
     collectionResourceBackPropagation,
     headingNodeParentBackPropagation,
     collectionsListOnRecords,
     lowResThumbnailsBackPropagation
-  } from "./fallbacks";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { FallbackTracker } from "$lib/client/utils/fallbackTracker.utils";
-  import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
-  import MemoryBase from "./MemoryBase.svelte";
-  import { defaultsMigrationForNodes } from "./migrations";
-  import { defaultsMigrationTidy } from "$lib/client/components/migrations";
+  } from "@21n/products/memotron/base/fallbacks";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { FallbackTracker } from "@21n/utils/fallbackTracker.utils";
+  import { dispatchCustomEvent } from "@21n/utils/browser.utils";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import MemoryBase from "@21n/products/memotron/base/MemoryBase.svelte";
+  import { defaultsMigrationForNodes } from "@21n/products/memotron/base/migrations";
+  import { defaultsMigrationTidy } from "@21n/components/migrations";
 
   let isLiteMode = $context.isEmbed && $context.isSheet;
   const isDebug = import.meta.env?.DEV;

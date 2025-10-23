@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import LogsPulseItem from "./LogsPulseItem.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import LogsPulseItem from "@21n/elements/feedback/animations/LogsPulse/LogsPulseItem.svelte";
   export let count: number = 0;
   if (count < 1) count = 1;
 </script>

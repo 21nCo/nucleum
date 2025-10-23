@@ -1,6 +1,6 @@
-import { NodeType } from "$lib/client/products/memotron/node/node.type";
-import { sanitize } from "$lib/shared/utils/utils";
-import { isValidUrl } from "$lib/shared/utils/utils";
+import { NodeType } from "@21n/products/memotron/node/node.type";
+import { sanitize } from "@21n/shared-utils/utils";
+import { isValidUrl } from "@21n/shared-utils/utils";
 
 export const contentTypeMap: {
   contentType:
@@ -14,6 +14,7 @@ export const contentTypeMap: {
     | NodeType.THREADS_POST
     | NodeType.THREADS_PROFILE
     | NodeType.INSTAGRAM_POST
+    | NodeType.INSTAGRAM_REEL
     | NodeType.INSTAGRAM_PROFILE
     | NodeType.FACEBOOK_POST
     | NodeType.FACEBOOK_PROFILE
@@ -21,6 +22,7 @@ export const contentTypeMap: {
     | NodeType.MASTODON_PROFILE
     | NodeType.TWITTER_PROFILE
     | NodeType.YOUTUBE_VIDEO
+    | NodeType.YOUTUBE_SHORT
     | NodeType.YOUTUBE_CHANNEL
     | NodeType.GIST
     | NodeType.REDDIT_SUB;
@@ -30,7 +32,7 @@ export const contentTypeMap: {
   {
     contentType: NodeType.TWEET,
     regex: [
-      /^https:\/\/(?:www\.)?(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/(\d+)\/?$/
+      /^https:\/\/(?:www\.)?(twitter\.com|x\.com)\/([a-zA-Z0-9_]+)\/status\/(\d+)(?:\/)?(?:\?.*)?$/
     ],
     currentDomain: "x.com"
   },
@@ -44,6 +46,12 @@ export const contentTypeMap: {
       /^https:\/\/(?:www\.)?(youtube\.com)\/watch\?v=([a-zA-Z0-9_-]+)/,
       /^https:\/\/youtu\.be\/([a-zA-Z0-9_-]+)(\?.*)?$/,
       /^https:\/\/(?:www\.)?(youtube\.com)\/embed\/([a-zA-Z0-9_-]+)/
+    ]
+  },
+  {
+    contentType: NodeType.YOUTUBE_SHORT,
+    regex: [
+      /^https:\/\/(?:www\.|m\.)?youtube\.com\/shorts\/([a-zA-Z0-9_-]+)(?:\?.*)?$/
     ]
   },
   {
@@ -93,6 +101,12 @@ export const contentTypeMap: {
     contentType: NodeType.INSTAGRAM_POST,
     regex: [
       /^https:\/\/(?:www\.)?instagram\.com\/p\/[A-Za-z0-9_-]+\/?(?:\?.*)?$/
+    ]
+  },
+  {
+    contentType: NodeType.INSTAGRAM_REEL,
+    regex: [
+      /^https:\/\/(?:www\.)?instagram\.com\/reel\/[A-Za-z0-9_-]+\/?(?:\?.*)?$/
     ]
   },
   {
@@ -160,7 +174,64 @@ const urlMap = [
     isIframeable: false
   },
   {
-    domain: "wikipedia.org",
+    domain: /^https:\/\/(?:www\.)?tldraw\.com\/f\/[a-zA-Z0-9_-]+(?:\?.*)?$/,
+    faviconUrl: "https://www.tldraw.com/favicon.ico",
+    isIframeable: true
+  },
+  {
+    domain:
+      /^https:\/\/(?:www\.)?excalidraw\.com(?:\/(?:[a-zA-Z0-9_-]+)?)?(?:\?.*)?$/,
+    faviconUrl: "https://excalidraw.com/favicon.ico",
+    isIframeable: true
+  },
+  {
+    domain:
+      /^https:\/\/(?:www\.)?miro\.com\/app\/board\/[a-zA-Z0-9_=-]+(?:\/.*)?(?:\?.*)?$/,
+    faviconUrl: "https://miro.com/favicon.ico",
+    isIframeable: true
+  },
+  {
+    domain:
+      /^https:\/\/(?:www\.)?whimsical\.com\/embed\/[a-zA-Z0-9_-]+(?:\?.*)?$/,
+    faviconUrl: "https://whimsical.com/favicon.ico",
+    isIframeable: true
+  },
+  {
+    domain: /^https:\/\/(?:www\.)?draw\.io\/(?:\?.*)?$/,
+    faviconUrl: "https://app.diagrams.net/favicon.ico",
+    isIframeable: true
+  },
+  {
+    domain: /^https:\/\/(?:viewer|embed)\.diagrams\.net\/.*$/,
+    faviconUrl: "https://app.diagrams.net/favicon.ico",
+    isIframeable: true
+  },
+  {
+    domain:
+      /^https:\/\/lucid\.app\/documents\/embedded\/[a-zA-Z0-9_-]+(?:\?.*)?$/,
+    faviconUrl: "https://lucid.app/favicon.ico",
+    isIframeable: true
+  },
+  {
+    domain:
+      /^https?:\/\/(?:www\.)?canva\.com\/design\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/view\?embed(?:=true)?(?:&.*)?$/,
+    isIframeable: true
+  },
+  {
+    domain:
+      /^https?:\/\/(?:www\.)?canva\.com\/design\/[a-zA-Z0-9_-]+\/[a-zA-Z0-9_-]+\/view(?:\?.*)?$/,
+    customMessage:
+      "Preview not available for this Canva URL. Please use the embed URL instead.",
+    convertToEmbedUrl: (url: string) => {
+      const urlObj = new URL(url);
+      if (!urlObj.searchParams.has("embed")) {
+        urlObj.searchParams.set("embed", "true");
+      }
+      return urlObj.toString();
+    }
+  },
+  {
+    domain: /^https:\/\/(?:[\w-]+\.)?wikipedia\.org\/.+$/,
     faviconUrl: "https://en.wikipedia.org/static/apple-touch/wikipedia.png",
     isIframeable: true
   },

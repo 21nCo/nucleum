@@ -1,17 +1,17 @@
 <script lang="ts">
-  import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import { cn } from "@21n/utils/ui.utils";
   import { fly } from "svelte/transition";
-  import { recentsStore } from "$lib/client/components/record/recent.store";
-  import Records from "$lib/client/components/record/Records.svelte";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
+  import { recentsStore } from "@21n/components/record/recent.store";
+  import Records from "@21n/components/record/Records.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { Size } from "@21n/types/size.enum";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { onMount, onDestroy } from "svelte";
-  import { SearchStore } from "$lib/client/components/record/record.store";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import Button from "@21n/elements/button/Button.svelte";
 
   export let isActive: boolean = false;
   export let isSearchFocused: boolean = false;

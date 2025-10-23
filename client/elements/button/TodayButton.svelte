@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { selectedTimePeriod } from "$lib/client/stores/app.store";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { isSameDay } from "$lib/client/utils/time.utils";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { selectedTimePeriod } from "@21n/stores/app.store";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import { isSameDay } from "@21n/utils/time.utils";
   export let parentBackgroundIndex: number = 1;
 </script>
 

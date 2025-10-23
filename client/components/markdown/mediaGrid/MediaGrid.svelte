@@ -6,26 +6,26 @@
     onMount
   } from "svelte";
 
-  import MediaGridOptions from "./MediaGridOptions.svelte";
-  import type { Config } from "./mediaGrid.type";
-  import { dragAndDropStore } from "$lib/client/stores/app.store";
-  import { DragStatus } from "$lib/client/types/dragstatus.enum";
-  import DraggableMediaGridElement from "$lib/client/components/markdown/mediaGrid/DraggableMediaGridElement.svelte";
-  import type { DragAndDrop } from "$lib/client/types/draganddrop.type";
-  import account from "$lib/client/stores/account.store";
-  import { BlockAction } from "../md.type";
-  import { isReplaceableMd, type MdStoreType } from "../markdown.store";
-  import { logger } from "../../debug/logger.client";
+  import MediaGridOptions from "@21n/components/markdown/mediaGrid/MediaGridOptions.svelte";
+  import type { Config } from "@21n/components/markdown/mediaGrid/mediaGrid.type";
+  import { dragAndDropStore } from "@21n/stores/app.store";
+  import { DragStatus } from "@21n/types/dragstatus.enum";
+  import DraggableMediaGridElement from "@21n/components/markdown/mediaGrid/DraggableMediaGridElement.svelte";
+  import type { DragAndDrop } from "@21n/types/draganddrop.type";
+  import account from "@21n/stores/account.store";
+  import { BlockAction } from "@21n/components/markdown/md.type";
+  import { isReplaceableMd, type MdStoreType } from "@21n/components/markdown/markdown.store";
+  import { logger } from "@21n/components/debug/logger.client";
   import {
     MediaGridType,
     type IMediaGridItem,
     type IMediaGridNode
-  } from "$lib/client/products/memotron/node/node.type";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import type { IFile } from "../../files/file.type";
-  import { fileStore } from "../../files/file.store";
-  import { isSameResource } from "../../flux/resourceStores/resource.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/products/memotron/node/node.type";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import type { IFile } from "@21n/components/files/file.type";
+  import { fileStore } from "@21n/components/files/file.store";
+  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { cn } from "@21n/utils/ui.utils";
 
   // export let items: Item[] = $userPreferences.mediaGridTestitems;
   // $: $userPreferences.mediaGridTestitems = items;

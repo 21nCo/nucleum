@@ -2,7 +2,7 @@ import {
   NodeType,
   type StructuralNodeType,
   structuralNodeTypes
-} from "$lib/client/products/memotron/node/node.type";
+} from "@21n/products/memotron/node/node.type";
 import { get, writable } from "svelte/store";
 import { tick } from "svelte";
 import {
@@ -15,16 +15,16 @@ import {
   type IListBlockBody,
   type IListBlock,
   type IBlock
-} from "$lib/client/components/markdown/md.type";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { ObservableStore } from "$lib/client/stores/client.store";
-import type { IRecordId } from "$lib/client/types/data.type";
-import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+} from "@21n/components/markdown/md.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { ObservableStore } from "@21n/stores/client.store";
+import type { IRecordId } from "@21n/types/data.type";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
 import {
   isSameResource,
   resourceInList
-} from "../flux/resourceStores/resource.utils";
-import { logger } from "../debug/logger.client";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { logger } from "@21n/components/debug/logger.client";
 
 /**
  * Used to identify if temporary s3 storage should be used or not, If true, temporary s3 storage is used

@@ -3,87 +3,88 @@ import {
   type IActionFnParams,
   ActionType,
   ContentType
-} from "$lib/client/types/action.type";
-import PageError from "../components/error/PageError.svelte";
-import DebugLogs from "../components/error/DebugLogs.svelte";
-import Offline from "../components/error/Offline.svelte";
-import Signup from "../components/settings/account/Signup.svelte";
-import ToastModalPortrait from "../elements/feedback/ToastModalPortrait.svelte";
-import CommandBar from "../components/commandBar/CommandBar.svelte";
-import { Size } from "../types/size.enum";
-import { Orientation } from "../types/direction.enum";
-import { appStore, intercomId, isInEditMode } from "./app.store";
-import Help from "../components/help/Help.svelte";
-import ExtensionLoginStatusPage from "../components/settings/ExtensionLoginStatusPage.svelte";
-import DebugPage from "../layout/layers/debug/DebugPage.svelte";
-import modalEvent from "../components/modal/modal.store";
-import { Action } from "../types/action.enum";
-import Bootstrap from "../components/settings/account/Bootstrap.svelte";
-import Calendar from "../components/calendar/Calendar.svelte";
-import { GlobalEvent } from "../types/event.enum";
-import { uiState } from "./uiState/uiState.store";
-import BookACall from "../components/cx/BookACall.svelte";
-import MdShortcuts from "../components/markdown/shortcuts/MdShortcuts.svelte";
-import CoverPicker from "../elements/coverPicker/CoverPicker.svelte";
-import SurrealLocalViewer from "../components/debug/SurrealLocalViewer.svelte";
-import SignalDBViewer from "../components/debug/SignalDBViewer.svelte";
-import PrivacyPolicy from "../landing/shared/PrivacyPolicy.svelte";
-import CalendarSettings from "../components/calendar/settings/CalendarSettings.svelte";
-import { Embed } from "../types/context.type";
+} from "@21n/types/action.type";
+import PageError from "@21n/components/error/PageError.svelte";
+import DebugLogs from "@21n/components/error/DebugLogs.svelte";
+import Offline from "@21n/components/error/Offline.svelte";
+import Signup from "@21n/components/settings/account/Signup.svelte";
+import ToastModalPortrait from "@21n/elements/feedback/ToastModalPortrait.svelte";
+import CommandBar from "@21n/components/commandBar/CommandBar.svelte";
+import { Size } from "@21n/types/size.enum";
+import { Orientation, Placement } from "@21n/types/direction.enum";
+import { appStore, intercomId, isInEditMode } from "@21n/stores/app.store";
+import Help from "@21n/components/help/Help.svelte";
+import ExtensionLoginStatusPage from "@21n/components/settings/ExtensionLoginStatusPage.svelte";
+import DebugPage from "@21n/layout/layers/debug/DebugPage.svelte";
+import modalEvent from "@21n/components/modal/modal.store";
+import { Action } from "@21n/types/action.enum";
+import Bootstrap from "@21n/components/settings/account/Bootstrap.svelte";
+import Calendar from "@21n/components/calendar/Calendar.svelte";
+import { GlobalEvent } from "@21n/types/event.enum";
+import { uiState } from "@21n/stores/uiState/uiState.store";
+import BookACall from "@21n/components/cx/BookACall.svelte";
+import MdShortcuts from "@21n/components/markdown/shortcuts/MdShortcuts.svelte";
+import CoverPicker from "@21n/elements/coverPicker/CoverPicker.svelte";
+import SurrealLocalViewer from "@21n/components/debug/SurrealLocalViewer.svelte";
+import SignalDBViewer from "@21n/components/debug/SignalDBViewer.svelte";
+import PrivacyPolicy from "@21n/landing/shared/PrivacyPolicy.svelte";
+import CalendarSettings from "@21n/components/calendar/settings/CalendarSettings.svelte";
+import { Embed } from "@21n/types/context.type";
 import {
   ResourceAccessMode,
   ResourceActionType,
   type IMultiSelectStore
-} from "../components/flux/resourceStores/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 import {
   determineResourceType,
   resolveResourceIcon,
   resourceAction,
   resourceCacheComponentKey
-} from "../components/flux/resourceStores/resource.utils";
-import { Resource } from "../components/flux/resourceStores/resource.enum";
-import CreateCollection from "$lib/client/components/collection/CreateCollection.svelte";
-import PropertiesEditor from "$lib/client/components/collection/properties/PropertiesEditor.svelte";
-import CreateCombination from "$lib/client/components/combination/CreateCombination.svelte";
-import { linker } from "../products/memotron/linking/link.store";
-import { ResourceError } from "$lib/client/components/error/errors";
-import { ResourceErrorCode } from "$lib/client/components/error/error.type";
-import CollectionTitleLabelPart from "$lib/client/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
-import PropertyConfig from "$lib/client/components/collection/properties/propertyConfig/PropertyConfig.svelte";
-import { logger } from "../components/debug/logger.client";
-import { toasts } from "./notification.store";
-import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
-import LinkSearchResultItem from "$lib/client/products/memotron/common/linkbox/LinkSearchResultItemDummy.svelte";
-import { SearchStore } from "../components/record/record.store";
-import { recentsStore } from "../components/record/recent.store";
-import { isValidString } from "$lib/shared/utils/text.utils";
-import ResourceBrowser from "../components/library/resourceBrowser/ResourceBrowser.svelte";
-import UserPlan from "../components/subscription/UserPlan.svelte";
-import InactivePlan from "../components/subscription/InactivePlan.svelte";
-import { ButtonVariant } from "../types/button.type";
-import PaymentRedirect from "../components/subscription/PaymentRedirect.svelte";
-import PlanOnboarding from "../components/subscription/PlanOnboarding.svelte";
-import type { IRecordId } from "$lib/client/types/data.type";
-import UserBilling from "../components/subscription/UserBilling.svelte";
-import UserPlanCancellation from "../components/subscription/UserPlanCancellation.svelte";
-import DocusaurusEmbed from "../components/cx/docusaurus/DocusaurusEmbed.svelte";
-import ResourceSearchModal from "../products/memotron/library/search/ResourceSearchModal.svelte";
-import Collection from "../components/collection/DummyCollection.svelte";
-import AppLoadingView from "../layout/paint/AppLoadingView.svelte";
-import SimpleDigitalClock from "../products/pointron/clocks/SimpleDigitalClock.svelte";
-import Test from "../components/Test.svelte";
-import SampleCalendarItemThumbnail from "../components/calendar/column/timeline/SampleCalendarItemThumbnail.svelte";
-import FocusCalendarEntryThumbnail from "../components/calendar/column/timeline/focusEntry/FocusCalendarEntryThumbnail.svelte";
-import CalendarDayModal from "../components/calendar/column/CalendarDayModal.svelte";
-import HotKeys from "../components/markdown/shortcuts/HotKeys.svelte";
-import HistoryModal from "../components/calendar/HistoryModal.svelte";
-import Credits from "$lib/client/components/help/Credits.svelte";
-import { resolveResourceStore } from "../components/flux/resourceStores/store.resolver";
-import CollectionCache from "../components/collection/CollectionCache.svelte";
-import DataSettings from "../components/settings/DataSettings.svelte";
-import DexieConsole from "../components/debug/DexieConsole.svelte";
-import { AppSearchParam } from "../types/appStore.type";
-import OfflineStatusModal from "../components/settings/sync/OfflineStatusModal.svelte";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import CreateCollection from "@21n/components/collection/CreateCollection.svelte";
+import PropertiesEditor from "@21n/components/collection/properties/PropertiesEditor.svelte";
+import CreateCombination from "@21n/components/combination/CreateCombination.svelte";
+import { linker } from "@21n/products/memotron/linking/link.store";
+import { ResourceError } from "@21n/components/error/errors";
+import { ResourceErrorCode } from "@21n/components/error/error.type";
+import CollectionTitleLabelPart from "@21n/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
+import PropertyConfig from "@21n/components/collection/properties/propertyConfig/PropertyConfig.svelte";
+import { logger } from "@21n/components/debug/logger.client";
+import { toasts } from "@21n/stores/notification.store";
+import NodeLoadingPulse from "@21n/elements/feedback/animations/NodeLoadingPulse.svelte";
+import LinkSearchResultItem from "@21n/products/memotron/common/linkbox/LinkSearchResultItemDummy.svelte";
+import { SearchStore } from "@21n/components/record/record.store";
+import { recentsStore } from "@21n/components/record/recent.store";
+import { isValidString } from "@21n/shared-utils/text.utils";
+import ResourceBrowser from "@21n/components/library/resourceBrowser/ResourceBrowser.svelte";
+import UserPlan from "@21n/components/subscription/UserPlan.svelte";
+import InactivePlan from "@21n/components/subscription/InactivePlan.svelte";
+import { ButtonVariant } from "@21n/types/button.type";
+import PaymentRedirect from "@21n/components/subscription/PaymentRedirect.svelte";
+import PlanOnboarding from "@21n/components/subscription/PlanOnboarding.svelte";
+import type { IRecordId } from "@21n/types/data.type";
+import UserBilling from "@21n/components/subscription/UserBilling.svelte";
+import UserPlanCancellation from "@21n/components/subscription/UserPlanCancellation.svelte";
+import DocusaurusEmbed from "@21n/components/cx/docusaurus/DocusaurusEmbed.svelte";
+import ResourceSearchModal from "@21n/products/memotron/library/search/ResourceSearchModal.svelte";
+import Collection from "@21n/components/collection/DummyCollection.svelte";
+import AppLoadingView from "@21n/layout/paint/AppLoadingView.svelte";
+import SimpleDigitalClock from "@21n/products/pointron/clocks/SimpleDigitalClock.svelte";
+import Test from "@21n/components/Test.svelte";
+import SampleCalendarItemThumbnail from "@21n/components/calendar/column/timeline/SampleCalendarItemThumbnail.svelte";
+import FocusCalendarEntryThumbnail from "@21n/components/calendar/column/timeline/focusEntry/FocusCalendarEntryThumbnail.svelte";
+import CalendarDayModal from "@21n/components/calendar/column/CalendarDayModal.svelte";
+import HotKeys from "@21n/components/markdown/shortcuts/HotKeys.svelte";
+import HistoryModal from "@21n/components/calendar/HistoryModal.svelte";
+import Credits from "@21n/components/help/Credits.svelte";
+import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
+import CollectionCache from "@21n/components/collection/CollectionCache.svelte";
+import DataSettings from "@21n/components/settings/DataSettings.svelte";
+import DexieConsole from "@21n/components/debug/DexieConsole.svelte";
+import { AppSearchParam } from "@21n/types/appStore.type";
+import OfflineStatusModal from "@21n/components/settings/sync/OfflineStatusModal.svelte";
+import context from "@21n/stores/context.store";
 
 export const globalActions: IAction[] = [
   {
@@ -436,10 +437,11 @@ export const globalActions: IAction[] = [
     type: ActionType.MODAL,
     isMeta: true,
     modalParams: {
+      isShowOverlay: false,
       layout: {
-        size: Size.md,
-        orientation: Orientation.Horizontal,
-        ignoreSafeArea: true
+        ignoreSafeArea: true,
+        isDynamicSize: true,
+        alignment: Placement.TopCenter
       }
     }
   },
@@ -579,8 +581,8 @@ export const globalActions: IAction[] = [
     type: ActionType.MODAL,
     modalParams: {
       layout: {
-        size: Size.lg,
-        orientation: Orientation.Horizontal,
+        size: Size.md,
+        orientation: Orientation.Vertical,
         ignoreSafeArea: true
       }
     }
@@ -593,7 +595,8 @@ export const globalActions: IAction[] = [
     modalParams: {
       layout: {
         size: Size.xxl,
-        orientation: Orientation.Horizontal
+        orientation: Orientation.Horizontal,
+        isOveriddenFooter: true
       }
     }
   },
@@ -607,7 +610,8 @@ export const globalActions: IAction[] = [
       title: "Create a new combination",
       layout: {
         size: Size.md,
-        orientation: Orientation.Horizontal
+        orientation: Orientation.Horizontal,
+        isOveriddenFooter: true
       }
     }
   },
@@ -731,6 +735,7 @@ export const globalActions: IAction[] = [
     action: Action.INACTIVE_PLAN,
     type: ActionType.MODAL,
     isMeta: true,
+    // label: "inactive plan",
     component: InactivePlan,
     modalParams: {
       isDismissable: false,
@@ -746,11 +751,12 @@ export const globalActions: IAction[] = [
           }
         },
         secondaryAction: {
-          label: "Chat with us",
-          icon: "chat-three",
+          label: "Use offline",
+          icon: "offline",
           variant: ButtonVariant.SECONDARY,
           callback: async () => {
-            appStore.runAction("chat");
+            await context.toggleOfflineMode(true);
+            modalEvent.hide(Action.INACTIVE_PLAN);
           }
         }
       }
@@ -1045,7 +1051,8 @@ export const globalActions: IAction[] = [
     component: OfflineStatusModal,
     modalParams: {
       layout: {
-        size: Size.sm
+        size: Size.sm,
+        isOveriddenFooter: true
       }
     }
   }

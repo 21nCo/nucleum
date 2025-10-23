@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { IAudioMetadata } from "../node.type";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import BasicInfoItem from "./BasicInfoItem.svelte";
+  import type { IAudioMetadata } from "@21n/products/memotron/node/node.type";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import BasicInfoItem from "@21n/products/memotron/node/metadata/BasicInfoItem.svelte";
   export let metadata: IAudioMetadata;
   export let duration: number | undefined = undefined;
 </script>

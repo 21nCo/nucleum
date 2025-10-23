@@ -1,5 +1,5 @@
-import type { IButtonParams } from "./button.type";
-import type { Size } from "./size.enum";
+import type { IButtonParams } from "@21n/types/button.type";
+import type { Size } from "@21n/types/size.enum";
 
 export type ScheduledNotification = {
   inSeconds: number;

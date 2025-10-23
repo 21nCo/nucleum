@@ -1,12 +1,31 @@
-import type { PersistenceProvider } from "$lib/client/persistence/persistence.type";
+import type { PersistenceProvider } from "@21n/persistence/persistence.type";
 import type {
   IMutationParamsv2,
   IRecordId,
   IResourceSelectParams,
   IResourceSelectProperties,
-  IStore
-} from "$lib/client/types/data.type";
-import type { Resource } from "./resourceStores/resource.enum";
+  IStore,
+  StoreDataType
+} from "@21n/types/data.type";
+import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+
+/**
+ * Configuration for a resource table in flux
+ */
+export interface IResourceTableConfig {
+  name: Resource | string;
+  indices?: string[];
+  searchIndices?: string[];
+  encrypt?: string[];
+  dataType?: StoreDataType;
+  isInMemory?: boolean;
+  isRemoteOnly?: boolean;
+}
+
+/**
+ * Callback function for loading in-memory stores
+ */
+export type LoaderCallback = (resource: Resource | string, data: any) => void;
 
 export enum FluxMethod {
   CLONE_DOWN = "cloneDown",
@@ -87,18 +106,17 @@ interface IFluxMutationArgs<T> {
   params: IMutationParamsv2<T>;
   additionalParams?: {
     isPreventCloudPersistence?: boolean;
-    isCloudOnlyResource?: boolean;
     context?: string;
   };
 }
 
-interface IFluxInitArgs {
-  stores: IStore[];
-  provider: PersistenceProvider;
+export interface IFluxInitArgs {
+  tables: IResourceTableConfig[];
   params: {
     dapId: string;
     userId?: string;
     isLocalMode?: boolean;
+    loaderCallback?: LoaderCallback;
   };
 }
 

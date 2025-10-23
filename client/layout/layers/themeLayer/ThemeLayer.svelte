@@ -1,26 +1,27 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import view from "$lib/client/stores/view.store";
-  import { AppSkin } from "$lib/client/types/appearance.type";
-  import { postDataToParent } from "$lib/client/utils/embed.utils";
+  import view from "@21n/stores/view.store";
+  import { AppSkin } from "@21n/types/appearance.type";
+  import { postDataToParent } from "@21n/utils/embed.utils";
   import appearance, {
     fallBackTypefaceString
-  } from "$lib/client/stores/appearance.store";
-  import ColorLayer from "./ColorLayer.svelte";
-  import GlassSkin from "./GlassSkin.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/stores/appearance.store";
+  import ColorLayer from "@21n/layout/layers/themeLayer/ColorLayer.svelte";
+  import GlassSkin from "@21n/layout/layers/themeLayer/GlassSkin.svelte";
+  import { cn } from "@21n/utils/ui.utils";
   import "@fontsource-variable/space-grotesk";
   import "@fontsource-variable/hanken-grotesk";
   import "@fontsource-variable/sen";
   import "@fontsource/noto-color-emoji";
   // Do not remove this import as it is required for the global css propagation in case of custom colors are absent - ex: PanelSwitcher
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
-  import { generateGoogleFontsUrl } from "./fonts.config";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
+  import { generateGoogleFontsUrl } from "@21n/layout/layers/themeLayer/fonts.config";
 
   export let extensionContext: string | undefined = undefined;
   export let isInlineExtensionContext: boolean = false;
+  export let isSheetContext: boolean = false;
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
   let rootFontSize: number = defaultRootFontSize + 0.6 * $view?.scale;
@@ -59,12 +60,14 @@
       "(prefers-color-scheme: dark)"
     );
     appearance.setSystemTheme(darkModeMediaQuery.matches);
-    darkModeMediaQuery.addEventListener("change", (e) => {
+    const onDarkModeChange = (e: MediaQueryListEvent) => {
       appearance.setSystemTheme(e.matches);
-    });
+    };
+    darkModeMediaQuery.addEventListener("change", onDarkModeChange);
     return () => {
       appearanceSub();
       userPreferencesSub();
+      darkModeMediaQuery.removeEventListener("change", onDarkModeChange);
     };
   });
 
@@ -76,20 +79,27 @@
    *
    * visibility is set to visible with important to handle cases where the web pages override extension styles like on Reddit website.
    *
+   *Note: Setting default root font size (16) as root size for Sheet context as regular calculation is yiedling 14.xx as root size which is resulting in smaller and hard to read text.
+   TODO - test other $view.scale cases and the need for having less defaultRootFontSize for $view.scale < 0.55 
+   *
    */
   function refreshSizing() {
-    if (accessibilitySizingFactor == 0) {
-      if ($view.scale > 0.55) defaultRootFontSize = 14;
-      else defaultRootFontSize = 12;
-    } else if (accessibilitySizingFactor == 1) {
-      if ($view.scale > 0.55) defaultRootFontSize = 16;
-      else if ($view.scale > 0.45) defaultRootFontSize = 14;
-      else defaultRootFontSize = 13;
-    } else if (accessibilitySizingFactor == 2) {
-      if ($view.scale > 0.55) defaultRootFontSize = 18;
-      else defaultRootFontSize = 16;
+    if (isSheetContext) {
+      rootFontSize = defaultRootFontSize;
+    } else {
+      if (accessibilitySizingFactor == 0) {
+        if ($view.scale > 0.55) defaultRootFontSize = 14;
+        else defaultRootFontSize = 12;
+      } else if (accessibilitySizingFactor == 1) {
+        if ($view.scale > 0.55) defaultRootFontSize = 16;
+        else if ($view.scale > 0.45) defaultRootFontSize = 14;
+        else defaultRootFontSize = 13;
+      } else if (accessibilitySizingFactor == 2) {
+        if ($view.scale > 0.55) defaultRootFontSize = 18;
+        else defaultRootFontSize = 16;
+      }
+      rootFontSize = defaultRootFontSize + 0.6 * $view.scale;
     }
-    rootFontSize = defaultRootFontSize + 0.6 * $view.scale;
 
     const dom = document.getElementById(extensionContext + "-root");
     if (extensionContext) {

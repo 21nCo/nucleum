@@ -1,27 +1,27 @@
-import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { logger } from "$lib/client/components/debug/logger.client";
+import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { logger } from "@21n/components/debug/logger.client";
 import { get } from "svelte/store";
-import { ResourceAccessPoint } from "../../components/flux/resourceStores/resource.type";
-import { appStore } from "../app.store";
-import { ObservableStore } from "../client.store";
-import { Action } from "../../types/action.enum";
-import { InteractionMode } from "../../components/settings/interactionMode/interactionMode.type";
+import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+import { appStore } from "@21n/stores/app.store";
+import { ObservableStore } from "@21n/stores/client.store";
+import { Action } from "@21n/types/action.enum";
+import { InteractionMode } from "@21n/components/settings/interactionMode/interactionMode.type";
 import {
   UIState,
   UIStateScope,
   type IUIStateParams,
   type IUIStateStore
-} from "./uiState.type";
-import context from "../context.store";
-import { Embed } from "$lib/client/types/context.type";
-import type { IRecordId } from "$lib/client/types/data.type";
-import { toasts } from "../notification.store";
+} from "@21n/stores/uiState/uiState.type";
+import context from "@21n/stores/context.store";
+import { Embed } from "@21n/types/context.type";
+import type { IRecordId } from "@21n/types/data.type";
+import { toasts } from "@21n/stores/notification.store";
 import {
   resourceInList,
   isSameResource
-} from "$lib/client/components/flux/resourceStores/resource.utils";
-import { parse, stringify } from "$lib/shared/utils/json.utils";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { parse, stringify } from "@21n/shared-utils/json.utils";
 
 class UiStateStore extends KeyValueStore<IUIStateStore> {
   constructor() {
@@ -184,7 +184,7 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
   }
 }
 
-export const uiState = new UiStateStore();
+export const uiState = UiStateStore.resolve(Resource.uiState);
 
 /**
  *

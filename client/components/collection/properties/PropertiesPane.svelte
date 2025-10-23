@@ -1,27 +1,27 @@
 <script lang="ts">
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import PropertiesListView from "$lib/client/components/collection/properties/PropertiesListView.svelte";
-  import type { IActiveNodeStore } from "$lib/client/products/memotron/node/node.store";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import PropertiesListView from "@21n/components/collection/properties/PropertiesListView.svelte";
+  import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/types/size.enum";
   import {
     removeDuplicatesFilter,
     resourceAction
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import type { ICollectionExpanded } from "$lib/client/components/collection/collection.type";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import type { ICollectionExpanded } from "@21n/components/collection/collection.type";
   import { onMount } from "svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import ResourceStatusBanner from "$lib/client/components/record/RecordStatusBanner.svelte";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { collectionStore } from "$lib/client/components/collection/collection.store";
-  import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IActiveGoalStore } from "../../goals/goal.store";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import ResourceStatusBanner from "@21n/components/record/RecordStatusBanner.svelte";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { collectionStore } from "@21n/components/collection/collection.store";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IActiveGoalStore } from "@21n/components/goals/goal.store";
 
   export let item: IActiveNodeStore | IActiveGoalStore;
   export let resource: Resource;

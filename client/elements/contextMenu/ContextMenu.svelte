@@ -2,16 +2,16 @@
   import type {
     IContextMenuGroup,
     IContextMenuItem
-  } from "$lib/client/types/select.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
-  import Divider from "../Divider.svelte";
-  import Text from "../text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import ContextMenuItem from "./ContextMenuItem.svelte";
+  } from "@21n/types/select.type";
+  import { Size } from "@21n/types/size.enum";
+  import { bg, cn } from "@21n/utils/ui.utils";
+  import Divider from "@21n/elements/Divider.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import ContextMenuItem from "@21n/elements/contextMenu/ContextMenuItem.svelte";
   import { onMount } from "svelte";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import view from "$lib/client/stores/view.store";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import view from "@21n/stores/view.store";
   export let menuResolver: () => { group: string; items: IContextMenuItem[] }[];
   export let size: Size.sm | Size.md | Size.lg | Size.xl = Size.md;
   export let heading: string | undefined = undefined;

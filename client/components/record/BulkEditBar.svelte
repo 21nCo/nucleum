@@ -1,24 +1,24 @@
 <script lang="ts">
-  import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
+  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
   import {
     ResourceAccessPoint,
     ResourceActionType,
     type IMultiSelectContext
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
-  import { LinkType } from "$lib/client/products/memotron/linking/link.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import appearance from "$lib/client/stores/appearance.store";
-  import { Theme } from "$lib/client/types/appearance.type";
-  import { resolveResourceActionIcon } from "../flux/resourceStores/resource.utils";
-  import { enumToString } from "$lib/shared/utils/text.utils";
-  import { isSameDay } from "$lib/client/utils/time.utils";
-  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
-  import { tooltip } from "$lib/client/actions/popover.action";
+  import { LinkType } from "@21n/products/memotron/linking/link.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import appearance from "@21n/stores/appearance.store";
+  import { Theme } from "@21n/types/appearance.type";
+  import { resolveResourceActionIcon } from "@21n/components/flux/resourceStores/resource.utils";
+  import { enumToString } from "@21n/shared-utils/text.utils";
+  import { isSameDay } from "@21n/utils/time.utils";
+  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
+  import { tooltip } from "@21n/actions/popover.action";
 
   const dispatch = createEventDispatcher();
   export let context: IMultiSelectContext;

@@ -2,27 +2,27 @@ import type {
   ILocal,
   IPersistence,
   IPersistenceInitParams
-} from "../persistence.type";
-import { logger } from "../../components/debug/logger.client";
-import { Resource } from "../../components/flux/resourceStores/resource.enum";
+} from "@21n/persistence/persistence.type";
+import { logger } from "@21n/components/debug/logger.client";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import type {
   IMetaResource,
   IResource
-} from "../../components/flux/resourceStores/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 import {
   PersistenceActionType,
   type IMutationParamsv2,
   type IRecordId,
   type IResourceSelectParams,
   type IResourceSelectProperties
-} from "../../types/data.type";
-import { LogType } from "$lib/client/components/debug/debug.type";
-import { compareVersions } from "$lib/shared/utils/utils";
-import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
-import { GlobalEvent } from "$lib/client/types/event.enum";
-import { generateMiniRandomId } from "$lib/shared/utils/crypto.utils";
-import { Product } from "$lib/client/products/product.type";
-import { resolveProductConfig } from "$lib/client/products/product.config";
+} from "@21n/types/data.type";
+import { LogType } from "@21n/components/debug/debug.type";
+import { compareVersions } from "@21n/shared-utils/utils";
+import { dispatchCustomEvent } from "@21n/utils/browser.utils";
+import { GlobalEvent } from "@21n/types/event.enum";
+import { generateMiniRandomId } from "@21n/shared-utils/crypto.utils";
+import { Product } from "@21n/products/product.type";
+import { resolveProductConfig } from "@21n/products/product.config";
 
 const loadRxDB = async () => {
   const { createRxDatabase } = await import("rxdb");

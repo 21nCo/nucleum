@@ -343,6 +343,8 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
       updateHandles();
     },
     destroy() {
+      document.removeEventListener("mousemove", resize);
+      document.removeEventListener("mouseup", stopResize);
       removeHandles();
       removeOverlay();
     }

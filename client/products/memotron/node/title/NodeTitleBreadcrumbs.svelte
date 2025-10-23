@@ -1,12 +1,12 @@
 <script lang="ts">
-  import type { IBreadcrumbItem } from "$lib/client/elements/breadcrumbsV2/breadcrumbItem.type";
+  import type { IBreadcrumbItem } from "@21n/elements/breadcrumbsV2/breadcrumbItem.type";
   import { createEventDispatcher, onMount } from "svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { nodeStore } from "../node.store";
-  import Breadcrumbs from "$lib/client/elements/breadcrumbsV2/Breadcrumbs.svelte";
-  import { headingNodeTypes, NodeType, type INode } from "../node.type";
-  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import BreadcrumbMini from "$lib/client/elements/breadcrumb/BreadcrumbMini.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
+  import Breadcrumbs from "@21n/elements/breadcrumbsV2/Breadcrumbs.svelte";
+  import { headingNodeTypes, NodeType, type INode } from "@21n/products/memotron/node/node.type";
+  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+  import BreadcrumbMini from "@21n/elements/breadcrumb/BreadcrumbMini.svelte";
   const dispatch = createEventDispatcher();
   export let mdParent: IRecordId[] | INode[] | undefined = undefined;
   export let id: IRecordId | undefined = undefined;

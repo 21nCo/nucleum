@@ -1,9 +1,9 @@
-import { logger } from "$lib/client/components/debug/logger.client";
-import type { IFile } from "$lib/client/components/files/file.type";
-import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
-import type { IBlock } from "$lib/client/components/markdown/md.type";
+import { logger } from "@21n/components/debug/logger.client";
+import type { IFile } from "@21n/components/files/file.type";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
+import type { IBlock } from "@21n/components/markdown/md.type";
 import {
   NodeType,
   type INode,
@@ -17,18 +17,18 @@ import {
   socialPostNodeTypeList,
   socialProfileNodeTypeList,
   socialProfileWithImageUnavailable
-} from "$lib/client/products/memotron/node/node.type";
-import type { IRecordId } from "$lib/client/types/data.type";
-import { TimeFormat } from "$lib/client/types/time.type";
-import { getGeoLocation } from "$lib/client/utils/browser.utils";
-import { formatSeconds } from "$lib/client/utils/time.utils";
+} from "@21n/products/memotron/node/node.type";
+import type { IRecordId } from "@21n/types/data.type";
+import { TimeFormat } from "@21n/types/time.type";
+import { getGeoLocation } from "@21n/utils/browser.utils";
+import { formatSeconds } from "@21n/utils/time.utils";
 import {
   enumToString,
   isValidString,
   properCase
-} from "$lib/shared/utils/text.utils";
-import { isValidUrl } from "$lib/shared/utils/utils";
-import { resolveUrlData } from "./url.utils";
+} from "@21n/shared-utils/text.utils";
+import { isValidUrl } from "@21n/shared-utils/utils";
+import { resolveUrlData } from "@21n/products/memotron/node/url.utils";
 
 export function resolveContentPreview(node: INode) {
   const { body, contentType, metadata } = node;
@@ -37,6 +37,22 @@ export function resolveContentPreview(node: INode) {
   if (contentType === NodeType.TWEET && "content" in body) {
     if (body.content) return body.content;
     else if (metadata && "ogTitle" in metadata) return metadata.ogTitle;
+  } else if (
+    contentType === NodeType.YOUTUBE_VIDEO ||
+    contentType === NodeType.YOUTUBE_SHORT
+  ) {
+    if ("title" in body && body.title) return body.title;
+    if (metadata && "ogTitle" in metadata && metadata.ogTitle)
+      return metadata.ogTitle;
+    if (metadata && "title" in metadata && metadata.title)
+      return metadata.title;
+  } else if (socialPostNodeTypeList.has(contentType)) {
+    if (node.text && typeof node.text === "string") return node.text;
+    if (node.label && typeof node.label === "string") return node.label;
+    if (metadata && "ogTitle" in metadata && metadata.ogTitle)
+      return metadata.ogTitle;
+    if (metadata && "title" in metadata && metadata.title)
+      return metadata.title;
   } else if (contentType === NodeType.TWITTER_PROFILE) {
     if ("bio" in body && body.bio) return body.bio;
     if (!node.url) return "";
@@ -119,6 +135,7 @@ const nodeIconMap = new Map<NodeType, string>([
   [NodeType.VIDEO, "video"],
   [NodeType.FILE, "ph:file-light"],
   [NodeType.YOUTUBE_VIDEO, "logos:youtube-icon"],
+  [NodeType.YOUTUBE_SHORT, "logos:youtube-icon"],
   [NodeType.YOUTUBE_CHANNEL, "logos:youtube-icon"],
   [NodeType.YOUTUBE_BOOKMARK, "logos:youtube-icon"],
   [NodeType.TWEET, "twitter"],
@@ -132,6 +149,7 @@ const nodeIconMap = new Map<NodeType, string>([
   [NodeType.THREADS_POST, "ph:threads-logo"],
   [NodeType.THREADS_PROFILE, "ph:threads-logo"],
   [NodeType.INSTAGRAM_POST, "skill-icons:instagram"],
+  [NodeType.INSTAGRAM_REEL, "skill-icons:instagram"],
   [NodeType.INSTAGRAM_PROFILE, "skill-icons:instagram"],
   [NodeType.LINKEDIN_POST, "logos:linkedin-icon"],
   [NodeType.LINKEDIN_PROFILE, "logos:linkedin-icon"],
@@ -247,8 +265,10 @@ export function resolveNodeContentLabel(contentType: NodeType) {
 }
 
 export function resolveFilePreview(node: INode) {
-  const { contentType, body, file, metadata } = node;
-  if (
+  const { contentType, body, file, metadata, previewImage } = node;
+  if(previewImage){
+    return previewImage;
+  } else if (
     contentType === NodeType.IMAGE ||
     contentType === NodeType.FILE ||
     contentType === NodeType.VIDEO
@@ -279,6 +299,7 @@ export function resolveUrlPreview(node: INode) {
     return metadata?.ogImage ?? metadata?.screenshotUrl;
   } else if (
     contentType === NodeType.YOUTUBE_VIDEO ||
+    contentType === NodeType.YOUTUBE_SHORT ||
     contentType === NodeType.YOUTUBE_CHANNEL
   ) {
     return metadata?.ogImage ?? metadata?.thumbnailUrl;
@@ -555,12 +576,14 @@ const contentTypePriority: NodeType[] = [
   NodeType.BLUESKY_POST,
   NodeType.THREADS_POST,
   NodeType.INSTAGRAM_POST,
+  NodeType.INSTAGRAM_REEL,
   NodeType.REDDIT_POST,
   NodeType.FACEBOOK_POST,
   NodeType.MASTODON_POST,
 
   // Video content
   NodeType.YOUTUBE_VIDEO,
+  NodeType.YOUTUBE_SHORT,
   NodeType.COURSERA_VIDEO,
   NodeType.UDEMY_VIDEO,
   NodeType.EDX_VIDEO,

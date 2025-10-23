@@ -1,22 +1,22 @@
 <script lang="ts">
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
+  } from "@21n/stores/uiState/uiState.type";
   import {
     OptionSelectorStyle,
     type ISelectItem
-  } from "$lib/client/types/select.type";
-  import { Size } from "$lib/client/types/size.enum";
+  } from "@21n/types/select.type";
+  import { Size } from "@21n/types/size.enum";
   import {
     PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { CalendarColumnLayout, CalendarColumnPanel } from "../calendar.type";
+  } from "@21n/types/switcher.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { CalendarColumnLayout, CalendarColumnPanel } from "@21n/components/calendar/calendar.type";
   export let panels: ISelectItem[];
   export let selectedPanel: CalendarColumnPanel;
   export let layout: CalendarColumnLayout;

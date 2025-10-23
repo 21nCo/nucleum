@@ -1,24 +1,25 @@
 <script lang="ts">
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { pointronPreferences } from "@21n/products/pointron/pointron.store";
   import {
     SessionCompositionType,
     type SessionComposition,
     BreakCompositionType
-  } from "$lib/client/types/pointron/sessionComposition.type";
-  import ComposeDuration from "../composition/ComposeDuration.svelte";
-  import ModalFooter from "$lib/client/components/modal/ModalFooter.svelte";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import { deepCopy } from "$lib/shared/utils/obj.utils";
+  } from "@21n/types/pointron/sessionComposition.type";
+  import ComposeDuration from "@21n/products/pointron/focus/advanced/composition/ComposeDuration.svelte";
+  import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import { ButtonVariant } from "@21n/types/button.type";
+  import { deepCopy } from "@21n/shared-utils/obj.utils";
   import { onMount } from "svelte";
-  import ComposeTotalsText from "../composition/ComposeTotalsText.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
-  import { goalStore } from "$lib/client/components/goals/goal.store";
-  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import PresetGoalsSelector from "./PresetGoalsSelector.svelte";
+  import ComposeTotalsText from "@21n/products/pointron/focus/advanced/composition/ComposeTotalsText.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
+  import { goalStore } from "@21n/components/goals/goal.store";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import PresetGoalsSelector from "@21n/products/pointron/focus/advanced/presets/PresetGoalsSelector.svelte";
+  import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
 
   export let id: string;
   let composition: SessionComposition;
@@ -79,9 +80,9 @@
   }
 </script>
 
-<div class="flex flex-col justify-between w-full h-full">
+<div class="flex flex-col gap-6 justify-between w-full h-full">
   {#if composition}
-    <div class="flex flex-col gap-4 flex-grow">
+    <ModalContentPadded class="flex flex-col gap-4 flex-grow">
       <TextInput
         bind:value={composition.name}
         label={{ label: "Preset name", orientation: Orientation.Vertical }}
@@ -93,7 +94,7 @@
         on:change={() => (composition = composition)}
       />
       <PresetGoalsSelector bind:selectedGoals />
-    </div>
+    </ModalContentPadded>
     <ModalFooter
       action={PointronAction.EDIT_PRESET}
       primaryAction={{

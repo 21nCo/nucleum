@@ -1,8 +1,8 @@
 <script lang="ts">
   import { fly } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import MarkdownRenderer from "../elements/MarkdownRenderer.svelte";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import MarkdownRenderer from "@21n/landing/shared/elements/MarkdownRenderer.svelte";
   export let title: string = "";
   export let body: string = "";
   export let isExpanded: boolean = false;

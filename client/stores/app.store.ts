@@ -1,50 +1,50 @@
 import { get, writable } from "svelte/store";
-import { AppSkin } from "$lib/client/types/appearance.type";
+import { AppSkin } from "@21n/types/appearance.type";
 import {
   AppSearchParam,
   type IAppStore
-} from "$lib/client/types/appStore.type";
-import type { DragAndDrop } from "$lib/client/types/draganddrop.type";
-import { DragStatus } from "$lib/client/types/dragstatus.enum";
-import blankJson from "$lib/client/data/blank.json";
-import colorSchemes from "$lib/client/theme/colorschemes.json";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { shuffleEmojis } from "../data/avatars";
-import { ActionType, type IAction } from "../types/action.type";
+} from "@21n/types/appStore.type";
+import type { DragAndDrop } from "@21n/types/draganddrop.type";
+import { DragStatus } from "@21n/types/dragstatus.enum";
+import blankJson from "@21n/data/blank.json";
+import colorSchemes from "@21n/theme/colorschemes.json";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { shuffleEmojis } from "@21n/data/avatars";
+import { ActionType, type IAction } from "@21n/types/action.type";
 import {
   IdentityProvider,
   type OAuthProviderConfig
-} from "../types/oauth.type";
-import { dispatchCustomEvent, goto } from "../utils/browser.utils";
-import { persistLocally, getDapId } from "../persistence/persistence.utils";
-import { postDataToParent } from "$lib/client/utils/embed.utils";
-import modalEvent from "../components/modal/modal.store";
-import view from "$lib/client/stores/view.store";
-import context from "$lib/client/stores/context.store";
+} from "@21n/types/oauth.type";
+import { dispatchCustomEvent, goto } from "@21n/utils/browser.utils";
+import { persistLocally, getDapId } from "@21n/persistence/persistence.utils";
+import { postDataToParent } from "@21n/utils/embed.utils";
+import modalEvent from "@21n/components/modal/modal.store";
+import view from "@21n/stores/view.store";
+import context from "@21n/stores/context.store";
 import {
   appEvents,
   confirmationNotification
-} from "$lib/client/stores/notification.store";
-import { Embed, OperatingSystem } from "../types/context.type";
-import { accessLogStore } from "../components/accessLogging/accesslog.store";
+} from "@21n/stores/notification.store";
+import { Embed, OperatingSystem } from "@21n/types/context.type";
+import { accessLogStore } from "@21n/components/accessLogging/accesslog.store";
 import {
   ResourceAccessMode,
   ResourceActionType
-} from "../components/flux/resourceStores/resource.type";
-import { InteractionMode } from "../components/settings/interactionMode/interactionMode.type";
-import { Action } from "../types/action.enum";
-import { GlobalEvent, type Event } from "../types/event.enum";
-import { logger } from "../components/debug/logger.client";
-import { Size } from "../types/size.enum";
-import type { IRecordId } from "../types/data.type";
-import account from "./account.store";
-import { tabs } from "../layout/topNav/tabs/tabs.store";
+} from "@21n/components/flux/resourceStores/resource.type";
+import { InteractionMode } from "@21n/components/settings/interactionMode/interactionMode.type";
+import { Action } from "@21n/types/action.enum";
+import { GlobalEvent, type Event } from "@21n/types/event.enum";
+import { logger } from "@21n/components/debug/logger.client";
+import { Size } from "@21n/types/size.enum";
+import type { IRecordId } from "@21n/types/data.type";
+import account from "@21n/stores/account.store";
+import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
 import {
   determineResourceAccessMode,
   resourceAction
-} from "../components/flux/resourceStores/resource.utils";
-import { Product } from "$lib/client/products/product.type";
-import { EmbedDataMessage } from "../types/embedMessage.enum";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { Product } from "@21n/products/product.type";
+import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",

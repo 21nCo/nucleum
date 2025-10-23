@@ -1,13 +1,13 @@
 <script lang="ts">
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { tooltip } from "$lib/client/actions/popover.action";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { resolveResource } from "$lib/client/components/record/record.store";
-  import NodeAvatar from "$lib/client/products/memotron/node/avatar/NodeAvatar.svelte";
-  import { webNodeTypeList } from "$lib/client/products/memotron/node/node.type";
-  import { resolveNodeLabelString } from "$lib/client/products/memotron/node/node.utils";
-  import { isValidString } from "$lib/shared/utils/text.utils";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { tooltip } from "@21n/actions/popover.action";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { resolveResource } from "@21n/components/record/record.store";
+  import NodeAvatar from "@21n/products/memotron/node/avatar/NodeAvatar.svelte";
+  import { webNodeTypeList } from "@21n/products/memotron/node/node.type";
+  import { resolveNodeLabelString } from "@21n/products/memotron/node/node.utils";
+  import { isValidString } from "@21n/shared-utils/text.utils";
   import { onMount } from "svelte";
 
   export let id: string;
@@ -36,7 +36,7 @@
   class="inline-mention px-1 bg-bgs2 notouch:hover:bg-bgs3 active:bg-bgs3 rounded-md max-w-48 truncate"
   data-record-id={id}
   data-label={label}
-  href={`?pop=${id}`}
+  href={`${window.location.pathname}${window.location.search}${window.location.search ? "&" : "?"}pop=${id}`}
   contenteditable="false"
   use:hoverable={{
     onHover: (val) => {

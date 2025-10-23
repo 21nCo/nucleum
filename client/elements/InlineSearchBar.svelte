@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { InputStyle } from "$lib/client/types/input.type";
-  import TextInput from "./input/TextInput.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import { InputStyle } from "@21n/types/input.type";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { Size } from "@21n/types/size.enum";
   import { createEventDispatcher, onMount, tick } from "svelte";
-  import ShortcutText from "./text/ShortcutText.svelte";
-  import { GlobalEvent } from "../types/event.enum";
-  import { appEvents } from "../stores/notification.store";
-  import type { IEvent } from "../types/event.type";
-  import { cn } from "../utils/ui.utils";
-  import { debouncer } from "../utils/utils";
+  import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import { appEvents } from "@21n/stores/notification.store";
+  import type { IEvent } from "@21n/types/event.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import { debouncer } from "@21n/utils/utils";
   export let query: string = "";
   export let size: Size = Size.md;
   export let placeholder: string = "Search";

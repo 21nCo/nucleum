@@ -1,4 +1,5 @@
 export enum MemotronAction {
+  PREVIEW_IMAGE_UPLOADER = "preview-image-uploader",
   /**
    * @deprecated - use resourceAction(Resource.collection, ResourceActionType.CREATE) instead
    */
@@ -34,5 +35,6 @@ export enum MemotronAction {
   EDIT_CAPTURE_SHORTCUTS = "edit-capture-shortcuts",
   CAPTURE_SETTINGS = "capture-settings",
   RELATIONS_AS_SETTINGS = "relations-as-settings",
-  ACTIVATE_LINK_BOX = "ACTIVATE_LINK_BOX"
+  ACTIVATE_LINK_BOX = "ACTIVATE_LINK_BOX",
+  NODE_SETTINGS = "node-settings"
 }

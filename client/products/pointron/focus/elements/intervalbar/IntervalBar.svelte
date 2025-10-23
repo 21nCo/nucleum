@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { activeSession } from "$lib/client/products/pointron/focus/session.store";
-  import IntervalBarItem from "$lib/client/products/pointron/focus/elements/intervalbar/IntervalBarItem.svelte";
-  import { SessionType } from "$lib/client/products/pointron/logs/log.type";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
+  import IntervalBarItem from "@21n/products/pointron/focus/elements/intervalbar/IntervalBarItem.svelte";
+  import { SessionType } from "@21n/products/pointron/logs/log.type";
   import {
     SessionUIContext,
     type ISessionInterval
-  } from "$lib/client/types/pointron/session.type";
-  import TimeLabel from "./TimeLabel.svelte";
-  import view from "$lib/client/stores/view.store";
-  import MoreBarsInfo from "./MoreBarsInfo.svelte";
-  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { deepCopy } from "$lib/shared/utils/obj.utils";
+  } from "@21n/types/pointron/session.type";
+  import TimeLabel from "@21n/products/pointron/focus/elements/intervalbar/TimeLabel.svelte";
+  import view from "@21n/stores/view.store";
+  import MoreBarsInfo from "@21n/products/pointron/focus/elements/intervalbar/MoreBarsInfo.svelte";
+  import { SessionState } from "@21n/types/pointron/sessionState.enum";
+  import { deepCopy } from "@21n/shared-utils/obj.utils";
   export let context: SessionUIContext = SessionUIContext.DEFAULT;
   let preceedingHiddenBars: ISessionInterval[] = [];
   let succeedingHiddenBars: ISessionInterval[] = [];

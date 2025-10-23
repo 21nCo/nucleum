@@ -1,5 +1,5 @@
 <script lang="ts">
-  import SpaceDocument from "$lib/client/components/space/SpaceDocument.svelte";
+  import SpaceDocument from "@21n/components/space/SpaceDocument.svelte";
 
   import { onMount } from "svelte";
   let spaceId: string = "";

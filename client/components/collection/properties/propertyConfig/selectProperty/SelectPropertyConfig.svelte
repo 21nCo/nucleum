@@ -1,17 +1,17 @@
 <script lang="ts">
-  import type { ISelectProperty } from "$lib/client/components/collection/properties/property.type";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import Popover from "$lib/client/elements/popover/Popover.svelte";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { Orientation, Placement } from "$lib/client/types/direction.enum";
-  import type { IPopoverOptions } from "$lib/client/types/popover.type";
-  import EndText from "../EndText.svelte";
-  import SelectOptionsEditor from "./SelectOptionsEditor.svelte";
-  import { popover } from "$lib/client/actions/popover.action";
-  import SelectPropertyOption from "../../selectProperty/SelectPropertyOption.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Size } from "$lib/client/types/size.enum";
+  import type { ISelectProperty } from "@21n/components/collection/properties/property.type";
+  import Divider from "@21n/elements/Divider.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import Popover from "@21n/elements/popover/Popover.svelte";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import { Orientation, Placement } from "@21n/types/direction.enum";
+  import type { IPopoverOptions } from "@21n/types/popover.type";
+  import EndText from "@21n/components/collection/properties/propertyConfig/EndText.svelte";
+  import SelectOptionsEditor from "@21n/components/collection/properties/propertyConfig/selectProperty/SelectOptionsEditor.svelte";
+  import { popover } from "@21n/actions/popover.action";
+  import SelectPropertyOption from "@21n/components/collection/properties/selectProperty/SelectPropertyOption.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/types/size.enum";
 
   export let property: ISelectProperty;
   export let isPopoverOpen: boolean = false;

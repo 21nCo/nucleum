@@ -1,32 +1,32 @@
-import { logger } from "$lib/client/components/debug/logger.client";
+import { logger } from "@21n/components/debug/logger.client";
 import {
   ErrorMessage,
   ResourceErrorCode
-} from "$lib/client/components/error/error.type";
-import { ResourceError } from "$lib/client/components/error/errors";
-import { FluxMethod } from "$lib/client/components/flux/flux.type";
-import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
-import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+} from "@21n/components/error/error.type";
+import { ResourceError } from "@21n/components/error/errors";
+import { FluxMethod } from "@21n/components/flux/flux.type";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
+import { extensionFlux } from "@21n/components/flux/fluxExtentionMediator";
+import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import type {
   CaptureOmittedFields,
   OmitFields,
   OmitForCapture,
   OmitForCaptureWithId
-} from "$lib/client/components/flux/resourceStores/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 import {
   determineResourceType,
   isSameResource,
   resourceInList
-} from "$lib/client/components/flux/resourceStores/resource.utils";
-import { Persistence } from "$lib/client/persistence/persistence";
-import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { Persistence } from "@21n/persistence/persistence";
+import { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
 import {
   linker,
   linkTagStore
-} from "$lib/client/products/memotron/linking/link.store";
-import { nodeStore } from "$lib/client/products/memotron/node/node.store";
+} from "@21n/products/memotron/linking/link.store";
+import { nodeStore } from "@21n/products/memotron/node/node.store";
 import {
   type IClip,
   type IClipCapture,
@@ -45,50 +45,50 @@ import {
   NodeType,
   socialPostNodeTypeList,
   socialProfileNodeTypeList
-} from "$lib/client/products/memotron/node/node.type";
-import { generateNodeIdPrefixed } from "$lib/client/products/memotron/node/node.utils";
+} from "@21n/products/memotron/node/node.type";
+import { generateNodeIdPrefixed } from "@21n/products/memotron/node/node.utils";
 import {
   isSameAsCurrentUrl,
   resolveUrlData
-} from "$lib/client/products/memotron/node/url.utils";
-import { ObservableStore } from "$lib/client/stores/client.store";
-import { appEvents } from "$lib/client/stores/notification.store";
+} from "@21n/products/memotron/node/url.utils";
+import { ObservableStore } from "@21n/stores/client.store";
+import { appEvents } from "@21n/stores/notification.store";
 import {
   type IRecordId,
   PersistenceActionType
-} from "$lib/client/types/data.type";
-import { Placement } from "$lib/client/types/direction.enum";
-import { ExtensionEvent } from "$lib/client/types/extension.type";
-import { AlertType } from "$lib/client/types/notification.type";
+} from "@21n/types/data.type";
+import { Placement } from "@21n/types/direction.enum";
+import { ExtensionEvent } from "@21n/types/extension.type";
+import { AlertType } from "@21n/types/notification.type";
 
 import {
   relayToBackgroundScript,
   relayToSidePanel
-} from "$lib/client/utils/extension.utils";
-import { activeResourceFilter } from "$lib/client/utils/utils";
-import { parse, stringify } from "$lib/shared/utils/json.utils";
-import { objIsEmpty, shallowDiff } from "$lib/shared/utils/obj.utils";
-import { enumToString } from "$lib/shared/utils/text.utils";
-import type { ISocialPost } from "../clipper.type";
+} from "@21n/utils/extension.utils";
+import { activeResourceFilter } from "@21n/utils/utils";
+import { parse, stringify } from "@21n/shared-utils/json.utils";
+import { objIsEmpty, shallowDiff } from "@21n/shared-utils/obj.utils";
+import { enumToString } from "@21n/shared-utils/text.utils";
+import type { ISocialPost } from "@21n/extensions/clipper/clipper.type";
 import {
   extractFullTabData,
   extractMinimalTabData,
   extractYoutubeVideoData,
   resolveUrl
-} from "../clipper.utils";
+} from "@21n/extensions/clipper/clipper.utils";
 import {
   resolveInlineSocialPostParser,
   resolveParser,
   resolveVideoBookmarkParser
-} from "../parsers";
-import { captureVideoFrame } from "../parsers/shared/video.utils";
-import { removeHighlight } from "./highlightV4";
+} from "@21n/extensions/clipper/parsers";
+import { captureVideoFrame } from "@21n/extensions/clipper/parsers/shared/video.utils";
+import { removeHighlight } from "@21n/extensions/clipper/contentScripts/highlightV4";
 import {
   type IFeedbackPaneStore,
   type ISyncStore,
   type IWebpageStore,
   SyncStatus
-} from "./types";
+} from "@21n/extensions/clipper/contentScripts/types";
 
 class WebpageStore extends ObservableStore<IWebpageStore> {
   previousValue: string = "";
@@ -259,7 +259,10 @@ class WebpageStore extends ObservableStore<IWebpageStore> {
      * @returns
      */
     async function extractData() {
-      if (params?.contentType === NodeType.YOUTUBE_VIDEO) {
+      if (
+        params?.contentType === NodeType.YOUTUBE_VIDEO ||
+        params?.contentType === NodeType.YOUTUBE_SHORT
+      ) {
         return extractYoutubeVideoData();
       } else if (params?.contentType === NodeType.YOUTUBE_CHANNEL) {
         const urlData = await new Persistence().retrieveUrlData(
@@ -1340,8 +1343,9 @@ class ClipperToolbarState extends KeyValueStore<{
     }
   }
 }
-
-export const toolbarState = new ClipperToolbarState();
+export const toolbarState = ClipperToolbarState.resolve(
+  Resource.clipperToolbarState
+);
 
 class SyncStore extends ObservableStore<ISyncStore> {
   constructor() {

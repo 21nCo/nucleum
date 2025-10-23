@@ -1,27 +1,29 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { ActionType, type IAction } from "$lib/client/types/action.type";
-  import SearchActionResults from "./SearchActionResults.svelte";
-  import CmdResults from "./CmdResults.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import modalEvent from "$lib/client/components/modal/modal.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
-  import { Display } from "$lib/client/types/view.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
-  import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
-  import { keyboardShortcuts } from "../shortcuts/shortcuts.store";
-  import { renderMdAsHtml } from "../markdown/markdown.utils";
-  import { resolveShortcutText } from "../shortcuts/shortcut.utils";
-  import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
-  import KeyboardToolbar from "$lib/client/elements/keyboardToolbar/KeyboardToolbar.svelte";
+  import { ActionType, type IAction } from "@21n/types/action.type";
+  import SearchActionResults from "@21n/components/commandBar/SearchActionResults.svelte";
+  import CmdResults from "@21n/components/commandBar/CmdResults.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import modalEvent from "@21n/components/modal/modal.store";
+  import { Action } from "@21n/types/action.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import view from "@21n/stores/view.store";
+  import { Display } from "@21n/types/view.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
+  import context from "@21n/stores/context.store";
+  import { Embed } from "@21n/types/context.type";
+  import { keyboardShortcuts } from "@21n/components/shortcuts/shortcuts.store";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
+  import { resolveShortcutText } from "@21n/components/shortcuts/shortcut.utils";
+  import { KeyboardKey, ModifierKey } from "@21n/types/keyboard.type";
+  import KeyboardToolbar from "@21n/elements/keyboardToolbar/KeyboardToolbar.svelte";
+  import { fly } from "svelte/transition";
+  import { quadInOut } from "svelte/easing";
 
   export let command: string | undefined = undefined;
   export let commandType: ActionType | undefined = undefined;
@@ -35,7 +37,7 @@
   let isFocusing: boolean = false;
   let defaultPlaceholder = isFullPageContext
     ? "Search for a command"
-    : "Run a command or scroll to see list of all commands";
+    : "Search for a command or scroll to see full list";
   let placeholder = defaultPlaceholder;
   onMount(() => {
     inputRef?.focus();
@@ -54,14 +56,20 @@
       resultsRef.select();
     }
   }
+
   function handleKeyDown(event: any) {
     if (event.key === "Backspace" && !$view.isConstrainedWidth) {
       if (value == "" && isPerformingSearchAction) {
-        isPerformingSearchAction = false;
-        placeholder = defaultPlaceholder;
+        resetContext();
       } else if (value == "") close();
     }
   }
+
+  function resetContext() {
+    isPerformingSearchAction = false;
+    placeholder = defaultPlaceholder;
+  }
+
   function onSearchAction(event: any) {
     value = "";
     isPerformingSearchAction = true;
@@ -101,30 +109,42 @@
 </script>
 
 <div
-  class={cn("flex flex-col w-full otop:pt-12", {
-    "border border-brs2 rounded-md": isFullPageContext,
-    "h-full": !isFullPageContext || (isFullPageContext && isFocusing)
-  })}
+  class={cn(
+    "flex flex-col cw:w-full cw:min-w-full w-[40rem] max-w-full overflow-auto",
+    {
+      "border border-brs2 rounded-md": isFullPageContext,
+      "cw:h-full h-[30rem]":
+        !isFullPageContext || (isFullPageContext && isFocusing)
+    }
+  )}
 >
+  {#if isPerformingSearchAction}
+    <div
+      class="h-fit min-h-fit flex gap-2 justify-between items-center cw:w-full cw:max-w-full w-fit max-w-60 cw:ml-0 ml-2 mt-2 bg-bgs2 cw:px-3 cw:py-2 pr-1 pl-3 cw:rounded-none rounded-md truncate"
+      in:fly={{ y: -10, easing: quadInOut, duration: 250 }}
+    >
+      <span class="truncate">
+        {@html renderMdAsHtml(componentParams?.label ?? searchAction.cmdLabel)}
+      </span>
+      {#if $view.isConstrainedWidth}
+        <Button icon="cross" tooltip="Close" on:click={close} />
+      {:else}
+        <Button
+          icon="backspace"
+          tooltip="Clear"
+          on:click={() => {
+            value = "";
+            resetContext();
+          }}
+        />
+      {/if}
+    </div>
+  {/if}
   <div
     class={cn(
-      "flex mo:flex-col w-full bg-bgs2 justify-between items-center mo:rounded-none rounded-t-md"
+      "flex mo:flex-col w-full bg-bgs1 justify-between items-center mo:rounded-none rounded-t-md"
     )}
   >
-    {#if isPerformingSearchAction}
-      <div
-        class="h-5/6 cw:w-full cw:flex cw:justify-between cw:max-w-full max-w-60 cw:ml-0 ml-2 bg-bgs3 flex items-center justify-center px-4 cw:rounded-none rounded-md truncate"
-      >
-        <span class="truncate">
-          {@html renderMdAsHtml(
-            componentParams?.label ?? searchAction.cmdLabel
-          )}
-        </span>
-        {#if $view.isConstrainedWidth}
-          <Button icon="cross" tooltip="Close" on:click={close} />
-        {/if}
-      </div>
-    {/if}
     <input
       bind:this={inputRef}
       type="text"
@@ -134,7 +154,7 @@
       on:focus={() => {
         isFocusing = true;
       }}
-      class="h-[3.6rem] mo:h-20 mo:w-full bg-transparent px-4 grow focus:border-none focus:outline-none text-h5"
+      class="h-[3.6rem] mo:h-20 mo:w-full bg-transparent px-4 grow focus:border-none focus:outline-none text-h5 transition-all duration-300"
       {placeholder}
     />
     {#if !$view.isConstrainedWidth && $context.embed !== Embed.HANDSET}
@@ -143,7 +163,7 @@
           class={cn(
             "px-2 flex justify-center items-center gap-2 rounded-md py-1 text-b3 text-fgs3 min-w-fit w-fit",
             {
-              "bg-bgs3": !(isFullPageContext && !isFocusing)
+              "bg-bgs2": !(isFullPageContext && !isFocusing)
             }
           )}
         >
@@ -204,14 +224,14 @@
         Press
         <ShortcutText
           shortcut={Action.CLOSE}
-          parentBgIndex={1}
+          parentBgIndex={2}
           isAlwaysShown={true}
         />
         to close
       </span>
       <ShortcutText
         shortcut={Action.CMD}
-        parentBgIndex={1}
+        parentBgIndex={2}
         isAlwaysShown={true}
       />
     </div>

@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import view from "$lib/client/stores/view.store";
+  import view from "@21n/stores/view.store";
   import appearance, {
     fallBackTypefaceString
-  } from "$lib/client/stores/appearance.store";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/stores/appearance.store";
+  import { cn } from "@21n/utils/ui.utils";
   import "@fontsource-variable/space-grotesk";
   import "@fontsource-variable/hanken-grotesk";
   import "@fontsource-variable/sen";
@@ -27,11 +27,13 @@
       "(prefers-color-scheme: dark)"
     );
     appearance.setSystemTheme(darkModeMediaQuery.matches);
-    darkModeMediaQuery.addEventListener("change", (e) => {
+    const onDarkModeChange = (e: MediaQueryListEvent) => {
       appearance.setSystemTheme(e.matches);
-    });
+    };
+    darkModeMediaQuery.addEventListener("change", onDarkModeChange);
     return () => {
       appearanceSub();
+      darkModeMediaQuery.removeEventListener("change", onDarkModeChange);
     };
   });
 

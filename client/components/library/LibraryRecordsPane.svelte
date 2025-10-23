@@ -1,62 +1,62 @@
 <script lang="ts">
-  import Records from "$lib/client/components/record/Records.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { Arrangement, Orientation } from "$lib/client/types/direction.enum";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
+  import Records from "@21n/components/record/Records.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { Arrangement, Orientation } from "@21n/types/direction.enum";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { appStore } from "@21n/stores/app.store";
   import {
     ResourceAccessMode,
     ResourceAccessPoint,
     ResourceAccessPointState,
     ResourceActionType
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import BulkEditBar from "$lib/client/components/record/BulkEditBar.svelte";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import BulkEditBar from "@21n/components/record/BulkEditBar.svelte";
   import {
     BulkEditor,
     SearchStore
-  } from "$lib/client/components/record/record.store";
+  } from "@21n/components/record/record.store";
 
-  import LibrarySearchBox from "$lib/client/components/library/LibrarySearchBox.svelte";
+  import LibrarySearchBox from "@21n/components/library/LibrarySearchBox.svelte";
   import {
     CollectionType,
     type ICollection
-  } from "$lib/client/components/collection/collection.type";
+  } from "@21n/components/collection/collection.type";
   import {
     NodeType,
     rootNodeTypeList,
     type INode
-  } from "$lib/client/products/memotron/node/node.type";
+  } from "@21n/products/memotron/node/node.type";
 
-  import { debouncer } from "$lib/client/utils/utils";
+  import { debouncer } from "@21n/utils/utils";
   import {
     PersistenceActionType,
     RemovalProperty,
     type IMutationParamsv2,
     type IResourceSelectOrderBy
-  } from "$lib/client/types/data.type";
-  import LibraryLoadingPulse from "$lib/client/components/library/LibraryLoadingPulse.svelte";
-  import view from "$lib/client/stores/view.store";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { intersection } from "$lib/client/actions/intersection.action";
-  import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import InlineSyncingFeedback from "$lib/client/elements/feedback/InlineSyncingFeedback.svelte";
-  import { enumToString } from "$lib/shared/utils/text.utils";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-  import { resolveMultiSelectStore } from "../flux/resourceStores/resource.store";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
+  } from "@21n/types/data.type";
+  import LibraryLoadingPulse from "@21n/components/library/LibraryLoadingPulse.svelte";
+  import view from "@21n/stores/view.store";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { intersection } from "@21n/actions/intersection.action";
+  import context from "@21n/stores/context.store";
+  import { Embed } from "@21n/types/context.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import InlineSyncingFeedback from "@21n/elements/feedback/InlineSyncingFeedback.svelte";
+  import { enumToString } from "@21n/shared-utils/text.utils";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
+  import { toasts } from "@21n/stores/notification.store";
+  import BottomFloat from "@21n/elements/BottomFloat.svelte";
   import { onDestroy, onMount, tick } from "svelte";
   import { page } from "$app/stores";
-  import InlineSearchBar from "$lib/client/elements/InlineSearchBar.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
-  import { UIState } from "$lib/client/stores/uiState/uiState.type";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
+  import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import { UIState } from "@21n/stores/uiState/uiState.type";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
   import { fade, fly } from "svelte/transition";
   import {
     availableResources,
@@ -64,20 +64,20 @@
     removeDuplicatesFilter,
     resourceAction,
     resourceCacheKey
-  } from "../flux/resourceStores/resource.utils";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { createEventDispatcher } from "svelte";
-  import TaskLibrary from "../tasks/TaskLibrary.svelte";
-  import LibrarySubTypeSwitcher from "./LibrarySubTypeSwitcher.svelte";
-  import type { SubType } from "./library.type";
-  import { isCustomLibrary } from "./library.utils";
-  import LinkTagsControlPanel from "$lib/client/products/memotron/linking/LinkTagsControlPanel.svelte";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { cache } from "$lib/client/layout/layers/cache/cache.store";
-  import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
-  import { dragSelection } from "$lib/client/actions/dragSelection.action";
+  import TaskLibrary from "@21n/components/tasks/TaskLibrary.svelte";
+  import LibrarySubTypeSwitcher from "@21n/components/library/LibrarySubTypeSwitcher.svelte";
+  import type { SubType } from "@21n/components/library/library.type";
+  import { isCustomLibrary } from "@21n/components/library/library.utils";
+  import LinkTagsControlPanel from "@21n/products/memotron/linking/LinkTagsControlPanel.svelte";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { cache } from "@21n/layout/layers/cache/cache.store";
+  import { CacheKey } from "@21n/layout/layers/cache/cache.type";
+  import { dragSelection } from "@21n/actions/dragSelection.action";
   const dispatch = createEventDispatcher();
 
   enum CacheSubKey {
@@ -157,6 +157,9 @@
     if (abortController) {
       abortController.abort();
       abortController = null;
+    }
+    if (refreshResetTimeout) {
+      clearTimeout(refreshResetTimeout);
     }
   });
 
@@ -615,7 +618,7 @@
     />
   {/if}
   <div
-    class="flex flex-col gap-4 px-4 overflow-auto grow"
+    class="flex flex-col gap-4 px-4 overflow-auto-scrollbar grow"
     id="records-container"
   >
     <InlineSyncingFeedback {resource} />

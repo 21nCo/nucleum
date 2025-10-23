@@ -1,14 +1,14 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import Divider from "../../Divider.svelte";
-  import Icon from "../../Icon.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
   import dayjs from "dayjs";
   import "dayjs/locale/en";
-  import { Size } from "../../../types/size.enum";
-  import { TimeScale } from "../../../types/time.type";
-  import Button from "../../button/Button.svelte";
-  import { abg, bg, cn } from "$lib/client/utils/ui.utils";
-  import { isSameDay } from "$lib/client/utils/time.utils";
+  import { Size } from "@21n/types/size.enum";
+  import { TimeScale } from "@21n/types/time.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { abg, bg, cn } from "@21n/utils/ui.utils";
+  import { isSameDay } from "@21n/utils/time.utils";
   const dispatch = createEventDispatcher();
   // let decadeMode  = false; // true: show decade
   export let scale: TimeScale.DAYS | TimeScale.MONTHS | TimeScale.YEARS =
@@ -362,7 +362,7 @@
   >
     <div class="flex items-center w-full justify-between text-b2">
       <div class="flex gap-1 items-center">
-        <Button icon="chevleft" on:click={previousDecade} size={Size.sm} />
+        <Button icon="chevron-left" on:click={previousDecade} size={Size.sm} />
 
         <div class="flex justify-between">
           <!-- <button on:click={previousDecade} class="focus:outline-none"
@@ -387,7 +387,7 @@
               (selectedDecade + 20).toString().slice(2)}</button
           > -->
         </div>
-        <Button icon="chevright" on:click={nextDecade} size={Size.sm} />
+        <Button icon="chevron-right" on:click={nextDecade} size={Size.sm} />
       </div>
       {#if !isSameDay(selectedDate, new Date())}
         <Button
@@ -404,7 +404,7 @@
     {#if monthMode || dayMode}
       <div class="w-full flex items-center justify-between text-b3">
         <Button
-          icon="chevleft"
+          icon="chevron-left"
           on:click={() => previousYear(2)}
           size={Size.sm}
         />
@@ -474,7 +474,11 @@
             >
           {/each}
         </div>
-        <Button icon="chevright" on:click={() => nextYear(2)} size={Size.sm} />
+        <Button
+          icon="chevron-right"
+          on:click={() => nextYear(2)}
+          size={Size.sm}
+        />
       </div>
     {/if}
 
@@ -486,7 +490,7 @@
           }}
           aria-label="calendar backward"
         >
-          <Icon icon="chevleft" />
+          <Icon icon="chevron-left" />
         </button> -->
         <div
           class="px-2 w-full flex items-center justify-evenly gap-3 flex-wrap"
@@ -518,7 +522,7 @@
           }}
           aria-label="calendar forward"
         >
-          <Icon icon="chevright" />
+          <Icon icon="chevron-right" />
         </button> -->
       </div>
       <div class="flex w-full justify-center">
@@ -724,7 +728,7 @@
             {#if startSelected}
               {startString}<button
                 ><Icon
-                  icon="cross-circled"
+                  icon="ph:x-circle-light"
                   size={Size.xs}
                   class="stroke-ars1"
                   on:click={() => reset(true, false)}
@@ -747,7 +751,7 @@
             {#if endSelected}
               {endString}<button
                 ><Icon
-                  icon="cross-circled"
+                  icon="ph:x-circle-light"
                   size={Size.xs}
                   class="stroke-ars1"
                   on:click={() => reset(false, true)}

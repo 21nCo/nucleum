@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { TimeScaleUnit } from "$lib/client/types/time.type";
-  import CalendarOverviewPanelPointron from "./CalendarOverviewPanelPointron.svelte";
-  import MemoryOverviewForTimePeriod from "./MemoryOverviewForTimePeriod.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { TimeScaleUnit } from "@21n/types/time.type";
+  import CalendarOverviewPanelPointron from "@21n/components/calendar/column/overview/CalendarOverviewPanelPointron.svelte";
+  import MemoryOverviewForTimePeriod from "@21n/components/calendar/column/overview/MemoryOverviewForTimePeriod.svelte";
 
   export let date: Date;
   export let scale: TimeScaleUnit = TimeScaleUnit.DAY;

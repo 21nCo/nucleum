@@ -1,5 +1,5 @@
 <script>
-  import Bootstrap from "$lib/client/components/settings/account/Bootstrap.svelte";
+  import Bootstrap from "@21n/components/settings/account/Bootstrap.svelte";
 </script>
 
 <Bootstrap />

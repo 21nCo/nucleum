@@ -1,24 +1,34 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { toasts } from "$lib/client/stores/notification.store";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { Orientation, Placement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import LinkItems from "../../common/linkbox/LinkItems.svelte";
-  import LinkSearch from "../../common/linkbox/LinkSearch.svelte";
-  import type { IActiveNodeStore } from "../node.store";
-  import { resolveNodeContentLabel, resolveNodeIcon } from "../node.utils";
-  import { resourceInList } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { popover, tooltip } from "$lib/client/actions/popover.action";
-  import { headingNodeTypes, NodeType } from "../node.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { ResourceError } from "$lib/client/components/error/errors";
-  import { ResourceErrorCode } from "$lib/client/components/error/error.type";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { toasts } from "@21n/stores/notification.store";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import { Orientation, Placement } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import LinkItems from "@21n/products/memotron/common/linkbox/LinkItems.svelte";
+  import LinkSearch from "@21n/products/memotron/common/linkbox/LinkSearch.svelte";
+  import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import { resolveNodeContentLabel, resolveNodeIcon } from "@21n/products/memotron/node/node.utils";
+  import {
+    resourceAction,
+    resourceInList
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { popover, tooltip } from "@21n/actions/popover.action";
+  import { headingNodeTypes, NodeType } from "@21n/products/memotron/node/node.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { ResourceError } from "@21n/components/error/errors";
+  import { ResourceErrorCode } from "@21n/components/error/error.type";
+  import {
+    ResourceAccessPoint,
+    ResourceActionType
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import view from "@21n/stores/view.store";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import { resolveProductConfig } from "@21n/products/product.config";
+  import { Action } from "@21n/types/action.enum";
 
   export let node: IActiveNodeStore;
   export let isReadOnlyMode: boolean = false;
@@ -72,10 +82,14 @@
       class="flex items-center gap-2 h-full border border-bgs4 hover:border-fgs3 rounded-full px-2 py-0.5 text-b2 whitespace-nowrap bg-bgs2 text-fgs1"
       on:click={() => {
         appStore.closeResource();
-        appStore.gotoPath("/library", {
+        const path = $view.isPortrait
+          ? resourceAction(Resource.node, ResourceActionType.BROWSE)
+          : Action.LIBRARY;
+        appStore.gotoPath(`/${path}`, {
           queryParams: {
             resource: Resource.node,
-            type: $node.contentType.toLowerCase()
+            type: $node.contentType.toLowerCase(),
+            [AppSearchParam.RETURN_TO]: resolveProductConfig().homePathPt
           }
         });
       }}

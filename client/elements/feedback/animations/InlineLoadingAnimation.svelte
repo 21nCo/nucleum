@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  export let variant: "accent-background" | "bg-background" =
+  export let variant: "accent-background" | "bg-background" | "accent" =
     "accent-background";
   let cssRoot: any;
   let divParent: any;
@@ -9,7 +9,12 @@
   let squareML: any;
   let circleMT: any;
   let ranOnce: boolean = false;
-  $: circleFill = variant === "accent-background" ? "fill-abg" : "fill-fgs1";
+  $: circleFill =
+    variant === "accent"
+      ? "fill-aps1"
+      : variant === "accent-background"
+        ? "fill-abg"
+        : "fill-fgs1";
   $: squareBorder =
     variant === "accent-background" ? "border-abg" : "border-fg1";
   onMount(() => {

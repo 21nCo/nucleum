@@ -1,8 +1,8 @@
 <script lang="ts">
-  import InlineInfoBanner from "$lib/client/elements/text/InlineInfoBanner.svelte";
-  import { InfoTextType } from "$lib/client/types/text.type";
-  import { formatDatetime } from "$lib/client/utils/time.utils";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
+  import { InfoTextType } from "@21n/types/text.type";
+  import { formatDatetime } from "@21n/utils/time.utils";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let deletedAt: string;

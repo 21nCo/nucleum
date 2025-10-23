@@ -12,25 +12,25 @@
     BarStyle,
     PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
+  } from "@21n/types/switcher.enum";
   import { createEventDispatcher, onMount } from "svelte";
-  import PanelSwitcherItem from "./PanelSwitcherItem.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { bg, cn, emptyTranstition } from "$lib/client/utils/ui.utils";
+  import PanelSwitcherItem from "@21n/elements/switcher/PanelSwitcherItem.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { bg, cn, emptyTranstition } from "@21n/utils/ui.utils";
   import type {
     ISelectItem,
     ISelectValue
-  } from "$lib/client/types/select.type";
+  } from "@21n/types/select.type";
   import { fly } from "svelte/transition";
-  import { moveItemInArray } from "$lib/shared/utils/obj.utils";
-  import view from "$lib/client/stores/view.store";
-  import DropDown from "../dropdown/DropDown.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { isTextElement } from "$lib/client/utils/browser.utils";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import Icon from "../Icon.svelte";
-  import TrainPanelSwitcher from "./train/TrainPanelSwitcher.svelte";
-  import { KeyboardKey } from "$lib/client/types/keyboard.type";
+  import { moveItemInArray } from "@21n/shared-utils/obj.utils";
+  import view from "@21n/stores/view.store";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import { isTextElement } from "@21n/utils/browser.utils";
+  import { logger } from "@21n/components/debug/logger.client";
+  import Icon from "@21n/elements/Icon.svelte";
+  import TrainPanelSwitcher from "@21n/elements/switcher/train/TrainPanelSwitcher.svelte";
+  import { KeyboardKey } from "@21n/types/keyboard.type";
   const dispatch = createEventDispatcher();
 
   const PANEL_SWITCHER_ATTR = "data-panel-switcher-id";
@@ -276,12 +276,9 @@
 <svelte:document
   on:keydown={(event) => {
     try {
-      if (isPreventTabShortcut || event.key !== KeyboardKey.TAB) return;
-      if (!isTopmostPanelSwitcher()) return;
-      const isMetaShiftCombination = event.metaKey && event.shiftKey;
-      const isTextInputSource = isTextElement(event.target);
-      if (isTextInputSource && !isMetaShiftCombination) return;
-      const isBackward = event.shiftKey;
+      if (isPreventTabShortcut || ![KeyboardKey.ARROW_LEFT, KeyboardKey.ARROW_RIGHT].includes(event.key)) return;
+      if (!isTopmostPanelSwitcher() || isTextElement(event.target)) return;;
+      const isBackward = event.key === KeyboardKey.ARROW_LEFT;
       event.preventDefault();
       event.stopPropagation();
       const dispatchSwitch = (val) => {

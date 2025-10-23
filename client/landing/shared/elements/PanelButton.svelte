@@ -1,11 +1,11 @@
 <script lang="ts">
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import view from "$lib/client/stores/view.store";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { PanelName } from "../landing.type";
-  import DayAndNightToggle from "../DayAndNightToggle.svelte";
-  import { hoverable } from "$lib/client/actions/hover.action";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import view from "@21n/stores/view.store";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { PanelName } from "@21n/landing/shared/landing.type";
+  import DayAndNightToggle from "@21n/landing/shared/DayAndNightToggle.svelte";
+  import { hoverable } from "@21n/actions/hover.action";
   export let label: string;
   export let description: string;
   export let icon: string;

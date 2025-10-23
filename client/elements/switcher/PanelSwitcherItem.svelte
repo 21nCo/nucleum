@@ -1,17 +1,17 @@
 <script lang="ts">
-  import view from "$lib/client/stores/view.store";
-  import { Size } from "$lib/client/types/size.enum";
+  import view from "@21n/stores/view.store";
+  import { Size } from "@21n/types/size.enum";
   import {
     BarStyle,
     PanelSwitcherStyle,
     type PanelSwitcherEditModeOptions
-  } from "$lib/client/types/switcher.enum";
+  } from "@21n/types/switcher.enum";
   import { createEventDispatcher } from "svelte";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
-  import type { ISelectItem } from "$lib/client/types/select.type";
-  import PanelSwitcherItemLabel from "./PanelSwitcherItemLabel.svelte";
-  import { rearrangeOnAxis } from "$lib/client/actions/rearrange.action";
-  import { scrollIntoViewOnFocus } from "$lib/client/actions/scroll.action";
+  import { bg, cn } from "@21n/utils/ui.utils";
+  import type { ISelectItem } from "@21n/types/select.type";
+  import PanelSwitcherItemLabel from "@21n/elements/switcher/PanelSwitcherItemLabel.svelte";
+  import { rearrangeOnAxis } from "@21n/actions/rearrange.action";
+  import { scrollIntoViewOnFocus } from "@21n/actions/scroll.action";
   const dispatch = createEventDispatcher();
   export let item: ISelectItem;
   export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;

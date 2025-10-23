@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
-  import { mdToolbar, simpleToolbar } from "./keyboardToolbar.action";
-  import { cn } from "../../utils/ui.utils";
+  import { mdToolbar, simpleToolbar } from "@21n/elements/keyboardToolbar/keyboardToolbar.action";
+  import { cn } from "@21n/utils/ui.utils";
   import { fly } from "svelte/transition";
   let classList: string = "";
   export { classList as class };

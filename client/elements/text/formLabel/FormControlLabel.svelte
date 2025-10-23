@@ -1,9 +1,9 @@
 <script lang="ts">
-  import type { InputLabel } from "$lib/client/types/input.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Badge from "../Badge.svelte";
-  import FormLabelTooltip from "./FormLabelTooltip.svelte";
+  import type { InputLabel } from "@21n/types/input.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
   export let props: InputLabel;
   export let forId: string = "";
   export let isCursorPointer: boolean = false;

@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonVariant } from "@21n/types/button.type";
   import { createEventDispatcher } from "svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import { TimeScaleUnit } from "$lib/client/types/time.type";
-  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import { TimeScaleUnit } from "@21n/types/time.type";
+  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
 
   const dispatch = createEventDispatcher();
 

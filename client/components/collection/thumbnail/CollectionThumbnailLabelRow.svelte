@@ -2,14 +2,14 @@
   import {
     ResourceAccessPoint,
     ResourceAccessPointState
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Arrangement } from "$lib/client/types/direction.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { type ICollectionThumb } from "../collection.type";
-  import CollectionThumbnailLabel from "./CollectionThumbnailLabel.svelte";
-  import CollectionNodeCount from "../counts/CollectionItemCount.svelte";
-  import RecordStarStatusFeedback from "../../record/RecordStarStatusFeedback.svelte";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Arrangement } from "@21n/types/direction.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { type ICollectionThumb } from "@21n/components/collection/collection.type";
+  import CollectionThumbnailLabel from "@21n/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
+  import CollectionNodeCount from "@21n/components/collection/counts/CollectionItemCount.svelte";
+  import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
   export let item: ICollectionThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
@@ -25,7 +25,7 @@
   })}
 >
   <div
-    class={cn({
+    class={cn("text-b2",{
       "flex items-center gap-3 min-w-0": arrangement === Arrangement.LIST,
       "flex w-full justify-between":
         arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY

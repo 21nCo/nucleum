@@ -1,44 +1,44 @@
 <script lang="ts">
-  import CalendarHeader from "./CalendarHeader.svelte";
-  import MonthView from "./MonthView.svelte";
-  import WeekView from "./WeekView.svelte";
-  import YearView from "./YearView.svelte";
-  import CalendarLayoutView from "../CalendarLayout.svelte";
-  import view from "$lib/client/stores/view.store";
-  import CalendarColumn from "../column/CalendarColumn.svelte";
-  import { TimeScaleUnit } from "$lib/client/types/time.type";
-  import { uiState } from "$lib/client/stores/uiState/uiState.store";
+  import CalendarHeader from "@21n/components/calendar/classic/CalendarHeader.svelte";
+  import MonthView from "@21n/components/calendar/classic/MonthView.svelte";
+  import WeekView from "@21n/components/calendar/classic/WeekView.svelte";
+  import YearView from "@21n/components/calendar/classic/YearView.svelte";
+  import CalendarLayoutView from "@21n/components/calendar/CalendarLayout.svelte";
+  import view from "@21n/stores/view.store";
+  import CalendarColumn from "@21n/components/calendar/column/CalendarColumn.svelte";
+  import { TimeScaleUnit } from "@21n/types/time.type";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
   import {
     UIState,
     UIStateScope
-  } from "$lib/client/stores/uiState/uiState.type";
+  } from "@21n/stores/uiState/uiState.type";
   import {
     CalendarLayout,
     type ICalendarIndicatorData
-  } from "../calendar.type";
-  import { resizable } from "$lib/client/actions/resize.action";
-  import { debouncer } from "$lib/client/utils/utils";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/components/calendar/calendar.type";
+  import { resizable } from "@21n/actions/resize.action";
+  import { debouncer } from "@21n/utils/utils";
+  import { cn } from "@21n/utils/ui.utils";
   import {
     MetaResource,
     Resource
-  } from "../../flux/resourceStores/resource.enum";
-  import { SearchStore } from "../../record/record.store";
-  import { compareObjects } from "$lib/shared/utils/obj.utils";
-  import { tzStore } from "$lib/client/components/settings/timezone/tz.store";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { Product } from "$lib/client/products/product.type";
-  import { NodeMetaType } from "$lib/client/products/memotron/node/node.type";
-  import { cache } from "$lib/client/layout/layers/cache/cache.store";
-  import { CacheKey } from "$lib/client/layout/layers/cache/cache.type";
-  import MemotronTempCalendarColumn from "../column/MemotronTempCalendarColumn.svelte";
-  import ComponentBaseLayer from "$lib/client/layout/layers/ComponentBaseLayer.svelte";
-  import ClassicCalendarHeaderLeftOptions from "./ClassicCalendarHeaderLeftOptions.svelte";
+  } from "@21n/components/flux/resourceStores/resource.enum";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { compareObjects } from "@21n/shared-utils/obj.utils";
+  import { tzStore } from "@21n/components/settings/timezone/tz.store";
+  import { appStore } from "@21n/stores/app.store";
+  import { Product } from "@21n/products/product.type";
+  import { NodeMetaType } from "@21n/products/memotron/node/node.type";
+  import { cache } from "@21n/layout/layers/cache/cache.store";
+  import { CacheKey } from "@21n/layout/layers/cache/cache.type";
+  import MemotronTempCalendarColumn from "@21n/components/calendar/column/MemotronTempCalendarColumn.svelte";
+  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import ClassicCalendarHeaderLeftOptions from "@21n/components/calendar/classic/ClassicCalendarHeaderLeftOptions.svelte";
   import { onMount } from "svelte";
-  import { Display } from "$lib/client/types/view.type";
-  import { logger } from "../../debug/logger.client";
-  import { RemovalProperty } from "$lib/client/types/data.type";
-  import YearViewV2 from "./YearViewV2.svelte";
+  import { Display } from "@21n/types/view.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { RemovalProperty } from "@21n/types/data.type";
+  import YearViewV2 from "@21n/components/calendar/classic/YearViewV2.svelte";
   export let panel: CalendarLayout = CalendarLayout.Classic;
 
   let selectedDate = new Date();
@@ -352,7 +352,10 @@
           {indicatorData}
           {indicatorRefreshId}
           on:monthChange={handleMonthChange}
-          on:dateChange={onDateChange}
+          on:dateChange={(e) => {
+            selectedScale = TimeScaleUnit.DAY;
+            onDateChange();
+          }}
         />
       {:else if selectedView === TimeScaleUnit.WEEK}
         <WeekView

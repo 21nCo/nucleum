@@ -1,11 +1,11 @@
 <script lang="ts">
-  import CheckboxInput from "$lib/client/elements/toggle/CheckboxInput.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { type IProperty, PropertyType } from "../property.type";
-  import EndText from "./EndText.svelte";
-  import RatingPropertyConfig from "../ratingProperty/config/RatingPropertyConfig.svelte";
-  import SelectPropertyConfig from "./selectProperty/SelectPropertyConfig.svelte";
-  import UniversalPropertyConfig from "./universalProperty/UniversalPropertyConfig.svelte";
+  import CheckboxInput from "@21n/elements/toggle/CheckboxInput.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { type IProperty, PropertyType } from "@21n/components/collection/properties/property.type";
+  import EndText from "@21n/components/collection/properties/propertyConfig/EndText.svelte";
+  import RatingPropertyConfig from "@21n/components/collection/properties/ratingProperty/config/RatingPropertyConfig.svelte";
+  import SelectPropertyConfig from "@21n/components/collection/properties/propertyConfig/selectProperty/SelectPropertyConfig.svelte";
+  import UniversalPropertyConfig from "@21n/components/collection/properties/propertyConfig/universalProperty/UniversalPropertyConfig.svelte";
   export let row: IProperty;
   let dev_isEnableDefaultSelection: boolean = false;
   let isPopoverOpen: boolean = false;

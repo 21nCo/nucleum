@@ -1,45 +1,45 @@
 <script lang="ts">
-  import Modal from "$lib/client/components/modal/Modal.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
+  import Modal from "@21n/components/modal/Modal.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import view from "@21n/stores/view.store";
   import modalEvent, {
     fullScreen,
     player
-  } from "$lib/client/components/modal/modal.store";
+  } from "@21n/components/modal/modal.store";
   import {
     toasts,
     confirmationNotification,
     fullPageLoadingScreen,
     appEvents
-  } from "$lib/client/stores/notification.store";
-  import { Size } from "$lib/client/types/size.enum";
+  } from "@21n/stores/notification.store";
+  import { Size } from "@21n/types/size.enum";
   import { fly, slide } from "svelte/transition";
-  import ComponentResolver from "../paint/ComponentResolver.svelte";
+  import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
   import { onMount } from "svelte";
-  import type { ModalEvent, ModalParams } from "$lib/client/types/popup.type";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
-  import type { IEvent } from "$lib/client/types/event.type";
-  import { postDataToParent } from "$lib/client/utils/embed.utils";
-  import ToastNotification from "$lib/client/elements/feedback/ToastNotification.svelte";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import ModalLayout from "$lib/client/components/modal/ModalLayout.svelte";
-  import PageLoadingAnimation from "$lib/client/elements/feedback/animations/PageLoadingAnimation.svelte";
-  import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
+  import type { ModalEvent, ModalParams } from "@21n/types/popup.type";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import type { IEvent } from "@21n/types/event.type";
+  import { postDataToParent } from "@21n/utils/embed.utils";
+  import ToastNotification from "@21n/elements/feedback/ToastNotification.svelte";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import ModalLayout from "@21n/components/modal/ModalLayout.svelte";
+  import PageLoadingAnimation from "@21n/elements/feedback/animations/PageLoadingAnimation.svelte";
+  import context from "@21n/stores/context.store";
+  import { Embed } from "@21n/types/context.type";
   import { page } from "$app/stores";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import SplitView from "../SplitView.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import ColorLayer from "./themeLayer/ColorLayer.svelte";
-  import { Action } from "$lib/client/types/action.enum";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-  import { AlertType } from "$lib/client/types/notification.type";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import Code from "$lib/client/icons/Code.svelte";
-  import ConfirmationNotification from "$lib/client/components/notifications/ConfirmationNotification.svelte";
-  import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import SplitView from "@21n/layout/SplitView.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import ColorLayer from "@21n/layout/layers/themeLayer/ColorLayer.svelte";
+  import { Action } from "@21n/types/action.enum";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { cn } from "@21n/utils/ui.utils";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
+  import { AlertType } from "@21n/types/notification.type";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import Code from "@21n/icons/Code.svelte";
+  import ConfirmationNotification from "@21n/components/notifications/ConfirmationNotification.svelte";
+  import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
   let isShowAppearancePreview: boolean = false;
@@ -306,6 +306,7 @@
     isDynamicSize={modal.layout?.isDynamicSize}
     orientation={modal.layout?.orientation ?? Orientation.Vertical}
     isOnRight={modal?.isOnRight}
+    alignment={modal.layout?.alignment}
     hasCantileverButtons={modal.layout?.isShowCantileverClose ||
       modal.layout?.isShowBackButton}
   >
@@ -332,7 +333,8 @@
         title: $confirmationNotification.title,
         layout: {
           size: $confirmationNotification.size ?? Size.xs,
-          orientation: Orientation.Horizontal
+          orientation: Orientation.Horizontal,
+          isOveriddenFooter: true
         }
       }}
     >

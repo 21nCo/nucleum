@@ -1,9 +1,9 @@
 <script lang="ts">
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import view from "$lib/client/stores/view.store";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import view from "@21n/stores/view.store";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
   import { createEventDispatcher } from "svelte";
 
   //   export let isLastStep = false;
@@ -28,7 +28,7 @@
 <div class="flex justify-between w-full">
   {#if currentStep > 0}
     {#if $view.isPortrait}
-      <Icon on:click={handleBack} icon="chevleft" />
+      <Icon on:click={handleBack} icon="chevron-left" />
     {:else}
       <Button size={Size.sm} on:click={handleBack} icon="back-sm">Back</Button>
     {/if}

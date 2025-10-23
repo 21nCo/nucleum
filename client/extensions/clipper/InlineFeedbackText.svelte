@@ -1,11 +1,11 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
   import {
     AlertType,
     type IInlineStatus
-  } from "$lib/client/types/notification.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
+  } from "@21n/types/notification.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
 
   export let feedback: IInlineStatus | string | undefined = undefined;
   export let isRenderEmptyHeight = false;

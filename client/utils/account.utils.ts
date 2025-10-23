@@ -1,22 +1,22 @@
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { logger } from "../components/debug/logger.client";
-import { ClientStorageKey } from "../persistence/persistence.type";
-import { goto, isExtensionEnvironment } from "./browser.utils";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { logger } from "@21n/components/debug/logger.client";
+import { ClientStorageKey } from "@21n/persistence/persistence.type";
+import { goto, isExtensionEnvironment } from "@21n/utils/browser.utils";
 import {
   clientStorage,
   retrieveLocally
-} from "../persistence/persistence.utils";
-import { postDataToParent } from "./embed.utils";
-import { LicenseType, type IUserPlan } from "../types/account.type";
+} from "@21n/persistence/persistence.utils";
+import { postDataToParent } from "@21n/utils/embed.utils";
+import { LicenseType, type IUserPlan } from "@21n/types/account.type";
 import jwt_decode from "jwt-decode";
 import {
   BillingCycle,
   PlanType
-} from "../components/subscription/userPlan.type";
-import { parseAndFormatDate } from "./time.utils";
-import { enumToString } from "$lib/shared/utils/text.utils";
-import { EmbedDataMessage } from "../types/embedMessage.enum";
-import { parse } from "$lib/shared/utils/json.utils";
+} from "@21n/components/subscription/userPlan.type";
+import { parseAndFormatDate } from "@21n/utils/time.utils";
+import { enumToString } from "@21n/shared-utils/text.utils";
+import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
+import { parse } from "@21n/shared-utils/json.utils";
 
 export function getBucketNameandKey(url: string) {
   const urlParts = url.split("/");

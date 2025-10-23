@@ -6,7 +6,7 @@ import {
   type IListBlockBody,
   type IBlockBody,
   InlineType
-} from "$lib/client/components/markdown/md.type";
+} from "@21n/components/markdown/md.type";
 import {
   type INode,
   type IActiveNode,
@@ -14,8 +14,8 @@ import {
   simpleTextNodeTypeList,
   headingNodeTypes,
   type INodeStructure
-} from "$lib/client/products/memotron/node/node.type";
-import { generateRandomIdv2 } from "$lib/shared/utils/crypto.utils";
+} from "@21n/products/memotron/node/node.type";
+import { generateRandomIdv2 } from "@21n/shared-utils/crypto.utils";
 
 /**
  * Recursively extracts all children of a node and its children. Useful for converting a nested structure of node into a flat array.
@@ -140,13 +140,6 @@ export const inlineStylingPatterns = [
       "`",
       "<span class='bg-aps2 px-0.5 text-b2 font-mono'>$1</span>"
     )
-  },
-  {
-    regex: /\#([^\#]+)\#(?!#)/g,
-    replacement: encapsulateInlinePattern(
-      "#",
-      "<span class='bg-aps2 rounded-sm'>$1</span>"
-    )
   }
   // {
   //   regex: /#\[((?:\S|\s\S)+?)\]\(([^)]+?)\)/g,
@@ -179,7 +172,25 @@ export const symbolPatterns = [
 ];
 
 /**
- * Renders markdown as html. It replaces symbols, inline styles and spaces with html entities.
+ * Escapes HTML characters to prevent XSS attacks
+ * @param text Text to escape
+ * @returns Escaped text
+ */
+function escapeHtml(text: string): string {
+  const htmlEscapes: Record<string, string> = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#x27;",
+    "/": "&#x2F;"
+  };
+  return text.replace(/[&<>"'\/]/g, (match) => htmlEscapes[match] || match);
+}
+
+/**
+ * Renders markdown as html with proper sanitization. It replaces symbols, inline styles and spaces with html entities.
+ * All user content is escaped to prevent XSS attacks.
  *
  * In cases of search results, where parts of the text are highlighted, plain text spaces are not rendered correctly. To avoid this, spaces are rendered as &nbsp; when isIncludeSpaces is true.
  *
@@ -191,11 +202,58 @@ export function renderMdAsHtml(
   text: string,
   params?: {
     isIncludeSpaces?: boolean;
+    isPageRender?: boolean;
   }
 ) {
   let parsedText = text;
   parsedText = replaceSymbolPatterns(parsedText);
   parsedText = replaceInlineStylePatterns(parsedText);
+
+  // Escape HTML in heading content to prevent XSS
+  parsedText = parsedText.replace(
+    /^#### (.*)$/gm,
+    (match, content) => `<h4 class="text-h4">${escapeHtml(content)}</h4>`
+  );
+  parsedText = parsedText.replace(
+    /^### (.*)$/gm,
+    (match, content) =>
+      `<h3 class="${params?.isPageRender ? "text-h3" : "text-h4"}">${escapeHtml(content)}</h3>`
+  );
+  parsedText = parsedText.replace(
+    /^## (.*)$/gm,
+    (match, content) =>
+      `<h2 class="${params?.isPageRender ? "text-h2" : "text-h4"}">${escapeHtml(content)}</h2>`
+  );
+  parsedText = parsedText.replace(
+    /^# (.*)$/gm,
+    (match, content) =>
+      `<h1 class="${params?.isPageRender ? "text-h1" : "text-h4"}">${escapeHtml(content)}</h1>`
+  );
+
+  parsedText = parsedText.replace(
+    /^> (.*)$/gm,
+    (match, content) => `<blockquote>${escapeHtml(content)}</blockquote>`
+  );
+
+  parsedText = parsedText.replace(/^---\s*$/gm, "<hr>");
+  parsedText = parsedText.replace(/^===\s*$/gm, "<hr>");
+
+  parsedText = parsedText.replace(
+    /((^|\n)\s*[-*] .*(\n\s*[-*] .*)*)/gm,
+    function (match: string) {
+      const items = match
+        .split(/\n/)
+        .filter((line: string) => /^\s*[-*] /.test(line));
+      if (items.length === 0) return match;
+      const lis = items
+        .map(
+          (line: string) =>
+            `<li class="md-list-item">${line.replace(/^\s*[-*] /, "")}</li>`
+        )
+        .join("");
+      return `<ul>${lis}</ul>`;
+    }
+  );
   parsedText = parsedText.replace(/\n/g, "<br>");
   parsedText = replaceInlineLinkPatterns(parsedText);
   // parsedText = parsedText.replace(
@@ -790,6 +848,8 @@ export function resolveDefaultBodyForBlock(
     case NodeType.CODE:
     case NodeType.CALLOUT:
       return { text };
+    case NodeType.SIMPLE_TEXT:
+      return text;
     default:
       return { text };
   }

@@ -3,13 +3,13 @@ import {
   NodeType,
   rootNodeTypeList,
   type INode
-} from "$lib/client/products/memotron/node/node.type";
+} from "@21n/products/memotron/node/node.type";
 import {
   activeResourceFilter,
   activeResourceFilterV2
-} from "$lib/client/utils/utils";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { isValidString } from "$lib/shared/utils/text.utils";
+} from "@21n/utils/utils";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { isValidString } from "@21n/shared-utils/text.utils";
 import {
   SearchType,
   type IRecordId,
@@ -17,48 +17,48 @@ import {
   type IResourceSelectOrderBy,
   type IResourceSelectParams,
   type IResourceSelectProperties
-} from "$lib/client/types/data.type";
-import { flux } from "$lib/client/components/flux/flux";
-import { logger } from "$lib/client/components/debug/logger.client";
+} from "@21n/types/data.type";
+import { flux } from "@21n/components/flux/flux";
+import { logger } from "@21n/components/debug/logger.client";
 import {
   isValidArray,
   isValidArrayWithData
-} from "$lib/shared/utils/obj.utils";
-import { toasts } from "$lib/client/stores/notification.store";
-import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
-import { FluxMethod } from "$lib/client/components/flux/flux.type";
-import type { CollectionType } from "$lib/client/components/collection/collection.type";
-import { collectionStore } from "$lib/client/components/collection/collection.store";
-import { nodeStore } from "$lib/client/products/memotron/node/node.store";
+} from "@21n/shared-utils/obj.utils";
+import { toasts } from "@21n/stores/notification.store";
+import { extensionFlux } from "@21n/components/flux/fluxExtentionMediator";
+import { FluxMethod } from "@21n/components/flux/flux.type";
+import type { CollectionType } from "@21n/components/collection/collection.type";
+import { collectionStore } from "@21n/components/collection/collection.store";
+import { nodeStore } from "@21n/products/memotron/node/node.store";
 import type {
   MultiSelectStore,
   ResourceStore
-} from "$lib/client/components/flux/resourceStores/resource.store";
-import { appStore } from "$lib/client/stores/app.store";
-import { linker } from "$lib/client/products/memotron/linking/link.store";
+} from "@21n/components/flux/resourceStores/resource.store";
+import { appStore } from "@21n/stores/app.store";
+import { linker } from "@21n/products/memotron/linking/link.store";
 import {
   highlightSearchQuery,
   searchSort
-} from "$lib/client/products/memotron/memotron.utils";
+} from "@21n/products/memotron/memotron.utils";
 import {
   determineResourceType,
   isSameResource,
   removeDuplicatesFilter,
   resolveProductResources,
   resourceInList
-} from "$lib/client/components/flux/resourceStores/resource.utils";
-import { recentsStore } from "./recent.store";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { recentsStore } from "@21n/components/record/recent.store";
 import { get } from "svelte/store";
-import { resolveCollectionResource } from "../collection/collection.utils";
-import { goalStore } from "../goals/goal.store";
-import { Action } from "$lib/client/types/action.enum";
-import { taskStore } from "../tasks/task.store";
-import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
-import { resolveResourceStore } from "../flux/resourceStores/store.resolver";
-import { clientStorage } from "$lib/client/persistence/persistence.utils";
-import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
-import { parse } from "$lib/shared/utils/json.utils";
-import { contentTypeSort } from "$lib/client/products/memotron/node/node.utils";
+import { resolveCollectionResource } from "@21n/components/collection/collection.utils";
+import { goalStore } from "@21n/components/goals/goal.store";
+import { Action } from "@21n/types/action.enum";
+import { taskStore } from "@21n/components/tasks/task.store";
+import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
+import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
+import { clientStorage } from "@21n/persistence/persistence.utils";
+import { ClientStorageKey } from "@21n/persistence/persistence.type";
+import { parse } from "@21n/shared-utils/json.utils";
+import { contentTypeSort } from "@21n/products/memotron/node/node.utils";
 
 const resolveSearchPriority = (item: any) => {
   if (isValidString(item?.labelSearch)) return 0;

@@ -1,23 +1,23 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import account from "$lib/client/stores/account.store";
-  import { PlanType, BillingCycle } from "./userPlan.type";
-  import { Action } from "$lib/client/types/action.enum";
+  import account from "@21n/stores/account.store";
+  import { PlanType, BillingCycle } from "@21n/components/subscription/userPlan.type";
+  import { Action } from "@21n/types/action.enum";
   import { goto } from "$app/navigation";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { ButtonVariant } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
   import {
     resolveNextRenewalDate,
     resolvePlanLabel,
     SUBSCRIPTION_PLANS
-  } from "./userPlan.utils";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
-  import { renderMdAsHtml } from "../markdown/markdown.utils";
-  import PlanIcon from "./elements/PlanIcon.svelte";
-  import modalEvent from "../modal/modal.store";
+  } from "@21n/components/subscription/userPlan.utils";
+  import { appStore } from "@21n/stores/app.store";
+  import { parseAndFormatDate } from "@21n/utils/time.utils";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
+  import PlanIcon from "@21n/components/subscription/elements/PlanIcon.svelte";
+  import modalEvent from "@21n/components/modal/modal.store";
 
   let currentPlanFeatures: Array<{ icon: string; label: string }> = [];
   $: renewalDate = $account.plan?.plan

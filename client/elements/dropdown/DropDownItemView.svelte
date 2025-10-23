@@ -1,10 +1,10 @@
 <script lang="ts">
-  import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { properCase } from "$lib/shared/utils/text.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Icon from "../Icon.svelte";
-  import Badge from "../text/Badge.svelte";
+  import type { DropdownItem } from "@21n/types/dropdownItem.type";
+  import { Size } from "@21n/types/size.enum";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import Badge from "@21n/elements/text/Badge.svelte";
   export let item: DropdownItem;
 </script>
 

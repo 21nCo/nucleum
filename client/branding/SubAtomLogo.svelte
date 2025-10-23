@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { ClientStorageKey } from "../persistence/persistence.type";
-  import { clientStorage } from "../persistence/persistence.utils";
-  import { Size } from "../types/size.enum";
-  import { cn } from "../utils/ui.utils";
+  import { ClientStorageKey } from "@21n/persistence/persistence.type";
+  import { clientStorage } from "@21n/persistence/persistence.utils";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
   export let subatom: string | undefined = undefined;
   export let size: Size.sm | Size.md | Size.xs = Size.md;
 

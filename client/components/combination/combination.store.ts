@@ -1,27 +1,27 @@
 import { get } from "svelte/store";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
   ActiveResourceStore,
   ResourceStore
-} from "$lib/client/components/flux/resourceStores/resource.store";
+} from "@21n/components/flux/resourceStores/resource.store";
 import {
   ResourceAccessMode,
   ResourceAccessPoint
-} from "$lib/client/components/flux/resourceStores/resource.type";
-import type { IRecordId } from "$lib/client/types/data.type";
-import { StoreDataType } from "$lib/client/types/data.type";
-import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-import { appStore } from "$lib/client/stores/app.store";
-import { resolveResourceStore } from "$lib/client/components/flux/resourceStores/store.resolver";
-import { logger } from "$lib/client/components/debug/logger.client";
-import type { IAvatar } from "$lib/client/types/avatar.type";
+} from "@21n/components/flux/resourceStores/resource.type";
+import type { IRecordId } from "@21n/types/data.type";
+import { StoreDataType } from "@21n/types/data.type";
+import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+import { appStore } from "@21n/stores/app.store";
+import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
+import { logger } from "@21n/components/debug/logger.client";
+import type { IAvatar } from "@21n/types/avatar.type";
 import {
   CombinationNavItemType,
   CombinationType,
   type IActiveCombination,
   type ICombinationNavItem,
   type ISideNavCombination
-} from "./combination.type";
+} from "@21n/components/combination/combination.type";
 import {
   cloneNavItems,
   indentItem,
@@ -54,9 +54,7 @@ class CombinationStore extends ResourceStore<
   constructor() {
     super(Resource.combination, {
       dataType: StoreDataType.FIR,
-      defaultProps: defaults,
-      indices: ["type"],
-      searchIndices: ["label"]
+      defaultProps: defaults
     });
   }
 
@@ -70,11 +68,12 @@ class CombinationStore extends ResourceStore<
   }
 }
 
-export const combinationStore = new CombinationStore();
+export const combinationStore = CombinationStore.resolve(Resource.combination);
 
 export class ActiveCombinationStore extends ActiveResourceStore<
   IActiveCombination,
-  CombinationStore
+  CombinationStore,
+  ICombination
 > {
   constructor(combinationId: IRecordId) {
     super(combinationId, combinationStore);
@@ -164,7 +163,11 @@ export class ActiveCombinationStore extends ActiveResourceStore<
     );
   }
 
-  async addSection(params: { label: string; parentId?: string; index?: number }) {
+  async addSection(params: {
+    label: string;
+    parentId?: string;
+    index?: number;
+  }) {
     const section: ICombinationNavItem = {
       id: generateSimpleRandomId(),
       type: CombinationNavItemType.SECTION,

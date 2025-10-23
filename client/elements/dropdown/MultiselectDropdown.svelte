@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { generateUID } from "$lib/client/utils/utils";
+  import { generateUID } from "@21n/utils/utils";
   import { createEventDispatcher, onMount } from "svelte";
-  import type { DropdownItem } from "$lib/client/types/dropdownItem.type";
-  import Icon from "../Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import Check from "$lib/client/icons/Check.svelte";
-  import { InputStyle, type InputLabel } from "$lib/client/types/input.type";
-  import InputBaseElement from "../InputBaseElement.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import type { DropdownItem } from "@21n/types/dropdownItem.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import Check from "@21n/icons/Check.svelte";
+  import { InputStyle, type InputLabel } from "@21n/types/input.type";
+  import InputBaseElement from "@21n/elements/InputBaseElement.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Orientation } from "@21n/types/direction.enum";
   const dispatch = createEventDispatcher();
   export let options: DropdownItem[];
   export let selected: (string | number)[] = [];
@@ -70,7 +70,7 @@
       <span class="text-fgs3">{placeholder}</span>
     {/if}
   </div>
-  <Icon icon={isActive ? "chevup" : "chevdown"} size={Size.sm} />
+  <Icon icon={isActive ? "chevron-up" : "chevron-down"} size={Size.sm} />
   <slot name="popover" slot="popover">
     {#each options as item, index}
       <button

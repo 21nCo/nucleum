@@ -1,17 +1,20 @@
 <script lang="ts">
-  import { ExtensionEvent } from "$lib/client/types/extension.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { createEventDispatcher, onMount } from "svelte";
-  import type { IArea } from "./types";
-  import { feedbackPane, webpage } from "./store";
+  import { ExtensionEvent } from "@21n/types/extension.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import { createEventDispatcher, onMount, onDestroy } from "svelte";
+  import type { IArea } from "@21n/extensions/clipper/contentScripts/types";
+  import {
+    feedbackPane,
+    webpage
+  } from "@21n/extensions/clipper/contentScripts/store";
   import {
     NodeType,
     type IWebScreenshotClip
-  } from "$lib/client/products/memotron/node/node.type";
-  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { relayToBackgroundScript } from "$lib/client/utils/extension.utils";
-  import type { OmitForCapture } from "$lib/client/components/flux/resourceStores/resource.type";
+  } from "@21n/products/memotron/node/node.type";
+  import { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { relayToBackgroundScript } from "@21n/utils/extension.utils";
+  import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
   const dispatch = createEventDispatcher();
   let screenshotElement: HTMLElement;
   let topValue: number = 0;
@@ -29,14 +32,14 @@
    * @summary Sets the capture area shade color
    * @description Gets the background color of the body element and converts it to RGB values then inverts the RGB values to form a visible color for the capture area shade
    */
+  let cursorUrl: string | null = null;
   onMount(() => {
-    // screenshotElement.style.cursor = "crosshair";
     const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
       <path d="M 15 0 L 15 32 M 0 15 L 32 15" stroke="white" stroke-width="5"/>
       <path d="M 15 0 L 15 32 M 0 15 L 32 15" stroke="black" stroke-width="2"/>
     </svg>`;
     const blob = new Blob([svgContent], { type: "image/svg+xml" });
-    const cursorUrl = URL.createObjectURL(blob);
+    cursorUrl = URL.createObjectURL(blob);
     screenshotElement.style.cursor = `url('${cursorUrl}') 16 16, crosshair`;
     const bodyBackgroundColor = getComputedStyle(document.body).backgroundColor;
 
@@ -224,6 +227,15 @@
       dispatch("close");
     }
   }
+  onDestroy(() => {
+    if (cursorUrl) {
+      URL.revokeObjectURL(cursorUrl);
+      cursorUrl = null;
+    }
+    if (screenshotElement) {
+      screenshotElement.style.cursor = "crosshair";
+    }
+  });
 </script>
 
 <button

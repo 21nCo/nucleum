@@ -8,7 +8,8 @@ import { IUserProfileInfo } from "$lib/shared/types/account.type";
 
 export enum DatabaseProvider {
   SURREAL = "surreal",
-  DYNAMODB = "dynamodb"
+  DYNAMODB = "dynamodb",
+  TURSO = "turso"
 }
 
 export interface IDatabaseProviderConfig {

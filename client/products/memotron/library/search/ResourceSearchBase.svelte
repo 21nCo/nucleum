@@ -1,43 +1,43 @@
 <script lang="ts">
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import Toggle from "$lib/client/elements/toggle/Toggle.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { PanelSwitcherStyle } from "$lib/client/types/switcher.enum";
-  import { SearchStore } from "$lib/client/components/record/record.store";
-  import { recentsStore } from "$lib/client/components/record/recent.store";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { recentsStore } from "@21n/components/record/recent.store";
   import { onMount } from "svelte";
-  import { isValidString, properCase } from "$lib/shared/utils/text.utils";
-  import SwitchInput from "$lib/client/elements/toggle/SwitchInput.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import { isValidString, properCase } from "@21n/shared-utils/text.utils";
+  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
   import {
     SearchType,
     type IResourceSelectOrderBy
-  } from "$lib/client/types/data.type";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import SearchResultsPopover from "$lib/client/elements/input/SearchResultsPopover.svelte";
-  import LinkSearchResultItem from "../../common/linkbox/LinkSearchResultItem.svelte";
-  import GroupedSearchResults from "./GroupedSearchResults.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
+  } from "@21n/types/data.type";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import SearchResultsPopover from "@21n/elements/input/SearchResultsPopover.svelte";
+  import LinkSearchResultItem from "@21n/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
+  import GroupedSearchResults from "@21n/products/memotron/library/search/GroupedSearchResults.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import view from "@21n/stores/view.store";
   import {
     determineResourceType,
     resolveProductResources,
     resolveResourceIcon
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { tabs } from "$lib/client/layout/topNav/tabs/tabs.store";
-  import { isInlineAvailable } from "$lib/client/components/library/library.utils";
-  import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
-  import ShortcutText from "$lib/client/elements/text/ShortcutText.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
+  import { isInlineAvailable } from "@21n/components/library/library.utils";
+  import { KeyboardKey, ModifierKey } from "@21n/types/keyboard.type";
+  import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import context from "@21n/stores/context.store";
+  import { Embed } from "@21n/types/context.type";
   import { createEventDispatcher } from "svelte";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { Action } from "$lib/client/types/action.enum";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { Action } from "@21n/types/action.enum";
 
   const dispatch = createEventDispatcher();
 
@@ -332,7 +332,7 @@
           Press
           <ShortcutText
             shortcut={Action.CLOSE}
-            parentBgIndex={1}
+            parentBgIndex={2}
             isAlwaysShown={true}
           />
           to close
@@ -343,9 +343,9 @@
             <ShortcutText
               shortcut={{
                 key: KeyboardKey.ARROW_RIGHT,
-                modifiers: [ModifierKey.META]
+                modifiers: [ModifierKey.META, ModifierKey.SHIFT]
               }}
-              parentBgIndex={1}
+              parentBgIndex={2}
               isAlwaysShown={true}
             /> to switch between result groups
           </span>

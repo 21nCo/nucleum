@@ -1,17 +1,17 @@
-import { logger } from "$lib/client/components/debug/logger.client";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { logger } from "@21n/components/debug/logger.client";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
   PersistenceActionType,
   type IMutation
-} from "$lib/client/types/data.type";
-import type { ISurrealDatabase } from "$lib/client/types/db.type";
+} from "@21n/types/data.type";
+import type { ISurrealDatabase } from "@21n/types/db.type";
 import {
   ClientStorageKey,
   type IPersistence,
   type ISyncHandler
-} from "../persistence.type";
-import { clientStorage } from "../persistence.utils";
-import { resolveMutationQueryV2 } from "./surreal.utils";
+} from "@21n/persistence/persistence.type";
+import { clientStorage } from "@21n/persistence/persistence.utils";
+import { resolveMutationQueryV2 } from "@21n/persistence/surreal/surreal.utils";
 
 export class SurrealSync implements ISyncHandler {
   remote: ISurrealDatabase;

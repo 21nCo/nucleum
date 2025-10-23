@@ -1,15 +1,15 @@
 <script lang="ts">
-  import type { IActiveGoalStore } from "../goal.store";
-  import { TimeScale } from "$lib/client/types/time.type";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
-  import TimelineCardAxis from "./TimelineCardAxis.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import TimeSpan from "$lib/client/elements/datetime/TimeSpan.svelte";
+  import type { IActiveGoalStore } from "@21n/components/goals/goal.store";
+  import { TimeScale } from "@21n/types/time.type";
+  import { InputStyle } from "@21n/types/input.type";
+  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
+  import TimelineCardAxis from "@21n/components/goals/info/TimelineCardAxis.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import TimeSpan from "@21n/elements/datetime/TimeSpan.svelte";
   import {
     activeScales,
     resolveDefaultSpanScale
-  } from "$lib/client/elements/datetime/datetime.utils";
+  } from "@21n/elements/datetime/datetime.utils";
 
   export let goal: IActiveGoalStore;
 

@@ -1,23 +1,23 @@
-import type { IContemporary } from "../../types/featureWheel.type";
-import { Contemporary } from "../../components/featureWheel/comparer.type";
-import obsidianData from "./obsidian.json";
-import notionData from "./notion.json";
-import capacitiesData from "./capacities.json";
-import logseqData from "./logseq.json";
-import mymindData from "./mymind.json";
-import raindropData from "./raindrop.json";
-import applennotesData from "./applenotes.json";
-import evernoteData from "./evernote.json";
-import anytypeData from "./anytype.json";
-import roamData from "./roam.json";
-import remnoteData from "./remnote.json";
-import craftData from "./craft.json";
-import linerData from "./liner.json";
-import memData from "./mem.json";
-import weavaData from "./weava.json";
-import diigoData from "./diigo.json";
-import glaspData from "./glasp.json";
-import hypothesisData from "./hypothesis.json";
+import type { IContemporary } from "@21n/types/featureWheel.type";
+import { Contemporary } from "@21n/components/featureWheel/comparer.type";
+import obsidianData from "@21n/cx/contemporaries/obsidian.json";
+import notionData from "@21n/cx/contemporaries/notion.json";
+import capacitiesData from "@21n/cx/contemporaries/capacities.json";
+import logseqData from "@21n/cx/contemporaries/logseq.json";
+import mymindData from "@21n/cx/contemporaries/mymind.json";
+import raindropData from "@21n/cx/contemporaries/raindrop.json";
+import applennotesData from "@21n/cx/contemporaries/applenotes.json";
+import evernoteData from "@21n/cx/contemporaries/evernote.json";
+import anytypeData from "@21n/cx/contemporaries/anytype.json";
+import roamData from "@21n/cx/contemporaries/roam.json";
+import remnoteData from "@21n/cx/contemporaries/remnote.json";
+import craftData from "@21n/cx/contemporaries/craft.json";
+import linerData from "@21n/cx/contemporaries/liner.json";
+import memData from "@21n/cx/contemporaries/mem.json";
+import weavaData from "@21n/cx/contemporaries/weava.json";
+import diigoData from "@21n/cx/contemporaries/diigo.json";
+import glaspData from "@21n/cx/contemporaries/glasp.json";
+import hypothesisData from "@21n/cx/contemporaries/hypothesis.json";
 
 const jsonDataMap: Partial<Record<Contemporary, IContemporary>> = {
   [Contemporary.Obsidian]: obsidianData as IContemporary,

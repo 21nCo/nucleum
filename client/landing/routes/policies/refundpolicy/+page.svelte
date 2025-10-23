@@ -1,6 +1,6 @@
 <script lang="ts">
-  import RefundPolicy from "../../../shared/RefundPolicy.svelte";
-  import PageSeo from "../../../shared/seo/PageSEO.svelte";
+  import RefundPolicy from "@21n/landing/shared/RefundPolicy.svelte";
+  import PageSeo from "@21n/landing/shared/seo/PageSEO.svelte";
   export let data;
   const productName = data.product ?? "";
 </script>

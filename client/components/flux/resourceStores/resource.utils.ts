@@ -1,14 +1,14 @@
-import { Resource } from "./resource.enum";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
   ResourceAccessMode,
   ResourceActionType,
   type ResourceAccessPoint
-} from "./resource.type";
-import type { IRecordId } from "$lib/client/types/data.type";
-import { logger } from "../../debug/logger.client";
-import { properCase } from "$lib/shared/utils/text.utils";
-import type { IResourceSwitchItem } from "$lib/client/types/select.type";
-import { Product } from "$lib/client/products/product.type";
+} from "@21n/components/flux/resourceStores/resource.type";
+import type { IRecordId } from "@21n/types/data.type";
+import { logger } from "@21n/components/debug/logger.client";
+import { properCase } from "@21n/shared-utils/text.utils";
+import type { IResourceSwitchItem } from "@21n/types/select.type";
+import { Product } from "@21n/products/product.type";
 
 export function resourceAction(resource: Resource, action: ResourceActionType) {
   return `${resource}_${action}`;
@@ -22,6 +22,9 @@ export function resourceCacheKey(resource: Resource, key: string) {
   return `${resource}-${key}`;
 }
 
+/**
+ * TODO - using product.config
+ *  */
 export function resolveProductResources(
   product: Product,
   context: "search" | "cache" | "library" | undefined = undefined

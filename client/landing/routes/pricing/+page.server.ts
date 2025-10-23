@@ -1,8 +1,8 @@
 import { SITE, IS_PRODUCT_PAGE } from "$env/static/private";
-import type { PricingPlan } from "../../shared/pricing/pricing.types";
-import { freePlan, nucleusPlan } from "../../shared/pricing/pricing.data";
-import type { IFaq } from "../../shared/landing.type";
-import { faqs } from "../../shared/faqs.data";
+import type { PricingPlan } from "@21n/landing/shared/pricing/pricing.types";
+import { freePlan, nucleusPlan } from "@21n/landing/shared/pricing/pricing.data";
+import type { IFaq } from "@21n/landing/shared/landing.type";
+import { faqs } from "@21n/landing/shared/faqs.data";
 
 export const prerender =
   IS_PRODUCT_PAGE === "true" && (SITE === "Memotron" || SITE === "Pointron");

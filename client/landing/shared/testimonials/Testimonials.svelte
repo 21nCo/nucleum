@@ -1,11 +1,11 @@
 <script lang="ts">
-  import view from "$lib/client/stores/view.store";
-  import Button from "../elements/Button.svelte";
-  import type { ITestimonial } from "../landing.type";
-  import { landing, org } from "../store/shared.store";
-  import Title from "../Title.svelte";
-  import TestimonialItem from "./TestimonialItem.svelte";
-  import TestimonialRow from "./TestimonialRow.svelte";
+  import view from "@21n/stores/view.store";
+  import Button from "@21n/landing/shared/elements/Button.svelte";
+  import type { ITestimonial } from "@21n/landing/shared/landing.type";
+  import { landing, org } from "@21n/landing/shared/store/shared.store";
+  import Title from "@21n/landing/shared/Title.svelte";
+  import TestimonialItem from "@21n/landing/shared/testimonials/TestimonialItem.svelte";
+  import TestimonialRow from "@21n/landing/shared/testimonials/TestimonialRow.svelte";
   export let title: string = "Testimonials";
   export let subtitle: string = "What our users are saying";
   export let testimonials: ITestimonial[] = [];

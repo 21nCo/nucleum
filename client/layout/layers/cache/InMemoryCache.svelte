@@ -2,10 +2,10 @@
   import {
     resolveProductResources,
     resourceCacheComponentKey
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { appStore } from "$lib/client/stores/app.store";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import { appStore } from "@21n/stores/app.store";
   import { onMount } from "svelte";
-  import { CacheKey } from "./cache.type";
+  import { CacheKey } from "@21n/layout/layers/cache/cache.type";
   let components: any[] = [];
   const globalCacheKeys: string[] = [CacheKey.CALENDAR_CACHE];
 

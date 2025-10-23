@@ -1,13 +1,13 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { SubGoalsLayout, GoalStatus, type IGoal } from "../goal.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import { SubGoalsLayout, GoalStatus, type IGoal } from "@21n/components/goals/goal.type";
   import { createEventDispatcher } from "svelte";
-  import StepMarker from "./StepMarker.svelte";
-  import { parseAndFormatDate } from "$lib/client/utils/time.utils";
+  import StepMarker from "@21n/components/goals/sub/StepMarker.svelte";
+  import { parseAndFormatDate } from "@21n/utils/time.utils";
   export let subGoal: IGoal | { label?: string; type: string };
   export let index: number;
   export let totalLength: number;

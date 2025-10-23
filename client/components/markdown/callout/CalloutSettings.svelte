@@ -1,26 +1,25 @@
 <script lang="ts">
-  import Avatar from "$lib/client/elements/avatarPicker/Avatar.svelte";
-  import ColorPickerMini from "$lib/client/elements/colorPicker/ColorPickerMini.svelte";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import Table2 from "$lib/client/elements/table/Table2.svelte";
-  import InlineErrorMessage from "$lib/client/elements/text/InlineErrorMessage.svelte";
-  import Text from "$lib/client/elements/text/Text.svelte";
-  import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
+  import Avatar from "@21n/elements/avatarPicker/Avatar.svelte";
+  import ColorPickerMini from "@21n/elements/colorPicker/ColorPickerMini.svelte";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import Table2 from "@21n/elements/table/Table2.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
+  import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
   import {
     AvatarPickerContext,
     AvatarType,
     type IAvatar
-  } from "$lib/client/types/avatar.type";
+  } from "@21n/types/avatar.type";
   import {
     TableCellDefaultAction,
     TableCellType,
     type TableColumn
-  } from "$lib/client/types/table.type";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import ModalFooter from "../../modal/ModalFooter.svelte";
-  import { markdownSettings } from "../markdown.settings";
-
+  } from "@21n/types/table.type";
+  import { TextStyle } from "@21n/types/text.enum";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
+  import { markdownSettings } from "@21n/components/markdown/markdown.settings";
+  import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
   let previewId: string | undefined = $markdownSettings.callout[0]?.id;
   let error: string | undefined = undefined;
   const columns: TableColumn[] = [
@@ -106,7 +105,7 @@
 </script>
 
 <div class="flex flex-col gap-4 w-full h-full">
-  <div class="w-full flex flex-1 overflow-y-auto">
+  <ModalContentPadded class="w-full flex flex-1 overflow-y-auto">
     <Table2
       {columns}
       bind:data={$markdownSettings.callout}
@@ -114,7 +113,7 @@
       addAction="Add"
       on:add={addCallout}
     />
-  </div>
+  </ModalContentPadded>
   <!-- Callout Preview -->
   {#if previewId}
     {@const preview = $markdownSettings.callout.find(
@@ -122,10 +121,10 @@
     )}
     <CustomColorPropagator
       color={preview?.color}
-      class="flex flex-col gap-3 w-full text-left border border-brs2 rounded-md p-4"
+      class="flex flex-col gap-3 w-full text-left border-t p-4"
     >
       <Text
-        content={`Preview for "${preview?.label ?? "Untitled Callout"}"`}
+        content={`Preview for **${preview?.label ?? "Untitled Callout"}** callout - Click on the play button to preview it here.`}
         style={TextStyle.SECTION_HEADING_SMALL}
       />
       <div
@@ -145,9 +144,10 @@
       </div>
     </CustomColorPropagator>
   {/if}
-  <InlineErrorMessage bind:error />
+
   <ModalFooter
     action={MemotronAction.CALLOUT_SETTINGS}
+    bind:error
     primaryAction={{
       label: "Save",
       callback: onSave

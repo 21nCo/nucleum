@@ -1,21 +1,21 @@
 <script lang="ts">
-  import { SearchStore } from "$lib/client/components/record/record.store";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import GoalSearchResultItem from "$lib/client/components/goals/GoalSearchResultItem.svelte";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import GoalSearchResultItem from "@21n/components/goals/GoalSearchResultItem.svelte";
   import {
     GoalStatus,
     type IGoalThumb
-  } from "$lib/client/components/goals/goal.type";
+  } from "@21n/components/goals/goal.type";
   import {
     isSameResource,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import CustomColorPropagator from "$lib/client/elements/style/CustomColorPropagator.svelte";
-  import { resolveGoalColor } from "$lib/client/components/goals/goal.utils";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
+  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
+  import type { IRecordId } from "@21n/types/data.type";
+  import Icon from "@21n/elements/Icon.svelte";
 
   export let selectedGoals: IGoalThumb[] = [];
   let searchStore = new SearchStore(Resource.goal);

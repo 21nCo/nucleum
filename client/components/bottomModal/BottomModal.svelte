@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { bottomModal, type IBottomModalState } from "./bottomModal.store";
+  import { bottomModal, type IBottomModalState } from "@21n/components/bottomModal/bottomModal.store";
   import { onDestroy } from "svelte";
   import { fly, fade } from "svelte/transition";
   import type { ComponentType } from "svelte";
-  import NotesModal from "../featureWheel/sidePanel/NotesModal.svelte";
-  import { properCase } from "$lib/shared/utils/text.utils";
+  import NotesModal from "@21n/components/featureWheel/sidePanel/NotesModal.svelte";
+  import { properCase } from "@21n/shared-utils/text.utils";
 
   interface ComponentMap {
     [key: string]: ComponentType;

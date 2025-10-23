@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { ITopNavBarItem } from "../landing.type";
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import type { ITopNavBarItem } from "@21n/landing/shared/landing.type";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
+  import { cn } from "@21n/utils/ui.utils";
   import { page } from "$app/stores";
   export let item: ITopNavBarItem;
   export let isStickedContext: boolean = false;
@@ -35,7 +35,7 @@
   >{item.label}
   {#if item.expandRender}
     <span class="w-3">
-      <SvgIcon icon="chevdown" isRenderRaw={true} />
+      <SvgIcon icon="chevron-down" isRenderRaw={true} />
     </span>
   {/if}
 </svelte:element>

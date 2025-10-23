@@ -1,16 +1,16 @@
 <script lang="ts">
-  import SubAtomLogo from "$lib/client/branding/SubAtomLogo.svelte";
-  import ColorSchemeSelector from "$lib/client/components/settings/appearance/ColorSchemeSelector.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import YoutubeVideoPreview from "$lib/client/products/memotron/node/content/web/YoutubeVideoPreview.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import appearance from "$lib/client/stores/appearance.store";
-  import view from "$lib/client/stores/view.store";
-  import { Theme } from "$lib/client/types/appearance.type";
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IOnboardingConfig } from "./onboarding.type";
+  import SubAtomLogo from "@21n/branding/SubAtomLogo.svelte";
+  import ColorSchemeSelector from "@21n/components/settings/appearance/ColorSchemeSelector.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import YoutubeVideoPreview from "@21n/products/memotron/node/content/web/YoutubeVideoPreview.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import appearance from "@21n/stores/appearance.store";
+  import view from "@21n/stores/view.store";
+  import { Theme } from "@21n/types/appearance.type";
+  import { ButtonVariant } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IOnboardingConfig } from "@21n/components/onboarding/onboarding.type";
 
   export let config: IOnboardingConfig;
   const isShowVideo =

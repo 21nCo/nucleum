@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { renderMdAsHtml } from "../../markdown/markdown.utils";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
   export let features: {
     icon: string;
     label: string;

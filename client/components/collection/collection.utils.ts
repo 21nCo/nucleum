@@ -2,22 +2,22 @@ import {
   CollectionType,
   type ICollectionExpanded,
   type ICollectionItem
-} from "./collection.type";
-import type { IRecordId } from "$lib/client/types/data.type";
-import type { IProperty } from "./properties/property.type";
-import { PropertyType } from "./properties/property.type";
+} from "@21n/components/collection/collection.type";
+import type { IRecordId } from "@21n/types/data.type";
+import type { IProperty } from "@21n/components/collection/properties/property.type";
+import { PropertyType } from "@21n/components/collection/properties/property.type";
 import {
   resolvePropertyOptions as _resolvePropertyOptions,
   resolveUniversalPropertyOptions
-} from "./properties/property.utils";
+} from "@21n/components/collection/properties/property.utils";
 import {
   isNoneResource,
   resourceInList
-} from "$lib/client/components/flux/resourceStores/resource.utils";
-import type { ISelectItem } from "$lib/client/types/select.type";
-import { Resource } from "../flux/resourceStores/resource.enum";
-import { Product } from "$lib/client/products/product.type";
-import type { IAvatar } from "$lib/client/types/avatar.type";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import type { ISelectItem } from "@21n/types/select.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Product } from "@21n/products/product.type";
+import type { IAvatar } from "@21n/types/avatar.type";
 
 export const UNASSIGNED_VALUE = "unassigned";
 export const UNASSIGNED_LABEL = "Unassigned";
@@ -30,6 +30,8 @@ export function resolveCollectionTypeIcon(type: CollectionType) {
       return "cube";
     case CollectionType.QUERY:
       return "ph:database-light";
+    case CollectionType.SYNCED:
+      return "sync";
   }
 }
 
@@ -41,6 +43,8 @@ export function resolveCollectionTypeLabel(type: CollectionType) {
       return "Typed";
     case CollectionType.QUERY:
       return "Query";
+    case CollectionType.SYNCED:
+      return "Synced";
   }
 }
 

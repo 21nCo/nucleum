@@ -1,16 +1,16 @@
-import { logger } from "$lib/client/components/debug/logger.client";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { logger } from "@21n/components/debug/logger.client";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
   ResourceActionType,
   type IResource
-} from "$lib/client/components/flux/resourceStores/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 import {
   type ILocal,
   type IPersistence,
   type ITable,
   PersistenceProvider
-} from "$lib/client/persistence/persistence.type";
-import { getDapId } from "$lib/client/persistence/persistence.utils";
+} from "@21n/persistence/persistence.type";
+import { getDapId } from "@21n/persistence/persistence.utils";
 import {
   type IStore,
   PersistenceActionType,
@@ -24,47 +24,52 @@ import {
   type IMutationAdditionalParams,
   type IResourceSelectProperties,
   type IResourceStore
-} from "$lib/client/types/data.type";
-import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
-import { GlobalEvent } from "$lib/client/types/event.enum";
-import { ExtensionEvent } from "$lib/client/types/extension.type";
-import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
+} from "@21n/types/data.type";
+import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
+import { GlobalEvent } from "@21n/types/event.enum";
+import { ExtensionEvent } from "@21n/types/extension.type";
+import { resolveCurrentUserId } from "@21n/utils/account.utils";
 import {
   dispatchCustomEvent,
   isExtensionEnvironment,
   getEnvVal
-} from "$lib/client/utils/browser.utils";
-import { postDataToParent } from "$lib/client/utils/embed.utils";
+} from "@21n/utils/browser.utils";
+import { postDataToParent } from "@21n/utils/embed.utils";
 import {
   relayToContentScript,
   relayToSidePanel
-} from "$lib/client/utils/extension.utils";
+} from "@21n/utils/extension.utils";
 import {
   determineIfOffline,
   performApiCall
-} from "$lib/client/utils/network.utils";
-import { wait } from "$lib/client/utils/time.utils";
-import { interceptSurrealResponse } from "$lib/client/utils/utils";
-import { SyncMethod } from "$lib/shared/types/sync.type";
+} from "@21n/utils/network.utils";
+import { wait } from "@21n/utils/time.utils";
+import { interceptSurrealResponse } from "@21n/utils/utils";
+import { SyncMethod } from "@21n/shared-types/sync.type";
 import {
   generateRandomIdv2,
   generateSimpleRandomId
-} from "$lib/shared/utils/crypto.utils";
-import { reparse } from "$lib/shared/utils/json.utils";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { DataMapper } from "./dataMapper";
-import { FluxMethod, type IDataMapper, type IFluxMethod } from "./flux.type";
+} from "@21n/shared-utils/crypto.utils";
+import { reparse } from "@21n/shared-utils/json.utils";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+import { DataMapper } from "@21n/components/flux/dataMapper";
+import {
+  FluxMethod,
+  type IDataMapper,
+  type IFluxMethod,
+  type IResourceTableConfig,
+  type LoaderCallback
+} from "@21n/components/flux/flux.type";
 import {
   determineResourceType,
   isRecordId,
   removeDuplicatesFilter
-} from "./resourceStores/resource.utils";
+} from "@21n/components/flux/resourceStores/resource.utils";
 
 class Flux {
   static _instance: Flux | null = null;
-  stores: IResourceStore<unknown>[] = [];
-  remoteOnlyStores: IResourceStore<unknown>[] = [];
-  provider!: PersistenceProvider;
+  tables!: IResourceTableConfig[];
+  loaderCallback: LoaderCallback | undefined;
   persistence!: IPersistence;
   dataMapper!: IDataMapper;
   private isLocalMode: boolean = false;
@@ -78,25 +83,23 @@ class Flux {
     getEnvVal("CLONE_DOWN_LIMIT", "number") ?? 500;
 
   static initialize(
-    stores: IResourceStore<unknown>[],
-    provider: PersistenceProvider,
     persistence: IPersistence,
     params: {
       dapId: string;
       product: string;
       userId?: string;
       appVersion?: string;
-      remoteOnlyStores?: IResourceStore<unknown>[];
+      tables: IResourceTableConfig[];
+      loaderCallback?: LoaderCallback;
     }
   ): Promise<number> {
-    logger.log({ at: "flux.initialize", stores, params });
+    logger.log({ at: "flux.initialize", params });
     Flux._instance = new Flux();
-    Flux._instance.provider = provider;
     Flux._instance.isLocalMode = !params.userId;
     Flux._instance.persistence = persistence;
-    Flux._instance.stores = stores;
-    Flux._instance.remoteOnlyStores = params.remoteOnlyStores ?? [];
-    Flux._instance.initializeDataMapper(stores);
+    Flux._instance.tables = params.tables;
+    Flux._instance.loaderCallback = params.loaderCallback ?? undefined;
+    Flux._instance.initializeDataMapper();
     logger.log({ at: "flux.initialized", instance: Flux._instance });
     return Flux._instance.initializePersistence(params);
   }
@@ -113,19 +116,13 @@ class Flux {
     appVersion?: string;
   }) {
     logger.log({ at: "flux.initializePersistence", params });
-    const tables: ITable[] = [
-      ...[...this.stores, ...this.remoteOnlyStores]
-        .filter(
-          (x) =>
-            x.dataType === StoreDataType.FIR || x.dataType === StoreDataType.IFR
-        )
-        .map((x) => {
-          return {
-            name: x.id as Resource,
-            indices: x.indices ?? ["id"],
-            searchIndices: x.searchIndices
-          };
-        }),
+
+    let tables: ITable[] = this.tables.map((config) => ({
+      name: config.name as Resource,
+      indices: config.indices ?? ["id"],
+      searchIndices: config.searchIndices
+    }));
+    tables = tables.concat([
       {
         name: Resource.kv,
         indices: ["id"]
@@ -134,7 +131,8 @@ class Flux {
         name: Resource.mutation,
         indices: ["id", "timestamp"]
       }
-    ];
+    ]);
+
     return this.persistence.initialize({
       ...params,
       isExtensionEnvironment: this.isExtensionEnvironment,
@@ -142,11 +140,15 @@ class Flux {
     });
   }
 
-  private initializeDataMapper(stores: IResourceStore<unknown>[]) {
+  private initializeDataMapper() {
     const encryptionFieldsMap: Record<string, string[]> = {};
-    for (const store of stores) {
-      encryptionFieldsMap[store.id] = store.encrypt ?? [];
+
+    for (const config of this.tables) {
+      if (config.encrypt) {
+        encryptionFieldsMap[config.name] = config.encrypt;
+      }
     }
+
     this.dataMapper = new DataMapper(encryptionFieldsMap);
   }
 
@@ -156,39 +158,32 @@ class Flux {
   }) {
     logger.log({ at: "flux.loadInMemoryStores", params });
     try {
-      let kvStores = this.stores.filter(
-        (x) => x.dataType === StoreDataType.KVO
-      );
       const data = await this.persistence.selectMany(Resource.kv);
-      if (!data) return;
-      data.forEach((record: any) => {
-        if (
-          params?.kvRecords &&
-          !params.kvRecords.includes(record.id.toString())
-        )
-          return;
-        const store = kvStores.find(
-          (x) => "kv:" + x.id === record.id.toString()
-        );
-        if (!store?.loader) return;
-        store.loader(record);
-      });
-      let inMemoryResouceStores = this.stores.filter((x) => x.isInMemory);
-      if (!inMemoryResouceStores) return;
-      for (const store of inMemoryResouceStores) {
-        if (
-          params?.resources &&
-          !params.resources.includes(store.id as Resource)
-        )
-          continue;
-        const data = await this.persistence.selectMany(store.id as Resource);
-        if (data && Array.isArray(data) && store?.loader) {
+      if (data) {
+        data.forEach((record: any) => {
+          if (
+            params?.kvRecords &&
+            !params.kvRecords.includes(record.id.toString())
+          )
+            return;
+          const storeId = record.id.toString().replace("kv:", "");
+          if (this.loaderCallback) this.loaderCallback(storeId, record);
+        });
+      }
+      const inMemoryResources = this.tables
+        .filter((t) => t.isInMemory)
+        .map((t) => t.name as Resource);
+
+      for (const resource of inMemoryResources) {
+        if (params?.resources && !params.resources.includes(resource)) continue;
+        const data = await this.persistence.selectMany(resource);
+        if (data && Array.isArray(data)) {
           logger.log({
             at: "flux.loadInMemoryStores - loading resource store",
-            id: store.id,
+            id: resource,
             data
           });
-          store.loader(data);
+          if (this.loaderCallback) this.loaderCallback(resource, data);
         }
       }
     } catch (e) {
@@ -198,26 +193,17 @@ class Flux {
 
   private async loadInMemoryResourceStore(resource: Resource) {
     logger.log({ at: "flux.loadInMemoryResourceStore", resource });
-    const store = this.stores.find((x) => x.id === resource);
-    if (store?.loader) {
-      const data = await this.persistence.selectMany(resource);
-      store.loader(data);
-    }
+    const data = await this.persistence.selectMany(resource);
+    if (this.loaderCallback) this.loaderCallback(resource, data);
   }
 
   /**
    * This method will be called on signup and database is bootstrapped.
    * This will persist all kv seed data on cloud.
    */
-  async kvSeed() {
+  async kvSeed(data: any) {
     logger.log({ at: "flux.kvSeed" });
     try {
-      let data = this.stores
-        .filter((x) => x.dataType === StoreDataType.KVO)
-        .map((x) => {
-          const k = x as IObservableStore<any>;
-          return { id: `kv:${k.id}`, ...k.seed };
-        });
       await this.seed();
       const params: IInsertMutation<any> = {
         records: data,
@@ -268,13 +254,15 @@ class Flux {
       }
     });
     try {
-      if (!additionalParams?.isCloudOnlyResource || this.isLocalMode) {
+      const config = this.tables.find((t) => t.name === resource);
+      const isCloudOnly = config ? config.isRemoteOnly : true;
+      if (!isCloudOnly || this.isLocalMode) {
         response = await this.persistence.mutation(resource, params);
       }
       let mutation: IMutation | undefined;
       if (
         !additionalParams?.isPreventCloudPersistence &&
-        (!this.isLocalMode || this.isExtensionEnvironment)
+        (!this.isLocalMode || this.isExtensionEnvironment || isCloudOnly)
       ) {
         mutation = await this.insertMutation(resource, params);
       }
@@ -297,8 +285,8 @@ class Flux {
             context: additionalParams?.context
           });
         }
-        const correspondingStore = this.stores.find((x) => x.id === resource);
-        if (correspondingStore?.isInMemory) {
+        const isInMemory = config?.isInMemory ?? false;
+        if (isInMemory) {
           await this.loadInMemoryResourceStore(resource);
         }
       }
@@ -394,7 +382,6 @@ class Flux {
     resourceId: IRecordId,
     properties?: IResourceSelectProperties,
     params?: {
-      isCloudOnlyResource?: boolean;
       signal?: AbortSignal;
     }
   ) {
@@ -406,7 +393,10 @@ class Flux {
       }
 
       const isOffline = await determineIfOffline();
-      if (!this.isLocalMode && params?.isCloudOnlyResource && !isOffline) {
+      const resourceType = resourceId.toString().split(":")[0];
+      const config = this.tables.find((t) => t.name === resourceType);
+      const isCloudOnly = config?.isRemoteOnly ?? false;
+      if (!this.isLocalMode && isCloudOnly && !isOffline) {
         return this.remoteRelay({
           method: FluxMethod.SELECT,
           args: {
@@ -431,7 +421,7 @@ class Flux {
   async selectMany(
     resource: Resource,
     params?: IResourceSelectParams,
-    additionalParams?: { isCloudOnlyResource?: boolean; signal?: AbortSignal }
+    additionalParams?: { signal?: AbortSignal; isUseCloud?: boolean }
   ) {
     try {
       const debugResource: Resource[] = [];
@@ -452,9 +442,11 @@ class Flux {
       }
 
       const isOffline = await determineIfOffline();
+      const config = this.tables.find((t) => t.name === resource);
+      const isCloudOnly = config?.isRemoteOnly ?? false;
       if (
         !this.isLocalMode &&
-        additionalParams?.isCloudOnlyResource &&
+        (isCloudOnly || additionalParams?.isUseCloud) &&
         !isOffline
       ) {
         const result = await this.remoteRelay({
@@ -789,13 +781,6 @@ class Flux {
     };
   }
 
-  async search(storeId: string, query: string) {
-    const store = this.stores.find((x) => x.id === storeId);
-    if (store) {
-      return store?.search?.(query);
-    }
-  }
-
   private resolveLocal() {
     return this.persistence.select("kv:local");
   }
@@ -972,6 +957,7 @@ class Flux {
     params?: {
       isReconciliation?: boolean;
       limit?: number;
+      isFirstInitialLoad?: boolean;
     }
   ): Promise<{ paginateResources?: Resource[] } | undefined> {
     logger.log({ at: "flux.cloneDown", resources });
@@ -998,7 +984,8 @@ class Flux {
           needsPagination.push(resource);
         }
         await this.processCloneDown(resource, records, {
-          isReconciliation: params?.isReconciliation
+          isReconciliation: params?.isReconciliation,
+          isFirstInitialLoad: params?.isFirstInitialLoad
         });
       }
       console.log("needsPagination", needsPagination);
@@ -1021,6 +1008,7 @@ class Flux {
     records: any,
     params: {
       isReconciliation?: boolean;
+      isFirstInitialLoad?: boolean;
     }
   ) {
     try {
@@ -1045,18 +1033,28 @@ class Flux {
           .filter(removeDuplicatesFilter);
       }
       records = this.dataMapper.parse(resource, records);
-      const mutationResult = await this.persistence.mutation(
-        resource as Resource,
-        {
-          records,
-          action:
-            params?.isReconciliation ||
-            resource === Resource.kv ||
-            resource === Resource.link
-              ? PersistenceActionType.INSERT
-              : PersistenceActionType.BULK_INSERT
-        }
-      );
+      let mutationResult;
+      try {
+        mutationResult = await this.persistence.mutation(
+          resource as Resource,
+          {
+            records,
+            action:
+              params?.isReconciliation ||
+              resource === Resource.kv ||
+              resource === Resource.link
+                ? PersistenceActionType.INSERT
+                : PersistenceActionType.BULK_INSERT,
+            isSkipFlexSearchIndexing: params?.isFirstInitialLoad
+          } as any
+        );
+      } catch (e) {
+        logger.error({
+          at: "flux.cloneDown - error",
+          resource,
+          error: e
+        });
+      }
       logger.log({
         at: "flux.cloneDown - result",
         resource,
@@ -1068,8 +1066,9 @@ class Flux {
           resource as Resource,
           {
             records,
-            action: PersistenceActionType.INSERT
-          }
+            action: PersistenceActionType.INSERT,
+            isSkipFlexSearchIndexing: params?.isFirstInitialLoad
+          } as any
         );
         logger.log({
           at: "flux.cloneDown - fallbackResult",
@@ -1089,6 +1088,7 @@ class Flux {
     params?: {
       isReconciliation?: boolean;
       limit?: number;
+      isFirstInitialLoad?: boolean;
     }
   ): Promise<{ cursors?: any } | undefined> {
     logger.log({ at: "flux.cloneDownv2", resources });
@@ -1105,7 +1105,8 @@ class Flux {
         const records = result.data[resource] ?? result.data[index];
         if (!records || !isValidArrayWithData(records)) continue;
         await this.processCloneDown(resource, records, {
-          isReconciliation: params?.isReconciliation
+          isReconciliation: params?.isReconciliation,
+          isFirstInitialLoad: params?.isFirstInitialLoad
         });
       }
       return result;
@@ -1125,20 +1126,24 @@ class Flux {
       this.propagateSyncStatus(Resource.everything);
       const resources = this.resolveFIRResources();
       const result = await this.cloneDown(resources, {
-        limit: 1000
+        limit: 1000,
+        isFirstInitialLoad: true
       });
       if (!result) return false;
       if (result.paginateResources) {
-        await this.paginateResources(result.paginateResources);
+        await this.paginateResources(result.paginateResources, undefined, true);
       }
       const ifrResources = this.resolveIFRBootResources();
       const ifrResult = await this.cloneDown(ifrResources, {
-        limit: 100
+        limit: 100,
+        isFirstInitialLoad: true
       });
       await this.afterInitialize();
       return {
         finiteCloneResult: result,
-        ifrCloneResult: ifrResult
+        ifrCloneResult: ifrResult,
+        paginateResources: result?.paginateResources,
+        isFirstInitialLoad: true
       };
     } catch (e) {
       logger.error({ at: "flux.cloneDownEssentials", error: e });
@@ -1152,18 +1157,23 @@ class Flux {
       this.propagateSyncStatus(Resource.everything);
       const resources = this.resolveFIRResources();
       const result = await this.cloneDownV2(resources, {
-        limit: 1000
+        limit: 1000,
+        isFirstInitialLoad: true
       });
       if (!result) return false;
       if (result.cursors) {
-        await this.paginateResourcesV2(result.cursors);
+        await this.paginateResourcesV2(result.cursors, true);
       }
       const ifrResources = this.resolveIFRBootResources();
       const ifrResult = await this.cloneDownV2(ifrResources, {
-        limit: 100
+        limit: 100,
+        isFirstInitialLoad: true
       });
       await this.afterInitialize();
-      return ifrResult;
+      return {
+        ...ifrResult,
+        isFirstInitialLoad: true
+      };
     } catch (e) {
       logger.error({ at: "flux.cloneDownEssentials", error: e });
       this.propagateSyncStatus(Resource.everything, true);
@@ -1180,6 +1190,24 @@ class Flux {
       action: PersistenceActionType.MERGE
     });
     this.propagateSyncStatus(Resource.everything, true);
+  }
+
+  async index() {
+    if (
+      typeof (this.persistence as any).triggerBackgroundIndexing === "function"
+    ) {
+      logger.info({
+        at: "flux.index - triggering background indexing"
+      });
+      (this.persistence as any)
+        .triggerBackgroundIndexing(true)
+        .catch((error: any) => {
+          logger.error({
+            at: "flux.index - background indexing error",
+            error
+          });
+        });
+    }
   }
 
   /**
@@ -1266,19 +1294,29 @@ class Flux {
     }
   }
 
-  async paginateResources(resources: Resource[], offset?: number) {
+  async paginateResources(
+    resources: Resource[],
+    offset?: number,
+    isFirstInitialLoad?: boolean
+  ) {
     for (let resource of resources) {
       this.propagateSyncStatus(resource);
       await this.paginateResource(
         resource,
         offset !== undefined ? offset : this.cloneDownLimit,
-        this.cloneDownLimit
+        this.cloneDownLimit,
+        isFirstInitialLoad
       );
       this.propagateSyncStatus(resource, true);
     }
   }
 
-  async paginateResource(resource: Resource, offset: number, limit: number) {
+  async paginateResource(
+    resource: Resource,
+    offset: number,
+    limit: number,
+    isFirstInitialLoad?: boolean
+  ) {
     this.propagateSyncStatus(resource);
     const result = await this.performSync(SyncMethod.CLONE_DOWN_PAGINATE, {
       resource,
@@ -1292,39 +1330,69 @@ class Flux {
       isValidArrayWithData(result[0].result)
     ) {
       const records = result[0].result;
-      const mutationResult = await this.persistence.mutation(
-        resource as Resource,
-        {
-          records,
-          action:
-            resource === Resource.kv || resource === Resource.link
-              ? PersistenceActionType.INSERT
-              : PersistenceActionType.BULK_INSERT
-        }
-      );
-      if (!mutationResult) {
-        await this.persistence.mutation(resource as Resource, {
-          records,
-          action: PersistenceActionType.INSERT
+      let mutationResult;
+      try {
+        mutationResult = await this.persistence.mutation(
+          resource as Resource,
+          {
+            records,
+            action:
+              resource === Resource.kv || resource === Resource.link
+                ? PersistenceActionType.INSERT
+                : PersistenceActionType.BULK_INSERT,
+            isSkipFlexSearchIndexing: isFirstInitialLoad
+          } as any
+        );
+      } catch (e) {
+        logger.error({
+          at: "flux.paginateResource - error",
+          resource,
+          error: e
         });
       }
+      if (!mutationResult) {
+        await this.persistence.mutation(
+          resource as Resource,
+          {
+            records,
+            action: PersistenceActionType.INSERT,
+            isSkipFlexSearchIndexing: isFirstInitialLoad
+          } as any
+        );
+      }
       if (records.length === limit) {
-        await this.paginateResource(resource, offset + limit, limit);
+        await this.paginateResource(
+          resource,
+          offset + limit,
+          limit,
+          isFirstInitialLoad
+        );
       }
     }
   }
 
-  async paginateResourcesV2(cursors: { [key: string]: string }) {
+  async paginateResourcesV2(
+    cursors: { [key: string]: string },
+    isFirstInitialLoad?: boolean
+  ) {
     for (let resource of Object.keys(cursors)) {
       const cursor = cursors[resource];
       if (!cursor) continue;
       this.propagateSyncStatus(resource as Resource);
-      await this.paginateResourceV2(resource as Resource, cursor);
+      await this.paginateResourceV2(
+        resource as Resource,
+        cursor,
+        isFirstInitialLoad
+      );
       this.propagateSyncStatus(resource as Resource, true);
     }
   }
 
-  async paginateResourceV2(resource: Resource, cursor: string) {
+  async paginateResourceV2(
+    resource: Resource,
+    cursor: string,
+    isFirstInitialLoad?: boolean
+  ) {
     if (!cursor) return;
     this.propagateSyncStatus(resource);
     const result = await this.performSync(SyncMethod.CLONE_DOWN_PAGINATE_V2, {
@@ -1336,24 +1404,42 @@ class Flux {
     if (isValidArrayWithData(result.data)) {
       let records = result.data;
       records = this.dataMapper.parse(resource, records);
-      const mutationResult = await this.persistence.mutation(
-        resource as Resource,
-        {
-          records,
-          action:
-            resource === Resource.kv || resource === Resource.link
-              ? PersistenceActionType.INSERT
-              : PersistenceActionType.BULK_INSERT
-        }
-      );
-      if (!mutationResult) {
-        await this.persistence.mutation(resource as Resource, {
-          records,
-          action: PersistenceActionType.INSERT
+      let mutationResult;
+      try {
+        mutationResult = await this.persistence.mutation(
+          resource as Resource,
+          {
+            records,
+            action:
+              resource === Resource.kv || resource === Resource.link
+                ? PersistenceActionType.INSERT
+                : PersistenceActionType.BULK_INSERT,
+            isSkipFlexSearchIndexing: isFirstInitialLoad
+          } as any
+        );
+      } catch (e) {
+        logger.error({
+          at: "flux.paginateResourceV2 - error",
+          resource,
+          error: e
         });
       }
+      if (!mutationResult) {
+        await this.persistence.mutation(
+          resource as Resource,
+          {
+            records,
+            action: PersistenceActionType.INSERT,
+            isSkipFlexSearchIndexing: isFirstInitialLoad
+          } as any
+        );
+      }
       if (result.nextCursor) {
-        await this.paginateResourceV2(resource, result.nextCursor);
+        await this.paginateResourceV2(
+          resource,
+          result.nextCursor,
+          isFirstInitialLoad
+        );
       }
     }
   }
@@ -1366,7 +1452,9 @@ class Flux {
     logger.log({ at: "flux.cloneUp" });
     if (await determineIfOffline()) return;
     const resources = this.resolveSyncResources();
-    const remoteOnlyResources = this.remoteOnlyStores.map((x) => x.id);
+    const remoteOnlyResources = this.tables
+      .filter((x) => x.isRemoteOnly)
+      .map((x) => x.name as Resource);
     const _all = [...resources, ...remoteOnlyResources];
     for (let resource of _all) {
       const records = await this.persistence.selectMany(resource as Resource);
@@ -1380,34 +1468,31 @@ class Flux {
   }
 
   private resolveSyncResources(): Resource[] {
-    const resources = [
-      Resource.kv,
-      ...(this.stores
-        .filter(
-          (x) =>
-            x.dataType === StoreDataType.IFR || x.dataType === StoreDataType.FIR
-        )
-        .map((x) => x.id) ?? [])
-    ] as Resource[];
-    return resources;
+    return this.tables
+      .filter((x) => !x.isRemoteOnly)
+      .map((t) => t.name as Resource)
+      .filter(Boolean)
+      .concat(Resource.kv);
   }
 
   private resolveFIRResources(): Resource[] {
-    const resources = [
-      Resource.kv,
-      ...(this.stores
-        .filter((x) => x.dataType === StoreDataType.FIR)
-        .map((x) => x.id) ?? [])
-    ] as Resource[];
-    return resources;
+    return this.tables
+      .filter(
+        (t) =>
+          !t.isRemoteOnly && (!t.dataType || t.dataType === StoreDataType.FIR)
+      )
+      .filter(Boolean)
+      .map((t) => t.name as Resource)
+      .concat(Resource.kv);
   }
   private resolveIFRBootResources(): Resource[] {
-    const resources = [
-      ...(this.stores
-        .filter((x) => x.dataType === StoreDataType.IFR)
-        .map((x) => x.id) ?? [])
-    ] as Resource[];
-    return resources;
+    return this.tables
+      .filter(
+        (t) =>
+          !t.isRemoteOnly && (!t.dataType || t.dataType === StoreDataType.IFR)
+      )
+      .filter(Boolean)
+      .map((t) => t.name as Resource);
   }
 
   async reinitializeIfRequired() {
@@ -1484,14 +1569,36 @@ class Flux {
           resource,
           data: data[resource]
         });
-        await this.persistence.mutation(resource as Resource, {
-          records: data[resource],
-          action:
-            resource === Resource.kv || resource === Resource.link
-              ? PersistenceActionType.INSERT
-              : PersistenceActionType.BULK_INSERT
-        });
-        if (!(await determineIfOffline()) && data[resource].length > 0) {
+        let mutationResult;
+        try {
+          mutationResult = await this.persistence.mutation(
+            resource as Resource,
+            {
+              records: data[resource],
+              action:
+                resource === Resource.kv || resource === Resource.link
+                  ? PersistenceActionType.INSERT
+                  : PersistenceActionType.BULK_INSERT
+            }
+          );
+        } catch (error) {
+          logger.error({
+            at: "flux.import - bulkInsert failed, falling back",
+            resource,
+            error
+          });
+        }
+        if (!mutationResult) {
+          await this.persistence.mutation(resource as Resource, {
+            records: data[resource],
+            action: PersistenceActionType.INSERT
+          });
+        }
+        if (
+          !this.isLocalMode &&
+          !(await determineIfOffline()) &&
+          data[resource].length > 0
+        ) {
           await this.performSync(SyncMethod.CLONE_UP, {
             resource,
             records: data[resource]
@@ -1506,6 +1613,9 @@ class Flux {
       }
     }
     await this.loadInMemoryStores();
+    if (!this.isExtensionEnvironment) {
+      dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
+    }
     return true;
   }
 }
@@ -1513,19 +1623,21 @@ class Flux {
 export let flux = Flux._instance as any as Flux;
 
 export async function initFlux(
-  stores: IStore[],
-  provider: PersistenceProvider,
   persistence: IPersistence,
   params: {
+    tables: IResourceTableConfig[];
     dapId: string;
     product: string;
     userId?: string;
     appVersion?: string;
-    remoteOnlyStores?: IStore[];
+    /**
+     * Will not be present in extension environment
+     */
+    loaderCallback?: LoaderCallback;
   }
 ) {
-  logger.log({ at: "initFlux", stores, provider, persistence, params });
-  const result = await Flux.initialize(stores, provider, persistence, params);
+  logger.log({ at: "initFlux", persistence, params });
+  const result = await Flux.initialize(persistence, params);
   flux = Flux._instance as any as Flux;
   return result;
 }

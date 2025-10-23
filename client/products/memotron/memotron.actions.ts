@@ -1,43 +1,58 @@
-import { ActionType, type IAction } from "$lib/client/types/action.type";
-import { Orientation } from "$lib/client/types/direction.enum";
-import { Size } from "$lib/client/types/size.enum";
-import Capture from "$lib/client/products/memotron/capture/Capture.svelte";
-import Node from "$lib/client/products/memotron/node/Node.svelte";
-import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
-import ComingSoonView from "$lib/client/elements/ComingSoonView.svelte";
-import SideNavCombination from "$lib/client/components/combination/SideNavCombination.svelte";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import MemotronLibrary from "$lib/client/products/memotron/library/MemotronLibrary.svelte";
-import { MemotronAction } from "$lib/client/products/memotron/memotronAction.enum";
+import { ActionType, type IAction } from "@21n/types/action.type";
+import { Orientation, Placement } from "@21n/types/direction.enum";
+import { Size } from "@21n/types/size.enum";
+import Capture from "@21n/products/memotron/capture/Capture.svelte";
+import Node from "@21n/products/memotron/node/Node.svelte";
+import NodeLoadingPulse from "@21n/elements/feedback/animations/NodeLoadingPulse.svelte";
+import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+import SideNavCombination from "@21n/components/combination/SideNavCombination.svelte";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import MemotronLibrary from "@21n/products/memotron/library/MemotronLibrary.svelte";
+import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
 import {
   ResourceAccessMode,
   ResourceActionType
-} from "$lib/client/components/flux/resourceStores/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 import {
   resourceAction,
   resourceCacheComponentKey
-} from "$lib/client/components/flux/resourceStores/resource.utils";
-import PasteConfirmationModal from "./capture/PasteConfirmationModal.svelte";
-import Chat from "$lib/client/products/memotron/taco/Chat.svelte";
-import CaptureDnD from "./capture/CaptureDnD.svelte";
-import MemotronOnboarding from "./base/MemotronOnboarding.svelte";
-import NodeTitleLabelPart from "./node/title/NodeTitleLabelPart.svelte";
-import MemotronGreenUse from "./base/MemotronGreenUse.svelte";
-import CalloutSettings from "$lib/client/components/markdown/callout/CalloutSettings.svelte";
-import ResourceBrowser from "$lib/client/components/library/resourceBrowser/ResourceBrowser.svelte";
-import FeatureWheel from "$lib/client/components/featureWheel/FeatureWheel.svelte";
-import ResourceCache from "$lib/client/components/record/ResourceCache.svelte";
-import MemotronOverview from "./overview/MemotronOverview.svelte";
-import { Action } from "$lib/client/types/action.enum";
-import ImportAppData from "./import/ImportAppData.svelte";
-import MemotronImportSettings from "./import/MemotronImportSettings.svelte";
-import MemotronHomeOnMobile from "./home/MemotronHomeOnMobile.svelte";
-import EditCaptureShortcuts from "./capture/EditCaptureShortcuts.svelte";
-import CaptureSettings from "./capture/CaptureSettings.svelte";
-import LinkTagsControlPanel from "./linking/LinkTagsControlPanel.svelte";
-import LibraryPanelContentResolver from "$lib/client/components/library/LibraryPanelContentResolver.svelte";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import PasteConfirmationModal from "@21n/products/memotron/capture/PasteConfirmationModal.svelte";
+import Chat from "@21n/products/memotron/taco/Chat.svelte";
+import CaptureDnD from "@21n/products/memotron/capture/CaptureDnD.svelte";
+import MemotronOnboarding from "@21n/products/memotron/base/MemotronOnboarding.svelte";
+import NodeTitleLabelPart from "@21n/products/memotron/node/title/NodeTitleLabelPart.svelte";
+import MemotronGreenUse from "@21n/products/memotron/base/MemotronGreenUse.svelte";
+import CalloutSettings from "@21n/components/markdown/callout/CalloutSettings.svelte";
+import ResourceBrowser from "@21n/components/library/resourceBrowser/ResourceBrowser.svelte";
+import FeatureWheel from "@21n/components/featureWheel/FeatureWheel.svelte";
+import ResourceCache from "@21n/components/record/ResourceCache.svelte";
+import MemotronOverview from "@21n/products/memotron/overview/MemotronOverview.svelte";
+import { Action } from "@21n/types/action.enum";
+import ImportAppData from "@21n/products/memotron/import/ImportAppData.svelte";
+import MemotronImportSettings from "@21n/products/memotron/import/MemotronImportSettings.svelte";
+import MemotronHomeOnMobile from "@21n/products/memotron/home/MemotronHomeOnMobile.svelte";
+import EditCaptureShortcuts from "@21n/products/memotron/capture/EditCaptureShortcuts.svelte";
+import CaptureSettings from "@21n/products/memotron/capture/CaptureSettings.svelte";
+import LinkTagsControlPanel from "@21n/products/memotron/linking/LinkTagsControlPanel.svelte";
+import LibraryPanelContentResolver from "@21n/components/library/LibraryPanelContentResolver.svelte";
+import PreviewImageUploader from "@21n/products/memotron/node/PreviewImageUploader.svelte";
+import NodeSettings from "@21n/products/memotron/node/NodeSettings.svelte";
 
 export const memotronActions: IAction[] = [
+  {
+    action: MemotronAction.PREVIEW_IMAGE_UPLOADER,
+    type: ActionType.MODAL,
+    isMeta: true,
+    component: PreviewImageUploader,
+    modalParams: {
+      layout: {
+        size: Size.md,
+        orientation: Orientation.Vertical,
+        isShowCantileverClose: true
+      }
+    }
+  },
   {
     action: Action.MOBILEHOME,
     component: MemotronHomeOnMobile,
@@ -55,9 +70,9 @@ export const memotronActions: IAction[] = [
         size: Size.xxl,
         orientation: Orientation.Horizontal,
         ignoreSafeArea: true,
-        isShowClose: true
+        isShowClose: true,
+        alignment: Placement.Right
       },
-      isOnRight: true,
       title: "Taco"
     }
   },
@@ -209,9 +224,9 @@ export const memotronActions: IAction[] = [
     isMeta: true,
     component: PasteConfirmationModal,
     modalParams: {
-      title: "Paste Confirmation",
       layout: {
-        size: Size.sm
+        ignoreSafeArea: true,
+        size: Size.md
       }
     }
   },
@@ -267,7 +282,8 @@ export const memotronActions: IAction[] = [
       title: "Callout Settings",
       layout: {
         orientation: Orientation.Vertical,
-        size: Size.lg
+        size: Size.lg,
+        isOveriddenFooter: true
       }
     }
   },
@@ -336,6 +352,20 @@ export const memotronActions: IAction[] = [
       title: "Capture Settings",
       layout: {
         size: Size.lg,
+        orientation: Orientation.Vertical,
+        isShowCantileverClose: true
+      }
+    }
+  },
+  {
+    action: MemotronAction.NODE_SETTINGS,
+    label: "Node Settings",
+    type: ActionType.MODAL,
+    component: NodeSettings,
+    modalParams: {
+      title: "Node Settings",
+      layout: {
+        size: Size.md,
         orientation: Orientation.Vertical,
         isShowCantileverClose: true
       }

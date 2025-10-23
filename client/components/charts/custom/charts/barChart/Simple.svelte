@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Orientation } from "$lib/client/types/direction.enum";
+  import { Orientation } from "@21n/types/direction.enum";
   import type { BarChartOptions } from "@carbon/charts-svelte";
   import {
     select,
@@ -11,14 +11,14 @@
   } from "d3";
   import { createEventDispatcher, onMount } from "svelte";
   //TODO - import dependency on local
-  import { roundOffToNdigitsAfterDecimal } from "$lib/client/products/pointron/pointron.utils";
+  import { roundOffToNdigitsAfterDecimal } from "@21n/products/pointron/pointron.utils";
   import {
     customColor,
     retrieveCurrentColors
-  } from "$lib/client/utils/theme.utils";
-  import type { ChartDataPoint } from "$lib/client/types/chartDataPoint.type";
-  import { generateUID } from "$lib/client/utils/utils";
-  import appearance from "$lib/client/stores/appearance.store";
+  } from "@21n/utils/theme.utils";
+  import type { ChartDataPoint } from "@21n/types/chartDataPoint.type";
+  import { generateUID } from "@21n/utils/utils";
+  import appearance from "@21n/stores/appearance.store";
 
   export let data: ChartDataPoint[] = [];
   export let options: BarChartOptions;
@@ -687,36 +687,39 @@
       );
   }
 
+  let barMouseOverHandler: ((e: any) => void) | null = null;
+  let barMouseOutHandler: ((e: any) => void) | null = null;
+  let docMouseMoveHandler: ((event: MouseEvent) => void) | null = null;
   function handleEventListeningForBars() {
     if (informationModal && document) {
       const allBars = document.querySelectorAll(".cc-bar");
+      barMouseOverHandler = (e: any) => {
+        mouseHoverData = {
+          key: e.target.__data__.key,
+          value: e.target.__data__.value,
+          group: e.target.__data__.group
+        };
+      };
+      barMouseOutHandler = (_e: any) => {
+        mouseHoverData = {
+          key: "",
+          value: 0,
+          group: ""
+        };
+      };
       allBars.forEach((bar) => {
-        bar.addEventListener("mouseover", (e: any) => {
-          mouseHoverData = {
-            key: e.target.__data__.key,
-            value: e.target.__data__.value,
-            group: e.target.__data__.group
-          };
-        });
+        bar.addEventListener("mouseover", barMouseOverHandler!);
+        bar.addEventListener("mouseout", barMouseOutHandler!);
       });
-      allBars.forEach((bar) => {
-        bar.addEventListener("mouseout", (e: any) => {
-          mouseHoverData = {
-            key: "",
-            value: 0,
-            group: ""
-          };
-        });
-      });
-      document.addEventListener("mousemove", (event) => {
-        // this will move with the mouse
+      docMouseMoveHandler = (event: MouseEvent) => {
         if (informationModal) {
           informationModal.setAttribute(
             "style",
             `top:${event.clientY - 90}px;left:${event.clientX - 130}px;`
           );
         }
-      });
+      };
+      document.addEventListener("mousemove", docMouseMoveHandler);
     }
   }
 
@@ -745,6 +748,7 @@
     }
   }
 
+  import { onDestroy } from "svelte";
   onMount(() => {
     // filteredData = sanitizedData;//*this is done so that the chart is rendered with the data that is present at the time of mounting
     console.log("data received in Simple.svelte ", data);
@@ -777,6 +781,22 @@
       scrollableElementContainerRef.addEventListener("scroll", detectScrollEnd);
     }
     handleEventListeningForBars();
+  });
+
+  onDestroy(() => {
+    if (scrollableElementContainerRef) {
+      scrollableElementContainerRef.removeEventListener("scroll", detectScrollEnd);
+    }
+    const allBars = document?.querySelectorAll?.(".cc-bar");
+    if (allBars && barMouseOverHandler && barMouseOutHandler) {
+      allBars.forEach((bar) => {
+        bar.removeEventListener("mouseover", barMouseOverHandler!);
+        bar.removeEventListener("mouseout", barMouseOutHandler!);
+      });
+    }
+    if (docMouseMoveHandler) {
+      document.removeEventListener("mousemove", docMouseMoveHandler);
+    }
   });
 </script>
 

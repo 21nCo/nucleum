@@ -1,5 +1,5 @@
 <script>
-  import Capture from "./Capture.svelte";
+  import Capture from "@21n/products/memotron/capture/Capture.svelte";
 </script>
 
 <Capture isWindowDnD={true} />

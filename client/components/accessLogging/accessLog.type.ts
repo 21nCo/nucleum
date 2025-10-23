@@ -1,8 +1,8 @@
-import type { IRecordId } from "$lib/client/types/data.type";
+import type { IRecordId } from "@21n/types/data.type";
 import type {
   IMetaResource,
   ResourceActionType
-} from "../flux/resourceStores/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
 
 export interface IAccessLog extends IMetaResource {
   action: ResourceActionType;

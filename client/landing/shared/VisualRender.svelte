@@ -1,22 +1,22 @@
 <script lang="ts">
-  import BuildToLast from "./highlights/visuals/BuildToLast.svelte";
-  import DatabaseIcon from "./highlights/visuals/DatabaseIcon.svelte";
-  import AInative from "./highlights/visuals/AInative.svelte";
-  import NetworkIcon from "./highlights/visuals/NetworkIcon.svelte";
-  import Security from "./highlights/visuals/SecurityVisual.svelte";
-  import UIVisual from "./highlights/visuals/UIVisual.svelte";
-  import CollectionsGraph from "./highlights/visuals/CollectionsGraph.svelte";
-  import PointronFeatures from "./highlights/visuals/PointronFeatures.svelte";
-  import ContinueOffline from "./highlights/visuals/ContinueOffline.svelte";
-  import FocusFeature from "./features/visuals/FocusFeature.svelte";
-  import AnalyticsFeature from "./features/visuals/AnalyticsFeature.svelte";
-  import GoalsFeature from "./features/visuals/GoalsFeature.svelte";
-  import PointronIntuitive from "./highlights/visuals/PointronIntuitive.svelte";
-  import MemotronFeaturesRadial from "./highlights/visuals/MemotronFeaturesRadial.svelte";
-  import CaptureFeature from "./features/visuals/CaptureFeature.svelte";
-  import ClipFeature from "./features/visuals/ClipFeature.svelte";
-  import SynthesizeFeature from "./features/visuals/SynthesizeFeature.svelte";
-  import OrganizeFeature from "./features/visuals/OrganizeFeature.svelte";
+  import BuildToLast from "@21n/landing/shared/highlights/visuals/BuildToLast.svelte";
+  import DatabaseIcon from "@21n/landing/shared/highlights/visuals/DatabaseIcon.svelte";
+  import AInative from "@21n/landing/shared/highlights/visuals/AInative.svelte";
+  import NetworkIcon from "@21n/landing/shared/highlights/visuals/NetworkIcon.svelte";
+  import Security from "@21n/landing/shared/highlights/visuals/SecurityVisual.svelte";
+  import UIVisual from "@21n/landing/shared/highlights/visuals/UIVisual.svelte";
+  import CollectionsGraph from "@21n/landing/shared/highlights/visuals/CollectionsGraph.svelte";
+  import PointronFeatures from "@21n/landing/shared/highlights/visuals/PointronFeatures.svelte";
+  import ContinueOffline from "@21n/landing/shared/highlights/visuals/ContinueOffline.svelte";
+  import FocusFeature from "@21n/landing/shared/features/visuals/FocusFeature.svelte";
+  import AnalyticsFeature from "@21n/landing/shared/features/visuals/AnalyticsFeature.svelte";
+  import GoalsFeature from "@21n/landing/shared/features/visuals/GoalsFeature.svelte";
+  import PointronIntuitive from "@21n/landing/shared/highlights/visuals/PointronIntuitive.svelte";
+  import MemotronFeaturesRadial from "@21n/landing/shared/highlights/visuals/MemotronFeaturesRadial.svelte";
+  import CaptureFeature from "@21n/landing/shared/features/visuals/CaptureFeature.svelte";
+  import ClipFeature from "@21n/landing/shared/features/visuals/ClipFeature.svelte";
+  import SynthesizeFeature from "@21n/landing/shared/features/visuals/SynthesizeFeature.svelte";
+  import OrganizeFeature from "@21n/landing/shared/features/visuals/OrganizeFeature.svelte";
   export let name: string;
 
   const componentMap: Record<string, any> = {

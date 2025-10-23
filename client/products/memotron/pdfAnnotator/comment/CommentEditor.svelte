@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { AnnotationType } from "$lib/client/products/memotron/pdfAnnotator/pdfAnnotator.type";
-  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
+  import { AnnotationType } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
+  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
   import { createEventDispatcher } from "svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { ButtonVariant } from "$lib/client/types/button.type";
-  import { Size } from "$lib/client/types/size.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonVariant } from "@21n/types/button.type";
+  import { Size } from "@21n/types/size.enum";
   export let annotationMode: AnnotationType;
   export let style = "";
   export let dueDate: Date = new Date();

@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { currentTime } from "$lib/client/stores/app.store";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { formatTime } from "$lib/client/utils/time.utils";
+  import { currentTime } from "@21n/stores/app.store";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import { formatTime } from "@21n/utils/time.utils";
 </script>
 
 <div class="flex flex-col items-center justify-center gap-2 w-full h-full">

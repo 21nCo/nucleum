@@ -1,10 +1,10 @@
 <script lang="ts">
-  import TextArea from "$lib/client/elements/input/TextArea.svelte";
-  import InlineFeedbackText from "$lib/client/extensions/clipper/InlineFeedbackText.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { AlertType } from "$lib/client/types/notification.type";
-  import type { IActiveCollectionStore } from "./collection.store";
+  import TextArea from "@21n/elements/input/TextArea.svelte";
+  import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { InputStyle } from "@21n/types/input.type";
+  import { AlertType } from "@21n/types/notification.type";
+  import type { IActiveCollectionStore } from "@21n/components/collection/collection.store";
   export let collection: IActiveCollectionStore;
 
   let status:

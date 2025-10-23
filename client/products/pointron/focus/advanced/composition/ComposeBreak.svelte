@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
+  import { pointronPreferences } from "@21n/products/pointron/pointron.store";
   import {
     BreakCompositionType,
     type SessionComposition
-  } from "$lib/client/types/pointron/sessionComposition.type";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import DurationInput from "$lib/client/elements/input/durationInput/DurationInput.svelte";
-  import OptionSelector from "$lib/client/elements/select/OptionSelector.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import { OptionSelectorStyle } from "$lib/client/types/select.type";
+  } from "@21n/types/pointron/sessionComposition.type";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
+  import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import { OptionSelectorStyle } from "@21n/types/select.type";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let composition: SessionComposition;

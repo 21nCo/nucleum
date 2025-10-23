@@ -1,22 +1,17 @@
 <script lang="ts">
-  import { Size } from "$lib/client/types/size.enum";
+  import { Size } from "@21n/types/size.enum";
   import { createEventDispatcher } from "svelte";
-  import SearchResultItem from "./SearchResultItem.svelte";
-  import { debouncer } from "$lib/client/utils/utils";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import type { IResource } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { renderMdAsHtml } from "$lib/client/components/markdown/markdown.utils";
-  import { flux } from "$lib/client/components/flux/flux";
-  import { isExtensionEnvironment } from "$lib/client/utils/browser.utils";
-  import { FluxMethod } from "$lib/client/components/flux/flux.type";
-  import { extensionFlux } from "$lib/client/components/flux/fluxExtentionMediator";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import Icon from "../Icon.svelte";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { determineResourceType } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { KeyboardKey, ModifierKey } from "$lib/client/types/keyboard.type";
-  export let searchStoreId: string | undefined = undefined;
+  import SearchResultItem from "@21n/elements/input/SearchResultItem.svelte";
+  import { debouncer } from "@21n/utils/utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import type { IResource } from "@21n/components/flux/resourceStores/resource.type";
+  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
+  import { logger } from "@21n/components/debug/logger.client";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import { appStore } from "@21n/stores/app.store";
+  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
+  import { KeyboardKey, ModifierKey } from "@21n/types/keyboard.type";
   export let searchCallback: Function | undefined = undefined;
   export let searchResultComponent: any = undefined;
   export let searchResultComponentProps: Record<string, unknown> = {};
@@ -181,16 +176,6 @@
       dispatch("count", { count: results?.length });
       return;
     }
-    if (searchStoreId) {
-      if (isExtensionEnvironment()) {
-        results = await extensionFlux({
-          method: FluxMethod.SEARCH,
-          args: { storeId: searchStoreId, query: val }
-        });
-      } else {
-        results = await flux.search(searchStoreId, val);
-      }
-    }
 
     isSearchInProgress = false;
     if (results?.length > 0) {
@@ -216,7 +201,7 @@
     "bg-bgs1 rounded-md border border-brs2": isApplyPopoverStyling
   })}
 >
-  <div class="flex flex-col flex-grow items-center w-full">
+  <div class="flex flex-col overflow-y-auto-scrollbar items-center w-full">
     {#if isAlwaysShowSearchFeedback && isSearchInProgress}
       <span class="flex items-center gap-2 p-2">
         <Icon icon="svg-spinners:3-dots-fade" />

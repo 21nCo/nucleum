@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { TimeScale } from "$lib/client/types/time.type";
-  import { popover } from "$lib/client/actions/popover.action";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import TimeScaleSelector from "$lib/client/elements/datetime/TimeScaleSelector.svelte";
+  import { TimeScale } from "@21n/types/time.type";
+  import { popover } from "@21n/actions/popover.action";
+  import { Placement } from "@21n/types/direction.enum";
+  import TimeScaleSelector from "@21n/elements/datetime/TimeScaleSelector.svelte";
   import { createEventDispatcher } from "svelte";
   import {
     calculateTimeSpan,
     getDaysCount,
     scaleThresholds
-  } from "./datetime.utils";
+  } from "@21n/elements/datetime/datetime.utils";
   const dispatch = createEventDispatcher();
 
   export let start: Date;

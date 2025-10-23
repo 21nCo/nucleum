@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import ResourceResolver from "./paint/ResourceResolver.svelte";
+  import ResourceResolver from "@21n/layout/paint/ResourceResolver.svelte";
   import { page } from "$app/stores";
-  import { ResourceAccessMode } from "$lib/client/components/flux/resourceStores/resource.type";
-  import RightSplit from "./RightSplit.svelte";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import RightSplit from "@21n/layout/RightSplit.svelte";
   export let id: string;
   let split: string | undefined = undefined;
   export let componentParams: any = {};

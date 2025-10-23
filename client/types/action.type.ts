@@ -1,10 +1,10 @@
-import type { Resource } from "../components/flux/resourceStores/resource.enum";
-import type { ResourceAccessMode } from "../components/flux/resourceStores/resource.type";
-import type { UserDataMode } from "./account.type";
-import { Embed, OperatingSystem, type IAppContext } from "./context.type";
-import type { ConfirmationNotification } from "./notification.type";
-import type { ModalParams } from "./popup.type";
-import type { IViewStore } from "./view.type";
+import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import type { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+import type { UserDataMode } from "@21n/types/account.type";
+import { Embed, OperatingSystem, type IAppContext } from "@21n/types/context.type";
+import type { ConfirmationNotification } from "@21n/types/notification.type";
+import type { ModalParams } from "@21n/types/popup.type";
+import type { IViewStore } from "@21n/types/view.type";
 
 export type IAction = {
   action: string;
@@ -90,10 +90,6 @@ export type IAction = {
    * Search action params to be used when the action type is {@link ActionType.SEARCH_CMD}
    */
   searchActionParams?: {
-    /**
-     * @deprecated - use searchCallback instead
-     */
-    searchStoreId?: string;
     searchCallback?: (search: string, componentParams?: any) => Promise<any>;
     /**
      * @deprecated - use placeholder instead

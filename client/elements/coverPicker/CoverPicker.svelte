@@ -1,33 +1,33 @@
 <script lang="ts">
-  import modalEvent from "$lib/client/components/modal/modal.store";
-  import { Action } from "$lib/client/types/action.enum";
+  import modalEvent from "@21n/components/modal/modal.store";
+  import { Action } from "@21n/types/action.enum";
   import {
     BarStyle,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
-  import { TextStyle } from "$lib/client/types/text.enum";
-  import Button from "../button/Button.svelte";
-  import ColorPicker from "../colorPicker/ColorPicker.svelte";
-  import PanelSwitcher from "../switcher/PanelSwitcher.svelte";
-  import Text from "../text/Text.svelte";
+  } from "@21n/types/switcher.enum";
+  import { TextStyle } from "@21n/types/text.enum";
+  import Button from "@21n/elements/button/Button.svelte";
+  import ColorPicker from "@21n/elements/colorPicker/ColorPicker.svelte";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import Text from "@21n/elements/text/Text.svelte";
   import { createEventDispatcher, onMount } from "svelte";
-  import GradientsSelector from "../colorPicker/gradients/GradientsSelector.svelte";
-  import { fileDrop } from "$lib/client/actions/fileDrop.action";
-  import Icon from "../Icon.svelte";
-  import account from "$lib/client/stores/account.store";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import FileView from "$lib/client/components/files/FileView.svelte";
-  import { FileType } from "$lib/client/components/files/file.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import ComingSoonView from "../ComingSoonView.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import view from "$lib/client/stores/view.store";
-  import UnsplashPicker from "./UnsplashPicker.svelte";
-  import CoverPickerFromLibrary from "./CoverPickerFromLibrary.svelte";
-  import { isRecordId } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { resolveProductConfig } from "$lib/client/products/product.config";
+  import GradientsSelector from "@21n/elements/colorPicker/gradients/GradientsSelector.svelte";
+  import { fileDrop } from "@21n/actions/fileDrop.action";
+  import Icon from "@21n/elements/Icon.svelte";
+  import account from "@21n/stores/account.store";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import FileView from "@21n/components/files/FileView.svelte";
+  import { FileType } from "@21n/components/files/file.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import view from "@21n/stores/view.store";
+  import UnsplashPicker from "@21n/elements/coverPicker/UnsplashPicker.svelte";
+  import CoverPickerFromLibrary from "@21n/elements/coverPicker/CoverPickerFromLibrary.svelte";
+  import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
+  import { appStore } from "@21n/stores/app.store";
+  import { resolveProductConfig } from "@21n/products/product.config";
 
   const dispatch = createEventDispatcher();
 
@@ -42,8 +42,9 @@
   export let orientation: Orientation = Orientation.Vertical;
   export let value: IRecordId | undefined = undefined;
 
-  $: isFileUploadAvailable = resolveProductConfig($appStore.product).features
-    .fileUploadAvailable;
+  $: isFileUploadAvailable = resolveProductConfig(
+    $appStore.product
+  ).tableConfig.some((table) => table.name === Resource.file);
 
   let selectedMethod: Method = Method.COLOR;
   let _value: string | undefined = transformValue(value);

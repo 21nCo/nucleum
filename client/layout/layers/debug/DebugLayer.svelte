@@ -1,25 +1,28 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
-  import DebugInfoItem from "./DebugInfoItem.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { logger } from "$lib/client/components/debug/logger.client";
-  import appearance from "$lib/client/stores/appearance.store";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { Size } from "$lib/client/types/size.enum";
-  import context from "$lib/client/stores/context.store";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import account from "$lib/client/stores/account.store";
-  import { Action } from "$lib/client/types/action.enum";
-  import { FallbackTracker } from "$lib/client/utils/fallbackTracker.utils";
-  import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import view from "@21n/stores/view.store";
+  import DebugInfoItem from "@21n/layout/layers/debug/DebugInfoItem.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { LogType } from "@21n/components/debug/debug.type";
+  import appearance from "@21n/stores/appearance.store";
+  import Divider from "@21n/elements/Divider.svelte";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import { Size } from "@21n/types/size.enum";
+  import context from "@21n/stores/context.store";
+  import { cn } from "@21n/utils/ui.utils";
+  import account from "@21n/stores/account.store";
+  import { Action } from "@21n/types/action.enum";
+  import { FallbackTracker } from "@21n/utils/fallbackTracker.utils";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
   export let isShowAsPage: boolean = false;
   let isShowDebugOverlay: boolean = false;
   let environment: string = $appStore.env;
   let isShowLogs: boolean = false;
+  const defaultLogLevel = logger.level ?? LogType.INFO;
+  let isTraceLoggingEnabled = logger.level >= LogType.TRACE;
   let isDboUpdateInProgress: boolean = false;
   let storageQuota: number | undefined;
   let storageUsage: number | undefined;
@@ -57,6 +60,17 @@
       console.error("Failed to reset fallbacks:", error);
     }
   }
+
+  function toggleTraceLogging() {
+    console.log("toggleTraceLogging", isTraceLoggingEnabled, defaultLogLevel);
+    if (isTraceLoggingEnabled) {
+      logger.setDefaultLevel();
+      isTraceLoggingEnabled = logger.level >= LogType.TRACE;
+    } else {
+      logger.setLevel(LogType.TRACE);
+      isTraceLoggingEnabled = true;
+    }
+  }
 </script>
 
 {#if isShowDebugOverlay || isShowAsPage}
@@ -71,7 +85,7 @@
         class="absolute top-0 right-0 flex flex-col p-1 bg-bgs3 text-fgs1 rounded-lg z-50"
         on:click={() => (isShowDebugOverlay = false)}
       >
-        <Icon icon="minus-circled" />
+        <Icon icon="minus-circle" />
       </button>
     {/if}
     <DebugInfoItem
@@ -165,20 +179,12 @@
         label="Dexie console"
       />
       <Button
-        on:click={() => {
-          appStore.runAction("surreal-local");
-        }}
+        on:click={toggleTraceLogging}
         size={Size.sm}
-        icon="terminal"
-        label="Surreal console"
-      />
-      <Button
-        on:click={() => {
-          appStore.runAction("signaldb-console");
-        }}
-        size={Size.sm}
-        icon="terminal"
-        label="SignalDB console"
+        icon={isTraceLoggingEnabled ? "check" : "terminal"}
+        label={isTraceLoggingEnabled
+          ? "Trace logging enabled"
+          : "Enable trace logging"}
       />
       <Button
         icon="trash"
@@ -214,7 +220,7 @@
       class="absolute top-0 right-0 flex flex-col p-1 text-fgs1 rounded-lg z-50"
       on:click={() => (isShowLogs = false)}
     >
-      <Icon icon="minus-circled" size={Size.lg} />
+      <Icon icon="minus-circle" size={Size.lg} />
     </button>
     <span> Replaced with telemetry. </span>
     <!-- <div class="flex flex-col items-start gap-2 overflow-y-auto">

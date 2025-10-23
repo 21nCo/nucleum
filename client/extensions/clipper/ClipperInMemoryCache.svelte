@@ -1,5 +1,5 @@
 <script lang="ts">
-  import CollectionCache from "$lib/client/components/collection/CollectionCache.svelte";
+  import CollectionCache from "@21n/components/collection/CollectionCache.svelte";
 </script>
 
 <CollectionCache />

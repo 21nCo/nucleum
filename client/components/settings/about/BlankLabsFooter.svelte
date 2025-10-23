@@ -1,6 +1,6 @@
 <script lang="ts">
-  import A21nLogo from "$lib/client/branding/A21nLogo.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import A21nLogo from "@21n/branding/A21nLogo.svelte";
+  import { Size } from "@21n/types/size.enum";
   export let isComingSoon: boolean = false;
 </script>
 

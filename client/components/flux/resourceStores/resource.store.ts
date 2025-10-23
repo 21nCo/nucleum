@@ -5,7 +5,7 @@ import {
   activeResourceFilterV2,
   archivedResourceFilter,
   debouncer
-} from "../../../utils/utils";
+} from "@21n/utils/utils";
 import {
   PersistenceActionType,
   StoreDataType,
@@ -17,10 +17,10 @@ import {
   type IResourceSelectFilters,
   type IResourceSelectProperties,
   type IResourceStore
-} from "../../../types/data.type";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { ObservableStore } from "../../../stores/client.store";
-import { resolveCurrentUserId } from "../../../utils/account.utils";
+} from "@21n/types/data.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { ObservableStore } from "@21n/stores/client.store";
+import { resolveCurrentUserId } from "@21n/utils/account.utils";
 import {
   type IMultiSelectContext,
   type IMultiSelectStore,
@@ -28,27 +28,28 @@ import {
   type IResourceMutationParams,
   type IResourceCaptureV2,
   ResourceAccessMode
-} from "./resource.type";
-import { flux } from "../flux";
+} from "@21n/components/flux/resourceStores/resource.type";
+import { flux } from "@21n/components/flux/flux";
 import {
   dispatchCustomEvent,
   isExtensionEnvironment
-} from "$lib/client/utils/browser.utils";
-import { extensionFlux } from "../fluxExtentionMediator";
-import { FluxMethod } from "../flux.type";
-import { generateResourceId } from "../flux.utils";
-import { toasts } from "$lib/client/stores/notification.store";
-import { logger } from "../../debug/logger.client";
+} from "@21n/utils/browser.utils";
+import { extensionFlux } from "@21n/components/flux/fluxExtentionMediator";
+import { FluxMethod } from "@21n/components/flux/flux.type";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
+import { toasts } from "@21n/stores/notification.store";
+import { logger } from "@21n/components/debug/logger.client";
 import {
   determineResourceAccessMode,
   isSameResource,
   resourceInList
-} from "./resource.utils";
-import { GlobalEvent } from "$lib/client/types/event.enum";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { stringify } from "$lib/shared/utils/json.utils";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { GlobalEvent } from "@21n/types/event.enum";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+import { stringify } from "@21n/shared-utils/json.utils";
 
 const activeResources = new Map<string, ActiveResourceStore<any, any, any>>();
+export const resourceStores = new Map<Resource, ResourceStore<any, any>>();
 
 const multiSelectStores = new Map<string, MultiSelectStore>();
 
@@ -211,10 +212,6 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
   id: Resource;
   dataType: StoreDataType = StoreDataType.IFR;
   currentUserId?: string;
-  indices?: string[];
-  searchIndices?: string[];
-  isInMemory?: boolean = false;
-  isCloudOnlyResource?: boolean = false;
   defaultProps?: Partial<T> = {};
   expandProps?: string[];
   /**
@@ -231,30 +228,13 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
   private isExtensionEnvironment: boolean = false;
   constructor(
     resourceType: Resource,
-    params?: Pick<
-      IResourceStore<T>,
-      | "isInMemory"
-      | "isCloudOnlyResource"
-      | "indices"
-      | "searchIndices"
-      | "defaultProps"
-      | "expandProps"
-    > &
+    params?: Pick<IResourceStore<T>, "defaultProps" | "expandProps"> &
       Partial<Pick<IResourceStore<T>, "dataType">>
   ) {
     this.id = resourceType;
     resolveCurrentUserId().then((x) => {
       this.currentUserId = x;
     });
-    this.indices = [
-      "id",
-      "createdAt",
-      "modifiedAt",
-      ...(params?.indices ?? [])
-    ];
-    this.searchIndices = params?.searchIndices;
-    this.isInMemory = params?.isInMemory;
-    this.isCloudOnlyResource = params?.isCloudOnlyResource;
     this.dataType = params?.dataType ?? StoreDataType.IFR;
     this.defaultProps = params?.defaultProps ?? {};
     this.expandProps = params?.expandProps;
@@ -305,17 +285,13 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
         method: FluxMethod.MUTATION,
         args: {
           resource: this.id,
-          params: data,
-          additionalParams: {
-            isCloudOnlyResource: this.isCloudOnlyResource
-          }
+          params: data
         }
       });
       if (result) return resources;
       return result;
     }
     await flux.mutation<T>(this.id, data, {
-      isCloudOnlyResource: this.isCloudOnlyResource,
       context: params?.context
     });
     return resources;
@@ -334,10 +310,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
             action: PersistenceActionType.MERGE,
             record: data
           },
-          additionalParams: {
-            ...additionalParams,
-            isCloudOnlyResource: this.isCloudOnlyResource
-          }
+          additionalParams
         }
       });
     }
@@ -348,8 +321,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
         record: data
       },
       {
-        ...additionalParams,
-        isCloudOnlyResource: this.isCloudOnlyResource
+        ...additionalParams
       }
     );
   }
@@ -484,9 +456,6 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
               modifiedBy: this.currentUserId,
               modifiedAt: new Date()
             }))
-          },
-          additionalParams: {
-            isCloudOnlyResource: this.isCloudOnlyResource
           }
         }
       });
@@ -509,8 +478,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
         })) as unknown as T[]
       },
       {
-        ...additionalParams,
-        isCloudOnlyResource: this.isCloudOnlyResource
+        ...additionalParams
       }
     );
   }
@@ -612,9 +580,6 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
           params: {
             action: PersistenceActionType.DELETE,
             recordId: id
-          },
-          additionalParams: {
-            isCloudOnlyResource: this.isCloudOnlyResource
           }
         }
       });
@@ -626,8 +591,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
         recordId: id
       },
       {
-        ...additionalParams,
-        isCloudOnlyResource: this.isCloudOnlyResource
+        ...additionalParams
       }
     );
   }
@@ -638,10 +602,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
         method: FluxMethod.MUTATION,
         args: {
           resource: this.id,
-          params: { action: PersistenceActionType.BULK_DELETE, recordIds: ids },
-          additionalParams: {
-            isCloudOnlyResource: this.isCloudOnlyResource
-          }
+          params: { action: PersistenceActionType.BULK_DELETE, recordIds: ids }
         }
       });
     }
@@ -652,8 +613,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
         recordIds: ids
       },
       {
-        ...additionalParams,
-        isCloudOnlyResource: this.isCloudOnlyResource
+        ...additionalParams
       }
     );
   }
@@ -713,8 +673,7 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
     }
 
     const result = await flux.selectMany(this.id, params, {
-      isCloudOnlyResource:
-        this.isCloudOnlyResource ?? additionalParams?.isUseCloud,
+      isUseCloud: additionalParams?.isUseCloud,
       signal: additionalParams?.signal
     });
     if (
@@ -756,7 +715,6 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
       });
     }
     return flux.select(resourceId, properties, {
-      isCloudOnlyResource: this.isCloudOnlyResource,
       signal: params?.signal
     });
   }
@@ -767,7 +725,6 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
    * @returns
    */
   loader(data: T[]) {
-    if (!this.isInMemory) return;
     this._setInMemoryItems(data);
   }
 
@@ -809,5 +766,16 @@ export class ResourceStore<T extends IResource, C extends IResourceCaptureV2<T>>
     } else {
       toasts.error("Something went wrong. Please try again.");
     }
+  }
+
+  static resolve<T extends ResourceStore<any, any>>(
+    this: new () => T,
+    resource: Resource
+  ): T {
+    if (!resourceStores.has(resource)) {
+      resourceStores.set(resource, new this());
+    }
+    let val = resourceStores.get(resource);
+    return val! as T;
   }
 }

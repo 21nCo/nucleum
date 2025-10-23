@@ -3,23 +3,23 @@ import {
   CollectionLayout,
   type ICollectionViewCapture,
   type ICollectionCapture
-} from "$lib/client/components/collection/collection.type";
-import { collectionStore } from "$lib/client/components/collection/collection.store";
-import { linker } from "$lib/client/products/memotron/linking/link.store";
+} from "@21n/components/collection/collection.type";
+import { collectionStore } from "@21n/components/collection/collection.store";
+import { linker } from "@21n/products/memotron/linking/link.store";
 import JSZip from "jszip";
-import { sanitizeAndResolve } from "../node/url.utils";
-import { nodeStore } from "../node/node.store";
-import { NodeType } from "../node/node.type";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { generateResourceId } from "$lib/shared/utils/surreal.utils";
-import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
-import { GlobalEvent } from "$lib/client/types/event.enum";
-import { logger } from "$lib/client/components/debug/logger.client";
-import { viewStore } from "$lib/client/components/collection/view.store";
-import { performApiCall } from "$lib/client/utils/network.utils";
-import { UserDataMode } from "$lib/client/types/account.type";
-import account from "$lib/client/stores/account.store";
-import { parse } from "$lib/shared/utils/json.utils";
+import { sanitizeAndResolve } from "@21n/products/memotron/node/url.utils";
+import { nodeStore } from "@21n/products/memotron/node/node.store";
+import { NodeType } from "@21n/products/memotron/node/node.type";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { generateResourceId } from "@21n/shared-utils/surreal.utils";
+import { dispatchCustomEvent } from "@21n/utils/browser.utils";
+import { GlobalEvent } from "@21n/types/event.enum";
+import { logger } from "@21n/components/debug/logger.client";
+import { viewStore } from "@21n/components/collection/view.store";
+import { performApiCall } from "@21n/utils/network.utils";
+import { UserDataMode } from "@21n/types/account.type";
+import account from "@21n/stores/account.store";
+import { parse } from "@21n/shared-utils/json.utils";
 
 export class PocketImporter {
   private processedUrls: Map<string, string> = new Map();

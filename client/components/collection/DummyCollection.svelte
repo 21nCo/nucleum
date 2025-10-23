@@ -2,8 +2,8 @@
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "../flux/resourceStores/resource.type";
-  import Collection from "./Collection.svelte";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import Collection from "@21n/components/collection/Collection.svelte";
   export let id: any;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let parentBgIndex: number = 1;

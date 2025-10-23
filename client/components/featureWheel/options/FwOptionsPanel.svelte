@@ -1,22 +1,22 @@
 <script lang="ts">
-  import SvgIcon from "$lib/client/elements/SVGIcon.svelte";
+  import SvgIcon from "@21n/elements/SVGIcon.svelte";
   import type {
     FeatureWheelMode,
     IContemporary,
     IFwCategory,
     IFwFeature
-  } from "$lib/client/types/featureWheel.type";
-  import { popover } from "$lib/client/actions/popover.action";
-  import { properCase } from "$lib/shared/utils/text.utils";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import Badge from "$lib/client/elements/text/Badge.svelte";
-  import ExternalLogo from "$lib/client/branding/external/ExternalLogo.svelte";
-  import ContemporarySelectorPopover from "./ContemporarySelectorPopover.svelte";
+  } from "@21n/types/featureWheel.type";
+  import { popover } from "@21n/actions/popover.action";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import { cn } from "@21n/utils/ui.utils";
+  import Badge from "@21n/elements/text/Badge.svelte";
+  import ExternalLogo from "@21n/branding/external/ExternalLogo.svelte";
+  import ContemporarySelectorPopover from "@21n/components/featureWheel/options/ContemporarySelectorPopover.svelte";
   import { createEventDispatcher } from "svelte";
-  import FwCategoryLegend from "./FwCategoryLegend.svelte";
-  import FeatureSelectorPopover from "./FeatureSelectorPopover.svelte";
-  import Button from "$lib/client/landing/shared/elements/Button.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
+  import FwCategoryLegend from "@21n/components/featureWheel/options/FwCategoryLegend.svelte";
+  import FeatureSelectorPopover from "@21n/components/featureWheel/options/FeatureSelectorPopover.svelte";
+  import Button from "@21n/landing/shared/elements/Button.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
   const dispatch = createEventDispatcher();
   export let mode: FeatureWheelMode;
   export let title: string | undefined = undefined;
@@ -139,7 +139,7 @@
               <span class="text-fgs2 whitespace-nowrap"> All apps </span>
             {/if}
           </div>
-          <SvgIcon icon="chevdown" isRenderRaw={true} />
+          <SvgIcon icon="chevron-down" isRenderRaw={true} />
         </button>
       </div>
 
@@ -193,7 +193,7 @@
                 <Badge text={selectedCategories.length} />
               {/if}
             </div>
-            <SvgIcon icon="chevdown" isRenderRaw={true} />
+            <SvgIcon icon="chevron-down" isRenderRaw={true} />
           </button>
         </div>
       {/if}

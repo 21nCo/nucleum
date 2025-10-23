@@ -1,51 +1,51 @@
-import { NodeType } from "$lib/client/products/memotron/node/node.type";
+import { NodeType } from "@21n/products/memotron/node/node.type";
 import type {
   IWebpageParser,
   ISocialPostParser,
   IVideoBookmarkParser
-} from "../clipper.type";
+} from "@21n/extensions/clipper/clipper.type";
 import {
   extractBskyPostFromPage,
   extractBskyPostFromInlineClip,
   extractBlueskyProfile
-} from "./blueskyParser";
-import { extractCourseraBookmark } from "./courseraParser";
+} from "@21n/extensions/clipper/parsers/blueskyParser";
+import { extractCourseraBookmark } from "@21n/extensions/clipper/parsers/courseraParser";
 import {
   extractFacebookPostFromPage,
   extractFacebookPostFromInlineClip,
   extractFacebookProfile
-} from "./facebookParser";
+} from "@21n/extensions/clipper/parsers/facebookParser";
 import {
   extractInstagramPostFromPage,
   extractInstagramPostFromInlineClip,
   extractInstagramProfileFromPage
-} from "./instagramParser";
+} from "@21n/extensions/clipper/parsers/instagramParser";
 import {
   extractLinkedInPostFromPage,
   extractLinkedInPostFromInlineClip,
   extractLinkedInProfile
-} from "./linkedinParser";
+} from "@21n/extensions/clipper/parsers/linkedinParser";
 import {
   extractMastodonPostFromPage,
   extractMastodonPostFromInlineClip,
   extractMastodonProfile
-} from "./mastodonParser";
+} from "@21n/extensions/clipper/parsers/mastodonParser";
 import {
   extractRedditPostFromPage,
   extractRedditPostFromInlineClip
-} from "./redditParser";
+} from "@21n/extensions/clipper/parsers/redditParser";
 import {
   extractThreadsPostFromPage,
   extractThreadsPostFromInlineClip,
   extractThreadsProfile
-} from "./threadsParser";
+} from "@21n/extensions/clipper/parsers/threadsParser";
 import {
   extractTweetFromTweetPage,
   extractTweetFromInlineClip,
   extractTwitterProfile
-} from "./twitterParser";
-import { extractUdemyBookmark } from "./udemyParser";
-import { extractYoutubeBookmark } from "./youtubeParser";
+} from "@21n/extensions/clipper/parsers/twitterParser";
+import { extractUdemyBookmark } from "@21n/extensions/clipper/parsers/udemyParser";
+import { extractYoutubeBookmark } from "@21n/extensions/clipper/parsers/youtubeParser";
 
 const parserMap = new Map<NodeType, IWebpageParser>([
   [NodeType.TWEET, extractTweetFromTweetPage],
@@ -57,6 +57,7 @@ const parserMap = new Map<NodeType, IWebpageParser>([
   [NodeType.THREADS_POST, extractThreadsPostFromPage],
   [NodeType.THREADS_PROFILE, extractThreadsProfile],
   [NodeType.INSTAGRAM_POST, extractInstagramPostFromPage],
+  [NodeType.INSTAGRAM_REEL, extractInstagramPostFromPage],
   [NodeType.INSTAGRAM_PROFILE, extractInstagramProfileFromPage],
   [NodeType.REDDIT_POST, extractRedditPostFromPage],
   [NodeType.FACEBOOK_POST, extractFacebookPostFromPage],
@@ -71,6 +72,7 @@ const inlineSocialPostParserMap = new Map<NodeType, ISocialPostParser>([
   [NodeType.BLUESKY_POST, extractBskyPostFromInlineClip],
   [NodeType.THREADS_POST, extractThreadsPostFromInlineClip],
   [NodeType.INSTAGRAM_POST, extractInstagramPostFromInlineClip],
+  [NodeType.INSTAGRAM_REEL, extractInstagramPostFromInlineClip],
   [NodeType.REDDIT_POST, extractRedditPostFromInlineClip],
   [NodeType.FACEBOOK_POST, extractFacebookPostFromInlineClip],
   [NodeType.MASTODON_POST, extractMastodonPostFromInlineClip]
@@ -78,6 +80,7 @@ const inlineSocialPostParserMap = new Map<NodeType, ISocialPostParser>([
 
 const videoBookmarkParserMap = new Map<NodeType, IVideoBookmarkParser>([
   [NodeType.YOUTUBE_VIDEO, extractYoutubeBookmark],
+  [NodeType.YOUTUBE_SHORT, extractYoutubeBookmark],
   [NodeType.COURSERA_VIDEO, extractCourseraBookmark],
   [NodeType.UDEMY_VIDEO, extractUdemyBookmark]
 ]);

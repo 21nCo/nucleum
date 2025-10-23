@@ -1,6 +1,6 @@
-import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import type { IHighlightStore } from "./highlight.type";
+import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import type { IHighlightStore } from "@21n/products/memotron/common/highlighters/highlight.type";
 
 const seedHighlighters: IHighlightStore = {
   highlighters: [
@@ -20,5 +20,6 @@ class HighlightColorsStore extends KeyValueStore<IHighlightStore> {
     return this.get().highlighters.find((x) => x.id === id)?.color ?? "#f6e05e";
   }
 }
-
-export const highlightStore = new HighlightColorsStore();
+export const highlightStore = HighlightColorsStore.resolve(
+  Resource.highlight
+);

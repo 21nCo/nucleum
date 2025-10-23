@@ -1,9 +1,9 @@
-import { Placement } from "$lib/client/types/direction.enum";
-import { OperatingSystem } from "../types/context.type";
-import { GlobalEvent, type Event } from "../types/event.enum";
-import type { IPopoverRenderParams } from "../types/popover.type";
-import { deepCopy } from "../../shared/utils/obj.utils";
-import { logger } from "../components/debug/logger.client";
+import { Placement } from "@21n/types/direction.enum";
+import { OperatingSystem } from "@21n/types/context.type";
+import { GlobalEvent, type Event } from "@21n/types/event.enum";
+import type { IPopoverRenderParams } from "@21n/types/popover.type";
+import { deepCopy } from "@21n/shared-utils/obj.utils";
+import { logger } from "@21n/components/debug/logger.client";
 
 function documentDimensions() {
   const documentWidth = window.innerWidth;

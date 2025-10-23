@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createEventDispatcher, onMount } from "svelte";
-  import GridInputElement from "./GridInputElement.svelte";
-  import { generateUID } from "$lib/client/utils/utils";
+  import GridInputElement from "@21n/products/memotron/lab/infiniteGrid/GridInputElement.svelte";
+  import { generateUID } from "@21n/utils/utils";
   export let size: number;
   export let id: string;
   export let top: number;

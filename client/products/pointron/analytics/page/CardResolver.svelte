@@ -1,16 +1,16 @@
 <script lang="ts">
-  import AnalyticsChart from "./AnalyticsChart.svelte";
+  import AnalyticsChart from "@21n/products/pointron/analytics/page/AnalyticsChart.svelte";
   import {
     AnalyticsCardType,
     type IAnalyticsCard,
     type AnalyticsDataRecord,
     type IAnalyticsLabelColor
-  } from "../analytics.types";
-  import TopNCard from "../cards/topN/TopNCard.svelte";
-  import MetricsCard from "../cards/metrics/MetricsCard.svelte";
-  import TargetGuages from "../targets/TargetGuages.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import view from "$lib/client/stores/view.store";
+  } from "@21n/products/pointron/analytics/analytics.types";
+  import TopNCard from "@21n/products/pointron/analytics/cards/topN/TopNCard.svelte";
+  import MetricsCard from "@21n/products/pointron/analytics/cards/metrics/MetricsCard.svelte";
+  import TargetGuages from "@21n/products/pointron/analytics/targets/TargetGuages.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import view from "@21n/stores/view.store";
   export let card: IAnalyticsCard;
   export let data: AnalyticsDataRecord[];
   export let parentBgIndex: number = 1;

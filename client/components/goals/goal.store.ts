@@ -1,43 +1,43 @@
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
 import {
   type IRecordId,
   type IResourceSelectAdditionalParams,
   type IResourceSelectParams
-} from "$lib/client/types/data.type";
-import { generateResourceId } from "$lib/client/components/flux/flux.utils";
-import { logger } from "$lib/client/components/debug/logger.client";
-import type { IActiveGoal, IGoal, IGoalCapture, IGoalThumb } from "./goal.type";
-import { GoalStatus, GoalType } from "./goal.type";
+} from "@21n/types/data.type";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
+import { logger } from "@21n/components/debug/logger.client";
+import type { IActiveGoal, IGoal, IGoalCapture, IGoalThumb } from "@21n/components/goals/goal.type";
+import { GoalStatus, GoalType } from "@21n/components/goals/goal.type";
 import {
   ResourceAccessMode,
   ResourceAccessPoint,
   ResourceActionType
-} from "../flux/resourceStores/resource.type";
-import { ResourceActions } from "../record/resource.actions";
+} from "@21n/components/flux/resourceStores/resource.type";
+import { ResourceActions } from "@21n/components/record/resource.actions";
 import {
   ContextMenuType,
   type IContextMenu,
   type IContextMenuItem
-} from "$lib/client/types/select.type";
-import { CollectibleStore } from "../collection/collectible.store";
-import { activeSession } from "$lib/client/products/pointron/focus/session.store";
+} from "@21n/types/select.type";
+import { CollectibleStore } from "@21n/components/collection/collectible.store";
+import { activeSession } from "@21n/products/pointron/focus/session.store";
 import { get } from "svelte/store";
-import { appStore } from "$lib/client/stores/app.store";
-import context from "$lib/client/stores/context.store";
-import { Embed } from "$lib/client/types/context.type";
-import view from "$lib/client/stores/view.store";
-import { collectionStore } from "../collection/collection.store";
-import { AppSearchParam } from "$lib/client/types/appStore.type";
-import { toasts } from "$lib/client/stores/notification.store";
+import { appStore } from "@21n/stores/app.store";
+import context from "@21n/stores/context.store";
+import { Embed } from "@21n/types/context.type";
+import view from "@21n/stores/view.store";
+import { collectionStore } from "@21n/components/collection/collection.store";
+import { AppSearchParam } from "@21n/types/appStore.type";
+import { toasts } from "@21n/stores/notification.store";
 import {
   isSameResource,
   resourceAction,
   resourceInList
-} from "../flux/resourceStores/resource.utils";
-import { taskStore } from "../tasks/task.store";
-import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { taskStore } from "@21n/components/tasks/task.store";
+import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
 
 const defaults: Partial<IGoal> = {
   type: GoalType.INDEFINITE,
@@ -48,8 +48,6 @@ const defaults: Partial<IGoal> = {
 class GoalStore extends ResourceStore<IGoal, IGoalCapture> {
   constructor() {
     super(Resource.goal, {
-      indices: ["type", "status", "*parent"],
-      searchIndices: ["label"],
       defaultProps: defaults,
       expandProps: ["parent"]
     });
@@ -362,7 +360,7 @@ class GoalStore extends ResourceStore<IGoal, IGoalCapture> {
   }
 }
 
-export const goalStore = new GoalStore();
+export const goalStore = GoalStore.resolve(Resource.goal);
 
 export class ActiveGoalStore extends CollectibleStore<
   IGoal,

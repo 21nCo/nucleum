@@ -1,8 +1,8 @@
 <script lang="ts">
-  import BlankLandingLayout from "$lib/client/landing/shared/BlankLandingLayout.svelte";
-  import CommingSoonSection from "../shared/CommingSoonSection.svelte";
-  import { extractProductv1 } from "$lib/shared/utils/utils";
-  import { upcomingProductsStore } from "../shared/store/shared.store";
+  import BlankLandingLayout from "@21n/landing/shared/BlankLandingLayout.svelte";
+  import CommingSoonSection from "@21n/landing/shared/CommingSoonSection.svelte";
+  import { extractProductv1 } from "@21n/shared-utils/utils";
+  import { upcomingProductsStore } from "@21n/landing/shared/store/shared.store";
 
   let commingSoonSectionInputs: any;
   let topNavBarValues: any;

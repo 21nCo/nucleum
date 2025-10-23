@@ -1,46 +1,46 @@
 <script lang="ts">
-  import type { IRecordId } from "$lib/client/types/data.type";
+  import type { IRecordId } from "@21n/types/data.type";
   import { onMount } from "svelte";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
-  } from "../flux/resourceStores/resource.type";
-  import { taskStore } from "./task.store";
-  import type { ITaskThumb } from "./task.type";
-  import { isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-  import { Resource } from "../flux/resourceStores/resource.enum";
-  import { recentsStore } from "../record/recent.store";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import DatePicker from "$lib/client/elements/datetime/DatePicker.svelte";
-  import { Orientation } from "$lib/client/types/direction.enum";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import TaskCheckbox from "./TaskCheckbox.svelte";
-  import { ButtonStyle, ButtonVariant } from "$lib/client/types/button.type";
-  import { appStore } from "$lib/client/stores/app.store";
-  import InlineFeedbackText from "$lib/client/extensions/clipper/InlineFeedbackText.svelte";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import { taskStore } from "@21n/components/tasks/task.store";
+  import type { ITaskThumb } from "@21n/components/tasks/task.type";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { recentsStore } from "@21n/components/record/recent.store";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
+  import { Orientation } from "@21n/types/direction.enum";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { InputStyle } from "@21n/types/input.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import TaskCheckbox from "@21n/components/tasks/TaskCheckbox.svelte";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { appStore } from "@21n/stores/app.store";
+  import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
   import {
     AlertType,
     type IInlineStatus
-  } from "$lib/client/types/notification.type";
-  import TaskThumbnailGoalLabel from "./TaskThumbnailGoalLabel.svelte";
-  import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
-  import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
-  import type { IGoalThumb } from "../goals/goal.type";
-  import { SearchStore } from "../record/record.store";
-  import { Product } from "$lib/client/products/product.type";
-  import { goalStore } from "../goals/goal.store";
+  } from "@21n/types/notification.type";
+  import TaskThumbnailGoalLabel from "@21n/components/tasks/TaskThumbnailGoalLabel.svelte";
+  import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
+  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { Product } from "@21n/products/product.type";
+  import { goalStore } from "@21n/components/goals/goal.store";
   import {
     activeSession,
     currentFocusItem
-  } from "$lib/client/products/pointron/focus/session.store";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-  import RecordTrashBanner from "../record/RecordTrashBanner.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import view from "$lib/client/stores/view.store";
+  } from "@21n/products/pointron/focus/session.store";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import RecordTrashBanner from "@21n/components/record/RecordTrashBanner.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import view from "@21n/stores/view.store";
 
   export let id: IRecordId;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;

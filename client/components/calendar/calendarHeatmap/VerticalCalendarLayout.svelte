@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { startTouch } from "$lib/client/utils/touchGesture";
-  import MonthsHeader from "./MonthsHeader.svelte";
-  import WeekDays from "./WeekDays.svelte";
-  import { TileScale } from "./calendarHeatmap.types";
+  import { startTouch } from "@21n/utils/touchGesture";
+  import MonthsHeader from "@21n/components/calendar/calendarHeatmap/MonthsHeader.svelte";
+  import WeekDays from "@21n/components/calendar/calendarHeatmap/WeekDays.svelte";
+  import { TileScale } from "@21n/components/calendar/calendarHeatmap/calendarHeatmap.types";
   export let data: any;
   export let scale: TileScale;
   export let numberOfColumns: number = 3;

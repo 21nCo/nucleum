@@ -1,13 +1,13 @@
 <script lang="ts">
-  import Extend from "$lib/client/icons/Extend.svelte";
-  import { Control } from "$lib/client/types/pointron/control.enum";
+  import Extend from "@21n/icons/Extend.svelte";
+  import { Control } from "@21n/types/pointron/control.enum";
   import { createEventDispatcher, onMount } from "svelte";
-  import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
-  import ControlIcon from "./ControlIcon.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { activeSession } from "../../session.store";
-  import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-  import { SessionUIContext } from "$lib/client/types/pointron/session.type";
+  import { pointronPreferences } from "@21n/products/pointron/pointron.store";
+  import ControlIcon from "@21n/products/pointron/focus/elements/controls/ControlIcon.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import { activeSession } from "@21n/products/pointron/focus/session.store";
+  import { SessionState } from "@21n/types/pointron/sessionState.enum";
+  import { SessionUIContext } from "@21n/types/pointron/session.type";
   export let control: Control;
   export let isProminent: boolean = false;
   export let context: SessionUIContext = SessionUIContext.DEFAULT;

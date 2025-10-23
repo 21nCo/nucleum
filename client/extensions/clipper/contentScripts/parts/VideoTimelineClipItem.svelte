@@ -1,17 +1,17 @@
 <script lang="ts">
-  import type { IVideoTimestampClip } from "$lib/client/products/memotron/node/node.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import FileView from "$lib/client/components/files/FileView.svelte";
-  import { formatSeconds } from "$lib/client/utils/time.utils";
-  import { TimeFormat } from "$lib/client/types/time.type";
-  import { webpage } from "../store";
-  import { checkIfVideoPaused } from "$lib/client/extensions/clipper/parsers/shared/video.utils";
-  import { pauseVideo } from "$lib/client/extensions/clipper/parsers/shared/video.utils";
+  import type { IVideoTimestampClip } from "@21n/products/memotron/node/node.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import FileView from "@21n/components/files/FileView.svelte";
+  import { formatSeconds } from "@21n/utils/time.utils";
+  import { TimeFormat } from "@21n/types/time.type";
+  import { webpage } from "@21n/extensions/clipper/contentScripts/store";
+  import { checkIfVideoPaused } from "@21n/extensions/clipper/parsers/shared/video.utils";
+  import { pauseVideo } from "@21n/extensions/clipper/parsers/shared/video.utils";
   import { onMount } from "svelte";
-  import { appEvents } from "$lib/client/stores/notification.store";
-  import { ClipperExtensionEvent } from "$lib/client/products/memotron/common/clip.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
+  import { appEvents } from "@21n/stores/notification.store";
+  import { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
 
   export let clip: IVideoTimestampClip;
   export let index: number;

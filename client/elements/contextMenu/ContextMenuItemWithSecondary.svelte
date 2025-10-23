@@ -1,15 +1,15 @@
 <script lang="ts">
   import { createEventDispatcher, onDestroy, onMount } from "svelte";
-  import type { IContextMenuItem } from "$lib/client/types/select.type";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import ContextMenuItemBase from "./ContextMenuItemBase.svelte";
-  import Popover from "../popover/Popover.svelte";
-  import { createEventPropagator } from "$lib/client/components/events/event.utils";
-  import { popover } from "$lib/client/actions/popover.action";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
-  import { hoverable } from "$lib/client/actions/hover.action";
+  import type { IContextMenuItem } from "@21n/types/select.type";
+  import { Placement } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import ContextMenuItemBase from "@21n/elements/contextMenu/ContextMenuItemBase.svelte";
+  import Popover from "@21n/elements/popover/Popover.svelte";
+  import { createEventPropagator } from "@21n/components/events/event.utils";
+  import { popover } from "@21n/actions/popover.action";
+  import { PopoverTriggerMethod } from "@21n/types/popover.type";
+  import { hoverable } from "@21n/actions/hover.action";
   const dispatch = createEventDispatcher();
   export let item: IContextMenuItem;
   export let size: Size.sm | Size.md | Size.lg = Size.md;

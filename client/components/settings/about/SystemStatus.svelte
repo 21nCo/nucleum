@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { appStore } from "$lib/client/stores/app.store";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { appStore } from "@21n/stores/app.store";
+  import { cn } from "@21n/utils/ui.utils";
   import { onMount } from "svelte";
   let status: "UP" | "HASISSUES" | "UNDERMAINTENANCE" | undefined = undefined;
   let statusPageUrl: string | undefined = $appStore.appData?.urls?.statusPage;

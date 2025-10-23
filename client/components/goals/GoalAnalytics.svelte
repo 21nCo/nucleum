@@ -1,7 +1,7 @@
 <script lang="ts">
-  import AnalyticsChartStandalone from "$lib/client/products/pointron/analytics/page/AnalyticsChartStandalone.svelte";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import AnalyticsChartStandalone from "@21n/products/pointron/analytics/page/AnalyticsChartStandalone.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   export let id: IRecordId;
 </script>
 

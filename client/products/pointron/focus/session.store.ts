@@ -1,4 +1,4 @@
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
   type IActiveSessionStore,
   type ISessionInterval,
@@ -6,69 +6,69 @@ import {
   type IFocusItemsStore,
   type ICurrentFocusItem,
   type IFocusItem
-} from "$lib/client/types/pointron/session.type";
+} from "@21n/types/pointron/session.type";
 import {
   generateIntervalsFromComposition,
   getTotalsFromComposition,
   refreshPredefinedIntervalsStartTime,
   resolveSessionTimeSplit
-} from "$lib/client/products/pointron/pointron.utils";
+} from "@21n/products/pointron/pointron.utils";
 import { get, writable } from "svelte/store";
-import { SessionState } from "$lib/client/types/pointron/sessionState.enum";
-import { pointronPreferences } from "../pointron.store";
+import { SessionState } from "@21n/types/pointron/sessionState.enum";
+import { pointronPreferences } from "@21n/products/pointron/pointron.store";
 import {
   SessionCompositionType,
   type SessionComposition,
   BreakCompositionType
-} from "$lib/client/types/pointron/sessionComposition.type";
-import { appStore } from "$lib/client/stores/app.store";
+} from "@21n/types/pointron/sessionComposition.type";
+import { appStore } from "@21n/stores/app.store";
 import modalEvent, {
   fullScreen,
   player
-} from "$lib/client/components/modal/modal.store";
+} from "@21n/components/modal/modal.store";
 import {
   toasts,
   scheduledNotifications,
   fullPageLoadingScreen,
   appEvents
-} from "$lib/client/stores/notification.store";
-import { deepCopy, isValidArrayWithData } from "$lib/shared/utils/obj.utils";
-import { AlertType } from "$lib/client/types/notification.type";
-import { generateResourceId } from "$lib/client/components/flux/flux.utils";
+} from "@21n/stores/notification.store";
+import { deepCopy, isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+import { AlertType } from "@21n/types/notification.type";
+import { generateResourceId } from "@21n/components/flux/flux.utils";
 import type {
   IRecordId,
   IResourceSelectAdditionalParams,
   IResourceSelectParams
-} from "$lib/client/types/data.type";
-import { logger } from "$lib/client/components/debug/logger.client";
+} from "@21n/types/data.type";
+import { logger } from "@21n/components/debug/logger.client";
 import {
   type ISession,
   SessionType,
   type ISessionCapture,
   type ISessionLogCapture
-} from "$lib/client/products/pointron/logs/log.type";
-import { sessionLogStore } from "$lib/client/products/pointron/logs/log.store";
-import context from "$lib/client/stores/context.store";
-import { PointronEvent } from "$lib/client/types/pointron/pointronEvent.enum";
-import { PointronAction } from "$lib/client/types/pointron/pointronAction.enum";
-import { KeyValueStore } from "$lib/client/components/flux/resourceStores/kv.store";
+} from "@21n/products/pointron/logs/log.type";
+import { sessionLogStore } from "@21n/products/pointron/logs/log.store";
+import context from "@21n/stores/context.store";
+import { PointronEvent } from "@21n/types/pointron/pointronEvent.enum";
+import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
 import {
   determineResourceType,
   isSameResource,
   resourceInList
-} from "$lib/client/components/flux/resourceStores/resource.utils";
-import { ResourceStore } from "$lib/client/components/flux/resourceStores/resource.store";
-import { resolveTaskFocus, resolveTotalTaskTime } from "./session.utils";
-import { postDataToParent } from "$lib/client/utils/embed.utils";
-import { goalStore } from "$lib/client/components/goals/goal.store";
-import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-import { taskStore } from "$lib/client/components/tasks/task.store";
-import { GoalStatus } from "$lib/client/components/goals/goal.type";
-import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
-import { uiState } from "$lib/client/stores/uiState/uiState.store";
-import { UIState } from "$lib/client/stores/uiState/uiState.type";
-import { removeDuplicatesFilter } from "$lib/client/components/flux/resourceStores/resource.utils";
-import { EmbedDataMessage } from "$lib/client/types/embedMessage.enum";
+} from "@21n/components/flux/resourceStores/resource.utils";
+import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import { resolveTaskFocus, resolveTotalTaskTime } from "@21n/products/pointron/focus/session.utils";
+import { postDataToParent } from "@21n/utils/embed.utils";
+import { goalStore } from "@21n/components/goals/goal.store";
+import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+import { taskStore } from "@21n/components/tasks/task.store";
+import { GoalStatus } from "@21n/components/goals/goal.type";
+import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
+import { uiState } from "@21n/stores/uiState/uiState.store";
+import { UIState } from "@21n/stores/uiState/uiState.type";
+import { removeDuplicatesFilter } from "@21n/components/flux/resourceStores/resource.utils";
+import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
 
 /** @deprecated */
 export const todayFocusStore = initTodayFocus();
@@ -1269,8 +1269,9 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     }
   }
 }
-
-export const activeSession = new ActiveSessionStore();
+export const activeSession = ActiveSessionStore.resolve(
+  Resource.pointSessionSnapshotv2
+);
 
 export const lastActiveGoalIdForEditing = writable<IRecordId | undefined>(
   undefined
@@ -1522,11 +1523,13 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
   }
 }
 
-export const focusItemsStore = new FocusItemsStore();
+export const focusItemsStore = FocusItemsStore.resolve(
+  Resource.sessionFocusItems
+);
 
 class SessionStore extends ResourceStore<ISession, ISessionCapture> {
   constructor() {
-    super(Resource.session, { indices: ["startUnix", "type"] });
+    super(Resource.session);
   }
 
   async selectManyWithItemsExpansion(
@@ -1727,4 +1730,4 @@ class SessionStore extends ResourceStore<ISession, ISessionCapture> {
   }
 }
 
-export const sessionStore = new SessionStore();
+export const sessionStore = SessionStore.resolve(Resource.session);

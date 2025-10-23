@@ -1,24 +1,24 @@
 <script lang="ts">
-  import { ChartType } from "$lib/client/types/analytics.type";
-  import Chart from "$lib/client/components/charts/Chart.svelte";
+  import { ChartType } from "@21n/types/analytics.type";
+  import Chart from "@21n/components/charts/Chart.svelte";
   import {
     determineTimePeriod,
     determineTimePeriodv2,
     parseAndFormatDate,
     formatSeconds
-  } from "$lib/client/utils/time.utils";
-  import { pointronPreferences } from "$lib/client/products/pointron/pointron.store";
-  import { appConstants } from "$lib/client/stores/app.store";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import { TimeScale } from "$lib/client/types/time.type";
-  import { getCorrespoingHorizonFrequencyLabel } from "$lib/client/utils/time.utils";
+  } from "@21n/utils/time.utils";
+  import { pointronPreferences } from "@21n/products/pointron/pointron.store";
+  import { appConstants } from "@21n/stores/app.store";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import { TimeScale } from "@21n/types/time.type";
+  import { getCorrespoingHorizonFrequencyLabel } from "@21n/utils/time.utils";
   import {
     resolveSaturationAndLightness,
     retrieveCurrentColors
-  } from "$lib/client/utils/theme.utils";
-  import { ChartVariant } from "$lib/client/types/chartVariant.enum";
-  import appearance from "$lib/client/stores/appearance.store";
+  } from "@21n/utils/theme.utils";
+  import { ChartVariant } from "@21n/types/chartVariant.enum";
+  import appearance from "@21n/stores/appearance.store";
   import {
     AnalyticsCardGrouping,
     AnalyticsCardType,
@@ -26,9 +26,9 @@
     type AnalyticsDataRecord,
     type ChartDataRecord,
     type IAnalyticsLabelColor
-  } from "../analytics.types";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import view from "$lib/client/stores/view.store";
+  } from "@21n/products/pointron/analytics/analytics.types";
+  import { cn } from "@21n/utils/ui.utils";
+  import view from "@21n/stores/view.store";
   export let chart: IAnalyticsCard;
   export let rawData: AnalyticsDataRecord[];
   export let goalColors: IAnalyticsLabelColor[];

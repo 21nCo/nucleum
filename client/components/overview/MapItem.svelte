@@ -1,11 +1,11 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { determineResourceType } from "../flux/resourceStores/resource.utils";
-  import { Resource } from "../flux/resourceStores/resource.enum";
-  import NodeThumbnail from "$lib/client/products/memotron/node/thumbnail/NodeThumbnail.svelte";
-  import { ResourceAccessPoint } from "../flux/resourceStores/resource.type";
+  import { appStore } from "@21n/stores/app.store";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import NodeThumbnail from "@21n/products/memotron/node/thumbnail/NodeThumbnail.svelte";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
 
   interface MapItemData {
     id: string;

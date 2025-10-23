@@ -26,3 +26,15 @@ client/cx/contemporaries/glasp-*
 **/.svelte-kit
 **/build
 .turbo
+.aider*
+
+.vscode/tasks.json
+.ar
+.sample_*
+.notes*
+
+.plasmo
+
+# Generated static assets manifest
+client/static/assets-manifest.json
+

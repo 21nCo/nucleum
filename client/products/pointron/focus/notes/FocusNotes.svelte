@@ -1,6 +1,6 @@
 <script lang="ts">
-  import Markdown from "$lib/client/components/markdown/Markdown.svelte";
-  import type { IMarkdown } from "$lib/client/components/markdown/md.type";
+  import Markdown from "@21n/components/markdown/Markdown.svelte";
+  import type { IMarkdown } from "@21n/components/markdown/md.type";
   export let md: IMarkdown;
   export let parentBgIndex: number = 1;
   export let isHideTitle: boolean = false;

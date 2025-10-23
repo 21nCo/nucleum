@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { hoverable } from "$lib/client/actions/hover.action";
-  import { resolveMultiSelectStore } from "$lib/client/components/flux/resourceStores/resource.store";
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { hoverable } from "@21n/actions/hover.action";
+  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import {
     determineResourceType,
     resourceIdToElementId,
     resourceInList
-  } from "$lib/client/components/flux/resourceStores/resource.utils";
-  import Check from "$lib/client/icons/Check.svelte";
-  import context from "$lib/client/stores/context.store";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { Arrangement } from "$lib/client/types/direction.enum";
-  import { Size } from "$lib/client/types/size.enum";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import ResourceThumbnailContextMenu from "./ResourceThumbnailContextMenu.svelte";
+  } from "@21n/components/flux/resourceStores/resource.utils";
+  import Check from "@21n/icons/Check.svelte";
+  import context from "@21n/stores/context.store";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { Arrangement } from "@21n/types/direction.enum";
+  import { Size } from "@21n/types/size.enum";
+  import { cn } from "@21n/utils/ui.utils";
+  import ResourceThumbnailContextMenu from "@21n/components/record/thumbnail/ResourceThumbnailContextMenu.svelte";
 
   export let isHovering = false;
   export let item: any;

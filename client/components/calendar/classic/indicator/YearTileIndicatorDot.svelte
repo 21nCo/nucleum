@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { cn } from "$lib/client/utils/ui.utils";
+  import { cn } from "@21n/utils/ui.utils";
   export let color: string;
   export let isActive: boolean = false;
   export let isMemory: boolean = false;

@@ -1,27 +1,27 @@
 <script lang="ts">
-  import { isInEditMode } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
-  import { analyticsConfigStore } from "../analytics.store";
-  import ScrollViewBottomSpacer from "$lib/client/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import AnalyticsCardView from "./AnalyticsCardView.svelte";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import EmptyStatusView from "$lib/client/elements/feedback/EmptyStatusView.svelte";
-  import { goalStore } from "$lib/client/components/goals/goal.store";
-  import type { IGoalThumb } from "$lib/client/components/goals/goal.type";
+  import { isInEditMode } from "@21n/stores/app.store";
+  import view from "@21n/stores/view.store";
+  import { bg, cn } from "@21n/utils/ui.utils";
+  import { analyticsConfigStore } from "@21n/products/pointron/analytics/analytics.store";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
+  import AnalyticsCardView from "@21n/products/pointron/analytics/page/AnalyticsCardView.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import Icon from "@21n/elements/Icon.svelte";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { goalStore } from "@21n/components/goals/goal.store";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
   import { onMount } from "svelte";
-  import { AnalyticsCardType, type AnalyticsPage } from "../analytics.types";
-  import type { ITimePeriodResolved } from "$lib/client/types/time.type";
+  import { AnalyticsCardType, type AnalyticsPage } from "@21n/products/pointron/analytics/analytics.types";
+  import type { ITimePeriodResolved } from "@21n/types/time.type";
   import {
     determinePreviousTimePeriod,
     determineTimePeriodv2
-  } from "$lib/client/utils/time.utils";
-  import type { ISessionLog } from "../../logs/log.type";
-  import { sessionLogStore } from "../../logs/log.store";
-  import { resolveUnixTimestamp } from "$lib/shared/utils/time.utils";
-  import { logger } from "$lib/client/components/debug/logger.client";
+  } from "@21n/utils/time.utils";
+  import type { ISessionLog } from "@21n/products/pointron/logs/log.type";
+  import { sessionLogStore } from "@21n/products/pointron/logs/log.store";
+  import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
+  import { logger } from "@21n/components/debug/logger.client";
   export let id: string;
   export let parentBgIndex: number = 1;
   let goals: IGoalThumb[] = [];

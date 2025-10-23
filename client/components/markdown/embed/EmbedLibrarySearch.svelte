@@ -1,11 +1,11 @@
 <script lang="ts">
-  import LinkSearchResultItem from "$lib/client/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
-  import { SearchStore } from "$lib/client/components/record/record.store";
-  import { NodeType } from "$lib/client/products/memotron/node/node.type";
-  import { enumToString } from "$lib/shared/utils/text.utils";
+  import LinkSearchResultItem from "@21n/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
+  import { SearchStore } from "@21n/components/record/record.store";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
+  import { enumToString } from "@21n/shared-utils/text.utils";
   import { onMount } from "svelte";
-  import { Resource } from "../../flux/resourceStores/resource.enum";
-  import TextSearchInput from "$lib/client/elements/input/TextSearchInput.svelte";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
   export let subType: NodeType;
   export let onSelect: (event: CustomEvent) => void;
   export let onReset: () => void;

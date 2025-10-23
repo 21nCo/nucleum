@@ -1,9 +1,9 @@
 import type {
   ICollectible,
   ICollectionExpanded
-} from "$lib/client/components/collection/collection.type";
-import type { IPropertyValue } from "$lib/client/components/collection/properties/property.type";
-import type { IFile } from "$lib/client/components/files/file.type";
+} from "@21n/components/collection/collection.type";
+import type { IPropertyValue } from "@21n/components/collection/properties/property.type";
+import type { IFile } from "@21n/components/files/file.type";
 import {
   ResourceAccessMode,
   type CaptureOmittedFields,
@@ -16,14 +16,19 @@ import {
   type IResourceShareable,
   type OmitFields,
   type OmitForCapture
-} from "$lib/client/components/flux/resourceStores/resource.type";
+} from "@21n/components/flux/resourceStores/resource.type";
+import type { IBlockBody, IMarkdown } from "@21n/components/markdown/md.type";
+import type { IAvatar } from "@21n/types/avatar.type";
+import type { IRecordId, IStore } from "@21n/types/data.type";
 import type {
-  IBlockBody,
-  IMarkdown
-} from "$lib/client/components/markdown/md.type";
-import type { IAvatar } from "$lib/client/types/avatar.type";
-import type { IRecordId, IStore } from "$lib/client/types/data.type";
-import type { ILink, ILinkBase, LinkType } from "../linking/link.type";
+  ILink,
+  ILinkBase,
+  LinkType
+} from "@21n/products/memotron/linking/link.type";
+import type {
+  AnnotationType,
+  Scaled
+} from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
 
 type IResourcePropertiesForNode = IResource &
   IResourceLabeled &
@@ -58,6 +63,15 @@ type INodeInterface<
   notes?: string;
   url?: string;
   file?: IRecordId;
+  /**
+   * @deprecated - use cover instead
+   * Custom preview image for node thumbnails (especially for markdown nodes)
+   */
+  previewImage?: IRecordId;
+  /**
+   * Cover photo for markdown nodes (rendered at the top above title)
+   */
+  cover?: string;
   /**
    * Calculated avatar from linked type collections
    */
@@ -208,6 +222,7 @@ export enum NodeType {
   LINKEDIN_PROFILE = "LINKEDIN_PROFILE",
   LINKEDIN_GROUP = "LINKEDIN_GROUP",
   INSTAGRAM_POST = "INSTAGRAM_POST",
+  INSTAGRAM_REEL = "INSTAGRAM_REEL",
   INSTAGRAM_PROFILE = "INSTAGRAM_PROFILE",
   FACEBOOK_POST = "FACEBOOK_POST",
   FACEBOOK_PROFILE = "FACEBOOK_PROFILE",
@@ -219,6 +234,7 @@ export enum NodeType {
 
   //WEB VIDEO
   YOUTUBE_VIDEO = "YOUTUBE_VIDEO",
+  YOUTUBE_SHORT = "YOUTUBE_SHORT",
   YOUTUBE_CHANNEL = "YOUTUBE_CHANNEL",
   COURSERA_VIDEO = "COURSERA_VIDEO",
   UDEMY_VIDEO = "UDEMY_VIDEO",
@@ -302,10 +318,10 @@ export const socialPostNodeTypeList = new Set([
   NodeType.BLUESKY_POST,
   NodeType.THREADS_POST,
   NodeType.INSTAGRAM_POST,
+  NodeType.INSTAGRAM_REEL,
   NodeType.REDDIT_POST,
   NodeType.FACEBOOK_POST,
-  NodeType.MASTODON_POST,
-  NodeType.REDDIT_POST
+  NodeType.MASTODON_POST
 ]);
 
 /**
@@ -335,7 +351,7 @@ export enum NodeRightPaneType {
   NONE = "NONE",
   OUTLINE = "OUTLINE",
   PROPERTIES = "PROPERTIES",
-  TRACES = "TRACES",
+  BOOKMARKS = "BOOKMARKS",
   SIDENOTES = "SIDENOTES",
   METADATA = "METADATA",
   LINKS = "LINKS",
@@ -359,9 +375,13 @@ type INodeLinkBase = {
 };
 
 export type INodeLinkThumb = ILinkBase & {
-  id: IRecordId;
   linkedTo: IRecordId;
-  direction: "incoming" | "outgoing";
+  links?: {
+    id: IRecordId;
+    linkType: LinkType;
+    direction?: "incoming" | "outgoing";
+    tags?: IRecordId[];
+  }[];
 };
 
 export type LinkThumbnail = ILink & {
@@ -555,6 +575,7 @@ const webNodeTypes = [
   NodeType.WEB_SCREENSHOT,
 
   NodeType.YOUTUBE_VIDEO,
+  NodeType.YOUTUBE_SHORT,
   NodeType.YOUTUBE_CHANNEL,
   NodeType.YOUTUBE_BOOKMARK,
   NodeType.KINDLE_BOOK,
@@ -574,6 +595,7 @@ export const socialProfileWithImageUnavailable = new Set([
   NodeType.THREADS_POST,
   NodeType.THREADS_PROFILE,
   NodeType.INSTAGRAM_POST,
+  NodeType.INSTAGRAM_REEL,
   NodeType.INSTAGRAM_PROFILE,
   NodeType.REDDIT_POST,
   NodeType.REDDIT_PROFILE
@@ -585,6 +607,7 @@ export type IWebNodeType =
   | NodeType.WEB_TEXT_BOOKMARK
   | NodeType.WEB_SCREENSHOT
   | NodeType.YOUTUBE_VIDEO
+  | NodeType.YOUTUBE_SHORT
   | NodeType.YOUTUBE_CHANNEL
   | NodeType.YOUTUBE_BOOKMARK
   | NodeType.TWEET
@@ -592,6 +615,7 @@ export type IWebNodeType =
   | NodeType.THREADS_POST
   | NodeType.LINKEDIN_POST
   | NodeType.INSTAGRAM_POST
+  | NodeType.INSTAGRAM_REEL
   | NodeType.TWITTER_PROFILE
   | NodeType.LINKEDIN_PROFILE
   | NodeType.INSTAGRAM_PROFILE
@@ -726,6 +750,13 @@ export type IYoutubeVideo = INodeInterface<
 > &
   INodeHasUrl &
   INodeHasLabel;
+export type IYoutubeShort = INodeInterface<
+  NodeType.YOUTUBE_SHORT,
+  IYoutubeVideoBody,
+  IYoutubeVideoMetadata
+> &
+  INodeHasUrl &
+  INodeHasLabel;
 
 type IWebScreenshotClipBody = {
   /**
@@ -805,6 +836,14 @@ type IInstagramPostMetadata = ISocialPostMetadata & {
 };
 export type IInstagramPost = INodeInterface<
   NodeType.INSTAGRAM_POST,
+  ISocialPostBody,
+  IInstagramPostMetadata
+> &
+  INodeHasUrl &
+  INodeHasParent &
+  INodeHasText;
+export type IInstagramReel = INodeInterface<
+  NodeType.INSTAGRAM_REEL,
   ISocialPostBody,
   IInstagramPostMetadata
 > &
@@ -1020,6 +1059,7 @@ export type IClip =
   | IThreadsPost
   | ILinkedInPost
   | IInstagramPost
+  | IInstagramReel
   | IRedditPost
   | IVideoTimestampClip
   | ITextClip
@@ -1030,11 +1070,13 @@ export type IWebPage =
   | IGenericWebPage
   | IYoutubeChannel
   | IYoutubeVideo
+  | IYoutubeShort
   | ITwitterProfile
   | ILinkedInProfile
   | IBlueskyProfile
   | IThreadsProfile
   | IInstagramProfile
+  | IInstagramReel
   | IRedditProfile
   | IKindleBook
   | IGist;
@@ -1107,7 +1149,7 @@ export type IActiveNode = INode &
     collections?: IRecordId[];
     types?: ICollectionExpanded[];
     wordCount?: number;
-    pdfAnnotations?: any[];
+    pdfAnnotations?: IPdfBookmarkBody[];
     links?: INodeLinkThumb[];
     children?: IActiveNode[];
     childrenHierarchy?: IRecordId[];
@@ -1133,6 +1175,7 @@ const canHaveTracesBase = [
   NodeType.PDF,
   NodeType.WEB_PAGE,
   NodeType.YOUTUBE_VIDEO,
+  NodeType.YOUTUBE_SHORT,
   NodeType.KINDLE_BOOK
 ];
 
@@ -1143,7 +1186,29 @@ export const canHaveTraces = [
 
 export type IVideoBookmarkCapture = INodeHasUrl &
   INodeHasText & {
-    contentType: NodeType.YOUTUBE_BOOKMARK | NodeType.VIDEO_BOOKMARK | NodeType.WEB_VIDEO_BOOKMARK;
+    contentType:
+      | NodeType.YOUTUBE_BOOKMARK
+      | NodeType.VIDEO_BOOKMARK
+      | NodeType.WEB_VIDEO_BOOKMARK;
     body: IVideoBookmarkBody;
     metadata: IVideoBookmarkMetadata;
   };
+
+export type IPdfBookmarkBody = {
+  startPageNumber?: number;
+  endPageNumber?: number;
+  pageNumber?: number;
+  date?: string;
+  selectedText?: string;
+  /**
+   * Highlight color id
+   */
+  color?: IRecordId;
+  comment?: string;
+  annotType?: AnnotationType;
+  boundingRect?: Scaled;
+  rect?: Scaled;
+  rects?: Scaled[];
+};
+
+export type IPdfBookmarkMetadata = {};

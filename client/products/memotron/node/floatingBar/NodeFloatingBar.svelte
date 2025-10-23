@@ -3,33 +3,33 @@
     ResourceAccessMode,
     ResourceAccessPoint,
     ResourceActionType
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import Button from "$lib/client/elements/button/Button.svelte";
-  import ContextMenuAction from "$lib/client/elements/contextMenu/ContextMenuAction.svelte";
-  import Divider from "$lib/client/elements/Divider.svelte";
-  import PanelSwitcher from "$lib/client/elements/switcher/PanelSwitcher.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { ColorStrength } from "$lib/client/types/appearance.type";
-  import { Orientation, Placement } from "$lib/client/types/direction.enum";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import Button from "@21n/elements/button/Button.svelte";
+  import ContextMenuAction from "@21n/elements/contextMenu/ContextMenuAction.svelte";
+  import Divider from "@21n/elements/Divider.svelte";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { ColorStrength } from "@21n/types/appearance.type";
+  import { Orientation, Placement } from "@21n/types/direction.enum";
   import {
     BarStyle,
     PanelSwitcherStyle
-  } from "$lib/client/types/switcher.enum";
+  } from "@21n/types/switcher.enum";
   import { createEventDispatcher } from "svelte";
   import {
     nodeStore,
     resolveNodeContextMenu,
     resolveVisibleActions,
     type IActiveNodeStore
-  } from "../node.store";
-  import { bg, cn } from "$lib/client/utils/ui.utils";
-  import { Size } from "$lib/client/types/size.enum";
-  import { ButtonStyle } from "$lib/client/types/button.type";
-  import ToggleGroup from "$lib/client/elements/toggle/ToggleGroup.svelte";
-  import { NodeRightPaneType, NodeView } from "../node.type";
-  import DropDown from "$lib/client/elements/dropdown/DropDown.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import ResourceInlineCloseButton from "$lib/client/elements/button/ResourceInlineCloseButton.svelte";
+  } from "@21n/products/memotron/node/node.store";
+  import { bg, cn } from "@21n/utils/ui.utils";
+  import { Size } from "@21n/types/size.enum";
+  import { ButtonStyle } from "@21n/types/button.type";
+  import ToggleGroup from "@21n/elements/toggle/ToggleGroup.svelte";
+  import { NodeRightPaneType, NodeView } from "@21n/products/memotron/node/node.type";
+  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
   const dispatch = createEventDispatcher();
   export let node: IActiveNodeStore;
   export let nodeView: NodeView = NodeView.CONTENT;
@@ -191,7 +191,7 @@
       {#if $node.accessMode !== ResourceAccessMode.FULL}
         <Button
           {...buttonCommonProps}
-          icon="full-screen"
+          icon="fullscreen"
           tooltip="Full screen"
           on:click={() => {
             appStore.toggleFullScreen($node.accessMode, $node.id);

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { logger } from "$lib/client/components/debug/logger.client";
+  import { logger } from "@21n/components/debug/logger.client";
   import { onMount } from "svelte";
 
   // Extend Window interface to include YouTube specific properties
@@ -76,6 +76,11 @@
 
     if (match && match[2].length === 11) {
       videoId = match[2];
+    } else {
+      const shortsMatch = url.match(/\/shorts\/([A-Za-z0-9_-]{11})/);
+      if (shortsMatch) {
+        videoId = shortsMatch[1];
+      }
     }
 
     return videoId;

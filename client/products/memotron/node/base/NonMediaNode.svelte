@@ -1,42 +1,55 @@
 <script lang="ts">
-  import NodeLoadingPulse from "$lib/client/elements/feedback/animations/NodeLoadingPulse.svelte";
-  import { nodeStore, type IActiveNodeStore } from "../node.store";
-  import NodeRightPane from "../rightPanel/NodeRightPane.svelte";
-  import BottomFloat from "$lib/client/elements/BottomFloat.svelte";
-  import NodeFloatingBar from "../floatingBar/NodeFloatingBar.svelte";
-  import NodeTitleBreadcrumbs from "../title/NodeTitleBreadcrumbs.svelte";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import NodeContent from "../content/NodeContent.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import ResourceStatusBanner from "../../../../components/record/RecordStatusBanner.svelte";
-  import TextInput from "$lib/client/elements/input/TextInput.svelte";
-  import { InputStyle } from "$lib/client/types/input.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import NodeAvatar from "../avatar/NodeAvatar.svelte";
+  import NodeLoadingPulse from "@21n/elements/feedback/animations/NodeLoadingPulse.svelte";
+  import {
+    nodeStore,
+    type IActiveNodeStore
+  } from "@21n/products/memotron/node/node.store";
+  import NodeRightPane from "@21n/products/memotron/node/rightPanel/NodeRightPane.svelte";
+  import BottomFloat from "@21n/elements/BottomFloat.svelte";
+  import NodeFloatingBar from "@21n/products/memotron/node/floatingBar/NodeFloatingBar.svelte";
+  import NodeTitleBreadcrumbs from "@21n/products/memotron/node/title/NodeTitleBreadcrumbs.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import NodeContent from "@21n/products/memotron/node/content/NodeContent.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import ResourceStatusBanner from "@21n/components/record/RecordStatusBanner.svelte";
+  import TextInput from "@21n/elements/input/TextInput.svelte";
+  import { InputStyle } from "@21n/types/input.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import NodeAvatar from "@21n/products/memotron/node/avatar/NodeAvatar.svelte";
   import { fade } from "svelte/transition";
-  import CollectionsLane from "../floatingBar/CollectionsLane.svelte";
-  import { headingNodeTypes, NodeRightPaneType, NodeView } from "../node.type";
-  import PropertiesPane from "$lib/client/components/collection/properties/PropertiesPane.svelte";
-  import view from "$lib/client/stores/view.store";
-  import NodeRightPaneContent from "../rightPanel/NodeRightPaneContent.svelte";
-  import NodeBirdView from "../birdView/NodeBirdView.svelte";
+  import CollectionsLane from "@21n/products/memotron/node/floatingBar/CollectionsLane.svelte";
+  import {
+    headingNodeTypes,
+    NodeRightPaneType,
+    NodeView
+  } from "@21n/products/memotron/node/node.type";
+  import PropertiesPane from "@21n/components/collection/properties/PropertiesPane.svelte";
+  import view from "@21n/stores/view.store";
+  import NodeRightPaneContent from "@21n/products/memotron/node/rightPanel/NodeRightPaneContent.svelte";
+  import NodeBirdView from "@21n/products/memotron/node/birdView/NodeBirdView.svelte";
   import {
     ResourceAccessMode,
     ResourceAccessPoint,
     ResourceActionType
-  } from "$lib/client/components/flux/resourceStores/resource.type";
-  import { resizeListener } from "$lib/client/actions/resize.action";
-  import FullScreenCloseButton from "$lib/client/elements/button/FullScreenCloseButton.svelte";
-  import { getMdStore } from "$lib/client/components/markdown/markdown.store";
-  import TableOfContents from "$lib/client/components/markdown/TableOfContents.svelte";
-  import { generateSimpleRandomId } from "$lib/shared/utils/crypto.utils";
-  import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
-  import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-  import { dispatchCustomEvent } from "$lib/client/utils/browser.utils";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { AppSearchParam } from "$lib/client/types/appStore.type";
-  import { appStore } from "$lib/client/stores/app.store";
+  } from "@21n/components/flux/resourceStores/resource.type";
+  import { resizeListener } from "@21n/actions/resize.action";
+  import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
+  import { getMdStore } from "@21n/components/markdown/markdown.store";
+  import TableOfContents from "@21n/components/markdown/TableOfContents.svelte";
+  import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import context from "@21n/stores/context.store";
+  import { Embed } from "@21n/types/context.type";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { dispatchCustomEvent } from "@21n/utils/browser.utils";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import { appStore } from "@21n/stores/app.store";
+  import CoverPicker from "@21n/elements/coverPicker/CoverPicker.svelte";
+  import CoverRenderer from "@21n/elements/coverPicker/CoverRenderer.svelte";
+  import { hoverable } from "@21n/actions/hover.action";
+  import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonVariant } from "@21n/types/button.type";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
 
   export let node: IActiveNodeStore;
   export let selectedView: NodeView = NodeView.CONTENT;
@@ -50,7 +63,10 @@
   let containerWidth = 0;
   let refreshId: number = new Date().getTime();
   let scrollTimeout: NodeJS.Timeout;
+  let isCoverPickerHovered = false;
+  let isShowCoverPicker = false;
   $: mdStore = getMdStore(mdId);
+  $: cover = $node.cover;
   $: isWidened = $node.config?.isWidened ?? false;
   $: isConstrainedWidth =
     $view.isConstrainedWidth ||
@@ -119,7 +135,8 @@
   }
 
   function onRightPaneSwitch() {
-    if ($node.accessMode !== ResourceAccessMode.INLINE) return;
+    if ($node.accessMode !== ResourceAccessMode.INLINE || isConstrainedWidth)
+      return;
     if (isRightPanelCollapsed) {
       dispatchCustomEvent(GlobalEvent.EXPAND_PANEL, {});
     } else {
@@ -145,6 +162,24 @@
       await node.afterInit();
     }
   }
+
+  async function handleCoverPhotoChange(e: CustomEvent) {
+    await node.modify({
+      cover: e.detail
+    });
+  }
+
+  async function closeCoverPicker() {
+    isShowCoverPicker = false;
+  }
+
+  async function removeCoverPhoto(e: MouseEvent) {
+    e.stopPropagation();
+    await node.modify({
+      cover: undefined
+    });
+    isShowCoverPicker = false;
+  }
 </script>
 
 <div
@@ -156,13 +191,17 @@
 >
   {#if $node}
     {#if selectedView === NodeView.CONTENT}
+      {@const isRenderCover =
+        $node.contentType === NodeType.NODULAR_MARKDOWN &&
+        cover &&
+        !$node.focusedBlock}
       {#key refreshId}
         <div
-          class={cn("h-full w-full mo:gap-0 cw:gap-0 gap-4 otop:pt-12", {
-            "flex px-4 justify-center": !isWidened,
+          class={cn("h-full w-full flex mo:gap-0 cw:gap-0 gap-4", {
+            "px-4 otop:pt-12": !isRenderCover,
+            "justify-center": !isWidened,
             "dp:grid dp:grid-cols-[1fr_auto_1fr] dp:gap-2":
               !isWidened && !isConstrainedWidth,
-            "flex px-4": isWidened,
             "px-0": isConstrainedWidth && rightPane !== NodeRightPaneType.NONE
           })}
         >
@@ -175,6 +214,39 @@
                 "dp:min-w-[50rem]": !isWidened && !isConstrainedWidth
               })}
             >
+              {#if isRenderCover}
+                <div
+                  class="relative flex w-full cw:h-32 h-72 justify-center items-center"
+                  use:hoverable={{
+                    onHover: (e) => {
+                      isCoverPickerHovered = e;
+                    }
+                  }}
+                >
+                  <CoverRenderer {cover} class="w-full h-full object-cover" />
+                  {#if isCoverPickerHovered && !isReadOnlyMode}
+                    <div
+                      class="absolute top-0 left-0 w-full h-full flex gap-4 items-center justify-center bg-bgs2 bg-opacity-70"
+                    >
+                      <Button
+                        label="Replace"
+                        icon="reset"
+                        size={Size.sm}
+                        on:click={() => {
+                          isShowCoverPicker = true;
+                        }}
+                      />
+                      <Button
+                        label="Remove"
+                        icon="trash"
+                        type={ButtonVariant.DANGER}
+                        size={Size.sm}
+                        on:click={removeCoverPhoto}
+                      />
+                    </div>
+                  {/if}
+                </div>
+              {/if}
               {#if headingNodeTypes.includes($node.contentType)}
                 {#key $node.mdParent?.map((x) => x.toString())?.join(".")}
                   <header class="flex w-full px-12 py-4">
@@ -192,86 +264,102 @@
                   </header>
                 {/key}
               {/if}
-              <main
-                class="relative flex flex-col gap-6 mo:pr-0 h-full w-full overflow-auto"
-                on:scroll={onScroll}
-              >
-                {#if !$node.focusedBlock}
-                  <div class="min-h-20" />
-                  {#if $node.types && $node.types.length > 0}
-                    <span
-                      class={cn("flex mo:mx-0 mx-12 -mb-6", {
-                        "opacity-0": isStickied,
-                        "opacity-100": !isStickied
-                      })}
-                    >
-                      <NodeAvatar
-                        node={$node}
-                        accessPoint={ResourceAccessPoint.SELF}
-                        isExpandedContext={true}
-                      />
-                    </span>
-                  {/if}
-                  <span
-                    class={cn(
-                      "node-title flex gap-3 font-medium text-start sticky top-0 z-10 mo:ml-0 cw:ml-0 ml-12 py-3 userdata",
-                      {
-                        "text-h4 bg-bgs1": isStickied,
-                        "text-h2 bg-bgs1": !isStickied
-                      }
-                    )}
-                  >
-                    {#if isStickied && $node.types && $node.types.length > 0}
-                      <NodeAvatar
-                        node={$node}
-                        accessPoint={ResourceAccessPoint.SELF}
-                      />
-                    {/if}
-                    {#if !isReadOnlyMode}
-                      <TextInput
-                        id={`title-${$node.id}`}
-                        size={Size.xl}
-                        bind:value={$node.label}
-                        isExperimentalMdInput={true}
-                        style={InputStyle.PLAIN}
-                        placeholder="Node title"
-                        width="w-full"
-                        on:debouncedChange={onLabelChange}
-                        on:keydown={(e) => {
-                          const event = e.detail;
-                          if (event.key === "ArrowDown") {
-                            event.preventDefault();
-                            if ($mdStore.blocks[0].id)
-                              mdStore.focus.set({
-                                id: $mdStore.blocks[0].id
-                              });
-                          }
-                        }}
-                      />
-                    {:else}
-                      {$node.label ?? $node.body ?? ""}
-                    {/if}
-                  </span>
-                  <div class="w-full flex mo:px-0 cw:px-0 px-12 -mt-4">
-                    <CollectionsLane {node} {isReadOnlyMode} />
-                  </div>
-                {/if}
-                <div class="cw:px-0 px-12">
-                  <ResourceStatusBanner resource={node} />
-                </div>
-                {#if $node.types && $node.types.length > 0 && !$node.focusedBlock}
-                  <!-- TODO - later - show properties of focused node if the focused blocks is associated with a type collection -->
-                  <PropertiesPane
-                    item={node}
-                    resource={Resource.node}
-                    isVisibleProps={true}
-                    on:showAll={() => {
-                      _openRightPane(NodeRightPaneType.PROPERTIES);
-                    }}
+              {#if $node.contentType === NodeType.NODULAR_MARKDOWN && isShowCoverPicker}
+                <div class="h-full w-full overflow-auto">
+                  <CoverPicker
+                    value={cover}
+                    on:close={closeCoverPicker}
+                    on:change={handleCoverPhotoChange}
+                    on:select={handleCoverPhotoChange}
                   />
-                {/if}
-                <NodeContent {node} {mdId} {isReadOnlyMode} />
-              </main>
+                </div>
+              {:else}
+                <main
+                  class={cn(
+                    "relative flex flex-col gap-6 mo:pr-0 h-full w-full overflow-auto",
+                    {
+                      "cw:px-4": isRenderCover
+                    }
+                  )}
+                  on:scroll={onScroll}
+                >
+                  {#if !$node.focusedBlock}
+                    <div class="min-h-20" />
+                    {#if $node.types && $node.types.length > 0}
+                      <span
+                        class={cn("flex mo:mx-0 mx-12 -mb-6", {
+                          "opacity-0": isStickied,
+                          "opacity-100": !isStickied
+                        })}
+                      >
+                        <NodeAvatar
+                          node={$node}
+                          accessPoint={ResourceAccessPoint.SELF}
+                          isExpandedContext={true}
+                        />
+                      </span>
+                    {/if}
+                    <span
+                      class={cn(
+                        "node-title flex gap-3 font-medium text-start sticky top-0 z-10 mo:ml-0 cw:ml-0 ml-12 py-3 userdata",
+                        {
+                          "text-h4 bg-bgs1": isStickied,
+                          "text-h2 bg-bgs1": !isStickied
+                        }
+                      )}
+                    >
+                      {#if isStickied && $node.types && $node.types.length > 0}
+                        <NodeAvatar
+                          node={$node}
+                          accessPoint={ResourceAccessPoint.SELF}
+                        />
+                      {/if}
+                      {#if !isReadOnlyMode}
+                        <TextInput
+                          id={`title-${$node.id}`}
+                          size={Size.xl}
+                          bind:value={$node.label}
+                          isExperimentalMdInput={true}
+                          style={InputStyle.PLAIN}
+                          placeholder="Node title"
+                          width="w-full"
+                          on:debouncedChange={onLabelChange}
+                          on:keydown={(e) => {
+                            const event = e.detail;
+                            if (event.key === "ArrowDown") {
+                              event.preventDefault();
+                              if ($mdStore.blocks[0].id)
+                                mdStore.focus.set({
+                                  id: $mdStore.blocks[0].id
+                                });
+                            }
+                          }}
+                        />
+                      {:else}
+                        {$node.label ?? $node.body ?? ""}
+                      {/if}
+                    </span>
+                    <div class="w-full flex mo:px-0 cw:px-0 px-12 -mt-4">
+                      <CollectionsLane {node} {isReadOnlyMode} />
+                    </div>
+                  {/if}
+                  <div class="cw:px-0 px-12">
+                    <ResourceStatusBanner resource={node} />
+                  </div>
+                  {#if $node.types && $node.types.length > 0 && !$node.focusedBlock}
+                    <!-- TODO - later - show properties of focused node if the focused blocks is associated with a type collection -->
+                    <PropertiesPane
+                      item={node}
+                      resource={Resource.node}
+                      isVisibleProps={true}
+                      on:showAll={() => {
+                        _openRightPane(NodeRightPaneType.PROPERTIES);
+                      }}
+                    />
+                  {/if}
+                  <NodeContent {node} {mdId} {isReadOnlyMode} />
+                </main>
+              {/if}
             </div>
           {:else if isConstrainedWidth && rightPane !== NodeRightPaneType.NONE}
             <NodeRightPaneContent
@@ -327,6 +415,10 @@
                 ].includes(e.detail)
               ) {
                 openRightPane(e);
+              } else if (e.detail === ResourceActionType.SET_COVER_PHOTO) {
+                if (!isReadOnlyMode) {
+                  isShowCoverPicker = true;
+                }
               }
             }}
             on:view={onViewSwitch}

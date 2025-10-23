@@ -1,16 +1,16 @@
 <svelte:options accessors={true} />
 
 <script lang="ts">
-  import type { IMediaGridItem } from "$lib/client/products/memotron/node/node.type";
-  import { dragAndDropStore } from "$lib/client/stores/app.store";
-  import view from "$lib/client/stores/view.store";
-  import { DragStatus } from "$lib/client/types/dragstatus.enum";
+  import type { IMediaGridItem } from "@21n/products/memotron/node/node.type";
+  import { dragAndDropStore } from "@21n/stores/app.store";
+  import view from "@21n/stores/view.store";
+  import { DragStatus } from "@21n/types/dragstatus.enum";
   import { onMount } from "svelte";
-  import type { IFile } from "../../files/file.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import { fileStore } from "../../files/file.store";
-  import FileView from "../../files/FileView.svelte";
-  import { cn } from "$lib/client/utils/ui.utils";
+  import type { IFile } from "@21n/components/files/file.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  import { fileStore } from "@21n/components/files/file.store";
+  import FileView from "@21n/components/files/FileView.svelte";
+  import { cn } from "@21n/utils/ui.utils";
 
   export let isGridItem: boolean = true;
   export let item: IMediaGridItem;

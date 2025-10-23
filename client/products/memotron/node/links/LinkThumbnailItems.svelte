@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "$lib/client/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import type {
     INode,
     INodeLinkThumb
-  } from "$lib/client/products/memotron/node/node.type";
-  import type { IRecordId } from "$lib/client/types/data.type";
-  import LinkItem from "./LinkItem.svelte";
+  } from "@21n/products/memotron/node/node.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  import LinkItem from "@21n/products/memotron/node/links/LinkItem.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
   export let links: { link: INodeLinkThumb; node: INode }[];
@@ -15,7 +15,7 @@
 </script>
 
 <div class="flex flex-col gap-3 w-full">
-  {#each links as item (item.link.id)}
+  {#each links as item (item.link.linkedTo)}
     <LinkItem
       link={item.link}
       item={item.node}
@@ -25,8 +25,10 @@
       on:click={(e) => {
         dispatch("click", { event: e, id: item.node.id });
       }}
+      on:linkTypeSelect
       on:action
       on:tagClick
+      on:tag
     />
   {/each}
 </div>

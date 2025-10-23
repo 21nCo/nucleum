@@ -1,31 +1,32 @@
 <script lang="ts">
-  import modalEvent from "$lib/client/components/modal/modal.store";
+  import modalEvent from "@21n/components/modal/modal.store";
   import {
     appEvents,
     confirmationNotification
-  } from "$lib/client/stores/notification.store";
-  import { Size } from "$lib/client/types/size.enum";
-  import ModalFooter from "./ModalFooter.svelte";
-  import ModalHeader from "./ModalHeader.svelte";
-  import type { ModalParams } from "$lib/client/types/popup.type";
+  } from "@21n/stores/notification.store";
+  import { Size } from "@21n/types/size.enum";
+  import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
+  import ModalHeader from "@21n/components/modal/ModalHeader.svelte";
+  import type { ModalParams } from "@21n/types/popup.type";
   import { fly } from "svelte/transition";
   import { quintOut } from "svelte/easing";
-  import context from "$lib/client/stores/context.store";
-  import { Embed } from "$lib/client/types/context.type";
-  import { cn } from "$lib/client/utils/ui.utils";
-  import { Action } from "$lib/client/types/action.enum";
+  import context from "@21n/stores/context.store";
+  import { Embed } from "@21n/types/context.type";
+  import { cn } from "@21n/utils/ui.utils";
+  import { Action } from "@21n/types/action.enum";
   import { onMount } from "svelte";
-  import { GlobalEvent } from "$lib/client/types/event.enum";
-  import { resolveModalOnFront } from "$lib/client/utils/browser.utils";
-  import { logger } from "../debug/logger.client";
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { appStore } from "$lib/client/stores/app.store";
-  import { popover, tooltip } from "$lib/client/actions/popover.action";
-  import { Placement } from "$lib/client/types/direction.enum";
-  import { ResourceAccessMode } from "../flux/resourceStores/resource.type";
-  import view from "$lib/client/stores/view.store";
-  import ButtonTooltip from "$lib/client/elements/button/ButtonTooltip.svelte";
-  import { PopoverTriggerMethod } from "$lib/client/types/popover.type";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import { resolveModalOnFront } from "@21n/utils/browser.utils";
+  import { logger } from "@21n/components/debug/logger.client";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { appStore } from "@21n/stores/app.store";
+  import { popover, tooltip } from "@21n/actions/popover.action";
+  import { Placement } from "@21n/types/direction.enum";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import view from "@21n/stores/view.store";
+  import ButtonTooltip from "@21n/elements/button/ButtonTooltip.svelte";
+  import { PopoverTriggerMethod } from "@21n/types/popover.type";
+  import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
 
   export let path: string;
   export let resource: string | undefined = undefined;
@@ -101,10 +102,11 @@
 {:else}
   <div
     class={cn(
-      "relative modal flex flex-col items-center justify-between w-full h-full  rounded-md embed-ios:bg-bgs1",
+      "relative modal flex flex-col items-center justify-between rounded-md embed-ios:bg-bgs1 cw:w-full cw:h-full",
       {
         "dark:border border-brs3": !isInFocusMode && !$view.isConstrainedWidth,
-        "otop:pt-12": !resource || params.title
+        "otop:pt-12": !resource || params.title,
+        "w-full h-full": !params.layout?.isDynamicSize
       },
       !params.layout?.ignoreSafeArea && {
         "gap-4": size === Size.xs,
@@ -130,21 +132,35 @@
           : params.layout?.isShowClose}
       />
     {/if}
+
     <div
       class={cn(
-        "flex flex-col gap-4 w-full flex-grow overflow-hidden mo:rounded-none rounded-md",
+        "flex flex-col gap-4 flex-grow overflow-hidden mo:rounded-none rounded-md cw:w-full",
         {
-          "p-2 lg:p-4": !params.layout?.ignoreSafeArea && size === Size.xs,
-          "px-3 tp:px-8 lg:px-12":
-            !params.layout?.ignoreSafeArea && size !== Size.xs
+          "w-full h-full": !params.layout?.isDynamicSize
         }
       )}
     >
-      <slot />
+      {#if !params.layout?.ignoreSafeArea && !params.layout?.isOveriddenFooter}
+        <ModalContentPadded
+          isExtraSmall={size === Size.xs}
+          isDynamicSize={params.layout?.isDynamicSize}
+        >
+          <slot />
+        </ModalContentPadded>
+      {:else}
+        <slot />
+      {/if}
     </div>
-    {#if params.layout?.primaryAction || params.layout?.secondaryAction}
+
+    {#if params.layout?.primaryAction || params.layout?.secondaryAction || params.layout?.isShowClose}
       <ModalFooter
         action={path}
+        size={size === Size.xl || size === Size.xxl
+          ? Size.lg
+          : size === Size.xxs
+            ? Size.xs
+            : size}
         primaryAction={params.layout?.primaryAction}
         secondaryAction={params.layout?.secondaryAction}
         isDelegateClose={true}

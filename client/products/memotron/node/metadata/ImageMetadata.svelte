@@ -1,8 +1,8 @@
 <script lang="ts">
-  import Icon from "$lib/client/elements/Icon.svelte";
-  import { Size } from "$lib/client/types/size.enum";
-  import type { IImageMetadata } from "../node.type";
-  import BasicInfoItem from "./BasicInfoItem.svelte";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { Size } from "@21n/types/size.enum";
+  import type { IImageMetadata } from "@21n/products/memotron/node/node.type";
+  import BasicInfoItem from "@21n/products/memotron/node/metadata/BasicInfoItem.svelte";
   export let metadata: IImageMetadata | undefined = undefined;
   export let renderingDetails: any = undefined;
 

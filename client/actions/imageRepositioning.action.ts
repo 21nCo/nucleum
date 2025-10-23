@@ -93,6 +93,8 @@ export function imageRepositioner(
       node.removeEventListener("touchstart", handleTouchstart);
       node.removeEventListener("touchmove", handleTouchmove);
       node.removeEventListener("touchend", handleMouseup);
+      window.removeEventListener("mousemove", handleMousemove);
+      window.removeEventListener("mouseup", handleMouseup);
       if (isApplyCursorStyle) {
         node.style.cursor = "default";
       }
@@ -133,6 +135,8 @@ export function imageRepositioner(
       node.removeEventListener("touchstart", handleTouchstart);
       node.removeEventListener("touchmove", handleTouchmove);
       node.removeEventListener("touchend", handleMouseup);
+      window.removeEventListener("mousemove", handleMousemove);
+      window.removeEventListener("mouseup", handleMouseup);
       unsubscribe();
     }
   };

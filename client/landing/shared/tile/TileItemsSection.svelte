@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { ITileItem } from "../landing.type";
-  import Section from "../Section.svelte";
-  import Title from "../Title.svelte";
-  import Button from "../elements/Button.svelte";
-  import { isProductsPanelOpen } from "../store/shared.store";
-  import TileItem from "./TileItem.svelte";
-  import Indicator from "./Indicator.svelte";
-  import view from "$lib/client/stores/view.store";
+  import type { ITileItem } from "@21n/landing/shared/landing.type";
+  import Section from "@21n/landing/shared/Section.svelte";
+  import Title from "@21n/landing/shared/Title.svelte";
+  import Button from "@21n/landing/shared/elements/Button.svelte";
+  import { isProductsPanelOpen } from "@21n/landing/shared/store/shared.store";
+  import TileItem from "@21n/landing/shared/tile/TileItem.svelte";
+  import Indicator from "@21n/landing/shared/tile/Indicator.svelte";
+  import view from "@21n/stores/view.store";
 
   export let title: string;
   export let items: ITileItem[];
