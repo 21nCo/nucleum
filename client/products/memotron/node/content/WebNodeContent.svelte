@@ -28,7 +28,7 @@
   export let isLinkHovering: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   let youtubeVideoRef: YoutubeVideoPreview;
-
+  let copyLabel: string = "Copy";
   export function onTrace(e: any) {
     youtubeVideoRef.onTrace(e);
   }
@@ -56,12 +56,6 @@
       ]
     }
   ];
-
-  function trimUrl(url: string, isHovering: boolean) {
-    url = url.split("?")[0];
-    url = url.split("#")[0];
-    return truncateString(url, isHovering ? 150 : 50);
-  }
 </script>
 
 <div class="relative h-full w-full flex flex-col">
@@ -91,35 +85,39 @@
   {#if "url" in node && node.url && accessPoint === ResourceAccessPoint.SELF && !socialPostNodeTypeList.has(node.contentType)}
     <!-- TODO - TIDY-10 -->
     <div
-      class="flex items-center max-w-full w-full border-t border-brs2 text-fgs3 text-b2"
+      class="flex items-center max-w-full w-full border-t border-brs2 text-fgs3 text-b2 truncate"
     >
-      <button
-        class="flex border-r border-brs2 px-3 py-1.5 hover:bg-bgs2-striped grow"
-      >
-        {trimUrl(node.url, isLinkHovering)}
-      </button>
-      <button class="flex border-r border-brs2 px-3 py-1.5"> copy </button>
-
       <!-- <ContextMenuAction
         id="open-link-context-menu"
         triggerMethod={PopoverTriggerMethod.RIGHT_CLICK}
         menuResolver={() => {
           return linkContextMenu;
         }}
+      > -->
+      <button
+        class="flex border-r border-brs2 px-3 py-1.5 hover:bg-aps2-striped hover:text-aps1 truncate min-w-0 flex-1"
+        title="Open link"
+        on:click={() => {
+          if (!node.url) return;
+          appStore.openLink(node.url);
+        }}
       >
-        <Button
-          icon="weblink"
-          label={trimUrl(node.url, isLinkHovering)}
-          bind:isHovering={isLinkHovering}
-          size={Size.xs}
-          type={ButtonVariant.PRIMARY}
-          style={ButtonStyle.OUTLINED}
-          on:click={() => {
-            if (!node.url) return;
-            appStore.openLink(node.url);
-          }}
-        />
-      </ContextMenuAction> -->
+        {node.url?.split("?")?.[0]?.split("#")?.[0]}
+      </button>
+      <!-- </ContextMenuAction> -->
+      <button
+        class="flex px-3 py-1.5 hover:bg-bgs2-striped"
+        on:click={() => {
+          if (!node.url) return;
+          navigator.clipboard.writeText(node.url);
+          copyLabel = "Copied!";
+          setTimeout(() => {
+            copyLabel = "Copy";
+          }, 1000);
+        }}
+      >
+        {copyLabel}
+      </button>
     </div>
   {/if}
 </div>

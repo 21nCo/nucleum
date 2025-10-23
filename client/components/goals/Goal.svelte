@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { ActiveGoalStore, type IActiveGoalStore } from "@21n/components/goals/goal.store";
+  import {
+    ActiveGoalStore,
+    type IActiveGoalStore
+  } from "@21n/components/goals/goal.store";
   import PageLoadingPulse from "@21n/elements/feedback/animations/PageLoadingPulse.svelte";
   import {
     ResourceAccessMode,
@@ -207,7 +210,7 @@
     </div>
   {:else if $goal}
     <div
-      class="flex w-full h-full gap-4 overflow-auto"
+      class="flex w-full h-full overflow-auto"
       use:resizeListener={(e) => {
         containerWidth = e.width;
       }}
@@ -223,18 +226,10 @@
           />
         </aside>
       {/if}
-      <main
-        class={cn("flex flex-col gap-4 flex-1 overflow-auto", {
-          "py-4 pr-4": !isConstrainedWidth
-        })}
-      >
+      <main class={cn("flex flex-col gap-4 flex-1 overflow-auto", {})}>
         <div
           class={cn(
-            "relative flex flex-col w-full overflow-auto gap-3 bg-bgs2 otop:pt-12 shrink-0",
-            {
-              "rounded-lg border border-brs3": !isConstrainedWidth,
-              "border-b border-brs3": isConstrainedWidth
-            }
+            "relative flex flex-col w-full overflow-auto gap-3 bg-bgs2 otop:pt-12 shrink-0 border-b border-brs3"
           )}
         >
           {#if isConstrainedWidth}
@@ -274,7 +269,7 @@
         </div>
         <div
           class={cn("flex-1 overflow-auto", {
-            "px-3": isConstrainedWidth
+            "px-4 pb-4": !isConstrainedWidth
           })}
         >
           {#if selectedPanel === "info"}
