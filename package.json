@@ -64,5 +64,8 @@
     "build:memotron-share": "turbo run build --filter=memotron-share",
     "clean": "turbo run clean"
   },
-  "packageManager": "npm@10.0.0"
+  "packageManager": "npm@10.0.0",
+  "overrides": {
+    "@parcel/watcher": "2.1.0"
+  }
 }
