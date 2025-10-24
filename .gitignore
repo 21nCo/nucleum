@@ -38,3 +38,4 @@ client/cx/contemporaries/glasp-*
 # Generated static assets manifest
 client/static/assets-manifest.json
 
+deployment/.surrealdb
