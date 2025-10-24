@@ -90,10 +90,10 @@ async function findValidTransaction(transactions: any[], userId: string) {
       transaction.cycle === BillingCycle.MONTHLY
         ? 30
         : transaction.cycle === BillingCycle.YEARLY
-        ? 365
-        : transaction.cycle === BillingCycle.LIFETIME
-        ? 36500
-        : 0;
+          ? 365
+          : transaction.cycle === BillingCycle.LIFETIME
+            ? 36500
+            : 0;
 
     const expiryDate = new Date(
       paymentDate.getTime() + cycleInDays * 24 * 60 * 60 * 1000
@@ -126,8 +126,8 @@ async function reconcilePayments(transactions: any[]) {
 
     const isSubscription = !!transaction.dodoPayment.subscription_id;
     const paymentStatus = await verifyPayment(
-      transaction.dodoPayment.payment_id ??
-        transaction.dodoPayment.subscription_id,
+      transaction.dodoPayment.subscription_id ??
+        transaction.dodoPayment.payment_id,
       isSubscription
     );
 

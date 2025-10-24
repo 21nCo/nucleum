@@ -79,8 +79,8 @@ async function handleDodoPaymentVerification(transaction: any, user: any) {
   }
   const isSubscription = !!transaction.dodoPayment.subscription_id;
   const paymentStatus = await verifyPayment(
-    transaction.dodoPayment.payment_id ??
-      transaction.dodoPayment.subscription_id,
+    transaction.dodoPayment.subscription_id ??
+      transaction.dodoPayment.payment_id,
     isSubscription
   );
 
@@ -144,8 +144,8 @@ async function handleAppleStoreVerification(params: {
   const transactionId = Array.isArray(body.embedTransaction)
     ? body.embedTransaction[0]?.transactionId
     : typeof body.embedTransaction === "string"
-    ? body.embedTransaction
-    : null;
+      ? body.embedTransaction
+      : null;
   if (!transactionId) {
     throw new InternalServerError(
       "Invalid Apple transaction: missing transaction information"
@@ -154,9 +154,8 @@ async function handleAppleStoreVerification(params: {
   console.log({ transactionId });
   let verificationResponse = null;
   if (transaction?.cycle === BillingCycle.LIFETIME) {
-    verificationResponse = await verifyAppleNonConsumablePurchase(
-      transactionId
-    );
+    verificationResponse =
+      await verifyAppleNonConsumablePurchase(transactionId);
   } else {
     verificationResponse = await verifyAppleSubscription(transactionId);
   }
