@@ -77,21 +77,31 @@ export async function generateSpaceToken(props: {
 }
 
 export async function validateToken(props: { token: string; host?: string }) {
+  const verificationKey = process.env.TOKEN_PRIVATE_KEY?.replace(/\\n/g, "\n");
+
+  if (!verificationKey) {
+    return false;
+  }
+
   try {
-    const decoded = jwt.verify(
-      props.token,
-      process.env.TOKEN_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-      {
-        algorithms: ["RS384"],
-        issuer: process.env.DOMAIN,
-        keyid: process.env.TOKEN_NAME
+    const decoded = jwt.verify(props.token, verificationKey, {
+      algorithms: ["RS384"],
+      issuer: process.env.DOMAIN,
+      audience: props.host ?? "blank"
+    });
+
+    if (typeof decoded === "object" && decoded !== null) {
+      const payload = decoded as Record<string, any>;
+      if (
+        typeof payload.exp === "number" &&
+        payload.exp < Math.floor(Date.now() / 1000)
+      ) {
+        return false;
       }
-    );
-    console.log({ decoded });
-    if (decoded.exp < Math.floor(Date.now() / 1000)) return false;
-    else return decoded;
-  } catch (err) {
-    console.log({ err });
+    }
+
+    return decoded;
+  } catch {
     return false;
   }
 }

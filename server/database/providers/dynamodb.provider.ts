@@ -303,14 +303,17 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
    * @returns Promise resolving to user data if authentication succeeds, or error code
    */
   async authenticateUser(email: string, password: string): Promise<any> {
-    const user = await this.getUserByEmail(email);
-    if (user) {
-      const hashedPassword = this.hashPassword(password);
-      if (user.pass === hashedPassword) {
-        return user;
-      }
+    const userProfile = await this.getUserByEmail(email, true);
+
+    if (!userProfile) {
+      return [];
     }
-    return [];
+
+    if (userProfile.pass && this.verifyPassword(password, userProfile.pass)) {
+      return userProfile;
+    }
+
+    return -1;
   }
 
   /**
@@ -542,15 +545,81 @@ export class DynamoDBDatabaseProvider implements IDatabaseProvider {
   }
 
   /**
-   * Hashes a password using SHA256 with salt
+   * Hashes a password using PBKDF2 with a unique per-user salt.
    * @param password - The plain text password to hash
-   * @returns The hashed password string
+   * @returns The hashed password string in the format salt:hash
    */
   private hashPassword(password: string): string {
-    // Simplified password hashing - in production use bcrypt or similar
-    return crypto
+    const salt = crypto.randomBytes(16);
+    const derivedKey = crypto.pbkdf2Sync(password, salt, 120000, 64, "sha512");
+    return `${salt.toString("hex")}:${derivedKey.toString("hex")}`;
+  }
+
+  /**
+   * Validates a password against a stored hash, supporting legacy hashes.
+   * @param password - The candidate password to verify
+   * @param storedHash - The stored password hash
+   * @returns True if the password matches, false otherwise
+   */
+  private verifyPassword(password: string, storedHash: string): boolean {
+    if (!storedHash || typeof storedHash !== "string") {
+      return false;
+    }
+
+    const [saltHex, derivedHex] = storedHash.split(":");
+
+    if (saltHex && derivedHex) {
+      try {
+        const salt = Buffer.from(saltHex, "hex");
+        const expected = Buffer.from(derivedHex, "hex");
+
+        if (expected.toString("hex") !== derivedHex.toLowerCase()) {
+          return false;
+        }
+
+        const candidate = crypto.pbkdf2Sync(
+          password,
+          salt,
+          120000,
+          expected.length,
+          "sha512"
+        );
+
+        if (candidate.length !== expected.length) {
+          return false;
+        }
+
+        return crypto.timingSafeEqual(candidate, expected);
+      } catch {
+        return false;
+      }
+    }
+
+    const legacySalt = String(process.env.PASSWORD_SALT);
+    const legacyHash = crypto
       .createHash("sha256")
-      .update(password + process.env.PASSWORD_SALT)
+      .update(password + legacySalt)
       .digest("hex");
+
+    if (legacyHash.length !== storedHash.length) {
+      return false;
+    }
+
+    try {
+      const storedBuffer = Buffer.from(storedHash, "hex");
+      if (storedBuffer.toString("hex") !== storedHash.toLowerCase()) {
+        return false;
+      }
+
+      const legacyBuffer = Buffer.from(legacyHash, "hex");
+
+      if (legacyBuffer.length !== storedBuffer.length) {
+        return false;
+      }
+
+      return crypto.timingSafeEqual(legacyBuffer, storedBuffer);
+    } catch {
+      return false;
+    }
   }
 }
