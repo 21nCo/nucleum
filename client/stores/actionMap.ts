@@ -922,6 +922,7 @@ export const globalActions: IAction[] = [
     type: ActionType.RESOURCE,
     accessMode: ResourceAccessMode.POP,
     modalParams: {
+      isShowOverlay: false,
       layout: {
         orientation: Orientation.Horizontal,
         size: Size.xl,

@@ -178,15 +178,14 @@
 </script>
 
 <div
-  class={cn("flex flex-col gap-4 w-full h-full", {
-    "bg-bgs2": isGlobalSearchModal && resource === Resource.everything,
+  class={cn("flex flex-col w-full h-full", {
     "otop:pt-12": isGlobalSearchModal
   })}
 >
   <header class={"flex flex-col w-full"}>
     <div
       class={cn("flex gap-1", {
-        "py-4": isGlobalSearchModal
+        "py-3": isGlobalSearchModal
       })}
     >
       <span class="min-w-0 flex-1">
@@ -249,9 +248,7 @@
         bind:value={resource}
         style={PanelSwitcherStyle.BAR}
         isExpandToFullWidth={true}
-        parentBgIndex={isGlobalSearchModal && resource === Resource.everything
-          ? 2
-          : parentBgIndex}
+        parentBgIndex={parentBgIndex}
         size={Size.sm}
         on:switch={() => {
           setTimeout(() => {
@@ -289,7 +286,7 @@
       </div>
     {/if} -->
       {#if isGroupedResultsMode}
-        <div class="flex flex-col justify-between w-full h-full p-2">
+        <div class="flex flex-col justify-between w-full h-full">
           <div class="flex flex-grow w-full">
             <GroupedSearchResults
               bind:this={groupedSearchRef}

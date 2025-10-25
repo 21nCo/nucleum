@@ -108,7 +108,7 @@
       threshold: 30
     }}
     class={cn(
-      "relative flex items-center text-b2 gap-2 max-w-48 min-w-20 truncate",
+      "relative flex items-center text-b2 gap-2 max-w-48 min-w-24 truncate",
       // abg(isActive, 1),
       {
         "rounded-md": !dev_isFullHeightTabStyle || isInterimTab,

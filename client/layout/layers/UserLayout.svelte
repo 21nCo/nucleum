@@ -80,9 +80,12 @@
                 </slot>
               </AppSplitView>
             </div>
+            <!-- <div class="h-full w-96 border-l-2 border-brs3">
+    
+              <RightPanel />
+            </div> -->
           </div>
         </div>
-        <!-- <RightPanel /> -->
       </div>
     </div>
   {/if}

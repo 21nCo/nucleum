@@ -69,13 +69,10 @@ export class DexiePersistence implements IPersistence {
       if (tablesVal) tables = [...(tables ?? []), ...parse(tablesVal)];
     }
     const stores =
-      tables?.reduce(
-        (acc, table) => {
-          acc[table.name] = table.indices.join(", ");
-          return acc;
-        },
-        {} as { [key: string]: string }
-      ) ?? {};
+      tables?.reduce((acc, table) => {
+        acc[table.name] = table.indices.join(", ");
+        return acc;
+      }, {} as { [key: string]: string }) ?? {};
     this.instance.version(version).stores(stores);
     this.userId = user;
     if (tables) {

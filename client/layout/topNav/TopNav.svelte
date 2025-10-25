@@ -26,6 +26,7 @@
   import { Embed } from "@21n/types/context.type";
   import context from "@21n/stores/context.store";
   import OfflineStatusMessage from "@21n/elements/feedback/OfflineStatusMessage.svelte";
+  import TopNavDateTime from "./TopNavDateTime.svelte";
 
   let isInFocusMode = false;
   let pinnedItems: IRecordId[] = tabs.get() ?? [];
@@ -158,6 +159,7 @@
       />
       <TrailLeftIndicator />
       <OfflineStatusMessage />
+      <!-- <TopNavDateTime /> -->
       <button
         class={cn(
           "flex items-center gap-2 rounded-full overflow-hidden border border-transparent ml-2",

@@ -13,6 +13,7 @@
   import { isValidNumber } from "@21n/shared-utils/text.utils";
   const dispatch = createEventDispatcher();
   export let group: any;
+  export let index: number;
   export let isActive: boolean = false;
   export let isDefaultState: boolean = false;
   export let searchCallback: (query: string) => void;
@@ -37,10 +38,9 @@
 
 <div
   class={cn(
-    "flex flex-col rounded-md border bg-bgs1 min-h-96 grow overflow-y-auto",
+    "flex flex-col border-b border-brs1 bg-bgs1 min-h-96 grow overflow-y-auto",
     {
-      "border-brs3": isActive,
-      "border-transparent": !isActive
+      "border-r": index % 2 === 0,
     }
   )}
 >
