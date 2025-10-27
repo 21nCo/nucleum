@@ -43,3 +43,7 @@ deployment/.surrealdb/
 tests/coverage/
 
 coverage/
+
+# Playwright output
+test-results/
+artifacts/
