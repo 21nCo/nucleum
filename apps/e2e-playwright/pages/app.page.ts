@@ -4,7 +4,7 @@ export class AppPage {
   constructor(private readonly page: Page) {}
 
   async gotoHome() {
-    await this.page.goto("/");
+    return await this.page.goto("/");
   }
 
   async getTitle() {

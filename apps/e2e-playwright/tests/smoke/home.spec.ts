@@ -9,11 +9,15 @@ test.skip(
 
 test.describe("smoke", () => {
   test("home page loads without errors", async ({ page }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (error) => errors.push(error.message));
+    
     const app = new AppPage(page);
-    await app.gotoHome();
+    const response = await app.gotoHome();
     await page.waitForLoadState("networkidle");
 
+    expect(response?.status()).toBeLessThan(400);
     await expect(page).toHaveURL(/\//);
-    await expect(page.locator("body div").first()).toBeVisible();
+    expect(errors).toHaveLength(0);
   });
 });
