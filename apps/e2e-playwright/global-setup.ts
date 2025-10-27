@@ -1,6 +1,7 @@
 import http from "node:http";
 import path from "node:path";
 import { AddressInfo } from "node:net";
+import { execSync } from "node:child_process";
 
 import type { FullConfig } from "@playwright/test";
 import { createServer as createViteServer } from "vite";
@@ -13,6 +14,14 @@ type ViteHarness = {
 async function startVite(app: string): Promise<ViteHarness> {
   const repoRoot = path.resolve(__dirname, "..", "..");
   const root = path.join(repoRoot, app);
+  
+  console.log("🔄 Syncing SvelteKit files...");
+  try {
+    execSync("npx svelte-kit sync", { cwd: root, stdio: "inherit" });
+  } catch (error) {
+    console.warn("⚠️ SvelteKit sync failed, continuing anyway:", error);
+  }
+  
   const vite = await createViteServer({
     root,
     configFile: path.join(root, "vite.config.ts"),
