@@ -39,8 +39,7 @@ vi.mock("@21n/persistence/persistence.utils", () => ({ clientStorage: moduleMock
 vi.mock("@21n/utils/time.utils", () => moduleMocks.time);
 vi.mock("@21n/utils/extension.utils", () => moduleMocks.extension);
 vi.mock("@21n/shared-utils/json.utils", async () => {
-  const actual = await vi.importActual<any>("@21n/shared-utils/json.utils");
-  return actual;
+  return await vi.importActual<any>("@21n/shared-utils/json.utils");
 });
 
 const {

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@21n/components/flux/flux", () => ({
   flux: {
@@ -7,9 +7,9 @@ vi.mock("@21n/components/flux/flux", () => ({
 }));
 
 vi.mock("@21n/utils/browser.utils", async () => {
-  const actual = await vi.importActual<typeof import("@21n/utils/browser.utils")>(
-    "@21n/utils/browser.utils"
-  );
+  const actual = await vi.importActual<
+    typeof import("@21n/utils/browser.utils")
+  >("@21n/utils/browser.utils");
 
   return {
     ...actual,
@@ -22,6 +22,16 @@ const { pointronPreferences, defaultHorizonChartConfiguration } = await import(
 );
 
 describe("pointron preferences store", () => {
+  beforeEach(async () => {
+    await pointronPreferences.modify(
+      {
+        horizonCharts: defaultHorizonChartConfiguration,
+        manualEntryQuickDurations: []
+      },
+      { isPersist: false }
+    );
+  });
+
   it("resets horizon charts to defaults", async () => {
     await pointronPreferences.modify(
       { horizonCharts: [] },

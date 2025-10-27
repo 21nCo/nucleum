@@ -83,7 +83,7 @@ describe("server utils", () => {
     });
 
     expect(response).toMatchObject({
-      error: "An error occured"
+      error: "An error occurred"
     });
   });
 });

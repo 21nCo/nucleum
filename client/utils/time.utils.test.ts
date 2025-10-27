@@ -205,7 +205,7 @@ describe("client/utils/time.utils", () => {
   });
 
   it("increments time with optional rounding", () => {
-    const base = new Date(2024, 0, 1, 10, 15, 0);
+    const base = new Date(Date.UTC(2024, 0, 1, 10, 15, 0));
     const rounded = incrementTime(new Date(base), 2, true);
     expect(rounded.getUTCHours()).toBe(12);
   });
@@ -238,9 +238,9 @@ describe("client/utils/time.utils", () => {
   it("shifts dates and attaches time", () => {
     const base = new Date(Date.UTC(2024, 0, 1, 0, 0, 0));
     const shifted = offsetDate(base, 2);
-    expect(shifted.getDate()).toBe(3);
+    expect(shifted.getUTCDate()).toBe(3);
     const attached = attachTimeToDate(new Date(base), "15:45");
-    expect(attached.getHours()).toBe(15);
+    expect(attached.getUTCHours()).toBe(15);
   });
 
   it("formats complete datetime string", () => {
