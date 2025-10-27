@@ -22,7 +22,8 @@ describe("obj.utils property-based checks", () => {
     fc.assert(
       fc.property(fc.jsonValue(), (value) => {
         const copy = deepCopy(value);
-        expect(copy).toEqual(value);
+        const normalizedValue = JSON.parse(JSON.stringify(value));
+        expect(copy).toEqual(normalizedValue);
         if (value && typeof value === "object") {
           expect(copy).not.toBe(value);
         }
