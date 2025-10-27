@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "types": ["@playwright/test"],
+    "moduleResolution": "node"
+  },
+  "include": [
+    "playwright.config.ts",
+    "global-setup.ts",
+    "global-teardown.ts",
+    "pages/**/*.ts",
+    "tests/**/*.ts"
+  ]
+}

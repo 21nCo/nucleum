@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { resolveDboUpdateQuery } from "@21n/shared-utils/surreal.utils";
-import { globalDbo } from "@21n/shared-dbo/dbo";
-import { memotronDboDefinitions } from "@21n/shared-dbo/memotron.dbo";
-import { pointronDboDefinitions } from "@21n/shared-dbo/pointron.dbo";
+import { globalDbo } from "@21n/shared-dbo";
+import { memotronDboDefinitions } from "@21n/shared-dbo";
+import { pointronDboDefinitions } from "@21n/shared-dbo";
 describe("resolveBootstrapQuery", () => {
   it("should return concatenated string of table names and function results when valid dbo array is provided", () => {
     const dbo = [
