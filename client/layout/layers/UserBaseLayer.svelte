@@ -40,9 +40,6 @@
     getDapId
   } from "@21n/persistence/persistence.utils";
   import PageError from "@21n/components/error/PageError.svelte";
-  import { SurrealPersistence } from "@21n/persistence/surreal/surreal.local";
-  import { SignalDBPersistence } from "@21n/persistence/signaldb/signaldb.local";
-  import { IndexedDBPersistence } from "@21n/persistence/indexeddb/indexeddb.local";
   import posthog from "posthog-js";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
@@ -64,7 +61,6 @@
   import UserLayout from "@21n/layout/layers/UserLayout.svelte";
   import { compareVersions } from "@21n/shared-utils/utils";
   import { UIStateScope } from "@21n/stores/uiState/uiState.type";
-  import { RxDBPersistence } from "@21n/persistence/rxdb/rxdb.local";
   import { DexiePersistence } from "@21n/persistence/dexie/dexie.local";
   import { parse } from "@21n/shared-utils/json.utils";
   import { resolveProductConfig } from "@21n/products/product.config";
@@ -387,24 +383,7 @@
     };
 
     const provider: PersistenceProvider = PersistenceProvider.DEXIE;
-    return initFlux(resolveLocalPersistence(), initParams);
-
-    function resolveLocalPersistence() {
-      switch (provider) {
-        case PersistenceProvider.SURREAL:
-          return new SurrealPersistence();
-        case PersistenceProvider.SIGNALDB:
-          return new SignalDBPersistence();
-        case PersistenceProvider.RXDB:
-          return new RxDBPersistence();
-        case PersistenceProvider.INDEXEDDB:
-          return new IndexedDBPersistence();
-        case PersistenceProvider.DEXIE:
-          return new DexiePersistence();
-        default:
-          return new SurrealPersistence();
-      }
-    }
+    return initFlux(new DexiePersistence(), initParams);
   }
 
   async function initializeEssentialUserData(initState: number): Promise<
