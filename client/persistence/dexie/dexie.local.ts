@@ -27,6 +27,7 @@ import {
 import { clientStorage } from "@21n/persistence/persistence.utils";
 import { Dexie, type Collection, type Table, type WhereClause } from "dexie";
 import { SearchEngine } from "searchfn";
+import { extractSearchFields as extractSearchFieldsUtil } from "@21n/utils/textUtils";
 import { indexingStore } from "@21n/persistence/dexie/indexing.store";
 
 // import {
@@ -266,14 +267,7 @@ export class DexiePersistence implements IPersistence {
             logger.info({
               at: "DexiePersistence.triggerBackgroundIndexing",
               message:
-                "Worker indexing complete, importing worker-exported indices"
-            });
-
-            this.importWorkerExportedIndices().catch((error) => {
-              logger.error({
-                at: "DexiePersistence.triggerBackgroundIndexing - import error",
-                error
-              });
+                "Worker indexing complete - SearchEngine persists automatically"
             });
 
             break;
@@ -295,7 +289,7 @@ export class DexiePersistence implements IPersistence {
         payload: {
           userId: this.userId,
           dbVersion,
-          indexMethod: "flexsearch",
+          indexMethod: "searchfn",
           tables: this.tables
             .filter((t) => t.searchIndices && t.searchIndices.length > 0)
             .map((t) => ({
@@ -328,15 +322,6 @@ export class DexiePersistence implements IPersistence {
     const dbName = `${this.userId}-${dbVersion}`;
     const name = `${dbName}-#tableName#-search`;
     await this.initializeFlatSearchIndexes(name);
-  }
-
-  private async importWorkerExportedIndices(): Promise<void> {
-    logger.info({
-      at: "DexiePersistence.importWorkerExportedIndices",
-      message: "SearchEngine persists automatically - no import needed"
-    });
-    // SearchEngine automatically persists to IndexedDB during add() operations
-    // No need to manually import indices from workers
   }
 
   async initializeFlatSearchIndexes(dbName: string) {
@@ -383,18 +368,6 @@ export class DexiePersistence implements IPersistence {
       dapId: params?.dapId
     });
   }
-  private cleanText(text: string): string {
-    return text
-      .replace(/\(resource=\w+:[a-zA-Z0-9_-]+\)/g, "")
-      .replace(/\b\w+:[a-zA-Z0-9_-]+\b/g, "")
-      .replace(/https?:\/\/[^\s)]+/g, "")
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-      .replace(/^#{1,6}\s+/gm, "")
-      .replace(/^===+$/gm, "")
-      .replace(/[​\u200B-\u200D\uFEFF]/g, "")
-      .trim();
-  }
-
   private extractSearchFields(
     record: any,
     resource: Resource
@@ -405,21 +378,7 @@ export class DexiePersistence implements IPersistence {
     if (!searchIndices || searchIndices.length === 0) return undefined;
 
     try {
-      const fields: Record<string, string> = {};
-      let hasContent = false;
-
-      for (const fieldName of searchIndices) {
-        const value = record[fieldName];
-        if (value != null && value !== "") {
-          const cleanedValue = this.cleanText(String(value));
-          if (isValidString(cleanedValue)) {
-            fields[fieldName] = cleanedValue;
-            hasContent = true;
-          }
-        }
-      }
-
-      return hasContent ? fields : undefined;
+      return extractSearchFieldsUtil(record, searchIndices);
     } catch (e) {
       logger.error({
         at: "DexiePersistence.extractSearchFields",
@@ -444,22 +403,25 @@ export class DexiePersistence implements IPersistence {
           };
         });
         const shouldSkipIndexing = (params as any).isSkipFlexSearchIndexing;
+        const table = this.instance?.table(resource);
+        if (!table) return;
+        const putResult = await table.bulkPut(records);
         if (!shouldSkipIndexing && this.searchIndices.has(resource)) {
           const searchEngine = this.searchIndices.get(resource);
           if (searchEngine) {
-            const indexPromises = records
-              .map((x) => {
-                const fields = this.extractSearchFields(x, resource);
-                if (x.id && fields) {
-                  return searchEngine.add({ id: x.id, fields });
-                }
-                return null;
-              })
-              .filter(Boolean);
-            await Promise.all(indexPromises);
+            await Promise.all(
+              records
+                .map((r) => {
+                  const fields = this.extractSearchFields(r, resource);
+                  return r.id && fields
+                    ? searchEngine.add({ id: r.id, fields }).catch(() => void 0)
+                    : null;
+                })
+                .filter(Boolean) as Promise<unknown>[]
+            );
           }
         }
-        return this.instance?.table(resource).bulkPut(records);
+        return putResult;
       case PersistenceActionType.BULK_INSERT:
         return this.bulkInsert(
           resource,
@@ -480,12 +442,12 @@ export class DexiePersistence implements IPersistence {
           try {
             const searchEngine = this.searchIndices.get(resource);
             if (searchEngine && params.record.id) {
+              try {
+                await searchEngine.remove(params.record.id);
+              } catch (e) {}
+
               const fields = this.extractSearchFields(params.record, resource);
               if (fields) {
-                try {
-                  await searchEngine.remove(params.record.id);
-                } catch (e) {}
-
                 await searchEngine.add({
                   id: params.record.id,
                   fields
@@ -503,15 +465,18 @@ export class DexiePersistence implements IPersistence {
         return this.merge(resource, params.record.id, params.record);
       case PersistenceActionType.DELETE:
         logger.log({ at: "DexiePersistence.mutation delete", params });
+        const dbResult = await this.instance
+          ?.table(resource)
+          .delete(params.recordId.toString());
         if (this.searchIndices.has(resource) && params.recordId) {
           const searchEngine = this.searchIndices.get(resource);
           if (searchEngine) {
-            await searchEngine.remove(params.recordId.toString());
+            await searchEngine
+              .remove(params.recordId.toString())
+              .catch(() => void 0);
           }
         }
-        return this.instance
-          ?.table(resource)
-          .delete(params.recordId.toString());
+        return dbResult;
       case PersistenceActionType.BULK_DELETE:
         return this.instance
           ?.table(resource)
@@ -550,23 +515,25 @@ export class DexiePersistence implements IPersistence {
         id: record.id?.toString()
       }));
 
+      const result = await table.bulkPut(formattedRecords);
+
       if (!isSkipFlexSearchIndexing && this.searchIndices.has(resource)) {
         const searchEngine = this.searchIndices.get(resource);
         if (searchEngine) {
-          const indexPromises = formattedRecords
-            .map((record) => {
-              const fields = this.extractSearchFields(record, resource);
-              if (record.id && fields) {
-                return searchEngine.add({ id: record.id, fields });
-              }
-              return null;
-            })
-            .filter(Boolean);
-          await Promise.all(indexPromises);
+          await Promise.all(
+            formattedRecords
+              .map((record) => {
+                const fields = this.extractSearchFields(record, resource);
+                return record.id && fields
+                  ? searchEngine
+                      .add({ id: record.id, fields })
+                      .catch(() => void 0)
+                  : null;
+              })
+              .filter(Boolean) as Promise<unknown>[]
+          );
         }
       }
-
-      const result = await table.bulkPut(formattedRecords);
 
       logger.log({
         at: "DexiePersistence.bulkInsert",
@@ -955,7 +922,8 @@ export class DexiePersistence implements IPersistence {
     const searchEngine = this.searchIndices.get(resource);
     if (searchEngine) {
       const ids = await searchEngine.search(search.query, {
-        limit: params?.limit
+        limit: params?.limit,
+        fields: search.properties
       });
       if (ids.length > 0) {
         console.timeEnd("preSearchUsingIndex");

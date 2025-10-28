@@ -7,10 +7,8 @@ import {
   type IAnalyticsCard,
   AnalyticsCardType
 } from "@21n/products/pointron/analytics/analytics.types";
-import { interceptSurrealResponse } from "@21n/utils/utils";
 import { TimePeriodType, TimeScale } from "@21n/types/time.type";
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-import { SurrealDatabase } from "@21n/persistence/surrealHelper";
 import {
   generateAnalyticsSeedPage,
   generateAnalyticsSeedPages,
@@ -131,76 +129,6 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
 export const analyticsConfigStore = AnalyticsConfigStore.resolve(
   analyticsConfigStoreId
 );
-
-export type AnalyticsPageStoreType = ReturnType<typeof initAnalyticsPageStore>;
-
-/**
- * Analytics page store map for analytics pages
- */
-const activeAnalyticsPageStores = new Map<string, AnalyticsPageStoreType>();
-
-/**
- * @deprecated
- * Resolves the analytics page for the given id. If the store does not exist, it will be initialized.
- * @param id - The id of the analytics page
- * @returns The active analytics page store
- */
-export function resolveAnalyticsPageStore(config: AnalyticsPage | string) {
-  if (typeof config === "string") {
-    return activeAnalyticsPageStores.get(config)!;
-  }
-  if (!activeAnalyticsPageStores.has(config.id)) {
-    activeAnalyticsPageStores.set(config.id, initAnalyticsPageStore(config));
-  }
-  let val = activeAnalyticsPageStores.get(config.id);
-  return val!;
-}
-
-function initAnalyticsPageStore(config: AnalyticsPage) {
-  let id = config.id;
-  const { subscribe, set, update } = writable<AnalyticsPageStore>({
-    id: config.id,
-    config,
-    data: null
-  });
-  return {
-    subscribe,
-    update,
-    reset: () => {},
-    refresh: async () => {
-      update((n) => {
-        return { ...n, isRefreshing: true };
-      });
-      const config = get(analyticsConfigStore).pages.find((p) => p.id === id);
-      if (!config) {
-        console.error("config not found", id);
-        update((n) => {
-          return { ...n, isRefreshing: false };
-        });
-        return false;
-      }
-      // const params = generateParamsForCharts(config.cards.map((c) => c.period));
-      const params = generateParamsForCards(config.cards);
-      const db = new SurrealDatabase();
-      const res = await db.executeReadFn(
-        "return fn::pointron::analytics::page::fetch($params)",
-        {
-          params
-        }
-      );
-      const data = interceptSurrealResponse(res);
-      if (!data) {
-        console.error("data not found", id);
-        update((n) => {
-          return { ...n, isRefreshing: false };
-        });
-        return false;
-      }
-      set({ data, id, config, isRefreshing: false });
-      return true;
-    }
-  };
-}
 
 class FocusAggregates {
   /**

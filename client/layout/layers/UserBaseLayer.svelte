@@ -382,7 +382,6 @@
       loaderCallback
     };
 
-    const provider: PersistenceProvider = PersistenceProvider.DEXIE;
     return initFlux(new DexiePersistence(), initParams);
   }
 

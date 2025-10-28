@@ -1,8 +1,6 @@
 import { SearchEngine } from "searchfn";
+import { extractSearchFields } from "../../utils/textUtils";
 
-const searchfnAvailable = true;
-
-console.log("[Worker] searchfn SearchEngine imported from local package");
 
 interface IndexingTask {
   userId: string;
@@ -43,11 +41,18 @@ const ports: MessagePort[] = [];
 const workerLogs: string[] = [];
 const isForwardLogs = false;
 function logToMain(message: string, data?: any) {
-  const logEntry = `[${new Date().toISOString()}] ${message}${
-    data ? ": " + JSON.stringify(data) : ""
-  }`;
+  let dataStr = "";
+  if (data !== undefined) {
+    try {
+      dataStr = ": " + JSON.stringify(data);
+    } catch {
+      dataStr = ": <unserializable>";
+    }
+  }
+  const logEntry = `[${new Date().toISOString()}] ${message}${dataStr}`;
   console.log(logEntry);
   workerLogs.push(logEntry);
+  if (workerLogs.length > 1000) workerLogs.shift();
 
   // Broadcast log to all connected ports
   if (isForwardLogs) {
@@ -109,7 +114,10 @@ async function startIndexing(task: IndexingTask, port: MessagePort) {
   let db: IDBDatabase | null = null;
 
   try {
-    console.log("[Worker] Starting indexing with task:", task);
+    logToMain("[Worker] Starting indexing", {
+      dbVersion: task.dbVersion,
+      tableCount: task.tables?.length
+    });
 
     const dbName = `${task.userId}-${task.dbVersion}`;
     console.log("[Worker] Opening IndexedDB database:", dbName);
@@ -151,8 +159,7 @@ async function startIndexing(task: IndexingTask, port: MessagePort) {
     currentProgress.totalRecords = totalRecordsToIndex;
     broadcastProgress(port);
 
-    // Use searchfn if requested (it's already loaded)
-    const useSearchfn = task.indexMethod === "flexsearch" && searchfnAvailable;
+    const useSearchfn = (task.indexMethod ?? "searchfn") !== "custom";
     logToMain("Using indexing method", {
       method: useSearchfn ? "searchfn" : "custom"
     });
@@ -196,7 +203,7 @@ async function startIndexing(task: IndexingTask, port: MessagePort) {
 
     if (db) {
       try {
-        await db.close();
+        db.close();
       } catch (closeError) {
         console.error("[Worker] Error closing database:", closeError);
       }
@@ -219,36 +226,86 @@ async function indexTable(
   useSearchfn: boolean,
   port: MessagePort
 ) {
-  // Get all records from the table using native IndexedDB
   const transaction = db.transaction([table.name], "readonly");
   const objectStore = transaction.objectStore(table.name);
-  const getAllRequest = objectStore.getAll();
-
-  const records = await new Promise<any[]>((resolve, reject) => {
-    getAllRequest.onsuccess = () => {
-      resolve(getAllRequest.result || []);
-    };
-    getAllRequest.onerror = () => {
-      console.error("[Worker] Error getting records:", getAllRequest.error);
-      resolve([]);
-    };
-  });
-
-  console.log(
-    `[Worker] Processing ${records.length} records from table ${
-      table.name
-    } using ${useSearchfn ? "searchfn" : "custom"} indexing`
-  );
 
   if (useSearchfn) {
-    await indexWithSearchfn(records, table, userId, dbVersion, port);
+    await indexWithSearchfn(objectStore, table, userId, dbVersion, port);
   } else {
-    await indexWithCustomLogic(records, table, userId, dbVersion, port);
+    await indexWithCustomLogic(objectStore, table, userId, dbVersion, port);
+  }
+}
+
+async function streamObjectStore(
+  objectStore: IDBObjectStore,
+  batchSize: number,
+  onBatch: (records: any[]) => Promise<void>
+) {
+  let batch: any[] = [];
+
+  for await (const record of iterateObjectStore(objectStore)) {
+    batch.push(record);
+    if (batch.length >= batchSize) {
+      const currentBatch = batch;
+      batch = [];
+      await onBatch(currentBatch);
+    }
+  }
+
+  if (batch.length > 0) {
+    await onBatch(batch);
+  }
+}
+
+async function* iterateObjectStore(
+  objectStore: IDBObjectStore
+): AsyncGenerator<any, void, void> {
+  const request = objectStore.openCursor();
+  let resolveNext: ((value: IDBCursorWithValue | null) => void) | null = null;
+  let rejectNext: ((reason?: any) => void) | null = null;
+  let finished = false;
+
+  request.onerror = () => {
+    if (finished) return;
+    finished = true;
+    if (rejectNext) {
+      rejectNext(request.error ?? new Error("Cursor iteration failed"));
+    }
+  };
+
+  request.onsuccess = () => {
+    if (finished) return;
+    if (resolveNext) {
+      const cursor = request.result ?? null;
+      const resolve = resolveNext;
+      resolveNext = null;
+      rejectNext = null;
+      resolve(cursor);
+    }
+  };
+
+  try {
+    while (true) {
+      const cursor = await new Promise<IDBCursorWithValue | null>((resolve, reject) => {
+        resolveNext = resolve;
+        rejectNext = reject;
+      });
+
+      if (!cursor) {
+        finished = true;
+        break;
+      }
+
+      yield cursor.value;
+      cursor.continue();
+    }
+  } finally {
+    finished = true;
   }
 }
 
 async function indexWithSearchfn(
-  records: any[],
+  objectStore: IDBObjectStore,
   table: { name: string; searchIndices: string[] },
   userId: string,
   dbVersion: number,
@@ -258,7 +315,7 @@ async function indexWithSearchfn(
 
   const searchEngine = new SearchEngine({
     name: indexDbName,
-    fields: table.searchIndices, // Use actual field names
+    fields: table.searchIndices,
     pipeline: {
       enableStemming: true,
       language: "en"
@@ -269,48 +326,37 @@ async function indexWithSearchfn(
     }
   });
 
-  // Clear existing index to avoid duplicates
   await searchEngine.clear();
 
-  logToMain(
-    `Starting bulk indexing for table ${table.name}: ${records.length} records`
-  );
+  logToMain(`Starting streaming indexing for table ${table.name}`);
 
-  // Optimized approach: Larger batches with concurrent processing
-  // searchfn's persistPostings() only saves dirty postings, so this is efficient
-  const batchSize = 1000; // Process 1000 records at a time
+  const batchSize = 1000;
+  const initialIndexed = currentProgress.indexedRecords;
   let processedCount = 0;
 
-  for (let i = 0; i < records.length; i += batchSize) {
-    const batch = records.slice(i, Math.min(i + batchSize, records.length));
+  await streamObjectStore(objectStore, batchSize, async (batch) => {
+    const addPromises: Promise<unknown>[] = [];
 
-    // Build all promises for this batch using flatMap
-    const indexPromises = batch.flatMap((record) => {
+    for (const record of batch) {
       const fields = extractSearchFields(record, table.searchIndices);
-      if (!record.id || !fields) return [];
+      if (!record?.id || !fields) continue;
+      addPromises.push(Promise.resolve(searchEngine.add({ id: record.id, fields })));
+    }
 
-      return searchEngine.add({
-        id: record.id,
-        fields
-      });
-    });
+    const results = await Promise.allSettled(addPromises);
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    processedCount += succeeded;
 
-    // Process entire batch concurrently
-    await Promise.all(indexPromises);
-
-    processedCount += batch.length;
-    currentProgress.indexedRecords = processedCount;
+    currentProgress.indexedRecords = initialIndexed + processedCount;
     currentProgress.progress =
       currentProgress.totalRecords > 0
-        ? Math.floor((processedCount / currentProgress.totalRecords) * 100)
+        ? Math.floor((currentProgress.indexedRecords / currentProgress.totalRecords) * 100)
         : 100;
 
-    // Broadcast progress every batch (already efficient with large batches)
     broadcastProgress(port);
 
-    // Brief yield to prevent blocking
     await new Promise((resolve) => setTimeout(resolve, 0));
-  }
+  });
 
   logToMain(
     `searchfn indexing completed for table ${table.name}: ${processedCount} records indexed`
@@ -318,34 +364,34 @@ async function indexWithSearchfn(
 }
 
 async function indexWithCustomLogic(
-  records: any[],
+  objectStore: IDBObjectStore,
   table: { name: string; searchIndices: string[] },
   userId: string,
   dbVersion: number,
   port: MessagePort
 ) {
-  // Build search index in memory
-  const searchIndex: Map<string, Set<string>> = new Map(); // term -> set of record IDs
-  const recordTexts: Map<string, string> = new Map(); // record ID -> extracted text
+  const searchIndex: Map<string, Set<string>> = new Map();
+  const recordTexts: Map<string, string> = new Map();
 
   const batchSize = 100;
-  for (let i = 0; i < records.length; i += batchSize) {
-    const batch = records.slice(i, Math.min(i + batchSize, records.length));
+  const initialIndexed = currentProgress.indexedRecords;
+  let processedCount = 0;
+  let batchCounter = 0;
+
+  await streamObjectStore(objectStore, batchSize, async (batch) => {
+    batchCounter += 1;
 
     for (const record of batch) {
       const text = extractFlatText(record, table.searchIndices);
       if (record.id && text) {
-        // Store the text for this record
         recordTexts.set(record.id, text);
 
-        // Simple tokenization - split by whitespace and punctuation
         const tokens = text
           .toLowerCase()
           .split(/[\s\-\_\,\.\;\:\!\?\(\)\[\]\{\}\/\\]+/);
 
         for (const token of tokens) {
           if (token.length > 1) {
-            // Skip single characters
             if (!searchIndex.has(token)) {
               searchIndex.set(token, new Set());
             }
@@ -355,21 +401,20 @@ async function indexWithCustomLogic(
       }
     }
 
-    currentProgress.indexedRecords += batch.length;
+    processedCount += batch.length;
+    currentProgress.indexedRecords = initialIndexed + processedCount;
     currentProgress.progress =
       currentProgress.totalRecords > 0
-        ? Math.floor(
-            (currentProgress.indexedRecords / currentProgress.totalRecords) *
-              100
-          )
+        ? Math.floor((currentProgress.indexedRecords / currentProgress.totalRecords) * 100)
         : 100;
 
-    if (i % (batchSize * 5) === 0) {
+    if (batchCounter % 5 === 0) {
       broadcastProgress(port);
     }
-  }
+  });
 
-  // Store the index in IndexedDB for later retrieval
+  broadcastProgress(port);
+
   await storeCustomSearchIndex(
     table.name,
     searchIndex,
@@ -449,43 +494,6 @@ async function storeCustomSearchIndex(
   });
 }
 
-function cleanText(text: string): string {
-  return text
-    .replace(/\(resource=\w+:[a-zA-Z0-9_-]+\)/g, "")
-    .replace(/\b\w+:[a-zA-Z0-9_-]+\b/g, "")
-    .replace(/https?:\/\/[^\s)]+/g, "")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/^#{1,6}\s+/gm, "")
-    .replace(/^===+$/gm, "")
-    .replace(/[​\u200B-\u200D\uFEFF]/g, "")
-    .trim();
-}
-
-function extractSearchFields(
-  record: any,
-  searchIndices: string[]
-): Record<string, string> | undefined {
-  try {
-    const fields: Record<string, string> = {};
-    let hasContent = false;
-
-    for (const fieldName of searchIndices) {
-      const value = record[fieldName];
-      if (value != null && value !== "") {
-        const cleanedValue = cleanText(String(value));
-        if (cleanedValue && cleanedValue.length > 0) {
-          fields[fieldName] = cleanedValue;
-          hasContent = true;
-        }
-      }
-    }
-
-    return hasContent ? fields : undefined;
-  } catch (e) {
-    console.error("[Worker] Error extracting search fields:", e);
-    return undefined;
-  }
-}
 
 // Keep for backward compatibility with custom indexing
 function extractFlatText(
