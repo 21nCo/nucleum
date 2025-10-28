@@ -1,13 +1,6 @@
-// Import FlexSearch from local package
-import { Index as FlexSearchIndex } from "flexsearch";
+import { SearchEngine } from "searchfn";
+import { extractSearchFields } from "../../utils/textUtils";
 
-const FlexSearch = {
-  Index: FlexSearchIndex
-};
-
-const flexSearchAvailable = true;
-
-console.log("[Worker] FlexSearch imported from local package");
 
 interface IndexingTask {
   userId: string;
@@ -48,9 +41,18 @@ const ports: MessagePort[] = [];
 const workerLogs: string[] = [];
 const isForwardLogs = false;
 function logToMain(message: string, data?: any) {
-  const logEntry = `[${new Date().toISOString()}] ${message}${data ? ": " + JSON.stringify(data) : ""}`;
+  let dataStr = "";
+  if (data !== undefined) {
+    try {
+      dataStr = ": " + JSON.stringify(data);
+    } catch {
+      dataStr = ": <unserializable>";
+    }
+  }
+  const logEntry = `[${new Date().toISOString()}] ${message}${dataStr}`;
   console.log(logEntry);
   workerLogs.push(logEntry);
+  if (workerLogs.length > 1000) workerLogs.shift();
 
   // Broadcast log to all connected ports
   if (isForwardLogs) {
@@ -112,7 +114,10 @@ async function startIndexing(task: IndexingTask, port: MessagePort) {
   let db: IDBDatabase | null = null;
 
   try {
-    console.log("[Worker] Starting indexing with task:", task);
+    logToMain("[Worker] Starting indexing", {
+      dbVersion: task.dbVersion,
+      tableCount: task.tables?.length
+    });
 
     const dbName = `${task.userId}-${task.dbVersion}`;
     console.log("[Worker] Opening IndexedDB database:", dbName);
@@ -154,11 +159,9 @@ async function startIndexing(task: IndexingTask, port: MessagePort) {
     currentProgress.totalRecords = totalRecordsToIndex;
     broadcastProgress(port);
 
-    // Use FlexSearch if requested (it's already loaded)
-    const useFlexSearch =
-      task.indexMethod === "flexsearch" && flexSearchAvailable;
+    const useSearchfn = (task.indexMethod ?? "searchfn") !== "custom";
     logToMain("Using indexing method", {
-      method: useFlexSearch ? "flexsearch" : "custom"
+      method: useSearchfn ? "searchfn" : "custom"
     });
 
     // Process each table
@@ -169,7 +172,7 @@ async function startIndexing(task: IndexingTask, port: MessagePort) {
         table,
         task.userId,
         task.dbVersion,
-        useFlexSearch,
+        useSearchfn,
         port
       );
     }
@@ -200,7 +203,7 @@ async function startIndexing(task: IndexingTask, port: MessagePort) {
 
     if (db) {
       try {
-        await db.close();
+        db.close();
       } catch (closeError) {
         console.error("[Worker] Error closing database:", closeError);
       }
@@ -220,37 +223,89 @@ async function indexTable(
   table: { name: string; searchIndices: string[] },
   userId: string,
   dbVersion: number,
-  useFlexSearch: boolean,
+  useSearchfn: boolean,
   port: MessagePort
 ) {
-  // Get all records from the table using native IndexedDB
   const transaction = db.transaction([table.name], "readonly");
   const objectStore = transaction.objectStore(table.name);
-  const getAllRequest = objectStore.getAll();
 
-  const records = await new Promise<any[]>((resolve, reject) => {
-    getAllRequest.onsuccess = () => {
-      resolve(getAllRequest.result || []);
-    };
-    getAllRequest.onerror = () => {
-      console.error("[Worker] Error getting records:", getAllRequest.error);
-      resolve([]);
-    };
-  });
-
-  console.log(
-    `[Worker] Processing ${records.length} records from table ${table.name} using ${useFlexSearch ? "FlexSearch" : "custom"} indexing`
-  );
-
-  if (useFlexSearch) {
-    await indexWithFlexSearch(records, table, userId, dbVersion, port);
+  if (useSearchfn) {
+    await indexWithSearchfn(objectStore, table, userId, dbVersion, port);
   } else {
-    await indexWithCustomLogic(records, table, userId, dbVersion, port);
+    await indexWithCustomLogic(objectStore, table, userId, dbVersion, port);
   }
 }
 
-async function indexWithFlexSearch(
-  records: any[],
+async function streamObjectStore(
+  objectStore: IDBObjectStore,
+  batchSize: number,
+  onBatch: (records: any[]) => Promise<void>
+) {
+  let batch: any[] = [];
+
+  for await (const record of iterateObjectStore(objectStore)) {
+    batch.push(record);
+    if (batch.length >= batchSize) {
+      const currentBatch = batch;
+      batch = [];
+      await onBatch(currentBatch);
+    }
+  }
+
+  if (batch.length > 0) {
+    await onBatch(batch);
+  }
+}
+
+async function* iterateObjectStore(
+  objectStore: IDBObjectStore
+): AsyncGenerator<any, void, void> {
+  const request = objectStore.openCursor();
+  let resolveNext: ((value: IDBCursorWithValue | null) => void) | null = null;
+  let rejectNext: ((reason?: any) => void) | null = null;
+  let finished = false;
+
+  request.onerror = () => {
+    if (finished) return;
+    finished = true;
+    if (rejectNext) {
+      rejectNext(request.error ?? new Error("Cursor iteration failed"));
+    }
+  };
+
+  request.onsuccess = () => {
+    if (finished) return;
+    if (resolveNext) {
+      const cursor = request.result ?? null;
+      const resolve = resolveNext;
+      resolveNext = null;
+      rejectNext = null;
+      resolve(cursor);
+    }
+  };
+
+  try {
+    while (true) {
+      const cursor = await new Promise<IDBCursorWithValue | null>((resolve, reject) => {
+        resolveNext = resolve;
+        rejectNext = reject;
+      });
+
+      if (!cursor) {
+        finished = true;
+        break;
+      }
+
+      yield cursor.value;
+      cursor.continue();
+    }
+  } finally {
+    finished = true;
+  }
+}
+
+async function indexWithSearchfn(
+  objectStore: IDBObjectStore,
   table: { name: string; searchIndices: string[] },
   userId: string,
   dbVersion: number,
@@ -258,84 +313,85 @@ async function indexWithFlexSearch(
 ) {
   const indexDbName = `${userId}-${dbVersion}-${table.name}-search`;
 
-  const searchIndex = new FlexSearch.Index({
-    tokenize: "full",
-    cache: true
+  const searchEngine = new SearchEngine({
+    name: indexDbName,
+    fields: table.searchIndices,
+    pipeline: {
+      enableStemming: true,
+      language: "en"
+    },
+    cache: {
+      terms: 2048,
+      vectors: 512
+    }
   });
 
-  const contextualIndex = new FlexSearch.Index({
-    tokenize: "strict",
-    context: true,
-    cache: true
-  });
+  await searchEngine.clear();
 
-  // Process records in batches
-  const batchSize = 100;
-  for (let i = 0; i < records.length; i += batchSize) {
-    const batch = records.slice(i, Math.min(i + batchSize, records.length));
+  logToMain(`Starting streaming indexing for table ${table.name}`);
+
+  const batchSize = 1000;
+  const initialIndexed = currentProgress.indexedRecords;
+  let processedCount = 0;
+
+  await streamObjectStore(objectStore, batchSize, async (batch) => {
+    const addPromises: Promise<unknown>[] = [];
 
     for (const record of batch) {
-      const text = extractFlatText(record, table.searchIndices);
-      if (record.id && text) {
-        searchIndex.add(record.id, text);
-        contextualIndex.add(record.id, text);
-      }
+      const fields = extractSearchFields(record, table.searchIndices);
+      if (!record?.id || !fields) continue;
+      addPromises.push(Promise.resolve(searchEngine.add({ id: record.id, fields })));
     }
 
-    currentProgress.indexedRecords += batch.length;
+    const results = await Promise.allSettled(addPromises);
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    processedCount += succeeded;
+
+    currentProgress.indexedRecords = initialIndexed + processedCount;
     currentProgress.progress =
       currentProgress.totalRecords > 0
-        ? Math.floor(
-            (currentProgress.indexedRecords / currentProgress.totalRecords) *
-              100
-          )
+        ? Math.floor((currentProgress.indexedRecords / currentProgress.totalRecords) * 100)
         : 100;
 
-    if (i % (batchSize * 5) === 0) {
-      broadcastProgress(port);
-    }
-  }
+    broadcastProgress(port);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
 
   logToMain(
-    `FlexSearch indexing completed for table ${table.name}, exporting to IndexedDB...`
+    `searchfn indexing completed for table ${table.name}: ${processedCount} records indexed`
   );
-
-  // Export indices to IndexedDB using FlexSearch's export method
-  await exportIndexToIndexedDB(searchIndex, indexDbName + "-flat");
-  await exportIndexToIndexedDB(contextualIndex, indexDbName + "-contextual");
-
-  logToMain(`Exported FlexSearch indices to IndexedDB for table ${table.name}`);
 }
 
 async function indexWithCustomLogic(
-  records: any[],
+  objectStore: IDBObjectStore,
   table: { name: string; searchIndices: string[] },
   userId: string,
   dbVersion: number,
   port: MessagePort
 ) {
-  // Build search index in memory
-  const searchIndex: Map<string, Set<string>> = new Map(); // term -> set of record IDs
-  const recordTexts: Map<string, string> = new Map(); // record ID -> extracted text
+  const searchIndex: Map<string, Set<string>> = new Map();
+  const recordTexts: Map<string, string> = new Map();
 
   const batchSize = 100;
-  for (let i = 0; i < records.length; i += batchSize) {
-    const batch = records.slice(i, Math.min(i + batchSize, records.length));
+  const initialIndexed = currentProgress.indexedRecords;
+  let processedCount = 0;
+  let batchCounter = 0;
+
+  await streamObjectStore(objectStore, batchSize, async (batch) => {
+    batchCounter += 1;
 
     for (const record of batch) {
       const text = extractFlatText(record, table.searchIndices);
       if (record.id && text) {
-        // Store the text for this record
         recordTexts.set(record.id, text);
 
-        // Simple tokenization - split by whitespace and punctuation
         const tokens = text
           .toLowerCase()
           .split(/[\s\-\_\,\.\;\:\!\?\(\)\[\]\{\}\/\\]+/);
 
         for (const token of tokens) {
           if (token.length > 1) {
-            // Skip single characters
             if (!searchIndex.has(token)) {
               searchIndex.set(token, new Set());
             }
@@ -345,21 +401,20 @@ async function indexWithCustomLogic(
       }
     }
 
-    currentProgress.indexedRecords += batch.length;
+    processedCount += batch.length;
+    currentProgress.indexedRecords = initialIndexed + processedCount;
     currentProgress.progress =
       currentProgress.totalRecords > 0
-        ? Math.floor(
-            (currentProgress.indexedRecords / currentProgress.totalRecords) *
-              100
-          )
+        ? Math.floor((currentProgress.indexedRecords / currentProgress.totalRecords) * 100)
         : 100;
 
-    if (i % (batchSize * 5) === 0) {
+    if (batchCounter % 5 === 0) {
       broadcastProgress(port);
     }
-  }
+  });
 
-  // Store the index in IndexedDB for later retrieval
+  broadcastProgress(port);
+
   await storeCustomSearchIndex(
     table.name,
     searchIndex,
@@ -439,134 +494,15 @@ async function storeCustomSearchIndex(
   });
 }
 
+
+// Keep for backward compatibility with custom indexing
 function extractFlatText(
   record: any,
   searchIndices: string[]
 ): string | undefined {
-  try {
-    const text = Object.entries(record)
-      .filter(([key]) => searchIndices.includes(key))
-      .map(([key, value]) => String(value))
-      .join(" ")
-      .trim();
-
-    let cleanedText = text
-      .replace(/\(resource=\w+:[a-zA-Z0-9_-]+\)/g, "")
-      .replace(/\b\w+:[a-zA-Z0-9_-]+\b/g, "")
-      .replace(/https?:\/\/[^\s)]+/g, "")
-      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-      .replace(/^#{1,6}\s+/gm, "")
-      .replace(/^===+$/gm, "")
-      .replace(/[​\u200B-\u200D\uFEFF]/g, "")
-      .trim();
-
-    return cleanedText && cleanedText.length > 0 ? cleanedText : undefined;
-  } catch (e) {
-    console.error("Error extracting text for indexing:", e);
-    return "";
-  }
-}
-
-async function exportIndexToIndexedDB(
-  index: any,
-  storeName: string
-): Promise<void> {
-  return new Promise<void>(async (resolve, reject) => {
-    try {
-      // First, get the current version of the database
-      let currentVersion = 1;
-      let storeExists = false;
-      const checkRequest = indexedDB.open("flexsearch");
-
-      await new Promise<void>((res, rej) => {
-        checkRequest.onsuccess = () => {
-          const db = checkRequest.result;
-          currentVersion = db.version;
-
-          // Check if store exists
-          if (db.objectStoreNames.contains(storeName)) {
-            storeExists = true;
-            // Store exists, we can use this connection
-            performExport(db, storeName, index, resolve, reject);
-            return; // Don't call res() - performExport will handle resolve/reject
-          }
-
-          db.close();
-          res(); // Store doesn't exist, need to create it
-        };
-
-        checkRequest.onerror = () => {
-          // Database doesn't exist yet, will be created
-          res();
-        };
-
-        checkRequest.onupgradeneeded = (event) => {
-          const db = (event.target as IDBOpenDBRequest).result;
-          if (!db.objectStoreNames.contains(storeName)) {
-            db.createObjectStore(storeName);
-          }
-        };
-      });
-
-      // If store already exists, performExport was called and will handle resolve/reject
-      if (storeExists) {
-        return;
-      }
-
-      // If we got here, we need to create the object store
-      const upgradeRequest = indexedDB.open("flexsearch", currentVersion + 1);
-
-      upgradeRequest.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains(storeName)) {
-          db.createObjectStore(storeName);
-        }
-      };
-
-      upgradeRequest.onsuccess = async () => {
-        await performExport(
-          upgradeRequest.result,
-          storeName,
-          index,
-          resolve,
-          reject
-        );
-      };
-
-      upgradeRequest.onerror = () => {
-        reject(upgradeRequest.error);
-      };
-    } catch (error) {
-      reject(error);
-    }
-  });
-}
-
-async function performExport(
-  db: IDBDatabase,
-  storeName: string,
-  index: any,
-  resolve: () => void,
-  reject: (error: any) => void
-): Promise<void> {
-  try {
-    await index.export(async (key: string, data: string) => {
-      const transaction = db.transaction([storeName], "readwrite");
-      const store = transaction.objectStore(storeName);
-
-      await new Promise<void>((res, rej) => {
-        const putReq = store.put(data, key);
-        putReq.onsuccess = () => res();
-        putReq.onerror = () => rej(putReq.error);
-      });
-    });
-
-    db.close();
-    resolve();
-  } catch (error) {
-    db.close();
-    reject(error);
-  }
+  const fields = extractSearchFields(record, searchIndices);
+  if (!fields) return undefined;
+  return Object.values(fields).join(" ").trim();
 }
 
 function broadcastProgress(port: MessagePort) {
