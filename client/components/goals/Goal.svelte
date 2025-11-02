@@ -10,7 +10,7 @@
   } from "@21n/components/flux/resourceStores/resource.type";
 
   import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
+  import { BarStyle, PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import { resolveResourceIcon } from "@21n/components/flux/resourceStores/resource.utils";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import GoalInfoPanel from "@21n/components/goals/info/GoalInfoPanel.svelte";
@@ -36,6 +36,8 @@
   import { Size } from "@21n/types/size.enum";
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
+  import BottomFloat from "@21n/elements/BottomFloat.svelte";
+  import BoxSwitcher from "@21n/elements/switcher/BoxSwitcher.svelte";
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
@@ -43,7 +45,7 @@
   let containerWidth = 0;
   let goal: IActiveGoalStore = ActiveGoalStore.resolve(id);
   let isReady = false;
-  const dev_isEnableLinks = false;
+  const dev_isEnableLinks = true;
   $: isActiveResource =
     !$goal?.isArchived && !$goal?.trashInformation && !$goal?.isParentInactive;
   $: isConstrainedWidth =
@@ -105,25 +107,25 @@
     isConstrainedWidth: boolean
   ) {
     let items = [
-      {
-        label: "Sub goals",
-        value: "subgoals",
-        icon: resolveResourceIcon(Resource.goal),
-        badge: goal?.children?.length
-      },
-      {
-        label: "Tasks",
-        value: "tasks",
-        icon: resolveResourceIcon(Resource.task),
-        badge: goal?.taskCount
-      },
+      // {
+      //   label: "Sub goals",
+      //   value: "subgoals",
+      //   icon: resolveResourceIcon(Resource.goal),
+      //   badge: goal?.children?.length
+      // },
+      // {
+      //   label: "Tasks",
+      //   value: "tasks",
+      //   // icon: resolveResourceIcon(Resource.task),
+      //   badge: goal?.taskCount
+      // },
       {
         label: "Analytics",
         value: "analytics",
-        icon: "chart-line-up"
+        icon: "chart"
       },
       {
-        label: "History",
+        label: "Activity",
         value: "history",
         icon: "history"
       }
@@ -217,7 +219,7 @@
     >
       {#if !isConstrainedWidth}
         <aside
-          class="flex flex-col gap-4 bg-bgs2 border-r border-brs2 p-4 w-96 2k:w-[30rem] overflow-auto"
+          class="flex flex-col gap-4 bg-bgs2 border-r border-brs2 p--4 w-96 2k:w-[30rem]"
         >
           <GoalInfoPanel
             {goal}
@@ -226,17 +228,19 @@
           />
         </aside>
       {/if}
-      <main class={cn("flex flex-col gap-4 flex-1 overflow-auto", {})}>
+      <main
+        class={cn("relative flex flex-col flex-1 overflow-auto bg--bgs2", {})}
+      >
         <div
           class={cn(
-            "relative flex flex-col w-full overflow-auto gap-3 bg-bgs2 otop:pt-12 shrink-0 border-b border-brs3"
+            "relative flex flex-col w-full overflow-auto gap-3 bg--bgs2 otop:pt-12 shrink-0 border-b border-brs3"
           )}
         >
           {#if isConstrainedWidth}
             <GoalTitleRow {goal} isConstrainedWidth={true} bind:status />
           {/if}
           <div class="relative">
-            <PanelSwitcher
+            <!-- <PanelSwitcher
               items={tabs}
               style={PanelSwitcherStyle.BAR}
               value={selectedPanel}
@@ -259,7 +263,7 @@
                   />
                 {/if}
               </div>
-            </PanelSwitcher>
+            </PanelSwitcher> -->
             {#if isConstrainedWidth}
               <div
                 class="w-10 bg-gradient-to-r from-bgs2/20 to-bgs2 absolute right-0 top-0 h-full"
@@ -269,31 +273,72 @@
         </div>
         <div
           class={cn("flex-1 overflow-auto", {
-            "px-4 pb-4": !isConstrainedWidth
+            "px-4": !isConstrainedWidth,
+            "pt-4": isConstrainedWidth
           })}
         >
-          {#if selectedPanel === "info"}
-            <GoalInfoPanel
-              {goal}
-              {isConstrainedWidth}
-              bind:status
-              on:showAllProperties={showAllProperties}
-            />
-          {:else if selectedPanel === "subgoals"}
-            <SubGoalsPanel {goal} {isActiveResource} />
-          {:else if selectedPanel === "history"}
-            <GoalHistory {goal} />
-          {:else if selectedPanel === "tasks"}
-            <GoalTasks id={$goal.id} {isActiveResource} />
-          {:else if selectedPanel === "analytics"}
-            <GoalAnalytics id={$goal.id} />
-          {:else if selectedPanel === "properties"}
-            <div class="flex w-full justify-center">
-              <div class="w-96">
-                <PropertiesPane item={goal} resource={Resource.goal} />
-              </div>
+          <div class="flex gap-2 h-full">
+            <div
+              class="flex flex-col gap-4 border- border-brs2 rounded--md w--full h-full p--4 bg--bgs1"
+            >
+              <GoalTasks id={$goal.id} {isActiveResource} />
             </div>
-          {/if}
+            <div
+              class="relative flex flex-col bg-bgs1 border-l border-brs2 min-w-96 w-96 flex-grow p-4"
+            >
+              {#if selectedPanel === "history"}
+                <GoalHistory {goal} />
+              {:else if selectedPanel === "analytics"}
+                <GoalAnalytics id={$goal.id} />
+              {:else if selectedPanel === "properties"}
+                <div class="flex w-full justify-center">
+                  <div class="w-96">
+                    <PropertiesPane item={goal} resource={Resource.goal} />
+                  </div>
+                </div>
+              {/if}
+              <BottomFloat class="mb--8 h-12 w-full inset-x-0 mx-auto ">
+                <div
+                  class="bg-bgs2 border-t border-x border-brs3 shadow-md rounded-full overflow-hidden"
+                >
+                  <BoxSwitcher
+                    options={tabs}
+                    isExpandOnActiveForIcon={true}
+                    parentBgIndex={2}
+                    selected={selectedPanel}
+                    on:select={(e) => {
+                      setTab(e.detail);
+                    }}
+                  />
+                  <!-- <PanelSwitcher
+                    items={tabs}
+                    style={PanelSwitcherStyle.BAR}
+                    barStyle={BarStyle.DOT}
+                    value={selectedPanel}
+                    isExpandToFullWidth={true}
+                    parentBgIndex={2}
+                    isBgBar={true}
+                    size={Size.sm}
+                    isRearrangeableByDefault={true}
+                    on:rearrange={rearrangePanels}
+                    on:switch={(e) => {
+                      setTab(e.detail);
+                    }}
+                  >
+                    <div slot="right">
+                      {#if $goal.accessMode === ResourceAccessMode.FULL && !isConstrainedWidth}
+                        <ResourceInlineCloseButton
+                          accessMode={$goal.accessMode}
+                          parentBgIndex={2}
+                          id={$goal.id}
+                        />
+                      {/if}
+                    </div>
+                  </PanelSwitcher> -->
+                </div>
+              </BottomFloat>
+            </div>
+          </div>
         </div>
       </main>
     </div>

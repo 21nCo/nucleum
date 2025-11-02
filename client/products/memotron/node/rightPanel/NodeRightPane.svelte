@@ -75,7 +75,7 @@
       $view.display === Display.TK
   })}
 >
-  <div
+  <!-- <div
     class={cn("flex flex-col justify-between items-center", {
       " border-r border-r-brs2": isValidPane
     })}
@@ -93,7 +93,7 @@
         : VerticalSwitcherStyle.DOT}
       on:switch={onRightPanelSwitch}
     />
-  </div>
+  </div> -->
   {#if isValidPane}
     <NodeRightPanelContent {node} {mdId} {pane} on:close />
   {/if}

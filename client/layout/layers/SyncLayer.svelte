@@ -70,7 +70,7 @@
     }, MAX_SYNC_DURATION);
 
     try {
-      await flux?.sync();
+      // await flux?.sync();
     } catch (error) {
       console.error("Sync failed:", error);
     } finally {

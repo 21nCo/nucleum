@@ -13,7 +13,13 @@
   export let pane: NodeRightPaneType | undefined = undefined;
   export let renderingDetails: any = undefined;
   export let isConstrainedWidth: boolean = false;
-  const typesWithMinimalRightPanel = [NodeType.PDF, NodeType.YOUTUBE_VIDEO];
+  const typesWithMinimalRightPanel = [
+    NodeType.PDF,
+    NodeType.YOUTUBE_VIDEO,
+    NodeType.VIDEO,
+    NodeType.IMAGE,
+    NodeType.AUDIO
+  ];
   $: isExpanded =
     ((!pane || pane === NodeRightPaneType.DEFAULT) &&
       !typesWithMinimalRightPanel.includes($node.contentType)) ||
@@ -25,7 +31,7 @@
     "flex flex-col h-full gap-4 justify-center items-center mo:w-full cw:min-w-full min-w-96 w--80 2k:w--96",
     {
       "w-3/10": !isExpanded,
-      "w-1/2": isExpanded,
+      "w-2/3": isExpanded,
       "w-full px-3": isConstrainedWidth
     }
   )}

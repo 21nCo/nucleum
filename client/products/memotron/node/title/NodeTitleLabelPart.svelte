@@ -84,7 +84,7 @@
               {_label?.label}
             {/if}
           </span>
-          <button
+          <!-- <button
             class={cn("truncate flex-1 min-w-0 text-left", {
               "underline-dotted cursor-pointer hover:underline-dotted-primary":
                 isNodePageContext
@@ -101,7 +101,7 @@
             }}
           >
             {_label?.parent?.label}
-          </button>
+          </button> -->
         </span>
       {/if}
     {:else}

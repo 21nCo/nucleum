@@ -11,10 +11,7 @@
   import { appStore } from "@21n/stores/app.store";
   import { ColorStrength } from "@21n/types/appearance.type";
   import { Orientation, Placement } from "@21n/types/direction.enum";
-  import {
-    BarStyle,
-    PanelSwitcherStyle
-  } from "@21n/types/switcher.enum";
+  import { BarStyle, PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import { createEventDispatcher } from "svelte";
   import {
     nodeStore,
@@ -26,7 +23,10 @@
   import { Size } from "@21n/types/size.enum";
   import { ButtonStyle } from "@21n/types/button.type";
   import ToggleGroup from "@21n/elements/toggle/ToggleGroup.svelte";
-  import { NodeRightPaneType, NodeView } from "@21n/products/memotron/node/node.type";
+  import {
+    NodeRightPaneType,
+    NodeView
+  } from "@21n/products/memotron/node/node.type";
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
   import { InputStyle } from "@21n/types/input.type";
   import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
@@ -34,7 +34,7 @@
   export let node: IActiveNodeStore;
   export let nodeView: NodeView = NodeView.CONTENT;
   export let isWidened: boolean = false;
-  export let isConstrainedWidth: boolean = false;
+  export let isConstrainedWidth: boolean = true;
   let bgIndex = 2;
   let toggleGroupRef: ToggleGroup;
   let selectedToggleAction: string | undefined = undefined;
@@ -60,16 +60,16 @@
 
 <div
   class={cn(
-    "flex justify-between items-center border-t border-x border-brs3 px-4",
+    "flex justify-between items-center border-t border-x border-brs3 px-4 mb-4",
     bg(bgIndex - 1),
     {
-      "h-14 w-9/10 rounded-full shadow-md": isConstrainedWidth,
+      "h-14 w-[40rem] rounded-full shadow-md": isConstrainedWidth,
       "tp:w-4/5 lp:w-[40rem] dp:w-[48rem] h-16 rounded-t-md":
         !isConstrainedWidth
     }
   )}
 >
-  {#if isConstrainedWidth}
+  {#if !isConstrainedWidth}
     {#if $node.accessMode === ResourceAccessMode.SPLIT || $node.accessMode === ResourceAccessMode.FSPLIT}
       <div class="flex w-24">
         <DropDown

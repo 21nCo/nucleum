@@ -58,7 +58,7 @@
 
 <!-- Using transition here caused modal freeze issue -->
 <div
-  class={cn("flex flex-col w-full justify-center items-center", {
+  class={cn("flex flex-col w-full justify-center items-center bg-bgs2", {
     "mb-6 absolute z-10 bottom-0":
       $node.accessMode === ResourceAccessMode.SLIDESHOW,
     relative: $node.accessMode !== ResourceAccessMode.SLIDESHOW
@@ -90,7 +90,7 @@
     {/if}
     <div
       class={cn(
-        "flex flex-col gap-2 w-full justify-center items-center bg-bgs1 mo:p-2 p-3 cw:border-b cw:border-b-brs2 cw:border-t-transparent cw:rounded-none cw:bg-bgs2 cw:otop:pt-12 border-t border-t-brs2",
+        "flex flex-col gap-2 w-full justify-center items-center bg-bgs2 mo:p-2 p-3 cw:border-b cw:border-b-brs2 cw:border-t-transparent cw:rounded-none cw:bg-bgs2 cw:otop:pt-12 border-b- border-brs2",
         {
           "rounded-b-md": $node.accessMode === ResourceAccessMode.POP,
           "w-full": $node.accessMode !== ResourceAccessMode.SLIDESHOW,
@@ -120,11 +120,11 @@
               }}
             />
           </BackButton>
-          {#if !isConstrainedWidth && !$node.isInEditMode}
+          <!-- {#if !isConstrainedWidth && !$node.isInEditMode}
             <div class="text-b3 text-fgs3 whitespace-nowrap default-typeface">
               {formatDatetime($userPreferences, $node.createdAt)}
             </div>
-          {/if}
+          {/if} -->
         </span>
         <span
           class={cn("flex", {
@@ -151,6 +151,7 @@
                 accessMode: $node.accessMode,
                 isConstrainedWidth
               })}
+              parentBgIndex={2}
               class="gap-5"
               on:change={(e) => {
                 onPanelAction(e.detail);
@@ -182,7 +183,7 @@
               }
             }}
           />
-          {#if !isConstrainedWidth}
+          <!-- {#if !isConstrainedWidth}
             <div class="h-8">
               <Divider
                 orientation={Orientation.Vertical}
@@ -199,7 +200,7 @@
                 appStore.toggleFullScreen($node.accessMode, $node.id);
               }}
             />
-          {/if}
+          {/if} -->
           <ResourceInlineCloseButton
             accessMode={$node.accessMode}
             id={$node.id}

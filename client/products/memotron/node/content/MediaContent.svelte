@@ -55,7 +55,7 @@
   }
 </script>
 
-<div class="flex w-full flex-grow cw:mb-8 tp:otop:pt-12">
+<div class="flex w-full h-full cw:mb-8 tp:otop:pt-12">
   {#if !(isConstrainedWidth && rightPane)}
     <main
       class={cn("relative flex justify-center min-w-0 flex-1", {
@@ -82,7 +82,7 @@
       />
     </main>
   {/if}
-  {#if rightPane || (webNodeTypeList.includes($node?.contentType) && !isConstrainedWidth)}
+  {#if rightPane !== NodeRightPaneType.NONE && !isConstrainedWidth}
     <MediaNodeRightPane
       {node}
       bind:pane={rightPane}

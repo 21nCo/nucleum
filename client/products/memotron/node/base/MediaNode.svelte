@@ -36,7 +36,7 @@
 
 {#if $node}
   <div
-    class="relative flex flex-col cw:flex-col-reverse cw:gap-8 w-full h-full"
+    class="relative flex flex-col flex-col-reverse cw:gap-8 w-full h-full"
     use:resizeListener={(e) => {
       containerWidth = e.width;
     }}
@@ -46,7 +46,7 @@
     {:else}
       <MediaContent {node} bind:rightPane={panelAction} {isConstrainedWidth} />
     {/if}
-    {#if $node.accessMode !== ResourceAccessMode.SLIDESHOW || isShowFloatingBar}
+    <!-- {#if $node.accessMode !== ResourceAccessMode.SLIDESHOW || isShowFloatingBar}
       <MediaNodeFloatingBar
         bind:isHovering={isHoveringOnFloatingBar}
         {node}
@@ -57,7 +57,7 @@
         }}
         bind:bottomAction={panelAction}
       />
-    {/if}
+    {/if} -->
     {#if ($node.accessMode === ResourceAccessMode.SPLIT || $node.accessMode === ResourceAccessMode.FSPLIT) && !panelAction}
       <FullScreenCloseButton accessMode={$node.accessMode} isFloat={true} />
     {/if}

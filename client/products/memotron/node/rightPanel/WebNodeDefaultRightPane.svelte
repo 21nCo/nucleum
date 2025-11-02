@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessMode, ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import Badge from "@21n/elements/text/Badge.svelte";
@@ -29,11 +29,15 @@
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import RightPaneOverviewMetricCard from "@21n/products/memotron/node/rightPanel/RightPaneOverviewMetricCard.svelte";
   import Icon from "@21n/elements/Icon.svelte";
-
+  import InfoCard from "@21n/products/memotron/node/metadata/InfoCard.svelte";
+  import { resolveNodeLabel } from "../node.utils";
+  import MediaNodeFloatingBar from "../floatingBar/MediaNodeFloatingBar.svelte";
+  import { NodeView } from "../node.type";
   export let node: IActiveNodeStore;
   export let pane: NodeRightPaneType | undefined = undefined;
   let links: { link: INodeLinkThumb; node: INode }[] = [];
   let _notes = $node.notes;
+  let nodeView: NodeView = NodeView.CONTENT;
   const notesInputId = generateSimpleRandomId();
   const contentContext = getContext<any>("content");
 
@@ -67,33 +71,51 @@
   function onLinkClick(e: CustomEvent) {
     appStore.resourceClickHandler(e.detail.event, e.detail.id);
   }
+  $: _label = resolveNodeLabel($node)
 </script>
 
 <div
   class="flex flex-col gap-4 justify-center items-start w-full h-full bg-bgs2 cw:p-2"
 >
-  <div class="pt-2 px-2 dp:px-3">
+  <!-- <div class="pt-2 px-2 dp:px-3">
     <Text content="Overview" style={TextStyle.PANEL_HEADING_SMALL} />
+  </div> -->
+  <MediaNodeFloatingBar
+  {node}
+  bind:nodeView
+  on:fullscreen={() => {
+    appStore.toggleFullScreen($node.accessMode, $node.id);
+  }}
+/>
+  <div class='w-full grid grid-cols-3 gap-3 px-2 dp:px-3'>
+    {#if _label && typeof _label === "object" && "parent" in _label}
+      <InfoCard label="Parent" value={_label.parent.label} parentBgIndex={0}
+      span="col-span-2"
+      on:click={(e) => {
+         appStore.resourceClickHandler(e, _label?.parent.id, {
+                replaceId: $node.id,
+                defaultTo: ResourceAccessMode.POP
+              });
+      }}
+      />
+    {/if}
+    <InfoCard label="Saved at" value={$node.createdAt} parentBgIndex={0}
+    on:click={() => (pane = NodeRightPaneType.METADATA)}
+    />
+    <!-- <InfoCard label="Genre" value={"Sci fi (3 items in library)"} parentBgIndex={0}
+    on:click={() => (pane = NodeRightPaneType.LINKS)}
+    /> -->
+    <InfoCard label="Links" value={$node.links?.length || 0} parentBgIndex={0}
+    on:click={() => (pane = NodeRightPaneType.LINKS)}
+    />
+    {#if canHaveTraces.includes($node.contentType)}
+    <InfoCard label="Bookmarks" value={$node.clips?.length || 0} parentBgIndex={0}
+    on:click={() => (pane = NodeRightPaneType.BOOKMARKS)}
+    />
+    
+    {/if}
   </div>
-
-  {#if canHaveTraces.includes($node.contentType)}
-    <div class="grid grid-cols-2 w-full h-10">
-      <RightPaneOverviewMetricCard
-        label="Links"
-        icon="link"
-        value={$node.links?.length || 0}
-        on:click={() => (pane = NodeRightPaneType.LINKS)}
-      />
-      <RightPaneOverviewMetricCard
-        label="Bookmarks"
-        icon="bookmark"
-        value={$node.clips?.length || 0}
-        on:click={() => (pane = NodeRightPaneType.BOOKMARKS)}
-      />
-    </div>
-  {/if}
-
-  {#if $node.clips?.length > 0}
+  <!-- {#if $node.clips?.length > 0}
     <div
       class="flex flex-col gap-4 items-start w-full h-1/3 min-h-0 px-2 dp:px-3"
     >
@@ -178,7 +200,7 @@
         {/await}
       </div>
     </div>
-  {/if}
+  {/if} -->
   <div
     class="flex flex-col gap-1 items-start w-full flex-1 min-h-0 max-h-1/2 border-t border-brs2 pt-1"
   >
@@ -192,12 +214,13 @@
         <Button
           icon="expand"
           size={Size.sm}
+          parentBgIndex={2}
           on:click={() => (pane = NodeRightPaneType.SIDENOTES)}
         />
       </span>
     </span>
     <button
-      class="flex w-full flex-1 bg-bgs2 bg-opacity-60 p-4 overflow-y-auto"
+      class="flex w-full flex-1 bg-bgs2 bg-opacity-60 px-4 pb-2 overflow-y-auto"
       use:focusById={notesInputId}
     >
       <InlineMarkdownTextInput

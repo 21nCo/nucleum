@@ -226,86 +226,15 @@ async function indexTable(
   useSearchfn: boolean,
   port: MessagePort
 ) {
-  const transaction = db.transaction([table.name], "readonly");
-  const objectStore = transaction.objectStore(table.name);
-
   if (useSearchfn) {
-    await indexWithSearchfn(objectStore, table, userId, dbVersion, port);
+    await indexWithSearchfn(db, table, userId, dbVersion, port);
   } else {
-    await indexWithCustomLogic(objectStore, table, userId, dbVersion, port);
-  }
-}
-
-async function streamObjectStore(
-  objectStore: IDBObjectStore,
-  batchSize: number,
-  onBatch: (records: any[]) => Promise<void>
-) {
-  let batch: any[] = [];
-
-  for await (const record of iterateObjectStore(objectStore)) {
-    batch.push(record);
-    if (batch.length >= batchSize) {
-      const currentBatch = batch;
-      batch = [];
-      await onBatch(currentBatch);
-    }
-  }
-
-  if (batch.length > 0) {
-    await onBatch(batch);
-  }
-}
-
-async function* iterateObjectStore(
-  objectStore: IDBObjectStore
-): AsyncGenerator<any, void, void> {
-  const request = objectStore.openCursor();
-  let resolveNext: ((value: IDBCursorWithValue | null) => void) | null = null;
-  let rejectNext: ((reason?: any) => void) | null = null;
-  let finished = false;
-
-  request.onerror = () => {
-    if (finished) return;
-    finished = true;
-    if (rejectNext) {
-      rejectNext(request.error ?? new Error("Cursor iteration failed"));
-    }
-  };
-
-  request.onsuccess = () => {
-    if (finished) return;
-    if (resolveNext) {
-      const cursor = request.result ?? null;
-      const resolve = resolveNext;
-      resolveNext = null;
-      rejectNext = null;
-      resolve(cursor);
-    }
-  };
-
-  try {
-    while (true) {
-      const cursor = await new Promise<IDBCursorWithValue | null>((resolve, reject) => {
-        resolveNext = resolve;
-        rejectNext = reject;
-      });
-
-      if (!cursor) {
-        finished = true;
-        break;
-      }
-
-      yield cursor.value;
-      cursor.continue();
-    }
-  } finally {
-    finished = true;
+    await indexWithCustomLogic(db, table, userId, dbVersion, port);
   }
 }
 
 async function indexWithSearchfn(
-  objectStore: IDBObjectStore,
+  db: IDBDatabase,
   table: { name: string; searchIndices: string[] },
   userId: string,
   dbVersion: number,
@@ -328,13 +257,16 @@ async function indexWithSearchfn(
 
   await searchEngine.clear();
 
-  logToMain(`Starting streaming indexing for table ${table.name}`);
+  const records = await loadAllRecords(db, table.name);
+
+  logToMain(`Starting indexing for table ${table.name} with ${records.length} records`);
 
   const batchSize = 1000;
   const initialIndexed = currentProgress.indexedRecords;
   let processedCount = 0;
 
-  await streamObjectStore(objectStore, batchSize, async (batch) => {
+  for (let i = 0; i < records.length; i += batchSize) {
+    const batch = records.slice(i, Math.min(i + batchSize, records.length));
     const addPromises: Promise<unknown>[] = [];
 
     for (const record of batch) {
@@ -356,7 +288,7 @@ async function indexWithSearchfn(
     broadcastProgress(port);
 
     await new Promise((resolve) => setTimeout(resolve, 0));
-  });
+  }
 
   logToMain(
     `searchfn indexing completed for table ${table.name}: ${processedCount} records indexed`
@@ -364,12 +296,14 @@ async function indexWithSearchfn(
 }
 
 async function indexWithCustomLogic(
-  objectStore: IDBObjectStore,
+  db: IDBDatabase,
   table: { name: string; searchIndices: string[] },
   userId: string,
   dbVersion: number,
   port: MessagePort
 ) {
+  const records = await loadAllRecords(db, table.name);
+
   const searchIndex: Map<string, Set<string>> = new Map();
   const recordTexts: Map<string, string> = new Map();
 
@@ -378,7 +312,8 @@ async function indexWithCustomLogic(
   let processedCount = 0;
   let batchCounter = 0;
 
-  await streamObjectStore(objectStore, batchSize, async (batch) => {
+  for (let i = 0; i < records.length; i += batchSize) {
+    const batch = records.slice(i, Math.min(i + batchSize, records.length));
     batchCounter += 1;
 
     for (const record of batch) {
@@ -411,7 +346,7 @@ async function indexWithCustomLogic(
     if (batchCounter % 5 === 0) {
       broadcastProgress(port);
     }
-  });
+  }
 
   broadcastProgress(port);
 
@@ -510,4 +445,51 @@ function broadcastProgress(port: MessagePort) {
     type: "PROGRESS",
     payload: currentProgress
   } as ProgressMessage);
+}
+
+async function loadAllRecords(db: IDBDatabase, tableName: string): Promise<any[]> {
+  const transaction = db.transaction([tableName], "readonly");
+  const objectStore = transaction.objectStore(tableName);
+  const records: any[] = [];
+
+  const done = waitForTransaction(transaction);
+
+  let cursorError: Error | null = null;
+  const request = objectStore.openCursor();
+  request.onerror = () => {
+    cursorError = request.error ?? new Error("IndexedDB cursor error");
+    transaction.abort();
+  };
+  request.onsuccess = () => {
+    const cursor = request.result;
+    if (!cursor) {
+      return;
+    }
+    records.push(cursor.value);
+    cursor.continue();
+  };
+
+  try {
+    await done;
+  } catch (error) {
+    if (cursorError) {
+      throw cursorError;
+    }
+    throw error;
+  }
+
+  if (cursorError) {
+    throw cursorError;
+  }
+  return records;
+}
+
+function waitForTransaction(transaction: IDBTransaction): Promise<void> {
+  return new Promise((resolve, reject) => {
+    transaction.oncomplete = () => resolve();
+    transaction.onerror = () =>
+      reject(transaction.error ?? new Error("IndexedDB transaction error"));
+    transaction.onabort = () =>
+      reject(transaction.error ?? new Error("IndexedDB transaction aborted"));
+  });
 }

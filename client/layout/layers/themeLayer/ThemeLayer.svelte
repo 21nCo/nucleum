@@ -200,6 +200,8 @@
     "font-[350]": typeface === "Sora",
     "font-[401]": typeface === "Space Grotesk",
     "font-[500]": typeface === "Quicksand",
+    "font--[300] text-[0.9rem] tracking-[0.03em]":
+      typeface === "Twenty One Native Revised",
     glassy: $userPreferences?.appearance?.skin == AppSkin.Glassy,
     dark: $appearance?.colorScheme?.isDark
   })}

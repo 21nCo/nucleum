@@ -54,7 +54,7 @@
     isPreventAddNew={!isActiveResource}
     accessPoint={ResourceAccessPoint.GOAL}
   />
-  {#if !$view.isPortrait && !$context.isTouchDevice}
+  <!-- {#if !$view.isPortrait && !$context.isTouchDevice}
     <Divider orientation={Orientation.Vertical} />
     <div class="w-1/2 min-w-96 h-full">
       {#if selectedTaskId}
@@ -71,5 +71,5 @@
         />
       {/if}
     </div>
-  {/if}
+  {/if} -->
 </div>

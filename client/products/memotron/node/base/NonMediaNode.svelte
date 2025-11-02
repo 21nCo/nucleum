@@ -292,11 +292,11 @@
                           "opacity-100": !isStickied
                         })}
                       >
-                        <NodeAvatar
+                        <!-- <NodeAvatar
                           node={$node}
                           accessPoint={ResourceAccessPoint.SELF}
                           isExpandedContext={true}
-                        />
+                        /> -->
                       </span>
                     {/if}
                     <span
@@ -400,7 +400,6 @@
         >
           <NodeFloatingBar
             {node}
-            {isConstrainedWidth}
             nodeView={selectedView}
             bind:isWidened
             bind:this={floatingBarRef}
