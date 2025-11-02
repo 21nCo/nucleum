@@ -12,7 +12,10 @@
   import { goalStore } from "@21n/components/goals/goal.store";
   import type { IGoalThumb } from "@21n/components/goals/goal.type";
   import { onMount } from "svelte";
-  import { AnalyticsCardType, type AnalyticsPage } from "@21n/products/pointron/analytics/analytics.types";
+  import {
+    AnalyticsCardType,
+    type AnalyticsPage
+  } from "@21n/products/pointron/analytics/analytics.types";
   import type { ITimePeriodResolved } from "@21n/types/time.type";
   import {
     determinePreviousTimePeriod,

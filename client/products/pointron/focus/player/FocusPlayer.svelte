@@ -29,6 +29,7 @@
   import { tooltip } from "@21n/actions/popover.action";
   import type { IGoalThumb } from "@21n/components/goals/goal.type";
   import type { ITaskThumb } from "@21n/components/tasks/task.type";
+  import { wait } from "@21n/utils/time.utils";
   let playerContainerRef: any;
   let playerRef: HTMLElement | null = document.getElementById("focusplayer");
   let playerContainer: HTMLElement | null =
@@ -38,6 +39,7 @@
     caretHovering: false,
     pipHovering: false
   };
+  let isRenderPip: boolean = false;
   let curentFocusItemExpanded: ITaskThumb | IGoalThumb | undefined = undefined;
   $: isBreakReminderMode =
     $activeSession.timeRemainingToTakeBreak != undefined &&
@@ -56,6 +58,7 @@
     if (playerRef && $activeSession.isSessionRunning)
       playerContainer?.append(playerRef);
     isPipShown = false;
+    isRenderPip = false;
     if ($player.isPipOn) {
       player.togglePip(PointronAction.FOCUS_PLAYER);
     }
@@ -158,8 +161,10 @@
         }
       }
     });
-    const sub = player.subscribe((x) => {
+    const sub = player.subscribe(async (x) => {
       if (x.isPipOn && !isPipShown) {
+        isRenderPip = true;
+        await wait(100);
         showPip(null);
       } else if (!x.isPipOn && isPipShown) {
         closePip();
@@ -201,7 +206,12 @@
       : ""}
   >
     <ThemeLayer extensionContext={isPipShown ? "focusplayer" : undefined}>
-      <div class="flex flex-col gap-1 w-full">
+      <div
+        class={cn("flex flex-col gap-1 w-full", {
+          hidden: !isRenderPip && !$view.isConstrainedWidth,
+          "opacity-0": isRenderPip && !isPipShown
+        })}
+      >
         <CustomColorPropagator
           type="button"
           color={curentFocusItemExpanded &&

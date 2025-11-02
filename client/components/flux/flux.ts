@@ -246,7 +246,7 @@ class Flux {
         ...params,
         action: params.action,
         recordCount:
-          "records" in params ? params.records?.length ?? "NA" : "NA",
+          "records" in params ? (params.records?.length ?? "NA") : "NA",
         record: "record" in params ? params.record : "NA"
       }
     });
@@ -300,7 +300,8 @@ class Flux {
       at: "flux.mutation - result",
       resource,
       action: params.action,
-      recordCount: "records" in params ? params.records?.length ?? "NA" : "NA",
+      recordCount:
+        "records" in params ? (params.records?.length ?? "NA") : "NA",
       record: "record" in params ? params.record : "NA",
       response
     });

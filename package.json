@@ -1,5 +1,5 @@
 {
-  "name": "tidigit",
+  "name": "@21n/nucleus",
   "private": true,
   "version": "0.0.0",
   "workspaces": [
@@ -32,15 +32,17 @@
     "tests"
   ],
   "dependencies": {
-    "bcrypt": "^6.0.0",
-    "@types/bcrypt": "^6.0.0"
+    "@types/bcrypt": "^6.0.0",
+    "bcrypt": "^6.0.0"
   },
   "devDependencies": {
     "@tsconfig/svelte": "^5.0.5",
+    "prettier": "^3.6.2",
+    "prettier-plugin-svelte": "^3.4.0",
     "ts-morph": "^22.0.0",
     "tslib": "^2.8.0",
-    "turbo": "^2.0.0",
     "tsx": "^4.19.1",
+    "turbo": "^2.0.0",
     "typescript": "^5.0.0",
     "vitest": "^2.0.5"
   },
@@ -55,7 +57,7 @@
     "dev:memotron-clipper": "turbo run dev --filter=memotron-clipper",
     "codemod:alias": "tsx tools/codemods/alias-migration/index.ts",
     "lint": "turbo run lint",
-    "test": "turbo run test",
+    "test": "turbo run test --filter=tidigit-tests",
     "build:packages": "turbo run build --filter='./packages/*'",
     "build:products": "turbo run build --filter='./apps/*'",
     "build:nucleus": "turbo run build --filter=nucleus-app",

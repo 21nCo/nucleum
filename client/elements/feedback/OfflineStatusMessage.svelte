@@ -34,7 +34,7 @@
   {:else}
     <button
       type="button"
-      class="flex items-center gap-1 text-ass1 px-1.5 py-0.5 text-b3 border border-dashed dark:border-ass2/50 border-ass2 hover:bg-ass2/10 rounded-md"
+      class="flex items-center gap-1 text-ass1 px-1.5 py-0.5 text-b3 border border-dashed dark:border-ass1/50 border-ass1 hover:bg-ass2/10 rounded-md"
       on:click={onClick}
     >
       <Icon icon="offline" class="text-ass1" size={Size.sm} />

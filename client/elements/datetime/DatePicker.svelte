@@ -135,7 +135,8 @@
           variant === "icon-only",
         "p-1": variant === "icon-only" && size === Size.sm,
         "p-1.5": variant === "icon-only" && size !== Size.sm,
-        "underline-dotted": variant === "inline"
+        "underline-dotted": variant === "inline",
+        "h-full px-3": variant === "inline-with-icon"
       }
     )}
     bind:this={ref}

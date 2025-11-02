@@ -74,13 +74,14 @@
   }
 </script>
 
-<div class="grid grid-cols-2 cw:grid-cols-1 gap-2 w-full flex-grow">
+<div class="grid grid-cols-2 cw:grid-cols-1 w-full flex-grow">
   {#each groups as group, index}
     <GroupItem
       bind:this={groupRefs[index]}
       isActive={activeGroupIndex === index && $context.embed !== Embed.HANDSET}
       {isDefaultState}
       {group}
+      {index}
       searchCallback={(query) => {
         return searchCallback(query, group.value);
       }}

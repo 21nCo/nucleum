@@ -15,7 +15,7 @@
 
 <button
   class={cn("flex relative z-20 items-center gap-2 p-1.5 px-3 rounded-md", {
-    "bg-ccs1 text-cbg": isActive || isAccent,
+    "bg-ccs4 text-ccs1": isActive || isAccent,
     "bg-bgs3 notouch:hover:bg-bgs4 active:bg-bgs4": !isActive && !isAccent
   })}
   use:tooltip={{
@@ -30,7 +30,7 @@
       : resolveGoalStatusIcon(status)}
     size={Size.sm}
     class={cn({
-      "text-cbg": isActive || isAccent,
+      "text-ccs1": isActive || isAccent,
       "text-fgs3": !isActive && !isAccent
     })}
   />

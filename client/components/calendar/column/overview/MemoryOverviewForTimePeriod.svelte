@@ -154,10 +154,9 @@
         />
         <MetricCard label="Links" value={today.links.length} />
       </div>
-
-      <div class="flex flex-col gap-3 w-full">
-        <Text content="On this day" style={TextStyle.SECTION_HEADING} />
-        {#if previousYears.length > 0}
+      {#if previousYears.length > 0}
+        <div class="flex flex-col gap-3 w-full">
+          <Text content="On this day" style={TextStyle.SECTION_HEADING} />
           {#each previousYears as { nodes, links, year }}
             <div class="flex flex-col gap-2 w-full">
               <!-- Year header -->
@@ -193,14 +192,8 @@
               {/if}
             </div>
           {/each}
-        {:else}
-          <EmptyStatusView
-            size={Size.sm}
-            mainText="No memories found"
-            subText={`No memories found for this day in previous years`}
-          />
-        {/if}
-      </div>
+        </div>
+      {/if}
     </div>
   {/if}
 {:catch error}

@@ -922,6 +922,7 @@ export const globalActions: IAction[] = [
     type: ActionType.RESOURCE,
     accessMode: ResourceAccessMode.POP,
     modalParams: {
+      isShowOverlay: false,
       layout: {
         orientation: Orientation.Horizontal,
         size: Size.xl,
@@ -983,12 +984,12 @@ export const globalActions: IAction[] = [
   },
   {
     action: Action.HISTORY,
-    label: "History",
+    label: "Activity",
     icon: "history",
     type: ActionType.RESOURCE,
     component: HistoryModal,
     modalParams: {
-      title: "History",
+      title: "Activity",
       layout: {
         size: Size.lg,
         orientation: Orientation.Horizontal,

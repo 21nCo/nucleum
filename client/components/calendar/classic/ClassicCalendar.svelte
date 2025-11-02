@@ -8,10 +8,7 @@
   import CalendarColumn from "@21n/components/calendar/column/CalendarColumn.svelte";
   import { TimeScaleUnit } from "@21n/types/time.type";
   import { uiState } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import {
     CalendarLayout,
     type ICalendarIndicatorData
@@ -386,8 +383,8 @@
     </div>
     {#if (selectedView !== TimeScaleUnit.WEEK && !$view.isConstrainedWidth) || selectedView === TimeScaleUnit.DAY}
       <div
-        class={cn("relative border-l border-brs3", {
-          "w-[28rem]": selectedView !== TimeScaleUnit.DAY,
+        class={cn("relative", {
+          "w-[28rem] border-l border-brs3": selectedView !== TimeScaleUnit.DAY,
           "w-full": selectedView === TimeScaleUnit.DAY
         })}
         style={selectedView !== TimeScaleUnit.DAY &&
@@ -414,6 +411,7 @@
           {:else}
             <CalendarColumn
               scale={selectedScale}
+              viewScale={selectedView}
               date={selectedDate}
               on:dateChange={(e) => {
                 if (e.detail) {

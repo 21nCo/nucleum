@@ -9,6 +9,10 @@
   export let text: string | undefined = undefined;
   export let padding: string = "";
   export let isSyncing: boolean = false;
+  /**
+   * out: transition interfering issue with TopNav transitions hence duration is used as 1 ms
+   */
+  const outTransitionDuration = isShorter ? 1 : 200;
   if (!text && !isShorter) text = "Syncing...";
 </script>
 
@@ -20,10 +24,10 @@
   })}
   class:hidden={!isSyncing}
   in:scale={{ duration: 200, easing: bounceIn }}
-  out:scale={{ duration: 200, easing: bounceOut }}
+  out:scale={{ duration: outTransitionDuration, easing: bounceOut }}
 >
   <Icon
-    icon={isShorter ? "svg-spinners:eclipse-half" : "svg-spinners:3-dots-fade"}
+    icon={isShorter ? "svg-spinners:bars-scale" : "svg-spinners:3-dots-fade"}
     size={Size.sm}
     class={isShorter ? "text-fgs2" : "text-aps1"}
   />

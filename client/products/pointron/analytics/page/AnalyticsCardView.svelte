@@ -49,11 +49,14 @@
   let isRefreshing = false;
   let refreshId = new Date().getTime();
   let errorMessage: string | undefined = undefined;
-  $: isCarbonChart =
-    card.type === AnalyticsCardType.PIE ||
-    card.type === AnalyticsCardType.DONUT ||
-    card.type === AnalyticsCardType.AREA ||
-    card.type === AnalyticsCardType.LINE;
+  const isCarbonChart = false;
+  const isCanRenderInSmallerArea = [
+    AnalyticsCardType.PIE,
+    AnalyticsCardType.DONUT,
+    AnalyticsCardType.SUNBURST,
+    AnalyticsCardType.TOP_N,
+    AnalyticsCardType.METRICS
+  ];
 
   $: if (isPageLoaded) {
     refresh();
@@ -228,15 +231,12 @@
 <div
   class={cn("flex flex-col grow border border-brs2 rounded-md bg-bgs1", {
     "w-full h-96 p-2": $view.isPortrait,
+    "p-4": !$view.isPortrait,
     "h-[32rem]": $view.isPortrait && $isInEditMode,
-    "min-w-1/2 w-1/2 2k:min-w-min 2k:w-3/10 p-4 bg-bgs1": !$view.isPortrait,
     "w-4/5": position.total === 1 && !$view.isPortrait,
-    "w-1/3":
-      !$view.isPortrait &&
-      (card.type === AnalyticsCardType.PIE ||
-        card.type === AnalyticsCardType.DONUT ||
-        card.type === AnalyticsCardType.TOP_N ||
-        card.type === AnalyticsCardType.METRICS),
+    "w-2/5 2k:w-3/10":
+      !$view.isPortrait && isCanRenderInSmallerArea.includes(card.type),
+    "w-3/5": !$view.isPortrait && !isCanRenderInSmallerArea.includes(card.type),
     "border border-brs2": $isInEditMode
   })}
   style={!$view.isPortrait

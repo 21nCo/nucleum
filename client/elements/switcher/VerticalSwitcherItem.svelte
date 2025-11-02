@@ -65,11 +65,11 @@
 
   $: if (size) {
     if (size === Size.xs) {
-      sizeClasses = "text-b5 w-16 gap-1 py-3";
+      sizeClasses = "text-b5 w-12 gap-1 py-3";
     } else if (size === Size.sm) {
       sizeClasses = "text-b4 gap-1 py-4";
       if (isHideLabel) sizeClasses += " px-2";
-      else sizeClasses += " w-[4.5rem]";
+      else sizeClasses += " w-14";
     } else if (size === Size.md) {
       sizeClasses = "text-b2 gap-2 py-4";
       if (isHideLabel) sizeClasses += " px-3";

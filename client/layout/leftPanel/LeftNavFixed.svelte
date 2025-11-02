@@ -10,10 +10,7 @@
   import { Placement } from "@21n/types/direction.enum";
   import Icon from "@21n/elements/Icon.svelte";
   import { uiState } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { onMount } from "svelte";
   import { appStore } from "@21n/stores/app.store";
   import OfflineStatusMessage from "@21n/elements/feedback/OfflineStatusMessage.svelte";
@@ -72,8 +69,10 @@
     >
       <div class="w-full flex flex-col gap-8 overflow-auto">
         <div
-          class="w-full flex justify-center opacity-30 hover:opacity--100 transition-opacity duration-200 py-2"
-        ></div>
+          class="w-full flex justify-center transition-opacity duration-200 py-2"
+        >
+          <!--  -->
+        </div>
         <div
           class={cn("flex flex-col gap-3 items-center w-full overflow-auto", {
             "p-2": !isHideMenuLabels
@@ -111,12 +110,7 @@
       <div class="w-full flex flex-col gap-2 items-center">
         <OfflineStatusMessage isIconOnly={true} />
         <!-- <LeftNavCommandAction isInThinMode={true} size={Size.lg} /> -->
-        <LeftBottomBar
-          isInThinMode={true}
-          {isRounded}
-          size={Size.lg}
-          {dev_mixedPanel}
-        />
+        <LeftBottomBar {isRounded} />
       </div>
     </div>
     <slot name="panel" />

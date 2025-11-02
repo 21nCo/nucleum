@@ -80,9 +80,10 @@
               onCreateResource();
             },
             icon: "plus",
-            variant: ButtonVariant.PRIMARY,
+            parentBgIndex: 2,
             shortcut: createShortcut,
-            style: ButtonStyle.DEFAULT
+            // variant: ButtonVariant.PRIMARY,
+            style: ButtonStyle.OUTLINED
           };
 
   onMount(() => {

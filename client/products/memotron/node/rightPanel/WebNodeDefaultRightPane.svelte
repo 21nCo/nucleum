@@ -70,14 +70,14 @@
 </script>
 
 <div
-  class="flex flex-col gap-4 justify-center items-start w-full h-full cw:p-2"
+  class="flex flex-col gap-4 justify-center items-start w-full h-full bg-bgs2 cw:p-2"
 >
   <div class="pt-2 px-2 dp:px-3">
     <Text content="Overview" style={TextStyle.PANEL_HEADING_SMALL} />
   </div>
 
   {#if canHaveTraces.includes($node.contentType)}
-    <div class="grid grid-cols-2 w-full border-y border-brs2 h-10">
+    <div class="grid grid-cols-2 w-full h-10">
       <RightPaneOverviewMetricCard
         label="Links"
         icon="link"

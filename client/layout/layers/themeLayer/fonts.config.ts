@@ -1,4 +1,5 @@
 export const FONT_FAMILIES = [
+  "Twenty One Native",
   "Space+Grotesk:wght@300..700",
   "Hanken+Grotesk:ital,wght@0,100..900;1,100..900",
   "Sen:wght@400..800",

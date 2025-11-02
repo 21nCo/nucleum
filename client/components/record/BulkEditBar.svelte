@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
   import {
     ResourceAccessPoint,
     ResourceActionType,
@@ -21,9 +20,10 @@
   import { tooltip } from "@21n/actions/popover.action";
 
   const dispatch = createEventDispatcher();
+  export let count: number = 0;
   export let context: IMultiSelectContext;
   export let subContext: string = "";
-  export let isExpandedMode: boolean = false;
+  export let isExpandedMode: boolean = true;
   type Action = {
     action: string;
     label: string;
@@ -38,20 +38,11 @@
   const isHideArchive = [Resource.task, Resource.session].includes(
     context.resource
   );
-  $: multiSelectStore = resolveMultiSelectStore(context);
-  const miniButtonProps: {} = {
-    size: Size.md,
-    style: ButtonStyle.OUTLINED,
-    isPreventMinWidth: true
-  };
-  const expandedButtonProps: {} = {
+  const buttonProps = {
     size: Size.sm,
     style: ButtonStyle.OUTLINED,
     isPreventMinWidth: true
   };
-  $: buttonProps = isExpandedMode ? expandedButtonProps : miniButtonProps;
-  $: selector =
-    $appearance?.colorScheme?.tailwindSelector?.replace("light", "dark") ?? "";
   $: parentBgIndex = $appearance.theme === Theme.LIGHT ? 1 : 3;
 
   const selectAllAction = {
@@ -185,28 +176,22 @@
 
 <!-- TODO - invert color layer with corresponding opposite light/dark color scheme -->
 <div
-  class={cn(
-    "grid grid-cols-[auto_1fr_auto] gap-3 items-center bg-bgs1 dark:bg-bgs3 text-fgs1 border border-brs3 shadow-md rounded-md overflow-auto",
-    {
-      [selector]: $appearance.theme === Theme.LIGHT,
-      "w-full mx-2 px-4 py-2 text-b2": !isExpandedMode,
-      "w-full mx-8 px-6 py-3": isExpandedMode
-    }
-  )}
+  class="grid grid-cols-[auto_1fr_auto] gap-3 items-center text-fgs1 overflow-auto w-full px-3"
 >
   <span class="flex whitespace-nowrap">
-    Selected: {resolveCountLabel($multiSelectStore.length)}
+    Selected: {resolveCountLabel(count)}
   </span>
   <span class="flex gap-2 overflow-x-auto">
     {#each actions as action}
       {#if action.action === "setDate"}
         <div
+          class="border border-brs3 rounded-full hover:bg-bgs2-striped"
           use:tooltip={{
             text: "Set date"
           }}
         >
           <DatePicker
-            variant="icon-only"
+            variant="inline-with-icon"
             on:change={(e) => {
               dispatch("action", {
                 action: action.action,
@@ -246,7 +231,7 @@
           if (action.action === "selectAll") {
             dispatch("selectAll");
           } else if (action.action === "clearSelection") {
-            $multiSelectStore = [];
+            dispatch("clear");
           } else {
             dispatch("action", {
               action: action.action

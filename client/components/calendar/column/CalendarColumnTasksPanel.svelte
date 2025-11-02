@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import type { ITaskThumb } from "@21n/components/tasks/task.type";
   import TaskRecords from "@21n/components/tasks/TaskRecords.svelte";
   import {
@@ -12,10 +12,7 @@
   import { appStore } from "@21n/stores/app.store";
   import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
-  import {
-    PersistenceActionType,
-    RemovalProperty
-  } from "@21n/types/data.type";
+  import { RemovalProperty, type IRecordId } from "@21n/types/data.type";
   import Button from "@21n/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
@@ -25,21 +22,16 @@
   import { shortcutsConfig } from "@21n/components/shortcuts/shortcuts.config";
   import ComponentShortcutListener from "@21n/components/shortcuts/ComponentShortcutListener.svelte";
   import { uiState } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
-  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
-  import BottomFloat from "@21n/elements/BottomFloat.svelte";
-  import BulkEditBar from "@21n/components/record/BulkEditBar.svelte";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { toasts } from "@21n/stores/notification.store";
   import { dragSelection } from "@21n/actions/dragSelection.action";
+  import { bulkEditStore } from "@21n/components/record/bulkedit.store";
   export let date: Date;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CALENDAR;
+  export let isShowCompletedTasks: boolean = refreshShowCompletedTasksState();
+  export let completedTasksCount: number = 0;
   let isRefreshing = false;
   let tasks: ITaskThumb[] = [];
-  let completedTasksCount = 0;
-  let showCompletedTasks = refreshShowCompletedTasksState();
   let isInSelectionMode = false;
   onMount(async () => {
     await refreshTimeline();
@@ -58,7 +50,12 @@
     resource: Resource.task,
     accessPoint
   };
-  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
+
+  onDestroy(() => {
+    if (bulkEditStore.matchesContext(multiSelectContext)) {
+      bulkEditStore.clear();
+    }
+  });
 
   async function refreshTimeline() {
     isRefreshing = true;
@@ -77,7 +74,7 @@
       (task: ITaskThumb) => task.isChecked
     ).length;
 
-    if (showCompletedTasks) {
+    if (isShowCompletedTasks) {
       tasks = allTasks;
     } else {
       tasks = allTasks.filter((task: ITaskThumb) => !task.isChecked);
@@ -97,24 +94,26 @@
     refreshTimeline();
   }
 
-  function toggleCompletedTasks() {
-    showCompletedTasks = !showCompletedTasks;
-    uiState.setState(UIState.showCompletedCalendarTasks, showCompletedTasks, {
+  export function toggleCompletedTasks() {
+    isShowCompletedTasks = !isShowCompletedTasks;
+    uiState.setState(UIState.showCompletedCalendarTasks, isShowCompletedTasks, {
       scope: UIStateScope.DEVICE
     });
     loadTasks();
   }
 
   function onSelectAll() {
-    $multiSelectStore = tasks.map((x) => x.id);
+    return tasks.map((x) => x.id);
   }
 
   async function onBulkAction(
-    e: CustomEvent<{ action: string; data?: unknown }>
+    ids: IRecordId[],
+    action: string,
+    data?: unknown
   ) {
     try {
-      const editor = new BulkEditor(Resource.task, multiSelectStore);
-      await editor.run(e.detail.action, e.detail.data);
+      const editor = new BulkEditor(Resource.task, bulkEditStore);
+      await editor.run(action, data);
       refreshTimeline();
     } catch (e) {
       toasts.error("Failed to perform bulk action");
@@ -129,13 +128,17 @@
     selectableSelector: "div[id^='thumbnail-']",
     containerId: "calendar-tasks-panel",
     onSelectionChange: (elements, ids) => {
+      bulkEditStore.activate(multiSelectContext, {
+        onAction: onBulkAction,
+        onSelectAll: onSelectAll,
+        subContext: date.toISOString()
+      });
+      const state = bulkEditStore.getState();
       if (isInSelectionMode) {
-        $multiSelectStore = [
-          ...new Set([...($multiSelectStore ?? []), ...ids])
-        ];
+        bulkEditStore.select([...new Set([...state.selectedIds, ...ids])]);
       } else {
         isInSelectionMode = true;
-        $multiSelectStore = ids;
+        bulkEditStore.select(ids);
       }
     }
   }}
@@ -143,11 +146,14 @@
   {#if isRefreshing || tasks.length === 0}
     <EmptyStatusView
       isLoadingState={isRefreshing}
+      size={Size.sm}
       mainText={completedTasksCount > 0 ? "Inbox zero" : "No tasks found"}
       subText={completedTasksCount > 0
-        ? "You completed all your tasks!"
+        ? `You completed ${completedTasksCount > 1 ? "all your" : "your"} ${completedTasksCount} task${completedTasksCount > 1 ? "s" : ""}!`
         : "Choose a different date or create a task"}
-      actionText="Create task"
+      actionText={accessPoint === ResourceAccessPoint.PICKER
+        ? "Create task"
+        : undefined}
       actionShortcut={shortcutsConfig.create}
       on:click={handleCreateTask}
       loadingAnimation={LoadingAnimationType.FOCUS_ITEMS_PULSE}
@@ -158,8 +164,8 @@
       {#if completedTasksCount > 0}
         <div class="my-4">
           <Button
-            icon={showCompletedTasks ? "hide" : ""}
-            label={showCompletedTasks
+            icon={isShowCompletedTasks ? "hide" : ""}
+            label={isShowCompletedTasks
               ? "Hide completed"
               : `Completed (${completedTasksCount})`}
             size={Size.sm}
@@ -177,8 +183,8 @@
     <div class="flex flex-col justify-center items-center gap-6">
       {#if completedTasksCount > 0}
         <Button
-          icon={showCompletedTasks ? "hide" : ""}
-          label={showCompletedTasks
+          icon={isShowCompletedTasks ? "hide" : ""}
+          label={isShowCompletedTasks
             ? "Hide completed"
             : `Completed (${completedTasksCount})`}
           size={Size.sm}
@@ -187,15 +193,17 @@
           on:click={toggleCompletedTasks}
         />
       {/if}
-      <Button
-        icon="plus"
-        label="New task"
-        size={Size.sm}
-        shortcut={shortcutsConfig.create}
-        type={ButtonVariant.PRIMARY}
-        style={ButtonStyle.OUTLINED}
-        on:click={handleCreateTask}
-      />
+      {#if accessPoint === ResourceAccessPoint.PICKER}
+        <Button
+          icon="plus"
+          label="New task"
+          size={Size.sm}
+          shortcut={shortcutsConfig.create}
+          type={ButtonVariant.PRIMARY}
+          style={ButtonStyle.OUTLINED}
+          on:click={handleCreateTask}
+        />
+      {/if}
     </div>
     <ScrollViewBottomSpacer />
     <!-- <FloatingButton
@@ -211,16 +219,6 @@
     /> -->
   {/if}
 </div>
-{#if $multiSelectStore.length > 0}
-  <BottomFloat zIndex="z-30">
-    <BulkEditBar
-      context={multiSelectContext}
-      subContext={date.toISOString()}
-      on:selectAll={onSelectAll}
-      on:action={onBulkAction}
-    />
-  </BottomFloat>
-{/if}
 <ComponentBaseLayer
   subscribeToResource={new Set([Resource.task])}
   subscriptionPropsForMergeAction={[
@@ -234,11 +232,13 @@
   }}
   on:change={onResourceMutation}
 />
-<ComponentShortcutListener
-  shortcuts={[
-    {
-      shortcut: shortcutsConfig.create,
-      callback: handleCreateTask
-    }
-  ]}
-/>
+{#if accessPoint === ResourceAccessPoint.PICKER}
+  <ComponentShortcutListener
+    shortcuts={[
+      {
+        shortcut: shortcutsConfig.create,
+        callback: handleCreateTask
+      }
+    ]}
+  />
+{/if}

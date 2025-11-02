@@ -4,7 +4,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## project overview
 
-Tidigit is an open source library powering productivity tools built at 21n.org. It includes three main products:
+Nucleus is an open source library powering productivity tools built at 21n.org. It includes three main products:
 
 - **Memotron** - Knowledge management and note-taking tool
 - **Pointron** - Focus and time management tool  

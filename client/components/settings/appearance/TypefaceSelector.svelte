@@ -53,6 +53,7 @@
     { label: "Sora", value: "Sora" },
     { label: "Space Grotesk", value: "Space Grotesk" },
     { label: "Teachers", value: "Teachers" },
+    { label: "Twenty One Native", value: "Twenty One Native" },
     { label: "Varela", value: "Varela" },
     { label: "Varela Round", value: "Varela Round" }
   ];

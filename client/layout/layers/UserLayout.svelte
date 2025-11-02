@@ -14,6 +14,7 @@
   import AppSplitView from "@21n/layout/AppSplitView.svelte";
   import TopNav from "@21n/layout/topNav/TopNav.svelte";
   import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
+  import RightNav from "../rightPanel/RightNav.svelte";
 
   let isHideLeftNavBar: boolean = refreshSidebarState();
   onMount(() => {
@@ -80,9 +81,9 @@
                 </slot>
               </AppSplitView>
             </div>
+            <!-- <RightNav /> -->
           </div>
         </div>
-        <!-- <RightPanel /> -->
       </div>
     </div>
   {/if}

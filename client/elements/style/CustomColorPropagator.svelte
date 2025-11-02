@@ -61,10 +61,10 @@
     background-color: var(--customcolorshadethree, rgb(var(--colors-aps3)));
   }
   :global(.bg-ccs4) {
-    background-color: var(--customcolorshadefour, rgb(var(--colors-aps4)));
+    background-color: var(--customcolorshadefour, rgb(var(--colors-aps3)));
   }
   :global(.bg-ccs5) {
-    background-color: var(--customcolorshadefive, rgb(var(--colors-aps4)));
+    background-color: var(--customcolorshadefive, rgb(var(--colors-aps3)));
   }
   :global(.border-ccs1) {
     border-color: var(--customcolor, rgb(var(--colors-aps1)));
@@ -216,6 +216,34 @@
   }
   :global(.to-ccs5) {
     --tw-gradient-to: var(
+      --customcolorshadefive,
+      rgb(var(--colors-aps4))
+    ) !important;
+  }
+
+  :global(.via-ccs1) {
+    --tw-gradient-via: var(--customcolor, rgb(var(--colors-aps1))) !important;
+  }
+  :global(.via-ccs2) {
+    --tw-gradient-via: var(
+      --customcolorshadetwo,
+      rgb(var(--colors-aps2))
+    ) !important;
+  }
+  :global(.via-ccs3) {
+    --tw-gradient-via: var(
+      --customcolorshadethree,
+      rgb(var(--colors-aps3))
+    ) !important;
+  }
+  :global(.via-ccs4) {
+    --tw-gradient-via: var(
+      --customcolorshadefour,
+      rgb(var(--colors-aps4))
+    ) !important;
+  }
+  :global(.via-ccs5) {
+    --tw-gradient-via: var(
       --customcolorshadefive,
       rgb(var(--colors-aps4))
     ) !important;

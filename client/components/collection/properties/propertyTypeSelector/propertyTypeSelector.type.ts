@@ -18,6 +18,12 @@ export enum PropertyTypeGroup {
   WIZARD = "wizard",
   SYSTEM = "system",
   RULE_BASED = "rule-based",
+  /**
+   * @deprecated - use SYSTEM group instead
+   */
   DETECTION = "detection",
+  /**
+   * @deprecated - in favor of links, synced collections
+   */
   INTEGRATION = "integration"
 }

@@ -18,9 +18,7 @@
   export let goalColors: IAnalyticsLabelColor[];
 </script>
 
-{#if card.type === AnalyticsCardType.PIE || card.type === AnalyticsCardType.DONUT || card.type === AnalyticsCardType.AREA || card.type === AnalyticsCardType.LINE || card.type === AnalyticsCardType.BAR}
-  <AnalyticsChart chart={card} rawData={data} {goalColors} />
-{:else}
+{#if card.type === AnalyticsCardType.TOP_N || card.type === AnalyticsCardType.TARGETS || card.type === AnalyticsCardType.METRICS}
   <div
     class="flex self-start w-full h-full mo:p-0.5 p-3 overflow-auto userdata"
   >
@@ -38,4 +36,6 @@
       <MetricsCard {card} {data} {goalColors} {previousTimePeriodData} />
     {/if}
   </div>
+{:else}
+  <AnalyticsChart chart={card} rawData={data} {goalColors} />
 {/if}

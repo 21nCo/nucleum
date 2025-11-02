@@ -1,17 +1,14 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import LinkThumbnailItems from "@21n/products/memotron/node/links/LinkThumbnailItems.svelte";
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
   import { Size } from "@21n/types/size.enum";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import ErrorStatusPane from "@21n/elements/feedback/ErrorStatusPane.svelte";
-  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
   import {
     ResourceAccessMode,
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
-  import BottomFloat from "@21n/elements/BottomFloat.svelte";
-  import BulkEditBar from "@21n/components/record/BulkEditBar.svelte";
   import InlineTimeoutMessage from "@21n/elements/text/InlineTimeoutMessage.svelte";
   import { AlertType } from "@21n/types/notification.type";
   import {
@@ -42,8 +39,9 @@
   import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import { activeResourceFilterV2 } from "@21n/utils/utils";
   import { BulkEditor } from "@21n/components/record/record.store";
+  import { bulkEditStore } from "@21n/components/record/bulkedit.store";
   import { toasts } from "@21n/stores/notification.store";
-  import { deepCopy, isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import {
     ErrorMessage,
     ResourceErrorCode
@@ -58,7 +56,52 @@
     accessPoint: ResourceAccessPoint.NODE_LINKS,
     accessPointId: node.id
   };
-  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
+  let bulkEditUnsub: (() => void) | undefined;
+  let bulkSelection: IRecordId[] = [];
+
+  function resolveBulkEditorInstance() {
+    bulkEditStore.activate(multiSelectContext, {
+      onAction: handleBulkAction,
+      onSelectAll: selectAll,
+      subContext: node.id.toString()
+    });
+    if (!bulkEditUnsub) {
+      bulkEditUnsub = bulkEditStore.subscribe((value = []) => {
+        bulkSelection = value;
+      });
+    }
+  }
+
+  function selectAll() {
+    return filtered?.map((x) => x.node.id.toString()) ?? [];
+  }
+
+  async function handleBulkAction(
+    ids: IRecordId[],
+    action: string,
+    data?: unknown
+  ) {
+    try {
+      const editor = new BulkEditor(Resource.node, bulkEditStore);
+      const result = await editor.run(action, data);
+      if (result) {
+        if (action === "unlink") {
+          $node.links = $node.links?.filter(
+            (x) => !ids.some(resourceInList(x.linkedTo))
+          );
+        }
+        await refresh();
+      }
+    } catch (e) {
+      toasts.error("Failed to perform bulk action");
+    }
+  }
+
+  $: {
+    multiSelectContext;
+    filtered;
+    resolveBulkEditorInstance();
+  }
   let _links: INodeLinkThumb[] = [];
   let all: { link: INodeLinkThumb; node: INode }[] = [];
   let outgoingMentions: { link: INodeLinkThumb; node: INode }[] = [];
@@ -96,6 +139,13 @@
     return () => {
       if (unsubscribe) unsubscribe();
     };
+  });
+
+  onDestroy(() => {
+    bulkEditUnsub?.();
+    if (bulkEditStore.matchesContext(multiSelectContext)) {
+      bulkEditStore.clear();
+    }
   });
 
   async function onSelect(e: CustomEvent<any>) {
@@ -282,13 +332,14 @@
     }
   }
 
+  /**
+   * TODO - click handler - check for new bulk edit store changes
+   * @param e
+   */
   function onClick(e: CustomEvent) {
-    const result = multiSelectStore.clickHandler(e.detail.id);
+    resolveBulkEditorInstance();
+    const result = bulkEditStore.clickHandler(e.detail.id);
     if (!result) appStore.resourceClickHandler(e.detail.event, e.detail.id);
-  }
-
-  function onSelectAll() {
-    $multiSelectStore = filtered?.map((x) => x.node.id.toString()) ?? [];
   }
 
   function onAction(e: CustomEvent) {
@@ -315,27 +366,6 @@
     if (!e.detail) return;
     selectedLinkType = e.detail;
     applyFilters();
-  }
-
-  async function onBulkAction(
-    e: CustomEvent<{ action: string; data?: unknown }>
-  ) {
-    try {
-      logger.log({ at: "onBulkAction", e });
-      const items = deepCopy($multiSelectStore);
-      const editor = new BulkEditor(Resource.node, multiSelectStore);
-      const result = await editor.run(e.detail.action, e.detail.data);
-      if (result) {
-        if (e.detail.action === "unlink") {
-          $node.links = $node.links?.filter(
-            (x) => !items.some(resourceInList(x.linkedTo))
-          );
-        }
-        await refresh();
-      }
-    } catch (e) {
-      toasts.error("Failed to perform bulk action");
-    }
   }
 
   // $: console.log({ all, _links, filtered, nodeLinks: $node.links });
@@ -427,13 +457,4 @@
       />
     {/if}
   </div>
-  {#if $multiSelectStore.length > 0}
-    <BottomFloat class="!mb-3" zIndex="z-30">
-      <BulkEditBar
-        context={multiSelectContext}
-        on:selectAll={onSelectAll}
-        on:action={onBulkAction}
-      />
-    </BottomFloat>
-  {/if}
 </div>

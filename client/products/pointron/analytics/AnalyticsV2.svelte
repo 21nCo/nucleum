@@ -9,7 +9,10 @@
   import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import { TextStyle } from "@21n/types/text.enum";
   import { onMount } from "svelte";
-  import { analyticsConfigStore, selectedPageId } from "@21n/products/pointron/analytics/analytics.store";
+  import {
+    analyticsConfigStore,
+    selectedPageId
+  } from "@21n/products/pointron/analytics/analytics.store";
   import AnalyticsPageView from "@21n/products/pointron/analytics/page/AnalyticsPageView.svelte";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
@@ -22,14 +25,8 @@
   } from "@21n/products/pointron/analytics/analytics.utils";
   import { confirmationNotification } from "@21n/stores/notification.store";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
-  import {
-    uiState,
-    uiStateDerived
-  } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { bg, cn } from "@21n/utils/ui.utils";
   import { Product } from "@21n/products/product.type";
 
@@ -102,7 +99,7 @@
         <div class="flex overflow-hidden w-full">
           <div class="overflow-x-auto w-full">
             <PanelSwitcher
-              title={isNucleusContext ? "Focus analytics" : "Overview"}
+              title={isNucleusContext ? "Focus" : "Overview"}
               items={pages}
               style={PanelSwitcherStyle.BAR}
               isExpandToFullWidth={true}

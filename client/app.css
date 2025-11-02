@@ -50,6 +50,15 @@ blockquote {
 
 @layer base {
   /* @font-face {
+    font-family: 'Twenty One Native';
+    src: url('/fonts/Twenty One Native.woff2') format('woff2'),
+         url('/fonts/Twenty One Native.woff') format('woff');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+  } */
+
+  /* @font-face {
         font-family: 'Space Grotesk';
         src: url('fonts/SpaceGrotesk.ttf');
     } */
@@ -170,7 +179,7 @@ blockquote {
   }
 
   .default-typeface {
-    font-family: "Sen", "Hanken Grotesk", system-ui, sans-serif;
+    font-family: "Twenty One Native-", "Sen", "Hanken Grotesk", system-ui, sans-serif;
   }
 
   .selectable {
@@ -221,6 +230,17 @@ blockquote {
     );
   }
 
+  .bg-bgs1-striped {
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(var(--colors-bgs3), 0.65) 0px,
+      rgba(var(--colors-bgs3), 0.65) 1px,
+      transparent 1px,
+      transparent 2px
+    );
+    background-size: 2.83px 2.83px; /* √(2²+2²) for 45deg angle */
+  }
+
   .bg-bgs2-striped {
     background: repeating-linear-gradient(
       45deg,
@@ -229,6 +249,7 @@ blockquote {
       transparent 1px,
       transparent 2px
     );
+    background-size: 2.83px 2.83px;
   }
 
   .bg-bgs3-striped {
@@ -239,6 +260,7 @@ blockquote {
       transparent 1px,
       transparent 2px
     );
+    background-size: 2.83px 2.83px;
   }
 
   .bg-aps2-striped, .bg-aps3-striped {
@@ -250,5 +272,6 @@ blockquote {
       transparent 1px,
       transparent 2px
     );
+    background-size: 2.83px 2.83px; /* √(2²+2²) for 135deg angle */
   }
 }

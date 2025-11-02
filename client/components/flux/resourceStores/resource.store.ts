@@ -39,56 +39,11 @@ import { FluxMethod } from "@21n/components/flux/flux.type";
 import { generateResourceId } from "@21n/components/flux/flux.utils";
 import { toasts } from "@21n/stores/notification.store";
 import { logger } from "@21n/components/debug/logger.client";
-import {
-  determineResourceAccessMode,
-  isSameResource,
-  resourceInList
-} from "@21n/components/flux/resourceStores/resource.utils";
+import { determineResourceAccessMode } from "@21n/components/flux/resourceStores/resource.utils";
 import { GlobalEvent } from "@21n/types/event.enum";
 import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-import { stringify } from "@21n/shared-utils/json.utils";
-
 const activeResources = new Map<string, ActiveResourceStore<any, any, any>>();
 export const resourceStores = new Map<Resource, ResourceStore<any, any>>();
-
-const multiSelectStores = new Map<string, MultiSelectStore>();
-
-export function resolveMultiSelectStore(context: IMultiSelectContext) {
-  const contextStr = stringify(context, { isPreventReplacer: true });
-  if (!multiSelectStores.has(contextStr))
-    multiSelectStores.set(contextStr, new MultiSelectStore(context));
-  return multiSelectStores.get(contextStr)!;
-}
-
-export class MultiSelectStore
-  extends ObservableStore<IRecordId[]>
-  implements IMultiSelectStore
-{
-  context: IMultiSelectContext;
-  constructor(context: IMultiSelectContext) {
-    super(stringify(context, { isPreventReplacer: true }), StoreDataType.NA);
-    this.context = context;
-    this.set([]);
-  }
-
-  reset() {
-    this.set([]);
-  }
-
-  clickHandler(id: IRecordId) {
-    let current = this.get();
-    if (current.length > 0) {
-      const isSelected = current.some(resourceInList(id));
-      if (isSelected) {
-        current = current.filter((x) => !isSameResource(x, id));
-        this.set(current);
-        return true;
-      }
-      this.set([...current, id]);
-      return true;
-    }
-  }
-}
 
 // export const selectedResources = writable<string[]>([]);
 

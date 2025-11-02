@@ -23,6 +23,7 @@ export type IAnalyticsCard = {
   type: AnalyticsCardType;
   period: TimePeriod;
   isGroupByTopLevelGoals?: boolean;
+  stackedBarMode?: "value" | "percentage";
 };
 
 export enum AnalyticsCardGrouping {
@@ -49,7 +50,12 @@ export enum AnalyticsCardType {
   AREA = "area",
   TOP_N = "top_n",
   TARGETS = "targets",
-  METRICS = "metrics"
+  METRICS = "metrics",
+  CALENDAR = "calendar",
+  HOURLY = "hourly",
+  SUNBURST = "sunburst",
+  TREEMAP = "treemap",
+  HOURLY_HEATMAP = "hourly_heatmap"
 }
 
 export type AnalyticsDataRecord = {

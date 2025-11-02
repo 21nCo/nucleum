@@ -1,4 +1,3 @@
-import { ObservableStore } from "@21n/stores/client.store";
 import {
   EmbedDataMessage,
   type EmbedMessage
@@ -6,13 +5,15 @@ import {
 import { postDataToParent } from "@21n/utils/embed.utils";
 import { wait } from "@21n/utils/time.utils";
 import type { IEmbedChannel } from "@21n/components/embed/embed.type";
+import { get, writable } from "svelte/store";
 
-class EmbedBridge extends ObservableStore<IEmbedChannel> {
-  constructor() {
-    super("embedBridge");
-    this.set({});
-  }
+const subject = writable<IEmbedChannel>({});
 
+export const embedBridge = {
+  get: () => get(subject),
+  subscribe: subject.subscribe,
+  update: subject.update,
+  set: subject.set,
   async fetch(id: string, type: EmbedMessage, body: any) {
     const store = this.get();
     let item = store[id];
@@ -38,13 +39,11 @@ class EmbedBridge extends ObservableStore<IEmbedChannel> {
 
     if (!item) return;
     return item.data;
-  }
+  },
 
   setData(id: string, type: EmbedMessage, data: any) {
     const store = this.get();
     store[id] = { type, data };
-    this.set(store);
+    subject.set(store);
   }
-}
-
-export const embedBridge = new EmbedBridge();
+};

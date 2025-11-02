@@ -1,9 +1,6 @@
 <script lang="ts">
   import { Orientation, Placement } from "@21n/types/direction.enum";
-  import type {
-    ISelectItem,
-    ISelectValue
-  } from "@21n/types/select.type";
+  import type { ISelectItem, ISelectValue } from "@21n/types/select.type";
   import { Size } from "@21n/types/size.enum";
   import { VerticalSwitcherStyle } from "@21n/types/switcher.enum";
   import { cn } from "@21n/utils/ui.utils";

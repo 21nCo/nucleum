@@ -10,7 +10,10 @@ import {
   determineTimePeriodv2
 } from "@21n/utils/time.utils";
 import { get } from "svelte/store";
-import { analyticsConfigStore, selectedPageId } from "@21n/products/pointron/analytics/analytics.store";
+import {
+  analyticsConfigStore,
+  selectedPageId
+} from "@21n/products/pointron/analytics/analytics.store";
 import {
   AnalyticsCardGrouping,
   AnalyticsCardType,
@@ -144,6 +147,19 @@ export function generateAnalyticsSeedPages() {
             param: -14
           }
         }
+      },
+      {
+        id: generateSimpleRandomId(),
+        grouping: AnalyticsCardGrouping.DEFAULT,
+        filter: [],
+        type: AnalyticsCardType.CALENDAR,
+        period: {
+          scale: TimeScale.YEARS,
+          value: {
+            type: TimePeriodType.RELATIVE,
+            param: 0
+          }
+        }
       }
     ]
   };
@@ -213,6 +229,19 @@ export function generateAnalyticsSeedPages() {
           value: {
             type: TimePeriodType.RELATIVE,
             param: -14
+          }
+        }
+      },
+      {
+        id: generateSimpleRandomId(),
+        grouping: AnalyticsCardGrouping.DEFAULT,
+        filter: [],
+        type: AnalyticsCardType.HOURLY,
+        period: {
+          scale: TimeScale.DAYS,
+          value: {
+            type: TimePeriodType.RELATIVE,
+            param: -7
           }
         }
       }
@@ -385,6 +414,17 @@ export function generateAnalyticsSeedPage(): AnalyticsPage {
           value: {
             type: TimePeriodType.RELATIVE,
             param: -14
+          }
+        }
+      },
+      {
+        id: generateSimpleRandomId(),
+        type: AnalyticsCardType.CALENDAR,
+        period: {
+          scale: TimeScale.YEARS,
+          value: {
+            type: TimePeriodType.RELATIVE,
+            param: 0
           }
         }
       }

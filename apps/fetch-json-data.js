@@ -32,7 +32,7 @@ export default function fetchJsonPlugin(outputPath) {
     name: "vite-plugin-fetch-json",
     configResolved(config) {
       const env = loadEnv(config.mode, process.cwd(), "");
-      const baseUrl = env.VITE_STATIC_URL || "";
+      const baseUrl = env.VITE_STATIC_URL || "https://cdn.21n.org";
       const envMode = env.VITE_ENV || "live";
       const product = env.VITE_PRODUCT || "nucleus";
       url = `${baseUrl}/${product}/${envMode}.json`;
