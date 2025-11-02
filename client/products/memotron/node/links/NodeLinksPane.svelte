@@ -337,8 +337,8 @@
    * @param e
    */
   function onClick(e: CustomEvent) {
-    const editor = resolveBulkEditorInstance();
-    const result = editor.clickHandler(e.detail.id);
+    resolveBulkEditorInstance();
+    const result = bulkEditStore.clickHandler(e.detail.id);
     if (!result) appStore.resourceClickHandler(e.detail.event, e.detail.id);
   }
 

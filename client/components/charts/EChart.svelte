@@ -147,6 +147,18 @@
     return normalizeColor(currentColors?.bgs2) ?? "rgba(17, 24, 39, 0.9)";
   }
 
+  function escapeHtml(text: string): string {
+    const htmlEscapes: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#x27;",
+      "/": "&#x2F;"
+    };
+    return String(text).replace(/[&<>"'\/]/g, (match) => htmlEscapes[match] || match);
+  }
+
   type BarDisplayMode = "value" | "percentage";
 
   function roundToTwoDecimals(value: number) {
@@ -322,18 +334,19 @@
         formatter: (params: any) => {
           if (!Array.isArray(params)) return "";
           const [first] = params;
-          const header = first?.axisValueLabel ?? "";
+          const header = escapeHtml(first?.axisValueLabel ?? "");
           const sorted = sortTooltipByValue(params);
           const body = filterZeroValues(sorted)
             .map((param: any) => {
               const rawValue = param?.data?.rawValue ?? param?.value;
               const rounded = roundToTwoDecimals(rawValue);
-              const formattedRaw = formatTooltipValue(rounded);
+              const formattedRaw = escapeHtml(formatTooltipValue(rounded));
+              const seriesName = escapeHtml(param.seriesName ?? "");
               if (usePercentage) {
                 const percentage = param?.data?.percentage ?? param?.value;
-                return `${param.marker} ${param.seriesName}: ${formattedRaw} (${Number(percentage).toFixed(1)}%)`;
+                return `${param.marker} ${seriesName}: ${formattedRaw} (${Number(percentage).toFixed(1)}%)`;
               }
-              return `${param.marker} ${param.seriesName}: ${formattedRaw}`;
+              return `${param.marker} ${seriesName}: ${formattedRaw}`;
             })
             .join("<br/>");
           return header ? `${header}<br/>${body}` : body;
@@ -743,10 +756,11 @@
         },
         formatter: (params: any) => {
           const value = roundToTwoDecimals(params.value ?? 0);
-          const formattedValue = formatTooltipValue(value);
+          const formattedValue = escapeHtml(formatTooltipValue(value));
+          const name = escapeHtml(params.name ?? "");
           const percent =
             total > 0 ? ((params.value / total) * 100).toFixed(1) : "0";
-          return `${params.marker} ${params.name}<br/>Focus: ${formattedValue} (${percent}%)`;
+          return `${params.marker} ${name}<br/>Focus: ${formattedValue} (${percent}%)`;
         }
       },
       series: [
@@ -763,7 +777,7 @@
             rotate: "radial",
             minAngle: 10,
             formatter: (params: any) => {
-              const name = truncateText(params.name, 15);
+              const name = escapeHtml(truncateText(params.name ?? "", 15));
               return name;
             }
           },
@@ -796,7 +810,7 @@
                   if (percent < 2) {
                     return "";
                   }
-                  const name = truncateText(params.name, 20);
+                  const name = escapeHtml(truncateText(params.name ?? "", 20));
                   return name;
                 }
               }
@@ -1360,12 +1374,13 @@
             typeof params?.value === "number"
               ? roundToTwoDecimals(params.value)
               : (params?.value ?? 0);
-          const value = formatTooltipValue(rawValue);
+          const value = escapeHtml(formatTooltipValue(rawValue));
+          const name = escapeHtml(params.name ?? "");
           const percent =
             typeof params?.percent === "number"
               ? `${params.percent.toFixed(1)}%`
               : "";
-          return `${params.marker} ${params.name}: ${value}${percent ? ` (${percent})` : ""}`;
+          return `${params.marker} ${name}: ${value}${percent ? ` (${percent})` : ""}`;
         }
       },
       legend: showLegend

@@ -979,11 +979,10 @@ export class BulkEditor {
           break;
         case "setDate":
           return `Date changed for ${itemsLabel} successfully`;
-          break;
         case "moveToToday":
           return `Moved ${itemsLabel} to today`;
       }
-      return `${prefix} ${itemsLabel} successfully updated`;
+      return `${prefix} ${itemsLabel} successfully ${!prefix ? "updated" : ""}`;
     }
   }
 }

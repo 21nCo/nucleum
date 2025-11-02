@@ -35,11 +35,17 @@
   $: timelinePanelSubItems = resolveTimelinePanelSubItems($appStore.product);
 
   function resolveTimlinePanelSelection() {
-    return (
-      uiState.getState(UIState.calendarDayTimelinePanelSelection, {
+    const persistedValue = uiState.getState(
+      UIState.calendarDayTimelinePanelSelection,
+      {
         scope: UIStateScope.DEVICE
-      }) ?? "tasks"
+      }
     );
+    const supportedValues = ["tasks", "events"];
+    if (persistedValue && supportedValues.includes(persistedValue)) {
+      return persistedValue;
+    }
+    return "tasks";
   }
 
   function refreshShowCompletedTasksState() {

@@ -21,7 +21,7 @@
 
 <button
   class={cn(
-    "flex items-center h-full w-fit border-r border-brs3 hover:bg-bgs3-striped",
+    "group flex items-center h-full w-fit border-r border-brs3 hover:bg-bgs3-striped",
     {
       "px-[0.72rem]": isHideMenuLabels,
       "px-[1.72rem]": !isHideMenuLabels
@@ -31,18 +31,17 @@
 >
   {#if isRenderProfilePicture}
     <div class="px-1">
-      <button
+      <div
         class={cn("flex items-center gap-2 rounded-full overflow-hidden", {
-          "outline outline-ags1 hover:outline-ags2": isSubscriber,
-          "hover:outline hover:outline-brs3": !isSubscriber
+          "outline outline-ags1 group-hover:brightness-110": isSubscriber,
+          "hover:outline group-hover:outline-brs3": !isSubscriber
         })}
         use:tooltip={{
           text: "Account & settings"
         }}
-        on:click={() => appStore.runAction(Action.SETTINGS)}
       >
         <ProfilePicture context="topbar" />
-      </button>
+      </div>
     </div>
   {:else}
     <div class="opacity-50">

@@ -32,7 +32,7 @@
   const dispatch = createEventDispatcher();
 
   export let scale: TimeScaleUnit;
-  export let viewScale: TimeScaleUnit;
+  export let viewScale: TimeScaleUnit = TimeScaleUnit.DAY;
   export let date: Date;
   export let expansionMode: CalendarExpansionMode =
     CalendarExpansionMode.JOURNAL;
