@@ -172,24 +172,6 @@
       on:keydown
       tabindex="0"
     >
-      <!-- {#if alignment === Placement.Right}
-        <div
-          class="popover-container fixed right-8 w-72 bg-bgs2 z-50 rounded-md overflow-y-auto"
-          style="height: 90%; top: 5%;"
-        >
-          {#if title}
-            <ModalHeader {title} />
-            on:click={() => {
-              show = false;
-            }}
-            />
-          {/if}
-          <div class="popover-body h-full w-full p-4 overflow-y-auto pb-40">
-            <ColorLayer>
-              <slot />
-            </ColorLayer>
-          </div>
-        </div> -->
       {#if isUseDialog}
         <dialog
           bind:this={dialog}
@@ -226,7 +208,7 @@
               "portrait:w-full": size !== Size.xs && size !== Size.sm
             },
             !$view.isConstrainedWidth && {
-              "shadow-xl cw:border-none border border-brs3": !isShowOverlay,
+              "shadow-xl cw:border-none dark:border-none border border-brs3": !isShowOverlay,
               "w-fit h-fit": isDynamicSize,
               "m-auto": alignment === Placement.Center || !alignment,
               "mx-auto":

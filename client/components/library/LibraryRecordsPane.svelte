@@ -12,11 +12,8 @@
     ResourceAccessPointState,
     ResourceActionType
   } from "@21n/components/flux/resourceStores/resource.type";
-  import BulkEditBar from "@21n/components/record/BulkEditBar.svelte";
-  import {
-    BulkEditor,
-    SearchStore
-  } from "@21n/components/record/record.store";
+  import { BulkEditor, SearchStore } from "@21n/components/record/record.store";
+  import { bulkEditStore } from "@21n/components/record/bulkedit.store";
 
   import LibrarySearchBox from "@21n/components/library/LibrarySearchBox.svelte";
   import {
@@ -34,6 +31,7 @@
     PersistenceActionType,
     RemovalProperty,
     type IMutationParamsv2,
+    type IRecordId,
     type IResourceSelectOrderBy
   } from "@21n/types/data.type";
   import LibraryLoadingPulse from "@21n/components/library/LibraryLoadingPulse.svelte";
@@ -46,9 +44,7 @@
   import InlineSyncingFeedback from "@21n/elements/feedback/InlineSyncingFeedback.svelte";
   import { enumToString } from "@21n/shared-utils/text.utils";
   import Toggle from "@21n/elements/toggle/Toggle.svelte";
-  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
   import { toasts } from "@21n/stores/notification.store";
-  import BottomFloat from "@21n/elements/BottomFloat.svelte";
   import { onDestroy, onMount, tick } from "svelte";
   import { page } from "$app/stores";
   import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
@@ -110,18 +106,27 @@
   let subTypeSwitcherRef: LibrarySubTypeSwitcher;
   let abortController: AbortController | null = null;
   let isInSelectionMode = false;
+  let bulkEditChangeUnsub: (() => void) | undefined;
 
   $: multiSelectContext = {
     resource,
     accessPoint
   };
-  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
+
+  $: if (bulkEditStore.matchesContext(multiSelectContext)) {
+    resolveBulkEditorInstance();
+  }
 
   $: isCustom = isCustomLibrary(resource);
   $: hasChildren = [Resource.node, Resource.goal].includes(resource);
 
   let pageSub: any;
   onMount(async () => {
+    bulkEditChangeUnsub = bulkEditStore.count.subscribe((count) => {
+      if (count === 0) {
+        isInSelectionMode = false;
+      }
+    });
     if (isCustom) return;
     abortController = new AbortController();
     pageSub = page.subscribe(async (p) => {
@@ -161,18 +166,40 @@
     if (refreshResetTimeout) {
       clearTimeout(refreshResetTimeout);
     }
+    if (bulkEditChangeUnsub) bulkEditChangeUnsub();
+    if (bulkEditStore.matchesContext(multiSelectContext)) {
+      bulkEditStore.clear();
+    }
   });
 
+  function resolveBulkEditSubContext() {
+    return (
+      selectedSubType +
+      (isStarFilterSelected ? "starred" : "") +
+      (isArchivedFilterSelected ? "archived" : "")
+    );
+  }
+
+  function resolveBulkEditorInstance() {
+    bulkEditStore.activate(multiSelectContext, {
+      onAction: onBulkAction,
+      onSelectAll: onSelectAll,
+      subContext: resolveBulkEditSubContext()
+    });
+  }
+
   function onSelectAll() {
-    $multiSelectStore = data.map((x) => x.id);
+    return data.map((x) => x.id);
   }
 
   async function onBulkAction(
-    e: CustomEvent<{ action: string; data?: unknown }>
+    ids: IRecordId[],
+    action: string,
+    actionData?: unknown
   ) {
     try {
-      const editor = new BulkEditor(resource, multiSelectStore);
-      await editor.run(e.detail.action, e.detail.data);
+      const editor = new BulkEditor(resource, bulkEditStore);
+      await editor.run(action, actionData);
     } catch (e) {
       toasts.error("Failed to perform bulk action");
     }
@@ -655,14 +682,22 @@
           selectableSelector: "div[id^='thumbnail-']",
           containerId: "records-container",
           onSelectionChange: (elements, ids) => {
+            resolveBulkEditorInstance();
+            if (!ids || ids.length === 0) {
+              bulkEditStore.reset();
+              isInSelectionMode = false;
+              return;
+            }
+            const state = bulkEditStore.getState();
             if (isInSelectionMode) {
-              $multiSelectStore = [
-                ...new Set([...($multiSelectStore ?? []), ...ids])
-              ];
+              bulkEditStore.select([
+                ...new Set([...state.selectedIds, ...ids])
+              ]);
             } else {
               isInSelectionMode = true;
-              $multiSelectStore = ids;
+              bulkEditStore.select(ids);
             }
+            isInSelectionMode = bulkEditStore.getState().selectedIds.length > 0;
           }
         }}
       >
@@ -727,20 +762,6 @@
       />
     {/if}
   </div>
-  {#if $multiSelectStore.length > 0}
-    <BottomFloat zIndex="z-30">
-      <BulkEditBar
-        isExpandedMode={!$view.isConstrainedWidth &&
-          accessPoint !== ResourceAccessPoint.BROWSER}
-        context={multiSelectContext}
-        subContext={selectedSubType +
-          (isStarFilterSelected ? "starred" : "") +
-          (isArchivedFilterSelected ? "archived" : "")}
-        on:selectAll={onSelectAll}
-        on:action={onBulkAction}
-      />
-    </BottomFloat>
-  {/if}
 {/if}
 
 <ComponentBaseLayer

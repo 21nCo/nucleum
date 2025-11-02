@@ -8,5 +8,9 @@ export enum ChartType {
   CALENDARHEATMAP = "calendarheatmap",
   STACKEDBAR = "stackedbar",
   STACKEDAREA = "stackedarea",
-  GUAGE = "guage"
+  GUAGE = "guage",
+  CALENDAR = "calendar",
+  HOURLY = "hourly",
+  SUNBURST = "sunburst",
+  HOURLY_HEATMAP = "hourly_heatmap"
 }

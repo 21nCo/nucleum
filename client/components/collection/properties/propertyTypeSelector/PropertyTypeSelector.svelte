@@ -50,34 +50,12 @@
       mode: PropertyTypeMode.AUTO
     },
     {
-      id: PropertyTypeGroup.DETECTION,
-      label: "Auto detection",
-      info: {
-        body: "Property values are automatically detected during creation.",
-        size: Size.xs
-      },
-      order: 2,
-      mode: PropertyTypeMode.AUTO
-    },
-    {
       id: PropertyTypeGroup.RULE_BASED,
       label: "Rule based",
       order: 0,
       badge: "Planned",
       isDisabled: true,
       mode: PropertyTypeMode.AUTO
-    },
-    {
-      id: PropertyTypeGroup.INTEGRATION,
-      label: "Integration",
-      info: {
-        body: "Property values are automatically populated from external sources.",
-        size: Size.xs
-      },
-      order: 3,
-      mode: PropertyTypeMode.AUTO,
-      badge: "Planned",
-      isDisabled: true
     }
   ];
   const options: DropdownItem[] = [...propertyOptions, ...autoPropertyOptions];

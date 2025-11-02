@@ -8,8 +8,15 @@
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { Size } from "@21n/types/size.enum";
   import FileView from "@21n/components/files/FileView.svelte";
-  import { NodeType, type INode, type INodeThumb } from "@21n/products/memotron/node/node.type";
-  import { resolveNodeContentLabel, resolveNodeIcon } from "@21n/products/memotron/node/node.utils";
+  import {
+    NodeType,
+    type INode,
+    type INodeThumb
+  } from "@21n/products/memotron/node/node.type";
+  import {
+    resolveNodeContentLabel,
+    resolveNodeIcon
+  } from "@21n/products/memotron/node/node.utils";
   import type {
     IPasteCaptureData,
     IMultiFileCaptureData
@@ -28,10 +35,7 @@
   import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
   import ButtonGroup from "@21n/elements/button/ButtonGroup.svelte";
   import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
-  import {
-    AlertType,
-    type IInlineStatus
-  } from "@21n/types/notification.type";
+  import { AlertType, type IInlineStatus } from "@21n/types/notification.type";
   import LinkBoxOnSaver from "@21n/products/memotron/capture/LinkBoxOnSaver.svelte";
   import {
     getSheetNodeByUrl,
@@ -509,6 +513,7 @@
       {#if !$context.isStandaloneSheet}
         <div class="mt-auto">
           <ButtonGroup
+            isFooter={true}
             buttons={[
               {
                 label: "Open",

@@ -69,22 +69,14 @@ export const autoPropertyOptions = [
   //   badge: "Planned",
   //   isDisabled: true
   // },
-  {
-    label: "Calendar events",
-    icon: "calendar",
-    value: PropertyType.CALENDAR_EVENT,
-    isDisabled: true,
-    badge: "Planned",
-    groupId: PropertyTypeGroup.SYSTEM
-  },
-  {
-    label: "Links count",
-    icon: "link",
-    value: PropertyType.LINKS_COUNT,
-    isDisabled: true,
-    badge: "Planned",
-    groupId: PropertyTypeGroup.SYSTEM
-  },
+  // {
+  //   label: "Links count",
+  //   icon: "link",
+  //   value: PropertyType.LINKS_COUNT,
+  //   isDisabled: true,
+  //   badge: "Planned",
+  //   groupId: PropertyTypeGroup.SYSTEM
+  // },
   {
     label: "Formula",
     icon: "formula",
@@ -110,38 +102,17 @@ export const autoPropertyOptions = [
     label: "Colors",
     icon: "palette",
     value: PropertyType.COLORS,
-    groupId: PropertyTypeGroup.DETECTION,
+    groupId: PropertyTypeGroup.SYSTEM,
     tooltip: "Detects colors from an image node."
-  },
-  {
-    label: "Scene",
-    icon: "image",
-    value: PropertyType.SCENE,
-    isDisabled: true,
-    badge: "Planned",
-    groupId: PropertyTypeGroup.DETECTION
-  },
-  {
-    label: "Time tracking [Pointron]",
-    icon: "timer",
-    value: PropertyType.TIME_TRACKING,
-    isDisabled: true,
-    groupId: PropertyTypeGroup.INTEGRATION
-  },
-  {
-    label: "Goal [Pointron]",
-    icon: "target",
-    value: PropertyType.GOAL,
-    isDisabled: true,
-    groupId: PropertyTypeGroup.INTEGRATION
-  },
-  {
-    label: "Git",
-    icon: "git-branch",
-    value: PropertyType.GIT,
-    isDisabled: true,
-    groupId: PropertyTypeGroup.INTEGRATION
   }
+  // {
+  //   label: "Scene",
+  //   icon: "image",
+  //   value: PropertyType.SCENE,
+  //   isDisabled: true,
+  //   badge: "Planned",
+  //   groupId: PropertyTypeGroup.SYSTEM
+  // }
 ];
 
 export const universalPropertyOptions = [
@@ -256,22 +227,6 @@ export const propertyOptions = [
     label: "Checkbox",
     icon: "check-square-offset",
     value: PropertyType.CHECKBOX,
-    groupId: PropertyTypeGroup.WIZARD
-  },
-  {
-    label: "Link list",
-    icon: "tree-view",
-    value: PropertyType.LINK_LIST,
-    badge: "Planned",
-    isDisabled: true,
-    groupId: PropertyTypeGroup.WIZARD
-  },
-  {
-    label: "Attachement(s)",
-    icon: "upload",
-    value: PropertyType.FILE,
-    badge: "Planned",
-    isDisabled: true,
     groupId: PropertyTypeGroup.WIZARD
   }
 ];

@@ -8,10 +8,7 @@
   import type { ISelectItem } from "@21n/types/select.type";
   import { CalendarLayout } from "@21n/components/calendar/calendar.type";
   import { uiState } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import Text from "@21n/elements/text/Text.svelte";
   import { TextStyle } from "@21n/types/text.enum";
   import { appStore } from "@21n/stores/app.store";
@@ -23,6 +20,7 @@
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { page } from "$app/stores";
   import BackButton from "@21n/elements/button/BackButton.svelte";
+  import BoxSwitcher from "@21n/elements/switcher/BoxSwitcher.svelte";
   export let panel: CalendarLayout = CalendarLayout.Classic;
   const dispatch = createEventDispatcher();
   const panelOptions: ISelectItem[] = [
@@ -47,36 +45,33 @@
 </script>
 
 <div class="flex flex-col h-full w-full otop:pt-12">
-  <div
-    class="flex items-center gap-4 border-b border-brs3 h-[3.2rem] 2k:h-14 px-4"
-  >
-    <header class="grid grid-cols-3 w-full sticky top-0 z-10">
-      <div class="flex items-center gap-4">
-        <BackButton
-          isEnabled={backPath !== null}
-          isPreventDefault={true}
-          on:click={() => {
-            if (backPath) appStore.gotoPath(backPath);
-          }}
-        >
-          {#if $appStore.product === Product.NUCLEUS && dev_enableBirdView}
-            <PanelSwitcher
-              items={panelOptions}
-              bind:value={panel}
-              style={PanelSwitcherStyle.TRAIN}
-              size={Size.sm}
-              activeItemStrength={PanelSwitcherActiveItemStrength.STRONG}
-              on:switch={onPanelSwitch}
+  <div class="flex items-center gap-4 border-b border-brs3 h-12 px-4">
+    <header class="grid grid-cols-3 w-full sticky top-0 z-10 h-full">
+      <div class="flex items-center gap-4 h-full">
+        {#if $appStore.product === Product.NUCLEUS && dev_enableBirdView}
+          <div class="h-full">
+            <BoxSwitcher
+              options={panelOptions}
+              bind:selected={panel}
+              on:select={onPanelSwitch}
             />
-          {:else}
+          </div>
+        {:else}
+          <BackButton
+            isEnabled={backPath !== null}
+            isPreventDefault={true}
+            on:click={() => {
+              if (backPath) appStore.gotoPath(backPath);
+            }}
+            class="h-full"
+          >
             <Text content="Calendar" style={TextStyle.PANEL_HEADING_SMALL} />
-          {/if}
-        </BackButton>
+          </BackButton>
+        {/if}
         <slot name="header-left-options" />
       </div>
       <slot name="header" />
-      <div class="flex gap-2 justify-end items-center">
-        <slot name="header-right-options" />
+      <div class="flex gap-2 justify-end items-center h-full w-full">
         <Button
           type={ButtonVariant.SECONDARY}
           style={ButtonStyle.OUTLINED}
@@ -88,6 +83,7 @@
             dispatch("goToToday");
           }}
         />
+        <slot name="header-right-options" />
         <Button
           type={ButtonVariant.SECONDARY}
           style={ButtonStyle.OUTLINED}

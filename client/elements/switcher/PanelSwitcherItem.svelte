@@ -103,9 +103,11 @@
     </div>
     {#if isActive && (barStyle === BarStyle.UNDER || barStyle === BarStyle.DOT)}
       <div
-        class={cn("absolute bottom-0", {
-          "bg-ccs1 left-1/2 w-1 h-1 rounded-full": barStyle === BarStyle.DOT,
-          "border-b-2 border-ccs1 left-1/3 w-1/3": barStyle === BarStyle.UNDER
+        class={cn("absolute", {
+          "bottom-1 bg-ccs1 left-1/2 w-1 h-1 rounded-full":
+            barStyle === BarStyle.DOT,
+          "bottom-0 border-b-2 border-ccs1 left-1/3 w-1/3":
+            barStyle === BarStyle.UNDER
         })}
       />
     {/if}

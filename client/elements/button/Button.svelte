@@ -85,7 +85,7 @@
       "gap-2 text-b2 dp:text-base": size === Size.md,
       "gap-2 text-b3 dp:text-b2": size === Size.sm,
       "gap-1 text-b4 dp:text-b3": size === Size.xs,
-      "p-1.5 rounded-md": isIconOnlyButton,
+      "p-1.5 rounded-md": isIconOnlyButton && !isBoxed,
       "w-full h-full": isBoxed,
       "rounded-full": !isBoxed,
       [bg(parentBgIndex)]:

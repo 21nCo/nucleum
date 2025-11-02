@@ -117,7 +117,13 @@ export enum PropertyType {
   RATING = "rating",
   DATE = "date",
   RANGE = "range",
+  /**
+   * @deprecated - in favor of pinned links list
+   */
   LINK_LIST = "link-list",
+  /**
+   * @deprecated - in favor of links, embeds
+   */
   FILE = "file",
 
   // System properties
@@ -140,9 +146,21 @@ export enum PropertyType {
   SCENE = "scene",
 
   //Integration properties
+  /**
+   * @deprecated - in favor of synced collections, links
+   */
   TIME_TRACKING = "time-tracking",
+  /**
+   * @deprecated - in favor of synced collections, links
+   */
   CALENDAR_EVENT = "calendar-event",
+  /**
+   * @deprecated - in favor of synced collections, links
+   */
   GOAL = "goal",
+  /**
+   * @deprecated - in favor of synced collections, links
+   */
   GIT = "git"
 }
 

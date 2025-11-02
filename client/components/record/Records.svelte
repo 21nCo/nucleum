@@ -11,8 +11,7 @@
     ResourceAccessMode,
     ResourceAccessPointState
   } from "@21n/components/flux/resourceStores/resource.type";
-  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
-  import { appStore } from "@21n/stores/app.store";
+  import { bulkEditStore } from "@21n/components/record/bulkedit.store";
   import FileView from "@21n/components/files/FileView.svelte";
   import { createEventDispatcher } from "svelte";
   import type { INodeThumb } from "@21n/products/memotron/node/node.type";
@@ -28,6 +27,8 @@
   import type { IGoalThumb } from "@21n/components/goals/goal.type";
   import type { ITaskThumb } from "@21n/components/tasks/task.type";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
+  import { stringify } from "@21n/shared-utils/json.utils";
   const dispatch = createEventDispatcher();
   export let data: (
     | INodeThumb
@@ -53,17 +54,25 @@
     resource,
     accessPoint
   };
-  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
   function onClick(e: MouseEvent, item: any) {
     if (isPreventDefault) {
       dispatch("click", item);
       return;
     }
-    const result = multiSelectStore.clickHandler(item.id);
-    if (!result)
-      appStore.resourceClickHandler(e, item.id, {
-        defaultTo: defaultAccessMode
-      });
+    const state = bulkEditStore.getState();
+    const isMatchingContext = state.context
+      ? stringify(state.context, { isPreventReplacer: true }) ===
+        stringify(multiSelectContext, { isPreventReplacer: true })
+      : false;
+    const result = isMatchingContext
+      ? bulkEditStore.clickHandler(item.id)
+      : false;
+    if (!result) {
+      tabs.activate(item.id);
+      // appStore.resourceClickHandler(e, item.id, {
+      //   defaultTo: defaultAccessMode
+      // });
+    }
   }
 </script>
 

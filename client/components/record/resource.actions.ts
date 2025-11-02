@@ -1,9 +1,7 @@
 import { appStore, isInEditMode } from "@21n/stores/app.store";
 import type { IMemotronItemBase } from "@21n/products/memotron/memotron.type";
-import {
-  resolveMultiSelectStore,
-  ResourceStore
-} from "@21n/components/flux/resourceStores/resource.store";
+import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import { bulkEditStore } from "@21n/components/record/bulkedit.store";
 import { copyResourceLinkToClipboard } from "@21n/products/memotron/memotron.utils";
 import {
   ResourceAccessPoint,
@@ -12,7 +10,6 @@ import {
   type IResourceCaptureV2
 } from "@21n/components/flux/resourceStores/resource.type";
 import { uiState } from "@21n/stores/uiState/uiState.store";
-import { get } from "svelte/store";
 import {
   determineResourceAccessMode,
   determineResourceType,
@@ -21,10 +18,7 @@ import {
   resourceInList
 } from "@21n/components/flux/resourceStores/resource.utils";
 import { linker } from "@21n/products/memotron/linking/link.store";
-import {
-  ContextMenuType,
-  type IContextMenuItem
-} from "@21n/types/select.type";
+import { ContextMenuType, type IContextMenuItem } from "@21n/types/select.type";
 import type { IRecordId } from "@21n/types/data.type";
 import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
@@ -34,6 +28,7 @@ import { toasts } from "@21n/stores/notification.store";
 import { Action } from "@21n/types/action.enum";
 import { AppSearchParam } from "@21n/types/appStore.type";
 import { UIStateScope } from "@21n/stores/uiState/uiState.type";
+import { BulkEditor } from "@21n/components/record/record.store";
 
 export class ResourceActions<T extends IMemotronItemBase> {
   accessPoint?: ResourceAccessPoint;
@@ -175,20 +170,42 @@ export class ResourceActions<T extends IMemotronItemBase> {
       accessPoint,
       accessPointId
     };
-    const multiSelectStore = resolveMultiSelectStore(multiSelectContext);
+
+    const resolveEditor = () => {
+      if (!bulkEditStore.matchesContext(multiSelectContext)) {
+        bulkEditStore.activate(multiSelectContext, {
+          onAction: (ids, action, data) => {
+            const bulkEditor = new BulkEditor(
+              multiSelectContext.resource,
+              bulkEditStore
+            );
+            bulkEditor.run(action, data);
+          },
+          onSelectAll: () => bulkEditStore.getState().selectedIds,
+          subContext: accessPointId?.toString()
+        });
+      }
+    };
+
+    resolveEditor();
+    const state = bulkEditStore.getState();
+    const selectedItems = state.selectedIds;
     return {
-      label: get(multiSelectStore)?.some(resourceInList(this.resource.id))
+      label: selectedItems.some(resourceInList(this.resource.id))
         ? "Unselect"
         : "Select",
       value: ResourceActionType.SELECT,
       icon: "check-circle",
       callback: async () => {
-        if (get(multiSelectStore)?.some(resourceInList(this.resource.id))) {
-          multiSelectStore.update((x) =>
-            x.filter((y) => !isSameResource(y, this.resource.id))
+        resolveEditor();
+        const currentState = bulkEditStore.getState();
+        const currentSelection = currentState.selectedIds;
+        if (currentSelection.some(resourceInList(this.resource.id))) {
+          bulkEditStore.select(
+            currentSelection.filter((y) => !isSameResource(y, this.resource.id))
           );
         } else {
-          multiSelectStore.update((x) => [...x, this.resource.id]);
+          bulkEditStore.select([...currentSelection, this.resource.id]);
         }
       }
     };

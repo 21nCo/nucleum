@@ -16,6 +16,7 @@
   import { debouncer } from "@21n/utils/utils";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { resolveCalendarNotesId } from "@21n/components/calendar/calendar.utils";
+  import { properCase } from "@21n/shared-utils/text.utils";
 
   export let date: Date;
   export let scale: TimeScaleUnit;
@@ -78,12 +79,12 @@
           scale === TimeScaleUnit.DAY
             ? "verbose"
             : scale === TimeScaleUnit.MONTH
-              ? "mmm-yy"
+              ? "mmm-yyyy"
               : "yyyy"
         )}
         style={TextStyle.PANEL_HEADING_SMALL}
       />
-      <span class="text-b2 text-fgs3">| Notes </span>
+      <span class="text-b2 text-fgs3">| {properCase(scale)} Notes </span>
       <InlineFeedbackText {feedback} size={Size.sm} />
     </div>
     <div class="flex items-center">

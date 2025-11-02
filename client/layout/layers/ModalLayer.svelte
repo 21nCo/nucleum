@@ -34,15 +34,10 @@
   import { Action } from "@21n/types/action.enum";
   import { logger } from "@21n/components/debug/logger.client";
   import { cn } from "@21n/utils/ui.utils";
-  import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
-  import { AlertType } from "@21n/types/notification.type";
-  import TextInput from "@21n/elements/input/TextInput.svelte";
-  import Code from "@21n/icons/Code.svelte";
   import ConfirmationNotification from "@21n/components/notifications/ConfirmationNotification.svelte";
   import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
   let modals: ModalEvent[] = [];
   let dialogRef: HTMLDialogElement;
-  let isShowAppearancePreview: boolean = false;
   let fullscreen: string | undefined;
   let pop:
     | { path: string; resource: string; modalParams: ModalParams }
@@ -181,7 +176,7 @@
   </div>
 {/if} -->
 
-{#if !$view.isPortrait && (isValidArrayWithData($toasts) || $player.isMiniOn)}
+{#if !$view.isPortrait && $player.isMiniOn}
   <div
     class={cn(
       "fixed bottom-0 right-0 mb-6 mr-6 flex flex-col items-end gap-4",
@@ -191,13 +186,6 @@
       }
     )}
   >
-    {#if isValidArrayWithData($toasts)}
-      <div class="flex flex-col gap-3" transition:slide={{ duration: 200 }}>
-        {#each $toasts as toast}
-          <ToastNotification notification={toast} />
-        {/each}
-      </div>
-    {/if}
     {#if $player.isMiniOn}
       <!-- Opacity is used as `hidden` or svelte `#if` will impair associated PIP functionality -->
       <div class={cn("player", { "opacity-0": $fullScreen.path })}>

@@ -7,10 +7,7 @@
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
   import ResourceThumbnailBase from "@21n/components/record/thumbnail/ResourceThumbnailBase.svelte";
-  import {
-    compareDates,
-    parseAndFormatDate
-  } from "@21n/utils/time.utils";
+  import { compareDates, parseAndFormatDate } from "@21n/utils/time.utils";
   import TaskCheckbox from "@21n/components/tasks/TaskCheckbox.svelte";
   import { hoverable } from "@21n/actions/hover.action";
   import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
@@ -41,9 +38,10 @@
   import { appStore } from "@21n/stores/app.store";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
+  import { bulkEditStore } from "@21n/components/record/bulkedit.store";
   import Task from "@21n/components/tasks/Task.svelte";
   import context from "@21n/stores/context.store";
+  import { stringify } from "@21n/shared-utils/json.utils";
   const dispatch = createEventDispatcher();
   export let item: ITaskThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
@@ -74,7 +72,19 @@
     accessPoint,
     accessPointId
   };
-  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
+  let hasBulkSelection = false;
+  $: {
+    const state = bulkEditStore.getState();
+    if (
+      state.context &&
+      stringify(state.context, { isPreventReplacer: true }) ===
+        stringify(multiSelectContext, { isPreventReplacer: true })
+    ) {
+      hasBulkSelection = state.selectedIds.length > 0;
+    } else {
+      hasBulkSelection = false;
+    }
+  }
 
   const instanceId = generateMiniRandomId();
 
@@ -161,12 +171,14 @@
     />
   {/if}
   <div
-    class={cn("flex gap-2 items-center pr-1 pl-3 py-2 h-16 h--14 rounded-md", {
+    class={cn("flex gap-2 items-center pr-1 pl-3 py-2 rounded-md", {
       "m-4 min-w-[30rem]": accessPoint === ResourceAccessPoint.SELF,
-      "bg-bgs2 hover:bg-bgs2 border": accessPoint !== ResourceAccessPoint.SELF,
+      "hover:bg-bgs2 border": accessPoint !== ResourceAccessPoint.SELF,
       "border-aps1": isCurrentlyFocusing,
-      "border-brs2":
-        !isCurrentlyFocusing && accessPoint !== ResourceAccessPoint.SELF
+      "border-transparent hover:border-brs2":
+        !isCurrentlyFocusing && accessPoint !== ResourceAccessPoint.SELF,
+      "min-h-14 h-14": item.goal,
+      "min-h-10 h-10": !item.goal
     })}
     use:movingBorder={{
       speed: 4000,
@@ -183,7 +195,7 @@
     <div
       class={cn("flex", {
         "self-start": item.goal && accessPoint !== ResourceAccessPoint.GOAL,
-        "opacity-0": $multiSelectStore.length > 0
+        "opacity-0": hasBulkSelection
       })}
     >
       <TaskCheckbox
@@ -352,6 +364,7 @@
         {accessPointId}
         {arrangement}
         {isApplyCustomColor}
+        bgSize={Size.sm}
         on:action={onContextMenuAction}
         isInline={true}
       />

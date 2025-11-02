@@ -13,6 +13,7 @@
   import { isValidNumber } from "@21n/shared-utils/text.utils";
   const dispatch = createEventDispatcher();
   export let group: any;
+  export let index: number;
   export let isActive: boolean = false;
   export let isDefaultState: boolean = false;
   export let searchCallback: (query: string) => void;
@@ -37,10 +38,9 @@
 
 <div
   class={cn(
-    "flex flex-col rounded-md border bg-bgs1 min-h-96 grow overflow-y-auto",
+    "flex flex-col border-b border-brs1 bg-bgs1 min-h-96 grow overflow-y-auto",
     {
-      "border-brs3": isActive,
-      "border-transparent": !isActive
+      "border-r": index % 2 === 0
     }
   )}
 >
@@ -48,7 +48,7 @@
     class={cn(
       "flex items-center justify-between px-3 py-2 border-b min-h-11 h-11",
       {
-        "border-brs2 bg-aps3": isActive,
+        "border-brs2 bg-bgs2": isActive,
         "border-brs1": !isActive
       }
     )}
@@ -56,7 +56,7 @@
     <div
       class={cn("flex items-center gap-2", {
         "text-fgs3": !isActive,
-        "text-aps1": isActive
+        "text-fgs1": isActive
       })}
     >
       <Icon
@@ -64,7 +64,7 @@
         size={Size.sm}
         class={cn({
           "text-fgs2": !isActive,
-          "text-aps1": isActive
+          "text-fgs1": isActive
         })}
         isFilled={isActive}
       />
@@ -79,7 +79,6 @@
       <Button
         icon="expand"
         tooltip="Expand results"
-        type={isActive ? ButtonVariant.PRIMARY : ButtonVariant.SECONDARY}
         style={isActive ? ButtonStyle.OUTLINED : ButtonStyle.DEFAULT}
         size={isActive ? Size.sm : Size.md}
         on:click={() => dispatch("expand", { group })}

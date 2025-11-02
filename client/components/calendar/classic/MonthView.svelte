@@ -24,10 +24,12 @@
 
   $: isConstrainedWidth = containerWidth < 600;
 
-  let showMonthIndicators = preferences.resolve(Preference.CALENDAR_TILE_INDICATORS_MONTH) ?? true;
+  let showMonthIndicators =
+    preferences.resolve(Preference.CALENDAR_TILE_INDICATORS_MONTH) ?? true;
 
   const unsubscribe = preferences.subscribe((prefs) => {
-    showMonthIndicators = prefs[Preference.CALENDAR_TILE_INDICATORS_MONTH] ?? true;
+    showMonthIndicators =
+      prefs[Preference.CALENDAR_TILE_INDICATORS_MONTH] ?? true;
   });
 
   onDestroy(unsubscribe);
@@ -89,9 +91,14 @@
   }}
 >
   <div class="grid grid-cols-7 h-full grid-rows-[auto_1fr_1fr_1fr_1fr_1fr_1fr]">
-    {#each weekDays as day}
+    {#each weekDays as day, index}
       <div
-        class="p-2 text-b3 text-fgs3 text-center border-b border-r border-brs3"
+        class={cn(
+          "h-10 flex items-center justify-center text-b3 text-fgs3 text-center border-b border-r border-brs2",
+          {
+            "border-r-0": index === 6
+          }
+        )}
       >
         {day}
       </div>
@@ -103,10 +110,13 @@
       {@const isNotCurrentMonth = day.getMonth() !== selectedDate.getMonth()}
       <button
         class={cn(
-          "p-1.5 border-b border-r border-brs3 relative group flex flex-col items-start",
+          "p-1.5 border-b border-brs2 relative group flex flex-col items-start",
+          {
+            "border-r": (calendarDays.indexOf(day) + 1) % 7 !== 0
+          },
           {
             "bg-bgs2/50": isNotCurrentMonth,
-            "notouch:hover:bg-bgs2": !isToday && !isSelected,
+            "notouch:hover:bg-bgs2-striped": !isToday && !isSelected,
             "bg-ass3 text-ass1 notouch:hover:bg-ass2/10":
               isToday && !isSelected,
             "bg-aps3 text-aps1": isSelected

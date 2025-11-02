@@ -5,7 +5,7 @@
     type IMarkdown,
     type IMarkdownParams
   } from "@21n/components/markdown/md.type";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { createEventDispatcher, onDestroy, onMount } from "svelte";
   import Block from "@21n/components/markdown/Block.svelte";
   import {
     getMdStore,
@@ -39,14 +39,12 @@
   import { debouncer } from "@21n/utils/utils";
   import { toasts } from "@21n/stores/notification.store";
   import { dragSelection } from "@21n/actions/dragSelection.action";
-  import BottomFloat from "@21n/elements/BottomFloat.svelte";
-  import BulkEditBar from "@21n/components/record/BulkEditBar.svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
     ResourceAccessPoint,
     ResourceActionType
   } from "@21n/components/flux/resourceStores/resource.type";
-  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
+  import { bulkEditStore as globalBulkEditStore } from "@21n/components/record/bulkedit.store";
   import { generateResourceId } from "@21n/components/flux/flux.utils";
   import { ErrorMessage } from "@21n/components/error/error.type";
   import { resizeListener } from "@21n/actions/resize.action";
@@ -104,7 +102,20 @@
     accessPoint: ResourceAccessPoint.MARKDOWN,
     accessPointId: id
   };
-  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
+  let bulkSelection: IRecordId[] = [];
+  let bulkEditUnsub: (() => void) | undefined;
+  $: if (globalBulkEditStore.matchesContext(multiSelectContext)) {
+    resolveBulkEditorInstance();
+  } else {
+    bulkEditUnsub?.();
+    bulkEditUnsub = undefined;
+    if (bulkSelection.length > 0) {
+      bulkSelection = [];
+      isInSelectionMode = false;
+      isSelectionConsecutive = false;
+      keyboardToolbarPanelSelection = undefined;
+    }
+  }
 
   onMount(() => {
     const mdChangeSub = mdContentChangeEvent.subscribe((val) => {
@@ -118,9 +129,34 @@
     };
   });
 
+  onDestroy(() => {
+    bulkEditUnsub?.();
+    if (globalBulkEditStore.matchesContext(multiSelectContext)) {
+      globalBulkEditStore.clear();
+    }
+  });
+
   const dispatchDebouncedChangeEvent = debouncer(() => {
     dispatch("debouncedChange", md);
   }, 1000);
+
+  function resolveBulkEditorInstance() {
+    globalBulkEditStore.activate(multiSelectContext, {
+      onAction: handleBulkAction,
+      onSelectAll: selectAll,
+      subContext: id
+    });
+    if (!bulkEditUnsub) {
+      bulkEditUnsub = globalBulkEditStore.subscribe((value = []) => {
+        bulkSelection = value;
+        isInSelectionMode = bulkSelection.length > 0;
+        if (bulkSelection.length === 0) {
+          keyboardToolbarPanelSelection = undefined;
+          isSelectionConsecutive = false;
+        }
+      });
+    }
+  }
 
   function load(md: IMarkdown | undefined) {
     let isSeeded = false;
@@ -209,23 +245,19 @@
   }
   function handleReorderBlocksInSelectionMode(event: DragDropEvent) {
     let { toId } = event;
-    if ($multiSelectStore.length === 0 || !toId) {
+    if (bulkSelection.length === 0 || !toId) {
       return;
     }
-    if (
-      $multiSelectStore.some((selectedId) => selectedId === toId.toString())
-    ) {
+    if (bulkSelection.some((selectedId) => selectedId === toId.toString())) {
       return;
     }
     const selectedBlocks = $mdStore.blocks.filter((block) =>
-      $multiSelectStore.some((selectedId) => block.id.toString() === selectedId)
+      bulkSelection.some((selectedId) => block.id.toString() === selectedId)
     );
 
     let newBlocks = $mdStore.blocks.filter(
       (block) =>
-        !$multiSelectStore.some(
-          (selectedId) => block.id.toString() === selectedId
-        )
+        !bulkSelection.some((selectedId) => block.id.toString() === selectedId)
     );
 
     const newToIndex = newBlocks.findIndex(resourceInList(toId));
@@ -240,7 +272,7 @@
   }
 
   function resetSelection() {
-    $multiSelectStore = [];
+    globalBulkEditStore.reset();
     keyboardToolbarPanelSelection = undefined;
     isInSelectionMode = false;
     isSelectionConsecutive = false;
@@ -249,18 +281,16 @@
   function onBulkAction(action: BlockAction | ResourceActionType, data?: any) {
     try {
       if (action === BlockAction.DELETE) {
-        mdStore.deleteMany($multiSelectStore);
+        mdStore.deleteMany(bulkSelection);
         propagate("action", {
           action: BlockAction.DELETE_MANY,
-          source: $multiSelectStore
+          source: bulkSelection
         });
         resetSelection();
         return;
       }
       const selectedBlocks = $mdStore.blocks.filter((block) =>
-        $multiSelectStore.some(
-          (selectedId) => block.id.toString() === selectedId
-        )
+        bulkSelection.some((selectedId) => block.id.toString() === selectedId)
       );
       const blocksLengthText =
         selectedBlocks.length > 1
@@ -280,7 +310,7 @@
         mdStore.insertMany(lastSelectedBlock.id, duplicatedBlocks);
         propagate("action", {
           action: BlockAction.INSERT_MANY,
-          source: $multiSelectStore,
+          source: bulkSelection,
           blocks: duplicatedBlocks
         });
         resetSelection();
@@ -302,9 +332,17 @@
     }
   }
 
+  function handleBulkAction(
+    ids: IRecordId[],
+    action: BlockAction | ResourceActionType,
+    data?: unknown
+  ) {
+    onBulkAction(action, data);
+  }
+
   function refreshConsecutiveSelectionState() {
     try {
-      const selectedIndices = $multiSelectStore
+      const selectedIndices = bulkSelection
         .map((id) =>
           $mdStore.blocks.findIndex((block) => block.id.toString() === id)
         )
@@ -325,7 +363,7 @@
   }
 
   function selectAll() {
-    $multiSelectStore = $mdStore.blocks.map((b) => b.id.toString());
+    return $mdStore.blocks.map((b) => b.id.toString());
   }
 </script>
 
@@ -394,22 +432,29 @@
       draggedOverClass: "!border-b-aps1 !rounded-none",
       onDrop: onReorderBlocks,
       dragImage:
-        $multiSelectStore.length > 0
-          ? `moving ${$multiSelectStore.length} blocks`
+        bulkSelection.length > 0
+          ? `moving ${bulkSelection.length} blocks`
           : "dragimage"
     }}
     use:dragSelection={{
       selectableSelector: "div[id^='md-block-']",
       containerId: containerId,
       onSelectionChange: (elements, ids) => {
+        resolveBulkEditorInstance();
+        if (!ids || ids.length === 0) {
+          globalBulkEditStore.select([]);
+          isInSelectionMode = false;
+          return;
+        }
         if (isInSelectionMode) {
-          $multiSelectStore = [
-            ...new Set([...($multiSelectStore ?? []), ...ids])
-          ];
+          const current = globalBulkEditStore.getState().selectedIds;
+          globalBulkEditStore.select([...new Set([...current, ...ids])]);
         } else {
           isInSelectionMode = true;
-          $multiSelectStore = ids;
+          globalBulkEditStore.select(ids);
         }
+        isInSelectionMode =
+          globalBulkEditStore.getState().selectedIds.length > 0;
       },
       onSelectionEnd: (elements, ids) => {
         if (ids.length > 0) {
@@ -425,7 +470,7 @@
   >
     {#if isValidAndUniqueArray($mdStore.blocks)}
       {#each $mdStore.blocks as block, index (block.id)}
-        {@const isSelected = $multiSelectStore.some(resourceInList(block.id))}
+        {@const isSelected = bulkSelection.some(resourceInList(block.id))}
         <Block
           {block}
           {mdStore}
@@ -435,12 +480,12 @@
             isSelectionConsecutive &&
             $mdStore.blocks
               .find((b) =>
-                $multiSelectStore.some(
+                bulkSelection.some(
                   (selectedId) => b.id.toString() === selectedId
                 )
               )
               ?.id.toString() === block.id.toString()}
-          isInSelectionMode={$multiSelectStore.length > 0}
+          isInSelectionMode={bulkSelection.length > 0}
           on:nodularize={(e) => {
             propagate("focus", e.detail);
           }}
@@ -450,18 +495,18 @@
             }
           }}
           on:select={(e) => {
-            const isAlreadyExists = $multiSelectStore.some(
-              resourceInList(block.id)
-            );
-            if (isAlreadyExists) {
-              $multiSelectStore = $multiSelectStore.filter(
-                (x) => !isSameResource(x, block)
+            resolveBulkEditorInstance();
+            const current = globalBulkEditStore.getState().selectedIds;
+            const resourceId = block.id.toString();
+            if (current.some((selectedId) => selectedId === resourceId)) {
+              globalBulkEditStore.select(
+                current.filter((x) => x !== resourceId)
               );
-              if ($multiSelectStore.length === 0) {
+              if (globalBulkEditStore.getState().selectedIds.length === 0) {
                 keyboardToolbarPanelSelection = undefined;
               }
             } else {
-              $multiSelectStore = [...$multiSelectStore, block.id.toString()];
+              globalBulkEditStore.select([...current, resourceId]);
               keyboardToolbarPanelSelection = "actions";
               keyboardToolbarRef?.action("actions");
             }
@@ -477,35 +522,25 @@
     {/if}
   </div>
 </div>
-{#if $multiSelectStore.length > 0}
-  <BottomFloat zIndex="z-30" {containerId}>
-    <BulkEditBar
-      isExpandedMode={containerWidth > 800}
-      context={multiSelectContext}
-      on:action={(e) => onBulkAction(e.detail.action, e.detail.data)}
-      on:actionWithContext={(e) =>
-        onBulkAction(e.detail.action, e.detail.context)}
-      on:selectAll={selectAll}
-    />
-  </BottomFloat>
-{/if}
 {#if $context.isTouchDevice && (focusedBlock || keyboardToolbarPanelSelection)}
   <MarkdownkeyboardToolbar
     bind:this={keyboardToolbarRef}
     bind:keyboardToolbarPanelSelection
-    selectedBlocks={$multiSelectStore}
+    selectedBlocks={bulkSelection}
     on:select={() => {
-      if (focusedBlock) $multiSelectStore = [focusedBlock];
+      resolveBulkEditorInstance();
+      if (focusedBlock) globalBulkEditStore.select([focusedBlock]);
     }}
     on:unselect={() => {
-      $multiSelectStore = [];
+      resolveBulkEditorInstance();
+      globalBulkEditStore.select([]);
     }}
     on:action={(e) => {
       const { action, data } = e.detail;
-      if ($multiSelectStore.length === 1) {
-        mdStore.alterBlock({ action, data, blockId: $multiSelectStore[0] });
+      if (bulkSelection.length === 1) {
+        mdStore.alterBlock({ action, data, blockId: bulkSelection[0] });
       } else if (
-        $multiSelectStore.length === 0 &&
+        bulkSelection.length === 0 &&
         action === BlockAction.INSERT &&
         focusedBlock
       ) {
@@ -513,11 +548,12 @@
       } else {
         onBulkAction(action);
       }
-      $multiSelectStore = [];
+      resolveBulkEditorInstance();
+      globalBulkEditStore.select([]);
     }}
     on:insert={(e) => {
       const toType = e.detail;
-      const block = $mdStore.blocks.find(resourceInList($multiSelectStore[0]));
+      const block = $mdStore.blocks.find(resourceInList(bulkSelection[0]));
       if (!block) return;
       if (block.contentType === NodeType.SIMPLE_TEXT && !block.body) {
         mdStore.alterBlock({
@@ -532,11 +568,11 @@
           blockId: block.id
         });
       }
-      $multiSelectStore = [];
+      resolveBulkEditorInstance();
+      globalBulkEditStore.select([]);
     }}
     on:focus={() => {
-      if ($multiSelectStore.length === 1)
-        mdStore.focusBlock($multiSelectStore[0]);
+      if (bulkSelection.length === 1) mdStore.focusBlock(bulkSelection[0]);
     }}
   />
 {/if}

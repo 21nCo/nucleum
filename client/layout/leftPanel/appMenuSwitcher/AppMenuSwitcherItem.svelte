@@ -186,7 +186,7 @@
         layoutContext === LayoutContext.MINIMIZED) && {
         "bg-aps3 border-aps2 border text-aps1 hover:bg-aps2 hover:bg-opacity-70":
           isActive && isOutlineStyle,
-        "hover:bg-bgs3-striped": !isActive,
+        "hover:bg-bgs3-striped hover:border-brs3": !isActive,
         [abg()]: isActive && !isOutlineStyle,
         "border border-transparent": !isActive && isOutlineStyle
       },
@@ -200,7 +200,7 @@
       layoutContext === LayoutContext.THIN_WITH_LABEL && {
         "bg-aps3 border-y text-aps1 hover:bg-aps2 hover:bg-opacity-70":
           isActive && !isShowLabel,
-        "border border-transparent hover:bg-bgs3-striped transition-all":
+        "border-y border-transparent hover:bg-bgs3-striped hover:border-brs3 transition-all":
           !isActive && !isShowLabel,
         "border-aps2":
           isActive && (!dev_mixedPanel || !$appStore.currentComponent?.panel),
@@ -225,7 +225,7 @@
         "w-full py-2 rounded-md":
           layoutContext === LayoutContext.THIN_WITH_LABEL,
         border: layoutContext === LayoutContext.THIN_WITH_LABEL && isShowLabel,
-        "hover:bg-bgs3-striped":
+        "hover:bg-bgs3-striped hover:border-brs3":
           layoutContext === LayoutContext.THIN_WITH_LABEL &&
           isShowLabel &&
           !isActive,

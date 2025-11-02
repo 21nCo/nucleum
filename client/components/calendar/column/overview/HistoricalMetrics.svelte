@@ -5,10 +5,7 @@
   import { Action } from "@21n/types/action.enum";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { TimeFormat } from "@21n/types/time.type";
-  import {
-    parseAndFormatDate,
-    formatSeconds
-  } from "@21n/utils/time.utils";
+  import { parseAndFormatDate, formatSeconds } from "@21n/utils/time.utils";
 
   export let date: Date;
   export let title: string;
@@ -17,7 +14,7 @@
 </script>
 
 <button
-  class="flex flex-col items-center h-60 w-48 rounded-xl bg-bgs2 shadow-lg overflow-hidden flex-1 min-w-48"
+  class="flex flex-col items-center h-48 w-48 rounded-xl bg-bgs2 shadow-lg overflow-hidden flex-1 min-w-48"
   on:click={() => {
     appStore.openResource(Action.CALENDAR_DAY, ResourceAccessMode.POP, {
       searchParams: { [AppSearchParam.DATE]: date.toISOString() }
@@ -27,7 +24,7 @@
   <div class="p-4 flex flex-col justify-between gap-4 flex-1 w-full">
     <div class="flex items-center justify-between w-full">
       <div class="flex flex-col items-start text-left">
-        <div class="text-h4">{title}</div>
+        <div class="text-h5">{title}</div>
         <div class="text-fgs3 text-b2">{parseAndFormatDate(date)}</div>
       </div>
       <div

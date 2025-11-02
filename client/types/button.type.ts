@@ -9,6 +9,7 @@ export enum ButtonStyle {
 export type IButtonParams = {
   label?: string;
   icon?: string;
+  tooltip?: string;
   callback?: (event?: any) => Promise<any>;
   action?: string;
   size?: Size.xs | Size.sm | Size.md | Size.lg;

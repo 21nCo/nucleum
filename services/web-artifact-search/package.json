@@ -1,5 +1,5 @@
 {
-  "name": "@tidigit/web-artifact-search-service",
+  "name": "@21n/web-artifact-search-service",
   "version": "0.1.0",
   "private": true,
   "type": "module",

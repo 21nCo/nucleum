@@ -19,4 +19,4 @@ Keep this managed block so 'openspec update' can refresh the instructions.
 
 # AGENTS.md
 
-See the [Tidigit Constitution](.specify/memory/constitution.md) for the authoritative onboarding checklist and operational policies.
+See the [Nucleus Constitution](.specify/memory/constitution.md) for the authoritative onboarding checklist and operational policies.

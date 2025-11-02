@@ -1,7 +1,7 @@
 # Project Context
 
 ## Purpose
-Tidigit is an open source library powering productivity tools built at 21n.org to help 21st century digital humans manage their digital lives efficiently. The project includes three main products:
+Nucleus is an open source library powering productivity tools built at 21n.org to help 21st century digital humans manage their digital lives efficiently. The project includes three main products:
 - **Nucleus** - Digital harmony super app combining all tools below
 - **Memotron** - Memory atlas for personal knowledge management and note-taking
 - **Pointron** - Focus haven for goal tracking and time management

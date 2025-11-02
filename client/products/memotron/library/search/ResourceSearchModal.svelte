@@ -39,3 +39,11 @@
     class="pl-4 text-h3 w-full bg-transparent focus:outline-none focus:border-none"
   />
 </ResourceSearchBase>
+
+<style>
+  input::placeholder {
+    color: rgba(var(--colors-fgs4), 0.5);
+    font-size: smaller;
+    font-weight: lighter;
+  }
+</style>

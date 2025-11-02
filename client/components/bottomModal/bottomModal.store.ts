@@ -6,31 +6,29 @@ export interface IBottomModalState {
   data?: any;
 }
 
-class BottomModalStore {
-  protected subject = writable<IBottomModalState>({
-    isOpen: false,
-    componentKey: null,
-    data: undefined
-  });
-  subscribe = this.subject.subscribe;
-  update = this.subject.update;
-  protected _set = this.subject.set;
+const subject = writable<IBottomModalState>({
+  isOpen: false,
+  componentKey: null,
+  data: undefined
+});
+
+export const bottomModal = {
+  subscribe: subject.subscribe,
+  update: subject.update,
 
   open(componentKey: string, data?: any) {
-    this._set({
+    subject.set({
       isOpen: true,
       componentKey,
       data
     });
-  }
+  },
 
   close() {
-    this._set({
+    subject.set({
       isOpen: false,
       componentKey: null,
       data: undefined
     });
   }
-}
-
-export const bottomModal = new BottomModalStore();
+};

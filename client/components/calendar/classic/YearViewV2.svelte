@@ -18,18 +18,18 @@
 
   const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
   const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
     "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December"
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec"
   ];
 
   const YEAR_RANGE = 200;
@@ -403,23 +403,27 @@
         {@const isSelectedYear =
           selectedScale === TimeScaleUnit.YEAR &&
           selectedDate.getFullYear() === year}
-        <div class="px-4 py-2 dp:px-6 dp:py-3" id="year-{year}">
-          <div class="mb-2">
-            <button
-              class={cn(
-                "text-h2 font-medium ml-3 hover:text-aps1 transition-colors cursor-pointer",
-                {
-                  "text-fgs4": isFutureYear && !isSelectedYear,
-                  "text-aps1 font-bold": isSelectedYear
-                }
-              )}
-              on:click={() => handleYearSelect(year)}
+        <div
+          class={cn("mb-1 has-[.year-label:hover]:bg-bgs2 transition-colors", {
+            "bg-bgs2": isSelectedYear
+          })}
+          id="year-{year}"
+        >
+          <button
+            class={cn("year-label mb-2 w-full text-start group cursor-pointer")}
+            on:click={() => handleYearSelect(year)}
+          >
+            <span
+              class={cn("text-h2 font-medium ml-8 mr-2 group-hover:text-aps1", {
+                "text-fgs4": isFutureYear && !isSelectedYear,
+                "text-aps1 font-bold": isSelectedYear
+              })}
             >
               {year}
-            </button>
-          </div>
+            </span>
+          </button>
           <div
-            class="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-x-12 gap-y-8 default-typeface"
+            class="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-x-1 gap-y-1 default-typeface"
           >
             {#each months as { days, monthIndex }}
               {@const isFutureMonth = resolveIfFutureMonth(year, monthIndex)}
@@ -428,18 +432,21 @@
                 selectedScale === TimeScaleUnit.MONTH &&
                 selectedDate.getFullYear() === year &&
                 selectedDate.getMonth() === monthIndex}
-              <div
+              <button
                 class={cn(
-                  "flex flex-col min-w-[240px] p-2 dp:p-4 transition-all duration-300 has-[.first:hover]:bg-bgs2 rounded-md",
+                  "flex flex-col min-w-[240px] p-4 dp:p-6 transition-all duration-200",
                   {
-                    "bg-bgs2": isSelectedMonth
+                    "bg-bgs2": isSelectedMonth,
+                    "has-[.first:hover]:bg--bgs2 hover:bg-bgs1-striped":
+                      !isSelectedMonth
                   }
                 )}
                 id="month-{year}-{monthIndex}"
+                on:click={() => handleMonthSelect(year, monthIndex)}
               >
-                <button
+                <div
                   class={cn(
-                    "first flex items-center gap-1 mb-1 ml-3 font-medium text-h5 hover:text-aps1 transition-colors cursor-pointer text-left",
+                    "first flex items-center gap-1 mb-2 ml-3 font-medium text-h5 transition-colors cursor-pointer text-left",
                     {
                       "text-fgs4": isFutureMonth && !isSelectedMonth,
                       "text-fgs1":
@@ -448,12 +455,13 @@
                       "text-aps1 font-bold": isSelectedMonth
                     }
                   )}
-                  on:click={() => handleMonthSelect(year, monthIndex)}
                 >
                   <span>{monthNames[monthIndex]}</span>
-                  <span class="text-fgs4">{year}</span>
-                </button>
-                <div class="grid grid-cols-7 gap-x-1 text-center text-b2">
+                  <span>{year}</span>
+                </div>
+                <div
+                  class="grid grid-cols-7 gap-x-1 gap-y-1 text-center text-b2"
+                >
                   {#each weekDays as day}
                     <div class="text-fgs4 mb-1 text-b4">{day}</div>
                   {/each}
@@ -466,7 +474,7 @@
                       {@const isPastDay = isPastDate(date)}
                       <button
                         class={cn(
-                          "py-1 rounded-md border flex flex-col items-center h-9 max-w-9",
+                          "py-1 rounded-md border flex flex-col items-center h-9 w-full",
                           {
                             "bg-aps1 text-abg border-transparent": isSelected,
                             "text-ass1 font-medium border-ass1 notouch:hover:bg-ass2 active:bg-ass2":
@@ -474,16 +482,13 @@
                           },
                           !isSelected &&
                             !isCurrentDay && {
-                              "hover:text-fgs1 border-transparent": true,
-                              "notouch:hover:bg-bgs2 active:bg-bgs2":
-                                !isSelectedMonth,
-                              "notouch:hover:bg-bgs3 active:bg-bgs3":
-                                isSelectedMonth,
+                              "hover:text-fgs1 border-transparent notouch:hover:bg-bgs3 active:bg-bgs3": true,
                               "text-fgs1 border-transparent": isPastDay,
                               "text-fgs3": !isPastDay
                             }
                         )}
-                        on:click={() => {
+                        on:click={(e) => {
+                          e.stopPropagation();
                           selectedDate = date;
                           dispatch("dateChange", { date });
                         }}
@@ -503,7 +508,7 @@
                     {/if}
                   {/each}
                 </div>
-              </div>
+              </button>
             {/each}
           </div>
         </div>
