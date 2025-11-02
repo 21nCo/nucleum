@@ -4,10 +4,7 @@ import {
   rootNodeTypeList,
   type INode
 } from "@21n/products/memotron/node/node.type";
-import {
-  activeResourceFilter,
-  activeResourceFilterV2
-} from "@21n/utils/utils";
+import { activeResourceFilter, activeResourceFilterV2 } from "@21n/utils/utils";
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { isValidString } from "@21n/shared-utils/text.utils";
 import {
@@ -30,10 +27,8 @@ import { FluxMethod } from "@21n/components/flux/flux.type";
 import type { CollectionType } from "@21n/components/collection/collection.type";
 import { collectionStore } from "@21n/components/collection/collection.store";
 import { nodeStore } from "@21n/products/memotron/node/node.store";
-import type {
-  MultiSelectStore,
-  ResourceStore
-} from "@21n/components/flux/resourceStores/resource.store";
+import type { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import type { BulkEditStore } from "@21n/components/record/bulkedit.store";
 import { appStore } from "@21n/stores/app.store";
 import { linker } from "@21n/products/memotron/linking/link.store";
 import {
@@ -678,10 +673,10 @@ export class SearchStore {
 
 export class BulkEditor {
   resource: Resource = Resource.node;
-  multiSelectStore: MultiSelectStore;
+  multiSelectStore: BulkEditStore;
   constructor(
     resource: Resource = Resource.node,
-    multiSelectStore: MultiSelectStore
+    multiSelectStore: BulkEditStore
   ) {
     this.resource = resource;
     this.multiSelectStore = multiSelectStore;
@@ -713,9 +708,10 @@ export class BulkEditor {
     let isResetItems = false;
     try {
       if (this.resource === Resource.everything) return;
-      const items = this.multiSelectStore.get();
-      const accessPointId = this.multiSelectStore.context.accessPointId;
-      const accessPoint = this.multiSelectStore.context.accessPoint;
+      const state = this.multiSelectStore.getState();
+      const items = state.selectedIds;
+      const accessPointId = state.context?.accessPointId;
+      const accessPoint = state.context?.accessPoint;
       logger.log({
         at: "BulkEditor.run",
         action,
@@ -987,7 +983,7 @@ export class BulkEditor {
         case "moveToToday":
           return `Moved ${itemsLabel} to today`;
       }
-      return `${prefix} ${itemsLabel} successfully`;
+      return `${prefix} ${itemsLabel} successfully updated`;
     }
   }
 }

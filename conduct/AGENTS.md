@@ -19,7 +19,7 @@ conduct/
 
 ## Issue Trackers
 This project uses the following issue tracking systems:
-- GitHub Issues (21nOrg/tidigit/issues)
+- GitHub Issues (21nOrg/nucleus/issues)
 
 All features and changes should be linked to issues in track.json.
 

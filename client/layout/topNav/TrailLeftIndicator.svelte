@@ -19,12 +19,12 @@
   {@const isTrialExpired = trialDaysLeft <= 0}
   <button
     class={cn(
-      "flex gap-1 justify-center items-center border rounded-md  mx-1.5 whitespace-nowrap",
+      "flex gap-1 justify-center items-center border border-dashed rounded-md  mx-1.5 whitespace-nowrap",
       {
         "flex-col p-1.5": orientation === Orientation.Vertical,
         "px-1.5 py-0.5": orientation === Orientation.Horizontal,
         "bg-ars2 border-ars1": isTrialExpired,
-        "bg-ass2/10 border-ass1 text-ass1": !isTrialExpired
+        "hover:bg-ass2/10 border-ass1/50 text-ass1": !isTrialExpired
       }
     )}
     on:click={() =>

@@ -6,7 +6,9 @@
     type IButtonParams
   } from "@21n/types/button.type";
   import { createEventDispatcher, onMount } from "svelte";
-  import modalEvent, { isPrimaryActionDisabled } from "@21n/components/modal/modal.store";
+  import modalEvent, {
+    isPrimaryActionDisabled
+  } from "@21n/components/modal/modal.store";
   import { appEvents } from "@21n/stores/notification.store";
   import { GlobalEvent } from "@21n/types/event.enum";
   import { resolveModalOnFront } from "@21n/utils/browser.utils";
@@ -147,7 +149,7 @@
   >
     {#if dev_isUseExpandedButtons}
       {#key `${$isPrimaryActionDisabled}-${isPrimaryActionInProgress}`}
-        <ButtonGroup buttons={resolveButtons()} {size} />
+        <ButtonGroup buttons={resolveButtons()} {size} isFooter={true} />
       {/key}
     {:else}
       {#if primaryAction}

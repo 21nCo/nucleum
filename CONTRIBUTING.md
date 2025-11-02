@@ -1,6 +1,6 @@
-# Contributing to Tidigit
+# Contributing to Nucleus
 
-Thank you for your interest in contributing to Tidigit! This guide will help you get started.
+Thank you for your interest in contributing to Nucleus! This guide will help you get started.
 
 ## Getting Started
 
@@ -21,8 +21,8 @@ VITE_STATIC_URL=https://cdn.21n.org
 
 ## Reporting Issues
 
-If you find any issues or have any suggestions, please report them in the [issues](https://github.com/21nOrg/tidigit/issues) section.
+If you find any issues or have any suggestions, please report them in the [issues](https://github.com/21nOrg/nucleus/issues) section.
 
 ## License
 
-By contributing to Tidigit, you agree that your contributions will be licensed under the [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html) license.
+By contributing to Nucleus, you agree that your contributions will be licensed under the [AGPL-3.0](https://www.gnu.org/licenses/agpl-3.0.html) license.

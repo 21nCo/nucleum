@@ -1,6 +1,5 @@
 <script lang="ts">
   import Divider from "@21n/elements/Divider.svelte";
-  import FloatingButton from "@21n/elements/button/FloatingButton.svelte";
   import Text from "@21n/elements/text/Text.svelte";
   import view from "@21n/stores/view.store";
   import type { IButtonParams } from "@21n/types/button.type";
@@ -23,6 +22,7 @@
   import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
   import { fly } from "svelte/transition";
   import BackButton from "@21n/elements/button/BackButton.svelte";
+  import ButtonGroup from "@21n/elements/button/ButtonGroup.svelte";
   const dispatch = createEventDispatcher();
 
   export let title: string | undefined = undefined;
@@ -136,8 +136,9 @@
         </div>
       {/if}
       {#if floatingButton}
-        <FloatingButton
-          params={Array.isArray(floatingButton)
+        <ButtonGroup
+          isFooter={true}
+          buttons={Array.isArray(floatingButton)
             ? [...floatingButton]
             : [floatingButton]}
         />

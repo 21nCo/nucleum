@@ -14,21 +14,17 @@
   class={cn(
     "flex flex-col items-start justify-between border border-brs3 rounded-md min-w-fit grow",
     {
-      "p-2 h-20 bg-bgs2": $view.isPortrait,
-      "p-2 h-20 dp:p-4 dp:h-[7rem]": !$view.isPortrait
+      "p-2 h-16 bg-bgs2": $view.isPortrait,
+      "p-2 h-fit": !$view.isPortrait
     }
   )}
 >
-  <div
-    class={cn({
-      "text-b2": $view.isPortrait
-    })}
-  >
+  <div class="text-b2">
     {properCase(type)}
   </div>
-  <div class="flex gap-2">
+  <div class="flex items-center gap-2">
     <div
-      class={cn("font-medium min-w-fit text-base dp:text-h3 2k:text-h2", {
+      class={cn("font-medium min-w-fit text-base dp:text-h4 2k:text-h3", {
         "text-aps1": type === "focus",
         "text-ass1": type === "break"
       })}

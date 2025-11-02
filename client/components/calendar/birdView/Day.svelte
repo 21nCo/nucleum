@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { dayNames, monthNames } from "@21n/components/calendar/birdView/Birdview.utils";
+  import {
+    dayNames,
+    monthNames
+  } from "@21n/components/calendar/birdView/Birdview.utils";
 
   export let date: string;
   let dayMonth = date.split("-")[1];

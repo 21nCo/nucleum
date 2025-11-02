@@ -5,5 +5,8 @@
   "type": "module",
   "exports": {
     "./*": "./*"
+  },
+  "dependencies": {
+    "echarts": "^5.5.0"
   }
 }

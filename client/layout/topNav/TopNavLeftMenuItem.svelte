@@ -10,11 +10,17 @@
   export let icon: string;
   export let tooltip: string;
   export let shortcut: string | undefined = undefined;
+  export let isLastItem: boolean = false;
   let isHovered: boolean = false;
 </script>
 
 <button
-  class="flex flex-col items-center justify-center h-full px-2.5 2k:px-3 border-x border-transparent hover:border-brs3 hover:bg-bgs3-striped transition-colors hover:text-fgs3"
+  class={cn(
+    "flex flex-col items-center justify-center h-full px-3 border-x border-transparent hover:border-brs3 hover:bg-bgs3-striped transition-colors hover:text-fgs3",
+    {
+      "pr-4": isLastItem
+    }
+  )}
   use:hoverable={{
     onHover: (val) => {
       isHovered = val;

@@ -4,10 +4,7 @@
   import Text from "@21n/elements/text/Text.svelte";
   import { appStore } from "@21n/stores/app.store";
   import { uiState } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { Product } from "@21n/products/product.type";
   import { TextStyle } from "@21n/types/text.enum";
   import { TimeScaleUnit } from "@21n/types/time.type";
@@ -27,15 +24,15 @@
   import { page } from "$app/stores";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle } from "@21n/types/button.type";
   import view from "@21n/stores/view.store";
   import { resolveCalendarNotesId } from "@21n/components/calendar/calendar.utils";
   import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { AppSearchParam } from "@21n/types/appStore.type";
+  import DayTimeline from "./timeline/daytimeline/DayTimeline.svelte";
   const dispatch = createEventDispatcher();
 
   export let scale: TimeScaleUnit;
+  export let viewScale: TimeScaleUnit;
   export let date: Date;
   export let expansionMode: CalendarExpansionMode =
     CalendarExpansionMode.JOURNAL;
@@ -84,49 +81,39 @@
    */
   function resolvePanels(product: Product, layout: CalendarColumnLayout) {
     const timeline = {
-      label: "Default",
-      // tooltip: "Timeline",
+      label: "Timeline",
       value: CalendarColumnPanel.Timeline,
       icon: "clock"
     };
-    const tempHistory = {
-      label: "History",
-      // tooltip: "History",
-      value: CalendarColumnPanel.History,
+    const activity = {
+      label: "Activity",
+      value: CalendarColumnPanel.Activity,
       icon: "history"
     };
     const overview = {
       label: "Overview",
-      // tooltip: "Overview",
       value: CalendarColumnPanel.Overview,
       icon: "heroicons:rectangle-group"
       // icon: "grid"
     };
     const notes = {
       label: "Notes",
-      // tooltip: "Notes",
       value: CalendarColumnPanel.Notes,
       icon: "note"
-    };
-    const tempTasksPanel = {
-      label: "Tasks",
-      // tooltip: "Tasks",
-      value: CalendarColumnPanel.Tasks,
-      icon: "check-square"
     };
     let items = [overview];
     switch (product) {
       case Product.POINTRON:
-        items = [overview];
+        items = [overview, activity];
         break;
       case Product.MEMOTRON:
-        items = [notes, tempHistory];
+        items = [notes, activity];
         break;
       case Product.NUCLEUS:
-        items = [notes, overview];
+        items = [notes, overview, activity];
         break;
       default:
-        items = [overview];
+        items = [overview, activity];
     }
     if (layout === CalendarColumnLayout.TABS && product !== Product.MEMOTRON) {
       items = [timeline, ...items];
@@ -149,18 +136,17 @@
 </script>
 
 <div
-  class={cn("flex flex-col gap-3 pb-4 h-full w-full", {
-    "px-4 pb-4 pt-2": layout !== CalendarColumnLayout.TABS,
-    "p-4": layout === CalendarColumnLayout.TABS && !isCwContext
-  })}
+  class="flex flex-col h-full w-full"
   id="mdcontainer-{mdId}"
   use:resizeListener={(e) => {
     containerWidth = e.width;
   }}
 >
   {#if layout === CalendarColumnLayout.TABS}
-    <div class="flex items-center justify-between">
-      <div class="flex items-center gap-2">
+    <div
+      class="flex items-center justify-between border-b h-10 min-h-10 border-brs3"
+    >
+      <div class="flex items-center gap-2 hover:bg-bgs2-striped h-full">
         {#if isCwContext && backPath}
           <Icon
             icon="ph:caret-left"
@@ -171,17 +157,18 @@
             }}
           />
         {/if}
-        <div class="text-h4 font-medium text-fgs3">
+        <div class="flex text-fgs2 h-full">
           <!-- {formatDate(date)} -->
-          <DatePicker bind:date on:change={handleDateChange} variant="inline" />
+          <DatePicker
+            bind:date
+            on:change={handleDateChange}
+            variant="inline-with-icon"
+          />
         </div>
-        <!-- |
-    <div class="text-b2 text-fgs3">
-      {enumToString(selectedPanel)}
-      </div> -->
       </div>
-      <div class="flex items-center gap-2">
-        {#if !$view.isPortrait && selectedPanel === CalendarColumnPanel.Notes}
+      <div class="flex items-center gap-2 h-full">
+        <!-- TODO - open in full screen action -->
+        <!-- {#if !$view.isPortrait && selectedPanel === CalendarColumnPanel.Notes}
           <Button
             icon="fullscreen"
             tooltip="Open notes in full screen"
@@ -189,21 +176,22 @@
             size={Size.sm}
             on:click={openNotesInFullScreen}
           />
-        {/if}
-        <CalendarColumnPanelSelector
-          bind:selectedPanel
-          {layout}
-          {panels}
-          {isCwContext}
-        />
+        {/if} -->
+        <CalendarColumnPanelSelector bind:selectedPanel {panels} />
       </div>
     </div>
   {/if}
-  <div class="flex gap-4 flex-grow w-full">
+  <div class="flex flex-grow w-full">
     {#key date.toISOString()}
       {#if (layout === CalendarColumnLayout.TABS && selectedPanel === CalendarColumnPanel.Timeline) || (layout !== CalendarColumnLayout.TABS && expansionMode === CalendarExpansionMode.JOURNAL)}
+        {#if viewScale === TimeScaleUnit.DAY}
+          <div class="flex flex-col flex-grow min-w-96">
+            <DayTimeline {date} {layout} />
+          </div>
+        {/if}
         <CalendarColumnTimeline
           {date}
+          scale={viewScale}
           isExpandable={false}
           {layout}
           on:dateChange={handleDateChange}
@@ -213,30 +201,19 @@
         {@const isShowNotesFullScreenButton =
           !$view.isPortrait && selectedPanel === CalendarColumnPanel.Notes}
         <Divider orientation={Orientation.Vertical} />
-        <div class="flex flex-col gap-4 flex-grow pt-2">
+        <div class="flex flex-col flex-grow">
           {#if panels.length === 1}
             <Text
-              content={selectedPanel}
+              content={`${viewScale} ${selectedPanel}`}
               style={TextStyle.PANEL_HEADING_SMALL}
             />
           {:else}
             <div
-              class={cn("grid", {
-                "grid-cols-1": !isShowNotesFullScreenButton,
-                "grid-cols-3": isShowNotesFullScreenButton
-              })}
+              class="flex w-full justify-end gap-2 border-b border-brs2 h-10 min-h-10"
             >
-              {#if isShowNotesFullScreenButton}
-                <span />
-              {/if}
-              <CalendarColumnPanelSelector
-                bind:selectedPanel
-                {layout}
-                {panels}
-                {isCwContext}
-              />
-              {#if isShowNotesFullScreenButton}
-                <div class="flex items-center justify-end">
+              <!--TODO - full screen button for notes panel -->
+              <!-- {#if isShowNotesFullScreenButton}
+                <div class="flex items-center">
                   <Button
                     icon="fullscreen"
                     tooltip="Open notes in full screen"
@@ -245,7 +222,8 @@
                     on:click={openNotesInFullScreen}
                   />
                 </div>
-              {/if}
+              {/if} -->
+              <CalendarColumnPanelSelector bind:selectedPanel {panels} />
             </div>
           {/if}
           <CalendarColumnPanelResolver
@@ -256,7 +234,7 @@
             {isRewind}
           />
         </div>
-      {:else}
+      {:else if selectedPanel !== CalendarColumnPanel.Timeline}
         <CalendarColumnPanelResolver
           {mdId}
           {selectedPanel}
@@ -268,6 +246,7 @@
       {#if layout !== CalendarColumnLayout.TABS && expansionMode === CalendarExpansionMode.TIMELINE}
         <CalendarColumnTimeline
           {date}
+          scale={viewScale}
           isExpandable={true}
           {layout}
           on:dateChange={handleDateChange}

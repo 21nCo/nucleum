@@ -73,11 +73,6 @@
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import { InputStyle } from "@21n/types/input.type";
   import { resizeListener } from "@21n/actions/resize.action";
-  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
-  import BottomFloat from "@21n/elements/BottomFloat.svelte";
-  import BulkEditBar from "@21n/components/record/BulkEditBar.svelte";
-  import { BulkEditor } from "@21n/components/record/record.store";
-  import { toasts } from "@21n/stores/notification.store";
   import { Action } from "@21n/types/action.enum";
   import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
   import Icon from "@21n/elements/Icon.svelte";
@@ -137,12 +132,6 @@
     activeView?.layout === CollectionLayout.BOARD &&
     !isNoneResource(activeView?.groupBy);
 
-  $: multiSelectContext = {
-    resource: Resource.node,
-    accessPoint: ResourceAccessPoint.COLLECTION,
-    accessPointId: id
-  };
-  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
 
   onMount(async () => {
     const viewQueryParam = new URLSearchParams(location.search).get(
@@ -517,23 +506,6 @@
     }
   }
 
-  async function onBulkAction(
-    e: CustomEvent<{ action: string; data?: unknown }>
-  ) {
-    try {
-      const editor = new BulkEditor(Resource.node, multiSelectStore);
-      const result = await editor.run(e.detail.action, e.detail.data);
-      if (result) {
-        await refresh();
-      }
-    } catch (e) {
-      toasts.error("Failed to perform bulk action");
-    }
-  }
-
-  function onSelectAll(e: CustomEvent) {
-    logger.log({ at: "onSelectAll", e });
-  }
 </script>
 
 {#if !$collection || $collection.isPageLoading || !isReady}
@@ -837,16 +809,6 @@
       />
     {/if}
   </div>
-  {#if $multiSelectStore.length > 0}
-    <BottomFloat zIndex="z-30">
-      <BulkEditBar
-        isExpandedMode={!isConstrainedWidth}
-        context={multiSelectContext}
-        on:selectAll={onSelectAll}
-        on:action={onBulkAction}
-      />
-    </BottomFloat>
-  {/if}
 {/if}
 <ComponentBaseLayer
   hasDragAndDrop={true}

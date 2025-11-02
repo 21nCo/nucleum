@@ -4,20 +4,16 @@
   import type { IRecordId } from "@21n/types/data.type";
   import { appStore } from "@21n/stores/app.store";
   import { Action } from "@21n/types/action.enum";
-  import ProfilePicture from "@21n/components/settings/account/ProfilePicture.svelte";
-  import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
   import Tabs from "@21n/layout/topNav/tabs/Tabs.svelte";
   import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
   import TrailLeftIndicator from "@21n/layout/topNav/TrailLeftIndicator.svelte";
   import { fly } from "svelte/transition";
+  import { quadIn } from "svelte/easing";
   import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { page } from "$app/stores";
   import TopBarResourceItem from "@21n/layout/topNav/tabs/TopBarResourceItem.svelte";
   import { cn } from "@21n/utils/ui.utils";
-  import { determineIfActiveSubscriber } from "@21n/components/subscription/userPlan.utils";
-  import account from "@21n/stores/account.store";
-  import { UserDataMode } from "@21n/types/account.type";
-  import { tooltip } from "@21n/actions/popover.action";
+
   import TopNavLeftMenuItem from "@21n/layout/topNav/TopNavLeftMenuItem.svelte";
   import InlineSyncingFeedback from "@21n/elements/feedback/InlineSyncingFeedback.svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
@@ -26,19 +22,24 @@
   import { Embed } from "@21n/types/context.type";
   import context from "@21n/stores/context.store";
   import OfflineStatusMessage from "@21n/elements/feedback/OfflineStatusMessage.svelte";
-  import TopNavDateTime from "./TopNavDateTime.svelte";
-
+  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { toasts } from "@21n/stores/notification.store";
+  import ToastNotificationContent from "@21n/elements/feedback/ToastNotificationContent.svelte";
+  import { bulkEditStore } from "@21n/components/record/bulkedit.store";
+  import BulkEditBar from "@21n/components/record/BulkEditBar.svelte";
+  import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
   let isInFocusMode = false;
   let pinnedItems: IRecordId[] = tabs.get() ?? [];
+  let bulkEditCount = 0;
+  let bulkEditContext: any = null;
+  let bulkEditSubContext: string | undefined = undefined;
 
   $: currentTab = $page.url.searchParams.get(ResourceAccessMode.TAB);
   $: isInterimTab =
     currentTab && !pinnedItems.some((x) => x.toString() === currentTab);
 
-  $: isSubscriber =
-    $account?.plan && $account?.dataMode === UserDataMode.CLOUD
-      ? determineIfActiveSubscriber($account.plan)
-      : false;
+  $: isRightOverlayMode = isValidArrayWithData($toasts);
+  $: isFullOverlayMode = bulkEditCount > 0;
 
   let isHideMenuLabels = uiState.getState(UIState.hideLeftNavMenuLabels, {
     scope: UIStateScope.DAP
@@ -57,8 +58,22 @@
         scope: UIStateScope.DAP
       });
     });
+    const bulkEditCountUnsub = bulkEditStore.count.subscribe((count) => {
+      bulkEditCount = count;
+    });
+    const bulkEditContextUnsub = bulkEditStore.context.subscribe((ctx) => {
+      bulkEditContext = ctx;
+    });
+    const bulkEditSubContextUnsub = bulkEditStore.subContext.subscribe(
+      (sub) => {
+        bulkEditSubContext = sub;
+      }
+    );
     return () => {
       if (unsubscribe) unsubscribe();
+      if (bulkEditCountUnsub) bulkEditCountUnsub();
+      if (bulkEditContextUnsub) bulkEditContextUnsub();
+      if (bulkEditSubContextUnsub) bulkEditSubContextUnsub();
     };
   });
 </script>
@@ -67,115 +82,147 @@
   <div class="hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
   <div
     class={cn(
-      "w-full h-11 max-h-11 min-h-11 2k:h-12 2k:max-h-12 2k:min-h-12 bg-bgs2 pr-4 border-b border-brs3 userdata",
+      "w-full h-11 max-h-11 min-h-11 bg-bgs2 border-b border-brs3 userdata grid",
       {
-        "flex gap-3 justify-between items-center":
-          pinnedItems.length > 0 || isInterimTab,
-        "grid grid-cols-3": pinnedItems.length === 0 && !isInterimTab
+        "grid-cols-[auto_1fr_auto]": pinnedItems.length > 0 || isInterimTab,
+        "grid-cols-3": pinnedItems.length < 1
       }
     )}
   >
-    {#if pinnedItems.length > 0}
-      <div class="flex items-center relative h-full overflow-x-auto">
-        {#if $context.embed !== Embed.HANDSET}
-          <TopNavLeftLogo {isHideMenuLabels} />
-        {/if}
-        <Tabs {pinnedItems} />
+    {#if $context.embed !== Embed.HANDSET}
+      <TopNavLeftLogo {isHideMenuLabels} isRenderProfilePicture={true} />
+    {/if}
+    {#if !isFullOverlayMode}
+      {#if pinnedItems.length > 0}
         <div
-          class="absolute right-0 top-0 bottom-0 flex items-center pointer-events-none"
+          class={cn(
+            "flex items-center justify-start relative h-full flex-grow overflow-x-auto transition-opacity",
+            {
+              "opacity-80 hover:opacity-100":
+                !isRightOverlayMode && !isFullOverlayMode,
+              "opacity-60 hover:opacity-100": isRightOverlayMode
+            }
+          )}
         >
+          <Tabs {pinnedItems} />
           <div
-            class="h-full w-6 flex items-center justify-end bg-gradient-to-r from-transparent via-bgs2/50 to-bgs2 px-2"
-          ></div>
+            class="absolute right-0 top-0 bottom-0 flex items-center pointer-events-none"
+          >
+            <div
+              class={cn(
+                "h-full flex items-center justify-end bg-gradient-to-r from-transparent via-bgs2 to-bgs2 px-2",
+                {
+                  "w-12": !isRightOverlayMode,
+                  "w-24": isRightOverlayMode
+                }
+              )}
+            ></div>
+          </div>
         </div>
-      </div>
-    {:else}
-      <TopNavLeftLogo {isHideMenuLabels} />
-    {/if}
-    {#if pinnedItems.length === 0 && !isInterimTab}
-      <div class="flex items-center justify-center">
-        <button
-          class="flex items-center justify-between w-96 h-full border-x border-brs3/70 hover:bg-bgs3-striped px-3 mx-3 text-b2 text-fgs2"
-          transition:fly={{
-            duration: 300,
-            x: 40
-          }}
-          on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
-        >
-          <span>Search</span>
-          <ShortcutText
-            shortcut={Action.GLOBAL_SEARCH}
-            parentBgIndex={2}
-            isAlwaysShown={true}
-          />
-        </button>
-      </div>
-    {/if}
-    <div class="flex items-center justify-end gap-1 h-full">
-      {#if isInterimTab && currentTab}
-        {#key currentTab}
-          <TopBarResourceItem
-            item={currentTab}
-            on:click
-            isInterimTab
-            on:close={() => {
-              appStore.goBack();
+      {:else if pinnedItems.length === 0 && !isInterimTab}
+        <div class="flex items-center justify-center">
+          <button
+            class="flex items-center justify-between w-96 h-full border-x border-brs3/70 hover:bg-bgs3-striped px-3 mx-3 text-b2 text-fgs2"
+            in:fly={{
+              duration: 300,
+              x: 40
             }}
-          />
-        {/key}
-      {/if}
-      {#if pinnedItems.length > 0 || isInterimTab}
-        <div
-          class="flex h-full"
-          transition:fly={{
-            duration: 300,
-            x: -60
-          }}
-        >
-          <TopNavLeftMenuItem
-            icon="search"
-            tooltip="Search"
-            shortcut={Action.GLOBAL_SEARCH}
             on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
-          />
+          >
+            <span>Search</span>
+            <ShortcutText
+              shortcut={Action.GLOBAL_SEARCH}
+              parentBgIndex={2}
+              isAlwaysShown={true}
+            />
+          </button>
         </div>
+      {:else}
+        <div />
       {/if}
-      <slot name="topnav" />
-      <TopNavLeftMenuItem
-        icon="terminal-window"
-        tooltip="Command bar"
-        shortcut={Action.CMD}
-        on:click={() => appStore.runAction(Action.CMD)}
-      />
-      <TopNavLeftMenuItem
-        icon="question"
-        tooltip="Help"
-        on:click={() => appStore.runAction(Action.HELP)}
-      />
-      <InlineSyncingFeedback
-        resource={Resource.everything}
-        isShorter={true}
-        text="Syncing..."
-      />
-      <TrailLeftIndicator />
-      <OfflineStatusMessage />
-      <!-- <TopNavDateTime /> -->
-      <button
+    {/if}
+    {#if isRightOverlayMode || isFullOverlayMode}
+      <!-- TODO - multiple toasts case -->
+      <div
         class={cn(
-          "flex items-center gap-2 rounded-full overflow-hidden border border-transparent ml-2",
+          "text-b2 w-full flex items-center justify-end pr-3 !opacity-100",
           {
-            "outline outline-ags1 hover:outline-ags2": isSubscriber,
-            "hover:outline hover:outline-brs3": !isSubscriber
+            "col-span-2": bulkEditCount > 0
           }
         )}
-        use:tooltip={{
-          text: "Account"
-        }}
-        on:click={() => appStore.runAction(Action.SETTINGS)}
+        in:fly={{ duration: 200, y: -10, easing: quadIn }}
       >
-        <ProfilePicture context="topbar" />
-      </button>
-    </div>
+        {#if $toasts.length > 0}
+          <ToastNotificationContent
+            notification={$toasts[$toasts.length - 1]}
+          />
+        {:else if bulkEditCount > 0 && bulkEditContext}
+          <BulkEditBar
+            count={bulkEditCount}
+            context={bulkEditContext}
+            subContext={bulkEditSubContext}
+            on:action={(e) =>
+              bulkEditStore.onAction(e.detail.action, e.detail.data)}
+            on:selectAll={() => bulkEditStore.onSelectAll()}
+            on:clear={() => bulkEditStore.reset()}
+          />
+        {/if}
+      </div>
+    {:else}
+      <div
+        class="flex items-center justify-end gap-1 h-full"
+        in:fly={{ duration: 200, y: 10, easing: quadIn }}
+      >
+        {#if isInterimTab && currentTab}
+          {#key currentTab}
+            <TopBarResourceItem
+              item={currentTab}
+              on:click
+              isInterimTab
+              on:close={() => {
+                appStore.goBack();
+              }}
+            />
+          {/key}
+        {/if}
+        <TrailLeftIndicator />
+        <OfflineStatusMessage />
+        <InlineSyncingFeedback
+          resource={Resource.everything}
+          isShorter={true}
+          text="Syncing..."
+        />
+        <slot name="topnav" />
+        {#if pinnedItems.length > 0 || isInterimTab}
+          <div
+            class="flex h-full"
+            transition:fly={{
+              duration: 300,
+              x: -60
+            }}
+          >
+            <TopNavLeftMenuItem
+              icon="search"
+              tooltip="Search"
+              shortcut={Action.GLOBAL_SEARCH}
+              on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
+            />
+          </div>
+        {/if}
+        <TopNavLeftMenuItem
+          icon="terminal-window"
+          tooltip="Command bar"
+          shortcut={Action.CMD}
+          on:click={() => appStore.runAction(Action.CMD)}
+        />
+        <TopNavLeftMenuItem
+          icon="gear"
+          tooltip="Settings"
+          isLastItem={true}
+          on:click={() => appStore.runAction(Action.SETTINGS)}
+        />
+      </div>
+    {/if}
   </div>
 {/if}
 <svelte:window on:focusMode={handleFocusMode} />

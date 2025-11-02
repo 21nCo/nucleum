@@ -8,7 +8,7 @@
   } from "@21n/products/memotron/node/node.type";
   import { cn } from "@21n/utils/ui.utils";
   import NodeThumbnail from "@21n/products/memotron/node/thumbnail/NodeThumbnail.svelte";
-  import { afterUpdate, onMount } from "svelte";
+import { afterUpdate, onDestroy, onMount } from "svelte";
   import { fade } from "svelte/transition";
   import view from "@21n/stores/view.store";
   import NodeThumbnailTitle from "@21n/products/memotron/node/thumbnail/NodeThumbnailTitle.svelte";
@@ -17,8 +17,10 @@
   import { hoverable } from "@21n/actions/hover.action";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import type { IProperty } from "@21n/components/collection/properties/property.type";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { bulkEditStore } from "@21n/components/record/bulkedit.store";
+import { BulkEditor } from "@21n/components/record/record.store";
+import { toasts } from "@21n/stores/notification.store";
   import { logger } from "@21n/components/debug/logger.client";
   import { resolveFilePreview } from "@21n/products/memotron/node/node.utils";
 
@@ -49,7 +51,37 @@
     accessPoint: accessPoint ?? ResourceAccessPoint.BROWSER,
     accessPointId
   };
-  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
+
+  function selectAll() {
+    return nodes.map((item) => item.id);
+  }
+
+  async function handleBulkAction(
+    ids: IRecordId[],
+    action: string,
+    data?: unknown
+  ) {
+    try {
+      const editor = new BulkEditor(Resource.node, bulkEditStore);
+      await editor.run(action, data);
+    } catch (e) {
+      toasts.error("Failed to perform bulk action");
+    }
+  }
+
+  function resolveBulkEditorInstance() {
+    bulkEditStore.activate(multiSelectContext, {
+      onAction: handleBulkAction,
+      onSelectAll: selectAll,
+      subContext: accessPointId?.toString()
+    });
+  }
+
+  $: {
+    multiSelectContext;
+    nodes;
+    resolveBulkEditorInstance();
+  }
 
   afterUpdate(() => {
     if (arrangement === Arrangement.MASONRY) {
@@ -65,6 +97,12 @@
     return () => {
       window.removeEventListener("resize", resizeAllMasonryItems);
     };
+  });
+
+  onDestroy(() => {
+    if (bulkEditStore.matchesContext(multiSelectContext)) {
+      bulkEditStore.clear();
+    }
   });
 
   function resizeMasonryItem(item: HTMLElement) {
@@ -108,13 +146,9 @@
     }
   }
   function onClick(e: MouseEvent, item: any) {
-    logger.log({
-      at: "NodeItems onClick",
-      item,
-      multiSelectContext,
-      multiSelectStore: $multiSelectStore
-    });
-    const result = multiSelectStore.clickHandler(item.id);
+    resolveBulkEditorInstance();
+    logger.log({ at: "NodeItems onClick", item, multiSelectContext });
+    const result = bulkEditStore.clickHandler(item.id);
     if (!result) appStore.resourceClickHandler(e, item.id);
   }
 </script>

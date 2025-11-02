@@ -60,7 +60,12 @@
     on:click
   />
   {#if count}
-    <div class="absolute bottom-1 right-1">
+    <div
+      class={cn("absolute", {
+        "bottom-1 right-1": bgSize !== Size.sm,
+        "bottom-0 right-0": bgSize === Size.sm
+      })}
+    >
       <Badge text={count} size={Size.sm} />
     </div>
   {/if}

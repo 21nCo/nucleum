@@ -1,11 +1,9 @@
 <script lang="ts">
-  import { Size } from "@21n/types/size.enum";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonVariant } from "@21n/types/button.type";
   import { createEventDispatcher } from "svelte";
-  import { ButtonStyle } from "@21n/types/button.type";
   import { TimeScaleUnit } from "@21n/types/time.type";
   import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
+  import { cn } from "@21n/utils/ui.utils";
+  import BoxButton from "@21n/elements/button/BoxButton.svelte";
 
   const dispatch = createEventDispatcher();
 
@@ -88,16 +86,15 @@
   $: currentYear = selectedDate.getFullYear();
 </script>
 
-<div class="flex items-center gap-4 justify-center">
-  <Button
-    type={ButtonVariant.SECONDARY}
-    style={ButtonStyle.DEFAULT}
-    icon="chevron-left"
-    size={Size.sm}
-    {parentBgIndex}
-    on:click={goToPrevious}
-  />
-  <h2 class="text-h4">
+<div class="flex items-center justify-center">
+  <div class="h-full w-10">
+    <BoxButton icon="chevron-left" on:click={goToPrevious} />
+  </div>
+  <h2
+    class={cn("text-h4 h-full  flex items-center justify-center px-3", {
+      "hover:bg-bgs2-striped": selectedView === TimeScaleUnit.DAY
+    })}
+  >
     {#if selectedView === TimeScaleUnit.YEAR}
       {currentYear}
     {:else if selectedView === TimeScaleUnit.WEEK}
@@ -115,15 +112,10 @@
     {:else if selectedView === TimeScaleUnit.MONTH}
       {currentMonth} {currentYear}
     {:else}
-      <DatePicker bind:date={selectedDate} variant="inline" />
+      <DatePicker bind:date={selectedDate} variant="inline-with-icon" />
     {/if}
   </h2>
-  <Button
-    type={ButtonVariant.SECONDARY}
-    style={ButtonStyle.DEFAULT}
-    icon="chevron-right"
-    size={Size.sm}
-    {parentBgIndex}
-    on:click={goToNext}
-  />
+  <div class="h-full w-10">
+    <BoxButton icon="chevron-right" on:click={goToNext} />
+  </div>
 </div>

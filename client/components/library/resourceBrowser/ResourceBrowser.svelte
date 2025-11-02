@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { onDestroy, onMount } from "svelte";
   import Panel from "@21n/layout/paint/Panel.svelte";
-  import { ButtonVariant } from "@21n/types/button.type";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { Arrangement } from "@21n/types/direction.enum";
   import { Size } from "@21n/types/size.enum";
   import { appStore } from "@21n/stores/app.store";
@@ -17,16 +18,19 @@
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { isValidString } from "@21n/shared-utils/text.utils";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { resolveMultiSelectStore } from "@21n/components/flux/resourceStores/resource.store";
   import { UIState } from "@21n/stores/uiState/uiState.type";
   import LibraryRecordsPane from "@21n/components/library/LibraryRecordsPane.svelte";
-  import { isHideCreateAction, resolveResourceTooltip } from "@21n/components/library/library.utils";
+  import {
+    isHideCreateAction,
+    resolveResourceTooltip
+  } from "@21n/components/library/library.utils";
   import { keyboardShortcuts } from "@21n/components/shortcuts/shortcuts.store";
   import ComponentShortcutListener from "@21n/components/shortcuts/ComponentShortcutListener.svelte";
   import ComponentEmbedLayer from "@21n/layout/layers/ComponentEmbedLayer.svelte";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import view from "@21n/stores/view.store";
   import { Display } from "@21n/types/view.type";
+  import { bulkEditStore } from "@21n/components/record/bulkedit.store";
   export let resource: Resource;
   export let onBack: (() => void) | undefined = undefined;
   export let isPreventCwPadding: boolean = false;
@@ -36,6 +40,8 @@
   let searchQuery: string = "";
   let id: string | null = null;
   let arrangement: Arrangement = resolveArrangement();
+  let selectionCount = 0;
+  let bulkEditCountUnsub: (() => void) | undefined;
 
   const createShortcut = keyboardShortcuts?.resolveShortcutForAction("create");
 
@@ -45,16 +51,15 @@
     resource,
     accessPoint: ResourceAccessPoint.BROWSER
   };
-  $: multiSelectStore = resolveMultiSelectStore(multiSelectContext);
   $: floatingButton =
-    $multiSelectStore.length > 0 || isHideCreateAction(resource)
+    selectionCount > 0 || isHideCreateAction(resource)
       ? undefined
       : {
           label: "New " + resource,
           callback: addAction,
           icon: "plus",
           shortcut: createShortcut,
-          variant: ButtonVariant.PRIMARY
+          style: ButtonStyle.OUTLINED
         };
 
   $: state = isValidString(searchQuery)
@@ -91,6 +96,25 @@
     else if ($view.display === Display.TP) return Size.sm;
     return Size.md;
   }
+
+  onMount(() => {
+    bulkEditCountUnsub = bulkEditStore.count.subscribe((count) => {
+      const state = bulkEditStore.getState();
+      if (
+        state.context &&
+        state.context.resource === resource &&
+        state.context.accessPoint === ResourceAccessPoint.BROWSER
+      ) {
+        selectionCount = count;
+      } else {
+        selectionCount = 0;
+      }
+    });
+  });
+
+  onDestroy(() => {
+    if (bulkEditCountUnsub) bulkEditCountUnsub();
+  });
 </script>
 
 {#key resource}
@@ -110,7 +134,7 @@
     {isPreventCwPadding}
   >
     <div
-      class="relative flex flex-col gap-4 h-full overflow-auto py-3"
+      class="relative flex flex-col gap-4 h-full overflow-auto pt-3"
       slot="nonpadded"
     >
       <LibraryRecordsPane

@@ -32,6 +32,7 @@
   export let chart: IAnalyticsCard;
   export let rawData: AnalyticsDataRecord[];
   export let goalColors: IAnalyticsLabelColor[];
+  export let showLegend: boolean = true;
   let data: ChartDataRecord[];
   let options: any;
   let isLoadingState = true;
@@ -50,7 +51,9 @@
 
   function setBaseOptions() {
     options = {
-      percentage: chart.type === AnalyticsCardType.BAR,
+      ...(chart.type === AnalyticsCardType.BAR
+        ? { stackedBarMode: chart.stackedBarMode ?? "value" }
+        : {}),
       color: {
         scale: {}
       },
@@ -116,7 +119,11 @@
             : chart.type == AnalyticsCardType.LINE ||
                 chart.type === AnalyticsCardType.AREA
               ? new Date(r.start.setHours(0, 0, 0, 0))
-              : r.start,
+              : chart.type === AnalyticsCardType.CALENDAR ||
+                  chart.type === AnalyticsCardType.HOURLY ||
+                  chart.type === AnalyticsCardType.HOURLY_HEATMAP
+                ? new Date(r.start)
+                : r.start,
         value: +(+focus / (60 * 60)).toFixed(2)
       };
     });
@@ -158,6 +165,45 @@
         (a: { key: string }, b) =>
           new Date(a.key).getTime() - new Date(b.key).getTime()
       );
+    } else if (
+      chart.type === AnalyticsCardType.CALENDAR ||
+      chart.type === AnalyticsCardType.HOURLY ||
+      chart.type === AnalyticsCardType.HOURLY_HEATMAP
+    ) {
+      const dayMap = data.reduce((acc: { [key: string]: number }, cur) => {
+        const date = new Date(cur.key);
+        const dateKey =
+          chart.type === AnalyticsCardType.CALENDAR
+            ? date.toISOString().split("T")[0]
+            : cur.key;
+        acc[dateKey] = (acc[dateKey] || 0) + cur.value;
+        return acc;
+      }, {});
+      data = Object.keys(dayMap).map((key) => ({
+        key,
+        value: dayMap[key]
+      }));
+      data.sort(
+        (a: { key: string }, b: { key: string }) =>
+          new Date(a.key).getTime() - new Date(b.key).getTime()
+      );
+    } else if (
+      chart.type === AnalyticsCardType.SUNBURST ||
+      chart.type === AnalyticsCardType.TREEMAP
+    ) {
+      const hierarchicalMap = data.reduce(
+        (acc: { [key: string]: any }, cur) => {
+          const compositeKey = `${cur.topLevelGoal}-${cur.group}`;
+          if (acc[compositeKey]) {
+            acc[compositeKey].value += cur.value;
+          } else {
+            acc[compositeKey] = { ...cur };
+          }
+          return acc;
+        },
+        {}
+      );
+      data = Object.values(hierarchicalMap);
     }
   }
   /**
@@ -182,7 +228,7 @@
       options = {
         ...options,
         xDomain: xDomain,
-        barsWidth: xDomain.length < 10 ? 30 : xDomain.length < 15 ? 26 : 25
+        barsWidth: Math.round(450 / xDomain.length)
         // barsWidth: xDomain.length > 20 ? 10 : xDomain.length > 10 ? 20 : 30
       };
     }
@@ -213,7 +259,7 @@
   class={cn(
     "gap-2 w-full h-full flex flex-col justify-center items-center userdata",
     {
-      "p-4": !$view.isPortrait
+      "p-2": !$view.isPortrait
     }
   )}
 >
@@ -231,7 +277,12 @@
       })}
     >
       <Chart
-        variant={chart.type == AnalyticsCardType.BAR
+        variant={chart.type == AnalyticsCardType.BAR ||
+        chart.type === AnalyticsCardType.CALENDAR ||
+        chart.type === AnalyticsCardType.HOURLY ||
+        chart.type === AnalyticsCardType.HOURLY_HEATMAP ||
+        chart.type === AnalyticsCardType.SUNBURST ||
+        chart.type === AnalyticsCardType.TREEMAP
           ? ChartVariant.CUSTOM
           : ChartVariant.CARBON}
         type={chart.type == AnalyticsCardType.BAR
@@ -242,9 +293,20 @@
               ? ChartType.DOUGHNUT
               : chart.type === AnalyticsCardType.LINE
                 ? ChartType.LINE
-                : ChartType.AREA}
+                : chart.type === AnalyticsCardType.CALENDAR
+                  ? ChartType.CALENDAR
+                  : chart.type === AnalyticsCardType.HOURLY
+                    ? ChartType.HOURLY
+                    : chart.type === AnalyticsCardType.HOURLY_HEATMAP
+                      ? ChartType.HOURLY_HEATMAP
+                      : chart.type === AnalyticsCardType.SUNBURST
+                        ? ChartType.SUNBURST
+                        : chart.type === AnalyticsCardType.TREEMAP
+                          ? ChartType.TREEMAP
+                          : ChartType.AREA}
         {data}
         {options}
+        {showLegend}
       />
       <!-- <Chart variant={ChartVariant.CARBON} type={chart.type} {data} {options} /> -->
     </div>

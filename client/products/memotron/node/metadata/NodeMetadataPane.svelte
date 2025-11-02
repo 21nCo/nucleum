@@ -120,7 +120,7 @@
         />
       {/if}
       <BasicInfoItem
-        label={isWebNode ? "Clipped at" : "Created at"}
+        label={isWebNode ? "Saved at" : "Created at"}
         value={$node.createdAt}
       />
       {#if lastAccessLog}

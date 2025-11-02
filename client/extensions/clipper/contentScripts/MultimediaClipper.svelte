@@ -1,6 +1,6 @@
 <!-- @deprecated - using MultimediaClipperContentScript instead -->
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   export let colors: string[];
   function isMultimedia(element) {
     return (
@@ -62,12 +62,7 @@
       element.addEventListener("mouseleave", mouseLeaveHandler);
     });
   });
-</script>
 
-<svelte:window on:scroll={removeAll} on:mouseup={removeAll} />
-
-<script lang="ts">
-  import { onDestroy } from "svelte";
   onDestroy(() => {
     trackedElements.forEach((element) => {
       element.removeEventListener("mouseover", mouseOverHandler);
@@ -76,3 +71,5 @@
     trackedElements = [];
   });
 </script>
+
+<svelte:window on:scroll={removeAll} on:mouseup={removeAll} />

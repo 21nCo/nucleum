@@ -101,7 +101,7 @@
     groupId: "resourceSwitcherContextMenuGroup"
   }}
   class={cn(
-    "relative flex-1 flex gap-1 items-center whitespace-nowrap border rounded-md text-b2",
+    "relative flex-1 flex gap-1 items-center whitespace-nowrap border rounded-md text-b2 transition-all",
     {
       "px-4 py-3": isConstrainedWidth,
       "px-3 py-2": !isConstrainedWidth,

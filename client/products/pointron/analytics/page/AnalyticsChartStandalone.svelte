@@ -54,12 +54,10 @@
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { uiState } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CALENDAR;
   export let date: Date | undefined = undefined;
+  export let showLegend: boolean = true;
   export let scale: TimeScale | undefined = undefined;
   export let goalId: IRecordId | undefined = undefined;
   let periodValue: TimePeriodValue = {
@@ -101,9 +99,13 @@
   }
 
   function persistShowOptionsState() {
-    uiState.setState(UIState.analyticsChartStandaloneShowOptions, isShowOptions, {
-      scope: UIStateScope.DAP
-    });
+    uiState.setState(
+      UIState.analyticsChartStandaloneShowOptions,
+      isShowOptions,
+      {
+        scope: UIStateScope.DAP
+      }
+    );
   }
 
   onMount(() => {
@@ -262,7 +264,12 @@
           </div>
           <div class="flex items-center gap-2">
             <CardSelector {accessPoint} bind:selected={chartType} on:select />
-            <Toggle icon="sliders" bgSize={Size.sm} bind:on={isShowOptions} on:change={() => persistShowOptionsState()} />
+            <Toggle
+              icon="sliders"
+              bgSize={Size.sm}
+              bind:on={isShowOptions}
+              on:change={() => persistShowOptionsState()}
+            />
           </div>
         </div>
       </div>
@@ -326,6 +333,7 @@
           }}
           rawData={data}
           {goalColors}
+          {showLegend}
         />
       {/key}
     {/if}
