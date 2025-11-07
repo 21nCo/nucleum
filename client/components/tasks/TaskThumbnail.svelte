@@ -296,8 +296,7 @@
 
       {#if isHovering || isDatePickerOpen || ($context.isTouchDevice && !$view.isPortrait)}
         {@const isInlineContext =
-          (accessPoint === ResourceAccessPoint.BROWSER ||
-            accessPoint === ResourceAccessPoint.GOAL) &&
+          accessPoint === ResourceAccessPoint.BROWSER &&
           !$view.isConstrainedWidth}
         {#if !isCurrentlyFocusing}
           <Button
@@ -342,7 +341,7 @@
           style={ButtonStyle.OUTLINED}
           isPreventMinWidth={true}
           on:click={() => {
-            if (accessPoint === ResourceAccessPoint.GOAL) {
+            if (isInlineContext && accessPoint === ResourceAccessPoint.GOAL) {
               if (accessPointId)
                 appStore.toggleSearchParamRecordSpecific(accessPointId, {
                   task: item.id.toString()

@@ -5,20 +5,20 @@
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
   import { TimeScaleUnit } from "@21n/types/time.type";
   import { uiState } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
   import { OptionSelectorStyle } from "@21n/types/select.type";
   import view from "@21n/stores/view.store";
   import { appStore } from "@21n/stores/app.store";
   import { Product } from "@21n/products/product.type";
+  import Button from "@21n/elements/button/Button.svelte";
   const dispatch = createEventDispatcher();
 
   export let selectedView: TimeScaleUnit = TimeScaleUnit.MONTH;
   export let isRefreshing: boolean = false;
   export let parentBgIndex: number = 2;
+  const isDev = import.meta.env?.DEV;
+
   const monthOption = {
     label: "Month",
     icon: "text:M",
@@ -49,11 +49,11 @@
       ? [monthOption, yearOption]
       : [
           dayOption,
-          // weekOption,
+          isDev && weekOption,
           monthOption,
-          yearOption
-          // heatmapOption
-        ];
+          yearOption,
+          isDev && heatmapOption
+        ].filter(Boolean);
 
   function onScaleSelection(e: CustomEvent) {
     if (!e.detail) return;
@@ -89,7 +89,7 @@
       />
     {/if}
   </div>
-  {#if isRefreshing}
-    <Icon icon="svg-spinners:180-ring-with-bg" size={Size.sm} />
+  {#if isDev}
+    <Button icon="focus" tooltip="Calendar scope" />
   {/if}
 </div>

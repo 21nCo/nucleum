@@ -27,18 +27,12 @@
   import DynamicMetadataLayer from "@21n/layout/layers/DynamicMetadataLayer.svelte";
   import { logger } from "@21n/components/debug/logger.client";
   import { flux, initFlux } from "@21n/components/flux/flux";
-  import {
-    UserDataMode,
-    UserSessionType
-  } from "@21n/types/account.type";
+  import { UserDataMode, UserSessionType } from "@21n/types/account.type";
   import {
     ClientStorageKey,
     PersistenceProvider
   } from "@21n/persistence/persistence.type";
-  import {
-    clientStorage,
-    getDapId
-  } from "@21n/persistence/persistence.utils";
+  import { clientStorage, getDapId } from "@21n/persistence/persistence.utils";
   import PageError from "@21n/components/error/PageError.svelte";
   import posthog from "posthog-js";
   import { createEventDispatcher } from "svelte";

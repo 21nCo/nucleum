@@ -114,6 +114,7 @@ export enum AppSearchParam {
    * Should be used only with some prefix like recordId etc... Otherwise it will conflict with ResourceAccessMode.TAB
    */
   TAB = "tab",
+  PANEL = "panel",
   VIEW = "view",
   LINK = "link",
   BULK = "bulk",

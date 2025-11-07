@@ -26,6 +26,7 @@
   export let triggerMethod: PopoverTriggerMethod | undefined = undefined;
   export let position: Placement | undefined = undefined;
   export let offsetInPx: number | undefined = undefined;
+  export let isBoxed: boolean = false;
   export let heading: string | undefined = undefined;
   /**
    * Export only for read-only purpose to check if the context menu is visible.
@@ -128,6 +129,7 @@
     <Toggle
       {icon}
       {tooltip}
+      {isBoxed}
       parentBgIndex={parentBgIndex + 1}
       isPreventFillOnActive={true}
       size={actionSize}

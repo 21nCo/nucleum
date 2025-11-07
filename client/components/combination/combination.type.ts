@@ -63,6 +63,7 @@ export enum CombinationType {
   MINDMAP = "mindmap",
   WALL = "wall",
   /**
+   * @deprecated - use horizontal stack and vertical stack when Calendar scope is activated in Calendar instead.
    * Previous - Pyramid, Funnel views merged into regular timeline view.
    */
   TIMELINE = "timeline"

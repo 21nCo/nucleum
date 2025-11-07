@@ -3,10 +3,7 @@
   import ClassicCalendar from "@21n/components/calendar/classic/ClassicCalendar.svelte";
   import { CalendarLayout } from "@21n/components/calendar/calendar.type";
   import { uiState } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import view from "@21n/stores/view.store";
   import CalendarCw from "@21n/components/calendar/CalendarCW.svelte";
   export let panel: CalendarLayout = resolvePanelSelection();

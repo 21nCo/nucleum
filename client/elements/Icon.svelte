@@ -287,9 +287,9 @@
       renderedIcon = icon;
     } else if (icon.startsWith("ph:")) {
       if (icon.endsWith("-light")) {
-        renderedIcon = isFilled ? icon.replace("-light", "-fill") : icon;
+        renderedIcon = isFilled ? icon.replace("-light", "-duotone") : icon;
       } else if (icon.endsWith("-thin")) {
-        renderedIcon = isFilled ? icon.replace("-thin", "-fill") : icon;
+        renderedIcon = isFilled ? icon.replace("-thin", "-duotone") : icon;
       } else if (!icon.endsWith("-fill")) {
         renderedIcon = isFilled ? icon + "-fill" : icon;
       }

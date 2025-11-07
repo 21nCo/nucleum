@@ -10,7 +10,6 @@
   import { parseAndFormatDate } from "@21n/utils/time.utils";
   import { bg, cn } from "@21n/utils/ui.utils";
   import ProfilePicture from "@21n/components/settings/account/ProfilePicture.svelte";
-  import { Modes } from "@21n/components/calendar/birdView/Birdview.type";
   import modalEvent from "@21n/components/modal/modal.store";
   import { Action } from "@21n/types/action.enum";
   import {

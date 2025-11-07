@@ -225,8 +225,8 @@
 </script>
 
 <div
-  class={cn("flex flex-col w-full rounded-md border border-brs3 p-3", {
-    "h-80": accessPoint === ResourceAccessPoint.CALENDAR,
+  class={cn("flex flex-col w-full rounded-md p-3", {
+    "h-80 border border-brs3": accessPoint === ResourceAccessPoint.CALENDAR,
     "h-full": accessPoint === ResourceAccessPoint.GOAL
   })}
 >

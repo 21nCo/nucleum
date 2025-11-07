@@ -6,7 +6,6 @@
   } from "@21n/products/memotron/node/node.store";
   import NodeRightPane from "@21n/products/memotron/node/rightPanel/NodeRightPane.svelte";
   import BottomFloat from "@21n/elements/BottomFloat.svelte";
-  import NodeFloatingBar from "@21n/products/memotron/node/floatingBar/NodeFloatingBar.svelte";
   import NodeTitleBreadcrumbs from "@21n/products/memotron/node/title/NodeTitleBreadcrumbs.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import NodeContent from "@21n/products/memotron/node/content/NodeContent.svelte";
@@ -16,23 +15,19 @@
   import { InputStyle } from "@21n/types/input.type";
   import { cn } from "@21n/utils/ui.utils";
   import NodeAvatar from "@21n/products/memotron/node/avatar/NodeAvatar.svelte";
-  import { fade } from "svelte/transition";
   import CollectionsLane from "@21n/products/memotron/node/floatingBar/CollectionsLane.svelte";
   import {
     headingNodeTypes,
-    NodeRightPaneType,
     NodeView
   } from "@21n/products/memotron/node/node.type";
+  import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
   import PropertiesPane from "@21n/components/collection/properties/PropertiesPane.svelte";
-  import view from "@21n/stores/view.store";
   import NodeRightPaneContent from "@21n/products/memotron/node/rightPanel/NodeRightPaneContent.svelte";
   import NodeBirdView from "@21n/products/memotron/node/birdView/NodeBirdView.svelte";
   import {
     ResourceAccessMode,
-    ResourceAccessPoint,
-    ResourceActionType
+    ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
-  import { resizeListener } from "@21n/actions/resize.action";
   import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
   import { getMdStore } from "@21n/components/markdown/markdown.store";
   import TableOfContents from "@21n/components/markdown/TableOfContents.svelte";
@@ -40,8 +35,6 @@
   import context from "@21n/stores/context.store";
   import { Embed } from "@21n/types/context.type";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { dispatchCustomEvent } from "@21n/utils/browser.utils";
-  import { GlobalEvent } from "@21n/types/event.enum";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { appStore } from "@21n/stores/app.store";
   import CoverPicker from "@21n/elements/coverPicker/CoverPicker.svelte";
@@ -53,26 +46,18 @@
 
   export let node: IActiveNodeStore;
   export let selectedView: NodeView = NodeView.CONTENT;
+  export let isConstrainedWidth: boolean = false;
+  export let isShowFloatingBar = true;
   let lastScrollTop = 0;
   let mdId = generateSimpleRandomId();
   let isStickied = false;
-  let isShowFloatingBar = true;
-  let isRightPanelCollapsed: boolean = true;
-  let rightPane = NodeRightPaneType.NONE;
-  let floatingBarRef: NodeFloatingBar | undefined = undefined;
-  let containerWidth = 0;
   let refreshId: number = new Date().getTime();
   let scrollTimeout: NodeJS.Timeout;
   let isCoverPickerHovered = false;
-  let isShowCoverPicker = false;
+  let dev_isShowFallbackFloatingBar = false;
   $: mdStore = getMdStore(mdId);
   $: cover = $node.cover;
   $: isWidened = $node.config?.isWidened ?? false;
-  $: isConstrainedWidth =
-    $view.isConstrainedWidth ||
-    containerWidth < 1000 ||
-    $node.accessMode === ResourceAccessMode.SPLIT ||
-    $node.accessMode === ResourceAccessMode.FSPLIT;
 
   $: isReadOnlyMode =
     $node.isInReadOnlyMode ||
@@ -122,32 +107,6 @@
     if ($node.label) await node.modify({ label: $node.label });
   }
 
-  function closeRightPane() {
-    rightPane = NodeRightPaneType.NONE;
-    isRightPanelCollapsed = true;
-    onRightPaneSwitch();
-  }
-
-  function _openRightPane(pane: NodeRightPaneType) {
-    rightPane = pane;
-    isRightPanelCollapsed = false;
-    onRightPaneSwitch();
-  }
-
-  function onRightPaneSwitch() {
-    if ($node.accessMode !== ResourceAccessMode.INLINE || isConstrainedWidth)
-      return;
-    if (isRightPanelCollapsed) {
-      dispatchCustomEvent(GlobalEvent.EXPAND_PANEL, {});
-    } else {
-      dispatchCustomEvent(GlobalEvent.COLLAPSE_PANEL, {});
-    }
-  }
-
-  function openRightPane(e: CustomEvent<NodeRightPaneType>) {
-    _openRightPane(e.detail);
-  }
-
   async function onViewSwitch(e: CustomEvent<NodeView>) {
     selectedView = e.detail;
     appStore.toggleSearchParamRecordSpecific($node.id, {
@@ -170,7 +129,7 @@
   }
 
   async function closeCoverPicker() {
-    isShowCoverPicker = false;
+    node.toggleCoverPicker(false);
   }
 
   async function removeCoverPhoto(e: MouseEvent) {
@@ -178,16 +137,13 @@
     await node.modify({
       cover: undefined
     });
-    isShowCoverPicker = false;
+    node.toggleCoverPicker(false);
   }
 </script>
 
 <div
   class="relative w-full h-full flex flex-col bg-bgs1 rounded-md"
   id="mdcontainer-{mdId}"
-  use:resizeListener={(e) => {
-    containerWidth = e.width;
-  }}
 >
   {#if $node}
     {#if selectedView === NodeView.CONTENT}
@@ -202,10 +158,11 @@
             "justify-center": !isWidened,
             "dp:grid dp:grid-cols-[1fr_auto_1fr] dp:gap-2":
               !isWidened && !isConstrainedWidth,
-            "px-0": isConstrainedWidth && rightPane !== NodeRightPaneType.NONE
+            "px-0":
+              isConstrainedWidth && $node.panel !== ResourcePanelType.DEFAULT
           })}
         >
-          {#if !isConstrainedWidth || (isConstrainedWidth && rightPane === NodeRightPaneType.NONE)}
+          {#if !isConstrainedWidth || (isConstrainedWidth && ($node.panel === ResourcePanelType.DEFAULT || $node.panel === ResourcePanelType.NONE))}
             <div class="min-w-0" />
             <div
               class={cn("flex flex-col justify-center items-center h-full", {
@@ -233,7 +190,7 @@
                         icon="reset"
                         size={Size.sm}
                         on:click={() => {
-                          isShowCoverPicker = true;
+                          node.toggleCoverPicker(true);
                         }}
                       />
                       <Button
@@ -264,7 +221,7 @@
                   </header>
                 {/key}
               {/if}
-              {#if $node.contentType === NodeType.NODULAR_MARKDOWN && isShowCoverPicker}
+              {#if $node.contentType === NodeType.NODULAR_MARKDOWN && $node.isShowCoverPicker}
                 <div class="h-full w-full overflow-auto">
                   <CoverPicker
                     value={cover}
@@ -353,7 +310,7 @@
                       resource={Resource.node}
                       isVisibleProps={true}
                       on:showAll={() => {
-                        _openRightPane(NodeRightPaneType.PROPERTIES);
+                        node.switchPanel(ResourcePanelType.PROPERTIES);
                       }}
                     />
                   {/if}
@@ -361,80 +318,24 @@
                 </main>
               {/if}
             </div>
-          {:else if isConstrainedWidth && rightPane !== NodeRightPaneType.NONE}
-            <NodeRightPaneContent
-              {node}
-              {mdId}
-              pane={rightPane}
-              on:close={closeRightPane}
-            />
+          {:else if isConstrainedWidth && $node.panel !== ResourcePanelType.NONE}
+            <NodeRightPaneContent {node} {mdId} />
           {/if}
-
-          {#if !isConstrainedWidth && !$node.isInFocusMode}
-            <NodeRightPane
-              {node}
-              {mdId}
-              bind:isRightPanelCollapsed
-              bind:pane={rightPane}
-              on:close={closeRightPane}
-              on:switch={onRightPaneSwitch}
-            />
-          {:else if $node.isInFocusMode && !isConstrainedWidth}
-            <div class="flex max-w-sm">
-              <TableOfContents {mdId} />
-            </div>
+          {#if !isConstrainedWidth}
+            {#if !$node.isInFocusMode && $node.panel && $node.panel !== ResourcePanelType.NONE && $node.panel !== ResourcePanelType.DEFAULT}
+              <NodeRightPane {node} {mdId} />
+            {:else}
+              <div class="flex max-w-sm">
+                <TableOfContents {mdId} isHideEmptyPlaceholder={true} />
+              </div>
+            {/if}
           {/if}
         </div>
       {/key}
     {:else}
-      <NodeBirdView {node} bind:rightPane />
+      <NodeBirdView {node} />
     {/if}
-    {#if (isShowFloatingBar || isConstrainedWidth) && !$node.isInFocusMode}
-      <div transition:fade={{ duration: 200 }}>
-        <BottomFloat
-          margin={isConstrainedWidth && $context.embed === Embed.HANDSET
-            ? "mb-8"
-            : isConstrainedWidth
-              ? "mb-4"
-              : "mb-0"}
-        >
-          <NodeFloatingBar
-            {node}
-            {isConstrainedWidth}
-            nodeView={selectedView}
-            bind:isWidened
-            bind:this={floatingBarRef}
-            on:action={(e) => {
-              if (
-                [
-                  NodeRightPaneType.METADATA,
-                  NodeRightPaneType.HISTORY,
-                  NodeRightPaneType.SIDENOTES,
-                  NodeRightPaneType.PROPERTIES,
-                  NodeRightPaneType.LINKS
-                ].includes(e.detail)
-              ) {
-                openRightPane(e);
-              } else if (e.detail === ResourceActionType.SET_COVER_PHOTO) {
-                if (!isReadOnlyMode) {
-                  isShowCoverPicker = true;
-                }
-              }
-            }}
-            on:view={onViewSwitch}
-            on:panel={openRightPane}
-            on:none={(e) => {
-              if (e.detail === rightPane) {
-                closeRightPane();
-              } else if (e.detail === ResourceActionType.TOGGLE_READ_MODE) {
-                nodeStore.toggleReadMode($node.id, false);
-              }
-            }}
-          />
-        </BottomFloat>
-      </div>
-    {/if}
-    {#if $node.isInFocusMode}
+    {#if dev_isShowFallbackFloatingBar && $node.isInFocusMode && isConstrainedWidth}
       <BottomFloat margin={$context.embed === Embed.HANDSET ? "mb-8" : "mb-4"}>
         <button
           class="flex justify-center items-center gap-2 bg-bgs2 border border-brs3 rounded-md px-4 py-2 shadow-sm hover:bg-bgs3"
@@ -452,7 +353,7 @@
       <NodeLoadingPulse />
     </div>
   {/if}
-  {#if ($node.accessMode === ResourceAccessMode.SPLIT || $node.accessMode === ResourceAccessMode.FSPLIT) && (!rightPane || rightPane === NodeRightPaneType.NONE)}
+  {#if ($node.accessMode === ResourceAccessMode.SPLIT || $node.accessMode === ResourceAccessMode.FSPLIT) && (!$node.panel || $node.panel === ResourcePanelType.NONE)}
     <FullScreenCloseButton accessMode={$node.accessMode} isFloat={true} />
   {/if}
 </div>

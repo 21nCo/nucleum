@@ -2,7 +2,6 @@
   import Roller from "@21n/components/calendar/birdView/Roller.svelte";
   import {
     Itemtype,
-    Modes,
     type ProgrammedVerticalWheelEvent
   } from "@21n/components/calendar/birdView/Birdview.type";
   import {
@@ -16,6 +15,7 @@
   } from "@21n/components/calendar/birdView/Birdview.utils";
   import { createEventDispatcher, onMount } from "svelte";
   import { debouncer } from "@21n/utils/utils";
+  import { TimeScaleUnit } from "@21n/types/time.type";
   const dispatch = createEventDispatcher();
   let containerHeight: number;
   let monthNames = [
@@ -32,7 +32,7 @@
     "Nov",
     "Dec"
   ];
-  export let mode: Modes;
+  export let mode: TimeScaleUnit;
 
   let selectedYear: number = currentYear;
   let selectedMonth: string = currentYear + currentMonth;
@@ -177,11 +177,12 @@
         (Number(selectedDate.slice(lastAlphIndex + 1)) > selectedMonthEndDate
           ? selectedMonthEndDate
           : selectedDate.slice(lastAlphIndex + 1));
-      if (mode == Modes.ZONES) {
+      if (mode == TimeScaleUnit.PART) {
         debouncedDispatchSelectedDateReset();
         await waitForTimeout(scrollToSelectedDay);
-      } else if (mode == Modes.DAYS) debouncedDispatchSelectedMonthReset();
-      else if (mode == Modes.MONTHS)
+      } else if (mode == TimeScaleUnit.DAY)
+        debouncedDispatchSelectedMonthReset();
+      else if (mode == TimeScaleUnit.MONTH)
         if (!e?.isPanelEvent) {
           dispatch("selectedYearChange", {
             selectedYear,
@@ -235,10 +236,10 @@
         ? selectedMonthEndDate
         : selectedDate.slice(lastAlphIndex + 1));
     if (e instanceof WheelEvent || e.isWheelEvent == true) {
-      if (mode == Modes.ZONES) {
+      if (mode == TimeScaleUnit.PART) {
         debouncedDispatchSelectedDateReset();
         await waitForTimeout(scrollToSelectedDay);
-      } else if (mode == Modes.DAYS)
+      } else if (mode == TimeScaleUnit.DAY)
         dispatch("selectedMonthChange", {
           selectedMonth,
           isPostive: e?.deltaY > 0
@@ -292,9 +293,12 @@
       itemHeight: 24,
       containerHeight: containerHeight
     };
-    if (mode == Modes.ZONES) dispatch("selectedDateChange", selectedDate);
-    else if (mode == Modes.DAYS) dispatch("selectedMonthChange", selectedMonth);
-    else if (mode == Modes.MONTHS) dispatch("selectedYearChange", selectedYear);
+    if (mode == TimeScaleUnit.PART)
+      dispatch("selectedDateChange", selectedDate);
+    else if (mode == TimeScaleUnit.DAY)
+      dispatch("selectedMonthChange", selectedMonth);
+    else if (mode == TimeScaleUnit.MONTH)
+      dispatch("selectedYearChange", selectedYear);
 
     dispatch("mount", {
       handleDaysWheelEvent,
@@ -308,7 +312,7 @@
   class="relative flex p-1 gap-1 border border-brs3 default-typeface"
   bind:clientHeight={containerHeight}
 >
-  {#if mode == Modes.MONTHS || mode == Modes.DAYS || mode == Modes.ZONES}
+  {#if mode == TimeScaleUnit.MONTH || mode == TimeScaleUnit.DAY || mode == TimeScaleUnit.PART}
     <Roller
       handleWheelEvent={handleYearsWheelEvent}
       items={years}
@@ -318,7 +322,7 @@
       on:mount={(e) => (scrollToSelectedYear = e.detail)}
     />
   {/if}
-  {#if mode == Modes.DAYS || mode == Modes.ZONES}
+  {#if mode == TimeScaleUnit.DAY || mode == TimeScaleUnit.PART}
     <Roller
       handleWheelEvent={handleMonthsWheelEvent}
       items={yearsForMonths}
@@ -328,7 +332,7 @@
       on:mount={(e) => (scrollToSelectedMonth = e.detail)}
     />
   {/if}
-  {#if mode == Modes.ZONES}
+  {#if mode == TimeScaleUnit.PART}
     <Roller
       handleWheelEvent={handleDaysWheelEvent}
       items={days}

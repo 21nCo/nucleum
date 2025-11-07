@@ -54,13 +54,17 @@ export function staticPlugin(options = {}) {
     },
     configureServer(server) {
       // Serve static assets during development
+      // This middleware should run before SvelteKit's router
       server.middlewares.use("/static", (req, res, next) => {
-        const filePath = path.join(__dirname, req.url);
+        // When using .use("/static", handler), req.url is relative to the mount point
+        // So /static/fonts/file.woff2 becomes /fonts/file.woff2 in req.url
+        const relativePath = req.url;
+        const filePath = path.join(__dirname, relativePath);
 
         if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
           res.statusCode = 200;
 
-          // Set correct Content-Type for SVG files
+          // Set correct Content-Type for various file types
           if (filePath.endsWith(".svg")) {
             res.setHeader("Content-Type", "image/svg+xml");
           } else if (filePath.endsWith(".png")) {
@@ -73,13 +77,26 @@ export function staticPlugin(options = {}) {
             res.setHeader("Content-Type", "audio/mpeg");
           } else if (filePath.endsWith(".wav")) {
             res.setHeader("Content-Type", "audio/wav");
+          } else if (filePath.endsWith(".woff2")) {
+            res.setHeader("Content-Type", "font/woff2");
+          } else if (filePath.endsWith(".woff")) {
+            res.setHeader("Content-Type", "font/woff");
+          } else if (filePath.endsWith(".ttf")) {
+            res.setHeader("Content-Type", "font/ttf");
+          } else if (filePath.endsWith(".otf")) {
+            res.setHeader("Content-Type", "font/otf");
           }
 
-          fs.createReadStream(filePath).pipe(res);
+          const stream = fs.createReadStream(filePath);
+          stream.on("error", () => {
+            res.statusCode = 404;
+            res.end();
+          });
+          stream.pipe(res);
         } else {
           next();
         }
       });
-    },
+    }
   };
 }

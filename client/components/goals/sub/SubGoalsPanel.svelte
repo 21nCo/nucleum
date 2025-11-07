@@ -25,8 +25,15 @@
   } from "@21n/components/flux/resourceStores/resource.utils";
   import NestedList from "@21n/components/nestedList/NestedList.svelte";
   import { NestedListStyle } from "@21n/components/nestedList/nestedList.type";
-  import { goalStore, type IActiveGoalStore } from "@21n/components/goals/goal.store";
-  import { GoalStatus, SubGoalsLayout, type IGoal } from "@21n/components/goals/goal.type";
+  import {
+    goalStore,
+    type IActiveGoalStore
+  } from "@21n/components/goals/goal.store";
+  import {
+    GoalStatus,
+    SubGoalsLayout,
+    type IGoal
+  } from "@21n/components/goals/goal.type";
   import { resolveGoalStatusIcon } from "@21n/components/goals/goal.utils";
   import SubGoalItem from "@21n/components/goals/sub/SubGoalItem.svelte";
   import SubGoalsLayoutSwitcher from "@21n/components/goals/sub/SubGoalsLayoutSwitcher.svelte";
@@ -175,11 +182,11 @@
   </div>
 {/if}
 {#if _subGoals}
-  <div class="flex items-center justify-end gap-4 w-full">
+  <div class="flex items-center justify-end gap-4 w-full px-3">
     {#if $goal.subGoalsLayout !== SubGoalsLayout.STEPS && completedSubgoalsCount}
       <Button
         icon={isHideCompleted ? "show" : "hide"}
-        label={`${isHideCompleted ? "Show" : "Hide"} completed (${completedSubgoalsCount})`}
+        tooltip={`${isHideCompleted ? "Show" : "Hide"} completed (${completedSubgoalsCount})`}
         size={Size.sm}
         style={ButtonStyle.PLAIN}
         on:click={onHideCompletedChange}
@@ -191,7 +198,7 @@
     />
   </div>
   <div
-    class={cn("flex flex-col cw:px-2 p-4 userdata", {
+    class={cn("flex flex-col cw:px-2 userdata text-b2", {
       "gap-6": $goal.subGoalsLayout === SubGoalsLayout.STEPS,
       "gap-2": $goal.subGoalsLayout === SubGoalsLayout.DEFAULT
     })}
@@ -207,7 +214,7 @@
         items={_subGoals.map((t) => t.id)}
         contentCallback={resolveContent}
         childrenCallback={resolveSubGoals}
-        style={NestedListStyle.OUTLINED}
+        style={NestedListStyle.DEFAULT}
         isShowAddTextInput={isActiveResource}
         on:click={(e) => {
           if (e.detail) {

@@ -358,7 +358,7 @@
       !event.detail.path.includes("mailto:") &&
       !event.detail.path.includes("//oauthsignin")
     )
-      goto(event.detail.path);
+      goto(event.detail.path, { replaceState: event.detail?.replaceState ?? false });
     else if (event.detail.path) window.location = event.detail.path;
   }
 

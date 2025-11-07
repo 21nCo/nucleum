@@ -19,6 +19,7 @@
   export let data: any;
   export let options: any;
   export let showLegend: boolean = true;
+  export let isConstrainedWidth: boolean = false;
 
   const supportedTypes = new Set([
     ChartType.BAR,
@@ -367,7 +368,11 @@
               normalizeColor(currentColors?.fgs3) ?? "rgba(128, 128, 128, 0.5)",
             pageTextStyle: {
               color: axisLabelColor
-            }
+            },
+            ...(isConstrainedWidth && {
+              bottom: 0,
+              left: "center"
+            })
           }
         : { show: false },
       xAxis: {
@@ -527,7 +532,12 @@
               normalizeColor(currentColors?.fgs3) ?? "rgba(128, 128, 128, 0.5)",
             pageTextStyle: {
               color: axisLabelColor
-            }
+            },
+            ...(isConstrainedWidth && {
+              orient: "horizontal",
+              bottom: 0,
+              left: "center"
+            })
           }
         : { show: false },
       xAxis: {
@@ -1385,14 +1395,15 @@
       },
       legend: showLegend
         ? {
-            orient: "vertical",
+            orient: isConstrainedWidth ? "horizontal" : "vertical",
             type: "scroll",
             itemWidth: 12,
             itemHeight: 12,
             backgroundColor:
               normalizeColor(currentColors?.bgs1) ?? "rgba(0,0,0,0.1)",
-            right: 0,
-            top: "top",
+            ...(isConstrainedWidth
+              ? { bottom: 0, left: "center" }
+              : { right: 0, top: "top" }),
             textStyle: {
               color: labelColor,
               overflow: "truncate"

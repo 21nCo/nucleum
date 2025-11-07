@@ -25,7 +25,10 @@
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import view from "@21n/stores/view.store";
-  import { resolveCalendarNotesId } from "@21n/components/calendar/calendar.utils";
+  import {
+    resolveCalendarColumnPanels,
+    resolveCalendarNotesId
+  } from "@21n/components/calendar/calendar.utils";
   import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import DayTimeline from "./timeline/daytimeline/DayTimeline.svelte";
@@ -59,7 +62,10 @@
 
   $: layout = resolveLayout(containerWidth);
 
-  $: panels = resolvePanels($appStore.product, layout);
+  $: panels = resolveCalendarColumnPanels($appStore.product, layout);
+  $: if (panels.length === 1) {
+    selectedPanel = panels[0].value;
+  }
 
   function resolveLayout(width: number) {
     if (width > 1400) {
@@ -69,59 +75,6 @@
     } else {
       return CalendarColumnLayout.TABS;
     }
-  }
-
-  /**
-   * Notes on timeline:
-   * - Sub timeline (hours for a day, days for a week etc) - Time blocking/slotting
-   * - Collapsible all-day events, tasks inbox (collapsible so that timeline is not crowded)
-   * - Past days/periods - will be more restrospective, future days will have planned events, tasks etc - current day/period tries to show both
-   * - Timeline will move out of panel switcher when enough width is available for the calendar column
-   * @param product
-   */
-  function resolvePanels(product: Product, layout: CalendarColumnLayout) {
-    const timeline = {
-      label: "Timeline",
-      value: CalendarColumnPanel.Timeline,
-      icon: "clock"
-    };
-    const activity = {
-      label: "Activity",
-      value: CalendarColumnPanel.Activity,
-      icon: "history"
-    };
-    const overview = {
-      label: "Overview",
-      value: CalendarColumnPanel.Overview,
-      icon: "heroicons:rectangle-group"
-      // icon: "grid"
-    };
-    const notes = {
-      label: "Notes",
-      value: CalendarColumnPanel.Notes,
-      icon: "note"
-    };
-    let items = [overview];
-    switch (product) {
-      case Product.POINTRON:
-        items = [overview, activity];
-        break;
-      case Product.MEMOTRON:
-        items = [notes, activity];
-        break;
-      case Product.NUCLEUS:
-        items = [notes, overview, activity];
-        break;
-      default:
-        items = [overview, activity];
-    }
-    if (layout === CalendarColumnLayout.TABS && product !== Product.MEMOTRON) {
-      items = [timeline, ...items];
-    }
-    if (items.length === 1) {
-      selectedPanel = items[0].value;
-    }
-    return items;
   }
 
   function handleDateChange(e: CustomEvent<Date>) {

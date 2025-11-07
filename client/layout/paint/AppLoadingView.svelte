@@ -32,7 +32,7 @@
         {#if $appStore.product === Product.NUCLEUS}
           <NucleusAnimation />
         {:else}
-          <SubAtomLogo />
+          <SubAtomLogo isShowAnimation={true} />
         {/if}
         {#if duration !== undefined || message || subMessage}
           <div

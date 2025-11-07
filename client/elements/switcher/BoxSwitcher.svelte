@@ -5,10 +5,10 @@
   import { createEventDispatcher } from "svelte";
   import { Size } from "@21n/types/size.enum";
   import { onMount } from "svelte";
-  import { fly } from "svelte/transition";
   import { tooltip } from "@21n/actions/popover.action";
   export let options: ISelectItem[];
   export let selected: ISelectValue | undefined = undefined;
+  export let isIconOnlyMode: boolean = false;
   export let isExpandOnActiveForIcon = false;
   export let parentBgIndex: number = 1;
   if (selected === undefined) selected = options[0]?.value;
@@ -49,9 +49,9 @@
 <div
   bind:this={containerEl}
   class={cn("grid grid-flow-col h-full", {
-    "auto-cols-max w-full": !isExpandOnActiveForIcon
+    "auto-cols-max w-full": !isExpandOnActiveForIcon || isIconOnlyMode
   })}
-  style:width={isExpandOnActiveForIcon && containerWidth > 0
+  style:width={!isIconOnlyMode && isExpandOnActiveForIcon && containerWidth > 0
     ? `${containerWidth}px`
     : undefined}
   style:grid-template-columns={isExpandOnActiveForIcon
@@ -62,10 +62,10 @@
     {@const isSelected = selected === option.value}
     <button
       class={cn(
-        "flex items-center justify-center gap-1 h-full px-3 border-b text-b2",
+        "flex items-center justify-center gap-1 h-full px-3 border-b text-b2 transition-all duration-300",
         {
-          "border-transparent hover:border-brs3": !isSelected,
-          "border-aps1": isSelected,
+          "border-transparent hover:border-brs3 text-fgs3": !isSelected,
+          "border-fgs2 border--aps1 text--aps1 bg--aps3": isSelected,
           [`${bg(parentBgIndex)}`]: isSelected,
           [`hover:${bg(parentBgIndex)}-striped`]: !isSelected
         }
@@ -83,13 +83,15 @@
         <Icon
           icon={option.icon}
           size={Size.sm}
+          isFilled={isSelected}
           class={cn({
-            "text-fgs1": isSelected
+            "text--aps1 text-fgs1": isSelected,
+            "text-fgs2": !isSelected
           })}
         />
       {/if}
-      {#if option.label && (!isExpandOnActiveForIcon || selected === option.value)}
-        <span class="whitespace-nowrap" in:fly={{ duration: 200, x: 10 }}>
+      {#if !isIconOnlyMode && option.label && (!isExpandOnActiveForIcon || selected === option.value)}
+        <span class="whitespace-nowrap">
           {option.label}
         </span>
       {/if}

@@ -984,6 +984,11 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "layers",
     solar: "layers"
   },
+  library: {
+    phosphor: "books",
+    lucide: "layers",
+    solar: "layers"
+  },
   "music-note": {
     phosphor: "music-note",
     lucide: "music",
@@ -1291,6 +1296,16 @@ export const iconMappings: Record<string, IconMapping> = {
     phosphor: "picture-in-picture",
     lucide: "picture-in-picture",
     solar: "pip"
+  },
+  overview: {
+    phosphor: "squares-four",
+    lucide: "layout-dashboard",
+    solar: "layout-dashboard"
+  },
+  activity: {
+    phosphor: "clock-countdown",
+    lucide: "activity",
+    solar: "activity"
   }
 };
 

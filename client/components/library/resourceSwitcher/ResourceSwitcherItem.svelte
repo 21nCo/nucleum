@@ -129,6 +129,7 @@
       <Icon
         icon={item.icon}
         size={isConstrainedWidth ? Size.lg : Size.md}
+        isFilled={isActive}
         class={cn({
           "fill-aps1": isActive,
           "stroke-fgs2":

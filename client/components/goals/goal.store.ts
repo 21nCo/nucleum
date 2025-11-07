@@ -1,5 +1,7 @@
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import { PanelSwitcherMixin } from "@21n/components/resource/panelSwitcher.mixin";
+import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
 import {
   type IRecordId,
   type IResourceSelectAdditionalParams,
@@ -7,7 +9,12 @@ import {
 } from "@21n/types/data.type";
 import { generateResourceId } from "@21n/components/flux/flux.utils";
 import { logger } from "@21n/components/debug/logger.client";
-import type { IActiveGoal, IGoal, IGoalCapture, IGoalThumb } from "@21n/components/goals/goal.type";
+import type {
+  IActiveGoal,
+  IGoal,
+  IGoalCapture,
+  IGoalThumb
+} from "@21n/components/goals/goal.type";
 import { GoalStatus, GoalType } from "@21n/components/goals/goal.type";
 import {
   ResourceAccessMode,
@@ -32,6 +39,7 @@ import { AppSearchParam } from "@21n/types/appStore.type";
 import { toasts } from "@21n/stores/notification.store";
 import {
   isSameResource,
+  resolveResourceIcon,
   resourceAction,
   resourceInList
 } from "@21n/components/flux/resourceStores/resource.utils";
@@ -373,9 +381,13 @@ export class ActiveGoalStore extends CollectibleStore<
 
   async init(
     accessMode: ResourceAccessMode,
-    params?: { isInEditMode?: boolean; linkSearchParam?: string }
+    params?: {
+      isInEditMode?: boolean;
+      linkSearchParam?: string;
+      panel?: string;
+    }
   ) {
-    logger.log({ at: "ActiveGoalStore.init", id: this.id });
+    logger.log({ at: "ActiveGoalStore.init", id: this.id, params });
     try {
       const oldProps = [
         "*",
@@ -396,6 +408,7 @@ export class ActiveGoalStore extends CollectibleStore<
           modifiedAt: new Date(),
           createdAt: new Date(),
           accessMode,
+          panel: params?.panel ?? ResourcePanelType.DEFAULT,
           ...(params?.isInEditMode && { isInEditMode: true }),
           isPageLoading: false
         });
@@ -410,6 +423,7 @@ export class ActiveGoalStore extends CollectibleStore<
         types,
         isPageLoading: false,
         accessMode,
+        panel: params?.panel ?? ResourcePanelType.DEFAULT,
         ...(params?.isInEditMode && { isInEditMode: true })
       });
 
@@ -446,9 +460,70 @@ export class ActiveGoalStore extends CollectibleStore<
       };
     });
   }
+
+  switchPanel!: (panel: string) => void;
+
+  static resolve(id: IRecordId): IActiveGoalStore {
+    if (!ActiveGoalStore.prototype.switchPanel) {
+      ActiveGoalStore.prototype.switchPanel = PanelSwitcherMixin.switchPanel;
+    }
+
+    const instance = super.resolve.call(this, id) as any;
+
+    if (!instance.switchPanel) {
+      instance.switchPanel = PanelSwitcherMixin.switchPanel;
+    }
+
+    return instance;
+  }
 }
 
 export type IActiveGoalStore = InstanceType<typeof ActiveGoalStore>;
+
+const goalStaticPanelActions = {
+  infoPane: {
+    value: ResourcePanelType.DEFAULT,
+    icon: "info",
+    label: "Info",
+    tooltip: "Show info"
+  },
+  subGoalsPane: {
+    value: ResourcePanelType.SUB,
+    icon: resolveResourceIcon(Resource.goal),
+    label: "Sub goals",
+    tooltip: "Show sub goals"
+  },
+  tasksPane: {
+    value: ResourcePanelType.TASKS,
+    icon: resolveResourceIcon(Resource.task),
+    label: "Tasks",
+    tooltip: "Show tasks"
+  },
+  analyticsPane: {
+    value: ResourcePanelType.ANALYTICS,
+    icon: "chart",
+    label: "Analytics",
+    tooltip: "Show analytics"
+  },
+  activityPane: {
+    value: ResourcePanelType.ACTIVITY,
+    icon: "activity",
+    label: "Activity",
+    tooltip: "Show activity"
+  },
+  propertiesPane: {
+    value: ResourcePanelType.PROPERTIES,
+    icon: "shapes",
+    label: "Properties",
+    tooltip: "Show properties"
+  },
+  linksPane: {
+    value: ResourcePanelType.LINKS,
+    icon: "link",
+    label: "Links",
+    tooltip: "Show links"
+  }
+};
 
 class GoalActions {
   constructor(
@@ -529,6 +604,37 @@ class GoalActions {
       }
     };
   }
+}
+
+export function resolvePanelOptions(
+  goal: IActiveGoal,
+  isConstrainedWidth: boolean
+) {
+  const overview = {
+    value: ResourcePanelType.DEFAULT,
+    label: "Overview",
+    icon: "overview",
+    tooltip: "Show overview"
+  };
+
+  let items = [
+    goalStaticPanelActions.analyticsPane,
+    goalStaticPanelActions.linksPane,
+    goalStaticPanelActions.activityPane
+  ];
+
+  if (isConstrainedWidth) {
+    items.unshift(goalStaticPanelActions.tasksPane);
+    items.unshift(goalStaticPanelActions.subGoalsPane);
+    items.unshift(goalStaticPanelActions.infoPane);
+  } else {
+    items.unshift(overview);
+  }
+
+  if (goal?.types && goal?.types?.length > 0) {
+    items.push(goalStaticPanelActions.propertiesPane);
+  }
+  return items;
 }
 
 export function resolveGoalContextMenu(
