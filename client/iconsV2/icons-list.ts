@@ -159,7 +159,14 @@ const phosphorIcons = [
   "chart-donut",
   "chart-scatter",
   "chart-line-down",
-  "presentation-chart"
+  "presentation-chart",
+  "cards-three",
+  "checkerboard",
+  "circles-three",
+  "diamonds-four",
+  "drone",
+  "grid-four",
+  "books"
 ];
 
 export const phosphorRatingIcons = [
@@ -469,4 +476,4 @@ export const solarIconsForBundling = {
   "bold-duotone": solarBoldDuotoneIcons
 };
 
-export const bundleNumber = 60;
+export const bundleNumber = 61;

@@ -82,7 +82,7 @@
             icon: "plus",
             parentBgIndex: 2,
             shortcut: createShortcut,
-            // variant: ButtonVariant.PRIMARY,
+            variant: ButtonVariant.PRIMARY,
             style: ButtonStyle.OUTLINED
           };
 

@@ -1136,7 +1136,7 @@
       scrollToAnnot(event.detail.id, event.detail.pageNumber)}
   /> -->
   <div
-    class={"absolute bottom-0 inset-x-0 m-2 flex gap-2 items-center justify-center"}
+    class={"absolute cw:bottom-0 cw:inset-x-0 right-0 inset-y-0 m-2 flex gap-2 items-center justify-center"}
   >
     <ToolBar
       bind:selectedAnnotationMode={annotationMode}

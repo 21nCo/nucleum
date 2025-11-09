@@ -190,7 +190,10 @@
       <!-- Opacity is used as `hidden` or svelte `#if` will impair associated PIP functionality -->
       <div class={cn("player", { "opacity-0": $fullScreen.path })}>
         <ColorLayer>
-          <ComponentResolver path={$player.action} />
+          <ComponentResolver
+            path={$player.action}
+            isPreventErrorFeedback={true}
+          />
         </ColorLayer>
       </div>
     {/if}

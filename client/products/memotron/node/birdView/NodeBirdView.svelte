@@ -24,11 +24,11 @@
     type IActiveNodeStore
   } from "@21n/products/memotron/node/node.store";
   import {
-    NodeRightPaneType,
     NodeView,
     webNodeTypeList,
     type INode
   } from "@21n/products/memotron/node/node.type";
+  import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
   import type { DropdownItem } from "@21n/types/dropdownItem.type";
   import {
     LinkType,
@@ -53,7 +53,6 @@
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { page } from "$app/stores";
   export let node: IActiveNodeStore;
-  export let rightPane: NodeRightPaneType | undefined = undefined;
   let linkedNodes: INode[];
   let selectedView = NodeBirdViewMode.Graph;
   let depth = $page.url?.searchParams?.get(AppSearchParam.DEPTH)
@@ -374,8 +373,9 @@
     }
 
     if (newResource === $node.id.toString()) {
-      if (rightPane === NodeRightPaneType.LINKS) rightPane = undefined;
-      else rightPane = NodeRightPaneType.LINKS;
+      if ($node.panel === ResourcePanelType.LINKS)
+        node.switchPanel(ResourcePanelType.DEFAULT);
+      else node.switchPanel(ResourcePanelType.LINKS);
       return;
     }
     if (splitResource === newResource) {
@@ -537,9 +537,9 @@
           parentBgIndex={2}
           on:change={(e) => {
             if (e.detail) {
-              rightPane = NodeRightPaneType.LINKS;
-            } else if (rightPane === NodeRightPaneType.LINKS) {
-              rightPane = undefined;
+              node.switchPanel(ResourcePanelType.LINKS);
+            } else if ($node.panel === ResourcePanelType.LINKS) {
+              node.switchPanel(ResourcePanelType.DEFAULT);
             }
           }}
         />
@@ -574,18 +574,11 @@
         />
       {/if}
     </div>
-    {#if rightPane && rightPane !== NodeRightPaneType.NONE}
+    {#if $node.panel && $node.panel !== ResourcePanelType.NONE}
       <div
         class="flex gap-2 h-full overflow-auto min-w-96 max-w-96 border-l border-brs3"
       >
-        <NodeRightPaneContent
-          {node}
-          pane={rightPane}
-          isShowClose={true}
-          on:close={() => {
-            rightPane = undefined;
-          }}
-        />
+        <NodeRightPaneContent {node} isShowClose={true} />
       </div>
     {/if}
   </div>

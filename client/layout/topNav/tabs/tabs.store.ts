@@ -37,6 +37,7 @@ class TabStore {
     const resolvedBack = tabParam
       ? (existingBack ?? undefined)
       : (backParam ?? window.location.pathname);
+    const returnToParam = currentParams.get("returnTo");
 
     appStore.closeResource({ isRestrictToModals: true });
     const resource =
@@ -50,6 +51,9 @@ class TabStore {
     };
     if (resolvedBack !== undefined && resolvedBack !== null) {
       queryParams.back = resolvedBack;
+    }
+    if (returnToParam) {
+      queryParams.returnTo = returnToParam;
     }
     appStore.gotoPath(`/${resource}/tab`, {
       queryParams

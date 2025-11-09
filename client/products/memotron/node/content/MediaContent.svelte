@@ -1,9 +1,9 @@
 <script lang="ts">
   import {
-    NodeRightPaneType,
     NodeType,
     webNodeTypeList
   } from "@21n/products/memotron/node/node.type";
+  import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
   import { type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
   import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { cn } from "@21n/utils/ui.utils";
@@ -18,10 +18,6 @@
 
   export let node: IActiveNodeStore;
   export let isConstrainedWidth: boolean = false;
-  export let rightPane: NodeRightPaneType | undefined =
-    $node?.contentType === NodeType.PDF && !isConstrainedWidth
-      ? NodeRightPaneType.BOOKMARKS
-      : undefined;
   let renderingDetails: any;
   let contentRef: MediaContentResolver;
 
@@ -55,13 +51,13 @@
   }
 </script>
 
-<div class="flex w-full flex-grow cw:mb-8 tp:otop:pt-12">
-  {#if !(isConstrainedWidth && rightPane)}
+<div class="flex w-full h-full cw:mb-8 tp:otop:pt-12">
+  {#if !(isConstrainedWidth && $node.panel && $node.panel !== ResourcePanelType.DEFAULT && $node.panel !== ResourcePanelType.NONE)}
     <main
-      class={cn("relative flex justify-center min-w-0 flex-1", {
+      class={cn("relative flex justify-center min-w-96 flex-1", {
         "h-full": $node.accessMode === ResourceAccessMode.FULL,
         "border-r border-brs2":
-          rightPane ||
+          $node.panel ||
           (webNodeTypeList.includes($node?.contentType) && !isConstrainedWidth),
         grow:
           $node.accessMode === ResourceAccessMode.POP ||
@@ -82,12 +78,7 @@
       />
     </main>
   {/if}
-  {#if rightPane || (webNodeTypeList.includes($node?.contentType) && !isConstrainedWidth)}
-    <MediaNodeRightPane
-      {node}
-      bind:pane={rightPane}
-      {renderingDetails}
-      {isConstrainedWidth}
-    />
+  {#if (!isConstrainedWidth || (isConstrainedWidth && $node.panel !== ResourcePanelType.DEFAULT)) && $node.panel !== ResourcePanelType.NONE}
+    <MediaNodeRightPane {node} {renderingDetails} {isConstrainedWidth} />
   {/if}
 </div>

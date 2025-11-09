@@ -248,7 +248,7 @@
         bind:value={resource}
         style={PanelSwitcherStyle.BAR}
         isExpandToFullWidth={true}
-        parentBgIndex={parentBgIndex}
+        {parentBgIndex}
         size={Size.sm}
         on:switch={() => {
           setTimeout(() => {

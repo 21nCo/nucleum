@@ -13,6 +13,7 @@ import {
   type IResourceInActivableFromParent,
   type IResourceLabeled,
   type IResourceLockable,
+  type IResourcePageWithPanels,
   type IResourceShareable,
   type OmitFields,
   type OmitForCapture
@@ -20,6 +21,7 @@ import {
 import type { IBlockBody, IMarkdown } from "@21n/components/markdown/md.type";
 import type { IAvatar } from "@21n/types/avatar.type";
 import type { IRecordId, IStore } from "@21n/types/data.type";
+import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
 import type {
   ILink,
   ILinkBase,
@@ -346,26 +348,6 @@ export type ListNodeType =
   | NodeType.LIST
   | NodeType.ORDERED_LIST
   | NodeType.CHECKLIST;
-
-export enum NodeRightPaneType {
-  NONE = "NONE",
-  DEFAULT = "DEFAULT",
-  OUTLINE = "OUTLINE",
-  PROPERTIES = "PROPERTIES",
-  BOOKMARKS = "BOOKMARKS",
-  SIDENOTES = "SIDENOTES",
-  METADATA = "METADATA",
-  LINKS = "LINKS",
-  /**
-   * @deprecated - merged into traces
-   */
-  MENTIONS = "MENTIONS",
-  HISTORY = "HISTORY",
-  /**
-   * @deprecated - will be shown as main panel
-   */
-  SERENDIPITY = "SERENDIPITY"
-}
 
 type INodeLinkBase = {
   linkType: LinkType;
@@ -1140,7 +1122,8 @@ export type INode =
   | IClip;
 
 export type IActiveNode = INode &
-  IActiveResource & {
+  IActiveResource &
+  IResourcePageWithPanels & {
     md: IMarkdown;
     parent?: INode;
     file?: IFile;
@@ -1156,6 +1139,7 @@ export type IActiveNode = INode &
     childrenHierarchy?: IRecordId[];
     blocks?: INode[];
     forelinks?: LinkThumbnail[];
+    isShowCoverPicker?: boolean;
   };
 
 export type INodeThumb = INode & {

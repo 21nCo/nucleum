@@ -27,10 +27,7 @@
   import FocusPlayerTimeText from "@21n/products/pointron/focus/player/FocusPlayerTimeText.svelte";
   import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
   import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
-  import {
-    AlertType,
-    type IInlineStatus
-  } from "@21n/types/notification.type";
+  import { AlertType, type IInlineStatus } from "@21n/types/notification.type";
   import { appStore } from "@21n/stores/app.store";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   export let goal: IActiveGoalStore;
@@ -82,27 +79,46 @@
 {/if}
 <div
   class={cn("relative flex flex-col gap-6 ", {
-    "rounded-md p-3": isConstrainedWidth
+    "rounded-md p-3": isConstrainedWidth,
+    "pt-3": $goal.isInEditMode
   })}
 >
-  <div class="flex flex-col gap-2">
-    {#if !isConstrainedWidth}
-      <GoalTitleRow {goal} bind:status />
-    {/if}
-    <div class="flex flex-col gap-1">
-      {#if isConstrainedWidth}
-        <span class="text-b2 text-fgs3">Collections</span>
-      {/if}
+  {#if ($goal.description && !isEmptyMd($goal.description.blocks)) || $goal.isInEditMode}
+    <div>
       {#if $goal.isInEditMode}
-        <div class="grid grid-cols-2 gap-2 h-20 my-4">
-          <GoalInfoEditControl {goal} control="color" bind:status />
-          <GoalInfoEditControl {goal} control="type" bind:status />
-        </div>
-      {:else}
-        <GoalCollectionsRow {goal} />
+        <span class="text-b2 text-fgs3">Description</span>
       {/if}
+      <div
+        class="flex flex-col gap-2 p-2 bg-bgs2 rounded-md overflow-auto userdata"
+      >
+        <Markdown
+          md={$goal.description}
+          params={{
+            placeholder: "Type...",
+            isPreventFocusOnLoad: true
+          }}
+          on:change={onDescriptionChange}
+        />
+      </div>
     </div>
-  </div>
+  {/if}
+  {#if $goal.isInEditMode || isConstrainedWidth}
+    <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-1">
+        {#if isConstrainedWidth}
+          <span class="text-b2 text-fgs3">Collections</span>
+        {/if}
+        {#if $goal.isInEditMode}
+          <div class="grid grid-cols-2 gap-2 h-20 my-4">
+            <GoalInfoEditControl {goal} control="color" bind:status />
+            <GoalInfoEditControl {goal} control="type" bind:status />
+          </div>
+        {:else if isConstrainedWidth}
+          <GoalCollectionsRow {goal} />
+        {/if}
+      </div>
+    </div>
+  {/if}
   <RecordStatusBanner resource={goal} />
   {#if isCurrentlyFocusing}
     <button
@@ -133,24 +149,6 @@
   {/if}
   {#if $goal.type === GoalType.DEFINITE}
     <TimelineCard {goal} />
-  {/if}
-
-  {#if ($goal.description && !isEmptyMd($goal.description.blocks)) || $goal.isInEditMode}
-    <div>
-      <span class="text-b2 text-fgs3">Description</span>
-      <div
-        class="flex flex-col gap-2 p-2 bg-bgs2 rounded-md overflow-auto userdata"
-      >
-        <Markdown
-          md={$goal.description}
-          params={{
-            placeholder: "Type...",
-            isPreventFocusOnLoad: true
-          }}
-          on:change={onDescriptionChange}
-        />
-      </div>
-    </div>
   {/if}
   {#if $goal.types && $goal.types.length > 0}
     <PropertiesPane

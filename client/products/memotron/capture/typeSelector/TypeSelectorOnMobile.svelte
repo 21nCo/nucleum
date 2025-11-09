@@ -29,8 +29,8 @@
       value: CaptureMethod.SKETCH
     },
     {
-      icon: "globe-alt",
-      label: "Add from Web",
+      icon: "globe",
+      label: "From web",
       value: CaptureMethod.WEB
     },
     isDev && {

@@ -13,6 +13,7 @@
   export let action: IAction | null = null;
   export let path: string = "";
   export let params: any = {};
+  export let isPreventErrorFeedback: boolean = false;
   onMount(() => {
     if (action === null && path !== "") {
       action = appStore.resolveComponentFromPath(path);
@@ -56,6 +57,6 @@
   </ModalLayout>
 {:else if action?.component}
   <svelte:component this={action?.component} {...params} />
-{:else}
+{:else if !isPreventErrorFeedback}
   <PageError />
 {/if}

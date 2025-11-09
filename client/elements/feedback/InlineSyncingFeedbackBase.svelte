@@ -9,10 +9,11 @@
   export let text: string | undefined = undefined;
   export let padding: string = "";
   export let isSyncing: boolean = false;
+  export let isDisableOutTransition: boolean = false;
   /**
    * out: transition interfering issue with TopNav transitions hence duration is used as 1 ms
    */
-  const outTransitionDuration = isShorter ? 1 : 200;
+  const outTransitionDuration = isShorter || isDisableOutTransition ? 1 : 200;
   if (!text && !isShorter) text = "Syncing...";
 </script>
 

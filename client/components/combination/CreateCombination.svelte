@@ -7,7 +7,10 @@
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
   import { toasts } from "@21n/stores/notification.store";
   import { Orientation } from "@21n/types/direction.enum";
-  import type { ISelectItem } from "@21n/types/select.type";
+  import {
+    OptionSelectorStyle,
+    type ISelectItem
+  } from "@21n/types/select.type";
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
   import { combinationStore } from "@21n/components/combination/combination.store";
   import { CombinationType } from "@21n/components/combination/combination.type";
@@ -22,6 +25,13 @@
       value: CombinationType.SIDENAV
     },
     {
+      label: "Wall",
+      icon: "widget",
+      value: CombinationType.WALL,
+      isDisabled: true,
+      badge: "planned"
+    },
+    {
       label: "Canvas",
       icon: "canvas",
       value: CombinationType.WHITEBOARD,
@@ -32,20 +42,6 @@
       label: "Mind map",
       icon: "tree-view",
       value: CombinationType.MINDMAP,
-      isDisabled: true,
-      badge: "planned"
-    },
-    {
-      label: "Timeline",
-      icon: "calendar-blank",
-      value: CombinationType.TIMELINE,
-      isDisabled: true,
-      badge: "planned"
-    },
-    {
-      label: "Wall",
-      icon: "widget",
-      value: CombinationType.WALL,
       isDisabled: true,
       badge: "planned"
     }
@@ -86,6 +82,7 @@
       />
       <OptionSelector
         labelProps={{ label: "Type of combination" }}
+        style={OptionSelectorStyle.TRAIN}
         options={typeOptions}
         bind:selected={type}
       />

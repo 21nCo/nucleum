@@ -36,7 +36,7 @@ export const nucleusActions: IAction[] = [
   {
     action: Action.LIBRARY,
     label: "Library",
-    icon: "stack",
+    icon: "library",
     component: LibraryPanelContentResolver,
     panel: NucleusLibrary,
     type: ActionType.PAGE,
@@ -47,7 +47,7 @@ export const nucleusActions: IAction[] = [
   {
     action: Action.OVERVIEW,
     label: "Overview",
-    icon: "heroicons:rectangle-group",
+    icon: "overview",
     component: NucleusOverview,
     panel: NucleusOverviewPanel,
     type: ActionType.PAGE

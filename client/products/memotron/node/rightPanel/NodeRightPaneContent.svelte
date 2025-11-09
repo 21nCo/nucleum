@@ -6,60 +6,53 @@
   import NodeHistoryPane from "@21n/products/memotron/common/history/NodeHistoryPane.svelte";
   import NodeLinksPane from "@21n/products/memotron/node/links/NodeLinksPane.svelte";
   import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
-  import { NodeRightPaneType, NodeType } from "@21n/products/memotron/node/node.type";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
+  import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
   import NodeTracesPane from "@21n/products/memotron/node/traces/NodeTracesPane.svelte";
   import NodeSidenotesPane from "@21n/products/memotron/node/rightPanel/NodeSidenotesPane.svelte";
   import PropertiesPane from "@21n/components/collection/properties/PropertiesPane.svelte";
   import NodeMetadataPane from "@21n/products/memotron/node/metadata/NodeMetadataPane.svelte";
   import Button from "@21n/elements/button/Button.svelte";
-  import { createEventDispatcher } from "svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  const dispatch = createEventDispatcher();
-  export let pane: NodeRightPaneType;
   export let node: IActiveNodeStore;
   export let mdId: string | undefined = undefined;
   export let renderingDetails: any = undefined;
   export let isShowClose: boolean = false;
-  export let isConstrainedWidth: boolean = false;
 
-  $: _isShowClose =
-    isShowClose ||
-    pane === NodeRightPaneType.METADATA ||
-    isConstrainedWidth ||
-    ($node.contentType === NodeType.NODULAR_MARKDOWN &&
-      pane === NodeRightPaneType.HISTORY) ||
-    ($node.contentType !== NodeType.NODULAR_MARKDOWN &&
-      pane === NodeRightPaneType.LINKS);
+  $: _isShowClose = isShowClose || $node.panel === ResourcePanelType.METADATA;
 </script>
 
 <div
   class="flex flex-col h-full w-full overflow-y-auto items-start gap-3 cw:py-4 cw:px-0 p-4"
 >
   <div class="w-full flex items-center justify-between gap-2">
-    <Text content={properCase(pane)} style={TextStyle.PANEL_HEADING_SMALL} />
+    <Text
+      content={properCase($node.panel)}
+      style={TextStyle.PANEL_HEADING_SMALL}
+    />
     {#if _isShowClose}
       <Button
         icon="x-circle"
         tooltip="Close"
         on:click={() => {
-          dispatch("close", pane);
+          node.switchPanel(ResourcePanelType.DEFAULT);
         }}
       />
     {/if}
   </div>
-  {#if pane === NodeRightPaneType.OUTLINE && mdId}
+  {#if $node.panel === ResourcePanelType.OUTLINE && mdId}
     <TableOfContents {mdId} />
-  {:else if pane === NodeRightPaneType.LINKS}
+  {:else if $node.panel === ResourcePanelType.LINKS}
     <NodeLinksPane {node} />
-  {:else if pane === NodeRightPaneType.PROPERTIES}
+  {:else if $node.panel === ResourcePanelType.PROPERTIES}
     <PropertiesPane item={node} resource={Resource.node} />
-  {:else if pane === NodeRightPaneType.BOOKMARKS}
+  {:else if $node.panel === ResourcePanelType.BOOKMARKS}
     <NodeTracesPane {node} />
-  {:else if pane === NodeRightPaneType.HISTORY}
+  {:else if $node.panel === ResourcePanelType.ACTIVITY}
     <NodeHistoryPane {node} />
-  {:else if pane === NodeRightPaneType.SIDENOTES}
+  {:else if $node.panel === ResourcePanelType.SIDENOTES}
     <NodeSidenotesPane {node} />
-  {:else if pane === NodeRightPaneType.METADATA}
+  {:else if $node.panel === ResourcePanelType.METADATA}
     <NodeMetadataPane {node} {renderingDetails} />
   {/if}
 </div>

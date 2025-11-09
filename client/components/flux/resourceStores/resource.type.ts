@@ -340,3 +340,10 @@ export type IResourceMutationParams = IMutationAdditionalParams & {
    */
   isModifyAsSystem?: boolean;
 };
+
+export interface IResourcePageWithPanels {
+  id: IRecordId;
+  panel: string;
+  isInFocusMode?: boolean;
+  switchPanel: (panel: string) => void;
+}

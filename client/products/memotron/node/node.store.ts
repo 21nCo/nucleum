@@ -4,7 +4,6 @@ import {
   type IActiveNode,
   type INode,
   NodeType,
-  NodeRightPaneType,
   type INodeLinkThumb,
   canHaveTraces,
   NodeView,
@@ -14,7 +13,9 @@ import {
   socialPostNodeTypeList,
   type INodeCapture
 } from "@21n/products/memotron/node/node.type";
+import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
 import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import { PanelSwitcherMixin } from "@21n/components/resource/panelSwitcher.mixin";
 import {
   activeResourceFilterIgnoreParentInactive,
   debouncer
@@ -276,6 +277,7 @@ export class ActiveNodeStore extends CollectibleStore<
 > {
   eventStore: any;
   debouncers = new Map<string, any>();
+
   constructor(node: IRecordId) {
     super(node, nodeStore);
     this.eventStore = resolveActiveNodeEventStore(node.toString());
@@ -337,6 +339,7 @@ export class ActiveNodeStore extends CollectibleStore<
   init = async (params: {
     accessMode: ResourceAccessMode;
     accessPoint: ResourceAccessPoint;
+    panel?: ResourcePanelType;
   }) => {
     logger.log({ at: "ActiveNodeStore.init", id: this.id });
     console.time("ActiveNodeStore.init");
@@ -349,7 +352,11 @@ export class ActiveNodeStore extends CollectibleStore<
           error: "Node not found"
         };
       }
-      this.set({ ...node, accessMode: params.accessMode });
+      this.set({
+        ...node,
+        accessMode: params.accessMode,
+        panel: params.panel ?? ResourcePanelType.DEFAULT
+      });
       if (
         params.accessPoint === ResourceAccessPoint.CALENDAR ||
         !node.metaType
@@ -645,6 +652,29 @@ export class ActiveNodeStore extends CollectibleStore<
       ? generateMarkdownText(node.md.blocks, { isIncludeNonSearchBlocks: true })
       : "";
   }
+
+  switchPanel!: (panel: string) => void;
+
+  toggleCoverPicker(val?: boolean) {
+    this.update((n) => {
+      n.isShowCoverPicker = val ?? !n.isShowCoverPicker;
+      return n;
+    });
+  }
+
+  static resolve(id: IRecordId): IActiveNodeStore {
+    if (!ActiveNodeStore.prototype.switchPanel) {
+      ActiveNodeStore.prototype.switchPanel = PanelSwitcherMixin.switchPanel;
+    }
+
+    const instance = super.resolve.call(this, id) as any;
+
+    if (!instance.switchPanel) {
+      instance.switchPanel = PanelSwitcherMixin.switchPanel;
+    }
+
+    return instance;
+  }
 }
 
 const activeNodeEventStores = new Map<string, any>();
@@ -678,22 +708,22 @@ function initActiveNodeEventStore(id: string) {
 
 const nodeStaticActions = {
   metadataPane: {
-    value: NodeRightPaneType.METADATA,
+    value: ResourcePanelType.METADATA,
     icon: "ph:file-light",
     label: "Show metadata",
     tooltip: "Show metadata"
   },
   propertiesPane: {
-    value: NodeRightPaneType.PROPERTIES,
+    value: ResourcePanelType.PROPERTIES,
     icon: "shapes",
-    label: "Show properties",
+    label: "Properties",
     tooltip: "Show properties"
   },
-  historyPane: {
-    value: NodeRightPaneType.HISTORY,
-    icon: "ph:clock-countdown-light",
-    label: "Show history",
-    tooltip: "Show history"
+  activityPane: {
+    value: ResourcePanelType.ACTIVITY,
+    icon: "activity",
+    label: "Activity",
+    tooltip: "Show activity"
   },
   showForks: {
     value: "forks",
@@ -804,7 +834,7 @@ class NodeActions {
 
   sideNotesPane() {
     return {
-      value: NodeRightPaneType.SIDENOTES,
+      value: ResourcePanelType.SIDENOTES,
       icon: this.node.notes ? "note" : "note-blank",
       label: "Side notes",
       tooltip: "Side notes"
@@ -813,9 +843,9 @@ class NodeActions {
 
   linksPane() {
     return {
-      value: NodeRightPaneType.LINKS,
+      value: ResourcePanelType.LINKS,
       icon: "link",
-      label: "Show links",
+      label: "Links",
       tooltip: "Show links",
       count:
         "links" in this.node &&
@@ -829,9 +859,9 @@ class NodeActions {
 
   tracesPane() {
     return {
-      value: NodeRightPaneType.BOOKMARKS,
+      value: ResourcePanelType.BOOKMARKS,
       icon: "bookmark",
-      label: "Show bookmarks",
+      label: "Bookmarks",
       tooltip: "Show bookmarks",
       count:
         "clips" in this.node &&
@@ -1079,14 +1109,14 @@ export function resolveNodeContextMenu(
     ? [
         resourceActions.toggleReadMode(),
         nodeStaticActions.metadataPane,
-        nodeStaticActions.historyPane,
+        nodeStaticActions.activityPane,
         ...(coverPhotoAction ? [coverPhotoAction] : [])
       ]
     : [
         resourceActions.toggleReadMode(),
         nodeActions.toggleFullWidth(),
         nodeStaticActions.metadataPane,
-        nodeStaticActions.historyPane,
+        nodeStaticActions.activityPane,
         ...(coverPhotoAction ? [coverPhotoAction] : [])
       ];
   return [
@@ -1151,5 +1181,47 @@ export function resolveVisibleActions(
   if (canHaveTraces.includes(node.contentType) && !params?.isConstrainedWidth) {
     baseActions.push(nodeActions.tracesPane());
   }
+  return baseActions;
+}
+
+export function resolvePanelOptions(node: INode) {
+  const nodeActions = new NodeActions(
+    node,
+    nodeStore,
+    ResourceAccessPoint.SELF
+  );
+  const overviewPanel = {
+    value: ResourcePanelType.DEFAULT,
+    label: "Overview",
+    icon: "overview"
+  };
+  const focusMode = {
+    value: "focus",
+    label: "Focus",
+    icon: "circle"
+  };
+  if (
+    node.contentType === NodeType.NODULAR_MARKDOWN ||
+    headingNodeTypes.includes(node.contentType)
+  ) {
+    return [
+      focusMode,
+      nodeActions.linksPane(),
+      nodeStaticActions.activityPane,
+      nodeStaticActions.propertiesPane,
+      nodeActions.sideNotesPane()
+    ];
+  }
+  const baseActions: IToggleItem[] = [
+    focusMode,
+    overviewPanel,
+    nodeActions.linksPane(),
+    nodeStaticActions.activityPane,
+    nodeActions.sideNotesPane()
+  ];
+  if (canHaveTraces.includes(node.contentType)) {
+    baseActions.push(nodeActions.tracesPane());
+  }
+  baseActions.push(nodeStaticActions.propertiesPane);
   return baseActions;
 }

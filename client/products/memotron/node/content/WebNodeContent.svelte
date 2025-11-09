@@ -86,7 +86,7 @@
   {#if "url" in node && node.url && accessPoint === ResourceAccessPoint.SELF && !socialPostNodeTypeList.has(node.contentType)}
     <!-- TODO - TIDY-10 -->
     <div
-      class="flex items-center max-w-full w-full border-t border-brs2 text-fgs3 text-b2 truncate"
+      class="flex items-center max-w-full w-full border-t cw:border-y border-brs2 text-fgs3 text-b2 truncate cw:mb-10"
     >
       <!-- <ContextMenuAction
         id="open-link-context-menu"

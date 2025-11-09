@@ -49,14 +49,15 @@ blockquote {
 }
 
 @layer base {
-  /* @font-face {
+  @font-face {
     font-family: 'Twenty One Native';
-    src: url('/fonts/Twenty One Native.woff2') format('woff2'),
-         url('/fonts/Twenty One Native.woff') format('woff');
+    src: url('/static/fonts/TwentyOneNative.woff2') format('woff2'),
+         url('/static/fonts/TwentyOneNative.woff') format('woff');
     font-weight: 100 900;
     font-style: normal;
     font-display: swap;
-  } */
+  }
+
 
   /* @font-face {
         font-family: 'Space Grotesk';

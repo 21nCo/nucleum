@@ -3,27 +3,23 @@
   import RollerPicker from "@21n/components/calendar/birdView/RollerPicker.svelte";
   import Zone from "@21n/components/calendar/birdView/Zone.svelte";
   import {
-    Modes,
     type ProgrammedHorizontalWheelEvent,
     type ProgrammedVerticalWheelEvent
   } from "@21n/components/calendar/birdView/Birdview.type";
   import {
     currentMonthIndex,
     currentYear,
-    getISOfromDateString,
     scrollDateSlotIntoView,
     monthNames,
-    getFirstAlphabetPosition,
-    currentDate
+    currentDate,
+    getISOfromDateString,
+    getFirstAlphabetPosition
   } from "@21n/components/calendar/birdView/Birdview.utils";
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import Day from "@21n/components/calendar/birdView/Day.svelte";
   import Month from "@21n/components/calendar/birdView/Month.svelte";
   import Year from "@21n/components/calendar/birdView/Year.svelte";
-  import TodayButton from "@21n/components/calendar/birdView/TodayButton.svelte";
-  import { Size } from "@21n/types/size.enum";
   import { debouncer } from "@21n/utils/utils";
+  import { TimeScaleUnit } from "@21n/types/time.type";
 
   let startX: number;
   let instaceId = new Date().getTime();
@@ -43,8 +39,8 @@
   let prevScrollLeft: number = 0;
   let prevScrollWidth: number = 0;
   let panelsContainer: HTMLDivElement;
-  let dateInViewForward: string;
-  let dateInViewReverse: string;
+  let dateInViewForward: string = "";
+  let dateInViewReverse: string = "";
   let prevDateInViewReverse: string | null = null;
   let prevDateInViewForward: string | null = null;
   let engadged: boolean = false;
@@ -52,7 +48,7 @@
   let thresholdCrossed = false;
   let cursorDirection: "right" | "left" | "bidirectional" | "default" =
     "default";
-  export let mode: Modes = Modes.DAYS;
+  export let mode: TimeScaleUnit = TimeScaleUnit.DAY;
   const zones = [
     "6am-9am",
     "9am-12pm",
@@ -68,66 +64,98 @@
   let yearsData = generateYearsData(currentYear);
 
   function generateYearsData(centerYear: number) {
-    let i = centerYear - 5;
-    let data = [];
-    for (; i <= centerYear + 5; i++) {
-      data.push(i);
+    try {
+      let i = centerYear - 5;
+      let data = [];
+      for (; i <= centerYear + 5; i++) {
+        data.push(i);
+      }
+      return data;
+    } catch (error) {
+      console.error(error);
+      return [];
     }
-    return data;
   }
   function generateMonthsData(year: number) {
-    let i = year - 1;
-    let data = [];
-    for (; i <= year + 1; i++) {
-      data.push(i);
+    try {
+      let i = year - 1;
+      let data = [];
+      for (; i <= year + 1; i++) {
+        data.push(i);
+      }
+      return data;
+    } catch (error) {
+      console.error(error);
+      return [];
     }
-    return data;
   }
   function generateDaysData(year: number, month: number) {
-    let data = [];
-    let j: number;
-    month = month + 1 > 11 ? 0 : month + 1;
-    if (month == 0) j = 10;
-    else if (month == 1) j = 11;
-    else j = month - 2;
-    for (; j <= month; j = (j + 1) % 12) {
-      let relevantYear: number;
-      if (month == 0 && j == month) relevantYear = year + 1;
-      else if (month == 1 && j == 11) relevantYear = year - 1;
-      else relevantYear = year;
-      data.push(
-        ...Array.from(
-          { length: new Date(Date.UTC(relevantYear, j + 1, 0)).getDate() },
-          (_, i) => {
-            let tmp = new Date(Date.UTC(relevantYear, j, i + 1))
-              .toISOString()
-              .split("T")[0];
-            return tmp;
+    try {
+      let data = [];
+      // Increment month to get the "next" month (the one we want to center on)
+      const targetMonth = month + 1 > 11 ? 0 : month + 1;
+      // Calculate starting month (2 months before target, wrapping around)
+      const startMonth = targetMonth >= 2 ? targetMonth - 2 : targetMonth + 10;
+
+      // Iterate through 3 consecutive months
+      for (let i = 0; i < 3; i++) {
+        const currentMonth = (startMonth + i) % 12;
+        // Calculate the year for this month based on whether we've crossed year boundaries
+        let relevantYear: number;
+        if (targetMonth === 0) {
+          // Target is January (next year)
+          if (currentMonth === 0) {
+            relevantYear = year + 1; // January of next year
+          } else {
+            relevantYear = year; // November/December of current year
           }
-        )
-      );
+        } else if (targetMonth === 1 && currentMonth === 11) {
+          // Target is February, current is December (previous year)
+          relevantYear = year - 1;
+        } else {
+          relevantYear = year;
+        }
+
+        const daysInMonth = new Date(
+          Date.UTC(relevantYear, currentMonth + 1, 0)
+        ).getDate();
+        for (let day = 1; day <= daysInMonth; day++) {
+          const date = new Date(Date.UTC(relevantYear, currentMonth, day))
+            .toISOString()
+            .split("T")[0];
+          data.push(date);
+        }
+      }
+      return data;
+    } catch (error) {
+      console.error(error);
+      return [];
     }
-    return data;
   }
   function generateZonesData(centerDateString: string) {
-    const centerDate = new Date(centerDateString);
-    const numberOfDays = 7;
-    const daysBeforeAfter = Math.floor(numberOfDays / 2);
-    const startDate = new Date(centerDate);
-    startDate.setDate(centerDate.getDate() - daysBeforeAfter);
+    try {
+      const centerDate = new Date(centerDateString);
+      const numberOfDays = 7;
+      const daysBeforeAfter = Math.floor(numberOfDays / 2);
+      const startDate = new Date(centerDate);
+      startDate.setDate(centerDate.getDate() - daysBeforeAfter);
 
-    let data = [];
-    for (let i = 0; i < numberOfDays; i++) {
-      const currentDate = new Date(startDate);
-      currentDate.setDate(startDate.getDate() + i);
-      const dateStr = currentDate.toISOString().split("T")[0];
-      const dataEntry = {
-        date: dateStr,
-        data: ["0", "1", "2", "3", "4", "5"]
-      };
-      data.push(dataEntry);
+      let data = [];
+      for (let i = 0; i < numberOfDays; i++) {
+        const currentDate = new Date(startDate);
+        currentDate.setDate(startDate.getDate() + i);
+        const dateStr = currentDate.toISOString().split("T")[0];
+        const dataEntry = {
+          date: dateStr,
+          data: ["0", "1", "2", "3", "4", "5"]
+        };
+        data.push(dataEntry);
+      }
+      return data;
+    } catch (error) {
+      console.error(error);
+      return [];
     }
-    return data;
   }
 
   async function scrollLookAlike(isPositive: boolean) {
@@ -309,13 +337,14 @@
       }
       if (deltaX > 0) {
         if (!("isWheelEvent" in e) || e.isWheelEvent == true) {
-          if (mode != Modes.DAYS) scrollLookAlike(true);
+          if (mode != TimeScaleUnit.DAY) scrollLookAlike(true);
           if (reverseScrollInAction) {
             await waitForReverseScrollInAction();
             checkVisibility();
           }
-          if (mode == Modes.ZONES) {
+          if (mode == TimeScaleUnit.PART) {
             if (
+              dateInViewForward &&
               dateInViewForward.split("-")[3] == "0" &&
               (prevDateInViewForward == null ||
                 prevDateInViewForward != dateInViewForward)
@@ -329,8 +358,9 @@
               });
             }
             addZoneDataEnd();
-          } else if (mode == Modes.DAYS) {
+          } else if (mode == TimeScaleUnit.DAY) {
             if (
+              dateInViewForward &&
               dateInViewForward.split("-")[2] == "01" &&
               (prevDateInViewForward == null ||
                 prevDateInViewForward != dateInViewForward)
@@ -344,8 +374,9 @@
               });
             }
             addFewDaysToEnd(1);
-          } else if (mode == Modes.MONTHS) {
+          } else if (mode == TimeScaleUnit.MONTH) {
             if (
+              dateInViewForward &&
               dateInViewForward.split("-")[1] == "01" &&
               (prevDateInViewForward == null ||
                 prevDateInViewForward != dateInViewForward)
@@ -359,19 +390,22 @@
               });
             }
             if (
-              itemsInView[itemsInView.length - 1].split("-")[0] + 1 ==
-              monthsData[0]
+              itemsInView.length > 0 &&
+              itemsInView[itemsInView.length - 1] &&
+              Number(itemsInView[itemsInView.length - 1].split("-")[0]) + 1 ==
+                monthsData[0]
             )
               addMonthDataEnd();
-          } else if (mode == Modes.YEARS) {
+          } else if (mode == TimeScaleUnit.YEAR) {
             addYearDataEnd();
           }
         }
       } else if (deltaX < 0) {
         if (!("isWheelEvent" in e) || e.isWheelEvent == true) {
-          if (mode != Modes.DAYS) scrollLookAlike(false);
-          if (mode == Modes.ZONES) {
+          if (mode != TimeScaleUnit.DAY) scrollLookAlike(false);
+          if (mode == TimeScaleUnit.PART) {
             if (
+              dateInViewReverse &&
               dateInViewReverse.split("-")[3] == "5" &&
               (prevDateInViewReverse == null ||
                 prevDateInViewReverse != dateInViewReverse)
@@ -385,9 +419,10 @@
               });
             }
             addZoneDataStart();
-          } else if (mode == Modes.DAYS) {
+          } else if (mode == TimeScaleUnit.DAY) {
             if (
-              dateInViewReverse?.split("-")[2] == "01" &&
+              dateInViewReverse &&
+              dateInViewReverse.split("-")[2] == "01" &&
               (prevDateInViewReverse == null ||
                 prevDateInViewReverse != dateInViewReverse)
             ) {
@@ -400,8 +435,9 @@
               });
             }
             addFewDaysToStart(1);
-          } else if (mode == Modes.MONTHS) {
+          } else if (mode == TimeScaleUnit.MONTH) {
             if (
+              dateInViewForward &&
               dateInViewForward.split("-")[1] == "01" &&
               (prevDateInViewReverse == null ||
                 prevDateInViewReverse != dateInViewForward)
@@ -415,11 +451,13 @@
               });
             }
             if (
-              itemsInView[itemsInView.length - 1].split("-")[0] - 1 ==
-              monthsData[0]
+              itemsInView.length > 0 &&
+              itemsInView[itemsInView.length - 1] &&
+              Number(itemsInView[itemsInView.length - 1].split("-")[0]) - 1 ==
+                monthsData[0]
             )
               addMonthDataStart();
-          } else if (mode == Modes.YEARS) {
+          } else if (mode == TimeScaleUnit.YEAR) {
             addYearDataStart();
           }
         }
@@ -517,7 +555,7 @@
       isMouseWheelMoveEnabled = !isMouseWheelMoveEnabled;
     } else {
       event.stopPropagation();
-      handleMouseDownOthers;
+      handleMouseDownOthers(event);
     }
   }
   async function goToToday() {
@@ -530,7 +568,7 @@
     prevDateInViewForward = null;
     prevDateInViewReverse = null;
     switch (mode) {
-      case Modes.ZONES:
+      case TimeScaleUnit.PART:
         date = currentYear + "-" + paddedCurrmonthIndex + "-" + paddedCurrDate;
         index = zonesData.findIndex((x) => {
           x.date == date;
@@ -544,7 +582,7 @@
           currentYear + "-" + paddedCurrmonthIndex + "-" + paddedCurrDate + "-0"
         );
         break;
-      case Modes.DAYS:
+      case TimeScaleUnit.DAY:
         date = currentYear + "-" + paddedCurrmonthIndex + "-" + paddedCurrDate;
         index = daysData.findIndex((x) => {
           x == date;
@@ -558,7 +596,7 @@
           currentYear + "-" + paddedCurrmonthIndex + "-" + paddedCurrDate
         );
         break;
-      case Modes.MONTHS:
+      case TimeScaleUnit.MONTH:
         date = currentYear;
         index = monthsData.findIndex((x) => {
           x == date;
@@ -570,7 +608,7 @@
         }
         scrollDateSlotIntoView(currentYear + "-" + paddedCurrmonthIndex);
         break;
-      case Modes.YEARS:
+      case TimeScaleUnit.YEAR:
         scrollDateSlotIntoView(String(currentYear));
         break;
       default:
@@ -581,7 +619,7 @@
   function checkifNotToday(itemsInView: any[]): boolean {
     let currentDay = currentDate.getDate();
     switch (mode) {
-      case Modes.ZONES:
+      case TimeScaleUnit.PART:
         for (let i = 0; i < itemsInView.length; i++) {
           if (
             itemsInView[i].split("-")[0] == currentYear &&
@@ -591,7 +629,7 @@
             return false;
         }
         return true;
-      case Modes.DAYS:
+      case TimeScaleUnit.DAY:
         for (let i = 0; i < itemsInView.length; i++) {
           if (
             itemsInView[i].split("-")[0] == currentYear &&
@@ -601,7 +639,7 @@
             return false;
         }
         return true;
-      case Modes.MONTHS:
+      case TimeScaleUnit.MONTH:
         for (let i = 0; i < itemsInView.length; i++) {
           if (
             itemsInView[i].split("-")[0] == currentYear &&
@@ -610,7 +648,7 @@
             return false;
         }
         return true;
-      case Modes.YEARS:
+      case TimeScaleUnit.YEAR:
         for (let i = 0; i < itemsInView.length; i++) {
           if (itemsInView[i] == currentYear) return false;
         }
@@ -633,58 +671,79 @@
   let itemsInView: any[] = [];
 
   function checkVisibility() {
+    if (!panelsContainer) return;
     const containerLeft = panelsContainer.scrollLeft;
     const containerRight = containerLeft + panelsContainer.offsetWidth;
     itemsInView = [];
 
     Array.from(panelsContainer.children).forEach((child) => {
-      const childLeft = child.offsetLeft;
-      const childRight = childLeft + child.offsetWidth;
+      const childElement = child as HTMLElement;
+      const childLeft = childElement.offsetLeft;
+      const childRight = childLeft + childElement.offsetWidth;
 
       if (childLeft < containerRight && childRight > containerLeft) {
         // The item is visible
-        itemsInView.push(child.getAttribute("data-date"));
+        const dateAttr = childElement.getAttribute("data-date");
+        if (dateAttr) {
+          itemsInView.push(dateAttr);
+        }
       }
     });
-    dateInViewReverse = itemsInView[itemsInView.length - 2];
-    dateInViewForward = itemsInView[itemsInView.length - 1];
+    dateInViewReverse =
+      itemsInView.length >= 2
+        ? itemsInView[itemsInView.length - 2]
+        : itemsInView[0] || "";
+    dateInViewForward =
+      itemsInView.length >= 1 ? itemsInView[itemsInView.length - 1] : "";
     isNotToday = checkifNotToday(itemsInView);
   }
 
-  onMount(async () => {
-    prevScrollLeft = panelsContainer.scrollLeft;
-    checkVisibility();
-    if (mode == Modes.YEARS) {
-      scrollDateSlotIntoView(String(currentYear));
-    }
-
-    panelsContainer.addEventListener("touchstart", handleTouchStart, {
-      passive: true
-    });
-    panelsContainer.addEventListener("touchmove", handleTouchMove, {
-      passive: false
-    });
+  onMount(() => {
     const wheelHandler = (e: WheelEvent) => {
       e.preventDefault();
       waitUntilDisenganged(e);
     };
-    panelsContainer.addEventListener("wheel", wheelHandler, { passive: false });
-    panelsContainer.addEventListener(
-      "mousedown",
-      handleMouseDownOnPanelsContainer
-    );
-    document.addEventListener("mousedown", handleMouseDownOthers);
-    return () => {
-      panelsContainer.removeEventListener("touchstart", handleTouchStart);
-      panelsContainer.removeEventListener("touchmove", handleTouchMove);
-      panelsContainer.removeEventListener(
+
+    (async () => {
+      await tick(); // Wait for DOM to be ready
+      if (!panelsContainer) return;
+
+      prevScrollLeft = panelsContainer.scrollLeft;
+      checkVisibility();
+      if (mode == TimeScaleUnit.YEAR) {
+        await tick(); // Ensure Year components are rendered
+        scrollDateSlotIntoView(String(currentYear));
+      }
+
+      panelsContainer.addEventListener("touchstart", handleTouchStart, {
+        passive: true
+      });
+      panelsContainer.addEventListener("touchmove", handleTouchMove, {
+        passive: false
+      });
+      panelsContainer.addEventListener("wheel", wheelHandler, {
+        passive: false
+      });
+      panelsContainer.addEventListener(
         "mousedown",
         handleMouseDownOnPanelsContainer
       );
-      panelsContainer.removeEventListener(
-        "wheel",
-        wheelHandler as EventListener
-      );
+    })();
+
+    document.addEventListener("mousedown", handleMouseDownOthers);
+    return () => {
+      if (panelsContainer) {
+        panelsContainer.removeEventListener("touchstart", handleTouchStart);
+        panelsContainer.removeEventListener("touchmove", handleTouchMove);
+        panelsContainer.removeEventListener(
+          "mousedown",
+          handleMouseDownOnPanelsContainer
+        );
+        panelsContainer.removeEventListener(
+          "wheel",
+          wheelHandler as EventListener
+        );
+      }
       document.removeEventListener("mousedown", handleMouseDownOthers);
       document.removeEventListener("mousemove", handleMouseMove);
     };
@@ -717,7 +776,7 @@
   </div> -->
   <div class="flex h-full w-full overflow-auto">
     {#key mode && instaceId}
-      {#if mode != Modes.YEARS}
+      {#if mode != TimeScaleUnit.YEAR}
         <RollerPicker
           {mode}
           on:selectedDateReset={async (e) => {
@@ -803,7 +862,7 @@
       class="flex w-full overflow-y-hidden overflow-x-hidden"
       bind:this={panelsContainer}
     >
-      {#if mode == Modes.ZONES}
+      {#if mode == TimeScaleUnit.PART}
         {#each zonesData as day, index (index)}
           {#each day.data as zoneData, i (i)}
             {@const date = day.date}
@@ -815,7 +874,7 @@
           {/each}
         {/each}
       {/if}
-      {#if mode == Modes.DAYS}
+      {#if mode == TimeScaleUnit.DAY}
         {#each daysData as day, index (index)}
           {@const date = day}
           {#key day}
@@ -823,7 +882,7 @@
           {/key}
         {/each}
       {/if}
-      {#if mode == Modes.MONTHS}
+      {#if mode == TimeScaleUnit.MONTH}
         {#each monthsData as year (year)}
           {#each monthNames as month, i (i)}
             {@const date = year + month}
@@ -831,7 +890,7 @@
           {/each}
         {/each}
       {/if}
-      {#if mode == Modes.YEARS}
+      {#if mode == TimeScaleUnit.YEAR}
         {#each yearsData as year (year)}
           <Year {year} />
         {/each}
@@ -844,7 +903,7 @@
     <div class="pointer-events-auto">
       <!-- <PanelSwitcher
         style={PanelSwitcherStyle.TRAIN}
-        items={Object.values(Modes)}
+        items={Object.values(TimeScaleUnit)}
         size={Size.sm}
         value={mode}
         on:switch={async (e) => {

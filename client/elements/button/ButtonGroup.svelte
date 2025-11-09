@@ -45,7 +45,7 @@
           {...button}
           style={button.style ?? ButtonStyle.OUTLINED}
           isBoxed={true}
-          on:click={button.callback?.bind(null, {})}
+          on:click={(e) => button.callback?.(e)}
         />
       </div>
     {/each}
@@ -58,7 +58,7 @@
           size={button.size ?? Size.md}
           tooltip={button.tooltip}
           {parentBgIndex}
-          on:click={button.callback?.bind(null, {})}
+          on:click={(e) => button.callback?.(e)}
         />
       </div>
     {/each}
