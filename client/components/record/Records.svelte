@@ -29,6 +29,7 @@
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
   import { stringify } from "@21n/shared-utils/json.utils";
+  import { appStore } from "@21n/stores/app.store";
   const dispatch = createEventDispatcher();
   export let data: (
     | INodeThumb
@@ -68,10 +69,12 @@
       ? bulkEditStore.clickHandler(item.id)
       : false;
     if (!result) {
-      tabs.activate(item.id);
-      // appStore.resourceClickHandler(e, item.id, {
-      //   defaultTo: defaultAccessMode
-      // });
+      if (defaultAccessMode !== ResourceAccessMode.INLINE)
+        tabs.activate(item.id);
+      else
+        appStore.resourceClickHandler(e, item.id, {
+          defaultTo: defaultAccessMode
+        });
     }
   }
 </script>

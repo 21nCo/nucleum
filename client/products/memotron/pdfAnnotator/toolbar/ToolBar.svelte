@@ -16,6 +16,7 @@
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import context from "@21n/stores/context.store";
   import { Embed, OperatingSystem } from "@21n/types/context.type";
+  import view from "@21n/stores/view.store";
   export let selectedColor = "";
   export let style = "";
   export let pageNumber = 1;
@@ -31,6 +32,7 @@
   const annotationModes: IToggleItem[] = resolveAnnotationModes();
   let pageInput = "";
   let isEditingPage = false;
+  const dev_isEnableJumpToPage: boolean = false;
 
   $: if (!isEditingPage) {
     pageInput = `${pageNumber}`;
@@ -48,11 +50,12 @@
 </script>
 
 <div
-  class="flex min-w-fit min-h-fit h-12 justify-between items-center bg-bgs2 rounded-md border border-brs3 shadow-sm"
+  class="flex portrait:flex-row flex-col portrait:h-12 min-w-fit min-h-fit py-2 px-1 justify-between items-center bg-bgs2 rounded-md border border-brs3 shadow-sm"
   {style}
 >
   {#if isExpanded}
     <ToggleGroup
+      class="portrait:flex-row flex-col"
       items={annotationModes}
       size={Size.lg}
       parentBgIndex={2}
@@ -72,13 +75,17 @@
         dispatchEvent("searchToggle", !isSearchActive);
       }}
     />
-    <span class="px-1" />
+    <span class="portrait:px-1 py-1" />
     <Divider
-      orientation={Orientation.Vertical}
+      orientation={$view.isPortrait
+        ? Orientation.Vertical
+        : Orientation.Horizontal}
       colorStrength={ColorStrength.Strong}
     />
   {/if}
-  <div class="flex justify-center items-center gap-2 px-4">
+  <div
+    class="flex portrait:flex-row flex-col justify-center items-center gap-2 py-1"
+  >
     <Button
       icon="magnifying-glass-plus"
       parentBgIndex={2}
@@ -86,32 +93,35 @@
         dispatchEvent("pageRerender", "ZOOMIN");
       }}
     />
-    <div
-      class="flex items-center gap-2 min-w-fit text-fgs1 text-b2 pt-1 font-sans"
-    >
-      <div class="w-12">
-        <TextInput
-          bind:value={pageInput}
-          type="number"
-          style={InputStyle.PLAIN}
-          size={Size.sm}
-          parentBackgroundIndex={2}
-          numberInputParams={{ min: 1, max: totalPages, step: 1 }}
-          on:focus={() => {
-            isEditingPage = true;
-          }}
-          on:blur={() => {
-            commitPageInput();
-            isEditingPage = false;
-          }}
-          on:enter={() => {
-            commitPageInput();
-            isEditingPage = false;
-          }}
-        />
+    {#if dev_isEnableJumpToPage}
+      <div
+        class="flex flex-col items-center gap-2 min-w-fit text-fgs1 text-b2 pt-1 font-sans"
+      >
+        <div class="portrait:w-12">
+          <TextInput
+            bind:value={pageInput}
+            type="number"
+            style={InputStyle.PLAIN}
+            size={Size.sm}
+            parentBackgroundIndex={2}
+            numberInputParams={{ min: 1, max: totalPages, step: 1 }}
+            on:focus={() => {
+              isEditingPage = true;
+            }}
+            on:blur={() => {
+              commitPageInput();
+              isEditingPage = false;
+            }}
+            on:enter={() => {
+              commitPageInput();
+              isEditingPage = false;
+            }}
+          />
+        </div>
+        <span>/ {totalPages}</span>
       </div>
-      <span>/ {totalPages}</span>
-    </div>
+    {/if}
+
     <Button
       icon="magnifying-glass-minus"
       parentBgIndex={2}
@@ -122,11 +132,19 @@
   </div>
   {#if isExpanded}
     <Divider
-      orientation={Orientation.Vertical}
+      orientation={$view.isPortrait
+        ? Orientation.Vertical
+        : Orientation.Horizontal}
       colorStrength={ColorStrength.Strong}
     />
-    <span class="flex items-center px-2">
-      <HighlightColors bind:selected={selectedColor} on:color />
+    <span class="flex portrait:flex-row flex-col items-center py-2">
+      <HighlightColors
+        bind:selected={selectedColor}
+        on:color
+        orientation={$view.isPortrait
+          ? Orientation.Horizontal
+          : Orientation.Vertical}
+      />
     </span>
   {/if}
 </div>

@@ -17,6 +17,7 @@
     resourceInList
   } from "@21n/components/flux/resourceStores/resource.utils";
   export let mdId: string;
+  export let isHideEmptyPlaceholder: boolean = false;
   const mdStore = getMdStore(mdId);
   let mdcontainerID = "markDown-" + mdId;
   let mdContainerHeight: number | undefined;
@@ -111,6 +112,6 @@
       {/each}
     </div>
   </div>
-{:else}
+{:else if !isHideEmptyPlaceholder}
   <EmptyStatusView mainText="No headings found" size={Size.sm} />
 {/if}

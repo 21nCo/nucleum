@@ -6,6 +6,7 @@ import type {
   IResourceArchivable,
   IResourceInActivableFromParent,
   IResourceLabeled,
+  IResourcePageWithPanels,
   IResourceStarrable,
   IResourceShareable
 } from "@21n/components/flux/resourceStores/resource.type";
@@ -89,6 +90,7 @@ export type IGoalThumb = IResourcePropertiesForGoal &
   };
 
 export type IActiveGoal = IActiveResource &
+  IResourcePageWithPanels &
   IGoalBase & {
     type: GoalType;
     parent?: IGoalThumb[];

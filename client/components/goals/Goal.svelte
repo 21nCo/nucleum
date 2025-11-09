@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     ActiveGoalStore,
+    resolvePanelOptions,
     type IActiveGoalStore
   } from "@21n/components/goals/goal.store";
   import PageLoadingPulse from "@21n/elements/feedback/animations/PageLoadingPulse.svelte";
@@ -8,34 +9,30 @@
     ResourceAccessMode,
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
-
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
-  import { resolveResourceIcon } from "@21n/components/flux/resourceStores/resource.utils";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import GoalInfoPanel from "@21n/components/goals/info/GoalInfoPanel.svelte";
   import view from "@21n/stores/view.store";
   import { resizeListener } from "@21n/actions/resize.action";
   import GoalTitleRow from "@21n/components/goals/info/GoalTitleRow.svelte";
-  import SubGoalsPanel from "@21n/components/goals/sub/SubGoalsPanel.svelte";
   import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
-  import { appStore } from "@21n/stores/app.store";
-  import GoalHistory from "@21n/components/goals/history/GoalHistory.svelte";
-  import GoalTasks from "@21n/components/goals/tasks/GoalTasks.svelte";
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy } from "svelte";
   import { page } from "$app/stores";
-  import PropertiesPane from "@21n/components/collection/properties/PropertiesPane.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import appearance from "@21n/stores/appearance.store";
-  import { Product } from "@21n/products/product.type";
-  import type { IActiveGoal } from "@21n/components/goals/goal.type";
-  import GoalAnalytics from "@21n/components/goals/GoalAnalytics.svelte";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { type IInlineStatus } from "@21n/types/notification.type";
   import { logger } from "@21n/components/debug/logger.client";
   import { Size } from "@21n/types/size.enum";
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
+  import GoalPanelSwitcher from "./GoalPanelSwitcher.svelte";
+  import { resolvePanelParam } from "@21n/components/resource/panelParam.mixin";
+  import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
+  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
+  import GoalPanelContentResolver from "./GoalPanelContentResolver.svelte";
+  import GoalLeftPanel from "./GoalLeftPanel.svelte";
+  import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { ResourcePanelType } from "../resource/resourcePanel.type";
+  import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
+  import { ErrorMessage } from "../error/error.type";
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
@@ -43,31 +40,14 @@
   let containerWidth = 0;
   let goal: IActiveGoalStore = ActiveGoalStore.resolve(id);
   let isReady = false;
-  const dev_isEnableLinks = false;
-  $: isActiveResource =
-    !$goal?.isArchived && !$goal?.trashInformation && !$goal?.isParentInactive;
-  $: isConstrainedWidth =
-    $view.isConstrainedWidth ||
-    $goal?.accessMode === ResourceAccessMode.SPLIT ||
-    $goal?.accessMode === ResourceAccessMode.FSPLIT ||
-    $goal?.accessMode === ResourceAccessMode.INLINE ||
-    containerWidth < 800;
-  $: tabs = resolvePanelSwitcherItems($goal, isConstrainedWidth);
 
-  let selectedPanel = isConstrainedWidth ? "info" : "subgoals";
-  initialize();
+  $: isConstrainedWidth = resolveIfConstrainedWidth(
+    $goal?.accessMode ?? accessMode,
+    containerWidth,
+    $view.isConstrainedWidth
+  );
 
-  onMount(() => {
-    const pageSub = page.subscribe((page) => {
-      const tab = resolveTabParam();
-      if (tab) {
-        selectedPanel = tab;
-      }
-    });
-    return () => {
-      pageSub();
-    };
-  });
+  $: tabs = resolvePanelOptions($goal, isConstrainedWidth);
 
   onDestroy(() => {
     const latestAccessMode = $goal?.accessMode ?? accessMode;
@@ -77,104 +57,30 @@
   async function initialize() {
     const editSearchParam = $page.url.searchParams.get(AppSearchParam.EDIT);
     const linkSearchParam = $page.url.searchParams.get(AppSearchParam.LINK);
+    const panel = resolvePanelParam(id, "Goal.svelte");
     await goal.init(accessMode, {
       isInEditMode: editSearchParam === "true",
-      linkSearchParam: linkSearchParam ?? undefined
+      linkSearchParam: linkSearchParam ?? undefined,
+      panel: panel ?? ResourcePanelType.DEFAULT
     });
     isReady = true;
-    goal.afterInit();
+    return goal.afterInit();
   }
 
-  function resolveTabParam() {
-    try {
-      if (!$goal) return;
-      return $page.url.searchParams.get(
-        appStore.resolveRecordSpecificSearchParam($goal.id, AppSearchParam.TAB)
-      );
-    } catch (error) {
-      logger.error({
-        at: "Goal.svelte",
-        error,
-        goalId: $goal?.id
-      });
-    }
-  }
+  let initPromise: Promise<void> = initialize();
 
-  function resolvePanelSwitcherItems(
-    goal: IActiveGoal,
-    isConstrainedWidth: boolean
+  function resolveIfConstrainedWidth(
+    accessMode: ResourceAccessMode,
+    containerWidth: number,
+    isViewConstrainedWidth: boolean
   ) {
-    let items = [
-      {
-        label: "Sub goals",
-        value: "subgoals",
-        icon: resolveResourceIcon(Resource.goal),
-        badge: goal?.children?.length
-      },
-      {
-        label: "Tasks",
-        value: "tasks",
-        icon: resolveResourceIcon(Resource.task),
-        badge: goal?.taskCount
-      },
-      {
-        label: "Analytics",
-        value: "analytics",
-        icon: "chart-line-up"
-      },
-      {
-        label: "History",
-        value: "history",
-        icon: "history"
-      }
-    ];
-    if (isConstrainedWidth) {
-      items.unshift({
-        label: "Info",
-        value: "info",
-        icon: "info"
-      });
-    }
-    if (goal?.types && goal?.types?.length > 0) {
-      items.push({
-        label: "Properties",
-        value: "properties",
-        icon: "shapes"
-      });
-    }
-    if ($appStore.product === Product.NUCLEUS && dev_isEnableLinks) {
-      items.push({
-        label: "Links",
-        value: "links",
-        icon: "link"
-      });
-    }
-    if (goal?.uiState?.tabsOrder) {
-      const orderedItems = goal.uiState.tabsOrder
-        .map((x) => {
-          const item = items.find((y) => y.value === x);
-          if (item) {
-            return item;
-          }
-          return null;
-        })
-        .filter((x) => x !== null);
-      items = [
-        ...orderedItems,
-        ...items.filter((x) => !orderedItems.includes(x))
-      ];
-    }
-    const tab = resolveTabParam();
-    if (tab) {
-      selectedPanel = tab;
-    } else {
-      selectedPanel = items[0].value;
-    }
-    return items;
-  }
-
-  function showAllProperties() {
-    setTab("properties");
+    return (
+      isViewConstrainedWidth ||
+      accessMode === ResourceAccessMode.SPLIT ||
+      accessMode === ResourceAccessMode.FSPLIT ||
+      accessMode === ResourceAccessMode.INLINE ||
+      containerWidth < 800
+    );
   }
 
   async function rearrangePanels(e: CustomEvent) {
@@ -189,130 +95,122 @@
       }
     });
   }
-
-  function setTab(tab: string) {
-    appStore.toggleSearchParamRecordSpecific($goal.id, {
-      [AppSearchParam.TAB]: tab
-    });
-  }
 </script>
 
-<CustomColorPropagator
-  class={cn("h-full w-full bg-gradient-to-br from-bgs1 via-bgs1", {
-    "to-ccs5/50": $appearance?.colorScheme?.isDark,
-    "to-ccs5": !$appearance?.colorScheme?.isDark
-  })}
-  color={$goal?.color ?? ($goal?.parent ? $goal.parent?.[0]?.color : undefined)}
+<div
+  class="flex w-full h-full overflow-auto"
+  use:resizeListener={(e) => {
+    containerWidth = e.width;
+  }}
 >
-  {#if !$goal || !isReady}
-    <div class="w-full h-full p-4">
-      <PageLoadingPulse />
-    </div>
-  {:else if $goal}
-    <div
-      class="flex w-full h-full overflow-auto"
-      use:resizeListener={(e) => {
-        containerWidth = e.width;
-      }}
+  {#await initPromise}
+    <EmptyStatusView isLoadingState={true} />
+  {:then}
+    <CustomColorPropagator
+      class={cn("h-full w-full bg-gradient-to-br from-bgs1 via-bgs1", {
+        "to-ccs5/50": $appearance?.colorScheme?.isDark,
+        "to-ccs5": !$appearance?.colorScheme?.isDark
+      })}
+      color={$goal?.color ??
+        ($goal?.parent ? $goal.parent?.[0]?.color : undefined)}
     >
-      {#if !isConstrainedWidth}
-        <aside
-          class="flex flex-col gap-4 bg-bgs2 border-r border-brs2 p-4 w-96 2k:w-[30rem] overflow-auto"
-        >
-          <GoalInfoPanel
-            {goal}
-            on:showAllProperties={showAllProperties}
-            bind:status
-          />
-        </aside>
-      {/if}
-      <main class={cn("flex flex-col gap-4 flex-1 overflow-auto", {})}>
-        <div
-          class={cn(
-            "relative flex flex-col w-full overflow-auto gap-3 bg-bgs2 otop:pt-12 shrink-0 border-b border-brs3"
-          )}
-        >
-          {#if isConstrainedWidth}
-            <GoalTitleRow {goal} isConstrainedWidth={true} bind:status />
-          {/if}
-          <div class="relative">
-            <PanelSwitcher
-              items={tabs}
-              style={PanelSwitcherStyle.BAR}
-              value={selectedPanel}
-              isExpandToFullWidth={true}
-              parentBgIndex={2}
-              isBgBar={true}
-              size={Size.sm}
-              isRearrangeableByDefault={true}
-              on:rearrange={rearrangePanels}
-              on:switch={(e) => {
-                setTab(e.detail);
-              }}
+      {#if !$goal || !isReady}
+        <div class="w-full h-full p-4">
+          <PageLoadingPulse />
+        </div>
+      {:else if $goal}
+        <div class="flex w-full h-full overflow-auto">
+          {#if !isConstrainedWidth}
+            <aside
+              class="flex flex-col gap-4 border-r border-brs2 w-96 2k:w-[35rem]"
             >
-              <div slot="right">
-                {#if $goal.accessMode === ResourceAccessMode.FULL && !isConstrainedWidth}
-                  <ResourceInlineCloseButton
-                    accessMode={$goal.accessMode}
-                    parentBgIndex={2}
-                    id={$goal.id}
-                  />
-                {/if}
-              </div>
-            </PanelSwitcher>
+              <GoalLeftPanel {goal} {isConstrainedWidth} bind:status />
+            </aside>
+          {/if}
+          <main class="flex flex-col flex-1 overflow-auto">
             {#if isConstrainedWidth}
               <div
-                class="w-10 bg-gradient-to-r from-bgs2/20 to-bgs2 absolute right-0 top-0 h-full"
-              />
-            {/if}
-          </div>
-        </div>
-        <div
-          class={cn("flex-1 overflow-auto", {
-            "px-4 pb-4": !isConstrainedWidth
-          })}
-        >
-          {#if selectedPanel === "info"}
-            <GoalInfoPanel
-              {goal}
-              {isConstrainedWidth}
-              bind:status
-              on:showAllProperties={showAllProperties}
-            />
-          {:else if selectedPanel === "subgoals"}
-            <SubGoalsPanel {goal} {isActiveResource} />
-          {:else if selectedPanel === "history"}
-            <GoalHistory {goal} />
-          {:else if selectedPanel === "tasks"}
-            <GoalTasks id={$goal.id} {isActiveResource} />
-          {:else if selectedPanel === "analytics"}
-            <GoalAnalytics id={$goal.id} />
-          {:else if selectedPanel === "properties"}
-            <div class="flex w-full justify-center">
-              <div class="w-96">
-                <PropertiesPane item={goal} resource={Resource.goal} />
+                class={cn(
+                  "relative flex flex-col w-full overflow-auto gap-3 cw:bg-bgs2 otop:pt-12 shrink-0 border-b border-brs3",
+                  {
+                    "bg-bgs2": isConstrainedWidth
+                  }
+                )}
+              >
+                <GoalTitleRow {goal} isConstrainedWidth={true} bind:status />
+                <div class="relative">
+                  <PanelSwitcher
+                    items={tabs}
+                    style={PanelSwitcherStyle.BAR}
+                    value={$goal.panel}
+                    isExpandToFullWidth={true}
+                    parentBgIndex={2}
+                    isBgBar={true}
+                    size={Size.sm}
+                    isRearrangeableByDefault={true}
+                    on:rearrange={rearrangePanels}
+                    on:switch={(e) => {
+                      goal.switchPanel(e.detail);
+                    }}
+                  >
+                    <div slot="right">
+                      {#if $goal.accessMode === ResourceAccessMode.FULL && !isConstrainedWidth}
+                        <ResourceInlineCloseButton
+                          accessMode={$goal.accessMode}
+                          parentBgIndex={2}
+                          id={$goal.id}
+                        />
+                      {/if}
+                    </div>
+                  </PanelSwitcher>
+                  {#if isConstrainedWidth}
+                    <div
+                      class="w-10 bg-gradient-to-r from-bgs2/20 to-bgs2 absolute right-0 top-0 h-full"
+                    />
+                  {/if}
+                </div>
               </div>
+            {/if}
+            <div
+              class={cn("flex-1 overflow-auto", {
+                "pt-4 w-full": isConstrainedWidth
+              })}
+            >
+              <GoalPanelContentResolver
+                {goal}
+                {isConstrainedWidth}
+                bind:status
+              />
+              {#if isConstrainedWidth}
+                <ScrollViewBottomSpacer />
+              {/if}
             </div>
+          </main>
+          {#if !isConstrainedWidth}
+            <GoalPanelSwitcher panels={tabs} {goal} {isConstrainedWidth} />
           {/if}
         </div>
-      </main>
-    </div>
-  {/if}
-</CustomColorPropagator>
-<ComponentBaseLayer
-  subscribeToRecords={[id]}
-  on:change={(e) => {
-    try {
-      if ("parent" in e.detail.params.record) {
-        isReady = false;
-        initialize();
-      }
-    } catch (error) {
-      logger.error({
-        at: "Goal.svelte - change subscription error",
-        error,
-        goalId: $goal?.id
-      });
-    }
-  }}
-/>
+      {/if}
+    </CustomColorPropagator>
+
+    <ComponentBaseLayer
+      subscribeToRecords={[id]}
+      on:change={(e) => {
+        try {
+          if ("parent" in e.detail.params.record) {
+            isReady = false;
+            initPromise = initialize();
+          }
+        } catch (error) {
+          logger.error({
+            at: "Goal.svelte - change subscription error",
+            error,
+            goalId: $goal?.id
+          });
+        }
+      }}
+    />
+  {:catch}
+    <EmptyStatusView mainText={ErrorMessage.DEFAULT} />
+  {/await}
+</div>

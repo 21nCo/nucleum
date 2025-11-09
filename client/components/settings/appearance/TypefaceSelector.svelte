@@ -49,11 +49,15 @@
     { label: "Recursive", value: "Recursive" },
     { label: "Red Hat Text", value: "Red Hat Text" },
     { label: "Rubik", value: "Rubik" },
-    { label: "Sen", value: "Sen", badge: "Default" },
+    { label: "Sen", value: "Sen" },
     { label: "Sora", value: "Sora" },
     { label: "Space Grotesk", value: "Space Grotesk" },
     { label: "Teachers", value: "Teachers" },
-    { label: "Twenty One Native", value: "Twenty One Native" },
+    {
+      label: "Twenty One Native",
+      value: "Twenty One Native",
+      badge: "Default"
+    },
     { label: "Varela", value: "Varela" },
     { label: "Varela Round", value: "Varela Round" }
   ];

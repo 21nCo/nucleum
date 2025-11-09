@@ -4,14 +4,6 @@ export enum Itemtype {
   DAY = "DAY"
 }
 
-export enum Modes {
-  ZONES = "PART",
-  DAYS = "DAY",
-  WEEKS = "WEEK",
-  MONTHS = "MONTH",
-  YEARS = "YEAR"
-}
-
 export type ProgrammedHorizontalWheelEvent = {
   deltaX: number;
   isWheelEvent: boolean;

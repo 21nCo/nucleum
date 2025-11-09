@@ -528,7 +528,11 @@
     </div>
   {/if}
 
-  <InlineSyncingFeedback resource={Resource.task} padding="cw:px-0 px-4" />
+  <InlineSyncingFeedback
+    resource={Resource.task}
+    padding="cw:px-0 px-4"
+    isDisableOutTransition={true}
+  />
 
   {#if tasks && tasks.length > 0}
     <div

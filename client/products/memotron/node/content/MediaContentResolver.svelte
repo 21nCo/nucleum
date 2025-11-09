@@ -49,38 +49,46 @@
   }
 </script>
 
-{#if _file && (node.contentType === NodeType.FILE || isHidePreview)}
-  <button class="flex w-full items-center justify-between h-12">
-    <span class="flex items-center gap-2">
-      <Icon icon={resolveFileIcon(_file)} size={Size.lg} />
-      <span class="text-sm">{_file.name ?? _file.label}</span>
-      <span class="text-xs text-fgs4">
-        {_file.size ? formatBytes(_file.size) : "Unknown size"}
+{#await resolveData()}
+  <div class="flex w-full h-full items-center justify-center">
+    <div
+      class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"
+    ></div>
+  </div>
+{:then}
+  {#if _file && (node.contentType === NodeType.FILE || isHidePreview)}
+    <button class="flex w-full items-center justify-between h-12">
+      <span class="flex items-center gap-2">
+        <Icon icon={resolveFileIcon(_file)} size={Size.lg} />
+        <span class="text-sm">{_file.name ?? _file.label}</span>
+        <span class="text-xs text-fgs4">
+          {_file.size ? formatBytes(_file.size) : "Unknown size"}
+        </span>
       </span>
-    </span>
-  </button>
-{:else if node.contentType === NodeType.AUDIO && _url}
-  <!-- <audio controls src={$node.body?.url} /> -->
-  <!-- TODO - relay refresh event to top instead of refreshing here -->
-  <AudioContent
-    on:refresh
-    body={node?.body}
-    url={_url}
-    nodeId={node.id.toString()}
-    metadata={node.metadata}
-    {accessPoint}
-  />
-{:else if (node.contentType === NodeType.IMAGE || node.contentType === NodeType.VIDEO) && _file}
-  <FileView file={_file} bind:renderingDetails class="!object-contain" />
-{:else if webNodeTypeList.includes(node.contentType)}
-  <WebNodeContent {node} bind:this={webContentRef} {accessPoint} />
-{:else if node.contentType === NodeType.PDF && _url}
-  <PdfAnnotator
-    bind:this={pdfContent}
-    url={_url}
-    {node}
-    {accessPoint}
-    on:annotation
-    on:configUpdate
-  />
-{/if}
+    </button>
+  {:else if node.contentType === NodeType.AUDIO && _url}
+    <!-- <audio controls src={$node.body?.url} /> -->
+    <!-- TODO - relay refresh event to top instead of refreshing here -->
+    <AudioContent
+      on:refresh
+      body={node?.body}
+      url={_url}
+      nodeId={node.id.toString()}
+      metadata={node.metadata}
+      {accessPoint}
+    />
+  {:else if (node.contentType === NodeType.IMAGE || node.contentType === NodeType.VIDEO) && _file}
+    <FileView file={_file} bind:renderingDetails class="!object-contain" />
+  {:else if webNodeTypeList.includes(node.contentType)}
+    <WebNodeContent {node} bind:this={webContentRef} {accessPoint} />
+  {:else if node.contentType === NodeType.PDF && _url}
+    <PdfAnnotator
+      bind:this={pdfContent}
+      url={_url}
+      {node}
+      {accessPoint}
+      on:annotation
+      on:configUpdate
+    />
+  {/if}
+{/await}

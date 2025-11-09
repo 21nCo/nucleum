@@ -1,9 +1,6 @@
 import { get, writable } from "svelte/store";
 import { AppSkin } from "@21n/types/appearance.type";
-import {
-  AppSearchParam,
-  type IAppStore
-} from "@21n/types/appStore.type";
+import { AppSearchParam, type IAppStore } from "@21n/types/appStore.type";
 import type { DragAndDrop } from "@21n/types/draganddrop.type";
 import { DragStatus } from "@21n/types/dragstatus.enum";
 import blankJson from "@21n/data/blank.json";
@@ -171,7 +168,8 @@ const recordSpecificSearchParams = [
   ResourceAccessMode.FSPLIT
 ];
 
-export const appStore = initAppStore({
+// export const appStore = initAppStore();
+const { subscribe, set, update } = writable<IAppStore>({
   product: Product.NUCLEUS,
   env: "dev",
   isDebugMode,
@@ -183,28 +181,29 @@ export const appStore = initAppStore({
   interactionMode: InteractionMode.DEFAULT
 });
 
-function initAppStore(seed: IAppStore) {
-  const { subscribe, set, update } = writable<IAppStore>(seed);
-
-  const resolveComponentFromPath = (path: string) => {
+export const appStore = {
+  subscribe,
+  set,
+  update,
+  resolveComponentFromPath: (path: string) => {
     const actions = get(appStore).actions;
     let component = actions.find((x) => x.path === path);
     if (component) return component;
     component = actions.find((x) => x.action === path);
     if (component) return component;
     return null;
-  };
+  },
   /**
    * Determines whether the app menu should be hidden for a path
    * @param newPath path which needs to checked
    * @param n view
    * @returns a boolean whether app menu should be hidden or not
    */
-  const checkIfNeedToHideMenu = (newPath: string) => {
+  checkIfNeedToHideMenu: (newPath: string) => {
     const n = get(view);
     const path = newPath.split("?")[0];
     if (path.split("/")[1]) {
-      let component = resolveComponentFromPath(path.split("/")[1]);
+      let component = appStore.resolveComponentFromPath(path.split("/")[1]);
       if (component?.isMenuHidden) return true;
     }
     const listOfPathsToHideMenu = {
@@ -225,11 +224,12 @@ function initAppStore(seed: IAppStore) {
       //check for landscape
     }
     return false;
-  };
-  const gotoPath = async (
+  },
+  gotoPath: async (
     path: string,
     props?: {
       queryParams?: any;
+      replaceState?: boolean;
     }
   ) => {
     logger.log({ method: "gotoPath", path });
@@ -239,7 +239,7 @@ function initAppStore(seed: IAppStore) {
       n = {
         ...n,
         currentPath: path,
-        isMenuHidden: checkIfNeedToHideMenu(path)
+        isMenuHidden: appStore.checkIfNeedToHideMenu(path)
       };
       return n;
     });
@@ -247,13 +247,13 @@ function initAppStore(seed: IAppStore) {
       const queryString = new URLSearchParams(props.queryParams).toString();
       path += "?" + queryString;
     }
-    goto(path);
-  };
-  const gotoErrorPage = (err: any) => {
+    goto(path, false, props?.replaceState ?? false);
+  },
+  gotoErrorPage: (err: any) => {
     //TODO - log error, show error code on error page
     logger.log({ at: "gotoErrorPage", err });
-    gotoPath("/error");
-  };
+    appStore.gotoPath("/error");
+  },
 
   /**
    * @deprecated - use openResource instead
@@ -261,23 +261,19 @@ function initAppStore(seed: IAppStore) {
    * @param id
    * @param params
    */
-  const gotoResource = async (
-    item: Resource,
-    id: string,
-    params: any = null
-  ) => {
+  gotoResource: async (item: Resource, id: string, params: any = null) => {
     const path = `/${item}/${id}`;
     update((n: IAppStore) => {
       n = {
         ...n,
         currentPath: path,
-        isMenuHidden: checkIfNeedToHideMenu(path)
+        isMenuHidden: appStore.checkIfNeedToHideMenu(path)
       };
       return n;
     });
     goto(path);
-  };
-  const resolveAction = (slug: string) => {
+  },
+  resolveAction: (slug: string) => {
     const actions = get(appStore).actions;
     let action = actions.find(
       (x) => x.action?.toLowerCase() == slug.toLowerCase()
@@ -290,9 +286,8 @@ function initAppStore(seed: IAppStore) {
       return null;
     if (action) return action;
     return null;
-  };
-
-  const runAction = (
+  },
+  runAction: (
     slug: string,
     params: {
       componentParams?: any;
@@ -304,10 +299,10 @@ function initAppStore(seed: IAppStore) {
       searchParams: undefined
     }
   ) => {
-    let action = resolveAction(slug);
+    let action = appStore.resolveAction(slug);
     logger.log({ at: "runAction", action, slug, params });
     if (!action) {
-      gotoPath("404");
+      appStore.gotoPath("404");
       return;
     }
     const store = get(appStore);
@@ -321,7 +316,7 @@ function initAppStore(seed: IAppStore) {
     if (action.type === ActionType.LINK) {
       const url = store.appData.urls[action.action];
       if (!url) return;
-      if (url) return openLink(url);
+      if (url) return appStore.openLink(url);
     } else if (action.type === ActionType.FUNCTION) {
       if (!action.fn) return;
       return action.fn({
@@ -345,9 +340,13 @@ function initAppStore(seed: IAppStore) {
     } else if (params.isReturnIfComponent) {
       return action;
     } else if (action.type === ActionType.RESOURCE && !isRenderAsPage) {
-      openResource(action.action, action.accessMode ?? ResourceAccessMode.POP, {
-        searchParams: params?.searchParams
-      });
+      appStore.openResource(
+        action.action,
+        action.accessMode ?? ResourceAccessMode.POP,
+        {
+          searchParams: params?.searchParams
+        }
+      );
     } else if (action.type === ActionType.MODAL && !isRenderAsPage) {
       modalEvent.notify({
         path: action.action,
@@ -359,7 +358,7 @@ function initAppStore(seed: IAppStore) {
         ...action.modalParams
       });
       if (params?.searchParams) {
-        toggleSearchParam(params.searchParams);
+        appStore.toggleSearchParam(params.searchParams);
       }
     } else if (action.component) {
       logger.log({
@@ -371,21 +370,21 @@ function initAppStore(seed: IAppStore) {
         store.interactionMode === InteractionMode.COMMAND_ONLY &&
         ctx.embed !== Embed.HANDSET
       ) {
-        toggleSearchParam({ tab: "page:" + action.action });
+        appStore.toggleSearchParam({ tab: "page:" + action.action });
       } else {
-        gotoPath("/" + (action.path ?? action.action), {
+        appStore.gotoPath("/" + (action.path ?? action.action), {
           queryParams: params?.searchParams
         });
       }
       return;
     }
-  };
-  const openLink = (url: string, isOauthFlow: boolean = false) => {
+  },
+  openLink: (url: string, isOauthFlow: boolean = false) => {
     logger.log({ at: "opening link", url });
     const ctx = get(context);
     if (!url) return;
     if (!url.includes("http")) {
-      gotoPath(url);
+      appStore.gotoPath(url);
       return;
     }
     if (ctx.isEmbed) {
@@ -400,12 +399,8 @@ function initAppStore(seed: IAppStore) {
         win.focus();
       }
     }
-  };
-
-  const initiateOAuth2Flow = async (
-    provider: IdentityProvider,
-    guest?: string
-  ) => {
+  },
+  initiateOAuth2Flow: async (provider: IdentityProvider, guest?: string) => {
     const ctx = get(context);
     const app = get(appStore);
     const oAuthConfig: OAuthProviderConfig[] = app.appData?.oAuthConfig;
@@ -481,31 +476,27 @@ function initAppStore(seed: IAppStore) {
             : `https://${import.meta.env?.VITE_HOST}`;
         url = `${host}/embed?provider=${config.oauth_slug}&guest=${guestPartForState}`;
       }
-      openLink(
+      appStore.openLink(
         url,
         ctx.os === OperatingSystem.IOS || ctx.os === OperatingSystem.MACOS
       );
     } else {
       goto(url);
     }
-  };
-
-  function runClientUpdate() {
+  },
+  runClientUpdate: () => {
     logger.log("running client update");
     //todo - show user a message that an update is available - auto updating for now
     window?.location?.reload();
-  }
-
-  const resolveRecordSpecificSearchParamPrefix = (id: IRecordId) => {
+  },
+  resolveRecordSpecificSearchParamPrefix: (id: IRecordId) => {
     return id.toString().slice(-5);
-  };
-
-  const resolveRecordSpecificSearchParam = (id: IRecordId, param: string) => {
-    const prefix = resolveRecordSpecificSearchParamPrefix(id);
+  },
+  resolveRecordSpecificSearchParam: (id: IRecordId, param: string) => {
+    const prefix = appStore.resolveRecordSpecificSearchParamPrefix(id);
     return `${prefix}-${param}`;
-  };
-
-  const toggleSearchParamRecordSpecific = (
+  },
+  toggleSearchParamRecordSpecific: (
     id: IRecordId,
     params:
       | Record<string, string | boolean | number | null>
@@ -515,7 +506,7 @@ function initAppStore(seed: IAppStore) {
       url?: URL;
     }
   ) => {
-    const prefix = resolveRecordSpecificSearchParamPrefix(id);
+    const prefix = appStore.resolveRecordSpecificSearchParamPrefix(id);
     let modified:
       | Record<string, string | boolean | number | null>
       | (string | RegExp)[] = {};
@@ -526,21 +517,21 @@ function initAppStore(seed: IAppStore) {
         modified[`${prefix}-${key}`] = value;
       });
     }
-    return toggleSearchParam(modified, additional);
-  };
-
+    return appStore.toggleSearchParam(modified, additional);
+  },
   /**
    * Sets or deletes search params
    * @param params Send an object to set params, array of strings to delete
    * @returns
    */
-  const toggleSearchParam = (
+  toggleSearchParam: (
     params:
       | Record<string, string | boolean | number | null>
       | (string | RegExp)[],
     additional?: {
       isPreventRefresh?: boolean;
       url?: URL;
+      replaceState?: boolean;
     }
   ) => {
     if (!params) return;
@@ -556,7 +547,11 @@ function initAppStore(seed: IAppStore) {
           });
         }
       });
-      if (!additional?.isPreventRefresh) appStore.gotoPath(url.href);
+      if (!additional?.isPreventRefresh) {
+        appStore.gotoPath(url.href, {
+          replaceState: additional?.replaceState ?? true
+        });
+      }
       return url;
     }
     if (typeof params !== "object") return;
@@ -564,14 +559,18 @@ function initAppStore(seed: IAppStore) {
       if (value === null) url.searchParams.delete(key);
       else url.searchParams.set(key, value.toString());
     });
-    if (!additional?.isPreventRefresh) appStore.gotoPath(url.href);
+    if (!additional?.isPreventRefresh) {
+      appStore.gotoPath(url.href, {
+        replaceState: additional?.replaceState ?? true
+      });
+    }
     return url;
-  };
+  },
   /**
    * Determines if the current view is a full view or a pop view
    * @returns
    */
-  const isOverlay = (recordId?: IRecordId) => {
+  isOverlay: (recordId?: IRecordId) => {
     if (recordId) {
       const accessMode = determineResourceAccessMode(recordId);
       return (
@@ -585,8 +584,8 @@ function initAppStore(seed: IAppStore) {
       ) ||
       new URLSearchParams(window.location.search).get(ResourceAccessMode.POP)
     );
-  };
-  const determineCurrentResourceAccessMode1 = (id: string) => {
+  },
+  determineCurrentResourceAccessMode1: (id: string) => {
     if (
       new URLSearchParams(window.location.search).get(
         ResourceAccessMode.POP
@@ -612,8 +611,7 @@ function initAppStore(seed: IAppStore) {
     )
       return ResourceAccessMode.FSPLIT;
     else return ResourceAccessMode.INLINE;
-  };
-
+  },
   /**
    *
    * TODO - shortcuts from user settings
@@ -621,7 +619,7 @@ function initAppStore(seed: IAppStore) {
    * @param event
    * @returns
    */
-  const determineClickAccessMode = (event: MouseEvent) => {
+  determineClickAccessMode: (event: MouseEvent) => {
     if (event.altKey && event.metaKey) {
       return ResourceAccessMode.TAB_IN_BACKGROUND;
     } else if (event.shiftKey) return ResourceAccessMode.FULL;
@@ -630,9 +628,8 @@ function initAppStore(seed: IAppStore) {
     } else if (event.metaKey) {
       return ResourceAccessMode.TAB;
     }
-  };
-
-  const openResource = (
+  },
+  openResource: (
     id: IRecordId,
     accessMode: ResourceAccessMode = ResourceAccessMode.INLINE,
     params?: {
@@ -645,9 +642,12 @@ function initAppStore(seed: IAppStore) {
     let url = new URL(window.location.href);
     if (accessMode === ResourceAccessMode.FULL) {
       url =
-        toggleSearchParam([ResourceAccessMode.POP, ResourceAccessMode.FSPLIT], {
-          isPreventRefresh: true
-        }) ?? url;
+        appStore.toggleSearchParam(
+          [ResourceAccessMode.POP, ResourceAccessMode.FSPLIT],
+          {
+            isPreventRefresh: true
+          }
+        ) ?? url;
     }
     const timestamp = new Date();
     accessLogStore.create({
@@ -662,17 +662,17 @@ function initAppStore(seed: IAppStore) {
     } else if (accessMode === ResourceAccessMode.TAB_IN_BACKGROUND) {
       tabs.addInBackground(id);
     } else if (accessMode === ResourceAccessMode.SPLIT) {
-      const isFullOrPop = isOverlay(params?.replaceId);
+      const isFullOrPop = appStore.isOverlay(params?.replaceId);
       if (isFullOrPop) accessMode = ResourceAccessMode.FSPLIT;
       else accessMode = ResourceAccessMode.SPLIT;
     }
     logger.log({ at: "openResource", accessMode });
     url =
-      toggleSearchParam(recordSpecificSearchParams, {
+      appStore.toggleSearchParam(recordSpecificSearchParams, {
         isPreventRefresh: true,
         url
       }) ?? url;
-    toggleSearchParam(
+    appStore.toggleSearchParam(
       {
         [accessMode]: id.toString(),
         [accessMode + "At"]: timestamp.getTime(),
@@ -682,19 +682,17 @@ function initAppStore(seed: IAppStore) {
         url: url
       }
     );
-  };
-
+  },
   /**
    * Clears all tooltips from the DOM. This is to avoid an issue where clicking on a mention in markdown when the tooltip is activated is not removing the tooltip properly on navigation to that mention node page.
    */
-  const clearAllTooltips = () => {
+  clearAllTooltips: () => {
     const tooltipsContainer = document.getElementById("tooltips");
     if (tooltipsContainer) {
       tooltipsContainer.innerHTML = "";
     }
-  };
-
-  const resourceClickHandlerForGraph = (
+  },
+  resourceClickHandlerForGraph: (
     id: IRecordId,
     event: MouseEvent,
     params?: {
@@ -711,27 +709,31 @@ function initAppStore(seed: IAppStore) {
     appStore.openResource(id, accessMode, {
       replaceId: params?.replaceId
     });
-  };
-
-  const goBack = (resource?: IRecordId) => {
+  },
+  goBack: (resource?: IRecordId) => {
     appEvents.nav(resource?.toString() ?? "");
-    const backQueryParam = new URLSearchParams(window.location.search).get(
-      "back"
-    );
+    const existingParams = new URLSearchParams(window.location.search);
+    const backQueryParam = existingParams.get("back");
+    const returnToQueryParam = existingParams.get("returnTo");
     if (backQueryParam) {
-      appStore.gotoPath(backQueryParam);
+      appStore.gotoPath(backQueryParam, {
+        queryParams: returnToQueryParam
+          ? {
+              returnTo: returnToQueryParam
+            }
+          : {}
+      });
       return;
     }
     if (window.history.length > 1) {
       window.history.back();
     }
-  };
-
-  const goForward = () => {
+  },
+  goForward: () => {
     if (window.history.length > 1) {
       window.history.forward();
     }
-  };
+  },
   /**
    * Handles resource click.
    *
@@ -743,7 +745,7 @@ function initAppStore(seed: IAppStore) {
    * @param params - additional params
    * @returns
    */
-  const resourceClickHandler = (
+  resourceClickHandler: (
     event: MouseEvent | undefined,
     id: IRecordId,
     params?: {
@@ -753,17 +755,17 @@ function initAppStore(seed: IAppStore) {
     }
   ) => {
     if (!id) return;
-    toggleSearchParam([AppSearchParam.VIEW]);
+    appStore.toggleSearchParam([AppSearchParam.VIEW]);
     let accessMode;
     const defaultTo =
       params?.defaultTo ??
       (params?.replaceId
         ? determineResourceAccessMode(params.replaceId)
         : ResourceAccessMode.POP);
-    if (event) accessMode = determineClickAccessMode(event);
+    if (event) accessMode = appStore.determineClickAccessMode(event);
     if (!accessMode) accessMode = defaultTo;
     logger.log({ at: "resourceClickHandler", accessMode, defaultTo });
-    openResource(id, accessMode, {
+    appStore.openResource(id, accessMode, {
       replaceId: params?.replaceId,
       searchParams: params?.searchParams
     });
@@ -774,8 +776,8 @@ function initAppStore(seed: IAppStore) {
       accessMode,
       event
     });
-  };
-  const closeResource = (props?: {
+  },
+  closeResource: (props?: {
     id?: IRecordId;
     accessMode?: ResourceAccessMode;
     isRestrictToModals?: boolean;
@@ -787,25 +789,28 @@ function initAppStore(seed: IAppStore) {
     };
     appEvents.nav(props?.id?.toString() ?? "");
     const url =
-      toggleSearchParam(recordSpecificSearchParams, {
+      appStore.toggleSearchParam(recordSpecificSearchParams, {
         isPreventRefresh: true
       }) ?? new URL(window.location.href);
     if (props?.accessMode) {
-      toggleSearchParam([props.accessMode], { url });
+      appStore.toggleSearchParam([props.accessMode], { url });
       restoreInlineResourceIfPrev();
       return;
     } else if (props?.id) {
       const accessMode = determineResourceAccessMode(props.id);
       if (accessMode) {
-        toggleSearchParam([accessMode], { url });
+        appStore.toggleSearchParam([accessMode], { url });
         restoreInlineResourceIfPrev();
       }
       return;
     }
     if (props?.isRestrictToModals) {
-      toggleSearchParam([ResourceAccessMode.FSPLIT, ResourceAccessMode.POP], {
-        url
-      });
+      appStore.toggleSearchParam(
+        [ResourceAccessMode.FSPLIT, ResourceAccessMode.POP],
+        {
+          url
+        }
+      );
       return;
     }
     restoreInlineResourceIfPrev();
@@ -820,15 +825,14 @@ function initAppStore(seed: IAppStore) {
       if (!url.searchParams.get(param)) return;
       url.searchParams.delete(param);
     }
-  };
-
-  const toggleFullAccessMode = (
+  },
+  toggleFullScreen: (
     currentMode: ResourceAccessMode,
     resourceId: IRecordId
   ) => {
     logger.log({ at: "toggleFullAccessMode", currentMode, resourceId });
     const url =
-      toggleSearchParam(recordSpecificSearchParams, {
+      appStore.toggleSearchParam(recordSpecificSearchParams, {
         isPreventRefresh: true
       }) ?? new URL(window.location.href);
     removeSearchParam(currentMode);
@@ -849,124 +853,91 @@ function initAppStore(seed: IAppStore) {
       if (!url.searchParams.get(param)) return;
       url.searchParams.delete(param);
     }
-  };
-
-  return {
-    subscribe,
-    set: (m: IAppStore) => {
-      set(m);
-    },
-    update,
-    initializeProductInformation: (details: {
-      product: string;
-      env: string;
-    }) => {
-      update((n: IAppStore) => {
-        n.product = details.product;
-        n.env = details.env;
-        return n;
-      });
-    },
-    setVersion(version: string, build: number) {
-      update((n: IAppStore) => {
-        n.version = version;
-        n.build = build;
-        return n;
-      });
-    },
-    loadAppData(data: any, params?: { isDefaultData: boolean }) {
-      update((n: IAppStore) => {
-        const env = n.env;
-        if (data.env && data.env[env]) {
-          n.appData = { ...data, ...data.env[env] };
-        } else {
-          n.appData = data;
-        }
-        if (!params?.isDefaultData) {
-          persistLocally(Resource.appData, data);
-        }
-        return n;
-      });
-    },
-    turnDebugMode(isDebugMode: boolean) {
-      update((n: IAppStore) => {
-        n.isDebugMode = isDebugMode;
-        return n;
-      });
-    },
-
-    toggleMenuVisibility: (isHidden?: boolean) => {
-      update((n: IAppStore) => {
-        if (isHidden !== undefined && isHidden !== null) {
-          n = { ...n, isMenuHidden: isHidden };
-        } else {
-          n = { ...n, isMenuHidden: !n.isMenuHidden };
-        }
-        return n;
-      });
-    },
-    toggleTopBar: (isMinimal: boolean) => {
-      update((n: IAppStore) => {
-        n = { ...n, isMinimalTopBar: isMinimal };
-        return n;
-      });
-    },
-    setCurrentPath: (path: string) => {
-      update((n: IAppStore) => {
-        n = {
-          ...n,
-          currentPath: path,
-          isMenuHidden: checkIfNeedToHideMenu(path)
-        };
-        return n;
-      });
-    },
-    initActions: (actions: IAction[], settings: IAction[]) => {
-      update((n: IAppStore) => {
-        if (!n.actions) n.actions = [];
-        n.actions = [...actions, ...settings];
-        return n;
-      });
-    },
-    initActionsForSheet: (actions: IAction[]) => {
-      update((n: IAppStore) => {
-        n.actions = [...actions];
-        return n;
-      });
-    },
-    runResourceAction: (
-      resource: Resource,
-      action: ResourceActionType,
-      params?: any
-    ) => {
-      return runAction(resourceAction(resource, action), params);
-    },
-    addToRecents: (data: { record: any; type: Resource; timestamp: Date }) => {
-      dispatchCustomEvent(GlobalEvent.ADD_TO_RECENTS, data);
-    },
-    gotoPath,
-    gotoErrorPage,
-    gotoResource,
-    resolveAction,
-    resolveComponentFromPath,
-    openLink,
-    runAction,
-    initiateOAuth2Flow,
-    toggleSearchParam,
-    toggleSearchParamRecordSpecific,
-    resolveRecordSpecificSearchParam,
-    resourceClickHandler,
-    resourceClickHandlerForGraph,
-    openResource,
-    toggleFullScreen: toggleFullAccessMode,
-    determineClickAccessMode,
-    isOverlay,
-    closeResource,
-    goBack,
-    goForward,
-    clearAllTooltips
-  };
-}
+  },
+  initializeProductInformation: (details: { product: string; env: string }) => {
+    update((n: IAppStore) => {
+      n.product = details.product;
+      n.env = details.env;
+      return n;
+    });
+  },
+  setVersion: (version: string, build: number) => {
+    update((n: IAppStore) => {
+      n.version = version;
+      n.build = build;
+      return n;
+    });
+  },
+  loadAppData: (data: any, params?: { isDefaultData: boolean }) => {
+    update((n: IAppStore) => {
+      const env = n.env;
+      if (data.env && data.env[env]) {
+        n.appData = { ...data, ...data.env[env] };
+      } else {
+        n.appData = data;
+      }
+      if (!params?.isDefaultData) {
+        persistLocally(Resource.appData, data);
+      }
+      return n;
+    });
+  },
+  turnDebugMode: (isDebugMode: boolean) => {
+    update((n: IAppStore) => {
+      n.isDebugMode = isDebugMode;
+      return n;
+    });
+  },
+  toggleMenuVisibility: (isHidden?: boolean) => {
+    update((n: IAppStore) => {
+      if (isHidden !== undefined && isHidden !== null) {
+        n = { ...n, isMenuHidden: isHidden };
+      } else {
+        n = { ...n, isMenuHidden: !n.isMenuHidden };
+      }
+      return n;
+    });
+  },
+  toggleTopBar: (isMinimal: boolean) => {
+    update((n: IAppStore) => {
+      n = { ...n, isMinimalTopBar: isMinimal };
+      return n;
+    });
+  },
+  setCurrentPath: (path: string) => {
+    update((n: IAppStore) => {
+      n = {
+        ...n,
+        currentPath: path,
+        isMenuHidden: appStore.checkIfNeedToHideMenu(path)
+      };
+      return n;
+    });
+  },
+  initActions: (actions: IAction[], settings: IAction[]) => {
+    update((n: IAppStore) => {
+      if (!n.actions) n.actions = [];
+      n.actions = [...actions, ...settings];
+      return n;
+    });
+  },
+  initActionsForSheet: (actions: IAction[]) => {
+    update((n: IAppStore) => {
+      n.actions = [...actions];
+      return n;
+    });
+  },
+  runResourceAction: (
+    resource: Resource,
+    action: ResourceActionType,
+    params?: any
+  ) => {
+    return appStore.runAction(resourceAction(resource, action), params);
+  },
+  addToRecents: (data: { record: any; type: Resource; timestamp: Date }) => {
+    dispatchCustomEvent(GlobalEvent.ADD_TO_RECENTS, data);
+  }
+};
 
 export const isInEditMode = initEditModeStore();
 

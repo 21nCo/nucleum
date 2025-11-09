@@ -182,7 +182,7 @@ export const memotronActions: IAction[] = [
   {
     action: MemotronAction.LIBRARY,
     label: "Library",
-    icon: "stack",
+    icon: "library",
     component: LibraryPanelContentResolver,
     panel: MemotronLibrary,
     type: ActionType.PAGE,
@@ -252,8 +252,7 @@ export const memotronActions: IAction[] = [
     action: Action.OVERVIEW,
     type: ActionType.PAGE,
     label: "Overview",
-    // icon: "ph:squares-four-light",
-    icon: "heroicons:rectangle-group",
+    icon: "overview",
     component: MemotronOverview
   },
   {

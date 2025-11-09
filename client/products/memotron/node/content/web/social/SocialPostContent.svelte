@@ -18,10 +18,11 @@
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle } from "@21n/types/button.type";
+  import { ButtonStyle, type IButtonParams } from "@21n/types/button.type";
   import { properCase } from "@21n/shared-utils/text.utils";
   import { resolveContentPreview } from "@21n/products/memotron/node/node.utils";
   import { toasts } from "@21n/stores/notification.store";
+  import ButtonGroup from "@21n/elements/button/ButtonGroup.svelte";
 
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
@@ -30,6 +31,7 @@
   let oembedHtml: string | null = null;
   let error: string = "";
   let hasPermanentCopy = false;
+  let isShowPermanentCopy: boolean = false;
   onMount(async () => {
     await resolveParent();
   });
@@ -92,19 +94,50 @@
       toasts.success("Text copied to clipboard");
     }
   }
+
+  $: buttons = [
+    ...(hasPermanentCopy
+      ? [
+          {
+            label: "Copy text content",
+            size: Size.sm,
+            callback: async (e: MouseEvent) => {
+              e.stopPropagation();
+              await copyTextContent();
+            }
+          } as IButtonParams,
+          {
+            label: isShowPermanentCopy ? "View as embed" : "View copy",
+            size: Size.sm,
+            callback: async (e: MouseEvent) => {
+              e.stopPropagation();
+              isShowPermanentCopy = !isShowPermanentCopy;
+            }
+          } as IButtonParams
+        ]
+      : []),
+    {
+      label: resolveOpenInButtonLabel(),
+      size: Size.sm,
+      callback: async () => {
+        if (!node.url) return;
+        appStore.openLink(node.url);
+      }
+    } as IButtonParams
+  ];
 </script>
 
 {#if oembedHtml}
   {@html oembedHtml}
-{:else if shouldShowWidget() && node.url && !error}
+{:else if shouldShowWidget() && node.url && !error && !isShowPermanentCopy}
   <div
-    class="relative w-full h-full px-4 flex flex-col justify-center items-center overflow-y-auto"
+    class="relative w-full h-full flex flex-col justify-center items-center overflow-y-auto cw:mb-10"
   >
     <div class="absolute inset-0 flex justify-center items-center z-0 mb-12">
       <Icon icon="svg-spinners:3-dots-fade" size={Size.lg} />
     </div>
     <div
-      class="relative w-9/10 flex-grow flex flex-col items-center max-w-2xl py-6 z-10"
+      class="relative w-9/10 flex-grow flex flex-col items-center max-w-2xl px-4 py-6 z-10"
     >
       {#if $context.isEmbed}
         <button class="absolute inset-0 z-20" on:click></button>
@@ -139,45 +172,9 @@
         />
       {/if}
     </div>
-    <div
-      class="flex cw:flex-col justify-center items-center w-full gap-4 pt-4 pb-8"
-    >
-      {#if hasPermanentCopy}
-        <Button
-          style={ButtonStyle.PLAIN}
-          label="View permanent copy"
-          isUnderlined={true}
-          size={Size.sm}
-          on:click={(e) => {
-            e.stopPropagation();
-            onError(new CustomEvent("fallback", { detail: "fallback" }));
-          }}
-        />
-      {/if}
-      {#if hasPermanentCopy}
-        <Button
-          style={ButtonStyle.PLAIN}
-          label="Copy text content"
-          isUnderlined={true}
-          size={Size.sm}
-          on:click={(e) => {
-            e.stopPropagation();
-            copyTextContent();
-          }}
-        />
-      {/if}
-      <Button
-        style={ButtonStyle.PLAIN}
-        label={resolveOpenInButtonLabel()}
-        isUnderlined={true}
-        size={Size.sm}
-        on:click={() => {
-          if (!node.url) return;
-          appStore.openLink(node.url);
-        }}
-      />
-    </div>
+    <ButtonGroup {buttons} isFooter={true} />
   </div>
 {:else}
   <SocialPostContentFallback {node} />
+  <ButtonGroup {buttons} isFooter={true} />
 {/if}

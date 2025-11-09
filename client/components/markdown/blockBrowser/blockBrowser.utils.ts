@@ -65,39 +65,39 @@ let embedSection: IBlockBrowserSection = {
       description: "Embed kindle highlight block",
       type: NodeType.KINDLE_HIGHLIGHT,
       icon: "bookmark"
-    },
-    {
-      label: "Graph",
-      description: "Embed node graph",
-      type: NodeType.GRAPH_AS_EMBED,
-      icon: "graph",
-      isDisabled: true,
-      badge: "planned"
-    },
-    {
-      label: "Node links tree",
-      description: "Embed node links tree",
-      type: NodeType.TREE_OF_LINKS,
-      icon: "tree-view",
-      isDisabled: true,
-      badge: "planned"
-    },
-    {
-      label: "Calendar",
-      description: "Embed calendar",
-      type: NodeType.CALENDAR_AS_EMBED,
-      icon: "calendar",
-      isDisabled: true,
-      badge: "planned"
-    },
-    {
-      label: "Table of contents",
-      description: "Embed table of contents block",
-      type: NodeType.TOC,
-      icon: "list-bullets",
-      isDisabled: true,
-      badge: "planned"
     }
+    // {
+    //   label: "Graph",
+    //   description: "Embed node graph",
+    //   type: NodeType.GRAPH_AS_EMBED,
+    //   icon: "graph",
+    //   isDisabled: true,
+    //   badge: "planned"
+    // },
+    // {
+    //   label: "Node links tree",
+    //   description: "Embed node links tree",
+    //   type: NodeType.TREE_OF_LINKS,
+    //   icon: "tree-view",
+    //   isDisabled: true,
+    //   badge: "planned"
+    // },
+    // {
+    //   label: "Calendar",
+    //   description: "Embed calendar",
+    //   type: NodeType.CALENDAR_AS_EMBED,
+    //   icon: "calendar",
+    //   isDisabled: true,
+    //   badge: "planned"
+    // },
+    // {
+    //   label: "Table of contents",
+    //   description: "Embed table of contents block",
+    //   type: NodeType.TOC,
+    //   icon: "list-bullets",
+    //   isDisabled: true,
+    //   badge: "planned"
+    // }
   ]
 };
 
@@ -127,47 +127,47 @@ let layoutSection: IBlockBrowserSection = {
       description: "Media grid block",
       type: NodeType.MEDIA_GRID,
       icon: "rectangle-group"
-    },
-    {
-      label: "Cards",
-      description: "Cards block",
-      type: NodeType.CARDS,
-      icon: "grid",
-      badge: "planned",
-      isDisabled: true
-    },
-    {
-      label: "Tabs",
-      description: "Tabs block",
-      type: NodeType.TABS,
-      icon: "tabs",
-      badge: "planned",
-      isDisabled: true
-    },
-    {
-      label: "Accordion",
-      description: "Accordion block",
-      type: NodeType.ACCORDION,
-      icon: "queue-list",
-      badge: "planned",
-      isDisabled: true
-    },
-    {
-      label: "Table",
-      description: "Table block",
-      type: NodeType.TABLE,
-      icon: "table",
-      badge: "planned",
-      isDisabled: true
-    },
-    {
-      label: "Stack",
-      description: "Stack block",
-      type: NodeType.STACK,
-      icon: "stack",
-      badge: "planned",
-      isDisabled: true
     }
+    // {
+    //   label: "Cards",
+    //   description: "Cards block",
+    //   type: NodeType.CARDS,
+    //   icon: "grid",
+    //   badge: "planned",
+    //   isDisabled: true
+    // },
+    // {
+    //   label: "Tabs",
+    //   description: "Tabs block",
+    //   type: NodeType.TABS,
+    //   icon: "tabs",
+    //   badge: "planned",
+    //   isDisabled: true
+    // },
+    // {
+    //   label: "Accordion",
+    //   description: "Accordion block",
+    //   type: NodeType.ACCORDION,
+    //   icon: "queue-list",
+    //   badge: "planned",
+    //   isDisabled: true
+    // },
+    // {
+    //   label: "Table",
+    //   description: "Table block",
+    //   type: NodeType.TABLE,
+    //   icon: "table",
+    //   badge: "planned",
+    //   isDisabled: true
+    // },
+    // {
+    //   label: "Stack",
+    //   description: "Stack block",
+    //   type: NodeType.STACK,
+    //   icon: "stack",
+    //   badge: "planned",
+    //   isDisabled: true
+    // }
   ]
 };
 
@@ -205,15 +205,15 @@ let mediaSection: IBlockBrowserSection = {
       description: "File block",
       type: NodeType.FILE,
       icon: "file"
-    },
-    {
-      label: "Sketch",
-      description: "Sketch block",
-      type: NodeType.SKETCH,
-      icon: "ri:sketching",
-      badge: "planned",
-      isDisabled: true
     }
+    // {
+    //   label: "Sketch",
+    //   description: "Sketch block",
+    //   type: NodeType.SKETCH,
+    //   icon: "ri:sketching",
+    //   badge: "planned",
+    //   isDisabled: true
+    // }
   ]
 };
 
@@ -319,8 +319,8 @@ let textSection: IBlockBrowserSection = {
     paragraphBrowserItem,
     quoteBrowserItem,
     calloutBrowserItem,
-    codeBrowserItem,
-    latexBrowserItem
+    codeBrowserItem
+    // latexBrowserItem
   ]
 };
 

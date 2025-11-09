@@ -1,10 +1,5 @@
 <script lang="ts">
-  import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import { Size } from "@21n/types/size.enum";
-  import {
-    PanelSwitcherActiveItemStrength,
-    PanelSwitcherStyle
-  } from "@21n/types/switcher.enum";
   import type { ISelectItem } from "@21n/types/select.type";
   import { CalendarLayout } from "@21n/components/calendar/calendar.type";
   import { uiState } from "@21n/stores/uiState/uiState.store";
@@ -28,8 +23,6 @@
     {
       value: CalendarLayout.Bird,
       label: "Columns"
-      // badge: "planned",
-      // isDisabled: true
     }
   ];
   const backPath = $page.url.searchParams.get(AppSearchParam.RETURN_TO);
@@ -72,6 +65,7 @@
       </div>
       <slot name="header" />
       <div class="flex gap-2 justify-end items-center h-full w-full">
+        <slot name="header-right-options" />
         <Button
           type={ButtonVariant.SECONDARY}
           style={ButtonStyle.OUTLINED}
@@ -83,7 +77,6 @@
             dispatch("goToToday");
           }}
         />
-        <slot name="header-right-options" />
         <Button
           type={ButtonVariant.SECONDARY}
           style={ButtonStyle.OUTLINED}

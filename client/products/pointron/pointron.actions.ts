@@ -372,7 +372,8 @@ export const pointronActions: IAction[] = [
     type: ActionType.PAGE,
     // icon: "ph:presentation-chart-light",
     // icon: "chart-line-up",
-    icon: "heroicons:rectangle-group",
+    // icon: "heroicons:rectangle-group",
+    icon: "overview",
     label: "Overview"
   },
   // {
@@ -669,7 +670,7 @@ export const pointronActions: IAction[] = [
   {
     action: Action.LIBRARY,
     label: "Library",
-    icon: "stack",
+    icon: "library",
     panel: PointronLibrary,
     component: LibraryPanelContentResolver,
     type: ActionType.PAGE,
@@ -686,7 +687,7 @@ export const pointronActions: IAction[] = [
   {
     action: Action.LIBRARY_PORTRAIT,
     label: "Library",
-    icon: "stack",
+    icon: "library",
     component: PointronLibrary,
     type: ActionType.PAGE
   },

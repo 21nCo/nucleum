@@ -7,6 +7,7 @@
   export let isShorter: boolean = false;
   export let text: string | undefined = undefined;
   export let padding: string = "";
+  export let isDisableOutTransition: boolean = false;
   let isSyncing: boolean = false;
   let syncStatusPropagatorRef: SyncStatusListener | null = null;
 
@@ -15,7 +16,13 @@
   }
 </script>
 
-<InlineSyncingFeedbackBase {isShorter} {text} {padding} {isSyncing} />
+<InlineSyncingFeedbackBase
+  {isShorter}
+  {text}
+  {padding}
+  {isSyncing}
+  {isDisableOutTransition}
+/>
 <SyncStatusListener
   bind:this={syncStatusPropagatorRef}
   {resource}

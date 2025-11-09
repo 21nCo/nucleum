@@ -22,6 +22,7 @@
   export let count: number | undefined = undefined;
   export let bgSize: Size.sm | Size.md | Size.lg = Size.md;
   export let shortcut: string | IKeyboardShortcut | undefined = undefined;
+  export let isBoxed: boolean = false;
   let isHovering: boolean = false;
   function onclick() {
     on = !on;
@@ -42,20 +43,29 @@
     text: tooltip,
     direction: tooltipOptions?.placement ?? Placement.Bottom
   }}
-  class={cn("flex relative items-center justify-center rounded-md", {
-    "min-h-8 min-w-8": bgSize === Size.sm || (!bgSize && size === Size.sm),
-    "min-h-10 min-w-10": bgSize === Size.md || (!bgSize && size === Size.md),
-    "min-h-12 min-w-12": bgSize === Size.lg || (!bgSize && size === Size.lg),
-    [bg(parentBgIndex)]: isHovering || on
-  })}
+  class={cn(
+    "flex relative items-center justify-center",
+    {
+      "rounded-md": !isBoxed,
+      "h-full w-full": isBoxed,
+      [`${bg(parentBgIndex)}-striped`]: isHovering && !on,
+      [bg(parentBgIndex)]: on
+    },
+    !isBoxed && {
+      "min-h-8 min-w-8": bgSize === Size.sm || (!bgSize && size === Size.sm),
+      "min-h-10 min-w-10": bgSize === Size.md || (!bgSize && size === Size.md),
+      "min-h-12 min-w-12": bgSize === Size.lg || (!bgSize && size === Size.lg),
+      [bg(parentBgIndex)]: isHovering || on
+    }
+  )}
 >
   <Icon
     {icon}
     {size}
     isFilled={on && !isPreventFillOnActive}
     class={cn({
-      "fill-aps1": on,
-      "stroke-fgs2": !on
+      "text-aps1": on,
+      "text-fgs2": !on
     })}
     on:click
   />

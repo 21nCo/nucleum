@@ -26,7 +26,7 @@ import {
 } from "@21n/persistence/persistence.type";
 import { clientStorage } from "@21n/persistence/persistence.utils";
 import { Dexie, type Collection, type Table, type WhereClause } from "dexie";
-import { SearchEngine } from "searchfn";
+import { SearchFn } from "searchfn";
 import { extractSearchFields as extractSearchFieldsUtil } from "@21n/utils/textUtils";
 import { indexingStore } from "@21n/persistence/dexie/indexing.store";
 
@@ -41,7 +41,7 @@ export class DexiePersistence implements IPersistence {
   instance: Dexie | undefined = undefined;
   tables: ITable[] = [];
   userId: string = "";
-  searchIndices: Map<string, SearchEngine> = new Map();
+  searchIndices: Map<string, SearchFn> = new Map();
   private indexingWorker: SharedWorker | undefined = undefined;
   private isIndexingInProgress: boolean = false;
   private indexingProgress: number = 0;
@@ -63,10 +63,13 @@ export class DexiePersistence implements IPersistence {
       if (tablesVal) tables = [...(tables ?? []), ...parse(tablesVal)];
     }
     const stores =
-      tables?.reduce((acc, table) => {
-        acc[table.name] = table.indices.join(", ");
-        return acc;
-      }, {} as { [key: string]: string }) ?? {};
+      tables?.reduce(
+        (acc, table) => {
+          acc[table.name] = table.indices.join(", ");
+          return acc;
+        },
+        {} as { [key: string]: string }
+      ) ?? {};
     this.instance.version(version).stores(stores);
     this.userId = user;
     if (tables) {
@@ -118,38 +121,40 @@ export class DexiePersistence implements IPersistence {
       const searchEngine = this.searchIndices.get(table.name);
       if (!searchEngine) continue;
 
-      const batchSize = 500;
-      for (let i = 0; i < records.length; i += batchSize) {
-        const batch = records.slice(i, Math.min(i + batchSize, records.length));
+      // Transform records to searchfn format
+      const documents = records
+        .map((record) => {
+          const fields = this.extractSearchFields(record, table.name);
+          if (!record?.id || !fields) return null;
+          return { id: record.id, fields };
+        })
+        .filter(
+          (doc): doc is { id: string; fields: Record<string, string> } =>
+            doc !== null
+        );
 
-        const indexPromises = batch
-          .map((record) => {
-            const fields = this.extractSearchFields(record, table.name);
-            if (record.id && fields) {
-              return searchEngine.add({ id: record.id, fields });
-            }
-            return null;
-          })
-          .filter(Boolean);
+      // Use bulk indexing API for better performance
+      // BatchSize controls parallel processing batch size (default: 100 for memory efficiency)
+      await searchEngine.addBulk(documents, {
+        batchSize: 100, // Parallel batch size - balance between speed and memory
+        onProgress: (indexed, total) => {
+          indexedRecords = totalRecords - documents.length + indexed;
+          const progress =
+            totalRecords > 0
+              ? Math.floor((indexedRecords / totalRecords) * 100)
+              : 100;
+          this.indexingProgress = progress;
 
-        await Promise.all(indexPromises);
+          indexingStore.updateProgress({
+            progress,
+            indexedRecords,
+            totalRecords,
+            currentTable: table.name as string
+          });
+        }
+      });
 
-        indexedRecords += batch.length;
-        const progress =
-          totalRecords > 0
-            ? Math.floor((indexedRecords / totalRecords) * 100)
-            : 100;
-        this.indexingProgress = progress;
-
-        indexingStore.updateProgress({
-          progress,
-          indexedRecords,
-          totalRecords,
-          currentTable: table.name as string
-        });
-
-        await new Promise((resolve) => setTimeout(resolve, 0));
-      }
+      indexedRecords += documents.length;
     }
   }
 
@@ -267,7 +272,7 @@ export class DexiePersistence implements IPersistence {
             logger.info({
               at: "DexiePersistence.triggerBackgroundIndexing",
               message:
-                "Worker indexing complete - SearchEngine persists automatically"
+                "Worker indexing complete - SearchFn persists automatically"
             });
 
             break;
@@ -330,12 +335,15 @@ export class DexiePersistence implements IPersistence {
 
       const indexName = dbName.replace("#tableName#", table.name);
 
-      const searchEngine = new SearchEngine({
+      const searchEngine = new SearchFn({
         name: indexName,
         fields: table.searchIndices, // Use actual field names
         pipeline: {
           enableStemming: true,
-          language: "en"
+          language: "en",
+          enableEdgeNGrams: true, // Enable prefix/autocomplete search
+          edgeNGramMinLength: 2,
+          edgeNGramMaxLength: 15
         },
         cache: {
           terms: 2048,
@@ -918,19 +926,27 @@ export class DexiePersistence implements IPersistence {
       limit?: number;
     }
   ) {
-    console.time("preSearchUsingIndex");
+    const id = Math.random().toString(36).substring(2, 15);
+    console.time(`preSearchUsingIndex - ${resource} - ${id}`);
     const searchEngine = this.searchIndices.get(resource);
-    if (searchEngine) {
-      const ids = await searchEngine.search(search.query, {
-        limit: params?.limit,
-        fields: search.properties
-      });
-      if (ids.length > 0) {
-        console.timeEnd("preSearchUsingIndex");
-        return ids.filter(removeDuplicatesFilter);
-      }
+    if (!searchEngine) {
+      console.timeEnd(`preSearchUsingIndex - ${resource} - ${id}`);
+      return undefined;
     }
-    console.timeEnd("preSearchUsingIndex");
+
+    const ids = await searchEngine.search(search.query, {
+      limit: params?.limit ?? 50,
+      fields: search.properties,
+      mode: "auto",
+      fuzzy: false,
+      applyQueryNGrams: false
+    });
+
+    console.timeEnd(`preSearchUsingIndex - ${resource} - ${id}`);
+    if (ids.length > 0) {
+      return ids.filter(removeDuplicatesFilter);
+    }
+
     return undefined;
   }
 
