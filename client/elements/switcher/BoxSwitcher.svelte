@@ -11,6 +11,7 @@
   export let isIconOnlyMode: boolean = false;
   export let isExpandOnActiveForIcon = false;
   export let parentBgIndex: number = 1;
+  export let isAccentColor: boolean = false;
   if (selected === undefined) selected = options[0]?.value;
   const dispatch = createEventDispatcher();
 
@@ -65,7 +66,8 @@
         "flex items-center justify-center gap-1 h-full px-3 border-b text-b2 transition-all duration-300",
         {
           "border-transparent hover:border-brs3 text-fgs3": !isSelected,
-          "border-fgs2 border--aps1 text--aps1 bg--aps3": isSelected,
+          "border-fgs2": isSelected && !isAccentColor,
+          "border-aps1 text-aps1": isSelected && isAccentColor,
           [`${bg(parentBgIndex)}`]: isSelected,
           [`hover:${bg(parentBgIndex)}-striped`]: !isSelected
         }
@@ -85,7 +87,8 @@
           size={Size.sm}
           isFilled={isSelected}
           class={cn({
-            "text--aps1 text-fgs1": isSelected,
+            "text-fgs1": isSelected && !isAccentColor,
+            "text-aps1": isSelected && isAccentColor,
             "text-fgs2": !isSelected
           })}
         />

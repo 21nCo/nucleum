@@ -67,6 +67,8 @@
     return goal.afterInit();
   }
 
+  let initPromise: Promise<void> = initialize();
+
   function resolveIfConstrainedWidth(
     accessMode: ResourceAccessMode,
     containerWidth: number,
@@ -101,7 +103,7 @@
     containerWidth = e.width;
   }}
 >
-  {#await initialize()}
+  {#await initPromise}
     <EmptyStatusView isLoadingState={true} />
   {:then}
     <CustomColorPropagator
@@ -197,7 +199,7 @@
         try {
           if ("parent" in e.detail.params.record) {
             isReady = false;
-            initialize();
+            initPromise = initialize();
           }
         } catch (error) {
           logger.error({

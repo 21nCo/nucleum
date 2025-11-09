@@ -9,6 +9,7 @@
   export let isConstrainedWidth: boolean = false;
 
   const adaptedStore = derived(goal, ($goal) => ({
+    id: $goal.id,
     panel: $goal.panel,
     isInFocusMode: $goal.isInFocusMode,
     switchPanel: (panel: string) => goal.switchPanel(panel)
@@ -18,5 +19,6 @@
 <ResourcePanelSwitcher
   resourceStore={adaptedStore}
   {panels}
+  accessMode={$goal.accessMode}
   {isConstrainedWidth}
 />

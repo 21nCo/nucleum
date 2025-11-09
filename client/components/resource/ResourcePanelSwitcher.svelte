@@ -29,11 +29,11 @@
 </script>
 
 <div
-  class={cn("absolute bottom-0 inset-x-0 mx-auto w-fit z-10", {
+  class={cn("bottom-0 inset-x-0 mx-auto w-fit z-10", {
     "mb-3": $resourceStore.isInFocusMode,
     "mb-5": !$resourceStore.isInFocusMode,
-    absolute: accessMode == ResourceAccessMode.POP,
-    fixed: accessMode != ResourceAccessMode.POP
+    absolute: accessMode === ResourceAccessMode.POP,
+    fixed: accessMode !== ResourceAccessMode.POP
   })}
 >
   <div

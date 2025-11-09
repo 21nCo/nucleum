@@ -60,6 +60,15 @@ export function staticPlugin(options = {}) {
         // So /static/fonts/file.woff2 becomes /fonts/file.woff2 in req.url
         const relativePath = req.url;
         const filePath = path.join(__dirname, relativePath);
+        const resolvedPath = path.resolve(filePath);
+        const baseDir = path.resolve(__dirname);
+
+        // Security: Prevent path traversal attacks
+        if (!resolvedPath.startsWith(baseDir)) {
+          res.statusCode = 403;
+          res.end("Forbidden");
+          return;
+        }
 
         if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
           res.statusCode = 200;

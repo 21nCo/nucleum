@@ -8,6 +8,7 @@
   export let size: Size.sm | Size.md | Size.xs = Size.md;
   export let isShowAnimation: boolean = false;
   let cssRoot: HTMLElement | null;
+  let logoRoot: HTMLElement | null = null;
   export let variant: "accent" | "subtle" | "primary" = "primary";
 
   onMount(async () => {
@@ -36,10 +37,8 @@
         ? "rgba(var(--colors-bgs3), 0.5)"
         : "rgba(var(--colors-bgs2), 0.5)";
   onMount(() => {
-    cssRoot = document.querySelector("#logoRoot");
-    if (cssRoot) {
-      cssRoot.style.setProperty("--thread-color", threadColor);
-    }
+    cssRoot = logoRoot;
+    cssRoot?.style.setProperty("--thread-color", threadColor);
   });
 
   $: if (cssRoot) {
@@ -49,13 +48,13 @@
 
 <div class="relative">
   <div
-    id="logoRoot"
+    bind:this={logoRoot}
     class={cn({
       "w-16 h-16": size === Size.md,
       "w-8 h-8": size === Size.sm,
       "w-6 h-6": size === Size.xs
     })}
-    style="clip-path: url(#logoClip);"
+    style="clip-path: url(#{subatom}-logoClip);"
   >
     {#if isShowAnimation}
       <div class="section section-horizontal"></div>
@@ -71,7 +70,7 @@
   >
     <defs>
       <clipPath
-        id="logoClip"
+        id={`${subatom}-logoClip`}
         clipPathUnits="objectBoundingBox"
         transform="scale(0.002165 0.002165)"
       >

@@ -29,7 +29,6 @@
         : "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
 
   onMount(() => {
-    cssRoot = document.querySelector("#threadsLoadingAnim");
     if (cssRoot) {
       cssRoot.style.setProperty("--thread-size", `${size}px`);
       cssRoot.style.setProperty("--thread-color", threadColor);
@@ -42,10 +41,11 @@
     cssRoot.style.setProperty("--thread-color", threadColor);
     cssRoot.style.setProperty("--thread-bg", bgColor);
     cssRoot.style.setProperty("--clip-path", clipPath);
+    cssRoot.style.setProperty("--thread-size", `${size}px`);
   }
 </script>
 
-<div id="threadsLoadingAnim" class="threads-container">
+<div bind:this={cssRoot} class="threads-container">
   <div class="section section-horizontal"></div>
   <div class="section section-diagonal-1"></div>
   <div class="section section-diagonal-2"></div>
