@@ -323,7 +323,7 @@
         style={ButtonStyle.DEFAULT}
         isPreventMinWidth={true}
         on:click={() => {
-          inputRef.value = "";
+          value = "";
           dispatch("cancel");
         }}
         on:mousedown={(e) => e.preventDefault()}

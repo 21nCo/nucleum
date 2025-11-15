@@ -1254,15 +1254,20 @@ export const iconMappings: Record<string, IconMapping> = {
   },
   "google-oauth-logo": {
     phosphor: "logos:google-icon",
-    lucide: "google",
+    lucide: "circle",
     solar: "google"
   },
   "microsoft-oauth-logo": {
     phosphor: "logos:microsoft-icon",
-    lucide: "microsoft",
+    lucide: "circle",
     solar: "microsoft"
   },
   "github-oauth-logo": {
+    phosphor: "logos:github-icon",
+    lucide: "github",
+    solar: "github"
+  },
+  "github-logo": {
     phosphor: "logos:github-icon",
     lucide: "github",
     solar: "github"

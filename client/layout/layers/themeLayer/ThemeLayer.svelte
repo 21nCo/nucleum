@@ -198,7 +198,7 @@
   const fontsToEnlargeNumbersForGrid = ["Sen"];
   const fontsWithNoisyGridNumbers = ["Space Grotesk", "Twenty One Native"];
 
-  function resolveNumberTypface(typeface: string) {
+  function resolveNumberTypeface(typeface: string) {
     if (fontsWithoutTabularSupport.includes(typeface))
       return "Twenty One Native, Sen, Hanken Grotesk, system-ui, sans-serif";
     else return typeface;
@@ -238,7 +238,7 @@
     glassy: $userPreferences?.appearance?.skin == AppSkin.Glassy,
     dark: $appearance?.colorScheme?.isDark
   })}
-  style:--number-typeface={resolveNumberTypface(typeface)}
+  style:--number-typeface={resolveNumberTypeface(typeface)}
   style:--number-grid-size={resolveNumberGridSize(typeface)}
   style:--number-grid-typeface={resolveNumberGridTypeface(typeface)}
 >
@@ -277,7 +277,7 @@
   */
   :global(.tabular-nums) {
     font-variant-numeric: tabular-nums;
-    font-family: var(--number-typeface, --number-fallback-typeface);
+    font-family: var(--number-typeface, var(--number-fallback-typeface));
   }
 
   /**
@@ -285,7 +285,7 @@
   */
   :global(.number-grid-size) {
     font-size: var(--number-grid-size, 1) !important;
-    font-family: var(--number-grid-typeface, --number-grid-fallback-typeface);
+    font-family: var(--number-grid-typeface, var(--number-grid-fallback-typeface));
   }
 
   .glassylavendar {

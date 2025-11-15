@@ -68,7 +68,7 @@
     { "text-fgs3": !isPrimary && !isTertiary },
     { "font-bold": selectedItem == prefix + item }
   )}
-  style="height:{config.itemHeight}px;}"
+  style="height:{config.itemHeight}px;"
   {...{
     [`data-${config.itemType}`]: `${prefix}${item}`
   }}
