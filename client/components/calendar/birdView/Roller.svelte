@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { Itemtype, type ProgrammedWheelEvent } from "@21n/components/calendar/birdView/Birdview.type";
+  import {
+    Itemtype,
+    type ProgrammedWheelEvent
+  } from "@21n/components/calendar/birdView/Birdview.type";
   import { createEventDispatcher, onMount } from "svelte";
   import RollerButton from "@21n/components/calendar/birdView/RollerButton.svelte";
   import {
@@ -127,19 +130,14 @@
 </script>
 
 <div
-  class={cn(
-    "overflow-hidden",
-    { "w-20": config.itemType == Itemtype.YEAR },
-    { "w-[60px]": config.itemType == Itemtype.MONTH },
-    { "w-[60px]": config.itemType == Itemtype.DAY }
-  )}
+  class={cn("z-10 overflow-hidden border-r border-brs2 w-20")}
   bind:this={container}
   bind:clientHeight={containerHeight}
 >
   {#each items as item}
     {#if (config.itemType == Itemtype.YEAR && item % 10 == 0) || config.itemType == Itemtype.MONTH || (config.itemType == Itemtype.DAY && item.slice(getLastAlphabetPosition(item) + 1) == 1)}
       <div
-        class="text-xs text-fgs2 text-left leading-loose opacity-75 pl-1 border-t border-brs3"
+        class="text-b4 text-fgs2 text-left leading-loose opacity-75 pl-1 border-t border-brs3 bg-bgs2"
         style="height:{config.itemHeight}px;"
       >
         {config.itemType == Itemtype.YEAR

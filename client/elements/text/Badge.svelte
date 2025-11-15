@@ -14,20 +14,17 @@
 
 {#if typeof text === "number"}
   <div
-    class={cn(
-      "flex justify-center items-center rounded-full w-fit border default-typeface",
-      {
-        "px-1": text > 9,
-        "bg-css2 border-ccs2": isApplyCustomColor,
-        [abg()]: isAccentColor,
-        "border-transparent": isAccentColor,
-        [bg(parentBgIndex)]: !isApplyCustomColor && !isAccentColor,
-        "border-brs3": !isApplyCustomColor && !isAccentColor,
-        "min-w-5 min-h-5 w-5 h-5 text-b3": size === Size.md,
-        "min-w-4 min-h-4 w-4 h-4 text-b4": size === Size.sm,
-        "min-w-3.5 min-h-3.5 w-3.5 h-3.5 text-b4": size === Size.xs
-      }
-    )}
+    class={cn("flex justify-center items-center rounded-full w-fit border", {
+      "px-1": text > 9,
+      "bg-css2 border-ccs2": isApplyCustomColor,
+      [abg()]: isAccentColor,
+      "border-transparent": isAccentColor,
+      [bg(parentBgIndex)]: !isApplyCustomColor && !isAccentColor,
+      "border-brs3": !isApplyCustomColor && !isAccentColor,
+      "min-w-5 min-h-5 w-5 h-5 text-b3": size === Size.md,
+      "min-w-4 min-h-4 w-4 h-4 text-b4": size === Size.sm,
+      "min-w-3.5 min-h-3.5 w-3.5 h-3.5 text-b4": size === Size.xs
+    })}
   >
     {text}
   </div>

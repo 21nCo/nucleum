@@ -1247,6 +1247,26 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "instagram",
     solar: "instagram"
   },
+  "apple-oauth-logo": {
+    phosphor: "logos:apple",
+    lucide: "apple",
+    solar: "apple"
+  },
+  "google-oauth-logo": {
+    phosphor: "logos:google-icon",
+    lucide: "google",
+    solar: "google"
+  },
+  "microsoft-oauth-logo": {
+    phosphor: "logos:microsoft-icon",
+    lucide: "microsoft",
+    solar: "microsoft"
+  },
+  "github-oauth-logo": {
+    phosphor: "logos:github-icon",
+    lucide: "github",
+    solar: "github"
+  },
   butterfly: {
     phosphor: "butterfly",
     lucide: "butterfly",
@@ -1261,11 +1281,6 @@ export const iconMappings: Record<string, IconMapping> = {
     phosphor: "wallet",
     lucide: "wallet",
     solar: "wallet"
-  },
-  "github-logo": {
-    phosphor: "github-logo",
-    lucide: "github",
-    solar: "github"
   },
   book: {
     phosphor: "book",

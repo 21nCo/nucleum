@@ -720,7 +720,7 @@
         />
       </div>
       <div
-        class="flex w-full justify-center text-b2 text-fgs3 default-typeface"
+        class="flex w-full justify-center text-b2 text-fgs3"
         use:intersection={{
           rootMargin: "100px",
           callback: () => {

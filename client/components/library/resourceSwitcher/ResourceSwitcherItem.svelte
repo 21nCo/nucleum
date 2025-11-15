@@ -152,7 +152,7 @@
     </div>
   {/if} -->
   {#if isShowCount && count > 0}
-    <span class="absolute right-0 top-0 m-3 leading-none default-typeface">
+    <span class="absolute right-0 top-0 m-3 leading-none">
       <span
         class={cn({
           "text-h4": isConstrainedWidth,

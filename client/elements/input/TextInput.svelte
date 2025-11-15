@@ -280,8 +280,8 @@
           {/if}
         </div>
       {/if}
-      <slot />
     {/if}
+    <slot />
   </InputBaseElement>
 {/if}
 {#if isPreserveKeyboardToolbar || (!isPreventKeyboardToolbar && isFocused)}

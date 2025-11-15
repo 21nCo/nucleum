@@ -2,7 +2,6 @@
   import CalendarHeader from "@21n/components/calendar/classic/CalendarHeader.svelte";
   import MonthView from "@21n/components/calendar/classic/MonthView.svelte";
   import WeekView from "@21n/components/calendar/classic/WeekView.svelte";
-  import YearView from "@21n/components/calendar/classic/YearView.svelte";
   import CalendarLayoutView from "@21n/components/calendar/CalendarLayout.svelte";
   import view from "@21n/stores/view.store";
   import CalendarColumn from "@21n/components/calendar/column/CalendarColumn.svelte";

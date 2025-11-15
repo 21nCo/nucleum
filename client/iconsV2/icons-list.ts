@@ -285,6 +285,14 @@ const hugeiconsIcons = [
 const lucideIcons: string[] = [];
 
 const logos = [
+  "github",
+  "github-icon",
+  "github-copilot",
+  "apple",
+  "google",
+  "microsoft",
+  "microsoft-icon",
+
   //Used in Markdown embed placeholder
   "google-drive",
   "youtube-icon",
@@ -476,4 +484,4 @@ export const solarIconsForBundling = {
   "bold-duotone": solarBoldDuotoneIcons
 };
 
-export const bundleNumber = 61;
+export const bundleNumber = 62;

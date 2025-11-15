@@ -308,10 +308,7 @@
   });
 </script>
 
-<div
-  class="relative flex p-1 gap-1 border border-brs3 default-typeface"
-  bind:clientHeight={containerHeight}
->
+<div class="relative flex bg-bgs2" bind:clientHeight={containerHeight}>
   {#if mode == TimeScaleUnit.MONTH || mode == TimeScaleUnit.DAY || mode == TimeScaleUnit.PART}
     <Roller
       handleWheelEvent={handleYearsWheelEvent}
@@ -343,8 +340,8 @@
     />
   {/if}
   <div
-    class="-ml-1 w-full bg-bgs4 opacity-50"
-    style="position:absolute;top:{containerHeight / 2 -
+    class="absolute z-0 w-full bg-aps3"
+    style="top:{containerHeight / 2 -
       rollerConfig.itemHeight}px;height:{rollerConfig.itemHeight}px;max-height:{rollerConfig.itemHeight}px;"
   ></div>
 </div>

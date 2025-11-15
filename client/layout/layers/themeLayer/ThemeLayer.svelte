@@ -26,7 +26,7 @@
   let defaultRootFontSize: number = 16;
   let rootFontSize: number = defaultRootFontSize + 0.6 * $view?.scale;
   let ref: HTMLDivElement;
-  const defaultTypeface = "Sen";
+  const defaultTypeface = "Twenty One Native";
   let typeface = $userPreferences?.appearance?.typeface ?? defaultTypeface;
   let accessibilitySizingFactor =
     $userPreferences?.accessibilitySizingFactor ?? 1;
@@ -183,6 +183,41 @@
         }
       });
   }
+
+  const fontsWithoutTabularSupport = [
+    "Comic Neue",
+    "Didact Gothic",
+    "DM Sans",
+    "Lexend",
+    "Maven Pro",
+    "Oxygen",
+    "Parkinsans",
+    "Poppins",
+    "Quicksand"
+  ];
+  const fontsToEnlargeNumbersForGrid = ["Sen"];
+  const fontsWithNoisyGridNumbers = ["Space Grotesk", "Twenty One Native"];
+
+  function resolveNumberTypface(typeface: string) {
+    if (fontsWithoutTabularSupport.includes(typeface))
+      return "Twenty One Native, Sen, Hanken Grotesk, system-ui, sans-serif";
+    else return typeface;
+  }
+
+  function resolveNumberGridSize(typeface: string) {
+    if (
+      fontsToEnlargeNumbersForGrid.includes(typeface) ||
+      fontsWithNoisyGridNumbers.includes(typeface)
+    )
+      return "0.9rem";
+    else return "0.85rem";
+  }
+
+  function resolveNumberGridTypeface(typeface: string) {
+    if (fontsWithNoisyGridNumbers.includes(typeface))
+      return "Sen, Hanken Grotesk, system-ui, sans-serif";
+    else return typeface;
+  }
 </script>
 
 <svelte:head>
@@ -203,6 +238,9 @@
     glassy: $userPreferences?.appearance?.skin == AppSkin.Glassy,
     dark: $appearance?.colorScheme?.isDark
   })}
+  style:--number-typeface={resolveNumberTypface(typeface)}
+  style:--number-grid-size={resolveNumberGridSize(typeface)}
+  style:--number-grid-typeface={resolveNumberGridTypeface(typeface)}
 >
   <ColorLayer>
     <slot />
@@ -227,6 +265,28 @@
   /* .glass {
     background-image: url(back.png);
   } */
+
+  :root {
+    --number-fallback-typeface:
+      Twenty One Native, Sen, Hanken Grotesk, system-ui, sans-serif;
+    --number-grid-fallback-typeface: Sen, Hanken Grotesk, system-ui, sans-serif;
+  }
+
+  /**
+  * Adds support for typefaces that doesn't have tabular support for numbers
+  */
+  :global(.tabular-nums) {
+    font-variant-numeric: tabular-nums;
+    font-family: var(--number-typeface, --number-fallback-typeface);
+  }
+
+  /**
+  * Adds support for typefaces that has noise when the numbers are arranged in a grid like in Calendar view or date picker.
+  */
+  :global(.number-grid-size) {
+    font-size: var(--number-grid-size, 1) !important;
+    font-family: var(--number-grid-typeface, --number-grid-fallback-typeface);
+  }
 
   .glassylavendar {
     background: linear-gradient(
