@@ -4,10 +4,7 @@ import type {
   UserAppearanceSettings
 } from "@21n/types/preferences.type";
 import { TimeScale } from "@21n/types/time.type";
-import {
-  detectTimeZone,
-  detectTimeZoneFallback
-} from "@21n/utils/time.utils";
+import { detectTimeZone, detectTimeZoneFallback } from "@21n/utils/time.utils";
 import { get } from "svelte/store";
 import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
@@ -40,7 +37,7 @@ export const seedUserPreferences: IUserGlobalPreferences = {
     userThemeSetting: Theme.LIGHT,
     isBlurredBgForPopups: false,
     isFixedLeftNav: false,
-    typeface: "Sen"
+    typeface: "Twenty One Native"
   },
   avatarPicker: {
     skinIndex: 0,

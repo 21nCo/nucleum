@@ -15,9 +15,9 @@
 
 <div
   data-date={date}
-  class="flex-none text-fgs1 box-content font-medium text-h5 w-80 bg-bgs2 border-r border-brs3 break-words"
+  class="flex-none text-fgs1 box-content font-medium text-h5 w-80 border-r border-brs3 break-words"
 >
-  <div class="p-2 h--12 w-full text-center border-y border-brs3">
+  <div class="p-2 h--12 w-full text-center border-b border-brs3">
     <p class="text-b3 text-fgs3">
       {dayNames[day]}
     </p>

@@ -5,7 +5,10 @@
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import PlanFeatureList from "@21n/components/subscription/elements/PlanFeatureList.svelte";
   import type { IPlan } from "@21n/components/subscription/userPlan.type";
-  import { BillingCycle, PlanType } from "@21n/components/subscription/userPlan.type";
+  import {
+    BillingCycle,
+    PlanType
+  } from "@21n/components/subscription/userPlan.type";
   import account from "@21n/stores/account.store";
   import { createEventDispatcher } from "svelte";
   import PlanIcon from "@21n/components/subscription/elements/PlanIcon.svelte";
@@ -81,7 +84,7 @@
 
 <div
   class={cn(
-    "flex flex-col flex-1 max-h-[48rem] p-6 rounded-lg border relative",
+    "flex flex-col flex-1 max-h-[48rem] p-6 rounded-lg border relative default-typeface",
     {
       "border-2 border-aps1 hover:bg-aps3/30": plan.isPopular,
       "border-brs3 hover:bg-bgs2": !plan.isPopular,
@@ -129,9 +132,7 @@
       <div>
         <div class="flex items-baseline gap-2">
           {#if discountedPrice}
-            <span
-              class="cw:text-h1 text-h1 font-semibold text-ags1 default-typeface"
-            >
+            <span class="cw:text-h1 text-h1 font-semibold text-ags1">
               {#if period === BillingCycle.YEARLY}
                 ${discountedPrice * 12}
               {:else}
@@ -140,7 +141,7 @@
             </span>
           {/if}
           <span
-            class={cn("cw:text-h1 font-semibold default-typeface", {
+            class={cn("cw:text-h1 font-semibold", {
               "line-through text-fgs3 text-h3": discountedPrice,
               "text-fgs1 text-h1": !discountedPrice
             })}
@@ -236,7 +237,7 @@
         />
       {/if}
     </div>
-    <div class="mt-2 mx-auto text-b3 text-fgs2 default-typeface">
+    <div class="mt-2 mx-auto text-b3 text-fgs2">
       {#if period === BillingCycle.YEARLY}
         That's <b>
           {#if discountedPrice}

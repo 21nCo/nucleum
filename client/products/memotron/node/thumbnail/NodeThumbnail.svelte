@@ -247,7 +247,7 @@
               />
             {/key}
             {#if !isLinkContext}
-              <div class="text-b4 text-fgs3 default-typeface">
+              <div class="text-b4 text-fgs3">
                 {#if accessPoint === ResourceAccessPoint.CALENDAR}
                   {formatTime($userPreferences, item.createdAt)}
                 {:else}

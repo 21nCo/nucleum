@@ -41,7 +41,7 @@
   };
   const heatmapOption = {
     label: "Heatmap",
-    icon: "text:H",
+    icon: "text:E",
     value: "heatmap"
   };
   const switchOptions =

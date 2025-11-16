@@ -1,9 +1,6 @@
 <script lang="ts">
   import Icon from "@21n/elements/Icon.svelte";
-  import {
-    BlockAction,
-    type IBlock
-  } from "@21n/components/markdown/md.type";
+  import { BlockAction, type IBlock } from "@21n/components/markdown/md.type";
   import {
     headingNodeTypes,
     mediaNodeTypeList,
@@ -38,10 +35,7 @@
   import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
   import { hoverable } from "@21n/actions/hover.action";
   import { nodeStore } from "@21n/products/memotron/node/node.store";
-  import {
-    parseAndFormatDate,
-    formatDatetime
-  } from "@21n/utils/time.utils";
+  import { parseAndFormatDate, formatDatetime } from "@21n/utils/time.utils";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { resolveResourceActionIcon } from "@21n/components/flux/resourceStores/resource.utils";
   const dispatch = createEventDispatcher();
@@ -393,7 +387,7 @@
       size: Size.lg,
       heading: "Options",
       bottomRender: block.modifiedAt
-        ? `<div class="flex justify-center py-1 items-center text-b3 text-fgs3 default-typeface">Last modified: ${formatDatetime($userPreferences, block.modifiedAt)}</div>`
+        ? `<div class="flex justify-center py-1 items-center text-b3 text-fgs3 ">Last modified: ${formatDatetime($userPreferences, block.modifiedAt)}</div>`
         : "",
       onSelect: (e) => {
         hideContextMenu();

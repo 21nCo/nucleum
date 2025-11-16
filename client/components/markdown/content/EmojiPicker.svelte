@@ -8,6 +8,7 @@
 
   export let searchQuery: string = "";
   export let isPopoverContext: boolean = false;
+  export let onNoresults: (() => void) | undefined = undefined;
 
   let activeCategory: string = "";
   let emojisWithCategories: any = {
@@ -48,6 +49,8 @@
       displayEmojis = {};
       flatEmojiList = [];
       selectedIndex = 0;
+      dispatch("noresults");
+      if (onNoresults) onNoresults();
       return;
     }
     
@@ -77,6 +80,11 @@
     displayEmojis = tempEmojis;
     flatEmojiList = tempFlatList;
     selectedIndex = 0;
+    
+    if (totalCount === 0) {
+      dispatch("noresults");
+      if (onNoresults) onNoresults();
+    }
   }
 
   function addToUsedList(emoji: any) {

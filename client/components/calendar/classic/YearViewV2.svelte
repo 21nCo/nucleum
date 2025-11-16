@@ -423,7 +423,7 @@
             </span>
           </button>
           <div
-            class="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-x-1 gap-y-1 default-typeface"
+            class="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-x-1 gap-y-1"
           >
             {#each months as { days, monthIndex }}
               {@const isFutureMonth = resolveIfFutureMonth(year, monthIndex)}
@@ -460,7 +460,7 @@
                   <span>{year}</span>
                 </div>
                 <div
-                  class="grid grid-cols-7 gap-x-1 gap-y-1 text-center text-b2"
+                  class="grid grid-cols-7 gap-x-1 gap-y-1 text-center number-grid-size"
                 >
                   {#each weekDays as day}
                     <div class="text-fgs4 mb-1 text-b4">{day}</div>

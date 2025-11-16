@@ -87,7 +87,7 @@
     parentBgIndex={parentBackgroundIndex}
   >
     <button
-      class={cn("flex items-center gap-2 p-2 w-full default-typeface", {
+      class={cn("flex items-center gap-2 p-2 w-full number-grid-size", {
         "justify-center": variant == "wide-center",
         "justify-start": variant == "wide"
       })}
@@ -129,7 +129,7 @@
 {:else if variant == "inline" || variant == "icon-only" || variant === "inline-with-icon"}
   <button
     class={cn(
-      "relative flex items-center gap-1 justify-center default-typeface",
+      "relative flex items-center gap-1 justify-center number-grid-size",
       {
         "flex items-center justify-center border border-brs3 rounded-md hover:bg-bgs2":
           variant === "icon-only",

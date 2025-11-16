@@ -360,7 +360,7 @@
       {#each MONTHS.slice(6) as month, i}
         <button
           class={cn(
-            "px-1.5 py-1 rounded-md text-b3 font-light transition-colors",
+            "px-1.5 py-1 rounded-md text-b3 transition-colors",
             i + 6 === selectedMonth ? abg() : "hover:bg-bgs2"
           )}
           on:click={() => selectMonth(i + 7)}
@@ -371,7 +371,7 @@
     </div>
   </div>
   <Divider />
-  <div class="flex flex-col w-full default-typeface">
+  <div class="flex flex-col w-full number-grid-size">
     <table class="w-full text-b3 border-separate border-spacing-0">
       <thead>
         <tr>

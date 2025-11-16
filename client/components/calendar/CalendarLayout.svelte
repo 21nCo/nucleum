@@ -65,18 +65,18 @@
       </div>
       <slot name="header" />
       <div class="flex gap-2 justify-end items-center h-full w-full">
-        <slot name="header-right-options" />
         <Button
           type={ButtonVariant.SECONDARY}
           style={ButtonStyle.OUTLINED}
           size={Size.sm}
-          label="Go to today"
+          label="Today"
           isPreventMinWidth={true}
           parentBgIndex={2}
           on:click={() => {
             dispatch("goToToday");
           }}
         />
+        <slot name="header-right-options" />
         <Button
           type={ButtonVariant.SECONDARY}
           style={ButtonStyle.OUTLINED}

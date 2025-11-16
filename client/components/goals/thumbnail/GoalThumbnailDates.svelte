@@ -5,7 +5,7 @@
 </script>
 
 {#if item.startDate || item.endDate}
-  <span class="text-left text-b3 text-fgs3 default-typeface">
+  <span class="text-left text-b3 text-fgs3">
     {#if item.startDate}
       {parseAndFormatDate(item.startDate)}
     {/if}

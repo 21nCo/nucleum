@@ -134,18 +134,23 @@
       </div>
     </div>
   {/if}
-  <div class="flex flex-grow w-full">
+  <div
+    class={cn("w-full flex-grow", {
+      "grid grid-cols-10": layout === CalendarColumnLayout.FULL,
+      flex: layout !== CalendarColumnLayout.FULL
+    })}
+  >
     {#key date.toISOString()}
       {#if (layout === CalendarColumnLayout.TABS && selectedPanel === CalendarColumnPanel.Timeline) || (layout !== CalendarColumnLayout.TABS && expansionMode === CalendarExpansionMode.JOURNAL)}
         {#if viewScale === TimeScaleUnit.DAY}
-          <div class="flex flex-col flex-grow min-w-96">
+          <div class="flex flex-grow col-span-3">
             <DayTimeline {date} {layout} />
           </div>
         {/if}
         <CalendarColumnTimeline
           {date}
           scale={viewScale}
-          isExpandable={false}
+          isExpandable={layout === CalendarColumnLayout.FULL}
           {layout}
           on:dateChange={handleDateChange}
         />
@@ -153,8 +158,7 @@
       {#if layout !== CalendarColumnLayout.TABS}
         {@const isShowNotesFullScreenButton =
           !$view.isPortrait && selectedPanel === CalendarColumnPanel.Notes}
-        <Divider orientation={Orientation.Vertical} />
-        <div class="flex flex-col flex-grow">
+        <div class="flex flex-col flex-grow border-l border-brs2 col-span-4">
           {#if panels.length === 1}
             <Text
               content={`${viewScale} ${selectedPanel}`}
