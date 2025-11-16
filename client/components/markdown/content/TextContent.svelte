@@ -99,6 +99,7 @@
   let mentionTriggerKey: string;
   let mentionSearchPopoverId: string = generateSimpleRandomId();
   let emojiPickerRef: any;
+  let isEmojiPickerDismissed: boolean = false;
   let caretPositionT2:
     | {
         element?: any;
@@ -349,21 +350,40 @@
         at: "handleEmojiShortcut - triggered",
         key: event.key
       });
+      isEmojiPickerDismissed = false;
       return true;
     } else if (!hasColon && !isRenderEmojiPicker) {
+      isEmojiPickerDismissed = false;
       return false;
-    } else if (type === "keyup" && (event.key === "Escape" || !hasColon)) {
+    } else if (type === "keyup" && event.key === "Escape") {
+      if (isRenderEmojiPicker) {
+        hidePopover("emojiPicker");
+        isEmojiPickerDismissed = true;
+      }
+    } else if (type === "keyup" && !hasColon) {
       if (isRenderEmojiPicker) {
         hidePopover("emojiPicker");
       }
-    } else if (type === "keyup" && hasColon) {
+      isEmojiPickerDismissed = false;
+    } else if (type === "keyup" && hasColon && !isEmojiPickerDismissed) {
       const colonIndex = text.lastIndexOf(":");
       if (colonIndex !== -1) {
-        // Extract query from colon until next space or end of text
+        const beforeColon = text.substring(0, colonIndex);
+        const charBeforeColon = beforeColon.slice(-1);
+        const isValidEmojiContext = colonIndex === 0 || /\s/.test(charBeforeColon);
+        
+        if (!isValidEmojiContext) {
+          if (isRenderEmojiPicker) {
+            hidePopover("emojiPicker");
+          }
+          return false;
+        }
+        
         const afterColon = text.substring(colonIndex + 1);
         const spaceIndex = afterColon.search(/\s/);
         emojiSearchQuery =
           spaceIndex === -1 ? afterColon : afterColon.substring(0, spaceIndex);
+        
         if (emojiSearchQuery.trim()) {
           if (!isRenderEmojiPicker) {
             showPopover("emojiPicker");
@@ -915,6 +935,9 @@
         bind:this={emojiPickerRef}
         bind:searchQuery={emojiSearchQuery}
         on:select={onEmojiSelect}
+        on:noresults={() => {
+          hidePopover("emojiPicker");
+        }}
       />
     {/if}
   </slot>
@@ -952,6 +975,9 @@
       componentProps: {
         searchQuery: emojiSearchQuery,
         onSelect: onEmojiSelect,
+        onNoresults: () => {
+          hidePopover("emojiPicker");
+        },
         isPopoverContext: true
       }
     }}

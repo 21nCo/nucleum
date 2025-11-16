@@ -309,17 +309,15 @@
 </script>
 
 <div class="relative flex bg-bgs2" bind:clientHeight={containerHeight}>
+  <Roller
+    handleWheelEvent={handleYearsWheelEvent}
+    items={years}
+    bind:container={yearContainer}
+    bind:selectedItem={selectedYear}
+    config={{ ...rollerConfig, itemType: Itemtype.YEAR }}
+    on:mount={(e) => (scrollToSelectedYear = e.detail)}
+  />
   {#if mode == TimeScaleUnit.MONTH || mode == TimeScaleUnit.DAY || mode == TimeScaleUnit.PART}
-    <Roller
-      handleWheelEvent={handleYearsWheelEvent}
-      items={years}
-      bind:container={yearContainer}
-      bind:selectedItem={selectedYear}
-      config={{ ...rollerConfig, itemType: Itemtype.YEAR }}
-      on:mount={(e) => (scrollToSelectedYear = e.detail)}
-    />
-  {/if}
-  {#if mode == TimeScaleUnit.DAY || mode == TimeScaleUnit.PART}
     <Roller
       handleWheelEvent={handleMonthsWheelEvent}
       items={yearsForMonths}
@@ -329,7 +327,7 @@
       on:mount={(e) => (scrollToSelectedMonth = e.detail)}
     />
   {/if}
-  {#if mode == TimeScaleUnit.PART}
+  {#if mode == TimeScaleUnit.DAY || mode == TimeScaleUnit.PART}
     <Roller
       handleWheelEvent={handleDaysWheelEvent}
       items={days}

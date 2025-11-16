@@ -23,6 +23,7 @@
   export let date: Date;
   export let scale: TimeScaleUnit = TimeScaleUnit.DAY;
   export let isRewind: boolean = false;
+  const dev_isShowPreviousYearsData = false;
 
   async function fetchMemoryData(): Promise<{
     today: { nodes: INodeThumb[]; links: ILink[] };
@@ -154,7 +155,7 @@
         />
         <MetricCard label="Links" value={today.links.length} />
       </div>
-      {#if previousYears.length > 0}
+      {#if dev_isShowPreviousYearsData && previousYears.length > 0}
         <div class="flex flex-col gap-3 w-full">
           <Text content="On this day" style={TextStyle.SECTION_HEADING} />
           {#each previousYears as { nodes, links, year }}
