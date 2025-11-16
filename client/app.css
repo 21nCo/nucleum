@@ -51,10 +51,73 @@ blockquote {
 @layer base {
   @font-face {
     font-family: 'Twenty One Native';
+    src: url('/static/fonts/TwentyOneNativeLight.woff2') format('woff2'),
+         url('/static/fonts/TwentyOneNativeLight.woff') format('woff');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Twenty One Native';
+    src: url('/static/fonts/TwentyOneNativeLightItalic.woff2') format('woff2'),
+         url('/static/fonts/TwentyOneNativeLightItalic.woff') format('woff');
+    font-weight: 300;
+    font-style: italic;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Twenty One Native';
     src: url('/static/fonts/TwentyOneNative.woff2') format('woff2'),
          url('/static/fonts/TwentyOneNative.woff') format('woff');
-    font-weight: 100 900;
+    font-weight: 400;
     font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Twenty One Native';
+    src: url('/static/fonts/TwentyOneNativeItalic.woff2') format('woff2'),
+         url('/static/fonts/TwentyOneNativeItalic.woff') format('woff');
+    font-weight: 400;
+    font-style: italic;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Twenty One Native';
+    src: url('/static/fonts/TwentyOneNativeMedium.woff2') format('woff2'),
+         url('/static/fonts/TwentyOneNativeMedium.woff') format('woff');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Twenty One Native';
+    src: url('/static/fonts/TwentyOneNativeMediumItalic.woff2') format('woff2'),
+         url('/static/fonts/TwentyOneNativeMediumItalic.woff') format('woff');
+    font-weight: 500;
+    font-style: italic;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Twenty One Native';
+    src: url('/static/fonts/TwentyOneNativeBold.woff2') format('woff2'),
+         url('/static/fonts/TwentyOneNativeBold.woff') format('woff');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Twenty One Native';
+    src: url('/static/fonts/TwentyOneNativeBoldItalic.woff2') format('woff2'),
+         url('/static/fonts/TwentyOneNativeBoldItalic.woff') format('woff');
+    font-weight: 700;
+    font-style: italic;
     font-display: swap;
   }
 
@@ -180,7 +243,7 @@ blockquote {
   }
 
   .default-typeface {
-    font-family: "Twenty One Native-", "Sen", "Hanken Grotesk", system-ui, sans-serif;
+    font-family: "Twenty One Native", "Sen", "Hanken Grotesk", system-ui, sans-serif;
   }
 
   .selectable {

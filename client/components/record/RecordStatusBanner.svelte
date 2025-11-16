@@ -13,7 +13,7 @@
 </script>
 
 {#if isShowStatusBanner($resource)}
-  <div class="flex flex-col gap-4 default-typeface">
+  <div class="flex flex-col gap-4">
     {#if $resource.trashInformation}
       <RecordTrashBanner
         deletedAt={$resource.trashInformation.deletedAt}

@@ -8,7 +8,7 @@
   class="text-fgs1 flex-shrink-0 min-h-[600px] h-full w-[25%] border-r border-brs3"
 >
   <div
-    class="border-y border-brs3 bg-bgs2 h-10 flex items-center justify-center text-center text-fgs2"
+    class="border-b border-brs3 bg-bgs2 h-10 flex items-center justify-center text-center text-fgs2"
   >
     <p class="text-xs">
       {year}

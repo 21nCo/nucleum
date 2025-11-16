@@ -34,6 +34,9 @@
   let tasksPanelRef: CalendarColumnTasksPanel | undefined = undefined;
   $: timelinePanelSubItems = resolveTimelinePanelSubItems($appStore.product);
 
+  $: createNewLabel =
+    timelinePanelSubItem === "tasks" ? "New task" : "New event";
+
   function resolveTimlinePanelSelection() {
     const persistedValue = uiState.getState(
       UIState.calendarDayTimelinePanelSelection,
@@ -119,7 +122,7 @@
 <div
   class={cn("flex flex-col", {
     "flex-grow": isExpandable,
-    "max-w-md border-l border-brs2": layout === CalendarColumnLayout.FULL,
+    "col-span-3 border-l border-brs2": layout === CalendarColumnLayout.FULL,
     "lp:max-w-sm 2k:max-w-lg": layout === CalendarColumnLayout.SPLIT,
     "w-1/2 shrink-0": !isExpandable && layout !== CalendarColumnLayout.TABS,
     "w-full": !isExpandable && layout === CalendarColumnLayout.TABS
@@ -127,8 +130,8 @@
 >
   {#if layout !== CalendarColumnLayout.TABS}
     <div class="flex justify-between gap-3 min-h-10 h-10 border-b border-brs2">
-      {#if scale !== TimeScaleUnit.DAY}
-        <div class="flex h-full gap-1">
+      <div class="flex h-full gap-1">
+        {#if scale !== TimeScaleUnit.DAY}
           <div class="hover:bg-bgs2-striped">
             <DatePicker
               bind:date
@@ -138,17 +141,17 @@
               variant="inline-with-icon"
             />
           </div>
-        </div>
-      {:else}
+        {/if}
         <span>
           <BoxButton
             width="w-fit px-3"
             icon="plus"
-            label="Create"
+            label={scale === TimeScaleUnit.DAY ? createNewLabel : undefined}
+            tooltip={scale !== TimeScaleUnit.DAY ? createNewLabel : undefined}
             on:click={handleCreate}
           />
         </span>
-      {/if}
+      </div>
       {#if timelinePanelSubItems.length > 1}
         <div>
           <BoxSwitcher
@@ -199,7 +202,7 @@
               {/if}
               <Button
                 icon="plus"
-                tooltip="Create new"
+                tooltip={createNewLabel}
                 on:click={handleCreate}
               />
             </div>
@@ -216,7 +219,11 @@
               bind:completedTasksCount
             />
           {:else if timelinePanelSubItem === "events"}
-            <EmptyStatusView mainText="Coming soon..." size={Size.sm} />
+            <EmptyStatusView
+              mainText="Events"
+              subText="Coming soon..."
+              size={Size.sm}
+            />
           {/if}
         </div>
       {/if}

@@ -73,14 +73,15 @@
     />
   </slot>
   <slot name="header-right-options" slot="header-right-options">
-    <CalendarColumnPanelSelector
+    <!-- This panel switcher won't be necessary as the column will have the necessary information for all aspects and upon click - expands to show content similar to classic mode with panels inside it -->
+    <!-- <CalendarColumnPanelSelector
       panels={resolveCalendarColumnPanels(
         $appStore.product,
         CalendarColumnLayout.TABS
       )}
       isBoxed={false}
       {selectedPanel}
-    />
+    /> -->
   </slot>
   <div class="w-full h-full max-h-full">
     <Birdview mode={scale} />

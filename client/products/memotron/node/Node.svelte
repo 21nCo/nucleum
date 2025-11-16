@@ -57,8 +57,8 @@
   $: isConstrainedWidth =
     $viewStore.isConstrainedWidth ||
     containerWidth < 1000 ||
-    $node.accessMode === ResourceAccessMode.SPLIT ||
-    $node.accessMode === ResourceAccessMode.FSPLIT;
+    $node?.accessMode === ResourceAccessMode.SPLIT ||
+    $node?.accessMode === ResourceAccessMode.FSPLIT;
 
   let isLoading = false;
   let error: any;

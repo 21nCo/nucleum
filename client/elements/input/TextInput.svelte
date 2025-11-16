@@ -280,8 +280,8 @@
           {/if}
         </div>
       {/if}
-      <slot />
     {/if}
+    <slot />
   </InputBaseElement>
 {/if}
 {#if isPreserveKeyboardToolbar || (!isPreventKeyboardToolbar && isFocused)}
@@ -323,7 +323,7 @@
         style={ButtonStyle.DEFAULT}
         isPreventMinWidth={true}
         on:click={() => {
-          inputRef.value = "";
+          value = "";
           dispatch("cancel");
         }}
         on:mousedown={(e) => e.preventDefault()}

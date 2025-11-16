@@ -62,13 +62,13 @@
 
 <button
   class={cn(
-    "item block w-full text-b2 disabled:opacity-50",
-    { "text-fgs3": isTertiary },
+    "item block w-full text-b3 disabled:opacity-50",
+    { "text-fgs2": isTertiary },
     { "text-aps1": isPrimary },
-    { "text-fgs2": !isPrimary && !isTertiary },
+    { "text-fgs3": !isPrimary && !isTertiary },
     { "font-bold": selectedItem == prefix + item }
   )}
-  style="height:{config.itemHeight}px;}"
+  style="height:{config.itemHeight}px;"
   {...{
     [`data-${config.itemType}`]: `${prefix}${item}`
   }}

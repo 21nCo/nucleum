@@ -1,6 +1,10 @@
 <script lang="ts">
   import { nodeStore } from "@21n/products/memotron/node/node.store";
-  import type { INode, INodeLinkThumb, INodeThumb } from "@21n/products/memotron/node/node.type";
+  import type {
+    INode,
+    INodeLinkThumb,
+    INodeThumb
+  } from "@21n/products/memotron/node/node.type";
   import {
     isSameResource,
     resourceInList
@@ -105,7 +109,7 @@
           </div>
           <div class="flex flex-col gap-1.5 flex-grow">
             <div
-              class="text-b3 text-fgs3 h-[24px] flex items-center default-typeface"
+              class="text-b3 text-fgs3 h-[24px] flex items-center tabular-nums"
             >
               {group.date}
             </div>

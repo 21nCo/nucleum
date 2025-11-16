@@ -264,7 +264,7 @@
     {/if}
     {#if accessPoint !== ResourceAccessPoint.PICKER}
       <div class="flex flex-col items-end">
-        {#if item.dateUnix && !isHovering && !isCurrentlyFocusing}
+        {#if item.dateUnix && !isHovering && !isCurrentlyFocusing && accessPoint !== ResourceAccessPoint.CALENDAR}
           <div
             class={cn("text-b3 userdata", {
               "text-ars1": isOverdue,
