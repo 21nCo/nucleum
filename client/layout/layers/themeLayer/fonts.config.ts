@@ -34,11 +34,14 @@ export const FONT_FAMILIES = [
   "Comic+Neue:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700",
   "IBM+Plex+Sans:ital,wght@0,100..700;1,100..700",
   "Rubik:ital,wght@0,300..900;1,300..900",
-  "Funnel+Sans:ital,wght@0,300..800;1,300..800"
+  "Funnel+Sans:ital,wght@0,300..800;1,300..800",
+  "Arvo:ital,wght@0,400;0,700;1,400;1,700"
 ];
 
 export function generateGoogleFontsUrl(): string {
   const baseUrl = "https://fonts.googleapis.com/css2";
-  const familyParams = FONT_FAMILIES.map(family => `family=${family}`).join("&");
+  const familyParams = FONT_FAMILIES.map((family) => `family=${family}`).join(
+    "&"
+  );
   return `${baseUrl}?${familyParams}&display=swap`;
 }

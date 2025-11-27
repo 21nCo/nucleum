@@ -13,6 +13,9 @@ export default defineConfig({
   worker: {
     format: "es"
   },
+  server: {
+    allowedHosts: ["local.memotron.app", "debug-pre.memotron.app"]
+  },
   build: {
     target: "esnext",
     rollupOptions: {

@@ -29,19 +29,16 @@
 </script>
 
 <div
-  class={cn("bottom-0 inset-x-0 mx-auto w-fit z-10", {
-    "mb-3": $resourceStore.isInFocusMode,
-    "mb-5": !$resourceStore.isInFocusMode,
-    absolute: accessMode === ResourceAccessMode.POP,
-    fixed: accessMode !== ResourceAccessMode.POP
+  class={cn("absolute bottom-0 inset-x-0 mx-auto w-fit z-10", {
+    "mb-3": $resourceStore.isInFocusMode
   })}
 >
   <div
     class={cn(
-      "flex cw:flex-row-reverse border-t border-x border-brs3 shadow-md rounded-md overflow-hidden",
+      "flex cw:flex-row-reverse border-t border-x border-brs3 shadow-md  overflow-hidden",
       {
-        "h-8 bg-bgs3": $resourceStore.isInFocusMode,
-        "h-12 bg-bgs2": !$resourceStore.isInFocusMode
+        "h-8 bg-bgs3 rounded-md": $resourceStore.isInFocusMode,
+        "h-12 bg-bgs2 rounded-t-md": !$resourceStore.isInFocusMode
       }
     )}
   >
@@ -78,6 +75,8 @@
       <BoxSwitcher
         isExpandOnActiveForIcon={true}
         options={panels}
+        size={$view.isConstrainedWidth ? Size.sm : Size.md}
+        isActiveIndicatorOnTop={true}
         selected={$resourceStore.panel}
         on:select={(e) => $resourceStore.switchPanel(e.detail)}
         isIconOnlyMode={$view.isConstrainedWidth}

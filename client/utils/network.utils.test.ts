@@ -47,7 +47,10 @@ const {
   performApiCall,
   performHttpNetworkOperation,
   performStaticDataOperation,
-  resolveRegionalApiUrl
+  resolveRegionalApiUrl,
+  resolveRegionalApiUrlStrategy,
+  detectUserRegionFromIP,
+  detectUserRegion
 } = networkUtils;
 
 describe("client/utils/network.utils", () => {
@@ -262,5 +265,97 @@ describe("client/utils/network.utils", () => {
     const result = await determineIfOffline();
     expect(moduleMocks.storage.get).toHaveBeenCalledWith(ClientStorageKey.OFFLINE_MODE);
     expect(result).toBe(true);
+  });
+
+  describe("region detection", () => {
+    it("resolves regional strategy based on timezone offset", () => {
+      const offsetSpy = vi
+        .spyOn(Date.prototype, "getTimezoneOffset")
+        .mockReturnValue(300);
+      expect(resolveRegionalApiUrlStrategy()).toBe("useast");
+
+      offsetSpy.mockReturnValue(0);
+      expect(resolveRegionalApiUrlStrategy()).toBe("euwest");
+
+      offsetSpy.mockReturnValue(-600);
+      expect(resolveRegionalApiUrlStrategy()).toBe("insouth");
+
+      offsetSpy.mockRestore();
+    });
+
+    it("detects region from IP using ipinfo when token is available", async () => {
+      (fetch as any).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ country: "US" })
+      });
+
+      const region = await detectUserRegionFromIP("test-token");
+      expect(region).toBe("useast");
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining("ipinfo.io"),
+        expect.any(Object)
+      );
+    });
+
+    it("returns null when ipinfo token is not configured", async () => {
+      const region = await detectUserRegionFromIP("");
+      expect(region).toBeNull();
+      expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it("returns null when ipinfo API call fails", async () => {
+      (fetch as any).mockResolvedValue({
+        ok: false,
+        status: 429
+      });
+
+      const region = await detectUserRegionFromIP("test-token");
+      expect(region).toBeNull();
+    });
+
+    it("maps different countries to correct regions", async () => {
+      (fetch as any).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ country: "DE" })
+      });
+      expect(await detectUserRegionFromIP("test-token")).toBe("euwest");
+
+      (fetch as any).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ country: "IN" })
+      });
+      expect(await detectUserRegionFromIP("test-token")).toBe("insouth");
+
+      (fetch as any).mockResolvedValue({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ country: "BR" })
+      });
+      expect(await detectUserRegionFromIP("test-token")).toBe("useast");
+    });
+
+    it("returns a valid region from detectUserRegion", async () => {
+      const offsetSpy = vi
+        .spyOn(Date.prototype, "getTimezoneOffset")
+        .mockReturnValue(0);
+
+      const region = await detectUserRegion();
+      expect(["useast", "euwest", "insouth"]).toContain(region);
+
+      offsetSpy.mockRestore();
+    });
+
+    it("falls back to timezone detection when IP detection fails", async () => {
+      vi.spyOn(import.meta, "env", "get").mockReturnValue({} as any);
+
+      const offsetSpy = vi
+        .spyOn(Date.prototype, "getTimezoneOffset")
+        .mockReturnValue(300);
+
+      const region = await detectUserRegion();
+      expect(region).toBe("useast");
+      expect(fetch).not.toHaveBeenCalled();
+
+      offsetSpy.mockRestore();
+    });
   });
 });

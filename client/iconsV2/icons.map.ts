@@ -142,6 +142,26 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "square",
     solar: "square"
   },
+  focus: {
+    phosphor: "circle",
+    lucide: "circle",
+    solar: "circle"
+  },
+  catchup: {
+    phosphor: "triangle",
+    lucide: "triangle",
+    solar: "triangle"
+  },
+  feed: {
+    phosphor: "play",
+    lucide: "play",
+    solar: "play"
+  },
+  rhombus: {
+    phosphor: "robot",
+    lucide: "bot",
+    solar: "bot"
+  },
 
   // Content and Media
   image: {
@@ -766,7 +786,7 @@ export const iconMappings: Record<string, IconMapping> = {
     lucide: "book-open",
     solar: "book-2"
   },
-  focus: {
+  scope: {
     phosphor: "crosshair",
     lucide: "focus",
     solar: "target"

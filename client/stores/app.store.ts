@@ -367,7 +367,7 @@ export const appStore = {
         searchParams: params?.searchParams
       });
       if (
-        store.interactionMode === InteractionMode.COMMAND_ONLY &&
+        store.interactionMode === InteractionMode.AGENT &&
         ctx.embed !== Embed.HANDSET
       ) {
         appStore.toggleSearchParam({ tab: "page:" + action.action });

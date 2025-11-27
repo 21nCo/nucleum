@@ -92,6 +92,7 @@
     {#if $context.embed !== Embed.HANDSET}
       <TopNavLeftLogo {isHideMenuLabels} isRenderProfilePicture={true} />
     {/if}
+
     {#if !isFullOverlayMode}
       {#if pinnedItems.length > 0}
         <div
@@ -104,6 +105,22 @@
             }
           )}
         >
+          {#if pinnedItems.length > 0 || isInterimTab}
+            <div
+              class="flex h-full"
+              transition:fly={{
+                duration: 300,
+                x: -60
+              }}
+            >
+              <TopNavLeftMenuItem
+                icon="search"
+                tooltip="Search"
+                shortcut={Action.GLOBAL_SEARCH}
+                on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
+              />
+            </div>
+          {/if}
           <Tabs {pinnedItems} />
           <div
             class="absolute right-0 top-0 bottom-0 flex items-center pointer-events-none"
@@ -193,22 +210,6 @@
           text="Syncing..."
         />
         <slot name="topnav" />
-        {#if pinnedItems.length > 0 || isInterimTab}
-          <div
-            class="flex h-full"
-            transition:fly={{
-              duration: 300,
-              x: -60
-            }}
-          >
-            <TopNavLeftMenuItem
-              icon="search"
-              tooltip="Search"
-              shortcut={Action.GLOBAL_SEARCH}
-              on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
-            />
-          </div>
-        {/if}
         <TopNavLeftMenuItem
           icon="terminal-window"
           tooltip="Command bar"

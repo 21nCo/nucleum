@@ -7,6 +7,8 @@
   import MemotronLogo from "./MemotronLogo.svelte";
   import PointronLogo from "./PointronLogo.svelte";
   import NucleusLogo from "./NucleusLogo.svelte";
+  import NucleusAnimation from "./NucleusAnimation.svelte";
+
   export let subatom: string | undefined = undefined;
   export let size: Size.sm | Size.md | Size.xs = Size.md;
   export let isShowAnimation: boolean = false;
@@ -55,9 +57,13 @@
     style="clip-path: url(#{subatom}-logoClip);"
   >
     {#if isShowAnimation}
-      <div class="section section-horizontal"></div>
-      <div class="section section-diagonal-1"></div>
-      <div class="section section-diagonal-2"></div>
+      {#if subatom == "nucleus"}
+        <NucleusAnimation />
+      {:else}
+        <div class="section section-horizontal"></div>
+        <div class="section section-diagonal-1"></div>
+        <div class="section section-diagonal-2"></div>
+      {/if}
     {:else}
       <svg
         viewBox="0 0 462 462"
@@ -75,28 +81,30 @@
       </svg>
     {/if}
   </div>
-  <svg
-    viewBox="0 0 462 462"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    class="absolute"
-  >
-    <defs>
-      <clipPath
-        id={`${subatom}-logoClip`}
-        clipPathUnits="objectBoundingBox"
-        transform="scale(0.002165 0.002165)"
-      >
-        {#if subatom === "nucleus"}
-          <NucleusLogo {width} />
-        {:else if subatom === "pointron"}
-          <PointronLogo {width} />
-        {:else if subatom === "memotron"}
-          <MemotronLogo {width} />
-        {/if}
-      </clipPath>
-    </defs>
-  </svg>
+  {#if subatom != "nucleus" && isShowAnimation}
+    <svg
+      viewBox="0 0 462 462"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      class="absolute"
+    >
+      <defs>
+        <clipPath
+          id={`${subatom}-logoClip`}
+          clipPathUnits="objectBoundingBox"
+          transform="scale(0.002165 0.002165)"
+        >
+          {#if subatom === "nucleus"}
+            <NucleusLogo {width} />
+          {:else if subatom === "pointron"}
+            <PointronLogo {width} />
+          {:else if subatom === "memotron"}
+            <MemotronLogo {width} />
+          {/if}
+        </clipPath>
+      </defs>
+    </svg>
+  {/if}
 </div>
 
 <style>

@@ -64,9 +64,7 @@
     $view.display !== Display.TK &&
     !$view.isConstrainedWidth &&
     panelSize !== Size.xl &&
-    $appStore.interactionMode !== InteractionMode.COMMAND_ONLY &&
     $appStore.interactionMode !== InteractionMode.AGENT;
-
   $: isExtraLargeScreen = $view.landscapiness > 1.7 && $view.scale > 1.8;
 </script>
 

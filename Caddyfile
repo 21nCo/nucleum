@@ -1,0 +1,29 @@
+local.nucleus.to {
+	reverse_proxy localhost:5050
+	tls internal
+}
+
+local.pointron.app {
+	reverse_proxy localhost:5001
+	tls internal
+}
+
+local.memotron.app {
+	reverse_proxy localhost:5002
+	tls internal
+}
+
+debug-pre.nucleus.to {
+	reverse_proxy localhost:5100
+	tls internal
+}
+
+debug-pre.pointron.app {
+	reverse_proxy localhost:5101
+	tls internal
+}
+
+debug-pre.memotron.app {
+	reverse_proxy localhost:5102
+	tls internal
+}

@@ -54,7 +54,7 @@
 </script>
 
 {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
-  {#if $appStore.interactionMode === InteractionMode.COMMAND_ONLY && $context.embed !== Embed.HANDSET}
+  {#if $appStore.interactionMode === InteractionMode.AGENT && $context.embed !== Embed.HANDSET}
     <CommandModePage>
       <slot />
     </CommandModePage>

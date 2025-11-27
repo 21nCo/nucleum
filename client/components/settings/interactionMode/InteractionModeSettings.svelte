@@ -1,15 +1,11 @@
 <script lang="ts">
   import Divider from "@21n/elements/Divider.svelte";
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
-  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
   import Text from "@21n/elements/text/Text.svelte";
   import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { uiState } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import view from "@21n/stores/view.store";
   import { Action } from "@21n/types/action.enum";
   import { Orientation } from "@21n/types/direction.enum";
@@ -32,6 +28,15 @@
       scope: UIStateScope.PRODUCT
     });
   }
+  if (
+    selectedMode === InteractionMode.COMMAND_ONLY ||
+    selectedMode === InteractionMode.VOICE_ONLY
+  ) {
+    selectedMode = InteractionMode.AGENT;
+    uiState.setState(Action.MODE_OF_INTERACTION, selectedMode, {
+      scope: UIStateScope.PRODUCT
+    });
+  }
   let isShortcutHintsEnabled = uiState.getState(UIState.hideShortcutHints, {
     scope: UIStateScope.DEVICE
   });
@@ -41,18 +46,6 @@
       scope: UIStateScope.PRODUCT
     }
   );
-  function resolveInfo(mode: InteractionMode) {
-    switch (mode) {
-      case InteractionMode.DEFAULT:
-        return "Default mode will try to blend all modes of interaction. You can use keyboard shortcuts, command bar, hot keys and even agent when its available.";
-      case InteractionMode.KEYBOARD_CENTRIC:
-        return "In **keyboard centric mode**, additional hot keys will be enabled and shortcut hints will be shown if enabled. We have designed this mode to maximize keyboard usage eliminating the need to use trackpad or mouse.";
-      case InteractionMode.COMMAND_ONLY:
-        return "**Command only mode** is taking keyboard utilization and minimalization to next level. Everything will be hidden and can be accessed on-demand using commands.";
-      case InteractionMode.AGENT:
-        return "For a complete **hands-free experience**, turn on this mode and let the AI agent take care of the rest. This mode will be available soon...";
-    }
-  }
   function onInteractionModeSelect() {
     uiState.setState(Action.MODE_OF_INTERACTION, selectedMode, {
       scope: UIStateScope.PRODUCT
@@ -63,7 +56,7 @@
 <div class="flex flex-col gap-6 overflow-auto">
   <OptionSelector
     bind:selected={selectedMode}
-    style={OptionSelectorStyle.OUTLINE}
+    style={OptionSelectorStyle.TRAIN}
     size={$view.isConstrainedWidth ? Size.sm : Size.md}
     labelProps={{
       label: "Preferred mode of interaction",
@@ -76,21 +69,12 @@
     options={[
       {
         value: InteractionMode.DEFAULT,
-        icon: "circle-dashed",
-        tooltip: resolveInfo(InteractionMode.DEFAULT)
-      },
-      {
-        value: InteractionMode.COMMAND_ONLY,
-        label: "Command only",
-        icon: "terminal-window"
+        icon: "circle-dashed"
       },
       {
         value: InteractionMode.AGENT,
         label: "Agent",
-        icon: "sparkle",
-        badge: "planned",
-        isDisabled: true,
-        tooltip: resolveInfo(InteractionMode.AGENT)
+        icon: "rhombus"
       }
     ]}
   />
@@ -126,12 +110,10 @@
       isExpanded={true}
     />
     <Divider />
-    <div class="flex flex-col items-start w-full gap-3">
-      <Text content="Keyboard shortcuts" style={TextStyle.SECTION_HEADING} />
-      <ShortcutSettings />
-    </div>
-  {:else}
-    <InlineInfoBanner content={resolveInfo(selectedMode)} />
   {/if}
+  <div class="flex flex-col items-start w-full gap-3">
+    <Text content="Keyboard shortcuts" style={TextStyle.SECTION_HEADING} />
+    <ShortcutSettings />
+  </div>
   <ScrollViewBottomSpacer />
 </div>
