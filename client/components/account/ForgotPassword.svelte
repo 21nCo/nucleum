@@ -197,10 +197,11 @@
     appStore.gotoPath("/account/login");
   }
 
-  function handleResendOTP() {
+  async function handleResendOTP() {
     clearFeedback();
     otp = "";
-    step = "email";
+    //TODO - pass retry flag and use different provider in the backend for resend
+    await handleSendOTP();
   }
 </script>
 

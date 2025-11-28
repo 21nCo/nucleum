@@ -345,7 +345,7 @@ describe("client/utils/network.utils", () => {
     });
 
     it("falls back to timezone detection when IP detection fails", async () => {
-      vi.spyOn(import.meta, "env", "get").mockReturnValue({} as any);
+      const envSpy = vi.spyOn(import.meta, "env", "get").mockReturnValue({} as any);
 
       const offsetSpy = vi
         .spyOn(Date.prototype, "getTimezoneOffset")
@@ -356,6 +356,7 @@ describe("client/utils/network.utils", () => {
       expect(fetch).not.toHaveBeenCalled();
 
       offsetSpy.mockRestore();
+      envSpy.mockRestore();
     });
   });
 });

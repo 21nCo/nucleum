@@ -9,11 +9,12 @@
   import { EmbedMessage } from "@21n/types/embedMessage.enum";
   import { onMount } from "svelte";
   import AccountDebugInfo from "./AccountDebugInfo.svelte";
-  let token = "";
+  let isEmbedTokenPresent = false;
   const dev_isDebugAccountMode = false;
   onMount(() => {
     postMessageToParent(EmbedMessage.MOUNT);
-    token = localStorage.getItem("embedToken") || "";
+    const token = localStorage.getItem("embedToken");
+    isEmbedTokenPresent = token ? true : false;
   });
 </script>
 
@@ -34,7 +35,7 @@
     {/if}
   {:else}
     <div class="h-full flex flex-col justify-center items-center">
-      {token}
+      Embed token: {isEmbedTokenPresent}
       <Button
         label="Login/Signup"
         on:click={() => {
@@ -44,8 +45,8 @@
     </div>
   {/if}
 {:catch error}
-  Error: {error}
   <div class="h-full flex flex-col justify-center items-center">
+    <div class="text-ass1 text-b2 mb-4">Authentication error</div>
     <Button
       label="Login/Signup"
       on:click={() => {

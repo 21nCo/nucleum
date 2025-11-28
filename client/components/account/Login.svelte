@@ -60,12 +60,19 @@
 
   async function handleMessageFromParent(event: MessageEvent) {
     try {
+      const isOriginAllowed = window.location.origin === event.origin;
+      if (!isOriginAllowed) {
+        console.warn(
+          "Rejected message from untrusted origin:",
+          event.origin,
+          "currentOrigin:",
+          window.location.origin
+        );
+        return;
+      }
+
       if (event?.data?.type === "SWIFT_MESSAGE" && event?.data?.payload) {
         const parsed = parse(event.data.payload);
-        console.log({
-          at: "Login - handleMessageFromParent - SWIFT_MESSAGE",
-          parsed
-        });
         if (parsed.oauth) {
           currentProgress = undefined;
           let { token } = parsed.oauth;
@@ -75,7 +82,7 @@
             }
           }
           if (!token) {
-            toasts.error();
+            toasts.error("Authentication failed. Please try again.");
             return;
           }
           localStorage.setItem("embedToken", token);

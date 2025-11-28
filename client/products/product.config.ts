@@ -60,7 +60,7 @@ interface IAppConfigBase extends IProductConfigBase {
   databaseName?: string;
   librarySectionLabel?: string;
   configurableShortcuts?: string[];
-  oAuthProviders?: string[];
+  oAuthProviders?: ("google" | "apple" | "github")[];
 }
 
 interface IAppConfig extends IAppConfigBase {

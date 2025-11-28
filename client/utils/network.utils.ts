@@ -42,9 +42,9 @@ export function resolveRegionalApiUrl() {
 export function resolveRegionalApiUrlStrategy(): string {
   try {
     const tzOffset = -new Date().getTimezoneOffset() * 60;
-    if (tzOffset < -10800) {
+    if (tzOffset <= -10800) {
       return "useast";
-    } else if (tzOffset > -10800 && tzOffset < 10800) {
+    } else if (tzOffset < 10800) {
       return "euwest";
     } else {
       return "insouth";
@@ -83,26 +83,40 @@ export async function detectUserRegionFromIP(
       console.warn("IPInfo token not configured");
       return null;
     }
-    
-    const response = await fetch(
-      `https://ipinfo.io/json?token=${ipinfoToken}`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json"
-        }
-      }
-    );
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-    if (!response.ok) {
-      console.warn("Failed to fetch IP info:", response.status);
+    try {
+      const response = await fetch(
+        `https://ipinfo.io/json?token=${ipinfoToken}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          signal: controller.signal
+        }
+      );
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.warn("Failed to fetch IP info:", response.status);
+        return null;
+      }
+
+      const data: IPInfoResponse = await response.json();
+      return mapCountryToRegion(data.country);
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      if (fetchError instanceof Error && fetchError.name === "AbortError") {
+        console.warn("IP info fetch timed out");
+      } else {
+        console.error("Error fetching IP info:", fetchError);
+      }
       return null;
     }
-
-    const data: IPInfoResponse = await response.json();
-    return mapCountryToRegion(data.country);
   } catch (error) {
-    console.warn("Error detecting user region from IP:", error);
+    console.error("Error detecting region from IP:", error);
     return null;
   }
 }
@@ -184,7 +198,7 @@ function mapCountryToRegion(countryCode?: string): string | null {
  * Detects user's region using a two-tier strategy:
  * 1. Primary: IP-based detection using IPInfo API (requires VITE_IPINFO_TOKEN)
  * 2. Fallback: Timezone-based detection using browser timezone offset
- * 
+ *
  * @returns Region code: 'useast' | 'euwest' | 'insouth'
  */
 export async function detectUserRegion(): Promise<string> {

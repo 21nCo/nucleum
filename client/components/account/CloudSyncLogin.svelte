@@ -93,8 +93,14 @@
       return;
     }
     if (passwordMode === "password" && !isValidFormData()) return;
-    if (passwordMode === "otp" && !isValidEmail(email)) return;
-    if (passwordMode === "otp" && !otp) return;
+    if (passwordMode === "otp" && !isValidEmail(email)) {
+      showError("Please enter a valid email address.");
+      return;
+    }
+    if (passwordMode === "otp" && !otp) {
+      showError("Please enter the OTP code.");
+      return;
+    }
     actionInProgress = true;
     let response;
     let errorMessage = null;
@@ -145,12 +151,13 @@
       if (response?.error?.details) {
         const errorName = response.error.details.name;
         if (errorName === "RegionMismatchError") {
-          const region = response.error.details.region;
+          const detectedRegion = response.error.details.region;
           if (isSignup) {
-            await handleAlreadyExistsCase(region);
+            await handleAlreadyExistsCase(detectedRegion);
             return;
           } else {
-            const client = await authClient({ region });
+            errorMessage = null;
+            const client = await authClient({ region: detectedRegion });
             if (passwordMode === "password")
               response = await client.signIn.email({
                 email,
@@ -164,9 +171,11 @@
           }
         }
       }
-      showError(errorMessage);
-      actionInProgress = false;
-      return;
+      if (!response || response.error || errorMessage) {
+        showError(errorMessage);
+        actionInProgress = false;
+        return;
+      }
     }
     const json = response.data;
     //TODO - different error cases - user messages
@@ -217,7 +226,7 @@
       showError("Please enter a valid email address.");
       return false;
     }
-    if (isSignup && !isValidPasswordChoice()) return;
+    if (isSignup && !isValidPasswordChoice()) return false;
     return true;
   }
   function isValidPasswordChoice() {
@@ -250,11 +259,13 @@
 
   function showError(message: string | null = null) {
     actionInProgress = false;
+    info = null;
     error = message ?? "Something went wrong. Please try again later.";
   }
 
   function showInfo(message: string) {
     actionInProgress = false;
+    error = null;
     info = message;
   }
 
@@ -274,6 +285,7 @@
       showInfo("OTP sent to your email address. Please check your inbox.");
       return true;
     }
+    return false;
   }
 
   async function emailProceedOptionSelection(mode: "password" | "otp") {
@@ -281,13 +293,19 @@
       showError("Please enter a valid email address.");
       return false;
     }
-    const response = await peformAccountApiCall("lookup", { email });
-    if (response && response.ok) {
-      const json = await response.json();
-      if (json.region) {
-        updateUserRegionMap(email, json.region);
+
+    try {
+      const response = await peformAccountApiCall("lookup", { email });
+      if (response && response.ok) {
+        const json = await response.json();
+        if (json.region) {
+          updateUserRegionMap(email, json.region);
+        }
       }
+    } catch (err) {
+      console.warn("Region lookup failed, using default region:", err);
     }
+
     passwordMode = mode;
     if (mode === "otp") await sendOTP();
   }

@@ -6,9 +6,9 @@
   import { page } from "$app/stores";
 
   let message: string | undefined = undefined;
-  let messageParam = $page.url.searchParams.get(AppSearchParam.MSG);
   $: productName = properCase($appStore.product);
-  if (messageParam) {
+  $: {
+    const messageParam = $page.url.searchParams.get(AppSearchParam.MSG);
     if (messageParam === "deleted") {
       message = "Your account has been deleted.";
     } else if (messageParam === "signedout") {
@@ -17,6 +17,8 @@
       message = "Your session has expired. Please login again.";
     } else if (messageParam === "notfound") {
       message = "User not found. Please login again.";
+    } else {
+      message = undefined;
     }
   }
 </script>

@@ -11,14 +11,15 @@ import { resolveAccountBaseUrl } from "../network";
 
 function createAuthClientWithPlugins(region: string) {
   const baseURL = resolveAccountBaseUrl(region);
-  const embedToken = localStorage.getItem("embedToken");
+  const embedToken =
+    typeof window !== "undefined" ? localStorage.getItem("embedToken") : null;
   return createAuthClient({
     baseURL,
     fetchOptions: embedToken
       ? {
           auth: {
             type: "Bearer",
-            token: embedToken || ""
+            token: embedToken
           }
         }
       : {},
@@ -50,20 +51,23 @@ export const authClient = async (params?: {
 };
 
 async function performCheckUsingSessionAPI() {
+  if (typeof window === "undefined") {
+    return false;
+  }
   try {
     const client = await authClient({ isPreventCachedInstance: true });
     const session = await client.getSession();
-    console.log("Better-auth session:", session);
     if (session?.data?.user) {
       await clientStorage.set(ClientStorageKey.USER, session.data.user);
     }
     return !!session?.data?.session;
   } catch (error) {
     console.error("Error checking better-auth session:", error);
+    return undefined;
   }
 }
 
 export function performSessionCheck(): Promise<boolean | undefined> {
-  //TODO - offline user case
+  //TODO: Implement offline user case
   return performCheckUsingSessionAPI();
 }
