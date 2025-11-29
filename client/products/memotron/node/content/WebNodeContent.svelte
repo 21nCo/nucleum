@@ -28,7 +28,7 @@
   export let isLinkHovering: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   let youtubeVideoRef: YoutubeVideoPreview;
-  let copyLabel: string = "Copy";
+  let copyLabel: string = "Copy link";
   let copyTimeoutId: ReturnType<typeof setTimeout> | null = null;
   export function onTrace(e: any) {
     youtubeVideoRef.onTrace(e);
@@ -59,7 +59,7 @@
   ];
 </script>
 
-<div class="relative h-full w-full flex flex-col">
+<div class="relative h-full w-full flex flex-col flex-col-reverse">
   {#if node.contentType === NodeType.WEB_PAGE || node.contentType === NodeType.YOUTUBE_CHANNEL}
     <WebPagePreview {node} {accessPoint} />
   {:else if node.contentType === NodeType.GIST}
@@ -86,7 +86,7 @@
   {#if "url" in node && node.url && accessPoint === ResourceAccessPoint.SELF && !socialPostNodeTypeList.has(node.contentType)}
     <!-- TODO - TIDY-10 -->
     <div
-      class="flex items-center max-w-full w-full border-t cw:border-y border-brs2 text-fgs3 text-b2 truncate cw:mb-10"
+      class="flex items-center max-w-full w-full border-b cw:border-y border-brs2 text-fgs3 text-b2 truncate cw:mb-10"
     >
       <!-- <ContextMenuAction
         id="open-link-context-menu"
@@ -116,7 +116,7 @@
             clearTimeout(copyTimeoutId);
           }
           copyTimeoutId = setTimeout(() => {
-            copyLabel = "Copy";
+            copyLabel = "Copy link";
             copyTimeoutId = null;
           }, 1000);
         }}

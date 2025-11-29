@@ -28,16 +28,7 @@
     return resource;
   });
 
-  let sections = [
-    Product.NUCLEUS,
-    Product.POINTRON,
-    Product.MEMOTRON,
-    Product.SELFTRON,
-    Product.FEEDTRON,
-    Product.HOMETRON,
-    Product.FINATRON,
-    Product.FELLOTRON
-  ];
+  let sections = [Product.NUCLEUS, Product.POINTRON, Product.MEMOTRON];
   if (selected === undefined) selected = options[0]?.value;
   const nucleusResources = resolveProductConfig(Product.NUCLEUS).resources
     .browse;

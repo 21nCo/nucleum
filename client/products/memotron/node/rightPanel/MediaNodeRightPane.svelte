@@ -37,7 +37,7 @@
     "flex flex-col h-full gap-4 justify-center items-center mo:w-full cw:min-w-full min-w-96 w--80 2k:w--96 transition-all duration-300",
     {
       "w-3/10": !isExpanded,
-      "w-2/3": isExpanded,
+      "w-1/2": isExpanded,
       "w-full px-3": isConstrainedWidth
     }
   )}

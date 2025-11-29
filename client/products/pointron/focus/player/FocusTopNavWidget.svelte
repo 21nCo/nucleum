@@ -36,7 +36,7 @@
     }}
   >
     <Icon
-      icon="ph:circle"
+      icon="focus"
       size={Size.sm}
       class={cn({
         "text-aps1": $activeSession.state === SessionState.FOCUS_RUNNING,
@@ -47,7 +47,7 @@
   </button>
 {:else}
   <TopNavLeftMenuItem
-    icon="ph:circle"
+    icon="focus"
     tooltip="Focus"
     shortcut={action}
     on:click={handleClick}

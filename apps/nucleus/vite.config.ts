@@ -15,6 +15,9 @@ export default defineConfig({
   worker: {
     format: "es"
   },
+  server: {
+    allowedHosts: ["local.nucleus.to"]
+  },
   build: {
     target: "esnext",
     rollupOptions: {

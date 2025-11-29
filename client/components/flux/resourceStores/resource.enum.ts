@@ -100,25 +100,7 @@ export enum Resource {
   //Memotron clipper
   highlight = "highlight",
   clipperToolbarState = "clipperToolbarState",
-  clipperSync = "clipperSync",
-
-  //Selftron
-  habit = "habit",
-  quest = "quest",
-
-  //Feedtron
-  feed = "feed",
-  source = "source",
-
-  //Hometron
-  thing = "thing",
-
-  //Finatron
-  account = "account",
-  transaction = "transaction",
-
-  //Fellotron
-  fellow = "fellow"
+  clipperSync = "clipperSync"
 }
 
 /**

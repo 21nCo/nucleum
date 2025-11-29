@@ -18,6 +18,7 @@
   import MemoryBase from "@21n/products/memotron/base/MemoryBase.svelte";
   import { defaultsMigrationForNodes } from "@21n/products/memotron/base/migrations";
   import { defaultsMigrationTidy } from "@21n/components/migrations";
+  import TopNavLeftMenuItem from "@21n/layout/topNav/TopNavLeftMenuItem.svelte";
 
   let isLiteMode = $context.isEmbed && $context.isSheet;
   const isDebug = import.meta.env?.DEV;
@@ -69,6 +70,13 @@
 </script>
 
 <UserBaseLayer on:ready={onUserBaseLayerReady}>
+  <div slot="topnav" class="flex gap-1 items-center h-full">
+    {#if import.meta.env.DEV}
+      <TopNavLeftMenuItem icon="mynaui:plus-hexagon" tooltip="Capture" />
+      <TopNavLeftMenuItem icon="calendar" tooltip="Today" />
+      <TopNavLeftMenuItem icon="rhombus" tooltip="Rhombus" />
+    {/if}
+  </div>
   <slot />
   <MemotronNotifications />
 </UserBaseLayer>

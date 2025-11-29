@@ -65,7 +65,6 @@
 
 <UserBaseLayer on:ready={onReady}>
   <div slot="topnav" class="flex gap-1 items-center h-full">
-    <FocusTopNavWidget />
     <TopNavLeftMenuItem
       icon="mynaui:plus-hexagon"
       tooltip="Capture"
@@ -75,6 +74,12 @@
           resourceAction(Resource.node, ResourceActionType.CREATE)
         )}
     />
+    <FocusTopNavWidget />
+    {#if isDebug}
+      <TopNavLeftMenuItem icon="feed" tooltip="Feed" />
+      <TopNavLeftMenuItem icon="calendar" tooltip="Today" />
+      <TopNavLeftMenuItem icon="rhombus" tooltip="Rhombus" />
+    {/if}
   </div>
   <slot />
   <PointronNotifications />

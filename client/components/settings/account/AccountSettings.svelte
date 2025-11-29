@@ -34,17 +34,25 @@
     resolveNextRenewalDate,
     resolvePlanLabel
   } from "@21n/components/subscription/userPlan.utils";
-  import { BillingCycle, PlanType } from "@21n/components/subscription/userPlan.type";
+  import {
+    BillingCycle,
+    PlanType
+  } from "@21n/components/subscription/userPlan.type";
   import { parseAndFormatDate } from "@21n/utils/time.utils";
   import RestorePurchaseAction from "@21n/components/subscription/RestorePurchaseAction.svelte";
   import view from "@21n/stores/view.store";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { Product } from "@21n/products/product.type";
+  import { clientStorage } from "@21n/persistence/persistence.utils";
+  import { ClientStorageKey } from "@21n/persistence/persistence.type";
+  import { parse } from "@21n/shared-utils/json.utils";
+  import NewAccountDebugInfo from "./NewAccountDebugInfo.svelte";
   let name = "";
   let emailParts: EmailParts | undefined = undefined;
   let isEditing = false;
   let isSaveInProgress = false;
   let profilePicture: IRecordId | undefined = $userPreferences.profilePicture;
+  let user: any;
   $: isActivePlan = $account.plan
     ? determineIfPlanIsActive($account.plan)
     : false;
@@ -59,13 +67,17 @@
     const unsubscribeUserPreferences = userPreferences.subscribe((value) => {
       name = value.name || $account.userInfo?.nickName || "";
     });
-
+    refreshUser();
     account.refreshPlanData();
     return () => {
       unsubscribeAccount();
       unsubscribeUserPreferences();
     };
   });
+
+  async function refreshUser() {
+    user = parse((await clientStorage.get(ClientStorageKey.USER)) ?? "{}");
+  }
   function onSave() {
     userPreferences.updateUserProfile({ name, profilePicture });
     isEditing = false;
@@ -240,6 +252,9 @@
             </div>
           {/if}
         </div>
+        {#if user}
+          <NewAccountDebugInfo {user} />
+        {/if}
         {#if !$view.isConstrainedWidth}
           <Button
             label="Go to billing"

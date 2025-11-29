@@ -55,7 +55,7 @@
       scope: UIStateScope.PRODUCT
     });
     if (
-      interactionMode === InteractionMode.COMMAND_ONLY &&
+      interactionMode === InteractionMode.AGENT &&
       shortcut.action === Action.CMD
     ) {
       appStore.toggleSearchParam([ResourceAccessMode.TAB]);
