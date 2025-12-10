@@ -1,10 +1,15 @@
 import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import type { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
 import type { UserDataMode } from "@21n/types/account.type";
-import { Embed, OperatingSystem, type IAppContext } from "@21n/types/context.type";
+import {
+  Embed,
+  OperatingSystem,
+  type IAppContext
+} from "@21n/types/context.type";
 import type { ConfirmationNotification } from "@21n/types/notification.type";
 import type { ModalParams } from "@21n/types/popup.type";
 import type { IViewStore } from "@21n/types/view.type";
+import type { Size } from "./size.enum";
 
 export type IAction = {
   action: string;
@@ -135,6 +140,14 @@ export type IAction = {
    * Type of action specific to mobile behavior.
    */
   handsetBehaviorType?: ActionType;
+  /**
+   * Params for the right panel if the action is opened as in right panel on desktop.
+   */
+  rightPanelParams?: IRightPanelParams;
+};
+
+export type IRightPanelParams = {
+  size?: Size;
 };
 
 export type IActionFnParams = {

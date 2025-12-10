@@ -166,7 +166,9 @@ const phosphorIcons = [
   "diamonds-four",
   "drone",
   "grid-four",
-  "books"
+  "books",
+  "compass",
+  "navigation-arrow"
 ];
 
 export const phosphorRatingIcons = [
@@ -484,4 +486,4 @@ export const solarIconsForBundling = {
   "bold-duotone": solarBoldDuotoneIcons
 };
 
-export const bundleNumber = 63;
+export const bundleNumber = 64;

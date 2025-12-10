@@ -23,21 +23,31 @@
   import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import { getContext } from "svelte";
+  import { readable, type Writable } from "svelte/store";
+  import { Context } from "@21n/types/appStore.type";
+  import type { IContainer } from "@21n/layout/layout.type";
+
+  const container =
+    getContext<Writable<IContainer | undefined>>(Context.CONTAINER) ||
+    readable(undefined);
 
   export let isInline: boolean = false;
+  const MIN_WIDTH_TO_EXPAND = 1000;
   let layout: number = 1;
   let isShowTimeLeftOnMobile: boolean = false;
   $: fullScreenFocusIsEnabled =
     $page?.url?.searchParams?.get(ResourceAccessMode.FULL) ===
     PointronAction.FULL_SCREEN_FOCUS;
-  $: isExtraLargeScreen = $view.landscapiness > 1.7 && $view.scale > 1.8;
+  $: isExtraLargeScreen =
+    $container && $container.landscapiness > 1.7 && $view.scale > 1.8;
 </script>
 
 <!-- {#snippet focusItemsHeading()}
 <FocusItemsHeading {isInEditMode} on:click={onEditClicked} />
 {/snippet} -->
 
-{#if $view.isPortrait}
+{#if $view.isPortrait || ($container && ($container.isPortrait || $container.width < MIN_WIDTH_TO_EXPAND))}
   <div
     on:touchstart|stopPropagation={startTouch}
     on:touchmove|stopPropagation={() =>
@@ -80,7 +90,7 @@
           <ControlBar />
         </div>
         <div class="flex justify-center">
-          <Extras isInFullScreen={!isInline} />
+          <Extras isInFullScreen={$view.isPortrait && !isInline} />
         </div>
       </div>
     {/if}

@@ -29,8 +29,9 @@
   import MdKeyboardKeysRow from "@21n/components/markdown/toolbar/MdKeyboardKeysRow.svelte";
   import { createEventDispatcher, getContext } from "svelte";
   import type { IRecordId } from "@21n/types/data.type";
+  import { Context } from "@21n/types/appStore.type";
   const dispatch = createEventDispatcher();
-  const nodeContext = getContext<any>("node");
+  const nodeContext = getContext<any>(Context.NODE);
 
   export let keyboardToolbarPanelSelection: string | undefined = undefined;
   export let selectedBlocks: IRecordId[] = [];

@@ -49,6 +49,7 @@
   import { ErrorMessage } from "@21n/components/error/error.type";
   import { resizeListener } from "@21n/actions/resize.action";
   import { stringify } from "@21n/shared-utils/json.utils";
+  import { Context } from "@21n/types/appStore.type";
 
   /**
    * Propagates the event to the parent component.
@@ -78,7 +79,7 @@
     }
     if (message.event) propagate(message.event, message.data);
   }
-  setContext("markdown", markdownContext);
+  setContext(Context.MARKDOWN, markdownContext);
 
   export let md: IMarkdown | undefined = undefined;
   export let params: IMarkdownParams | undefined = undefined;

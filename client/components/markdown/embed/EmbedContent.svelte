@@ -45,10 +45,11 @@
   } from "@21n/products/memotron/capture/capture.store";
   import Task from "@21n/components/tasks/Task.svelte";
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { Context } from "@21n/types/appStore.type";
 
   const dispatch = createEventDispatcher();
-  const nodeContext = getContext<any>("node");
-  const captureContext = getContext<any>("capture");
+  const nodeContext = getContext<any>(Context.NODE);
+  const captureContext = getContext<any>(Context.CAPTURE);
   let captureStore: IActiveCaptureStore | undefined;
   $: if (nodeContext?.id || captureContext?.id) {
     const id = nodeContext?.id
@@ -56,7 +57,7 @@
       : captureContext?.id;
     captureStore = ActiveCaptureStore.resolve(id);
   }
-  const contentContext = getContext<any>("content");
+  const contentContext = getContext<any>(Context.CONTENT);
   export let id: IRecordId;
   export let body: IEmbedBlockBody;
   export let mdStore: MdStoreType;

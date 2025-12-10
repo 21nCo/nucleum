@@ -14,6 +14,7 @@
   import PlayerControl from "@21n/elements/player/controls/PlayerControl.svelte";
   import { Size } from "@21n/types/size.enum";
   import { ButtonStyle } from "@21n/types/button.type";
+  import { Context } from "@21n/types/appStore.type";
   const dispatch = createEventDispatcher();
 
   export let captureStore: IActiveCaptureStore;
@@ -48,7 +49,7 @@
     publish: handleEvent
   };
 
-  setContext("content", contentContext);
+  setContext(Context.CONTENT, contentContext);
 
   export function focus(id?: IRecordId) {
     mdRef?.focusBlock(id);

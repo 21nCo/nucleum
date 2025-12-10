@@ -14,18 +14,62 @@
   import AppSplitView from "@21n/layout/AppSplitView.svelte";
   import TopNav from "@21n/layout/topNav/TopNav.svelte";
   import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
-  import RightNav from "../rightPanel/RightNav.svelte";
-
+  import RightPanel from "../rightPanel/RightPanel.svelte";
+  import ResourceSearchModal from "@21n/products/memotron/library/search/ResourceSearchModal.svelte";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import { page } from "$app/stores";
+  import BottomNav from "../bottomNav/BottomNav.svelte";
+  import { hTrail } from "../topNav/tabs/tabs.store";
+  import Trail from "../trail/Trail.svelte";
+  import type { IAction } from "@21n/types/action.type";
+  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  import ResourceResolver from "../paint/ResourceResolver.svelte";
   let isHideLeftNavBar: boolean = refreshSidebarState();
+
+  let isSearchMode: boolean =
+    new URLSearchParams(window.location.search).get(AppSearchParam.SEARCH) ===
+    "true";
+  let rightPanel: IAction | undefined = undefined;
+  let pop: { id: IRecordId; action: IAction } | undefined = undefined;
+
   onMount(() => {
     const uiStateSub = uiState.subscribe(() => {
       isHideLeftNavBar = refreshSidebarState();
     });
     $appLoadingState.isLocalLoaded = true;
+    const pageSub = page.subscribe((p) => {
+      isSearchMode = p.url.searchParams.get(AppSearchParam.SEARCH) === "true";
+      const rightPanelParam = p.url.searchParams.get(AppSearchParam.RIGHT);
+      if (rightPanelParam) {
+        rightPanel = appStore.resolveAction(rightPanelParam) ?? undefined;
+      } else {
+        rightPanel = undefined;
+      }
+      const popParam =
+        p.url.searchParams.get(ResourceAccessMode.POP) ?? undefined;
+      if (popParam) {
+        resolvePop(popParam);
+      } else {
+        pop = undefined;
+      }
+    });
     return () => {
-      uiStateSub();
+      if (uiStateSub) uiStateSub();
+      if (pageSub) pageSub();
     };
   });
+
+  function resolvePop(resourceId: string) {
+    if (!resourceId) return;
+    const slug = resourceId.split(":")[0];
+    const action = appStore.resolveAction(slug);
+    if (!action) return;
+    pop = {
+      id: resourceId,
+      action
+    };
+  }
 
   function refreshSidebarState() {
     return uiState.getState(UIState.isHideLeftNavBar);
@@ -72,17 +116,41 @@
           {/if}
           <div class="flex w-full flex-grow">
             {#if $context.embed !== Embed.HANDSET && !isHideLeftNavBar}
-              <LeftNav variant="fixed" />
+              <LeftNav variant="fixed" isHidePanel={!!pop || isSearchMode} />
             {/if}
-            <div class="min-w-0 flex-grow">
-              <AppSplitView>
-                <slot name="main" slot="main">
-                  <slot />
-                </slot>
-              </AppSplitView>
+            <div class="min-w-0 flex-grow relative">
+              {#if isSearchMode}
+                <div class="absolute inset-0 w-full h-full bg-bgs1 z-40">
+                  <ResourceSearchModal isInline={true} />
+                </div>
+              {/if}
+              {#if pop}
+                <div class="absolute inset-0 w-full h-full bg-bgs1 z-50">
+                  <ResourceResolver
+                    id={pop.id}
+                    accessMode={ResourceAccessMode.POP}
+                  />
+                </div>
+              {/if}
+              {#if $hTrail.path.length > 0 && $hTrail.activated && (!$hTrail.isBaseNonRecord || ($hTrail.isBaseNonRecord && $hTrail.activated !== $hTrail.path[0]))}
+                <Trail />
+                <!-- {:else if $vTrail.items.length > 0 && $vTrail.activated && (!isRecordId($vTrail.base) || (isRecordId($vTrail.base) && $vTrail.activated !== $vTrail.base))}
+                <TrailContent /> -->
+              {:else}
+                <AppSplitView>
+                  <slot name="main" slot="main">
+                    <slot />
+                  </slot>
+                </AppSplitView>
+              {/if}
             </div>
-            <!-- <RightNav /> -->
+            {#if rightPanel}
+              <RightPanel action={rightPanel} />
+            {/if}
           </div>
+          {#if $hTrail.path.length > 0}
+            <BottomNav />
+          {/if}
         </div>
       </div>
     </div>

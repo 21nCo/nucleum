@@ -31,6 +31,7 @@
   import NodePanelSwitcher from "./floatingBar/NodePanelSwitcher.svelte";
   import { fly } from "svelte/transition";
   import { resolvePanelParam } from "@21n/components/resource/panelParam.mixin";
+  import { Context } from "@21n/types/appStore.type";
 
   export let id: string;
   export let accessMode: ResourceAccessMode;
@@ -95,7 +96,7 @@
     publish: contextEventListener
   };
 
-  setContext("node", nodeContext);
+  setContext(Context.NODE, nodeContext);
 
   onDestroy(() => {
     ActiveNodeStore.destroy(id, accessMode);

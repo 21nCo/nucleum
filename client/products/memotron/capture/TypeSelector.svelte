@@ -20,6 +20,7 @@
   export let isHideTypeShortcuts: boolean = false;
   let dev_isEnableEditShortcuts: boolean = true;
   let refreshId: number = new Date().getTime();
+  const isDev = import.meta.env.DEV;
 
   const contentTypes: (ISelectItem & { value: string })[] = [
     {
@@ -34,11 +35,19 @@
       icon: "camera",
       value: CaptureMethod.CAMERA
     },
-    {
-      icon: "globe-alt",
-      value: CaptureMethod.WEB,
-      label: "Add from Web"
-    },
+    ...(isDev
+      ? [
+          {
+            icon: "ri:sketching",
+            value: CaptureMethod.SKETCH
+          },
+          {
+            icon: "globe-alt",
+            value: CaptureMethod.WEB,
+            label: "Add from Web"
+          }
+        ]
+      : []),
     {
       icon: "upload",
       value: CaptureMethod.UPLOAD

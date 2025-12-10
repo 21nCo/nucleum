@@ -13,7 +13,7 @@
   import { Action } from "@21n/types/action.enum";
   import { Size } from "@21n/types/size.enum";
   import { resolveProductConfig } from "@21n/products/product.config";
-
+  export let isHidePanel = false;
   let isInFocusMode = false;
   let isRounded = false;
   const productConfig = resolveProductConfig();
@@ -65,7 +65,7 @@
     {:else if variant === "fixed"}
       <LeftNavFixed {isRounded}>
         <div slot="panel" class="h-full overflow-auto relative">
-          {#if $appStore.currentComponent?.panel}
+          {#if !isHidePanel && $appStore.currentComponent?.panel}
             <svelte:component this={$appStore.currentComponent.panel} />
           {/if}
         </div>

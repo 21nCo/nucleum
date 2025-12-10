@@ -1,32 +1,35 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
-  import view from "@21n/stores/view.store";
-
-  let isInThinMode = true;
+  import { cn } from "@21n/utils/ui.utils";
+  import ComponentResolver from "../paint/ComponentResolver.svelte";
+  import type { IAction } from "@21n/types/action.type";
+  import { Size } from "@21n/types/size.enum";
+  import { resizeListener } from "@21n/actions/resize.action";
+  import { setContext } from "svelte";
+  import { writable, type Writable } from "svelte/store";
+  import { Context } from "@21n/types/appStore.type";
+  import type { IContainer } from "../layout.type";
+  export let action: IAction;
+  const containerStore = writable<IContainer | undefined>(undefined);
+  setContext<Writable<IContainer | undefined>>(
+    Context.CONTAINER,
+    containerStore
+  );
 </script>
 
-{#if !$view.isPortrait}
-  <div
-    class="flex justify-center items-center h-full {isInThinMode
-      ? 'w-16'
-      : 'w-72'}  mr-2 flex-none"
-  >
-    <div
-      class="flex flex-col pt-8 gap-4 items-center justify-between overflow-auto w-full rounded-lg bg-bgs2"
-      style="height: calc(100% - 1rem);"
-    >
-      <div class="w-full flex justify-center px-2">
-        <Icon
-          icon={isInThinMode ? "chevdoubleleft" : "chevdoubleright"}
-          class="stroke-fgs2"
-          on:click={() => {
-            isInThinMode = !isInThinMode;
-          }}
-        />
-      </div>
-      {#if !isInThinMode}
-        Right panel content
-      {/if}
-    </div>
-  </div>
-{/if}
+<div
+  class={cn(
+    "flex justify-center items-center h-full bg-bgs2 border-l border-brs3 transition-all duration-200",
+    {
+      "min-w-80 w-80 2k:min-w-96 2k:w-96":
+        action.rightPanelParams?.size === Size.sm,
+      "min-w-96 w-96 2k:min-w-128 2k:w-128":
+        !action.rightPanelParams?.size ||
+        action.rightPanelParams?.size === Size.md
+    }
+  )}
+  use:resizeListener={(e) => {
+    containerStore.set(e);
+  }}
+>
+  <ComponentResolver {action} />
+</div>

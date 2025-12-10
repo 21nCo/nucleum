@@ -14,9 +14,6 @@
   export let ctx: Product = Product.NUCLEUS;
   const action =
     ctx === Product.NUCLEUS ? PointronAction.FOCUS : PointronAction.FOCUS_MODAL;
-  function handleClick() {
-    appStore.runAction(action);
-  }
 </script>
 
 {#if $activeSession.isSessionRunning}
@@ -30,7 +27,12 @@
           $activeSession.state === SessionState.BREAK_RUNNING
       }
     )}
-    on:click={handleClick}
+    on:click={() => {
+      appStore.toggleTopNavItem({
+        action: PointronAction.FULL_SCREEN_FOCUS,
+        isOpeningBehaviorConfigurable: true
+      });
+    }}
     use:tooltip={{
       text: "Open focus"
     }}
@@ -46,10 +48,5 @@
     {formatSeconds($activeSession.timeElapsed, TimeFormat.CLOCK)}
   </button>
 {:else}
-  <TopNavLeftMenuItem
-    icon="focus"
-    tooltip="Focus"
-    shortcut={action}
-    on:click={handleClick}
-  />
+  <TopNavLeftMenuItem {action} isOpeningBehaviorConfigurable={true} />
 {/if}

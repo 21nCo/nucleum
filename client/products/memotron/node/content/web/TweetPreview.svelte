@@ -12,9 +12,10 @@
   import account from "@21n/stores/account.store";
   import { InfoTextType } from "@21n/types/text.type";
   import { parse } from "@21n/shared-utils/json.utils";
+  import { Context } from "@21n/types/appStore.type";
   export let node: ITweet;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  const nodeContext = getContext<any>("node");
+  const nodeContext = getContext<any>(Context.NODE);
 
   let parent: any;
   let parentUsername: string;

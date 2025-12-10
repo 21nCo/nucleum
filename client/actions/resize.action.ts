@@ -1,10 +1,11 @@
+import type { IContainer } from "@21n/layout/layout.type";
 import type { Action } from "svelte/action";
 
 type Edge = "left" | "right" | "top" | "bottom";
 
 interface ResizableOptions {
   edges?: Edge[];
-  onResize?: (dimensions: { width: number; height: number }) => void;
+  onResize?: (dimensions: IContainer) => void;
   enabled?: boolean;
   minWidth?: number;
   maxWidth?: number;
@@ -249,7 +250,14 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
     }
 
     if (onResize) {
-      onResize({ width: newWidth, height: newHeight });
+      const landscapiness = newWidth / newHeight;
+      const isPortrait = landscapiness < 1;
+      onResize({
+        width: newWidth,
+        height: newHeight,
+        landscapiness,
+        isPortrait
+      });
     }
   }
 
@@ -353,12 +361,19 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
 
 export function resizeListener(
   node: HTMLElement | SVGElement,
-  callback: (dimensions: { width: number; height: number }) => void
+  callback: (dimensions: IContainer) => void
 ) {
   const resizeObserver = new ResizeObserver((entries) => {
     for (let entry of entries) {
       const { width, height } = entry.contentRect;
-      callback({ width: Math.round(width), height: Math.round(height) });
+      const landscapiness = width / height;
+      const isPortrait = landscapiness < 1;
+      callback({
+        width: Math.round(width),
+        height: Math.round(height),
+        landscapiness,
+        isPortrait
+      });
     }
   });
 
@@ -368,9 +383,7 @@ export function resizeListener(
     destroy() {
       resizeObserver.disconnect();
     },
-    update(
-      newCallback: (dimensions: { width: number; height: number }) => void
-    ) {
+    update(newCallback: (dimensions: IContainer) => void) {
       callback = newCallback;
     }
   };

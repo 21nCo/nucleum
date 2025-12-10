@@ -38,7 +38,7 @@
       "flex cw:flex-row-reverse border-t border-x border-brs3 shadow-md  overflow-hidden",
       {
         "h-8 bg-bgs3 rounded-md": $resourceStore.isInFocusMode,
-        "h-12 bg-bgs2 rounded-t-md": !$resourceStore.isInFocusMode
+        "h-14 bg-bgs2 rounded-t-md": !$resourceStore.isInFocusMode
       }
     )}
   >
@@ -72,22 +72,23 @@
           </div>
         {/if}
       </div>
-      <BoxSwitcher
-        isExpandOnActiveForIcon={true}
-        options={panels}
-        size={$view.isConstrainedWidth ? Size.sm : Size.md}
-        isActiveIndicatorOnTop={true}
-        selected={$resourceStore.panel}
-        on:select={(e) => $resourceStore.switchPanel(e.detail)}
-        isIconOnlyMode={$view.isConstrainedWidth}
-      />
+      <div class="pb-2">
+        <BoxSwitcher
+          isExpandOnActiveForIcon={true}
+          options={panels}
+          size={$view.isConstrainedWidth ? Size.sm : Size.md}
+          isActiveIndicatorOnTop={true}
+          selected={$resourceStore.panel}
+          on:select={(e) => $resourceStore.switchPanel(e.detail)}
+          isIconOnlyMode={$view.isConstrainedWidth}
+        />
+      </div>
       <div class="cw:border-r border-l border-brs2">
         {#if isConstrainedWidth}
           <BoxButton
             icon="chevron-left"
             tooltip="Go back"
             width="px-3"
-            size={Size.sm}
             parentBgIndex={2}
             on:click={() => {
               if (accessMode === ResourceAccessMode.FULL) {
@@ -103,7 +104,6 @@
             tooltip="Close"
             width="px-3"
             parentBgIndex={2}
-            size={Size.sm}
             type={ButtonVariant.DANGER}
             on:click={() => {
               appStore.closeResource({ id: $resourceStore.id });

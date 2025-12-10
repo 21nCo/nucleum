@@ -74,7 +74,7 @@
   }
 </script>
 
-<div class="grid grid-cols-2 cw:grid-cols-1 w-full flex-grow">
+<div class="grid grid-cols-2 2k:grid-cols-3 cw:grid-cols-1 w-full flex-grow">
   {#each groups as group, index}
     <GroupItem
       bind:this={groupRefs[index]}
