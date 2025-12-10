@@ -15,6 +15,7 @@
   import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
   import context from "@21n/stores/context.store";
   import { OperatingSystem } from "@21n/types/context.type";
+  import { Context } from "@21n/types/appStore.type";
 
   export let node: IActiveNodeStore;
   export let isConstrainedWidth: boolean = false;
@@ -33,7 +34,7 @@
   const contentContext = {
     publish: contextEventListener
   };
-  setContext("content", contentContext);
+  setContext(Context.CONTENT, contentContext);
 
   function onAnnotation(e: CustomEvent<any[]>) {
     if ($node.contentType === NodeType.PDF && e.detail)

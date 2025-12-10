@@ -35,9 +35,10 @@
     type IActiveCaptureStore
   } from "@21n/products/memotron/capture/capture.store";
   import { taskStore } from "@21n/components/tasks/task.store";
+  import { Context } from "@21n/types/appStore.type";
   const dispatch = createEventDispatcher();
-  const nodeContext = getContext<any>("node");
-  const captureContext = getContext<any>("capture");
+  const nodeContext = getContext<any>(Context.NODE);
+  const captureContext = getContext<any>(Context.CAPTURE);
   let captureStore: IActiveCaptureStore | undefined;
   $: if (nodeContext?.id || captureContext?.id) {
     const id = nodeContext?.id

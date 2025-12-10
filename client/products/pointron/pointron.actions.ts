@@ -346,14 +346,14 @@ export const pointronActions: IAction[] = [
   {
     action: PointronAction.FOCUS,
     component: Focus,
-    icon: "circle",
+    icon: "focus",
     type: ActionType.PAGE,
     label: "Focus"
   },
   {
     action: PointronAction.FOCUS_MODAL,
     component: Focus,
-    icon: "circle",
+    icon: "focus",
     type: ActionType.RESOURCE,
     isMeta: true,
     label: "Focus",

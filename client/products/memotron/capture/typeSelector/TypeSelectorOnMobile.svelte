@@ -23,21 +23,25 @@
   const baseTypes = [
     { icon: "microphone", label: "Record", value: CaptureMethod.AUDIO },
     { icon: "camera", label: "Camera", value: CaptureMethod.CAMERA },
-    isDev && {
-      icon: "ri:sketching",
-      label: "Sketch",
-      value: CaptureMethod.SKETCH
-    },
-    {
-      icon: "globe",
-      label: "From web",
-      value: CaptureMethod.WEB
-    },
-    isDev && {
-      icon: "scan",
-      label: "Scan",
-      value: CaptureMethod.SCAN
-    },
+    ...(isDev
+      ? [
+          {
+            icon: "ri:sketching",
+            label: "Sketch",
+            value: CaptureMethod.SKETCH
+          },
+          {
+            icon: "scan",
+            label: "Scan",
+            value: CaptureMethod.SCAN
+          },
+          {
+            icon: "globe",
+            label: "From web",
+            value: CaptureMethod.WEB
+          }
+        ]
+      : []),
     { icon: "upload", label: "File", value: CaptureMethod.UPLOAD },
     !$context.isEmbed && {
       icon: "clipboard",

@@ -26,10 +26,11 @@
   import { fileStore } from "@21n/components/files/file.store";
   import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
   import { cn } from "@21n/utils/ui.utils";
+  import { Context } from "@21n/types/appStore.type";
 
   // export let items: Item[] = $userPreferences.mediaGridTestitems;
   // $: $userPreferences.mediaGridTestitems = items;
-  const blockContext = getContext<any>("block");
+  const blockContext = getContext<any>(Context.BLOCK);
 
   /**
    * Relays an event to the block context.

@@ -137,5 +137,17 @@ export enum AppSearchParam {
   FULL_AT = "fullAt",
   DEPTH = "depth",
   TRAVERSE = "traverse",
-  NODE_VIEW = "nodeView"
+  NODE_VIEW = "nodeView",
+  SEARCH = "search",
+  RIGHT = "right"
+}
+
+export enum Context {
+  CONTAINER = "container",
+  NODE = "node",
+  MARKDOWN = "markdown",
+  CONTENT = "content",
+  CAPTURE = "capture",
+  BLOCK = "block",
+  CALENDAR_CONTENT = "calendar-content"
 }

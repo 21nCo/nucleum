@@ -30,10 +30,7 @@
   import { OperatingSystem } from "@21n/types/context.type";
   import { logger } from "@21n/components/debug/logger.client";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import {
-    AlertType,
-    type InlineToast
-  } from "@21n/types/notification.type";
+  import { AlertType, type InlineToast } from "@21n/types/notification.type";
   import Button from "@21n/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { inlineToasts } from "@21n/stores/notification.store";
@@ -51,9 +48,9 @@
   import { InfoTextType } from "@21n/types/text.type";
   import { resolveProductConfig } from "@21n/products/product.config";
   import { AppSearchParam } from "@21n/types/appStore.type";
+  import { searchStore } from "@21n/components/search";
   export let captureId: IRecordId = generateResourceId(Resource.capture);
   let mode: "search" | "capture" | undefined = undefined;
-  let searchQuery = "";
   let captureStore: IActiveCaptureStore;
   let writerRef: Writer | null = null;
   const isBoxedLayout = true;
@@ -63,9 +60,8 @@
   let cameraCaptureRef: HTMLInputElement;
   const transitionDuration = 250;
   initializeCaptureStore();
-  const searchStore = new SearchStore();
+  const resourceSearch = new SearchStore();
   let searchBaseRef: ResourceSearchBase;
-  let resource: Resource = Resource.everything;
   const homePathPt = resolveProductConfig().homePathPt;
 
   function initializeCaptureStore() {
@@ -78,8 +74,8 @@
     let collectionCounts: number | undefined = undefined;
     try {
       const [nodes, collections] = await Promise.all([
-        searchStore.resolveCount({ resource: Resource.node }),
-        searchStore.resolveCount({ resource: Resource.collection })
+        resourceSearch.resolveCount({ resource: Resource.node }),
+        resourceSearch.resolveCount({ resource: Resource.collection })
       ]);
       nodeCounts = nodes;
       collectionCounts = collections;
@@ -142,7 +138,10 @@
       dev_iosCameraCaptureMethod === "input"
     ) {
       triggerNativeCameraCaptureUsingInputAPI();
-    } else if (e.detail !== CaptureMethod.UPLOAD && e.detail !== CaptureMethod.PASTE) {
+    } else if (
+      e.detail !== CaptureMethod.UPLOAD &&
+      e.detail !== CaptureMethod.PASTE
+    ) {
       mode = "capture";
     }
     await captureStore.onTypeSelect(e.detail);
@@ -270,12 +269,10 @@
       >
         <ResourceSearchBase
           bind:this={searchBaseRef}
-          bind:resource
           isExpanded={mode === "search"}
           parentBgIndex={2}
           on:close={() => {
             mode = undefined;
-            searchQuery = "";
           }}
         >
           <div
@@ -285,10 +282,10 @@
             })}
           >
             <TextInput
-              bind:value={searchQuery}
-              placeholder={resource === Resource.everything
+              bind:value={$searchStore.query}
+              placeholder={$searchStore.resourceType === Resource.everything
                 ? "Search across your memory..."
-                : "Search " + resource + "s"}
+                : "Search " + $searchStore.resourceType + "s"}
               on:focus={() => {
                 mode = "search";
                 setTimeout(() => {
@@ -296,10 +293,10 @@
                 }, 100);
               }}
               on:keydown={(e) => {
-                searchBaseRef?.keydown(e.detail.event);
+                searchStore.keydown(e.detail.event);
               }}
               on:keyup={(e) => {
-                searchBaseRef?.keyup(e.detail.event);
+                searchStore.keyup(e.detail.event);
               }}
             />
           </div>

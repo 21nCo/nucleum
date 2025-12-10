@@ -85,6 +85,23 @@ import DexieConsole from "@21n/components/debug/DexieConsole.svelte";
 import { AppSearchParam } from "@21n/types/appStore.type";
 import OfflineStatusModal from "@21n/components/settings/sync/OfflineStatusModal.svelte";
 import context from "@21n/stores/context.store";
+import view from "./view.store";
+import Navigator from "@21n/layout/navigator/Navigator.svelte";
+import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+import Today from "@21n/components/calendar/Today.svelte";
+
+const openInRightPanelFunction = (action: Action) => async () => {
+  const paramPresent = new URLSearchParams(window.location.search).get(
+    AppSearchParam.RIGHT
+  );
+  if (paramPresent && paramPresent === action) {
+    appStore.toggleSearchParam([AppSearchParam.RIGHT]);
+  } else {
+    appStore.toggleSearchParam({
+      [AppSearchParam.RIGHT]: action
+    });
+  }
+};
 
 export const globalActions: IAction[] = [
   {
@@ -432,6 +449,7 @@ export const globalActions: IAction[] = [
   },
   {
     action: Action.CMD,
+    icon: "terminal-window",
     label: "Command bar",
     component: CommandBar,
     type: ActionType.MODAL,
@@ -915,12 +933,15 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: Action.GLOBAL_SEARCH,
+    action: Action.GLOBAL_SEARCH_MODAL,
     component: ResourceSearchModal,
-    label: "Search resources",
+    label: "Search",
     // type: ActionType.MODAL,
     type: ActionType.RESOURCE,
     accessMode: ResourceAccessMode.POP,
+    preCondition: () => {
+      return view.get().isConstrainedWidth;
+    },
     modalParams: {
       isShowOverlay: false,
       layout: {
@@ -928,6 +949,25 @@ export const globalActions: IAction[] = [
         size: Size.xl,
         ignoreSafeArea: true,
         isShowCantileverClose: true
+      }
+    }
+  },
+  {
+    action: Action.GLOBAL_SEARCH,
+    component: ResourceSearchModal,
+    label: "Search",
+    icon: "search",
+    type: ActionType.FUNCTION,
+    fn: async () => {
+      const currentValue = new URLSearchParams(window.location.search).get(
+        AppSearchParam.SEARCH
+      );
+      if (currentValue) {
+        return appStore.toggleSearchParam([AppSearchParam.SEARCH]);
+      } else {
+        return appStore.toggleSearchParam({
+          [AppSearchParam.SEARCH]: true
+        });
       }
     }
   },
@@ -1056,5 +1096,38 @@ export const globalActions: IAction[] = [
         isOveriddenFooter: true
       }
     }
+  },
+  {
+    action: Action.NAVIGATOR,
+    icon: "ph:compass-light",
+    label: "Navigator",
+    type: ActionType.FUNCTION,
+    component: Navigator,
+    rightPanelParams: {
+      size: Size.sm
+    },
+    fn: openInRightPanelFunction(Action.NAVIGATOR)
+  },
+  {
+    action: Action.TODAY,
+    icon: "calendar-blank",
+    label: "Today",
+    type: ActionType.FUNCTION,
+    component: Today,
+    rightPanelParams: {
+      size: Size.md
+    },
+    fn: openInRightPanelFunction(Action.TODAY)
+  },
+  {
+    action: Action.RHOMBUS,
+    icon: "rhombus",
+    label: "Rhombus",
+    type: ActionType.FUNCTION,
+    component: ComingSoonView,
+    rightPanelParams: {
+      size: Size.md
+    },
+    fn: openInRightPanelFunction(Action.RHOMBUS)
   }
 ];

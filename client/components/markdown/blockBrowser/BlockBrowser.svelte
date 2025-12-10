@@ -12,8 +12,9 @@
   import context from "@21n/stores/context.store";
   import type { IBlockBrowserSection } from "@21n/components/markdown/blockBrowser/blockBrowser.type";
   import { resolveBlockBrowserConfig } from "@21n/components/markdown/blockBrowser/blockBrowser.utils";
+  import { Context } from "@21n/types/appStore.type";
   const dispatch = createEventDispatcher();
-  const nodeContext = getContext<any>("node");
+  const nodeContext = getContext<any>(Context.NODE);
 
   export let variant: "v1" | "v2" = "v2";
   export let isSingleColumnMode: boolean = false;

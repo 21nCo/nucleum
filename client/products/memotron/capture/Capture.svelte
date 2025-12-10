@@ -40,6 +40,7 @@
   import ComponentShortcutListener from "@21n/components/shortcuts/ComponentShortcutListener.svelte";
   import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
   import { Action } from "@21n/types/action.enum";
+  import { Context } from "@21n/types/appStore.type";
 
   export let captureId: IRecordId = generateResourceId(Resource.capture);
   export let isWindowDnD = false;
@@ -47,7 +48,7 @@
     id: captureId
   };
 
-  setContext("capture", captureContext);
+  setContext(Context.CAPTURE, captureContext);
   let captureStore: IActiveCaptureStore;
   if (captureId) captureStore = ActiveCaptureStore.resolve(captureId);
   isInEditMode.set(true);

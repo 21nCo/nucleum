@@ -66,19 +66,11 @@
 <UserBaseLayer on:ready={onReady}>
   <div slot="topnav" class="flex gap-1 items-center h-full">
     <TopNavLeftMenuItem
-      icon="mynaui:plus-hexagon"
-      tooltip="Capture"
-      shortcut={resourceAction(Resource.node, ResourceActionType.CREATE)}
-      on:click={() =>
-        appStore.runAction(
-          resourceAction(Resource.node, ResourceActionType.CREATE)
-        )}
+      action={resourceAction(Resource.node, ResourceActionType.CREATE)}
     />
     <FocusTopNavWidget />
     {#if isDebug}
-      <TopNavLeftMenuItem icon="feed" tooltip="Feed" />
-      <TopNavLeftMenuItem icon="calendar" tooltip="Today" />
-      <TopNavLeftMenuItem icon="rhombus" tooltip="Rhombus" />
+      <TopNavLeftMenuItem action="feed" isOpeningBehaviorConfigurable={true} />
     {/if}
   </div>
   <slot />

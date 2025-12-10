@@ -69,12 +69,10 @@
       ? bulkEditStore.clickHandler(item.id)
       : false;
     if (!result) {
-      if (defaultAccessMode !== ResourceAccessMode.INLINE)
-        tabs.activate(item.id);
-      else
-        appStore.resourceClickHandler(e, item.id, {
-          defaultTo: defaultAccessMode
-        });
+      appStore.resourceClickHandler(e, item.id, {
+        defaultTo: defaultAccessMode,
+        origin: accessPoint
+      });
     }
   }
 </script>

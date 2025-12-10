@@ -1,10 +1,7 @@
+import type { IContainer } from "@21n/layout/layout.type";
 import type { IAction } from "@21n/types/action.type";
 
-export type IViewStore = {
-  height: number;
-  width: number;
-  landscapiness: number;
-  isPortrait: boolean;
+export type IViewStore = IContainer & {
   scale: number;
   display: Display;
   isMinimalTopBar?: boolean;

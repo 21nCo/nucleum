@@ -18,6 +18,7 @@
   import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
   import { resolveProductConfig } from "@21n/products/product.config";
   import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { hTrail, vTrail } from "@21n/layout/topNav/tabs/tabs.store";
 
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
@@ -86,6 +87,8 @@
       toasts.reset();
     }
     isInEditMode.set(false);
+    hTrail.clear();
+    vTrail.clear();
     // console.log({ item, selected: current });
     if (
       current !== item.action ||

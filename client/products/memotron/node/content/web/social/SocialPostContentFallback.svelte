@@ -19,11 +19,12 @@
   import { ButtonStyle } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
   import { toasts } from "@21n/stores/notification.store";
+  import { Context } from "@21n/types/appStore.type";
 
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
 
-  const nodeContext = getContext<any>("node");
+  const nodeContext = getContext<any>(Context.NODE);
   let parent: any;
   let parentUsername: string = "";
   let oembedHtml: string | null = null;

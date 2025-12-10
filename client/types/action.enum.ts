@@ -5,7 +5,7 @@ export enum Action {
   EDIT_MODE = "EDIT_MODE",
   USER_LOGIN = "USER_LOGIN",
   USER_SIGNUP = "USER_SIGNUP",
-  HELP = "HELP",
+  HELP = "help",
   SETTINGS = "cp",
   ACCOUNT = "account",
   PYOD = "mod",
@@ -25,6 +25,7 @@ export enum Action {
   TERMS_OF_SERVICE = "tos",
   TERMS_OF_SERVICE_APPLE = "tosapple",
   GLOBAL_SEARCH = "global-search",
+  GLOBAL_SEARCH_MODAL = "global-search-modal",
   EXTENSTION_LOGIN = "ext_login",
   EXTENSTION_UNINSTALL = "EXTENSTION_UNINSTALL",
   MARKDOWN_SHORTCUTS = "MARKDOWN_SHORTCUTS",
@@ -55,5 +56,9 @@ export enum Action {
   SHORTCUTS = "shortcuts",
   ACCESSIBILITY = "accessibility",
   IMPORT_FROM_OTHER_APPS = "import-from-other-apps",
-  OFFLINE_STATUS = "offline-status"
+  OFFLINE_STATUS = "offline-status",
+  NAVIGATOR = "navigator",
+  RHOMBUS = "rhombus",
+  TODAY = "today",
+  FEED = "feed"
 }

@@ -23,11 +23,12 @@
   import { resolveContentPreview } from "@21n/products/memotron/node/node.utils";
   import { toasts } from "@21n/stores/notification.store";
   import ButtonGroup from "@21n/elements/button/ButtonGroup.svelte";
+  import { Context } from "@21n/types/appStore.type";
 
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
 
-  const nodeContext = getContext<any>("node");
+  const nodeContext = getContext<any>(Context.NODE);
   let oembedHtml: string | null = null;
   let error: string = "";
   let hasPermanentCopy = false;

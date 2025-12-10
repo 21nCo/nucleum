@@ -58,5 +58,5 @@
 {:else if action?.component}
   <svelte:component this={action?.component} {...params} />
 {:else if !isPreventErrorFeedback}
-  <PageError />
+  <PageError isNotFoundPage={true} />
 {/if}

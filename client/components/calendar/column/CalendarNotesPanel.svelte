@@ -24,6 +24,7 @@
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { Size } from "@21n/types/size.enum";
   import { page } from "$app/stores";
+  import { Context } from "@21n/types/appStore.type";
 
   export let date: Date;
   export let scale: TimeScaleUnit;
@@ -70,7 +71,7 @@
     contentType: NodeType.NODULAR_MARKDOWN
   };
 
-  setContext("node", nodeContext);
+  setContext(Context.NODE, nodeContext);
 </script>
 
 <SyncStatusListener resource={Resource.everything} bind:isSyncing />

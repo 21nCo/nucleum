@@ -27,6 +27,7 @@
   export let node: IClip | IWebPage;
   export let isLinkHovering: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  const dev_isShowCopyLinkAction = false;
   let youtubeVideoRef: YoutubeVideoPreview;
   let copyLabel: string = "Copy link";
   let copyTimeoutId: ReturnType<typeof setTimeout> | null = null;
@@ -83,7 +84,7 @@
       bind:this={youtubeVideoRef}
     />
   {/if}
-  {#if "url" in node && node.url && accessPoint === ResourceAccessPoint.SELF && !socialPostNodeTypeList.has(node.contentType)}
+  {#if dev_isShowCopyLinkAction && "url" in node && node.url && accessPoint === ResourceAccessPoint.SELF && !socialPostNodeTypeList.has(node.contentType)}
     <!-- TODO - TIDY-10 -->
     <div
       class="flex items-center max-w-full w-full border-b cw:border-y border-brs2 text-fgs3 text-b2 truncate cw:mb-10"

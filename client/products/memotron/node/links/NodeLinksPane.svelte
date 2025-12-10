@@ -339,7 +339,11 @@
   function onClick(e: CustomEvent) {
     resolveBulkEditorInstance();
     const result = bulkEditStore.clickHandler(e.detail.id);
-    if (!result) appStore.resourceClickHandler(e.detail.event, e.detail.id);
+    if (!result) {
+      appStore.resourceClickHandler(e.detail.event, e.detail.id, {
+        origin: $node.id
+      });
+    }
   }
 
   function onAction(e: CustomEvent) {

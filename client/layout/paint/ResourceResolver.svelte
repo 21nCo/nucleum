@@ -34,14 +34,14 @@
       if (!resource || resource === Resource.unknown) return;
       const action = appStore.resolveAction(resource);
       if (!action) return;
-      appStore.update(s => ({ ...s, currentComponent: action }));
+      appStore.update((s) => ({ ...s, currentComponent: action }));
     } catch (e) {
       logger.error("ResourceResolver.setCurrentComponent - error", e);
     }
   }
 </script>
 
-{#key refreshId}
+{#key refreshId + id}
   <ComponentResolver
     path={id.split(":")[0]}
     params={{ id, isFromSplitView, accessMode, ...componentParams }}

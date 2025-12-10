@@ -58,5 +58,12 @@ export const nucleusActions: IAction[] = [
     icon: "home",
     component: ComingSoonView,
     type: ActionType.PAGE
+  },
+  {
+    action: Action.FEED,
+    label: "Feed",
+    icon: "feed",
+    component: ComingSoonView,
+    type: ActionType.PAGE
   }
 ];

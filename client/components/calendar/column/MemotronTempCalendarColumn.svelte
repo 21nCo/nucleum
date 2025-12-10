@@ -12,6 +12,7 @@
   import CalendarNotesPanel from "@21n/components/calendar/column/CalendarNotesPanel.svelte";
   import { AlertType, type IInlineStatus } from "@21n/types/notification.type";
   import { setContext } from "svelte";
+  import { Context } from "@21n/types/appStore.type";
   import { Size } from "@21n/types/size.enum";
   import { debouncer } from "@21n/utils/utils";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
@@ -58,7 +59,7 @@
     publish: handleContentEvent
   };
 
-  setContext("calendar-content", calendarContentContext);
+  setContext(Context.CALENDAR_CONTENT, calendarContentContext);
 
   function openNotesInFullScreen() {
     const id = resolveCalendarNotesId(date, scale);

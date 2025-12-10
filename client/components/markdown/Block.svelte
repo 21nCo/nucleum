@@ -78,6 +78,7 @@
     type IActiveCaptureStore
   } from "@21n/products/memotron/capture/capture.store";
   import Check from "@21n/icons/Check.svelte";
+  import { Context } from "@21n/types/appStore.type";
 
   const dispatch = createEventDispatcher();
 
@@ -102,10 +103,10 @@
   $: isSoleBlock =
     isSameResource($mdStore.blocks[0], block) && $mdStore.blocks.length === 1;
 
-  const markdownContext = getContext<any>("markdown");
-  const nodeContext = getContext<any>("node");
-  const contentContext = getContext<any>("content");
-  const captureContext = getContext<any>("capture");
+  const markdownContext = getContext<any>(Context.MARKDOWN);
+  const nodeContext = getContext<any>(Context.NODE);
+  const contentContext = getContext<any>(Context.CONTENT);
+  const captureContext = getContext<any>(Context.CAPTURE);
   let captureStore: IActiveCaptureStore | undefined;
   $: if (nodeContext?.id || captureContext?.id) {
     const id = nodeContext?.id
@@ -117,7 +118,7 @@
   const blockContext = {
     publish: blockEvent
   };
-  setContext("block", blockContext);
+  setContext(Context.BLOCK, blockContext);
 
   function propagate(event: string, data: any) {
     markdownContext({

@@ -49,6 +49,7 @@
   let isWindowVisible: boolean = true;
   let isDialogEnabled: boolean = false;
   let isInFocusMode = false;
+  const dev_isRenderPopAsModal = false;
 
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
@@ -59,12 +60,14 @@
       }
     });
     const pageSub = page.subscribe((value) => {
-      const popParam =
-        value.url.searchParams.get(ResourceAccessMode.POP) ?? undefined;
-      if (popParam) {
-        resolvePop(popParam);
-      } else {
-        pop = undefined;
+      if (dev_isRenderPopAsModal) {
+        const popParam =
+          value.url.searchParams.get(ResourceAccessMode.POP) ?? undefined;
+        if (popParam) {
+          resolvePop(popParam);
+        } else {
+          pop = undefined;
+        }
       }
       fullscreen =
         value.url.searchParams.get(ResourceAccessMode.FULL) ?? undefined;

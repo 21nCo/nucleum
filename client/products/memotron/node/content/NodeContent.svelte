@@ -38,6 +38,7 @@
     resourceInList
   } from "@21n/components/flux/resourceStores/resource.utils";
   import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
+  import { Context } from "@21n/types/appStore.type";
 
   export let node: IActiveNodeStore;
   export let mdId: string;
@@ -47,7 +48,7 @@
   let markdownRef: any;
   let dev_isEnableBottomDivider: boolean = false;
 
-  const calendarContentContext = getContext<any>("calendar-content");
+  const calendarContentContext = getContext<any>(Context.CALENDAR_CONTENT);
 
   function propagateSavingFeedback(event: string, data: any = {}) {
     if (calendarContentContext?.publish) {
@@ -73,7 +74,7 @@
   const contentContext = {
     publish: handleEvent
   };
-  setContext("content", contentContext);
+  setContext(Context.CONTENT, contentContext);
 
   let focusEventSub: any;
 

@@ -6,7 +6,10 @@
     ResourceAccessMode,
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
-  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
+  import {
+    determineResourceType,
+    isRecordId
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
   import { resolveResource } from "@21n/components/record/record.store";
   import { appStore } from "@21n/stores/app.store";
@@ -32,6 +35,7 @@
   const dispatch = createEventDispatcher();
   export let item: IRecordId;
   export let isInterimTab: boolean = false;
+  export let isTrail: boolean = false;
   let resource: any;
   let action: any;
   let isHovering: boolean = false;
@@ -51,11 +55,21 @@
     }
   ];
   $: isActive =
-    item.toString() === $page.url.searchParams.get(ResourceAccessMode.TAB);
+    item.toString() === $page.url.searchParams.get(ResourceAccessMode.POP);
   onMount(async () => {
-    resourceType = determineResourceType(item);
-    action = appStore.resolveAction(resourceType);
-    resource = await resolveResource(item);
+    if (isRecordId(item)) {
+      resourceType = determineResourceType(item);
+      action = appStore.resolveAction(resourceType);
+      resource = await resolveResource(item);
+    } else {
+      action = appStore.resolveAction(item);
+      if (action) {
+        resource = {
+          label: action.label,
+          icon: action.icon
+        };
+      }
+    }
   });
 
   function resolveContextMenu() {
@@ -84,9 +98,9 @@
 </script>
 
 <div
-  class={cn("border--x border--r-brs3 border-l-transparent max-h-full", {
+  class={cn("border--x border--r-brs3 border-l-transparent max-h-full z-10", {
     "h-full": !isInterimTab && dev_isFullHeightTabStyle,
-    "p-1": !dev_isFullHeightTabStyle || isInterimTab
+    "p-1": !isTrail && (!dev_isFullHeightTabStyle || isInterimTab)
   })}
 >
   <button
@@ -108,14 +122,21 @@
       threshold: 30
     }}
     class={cn(
-      "relative flex items-center text-b2 gap-2 max-w-48 min-w-24 truncate",
+      "relative z-20 flex items-center text-b2 gap-2 truncate",
       // abg(isActive, 1),
       {
         "rounded-md": !dev_isFullHeightTabStyle || isInterimTab,
-        "px-4 py-1.5": !isInterimTab,
-        "px-2 py-0.5 border border-dashed border-fgs4": isInterimTab,
+        "px-4 py-1.5": !isInterimTab && !isTrail,
+        "px-2 py-1 border": isInterimTab,
+        "border-transparent hover:border-dashed hover:border-brs3":
+          isInterimTab && !isActive,
+        "border-dashed border-brs4 bg-bgs3": isActive && isInterimTab,
+        "w-full": isTrail,
+        "bg-bgs2": isTrail && !isActive,
+        "max-w-48 min-w-24": !isTrail,
+        "px-1 py-1.5": !isInterimTab && isTrail,
         "hover:bg-bgs3 text-fgs2 hover:text-fgs1": !isActive,
-        "bg-bgs1": isActive
+        "bg-bgs1": !isInterimTab && isActive
       },
       !isInterimTab &&
         dev_isFullHeightTabStyle && {
@@ -136,10 +157,15 @@
           accessPoint={ResourceAccessPoint.TABS}
         />
       {:else}
-        {isValidString(resource?.label) ? resource?.label : "Untitled"}
+        <span class="flex items-center gap-1">
+          {#if resource.icon}
+            <Icon icon={resource.icon} size={Size.sm} />
+          {/if}
+          {isValidString(resource?.label) ? resource?.label : "Untitled"}
+        </span>
       {/if}
     </div>
-    {#if isInterimTab}
+    {#if isInterimTab && !isTrail}
       <div class="flex items-center">
         <Button
           icon="ph:push-pin-light"
@@ -162,7 +188,7 @@
         />
       </div>
     {/if}
-    {#if !isInterimTab && (isHovering || $context.isTouchDevice)}
+    {#if !isTrail && !isInterimTab && (isHovering || $context.isTouchDevice)}
       <button
         class={cn(
           "absolute right-0 h-full rounded-r-md bg-gradient-to-l  to-transparent pl-10",
