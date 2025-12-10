@@ -250,6 +250,7 @@ export const resizable: Action<HTMLElement, ResizableOptions> = (
     }
 
     if (onResize) {
+      if (newHeight === 0) return;
       const landscapiness = newWidth / newHeight;
       const isPortrait = landscapiness < 1;
       onResize({
@@ -366,6 +367,7 @@ export function resizeListener(
   const resizeObserver = new ResizeObserver((entries) => {
     for (let entry of entries) {
       const { width, height } = entry.contentRect;
+      if (height === 0) continue;
       const landscapiness = width / height;
       const isPortrait = landscapiness < 1;
       callback({

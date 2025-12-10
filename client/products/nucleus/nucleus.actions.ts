@@ -60,7 +60,7 @@ export const nucleusActions: IAction[] = [
     type: ActionType.PAGE
   },
   {
-    action: "feed",
+    action: Action.FEED,
     label: "Feed",
     icon: "feed",
     component: ComingSoonView,

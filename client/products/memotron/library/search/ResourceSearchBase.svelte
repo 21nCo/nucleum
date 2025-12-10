@@ -227,12 +227,13 @@
     {#if isExpanded}
       <PanelSwitcher
         items={switchItems}
-        bind:value={$searchStore.resourceType}
+        value={$searchStore.resourceType}
         style={PanelSwitcherStyle.BAR}
         isExpandToFullWidth={true}
         {parentBgIndex}
         size={Size.sm}
-        on:switch={() => {
+        on:switch={(e) => {
+          searchStore.setResourceType(e.detail);
           setTimeout(() => {
             if (isGroupedResultsMode) {
               groupedSearchRef?.search($searchStore.query);

@@ -56,9 +56,7 @@ class TabStore {
         : typeof id === "object" && "tb" in id
           ? id.tb
           : undefined;
-    const queryParams: Record<string, IRecordId | string> = {
-      // tab: id
-    };
+    const queryParams: Record<string, IRecordId | string> = {};
     if (resolvedBack !== undefined && resolvedBack !== null) {
       queryParams.back = resolvedBack;
     }
@@ -68,9 +66,6 @@ class TabStore {
     appStore.openResource(id, ResourceAccessMode.POP, {
       searchParams: { ...queryParams }
     });
-    // appStore.gotoPath(`/${resource}/tab`, {
-    //   queryParams
-    // });
   }
 
   remove(id: IRecordId) {
@@ -129,6 +124,7 @@ function createHorizontalTrailStore() {
 
     remove(id: IRecordId) {
       update((trail) => ({
+        ...trail,
         path: trail.path.filter((t) => t !== id),
         activated: trail.activated === id ? undefined : trail.activated
       }));
@@ -185,7 +181,6 @@ function createVTrailStore() {
       const state = get(vTrail);
       let newState = { ...state };
       if (state.items.length < 1) {
-        console.log("init trail", origin);
         newState = {
           ...state,
           items: [id],
@@ -244,6 +239,7 @@ function createVTrailStore() {
         appStore.runAction(id);
         return;
       } else {
+        if (!isRecordId(id)) return;
         const parts = id.split("-");
         const recordId = parts[parts.length - 1];
         appStore.openResource(recordId, ResourceAccessMode.POP, {

@@ -62,13 +62,6 @@
     const targetPosition = itemIndex * ITEM_WIDTH;
     virtualScrollLeft = targetPosition;
     containerRef.scrollLeft = targetPosition;
-    console.log({
-      at: "scrollToItem",
-      item,
-      itemIndex,
-      targetPosition,
-      virtualScrollLeft
-    });
   }
 
   function onScroll(e: Event) {
@@ -86,7 +79,7 @@
   bind:this={containerRef}
   class="relative w-screen h-full overflow-x-auto overflow-y-hidden"
   on:scroll={onScroll}
-  style="scroll--behavior: smooth;"
+  style="scroll-behavior: smooth;"
 >
   <div class="relative h-full" style="width: {totalWidth}px;">
     {#each visibleItems as item, index (item)}

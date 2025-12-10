@@ -59,5 +59,6 @@ export enum Action {
   OFFLINE_STATUS = "offline-status",
   NAVIGATOR = "navigator",
   RHOMBUS = "rhombus",
-  TODAY = "today"
+  TODAY = "today",
+  FEED = "feed"
 }
