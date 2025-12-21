@@ -84,7 +84,7 @@
   </div>
 {:else if tasksByGoal}
   <div class="flex flex-col gap-2">
-    {#each tasksByGoal.groups.entries() as [goalId, group]}
+    {#each [...tasksByGoal.groups.entries()] as [goalId, group]}
       <div
         class="flex flex-col gap-1 pl-1 py-2 pr-1 border rounded-md border-brs2"
       >

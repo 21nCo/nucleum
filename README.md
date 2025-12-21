@@ -37,7 +37,7 @@
 | Memotron | [memotron.app](https://memotron.app) | **Your memory atlas**, a tool for managing your digital memory and personal knowledge.                  | Digital memory, PKM, Note‑taking, Knowledge management    |
 | Pointron | [pointron.app](https://pointron.app) | **Your focus haven**, a tool for tracking your goals and managing your time.     | Focus, Time management, Goal tracking                    |
 
-**Note:** All of the above tools are designed for personal use and lacks team/group featueres like collaboration, sharing, etc.
+**Note:** All of the above tools are designed for personal use and lack team/group features like collaboration, sharing, etc.
 
 *More tools coming soon...*
 

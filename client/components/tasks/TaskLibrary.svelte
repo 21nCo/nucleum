@@ -539,7 +539,17 @@
       {isRefreshing}
       {searchQuery}
       on:create={() => {
-        appStore.runAction(PointronAction.CREATE_TASK_INLINE);
+        appStore.runAction(PointronAction.CREATE_TASK_INLINE, {
+          componentParams: {
+            date:
+              selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
+              selectedSubType === TaskSubTypeForSwitcher.BY_MONTH
+                ? selectedDate
+                : undefined,
+            goalId: goalId,
+            collectionId: collectionId
+          }
+        });
       }}
     />
     <div

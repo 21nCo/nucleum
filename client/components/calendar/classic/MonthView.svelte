@@ -167,6 +167,7 @@
       {@const isNotCurrentMonth = day.getMonth() !== selectedDate.getMonth()}
       {@const isInSelectedWeek =
         selectedScale === TimeScaleUnit.WEEK &&
+        day.getFullYear() === selectedDate.getFullYear() &&
         getWeekNumber(day) === getWeekNumber(selectedDate)}
       <button
         class={cn(

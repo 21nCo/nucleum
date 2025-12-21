@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import "@21n/fonts";
   import view from "@21n/stores/view.store";
   import { AppSkin } from "@21n/types/appearance.type";
   import { postDataToParent } from "@21n/utils/embed.utils";

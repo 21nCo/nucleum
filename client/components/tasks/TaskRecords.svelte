@@ -41,7 +41,16 @@
   let completedTasksCount: number = 0;
   let isShowCompletedTasks: boolean = refreshShowCompletedTasksState();
   const inboxZeroIllustrations = ["inboxZero", "travel", "check", "globe"];
+  let selectedIllustration: string | undefined = undefined;
   $: _data = applyFilters(data, { isShowCompletedTasks });
+  
+  $: {
+    if (accessPoint === ResourceAccessPoint.CALENDAR && completedTasksCount > 0 && !selectedIllustration) {
+      selectedIllustration = inboxZeroIllustrations[Math.floor(Math.random() * 4)];
+    } else if (completedTasksCount === 0) {
+      selectedIllustration = undefined;
+    }
+  }
 
   $: tasksByDate =
     subType === TaskSubTypeForSwitcher.BY_MONTH
@@ -217,10 +226,7 @@
         : undefined}
       actionShortcut={Action.CREATE}
       on:click={handleCreateTask}
-      emptyIllustration={accessPoint === ResourceAccessPoint.CALENDAR &&
-      completedTasksCount > 0
-        ? inboxZeroIllustrations[Math.floor(Math.random() * 4)]
-        : undefined}
+      emptyIllustration={selectedIllustration}
     >
       {#if completedTasksCount > 0}
         <div class="my-4">
