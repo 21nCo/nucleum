@@ -24,7 +24,7 @@ jobs:
           node-version: 20
           cache: npm
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
       - name: Run unified test suite
         run: npm run test
       - name: Upload coverage to Codecov
@@ -58,7 +58,7 @@ jobs:
           node-version: 20
           cache: npm
       - name: Install dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
         working-directory: apps/e2e-playwright
