@@ -4,6 +4,14 @@ import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { CalendarColumnLayout, CalendarColumnPanel } from "./calendar.type";
 import { Product } from "@21n/products/product.type";
 
+/**
+ *
+ * Note: using reference date for week notes instead of week number to avoid different week resolution issues. The Thursday of the week is used as reference day of the week irrespective of first day of week, week resolution strategy (ISO vs 1st date of the year etc)
+ *
+ * @param date
+ * @param scale
+ * @returns
+ */
 export function resolveCalendarNotesId(date: Date, scale: TimeScaleUnit) {
   let idPart = "";
   if (scale === TimeScaleUnit.YEAR) {
@@ -13,7 +21,11 @@ export function resolveCalendarNotesId(date: Date, scale: TimeScaleUnit) {
       date.getFullYear().toString() +
       String(date.getMonth() + 1).padStart(2, "0");
   } else if (scale === TimeScaleUnit.WEEK) {
-    //TODO - calculate for week
+    idPart =
+      date.getFullYear().toString() +
+      String(date.getMonth() + 1).padStart(2, "0") +
+      "week" +
+      String(date.getDate()).padStart(2, "0");
   } else if (scale === TimeScaleUnit.DAY) {
     idPart =
       date.getFullYear().toString() +

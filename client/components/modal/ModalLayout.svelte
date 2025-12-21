@@ -22,7 +22,7 @@
   import { appStore } from "@21n/stores/app.store";
   import { popover, tooltip } from "@21n/actions/popover.action";
   import { Placement } from "@21n/types/direction.enum";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import view from "@21n/stores/view.store";
   import ButtonTooltip from "@21n/elements/button/ButtonTooltip.svelte";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
@@ -31,7 +31,6 @@
   export let path: string;
   export let resource: string | undefined = undefined;
   export let params: ModalParams;
-  export let isInFocusMode = false;
   let size: Size = Size.md;
   if (params.layout?.size) size = params.layout.size;
   let footerRef: any;
@@ -56,7 +55,7 @@
   export function close() {
     footerRef.close();
   }
-  function handleClose(accessMode?: ResourceAccessMode) {
+  function handleClose(accessMode?: AccessMode) {
     if (params.isDismissable === false) return;
     if (path === Action.CONFIRMATION) confirmationNotification.reset();
     else if (resource)
@@ -104,7 +103,7 @@
     class={cn(
       "relative modal flex flex-col items-center justify-between rounded-md embed-ios:bg-bgs1 cw:w-full cw:h-full",
       {
-        "dark:border border-brs3": !isInFocusMode && !$view.isConstrainedWidth,
+        "dark:border border-brs3": !$view.isConstrainedWidth,
         "otop:pt-12": !resource || params.title,
         "w-full h-full": !params.layout?.isDynamicSize
       },
@@ -169,10 +168,10 @@
         isShowClose={params.layout?.isShowClose}
       />
     {/if}
-    {#if params.layout?.isShowCantileverClose && !isInFocusMode}
+    {#if params.layout?.isShowCantileverClose}
       <button
         class="absolute top-2 -right-10 bg-ars1 w-10 h-12 rounded-r-md flex justify-center items-center hover:brightness-110"
-        on:click={() => handleClose(ResourceAccessMode.POP)}
+        on:click={() => handleClose(AccessMode.POP)}
         use:popover={{
           content: ButtonTooltip,
           triggerMethod: [PopoverTriggerMethod.HOVER],
@@ -190,7 +189,7 @@
         <Icon icon="cross" size={Size.lg} class="stroke-abg" />
       </button>
     {/if}
-    {#if params.layout?.isShowBackButton && !isInFocusMode}
+    {#if params.layout?.isShowBackButton}
       <button
         class="absolute top-16 -right-10 bg-bgs4 w-10 h-12 rounded-r-md flex justify-center items-center hover:brightness-110"
         on:click={() => appStore.goBack(resource)}

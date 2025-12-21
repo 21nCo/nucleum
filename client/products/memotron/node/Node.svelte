@@ -5,17 +5,18 @@
     type IActiveNodeStore
   } from "@21n/products/memotron/node/node.store";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
   import {
     mediaNodeTypeList,
+    NodeType,
     NodeView,
     webNodeTypeList
   } from "@21n/products/memotron/node/node.type";
   import MediaNode from "@21n/products/memotron/node/base/MediaNode.svelte";
   import NonMediaNode from "@21n/products/memotron/node/base/NonMediaNode.svelte";
-  import { onDestroy, onMount, setContext } from "svelte";
+  import { onDestroy, setContext } from "svelte";
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { debouncer } from "@21n/utils/utils";
@@ -26,15 +27,21 @@
   import { AppSearchParam } from "@21n/types/appStore.type";
   import ComponentEmbedLayer from "@21n/layout/layers/ComponentEmbedLayer.svelte";
   import context from "@21n/stores/context.store";
-  import { resizeListener } from "@21n/actions/resize.action";
-  import viewStore from "@21n/stores/view.store";
   import NodePanelSwitcher from "./floatingBar/NodePanelSwitcher.svelte";
   import { fly } from "svelte/transition";
   import { resolvePanelParam } from "@21n/components/resource/panelParam.mixin";
   import { Context } from "@21n/types/appStore.type";
+  import { getContext } from "svelte";
+  import { readable, type Writable } from "svelte/store";
+  import type { IContainer } from "@21n/layout/layout.type";
+  import { resolveMinWidth } from "@21n/layout/layout.utils";
+
+  const container =
+    getContext<Writable<IContainer | undefined>>(Context.CONTAINER) ||
+    readable(undefined);
 
   export let id: string;
-  export let accessMode: ResourceAccessMode;
+  export let accessMode: AccessMode;
 
   export let isFromSplitView: boolean = false;
   let view: NodeView = NodeView.CONTENT;
@@ -53,13 +60,13 @@
   let node: IActiveNodeStore;
   // $: if (id) node = resolveActiveNodeStore(id);
   $: if (id) node = ActiveNodeStore.resolve(id);
-  let containerWidth = 0;
-
   $: isConstrainedWidth =
-    $viewStore.isConstrainedWidth ||
-    containerWidth < 1000 ||
-    $node?.accessMode === ResourceAccessMode.SPLIT ||
-    $node?.accessMode === ResourceAccessMode.FSPLIT;
+    ($container &&
+      $container.width <
+        resolveMinWidth(
+          $node?.contentType === NodeType.NODULAR_MARKDOWN ? 3 : 2
+        )) ??
+    false;
 
   let isLoading = false;
   let error: any;
@@ -108,12 +115,7 @@
 {#if error}
   <EmptyStatusView mainText={error} isSearchContext={true} />
 {:else if $node && !isLoading}
-  <div
-    class="w-full h-full relative"
-    use:resizeListener={(e) => {
-      containerWidth = e.width;
-    }}
-  >
+  <div class="w-full h-full relative">
     {#if [...mediaNodeTypeList, ...webNodeTypeList].includes($node.contentType)}
       <MediaNode {node} nodeView={view} {isConstrainedWidth} />
     {:else}
@@ -140,6 +142,6 @@
   subscribeToResource={new Set([Resource.property])}
   on:change={debouncedInitialize}
 />
-{#if $context.isEmbed && accessMode !== ResourceAccessMode.POP && !isFromSplitView}
+{#if $context.isEmbed && accessMode !== AccessMode.POP && !isFromSplitView}
   <ComponentEmbedLayer isBackNavigable={true} />
 {/if}

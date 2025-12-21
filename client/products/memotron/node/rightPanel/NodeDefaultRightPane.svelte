@@ -1,12 +1,15 @@
 <script lang="ts">
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import Text from "@21n/elements/text/Text.svelte";
   import { Size } from "@21n/types/size.enum";
   import { TextStyle } from "@21n/types/text.enum";
   import { type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
-  import { canHaveTraces } from "@21n/products/memotron/node/node.type";
+  import {
+    canHaveTraces,
+    socialPostNodeTypeList
+  } from "@21n/products/memotron/node/node.type";
   import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
   import { appStore } from "@21n/stores/app.store";
   import { focusById } from "@21n/actions/focusById.action";
@@ -17,6 +20,8 @@
   import CollectionsLane from "../floatingBar/CollectionsLane.svelte";
   import PropertiesPane from "@21n/components/collection/properties/PropertiesPane.svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import WebNodeUrlSegment from "../content/web/WebNodeUrlSegment.svelte";
+  import SocialPostActions from "../content/web/SocialPostActions.svelte";
   export let node: IActiveNodeStore;
   let _notes = $node.notes;
   const notesInputId = generateSimpleRandomId();
@@ -29,95 +34,106 @@
   $: _label = resolveNodeLabel($node);
 </script>
 
-<div class="flex flex-col gap-4 w-full h-full bg-bgs2 cw:p-2 px-3">
-  <div class="flex w-full justify-between">
-    <NodeTitle
-      node={$node}
-      on:labelChange={(e) => {
-        if ($node.label !== undefined) node.modify({ label: $node.label });
-      }}
-      on:editModeChange={(e) => {
-        node.toggleEditMode(e.detail);
-      }}
-    />
-  </div>
-  <div class="flex w-full justify-between">
-    <CollectionsLane {node} />
-  </div>
-  <div class="w-full">
-    <PropertiesPane
-      item={node}
-      resource={Resource.node}
-      isVisibleProps={true}
-    />
-  </div>
-  <div class="w-full grid grid-cols-3 gap-3 px-2 dp:px-3">
-    {#if _label && typeof _label === "object" && "parent" in _label}
-      <InfoCard
-        label="Parent"
-        value={_label.parent.label}
-        parentBgIndex={0}
-        span="col-span-2"
-        on:click={(e) => {
-          appStore.resourceClickHandler(e, _label?.parent.id, {
-            replaceId: $node.id,
-            defaultTo: ResourceAccessMode.POP
-          });
+<div class="flex flex-col w-full h-full bg-bgs2">
+  <section class="flex flex-col cw:px-2 px-3 pb-6">
+    <div class="flex w-full justify-between py-2">
+      <NodeTitle
+        node={$node}
+        on:labelChange={(e) => {
+          if ($node.label !== undefined) node.modify({ label: $node.label });
+        }}
+        on:editModeChange={(e) => {
+          node.toggleEditMode(e.detail);
         }}
       />
-    {/if}
-    <InfoCard
-      label="Saved at"
-      value={$node.createdAt}
-      parentBgIndex={0}
-      on:click={() => node.switchPanel(ResourcePanelType.METADATA)}
-    />
-    <!-- <InfoCard label="Genre" value={"Sci fi (3 items in library)"} parentBgIndex={0}
+    </div>
+    <div class="flex w-full justify-between">
+      <CollectionsLane {node} />
+    </div>
+  </section>
+  <section class="overflow-y-auto w-full flex flex-col">
+    <div class="w-full grid grid-cols-3 gap-3 cw:px-2 px-3 pb-6">
+      {#if _label && typeof _label === "object" && "parent" in _label}
+        <InfoCard
+          label="Parent"
+          value={_label.parent.label}
+          parentBgIndex={0}
+          span="col-span-2"
+          on:click={(e) => {
+            appStore.resourceClickHandler(e, _label?.parent.id, {
+              origin: $node.id
+            });
+          }}
+        />
+      {/if}
+      <InfoCard
+        label="Saved at"
+        value={$node.createdAt}
+        parentBgIndex={0}
+        on:click={() => node.switchPanel(ResourcePanelType.METADATA)}
+      />
+      <!-- <InfoCard label="Genre" value={"Sci fi (3 items in library)"} parentBgIndex={0}
       on:click={() => (pane = ResourcePanelType.LINKS)}
       /> -->
-    <InfoCard
-      label="Links"
-      value={$node.links?.length || 0}
-      parentBgIndex={0}
-      on:click={() => node.switchPanel(ResourcePanelType.LINKS)}
-    />
-    {#if canHaveTraces.includes($node.contentType)}
       <InfoCard
-        label="Bookmarks"
-        value={$node.clips?.length || 0}
+        label="Links"
+        value={$node.links?.length || 0}
         parentBgIndex={0}
-        on:click={() => node.switchPanel(ResourcePanelType.BOOKMARKS)}
+        on:click={() => node.switchPanel(ResourcePanelType.LINKS)}
       />
+      <InfoCard
+        label="Properties"
+        value={$node.properties?.length || 0}
+        parentBgIndex={0}
+        on:click={() => node.switchPanel(ResourcePanelType.PROPERTIES)}
+      />
+      {#if canHaveTraces.includes($node.contentType)}
+        <InfoCard
+          label="Bookmarks"
+          value={$node.clips?.length || 0}
+          parentBgIndex={0}
+          on:click={() => node.switchPanel(ResourcePanelType.BOOKMARKS)}
+        />
+      {/if}
+    </div>
+    <div class="w-full cw:px-2 px-3 pb-6">
+      <PropertiesPane
+        item={node}
+        resource={Resource.node}
+        isVisibleProps={true}
+      />
+    </div>
+    {#if "url" in $node && $node.url}
+      <div class="w-full">
+        {#if socialPostNodeTypeList.has($node.contentType)}
+          <SocialPostActions node={$node} />
+        {:else}
+          <WebNodeUrlSegment url={$node.url} />
+        {/if}
+      </div>
     {/if}
-  </div>
-  <div
-    class="flex flex-col gap-1 items-start w-full flex-1 min-h-0 max-h-1/2 border-t border-brs2 pt-1"
-  >
-    <span
-      class="flex flex-row justify-between items-center w-full px-2 dp:px-3"
+    <div
+      class="relative flex flex-col gap-1 items-start w-full flex-1 min-h-0 max-h-1/2 border-t border-brs2 pt-1"
     >
-      <span class="flex flex-row gap-1 items-center">
-        <Text content="Side notes" style={TextStyle.SECTION_HEADING} />
-      </span>
-      <span>
+      <span
+        class="absolute top-0 right-0 z-10 mt-1 mr-1 bg-bgs2 bg-opacity-50 hover:bg-opacity-100"
+      >
         <Button
           icon="expand"
+          tooltip="Expand side notes"
           size={Size.sm}
           parentBgIndex={2}
           on:click={() => node.switchPanel(ResourcePanelType.SIDENOTES)}
         />
       </span>
-    </span>
-    <button
-      class="flex w-full flex-1 bg-bgs2 bg-opacity-60 px-4 pb-2 overflow-y-auto"
-      use:focusById={notesInputId}
-    >
-      <InlineMarkdownTextInput
-        id={notesInputId}
-        placeholder="Add notes"
-        bind:content={_notes}
-        on:debouncedChange={onNotesChange}
-      />
-    </button>
-  </div>
+      <button class="flex w-full flex-1 px-4 py-2" use:focusById={notesInputId}>
+        <InlineMarkdownTextInput
+          id={notesInputId}
+          placeholder="Start writing side notes here..."
+          bind:content={_notes}
+          on:debouncedChange={onNotesChange}
+        />
+      </button>
+    </div>
+  </section>
 </div>

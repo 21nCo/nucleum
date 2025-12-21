@@ -8,7 +8,7 @@
   import { TextStyle } from "@21n/types/text.enum";
   import { TimeScaleUnit } from "@21n/types/time.type";
   import { parseAndFormatDate } from "@21n/utils/time.utils";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import CalendarNotesPanel from "@21n/components/calendar/column/CalendarNotesPanel.svelte";
   import { AlertType, type IInlineStatus } from "@21n/types/notification.type";
   import { setContext } from "svelte";
@@ -64,7 +64,7 @@
   function openNotesInFullScreen() {
     const id = resolveCalendarNotesId(date, scale);
     if (!id) return;
-    appStore.openResource(id, ResourceAccessMode.FULL);
+    appStore.openResource(id, AccessMode.POP);
   }
 </script>
 
@@ -81,9 +81,12 @@
             ? "verbose"
             : scale === TimeScaleUnit.MONTH
               ? "mmm-yyyy"
-              : "yyyy"
+              : scale === TimeScaleUnit.WEEK
+                ? "week-yyyy"
+                : "yyyy"
         )}
         style={TextStyle.PANEL_HEADING_SMALL}
+        isPreventProperCasing={scale === TimeScaleUnit.WEEK}
       />
       <span class="text-b2 text-fgs3">| {properCase(scale)} Notes </span>
       <InlineFeedbackText {feedback} size={Size.sm} />
@@ -98,7 +101,7 @@
         icon="history"
         tooltip="History"
         on:click={() => {
-          appStore.openResource(Action.HISTORY, ResourceAccessMode.POP, {
+          appStore.openResource(Action.HISTORY, AccessMode.POP, {
             searchParams: { [AppSearchParam.DATE]: date.toISOString() }
           });
         }}

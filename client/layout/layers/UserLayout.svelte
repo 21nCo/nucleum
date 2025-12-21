@@ -1,7 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { appLoadingState, appStore } from "@21n/stores/app.store";
-  import { scheduledNotifications } from "@21n/stores/notification.store";
+  import {
+    appEvents,
+    scheduledNotifications
+  } from "@21n/stores/notification.store";
   import { postDataToParent } from "@21n/utils/embed.utils";
   import context from "@21n/stores/context.store";
   import view from "@21n/stores/view.store";
@@ -15,23 +18,25 @@
   import TopNav from "@21n/layout/topNav/TopNav.svelte";
   import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
   import RightPanel from "../rightPanel/RightPanel.svelte";
-  import ResourceSearchModal from "@21n/products/memotron/library/search/ResourceSearchModal.svelte";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { page } from "$app/stores";
   import BottomNav from "../bottomNav/BottomNav.svelte";
   import { hTrail } from "../topNav/tabs/tabs.store";
   import Trail from "../trail/Trail.svelte";
   import type { IAction } from "@21n/types/action.type";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import type { IRecordId } from "@21n/types/data.type";
   import ResourceResolver from "../paint/ResourceResolver.svelte";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import ComponentResolver from "../paint/ComponentResolver.svelte";
   let isHideLeftNavBar: boolean = refreshSidebarState();
 
-  let isSearchMode: boolean =
-    new URLSearchParams(window.location.search).get(AppSearchParam.SEARCH) ===
+  let isMaxMode: boolean =
+    new URLSearchParams(window.location.search).get(AppSearchParam.MAX) ===
     "true";
   let rightPanel: IAction | undefined = undefined;
   let pop: { id: IRecordId; action: IAction } | undefined = undefined;
+  let main: string | undefined = undefined;
 
   onMount(() => {
     const uiStateSub = uiState.subscribe(() => {
@@ -39,24 +44,30 @@
     });
     $appLoadingState.isLocalLoaded = true;
     const pageSub = page.subscribe((p) => {
-      isSearchMode = p.url.searchParams.get(AppSearchParam.SEARCH) === "true";
-      const rightPanelParam = p.url.searchParams.get(AppSearchParam.RIGHT);
+      isMaxMode = p.url.searchParams.get(AppSearchParam.MAX) === "true";
+      const rightPanelParam = p.url.searchParams.get(AccessMode.RIGHT);
       if (rightPanelParam) {
         rightPanel = appStore.resolveAction(rightPanelParam) ?? undefined;
       } else {
         rightPanel = undefined;
       }
-      const popParam =
-        p.url.searchParams.get(ResourceAccessMode.POP) ?? undefined;
+      const popParam = p.url.searchParams.get(AccessMode.POP) ?? undefined;
       if (popParam) {
         resolvePop(popParam);
       } else {
         pop = undefined;
       }
+      main = p.url.searchParams.get(AccessMode.MAIN) ?? undefined;
+    });
+    const appEventSub = appEvents.subscribe((x) => {
+      if (x.event === GlobalEvent.ESCAPE) {
+        appStore.closeResource({ isRestrictToModals: true });
+      }
     });
     return () => {
       if (uiStateSub) uiStateSub();
       if (pageSub) pageSub();
+      if (appEventSub) appEventSub();
     };
   });
 
@@ -109,27 +120,26 @@
           <LeftNav variant="fixed" />
         {/if}
         <div class="flex flex-col h-full w-full">
-          {#if !$view.isPortrait}
+          {#if !$view.isPortrait && !isMaxMode}
             <TopNav>
               <slot name="topnav" slot="topnav" />
             </TopNav>
           {/if}
           <div class="flex w-full flex-grow">
-            {#if $context.embed !== Embed.HANDSET && !isHideLeftNavBar}
-              <LeftNav variant="fixed" isHidePanel={!!pop || isSearchMode} />
+            {#if $context.embed !== Embed.HANDSET && !isHideLeftNavBar && !isMaxMode}
+              <LeftNav variant="fixed" isHidePanel={!!pop || !!main} />
             {/if}
             <div class="min-w-0 flex-grow relative">
-              {#if isSearchMode}
+              {#if main}
                 <div class="absolute inset-0 w-full h-full bg-bgs1 z-40">
-                  <ResourceSearchModal isInline={true} />
+                  <ComponentResolver path={main} params={{ isInline: true }} />
                 </div>
               {/if}
               {#if pop}
-                <div class="absolute inset-0 w-full h-full bg-bgs1 z-50">
-                  <ResourceResolver
-                    id={pop.id}
-                    accessMode={ResourceAccessMode.POP}
-                  />
+                <div
+                  class="absolute inset-0 flex justify-center w-full h-full bg-bgs1 z-50"
+                >
+                  <ResourceResolver id={pop.id} accessMode={AccessMode.POP} />
                 </div>
               {/if}
               {#if $hTrail.path.length > 0 && $hTrail.activated && (!$hTrail.isBaseNonRecord || ($hTrail.isBaseNonRecord && $hTrail.activated !== $hTrail.path[0]))}
@@ -144,7 +154,7 @@
                 </AppSplitView>
               {/if}
             </div>
-            {#if rightPanel}
+            {#if !$view.isConstrainedWidth && rightPanel}
               <RightPanel action={rightPanel} />
             {/if}
           </div>

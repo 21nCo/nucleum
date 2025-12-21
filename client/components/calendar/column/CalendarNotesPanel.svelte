@@ -10,7 +10,7 @@
   import type { TimeScaleUnit } from "@21n/types/time.type";
   import { setContext } from "svelte";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
   import { resolveCalendarNotesId } from "@21n/components/calendar/calendar.utils";
@@ -35,9 +35,9 @@
   let isFullScreenActive: boolean = false;
 
   $: {
-    const fullScreenParam = $page.url.searchParams.get(ResourceAccessMode.FULL);
+    const expandScreenParam = $page.url.searchParams.get(AccessMode.POP);
     const nodeId = resolveCalendarNotesId(date, scale);
-    isFullScreenActive = fullScreenParam === nodeId;
+    isFullScreenActive = expandScreenParam === nodeId;
   }
 
   async function initialize(scaleParam: TimeScaleUnit) {
@@ -57,7 +57,7 @@
     }
     node = ActiveNodeStore.resolve(id);
     const nodeInitResult = await node.init({
-      accessMode: ResourceAccessMode.INLINE,
+      accessMode: AccessMode.INLINE,
       accessPoint: ResourceAccessPoint.CALENDAR
     });
     if (nodeInitResult?.error) {
@@ -79,11 +79,9 @@
   <EmptyStatusView
     size={Size.sm}
     mainText="Temporarily unavailable."
-    subText={
-      isSyncing
-        ? "Calendar notes are not available while sync is in progress."
-        : "Calendar notes are hidden while full screen mode is active."
-    }
+    subText={isSyncing
+      ? "Calendar notes are not available while sync is in progress."
+      : "Calendar notes are hidden while full screen mode is active."}
   />
 {:else}
   {#await initialize(scale)}

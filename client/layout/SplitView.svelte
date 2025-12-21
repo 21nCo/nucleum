@@ -2,15 +2,14 @@
   import { onMount } from "svelte";
   import ResourceResolver from "@21n/layout/paint/ResourceResolver.svelte";
   import { page } from "$app/stores";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import RightSplit from "@21n/layout/RightSplit.svelte";
   export let id: string;
   let split: string | undefined = undefined;
   export let componentParams: any = {};
   onMount(() => {
     const sub = page.subscribe((value) => {
-      split =
-        value.url.searchParams.get(ResourceAccessMode.FSPLIT) ?? undefined;
+      split = value.url.searchParams.get(AccessMode.FSPLIT) ?? undefined;
     });
     return () => {
       sub();
@@ -28,6 +27,6 @@
     </slot>
   </div>
   {#if split}
-    <RightSplit {split} accessMode={ResourceAccessMode.FSPLIT} />
+    <RightSplit {split} accessMode={AccessMode.FSPLIT} />
   {/if}
 </div>

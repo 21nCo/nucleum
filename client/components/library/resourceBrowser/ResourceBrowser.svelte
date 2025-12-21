@@ -12,7 +12,7 @@
   import {
     ResourceAccessPoint,
     ResourceActionType,
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPointState
   } from "@21n/components/flux/resourceStores/resource.type";
   import { uiState } from "@21n/stores/uiState/uiState.store";
@@ -46,11 +46,7 @@
   const createShortcut = keyboardShortcuts?.resolveShortcutForAction("create");
 
   $: tooltip = resolveResourceTooltip(resource);
-  $: id = $page.url.searchParams.get(ResourceAccessMode.INLINE);
-  $: multiSelectContext = {
-    resource,
-    accessPoint: ResourceAccessPoint.BROWSER
-  };
+  $: id = $page.url.searchParams.get(AccessMode.INLINE);
   $: floatingButton =
     selectionCount > 0 || isHideCreateAction(resource)
       ? undefined
@@ -149,7 +145,7 @@
     <slot slot="right" name="right">
       {#key id}
         {#if id}
-          <ResourceResolver {id} accessMode={ResourceAccessMode.INLINE} />
+          <ResourceResolver {id} accessMode={AccessMode.INLINE} />
         {:else}
           <EmptyStatusView
             size={Size.lg}

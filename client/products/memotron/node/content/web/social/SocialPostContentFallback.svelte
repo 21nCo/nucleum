@@ -2,7 +2,7 @@
   import { appStore } from "@21n/stores/app.store";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { formatDatetime } from "@21n/utils/time.utils";
-  import { getContext, onMount } from "svelte";
+  import { createEventDispatcher, getContext, onMount } from "svelte";
   import { resolveContentPreview } from "@21n/products/memotron/node/node.utils";
   import {
     NodeType,
@@ -23,7 +23,7 @@
 
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-
+  const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>(Context.NODE);
   let parent: any;
   let parentUsername: string = "";
@@ -190,12 +190,22 @@
     <div class="flex justify-center items-center w-full gap-4">
       <Button
         style={ButtonStyle.PLAIN}
-        label="Copy text content"
+        label="Copy content"
         isUnderlined={true}
         size={Size.sm}
         on:click={(e) => {
           e.stopPropagation();
           copyTextContent();
+        }}
+      />
+      <Button
+        style={ButtonStyle.PLAIN}
+        label="View as embed"
+        isUnderlined={true}
+        size={Size.sm}
+        on:click={(e) => {
+          e.stopPropagation();
+          dispatch("viewEmbed");
         }}
       />
     </div>

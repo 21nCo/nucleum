@@ -1,7 +1,7 @@
 <script lang="ts">
   import { logger } from "@21n/components/debug/logger.client";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import {
     determineResourceType,
     isSameResource
@@ -11,10 +11,10 @@
   export let id: string;
   export let isFromSplitView: boolean = false;
   export let componentParams: any = {};
-  export let accessMode: ResourceAccessMode = ResourceAccessMode.INLINE;
+  export let accessMode: AccessMode = AccessMode.INLINE;
   let refreshId: number = new Date().getTime();
 
-  $: if (accessMode === ResourceAccessMode.TAB && id) setCurrentComponent();
+  $: if (accessMode === AccessMode.TAB && id) setCurrentComponent();
 
   function onReloadResource(e: CustomEvent) {
     const resource = e?.detail?.id;
@@ -22,14 +22,14 @@
     if (isSameResource(resource, id)) {
       refreshId = new Date().getTime();
     }
-    if (accessMode === ResourceAccessMode.TAB && isSameResource(resource, id)) {
+    if (accessMode === AccessMode.TAB && isSameResource(resource, id)) {
       setCurrentComponent();
     }
   }
 
   function setCurrentComponent() {
     try {
-      if (accessMode !== ResourceAccessMode.TAB) return;
+      if (accessMode !== AccessMode.TAB) return;
       const resource = determineResourceType(id);
       if (!resource || resource === Resource.unknown) return;
       const action = appStore.resolveAction(resource);

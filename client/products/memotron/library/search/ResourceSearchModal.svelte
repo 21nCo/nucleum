@@ -25,7 +25,7 @@
   on:close={() => {
     if (isInline) return;
     appStore.closeResource({
-      id: Action.GLOBAL_SEARCH
+      id: Action.SEARCH
     });
   }}
 >

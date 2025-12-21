@@ -29,9 +29,10 @@
     resolveCalendarColumnPanels,
     resolveCalendarNotesId
   } from "@21n/components/calendar/calendar.utils";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import DayTimeline from "./timeline/daytimeline/DayTimeline.svelte";
+  import BoxButton from "@21n/elements/button/BoxButton.svelte";
   const dispatch = createEventDispatcher();
 
   export let scale: TimeScaleUnit;
@@ -84,7 +85,7 @@
   function openNotesInFullScreen() {
     const id = resolveCalendarNotesId(date, scale);
     if (!id) return;
-    appStore.openResource(id, ResourceAccessMode.FULL);
+    appStore.openResource(id, AccessMode.POP);
   }
 </script>
 
@@ -120,16 +121,14 @@
         </div>
       </div>
       <div class="flex items-center gap-2 h-full">
-        <!-- TODO - open in full screen action -->
-        <!-- {#if !$view.isPortrait && selectedPanel === CalendarColumnPanel.Notes}
-          <Button
-            icon="fullscreen"
-            tooltip="Open notes in full screen"
-            style={ButtonStyle.OUTLINED}
+        {#if !$view.isPortrait && selectedPanel === CalendarColumnPanel.Notes}
+          <BoxButton
+            icon="expand"
+            tooltip="Expand notes"
             size={Size.sm}
             on:click={openNotesInFullScreen}
           />
-        {/if} -->
+        {/if}
         <CalendarColumnPanelSelector bind:selectedPanel {panels} />
       </div>
     </div>
@@ -166,20 +165,24 @@
             />
           {:else}
             <div
-              class="flex w-full justify-end gap-2 border-b border-brs2 h-10 min-h-10"
+              class={cn(
+                "flex w-full gap-2 border-b border-brs2 h-10 min-h-10",
+                {
+                  "justify-between": isShowNotesFullScreenButton,
+                  "justify-end": !isShowNotesFullScreenButton
+                }
+              )}
             >
-              <!--TODO - full screen button for notes panel -->
-              <!-- {#if isShowNotesFullScreenButton}
-                <div class="flex items-center">
-                  <Button
-                    icon="fullscreen"
-                    tooltip="Open notes in full screen"
-                    style={ButtonStyle.OUTLINED}
+              {#if isShowNotesFullScreenButton}
+                <div class="flex items-center w-10">
+                  <BoxButton
+                    icon="expand"
+                    tooltip="Expand notes"
                     size={Size.sm}
                     on:click={openNotesInFullScreen}
                   />
                 </div>
-              {/if} -->
+              {/if}
               <CalendarColumnPanelSelector bind:selectedPanel {panels} />
             </div>
           {/if}

@@ -219,7 +219,7 @@
           tooltip={recordingState === PlayActionState.NOT_STARTED
             ? "Go back"
             : undefined}
-          style={ButtonStyle.OUTLINED}
+          style={ButtonStyle.PLAIN}
         />
         {#if recordingState === PlayActionState.NOT_STARTED}
           <PlayerControl

@@ -9,10 +9,15 @@
   import { resizeListener } from "@21n/actions/resize.action";
   import { preferences } from "@21n/stores/preferences/preferences.store";
   import { Preference } from "@21n/stores/preferences/preferences.type";
+  import { tooltip } from "@21n/actions/popover.action";
+  import { Placement } from "@21n/types/direction.enum";
+  import { TimeScaleUnit } from "@21n/types/time.type";
+  import { getWeekNumber } from "@21n/utils/time.utils";
 
   export let selectedDate: Date;
   export let indicatorData: ICalendarIndicatorData[] = [];
   export let indicatorRefreshId: number = 0;
+  export let selectedScale: TimeScaleUnit = TimeScaleUnit.DAY;
 
   const dispatch = createEventDispatcher();
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -81,6 +86,25 @@
   }
 
   $: calendarDays = getDaysInMonth(selectedDate);
+
+  /**
+   *
+   * TODO - adjust the reference date of the week according to the first day of the week user preference - Use Thursday always as reference day of the week (used for saving calendar notes etc and avoiding data loss if user changes first day of the week)
+   *
+   * Current default first day of week is Sunday
+   *
+   * @param firstDay
+   */
+  function resolveReferenceDayOfWeek(firstDay: Date) {
+    const referenceDay = new Date(firstDay);
+    referenceDay.setDate(referenceDay.getDate() - referenceDay.getDay());
+    referenceDay.setDate(referenceDay.getDate() + 4);
+    return referenceDay;
+  }
+
+  function handleWeekSelect(weekReferenceDay: Date) {
+    dispatch("weekSelect", { date: weekReferenceDay });
+  }
 </script>
 
 <div
@@ -90,7 +114,14 @@
     containerWidth = e.width;
   }}
 >
-  <div class="grid grid-cols-7 h-full grid-rows-[auto_1fr_1fr_1fr_1fr_1fr_1fr]">
+  <div
+    class="grid grid-cols-[auto_1fr_1fr_1fr_1fr_1fr_1fr_1fr] h-full grid-rows-[auto_1fr_1fr_1fr_1fr_1fr_1fr]"
+  >
+    <div
+      class="h-10 flex items-center justify-center text-b4 text-fgs3 border-b border-r border-brs2 w-8 2k:w-10"
+    >
+      W
+    </div>
     {#each weekDays as day, index}
       <div
         class={cn(
@@ -104,10 +135,39 @@
       </div>
     {/each}
 
-    {#each calendarDays as day}
+    {#each calendarDays as day, dayIndex}
+      {#if dayIndex % 7 === 0}
+        {@const referenceDay = resolveReferenceDayOfWeek(day)}
+        {@const weekNumber = getWeekNumber(referenceDay)}
+        {@const isSelected =
+          selectedScale === TimeScaleUnit.WEEK &&
+          referenceDay.toDateString() === selectedDate.toDateString()}
+        <button
+          class={cn(
+            "flex items-center justify-center border-b border-r border-brs2",
+            {
+              "bg-bgs2 text-aps1 font-bold text-b2": isSelected,
+              "bg-bgs1 hover:bg-bgs2 hover:text-fgs1 text-fgs3 text-b3":
+                !isSelected
+            }
+          )}
+          use:tooltip={{
+            text: `${referenceDay.getFullYear()}: Week ${weekNumber}`,
+            direction: Placement.Right
+          }}
+          on:click={() => handleWeekSelect(referenceDay)}
+        >
+          {weekNumber}
+        </button>
+      {/if}
       {@const isToday = day.toDateString() === today.toDateString()}
-      {@const isSelected = day.toDateString() === selectedDate.toDateString()}
+      {@const isSelected =
+        selectedScale === TimeScaleUnit.DAY &&
+        day.toDateString() === selectedDate.toDateString()}
       {@const isNotCurrentMonth = day.getMonth() !== selectedDate.getMonth()}
+      {@const isInSelectedWeek =
+        selectedScale === TimeScaleUnit.WEEK &&
+        getWeekNumber(day) === getWeekNumber(selectedDate)}
       <button
         class={cn(
           "p-1.5 border-b border-brs2 relative group flex flex-col items-start",
@@ -119,7 +179,8 @@
             "notouch:hover:bg-bgs2-striped": !isToday && !isSelected,
             "bg-ass3 text-ass1 notouch:hover:bg-ass2/10":
               isToday && !isSelected,
-            "bg-aps3 text-aps1": isSelected
+            "bg-aps3 text-aps1": isSelected,
+            "bg-bgs2": isInSelectedWeek
           }
         )}
         on:click={() => {

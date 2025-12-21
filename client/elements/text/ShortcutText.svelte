@@ -20,13 +20,20 @@
   export let isAlwaysShown: boolean = false;
   let detail: IKeyboardShortcut | undefined = undefined;
   const iconKeys = new Map<KeyboardKey, string>([
-    [KeyboardKey.ENTER, "arrow-turn-down-left"],
-    [KeyboardKey.ARROW_LEFT, "arrow-left"],
-    [KeyboardKey.ARROW_RIGHT, "arrow-right"],
-    [KeyboardKey.ARROW_UP, "arrow-up"],
-    [KeyboardKey.ARROW_DOWN, "arrow-down"]
+    // [KeyboardKey.ENTER, "arrow-turn-down-left"],
+    // [KeyboardKey.ARROW_LEFT, "arrow-left"],
+    // [KeyboardKey.ARROW_RIGHT, "proceed"],
+    // [KeyboardKey.ARROW_UP, "arrow-up"],
+    // [KeyboardKey.ARROW_DOWN, "arrow-down"]
   ]);
-  const textReplacements = [{ key: KeyboardKey.ESCAPE, text: "Esc" }];
+  const textReplacements = [
+    { key: KeyboardKey.ESCAPE, text: "Esc" },
+    { key: KeyboardKey.ENTER, text: "Enter" },
+    { key: KeyboardKey.ARROW_RIGHT, text: "→" },
+    { key: KeyboardKey.ARROW_LEFT, text: "←" },
+    { key: KeyboardKey.ARROW_UP, text: "↑" },
+    { key: KeyboardKey.ARROW_DOWN, text: "↓" }
+  ];
 
   $: text = resolveText(shortcut);
   $: trimmedText = text?.trim();
@@ -100,11 +107,9 @@
         icon={iconKeys.get(detail?.key)}
         size={Size.xs}
         class={cn({
-          "stroke-fgs3": parentBgIndex !== undefined,
-          "fill-abg stroke-abg":
-            parentBgIndex === undefined && !isAccentOutlined,
-          "fill-aps1 stroke-aps1":
-            parentBgIndex === undefined && isAccentOutlined
+          "text-fgs3": parentBgIndex !== undefined,
+          "text-abg": parentBgIndex === undefined && !isAccentOutlined,
+          "text-aps1": parentBgIndex === undefined && isAccentOutlined
         })}
       />
     {:else if text && textReplacements.some( (x) => text?.includes(x.key.toUpperCase()) )}

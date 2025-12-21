@@ -18,7 +18,7 @@
     archivedResourceFilter
   } from "@21n/utils/utils";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+
   import {
     resourceInList,
     shiftResourceInArray

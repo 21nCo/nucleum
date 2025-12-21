@@ -9,7 +9,7 @@
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { Action } from "@21n/types/action.enum";
   import { InteractionMode } from "@21n/components/settings/interactionMode/interactionMode.type";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { UIStateScope } from "@21n/stores/uiState/uiState.type";
   import context from "@21n/stores/context.store";
   import { Embed } from "@21n/types/context.type";
@@ -58,7 +58,7 @@
       interactionMode === InteractionMode.AGENT &&
       shortcut.action === Action.CMD
     ) {
-      appStore.toggleSearchParam([ResourceAccessMode.TAB]);
+      appStore.toggleSearchParam([AccessMode.TAB]);
       event.preventDefault();
       return;
     }

@@ -2,7 +2,7 @@
   import type { IRecordId } from "@21n/types/data.type";
   import { onMount } from "svelte";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
   import { taskStore } from "@21n/components/tasks/task.store";
@@ -21,10 +21,7 @@
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { appStore } from "@21n/stores/app.store";
   import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
-  import {
-    AlertType,
-    type IInlineStatus
-  } from "@21n/types/notification.type";
+  import { AlertType, type IInlineStatus } from "@21n/types/notification.type";
   import TaskThumbnailGoalLabel from "@21n/components/tasks/TaskThumbnailGoalLabel.svelte";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
   import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
@@ -44,7 +41,7 @@
 
   export let id: IRecordId;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
+  export let accessMode: AccessMode = AccessMode.POP;
   export let accessPointId: IRecordId | undefined = undefined;
   let isRefreshing = false;
   let status: IInlineStatus | undefined = undefined;
@@ -260,9 +257,9 @@
   class={cn(
     "flex p-4 cw:w-full portrait:w-full cw:h-full otop:pt-12 h-[28rem]",
     {
-      "landscape:w-[32rem]": accessMode !== ResourceAccessMode.INLINE,
-      "w-full": accessMode === ResourceAccessMode.INLINE,
-      "w-full min-h-[28rem]": accessMode === ResourceAccessMode.SHEET
+      "landscape:w-[32rem]": accessMode !== AccessMode.INLINE,
+      "w-full": accessMode === AccessMode.INLINE,
+      "w-full min-h-[28rem]": accessMode === AccessMode.SHEET
     }
   )}
 >
@@ -287,7 +284,7 @@
             <TextSearchInput
               bind:value={goalSearchQuery}
               searchCallback={goalSearchGoalCallback}
-              placeholder="Assign to a goal"
+              placeholder="Search to assign a goal"
               icon="plus"
               on:select={onGoalSelect}
               style={InputStyle.PLAIN}

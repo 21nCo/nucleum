@@ -51,7 +51,7 @@
           {
             label: "Search",
             callback: async () => {
-              appStore.runAction(Action.GLOBAL_SEARCH);
+              appStore.runAction(Action.SEARCH);
             },
             icon: "search"
           },

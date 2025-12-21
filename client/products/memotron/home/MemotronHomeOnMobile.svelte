@@ -7,7 +7,7 @@
   import { SearchStore } from "@21n/components/record/record.store";
   import { resolveResourceIcon } from "@21n/components/flux/resourceStores/resource.utils";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceActionType
   } from "@21n/components/flux/resourceStores/resource.type";
   import Icon from "@21n/elements/Icon.svelte";
@@ -196,7 +196,7 @@
 
   function onInlineToastAction() {
     if (inlineToast?.data) {
-      appStore.openResource(inlineToast.data.id, ResourceAccessMode.POP);
+      appStore.openResource(inlineToast.data.id, AccessMode.POP);
     }
     onInlineToastClose();
   }

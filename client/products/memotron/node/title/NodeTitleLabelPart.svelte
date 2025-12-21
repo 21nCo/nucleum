@@ -10,7 +10,7 @@
   import { appStore } from "@21n/stores/app.store";
   import { cn } from "@21n/utils/ui.utils";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
   import NodeAvatar from "@21n/products/memotron/node/avatar/NodeAvatar.svelte";
@@ -96,7 +96,7 @@
                   accessPoint === ResourceAccessPoint.SELF
                     ? item.id
                     : undefined,
-                defaultTo: ResourceAccessMode.POP
+                defaultTo: AccessMode.POP
               });
             }}
           >

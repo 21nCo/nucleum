@@ -1,6 +1,6 @@
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
-  ResourceAccessMode,
+  AccessMode,
   ResourceActionType,
   type ResourceAccessPoint
 } from "@21n/components/flux/resourceStores/resource.type";
@@ -341,16 +341,13 @@ export function resolveResourceActionIcon(action: ResourceActionType) {
   }
 }
 
-export const determineResourceAccessMode = (
-  id: IRecordId
-): ResourceAccessMode => {
+export const determineResourceAccessMode = (id: IRecordId): AccessMode => {
   const searchParams =
     typeof window !== "undefined"
       ? new URLSearchParams(window.location.search)
       : new URLSearchParams();
-  const mode = (Object.values(ResourceAccessMode) as string[]).find(
-    (m) =>
-      m !== ResourceAccessMode.INLINE && searchParams.get(m) === id.toString()
+  const mode = (Object.values(AccessMode) as string[]).find(
+    (m) => m !== AccessMode.INLINE && searchParams.get(m) === id.toString()
   );
-  return (mode as ResourceAccessMode) || ResourceAccessMode.INLINE;
+  return (mode as AccessMode) || AccessMode.INLINE;
 };

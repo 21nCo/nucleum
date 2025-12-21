@@ -2,7 +2,7 @@
   import { onDestroy, onMount } from "svelte";
   import type { IRecordId } from "@21n/client/types/data.type";
   import { Resource } from "@21n/client/components/flux/resourceStores/resource.enum";
-  import { ResourceAccessMode } from "@21n/client/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/client/components/flux/resourceStores/resource.type";
   import { Size } from "@21n/client/types/size.enum";
   import { cn } from "@21n/client/utils/ui.utils";
   import Button from "@21n/client/elements/button/Button.svelte";
@@ -22,7 +22,7 @@
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import ComponentBaseLayer from "@21n/client/layout/layers/ComponentBaseLayer.svelte";
   export let id: IRecordId;
-  export let accessMode: ResourceAccessMode = ResourceAccessMode.INLINE;
+  export let accessMode: AccessMode = AccessMode.INLINE;
   export let isEmbedded: boolean = false;
   export let visitedCombinationIds: Set<string> = new Set();
 
@@ -326,7 +326,7 @@
     <CombinationResourceRenderer
       resourceId={selectedResourceId}
       resourceType={selectedResourceType}
-      accessMode={ResourceAccessMode.INLINE}
+      accessMode={AccessMode.INLINE}
       parentCombinationId={id}
       visitedCombinationIds={visitedForRenderer}
     />

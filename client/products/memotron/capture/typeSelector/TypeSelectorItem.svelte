@@ -61,10 +61,11 @@
   class={cn(
     "flex gap-1 dp:gap-2 items-center justify-center",
     {
-      "bg-aps3 border-aps1 text-aps1": isActive,
+      "bg-bgs2 text-aps1": isActive,
       "flex flex-col items-center justify-center gap-2 w-full h-24 px-1.5":
         isBoxed,
-      "notouch:hover:bg-bgs2 active:bg-bgs2 bg-bgs1": isBoxed && !isActive,
+      "notouch:hover:bg-bgs1-striped active:bg-bgs2 bg-bgs1":
+        isBoxed && !isActive,
       "px-3 dp:px-5 h-14 dp:h-16 rounded-md border": !isBoxed
     },
     !isBoxed && {
@@ -96,20 +97,21 @@
       {size}
       class={cn(
         {
-          "text-fgs1": isBoxed
+          "text-fgs1": isBoxed && !isActive && !item.isDisabled,
+          "text-aps1": isActive && !item.isDisabled,
+          "text-fgs3": item.isDisabled
         },
-        !isBoxed && {
-          "fill-aps1": isActive && !item.isDisabled,
-          "stroke-fgs1": !isActive && !item.isDisabled,
-          "stroke-fgs3": item.isDisabled
-        }
+        !isBoxed && {}
       )}
     />
   {/if}
   <div
     class={cn("whitespace-nowrap truncate userdata", {
-      "text-b3 dp:text-b2 text-fgs1 w-full": isBoxed,
-      "text-b2 dp:text-base": !isBoxed
+      "text-b3 dp:text-b2 w-full": isBoxed,
+      "text-b2 dp:text-base": !isBoxed,
+      "text-fgs1": isBoxed && !isActive && !item.isDisabled,
+      "text-aps1": isActive && !item.isDisabled,
+      "text-fgs3": item.isDisabled
     })}
   >
     {item.label ?? enumToString(item.value)}

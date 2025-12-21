@@ -2,9 +2,9 @@
   import { cubicOut } from "svelte/easing";
   import { fly } from "svelte/transition";
   import ResourceResolver from "@21n/layout/paint/ResourceResolver.svelte";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   export let split: string;
-  export let accessMode: ResourceAccessMode = ResourceAccessMode.SPLIT;
+  export let accessMode: AccessMode = AccessMode.SPLIT;
 </script>
 
 <div

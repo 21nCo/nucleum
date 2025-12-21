@@ -6,7 +6,7 @@
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import ErrorStatusPane from "@21n/elements/feedback/ErrorStatusPane.svelte";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
   import InlineTimeoutMessage from "@21n/elements/text/InlineTimeoutMessage.svelte";

@@ -27,10 +27,9 @@
   import context from "@21n/stores/context.store";
   import { Embed } from "@21n/types/context.type";
   import { createEventDispatcher } from "svelte";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { Action } from "@21n/types/action.enum";
   import { searchStore } from "@21n/components/search";
-  import { AppSearchParam } from "@21n/types/appStore.type";
 
   const dispatch = createEventDispatcher();
 
@@ -156,12 +155,12 @@
       return;
     }
     if ($view.isPortrait) {
-      appStore.openResource(item.id, ResourceAccessMode.FULL);
+      appStore.openResource(item.id, AccessMode.FULL);
       return;
     }
-    appStore.toggleSearchParam([AppSearchParam.SEARCH]);
+    appStore.toggleSearchParam([AccessMode.MAIN]);
     appStore.resourceClickHandler(e.detail.event, item.id, {
-      origin: Action.GLOBAL_SEARCH
+      origin: Action.SEARCH
     });
   }
 
@@ -311,7 +310,7 @@
         <span class="inline-flex items-center gap-1">
           Press
           <ShortcutText
-            shortcut={Action.GLOBAL_SEARCH}
+            shortcut={Action.SEARCH}
             parentBgIndex={2}
             isAlwaysShown={true}
           />

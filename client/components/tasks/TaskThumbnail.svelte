@@ -3,7 +3,7 @@
   import { Arrangement } from "@21n/types/direction.enum";
   import { Size } from "@21n/types/size.enum";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
   import ResourceThumbnailBase from "@21n/components/record/thumbnail/ResourceThumbnailBase.svelte";
@@ -51,6 +51,7 @@
   export let isApplyCustomColor: boolean = false;
   export let isDraggable: boolean = false;
   export let parentBgIndex: number = 1;
+  export let isShowGoal: boolean = false;
   let isHovering = false;
   let isDatePickerOpen = false;
   let isShowDatePickerOnCw = false;
@@ -120,7 +121,7 @@
     } else if (action === "openTask") {
       if ($view.isConstrainedWidth && dev_isRenderTaskAsSheetOnMobile)
         isTaskOpened = true;
-      else appStore.openResource(item.id, ResourceAccessMode.POP);
+      else appStore.openResource(item.id, AccessMode.POP);
     }
     dispatch("action", event.detail);
   }
@@ -157,7 +158,7 @@
           id: item.id,
           accessPoint,
           accessPointId,
-          accessMode: ResourceAccessMode.SHEET
+          accessMode: AccessMode.SHEET
         }
       }}
       on:change={(e) => {
@@ -171,14 +172,14 @@
     />
   {/if}
   <div
-    class={cn("flex gap-2 items-center pr-1 pl-3 py-2 rounded-md", {
+    class={cn("flex gap-2 items-center pr-1 pl-2 py-2 rounded-md", {
       "m-4 min-w-[30rem]": accessPoint === ResourceAccessPoint.SELF,
       "hover:bg-bgs2 border": accessPoint !== ResourceAccessPoint.SELF,
       "border-aps1": isCurrentlyFocusing,
       "border-transparent hover:border-brs2":
         !isCurrentlyFocusing && accessPoint !== ResourceAccessPoint.SELF,
-      "min-h-14 h-14": item.goal,
-      "min-h-10 h-10": !item.goal
+      "min-h-14 h-14": item.goal && isShowGoal,
+      "min-h-10 h-10": !item.goal || !isShowGoal
     })}
     use:movingBorder={{
       speed: 4000,
@@ -206,7 +207,7 @@
       />
     </div>
     <div class="flex-1 min-w-0 flex flex-col userdata whitespace-no-wrap">
-      {#if item.goal && accessPoint !== ResourceAccessPoint.GOAL}
+      {#if item.goal && isShowGoal}
         <TaskThumbnailGoalLabel goal={item.goal} {accessPoint} />
       {/if}
       {#if item.isChecked}
@@ -350,9 +351,7 @@
             }
             appStore.openResource(
               item.id,
-              isInlineContext
-                ? ResourceAccessMode.INLINE
-                : ResourceAccessMode.POP
+              isInlineContext ? AccessMode.INLINE : AccessMode.POP
             );
           }}
         />

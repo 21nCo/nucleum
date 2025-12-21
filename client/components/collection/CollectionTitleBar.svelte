@@ -7,7 +7,7 @@
   import ContextMenuAction from "@21n/elements/contextMenu/ContextMenuAction.svelte";
   import { resolveCollectionContextMenu } from "@21n/components/collection/collection.store";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPoint,
     ResourceActionType
   } from "@21n/components/flux/resourceStores/resource.type";
@@ -101,8 +101,8 @@
     isEnabled={!$collection.isInEditMode &&
       isConstrainedWidth &&
       accessPoint !== ResourceAccessPoint.MARKDOWN_EMBED &&
-      $collection.accessMode !== ResourceAccessMode.INLINE &&
-      $collection.accessMode !== ResourceAccessMode.FULL}
+      $collection.accessMode !== AccessMode.INLINE &&
+      $collection.accessMode !== AccessMode.FULL}
     accessMode={$collection.accessMode}
     class="truncate"
   >

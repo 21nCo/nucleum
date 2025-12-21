@@ -41,7 +41,7 @@ import { linker } from "@21n/products/memotron/linking/link.store";
 import { collectionStore } from "@21n/components/collection/collection.store";
 import { resolveContentTypeForFile } from "@21n/products/memotron/capture/capture.utils";
 import {
-  ResourceAccessMode,
+  AccessMode,
   ResourceActionType
 } from "@21n/components/flux/resourceStores/resource.type";
 import type { IRecordId } from "@21n/types/data.type";
@@ -348,7 +348,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     if (!val) return;
     if (val === CaptureMethod.PASTE) {
       await openPasteConfirmationModalFromClipboard();
-      appStore.closeResource({ accessMode: ResourceAccessMode.POP });
+      appStore.closeResource({ accessMode: AccessMode.MAIN });
       return;
     }
     const isCollection = isRecordId(val, Resource.collection);
@@ -756,7 +756,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         properties: params?.isEmbedContext ? [] : captureStore.properties,
         collections,
         creationContext: params?.isEmbedContext
-          ? params?.creationContext ?? this.get().nodeId
+          ? (params?.creationContext ?? this.get().nodeId)
           : undefined
       } as INodeCapture<IMediaNode>;
       const result = await nodeStore.create([node], {
@@ -920,7 +920,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           collections,
           properties: params?.isEmbedContext ? [] : captureStore.properties,
           creationContext: params?.isEmbedContext
-            ? params?.creationContext ?? this.get().nodeId
+            ? (params?.creationContext ?? this.get().nodeId)
             : undefined
         } as INodeCapture<IMediaNode>;
         nodes.push(node);
@@ -992,7 +992,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         collections,
         properties: params?.isEmbedContext ? [] : captureStore.properties,
         creationContext: params?.isEmbedContext
-          ? params?.creationContext ?? this.get().nodeId
+          ? (params?.creationContext ?? this.get().nodeId)
           : undefined,
         label:
           (isValidString(captureStore.label) ? captureStore.label : null) ??
@@ -1119,7 +1119,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       label: text.split("://").pop() ?? "",
       url: text,
       creationContext: params?.isEmbedContext
-        ? params?.creationContext ?? this.get().nodeId
+        ? (params?.creationContext ?? this.get().nodeId)
         : undefined,
       body: {
         hash: "",
@@ -1211,7 +1211,11 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       }
 
       if (shouldOpenUponSave && !params?.isEmbedContext)
-        appStore.openResource(node.id, ResourceAccessMode.POP);
+        appStore.openResource(node.id, AccessMode.POP, {
+          searchParams: {
+            [AccessMode.MAIN]: null
+          }
+        });
     } else if (!viewStore.isConstrainedWidth && !params?.isEmbedContext) {
       toasts.success(`${result.length} nodes saved successfully!`);
     }
@@ -1219,15 +1223,15 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     if (!shouldOpenUponSave) {
       appStore.closeResource({
         id: captureAction,
-        accessMode: ResourceAccessMode.POP
+        accessMode: AccessMode.MAIN
       });
       appStore.closeResource({
         id: MemotronAction.CAPTURE_DND,
-        accessMode: ResourceAccessMode.POP
+        accessMode: AccessMode.MAIN
       });
       appStore.closeResource({
         id: MemotronAction.CAPTURE_SECONDARY,
-        accessMode: ResourceAccessMode.POP
+        accessMode: AccessMode.MAIN
       });
     }
     this.update((prev) => ({ ...prev, isAvoidSaveLeaks: true }));

@@ -933,13 +933,14 @@
 <!--TODO -  Note - when reenabling drag and drag to rearrange - make sure it is not interfering with text selection or media grid space slider -->
 <div
   class={cn(
-    "relative flex w-full min-h-fit h-11 items-center gap-2 rounded-md border border-transparent",
+    "relative flex w-full min-h-fit h-8 items-center gap-2 rounded-md border border-transparent",
     {
       "grid grid-cols-[2.5rem_1fr_2.5rem]": isLeftControlsEnabled,
       dragging: isDragging,
       "prevent-reorder-feedback-for-files":
         block.contentType === NodeType.EMBED && !block.body.id,
-      "bg-bgs2": $context.isTouchDevice && block.contentType === NodeType.EMBED
+      "bg-bgs2": $context.isTouchDevice && block.contentType === NodeType.EMBED,
+      "mt-3 mb-1": headingNodeTypes.includes(block.contentType)
     },
     $mdStore.params?.isNodular &&
       !$mdStore.params?.isReadOnly && {

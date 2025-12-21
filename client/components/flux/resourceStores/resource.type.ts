@@ -68,7 +68,7 @@ export interface IMetaResource extends IResourceBase {
 }
 
 export interface IActiveResource extends IResource {
-  accessMode: ResourceAccessMode;
+  accessMode: AccessMode;
   /**
    * All editing features will be turned on if this is true.
    * Example: collection, combination, media node, etc.
@@ -93,7 +93,7 @@ export interface ITrashInformation {
   deletedBy: string;
 }
 
-export enum ResourceAccessMode {
+export enum AccessMode {
   INLINE = "inline",
   /**
    * Inline split
@@ -106,19 +106,17 @@ export enum ResourceAccessMode {
   /**
    * Pop mode
    */
-  POP = "pop",
+  POP = "r",
   /**
    * Full screen mode
    */
   FULL = "full",
   TAB = "tab",
-  TAB_IN_BACKGROUND = "tab-in-background",
-  /**
-   * The resource is being accessed from the tabs.
-   */
-  TABS = "tabs",
+  OPEN_IN_BACKGROUND = "open-in-background",
   SLIDESHOW = "slideshow",
-  SHEET = "sheet"
+  SHEET = "sheet",
+  RIGHT = "right",
+  MAIN = "m"
 }
 
 export enum ResourceActionType {
@@ -344,6 +342,9 @@ export type IResourceMutationParams = IMutationAdditionalParams & {
 export interface IResourcePageWithPanels {
   id: IRecordId;
   panel: string;
+  defaultPanel: string;
   isInFocusMode?: boolean;
-  switchPanel: (panel: string) => void;
+  isInEditMode?: boolean;
+  switchPanel: (panel?: string) => void;
+  closeEditMode: () => void;
 }

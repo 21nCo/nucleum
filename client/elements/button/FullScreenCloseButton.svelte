@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tooltip } from "@21n/actions/popover.action";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import modalEvent from "@21n/components/modal/modal.store";
   import { appStore } from "@21n/stores/app.store";
   import view from "@21n/stores/view.store";
@@ -9,7 +9,7 @@
   import { cn } from "@21n/utils/ui.utils";
   import Icon from "@21n/elements/Icon.svelte";
   export let path: string | undefined = undefined;
-  export let accessMode: ResourceAccessMode = ResourceAccessMode.FULL;
+  export let accessMode: AccessMode = AccessMode.FULL;
   /**
    * If true, the button will be fully rounded and floating with a margin from the edges. Otherwise, it will stick to the top right corner.
    */

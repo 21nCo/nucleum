@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { appStore } from "@21n/stores/app.store";
   import type { IRecordId } from "@21n/types/data.type";
   import BreadcrumbItem from "@21n/elements/breadcrumbsV2/BreadcrumbItem.svelte";
@@ -16,7 +16,7 @@
         isOverflowItem={true}
         on:click={(e) => {
           if (item.resourceId) {
-            appStore.openResource(item.resourceId, ResourceAccessMode.POP, {
+            appStore.openResource(item.resourceId, AccessMode.POP, {
               replaceId
             });
           }

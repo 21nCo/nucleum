@@ -236,11 +236,7 @@
             <Icon icon="twitter" class="stroke-fgs3" />
           {:else if subType === NodeType.KINDLE_BOOK || subType === NodeType.KINDLE_HIGHLIGHT}
             <Icon icon="book" class="stroke-fgs3" />
-          {:else if [
-              NodeType.YOUTUBE_VIDEO,
-              NodeType.YOUTUBE_SHORT,
-              NodeType.YOUTUBE_CHANNEL
-            ].includes(subType)}
+          {:else if [NodeType.YOUTUBE_VIDEO, NodeType.YOUTUBE_SHORT, NodeType.YOUTUBE_CHANNEL].includes(subType)}
             <Icon icon="youtube" class="stroke-fgs3" />
           {:else if !subType}
             <div class="flex items-center justify-center gap-3">
@@ -342,7 +338,7 @@
           >
             <Button
               label="Choose from library"
-              icon="globe"
+              icon="library"
               {...commonButtonParams}
             />
           </button>

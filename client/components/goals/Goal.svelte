@@ -6,11 +6,9 @@
   } from "@21n/components/goals/goal.store";
   import PageLoadingPulse from "@21n/elements/feedback/animations/PageLoadingPulse.svelte";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
-  import view from "@21n/stores/view.store";
-  import { resizeListener } from "@21n/actions/resize.action";
   import GoalTitleRow from "@21n/components/goals/info/GoalTitleRow.svelte";
   import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
   import { onDestroy } from "svelte";
@@ -33,26 +31,59 @@
   import { ResourcePanelType } from "../resource/resourcePanel.type";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { ErrorMessage } from "../error/error.type";
+  import { getContext } from "svelte";
+  import { readable, type Writable } from "svelte/store";
+  import { Context } from "@21n/types/appStore.type";
+  import type { IContainer } from "@21n/layout/layout.type";
+  import { resolveMinWidth } from "@21n/layout/layout.utils";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
+
   export let id: string;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
+  export let accessMode: AccessMode = AccessMode.POP;
   export let status: IInlineStatus | undefined = undefined;
-  let containerWidth = 0;
+  const dev_isPanelSwitcherOnTop = false;
+
+  const container =
+    getContext<Writable<IContainer | undefined>>(Context.CONTAINER) ||
+    readable(undefined);
   let goal: IActiveGoalStore = ActiveGoalStore.resolve(id);
   let isReady = false;
 
-  $: isConstrainedWidth = resolveIfConstrainedWidth(
-    $goal?.accessMode ?? accessMode,
-    containerWidth,
-    $view.isConstrainedWidth
-  );
+  $: isConstrainedWidth =
+    ($container && $container.width < resolveMinWidth(2)) ?? false;
+  $: isThreeColumned =
+    ($container && $container.width >= resolveMinWidth(3)) ?? false;
 
-  $: tabs = resolvePanelOptions($goal, isConstrainedWidth);
+  $: tabs = resolvePanelOptions($goal, { isConstrainedWidth, isThreeColumned });
+
+  $: {
+    if (
+      tabs &&
+      $goal &&
+      $goal.panel &&
+      !tabs.find((tab) => tab.value === $goal.panel)
+    ) {
+      goal.switchPanel(tabs[0].value);
+    }
+  }
 
   onDestroy(() => {
     const latestAccessMode = $goal?.accessMode ?? accessMode;
     ActiveGoalStore.destroy(id, latestAccessMode);
   });
+
+  function resolvePreviouslySelectedView() {
+    const panelState = uiState.getState(UIState.goalPanelSelection, {
+      scope: UIStateScope.DEVICE,
+      subVariables: [
+        isConstrainedWidth?.toString(),
+        isThreeColumned?.toString()
+      ]
+    });
+    return panelState;
+  }
 
   async function initialize() {
     const editSearchParam = $page.url.searchParams.get(AppSearchParam.EDIT);
@@ -61,27 +92,18 @@
     await goal.init(accessMode, {
       isInEditMode: editSearchParam === "true",
       linkSearchParam: linkSearchParam ?? undefined,
-      panel: panel ?? ResourcePanelType.DEFAULT
+      panel:
+        panel ??
+        resolvePreviouslySelectedView() ??
+        (isThreeColumned
+          ? ResourcePanelType.OVERVIEW
+          : ResourcePanelType.DEFAULT)
     });
     isReady = true;
     return goal.afterInit();
   }
 
   let initPromise: Promise<void> = initialize();
-
-  function resolveIfConstrainedWidth(
-    accessMode: ResourceAccessMode,
-    containerWidth: number,
-    isViewConstrainedWidth: boolean
-  ) {
-    return (
-      isViewConstrainedWidth ||
-      accessMode === ResourceAccessMode.SPLIT ||
-      accessMode === ResourceAccessMode.FSPLIT ||
-      accessMode === ResourceAccessMode.INLINE ||
-      containerWidth < 800
-    );
-  }
 
   async function rearrangePanels(e: CustomEvent) {
     if (!Array.isArray(e.detail)) {
@@ -97,12 +119,7 @@
   }
 </script>
 
-<div
-  class="flex w-full h-full overflow-auto"
-  use:resizeListener={(e) => {
-    containerWidth = e.width;
-  }}
->
+<div class="flex w-full h-full overflow-auto">
   {#await initPromise}
     <EmptyStatusView isLoadingState={true} />
   {:then}
@@ -133,42 +150,44 @@
                 class={cn(
                   "relative flex flex-col w-full overflow-auto gap-3 cw:bg-bgs2 otop:pt-12 shrink-0 border-b border-brs3",
                   {
-                    "bg-bgs2": isConstrainedWidth
+                    "bg-bgs2 py-2": isConstrainedWidth
                   }
                 )}
               >
                 <GoalTitleRow {goal} isConstrainedWidth={true} bind:status />
-                <div class="relative">
-                  <PanelSwitcher
-                    items={tabs}
-                    style={PanelSwitcherStyle.BAR}
-                    value={$goal.panel}
-                    isExpandToFullWidth={true}
-                    parentBgIndex={2}
-                    isBgBar={true}
-                    size={Size.sm}
-                    isRearrangeableByDefault={true}
-                    on:rearrange={rearrangePanels}
-                    on:switch={(e) => {
-                      goal.switchPanel(e.detail);
-                    }}
-                  >
-                    <div slot="right">
-                      {#if $goal.accessMode === ResourceAccessMode.FULL && !isConstrainedWidth}
-                        <ResourceInlineCloseButton
-                          accessMode={$goal.accessMode}
-                          parentBgIndex={2}
-                          id={$goal.id}
-                        />
-                      {/if}
-                    </div>
-                  </PanelSwitcher>
-                  {#if isConstrainedWidth}
-                    <div
-                      class="w-10 bg-gradient-to-r from-bgs2/20 to-bgs2 absolute right-0 top-0 h-full"
-                    />
-                  {/if}
-                </div>
+                {#if dev_isPanelSwitcherOnTop}
+                  <div class="relative">
+                    <PanelSwitcher
+                      items={tabs}
+                      style={PanelSwitcherStyle.BAR}
+                      value={$goal.panel}
+                      isExpandToFullWidth={true}
+                      parentBgIndex={2}
+                      isBgBar={true}
+                      size={Size.sm}
+                      isRearrangeableByDefault={true}
+                      on:rearrange={rearrangePanels}
+                      on:switch={(e) => {
+                        goal.switchPanel(e.detail);
+                      }}
+                    >
+                      <div slot="right">
+                        {#if $goal.accessMode === AccessMode.FULL && !isConstrainedWidth}
+                          <ResourceInlineCloseButton
+                            accessMode={$goal.accessMode}
+                            parentBgIndex={2}
+                            id={$goal.id}
+                          />
+                        {/if}
+                      </div>
+                    </PanelSwitcher>
+                    {#if isConstrainedWidth}
+                      <div
+                        class="w-10 bg-gradient-to-r from-bgs2/20 to-bgs2 absolute right-0 top-0 h-full"
+                      />
+                    {/if}
+                  </div>
+                {/if}
               </div>
             {/if}
             <div
@@ -179,6 +198,7 @@
               <GoalPanelContentResolver
                 {goal}
                 {isConstrainedWidth}
+                {isThreeColumned}
                 bind:status
               />
               {#if isConstrainedWidth}
@@ -186,9 +206,12 @@
               {/if}
             </div>
           </main>
-          {#if !isConstrainedWidth}
-            <GoalPanelSwitcher panels={tabs} {goal} {isConstrainedWidth} />
-          {/if}
+          <GoalPanelSwitcher
+            panels={tabs}
+            {goal}
+            {isConstrainedWidth}
+            {isThreeColumned}
+          />
         </div>
       {/if}
     </CustomColorPropagator>

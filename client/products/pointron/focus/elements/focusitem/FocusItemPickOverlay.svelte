@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import {
     determineResourceType,
     resourceInList
@@ -68,7 +68,7 @@
           style={ButtonStyle.OUTLINED}
           parentBgIndex={2}
           on:click={() => {
-            appStore.openResource(item.id, ResourceAccessMode.POP);
+            appStore.openResource(item.id, AccessMode.POP);
           }}
         />
       {/if}
@@ -115,7 +115,7 @@
     style={ButtonStyle.OUTLINED}
     parentBgIndex={2}
     on:click={() => {
-      appStore.openResource(item.id, ResourceAccessMode.POP);
+      appStore.openResource(item.id, AccessMode.POP);
     }}
   />
 {/if}

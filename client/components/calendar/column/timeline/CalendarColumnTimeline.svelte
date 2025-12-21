@@ -21,7 +21,8 @@
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import BoxButton from "@21n/elements/button/BoxButton.svelte";
   import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
-  import Toggle from "@21n/elements/toggle/Toggle.svelte";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import { Action } from "@21n/types/action.enum";
   const dispatch = createEventDispatcher();
   export let date: Date;
   export let isExpandable: boolean = false;
@@ -29,8 +30,6 @@
   export let scale: TimeScaleUnit;
   let timelinePanelSubItem: "tasks" | "events" = resolveTimlinePanelSelection();
   let allDayPanelState: "default" | "collapsed" | "expanded" = "default";
-  let isShowCompletedTasks: boolean = refreshShowCompletedTasksState();
-  let completedTasksCount: number | undefined = undefined;
   let tasksPanelRef: CalendarColumnTasksPanel | undefined = undefined;
   $: timelinePanelSubItems = resolveTimelinePanelSubItems($appStore.product);
 
@@ -49,14 +48,6 @@
       return persistedValue;
     }
     return "tasks";
-  }
-
-  function refreshShowCompletedTasksState() {
-    return (
-      uiState.getState(UIState.showCompletedCalendarTasks, {
-        scope: UIStateScope.DEVICE
-      }) ?? false
-    );
   }
 
   /**
@@ -106,16 +97,9 @@
   }
 
   async function handleCreateTask() {
-    appStore.runAction(
-      resourceAction(Resource.task, ResourceActionType.CREATE),
-      {
-        componentParams: { date }
-      }
-    );
-  }
-
-  function onHideCompletedChange() {
-    tasksPanelRef?.toggleCompletedTasks();
+    appStore.runAction(PointronAction.CREATE_TASK_INLINE, {
+      componentParams: { date }
+    });
   }
 </script>
 
@@ -148,6 +132,7 @@
             icon="plus"
             label={scale === TimeScaleUnit.DAY ? createNewLabel : undefined}
             tooltip={scale !== TimeScaleUnit.DAY ? createNewLabel : undefined}
+            shortcut={Action.CREATE}
             on:click={handleCreate}
           />
         </span>
@@ -190,20 +175,11 @@
             on:switch={onTimelinePanelSwitch}
           >
             <div slot="right" class="flex items-center gap-2 mr-3">
-              {#if timelinePanelSubItem === "tasks"}
-                <Toggle
-                  icon={isShowCompletedTasks ? "hide" : "show"}
-                  tooltip={`${isShowCompletedTasks ? "Hide" : "Show"} completed (${completedTasksCount})`}
-                  bgSize={Size.sm}
-                  count={completedTasksCount}
-                  on={isShowCompletedTasks}
-                  on:change={onHideCompletedChange}
-                />
-              {/if}
               <Button
                 icon="plus"
                 tooltip={createNewLabel}
                 on:click={handleCreate}
+                shortcut={Action.CREATE}
               />
             </div>
           </PanelSwitcher>
@@ -212,12 +188,7 @@
       {#if allDayPanelState !== "collapsed"}
         <div class="overflow-y-auto w-full min-h-0 flex-1 px-3">
           {#if timelinePanelSubItem === "tasks"}
-            <CalendarColumnTasksPanel
-              {date}
-              bind:this={tasksPanelRef}
-              bind:isShowCompletedTasks
-              bind:completedTasksCount
-            />
+            <CalendarColumnTasksPanel {date} bind:this={tasksPanelRef} />
           {:else if timelinePanelSubItem === "events"}
             <EmptyStatusView
               mainText="Events"

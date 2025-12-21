@@ -1,5 +1,5 @@
 import {
-  ResourceAccessMode,
+  AccessMode,
   ResourceAccessPoint
 } from "@21n/components/flux/resourceStores/resource.type";
 import {
@@ -13,7 +13,6 @@ import type { HorizontalTrail, VerticalTrail } from "./tabs.type";
 import type { IRecordId } from "@21n/types/data.type";
 import { Action } from "@21n/types/action.enum";
 import { get, writable } from "svelte/store";
-import { AppSearchParam } from "@21n/types/appStore.type";
 
 class TabStore {
   open(id: IRecordId, backParam?: string) {
@@ -63,7 +62,7 @@ class TabStore {
     if (returnToParam) {
       queryParams.returnTo = returnToParam;
     }
-    appStore.openResource(id, ResourceAccessMode.POP, {
+    appStore.openResource(id, AccessMode.POP, {
       searchParams: { ...queryParams }
     });
   }
@@ -143,7 +142,7 @@ function createHorizontalTrailStore() {
         appStore.runAction(id);
         return;
       } else {
-        appStore.toggleSearchParam([AppSearchParam.SEARCH]);
+        appStore.toggleSearchParam([AccessMode.MAIN]);
       }
       update((state) => {
         return {
@@ -242,7 +241,7 @@ function createVTrailStore() {
         if (!isRecordId(id)) return;
         const parts = id.split("-");
         const recordId = parts[parts.length - 1];
-        appStore.openResource(recordId, ResourceAccessMode.POP, {
+        appStore.openResource(recordId, AccessMode.POP, {
           origin: current.base
         });
       }

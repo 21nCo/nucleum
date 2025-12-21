@@ -592,6 +592,7 @@ export function parseAndFormatDate(
     | "mmm-dd"
     | "mmm-yy"
     | "mmm-yyyy"
+    | "week-yyyy"
     | "yyyy" = "verbose"
 ) {
   if (typeof date === "number") date = new Date(date);
@@ -633,6 +634,10 @@ export function parseAndFormatDate(
     return date.toLocaleDateString(locale, {
       year: "numeric"
     });
+  } else if (format === "week-yyyy") {
+    const weekNumber = getWeekNumber(date);
+    const year = date.getFullYear();
+    return `${year}: W${weekNumber}`;
   }
   return "";
 }
@@ -804,4 +809,15 @@ export function resolveDurationInSeconds(duration: {
     default:
       return duration.value;
   }
+}
+
+export function getWeekNumber(date: Date): number {
+  const year = date.getFullYear();
+  const yearStart = new Date(year, 0, 1);
+  const daysSinceYearStart = Math.floor(
+    (date.getTime() - yearStart.getTime()) / 86400000
+  );
+  const yearStartDay = yearStart.getDay();
+  const adjustedDays = daysSinceYearStart + yearStartDay;
+  return Math.ceil((adjustedDays + 1) / 7);
 }

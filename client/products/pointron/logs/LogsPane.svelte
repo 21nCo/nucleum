@@ -14,10 +14,13 @@
   import DaySummaryPart from "@21n/products/pointron/logs/daySummary/DaySummaryPart.svelte";
   import { appStore } from "@21n/stores/app.store";
   import ScrollView from "@21n/layout/scrollView/ScrollView.svelte";
-  import type { DaySummary, ISessionThumb } from "@21n/products/pointron/logs/log.type";
+  import type {
+    DaySummary,
+    ISessionThumb
+  } from "@21n/products/pointron/logs/log.type";
   import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { sessionStore } from "@21n/products/pointron/focus/session.store";
   import { resolveSessionTimeSplit } from "@21n/products/pointron/pointron.utils";
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
@@ -151,7 +154,7 @@
             isLast={index === sessions.length - 1}
             on:click={() => {
               if (context === "journal") {
-                appStore.openResource(session.id, ResourceAccessMode.POP);
+                appStore.openResource(session.id, AccessMode.POP);
                 return;
               }
               selectedId = session.id;

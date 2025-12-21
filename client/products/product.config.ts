@@ -74,7 +74,7 @@ interface IExtensionConfig extends IProductConfigBase {
 const commonConfigurableShortcuts = [
   Action.EDIT_MODE,
   Action.CMD,
-  Action.GLOBAL_SEARCH,
+  Action.SEARCH,
   Action.GO_BACK,
   Action.GO_FORWARD
 ];

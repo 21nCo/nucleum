@@ -3,7 +3,7 @@
   import { hoverable } from "@21n/actions/hover.action";
   import { popover, tooltip } from "@21n/actions/popover.action";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
   import {
@@ -54,8 +54,7 @@
       ]
     }
   ];
-  $: isActive =
-    item.toString() === $page.url.searchParams.get(ResourceAccessMode.POP);
+  $: isActive = item.toString() === $page.url.searchParams.get(AccessMode.POP);
   onMount(async () => {
     if (isRecordId(item)) {
       resourceType = determineResourceType(item);
@@ -77,13 +76,13 @@
     if (!resource || !resourceStore) return contextMenu;
     const resourceActions = new ResourceActions(resource, resourceStore, {
       accessPoint: ResourceAccessPoint.SELF,
-      accessMode: ResourceAccessMode.TAB
+      accessMode: AccessMode.TAB
     });
     return [
       ...contextMenu,
       {
         group: "open",
-        items: [resourceActions.openAsSplit(), resourceActions.openAsFull()]
+        items: [resourceActions.openAsSplit(), resourceActions.maximize()]
       }
     ];
   }

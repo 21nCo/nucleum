@@ -371,20 +371,21 @@
       if (colonIndex !== -1) {
         const beforeColon = text.substring(0, colonIndex);
         const charBeforeColon = beforeColon.slice(-1);
-        const isValidEmojiContext = colonIndex === 0 || /\s/.test(charBeforeColon);
-        
+        const isValidEmojiContext =
+          colonIndex === 0 || /\s/.test(charBeforeColon);
+
         if (!isValidEmojiContext) {
           if (isRenderEmojiPicker) {
             hidePopover("emojiPicker");
           }
           return false;
         }
-        
+
         const afterColon = text.substring(colonIndex + 1);
         const spaceIndex = afterColon.search(/\s/);
         emojiSearchQuery =
           spaceIndex === -1 ? afterColon : afterColon.substring(0, spaceIndex);
-        
+
         if (emojiSearchQuery.trim()) {
           if (!isRenderEmojiPicker) {
             showPopover("emojiPicker");
