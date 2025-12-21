@@ -8,7 +8,7 @@
   import { Size } from "@21n/types/size.enum";
   import {
     ResourceAccessPoint,
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPointState
   } from "@21n/components/flux/resourceStores/resource.type";
   import { bulkEditStore } from "@21n/components/record/bulkedit.store";
@@ -41,7 +41,7 @@
   )[] = [];
   export let resource: Resource = Resource.node;
   export let arrangement: Arrangement = Arrangement.LIST;
-  export let defaultAccessMode: ResourceAccessMode = ResourceAccessMode.POP;
+  export let defaultAccessMode: AccessMode = AccessMode.POP;
   export let size: Size.sm | Size.md = Size.md;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   export let accessPointState: ResourceAccessPointState =

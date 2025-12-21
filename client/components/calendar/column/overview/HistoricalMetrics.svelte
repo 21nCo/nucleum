@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import Icon from "@21n/elements/Icon.svelte";
   import { appStore } from "@21n/stores/app.store";
   import { Action } from "@21n/types/action.enum";
@@ -14,9 +14,9 @@
 </script>
 
 <button
-  class="flex flex-col items-center h-48 w-48 rounded-xl bg-bgs2 shadow-lg overflow-hidden flex-1 min-w-48"
+  class="flex flex-col items-center h-48 w-48 rounded-xl bg-bgs2 hover:bg-bgs3-striped overflow-hidden flex-1 min-w-48"
   on:click={() => {
-    appStore.openResource(Action.CALENDAR_DAY, ResourceAccessMode.POP, {
+    appStore.openResource(Action.CALENDAR_DAY, AccessMode.POP, {
       searchParams: { [AppSearchParam.DATE]: date.toISOString() }
     });
   }}
@@ -42,5 +42,5 @@
     </div>
   </div>
 
-  <div class="w-full h-1.5 bg-gradient-to-r from-aps1 to-aps2"></div>
+  <div class="w-full h-1 bg-gradient-to-r from-aps1 to-aps2"></div>
 </button>

@@ -39,6 +39,7 @@ export enum UIState {
   manualLogDurationMethod = "manualLogDurationMethod",
   recentFocusItems = "recentFocusItems",
   focusItemsPickFromPanel = "focusItemsPickFromPanel",
+  goalPanelSelection = "goalPanelSelection",
   //Memotron
   /**
    * List of recently used capture shortcuts on capture page
@@ -56,7 +57,7 @@ export enum UIState {
   calendarHistoryTab = "calendarHistoryTab",
   calendarDayTimelineScale = "calendarDayTimelineScale",
   calendarDayTimelinePanelSelection = "calendarDayTimelinePanelSelection",
-  showCompletedCalendarTasks = "showCompletedCalendarTasks",
+  showCompletedTasks = "showCompletedTasks",
   taskLibraryFiltersExpanded = "taskLibraryFiltersExpanded",
   taskLibrarySelectedSubType = "taskLibrarySelectedSubType",
   analyticsChartStandaloneShowOptions = "analyticsChartStandaloneShowOptions"

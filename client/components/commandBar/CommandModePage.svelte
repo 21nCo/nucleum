@@ -21,14 +21,11 @@
   import Tabs from "@21n/layout/topNav/tabs/Tabs.svelte";
   import { page } from "$app/stores";
   import PagePainterV2 from "@21n/layout/paint/PagePainterV2.svelte";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { onMount } from "svelte";
   import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
   import type { IRecordId } from "@21n/types/data.type";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   let isInFocusMode = false;
   let pinnedItems: IRecordId[] = tabs.get() ?? [];
 
@@ -47,7 +44,7 @@
   });
   let isCmdHome = true;
 
-  $: activeTab = $page.url.searchParams.get(ResourceAccessMode.TAB);
+  $: activeTab = $page.url.searchParams.get(AccessMode.TAB);
 </script>
 
 <div class="flex flex-col w-full h-full">
@@ -58,7 +55,7 @@
       {activeTab}
       on:home={(e) => {
         isCmdHome = e.detail;
-        if (isCmdHome) appStore.toggleSearchParam([ResourceAccessMode.TAB]);
+        if (isCmdHome) appStore.toggleSearchParam([AccessMode.TAB]);
       }}
     />
   </div>
@@ -113,7 +110,7 @@
         <span class="flex flex-row text-fgs3 gap-1">
           Press
           <ShortcutText
-            shortcut={Action.GLOBAL_SEARCH}
+            shortcut={Action.SEARCH}
             parentBgIndex={2}
             isAlwaysShown={true}
           />

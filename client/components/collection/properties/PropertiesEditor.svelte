@@ -17,7 +17,10 @@
     UniversalPropertyType,
     type IProperty
   } from "@21n/components/collection/properties/property.type";
-  import { propertyEditorStore, propertyStore } from "@21n/components/collection/properties/property.store";
+  import {
+    propertyEditorStore,
+    propertyStore
+  } from "@21n/components/collection/properties/property.store";
   import {
     ActiveCollectionStore,
     collectionStore,
@@ -25,7 +28,7 @@
   } from "@21n/components/collection/collection.store";
   import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceActionType,
     type OmitForCaptureWithId
   } from "@21n/components/flux/resourceStores/resource.type";
@@ -38,7 +41,10 @@
   import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
   import { Orientation } from "@21n/types/direction.enum";
   import SearchSingleSelect from "@21n/elements/select/SearchSingleSelect.svelte";
-  import { CollectionType, type ICollection } from "@21n/components/collection/collection.type";
+  import {
+    CollectionType,
+    type ICollection
+  } from "@21n/components/collection/collection.type";
   import { confirmationNotification } from "@21n/stores/notification.store";
   import { AlertType } from "@21n/types/notification.type";
   import Button from "@21n/elements/button/Button.svelte";
@@ -144,7 +150,7 @@
 
   onMount(async () => {
     if (collection && (!$collection || !$collection.label)) {
-      await collection.init(ResourceAccessMode.POP);
+      await collection.init(AccessMode.POP);
     } else if (collection) {
       await collection.refreshProperties();
       propertyEditorStore.set({
@@ -267,7 +273,7 @@
         callback: async () => {
           await onSave();
           modalEvent.hide(propertiesEditAction);
-          appStore.openResource(id, ResourceAccessMode.POP);
+          appStore.openResource(id, AccessMode.POP);
           return true;
         }
       }

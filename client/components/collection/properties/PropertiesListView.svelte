@@ -18,7 +18,10 @@
     ICollectionItem,
     ICollectionItemPropertyValue
   } from "@21n/components/collection/collection.type";
-  import type { IProperty, IPropertyConfigOption } from "@21n/components/collection/properties/property.type";
+  import type {
+    IProperty,
+    IPropertyConfigOption
+  } from "@21n/components/collection/properties/property.type";
   import {
     removeDuplicatesFilter,
     resourceInList
@@ -26,6 +29,7 @@
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { propertyStore } from "@21n/components/collection/properties/property.store";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
   const dispatch = createEventDispatcher();
   export let types: ICollectionExpanded[] | undefined = undefined;
   export let isIncludeExtendedProperties: boolean = true;
@@ -108,7 +112,8 @@
       "w-full userdata",
       !isRenderAsColumn &&
         !$view.isConstrainedWidth &&
-        resource === Resource.node && {
+        resource === Resource.node &&
+        item?.contentType === NodeType.NODULAR_MARKDOWN && {
           "pl-8": !isCollapsed,
           "pl-12": isCollapsed
         }

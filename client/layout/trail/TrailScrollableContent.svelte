@@ -2,7 +2,7 @@
   import { onMount, tick } from "svelte";
   import { vTrail } from "../topNav/tabs/tabs.store";
   import ResourceResolver from "@21n/layout/paint/ResourceResolver.svelte";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import type { IRecordId } from "@21n/types/data.type";
   import type { Action } from "@21n/types/action.enum";
   const ITEM_WIDTH =
@@ -90,7 +90,7 @@
       >
         <ResourceResolver
           id={parts[parts.length - 1]}
-          accessMode={ResourceAccessMode.INLINE}
+          accessMode={AccessMode.INLINE}
         />
       </div>
     {/each}

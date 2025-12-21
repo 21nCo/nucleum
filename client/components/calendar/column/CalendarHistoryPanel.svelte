@@ -1,19 +1,12 @@
 <script lang="ts">
-  import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
-  import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
   import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
   import LogsPane from "@21n/products/pointron/logs/LogsPane.svelte";
   import { appStore } from "@21n/stores/app.store";
   import { uiState } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
-  import view from "@21n/stores/view.store";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { Product } from "@21n/products/product.type";
   import { Size } from "@21n/types/size.enum";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { CalendarHistoryTab } from "@21n/components/calendar/calendar.type";
   import CalendarAllActivityPanel from "@21n/components/calendar/column/CalendarAllActivityPanel.svelte";
   import CalendarHistoryNodeEntries from "@21n/components/calendar/column/CalendarHistoryNodeEntries.svelte";

@@ -9,11 +9,10 @@
   import { Size } from "@21n/types/size.enum";
   import { Action } from "@21n/types/action.enum";
   import { page } from "$app/stores";
-  import { AppSearchParam } from "@21n/types/appStore.type";
   import { onMount, createEventDispatcher } from "svelte";
   import type { IAction } from "@21n/types/action.type";
   import { appStore } from "@21n/stores/app.store";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { keyboardShortcuts } from "@21n/components/shortcuts/shortcuts.store";
   const dispatch = createEventDispatcher();
 
@@ -23,14 +22,13 @@
   export let label: string | undefined = undefined;
   export let icon: string | undefined = undefined;
   export let tooltip: string | undefined = undefined;
-  export let isOpeningBehaviorConfigurable: boolean = false;
   export let isPreventDefault: boolean = false;
   let isHovered: boolean = false;
   let data: IAction | null = null;
 
   $: isActive =
-    action === $page.url.searchParams.get(AppSearchParam.RIGHT) ||
-    action === $page.url.searchParams.get(ResourceAccessMode.POP);
+    action === $page.url.searchParams.get(AccessMode.RIGHT) ||
+    action === $page.url.searchParams.get(AccessMode.MAIN);
 
   onMount(() => {
     data = appStore.resolveAction(action);
@@ -41,7 +39,7 @@
       dispatch("click");
       return;
     }
-    appStore.toggleTopNavItem({ action, isOpeningBehaviorConfigurable });
+    appStore.runAction(action);
   }
 </script>
 

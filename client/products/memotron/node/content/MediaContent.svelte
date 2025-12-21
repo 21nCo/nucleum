@@ -5,7 +5,7 @@
   } from "@21n/products/memotron/node/node.type";
   import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
   import { type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { cn } from "@21n/utils/ui.utils";
   import MediaNodeRightPane from "@21n/products/memotron/node/rightPanel/MediaNodeRightPane.svelte";
   import { setContext } from "svelte";
@@ -25,7 +25,7 @@
   function contextEventListener(event: string, data: any) {
     if (event === "pdf-trace-click" || event === "yt-trace-click") {
       if ($view.isPortrait && isRecordId(data.id)) {
-        appStore.openResource(data.id, ResourceAccessMode.POP);
+        appStore.openResource(data.id, AccessMode.POP);
       } else {
         contentRef.onTraceClick(data);
       }
@@ -56,17 +56,18 @@
   {#if !(isConstrainedWidth && $node.panel && $node.panel !== ResourcePanelType.DEFAULT && $node.panel !== ResourcePanelType.NONE)}
     <main
       class={cn("relative flex justify-center min-w-96 flex-1", {
-        "h-full": $node.accessMode === ResourceAccessMode.FULL,
+        "h-full": $node.accessMode === AccessMode.FULL,
         "border-r border-brs2":
           $node.panel ||
           (webNodeTypeList.includes($node?.contentType) && !isConstrainedWidth),
         grow:
-          $node.accessMode === ResourceAccessMode.POP ||
-          $node.accessMode === ResourceAccessMode.INLINE,
+          $node.accessMode === AccessMode.POP ||
+          $node.accessMode === AccessMode.INLINE,
         "mt-16":
           $context.isEmbed &&
           $context.os === OperatingSystem.IOS &&
-          $node.contentType === NodeType.VIDEO
+          $node.contentType === NodeType.VIDEO,
+        "mb-16": $node.panel === ResourcePanelType.CONTENT
       })}
     >
       <MediaContentResolver
@@ -79,7 +80,7 @@
       />
     </main>
   {/if}
-  {#if (!isConstrainedWidth || (isConstrainedWidth && $node.panel !== ResourcePanelType.DEFAULT)) && $node.panel !== ResourcePanelType.NONE}
+  {#if (!isConstrainedWidth || (isConstrainedWidth && $node.panel !== ResourcePanelType.DEFAULT)) && $node.panel !== ResourcePanelType.CONTENT}
     <MediaNodeRightPane {node} {renderingDetails} {isConstrainedWidth} />
   {/if}
 </div>

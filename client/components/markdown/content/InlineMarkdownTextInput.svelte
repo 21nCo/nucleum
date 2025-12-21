@@ -1,9 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher, onMount, onDestroy } from "svelte";
-  import {
-    type IBlock,
-    InlineType
-  } from "@21n/components/markdown/md.type";
+  import { type IBlock, InlineType } from "@21n/components/markdown/md.type";
   import { debouncer, generateUID } from "@21n/utils/utils";
   import {
     extractInlineMarkdownFromHtml,
@@ -274,26 +271,28 @@
     if (codeMatch) {
       const emojiChar = String.fromCodePoint(parseInt(codeMatch[1], 16));
       const searchText = ":" + searchQuery;
-      
+
       // Find the last occurrence of the search text (most likely the one user is typing)
       const searchIndex = content?.lastIndexOf(searchText) ?? -1;
-      
+
       if (searchIndex !== -1 && content) {
         // Replace only at the specific position
         const before = content.substring(0, searchIndex);
         const after = content.substring(searchIndex + searchText.length);
         content = before + emojiChar + after;
-        
+
         // Do the same for innerHTML
         const htmlSearchIndex = innerHTML.lastIndexOf(searchText);
         if (htmlSearchIndex !== -1) {
           const htmlBefore = innerHTML.substring(0, htmlSearchIndex);
-          const htmlAfter = innerHTML.substring(htmlSearchIndex + searchText.length);
+          const htmlAfter = innerHTML.substring(
+            htmlSearchIndex + searchText.length
+          );
           innerHTML = htmlBefore + emojiChar + htmlAfter;
         }
-        
+
         dispatchChangeEvent();
-        
+
         // Set caret position after the inserted emoji
         setTimeout(() => {
           const newCaretPosition = searchIndex + emojiChar.length;
@@ -1061,9 +1060,11 @@
       data.textMetadata?.isMultiBlockText ||
       data.textMetadata?.isEmbed ||
       (data.contentType &&
-        [NodeType.YOUTUBE_VIDEO, NodeType.YOUTUBE_SHORT, NodeType.CODE].includes(
-          data.contentType
-        ))
+        [
+          NodeType.YOUTUBE_VIDEO,
+          NodeType.YOUTUBE_SHORT,
+          NodeType.CODE
+        ].includes(data.contentType))
     ) {
       dispatch("paste", event);
       return;
@@ -1131,7 +1132,7 @@
     data-type={dataType}
     bind:innerHTML
     style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
-    class="w-full h-full text-left outline-none py-1.5"
+    class="w-full h-full text-left outline-none py-1"
     contenteditable="false"
   ></div>
 {:else if typeof content === "string"}
@@ -1142,7 +1143,7 @@
       data-type={dataType}
       style="max-width: 100%; width: 100%; white-space: pre-wrap; word-break: break-word;"
       class={cn(
-        "inline-markdown relative w-full h-full text-left outline-none py-1.5",
+        "inline-markdown relative w-full h-full text-left outline-none py-1",
         classList,
         {
           customcaret: isCustomCaret,

@@ -120,6 +120,7 @@
           <div class="flex flex-col gap-4 ml-[5px]">
             {#each daySessions as session}
               <GoalFocusSessionThumbnail
+                goalId={id}
                 {session}
                 logs={sessionLogs.filter((x) =>
                   isSameResource(x.sessionId, session)

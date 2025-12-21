@@ -12,7 +12,7 @@
   import type { IRecordId } from "@21n/types/data.type";
   import { nodeStore } from "@21n/products/memotron/node/node.store";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
   import YoutubeVideoPreview from "@21n/products/memotron/node/content/web/YoutubeVideoPreview.svelte";
@@ -198,7 +198,7 @@
 
   function onEditTitle(e: MouseEvent) {
     if ($view.isConstrainedWidth) {
-      if (body.id) appStore.openResource(body.id, ResourceAccessMode.POP);
+      if (body.id) appStore.openResource(body.id, AccessMode.POP);
       return;
     }
     e.stopPropagation();
@@ -236,7 +236,7 @@
       on:click={(e) => {
         if (e.target && e.target.classList.contains("resizer")) return;
         if (_mediaBlock?.contentType === NodeType.FILE) return;
-        if (body.id) appStore.openResource(body.id, ResourceAccessMode.POP);
+        if (body.id) appStore.openResource(body.id, AccessMode.POP);
       }}
     >
       {#if isShowPreview}
@@ -353,7 +353,7 @@
                     style={ButtonStyle.OUTLINED}
                     on:click={() => {
                       if (body.id)
-                        appStore.openResource(body.id, ResourceAccessMode.POP);
+                        appStore.openResource(body.id, AccessMode.POP);
                     }}
                   />
                 {/if}

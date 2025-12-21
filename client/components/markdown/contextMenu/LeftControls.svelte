@@ -23,7 +23,7 @@
   import BlockBrowser from "@21n/components/markdown/blockBrowser/BlockBrowser.svelte";
   import { appStore } from "@21n/stores/app.store";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceActionType
   } from "@21n/components/flux/resourceStores/resource.type";
   import { uiState } from "@21n/stores/uiState/uiState.store";
@@ -144,6 +144,7 @@
     },
     [BlockAction.FOCUS]: {
       value: BlockAction.FOCUS,
+      label: "Zoom in to heading",
       icon: "circle",
       callback: async () => {
         onNodularize();
@@ -153,7 +154,7 @@
       value: BlockAction.OPEN_AS_SPLIT,
       icon: "split",
       callback: async () => {
-        appStore.openResource(block.id, ResourceAccessMode.FSPLIT);
+        appStore.openResource(block.id, AccessMode.FSPLIT);
       }
     },
     [BlockAction.OPEN_IN_FULL_SCREEN]: {
@@ -161,7 +162,7 @@
       icon: "fullscreen",
       callback: async () => {
         // appStore.closeResource({ isRestrictToModals: true });
-        appStore.openResource(block.id, ResourceAccessMode.FULL);
+        appStore.openResource(block.id, AccessMode.FULL);
       }
     },
     [BlockAction.OPEN_AS_TAB]: {
@@ -254,7 +255,6 @@
             // actions[BlockAction.COPY_LINK],
             actions[BlockAction.COPY_BLOCK_TEXT],
             // actions[BlockAction.OPEN_AS_SPLIT],
-            actions[BlockAction.OPEN_IN_FULL_SCREEN],
             actions[BlockAction.OPEN_AS_TAB],
             actions[BlockAction.SHORTCUTS]
           ]

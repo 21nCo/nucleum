@@ -26,7 +26,7 @@
     ResourcePanelType.ACTIVITY
   ];
   $: isExpanded =
-    ((!$node.panel || $node.panel === ResourcePanelType.DEFAULT) &&
+    ((!$node.panel || $node.panel === ResourcePanelType.OVERVIEW) &&
       !typesWithLargerContent.includes($node.contentType)) ||
     ($node.panel &&
       panelsWithLargerContent.includes($node.panel as ResourcePanelType));
@@ -41,9 +41,9 @@
       "w-full px-3": isConstrainedWidth
     }
   )}
-  in:fly={{ x: 100, duration: 300, easing: quadInOut }}
+  in:fly={{ x: 10, duration: 300, easing: quadInOut }}
 >
-  {#if $node.panel && $node.panel !== ResourcePanelType.DEFAULT}
+  {#if $node.panel && $node.panel !== ResourcePanelType.OVERVIEW}
     <NodeRightPaneContent {node} {renderingDetails} />
   {:else}
     <NodeDefaultRightPane {node} />

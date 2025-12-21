@@ -209,7 +209,7 @@
         "rounded-r-md": dev_mixedPanel && $appStore.currentComponent?.panel
       }
     )}
-    on:click={onClick}
+    on:click|stopPropagation={onClick}
     use:hoverable={{
       onHover: (isHoveringParam) => {
         isHovering = isHoveringParam;

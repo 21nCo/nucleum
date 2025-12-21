@@ -6,7 +6,8 @@
   import { appStore } from "@21n/stores/app.store";
   import { formatSeconds } from "@21n/utils/time.utils";
   import { cn } from "@21n/utils/ui.utils";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  export let goalId: IRecordId;
   export let session: ISessionThumb;
   export let logs: ISessionLogThumb[] = [];
 
@@ -22,7 +23,9 @@
 <button
   class="relative flex items-start pl-6"
   on:click={(e) => {
-    appStore.resourceClickHandler(e, session.id);
+    appStore.resourceClickHandler(e, session.id, {
+      origin: goalId
+    });
   }}
 >
   <div class="absolute left-0 top-[10px] w-6 h-[2px] bg-bgs4" />

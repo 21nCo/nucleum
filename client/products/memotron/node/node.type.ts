@@ -5,7 +5,7 @@ import type {
 import type { IPropertyValue } from "@21n/components/collection/properties/property.type";
 import type { IFile } from "@21n/components/files/file.type";
 import {
-  ResourceAccessMode,
+  AccessMode,
   type CaptureOmittedFields,
   type IActiveResource,
   type IResource,
@@ -1128,7 +1128,7 @@ export type IActiveNode = INode &
     parent?: INode;
     file?: IFile;
     mdParent?: IRecordId[];
-    accessMode: ResourceAccessMode;
+    accessMode: AccessMode;
     focusedBlock?: IRecordId;
     collections?: IRecordId[];
     types?: ICollectionExpanded[];

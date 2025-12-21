@@ -1,6 +1,7 @@
 export enum Action {
   CMD = "CMD",
   CLOSE = "CLOSE",
+  CREATE = "create",
   MODE_OF_INTERACTION = "MODE_OF_INTERACTION",
   EDIT_MODE = "EDIT_MODE",
   USER_LOGIN = "USER_LOGIN",
@@ -24,7 +25,7 @@ export enum Action {
   PRIVACY_POLICY = "privacy",
   TERMS_OF_SERVICE = "tos",
   TERMS_OF_SERVICE_APPLE = "tosapple",
-  GLOBAL_SEARCH = "global-search",
+  SEARCH = "search",
   GLOBAL_SEARCH_MODAL = "global-search-modal",
   EXTENSTION_LOGIN = "ext_login",
   EXTENSTION_UNINSTALL = "EXTENSTION_UNINSTALL",

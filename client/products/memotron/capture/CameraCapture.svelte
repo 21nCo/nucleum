@@ -2,7 +2,7 @@
   import { createEventDispatcher, onMount } from "svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import { Size } from "@21n/types/size.enum";
-  import { ButtonVariant } from "@21n/types/button.type";
+  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import view from "@21n/stores/view.store";
   import { logger } from "@21n/components/debug/logger.client";
   import { cn } from "@21n/utils/ui.utils";
@@ -13,9 +13,10 @@
   import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceActionType
   } from "@21n/components/flux/resourceStores/resource.type";
+  import PlayerControl from "@21n/elements/player/controls/PlayerControl.svelte";
   export let captureStore: IActiveCaptureStore;
   let videoElement: HTMLVideoElement;
   let canvasElement: HTMLCanvasElement;
@@ -218,7 +219,7 @@
             );
             appStore.closeResource({
               id: captureAction,
-              accessMode: ResourceAccessMode.POP
+              accessMode: AccessMode.POP
             });
           }}
         />
@@ -249,6 +250,7 @@
           label="Go back"
           size={$view.isConstrainedWidth ? Size.sm : Size.md}
           isPreventMinWidth={true}
+          style={ButtonStyle.PLAIN}
           on:click={() => dispatch("clear")}
         />
       {/if}
@@ -263,12 +265,11 @@
         </button>
       </div>
       <div class="col-span-1 flex justify-center">
-        <Button
-          icon="back"
-          label="Go back"
-          size={$view.isConstrainedWidth ? Size.sm : Size.md}
-          isPreventMinWidth={true}
+        <PlayerControl
           on:click={() => dispatch("clear")}
+          icon="back"
+          tooltip={"Go back"}
+          style={ButtonStyle.PLAIN}
         />
       </div>
     {/if}

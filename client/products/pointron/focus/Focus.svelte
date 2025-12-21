@@ -1,9 +1,6 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import {
-    BarStyle,
-    PanelSwitcherStyle
-  } from "@21n/types/switcher.enum";
+  import { BarStyle, PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import { onMount } from "svelte";
   import QuickStart from "@21n/products/pointron/focus/quickstart/QuickStart.svelte";
   import Advanced from "@21n/products/pointron/focus/advanced/Advanced.svelte";
@@ -27,8 +24,19 @@
   import { cn } from "@21n/utils/ui.utils";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import ComponentShortcutListener from "@21n/components/shortcuts/ComponentShortcutListener.svelte";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
-  export let accessMode: ResourceAccessMode = ResourceAccessMode.INLINE;
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { getContext } from "svelte";
+  import { readable, type Writable } from "svelte/store";
+  import { Context } from "@21n/types/appStore.type";
+  import type { IContainer } from "@21n/layout/layout.type";
+  import { resolveMinWidth } from "@21n/layout/layout.utils";
+
+  const container =
+    getContext<Writable<IContainer | undefined>>(Context.CONTAINER) ||
+    readable(undefined);
+  const MIN_WIDTH_TO_EXPAND = resolveMinWidth(2);
+
+  export let accessMode: AccessMode = AccessMode.INLINE;
   let mode: number = 0;
   let isInlineEnabled: boolean = true;
   const manualLogHotKey = {
@@ -69,7 +77,9 @@
   }
 </script>
 
-{#if $view.isPortrait}
+{#if $view.isPortrait || ($container && ($container.isPortrait || $container.width < MIN_WIDTH_TO_EXPAND))}
+  {@const isMobile = $view.isPortrait}
+  {@const parentBgIndex = isMobile ? 1 : 2}
   <main class="relative flex w-full h-full otop:pt-12">
     <div class="flex flex-col h-full w-full">
       {#if $activeSession.isSessionRunning && !$activeSession.isQuickStartOn && isInlineEnabled}
@@ -77,9 +87,9 @@
       {:else}
         <div
           class={cn("flex flex-col gap-3 w-full h-full items-center", {
-            "py-2": $view.isPortrait,
-            "px-4": $view.isPortrait && mode !== 0,
-            "p-6": !$view.isPortrait
+            "py-2": isMobile,
+            "px-4": mode !== 0
+            // "p-2": !$view.isPortrait
           })}
         >
           <div class="flex w-full gap-8 items-center justify-center">
@@ -89,6 +99,7 @@
               value={mode === 0 ? "Quick Focus" : "Advanced"}
               style={PanelSwitcherStyle.BAR}
               barStyle={BarStyle.DOT}
+              {parentBgIndex}
               isDisableEnabled={$activeSession.isSessionRunning}
               on:switch={(e) => {
                 mode = e.detail === "Quick Focus" ? 0 : 1;
@@ -103,7 +114,7 @@
             <FloatingButton params={[addManualLogButton]} />
             <!-- <ManualFocusLog /> -->
           {:else}
-            <AdvancedPortrait />
+            <AdvancedPortrait {parentBgIndex} />
             <FloatingButton params={[startSessionButton]} />
           {/if}
         </div>
@@ -127,7 +138,7 @@
         titleStyle={TextStyle.PANEL_HEADING}
         isProminentDivider={true}
         extraLargeScreenComponent={$activeSession.isSessionRunning ||
-        accessMode === ResourceAccessMode.POP
+        accessMode === AccessMode.POP
           ? undefined
           : "simpleDigitalClock"}
       >

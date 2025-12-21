@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { appStore } from "@21n/stores/app.store";
-import { AppSearchParam } from "@21n/types/appStore.type";
+import { AccessMode } from "../flux/resourceStores/resource.type";
 
 export interface SearchState {
   /**
@@ -37,7 +37,7 @@ function createSearchStore() {
 
     reset: () => {
       set({ query: "", resourceType: Resource.everything });
-      appStore.toggleSearchParam([AppSearchParam.SEARCH]);
+      appStore.toggleSearchParam([AccessMode.MAIN]);
     },
 
     clear: () => {

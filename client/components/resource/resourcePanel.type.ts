@@ -1,18 +1,20 @@
 export enum ResourcePanelType {
-  DEFAULT = "DEFAULT",
-  NONE = "NONE",
+  DEFAULT = "default",
+  NONE = "none",
+  CONTENT = "content",
+  OVERVIEW = "overview",
 
-  PROPERTIES = "PROPERTIES",
-  LINKS = "LINKS",
-  ACTIVITY = "ACTIVITY",
-  METADATA = "METADATA",
+  PROPERTIES = "properties",
+  LINKS = "links",
+  ACTIVITY = "activity",
+  METADATA = "metadata",
 
-  OUTLINE = "OUTLINE",
-  BOOKMARKS = "BOOKMARKS",
-  SIDENOTES = "SIDENOTES",
+  OUTLINE = "outline",
+  BOOKMARKS = "bookmarks",
+  SIDENOTES = "sidenotes",
 
-  ANALYTICS = "ANALYTICS",
-  INFO = "INFO",
-  SUB = "SUB",
-  TASKS = "TASKS"
+  ANALYTICS = "analytics",
+  INFO = "info",
+  SUB = "sub",
+  TASKS = "tasks"
 }

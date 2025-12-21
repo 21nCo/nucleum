@@ -31,7 +31,7 @@
   import { sessionStore } from "@21n/products/pointron/focus/session.store";
   import type { ITaskThumb } from "@21n/components/tasks/task.type";
   import type { IGoalThumb } from "@21n/components/goals/goal.type";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
   import { goalStore } from "@21n/components/goals/goal.store";
   import { taskStore } from "@21n/components/tasks/task.store";
@@ -46,7 +46,7 @@
 
   export let id: string;
   export let log: any = undefined;
-  export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
+  export let accessMode: AccessMode = AccessMode.POP;
   let selectedTab: "Summary" | "Notes" = "Summary";
   let isLoadingState: boolean = false;
   let focusItems: IFocusItem[] = [];
@@ -107,14 +107,14 @@
   />
 {:then}
   <div
-    class="flex flex-col gap-6 flex-grow w-full items-center userdata otop:pt-12"
+    class="flex flex-col gap-6 flex-grow w-full max-w-3xl items-center userdata otop:pt-12"
   >
     <ModalContentPadded
       class="flex flex-col gap-6 flex-grow w-full items-center"
     >
       <div class="flex gap-4 w-full items-center justify-between">
         <Text content="Session details" style={TextStyle.PANEL_HEADING} />
-        {#if accessMode === ResourceAccessMode.SPLIT || accessMode === ResourceAccessMode.FSPLIT || $view.isConstrainedWidth}
+        {#if accessMode === AccessMode.SPLIT || accessMode === AccessMode.FSPLIT || $view.isConstrainedWidth}
           <Button
             icon="cross"
             style={ButtonStyle.OUTLINED}

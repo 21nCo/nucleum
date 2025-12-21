@@ -7,7 +7,7 @@
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { appStore } from "@21n/stores/app.store";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPoint,
     ResourceAccessPointState,
     ResourceActionType
@@ -659,8 +659,8 @@
           {resource}
           defaultAccessMode={accessPoint === ResourceAccessPoint.LIBRARY ||
           $view.isConstrainedWidth
-            ? ResourceAccessMode.POP
-            : ResourceAccessMode.INLINE}
+            ? AccessMode.POP
+            : AccessMode.INLINE}
           size={$view.isConstrainedWidth ||
           accessPoint === ResourceAccessPoint.BROWSER
             ? Size.sm
@@ -708,8 +708,8 @@
           {resource}
           defaultAccessMode={accessPoint === ResourceAccessPoint.LIBRARY ||
           $view.isConstrainedWidth
-            ? ResourceAccessMode.POP
-            : ResourceAccessMode.INLINE}
+            ? AccessMode.POP
+            : AccessMode.INLINE}
           size={$view.isConstrainedWidth ||
           accessPoint === ResourceAccessPoint.BROWSER
             ? Size.sm

@@ -16,11 +16,13 @@
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { CollectionObjectKey } from "@21n/components/collection/collection.type";
   import context from "@21n/stores/context.store";
+  import { cn } from "@21n/utils/ui.utils";
   export let selected: string;
   export let isHideTypeShortcuts: boolean = false;
   let dev_isEnableEditShortcuts: boolean = true;
   let refreshId: number = new Date().getTime();
   const isDev = import.meta.env.DEV;
+  const dev_isBoxed: boolean = true;
 
   const contentTypes: (ISelectItem & { value: string })[] = [
     {
@@ -42,7 +44,7 @@
             value: CaptureMethod.SKETCH
           },
           {
-            icon: "globe-alt",
+            icon: "globe",
             value: CaptureMethod.WEB,
             label: "Add from Web"
           }
@@ -70,9 +72,11 @@
 </script>
 
 <div class="w-full flex flex-col items-center gap-3 dp:gap-4">
-  <div class="self-start">
-    <Text content="Select a type" style={TextStyle.SECTION_HEADING} />
-  </div>
+  {#if !dev_isBoxed}
+    <div class="self-start">
+      <Text content="Select a type" style={TextStyle.SECTION_HEADING} />
+    </div>
+  {/if}
   {#key refreshId}
     {#await refreshTypes()}
       <div
@@ -82,22 +86,54 @@
       >
         <Icon icon="svg-spinners:3-dots-fade" />
       </div>
-    {:then result}
+    {:then types}
       <div
-        class="grid mo:grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-2 dp:gap-4 w-full"
+        class={cn(
+          "grid mo:grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] w-full",
+          {
+            "gap-2 dp:gap-4 grid-cols-[repeat(auto-fill,minmax(12rem,1fr))]":
+              !dev_isBoxed,
+            "gap-0.5 bg-bgs2 rounded-md border-2 border-bgs2 overflow-hidden grid-cols-4":
+              dev_isBoxed
+          }
+        )}
       >
-        {#each result as item}
-          <TypeSelectorItem
-            {item}
-            isActive={selected === item.value}
-            on:select
-            on:capture
-          />
+        {#each types as item, index}
+          <div
+            class={cn({
+              "col-span-3": types.length % 4 === 1 && index === types.length - 1
+            })}
+          >
+            <TypeSelectorItem
+              {item}
+              isActive={selected === item.value}
+              isBoxed={true}
+              on:select
+              on:capture
+            />
+          </div>
         {/each}
+        {#if dev_isEnableEditShortcuts && dev_isBoxed}
+          <button
+            class={cn(
+              "flex justify-center items-center bg-bgs1 min-h-12 notouch:hover:bg-bgs1-striped active:bg-bgs2",
+              {
+                "col-span-4": types.length % 4 === 0,
+                "col-span-2": types.length % 4 === 2,
+                "w-full h-full col-span-1": types.length % 4 !== 0
+              }
+            )}
+            on:click={() => {
+              appStore.runAction(MemotronAction.CAPTURE_SETTINGS);
+            }}
+          >
+            <Icon icon="more-outline-horizontal" />
+          </button>
+        {/if}
       </div>
     {/await}
   {/key}
-  {#if dev_isEnableEditShortcuts}
+  {#if !dev_isBoxed && dev_isEnableEditShortcuts}
     <Button
       label="Edit shortcuts"
       style={ButtonStyle.PLAIN}

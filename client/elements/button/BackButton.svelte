@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { Size } from "@21n/types/size.enum";
   import { bg, cn } from "@21n/utils/ui.utils";
   import { createEventDispatcher } from "svelte";
@@ -13,7 +13,7 @@
   export let parentBgIndex: number = 1;
   export let isEnabled: boolean = true;
   export let path: string | undefined = undefined;
-  export let accessMode: ResourceAccessMode = ResourceAccessMode.FULL;
+  export let accessMode: AccessMode = AccessMode.FULL;
   export let isPreventDefault: boolean = false;
   let classList: string = "";
   export { classList as class };

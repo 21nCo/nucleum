@@ -27,7 +27,7 @@
   import context from "@21n/stores/context.store";
   import { Embed } from "@21n/types/context.type";
   import { page } from "$app/stores";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import SplitView from "@21n/layout/SplitView.svelte";
   import { Orientation } from "@21n/types/direction.enum";
   import ColorLayer from "@21n/layout/layers/themeLayer/ColorLayer.svelte";
@@ -48,7 +48,6 @@
 
   let isWindowVisible: boolean = true;
   let isDialogEnabled: boolean = false;
-  let isInFocusMode = false;
   const dev_isRenderPopAsModal = false;
 
   onMount(() => {
@@ -60,17 +59,14 @@
       }
     });
     const pageSub = page.subscribe((value) => {
-      if (dev_isRenderPopAsModal) {
-        const popParam =
-          value.url.searchParams.get(ResourceAccessMode.POP) ?? undefined;
-        if (popParam) {
-          resolvePop(popParam);
-        } else {
-          pop = undefined;
-        }
+      fullscreen = value.url.searchParams.get(AccessMode.FULL) ?? undefined;
+      if (!dev_isRenderPopAsModal) return;
+      const popParam = value.url.searchParams.get(AccessMode.POP) ?? undefined;
+      if (popParam) {
+        resolvePop(popParam);
+      } else {
+        pop = undefined;
       }
-      fullscreen =
-        value.url.searchParams.get(ResourceAccessMode.FULL) ?? undefined;
       // console.log({ pop, fullscreen });
     });
     const modalEventSub = modalEvent.subscribe(modalEventSubscriber);
@@ -137,12 +133,6 @@
   const visibilityChangeListener = () => {
     isWindowVisible = !document.hidden;
   };
-
-  function handleFocusMode(e: CustomEvent<boolean>) {
-    if (typeof e.detail === "boolean") {
-      isInFocusMode = e.detail;
-    }
-  }
 </script>
 
 <!-- {#if $appStore.fullScreenComponentPath}
@@ -235,7 +225,7 @@
           id={fullscreen}
           componentParams={{
             isModal: true,
-            accessMode: ResourceAccessMode.FULL
+            accessMode: AccessMode.FULL
           }}
         />
       </ModalLayout>
@@ -247,7 +237,6 @@
     <Modal
       show={pop != undefined}
       id={pop.path + "-resource"}
-      {isInFocusMode}
       isDismissable={pop.modalParams?.isDismissable ?? true}
       isShowOverlay={pop.modalParams?.isShowOverlay ?? true}
       isDynamicSize={pop.modalParams?.layout?.isDynamicSize}
@@ -263,7 +252,6 @@
       <ModalLayout
         path={pop.path + "-resource"}
         resource={pop.resource}
-        {isInFocusMode}
         params={{
           ...pop?.modalParams,
           layout: {
@@ -278,7 +266,7 @@
           id={pop.resource}
           componentParams={{
             isModal: true,
-            accessMode: ResourceAccessMode.POP
+            accessMode: AccessMode.POP
           }}
         />
       </ModalLayout>
@@ -290,7 +278,6 @@
     show={modal.isShow}
     id={modal.path}
     {index}
-    {isInFocusMode}
     isDismissable={modal.isDismissable ?? true}
     isShowOverlay={modal.isShowOverlay ?? true}
     isUseDialog={modal.layout?.size != Size.full &&
@@ -304,7 +291,7 @@
     hasCantileverButtons={modal.layout?.isShowCantileverClose ||
       modal.layout?.isShowBackButton}
   >
-    <ModalLayout path={modal.path} {isInFocusMode} bind:params={modal}>
+    <ModalLayout path={modal.path} bind:params={modal}>
       <ComponentResolver
         path={modal.path}
         params={{ ...modal.componentParams, isModal: true }}
@@ -338,4 +325,3 @@
 {/if}
 
 <svelte:document on:visibilitychange={visibilityChangeListener} />
-<svelte:window on:focusMode={handleFocusMode} />

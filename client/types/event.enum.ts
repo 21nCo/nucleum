@@ -36,6 +36,9 @@ export enum GlobalEvent {
   SYNC_DOWN = "syncDown",
   APP_MENU_SWITCHED = "APP_MENU_SWITCHED",
   MUTATION = "mutation",
+  /**
+   * @deprecated - using full screen/maximize for resources instead
+   */
   FOCUS_MODE = "focusMode",
   APP_LOADING_STATUS = "appLoadingStatus",
   /**

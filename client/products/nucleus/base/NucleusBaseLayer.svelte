@@ -20,6 +20,7 @@
   import { defaultsMigrationTidy } from "@21n/components/migrations";
   import { defaultsMigrationForNodes } from "@21n/products/memotron/base/migrations";
   import TopNavLeftMenuItem from "@21n/layout/topNav/TopNavLeftMenuItem.svelte";
+  import { Action } from "@21n/types/action.enum";
 
   let isLiteMode = $context.isEmbed && $context.isSheet;
   const isDebug = import.meta.env?.DEV;
@@ -70,7 +71,7 @@
     />
     <FocusTopNavWidget />
     {#if isDebug}
-      <TopNavLeftMenuItem action="feed" isOpeningBehaviorConfigurable={true} />
+      <TopNavLeftMenuItem action={Action.FEED} />
     {/if}
   </div>
   <slot />

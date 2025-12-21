@@ -21,7 +21,7 @@ import {
   debouncer
 } from "@21n/utils/utils";
 import {
-  ResourceAccessMode,
+  AccessMode,
   ResourceAccessPoint,
   ResourceActionType
 } from "@21n/components/flux/resourceStores/resource.type";
@@ -337,7 +337,7 @@ export class ActiveNodeStore extends CollectibleStore<
     return val!;
   }
   init = async (params: {
-    accessMode: ResourceAccessMode;
+    accessMode: AccessMode;
     accessPoint: ResourceAccessPoint;
     panel?: ResourcePanelType;
   }) => {
@@ -352,10 +352,15 @@ export class ActiveNodeStore extends CollectibleStore<
           error: "Node not found"
         };
       }
+      const defaultPanel =
+        node.contentType === NodeType.NODULAR_MARKDOWN
+          ? ResourcePanelType.CONTENT
+          : ResourcePanelType.OVERVIEW;
       this.set({
         ...node,
+        defaultPanel,
         accessMode: params.accessMode,
-        panel: params.panel ?? ResourcePanelType.DEFAULT
+        panel: params.panel ?? defaultPanel
       });
       if (
         params.accessPoint === ResourceAccessPoint.CALENDAR ||
@@ -710,7 +715,7 @@ const nodeStaticActions = {
   metadataPane: {
     value: ResourcePanelType.METADATA,
     icon: "ph:file-light",
-    label: "Show metadata",
+    label: "Metadata",
     tooltip: "Show metadata"
   },
   propertiesPane: {
@@ -895,9 +900,8 @@ export function resolveNodeContextMenu(
   node: INode,
   accessPoint: ResourceAccessPoint,
   params?: {
-    isMediaNode?: boolean;
     accessPointId?: IRecordId;
-    accessMode?: ResourceAccessMode;
+    accessMode?: AccessMode;
     accessPointContext?: string;
     nodeView?: NodeView;
     isConstrainedWidth?: boolean;
@@ -905,6 +909,7 @@ export function resolveNodeContextMenu(
 ): IContextMenu {
   const resourceActions = new ResourceActions(node, nodeStore, accessPoint);
   const nodeActions = new NodeActions(node, nodeStore, accessPoint);
+  const isMediaNode = node.contentType !== NodeType.NODULAR_MARKDOWN;
   if (accessPoint === ResourceAccessPoint.CLIPPER) {
     return [
       {
@@ -930,25 +935,25 @@ export function resolveNodeContextMenu(
     commonGroups = [moreGroup];
   } else if (
     accessPoint === ResourceAccessPoint.SELF &&
-    params?.accessMode !== ResourceAccessMode.SPLIT &&
+    params?.accessMode !== AccessMode.SPLIT &&
     !viewStore.isPortrait
   ) {
     commonGroups = [
       {
         group: "open",
-        items: [resourceActions.openAsTab(), resourceActions.openAsFull()]
+        items: [resourceActions.openAsTab(), resourceActions.maximize()]
       },
       moreGroup
     ];
   } else if (
     accessPoint === ResourceAccessPoint.SELF &&
-    params?.accessMode === ResourceAccessMode.INLINE &&
+    params?.accessMode === AccessMode.INLINE &&
     viewStore.isPortrait
   ) {
     commonGroups = [
       {
         group: "open",
-        items: [resourceActions.openAsFull()]
+        items: [resourceActions.maximize()]
       },
       moreGroup
     ];
@@ -959,7 +964,7 @@ export function resolveNodeContextMenu(
         items: [
           resourceActions.openAsTab(),
           resourceActions.openAsSplit(),
-          resourceActions.openAsFull()
+          resourceActions.maximize()
         ]
       },
       moreGroup
@@ -1041,7 +1046,7 @@ export function resolveNodeContextMenu(
       },
       ...commonGroups
     ];
-  } else if (params?.isConstrainedWidth && params?.isMediaNode) {
+  } else if (params?.isConstrainedWidth && isMediaNode) {
     return [
       {
         group: "all",
@@ -1060,7 +1065,7 @@ export function resolveNodeContextMenu(
       mediaShareAndExportGroup,
       ...commonGroups
     ];
-  } else if (params?.isMediaNode) {
+  } else if (isMediaNode) {
     return [
       {
         group: "all",
@@ -1068,7 +1073,8 @@ export function resolveNodeContextMenu(
           resourceActions.star(),
           resourceActions.edit(accessPoint),
           nodeActions.linksPane(),
-          nodeStaticActions.metadataPane
+          nodeStaticActions.metadataPane,
+          nodeStaticActions.propertiesPane
         ]
       },
       mediaShareAndExportGroup,
@@ -1092,12 +1098,8 @@ export function resolveNodeContextMenu(
   }
   const toggleGroupItems =
     node.contentType === NodeType.NODULAR_MARKDOWN
-      ? [
-          resourceActions.starAsToggle(),
-          resourceActions.toggleLock(),
-          resourceActions.toggleFocusMode()
-        ]
-      : [resourceActions.toggleFocusMode()];
+      ? [resourceActions.starAsToggle(), resourceActions.toggleLock()]
+      : [];
 
   const coverPhotoAction =
     node.contentType === NodeType.NODULAR_MARKDOWN
@@ -1108,15 +1110,17 @@ export function resolveNodeContextMenu(
   const secondGroupItems = viewStore.isConstrainedWidth
     ? [
         resourceActions.toggleReadMode(),
-        nodeStaticActions.metadataPane,
+        nodeStaticActions.propertiesPane,
         nodeStaticActions.activityPane,
+        nodeStaticActions.metadataPane,
         ...(coverPhotoAction ? [coverPhotoAction] : [])
       ]
     : [
         resourceActions.toggleReadMode(),
         nodeActions.toggleFullWidth(),
-        nodeStaticActions.metadataPane,
+        nodeStaticActions.propertiesPane,
         nodeStaticActions.activityPane,
+        nodeStaticActions.metadataPane,
         ...(coverPhotoAction ? [coverPhotoAction] : [])
       ];
   return [
@@ -1144,7 +1148,7 @@ export function resolveNodeContextMenu(
 export function resolveVisibleActions(
   node: INode,
   params?: {
-    accessMode?: ResourceAccessMode;
+    accessMode?: AccessMode;
     isConstrainedWidth?: boolean;
   }
 ): IToggleItem[] {
@@ -1191,37 +1195,38 @@ export function resolvePanelOptions(node: INode) {
     ResourceAccessPoint.SELF
   );
   const overviewPanel = {
-    value: ResourcePanelType.DEFAULT,
+    value: ResourcePanelType.OVERVIEW,
     label: "Overview",
     icon: "overview"
   };
-  const focusMode = {
-    value: "focus",
-    label: "Focus",
-    icon: "circle"
+  const contentMode = {
+    value: ResourcePanelType.CONTENT,
+    label: "Content",
+    icon:
+      node.contentType === NodeType.NODULAR_MARKDOWN ? "markdown" : "hexagon"
   };
   if (
     node.contentType === NodeType.NODULAR_MARKDOWN ||
     headingNodeTypes.includes(node.contentType)
   ) {
     return [
-      focusMode,
+      contentMode,
       nodeActions.linksPane(),
       nodeStaticActions.activityPane,
-      nodeStaticActions.propertiesPane,
+      // nodeStaticActions.propertiesPane,
       nodeActions.sideNotesPane()
     ];
   }
   const baseActions: IToggleItem[] = [
-    focusMode,
+    contentMode,
     overviewPanel,
     nodeActions.linksPane(),
     nodeStaticActions.activityPane,
     nodeActions.sideNotesPane()
   ];
-  if (canHaveTraces.includes(node.contentType)) {
-    baseActions.push(nodeActions.tracesPane());
-  }
-  baseActions.push(nodeStaticActions.propertiesPane);
+  // if (canHaveTraces.includes(node.contentType)) {
+  //   baseActions.push(nodeActions.tracesPane());
+  // }
+  // baseActions.push(nodeStaticActions.propertiesPane);
   return baseActions;
 }

@@ -5,18 +5,17 @@ import { dispatchCustomEvent } from "@21n/utils/browser.utils";
 import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
 
 export const PanelSwitcherMixin = {
-  switchPanel(this: unknown, panelValue: string) {
+  switchPanel(this: unknown, panelValue?: string) {
     const state = this.get();
-    let panel: string | undefined = state.panel;
+    let panel: string | undefined = state?.panel;
     let isInFocusMode: boolean = false;
-
     if (panelValue === "focus") {
       panel = ResourcePanelType.NONE;
       isInFocusMode = true;
     } else if (panelValue === panel) {
-      panel = ResourcePanelType.DEFAULT;
+      panel = state.defaultPanel ?? ResourcePanelType.DEFAULT;
     } else {
-      panel = panelValue;
+      panel = panelValue ?? state.defaultPanel;
     }
 
     if (panel) {
@@ -31,7 +30,11 @@ export const PanelSwitcherMixin = {
       isInFocusMode
     }));
 
-    if (!panel || panel === ResourcePanelType.NONE || panel === ResourcePanelType.DEFAULT) {
+    if (
+      !panel ||
+      panel === ResourcePanelType.NONE ||
+      panel === ResourcePanelType.DEFAULT
+    ) {
       dispatchCustomEvent(GlobalEvent.EXPAND_PANEL, {});
     } else {
       dispatchCustomEvent(GlobalEvent.COLLAPSE_PANEL, {});

@@ -12,7 +12,7 @@
   import { appStore } from "@21n/stores/app.store";
   import { logger } from "@21n/components/debug/logger.client";
   import { resolveModalOnFront } from "@21n/utils/browser.utils";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import view from "@21n/stores/view.store";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import context from "@21n/stores/context.store";
@@ -31,7 +31,6 @@
   export let size: Size = Size.md;
   export let orientation: Orientation = Orientation.Vertical;
   export let hasCantileverButtons: boolean = false;
-  export let isInFocusMode = false;
   export let isDynamicSize: boolean = false;
   let dialog: HTMLDialogElement;
   /**
@@ -58,8 +57,7 @@
         event.target?.classList?.contains("pop-overlay") ||
         event.target?.classList?.contains("popover") ||
         event.target?.id === id) &&
-      isDismissable &&
-      !isInFocusMode
+      isDismissable
     ) {
       close();
     }
@@ -70,7 +68,7 @@
     logger.log({ at: "Modal.svelte close", id, frontModal });
     confirmationNotification.reset();
     if (frontModal?.id?.includes("-resource")) {
-      appStore.closeResource({ accessMode: ResourceAccessMode.POP });
+      appStore.closeResource({ accessMode: AccessMode.POP });
     }
     if (!frontModal || id != frontModal?.id) return;
     show = false;
@@ -147,7 +145,6 @@
             !alignment ||
             $view.isConstrainedWidth,
           "bg-opacity-0": !isShowOverlay,
-          "bg-bgs1": isInFocusMode,
           "mo:p-0 p-3": !isUseDialog && size !== Size.full
         },
         !$view.isConstrainedWidth && {
@@ -156,8 +153,7 @@
             alignment === Placement.BottomCenter
         },
         isShowOverlay &&
-          !isUseDialog &&
-          !isInFocusMode && {
+          !isUseDialog && {
             "bg-black bg-opacity-70": !isBlurredBg,
             "backdrop-blur-xl backdrop-opacity--80 backdrop-brightness--50 backdrop-grayscale bg-fgs4 bg-opacity-50 backdrop-saturate--50":
               isBlurredBg
@@ -208,7 +204,8 @@
               "portrait:w-full": size !== Size.xs && size !== Size.sm
             },
             !$view.isConstrainedWidth && {
-              "shadow-xl cw:border-none dark:border-none border border-brs3": !isShowOverlay,
+              "shadow-xl cw:border-none dark:border-none border border-brs3":
+                !isShowOverlay,
               "w-fit h-fit": isDynamicSize,
               "m-auto": alignment === Placement.Center || !alignment,
               "mx-auto":

@@ -4,12 +4,12 @@
   import type { IRecordId } from "@21n/types/data.type";
   import BoxButton from "@21n/elements/button/BoxButton.svelte";
   import { appStore } from "@21n/stores/app.store";
-  import { AppSearchParam } from "@21n/types/appStore.type";
   import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "@21n/types/size.enum";
   import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
   import Badge from "@21n/elements/text/Badge.svelte";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
 
   function handleClick(item: IRecordId) {
     vTrail.activate(item);
@@ -28,7 +28,7 @@
       <BoxButton
         icon="cross"
         on:click={() => {
-          appStore.toggleSearchParam([AppSearchParam.RIGHT]);
+          appStore.toggleSearchParam([AccessMode.RIGHT]);
         }}
       />
     </div>

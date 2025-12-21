@@ -8,17 +8,16 @@
   import PropertiesPane from "@21n/components/collection/properties/PropertiesPane.svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
-  import view from "@21n/stores/view.store";
-  import { Display } from "@21n/types/view.type";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth: boolean = false;
+  export let isThreeColumned: boolean = false;
   export let status: any;
   $: isActiveResource =
     !$goal?.isArchived && !$goal?.trashInformation && !$goal?.isParentInactive;
 </script>
 
 <div class="cw:w-full h-full transition-all flex">
-  {#if !isConstrainedWidth && $goal.panel === ResourcePanelType.DEFAULT}
+  {#if $goal.panel === ResourcePanelType.OVERVIEW}
     <div class="flex flex-col min-w-96 grow gap-4 p-2 h-full">
       <GoalTasks id={$goal.id} {isActiveResource} />
     </div>
@@ -43,7 +42,7 @@
       {/if}
     </div>
   {/if}
-  {#if (!isConstrainedWidth && $goal.panel === ResourcePanelType.DEFAULT) || $view.display === Display.TK}
+  {#if isThreeColumned && $goal.panel === ResourcePanelType.OVERVIEW}
     <div class="flex flex-col bg-bgs2 border-l border-brs2 min-w-96 w-96 p-4">
       <GoalInfoPanel {goal} />
     </div>

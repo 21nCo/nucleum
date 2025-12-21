@@ -12,10 +12,7 @@
   import { bg, cn } from "@21n/utils/ui.utils";
   import ViewTabSwitcher from "@21n/components/collection/tabSwitcher/ViewTabSwitcher.svelte";
   import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import {
-    BarStyle,
-    PanelSwitcherStyle
-  } from "@21n/types/switcher.enum";
+  import { BarStyle, PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import { Size } from "@21n/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import {
@@ -25,12 +22,9 @@
   import { activeResourceFilter } from "@21n/utils/utils";
   import { onDestroy, onMount } from "svelte";
   import type { DropdownItem } from "@21n/types/dropdownItem.type";
-  import type {
-    ISelectItem,
-    ISelectValue
-  } from "@21n/types/select.type";
+  import type { ISelectItem, ISelectValue } from "@21n/types/select.type";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPoint,
     ResourceActionType
   } from "@21n/components/flux/resourceStores/resource.type";
@@ -84,7 +78,7 @@
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let parentBgIndex: number = 1;
 
-  export let accessMode: ResourceAccessMode = ResourceAccessMode.POP;
+  export let accessMode: AccessMode = AccessMode.POP;
   let collection: IActiveCollectionStore = ActiveCollectionStore.resolve(id);
   let activeView: ICollectionViewWithData | null = null;
   let viewData: ICollectionItem[] = [];
@@ -115,8 +109,8 @@
   $: isConstrainedWidth =
     $view.isConstrainedWidth ||
     $view.isPortrait ||
-    $collection?.accessMode === ResourceAccessMode.SPLIT ||
-    $collection?.accessMode === ResourceAccessMode.FSPLIT ||
+    $collection?.accessMode === AccessMode.SPLIT ||
+    $collection?.accessMode === AccessMode.FSPLIT ||
     (containerWidth < 1000 &&
       ($collection?.coverLayout?.placement === Placement.Right ||
         $collection?.coverLayout?.placement === Placement.Left));
@@ -131,7 +125,6 @@
   $: isBoardContext =
     activeView?.layout === CollectionLayout.BOARD &&
     !isNoneResource(activeView?.groupBy);
-
 
   onMount(async () => {
     const viewQueryParam = new URLSearchParams(location.search).get(
@@ -505,7 +498,6 @@
       collection.modify({ typeToExtend: undefined });
     }
   }
-
 </script>
 
 {#if !$collection || $collection.isPageLoading || !isReady}

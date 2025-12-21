@@ -389,7 +389,7 @@
 </script>
 
 <div
-  class="h-full overflow-y-auto"
+  class="h-full overflow-y-auto px-6"
   bind:this={containerRef}
   on:scroll={onScroll}
 >
@@ -404,13 +404,16 @@
           selectedScale === TimeScaleUnit.YEAR &&
           selectedDate.getFullYear() === year}
         <div
-          class={cn("mb-1 has-[.year-label:hover]:bg-bgs2 transition-colors", {
-            "bg-bgs2": isSelectedYear
-          })}
+          class={cn(
+            "mb-1 has-[.year-label:hover]:bg-bgs2 rounded-md transition-colors",
+            {
+              "bg-bgs2": isSelectedYear
+            }
+          )}
           id="year-{year}"
         >
           <button
-            class={cn("year-label mb-2 w-full text-start group cursor-pointer")}
+            class={cn("year-label pt-2 w-full text-start group cursor-pointer")}
             on:click={() => handleYearSelect(year)}
           >
             <span
@@ -434,7 +437,7 @@
                 selectedDate.getMonth() === monthIndex}
               <button
                 class={cn(
-                  "flex flex-col min-w-[240px] p-4 dp:p-6 transition-all duration-200",
+                  "flex flex-col min-w-[240px] p-4 dp:p-6 transition-all duration-200 rounded-md",
                   {
                     "bg-bgs2": isSelectedMonth,
                     "has-[.first:hover]:bg--bgs2 hover:bg-bgs1-striped":

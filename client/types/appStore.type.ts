@@ -138,8 +138,19 @@ export enum AppSearchParam {
   DEPTH = "depth",
   TRAVERSE = "traverse",
   NODE_VIEW = "nodeView",
+  /**
+   * @deprecated - use MAIN access mode instead
+   */
   SEARCH = "search",
-  RIGHT = "right"
+  /**
+   * @deprecated - use RIGHT access mode instead
+   * Opening an action in right panel
+   */
+  RIGHT = "right",
+  /**
+   * Whether to maximize the resource or not
+   */
+  MAX = "max"
 }
 
 export enum Context {

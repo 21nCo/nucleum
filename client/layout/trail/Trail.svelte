@@ -2,7 +2,7 @@
   import { onMount, tick } from "svelte";
   import { hTrail } from "../topNav/tabs/tabs.store";
   import ResourceResolver from "@21n/layout/paint/ResourceResolver.svelte";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import type { IRecordId } from "@21n/types/data.type";
   import type { Action } from "@21n/types/action.enum";
   import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
@@ -96,7 +96,7 @@
           class="absolute top-0 h-full rounded-md"
           style="left: {getItemPosition(index)}px; width: {ITEM_WIDTH}px;"
         >
-          <ResourceResolver id={item} accessMode={ResourceAccessMode.INLINE} />
+          <ResourceResolver id={item} accessMode={AccessMode.INLINE} />
         </div>
       {/if}
     {/each}

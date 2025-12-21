@@ -34,7 +34,7 @@
   };
   function onFullScreenToggle() {
     if (!isInFullScreen) {
-      modalEvent.hide(PointronAction.FOCUS_MODAL);
+      modalEvent.hide(PointronAction.FOCUS);
       fullScreen.show(PointronAction.FULL_SCREEN_FOCUS);
     } else {
       fullScreen.hide();
