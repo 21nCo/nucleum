@@ -17,7 +17,7 @@ import type {
 } from "@21n/components/goals/goal.type";
 import { GoalStatus, GoalType } from "@21n/components/goals/goal.type";
 import {
-  ResourceAccessMode,
+  AccessMode,
   ResourceAccessPoint,
   ResourceActionType
 } from "@21n/components/flux/resourceStores/resource.type";
@@ -115,7 +115,7 @@ class GoalStore extends ResourceStore<IGoal, IGoalCapture> {
     }
     toasts.success("New goal created successfully");
     if (params?.isPreventOpenAfterCreate) return result[0];
-    appStore.openResource(result[0].id, ResourceAccessMode.POP, {
+    appStore.openResource(result[0].id, AccessMode.POP, {
       searchParams: {
         [AppSearchParam.EDIT]: true,
         [AppSearchParam.LINK]: params?.linkSearchParam ?? null
@@ -380,7 +380,7 @@ export class ActiveGoalStore extends CollectibleStore<
   }
 
   async init(
-    accessMode: ResourceAccessMode,
+    accessMode: AccessMode,
     params?: {
       isInEditMode?: boolean;
       linkSearchParam?: string;
@@ -608,10 +608,13 @@ class GoalActions {
 
 export function resolvePanelOptions(
   goal: IActiveGoal,
-  isConstrainedWidth: boolean
+  params?: {
+    isConstrainedWidth?: boolean;
+    isThreeColumned?: boolean;
+  }
 ) {
   const overview = {
-    value: ResourcePanelType.DEFAULT,
+    value: ResourcePanelType.OVERVIEW,
     label: "Overview",
     icon: "overview",
     tooltip: "Show overview"
@@ -623,17 +626,20 @@ export function resolvePanelOptions(
     goalStaticPanelActions.activityPane
   ];
 
-  if (isConstrainedWidth) {
+  if (params?.isConstrainedWidth) {
     items.unshift(goalStaticPanelActions.tasksPane);
     items.unshift(goalStaticPanelActions.subGoalsPane);
+    items.unshift(goalStaticPanelActions.infoPane);
+  } else if (params?.isThreeColumned === false) {
+    items.unshift(goalStaticPanelActions.tasksPane);
     items.unshift(goalStaticPanelActions.infoPane);
   } else {
     items.unshift(overview);
   }
 
-  if (goal?.types && goal?.types?.length > 0) {
-    items.push(goalStaticPanelActions.propertiesPane);
-  }
+  // if (goal?.types && goal?.types?.length > 0) {
+  //   items.push(goalStaticPanelActions.propertiesPane);
+  // }
   return items;
 }
 
@@ -689,7 +695,7 @@ export function resolveGoalContextMenu(
       ...(accessPoint !== ResourceAccessPoint.SELF
         ? [resourceActions.openAsSplit()]
         : []),
-      resourceActions.openAsFull()
+      resourceActions.maximize()
     ]
   };
   const ctx = get(context);

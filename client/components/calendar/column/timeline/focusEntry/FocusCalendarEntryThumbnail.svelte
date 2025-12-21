@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resizeListener } from "@21n/actions/resize.action";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import type { ISessionThumb } from "@21n/products/pointron/logs/log.type";
   import LogThumbnailGoalsInfo from "@21n/products/pointron/logs/LogThumbnailGoalsInfo.svelte";
@@ -26,7 +26,7 @@
 <button
   class="flex flex-col w-full px-1"
   on:click={() => {
-    appStore.openResource(item.id, ResourceAccessMode.POP);
+    appStore.openResource(item.id, AccessMode.POP);
   }}
   use:resizeListener={(el) => {
     width = el.width;

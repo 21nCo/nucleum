@@ -66,17 +66,6 @@
   }, 1000);
 </script>
 
-{#if $goal.isInEditMode}
-  <button
-    class="flex gap-1 w-full h-12 min-h-12 bg-ass1 text-abg items-center justify-center rounded-md hover:brightness-110"
-    on:click={() => {
-      goal.toggleEditMode(false);
-    }}
-  >
-    <Icon icon="cross" size={Size.sm} class="text-abg" />
-    <span> Close edit mode </span>
-  </button>
-{/if}
 <div
   class={cn("relative flex flex-col gap-6 ", {
     "rounded-md p-3": isConstrainedWidth,

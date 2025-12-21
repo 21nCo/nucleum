@@ -10,7 +10,7 @@
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { SearchStore } from "@21n/components/record/record.store";
   import { appStore } from "@21n/stores/app.store";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { Product } from "@21n/products/product.type";
@@ -130,7 +130,7 @@
             id = id[0];
           }
           if (!id) return;
-          appStore.openResource(id, ResourceAccessMode.POP);
+          appStore.openResource(id, AccessMode.POP);
         }}
       >
         <span class="text-b3 text-fgs3 whitespace-nowrap"

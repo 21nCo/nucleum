@@ -91,12 +91,7 @@ export async function signin(body: any) {
   }
 }
 
-const betaProducts = [
-  "web.selftron.app",
-  "pre.selftron.app",
-  "web.nucleus.app",
-  "pre.nucleus.app"
-];
+const betaProducts = ["web.nucleus.app", "pre.nucleus.app"];
 
 async function betaListCheck(email: string, app: string) {
   if (!betaProducts.includes(app)) return;

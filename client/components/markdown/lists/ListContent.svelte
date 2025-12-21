@@ -1,8 +1,5 @@
 <script lang="ts">
-  import {
-    ListType,
-    NodeType
-  } from "@21n/products/memotron/node/node.type";
+  import { ListType, NodeType } from "@21n/products/memotron/node/node.type";
   import TextContent from "@21n/components/markdown/content/TextContent.svelte";
   import type { MdStoreType } from "@21n/components/markdown/markdown.store";
   import type { IListBlockBody } from "@21n/components/markdown/md.type";
@@ -80,15 +77,15 @@
     <Check isChecked={body.checked} on:click={onCheckClicked} size={Size.sm} />
   {:else if !body.indent || body.indent % 3 === 0}
     <div
-      class="w-1.5 h-1.5 min-w-[0.375rem] rounded-full self-start bg-fgs1 my-4 mx-2"
+      class="w-1.5 h-1.5 min-w-[0.375rem] rounded-full self-start bg-fgs1 mt-3 mx-2"
     ></div>
   {:else if body.indent % 3 === 1}
     <div
-      class="w-1.5 h-1.5 min-w-[0.375rem] bg-fgs1 self-start my-4 mx-2"
+      class="w-1.5 h-1.5 min-w-[0.375rem] bg-fgs1 self-start mt-3 mx-2"
     ></div>
   {:else}
     <div
-      class="w-1.5 h-1.5 min-w-[0.375rem] self-start rounded-full border border-fgs1 my-4 mx-2"
+      class="w-1.5 h-1.5 min-w-[0.375rem] self-start rounded-full border border-fgs1 mt-3 mx-2"
     ></div>
   {/if}
 

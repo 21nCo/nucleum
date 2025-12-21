@@ -13,7 +13,11 @@
   import SystemStatus from "@21n/components/settings/about/SystemStatus.svelte";
   export let message: string | undefined = undefined;
   export let actions: IButtonParams[] = [];
-  $: is404 = $page?.url.pathname === "/404" || $page?.url.pathname === "/404/";
+  export let isNotFoundPage: boolean = false;
+  $: is404 =
+    isNotFoundPage ||
+    $page?.url.pathname === "/404" ||
+    $page?.url.pathname === "/404/";
   $: erroredPath = $page?.url?.searchParams?.get("path");
   $: errorParam = $page?.url?.searchParams?.get("error");
   const titles = ["Yikes", "Uh-oh", "Oops", "Oh no", "Whoops", "Dang", "Shoot"];

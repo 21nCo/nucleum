@@ -60,6 +60,7 @@ interface IAppConfigBase extends IProductConfigBase {
   databaseName?: string;
   librarySectionLabel?: string;
   configurableShortcuts?: string[];
+  oAuthProviders?: ("google" | "apple" | "github")[];
 }
 
 interface IAppConfig extends IAppConfigBase {
@@ -73,7 +74,7 @@ interface IExtensionConfig extends IProductConfigBase {
 const commonConfigurableShortcuts = [
   Action.EDIT_MODE,
   Action.CMD,
-  Action.GLOBAL_SEARCH,
+  Action.SEARCH,
   Action.GO_BACK,
   Action.GO_FORWARD
 ];
@@ -98,12 +99,7 @@ const resourceTableMap: Record<Product, Resource[]> = {
     Resource.task,
     Resource.session,
     Resource.sessionLog
-  ],
-  [Product.SELFTRON]: [],
-  [Product.FEEDTRON]: [],
-  [Product.HOMETRON]: [],
-  [Product.FINATRON]: [],
-  [Product.FELLOTRON]: []
+  ]
 };
 
 export const products: Record<Product, IAppConfigBase> = {
@@ -298,81 +294,6 @@ export const products: Record<Product, IAppConfigBase> = {
         section: "other"
       }
     ]
-  },
-  [Product.SELFTRON]: {
-    name: "Selftron",
-    appMenu: ["overview", "library"],
-    appMenuPt: [],
-    homePath: "home",
-    homePathPt: "mobilehome",
-    databaseName: "nativeone",
-    resources: {
-      browse: [Resource.habit, Resource.quest, Resource.input],
-      table: [...commonTables, ...resourceTableMap[Product.SELFTRON]]
-    },
-    librarySectionLabel: "Self",
-    displayName: "Selftron",
-    tagline: "Your self improvement"
-  },
-  [Product.FEEDTRON]: {
-    name: "Feedtron",
-    appMenu: ["overview", "library"],
-    appMenuPt: [],
-    homePath: "feed",
-    homePathPt: "mobilehome",
-    databaseName: "nativeone",
-    resources: {
-      browse: [Resource.source, Resource.feed],
-      table: [...commonTables, ...resourceTableMap[Product.FEEDTRON]]
-    },
-    librarySectionLabel: "Feed",
-    displayName: "Feedtron",
-    tagline: "Your feed curator"
-  },
-  [Product.HOMETRON]: {
-    name: "Hometron",
-    appMenu: ["overview", "library"],
-    appMenuPt: [],
-    homePath: "home",
-    homePathPt: "mobilehome",
-    databaseName: "nativeone",
-    resources: {
-      browse: [Resource.thing, Resource.place],
-      table: [...commonTables, ...resourceTableMap[Product.HOMETRON]]
-    },
-    librarySectionLabel: "Home",
-    displayName: "Hometron",
-    tagline: "Your home manager"
-  },
-  [Product.FINATRON]: {
-    name: "Finatron",
-    appMenu: ["overview", "library"],
-    appMenuPt: [],
-    homePath: "home",
-    homePathPt: "mobilehome",
-    databaseName: "nativeone",
-    resources: {
-      browse: [Resource.account],
-      table: [...commonTables, ...resourceTableMap[Product.FINATRON]]
-    },
-    librarySectionLabel: "Finance",
-    displayName: "Finatron",
-    tagline: "Your financial assistant"
-  },
-  [Product.FELLOTRON]: {
-    name: "Fellotron",
-    appMenu: ["overview", "library"],
-    appMenuPt: [],
-    homePath: "home",
-    homePathPt: "mobilehome",
-    databaseName: "nativeone",
-    resources: {
-      browse: [Resource.fellow],
-      table: [...commonTables, ...resourceTableMap[Product.FELLOTRON]]
-    },
-    librarySectionLabel: "Fellow",
-    displayName: "Fellotron",
-    tagline: "Your fellow tracker"
   }
 };
 
@@ -394,6 +315,7 @@ export const resolveProductConfig = (productOverride?: Product): IAppConfig => {
   const base = products[productOverride ?? (product as Product)];
   return {
     ...base,
+    oAuthProviders: ["google", "apple", "github"],
     tableConfig: base.resources.table
       .map(tableConfigMapper)
       .filter((x) => x != null)

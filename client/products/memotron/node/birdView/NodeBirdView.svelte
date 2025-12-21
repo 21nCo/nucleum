@@ -578,7 +578,7 @@
       <div
         class="flex gap-2 h-full overflow-auto min-w-96 max-w-96 border-l border-brs3"
       >
-        <NodeRightPaneContent {node} isShowClose={true} />
+        <NodeRightPaneContent {node} />
       </div>
     {/if}
   </div>

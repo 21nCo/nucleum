@@ -20,7 +20,7 @@ import {
   propertyStore
 } from "@21n/components/collection/properties/property.store";
 import {
-  ResourceAccessMode,
+  AccessMode,
   ResourceAccessPoint,
   ResourceActionType,
   type OmitForCaptureWithId
@@ -315,7 +315,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
   /**
    * Initialized the collection with local cached data
    */
-  async init(accessMode: ResourceAccessMode) {
+  async init(accessMode: AccessMode) {
     logger.log({ at: "ActiveCollectionStore.init", id: this.id });
     try {
       this.update((val: IActiveCollection) => {
@@ -569,7 +569,7 @@ export function resolveCollectionContextMenu(
   accessPoint: ResourceAccessPoint,
   params?: {
     accessPointId?: IRecordId;
-    accessMode?: ResourceAccessMode;
+    accessMode?: AccessMode;
     accessPointContext?: string;
     isConstrainedWidth?: boolean;
   }
@@ -591,13 +591,13 @@ export function resolveCollectionContextMenu(
   } else if (
     viewStore.isPortrait &&
     accessPoint === ResourceAccessPoint.SELF &&
-    params?.accessMode === ResourceAccessMode.INLINE
+    params?.accessMode === AccessMode.INLINE
   ) {
     commonGroups = [
       moreGroup,
       {
         group: "open",
-        items: [resourceActions.openAsFull()]
+        items: [resourceActions.maximize()]
       }
     ];
   } else {
@@ -607,7 +607,7 @@ export function resolveCollectionContextMenu(
         items: [
           resourceActions.openAsTab(),
           // resourceActions.openAsSplit(),
-          resourceActions.openAsFull()
+          resourceActions.maximize()
         ]
       },
       moreGroup

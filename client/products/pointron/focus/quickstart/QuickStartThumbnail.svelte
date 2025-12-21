@@ -23,7 +23,7 @@
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { createEventDispatcher } from "svelte";
   import { appStore } from "@21n/stores/app.store";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import context from "@21n/stores/context.store";
   const dispatch = createEventDispatcher();
 
@@ -60,7 +60,7 @@
 
   async function toggleSession(e: MouseEvent) {
     if (isInEditMode || e.altKey) {
-      appStore.openResource(item.id, ResourceAccessMode.POP);
+      appStore.openResource(item.id, AccessMode.POP);
       return;
     }
     if (isActive) {
@@ -104,7 +104,7 @@
 
   function onTitleClick(e: MouseEvent) {
     if (!$context.isEmbed) {
-      appStore.openResource(item.id, ResourceAccessMode.POP);
+      appStore.openResource(item.id, AccessMode.POP);
       e.stopPropagation();
     }
   }

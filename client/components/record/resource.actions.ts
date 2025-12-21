@@ -5,7 +5,7 @@ import { bulkEditStore } from "@21n/components/record/bulkedit.store";
 import { copyResourceLinkToClipboard } from "@21n/products/memotron/memotron.utils";
 import {
   ResourceAccessPoint,
-  ResourceAccessMode,
+  AccessMode,
   ResourceActionType,
   type IResourceCaptureV2
 } from "@21n/components/flux/resourceStores/resource.type";
@@ -29,16 +29,17 @@ import { Action } from "@21n/types/action.enum";
 import { AppSearchParam } from "@21n/types/appStore.type";
 import { UIStateScope } from "@21n/stores/uiState/uiState.type";
 import { BulkEditor } from "@21n/components/record/record.store";
+import { GlobalEvent } from "@21n/types/event.enum";
 
 export class ResourceActions<T extends IMemotronItemBase> {
   accessPoint?: ResourceAccessPoint;
-  accessMode?: ResourceAccessMode;
+  accessMode?: AccessMode;
   constructor(
     private resource: T,
     private store: ResourceStore<T, IResourceCaptureV2<T>>,
     params?: {
       accessPoint?: ResourceAccessPoint;
-      accessMode?: ResourceAccessMode;
+      accessMode?: AccessMode;
     }
   ) {
     this.resource = resource;
@@ -220,8 +221,8 @@ export class ResourceActions<T extends IMemotronItemBase> {
           appStore.openResource(
             this.resource.id,
             context === ResourceAccessPoint.BROWSER
-              ? ResourceAccessMode.INLINE
-              : ResourceAccessMode.POP,
+              ? AccessMode.INLINE
+              : AccessMode.POP,
             {
               searchParams: {
                 [AppSearchParam.EDIT]: true
@@ -252,14 +253,13 @@ export class ResourceActions<T extends IMemotronItemBase> {
   }
   toggleFocusMode(): IContextMenuItem {
     return {
-      value: "focusMode",
+      value: GlobalEvent.FOCUS_MODE,
       label: "Focus",
       activeLabel: "Focused",
       icon: "circle",
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isInFocusMode,
       callback: async (checked) => {
-        console.log({ checked });
         this.store.toggleFocusMode(this.resource.id, checked);
       }
     };
@@ -305,7 +305,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       value: "open-as-split",
       icon: "split-screen",
       callback: async () => {
-        appStore.openResource(this.resource.id, ResourceAccessMode.SPLIT);
+        appStore.openResource(this.resource.id, AccessMode.SPLIT);
       }
     };
   }
@@ -314,35 +314,31 @@ export class ResourceActions<T extends IMemotronItemBase> {
     return {
       value: "open-as-split",
       label:
-        currentMode === ResourceAccessMode.SPLIT
+        currentMode === AccessMode.SPLIT
           ? "Close split screen"
           : "Open in split screen",
-      icon:
-        currentMode === ResourceAccessMode.SPLIT
-          ? "minus-circle"
-          : "split-screen",
+      icon: currentMode === AccessMode.SPLIT ? "minus-circle" : "split-screen",
       callback: async () => {
-        if (currentMode === ResourceAccessMode.SPLIT) {
+        if (currentMode === AccessMode.SPLIT) {
           appStore.closeResource({
             id: this.resource.id,
-            accessMode: ResourceAccessMode.SPLIT
+            accessMode: AccessMode.SPLIT
           });
         } else {
-          appStore.openResource(this.resource.id, ResourceAccessMode.SPLIT);
+          appStore.openResource(this.resource.id, AccessMode.SPLIT);
         }
       }
     };
   }
-  openAsFull(): IContextMenuItem {
+  maximize(): IContextMenuItem {
+    const maxSearchParam = new URLSearchParams(window.location.search).get(
+      AppSearchParam.MAX
+    );
     const currentMode = determineResourceAccessMode(this.resource.id);
     return {
       value: "open-in-full-screen",
-      label:
-        currentMode === ResourceAccessMode.FULL
-          ? "Close full screen"
-          : "Open in full screen",
-      icon:
-        currentMode === ResourceAccessMode.FULL ? "minus-circle" : "fullscreen",
+      label: maxSearchParam ? "Minimize" : "Maximize",
+      icon: maxSearchParam ? "exitfullscreen" : "fullscreen",
       callback: async () => {
         appStore.toggleFullScreen(currentMode, this.resource.id);
       }

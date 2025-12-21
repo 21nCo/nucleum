@@ -18,7 +18,6 @@
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { appStore } from "@21n/stores/app.store";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
-  import { Product } from "@21n/products/product.type";
   export let date: Date = new Date();
   export let data: Array<CalendarTimelineEntry> = [];
   export let layout: CalendarColumnLayout;
@@ -295,7 +294,7 @@
 </script>
 
 <div
-  class="flex flex-col w-full h-full overflow-hidden bg-bgs1 relative pl-1"
+  class="flex flex-col w-full h-full overflow-hidden bg-bgs1 relative"
   bind:this={container}
 >
   {#if isRefreshing}
@@ -347,11 +346,11 @@
           style="top: {nowPosition}px;"
         >
           <div
-            class="w-2 h-2 rounded-full bg-aps1 absolute -left--1 -mt-0.5"
+            class="w-0.5 h-4 rounded-full bg-aps1 absolute -left--1 -mt-0.5"
           ></div>
         </div>
         <div
-          class="absolute text-aps1 text-b3 w-14 flex justify-end bg-gradient-to-t from-bgs1 via-bgs1 to-transparent rounded-md px-2 pt-2 left-2 whitespace-nowrap tabular-nums"
+          class="absolute text-aps1 text-b4 w-14 flex justify-end bg-gradient-to-t from-bgs1 via-bgs1 to-transparent rounded-md px-2 pt-2 left-2 whitespace-nowrap tabular-nums"
           style="top: {nowPosition - 26}px;"
         >
           {formatTime($userPreferences, now)}
@@ -361,10 +360,7 @@
             class="absolute z-20 text-abg text-b3 flex justify-end rounded-md px-2 mr-1 right-0 whitespace-nowrap bg-aps1"
             style="top: {nowPosition - 10}px;"
             on:click={() => {
-              const action =
-                $appStore.product === Product.POINTRON
-                  ? PointronAction.FOCUS_MODAL
-                  : PointronAction.FOCUS;
+              const action = PointronAction.FOCUS;
               appStore.runAction(action);
             }}
           >

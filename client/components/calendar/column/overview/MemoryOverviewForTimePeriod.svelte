@@ -7,7 +7,7 @@
   import Text from "@21n/elements/text/Text.svelte";
   import { TextStyle } from "@21n/types/text.enum";
   import { appStore } from "@21n/stores/app.store";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import NodeThumbnail from "@21n/products/memotron/node/thumbnail/NodeThumbnail.svelte";
   import { Arrangement } from "@21n/types/direction.enum";
@@ -121,7 +121,7 @@
   }
 
   function handleNodeClick(node: INodeThumb) {
-    appStore.openResource(node.id, ResourceAccessMode.POP);
+    appStore.openResource(node.id, AccessMode.POP);
   }
 </script>
 
@@ -133,10 +133,10 @@
   />
 {:then { today, previousYears }}
   {#if today.nodes.length === 0 && today.links.length === 0 && previousYears.length === 0}
-    <EmptyStatusView
+    <!-- <EmptyStatusView
       mainText="No nodes found"
       subText={`No nodes found on ${parseAndFormatDate(date, "verbose")}`}
-    />
+    /> -->
   {:else}
     <div class="flex flex-col gap-6 w-full">
       <!-- Today's Memory metrics cards -->
@@ -148,7 +148,7 @@
           value={today.nodes.length}
           isAccent={true}
           callback={() => {
-            appStore.openResource(Action.HISTORY, ResourceAccessMode.POP, {
+            appStore.openResource(Action.HISTORY, AccessMode.POP, {
               searchParams: { [AppSearchParam.DATE]: date.toISOString() }
             });
           }}

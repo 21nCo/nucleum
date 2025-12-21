@@ -16,7 +16,7 @@
   import view from "@21n/stores/view.store";
   import context from "@21n/stores/context.store";
   import { OperatingSystem } from "@21n/types/context.type";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { generateResourceId } from "@21n/components/flux/flux.utils";
   import { postMessageToParent } from "@21n/utils/embed.utils";
@@ -40,6 +40,8 @@
   import ComponentShortcutListener from "@21n/components/shortcuts/ComponentShortcutListener.svelte";
   import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
   import { Action } from "@21n/types/action.enum";
+  import { Context } from "@21n/types/appStore.type";
+  import EdgeButton from "@21n/elements/button/EdgeButton.svelte";
 
   export let captureId: IRecordId = generateResourceId(Resource.capture);
   export let isWindowDnD = false;
@@ -47,7 +49,7 @@
     id: captureId
   };
 
-  setContext("capture", captureContext);
+  setContext(Context.CAPTURE, captureContext);
   let captureStore: IActiveCaptureStore;
   if (captureId) captureStore = ActiveCaptureStore.resolve(captureId);
   isInEditMode.set(true);
@@ -55,6 +57,10 @@
   let subs: any[] = [];
   let isWebModalOpen = false;
   let captureTopBarRef: CaptureTopBar | undefined = undefined;
+
+  $: isShowBottomCloseButton =
+    !$view.isConstrainedWidth && $captureStore?.isEmpty;
+
   onMount(async () => {
     const appEventSub = appEvents.subscribe(async (x: IEvent) => {
       if (x.event === GlobalEvent.ENTER && x.value.metaKey === true) {
@@ -109,7 +115,7 @@
   function reset() {
     captureStore.reset();
     if ($view.isConstrainedWidth) {
-      appStore.closeResource({ accessMode: ResourceAccessMode.POP });
+      appStore.closeResource({ accessMode: AccessMode.POP });
     }
     postMessageToParent(EmbedMessage.MENU_ITEM_SELECTED);
   }
@@ -124,15 +130,7 @@
   ) {
     const artifact = event.detail?.item;
     if (!artifact) return;
-    
-    // TODO: CRITICAL - Complete web artifact integration
-    // The artifact data needs to be added to the capture store.
-    // Options:
-    // 1. Add artifact metadata as markdown content: captureStore.appendContent(`[${artifact.title}](${artifact.externalUrl})`)
-    // 2. Create a node with artifact data: captureStore.createNodeFromArtifact(artifact)
-    // 3. Add as structured capture data: captureStore.addArtifact(artifact)
-    // Currently, clicking Add only closes the modal without saving anything.
-    
+    //TODO - complete web artifact integration
     isWebModalOpen = false;
   }
 
@@ -171,7 +169,11 @@
       class="w-full h-full flex justify-center otop:pt-12"
       id={`mdcontainer-${$captureStore.id}`}
     >
-      <div class="w-full max-w-5xl h-full flex flex-col p-4 bg-bgs1">
+      <div
+        class={cn("w-full max-w-5xl h-full flex flex-col px-4 pt-4 bg-bgs1", {
+          "pb-4": !isShowBottomCloseButton
+        })}
+      >
         {#if !$captureStore.isSaving}
           <CaptureTopBar
             bind:this={captureTopBarRef}
@@ -256,19 +258,15 @@
             </button>
           </div>
         {/if}
-        {#if !$view.isConstrainedWidth && ($captureStore.isEmpty || $captureStore.method === CaptureMethod.AUDIO)}
-          <div class="w-full flex justify-center mb-5">
-            <Button
+        {#if isShowBottomCloseButton}
+          <div class="w-full flex justify-center">
+            <EdgeButton
               icon="cross"
               tooltip="Close capture"
-              tooltipOptions={{ placement: Placement.TopCenter }}
-              type={ButtonVariant.DANGER}
-              shortcut={Action.CLOSE}
+              label="Close"
               on:click={() => {
-                appStore.closeResource({ isRestrictToModals: true });
+                appStore.closeResource({ accessMode: AccessMode.MAIN });
               }}
-              style={ButtonStyle.OUTLINED}
-              size={Size.lg}
             />
           </div>
         {/if}

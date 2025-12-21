@@ -12,7 +12,7 @@
   import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceActionType
   } from "@21n/components/flux/resourceStores/resource.type";
   import { generateResourceId } from "@21n/shared-utils/surreal.utils";
@@ -78,7 +78,7 @@
   function handleOpen(event: CustomEvent) {
     const { nodeId } = event.detail;
     if (nodeId) {
-      appStore.openResource(nodeId, ResourceAccessMode.POP);
+      appStore.openResource(nodeId, AccessMode.POP);
     }
     modalEvent.hide(MemotronAction.PASTE_CONFIRMATION);
   }

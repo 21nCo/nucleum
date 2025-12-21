@@ -1,6 +1,5 @@
 export enum PointronAction {
   FOCUS = "focus",
-  FOCUS_MODAL = "focusModal",
   SHOW_ZEN_FOCUS = "SHOW_ZEN_FOCUS",
   MANUAL_FOCUS_ENTRY = "MANUAL_FOCUS_ENTRY",
   LOGS = "LOGS",
@@ -44,5 +43,6 @@ export enum PointronAction {
    */
   IMPORT_ONBOARDING = "importonboarding",
   IMPORT_EXPORT = "importexportpage",
-  SELECT_PARENT_GOAL = "selectParentGoal"
+  SELECT_PARENT_GOAL = "selectParentGoal",
+  CREATE_TASK_INLINE = "createTaskInline"
 }

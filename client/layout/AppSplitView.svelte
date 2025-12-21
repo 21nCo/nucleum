@@ -1,12 +1,12 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { page } from "$app/stores";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import RightSplit from "@21n/layout/RightSplit.svelte";
   let split: string | undefined = undefined;
   onMount(() => {
     const sub = page.subscribe((value) => {
-      split = value.url.searchParams.get(ResourceAccessMode.SPLIT) ?? undefined;
+      split = value.url.searchParams.get(AccessMode.SPLIT) ?? undefined;
     });
     return () => {
       sub();
@@ -19,6 +19,6 @@
     <slot name="main" />
   </div>
   {#if split}
-    <RightSplit {split} accessMode={ResourceAccessMode.SPLIT} />
+    <RightSplit {split} accessMode={AccessMode.SPLIT} />
   {/if}
 </div>

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import Panel from "@21n/layout/paint/Panel.svelte";
-  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { ButtonStyle } from "@21n/types/button.type";
   import { Arrangement } from "@21n/types/direction.enum";
   import { Size } from "@21n/types/size.enum";
   import { appStore } from "@21n/stores/app.store";
@@ -12,7 +12,7 @@
   import {
     ResourceAccessPoint,
     ResourceActionType,
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPointState
   } from "@21n/components/flux/resourceStores/resource.type";
   import { uiState } from "@21n/stores/uiState/uiState.store";
@@ -24,13 +24,14 @@
     isHideCreateAction,
     resolveResourceTooltip
   } from "@21n/components/library/library.utils";
-  import { keyboardShortcuts } from "@21n/components/shortcuts/shortcuts.store";
   import ComponentShortcutListener from "@21n/components/shortcuts/ComponentShortcutListener.svelte";
   import ComponentEmbedLayer from "@21n/layout/layers/ComponentEmbedLayer.svelte";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import view from "@21n/stores/view.store";
   import { Display } from "@21n/types/view.type";
   import { bulkEditStore } from "@21n/components/record/bulkedit.store";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import { Action } from "@21n/types/action.enum";
   export let resource: Resource;
   export let onBack: (() => void) | undefined = undefined;
   export let isPreventCwPadding: boolean = false;
@@ -43,14 +44,8 @@
   let selectionCount = 0;
   let bulkEditCountUnsub: (() => void) | undefined;
 
-  const createShortcut = keyboardShortcuts?.resolveShortcutForAction("create");
-
   $: tooltip = resolveResourceTooltip(resource);
-  $: id = $page.url.searchParams.get(ResourceAccessMode.INLINE);
-  $: multiSelectContext = {
-    resource,
-    accessPoint: ResourceAccessPoint.BROWSER
-  };
+  $: id = $page.url.searchParams.get(AccessMode.INLINE);
   $: floatingButton =
     selectionCount > 0 || isHideCreateAction(resource)
       ? undefined
@@ -58,7 +53,7 @@
           label: "New " + resource,
           callback: addAction,
           icon: "plus",
-          shortcut: createShortcut,
+          shortcut: Action.CREATE,
           style: ButtonStyle.OUTLINED
         };
 
@@ -79,7 +74,11 @@
   }
 
   const addAction = async () => {
-    appStore.runAction(resourceAction(resource, ResourceActionType.CREATE), {
+    const action =
+      resource === Resource.task
+        ? PointronAction.CREATE_TASK_INLINE
+        : resourceAction(resource, ResourceActionType.CREATE);
+    appStore.runAction(action, {
       componentParams: {
         context: ResourceAccessPoint.BROWSER
       }
@@ -149,7 +148,7 @@
     <slot slot="right" name="right">
       {#key id}
         {#if id}
-          <ResourceResolver {id} accessMode={ResourceAccessMode.INLINE} />
+          <ResourceResolver {id} accessMode={AccessMode.INLINE} />
         {:else}
           <EmptyStatusView
             size={Size.lg}
@@ -161,12 +160,11 @@
     </slot>
   </Panel>
 {/key}
-
-{#if createShortcut}
+{#if resource !== Resource.task}
   <ComponentShortcutListener
     shortcuts={[
       {
-        shortcut: createShortcut,
+        shortcut: Action.CREATE,
         callback: addAction
       }
     ]}

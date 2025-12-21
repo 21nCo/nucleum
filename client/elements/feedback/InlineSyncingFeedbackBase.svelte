@@ -28,7 +28,9 @@
   out:scale={{ duration: outTransitionDuration, easing: bounceOut }}
 >
   <Icon
-    icon={isShorter ? "svg-spinners:bars-scale" : "svg-spinners:3-dots-fade"}
+    icon={isShorter
+      ? "svg-spinners:bars-rotate-fade"
+      : "svg-spinners:3-dots-fade"}
     size={Size.sm}
     class={isShorter ? "text-fgs2" : "text-aps1"}
   />

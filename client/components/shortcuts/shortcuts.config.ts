@@ -1,24 +1,25 @@
 import { KeyboardKey, ModifierKey } from "@21n/types/keyboard.type";
 import type { IKeyboardShortcut } from "@21n/components/shortcuts/shortcut.type";
+import { Action } from "@21n/types/action.enum";
+import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
+import { GlobalEvent } from "@21n/types/event.enum";
 
 export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
-  calendar: {
+  [Action.CALENDAR]: {
     key: "c"
   },
-  library: {
+  [Action.LIBRARY]: {
     key: "l"
   },
-  focus: {
+  [PointronAction.FOCUS]: {
     key: "f"
   },
   focusModal: {
     key: "f",
     modifiers: [ModifierKey.SHIFT]
   },
-  graph: {
-    key: "g"
-  },
-  overview: {
+  [Action.OVERVIEW]: {
     key: "o"
   },
   create: {
@@ -27,45 +28,49 @@ export const shortcutsConfig: Record<string, IKeyboardShortcut> = {
   node_create: {
     key: "p"
   },
-  TOGGLE_SIDEBAR: {
+  [Action.TOGGLE_SIDEBAR]: {
     key: "q"
   },
-  CMD: {
+  [Action.CMD]: {
     key: "p",
     modifiers: [ModifierKey.META, ModifierKey.SHIFT]
   },
-  EDIT_MODE: {
+  [Action.EDIT_MODE]: {
     key: "e",
     modifiers: [ModifierKey.META]
   },
-  ACTIVATE_SEARCH_BOX: {
+  [GlobalEvent.ACTIVATE_SEARCH_BOX]: {
     key: KeyboardKey.SPACE,
     code: KeyboardKey.SPACE
   },
-  ACTIVATE_LINK_BOX: {
+  [MemotronAction.ACTIVATE_LINK_BOX]: {
     key: "l",
     modifiers: [ModifierKey.META]
   },
-  TOGGLE_FOCUS_SESSION: {
+  [PointronAction.TOGGLE_FOCUS_SESSION]: {
     key: KeyboardKey.SPACE,
     code: KeyboardKey.SPACE,
     modifiers: [ModifierKey.META, ModifierKey.ALT]
   },
-  "global-search": {
+  [Action.SEARCH]: {
     key: "k",
     modifiers: [ModifierKey.META]
   },
-  GO_BACK: {
+  [Action.GO_BACK]: {
     key: "b",
     modifiers: [ModifierKey.META, ModifierKey.SHIFT]
   },
-  GO_FORWARD: {
+  [Action.GO_FORWARD]: {
     key: "f",
     modifiers: [ModifierKey.META, ModifierKey.SHIFT]
   },
-  CLOSE: {
+  [Action.CLOSE]: {
     key: KeyboardKey.ESCAPE,
     code: KeyboardKey.ESCAPE,
+    modifiers: [ModifierKey.META]
+  },
+  [GlobalEvent.ENTER]: {
+    key: KeyboardKey.ENTER,
     modifiers: [ModifierKey.META]
   }
 };

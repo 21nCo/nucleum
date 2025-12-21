@@ -6,7 +6,7 @@
   import type { IToggleItem } from "@21n/elements/toggle/toggle.type";
   import type { Readable } from "svelte/store";
   import {
-    ResourceAccessMode,
+    AccessMode,
     type IResourcePageWithPanels
   } from "@21n/components/flux/resourceStores/resource.type";
   import { Size } from "@21n/types/size.enum";
@@ -15,103 +15,146 @@
   import view from "@21n/stores/view.store";
   import ContextMenuAction from "@21n/elements/contextMenu/ContextMenuAction.svelte";
   import type { IContextMenuItem } from "@21n/types/select.type";
+  import { onMount } from "svelte";
+  import { page } from "$app/stores";
+  import Icon from "@21n/elements/Icon.svelte";
+  import { AppSearchParam } from "@21n/types/appStore.type";
 
   export let resourceStore: Readable<IResourcePageWithPanels>;
   export let panels: IToggleItem[];
   export let isConstrainedWidth: boolean = false;
-  export let accessMode: ResourceAccessMode;
+  export let accessMode: AccessMode;
   export let contextMenuResolver: () =>
     | {
         group: string;
         items: IContextMenuItem[];
       }[]
     | undefined = undefined;
+  let isMaximized: boolean = false;
+
+  onMount(() => {
+    const pageSub = page.subscribe((p) => {
+      isMaximized = p.url.searchParams.get(AppSearchParam.MAX) === "true";
+    });
+    return () => {
+      if (pageSub) pageSub();
+    };
+  });
 </script>
 
 <div
-  class={cn("bottom-0 inset-x-0 mx-auto w-fit z-10", {
+  class={cn("absolute bottom-0 inset-x-0 mx-auto w-fit z-10", {
     "mb-3": $resourceStore.isInFocusMode,
-    "mb-5": !$resourceStore.isInFocusMode,
-    absolute: accessMode === ResourceAccessMode.POP,
-    fixed: accessMode !== ResourceAccessMode.POP
+    "mb-4": !$resourceStore.isInFocusMode
   })}
 >
   <div
     class={cn(
-      "flex cw:flex-row-reverse border-t border-x border-brs3 shadow-md rounded-md overflow-hidden",
-      {
-        "h-8 bg-bgs3": $resourceStore.isInFocusMode,
-        "h-12 bg-bgs2": !$resourceStore.isInFocusMode
-      }
+      "flex flex-col border-t border-x border-brs3 shadow-md rounded-md  overflow-hidden"
     )}
   >
-    {#if $resourceStore.isInFocusMode}
-      <div class="flex h-full" in:slide={{ duration: 300, axis: "x" }}>
-        <BoxButton
-          icon="cross"
-          label="Close"
-          width="px-2"
-          parentBgIndex={3}
-          on:click={() => {
-            $resourceStore.switchPanel("DEFAULT");
-          }}
-        />
-      </div>
-    {:else}
-      <div class="flex cw:border-l border-r border-brs2">
-        {#if contextMenuResolver !== undefined}
-          <div class="flex items-center h-full">
-            <ContextMenuAction
-              menuResolver={contextMenuResolver}
-              size={Size.lg}
-              isBoxed={true}
-              parentBgIndex={1}
-              class="h-full w-10"
-              id="resourcePanelContextMenu"
-              icon="more-outline-horizontal"
-              heading="Actions"
-              on:action
-            />
-          </div>
-        {/if}
-      </div>
-      <BoxSwitcher
-        isExpandOnActiveForIcon={true}
-        options={panels}
-        selected={$resourceStore.panel}
-        on:select={(e) => $resourceStore.switchPanel(e.detail)}
-        isIconOnlyMode={$view.isConstrainedWidth}
-      />
-      <div class="cw:border-r border-l border-brs2">
-        {#if isConstrainedWidth}
-          <BoxButton
-            icon="chevron-left"
-            tooltip="Go back"
-            width="px-3"
-            size={Size.sm}
-            parentBgIndex={2}
-            on:click={() => {
-              if (accessMode === ResourceAccessMode.FULL) {
-                appStore.toggleFullScreen(accessMode, $resourceStore.id);
-              } else {
-                appStore.goBack();
-              }
-            }}
-          />
-        {:else}
+    <div
+      class={cn("flex cw:flex-row-reverse  overflow-hidden", {
+        "h-8 bg-bgs3": $resourceStore.isInFocusMode,
+        "h-12 bg-bgs2": !$resourceStore.isInFocusMode,
+        "rounded-md": !$resourceStore.isInEditMode,
+        "rounded-t-md": $resourceStore.isInEditMode
+      })}
+    >
+      {#if $resourceStore.isInFocusMode}
+        <div class="flex h-full" in:slide={{ duration: 300, axis: "x" }}>
           <BoxButton
             icon="cross"
-            tooltip="Close"
+            label="Close"
+            width="px-2"
+            parentBgIndex={3}
+            on:click={() => {
+              $resourceStore.switchPanel();
+            }}
+          />
+        </div>
+      {:else}
+        <div class="flex cw:border-l border-r border-brs2 text-fgs2 mr-3">
+          <BoxButton
+            label="Close"
+            icon="cross"
             width="px-3"
-            parentBgIndex={2}
             size={Size.sm}
             type={ButtonVariant.DANGER}
+            parentBgIndex={2}
             on:click={() => {
               appStore.closeResource({ id: $resourceStore.id });
             }}
           />
-        {/if}
-      </div>
+        </div>
+        <BoxSwitcher
+          isExpandOnActiveForIcon={true}
+          options={panels}
+          size={$view.isConstrainedWidth ? Size.sm : Size.md}
+          isAccentColor={true}
+          isActiveIndicatorOnTop={true}
+          selected={$resourceStore.panel}
+          on:select={(e) => $resourceStore.switchPanel(e.detail)}
+          isIconOnlyMode={$view.isConstrainedWidth}
+        />
+        <div
+          class="flex items-center h-full cw:border-r border-l border-brs2 ml-3"
+        >
+          {#if isConstrainedWidth}
+            <BoxButton
+              icon="chevron-left"
+              tooltip="Go back"
+              width="px-3"
+              parentBgIndex={2}
+              on:click={() => {
+                if (accessMode === AccessMode.FULL) {
+                  appStore.toggleFullScreen(accessMode, $resourceStore.id);
+                } else {
+                  appStore.goBack();
+                }
+              }}
+            />
+          {:else}
+            <div class="flex items-center bg--bgs3 h-full">
+              <BoxButton
+                icon={isMaximized ? "exitfullscreen" : "fullscreen"}
+                tooltip={isMaximized ? "Minimize" : "Maximize"}
+                width="px-3"
+                parentBgIndex={2}
+                on:click={() => {
+                  appStore.toggleFullScreen(accessMode, $resourceStore.id);
+                }}
+              />
+              {#if contextMenuResolver !== undefined}
+                <div class="flex items-center h-full">
+                  <ContextMenuAction
+                    menuResolver={contextMenuResolver}
+                    size={Size.lg}
+                    isBoxed={true}
+                    parentBgIndex={1}
+                    class="h-full w-10"
+                    id="resourcePanelContextMenu"
+                    icon="more-outline-horizontal"
+                    heading="Actions"
+                    on:action
+                  />
+                </div>
+              {/if}
+            </div>
+          {/if}
+        </div>
+      {/if}
+    </div>
+    {#if $resourceStore.isInEditMode}
+      <button
+        class="flex gap-1 w-full h-11 min-h-11 bg-ass1 text-abg items-center justify-center rounded-b-md hover:brightness-110"
+        on:click={() => {
+          $resourceStore.closeEditMode();
+        }}
+      >
+        <Icon icon="cross" size={Size.sm} class="text-abg" />
+        <span> Close edit mode </span>
+      </button>
     {/if}
   </div>
 </div>

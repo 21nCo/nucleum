@@ -7,14 +7,17 @@ import type { IRecordId } from "@21n/types/data.type";
 
 export function resolvePanelParam(
   resourceId: IRecordId,
-  resourceType: string
+  resourceType?: string
 ): string | null {
   try {
     const currentPage = get(page);
     if (!currentPage) return null;
 
     return currentPage.url.searchParams.get(
-      appStore.resolveRecordSpecificSearchParam(resourceId, AppSearchParam.PANEL)
+      appStore.resolveRecordSpecificSearchParam(
+        resourceId,
+        AppSearchParam.PANEL
+      )
     );
   } catch (error) {
     logger.error({

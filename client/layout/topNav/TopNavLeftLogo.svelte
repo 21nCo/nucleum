@@ -9,9 +9,29 @@
   import { UserDataMode } from "@21n/types/account.type";
   import account from "@21n/stores/account.store";
   import { Action } from "@21n/types/action.enum";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
+  import { onMount } from "svelte";
+  import Icon from "@21n/elements/Icon.svelte";
 
-  export let isHideMenuLabels: boolean = false;
+  export let action: string | undefined = undefined;
   export let isRenderProfilePicture: boolean = false;
+  export let callback: (() => void) | undefined = undefined;
+
+  let isHideMenuLabels = uiState.getState(UIState.hideLeftNavMenuLabels, {
+    scope: UIStateScope.DAP
+  });
+
+  onMount(() => {
+    const unsubscribe = uiState.subscribe((x) => {
+      isHideMenuLabels = uiState.getState(UIState.hideLeftNavMenuLabels, {
+        scope: UIStateScope.DAP
+      });
+    });
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
+  });
 
   $: isSubscriber =
     $account?.plan && $account?.dataMode === UserDataMode.CLOUD
@@ -22,12 +42,22 @@
 <button
   class={cn(
     "group flex items-center h-full w-fit border-r border-brs3 hover:bg-bgs3-striped",
-    {
+    !action && {
       "px-[0.72rem]": isHideMenuLabels,
       "px-[1.72rem]": !isHideMenuLabels
+    },
+    action && {
+      "px-[1.08rem]": isHideMenuLabels,
+      "px-[2.08rem]": !isHideMenuLabels
     }
   )}
-  on:click={() => appStore.runAction(Action.SETTINGS)}
+  on:click={() => {
+    if (callback) {
+      callback();
+    } else {
+      appStore.runAction(action ?? Action.SETTINGS);
+    }
+  }}
 >
   {#if isRenderProfilePicture}
     <div class="px-1">
@@ -42,6 +72,10 @@
       >
         <ProfilePicture context="topbar" />
       </div>
+    </div>
+  {:else if action}
+    <div class="flex items-center justify-center">
+      <Icon icon={action} />
     </div>
   {:else}
     <div class="opacity-50">

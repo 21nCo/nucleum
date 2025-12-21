@@ -6,7 +6,6 @@
   import { popover } from "@21n/actions/popover.action";
   import BreadcrumbsOverflowPopover from "@21n/elements/breadcrumbsV2/BreadcrumbsOverflowPopover.svelte";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { cn } from "@21n/utils/ui.utils";
   const dispatch = createEventDispatcher();
   export let items: IBreadcrumbItem[] = [];

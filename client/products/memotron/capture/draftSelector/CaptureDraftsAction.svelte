@@ -53,7 +53,7 @@
         "flex items-center gap-1 notouch:hover:bg-ass2/10 active:bg-ass2/10 rounded-md border border-dashed border-ass1 text-ass1",
         {
           "text-b3 px-2 py-1": size === Size.sm,
-          "text-b2 px-3 py-2": size === Size.md
+          "text-b2 px-3 py-1.5": size === Size.md
         }
       )}
       bind:this={ref}

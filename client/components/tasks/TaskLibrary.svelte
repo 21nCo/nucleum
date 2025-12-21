@@ -39,7 +39,6 @@
     parseAndFormatDate,
     isSameDay
   } from "@21n/utils/time.utils";
-  import AddNewTaskInline from "@21n/components/tasks/AddNewTaskInline.svelte";
   import { taskStore } from "@21n/components/tasks/task.store";
   import { toasts } from "@21n/stores/notification.store";
   import Button from "@21n/elements/button/Button.svelte";
@@ -69,6 +68,7 @@
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { logger } from "@21n/components/debug/logger.client";
+  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   export let goalId: IRecordId | undefined = undefined;
   export let collectionId: IRecordId | undefined = undefined;
   export let accessPoint: ResourceAccessPoint | undefined = undefined;
@@ -80,7 +80,6 @@
   let searchQuery = "";
   let searchInputRef: InlineSearchBar | undefined;
   let isArchivedFilterSelected = false;
-  let isHideCompletedFilterSelected = false;
   let isHideGoalTasksFilterSelected = false;
   let dueDateFilter: TaskDueDateFilter = TaskDueDateFilter.ALL;
   let isFiltersExpanded = false;
@@ -89,7 +88,6 @@
   let viewDate: Date = new Date();
   let taskRecordsRef: TaskRecords | undefined;
   let dateSelectionPopoverRef: HTMLDivElement;
-  let addNewTaskInlineRef: AddNewTaskInline | undefined;
   let isRefreshing = false;
   let isInSelectionMode = false;
   let isShowSearchBar = false;
@@ -240,11 +238,7 @@
     return {
       isArchived: isArchivedFilterSelected ? true : undefined,
       goalId: isHideGoalTasksFilterSelected ? false : undefined,
-      isChecked:
-        dueDateFilter === TaskDueDateFilter.OVERDUE ||
-        isHideCompletedFilterSelected
-          ? false
-          : undefined
+      isChecked: dueDateFilter === TaskDueDateFilter.OVERDUE ? false : undefined
     };
   }
 
@@ -386,12 +380,14 @@
     subContext={goalId ? instance : undefined}
   >
     <Toggle bind:on={isShowSearchBar} icon="search" tooltip="Search" />
-    <Toggle
-      bind:on={isFiltersExpanded}
-      icon="ph:sliders-light"
-      tooltip="Filters and options"
-      on:change={() => persistFiltersExpandedState()}
-    />
+    {#if selectedSubType !== TaskSubTypeForSwitcher.BY_DATE || !goalId}
+      <Toggle
+        bind:on={isFiltersExpanded}
+        icon="ph:sliders-light"
+        tooltip="Filters and options"
+        on:change={() => persistFiltersExpandedState()}
+      />
+    {/if}
     {#if !isPreventAddNew && ((!$view.isConstrainedWidth && accessPoint === ResourceAccessPoint.LIBRARY) || accessPoint === ResourceAccessPoint.GOAL)}
       <Button
         icon="plus"
@@ -400,20 +396,17 @@
         size={Size.md}
         isPreventMinWidth={true}
         on:click={() => {
-          appStore.runAction(
-            resourceAction(Resource.task, ResourceActionType.CREATE),
-            {
-              componentParams: {
-                date:
-                  selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
-                  selectedSubType === TaskSubTypeForSwitcher.BY_MONTH
-                    ? selectedDate
-                    : undefined,
-                goalId: goalId,
-                collectionId: collectionId
-              }
+          appStore.runAction(PointronAction.CREATE_TASK_INLINE, {
+            componentParams: {
+              date:
+                selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
+                selectedSubType === TaskSubTypeForSwitcher.BY_MONTH
+                  ? selectedDate
+                  : undefined,
+              goalId: goalId,
+              collectionId: collectionId
             }
-          );
+          });
         }}
       />
     {/if}
@@ -442,12 +435,6 @@
           }}
         />
       {/if}
-      <SwitchInput
-        bind:checked={isHideCompletedFilterSelected}
-        isExpanded={true}
-        label={{ label: "Hide completed tasks" }}
-        on:change={() => refresh()}
-      />
       {#if !goalId}
         <SwitchInput
           bind:checked={isHideGoalTasksFilterSelected}
@@ -534,57 +521,47 @@
     isDisableOutTransition={true}
   />
 
-  {#if tasks && tasks.length > 0}
-    <div
-      class={cn(
-        "flex flex-col gap-4 pr-1.5 overflow-auto-scrollbar grow userdata",
-        {
-          "px-4": accessPoint === ResourceAccessPoint.LIBRARY
-        }
-      )}
-    >
-      <!-- {#if selectedSubType !== TaskSubTypeForSwitcher.BY_MONTH}
-      <AddNewTaskInline on:add={onAdd} bind:this={addNewTaskInlineRef} />
-    {/if} -->
-      <TaskRecords
-        bind:this={taskRecordsRef}
-        data={tasks}
-        accessPoint={resolveAccessPoint()}
-        accessPointId={resolveAccessPointId()}
-        {parentBgIndex}
-        subType={selectedSubType}
-      />
-      <div
-        use:intersection={{
-          rootMargin: "100px",
-          callback: () => {
-            refresh({ isPagination: true });
+  <div
+    class={cn(
+      "flex flex-col gap-4 pr-1.5 overflow-auto-scrollbar grow userdata",
+      {
+        "px-4": accessPoint === ResourceAccessPoint.LIBRARY
+      }
+    )}
+  >
+    <TaskRecords
+      bind:this={taskRecordsRef}
+      data={tasks}
+      accessPoint={resolveAccessPoint()}
+      accessPointId={resolveAccessPointId()}
+      {parentBgIndex}
+      subType={selectedSubType}
+      {isRefreshing}
+      {searchQuery}
+      on:create={() => {
+        appStore.runAction(PointronAction.CREATE_TASK_INLINE, {
+          componentParams: {
+            date:
+              selectedSubType === TaskSubTypeForSwitcher.BY_DATE ||
+              selectedSubType === TaskSubTypeForSwitcher.BY_MONTH
+                ? selectedDate
+                : undefined,
+            goalId: goalId,
+            collectionId: collectionId
           }
-        }}
-      />
-      <ScrollViewBottomSpacer />
-    </div>
-  {:else}
-    <EmptyStatusView
-      isSearchContext={searchQuery !== ""}
-      isLoadingState={isRefreshing}
-      loadingAnimation={LoadingAnimationType.FOCUS_ITEMS_PULSE}
-      mainText="No tasks found"
-      subText={searchQuery !== ""
-        ? "Try different search criteria or create a new task."
-        : !isPreventAddNew
-          ? "Create a task to get started."
-          : "You can't add tasks to this goal when it is archived/deleted."}
-      actionText={!isPreventAddNew && !$view.isConstrainedWidth
-        ? "Create new task"
-        : undefined}
-      on:click={() => {
-        appStore.runAction(
-          resourceAction(Resource.task, ResourceActionType.CREATE)
-        );
+        });
       }}
     />
-  {/if}
+    <div
+      use:intersection={{
+        rootMargin: "100px",
+        callback: () => {
+          refresh({ isPagination: true });
+        }
+      }}
+    />
+    <ScrollViewBottomSpacer />
+  </div>
 </div>
 <ComponentBaseLayer
   syncDownOnMount={true}

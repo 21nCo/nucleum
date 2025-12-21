@@ -31,7 +31,7 @@ import PrivacyPolicy from "@21n/landing/shared/PrivacyPolicy.svelte";
 import CalendarSettings from "@21n/components/calendar/settings/CalendarSettings.svelte";
 import { Embed } from "@21n/types/context.type";
 import {
-  ResourceAccessMode,
+  AccessMode,
   ResourceActionType,
   type IMultiSelectStore
 } from "@21n/components/flux/resourceStores/resource.type";
@@ -85,6 +85,10 @@ import DexieConsole from "@21n/components/debug/DexieConsole.svelte";
 import { AppSearchParam } from "@21n/types/appStore.type";
 import OfflineStatusModal from "@21n/components/settings/sync/OfflineStatusModal.svelte";
 import context from "@21n/stores/context.store";
+import view from "./view.store";
+import Navigator from "@21n/layout/navigator/Navigator.svelte";
+import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
+import Today from "@21n/components/calendar/Today.svelte";
 
 export const globalActions: IAction[] = [
   {
@@ -432,6 +436,7 @@ export const globalActions: IAction[] = [
   },
   {
     action: Action.CMD,
+    icon: "terminal-window",
     label: "Command bar",
     component: CommandBar,
     type: ActionType.MODAL,
@@ -915,12 +920,15 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: Action.GLOBAL_SEARCH,
+    action: Action.GLOBAL_SEARCH_MODAL,
     component: ResourceSearchModal,
-    label: "Search resources",
+    label: "Search",
     // type: ActionType.MODAL,
     type: ActionType.RESOURCE,
-    accessMode: ResourceAccessMode.POP,
+    accessMode: AccessMode.POP,
+    preCondition: () => {
+      return view.get().isConstrainedWidth;
+    },
     modalParams: {
       isShowOverlay: false,
       layout: {
@@ -930,6 +938,14 @@ export const globalActions: IAction[] = [
         isShowCantileverClose: true
       }
     }
+  },
+  {
+    action: Action.SEARCH,
+    component: ResourceSearchModal,
+    label: "Search",
+    icon: "search",
+    type: ActionType.LIVE,
+    accessMode: AccessMode.MAIN
   },
   {
     action: "appLoading",
@@ -1055,6 +1071,40 @@ export const globalActions: IAction[] = [
         size: Size.sm,
         isOveriddenFooter: true
       }
+    }
+  },
+  {
+    action: Action.NAVIGATOR,
+    icon: "ph:compass-light",
+    label: "Navigator",
+    type: ActionType.LIVE,
+    component: Navigator,
+    accessMode: AccessMode.RIGHT,
+    liveActionParams: {
+      size: Size.sm
+    }
+  },
+  {
+    action: Action.TODAY,
+    icon: "calendar-blank",
+    label: "Today",
+    type: ActionType.LIVE,
+    component: Today,
+    accessMode: AccessMode.RIGHT,
+    liveActionParams: {
+      size: Size.md
+    }
+  },
+  {
+    action: Action.RHOMBUS,
+    icon: "proicons:rhombus",
+    label: "Rhombus",
+    type: ActionType.LIVE,
+    component: ComingSoonView,
+    accessMode: AccessMode.RIGHT,
+    liveActionParams: {
+      size: Size.md,
+      isOpeningBehaviorConfigurable: true
     }
   }
 ];

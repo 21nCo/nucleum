@@ -18,6 +18,10 @@
   import MemoryBase from "@21n/products/memotron/base/MemoryBase.svelte";
   import { defaultsMigrationForNodes } from "@21n/products/memotron/base/migrations";
   import { defaultsMigrationTidy } from "@21n/components/migrations";
+  import TopNavLeftMenuItem from "@21n/layout/topNav/TopNavLeftMenuItem.svelte";
+  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
 
   let isLiteMode = $context.isEmbed && $context.isSheet;
   const isDebug = import.meta.env?.DEV;
@@ -69,6 +73,11 @@
 </script>
 
 <UserBaseLayer on:ready={onUserBaseLayerReady}>
+  <div slot="topnav" class="flex items-center h-full">
+    <TopNavLeftMenuItem
+      action={resourceAction(Resource.node, ResourceActionType.CREATE)}
+    />
+  </div>
   <slot />
   <MemotronNotifications />
 </UserBaseLayer>

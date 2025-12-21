@@ -25,7 +25,7 @@ import {
 import { Embed, OperatingSystem } from "@21n/types/context.type";
 import { accessLogStore } from "@21n/components/accessLogging/accesslog.store";
 import {
-  ResourceAccessMode,
+  AccessMode,
   ResourceActionType
 } from "@21n/components/flux/resourceStores/resource.type";
 import { InteractionMode } from "@21n/components/settings/interactionMode/interactionMode.type";
@@ -35,7 +35,7 @@ import { logger } from "@21n/components/debug/logger.client";
 import { Size } from "@21n/types/size.enum";
 import type { IRecordId } from "@21n/types/data.type";
 import account from "@21n/stores/account.store";
-import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
+import { tabs, vTrail } from "@21n/layout/topNav/tabs/tabs.store";
 import {
   determineResourceAccessMode,
   resourceAction
@@ -165,7 +165,7 @@ const recordSpecificSearchParams = [
   AppSearchParam.LINK,
   AppSearchParam.DATE,
   AppSearchParam.SETTING,
-  ResourceAccessMode.FSPLIT
+  AccessMode.FSPLIT
 ];
 
 // export const appStore = initAppStore();
@@ -235,6 +235,10 @@ export const appStore = {
     logger.log({ method: "gotoPath", path });
     //TODO
     // appStore.hideFullScreenPlayer();
+    if (props?.queryParams) {
+      const queryString = new URLSearchParams(props.queryParams).toString();
+      path += "?" + queryString;
+    }
     update((n: IAppStore) => {
       n = {
         ...n,
@@ -243,10 +247,6 @@ export const appStore = {
       };
       return n;
     });
-    if (props?.queryParams) {
-      const queryString = new URLSearchParams(props.queryParams).toString();
-      path += "?" + queryString;
-    }
     goto(path, false, props?.replaceState ?? false);
   },
   gotoErrorPage: (err: any) => {
@@ -342,7 +342,7 @@ export const appStore = {
     } else if (action.type === ActionType.RESOURCE && !isRenderAsPage) {
       appStore.openResource(
         action.action,
-        action.accessMode ?? ResourceAccessMode.POP,
+        action.accessMode ?? AccessMode.POP,
         {
           searchParams: params?.searchParams
         }
@@ -360,6 +360,21 @@ export const appStore = {
       if (params?.searchParams) {
         appStore.toggleSearchParam(params.searchParams);
       }
+    } else if (action.type === ActionType.LIVE) {
+      if (action.liveActionParams?.isOpeningBehaviorConfigurable) {
+        //TODO - check for default opening mode preference
+      }
+      const mode = action.accessMode ?? AccessMode.RIGHT;
+      const paramPresent = new URLSearchParams(window.location.search).get(
+        mode
+      );
+      if (paramPresent && paramPresent === slug) {
+        appStore.toggleSearchParam([mode]);
+      } else {
+        appStore.toggleSearchParam({
+          [mode]: slug
+        });
+      }
     } else if (action.component) {
       logger.log({
         at: "running action",
@@ -367,7 +382,7 @@ export const appStore = {
         searchParams: params?.searchParams
       });
       if (
-        store.interactionMode === InteractionMode.COMMAND_ONLY &&
+        store.interactionMode === InteractionMode.AGENT &&
         ctx.embed !== Embed.HANDSET
       ) {
         appStore.toggleSearchParam({ tab: "page:" + action.action });
@@ -573,44 +588,29 @@ export const appStore = {
   isOverlay: (recordId?: IRecordId) => {
     if (recordId) {
       const accessMode = determineResourceAccessMode(recordId);
-      return (
-        accessMode === ResourceAccessMode.POP ||
-        accessMode === ResourceAccessMode.FULL
-      );
+      return accessMode === AccessMode.POP || accessMode === AccessMode.FULL;
     }
     return (
-      new URLSearchParams(window.location.search).get(
-        ResourceAccessMode.FULL
-      ) ||
-      new URLSearchParams(window.location.search).get(ResourceAccessMode.POP)
+      new URLSearchParams(window.location.search).get(AccessMode.FULL) ||
+      new URLSearchParams(window.location.search).get(AccessMode.POP)
     );
   },
   determineCurrentResourceAccessMode1: (id: string) => {
-    if (
-      new URLSearchParams(window.location.search).get(
-        ResourceAccessMode.POP
-      ) === id
-    )
-      return ResourceAccessMode.POP;
+    if (new URLSearchParams(window.location.search).get(AccessMode.POP) === id)
+      return AccessMode.POP;
     else if (
-      new URLSearchParams(window.location.search).get(
-        ResourceAccessMode.FULL
-      ) === id
+      new URLSearchParams(window.location.search).get(AccessMode.FULL) === id
     )
-      return ResourceAccessMode.FULL;
+      return AccessMode.FULL;
     else if (
-      new URLSearchParams(window.location.search).get(
-        ResourceAccessMode.SPLIT
-      ) === id
+      new URLSearchParams(window.location.search).get(AccessMode.SPLIT) === id
     )
-      return ResourceAccessMode.SPLIT;
+      return AccessMode.SPLIT;
     else if (
-      new URLSearchParams(window.location.search).get(
-        ResourceAccessMode.FSPLIT
-      ) === id
+      new URLSearchParams(window.location.search).get(AccessMode.FSPLIT) === id
     )
-      return ResourceAccessMode.FSPLIT;
-    else return ResourceAccessMode.INLINE;
+      return AccessMode.FSPLIT;
+    else return AccessMode.INLINE;
   },
   /**
    *
@@ -621,18 +621,19 @@ export const appStore = {
    */
   determineClickAccessMode: (event: MouseEvent) => {
     if (event.altKey && event.metaKey) {
-      return ResourceAccessMode.TAB_IN_BACKGROUND;
-    } else if (event.shiftKey) return ResourceAccessMode.FULL;
+      return AccessMode.TAB;
+    } else if (event.shiftKey) return AccessMode.FULL;
     else if (event.altKey) {
-      return ResourceAccessMode.SPLIT;
+      return AccessMode.SPLIT;
     } else if (event.metaKey) {
-      return ResourceAccessMode.TAB;
+      return AccessMode.OPEN_IN_BACKGROUND;
     }
   },
   openResource: (
     id: IRecordId,
-    accessMode: ResourceAccessMode = ResourceAccessMode.INLINE,
+    accessMode: AccessMode = AccessMode.INLINE,
     params?: {
+      origin?: Action | IRecordId;
       replaceId?: IRecordId;
       searchParams?: Record<string, string | boolean | number | null>;
     }
@@ -640,14 +641,11 @@ export const appStore = {
     logger.log({ at: "openResource", id, accessMode, params });
     if (!id) return;
     let url = new URL(window.location.href);
-    if (accessMode === ResourceAccessMode.FULL) {
+    if (accessMode === AccessMode.FULL) {
       url =
-        appStore.toggleSearchParam(
-          [ResourceAccessMode.POP, ResourceAccessMode.FSPLIT],
-          {
-            isPreventRefresh: true
-          }
-        ) ?? url;
+        appStore.toggleSearchParam([AccessMode.POP, AccessMode.FSPLIT], {
+          isPreventRefresh: true
+        }) ?? url;
     }
     const timestamp = new Date();
     accessLogStore.create({
@@ -656,17 +654,35 @@ export const appStore = {
       resourceId: id,
       timestamp: timestamp.toISOString()
     });
-    if (accessMode === ResourceAccessMode.TAB) {
+    if (accessMode === AccessMode.TAB) {
       if (params?.replaceId) tabs.replace(id, params.replaceId);
       else tabs.open(id);
-    } else if (accessMode === ResourceAccessMode.TAB_IN_BACKGROUND) {
-      tabs.addInBackground(id);
-    } else if (accessMode === ResourceAccessMode.SPLIT) {
+      return;
+    } else if (accessMode === AccessMode.OPEN_IN_BACKGROUND && params?.origin) {
+      vTrail.add(params.origin, id, {
+        isPreventActivation: true
+      });
+      appStore.toggleSearchParam(
+        { [AccessMode.RIGHT]: Action.NAVIGATOR },
+        { url }
+      );
+      return;
+    } else if (accessMode === AccessMode.SPLIT) {
       const isFullOrPop = appStore.isOverlay(params?.replaceId);
-      if (isFullOrPop) accessMode = ResourceAccessMode.FSPLIT;
-      else accessMode = ResourceAccessMode.SPLIT;
+      if (isFullOrPop) accessMode = AccessMode.FSPLIT;
+      else accessMode = AccessMode.SPLIT;
     }
     logger.log({ at: "openResource", accessMode });
+    let isOpenNavigator = false;
+    let isCloseNavigator = false;
+    if (accessMode === AccessMode.POP && params?.origin) {
+      isOpenNavigator = vTrail.add(params.origin, id);
+    } else if (accessMode === AccessMode.POP) {
+      vTrail.clear();
+      isCloseNavigator =
+        new URL(window.location.href).searchParams.get(AccessMode.RIGHT) ===
+        Action.NAVIGATOR;
+    }
     url =
       appStore.toggleSearchParam(recordSpecificSearchParams, {
         isPreventRefresh: true,
@@ -676,7 +692,9 @@ export const appStore = {
       {
         [accessMode]: id.toString(),
         [accessMode + "At"]: timestamp.getTime(),
-        ...(params?.searchParams ?? {})
+        ...(params?.searchParams ?? {}),
+        ...(isOpenNavigator ? { [AccessMode.RIGHT]: Action.NAVIGATOR } : {}),
+        ...(isCloseNavigator ? { [AccessMode.RIGHT]: null } : {})
       },
       {
         url: url
@@ -700,9 +718,9 @@ export const appStore = {
     }
   ) => {
     const clickAccessMode = appStore.determineClickAccessMode(event);
-    let accessMode = ResourceAccessMode.SPLIT;
-    if (clickAccessMode === ResourceAccessMode.SPLIT) {
-      accessMode = ResourceAccessMode.POP;
+    let accessMode = AccessMode.SPLIT;
+    if (clickAccessMode === AccessMode.SPLIT) {
+      accessMode = AccessMode.POP;
     } else if (clickAccessMode) {
       accessMode = clickAccessMode;
     }
@@ -749,7 +767,8 @@ export const appStore = {
     event: MouseEvent | undefined,
     id: IRecordId,
     params?: {
-      defaultTo?: ResourceAccessMode;
+      origin?: Action | IRecordId;
+      defaultTo?: AccessMode;
       replaceId?: IRecordId;
       searchParams?: Record<string, string | boolean | number | null>;
     }
@@ -761,13 +780,14 @@ export const appStore = {
       params?.defaultTo ??
       (params?.replaceId
         ? determineResourceAccessMode(params.replaceId)
-        : ResourceAccessMode.POP);
+        : AccessMode.POP);
     if (event) accessMode = appStore.determineClickAccessMode(event);
     if (!accessMode) accessMode = defaultTo;
     logger.log({ at: "resourceClickHandler", accessMode, defaultTo });
     appStore.openResource(id, accessMode, {
       replaceId: params?.replaceId,
-      searchParams: params?.searchParams
+      searchParams: params?.searchParams,
+      origin: params?.origin
     });
     logger.log({
       at: "resourceClickHandler",
@@ -779,12 +799,12 @@ export const appStore = {
   },
   closeResource: (props?: {
     id?: IRecordId;
-    accessMode?: ResourceAccessMode;
+    accessMode?: AccessMode;
     isRestrictToModals?: boolean;
   }) => {
     const restoreInlineResourceIfPrev = () => {
       const prevMode = url.searchParams.get("prev");
-      if (prevMode === ResourceAccessMode.INLINE && props?.id)
+      if (prevMode === AccessMode.INLINE && props?.id)
         url.searchParams.set(prevMode, props?.id.toString());
     };
     appEvents.nav(props?.id?.toString() ?? "");
@@ -805,20 +825,18 @@ export const appStore = {
       return;
     }
     if (props?.isRestrictToModals) {
-      appStore.toggleSearchParam(
-        [ResourceAccessMode.FSPLIT, ResourceAccessMode.POP],
-        {
-          url
-        }
-      );
+      appStore.toggleSearchParam([AccessMode.FSPLIT, AccessMode.POP], {
+        url
+      });
       return;
     }
     restoreInlineResourceIfPrev();
     removeSearchParam("prev");
-    removeSearchParam(ResourceAccessMode.SPLIT);
-    removeSearchParam(ResourceAccessMode.FULL);
-    removeSearchParam(ResourceAccessMode.POP);
-    removeSearchParam(ResourceAccessMode.FSPLIT);
+    removeSearchParam(AccessMode.SPLIT);
+    removeSearchParam(AccessMode.FULL);
+    removeSearchParam(AccessMode.POP);
+    removeSearchParam(AccessMode.FSPLIT);
+    removeSearchParam(AccessMode.MAIN);
     appStore.gotoPath(url.href);
 
     function removeSearchParam(param: string) {
@@ -826,17 +844,24 @@ export const appStore = {
       url.searchParams.delete(param);
     }
   },
-  toggleFullScreen: (
-    currentMode: ResourceAccessMode,
-    resourceId: IRecordId
-  ) => {
+  toggleFullScreen: (currentMode: AccessMode, resourceId: IRecordId) => {
     logger.log({ at: "toggleFullAccessMode", currentMode, resourceId });
+    const hasMaxParam = new URLSearchParams(window.location.search).get(
+      AppSearchParam.MAX
+    );
+    if (hasMaxParam) {
+      appStore.toggleSearchParam({ [AppSearchParam.MAX]: null });
+    } else {
+      appStore.toggleSearchParam({ [AppSearchParam.MAX]: true });
+    }
+    return;
+    appStore.toggleSearchParam({ [AccessMode.FULL]: null });
     const url =
       appStore.toggleSearchParam(recordSpecificSearchParams, {
         isPreventRefresh: true
       }) ?? new URL(window.location.href);
     removeSearchParam(currentMode);
-    if (currentMode === ResourceAccessMode.FULL) {
+    if (currentMode === AccessMode.FULL) {
       const prevMode = url.searchParams.get("prev");
       logger.log({ at: "toggleFocusAccessMode", currentMode, prevMode });
       if (prevMode) {
@@ -844,7 +869,7 @@ export const appStore = {
         removeSearchParam("prev");
       }
     } else {
-      url.searchParams.set(ResourceAccessMode.FULL, resourceId.toString());
+      url.searchParams.set(AccessMode.FULL, resourceId.toString());
       url.searchParams.set("prev", currentMode);
     }
     appStore.gotoPath(url.href);
@@ -927,6 +952,7 @@ export const appStore = {
       return n;
     });
   },
+
   runResourceAction: (
     resource: Resource,
     action: ResourceActionType,
@@ -934,6 +960,7 @@ export const appStore = {
   ) => {
     return appStore.runAction(resourceAction(resource, action), params);
   },
+
   addToRecents: (data: { record: any; type: Resource; timestamp: Date }) => {
     dispatchCustomEvent(GlobalEvent.ADD_TO_RECENTS, data);
   }

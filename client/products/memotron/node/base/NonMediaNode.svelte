@@ -25,7 +25,7 @@
   import NodeRightPaneContent from "@21n/products/memotron/node/rightPanel/NodeRightPaneContent.svelte";
   import NodeBirdView from "@21n/products/memotron/node/birdView/NodeBirdView.svelte";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
   import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
@@ -162,7 +162,7 @@
               isConstrainedWidth && $node.panel !== ResourcePanelType.DEFAULT
           })}
         >
-          {#if !isConstrainedWidth || (isConstrainedWidth && ($node.panel === ResourcePanelType.DEFAULT || $node.panel === ResourcePanelType.NONE))}
+          {#if !isConstrainedWidth || (isConstrainedWidth && ($node.panel === ResourcePanelType.DEFAULT || $node.panel === ResourcePanelType.CONTENT || $node.panel === ResourcePanelType.NONE))}
             <div class="min-w-0" />
             <div
               class={cn("flex flex-col justify-center items-center h-full", {
@@ -258,10 +258,10 @@
                     {/if}
                     <span
                       class={cn(
-                        "node-title flex gap-3 font-medium text-start sticky top-0 z-10 mo:ml-0 cw:ml-0 ml-12 py-3 userdata",
+                        "node-title flex gap-3 font-medium text-start sticky top-0 mo:ml-0 cw:ml-0 ml-12 py-3 userdata",
                         {
-                          "text-h4 bg-bgs1": isStickied,
-                          "text-h2 bg-bgs1": !isStickied
+                          "text-h4 bg-bgs1 z-10": isStickied,
+                          "text-h2 bg-bgs1 z-0": !isStickied
                         }
                       )}
                     >
@@ -318,17 +318,20 @@
                 </main>
               {/if}
             </div>
-          {:else if isConstrainedWidth && $node.panel !== ResourcePanelType.NONE}
+          {:else if isConstrainedWidth && $node.panel !== ResourcePanelType.CONTENT}
             <NodeRightPaneContent {node} {mdId} />
           {/if}
-          {#if !isConstrainedWidth}
-            {#if !$node.isInFocusMode && $node.panel && $node.panel !== ResourcePanelType.NONE && $node.panel !== ResourcePanelType.DEFAULT}
-              <NodeRightPane {node} {mdId} />
-            {:else}
-              <div class="flex max-w-sm">
-                <TableOfContents {mdId} isHideEmptyPlaceholder={true} />
-              </div>
-            {/if}
+
+          {#if !$node.isInFocusMode && $node.panel && $node.panel !== ResourcePanelType.CONTENT && $node.panel !== ResourcePanelType.DEFAULT}
+            <NodeRightPane {node} {mdId} />
+          {:else}
+            <div class="flex max-w-sm px-1">
+              <TableOfContents
+                {mdId}
+                isHideEmptyPlaceholder={true}
+                isExpandOnHover={isConstrainedWidth}
+              />
+            </div>
           {/if}
         </div>
       {/key}
@@ -353,7 +356,7 @@
       <NodeLoadingPulse />
     </div>
   {/if}
-  {#if ($node.accessMode === ResourceAccessMode.SPLIT || $node.accessMode === ResourceAccessMode.FSPLIT) && (!$node.panel || $node.panel === ResourcePanelType.NONE)}
+  {#if ($node.accessMode === AccessMode.SPLIT || $node.accessMode === AccessMode.FSPLIT) && (!$node.panel || $node.panel === ResourcePanelType.NONE)}
     <FullScreenCloseButton accessMode={$node.accessMode} isFloat={true} />
   {/if}
 </div>

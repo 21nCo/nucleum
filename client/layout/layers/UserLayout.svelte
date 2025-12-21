@@ -1,7 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { appLoadingState, appStore } from "@21n/stores/app.store";
-  import { scheduledNotifications } from "@21n/stores/notification.store";
+  import {
+    appEvents,
+    scheduledNotifications
+  } from "@21n/stores/notification.store";
   import { postDataToParent } from "@21n/utils/embed.utils";
   import context from "@21n/stores/context.store";
   import view from "@21n/stores/view.store";
@@ -14,18 +17,70 @@
   import AppSplitView from "@21n/layout/AppSplitView.svelte";
   import TopNav from "@21n/layout/topNav/TopNav.svelte";
   import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
-  import RightNav from "../rightPanel/RightNav.svelte";
-
+  import RightPanel from "../rightPanel/RightPanel.svelte";
+  import { AppSearchParam } from "@21n/types/appStore.type";
+  import { page } from "$app/stores";
+  import BottomNav from "../bottomNav/BottomNav.svelte";
+  import { hTrail } from "../topNav/tabs/tabs.store";
+  import Trail from "../trail/Trail.svelte";
+  import type { IAction } from "@21n/types/action.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import type { IRecordId } from "@21n/types/data.type";
+  import ResourceResolver from "../paint/ResourceResolver.svelte";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import ComponentResolver from "../paint/ComponentResolver.svelte";
   let isHideLeftNavBar: boolean = refreshSidebarState();
+
+  let isMaxMode: boolean =
+    new URLSearchParams(window.location.search).get(AppSearchParam.MAX) ===
+    "true";
+  let rightPanel: IAction | undefined = undefined;
+  let pop: { id: IRecordId; action: IAction } | undefined = undefined;
+  let main: string | undefined = undefined;
+
   onMount(() => {
     const uiStateSub = uiState.subscribe(() => {
       isHideLeftNavBar = refreshSidebarState();
     });
     $appLoadingState.isLocalLoaded = true;
+    const pageSub = page.subscribe((p) => {
+      isMaxMode = p.url.searchParams.get(AppSearchParam.MAX) === "true";
+      const rightPanelParam = p.url.searchParams.get(AccessMode.RIGHT);
+      if (rightPanelParam) {
+        rightPanel = appStore.resolveAction(rightPanelParam) ?? undefined;
+      } else {
+        rightPanel = undefined;
+      }
+      const popParam = p.url.searchParams.get(AccessMode.POP) ?? undefined;
+      if (popParam) {
+        resolvePop(popParam);
+      } else {
+        pop = undefined;
+      }
+      main = p.url.searchParams.get(AccessMode.MAIN) ?? undefined;
+    });
+    const appEventSub = appEvents.subscribe((x) => {
+      if (x.event === GlobalEvent.ESCAPE) {
+        appStore.closeResource({ isRestrictToModals: true });
+      }
+    });
     return () => {
-      uiStateSub();
+      if (uiStateSub) uiStateSub();
+      if (pageSub) pageSub();
+      if (appEventSub) appEventSub();
     };
   });
+
+  function resolvePop(resourceId: string) {
+    if (!resourceId) return;
+    const slug = resourceId.split(":")[0];
+    const action = appStore.resolveAction(slug);
+    if (!action) return;
+    pop = {
+      id: resourceId,
+      action
+    };
+  }
 
   function refreshSidebarState() {
     return uiState.getState(UIState.isHideLeftNavBar);
@@ -54,7 +109,7 @@
 </script>
 
 {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
-  {#if $appStore.interactionMode === InteractionMode.COMMAND_ONLY && $context.embed !== Embed.HANDSET}
+  {#if $appStore.interactionMode === InteractionMode.AGENT && $context.embed !== Embed.HANDSET}
     <CommandModePage>
       <slot />
     </CommandModePage>
@@ -65,24 +120,47 @@
           <LeftNav variant="fixed" />
         {/if}
         <div class="flex flex-col h-full w-full">
-          {#if !$view.isPortrait}
+          {#if !$view.isPortrait && !isMaxMode}
             <TopNav>
               <slot name="topnav" slot="topnav" />
             </TopNav>
           {/if}
           <div class="flex w-full flex-grow">
-            {#if $context.embed !== Embed.HANDSET && !isHideLeftNavBar}
-              <LeftNav variant="fixed" />
+            {#if $context.embed !== Embed.HANDSET && !isHideLeftNavBar && !isMaxMode}
+              <LeftNav variant="fixed" isHidePanel={!!pop || !!main} />
             {/if}
-            <div class="min-w-0 flex-grow">
-              <AppSplitView>
-                <slot name="main" slot="main">
-                  <slot />
-                </slot>
-              </AppSplitView>
+            <div class="min-w-0 flex-grow relative">
+              {#if main}
+                <div class="absolute inset-0 w-full h-full bg-bgs1 z-40">
+                  <ComponentResolver path={main} params={{ isInline: true }} />
+                </div>
+              {/if}
+              {#if pop}
+                <div
+                  class="absolute inset-0 flex justify-center w-full h-full bg-bgs1 z-50"
+                >
+                  <ResourceResolver id={pop.id} accessMode={AccessMode.POP} />
+                </div>
+              {/if}
+              {#if $hTrail.path.length > 0 && $hTrail.activated && (!$hTrail.isBaseNonRecord || ($hTrail.isBaseNonRecord && $hTrail.activated !== $hTrail.path[0]))}
+                <Trail />
+                <!-- {:else if $vTrail.items.length > 0 && $vTrail.activated && (!isRecordId($vTrail.base) || (isRecordId($vTrail.base) && $vTrail.activated !== $vTrail.base))}
+                <TrailContent /> -->
+              {:else}
+                <AppSplitView>
+                  <slot name="main" slot="main">
+                    <slot />
+                  </slot>
+                </AppSplitView>
+              {/if}
             </div>
-            <!-- <RightNav /> -->
+            {#if !$view.isConstrainedWidth && rightPanel}
+              <RightPanel action={rightPanel} />
+            {/if}
           </div>
+          {#if $hTrail.path.length > 0}
+            <BottomNav />
+          {/if}
         </div>
       </div>
     </div>

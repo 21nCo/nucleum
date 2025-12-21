@@ -67,7 +67,10 @@ import {
 } from "@21n/components/flux/resourceStores/resource.utils";
 import ResourceCache from "@21n/components/record/ResourceCache.svelte";
 import ResourceBrowser from "@21n/components/library/resourceBrowser/ResourceBrowser.svelte";
-import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+import {
+  AccessMode,
+  ResourceActionType
+} from "@21n/components/flux/resourceStores/resource.type";
 import NodeLoadingPulse from "@21n/elements/feedback/animations/NodeLoadingPulse.svelte";
 //TODO - use dummy task if this causes any issues - like earlier
 import Task from "@21n/components/tasks/Task.svelte";
@@ -346,24 +349,12 @@ export const pointronActions: IAction[] = [
   {
     action: PointronAction.FOCUS,
     component: Focus,
-    icon: "circle",
-    type: ActionType.PAGE,
-    label: "Focus"
-  },
-  {
-    action: PointronAction.FOCUS_MODAL,
-    component: Focus,
-    icon: "circle",
-    type: ActionType.RESOURCE,
-    isMeta: true,
+    icon: "focus",
+    type: ActionType.LIVE,
     label: "Focus",
-    modalParams: {
-      layout: {
-        size: Size.xxl,
-        orientation: Orientation.Horizontal,
-        ignoreSafeArea: true,
-        isShowCantileverClose: true
-      }
+    accessMode: AccessMode.RIGHT,
+    liveActionParams: {
+      isOpeningBehaviorConfigurable: true
     }
   },
   {
@@ -785,6 +776,10 @@ export const pointronActions: IAction[] = [
         alignment: Placement.TopCenter
       }
     }
+  },
+  {
+    action: PointronAction.CREATE_TASK_INLINE,
+    type: ActionType.EVENT
   },
   {
     action: Resource.task,

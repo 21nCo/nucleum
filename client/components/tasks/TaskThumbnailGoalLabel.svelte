@@ -9,7 +9,7 @@
   import context from "@21n/stores/context.store";
   import { appStore } from "@21n/stores/app.store";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
   import { createEventDispatcher } from "svelte";
@@ -28,7 +28,7 @@
       !($context.isEmbed && $context.embed === Embed.HANDSET) &&
       accessPoint !== ResourceAccessPoint.GOAL
     ) {
-      appStore.openResource(goal.id, ResourceAccessMode.POP);
+      appStore.openResource(goal.id, AccessMode.POP);
       e.stopPropagation();
     }
   }
@@ -53,7 +53,7 @@
     {color}
     type={accessPoint !== ResourceAccessPoint.GOAL ? "button" : "div"}
     class={cn("flex items-center gap-1 text-ccs1 flex-grow min-w-0", {
-      "text-b3 ": accessPoint !== ResourceAccessPoint.SELF,
+      "text-b4 ": accessPoint !== ResourceAccessPoint.SELF,
       "notouch:hover:underline focus:underline":
         accessPoint !== ResourceAccessPoint.GOAL
     })}

@@ -68,6 +68,12 @@
       description: "Audio visualization library",
       creator: "katspaugh",
       link: "https://wavesurfer-js.org/"
+    },
+    {
+      name: "Apache ECharts",
+      description: "Powerful charting and visualization library",
+      creator: "Apache Software Foundation",
+      link: "https://echarts.apache.org/"
     }
   ];
 
@@ -107,6 +113,18 @@
       description: "The status-quo code editor",
       creator: "Microsoft",
       link: "https://code.visualstudio.com/"
+    },
+    {
+      name: "MySQL",
+      description: "Open-source relational database management system",
+      creator: "Oracle Corporation",
+      link: "https://www.mysql.com/"
+    },
+    {
+      name: "Better Auth",
+      description: "Framework-agnostic authentication library",
+      creator: "Better Auth Team",
+      link: "https://www.better-auth.com/"
     }
   ];
 

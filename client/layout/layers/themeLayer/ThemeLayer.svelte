@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import "@21n/fonts";
   import view from "@21n/stores/view.store";
   import { AppSkin } from "@21n/types/appearance.type";
   import { postDataToParent } from "@21n/utils/embed.utils";
@@ -185,6 +186,7 @@
   }
 
   const fontsWithoutTabularSupport = [
+    "Arvo",
     "Comic Neue",
     "Didact Gothic",
     "DM Sans",
@@ -285,7 +287,10 @@
   */
   :global(.number-grid-size) {
     font-size: var(--number-grid-size, 1) !important;
-    font-family: var(--number-grid-typeface, var(--number-grid-fallback-typeface));
+    font-family: var(
+      --number-grid-typeface,
+      var(--number-grid-fallback-typeface)
+    );
   }
 
   .glassylavendar {

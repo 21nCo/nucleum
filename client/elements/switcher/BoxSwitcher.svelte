@@ -12,6 +12,8 @@
   export let isExpandOnActiveForIcon = false;
   export let parentBgIndex: number = 1;
   export let isAccentColor: boolean = false;
+  export let size: Size.sm | Size.md = Size.sm;
+  export let isActiveIndicatorOnTop: boolean = false;
   if (selected === undefined) selected = options[0]?.value;
   const dispatch = createEventDispatcher();
 
@@ -26,8 +28,8 @@
       tempDiv.className = "text-b2";
       document.body.appendChild(tempDiv);
 
-      const iconWidth = 20;
-      const padding = 24;
+      const iconWidth = size === Size.sm ? 20 : 24;
+      const padding = size === Size.sm ? 24 : 32;
       const iconOnlyWidth = iconWidth + padding;
       const inactiveCount = options.length - 1;
 
@@ -63,8 +65,12 @@
     {@const isSelected = selected === option.value}
     <button
       class={cn(
-        "flex items-center justify-center gap-1 h-full px-3 border-b text-b2 transition-all duration-300",
+        "flex items-center justify-center gap-1 h-full text-b2 transition-all duration-300",
         {
+          "border-t": isActiveIndicatorOnTop,
+          "border-b": !isActiveIndicatorOnTop,
+          "px-3": size === Size.sm,
+          "px-4": size === Size.md,
           "border-transparent hover:border-brs3 text-fgs3": !isSelected,
           "border-fgs2": isSelected && !isAccentColor,
           "border-aps1 text-aps1": isSelected && isAccentColor,
@@ -84,7 +90,7 @@
       {#if option.icon && typeof option.icon === "string"}
         <Icon
           icon={option.icon}
-          size={Size.sm}
+          {size}
           isFilled={isSelected}
           class={cn({
             "text-fgs1": isSelected && !isAccentColor,

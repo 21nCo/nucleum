@@ -6,53 +6,44 @@
   import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import { SearchStore } from "@21n/components/record/record.store";
   import { recentsStore } from "@21n/components/record/recent.store";
-  import { onMount } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import { isValidString, properCase } from "@21n/shared-utils/text.utils";
-  import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
   import Button from "@21n/elements/button/Button.svelte";
-  import { Orientation } from "@21n/types/direction.enum";
-  import {
-    SearchType,
-    type IResourceSelectOrderBy
-  } from "@21n/types/data.type";
+  import { type IResourceSelectOrderBy } from "@21n/types/data.type";
   import { ButtonStyle } from "@21n/types/button.type";
   import { logger } from "@21n/components/debug/logger.client";
-  import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import SearchResultsPopover from "@21n/elements/input/SearchResultsPopover.svelte";
   import LinkSearchResultItem from "@21n/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
   import GroupedSearchResults from "@21n/products/memotron/library/search/GroupedSearchResults.svelte";
   import { appStore } from "@21n/stores/app.store";
   import view from "@21n/stores/view.store";
   import {
-    determineResourceType,
     resolveProductResources,
     resolveResourceIcon
   } from "@21n/components/flux/resourceStores/resource.utils";
-  import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
-  import { isInlineAvailable } from "@21n/components/library/library.utils";
   import { KeyboardKey, ModifierKey } from "@21n/types/keyboard.type";
   import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import context from "@21n/stores/context.store";
   import { Embed } from "@21n/types/context.type";
   import { createEventDispatcher } from "svelte";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { Action } from "@21n/types/action.enum";
+  import { searchStore } from "@21n/components/search";
 
   const dispatch = createEventDispatcher();
 
-  export let resource: Resource = Resource.everything;
   export let isGlobalSearchModal: boolean = false;
+  export let isInline: boolean = false;
   export let isExpanded: boolean = isGlobalSearchModal;
   export let parentBgIndex: number = 1;
-  export let searchQuery: string = "";
+
   let isFiltersVisible: boolean = false;
   let data: any[] = [];
   let recents: any[] = [];
-  let searchStore = new SearchStore();
+  let resourceSearch = new SearchStore();
   let isRefreshing: boolean = false;
   let searchResultsPopover: SearchResultsPopover;
-  let dev_enableSemanticSearch: boolean = false;
   let groupedSearchRef: GroupedSearchResults;
   const resources = resolveProductResources($appStore.product, "search");
   const switchItems = [
@@ -69,14 +60,23 @@
   ];
 
   $: isGroupedResultsMode =
-    !$view.isConstrainedWidth && resource === Resource.everything;
+    !$view.isConstrainedWidth &&
+    $searchStore.resourceType === Resource.everything;
 
   onMount(async () => {
+    searchStore.setKeyboardHandlers({
+      keyup: (event) => keyup(event),
+      keydown: (event) => keydown(event)
+    });
+
     if (isExpanded) {
       searchResultsPopover?.search();
       groupedSearchRef?.search();
     }
-    // await refresh();
+  });
+
+  onDestroy(() => {
+    searchStore.clearKeyboardHandlers();
   });
 
   export function search() {
@@ -115,8 +115,8 @@
         //     createdAt: "desc"
         //   };
         // }
-        data = await searchStore.select({
-          resource: resourceType ?? resource,
+        data = await resourceSearch.select({
+          resource: resourceType ?? $searchStore.resourceType,
           searchQuery,
           orderBy,
           semanticSearchTopK,
@@ -124,7 +124,9 @@
         });
       } else {
         data = [];
-        recents = recentsStore.resolve({ type: resourceType ?? resource });
+        recents = recentsStore.resolve({
+          type: resourceType ?? $searchStore.resourceType
+        });
         return recents;
       }
       return data;
@@ -144,7 +146,7 @@
   ) {
     const item = e.detail.item;
     if (!item || !item?.id) {
-      if (resource === Resource.everything) {
+      if ($searchStore.resourceType === Resource.everything) {
         const group = e.detail.group;
         if (group) {
           expandGroup(group.value);
@@ -153,26 +155,19 @@
       return;
     }
     if ($view.isPortrait) {
-      appStore.openResource(item.id, ResourceAccessMode.FULL);
+      appStore.openResource(item.id, AccessMode.FULL);
       return;
     }
-    const clickAccessMode = e.detail.event
-      ? appStore.determineClickAccessMode(e.detail.event)
-      : undefined;
-    if (!clickAccessMode) {
-      const resourceType = determineResourceType(item.id);
-      if (isInlineAvailable(resourceType)) {
-        tabs.activate(item.id);
-        return;
-      }
-    }
-    appStore.resourceClickHandler(e.detail.event, item.id);
+    appStore.toggleSearchParam([AccessMode.MAIN]);
+    appStore.resourceClickHandler(e.detail.event, item.id, {
+      origin: Action.SEARCH
+    });
   }
 
   function expandGroup(resourceType: Resource) {
-    resource = resourceType;
+    searchStore.setResourceType(resourceType);
     setTimeout(() => {
-      searchResultsPopover?.search(searchQuery);
+      searchResultsPopover?.search($searchStore.query);
     }, 100);
   }
 </script>
@@ -185,7 +180,7 @@
   <header class={"flex flex-col w-full"}>
     <div
       class={cn("flex gap-1", {
-        "py-3": isGlobalSearchModal
+        "py-3": isGlobalSearchModal && !isInline
       })}
     >
       <span class="min-w-0 flex-1">
@@ -199,23 +194,9 @@
               size={Size.lg}
               style={ButtonStyle.OUTLINED}
               on:click={() => {
+                searchStore.reset();
                 dispatch("close");
               }}
-            />
-          {/if}
-          {#if dev_enableSemanticSearch && $userPreferences.localAI.semanticSearch}
-            <SwitchInput
-              label={{ label: "Semantic", orientation: Orientation.Horizontal }}
-              size={Size.sm}
-              on:change={(e) => {
-                if (e.detail) {
-                  searchStore.searchType = SearchType.SEMANTIC;
-                } else {
-                  searchStore.searchType = SearchType.FULL_TEXT;
-                }
-                refresh();
-              }}
-              checked={searchStore.searchType === SearchType.SEMANTIC}
             />
           {/if}
           {#if isFiltersVisible}
@@ -245,17 +226,18 @@
     {#if isExpanded}
       <PanelSwitcher
         items={switchItems}
-        bind:value={resource}
+        value={$searchStore.resourceType}
         style={PanelSwitcherStyle.BAR}
         isExpandToFullWidth={true}
         {parentBgIndex}
         size={Size.sm}
-        on:switch={() => {
+        on:switch={(e) => {
+          searchStore.setResourceType(e.detail);
           setTimeout(() => {
             if (isGroupedResultsMode) {
-              groupedSearchRef?.search(searchQuery);
+              groupedSearchRef?.search($searchStore.query);
             } else {
-              searchResultsPopover?.search(searchQuery);
+              searchResultsPopover?.search($searchStore.query);
             }
           }, 100);
         }}
@@ -293,7 +275,7 @@
               searchCallback={(query, resourceType) => {
                 return refresh(query, resourceType);
               }}
-              isDefaultState={!searchQuery}
+              isDefaultState={!$searchStore.query}
               groups={switchItems.filter(
                 (x) => x.value !== Resource.everything
               )}
@@ -328,11 +310,11 @@
         <span class="inline-flex items-center gap-1">
           Press
           <ShortcutText
-            shortcut={Action.CLOSE}
+            shortcut={Action.SEARCH}
             parentBgIndex={2}
             isAlwaysShown={true}
           />
-          to close
+          to toggle global search
         </span>
         {#if isGroupedResultsMode}
           <span class="inline-flex items-center gap-1">

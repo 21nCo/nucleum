@@ -20,24 +20,36 @@
   import { cn } from "@21n/utils/ui.utils";
   import { fullScreen } from "@21n/components/modal/modal.store";
   import { page } from "$app/stores";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
+  import { getContext } from "svelte";
+  import { readable, type Writable } from "svelte/store";
+  import { Context } from "@21n/types/appStore.type";
+  import type { IContainer } from "@21n/layout/layout.type";
+  import { resolveMinWidth } from "@21n/layout/layout.utils";
+
+  const container =
+    getContext<Writable<IContainer | undefined>>(Context.CONTAINER) ||
+    readable(undefined);
 
   export let isInline: boolean = false;
+  const MIN_WIDTH_TO_EXPAND = resolveMinWidth(2);
   let layout: number = 1;
   let isShowTimeLeftOnMobile: boolean = false;
   $: fullScreenFocusIsEnabled =
-    $page?.url?.searchParams?.get(ResourceAccessMode.FULL) ===
+    $page?.url?.searchParams?.get(AccessMode.FULL) ===
     PointronAction.FULL_SCREEN_FOCUS;
-  $: isExtraLargeScreen = $view.landscapiness > 1.7 && $view.scale > 1.8;
+  $: isExtraLargeScreen =
+    $container && $container.landscapiness > 1.7 && $view.scale > 1.8;
 </script>
 
 <!-- {#snippet focusItemsHeading()}
 <FocusItemsHeading {isInEditMode} on:click={onEditClicked} />
 {/snippet} -->
 
-{#if $view.isPortrait}
+{#if $view.isPortrait || ($container && ($container.isPortrait || $container.width < MIN_WIDTH_TO_EXPAND))}
+  {@const isMobile = $view.isPortrait}
   <div
     on:touchstart|stopPropagation={startTouch}
     on:touchmove|stopPropagation={() =>
@@ -52,7 +64,7 @@
     class="flex flex-col w-full h-full px-4 py-8 glassthick bg-bgs1 otop:pt-12"
   >
     <div class="flex flex-col gap-6 flex-grow w-full items-center">
-      {#if !$isInEditMode}
+      {#if (isMobile && !$isInEditMode) || !isMobile}
         <IntervalBar />
         <div
           class="flex flex-col w-full items-center transition-all duration-300"
@@ -74,13 +86,13 @@
         <FocusItemList isInEditMode={$isInEditMode} />
       </div>
     </div>
-    {#if !isInline && !$isInEditMode}
+    {#if ((isMobile && !isInline) || !isMobile) && !$isInEditMode}
       <div class="flex flex-col gap-12">
         <div class="flex w-full justify-center">
           <ControlBar />
         </div>
         <div class="flex justify-center">
-          <Extras isInFullScreen={!isInline} />
+          <Extras isInFullScreen={$view.isPortrait && !isInline} />
         </div>
       </div>
     {/if}

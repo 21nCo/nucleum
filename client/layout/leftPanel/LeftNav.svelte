@@ -13,19 +13,13 @@
   import { Action } from "@21n/types/action.enum";
   import { Size } from "@21n/types/size.enum";
   import { resolveProductConfig } from "@21n/products/product.config";
-
-  let isInFocusMode = false;
+  export let isHidePanel = false;
   let isRounded = false;
   const productConfig = resolveProductConfig();
   // $: isRounded = $appearance.skin === AppSkin.Glassy ? true : false;
-  function handleFocusMode(e: CustomEvent<boolean>) {
-    if (typeof e.detail === "boolean") {
-      isInFocusMode = e.detail;
-    }
-  }
 </script>
 
-{#if !$appStore.isMenuHidden && !isInFocusMode}
+{#if !$appStore.isMenuHidden}
   {#if $view.isPortrait && productConfig.appMenuPt.length > 0}
     <PortraitBottomNav />
   {:else if !$view.isPortrait && productConfig.appMenu.length > 0}
@@ -37,14 +31,14 @@
             <div class="px-3 w-full mt-4">
               <button
                 class="h-10 w-full flex justify-between items-center px-2 border border-brs3 rounded-md hover:bg-bgs3 text-b2 text-fgs2 font-light"
-                on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
+                on:click={() => appStore.runAction(Action.SEARCH)}
               >
                 <span class="flex gap-2 items-center">
                   <Icon icon="search" size={Size.sm} />
                   <span> Search </span>
                 </span>
                 <ShortcutText
-                  shortcut={Action.GLOBAL_SEARCH}
+                  shortcut={Action.SEARCH}
                   parentBgIndex={2}
                   isAlwaysShown={true}
                 />
@@ -57,7 +51,7 @@
             <Button
               icon="search"
               parentBgIndex={2}
-              on:click={() => appStore.runAction(Action.GLOBAL_SEARCH)}
+              on:click={() => appStore.runAction(Action.SEARCH)}
             />
           </div>
         </slot>
@@ -65,7 +59,7 @@
     {:else if variant === "fixed"}
       <LeftNavFixed {isRounded}>
         <div slot="panel" class="h-full overflow-auto relative">
-          {#if $appStore.currentComponent?.panel}
+          {#if !isHidePanel && $appStore.currentComponent?.panel}
             <svelte:component this={$appStore.currentComponent.panel} />
           {/if}
         </div>
@@ -73,4 +67,3 @@
     {/if}
   {/if}
 {/if}
-<svelte:window on:focusMode={handleFocusMode} />

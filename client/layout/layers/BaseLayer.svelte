@@ -15,18 +15,12 @@
   import { toasts } from "@21n/stores/notification.store";
   import context from "@21n/stores/context.store";
   import ThemeLayer from "@21n/layout/layers/themeLayer/ThemeLayer.svelte";
-  import {
-    detectSystemOS,
-    detectTouchDevice
-  } from "@21n/utils/browser.utils";
+  import { detectSystemOS, detectTouchDevice } from "@21n/utils/browser.utils";
   import { extractProduct } from "@21n/shared-utils/utils";
   import { AlertType } from "@21n/types/notification.type";
   import { logger } from "@21n/components/debug/logger.client";
   import { LogType } from "@21n/components/debug/debug.type";
-  import {
-    clientStorage,
-    getDapId
-  } from "@21n/persistence/persistence.utils";
+  import { clientStorage, getDapId } from "@21n/persistence/persistence.utils";
   import { ClientStorageKey } from "@21n/persistence/persistence.type";
   import { cn } from "@21n/utils/ui.utils";
   import appearance from "@21n/stores/appearance.store";
@@ -38,10 +32,7 @@
   import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
   import { parse } from "@21n/shared-utils/json.utils";
   import { productData } from "@21n/products/product.resolver";
-  import {
-    product,
-    resolveProductConfig
-  } from "@21n/products/product.config";
+  import { product, resolveProductConfig } from "@21n/products/product.config";
   import view from "@21n/stores/view.store";
   let timer: any;
   let isMounted = false;
@@ -357,9 +348,11 @@
         !event.detail.path.includes("http")) &&
       !event.detail.path.includes("mailto:") &&
       !event.detail.path.includes("//oauthsignin")
-    )
-      goto(event.detail.path, { replaceState: event.detail?.replaceState ?? false });
-    else if (event.detail.path) window.location = event.detail.path;
+    ) {
+      goto(event.detail.path, {
+        replaceState: event.detail?.replaceState ?? false
+      });
+    } else if (event.detail.path) window.location = event.detail.path;
   }
 
   /**

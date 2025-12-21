@@ -4,15 +4,16 @@
   import Node from "@21n/client/products/memotron/node/Node.svelte";
   import SideNavCombination from "./SideNavCombination.svelte";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPoint
   } from "@21n/client/components/flux/resourceStores/resource.type";
   import { Resource } from "@21n/client/components/flux/resourceStores/resource.enum";
   import type { IRecordId } from "@21n/client/types/data.type";
+  import Goal from "../goals/Goal.svelte";
 
   export let resourceId: IRecordId | undefined = undefined;
   export let resourceType: Resource | undefined = undefined;
-  export let accessMode: ResourceAccessMode = ResourceAccessMode.INLINE;
+  export let accessMode: AccessMode = AccessMode.INLINE;
   export let visitedCombinationIds: Set<string> = new Set();
   export let parentCombinationId: IRecordId | undefined = undefined;
 
@@ -49,6 +50,12 @@
   <Node id={resourceId} {accessMode} />
 {:else if resourceType === Resource.collection}
   <Collection
+    id={resourceId}
+    {accessMode}
+    accessPoint={ResourceAccessPoint.COMBINATION}
+  />
+{:else if resourceType === Resource.goal}
+  <Goal
     id={resourceId}
     {accessMode}
     accessPoint={ResourceAccessPoint.COMBINATION}

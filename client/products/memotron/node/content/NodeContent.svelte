@@ -6,7 +6,10 @@
     type INodeStructure
   } from "@21n/products/memotron/node/node.type";
   import { TextStyle } from "@21n/types/text.enum";
-  import { hierarchyFactorLimit, type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
+  import {
+    hierarchyFactorLimit,
+    type IActiveNodeStore
+  } from "@21n/products/memotron/node/node.store";
 
   import {
     deepCopy,
@@ -29,15 +32,19 @@
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { Size } from "@21n/types/size.enum";
   import type { IRecordId } from "@21n/types/data.type";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import view from "@21n/stores/view.store";
   import context from "@21n/stores/context.store";
-  import { generateMarkdownText, resolveHeadingParent } from "@21n/products/memotron/node/node.utils";
+  import {
+    generateMarkdownText,
+    resolveHeadingParent
+  } from "@21n/products/memotron/node/node.utils";
   import {
     determineResourceAccessMode,
     resourceInList
   } from "@21n/components/flux/resourceStores/resource.utils";
   import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
+  import { Context } from "@21n/types/appStore.type";
 
   export let node: IActiveNodeStore;
   export let mdId: string;
@@ -47,7 +54,7 @@
   let markdownRef: any;
   let dev_isEnableBottomDivider: boolean = false;
 
-  const calendarContentContext = getContext<any>("calendar-content");
+  const calendarContentContext = getContext<any>(Context.CALENDAR_CONTENT);
 
   function propagateSavingFeedback(event: string, data: any = {}) {
     if (calendarContentContext?.publish) {
@@ -73,7 +80,7 @@
   const contentContext = {
     publish: handleEvent
   };
-  setContext("content", contentContext);
+  setContext(Context.CONTENT, contentContext);
 
   let focusEventSub: any;
 
@@ -131,8 +138,8 @@
   function temp_Focus(
     id: IRecordId,
     params?: {
-      accessMode?: ResourceAccessMode;
-      currentAccessMode?: ResourceAccessMode;
+      accessMode?: AccessMode;
+      currentAccessMode?: AccessMode;
     }
   ) {
     if (id === $node.id) return;
@@ -140,8 +147,8 @@
     const currentAccessMode =
       params?.currentAccessMode ?? determineResourceAccessMode($node.id);
     if (
-      currentAccessMode === ResourceAccessMode.TAB &&
-      (!params?.accessMode || params?.accessMode === ResourceAccessMode.TAB)
+      currentAccessMode === AccessMode.TAB &&
+      (!params?.accessMode || params?.accessMode === AccessMode.TAB)
     ) {
       tabs.replace(id, $node.id);
       return;

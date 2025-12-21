@@ -3,7 +3,7 @@ import { writable } from "svelte/store";
 import { logger } from "@21n/components/debug/logger.client";
 import { ObservableStore } from "@21n/stores/client.store";
 import { appStore } from "@21n/stores/app.store";
-import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
 import { appEvents } from "@21n/stores/notification.store";
 import { GlobalEvent } from "@21n/types/event.enum";
 
@@ -98,8 +98,8 @@ class FullScreenStore extends ObservableStore<{ path?: string }> {
     this.set({ path });
     // appStore.runAction(path);
     appStore.toggleSearchParam({
-      [ResourceAccessMode.FULL]: path,
-      [ResourceAccessMode.POP]: null
+      [AccessMode.FULL]: path,
+      [AccessMode.POP]: null
     });
   }
 
@@ -119,12 +119,12 @@ class FullScreenStore extends ObservableStore<{ path?: string }> {
     }
     this.set({ path: undefined });
     // modalEvent.hide(fullScreenAction ?? "", "app.store");
-    appStore.toggleSearchParam([ResourceAccessMode.FULL]);
+    appStore.toggleSearchParam([AccessMode.FULL]);
   }
 
   restore() {
     const fullSearchParam = new URLSearchParams(window.location.search).get(
-      ResourceAccessMode.FULL
+      AccessMode.FULL
     );
     if (fullSearchParam) {
       this.show(fullSearchParam);

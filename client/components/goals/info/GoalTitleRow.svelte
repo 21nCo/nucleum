@@ -1,24 +1,12 @@
 <script lang="ts">
   import { mount } from "@21n/actions/mount.action";
-  import {
-    resolveGoalContextMenu,
-    type IActiveGoalStore
-  } from "@21n/components/goals/goal.store";
+  import { type IActiveGoalStore } from "@21n/components/goals/goal.store";
   import Breadcrumbs from "@21n/elements/breadcrumbsV2/Breadcrumbs.svelte";
-  import ContextMenuAction from "@21n/elements/contextMenu/ContextMenuAction.svelte";
   import TextInput from "@21n/elements/input/TextInput.svelte";
-  import { Placement } from "@21n/types/direction.enum";
-  import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-  import {
-    ResourceAccessMode,
-    ResourceAccessPoint
-  } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
-  import {
-    AlertType,
-    type IInlineStatus
-  } from "@21n/types/notification.type";
+  import { AlertType, type IInlineStatus } from "@21n/types/notification.type";
   import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
   export let goal: IActiveGoalStore;
   export let isConstrainedWidth = false;
@@ -124,19 +112,10 @@
         </button>
       {/if}
     </div>
-    <ContextMenuAction
-      menuResolver={() =>
-        resolveGoalContextMenu($goal, ResourceAccessPoint.SELF)}
-      position={Placement.BottomCenter}
-      id="taskContextMenu"
-      size={Size.lg}
-      icon="more-outline-horizontal"
-      actionBgSize={isConstrainedWidth ? Size.sm : undefined}
-    />
     {#if isConstrainedWidth}
       <ResourceInlineCloseButton
         accessMode={$goal.accessMode}
-        additionalAccessModes={[ResourceAccessMode.POP]}
+        additionalAccessModes={[AccessMode.POP]}
         parentBgIndex={2}
         id={$goal.id}
       />

@@ -12,7 +12,12 @@ Thank you for your interest in contributing to Nucleus! This guide will help you
 ```
 VITE_PRODUCT=memotron
 VITE_STATIC_URL=https://cdn.21n.org
+
+# Optional: For IP-based region detection (get token at https://ipinfo.io/)
+VITE_IPINFO_TOKEN=your_token_here
 ```
+
+**Note:** `VITE_IPINFO_TOKEN` is optional. If not provided, the system will fall back to timezone-based region detection.
 
 ## Submitting a Pull Request
 

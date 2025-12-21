@@ -1,10 +1,15 @@
 import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-import type { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+import type { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
 import type { UserDataMode } from "@21n/types/account.type";
-import { Embed, OperatingSystem, type IAppContext } from "@21n/types/context.type";
+import {
+  Embed,
+  OperatingSystem,
+  type IAppContext
+} from "@21n/types/context.type";
 import type { ConfirmationNotification } from "@21n/types/notification.type";
 import type { ModalParams } from "@21n/types/popup.type";
 import type { IViewStore } from "@21n/types/view.type";
+import type { Size } from "./size.enum";
 
 export type IAction = {
   action: string;
@@ -59,6 +64,9 @@ export type IAction = {
    * @deprecated
    */
   thinModeBehavior?: ThinModeBehavior;
+  /**
+   * @deprecated
+   */
   contentType?: ContentType;
   associatedPlayer?: string;
   /**
@@ -113,7 +121,7 @@ export type IAction = {
   /**
    * Used in conjunction with {@link ActionType.RESOURCE} to specify the access mode of the resource.
    */
-  accessMode?: ResourceAccessMode;
+  accessMode?: AccessMode;
 
   /**
    * Svelte component to render the label of the resource.
@@ -135,6 +143,15 @@ export type IAction = {
    * Type of action specific to mobile behavior.
    */
   handsetBehaviorType?: ActionType;
+  /**
+   * Params for live actions when opened in right panel or in main panel
+   */
+  liveActionParams?: ILiveActionParams;
+};
+
+export type ILiveActionParams = {
+  size?: Size;
+  isOpeningBehaviorConfigurable?: boolean;
 };
 
 export type IActionFnParams = {
@@ -173,7 +190,11 @@ export enum ActionType {
   /**
    * Component specifically for caching.
    */
-  CACHE = "CACHE"
+  CACHE = "CACHE",
+  /**
+   * Actions that can take full page or can run on the right panel
+   */
+  LIVE = "LIVE"
 }
 
 /**
@@ -199,6 +220,9 @@ export enum ThinModeBehavior {
   HIDE
 }
 
+/**
+ * @deprecated
+ */
 export enum ContentType {
   BLOCK,
   SECTION,

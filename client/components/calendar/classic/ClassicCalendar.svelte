@@ -100,6 +100,12 @@
     setDate(event.detail.date);
   }
 
+  function handleWeekSelect(event: CustomEvent) {
+    if (!event.detail || $appStore.product === Product.POINTRON) return;
+    selectedScale = TimeScaleUnit.WEEK;
+    setDate(event.detail.date);
+  }
+
   function handleVisibleDatesChange(event: CustomEvent) {
     visibleWeekDates = event.detail.dates;
   }
@@ -345,6 +351,7 @@
       {#if selectedView === TimeScaleUnit.MONTH}
         <MonthView
           bind:selectedDate
+          {selectedScale}
           {indicatorData}
           {indicatorRefreshId}
           on:monthChange={handleMonthChange}
@@ -352,14 +359,7 @@
             selectedScale = TimeScaleUnit.DAY;
             onDateChange();
           }}
-        />
-      {:else if selectedView === TimeScaleUnit.WEEK}
-        <WeekView
-          bind:this={weekViewRef}
-          {selectedDate}
-          {events}
-          on:monthChange={handleMonthChange}
-          on:visibleDatesChange={handleVisibleDatesChange}
+          on:weekSelect={handleWeekSelect}
         />
       {:else if selectedView === TimeScaleUnit.YEAR}
         {#key yearViewRefreshId}

@@ -37,11 +37,12 @@
   import { dispatchCustomEvent } from "@21n/utils/browser.utils";
   import { GlobalEvent } from "@21n/types/event.enum";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+  import { Context } from "@21n/types/appStore.type";
 
-  const nodeContentContext = getContext<any>("content");
-  const blockContext = getContext<any>("block");
-  const nodeContext = getContext<any>("node");
-  const markdownContext = getContext<any>("markdown");
+  const nodeContentContext = getContext<any>(Context.CONTENT);
+  const blockContext = getContext<any>(Context.BLOCK);
+  const nodeContext = getContext<any>(Context.NODE);
+  const markdownContext = getContext<any>(Context.MARKDOWN);
 
   function propagateToNodeContent(event: string, data: any) {
     if (!nodeContentContext) {
@@ -370,20 +371,21 @@
       if (colonIndex !== -1) {
         const beforeColon = text.substring(0, colonIndex);
         const charBeforeColon = beforeColon.slice(-1);
-        const isValidEmojiContext = colonIndex === 0 || /\s/.test(charBeforeColon);
-        
+        const isValidEmojiContext =
+          colonIndex === 0 || /\s/.test(charBeforeColon);
+
         if (!isValidEmojiContext) {
           if (isRenderEmojiPicker) {
             hidePopover("emojiPicker");
           }
           return false;
         }
-        
+
         const afterColon = text.substring(colonIndex + 1);
         const spaceIndex = afterColon.search(/\s/);
         emojiSearchQuery =
           spaceIndex === -1 ? afterColon : afterColon.substring(0, spaceIndex);
-        
+
         if (emojiSearchQuery.trim()) {
           if (!isRenderEmojiPicker) {
             showPopover("emojiPicker");

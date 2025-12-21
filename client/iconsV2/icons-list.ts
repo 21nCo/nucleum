@@ -166,7 +166,9 @@ const phosphorIcons = [
   "diamonds-four",
   "drone",
   "grid-four",
-  "books"
+  "books",
+  "compass",
+  "navigation-arrow"
 ];
 
 export const phosphorRatingIcons = [
@@ -279,7 +281,9 @@ const hugeiconsIcons = [
   "heading-02",
   "heading-03",
   "heading-04",
-  "sidebar-right"
+  "sidebar-right",
+  "rhombus",
+  "rhombus-01"
 ];
 
 const lucideIcons: string[] = [];
@@ -407,7 +411,7 @@ const letsIconsIcons = ["color-picker", "color-mode-light"];
 
 const remixIcons = ["sketching"];
 
-const proIcons = ["send"];
+const proIcons = ["send", "rhombus"];
 
 const fa6BrandsIcons = ["unsplash"];
 
@@ -438,7 +442,8 @@ const mynaUiIcons = [
   "brand-pocket",
   "brand-pocket-solid",
   "terminal",
-  "calendar"
+  "calendar",
+  "rhombus"
 ];
 const mynaUiAllIcons = [
   ...mynaUiIcons,
@@ -484,4 +489,4 @@ export const solarIconsForBundling = {
   "bold-duotone": solarBoldDuotoneIcons
 };
 
-export const bundleNumber = 62;
+export const bundleNumber = 65;

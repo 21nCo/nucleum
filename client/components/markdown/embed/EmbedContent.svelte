@@ -12,7 +12,7 @@
   import type { IRecordId } from "@21n/types/data.type";
   import { nodeStore } from "@21n/products/memotron/node/node.store";
   import {
-    ResourceAccessMode,
+    AccessMode,
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
   import YoutubeVideoPreview from "@21n/products/memotron/node/content/web/YoutubeVideoPreview.svelte";
@@ -45,10 +45,11 @@
   } from "@21n/products/memotron/capture/capture.store";
   import Task from "@21n/components/tasks/Task.svelte";
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { Context } from "@21n/types/appStore.type";
 
   const dispatch = createEventDispatcher();
-  const nodeContext = getContext<any>("node");
-  const captureContext = getContext<any>("capture");
+  const nodeContext = getContext<any>(Context.NODE);
+  const captureContext = getContext<any>(Context.CAPTURE);
   let captureStore: IActiveCaptureStore | undefined;
   $: if (nodeContext?.id || captureContext?.id) {
     const id = nodeContext?.id
@@ -56,7 +57,7 @@
       : captureContext?.id;
     captureStore = ActiveCaptureStore.resolve(id);
   }
-  const contentContext = getContext<any>("content");
+  const contentContext = getContext<any>(Context.CONTENT);
   export let id: IRecordId;
   export let body: IEmbedBlockBody;
   export let mdStore: MdStoreType;
@@ -197,7 +198,7 @@
 
   function onEditTitle(e: MouseEvent) {
     if ($view.isConstrainedWidth) {
-      if (body.id) appStore.openResource(body.id, ResourceAccessMode.POP);
+      if (body.id) appStore.openResource(body.id, AccessMode.POP);
       return;
     }
     e.stopPropagation();
@@ -235,7 +236,7 @@
       on:click={(e) => {
         if (e.target && e.target.classList.contains("resizer")) return;
         if (_mediaBlock?.contentType === NodeType.FILE) return;
-        if (body.id) appStore.openResource(body.id, ResourceAccessMode.POP);
+        if (body.id) appStore.openResource(body.id, AccessMode.POP);
       }}
     >
       {#if isShowPreview}
@@ -352,7 +353,7 @@
                     style={ButtonStyle.OUTLINED}
                     on:click={() => {
                       if (body.id)
-                        appStore.openResource(body.id, ResourceAccessMode.POP);
+                        appStore.openResource(body.id, AccessMode.POP);
                     }}
                   />
                 {/if}

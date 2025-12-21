@@ -7,16 +7,10 @@
   import { tooltip } from "@21n/actions/popover.action";
   import { cn } from "@21n/utils/ui.utils";
   import { SessionState } from "@21n/types/pointron/sessionState.enum";
-  import { Product } from "@21n/products/product.type";
   import TopNavLeftMenuItem from "@21n/layout/topNav/TopNavLeftMenuItem.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
-  export let ctx: Product = Product.NUCLEUS;
-  const action =
-    ctx === Product.NUCLEUS ? PointronAction.FOCUS : PointronAction.FOCUS_MODAL;
-  function handleClick() {
-    appStore.runAction(action);
-  }
+  const action = PointronAction.FOCUS;
 </script>
 
 {#if $activeSession.isSessionRunning}
@@ -30,13 +24,15 @@
           $activeSession.state === SessionState.BREAK_RUNNING
       }
     )}
-    on:click={handleClick}
+    on:click={() => {
+      appStore.runAction(action);
+    }}
     use:tooltip={{
       text: "Open focus"
     }}
   >
     <Icon
-      icon="ph:circle"
+      icon="focus"
       size={Size.sm}
       class={cn({
         "text-aps1": $activeSession.state === SessionState.FOCUS_RUNNING,
@@ -46,10 +42,5 @@
     {formatSeconds($activeSession.timeElapsed, TimeFormat.CLOCK)}
   </button>
 {:else}
-  <TopNavLeftMenuItem
-    icon="ph:circle"
-    tooltip="Focus"
-    shortcut={action}
-    on:click={handleClick}
-  />
+  <TopNavLeftMenuItem {action} />
 {/if}

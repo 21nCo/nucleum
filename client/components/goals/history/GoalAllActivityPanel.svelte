@@ -7,10 +7,7 @@
   import { flux } from "@21n/components/flux/flux";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { logger } from "@21n/components/debug/logger.client";
-  import {
-    PersistenceActionType,
-    type IMutation
-  } from "@21n/types/data.type";
+  import { PersistenceActionType, type IMutation } from "@21n/types/data.type";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { resolveMutationAction } from "@21n/components/flux/flux.utils";
   import { sessionStore } from "@21n/products/pointron/focus/session.store";
@@ -22,7 +19,7 @@
   import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
   import { formatSeconds } from "@21n/utils/time.utils";
   import { appStore } from "@21n/stores/app.store";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { cn } from "@21n/utils/ui.utils";
 
   export let goalId: string;
@@ -161,10 +158,9 @@
           })}
           on:click={() => {
             if (accessLog.type === "focus" && accessLog.session?.id) {
-              appStore.openResource(
-                accessLog.session.id,
-                ResourceAccessMode.POP
-              );
+              appStore.openResource(accessLog.session.id, AccessMode.POP, {
+                origin: goalId
+              });
             }
           }}
         >

@@ -27,7 +27,7 @@ import {
   type IResource,
   type IResourceMutationParams,
   type IResourceCaptureV2,
-  ResourceAccessMode
+  AccessMode
 } from "@21n/components/flux/resourceStores/resource.type";
 import { flux } from "@21n/components/flux/flux";
 import {
@@ -140,10 +140,10 @@ export class ActiveResourceStore<
     return val! as T;
   }
 
-  static destroy(id: IRecordId, accessMode?: ResourceAccessMode) {
-    if (accessMode === ResourceAccessMode.FULL) {
+  static destroy(id: IRecordId, accessMode?: AccessMode) {
+    if (accessMode === AccessMode.FULL) {
       const _accessMode = determineResourceAccessMode(id);
-      if (_accessMode !== ResourceAccessMode.FULL) {
+      if (_accessMode !== AccessMode.FULL) {
         const resource = activeResources.get(id.toString());
         if (resource) {
           resource.update((prev) => ({

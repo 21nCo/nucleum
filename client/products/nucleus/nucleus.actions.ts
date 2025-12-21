@@ -4,22 +4,13 @@ import { memotronActions } from "@21n/products/memotron/memotron.actions";
 import { pointronActions } from "@21n/products/pointron/pointron.actions";
 import NucleusLibrary from "@21n/products/nucleus/NucleusLibrary.svelte";
 import NucleusOverview from "@21n/products/nucleus/overview/NucleusOverview.svelte";
-import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
 import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
 import LibraryPanelContentResolver from "@21n/components/library/LibraryPanelContentResolver.svelte";
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import NucleusOverviewPanel from "@21n/products/nucleus/overview/NucleusOverviewPanel.svelte";
+import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
 
-const actionsToFilterInSub = [
-  Action.LIBRARY,
-  Action.OVERVIEW,
-  PointronAction.FOCUS,
-  PointronAction.FOCUS_MODAL
-];
-
-const focusModal = pointronActions.find(
-  (action) => action.action === PointronAction.FOCUS_MODAL
-);
+const actionsToFilterInSub = [Action.LIBRARY, Action.OVERVIEW];
 
 export const nucleusActions: IAction[] = [
   ...memotronActions.filter(
@@ -28,11 +19,6 @@ export const nucleusActions: IAction[] = [
   ...pointronActions.filter(
     (action) => !actionsToFilterInSub.includes(action.action as Action)
   ),
-  {
-    type: ActionType.MODAL,
-    ...(focusModal ? focusModal : {}),
-    action: PointronAction.FOCUS
-  },
   {
     action: Action.LIBRARY,
     label: "Library",
@@ -58,5 +44,16 @@ export const nucleusActions: IAction[] = [
     icon: "home",
     component: ComingSoonView,
     type: ActionType.PAGE
+  },
+  {
+    action: Action.FEED,
+    label: "Feed",
+    icon: "feed",
+    component: ComingSoonView,
+    type: ActionType.LIVE,
+    accessMode: AccessMode.RIGHT,
+    liveActionParams: {
+      isOpeningBehaviorConfigurable: true
+    }
   }
 ];

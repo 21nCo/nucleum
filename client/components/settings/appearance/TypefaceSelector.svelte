@@ -21,6 +21,7 @@
 
   const fontOptions: FontOption[] = [
     { label: "AR One Sans", value: "AR One Sans" },
+    { label: "Arvo", value: "Arvo" },
     { label: "Comic Neue", value: "Comic Neue" },
     { label: "Didact Gothic", value: "Didact Gothic" },
     { label: "DM Sans", value: "DM Sans" },

@@ -5,7 +5,7 @@ import {
   ResourceStore
 } from "@21n/components/flux/resourceStores/resource.store";
 import {
-  ResourceAccessMode,
+  AccessMode,
   ResourceAccessPoint
 } from "@21n/components/flux/resourceStores/resource.type";
 import type { IRecordId } from "@21n/types/data.type";
@@ -122,7 +122,7 @@ export class ActiveCombinationStore extends ActiveResourceStore<
     }
   }
 
-  async init(accessMode: ResourceAccessMode) {
+  async init(accessMode: AccessMode) {
     this.update((prev) => ({
       ...(prev ?? {}),
       isPageLoading: true,

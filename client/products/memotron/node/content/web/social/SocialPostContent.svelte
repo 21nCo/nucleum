@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { appStore } from "@21n/stores/app.store";
   import { getContext, onMount } from "svelte";
   import { NodeType } from "@21n/products/memotron/node/node.type";
   import type { INode } from "@21n/products/memotron/node/node.type";
@@ -17,20 +16,14 @@
   import context from "@21n/stores/context.store";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
-  import Button from "@21n/elements/button/Button.svelte";
-  import { ButtonStyle, type IButtonParams } from "@21n/types/button.type";
-  import { properCase } from "@21n/shared-utils/text.utils";
-  import { resolveContentPreview } from "@21n/products/memotron/node/node.utils";
-  import { toasts } from "@21n/stores/notification.store";
-  import ButtonGroup from "@21n/elements/button/ButtonGroup.svelte";
+  import { Context } from "@21n/types/appStore.type";
 
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
 
-  const nodeContext = getContext<any>("node");
+  const nodeContext = getContext<any>(Context.NODE);
   let oembedHtml: string | null = null;
   let error: string = "";
-  let hasPermanentCopy = false;
   let isShowPermanentCopy: boolean = false;
   onMount(async () => {
     await resolveParent();
@@ -39,8 +32,6 @@
   async function resolveParent() {
     if (nodeContext?.parent) parent = nodeContext.parent;
   }
-
-  $: hasPermanentCopy = !!resolveContentPreview(node);
 
   function shouldShowWidget() {
     if (!account.isCloudUserAndOnline()) return false;
@@ -75,56 +66,6 @@
   function onError(event: CustomEvent) {
     error = event.detail;
   }
-  function resolveOpenInButtonLabel() {
-    let suffix = "";
-    if (node.contentType === NodeType.TWEET) suffix = "Twitter";
-    else if (
-      node.contentType === NodeType.INSTAGRAM_POST ||
-      node.contentType === NodeType.INSTAGRAM_REEL
-    )
-      suffix = "Instagram";
-    else suffix = properCase(node.contentType.split("_POST")[0]);
-    return `Open on ${suffix}`;
-  }
-
-  async function copyTextContent() {
-    const text = resolveContentPreview(node);
-    if (text) {
-      await navigator.clipboard.writeText(text);
-      toasts.success("Text copied to clipboard");
-    }
-  }
-
-  $: buttons = [
-    ...(hasPermanentCopy
-      ? [
-          {
-            label: "Copy text content",
-            size: Size.sm,
-            callback: async (e: MouseEvent) => {
-              e.stopPropagation();
-              await copyTextContent();
-            }
-          } as IButtonParams,
-          {
-            label: isShowPermanentCopy ? "View as embed" : "View copy",
-            size: Size.sm,
-            callback: async (e: MouseEvent) => {
-              e.stopPropagation();
-              isShowPermanentCopy = !isShowPermanentCopy;
-            }
-          } as IButtonParams
-        ]
-      : []),
-    {
-      label: resolveOpenInButtonLabel(),
-      size: Size.sm,
-      callback: async () => {
-        if (!node.url) return;
-        appStore.openLink(node.url);
-      }
-    } as IButtonParams
-  ];
 </script>
 
 {#if oembedHtml}
@@ -172,9 +113,12 @@
         />
       {/if}
     </div>
-    <ButtonGroup {buttons} isFooter={true} />
   </div>
 {:else}
-  <SocialPostContentFallback {node} />
-  <ButtonGroup {buttons} isFooter={true} />
+  <SocialPostContentFallback
+    {node}
+    on:viewEmbed={() => {
+      isShowPermanentCopy = !isShowPermanentCopy;
+    }}
+  />
 {/if}

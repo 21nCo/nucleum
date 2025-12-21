@@ -77,7 +77,7 @@
     </div>
   {:then}
     <div class="text-b2 text-fgs3">
-      Enable collections to appear as quick capture options in the capture
+      Enabling collections will show them as quick capture shortcuts on capture
       screen.
     </div>
     <div class="flex flex-col gap-2 w-full flex-grow">
@@ -96,6 +96,7 @@
           bind:query
           on:search={onSearch}
           style={InputStyle.FILLED}
+          placeholder="Search collections"
         />
         {#each filteredCollections as collection (collection.id)}
           <div

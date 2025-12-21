@@ -1,0 +1,45 @@
+# Local Development Caddyfile
+#
+# Setup Requirements:
+# 1. Install Caddy: https://caddyserver.com/docs/install
+# 2. Add entries to /etc/hosts:
+#    127.0.0.1 local.nucleus.to
+#    127.0.0.1 local.pointron.app
+#    127.0.0.1 local.memotron.app
+#    127.0.0.1 debug-pre.nucleus.to
+#    127.0.0.1 debug-pre.pointron.app
+#    127.0.0.1 debug-pre.memotron.app
+# 3. Run: caddy run --config Caddyfile
+# 4. Trust the local CA: caddy trust
+#
+# Note: Local ports should match your dev server configuration
+
+local.nucleus.to {
+	reverse_proxy localhost:5050
+	tls internal
+}
+
+local.pointron.app {
+	reverse_proxy localhost:5001
+	tls internal
+}
+
+local.memotron.app {
+	reverse_proxy localhost:5002
+	tls internal
+}
+
+debug-pre.nucleus.to {
+	reverse_proxy localhost:5100
+	tls internal
+}
+
+debug-pre.pointron.app {
+	reverse_proxy localhost:5101
+	tls internal
+}
+
+debug-pre.memotron.app {
+	reverse_proxy localhost:5102
+	tls internal
+}

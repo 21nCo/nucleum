@@ -34,7 +34,6 @@
   import { isHideCreateAction } from "@21n/components/library/library.utils";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import ComponentShortcutListener from "@21n/components/shortcuts/ComponentShortcutListener.svelte";
-  import { keyboardShortcuts } from "@21n/components/shortcuts/shortcuts.store";
 
   export let resources: Resource[] = [];
 
@@ -43,7 +42,6 @@
     : resources[0];
   let syncFeedbackRef: InlineSyncingFeedback;
   let recordsPaneRef: LibraryRecordsPane;
-  const createShortcut = keyboardShortcuts?.resolveShortcutForAction("create");
 
   $: floatingButton =
     $view.isConstrainedWidth && selectedResource === Resource.unknown
@@ -51,7 +49,7 @@
           {
             label: "Search",
             callback: async () => {
-              appStore.runAction(Action.GLOBAL_SEARCH);
+              appStore.runAction(Action.SEARCH);
             },
             icon: "search"
           },
@@ -81,8 +79,7 @@
             },
             icon: "plus",
             parentBgIndex: 2,
-            shortcut: createShortcut,
-            variant: ButtonVariant.PRIMARY,
+            shortcut: Action.CREATE,
             style: ButtonStyle.OUTLINED
           };
 
@@ -230,11 +227,11 @@
   </div>
 </Panel>
 
-{#if createShortcut}
+{#if selectedResource !== Resource.task}
   <ComponentShortcutListener
     shortcuts={[
       {
-        shortcut: createShortcut,
+        shortcut: Action.CREATE,
         callback: onCreateResource
       }
     ]}

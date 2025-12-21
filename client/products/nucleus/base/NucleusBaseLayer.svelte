@@ -20,6 +20,7 @@
   import { defaultsMigrationTidy } from "@21n/components/migrations";
   import { defaultsMigrationForNodes } from "@21n/products/memotron/base/migrations";
   import TopNavLeftMenuItem from "@21n/layout/topNav/TopNavLeftMenuItem.svelte";
+  import { Action } from "@21n/types/action.enum";
 
   let isLiteMode = $context.isEmbed && $context.isSheet;
   const isDebug = import.meta.env?.DEV;
@@ -65,16 +66,13 @@
 
 <UserBaseLayer on:ready={onReady}>
   <div slot="topnav" class="flex gap-1 items-center h-full">
-    <FocusTopNavWidget />
     <TopNavLeftMenuItem
-      icon="mynaui:plus-hexagon"
-      tooltip="Capture"
-      shortcut={resourceAction(Resource.node, ResourceActionType.CREATE)}
-      on:click={() =>
-        appStore.runAction(
-          resourceAction(Resource.node, ResourceActionType.CREATE)
-        )}
+      action={resourceAction(Resource.node, ResourceActionType.CREATE)}
     />
+    <FocusTopNavWidget />
+    {#if isDebug}
+      <TopNavLeftMenuItem action={Action.FEED} />
+    {/if}
   </div>
   <slot />
   <PointronNotifications />

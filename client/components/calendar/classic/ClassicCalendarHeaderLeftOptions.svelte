@@ -90,6 +90,6 @@
     {/if}
   </div>
   {#if isDev}
-    <Button icon="focus" tooltip="Calendar scope" />
+    <Button icon="scope" tooltip="Calendar scope" />
   {/if}
 </div>

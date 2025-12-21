@@ -11,6 +11,8 @@
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import Badge from "@21n/elements/text/Badge.svelte";
   import { isValidNumber } from "@21n/shared-utils/text.utils";
+  import { Display } from "@21n/types/view.type";
+  import view from "@21n/stores/view.store";
   const dispatch = createEventDispatcher();
   export let group: any;
   export let index: number;
@@ -40,7 +42,11 @@
   class={cn(
     "flex flex-col border-b border-brs1 bg-bgs1 min-h-96 grow overflow-y-auto",
     {
-      "border-r": index % 2 === 0
+      "border-r":
+        $view.display === Display.TK
+          ? !((index + 1) % 3 === 0)
+          : index % 2 === 0,
+      hidden: count === 0
     }
   )}
 >

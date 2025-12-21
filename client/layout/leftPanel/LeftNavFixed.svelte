@@ -31,6 +31,12 @@
       if (unsubscribe) unsubscribe();
     };
   });
+
+  function handleToggleMenuLabels(): void {
+    uiState.setState(UIState.hideLeftNavMenuLabels, !isHideMenuLabels, {
+      scope: UIStateScope.DAP
+    });
+  }
 </script>
 
 <div
@@ -53,18 +59,19 @@
       }
     )}
   >
-    <div
+    <button
       class={cn(
         "flex flex-col items-center justify-between overflow-auto bg-bgs2",
         {
-          "w-[5.5rem] min-w-[5.5rem]": !isHideMenuLabels,
-          "w-[3.5rem] min-w-[3.5rem]": isHideMenuLabels
+          "w-[5.5rem] min-w-[5.5rem] cursor-w-resize": !isHideMenuLabels,
+          "w-[3.5rem] min-w-[3.5rem] cursor-e-resize": isHideMenuLabels
         },
         (!dev_mixedPanel || !$appStore.currentComponent?.panel) && {
           "rounded-lg border-none": isRounded,
           "border-r border-bgs4": !isRounded
         }
       )}
+      on:click={handleToggleMenuLabels}
       style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
     >
       <div class="w-full flex flex-col gap-8 overflow-auto">
@@ -74,9 +81,14 @@
           <!--  -->
         </div>
         <div
-          class={cn("flex flex-col gap-3 items-center w-full overflow-auto", {
-            "p-2": !isHideMenuLabels
-          })}
+          class={cn(
+            "flex flex-col gap-3 items-center w-full overflow-auto cursor-default",
+            {
+              "p-2": !isHideMenuLabels
+            }
+          )}
+          role="group"
+          on:click|stopPropagation
         >
           <AppMenuSwitcher
             parentBackgroundIndex={1}
@@ -84,19 +96,20 @@
           />
           <div
             class="flex justify-center items-center w-full mt-2"
-            use:popover={{
-              content: LeftNavSettingsPopover,
-              id: "leftnav-settings-popover",
-              placement: Placement.Right,
-              triggerMethod: [PopoverTriggerMethod.CLICK],
-              offsetInPx: 10
-            }}
             use:tooltip={{
               text: "Menu settings"
             }}
           >
             <button
               class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-bgs3 transition-colors duration-200"
+              use:popover={{
+                content: LeftNavSettingsPopover,
+                id: "leftnav-settings-popover",
+                placement: Placement.Right,
+                triggerMethod: [PopoverTriggerMethod.CLICK],
+                offsetInPx: 10
+              }}
+              on:click|stopPropagation
             >
               <Icon
                 icon="more-outline-horizontal"
@@ -112,7 +125,7 @@
         <!-- <LeftNavCommandAction isInThinMode={true} size={Size.lg} /> -->
         <LeftBottomBar {isRounded} />
       </div>
-    </div>
+    </button>
     <slot name="panel" />
   </div>
 </div>

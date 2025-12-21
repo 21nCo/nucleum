@@ -16,13 +16,18 @@
     isSameResource,
     resourceInList
   } from "@21n/components/flux/resourceStores/resource.utils";
+  import TableOfContentsList from "@21n/components/markdown/TableOfContentsList.svelte";
+  import { hoverable } from "@21n/actions/hover.action";
   export let mdId: string;
   export let isHideEmptyPlaceholder: boolean = false;
+  export let isExpandOnHover: boolean = false;
   const mdStore = getMdStore(mdId);
   let mdcontainerID = "markDown-" + mdId;
   let mdContainerHeight: number | undefined;
   let headingBlocks: any;
   let isHeadingAvailable: boolean = false;
+  const dev_isShowFocusState: boolean = false;
+  let isHovered: boolean = false;
   onMount(() => {
     let mdContainerElement = document.getElementById(mdcontainerID);
     mdContainerHeight = mdContainerElement?.offsetHeight;
@@ -55,61 +60,71 @@
 </script>
 
 {#if isHeadingAvailable}
-  <div class="w-full text-left">
-    <div class="sticky top-10">
-      {#each headingBlocks as block}
-        {@const isInView = $mdStore?.headingsInView?.some(
-          resourceInList(block)
-        )}
-        {@const isFirstInView =
-          $mdStore?.headingsInView?.[0] &&
-          isSameResource($mdStore.headingsInView[0], block)}
-        {@const isLastInView =
-          $mdStore?.headingsInView?.[$mdStore?.headingsInView?.length - 1] &&
-          isSameResource(
-            $mdStore.headingsInView[$mdStore.headingsInView.length - 1],
-            block
-          )}
-        {@const isActive =
-          $mdStore.activeHeading &&
-          isSameResource($mdStore.activeHeading, block)}
-        <a
-          href="#{block.id}"
-          on:click={(e) => scrollToHeading(e, block.id)}
-          class={cn(
-            "flex items-center gap-1.5 text-b2 truncate py-1.5",
-            {
-              "hover:bg-bgs2 rounded-md": !isInView,
-              "bg-bgs2": isInView,
-              "rounded-t-md": isFirstInView,
-              "rounded-b-md": isLastInView,
-              "text-aps1": isActive && !$mdStore.params?.isReadOnly
-            },
-            (!isActive || $mdStore.params?.isReadOnly) && {
-              "text-fgs1": isInView,
-              "text-fgs3": !isInView
-            }
-          )}
-          style="padding-left: {block.HEADING * 20}px;"
-          use:tooltip={{
-            isEnableOnlyOnTruncate: true,
-            text: block.content
-          }}
-        >
-          <span
-            class={cn(
-              "bg-aps1 min-w-1.5 h-1.5 flex justify-center items-center rounded-full",
-              {
-                "opacity-0": !isActive || $mdStore.params?.isReadOnly
-              }
+  <div
+    class={cn("w-full text-left transition-all", {
+      "p-2": isExpandOnHover
+    })}
+    class:relative={isExpandOnHover}
+    use:hoverable={{
+      onHover: (val) => {
+        isHovered = val;
+      }
+    }}
+  >
+    <div class="sticky top-10 pt-10">
+      {#if isExpandOnHover}
+        <div class="flex flex-col items-end gap-1.5 py-2">
+          {#each headingBlocks as block}
+            {@const isInView = $mdStore?.headingsInView?.some(
+              resourceInList(block)
             )}
-          >
-          </span>
-          <span>
-            {block.content}
-          </span>
-        </a>
-      {/each}
+            {@const isActive =
+              dev_isShowFocusState &&
+              $mdStore.activeHeading &&
+              isSameResource($mdStore.activeHeading, block)}
+            {@const lineWidth = 24 - block.HEADING * 6}
+            <a
+              href="#{block.id}"
+              on:click={(e) => scrollToHeading(e, block.id)}
+              class="flex items-center py-0.5"
+              use:tooltip={{
+                text: block.content,
+                direction: "right"
+              }}
+            >
+              <div
+                class={cn("h-[1.5px] rounded-full transition-all", {
+                  "bg-aps1": isActive && !$mdStore.params?.isReadOnly,
+                  "bg-fgs1":
+                    isInView && (!isActive || $mdStore.params?.isReadOnly),
+                  "bg-fgs4":
+                    !isInView && (!isActive || $mdStore.params?.isReadOnly)
+                })}
+                style="width: {lineWidth}px;"
+              ></div>
+            </a>
+          {/each}
+        </div>
+      {/if}
+      {#if isExpandOnHover && isHovered}
+        <div
+          class="absolute right-0 top-10 z-10 bg-bgs1 border border-brs1 rounded-lg shadow-lg p-2 min-w-64"
+        >
+          <TableOfContentsList
+            {headingBlocks}
+            {mdStore}
+            {scrollToHeading}
+            {dev_isShowFocusState}
+          />
+        </div>
+      {:else if !isExpandOnHover}
+        <TableOfContentsList
+          {headingBlocks}
+          {mdStore}
+          {scrollToHeading}
+          {dev_isShowFocusState}
+        />
+      {/if}
     </div>
   </div>
 {:else if !isHideEmptyPlaceholder}

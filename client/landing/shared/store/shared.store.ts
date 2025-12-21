@@ -65,13 +65,6 @@ export const microToolsStore = readable<ITileItem[]>([
 ]);
 
 export const upcomingProductsStore = writable<ITileItem[]>([
-  // {
-  //   icon: "",
-  //   title: "Selftron",
-  //   label: "Your health compass.",
-  //   description:
-  //     "Selftron offers top-notch tracking and analytics for your body and mind, making it easier to understand and improve your wellness"
-  // },
   {
     icon: "nucleus",
     title: "Nucleus",

@@ -10,7 +10,7 @@ import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import MemotronLibrary from "@21n/products/memotron/library/MemotronLibrary.svelte";
 import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
 import {
-  ResourceAccessMode,
+  AccessMode,
   ResourceActionType
 } from "@21n/components/flux/resourceStores/resource.type";
 import {
@@ -81,22 +81,15 @@ export const memotronActions: IAction[] = [
     component: Capture,
     label: "Capture",
     icon: "mynaui:plus-hexagon",
-    type: ActionType.RESOURCE,
-    accessMode: ResourceAccessMode.POP,
-    modalParams: {
-      layout: {
-        size: Size.full,
-        orientation: Orientation.Horizontal,
-        ignoreSafeArea: true
-      }
-    }
+    type: ActionType.LIVE,
+    accessMode: AccessMode.MAIN
   },
   {
     action: MemotronAction.CAPTURE_DND,
     component: CaptureDnD,
     isMeta: true,
     type: ActionType.RESOURCE,
-    accessMode: ResourceAccessMode.POP,
+    accessMode: AccessMode.POP,
     modalParams: {
       layout: {
         size: Size.xxl,
@@ -112,7 +105,7 @@ export const memotronActions: IAction[] = [
     component: Capture,
     isMeta: true,
     type: ActionType.RESOURCE,
-    accessMode: ResourceAccessMode.POP,
+    accessMode: AccessMode.POP,
     modalParams: {
       layout: {
         size: Size.xxl,
@@ -168,7 +161,7 @@ export const memotronActions: IAction[] = [
     action: Resource.combination,
     type: ActionType.MODAL,
     component: SideNavCombination,
-    accessMode: ResourceAccessMode.POP,
+    accessMode: AccessMode.POP,
     modalParams: {
       layout: {
         size: Size.xxl,

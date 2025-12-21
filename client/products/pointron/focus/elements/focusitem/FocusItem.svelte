@@ -31,7 +31,7 @@
   import FocusTask from "@21n/products/pointron/focus/elements/focusitem/FocusTask.svelte";
   import type { ITaskThumb } from "@21n/components/tasks/task.type";
   import { appStore } from "@21n/stores/app.store";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { resolveGoalColor } from "@21n/components/goals/goal.utils";
   import { createEventDispatcher } from "svelte";
   import { toasts } from "@21n/stores/notification.store";
@@ -173,7 +173,7 @@
             class="notouch:hover:underline active:underline"
             on:click={(e) => {
               e.stopPropagation();
-              appStore.openResource(goal.id, ResourceAccessMode.POP);
+              appStore.openResource(goal.id, AccessMode.POP);
             }}
           >
             {goal.label}
@@ -267,7 +267,7 @@
           class="notouch:hover:underline active:underline"
           on:click={(e) => {
             e.stopPropagation();
-            appStore.openResource(goal.id, ResourceAccessMode.POP);
+            appStore.openResource(goal.id, AccessMode.POP);
           }}
         >
           {goal.label}

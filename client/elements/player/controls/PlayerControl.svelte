@@ -22,7 +22,9 @@
       {
         "w-16 h-16": size === Size.lg,
         "w-14 h-14": size === Size.md,
-        "w-10 h-10": size === Size.sm
+        "w-10 h-10": size === Size.sm,
+        "notouch:hover:bg-bgs1-striped active:bg-bgs2":
+          style === ButtonStyle.PLAIN
       },
       style === ButtonStyle.DEFAULT && {
         "notouch:hover:brightness-110 active:brightness-110": true,

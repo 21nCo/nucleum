@@ -6,7 +6,6 @@
   import NodeHistoryPane from "@21n/products/memotron/common/history/NodeHistoryPane.svelte";
   import NodeLinksPane from "@21n/products/memotron/node/links/NodeLinksPane.svelte";
   import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
-  import { NodeType } from "@21n/products/memotron/node/node.type";
   import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
   import NodeTracesPane from "@21n/products/memotron/node/traces/NodeTracesPane.svelte";
   import NodeSidenotesPane from "@21n/products/memotron/node/rightPanel/NodeSidenotesPane.svelte";
@@ -17,9 +16,6 @@
   export let node: IActiveNodeStore;
   export let mdId: string | undefined = undefined;
   export let renderingDetails: any = undefined;
-  export let isShowClose: boolean = false;
-
-  $: _isShowClose = isShowClose || $node.panel === ResourcePanelType.METADATA;
 </script>
 
 <div
@@ -30,15 +26,13 @@
       content={properCase($node.panel)}
       style={TextStyle.PANEL_HEADING_SMALL}
     />
-    {#if _isShowClose}
-      <Button
-        icon="x-circle"
-        tooltip="Close"
-        on:click={() => {
-          node.switchPanel(ResourcePanelType.DEFAULT);
-        }}
-      />
-    {/if}
+    <Button
+      icon="x-circle"
+      tooltip="Close"
+      on:click={() => {
+        node.switchPanel($node.defaultPanel);
+      }}
+    />
   </div>
   {#if $node.panel === ResourcePanelType.OUTLINE && mdId}
     <TableOfContents {mdId} />

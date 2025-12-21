@@ -137,5 +137,28 @@ export enum AppSearchParam {
   FULL_AT = "fullAt",
   DEPTH = "depth",
   TRAVERSE = "traverse",
-  NODE_VIEW = "nodeView"
+  NODE_VIEW = "nodeView",
+  /**
+   * @deprecated - use MAIN access mode instead
+   */
+  SEARCH = "search",
+  /**
+   * @deprecated - use RIGHT access mode instead
+   * Opening an action in right panel
+   */
+  RIGHT = "right",
+  /**
+   * Whether to maximize the resource or not
+   */
+  MAX = "max"
+}
+
+export enum Context {
+  CONTAINER = "container",
+  NODE = "node",
+  MARKDOWN = "markdown",
+  CONTENT = "content",
+  CAPTURE = "capture",
+  BLOCK = "block",
+  CALENDAR_CONTENT = "calendar-content"
 }

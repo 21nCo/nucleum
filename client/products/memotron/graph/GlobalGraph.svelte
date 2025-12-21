@@ -4,10 +4,13 @@
   import { linker } from "@21n/products/memotron/linking/link.store";
   import GlobalGraphUsingG6 from "@21n/products/memotron/graph/GlobalGraphUsingG6.svelte";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { headingNodeTypes, rootNodeTypeList } from "@21n/products/memotron/node/node.type";
+  import {
+    headingNodeTypes,
+    rootNodeTypeList
+  } from "@21n/products/memotron/node/node.type";
   import { removeDuplicatesFilter } from "@21n/components/flux/resourceStores/resource.utils";
   import { appStore } from "@21n/stores/app.store";
-  import { ResourceAccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { resolveNodeLabelString } from "@21n/products/memotron/node/node.utils";
   import NodeTitleLabelPart from "@21n/products/memotron/node/title/NodeTitleLabelPart.svelte";
   import { activeResourceFilterV2 } from "@21n/utils/utils";
@@ -162,7 +165,7 @@
   }
 
   function onCanvasClick(event: CustomEvent) {
-    appStore.closeResource({ accessMode: ResourceAccessMode.SPLIT });
+    appStore.closeResource({ accessMode: AccessMode.SPLIT });
   }
 </script>
 

@@ -78,6 +78,7 @@
     type IActiveCaptureStore
   } from "@21n/products/memotron/capture/capture.store";
   import Check from "@21n/icons/Check.svelte";
+  import { Context } from "@21n/types/appStore.type";
 
   const dispatch = createEventDispatcher();
 
@@ -102,10 +103,10 @@
   $: isSoleBlock =
     isSameResource($mdStore.blocks[0], block) && $mdStore.blocks.length === 1;
 
-  const markdownContext = getContext<any>("markdown");
-  const nodeContext = getContext<any>("node");
-  const contentContext = getContext<any>("content");
-  const captureContext = getContext<any>("capture");
+  const markdownContext = getContext<any>(Context.MARKDOWN);
+  const nodeContext = getContext<any>(Context.NODE);
+  const contentContext = getContext<any>(Context.CONTENT);
+  const captureContext = getContext<any>(Context.CAPTURE);
   let captureStore: IActiveCaptureStore | undefined;
   $: if (nodeContext?.id || captureContext?.id) {
     const id = nodeContext?.id
@@ -117,7 +118,7 @@
   const blockContext = {
     publish: blockEvent
   };
-  setContext("block", blockContext);
+  setContext(Context.BLOCK, blockContext);
 
   function propagate(event: string, data: any) {
     markdownContext({
@@ -932,13 +933,14 @@
 <!--TODO -  Note - when reenabling drag and drag to rearrange - make sure it is not interfering with text selection or media grid space slider -->
 <div
   class={cn(
-    "relative flex w-full min-h-fit h-11 items-center gap-2 rounded-md border border-transparent",
+    "relative flex w-full min-h-fit h-8 items-center gap-2 rounded-md border border-transparent",
     {
       "grid grid-cols-[2.5rem_1fr_2.5rem]": isLeftControlsEnabled,
       dragging: isDragging,
       "prevent-reorder-feedback-for-files":
         block.contentType === NodeType.EMBED && !block.body.id,
-      "bg-bgs2": $context.isTouchDevice && block.contentType === NodeType.EMBED
+      "bg-bgs2": $context.isTouchDevice && block.contentType === NodeType.EMBED,
+      "mt-3 mb-1": headingNodeTypes.includes(block.contentType)
     },
     $mdStore.params?.isNodular &&
       !$mdStore.params?.isReadOnly && {

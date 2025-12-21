@@ -20,6 +20,9 @@ export enum ClientStorageKey {
    * Surreal token
    */
   STOKEN = "stoken",
+  USER = "user",
+  REGION = "region",
+  USER_REGION_MAP = "userRegionMap",
   USER_INFO = "userInfo",
   /**
    * @deprecated - use userId instead
