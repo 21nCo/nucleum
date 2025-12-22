@@ -78,7 +78,7 @@
     "@21n/actions": "*",
     "@21n/components": "*",
     "@21n/elements": "*",
-    "@21n/fonts": "^1.0.0",
+    "@21n/fonts": "^1.0.1",
     "@21n/products": "*",
     "@21n/static": "*",
     "@21n/stores": "*",

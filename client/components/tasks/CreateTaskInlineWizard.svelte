@@ -177,7 +177,7 @@
         />
       </div>
     {:else if goal}
-      <div class="transition-all duration-200">
+      <div class="min-w-0 flex-1 transition-all duration-200">
         <TaskThumbnailGoalLabel
           {goal}
           on:clearGoal={() => {

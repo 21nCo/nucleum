@@ -31,7 +31,7 @@
       "text-ars1": type === ButtonVariant.DANGER
     }
   )}
-  on:click
+  on:click|stopPropagation
   use:popover={{
     content: tooltip ? ButtonTooltip : "",
     triggerMethod: tooltip ? [PopoverTriggerMethod.HOVER] : [],

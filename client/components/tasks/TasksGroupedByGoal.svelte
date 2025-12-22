@@ -9,6 +9,7 @@
   import type { IGoalThumb } from "../goals/goal.type";
   import CreateTaskInlineWizard from "./CreateTaskInlineWizard.svelte";
   import Button from "@21n/elements/button/Button.svelte";
+  import { truncateString } from "@21n/shared-utils/text.utils";
   export let tasks: ITaskThumb[];
   export let accessPoint: ResourceAccessPoint;
   export let accessPointId: IRecordId | undefined = undefined;
@@ -69,7 +70,7 @@
 
 {#if isDisableGrouping}
   <div class="flex flex-col gap-2">
-    {#each tasks as item}
+    {#each tasks as item (item.id)}
       <TaskThumbnail
         {item}
         {accessPoint}
@@ -84,14 +85,17 @@
   </div>
 {:else if tasksByGoal}
   <div class="flex flex-col gap-2">
-    {#each [...tasksByGoal.groups.entries()] as [goalId, group]}
+    {#each [...tasksByGoal.groups.entries()] as [goalId, group] (goalId)}
       <div
         class="flex flex-col gap-1 pl-1 py-2 pr-1 border rounded-md border-brs2"
       >
         <div class="px-2 flex justify-between w-full">
-          <TaskThumbnailGoalLabel goal={group.goal} {accessPoint} />
+          <div class="flex flex-1 min-w-0">
+            <TaskThumbnailGoalLabel goal={group.goal} {accessPoint} />
+          </div>
           <Button
             icon="plus"
+            tooltip={`Create task for ${truncateString(group.goal.label, 20)}`}
             size={Size.sm}
             on:click={() => (createTaskWizardForGoal = goalId)}
           />
@@ -105,7 +109,7 @@
             />
           </div>
         {/if}
-        {#each group.tasks as task}
+        {#each group.tasks as task (task.id)}
           <TaskThumbnail
             item={task}
             {accessPoint}
@@ -118,7 +122,7 @@
         {/each}
       </div>
     {/each}
-    {#each tasksByGoal.nonGoalTasks as task}
+    {#each tasksByGoal.nonGoalTasks as task (task.id)}
       <TaskThumbnail
         item={task}
         {accessPoint}
