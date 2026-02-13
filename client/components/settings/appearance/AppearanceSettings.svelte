@@ -69,7 +69,7 @@
   /> -->
   <TypefaceSelector
     label={{ label: "Font", orientation: Orientation.Vertical }}
-    value={$userPreferences.appearance.typeface || "Sen"}
+    value={$userPreferences.appearance?.typeface || "Sen"}
     on:select={onTypefaceChange}
     size={Size.sm}
     {parentBackgroundIndex}

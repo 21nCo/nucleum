@@ -1,13 +1,1 @@
-{
-  "name": "e2e-playwright",
-  "private": true,
-  "scripts": {
-    "test": "playwright test",
-    "test:smoke": "playwright test --project=smoke",
-    "test:regression": "playwright test --project=regression",
-    "test:ci": "playwright test --reporter=line"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.49.0"
-  }
-}
+{"name":"e2e-playwright","private":true,"scripts":{"test":"playwright test","test:smoke":"playwright test --project=smoke","test:regression":"playwright test --project=regression","test:ci":"playwright test --reporter=line"},"devDependencies":{"@playwright/test":"^1.49.0","@types/node":"^22.0.0"}}

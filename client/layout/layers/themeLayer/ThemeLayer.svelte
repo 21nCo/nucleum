@@ -38,8 +38,8 @@
     refreshSizing();
     const userPreferencesSub = userPreferences.subscribe((x) => {
       if (!userPreferences.isInitialized) return;
-      if (x.appearance.typeface !== typeface) {
-        typeface = x.appearance.typeface ?? defaultTypeface;
+      if (x.appearance?.typeface !== typeface) {
+        typeface = x.appearance?.typeface ?? defaultTypeface;
         refreshTailwind();
       }
       if (x.accessibilitySizingFactor !== accessibilitySizingFactor) {
