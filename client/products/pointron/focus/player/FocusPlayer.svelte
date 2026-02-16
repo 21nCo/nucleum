@@ -202,7 +202,7 @@
         isBreakReminderMode && isPipShown
     })}
     style={isPipShown
-      ? "font-family: {$appearance?.typeface ?? fallBackTypefaceString};"
+      ? "font-family: {$appearance.typeface ?? fallBackTypefaceString};"
       : ""}
   >
     <ThemeLayer extensionContext={isPipShown ? "focusplayer" : undefined}>

@@ -1,0 +1,8 @@
+# Local env with credentials – do not commit
+.env
+artifacts/
+test-results/
+playwright-report/
+playwright/.cache/
+*-state.json
+.auth/

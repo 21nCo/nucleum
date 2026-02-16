@@ -74,15 +74,18 @@ async function startVite(app: string): Promise<ViteHarness> {
 }
 
 export default async function globalSetup(_: FullConfig) {
-  const targetApp = process.env.PLAYWRIGHT_APP ?? "apps/pointron";
-  console.log(`🚀 Starting Vite server for ${targetApp}...`);
-  
-  const harness = await startVite(targetApp);
+  // If APP_BASE_URL is already set (e.g. in .env as http://local.nucleus.to), don't start a server
+  if (process.env.APP_BASE_URL) {
+    console.log(`📝 Using APP_BASE_URL (e.g. from .env): ${process.env.APP_BASE_URL}`);
+    (globalThis as any).__viteHarness = { close: async () => {} };
+    return process.env.APP_BASE_URL;
+  }
 
+  const targetApp = process.env.PLAYWRIGHT_APP ?? "apps/nucleus";
+  console.log(`🚀 Starting Vite server for ${targetApp}...`);
+  const harness = await startVite(targetApp);
   process.env.APP_BASE_URL = harness.url;
   console.log(`📝 Set APP_BASE_URL to ${harness.url}`);
-
   (globalThis as any).__viteHarness = harness;
-  
   return harness.url;
 }

@@ -1,0 +1,104 @@
+/**
+ * One-time save: first Google login only. You complete sign-in; we save as soon as you're back on the app.
+ * Any next screen (e.g. signup, "Continue offline") is handled in the test only.
+ *
+ * Run: npm run e2e:save-auth
+ * Set APP_BASE_URL in .env (e.g. https://dev.nucleus.to).
+ */
+
+import "dotenv/config";
+import { chromium } from "@playwright/test";
+import path from "node:path";
+import fs from "node:fs";
+
+const authDir = path.join(__dirname, "..", ".auth");
+const authStatePath = path.join(authDir, "user.json");
+const baseURL = process.env.APP_BASE_URL ?? "http://127.0.0.1:4173";
+const waitForRedirectBackMs = 120_000; // 2 min to complete Google login
+
+const baseOrigin = new URL(baseURL).origin;
+const baseHost = new URL(baseURL).host;
+// Allow both http and https for the same host (redirect may use different scheme)
+const allowedOrigins = [
+  baseOrigin,
+  baseOrigin.startsWith("http:") ? `https://${baseHost}` : `http://${baseHost}`,
+  "https://dev.nucleus.to",
+  "http://dev.nucleus.to"
+];
+const allowedOriginsSet = new Set(allowedOrigins);
+
+async function main() {
+  if (!fs.existsSync(authDir)) {
+    fs.mkdirSync(authDir, { recursive: true });
+  }
+
+  console.log("Base URL:", baseURL);
+  console.log("Opening browser – complete Google sign-in once. We save as soon as you're back on the app.");
+  console.log("If you see another login/signup screen after that, the test will handle it.\n");
+
+  const browser = await chromium.launch({
+    headless: false,
+    channel: "chrome",
+    args: ["--disable-blink-features=AutomationControlled", "--no-sandbox"]
+  });
+  const context = await browser.newContext({
+    viewport: { width: 1280, height: 720 },
+    userAgent:
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+  });
+  const page = await context.newPage();
+
+  try {
+    await page.goto(`${baseURL}/account/login`, { waitUntil: "domcontentloaded" });
+    await page.waitForURL(/\/account\/login/, { timeout: 10_000 });
+
+    const googleButton = page
+      .getByRole("button", { name: /Continue with Google/i })
+      .or(page.locator("#google-signin"))
+      .first();
+
+    // Do not block on click promise: OAuth can involve long multi-step navigation
+    // (Google identifier/password/consent), which can outlive action timeout.
+    void googleButton.click({ noWaitAfter: true }).catch(() => {});
+
+    console.log("Complete Google sign-in in the browser. Waiting up to", waitForRedirectBackMs / 1000, "s for redirect back...\n");
+
+    const appOrigin = new URL(baseURL).origin;
+
+    // Save only when we're back on the app on a post-login path (not /account/login).
+    // Otherwise an HTTP→HTTPS redirect that keeps us on /account/login would be treated as "back" and close before opening Google.
+    const isBackOnApp = (url: URL) =>
+      allowedOriginsSet.has(url.origin) &&
+      (["/", "/signup", "/calendar"].includes(url.pathname) ||
+        url.pathname.startsWith("/calendar/") ||
+        url.pathname.includes("/oauth"));
+
+    // Important: don't treat the *initial* /account/login as "back on app".
+    // First wait until we leave that page (typically to Google OAuth), then wait for return.
+    await page.waitForURL((url) => {
+      const u = new URL(url.toString());
+      return !(u.origin === appOrigin && u.pathname === "/account/login");
+    }, {
+      timeout: waitForRedirectBackMs
+    });
+
+    await page.waitForURL((url) => isBackOnApp(new URL(url.toString())), {
+      timeout: waitForRedirectBackMs
+    });
+    const landedOrigin = new URL(page.url()).origin; // capture before any further navigation
+
+    await context.storageState({ path: authStatePath });
+    console.log("Back on app. Saved auth state to", authStatePath);
+    console.log("Done. Run: npm run test:regression (test will handle any next login/signup screen).");
+    if (landedOrigin !== new URL(baseURL).origin) {
+      console.log("\nNote: You were redirected to", landedOrigin, "- set APP_BASE_URL=" + landedOrigin, "in .env to run tests there.");
+    }
+  } finally {
+    await browser.close();
+  }
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

@@ -1,7 +1,13 @@
 import { devices, defineConfig } from "@playwright/test";
 import path from "node:path";
+import fs from "node:fs";
+
+// Load .env so E2E_*, APP_BASE_URL are available
+import "dotenv/config";
 
 const artifactsDir = path.join(__dirname, "artifacts");
+const authStatePath = path.join(__dirname, ".auth", "user.json");
+const useGoogleAuthState = fs.existsSync(authStatePath);
 
 export default defineConfig({
   testDir: path.join(__dirname, "tests"),
@@ -36,7 +42,9 @@ export default defineConfig({
       retries: 1,
       use: {
         ...devices["Desktop Chrome"],
-        viewport: { width: 1280, height: 720 }
+        viewport: { width: 1280, height: 720 },
+        video: "on", // keep video for every run (pass or fail)
+        ...(useGoogleAuthState ? { storageState: authStatePath } : {})
       }
     }
   ]
