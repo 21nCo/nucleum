@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { nucleusProductConfig } from "../../config/nucleus-product.config";
 
 const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
@@ -32,8 +33,8 @@ test.describe("regression", () => {
     const postLoginWaitMs = 25_000;
     const isApp = (url: URL) =>
       url.pathname === "/" ||
-      url.pathname === "/calendar" ||
-      url.pathname === "/calendar/";
+      url.pathname === `/${nucleusProductConfig.homePath}` ||
+      url.pathname === `/${nucleusProductConfig.homePath}/`;
 
     const clickContinueOfflineIfVisible = async () => {
       const offlineTab = page.getByRole("button", { name: "Offline" }).first();
@@ -95,7 +96,7 @@ test.describe("regression", () => {
     }
 
     const pathname = new URL(page.url()).pathname;
-    expect(pathname === "/" || pathname === "/calendar" || pathname === "/calendar/" || pathname === "/signup" || pathname === "/account/login").toBe(true);
+    expect(pathname === "/" || pathname === `/${nucleusProductConfig.homePath}` || pathname === `/${nucleusProductConfig.homePath}/` || pathname === "/signup" || pathname === "/account/login").toBe(true);
 
     // Even when URL looks app-like, app can still render signup/login panel.
     // Try clicking "Continue offline" a few times before calendar navigation.
@@ -105,19 +106,19 @@ test.describe("regression", () => {
       await page.waitForLoadState("domcontentloaded").catch(() => null);
     }
 
-    // Go to calendar first; if redirected to signup/login, recover via offline and retry.
-    const calendarUrl = new URL("/calendar", baseURL).toString();
-    let atCalendar = false;
+    // Go to home page first; if redirected to signup/login, recover via offline and retry.
+    const homePageUrl = new URL(`/${nucleusProductConfig.homePath}`, baseURL).toString();
+    let atHomePage = false;
     for (let attempt = 0; attempt < 3; attempt += 1) {
-      await page.goto(calendarUrl, { waitUntil: "domcontentloaded" });
+      await page.goto(homePageUrl, { waitUntil: "domcontentloaded" });
       const reached = await page
-        .waitForURL((u) => /^\/calendar(\/.*)?$/.test(new URL(u).pathname), {
+        .waitForURL((u) => new RegExp(`^\\/${nucleusProductConfig.homePath}(\\/.*)?$`).test(new URL(u).pathname), {
           timeout: 8_000
         })
         .then(() => true)
         .catch(() => false);
       if (reached) {
-        atCalendar = true;
+        atHomePage = true;
         break;
       }
       const handled = await clickContinueOfflineIfVisible();
@@ -125,13 +126,13 @@ test.describe("regression", () => {
         break;
       }
     }
-    if (!atCalendar) {
+    if (!atHomePage) {
       throw new Error(
-        `Could not reach /calendar after offline recovery; landed on ${new URL(page.url()).pathname}.`
+        `Could not reach /${nucleusProductConfig.homePath} after offline recovery; landed on ${new URL(page.url()).pathname}.`
       );
     }
 
-    // On /calendar the signup overlay can still be visible; dismiss it so the app nav (Home, Calendar, Overview, …) appears.
+    // On home page the signup overlay can still be visible; dismiss it so the app nav appears.
     for (let i = 0; i < 3; i += 1) {
       const handled = await clickContinueOfflineIfVisible();
       if (!handled) break;
@@ -139,37 +140,40 @@ test.describe("regression", () => {
     }
 
     // Visibility checks: ensure app navigation is rendered
-    const calendarContentTimeout = 20_000;
+    const contentTimeout = 20_000;
     const homeNav = page.getByRole("button").filter({ hasText: /^Home$/i }).first();
-    const calendarNav = page.getByRole("button").filter({ hasText: /^Calendar$/i }).first();
-    const overviewNav = page.getByRole("button").filter({ hasText: /^Overview$/i }).first();
-    const libraryNav = page.getByRole("button").filter({ hasText: /^Library$/i }).first();
+    // Create nav markers dynamically from product config
+    const navMarkers = nucleusProductConfig.appMenuNavLabels.map(label =>
+      page.getByRole("button").filter({ hasText: new RegExp(`^${label}$`, "i") }).first()
+    );
     const todayButton = page.getByRole("button", { name: "Today" }).first();
-    const calendarMarkers = [homeNav, calendarNav, overviewNav, libraryNav, todayButton];
+    const allMarkers = [homeNav, ...navMarkers, todayButton];
     await expect
       .poll(
         async () => {
-          for (const marker of calendarMarkers) {
+          for (const marker of allMarkers) {
             if (await marker.isVisible().catch(() => false)) return true;
           }
           return false;
         },
-        { timeout: calendarContentTimeout }
+        { timeout: contentTimeout }
       )
       .toBe(true);
 
-    // Required action: click Overview nav and verify route changed to /overview.
-    const overviewNavAction = page
-      .getByRole("button", { name: /^Overview$/i })
-      .or(page.getByRole("link", { name: /^Overview$/i }))
+    // Required action: click a different nav item (Overview) and verify route changed.
+    const testNavLabel = "Overview"; // Test navigation by clicking Overview
+    const navAction = page
+      .getByRole("button", { name: new RegExp(`^${testNavLabel}$`, "i") })
+      .or(page.getByRole("link", { name: new RegExp(`^${testNavLabel}$`, "i") }))
       .first();
-    await expect(overviewNavAction).toBeVisible({ timeout: 20_000 });
-    await overviewNavAction.click({ timeout: 5_000, force: true });
-    await page.waitForURL((u) => /^\/overview(\/.*)?$/.test(new URL(u).pathname), {
+    await expect(navAction).toBeVisible({ timeout: 20_000 });
+    await navAction.click({ timeout: 5_000, force: true });
+    const expectedPath = nucleusProductConfig.pathByNavLabel[testNavLabel];
+    await page.waitForURL((u) => new RegExp(`^${expectedPath}(\\/.*)?$`).test(new URL(u).pathname), {
       timeout: 20_000
     });
 
     const finalPath = new URL(page.url()).pathname;
-    expect(finalPath === "/overview" || finalPath.startsWith("/overview/")).toBe(true);
+    expect(finalPath === expectedPath || finalPath.startsWith(`${expectedPath}/`)).toBe(true);
   });
 });

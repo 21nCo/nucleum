@@ -40,6 +40,7 @@ export default defineConfig({
       name: "regression",
       testDir: path.join(__dirname, "tests", "regression"),
       retries: 1,
+      workers: 1,
       use: {
         ...devices["Desktop Chrome"],
         viewport: { width: 1280, height: 720 },
