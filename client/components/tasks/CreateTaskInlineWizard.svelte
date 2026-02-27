@@ -137,6 +137,7 @@
         on:blur={() => (isFocusing = false)}
         on:keydown={handleKeydown}
         placeholder="Enter task name"
+        testId="task-name-input"
         style={InputStyle.PLAIN}
         on:enter={handleCreateOnEnter}
       />

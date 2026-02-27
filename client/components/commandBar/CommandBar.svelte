@@ -146,6 +146,7 @@
     )}
   >
     <input
+      data-testid="command-bar-input"
       bind:this={inputRef}
       type="text"
       bind:value

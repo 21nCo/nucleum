@@ -545,6 +545,7 @@
         padding="px-2"
         on:search={() => refresh()}
         placeholder={"Search " + resource + "s"}
+        testId={"search-" + resource + "s"}
         style={InputStyle.FILLED}
       >
         <Toggle

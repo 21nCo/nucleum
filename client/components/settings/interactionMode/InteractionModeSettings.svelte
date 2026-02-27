@@ -53,7 +53,7 @@
   }
 </script>
 
-<div class="flex flex-col gap-6 overflow-auto">
+<div class="flex flex-col gap-6 overflow-auto" data-testid="mode-of-interaction-settings">
   <OptionSelector
     bind:selected={selectedMode}
     style={OptionSelectorStyle.TRAIN}
@@ -79,9 +79,10 @@
     ]}
   />
   {#if selectedMode === InteractionMode.DEFAULT}
-    <SwitchInput
-      label={{
-        label: "Hide all hot key and shortcut hints",
+    <div data-testid="toggle-hide-shortcut-hints">
+      <SwitchInput
+        label={{
+          label: "Hide all hot key and shortcut hints",
         tooltip: {
           body: "All hot key and shortcut hints will be hidden at relevant places throughout the app."
         }
@@ -93,9 +94,11 @@
           scope: UIStateScope.DEVICE
         });
       }}
-    />
-    <SwitchInput
-      bind:checked={isCompletelyHideLeftNavBar}
+      />
+    </div>
+    <div data-testid="toggle-hide-menu-bar">
+      <SwitchInput
+        bind:checked={isCompletelyHideLeftNavBar}
       on:change={(e) => {
         uiState.setState(UIState.completelyHideLeftNavBar, e.detail, {
           scope: UIStateScope.PRODUCT
@@ -108,7 +111,8 @@
         }
       }}
       isExpanded={true}
-    />
+      />
+    </div>
     <Divider />
   {/if}
   <div class="flex flex-col items-start w-full gap-3">

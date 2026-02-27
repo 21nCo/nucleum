@@ -132,6 +132,7 @@
             inputRef?.focus();
           }}
           placeholder="Enter task name"
+          testId="task-name-input"
           style={InputStyle.PLAIN}
           on:enter={handleCreateOnEnter}
         />

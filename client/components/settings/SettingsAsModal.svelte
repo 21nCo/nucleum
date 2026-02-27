@@ -45,6 +45,7 @@
 
 <div class="flex w-full h-full">
   <div
+    data-testid="settings-sidebar"
     class="flex flex-col overflow-auto gap-8 w-72 min-w-72 dp:w-[21rem] dp:min-w-[21rem] shrink-0 bg-bgs2 rounded-l-md py-4 items-start otop:pt-12"
   >
     <div class="pl-4">

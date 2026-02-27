@@ -16,6 +16,7 @@
   export let style: InputStyle = InputStyle.PLAIN;
   export let isPadded: boolean = false;
   export let padding: string = "";
+  export let testId: string | undefined = undefined;
   const dispatch = createEventDispatcher();
   let searchInputRef: any;
   let isSearchFocused: boolean = false;
@@ -66,6 +67,7 @@
     {size}
     {placeholder}
     {style}
+    {testId}
     parentBackgroundIndex={parentBgIndex}
     isRounded={true}
     height="h-10"

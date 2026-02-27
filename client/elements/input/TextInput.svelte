@@ -38,6 +38,7 @@
   export let isPreventKeyboardToolbar: boolean = false;
   export let isPreserveKeyboardToolbar: boolean = false;
   export let isAccentBackground: boolean = false;
+  export let testId: string | undefined = undefined;
   let isFocused: boolean = false;
   export async function focus() {
     await tick();
@@ -107,7 +108,7 @@
 </script>
 
 {#if isExperimentalMdInput}
-  <div class={inputClasses}>
+  <div class={inputClasses} data-testid={testId}>
     <InlineMarkdownTextInput
       {id}
       bind:content={value}
@@ -141,6 +142,7 @@
     {#if type === "password"}
       <input
         {id}
+        data-testid={testId}
         class={inputClasses}
         bind:value
         on:change|stopPropagation
@@ -165,6 +167,7 @@
     {:else if type === "number"}
       <input
         {id}
+        data-testid={testId}
         class={inputClasses}
         bind:value
         on:change|stopPropagation
@@ -227,6 +230,7 @@
         {/if}
         <input
           {id}
+          data-testid={testId}
           class={cn(inputClasses, {
             "h-7": hasControls,
             "h-12 text-h3": size === Size.lg,

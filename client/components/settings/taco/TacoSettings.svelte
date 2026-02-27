@@ -196,17 +196,19 @@
         bind:value={transcriptionModel}
         on:select={onTranscriptionModelChange}
       />
-      <SwitchInput
-        label={{
-          label: "Auto transcribe on audio record/upload",
-          tooltip: {
-            body: "If enabled, the app will automatically transcribe the audio when you record or upload an audio file. This is useful if mostly you are transcribing audio files without having to manually transcribe it."
-          }
-        }}
-        isExpanded={true}
-        bind:checked={autoTranscribe}
-        on:change={onAutoTranscribeChange}
-      />
+      <div data-testid="auto-transcribe-toggle">
+        <SwitchInput
+          label={{
+            label: "Auto transcribe on audio record/upload",
+            tooltip: {
+              body: "If enabled, the app will automatically transcribe the audio when you record or upload an audio file. This is useful if mostly you are transcribing audio files without having to manually transcribe it."
+            }
+          }}
+          isExpanded={true}
+          bind:checked={autoTranscribe}
+          on:change={onAutoTranscribeChange}
+        />
+      </div>
       {#if !$context.isEmbed}
         <InlineInfoBanner
           content="On-device AI is only available on iOS and macOS apps."

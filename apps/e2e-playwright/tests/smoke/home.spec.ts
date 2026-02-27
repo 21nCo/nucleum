@@ -4,7 +4,7 @@ import { AppPage } from "../../pages/app.page";
 
 test.skip(process.env.SKIP_E2E === "1", "E2E suite disabled by environment");
 
-test.describe("smoke", () => {
+test.describe("smoke @smoke", () => {
   test("home page loads without errors", async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (error) => errors.push(error.message));
