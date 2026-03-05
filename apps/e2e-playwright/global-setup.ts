@@ -80,19 +80,23 @@ export default async function globalSetup(_: FullConfig) {
     console.log(`📝 Using APP_BASE_URL (e.g. from .env): ${baseURL}`);
 
     // Warn if saved auth state was recorded for a different origin (causes "Embed token: false" / login screen)
-    const authPath = path.join(__dirname, ".auth", "user.json");
+    const authDir = path.join(__dirname, ".auth");
+    const authFiles = ["user.json", "user-memotron.json", "user-pointron.json"];
     try {
       const fs = await import("node:fs");
-      if (fs.existsSync(authPath)) {
-        const raw = fs.readFileSync(authPath, "utf-8");
-        const state = JSON.parse(raw) as { origins?: Array<{ origin: string }> };
-        const savedOrigins = state.origins?.map((o) => o.origin) ?? [];
-        const currentOrigin = new URL(baseURL).origin;
-        if (savedOrigins.length > 0 && !savedOrigins.includes(currentOrigin)) {
-          console.warn(
-            `\n⚠️  Auth state was saved for origin(s): ${savedOrigins.join(", ")} but APP_BASE_URL is ${baseURL}.`,
-            `\n   Tests will see login/signup unless you set APP_BASE_URL to match (e.g. ${savedOrigins[0]}).\n`
-          );
+      const currentOrigin = new URL(baseURL).origin;
+      for (const file of authFiles) {
+        const authPath = path.join(authDir, file);
+        if (fs.existsSync(authPath)) {
+          const raw = fs.readFileSync(authPath, "utf-8");
+          const state = JSON.parse(raw) as { origins?: Array<{ origin: string }> };
+          const savedOrigins = state.origins?.map((o) => o.origin) ?? [];
+          if (savedOrigins.length > 0 && !savedOrigins.includes(currentOrigin)) {
+            console.warn(
+              `\n⚠️  Auth in ${file} was saved for origin(s): ${savedOrigins.join(", ")} but APP_BASE_URL is ${baseURL}.`,
+              `\n   Set APP_BASE_URL_<PROJECT> in .env to match (e.g. APP_BASE_URL_MEMOTRON=${savedOrigins[0]}).\n`
+            );
+          }
         }
       }
     } catch {

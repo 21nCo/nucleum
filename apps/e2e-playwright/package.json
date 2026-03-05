@@ -1,3 +1,6 @@
 {"name":"e2e-playwright","private":true,"scripts":{"test":"playwright test","test:smoke":"playwright test --project=smoke","test:regression":"playwright test --project=regression","test:ci":"playwright test --reporter=line",
-    "e2e:save-auth":"npx tsx scripts/save-google-auth-state.ts"},"devDependencies":{"@playwright/test":"^1.49.0","@types/node":"^22.0.0","dotenv":"^16.4.5",
+    "e2e:save-auth":"npx tsx scripts/save-google-auth-state.ts",
+    "e2e:save-auth:nucleus":"PRODUCT=nucleus APP_BASE_URL=https://local.nucleus.to npx tsx scripts/save-google-auth-state.ts",
+    "e2e:save-auth:memotron":"PRODUCT=memotron APP_BASE_URL=https://local.memotron.app npx tsx scripts/save-google-auth-state.ts",
+    "e2e:save-auth:pointron":"PRODUCT=pointron APP_BASE_URL=https://local.pointron.app npx tsx scripts/save-google-auth-state.ts"},"devDependencies":{"@playwright/test":"^1.49.0","@types/node":"^22.0.0","dotenv":"^16.4.5",
     "tsx":"^4.19.0"}}

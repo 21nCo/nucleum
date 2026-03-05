@@ -79,9 +79,11 @@ test.describe("goal – creation flows @regression", () => {
     await page.waitForTimeout(1_500);
 
     await page
+      .locator("#app-menu")
       .getByRole("button", {
         name: new RegExp(`^${nucleusProductConfig.timelinePageLabel}$`, "i")
       })
+      .first()
       .click({ timeout: 5_000 });
     await page.waitForURL(
       (u) =>
@@ -162,9 +164,11 @@ test.describe("goal – creation flows @regression", () => {
     await page.waitForTimeout(500);
 
     await page
+      .locator("#app-menu")
       .getByRole("button", {
         name: new RegExp(`^${nucleusProductConfig.timelinePageLabel}$`, "i")
       })
+      .first()
       .click({ timeout: 5_000 });
     await page.waitForTimeout(800);
     await page.getByRole("button", { name: /^Focus$/i }).click({
@@ -217,9 +221,11 @@ test.describe("goal – creation flows @regression", () => {
     await page.waitForTimeout(1_000);
 
     await page
+      .locator("#app-menu")
       .getByRole("button", {
         name: new RegExp(`^${nucleusProductConfig.timelinePageLabel}$`, "i")
       })
+      .first()
       .click({ timeout: 5_000 });
     await page.waitForURL(
       (u) =>

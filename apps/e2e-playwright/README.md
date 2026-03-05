@@ -30,26 +30,33 @@ npx playwright test
 
 Tests can use a saved session so you don’t log in every run.
 
-- **Saved state:** `.auth/user.json` (cookies + localStorage). This folder is gitignored.
-- **Base URL:** Set `APP_BASE_URL` in `.env` (e.g. `https://local.nucleus.to`). The config uses this for navigation. If you have saved auth, the base URL is auto-adjusted to match the origin in the saved state when needed.
+- **Saved state (per product):** `.auth/user.json` (Nucleus), `.auth/user-memotron.json` (Memotron), `.auth/user-pointron.json` (Pointron). The `.auth/` folder is gitignored.
+- **Base URL:** Set in `.env`: `APP_BASE_URL` (default), or `APP_BASE_URL_NUCLEUS`, `APP_BASE_URL_MEMOTRON`, `APP_BASE_URL_POINTRON` per project (e.g. `https://local.memotron.app`). If a saved auth file exists, the config can auto-adjust the project base URL to match the saved origin.
 
-**First time or when the session expires:**
+**First time or when the session expires (per product):**
 
-1. Set `APP_BASE_URL` in `.env` to the same URL you use in the browser (e.g. `https://local.nucleus.to`).
-2. Run: `npm run e2e:save-auth`
-3. Complete Google sign-in once in the opened browser. When you’re back on the app, the script saves the session to `.auth/user.json`.
-4. Run tests as above.
+| Product   | Command |
+|-----------|---------|
+| Nucleus   | `npm run e2e:save-auth:nucleus` (or set `APP_BASE_URL=https://local.nucleus.to` and run `npm run e2e:save-auth`) |
+| Memotron  | `npm run e2e:save-auth:memotron` |
+| Pointron  | `npm run e2e:save-auth:pointron` |
 
-If you see a login screen or “Embed token: false” during tests, the session may have expired or the base URL may not match the saved origin. Run `npm run e2e:save-auth` again with the correct `APP_BASE_URL`, then re-run the tests.
+1. Run the command for the product you want. A browser opens at that product's login page.
+2. Complete Google sign-in once. When you’re back on the app, the script saves the session to that product's auth file.
+3. Run tests: `npx playwright test --project=memotron` (etc.).
+
+If you see a login screen or “Embed token: false” during tests, the session may have expired or the base URL may not match the saved origin. Run the save-auth script again for that product, then re-run the tests.
 
 ## Structure
 
-- **`tests/shared/`** – Auth and nav (used by all products)
-- **`tests/nucleus/`** – App shell, Overview, Calendar, Library, Settings
-- **`tests/core/focus/`** – Goals and tasks (Pointron)
-- **`tests/core/memory/`** – Capture and nodes (Memotron)
-- **`tests/pointron/`**, **`tests/memotron/`** – App-specific specs (placeholders)
+- **`tests/shared/`** – Overlapping features (run by one or more products):
+  - **`navigation.spec.ts`** – Auth and nav (all products)
+  - **`focus/`** – Goals and tasks (Pointron, Nucleus)
+  - **`memory/`** – Capture and nodes (Memotron, Nucleus)
+  - **`calendar/`**, **`overview/`**, **`collection/`** – Calendar, Overview, Library (all products)
+- **`tests/nucleus/`** – Nucleus-only: app shell (nav), Settings
+- **`tests/pointron/`**, **`tests/memotron/`** – Product-only specs (app nav, settings per product)
 - **`tests/smoke/`** – Smoke (e.g. home load)
 - **`tests/utils/`** – Shared helpers
 
-Projects in `playwright.config.ts` control which specs run for each product (`nucleus`, `pointron`, `memotron`).
+Projects in `playwright.config.ts` control which specs run for each product. Pointron runs shared except `shared/memory/**`; Memotron runs shared except `shared/focus/**`.

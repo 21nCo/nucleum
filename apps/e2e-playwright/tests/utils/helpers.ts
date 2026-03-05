@@ -9,7 +9,7 @@ const baseURL = runtimeEnv?.APP_BASE_URL ?? "http://127.0.0.1:4173";
 /**
  * Ensure we're in the app (dismiss signup if needed) and on the Nucleus home (calendar),
  * with app nav visible. Same flow as navigation.spec: continue offline → calendar → nav ready.
- * Uses relative URLs so navigation always uses the project's baseURL (same origin as saved auth).
+ * Uses the project's baseURL (from Playwright config) so memotron/pointron/nucleus each open the correct origin.
  */
 export async function ensureInAppOnHome(page: Page) {
   await page.goto("/");

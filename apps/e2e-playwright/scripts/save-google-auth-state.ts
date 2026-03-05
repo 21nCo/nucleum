@@ -2,8 +2,10 @@
  * One-time save: first Google login only. You complete sign-in; we save as soon as you're back on the app.
  * Any next screen (e.g. signup, "Continue offline") is handled in the test only.
  *
- * Run: npm run e2e:save-auth
- * Set APP_BASE_URL in .env (e.g. https://dev.nucleus.to).
+ * Run:
+ *   Nucleus:  npm run e2e:save-auth:nucleus   (or APP_BASE_URL=https://local.nucleus.to npm run e2e:save-auth)
+ *   Memotron: npm run e2e:save-auth:memotron  (or PRODUCT=memotron APP_BASE_URL=https://local.memotron.app npm run e2e:save-auth)
+ *   Pointron: npm run e2e:save-auth:pointron   (or PRODUCT=pointron APP_BASE_URL=https://local.pointron.app npm run e2e:save-auth)
  */
 
 import "dotenv/config";
@@ -12,7 +14,9 @@ import path from "node:path";
 import fs from "node:fs";
 
 const authDir = path.join(__dirname, "..", ".auth");
-const authStatePath = path.join(authDir, "user.json");
+const product = (process.env.PRODUCT ?? "nucleus").toLowerCase();
+const authFileName = product === "nucleus" ? "user.json" : `user-${product}.json`;
+const authStatePath = path.join(authDir, authFileName);
 const baseURL = process.env.APP_BASE_URL ?? "http://127.0.0.1:4173";
 const waitForRedirectBackMs = 120_000; // 2 min to complete Google login
 
@@ -23,7 +27,17 @@ const allowedOrigins = [
   baseOrigin,
   baseOrigin.startsWith("http:") ? `https://${baseHost}` : `http://${baseHost}`,
   "https://dev.nucleus.to",
-  "http://dev.nucleus.to"
+  "http://dev.nucleus.to",
+  "https://local.nucleus.to",
+  "http://local.nucleus.to",
+  "https://local.memotron.app",
+  "http://local.memotron.app",
+  "https://dev.memotron.to",
+  "http://dev.memotron.to",
+  "https://local.pointron.app",
+  "http://local.pointron.app",
+  "https://dev.pointron.to",
+  "http://dev.pointron.to"
 ];
 const allowedOriginsSet = new Set(allowedOrigins);
 
@@ -32,7 +46,9 @@ async function main() {
     fs.mkdirSync(authDir, { recursive: true });
   }
 
+  console.log("Product:", product);
   console.log("Base URL:", baseURL);
+  console.log("Auth will be saved to:", authStatePath);
   console.log("Opening browser – complete Google sign-in once. We save as soon as you're back on the app.");
   console.log("If you see another login/signup screen after that, the test will handle it.\n");
 
@@ -89,7 +105,7 @@ async function main() {
 
     await context.storageState({ path: authStatePath });
     console.log("Back on app. Saved auth state to", authStatePath);
-    console.log("Done. Run: npm run test:regression (test will handle any next login/signup screen).");
+    console.log("Done. Run tests with: npx playwright test --project=" + product);
     if (landedOrigin !== new URL(baseURL).origin) {
       console.log("\nNote: You were redirected to", landedOrigin, "- set APP_BASE_URL=" + landedOrigin, "in .env to run tests there.");
     }

@@ -14,6 +14,16 @@
     if (!event.detail.values) return;
     pointronPreferences.updateManualEntryQuickDurations(event.detail.values);
   }
+
+  function onBreakReminderChange(event: CustomEvent<{ value: number }>) {
+    const value = event.detail?.value;
+    if (value != null) pointronPreferences.modify({ breakReminder: value });
+  }
+
+  function onPiPChange(event: CustomEvent<boolean>) {
+    if (event.detail != null)
+      pointronPreferences.modify({ isEnableAutoPiP: !!event.detail });
+  }
 </script>
 
 <div class="flex flex-col gap-4 w-full">
@@ -42,7 +52,8 @@
         },
         orientation: Orientation.Vertical
       }}
-      bind:value={$pointronPreferences.breakReminder}
+      value={$pointronPreferences.breakReminder ?? 60 * 30}
+      on:change={onBreakReminderChange}
     />
   </div>
   {#if !$context.isEmbed}
@@ -53,7 +64,8 @@
           body: "When enabled, the PiP will be automatically activated when a focus session starts. Note: PiP is currently only available on web app."
         }
       }}
-      bind:checked={$pointronPreferences.isEnableAutoPiP}
+      checked={$pointronPreferences.isEnableAutoPiP ?? false}
+      on:change={onPiPChange}
       isExpanded={true}
     />
   {/if}

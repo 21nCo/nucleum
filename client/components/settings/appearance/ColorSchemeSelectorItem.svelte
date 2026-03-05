@@ -33,6 +33,7 @@
 
 <button
   on:click
+  data-selected={isActive}
   class={cn(
     "relative flex flex-col items-center mx-2 rounded-md border border-brs3",
     {

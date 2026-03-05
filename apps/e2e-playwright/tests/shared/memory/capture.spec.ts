@@ -10,7 +10,7 @@ test.skip(
   "E2E suite disabled by environment"
 );
 
-test.describe("core/memory – capture @regression", () => {
+test.describe("memory – capture @regression", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();

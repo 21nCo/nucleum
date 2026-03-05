@@ -10,8 +10,8 @@ test.skip(
   "E2E suite disabled by environment"
 );
 
-/** Nucleus-only settings: footer app version. Open/close/navigate and Mode of interaction are in shared/settings. */
-test.describe("nucleus – settings (product-specific) @regression", () => {
+/** Pointron-only settings: footer app version. Open/close/navigate and Mode of interaction are in shared/settings. */
+test.describe("pointron – settings (product-specific) @regression", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -21,17 +21,19 @@ test.describe("nucleus – settings (product-specific) @regression", () => {
   });
 
   async function openSettings(page: import("@playwright/test").Page) {
-    const profileBtn = page.getByTestId("topnav-account-settings");
-    const visible = await profileBtn.isVisible().catch(() => false);
-    if (visible) {
-      await profileBtn.click({ timeout: 5_000 });
-    } else {
-      await runCommand(page, "Settings");
+    // Pointron: Settings icon button in top-right nav
+    const settingsIconBtn = page.getByRole("button", { name: /^Settings$/i }).first();
+    const iconVisible = await settingsIconBtn.isVisible().catch(() => false);
+    if (iconVisible) {
+      await settingsIconBtn.click({ timeout: 5_000 });
+      await page.waitForTimeout(500);
+      return;
     }
+    await runCommand(page, "Settings");
     await page.waitForTimeout(500);
   }
 
-  test("Settings footer shows app version (Nucleus)", async ({ page }) => {
+  test("Settings footer shows app version (Pointron)", async ({ page }) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
 
@@ -40,7 +42,7 @@ test.describe("nucleus – settings (product-specific) @regression", () => {
       timeout: 10_000
     });
 
-    await expect(page.getByText(/Nucleus\s+v?[\d.]+/i).first()).toBeVisible({
+    await expect(page.getByText(/Pointron\s+v?[\d.]+/i).first()).toBeVisible({
       timeout: 5_000
     });
   });
