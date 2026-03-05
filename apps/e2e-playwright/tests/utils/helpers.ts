@@ -1,10 +1,19 @@
 import { expect, type Page } from "@playwright/test";
 import { nucleusProductConfig } from "../../config/nucleus-product.config";
+import { pointronProductConfig } from "../../config/pointron-product.config";
+import { memotronProductConfig } from "../../config/memotron-product.config";
 
 const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
 ).process?.env;
 const baseURL = runtimeEnv?.APP_BASE_URL ?? "http://127.0.0.1:4173";
+
+function getActiveProductConfig(pageUrl: string) {
+  const host = new URL(pageUrl).host;
+  if (host.includes("pointron")) return pointronProductConfig;
+  if (host.includes("memotron")) return memotronProductConfig;
+  return nucleusProductConfig;
+}
 
 /**
  * Ensure we're in the app (dismiss signup if needed) and on the Nucleus home (calendar),
@@ -63,12 +72,14 @@ export async function ensureInAppOnHome(page: Page) {
     await page.waitForLoadState("domcontentloaded").catch(() => null);
   }
 
-  await page.goto(nucleusProductConfig.homePath, { waitUntil: "domcontentloaded" });
+  const productConfig = getActiveProductConfig(page.url());
+  await page.goto(productConfig.homePath, { waitUntil: "domcontentloaded" });
   await page
     .waitForURL(
       (u) => {
         const p = new URL(u).pathname;
-        return p === "/calendar" || p.startsWith("/calendar/");
+        const home = `/${productConfig.homePath}`;
+        return p === home || p.startsWith(`${home}/`);
       },
       { timeout: 10_000 }
     )
@@ -81,8 +92,9 @@ export async function ensureInAppOnHome(page: Page) {
   }
 
   const navMarkers = [
-    page.getByRole("button", { name: /^Overview$/i }).first(),
-    page.getByRole("button", { name: /^Calendar$/i }).first(),
+    ...productConfig.appMenuNavLabels.map((label) =>
+      page.getByRole("button", { name: new RegExp(`^${label}$`, "i") }).first()
+    ),
     page.getByRole("button", { name: "Today" }).first()
   ];
   await expect

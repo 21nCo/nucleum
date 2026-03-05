@@ -1,15 +1,23 @@
 import { test, expect } from "@playwright/test";
 import { nucleusProductConfig } from "../../config/nucleus-product.config";
+import { pointronProductConfig } from "../../config/pointron-product.config";
+import { memotronProductConfig } from "../../config/memotron-product.config";
 
 const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
 ).process?.env;
-const baseURL = runtimeEnv?.APP_BASE_URL ?? "http://127.0.0.1:4173";
 
 test.skip(
   runtimeEnv?.SKIP_E2E === "1",
   "E2E suite disabled by environment"
 );
+
+function getActiveProductConfig(pageUrl: string) {
+  const host = new URL(pageUrl).host;
+  if (host.includes("pointron")) return pointronProductConfig;
+  if (host.includes("memotron")) return memotronProductConfig;
+  return nucleusProductConfig;
+}
 
 test.describe("shared – auth and nav @regression", () => {
   test("already logged in (Google auth state): handle old page if present, then verify in app @smoke", async ({
@@ -25,14 +33,15 @@ test.describe("shared – auth and nav @regression", () => {
       route.continue();
     });
 
-    await page.goto(baseURL);
+    await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
 
+    const productConfig = getActiveProductConfig(page.url());
     const postLoginWaitMs = 25_000;
     const isApp = (url: URL) =>
       url.pathname === "/" ||
-      url.pathname === `/${nucleusProductConfig.homePath}` ||
-      url.pathname === `/${nucleusProductConfig.homePath}/`;
+      url.pathname === `/${productConfig.homePath}` ||
+      url.pathname === `/${productConfig.homePath}/`;
 
     const clickContinueOfflineIfVisible = async () => {
       const offlineTab = page.getByRole("button", { name: "Offline" }).first();
@@ -97,8 +106,8 @@ test.describe("shared – auth and nav @regression", () => {
     const pathname = new URL(page.url()).pathname;
     expect(
       pathname === "/" ||
-        pathname === `/${nucleusProductConfig.homePath}` ||
-        pathname === `/${nucleusProductConfig.homePath}/` ||
+        pathname === `/${productConfig.homePath}` ||
+        pathname === `/${productConfig.homePath}/` ||
         pathname === "/signup" ||
         pathname === "/account/login"
     ).toBe(true);
@@ -109,18 +118,14 @@ test.describe("shared – auth and nav @regression", () => {
       await page.waitForLoadState("domcontentloaded").catch(() => null);
     }
 
-    const homePageUrl = new URL(
-      `/${nucleusProductConfig.homePath}`,
-      baseURL
-    ).toString();
     let atHomePage = false;
     for (let attempt = 0; attempt < 3; attempt += 1) {
-      await page.goto(homePageUrl, { waitUntil: "domcontentloaded" });
+      await page.goto(`/${productConfig.homePath}`, { waitUntil: "domcontentloaded" });
       const reached = await page
         .waitForURL(
           (u) =>
             new RegExp(
-              `^\\/${nucleusProductConfig.homePath}(\\/.*)?$`
+              `^\\/${productConfig.homePath}(\\/.*)?$`
             ).test(new URL(u).pathname),
           { timeout: 8_000 }
         )
@@ -135,7 +140,7 @@ test.describe("shared – auth and nav @regression", () => {
     }
     if (!atHomePage) {
       throw new Error(
-        `Could not reach /${nucleusProductConfig.homePath} after offline recovery; landed on ${new URL(page.url()).pathname}.`
+        `Could not reach /${productConfig.homePath} after offline recovery; landed on ${new URL(page.url()).pathname}.`
       );
     }
 
@@ -150,7 +155,7 @@ test.describe("shared – auth and nav @regression", () => {
       .getByRole("button")
       .filter({ hasText: /^Home$/i })
       .first();
-    const navMarkers = nucleusProductConfig.appMenuNavLabels.map((label) =>
+    const navMarkers = productConfig.appMenuNavLabels.map((label) =>
       page
         .getByRole("button")
         .filter({ hasText: new RegExp(`^${label}$`, "i") })
@@ -180,8 +185,8 @@ test.describe("shared – auth and nav @regression", () => {
     await expect(navAction).toBeVisible({ timeout: 20_000 });
     await navAction.click({ timeout: 5_000, force: true });
     const expectedPath =
-      nucleusProductConfig.pathByNavLabel[
-        testNavLabel as keyof typeof nucleusProductConfig.pathByNavLabel
+      productConfig.pathByNavLabel[
+        testNavLabel as keyof typeof productConfig.pathByNavLabel
       ];
     await page.waitForURL(
       (u) => new RegExp(`^${expectedPath}(\\/.*)?$`).test(new URL(u).pathname),

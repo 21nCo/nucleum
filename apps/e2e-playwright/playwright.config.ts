@@ -93,8 +93,9 @@ export default defineConfig({
     {
       name: "nucleus",
       testMatch: [
-        "**/shared/**/*.spec.ts",
-        "**/nucleus/**/*.spec.ts"
+        "tests/smoke/**/*.spec.ts",
+        "tests/shared/**/*.spec.ts",
+        "tests/nucleus/**/*.spec.ts"
       ],
       retries: 1,
       workers: 1,
@@ -103,8 +104,8 @@ export default defineConfig({
     {
       name: "pointron",
       testMatch: [
-        "**/shared/**/*.spec.ts",
-        "**/pointron/**/*.spec.ts"
+        "tests/shared/**/*.spec.ts",
+        "tests/pointron/**/*.spec.ts"
       ],
       testIgnore: ["**/shared/memory/**"],
       retries: 1,
@@ -114,8 +115,8 @@ export default defineConfig({
     {
       name: "memotron",
       testMatch: [
-        "**/shared/**/*.spec.ts",
-        "**/memotron/**/*.spec.ts"
+        "tests/shared/**/*.spec.ts",
+        "tests/memotron/**/*.spec.ts"
       ],
       testIgnore: ["**/shared/focus/**"],
       retries: 1,
