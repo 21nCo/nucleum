@@ -63,7 +63,7 @@ test.describe("memotron – settings (product-specific) @regression", () => {
       .click({ timeout: 5_000 });
     await page.waitForTimeout(400);
 
-    await expect(page.getByText(/Relations/i).first()).toBeVisible({
+    await expect(page.getByText(/Relations/i).last()).toBeVisible({
       timeout: 5_000
     });
   });

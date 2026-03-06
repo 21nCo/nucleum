@@ -41,7 +41,7 @@ test.describe("overview – Focus widgets and tabs (verify multiple elements) @r
     await page.waitForTimeout(1_500);
 
     await expect(page.getByText("Overview").first()).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText("Focus").first()).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole("button", { name: /^Focus$/i }).first()).toBeVisible({ timeout: 5_000 });
 
     await expect(page.getByRole("button", { name: /^All$/i }).first()).toBeVisible({
       timeout: 5_000
@@ -92,15 +92,12 @@ test.describe("overview – Focus widgets and tabs (verify multiple elements) @r
       .isVisible()
       .catch(() => false);
     const hasTotal = await page.getByText("Total", { exact: true }).first().isVisible().catch(() => false);
-    const hasFocusLabel = await page
-      .getByText("Focus", { exact: true })
-      .first()
-      .isVisible()
-      .catch(() => false);
+    const focusElements = await page.getByText("Focus", { exact: true }).all();
+    const hasFocusMetric = focusElements.length >= 2;
     const hasBreak = await page.getByText("Break", { exact: true }).first().isVisible().catch(() => false);
 
     expect(
-      hasEmptyState || hasSubtext || (hasTotal && hasFocusLabel && hasBreak),
+      hasEmptyState || hasSubtext || (hasTotal && hasFocusMetric && hasBreak),
       "Expected either empty state (No data available / subtext) or metric cards (Total, Focus, Break)"
     ).toBe(true);
   });
@@ -137,9 +134,8 @@ test.describe("overview – Focus widgets and tabs (verify multiple elements) @r
     await expect(page.getByText("Total", { exact: true }).first()).toBeVisible({
       timeout: 5_000
     });
-    await expect(page.getByText("Focus", { exact: true }).first()).toBeVisible({
-      timeout: 5_000
-    });
+    const focusMetricCard = page.getByText("Focus", { exact: true }).nth(1);
+    await expect(focusMetricCard).toBeVisible({ timeout: 5_000 });
     await expect(page.getByText("Break", { exact: true }).first()).toBeVisible({
       timeout: 5_000
     });

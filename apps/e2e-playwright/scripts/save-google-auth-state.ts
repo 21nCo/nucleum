@@ -73,9 +73,8 @@ async function main() {
       .or(page.locator("#google-signin"))
       .first();
 
-    // Do not block on click promise: OAuth can involve long multi-step navigation
-    // (Google identifier/password/consent), which can outlive action timeout.
-    void googleButton.click({ noWaitAfter: true }).catch(() => {});
+    await googleButton.waitFor({ state: "visible", timeout: 10_000 });
+    void googleButton.click({ noWaitAfter: true, timeout: 10_000 });
 
     console.log("Complete Google sign-in in the browser. Waiting up to", waitForRedirectBackMs / 1000, "s for redirect back...\n");
 

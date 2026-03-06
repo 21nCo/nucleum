@@ -1,7 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { nucleusProductConfig } from "../../config/nucleus-product.config";
-import { pointronProductConfig } from "../../config/pointron-product.config";
-import { memotronProductConfig } from "../../config/memotron-product.config";
+import { getProductConfig } from "../utils/helpers";
 
 const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
@@ -11,13 +9,6 @@ test.skip(
   runtimeEnv?.SKIP_E2E === "1",
   "E2E suite disabled by environment"
 );
-
-function getActiveProductConfig(pageUrl: string) {
-  const host = new URL(pageUrl).host;
-  if (host.includes("pointron")) return pointronProductConfig;
-  if (host.includes("memotron")) return memotronProductConfig;
-  return nucleusProductConfig;
-}
 
 test.describe("shared – auth and nav @regression", () => {
   test("already logged in (Google auth state): handle old page if present, then verify in app @smoke", async ({
@@ -36,7 +27,7 @@ test.describe("shared – auth and nav @regression", () => {
     await page.goto("/");
     await page.waitForLoadState("domcontentloaded");
 
-    const productConfig = getActiveProductConfig(page.url());
+    const productConfig = getProductConfig(test.info().project.name);
     const postLoginWaitMs = 25_000;
     const isApp = (url: URL) =>
       url.pathname === "/" ||

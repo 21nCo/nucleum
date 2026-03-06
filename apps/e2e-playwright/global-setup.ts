@@ -27,6 +27,8 @@ async function startVite(app: string): Promise<ViteHarness> {
     let resolved = false;
     const timeout = setTimeout(() => {
       if (!resolved) {
+        resolved = true;
+        viteProcess.kill("SIGTERM");
         reject(new Error("Timeout waiting for dev server to start"));
       }
     }, 60000);

@@ -35,7 +35,7 @@ test.describe("goal – browse flows @regression", () => {
       await goalNameInput.waitFor({ state: "visible", timeout: 15_000 });
       await goalNameInput.fill(goalName);
       await page.keyboard.press("Enter");
-      await expect(goalNameInput).toBeHidden({ timeout: 10_000 }).catch(() => null);
+      await expect(goalNameInput).toBeHidden({ timeout: 10_000 });
       await page.keyboard.press("Escape");
       await page.keyboard.press("Escape");
 
@@ -61,7 +61,7 @@ test.describe("goal – browse flows @regression", () => {
       await goalNameInput.waitFor({ state: "visible", timeout: 15_000 });
       await goalNameInput.fill(goalName);
       await page.keyboard.press("Enter");
-      await expect(goalNameInput).toBeHidden({ timeout: 10_000 }).catch(() => null);
+      await expect(goalNameInput).toBeHidden({ timeout: 10_000 });
       await page.keyboard.press("Escape");
       await page.keyboard.press("Escape");
 

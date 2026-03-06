@@ -60,7 +60,7 @@ test.describe("memory – capture @regression", () => {
     const saveBtn = page.getByRole("button", { name: /Save/i });
     await saveBtn.waitFor({ state: "visible", timeout: 8_000 });
     await saveBtn.click({ timeout: 5_000 });
-    await page.waitForTimeout(2_000);
+    await expect(saveBtn).toBeHidden({ timeout: 10_000 });
   });
 
   test("open Capture via UI (click Capture in top bar), type content, then Save", async ({
@@ -104,6 +104,6 @@ test.describe("memory – capture @regression", () => {
     const saveBtn = page.getByRole("button", { name: /Save/i });
     await saveBtn.waitFor({ state: "visible", timeout: 8_000 });
     await saveBtn.click({ timeout: 5_000 });
-    await page.waitForTimeout(2_000);
+    await expect(saveBtn).toBeHidden({ timeout: 10_000 });
   });
 });

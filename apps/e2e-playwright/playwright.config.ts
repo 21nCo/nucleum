@@ -21,6 +21,8 @@ function getAuthPath(projectName: string): string {
 }
 
 function resolveBaseURLWithAuth(projectName: string): string {
+  const envKey = `APP_BASE_URL_${projectName.toUpperCase()}`;
+  const explicitEnvURL = process.env[envKey] ?? process.env.APP_BASE_URL;
   let baseURL = getProjectBaseURL(projectName);
   const authPath = getAuthPath(projectName);
   if (!fs.existsSync(authPath)) return baseURL;
@@ -30,10 +32,15 @@ function resolveBaseURLWithAuth(projectName: string): string {
     const savedOrigins = state.origins?.map((o) => o.origin) ?? [];
     const currentOrigin = new URL(baseURL).origin;
     if (savedOrigins.length > 0 && !savedOrigins.includes(currentOrigin)) {
-      baseURL = savedOrigins[0];
+      if (!explicitEnvURL) {
+        baseURL = savedOrigins[0];
+      } else {
+        console.warn(
+          `[e2e] ${projectName}: saved auth origins (${savedOrigins.join(", ")}) do not match configured baseURL (${baseURL}). Re-run e2e:save-auth:${projectName} or update ${envKey}.`
+        );
+      }
     }
   } catch {
-    // ignore
   }
   return baseURL;
 }

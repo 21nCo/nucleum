@@ -5,7 +5,6 @@ import { ensureInAppOnHome, runCommand } from "../utils/helpers";
 const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
 ).process?.env;
-const baseURL = runtimeEnv?.APP_BASE_URL ?? "http://127.0.0.1:4173";
 
 test.skip(
   runtimeEnv?.SKIP_E2E === "1",
@@ -143,7 +142,7 @@ test.describe("nucleus – app layout and menu @regression", () => {
     const onLibraryPage = () =>
       new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(page.url()).pathname);
     if (!onLibraryPage()) {
-      await page.goto(new URL(libraryPath, baseURL).toString(), {
+      await page.goto(libraryPath, {
         waitUntil: "load"
       });
       await page.waitForURL(

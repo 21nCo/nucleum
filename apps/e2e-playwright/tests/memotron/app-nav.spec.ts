@@ -5,7 +5,6 @@ import { ensureInAppOnHome, runCommand } from "../utils/helpers";
 const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
 ).process?.env;
-const baseURL = runtimeEnv?.APP_BASE_URL ?? "http://127.0.0.1:4173";
 
 test.skip(
   runtimeEnv?.SKIP_E2E === "1",
@@ -93,7 +92,7 @@ test.describe("memotron – app layout and menu @regression", () => {
     const onLibraryPage = () =>
       new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(page.url()).pathname);
     if (!onLibraryPage()) {
-      await page.goto(new URL(libraryPath, baseURL).toString(), {
+      await page.goto(libraryPath, {
         waitUntil: "load"
       });
       await page.waitForURL(
@@ -134,7 +133,11 @@ test.describe("memotron – app layout and menu @regression", () => {
     await page.waitForTimeout(600);
 
     await expect(
-      page.getByTestId("search-nodes").or(page.getByText(/No nodes|Nodes/i).first())
+      page
+        .getByTestId("search-nodes")
+        .or(page.getByText(/No nodes/i).first())
+        .or(page.getByRole("button", { name: /Create new node|New node/i }).first())
+        .first()
     ).toBeVisible({ timeout: 10_000 });
   });
 });
