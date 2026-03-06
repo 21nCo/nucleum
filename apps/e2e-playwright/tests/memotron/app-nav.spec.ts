@@ -11,7 +11,7 @@ test.skip(
   "E2E suite disabled by environment"
 );
 
-test.describe("memotron – app layout and menu @regression", () => {
+test.describe("memotron - app layout and menu @regression", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();

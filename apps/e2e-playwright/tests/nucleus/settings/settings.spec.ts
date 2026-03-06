@@ -11,7 +11,7 @@ test.skip(
 );
 
 /** Nucleus-only settings: footer app version. Open/close/navigate and Mode of interaction are in shared/settings. */
-test.describe("nucleus – settings (product-specific) @regression", () => {
+test.describe("nucleus - settings (product-specific) @regression", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();

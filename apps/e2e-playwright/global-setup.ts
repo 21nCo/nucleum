@@ -76,12 +76,10 @@ async function startVite(app: string): Promise<ViteHarness> {
 }
 
 export default async function globalSetup(_: FullConfig) {
-  // If APP_BASE_URL is already set (e.g. in .env as http://local.nucleus.to), don't start a server
   if (process.env.APP_BASE_URL) {
     const baseURL = process.env.APP_BASE_URL;
     console.log(`📝 Using APP_BASE_URL (e.g. from .env): ${baseURL}`);
 
-    // Warn if saved auth state was recorded for a different origin (causes "Embed token: false" / login screen)
     const authDir = path.join(__dirname, ".auth");
     const authFiles = ["user.json", "user-memotron.json", "user-pointron.json"];
     try {
@@ -102,7 +100,6 @@ export default async function globalSetup(_: FullConfig) {
         }
       }
     } catch {
-      // ignore parse/read errors
     }
 
     (globalThis as any).__viteHarness = { close: async () => {} };

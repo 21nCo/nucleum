@@ -15,7 +15,7 @@ test.skip(
  * Overview page (Focus analytics): verify multiple elements per section.
  * Opening Overview via command bar or UI is already tested in app-nav.spec.ts.
  */
-test.describe("overview – Focus widgets and tabs (verify multiple elements) @regression", () => {
+test.describe("overview - Focus widgets and tabs (verify multiple elements) @regression", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();

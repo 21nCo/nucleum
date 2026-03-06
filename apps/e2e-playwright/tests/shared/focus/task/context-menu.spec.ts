@@ -10,7 +10,7 @@ test.skip(
   "E2E suite disabled by environment"
 );
 
-test.describe("task – context menu (all actions) @regression", () => {
+test.describe("task - context menu (all actions) @regression", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();

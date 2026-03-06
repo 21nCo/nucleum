@@ -10,7 +10,7 @@ test.skip(
   "E2E suite disabled by environment"
 );
 
-test.describe("shared – auth and nav @regression", () => {
+test.describe("shared - auth and nav @regression", () => {
   test("already logged in (Google auth state): handle old page if present, then verify in app @smoke", async ({
     page
   }) => {

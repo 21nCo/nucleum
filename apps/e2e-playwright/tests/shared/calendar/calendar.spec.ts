@@ -31,7 +31,7 @@ async function fillManualLogEntryAndSave(page: Page, goalName: string) {
     .click({ timeout: 5_000 });
 }
 
-test.describe("calendar – all workflows (Logs, manual time, timeline) @regression", () => {
+test.describe("calendar - all workflows (Logs, manual time, timeline) @regression", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();

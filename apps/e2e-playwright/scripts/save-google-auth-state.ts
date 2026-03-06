@@ -18,11 +18,10 @@ const product = (process.env.PRODUCT ?? "nucleus").toLowerCase();
 const authFileName = product === "nucleus" ? "user.json" : `user-${product}.json`;
 const authStatePath = path.join(authDir, authFileName);
 const baseURL = process.env.APP_BASE_URL ?? "http://127.0.0.1:4173";
-const waitForRedirectBackMs = 120_000; // 2 min to complete Google login
+const waitForRedirectBackMs = 120_000;
 
 const baseOrigin = new URL(baseURL).origin;
 const baseHost = new URL(baseURL).host;
-// Allow both http and https for the same host (redirect may use different scheme)
 const allowedOrigins = [
   baseOrigin,
   baseOrigin.startsWith("http:") ? `https://${baseHost}` : `http://${baseHost}`,
@@ -49,7 +48,7 @@ async function main() {
   console.log("Product:", product);
   console.log("Base URL:", baseURL);
   console.log("Auth will be saved to:", authStatePath);
-  console.log("Opening browser – complete Google sign-in once. We save as soon as you're back on the app.");
+  console.log("Opening browser - complete Google sign-in once. We save as soon as you're back on the app.");
   console.log("If you see another login/signup screen after that, the test will handle it.\n");
 
   const browser = await chromium.launch({
@@ -80,16 +79,12 @@ async function main() {
 
     const appOrigin = new URL(baseURL).origin;
 
-    // Save only when we're back on the app on a post-login path (not /account/login).
-    // Otherwise an HTTP→HTTPS redirect that keeps us on /account/login would be treated as "back" and close before opening Google.
     const isBackOnApp = (url: URL) =>
       allowedOriginsSet.has(url.origin) &&
       (["/", "/signup", "/calendar"].includes(url.pathname) ||
         url.pathname.startsWith("/calendar/") ||
         url.pathname.includes("/oauth"));
 
-    // Important: don't treat the *initial* /account/login as "back on app".
-    // First wait until we leave that page (typically to Google OAuth), then wait for return.
     await page.waitForURL((url) => {
       const u = new URL(url.toString());
       return !(u.origin === appOrigin && u.pathname === "/account/login");
@@ -100,7 +95,7 @@ async function main() {
     await page.waitForURL((url) => isBackOnApp(new URL(url.toString())), {
       timeout: waitForRedirectBackMs
     });
-    const landedOrigin = new URL(page.url()).origin; // capture before any further navigation
+    const landedOrigin = new URL(page.url()).origin;
 
     await context.storageState({ path: authStatePath });
     console.log("Back on app. Saved auth state to", authStatePath);

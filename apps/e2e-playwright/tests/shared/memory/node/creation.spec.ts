@@ -10,7 +10,7 @@ test.skip(
   "E2E suite disabled by environment"
 );
 
-test.describe("node – creation flows @regression", () => {
+test.describe("node - creation flows @regression", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -21,11 +21,9 @@ test.describe("node – creation flows @regression", () => {
 
   test.skip("create node via command bar", async ({ page }) => {
     await ensureInAppOnHome(page);
-    // TODO: Memotron – create node
   });
 
   test.skip("create node via UI", async ({ page }) => {
     await ensureInAppOnHome(page);
-    // TODO: Memotron – create node from UI
   });
 });

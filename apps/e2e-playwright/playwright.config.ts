@@ -2,7 +2,6 @@ import { devices, defineConfig } from "@playwright/test";
 import path from "node:path";
 import fs from "node:fs";
 
-// Load .env so E2E_*, APP_BASE_URL, APP_BASE_URL_* are available
 import "dotenv/config";
 
 const artifactsDir = path.join(__dirname, "artifacts");

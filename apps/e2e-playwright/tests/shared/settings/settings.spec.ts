@@ -16,16 +16,41 @@ test.skip(
 );
 
 const pdfFixturePath = path.resolve(
-  process.cwd(),
-  "tests/fixtures/files/Lorem_ipsum.pdf"
+  __dirname,
+  "..",
+  "..",
+  "fixtures",
+  "files",
+  "Lorem_ipsum.pdf"
 );
 const highlightedWord = "including";
 
-/**
- * Shared settings tests: open/close/navigate and Mode of interaction (common to all products).
- * Focus panel: Pointron + Nucleus (skip Memotron). Node settings: Memotron + Nucleus (skip Pointron).
- */
-test.describe("settings – open, close, navigate (shared) @regression", () => {
+async function openSettings(page: import("@playwright/test").Page) {
+  const profileBtn = page.getByTestId("topnav-account-settings");
+  const profileVisible = await profileBtn.isVisible().catch(() => false);
+  if (profileVisible) {
+    await profileBtn.click({ timeout: 5_000 });
+    await expect(page.getByText("Settings", { exact: true }).first()).toBeVisible({
+      timeout: 5_000
+    });
+    return;
+  }
+  const settingsIconBtn = page.getByRole("button", { name: /^Settings$/i }).first();
+  const iconVisible = await settingsIconBtn.isVisible().catch(() => false);
+  if (iconVisible) {
+    await settingsIconBtn.click({ timeout: 5_000 });
+    await expect(page.getByText("Settings", { exact: true }).first()).toBeVisible({
+      timeout: 5_000
+    });
+    return;
+  }
+  await runCommand(page, "Settings");
+  await expect(page.getByText("Settings", { exact: true }).first()).toBeVisible({
+    timeout: 5_000
+  });
+}
+
+test.describe("settings - open, close, navigate (shared) @regression", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -34,28 +59,6 @@ test.describe("settings – open, close, navigate (shared) @regression", () => {
     });
   });
 
-  async function openSettings(page: import("@playwright/test").Page) {
-    // Nucleus: profile/logo button in top-left
-    const profileBtn = page.getByTestId("topnav-account-settings");
-    const profileVisible = await profileBtn.isVisible().catch(() => false);
-    if (profileVisible) {
-      await profileBtn.click({ timeout: 5_000 });
-      await page.waitForTimeout(500);
-      return;
-    }
-    // Memotron / Pointron: Settings icon button in top-right nav
-    const settingsIconBtn = page.getByRole("button", { name: /^Settings$/i }).first();
-    const iconVisible = await settingsIconBtn.isVisible().catch(() => false);
-    if (iconVisible) {
-      await settingsIconBtn.click({ timeout: 5_000 });
-      await page.waitForTimeout(500);
-      return;
-    }
-    // Fallback: command bar
-    await runCommand(page, "Settings");
-    await page.waitForTimeout(500);
-  }
-
   test("open Settings and assert modal visible", async ({
     page
   }, testInfo) => {
@@ -63,16 +66,13 @@ test.describe("settings – open, close, navigate (shared) @regression", () => {
     await ensureInAppOnHome(page);
 
     if (testInfo.project.name === "nucleus") {
-      // Nucleus: profile/logo button (top-left)
       await page.getByTestId("topnav-account-settings").waitFor({ state: "visible", timeout: 10_000 });
       await page.getByTestId("topnav-account-settings").click({ timeout: 5_000 });
     } else {
-      // Memotron / Pointron: Settings icon button (top-right nav)
       const settingsBtn = page.getByRole("button", { name: /^Settings$/i }).first();
       await settingsBtn.waitFor({ state: "visible", timeout: 10_000 });
       await settingsBtn.click({ timeout: 5_000 });
     }
-    await page.waitForTimeout(500);
     await expect(page.getByText("Settings", { exact: true }).first()).toBeVisible({
       timeout: 10_000
     });
@@ -260,10 +260,7 @@ test.describe("settings – open, close, navigate (shared) @regression", () => {
   });
 });
 
-/**
- * Mode of interaction: comprehensive tests (shared – all products).
- */
-test.describe("settings – Mode of interaction (comprehensive) @regression", () => {
+test.describe("settings - Mode of interaction (comprehensive) @regression", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -271,28 +268,6 @@ test.describe("settings – Mode of interaction (comprehensive) @regression", ()
       else route.continue();
     });
   });
-
-  async function openSettings(page: import("@playwright/test").Page) {
-    // Nucleus: profile/logo button in top-left
-    const profileBtn = page.getByTestId("topnav-account-settings");
-    const profileVisible = await profileBtn.isVisible().catch(() => false);
-    if (profileVisible) {
-      await profileBtn.click({ timeout: 5_000 });
-      await page.waitForTimeout(500);
-      return;
-    }
-    // Memotron / Pointron: Settings icon button in top-right nav
-    const settingsIconBtn = page.getByRole("button", { name: /^Settings$/i }).first();
-    const iconVisible = await settingsIconBtn.isVisible().catch(() => false);
-    if (iconVisible) {
-      await settingsIconBtn.click({ timeout: 5_000 });
-      await page.waitForTimeout(500);
-      return;
-    }
-    // Fallback: command bar
-    await runCommand(page, "Settings");
-    await page.waitForTimeout(500);
-  }
 
   async function openModeOfInteraction(page: import("@playwright/test").Page) {
     await openSettings(page);
@@ -565,7 +540,7 @@ test.describe("settings – Mode of interaction (comprehensive) @regression", ()
     await page.getByTestId("modal-close").click({ timeout: 5_000 });
   });
 
-  test("Mode of interaction: See hot keys – open, verify list, close modals, then run each hot key and verify", async ({
+  test("Mode of interaction: See hot keys - open, verify list, close modals, then run each hot key and verify", async ({
     page
   }) => {
     test.setTimeout(90_000);
@@ -975,10 +950,7 @@ test.describe("settings – Mode of interaction (comprehensive) @regression", ()
   });
 });
 
-/**
- * Accessibility settings (Block sizing): shared tests for Nucleus, Memotron, Pointron.
- */
-test.describe("settings – Accessibility (shared) @regression", () => {
+test.describe("settings - Accessibility (shared) @regression", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -986,25 +958,6 @@ test.describe("settings – Accessibility (shared) @regression", () => {
       else route.continue();
     });
   });
-
-  async function openSettings(page: import("@playwright/test").Page) {
-    const profileBtn = page.getByTestId("topnav-account-settings");
-    const profileVisible = await profileBtn.isVisible().catch(() => false);
-    if (profileVisible) {
-      await profileBtn.click({ timeout: 5_000 });
-      await page.waitForTimeout(500);
-      return;
-    }
-    const settingsIconBtn = page.getByRole("button", { name: /^Settings$/i }).first();
-    const iconVisible = await settingsIconBtn.isVisible().catch(() => false);
-    if (iconVisible) {
-      await settingsIconBtn.click({ timeout: 5_000 });
-      await page.waitForTimeout(500);
-      return;
-    }
-    await runCommand(page, "Settings");
-    await page.waitForTimeout(500);
-  }
 
   async function openAccessibility(page: import("@playwright/test").Page) {
     await openSettings(page);
@@ -1156,7 +1109,7 @@ test.describe("settings – Accessibility (shared) @regression", () => {
   });
 });
 
-test.describe("settings – Focus (Pointron, Nucleus) @regression", () => {
+test.describe("settings - Focus (Pointron, Nucleus) @regression", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -1165,27 +1118,8 @@ test.describe("settings – Focus (Pointron, Nucleus) @regression", () => {
     });
   });
 
-  async function openSettingsForFocus(page: import("@playwright/test").Page) {
-    const profileBtn = page.getByTestId("topnav-account-settings");
-    const profileVisible = await profileBtn.isVisible().catch(() => false);
-    if (profileVisible) {
-      await profileBtn.click({ timeout: 5_000 });
-      await page.waitForTimeout(500);
-      return;
-    }
-    const settingsIconBtn = page.getByRole("button", { name: /^Settings$/i }).first();
-    const iconVisible = await settingsIconBtn.isVisible().catch(() => false);
-    if (iconVisible) {
-      await settingsIconBtn.click({ timeout: 5_000 });
-      await page.waitForTimeout(500);
-      return;
-    }
-    await runCommand(page, "Settings");
-    await page.waitForTimeout(500);
-  }
-
   async function openFocus(page: import("@playwright/test").Page) {
-    await openSettingsForFocus(page);
+    await openSettings(page);
     await expect(page.getByText("Settings", { exact: true }).first()).toBeVisible({
       timeout: 10_000
     });
@@ -1410,8 +1344,6 @@ test.describe("settings – Focus (Pointron, Nucleus) @regression", () => {
         // so it has zero size and appears hidden — that is the expected PiP state.
         await expect(page.locator("#playercontainer #focusplayer")).toHaveCount(0);
       } else {
-        // documentPictureInPicture not supported / blocked in this test environment
-        // (e.g. headless Chromium) – fall back to verifying focus session is running
         await expect(focusTimerButton).toBeVisible({ timeout: 5_000 });
       }
     } else {
@@ -1465,10 +1397,9 @@ test.describe("settings – Focus (Pointron, Nucleus) @regression", () => {
     await page.waitForTimeout(2_000);
 
     await expect(focusTimerButton).toBeVisible({ timeout: 10_000 });
-    await page.waitForTimeout(65_000);
 
     await expect(
       page.getByText(/Its been|consider taking a short break/i).first()
-    ).toBeVisible({ timeout: 15_000 });
+    ).toBeVisible({ timeout: 65_000 });
   });
 });
