@@ -92,8 +92,8 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
       .isVisible()
       .catch(() => false);
     const hasTotal = await page.getByText("Total", { exact: true }).first().isVisible().catch(() => false);
-    const focusElements = await page.getByText("Focus", { exact: true }).all();
-    const hasFocusMetric = focusElements.length >= 2;
+    const focusMetricLocator = page.getByText("Focus", { exact: true }).nth(1);
+    const hasFocusMetric = await focusMetricLocator.isVisible().catch(() => false);
     const hasBreak = await page.getByText("Break", { exact: true }).first().isVisible().catch(() => false);
 
     expect(

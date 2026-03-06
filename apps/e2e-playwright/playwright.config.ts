@@ -39,7 +39,8 @@ function resolveBaseURLWithAuth(projectName: string): string {
         );
       }
     }
-  } catch {
+  } catch (err) {
+    console.warn(`[e2e] ${projectName}: could not read auth file ${authPath}:`, err);
   }
   return baseURL;
 }

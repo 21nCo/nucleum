@@ -15,14 +15,7 @@ test.skip(
   "E2E suite disabled by environment"
 );
 
-const pdfFixturePath = path.resolve(
-  __dirname,
-  "..",
-  "..",
-  "fixtures",
-  "files",
-  "Lorem_ipsum.pdf"
-);
+const pdfFixturePath = path.resolve(__dirname, "..", "..", "fixtures", "files", "Lorem_ipsum.pdf");
 const highlightedWord = "including";
 
 async function openSettings(page: import("@playwright/test").Page) {
@@ -1398,8 +1391,7 @@ test.describe("settings - Focus (Pointron, Nucleus) @regression", () => {
 
     await expect(focusTimerButton).toBeVisible({ timeout: 10_000 });
 
-    await expect(
-      page.getByText(/Its been|consider taking a short break/i).first()
-    ).toBeVisible({ timeout: 65_000 });
+    const breakReminderElement = page.getByText(/Its been|consider taking a short break/i).first();
+    await expect(breakReminderElement).toBeVisible({ timeout: 65_000 });
   });
 });

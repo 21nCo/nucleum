@@ -99,7 +99,8 @@ export default async function globalSetup(_: FullConfig) {
           }
         }
       }
-    } catch {
+    } catch (err) {
+      console.warn("[e2e] Could not check auth origin vs APP_BASE_URL:", err);
     }
 
     (globalThis as any).__viteHarness = { close: async () => {} };

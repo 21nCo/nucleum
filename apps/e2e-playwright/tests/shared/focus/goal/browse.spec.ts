@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import {
   ensureInAppOnHome,
+  getProductConfig,
   runCommand
 } from "../../../utils/helpers";
 
@@ -26,9 +27,11 @@ test.describe("goal - browse flows @regression", () => {
   });
 
   test.describe("from library", () => {
-    test("open Library → Goals and see goal in list", async ({ page }) => {
+    test("open Library → Goals and see goal in list", async ({ page }, testInfo) => {
       test.setTimeout(60_000);
       await ensureInAppOnHome(page);
+      const productConfig = getProductConfig(testInfo.project.name);
+      const libraryPath = productConfig.pathByNavLabel.Library;
       const goalName = `E2E browse goal ${Date.now()}`;
       await runCommand(page, "Create a new goal");
       const goalNameInput = page.getByTestId("goal-name-input");
@@ -40,7 +43,7 @@ test.describe("goal - browse flows @regression", () => {
       await page.keyboard.press("Escape");
 
       await page.getByRole("button", { name: /^Library$/i }).click({ timeout: 5_000 });
-      await page.waitForURL((u) => /^\/library(\/.*)?$/.test(new URL(u).pathname), { timeout: 10_000 });
+      await page.waitForURL((u) => new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(u).pathname), { timeout: 10_000 });
       await page.getByRole("button", { name: /^Goals(\s+\d+)?$/i }).first().click({ timeout: 5_000 });
       await page.waitForTimeout(1_500);
       await expect(page.getByText(goalName, { exact: true }).first()).toBeVisible({ timeout: 15_000 });
@@ -74,8 +77,7 @@ test.describe("goal - browse flows @regression", () => {
 
       await page
         .getByTestId("command-bar-input")
-        .waitFor({ state: "hidden", timeout: 5_000 })
-        .catch(() => null);
+        .waitFor({ state: "hidden", timeout: 5_000 });
       await page.waitForTimeout(500);
 
       await page.getByRole("button", { name: /^Focus$/i }).click({
@@ -97,17 +99,19 @@ test.describe("goal - browse flows @regression", () => {
 
     test("pin goal via UI (Focus → Quick Focus → Edit → Pin another goal → search → select), then assert in pinned list", async ({
       page
-    }) => {
+    }, testInfo) => {
       test.setTimeout(90_000);
       await ensureInAppOnHome(page);
 
       const goalName = `E2E pin UI ${Date.now()}`;
 
+      const productConfig = getProductConfig(testInfo.project.name);
+      const libraryPath = productConfig.pathByNavLabel.Library;
       await page
         .getByRole("button", { name: /^Library$/i })
         .click({ timeout: 5_000 });
       await page.waitForURL(
-        (u) => /^\/library(\/.*)?$/.test(new URL(u).pathname),
+        (u) => new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(u).pathname),
         { timeout: 10_000 }
       );
       await page.getByRole("button", { name: /^Goals(\s+\d+)?$/i }).first().click({
@@ -161,8 +165,7 @@ test.describe("goal - browse flows @regression", () => {
 
       await page
         .getByTestId("command-bar-input")
-        .waitFor({ state: "hidden", timeout: 5_000 })
-        .catch(() => null);
+        .waitFor({ state: "hidden", timeout: 5_000 });
       await page.waitForTimeout(800);
 
       await quickFocusSearch.clear();

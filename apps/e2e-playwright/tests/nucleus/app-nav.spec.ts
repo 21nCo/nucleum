@@ -52,15 +52,14 @@ test.describe("nucleus - app layout and menu @regression", () => {
         ).test(new URL(u).pathname),
       { timeout: 10_000 }
     );
-    await page.waitForTimeout(1_000);
+    await page.getByRole("button", { name: /^Focus$/i }).first().waitFor({ state: "visible", timeout: 10_000 });
 
     await page
       .getByRole("button", { name: /^Focus$/i })
       .first()
       .click({ timeout: 5_000 });
-    await page.waitForTimeout(1_000);
-
     const calendarColumn = page.locator("[id^='mdcontainer-']");
+    await calendarColumn.first().waitFor({ state: "visible", timeout: 10_000 });
     const overviewInPanel = calendarColumn
       .getByRole("button", { name: /Overview/i })
       .first();
@@ -136,7 +135,7 @@ test.describe("nucleus - app layout and menu @regression", () => {
       .and(page.locator(":not([aria-disabled='true'])"));
     await goalsCard.first().waitFor({ state: "visible", timeout: 10_000 });
     await goalsCard.first().click({ timeout: 5_000 });
-    await page.waitForTimeout(1_500);
+    await page.getByTestId("search-goals").waitFor({ state: "visible", timeout: 15_000 });
 
     const libraryPath = nucleusProductConfig.pathByNavLabel.Library;
     const onLibraryPage = () =>
@@ -170,7 +169,6 @@ test.describe("nucleus - app layout and menu @regression", () => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
     await runCommand(page, "Goals");
-    await page.waitForTimeout(1_000);
     await expect(page.getByTestId("search-goals")).toBeVisible({
       timeout: 10_000
     });
@@ -182,7 +180,6 @@ test.describe("nucleus - app layout and menu @regression", () => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
     await runCommand(page, "Tasks");
-    await page.waitForTimeout(1_000);
     await expect(
       page
         .getByTestId("search-tasks")
@@ -198,11 +195,12 @@ test.describe("nucleus - app layout and menu @regression", () => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
 
+    const libraryPath = nucleusProductConfig.pathByNavLabel.Library;
     await page
       .getByRole("button", { name: /^Library$/i })
       .click({ timeout: 5_000 });
     await page.waitForURL(
-      (u) => /^\/library(\/.*)?$/.test(new URL(u).pathname),
+      (u) => new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(u).pathname),
       { timeout: 10_000 }
     );
     await page.getByRole("button", { name: /^Goals(\s+\d+)?$/i }).first().click({
@@ -257,18 +255,17 @@ test.describe("nucleus - app layout and menu @regression", () => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
 
+    const libraryPath = nucleusProductConfig.pathByNavLabel.Library;
     await page
       .getByRole("button", { name: /^Library$/i })
       .click({ timeout: 5_000 });
     await page.waitForURL(
-      (u) => /^\/library(\/.*)?$/.test(new URL(u).pathname),
+      (u) => new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(u).pathname),
       { timeout: 10_000 }
     );
     await page.getByRole("button", { name: /^Tasks(\s|$)/i }).click({
       timeout: 5_000
     });
-    await page.waitForTimeout(600);
-
     await expect(
       page
         .getByTestId("search-tasks")

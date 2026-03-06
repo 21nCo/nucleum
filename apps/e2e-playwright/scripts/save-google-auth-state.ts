@@ -73,7 +73,7 @@ async function main() {
       .first();
 
     await googleButton.waitFor({ state: "visible", timeout: 10_000 });
-    void googleButton.click({ noWaitAfter: true, timeout: 10_000 });
+    await googleButton.click({ timeout: 10_000 });
 
     console.log("Complete Google sign-in in the browser. Waiting up to", waitForRedirectBackMs / 1000, "s for redirect back...\n");
 

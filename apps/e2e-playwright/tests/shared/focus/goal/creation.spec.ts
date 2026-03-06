@@ -42,7 +42,7 @@ test.describe("goal - creation flows @regression", () => {
     await goalNameInput.fill(goalName);
     await page.keyboard.press("Enter");
 
-    await expect(goalNameInput).toBeHidden({ timeout: 10_000 }).catch(() => null);
+    await expect(goalNameInput).toBeHidden({ timeout: 10_000 });
 
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");
@@ -56,8 +56,7 @@ test.describe("goal - creation flows @regression", () => {
 
     await page
       .getByTestId("command-bar-input")
-      .waitFor({ state: "hidden", timeout: 5_000 })
-      .catch(() => null);
+      .waitFor({ state: "hidden", timeout: 5_000 });
 
     const focusTimerButton = page.getByRole("button", {
       name: /^\d{1,2}:\d{2}$/

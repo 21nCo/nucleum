@@ -86,7 +86,7 @@ test.describe("pointron - app layout and menu @regression", () => {
       .and(page.locator(":not([aria-disabled='true'])"));
     await goalsCard.first().waitFor({ state: "visible", timeout: 10_000 });
     await goalsCard.first().click({ timeout: 5_000 });
-    await page.waitForTimeout(1_500);
+    await page.getByTestId("search-goals").waitFor({ state: "visible", timeout: 15_000 });
 
     const libraryPath = pointronProductConfig.pathByNavLabel.Library;
     const onLibraryPage = () =>
@@ -120,18 +120,17 @@ test.describe("pointron - app layout and menu @regression", () => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
 
+    const libraryPath = pointronProductConfig.pathByNavLabel.Library;
     await page
       .getByRole("button", { name: /^Library$/i })
       .click({ timeout: 5_000 });
     await page.waitForURL(
-      (u) => /^\/library(\/.*)?$/.test(new URL(u).pathname),
+      (u) => new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(u).pathname),
       { timeout: 10_000 }
     );
     await page.getByRole("button", { name: /^Goals(\s+\d+)?$/i }).first().click({
       timeout: 5_000
     });
-    await page.waitForTimeout(600);
-
     await expect(page.getByTestId("search-goals")).toBeVisible({
       timeout: 10_000
     });
