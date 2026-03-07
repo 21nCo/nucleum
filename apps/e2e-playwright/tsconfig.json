@@ -8,6 +8,7 @@
     "playwright.config.ts",
     "global-setup.ts",
     "global-teardown.ts",
+    "config/**/*.ts",
     "pages/**/*.ts",
     "tests/**/*.ts"
   ]

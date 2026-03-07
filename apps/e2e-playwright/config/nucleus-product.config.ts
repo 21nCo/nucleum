@@ -1,22 +1,12 @@
 /**
- * Nucleus product config for E2E. Mirrors client/products/product.config.ts for Nucleus
- * so tests use home path and app menu labels instead of hardcoding.
+ * Nucleus product config for E2E. Re-exports from central product-nav.config
+ * so menu/labels are defined in one place (client/products/product-nav.config.ts).
  */
-export const nucleusProductConfig = {
-  homePath: "calendar",
-  /** Nav labels shown in the app menu (left nav / tabs). Used for getByRole('button', { name: ... }). */
-  appMenuNavLabels: ["Calendar", "Overview", "Library"] as const,
-  /** Optional "Home" when in dev (isDev); not always present in prod build. */
-  includeHomeInNav: false,
-  /** Which nav item contains the timeline view for verifying focus sessions, events, etc. */
-  timelinePageLabel: "Calendar",
-  /** Path segment or pathname to assert after opening each menu item (action path). */
-  pathByNavLabel: {
-    Calendar: "/calendar",
-    Overview: "/overview",
-    Library: "/library",
-    Home: "/"
-  } as Record<string, string>
-} as const;
+import {
+  getE2EProductConfig,
+  type NucleusAppMenuLabel
+} from "@21n/products/product-nav.config";
+import { Product } from "@21n/products/product.type";
 
-export type NucleusAppMenuLabel = (typeof nucleusProductConfig.appMenuNavLabels)[number];
+export const nucleusProductConfig = getE2EProductConfig(Product.NUCLEUS);
+export type { NucleusAppMenuLabel };

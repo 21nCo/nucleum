@@ -1,19 +1,8 @@
 /**
- * Pointron product config for E2E. Mirrors client/products/product.config.ts for Pointron
- * so tests use home path and app menu labels instead of hardcoding.
+ * Pointron product config for E2E. Re-exports from central product-nav.config
+ * so menu/labels are defined in one place (client/products/product-nav.config.ts).
  */
-export const pointronProductConfig = {
-  homePath: "calendar",
-  /** Nav labels shown in the app menu (left nav). Order: Focus first, then Calendar, Overview, Library. */
-  appMenuNavLabels: ["Focus", "Calendar", "Overview", "Library"] as const,
-  timelinePageLabel: "Calendar",
-  pathByNavLabel: {
-    Focus: "/focus",
-    Calendar: "/calendar",
-    Overview: "/overview",
-    Library: "/library",
-    Home: "/"
-  } as Record<string, string>,
-  /** Library section label in Pointron (Focus). */
-  librarySectionLabel: "Focus"
-} as const;
+import { getE2EProductConfig } from "@21n/products/product-nav.config";
+import { Product } from "@21n/products/product.type";
+
+export const pointronProductConfig = getE2EProductConfig(Product.POINTRON);
