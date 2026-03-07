@@ -262,22 +262,15 @@ export function resolveResourceSwitcher(): IResourceSwitchItem[] {
     Resource.combination,
     Resource.goal,
     Resource.task,
-    Resource.habit,
-    Resource.quest,
     Resource.session,
     Resource.node,
     Resource.relation,
-    Resource.thing,
-    Resource.feed,
-    Resource.source,
-    Resource.account,
-    Resource.transaction,
-    Resource.fellow,
     Resource.place,
     Resource.input
   ];
   return resources.map((resource) => ({
-    label: properCase(resource) + "s",
+    label:
+      resource === Resource.goal ? "Objectives" : properCase(resource) + "s",
     value: resource,
     icon: resolveResourceIcon(resource),
     isDisabled: !availableResources.has(resource),

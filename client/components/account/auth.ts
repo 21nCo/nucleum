@@ -17,12 +17,15 @@ function createAuthClientWithPlugins(region: string) {
     baseURL,
     fetchOptions: embedToken
       ? {
+          credentials: "include",
           auth: {
             type: "Bearer",
             token: embedToken
           }
         }
-      : {},
+      : {
+          credentials: "include"
+        },
     plugins: [
       emailOTPClient(),
       twoFactorClient(),

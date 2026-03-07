@@ -19,6 +19,7 @@ import type {
 } from "@21n/components/flux/resourceStores/resource.type";
 
 export enum CaptureMethod {
+  NOTE = "NOTE",
   MARKDOWN = "MARKDOWN",
   AUDIO = "AUDIO",
   CAMERA = "CAMERA",
