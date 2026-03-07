@@ -313,7 +313,7 @@ const tableConfigMapper = (resource: Resource) => {
 
 export const product =
   import.meta.env?.VITE_PRODUCT ||
-  process.env.PLASMO_PUBLIC_PRODUCT ||
+  (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_PRODUCT : undefined) ||
   Product.NUCLEUS;
 
 export const resolveProductConfig = (productOverride?: Product): IAppConfig => {

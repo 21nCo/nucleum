@@ -403,8 +403,13 @@ export function getEnvVal(
     const isExtension = isExtensionEnvironment();
     if (isExtension) {
       key = "PLASMO_PUBLIC_" + key;
-      if (dataType === "string") return process?.env[key];
-      else if (dataType === "number" && process?.env[key])
+      if (dataType === "string")
+        return typeof process !== "undefined" ? process?.env?.[key] : undefined;
+      else if (
+        dataType === "number" &&
+        typeof process !== "undefined" &&
+        process?.env?.[key]
+      )
         return Number(process.env[key]);
       else return null;
     }
