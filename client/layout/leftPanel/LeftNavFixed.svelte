@@ -101,6 +101,7 @@
             }}
           >
             <button
+              data-testid="leftnav-settings"
               class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-bgs3 transition-colors duration-200"
               use:popover={{
                 content: LeftNavSettingsPopover,

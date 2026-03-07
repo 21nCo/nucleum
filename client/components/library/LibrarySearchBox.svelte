@@ -50,6 +50,7 @@
   <div class="flex w-full justify-between p-5 py-4 pt-5 leading-none">
     <input
       id="librarysearchbox"
+      data-testid={"search-" + resource + "s"}
       class="text-h2 w-full bg-transparent focus:outline-none focus:border-none"
       type="text"
       bind:this={searchInputRef}

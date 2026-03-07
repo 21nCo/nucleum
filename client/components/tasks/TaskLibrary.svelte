@@ -510,6 +510,7 @@
             accessPoint === ResourceAccessPoint.LIBRARY
         })}
         placeholder={"Search tasks"}
+        testId="search-tasks"
         style={InputStyle.BORDERED}
       />
     </div>

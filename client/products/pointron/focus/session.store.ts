@@ -1352,9 +1352,9 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
       throw new Error("Task already exists");
     let blocks:
       | {
-          start: number;
-          end: number;
-        }[]
+        start: number;
+        end: number;
+      }[]
       | undefined = undefined;
     const removedTask = n.removedItems?.find(resourceInList(id));
     if (removedTask) {

@@ -27,6 +27,8 @@ async function startVite(app: string): Promise<ViteHarness> {
     let resolved = false;
     const timeout = setTimeout(() => {
       if (!resolved) {
+        resolved = true;
+        viteProcess.kill("SIGTERM");
         reject(new Error("Timeout waiting for dev server to start"));
       }
     }, 60000);
@@ -74,15 +76,42 @@ async function startVite(app: string): Promise<ViteHarness> {
 }
 
 export default async function globalSetup(_: FullConfig) {
-  const targetApp = process.env.PLAYWRIGHT_APP ?? "apps/pointron";
-  console.log(`🚀 Starting Vite server for ${targetApp}...`);
-  
-  const harness = await startVite(targetApp);
+  if (process.env.APP_BASE_URL) {
+    const baseURL = process.env.APP_BASE_URL;
+    console.log(`📝 Using APP_BASE_URL (e.g. from .env): ${baseURL}`);
 
+    const authDir = path.join(__dirname, ".auth");
+    const authFiles = ["user.json", "user-memotron.json", "user-pointron.json"];
+    try {
+      const fs = await import("node:fs");
+      const currentOrigin = new URL(baseURL).origin;
+      for (const file of authFiles) {
+        const authPath = path.join(authDir, file);
+        if (fs.existsSync(authPath)) {
+          const raw = fs.readFileSync(authPath, "utf-8");
+          const state = JSON.parse(raw) as { origins?: Array<{ origin: string }> };
+          const savedOrigins = state.origins?.map((o) => o.origin) ?? [];
+          if (savedOrigins.length > 0 && !savedOrigins.includes(currentOrigin)) {
+            console.warn(
+              `\n⚠️  Auth in ${file} was saved for origin(s): ${savedOrigins.join(", ")} but APP_BASE_URL is ${baseURL}.`,
+              `\n   Set APP_BASE_URL_<PROJECT> in .env to match (e.g. APP_BASE_URL_MEMOTRON=${savedOrigins[0]}).\n`
+            );
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("[e2e] Could not check auth origin vs APP_BASE_URL:", err);
+    }
+
+    (globalThis as any).__viteHarness = { close: async () => {} };
+    return baseURL;
+  }
+
+  const targetApp = process.env.PLAYWRIGHT_APP ?? "apps/nucleus";
+  console.log(`🚀 Starting Vite server for ${targetApp}...`);
+  const harness = await startVite(targetApp);
   process.env.APP_BASE_URL = harness.url;
   console.log(`📝 Set APP_BASE_URL to ${harness.url}`);
-
   (globalThis as any).__viteHarness = harness;
-  
   return harness.url;
 }

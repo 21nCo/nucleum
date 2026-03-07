@@ -105,6 +105,7 @@
             draggable="true"
             data-index={index}
             data-id={resource.id}
+            data-testid="leftnav-pin-resource"
           >
             <div class="flex items-center gap-2">
               <span

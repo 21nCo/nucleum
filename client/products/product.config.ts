@@ -1,4 +1,5 @@
 import { Extension, Product } from "@21n/products/product.type";
+import { getProductNavConfig } from "./product-nav.config";
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { Action } from "@21n/types/action.enum";
 import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
@@ -102,15 +103,19 @@ const resourceTableMap: Record<Product, Resource[]> = {
   ]
 };
 
+const nucleusNav = getProductNavConfig(Product.NUCLEUS);
+const memotronNav = getProductNavConfig(Product.MEMOTRON);
+const pointronNav = getProductNavConfig(Product.POINTRON);
+
 export const products: Record<Product, IAppConfigBase> = {
   [Product.NUCLEUS]: {
     name: "Nucleus",
-    appMenu: isDev
-      ? ["home", "calendar", "overview", "library"]
-      : ["calendar", "overview", "library"],
-    appMenuPt: ["calendar", "librarypt", "overview"],
-    homePath: "calendar",
-    homePathPt: "librarypt",
+    appMenu: (isDev && nucleusNav.appMenuDev
+      ? nucleusNav.appMenuDev
+      : nucleusNav.appMenu) as string[],
+    appMenuPt: [...nucleusNav.appMenuPt],
+    homePath: nucleusNav.homePath,
+    homePathPt: nucleusNav.homePathPt,
     databaseName: "nativeone",
     resources: {
       browse: [Resource.collection, Resource.combination, Resource.event],
@@ -122,7 +127,7 @@ export const products: Record<Product, IAppConfigBase> = {
         Resource.combination
       ]
     },
-    librarySectionLabel: "Nucleus",
+    librarySectionLabel: nucleusNav.librarySectionLabel,
     displayName: "Nucleus",
     tagline: "Your digital harmony",
     configurableShortcuts: [
@@ -172,10 +177,10 @@ export const products: Record<Product, IAppConfigBase> = {
   },
   [Product.MEMOTRON]: {
     name: "Memotron",
-    appMenu: ["node_create", "calendar", "overview", "library"],
-    appMenuPt: [],
-    homePath: "calendar",
-    homePathPt: "mobilehome",
+    appMenu: [...memotronNav.appMenu],
+    appMenuPt: [...memotronNav.appMenuPt],
+    homePath: memotronNav.homePath,
+    homePathPt: memotronNav.homePathPt,
     isShowCaptureOnMobile: true,
     databaseName: "nativeone",
     resources: {
@@ -187,7 +192,7 @@ export const products: Record<Product, IAppConfigBase> = {
         ...filesAbilityTables
       ]
     },
-    librarySectionLabel: "Memory",
+    librarySectionLabel: memotronNav.librarySectionLabel,
     displayName: "Memotron",
     tagline: "Your memory partner",
     configurableShortcuts: [
@@ -236,10 +241,10 @@ export const products: Record<Product, IAppConfigBase> = {
   },
   [Product.POINTRON]: {
     name: "Pointron",
-    appMenu: ["focus", "calendar", "overview", "library"],
-    appMenuPt: ["overview", "calendar", "focus", "librarypt"],
-    homePath: "calendar",
-    homePathPt: "focus",
+    appMenu: [...pointronNav.appMenu],
+    appMenuPt: [...pointronNav.appMenuPt],
+    homePath: pointronNav.homePath,
+    homePathPt: pointronNav.homePathPt,
     databaseName: "pointone",
     resources: {
       browse: [
@@ -254,7 +259,7 @@ export const products: Record<Product, IAppConfigBase> = {
         ...linkabilityTables
       ]
     },
-    librarySectionLabel: "Focus",
+    librarySectionLabel: pointronNav.librarySectionLabel,
     displayName: "Pointron",
     tagline: "Your focus haven",
     settings: [

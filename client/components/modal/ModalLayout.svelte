@@ -170,6 +170,9 @@
     {/if}
     {#if params.layout?.isShowCantileverClose}
       <button
+        type="button"
+        aria-label="Close"
+        data-testid="modal-close"
         class="absolute top-2 -right-10 bg-ars1 w-10 h-12 rounded-r-md flex justify-center items-center hover:brightness-110"
         on:click={() => handleClose(AccessMode.POP)}
         use:popover={{

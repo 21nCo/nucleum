@@ -8,6 +8,9 @@ import { nodePolyfills } from "vite-plugin-node-polyfills";
 const aliasConfig = buildViteAliases(loadAliasMap());
 
 export default defineConfig({
+  server: {
+    allowedHosts: ["local.pointron.app"]
+  },
   resolve: {
     alias: aliasConfig
   },

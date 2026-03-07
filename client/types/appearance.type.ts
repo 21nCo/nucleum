@@ -86,7 +86,7 @@ export type AppearanceStore = IStore & {
   isSyncWithSystem: boolean;
   systemTheme: Theme;
   /**
-   * @deprecated Use userPreferences.appearance.typeface directly instead
+   * @deprecated Use userPreferences.appearance?.typeface directly instead
    */
   typeface?: string;
   /**

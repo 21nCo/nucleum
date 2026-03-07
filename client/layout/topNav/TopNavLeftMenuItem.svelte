@@ -47,6 +47,7 @@
   {@const hasTooltip = data.label || tooltip || label}
   {@const shortcut = keyboardShortcuts.resolveShortcutForAction(action)}
   <button
+    aria-label={hasTooltip ? (tooltip ?? label ?? data.label) : undefined}
     class={cn(
       "flex items-center justify-center gap-1 h-full px-3.5 transition-colors",
       {

@@ -40,6 +40,7 @@
 </script>
 
 <button
+  data-testid="topnav-account-settings"
   class={cn(
     "group flex items-center h-full w-fit border-r border-brs3 hover:bg-bgs3-striped",
     !action && {

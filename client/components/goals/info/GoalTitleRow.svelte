@@ -83,6 +83,7 @@
               bind:this={inputRef}
               bind:value={labelEditVal}
               placeholder="Enter goal name"
+              testId="goal-name-input"
               width="w-full"
               parentBackgroundIndex={2}
               on:debouncedChange={handleLabelChange}

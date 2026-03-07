@@ -143,6 +143,7 @@
     isPadded={true}
     on:search={onSearch}
     placeholder="Search a goal to quick focus"
+    testId="quick-focus-search"
     on:enter={() => createNewGoal()}
     padding={$context.embed === Embed.HANDSET || $view.isConstrainedWidth
       ? "pl-4 pr-2"

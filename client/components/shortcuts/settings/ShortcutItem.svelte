@@ -184,13 +184,15 @@
               event.stopPropagation();
             }}
           />
-          <Button
-            tooltip="Accept"
-            icon="check-circle"
-            size={Size.sm}
-            {parentBgIndex}
-            on:click={accept}
-          />
+          <span data-testid="shortcut-accept">
+            <Button
+              tooltip="Accept"
+              icon="check-circle"
+              size={Size.sm}
+              {parentBgIndex}
+              on:click={accept}
+            />
+          </span>
           <Button
             tooltip="Reset to old value"
             icon="reload"
