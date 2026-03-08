@@ -2,7 +2,8 @@ import { createAuthClient } from "better-auth/svelte";
 import {
   emailOTPClient,
   twoFactorClient,
-  multiSessionClient
+  multiSessionClient,
+  apiKeyClient
 } from "better-auth/client/plugins";
 import { clientStorage } from "@21n/persistence/persistence.utils";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
@@ -16,19 +17,17 @@ function createAuthClientWithPlugins(region: string) {
     baseURL,
     fetchOptions: embedToken
       ? {
-          credentials: "include",
           auth: {
             type: "Bearer",
             token: embedToken
           }
         }
-      : {
-          credentials: "include"
-        },
+      : {},
     plugins: [
       emailOTPClient(),
       twoFactorClient(),
-      multiSessionClient()
+      multiSessionClient(),
+      apiKeyClient()
     ]
   });
 }

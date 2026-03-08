@@ -1,11 +1,11 @@
-![hero](nucleus-git-banner.png)
+![hero](nucleum-git-banner.png)
 
 <div align="center">
-  <h1>Nucleus</h1>
+  <h1>Nucleum</h1>
   <p>Meticulously crafted super apps to help you manage your digital life efficiently.</p>
 </div>
   <p align="center">
-    <a href="https://nucleus.to">Website</a>
+    <a href="https://nucleum.app">Website</a>
     ·
     <a href="https://docs.nucleus.to">Documentation</a>
     ·
@@ -33,7 +33,7 @@
 
 | App      | Website                          | Description                                                                 | Topics                                    |
 |----------|----------------------------------|-----------------------------------------------------------------------------|-------------------------------------------|
-| Nucleus  | [nucleus.to](https://nucleus.to)     | **Your digital harmony**, a super app that combines all of the tools listed below in a cohesive manner.    | Digital life, Personal productivity       |
+| Nucleum  | [nucleum.app](https://nucleum.app)     | **Your digital harmony**, a super app that combines all of the tools listed below in a cohesive manner.    | Digital life, Personal productivity       |
 | Memotron | [memotron.app](https://memotron.app) | **Your memory atlas**, a tool for managing your digital memory and personal knowledge.                  | Digital memory, PKM, Note‑taking, Knowledge management    |
 | Pointron | [pointron.app](https://pointron.app) | **Your focus haven**, a tool for tracking your goals and managing your time.     | Focus, Time management, Goal tracking                    |
 
@@ -51,8 +51,8 @@ Currently, only the frontend apps can be self‑hosted on your own server. This 
 4. Deploy to the provider of your choice
 
 ```env
-VITE_PRODUCT={{memotron | pointron | nucleus }}
-VITE_STATIC_URL=https://cdn.21n.org
+VITE_PRODUCT={{memotron | pointron | nucleum }}
+VITE_STATIC_URL=https://cdn.21n.co
 ```
 
 *Full app deployment including backend will be available soon...*
