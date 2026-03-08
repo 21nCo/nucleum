@@ -25,7 +25,7 @@
   export let isActive: boolean = false;
 
   let inputRef: HTMLInputElement;
-  $: size = isBoxed ? Size.lg : $view.isConstrainedWidth ? Size.sm : Size.md;
+  $: size = isBoxed && $view.isConstrainedWidth ? Size.lg : $view.isConstrainedWidth ? Size.sm : Size.md;
 
   function handleCapture(e: Event) {
     dispatch("capture", e);
@@ -62,7 +62,7 @@
     "flex gap-1 dp:gap-2 items-center justify-center",
     {
       "bg-bgs2 text-aps1": isActive,
-      "flex flex-col items-center justify-center gap-2 w-full h-24 px-1.5":
+      "flex flex-col items-center justify-center gap-2 w-full h-24 dp:h-20 px-1.5":
         isBoxed,
       "notouch:hover:bg-bgs1-striped active:bg-bgs2 bg-bgs1":
         isBoxed && !isActive,
@@ -107,10 +107,10 @@
   {/if}
   <div
     class={cn("whitespace-nowrap truncate userdata", {
-      "text-b3 dp:text-b2 w-full": isBoxed,
+      "text-b3 w-full": isBoxed,
       "text-b2 dp:text-base": !isBoxed,
       "text-fgs1": isBoxed && !isActive && !item.isDisabled,
-      "text-aps1": isActive && !item.isDisabled,
+      "text-aps1 font-medium": isActive && !item.isDisabled,
       "text-fgs3": item.isDisabled
     })}
   >

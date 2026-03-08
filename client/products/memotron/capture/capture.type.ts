@@ -20,6 +20,7 @@ import type {
 
 export enum CaptureMethod {
   MARKDOWN = "MARKDOWN",
+  NOTE = "NOTE",
   AUDIO = "AUDIO",
   CAMERA = "CAMERA",
   SKETCH = "SKETCH",

@@ -27,7 +27,13 @@
   const contentTypes: (ISelectItem & { value: string })[] = [
     {
       value: CaptureMethod.MARKDOWN,
+      label: "Page",
       icon: "markdown"
+    },
+    {
+      value: CaptureMethod.MARKDOWN,
+      label: "Note",
+      icon: "note-blank"
     },
     {
       icon: "microphone",

@@ -77,7 +77,7 @@
     </div>
   {:then}
     <div class="text-b2 text-fgs3">
-      Enabling collections will show them as quick capture shortcuts on capture
+      Selected collections will show as quick capture shortcuts on the capture
       screen.
     </div>
     <div class="flex flex-col gap-2 w-full flex-grow">

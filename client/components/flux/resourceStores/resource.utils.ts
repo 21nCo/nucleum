@@ -218,24 +218,24 @@ export function resolveResourceIcon(resource: Resource) {
       return "combination";
     case Resource.event:
       return "calendar";
-    case Resource.habit:
-      return "caret-circle-up";
-    case Resource.quest:
+    // case Resource.habit:
+    //   return "caret-circle-up";
+    // case Resource.quest:
       return "question";
     case Resource.session:
       return "clock";
-    case Resource.thing:
-      return "bicycle";
-    case Resource.feed:
-      return "rss";
-    case Resource.source:
-      return "globe";
-    case Resource.account:
-      return "bank";
-    case Resource.transaction:
-      return "arrows-left-right";
-    case Resource.fellow:
-      return "user";
+    // case Resource.thing:
+    //   return "bicycle";
+    // case Resource.feed:
+    //   return "rss";
+    // case Resource.source:
+    //   return "globe";
+    // case Resource.account:
+    //   return "bank";
+    // case Resource.transaction:
+    //   return "arrows-left-right";
+    // case Resource.fellow:
+    //   return "user";
     case Resource.place:
       return "map-pin";
     case Resource.input:
@@ -262,22 +262,14 @@ export function resolveResourceSwitcher(): IResourceSwitchItem[] {
     Resource.combination,
     Resource.goal,
     Resource.task,
-    Resource.habit,
-    Resource.quest,
     Resource.session,
     Resource.node,
     Resource.relation,
-    Resource.thing,
-    Resource.feed,
-    Resource.source,
-    Resource.account,
-    Resource.transaction,
-    Resource.fellow,
     Resource.place,
     Resource.input
   ];
   return resources.map((resource) => ({
-    label: properCase(resource) + "s",
+    label: resource === Resource.goal ? "Objectives" : properCase(resource) + "s",
     value: resource,
     icon: resolveResourceIcon(resource),
     isDisabled: !availableResources.has(resource),
