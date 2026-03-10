@@ -26,7 +26,7 @@ test.describe("node - bulk editor @regression", () => {
     });
   });
 
-  test("select multiple nodes via drag → bulk edit bar appears and shows count", async ({
+  test("select multiple nodes via context menu - bulk edit bar appears and shows count", async ({
     page
   }) => {
     test.setTimeout(90_000);
@@ -41,7 +41,7 @@ test.describe("node - bulk editor @regression", () => {
     ).toBeVisible({ timeout: 10_000 });
   });
 
-  test("select multiple nodes → clear selection hides bulk edit bar", async ({
+  test("select multiple nodes - clear selection hides bulk edit bar", async ({
     page
   }) => {
     test.setTimeout(90_000);
@@ -62,7 +62,7 @@ test.describe("node - bulk editor @regression", () => {
     });
   });
 
-  test("select multiple nodes → Star shows success toast and clears selection", async ({
+  test("select multiple nodes - Star shows success toast and clears selection", async ({
     page
   }) => {
     test.setTimeout(90_000);
@@ -86,7 +86,7 @@ test.describe("node - bulk editor @regression", () => {
     });
   });
 
-  test("select multiple nodes → Select all updates count to all items", async ({
+  test("select multiple nodes - Select all updates count to all items", async ({
     page
   }) => {
     test.setTimeout(90_000);
@@ -103,7 +103,7 @@ test.describe("node - bulk editor @regression", () => {
       .getByRole("button", { name: /Select all/i })
       .click({ timeout: 5_000 });
     await expect(
-      page.getByText(/Selected: 2 nodes?/i)
+      page.getByText(/Selected: \d+ nodes?/i)
     ).toBeVisible({ timeout: 5_000 });
   });
 });

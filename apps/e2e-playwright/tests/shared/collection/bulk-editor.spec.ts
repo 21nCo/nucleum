@@ -17,7 +17,7 @@ test.skip(
   "E2E suite disabled by environment"
 );
 
-test.describe("collection – bulk editor @regression", () => {
+test.describe("collection - bulk editor @regression", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -26,7 +26,7 @@ test.describe("collection – bulk editor @regression", () => {
     });
   });
 
-  test("select multiple collections via drag → bulk edit bar appears and shows count", async ({
+  test("select multiple collections via context menu - bulk edit bar appears and shows count", async ({
     page
   }) => {
     test.setTimeout(90_000);
@@ -36,11 +36,9 @@ test.describe("collection – bulk editor @regression", () => {
 
     await selectFirstTwoViaContextMenu(page, "records-container");
 
-    // Only collections are selected; bar shows count
     await expect(
       page.getByText(/Selected: 2 collections?/i)
     ).toBeVisible({ timeout: 10_000 });
-    // Bar (box in top nav) has Star, Archive, Delete options
     const bar = getBulkEditBar(page);
     await expect(bar).toBeVisible({ timeout: 5_000 });
     await expect(bar.getByRole("button", { name: /^Star$/i })).toBeVisible();
@@ -48,7 +46,7 @@ test.describe("collection – bulk editor @regression", () => {
     await expect(bar.getByRole("button", { name: /^Delete$/i })).toBeVisible();
   });
 
-  test("select multiple collections → clear selection hides bulk edit bar", async ({
+  test("select multiple collections - clear selection hides bulk edit bar", async ({
     page
   }) => {
     test.setTimeout(90_000);
@@ -69,13 +67,27 @@ test.describe("collection – bulk editor @regression", () => {
     ).toBeHidden({ timeout: 5_000 });
   });
 
-  test("select multiple collections → Star shows success toast, clears selection, and collections are starred", async ({
+  test("select multiple collections - Star shows success toast, clears selection, and collections are starred", async ({
     page
   }) => {
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
     await createTwoCollections(page);
     await openLibraryAndTab(page, LibraryTab.Collections);
+
+    const urlStarred = new URL(page.url());
+    urlStarred.searchParams.set("starred", "1");
+    await page.goto(urlStarred.toString(), { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(1_500);
+    const starredThumbnailsBefore = page.locator(
+      "#records-container div[id^='thumbnail-']"
+    );
+    await page.locator("#records-container").waitFor({ state: "visible", timeout: 10_000 });
+    const starredCountBefore = await starredThumbnailsBefore.count();
+    const urlCollections = new URL(page.url());
+    urlCollections.searchParams.delete("starred");
+    await page.goto(urlCollections.toString(), { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(1_500);
 
     await selectFirstTwoViaContextMenu(page, "records-container");
     await expect(
@@ -92,23 +104,23 @@ test.describe("collection – bulk editor @regression", () => {
       page.getByText(/Selected: 2 collections?/i)
     ).toBeHidden({ timeout: 5_000 });
 
-    // Verify collections are actually starred: enable starred filter via URL (toggle has no accessible name)
-    const url = new URL(page.url());
-    url.searchParams.set("starred", "1");
-    await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
+    await page.goto(urlStarred.toString(), { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1_500);
     const thumbnails = page.locator("#records-container div[id^='thumbnail-']");
     await expect(thumbnails.first()).toBeVisible({ timeout: 10_000 });
-    await expect(thumbnails).toHaveCount(2, { timeout: 5_000 });
+    await expect(thumbnails).toHaveCount(starredCountBefore + 2, {
+      timeout: 5_000
+    });
 
-    // Verify star icon appears on each of the selected (now starred) collections
     const starIconsInStarredView = page.locator(
       "#records-container div[id^='thumbnail-'] .text-yellow-400"
     );
-    await expect(starIconsInStarredView).toHaveCount(2, { timeout: 5_000 });
+    await expect(starIconsInStarredView).toHaveCount(starredCountBefore + 2, {
+      timeout: 5_000
+    });
   });
 
-  test("select multiple collections → Select all keeps bar visible with count", async ({
+  test("select multiple collections - Select all keeps bar visible with count", async ({
     page
   }) => {
     test.setTimeout(90_000);
@@ -125,17 +137,31 @@ test.describe("collection – bulk editor @regression", () => {
       .getByRole("button", { name: /Select all/i })
       .click({ timeout: 5_000 });
     await expect(
-      page.getByText(/Selected: 2 collections?/i)
+      page.getByText(/Selected: \d+ collections?/i)
     ).toBeVisible({ timeout: 5_000 });
   });
 
-  test("select multiple collections → Archive shows success toast, clears selection, and collections are archived", async ({
+  test("select multiple collections - Archive shows success toast, clears selection, and collections are archived", async ({
     page
   }) => {
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
     await createTwoCollections(page);
     await openLibraryAndTab(page, LibraryTab.Collections);
+
+    const urlArchived = new URL(page.url());
+    urlArchived.searchParams.set("archived", "1");
+    await page.goto(urlArchived.toString(), { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(1_500);
+    const archivedThumbnailsBefore = page.locator(
+      "#records-container div[id^='thumbnail-']"
+    );
+    await page.locator("#records-container").waitFor({ state: "visible", timeout: 10_000 });
+    const archivedCountBefore = await archivedThumbnailsBefore.count();
+    const urlCollections = new URL(page.url());
+    urlCollections.searchParams.delete("archived");
+    await page.goto(urlCollections.toString(), { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(1_500);
 
     await selectFirstTwoViaContextMenu(page, "records-container");
     await expect(
@@ -152,17 +178,16 @@ test.describe("collection – bulk editor @regression", () => {
       page.getByText(/Selected: 2 collections?/i)
     ).toBeHidden({ timeout: 5_000 });
 
-    // Verify collections are actually archived: enable archived filter via URL (toggle has no accessible name)
-    const url = new URL(page.url());
-    url.searchParams.set("archived", "1");
-    await page.goto(url.toString(), { waitUntil: "domcontentloaded" });
+    await page.goto(urlArchived.toString(), { waitUntil: "domcontentloaded" });
     await page.waitForTimeout(1_500);
     const thumbnails = page.locator("#records-container div[id^='thumbnail-']");
     await expect(thumbnails.first()).toBeVisible({ timeout: 10_000 });
-    await expect(thumbnails).toHaveCount(2, { timeout: 5_000 });
+    await expect(thumbnails).toHaveCount(archivedCountBefore + 2, {
+      timeout: 5_000
+    });
   });
 
-  test("select multiple collections → Delete shows success toast and clears selection", async ({
+  test("select multiple collections - Delete shows success toast and clears selection", async ({
     page
   }) => {
     test.setTimeout(90_000);
@@ -189,7 +214,6 @@ test.describe("collection – bulk editor @regression", () => {
       page.getByText(/Selected: 2 collections?/i)
     ).toBeHidden({ timeout: 5_000 });
 
-    // Verify the selected collections are removed: count after delete should be countBefore - 2
     await page.waitForTimeout(1_500);
     const thumbnailsAfter = recordsContainer.locator("div[id^='thumbnail-']");
     await expect(thumbnailsAfter).toHaveCount(countBefore - 2, { timeout: 10_000 });

@@ -139,7 +139,7 @@ export async function runQuickFocusCommand(page: Page) {
 export const LibraryTab = {
   Nodes: /^Nodes(\s+\d+)?$/i,
   Collections: /^Collections(\s+\d+)?$/i,
-  Goals: /^Goals(\s+\d+)?$/i,
+  Goals: /^(Goals|Objectives)(\s+\d+)?$/i,
   Tasks: /^Tasks(\s+\d+)?$/i
 } as const;
 
@@ -156,7 +156,9 @@ export async function openLibraryAndTab(
     (u) => /^\/library(\/.*)?$/.test(new URL(u).pathname),
     { timeout: 10_000 }
   );
-  await page.getByRole("button", { name: tabName }).first().click({ timeout: 5_000 });
+  const tabButton = page.getByRole("button", { name: tabName }).first();
+  await tabButton.waitFor({ state: "visible", timeout: 10_000 });
+  await tabButton.click({ timeout: 5_000 });
   await page.waitForTimeout(1_500);
 }
 
@@ -230,8 +232,10 @@ export async function createTwoNodesViaCapture(page: Page): Promise<void> {
     await editor.click();
     await page.keyboard.type(`E2E bulk node ${i} ${Date.now()}`, { delay: 30 });
     await page.waitForTimeout(300);
-    const saveBtn = page.getByTestId("capture-save-button");
-    await saveBtn.click({ timeout: 5_000 });
+    const saveBtn = page
+      .getByTestId("capture-save-button")
+      .or(page.getByRole("button", { name: /^Save$/i }));
+    await saveBtn.first().click({ timeout: 10_000 });
     await page.waitForTimeout(1_500);
     const closeBtn = page.getByRole("button", { name: "Close" });
     await closeBtn.click({ timeout: 5_000 });
@@ -253,7 +257,7 @@ export async function dragSelectFirstTwoThumbnails(
 ): Promise<void> {
   const container = page.locator(`#${containerId}`);
   await container.waitFor({ state: "visible", timeout: 15_000 });
-  const thumbnails = page.locator('div[id^="thumbnail-"]');
+  const thumbnails = container.locator('div[id^="thumbnail-"]');
   await expect(thumbnails.first()).toBeVisible({ timeout: 20_000 });
   const count = await thumbnails.count();
   if (count < 2) {
@@ -286,7 +290,7 @@ export async function dragSelectFirstTwoThumbnails(
 }
 
 /**
- * Select the first two items via the 3-dots context menu → "Select" on each,
+ * Select the first two items via the 3-dots context menu - "Select" on each,
  * so the bulk edit bar (down bar with Star, Archive, Delete, etc.) appears.
  * @param page - Playwright page
  * @param containerId - id of the container (e.g. 'records-container' or 'task-library')

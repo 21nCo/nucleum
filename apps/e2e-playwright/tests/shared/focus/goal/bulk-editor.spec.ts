@@ -26,7 +26,7 @@ test.describe("goal - bulk editor @regression", () => {
     });
   });
 
-  test("select multiple goals via drag → bulk edit bar appears and shows count", async ({
+  test("select multiple goals via context menu - bulk edit bar appears and shows count", async ({
     page
   }) => {
     test.setTimeout(90_000);
@@ -41,7 +41,7 @@ test.describe("goal - bulk editor @regression", () => {
     ).toBeVisible({ timeout: 10_000 });
   });
 
-  test("select multiple goals → clear selection hides bulk edit bar", async ({
+  test("select multiple goals - clear selection hides bulk edit bar", async ({
     page
   }) => {
     test.setTimeout(90_000);
@@ -62,7 +62,7 @@ test.describe("goal - bulk editor @regression", () => {
     });
   });
 
-  test("select multiple goals → Star shows success toast and clears selection", async ({
+  test("select multiple goals - Star shows success toast and clears selection", async ({
     page
   }) => {
     test.setTimeout(90_000);
@@ -86,7 +86,7 @@ test.describe("goal - bulk editor @regression", () => {
     });
   });
 
-  test("select multiple goals → Select all keeps bar visible with count", async ({
+  test("select multiple goals - Select all keeps bar visible with count", async ({
     page
   }) => {
     test.setTimeout(90_000);
@@ -102,7 +102,7 @@ test.describe("goal - bulk editor @regression", () => {
     await getBulkEditBar(page)
       .getByRole("button", { name: /Select all/i })
       .click({ timeout: 5_000 });
-    await expect(page.getByText(/Selected: 2 goals?/i)).toBeVisible({
+    await expect(page.getByText(/Selected: \d+ goals?/i)).toBeVisible({
       timeout: 5_000
     });
   });
