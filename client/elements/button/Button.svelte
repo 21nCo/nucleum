@@ -38,6 +38,10 @@
    */
   export let isUnderlined: boolean = false;
   export let id: string = "";
+  /** Optional test id for e2e (e.g. data-testid) */
+  export let testId: string | undefined = undefined;
+  /** Accessible name when button is icon-only (e.g. for screen readers and e2e) */
+  export let ariaLabel: string | undefined = undefined;
   let buttonRef: any;
   export let isHovering: boolean = false;
   export let shortcut: string | IKeyboardShortcut | undefined = undefined;
@@ -70,6 +74,8 @@
 
 <button
   {id}
+  aria-label={ariaLabel}
+  data-testid={testId}
   use:hoverable={{
     onHover: (val) => {
       isHovering = val;
