@@ -128,6 +128,11 @@ test.describe("collection - bulk editor @regression", () => {
     await createTwoCollections(page);
     await openLibraryAndTab(page, LibraryTab.Collections);
 
+    const container = page.locator("#records-container");
+    const thumbnails = container.locator('div[id^="thumbnail-"]');
+    await expect(thumbnails.first()).toBeVisible({ timeout: 10_000 });
+    const totalCount = await thumbnails.count();
+
     await selectFirstTwoViaContextMenu(page, "records-container");
     await expect(
       page.getByText(/Selected: 2 collections?/i)
@@ -137,7 +142,7 @@ test.describe("collection - bulk editor @regression", () => {
       .getByRole("button", { name: /Select all/i })
       .click({ timeout: 5_000 });
     await expect(
-      page.getByText(/Selected: \d+ collections?/i)
+      page.getByText(new RegExp(`Selected: ${totalCount} collections?`, "i"))
     ).toBeVisible({ timeout: 5_000 });
   });
 

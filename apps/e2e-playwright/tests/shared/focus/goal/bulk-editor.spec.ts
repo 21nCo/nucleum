@@ -94,6 +94,11 @@ test.describe("goal - bulk editor @regression", () => {
     await createTwoGoals(page);
     await openLibraryAndTab(page, LibraryTab.Goals);
 
+    const container = page.locator("#records-container");
+    const thumbnails = container.locator('div[id^="thumbnail-"]');
+    await expect(thumbnails.first()).toBeVisible({ timeout: 10_000 });
+    const totalCount = await thumbnails.count();
+
     await selectFirstTwoViaContextMenu(page, "records-container");
     await expect(
       page.getByText(/Selected: 2 goals?/i)
@@ -102,8 +107,8 @@ test.describe("goal - bulk editor @regression", () => {
     await getBulkEditBar(page)
       .getByRole("button", { name: /Select all/i })
       .click({ timeout: 5_000 });
-    await expect(page.getByText(/Selected: \d+ goals?/i)).toBeVisible({
-      timeout: 5_000
-    });
+    await expect(
+      page.getByText(new RegExp(`Selected: ${totalCount} goals?`, "i"))
+    ).toBeVisible({ timeout: 5_000 });
   });
 });

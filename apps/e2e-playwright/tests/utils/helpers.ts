@@ -278,8 +278,16 @@ export async function dragSelectFirstTwoThumbnails(
   const minY = Math.min(box1.y, box2.y);
   const maxRight = Math.max(box1.x + box1.width, box2.x + box2.width);
   const maxBottom = Math.max(box1.y + box1.height, box2.y + box2.height);
-  const startX = Math.max(containerBox.x + 5, minX - 20);
-  const startY = Math.max(containerBox.y + 5, minY - 10);
+  const startX = minX - 20;
+  const startY = minY - 10;
+  if (
+    startX < containerBox.x + 1 ||
+    startY < containerBox.y + 1
+  ) {
+    throw new Error(
+      `No empty gutter before the first thumbnails in #${containerId}; cannot start marquee selection outside a card`
+    );
+  }
   const endX = maxRight + 20;
   const endY = maxBottom + 15;
   await page.mouse.move(startX, startY);
@@ -292,6 +300,8 @@ export async function dragSelectFirstTwoThumbnails(
 /**
  * Select the first two items via the 3-dots context menu - "Select" on each,
  * so the bulk edit bar (down bar with Star, Archive, Delete, etc.) appears.
+ * Uses the outer element with data-testid="thumbnail-context-menu-trigger";
+ * the inner button (ContextMenuAction) opens the menu.
  * @param page - Playwright page
  * @param containerId - id of the container (e.g. 'records-container' or 'task-library')
  */
@@ -314,7 +324,6 @@ export async function selectFirstTwoViaContextMenu(
     await thumb.scrollIntoViewIfNeeded();
     await thumb.hover();
     await page.waitForTimeout(250);
-    // 3-dots trigger: inner button (ContextMenuAction) opens the menu; outer has data-testid
     const triggerWrapper = thumb.getByTestId("thumbnail-context-menu-trigger");
     await triggerWrapper.locator("button").first().click({ timeout: 5_000 });
     await page.getByRole("button", { name: /^Select$/i }).click({ timeout: 5_000 });
