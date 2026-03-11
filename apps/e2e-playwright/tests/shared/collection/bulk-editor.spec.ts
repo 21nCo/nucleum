@@ -201,7 +201,9 @@ test.describe("collection - bulk editor @regression", () => {
     await openLibraryAndTab(page, LibraryTab.Collections);
 
     const recordsContainer = page.locator("#records-container");
+    await recordsContainer.waitFor({ state: "visible", timeout: 10_000 });
     const thumbnailsBefore = recordsContainer.locator("div[id^='thumbnail-']");
+    await expect(thumbnailsBefore.first()).toBeVisible({ timeout: 10_000 });
     const countBefore = await thumbnailsBefore.count();
 
     await selectFirstTwoViaContextMenu(page, "records-container");
