@@ -1,4 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
+import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
 import { ensureInAppOnHome, runCommand } from "../../../utils/helpers";
 
 const runtimeEnv = (
@@ -193,13 +194,13 @@ test.describe("node – context menu (from library, from record page) @regressio
       await openContextMenuOnNode(page, nodeName);
 
       const expectedItems = [
-        { value: "select", label: /Select|Unselect/i },
-        { value: "star", label: /Star this resource|Unstar/i },
+        { value: ResourceActionType.SELECT, label: /Select|Unselect/i },
+        { value: ResourceActionType.STAR, label: /Star this resource|Unstar/i },
         { value: "addToCollection", label: /Add to collection/i },
-        { value: "edit", label: /^Edit$/i },
-        { value: "COPY_LINK", label: /Copy link/i },
-        { value: "archive", label: /^archive$/i },
-        { value: "delete", label: /^delete$/i }
+        { value: ResourceActionType.EDIT, label: /^Edit$/i },
+        { value: ResourceActionType.COPY_LINK, label: /Copy link/i },
+        { value: ResourceActionType.ARCHIVE, label: /^archive$/i },
+        { value: ResourceActionType.DELETE, label: /^delete$/i }
       ];
 
       for (const item of expectedItems) {
@@ -224,7 +225,9 @@ test.describe("node – context menu (from library, from record page) @regressio
       ).toBeVisible({ timeout: 15_000 });
 
       await openContextMenuOnNode(page, nodeName);
-      const starItem = page.locator('[data-context-menu-item-id="star"]');
+      const starItem = page.locator(
+        `[data-context-menu-item-id="${ResourceActionType.STAR}"]`
+      );
       await expect(starItem).toContainText(/Star this resource/i);
       await starItem.click();
       await page.waitForTimeout(1_000);
@@ -251,7 +254,7 @@ test.describe("node – context menu (from library, from record page) @regressio
       ).toBeVisible({ timeout: 15_000 });
 
       await openContextMenuOnNode(page, nodeName);
-      await clickContextMenuItem(page, "COPY_LINK");
+      await clickContextMenuItem(page, ResourceActionType.COPY_LINK);
 
       await expect(
         page.getByText(/link copied/i).first()
@@ -270,7 +273,7 @@ test.describe("node – context menu (from library, from record page) @regressio
       ).toBeVisible({ timeout: 15_000 });
 
       await openContextMenuOnNode(page, nodeName);
-      await clickContextMenuItem(page, "edit");
+      await clickContextMenuItem(page, ResourceActionType.EDIT);
 
       await expect(page.getByText(nodeName).first()).toBeVisible({
         timeout: 10_000
@@ -306,7 +309,7 @@ test.describe("node – context menu (from library, from record page) @regressio
 
       await openContextMenuOnNode(page, nodeName);
       const archiveItem = page.locator(
-        '[data-context-menu-item-id="archive"]'
+        `[data-context-menu-item-id="${ResourceActionType.ARCHIVE}"]`
       );
       await expect(archiveItem).toBeVisible({ timeout: 5_000 });
       await archiveItem.click();
@@ -340,7 +343,7 @@ test.describe("node – context menu (from library, from record page) @regressio
 
       await openContextMenuOnNode(page, nodeName);
       const unarchiveItem = page.locator(
-        '[data-context-menu-item-id="unarchive"]'
+        `[data-context-menu-item-id="${ResourceActionType.UNARCHIVE}"]`
       );
       await expect(unarchiveItem).toBeVisible({ timeout: 5_000 });
       await unarchiveItem.click();
@@ -369,7 +372,7 @@ test.describe("node – context menu (from library, from record page) @regressio
 
       await openContextMenuOnNode(page, nodeName);
       const deleteItem = page.locator(
-        '[data-context-menu-item-id="delete"]'
+        `[data-context-menu-item-id="${ResourceActionType.DELETE}"]`
       );
       await expect(deleteItem).toBeVisible({ timeout: 5_000 });
       await deleteItem.click();
@@ -398,7 +401,7 @@ test.describe("node – context menu (from library, from record page) @regressio
 
         await openContextMenuOnNode(page, nodeName);
         const restoreItem = page.locator(
-          '[data-context-menu-item-id="restore"]'
+          `[data-context-menu-item-id="${ResourceActionType.RESTORE}"]`
         );
         await expect(restoreItem).toBeVisible({ timeout: 5_000 });
         await restoreItem.click();
@@ -461,7 +464,7 @@ test.describe("node – context menu (from library, from record page) @regressio
       ).toBeVisible({ timeout: 15_000 });
 
       await openContextMenuOnNode(page, nodeName);
-      await clickContextMenuItem(page, "select");
+      await clickContextMenuItem(page, ResourceActionType.SELECT);
       await page.waitForTimeout(1_000);
 
       const nodeRow = page
@@ -530,11 +533,11 @@ test.describe("node – context menu (from library, from record page) @regressio
       await openRecordPageContextMenu(page);
 
       const expectedRecordItems = [
-        { value: "star" },
-        { value: "edit" },
-        { value: "COPY_LINK" },
-        { value: "archive" },
-        { value: "delete" }
+        { value: ResourceActionType.STAR },
+        { value: ResourceActionType.EDIT },
+        { value: ResourceActionType.COPY_LINK },
+        { value: ResourceActionType.ARCHIVE },
+        { value: ResourceActionType.DELETE }
       ];
 
       for (const item of expectedRecordItems) {
@@ -570,7 +573,9 @@ test.describe("node – context menu (from library, from record page) @regressio
 
       await openRecordPageContextMenu(page);
 
-      const starItem = page.locator('[data-context-menu-item-id="star"]');
+      const starItem = page.locator(
+        `[data-context-menu-item-id="${ResourceActionType.STAR}"]`
+      );
       if (await starItem.isVisible().catch(() => false)) {
         await expect(starItem).toContainText(/Star this resource/i);
         await starItem.click();
@@ -579,7 +584,7 @@ test.describe("node – context menu (from library, from record page) @regressio
         await openRecordPageContextMenu(page);
 
         await expect(
-          page.locator('[data-context-menu-item-id="star"]')
+          page.locator(`[data-context-menu-item-id="${ResourceActionType.STAR}"]`)
         ).toContainText(/Unstar/i);
       }
 
