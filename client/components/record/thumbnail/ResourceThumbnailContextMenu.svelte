@@ -51,6 +51,7 @@
 </script>
 
 <button
+  data-testid="thumbnail-context-menu-trigger"
   class={cn(
     "flex gap-2 p--1",
     {

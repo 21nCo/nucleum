@@ -16,7 +16,7 @@ export default defineConfig({
     format: "es"
   },
   server: {
-    allowedHosts: ["local.nucleum.app"]
+    allowedHosts: ["local.nucleum.app", "local.nucleus.to"]
   },
   build: {
     target: "esnext",

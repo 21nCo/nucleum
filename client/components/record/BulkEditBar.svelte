@@ -176,6 +176,7 @@
 
 <!-- TODO - invert color layer with corresponding opposite light/dark color scheme -->
 <div
+  data-testid="bulk-edit-bar"
   class="grid grid-cols-[auto_1fr_auto] gap-3 items-center text-fgs1 overflow-auto w-full px-3"
 >
   <span class="flex whitespace-nowrap">
@@ -203,6 +204,7 @@
       {:else}
         <Button
           label={isExpandedMode ? action.label : undefined}
+          ariaLabel={isExpandedMode ? undefined : action.label}
           tooltip={isExpandedMode ? undefined : action.label}
           icon={action.icon}
           type={action.label === "Delete"
@@ -223,6 +225,7 @@
     {#each rightActions as action}
       <Button
         label={isExpandedMode ? action.label : undefined}
+        ariaLabel={isExpandedMode ? undefined : action.label}
         tooltip={isExpandedMode ? undefined : action.label}
         icon={action.icon}
         {parentBgIndex}

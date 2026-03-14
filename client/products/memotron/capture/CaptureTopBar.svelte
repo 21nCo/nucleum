@@ -125,6 +125,7 @@
         {#if $captureStore.method === CaptureMethod.MARKDOWN}
           <Button
             testId="capture-save-button"
+            ariaLabel="Save"
             label={isHomeContext ? undefined : "Save"}
             type={ButtonVariant.PRIMARY}
             size={isHomeContext ? Size.md : Size.sm}
