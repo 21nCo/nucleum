@@ -140,7 +140,7 @@
       $context.dapId = dapId;
       const appDataFromUrl = extractProduct(
         import.meta.env?.VITE_HOST ??
-          process.env.PLASMO_PUBLIC_APP_URL ??
+          (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_APP_URL : undefined) ??
           window.location.host
       );
       const appDetails = {

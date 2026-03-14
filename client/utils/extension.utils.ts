@@ -128,6 +128,7 @@ export async function openAppPath(path: string) {
 
 export function resolveAppPath(path: string) {
   const appUrl =
-    process.env.PLASMO_PUBLIC_APP_URL ?? "https://web.memotron.app";
+    (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_APP_URL : undefined) ??
+    "https://web.memotron.app";
   return appUrl + "/" + path;
 }

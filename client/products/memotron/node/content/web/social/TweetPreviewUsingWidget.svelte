@@ -47,7 +47,11 @@
             // cards: "visible"
           })
           .then((el) => {
-            if (el && process.env.NODE_ENV === "development") {
+            if (
+              el &&
+              typeof process !== "undefined" &&
+              process.env?.NODE_ENV === "development"
+            ) {
               console.log("Tweet widget created successfully");
             }
           })
