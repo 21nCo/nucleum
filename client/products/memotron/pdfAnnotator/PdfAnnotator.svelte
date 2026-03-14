@@ -1036,7 +1036,13 @@
                   url.toString(),
                   embed_message_id
                 );
-                pdfData = Buffer.from(response);
+                // Browser-safe: use base64ToUint8Array like PdfViewer; no Buffer in browser
+                const uint8 =
+                  fileEmbedChannel.base64ToUint8Array?.(response) ??
+                  (response instanceof ArrayBuffer
+                    ? new Uint8Array(response)
+                    : new Uint8Array(response));
+                pdfData = uint8.buffer;
               } else {
                 pdfData = await fetch(url.toString()).then((response) =>
                   response.arrayBuffer()

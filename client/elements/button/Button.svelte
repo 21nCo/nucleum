@@ -38,8 +38,9 @@
    */
   export let isUnderlined: boolean = false;
   export let id: string = "";
-  export let testId: string | undefined = undefined;
   export let ariaLabel: string | undefined = undefined;
+  /** Optional test id for e2e (e.g. data-testid) */
+  export let testId: string | undefined = undefined;
   let buttonRef: any;
   export let isHovering: boolean = false;
   export let shortcut: string | IKeyboardShortcut | undefined = undefined;

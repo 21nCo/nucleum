@@ -35,7 +35,7 @@
   $: currentPage = extractProduct(window.location.hostname);
   $: isSelfPage =
     currentPage.product === "memotron" ||
-    process.env.NODE_ENV === "development";
+    (typeof process !== "undefined" ? process.env?.NODE_ENV === "development" : false);
 
   const sprites = [
     "sprite",

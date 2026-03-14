@@ -141,7 +141,10 @@ test.describe("shared - auth and nav @regression", () => {
       await page.waitForLoadState("domcontentloaded").catch(() => null);
     }
 
-    const contentTimeout = 20_000;
+    // Allow app shell and nav to render (CI can be slow after Vite cold start)
+    await page.waitForLoadState("networkidle").catch(() => null);
+
+    const contentTimeout = 35_000;
     const homeNav = page
       .getByRole("button")
       .filter({ hasText: /^Home$/i })
@@ -152,7 +155,7 @@ test.describe("shared - auth and nav @regression", () => {
         .filter({ hasText: new RegExp(`^${label}$`, "i") })
         .first()
     );
-    const todayButton = page.getByRole("button", { name: "Today" }).first();
+    const todayButton = page.getByRole("button", { name: /^Today$/i }).first();
     const allMarkers = [homeNav, ...navMarkers, todayButton];
     await expect
       .poll(

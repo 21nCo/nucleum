@@ -21,7 +21,7 @@ class Logger {
       } else {
         this.level =
           import.meta.env?.VITE_LOG_LEVEL ??
-          process.env.PLASMO_PUBLIC_LOG_LEVEL ??
+          (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_LOG_LEVEL : undefined) ??
           LogType.INFO;
       }
     } catch (e) {

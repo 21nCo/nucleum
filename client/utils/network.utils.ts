@@ -23,15 +23,18 @@ export function resolveRegionalApiUrl() {
     const tzOffset = -new Date().getTimezoneOffset() * 60;
     if (tzOffset < -10800) {
       return (
-        import.meta.env?.VITE_API_US_URL ?? process.env.PLASMO_PUBLIC_API_US_URL
+        import.meta.env?.VITE_API_US_URL ??
+        (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_API_US_URL : undefined)
       );
     } else if (tzOffset > -10800 && tzOffset < 10800) {
       return (
-        import.meta.env?.VITE_API_EU_URL ?? process.env.PLASMO_PUBLIC_API_EU_URL
+        import.meta.env?.VITE_API_EU_URL ??
+        (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_API_EU_URL : undefined)
       );
     } else {
       return (
-        import.meta.env?.VITE_API_AS_URL ?? process.env.PLASMO_PUBLIC_API_AS_URL
+        import.meta.env?.VITE_API_AS_URL ??
+        (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_API_AS_URL : undefined)
       );
     }
   } catch (e) {
@@ -231,11 +234,12 @@ export async function performApiCall(
     return response;
   }
   let baseUrl =
-    import.meta.env?.VITE_API_URL ?? process.env.PLASMO_PUBLIC_API_URL;
+    import.meta.env?.VITE_API_URL ??
+    (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_API_URL : undefined);
   if (params?.isFileApi) {
     baseUrl =
       import.meta.env?.VITE_FILE_API_URL ??
-      process.env.PLASMO_PUBLIC_FILE_API_URL;
+      (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_FILE_API_URL : undefined);
   }
   return performHttpNetworkOperation({
     url: baseUrl + "/" + endpoint,
@@ -266,7 +270,9 @@ export async function performApiCall(
       dapId,
       deviceFingerprint,
       host:
-        import.meta.env?.VITE_HOST ?? process.env.PLASMO_PUBLIC_APP_URL ?? host,
+        import.meta.env?.VITE_HOST ??
+        (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_APP_URL : undefined) ??
+        host,
       href,
       timezone: detectTimeZone(),
       geo: null,
