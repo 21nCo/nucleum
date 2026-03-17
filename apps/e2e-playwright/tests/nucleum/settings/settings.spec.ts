@@ -10,8 +10,8 @@ test.skip(
   "E2E suite disabled by environment"
 );
 
-/** Nucleus-only settings: footer app version. Open/close/navigate and Mode of interaction are in shared/settings. */
-test.describe("nucleus - settings (product-specific) @regression", () => {
+/** Nucleum-only settings: footer app version. Open/close/navigate and Mode of interaction are in shared/settings. */
+test.describe("nucleum – settings (product-specific) @regression", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -31,7 +31,7 @@ test.describe("nucleus - settings (product-specific) @regression", () => {
     await page.waitForTimeout(500);
   }
 
-  test("Settings footer shows app version (Nucleus)", async ({ page }) => {
+  test("Settings footer shows app version (Nucleum)", async ({ page }) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
 
@@ -40,7 +40,7 @@ test.describe("nucleus - settings (product-specific) @regression", () => {
       timeout: 10_000
     });
 
-    await expect(page.getByText(/Nucleus\s+v?[\d.]+/i).first()).toBeVisible({
+    await expect(page.getByText(/Nucleum\s+v?[\d.]+/i).first()).toBeVisible({
       timeout: 5_000
     });
   });

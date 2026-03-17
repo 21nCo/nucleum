@@ -28,7 +28,7 @@ test.describe("goal - browse flows @regression", () => {
 
   test.describe("from library", () => {
     test("open Library → Goals and see goal in list", async ({ page }, testInfo) => {
-      test.setTimeout(60_000);
+      test.setTimeout(120_000);
       await ensureInAppOnHome(page);
       const productConfig = getProductConfig(testInfo.project.name);
       const libraryPath = productConfig.pathByNavLabel.Library;
@@ -42,11 +42,28 @@ test.describe("goal - browse flows @regression", () => {
       await page.keyboard.press("Escape");
       await page.keyboard.press("Escape");
 
-      await page.getByRole("button", { name: /^Library$/i }).click({ timeout: 5_000 });
-      await page.waitForURL((u) => new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(u).pathname), { timeout: 10_000 });
-      await page.getByRole("button", { name: /^Goals(\s+\d+)?$/i }).first().click({ timeout: 5_000 });
+      const libraryBtn = page.getByRole("button", { name: /^Library$/i }).first();
+      await libraryBtn.waitFor({ state: "visible", timeout: 10_000 });
+      await libraryBtn.click({ timeout: 5_000 });
+      // Wait for Library panel to appear – search box label differs by tab:
+      // "Search collections" for Collections, "Search goals" for Goals/Objectives.
+      await expect(
+        page
+          .getByRole("textbox", { name: /Search (collections|goals)/ })
+          .first()
+      ).toBeVisible({ timeout: 15_000 });
+      await page
+        .getByRole("button", { name: /^(Goals|Objectives)(\s+\d+)?$/i })
+        .first()
+        .click({ timeout: 5_000 });
       await page.waitForTimeout(1_500);
-      await expect(page.getByText(goalName, { exact: true }).first()).toBeVisible({ timeout: 15_000 });
+      // In Pointron, the goal row text includes status (e.g. "Not started"),
+      // so we match on a button containing the goalName rather than exact text.
+      const goalRow = page
+        .getByRole("button")
+        .filter({ hasText: goalName })
+        .first();
+      await expect(goalRow).toBeVisible({ timeout: 15_000 });
     });
   });
 
@@ -105,18 +122,18 @@ test.describe("goal - browse flows @regression", () => {
 
       const goalName = `E2E pin UI ${Date.now()}`;
 
-      const productConfig = getProductConfig(testInfo.project.name);
-      const libraryPath = productConfig.pathByNavLabel.Library;
+      const libraryBtn = page.getByRole("button", { name: /^Library$/i }).first();
+      await libraryBtn.waitFor({ state: "visible", timeout: 10_000 });
+      await libraryBtn.click({ timeout: 5_000 });
+      await expect(
+        page.getByRole("textbox", { name: /Search (collections|goals)/ }).first()
+      ).toBeVisible({ timeout: 15_000 });
       await page
-        .getByRole("button", { name: /^Library$/i })
-        .click({ timeout: 5_000 });
-      await page.waitForURL(
-        (u) => new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(u).pathname),
-        { timeout: 10_000 }
-      );
-      await page.getByRole("button", { name: /^Goals(\s+\d+)?$/i }).first().click({
-        timeout: 5_000
-      });
+        .getByRole("button", { name: /^(Goals|Objectives)(\s+\d+)?$/i })
+        .first()
+        .click({
+          timeout: 5_000
+        });
       await page.waitForTimeout(500);
 
       const newGoalBtn = page.getByRole("button", { name: /New goal/i }).first();

@@ -285,7 +285,7 @@ test.describe("goal – context menu (all actions) @regression", () => {
         await page.waitForTimeout(500);
       }
 
-      // Pointron has Quick Focus panel (quick-focus-search); Nucleus does not.
+      // Pointron has Quick Focus panel (quick-focus-search); Nucleum does not.
       // Navigate to Focus view via nav button so Quick Start panel with quick-focus-search is visible.
       const isPointron = testInfo.project.name === "pointron";
       if (isPointron) {
@@ -306,7 +306,7 @@ test.describe("goal – context menu (all actions) @regression", () => {
         await dismissAnyModals(page);
         await navigateToLibraryGoals(page);
       } else {
-        // Nucleus: just verify pin state by unpinning via context menu
+        // Nucleum: just verify pin state by unpinning via context menu
         await navigateToLibraryGoals(page);
       }
 

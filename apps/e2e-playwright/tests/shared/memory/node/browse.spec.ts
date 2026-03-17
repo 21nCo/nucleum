@@ -1,5 +1,9 @@
-import { test } from "@playwright/test";
-import { ensureInAppOnHome } from "../../../utils/helpers";
+import { test, expect } from "@playwright/test";
+import {
+  ensureInAppOnHome,
+  openLibraryAndTab,
+  LibraryTab
+} from "../../../utils/helpers";
 
 const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
@@ -19,13 +23,20 @@ test.describe("node - browse flows (from library, from pinned) @regression", () 
     });
   });
 
-  test.skip("browse nodes from library", async ({ page }) => {
-    await ensureInAppOnHome(page);
-    // TODO
+  test.describe("from library", () => {
+    test("open Library → Nodes and see nodes list", async ({ page }) => {
+      test.setTimeout(120_000);
+      await ensureInAppOnHome(page);
+      await openLibraryAndTab(page, LibraryTab.Nodes);
+      const recordsContainer = page.locator("#records-container");
+      await expect(recordsContainer).toBeVisible({ timeout: 15_000 });
+    });
   });
 
-  test.skip("browse nodes from pinned resource browser", async ({ page }) => {
-    await ensureInAppOnHome(page);
-    // TODO
+  test.describe("from pinned resource browser", () => {
+    test.skip("browse nodes from pinned resource browser", async ({ page }) => {
+      await ensureInAppOnHome(page);
+      // Pinned resource browser (app menu) shows pinned library sections; no dedicated "pinned nodes" list like Quick Focus for goals. N/A or product-specific.
+    });
   });
 });

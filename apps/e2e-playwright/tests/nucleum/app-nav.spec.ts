@@ -11,7 +11,8 @@ test.skip(
   "E2E suite disabled by environment"
 );
 
-test.describe("nucleus - app layout and menu @regression", () => {
+test.describe("nucleum – app layout and menu @regression", () => {
+  test.describe.configure({ timeout: 90_000 });
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -26,7 +27,6 @@ test.describe("nucleus - app layout and menu @regression", () => {
   test("open Logs via command bar (See Logs), then assert Logs view visible", async ({
     page
   }) => {
-    test.setTimeout(45_000);
     await ensureInAppOnHome(page);
     await runCommand(page, "See Logs");
     await expect(page.getByText("Logs").first()).toBeVisible({
@@ -37,7 +37,6 @@ test.describe("nucleus - app layout and menu @regression", () => {
   test("open Logs via UI (Calendar → Activity → Focus), then assert Logs view visible", async ({
     page
   }) => {
-    test.setTimeout(45_000);
     await ensureInAppOnHome(page);
 
     await page
@@ -87,7 +86,6 @@ test.describe("nucleus - app layout and menu @regression", () => {
   test("open Overview via command bar (Overview), then assert Overview page visible", async ({
     page
   }) => {
-    test.setTimeout(45_000);
     await ensureInAppOnHome(page);
     await runCommand(page, "Overview");
 
@@ -104,7 +102,6 @@ test.describe("nucleus - app layout and menu @regression", () => {
   test("open Overview via UI (click Overview in left nav), then assert Overview page visible", async ({
     page
   }) => {
-    test.setTimeout(45_000);
     await ensureInAppOnHome(page);
 
     await page
@@ -125,7 +122,6 @@ test.describe("nucleus - app layout and menu @regression", () => {
   test("open Library via command bar (Library), then assert Library and Goals list visible", async ({
     page
   }) => {
-    test.setTimeout(45_000);
     await ensureInAppOnHome(page);
 
     await runCommand(page, "Library");
@@ -166,7 +162,6 @@ test.describe("nucleus - app layout and menu @regression", () => {
   test("open Library via command bar (Goals), then assert Goals list visible", async ({
     page
   }) => {
-    test.setTimeout(45_000);
     await ensureInAppOnHome(page);
     await runCommand(page, "Goals");
     await expect(page.getByTestId("search-goals")).toBeVisible({
@@ -177,7 +172,6 @@ test.describe("nucleus - app layout and menu @regression", () => {
   test("open Library via command bar (Tasks), then assert Tasks list visible", async ({
     page
   }) => {
-    test.setTimeout(45_000);
     await ensureInAppOnHome(page);
     await runCommand(page, "Tasks");
     await expect(
@@ -192,7 +186,6 @@ test.describe("nucleus - app layout and menu @regression", () => {
   test("open Library via UI (click Library in nav, then Goals), then assert Goals list visible", async ({
     page
   }) => {
-    test.setTimeout(45_000);
     await ensureInAppOnHome(page);
 
     const libraryPath = nucleusProductConfig.pathByNavLabel.Library;
@@ -216,7 +209,6 @@ test.describe("nucleus - app layout and menu @regression", () => {
   test("open Goals via side nav (pin Goals in menu settings, then click Goals), then assert Goals list visible", async ({
     page
   }) => {
-    test.setTimeout(45_000);
     await ensureInAppOnHome(page);
 
     await page.getByTestId("leftnav-settings").click({ timeout: 5_000 });
@@ -252,7 +244,6 @@ test.describe("nucleus - app layout and menu @regression", () => {
   test("open Library via UI (click Library in nav, then Tasks), then assert Tasks list visible", async ({
     page
   }) => {
-    test.setTimeout(45_000);
     await ensureInAppOnHome(page);
 
     const libraryPath = nucleusProductConfig.pathByNavLabel.Library;

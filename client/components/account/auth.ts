@@ -67,7 +67,13 @@ async function performCheckUsingSessionAPI() {
   }
 }
 
-export function performSessionCheck(): Promise<boolean | undefined> {
-  //TODO: Implement offline user case
-  return performCheckUsingSessionAPI();
+export async function performSessionCheck(): Promise<boolean | undefined> {
+  if (typeof window === "undefined") return false;
+  const offlineSessionId = await clientStorage.get(
+    ClientStorageKey.OFFLINE_SESSION_ID
+  );
+  if (offlineSessionId) return true;
+  const cloudSession = await performCheckUsingSessionAPI();
+  if (cloudSession) return true;
+  return cloudSession;
 }

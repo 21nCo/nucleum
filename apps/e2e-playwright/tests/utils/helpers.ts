@@ -17,30 +17,191 @@ function resolveProductConfig() {
   }
 }
 
+const runtimeEnv = (
+  globalThis as { process?: { env?: Record<string, string | undefined> } }
+).process?.env;
+
+
+/**
+ * Log in with email/password from env (E2E_LOGIN_EMAIL, E2E_LOGIN_PASSWORD).
+ * Navigates to /account/login, selects Log in, fills credentials, submits.
+ * Returns true if login was attempted and URL left login page; false if env not set or login failed.
+ */
+export async function loginWithEnvCredentials(page: Page): Promise<boolean> {
+  const email = runtimeEnv?.E2E_LOGIN_EMAIL;
+  const password = runtimeEnv?.E2E_LOGIN_PASSWORD;
+  if (!email?.trim() || !password) return false;
+
+  const currentPath = new URL(page.url()).pathname;
+  if (currentPath !== "/account/login") {
+    await page.goto("/account/login", { waitUntil: "domcontentloaded" });
+    await page.waitForLoadState("domcontentloaded");
+  }
+
+  // Click the "Log in" tab (Sign up / Log in / Offline).
+  const logInTab = page.getByRole("button", { name: "Log in" }).first();
+  await logInTab.waitFor({ state: "visible", timeout: 10_000 }).catch(() => null);
+  await logInTab.click({ timeout: 5_000 }).catch(() => null);
+  await page.waitForTimeout(500);
+
+  const emailInput = page.getByPlaceholder("username@email.com");
+  // On some self-hosted instances, there is no email/password login at all.
+  // If the email field never appears, treat this as "login not available".
+  const emailVisible = await emailInput
+    .waitFor({ state: "visible", timeout: 8_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!emailVisible) return false;
+  await emailInput.fill(email);
+  await page.waitForTimeout(300);
+
+  const enterPasswordBtn = page.getByRole("button", { name: "Enter password" });
+  await enterPasswordBtn.waitFor({ state: "visible", timeout: 5_000 });
+  await enterPasswordBtn.click();
+  await page.waitForTimeout(500);
+
+  const passwordInput = page.locator("#password");
+  await passwordInput.waitFor({ state: "visible", timeout: 5_000 });
+  await passwordInput.fill(password);
+  await page.waitForTimeout(300);
+
+  const submitBtn = page.getByRole("button", { name: "Log in" }).last();
+  await submitBtn.click({ timeout: 5_000 });
+  // Success = we left /account/login. App may redirect to /signup (where we then click "Continue offline") or to app home.
+  const leftLogin = await page
+    .waitForURL(
+      (u) => new URL(u).pathname !== "/account/login",
+      { timeout: 25_000, waitUntil: "domcontentloaded" }
+    )
+    .then(() => true)
+    .catch(() => false);
+  return leftLogin;
+}
+
+/**
+ * Ensure we're in the app (login with env credentials, or dismiss signup with continue offline) and on the home (calendar),
+ * with app nav visible. Uses E2E_LOGIN_EMAIL + E2E_LOGIN_PASSWORD from env when set; otherwise continue offline.
+ * Waits for any product's nav label (Focus, Capture, Calendar, Overview, Library) so it works for nucleum, pointron, and memotron.
+ */
 export async function ensureInAppOnHome(page: Page) {
-  await page.goto("/");
+  const safeGoto = async (url: string) => {
+    try {
+      await page.goto(url, { waitUntil: "domcontentloaded" });
+    } catch (err) {
+      const message = (err as Error).message || "";
+      if (!/ERR_CONNECTION_REFUSED/i.test(message)) throw err;
+      // Dev server may have restarted between tests – wait briefly and retry once.
+      await page.waitForTimeout(1_000);
+      await page.goto(url, { waitUntil: "domcontentloaded" });
+    }
+  };
+
+  await safeGoto("/");
   await page.waitForLoadState("domcontentloaded");
 
+  const pathname = new URL(page.url()).pathname;
+  const onAuthPage =
+    pathname === "/signup" ||
+    pathname === "/account/login" ||
+    pathname === "/";
+  if (
+    onAuthPage &&
+    runtimeEnv?.E2E_LOGIN_EMAIL?.trim() &&
+    runtimeEnv?.E2E_LOGIN_PASSWORD
+  ) {
+    // When app shows minimal "Embed token: false" + "Login/Signup" view (path "/"), click the button to open the login page.
+    if (pathname === "/") {
+      const loginSignupBtn = page.getByRole("button", {
+        name: /Login\/Signup|Login \/ Signup/i
+      }).first();
+      const visible = await loginSignupBtn
+        .waitFor({ state: "visible", timeout: 8_000 })
+        .then(() => true)
+        .catch(() => false);
+      if (visible) {
+        await loginSignupBtn.click({ timeout: 5_000 });
+        await page
+          .waitForURL(/\/account\/login/, {
+            timeout: 15_000,
+            waitUntil: "domcontentloaded"
+          })
+          .catch(() => null);
+        await page.waitForLoadState("domcontentloaded").catch(() => null);
+      }
+    } else if (pathname !== "/account/login") {
+      await page.goto("/account/login", { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("domcontentloaded");
+    }
+    const loggedIn = await loginWithEnvCredentials(page);
+    if (loggedIn) {
+      await page.waitForLoadState("domcontentloaded");
+      const afterLoginPath = new URL(page.url()).pathname;
+      // If app redirected to /signup after login, do not navigate away — we will click "Continue offline" there below.
+      if (afterLoginPath !== "/signup" && afterLoginPath !== "/account/login") {
+        await page.goto("/");
+        await page.waitForLoadState("domcontentloaded");
+      }
+    }
+  }
+
   const clickContinueOfflineIfVisible = async () => {
+    const pathname = new URL(page.url()).pathname;
+    // On /account/login the working "Continue offline" is on /signup; the Offline tab here shows "Continue using offline" (currently no-op in app). Click Offline tab first so that button is visible if the app ever wires it.
+    if (pathname === "/") {
+      // Self-hosted welcome screen: primary CTA is a bare "Continue offline" button.
+      const rootContinueOffline = page
+        .getByRole("button", { name: /Continue (using )?offline/i })
+        .first();
+      try {
+        await rootContinueOffline.waitFor({ state: "visible", timeout: 10_000 });
+      } catch {
+        return false;
+      }
+      const beforePathRoot = new URL(page.url()).pathname;
+      await rootContinueOffline.click({ timeout: 5_000, force: true }).catch(() => null);
+      await page.waitForLoadState("domcontentloaded").catch(() => null);
+      // Wait for SPA to leave "/" (navigation may be async)
+      const leftRoot = await page
+        .waitForURL((u) => new URL(u).pathname !== "/", { timeout: 15_000 })
+        .then(() => true)
+        .catch(() => false);
+      return leftRoot || new URL(page.url()).pathname !== beforePathRoot;
+    }
+    if (pathname === "/account/login") {
+      const offlineTab = page.getByRole("button", { name: "Offline" }).first();
+      await offlineTab.waitFor({ state: "visible", timeout: 3_000 }).catch(() => null);
+      await offlineTab.click({ timeout: 2_000, force: true }).catch(() => null);
+      await page.waitForTimeout(500);
+    }
+    const continueOfflineAny = page.getByRole("button", {
+      name: /Continue (using )?offline/i
+    }).first();
     const continueOfflineMain = page
       .getByRole("button", { name: /Continue (using )?offline/i })
       .filter({ hasText: /Single device|free forever|No signup/i })
       .first();
-    const continueOfflineAny = page.getByRole("button", {
-      name: /Continue (using )?offline/i
-    }).first();
-    const pathname = new URL(page.url()).pathname;
     const waitMs =
       pathname === "/signup" || pathname === "/account/login" ? 10_000 : 3_000;
-    let target = continueOfflineMain;
-    try {
-      await continueOfflineMain.waitFor({ state: "visible", timeout: waitMs });
-    } catch {
+    // On /signup (e.g. self-hosted) the button may be just "Continue offline" without "Single device..." text. Try the unfiltered button first so we click it immediately.
+    let target: ReturnType<typeof page.getByRole>;
+    if (pathname === "/signup") {
       try {
-        await continueOfflineAny.waitFor({ state: "visible", timeout: 2_000 });
+        await continueOfflineAny.waitFor({ state: "visible", timeout: waitMs });
         target = continueOfflineAny;
       } catch {
         return false;
+      }
+    } else {
+      try {
+        await continueOfflineMain.waitFor({ state: "visible", timeout: waitMs });
+        target = continueOfflineMain;
+      } catch {
+        try {
+          await continueOfflineAny.waitFor({ state: "visible", timeout: 2_000 });
+          target = continueOfflineAny;
+        } catch {
+          return false;
+        }
       }
     }
     const beforePath = new URL(page.url()).pathname;
@@ -52,7 +213,7 @@ export async function ensureInAppOnHome(page: Page) {
           const p = new URL(u).pathname;
           return p !== "/signup" && p !== "/account/login";
         },
-        { timeout: 8_000 }
+        { timeout: 8_000, waitUntil: "domcontentloaded" }
       )
       .then(() => true)
       .catch(() => false);
@@ -63,6 +224,21 @@ export async function ensureInAppOnHome(page: Page) {
     const handled = await clickContinueOfflineIfVisible();
     if (!handled) break;
   }
+  // If still on login page, the "Continue offline" that works lives on /signup (AccountForm), not on /account/login (Login.svelte's button is no-op). Go there and try again.
+  const pathAfterLoops = new URL(page.url()).pathname;
+  if (
+    pathAfterLoops === "/account/login" ||
+    pathAfterLoops === "/signup" ||
+    pathAfterLoops === "/"
+  ) {
+    await safeGoto("/signup");
+    await page.waitForLoadState("domcontentloaded").catch(() => null);
+    for (let j = 0; j < 3; j += 1) {
+      const handled = await clickContinueOfflineIfVisible();
+      if (!handled) break;
+      await page.waitForLoadState("domcontentloaded").catch(() => null);
+    }
+  }
   for (let i = 0; i < 3; i += 1) {
     const handled = await clickContinueOfflineIfVisible();
     if (!handled) break;
@@ -70,22 +246,38 @@ export async function ensureInAppOnHome(page: Page) {
   }
 
   const productConfig = resolveProductConfig();
-  await page.goto(productConfig.homePath, { waitUntil: "domcontentloaded" });
-  await page
-    .waitForURL(
+  await page.goto(`/${productConfig.homePath}`, { waitUntil: "domcontentloaded" });
+  // Wait until we're past signup/login (app may redirect / to /calendar). Use domcontentloaded so SPA client-side nav is enough.
+  await page.waitForURL(
+    (u) => {
+      const p = new URL(u).pathname;
+      return p !== "/signup" && p !== "/account/login";
+    },
+    { timeout: 25_000, waitUntil: "domcontentloaded" }
+  );
+
+  // If we're not already on home, navigate there (relative path = same origin).
+  const currentPath = new URL(page.url()).pathname;
+  const onHome =
+    currentPath === `/${productConfig.homePath}` ||
+    currentPath.startsWith(`/${productConfig.homePath}/`);
+  if (!onHome) {
+    await page.goto(`/${productConfig.homePath}`, {
+      waitUntil: "domcontentloaded"
+    });
+    await page.waitForURL(
       (u) => {
         const p = new URL(u).pathname;
         const home = `/${productConfig.homePath}`;
         return p === home || p.startsWith(`${home}/`);
       },
-      { timeout: 10_000 }
-    )
-    .catch(() => null);
-
-  for (let i = 0; i < 3; i += 1) {
-    const handled = await clickContinueOfflineIfVisible();
-    if (!handled) break;
-    await page.waitForLoadState("domcontentloaded").catch(() => null);
+      { timeout: 15_000, waitUntil: "domcontentloaded" }
+    );
+    for (let i = 0; i < 3; i += 1) {
+      const handled = await clickContinueOfflineIfVisible();
+      if (!handled) break;
+      await page.waitForLoadState("domcontentloaded").catch(() => null);
+    }
   }
 
   const navMarkers = [
@@ -154,7 +346,7 @@ export async function openLibraryAndTab(
   await page.getByRole("button", { name: /^Library$/i }).click({ timeout: 5_000 });
   await page.waitForURL(
     (u) => /^\/library(\/.*)?$/.test(new URL(u).pathname),
-    { timeout: 10_000 }
+    { timeout: 10_000, waitUntil: "domcontentloaded" }
   );
   const tabButton = page.getByRole("button", { name: tabName }).first();
   await tabButton.waitFor({ state: "visible", timeout: 10_000 });

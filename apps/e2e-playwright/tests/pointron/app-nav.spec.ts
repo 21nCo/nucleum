@@ -82,7 +82,7 @@ test.describe("pointron - app layout and menu @regression", () => {
     await runCommand(page, "Library");
 
     const goalsCard = page
-      .getByRole("button", { name: /^Goals(\s+\d+)?$/i })
+      .getByRole("button", { name: /^(Goals|Objectives)(\s+\d+)?$/i })
       .and(page.locator(":not([aria-disabled='true'])"));
     await goalsCard.first().waitFor({ state: "visible", timeout: 10_000 });
     await goalsCard.first().click({ timeout: 5_000 });
@@ -100,7 +100,9 @@ test.describe("pointron - app layout and menu @regression", () => {
           new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(u).pathname),
         { timeout: 15_000 }
       );
-      const goalsBtn = page.getByRole("button", { name: /^Goals(\s+\d+)?$/i }).first();
+      const goalsBtn = page
+        .getByRole("button", { name: /^(Goals|Objectives)(\s+\d+)?$/i })
+        .first();
       await goalsBtn.waitFor({ state: "visible", timeout: 15_000 });
       await goalsBtn.click({ timeout: 5_000 });
       await page.waitForTimeout(600);
@@ -128,9 +130,12 @@ test.describe("pointron - app layout and menu @regression", () => {
       (u) => new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(u).pathname),
       { timeout: 10_000 }
     );
-    await page.getByRole("button", { name: /^Goals(\s+\d+)?$/i }).first().click({
-      timeout: 5_000
-    });
+    await page
+      .getByRole("button", { name: /^(Goals|Objectives)(\s+\d+)?$/i })
+      .first()
+      .click({
+        timeout: 5_000
+      });
     await expect(page.getByTestId("search-goals")).toBeVisible({
       timeout: 10_000
     });

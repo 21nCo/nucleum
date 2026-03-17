@@ -3,7 +3,7 @@
  * Any next screen (e.g. signup, "Continue offline") is handled in the test only.
  *
  * Run:
- *   Nucleus:  npm run e2e:save-auth:nucleus   (or APP_BASE_URL=https://local.nucleus.to npm run e2e:save-auth)
+ *   Nucleum:  npm run e2e:save-auth:nucleum   (or APP_BASE_URL=https://local.nucleum.app npm run e2e:save-auth)
  *   Memotron: npm run e2e:save-auth:memotron  (or PRODUCT=memotron APP_BASE_URL=https://local.memotron.app npm run e2e:save-auth)
  *   Pointron: npm run e2e:save-auth:pointron   (or PRODUCT=pointron APP_BASE_URL=https://local.pointron.app npm run e2e:save-auth)
  */
@@ -14,8 +14,8 @@ import path from "node:path";
 import fs from "node:fs";
 
 const authDir = path.join(__dirname, "..", ".auth");
-const product = (process.env.PRODUCT ?? "nucleus").toLowerCase();
-const authFileName = product === "nucleus" ? "user.json" : `user-${product}.json`;
+const product = (process.env.PRODUCT ?? "nucleum").toLowerCase();
+const authFileName = product === "nucleum" ? "user.json" : `user-${product}.json`;
 const authStatePath = path.join(authDir, authFileName);
 const baseURL = process.env.APP_BASE_URL ?? "http://127.0.0.1:4173";
 const waitForRedirectBackMs = 120_000;
@@ -25,10 +25,10 @@ const baseHost = new URL(baseURL).host;
 const allowedOrigins = [
   baseOrigin,
   baseOrigin.startsWith("http:") ? `https://${baseHost}` : `http://${baseHost}`,
-  "https://dev.nucleus.to",
-  "http://dev.nucleus.to",
-  "https://local.nucleus.to",
-  "http://local.nucleus.to",
+  "https://dev.nucleum.app",
+  "http://dev.nucleum.app",
+  "https://local.nucleum.app",
+  "http://local.nucleum.app",
   "https://local.memotron.app",
   "http://local.memotron.app",
   "https://dev.memotron.to",

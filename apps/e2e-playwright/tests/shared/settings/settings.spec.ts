@@ -58,7 +58,8 @@ test.describe("settings - open, close, navigate (shared) @regression", () => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
 
-    if (testInfo.project.name === "nucleus") {
+    if (testInfo.project.name === "nucleum") {
+      // Nucleum: profile/logo button (top-left)
       await page.getByTestId("topnav-account-settings").waitFor({ state: "visible", timeout: 10_000 });
       await page.getByTestId("topnav-account-settings").click({ timeout: 5_000 });
     } else {
@@ -109,7 +110,7 @@ test.describe("settings - open, close, navigate (shared) @regression", () => {
   test("navigate to Focus and assert Focus settings panel visible (Pointron, Nucleus)", async ({
     page
   }, testInfo) => {
-    test.skip(testInfo.project.name === "memotron", "Focus panel only in Pointron and Nucleus");
+    test.skip(testInfo.project.name === "memotron", "Focus panel only in Pointron and Nucleum");
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
 
@@ -131,7 +132,7 @@ test.describe("settings - open, close, navigate (shared) @regression", () => {
   test("navigate to Node settings and assert panel visible (Memotron, Nucleus)", async ({
     page
   }, testInfo) => {
-    test.skip(testInfo.project.name === "pointron", "Node settings only in Memotron and Nucleus");
+    test.skip(testInfo.project.name === "pointron", "Node settings only in Memotron and Nucleum");
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
 
@@ -153,7 +154,7 @@ test.describe("settings - open, close, navigate (shared) @regression", () => {
   test("Node settings: hide/show text highlight colors in Bookmarks after PDF highlight (Memotron, Nucleus)", async ({
     page
   }, testInfo) => {
-    test.skip(testInfo.project.name === "pointron", "Node settings only in Memotron and Nucleus");
+    test.skip(testInfo.project.name === "pointron", "Node settings only in Memotron and Nucleum");
     test.setTimeout(120_000);
     await ensureInAppOnHome(page);
 
@@ -1047,8 +1048,8 @@ test.describe("settings - Accessibility (shared) @regression", () => {
     page
   }, testInfo) => {
     test.skip(
-      testInfo.project.name === "nucleus" || testInfo.project.name === "pointron",
-      "Known bug: sizing visually stays the same on Nucleus and Pointron"
+      testInfo.project.name === "nucleum" || testInfo.project.name === "pointron",
+      "Known bug: sizing visually stays the same on Nucleum and Pointron"
     );
     test.setTimeout(60_000);
     await ensureInAppOnHome(page);
@@ -1126,7 +1127,7 @@ test.describe("settings - Focus (Pointron, Nucleus) @regression", () => {
   test("Focus: navigate and assert panel and controls visible", async ({
     page
   }, testInfo) => {
-    test.skip(testInfo.project.name === "memotron", "Focus panel only in Pointron and Nucleus");
+    test.skip(testInfo.project.name === "memotron", "Focus panel only in Pointron and Nucleum");
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
     await openFocus(page);
@@ -1145,7 +1146,7 @@ test.describe("settings - Focus (Pointron, Nucleus) @regression", () => {
   });
 
   test("Focus: quick durations persist after add", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name === "memotron", "Focus panel only in Pointron and Nucleus");
+    test.skip(testInfo.project.name === "memotron", "Focus panel only in Pointron and Nucleum");
     test.setTimeout(60_000);
     await ensureInAppOnHome(page);
     await openFocus(page);
@@ -1177,7 +1178,7 @@ test.describe("settings - Focus (Pointron, Nucleus) @regression", () => {
   });
 
   test("Focus: default break reminder value persists", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name === "memotron", "Focus panel only in Pointron and Nucleus");
+    test.skip(testInfo.project.name === "memotron", "Focus panel only in Pointron and Nucleum");
     test.setTimeout(60_000);
     await ensureInAppOnHome(page);
     await openFocus(page);
@@ -1207,7 +1208,7 @@ test.describe("settings - Focus (Pointron, Nucleus) @regression", () => {
   });
 
   test("Focus: PiP toggle state persists", async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name === "memotron", "Focus panel only in Pointron and Nucleus");
+    test.skip(testInfo.project.name === "memotron", "Focus panel only in Pointron and Nucleum");
     test.setTimeout(60_000);
     await ensureInAppOnHome(page);
     await openFocus(page);
@@ -1241,7 +1242,7 @@ test.describe("settings - Focus (Pointron, Nucleus) @regression", () => {
   test("Focus: set 2min quick duration, 1min break reminder, PiP on → create goal → start focus → verify PiP → add manual log (last 2 min) → start focus → verify break reminder after 1 min", async ({
     page
   }, testInfo) => {
-    test.skip(testInfo.project.name === "memotron", "Focus panel only in Pointron and Nucleus");
+    test.skip(testInfo.project.name === "memotron", "Focus panel only in Pointron and Nucleum");
     test.setTimeout(240_000);
     await ensureInAppOnHome(page);
 

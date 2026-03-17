@@ -1,11 +1,9 @@
 import { devices, defineConfig } from "@playwright/test";
 import path from "node:path";
-import fs from "node:fs";
 
 import "dotenv/config";
 
 const artifactsDir = path.join(__dirname, "artifacts");
-const authDir = path.resolve(__dirname, ".auth");
 
 const defaultBaseURL = process.env.APP_BASE_URL ?? "http://127.0.0.1:4173";
 
@@ -14,49 +12,15 @@ function getProjectBaseURL(projectName: string): string {
   return (process.env[envKey] ?? process.env.APP_BASE_URL) ?? defaultBaseURL;
 }
 
-function getAuthPath(projectName: string): string {
-  const file = projectName === "nucleus" ? "user.json" : `user-${projectName}.json`;
-  return path.join(authDir, file);
-}
-
-function resolveBaseURLWithAuth(projectName: string): string {
-  const envKey = `APP_BASE_URL_${projectName.toUpperCase()}`;
-  const explicitEnvURL = process.env[envKey] ?? process.env.APP_BASE_URL;
-  let baseURL = getProjectBaseURL(projectName);
-  const authPath = getAuthPath(projectName);
-  if (!fs.existsSync(authPath)) return baseURL;
-  try {
-    const raw = fs.readFileSync(authPath, "utf-8");
-    const state = JSON.parse(raw) as { origins?: Array<{ origin: string }> };
-    const savedOrigins = state.origins?.map((o) => o.origin) ?? [];
-    const currentOrigin = new URL(baseURL).origin;
-    if (savedOrigins.length > 0 && !savedOrigins.includes(currentOrigin)) {
-      if (!explicitEnvURL) {
-        baseURL = savedOrigins[0];
-      } else {
-        console.warn(
-          `[e2e] ${projectName}: saved auth origins (${savedOrigins.join(", ")}) do not match configured baseURL (${baseURL}). Re-run e2e:save-auth:${projectName} or update ${envKey}.`
-        );
-      }
-    }
-  } catch (err) {
-    console.warn(`[e2e] ${projectName}: could not read auth file ${authPath}:`, err);
-  }
-  return baseURL;
-}
-
 function getProjectUse(projectName: string) {
-  const baseURL = resolveBaseURLWithAuth(projectName);
-  const authPath = getAuthPath(projectName);
-  const useAuth = fs.existsSync(authPath);
+  const baseURL = getProjectBaseURL(projectName);
   return {
     ...devices["Desktop Chrome"],
     viewport: { width: 1280, height: 720 },
     video: "on" as const,
     trace: "on-first-retry" as const,
     screenshot: "only-on-failure" as const,
-    baseURL,
-    ...(useAuth ? { storageState: authPath } : {})
+    baseURL
   };
 }
 
@@ -98,15 +62,15 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "nucleus",
+      name: "nucleum",
       testMatch: [
         "tests/smoke/**/*.spec.ts",
         "tests/shared/**/*.spec.ts",
-        "tests/nucleus/**/*.spec.ts"
+        "tests/nucleum/**/*.spec.ts"
       ],
       retries: 1,
       workers: 1,
-      use: getProjectUse("nucleus")
+      use: getProjectUse("nucleum")
     },
     {
       name: "pointron",
