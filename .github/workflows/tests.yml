@@ -62,9 +62,52 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
         working-directory: apps/e2e-playwright
-      - name: Run smoke tests
-        run: npm run test:smoke
-        working-directory: apps/e2e-playwright
+      - name: Map HTTPS local domains
+        run: |
+          sudo tee -a /etc/hosts >/dev/null <<'EOF'
+          127.0.0.1 local.nucleum.app local.memotron.app local.pointron.app
+          EOF
+      - name: Install Caddy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y caddy
+          # Package often starts systemd caddy → holds :2019 (and :443). Our caddy run needs those.
+          sudo systemctl stop caddy 2>/dev/null || true
+          sudo systemctl disable caddy 2>/dev/null || true
+      - name: Start dev server, create auth session, run smoke tests
+        env:
+          APP_BASE_URL: https://local.nucleum.app
+          APP_BASE_URL_NUCLEUS: https://local.nucleum.app
+          APP_BASE_URL_MEMOTRON: https://local.memotron.app
+          APP_BASE_URL_POINTRON: https://local.pointron.app
+          PRODUCT: nucleum
+          E2E_LOGIN_EMAIL: ${{ secrets.E2E_LOGIN_EMAIL }}
+          E2E_LOGIN_PASSWORD: ${{ secrets.E2E_LOGIN_PASSWORD }}
+        run: |
+          npm run dev --workspace=apps/nucleus -- --port 5173 --host 127.0.0.1 &
+          # Caddy v2: auto_https only accepts off|disable_redirects|disable_certs|ignore_loaded_certs (not "on").
+          # Use printf so the file has no YAML-indent leading spaces (heredoc would break the Caddyfile).
+          printf '%s\n' \
+            'local.nucleum.app, local.memotron.app, local.pointron.app {' \
+            '  tls internal' \
+            '  reverse_proxy 127.0.0.1:5173' \
+            '}' > Caddyfile
+
+          # Port 443 requires root on Linux; non-root caddy exits → trust fails on :2019.
+          CADDYFILE="$PWD/Caddyfile"
+          sudo caddy run --config "$CADDYFILE" --adapter caddyfile &
+          READY=0
+          for i in $(seq 1 30); do curl -sf --connect-timeout 1 http://127.0.0.1:2019/config/ >/dev/null && READY=1 && break; sleep 1; done
+          if [ "$READY" -ne 1 ]; then
+            echo "Caddy admin API did not become ready on 127.0.0.1:2019"
+            exit 1
+          fi
+          sudo caddy trust
+          # Node/wait-on may not pick up the OS trust store (even after `caddy trust`) in CI containers.
+          NODE_TLS_REJECT_UNAUTHORIZED=0 npx wait-on https://local.nucleum.app -t 60000
+          cd apps/e2e-playwright
+          npm run e2e:save-email-auth:nucleum || echo "::warning::Best-effort auth session save failed; continuing with smoke tests."
+          npm run test:smoke
       - name: Upload Playwright artifacts
         if: always()
         uses: actions/upload-artifact@v4
