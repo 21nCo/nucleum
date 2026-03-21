@@ -3,7 +3,12 @@
  * Used by both the app (product.config.ts) and E2E tests so menu changes
  * are made in one place only.
  */
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
 import { Product } from "@21n/products/product.type";
+import { Action } from "@21n/types/action.enum";
+import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
 
 /** Nav labels shown in the app menu (for E2E getByRole('button', { name: ... })). */
 export type AppMenuNavLabels = readonly string[];
@@ -33,11 +38,11 @@ export interface IProductNavConfig {
 
 const productNavConfig = {
   [Product.NUCLEUS]: {
-    appMenu: ["calendar", "overview", "library"] as const,
-    appMenuDev: ["home", "calendar", "overview", "library"] as const,
-    appMenuPt: ["calendar", "librarypt", "overview"] as const,
-    homePath: "calendar",
-    homePathPt: "librarypt",
+    appMenu: [Action.CALENDAR, Action.OVERVIEW, Action.LIBRARY] as const,
+    appMenuDev: [Action.RHOMBUS, Action.CALENDAR, Action.OVERVIEW, Action.LIBRARY] as const,
+    appMenuPt: [Action.CALENDAR, Action.LIBRARY_PORTRAIT, Action.OVERVIEW] as const,
+    homePath: Action.CALENDAR,
+    homePathPt: Action.LIBRARY_PORTRAIT,
     librarySectionLabel: "Nucleus",
     appMenuNavLabels: ["Calendar", "Overview", "Library"] as const,
     includeHomeInNav: false,
@@ -50,10 +55,10 @@ const productNavConfig = {
     } as Record<string, string>
   },
   [Product.MEMOTRON]: {
-    appMenu: ["node_create", "calendar", "overview", "library"] as const,
+    appMenu: [resourceAction(Resource.node, ResourceActionType.CREATE), Action.CALENDAR, Action.OVERVIEW, Action.LIBRARY] as const,
     appMenuPt: [] as const,
-    homePath: "calendar",
-    homePathPt: "mobilehome",
+    homePath: Action.CALENDAR,
+    homePathPt: Action.MOBILEHOME,
     librarySectionLabel: "Memory",
     appMenuNavLabels: ["Capture", "Calendar", "Overview", "Library"] as const,
     timelinePageLabel: "Calendar",
@@ -66,10 +71,10 @@ const productNavConfig = {
     } as Record<string, string>
   },
   [Product.POINTRON]: {
-    appMenu: ["focus", "calendar", "overview", "library"] as const,
-    appMenuPt: ["overview", "calendar", "focus", "librarypt"] as const,
-    homePath: "calendar",
-    homePathPt: "focus",
+    appMenu: [PointronAction.FOCUS, Action.CALENDAR, Action.OVERVIEW, Action.LIBRARY] as const,
+    appMenuPt: [Action.OVERVIEW, Action.CALENDAR, PointronAction.FOCUS, Action.LIBRARY_PORTRAIT] as const,
+    homePath: Action.CALENDAR,
+    homePathPt: PointronAction.FOCUS,
     librarySectionLabel: "Focus",
     appMenuNavLabels: ["Focus", "Calendar", "Overview", "Library"] as const,
     timelinePageLabel: "Calendar",

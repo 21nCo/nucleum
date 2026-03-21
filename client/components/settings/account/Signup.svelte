@@ -30,7 +30,8 @@
     "21n.dev",
     "memotron.app",
     "pointron.app",
-    "nucleus.to"
+    "nucleus.to",
+    "nucleum.app"
   ];
   let isSelfHosted =
     typeof window !== "undefined" ? resolveIfSelfHostedInstance() : false;
