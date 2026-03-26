@@ -328,6 +328,9 @@ export const product =
 
 export const resolveProductConfig = (productOverride?: Product): IAppConfig => {
   const base = products[productOverride ?? (product as Product)];
+  if (!base) {
+    throw new Error(`Unknown product: ${productOverride ?? product}`);
+  }
   return {
     ...base,
     oAuthProviders: ["google", "apple", "github"],

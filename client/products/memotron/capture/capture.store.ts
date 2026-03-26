@@ -585,7 +585,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       from,
       to: to.id,
       linkType,
-      toType: toType as Resource.node | Resource.collection,
+      toType: toType as typeof Resource.node | typeof Resource.collection,
       toSubType: ("contentType" in to ? to.contentType : to.type) as
         | NodeType
         | CollectionType,

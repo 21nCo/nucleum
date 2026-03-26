@@ -30,13 +30,16 @@
     return resource;
   });
 
+  const isProductSection = (value: string): value is Product =>
+    Object.values(Product).includes(value as Product);
+
   let sections = [
     Product.NUCLEUS,
     Product.POINTRON,
     ...nextProductSectionsPre,
     Product.MEMOTRON,
     ...nextProductSectionsPost,
-  ] as Product[];
+  ].filter(isProductSection);
   if (selected === undefined) selected = options[0]?.value;
   const nucleusResources = resolveProductConfig(Product.NUCLEUS).resources
     .browse;
@@ -54,7 +57,7 @@
   }
 
   function resolveSectionLabel(section: Product) {
-    return resolveProductConfig(section).librarySectionLabel ?? (properCase(section));
+    return resolveProductConfig(section).librarySectionLabel ?? properCase(section);
   }
 </script>
 

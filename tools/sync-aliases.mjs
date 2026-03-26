@@ -6,9 +6,6 @@ import { buildTsconfigPaths, loadAliasMap } from "./alias-utils.mjs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, "..");
-
-// SvelteKit apps/extensions get aliases via kit.alias in svelte.config.js
-// Only non-SvelteKit tsconfigs need paths injected here
 const TARGET_TSCONFIGS = [
   "tsconfig.json",
   "client/tsconfig.json"

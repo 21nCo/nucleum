@@ -21,7 +21,7 @@ All `@21n/*` import aliases are managed from a single source of truth: `alias-ma
 | Vite build/dev | `resolve.alias` via `buildViteAliases()` | `vite.config.ts` |
 | Root/client `tsc` | tsconfig `paths` via `sync-aliases.mjs` | `tsconfig.json`, `client/tsconfig.json` |
 
-SvelteKit apps do **not** use tsconfig `paths` — `kit.alias` generates `.svelte-kit/tsconfig.json` which handles intellisense, type checking, and build resolution.
+SvelteKit apps do **not** use tsconfig `paths` - `kit.alias` generates `.svelte-kit/tsconfig.json` which handles IntelliSense, type checking, and build resolution.
 
 ### Adding a new alias
 
@@ -54,7 +54,7 @@ alias: {
 }
 ```
 
-Do **not** add `paths` to the app's `tsconfig.json` — it overrides the SvelteKit-generated tsconfig and crashes `svelte-check`.
+Do **not** add `paths` to the app's `tsconfig.json` - it overrides the SvelteKit-generated tsconfig and crashes `svelte-check`.
 
 ### Available functions (`alias-utils.mjs`)
 

@@ -1,3 +1,4 @@
 export const NextProduct = {} as const;
 export type NextProduct = never;
-export enum NextOverviewPanel {}
+export const NextOverviewPanel = {} as const;
+export type NextOverviewPanel = never;

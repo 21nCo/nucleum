@@ -88,9 +88,15 @@ const productNavConfig = {
   }
 } satisfies Partial<Record<Product, IProductNavConfig>>;
 
+const resolveNavConfig = (product: Product): IProductNavConfig => {
+  const nav = productNavConfig[product];
+  if (!nav) throw new Error(`Missing nav config for product: ${product}`);
+  return nav;
+};
+
 /** Get nav config for the app (product.config.ts). */
 export function getProductNavConfig(product: Product): IProductNavConfig {
-  return (productNavConfig as Record<string, IProductNavConfig>)[product];
+  return resolveNavConfig(product);
 }
 
 /** E2E shape: homePath, appMenuNavLabels, pathByNavLabel, timelinePageLabel, librarySectionLabel, etc. */
@@ -105,7 +111,7 @@ export interface IE2EProductConfig {
 
 /** Get config in the shape E2E tests expect. */
 export function getE2EProductConfig(product: Product): IE2EProductConfig {
-  const nav = (productNavConfig as Record<string, IProductNavConfig>)[product];
+  const nav = resolveNavConfig(product);
   const config: IE2EProductConfig = {
     homePath: nav.homePath,
     appMenuNavLabels: nav.appMenuNavLabels,
@@ -125,4 +131,4 @@ export function productFromProjectName(projectName: string): Product {
 }
 
 export type NucleusAppMenuLabel =
-  (typeof productNavConfig)["nucleus"]["appMenuNavLabels"][number];
+  (typeof productNavConfig)[typeof Product.NUCLEUS]["appMenuNavLabels"][number];
