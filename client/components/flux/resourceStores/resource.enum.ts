@@ -1,4 +1,6 @@
-export enum Resource {
+import { NextResource } from "@21n/next/resource.enum";
+
+enum ResourceBase {
   ALL = "ALL",
   unknown = "unknown",
   /**
@@ -100,8 +102,11 @@ export enum Resource {
   //Memotron clipper
   highlight = "highlight",
   clipperToolbarState = "clipperToolbarState",
-  clipperSync = "clipperSync"
+  clipperSync = "clipperSync",
 }
+
+export const Resource = { ...ResourceBase, ...NextResource } as const;
+export type Resource = ResourceBase | NextResource;
 
 /**
  * For system purposes only. Example: rendering indicators in Calendar etc. Not stores in the database.

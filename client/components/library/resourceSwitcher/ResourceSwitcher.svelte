@@ -11,6 +11,8 @@
   import { resolveProductConfig } from "@21n/products/product.config";
   import { resolveResourceSwitcher } from "@21n/components/flux/resourceStores/resource.utils";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { properCase } from "@21n/shared-utils/text.utils";
+  import { nextProductSectionsPre, nextProductSectionsPost } from "@21n/next/product.config";
   const dispatch = createEventDispatcher();
   export let resources: Resource[] = [];
   export let selected: ISelectValue | undefined = undefined;
@@ -28,7 +30,16 @@
     return resource;
   });
 
-  let sections = [Product.NUCLEUS, Product.POINTRON, Product.MEMOTRON];
+  const isProductSection = (value: string): value is Product =>
+    Object.values(Product).includes(value as Product);
+
+  let sections = [
+    Product.NUCLEUS,
+    Product.POINTRON,
+    ...nextProductSectionsPre,
+    Product.MEMOTRON,
+    ...nextProductSectionsPost,
+  ].filter(isProductSection);
   if (selected === undefined) selected = options[0]?.value;
   const nucleusResources = resolveProductConfig(Product.NUCLEUS).resources
     .browse;
@@ -46,12 +57,12 @@
   }
 
   function resolveSectionLabel(section: Product) {
-    return resolveProductConfig(section).librarySectionLabel;
+    return resolveProductConfig(section).librarySectionLabel ?? properCase(section);
   }
 </script>
 
 {#if $appStore.product === Product.NUCLEUS}
-  <div class="flex flex-col gap-8 w-full overflow-y-auto">
+  <div class="flex flex-col gap-12 w-full overflow-y-auto">
     {#each sections as section (section)}
       {@const items = resolveResourcesForSection(section)}
       <div class="flex flex-col gap-2">

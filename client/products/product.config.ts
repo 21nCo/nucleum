@@ -1,10 +1,12 @@
-import { Extension, Product } from "@21n/products/product.type";
+import { Extension, OverviewPanel, Product } from "@21n/products/product.type";
 import { getProductNavConfig } from "./product-nav.config";
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { Action } from "@21n/types/action.enum";
 import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
 import { resourceConfig } from "@21n/components/flux/resourceStores/resource.config";
 import type { IResourceTableConfig } from "@21n/components/flux/flux.type";
+import type { ISelectItem } from "@21n/types/select.type";
+import { nextProducts, nextResourceTableMap, nextNucleusOverviewPanelSwitcherItems } from "@21n/next/product.config";
 
 const isDev = import.meta.env?.DEV || false;
 
@@ -28,7 +30,7 @@ interface IProductConfigBase {
   tagline: string;
 }
 
-interface IAppConfigBase extends IProductConfigBase {
+export interface IAppConfigBase extends IProductConfigBase {
   /**
    * @deprecated
    */
@@ -62,6 +64,7 @@ interface IAppConfigBase extends IProductConfigBase {
   librarySectionLabel?: string;
   configurableShortcuts?: string[];
   oAuthProviders?: ("google" | "apple" | "github")[];
+  overviewPanelSwitcherItems?: ISelectItem[];
 }
 
 interface IAppConfig extends IAppConfigBase {
@@ -92,7 +95,7 @@ const linkabilityTables = [
 
 const filesAbilityTables = [Resource.file];
 
-const resourceTableMap: Record<Product, Resource[]> = {
+const resourceTableMap: Record<string, Resource[]> = {
   [Product.NUCLEUS]: [Resource.event, Resource.combination],
   [Product.MEMOTRON]: [Resource.node, Resource.capture],
   [Product.POINTRON]: [
@@ -100,14 +103,15 @@ const resourceTableMap: Record<Product, Resource[]> = {
     Resource.task,
     Resource.session,
     Resource.sessionLog
-  ]
+  ],
+  ...nextResourceTableMap,
 };
 
 const nucleusNav = getProductNavConfig(Product.NUCLEUS);
 const memotronNav = getProductNavConfig(Product.MEMOTRON);
 const pointronNav = getProductNavConfig(Product.POINTRON);
 
-export const products: Record<Product, IAppConfigBase> = {
+export const products: Record<string, IAppConfigBase> = {
   [Product.NUCLEUS]: {
     name: "Nucleus",
     appMenu: (isDev && nucleusNav.appMenuDev
@@ -134,6 +138,11 @@ export const products: Record<Product, IAppConfigBase> = {
       ...commonConfigurableShortcuts,
       "SAVE_CAPTURE_SHORTCUT",
       "ACTIVATE_LINK_BOX"
+    ],
+    overviewPanelSwitcherItems: [
+      { label: "Focus", value: OverviewPanel.FOCUS, icon: "circle" },
+      { label: "Memory", value: OverviewPanel.MEMORY, icon: "hexagon" },
+      ...nextNucleusOverviewPanelSwitcherItems
     ],
     settings: [
       {
@@ -299,7 +308,8 @@ export const products: Record<Product, IAppConfigBase> = {
         section: "other"
       }
     ]
-  }
+  },
+  ...nextProducts,
 };
 
 const tableConfigMapper = (resource: Resource) => {
@@ -318,6 +328,9 @@ export const product =
 
 export const resolveProductConfig = (productOverride?: Product): IAppConfig => {
   const base = products[productOverride ?? (product as Product)];
+  if (!base) {
+    throw new Error(`Unknown product: ${productOverride ?? product}`);
+  }
   return {
     ...base,
     oAuthProviders: ["google", "apple", "github"],

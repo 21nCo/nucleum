@@ -6,15 +6,9 @@ import { buildTsconfigPaths, loadAliasMap } from "./alias-utils.mjs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, "..");
-
 const TARGET_TSCONFIGS = [
   "tsconfig.json",
-  "client/tsconfig.json",
-  "apps/memotron/tsconfig.json",
-  "apps/nucleus/tsconfig.json",
-  "apps/pointron/tsconfig.json",
-  "extensions/memotron-clipper/tsconfig.json",
-  "extensions/memotron-share/tsconfig.json"
+  "client/tsconfig.json"
 ];
 
 const aliasMap = loadAliasMap();

@@ -9,6 +9,7 @@ import { logger } from "@21n/components/debug/logger.client";
 import { properCase } from "@21n/shared-utils/text.utils";
 import type { IResourceSwitchItem } from "@21n/types/select.type";
 import { Product } from "@21n/products/product.type";
+import { nextResourceIcons, nextUncountableResources } from "@21n/next/resource.utils";
 
 export function resourceAction(resource: Resource, action: ResourceActionType) {
   return `${resource}_${action}`;
@@ -200,76 +201,40 @@ export function resourceIdToElementId(
   return `${elementType}-${resourceId}-${accessPoint ?? "none"}-${accessPointId ?? "none"}`;
 }
 
-export function resolveResourceIcon(resource: Resource) {
-  switch (resource) {
-    case Resource.collection:
-      return "collection";
-    case Resource.node:
-      return "hexagon";
-    case Resource.relation:
-      return "relation";
-    case Resource.goal:
-      return "target";
-    case Resource.task:
-      return "check-square";
-    case Resource.todo:
-      return "check-square-offset";
-    case Resource.combination:
-      return "combination";
-    case Resource.event:
-      return "calendar";
-    // case Resource.habit:
-    //   return "caret-circle-up";
-    // case Resource.quest:
-      return "question";
-    case Resource.session:
-      return "clock";
-    // case Resource.thing:
-    //   return "bicycle";
-    // case Resource.feed:
-    //   return "rss";
-    // case Resource.source:
-    //   return "globe";
-    // case Resource.account:
-    //   return "bank";
-    // case Resource.transaction:
-    //   return "arrows-left-right";
-    // case Resource.fellow:
-    //   return "user";
-    case Resource.place:
-      return "map-pin";
-    case Resource.input:
-      return "incoming";
-    default:
-      return "question";
-  }
+const baseResourceIcons: Record<string, string> = {
+  [Resource.collection]: "collection",
+  [Resource.node]: "hexagon",
+  [Resource.relation]: "relation",
+  [Resource.goal]: "target",
+  [Resource.task]: "check-square",
+  [Resource.todo]: "check-square-offset",
+  [Resource.combination]: "combination",
+  [Resource.event]: "calendar",
+  [Resource.session]: "clock",
+  [Resource.place]: "map-pin",
+  [Resource.input]: "incoming",
+};
+
+const resourceIconMap: Record<string, string> = {
+  ...baseResourceIcons,
+  ...nextResourceIcons,
+};
+
+export function resolveResourceIcon(resource: Resource): string {
+  return resourceIconMap[resource] ?? "question";
 }
 
-export const availableResources = new Set([
-  Resource.collection,
-  Resource.node,
-  Resource.relation,
-  Resource.combination,
-  Resource.goal,
-  Resource.task,
-  Resource.combination
-]);
+export const availableResources = new Set(Object.values(Resource));
+
+export function resolveResourceLabel(resource: Resource) {
+  if (resource === Resource.goal) return "Objectives";
+  if (nextUncountableResources.has(resource)) return properCase(resource);
+  return properCase(resource) + "s";
+}
 
 export function resolveResourceSwitcher(): IResourceSwitchItem[] {
-  const resources = [
-    Resource.event,
-    Resource.collection,
-    Resource.combination,
-    Resource.goal,
-    Resource.task,
-    Resource.session,
-    Resource.node,
-    Resource.relation,
-    Resource.place,
-    Resource.input
-  ];
-  return resources.map((resource) => ({
-    label: resource === Resource.goal ? "Objectives" : properCase(resource) + "s",
+  return Object.values(Resource).map((resource) => ({
+    label: resolveResourceLabel(resource),
     value: resource,
     icon: resolveResourceIcon(resource),
     isDisabled: !availableResources.has(resource),

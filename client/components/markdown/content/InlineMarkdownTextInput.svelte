@@ -1207,16 +1207,12 @@
 <style>
   div[contenteditable].noncustomcaret {
     caret-color: var(--customcolor, rgb(var(--colors-aps1))) !important;
-    caret-shape: block;
   }
   div[contenteditable].customcaret {
     caret-color: transparent;
   }
-
-  /* Using gray since rgba var is failing in case of extension */
   div[contenteditable]:empty::after {
     content: attr(placeholder);
-    /* color: rgba(var(--colors-fgs1), 0.5); */
     color: gray;
   }
   [contenteditable]::selection {

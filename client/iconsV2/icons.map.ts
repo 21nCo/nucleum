@@ -158,9 +158,9 @@ export const iconMappings: Record<string, IconMapping> = {
     solar: "play"
   },
   rhombus: {
-    phosphor: "robot",
-    lucide: "bot",
-    solar: "bot"
+    phosphor: "proicons:rhombus",
+    lucide: "diamond",
+    solar: "diamond"
   },
 
   // Content and Media

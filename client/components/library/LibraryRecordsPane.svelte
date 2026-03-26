@@ -265,7 +265,7 @@
         }
       }
       const filters = resolveFilters();
-      const newData = await searchStore.select({
+      const newData = (await searchStore.select({
         resource,
         searchQuery,
         filters,
@@ -274,7 +274,7 @@
         limit: 50,
         offset: isPagination ? data.length : 0,
         signal
-      });
+      })) ?? [];
       if (isPagination)
         data = [...data, ...newData]?.filter(removeDuplicatesFilter);
       else {
