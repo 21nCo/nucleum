@@ -17,7 +17,10 @@ export function resolveAccountBaseUrl(region: string) {
   }
   const domain = hostNameParts.slice(1).join(".");
   const subDomain = hostNameParts[0] ?? "dev";
-  const baseURL = `https://account-${region}${subDomain === "web" ? "" : "-" + subDomain}.${domain}`;
+  // Local app hosts still use the shared dev account backend.
+  const accountSubDomain =
+    subDomain === "local" ? "dev" : subDomain;
+  const baseURL = `https://account-${region}${accountSubDomain === "web" ? "" : "-" + accountSubDomain}.${domain}`;
   console.log({ baseURL });
   return baseURL;
 }

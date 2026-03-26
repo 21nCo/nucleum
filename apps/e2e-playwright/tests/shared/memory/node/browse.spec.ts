@@ -34,9 +34,45 @@ test.describe("node - browse flows (from library, from pinned) @regression", () 
   });
 
   test.describe("from pinned resource browser", () => {
-    test.skip("browse nodes from pinned resource browser", async ({ page }) => {
+    test("pin Nodes in resource browser (leftnav settings), then open Nodes from pinned nav", async ({
+      page
+    }) => {
+      test.setTimeout(120_000);
       await ensureInAppOnHome(page);
-      // Pinned resource browser (app menu) shows pinned library sections; no dedicated "pinned nodes" list like Quick Focus for goals. N/A or product-specific.
+
+      await page.getByTestId("leftnav-settings").click({ timeout: 5_000 });
+      const pinDialogVisible = await page
+        .getByText("Pin resources")
+        .first()
+        .isVisible()
+        .catch(() => false);
+      if (!pinDialogVisible) test.skip(true, "Pinned resource browser not available in this product build");
+
+      const nodesRow = page
+        .getByTestId("leftnav-pin-resource")
+        .filter({ hasText: /Nodes/i });
+      const hasNodesToggle = await nodesRow.first().isVisible().catch(() => false);
+      if (!hasNodesToggle) test.skip(true, "Nodes cannot be pinned (N/A)");
+
+      const toggle = nodesRow.locator('input[type="checkbox"]').first();
+      const checked = await toggle.isChecked().catch(() => false);
+      if (!checked) {
+        await nodesRow.locator("label").first().click({ timeout: 2_000 });
+        await page.waitForTimeout(300);
+      }
+
+      await page.keyboard.press("Escape");
+      await page.waitForTimeout(300);
+
+      await page
+        .getByRole("button", { name: /^Nodes(\s+\d+)?$/i })
+        .first()
+        .click({ timeout: 10_000 });
+      await page.waitForTimeout(800);
+
+      await expect(page.locator("#records-container")).toBeVisible({
+        timeout: 15_000
+      });
     });
   });
 });

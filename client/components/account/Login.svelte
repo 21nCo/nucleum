@@ -93,6 +93,7 @@
       console.error({ at: "Signup - handleMessageFromParent", error: e });
     }
   }
+
 </script>
 
 <div

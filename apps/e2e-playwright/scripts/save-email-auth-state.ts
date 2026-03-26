@@ -17,6 +17,7 @@ import fs from "node:fs";
 import net from "node:net";
 
 const authDir = path.join(__dirname, "..", ".auth");
+const artifactsDir = path.join(__dirname, "..", "artifacts");
 const product = (process.env.PRODUCT ?? "nucleum").toLowerCase();
 const authFileName = product === "nucleum" ? "user.json" : `user-${product}.json`;
 const authStatePath = path.join(authDir, authFileName);
@@ -45,8 +46,14 @@ async function main() {
   }
 
   const baseURL = getBaseURL();
+  const forcedAuthRegion =
+    process.env.E2E_AUTH_REGION?.trim() ||
+    (new URL(baseURL).hostname.startsWith("local.") ? "insouth" : "");
   if (!fs.existsSync(authDir)) {
     fs.mkdirSync(authDir, { recursive: true });
+  }
+  if (!fs.existsSync(artifactsDir)) {
+    fs.mkdirSync(artifactsDir, { recursive: true });
   }
 
   console.log("Product:", product);
@@ -70,78 +77,189 @@ async function main() {
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
   });
   const page = await context.newPage();
+  const hostname = new URL(baseURL).hostname;
+  const parentDomain =
+    net.isIP(hostname) !== 0 || hostname === "localhost"
+      ? hostname
+      : hostname.includes(".")
+        ? hostname.split(".").slice(-2).join(".")
+        : hostname; // e.g. local.nucleum.app -> nucleum.app
+  const sessionCookieName = "__Secure-21n.session_token";
 
   try {
-    // Start on "/" – app may show "Login/Signup" or "Signup/Login" button first (or redirect to /account/login)
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.waitForLoadState("domcontentloaded");
-    await page.waitForTimeout(2_000); // let SPA and auth check settle
+    const logStep = (message: string) => {
+      console.log(`[auth-save][step] ${message}`);
+    };
 
-    let pathname = new URL(page.url()).pathname;
-
-    // If we're on "/", click Login/Signup (or Signup/Login) to open the login page
-    if (pathname === "/") {
-      const loginSignupBtn = page.getByRole("button", { name: /login|signup/i }).first();
-
-      // Pure UI approach: ensure the button is interactable, click with retries, and only continue once
-      // the login page UI is detected.
-      const hasLoginBtn = await loginSignupBtn
-        .waitFor({ state: "visible", timeout: 20_000 })
-        .then(() => true)
-        .catch(() => false);
-
-      // Only click if the button is present (e.g., if we're not already redirected/logged in).
-      let loginUiReady = false;
-      if (hasLoginBtn) {
-        for (let i = 0; i < 5; i++) {
-          const enabled = await loginSignupBtn.isEnabled().catch(() => false);
-          if (!enabled) await page.waitForTimeout(500);
-
-          await loginSignupBtn.scrollIntoViewIfNeeded().catch(() => null);
-          await loginSignupBtn.click({ timeout: 10_000 }).catch(() => null);
-
-          const navigated = await page
-            .waitForURL(/\/account\/login/, { timeout: 10_000, waitUntil: "domcontentloaded" })
-            .then(() => true)
-            .catch(() => false);
-          if (navigated) break;
-
-          // Sometimes URL change is delayed; alternatively detect the login UI.
-          loginUiReady = await page
-            .getByRole("tab", { name: /^Log in$/i })
-            .first()
-            .waitFor({ state: "visible", timeout: 5_000 })
-            .then(() => true)
-            .catch(() => false);
-          if (loginUiReady) break;
-
-          await page.waitForTimeout(800);
-        }
-      }
-      pathname = new URL(page.url()).pathname;
-      if (pathname !== "/account/login" && loginUiReady) {
-        pathname = "/account/login";
-      }
-    }
-
-    if (pathname !== "/account/login") {
-      throw new Error(
-        `Expected to be on /account/login after clicking Login/Signup; got ${pathname}`
+    if (forcedAuthRegion) {
+      await page.addInitScript(
+        ({ region, email }) => {
+          window.localStorage.setItem("region", region);
+          const existing = window.localStorage.getItem("userRegionMap");
+          let parsed: Record<string, string> = {};
+          try {
+            parsed = existing ? JSON.parse(existing) : {};
+          } catch {
+            parsed = {};
+          }
+          if (email) parsed[email] = region;
+          window.localStorage.setItem("userRegionMap", JSON.stringify(parsed));
+        },
+        { region: forcedAuthRegion, email }
       );
+      logStep(`forcing auth region to ${forcedAuthRegion}`);
     }
 
-    await page.waitForTimeout(1_000); // let login form render
+    page.on("console", (msg) => {
+      console.log(`[auth-save][console.${msg.type()}] ${msg.text()}`);
+    });
+    page.on("pageerror", (err) => {
+      console.log(`[auth-save][pageerror] ${err.message}`);
+    });
+    page.on("requestfailed", (req) => {
+      const url = req.url();
+      if (/account|login|signup|auth/i.test(url)) {
+        console.log(
+          `[auth-save][requestfailed] ${req.method()} ${url} ${req.failure()?.errorText ?? ""}`
+        );
+      }
+    });
 
-    // Click "Log in" tab (BoxSwitcher option), then fill email and password
+    const dumpDebugState = async (label: string) => {
+      const screenshotPath = path.join(
+        artifactsDir,
+        `auth-save-${label.replace(/[^a-z0-9-]/gi, "-").toLowerCase()}.png`
+      );
+      const visibleButtons = await page
+        .locator("button")
+        .evaluateAll((els) =>
+          els
+            .map((el) => ({
+              text: (el.textContent ?? "").trim().replace(/\s+/g, " "),
+              ariaLabel: el.getAttribute("aria-label"),
+              disabled: (el as HTMLButtonElement).disabled
+            }))
+            .filter((x) => x.text || x.ariaLabel)
+        )
+        .catch(() => []);
+      const localStorageEntries = await page
+        .evaluate(() => Object.entries(window.localStorage))
+        .catch(() => []);
+      const cookies = await context.cookies().catch(() => []);
+      console.log(`[auth-save][debug:${label}] url=${page.url()}`);
+      console.log(
+        `[auth-save][debug:${label}] buttons=${JSON.stringify(visibleButtons)}`
+      );
+      console.log(
+        `[auth-save][debug:${label}] localStorage=${JSON.stringify(localStorageEntries)}`
+      );
+      console.log(
+        `[auth-save][debug:${label}] cookies=${JSON.stringify(
+          cookies.map((c) => ({ name: c.name, domain: c.domain }))
+        )}`
+      );
+      await page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => null);
+      console.log(`[auth-save][debug:${label}] screenshot=${screenshotPath}`);
+    };
+
     const logInTab = page
       .getByRole("tab", { name: /^Log in$/i })
       .or(page.getByRole("button", { name: /^Log in$/i }))
       .first();
+    const emailInput = page
+      .getByPlaceholder("username@email.com")
+      .or(page.getByLabel("Email"));
+    const enterPasswordBtn = page.getByRole("button", {
+      name: /Enter password/i
+    });
+    const googleButton = page
+      .getByRole("button", { name: /Continue with Google/i })
+      .first();
+    const passwordInput = page.locator("#password");
+
+    const isLoginSurfaceVisible = async (timeout: number) => {
+      const locators = [logInTab, emailInput.first(), enterPasswordBtn.first(), googleButton];
+      for (const locator of locators) {
+        const visible = await locator
+          .waitFor({ state: "visible", timeout })
+          .then(() => true)
+          .catch(() => false);
+        if (visible) return true;
+      }
+      return false;
+    };
+
+    const openLoginSurface = async () => {
+      logStep("opening /account/login");
+      await page.goto("/account/login", { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("domcontentloaded");
+      await page.waitForTimeout(2_000); // let SPA and auth check settle
+
+      if (await isLoginSurfaceVisible(20_000)) {
+        logStep(`login surface detected directly at ${page.url()}`);
+        return;
+      }
+
+      logStep("login surface not ready; trying / then Login/Signup button");
+      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("domcontentloaded");
+      await page.waitForTimeout(2_000);
+
+      const loginSignupBtn = page.getByRole("button", {
+        name: /login|signup/i
+      }).first();
+      const hasLoginBtn = await loginSignupBtn
+        .waitFor({ state: "visible", timeout: 15_000 })
+        .then(() => true)
+        .catch(() => false);
+      if (hasLoginBtn) {
+        for (let i = 0; i < 5; i += 1) {
+          logStep(`clicking Login/Signup button attempt ${i + 1}`);
+          await loginSignupBtn.scrollIntoViewIfNeeded().catch(() => null);
+          await loginSignupBtn.click({ timeout: 10_000, force: true }).catch(() => null);
+          const loginUiReady = await isLoginSurfaceVisible(5_000);
+          const reachedLoginPath = /\/account\/login/.test(new URL(page.url()).pathname);
+          if (loginUiReady || reachedLoginPath) {
+            logStep(
+              `login surface became reachable after Login/Signup click; url=${page.url()}`
+            );
+            return;
+          }
+          await page.waitForTimeout(800);
+        }
+      }
+
+      logStep("falling back to /signup to find login surface");
+      await page.goto("/signup", { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("domcontentloaded");
+      await page.waitForTimeout(1_000);
+      if (await isLoginSurfaceVisible(10_000)) {
+        logStep(`login surface detected from /signup at ${page.url()}`);
+        return;
+      }
+
+      await dumpDebugState("could-not-reach-login-surface");
+      throw new Error(
+        `Could not reach the login surface. Landed on ${new URL(page.url()).pathname}.`
+      );
+    };
+
+    await openLoginSurface();
+
+    await page.waitForTimeout(1_000); // let login form render
+
+    if (forcedAuthRegion) {
+      logStep(`auth region override active: ${forcedAuthRegion}`);
+    }
+
+    // Click "Log in" tab (BoxSwitcher option), then fill email and password
+    logStep(`waiting for Log in tab on ${page.url()}`);
     await logInTab.waitFor({ state: "visible", timeout: 15_000 });
+    logStep("clicking Log in tab");
     await logInTab.click({ timeout: 10_000 });
     await page.waitForTimeout(800);
 
-    const emailInput = page.getByPlaceholder("username@email.com").or(page.getByLabel("Email"));
+    logStep("waiting for email input");
     const emailVisible = await emailInput
       .waitFor({ state: "visible", timeout: 12_000 })
       .then(() => true)
@@ -151,24 +269,28 @@ async function main() {
         "Email input did not appear. Is email/password login enabled for this app?"
       );
     }
+    logStep(`filling email for ${email}`);
     await emailInput.fill(email);
     await page.waitForTimeout(300);
 
     // Some builds show an explicit "Enter password" button, others show the password field directly.
-    const enterPasswordBtn = page.getByRole("button", { name: /Enter password/i });
-    const passwordInput = page.locator("#password");
-
+    logStep("checking whether Enter password button is present");
     const haveEnterPassword = await enterPasswordBtn
       .first()
       .waitFor({ state: "visible", timeout: 7_500 })
       .then(() => true)
       .catch(() => false);
     if (haveEnterPassword) {
+      logStep("clicking Enter password");
       await enterPasswordBtn.first().click({ timeout: 10_000 }).catch(() => null);
       await page.waitForTimeout(500);
+    } else {
+      logStep("Enter password button not shown; password input expected directly");
     }
 
+    logStep("waiting for password input");
     await passwordInput.waitFor({ state: "visible", timeout: 10_000 });
+    logStep("filling password");
     await passwordInput.fill(password);
     await page.waitForTimeout(300);
 
@@ -202,66 +324,80 @@ async function main() {
       )
       .catch(() => null);
 
+    const hasSessionCookie = async () => {
+      const cookies = await context.cookies();
+      return cookies.some(
+        (c) =>
+          (c.name === sessionCookieName || c.name?.includes("session_token")) &&
+          (c.domain === parentDomain || c.domain === `.${parentDomain}`)
+      );
+    };
+
     // Avoid clicking the "Log in" tab again; target the form submit button.
     const submitBtn = page
       .locator('form button[type="submit"]', { hasText: /^Log in$/i })
       .first()
       .or(page.getByRole("button", { name: /^Log in$/i }).last());
+    logStep(`clicking final Log in submit on ${page.url()}`);
     await submitBtn.click({ timeout: 10_000 });
 
+    logStep("waiting for auth-related response and session cookie response");
     await responsePromise;
     await sessionCookiePromise;
 
-    const leftLogin = await page
-      .waitForURL(
-        (u) => new URL(u).pathname !== "/account/login",
-        {
-        timeout: 40_000,
-        waitUntil: "domcontentloaded"
-        }
-      )
-      .then(() => true)
-      .catch(() => false);
-
-    if (!leftLogin) {
-      throw new Error("Login did not complete (still on login page). Check credentials and app.");
-    }
-
-    await page.waitForLoadState("domcontentloaded");
-    await page.waitForLoadState("networkidle").catch(() => null);
-    await page.waitForTimeout(2_000);
-
-    // Same as memotron/pointron: ensure we're on the app origin so session cookies for that origin are in context.
-    await page.goto("/", { waitUntil: "domcontentloaded" });
-    await page.waitForLoadState("networkidle").catch(() => null);
-    await page.waitForTimeout(2_000);
-
-    // Wait until the session cookie is actually in the context (Playwright may not expose Set-Cookie in headers).
-    const hostname = new URL(baseURL).hostname;
-    const parentDomain =
-      net.isIP(hostname) !== 0 || hostname === "localhost"
-        ? hostname
-        : hostname.includes(".")
-          ? hostname.split(".").slice(-2).join(".")
-          : hostname; // e.g. local.nucleum.app -> nucleum.app
-    const sessionCookieName = "__Secure-21n.session_token";
-    const deadline = Date.now() + 15_000;
-    let hasSessionCookie = false;
-    while (Date.now() < deadline) {
-      const cookies = await context.cookies();
-      const hasSession = cookies.some(
-        (c) =>
-          (c.name === sessionCookieName || c.name?.includes("session_token")) &&
-          (c.domain === parentDomain || c.domain === `.${parentDomain}`)
-      );
-      if (hasSession) {
-        hasSessionCookie = true;
+    const authDeadline = Date.now() + 40_000;
+    let leftLogin = false;
+    while (Date.now() < authDeadline) {
+      const pathname = new URL(page.url()).pathname;
+      if (pathname !== "/account/login") {
+        logStep(`left /account/login and reached ${pathname}`);
+        leftLogin = true;
+        break;
+      }
+      if (await hasSessionCookie()) {
+        logStep("session cookie detected while still on /account/login");
         break;
       }
       await page.waitForTimeout(500);
     }
 
-    if (!hasSessionCookie) {
+    if (!leftLogin && (await hasSessionCookie())) {
+      logStep("forcing navigation to / after session cookie detection");
+      await page.goto("/", { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("domcontentloaded");
+      leftLogin = new URL(page.url()).pathname !== "/account/login";
+      logStep(`after forced navigation current url=${page.url()}`);
+    }
+
+    if (!leftLogin) {
+      await dumpDebugState("login-did-not-complete");
+      throw new Error("Login did not complete (still on login page). Check credentials and app.");
+    }
+
+    logStep(`post-login path is ${new URL(page.url()).pathname}`);
+    await page.waitForLoadState("domcontentloaded");
+    await page.waitForLoadState("networkidle").catch(() => null);
+    await page.waitForTimeout(2_000);
+
+    // Save the state exactly where login lands (typically /signup for this flow).
+    // Tests will handle the follow-up "Continue offline" step.
+    logStep(`preserving post-login landing page at ${new URL(page.url()).pathname}`);
+
+    // Wait until the session cookie is actually in the context (Playwright may not expose Set-Cookie in headers).
+    const deadline = Date.now() + 15_000;
+    let hasSessionCookieInContext = false;
+    while (Date.now() < deadline) {
+      const hasSession = await hasSessionCookie();
+      if (hasSession) {
+        logStep("confirmed session cookie in browser context");
+        hasSessionCookieInContext = true;
+        break;
+      }
+      await page.waitForTimeout(500);
+    }
+
+    if (!hasSessionCookieInContext) {
+      await dumpDebugState("session-cookie-not-detected");
       throw new Error("Session cookie was not detected; refusing to save unauthenticated storageState.");
     }
 

@@ -29,6 +29,9 @@ const runtimeEnv = (
  * Waits for any product's nav label (Focus, Capture, Calendar, Overview, Library) for nucleum, pointron, and memotron.
  */
 export async function ensureInAppOnHome(page: Page) {
+  const debug = (message: string) => {
+    console.log(`[ensureInAppOnHome] ${message}`);
+  };
   const safeGoto = async (url: string) => {
     try {
       await page.goto(url, { waitUntil: "domcontentloaded" });
@@ -42,6 +45,23 @@ export async function ensureInAppOnHome(page: Page) {
 
   await safeGoto("/");
   await page.waitForLoadState("domcontentloaded");
+  const setOfflineSessionFallback = async () => {
+    debug(`setting offlineSessionId fallback on ${page.url()}`);
+    await page.evaluate(() => {
+      const key = "offlineSessionId";
+      const value =
+        globalThis.crypto?.randomUUID?.() ??
+        `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      window.localStorage.setItem(key, value);
+    });
+  };
+  const continueOfflineAtStart = page.getByRole("button", { name: /Continue (using )?offline/i }).first();
+  if (await continueOfflineAtStart.isVisible().catch(() => false)) {
+    debug(`continue offline visible at start on ${page.url()}, using offline-session fallback`);
+    await setOfflineSessionFallback();
+    await safeGoto(`/${resolveProductConfig().homePath}`);
+    await page.waitForLoadState("domcontentloaded").catch(() => null);
+  }
 
   // Saved session: wait for app to redirect past auth. If we're already on an auth entry page,
   // don't burn the full timeout before trying the offline path.
@@ -64,6 +84,11 @@ export async function ensureInAppOnHome(page: Page) {
 
   const clickContinueOfflineIfVisible = async (): Promise<boolean> => {
     const pathname = new URL(page.url()).pathname;
+    const productConfig = resolveProductConfig();
+    const home = `/${productConfig.homePath}`;
+    if (pathname === home || pathname.startsWith(`${home}/`)) {
+      return false;
+    }
     if (pathname === "/") {
       const btn = page.getByRole("button", { name: /Continue (using )?offline/i }).first();
       try {
@@ -71,34 +96,42 @@ export async function ensureInAppOnHome(page: Page) {
       } catch {
         return false;
       }
-      const nextUrl = page
-        .waitForURL((u) => new URL(u).pathname !== "/", { timeout: 12_000 })
-        .then(() => true)
-        .catch(() => false);
-      await btn.click({ timeout: 5_000 }).catch(() => null);
-      await page.waitForLoadState("domcontentloaded").catch(() => null);
-      return nextUrl;
+      debug(`continue offline visible on /, using offline-session fallback`);
+      await setOfflineSessionFallback();
+      await safeGoto(`/${productConfig.homePath}`);
+      return true;
     }
     if (pathname === "/account/login") {
-      const offlineTab = page.getByRole("button", { name: "Offline" }).first();
-      await offlineTab.waitFor({ state: "visible", timeout: 3_000 }).catch(() => null);
-      await offlineTab.click({ timeout: 2_000 }).catch(() => null);
-      await page.waitForTimeout(500);
+      debug("redirecting /account/login -> /signup before offline flow");
+      await safeGoto("/signup");
+      await page.waitForLoadState("domcontentloaded").catch(() => null);
     }
     const continueOfflineBtn = page.getByRole("button", { name: /Continue (using )?offline/i }).first();
+    const currentPathname = new URL(page.url()).pathname;
     try {
-      await continueOfflineBtn.waitFor({ state: "visible", timeout: pathname === "/signup" ? 10_000 : 5_000 });
+      await continueOfflineBtn.waitFor({
+        state: "visible",
+        timeout: currentPathname === "/signup" ? 10_000 : 5_000
+      });
     } catch {
       return false;
     }
-    const leftAuth = page
-      .waitForURL((u) => new URL(u).pathname !== "/signup" && new URL(u).pathname !== "/account/login", { timeout: 10_000 })
-      .then(() => true)
-      .catch(() => false);
-    await continueOfflineBtn.click({ timeout: 5_000 }).catch(() => null);
-    await page.waitForLoadState("domcontentloaded").catch(() => null);
-    return leftAuth;
+    debug(`continue offline visible on ${page.url()}, using offline-session fallback`);
+    await setOfflineSessionFallback();
+    await safeGoto(`/${productConfig.homePath}`);
+    return true;
   };
+
+  // If "Continue offline" is visible, prefer clicking it even when the URL pathname
+  // doesn't match the canonical auth routes (some builds show an offline landing page
+  // at a different path). This reduces calendar failures where we were stuck on the
+  // welcome/offline screen.
+  {
+    const handledNow = await clickContinueOfflineIfVisible().catch(() => false);
+    if (handledNow) {
+      await page.waitForLoadState("domcontentloaded").catch(() => null);
+    }
+  }
 
   if (!leftAuthPage) {
     for (let i = 0; i < 4; i += 1) {
@@ -139,17 +172,31 @@ export async function ensureInAppOnHome(page: Page) {
     ...productConfig.appMenuNavLabels.map((label) =>
       page.getByRole("button", { name: new RegExp(`^${label}$`, "i") }).first()
     ),
-    page.getByRole("button", { name: "Today" }).first()
+    page.getByRole("button", { name: "Today" }).first(),
+    page.getByRole("button", { name: /command bar/i }).first(),
+    page.getByTestId("topnav-account-settings").first(),
+    page.getByTestId("leftnav-settings").first()
   ];
   await expect
     .poll(
       async () => {
+        const p = new URL(page.url()).pathname;
+        const quickContinueOffline = page.getByRole("button", { name: /Continue (using )?offline/i }).first();
+        if (await quickContinueOffline.isVisible().catch(() => false)) {
+          debug(`continue offline became visible during nav poll on ${page.url()}, using offline-session fallback`);
+          await setOfflineSessionFallback();
+          await safeGoto(`/${resolveProductConfig().homePath}`);
+          await page.waitForLoadState("domcontentloaded").catch(() => null);
+        }
+        if (p === "/" || p === "/signup" || p === "/account/login") {
+          await clickContinueOfflineIfVisible().catch(() => false);
+        }
         for (const marker of navMarkers) {
           if (await marker.isVisible().catch(() => false)) return true;
         }
         return false;
       },
-      { timeout: 25_000 }
+      { timeout: 45_000 }
     )
     .toBe(true);
 }

@@ -45,7 +45,11 @@ test.describe("calendar - all workflows (Logs, manual time, timeline) @regressio
 
   test("manual time entry via command bar (Manual time entry → goal + duration → save), then assert in Logs", async ({
     page
-  }) => {
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name === "memotron",
+      "Memotron does not ship the same manual focus log / Logs workflow as Nucleum/Pointron"
+    );
     test.setTimeout(60_000);
     await ensureInAppOnHome(page);
 
@@ -78,7 +82,11 @@ test.describe("calendar - all workflows (Logs, manual time, timeline) @regressio
 
   test("manual time entry via UI (Focus → Add manual log → goal + duration → save), then assert in Logs", async ({
     page
-  }) => {
+  }, testInfo) => {
+    test.skip(
+      testInfo.project.name === "memotron",
+      "Memotron has no Focus page / Add manual log entry point used in this flow"
+    );
     test.setTimeout(60_000);
     await ensureInAppOnHome(page);
 
@@ -110,5 +118,52 @@ test.describe("calendar - all workflows (Logs, manual time, timeline) @regressio
     await expect(
       page.getByText(goalName, { exact: true }).first()
     ).toBeVisible({ timeout: 10_000 });
+  });
+
+  test("calendar: navigate dates (prev/next) and verify day content updates (or N/A if no date nav)", async ({
+    page
+  }) => {
+    test.setTimeout(90_000);
+    await ensureInAppOnHome(page);
+
+    const todayBtn = page.getByRole("button", { name: /^Today$/i }).first();
+    await expect(todayBtn).toBeVisible({ timeout: 10_000 });
+
+    const prevBtn = page
+      .getByRole("button", { name: /Previous day|Previous|Back/i })
+      .first();
+    const nextBtn = page.getByRole("button", { name: /Next day|Next/i }).first();
+
+    const prevVisible = await prevBtn.isVisible().catch(() => false);
+    const nextVisible = await nextBtn.isVisible().catch(() => false);
+    if (!prevVisible || !nextVisible) {
+      test.skip(true, "Calendar date navigation controls not available (N/A)");
+      return;
+    }
+
+    const getDayMarker = async () => {
+      // Avoid matching the persistent "Today" nav button; use weekday/month-day labels that change with navigation.
+      const candidates = [
+        page.getByText(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)$/i).first(),
+        page.getByText(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/i).first()
+      ];
+      for (const c of candidates) {
+        const visible = await c.isVisible().catch(() => false);
+        if (visible) return (await c.textContent())?.trim() ?? "";
+      }
+      return new URL(page.url()).pathname + new URL(page.url()).search;
+    };
+
+    const before = await getDayMarker();
+    await prevBtn.click({ timeout: 5_000 });
+    await page.waitForTimeout(1_000);
+    const afterPrev = await getDayMarker();
+    expect(afterPrev).not.toEqual(before);
+
+    await nextBtn.click({ timeout: 5_000 });
+    await page.waitForTimeout(1_000);
+    const afterNext = await getDayMarker();
+    // After going prev then next, we should be back at the original day (most UIs).
+    expect(afterNext).toEqual(before);
   });
 });
