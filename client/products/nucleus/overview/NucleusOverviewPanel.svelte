@@ -9,7 +9,13 @@
   import { Placement } from "@21n/types/direction.enum";
   import { Size } from "@21n/types/size.enum";
   import { VerticalSwitcherStyle } from "@21n/types/switcher.enum";
-  import { OverviewPanel } from "@21n/products/nucleus/overview/overview.type";
+  import { OverviewPanel } from "@21n/products/product.type";
+  import { Product } from "@21n/products/product.type";
+  import { resolveProductConfig } from "@21n/products/product.config";
+
+  const items =
+    resolveProductConfig(Product.NUCLEUS).overviewPanelSwitcherItems ?? [];
+
   let selectedPanel: OverviewPanel = resolveSavedState() ?? OverviewPanel.FOCUS;
 
   function resolveSavedState() {
@@ -20,29 +26,6 @@
       return savedPanel;
     }
   }
-
-  const items = [
-    {
-      label: "Focus",
-      value: OverviewPanel.FOCUS,
-      icon: "circle"
-    },
-    {
-      label: "Memory",
-      value: OverviewPanel.MEMORY,
-      icon: "hexagon"
-    }
-    // {
-    //   label: "Self",
-    //   value: OverviewPanel.SELF,
-    //   icon: "heart"
-    // },
-    // {
-    //   label: "Finance",
-    //   value: OverviewPanel.FINANCE,
-    //   icon: "ph:bank-light"
-    // }
-  ];
 
   function onSwitch(event: CustomEvent) {
     const val = event.detail;

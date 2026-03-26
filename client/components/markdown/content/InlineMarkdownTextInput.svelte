@@ -1207,7 +1207,7 @@
 <style>
   div[contenteditable].noncustomcaret {
     caret-color: var(--customcolor, rgb(var(--colors-aps1))) !important;
-    caret-shape: block;
+    /* caret-shape: block; */
   }
   div[contenteditable].customcaret {
     caret-color: transparent;

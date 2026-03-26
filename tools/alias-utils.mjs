@@ -76,6 +76,18 @@ export const buildViteAliases = (aliasMap, projectRoot = PROJECT_ROOT) => {
   );
 };
 
+export const buildKitAliases = (aliasMap, configDir = PROJECT_ROOT) => {
+  const result = {};
+  for (const [alias, target] of Object.entries(aliasMap)) {
+    const absTarget = path.resolve(PROJECT_ROOT, target);
+    const relTarget = ensureRelativeSpecifier(
+      toPosixPath(path.relative(configDir, absTarget))
+    );
+    result[alias] = relTarget;
+  }
+  return result;
+};
+
 export const getAliasEntries = () => {
   const aliasMap = loadAliasMap();
   return {

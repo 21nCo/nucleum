@@ -1,6 +1,12 @@
 // import adapter from '@sveltejs/adapter-auto';
 import adapter from "@sveltejs/adapter-static";
 import { vitePreprocess } from "@sveltejs/vite-plugin-svelte";
+import { buildKitAliases, loadAliasMap } from "../../tools/alias-utils.mjs";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const kitAliases = buildKitAliases(loadAliasMap(), __dirname);
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -11,11 +17,10 @@ const config = {
     }),
     alias: {
       $local: "./src",
-      // Point $lib to the parent lib directory (2 levels up)
-      $lib: "../../"
+      $lib: "../../",
+      ...kitAliases
     },
     files: {
-      // lib points to the parent lib for this product
       lib: "../../",
       routes: "../../client/routes"
     }

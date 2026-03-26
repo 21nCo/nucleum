@@ -84,7 +84,7 @@ export type ICaptureLink = {
   from: IRecordId | "root";
   to: IRecordId;
   linkType: LinkType;
-  toType: Resource.node | Resource.collection;
+  toType: typeof Resource.node | typeof Resource.collection;
   toSubType?: CollectionType | NodeType;
   location?: IRecordId;
   tags?: IRecordId[];

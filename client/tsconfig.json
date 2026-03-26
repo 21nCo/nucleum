@@ -504,6 +504,26 @@
       ],
       "@21n/shared-dbo/*": [
         "../shared/dbo/*"
+      ],
+      "@21n/next": [
+        "./next/index.ts",
+        "./next/index.tsx",
+        "./next/index.js",
+        "./next/index.mjs",
+        "./next/index.cjs",
+        "./next/index.svelte",
+        "./next/index.d.ts",
+        "./next/src/index.ts",
+        "./next/src/index.tsx",
+        "./next/src/index.js",
+        "./next/src/index.mjs",
+        "./next/src/index.cjs",
+        "./next/src/index.svelte",
+        "./next/src/index.d.ts",
+        "./next"
+      ],
+      "@21n/next/*": [
+        "./next/*"
       ]
     }
   },
@@ -513,6 +533,7 @@
     "stores/**/*",
     "products/**/*",
     "layout/**/*",
-    "extensions/**/*"
+    "extensions/**/*",
+    "next/**/*"
   ]
 }

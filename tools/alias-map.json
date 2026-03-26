@@ -22,5 +22,6 @@
   "@21n/client": "client",
   "@21n/shared-types": "shared/types",
   "@21n/shared-utils": "shared/utils",
-  "@21n/shared-dbo": "shared/dbo"
+  "@21n/shared-dbo": "shared/dbo",
+  "@21n/next": "client/next/noop"
 }

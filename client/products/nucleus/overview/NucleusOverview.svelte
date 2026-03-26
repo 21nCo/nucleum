@@ -5,7 +5,7 @@
     UIState,
     UIStateScope
   } from "@21n/stores/uiState/uiState.type";
-  import { OverviewPanel } from "@21n/products/nucleus/overview/overview.type";
+  import { OverviewPanel } from "@21n/products/product.type";
   import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
   import AnalyticsV2 from "@21n/products/pointron/analytics/AnalyticsV2.svelte";
   import MemotronOverview from "@21n/products/memotron/overview/MemotronOverview.svelte";

@@ -12,7 +12,12 @@
     UIState,
     UIStateScope
   } from "@21n/stores/uiState/uiState.type";
-  import { OverviewPanel } from "@21n/products/nucleus/overview/overview.type";
+  import { OverviewPanel } from "@21n/products/product.type";
+  import { Product } from "@21n/products/product.type";
+  import { resolveProductConfig } from "@21n/products/product.config";
+
+  const overviewPanelSwitcherItems =
+    resolveProductConfig(Product.NUCLEUS).overviewPanelSwitcherItems ?? [];
 
   export let isConstrainedWidth = false;
   let selectedPanel: OverviewPanel = resolveSavedState() ?? OverviewPanel.FOCUS;
@@ -46,28 +51,7 @@
     }}
   >
     <PanelSwitcher
-      items={[
-        {
-          label: "Focus",
-          value: OverviewPanel.FOCUS,
-          icon: "circle"
-        },
-        {
-          label: "Memory",
-          value: OverviewPanel.MEMORY,
-          icon: "hexagon"
-        }
-        // {
-        //   label: "Self",
-        //   value: OverviewPanel.SELF,
-        //   icon: "heart"
-        // },
-        // {
-        //   label: "Finance",
-        //   value: OverviewPanel.FINANCE,
-        //   icon: "ph:bank-light"
-        // }
-      ]}
+      items={overviewPanelSwitcherItems}
       style={PanelSwitcherStyle.BAR}
       title="Overview"
       isExpandToFullWidth={true}

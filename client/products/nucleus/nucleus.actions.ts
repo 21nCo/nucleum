@@ -40,8 +40,8 @@ export const nucleusActions: IAction[] = [
   },
   {
     action: Action.HOME,
-    label: "Home",
-    icon: "home",
+    label: "Rhom",
+    icon: "rhombus",
     component: ComingSoonView,
     type: ActionType.PAGE
   },
