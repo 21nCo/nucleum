@@ -362,11 +362,27 @@ export function resolveMutationQueryV2(mutation: IMutation) {
       )} WHERE id = ${mutation.id}`;
     case PersistenceActionType.MERGE:
       return resolveMergeQuery(mutation.params.record, { isUpsert: true });
-    case PersistenceActionType.BULK_MERGE:
-      return resolveBulkMergeQuery(
-        mutation.resource as Resource,
-        resolveMutationRecords(mutation.params)
-      );
+    case PersistenceActionType.BULK_MERGE: {
+      if (
+        "recordIds" in mutation.params &&
+        Array.isArray(mutation.params.recordIds) &&
+        mutation.params.recordIds.length > 0 &&
+        "changes" in mutation.params
+      ) {
+        const query = `UPDATE ${mutation.resource} MERGE ${JSON.stringify(
+          mutation.params.changes,
+          noneReplacerFn
+        )} where id in ${JSON.stringify(mutation.params.recordIds)};`;
+        return commonQueryReplacements(query, mutation.resource as Resource);
+      }
+
+      const records = resolveMutationRecords(mutation.params);
+      if (records.length > 0) {
+        return resolveBulkMergeQuery(mutation.resource as Resource, records);
+      }
+
+      throw new Error("BULK_MERGE requires records or recordIds with changes");
+    }
     case PersistenceActionType.CUSTOM:
       return replaceParams(mutation.params.query, mutation.params.data);
   }
@@ -383,9 +399,7 @@ export function resolveSelectQuery(
   props = props.map((x) => (x === "#" ? "count()" : x));
   const expansionProps = (properties?.expand ?? [])
     .filter(isValidIdentifier)
-    .map(
-      (x) => `(select * from $parent.${x}) as ${x}`
-    );
+    .map((x) => `(select * from $parent.${x}) as ${x}`);
   const allProperties = [...props, ...expansionProps];
   return `SELECT ${allProperties.join(", ")} FROM ONLY ${resourceId};`;
 }
@@ -403,9 +417,7 @@ export function resolveSelectManyQuery(
   properties = properties.map((x) => (x === "#" ? "count()" : x));
   const expansionProps = (params?.properties?.expand ?? [])
     .filter(isValidIdentifier)
-    .map(
-      (x) => `${x}.* as ${x}`
-    );
+    .map((x) => `${x}.* as ${x}`);
   const allProperties = [...properties, ...expansionProps];
   const whereClause = generateWhereClause(resource, params);
   const selectClause = `SELECT ${allProperties.join(", ")}`;
@@ -630,7 +642,9 @@ function generateWhereClause(
 }
 
 function resolveMutationRecords(params: IMutation["params"]) {
-  return "records" in params && Array.isArray(params.records) ? params.records : [];
+  return "records" in params && Array.isArray(params.records)
+    ? params.records
+    : [];
 }
 
 function isDateValue(value: unknown): value is Date | string {
@@ -649,5 +663,10 @@ function isDateFilterValue(
 function isComparisonFilterValue(
   value: IResourceFilterValue
 ): value is IComparisonFilterValue {
-  return !!value && typeof value === "object" && !Array.isArray(value) && !("type" in value);
+  return (
+    !!value &&
+    typeof value === "object" &&
+    !Array.isArray(value) &&
+    !("type" in value)
+  );
 }

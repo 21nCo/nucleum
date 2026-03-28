@@ -56,26 +56,27 @@
   let isHideCompleted = $goal.uiState?.isHideCompleted ?? false;
   let _subGoals: ISubGoalListItem[] = [];
 
-  function isSavedSubGoal(
-    item: ISubGoalListItem
-  ): item is IRenderedSubGoal {
+  function isSavedSubGoal(item: ISubGoalListItem): item is IRenderedSubGoal {
     return "id" in item;
   }
 
   $: _subGoals = [
     ...($goal.children
       ? $goal.children
-        .filter(activeResourceFilterIgnoreParentInactive)
-        .filter(
-          isHideCompleted
+          .filter(activeResourceFilterIgnoreParentInactive)
+          .filter(
+            isHideCompleted
               ? (t: IGoal) => t.status !== GoalStatus.COMPLETED
               : (t: IGoal) => t
           )
-          .map((t: IGoal) => ({
-            ...t,
-            icon: resolveGoalStatusIcon(t.status),
-            isIconFilled: t.status === GoalStatus.COMPLETED
-          }) as IRenderedSubGoal)
+          .map(
+            (t: IGoal) =>
+              ({
+                ...t,
+                icon: resolveGoalStatusIcon(t.status),
+                isIconFilled: t.status === GoalStatus.COMPLETED
+              }) as IRenderedSubGoal
+          )
       : []),
     ...($goal.subGoalsLayout === SubGoalsLayout.STEPS && isActiveResource
       ? [
@@ -236,7 +237,7 @@
       dragImage: "dragimage"
     }}
   >
-      {#if !$goal.subGoalsLayout || $goal.subGoalsLayout === SubGoalsLayout.DEFAULT}
+    {#if !$goal.subGoalsLayout || $goal.subGoalsLayout === SubGoalsLayout.DEFAULT}
       <NestedList
         items={_subGoals.filter(isSavedSubGoal).map((t) => t.id)}
         contentCallback={resolveContent}
@@ -294,11 +295,10 @@
       <div class="flex flex-col gap-2 p-4">
         <Text content="Archived sub goals" style={TextStyle.SECTION_HEADING} />
         <div class="flex flex-col userdata">
-          {#each archiveSubGoals as child}
-            <!-- <SubGoalItem {child} /> -->
+          {#each archiveSubGoals as child, index}
             <SubGoalItem
               subGoal={child}
-              index={0}
+              {index}
               totalLength={archiveSubGoals.length}
               on:click={(e) => {
                 onSubGoalClick(child.id, e);

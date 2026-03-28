@@ -29,7 +29,7 @@ class PdfCache {
 
   private getMetadataKey(url: string): Request {
     const metadataUrl = new URL(url);
-    metadataUrl.searchParams.set('_cache_metadata', 'true');
+    metadataUrl.searchParams.set("_cache_metadata", "true");
     return new Request(metadataUrl.toString(), { method: "GET" });
   }
 
@@ -37,9 +37,9 @@ class PdfCache {
     try {
       const cache = await caches.open(CACHE_NAME);
       const response = await cache.match(this.getMetadataKey(url));
-      
+
       if (!response) return null;
-      
+
       return await response.json();
     } catch (error) {
       logger.error({ at: "PdfCache.getMetadata", error });
@@ -47,13 +47,16 @@ class PdfCache {
     }
   }
 
-  private async setMetadata(url: string, metadata: ICacheMetadata): Promise<void> {
+  private async setMetadata(
+    url: string,
+    metadata: ICacheMetadata
+  ): Promise<void> {
     try {
       const cache = await caches.open(CACHE_NAME);
       const response = new Response(JSON.stringify(metadata), {
         headers: { "Content-Type": "application/json" }
       });
-      
+
       await cache.put(this.getMetadataKey(url), response);
     } catch (error) {
       logger.error({ at: "PdfCache.setMetadata", error });
@@ -77,7 +80,12 @@ class PdfCache {
       if (metadata) {
         const age = Date.now() - metadata.timestamp;
         if (age > CACHE_EXPIRY_MS) {
-          logger.log({ at: "PdfCache.get", message: "Cache expired", url, age });
+          logger.log({
+            at: "PdfCache.get",
+            message: "Cache expired",
+            url,
+            age
+          });
           await this.delete(url);
           return null;
         }
@@ -109,9 +117,7 @@ class PdfCache {
       const cacheData = new Uint8Array(data.byteLength);
       cacheData.set(data);
 
-      const response = new Response(new Blob([cacheData.buffer], {
-        type: "application/pdf"
-      }), {
+      const response = new Response(cacheData, {
         headers: {
           "Content-Type": "application/pdf",
           "Content-Length": data.length.toString()
@@ -119,7 +125,7 @@ class PdfCache {
       });
 
       await cache.put(cacheKey, response);
-      
+
       await this.setMetadata(url, {
         timestamp: Date.now(),
         size: data.length
@@ -146,7 +152,11 @@ class PdfCache {
       const cache = await caches.open(CACHE_NAME);
       await cache.delete(this.getCacheKey(url));
       await cache.delete(this.getMetadataKey(url));
-      logger.log({ at: "PdfCache.delete", message: "Cache entry deleted", url });
+      logger.log({
+        at: "PdfCache.delete",
+        message: "Cache entry deleted",
+        url
+      });
     } catch (error) {
       logger.error({ at: "PdfCache.delete", error, url });
     }
@@ -157,7 +167,10 @@ class PdfCache {
 
     try {
       await caches.delete(CACHE_NAME);
-      logger.info({ at: "PdfCache.clear", message: "All cache entries cleared" });
+      logger.info({
+        at: "PdfCache.clear",
+        message: "All cache entries cleared"
+      });
     } catch (error) {
       logger.error({ at: "PdfCache.clear", error });
     }
@@ -176,8 +189,8 @@ class PdfCache {
       const cache = await caches.open(CACHE_NAME);
       const requests = await cache.keys();
 
-      const pdfRequests = requests.filter(req => 
-        !req.url.includes('_cache_metadata=true')
+      const pdfRequests = requests.filter(
+        (req) => !req.url.includes("_cache_metadata=true")
       );
 
       let totalSize = 0;
@@ -185,7 +198,7 @@ class PdfCache {
 
       for (const req of pdfRequests) {
         const metadata = await this.getMetadata(req.url);
-        
+
         if (metadata) {
           totalSize += metadata.size;
           if (!oldestTimestamp || metadata.timestamp < oldestTimestamp) {
@@ -215,7 +228,7 @@ class PdfCache {
       let deletedCount = 0;
 
       for (const req of requests) {
-        if (!req.url.includes('_cache_metadata=true')) {
+        if (!req.url.includes("_cache_metadata=true")) {
           const metadata = await this.getMetadata(req.url);
 
           if (metadata && now - metadata.timestamp > CACHE_EXPIRY_MS) {
@@ -241,13 +254,13 @@ class PdfCache {
 
     try {
       const stats = await this.getStats();
-      
+
       if (stats.totalSize > MAX_CACHE_SIZE_BYTES) {
         const cache = await caches.open(CACHE_NAME);
         const requests = await cache.keys();
-        
-        const pdfRequests = requests.filter(req => 
-          !req.url.includes('_cache_metadata=true')
+
+        const pdfRequests = requests.filter(
+          (req) => !req.url.includes("_cache_metadata=true")
         );
 
         const entries = await Promise.all(
@@ -257,14 +270,14 @@ class PdfCache {
           }))
         );
 
-        entries.sort((a, b) => 
-          (a.metadata?.timestamp || 0) - (b.metadata?.timestamp || 0)
+        entries.sort(
+          (a, b) => (a.metadata?.timestamp || 0) - (b.metadata?.timestamp || 0)
         );
 
         let currentSize = stats.totalSize;
         for (const entry of entries) {
           if (currentSize <= MAX_CACHE_SIZE_BYTES * 0.8) break;
-          
+
           await this.delete(entry.url);
           currentSize -= entry.metadata?.size || 0;
         }

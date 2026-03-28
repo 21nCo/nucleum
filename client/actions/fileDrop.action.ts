@@ -120,13 +120,7 @@ export function fileDrop(
   }
 
   setupInput();
-  const currentInput = input;
-  if (!currentInput) {
-    return {
-      update() {},
-      destroy() {}
-    };
-  }
+  const currentInput = input!;
 
   node.addEventListener("dragover", handleDragOver);
   node.addEventListener("dragleave", handleDragLeave);
