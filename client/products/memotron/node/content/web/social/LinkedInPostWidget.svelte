@@ -9,6 +9,11 @@
   let loading: boolean = true;
   let error: string = "";
   const dev_isUseEmbedScriptApproach = false;
+  type LinkedInWindow = Window & {
+    IN?: {
+      parse(element: Element): void;
+    };
+  };
 
   onMount(() => {
     if (dev_isUseEmbedScriptApproach) {
@@ -46,13 +51,14 @@
   function createLinkedInEmbed() {
     try {
       const element = document.getElementById(id);
-      if (element && window.IN) {
+      const linkedInWindow = window as LinkedInWindow;
+      if (element && linkedInWindow.IN) {
         element.innerHTML = `
           <script type="IN/Share" data-url="${postUrl}">
           <\/script>
         `;
 
-        window.IN.parse(element);
+        linkedInWindow.IN.parse(element);
         loading = false;
       } else {
         setTimeout(createLinkedInEmbed, 100);
@@ -98,14 +104,6 @@
       }
     } catch (err) {
       console.error("LinkedIn iframe approach failed:", err);
-    }
-  }
-
-  declare global {
-    interface Window {
-      IN: {
-        parse(element: Element): void;
-      };
     }
   }
 </script>

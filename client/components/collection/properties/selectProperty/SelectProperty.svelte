@@ -56,6 +56,18 @@
     ref?.dispatchEvent(new CustomEvent("hide"));
   }
 
+  function onPopoverChange(e: Event) {
+    const detail = (e as CustomEvent<{ open?: boolean }>).detail;
+    isOptionsVisible = detail?.open ?? false;
+  }
+
+  function resolvePropertyId() {
+    if ("id" in property && property.id) {
+      return property.id.toString();
+    }
+    return "";
+  }
+
   function shouldShowPlaceholder(val: string | string[] | null) {
     return (
       isEmptyValue() ||
@@ -107,7 +119,7 @@
           isSpanToTriggerWidth: true,
           componentProps: {
             property: {
-              id: property.id,
+              id: resolvePropertyId(),
               type: property.type,
               config:
                 property.type === PropertyType.UNIVERSAL
@@ -125,9 +137,7 @@
             onSelect
           }
         }}
-        on:change={(e) => {
-          isOptionsVisible = e.detail?.open;
-        }}
+        on:change={onPopoverChange}
       >
         {#if shouldShowPlaceholder(value)}
           <span class="placeholder">

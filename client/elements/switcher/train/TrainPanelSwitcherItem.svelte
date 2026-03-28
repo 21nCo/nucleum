@@ -18,6 +18,7 @@
   export let index: number = 0;
   export let activeItemStrength: PanelSwitcherActiveItemStrength =
     PanelSwitcherActiveItemStrength.DEFAULT;
+  $: index;
 
   const dev_isApplyBorderForDefaultActive = false;
 
@@ -68,7 +69,6 @@
       style={PanelSwitcherStyle.TRAIN}
       {isActive}
       {isDisabled}
-      {index}
       {parentBgIndex}
       {activeItemStrength}
       on:remove

@@ -21,6 +21,15 @@ const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
 ).process?.env;
 
+export const goalResourcePattern = /^(Goals|Objectives)(\s+\d+)?$/i;
+
+export function resolveGoalCommandLabel() {
+  try {
+    return test.info().project.name === "nucleum" ? "Objectives" : "Goals";
+  } catch {
+    return "Goals";
+  }
+}
 
 /**
  * Ensure we're in the app and on the home (calendar), with app nav visible.
@@ -55,12 +64,20 @@ export async function ensureInAppOnHome(page: Page) {
       window.localStorage.setItem(key, value);
     });
   };
-  const continueOfflineAtStart = page.getByRole("button", { name: /Continue (using )?offline/i }).first();
-  if (await continueOfflineAtStart.isVisible().catch(() => false)) {
-    debug(`continue offline visible at start on ${page.url()}, using offline-session fallback`);
+  const goHomeWithOfflineSessionFallback = async (reason: string) => {
+    debug(`${reason} on ${page.url()}, using offline-session fallback`);
     await setOfflineSessionFallback();
     await safeGoto(`/${resolveProductConfig().homePath}`);
     await page.waitForLoadState("domcontentloaded").catch(() => null);
+    return true;
+  };
+  const loginSignupAtStart = page.getByRole("button", { name: /Login\/Signup/i }).first();
+  if (await loginSignupAtStart.isVisible().catch(() => false)) {
+    await goHomeWithOfflineSessionFallback("login/signup shell visible at start");
+  }
+  const continueOfflineAtStart = page.getByRole("button", { name: /Continue (using )?offline/i }).first();
+  if (await continueOfflineAtStart.isVisible().catch(() => false)) {
+    await goHomeWithOfflineSessionFallback("continue offline visible at start");
   }
 
   // Saved session: wait for app to redirect past auth. If we're already on an auth entry page,
@@ -89,17 +106,21 @@ export async function ensureInAppOnHome(page: Page) {
     if (pathname === home || pathname.startsWith(`${home}/`)) {
       return false;
     }
+    const loginSignupBtn = page.getByRole("button", { name: /Login\/Signup/i }).first();
+    if (await loginSignupBtn.isVisible().catch(() => false)) {
+      return await goHomeWithOfflineSessionFallback("login/signup shell visible");
+    }
     if (pathname === "/") {
       const btn = page.getByRole("button", { name: /Continue (using )?offline/i }).first();
       try {
         await btn.waitFor({ state: "visible", timeout: 5_000 });
       } catch {
+        if (await loginSignupBtn.isVisible().catch(() => false)) {
+          return await goHomeWithOfflineSessionFallback("login/signup shell visible");
+        }
         return false;
       }
-      debug(`continue offline visible on /, using offline-session fallback`);
-      await setOfflineSessionFallback();
-      await safeGoto(`/${productConfig.homePath}`);
-      return true;
+      return await goHomeWithOfflineSessionFallback("continue offline visible");
     }
     if (pathname === "/account/login") {
       debug("redirecting /account/login -> /signup before offline flow");
@@ -114,12 +135,12 @@ export async function ensureInAppOnHome(page: Page) {
         timeout: currentPathname === "/signup" ? 10_000 : 5_000
       });
     } catch {
+      if (await loginSignupBtn.isVisible().catch(() => false)) {
+        return await goHomeWithOfflineSessionFallback("login/signup shell visible");
+      }
       return false;
     }
-    debug(`continue offline visible on ${page.url()}, using offline-session fallback`);
-    await setOfflineSessionFallback();
-    await safeGoto(`/${productConfig.homePath}`);
-    return true;
+    return await goHomeWithOfflineSessionFallback("continue offline visible");
   };
 
   // If "Continue offline" is visible, prefer clicking it even when the URL pathname
@@ -183,10 +204,11 @@ export async function ensureInAppOnHome(page: Page) {
         const p = new URL(page.url()).pathname;
         const quickContinueOffline = page.getByRole("button", { name: /Continue (using )?offline/i }).first();
         if (await quickContinueOffline.isVisible().catch(() => false)) {
-          debug(`continue offline became visible during nav poll on ${page.url()}, using offline-session fallback`);
-          await setOfflineSessionFallback();
-          await safeGoto(`/${resolveProductConfig().homePath}`);
-          await page.waitForLoadState("domcontentloaded").catch(() => null);
+          await goHomeWithOfflineSessionFallback("continue offline became visible during nav poll");
+        }
+        const quickLoginSignup = page.getByRole("button", { name: /Login\/Signup/i }).first();
+        if (await quickLoginSignup.isVisible().catch(() => false)) {
+          await goHomeWithOfflineSessionFallback("login/signup shell visible during nav poll");
         }
         if (p === "/" || p === "/signup" || p === "/account/login") {
           await clickContinueOfflineIfVisible().catch(() => false);
@@ -233,7 +255,7 @@ export async function runQuickFocusCommand(page: Page) {
 export const LibraryTab = {
   Nodes: /^Nodes(\s+\d+)?$/i,
   Collections: /^Collections(\s+\d+)?$/i,
-  Goals: /^(Goals|Objectives)(\s+\d+)?$/i,
+  Goals: goalResourcePattern,
   Tasks: /^Tasks(\s+\d+)?$/i
 } as const;
 

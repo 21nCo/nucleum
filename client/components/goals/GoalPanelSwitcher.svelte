@@ -6,7 +6,9 @@
   } from "@21n/components/goals/goal.store";
   import { derived } from "svelte/store";
   import type { IToggleItem } from "@21n/elements/toggle/toggle.type";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
   import {
+    type IResourcePageWithPanels,
     ResourceAccessPoint,
     ResourceActionType
   } from "../flux/resourceStores/resource.type";
@@ -19,28 +21,37 @@
   export let isConstrainedWidth: boolean = false;
   export let isThreeColumned: boolean = false;
 
-  const adaptedStore = derived(goal, ($goal) => ({
-    id: $goal.id,
-    panel: $goal.panel,
-    isInFocusMode: $goal.isInFocusMode,
-    isInEditMode: $goal.isInEditMode,
-    switchPanel: (panel: string) => {
-      uiState.setState(UIState.goalPanelSelection, panel, {
-        scope: UIStateScope.DEVICE,
-        subVariables: [
-          isConstrainedWidth.toString(),
-          isThreeColumned.toString()
-        ]
-      });
-      goal.switchPanel(panel);
-    },
-    closeEditMode: () => goal.toggleEditMode(false)
-  }));
+  const adaptedStore = derived(
+    goal,
+    ($goal): IResourcePageWithPanels => ({
+      id: $goal.id,
+      panel: $goal.panel,
+      defaultPanel: $goal.defaultPanel ?? $goal.panel,
+      isInFocusMode: $goal.isInFocusMode,
+      isInEditMode: $goal.isInEditMode,
+      switchPanel: (panel?: string) => {
+        if (!panel) return;
+        uiState.setState(UIState.goalPanelSelection, panel, {
+          scope: UIStateScope.DEVICE,
+          subVariables: [
+            isConstrainedWidth.toString(),
+            isThreeColumned.toString()
+          ]
+        });
+        goal.switchPanel(panel);
+      },
+      closeEditMode: () => goal.toggleEditMode(false)
+    })
+  );
 
   function onContextMenuAction(
     e: CustomEvent<ResourcePanelType | ResourceActionType>
   ) {
     // TODO - custom actions
+  }
+
+  function resolveGoalThumb() {
+    return $goal as unknown as IGoalThumb;
   }
 </script>
 
@@ -50,9 +61,6 @@
   accessMode={$goal.accessMode}
   {isConstrainedWidth}
   contextMenuResolver={() =>
-    resolveGoalContextMenu($goal, ResourceAccessPoint.SELF, {
-      accessMode: $goal.accessMode,
-      isConstrainedWidth
-    })}
+    resolveGoalContextMenu(resolveGoalThumb(), ResourceAccessPoint.SELF)}
   on:action={onContextMenuAction}
 />

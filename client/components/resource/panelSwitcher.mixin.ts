@@ -5,7 +5,17 @@ import { dispatchCustomEvent } from "@21n/utils/browser.utils";
 import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
 
 export const PanelSwitcherMixin = {
-  switchPanel(this: unknown, panelValue?: string) {
+  switchPanel(
+    this: {
+      get: () => {
+        id: string;
+        panel?: string;
+        defaultPanel?: string;
+      };
+      update: (updater: (value: any) => any) => void;
+    },
+    panelValue?: string
+  ) {
     const state = this.get();
     let panel: string | undefined = state?.panel;
     let isInFocusMode: boolean = false;

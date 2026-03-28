@@ -31,7 +31,7 @@
   export let rawData: AnalyticsDataRecord[];
   export let goalColors: IAnalyticsLabelColor[];
   export let showLegend: boolean = true;
-  let data: ChartDataRecord[];
+  let data: (ChartDataRecord & { topLevelGoal?: string })[];
   let options: any;
   let isLoadingState = true;
   const colors = retrieveCurrentColors($appearance);
@@ -178,6 +178,7 @@
         return acc;
       }, {});
       data = Object.keys(dayMap).map((key) => ({
+        group: "Total",
         key,
         value: dayMap[key]
       }));

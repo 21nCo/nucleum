@@ -108,7 +108,7 @@
   let filtered: { link: INodeLinkThumb; node: INode }[] = [];
 
   let selectedLinkType:
-    | { linkType: LinkType; direction: "incoming" | "outgoing" | undefined }
+    | { linkType: LinkType; direction?: "incoming" | "outgoing" }
     | undefined = undefined;
   let selectedLinkTags: IRecordId[] = [];
   let fetchError: string | undefined = undefined;
@@ -321,12 +321,14 @@
         );
       }
     }
-    if (selectedLinkType) {
+    const currentSelectedLinkType = selectedLinkType;
+    if (currentSelectedLinkType) {
       filtered = filtered.filter((x) =>
         x.link.links?.some(
           (y) =>
-            y.linkType === selectedLinkType.linkType &&
-            y.direction === selectedLinkType.direction
+            y.linkType === currentSelectedLinkType.linkType &&
+            (!currentSelectedLinkType.direction ||
+              y.direction === currentSelectedLinkType.direction)
         )
       );
     }

@@ -108,11 +108,12 @@
       if (dom) {
         const shadowRoot = dom.shadowRoot;
         if (!shadowRoot) return;
-        shadowRoot.host.style.fontSize = `${rootFontSize + 20}px`;
-        shadowRoot.host.style.setProperty("visibility", "visible", "important");
+        const shadowHost = shadowRoot.host as HTMLElement;
+        shadowHost.style.fontSize = `${rootFontSize + 20}px`;
+        shadowHost.style.setProperty("visibility", "visible", "important");
         if (isInlineExtensionContext) {
           shadowRoot
-            .querySelector("#plasmo-shadow-container")
+            .querySelector<HTMLElement>("#plasmo-shadow-container")
             ?.style.setProperty("z-index", "0");
         }
       } else {
@@ -225,7 +226,11 @@
 
 <svelte:head>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin="anonymous"
+  />
   <link href={generateGoogleFontsUrl()} rel="stylesheet" />
 </svelte:head>
 

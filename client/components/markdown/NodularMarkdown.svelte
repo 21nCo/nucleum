@@ -104,7 +104,9 @@
   let mdRef: Markdown | undefined = undefined;
   export let params: IMarkdownParams | undefined = undefined;
   if (node) {
-    _md = { blocks: recursivelyExtractAllChildrenIntoArray(node) };
+    _md = {
+      blocks: recursivelyExtractAllChildrenIntoArray(node) as IBlock[]
+    };
     reCalculateStructure(_md, true);
     setTimeout(() => {
       md = _md;

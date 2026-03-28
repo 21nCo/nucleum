@@ -344,7 +344,7 @@ export function determineTimePeriodv2(period: TimePeriod): {
 } {
   let begin = new Date();
   let end = new Date();
-  let title = timePeriodLabel(period);
+  let title = timePeriodLabel(period) ?? "";
   if (
     period.value.type === TimePeriodType.ABSOLUTE &&
     period.value instanceof Object &&

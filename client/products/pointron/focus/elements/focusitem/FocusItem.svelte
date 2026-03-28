@@ -119,15 +119,29 @@
       return (
         focusItem.tasks
           ?.map((taskId) => $focusItemsStore.items.find(resourceInList(taskId)))
-          .filter(Boolean) ?? []
+          .filter((item): item is IFocusItem => Boolean(item)) ?? []
       );
     } else {
       return (
         focusItem.tasks
           ?.map((taskId) => focusItemsList.find(resourceInList(taskId)))
-          .filter(Boolean) ?? []
+          .filter((item): item is IFocusItem => Boolean(item)) ?? []
       );
     }
+  }
+
+  function resolveWorkedDuration() {
+    if (
+      contxt === "history" &&
+      "worked" in focusItem &&
+      typeof focusItem.worked === "number"
+    ) {
+      return focusItem.worked;
+    }
+    return resolveTaskFocus(
+      contxt == "current" ? $activeSession.intervals : intervals,
+      focusItem.blocks
+    );
   }
 
   function onReorderTasks(event: any) {
@@ -287,12 +301,7 @@
       {:else}
         <div class="text-fgs3 text-b3">
           {formatSeconds(
-            contxt === "history" && focusItem.worked
-              ? focusItem.worked
-              : resolveTaskFocus(
-                  contxt == "current" ? $activeSession.intervals : intervals,
-                  focusItem.blocks
-                )
+            resolveWorkedDuration()
           )}
         </div>
       {/if}

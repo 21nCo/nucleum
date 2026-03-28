@@ -44,6 +44,23 @@
   function hidePopover() {
     ref?.dispatchEvent(new CustomEvent("hide"));
   }
+
+  function onDateChange(val: Date) {
+    date = val;
+    _date = val;
+    dispatch("change", val);
+    hidePopover();
+  }
+
+  function onPopoverChange(e: Event) {
+    const detail = (e as CustomEvent<{ open?: boolean }>).detail;
+    isPopoverVisible = detail?.open ?? false;
+    if (isPopoverVisible) {
+      dispatch("opened");
+    } else {
+      dispatch("closed");
+    }
+  }
 </script>
 
 {#if variant == "wide" || variant == "wide-center"}
@@ -99,22 +116,10 @@
         componentProps: {
           isDatePickerMode: true,
           selectedDate: _date,
-          onDateChange: (val) => {
-            date = val;
-            _date = val;
-            dispatch("change", val);
-            hidePopover();
-          }
+          onDateChange
         }
       }}
-      on:change={(e) => {
-        isPopoverVisible = e.detail?.open;
-        if (isPopoverVisible) {
-          dispatch("opened");
-        } else {
-          dispatch("closed");
-        }
-      }}
+      on:change={onPopoverChange}
     >
       <Icon icon="calendar" size={Size.md} />
       {#if date}
@@ -144,26 +149,14 @@
       content: AbsoluteTimeRangePopoverV2,
       id: "date-picker-popover",
       isRenderAsModalForCW: true,
-      componentProps: {
-        isDatePickerMode: true,
-        selectedDate: _date,
-        onDateChange: (val) => {
-          date = val;
-          _date = val;
-          dispatch("change", val);
-          hidePopover();
+        componentProps: {
+          isDatePickerMode: true,
+          selectedDate: _date,
+          onDateChange
         }
-      }
-    }}
-    on:change={(e) => {
-      isPopoverVisible = e.detail?.open;
-      if (isPopoverVisible) {
-        dispatch("opened");
-      } else {
-        dispatch("closed");
-      }
-    }}
-  >
+      }}
+      on:change={onPopoverChange}
+    >
     {#if variant === "icon-only" || variant === "inline-with-icon"}
       <Icon icon="calendar-blank" />
     {/if}
@@ -194,7 +187,7 @@
         }
       }}
     >
-      <Icon icon="calendar" size={variant === "inline" ? Size.md : Size.lg} />
+      <Icon icon="calendar" size={Size.lg} />
       <!-- {#if variant === "inline"}
         <span class="ml-2 text-fgs2">{formatDate(date)}</span>
       {/if} -->

@@ -1,7 +1,12 @@
 import { test, expect, type Page } from "@playwright/test";
 import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
 import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
-import { ensureInAppOnHome, runCommand } from "../../../utils/helpers";
+import {
+  ensureInAppOnHome,
+  goalResourcePattern,
+  resolveGoalCommandLabel,
+  runCommand
+} from "../../../utils/helpers";
 
 const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
@@ -34,13 +39,13 @@ async function navigateToLibraryGoals(page: Page) {
     (u) => /^\/library(\/.*)?$/.test(new URL(u).pathname),
     { timeout: 10_000 }
   );
-  const goalsBtn = page.getByRole("button", { name: /^Goals(\s+\d+)?$/i }).first();
+  const goalsBtn = page.getByRole("button", { name: goalResourcePattern }).first();
   const goalsVisible = await goalsBtn.waitFor({ state: "visible", timeout: 5_000 }).then(() => true).catch(() => false);
   if (goalsVisible) {
     const disabled = await goalsBtn.getAttribute("aria-disabled").then((a) => a === "true").catch(() => false);
     if (!disabled) await goalsBtn.click({ timeout: 5_000 });
   } else {
-    await runCommand(page, "Goals");
+    await runCommand(page, resolveGoalCommandLabel());
     await page.getByTestId("command-bar-input").waitFor({ state: "hidden", timeout: 5_000 }).catch(() => null);
   }
   await page.waitForTimeout(1_000);
@@ -348,7 +353,7 @@ test.describe("goal – context menu (all actions) @regression", () => {
 
       await page.locator("#app-menu").getByRole("button", { name: /^Library$/i }).click({ timeout: 5_000 });
       await page.waitForURL((u) => /^\/library(\/.*)?$/.test(new URL(u).pathname), { timeout: 10_000 });
-      await runCommand(page, "Goals");
+      await runCommand(page, resolveGoalCommandLabel());
       await page.getByTestId("command-bar-input").waitFor({ state: "hidden", timeout: 5_000 }).catch(() => null);
       await page.waitForTimeout(1_500);
 

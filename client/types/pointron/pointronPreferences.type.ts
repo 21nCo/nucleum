@@ -3,11 +3,17 @@ import type {
   SessionCompositionType
 } from "@21n/types/pointron/sessionComposition.type";
 import type { TimerMode } from "@21n/types/pointron/timerMode.enum";
-import type { HorizonChart } from "@21n/types/analytics.type";
+import type { ChartType } from "@21n/types/analytics.type";
 import type { Cloud } from "@21n/types/cloud.enum";
 import type { Layout } from "@21n/types/layout.type";
-import type { TimeScale } from "@21n/types/time.type";
+import type { TimePeriod, TimeScale } from "@21n/types/time.type";
 import type { AnalyticsFilters } from "@21n/types/pointron/analytics.type";
+
+export type HorizonChart = {
+  id: string;
+  period: TimePeriod;
+  type: ChartType;
+};
 
 export interface IPointronPreferences {
   isEnableAgeCounter: boolean;

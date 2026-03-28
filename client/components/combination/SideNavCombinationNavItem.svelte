@@ -103,7 +103,10 @@
 
   function handleDragLeave(event: DragEvent) {
     if (!isEditMode) return;
-    if (!event.currentTarget?.contains(event.relatedTarget as Node)) {
+    if (
+      !(event.currentTarget instanceof HTMLElement) ||
+      !event.currentTarget.contains(event.relatedTarget as Node)
+    ) {
       dropPosition = null;
     }
   }
@@ -156,7 +159,9 @@
     on:click={onSelect}
   >
     {#if item.children && item.children.length > 0}
-      <span
+      <button
+        type="button"
+        aria-label={isCollapsed ? "Expand section" : "Collapse section"}
         class="flex items-center justify-center w-6 h-6 rounded-md hover:bg-bgs3"
         on:click={onChevronClick}
       >
@@ -165,7 +170,7 @@
           class="stroke-fgs2"
           size={Size.sm}
         />
-      </span>
+      </button>
     {:else}
       <span class="w-6" />
     {/if}

@@ -12,6 +12,11 @@
   export let property: IProperty;
   export let item: ICollectionItem;
 
+  function resolveMetadata() {
+    if ("metadata" in item) return item.metadata;
+    return undefined;
+  }
+
   function resolveFallbackLabel() {
     if (property.type === PropertyType.CREATED_TIME) {
       return "Created";
@@ -39,8 +44,8 @@
   {:else if property.type === PropertyType.LINKS_COUNT}
     <!-- TODO -->
   {:else if property.type === PropertyType.COLORS}
-    <ColorsProperty colors={item?.metadata?.colors} />
+    <ColorsProperty colors={resolveMetadata()?.colors} />
   {:else if property.type === PropertyType.LOCATION}
-    <LocationProperty location={item?.metadata?.location} />
+    <LocationProperty location={resolveMetadata()?.location} />
   {/if}
 </div>

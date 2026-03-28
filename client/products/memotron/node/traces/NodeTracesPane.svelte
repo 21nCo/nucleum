@@ -7,6 +7,7 @@
   import { getContext } from "svelte";
   import {
     canHaveTraces,
+    type IPdfBookmarkBody,
     NodeType,
     socialProfileNodeTypeList
   } from "@21n/products/memotron/node/node.type";
@@ -30,9 +31,17 @@
   const contentContext = getContext<any>("content");
 
   export let node: IActiveNodeStore | null = null;
+  type PdfTrace = IPdfBookmarkBody & {
+    id?: string;
+    due?: {
+      date?: string;
+      completed?: boolean;
+    };
+  };
   let options = resolveOptions($node?.contentType);
   let selectedType: string | undefined = undefined;
   let searchQuery: string = "";
+  let pdfAnnotations: PdfTrace[] = [];
   const hideHighlightColors = derived(
     [preferences, appStore],
     ([$preferences, $appStore]) => {
@@ -42,6 +51,7 @@
   );
 
   function resolveOptions(contentType: NodeType | undefined) {
+    if (!contentType) return [];
     const tasks = {
       value: "tasks",
       label: "Tasks",
@@ -93,7 +103,7 @@
   }
 
   $: pdfAnnotations = (() => {
-    const baseAnnots = $node?.pdfAnnotations ?? [];
+    const baseAnnots = ($node?.pdfAnnotations ?? []) as PdfTrace[];
     const q = searchQuery.trim().toLowerCase();
 
     if (q) {
@@ -147,12 +157,12 @@
             : highlightStore.resolveColor(trace.color)}
         <button
           class="flex flex-col gap-2 w-full cw:p-2 p-3 text-b2 text-left border border-brs3 rounded-md hover:bg-bgs2"
-          on:click={() => {
-            contentContext.publish("pdf-trace-click", {
-              id: trace.id,
-              pageNumber: trace.pageNumber
-            });
-          }}
+              on:click={() => {
+                contentContext.publish("pdf-trace-click", {
+                  id: trace.id ?? `${trace.pageNumber ?? index}`,
+                  pageNumber: trace.pageNumber
+                });
+              }}
         >
           <!-- TODO - delete, link, edit actions within traces panel -->
           <!-- <button
@@ -171,7 +181,7 @@
                     ? `border-color: ${hexToRGBA(color, 0.8)};`
                     : ""}
                 >
-                  {trace.selectedText.slice(0, 100)}
+                  {trace.selectedText?.slice(0, 100) ?? ""}
                 </blockquote>
               {/if}
               <div>
@@ -193,7 +203,7 @@
                   ? `background-color: ${hexToRGBA(color, 0.2)};`
                   : ""}
               >
-                {trace.selectedText.slice(0, 100)}</span
+                {trace.selectedText?.slice(0, 100) ?? ""}</span
               >
             </div>
           {/if}

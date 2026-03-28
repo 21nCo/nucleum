@@ -2,7 +2,14 @@
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   export let isStarred = false;
-  export let size: Size = Size.sm;
+  export let size:
+    | Size.xxs
+    | Size.xs
+    | Size.sm
+    | Size.md
+    | Size.lg
+    | Size.xl
+    | Size.xxl = Size.sm;
 </script>
 
 {#if isStarred}

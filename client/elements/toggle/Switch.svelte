@@ -17,7 +17,6 @@
     "cursor-pointer": !isDisabled
   })}
   for={id}
-  on:click|stopPropagation
 >
   <div class="relative">
     <input

@@ -98,7 +98,9 @@ export type ICollectionThumb = ICollectionBase &
     views: IRecordId[];
   };
 
-export interface ICollectionExpanded extends ICollectionBase {
+export interface ICollectionExpanded
+  extends ICollectionBase,
+    IResourcePropertiesForCollection {
   type: CollectionType;
   resource: Resource;
   properties?: IProperty[];

@@ -37,12 +37,11 @@
   import ConfirmationNotification from "@21n/components/notifications/ConfirmationNotification.svelte";
   import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
   let modals: ModalEvent[] = [];
-  let dialogRef: HTMLDialogElement;
+  let isShowAppearancePreview = false;
   let fullscreen: string | undefined;
   let pop:
     | { path: string; resource: string; modalParams: ModalParams }
     | undefined;
-  $: if (dialogRef) dialogRef.showModal();
   //TODO offline mode detection and showing changes pending sync
   let isShowSyncErrorMessage: boolean = false;
 

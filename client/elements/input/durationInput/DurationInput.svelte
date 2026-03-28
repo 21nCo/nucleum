@@ -8,9 +8,11 @@
   import type { InputLabel } from "@21n/types/input.type";
   import { debouncer } from "@21n/utils/utils";
   export let parentBackgroundIndex: number = 1;
+  $: void parentBackgroundIndex;
   export let value: number;
   export let label: InputLabel | undefined = undefined;
   export let placeholder: string | undefined = undefined;
+  $: void placeholder;
   export let isExpanded: boolean = false;
   const dispatch = createEventDispatcher();
   let inputRef: any;

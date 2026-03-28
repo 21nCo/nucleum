@@ -42,6 +42,9 @@
       <GoalFocusSessions id={$goal.id} {isIncludeSubGoals} />
     {/key}
   {:else if selectedOption === "all"}
-    <GoalAllActivityPanel goalId={$goal.id} createdAt={$goal.createdAt} />
+    <GoalAllActivityPanel
+      goalId={$goal.id}
+      createdAt={$goal.createdAt.toISOString()}
+    />
   {/if}
 </div>

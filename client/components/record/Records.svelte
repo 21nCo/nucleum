@@ -15,7 +15,10 @@
   import FileView from "@21n/components/files/FileView.svelte";
   import { createEventDispatcher } from "svelte";
   import type { INodeThumb } from "@21n/products/memotron/node/node.type";
-  import type { ICollection } from "@21n/components/collection/collection.type";
+  import type {
+    ICollection,
+    ICollectionThumb
+  } from "@21n/components/collection/collection.type";
   import type { ISideNavCombination } from "@21n/components/combination/combination.type";
   import type { IFile } from "@21n/components/files/file.type";
   import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
@@ -31,14 +34,15 @@
   import { stringify } from "@21n/shared-utils/json.utils";
   import { appStore } from "@21n/stores/app.store";
   const dispatch = createEventDispatcher();
-  export let data: (
+  type RecordItem =
     | INodeThumb
     | ICollection
     | IFile
     | ISideNavCombination
     | IGoalThumb
-    | ITaskThumb
-  )[] = [];
+    | ITaskThumb;
+
+  export let data: RecordItem[] = [];
   export let resource: Resource = Resource.node;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let defaultAccessMode: AccessMode = AccessMode.POP;
@@ -55,7 +59,44 @@
     resource,
     accessPoint
   };
-  function onClick(e: MouseEvent, item: any) {
+
+  function asNodeThumb(item: RecordItem): INodeThumb {
+    return item as INodeThumb;
+  }
+
+  function asCollection(item: RecordItem): ICollectionThumb {
+    return item as unknown as ICollectionThumb;
+  }
+
+  function asCombination(item: RecordItem): ISideNavCombination {
+    return item as ISideNavCombination;
+  }
+
+  function asGoal(item: RecordItem): IGoalThumb {
+    return item as IGoalThumb;
+  }
+
+  function asTask(item: RecordItem): ITaskThumb {
+    return item as ITaskThumb;
+  }
+
+  function asFile(item: RecordItem): IFile {
+    return item as IFile;
+  }
+
+  function asNodeList(items: RecordItem[]): INodeThumb[] {
+    return items as INodeThumb[];
+  }
+
+  function asTaskList(items: RecordItem[]): ITaskThumb[] {
+    return items as ITaskThumb[];
+  }
+
+  function resolveMouseEvent(event: MouseEvent | CustomEvent) {
+    return event instanceof MouseEvent ? event : undefined;
+  }
+
+  function onClick(e: MouseEvent | CustomEvent, item: RecordItem) {
     if (isPreventDefault) {
       dispatch("click", item);
       return;
@@ -69,7 +110,7 @@
       ? bulkEditStore.clickHandler(item.id)
       : false;
     if (!result) {
-      appStore.resourceClickHandler(e, item.id, {
+      appStore.resourceClickHandler(resolveMouseEvent(e), item.id, {
         defaultTo: defaultAccessMode,
         origin: accessPoint
       });
@@ -77,12 +118,22 @@
   }
 </script>
 
-<div class="flex flex-col w-full h-full">
-  <!-- <div class={cn("flex h-full w-full gap-4 flex-row flex-wrap content-start")}> -->
-  {#if resource === Resource.node && arrangement === Arrangement.MASONRY}
-    <NodeItems nodes={data} {arrangement} density={3} {accessPoint} />
+  <div class="flex flex-col w-full h-full">
+    <!-- <div class={cn("flex h-full w-full gap-4 flex-row flex-wrap content-start")}> -->
+    {#if resource === Resource.node && arrangement === Arrangement.MASONRY}
+    <NodeItems
+      nodes={asNodeList(data)}
+      {arrangement}
+      density={3}
+      {accessPoint}
+    />
   {:else if resource === Resource.task && accessPoint === ResourceAccessPoint.LIBRARY}
-    <TaskRecords {data} {arrangement} {accessPoint} {parentBgIndex} />
+    <TaskRecords
+      data={asTaskList(data)}
+      {arrangement}
+      {accessPoint}
+      {parentBgIndex}
+    />
   {:else}
     <div
       style={arrangement === Arrangement.GRID &&
@@ -112,15 +163,16 @@
           {@const resourceType = determineResourceType(item.id)}
           {#if resourceType === Resource.node}
             <NodeThumbnail
-              {item}
+              item={asNodeThumb(item)}
               {accessPoint}
+              accessPointId={item.id}
               {parentBgIndex}
               {arrangement}
               on:click={(e) => onClick(e, item)}
             />
           {:else if resourceType === Resource.collection}
             <CollectionThumbnail
-              {item}
+              item={asCollection(item)}
               {size}
               {accessPoint}
               {accessPointState}
@@ -129,7 +181,7 @@
             />
           {:else if resourceType === Resource.combination}
             <CombinationThumbnail
-              {item}
+              item={asCombination(item)}
               {size}
               {accessPoint}
               {accessPointState}
@@ -138,14 +190,19 @@
             />
           {:else if resourceType === Resource.goal}
             <GoalThumbnail
-              {item}
+              item={asGoal(item)}
               {accessPoint}
-              {parentBgIndex}
+              accessPointId={item.id}
               {arrangement}
               on:click={(e) => onClick(e, item)}
             />
           {:else if resourceType === Resource.task}
-            <TaskThumbnail {item} {accessPoint} {arrangement} {parentBgIndex} />
+            <TaskThumbnail
+              item={asTask(item)}
+              {accessPoint}
+              {arrangement}
+              {parentBgIndex}
+            />
           {:else}
             <div
               class="h-72 w-80 border border-brs3 rounded-md hover:border-aps1 grow"
@@ -155,23 +212,24 @@
           {/if}
         {:else if resource === Resource.node && arrangement !== Arrangement.MASONRY}
           <NodeThumbnail
-            {item}
+            item={asNodeThumb(item)}
             {accessPoint}
+            accessPointId={item.id}
             {parentBgIndex}
             {arrangement}
             on:click={(e) => onClick(e, item)}
           />
         {:else if resource === Resource.goal && arrangement !== Arrangement.MASONRY}
           <GoalThumbnail
-            {item}
+            item={asGoal(item)}
             {accessPoint}
-            {parentBgIndex}
+            accessPointId={item.id}
             {arrangement}
             on:click={(e) => onClick(e, item)}
           />
         {:else if resource === Resource.task && arrangement !== Arrangement.MASONRY}
           <TaskThumbnail
-            {item}
+            item={asTask(item)}
             {accessPoint}
             {parentBgIndex}
             {arrangement}
@@ -179,7 +237,7 @@
           />
         {:else if resource === Resource.collection}
           <CollectionThumbnail
-            {item}
+            item={asCollection(item)}
             {size}
             {accessPoint}
             {accessPointState}
@@ -188,7 +246,7 @@
           />
         {:else if resource === Resource.combination}
           <CombinationThumbnail
-            {item}
+            item={asCombination(item)}
             {size}
             {accessPoint}
             {accessPointState}
@@ -198,7 +256,7 @@
         {:else if resource === Resource.file}
           <button class="h-40" on:click={(e) => onClick(e, item)}>
             <FileView
-              file={item}
+              file={asFile(item)}
               isLazyLoad={true}
               isUseThumbnailIfAvailable={true}
               class={cn("h-full w-full rounded-md object-cover", {})}

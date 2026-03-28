@@ -696,7 +696,12 @@
           isEmbedContext: true,
           creationContext: nodeContext?.id ?? undefined
         });
-        if (!webpageNode || webpageNode.error) return;
+        const hasWebpageNodeError =
+          typeof webpageNode === "object" &&
+          webpageNode !== null &&
+          "error" in webpageNode &&
+          Boolean(webpageNode.error);
+        if (!webpageNode || hasWebpageNodeError) return;
         newBlock = {
           contentType: NodeType.EMBED,
           body: {

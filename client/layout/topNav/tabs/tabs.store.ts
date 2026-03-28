@@ -49,12 +49,6 @@ class TabStore {
     const returnToParam = currentParams.get("returnTo");
 
     appStore.closeResource({ isRestrictToModals: true });
-    const resource =
-      typeof id === "string"
-        ? id.split(":")[0]
-        : typeof id === "object" && "tb" in id
-          ? id.tb
-          : undefined;
     const queryParams: Record<string, IRecordId | string> = {};
     if (resolvedBack !== undefined && resolvedBack !== null) {
       queryParams.back = resolvedBack;

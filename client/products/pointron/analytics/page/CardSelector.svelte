@@ -2,13 +2,13 @@
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import ContextMenuAction from "@21n/elements/contextMenu/ContextMenuAction.svelte";
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
-  import type { DropdownGroup } from "@21n/types/dropdownItem.type";
+  import type { DropdownGroup, DropdownItem } from "@21n/types/dropdownItem.type";
   import { InputStyle } from "@21n/types/input.type";
   import { Size } from "@21n/types/size.enum";
   import { AnalyticsCardType } from "@21n/products/pointron/analytics/analytics.types";
   export let accessPoint: ResourceAccessPoint;
   export let selected: AnalyticsCardType;
-  let chartTypes = [
+  let chartTypes: DropdownItem[] = [
     {
       label: "Pie chart",
       value: AnalyticsCardType.PIE,
@@ -85,14 +85,6 @@
       value: AnalyticsCardType.METRICS,
       icon: resolveChartIcon(AnalyticsCardType.METRICS),
       groupId: "other"
-    },
-    {
-      // label: "Targets",
-      // value: AnalyticsCardType.TARGETS,
-      // icon: resolveChartIcon(AnalyticsCardType.TARGETS),
-      // groupId: "other",
-      // badge: "planned",
-      // isDisabled: true
     }
   ];
   let groups: DropdownGroup[] = [

@@ -72,14 +72,16 @@
               {/if}
             </div>
           </div>
-          {#if log.task}
-            <button
-              on:click={(e) => {
-                e.stopPropagation();
-                appStore.resourceClickHandler(e, log.task.id);
-              }}
-              class="text-b2 notouch:hover:underline"
-            >
+              {#if log.task}
+                <button
+                  on:click={(e) => {
+                    const taskId = log.task?.id;
+                    if (!taskId) return;
+                    e.stopPropagation();
+                    appStore.resourceClickHandler(e, taskId);
+                  }}
+                  class="text-b2 notouch:hover:underline"
+                >
               {log.task.label}
             </button>
           {/if}

@@ -233,8 +233,9 @@
     const versionOnClient = $appStore.version;
     await refreshAppStaticData();
     const latestVersion = resolveLatestVersion();
+    if (!latestVersion || !versionOnClient) return;
     const comparer = compareVersions(latestVersion, versionOnClient);
-    if (latestVersion && comparer > 0) {
+    if (comparer > 0) {
       if ($context.isEmbed) {
         confirmationNotification.notify({
           title: `App update available (v${latestVersion}) 🎉`,

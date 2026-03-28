@@ -334,11 +334,11 @@
   }
 
   function handleBulkAction(
-    ids: IRecordId[],
-    action: BlockAction | ResourceActionType,
+    _ids: IRecordId[],
+    action: string,
     data?: unknown
   ) {
-    onBulkAction(action, data);
+    onBulkAction(action as BlockAction | ResourceActionType, data);
   }
 
   function refreshConsecutiveSelectionState() {

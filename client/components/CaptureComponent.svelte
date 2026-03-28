@@ -17,14 +17,14 @@
     "music"
   ];
   let touchAndHold = false;
-  let fingerId: string;
-  let timerId: any;
+  let fingerId = "";
+  let timerId: ReturnType<typeof setTimeout> | undefined;
   let startedOnClick: boolean = false;
-  let iconClicked: string;
-  let touchY: any;
-  let containerTouchY: number;
-  let rem: number;
-  let captureButtonTop: any;
+  let iconClicked = "";
+  let touchY: number | null = null;
+  let containerTouchY = 0;
+  let rem = 16;
+  let captureButtonTop: number | undefined;
   $: if (touchY && touchAndHold) {
     let [top, , ,] = getCurrentPosition("captureIconsHolder");
     if (top) top += 1.37 * rem; //1.37rem is half the height of the capture button
@@ -64,7 +64,7 @@
   function handleTouchEnd() {
     clearTimeout(timerId);
     touchAndHold = startedOnClick ? touchAndHold : false;
-    containerTouchY = captureButtonTop + 1.37 * rem ?? 0;
+    containerTouchY = (captureButtonTop ?? 0) + 1.37 * rem;
     if (IconsList.includes(fingerId)) {
       // emit event for fingerId(i.e.,icon) here
       triggerAction(fingerId);
@@ -83,6 +83,7 @@
   }
   function isFingerHere(id: string) {
     let [y, , , x] = getCurrentPosition(id);
+    if (touchY === null) return false;
     return isCloserProximity(touchY, y);
   }
   function handleIconClick(icon: string) {
@@ -102,7 +103,7 @@
   onMount(() => {
     rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
     [captureButtonTop, , ,] = getCurrentPosition("capture");
-    containerTouchY = captureButtonTop + 1.37 * rem ?? 0;
+    containerTouchY = (captureButtonTop ?? 0) + 1.37 * rem;
   });
 </script>
 
@@ -117,7 +118,15 @@
       <!-- svelte-ignore a11y-click-events-have-key-events -->
       <div
         id={icon}
+        role="button"
+        tabindex="0"
         on:click={() => handleIconClick(icon)}
+        on:keydown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            handleIconClick(icon);
+          }
+        }}
         class="flex justify-center items-center h-1/4"
       >
         <Icon
@@ -134,7 +143,7 @@
     id="highlightCircleForCapture"
     style={`position:absolute;margin-left:${0.4 * rem}px; ${
       touchAndHold && !startedOnClick
-        ? `top:-${captureButtonTop - containerTouchY + 1.37 * rem}px;`
+        ? `top:-${(captureButtonTop ?? 0) - containerTouchY + 1.37 * rem}px;`
         : `visibility:hidden;`
     }`}
   >
@@ -144,6 +153,8 @@
   <div
     id="capture"
     class="z-10"
+    role="button"
+    tabindex="0"
     style={touchAndHold ? "opacity:0" : ""}
     on:touchstart|stopPropagation={(event) => {
       handleTouchStart(event);
@@ -155,6 +166,13 @@
     on:click={() => {
       startedOnClick = !startedOnClick;
       touchAndHold = !touchAndHold;
+    }}
+    on:keydown={(event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        startedOnClick = !startedOnClick;
+        touchAndHold = !touchAndHold;
+      }
     }}
   >
     <Icon icon="capture2.0" size={touchAndHold ? Size.xs : Size.lg} />

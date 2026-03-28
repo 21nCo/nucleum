@@ -9,7 +9,7 @@ type ClipboardItemEntry = {
 };
 
 function createItemList(items: ClipboardItemEntry[]) {
-  const list = Object.assign([], items) as ClipboardItemEntry[] & {
+  const list = Object.assign([], items) as unknown as ClipboardItemEntry[] & {
     item: (index: number) => ClipboardItemEntry | null;
   };
   list.item = (index: number) => list[index] ?? null;
@@ -112,7 +112,7 @@ async function resolveClipboardEvent(): Promise<ClipboardEvent | null> {
     return null;
   }
 
-  const filesList = Object.assign([], files) as File[] & {
+  const filesList = Object.assign([], files) as unknown as File[] & {
     item: (index: number) => File | null;
   };
   filesList.item = (index: number) => filesList[index] ?? null;

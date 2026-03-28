@@ -4,7 +4,7 @@
   import { Size } from "@21n/types/size.enum";
   import view from "@21n/stores/view.store";
   export let text: string = "Add new";
-  export let size = Size.md;
+  export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
   export let className: string = "";
   export { className as class };
   let addText: string = $view.isConstrainedWidth ? "" : text;

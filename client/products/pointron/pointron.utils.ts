@@ -8,10 +8,13 @@ import {
   type ISessionInterval,
   BlockType
 } from "@21n/types/pointron/session.type";
-import type { ITag } from "@21n/types/pointron/tag.type";
 import { activeSession } from "@21n/products/pointron/focus/session.store";
 import { type ISessionBase, SessionType } from "@21n/products/pointron/logs/log.type";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
+
+type ITag = {
+  label: string;
+};
 
 export function getTotalsFromComposition(
   params: {
@@ -69,12 +72,13 @@ export function generateIntervalsFromComposition(
 }
 
 export function refreshPredefinedIntervalsStartTime(
-  intervals: ISessionInterval[],
+  intervals: Omit<ISessionInterval, "start">[],
   start: Date
-) {
+) : ISessionInterval[] {
+  let resolvedIntervals: ISessionInterval[] = [];
   intervals.forEach((interval, index) => {
     if (index == 0) {
-      intervals = [
+      resolvedIntervals = [
         {
           ...interval,
           start: start.getTime()
@@ -82,16 +86,16 @@ export function refreshPredefinedIntervalsStartTime(
       ];
       return;
     }
-    const previousBar = intervals[index - 1];
-    intervals = [
-      ...intervals,
+    const previousBar = resolvedIntervals[index - 1];
+    resolvedIntervals = [
+      ...resolvedIntervals,
       {
         ...interval,
         start: previousBar.start + previousBar.duration * 1000
       }
     ];
   });
-  return intervals;
+  return resolvedIntervals;
 }
 
 function generateIntervals(composition: SessionComposition) {
@@ -231,10 +235,10 @@ export function resolveSessionTimeLegacy(session: ISessionBase) {
   } else if (session.type === SessionType.COUNTUP) {
     let focus = session.blocks
       .filter((x) => x?.type === BlockType.FOCUS)
-      .reduce((acc, curr) => acc + (curr.end - curr.start), 0);
+      .reduce((acc, curr) => acc + curr.duration * 1000, 0);
     let brek = session.blocks
       .filter((x) => x?.type === BlockType.BREAK)
-      .reduce((acc, curr) => acc + (curr.end - curr.start), 0);
+      .reduce((acc, curr) => acc + curr.duration * 1000, 0);
     return { focus: focus / 1000, brek: brek / 1000 };
   } else {
     return resolveSessionSplitFromIntervals(session.blocks);

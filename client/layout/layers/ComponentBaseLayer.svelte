@@ -62,6 +62,20 @@
   }
 
   onMount(() => {
+    const syncDownHandler = () => {
+      dispatch("syncDown");
+    };
+    const cacheUpdateHandler = (event: Event) => {
+      onCacheUpdate(event as CustomEvent<{ key: string }>);
+    };
+    const mutationHandler = (event: Event) => {
+      onMutation(
+        event as CustomEvent<{ resource: Resource; params: any; context: string }>
+      );
+    };
+    window.addEventListener("syncDown", syncDownHandler);
+    window.addEventListener("cacheUpdate", cacheUpdateHandler);
+    window.addEventListener("mutation", mutationHandler);
     if (hasDragAndDrop) {
       $appStore.isDnDPageActive = true;
     }
@@ -71,6 +85,11 @@
       //TODO avoid duplicate syncDown if already triggered by global syncDown on appear
       flux.syncDown({ src: "ComponentBaseLayer" });
     }
+    return () => {
+      window.removeEventListener("syncDown", syncDownHandler);
+      window.removeEventListener("cacheUpdate", cacheUpdateHandler);
+      window.removeEventListener("mutation", mutationHandler);
+    };
   });
 
   onDestroy(() => {
@@ -78,7 +97,6 @@
       $appStore.isDnDPageActive = false;
     }
   });
-
   /**
    *
    * @param e
@@ -145,9 +163,4 @@
   }
 </script>
 
-<svelte:window
-  on:focus={visibilityChangeListener}
-  on:syncDown
-  on:cacheUpdate={onCacheUpdate}
-  on:mutation={onMutation}
-/>
+<svelte:window on:focus={visibilityChangeListener} />

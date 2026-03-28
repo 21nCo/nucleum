@@ -15,9 +15,33 @@
   export let action: IAction;
   export let componentParams: any = undefined;
   export let search: string = "";
+  type SearchActionResult = IResource &
+    Partial<{
+      label: string;
+      parent: {
+        hierarchy: Array<{ label: string }>;
+      };
+    }> &
+    Record<string, unknown>;
   let selectedIndex: number = 0;
   let isSearchInProgress: boolean = false;
-  let results: IResource[] = [];
+  let results: SearchActionResult[] = [];
+
+  function resolveHierarchy(result: SearchActionResult) {
+    const parent = result.parent;
+    if (!parent?.hierarchy) return [];
+    return parent.hierarchy
+      .filter(
+        (item): item is { label: string } =>
+          Boolean(item) && typeof item.label === "string"
+      )
+      .map((item) => item.label);
+  }
+
+  function resolveLabel(result: SearchActionResult) {
+    return typeof result.label === "string" ? result.label : "";
+  }
+
   function resetSearch() {
     results = [];
     selectedIndex = 0;
@@ -31,10 +55,11 @@
       isSearchInProgress = true;
       selectedIndex = 0;
       if (action.searchActionParams?.searchCallback) {
-        results = await action.searchActionParams.searchCallback(
+        const searchResults = await action.searchActionParams.searchCallback(
           search,
           componentParams
         );
+        results = Array.isArray(searchResults) ? searchResults : [];
       }
       isSearchInProgress = false;
     } catch (e) {
@@ -80,14 +105,13 @@
           item={result}
         />
       {:else}
+        {@const hierarchy = resolveHierarchy(result)}
         <div class="flex flex-col w-full items-start">
-          {#if result.parent?.hierarchy}
-            <BreadcrumbMini
-              hierarchy={result.parent.hierarchy.map((x) => x.label)}
-            />
+          {#if hierarchy.length > 0}
+            <BreadcrumbMini hierarchy={hierarchy} />
           {/if}
           <TextWithHoverTooltip
-            text={result.label}
+            text={resolveLabel(result)}
             class="text-left truncate w-full max-w-full"
           />
         </div>

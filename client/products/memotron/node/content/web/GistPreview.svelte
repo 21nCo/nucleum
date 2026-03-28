@@ -4,6 +4,7 @@
   import type { IGist } from "@21n/products/memotron/node/node.type";
   export let node: IGist;
   export let accessPoint: ResourceAccessPoint;
+  $: accessPoint;
 
   let snippetContent = "";
   let snippetMetadata: { title?: string; description?: string } | null = null;

@@ -100,7 +100,9 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
       ...(params?.filters ?? {}),
       type:
         params?.filters && "type" in params.filters && params?.filters?.type
-          ? params.filters.type?.toUpperCase()
+          ? typeof params.filters.type === "string"
+            ? params.filters.type.toUpperCase()
+            : params.filters.type
           : undefined,
       ...(this.collectibleResource
         ? {
@@ -199,11 +201,11 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
         }
       });
       if (!typeToExtend) return [{ ...result, properties }];
-      const mainProps = result.properties?.map((x) => {
+      const mainProps = result.properties?.map((x: IRecordId) => {
         const property = properties.find(resourceInList(x));
         return { ...property };
       });
-      const extendedProps = typeToExtend.properties?.map((x) => {
+      const extendedProps = typeToExtend.properties?.map((x: IRecordId) => {
         const property = properties.find(resourceInList(x));
         return { ...property };
       });
@@ -272,10 +274,10 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
     const recents =
       uiState
         .getState(UIState.captureShortcutRecents)
-        ?.map((x) => x.toString()) ?? [];
-    const _types = data
-      .filter((x) => !x.resource || x.resource === Resource.node)
-      .map((type: any) => ({
+        ?.map((x: IRecordId) => x.toString()) ?? [];
+    const _types: (ISelectItem & { value: string; isShortcut?: boolean })[] = data
+      .filter((x: ICollection) => !x.resource || x.resource === Resource.node)
+      .map((type: ICollection) => ({
         value: type.id,
         label: type.label,
         icon: type.avatar,
@@ -320,7 +322,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
     try {
       this.update((val: IActiveCollection) => {
         if (val) val.isPageLoading = true;
-        else val = { isPageLoading: true };
+        else val = { isPageLoading: true } as IActiveCollection;
         val.accessMode = accessMode;
         return val;
       });
@@ -345,7 +347,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         isViewDataLoading: true,
         isPageLoading: false,
         properties: record.properties ?? [],
-        views: record.views.map((x) => {
+        views: record.views.map((x: ICollectionView) => {
           return { ...x, data: [] };
         })
       });
@@ -577,7 +579,7 @@ export function resolveCollectionContextMenu(
   const resourceActions = new ResourceActions(
     collection,
     collectionStore,
-    accessPoint
+    { accessPoint, accessMode: params?.accessMode }
   );
   const ctx = get(context);
   const viewStore = get(view);
@@ -634,7 +636,7 @@ export function resolveCollectionContextMenu(
       label: "Capture shortcut",
       type: ContextMenuType.SWITCH,
       initialValue: collection.isCaptureShortcutEnabled,
-      callback: async (checked) => {
+      callback: async (checked: boolean) => {
         const result = await collectionStore.modify(collection.id, {
           isCaptureShortcutEnabled: checked
         });

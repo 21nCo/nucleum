@@ -26,6 +26,12 @@
     timeUnitSelection(unit);
   }
 
+  function onPopoverChange(event: Event) {
+    const detail = (event as CustomEvent<{ open?: boolean }>).detail;
+    isUnitDropdownOpen = detail?.open ?? false;
+    if (isUnitDropdownOpen) selectedIndex = units.indexOf(currentTimeUnit);
+  }
+
   function timeUnitSelection(item: TimeUnit) {
     if (currentTimeUnit !== item) {
       dispatch("change", {
@@ -69,10 +75,7 @@
       handleTimeUnitItemClick
     }
   }}
-  on:change={(e) => {
-    isUnitDropdownOpen = e.detail?.open;
-    if (isUnitDropdownOpen) selectedIndex = units.indexOf(currentTimeUnit);
-  }}
+  on:change={onPopoverChange}
   on:keydown={handleKeyDownInDropdown}
   class={unitClasses}
 >

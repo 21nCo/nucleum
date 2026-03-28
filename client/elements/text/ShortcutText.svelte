@@ -37,6 +37,7 @@
 
   $: text = resolveText(shortcut);
   $: trimmedText = text?.trim();
+  $: shortcutKey = detail?.key as KeyboardKey | undefined;
   $: isSingleLetterShortcut =
     !!trimmedText &&
     Array.from(trimmedText).length === 1 &&
@@ -101,10 +102,10 @@
         }
     )}
   >
-    {#if detail?.key && iconKeys.has(detail?.key)}
-      {text?.replace(detail?.key?.toUpperCase(), "") ?? ""}
+    {#if shortcutKey && iconKeys.has(shortcutKey)}
+      {text?.replace(shortcutKey.toUpperCase(), "") ?? ""}
       <Icon
-        icon={iconKeys.get(detail?.key)}
+        icon={iconKeys.get(shortcutKey)}
         size={Size.xs}
         class={cn({
           "text-fgs3": parentBgIndex !== undefined,

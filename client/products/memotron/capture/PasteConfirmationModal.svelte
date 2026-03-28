@@ -91,7 +91,7 @@
 {#if data}
   <ShareContentSaver
     {data}
-    {nodeType}
+    nodeType={nodeType ?? NodeType.UNKNOWN}
     {error}
     {isOffline}
     {saveAsNodeFilesCount}

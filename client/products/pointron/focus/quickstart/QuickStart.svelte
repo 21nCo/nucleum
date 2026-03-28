@@ -72,12 +72,13 @@
     const focusData = await focusAggregates.aggregateFocusForCurrentDay({
       goalIds: result.map((x: any) => x.id)
     });
+    const goalFocusData = Array.isArray(focusData) ? focusData : [];
     if (isValidArray(result)) {
       items = result
         .map((x: any) => ({
           ...x,
           color: resolveGoalColor(x),
-          focus: focusData ? focusData?.find(resourceInList(x.id))?.focus : 0
+          focus: goalFocusData.find(resourceInList(x.id))?.focus ?? 0
         }))
         .sort((a: IGoalThumb, b: IGoalThumb) => {
           if (a.color === b.color) {

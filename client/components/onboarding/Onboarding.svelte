@@ -13,8 +13,9 @@
   import type { IOnboardingConfig } from "@21n/components/onboarding/onboarding.type";
 
   export let config: IOnboardingConfig;
-  const isShowVideo =
-    !$view.isConstrainedWidth && $appStore?.appData?.urls?.onboardingVideo;
+  const onboardingVideoUrl = $appStore?.appData?.urls?.onboardingVideo;
+  const docsUrl = $appStore.appData?.urls?.docs ?? $appStore.appData?.urls?.guides;
+  const isShowVideo = !$view.isConstrainedWidth && Boolean(onboardingVideoUrl);
 
   function saveColorScheme(e: CustomEvent) {
     appearance.setColorScheme(e.detail);
@@ -64,10 +65,9 @@
           <Button
             label="Read the docs"
             icon="book-open"
-            on:click={() =>
-              appStore.openLink(
-                $appStore.appData?.urls?.docs ?? $appStore.appData?.urls?.guides
-              )}
+            on:click={() => {
+              if (docsUrl) appStore.openLink(docsUrl);
+            }}
           />
         </div>
       </div>
@@ -78,7 +78,7 @@
           class="cw:w-full w-[40rem] max-w-full h-96 mx-auto rounded-lg overflow-hidden"
         >
           <YoutubeVideoPreview
-            url={$appStore?.appData?.urls?.onboardingVideo}
+            url={onboardingVideoUrl ?? ""}
           />
         </div>
       </aside>

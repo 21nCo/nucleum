@@ -1,6 +1,6 @@
 import { Placement } from "@21n/types/direction.enum";
 import { OperatingSystem } from "@21n/types/context.type";
-import { GlobalEvent, type Event } from "@21n/types/event.enum";
+import { GlobalEvent, type Event as AppEvent } from "@21n/types/event.enum";
 import type { IPopoverRenderParams } from "@21n/types/popover.type";
 import { deepCopy } from "@21n/shared-utils/obj.utils";
 import { logger } from "@21n/components/debug/logger.client";
@@ -348,7 +348,7 @@ export function goto(path: string, isReload: boolean = false, replaceState: bool
   dispatchCustomEvent(GlobalEvent.CUSTOM_NAVIGATION, { path, isReload, replaceState });
 }
 
-export function dispatchCustomEvent(event: Event, data: any = {}) {
+export function dispatchCustomEvent(event: AppEvent, data: any = {}) {
   window.dispatchEvent(new CustomEvent(event, { detail: data }));
 }
 
@@ -448,6 +448,9 @@ export async function generateFingerprint() {
     if (isExtensionEnvironment()) {
       return "extension";
     }
+    const legacyWindow = window as Window & {
+      openDatabase?: unknown;
+    };
     const components = [
       navigator.userAgent,
       navigator.language,
@@ -461,7 +464,7 @@ export async function generateFingerprint() {
       !!window.sessionStorage,
       !!window.localStorage,
       !!window.indexedDB,
-      !!window.openDatabase,
+      !!legacyWindow.openDatabase,
       (navigator as any).cpuClass,
       navigator.platform,
       navigator.plugins.length,
@@ -516,7 +519,11 @@ export async function generateFingerprint() {
 
 export function getEventPath(event: Event): EventTarget[] {
   let path: EventTarget[] = [];
-  let currentTarget = event.target as Node | null;
+  const target = event.target;
+  if (target) {
+    path.push(target);
+  }
+  let currentTarget = target instanceof Node ? target.parentNode : null;
   while (currentTarget) {
     path.push(currentTarget);
     currentTarget = currentTarget.parentNode;

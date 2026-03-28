@@ -36,7 +36,7 @@ export function onRemovePageClicked(e: CustomEvent<string>) {
           (page) => page.id === pages[index]?.id
         )?.id as string
       );
-    } else selectedPageId.set(null);
+    } else selectedPageId.set(undefined);
   }
   analyticsConfigStore.removePage(e.detail);
 }

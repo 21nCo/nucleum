@@ -32,18 +32,27 @@
   function handleClick() {
     dispatchEvent("click", id);
   }
+
+  function handleKeydown(event: KeyboardEvent) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleClick();
+    }
+  }
 </script>
 
 {#each rects as rect, index}
   <div
     id={index == 0 ? id : ""}
     class={id}
+    role="button"
+    tabindex="0"
     data-color={color}
     data-highlighter={highlighter}
     data-annotType={annotType}
     style={calculateStyle(rect)}
     on:click|stopPropagation={handleClick}
-    on:keydown={() => {}}
+    on:keydown={handleKeydown}
     on:mousedown|stopPropagation
   >
     {#if annotType == AnnotationType.UNDERLINE || annotType == AnnotationType.LINETHROUGH}<div

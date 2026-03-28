@@ -88,7 +88,6 @@
             }
           )}
           role="group"
-          on:click|stopPropagation
         >
           <AppMenuSwitcher
             parentBackgroundIndex={1}

@@ -8,12 +8,23 @@
   import { createEventDispatcher } from "svelte";
   import StepMarker from "@21n/components/goals/sub/StepMarker.svelte";
   import { parseAndFormatDate } from "@21n/utils/time.utils";
-  export let subGoal: IGoal | { label?: string; type: string };
+
+  type IAddSubGoalItem = { label?: string; type: "add" };
+
+  export let subGoal: IGoal | IAddSubGoalItem;
   export let index: number;
   export let totalLength: number;
   export let method: SubGoalsLayout = SubGoalsLayout.DEFAULT;
   let newSubGoalLabel = "";
   const dispatch = createEventDispatcher();
+
+  function isSavedSubGoal(subGoal: IGoal | IAddSubGoalItem): subGoal is IGoal {
+    return "id" in subGoal;
+  }
+
+  $: stepMarkerItem = isSavedSubGoal(subGoal)
+    ? subGoal
+    : { ...subGoal, status: GoalStatus.NOT_STARTED };
 
   function onSave() {
     dispatch("add", { label: newSubGoalLabel });
@@ -30,21 +41,23 @@
       }
     )}
     on:click
-    data-id={subGoal.id}
+    data-id={isSavedSubGoal(subGoal) ? subGoal.id : undefined}
     data-index={index}
     data-type={subGoal.type}
     draggable={true}
   >
-    <StepMarker item={subGoal} {index} {totalLength} />
+    <StepMarker item={stepMarkerItem} {index} {totalLength} />
     {#if subGoal.label}
       <div
         class={cn("text-left flex-1 py-1.5 group-hover:text-ccs1", {
-          "line-through": subGoal.status === GoalStatus.COMPLETED
+          "line-through":
+            isSavedSubGoal(subGoal) &&
+            subGoal.status === GoalStatus.COMPLETED
         })}
       >
         {subGoal.label ? subGoal.label : "Untitled"}
       </div>
-      {#if subGoal.startDate && subGoal.endDate}
+      {#if isSavedSubGoal(subGoal) && subGoal.startDate && subGoal.endDate}
         <div class="text-b3 text-fgs3">
           {parseAndFormatDate(new Date(subGoal.startDate))} -
           {parseAndFormatDate(new Date(subGoal.endDate))}

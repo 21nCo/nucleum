@@ -80,7 +80,7 @@
 
 <UserBaseLayer on:ready={onReady}>
   <div slot="topnav" class="flex gap-1 items-center h-full">
-    <FocusTopNavWidget ctx={Product.POINTRON} />
+    <FocusTopNavWidget />
   </div>
   <slot />
   <SessionTitle ctx={Product.POINTRON} />

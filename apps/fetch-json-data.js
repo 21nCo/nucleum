@@ -4,6 +4,10 @@ import path from "path";
 import { loadEnv } from "vite";
 
 // Path validation utility to prevent directory traversal
+/**
+ * @param {string} inputPath
+ * @returns {string}
+ */
 function validatePath(inputPath) {
   const normalizedPath = path.normalize(inputPath);
 
@@ -30,6 +34,10 @@ export default function fetchJsonPlugin(outputPath) {
 
   return {
     name: "vite-plugin-fetch-json",
+    /**
+     * @param {import("vite").ResolvedConfig} config
+     * @returns {void}
+     */
     configResolved(config) {
       const env = loadEnv(config.mode, process.cwd(), "");
       const baseUrl = env.VITE_STATIC_URL || "https://cdn.21n.org";
@@ -55,6 +63,7 @@ export default function fetchJsonPlugin(outputPath) {
           );
         }
 
+        /** @type {unknown} */
         const data = await response.json();
 
         // Use validated path to prevent directory traversal

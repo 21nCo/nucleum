@@ -15,12 +15,13 @@ import { appStore } from "@21n/stores/app.store";
 import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
 import { logger } from "@21n/components/debug/logger.client";
 import type { IAvatar } from "@21n/types/avatar.type";
-import {
-  CombinationNavItemType,
-  CombinationType,
-  type IActiveCombination,
-  type ICombinationNavItem,
-  type ISideNavCombination
+  import {
+    CombinationNavItemType,
+    type ICombination,
+    CombinationType,
+    type IActiveCombination,
+    type ICombinationNavItem,
+    type ISideNavCombination
 } from "@21n/components/combination/combination.type";
 import {
   cloneNavItems,
@@ -72,9 +73,9 @@ class CombinationStore extends ResourceStore<
 export const combinationStore = CombinationStore.resolve(Resource.combination);
 
 export class ActiveCombinationStore extends ActiveResourceStore<
-  IActiveCombination,
+  ISideNavCombination,
   CombinationStore,
-  ICombination
+  IActiveCombination
 > {
   constructor(combinationId: IRecordId) {
     super(combinationId, combinationStore);
@@ -106,7 +107,7 @@ export class ActiveCombinationStore extends ActiveResourceStore<
     try {
       const resourceType = determineResourceType(resourceId);
       const store = resolveResourceStore(resourceType);
-      if (!store) return undefined;
+      if (!store || !("select" in store)) return undefined;
       const record = await store.select(resourceId);
       if (!record) return undefined;
       return {

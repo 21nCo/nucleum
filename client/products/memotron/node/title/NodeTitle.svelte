@@ -4,13 +4,13 @@
   import { cn } from "@21n/utils/ui.utils";
   import Icon from "@21n/elements/Icon.svelte";
   import NodeTitleLabelPart from "@21n/products/memotron/node/title/NodeTitleLabelPart.svelte";
-  import type { INode } from "@21n/products/memotron/node/node.type";
+  import type { IActiveNode } from "@21n/products/memotron/node/node.type";
   import { createEventDispatcher } from "svelte";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import context from "@21n/stores/context.store";
   import TextInputOnKeyboardToolbar from "@21n/elements/input/TextInputOnKeyboardToolbar.svelte";
   import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
-  export let node: INode;
+  export let node: IActiveNode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   let previousLabel = node.label;
   let isKeyboardEditorMounted = false;

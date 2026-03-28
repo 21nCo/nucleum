@@ -1,6 +1,7 @@
 <script lang="ts">
   export let width: number;
   export let variant: "v1" | "v2" = "v2";
+  $: width;
 </script>
 
 {#if variant === "v1"}

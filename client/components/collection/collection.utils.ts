@@ -144,7 +144,11 @@ export function resolveOptionsForGrouping(
   } else {
     propertyOptions = _resolvePropertyOptions(id, properties, additionalParams);
     const filteredOptions = propertyOptions.filter((option) => {
-      const count = counts.get(option.value);
+      const count = counts.get(
+        typeof option.value === "string"
+          ? option.value
+          : option.value?.toString()
+      );
       return count && count > 0;
     });
     if (additionalParams.isBoardView) {

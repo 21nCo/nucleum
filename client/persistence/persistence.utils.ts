@@ -5,6 +5,8 @@ import { isExtensionEnvironment } from "@21n/utils/browser.utils";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 import { parse, stringify } from "@21n/shared-utils/json.utils";
 
+type ClientStoragePayload = Partial<Record<ClientStorageKey, string | null>>;
+
 export function resetLocalStorage() {
   if (import.meta.env?.SSR || !import.meta.env || !window?.localStorage) {
     return;
@@ -41,14 +43,22 @@ export function retrieveLocally(itemType: Resource) {
 class ClientKeyValueStorage {
   isExtensionEnvironment = isExtensionEnvironment();
 
+  private isExtensionStorageAvailable() {
+    return (
+      this.isExtensionEnvironment &&
+      typeof chrome !== "undefined" &&
+      !!chrome.storage?.local
+    );
+  }
+
   get(key: ClientStorageKey): Promise<string | null> {
-    if (this.isExtensionEnvironment) {
+    if (this.isExtensionStorageAvailable()) {
       return new Promise((resolve, reject) => {
-        chrome.storage.local.get(key, function (data) {
-          if (chrome.runtime.lastError) {
+        chrome.storage.local.get(key, function (data: ClientStoragePayload) {
+          if (chrome.runtime?.lastError) {
             reject(chrome.runtime.lastError);
           } else {
-            resolve(data[key]);
+            resolve(data[key] ?? null);
           }
         });
       });
@@ -61,10 +71,10 @@ class ClientKeyValueStorage {
     if (typeof value === "object") {
       value = stringify(value);
     }
-    if (this.isExtensionEnvironment) {
+    if (this.isExtensionStorageAvailable()) {
       return new Promise((resolve, reject) => {
         chrome.storage.local.set({ [key]: value }, function () {
-          if (chrome.runtime.lastError) {
+          if (chrome.runtime?.lastError) {
             reject(chrome.runtime.lastError);
           } else {
             resolve(value);
@@ -78,10 +88,10 @@ class ClientKeyValueStorage {
   }
 
   remove(key: ClientStorageKey) {
-    if (this.isExtensionEnvironment) {
+    if (this.isExtensionStorageAvailable()) {
       return new Promise((resolve, reject) => {
         chrome.storage.local.remove(key, function () {
-          if (chrome.runtime.lastError) {
+          if (chrome.runtime?.lastError) {
             reject(chrome.runtime.lastError);
           } else {
             resolve(key);
@@ -94,13 +104,13 @@ class ClientKeyValueStorage {
     }
   }
   getForSession(key: ClientStorageKey) {
-    if (this.isExtensionEnvironment) {
+    if (this.isExtensionStorageAvailable()) {
       return new Promise((resolve, reject) => {
-        chrome.storage.local.get(key, function (data) {
-          if (chrome.runtime.lastError) {
+        chrome.storage.local.get(key, function (data: ClientStoragePayload) {
+          if (chrome.runtime?.lastError) {
             reject(chrome.runtime.lastError);
           } else {
-            resolve(data[key]);
+            resolve(data[key] ?? null);
           }
         });
       });
@@ -110,10 +120,10 @@ class ClientKeyValueStorage {
   }
 
   setForSession(key: ClientStorageKey, value: any) {
-    if (this.isExtensionEnvironment) {
+    if (this.isExtensionStorageAvailable()) {
       return new Promise((resolve, reject) => {
         chrome.storage.local.set({ [key]: value }, function () {
-          if (chrome.runtime.lastError) {
+          if (chrome.runtime?.lastError) {
             reject(chrome.runtime.lastError);
           } else {
             resolve(value);
@@ -127,10 +137,10 @@ class ClientKeyValueStorage {
   }
 
   removeForSession(key: ClientStorageKey) {
-    if (this.isExtensionEnvironment) {
+    if (this.isExtensionStorageAvailable()) {
       return new Promise((resolve, reject) => {
         chrome.storage.local.remove(key, function () {
-          if (chrome.runtime.lastError) {
+          if (chrome.runtime?.lastError) {
             reject(chrome.runtime.lastError);
           } else {
             resolve(key);
@@ -143,10 +153,10 @@ class ClientKeyValueStorage {
     }
   }
   clearAll() {
-    if (this.isExtensionEnvironment) {
+    if (this.isExtensionStorageAvailable()) {
       return new Promise((resolve, reject) => {
         chrome.storage.local.clear(function () {
-          if (chrome.runtime.lastError) {
+          if (chrome.runtime?.lastError) {
             reject(chrome.runtime.lastError);
           } else {
             resolve(null);

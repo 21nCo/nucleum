@@ -10,7 +10,6 @@
   import { TacoActions } from "@21n/products/memotron/taco/taco.types";
 
   const QAsearchStore = new SearchStore();
-  QAsearchStore.searchType = SearchType.SEMANTIC;
   let isLoading: boolean = false;
   let type = "";
   let index = 0;
@@ -28,6 +27,7 @@
     let node = await QAsearchStore.select({
       resource: Resource.node,
       searchQuery: question,
+      searchType: SearchType.SEMANTIC,
       semanticSearchTopK: 1
     });
     if (node.length == 0) {
@@ -51,7 +51,7 @@
       }
     });
     answer = await new Promise((resolve, reject) => {
-      tacoWorker.onmessage = (e) => {
+      tacoWorker.onmessage = (e: MessageEvent) => {
         resolve(e.data);
       };
     });

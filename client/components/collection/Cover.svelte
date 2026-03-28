@@ -63,8 +63,8 @@
     dispatch("placement", e.detail);
   }
 
-  function onHover(e: MouseEvent) {
-    isHovered = e.detail;
+  function onHoverChange(value: boolean) {
+    isHovered = value;
   }
 
   function resolveRespositionParams(
@@ -99,10 +99,10 @@
       maxHeight: 400,
       edges:
         placement === Placement.Top || !placement
-          ? ["bottom"]
+          ? (["bottom"] as ("bottom")[])
           : placement === Placement.Right
-            ? ["left"]
-            : ["right"],
+            ? (["left"] as ("left")[])
+            : (["right"] as ("right")[]),
       onResize: onResize
     };
   }
@@ -134,8 +134,7 @@
       ? `min-height: ${height}px; max-height: ${height}px;`
       : `min-width: ${size?.width ?? 300}px; max-width: ${size?.width ?? 300}px;`}
     on:click={onClick}
-    use:hoverable
-    on:hover={onHover}
+    use:hoverable={{ onHover: onHoverChange }}
     use:resizable={resolveResizeParams(placement, isInEditMode)}
   >
     {#if cover}

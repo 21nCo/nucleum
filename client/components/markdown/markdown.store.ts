@@ -101,9 +101,10 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
    */
   insert(params: IBlockOperationContext) {
     logger.log({ at: "MarkdownStore - insert", params });
-    let newBlock: Partial<IBlock> = {
+    let newBlock: IBlock = {
       id: generateResourceId(Resource.node),
-      body: params.body ?? ""
+      body: params.body ?? "",
+      contentType: NodeType.SIMPLE_TEXT
     };
     if (params.blockType && params.blockType != NodeType.NODULAR_MARKDOWN) {
       newBlock = {
@@ -159,9 +160,14 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
       const contextBlockIndex = store.blocks.findIndex(
         resourceInList(contextBlockId)
       );
-      const newBlock: IBlockInterface<StructuralNodeType> = {
+      const resolvedBlockType =
+        blockType === NodeType.DIVIDER || blockType === NodeType.DOUBLE_DIVIDER
+          ? blockType
+          : NodeType.DIVIDER;
+      const newBlock: IBlock = {
         id: newBlockId,
-        contentType: blockType
+        contentType: resolvedBlockType,
+        body: ""
       };
       store.blocks = [
         ...store.blocks.slice(0, contextBlockIndex),
@@ -255,7 +261,7 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
   }
 
   duplicate(id: IRecordId) {
-    let newBlock: IBlockInterface;
+    let newBlock: IBlock;
     const md = this.get();
     const contextIndex = md.blocks.findIndex((b) => b.id === id);
     if (contextIndex === -1) return;
@@ -301,7 +307,7 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
       } else if (firstBlock.contentType === NodeType.SIMPLE_TEXT) {
         isEmpty = !firstBlock.body;
       } else if (firstBlock.contentType === NodeType.LIST) {
-        isEmpty = !firstBlock.children || !firstBlock.children.length;
+        isEmpty = !firstBlock.body.text;
       }
     }
     return isFirstBlock && isEmpty;
@@ -436,6 +442,8 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
           const existingBlockIndex = n.blocks.findIndex(resourceInList(b.id));
           if (
             existingBlockIndex !== -1 &&
+            typeof n.blocks[existingBlockIndex].body !== "string" &&
+            "order" in n.blocks[existingBlockIndex].body &&
             n.blocks[existingBlockIndex].body.order !== b.body.order
           ) {
             changedBlocks.push(b);
@@ -481,7 +489,7 @@ class MarkdownStore extends ObservableStore<IMarkdownStore> {
           return {
             ...b,
             body: { ...changedBlocks.find(resourceInList(b.id))?.body }
-          };
+          } as IBlock;
         return b;
       });
       return n;

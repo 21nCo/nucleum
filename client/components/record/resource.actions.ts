@@ -1,5 +1,4 @@
-import { appStore, isInEditMode } from "@21n/stores/app.store";
-import type { IMemotronItemBase } from "@21n/products/memotron/memotron.type";
+import { appStore } from "@21n/stores/app.store";
 import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
 import { bulkEditStore } from "@21n/components/record/bulkedit.store";
 import { copyResourceLinkToClipboard } from "@21n/products/memotron/memotron.utils";
@@ -7,7 +6,12 @@ import {
   ResourceAccessPoint,
   AccessMode,
   ResourceActionType,
-  type IResourceCaptureV2
+  type IResourceCaptureV2,
+  type IActiveResource,
+  type IResource,
+  type IResourceArchivable,
+  type IResourceLockable,
+  type IResourceStarrable
 } from "@21n/components/flux/resourceStores/resource.type";
 import { uiState } from "@21n/stores/uiState/uiState.store";
 import {
@@ -23,7 +27,6 @@ import type { IRecordId } from "@21n/types/data.type";
 import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { LinkType } from "@21n/products/memotron/linking/link.type";
-import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
 import { toasts } from "@21n/stores/notification.store";
 import { Action } from "@21n/types/action.enum";
 import { AppSearchParam } from "@21n/types/appStore.type";
@@ -31,7 +34,19 @@ import { UIStateScope } from "@21n/stores/uiState/uiState.type";
 import { BulkEditor } from "@21n/components/record/record.store";
 import { GlobalEvent } from "@21n/types/event.enum";
 
-export class ResourceActions<T extends IMemotronItemBase> {
+type IActionableResource = IResource &
+  Partial<
+    Pick<
+      IActiveResource,
+      "isInEditMode" | "isInReadOnlyMode" | "isInFocusMode"
+    >
+  > &
+  Partial<IResourceArchivable & IResourceLockable & IResourceStarrable> & {
+    collections?: IRecordId[];
+    url?: string;
+  };
+
+export class ResourceActions<T extends IActionableResource> {
   accessPoint?: ResourceAccessPoint;
   accessMode?: AccessMode;
   constructor(
@@ -109,7 +124,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       icon: resolveResourceActionIcon(ResourceActionType.STAR),
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isStarred,
-      callback: async (checked) => {
+      callback: async (checked: boolean) => {
         this.store.modify(this.resource.id, { isStarred: checked } as T, {
           context: this.accessPoint
         });
@@ -245,7 +260,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       icon: resolveResourceActionIcon(ResourceActionType.TOGGLE_READ_MODE),
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isInReadOnlyMode,
-      callback: async (checked) => {
+      callback: async (checked: boolean) => {
         console.log({ checked });
         this.store.toggleReadMode(this.resource.id, checked);
       }
@@ -259,7 +274,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       icon: "circle",
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isInFocusMode,
-      callback: async (checked) => {
+      callback: async (checked: boolean) => {
         this.store.toggleFocusMode(this.resource.id, checked);
       }
     };
@@ -273,7 +288,7 @@ export class ResourceActions<T extends IMemotronItemBase> {
       activeIcon: "lock",
       type: ContextMenuType.SWITCH,
       initialValue: this.resource.isLocked,
-      callback: async (checked) => {
+      callback: async (checked: boolean) => {
         return this.store.modify(this.resource.id, {
           isLocked: checked
         } as T);
@@ -360,9 +375,9 @@ export class ResourceActions<T extends IMemotronItemBase> {
         if (isCollection) {
           this.store.modify(this.resource.id, {
             collections: this.resource.collections?.filter(
-              (x) => !isSameResource(x, contextId)
+              (x: IRecordId) => !isSameResource(x, contextId)
             )
-          });
+          } as Partial<T>);
         }
       }
     };

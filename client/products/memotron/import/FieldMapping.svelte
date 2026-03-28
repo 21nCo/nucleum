@@ -41,7 +41,7 @@
     {#each Object.entries(fieldMappingConfig) as [fieldKey, fieldConfig]}
       <div class="p-3 border border-brs3 rounded-md bg-bgs2">
         <div class="mb-2">
-          <label class="text-b3 font-medium">{fieldConfig.label}</label>
+          <div class="text-b3 font-medium">{fieldConfig.label}</div>
           {#if fieldConfig.description}
             <p class="text-fgs3 text-b4 mt-1">{fieldConfig.description}</p>
           {/if}

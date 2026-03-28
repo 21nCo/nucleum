@@ -37,31 +37,52 @@
   import { resolveGoalStatusIcon } from "@21n/components/goals/goal.utils";
   import SubGoalItem from "@21n/components/goals/sub/SubGoalItem.svelte";
   import SubGoalsLayoutSwitcher from "@21n/components/goals/sub/SubGoalsLayoutSwitcher.svelte";
+
+  type IAddSubGoalItem = {
+    label?: string;
+    type: "add";
+  };
+
+  type IRenderedSubGoal = IGoal & {
+    icon: string;
+    isIconFilled: boolean;
+  };
+
+  type ISubGoalListItem = IRenderedSubGoal | IAddSubGoalItem;
+
   export let goal: IActiveGoalStore;
   export let isActiveResource: boolean = true;
   let isExpandArchiveSubGoals = false;
   let isHideCompleted = $goal.uiState?.isHideCompleted ?? false;
+  let _subGoals: ISubGoalListItem[] = [];
+
+  function isSavedSubGoal(
+    item: ISubGoalListItem
+  ): item is IRenderedSubGoal {
+    return "id" in item;
+  }
+
   $: _subGoals = [
     ...($goal.children
       ? $goal.children
-          .filter(activeResourceFilterIgnoreParentInactive)
-          .filter(
-            isHideCompleted
-              ? (t) => t.status !== GoalStatus.COMPLETED
-              : (t) => t
+        .filter(activeResourceFilterIgnoreParentInactive)
+        .filter(
+          isHideCompleted
+              ? (t: IGoal) => t.status !== GoalStatus.COMPLETED
+              : (t: IGoal) => t
           )
-          .map((t) => ({
+          .map((t: IGoal) => ({
             ...t,
             icon: resolveGoalStatusIcon(t.status),
             isIconFilled: t.status === GoalStatus.COMPLETED
-          }))
+          }) as IRenderedSubGoal)
       : []),
     ...($goal.subGoalsLayout === SubGoalsLayout.STEPS && isActiveResource
       ? [
           {
             label: undefined,
             type: "add"
-          }
+          } as IAddSubGoalItem
         ]
       : [])
   ];
@@ -70,7 +91,7 @@
   ).length;
 
   $: completedSubgoalsCount = $goal.children?.filter(
-    (t) => t.status === GoalStatus.COMPLETED
+    (t: IGoal) => t.status === GoalStatus.COMPLETED
   ).length;
 
   function onSubGoalClick(id: IRecordId, event?: MouseEvent) {
@@ -123,13 +144,16 @@
       return (
         children
           ?.filter(activeResourceFilterIgnoreParentInactive)
-          ?.map((t) => t.id) ?? []
+          ?.map((t: IGoal) => t.id) ?? []
       );
     else return [];
   }
 
   async function resolveContent(id: IRecordId) {
-    const item = _subGoals.find(resourceInList(id));
+    const item = _subGoals.find(
+      (subGoal): subGoal is IRenderedSubGoal =>
+        isSavedSubGoal(subGoal) && resourceInList(id)(subGoal)
+    );
     if (item) return item;
     const result = await goalStore.select(id);
     if (result)
@@ -145,7 +169,10 @@
     if (!fromId || !toId || fromId === toId || !$goal.children) return;
     $goal.children = shiftResourceInArray($goal.children, fromId, toId);
     _subGoals = shiftResourceInArray(_subGoals, fromId, toId);
-    const subGoals = _subGoals.map((t) => t.id).filter((id) => id);
+    const subGoals = _subGoals
+      .filter(isSavedSubGoal)
+      .map((t) => t.id)
+      .filter((id): id is IRecordId => Boolean(id));
     await goal.modify(
       {
         children: subGoals
@@ -209,9 +236,9 @@
       dragImage: "dragimage"
     }}
   >
-    {#if !$goal.subGoalsLayout || $goal.subGoalsLayout === SubGoalsLayout.DEFAULT}
+      {#if !$goal.subGoalsLayout || $goal.subGoalsLayout === SubGoalsLayout.DEFAULT}
       <NestedList
-        items={_subGoals.map((t) => t.id)}
+        items={_subGoals.filter(isSavedSubGoal).map((t) => t.id)}
         contentCallback={resolveContent}
         childrenCallback={resolveSubGoals}
         style={NestedListStyle.DEFAULT}
@@ -226,14 +253,16 @@
         addPlaceholder="Add new subgoal"
       />
     {:else}
-      {#each _subGoals as subGoal, index (subGoal.id || subGoal.type)}
+      {#each _subGoals as subGoal, index (isSavedSubGoal(subGoal) ? subGoal.id : subGoal.type)}
         <SubGoalItem
           {subGoal}
           {index}
           totalLength={_subGoals.length}
           method={$goal.subGoalsLayout}
           on:click={(e) => {
-            onSubGoalClick(subGoal.id, e);
+            if (isSavedSubGoal(subGoal)) {
+              onSubGoalClick(subGoal.id, e);
+            }
           }}
           on:add={onAddSubGoal}
         />
@@ -269,6 +298,8 @@
             <!-- <SubGoalItem {child} /> -->
             <SubGoalItem
               subGoal={child}
+              index={0}
+              totalLength={archiveSubGoals.length}
               on:click={(e) => {
                 onSubGoalClick(child.id, e);
               }}

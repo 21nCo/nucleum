@@ -24,6 +24,7 @@
   // export let step = 5;
   export let val = 0;
   export let color: string | undefined = undefined;
+  $: color;
   // export let color: string | undefined = undefined
   const dispatch = createEventDispatcher();
 
@@ -611,7 +612,9 @@
       <div class="slider relative w-full overflow-hidden">
         <!-- Time-stops mapping no-overflow here,(full width) -->
 
-        <div
+        <button
+          type="button"
+          aria-label="Session duration slider"
           style={`padding:0 ${paddingForSliderTrack.right}px 0 ${paddingForSliderTrack.left}px; transform: translateX(${sliderTranslation}px)`}
           on:mouseup={handleDragEnd}
           on:mousemove={handleDrag}
@@ -620,7 +623,7 @@
           on:touchmove={handleDrag}
           on:touchend={handleDragEnd}
           on:wheel={handleMouseWheel}
-          class={`slider-track flex w-[fit-content] ${
+          class={`slider-track flex w-[fit-content] border-none bg-transparent p-0 ${
             isSessionRunning ? `cursor-default` : `cursor-pointer`
           } transition-all duration-150 ease-out`}
         >
@@ -747,7 +750,7 @@
               </div>
             {/if}
           {/each}
-        </div>
+        </button>
       </div>
 
       <!-- Current time(white box at the center, along with black overlays on both sides), Also the animation is needed as soon as the timer starts getting ahead from 0m, hence the condition Math.abs(sliderTranslation) > distanceFromWhichCurrentTimeWillBeShown -->

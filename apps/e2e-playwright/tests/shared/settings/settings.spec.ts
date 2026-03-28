@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import path from "node:path";
 import {
   ensureInAppOnHome,
+  goalResourcePattern,
   runCommand,
   runQuickFocusCommand
 } from "../../utils/helpers";
@@ -714,7 +715,7 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     await expect
       .poll(
         async () =>
-          (await page.getByRole("button", { name: /^Goals(\s+\d+)?$/i }).first().isVisible().catch(() => false)) ||
+          (await page.getByRole("button", { name: goalResourcePattern }).first().isVisible().catch(() => false)) ||
           (await page.getByText(/Library/i).first().isVisible().catch(() => false)),
         { timeout: 10_000 }
       )
@@ -820,7 +821,7 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     await expect
       .poll(
         async () =>
-          (await page.getByRole("button", { name: /^Goals(\s+\d+)?$/i }).first().isVisible().catch(() => false)) ||
+          (await page.getByRole("button", { name: goalResourcePattern }).first().isVisible().catch(() => false)) ||
           (await page.getByText(/Library/i).first().isVisible().catch(() => false)),
         { timeout: 8_000 }
       )

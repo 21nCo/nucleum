@@ -3,6 +3,7 @@
     FeatureWheelMode,
     type IContemporary,
     type IFeatureWheel,
+    type IFeatureWheelContemporary,
     type IFeatureWheelGroup,
     type IFwCategory,
     type IFwFeature
@@ -33,6 +34,17 @@
   let isShowSidePanel: boolean = false;
   let isShowGoBack: boolean = false;
   refreshWheel();
+
+  function hydrateContemporary(
+    contemporary: IFeatureWheelContemporary
+  ): IFeatureWheelContemporary {
+    const data = contemporaries.find((c) => c.label === contemporary.label);
+    return {
+      ...contemporary,
+      url: data?.url ?? "",
+      icon: data?.icon
+    };
+  }
 
   function refreshWheel() {
     const groups: IFeatureWheelGroup[] = [];
@@ -79,16 +91,7 @@
           }))
           .map((spoke) => ({
             ...spoke,
-            contemporaries: spoke.contemporaries.map((contemporary) => {
-              const data = contemporaries.find(
-                (c) => c.label === contemporary.label
-              );
-              return {
-                ...contemporary,
-                url: data?.url,
-                icon: data?.icon
-              };
-            })
+            contemporaries: spoke.contemporaries.map(hydrateContemporary)
           }))
       };
       groups.push(group);
@@ -145,15 +148,15 @@
         bind:selectedFeatures
         bind:selectedCompare
         bind:includePlannedFeatures
-        on:change={(e) => {
+        on:change={() => {
           refreshWheel();
         }}
-        on:howToUse={(e) => {
+        on:howToUse={() => {
           featureView = "howToUse";
           selectedCompare = undefined;
           isShowSidePanel = true;
         }}
-        on:report={(e) => {
+        on:report={() => {
           isShowSidePanel = true;
         }}
       />

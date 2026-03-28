@@ -45,6 +45,13 @@
   let isExplicitlyCollapsed = false;
 
   onMount(() => {
+    const collapsePanelHandler: EventListener = () => {
+      isCollapsed = $view.display !== Display.TK;
+    };
+    const expandPanelHandler: EventListener = () => {
+      if (isExplicitlyCollapsed) return;
+      isCollapsed = false;
+    };
     const unsubscribe = appEvents.subscribe((e) => {
       if (e.event === GlobalEvent.APP_MENU_SWITCHED) {
         const currentPath = window?.location?.pathname?.replace("/", "");
@@ -53,7 +60,14 @@
         isExplicitlyCollapsed = false;
       }
     });
+    window.addEventListener(GlobalEvent.COLLAPSE_PANEL, collapsePanelHandler);
+    window.addEventListener(GlobalEvent.EXPAND_PANEL, expandPanelHandler);
     return () => {
+      window.removeEventListener(
+        GlobalEvent.COLLAPSE_PANEL,
+        collapsePanelHandler
+      );
+      window.removeEventListener(GlobalEvent.EXPAND_PANEL, expandPanelHandler);
       if (unsubscribe) unsubscribe();
     };
   });
@@ -172,10 +186,3 @@
     {/if}
   {/if}
 </div>
-<svelte:window
-  on:collapsePanel={() => (isCollapsed = $view.display !== Display.TK && true)}
-  on:expandPanel={() => {
-    if (isExplicitlyCollapsed) return;
-    isCollapsed = false;
-  }}
-/>

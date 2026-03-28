@@ -2,9 +2,26 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+/**
+ * @typedef {Record<string, string>} AliasMap
+ */
+
+/**
+ * @typedef {Record<string, string[]>} TsconfigPaths
+ */
+
+/**
+ * @typedef {{
+ *   aliasMap: AliasMap;
+ *   tsconfigPaths: TsconfigPaths;
+ *   viteAliases: Record<string, string>;
+ * }} AliasEntries
+ */
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, "..");
+/** @type {string[]} */
 const INDEX_CANDIDATES = [
   "index.ts",
   "index.tsx",
@@ -24,8 +41,10 @@ const INDEX_CANDIDATES = [
 
 const ALIAS_MAP_PATH = path.join(__dirname, "alias-map.json");
 
+/** @param {string} value */
 const toPosixPath = (value) => value.replace(/\\/g, "/");
 
+/** @param {string} value */
 const ensureRelativeSpecifier = (value) => {
   if (value === "." || value.startsWith(".") || value.startsWith("/")) {
     return value;
@@ -34,12 +53,19 @@ const ensureRelativeSpecifier = (value) => {
   return `./${value}`;
 };
 
+/** @returns {AliasMap} */
 export const loadAliasMap = () => {
   const raw = readFileSync(ALIAS_MAP_PATH, "utf8");
-  return JSON.parse(raw);
+  return /** @type {AliasMap} */ (JSON.parse(raw));
 };
 
+/**
+ * @param {AliasMap} aliasMap
+ * @param {string} [baseDir=PROJECT_ROOT]
+ * @returns {TsconfigPaths}
+ */
 export const buildTsconfigPaths = (aliasMap, baseDir = PROJECT_ROOT) => {
+  /** @type {TsconfigPaths} */
   const paths = {};
 
   for (const [alias, target] of Object.entries(aliasMap)) {
@@ -67,16 +93,29 @@ export const buildTsconfigPaths = (aliasMap, baseDir = PROJECT_ROOT) => {
   return paths;
 };
 
+/**
+ * @param {AliasMap} aliasMap
+ * @param {string} [projectRoot=PROJECT_ROOT]
+ * @returns {Record<string, string>}
+ */
 export const buildViteAliases = (aliasMap, projectRoot = PROJECT_ROOT) => {
-  return Object.fromEntries(
-    Object.entries(aliasMap).map(([alias, target]) => [
-      alias,
-      path.resolve(projectRoot, target)
-    ])
+  return /** @type {Record<string, string>} */ (
+    Object.fromEntries(
+      Object.entries(aliasMap).map(([alias, target]) => [
+        alias,
+        path.resolve(projectRoot, target)
+      ])
+    )
   );
 };
 
+/**
+ * @param {AliasMap} aliasMap
+ * @param {string} [configDir=PROJECT_ROOT]
+ * @returns {Record<string, string>}
+ */
 export const buildKitAliases = (aliasMap, configDir = PROJECT_ROOT) => {
+  /** @type {Record<string, string>} */
   const result = {};
   for (const [alias, target] of Object.entries(aliasMap)) {
     const absTarget = path.resolve(PROJECT_ROOT, target);
@@ -88,6 +127,7 @@ export const buildKitAliases = (aliasMap, configDir = PROJECT_ROOT) => {
   return result;
 };
 
+/** @returns {AliasEntries} */
 export const getAliasEntries = () => {
   const aliasMap = loadAliasMap();
   return {
@@ -97,6 +137,7 @@ export const getAliasEntries = () => {
   };
 };
 
+/** @type {RegExp[]} */
 export const DISALLOWED_IMPORT_PATTERNS = [
   /^\.\.{1,2}\//, // relative traversals
   /^client\//,
@@ -106,12 +147,21 @@ export const DISALLOWED_IMPORT_PATTERNS = [
   /^\$lib$/
 ];
 
+/**
+ * @param {string} value
+ * @param {AliasMap} [aliasMap=loadAliasMap()]
+ * @returns {boolean}
+ */
 export const isAliasPath = (value, aliasMap = loadAliasMap()) => {
   return Object.keys(aliasMap).some((alias) =>
     value === alias || value.startsWith(`${alias}/`)
   );
 };
 
+/**
+ * @param {string} value
+ * @returns {boolean}
+ */
 export const isDisallowedImport = (value) => {
   return DISALLOWED_IMPORT_PATTERNS.some((pattern) => pattern.test(value));
 };
