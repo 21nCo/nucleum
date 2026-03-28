@@ -72,17 +72,23 @@ function validateArgs(args) {
 }
 
 function spawnLogged(command, args, options) {
+  const stdio = options?.stdio ?? ["ignore", "pipe", "pipe"];
   const child = spawn(command, args, {
     ...options,
-    stdio: ["ignore", "pipe", "pipe"]
+    stdio
   });
 
-  child.stdout?.on("data", (chunk) => {
-    process.stdout.write(chunk);
-  });
-  child.stderr?.on("data", (chunk) => {
-    process.stderr.write(chunk);
-  });
+  if (child.stdout) {
+    child.stdout.on("data", (chunk) => {
+      process.stdout.write(chunk);
+    });
+  }
+
+  if (child.stderr) {
+    child.stderr.on("data", (chunk) => {
+      process.stderr.write(chunk);
+    });
+  }
 
   return child;
 }
@@ -90,20 +96,61 @@ function spawnLogged(command, args, options) {
 function run(command, args, options) {
   return new Promise((resolve, reject) => {
     const child = spawnLogged(command, args, options);
+    let settled = false;
 
-    child.on("error", reject);
-    child.on("exit", (code, signal) => {
+    const finish = (handler, value) => {
+      if (settled) return;
+      settled = true;
+      handler(value);
+    };
+
+    child.on("error", (error) => {
+      finish(reject, error);
+    });
+    child.on("close", (code, signal) => {
       if (code === 0) {
-        resolve();
+        finish(resolve);
         return;
       }
 
-      reject(
+      finish(
+        reject,
         new Error(
           `${command} ${args.join(" ")} failed with code ${code ?? "null"} signal ${signal ?? "null"}`
         )
       );
     });
+  });
+}
+
+function areChildStreamsSettled(child) {
+  const stdoutSettled = child.stdout
+    ? child.stdout.destroyed || child.stdout.readableEnded
+    : true;
+  const stderrSettled = child.stderr
+    ? child.stderr.destroyed || child.stderr.readableEnded
+    : true;
+  return stdoutSettled && stderrSettled;
+}
+
+function waitForChildClose(child, timeoutMs) {
+  return new Promise((resolve) => {
+    if (child.exitCode !== null && areChildStreamsSettled(child)) {
+      resolve(true);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      child.off("close", onClose);
+      resolve(false);
+    }, timeoutMs);
+
+    const onClose = () => {
+      clearTimeout(timer);
+      resolve(true);
+    };
+
+    child.once("close", onClose);
   });
 }
 
@@ -149,22 +196,50 @@ function buildTestEnv(product, baseUrl) {
 }
 
 async function stopServer(server) {
-  if (!server || server.exitCode !== null) {
+  if (!server) {
     return;
   }
 
-  server.kill("SIGTERM");
+  const killServer = async (signal) => {
+    if (!server.pid) {
+      return;
+    }
 
-  const exited = await new Promise((resolve) => {
-    const timer = setTimeout(() => resolve(false), 10_000);
-    server.once("exit", () => {
-      clearTimeout(timer);
-      resolve(true);
-    });
-  });
+    if (process.platform === "win32") {
+      const args = ["/pid", String(server.pid), "/T"];
+      if (signal === "SIGKILL") {
+        args.push("/F");
+      }
+      try {
+        await run("taskkill", args, {
+          cwd: repoRoot,
+          env: process.env
+        });
+      } catch {}
+      return;
+    }
 
-  if (!exited && server.exitCode === null) {
-    server.kill("SIGKILL");
+    try {
+      process.kill(-server.pid, signal);
+    } catch {
+      try {
+        server.kill(signal);
+      } catch {}
+    }
+  };
+
+  await killServer("SIGTERM");
+
+  let exited = await waitForChildClose(server, 10_000);
+
+  if (!exited) {
+    await killServer("SIGKILL");
+    exited = await waitForChildClose(server, 5_000);
+  }
+
+  if (!exited) {
+    server.stdout?.destroy();
+    server.stderr?.destroy();
   }
 }
 
@@ -212,6 +287,7 @@ async function main() {
     ],
     {
       cwd: repoRoot,
+      detached: process.platform !== "win32",
       env: process.env
     }
   );
