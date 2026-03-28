@@ -72,12 +72,15 @@ jobs:
           - product: nucleum
             workspace: nucleus-app
             port: 5050
+            domain: local.nucleum.app
           - product: pointron
             workspace: pointron-app
             port: 5001
+            domain: local.pointron.app
           - product: memotron
             workspace: memotron-app
             port: 5002
+            domain: local.memotron.app
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -91,11 +94,39 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
         working-directory: apps/e2e-playwright
+      - name: Map HTTPS local domains
+        run: |
+          sudo tee -a /etc/hosts >/dev/null <<'EOF'
+          127.0.0.1 local.nucleum.app local.memotron.app local.pointron.app
+          EOF
+      - name: Install Caddy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y caddy
+          sudo systemctl stop caddy 2>/dev/null || true
+          sudo systemctl disable caddy 2>/dev/null || true
       - name: Run Playwright smoke for ${{ matrix.product }}
         env:
           E2E_LOGIN_EMAIL: ${{ secrets.E2E_LOGIN_EMAIL }}
           E2E_LOGIN_PASSWORD: ${{ secrets.E2E_LOGIN_PASSWORD }}
-        run: node tools/ci/run-playwright-product.mjs --product=${{ matrix.product }} --workspace=${{ matrix.workspace }} --port=${{ matrix.port }} --suite=smoke
+        run: |
+          printf '%s\n' \
+            '${{ matrix.domain }} {' \
+            '  tls internal' \
+            '  reverse_proxy 127.0.0.1:${{ matrix.port }}' \
+            '}' > Caddyfile
+          sudo caddy run --config "$PWD/Caddyfile" --adapter caddyfile &
+          READY=0
+          for i in $(seq 1 30); do
+            curl -sf --connect-timeout 1 http://127.0.0.1:2019/config/ >/dev/null && READY=1 && break
+            sleep 1
+          done
+          if [ "$READY" -ne 1 ]; then
+            echo "Caddy admin API did not become ready on 127.0.0.1:2019"
+            exit 1
+          fi
+          sudo caddy trust
+          node tools/ci/run-playwright-product.mjs --product=${{ matrix.product }} --workspace=${{ matrix.workspace }} --port=${{ matrix.port }} --base-url=https://${{ matrix.domain }} --suite=smoke
       - name: Upload Playwright artifacts
         if: always()
         uses: actions/upload-artifact@v4

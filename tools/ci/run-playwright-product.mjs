@@ -40,6 +40,7 @@ function validateArgs(args) {
   const workspace = args.workspace?.trim();
   const port = Number(args.port);
   const suite = args.suite?.trim();
+  const baseUrl = args["base-url"]?.trim();
 
   if (!product || !new Set(["nucleum", "memotron", "pointron"]).has(product)) {
     throw new Error(
@@ -59,7 +60,15 @@ function validateArgs(args) {
     throw new Error("Expected --suite to be one of: smoke, regression");
   }
 
-  return { product, workspace, port, suite };
+  if (baseUrl) {
+    try {
+      new URL(baseUrl);
+    } catch {
+      throw new Error("Expected --base-url to be a valid absolute URL");
+    }
+  }
+
+  return { product, workspace, port, suite, baseUrl };
 }
 
 function spawnLogged(command, args, options) {
@@ -185,7 +194,8 @@ async function maybeSaveAuthState(env) {
 
 async function main() {
   const args = validateArgs(parseArgs(process.argv.slice(2)));
-  const baseUrl = `http://127.0.0.1:${args.port}`;
+  const baseUrl = args.baseUrl ?? `http://127.0.0.1:${args.port}`;
+  const upstreamUrl = `http://127.0.0.1:${args.port}`;
   const env = buildTestEnv(args.product, baseUrl);
   const grep = args.suite === "smoke" ? "@smoke" : "@regression";
   const server = spawnLogged(
@@ -207,7 +217,7 @@ async function main() {
   );
 
   try {
-    await waitForServer(baseUrl, server);
+    await waitForServer(upstreamUrl, server);
     await maybeSaveAuthState(env);
     await run(
       "npx",
