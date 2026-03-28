@@ -6,6 +6,7 @@
   export let isApplyCustomColor: boolean = false;
   export let isMasonry: boolean = false;
   export let isHidePreview: boolean = false;
+  $: item;
 </script>
 
 <button

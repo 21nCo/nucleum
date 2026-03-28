@@ -113,7 +113,8 @@
     isPreventDefaultOnKeyboardClose = true;
     if (keyboardToolbarPanelSelection !== action)
       keyboardToolbarPanelSelection = action;
-    document.activeElement?.blur();
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement) activeElement.blur();
   }
 
   function insertTextAtCursor(text: string) {
@@ -232,7 +233,8 @@
       if (!keyboardToolbarPanelSelection) dispatch("select");
       isPreventDefaultOnKeyboardClose = true;
       keyboardToolbarPanelSelection = action;
-      document.activeElement?.blur();
+      const activeElement = document.activeElement;
+      if (activeElement instanceof HTMLElement) activeElement.blur();
     } else {
       keyboardToolbarPanelSelection = undefined;
       dispatch("focus");

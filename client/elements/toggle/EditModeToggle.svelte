@@ -11,7 +11,6 @@
     tooltip="Toggle read mode"
     icon="book-open"
     size={Size.sm}
-    isStayActive={!$isInEditMode}
     on:click={() => isInEditMode.toggle()}
   />
 {:else}

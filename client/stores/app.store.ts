@@ -8,10 +8,7 @@ import colorSchemes from "@21n/theme/colorschemes.json";
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { shuffleEmojis } from "@21n/data/avatars";
 import { ActionType, type IAction } from "@21n/types/action.type";
-import {
-  IdentityProvider,
-  type OAuthProviderConfig
-} from "@21n/types/oauth.type";
+import { IdentityProvider } from "@21n/types/oauth.type";
 import { dispatchCustomEvent, goto } from "@21n/utils/browser.utils";
 import { persistLocally, getDapId } from "@21n/persistence/persistence.utils";
 import { postDataToParent } from "@21n/utils/embed.utils";
@@ -314,7 +311,7 @@ export const appStore = {
       action.type = action.handsetBehaviorType ?? action.type;
     }
     if (action.type === ActionType.LINK) {
-      const url = store.appData.urls[action.action];
+      const url = store.appData.urls?.[action.action];
       if (!url) return;
       if (url) return appStore.openLink(url);
     } else if (action.type === ActionType.FUNCTION) {
@@ -418,7 +415,7 @@ export const appStore = {
   initiateOAuth2Flow: async (provider: IdentityProvider, guest?: string) => {
     const ctx = get(context);
     const app = get(appStore);
-    const oAuthConfig: OAuthProviderConfig[] = app.appData?.oAuthConfig;
+    const oAuthConfig = app.appData?.oAuthConfig;
     if (!oAuthConfig || oAuthConfig.length < 1) return;
     const config = oAuthConfig.find((c) => c.provider === provider);
     if (!config) return;
@@ -522,15 +519,18 @@ export const appStore = {
     }
   ) => {
     const prefix = appStore.resolveRecordSpecificSearchParamPrefix(id);
-    let modified:
-      | Record<string, string | boolean | number | null>
-      | (string | RegExp)[] = {};
+    let modified: Record<string, string | boolean | number | null> | string[] = {};
     if (Array.isArray(params)) {
       modified = params.map((p) => `${prefix}-${p}`);
     } else {
+      const recordSpecificParams: Record<
+        string,
+        string | boolean | number | null
+      > = {};
       Object.entries(params).forEach(([key, value]) => {
-        modified[`${prefix}-${key}`] = value;
+        recordSpecificParams[`${prefix}-${key}`] = value;
       });
+      modified = recordSpecificParams;
     }
     return appStore.toggleSearchParam(modified, additional);
   },
@@ -653,7 +653,7 @@ export const appStore = {
       action: ResourceActionType.OPEN,
       resourceId: id,
       timestamp: timestamp.toISOString()
-    });
+    } as any);
     if (accessMode === AccessMode.TAB) {
       if (params?.replaceId) tabs.replace(id, params.replaceId);
       else tabs.open(id);
@@ -865,7 +865,7 @@ export const appStore = {
       const prevMode = url.searchParams.get("prev");
       logger.log({ at: "toggleFocusAccessMode", currentMode, prevMode });
       if (prevMode) {
-        url.searchParams.set(prevMode, resourceId.toString());
+        url.searchParams.set(prevMode as string, resourceId.toString());
         removeSearchParam("prev");
       }
     } else {
@@ -881,7 +881,7 @@ export const appStore = {
   },
   initializeProductInformation: (details: { product: string; env: string }) => {
     update((n: IAppStore) => {
-      n.product = details.product;
+      n.product = details.product as Product;
       n.env = details.env;
       return n;
     });

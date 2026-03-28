@@ -5,17 +5,19 @@
   export let value: string;
   const dispatch = createEventDispatcher();
 
-  let canvas;
-  let ctx;
+  let canvas: HTMLCanvasElement;
+  let ctx: CanvasRenderingContext2D | null = null;
   let isDragging = false;
   export let selectedColor = { r: 255, g: 0, b: 0, a: 1 };
 
   onMount(() => {
     ctx = canvas.getContext("2d");
+    if (!ctx) return;
     drawColorSpectrum();
   });
 
   function drawColorSpectrum() {
+    if (!ctx) return;
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
     gradient.addColorStop(0, "rgb(255, 0, 0)");
     gradient.addColorStop(1 / 6, "rgb(255, 255, 0)");
@@ -37,12 +39,12 @@
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  function handleMouseDown(event) {
+  function handleMouseDown(event: MouseEvent) {
     isDragging = true;
     updateColor(event);
   }
 
-  function handleMouseMove(event) {
+  function handleMouseMove(event: MouseEvent) {
     if (isDragging) {
       updateColor(event);
     }
@@ -52,7 +54,8 @@
     isDragging = false;
   }
 
-  function updateColor(event) {
+  function updateColor(event: MouseEvent) {
+    if (!ctx) return;
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;

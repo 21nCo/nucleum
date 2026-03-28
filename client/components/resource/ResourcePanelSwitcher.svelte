@@ -24,13 +24,19 @@
   export let panels: IToggleItem[];
   export let isConstrainedWidth: boolean = false;
   export let accessMode: AccessMode;
-  export let contextMenuResolver: () =>
-    | {
-        group: string;
-        items: IContextMenuItem[];
-      }[]
+  export let contextMenuResolver:
+    | (() =>
+        | {
+            group: string;
+            items: IContextMenuItem[];
+          }[]
+        | undefined)
     | undefined = undefined;
   let isMaximized: boolean = false;
+
+  function resolveContextMenu() {
+    return contextMenuResolver?.() ?? [];
+  }
 
   onMount(() => {
     const pageSub = page.subscribe((p) => {
@@ -128,7 +134,7 @@
               {#if contextMenuResolver !== undefined}
                 <div class="flex items-center h-full">
                   <ContextMenuAction
-                    menuResolver={contextMenuResolver}
+                    menuResolver={resolveContextMenu}
                     size={Size.lg}
                     isBoxed={true}
                     parentBgIndex={1}

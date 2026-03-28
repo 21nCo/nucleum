@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Size } from "@21n/types/size.enum";
-  import { createEventDispatcher } from "svelte";
+  import { createEventDispatcher, onMount } from "svelte";
   import SearchResultItem from "@21n/elements/input/SearchResultItem.svelte";
   import { debouncer } from "@21n/utils/utils";
   import { cn } from "@21n/utils/ui.utils";
@@ -13,6 +13,7 @@
   import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
   import { KeyboardKey, ModifierKey } from "@21n/types/keyboard.type";
   export let searchCallback: Function | undefined = undefined;
+  export let searchStoreId: string | undefined = undefined;
   export let searchResultComponent: any = undefined;
   export let searchResultComponentProps: Record<string, unknown> = {};
   /**
@@ -31,9 +32,14 @@
   export let isApplyPopoverStyling: boolean = false;
   export let id: string = generateSimpleRandomId();
   export let isPreventAutoSelectZeroIndex: boolean = false;
+  $: void searchStoreId;
 
   let value: string;
   type SearchItem = Partial<IResource & Record<string, unknown>>;
+  interface SearchResultWindowEventDetail {
+    id: string;
+    event: KeyboardEvent;
+  }
   let results: SearchItem[] = [];
   let selectedIndex: number = resolveDefaultIndexSelection();
   let previousValue: string = "";
@@ -80,7 +86,59 @@
     hide();
   }
 
-  export function keydown(event: any) {
+  function resolveSearchItemLabel(item: SearchItem) {
+    if (typeof item.label === "string") return item.label;
+    if ("name" in item && typeof item.name === "string") return item.name;
+    return "";
+  }
+
+  function resolveSearchValue(event: KeyboardEvent) {
+    const target = event.target;
+    if (target instanceof HTMLInputElement) return target.value;
+    if (target instanceof HTMLElement) return target.innerText;
+    return "";
+  }
+
+  function resolveKeyboardEvent(event: Event) {
+    const detail = (event as CustomEvent<SearchResultWindowEventDetail>).detail;
+    if (!detail?.event || detail.id !== id) return null;
+    return detail.event;
+  }
+
+  function onWindowSearchResultKeyup(event: Event) {
+    const keyboardEvent = resolveKeyboardEvent(event);
+    if (!keyboardEvent) return;
+    keyup(keyboardEvent);
+  }
+
+  function onWindowSearchResultKeydown(event: Event) {
+    const keyboardEvent = resolveKeyboardEvent(event);
+    if (!keyboardEvent) return;
+    keydown(keyboardEvent);
+  }
+
+  onMount(() => {
+    window.addEventListener(
+      "searchresultkeyup",
+      onWindowSearchResultKeyup as EventListener
+    );
+    window.addEventListener(
+      "searchresultkeydown",
+      onWindowSearchResultKeydown as EventListener
+    );
+    return () => {
+      window.removeEventListener(
+        "searchresultkeyup",
+        onWindowSearchResultKeyup as EventListener
+      );
+      window.removeEventListener(
+        "searchresultkeydown",
+        onWindowSearchResultKeydown as EventListener
+      );
+    };
+  });
+
+  export function keydown(event: KeyboardEvent) {
     logger.log({ at: "SearchResultsPopover - keydown", event });
     if (event.key === KeyboardKey.ARROW_DOWN) {
       selectedIndex = Math.min(selectedIndex + 1);
@@ -103,11 +161,9 @@
     ModifierKey.ALT,
     ModifierKey.SHIFT
   ];
-  export function keyup(event: any) {
+  export function keyup(event: KeyboardEvent) {
     if (modifierKeys.includes(event.key as ModifierKey)) return;
-    value =
-      (event.target as HTMLInputElement).value ??
-      (event.target as HTMLElement).innerText;
+    value = resolveSearchValue(event);
     if (shortcutTrigger && value?.includes(shortcutTrigger)) {
       value = value.split(shortcutTrigger)[1].split(" ")[0];
     }
@@ -210,8 +266,7 @@
     {:else if results && results.length > 0}
       {#each results as item, index ((item.id ?? "") + item.value)}
         <SearchResultItem
-          label={item.label ??
-            ("name" in item && typeof item.name == "string" ? item.name : "")}
+          label={resolveSearchItemLabel(item)}
           isActive={selectedIndex === index}
           on:click={(e) => {
             onSearchResultSelection(item, e);
@@ -279,14 +334,3 @@
     </div>
   {/if}
 </div>
-
-<svelte:window
-  on:searchresultkeyup={(e) => {
-    if (id !== e.detail.id || !e.detail.event) return;
-    keyup(e.detail.event);
-  }}
-  on:searchresultkeydown={(e) => {
-    if (id !== e.detail.id || !e.detail.event) return;
-    keydown(e.detail.event);
-  }}
-/>

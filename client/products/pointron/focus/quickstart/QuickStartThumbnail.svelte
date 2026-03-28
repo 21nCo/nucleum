@@ -74,9 +74,10 @@
   }
 
   async function refreshFocus() {
-    todayFocusDuration = await focusAggregates.aggregateFocusForCurrentDay({
+    const focus = await focusAggregates.aggregateFocusForCurrentDay({
       goalId: item.id
     });
+    todayFocusDuration = typeof focus === "number" ? focus : undefined;
   }
 
   async function unPin(e: any) {

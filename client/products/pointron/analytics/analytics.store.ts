@@ -22,7 +22,12 @@ import { isSameResource } from "@21n/components/flux/resourceStores/resource.uti
 import { tzStore } from "@21n/components/settings/timezone/tz.store";
 import { toasts } from "@21n/stores/notification.store";
 
-export const selectedPageId = writable<string>();
+type IFocusLogAggregate = {
+  goalId?: IRecordId;
+  focus: number;
+};
+
+export const selectedPageId = writable<string | undefined>();
 const analyticsConfigStoreId = Resource.pointAnalyticsConfig;
 
 const seedAnalyticsConfig: IAnalyticsConfigStore = {
@@ -120,7 +125,9 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
 
   rearrangePages(ids: string[]) {
     let state = this.get();
-    state.pages = ids.map((id) => state.pages.find((p) => p.id === id));
+    state.pages = ids
+      .map((id) => state.pages.find((p) => p.id === id))
+      .filter((page): page is AnalyticsPage => Boolean(page));
     this.modify(state);
   }
 }
@@ -148,16 +155,20 @@ class FocusAggregates {
       }
     });
     if (!logs) return 0;
+    const focusLogs = logs as IFocusLogAggregate[];
     if (params.goalIds) {
       let data: {
         id: IRecordId;
         focus: number;
       }[] = [];
       params.goalIds.forEach((goalId) => {
-        const goalLogs = logs.filter((log) =>
-          isSameResource(log.goalId, goalId)
+        const goalLogs = focusLogs.filter((log: IFocusLogAggregate) =>
+          log.goalId ? isSameResource(log.goalId, goalId) : false
         );
-        const focus = goalLogs.reduce((acc, log) => acc + log.focus, 0);
+        const focus = goalLogs.reduce(
+          (acc: number, log: IFocusLogAggregate) => acc + log.focus,
+          0
+        );
         data.push({
           id: goalId,
           focus
@@ -165,7 +176,10 @@ class FocusAggregates {
       });
       return data;
     } else {
-      return logs.reduce((acc, log) => acc + log.focus, 0);
+      return focusLogs.reduce(
+        (acc: number, log: IFocusLogAggregate) => acc + log.focus,
+        0
+      );
     }
   }
 }

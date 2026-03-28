@@ -1012,8 +1012,13 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
     let n = this.get();
     n.totalExtended = n.totalExtended + extendDurationSetting;
     n.plannedDuration = n.plannedDuration + extendDurationSetting;
-    if (!n.plannedDuration) return n;
-    n.end = this.resolveEndTime({ ...n });
+    if (!n.plannedDuration || !n.start) return n;
+    n.end = this.resolveEndTime({
+      start: n.start,
+      composition: n.composition,
+      plannedDuration: n.plannedDuration,
+      end: n.end
+    });
     let currentLastBar = n.intervals.pop();
     if (currentLastBar) {
       let lastBar = {
@@ -1329,7 +1334,12 @@ class FocusItemsStore extends KeyValueStore<IFocusItemsStore> {
           startUnix: x.startUnix
         };
       })
-      .filter((k) => k && k.id && k.item);
+      .filter(
+        (
+          recent
+        ): recent is { id: string; item: any; startUnix: number } =>
+          Boolean(recent && recent.id && recent.item)
+      );
     this.modify({ recents: newRecents });
   }
 

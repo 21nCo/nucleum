@@ -13,6 +13,14 @@
     await tick();
     inputRef?.focus();
   }
+
+  function onCancel() {
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement) {
+      activeElement.blur();
+    }
+    dispatch("cancel");
+  }
 </script>
 
 <KeyboardToolbar
@@ -46,11 +54,7 @@
       parentBgIndex={2}
       style={ButtonStyle.OUTLINED}
       isPreventMinWidth={true}
-      on:click={() => {
-        //  inputRef.value = "";
-        document.activeElement?.blur();
-        dispatch("cancel");
-      }}
+      on:click={onCancel}
     />
   </div>
 </KeyboardToolbar>

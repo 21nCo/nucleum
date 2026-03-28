@@ -12,7 +12,10 @@ import { ChartType } from "@21n/types/analytics.type";
 import { TimePeriodType, TimeScale } from "@21n/types/time.type";
 import { objIsEmpty, shallowDiff } from "@21n/shared-utils/obj.utils";
 import { Layout } from "@21n/types/layout.type";
-import type { IPointronPreferences } from "@21n/types/pointron/pointronPreferences.type";
+import type {
+  HorizonChart,
+  IPointronPreferences
+} from "@21n/types/pointron/pointronPreferences.type";
 import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 import { parse } from "@21n/shared-utils/json.utils";
@@ -121,6 +124,7 @@ export const seedLocalPreferences: IPointronPreferences = {
   extendDuration: 5,
   presets: generateSeedPresets(),
   isEnableAutoStartInterval: true,
+  isEnableAutoPiP: false,
   isIncludeBreakInAnalytics: false,
   timerMode: TimerMode.JOURNAL,
   appMenu: [],
@@ -152,18 +156,20 @@ class PointronPreferencesStore extends KeyValueStore<IPointronPreferences> {
     super(Resource.pointronPreferences, seedLocalPreferences);
   }
   loader(data: IPointronPreferences) {
-    if (!data.id) return;
     if (!data.uiStates) data.uiStates = seedLocalPreferences.uiStates;
     if (!data.presets) data.presets = generateSeedPresets();
     //m.horizonCharts = defaultHorizonChartConfiguration;
     this.modify(data, { isPersist: false });
   }
   async set(newValue: IPointronPreferences) {
-    let changedProperties: any = {};
+    let changedProperties: Partial<IPointronPreferences> = {};
     if (this.previousValue) {
       let differences = shallowDiff(newValue, parse(this.previousValue));
       differences.forEach((key: string) => {
-        changedProperties[key] = newValue[key as keyof IPointronPreferences];
+        const preferenceKey = key as keyof IPointronPreferences;
+        Object.assign(changedProperties, {
+          [preferenceKey]: newValue[preferenceKey]
+        });
       });
       //TODO - create separate method for updating horizons with targets instead of duplicating custom set method (set() is present in KeyValueStore class)
       console.log({ differences });

@@ -20,6 +20,7 @@
 
   export let node: INode;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  $: accessPoint;
 
   const nodeContext = getContext<any>(Context.NODE);
   let oembedHtml: string | null = null;

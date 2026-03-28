@@ -73,7 +73,8 @@ export enum Theme {
   DARK = "dark"
 }
 
-export type AppearanceStore = IStore & {
+export type AppearanceStore = Omit<IStore, "get"> & {
+  get?: IStore["get"];
   /**
    * @deprecated Use userPreferences.appearance.skin directly instead
    */

@@ -45,8 +45,13 @@
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
   ></svg>
-  <svg class="circle" xmlns="http://www.w3.org/2000/svg" fill="none">
-    <circle class={circleFill} />
+  <svg
+    class="circle"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 20 20"
+  >
+    <circle class={circleFill} cx="10" cy="10" r="10" />
   </svg>
 </div>
 
@@ -69,12 +74,6 @@
     height: calc(var(--height) / 4.5);
     margin-top: var(--circleMT);
     top: 50%;
-  }
-  circle {
-    cx: calc(var(--width) / 10);
-    cy: calc(var(--width) / 10);
-    r: calc(var(--width) / 10);
-    z-index: 9999;
   }
   .square {
     position: absolute;

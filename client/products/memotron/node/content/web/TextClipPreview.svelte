@@ -35,7 +35,7 @@
     : resolveTextHighlightColor(node);
 
   function getKindleHighlightRGBA(color: string, opacity: number) {
-    const colorMap = {
+    const colorMap: Record<string, string> = {
       blue: "0, 0, 255",
       green: "0, 255, 0",
       yellow: "255, 255, 0",

@@ -1,3 +1,15 @@
+type FileDropError = { file: File; type: string };
+
+type FileDropOptions = {
+  disabled: boolean;
+  accept: string;
+  multiple: boolean;
+  maxSize: number;
+  onDrop: (all: File[], valid: File[], errors: FileDropError[]) => void;
+  dragOverClass: string | string[];
+  isPreventClickToBrowse: boolean;
+};
+
 /**
  * Use this action to enable file dropping on a node.
  *
@@ -7,22 +19,21 @@
  * @param options
  * @returns
  */
-export function fileDrop(node: HTMLElement, options = {}) {
-  let input: HTMLInputElement;
-  const defaultOptions = {
+export function fileDrop(
+  node: HTMLElement,
+  options: Partial<FileDropOptions> = {}
+) {
+  let input: HTMLInputElement | undefined;
+  const defaultOptions: FileDropOptions = {
     disabled: false,
     accept: "*",
     multiple: false,
     maxSize: Infinity, // in bytes
-    onDrop: (
-      all: File[],
-      valid: File[],
-      errors: { file: File; type: string }[]
-    ) => {},
+    onDrop: () => {},
     dragOverClass: ["border-fgs3"],
     isPreventClickToBrowse: false
   };
-  let settings = { ...defaultOptions, ...options };
+  let settings: FileDropOptions = { ...defaultOptions, ...options };
 
   function setupInput() {
     input = document.createElement("input");
@@ -34,7 +45,7 @@ export function fileDrop(node: HTMLElement, options = {}) {
   }
 
   function handleFiles(files: FileList) {
-    const errors: { file: File; type: string }[] = [];
+    const errors: FileDropError[] = [];
     const validFiles = Array.from(files).filter((file) => {
       if (file.size > settings.maxSize) {
         errors.push({ file, type: "size" });
@@ -93,35 +104,42 @@ export function fileDrop(node: HTMLElement, options = {}) {
   }
 
   function handleClick() {
-    if (settings.disabled || settings.isPreventClickToBrowse) return;
+    if (settings.disabled || settings.isPreventClickToBrowse || !input) return;
     input.click();
   }
 
   function handleBrowse() {
-    if (settings.disabled) return;
+    if (settings.disabled || !input) return;
     input.click();
   }
 
   function handleChange() {
-    if (!input.files) return;
+    if (!input?.files) return;
     handleFiles(input.files);
     input.value = ""; // Reset input to allow selecting the same file again
   }
 
   setupInput();
+  const currentInput = input;
+  if (!currentInput) {
+    return {
+      update() {},
+      destroy() {}
+    };
+  }
 
   node.addEventListener("dragover", handleDragOver);
   node.addEventListener("dragleave", handleDragLeave);
   node.addEventListener("drop", handleDrop);
   node.addEventListener("click", handleClick);
   node.addEventListener("browse", handleBrowse);
-  input.addEventListener("change", handleChange);
+  currentInput.addEventListener("change", handleChange);
 
   return {
-    update(newOptions) {
+    update(newOptions: Partial<FileDropOptions>) {
       settings = { ...settings, ...newOptions };
-      input.accept = settings.accept;
-      input.multiple = settings.multiple;
+      currentInput.accept = settings.accept;
+      currentInput.multiple = settings.multiple;
     },
     destroy() {
       node.removeEventListener("dragover", handleDragOver);
@@ -129,8 +147,8 @@ export function fileDrop(node: HTMLElement, options = {}) {
       node.removeEventListener("drop", handleDrop);
       node.removeEventListener("click", handleClick);
       node.removeEventListener("browse", handleBrowse);
-      input.removeEventListener("change", handleChange);
-      node.removeChild(input);
+      currentInput.removeEventListener("change", handleChange);
+      node.removeChild(currentInput);
     }
   };
 }

@@ -13,6 +13,12 @@
     //TODO - based on resource type
     return "Untitled";
   }
+
+  function resolveLabelSearch() {
+    return "labelSearch" in item && typeof item.labelSearch === "string"
+      ? item.labelSearch
+      : undefined;
+  }
 </script>
 
 <span class="flex gap-2 items-center min-w-0 userdata">
@@ -26,8 +32,8 @@
       isEnableOnlyOnTruncate: true
     }}
   >
-    {#if item.labelSearch}
-      {@html renderMdAsHtml(item.labelSearch)}
+    {#if resolveLabelSearch()}
+      {@html renderMdAsHtml(resolveLabelSearch() ?? "")}
     {:else if item.label}
       {item.label}
     {:else}

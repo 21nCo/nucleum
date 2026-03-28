@@ -65,6 +65,10 @@
   function onTitleSettingChange(e: CustomEvent) {
     dispatch("titleSettingChange", e.detail);
   }
+
+  function onPopoverChange(event: Event) {
+    isPopoverVisible = (event as CustomEvent<{ open?: boolean }>).detail?.open ?? false;
+  }
 </script>
 
 <div
@@ -86,9 +90,7 @@
       onTitleSettingChange
     }
   }}
-  on:change={(e) => {
-    isPopoverVisible = e.detail?.open;
-  }}
+  on:change={onPopoverChange}
 >
   <Toggle icon={resolveIcon(arrangement)} bind:on={isPopoverVisible} />
 </div>

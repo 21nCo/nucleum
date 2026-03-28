@@ -22,8 +22,12 @@ export function generateResourceId(
 
 export function resolveMutationAction(mutation: IMutation): string {
   const mutationAction = mutation.params.action;
-  const mutationChangedProperties = mutation.params.record;
-  if (mutationAction === PersistenceActionType.MERGE) {
+  if (
+    mutationAction === PersistenceActionType.MERGE &&
+    "record" in mutation.params &&
+    mutation.params.record
+  ) {
+    const mutationChangedProperties = mutation.params.record;
     if (RemovalProperty.IS_ARCHIVED in mutationChangedProperties) {
       return mutationChangedProperties.isArchived
         ? "🗃️ Archived"
@@ -50,18 +54,23 @@ export function resolveMutationLabel(mutation: IMutation): {
   resourceLabel?: string;
 } {
   const action = resolveMutationAction(mutation);
+  const records =
+    "records" in mutation.params && Array.isArray(mutation.params.records)
+      ? mutation.params.records
+      : [];
   if (Array.isArray(mutation.resourceId) && mutation.resourceId.length === 1) {
     return {
       action: `${action} ${mutation.resource}`,
-      resourceLabel: mutation.params.records?.[0]?.label ?? "Unknown"
+      resourceLabel: records[0]?.label ?? "Unknown"
     };
   } else if (
     Array.isArray(mutation.resourceId) &&
     mutation.resourceId.length > 1 &&
     mutation.resource === Resource.node
   ) {
-    const nodularMd = mutation.params.records.filter(
-      (x) => x.contentType === NodeType.NODULAR_MARKDOWN
+    const nodularMd = records.filter(
+      (x: { contentType?: NodeType }) =>
+        x.contentType === NodeType.NODULAR_MARKDOWN
     );
     return {
       action: `${action} ${mutation.resource}`,

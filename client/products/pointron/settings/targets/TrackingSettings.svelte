@@ -10,12 +10,12 @@
   import { Orientation } from "@21n/types/direction.enum";
   let timescaleOptions = $userPreferences.timeScales
     ? $userPreferences.timeScales.map((x) => {
-        return { label: properCase(x), value: TimeScale[x] };
+        return { label: properCase(x), value: x };
       })
-    : Object.keys(TimeScale).map((key) => {
+    : Object.values(TimeScale).map((key) => {
         return {
           label: properCase(key),
-          value: TimeScale[key]
+          value: key
         };
       });
   onMount(() => {

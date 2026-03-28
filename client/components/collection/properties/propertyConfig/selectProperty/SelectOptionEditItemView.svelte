@@ -33,6 +33,19 @@
     if (isFocusing) textInputRef?.focus();
   });
   if (option && !option.color) option.color = Math.random() * 360;
+
+  function onHoverChange(isHovered: boolean) {
+    isHovering = isHovered;
+  }
+
+  function onOptionKeydown(event: CustomEvent<KeyboardEvent>) {
+    const keyboardEvent = event.detail;
+    if (!(keyboardEvent instanceof KeyboardEvent)) return;
+    if (keyboardEvent.key === "Escape") {
+      textInputRef?.blur();
+      keyboardEvent.stopPropagation();
+    }
+  }
 </script>
 
 <div
@@ -48,7 +61,7 @@
   data-group-id={groupId}
   draggable={!isColorPickerOpen}
   use:hoverable={{
-    onHover: (e) => (isHovering = e)
+    onHover: onHoverChange
   }}
 >
   <span class="cursor-move h-full flex flex-col items-center justify-center">
@@ -97,12 +110,7 @@
     on:enter={(e) => {
       dispatch("enter", option.id);
     }}
-    on:keydown={(e) => {
-      if (e.key === "Escape") {
-        textInputRef?.blur();
-        e.stopPropagation();
-      }
-    }}
+    on:keydown={onOptionKeydown}
     on:focus={() => {
       isFocusing = true;
       colorPickerPopoverRef?.hide();
@@ -124,13 +132,13 @@
           icon={isDefault ? "minus-circle" : "circle-dashed"}
           size={Size.sm}
           tooltip={isDefault ? "Remove default" : "Set as default"}
-          on:click={(e) => {
+          on:click={(event) => {
+            event.stopPropagation();
             if (isDefault) {
               dispatch("default", null);
             } else {
               dispatch("default", option.id);
             }
-            e.detail?.stopPropagation();
           }}
         />
       {/if}
@@ -138,9 +146,9 @@
         icon="cross"
         size={Size.sm}
         tooltip={"Remove"}
-        on:click={(e) => {
+        on:click={(event) => {
+          event.stopPropagation();
           dispatch("remove", option.id);
-          e.detail?.stopPropagation();
         }}
       />
     {:else if isDefault && dev_isEnableDefaultSelection}

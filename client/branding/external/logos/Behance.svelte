@@ -1,6 +1,7 @@
 <script lang="ts">
   export let style: string = "dark";
   export let fg: string = "bgs3";
+  $: fg;
 </script>
 
 {#if style === "light"}

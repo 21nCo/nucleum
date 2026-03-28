@@ -11,18 +11,20 @@
   import { mapValue } from "@21n/components/featureWheel/sidePanel/comparisionTable/table.utils";
   export let contemporary: IFeatureWheelContemporary;
   export let feature: IFwFeature;
-  export let contemporaryDetail: IContemporary;
+  export let contemporaryDetail: IContemporary | undefined = undefined;
   export let additionalProperties: string[] = [];
+
+  function resolveAdditionalProperty(property: string) {
+    const key = property as keyof IContemporary;
+    return contemporaryDetail?.[key];
+  }
 </script>
 
 <tr>
   <td class="border-b border-l border-brs3 p-2 flex items-center gap-2">
     {#if contemporaryDetail}
       <div class="w-5 h-5">
-        <ExternalLogo
-          provider={contemporaryDetail.icon}
-          url={contemporaryDetail.url}
-        />
+        <ExternalLogo provider={contemporaryDetail} url={contemporaryDetail.url} />
       </div>
     {/if}
     {properCase(contemporary.label)}</td
@@ -30,12 +32,12 @@
   {#if additionalProperties}
     {#each additionalProperties as property}
       <td class="border border-brs3 p-2">
-        {mapValue(property, contemporaryDetail[property])}
+        {mapValue(property, resolveAdditionalProperty(property))}
       </td>
     {/each}
   {/if}
   <td class="border border-brs3 p-2">
-    {contemporaryDetail.price ? `$${contemporaryDetail.price}` : "-"}
+    {contemporaryDetail?.price ? `$${contemporaryDetail.price}` : "-"}
   </td>
   <td class="border border-brs3 p-2">
     <RatingCell value={contemporary.value} />

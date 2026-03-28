@@ -24,6 +24,7 @@
   export let selectedCompare: string[] | undefined = undefined;
   export let selectedFeatures: string[] | undefined = undefined;
   export let selectedCategories: string[] | undefined = undefined;
+  $: categories;
 
   // Toggle for showing planned features
   let showPlannedFeatures = false;

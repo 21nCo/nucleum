@@ -16,6 +16,10 @@ import { fileEmbedChannel } from "@21n/components/files/fileEmbedChannel.store";
 import { OperatingSystem } from "@21n/types/context.type";
 import account from "@21n/stores/account.store";
 
+function resolveBlobPart(data: Uint8Array<ArrayBufferLike>) {
+  return Uint8Array.from(data).buffer;
+}
+
 class FileStore extends ResourceStore<IFile, IFileCapture> {
   constructor() {
     super(Resource.file, {
@@ -175,14 +179,18 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
         return {
           ...file,
           thumbnailUrl: URL.createObjectURL(
-            new Blob([file.thumbnailData], { type: "image/jpeg" })
+            new Blob([resolveBlobPart(file.thumbnailData)], {
+              type: "image/jpeg"
+            })
           )
         };
       }
       if (typeof file === "object" && "data" in file && file.data) {
         return {
           ...file,
-          url: URL.createObjectURL(new Blob([file.data], { type: file.type }))
+          url: URL.createObjectURL(
+            new Blob([resolveBlobPart(file.data)], { type: file.type })
+          )
         };
       }
       const response = await this.updateUrlIfExpired(file, params);

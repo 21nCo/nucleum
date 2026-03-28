@@ -1,4 +1,4 @@
-import { tick } from "svelte";
+import { SvelteComponent, tick, type ComponentType } from "svelte";
 import { Placement } from "@21n/types/direction.enum";
 import { PopoverTriggerMethod } from "@21n/types/popover.type";
 import { detectTouchDevice, getEventPath } from "@21n/utils/browser.utils";
@@ -30,6 +30,14 @@ interface TooltipReturn {
   destroy: () => void;
 }
 
+type TooltipPlacement =
+  | Placement.Top
+  | Placement.Bottom
+  | Placement.Left
+  | Placement.Right;
+
+type PopoverComponentConstructor = ComponentType<SvelteComponent>;
+
 function propagateNavEvent(id: string) {
   window.dispatchEvent(
     new CustomEvent(GlobalEvent.EVENT, {
@@ -59,7 +67,6 @@ export function tooltip(
   let {
     text,
     classList = "",
-    direction = Placement.Bottom,
     offsetInPx = 10,
     delay = 300,
     disabled = false,
@@ -67,6 +74,7 @@ export function tooltip(
     isLarger = false,
     isAllowTextWrap = false
   } = params;
+  let direction = normalizeTooltipPlacement(params.direction ?? Placement.Bottom);
   let baseClassList =
     "fixed z-50 px-3 bg-fgs2 text-bgs1 shadow-md rounded-md pointer-events-none opacity-0 transition-opacity duration-200 tooltip";
   if (isAllowTextWrap) {
@@ -104,13 +112,13 @@ export function tooltip(
     let top = 0;
     let actualDirection = direction;
 
-    function calculatePosition(dir: Placement): {
+    function calculatePosition(dir: TooltipPlacement): {
       left: number;
       top: number;
       fits: boolean;
     } {
       switch (dir) {
-        case "top":
+        case Placement.Top:
           left = rect.left + rect.width / 2 - tooltipRect.width / 2;
           top = rect.top - tooltipRect.height - offsetInPx;
           return {
@@ -121,7 +129,7 @@ export function tooltip(
               left >= 0 &&
               left + tooltipRect.width <= window.innerWidth
           };
-        case "bottom":
+        case Placement.Bottom:
           left = rect.left + rect.width / 2 - tooltipRect.width / 2;
           top = rect.bottom + offsetInPx;
           return {
@@ -132,7 +140,7 @@ export function tooltip(
               left >= 0 &&
               left + tooltipRect.width <= window.innerWidth
           };
-        case "left":
+        case Placement.Left:
           left = rect.left - tooltipRect.width - offsetInPx;
           top = rect.top + rect.height / 2 - tooltipRect.height / 2;
           return {
@@ -143,7 +151,7 @@ export function tooltip(
               top >= 0 &&
               top + tooltipRect.height <= window.innerHeight
           };
-        case "right":
+        case Placement.Right:
           left = rect.right + offsetInPx;
           top = rect.top + rect.height / 2 - tooltipRect.height / 2;
           return {
@@ -155,16 +163,17 @@ export function tooltip(
               top + tooltipRect.height <= window.innerHeight
           };
       }
+      return { left, top, fits: false };
     }
 
     let position = calculatePosition(actualDirection);
 
     if (!position?.fits) {
-      const oppositeDirections: Record<Placement, Placement> = {
-        top: Placement.Bottom,
-        bottom: Placement.Top,
-        left: Placement.Right,
-        right: Placement.Left
+      const oppositeDirections: Record<TooltipPlacement, TooltipPlacement> = {
+        [Placement.Top]: Placement.Bottom,
+        [Placement.Bottom]: Placement.Top,
+        [Placement.Left]: Placement.Right,
+        [Placement.Right]: Placement.Left
       };
 
       actualDirection = oppositeDirections[actualDirection];
@@ -173,7 +182,10 @@ export function tooltip(
       // If opposite direction also doesn't fit, try to adjust within the original direction
       if (!position?.fits) {
         position = calculatePosition(direction);
-        if (direction === "top" || direction === "bottom") {
+        if (
+          direction === Placement.Top ||
+          direction === Placement.Bottom
+        ) {
           position.left = Math.max(
             offsetInPx,
             Math.min(
@@ -236,15 +248,22 @@ export function tooltip(
 
   return {
     update(newParams: TooltipParams): void {
-      ({
-        text,
-        classList = "",
-        direction = "top",
-        offsetInPx = 10,
-        delay = 300,
-        disabled = false,
-        isLarger = false
-      } = newParams);
+      const {
+        text: nextText,
+        classList: nextClassList = "",
+        direction: nextDirection = Placement.Top,
+        offsetInPx: nextOffsetInPx = 10,
+        delay: nextDelay = 300,
+        disabled: nextDisabled = false,
+        isLarger: nextIsLarger = false
+      } = newParams;
+      text = nextText;
+      classList = nextClassList;
+      direction = normalizeTooltipPlacement(nextDirection);
+      offsetInPx = nextOffsetInPx;
+      delay = nextDelay;
+      disabled = nextDisabled;
+      isLarger = nextIsLarger;
       if (disabled) {
         removeAllTraces();
         return;
@@ -289,7 +308,31 @@ function documentDimensions() {
   return { documentWidth, documentHeight };
 }
 
-type Content = string | HTMLElement | ConstructorOfATypedSvelteComponent;
+function normalizeTooltipPlacement(direction: Placement): TooltipPlacement {
+  switch (direction) {
+    case Placement.Top:
+    case Placement.Bottom:
+    case Placement.Left:
+    case Placement.Right:
+      return direction;
+    default:
+      return Placement.Top;
+  }
+}
+
+function resolveRootElementById(
+  node: HTMLElement,
+  id: string
+): HTMLElement | null {
+  const root = node.getRootNode();
+  if (root instanceof Document || root instanceof ShadowRoot) {
+    const element = root.getElementById(id);
+    return element instanceof HTMLElement ? element : null;
+  }
+  return null;
+}
+
+type Content = string | HTMLElement | PopoverComponentConstructor;
 
 interface PopoverParams {
   placement?: Placement;
@@ -325,7 +368,7 @@ interface PopoverParams {
 
 export function popover(node: HTMLElement, params: PopoverParams) {
   let popoverElement: HTMLElement | null = null;
-  let component: ConstructorOfATypedSvelteComponent | null = null;
+  let component: SvelteComponent | null = null;
   let {
     placement = Placement.BottomCenter,
     isSpanToTriggerWidth = false,
@@ -347,16 +390,16 @@ export function popover(node: HTMLElement, params: PopoverParams) {
   let lastTriggeredBy: PopoverTriggerMethod | null = null;
   let popoverContainer =
     document.getElementById("popovers") ??
-    node?.getRootNode()?.getElementById("popovers");
+    resolveRootElementById(node, "popovers");
   let secondaryPopoverContainer =
     document.getElementById("secondary-popovers") ??
-    node?.getRootNode()?.getElementById("secondary-popovers");
+    resolveRootElementById(node, "secondary-popovers");
   let cwModalOverlay: HTMLDivElement | null = null;
   let hoverDelay = delay ?? 0;
-  let hoverDelayTimeout: ReturnType<typeof setTimeout> | null = null;
+  let hoverDelayTimeout: number | null = null;
 
   function clearHoverDelayTimeout() {
-    if (hoverDelayTimeout) {
+    if (hoverDelayTimeout !== null) {
       clearTimeout(hoverDelayTimeout);
       hoverDelayTimeout = null;
     }
@@ -748,14 +791,19 @@ export function popover(node: HTMLElement, params: PopoverParams) {
    * @returns
    */
   function handleOutsideClickv2(event: MouseEvent): void {
-    if (!popoverElement || !node || event.target.nodeName === "PLASMO-CSUI")
+    const targetNode = event.target;
+    if (
+      !popoverElement ||
+      !node ||
+      !(targetNode instanceof Node) ||
+      targetNode.nodeName === "PLASMO-CSUI"
+    )
       return;
 
-    const target = event.target as Element;
-    const path =
-      (event.composedPath && event.composedPath()) ||
-      event.path ||
-      (event.target && getEventPath(event));
+    const target =
+      targetNode instanceof Element ? targetNode : targetNode.parentElement;
+    if (!target) return;
+    const path = event.composedPath?.() ?? getEventPath(event);
     if (target.tagName.toLowerCase() === "path") {
       const svgParent = target.closest("svg");
       // console.log("svgParent", path, svgParent);
@@ -767,8 +815,9 @@ export function popover(node: HTMLElement, params: PopoverParams) {
         const isInsideNodeOrPopover = path.some(
           (element) =>
             element instanceof SVGElement ||
-            node.contains(element as Node) ||
-            popoverElement?.contains(element as Node)
+            (element instanceof Node &&
+              (node.contains(element) ||
+                popoverElement?.contains(element)))
         );
         if (isInsideNodeOrPopover) {
           return;
@@ -779,7 +828,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     if (
       !popoverElement.contains(target) &&
       !node.contains(target) &&
-      !target.dataset.popoverId &&
+      !target.getAttribute("data-popover-id") &&
       target.tagName.toLowerCase() !== "path" &&
       target.tagName.toLowerCase() !== "svg"
     ) {

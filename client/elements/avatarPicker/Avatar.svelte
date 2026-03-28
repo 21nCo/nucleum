@@ -18,6 +18,7 @@
   export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;
   export let changeCallback: (avatar: IAvatar) => void = () => {};
   let ref: any;
+  let avatarPreview: IAvatar | undefined = undefined;
   function handleAvatarEmitted(avatarVal: any) {
     if (!avatarVal) return;
     //TODO - send avatar type from avatar picker itself
@@ -40,6 +41,20 @@
   function closePopover() {
     ref.dispatchEvent(new CustomEvent("hide"));
   }
+
+  function hasAvatarPreview(avatarValue: IAvatar | undefined) {
+    if (!avatarValue || objIsEmpty(avatarValue)) return false;
+    return (
+      ("code" in avatarValue && Boolean(avatarValue.code)) ||
+      ("file" in avatarValue && Boolean(avatarValue.file))
+    );
+  }
+
+  function resolveAvatarPreview(avatarValue: IAvatar | undefined) {
+    if (!hasAvatarPreview(avatarValue)) return undefined;
+    return avatarValue;
+  }
+  $: avatarPreview = resolveAvatarPreview(avatar);
 </script>
 
 {#if avatar && !isInEditMode}
@@ -61,8 +76,8 @@
     }}
     bind:this={ref}
   >
-    {#if avatar && !objIsEmpty(avatar) && (avatar.code || avatar.file)}
-      <AvatarRenderer {avatar} {size} />
+    {#if avatarPreview}
+      <AvatarRenderer avatar={avatarPreview} {size} />
     {:else}
       +
     {/if}

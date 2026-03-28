@@ -32,6 +32,7 @@
   import context from "@21n/stores/context.store";
   import { ResourceActions } from "@21n/components/record/resource.actions";
   import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
+  import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
   const dispatch = createEventDispatcher();
   export let item: IRecordId;
   export let isInterimTab: boolean = false;
@@ -73,7 +74,12 @@
 
   function resolveContextMenu() {
     const resourceStore = resolveResourceStore(resourceType);
-    if (!resource || !resourceStore) return contextMenu;
+    if (
+      !resource ||
+      !resourceStore ||
+      !(resourceStore instanceof ResourceStore)
+    )
+      return contextMenu;
     const resourceActions = new ResourceActions(resource, resourceStore, {
       accessPoint: ResourceAccessPoint.SELF,
       accessMode: AccessMode.TAB

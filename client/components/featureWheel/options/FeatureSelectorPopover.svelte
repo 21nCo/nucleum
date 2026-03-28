@@ -4,4 +4,5 @@
   export let selected: string[] = [];
   export let categories: string[] = [];
   export let onSelect: (selected: string[]) => void = () => {};
+  $: [features, selected, categories, onSelect];
 </script>

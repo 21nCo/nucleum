@@ -67,7 +67,7 @@
     const tasksWithGoal = $focusItemsStore.items
       .map((x) => x.tasks)
       .flat()
-      .filter((x) => x);
+      .filter((x): x is IRecordId => Boolean(x));
     focusItems = [
       ...($focusItemsStore.items.filter(
         (x) => !tasksWithGoal.some(resourceInList(x))

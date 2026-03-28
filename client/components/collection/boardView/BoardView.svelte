@@ -25,6 +25,7 @@
     type IPropertyValue,
     PropertyType
   } from "@21n/components/collection/properties/property.type";
+  import { nodeStore } from "@21n/products/memotron/node/node.store";
 
   export let collection: IActiveCollectionStore;
   export let view: ICollectionView;
@@ -34,7 +35,7 @@
   $: boardCounts = calculateGroupingCounts(data, view.groupBy);
   $: groups = resolveOptionsForGrouping(
     view.groupBy,
-    $collection.properties,
+    $collection.properties ?? [],
     boardCounts,
     { isBoardView: true }
   );

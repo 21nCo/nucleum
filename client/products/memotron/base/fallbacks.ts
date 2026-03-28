@@ -14,6 +14,13 @@ import {
 } from "@21n/types/data.type";
 import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
 import { headingNodeTypes, NodeType, type INode } from "@21n/products/memotron/node/node.type";
+import type { ILinkThumb } from "@21n/products/memotron/linking/link.type";
+
+type IMemotronNode = INode & {
+  avatar?: unknown;
+  collections?: IRecordId[];
+  mdParent?: IRecordId[];
+};
 
 export async function clipTextSearchFallback() {
   try {
@@ -117,13 +124,13 @@ export async function lowResThumbnailsBackPropagation() {
 }
 
 export async function collectionResourceBackPropagation() {
-  const collections = await flux.selectMany(Resource.collection, {
+  const collections = (await flux.selectMany(Resource.collection, {
     filters: {
       resource: false
     }
-  });
+  })) as ICollection[] | undefined;
   if (collections && isValidArrayWithData(collections)) {
-    await flux.mutation(Resource.collection, {
+    await flux.mutation<ICollection>(Resource.collection, {
       action: PersistenceActionType.BULK_MERGE,
       recordIds: collections.map((collection: ICollection) => collection.id),
       changes: {
@@ -142,11 +149,11 @@ export async function collectionResourceBackPropagation() {
  */
 export async function headingNodeParentBackPropagation() {
   try {
-    const nodes = await flux.selectMany(Resource.node, {
+    const nodes = (await flux.selectMany(Resource.node, {
       filters: {
         contentType: [...headingNodeTypes, NodeType.NODULAR_MARKDOWN]
       }
-    });
+    })) as IMemotronNode[] | undefined;
     if (!nodes || !isValidArrayWithData(nodes)) return;
     const headingNodesWithoutParent = nodes.filter(
       (node: INode) =>
@@ -192,7 +199,7 @@ export async function headingNodeParentBackPropagation() {
       modifiedNodes: modifiedNodes.length
     });
     if (orphanNodes.length > 0) {
-      await flux.mutation(Resource.node, {
+      await flux.mutation<IMemotronNode>(Resource.node, {
         action: PersistenceActionType.BULK_MERGE,
         recordIds: orphanNodes,
         changes: {
@@ -201,8 +208,8 @@ export async function headingNodeParentBackPropagation() {
       });
     }
     if (!modifiedNodes || !modifiedNodes.length) return;
-    const promises = modifiedNodes.map((x: any) => {
-      return flux.mutation(Resource.node, {
+    const promises = modifiedNodes.map((x: { id: IRecordId; mdParent: IRecordId[] }) => {
+      return flux.mutation<IMemotronNode>(Resource.node, {
         action: PersistenceActionType.MERGE,
         record: x
       });
@@ -217,50 +224,52 @@ export async function headingNodeParentBackPropagation() {
  * Changes made during v0.59.x - adding collections list to records - for faster collections lookup during searches, thumbnails, etc - for avatar, settings
  */
 export async function collectionsListOnRecords() {
-  const nodes = await flux.selectMany(Resource.node, {
+  const nodes = (await flux.selectMany(Resource.node, {
     properties: { select: ["id", "avatar"] }
-  });
+  })) as IMemotronNode[] | undefined;
+  if (!nodes?.length) return;
   console.log({ at: "collectionsListOnRecords", nodes });
-  const nodesWithAvatars = nodes.filter((x) => x.avatar);
+  const nodesWithAvatars = nodes.filter((x: IMemotronNode) => x.avatar);
   console.log({ at: "collectionsListOnRecords", nodesWithAvatars });
 
-  await flux.mutation(Resource.node, {
+  await flux.mutation<IMemotronNode>(Resource.node, {
     action: PersistenceActionType.BULK_MERGE,
-    recordIds: nodesWithAvatars.map((x: INode) => x.id),
+    recordIds: nodesWithAvatars.map((x: IMemotronNode) => x.id),
     changes: {
       avatar: undefined
     }
   });
 
-  const collections = await flux.selectMany(Resource.collection, {
+  const collections = (await flux.selectMany(Resource.collection, {
     properties: { select: ["id"] }
-  });
+  })) as ICollection[] | undefined;
+  if (!collections?.length) return;
 
-  const records = await flux.selectMany(Resource.link, {
+  const records = (await flux.selectMany(Resource.link, {
     properties: { expand: ["in"] },
     filters: {
-      out: collections.map((x) => x.id.toString())
+      out: collections.map((collection: ICollection) => collection.id.toString())
     }
-  });
+  })) as ILinkThumb[] | undefined;
   console.log({ at: "collectionsListOnRecords", collections, records });
   if (records && isValidArrayWithData(records)) {
-    const filteredRecords = records.filter((x) => {
+    const filteredRecords = records.filter((x: ILinkThumb) => {
       return determineResourceType(x.in?.id) === Resource.node;
     });
     const uniqueNodes = filteredRecords
-      .map((x) => x.in)
+      .map((x: ILinkThumb) => x.in as IMemotronNode)
       .filter(removeDuplicatesFilter)
-      .filter((y) => !y.collections);
+      .filter((y: IMemotronNode) => !y.collections);
     console.log({ at: "collectionsListOnRecords", uniqueNodes });
     if (!uniqueNodes || !uniqueNodes.length) return;
-    let promises: Promise<any>[] = [];
-    uniqueNodes.forEach((x) => {
+    const promises: Promise<any>[] = [];
+    uniqueNodes.forEach((x: IMemotronNode) => {
       const collections = filteredRecords
-        ?.filter((y) => isSameResource(y.in, x))
-        ?.map((y) => y.out);
+        .filter((y: ILinkThumb) => isSameResource(y.in, x))
+        .map((y: ILinkThumb) => y.out.id);
       console.log({ at: "collectionsListOnRecords", x, collections });
       promises.push(
-        flux.mutation(Resource.node, {
+        flux.mutation<IMemotronNode>(Resource.node, {
           action: PersistenceActionType.MERGE,
           record: {
             id: x.id,

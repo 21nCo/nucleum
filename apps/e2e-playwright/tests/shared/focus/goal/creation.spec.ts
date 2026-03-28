@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { nucleusProductConfig } from "../../../../config/nucleus-product.config";
 import {
   ensureInAppOnHome,
+  goalResourcePattern,
   runCommand,
   runQuickFocusCommand
 } from "../../../utils/helpers";
@@ -133,7 +134,7 @@ test.describe("goal - creation flows @regression", () => {
       (u) => /^\/library(\/.*)?$/.test(new URL(u).pathname),
       { timeout: 10_000 }
     );
-    await page.getByRole("button", { name: /^Goals(\s+\d+)?$/i }).first().click({
+    await page.getByRole("button", { name: goalResourcePattern }).first().click({
       timeout: 5_000
     });
     await page.waitForTimeout(500);

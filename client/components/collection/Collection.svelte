@@ -71,12 +71,52 @@
   import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import { AppSearchParam } from "@21n/types/appStore.type";
+  import type { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
   import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
   import ComponentEmbedLayer from "@21n/layout/layers/ComponentEmbedLayer.svelte";
 
   export let id: string = "";
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let parentBgIndex: number = 1;
+
+  function hasSelectMany(
+    store: ReturnType<typeof resolveResourceStore>
+  ): store is ResourceStore<any, any> {
+    return Boolean(store && "selectMany" in store);
+  }
+
+  function resolveParentLabel(parent: unknown) {
+    if (Array.isArray(parent)) {
+      return parent
+        .map((entry) =>
+          entry && typeof entry === "object" && "label" in entry
+            ? String((entry as { label?: unknown }).label ?? "")
+            : ""
+        )
+        .join(" ");
+    }
+    if (parent && typeof parent === "object" && "label" in parent) {
+      return String((parent as { label?: unknown }).label ?? "");
+    }
+    return "";
+  }
+
+  function resolveSearchHaystack(item: ICollectionItem) {
+    const values = [item.label];
+    if ("body" in item && item.body) {
+      values.push(item.body.toString());
+    }
+    if ("text" in item && typeof item.text === "string") {
+      values.push(item.text);
+    }
+    if ("parent" in item) {
+      values.push(resolveParentLabel(item.parent));
+    }
+    return values
+      .filter((value): value is string => Boolean(value))
+      .join(" ")
+      .toLowerCase();
+  }
 
   export let accessMode: AccessMode = AccessMode.POP;
   let collection: IActiveCollectionStore = ActiveCollectionStore.resolve(id);
@@ -200,7 +240,10 @@
     const key = e.detail.key;
     let value = e.detail.value;
     if (!key) return;
-    activeView[key] = value;
+    activeView = {
+      ...activeView,
+      [key]: value
+    } as ICollectionViewWithData;
     collection.updateView(
       activeView.id,
       {
@@ -322,6 +365,7 @@
     const resourceStore = resolveResourceStore(
       $collection.resource ?? Resource.node
     );
+    if (!hasSelectMany(resourceStore)) return;
     await collection.loadViewData(
       activeView.id,
       resourceStore,
@@ -337,9 +381,11 @@
       viewData =
         activeView.data?.filter((x) => {
           const prop = x.properties?.find(resourceInList(tabBy))?.value;
+          const selectedTabValue = selectedTab?.toString();
+          if (!selectedTabValue) return false;
           return Array.isArray(prop)
-            ? prop.includes(selectedTab)
-            : prop === selectedTab;
+            ? prop.some((value) => value?.toString() === selectedTabValue)
+            : prop?.toString() === selectedTabValue;
         }) ?? [];
     } else {
       viewData = activeView.data ?? [];
@@ -351,16 +397,9 @@
     try {
       logger.log({ at: "onSearch", searchQuery, viewData });
       if (searchQuery) {
+        const searchTerm = searchQuery.toLowerCase();
         _filtered = viewData.filter((x) => {
-          return (
-            x.label?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            x.body
-              ?.toString()
-              .toLowerCase()
-              .includes(searchQuery.toLowerCase()) ||
-            x.text?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            x.parent?.label?.toLowerCase()?.includes(searchQuery.toLowerCase())
-          );
+          return resolveSearchHaystack(x).includes(searchTerm);
         });
       } else {
         _filtered = viewData;

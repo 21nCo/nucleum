@@ -15,6 +15,7 @@ import {
 } from "@21n/persistence/persistence.utils";
 import type { UserAppearanceSettings } from "@21n/types/preferences.type";
 import { GlobalEvent } from "@21n/types/event.enum";
+import type { JsonValue } from "@21n/types/json.type";
 
 const defaultLightColorSchemeId = "colorscheme:clean_tidyblue_light";
 // const defaultDarkColorSchemeId = "colorscheme:clean_tidyblue_dark";
@@ -23,7 +24,9 @@ const defaultDarkColorSchemeId = "colorscheme:clean_tidyblue_dark";
 export const fallBackTypefaceString =
   "Sen, Sen Variable, Space Grotesk, Hanken Grotesk, Hanken Grotesk Variable, Nunito, Teachers, Montserrat, Proxima Nova,  Poppins, Noto Sans";
 
-const seedAppearance: AppearanceStore = {
+type AppearanceState = Omit<AppearanceStore, "get">;
+
+const seedAppearance: AppearanceState = {
   id: Resource.appearance,
   dataType: StoreDataType.NA,
   theme: Theme.LIGHT,
@@ -34,11 +37,12 @@ const seedAppearance: AppearanceStore = {
   darkColorSchemeId: defaultDarkColorSchemeId,
   colorScheme:
     colorSchemes.find((cs) => cs.id == defaultLightColorSchemeId) ??
-    colorSchemes[0]
+    colorSchemes[0],
+  accessibilitySizingFactor: 1
 };
 const cachedAppearance = retrieveLocally(
   Resource.appearance
-) as AppearanceStore;
+) as AppearanceState | null;
 
 export const appearance = initAppearanceStore();
 
@@ -47,13 +51,13 @@ function initAppearanceStore() {
     ...seedAppearance,
     ...(cachedAppearance ?? {})
   };
-  const { subscribe, set, update } = writable<AppearanceStore>(defaultData);
+  const { subscribe, set, update } = writable<AppearanceState>(defaultData);
 
-  const cache = (store: AppearanceStore) => {
-    persistLocally(Resource.appearance, store);
+  const cache = (store: AppearanceState) => {
+    persistLocally(Resource.appearance, store as unknown as JsonValue);
   };
 
-  const persist = (store: AppearanceStore) => {
+  const persist = (store: AppearanceState) => {
     dispatchCustomEvent(GlobalEvent.PERSIST_APPEARANCE_USER, {
       isSyncWithSystem: store.isSyncWithSystem,
       lightColorSchemeId: store.lightColorSchemeId.toString(),
@@ -63,7 +67,7 @@ function initAppearanceStore() {
     cache(store);
   };
 
-  const switchTheme = (theme: Theme, a: AppearanceStore) => {
+  const switchTheme = (theme: Theme, a: AppearanceState) => {
     let modified = { ...a, theme };
     if (theme === Theme.LIGHT) {
       if (!a.lightColorSchemeId && a.darkColorSchemeId) {
@@ -153,7 +157,7 @@ function initAppearanceStore() {
 
     modifyUserThemeSetting: (theme: Theme) => {
       update((a) => {
-        let modified: AppearanceStore = { ...a, userThemeSetting: theme };
+        let modified: AppearanceState = { ...a, userThemeSetting: theme };
         if (!a.isSyncWithSystem) {
           modified = switchTheme(theme, modified);
         } else {
@@ -186,7 +190,7 @@ function initAppearanceStore() {
       const theme = isDark ? Theme.DARK : Theme.LIGHT;
       if (current.systemTheme === theme) return;
       update((a) => {
-        let modified: AppearanceStore = { ...a, systemTheme: theme };
+        let modified: AppearanceState = { ...a, systemTheme: theme };
         if (a.isSyncWithSystem) {
           modified = switchTheme(theme, modified);
         }

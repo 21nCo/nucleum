@@ -17,6 +17,7 @@
   import FeatureSelectorPopover from "@21n/components/featureWheel/options/FeatureSelectorPopover.svelte";
   import Button from "@21n/landing/shared/elements/Button.svelte";
   import Icon from "@21n/elements/Icon.svelte";
+  import type { ISelectValue } from "@21n/types/select.type";
   const dispatch = createEventDispatcher();
   export let mode: FeatureWheelMode;
   export let title: string | undefined = undefined;
@@ -55,9 +56,30 @@
       ref.dispatchEvent(new CustomEvent("hide"));
     }
   }
+
+  function handleCompareSelect(selected: ISelectValue[]) {
+    selectedCompare = selected.map(String);
+    dispatch("change", selectedCompare);
+  }
+
+  function handleComparePopoverChange(event: Event) {
+    const detail = (event as CustomEvent<{ open?: boolean }>).detail;
+    isCompareWithSelectorOpen = detail?.open || false;
+  }
+
+  function handleFeatureSelect(selected: string[]) {
+    selectedFeatures = selected;
+    dispatch("change", selectedFeatures);
+  }
+
+  function handleFeaturePopoverChange(event: Event) {
+    const detail = (event as CustomEvent<{ open?: boolean }>).detail;
+    isFeatureSelectorOpen = detail?.open || false;
+  }
 </script>
 
 <div
+  data-mode={mode}
   class={cn(
     "flex  gap-6 items-center justify-between bg-bgs1 rounded-md border border-brs3 p-4",
     {
@@ -101,19 +123,14 @@
                   value: item.label
                 })),
               isUseExternalLogoForIcon: true,
-              onSelect: (selected) => {
-                selectedCompare = selected;
-                dispatch("change", selected);
-              },
+              onSelect: handleCompareSelect,
               onSeeComparisonReport: () => {
                 hidePopover();
                 dispatch("report");
               }
             }
           }}
-          on:change={(e) => {
-            isCompareWithSelectorOpen = e.detail?.open || false;
-          }}
+          on:change={handleComparePopoverChange}
         >
           <div class="flex items-center gap-2 h-6">
             {#if selectedCompare && selectedCompare.length > 0}
@@ -177,15 +194,10 @@
                 selected: selectedFeatures,
                 features,
                 categories: selectedCategories,
-                onSelect: (selected) => {
-                  selectedFeatures = selected;
-                  dispatch("change", selected);
-                }
+                onSelect: handleFeatureSelect
               }
             }}
-            on:change={(e) => {
-              isFeatureSelectorOpen = e.detail?.open || false;
-            }}
+            on:change={handleFeaturePopoverChange}
           >
             <div class="flex items-center gap-2">
               <span> Choose features</span>

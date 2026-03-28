@@ -12,6 +12,7 @@
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "@21n/types/size.enum";
   import { tooltip } from "@21n/actions/popover.action";
+  import { Placement } from "@21n/types/direction.enum";
   import {
     isSameResource,
     resourceInList
@@ -89,7 +90,7 @@
               class="flex items-center py-0.5"
               use:tooltip={{
                 text: block.content,
-                direction: "right"
+                direction: Placement.Right
               }}
             >
               <div

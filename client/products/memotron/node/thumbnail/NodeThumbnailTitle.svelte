@@ -1,7 +1,7 @@
 <script lang="ts">
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
-  import type { INode } from "@21n/products/memotron/node/node.type";
+  import type { INode, INodeThumb } from "@21n/products/memotron/node/node.type";
   import NodeTitleLabelPart from "@21n/products/memotron/node/title/NodeTitleLabelPart.svelte";
   import { hoverable } from "@21n/actions/hover.action";
   import { cn } from "@21n/utils/ui.utils";
@@ -16,6 +16,10 @@
   let isHovering = false;
   let isHoveringUrl = false;
   let isHoveringUrlIcon = false;
+
+  function resolveNodeThumb() {
+    return node as INodeThumb;
+  }
 </script>
 
 <div
@@ -51,7 +55,7 @@
   {:else}
     <div class="flex-1 min-w-0">
       <div class={cn("flex text-left truncate w-full text-b2 font--medium")}>
-        <NodeTitleLabelPart item={node} {accessPoint} />
+        <NodeTitleLabelPart item={resolveNodeThumb()} {accessPoint} />
       </div>
     </div>
     <span

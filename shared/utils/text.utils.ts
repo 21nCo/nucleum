@@ -105,12 +105,12 @@ export function enumToString(val: any, isProperCase: boolean = true) {
   return isProperCase ? properCase(str) : str;
 }
 
-export function enumToCamelCase(val: any) {
+export function enumToCamelCase(val: unknown) {
   let output = "";
-  val
+  String(val)
     .toString()
     .split("_")
-    .forEach((x, index) => {
+    .forEach((x: string, index: number) => {
       if (index === 0) output += x.toLowerCase();
       else output += x.charAt(0).toUpperCase() + x.slice(1).toLowerCase();
     });

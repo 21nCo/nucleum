@@ -3,8 +3,14 @@
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
   import { resolveGoalColor } from "@21n/components/goals/goal.utils";
+  import type { IGoalThumb } from "@21n/components/goals/goal.type";
   import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
   export let session: ISessionThumb;
+
+  function resolveExpandedGoal(item: ISessionThumb["expandedItems"][number]) {
+    if (determineResourceType(item.id) !== Resource.goal) return undefined;
+    return item as unknown as IGoalThumb;
+  }
 </script>
 
 <div class="flex flex-col w-full">
@@ -13,7 +19,7 @@
       {@const resourceType = determineResourceType(item.id)}
       {#if resourceType === Resource.goal}
         <CustomColorPropagator
-          color={resolveGoalColor(item)}
+          color={resolveGoalColor(resolveExpandedGoal(item))}
           class="flex w-full gap-2 text-base items-center"
         >
           <div class="w-2 h-2 rounded-sm bg-ccs1" />

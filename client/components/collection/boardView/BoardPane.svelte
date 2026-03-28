@@ -34,7 +34,7 @@
   $: boardCounts = calculateGroupingCounts(data, view.subGroupBy);
   $: subGroups = resolveOptionsForGrouping(
     view.subGroupBy,
-    $collection.properties,
+    $collection.properties ?? [],
     boardCounts,
     { isBoardView: true }
   );

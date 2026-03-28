@@ -36,6 +36,7 @@
   import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
   import { debouncer } from "@21n/utils/utils";
   import { createEventDispatcher } from "svelte";
+  import type { InputLabel } from "@21n/types/input.type";
   import type { ICollectionItem } from "@21n/components/collection/collection.type";
   const dispatch = createEventDispatcher();
 
@@ -61,7 +62,7 @@
   let style =
     context === "collectionView" ? InputStyle.PLAIN : InputStyle.FILLED;
 
-  let label =
+  let label: InputLabel | undefined =
     context === "collectionView" && property.type !== PropertyType.CHECKBOX
       ? undefined
       : {
@@ -132,6 +133,48 @@
     dispatch("change", _value);
   }
 
+  function resolveLabel(): InputLabel {
+    return (
+      label ?? {
+        label: property.label ? property.label : enumToString(property.type),
+        orientation: Orientation.Vertical
+      }
+    );
+  }
+
+  function resolveSelectedOption(value: IPropertyValue | null) {
+    const option = options.find(
+      (x) => x.id === value || (value === null && x.id === property.default)
+    );
+    return option;
+  }
+
+  function resolveSelectedOptions(value: IPropertyValue | null) {
+    if (!Array.isArray(value)) return [];
+    return value
+      .map((entry) => options.find((x) => x.id === entry))
+      .filter((option): option is NonNullable<typeof option> => Boolean(option));
+  }
+
+  function resolveSelectValue(value: IPropertyValue | null): string | string[] | null {
+    if (typeof value === "string" || Array.isArray(value)) return value;
+    return value === null ? null : null;
+  }
+
+  function resolveDateValue(value: IPropertyValue | null) {
+    return value instanceof Date ? value : undefined;
+  }
+
+  function onSelectChange(e: CustomEvent<string | string[] | null>) {
+    _value = e.detail;
+    dispatch("change", e.detail);
+  }
+
+  function onDateChange(e: CustomEvent<Date | undefined>) {
+    _value = e.detail ?? null;
+    dispatch("change", e.detail);
+  }
+
   const debouncedPropagateChange = debouncer(propagateChange, 1500);
 </script>
 
@@ -169,14 +212,12 @@
         }}
       >
         {#if property.type === PropertyType.SINGLE_SELECT}
-          <SelectPropertyOption
-            item={property.config?.options?.find(
-              (x) =>
-                x.id === _value ||
-                (_value === null && x.id === property.default)
-            )}
-            isSelectedContext={true}
-          />
+          {@const selectedOption = resolveSelectedOption(_value)}
+          {#if selectedOption}
+            <SelectPropertyOption item={selectedOption} isSelectedContext={true} />
+          {:else}
+            N/A
+          {/if}
         {:else if property.type === PropertyType.RATING && typeof _value === "number"}
           <Rating
             isReadOnlyMode={true}
@@ -215,14 +256,14 @@
     <SwitchInput
       {parentBgIndex}
       bind:checked={_value}
-      {label}
+      label={resolveLabel()}
       {style}
       on:change
     />
   {:else if property.type === PropertyType.RATING && typeof _value === "number"}
     <Rating
       {parentBgIndex}
-      {label}
+      label={resolveLabel()}
       {style}
       avatar={property.config?.avatar}
       bind:value={_value}
@@ -233,21 +274,15 @@
     {#if context === "collectionView"}
       {#if isValidArrayWithData(_value)}
         <div class="flex gap-2 flex-wrap w-full">
-          {#each _value as value}
-            <SelectPropertyOption
-              item={options?.find((x) => x.id === value)}
-              isSelectedContext={true}
-            />
+          {#each resolveSelectedOptions(_value) as option}
+            <SelectPropertyOption item={option} isSelectedContext={true} />
           {/each}
         </div>
       {:else if _value && _value !== "none"}
-        <SelectPropertyOption
-          item={options?.find(
-            (x) =>
-              x.id === _value || (_value === null && x.id === property.default)
-          )}
-          isSelectedContext={true}
-        />
+        {@const selectedOption = resolveSelectedOption(_value)}
+        {#if selectedOption}
+          <SelectPropertyOption item={selectedOption} isSelectedContext={true} />
+        {/if}
       {/if}
     {:else}
       <SelectProperty
@@ -256,8 +291,8 @@
         {property}
         {options}
         parentBackgroundIndex={parentBgIndex}
-        bind:value={_value}
-        on:change
+        value={resolveSelectValue(_value)}
+        on:change={onSelectChange}
         on:newOption
         on:configChange
       />
@@ -265,10 +300,10 @@
   {:else if property.type === PropertyType.DATE}
     <DatePicker
       parentBackgroundIndex={parentBgIndex}
-      bind:date={_value}
+      date={resolveDateValue(_value)}
       {label}
       {style}
-      on:change
+      on:change={onDateChange}
     />
   {:else if item}
     <MetaPropertyItem {property} {item} />

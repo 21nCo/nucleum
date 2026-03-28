@@ -9,14 +9,14 @@
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
   import { isShowStatusBanner } from "@21n/components/flux/resourceStores/resource.utils";
   import RecordTrashBanner from "@21n/components/record/RecordTrashBanner.svelte";
-  export let resource: ActiveResourceStore<any, any>;
+  export let resource: ActiveResourceStore<any, any, any>;
 </script>
 
 {#if isShowStatusBanner($resource)}
   <div class="flex flex-col gap-4">
     {#if $resource.trashInformation}
       <RecordTrashBanner
-        deletedAt={$resource.trashInformation.deletedAt}
+        deletedAt={$resource.trashInformation.deletedAt.toISOString()}
         on:restore={() => {
           resource.restore();
         }}

@@ -14,7 +14,10 @@ import {
   type INodeCapture
 } from "@21n/products/memotron/node/node.type";
 import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
-import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import {
+  ActiveResourceStore,
+  ResourceStore
+} from "@21n/components/flux/resourceStores/resource.store";
 import { PanelSwitcherMixin } from "@21n/components/resource/panelSwitcher.mixin";
 import {
   activeResourceFilterIgnoreParentInactive,
@@ -38,6 +41,7 @@ import { logger } from "@21n/components/debug/logger.client";
 import { collectionStore } from "@21n/components/collection/collection.store";
 import type {
   IRecordId,
+  IResourceFilterValue,
   IResourceSelectAdditionalParams,
   IResourceSelectParams
 } from "@21n/types/data.type";
@@ -136,11 +140,18 @@ class NodeStore extends ResourceStore<INode, INodeCapture<INode>> {
     };
     return super.selectMany(params, additionalParams);
 
-    function resolveContentTypeParam(contentType: string | Array<string>) {
+    function resolveContentTypeParam(
+      contentType: IResourceFilterValue
+    ): string | string[] | undefined {
       if (typeof contentType === "string") {
         return contentType.toUpperCase();
       }
-      return contentType;
+      if (Array.isArray(contentType)) {
+        return contentType.filter(
+          (item): item is string => typeof item === "string"
+        );
+      }
+      return undefined;
     }
   }
 
@@ -579,7 +590,6 @@ export class ActiveNodeStore extends CollectibleStore<
         (x) =>
           !(
             isSameResource(x.linkedTo, id) &&
-            x.direction === "outgoing" &&
             x.linkType === LinkType.MENTION
           )
       )
@@ -667,18 +677,23 @@ export class ActiveNodeStore extends CollectibleStore<
     });
   }
 
-  static resolve(id: IRecordId): IActiveNodeStore {
+  static resolve<T extends ActiveResourceStore<any, any, any>>(
+    this: new (id: IRecordId) => T,
+    id: IRecordId
+  ): T {
     if (!ActiveNodeStore.prototype.switchPanel) {
       ActiveNodeStore.prototype.switchPanel = PanelSwitcherMixin.switchPanel;
     }
 
-    const instance = super.resolve.call(this, id) as any;
+    const instance = super.resolve.call(this, id) as T & {
+      switchPanel?: (panel: string) => void;
+    };
 
     if (!instance.switchPanel) {
       instance.switchPanel = PanelSwitcherMixin.switchPanel;
     }
 
-    return instance;
+    return instance as T;
   }
 }
 
@@ -819,7 +834,6 @@ class NodeActions {
           cover: undefined
         });
         toasts.success("Cover photo removed");
-        return true;
       }
     };
   }
@@ -886,7 +900,7 @@ class NodeActions {
       type: ContextMenuType.SWITCH,
       initialValue: this.node.config?.isWidened,
       callback: async (checked: boolean) => {
-        return this.store.modify(this.node.id, {
+        await this.store.modify(this.node.id, {
           config: {
             isWidened: checked
           }
@@ -907,7 +921,10 @@ export function resolveNodeContextMenu(
     isConstrainedWidth?: boolean;
   }
 ): IContextMenu {
-  const resourceActions = new ResourceActions(node, nodeStore, accessPoint);
+  const resourceActions = new ResourceActions(node, nodeStore, {
+    accessPoint,
+    accessMode: params?.accessMode
+  });
   const nodeActions = new NodeActions(node, nodeStore, accessPoint);
   const isMediaNode = node.contentType !== NodeType.NODULAR_MARKDOWN;
   if (accessPoint === ResourceAccessPoint.CLIPPER) {

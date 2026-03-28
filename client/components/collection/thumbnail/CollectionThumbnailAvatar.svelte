@@ -6,10 +6,12 @@
   export let item: ICollectionThumb;
   export let isShowFallbackIcons: boolean = false;
   export let size: Size.sm | Size.md | Size.lg = Size.sm;
+  let avatar: ICollectionThumb["avatar"] | undefined = undefined;
+  $: avatar = item.avatar ?? item.typeToExtend?.avatar;
 </script>
 
-{#if item.type === CollectionType.TYPED && (item.avatar || item.typeToExtend?.avatar)}
-  <AvatarRenderer avatar={item.avatar ?? item.typeToExtend?.avatar} {size} />
+{#if item.type === CollectionType.TYPED && avatar}
+  <AvatarRenderer {avatar} {size} />
 {:else if item.type === CollectionType.QUERY}
   <Icon icon="at-symbol" {size} />
 {:else if isShowFallbackIcons}

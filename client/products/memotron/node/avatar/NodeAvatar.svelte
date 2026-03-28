@@ -25,7 +25,40 @@
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let isExpandedContext: boolean = false;
   let _avatars: IAvatar[] | undefined = undefined;
+  let size: Size = Size.md;
   $: size = setSize(accessPoint, isExpandedContext);
+
+  function hasResolvedTypes(
+    node: INode | IActiveNode
+  ): node is IActiveNode & { types: NonNullable<IActiveNode["types"]> } {
+    return "types" in node && Array.isArray(node.types) && node.types.length > 0;
+  }
+
+  function hasCollections(
+    node: INode | IActiveNode
+  ): node is IActiveNode & {
+    collections: NonNullable<IActiveNode["collections"]>;
+  } {
+    return (
+      "collections" in node &&
+      Array.isArray(node.collections) &&
+      node.collections.length > 0
+    );
+  }
+
+  function hasAvatarFile(avatar: IAvatar): avatar is IAvatar & { file: string } {
+    return "file" in avatar && typeof avatar.file === "string";
+  }
+
+  function resolveIconSize(
+    accessPoint: ResourceAccessPoint,
+    isExpandedContext: boolean
+  ): Size.sm | Size.md | Size.lg {
+    if (accessPoint === ResourceAccessPoint.SELF && isExpandedContext) {
+      return Size.lg;
+    }
+    return accessPoint === ResourceAccessPoint.MARKDOWN_MENTION ? Size.sm : Size.md;
+  }
 
   onMount(() => {
     refreshAvatar();
@@ -39,7 +72,7 @@
       case ResourceAccessPoint.MARKDOWN_MENTION:
         return Size.xs;
       case ResourceAccessPoint.SELF:
-        if (isExpandedContext) return 40;
+        if (isExpandedContext) return Size.lg;
         return Size.md;
       default:
         return Size.sm;
@@ -50,9 +83,9 @@
       if (!node) return;
       if (node.avatar) {
         _avatars = node.avatar;
-      } else if (node.types) {
+      } else if (hasResolvedTypes(node)) {
         _avatars = resolveAvatar(node.types);
-      } else if (node.collections) {
+      } else if (hasCollections(node)) {
         const typedCollections = cache.retrieve(
           CacheKey.TYPED_COLLECTION_CACHE
         );
@@ -72,7 +105,7 @@
   }
 </script>
 
-{#if _avatars && _avatars.length > 0 && !_avatars[0].file}
+{#if _avatars && _avatars.length > 0 && !hasAvatarFile(_avatars[0])}
   <span class="flex justify-center items-center">
     <!-- {#each _avatars as avatar, index (avatar)}
       <div
@@ -86,14 +119,24 @@
     <AvatarRenderer avatar={_avatars[0]} {size} />
   </span>
 {:else if node && webNodeTypeList.includes(node.contentType)}
-  <NodeFavicon {node} {size} />
+  <NodeFavicon node={node} size={resolveIconSize(accessPoint, isExpandedContext)} />
 {:else if node && node.contentType === NodeType.FILE && accessPoint !== ResourceAccessPoint.SEARCH_RESULT}
-  <Icon icon={resolveFileIcon(node.file)} {size} />
+  <Icon
+    icon={
+      node.file && typeof node.file === "object"
+        ? resolveFileIcon(node.file)
+        : "file"
+    }
+    size={resolveIconSize(accessPoint, isExpandedContext)}
+  />
 {:else if node && node.contentType}
-  <Icon icon={resolveNodeIcon(node.contentType)} {size} />
+  <Icon
+    icon={resolveNodeIcon(node.contentType)}
+    size={resolveIconSize(accessPoint, isExpandedContext)}
+  />
 {/if}
 
-{#if !node?.avatar && !node?.types}
+{#if node && !node.avatar && !hasResolvedTypes(node)}
   <ComponentBaseLayer
     subscribeToCacheUpdate={[CacheKey.TYPED_COLLECTION_CACHE]}
     on:change={refreshAvatar}

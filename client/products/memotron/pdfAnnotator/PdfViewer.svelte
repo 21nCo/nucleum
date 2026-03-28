@@ -71,6 +71,20 @@
   let fetchController: AbortController | null = null;
   let pageChangeHandler: ((event: any) => void) | null = null;
   let renderToken = 0;
+  const pdfViewerL10n = {
+    getLanguage() {
+      return "en-us";
+    },
+    getDirection() {
+      return "ltr";
+    },
+    async get(_ids: any[] | string, _args?: Object | null, fallback = "") {
+      return fallback;
+    },
+    async translate(_element: HTMLElement) {},
+    pause() {},
+    resume() {}
+  };
 
   const abortOngoingFetch = () => {
     if (fetchController) {
@@ -154,25 +168,30 @@
     _prev_gap_bottom = current_gap_bottom;
     _prev_gap_top = current_gap_top;
   };
-  onMount(async () => {
-    if (isDataViaEmbed) {
-      try {
-        dataViaEmbed = await fileEmbedChannel.fetch(
-          url.toString(),
-          embed_message_id
-        );
-      } catch (error) {
-        load_error_messge = "Error loading PDF. Please try again.";
-        return;
-      }
-    }
-    renderDocument("onMount");
+  onMount(() => {
     onPasswordSubmit = () => {
-      renderDocument("onPasswordSubmit");
+      void renderDocument("onPasswordSubmit");
     };
 
+    const initialize = async () => {
+      if (isDataViaEmbed) {
+        try {
+          dataViaEmbed = await fileEmbedChannel.fetch(
+            url.toString(),
+            embed_message_id
+          );
+        } catch (error) {
+          load_error_messge = "Error loading PDF. Please try again.";
+          return;
+        }
+      }
+      await renderDocument("onMount");
+    };
+
+    void initialize();
+
     return () => {
-      cleanupPdfResources();
+      void cleanupPdfResources();
     };
   });
 
@@ -199,7 +218,7 @@
           eventBus: event_bus,
           linkService: pdf_link_service,
           findController: pdf_find_controller,
-          l10n: pdfjs_viewer.NullL10n
+          l10n: pdfViewerL10n
         });
         pdf_link_service.setViewer(pdf_viewer);
 
@@ -307,10 +326,11 @@
       pdf_viewer.eventBus.on("pagechanging", pageChangeHandler);
       pdfViewer = pdf_viewer;
       eventDispatcher("ready");
-    } catch (error) {
-      const name = (error && (error.name || error.toString())) || "";
-      const message =
-        error && error.message ? error.message : String(error || "");
+    } catch (error: unknown) {
+      const normalizedError =
+        error instanceof Error ? error : new Error(String(error ?? ""));
+      const name = normalizedError.name || normalizedError.toString();
+      const message = normalizedError.message || String(error ?? "");
       const isPwd = typeof name === "string" && name.includes("Password");
       password_error = isPwd;
       load_error_messge = message;

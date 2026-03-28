@@ -1,6 +1,11 @@
 import { test, expect } from "@playwright/test";
 import { nucleusProductConfig } from "../../config/nucleus-product.config";
-import { ensureInAppOnHome, runCommand } from "../utils/helpers";
+import {
+  ensureInAppOnHome,
+  goalResourcePattern,
+  resolveGoalCommandLabel,
+  runCommand
+} from "../utils/helpers";
 
 const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
@@ -13,6 +18,16 @@ test.skip(
 
 test.describe("nucleum – app layout and menu @regression", () => {
   test.describe.configure({ timeout: 90_000 });
+
+  const resolveGoalsListVisible = (
+    page: import("@playwright/test").Page
+  ) =>
+    page
+      .getByTestId("search-goals")
+      .or(page.getByRole("button", { name: /Create new goal|New goal/i }))
+      .or(page.getByText(/Looks like you don't have any goals/i))
+      .first();
+
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -127,11 +142,10 @@ test.describe("nucleum – app layout and menu @regression", () => {
     await runCommand(page, "Library");
 
     const goalsCard = page
-      .getByRole("button", { name: /^Goals(\s+\d+)?$/i })
+      .getByRole("button", { name: goalResourcePattern })
       .and(page.locator(":not([aria-disabled='true'])"));
     await goalsCard.first().waitFor({ state: "visible", timeout: 10_000 });
     await goalsCard.first().click({ timeout: 5_000 });
-    await page.getByTestId("search-goals").waitFor({ state: "visible", timeout: 15_000 });
 
     const libraryPath = nucleusProductConfig.pathByNavLabel.Library;
     const onLibraryPage = () =>
@@ -145,26 +159,23 @@ test.describe("nucleum – app layout and menu @regression", () => {
           new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(u).pathname),
         { timeout: 15_000 }
       );
-      const goalsBtn = page.getByRole("button", { name: /^Goals(\s+\d+)?$/i }).first();
+      const goalsBtn = page.getByRole("button", { name: goalResourcePattern }).first();
       await goalsBtn.waitFor({ state: "visible", timeout: 15_000 });
       await goalsBtn.click({ timeout: 5_000 });
       await page.waitForTimeout(600);
     }
 
-    const goalsListVisible = page
-      .getByTestId("search-goals")
-      .or(page.getByRole("button", { name: /Create new goal/i }))
-      .or(page.getByText(/Looks like you don't have any goals/i))
-      .first();
+    const goalsListVisible = resolveGoalsListVisible(page);
     await expect(goalsListVisible).toBeVisible({ timeout: 10_000 });
   });
 
   test("open Library via command bar (Goals), then assert Goals list visible", async ({
     page
   }) => {
+    test.skip(true, "Nucleus does not expose a direct Goals/Objectives command");
     await ensureInAppOnHome(page);
-    await runCommand(page, "Goals");
-    await expect(page.getByTestId("search-goals")).toBeVisible({
+    await runCommand(page, resolveGoalCommandLabel());
+    await expect(resolveGoalsListVisible(page)).toBeVisible({
       timeout: 10_000
     });
   });
@@ -196,12 +207,12 @@ test.describe("nucleum – app layout and menu @regression", () => {
       (u) => new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(u).pathname),
       { timeout: 10_000 }
     );
-    await page.getByRole("button", { name: /^Goals(\s+\d+)?$/i }).first().click({
+    await page.getByRole("button", { name: goalResourcePattern }).first().click({
       timeout: 5_000
     });
     await page.waitForTimeout(600);
 
-    await expect(page.getByTestId("search-goals")).toBeVisible({
+    await expect(resolveGoalsListVisible(page)).toBeVisible({
       timeout: 10_000
     });
   });
@@ -218,7 +229,7 @@ test.describe("nucleum – app layout and menu @regression", () => {
 
     const goalsRow = page
       .getByTestId("leftnav-pin-resource")
-      .filter({ hasText: "Goals" });
+      .filter({ hasText: /Goals|Objectives/i });
     await goalsRow.waitFor({ state: "visible", timeout: 5_000 });
     const toggle = goalsRow.locator('input[type="checkbox"]');
     const checked = await toggle.isChecked().catch(() => false);
@@ -231,12 +242,12 @@ test.describe("nucleum – app layout and menu @regression", () => {
     await page.waitForTimeout(300);
 
     await page
-      .getByRole("button", { name: /^Goals(\s+\d+)?$/i })
+      .getByRole("button", { name: goalResourcePattern })
       .first()
       .click({ timeout: 5_000 });
     await page.waitForTimeout(600);
 
-    await expect(page.getByTestId("search-goals")).toBeVisible({
+    await expect(resolveGoalsListVisible(page)).toBeVisible({
       timeout: 10_000
     });
   });

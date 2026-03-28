@@ -28,6 +28,7 @@ export class PdfHandler {
 
   async saveClip(content: IPdfBookmarkBody) {
     let node = {
+      label: content.selectedText ?? content.comment ?? "PDF clip",
       body: { ...content },
       contentType: NodeType.PDF_BOOKMARK,
       parent: this.id,
@@ -35,7 +36,7 @@ export class PdfHandler {
       notes: content.comment ?? ""
     };
     logger.log({ at: "PdfHandler.saveClip", node });
-    let response = await nodeStore.create(node);
+    let response = await nodeStore.create(node as any);
     return response;
   }
 
@@ -514,7 +515,9 @@ export async function embedAnnotationsandDownload(
   });
 
   const pdfBytes = await pdfDoc.save();
-  const blob = new Blob([pdfBytes], { type: "application/pdf" });
+  const pdfBuffer = new Uint8Array(pdfBytes.byteLength);
+  pdfBuffer.set(pdfBytes);
+  const blob = new Blob([pdfBuffer.buffer], { type: "application/pdf" });
   return blob;
 }
 export function getBoundingRectSE(start: Coords, end: Coords): LTWH {

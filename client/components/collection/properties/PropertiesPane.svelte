@@ -9,7 +9,10 @@
     removeDuplicatesFilter,
     resourceAction
   } from "@21n/components/flux/resourceStores/resource.utils";
-  import type { ICollectionExpanded } from "@21n/components/collection/collection.type";
+  import type {
+    ICollectionExpanded,
+    ICollectionItem
+  } from "@21n/components/collection/collection.type";
   import { onMount } from "svelte";
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
   import Button from "@21n/elements/button/Button.svelte";
@@ -22,6 +25,8 @@
   import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
   import { cn } from "@21n/utils/ui.utils";
   import type { IActiveGoalStore } from "@21n/components/goals/goal.store";
+  import type { IActiveGoal } from "@21n/components/goals/goal.type";
+  import type { IActiveNode } from "@21n/products/memotron/node/node.type";
 
   export let item: IActiveNodeStore | IActiveGoalStore;
   export let resource: Resource;
@@ -31,10 +36,14 @@
   let multipleTypesList: ICollectionExpanded[] = [];
   let refreshId: number = new Date().getTime();
 
+  function asCollectionItem(item: IActiveNode | IActiveGoal): ICollectionItem {
+    return item as ICollectionItem;
+  }
+
   $: isReadOnlyMode =
     $item.isInReadOnlyMode ||
-    $item.isLocked ||
-    $item.isArchived ||
+    ("isLocked" in $item ? Boolean($item.isLocked) : false) ||
+    Boolean($item.isArchived) ||
     $item.trashInformation !== undefined;
 
   async function propagateChanges(e: CustomEvent) {
@@ -93,25 +102,25 @@
           {
             ...type.typeToExtend,
             properties: type.extendProperties
-          } as ICollectionExpanded
+          } as unknown as ICollectionExpanded
         ];
       } else if (type.properties && type.properties.length > 0) {
         _types = [type];
       }
     } else {
-      const allTypes = $item.types;
+      const allTypes = $item.types ?? [];
       const extendedTypes: ICollectionExpanded[] = allTypes
         ?.map((x) => {
           if (x.typeToExtend) {
             return {
               ...x.typeToExtend,
               properties: x.extendProperties
-            } as ICollectionExpanded;
+            } as unknown as ICollectionExpanded;
           }
           return x;
         })
         .filter((x) => x) as ICollectionExpanded[];
-      multipleTypesList = [...(allTypes ?? []), ...(extendedTypes ?? [])];
+      multipleTypesList = [...allTypes, ...extendedTypes];
       multipleTypesList = multipleTypesList.filter(removeDuplicatesFilter);
     }
     if (multipleTypesList.length > 0) {
@@ -170,7 +179,7 @@
           context={isVisibleProps ? "mainpanel" : "rightpanel"}
           isIncludeExtendedProperties={isVisibleProps}
           {isReadOnlyMode}
-          item={$item}
+          item={asCollectionItem($item)}
           {parentBgIndex}
           on:change={propagateChanges}
           on:showAll

@@ -22,6 +22,7 @@
   export let actionBgSize: Size.sm | Size.md | Size.lg | undefined = undefined;
   export let tooltip: string | undefined = undefined;
   export let tooltipOptions: IPopoverRenderBaseParams | undefined = undefined;
+  $: void tooltipOptions;
   export let parentBgIndex: number = 1;
   export let triggerMethod: PopoverTriggerMethod | undefined = undefined;
   export let position: Placement | undefined = undefined;
@@ -63,6 +64,10 @@
   function onSelect(item: IContextMenuItem) {
     dispatch("action", item.value);
     hide();
+  }
+
+  function onPopoverChange(e: Event) {
+    isPopoverVisible = (e as CustomEvent<{ open?: boolean }>).detail?.open ?? false;
   }
 </script>
 
@@ -120,9 +125,7 @@
     isRenderAsSibling
   }}
   class={classList}
-  on:change={(e) => {
-    isPopoverVisible = e.detail?.open;
-  }}
+  on:change={onPopoverChange}
   bind:this={contextMenuPopoverRef}
 >
   <slot>

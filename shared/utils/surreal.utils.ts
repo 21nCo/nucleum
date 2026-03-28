@@ -6,6 +6,7 @@ import { pointronTables } from "@21n/shared-dbo/pointron.tables";
 import { globalTables } from "@21n/shared-dbo/global.tables";
 import {
   type IPrimitiveDbDataType,
+  type IResourceFilterValue,
   type IResourceSelectParams,
   PersistenceActionType,
   SearchType,
@@ -18,6 +19,21 @@ import {
 } from "@21n/types/data.type";
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { generateRandomId } from "@21n/shared-utils/crypto.utils";
+
+type IComparisonFilterValue = {
+  greaterThan?: IPrimitiveDbDataType;
+  lessThan?: IPrimitiveDbDataType;
+  greaterThanOrEqual?: IPrimitiveDbDataType;
+  lessThanOrEqual?: IPrimitiveDbDataType;
+  notIn?: IPrimitiveDbDataType[];
+  contains?: IPrimitiveDbDataType;
+  notEquals?: IPrimitiveDbDataType;
+};
+
+type IDateFilterValue = IComparisonFilterValue & {
+  type: "date";
+  groupBy?: IResourceFilterDateGrouping;
+};
 
 /**
  * Resolves a dbo update query based on the provided dependencies from the database operations.
@@ -36,7 +52,7 @@ export function resolveDboUpdateQuery(dbo: string[]) {
     ...pointronTables,
     ...memotronTables
   ]);
-  const functions = {
+  const functions: Record<string, string[]> = {
     ...globalDbo,
     ...pointronDboDefinitions,
     ...memotronDboDefinitions
@@ -327,7 +343,7 @@ export function resolveMutationQueryV2(mutation: IMutation) {
     case PersistenceActionType.INSERT:
       return resolveInsertQuery(
         mutation.resource as Resource,
-        mutation.params.records,
+        resolveMutationRecords(mutation.params),
         {
           isUpsert: true
         }
@@ -349,7 +365,7 @@ export function resolveMutationQueryV2(mutation: IMutation) {
     case PersistenceActionType.BULK_MERGE:
       return resolveBulkMergeQuery(
         mutation.resource as Resource,
-        mutation.params.records
+        resolveMutationRecords(mutation.params)
       );
     case PersistenceActionType.CUSTOM:
       return replaceParams(mutation.params.query, mutation.params.data);
@@ -477,7 +493,10 @@ function generateWhereClause(
     conditions.push(whereClause.join(" AND "));
   }
 
-  if (params?.search?.type === SearchType.SEMANTIC && params?.search) {
+  if (
+    params?.search?.type === SearchType.SEMANTIC &&
+    params.search.queryEmbedding
+  ) {
     conditions.push(
       generateSemanticSearchClause(params.search.queryEmbedding, params.limit)
     );
@@ -488,46 +507,43 @@ function generateWhereClause(
   for (const [key, value] of Object.entries(params?.filters ?? {})) {
     if (Array.isArray(value)) {
       conditions.push(`${key} IN [${value.map(formatValue).join(", ")}]`);
-    } else if (Date.parse(value)) {
+    } else if (isDateValue(value)) {
       conditions.push(resolveDateCondition(key, value));
-    } else if (
-      typeof value === "object" &&
-      "type" in value &&
-      value.type === "date"
-    ) {
+    } else if (isDateFilterValue(value)) {
       let groupBy = IResourceFilterDateGrouping.DAY;
-      if ("groupBy" in value) {
-        groupBy = value.groupBy as IResourceFilterDateGrouping;
+      if (value.groupBy) {
+        groupBy = value.groupBy;
       }
       Object.entries(value).forEach(([operator, date]) => {
         if (operator === "type" || operator === "groupBy") return;
+        if (!isDateValue(date)) return;
         conditions.push(
-          resolveDateCondition(key, date as Date, {
+          resolveDateCondition(key, date, {
             operator: operator as IResourceFilterOperator,
-            groupBy: groupBy as IResourceFilterDateGrouping
+            groupBy
           })
         );
       });
-    } else if (typeof value === "object") {
-      if ("greaterThan" in value) {
+    } else if (isComparisonFilterValue(value)) {
+      if (value.greaterThan !== undefined) {
         conditions.push(`${key} > ${formatValue(value.greaterThan)}`);
       }
-      if ("lessThan" in value) {
+      if (value.lessThan !== undefined) {
         conditions.push(`${key} < ${formatValue(value.lessThan)}`);
       }
-      if ("greaterThanOrEqual" in value) {
+      if (value.greaterThanOrEqual !== undefined) {
         conditions.push(`${key} >= ${formatValue(value.greaterThanOrEqual)}`);
       }
-      if ("lessThanOrEqual" in value) {
+      if (value.lessThanOrEqual !== undefined) {
         conditions.push(`${key} <= ${formatValue(value.lessThanOrEqual)}`);
       }
-      if ("notIn" in value) {
+      if (value.notIn?.length) {
         conditions.push(
           `${key} NOT IN [${value.notIn.map(formatValue).join(", ")}]`
         );
-      } else if ("contains" in value) {
+      } else if (value.contains !== undefined) {
         conditions.push(`${key} CONTAINS ${formatValue(value.contains)}`);
-      } else if ("notEquals" in value) {
+      } else if (value.notEquals !== undefined) {
         conditions.push(`${key} IS NOT ${formatValue(value.notEquals)}`);
       }
     } else if (typeof value === "boolean") {
@@ -560,7 +576,7 @@ function generateWhereClause(
 
   function resolveDateCondition(
     key: string,
-    value: Date,
+    value: Date | string,
     params?: {
       operator?: IResourceFilterOperator;
       groupBy?: IResourceFilterDateGrouping;
@@ -579,7 +595,7 @@ function generateWhereClause(
      * @param date
      * @returns
      */
-    function resolveDateInUtc(date: Date) {
+    function resolveDateInUtc(date: Date | string) {
       if (typeof date === "string") return date;
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -611,4 +627,27 @@ function generateWhereClause(
         return "=";
     }
   }
+}
+
+function resolveMutationRecords(params: IMutation["params"]) {
+  return "records" in params && Array.isArray(params.records) ? params.records : [];
+}
+
+function isDateValue(value: unknown): value is Date | string {
+  if (value instanceof Date) return !Number.isNaN(value.getTime());
+  if (typeof value !== "string") return false;
+  return !Number.isNaN(Date.parse(value));
+}
+
+function isDateFilterValue(
+  value: IResourceFilterValue
+): value is IDateFilterValue {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  return "type" in value && value.type === "date";
+}
+
+function isComparisonFilterValue(
+  value: IResourceFilterValue
+): value is IComparisonFilterValue {
+  return !!value && typeof value === "object" && !Array.isArray(value) && !("type" in value);
 }

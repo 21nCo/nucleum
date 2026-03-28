@@ -24,6 +24,7 @@
   export let isShowAddTextInput: boolean = false;
   export let isActive: boolean = false;
   export let expandedItem: IRecordId | undefined = undefined;
+  $: style;
   let addTextInputValue: string = "";
   let content: NestedItemContent | undefined = undefined;
   let children: IRecordId[] = [];

@@ -6,11 +6,18 @@
   import type { ITaskThumb } from "@21n/components/tasks/task.type";
 
   export let item: IGoalThumb | ITaskThumb;
-  $: isGoal = determineResourceType(item.id) === Resource.goal;
+  let goalItem: IGoalThumb | undefined = undefined;
+
+  function resolveGoalItem(item: IGoalThumb | ITaskThumb) {
+    if (determineResourceType(item.id) !== Resource.goal) return undefined;
+    return item as IGoalThumb;
+  }
+
+  $: goalItem = resolveGoalItem(item);
 </script>
 
-{#if isGoal}
-  <GoalSearchResultItem {item} />
+{#if goalItem}
+  <GoalSearchResultItem item={goalItem} />
 {:else}
   <div class="flex w-full justify-between text-start">
     <span>{item.label}</span>

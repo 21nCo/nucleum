@@ -18,7 +18,10 @@
     allToolbars.forEach((toolbar) => {
       (toolbar as HTMLElement).style.display = "none";
     });
-    document.activeElement?.blur();
+    const activeElement = document.activeElement;
+    if (activeElement instanceof HTMLElement) {
+      activeElement.blur();
+    }
   }
 
   onMount(() => {

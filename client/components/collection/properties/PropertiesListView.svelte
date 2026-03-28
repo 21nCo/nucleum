@@ -49,6 +49,16 @@
     context === "rightpanel" || context === "clip";
   let isCollapserHovered: boolean = false;
 
+  function isProperty(value: IProperty | undefined): value is IProperty {
+    return Boolean(value);
+  }
+
+  function isNodeItem(
+    value: ICollectionItem | null
+  ): value is ICollectionItem & { contentType: NodeType } {
+    return Boolean(value && "contentType" in value);
+  }
+
   onMount(async () => {
     if (types) await refresh();
   });
@@ -58,7 +68,7 @@
     let propertyConfig = types
       .map((x) => x.properties)
       .flat()
-      .filter((x) => x);
+      .filter(isProperty);
     if (isIncludeExtendedProperties) {
       const extendedProps = types
         .map((x) => x.extendProperties)
@@ -84,7 +94,8 @@
       label: e.detail.label,
       color: Math.random() * 360
     };
-    property.config?.options?.push(newOption);
+    if (!property.config || !("options" in property.config)) return;
+    property.config.options = [...(property.config.options ?? []), newOption];
     const result = await propertyStore.modify(property.id, {
       config: property.config
     });
@@ -110,10 +121,11 @@
   <div
     class={cn(
       "w-full userdata",
-      !isRenderAsColumn &&
+        !isRenderAsColumn &&
         !$view.isConstrainedWidth &&
         resource === Resource.node &&
-        item?.contentType === NodeType.NODULAR_MARKDOWN && {
+        isNodeItem(item) &&
+        item.contentType === NodeType.NODULAR_MARKDOWN && {
           "pl-8": !isCollapsed,
           "pl-12": isCollapsed
         }

@@ -1,5 +1,5 @@
 import type { IUserGlobalPreferences } from "@21n/types/preferences.type";
-import type { SessionStore } from "@21n/types/session.type";
+import type { IActiveSessionStore } from "@21n/types/pointron/session.type";
 
 export type JsonValue =
   | string
@@ -7,6 +7,6 @@ export type JsonValue =
   | boolean
   | null
   | IUserGlobalPreferences
-  | SessionStore
+  | IActiveSessionStore
   | JsonValue[]
   | { [key: string]: JsonValue };

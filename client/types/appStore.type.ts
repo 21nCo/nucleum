@@ -1,16 +1,18 @@
 import type { IAction } from "@21n/types/action.type";
 import type { InteractionMode } from "@21n/components/settings/interactionMode/interactionMode.type";
 import type { IMetadata } from "@21n/layout/metadata.type";
-import type { Product } from "@21n/types/product.type";
+import type { Product } from "@21n/products/product.type";
+import type { OAuthProviderConfig } from "@21n/types/oauth.type";
 export type IAppStore = {
   product: Product;
   env: string;
-  version: string;
-  build: number;
-  appData: IAppData;
+  version?: string;
+  build?: number;
+  appData: Partial<IAppData>;
   isDebugMode: boolean;
   isExperimentalMode: boolean;
   isDnDPageActive?: boolean;
+  isMinimalTopBar?: boolean;
   pageMenu?: string[];
   //TACO - dynamic actions
   dynamicBlocks?: IAction[];
@@ -55,7 +57,7 @@ export type IAppData = {
    * @deprecated - use product.config instead
    */
   appMenuMobile?: string[];
-  oAuthConfig?: any[];
+  oAuthConfig?: OAuthProviderConfig[];
   isAnalyticsEnabled?: boolean;
   isCmdBarEnabled?: boolean;
   /**

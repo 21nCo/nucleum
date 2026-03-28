@@ -2,7 +2,7 @@ import { logger } from "@21n/components/debug/logger.client";
 import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
 import {
   NodeType,
-  type IWebPage
+  type INode
 } from "@21n/products/memotron/node/node.type";
 import {
   contentTypeMap,
@@ -15,12 +15,12 @@ import {
 import { enumToString } from "@21n/shared-utils/text.utils";
 import { extractBrowserDetails } from "@21n/extensions/clipper/parsers/shared/domUtils";
 
-export function isYoutubeVideoUrl(url) {
+export function isYoutubeVideoUrl(url: string) {
   const regex = /^https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/;
   return regex.test(url);
 }
 
-export function extractVideoId(url) {
+export function extractVideoId(url: string) {
   const match = url.match(
     /^https?:\/\/(www\.)?youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/
   );
@@ -32,7 +32,7 @@ export function extractVideoId(url) {
  * @param controlElement
  * @returns
  */
-export function createClipButton(controlElement) {
+export function createClipButton(controlElement: HTMLElement) {
   const clipButton = document.createElement("button");
   clipButton.className = "ytclip";
   clipButton.innerHTML = `
@@ -87,6 +87,8 @@ export function createClipPointer() {
 
   const path = pointer.querySelector("path");
   const strokePath = pointer.querySelectorAll("path")[1];
+  if (!(path instanceof SVGPathElement) || !(strokePath instanceof SVGPathElement))
+    return pointer;
   path.style.transition = "fill-opacity 0.2s";
   path.style.fillOpacity = "0.6";
   path.style.border = "1px solid transparent";
@@ -119,7 +121,7 @@ export async function extractFullTabData(
     url?: string;
     docText?: string;
   }
-): Promise<OmitForCapture<IWebPage>> {
+): Promise<OmitForCapture<INode>> {
   doc = doc ?? document;
   const title = doc.title;
   const faviconLink = (
@@ -162,10 +164,10 @@ export async function extractFullTabData(
       twitterCard,
       browser
     }
-  };
+  } as OmitForCapture<INode>;
 }
 
-export function extractMinimalTabData(): OmitForCapture<IWebPage> {
+export function extractMinimalTabData(): OmitForCapture<INode> {
   const title = document.title;
   const hash = generateHash(document.body.innerHTML);
   const { ogTitle, ogImage, ogDescription, ogUrl } = resolveOgData();
@@ -179,7 +181,7 @@ export function extractMinimalTabData(): OmitForCapture<IWebPage> {
     contentType,
     url,
     body: { hash }
-  };
+  } as OmitForCapture<INode>;
 }
 
 export async function extractYoutubeVideoData() {

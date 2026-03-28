@@ -13,13 +13,31 @@ import {
 } from "@21n/utils/browser.utils";
 import { parse } from "@21n/shared-utils/json.utils";
 
+type JsonResponse = Pick<Response, "ok" | "json">;
+
+function isJsonResponse(response: unknown): response is JsonResponse {
+  if (!response || typeof response !== "object") return false;
+  const candidate = response as {
+    ok?: unknown;
+    json?: unknown;
+  };
+  return typeof candidate.ok === "boolean" && typeof candidate.json === "function";
+}
+
 export class Persistence {
+  private resolveJsonResponse(response: unknown) {
+    if (!isJsonResponse(response)) return;
+    return response;
+  }
+
   refreshToken = async () => {
     try {
       const token = localStorage.getItem("refresh-token");
-      const response = await performApiCall("account/refreshToken", "POST", {
-        token
-      });
+      const response = this.resolveJsonResponse(
+        await performApiCall("account/refreshToken", "POST", {
+          token
+        })
+      );
       if (!response?.ok) {
         return;
       }
@@ -36,9 +54,11 @@ export class Persistence {
   };
   getUserInfo = async (token: string) => {
     try {
-      const response = await performApiCall("account/n/refresh", "POST", {
-        token
-      });
+      const response = this.resolveJsonResponse(
+        await performApiCall("account/n/refresh", "POST", {
+          token
+        })
+      );
       if (!response?.ok) {
         return;
       }
@@ -51,7 +71,9 @@ export class Persistence {
   };
   ping = async () => {
     try {
-      const response = await performApiCall("v2/account/ping", "POST", {});
+      const response = this.resolveJsonResponse(
+        await performApiCall("v2/account/ping", "POST", {})
+      );
       if (!response?.ok) {
         return;
       }
@@ -64,7 +86,9 @@ export class Persistence {
 
   getUserPlan = async () => {
     try {
-      const response = await performApiCall("v2/plan/get", "POST", {});
+      const response = this.resolveJsonResponse(
+        await performApiCall("v2/plan/get", "POST", {})
+      );
       if (!response?.ok) {
         return;
       }
@@ -77,9 +101,11 @@ export class Persistence {
 
   initiateSubscription = async (params: any) => {
     try {
-      const response = await performApiCall("v2/plan/subscribe", "POST", {
-        ...params
-      });
+      const response = this.resolveJsonResponse(
+        await performApiCall("v2/plan/subscribe", "POST", {
+          ...params
+        })
+      );
       if (!response?.ok) {
         return;
       }
@@ -92,9 +118,11 @@ export class Persistence {
 
   modifySubscription = async (params: any) => {
     try {
-      const response = await performApiCall("v2/plan/modify", "POST", {
-        ...params
-      });
+      const response = this.resolveJsonResponse(
+        await performApiCall("v2/plan/modify", "POST", {
+          ...params
+        })
+      );
       if (!response?.ok) {
         return;
       }
@@ -107,7 +135,9 @@ export class Persistence {
 
   restorePurchase = async () => {
     try {
-      const response = await performApiCall("v2/plan/restore", "POST", {});
+      const response = this.resolveJsonResponse(
+        await performApiCall("v2/plan/restore", "POST", {})
+      );
       if (!response?.ok) {
         return;
       }
@@ -120,10 +150,12 @@ export class Persistence {
 
   verifyPayment = async (nonce: string, embedTransaction?: any) => {
     try {
-      const response = await performApiCall("v2/plan/verify", "POST", {
-        nonce,
-        embedTransaction
-      });
+      const response = this.resolveJsonResponse(
+        await performApiCall("v2/plan/verify", "POST", {
+          nonce,
+          embedTransaction
+        })
+      );
       if (!response?.ok) {
         return;
       }
@@ -136,10 +168,12 @@ export class Persistence {
 
   async runAccountAction(action: string, params: any) {
     try {
-      const response = await performApiCall("account/n/action", "POST", {
-        action,
-        ...params
-      });
+      const response = this.resolveJsonResponse(
+        await performApiCall("account/n/action", "POST", {
+          action,
+          ...params
+        })
+      );
       if (!response?.ok) {
         return;
       }
@@ -151,10 +185,12 @@ export class Persistence {
   }
   async runGeoAction(method: string, params: any) {
     try {
-      const response = await performApiCall("utils/n/geo", "POST", {
-        method,
-        ...params
-      });
+      const response = this.resolveJsonResponse(
+        await performApiCall("utils/n/geo", "POST", {
+          method,
+          ...params
+        })
+      );
       if (!response?.ok) {
         return;
       }
@@ -186,17 +222,19 @@ export class Persistence {
     isTemp: boolean
   ) {
     try {
-      const response = await performApiCall(
-        "utils/n/getsignedurl",
-        "POST",
-        {
-          method: "PUT",
-          contentType,
-          fileName,
-          userId,
-          isTemp
-        },
-        { isFileApi: true }
+      const response = this.resolveJsonResponse(
+        await performApiCall(
+          "utils/n/getsignedurl",
+          "POST",
+          {
+            method: "PUT",
+            contentType,
+            fileName,
+            userId,
+            isTemp
+          },
+          { isFileApi: true }
+        )
       );
       return await response?.json();
     } catch (e) {
@@ -216,14 +254,16 @@ export class Persistence {
    *
    */
   async fetchSignedUrlForGet(key: string) {
-    const response = await performApiCall(
-      "utils/n/getsignedurl",
-      "POST",
-      {
-        method: "GET",
-        key
-      },
-      { isFileApi: true }
+    const response = this.resolveJsonResponse(
+      await performApiCall(
+        "utils/n/getsignedurl",
+        "POST",
+        {
+          method: "GET",
+          key
+        },
+        { isFileApi: true }
+      )
     );
     return await response?.json();
   }
@@ -260,8 +300,9 @@ export class Persistence {
       if (!response) return;
       data = response;
     } else {
-      if (!response?.ok) return;
-      data = await response.json();
+      const jsonResponse = this.resolveJsonResponse(response);
+      if (!jsonResponse?.ok) return;
+      data = await jsonResponse.json();
     }
     if (params?.isReturnRawData) {
       return data;
@@ -286,10 +327,12 @@ export class Persistence {
     page?: number;
     perPage?: number;
   }) {
-    const response = await performApiCall("utils/n/run", "POST", {
-      action: "unsplash-browse",
-      ...params
-    });
+    const response = this.resolveJsonResponse(
+      await performApiCall("utils/n/run", "POST", {
+        action: "unsplash-browse",
+        ...params
+      })
+    );
 
     if (!response?.ok) return;
     const data = await response.json();
@@ -297,10 +340,12 @@ export class Persistence {
   }
 
   async triggerUnsplashDownload(params?: { url: string }) {
-    const response = await performApiCall("utils/n/run", "POST", {
-      action: "unsplash-download",
-      ...params
-    });
+    const response = this.resolveJsonResponse(
+      await performApiCall("utils/n/run", "POST", {
+        action: "unsplash-download",
+        ...params
+      })
+    );
 
     if (!response?.ok) return;
     const data = await response.json();

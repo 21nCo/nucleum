@@ -36,7 +36,8 @@
   import Divider from "@21n/elements/Divider.svelte";
   import {
     GoalStatus,
-    type IGoal
+    type IGoal,
+    type IGoalThumb
   } from "@21n/components/goals/goal.type";
   import { goalStore } from "@21n/components/goals/goal.store";
   import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
@@ -61,12 +62,14 @@
   let selectedQuickAddItem: number = resolveQuickAddSelection();
   let error: string = "";
   let defaultTime = Date.now();
+  let notes = item.notes ?? { blocks: [] };
   let selectedMethod: "duration" | "startEnd" =
     uiState.getState(UIState.manualLogDurationMethod, {
       scope: UIStateScope.DEVICE
     }) ?? "duration";
   const searchStore = new SearchStore(Resource.goal);
   let recentGoals: IGoal[] = [];
+  $: item.notes = notes;
 
   onMount(() => {
     resolveRecentGoals();
@@ -94,10 +97,15 @@
       );
       if (isValidArrayWithData(result)) {
         recentGoals = state
-          .map((x) => result.find(resourceInList(x)))
+          .map((x: string) => result.find(resourceInList(x)))
+          .filter((goal: IGoal | undefined): goal is IGoal => Boolean(goal))
           .slice(0, $view.isConstrainedWidth ? 3 : 5);
       }
     }
+  }
+
+  function resolveGoalThumb(goal: IGoal) {
+    return goal as unknown as IGoalThumb;
   }
 
   function resolveQuickAddSelection() {
@@ -356,7 +364,7 @@
           <span class="text-b2 text-fgs3"> Recently used: </span>
           {#each recentGoals as goal}
             <CustomColorPropagator
-              color={resolveGoalColor(goal)}
+              color={resolveGoalColor(resolveGoalThumb(goal))}
               class="flex items-center gap-2 border border-ccs1 rounded-md px-2 py-1 text-ccs1 bg-ccs5 hover:bg-ccs4 userdata"
               on:click={() => {
                 onGoalSelect(goal);
@@ -433,7 +441,7 @@
     <Divider />
     <div class="px-4 xl:px-4 py-3">
       <FocusNotes
-        bind:md={item.notes}
+        bind:md={notes}
         isHideTitle={true}
         placeholder="Add notes"
       />

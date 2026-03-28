@@ -14,7 +14,7 @@
   }
 
   function setPlatformInfo(contentType: NodeType) {
-    const platformMap: Record<NodeType, string> = {
+    const platformMap: Partial<Record<NodeType, string>> = {
       [NodeType.LINKEDIN_GROUP]: "LinkedIn Group",
       [NodeType.FACEBOOK_GROUP]: "Facebook Group",
       [NodeType.REDDIT_SUB]: "Subreddit"
@@ -76,7 +76,7 @@
   <button
     class="flex flex-col items-center gap-6 p-8 border border-fgs4 rounded-md hover:bg-bgs2 max-w-md"
     on:click={() => {
-      appStore.openLink(node.url);
+      if (node.url) appStore.openLink(node.url);
     }}
   >
     <div class="flex flex-col gap-1 text-center">

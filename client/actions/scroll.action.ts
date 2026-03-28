@@ -239,7 +239,8 @@ export function scrollIntoViewOnFocus(
 
   async function handleFocus() {
     await tick();
-    const scrollParent = getScrollParent(node.parentElement);
+    const parentElement = node.parentElement;
+    const scrollParent = parentElement ? getScrollParent(parentElement) : null;
 
     if (scrollParent) {
       if (!isElementInViewEager(node, scrollParent, scrollOptions.eager)) {

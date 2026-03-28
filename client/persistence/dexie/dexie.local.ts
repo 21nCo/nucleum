@@ -90,7 +90,7 @@ export class DexiePersistence implements IPersistence {
   }
 
   async performBatchedIndexing() {
-    const clearPromises = [];
+    const clearPromises: Array<ReturnType<SearchFn["clear"]>> = [];
     this.searchIndices.forEach((engine) => {
       clearPromises.push(engine.clear());
     });
@@ -1084,7 +1084,7 @@ export class DexiePersistence implements IPersistence {
     try {
       console.time("recursionv2");
       if (!record || typeof record !== "object" || !(recurse in record)) return;
-      const recurseVal = record[recurse];
+      const recurseVal = (record as Record<string, unknown>)[recurse];
       if (!recurseVal || !Array.isArray(recurseVal) || recurseVal.length === 0)
         return;
 

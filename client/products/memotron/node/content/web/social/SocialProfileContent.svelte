@@ -5,7 +5,8 @@
   import {
     NodeType,
     socialProfileNodeTypeList,
-    socialProfileWithImageUnavailable
+    socialProfileWithImageUnavailable,
+    type ILinkedInProfileMetadata
   } from "@21n/products/memotron/node/node.type";
   import type { INode } from "@21n/products/memotron/node/node.type";
   import { resolveNodeIcon } from "@21n/products/memotron/node/node.utils";
@@ -20,8 +21,25 @@
     }
   }
 
+  function isObject(value: unknown): value is Record<string, unknown> {
+    return !!value && typeof value === "object";
+  }
+
+  function hasStringProperty<K extends string>(
+    value: unknown,
+    key: K
+  ): value is Record<K, string> {
+    return isObject(value) && typeof value[key] === "string";
+  }
+
+  function hasLinkedInMetadata(
+    metadata: unknown
+  ): metadata is ILinkedInProfileMetadata {
+    return isObject(metadata);
+  }
+
   function setPlatformInfo(contentType: NodeType) {
-    const platformMap: Record<NodeType, string> = {
+    const platformMap: Partial<Record<NodeType, string>> = {
       [NodeType.TWITTER_PROFILE]: "X",
       [NodeType.MASTODON_PROFILE]: "Mastodon",
       [NodeType.BLUESKY_PROFILE]: "Bluesky",
@@ -37,7 +55,7 @@
 
   function resolveUsername() {
     if (!node.url) {
-      return node.body?.username || "unknown";
+      return hasStringProperty(node.body, "username") ? node.body.username : "unknown";
     }
 
     try {
@@ -106,25 +124,31 @@
     }
 
     // Final fallback to body username
-    return node.body?.username || "unknown";
+    return hasStringProperty(node.body, "username") ? node.body.username : "unknown";
   }
 
   function getDisplayName() {
     return (
       node.label ||
-      node.body?.name ||
-      node.body?.displayName ||
-      node.metadata?.displayName ||
+      (hasStringProperty(node.body, "name") ? node.body.name : undefined) ||
+      (hasStringProperty(node.body, "displayName")
+        ? node.body.displayName
+        : undefined) ||
+      (hasStringProperty(node.metadata, "displayName")
+        ? node.metadata.displayName
+        : undefined) ||
       resolveUsername()
     );
   }
 
   function getBio() {
-    return node.body?.bio || "";
+    return hasStringProperty(node.body, "bio") ? node.body.bio : "";
   }
 
   function getProfileImageUrl() {
-    return node.body?.profileImageUrl || "";
+    return hasStringProperty(node.body, "profileImageUrl")
+      ? node.body.profileImageUrl
+      : "";
   }
 
   function getFollowersCount() {
@@ -154,14 +178,17 @@
   function getAdditionalInfo() {
     const info: string[] = [];
 
-    if (node.contentType === NodeType.LINKEDIN_PROFILE) {
-      if (node.metadata?.currentPosition) {
+    if (
+      node.contentType === NodeType.LINKEDIN_PROFILE &&
+      hasLinkedInMetadata(node.metadata)
+    ) {
+      if (node.metadata.currentPosition) {
         info.push(node.metadata.currentPosition);
       }
-      if (node.metadata?.currentCompany) {
+      if (node.metadata.currentCompany) {
         info.push(`at ${node.metadata.currentCompany}`);
       }
-      if (node.metadata?.location) {
+      if (node.metadata.location) {
         info.push(node.metadata.location);
       }
     }
@@ -187,7 +214,7 @@
   <button
     class="flex flex-col items-center gap-6 p-8 border border-fgs4 rounded-md hover:bg-bgs2 max-w-md"
     on:click={() => {
-      appStore.openLink(node.url);
+      if (node.url) appStore.openLink(node.url);
     }}
   >
     {#if getBannerImageUrl()}
@@ -233,12 +260,16 @@
     {/if}
 
     {#if getWebsiteUrl()}
-      <div
+      <button
+        type="button"
         class="text-center text-b4 text-blue-500 hover:underline"
-        on:click|stopPropagation={() => appStore.openLink(getWebsiteUrl())}
+        on:click|stopPropagation={() => {
+          const websiteUrl = getWebsiteUrl();
+          if (websiteUrl) appStore.openLink(websiteUrl);
+        }}
       >
         {getWebsiteUrl()}
-      </div>
+      </button>
     {/if}
 
     {#if getFollowersCount() || getFollowingCount() || getPostsCount()}

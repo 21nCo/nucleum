@@ -25,13 +25,33 @@
 
   function resolveCallout(): ICalloutSetting {
     if (body.callout) {
+      const currentCallout = body.callout;
       const calloutFromSettings = $markdownSettings.callout.find(
-        (x) => x.id === body.callout.id
+        (x) => x.id === currentCallout.id
       );
-      return calloutFromSettings ?? body.callout;
+      return calloutFromSettings ?? currentCallout;
     } else {
       return $markdownSettings.callout[0];
     }
+  }
+
+  function resolveCalloutPopoverParams() {
+    return {
+      content: CalloutSelector,
+      componentProps: {
+        selected: _callout,
+        onSelect: (callout: ICalloutSetting) => {
+          _callout = callout;
+          saveCalloutSetting(callout);
+          ref.dispatchEvent(new CustomEvent("hide"));
+        },
+        onEdit: () => {
+          ref.dispatchEvent(new CustomEvent("hide"));
+          appStore.runAction(MemotronAction.CALLOUT_SETTINGS);
+        }
+      },
+      isDisabled: $mdStore.params?.isReadOnly
+    };
   }
 
   function saveCalloutSetting(callout: ICalloutSetting) {
@@ -60,21 +80,7 @@
       }
     )}
     bind:this={ref}
-    use:popover={{
-      content: $mdStore.params?.isReadOnly ? null : CalloutSelector,
-      componentProps: {
-        selected: _callout,
-        onSelect: (callout) => {
-          _callout = callout;
-          saveCalloutSetting(callout);
-          ref.dispatchEvent(new CustomEvent("hide"));
-        },
-        onEdit: () => {
-          ref.dispatchEvent(new CustomEvent("hide"));
-          appStore.runAction(MemotronAction.CALLOUT_SETTINGS);
-        }
-      }
-    }}
+    use:popover={resolveCalloutPopoverParams()}
   >
     <Avatar avatar={_callout.avatar} />
   </div>

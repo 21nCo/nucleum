@@ -39,6 +39,7 @@
   export let parentBgIndex: number = 1;
   export let emptyIllustration: string | undefined = undefined;
   export let isFullPage: boolean = false;
+  $: isFullPage;
 </script>
 
 <div

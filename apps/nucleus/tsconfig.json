@@ -25,6 +25,7 @@
     ]
   },
   "include": [
+    "../../client/types/globals/**/*.d.ts",
     "src/**/*.d.ts",
     "src/**/*.js",
     "src/**/*.ts",

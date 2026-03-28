@@ -8,6 +8,7 @@
   export let label: string | undefined = undefined;
   export let icon: string | undefined = undefined;
   export let tooltip: string | undefined = undefined;
+  $: tooltip;
   let isHovering: boolean = false;
 </script>
 

@@ -54,6 +54,16 @@
     enableFullScreenPlayer();
   }
 
+  function resolveCurrentFocusItemGoal(
+    item: ITaskThumb | IGoalThumb | undefined
+  ): IGoalThumb | undefined {
+    if (!item) return undefined;
+    if ("goal" in item) {
+      return item.goal as IGoalThumb | undefined;
+    }
+    return item as IGoalThumb;
+  }
+
   function closePip() {
     if (playerRef && $activeSession.isSessionRunning)
       playerContainer?.append(playerRef);
@@ -214,12 +224,7 @@
       >
         <CustomColorPropagator
           type="button"
-          color={curentFocusItemExpanded &&
-            resolveGoalColor(
-              "goal" in curentFocusItemExpanded
-                ? curentFocusItemExpanded.goal
-                : curentFocusItemExpanded
-            )}
+          color={resolveGoalColor(resolveCurrentFocusItemGoal(curentFocusItemExpanded))}
           class={cn(
             "flex gap-2 h-full justify-between items-center px-4 py-2",
             isPipShown && {

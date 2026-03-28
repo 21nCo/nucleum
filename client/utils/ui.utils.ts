@@ -379,7 +379,11 @@ async function getImageData(img: HTMLImageElement): Promise<Uint8ClampedArray> {
 }
 
 export function rgbToHex(rgbString: string) {
-  const [r, g, b] = rgbString.match(/\d+/g)?.map(Number) ?? [];
+  const channels = rgbString.match(/\d+/g)?.slice(0, 3).map(Number);
+  if (!channels || channels.length < 3) {
+    return "#000000";
+  }
+  const [r, g, b] = channels;
   return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 }
 

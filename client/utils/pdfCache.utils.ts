@@ -105,8 +105,13 @@ class PdfCache {
     try {
       const cache = await caches.open(CACHE_NAME);
       const cacheKey = this.getCacheKey(url);
-      
-      const response = new Response(data, {
+
+      const cacheData = new Uint8Array(data.byteLength);
+      cacheData.set(data);
+
+      const response = new Response(new Blob([cacheData.buffer], {
+        type: "application/pdf"
+      }), {
         headers: {
           "Content-Type": "application/pdf",
           "Content-Length": data.length.toString()

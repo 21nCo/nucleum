@@ -19,9 +19,9 @@
     "w-full grid gap-3 grid-cols-[repeat(auto-fill,minmax(80px,1fr))]";
 
   $: items = configData.config
-    .find((section) => section.section === selectedSection)
+    .find((section: any) => section.section === selectedSection)
     ?.children?.filter(
-      (c) => !c.isDisabled && !notAvailableOnMobile.includes(c.type)
+      (c: any) => !c.isDisabled && !notAvailableOnMobile.includes(c.type)
     );
 </script>
 

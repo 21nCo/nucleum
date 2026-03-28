@@ -9,9 +9,16 @@ import { resourceInList } from "@21n/components/flux/resourceStores/resource.uti
 import type { IRecentsStore } from "@21n/components/record/record.type";
 import { rootNodeTypeList } from "@21n/products/memotron/node/node.type";
 import { logger } from "@21n/components/debug/logger.client";
+import type { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
 import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
 import { appStore } from "@21n/stores/app.store";
 import { get } from "svelte/store";
+
+function hasSelectMany(
+  store: ReturnType<typeof resolveResourceStore>
+): store is ResourceStore<any, any> {
+  return Boolean(store && "selectMany" in store);
+}
 
 export class RecentsStore extends ObservableStore<IRecentsStore> {
   private readonly LIMIT = 20;
@@ -102,7 +109,10 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
 
   private async recentResources(resource: Resource) {
     const resourceStore = resolveResourceStore(resource);
-    const result = await resourceStore?.selectMany(
+    if (!hasSelectMany(resourceStore)) {
+      return [];
+    }
+    const result = await resourceStore.selectMany(
       {
         orderBy: {
           modifiedAt: "desc"

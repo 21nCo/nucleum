@@ -290,6 +290,8 @@
         </div>
         {#if isEditMode && (draggedItemId || !isValidArrayWithData(items))}
           <div
+            role="region"
+            aria-label="Drop here to add to top level"
             class={cn(
               "mx-2 my-2 py-2 rounded-md border border-dashed text-center text-b3 transition-colors",
               {
@@ -313,7 +315,7 @@
           bind:value={newSectionLabel}
           placeholder="Add new section"
           size={Size.sm}
-          isShowSaveControl={newSectionLabel}
+          isShowSaveControl={Boolean(newSectionLabel)}
           on:save={addSection}
           on:enter={addSection}
           on:cancel={() => (newSectionLabel = "")}

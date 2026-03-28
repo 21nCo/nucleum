@@ -19,7 +19,7 @@
   import { linkTagStore } from "@21n/products/memotron/linking/link.store";
   import { linkTagLabelMapper } from "@21n/products/memotron/linking/link.utils";
 
-  export let node: INode;
+  export let node: INode & { links?: INodeLinkThumb[] };
   let isLoading = false;
   let linkedNodes: INodeThumb[] = [];
   let groups: { date: string; nodes: INodeThumb[] }[] = [];
@@ -86,6 +86,10 @@
       replaceId: node.id
     });
   }
+
+  function findLink(linkedNode: INodeThumb) {
+    return node.links?.find((link) => isSameResource(link.linkedTo, linkedNode));
+  }
 </script>
 
 <div class="flex flex-col w-full h-full overflow-auto px-4 dp:px-12">
@@ -115,9 +119,7 @@
             </div>
             <div class="flex flex-col gap-2">
               {#each group.nodes as linkedNode}
-                {@const link = node.links?.find((l) =>
-                  isSameResource(l.linkedTo, linkedNode)
-                )}
+                {@const link = findLink(linkedNode)}
                 <button
                   class="flex flex-col gap-1 p-3 rounded-md bg-bgs2 hover:bg-bgs3 border border-brs3 text-left w-full userdata"
                   on:click={(e) => handleNodeClick(linkedNode.id.toString(), e)}

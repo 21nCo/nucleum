@@ -11,6 +11,7 @@
   import ResourcePanelSwitcher from "@21n/components/resource/ResourcePanelSwitcher.svelte";
   import { derived } from "svelte/store";
   import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
+  import type { IResourcePageWithPanels } from "@21n/components/flux/resourceStores/resource.type";
   export let node: IActiveNodeStore;
   export let isConstrainedWidth: boolean = false;
 
@@ -20,27 +21,31 @@
     $node.isArchived ||
     $node.trashInformation !== undefined;
 
-  const adaptedStore = derived(node, ($node) => ({
+  const panelTypes = new Set<ResourcePanelType>([
+    ResourcePanelType.METADATA,
+    ResourcePanelType.ACTIVITY,
+    ResourcePanelType.SIDENOTES,
+    ResourcePanelType.PROPERTIES,
+    ResourcePanelType.BOOKMARKS,
+    ResourcePanelType.LINKS
+  ]);
+
+  const adaptedStore = derived(node, ($node): IResourcePageWithPanels => ({
     id: $node.id,
     panel: $node.panel,
+    defaultPanel: $node.defaultPanel ?? ResourcePanelType.DEFAULT,
     isInFocusMode: $node.isInFocusMode,
-    switchPanel: (panel: string) => node.switchPanel(panel)
+    isInEditMode: $node.isInEditMode,
+    switchPanel: (panel?: string) =>
+      node.switchPanel(panel ?? $node.defaultPanel ?? ResourcePanelType.DEFAULT),
+    closeEditMode: () => node.toggleEditMode(false)
   }));
 
   function onContextMenuAction(
     e: CustomEvent<ResourcePanelType | ResourceActionType>
   ) {
-    if (
-      [
-        ResourcePanelType.METADATA,
-        ResourcePanelType.ACTIVITY,
-        ResourcePanelType.SIDENOTES,
-        ResourcePanelType.PROPERTIES,
-        ResourcePanelType.BOOKMARKS,
-        ResourcePanelType.LINKS
-      ].includes(e.detail)
-    ) {
-      node.switchPanel(e.detail);
+    if (panelTypes.has(e.detail as ResourcePanelType)) {
+      node.switchPanel(e.detail as ResourcePanelType);
     } else if (e.detail === ResourceActionType.SET_COVER_PHOTO) {
       if (!isReadOnlyMode) {
         node.toggleCoverPicker(true);

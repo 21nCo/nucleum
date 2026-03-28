@@ -4,20 +4,53 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
+/**
+ * @typedef {{ outputDir?: string }} StaticPluginOptions
+ */
+
+/**
+ * @typedef {import("vite").ViteDevServer} ViteDevServer
+ */
+
+/**
+ * @typedef {import("rollup").NormalizedOutputOptions} NormalizedOutputOptions
+ */
+
+/**
+ * @typedef {import("rollup").OutputBundle} OutputBundle
+ */
+
+/**
+ * @typedef {import("vite").Connect.IncomingMessage} ConnectIncomingMessage
+ */
+
+/**
+ * @typedef {import("node:http").ServerResponse} ServerResponse
+ */
+
+/**
+ * @typedef {import("vite").Connect.NextFunction} NextFunction
+ */
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
+/**
+ * @param {StaticPluginOptions} [options={}]
+ * @returns {import("vite").Plugin}
+ */
 export function staticPlugin(options = {}) {
   const { outputDir = "static" } = options;
 
-  return {
+  /** @type {import("vite").Plugin} */
+  const plugin = {
     name: "static-plugin",
     buildStart() {
       console.log("🔄 Setting up shared static assets...");
     },
-    generateBundle(options, bundle) {
+    generateBundle(outputOptions, _bundle) {
       // Copy static assets to build output
       const sourceDir = __dirname;
-      const targetDir = path.join(options.dir || "build", outputDir);
+      const targetDir = path.join(outputOptions.dir || "build", outputDir);
 
       // Ensure target directory exists
       if (!fs.existsSync(targetDir)) {
@@ -25,6 +58,11 @@ export function staticPlugin(options = {}) {
       }
 
       // Copy assets
+      /**
+       * @param {string} src
+       * @param {string} dest
+       * @returns {void}
+       */
       const copyAssets = (src, dest) => {
         const items = fs.readdirSync(src);
 
@@ -58,7 +96,7 @@ export function staticPlugin(options = {}) {
       server.middlewares.use("/static", (req, res, next) => {
         // When using .use("/static", handler), req.url is relative to the mount point
         // So /static/fonts/file.woff2 becomes /fonts/file.woff2 in req.url
-        const relativePath = req.url;
+        const relativePath = req.url ?? "/";
         const filePath = path.join(__dirname, relativePath);
         const resolvedPath = path.resolve(filePath);
         const baseDir = path.resolve(__dirname);
@@ -108,4 +146,6 @@ export function staticPlugin(options = {}) {
       });
     }
   };
+
+  return plugin;
 }

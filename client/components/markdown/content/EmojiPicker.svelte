@@ -3,35 +3,60 @@
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
   import { createEventDispatcher, onMount } from "svelte";
   import { cn } from "$lib/client/utils/ui.utils";
+  import {
+    AvatarType,
+    type AvatarWithCode,
+    type EmojiAvatar,
+    type IAvatar
+  } from "$lib/client/types/avatar.type";
 
   const dispatch = createEventDispatcher();
 
   export let searchQuery: string = "";
   export let isPopoverContext: boolean = false;
   export let onNoresults: (() => void) | undefined = undefined;
+  $: void isPopoverContext;
+
+  type EmojiData = IAvatar;
+  type EmojiEntry = [IAvatar];
 
   let activeCategory: string = "";
-  let emojisWithCategories: any = {
+  let emojisWithCategories: Record<string, EmojiEntry[]> = {
     "Frequently Used": [],
-    ...emojis
+    ...(emojis as Record<string, EmojiEntry[]>)
   };
 
   let storeEmojis = emojisWithCategories;
   let storeEmojisKey = Object.keys(storeEmojis);
 
-  let displayEmojis: any = {};
+  let displayEmojis: Record<string, EmojiEntry[]> = {};
   let emojisParentContainer: HTMLDivElement;
   let selectedIndex = 0;
-  let flatEmojiList: any[] = [];
+  let flatEmojiList: EmojiEntry[] = [];
 
   $: {
     filterEmojis(searchQuery);
   }
 
+  function resolveEmojiData(emoji: EmojiEntry | undefined) {
+    return emoji?.[0];
+  }
+
+  function isEmojiAvatar(
+    emoji: IAvatar | undefined
+  ): emoji is AvatarWithCode<EmojiAvatar> {
+    return Boolean(emoji && "code" in emoji && emoji.type === AvatarType.EMOJI);
+  }
+
+  function resolveEmojiCode(emoji: EmojiEntry) {
+    const emojiData = resolveEmojiData(emoji);
+    return isEmojiAvatar(emojiData) ? emojiData.code : "";
+  }
+
   function updateUsedEmojis(prefs: any) {
     storeEmojis["Frequently Used"] = prefs.avatarPicker.usedEmojis
       ?.slice(0, 20)
-      .filter((emote: any) => emote[0]?.frequency > 2);
+      .filter((emote: EmojiEntry) => (resolveEmojiData(emote)?.frequency ?? 0) > 2);
   }
 
   onMount(() => {
@@ -54,8 +79,8 @@
       return;
     }
     
-    let tempEmojis: any = {};
-    let tempFlatList: any[] = [];
+    let tempEmojis: Record<string, EmojiEntry[]> = {};
+    let tempFlatList: EmojiEntry[] = [];
     let totalCount = 0;
     const maxResults = 50;
     
@@ -67,8 +92,8 @@
       
       for (let emoji of emojiList) {
         if (totalCount >= maxResults) break;
-        
-        let emojiName = emoji[0]?.name?.toLowerCase();
+
+        let emojiName = resolveEmojiData(emoji)?.name?.toLowerCase();
         if (emojiName && emojiName.includes(searchValue)) {
           if (tempEmojis[key] === undefined) tempEmojis[key] = [];
           tempEmojis[key].push(emoji);
@@ -87,32 +112,39 @@
     }
   }
 
-  function addToUsedList(emoji: any) {
-    let index = $userPreferences.avatarPicker.usedEmojis?.findIndex((el) => {
+  function addToUsedList(emoji: AvatarWithCode<EmojiAvatar>) {
+    let index = $userPreferences.avatarPicker.usedEmojis?.findIndex((el: EmojiEntry) => {
+      const usedEmoji = resolveEmojiData(el);
       return (
-        el[0].name === emoji.name &&
-        (("file" in el[0] && el[0].file !== undefined) ||
-          ("code" in el[0] && el[0].code === emoji.code))
+        usedEmoji?.name === emoji.name &&
+        (isEmojiAvatar(usedEmoji) ? usedEmoji.code === emoji.code : false)
       );
     });
     if (index === -1) {
-      let tempEmoji = { ...emoji };
+      let tempEmoji = { ...emoji } as AvatarWithCode<EmojiAvatar>;
+      tempEmoji.type = AvatarType.EMOJI;
       tempEmoji.frequency = 1;
       $userPreferences.avatarPicker.usedEmojis = [
         ...$userPreferences.avatarPicker.usedEmojis,
         [tempEmoji]
       ];
     } else {
-      $userPreferences.avatarPicker.usedEmojis[index][0].frequency++;
+      const usedEmoji = resolveEmojiData($userPreferences.avatarPicker.usedEmojis[index]);
+      if (usedEmoji) {
+        usedEmoji.frequency = (usedEmoji.frequency ?? 0) + 1;
+      }
     }
 
     $userPreferences.avatarPicker.usedEmojis.sort(
-      (a, b) => b[0].frequency - a[0].frequency
+      (a: EmojiEntry, b: EmojiEntry) =>
+        (resolveEmojiData(b)?.frequency ?? 0) -
+        (resolveEmojiData(a)?.frequency ?? 0)
     );
   }
 
-  function itemClickHandler(emoji: any) {
-    const selectedEmoji = emoji.length === 1 ? emoji[0] : emoji[0];
+  function itemClickHandler(emoji: EmojiEntry) {
+    const selectedEmoji = resolveEmojiData(emoji);
+    if (!isEmojiAvatar(selectedEmoji)) return;
     addToUsedList(selectedEmoji);
     dispatch("select", { emoji: selectedEmoji });
   }
@@ -143,7 +175,7 @@
     }
   }
 
-  function getCategoryForEmoji(emoji: any): string {
+  function getCategoryForEmoji(emoji: EmojiEntry): string {
     for (const [category, emojiList] of Object.entries(displayEmojis)) {
       if (Array.isArray(emojiList) && emojiList.includes(emoji)) {
         return category;
@@ -175,7 +207,7 @@
           on:click={() => itemClickHandler(emoji)}
         >
           <span class="text-lg flex-shrink-0">
-            {@html emoji[0]?.code}
+            {@html resolveEmojiCode(emoji)}
           </span>
           <span class="text-b3 text-fgs2 truncate">
             {emoji[0]?.name}

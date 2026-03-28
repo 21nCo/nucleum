@@ -1,6 +1,10 @@
 <script lang="ts">
   import Icon from "@21n/elements/Icon.svelte";
-  import { BlockAction, type IBlock } from "@21n/components/markdown/md.type";
+  import {
+    BlockAction,
+    type IBlock,
+    type IEmbedBlockBody
+  } from "@21n/components/markdown/md.type";
   import {
     headingNodeTypes,
     mediaNodeTypeList,
@@ -35,8 +39,6 @@
   import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
   import { hoverable } from "@21n/actions/hover.action";
   import { nodeStore } from "@21n/products/memotron/node/node.store";
-  import { parseAndFormatDate, formatDatetime } from "@21n/utils/time.utils";
-  import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { resolveResourceActionIcon } from "@21n/components/flux/resourceStores/resource.utils";
   const dispatch = createEventDispatcher();
   export let block: IBlock;
@@ -48,6 +50,10 @@
   let isHovering: boolean = false;
   let isPopoverVisible: boolean = false;
   let contextMenuRef: any;
+  type IContextMenuGroup = {
+    group: string;
+    items: IContextMenuItem[];
+  };
 
   $: isDebugLeftControls = false;
 
@@ -197,19 +203,30 @@
       value: BlockAction.DOWNLOAD,
       icon: "download",
       callback: async () => {
-        nodeStore.download(block.body.id);
+        const embedBody = resolveEmbedBody(block);
+        if (embedBody?.id) {
+          nodeStore.download(embedBody.id);
+        }
       }
     }
   };
 
+  function resolveEmbedBody(block: IBlock): IEmbedBlockBody | undefined {
+    if (block.contentType !== NodeType.EMBED) return undefined;
+    if (typeof block.body === "string") return undefined;
+    if (!("subType" in block.body || "id" in block.body)) return undefined;
+    return block.body;
+  }
+
   function resolveEmbedPreviewToggleAction() {
+    const embedBody = resolveEmbedBody(block);
     return {
       value: BlockAction.EMBED_PREVIEW_TOGGLE,
       icon: "hide",
       label: "Hide preview",
       type: ContextMenuType.SWITCH,
-      initialValue: block.body?.isHidePreview ?? false,
-      callback: async (checked) => {
+      initialValue: embedBody?.isHidePreview ?? false,
+      callback: async (checked: boolean) => {
         dispatch("action", {
           action: BlockAction.EMBED_PREVIEW_TOGGLE,
           data: {
@@ -236,7 +253,7 @@
   ): IContextMenu {
     const isStructuralBlock = structuralNodeTypes.includes(block.contentType);
     const isHeadingBlock = headingNodeTypes.includes(block.contentType);
-    let items = [];
+    let items: IContextMenuGroup[] = [];
     if (isHeadingBlock) {
       items = [
         {
@@ -307,8 +324,13 @@
         }
       });
     }
-    if ("body" in block && block.body && block.contentType === NodeType.EMBED) {
-      if (block.body.id && mediaNodeTypeList.includes(block.body.subType)) {
+    const embedBody = resolveEmbedBody(block);
+    if (embedBody) {
+      if (
+        embedBody.id &&
+        embedBody.subType &&
+        mediaNodeTypeList.includes(embedBody.subType)
+      ) {
         items.forEach((group) => {
           if (group.group === "base") {
             group.items.push(actions[BlockAction.DOWNLOAD]);
@@ -316,11 +338,11 @@
         });
       }
       if (
-        block.body.subType === NodeType.WEB_PAGE ||
-        block.body.subType === NodeType.PDF ||
-        block.body.subType === NodeType.GIST ||
-        block.body.subType === NodeType.YOUTUBE_VIDEO ||
-        block.body.subType === NodeType.YOUTUBE_SHORT
+        embedBody.subType === NodeType.WEB_PAGE ||
+        embedBody.subType === NodeType.PDF ||
+        embedBody.subType === NodeType.GIST ||
+        embedBody.subType === NodeType.YOUTUBE_VIDEO ||
+        embedBody.subType === NodeType.YOUTUBE_SHORT
       ) {
         items.forEach((group) => {
           if (group.group === "base") {
@@ -328,7 +350,7 @@
           }
         });
       }
-      if (block.body.subType && webNodeTypeList.includes(block.body.subType)) {
+      if (embedBody.subType && webNodeTypeList.includes(embedBody.subType)) {
         items.forEach((group) => {
           if (group.group === "base") {
             group.items.push(actions[BlockAction.GO_TO_EXTERNAL_LINK]);
@@ -361,8 +383,9 @@
    * Disabling this for time being as it is resulting in premature closing of popover when the width of the screen is less and the popover is opening over blocks and when secondary popover is opened on the right, the gap between popovers is getting tiggered as hover event on other blocks.
    * @param e
    */
-  function onOtherBlocksHoverListener(e: any) {
-    if (!e.detail || e.detail.id === block.id) return;
+  function onOtherBlocksHoverListener(e: Event) {
+    const detail = (e as CustomEvent<{ id?: string }>).detail;
+    if (!detail || detail.id === block.id) return;
     return;
     if (isPopoverVisible) {
       hideContextMenu();
@@ -370,6 +393,12 @@
   }
   function hideContextMenu() {
     contextMenuRef.dispatchEvent(new CustomEvent("hide"));
+  }
+
+  function onPopoverChange(e: Event) {
+    const detail = (e as CustomEvent<{ open?: boolean }>).detail;
+    isPopoverVisible = detail?.open ?? false;
+    dispatch("popoverVisibility", isPopoverVisible);
   }
 </script>
 
@@ -386,10 +415,8 @@
       menuResolver: () => resolveContextMenu(block, isSoleBlock),
       size: Size.lg,
       heading: "Options",
-      bottomRender: block.modifiedAt
-        ? `<div class="flex justify-center py-1 items-center text-b3 text-fgs3 ">Last modified: ${formatDatetime($userPreferences, block.modifiedAt)}</div>`
-        : "",
-      onSelect: (e) => {
+      bottomRender: "",
+      onSelect: () => {
         hideContextMenu();
       }
     },
@@ -397,10 +424,7 @@
     groupId: "leftControlsGroup",
     offsetInPx: 8
   }}
-  on:change={(e) => {
-    isPopoverVisible = e?.detail?.open;
-    dispatch("popoverVisibility", isPopoverVisible);
-  }}
+  on:change={onPopoverChange}
   bind:this={contextMenuRef}
   use:hoverable={{
     onHover: (e) => {

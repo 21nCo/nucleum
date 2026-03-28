@@ -71,7 +71,9 @@
         url
       });
       const model =
-        preferences.resolve(Preference.TRANSCRIPTION_MODEL) || "tiny";
+        (preferences.resolve(Preference.TRANSCRIPTION_MODEL) as
+          | string
+          | undefined) || "tiny";
       const taco = Taco.getInstance();
       const result = await taco.initiateTranscriptionUsingCoreML(url, {
         model

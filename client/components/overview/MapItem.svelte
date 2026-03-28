@@ -6,6 +6,7 @@
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import NodeThumbnail from "@21n/products/memotron/node/thumbnail/NodeThumbnail.svelte";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import type { INodeThumb } from "@21n/products/memotron/node/node.type";
 
   interface MapItemData {
     id: string;
@@ -17,7 +18,10 @@
   }
 
   export let data: MapItemData;
-  const resourceType = determineResourceType(data.id);
+  let resourceType = determineResourceType(data.id);
+  let nodeItem: INodeThumb;
+  $: resourceType = determineResourceType(data.id);
+  $: nodeItem = data as unknown as INodeThumb;
 
   const dispatch = createEventDispatcher();
 
@@ -30,9 +34,10 @@
 
 {#if resourceType === Resource.node}
   <NodeThumbnail
-    item={data}
+    item={nodeItem}
     on:click={handleClick}
     accessPoint={ResourceAccessPoint.MAP}
+    accessPointId={data.id}
   />
 {:else}
   <div

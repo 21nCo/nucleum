@@ -1,5 +1,9 @@
 import type { ISelectItem } from "@21n/types/select.type";
-import { TimePeriodType, TimeScale } from "@21n/types/time.type";
+import {
+  TimePeriodType,
+  TimeScale,
+  type RelativeTimePeriodValue
+} from "@21n/types/time.type";
 import { timePeriodLabel } from "@21n/utils/time.utils";
 import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
 
@@ -148,7 +152,9 @@ export function resolveRelativeTimePeriodOptions(
   }));
 }
 
-export function resolveRelativeTimePeriods(scale: TimeScale) {
+export function resolveRelativeTimePeriods(
+  scale: TimeScale
+): RelativeTimePeriodValue[] {
   switch (scale) {
     case TimeScale.DAYS:
       return [

@@ -12,6 +12,12 @@
   export let icon: string = "info";
   let ref: HTMLElement;
 
+  function resolveIconSize(size: Size | undefined): Size.sm | Size.md | Size.lg {
+    if (size === Size.lg) return Size.lg;
+    if (size === Size.md) return Size.md;
+    return Size.sm;
+  }
+
   function closeTooltip() {
     ref?.dispatchEvent(new CustomEvent("hide"));
   }
@@ -38,5 +44,5 @@
     }
   }}
 >
-  <Icon {icon} size={info.size ?? Size.sm} class="text-fgs3" />
+  <Icon {icon} size={resolveIconSize(info.size)} class="text-fgs3" />
 </button>

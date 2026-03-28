@@ -23,6 +23,7 @@
   export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
   export let parentBackgroundIndex: number;
   export let isHovered: boolean = false;
+  $: isHovered;
   let allPages: IAction[] = [];
   let defaultPages: IAction[] = [];
   let userPinnedPages: IAction[] = [];

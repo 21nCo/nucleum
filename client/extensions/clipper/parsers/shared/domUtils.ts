@@ -7,12 +7,9 @@ export function findAncestorOrSelf(
   if (element.matches && element.matches(selector)) {
     return element;
   }
-  let currentElement = element;
+  let currentElement: Element | ParentNode | ShadowRoot | null = element;
   while (currentElement) {
-    if (
-      currentElement.nodeType === Node.DOCUMENT_FRAGMENT_NODE &&
-      currentElement.host
-    ) {
+    if (currentElement instanceof ShadowRoot) {
       currentElement = currentElement.host;
     } else {
       currentElement = currentElement.parentNode;
@@ -20,7 +17,7 @@ export function findAncestorOrSelf(
     if (!currentElement || currentElement === document) {
       return null;
     }
-    if (currentElement.matches && currentElement.matches(selector)) {
+    if (currentElement instanceof Element && currentElement.matches(selector)) {
       return currentElement;
     }
   }
@@ -31,8 +28,8 @@ export function resolveParentNLevel(
   n: number,
   element: Element
 ): Element | null {
-  const root = Array.from({ length: n }).reduce(
-    (current, _) => current?.parentElement,
+  const root = Array.from({ length: n }).reduce<Element | null>(
+    (current) => current?.parentElement ?? null,
     element
   );
   return root;

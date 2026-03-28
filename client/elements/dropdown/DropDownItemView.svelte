@@ -6,6 +6,10 @@
   import Icon from "@21n/elements/Icon.svelte";
   import Badge from "@21n/elements/text/Badge.svelte";
   export let item: DropdownItem;
+
+  function resolveLabel() {
+    return item.label ?? properCase(String(item.value));
+  }
 </script>
 
 <button
@@ -20,7 +24,7 @@
         <Icon icon={item.icon} size={Size.sm} />
       {/if}
       <span class="whitespace-nowrap">
-        {item.label ?? properCase(item.value)}
+        {resolveLabel()}
       </span>
     </span>
     {#if item.badge}

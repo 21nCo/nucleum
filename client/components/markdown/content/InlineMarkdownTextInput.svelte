@@ -15,7 +15,6 @@
   import { logger } from "@21n/components/debug/logger.client";
   import { scrollIntoViewOnFocus } from "@21n/actions/scroll.action";
   import { isValidString, truncateString } from "@21n/shared-utils/text.utils";
-  import { resolveNodeLabelString } from "@21n/products/memotron/node/node.utils";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import InlineLink from "@21n/components/markdown/content/inline/InlineLink.svelte";
   import { resolvePasteContents } from "@21n/products/memotron/capture/capture.utils";
@@ -24,6 +23,7 @@
   import view from "@21n/stores/view.store";
   import KeyboardToolbar from "@21n/elements/keyboardToolbar/KeyboardToolbar.svelte";
   import Button from "@21n/elements/button/Button.svelte";
+  import type { IRecordId } from "@21n/types/data.type";
   import { Size } from "@21n/types/size.enum";
 
   const dispatch = createEventDispatcher();
@@ -242,11 +242,14 @@
     innerHTML = innerHTML.replace(target, replacement);
   }
   export function addMention(
-    item: IBlock,
+    item: { id: IRecordId; label?: string; name?: string },
     searchQuery: string,
     triggerKey?: string
   ) {
-    const label = isValidString(resolveNodeLabelString(item));
+    const label =
+      item.label ??
+      item.name ??
+      undefined;
     content = content?.replace(
       triggerKey + (searchQuery ?? ""),
       `[${label ?? "Unknown"}](resource=${item.id})`
@@ -316,13 +319,19 @@
     dispatchChangeEvent();
   }
 
+  function blurActiveElement() {
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+  }
+
   /**
    * @deprecated
    */
   export function renderMentionsv1() {
     const mentions = document.querySelectorAll("mention");
     document.querySelectorAll("mention").forEach((el) => {
-      const id = el.getAttribute("data-id") ? el.getAttribute("data-id") : "";
+      const id = el.getAttribute("data-id") ?? "";
       new InlineMention({ target: el, props: { id } });
 
       // Restore the caret position
@@ -330,6 +339,7 @@
       const sel = window.getSelection();
       range.setStartAfter(el);
       range.collapse(true);
+      if (!sel) return;
       sel.removeAllRanges();
       sel.addRange(range);
     });
@@ -832,9 +842,14 @@
 
     return { isFirstLine, isLastLine, caretOffset };
 
-    function getLines(element) {
-      const lines = [];
-      const traverse = (node) => {
+    function getLines(element: HTMLElement) {
+      const lines: {
+        top: number;
+        bottom: number;
+        left: number;
+        right: number;
+      }[] = [];
+      const traverse = (node: Node) => {
         if (node.nodeType === Node.TEXT_NODE) {
           const range = document.createRange();
           range.selectNodeContents(node);
@@ -848,8 +863,9 @@
             });
           }
         } else if (node.nodeType === Node.ELEMENT_NODE) {
-          if (node.tagName === "DIV" && node !== element) {
-            const rect = node.getBoundingClientRect();
+          const elementNode = node as HTMLElement;
+          if (elementNode.tagName === "DIV" && node !== element) {
+            const rect = elementNode.getBoundingClientRect();
             lines.push({
               top: rect.top,
               bottom: rect.bottom,
@@ -857,7 +873,7 @@
               right: rect.right
             });
           } else {
-            for (let child of node.childNodes) {
+            for (let child of elementNode.childNodes) {
               traverse(child);
             }
           }
@@ -1196,9 +1212,7 @@
         parentBgIndex={2}
         size={Size.sm}
         isPreventMinWidth={true}
-        on:click={() => {
-          document.activeElement?.blur();
-        }}
+        on:click={blurActiveElement}
       />
     </div>
   </KeyboardToolbar>

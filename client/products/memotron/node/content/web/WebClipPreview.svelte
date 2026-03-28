@@ -23,7 +23,12 @@
   })}
 >
   {#if node.contentType === NodeType.WEB_TEXT_BOOKMARK || node.contentType === NodeType.KINDLE_HIGHLIGHT}
-    <TextClipPreview {node} {contentPreview} {truncateLength} {accessPoint} />
+    <TextClipPreview
+      {node}
+      contentPreview={contentPreview ?? ""}
+      {truncateLength}
+      {accessPoint}
+    />
   {:else if node.contentType === NodeType.WEB_SCREENSHOT && node.body.file}
     <!-- <img
       alt="..."

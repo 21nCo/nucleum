@@ -8,6 +8,7 @@
   export let data: AnalyticsDataRecord[];
   export let goalColors: { label: string; color: number }[] = [];
   export let previousTimePeriodData: AnalyticsDataRecord[] = [];
+  $: [card, goalColors];
   $: totalFocus = data.reduce((acc, curr) => acc + curr.focus, 0);
   $: totalBreak = data.reduce((acc, curr) => acc + curr.brek, 0);
   $: total = totalFocus + totalBreak;

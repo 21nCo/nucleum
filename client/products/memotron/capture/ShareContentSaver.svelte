@@ -148,7 +148,7 @@
         await captureStore.saveMultipleFiles(data.multipleFiles.files);
       }
       if (result) {
-        savedNode = result;
+        savedNode = result as INodeThumb;
         savedNodeId = savedNode?.id;
         if ($context.isStandaloneSheet && savedNode && data?.text) {
           await saveSheetNode({
@@ -467,6 +467,7 @@
                   item={savedNode}
                   arrangement={Arrangement.LIST}
                   accessPoint={ResourceAccessPoint.BROWSER}
+                  accessPointId={savedNode.id}
                   size={Size.md}
                 />
               </button>

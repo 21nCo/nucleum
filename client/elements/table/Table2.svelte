@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { reorderList } from "@21n/actions/rearrange.action";
+  import {
+    reorderList,
+    type DragDropEvent
+  } from "@21n/actions/rearrange.action";
   import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { InputStyle } from "@21n/types/input.type";
@@ -17,8 +20,9 @@
   import Switch from "@21n/elements/toggle/Switch.svelte";
   import { createEventDispatcher } from "svelte";
   const dispatch = createEventDispatcher();
+  type TableRow = Record<string, any> & { id?: string | number };
   export let columns: TableColumn[] = [];
-  export let data: any = [];
+  export let data: TableRow[] = [];
   export let actions: { action: TableCellDefaultAction; index: number }[] = [];
   export let isStyled: boolean = false;
   export let addAction: string | undefined = undefined;
@@ -30,15 +34,20 @@
         ...columns.slice(0, action.index),
         resolveDefaultAction(action.action),
         ...columns.slice(action.index)
-      ].filter((column) => column);
+      ].filter(isTableColumn);
     });
   }
-  function resolveDefaultAction(action: string) {
+  function isTableColumn(column: TableColumn | undefined): column is TableColumn {
+    return column !== undefined;
+  }
+
+  function resolveDefaultAction(action: string): TableColumn | undefined {
     switch (action) {
       case TableCellDefaultAction.REORDER:
         return {
           key: "rearrange-horizontal",
-          type: TableCellType.ACTION
+          type: TableCellType.ACTION,
+          action: () => undefined
         };
       case TableCellDefaultAction.REMOVE:
         return {
@@ -47,8 +56,8 @@
           actionTooltip: {
             body: "Remove"
           },
-          action: (row: any) => {
-            data = data?.filter((d) => d.id !== row.id);
+          action: (row: TableRow) => {
+            data = data?.filter((entry: TableRow) => entry.id !== row.id);
           }
         };
       case TableCellDefaultAction.SELECT_ROW:
@@ -79,6 +88,14 @@
   function resolveAction(column: TableColumn, row: any) {
     if (!("action" in column)) return;
     return column.action(row);
+  }
+
+  function resolveActionTooltip(column: TableColumn) {
+    return "actionTooltip" in column ? column.actionTooltip?.body : undefined;
+  }
+
+  function onReorder(detail: DragDropEvent) {
+    dispatch("reorder", detail);
   }
 </script>
 
@@ -116,9 +133,9 @@
     use:reorderList={{
       listId: id,
       draggedOverClass: "!outline-aps1",
-      dragImage: "dragimage"
+      dragImage: "dragimage",
+      onDrop: onReorder
     }}
-    on:reorder
   >
     {#each data as row, i (row.id)}
       <div
@@ -157,7 +174,7 @@
           {:else if column.type === TableCellType.ACTION}
             <Button
               icon={column.key}
-              tooltip={column.actionTooltip?.body}
+              tooltip={resolveActionTooltip(column)}
               on:click={() => resolveAction(column, row)}
             />
           {:else if column.type === TableCellType.CUSTOM && "component" in column}

@@ -235,7 +235,7 @@
       {#if config.groups && isValidArrayWithData(config.groups)}
         {#each config.groups as group}
           <SelectOptionEditListView
-            bind:options={config.options}
+            options={config.options ?? []}
             {group}
             {focusedOptionId}
             {defaultOptionId}
@@ -253,7 +253,7 @@
       {/if}
     {/key}
     <SelectOptionEditListView
-      bind:options={config.options}
+      options={config.options ?? []}
       {focusedOptionId}
       {defaultOptionId}
       {parentBgIndex}

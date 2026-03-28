@@ -22,7 +22,7 @@
     <Icon icon="crop" {size} />
   {:else if node.contentType === NodeType.KINDLE_HIGHLIGHT}
     <Icon icon="book-open" {size} />
-  {:else if isValidUrl(favicon)}
+  {:else if favicon && isValidUrl(favicon)}
     <img
       use:lazyLoad={favicon}
       alt="favicon"
@@ -33,6 +33,6 @@
       })}
     />
   {:else}
-    <Icon icon={resolveFallbackIconForUrl(node.url)} {size} />
+    <Icon icon={resolveFallbackIconForUrl(node.url ?? "")} {size} />
   {/if}
 </span>

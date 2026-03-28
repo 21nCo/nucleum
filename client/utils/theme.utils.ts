@@ -220,11 +220,11 @@ export function heatMapColorRange(
   let lightness: number = 50;
   const currentColors = retrieveCurrentColors(appearance);
   if (hue === undefined || hue === null || typeof hue !== "number") {
-    const color = currentColors[fallback];
+    const color = currentColors[fallback as keyof typeof currentColors];
     if (!color) return [];
-    hue = color.split(" ")[0].split("(")[1];
-    saturation = color.split(" ")[1].split("%")[0];
-    lightness = color.split(" ")[2].split("%")[0];
+    hue = Number(color.split(" ")[0].split("(")[1]);
+    saturation = Number(color.split(" ")[1].split("%")[0]);
+    lightness = Number(color.split(" ")[2].split("%")[0]);
   } else {
     let values = resolveSaturationAndLightness(appearance);
     if (values) {
@@ -237,6 +237,7 @@ export function heatMapColorRange(
     const l = +lightness + i * (appearance.colorScheme.isDark ? 4 : 6);
     return `hsl(${hue} ${s}% ${l}%)`;
   });
-  colors.push(currentColors["bgs2"]);
+  const backgroundColor = currentColors["bgs2"];
+  if (backgroundColor) colors.push(backgroundColor);
   return colors.reverse();
 }

@@ -5,6 +5,7 @@
   import type { IProperty } from "@21n/components/collection/properties/property.type";
   import NodeRecords from "@21n/products/memotron/node/NodeRecords.svelte";
   import type { ICollectionItem } from "@21n/components/collection/collection.type";
+  import type { INodeThumb } from "@21n/products/memotron/node/node.type";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import Records from "@21n/components/record/Records.svelte";
 
@@ -22,11 +23,15 @@
   export let visibleProps: IProperty[] = [];
 
   $: isMasonryAvailable = !resource || [Resource.node].includes(resource);
+
+  function resolveNodeItems() {
+    return items as unknown as INodeThumb[];
+  }
 </script>
 
 {#if isMasonryAvailable}
   <NodeRecords
-    nodes={items}
+    nodes={resolveNodeItems()}
     {arrangement}
     {isHidePreview}
     {isHideTitle}

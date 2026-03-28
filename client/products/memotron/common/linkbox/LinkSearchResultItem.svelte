@@ -4,7 +4,7 @@
   import { isValidString, properCase } from "@21n/shared-utils/text.utils";
   import {
     NodeType,
-    type INode
+    type INodeThumb
   } from "@21n/products/memotron/node/node.type";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
@@ -23,10 +23,42 @@
   import { resolveNodeContentLabel } from "@21n/products/memotron/node/node.utils";
   import { resolveCollectionTypeLabel } from "@21n/components/collection/collection.utils";
   import { resolveGoalTypeLabel } from "@21n/components/goals/goal.utils";
-  export let item: INode | ICollectionThumb | IGoalThumb;
+  export let item: INodeThumb | ICollectionThumb | IGoalThumb;
   export let isHideResourceType: boolean = false;
   export let resourceType: Resource = determineResourceType(item.id);
-  const subType = resourceType === Resource.node ? item.contentType : item.type;
+
+  function asNode(
+    item: INodeThumb | ICollectionThumb | IGoalThumb
+  ): INodeThumb {
+    return item as INodeThumb;
+  }
+
+  function asCollection(
+    item: INodeThumb | ICollectionThumb | IGoalThumb
+  ): ICollectionThumb {
+    return item as ICollectionThumb;
+  }
+
+  function asGoal(
+    item: INodeThumb | ICollectionThumb | IGoalThumb
+  ): IGoalThumb {
+    return item as IGoalThumb;
+  }
+
+  function resolveSubType() {
+    if (resourceType === Resource.node) {
+      return asNode(item).contentType;
+    }
+    if (resourceType === Resource.collection) {
+      return asCollection(item).type;
+    }
+    if (resourceType === Resource.goal) {
+      return asGoal(item).type;
+    }
+    return undefined;
+  }
+
+  $: subType = resolveSubType();
 
   function resolveSubTypeLabel(subType: string) {
     if (resourceType === Resource.node) {
@@ -60,21 +92,21 @@
     {#if resourceType === Resource.node}
       <div class="flex gap-2 w-full truncate text-b2">
         <NodeTitleLabelPart
-          {item}
+          item={asNode(item)}
           accessPoint={ResourceAccessPoint.SEARCH_RESULT}
         />
       </div>
-      {#if item.bodySearch}
+      {#if asNode(item).bodySearch}
         <div
           class="text-left text-b2 text-fgs3 text-opacity-80 max-h-12 overflow-hidden"
         >
-          {@html renderMdAsHtml(item.bodySearch)}
+          {@html renderMdAsHtml(asNode(item).bodySearch ?? "")}
         </div>
       {/if}
     {:else if resourceType === Resource.collection}
-      <CollectionTitleLabelPart {item} isShowFallbackIcons={true} />
+      <CollectionTitleLabelPart item={asCollection(item)} isShowFallbackIcons={true} />
     {:else if resourceType === Resource.goal}
-      <GoalSearchResultItem {item} />
+      <GoalSearchResultItem item={asGoal(item)} />
     {:else}
       <div class="flex text-left line-clamp-1 truncate">
         {isValidString(item.label) ? item.label : "Untitled"}

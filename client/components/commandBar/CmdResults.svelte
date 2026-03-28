@@ -125,11 +125,17 @@
       );
       const recentActions = recentCommands
         .map((x) => allActions.find(findInList(x)))
-        .filter((x) => x);
+        .filter(isCommandAction);
       filteredActions = [...recentActions, ...filteredActions];
     } else {
       filteredActions = allActions;
     }
+  }
+
+  function isCommandAction(
+    action: ICommandAction | undefined
+  ): action is ICommandAction {
+    return Boolean(action);
   }
 
   function isSameAction(toCheck: ICommandAction | null, item: ICommandAction) {

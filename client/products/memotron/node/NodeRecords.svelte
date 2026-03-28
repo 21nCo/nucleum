@@ -189,7 +189,7 @@ import { toasts } from "@21n/stores/notification.store";
             {arrangement}
             {isApplyCustomColor}
             {accessPoint}
-            {accessPointId}
+            accessPointId={accessPointId ?? item.id}
             {isHideTitle}
             {visibleProps}
             on:load={(e) => {
@@ -220,7 +220,7 @@ import { toasts } from "@21n/stores/notification.store";
           {arrangement}
           {isDraggable}
           {accessPoint}
-          {accessPointId}
+          accessPointId={accessPointId ?? item.id}
           {isHidePreview}
           {visibleProps}
           collectionContext={"board"}

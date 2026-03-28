@@ -57,16 +57,7 @@ export function isUrlExpired(signedUrl: string) {
 export async function resolveToken(): Promise<string | null> {
   let token: string | null = null;
   if (isExtensionEnvironment()) {
-    return new Promise((resolve, reject) => {
-      chrome.storage.local.get(ClientStorageKey.STOKEN, function (data) {
-        if (chrome.runtime.lastError) {
-          reject(chrome.runtime.lastError);
-        } else {
-          // console.log("Token retrieved is: " + data.stoken);
-          resolve(data.stoken);
-        }
-      });
-    });
+    return clientStorage.get(ClientStorageKey.STOKEN);
   } else {
     const space = retrieveLocally(Resource.spaceInContext);
     if (space?.id) {
@@ -78,25 +69,19 @@ export async function resolveToken(): Promise<string | null> {
 
 export async function resolveCurrentUserId() {
   if (isExtensionEnvironment()) {
-    return new Promise((resolve, reject) => {
-      chrome.storage.local.get(ClientStorageKey.USER_INFO, function (data) {
-        if (chrome.runtime.lastError) {
-          reject(chrome.runtime.lastError);
-        } else if (data.userInfo) {
-          const id = parse(data.userInfo)?.id;
-          resolve(id);
-        } else {
-          resolve(null);
-        }
-      });
-    });
+    const userInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
+    if (!userInfo) {
+      return null;
+    }
+    return parse(userInfo)?.id ?? null;
   } else {
     const userInfo =
       typeof window !== "undefined"
         ? localStorage.getItem("userInfo")
         : undefined;
-    if (userInfo) return parse(userInfo)?.id;
+    if (userInfo) return parse(userInfo)?.id ?? null;
   }
+  return null;
 }
 
 export async function signout(

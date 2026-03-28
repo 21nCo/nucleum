@@ -71,6 +71,30 @@
     searchResultsPopover?.search();
   }
 
+  function resolveKeyboardEvent(
+    event: CustomEvent<{ event?: KeyboardEvent } | KeyboardEvent>
+  ) {
+    if (event.detail instanceof KeyboardEvent) return event.detail;
+    if (event.detail?.event instanceof KeyboardEvent) return event.detail.event;
+    return event as unknown as KeyboardEvent;
+  }
+
+  function onInlineKeyup(
+    event: CustomEvent<{ event?: KeyboardEvent } | KeyboardEvent>
+  ) {
+    const keyboardEvent = resolveKeyboardEvent(event);
+    if (!keyboardEvent) return;
+    searchResultsPopover.keyup(keyboardEvent);
+  }
+
+  function onInlineKeydown(
+    event: CustomEvent<{ event?: KeyboardEvent } | KeyboardEvent>
+  ) {
+    const keyboardEvent = resolveKeyboardEvent(event);
+    if (!keyboardEvent) return;
+    searchResultsPopover.keydown(keyboardEvent);
+  }
+
   function onKeyup(event: any) {
     if (!searchCallback && !searchStoreId) {
       hide();
@@ -83,6 +107,18 @@
     onReset();
     searchResultsPopover?.reset();
   }
+
+  function onInputBlur(e: FocusEvent) {
+    isFocused = false;
+    dispatch("blur");
+    if (isShowPopoverOnFocus) {
+      const target = e.target as HTMLElement | null;
+      if (!target?.classList?.contains("text-input")) {
+        hide();
+      }
+    }
+  }
+
   function onReset() {
     value = "";
     hide();
@@ -112,12 +148,8 @@
       bind:this={inputRef}
       {placeholder}
       {style}
-      on:keyup={(event) => {
-        searchResultsPopover.keyup(event.detail.event);
-      }}
-      on:keydown={(event) => {
-        searchResultsPopover.keydown(event);
-      }}
+      on:keyup={onInlineKeyup}
+      on:keydown={onInlineKeydown}
     />
     <SearchResultsPopover
       bind:this={searchResultsPopover}
@@ -188,15 +220,7 @@
       on:blur
       on:click|stopPropagation
       on:mouseup|stopPropagation
-      on:blur={(e) => {
-        isFocused = false;
-        dispatch("blur");
-        if (isShowPopoverOnFocus) {
-          if (!e.target?.classList?.contains("text-input")) {
-            hide();
-          }
-        }
-      }}
+      on:blur={onInputBlur}
       on:focus={() => {
         isFocused = true;
         dispatch("focus");

@@ -87,7 +87,7 @@
   let selectedDate: Date = new Date();
   let viewDate: Date = new Date();
   let taskRecordsRef: TaskRecords | undefined;
-  let dateSelectionPopoverRef: HTMLDivElement;
+  let dateSelectionPopoverRef: HTMLButtonElement | undefined;
   let isRefreshing = false;
   let isInSelectionMode = false;
   let isShowSearchBar = false;
@@ -280,19 +280,31 @@
     dateSelectionPopoverRef?.dispatchEvent(new CustomEvent("hide"));
   }
 
+  function onDateSelectionChange(val: Date) {
+    selectedDate = val;
+    viewDate = selectedDate;
+    refresh({ scrollToDate: true });
+    hidePopover();
+  }
+
   async function onAdd(e: any) {
     const label = e.detail;
     if (!label) return;
-    const task = await taskStore.save({
-      label,
-      dateUnix: resolveUnixTimestamp(resolveDateForNewTask()),
-      goalId,
-      collectionId
-    });
-    if (isValidArrayWithData(task)) {
-      tasks = [...tasks, task[0]];
+    const createdTasks =
+      (await taskStore.save({
+        label,
+        dateUnix: resolveUnixTimestamp(resolveDateForNewTask()),
+        goalId,
+        collectionId
+      })) ?? [];
+    if (isValidArrayWithData(createdTasks)) {
+      const createdTask = createdTasks[0];
+      if (!createdTask) {
+        toasts.error("Failed to add task. Please try again.");
+        return;
+      }
+      tasks = [...tasks, createdTask];
       toasts.success("Task created successfully.");
-      addNewTaskInlineRef?.reset();
     } else {
       toasts.error("Failed to add task. Please try again.");
     }
@@ -463,12 +475,7 @@
           componentProps: {
             isDatePickerMode: true,
             selectedDate: selectedDate,
-            onDateChange: (val) => {
-              selectedDate = val;
-              viewDate = selectedDate;
-              refresh({ scrollToDate: true });
-              hidePopover();
-            }
+            onDateChange: onDateSelectionChange
           }
         }}
       >

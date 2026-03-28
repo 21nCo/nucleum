@@ -7,6 +7,7 @@
   } from "@21n/utils/theme.utils";
   export let type: string = "div";
   export let id: string = "";
+  export let role: string | undefined = undefined;
   export let color: number | undefined = undefined;
   let classList: string = "w-full h-full";
   let styles: string = "";
@@ -21,6 +22,8 @@
 <svelte:element
   this={type}
   {id}
+  role={role ?? (type === "button" ? undefined : "button")}
+  tabindex={type === "button" ? undefined : 0}
   class={classList}
   on:click
   style:--customcolor={customColorShades[0]}

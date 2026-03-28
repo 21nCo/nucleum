@@ -16,6 +16,18 @@
   let popoverRef: any;
   let isPopoverVisible: boolean = false;
 
+  function onSelect(value: unknown) {
+    dispatch("select", value);
+  }
+
+  function onAction(value: unknown) {
+    dispatch("action", value);
+  }
+
+  function onPopoverChange(e: Event) {
+    isPopoverVisible = (e as CustomEvent<{ open?: boolean }>).detail?.open ?? false;
+  }
+
   // const { getEventContext } = createEventPropagator("contextMenuAction");
   // const { addEventListener, removeEventListener } = getEventContext();
 
@@ -40,21 +52,15 @@
     content: item.secondStepComponent?.component,
     isSecondary: true,
     componentProps: {
-      onSelect: (e) => {
-        dispatch("select", e);
-      },
-      onAction: (e) => {
-        dispatch("action", e);
-      },
+      onSelect,
+      onAction,
       ...item.secondStepComponent?.props
     },
     groupId: "contextMenuPopoverSecondaryScreen",
     id: "contextMenuPopoverSecondaryScreen",
     classForHoverDismissal: "contextmenuitem"
   }}
-  on:change={(e) => {
-    isPopoverVisible = e.detail?.open;
-  }}
+  on:change={onPopoverChange}
   class={cn(
     "contextmenuitem flex items-center gap-2.5 justify-between hover:bg-bgs3 rounded-md",
     {

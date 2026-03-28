@@ -21,7 +21,9 @@
 
   function resolveColors(scheme: ColorScheme) {
     if ($userPreferences?.appearance?.skin == AppSkin.Glassy) {
-      return scheme.colors;
+      return Object.values(scheme.colors).filter(
+        (color): color is string => Boolean(color)
+      );
     }
     const colors = getColors(scheme);
     if (size == Size.sm) {

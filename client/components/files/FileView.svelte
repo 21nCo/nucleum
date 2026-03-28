@@ -62,7 +62,9 @@
     const isLatestFilePresent = file && _id && isSameResource(file, _id);
     if (blob) return URL.createObjectURL(blob);
     else if (id || isLatestFilePresent) {
-      const result = await fileStore.refresh(isLatestFilePresent ? file : id, {
+      const fileToRefresh = isLatestFilePresent ? file : id;
+      if (!fileToRefresh) return "";
+      const result = await fileStore.refresh(fileToRefresh, {
         isUseThumbnailIfAvailable
       });
       if (result) {

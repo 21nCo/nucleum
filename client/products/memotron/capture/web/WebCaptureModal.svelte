@@ -148,7 +148,6 @@
       if (error instanceof Error && error.name === "AbortError") {
         updateState(category, {
           status: "idle",
-          loading: false,
           query
         });
         return;
@@ -315,7 +314,12 @@
 
 {#if open}
   <div class="fixed inset-0 z-[120] flex items-center justify-center" transition:fade>
-    <div class="absolute inset-0 bg-bgs1/80 backdrop-blur-xl" on:click={close} />
+    <button
+      type="button"
+      aria-label="Close dialog"
+      class="absolute inset-0 bg-bgs1/80 backdrop-blur-xl"
+      on:click={close}
+    />
     <div
       class="relative z-[121] flex h-full w-full max-w-6xl items-stretch justify-center p-6 mo:p-0"
       role="dialog"

@@ -71,6 +71,12 @@ const combinedSearchSort = (a: any, b: any) => {
   return searchSort(a, b);
 };
 
+function hasSelectMany(
+  store: ReturnType<typeof resolveResourceStore>
+): store is ResourceStore<any, any> {
+  return Boolean(store && "selectMany" in store);
+}
+
 export const MAX_FILE_SIZE_MB = 100;
 
 export function resolveResource(id: IRecordId) {
@@ -106,7 +112,8 @@ export class SearchStore {
   }
 
   setResourceStore(resource: Resource) {
-    this.resourceStore = resolveResourceStore(resource);
+    const store = resolveResourceStore(resource);
+    this.resourceStore = hasSelectMany(store) ? store : undefined;
   }
 
   levenshteinDistance(a: string, b: string): number {
@@ -244,7 +251,7 @@ export class SearchStore {
         data = await this.resourceStore?.selectMany(
           {
             filters: {
-              id: activeRecords.map((x) => x.id?.toString())
+              id: activeRecords.map((x: INode) => x.id?.toString())
             }
           },
           {
@@ -686,7 +693,7 @@ export class BulkEditor {
     const result = await linker.bulkUnlinkForDirect(items, accessPointId);
     const resourceType = determineResourceType(items[0]);
     const resourceStore = resolveResourceStore(resourceType);
-    if (resourceStore) {
+    if (hasSelectMany(resourceStore)) {
       const expandedItems = await resourceStore.selectMany({
         filters: {
           id: items.map((x) => x.toString())
@@ -766,7 +773,7 @@ export class BulkEditor {
               items,
               {
                 isStarred: true
-              },
+              } as Partial<INode>,
               additionalParams
             );
             onSuccess(action, items.length, Resource.node);
@@ -776,7 +783,7 @@ export class BulkEditor {
               items,
               {
                 isStarred: false
-              },
+              } as Partial<INode>,
               additionalParams
             );
             onSuccess(action, items.length, Resource.node);

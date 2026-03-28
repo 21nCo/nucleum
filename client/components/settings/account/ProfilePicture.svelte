@@ -31,10 +31,10 @@
     $appStore.product === Product.MEMOTRON ||
     $appStore.product === Product.NUCLEUS;
 
-  onMount(async () => {
-    await refresh($account);
-    const unsubscribeAccount = account.subscribe(async (x) => {
-      await refresh(x);
+  onMount(() => {
+    void refresh($account);
+    const unsubscribeAccount = account.subscribe((x) => {
+      void refresh(x);
     });
     const unsubscribeUserPreferences = userPreferences.subscribe((x) => {
       if (x.profilePicture) fileId = x.profilePicture ?? fileId;

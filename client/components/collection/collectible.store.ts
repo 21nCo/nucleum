@@ -83,7 +83,7 @@ export class CollectibleStore<
     const avatar = resolveAvatar(types);
     this.resourceStore.modifyAsSystem(id, {
       avatar
-    });
+    } as unknown as Partial<T>);
     return avatar;
   }
 
@@ -95,7 +95,7 @@ export class CollectibleStore<
       this.id,
       {
         properties: [...properties, property]
-      },
+      } as Partial<T>,
       {
         isDebounced: true,
         debounceKey: "property" + property.id.toString()

@@ -6,6 +6,7 @@
   import type { IToolTipOptions } from "@21n/elements/text/text.type";
   export let type: string = "div";
   export let id: string = "";
+  export let role: string | undefined = undefined;
   export let isDisabled: boolean = false;
   export let tooltip: string | undefined = undefined;
   export let tooltipOptions: IToolTipOptions = {
@@ -68,6 +69,8 @@
 <svelte:element
   this={type}
   {id}
+  role={role ?? (type === "button" ? undefined : "button")}
+  tabindex={type === "button" ? undefined : 0}
   bind:this={triggerRef}
   class={classList}
   style={styles}

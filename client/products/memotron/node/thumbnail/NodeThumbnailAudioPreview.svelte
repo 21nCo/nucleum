@@ -86,7 +86,9 @@
       const metadata = await parseBlob(blob);
       if (metadata?.common?.picture) {
         const imageData = metadata.common.picture[0].data;
-        imageUrl = URL.createObjectURL(new Blob([imageData]));
+        const artworkBuffer = new Uint8Array(imageData.byteLength);
+        artworkBuffer.set(imageData);
+        imageUrl = URL.createObjectURL(new Blob([artworkBuffer.buffer]));
         showWaveform = false;
       }
     } catch (error) {

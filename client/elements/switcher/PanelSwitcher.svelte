@@ -66,6 +66,10 @@
   let _items: ISelectItem[];
   const titleValue = "$title";
   const switcherId = resolvePanelSwitcherId();
+  function dispatchSwitch(nextValue: ISelectValue) {
+    value = nextValue;
+    dispatch("switch", nextValue);
+  }
   $: _items = items.every((x) => typeof x === "string")
     ? items.map((x) => ({ label: x, value: x }))
     : items;
@@ -276,15 +280,13 @@
 <svelte:document
   on:keydown={(event) => {
     try {
-      if (isPreventTabShortcut || ![KeyboardKey.ARROW_LEFT, KeyboardKey.ARROW_RIGHT].includes(event.key)) return;
-      if (!isTopmostPanelSwitcher() || isTextElement(event.target)) return;;
-      const isBackward = event.key === KeyboardKey.ARROW_LEFT;
+      const isBackwardKey = event.key === KeyboardKey.ARROW_LEFT;
+      const isForwardKey = event.key === KeyboardKey.ARROW_RIGHT;
+      if (isPreventTabShortcut || (!isBackwardKey && !isForwardKey)) return;
+      if (!isTopmostPanelSwitcher() || isTextElement(event.target)) return;
+      const isBackward = isBackwardKey;
       event.preventDefault();
       event.stopPropagation();
-      const dispatchSwitch = (val) => {
-        value = val;
-        dispatch("switch", val);
-      };
 
       const isTitleActive = isEnableTitleAction && value === titleValue;
       if (isBackward) {

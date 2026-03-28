@@ -7,6 +7,21 @@
   let id: string = generateSimpleRandomId();
   let widgetScriptLoaded = false;
 
+  type TwitterWindow = Window & {
+    twttr?: {
+      ready(callback: () => void): void;
+      widgets: {
+        createTweet(
+          tweetId: string,
+          element: HTMLElement,
+          options?: {
+            theme?: string;
+          }
+        ): Promise<HTMLElement | null>;
+      };
+    };
+  };
+
   onMount(() => {
     const loadTwitterWidget = () => {
       if (
@@ -39,14 +54,14 @@
 
       const doCreate = () => {
         if (!element) return;
-        window
-          .twttr!.widgets.createTweet(tweetId, element, {
+        const twitterWindow = window as TwitterWindow;
+        twitterWindow.twttr?.widgets.createTweet(tweetId, element, {
             theme: $appearance?.colorScheme?.isDark ? "dark" : "light"
             // Let CSS drive responsive width; removed fixed width: 450
             // conversation: "none",
             // cards: "visible"
           })
-          .then((el) => {
+          ?.then((el: HTMLElement | null) => {
             if (
               el &&
               typeof process !== "undefined" &&
@@ -55,13 +70,14 @@
               console.log("Tweet widget created successfully");
             }
           })
-          .catch((error) => {
+          .catch((error: unknown) => {
             console.error("Failed to create tweet widget:", error);
           });
       };
 
-      if (window.twttr?.ready) {
-        window.twttr.ready(() => doCreate());
+      const twitterWindow = window as TwitterWindow;
+      if (twitterWindow.twttr?.ready) {
+        twitterWindow.twttr.ready(() => doCreate());
       } else if (widgetScriptLoaded) {
         // Fallback if ready() is unavailable
         setTimeout(createTweetWidget, 150);
@@ -88,21 +104,6 @@
       const segments = url.split("/");
       const lastSegment = segments[segments.length - 1] || "";
       return lastSegment.replace(/\D/g, "");
-    }
-  }
-
-  declare global {
-    interface Window {
-      twttr?: {
-        ready(callback: (twttr: any) => void): void;
-        widgets: {
-          createTweet(
-            tweetId: string,
-            element: HTMLElement,
-            options?: any
-          ): Promise<HTMLElement | null>;
-        };
-      };
     }
   }
 </script>

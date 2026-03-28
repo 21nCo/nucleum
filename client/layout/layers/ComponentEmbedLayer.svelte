@@ -9,6 +9,7 @@
    */
   export let bg: number | undefined = undefined;
   export let isBackNavigable: boolean = false;
+  $: bg;
 
   onMount(() => {
     postDataToParent(

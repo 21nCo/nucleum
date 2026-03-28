@@ -4,6 +4,7 @@
   import { Action } from "@21n/types/action.enum";
   export let isInThinMode: boolean = false;
   export let isRounded: boolean = false;
+  $: [isInThinMode, isRounded];
 </script>
 
 <div class="w-full h-12">

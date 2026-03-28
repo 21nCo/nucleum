@@ -1,5 +1,13 @@
 import { LogType } from "@21n/components/debug/debug.type";
 
+const LOG_METHODS: Record<LogType, "debug" | "error" | "info" | "warn"> = {
+  [LogType.ERROR]: "error",
+  [LogType.WARN]: "warn",
+  [LogType.INFO]: "info",
+  [LogType.TRACE]: "debug",
+  [LogType.DEBUG]: "debug"
+};
+
 class Logger {
   level: LogType = LogType.ERROR;
   constructor() {
@@ -19,10 +27,11 @@ class Logger {
         const logLevel = logQueryParam?.split("=")[1];
         this.level = +(logLevel ?? "0") as LogType;
       } else {
-        this.level =
+        const defaultLevel =
           import.meta.env?.VITE_LOG_LEVEL ??
           (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_LOG_LEVEL : undefined) ??
           LogType.INFO;
+        this.level = Number(defaultLevel) as LogType;
       }
     } catch (e) {
       console.error("Error setting log level", e);
@@ -30,28 +39,28 @@ class Logger {
     }
   }
 
-  private _console(message: any, type: LogType) {
-    if (type === LogType.TRACE) type = LogType.DEBUG;
-    // if (type === LogType.DEBUG) type = LogType.TRACE;
-    const logTypeName = LogType[type].toLowerCase();
-    console[logTypeName]({ ...message, t: new Date().toISOString() });
+  private _console(message: unknown, type: LogType) {
+    const payload =
+      typeof message === "object" && message !== null
+        ? { ...(message as Record<string, unknown>), t: new Date().toISOString() }
+        : { message, t: new Date().toISOString() };
+    console[LOG_METHODS[type]](payload);
   }
-  private _log(message: any, type: LogType) {
+  private _log(message: unknown, type: LogType) {
     if (type <= this.level) {
       this._console(message, type);
     }
   }
   log(
-    message: any,
+    message: unknown,
     type: LogType.INFO | LogType.TRACE | LogType.DEBUG = LogType.TRACE
   ) {
-    // console.log({ ...message, type: LogType[type] });
     this._log(message, type);
   }
-  info(message: any) {
+  info(message: unknown) {
     this._log(message, LogType.INFO);
   }
-  error(message: any, error?: any) {
+  error(message: unknown, error?: unknown) {
     this._log({ message, error }, LogType.ERROR);
     if (typeof window !== "undefined") {
       window.dispatchEvent(
@@ -64,10 +73,10 @@ class Logger {
       );
     }
   }
-  warn(message: any) {
+  warn(message: unknown) {
     this._log(message, LogType.WARN);
   }
-  debug(message: any) {
+  debug(message: unknown) {
     this._console(message, LogType.DEBUG);
   }
 

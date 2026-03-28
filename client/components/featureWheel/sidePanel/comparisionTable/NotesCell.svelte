@@ -10,7 +10,7 @@
   import { properCase } from "@21n/shared-utils/text.utils";
   export let notes: string | Record<string, string> | undefined = undefined;
   export let isShort: boolean = false;
-  export let contemporary: IContemporary;
+  export let contemporary: IContemporary | undefined = undefined;
   export let feature: IFwFeature;
   function resolveNotesText() {
     if (typeof notes === "string") {
@@ -39,7 +39,7 @@
     on:click={() => {
       bottomModal.open("notes", {
         notes: resolveNotesText(),
-        title: `Notes for ${properCase(contemporary.label)}`
+        title: `Notes for ${properCase(contemporary?.label ?? "app")}`
       });
     }}
   >

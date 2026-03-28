@@ -54,9 +54,15 @@
   export let files: IFile[] = [];
   let isUploadInProgress: boolean = false;
 
-  if (block.body == "") {
-    block.body = {};
-    block.body.items = [];
+  if (!block.body || !Array.isArray(block.body.items)) {
+    block.body = {
+      items: [],
+      type: MediaGridType.AUTO,
+      gap: 0,
+      altText: "media grid",
+      noOfColumns: 1,
+      isWideLayout: false
+    };
   }
   if (!block.body.isWideLayout) block.body.isWideLayout = false;
   if (!block.body.gap) block.body.gap = 0;
@@ -102,9 +108,9 @@
    * @type {number[]}
    */
   let columnArray: number[] = [];
-  let columnsGrid: HTMLDivElement[] = [];
+  let columnsGrid: HTMLButtonElement[] = [];
   $: config.columns = Array(config.noOfColumns).fill("");
-  let autoGrid: HTMLDivElement;
+  let autoGrid: HTMLButtonElement;
   let autoGridNewItemIndex: number = 0;
   let dropHereHeight: number = 10;
   let autoItems: any[] = [];
@@ -868,17 +874,18 @@
           style="position:relative;width:100%;display:flex;flex-direction:column;gap:{config.gap}px;"
         >
           {#if columnArray[index] == undefined}
-            <DraggableMediaGridElement
-              bind:isDragging
-              {handleFileUpload}
-              isGridItem={false}
-              item={{
-                type: "htmlElement/div",
-                position: {
-                  columns: { columnNo: index, index: 0 },
-                  auto: undefined
-                }
-              }}
+                <DraggableMediaGridElement
+                  bind:isDragging
+                  {handleFileUpload}
+                  isGridItem={false}
+                  item={{
+                    id: generateSimpleRandomId(),
+                    file: "",
+                    position: {
+                      columns: { columnNo: index, index: 0 },
+                      auto: 0
+                    }
+                  }}
               id="dummmyDropArea01"
             />
           {/if}

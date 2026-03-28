@@ -28,8 +28,9 @@
   xmlns="http://www.w3.org/2000/svg"
   fill="none"
   class={svgBorder}
+  viewBox="0 0 100 100"
 >
-  <circle class={circleFill} />
+  <circle class={circleFill} cx="50" cy="50" r="25" />
 </svg>
 
 <style>
@@ -49,22 +50,19 @@
     box-sizing: content-box;
   }
   circle {
-    cx: calc(var(--width) / 2);
-    cy: calc(var(--width) / 2);
-    r: calc(var(--width) / 4);
-    /* fill: rgba(var(--colors-fgs3), 1); */
+    transform-origin: center;
   }
   @keyframes scale {
     0% {
-      r: calc(var(--width) / 4);
+      transform: scale(1);
     }
 
     50% {
-      r: calc(var(--width) / 2.1);
+      transform: scale(2);
     }
 
     100% {
-      r: calc(var(--width) / 4);
+      transform: scale(1);
     }
   }
 

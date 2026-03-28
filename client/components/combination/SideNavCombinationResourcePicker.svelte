@@ -29,6 +29,7 @@
 
 <div class="flex flex-col gap-3 w-full">
   <TextSearchInput
+    value=""
     placeholder="Add existing resource"
     icon="magnifying-glass"
     {searchCallback}

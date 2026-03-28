@@ -207,19 +207,24 @@
       />
     {:else}
       <!-- Syntax highlighted view -->
-      <pre 
-        class="hljs m-0 p-4 text-sm font-mono leading-relaxed overflow-x-auto cursor-text h-full"
-        style="min-height: 300px;"
+      <button
+        type="button"
+        class="block h-full w-full cursor-text border-none bg-transparent p-0 text-left"
         on:click={async () => {
           isEditing = true;
           await tick();
           textareaElement?.focus();
           autoResize();
         }}
-      ><code 
-        bind:this={codeElement} 
-        class="language-{language || 'plaintext'}"
-      >{code || 'Click to edit code...'}</code></pre>
+      >
+        <pre
+          class="hljs m-0 p-4 text-sm font-mono leading-relaxed overflow-x-auto h-full"
+          style="min-height: 300px;"
+        ><code
+          bind:this={codeElement}
+          class="language-{language || 'plaintext'}"
+        >{code || "Click to edit code..."}</code></pre>
+      </button>
     {/if}
   </div>
 </div>

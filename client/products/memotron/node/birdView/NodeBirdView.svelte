@@ -26,7 +26,9 @@
   import {
     NodeView,
     webNodeTypeList,
-    type INode
+    type INode,
+    type INodeLinkThumb,
+    type INodeThumb
   } from "@21n/products/memotron/node/node.type";
   import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
   import type { DropdownItem } from "@21n/types/dropdownItem.type";
@@ -62,12 +64,31 @@
   let isAutoGrouping = true;
   let isTraverseMode =
     $page.url?.searchParams?.get(AppSearchParam.TRAVERSE) === "true";
-  let combos: any[] = [];
-  let graphData: {
-    nodes: any[];
-    edges: any[];
-    combos: any[];
+  type GraphNode = {
+    id: string;
+    label: string;
+    type?: string;
+    combo?: string;
+    badge?: string | number;
+    icon?: string;
+    fill?: string;
   };
+  type GraphEdge = {
+    source: string;
+    target: string;
+    id?: IRecordId;
+    linkType?: LinkType | string;
+  };
+  type GraphCombo = {
+    id: string;
+    label: string;
+  };
+  let combos: GraphCombo[] = [];
+  let graphData: {
+    nodes: GraphNode[];
+    edges: GraphEdge[];
+    combos: GraphCombo[];
+  } = { nodes: [], edges: [], combos: [] };
   let splitResource: IRecordId | undefined = undefined;
   const depthOptions = [
     {
@@ -130,7 +151,7 @@
     }
   }
 
-  async function loadLinkedNodesData(links: any[]) {
+  async function loadLinkedNodesData(links: INodeLinkThumb[]) {
     try {
       linkedNodes = await nodeStore.selectMany({
         properties: {
@@ -138,7 +159,7 @@
           expand: ["parent"]
         },
         filters: {
-          id: links?.map((x) => x.linkedTo.toString())
+          id: links.map((x) => x.linkedTo.toString())
         }
       });
     } catch (error) {
@@ -151,21 +172,23 @@
    *
    * Note: removed no relation category altogether since this is not looking visually appealing when no other link tags are present. Even if other link tags are present, not having `no relation` category is not looking visually appealing.
    */
-  async function refreshGraphData(links: any[], depth: number) {
+  async function refreshGraphData(
+    links: INodeLinkThumb[] | undefined,
+    depth: number
+  ) {
     try {
-      if (!links) return;
-      await loadLinkedNodesData(links);
+      const activeNode = $node;
+      const activeLinks = links ?? [];
+      if (activeLinks.length === 0) {
+        graphData = { nodes: [], edges: [], combos: [] };
+        return;
+      }
+      await loadLinkedNodesData(activeLinks);
       if (isAutoGrouping) {
         let linkTagsInUse = new Set<string>();
-        let nodes: {
-          id: string;
-          label: string;
-          type?: string;
-          combo?: string;
-          badge?: string | number;
-        }[] = linkedNodes.map((node: INode) => {
-          const link = $node.links?.find((l) =>
-            isSameResource(l.linkedTo, node)
+        let nodes: GraphNode[] = linkedNodes.map((linkedNode: INode) => {
+          const link = activeLinks.find((l) =>
+            isSameResource(l.linkedTo, linkedNode)
           );
           let combo = null;
           if (link?.tags?.length === 0) {
@@ -187,30 +210,30 @@
             linkTagsInUse.add(combo);
           }
           return {
-            id: node.id.toString(),
-            label: resolveNodeLabelString(node),
-            icon: webNodeTypeList.includes(node.contentType)
-              ? resolveNodeFavicon(node)
+            id: linkedNode.id.toString(),
+            label: resolveNodeLabelString(linkedNode as INodeThumb),
+            icon: webNodeTypeList.includes(linkedNode.contentType)
+              ? resolveNodeFavicon(linkedNode)
               : undefined,
-            fill: resolveNodeGraphFill(node),
-            combo
+            fill: resolveNodeGraphFill(linkedNode),
+            combo: combo ?? undefined
           };
         });
         nodes.push({
-          id: $node.id.toString(),
+          id: activeNode.id.toString(),
           type: "hexagon",
-          badge: $node.links?.length,
-          label: resolveNodeLabelString($node),
-          icon: webNodeTypeList.includes($node.contentType)
-            ? resolveNodeFavicon($node)
+          badge: activeLinks.length,
+          label: resolveNodeLabelString(activeNode as INodeThumb),
+          icon: webNodeTypeList.includes(activeNode.contentType)
+            ? resolveNodeFavicon(activeNode)
             : undefined,
-          fill: resolveNodeGraphFill($node),
+          fill: resolveNodeGraphFill(activeNode),
           combo: undefined
         });
 
-        let edges = $node.links?.map((l) => {
+        let edges: GraphEdge[] = activeLinks.map((l) => {
           return {
-            source: $node.id.toString(),
+            source: activeNode.id.toString(),
             target: l.linkedTo.toString(),
             id: l.links?.[0]?.id,
             linkType: l.linkType
@@ -236,11 +259,11 @@
         // ];
         if (depth > 1) {
           const remainingNodes = nodes
-            .filter((x) => x.id !== $node.id.toString())
+            .filter((x) => x.id !== activeNode.id.toString())
             .map((x) => x.id);
           const data = await fetchDepth(remainingNodes);
           if (!data.edges || data.edges.length === 0) return;
-          edges?.push(...data.edges);
+          edges.push(...data.edges);
           nodes.push(...data.nodes);
           nodes = nodes.filter(removeDuplicatesFilter).map((x) => {
             return {
@@ -250,7 +273,7 @@
           });
         }
         edges = edges
-          ?.map((x) => {
+          .map((x) => {
             return {
               ...x,
               linkType:
@@ -259,7 +282,6 @@
                   : enumToString(x.linkType)
             };
           })
-          .filter((x) => x)
           .filter(removeDuplicatesFilter)
           .filter((x, index) => {
             return (
@@ -267,23 +289,16 @@
               x.target &&
               nodes.some((y) => y.id === x.source) &&
               nodes.some((y) => y.id === x.target) &&
-              edges?.findIndex(
+              edges.findIndex(
                 (y) => y.source === x.source && y.target === x.target
               ) === index
             );
           });
-        if (depth === 1) {
-          graphData = {
-            nodes,
-            edges,
-            combos
-          };
-        } else {
-          graphData = {
-            nodes,
-            edges
-          };
-        }
+        graphData = {
+          nodes,
+          edges,
+          combos: depth === 1 ? combos : []
+        };
       }
     } catch (error) {
       logger.error({ at: "refreshGraphData", error });
@@ -292,6 +307,7 @@
   }
 
   export async function fetchDepth(nodes: IRecordId[]) {
+    const activeNode = $node;
     const linkProperties = {
       select: ["id", "in", "out", "linkType", "tags"]
     };
@@ -307,15 +323,15 @@
         out: nodes.map((x) => x.toString())
       }
     });
-    const edges = [...inLinks, ...outLinks]
+    const edges: GraphEdge[] = [...inLinks, ...outLinks]
       .filter(
         (link: any) =>
           link.in &&
           link.out &&
           link.in.toString().includes("node") &&
           link.out.toString().includes("node") &&
-          !isSameResource(link.in, $node) &&
-          !isSameResource(link.out, $node)
+          !isSameResource(link.in, activeNode) &&
+          !isSameResource(link.out, activeNode)
       )
       .map((link: any) => ({
         source: link.in.toString(),
@@ -326,7 +342,7 @@
     const allNodesList = Array.from(
       new Set(edges.map((link: any) => [link.source, link.target]).flat())
     );
-    let allNodes = await nodeStore.selectMany({
+    let allNodes: GraphNode[] = await nodeStore.selectMany({
       properties: {
         select: ["id", "label", "body", "contentType"],
         expand: ["parent"]
@@ -339,7 +355,7 @@
     allNodes = allNodes.map((node: any) => {
       return {
         id: node.id.toString(),
-        label: resolveNodeLabelString(node)
+        label: resolveNodeLabelString(node as INodeThumb)
       };
     });
     return { nodes: allNodes, edges };

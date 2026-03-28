@@ -1,5 +1,8 @@
 <script lang="ts">
   import {
+    type IAudioBody,
+    type IClip,
+    type IWebPage,
     NodeType,
     webNodeTypeList,
     type INode
@@ -47,6 +50,14 @@
     _file = result;
     _url = _file.url ?? "";
   }
+
+  function resolveAudioBody(body: INode["body"]) {
+    return typeof body === "object" && body ? (body as IAudioBody) : undefined;
+  }
+
+  function resolveWebNode(node: INode) {
+    return node as unknown as IClip | IWebPage;
+  }
 </script>
 
 {#await resolveData()}
@@ -60,7 +71,7 @@
     <button class="flex w-full items-center justify-between h-12">
       <span class="flex items-center gap-2">
         <Icon icon={resolveFileIcon(_file)} size={Size.lg} />
-        <span class="text-sm">{_file.name ?? _file.label}</span>
+        <span class="text-sm">{_file.label}</span>
         <span class="text-xs text-fgs4">
           {_file.size ? formatBytes(_file.size) : "Unknown size"}
         </span>
@@ -71,7 +82,7 @@
     <!-- TODO - relay refresh event to top instead of refreshing here -->
     <AudioContent
       on:refresh
-      body={node?.body}
+      body={resolveAudioBody(node.body)}
       url={_url}
       nodeId={node.id.toString()}
       metadata={node.metadata}
@@ -80,7 +91,11 @@
   {:else if (node.contentType === NodeType.IMAGE || node.contentType === NodeType.VIDEO) && _file}
     <FileView file={_file} bind:renderingDetails class="!object-contain" />
   {:else if webNodeTypeList.includes(node.contentType)}
-    <WebNodeContent {node} bind:this={webContentRef} {accessPoint} />
+    <WebNodeContent
+      node={resolveWebNode(node)}
+      bind:this={webContentRef}
+      {accessPoint}
+    />
   {:else if node.contentType === NodeType.PDF && _url}
     <PdfAnnotator
       bind:this={pdfContent}

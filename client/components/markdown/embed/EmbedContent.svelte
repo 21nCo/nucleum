@@ -3,7 +3,8 @@
   import {
     mediaNodeTypeList,
     NodeType,
-    type INode
+    type INode,
+    type INodeThumb
   } from "@21n/products/memotron/node/node.type";
   import { getContext, onMount, createEventDispatcher } from "svelte";
   import type { IEmbedBlockBody } from "@21n/components/markdown/md.type";
@@ -196,6 +197,20 @@
     debouncedDispatchUpdateEvent({ height });
   }
 
+  function resolveEmbedTarget(target: EventTarget | null) {
+    return target as HTMLElement | null;
+  }
+
+  function resolveNodeThumb(node: INode) {
+    return node as unknown as INodeThumb;
+  }
+
+  function isYoutubeEmbedSubType(subType: NodeType | undefined) {
+    return (
+      subType === NodeType.YOUTUBE_VIDEO || subType === NodeType.YOUTUBE_SHORT
+    );
+  }
+
   function onEditTitle(e: MouseEvent) {
     if ($view.isConstrainedWidth) {
       if (body.id) appStore.openResource(body.id, AccessMode.POP);
@@ -234,7 +249,7 @@
         onResize: onResize
       }}
       on:click={(e) => {
-        if (e.target && e.target.classList.contains("resizer")) return;
+        if (resolveEmbedTarget(e.target)?.classList.contains("resizer")) return;
         if (_mediaBlock?.contentType === NodeType.FILE) return;
         if (body.id) appStore.openResource(body.id, AccessMode.POP);
       }}
@@ -309,7 +324,7 @@
               })}
             >
               <NodeTitleLabelPart
-                item={_mediaBlock}
+                item={resolveNodeThumb(_mediaBlock)}
                 accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
               />
               {#if !isShowPreview && _mediaBlockFile}
@@ -404,7 +419,7 @@
       {/if}
     </button>
   {/key}
-{:else if body?.url && [NodeType.YOUTUBE_VIDEO, NodeType.YOUTUBE_SHORT].includes(body?.subType)}
+{:else if body?.url && isYoutubeEmbedSubType(body?.subType)}
   <YoutubeVideoPreview url={body.url} />
 {:else if body?.subType === NodeType.COLLECTION_AS_EMBED && body?.id}
   <div class="h-96 w-[90vw] py-4 max-w-full overflow-x-auto">

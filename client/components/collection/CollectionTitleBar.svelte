@@ -35,6 +35,7 @@
   import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
   import BackButton from "@21n/elements/button/BackButton.svelte";
   import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
+  import type { ICollection } from "@21n/components/collection/collection.type";
 
   const dispatch = createEventDispatcher();
   export let searchQuery: string = "";
@@ -79,6 +80,10 @@
 
   function resolveSearchPlaceholder(count: number) {
     return `Search this collection ${count ? `(${count} items)` : ""}`;
+  }
+
+  function resolveCollectionForContextMenu() {
+    return $collection as unknown as ICollection;
   }
 </script>
 
@@ -233,9 +238,13 @@
     <div class="flex gap-2 justify-center items-center">
       <ContextMenuAction
         menuResolver={() =>
-          resolveCollectionContextMenu($collection, ResourceAccessPoint.SELF, {
-            accessMode: $collection.accessMode
-          })}
+          resolveCollectionContextMenu(
+            resolveCollectionForContextMenu(),
+            ResourceAccessPoint.SELF,
+            {
+              accessMode: $collection.accessMode
+            }
+          )}
         position={Placement.Left}
         id="collectionContextMenu"
         size={Size.lg}
@@ -317,7 +326,7 @@
         <ContextMenuAction
           menuResolver={() =>
             resolveCollectionContextMenu(
-              $collection,
+              resolveCollectionForContextMenu(),
               ResourceAccessPoint.SELF,
               {
                 accessMode: $collection.accessMode

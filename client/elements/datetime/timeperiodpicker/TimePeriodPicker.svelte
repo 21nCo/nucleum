@@ -9,9 +9,19 @@
   import { createEventDispatcher } from "svelte";
   export let period: TimePeriod;
   export let parentBgIndex: number = 1;
+  $: void parentBgIndex;
   let isActive: boolean = false;
   $: label = timePeriodLabel(period);
   const dispatch = createEventDispatcher();
+
+  function onTimePeriodChange(val: TimePeriod) {
+    period = val;
+    dispatch("change", val);
+  }
+
+  function onPopoverChange(e: Event) {
+    isActive = (e as CustomEvent<{ open?: boolean }>).detail?.open ?? false;
+  }
 </script>
 
 <FormElement style={InputStyle.BORDERED} isFocused={isActive}>
@@ -23,15 +33,10 @@
       isRenderAsModalForCW: true,
       componentProps: {
         period,
-        onChange: (val) => {
-          period = val;
-          dispatch("change", val);
-        }
+        onChange: onTimePeriodChange
       }
     }}
-    on:change={(e) => {
-      isActive = e.detail?.open;
-    }}
+    on:change={onPopoverChange}
   >
     <span class="text-wrap">
       {label}

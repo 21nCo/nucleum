@@ -14,6 +14,14 @@
   export let hoveredItem: ISelectValue | undefined = undefined;
   export let tabCounts: Map<string, number> = new Map();
   if (!selected) selected = tabs[0].value;
+
+  function resolveCountKey(value: ISelectValue) {
+    return value.toString();
+  }
+
+  function onTabHover(value: ISelectValue, isHovered: boolean) {
+    hoveredItem = isHovered ? value : undefined;
+  }
 </script>
 
 <div class="flex flex-1 min-w-0 mo:w-full mo:pb-1 overflow-x-auto gap-3">
@@ -34,13 +42,8 @@
               selected !== option.value && hoveredItem !== option.value
           }
         )}
-        use:hoverable
-        on:hover={(e) => {
-          if (e.detail) {
-            hoveredItem = option.value;
-          } else {
-            hoveredItem = undefined;
-          }
+        use:hoverable={{
+          onHover: (isHovered) => onTabHover(option.value, isHovered)
         }}
         on:click={() => {
           selected = option.value;
@@ -49,9 +52,9 @@
       >
         <span class="flex items-center gap-2">
           {option.label}
-          {#if tabCounts.has(option.value)}
+          {#if tabCounts.has(resolveCountKey(option.value))}
             <TabCountBadge
-              count={tabCounts.get(option.value)}
+              count={tabCounts.get(resolveCountKey(option.value))}
               isActive={selected === option.value}
               hasCustomColor={!!option.color}
             />

@@ -32,6 +32,7 @@
   export let orientation: Orientation = Orientation.Vertical;
   export let hasCantileverButtons: boolean = false;
   export let isDynamicSize: boolean = false;
+  $: isOnRight;
   let dialog: HTMLDialogElement;
   /**
    * Safari focuses the dialog element or a button present on the dialog when the dilaog is shown. This focusTrap is used to remove the focus from the dialog element or the button.
