@@ -11,6 +11,10 @@ on:
       - main
   workflow_dispatch: {}
 
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   app-checks:
     runs-on: ubuntu-latest
@@ -121,7 +125,17 @@ jobs:
             '  tls internal' \
             '  reverse_proxy 127.0.0.1:${{ matrix.port }}' \
             '}' > Caddyfile
-          sudo caddy run --config "$PWD/Caddyfile" --adapter caddyfile &
+          CADDY_LOG="$RUNNER_TEMP/caddy-${{ matrix.product }}.log"
+          sudo caddy run --config "$PWD/Caddyfile" --adapter caddyfile >"$CADDY_LOG" 2>&1 &
+          CADDY_PID=$!
+          cleanup() {
+            curl -fsS -X POST http://127.0.0.1:2019/stop >/dev/null 2>&1 || true
+            if kill -0 "$CADDY_PID" 2>/dev/null; then
+              sudo kill "$CADDY_PID" >/dev/null 2>&1 || true
+              wait "$CADDY_PID" >/dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup EXIT
           READY=0
           for i in $(seq 1 30); do
             curl -sf --connect-timeout 1 http://127.0.0.1:2019/config/ >/dev/null && READY=1 && break
