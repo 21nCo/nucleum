@@ -1,11 +1,29 @@
-{"name":"e2e-playwright","private":true,"scripts":{"test":"playwright test","test:smoke":"playwright test --project=nucleum --grep @smoke","test:regression":"playwright test --grep @regression","test:ci":"playwright test --reporter=line",
-    "e2e:save-auth":"npx tsx scripts/save-google-auth-state.ts",
-    "e2e:save-auth:nucleum":"PRODUCT=nucleum APP_BASE_URL=https://local.nucleum.app npx tsx scripts/save-google-auth-state.ts",
-    "e2e:save-auth:memotron":"PRODUCT=memotron APP_BASE_URL=https://local.memotron.app npx tsx scripts/save-google-auth-state.ts",
-    "e2e:save-auth:pointron":"PRODUCT=pointron APP_BASE_URL=https://local.pointron.app npx tsx scripts/save-google-auth-state.ts",
-    "e2e:save-email-auth":"npx tsx scripts/save-email-auth-state.ts",
-    "e2e:save-email-auth:nucleum":"PRODUCT=nucleum APP_BASE_URL=https://local.nucleum.app npx tsx scripts/save-email-auth-state.ts",
-    "e2e:save-email-auth:memotron":"PRODUCT=memotron APP_BASE_URL=https://local.memotron.app npx tsx scripts/save-email-auth-state.ts",
-    "e2e:save-email-auth:pointron":"PRODUCT=pointron APP_BASE_URL=https://local.pointron.app npx tsx scripts/save-email-auth-state.ts"},"dependencies":{"@21n/products":"*"},"devDependencies":{"@21n/components":"*","@21n/types":"*","@playwright/test":"^1.49.0","@types/node":"^22.0.0","dotenv":"^16.4.5",
-    "tsx":"^4.19.0"}
+{
+  "name": "e2e-playwright",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:regression": "playwright test --grep @regression",
+    "test:ci": "playwright test --reporter=line",
+    "e2e:save-auth": "npx tsx scripts/save-google-auth-state.ts",
+    "e2e:save-auth:nucleum": "PRODUCT=nucleum APP_BASE_URL=https://local.nucleum.app npx tsx scripts/save-google-auth-state.ts",
+    "e2e:save-auth:memotron": "PRODUCT=memotron APP_BASE_URL=https://local.memotron.app npx tsx scripts/save-google-auth-state.ts",
+    "e2e:save-auth:pointron": "PRODUCT=pointron APP_BASE_URL=https://local.pointron.app npx tsx scripts/save-google-auth-state.ts",
+    "e2e:save-email-auth": "npx tsx scripts/save-email-auth-state.ts",
+    "e2e:save-email-auth:nucleum": "PRODUCT=nucleum APP_BASE_URL=https://local.nucleum.app npx tsx scripts/save-email-auth-state.ts",
+    "e2e:save-email-auth:memotron": "PRODUCT=memotron APP_BASE_URL=https://local.memotron.app npx tsx scripts/save-email-auth-state.ts",
+    "e2e:save-email-auth:pointron": "PRODUCT=pointron APP_BASE_URL=https://local.pointron.app npx tsx scripts/save-email-auth-state.ts"
+  },
+  "dependencies": {
+    "@21n/products": "*"
+  },
+  "devDependencies": {
+    "@21n/components": "*",
+    "@21n/types": "*",
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.0.0",
+    "dotenv": "^16.4.5",
+    "tsx": "^4.19.0"
+  }
 }

@@ -1,0 +1,87 @@
+name: Weekly Full Tests
+
+on:
+  schedule:
+    - cron: "0 3 * * 0"
+  workflow_dispatch: {}
+
+jobs:
+  vitest-fuzz:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Execute property and fuzz suites
+        run: npm run test
+        env:
+          VITEST_FUZZ: "1"
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: |
+            coverage/**/coverage-final.json
+            tests/coverage/**/coverage-final.json
+          flags: vitest-weekly
+          disable_search: true
+      - name: Persist coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-coverage
+          path: coverage
+
+  playwright-regression:
+    runs-on: ubuntu-latest
+    needs: vitest-fuzz
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      actions: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - product: nucleum
+            workspace: nucleus-app
+            port: 5050
+          - product: pointron
+            workspace: pointron-app
+            port: 5001
+          - product: memotron
+            workspace: memotron-app
+            port: 5002
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+        working-directory: apps/e2e-playwright
+      - name: Run Playwright regression for ${{ matrix.product }}
+        env:
+          E2E_LOGIN_EMAIL: ${{ secrets.E2E_LOGIN_EMAIL }}
+          E2E_LOGIN_PASSWORD: ${{ secrets.E2E_LOGIN_PASSWORD }}
+        run: node tools/ci/run-playwright-product.mjs --product=${{ matrix.product }} --workspace=${{ matrix.workspace }} --port=${{ matrix.port }} --suite=regression
+      - name: Persist Playwright evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-playwright-${{ matrix.product }}
+          path: apps/e2e-playwright/artifacts
