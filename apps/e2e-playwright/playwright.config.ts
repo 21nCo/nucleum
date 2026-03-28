@@ -20,11 +20,12 @@ function getProjectBaseURL(projectName: string): string {
     );
   }
   const envKey = `APP_BASE_URL_${projectName.toUpperCase()}`;
-  return (process.env[envKey] ?? process.env.APP_BASE_URL) ?? defaultBaseURL;
+  return process.env[envKey] ?? process.env.APP_BASE_URL ?? defaultBaseURL;
 }
 
 function getAuthFilePath(projectName: string): string {
-  const fileName = projectName === "nucleum" ? "user.json" : `user-${projectName}.json`;
+  const fileName =
+    projectName === "nucleum" ? "user.json" : `user-${projectName}.json`;
   return path.join(authDir, fileName);
 }
 
@@ -102,6 +103,7 @@ export default defineConfig({
     {
       name: "pointron",
       testMatch: [
+        "tests/smoke/**/*.spec.ts",
         "tests/shared/**/*.spec.ts",
         "tests/pointron/**/*.spec.ts"
       ],
@@ -113,6 +115,7 @@ export default defineConfig({
     {
       name: "memotron",
       testMatch: [
+        "tests/smoke/**/*.spec.ts",
         "tests/shared/**/*.spec.ts",
         "tests/memotron/**/*.spec.ts"
       ],

@@ -5,6 +5,7 @@
     SwitcherStyle
   } from "@21n/types/switcher.enum";
   export let selectedSound: string = "";
+  $: selectedSound;
   let sounds: string[] = [
     "None",
     "Tick",

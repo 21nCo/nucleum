@@ -42,16 +42,21 @@
   let labelInputElement: any;
   let labelEntry: string;
   let scrollToTask: any = null;
-  $: workedTime =
-    context === "history" && focusItem.worked
-      ? focusItem.worked
-      : resolveTaskFocus(
-          context === "history" ? intervals : $activeSession.intervals,
-          focusItem.blocks,
-          isInprogress && $currentFocusItem
-            ? $currentFocusItem.start
-            : undefined
-        );
+  function resolveWorkedTime() {
+    if (
+      context === "history" &&
+      "worked" in focusItem &&
+      typeof focusItem.worked === "number"
+    ) {
+      return focusItem.worked;
+    }
+    return resolveTaskFocus(
+      context === "history" ? intervals : $activeSession.intervals,
+      focusItem.blocks,
+      isInprogress && $currentFocusItem ? $currentFocusItem.start : undefined
+    );
+  }
+  $: workedTime = resolveWorkedTime();
   // $: console.log({
   //   workedTime,
   //   task,

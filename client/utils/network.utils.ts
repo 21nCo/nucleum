@@ -223,7 +223,7 @@ export async function performApiCall(
   params?: {
     isFileApi?: boolean;
   }
-) {
+): Promise<any> {
   // console.log("Performing API call:", { endpoint, method, body });
   const isExtEnv = isExtensionEnvironment();
   if (isExtEnv && isContentScript()) {

@@ -30,6 +30,7 @@
   import NodePanelSwitcher from "./floatingBar/NodePanelSwitcher.svelte";
   import { fly } from "svelte/transition";
   import { resolvePanelParam } from "@21n/components/resource/panelParam.mixin";
+  import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
   import { Context } from "@21n/types/appStore.type";
   import { getContext } from "svelte";
   import { readable, type Writable } from "svelte/store";
@@ -82,7 +83,7 @@
     const result = await node.init({
       accessMode,
       accessPoint: ResourceAccessPoint.SELF,
-      panel: panel ?? undefined
+      panel: (panel as ResourcePanelType | undefined) ?? undefined
     });
     if (result && "error" in result) {
       error = result.error;

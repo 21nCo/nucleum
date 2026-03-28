@@ -43,6 +43,7 @@
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
   export let accessMode: AccessMode = AccessMode.POP;
   export let status: IInlineStatus | undefined = undefined;
+  $: accessPoint;
   const dev_isPanelSwitcherOnTop = false;
 
   const container =

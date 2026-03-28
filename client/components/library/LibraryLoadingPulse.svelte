@@ -8,6 +8,7 @@
    * @deprecated
    */
   export let resource: Resource = Resource.unknown;
+  $: resource;
 </script>
 
 {#if arrangement === Arrangement.LIST}

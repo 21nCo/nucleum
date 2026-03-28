@@ -3,7 +3,8 @@
   import { cn } from "@21n/utils/ui.utils";
   import type {
     INode,
-    INodeLinkThumb
+    INodeLinkThumb,
+    INodeThumb
   } from "@21n/products/memotron/node/node.type";
   import type { IRecordId } from "@21n/types/data.type";
   import LinkTagger from "@21n/products/memotron/linking/LinkTagger.svelte";
@@ -16,14 +17,14 @@
   const dispatch = createEventDispatcher();
   export let accessPointId: IRecordId;
   export let link: INodeLinkThumb;
-  export let item: INode;
+  export let item: INode | INodeThumb;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.NODE_LINKS;
   export let accessPointContext: string | undefined = undefined;
   let isShowLinkTagger = false;
 
   function propagateLinkTypeClick(
     linkType: LinkType,
-    direction: "incoming" | "outgoing"
+    direction: "incoming" | "outgoing" | undefined
   ) {
     return (e: Event) => {
       e.stopPropagation();

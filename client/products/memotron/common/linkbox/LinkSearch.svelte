@@ -18,6 +18,7 @@
   import type { IRecordId } from "@21n/types/data.type";
   import context from "@21n/stores/context.store";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { generateResourceId } from "@21n/components/flux/flux.utils";
   const dispatch = createEventDispatcher();
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CAPTURE;
   export let isCollectionsLane: boolean = false;
@@ -170,6 +171,7 @@
       );
     } else {
       result = await nodeStore.create({
+        id: generateResourceId(Resource.node),
         label: e.detail.value,
         contentType: NodeType.NODULAR_MARKDOWN,
         body: ""

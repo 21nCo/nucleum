@@ -18,13 +18,26 @@
   import { InfoTextType } from "@21n/types/text.type";
   import { cn } from "@21n/utils/ui.utils";
   import { linkTagStore } from "@21n/products/memotron/linking/link.store";
-  import type { ILinkTag } from "@21n/products/memotron/linking/link.type";
+  import type {
+    ILinkTag,
+    ILinkTagGroup
+  } from "@21n/products/memotron/linking/link.type";
   import LinkTagsGroup from "@21n/products/memotron/linking/LinkTagsGroup.svelte";
 
   export let accessPoint: ResourceAccessPoint | null = null;
   let inputValue: string = "";
   let errorMessage: string | null = null;
   let isAddFocused = false;
+  let groups: ILinkTagGroup[] = [];
+
+  function resolveSavedLinkTag(result: ILinkTag | ILinkTag[] | undefined) {
+    return Array.isArray(result) ? result[0] : result;
+  }
+
+  function resolveGroupItems(groupName: string) {
+    return groups.find((group) => group.group === groupName)?.items ?? [];
+  }
+
   async function save(params?: { group: string; label: string }) {
     if (!inputValue && !params?.label) {
       errorMessage = "Tag cannot be empty";
@@ -37,8 +50,9 @@
       result = await linkTagStore.save(inputValue);
     }
     logger.log({ at: "LinkTagsControlPanel save", result });
-    if (result) {
-      toasts.success(`**${result[0]?.label}** added to link tags`);
+    const savedLinkTag = resolveSavedLinkTag(result);
+    if (savedLinkTag?.label) {
+      toasts.success(`**${savedLinkTag.label}** added to link tags`);
     }
     inputValue = "";
   }
@@ -53,9 +67,9 @@
     linkTagStore.modify(e.detail.id, e.detail);
   }
 
-  function onUpdategroup(e: CustomEvent) {
+  function onUpdategroup(e: CustomEvent<{ group: string; newgroup: string }>) {
     const { group, newgroup } = e.detail;
-    const tags = groups.find((x) => x.group === group)?.items.map((x) => x.id);
+    const tags = resolveGroupItems(group).map((item) => item.id);
     logger.log({
       at: "LinkTagsControlPanel onUpdategroup",
       group,
@@ -65,15 +79,19 @@
     if (tags) linkTagStore.bulkModify(tags, { group: newgroup });
   }
 
-  async function onBulkDelete(e: CustomEvent) {
+  async function onBulkDelete(e: CustomEvent<string>) {
     const group = e.detail;
-    const tags = groups.find((x) => x.group === group)?.items.map((x) => x.id);
+    const tags = resolveGroupItems(group).map((item) => item.id);
     logger.log({ at: "LinkTagsControlPanel onBulkDelete", group, tags });
     if (tags) await linkTagStore.bulkTrash(tags);
     else toasts.error("No tags to delete");
   }
 
-  $: groups = $linkTagStore ? linkTagStore.transform($linkTagStore) : [];
+  $: groups = $linkTagStore
+    ? linkTagStore
+        .transform($linkTagStore)
+        .filter((group): group is ILinkTagGroup => Boolean(group))
+    : [];
 </script>
 
 <div

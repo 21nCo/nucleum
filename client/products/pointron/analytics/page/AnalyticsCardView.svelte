@@ -23,7 +23,7 @@
   import type { IRecordId } from "@21n/types/data.type";
   import type { ISessionLog } from "@21n/products/pointron/logs/log.type";
   import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
-  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import type { IGoal, IGoalThumb } from "@21n/components/goals/goal.type";
   import { resolveGoalColor } from "@21n/components/goals/goal.utils";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
@@ -102,6 +102,10 @@
     return goal;
   }
 
+  function resolveGoalThumb(goal: IGoal | IGoalThumb | undefined) {
+    return goal as IGoalThumb | undefined;
+  }
+
   async function refresh() {
     isRefreshing = true;
     data = [];
@@ -158,7 +162,7 @@
           topLevelGoal &&
           !colors.some((x) => x.label === topLevelGoal.label)
         ) {
-          const color = resolveGoalColor(topLevelGoal);
+          const color = resolveGoalColor(resolveGoalThumb(topLevelGoal));
           colors.push({
             label: topLevelGoal.label,
             color: color ?? randomColor()
@@ -170,7 +174,7 @@
           focus: log.focus || 0,
           goal: goalLabel,
           goalId: log.goalId || "",
-          start: new Date(tzCorrectedStart),
+          start: new Date(tzCorrectedStart).toISOString(),
           topLevelGoal: topLevelGoal?.label ?? goalLabel
         };
       };

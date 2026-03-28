@@ -367,14 +367,15 @@
       }
 
       isRefreshingTotalCount = true;
-      totalCountAfterFilter = await searchStore.resolveCount({
-        resource,
-        subType: !isGenericSubType()
-          ? (selectedSubType.toUpperCase() as NodeType | CollectionType)
-          : undefined,
-        filters,
-        signal: abortController?.signal
-      });
+      totalCountAfterFilter =
+        (await searchStore.resolveCount({
+          resource,
+          subType: !isGenericSubType()
+            ? (selectedSubType.toUpperCase() as NodeType | CollectionType)
+            : undefined,
+          filters,
+          signal: abortController?.signal
+        })) ?? 0;
       isRefreshingTotalCount = false;
     } catch (e) {
       if (e instanceof Error && e.message === "Operation aborted") {
@@ -506,13 +507,18 @@
       if (!("children" in mutation.record)) return;
     } else if (mutation.action === PersistenceActionType.MERGE) return;
 
+    const insertedRecord =
+      mutation.action === PersistenceActionType.INSERT ||
+      mutation.action === PersistenceActionType.BULK_INSERT
+        ? mutation.records?.[0]
+        : undefined;
     if (
       resource === Resource.node &&
       mutation.action === PersistenceActionType.INSERT &&
-      (!rootNodeTypeList.includes(
-        mutation.records[0].contentType as NodeType
-      ) ||
-        mutation.records[0].creationContext)
+      insertedRecord &&
+      "contentType" in insertedRecord &&
+      (!rootNodeTypeList.includes(insertedRecord.contentType as NodeType) ||
+        ("creationContext" in insertedRecord && insertedRecord.creationContext))
     ) {
       return;
     }

@@ -12,7 +12,11 @@
     ResourceActionType
   } from "@21n/components/flux/resourceStores/resource.type";
   import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
-  import { GoalStatus, type IGoal } from "@21n/components/goals/goal.type";
+  import {
+    GoalStatus,
+    type IGoal,
+    type IGoalThumb
+  } from "@21n/components/goals/goal.type";
   import modalEvent from "@21n/components/modal/modal.store";
   import { SearchStore } from "@21n/components/record/record.store";
   import { taskStore } from "@21n/components/tasks/task.store";
@@ -37,25 +41,34 @@
   let searchStore = new SearchStore(Resource.goal);
   let goal: IGoal | undefined = undefined;
   let isFocusing = false;
+  let isCreateInProgress = false;
   const dispatch = createEventDispatcher();
-  onMount(async () => {
-    if (goalId) {
-      goal = await goalStore.select(goalId);
-      isShowGoalPicker = false;
-    }
+  onMount(() => {
     const appEventSub = appEvents.subscribe((x) => {
       if (x.event === GlobalEvent.ENTER && isFocusing) {
         handleCreate();
       }
     });
+
+    const initialize = async () => {
+      if (goalId) {
+        goal = await goalStore.select(goalId);
+        isShowGoalPicker = false;
+      }
+    };
+
+    void initialize();
+
     return () => {
       appEventSub();
     };
   });
 
-  function handleKeydown(event: KeyboardEvent) {
-    if (event?.key === "ArrowDown") {
-      event.preventDefault();
+  function handleKeydown(event: CustomEvent<KeyboardEvent>) {
+    const keyboardEvent = event.detail;
+    if (!(keyboardEvent instanceof KeyboardEvent)) return;
+    if (keyboardEvent.key === "ArrowDown") {
+      keyboardEvent.preventDefault();
       isShowGoalPicker = true;
       setTimeout(() => {
         goalSearchInput?.focus();
@@ -64,9 +77,11 @@
     }
   }
 
-  function handleKeydownFromGoalSearch(event: CustomEvent<KeyboardEvent>) {
-    if (event?.detail?.key === "ArrowUp") {
-      event.preventDefault();
+  function handleKeydownFromGoalSearch(event: CustomEvent<any>) {
+    const keyboardEvent = event?.detail?.event ?? event?.detail;
+    if (!(keyboardEvent instanceof KeyboardEvent)) return;
+    if (keyboardEvent.key === "ArrowUp") {
+      keyboardEvent.preventDefault();
       isShowGoalPicker = false;
       setTimeout(() => {
         inputRef?.focus();
@@ -74,7 +89,10 @@
     }
   }
 
-  let isCreateInProgress = false;
+  function resolveGoalThumb(goal: IGoal) {
+    return goal as unknown as IGoalThumb;
+  }
+
   async function handleCreate(event?: any) {
     if (isCreateInProgress) return;
     try {
@@ -180,7 +198,7 @@
     {:else if goal}
       <div class="min-w-0 flex-1 transition-all duration-200">
         <TaskThumbnailGoalLabel
-          {goal}
+          goal={resolveGoalThumb(goal)}
           on:clearGoal={() => {
             isShowGoalPicker = true;
             goal = undefined;

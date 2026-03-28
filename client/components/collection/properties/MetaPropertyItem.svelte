@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { get } from "svelte/store";
   import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { formatDatetime } from "@21n/utils/time.utils";
@@ -10,7 +11,23 @@
   import LocationProperty from "@21n/components/collection/properties/locationProperty/LocationProperty.svelte";
   import type { ICollectionItem } from "@21n/components/collection/collection.type";
   export let property: IProperty;
-  export let item: ICollectionItem;
+  export let item: ICollectionItem | null | undefined;
+
+  function resolveMetadata() {
+    if (item && "metadata" in item) return item.metadata;
+    return undefined;
+  }
+
+  function resolveItemDate(value: Date | string | number | undefined) {
+    if (!value) return undefined;
+    return new Date(value);
+  }
+
+  function resolveItemDateLabel(value: Date | string | number | undefined) {
+    const date = resolveItemDate(value);
+    if (!date) return "";
+    return formatDatetime(get(userPreferences), date);
+  }
 
   function resolveFallbackLabel() {
     if (property.type === PropertyType.CREATED_TIME) {
@@ -31,16 +48,16 @@
     }}
   />
   {#if property.type === PropertyType.CREATED_TIME}
-    {formatDatetime($userPreferences, new Date(item?.createdAt))}
+    {resolveItemDateLabel(item?.createdAt)}
   {:else if property.type === PropertyType.MODIFIED_TIME}
-    {formatDatetime($userPreferences, new Date(item?.modifiedAt))}
+    {resolveItemDateLabel(item?.modifiedAt)}
   {:else if property.type === PropertyType.SYSTEM_ID}
-    {item.id?.toString()}
+    {item?.id?.toString()}
   {:else if property.type === PropertyType.LINKS_COUNT}
     <!-- TODO -->
   {:else if property.type === PropertyType.COLORS}
-    <ColorsProperty colors={item?.metadata?.colors} />
+    <ColorsProperty colors={resolveMetadata()?.colors} />
   {:else if property.type === PropertyType.LOCATION}
-    <LocationProperty location={item?.metadata?.location} />
+    <LocationProperty location={resolveMetadata()?.location} />
   {/if}
 </div>

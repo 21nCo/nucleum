@@ -36,8 +36,9 @@
 
   async function onEmptyEnter() {
     const result = await linkTagStore.save(searchQuery);
-    if (result) {
-      processSelect(result[0].id);
+    const savedLinkTag = Array.isArray(result) ? result[0] : result;
+    if (savedLinkTag) {
+      processSelect(savedLinkTag.id);
     }
     searchQuery = "";
     searchInputRef?.reset();

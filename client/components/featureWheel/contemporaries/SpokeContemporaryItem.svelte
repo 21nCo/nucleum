@@ -9,9 +9,7 @@
   export let xCoord: number;
   export let yCoord: number;
   export let group: IFeatureWheelContemporary[] = [];
-  export let contemporary:
-    | (IFeatureWheelContemporary & { icon: string })
-    | undefined = undefined;
+  export let contemporary: IFeatureWheelContemporary | undefined = undefined;
   export let size: Size = Size.md;
   $: width = size === Size.sm ? 13 : size === Size.md ? 16 : 20;
   let isHovering = false;

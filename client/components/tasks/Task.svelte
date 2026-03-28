@@ -355,7 +355,7 @@
         {/if}
         {#if task.trashInformation}
           <RecordTrashBanner
-            deletedAt={task.trashInformation.deletedAt}
+            deletedAt={task.trashInformation.deletedAt.toISOString()}
             on:restore={() => {
               taskStore.restore(id, {
                 context: accessPoint

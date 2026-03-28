@@ -40,7 +40,10 @@ export function generateSyncedResourceId(externalId: string, type: NodeType) {
 //   new URL("$lib/client/products/memotron/taco/taco.worker.ts", import.meta.url),
 //   { type: "module" }
 // );
-export const tacoWorker = {};
+export const tacoWorker: Pick<Worker, "postMessage" | "onmessage"> = {
+  postMessage: () => {},
+  onmessage: null
+};
 
 export function resolveFileUploadErrorMessage(
   errors: { file: File; type: string }[],

@@ -2,6 +2,7 @@
   import { Arrangement } from "@21n/types/direction.enum";
   import {
     headingNodeTypes,
+    type INode,
     type INodeThumb,
     NodeType,
     socialPostNodeTypeList,
@@ -33,6 +34,7 @@
   import { TimeFormat } from "@21n/types/time.type";
   import type { IRecordId } from "@21n/types/data.type";
   import { fileStore } from "@21n/components/files/file.store";
+  import type { IFile } from "@21n/components/files/file.type";
   import { onMount } from "svelte";
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
   import NodeThumbnailProperties from "@21n/products/memotron/node/thumbnail/NodeThumbnailProperties.svelte";
@@ -44,7 +46,7 @@
   import Icon from "@21n/elements/Icon.svelte";
   import NodeThumbnailSocialPostPreview from "@21n/products/memotron/node/thumbnail/NodeThumbnailSocialPostPreview.svelte";
   import CoverRenderer from "@21n/elements/coverPicker/CoverRenderer.svelte";
-  export let item: INodeThumb;
+  export let item: INode | INodeThumb;
   export let arrangement: Arrangement = Arrangement.LIST;
   export let isHidePreview: boolean = false;
   export let isHideTitle: boolean = false;
@@ -62,10 +64,32 @@
 
   let isHovering: boolean = false;
   let _url: string;
+  let filePreview: IFile | IRecordId | undefined;
+  let hasFullFileDetails = false;
+  let resolvedFilePreview: IFile | undefined;
+  let resolvedFilePreviewId: IRecordId | undefined;
+  let youtubeTimestamp: number | undefined;
+  $: void size;
+  $: void collectionContext;
+  $: void parentBgIndex;
   $: filePreview = resolveFilePreview(item);
-  $: hasFullFileDetails = filePreview?.url || filePreview?.data;
+  $: hasFullFileDetails =
+    !!filePreview && typeof filePreview === "object";
+  $: resolvedFilePreview = hasFullFileDetails
+    ? (filePreview as IFile)
+    : undefined;
+  $: resolvedFilePreviewId =
+    typeof filePreview === "string" ? filePreview : undefined;
   $: urlPreview = resolveUrlPreview(item);
   $: contentPreview = resolveContentPreview(item);
+  $: youtubeTimestamp =
+    item.contentType === NodeType.YOUTUBE_BOOKMARK &&
+    item.body &&
+    typeof item.body !== "string" &&
+    "timestamp" in item.body &&
+    typeof item.body.timestamp === "number"
+      ? item.body.timestamp
+      : undefined;
   $: isTextClip =
     item.contentType === NodeType.WEB_TEXT_BOOKMARK ||
     item.contentType === NodeType.KINDLE_HIGHLIGHT;
@@ -171,8 +195,8 @@
               {@html renderMdAsHtml(item.bodySearch)}
             {:else if filePreview}
               <FileView
-                file={hasFullFileDetails ? filePreview : undefined}
-                id={hasFullFileDetails ? undefined : filePreview}
+                file={resolvedFilePreview}
+                id={resolvedFilePreviewId}
                 isHideControls={true}
                 isLazyLoad={true}
                 isUseThumbnailIfAvailable={true}
@@ -275,7 +299,7 @@
           )}
           style=""
         >
-          {formatSeconds(item.body.timestamp, TimeFormat.CLOCK)}
+          {formatSeconds(youtubeTimestamp ?? 0, TimeFormat.CLOCK)}
         </span>
       {/if}
       <slot name="bottom" />
@@ -301,8 +325,8 @@
             />
           {:else if filePreview}
             <FileView
-              file={hasFullFileDetails ? filePreview : undefined}
-              id={hasFullFileDetails ? undefined : filePreview}
+              file={resolvedFilePreview}
+              id={resolvedFilePreviewId}
               isLazyLoad={true}
               isHideControls={true}
               isUseThumbnailIfAvailable={true}
@@ -380,8 +404,8 @@
       />
     {:else if filePreview}
       <FileView
-        file={hasFullFileDetails ? filePreview : undefined}
-        id={hasFullFileDetails ? undefined : filePreview}
+        file={resolvedFilePreview}
+        id={resolvedFilePreviewId}
         isHideControls={true}
         isLazyLoad={true}
         isUseThumbnailIfAvailable={true}

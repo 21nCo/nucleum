@@ -1,6 +1,6 @@
 // import fletcher16 from "fletcher";
 
-export function generateHashV1(str: string) {
+export function generateHashV1(str: string): void {
   // return fletcher16(Buffer.from(str.toLowerCase())).toString();
 }
 export function generateHash(str: string): string {
@@ -14,7 +14,7 @@ export function generateHash(str: string): string {
   return Math.abs(hash).toString(36);
 }
 
-export async function generateSHA256Hash(message: string) {
+export async function generateSHA256Hash(message: string): Promise<string> {
   const msgUint8 = new TextEncoder().encode(message);
   const hashBuffer = await crypto.subtle.digest("SHA-256", msgUint8);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -29,11 +29,11 @@ export async function generateSHA256Hash(message: string) {
  * @param content
  * @returns
  */
-export function generateContentHash(content: string) {
+export function generateContentHash(content: string): string {
   return CryptoJS.SHA256(content).toString();
 }
 
-export function generateRandomId(length = 16) {
+export function generateRandomId(length = 16): string {
   const randomValues = new Uint8Array(length);
   crypto.getRandomValues(randomValues);
 
@@ -46,7 +46,7 @@ export function generateRandomId(length = 16) {
  * Enhanced version of generateRandomId that adds timestamp-based entropy
  * and falls back to generateSimpleRandomId if crypto API fails
  */
-export function generateRandomIdv2(length = 16) {
+export function generateRandomIdv2(length = 16): string {
   try {
     const randomValues = new Uint8Array(length);
     crypto.getRandomValues(randomValues);
@@ -72,7 +72,7 @@ export function generateRandomIdv2(length = 16) {
 /**
  * Generates a simple unique identifier.
  */
-export function generateSimpleRandomId() {
+export function generateSimpleRandomId(): string {
   return (
     Date.now().toString(36) +
     Math.random().toString(36).slice(2, 10) +
@@ -80,6 +80,6 @@ export function generateSimpleRandomId() {
   );
 }
 
-export function generateMiniRandomId() {
+export function generateMiniRandomId(): string {
   return Math.random().toString(36).slice(2, 10);
 }

@@ -35,9 +35,15 @@
     style={InputStyle.BORDERED}
     label={{ label: "Choose time period", orientation: Orientation.Vertical }}
     on:select={() => {
+      const [selectedType, selectedParam] = dropDownValue.split("#");
+      if (
+        selectedType !== TimePeriodType.RELATIVE &&
+        selectedType !== TimePeriodType.UPPER_RELATIVE
+      )
+        return;
       value = {
-        type: dropDownValue.split("#")[0],
-        param: parseInt(dropDownValue.split("#")[1])
+        type: selectedType,
+        param: parseInt(selectedParam ?? "0")
       };
       dispatch("change", value);
     }}

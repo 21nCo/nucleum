@@ -32,7 +32,9 @@
       {formatSeconds(value, TimeFormat.VERBOSE)}
     </div>
     {#if previousValue}
-      <PreviousValueColumnCell row={{ value, previousValue }} />
+      <PreviousValueColumnCell
+        row={{ label: properCase(type), value, previousValue, color: 0 }}
+      />
     {/if}
   </div>
 </div>

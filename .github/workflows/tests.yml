@@ -8,8 +8,31 @@ on:
   pull_request:
     branches:
       - dev
+      - main
+  workflow_dispatch: {}
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
+  app-checks:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Run app checks
+        run: npm run check:apps
+
   vitest:
     runs-on: ubuntu-latest
     permissions:
@@ -43,12 +66,31 @@ jobs:
           name: coverage
           path: coverage
 
-  playwright:
+  playwright-smoke:
     runs-on: ubuntu-latest
-    needs: vitest
+    needs:
+      - app-checks
+      - vitest
+    timeout-minutes: 30
     permissions:
       contents: read
       actions: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - product: nucleum
+            workspace: nucleus-app
+            port: 5050
+            domain: local.nucleum.app
+          - product: pointron
+            workspace: pointron-app
+            port: 5001
+            domain: local.pointron.app
+          - product: memotron
+            workspace: memotron-app
+            port: 5002
+            domain: local.memotron.app
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -71,46 +113,43 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y caddy
-          # Package often starts systemd caddy → holds :2019 (and :443). Our caddy run needs those.
           sudo systemctl stop caddy 2>/dev/null || true
           sudo systemctl disable caddy 2>/dev/null || true
-      - name: Start dev server, create auth session, run smoke tests
+      - name: Run Playwright smoke for ${{ matrix.product }}
         env:
-          APP_BASE_URL: https://local.nucleum.app
-          APP_BASE_URL_NUCLEUS: https://local.nucleum.app
-          APP_BASE_URL_MEMOTRON: https://local.memotron.app
-          APP_BASE_URL_POINTRON: https://local.pointron.app
-          PRODUCT: nucleum
           E2E_LOGIN_EMAIL: ${{ secrets.E2E_LOGIN_EMAIL }}
           E2E_LOGIN_PASSWORD: ${{ secrets.E2E_LOGIN_PASSWORD }}
         run: |
-          npm run dev --workspace=apps/nucleus -- --port 5173 --host 127.0.0.1 &
-          # Caddy v2: auto_https only accepts off|disable_redirects|disable_certs|ignore_loaded_certs (not "on").
-          # Use printf so the file has no YAML-indent leading spaces (heredoc would break the Caddyfile).
           printf '%s\n' \
-            'local.nucleum.app, local.memotron.app, local.pointron.app {' \
+            '${{ matrix.domain }} {' \
             '  tls internal' \
-            '  reverse_proxy 127.0.0.1:5173' \
+            '  reverse_proxy 127.0.0.1:${{ matrix.port }}' \
             '}' > Caddyfile
-
-          # Port 443 requires root on Linux; non-root caddy exits → trust fails on :2019.
-          CADDYFILE="$PWD/Caddyfile"
-          sudo caddy run --config "$CADDYFILE" --adapter caddyfile &
+          CADDY_LOG="$RUNNER_TEMP/caddy-${{ matrix.product }}.log"
+          sudo caddy run --config "$PWD/Caddyfile" --adapter caddyfile >"$CADDY_LOG" 2>&1 &
+          CADDY_PID=$!
+          cleanup() {
+            curl -fsS -X POST http://127.0.0.1:2019/stop >/dev/null 2>&1 || true
+            if kill -0 "$CADDY_PID" 2>/dev/null; then
+              sudo kill "$CADDY_PID" >/dev/null 2>&1 || true
+              wait "$CADDY_PID" >/dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup EXIT
           READY=0
-          for i in $(seq 1 30); do curl -sf --connect-timeout 1 http://127.0.0.1:2019/config/ >/dev/null && READY=1 && break; sleep 1; done
+          for i in $(seq 1 30); do
+            curl -sf --connect-timeout 1 http://127.0.0.1:2019/config/ >/dev/null && READY=1 && break
+            sleep 1
+          done
           if [ "$READY" -ne 1 ]; then
             echo "Caddy admin API did not become ready on 127.0.0.1:2019"
             exit 1
           fi
           sudo caddy trust
-          # Node/wait-on may not pick up the OS trust store (even after `caddy trust`) in CI containers.
-          NODE_TLS_REJECT_UNAUTHORIZED=0 npx wait-on https://local.nucleum.app -t 60000
-          cd apps/e2e-playwright
-          npm run e2e:save-email-auth:nucleum || echo "::warning::Best-effort auth session save failed; continuing with smoke tests."
-          npm run test:smoke
+          node tools/ci/run-playwright-product.mjs --product=${{ matrix.product }} --workspace=${{ matrix.workspace }} --port=${{ matrix.port }} --base-url=https://${{ matrix.domain }} --suite=smoke
       - name: Upload Playwright artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-artifacts
+          name: playwright-smoke-${{ matrix.product }}
           path: apps/e2e-playwright/artifacts

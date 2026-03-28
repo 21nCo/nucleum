@@ -117,6 +117,28 @@
   let eventDispatcher = createEventDispatcher();
   let shuffleEmojis = $appStoreShuffleEmojis;
 
+  function resolvePreviewAvatar(emote: IAvatar[]) {
+    const activeAvatar = emote.length === 1 ? emote[0] : emote[skinIndex];
+    if ("file" in activeAvatar && activeAvatar.file) {
+      return activeAvatar;
+    }
+    return {
+      code: "code" in activeAvatar ? activeAvatar.code : "",
+      color:
+        "color" in activeAvatar && typeof activeAvatar.color === "string"
+          ? activeAvatar.color
+          : iconColor,
+      isFilled:
+        "isFilled" in activeAvatar && typeof activeAvatar.isFilled === "boolean"
+          ? activeAvatar.isFilled
+          : checked,
+      type: mode,
+      name: activeAvatar.name,
+      frequency:
+        typeof activeAvatar.frequency === "number" ? activeAvatar.frequency : 0
+    } as IAvatar;
+  }
+
   function updateUsedAndCustomAvatars(prefs: any) {
     storeAvatars["Frequently Used"] = (
       mode == AvatarType.ICON
@@ -324,7 +346,8 @@
   function addToUsedList(emote: any) {
     let tempEmote = deepCopy(emote) as IAvatar;
     if (mode == AvatarType.ICON) {
-      let index = $userPreferences.avatarPicker.usedIcons?.findIndex((el) => {
+      const usedIcons = [...($userPreferences.avatarPicker?.usedIcons ?? [])];
+      let index = usedIcons.findIndex((el) => {
         return (
           el[0].name == emote.name &&
           (("file" in el[0] && el[0].file !== undefined) ||
@@ -340,19 +363,21 @@
         tempEmote.frequency = 1;
         tempEmote.color = iconColor;
         tempEmote.isFilled = checked;
-        $userPreferences.avatarPicker.usedIcons = [
-          ...$userPreferences?.avatarPicker?.usedIcons,
-          [tempEmote]
-        ];
+        usedIcons.push([tempEmote]);
       } else {
-        $userPreferences.avatarPicker.usedIcons[index][0].frequency++;
-        tempEmote = $userPreferences.avatarPicker.usedIcons[index][0];
+        const current = usedIcons[index]?.[0];
+        if (current) {
+          current.frequency = (current.frequency ?? 0) + 1;
+          tempEmote = current;
+        }
       }
-      $userPreferences.avatarPicker.usedIcons.sort(
-        (a, b) => b[0].frequency - a[0].frequency
+      usedIcons.sort(
+        (a, b) => (b[0].frequency ?? 0) - (a[0].frequency ?? 0)
       );
+      $userPreferences.avatarPicker.usedIcons = usedIcons;
     } else {
-      let index = $userPreferences.avatarPicker.usedEmojis?.findIndex((el) => {
+      const usedEmojis = [...($userPreferences.avatarPicker?.usedEmojis ?? [])];
+      let index = usedEmojis.findIndex((el) => {
         return (
           el[0].name == emote.name &&
           (("file" in el[0] && el[0].file !== undefined) ||
@@ -363,18 +388,19 @@
         tempEmote = tempEmote as AvatarWithCode<EmojiAvatar>;
         tempEmote.type = AvatarType.EMOJI;
         tempEmote.frequency = 1;
-        $userPreferences.avatarPicker.usedEmojis = [
-          ...$userPreferences.avatarPicker.usedEmojis,
-          [tempEmote]
-        ];
+        usedEmojis.push([tempEmote]);
       } else {
-        $userPreferences.avatarPicker.usedEmojis[index][0].frequency++;
-        tempEmote = $userPreferences.avatarPicker.usedEmojis[index][0];
+        const current = usedEmojis[index]?.[0];
+        if (current) {
+          current.frequency = (current.frequency ?? 0) + 1;
+          tempEmote = current;
+        }
       }
 
-      $userPreferences.avatarPicker.usedEmojis.sort(
-        (a, b) => b[0].frequency - a[0].frequency
+      usedEmojis.sort(
+        (a, b) => (b[0].frequency ?? 0) - (a[0].frequency ?? 0)
       );
+      $userPreferences.avatarPicker.usedEmojis = usedEmojis;
     }
     eventDispatcher("avatarClicked", tempEmote);
     avatarClickCallback(tempEmote);
@@ -426,8 +452,8 @@
     let input = event.target.files[0];
     let customName = input.name.split(".")[0].trim();
     if (mode == AvatarType.ICON) {
-      for (let icon of $userPreferences.avatarPicker.usedIcons) {
-        if (icon[0].name.toLowerCase() == customName.toLowerCase()) {
+      for (let icon of $userPreferences.avatarPicker.usedIcons ?? []) {
+        if (icon[0]?.name?.toLowerCase() == customName.toLowerCase()) {
           alert("The icon name already exists. Please rename and upload");
           return;
         }
@@ -438,8 +464,8 @@
         [emote]
       ];
     } else {
-      for (let emoji of $userPreferences.avatarPicker.usedEmojis) {
-        if (emoji[0].name.toLowerCase() == customName.toLowerCase()) {
+      for (let emoji of $userPreferences.avatarPicker.usedEmojis ?? []) {
+        if (emoji[0]?.name?.toLowerCase() == customName.toLowerCase()) {
           alert("The emoji name already exists. Please rename and upload");
           return;
         }
@@ -667,32 +693,7 @@
                   >
                     <AvatarRenderer
                       isHoverEnabled={true}
-                      avatar={{
-                        code:
-                          "code" in emote[0]
-                            ? emote.length == 1
-                              ? emote[0].code
-                              : emote[skinIndex].code
-                            : "",
-                        color:
-                          "color" in emote[0] &&
-                          typeof emote[0].color === "string"
-                            ? emote[0]?.color
-                            : iconColor,
-                        isFilled:
-                          "isFilled" in emote[0] &&
-                          typeof emote[0].isFilled == "boolean"
-                            ? emote[0]?.isFilled
-                            : checked,
-                        type: mode,
-                        name: emote[0].name,
-                        frequency:
-                          "frequency" in emote[0] &&
-                          typeof emote[0].frequency === "number"
-                            ? emote[0].frequency
-                            : 0,
-                        file: "file" in emote[0] ? emote[0].file : ""
-                      }}
+                      avatar={resolvePreviewAvatar(emote)}
                       size={Size.lg}
                     />
                   </button>

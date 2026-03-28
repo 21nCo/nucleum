@@ -39,6 +39,7 @@
   export let isPreserveKeyboardToolbar: boolean = false;
   export let isAccentBackground: boolean = false;
   export let testId: string | undefined = undefined;
+  $: width;
   let isFocused: boolean = false;
   export async function focus() {
     await tick();
@@ -104,6 +105,11 @@
       return;
     isFocused = false;
     dispatch("blur");
+  }
+
+  function blurActiveElement() {
+    const activeElement = document.activeElement as HTMLElement | null;
+    activeElement?.blur?.();
   }
 </script>
 
@@ -339,9 +345,7 @@
         size={Size.sm}
         style={ButtonStyle.DEFAULT}
         isPreventMinWidth={true}
-        on:click={() => {
-          document.activeElement?.blur();
-        }}
+        on:click={blurActiveElement}
       />
     </div>
   </KeyboardToolbar>

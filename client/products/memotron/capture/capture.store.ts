@@ -23,6 +23,7 @@ import {
   type IActiveCapture,
   type ICapture,
   type ICaptureCapture,
+  type ICaptureLink,
   type IPasteCaptureData
 } from "@21n/products/memotron/capture/capture.type";
 import account from "@21n/stores/account.store";
@@ -110,11 +111,68 @@ const captureAction = resourceAction(Resource.node, ResourceActionType.CREATE);
 
 export const clipboard = writable<IPasteCaptureData | null>(null);
 
+type IClipboardBlockType =
+  | NodeType.CODE
+  | NodeType.CALLOUT
+  | NodeType.LIST
+  | NodeType.ORDERED_LIST
+  | NodeType.CHECKLIST
+  | NodeType.SIMPLE_TEXT;
+
+function resolveClipboardBlockType(
+  contentType?: NodeType
+): IClipboardBlockType {
+  switch (contentType) {
+    case NodeType.CODE:
+    case NodeType.CALLOUT:
+    case NodeType.LIST:
+    case NodeType.ORDERED_LIST:
+    case NodeType.CHECKLIST:
+      return contentType;
+    default:
+      return NodeType.SIMPLE_TEXT;
+  }
+}
+
+function resolveBlobPart(data: Uint8Array<ArrayBufferLike>) {
+  return Uint8Array.from(data).buffer;
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object";
+}
+
+function hasStringProperty<K extends string>(
+  value: unknown,
+  key: K
+): value is Record<K, string> {
+  return isObject(value) && typeof value[key] === "string";
+}
+
+function isMediaGridBlock(
+  block: IBlock
+): block is IBlock & {
+  contentType: NodeType.MEDIA_GRID;
+  body: { items: IMediaGridItem[] };
+} {
+  return (
+    block.contentType === NodeType.MEDIA_GRID &&
+    isObject(block.body) &&
+    "items" in block.body &&
+    Array.isArray(block.body.items)
+  );
+}
+
 function generateSeedStore(): IActiveCapture {
   const blockId = generateResourceId(Resource.node);
   const nodeId = generateResourceId(Resource.node);
   return {
     id: generateResourceId(Resource.capture),
+    accessMode: AccessMode.MAIN,
+    createdAt: new Date(),
+    modifiedAt: new Date(),
+    createdBy: currentUserId,
+    modifiedBy: currentUserId,
     method: CaptureMethod.MARKDOWN,
     nodeId,
     refreshId: new Date().getTime(),
@@ -282,13 +340,13 @@ export class ActiveCaptureStore extends ActiveResourceStore<
             location: newBlock[0].id
           });
         } else {
-          const contentType = data.contentType ?? NodeType.SIMPLE_TEXT;
+          const contentType = resolveClipboardBlockType(data.contentType);
           newBlock = [
             {
               id: generateResourceId(Resource.node),
               contentType,
               body: resolveDefaultBodyForBlock(contentType, data.text)
-            }
+            } as IBlock
           ];
         }
       }
@@ -364,7 +422,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     }
     const type: ICollection = await collectionStore.select(val);
     if (!type) return;
-    const link = {
+    const link: ICaptureLink = {
       from: "root",
       to: type.id,
       linkType: LinkType.DIRECT,
@@ -633,7 +691,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           if (parsedMetadata.common.picture?.[0]?.data) {
             try {
               const imageData = parsedMetadata.common.picture[0].data;
-              const imageFile = new File([imageData], file.name, {
+              const imageFile = new File([resolveBlobPart(imageData)], file.name, {
                 type: "image/jpeg"
               });
               const imageUploadResponse = await account.uploadFileV2(
@@ -835,7 +893,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         creationContext: id,
         children: block.children,
         mdParent: parent
-      });
+      } as INodeCapture<INode>);
     }
     const result: any = await nodeStore.create([root, ...remainingResources], {
       context: captureAction
@@ -1104,7 +1162,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   async saveWebpage(
     text: string,
     params?: {
-      contentType?: IWebNodeType;
+      contentType?: NodeType;
       isOpenOnSave?: boolean;
       isEmbedContext?: boolean;
       creationContext?: IRecordId;
@@ -1114,28 +1172,27 @@ export class ActiveCaptureStore extends ActiveResourceStore<
     if (urlData?.convertToEmbedUrl) {
       text = urlData.convertToEmbedUrl(text);
     }
-    let node: INodeCapture<IWebPage | IClip> = {
-      contentType: params?.contentType ?? NodeType.WEB_PAGE,
-      label: text.split("://").pop() ?? "",
-      url: text,
-      creationContext: params?.isEmbedContext
-        ? (params?.creationContext ?? this.get().nodeId)
-        : undefined,
-      body: {
-        hash: "",
-        description: ""
-      }
+    let contentType = params?.contentType ?? NodeType.WEB_PAGE;
+    let label = text.split("://").pop() ?? "";
+    let url = text;
+    const creationContext = params?.isEmbedContext
+      ? (params?.creationContext ?? this.get().nodeId)
+      : undefined;
+    const body = {
+      hash: "",
+      description: ""
     };
+    let metadata: Record<string, unknown> | undefined = undefined;
     const accountVal = account.get();
     if (accountVal?.dataMode === UserDataMode.CLOUD) {
       if (
-        params?.contentType === NodeType.YOUTUBE_VIDEO ||
-        params?.contentType === NodeType.YOUTUBE_SHORT
+        contentType === NodeType.YOUTUBE_VIDEO ||
+        contentType === NodeType.YOUTUBE_SHORT
       ) {
         const youtubeMetadata = await fetchYouTubeMetadata(text);
         if (youtubeMetadata) {
-          node.label = youtubeMetadata.title;
-          node.metadata = {
+          label = youtubeMetadata.title;
+          metadata = {
             authorName: youtubeMetadata.author_name,
             authorUrl: youtubeMetadata.author_url,
             thumbnailUrl: youtubeMetadata.thumbnail_url
@@ -1146,19 +1203,29 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         console.log({ at: "saveWebpage - retrieveUrlData", data });
         if (data?.parsedData) {
           const parsedData = data.parsedData;
-          node.label = parsedData.label ?? node.label;
-          node.url = parsedData.url ?? node.url;
-          node.contentType =
-            params?.contentType ?? parsedData.contentType ?? node.contentType;
-          node.body.description =
-            parsedData.body.description ?? node.body.description;
-          node.body.hash = parsedData.body.hash ?? node.body.hash;
-          node.metadata = {
+          label = parsedData.label ?? label;
+          url = parsedData.url ?? url;
+          contentType = params?.contentType ?? parsedData.contentType ?? contentType;
+          if (hasStringProperty(parsedData.body, "description")) {
+            body.description = parsedData.body.description;
+          }
+          if (hasStringProperty(parsedData.body, "hash")) {
+            body.hash = parsedData.body.hash;
+          }
+          metadata = {
             ...parsedData.metadata
           };
         }
       }
     }
+    const node = {
+      contentType,
+      label,
+      url,
+      creationContext,
+      body,
+      metadata
+    } as INodeCapture<IWebPage | IClip>;
     const result = await nodeStore.create(node, {
       context: captureAction
     });
@@ -1353,12 +1420,11 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       let contentType;
       let name;
       for (let block of val.body.blocks) {
-        if (block.contentType === NodeType.MEDIA_GRID) {
+        if (isMediaGridBlock(block)) {
           let files = await fileStore.selectMany({
-            filters: { id: block.body.items.map((item) => item.file) }
+            filters: { id: block.body.items.map((item: IMediaGridItem) => item.file) }
           });
           for (let item of block.body.items) {
-            item = item as IMediaGridItem;
             const file = files.find(resourceInList(item.file));
             if (!file) continue;
             data = await fetch(file.url).then((r) => r.blob());

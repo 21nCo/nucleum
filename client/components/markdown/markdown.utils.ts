@@ -13,9 +13,19 @@ import {
   NodeType,
   simpleTextNodeTypeList,
   headingNodeTypes,
-  type INodeStructure
+  type INodeStructure,
+  type ListNodeType,
+  type SimpleTextNodeType
 } from "@21n/products/memotron/node/node.type";
 import { generateRandomIdv2 } from "@21n/shared-utils/crypto.utils";
+
+type NestedActiveNode = Omit<IActiveNode, "children"> & {
+  children?: NestedActiveNode[];
+};
+
+type BlockWithChildren = IBlockInterface & {
+  children?: BlockWithChildren[];
+};
 
 /**
  * Recursively extracts all children of a node and its children. Useful for converting a nested structure of node into a flat array.
@@ -24,15 +34,7 @@ import { generateRandomIdv2 } from "@21n/shared-utils/crypto.utils";
  */
 export function recursivelyExtractAllChildrenIntoArray(md: IActiveNode) {
   try {
-    let children: IBlockInterface[] = [];
-
-    if (md.children && md.children.length > 0) {
-      md.children.forEach((child) => {
-        children.push(child);
-        children.push(...recursivelyExtractAllChildrenIntoArray(child));
-      });
-    }
-    return children;
+    return collectChildren(md as NestedActiveNode);
   } catch (e) {
     return [];
   }
@@ -48,12 +50,12 @@ export function recursivelyFormParentFromChildren(
   blocks: IBlockInterface[],
   childrenHierarchy: string[] | undefined
 ) {
-  let children: INode[] = [];
+  let children: BlockWithChildren[] = [];
   if (childrenHierarchy && childrenHierarchy.length > 0) {
     childrenHierarchy.forEach((childId) => {
       const child = blocks.find((b) => b.id === childId);
       if (child) {
-        const newChild: INode = {
+        const newChild: BlockWithChildren = {
           ...child,
           children: recursivelyFormParentFromChildren(
             blocks,
@@ -787,46 +789,31 @@ export function textToMdBlocks(
     }
     const { shortcut, type, isFullReplace, indentLevel, listOrder, isChecked } =
       escResult;
-    if (isFullReplace) {
-      return {
-        id,
-        contentType: type
-      };
+    if (isFullReplace && isStructuralBlockType(type)) {
+      return createBlock(id, type, "");
     }
     x = x.replace(shortcut, "");
-    if (headingNodeTypes.includes(type)) {
-      return {
-        id,
-        contentType: type,
-        label: x
-      };
-    } else if (simpleTextNodeTypeList.includes(type)) {
-      return {
-        id,
-        contentType: type,
-        body: x
-      };
+    if (isHeadingBlockType(type)) {
+      return createBlock(id, type, x, x);
+    } else if (isSimpleTextBlockType(type)) {
+      return createBlock(id, type, x);
     }
     if (indentLevel || listOrder || isChecked) {
-      return {
-        id,
-        contentType: type,
-        body: {
-          ...(resolveDefaultBodyForBlock(
-            type,
-            x.trimStart()
-          ) as IListBlockBody),
-          indent: indentLevel,
-          order: listOrder,
-          checked: isChecked
-        }
-      };
+      return createBlock(id, type as IBlock["contentType"], {
+        ...(resolveDefaultBodyForBlock(
+          type,
+          x.trimStart()
+        ) as IListBlockBody),
+        indent: indentLevel,
+        order: listOrder,
+        checked: isChecked
+      });
     }
-    return {
+    return createBlock(
       id,
-      contentType: type,
-      body: resolveDefaultBodyForBlock(type, x)
-    };
+      type as IBlock["contentType"],
+      resolveDefaultBodyForBlock(type, x)
+    );
   });
   return blocks;
 }
@@ -923,7 +910,7 @@ export function extractRootStructure(
   structure: INodeStructure[],
   hierarchyFactorLimit: number
 ) {
-  let rootBlocks: any = [];
+  let rootBlocks: INodeStructure[] = [];
   let firstHeadingHit = false;
   structure.forEach((block) => {
     if (!firstHeadingHit && block.factor <= hierarchyFactorLimit) {
@@ -932,11 +919,52 @@ export function extractRootStructure(
     } else if (!firstHeadingHit) rootBlocks.push(block);
     else if (block.factor > hierarchyFactorLimit) return;
     else {
-      const lowestFactor = Math.min(...rootBlocks.map((x) => x.factor));
+      const lowestFactor = Math.min(
+        ...rootBlocks.map((x: INodeStructure) => x.factor)
+      );
       if (block.factor <= lowestFactor) {
         rootBlocks.push(block);
       }
     }
   });
   return rootBlocks;
+}
+
+function isHeadingBlockType(type: NodeType): type is SimpleTextNodeType {
+  return headingNodeTypes.includes(type);
+}
+
+function isSimpleTextBlockType(type: NodeType): type is SimpleTextNodeType {
+  return simpleTextNodeTypeList.includes(type);
+}
+
+function isStructuralBlockType(
+  type: NodeType
+): type is NodeType.DIVIDER | NodeType.DOUBLE_DIVIDER {
+  return type === NodeType.DIVIDER || type === NodeType.DOUBLE_DIVIDER;
+}
+
+function createBlock(
+  id: string,
+  contentType: IBlock["contentType"],
+  body: IBlockBody,
+  label?: string
+): IBlock {
+  if (label) {
+    return { id, contentType, body, label } as IBlock;
+  }
+  return { id, contentType, body } as IBlock;
+}
+
+function collectChildren(node: NestedActiveNode): IBlockInterface[] {
+  const children: IBlockInterface[] = [];
+
+  if (node.children && node.children.length > 0) {
+    node.children.forEach((child) => {
+      children.push(child);
+      children.push(...collectChildren(child));
+    });
+  }
+
+  return children;
 }

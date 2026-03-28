@@ -2,7 +2,7 @@
   import Icon from "@21n/elements/Icon.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
-  import { GoalStatus, type IGoalThumb } from "@21n/components/goals/goal.type";
+  import { GoalStatus, GoalType, type IGoalThumb } from "@21n/components/goals/goal.type";
   import { resolveGoalTypeIcon } from "@21n/components/goals/goal.utils";
   export let item: IGoalThumb;
   export let isCurrentlyFocusing: boolean = false;
@@ -14,7 +14,7 @@
     <Icon icon="check-circle" class="text-ccs1" isFilled={true} />
   {:else}
     <Icon
-      icon={resolveGoalTypeIcon(item.type)}
+      icon={resolveGoalTypeIcon(item.type ?? GoalType.INDEFINITE)}
       class={cn({
         "text-ccs1": color
       })}

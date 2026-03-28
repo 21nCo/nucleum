@@ -2,6 +2,7 @@
   import { IconVariant } from "@21n/types/icon.type";
 
   export let variant: IconVariant = IconVariant.Outline;
+  $: variant;
 </script>
 
 <path

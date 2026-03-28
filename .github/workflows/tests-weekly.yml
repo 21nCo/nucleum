@@ -1,0 +1,132 @@
+name: Weekly Full Tests
+
+on:
+  schedule:
+    - cron: "0 3 * * 0"
+  workflow_dispatch: {}
+
+concurrency:
+  group: weekly-tests-${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vitest-fuzz:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Execute property and fuzz suites
+        run: npm run test
+        env:
+          VITEST_FUZZ: "1"
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: |
+            coverage/**/coverage-final.json
+            tests/coverage/**/coverage-final.json
+          flags: vitest-weekly
+          disable_search: true
+      - name: Persist coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-coverage
+          path: coverage
+
+  playwright-regression:
+    runs-on: ubuntu-latest
+    needs: vitest-fuzz
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      actions: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - product: nucleum
+            workspace: nucleus-app
+            port: 5050
+            domain: local.nucleum.app
+          - product: pointron
+            workspace: pointron-app
+            port: 5001
+            domain: local.pointron.app
+          - product: memotron
+            workspace: memotron-app
+            port: 5002
+            domain: local.memotron.app
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+        working-directory: apps/e2e-playwright
+      - name: Map HTTPS local domains
+        run: |
+          sudo tee -a /etc/hosts >/dev/null <<'EOF'
+          127.0.0.1 local.nucleum.app local.memotron.app local.pointron.app
+          EOF
+      - name: Install Caddy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y caddy
+          sudo systemctl stop caddy 2>/dev/null || true
+          sudo systemctl disable caddy 2>/dev/null || true
+      - name: Run Playwright regression for ${{ matrix.product }}
+        env:
+          E2E_LOGIN_EMAIL: ${{ secrets.E2E_LOGIN_EMAIL }}
+          E2E_LOGIN_PASSWORD: ${{ secrets.E2E_LOGIN_PASSWORD }}
+        run: |
+          printf '%s\n' \
+            '${{ matrix.domain }} {' \
+            '  tls internal' \
+            '  reverse_proxy 127.0.0.1:${{ matrix.port }}' \
+            '}' > Caddyfile
+          CADDY_LOG="$RUNNER_TEMP/caddy-${{ matrix.product }}.log"
+          sudo caddy run --config "$PWD/Caddyfile" --adapter caddyfile >"$CADDY_LOG" 2>&1 &
+          CADDY_PID=$!
+          cleanup() {
+            curl -fsS -X POST http://127.0.0.1:2019/stop >/dev/null 2>&1 || true
+            if kill -0 "$CADDY_PID" 2>/dev/null; then
+              sudo kill "$CADDY_PID" >/dev/null 2>&1 || true
+              wait "$CADDY_PID" >/dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup EXIT
+          READY=0
+          for i in $(seq 1 30); do
+            curl -sf --connect-timeout 1 http://127.0.0.1:2019/config/ >/dev/null && READY=1 && break
+            sleep 1
+          done
+          if [ "$READY" -ne 1 ]; then
+            echo "Caddy admin API did not become ready on 127.0.0.1:2019"
+            exit 1
+          fi
+          sudo caddy trust
+          node tools/ci/run-playwright-product.mjs --product=${{ matrix.product }} --workspace=${{ matrix.workspace }} --port=${{ matrix.port }} --base-url=https://${{ matrix.domain }} --suite=regression
+      - name: Persist Playwright evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-playwright-${{ matrix.product }}
+          path: apps/e2e-playwright/artifacts

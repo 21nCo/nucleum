@@ -8,6 +8,14 @@
   let loading: boolean = true;
   let error: string = "";
 
+  type FacebookWindow = Window & {
+    FB?: {
+      XFBML: {
+        parse(element?: Element, callback?: () => void): void;
+      };
+    };
+  };
+
   onMount(() => {
     loadFacebookWidget();
   });
@@ -53,14 +61,16 @@
           </div>
         `;
 
-        if (window.FB) {
-          window.FB.XFBML.parse(element, () => {
+        const facebookWindow = window as FacebookWindow;
+        if (facebookWindow.FB) {
+          facebookWindow.FB.XFBML.parse(element, () => {
             loading = false;
           });
         } else {
           setTimeout(() => {
-            if (window.FB) {
-              window.FB.XFBML.parse(element, () => {
+            const delayedFacebookWindow = window as FacebookWindow;
+            if (delayedFacebookWindow.FB) {
+              delayedFacebookWindow.FB.XFBML.parse(element, () => {
                 loading = false;
               });
             } else {
@@ -74,16 +84,6 @@
       console.error("Facebook embed creation error:", err);
       error = "Unable to load Facebook post";
       loading = false;
-    }
-  }
-
-  declare global {
-    interface Window {
-      FB: {
-        XFBML: {
-          parse(element?: Element, callback?: () => void): void;
-        };
-      };
     }
   }
 </script>

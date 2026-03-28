@@ -8,6 +8,7 @@
   } from "@21n/components/flux/resourceStores/resource.utils";
   import { appStore } from "@21n/stores/app.store";
   import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
+  import { onMount } from "svelte";
   export let id: string;
   export let isFromSplitView: boolean = false;
   export let componentParams: any = {};
@@ -15,6 +16,16 @@
   let refreshId: number = new Date().getTime();
 
   $: if (accessMode === AccessMode.TAB && id) setCurrentComponent();
+
+  onMount(() => {
+    const reloadResourceHandler: EventListener = (event) => {
+      onReloadResource(event as CustomEvent<{ id: string }>);
+    };
+    window.addEventListener("reloadResource", reloadResourceHandler);
+    return () => {
+      window.removeEventListener("reloadResource", reloadResourceHandler);
+    };
+  });
 
   function onReloadResource(e: CustomEvent) {
     const resource = e?.detail?.id;
@@ -47,5 +58,3 @@
     params={{ id, isFromSplitView, accessMode, ...componentParams }}
   />
 {/key}
-
-<svelte:window on:reloadResource={onReloadResource} />

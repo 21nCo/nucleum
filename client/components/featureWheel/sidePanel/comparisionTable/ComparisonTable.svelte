@@ -58,7 +58,7 @@
               {feature}
               contemporaryDetail={contemporaries.find(
                 (c) => c.label === contemporary.label
-              ) ?? {}}
+              )}
               additionalProperties={feature.comparisionProperties}
             />
           {/if}

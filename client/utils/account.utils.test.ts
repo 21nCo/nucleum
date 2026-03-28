@@ -141,43 +141,17 @@ describe("client/utils/account.utils", () => {
 
   it("resolves token in extension environment", async () => {
     isExtensionEnvironmentMock.mockReturnValue(true);
-    const chromeMock = {
-      storage: {
-        local: {
-          get: vi.fn((key: string, cb: (data: any) => void) => cb({ stoken: "abc" }))
-        }
-      },
-      runtime: {
-        lastError: null
-      }
-    };
-    (globalThis as any).chrome = chromeMock;
+    clientStorageMock.get.mockResolvedValue("abc");
 
     const token = await resolveToken();
 
     expect(token).toBe("abc");
-    expect(chromeMock.storage.local.get).toHaveBeenCalledWith(
-      ClientStorageKey.STOKEN,
-      expect.any(Function)
-    );
+    expect(clientStorageMock.get).toHaveBeenCalledWith(ClientStorageKey.STOKEN);
   });
 
   it("rejects when extension storage errors", async () => {
     isExtensionEnvironmentMock.mockReturnValue(true);
-    const chromeMock = {
-      storage: {
-        local: {
-          get: vi.fn((key: string, cb: (data: any) => void) => {
-            (chromeMock as any).runtime.lastError = new Error("boom");
-            cb({});
-          })
-        }
-      },
-      runtime: {
-        lastError: null
-      }
-    };
-    (globalThis as any).chrome = chromeMock;
+    clientStorageMock.get.mockRejectedValue(new Error("boom"));
 
     await expect(resolveToken()).rejects.toThrow("boom");
   });
@@ -207,37 +181,18 @@ describe("client/utils/account.utils", () => {
   it("resolves current user id in extension environment", async () => {
     isExtensionEnvironmentMock.mockReturnValue(true);
     parseMock.mockReturnValue({ id: "user-123" });
-    const chromeMock = {
-      storage: {
-        local: {
-          get: vi.fn((key: string, cb: (data: any) => void) => cb({ userInfo: "{}" }))
-        }
-      },
-      runtime: {
-        lastError: null
-      }
-    };
-    (globalThis as any).chrome = chromeMock;
+    clientStorageMock.get.mockResolvedValue("{}");
 
     const result = await resolveCurrentUserId();
 
     expect(result).toBe("user-123");
+    expect(clientStorageMock.get).toHaveBeenCalledWith(ClientStorageKey.USER_INFO);
     expect(parseMock).toHaveBeenCalledWith("{}");
   });
 
   it("returns null when extension storage lacks user info", async () => {
     isExtensionEnvironmentMock.mockReturnValue(true);
-    const chromeMock = {
-      storage: {
-        local: {
-          get: vi.fn((key: string, cb: (data: any) => void) => cb({}))
-        }
-      },
-      runtime: {
-        lastError: null
-      }
-    };
-    (globalThis as any).chrome = chromeMock;
+    clientStorageMock.get.mockResolvedValue(null);
 
     const result = await resolveCurrentUserId();
 

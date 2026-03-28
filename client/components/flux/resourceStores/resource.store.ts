@@ -125,7 +125,16 @@ export class ActiveResourceStore<
   }
 
   resolveExportContent(): string {
-    return (this.get().content as string) ?? "";
+    const current = this.get();
+    if (
+      current &&
+      typeof current === "object" &&
+      "content" in current &&
+      typeof current.content === "string"
+    ) {
+      return current.content;
+    }
+    return "";
   }
 
   static resolve<T extends ActiveResourceStore<any, any, any>>(

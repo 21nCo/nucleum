@@ -7,7 +7,10 @@
     calculateGroupingCounts,
     resolveOptionsForGrouping
   } from "@21n/components/collection/collection.utils";
-  import type { ICollectionView } from "@21n/components/collection/collection.type";
+  import type {
+    ICollectionItem,
+    ICollectionView
+  } from "@21n/components/collection/collection.type";
   import type {
     ISelectItem,
     ISelectValue
@@ -19,8 +22,10 @@
   export let properties: IProperty[] = [];
   export let value: ISelectValue | undefined = undefined;
   let tabs: ISelectItem[] = [];
+  $: viewData =
+    (view as ICollectionView & { data?: ICollectionItem[] }).data ?? [];
   $: label = resolveLabel(view.tabBy);
-  $: tabCounts = calculateGroupingCounts(view.data || [], view.tabBy);
+  $: tabCounts = calculateGroupingCounts(viewData, view.tabBy);
   $: tabs = resolveTabs(view.tabBy);
 
   function resolveTabs(tabBy: string) {

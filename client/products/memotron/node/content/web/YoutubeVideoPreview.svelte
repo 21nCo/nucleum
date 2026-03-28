@@ -1,15 +1,13 @@
 <script lang="ts">
   import { logger } from "@21n/components/debug/logger.client";
   import { onMount } from "svelte";
-
-  // Extend Window interface to include YouTube specific properties
-  declare global {
-    interface Window {
-      YT: any;
-      onYouTubeIframeAPIReady: () => void;
-      [key: string]: any; // Allow dynamic properties for instance-specific callbacks
-    }
-  }
+  type YouTubeWindow = Window & {
+    YT?: {
+      Player: new (containerId: string, params: any) => any;
+    };
+    onYouTubeIframeAPIReady?: () => void;
+    [key: string]: unknown;
+  };
 
   export let url: string;
   export let timestamp: number | null = null;
@@ -19,7 +17,6 @@
   let player: any;
   let playerReady = false;
   let errorMessage = "";
-  $: console.log({ url, videoId });
 
   onMount(() => {
     if (url) {
@@ -27,14 +24,12 @@
     }
     if (!videoId) return;
 
-    // Create a unique callback name for this instance
     const callbackName = `onYouTubeIframeAPIReady_${instanceId}`;
 
-    const win = window as any;
-    if (win.YT && win.YT.Player) {
+    const win = window as unknown as YouTubeWindow;
+    if (win.YT?.Player) {
       initializePlayer();
     } else {
-      // Only load the API script if it hasn't been loaded yet
       if (
         !document.querySelector(
           'script[src="https://www.youtube.com/iframe_api"]'
@@ -46,14 +41,13 @@
         firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
       }
 
-      // Set up unique callback for this instance
       win[callbackName] = initializePlayer;
       if (!win.onYouTubeIframeAPIReady) {
         win.onYouTubeIframeAPIReady = () => {
-          // Call all instance-specific callbacks
           Object.keys(win).forEach((key) => {
             if (key.startsWith("onYouTubeIframeAPIReady_")) {
-              win[key]();
+              const callback = win[key];
+              if (typeof callback === "function") callback();
             }
           });
         };
@@ -88,8 +82,10 @@
 
   function initializePlayer() {
     try {
+      const win = window as unknown as YouTubeWindow;
+      if (!win.YT?.Player || !videoId) return;
       const containerId = `player-container-${instanceId}`;
-      player = new window.YT.Player(containerId, {
+      player = new win.YT.Player(containerId, {
         height: "600",
         width: "100%",
         videoId: videoId,
@@ -107,7 +103,7 @@
   }
 
   export function onTrace(e: any) {
-    if (e.id && e.timestamp) {
+    if (e.id && e.timestamp && player) {
       timestamp = e.timestamp;
       player.seekTo(timestamp, true);
       player.playVideo();
@@ -147,8 +143,7 @@
   function cueVideo() {
     if (playerReady && videoId) {
       errorMessage = "";
-      // player.loadVideoById(videoId, timestamp);
-      player.cueVideoById(videoId, timestamp);
+      player.cueVideoById(videoId, timestamp ?? undefined);
     }
   }
 </script>

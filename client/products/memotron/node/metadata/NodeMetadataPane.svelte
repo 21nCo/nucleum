@@ -52,6 +52,11 @@
     }
   }
 
+  function resolveInfoValue(value: Date | string | undefined) {
+    if (!value) return undefined;
+    return value instanceof Date ? value.toISOString() : value;
+  }
+
   function resolveFileFormat(fileType: string) {
     if (!fileType) return "NA";
     if (fileType.includes("image/jpeg")) return "jpeg";
@@ -87,7 +92,7 @@
       if (accessLogs && accessLogs.length > 0) {
         viewLogs = accessLogs
           .filter((x) => x.action === ResourceActionType.OPEN)
-          .sort((a, b) => b.createdAt - a.createdAt);
+          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         if (viewLogs.length === 0) return;
         if (
           currentAccessId &&
@@ -121,16 +126,19 @@
       {/if}
       <BasicInfoItem
         label={isWebNode ? "Saved at" : "Created at"}
-        value={$node.createdAt}
+        value={resolveInfoValue($node.createdAt)}
       />
       {#if lastAccessLog}
         <BasicInfoItem
           label="Last viewed at"
-          value={lastAccessLog?.createdAt}
+          value={resolveInfoValue(lastAccessLog?.createdAt)}
         />
       {/if}
       {#if !isWebNode}
-        <BasicInfoItem label="Last modified at" value={$node.modifiedAt} />
+        <BasicInfoItem
+          label="Last modified at"
+          value={resolveInfoValue($node.modifiedAt)}
+        />
       {/if}
     </div>
     {#if $node.contentType === NodeType.AUDIO && $node.metadata}

@@ -102,7 +102,9 @@ export const rearrangeOnAxis: Action<HTMLElement, RearrangeParams> = (
         setTimeout(() => {
           const left = node.getBoundingClientRect().left;
           startX = left + offsetX;
-          prevTranslateX = lastMouseX - startX;
+          if (lastMouseX !== null) {
+            prevTranslateX = lastMouseX - startX;
+          }
         }, 1);
       }
       if (prevTranslateX < translateX) {

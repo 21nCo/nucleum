@@ -21,6 +21,10 @@
   export let bottomRender: string | undefined = undefined;
   let menu: IContextMenuGroup[] = [];
 
+  function resolveItemSize() {
+    return size === Size.xl ? Size.lg : size;
+  }
+
   onMount(() => {
     if (!menuResolver) return;
     const resolution = menuResolver();
@@ -67,7 +71,7 @@
       {#each group.items as item}
         <ContextMenuItem
           {item}
-          {size}
+          size={resolveItemSize()}
           isToggleGroup={group.isToggleGroup}
           {parentBgIndex}
           on:select={() => onSelect(item)}

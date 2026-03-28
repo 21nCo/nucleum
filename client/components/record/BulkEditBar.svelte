@@ -42,7 +42,7 @@
     size: Size.sm,
     style: ButtonStyle.OUTLINED,
     isPreventMinWidth: true
-  };
+  } as const;
   $: parentBgIndex = $appearance.theme === Theme.LIGHT ? 1 : 3;
 
   const selectAllAction = {

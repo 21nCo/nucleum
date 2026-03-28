@@ -68,7 +68,7 @@
       {/if}
       <InfoCard
         label="Saved at"
-        value={$node.createdAt}
+        value={$node.createdAt.toISOString()}
         parentBgIndex={0}
         on:click={() => node.switchPanel(ResourcePanelType.METADATA)}
       />

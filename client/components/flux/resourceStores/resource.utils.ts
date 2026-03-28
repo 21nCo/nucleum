@@ -64,11 +64,21 @@ export function resolveProductResources(
   }
 }
 
-export function determineResourceType(id: IRecordId): Resource {
+export function determineResourceType(
+  id: IRecordId | { tb: string } | null | undefined
+): Resource {
   if (!id) return Resource.unknown;
-  if (typeof id !== "string") return id.tb as Resource;
-  const parts = id.split(":");
-  if (parts.length > 1) return parts[0] as Resource;
+  if (
+    typeof id !== "string" &&
+    "tb" in id &&
+    typeof id.tb === "string"
+  ) {
+    return id.tb as Resource;
+  }
+  if (typeof id === "string") {
+    const parts = id.split(":");
+    if (parts.length > 1) return parts[0] as Resource;
+  }
   return Resource.unknown;
 }
 

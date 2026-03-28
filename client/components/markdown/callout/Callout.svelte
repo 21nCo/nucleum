@@ -4,7 +4,10 @@
   import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
   import { markdownSettings } from "@21n/components/markdown/markdown.settings";
   import type { MdStoreType } from "@21n/components/markdown/markdown.store";
-  import type { ICalloutBody, ICalloutSetting } from "@21n/components/markdown/md.type";
+  import type {
+    ICalloutBody,
+    ICalloutSetting
+  } from "@21n/components/markdown/md.type";
   import TextContent from "@21n/components/markdown/content/TextContent.svelte";
   import CalloutSelector from "@21n/components/markdown/callout/CalloutSelector.svelte";
   import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
@@ -25,13 +28,32 @@
 
   function resolveCallout(): ICalloutSetting {
     if (body.callout) {
+      const currentCallout = body.callout;
       const calloutFromSettings = $markdownSettings.callout.find(
-        (x) => x.id === body.callout.id
+        (x) => x.id === currentCallout.id
       );
-      return calloutFromSettings ?? body.callout;
+      return calloutFromSettings ?? currentCallout;
     } else {
       return $markdownSettings.callout[0];
     }
+  }
+
+  function resolveCalloutPopoverParams() {
+    return {
+      content: CalloutSelector,
+      componentProps: {
+        selected: _callout,
+        onSelect: (callout: ICalloutSetting) => {
+          _callout = callout;
+          saveCalloutSetting(callout);
+          ref.dispatchEvent(new CustomEvent("hide"));
+        },
+        onEdit: () => {
+          ref.dispatchEvent(new CustomEvent("hide"));
+          appStore.runAction(MemotronAction.CALLOUT_SETTINGS);
+        }
+      }
+    };
   }
 
   function saveCalloutSetting(callout: ICalloutSetting) {
@@ -51,33 +73,34 @@
   color={_callout.color}
   class="flex gap-3 items-start bg-ccs5 border border-ccs4 rounded-md px-2 py-1 text-ccs1"
 >
-  <div
-    class={cn(
-      "flex flex-col justify-center items-center px-2 border rounded-md h-10",
-      {
-        "border-ccs3": isHovering && !$mdStore.params?.isReadOnly,
-        "border-transparent": !isHovering || $mdStore.params?.isReadOnly
-      }
-    )}
-    bind:this={ref}
-    use:popover={{
-      content: $mdStore.params?.isReadOnly ? null : CalloutSelector,
-      componentProps: {
-        selected: _callout,
-        onSelect: (callout) => {
-          _callout = callout;
-          saveCalloutSetting(callout);
-          ref.dispatchEvent(new CustomEvent("hide"));
-        },
-        onEdit: () => {
-          ref.dispatchEvent(new CustomEvent("hide"));
-          appStore.runAction(MemotronAction.CALLOUT_SETTINGS);
+  {#if $mdStore.params?.isReadOnly}
+    <div
+      class={cn(
+        "flex flex-col justify-center items-center px-2 border rounded-md h-10",
+        {
+          "border-ccs3": isHovering && !$mdStore.params?.isReadOnly,
+          "border-transparent": !isHovering || $mdStore.params?.isReadOnly
         }
-      }
-    }}
-  >
-    <Avatar avatar={_callout.avatar} />
-  </div>
+      )}
+      bind:this={ref}
+    >
+      <Avatar avatar={_callout.avatar} />
+    </div>
+  {:else}
+    <div
+      class={cn(
+        "flex flex-col justify-center items-center px-2 border rounded-md h-10",
+        {
+          "border-ccs3": isHovering && !$mdStore.params?.isReadOnly,
+          "border-transparent": !isHovering || $mdStore.params?.isReadOnly
+        }
+      )}
+      bind:this={ref}
+      use:popover={resolveCalloutPopoverParams()}
+    >
+      <Avatar avatar={_callout.avatar} />
+    </div>
+  {/if}
   <div class="w-full">
     <TextContent
       bind:text={body.text}

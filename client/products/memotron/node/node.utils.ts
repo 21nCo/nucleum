@@ -9,7 +9,7 @@ import {
   type INode,
   type ITwitterProfileBody,
   type ITextClipBody,
-  type IVideoTimestampClipBody,
+  type IVideoTimestampClip,
   type ITwitterProfile,
   type INodeThumb,
   type INodeStructure,
@@ -30,46 +30,78 @@ import {
 import { isValidUrl } from "@21n/shared-utils/utils";
 import { resolveUrlData } from "@21n/products/memotron/node/url.utils";
 
-export function resolveContentPreview(node: INode) {
+function isObject(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === "object";
+}
+
+function hasStringProperty<K extends string>(
+  value: unknown,
+  key: K
+): value is Record<K, string> {
+  return isObject(value) && typeof value[key] === "string";
+}
+
+function hasNumberProperty<K extends string>(
+  value: unknown,
+  key: K
+): value is Record<K, number> {
+  return isObject(value) && typeof value[key] === "number";
+}
+
+function hasProperty<K extends string>(
+  value: unknown,
+  key: K
+): value is Record<K, unknown> {
+  return isObject(value) && key in value;
+}
+
+function resolveFilePreviewValue(
+  value: unknown
+): IFile | IRecordId | undefined {
+  if (typeof value === "string") return value;
+  if (isObject(value)) return value as unknown as IFile;
+  return undefined;
+}
+
+export function resolveContentPreview(node: INode | INodeThumb) {
   const { body, contentType, metadata } = node;
   logger.log({ at: "contentPreview", body, contentType });
 
-  if (contentType === NodeType.TWEET && "content" in body) {
+  if (contentType === NodeType.TWEET && hasStringProperty(body, "content")) {
     if (body.content) return body.content;
-    else if (metadata && "ogTitle" in metadata) return metadata.ogTitle;
+    else if (hasStringProperty(metadata, "ogTitle")) return metadata.ogTitle;
   } else if (
     contentType === NodeType.YOUTUBE_VIDEO ||
     contentType === NodeType.YOUTUBE_SHORT
   ) {
-    if ("title" in body && body.title) return body.title;
-    if (metadata && "ogTitle" in metadata && metadata.ogTitle)
-      return metadata.ogTitle;
-    if (metadata && "title" in metadata && metadata.title)
-      return metadata.title;
+    if (hasStringProperty(body, "title") && isValidString(body.title))
+      return body.title;
+    if (hasStringProperty(metadata, "ogTitle")) return metadata.ogTitle;
+    if (hasStringProperty(metadata, "title")) return metadata.title;
   } else if (socialPostNodeTypeList.has(contentType)) {
     if (node.text && typeof node.text === "string") return node.text;
     if (node.label && typeof node.label === "string") return node.label;
-    if (metadata && "ogTitle" in metadata && metadata.ogTitle)
-      return metadata.ogTitle;
-    if (metadata && "title" in metadata && metadata.title)
-      return metadata.title;
+    if (hasStringProperty(metadata, "ogTitle")) return metadata.ogTitle;
+    if (hasStringProperty(metadata, "title")) return metadata.title;
   } else if (contentType === NodeType.TWITTER_PROFILE) {
-    if ("bio" in body && body.bio) return body.bio;
+    if (hasStringProperty(body, "bio")) return body.bio;
     if (!node.url) return "";
 
     const ogImageUrl = resolveUrlData(node.url)?.ogImage;
     return ogImageUrl ?? "";
   } else if (
     contentType === NodeType.WEB_TEXT_BOOKMARK &&
-    "text" in body &&
-    body.text
+    hasStringProperty(body, "text")
   ) {
     return body.text;
   } else if (node.mdText && typeof node.mdText === "string") {
     return node.mdText;
   } else if (node.text && typeof node.text === "string") {
     return node.text;
-  } else if (contentType === NodeType.KINDLE_HIGHLIGHT && "text" in body) {
+  } else if (
+    contentType === NodeType.KINDLE_HIGHLIGHT &&
+    hasStringProperty(body, "text")
+  ) {
     return body.text;
   }
   return undefined;
@@ -270,7 +302,9 @@ export function resolveNodeContentLabel(contentType: NodeType) {
   }
 }
 
-export function resolveFilePreview(node: INode) {
+export function resolveFilePreview(
+  node: INode | INodeThumb
+): IFile | IRecordId | undefined {
   const { contentType, body, file, metadata, previewImage } = node;
   if (previewImage) {
     return previewImage;
@@ -281,34 +315,47 @@ export function resolveFilePreview(node: INode) {
   ) {
     return file;
   } else if (contentType === NodeType.WEB_SCREENSHOT) {
-    return body.file;
+    if (hasProperty(body, "file")) return resolveFilePreviewValue(body.file);
   } else if (contentType === NodeType.YOUTUBE_BOOKMARK) {
-    return body.thumbnail;
+    if (hasProperty(body, "thumbnail"))
+      return resolveFilePreviewValue(body.thumbnail);
   } else if (contentType === NodeType.AUDIO) {
-    if (file?.thumbnailUrl) return file;
-    return metadata?.picture;
+    if (isObject(file) && hasStringProperty(file, "thumbnailUrl")) return file;
+    if (hasProperty(metadata, "picture")) {
+      return resolveFilePreviewValue(metadata.picture);
+    }
   } else if (
     contentType === NodeType.WEB_PAGE &&
-    !metadata?.ogImage &&
-    !metadata?.screenshotUrl
+    !hasStringProperty(metadata, "ogImage") &&
+    !hasStringProperty(metadata, "screenshotUrl")
   ) {
-    return metadata?.screenshotFile;
-  } else if (contentType === NodeType.PDF && file?.thumbnailUrl) {
+    if (hasProperty(metadata, "screenshotFile")) {
+      return resolveFilePreviewValue(metadata.screenshotFile);
+    }
+  } else if (
+    contentType === NodeType.PDF &&
+    isObject(file) &&
+    hasStringProperty(file, "thumbnailUrl")
+  ) {
     return file;
   }
   return undefined;
 }
 
-export function resolveUrlPreview(node: INode) {
+export function resolveUrlPreview(node: INode | INodeThumb) {
   const { contentType, body, metadata } = node;
   if (contentType === NodeType.WEB_PAGE) {
-    return metadata?.ogImage ?? metadata?.screenshotUrl;
+    if (hasStringProperty(metadata, "ogImage")) return metadata.ogImage;
+    if (hasStringProperty(metadata, "screenshotUrl"))
+      return metadata.screenshotUrl;
   } else if (
     contentType === NodeType.YOUTUBE_VIDEO ||
     contentType === NodeType.YOUTUBE_SHORT ||
     contentType === NodeType.YOUTUBE_CHANNEL
   ) {
-    return metadata?.ogImage ?? metadata?.thumbnailUrl;
+    if (hasStringProperty(metadata, "ogImage")) return metadata.ogImage;
+    if (hasStringProperty(metadata, "thumbnailUrl"))
+      return metadata.thumbnailUrl;
   } else if (socialProfileNodeTypeList.has(contentType)) {
     if (socialProfileWithImageUnavailable.has(contentType)) {
       if (contentType === NodeType.INSTAGRAM_PROFILE)
@@ -316,9 +363,9 @@ export function resolveUrlPreview(node: INode) {
       else if (contentType === NodeType.THREADS_PROFILE)
         return "https://threads.com";
     }
-    return body?.profileImageUrl;
+    if (hasStringProperty(body, "profileImageUrl")) return body.profileImageUrl;
   } else if (contentType === NodeType.KINDLE_BOOK) {
-    return body?.imageUrl;
+    if (hasStringProperty(body, "imageUrl")) return body.imageUrl;
   }
   return undefined;
 }
@@ -360,7 +407,7 @@ export function resolveNodeLabel(item: INodeThumb) {
       "Clipped Text - " + (item.body as ITextClipBody)?.text,
     [NodeType.YOUTUBE_BOOKMARK]:
       "Video timestamp - " +
-      resolveVideoTimeStampStr(item.body as IVideoTimestampClipBody),
+      resolveVideoTimeStampStr(item.body as IVideoTimestampClip["body"]),
     [NodeType.WEB_SCREENSHOT]: "Web screenshot",
     [NodeType.TWEET]: "Unknown tweet",
     [NodeType.KINDLE_HIGHLIGHT]: "Kindle highlight"
@@ -371,7 +418,7 @@ export function resolveNodeLabel(item: INodeThumb) {
     const twitterProfileLabel = isValidString(
       parent?.label ?? parent?.body?.name
     )
-      ? parent.label ?? parent.body.name
+      ? (parent.label ?? parent.body.name)
       : "Unknown";
     const prefix = enumToString(item.contentType);
     return {
@@ -390,9 +437,14 @@ export function resolveNodeLabel(item: INodeThumb) {
       return {
         label: item.label ? item.label + " - " : "Clipped from - ",
         parent,
-        text: item.body?.text ?? item.text ?? `Clip: ${parent?.label ?? weburl}`
+        text:
+          (hasStringProperty(item.body, "text") ? item.body.text : undefined) ??
+          item.text ??
+          `Clip: ${parent?.label ?? weburl}`
       };
     case NodeType.YOUTUBE_BOOKMARK:
+      if (!hasNumberProperty(item.body, "timestamp"))
+        return item.label ?? "At - 00:00";
       const timestamp = formatSeconds(item.body.timestamp, TimeFormat.CLOCK);
       if (!parent?.label)
         return item.label
@@ -404,37 +456,35 @@ export function resolveNodeLabel(item: INodeThumb) {
         text: timestamp
       };
     case NodeType.TWITTER_PROFILE:
-      item = item as ITwitterProfile;
+      const twitterProfile = item as ITwitterProfile;
       return (
-        item.metadata?.ogTitle ||
-        item.label ||
-        ((item.body as ITwitterProfileBody).name
-          ? item.body.name + " X profile"
+        twitterProfile.metadata?.ogTitle ||
+        twitterProfile.label ||
+        ((twitterProfile.body as ITwitterProfileBody).name
+          ? twitterProfile.body.name + " X profile"
           : "Unknown X profile")
       );
     default:
       return "";
   }
 
-  function resolveVideoTimeStampStr(body: IVideoTimestampClipBody) {
+  function resolveVideoTimeStampStr(body: IVideoTimestampClip["body"]) {
     if (!body || typeof body.timestamp !== "number") return "00:00";
     return formatSeconds(body.timestamp, TimeFormat.CLOCK);
   }
 }
 
-export function resolveNodeFavicon(node: INode) {
+export function resolveNodeFavicon(node: INode | INodeThumb) {
   try {
     if (
       socialProfileNodeTypeList.has(node.contentType) &&
       !socialProfileWithImageUnavailable.has(node.contentType) &&
-      "profileImageUrl" in node.body &&
-      node.body.profileImageUrl
+      hasStringProperty(node.body, "profileImageUrl")
     ) {
       return node.body.profileImageUrl;
     } else if (
       node.contentType === NodeType.KINDLE_BOOK &&
-      "imageUrl" in node.body &&
-      node.body.imageUrl
+      hasStringProperty(node.body, "imageUrl")
     ) {
       return node.body.imageUrl;
     } else if (node.metadata?.faviconLink) {

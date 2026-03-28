@@ -138,7 +138,12 @@
   }
 
   function resolvePopover() {
-    if (!item?.componentParams?.resource) return {};
+    if (!item?.componentParams?.resource) {
+      return {
+        content: "",
+        triggerMethod: []
+      };
+    }
     return {
       placement: Placement.BottomCenter,
       content: ContextMenu,

@@ -91,7 +91,7 @@ export type IGoalThumb = IResourcePropertiesForGoal &
 
 export type IActiveGoal = IActiveResource &
   IResourcePageWithPanels &
-  IGoalBase & {
+  Omit<IGoal, "parent" | "children"> & {
     type: GoalType;
     parent?: IGoalThumb[];
     children?: IGoal[];

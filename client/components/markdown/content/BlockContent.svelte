@@ -4,7 +4,8 @@
     headingNodeTypes,
     listNodeTypes,
     NodeType,
-    simpleTextNodeTypeList
+    simpleTextNodeTypeList,
+    type IMediaGridNode
   } from "@21n/products/memotron/node/node.type";
   import EmbedContent from "@21n/components/markdown/embed/EmbedContent.svelte";
   import type { MdStoreType } from "@21n/components/markdown/markdown.store";
@@ -23,6 +24,8 @@
   export let parentHierarchy: string[] = [];
   export let isHovering: boolean = false;
   export let isFocusing: boolean = false;
+  $: parentHierarchy;
+  $: mediaGridBlock = block as unknown as IMediaGridNode;
 </script>
 
 <div
@@ -39,7 +42,7 @@
       <div class="h-px bg-bgs4"></div>
     </div>
   {:else if block.contentType === NodeType.MEDIA_GRID}
-    <MediaGrid {block} {mdStore} on:delete />
+    <MediaGrid block={mediaGridBlock} {mdStore} on:delete />
   {:else if block.contentType === NodeType.EMBED}
     <EmbedContent
       id={block.id}

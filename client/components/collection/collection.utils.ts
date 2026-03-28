@@ -22,6 +22,16 @@ import type { IAvatar } from "@21n/types/avatar.type";
 export const UNASSIGNED_VALUE = "unassigned";
 export const UNASSIGNED_LABEL = "Unassigned";
 
+function resolveGroupingCountKey(value: unknown) {
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") {
+    return value.toString();
+  }
+  if (value instanceof Date) return value.toISOString();
+  if (value && typeof value === "object") return JSON.stringify(value);
+  return UNASSIGNED_VALUE;
+}
+
 export function resolveCollectionTypeIcon(type: CollectionType) {
   switch (type) {
     case CollectionType.UNTYPED:
@@ -56,9 +66,9 @@ export function calculateGroupingCounts(
   data: ICollectionItem[],
   propertyId: IRecordId
 ): Map<string, number> {
-  if (!data) return new Map();
+  if (!data) return new Map<string, number>();
 
-  const counts = new Map();
+  const counts = new Map<string, number>();
   counts.set(UNASSIGNED_VALUE, 0);
 
   if (propertyId) {
@@ -68,10 +78,12 @@ export function calculateGroupingCounts(
         counts.set(UNASSIGNED_VALUE, (counts.get(UNASSIGNED_VALUE) || 0) + 1);
       } else if (Array.isArray(prop)) {
         prop.forEach((value) => {
-          counts.set(value, (counts.get(value) || 0) + 1);
+          const key = resolveGroupingCountKey(value);
+          counts.set(key, (counts.get(key) || 0) + 1);
         });
       } else {
-        counts.set(prop, (counts.get(prop) || 0) + 1);
+        const key = resolveGroupingCountKey(prop);
+        counts.set(key, (counts.get(key) || 0) + 1);
       }
     });
   }
@@ -144,7 +156,7 @@ export function resolveOptionsForGrouping(
   } else {
     propertyOptions = _resolvePropertyOptions(id, properties, additionalParams);
     const filteredOptions = propertyOptions.filter((option) => {
-      const count = counts.get(option.value);
+      const count = counts.get(resolveGroupingCountKey(option.value));
       return count && count > 0;
     });
     if (additionalParams.isBoardView) {

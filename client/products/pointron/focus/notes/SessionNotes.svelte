@@ -8,9 +8,22 @@
   import { TextStyle } from "@21n/types/text.enum";
   import { activeSession } from "@21n/products/pointron/focus/session.store";
   import FocusNotes from "@21n/products/pointron/focus/notes/FocusNotes.svelte";
+  import type { IMarkdown } from "@21n/components/markdown/md.type";
 
   let feedback: IInlineStatus | undefined = undefined;
   const mountTs = new Date().getTime();
+  let notes: IMarkdown = { blocks: [] };
+
+  $: {
+    const sessionNotes = $activeSession.notes;
+    if (sessionNotes && sessionNotes !== notes) {
+      notes = sessionNotes;
+    }
+  }
+
+  $: if ($activeSession.notes !== notes) {
+    activeSession.update((session) => ({ ...session, notes }));
+  }
 
   /**
    * Preventing the feedback on mount to avoid flickering
@@ -34,7 +47,7 @@
 </script>
 
 <FocusNotes
-  bind:md={$activeSession.notes}
+  bind:md={notes}
   parentBgIndex={2}
   on:debouncedChange={onChange}
 >

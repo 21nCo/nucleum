@@ -89,6 +89,26 @@
   let pageNumber = node?.config?.pdfPage ?? 1;
   let annotationMode: AnnotationType = AnnotationType.NONE;
   let isSearchActive = false;
+
+  function resolveKeyboardKey(event: KeyboardEvent | CustomEvent) {
+    if (event instanceof KeyboardEvent) return event.key;
+    const detail = event.detail;
+    if (detail instanceof KeyboardEvent) return detail.key;
+    if (
+      detail &&
+      typeof detail === "object" &&
+      "key" in detail &&
+      typeof detail.key === "string"
+    ) {
+      return detail.key;
+    }
+    return undefined;
+  }
+
+  function resolveArrayBuffer(buffer: ArrayBufferLike) {
+    return Uint8Array.from(new Uint8Array(buffer)).buffer;
+  }
+
   enum SpreadModes {
     //init display modes.
     "NONE",
@@ -138,6 +158,19 @@
   let pdfDocument: any;
 
   let mainRects: any = [];
+
+  function onInlineAnnotate(event: CustomEvent<AnnotationType>) {
+    if (
+      event.detail == AnnotationType.COMMENT ||
+      event.detail == AnnotationType.TASK
+    ) {
+      annotCickedType = event.detail;
+      commentEditorVisible = true;
+    } else {
+      annotate(event);
+    }
+    inlineToolBarVisible = false;
+  }
 
   /**
    * To convert top left height width to coordinates and height & width of the page.
@@ -262,7 +295,7 @@
   function handleAnnotClick(id: string) {
     // let element = document.getElementById(id);
     let elements = document.getElementsByClassName(id);
-    let element = elements[0];
+    let element = elements[0] as HTMLElement | undefined;
     annotClickedId = id;
     annotClickedColor = element?.dataset?.highlighter || "";
     annotCickedType = element?.dataset?.annottype || "";
@@ -371,7 +404,7 @@
     });
     handleScroll("");
     setTimeout(() => {
-      const annotItems = document.querySelectorAll("." + id);
+      const annotItems = document.querySelectorAll<HTMLElement>("." + id);
       const top =
         (annotItems[0]?.offsetTop || 0) +
         (viewerContainerElement?.scrollTop || 0) -
@@ -924,8 +957,8 @@
    * mousedown for on spot annotations(Task and Comment)
    */
   let onViewerMouseDown: ((event: MouseEvent) => void) | null = null;
-  onMount(async () => {
-    await refreshAnnotations();
+  onMount(() => {
+    void refreshAnnotations();
     viewerContainerElement = document.getElementById("viewerContainer")!;
     document.addEventListener("keydown", handleKeyDown);
     onViewerMouseDown = (event: MouseEvent) =>
@@ -977,7 +1010,7 @@
               placeholder="Search"
               bind:value={searchText}
               on:keydown={(e) => {
-                if (e.key === "Enter") onSearch();
+                if (resolveKeyboardKey(e) === "Enter") onSearch();
               }}
               size={Size.sm}
               icon="search"
@@ -1042,7 +1075,7 @@
                   (response instanceof ArrayBuffer
                     ? new Uint8Array(response)
                     : new Uint8Array(response));
-                pdfData = uint8.buffer;
+                pdfData = resolveArrayBuffer(uint8.buffer);
               } else {
                 pdfData = await fetch(url.toString()).then((response) =>
                   response.arrayBuffer()
@@ -1085,16 +1118,7 @@
         <InlineToolBar
           style={popupStyle}
           bind:selectedColor
-          on:annotate={(event) => {
-            if (
-              event.detail == AnnotationType.COMMENT ||
-              event.detail == AnnotationType.TASK
-            ) {
-              annotCickedType = event.detail;
-              commentEditorVisible = true;
-            } else annotate(event);
-            inlineToolBarVisible = false;
-          }}
+          on:annotate={onInlineAnnotate}
         />
       {/if}
       {#if commentEditorVisible}

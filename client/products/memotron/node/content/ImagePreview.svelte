@@ -12,6 +12,12 @@
 
   let classList = "";
   export { classList as class };
+
+  function handleImageError(event: Event) {
+    const target = event.currentTarget as HTMLImageElement;
+    target.style.display = "none";
+    target.nextElementSibling?.classList.remove("hidden");
+  }
 </script>
 
 <img
@@ -19,11 +25,7 @@
   class={classList}
   use:fileLoaderv2={{ source: src, isApplyBgColorFromImage: isApplyBgColor }}
   on:load
-  on:error={(e) => {
-    const target = e.currentTarget;
-    target.style.display = "none";
-    target.nextElementSibling?.classList.remove("hidden");
-  }}
+  on:error={handleImageError}
 />
 <div
   class={cn("hidden w-full h-full bg-bgs3 flex items-center justify-center", {

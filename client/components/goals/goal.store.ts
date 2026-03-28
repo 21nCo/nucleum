@@ -1,5 +1,8 @@
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+import {
+  ActiveResourceStore,
+  ResourceStore
+} from "@21n/components/flux/resourceStores/resource.store";
 import { PanelSwitcherMixin } from "@21n/components/resource/panelSwitcher.mixin";
 import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
 import {
@@ -409,9 +412,12 @@ export class ActiveGoalStore extends CollectibleStore<
           createdAt: new Date(),
           accessMode,
           panel: params?.panel ?? ResourcePanelType.DEFAULT,
+          defaultPanel: ResourcePanelType.DEFAULT,
+          switchPanel: () => {},
+          closeEditMode: () => {},
           ...(params?.isInEditMode && { isInEditMode: true }),
           isPageLoading: false
-        });
+        } as IActiveGoal);
         return;
       }
       let types = [];
@@ -463,18 +469,23 @@ export class ActiveGoalStore extends CollectibleStore<
 
   switchPanel!: (panel: string) => void;
 
-  static resolve(id: IRecordId): IActiveGoalStore {
+  static resolve<T extends ActiveResourceStore<any, any, any>>(
+    this: new (id: IRecordId) => T,
+    id: IRecordId
+  ): T {
     if (!ActiveGoalStore.prototype.switchPanel) {
       ActiveGoalStore.prototype.switchPanel = PanelSwitcherMixin.switchPanel;
     }
 
-    const instance = super.resolve.call(this, id) as any;
+    const instance = super.resolve.call(this, id) as T & {
+      switchPanel?: (panel: string) => void;
+    };
 
     if (!instance.switchPanel) {
       instance.switchPanel = PanelSwitcherMixin.switchPanel;
     }
 
-    return instance;
+    return instance as T;
   }
 }
 
@@ -650,7 +661,9 @@ export function resolveGoalContextMenu(
     accessPointId?: IRecordId;
   }
 ): IContextMenu {
-  const resourceActions = new ResourceActions(goal, goalStore, accessPoint);
+  const resourceActions = new ResourceActions(goal as unknown as IGoal, goalStore, {
+    accessPoint
+  });
   const goalActions = new GoalActions(goal, goalStore, accessPoint);
 
   let primaryItems: IContextMenuItem[] = [];

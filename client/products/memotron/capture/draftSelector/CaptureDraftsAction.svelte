@@ -23,7 +23,7 @@
   async function refresh() {
     const result = await captureStore.selectMany();
     if (isValidArrayWithData(result)) {
-      result.sort((a, b) => {
+      result.sort((a: ICapture, b: ICapture) => {
         return (
           new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime()
         );
@@ -43,6 +43,11 @@
   function hidePopover() {
     ref.dispatchEvent(new Event("hide"));
     appEvents.nav("capture-drafts-popover");
+  }
+
+  function onSelectDraft(draft: ICapture) {
+    dispatch("select", draft);
+    hidePopover();
   }
 </script>
 
@@ -65,10 +70,7 @@
         componentProps: {
           drafts,
           onClose: hidePopover,
-          onSelect: (draft) => {
-            dispatch("select", draft);
-            hidePopover();
-          },
+          onSelect: onSelectDraft,
           onDelete
         }
       }}

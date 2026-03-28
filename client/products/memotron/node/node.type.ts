@@ -15,6 +15,7 @@ import {
   type IResourceLockable,
   type IResourcePageWithPanels,
   type IResourceShareable,
+  type IResourceStarrable,
   type OmitFields,
   type OmitForCapture
 } from "@21n/components/flux/resourceStores/resource.type";
@@ -35,6 +36,7 @@ import type {
 type IResourcePropertiesForNode = IResource &
   IResourceLabeled &
   IResourceShareable &
+  IResourceStarrable &
   IResourceLockable &
   IResourceArchivable &
   IResourceInActivableFromParent &
@@ -83,6 +85,8 @@ type INodeInterface<
    */
   mdText?: string;
   text?: string;
+  bodySearch?: string;
+  labelSearch?: string;
   config?: any;
   metaType?: NodeMetaType | "";
   /**
@@ -639,7 +643,7 @@ type IWebPageMetadata = {
   screenshotFile?: IRecordId;
   browser?: {
     userAgent: string;
-    uAData: any;
+    uAData?: any;
   };
 };
 
@@ -1133,8 +1137,10 @@ export type IActiveNode = INode &
     collections?: IRecordId[];
     types?: ICollectionExpanded[];
     wordCount?: number;
+    charCount?: number;
     pdfAnnotations?: IPdfBookmarkBody[];
     links?: INodeLinkThumb[];
+    clips?: INode[];
     children?: IActiveNode[];
     childrenHierarchy?: IRecordId[];
     blocks?: INode[];

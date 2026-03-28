@@ -88,7 +88,7 @@
   function handleGradientChange(e: CustomEvent) {
     dispatch("select", `gradient_${e.detail}`);
   }
-  async function handleDrop(droppedFiles) {
+  async function handleDrop(droppedFiles: File[]) {
     let files = Array.isArray(droppedFiles) ? droppedFiles : [droppedFiles];
     isUploadInProgress = true;
 
@@ -234,7 +234,7 @@
       {:else if selectedMethod === Method.GRADIENT}
         <GradientsSelector
           on:change={handleGradientChange}
-          bind:value={_value}
+          value={_value ?? ""}
         />
       {:else if selectedMethod === Method.LIBRARY}
         <CoverPickerFromLibrary

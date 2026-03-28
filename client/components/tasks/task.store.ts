@@ -190,7 +190,9 @@ export function resolveTaskContextMenu(
     accessPointId?: IRecordId;
   }
 ): IContextMenu {
-  const resourceActions = new ResourceActions(task, taskStore, accessPoint);
+  const resourceActions = new ResourceActions(task, taskStore, {
+    accessPoint
+  });
   const taskActions = new TaskActions(task, taskStore, accessPoint);
   const product = get(appStore).product;
   const viewStore = get(view);

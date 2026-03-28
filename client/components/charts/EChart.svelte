@@ -235,7 +235,7 @@
     }
 
     const series = groups.map((group, index) => {
-      const seriesData = categories.map((category) => {
+      const seriesData = categories.map((category: string) => {
         const rawValue = valueLookup.get(group)?.get(category) ?? 0;
         if (usePercentage) {
           const total = totalsByCategory[category] ?? 0;
@@ -542,7 +542,6 @@
         : { show: false },
       xAxis: {
         type: "time",
-        boundaryGap: false,
         axisLabel: {
           color: axisLabelColor
         },

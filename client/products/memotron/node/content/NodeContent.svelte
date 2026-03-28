@@ -99,10 +99,10 @@
             isPreventBackPropagation: true
           }
         );
-        $node.children = [createdBlock[0]];
+        $node.children = [createdBlock[0] as typeof $node.children[number]];
       }
     }
-    focusEventSub = node.eventStore.subscribe((x) => {
+    focusEventSub = node.eventStore.subscribe((x: any) => {
       logger.debug({
         at: "Node content - nodeFocusEvent listener",
         x,

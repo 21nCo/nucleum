@@ -82,6 +82,11 @@
     "logos:google-drive",
     "logos:typeform-icon"
   ];
+  const youtubeNodeTypes = [
+    NodeType.YOUTUBE_VIDEO,
+    NodeType.YOUTUBE_SHORT,
+    NodeType.YOUTUBE_CHANNEL
+  ];
 
   let error: string | undefined = undefined;
   let isSaveInProgress: boolean = false;
@@ -192,8 +197,7 @@
         accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
         creationContext={nodeContext?.id}
         on:saved={onAudioCaptureSave}
-        on:cancel={() => (isAudioCaptureInProgress = false)}
-        bind:isSaveInProgress
+        on:clear={() => (isAudioCaptureInProgress = false)}
       />
     {/if}
   </div>
@@ -236,7 +240,7 @@
             <Icon icon="twitter" class="stroke-fgs3" />
           {:else if subType === NodeType.KINDLE_BOOK || subType === NodeType.KINDLE_HIGHLIGHT}
             <Icon icon="book" class="stroke-fgs3" />
-          {:else if [NodeType.YOUTUBE_VIDEO, NodeType.YOUTUBE_SHORT, NodeType.YOUTUBE_CHANNEL].includes(subType)}
+          {:else if subType && youtubeNodeTypes.includes(subType)}
             <Icon icon="youtube" class="stroke-fgs3" />
           {:else if !subType}
             <div class="flex items-center justify-center gap-3">

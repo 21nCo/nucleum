@@ -17,6 +17,8 @@
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div
   {style}
+  role="presentation"
+  tabindex="-1"
   class="border border-brs3 bg-bgs2 rounded-md p-2"
   on:click|stopPropagation
   on:mousedown|stopPropagation

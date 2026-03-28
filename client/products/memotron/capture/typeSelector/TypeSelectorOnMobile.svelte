@@ -15,6 +15,11 @@
   import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
   import { CollectionObjectKey } from "@21n/components/collection/collection.type";
   import context from "@21n/stores/context.store";
+  type IBaseType = {
+    icon: string;
+    label: string;
+    value: CaptureMethod;
+  };
   const dispatch = createEventDispatcher();
   export let selected: CaptureMethod | undefined = undefined;
   export let isBoxedLayout = true;
@@ -48,7 +53,7 @@
       label: "Paste",
       value: CaptureMethod.PASTE
     }
-  ].filter(Boolean);
+  ].filter((item): item is IBaseType => Boolean(item));
 
   async function refreshTypes() {
     const typesResult = await collectionStore.resolveCaptureShortcuts();

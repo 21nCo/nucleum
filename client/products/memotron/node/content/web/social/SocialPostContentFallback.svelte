@@ -31,7 +31,26 @@
   let platformName: string = "";
   let platformDisplay: string = "";
 
+  function isObject(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null;
+  }
+
+  function hasStringProperty<K extends string>(
+    value: unknown,
+    key: K
+  ): value is Record<K, string> {
+    return isObject(value) && typeof value[key] === "string";
+  }
+
+  function resolveParentUrl() {
+    if (isObject(node.parent) && hasStringProperty(node.parent, "url")) {
+      return node.parent.url;
+    }
+    return undefined;
+  }
+
   const contentPreview = resolveContentPreview(node);
+  $: void accessPoint;
 
   $: {
     if (socialPostNodeTypeList.has(node.contentType)) {
@@ -45,7 +64,7 @@
   });
 
   function setPlatformInfo(contentType: NodeType) {
-    const platformMap: Record<NodeType, { name: string; display: string }> = {
+    const platformMap: Partial<Record<NodeType, { name: string; display: string }>> = {
       [NodeType.TWEET]: { name: "twitter", display: "X" },
       [NodeType.MASTODON_POST]: { name: "mastodon", display: "Mastodon" },
       [NodeType.BLUESKY_POST]: { name: "bluesky", display: "Bluesky" },
@@ -96,8 +115,9 @@
     ];
 
     for (const pattern of urlPatterns) {
-      if (node.parent?.url?.includes(pattern.domain)) {
-        const username = node.parent.url.split(pattern.split)[1];
+      const parentUrl = resolveParentUrl();
+      if (parentUrl?.includes(pattern.domain)) {
+        const username = parentUrl.split(pattern.split)[1];
         if (username) {
           parentUsername = username.split("/")[0];
           return;
@@ -105,15 +125,16 @@
       }
     }
 
-    if (node.parent?.url && node.contentType === NodeType.MASTODON_POST) {
-      const mastodonMatch = node.parent.url.match(/\/@([^/]+)/);
+    const parentUrl = resolveParentUrl();
+    if (parentUrl && node.contentType === NodeType.MASTODON_POST) {
+      const mastodonMatch = parentUrl.match(/\/@([^/]+)/);
       if (mastodonMatch) {
         parentUsername = mastodonMatch[1];
         return;
       }
     }
 
-    if (node.metadata?.username) {
+    if (hasStringProperty(node.metadata, "username")) {
       parentUsername = node.metadata.username;
     }
   }
@@ -130,7 +151,9 @@
       isReturnRawData: true
     });
     const parsed = parse(urlData.text);
-    oembedHtml = parsed.html;
+    oembedHtml = isObject(parsed) && hasStringProperty(parsed, "html")
+      ? parsed.html
+      : null;
   }
 
   function getPostedAtTime() {
@@ -154,7 +177,9 @@
   <button
     class="flex flex-col gap-5 p-4 hover:bg-bgs2 border border-fgs4 rounded-md mo:w-full w-3/4"
     on:click|stopPropagation={() => {
-      appStore.openLink(node.url);
+      if (node.url) {
+        appStore.openLink(node.url);
+      }
     }}
   >
     {#if parent}

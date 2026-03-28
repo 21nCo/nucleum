@@ -4,6 +4,7 @@
   export let orientation: Orientation = Orientation.Horizontal;
   export let variant: IconVariant = IconVariant.Outline;
   export let isCircled: boolean = false;
+  $: isCircled;
 </script>
 
 {#if variant === IconVariant.Outline}

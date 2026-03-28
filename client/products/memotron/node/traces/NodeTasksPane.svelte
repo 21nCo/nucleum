@@ -8,6 +8,8 @@
   import TaskThumbnail from "@21n/components/tasks/TaskThumbnail.svelte";
   import { LoadingAnimationType } from "@21n/types/feedback.type";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import type { IEmbedBlock } from "@21n/components/markdown/md.type";
+  import type { IRecordId } from "@21n/types/data.type";
 
   export let node: IActiveNodeStore | null = null;
   let tasks: ITaskThumb[] = [];
@@ -21,12 +23,17 @@
     if (!node || !$node?.md?.blocks) return;
     isRefreshing = true;
     const taskIds = $node.md.blocks
-      ?.filter(
-        (b) =>
+      .filter(
+        (b): b is IEmbedBlock =>
           b.contentType === NodeType.EMBED &&
-          b.body.subType === NodeType.TASK_AS_EMBED
+          typeof b.body === "object" &&
+          b.body !== null &&
+          "subType" in b.body &&
+          b.body.subType === NodeType.TASK_AS_EMBED &&
+          "id" in b.body
       )
-      .map((b) => b.body.id);
+      .map((b) => b.body.id)
+      .filter((id): id is IRecordId => Boolean(id));
     const tasksResult = await taskStore.selectMany(
       {
         filters: {

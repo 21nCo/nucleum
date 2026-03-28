@@ -14,7 +14,11 @@
     ResourceActionType
   } from "@21n/components/flux/resourceStores/resource.type";
   import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
-  import { GoalStatus, type IGoal } from "@21n/components/goals/goal.type";
+  import {
+    GoalStatus,
+    type IGoal,
+    type IGoalThumb
+  } from "@21n/components/goals/goal.type";
   import modalEvent from "@21n/components/modal/modal.store";
   import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
   import { SearchStore } from "@21n/components/record/record.store";
@@ -79,6 +83,10 @@
     if (result) modalEvent.hide(action);
   }
 
+  function resolveGoalThumb(goal: IGoal) {
+    return goal as unknown as IGoalThumb;
+  }
+
   function searchGoalCallback(query: string) {
     return searchStore.select({
       searchQuery: query,
@@ -114,7 +122,7 @@
     {:else if goal}
       <div class="transition-all duration-200">
         <TaskThumbnailGoalLabel
-          {goal}
+          goal={resolveGoalThumb(goal)}
           on:clearGoal={() => {
             isShowGoalPicker = true;
           }}

@@ -33,6 +33,12 @@
   export let savedNode: INodeThumb | undefined;
   export let expandedLink: IRecordId | null = null;
 
+  type LinkedNodeThumb = INodeThumb & {
+    links?: INodeLinkThumb[];
+    collections?: IRecordId[];
+    properties?: ICollectionItemPropertyValue[];
+  };
+
   let linkSearchQuery: string = "";
   let linkedResources: IRecordId[] = [];
   let linkedProperties: ICollectionItemPropertyValue[] = [];
@@ -103,7 +109,7 @@
         })
         .filter((link) => !link.linkType || link.linkType === LinkType.DIRECT);
 
-      const collections = nodeResult?.collections ?? [];
+      const collections = (nodeResult?.collections ?? []) as IRecordId[];
       const properties = nodeResult?.properties ?? [];
 
       linkedProperties = properties;
@@ -129,25 +135,25 @@
 
       if (
         expandedLink &&
-        !aggregated.some((id) => isSameResource(id, expandedLink))
+        !aggregated.some((id) => isSameResource(id, expandedLink as IRecordId))
       ) {
         expandedLink = null;
       }
 
-      const updatedNode: INodeThumb | undefined = nodeResult
-        ? {
+      const updatedNode: LinkedNodeThumb | undefined = nodeResult
+        ? ({
             ...(nodeResult as INodeThumb),
             links: directLinks,
             collections,
             properties
-          }
+          } as LinkedNodeThumb)
         : savedNode
-          ? {
-              ...savedNode,
+          ? ({
+              ...(savedNode as INodeThumb),
               links: directLinks,
               collections,
               properties
-            }
+            } as LinkedNodeThumb)
           : undefined;
 
       if (updatedNode) {

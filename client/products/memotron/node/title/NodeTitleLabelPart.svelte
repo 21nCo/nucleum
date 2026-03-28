@@ -17,7 +17,7 @@
   import { Size } from "@21n/types/size.enum";
   import { resolveNodeLabel } from "@21n/products/memotron/node/node.utils";
   import NodeTitleBreadcrumbs from "@21n/products/memotron/node/title/NodeTitleBreadcrumbs.svelte";
-  export let item: INodeThumb;
+  export let item: INode | INodeThumb;
   export let isNodePageContext: boolean = false;
   export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
   let _label:
@@ -42,8 +42,25 @@
     //TODO - based on resource type
     return "Untitled";
   }
+
+  function resolveLabelObject() {
+    return typeof _label === "object" && _label && "parent" in _label
+      ? _label
+      : undefined;
+  }
+
+  function onParentClick(e: MouseEvent) {
+    const labelObject = resolveLabelObject();
+    if (!labelObject || accessPoint === ResourceAccessPoint.SEARCH_RESULT) return;
+    appStore.resourceClickHandler(e, labelObject.parent.id, {
+      replaceId:
+        accessPoint === ResourceAccessPoint.SELF ? item.id : undefined,
+      defaultTo: AccessMode.POP
+    });
+  }
+
   onMount(async () => {
-    _label = await resolveNodeLabel(item);
+    _label = await resolveNodeLabel(item as INodeThumb);
   });
 </script>
 
@@ -78,29 +95,16 @@
       {:else if typeof _label === "object" && "parent" in _label}
         <span class="flex w-full gap-1 items-center truncate">
           <span class="truncate">
-            {#if accessPoint === ResourceAccessPoint.SEARCH_RESULT}
-              {_label?.text ?? _label?.label}
-            {:else}
-              {_label?.label}
-            {/if}
+            {_label?.label}
           </span>
           <button
             class={cn("truncate flex-1 min-w-0 text-left", {
               "underline-dotted cursor-pointer hover:underline-dotted-primary":
                 isNodePageContext
             })}
-            on:click={(e) => {
-              if (accessPoint === ResourceAccessPoint.SEARCH_RESULT) return;
-              appStore.resourceClickHandler(e, _label?.parent.id, {
-                replaceId:
-                  accessPoint === ResourceAccessPoint.SELF
-                    ? item.id
-                    : undefined,
-                defaultTo: AccessMode.POP
-              });
-            }}
+            on:click={onParentClick}
           >
-            {_label?.parent?.label}
+            {resolveLabelObject()?.parent?.label}
           </button>
         </span>
       {/if}

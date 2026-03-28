@@ -11,6 +11,7 @@ export type IFwCategory = {
 
 export type IListContentItem = {
   label: string;
+  slug?: string;
   icon?: string;
 };
 

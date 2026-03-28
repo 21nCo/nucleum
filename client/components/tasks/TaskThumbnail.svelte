@@ -52,6 +52,8 @@
   export let isDraggable: boolean = false;
   export let parentBgIndex: number = 1;
   export let isShowGoal: boolean = false;
+  $: void size;
+  $: void parentBgIndex;
   let isHovering = false;
   let isDatePickerOpen = false;
   let isShowDatePickerOnCw = false;
@@ -126,7 +128,8 @@
     dispatch("action", event.detail);
   }
 
-  async function onDateChange(val: Date) {
+  async function onDateChange(val: Date | undefined) {
+    if (!val) return;
     item.dateUnix = resolveUnixTimestamp(val);
     await taskStore.modify(
       item.id,
@@ -136,6 +139,26 @@
       }
     );
     isShowDatePickerOnCw = false;
+  }
+
+  function onTaskPopoverChange(e: Event) {
+    const detail = (e as CustomEvent<{ open?: boolean }>).detail;
+    const isPopoverVisible = detail?.open ?? false;
+    if (isPopoverVisible) {
+      isTaskOpened = true;
+    } else {
+      isTaskOpened = false;
+    }
+  }
+
+  function onDatePickerPopoverChange(e: Event) {
+    const detail = (e as CustomEvent<{ open?: boolean }>).detail;
+    const isPopoverVisible = detail?.open ?? false;
+    if (isPopoverVisible) {
+      isShowDatePickerOnCw = true;
+    } else {
+      isShowDatePickerOnCw = false;
+    }
   }
 </script>
 
@@ -161,14 +184,7 @@
           accessMode: AccessMode.SHEET
         }
       }}
-      on:change={(e) => {
-        const isPopoverVisible = e.detail?.open;
-        if (isPopoverVisible) {
-          isTaskOpened = true;
-        } else {
-          isTaskOpened = false;
-        }
-      }}
+      on:change={onTaskPopoverChange}
     />
   {/if}
   <div
@@ -243,19 +259,10 @@
           componentProps: {
             isDatePickerMode: true,
             selectedDate: item.dateUnix ? new Date(item.dateUnix) : undefined,
-            onDateChange: (val) => {
-              onDateChange(val);
-            }
+            onDateChange
           }
         }}
-        on:change={(e) => {
-          const isPopoverVisible = e.detail?.open;
-          if (isPopoverVisible) {
-            isShowDatePickerOnCw = true;
-          } else {
-            isShowDatePickerOnCw = false;
-          }
-        }}
+        on:change={onDatePickerPopoverChange}
       ></div>
     {/if}
     {#if !isHovering && isCurrentlyFocusing}

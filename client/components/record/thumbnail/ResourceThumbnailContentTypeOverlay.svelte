@@ -6,6 +6,12 @@
   import { NodeType } from "@21n/products/memotron/node/node.type";
   export let contentType: CollectionType | NodeType | undefined = undefined;
   export let placement: Placement = Placement.TopLeft;
+
+  function isNodeContentType(
+    value: CollectionType | NodeType
+  ): value is NodeType {
+    return Object.values(NodeType).includes(value as NodeType);
+  }
 </script>
 
 {#if contentType}
@@ -17,7 +23,7 @@
   >
     {#if contentType === CollectionType.TYPED || contentType === CollectionType.QUERY}
       {properCase(contentType)} collection
-    {:else if contentType !== CollectionType.UNTYPED && Object.values(NodeType).includes(contentType)}
+    {:else if contentType !== CollectionType.UNTYPED && isNodeContentType(contentType)}
       {properCase(enumToString(contentType))}
     {/if}
   </div>

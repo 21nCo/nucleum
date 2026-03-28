@@ -13,6 +13,7 @@
   import { appEvents } from "@21n/stores/notification.store";
   import { onMount } from "svelte";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import type { IEvent } from "@21n/types/event.type";
   import CreateTaskInlineWizard from "./CreateTaskInlineWizard.svelte";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { LoadingAnimationType } from "@21n/types/feedback.type";
@@ -62,8 +63,8 @@
   ).length;
 
   onMount(() => {
-    const appEventSub = appEvents.subscribe((x) => {
-      if (x.event === PointronAction.CREATE_TASK_INLINE) {
+    const appEventSub = appEvents.subscribe((x: IEvent) => {
+      if (x.event?.toString() === PointronAction.CREATE_TASK_INLINE) {
         isShowCreateTaskWizard = !isShowCreateTaskWizard;
         createTaskParams = x.value;
       }

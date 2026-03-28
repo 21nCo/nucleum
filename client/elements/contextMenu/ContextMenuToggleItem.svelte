@@ -14,6 +14,11 @@
   export let isPreventFillOnActive: boolean = false;
   export let count: number | undefined = undefined;
   let isHovering: boolean = false;
+
+  function resolveIcon(icon: IContextMenuItem["icon"]) {
+    return typeof icon === "string" ? icon : undefined;
+  }
+
   function onclick() {
     on = !on;
     dispatch("change", on);
@@ -41,8 +46,8 @@
     }
   )}
 >
-  <Icon
-    icon={on ? item.activeIcon ?? item.icon : item.icon}
+<Icon
+    icon={resolveIcon(on ? item.activeIcon ?? item.icon : item.icon)}
     size={size === Size.lg ? Size.md : size}
     isFilled={on && !isPreventFillOnActive}
     class={cn({

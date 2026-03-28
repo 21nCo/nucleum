@@ -48,6 +48,7 @@
   },
   "scripts": {
     "build": "turbo run build",
+    "check:apps": "node tools/check/run-app-checks.mjs --format=json",
     "dev": "turbo run dev --parallel",
     "dev:nucleus": "turbo run dev --filter=nucleus-app",
     "dev:memotron": "turbo run dev --filter=memotron-app",
