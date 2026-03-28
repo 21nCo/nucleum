@@ -2,13 +2,22 @@ import path from "node:path";
 
 import tsconfigPaths from "vite-tsconfig-paths";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import { buildViteAliases, loadAliasMap } from "../tools/alias-utils.mjs";
 
 export const repoRoot = path.resolve(__dirname, "..");
+
+const workspaceAliases = Object.entries(buildViteAliases(loadAliasMap())).map(
+  ([find, replacement]) => ({
+    find,
+    replacement
+  })
+);
 
 export const alias = [
   { find: "@tests", replacement: path.join(repoRoot, "tests") },
   { find: "$lib", replacement: repoRoot },
-  { find: "$lib/", replacement: repoRoot + "/" }
+  { find: "$lib/", replacement: repoRoot + "/" },
+  ...workspaceAliases
 ];
 
 export const basePlugins = [

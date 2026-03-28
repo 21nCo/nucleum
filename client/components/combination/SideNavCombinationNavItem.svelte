@@ -49,11 +49,23 @@
 
   function onSelect(event: MouseEvent) {
     event.stopPropagation();
+    activateItem();
+  }
+
+  function activateItem() {
     if (item.type === CombinationNavItemType.RESOURCE) {
       dispatch("select", item);
     } else if (item.children && item.children.length > 0) {
       dispatch("toggle", item.id);
     }
+  }
+
+  function handleItemKeydown(event: KeyboardEvent) {
+    if (event.target !== event.currentTarget) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    event.stopPropagation();
+    activateItem();
   }
 
   function onChevronClick(event: MouseEvent) {
@@ -128,7 +140,9 @@
 </script>
 
 <div class="flex flex-col w-full" data-id={item.id}>
-  <button
+  <div
+    role="button"
+    tabindex="0"
     class={cn(
       "group flex items-center gap-2 px-2 py-2 transition-colors border-y",
       {
@@ -157,6 +171,7 @@
           ? "box-shadow: inset 0 0 0 2px var(--aps1);"
           : undefined}
     on:click={onSelect}
+    on:keydown={handleItemKeydown}
   >
     {#if item.children && item.children.length > 0}
       <button
@@ -224,7 +239,7 @@
         </button>
       </div>
     {/if}
-  </button>
+  </div>
 
   {#if item.children && item.children.length > 0 && !isCollapsed}
     <div class="flex flex-col">

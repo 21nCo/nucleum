@@ -4,7 +4,10 @@
   import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
   import { markdownSettings } from "@21n/components/markdown/markdown.settings";
   import type { MdStoreType } from "@21n/components/markdown/markdown.store";
-  import type { ICalloutBody, ICalloutSetting } from "@21n/components/markdown/md.type";
+  import type {
+    ICalloutBody,
+    ICalloutSetting
+  } from "@21n/components/markdown/md.type";
   import TextContent from "@21n/components/markdown/content/TextContent.svelte";
   import CalloutSelector from "@21n/components/markdown/callout/CalloutSelector.svelte";
   import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
@@ -49,8 +52,7 @@
           ref.dispatchEvent(new CustomEvent("hide"));
           appStore.runAction(MemotronAction.CALLOUT_SETTINGS);
         }
-      },
-      isDisabled: $mdStore.params?.isReadOnly
+      }
     };
   }
 
@@ -71,19 +73,34 @@
   color={_callout.color}
   class="flex gap-3 items-start bg-ccs5 border border-ccs4 rounded-md px-2 py-1 text-ccs1"
 >
-  <div
-    class={cn(
-      "flex flex-col justify-center items-center px-2 border rounded-md h-10",
-      {
-        "border-ccs3": isHovering && !$mdStore.params?.isReadOnly,
-        "border-transparent": !isHovering || $mdStore.params?.isReadOnly
-      }
-    )}
-    bind:this={ref}
-    use:popover={resolveCalloutPopoverParams()}
-  >
-    <Avatar avatar={_callout.avatar} />
-  </div>
+  {#if $mdStore.params?.isReadOnly}
+    <div
+      class={cn(
+        "flex flex-col justify-center items-center px-2 border rounded-md h-10",
+        {
+          "border-ccs3": isHovering && !$mdStore.params?.isReadOnly,
+          "border-transparent": !isHovering || $mdStore.params?.isReadOnly
+        }
+      )}
+      bind:this={ref}
+    >
+      <Avatar avatar={_callout.avatar} />
+    </div>
+  {:else}
+    <div
+      class={cn(
+        "flex flex-col justify-center items-center px-2 border rounded-md h-10",
+        {
+          "border-ccs3": isHovering && !$mdStore.params?.isReadOnly,
+          "border-transparent": !isHovering || $mdStore.params?.isReadOnly
+        }
+      )}
+      bind:this={ref}
+      use:popover={resolveCalloutPopoverParams()}
+    >
+      <Avatar avatar={_callout.avatar} />
+    </div>
+  {/if}
   <div class="w-full">
     <TextContent
       bind:text={body.text}

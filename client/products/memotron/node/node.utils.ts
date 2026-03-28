@@ -55,7 +55,9 @@ function hasProperty<K extends string>(
   return isObject(value) && key in value;
 }
 
-function resolveFilePreviewValue(value: unknown): IFile | IRecordId | undefined {
+function resolveFilePreviewValue(
+  value: unknown
+): IFile | IRecordId | undefined {
   if (typeof value === "string") return value;
   if (isObject(value)) return value as unknown as IFile;
   return undefined;
@@ -72,18 +74,15 @@ export function resolveContentPreview(node: INode | INodeThumb) {
     contentType === NodeType.YOUTUBE_VIDEO ||
     contentType === NodeType.YOUTUBE_SHORT
   ) {
-    if (hasStringProperty(body, "title")) return body.title;
-    if (hasStringProperty(metadata, "ogTitle"))
-      return metadata.ogTitle;
-    if (hasStringProperty(metadata, "title"))
-      return metadata.title;
+    if (hasStringProperty(body, "title") && isValidString(body.title))
+      return body.title;
+    if (hasStringProperty(metadata, "ogTitle")) return metadata.ogTitle;
+    if (hasStringProperty(metadata, "title")) return metadata.title;
   } else if (socialPostNodeTypeList.has(contentType)) {
     if (node.text && typeof node.text === "string") return node.text;
     if (node.label && typeof node.label === "string") return node.label;
-    if (hasStringProperty(metadata, "ogTitle"))
-      return metadata.ogTitle;
-    if (hasStringProperty(metadata, "title"))
-      return metadata.title;
+    if (hasStringProperty(metadata, "ogTitle")) return metadata.ogTitle;
+    if (hasStringProperty(metadata, "title")) return metadata.title;
   } else if (contentType === NodeType.TWITTER_PROFILE) {
     if (hasStringProperty(body, "bio")) return body.bio;
     if (!node.url) return "";
@@ -99,7 +98,10 @@ export function resolveContentPreview(node: INode | INodeThumb) {
     return node.mdText;
   } else if (node.text && typeof node.text === "string") {
     return node.text;
-  } else if (contentType === NodeType.KINDLE_HIGHLIGHT && hasStringProperty(body, "text")) {
+  } else if (
+    contentType === NodeType.KINDLE_HIGHLIGHT &&
+    hasStringProperty(body, "text")
+  ) {
     return body.text;
   }
   return undefined;
@@ -315,7 +317,8 @@ export function resolveFilePreview(
   } else if (contentType === NodeType.WEB_SCREENSHOT) {
     if (hasProperty(body, "file")) return resolveFilePreviewValue(body.file);
   } else if (contentType === NodeType.YOUTUBE_BOOKMARK) {
-    if (hasProperty(body, "thumbnail")) return resolveFilePreviewValue(body.thumbnail);
+    if (hasProperty(body, "thumbnail"))
+      return resolveFilePreviewValue(body.thumbnail);
   } else if (contentType === NodeType.AUDIO) {
     if (isObject(file) && hasStringProperty(file, "thumbnailUrl")) return file;
     if (hasProperty(metadata, "picture")) {
@@ -343,14 +346,16 @@ export function resolveUrlPreview(node: INode | INodeThumb) {
   const { contentType, body, metadata } = node;
   if (contentType === NodeType.WEB_PAGE) {
     if (hasStringProperty(metadata, "ogImage")) return metadata.ogImage;
-    if (hasStringProperty(metadata, "screenshotUrl")) return metadata.screenshotUrl;
+    if (hasStringProperty(metadata, "screenshotUrl"))
+      return metadata.screenshotUrl;
   } else if (
     contentType === NodeType.YOUTUBE_VIDEO ||
     contentType === NodeType.YOUTUBE_SHORT ||
     contentType === NodeType.YOUTUBE_CHANNEL
   ) {
     if (hasStringProperty(metadata, "ogImage")) return metadata.ogImage;
-    if (hasStringProperty(metadata, "thumbnailUrl")) return metadata.thumbnailUrl;
+    if (hasStringProperty(metadata, "thumbnailUrl"))
+      return metadata.thumbnailUrl;
   } else if (socialProfileNodeTypeList.has(contentType)) {
     if (socialProfileWithImageUnavailable.has(contentType)) {
       if (contentType === NodeType.INSTAGRAM_PROFILE)
@@ -413,7 +418,7 @@ export function resolveNodeLabel(item: INodeThumb) {
     const twitterProfileLabel = isValidString(
       parent?.label ?? parent?.body?.name
     )
-      ? parent.label ?? parent.body.name
+      ? (parent.label ?? parent.body.name)
       : "Unknown";
     const prefix = enumToString(item.contentType);
     return {
@@ -438,7 +443,8 @@ export function resolveNodeLabel(item: INodeThumb) {
           `Clip: ${parent?.label ?? weburl}`
       };
     case NodeType.YOUTUBE_BOOKMARK:
-      if (!hasNumberProperty(item.body, "timestamp")) return item.label ?? "At - 00:00";
+      if (!hasNumberProperty(item.body, "timestamp"))
+        return item.label ?? "At - 00:00";
       const timestamp = formatSeconds(item.body.timestamp, TimeFormat.CLOCK);
       if (!parent?.label)
         return item.label
