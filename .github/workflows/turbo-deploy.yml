@@ -103,8 +103,7 @@ jobs:
       - name: Install dependencies (workspace)
         run: |
           cd ../../
-          rm -rf node_modules package-lock.json
-          npm install --legacy-peer-deps
+          npm ci --legacy-peer-deps
 
       - name: Set dynamic secret names
         run: |
@@ -190,14 +189,13 @@ jobs:
       - name: Install deployment dependencies
         working-directory: ./deployment
         run: |
-          rm -rf node_modules package-lock.json
-          npm install --legacy-peer-deps
+          npm ci --legacy-peer-deps
 
       - name: Install CDK client dependencies
         working-directory: ./deployment/cdk/client
         run: |
-          rm -rf node_modules package-lock.json
-          npm install --legacy-peer-deps && npm run build
+          npm ci --legacy-peer-deps
+          npm run build
 
       - name: Set CDK environment variables with fallback
         run: |
