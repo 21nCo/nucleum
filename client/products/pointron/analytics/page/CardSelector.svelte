@@ -85,7 +85,7 @@
       value: AnalyticsCardType.METRICS,
       icon: resolveChartIcon(AnalyticsCardType.METRICS),
       groupId: "other"
-    }
+    },
   ];
   let groups: DropdownGroup[] = [
     {
