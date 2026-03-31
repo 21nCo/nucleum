@@ -60,6 +60,9 @@
     )}
   >
     <button
+      type="button"
+      data-testid="leftnav-sidebar-toggle"
+      aria-label="Toggle sidebar width"
       class={cn(
         "flex flex-col items-center justify-between overflow-auto bg-bgs2",
         {
