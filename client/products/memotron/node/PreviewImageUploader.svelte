@@ -16,8 +16,13 @@
   import { toasts } from "$lib/client/stores/notification.store";
   import { onDestroy } from "svelte";
 
-  export let nodeId: IRecordId;
-  export let nodeLabel: string | undefined = undefined;
+  let {
+    nodeId,
+    nodeLabel = undefined
+  }: {
+    nodeId: IRecordId;
+    nodeLabel?: string | undefined;
+  } = $props();
 
   const imageFileTypes = [
     ".jpg",
@@ -137,7 +142,7 @@
     <h2 class="text-h5 text-fgs2">
       Custom preview image {nodeLabel ? `: ${nodeLabel}` : ""}
     </h2>
-    <Button icon="close" on:click={handleClose} parentBgIndex={1} />
+    <Button icon="close" onclick={handleClose} parentBgIndex={1} />
   </div>
 
   {#if isSaving}
@@ -164,7 +169,7 @@
             label="Remove"
             icon="trash"
             size={Size.sm}
-            on:click={handleRemovePreview}
+            onclick={handleRemovePreview}
             parentBgIndex={2}
           />
         </div>
@@ -195,14 +200,14 @@
     <div class="flex gap-2 justify-end">
       <Button
         label="Cancel"
-        on:click={handleClose}
+        onclick={handleClose}
         parentBgIndex={1}
         size={Size.sm}
       />
       <Button
         label="Save"
         type={ButtonVariant.PRIMARY}
-        on:click={handleSave}
+        onclick={handleSave}
         size={Size.sm}
         isDisabled={!selectedFile}
         parentBgIndex={1}

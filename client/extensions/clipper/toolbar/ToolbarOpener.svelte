@@ -6,6 +6,11 @@
   import { cn } from "@21n/utils/ui.utils";
   import { fly } from "svelte/transition";
   import { toolbarState } from "@21n/extensions/clipper/contentScripts/store";
+  let {
+    onclick = undefined
+  }: {
+    onclick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
   let isHovering = false;
   if ($toolbarState.position === undefined) {
     toolbarState.changePosition(Placement.Right);
@@ -37,7 +42,7 @@
         "bg-bgs3": $toolbarState.position === Placement.Bottom && isHovering
       }
     )}
-    on:click
+    {onclick}
     use:hoverable={{
       onHover: (isHoveringParam) => {
         isHovering = isHoveringParam;

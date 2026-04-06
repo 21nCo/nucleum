@@ -4,12 +4,15 @@
   import type { IMarkdown } from "@21n/components/markdown/md.type";
   import { onMount, tick } from "svelte";
   import MarkdownView from "@21n/components/markdown/Markdown.svelte";
-  export let md: IMarkdown | undefined = undefined;
-  export let src: string | undefined = undefined;
+  let {
+    md = undefined,
+    src = undefined
+  }: {
+    md?: IMarkdown | undefined;
+    src?: string | undefined;
+  } = $props();
   window.scrollTo(0, 0);
-  $: if (src) {
-    md = $appStore?.appData?.md?.[src];
-  }
+  const resolvedMd = $derived(src ? $appStore?.appData?.md?.[src] : md);
   onMount(async () => {
     await tick();
     console.log("scrolling to top", {
@@ -22,9 +25,9 @@
   });
 </script>
 
-{#if md}
+{#if resolvedMd}
   <article class="p-6 tp:p-10 dp:p-16">
-    <MarkdownView {md} params={{ isReadOnly: true }} />
+    <MarkdownView md={resolvedMd} params={{ isReadOnly: true }} />
   </article>
 {:else}
   <AppLoadingView message="loading..." />

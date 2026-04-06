@@ -1,6 +1,5 @@
 <script lang="ts">
   import SvgIcon from "@21n/elements/SVGIcon.svelte";
-  import { createEventDispatcher } from "svelte";
   import type {
     IFwFeature,
     IFwCategory,
@@ -21,20 +20,38 @@
   import FooterInfo from "@21n/components/featureWheel/sidePanel/comparisionTable/FooterInfo.svelte";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
 
-  export let product: string;
-  export let features: IFwFeature[] = [];
-  export let categories: IFwCategory[] = [];
-  export let contemporaries: IContemporary[] = [];
-  export let featureView: string | undefined = undefined;
-  export let selectedCompare: string[] | undefined = undefined;
-  export let selectedCategories: string[] | undefined = undefined;
-  export let selectedFeatures: string[] | undefined = undefined;
-  export let isShowGoBack: boolean = false;
-  $: isHowToUse = featureView === "howToUse";
-  $: feature = featureView
-    ? features.find((f) => f.label === featureView)
-    : undefined;
-  const dispatch = createEventDispatcher();
+  let {
+    product,
+    features = [],
+    categories = [],
+    contemporaries = [],
+    featureView = undefined,
+    selectedCompare = undefined,
+    selectedCategories = undefined,
+    selectedFeatures = undefined,
+    isShowGoBack = false,
+    onClose = () => {},
+    onFeature = (_value: string) => {},
+    onGoBack = () => {}
+  }: {
+    product: string;
+    features?: IFwFeature[];
+    categories?: IFwCategory[];
+    contemporaries?: IContemporary[];
+    featureView?: string;
+    selectedCompare?: string[];
+    selectedCategories?: string[];
+    selectedFeatures?: string[];
+    isShowGoBack?: boolean;
+    onClose?: () => void;
+    onFeature?: (value: string) => void;
+    onGoBack?: () => void;
+  } = $props();
+
+  const isHowToUse = $derived(featureView === "howToUse");
+  const feature = $derived(
+    featureView ? features.find((f) => f.label === featureView) : undefined
+  );
 </script>
 
 <div
@@ -43,8 +60,8 @@
   {#if isShowGoBack}
     <button
       class="flex items-center gap-2 justify-start"
-      on:click={() => {
-        dispatch("goBack");
+      onclick={() => {
+        onGoBack();
       }}
     >
       <Icon icon="back-sm" />
@@ -87,8 +104,8 @@
     </div>
     <button
       class="flex items-center gap-2"
-      on:click={() => {
-        dispatch("close");
+      onclick={() => {
+        onClose();
       }}
     >
       <SvgIcon icon="ph:x" phIconSize={Size.lg} />
@@ -143,7 +160,7 @@
         {selectedCompare}
         {selectedFeatures}
         {selectedCategories}
-        on:feature
+        {onFeature}
       />
       {#if selectedCompare.length === 1}
         {@const contemporary = contemporaries.find(
@@ -156,13 +173,13 @@
               content={contemporary.distribution.description}
               learnMoreLink={contemporary.distribution.link}
             >
-              <div slot="additional">
+              {#snippet additional()}
                 <CardListContent
-                  items={contemporary.distribution.available.map((d) => ({
+                  items={(contemporary.distribution?.available ?? []).map((d) => ({
                     label: properCase(d)
                   }))}
                 />
-              </div>
+              {/snippet}
             </TextCard>
           {/if}
           {#if contemporary?.whenToChoose}

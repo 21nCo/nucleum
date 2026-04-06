@@ -9,13 +9,7 @@
     "skipLibCheck": true,
     "sourceMap": true,
     "strict": true,
-    "moduleResolution": "bundler",
-    "paths": {
-      "$local": ["./src"],
-      "$local/*": ["./src/*"],
-      "$lib": ["./src/lib"],
-      "$lib/*": ["./src/lib/*"]
-    }
+    "moduleResolution": "bundler"
   },
   "include": [
     "../../client/types/globals/**/*.d.ts",

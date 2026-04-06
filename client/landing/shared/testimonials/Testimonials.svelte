@@ -6,11 +6,20 @@
   import Title from "@21n/landing/shared/Title.svelte";
   import TestimonialItem from "@21n/landing/shared/testimonials/TestimonialItem.svelte";
   import TestimonialRow from "@21n/landing/shared/testimonials/TestimonialRow.svelte";
-  export let title: string = "Testimonials";
-  export let subtitle: string = "What our users are saying";
-  export let testimonials: ITestimonial[] = [];
-  export let discord: string = org.discord;
-  export let twitter: string = $landing.urls.socials?.twitter ?? org.twitter;
+  let {
+    title = "Testimonials",
+    subtitle = "What our users are saying",
+    testimonials = [],
+    discord = org.discord,
+    twitter = $landing.urls.socials?.twitter ?? org.twitter,
+  }: {
+    title?: string;
+    subtitle?: string;
+    testimonials?: ITestimonial[];
+    discord?: string;
+    twitter?: string;
+  } = $props();
+
 </script>
 
 <section

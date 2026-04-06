@@ -1,6 +1,6 @@
 <script lang="ts">
   import { generateUID } from "@21n/utils/utils";
-  import { createEventDispatcher } from "svelte";
+  import type { Snippet } from "svelte";
   import type { DropdownItem } from "@21n/types/dropdownItem.type";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
@@ -10,19 +10,40 @@
   import { cn } from "@21n/utils/ui.utils";
   import { Orientation } from "@21n/types/direction.enum";
   import type { ISelectValue } from "@21n/types/select.type";
-  const dispatch = createEventDispatcher();
-  export let options: DropdownItem[];
-  export let selected: ISelectValue[] = [];
-  export let parentBackgroundIndex: number = 1;
-  export let style: InputStyle = InputStyle.BORDERED;
-  export let label: InputLabel | undefined = undefined;
-  export let placeholder: string = "Plese select";
-  export let containerId = generateUID();
-  let isActive: boolean = false;
-  $: void containerId;
-  $: selectedItems = options.filter((item) =>
+  let {
+    options,
+    selected = $bindable<ISelectValue[]>([]),
+    parentBackgroundIndex = 1,
+    style = InputStyle.BORDERED,
+    label = undefined,
+    placeholder = "Plese select",
+    containerId = generateUID(),
+    onSelect = undefined,
+    popover = undefined
+  }: {
+    options: DropdownItem[];
+    selected?: ISelectValue[];
+    parentBackgroundIndex?: number;
+    style?: InputStyle;
+    label?: InputLabel | undefined;
+    placeholder?: string;
+    containerId?: string;
+    onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+    popover?: Snippet | undefined;
+  } = $props();
+  let isActive = $state(false);
+  void containerId;
+  const selectedItems = $derived(options.filter((item) =>
     selected.some((x) => x == item.value)
-  );
+  ));
+
+  function emitSelect(nextSelected: ISelectValue[]) {
+    const selectEvent = new CustomEvent<any>("select", {
+      detail: nextSelected
+    });
+    onSelect?.(selectEvent);
+  }
+
   function onCheckClicked(item: DropdownItem) {
     if (item.isDisabled) return;
     if (selected.some((x) => x == item.value)) {
@@ -30,7 +51,7 @@
     } else {
       selected = [...selected, item.value];
     }
-    dispatch("select", selected);
+    emitSelect(selected);
   }
 </script>
 
@@ -49,7 +70,7 @@
     parentBgIndex: parentBackgroundIndex,
     class: "max-h-60 overflow-y-auto flex flex-col items-start rounded-b-md"
   }}
->
+  >
   <div class="flex gap-2">
     {#if selectedItems.length > 0}
       {#each selectedItems.slice(0, 1) as item, index}
@@ -73,30 +94,36 @@
     {/if}
   </div>
   <Icon icon={isActive ? "chevron-up" : "chevron-down"} size={Size.sm} />
-  <slot name="popover" slot="popover">
-    {#each options as item, index}
-      <button
-        class="text-left px-4 py-2 hover:bg-bgs2 w-full {item.isDisabled
-          ? 'text-fgs3'
-          : 'text-fgs1'} {index === options.length - 1
-          ? 'hover:rounded-b-md'
-          : ''}"
-        on:click={(event) => {
-          onCheckClicked(item);
-          event.stopPropagation();
-        }}
-      >
-        <div class="flex gap-2">
-          <Check
-            isChecked={selected.some((x) => x == item.value)}
-            size={Size.sm}
-          />
-          {#if typeof item.icon === "string"}
-            <Icon icon={item.icon} size={Size.sm} />
-          {/if}
-          {item.label ?? item.value}
-        </div>
-      </button>
-    {/each}
-  </slot>
+  {#snippet popover()}
+    <div>
+      {#if popover}
+        {@render popover()}
+      {:else}
+        {#each options as item, index}
+          <button
+            class="text-left px-4 py-2 hover:bg-bgs2 w-full {item.isDisabled
+              ? 'text-fgs3'
+              : 'text-fgs1'} {index === options.length - 1
+              ? 'hover:rounded-b-md'
+              : ''}"
+            onclick={(event) => {
+              onCheckClicked(item);
+              event.stopPropagation();
+            }}
+          >
+            <div class="flex gap-2">
+              <Check
+                isChecked={selected.some((x) => x == item.value)}
+                size={Size.sm}
+              />
+              {#if typeof item.icon === "string"}
+                <Icon icon={item.icon} size={Size.sm} />
+              {/if}
+              {item.label ?? item.value}
+            </div>
+          </button>
+        {/each}
+      {/if}
+    </div>
+  {/snippet}
 </InputBaseElement>

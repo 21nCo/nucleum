@@ -10,10 +10,17 @@
   import { CalendarHistoryTab } from "@21n/components/calendar/calendar.type";
   import CalendarAllActivityPanel from "@21n/components/calendar/column/CalendarAllActivityPanel.svelte";
   import CalendarHistoryNodeEntries from "@21n/components/calendar/column/CalendarHistoryNodeEntries.svelte";
-  export let date: Date;
-  export let isInline: boolean = false;
-  let tab: CalendarHistoryTab = resolveTabSelection();
-  $: tabs = resolveTabs($appStore.product);
+
+  let {
+    date = $bindable(),
+    isInline = false
+  }: {
+    date?: Date;
+    isInline?: boolean;
+  } = $props();
+
+  let tab = $state<CalendarHistoryTab>(resolveTabSelection());
+  const tabs = $derived(resolveTabs($appStore.product));
 
   function resolveTabSelection() {
     const tabState = uiState.getState(UIState.calendarHistoryTab, {
@@ -71,7 +78,7 @@
         options={tabs}
         isPreventWrap={true}
         bind:selected={tab}
-        on:select={onTabSelection}
+        onSelect={onTabSelection}
         size={Size.sm}
       />
     </div>

@@ -20,5 +20,5 @@
 </script>
 
 <span>
-  <Button label="Export (Pointron json)" on:click={exportData} />
+  <Button label="Export (Pointron json)" onclick={exportData} />
 </span>

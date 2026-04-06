@@ -3,16 +3,20 @@
     StatusMessageType,
     type StatusMessage
   } from "@21n/types/statusMessage.type";
-  import { onMount } from "svelte";
-  export let message: StatusMessage;
-  $: {
-    if (message.message) {
-      setTimeout(() => {
-        message.message = undefined;
-        message.type = StatusMessageType.DEFAULT;
-      }, 3000);
-    }
-  }
+  let {
+    message,
+  }: {
+    message: StatusMessage;
+  } = $props();
+
+  $effect(() => {
+    if (!message.message) return;
+    const timer = setTimeout(() => {
+      message.message = undefined;
+      message.type = StatusMessageType.DEFAULT;
+    }, 3000);
+    return () => clearTimeout(timer);
+  });
 </script>
 
 {#if message?.message}

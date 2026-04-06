@@ -12,19 +12,26 @@
   } from "@21n/client/products/memotron/node/node.type";
   import { cn } from "@21n/client/utils/ui.utils";
 
-  export let resourceId: IRecordId | undefined = undefined;
-  export let resourceType: Resource | undefined = undefined;
+  let {
+    resourceId = undefined,
+    resourceType = undefined
+  }: {
+    resourceId?: IRecordId | undefined;
+    resourceType?: Resource | undefined;
+  } = $props();
 
   let unsubscribe: (() => void) | undefined;
   let node: IActiveNodeStore | undefined = undefined;
   let headings: { id: string; label: string; level: number }[] = [];
 
-  $: if (resourceType === Resource.node && resourceId) {
-    initializeNodeStore(resourceId);
-  } else {
-    headings = [];
-    cleanup();
-  }
+  $effect(() => {
+    if (resourceType === Resource.node && resourceId) {
+      initializeNodeStore(resourceId);
+    } else {
+      headings = [];
+      cleanup();
+    }
+  });
 
   function initializeNodeStore(id: IRecordId) {
     cleanup();
@@ -119,7 +126,7 @@
                   "pl-14": heading.level >= 5
                 }
               )}
-              on:click={() => scrollToHeading(heading.id)}
+              onclick={() => scrollToHeading(heading.id)}
             >
               {heading.label}
             </button>

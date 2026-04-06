@@ -5,7 +5,7 @@
   import { Action } from "@21n/types/action.enum";
   import SearchInput from "@21n/components/search/SearchInput.svelte";
 
-  export let isInline: boolean = false;
+  let { isInline = false }: { isInline?: boolean } = $props();
   let searchInputRef: SearchInput;
   let searchBaseRef: ResourceSearchBase;
 
@@ -22,7 +22,7 @@
   bind:this={searchBaseRef}
   isGlobalSearchModal={true}
   {isInline}
-  on:close={() => {
+  onClose={() => {
     if (isInline) return;
     appStore.closeResource({
       id: Action.SEARCH

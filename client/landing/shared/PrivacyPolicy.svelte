@@ -1,6 +1,10 @@
 <script lang="ts">
   import PageSeo from "@21n/landing/shared/seo/PageSEO.svelte";
-  export let productName: string;
+  let {
+    productName,
+  }: {
+    productName: string;
+  } = $props();
 </script>
 
 <PageSeo

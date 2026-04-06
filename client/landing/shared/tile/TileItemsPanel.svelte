@@ -8,8 +8,13 @@
   import TileItem from "@21n/landing/shared/tile/TileItem.svelte";
   import { addAnimateClass } from "@21n/utils/ui.utils";
 
-  export let currentProducts: ITileItem[];
-  export let upcomingProducts: ITileItem[];
+  let {
+    currentProducts,
+    upcomingProducts,
+  }: {
+    currentProducts: ITileItem[];
+    upcomingProducts: ITileItem[];
+  } = $props();
 
   const id: string = "products-panel";
   onMount(async () => {
@@ -20,10 +25,7 @@
 <div
   {id}
   class="absolute right-0 w-[740px] mo:w-full h-[100vh] flex bg-bgs1 cursor-default"
-  on:click|stopPropagation
-  on:keypress|stopPropagation
-  role="button"
-  tabindex="0"
+  onclick={(event) => event.stopPropagation()}
 >
   <div class="flex flex-col gap-5 w-full pt-10 px-10 mo:px-6">
     <!-- {#if $view.isPortrait} -->
@@ -33,7 +35,7 @@
         <SvgIcon
           icon="close"
           class="ml-auto"
-          on:click={async () => {
+          onclick={async () => {
             await addAnimateClass("animate-close-right", id);
             $isProductsPanelOpen = false;
           }}
@@ -67,7 +69,7 @@
     label="Close"
     icon="close"
     isRightPanel={true}
-    on:click={async () => {
+    onclick={async () => {
       await addAnimateClass("animate-close-right", id);
       $isProductsPanelOpen = false;
     }}

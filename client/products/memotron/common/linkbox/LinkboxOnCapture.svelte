@@ -2,30 +2,40 @@
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import LinkItems from "@21n/products/memotron/common/linkbox/LinkItems.svelte";
   import LinkSearch from "@21n/products/memotron/common/linkbox/LinkSearch.svelte";
-  import { createEventDispatcher } from "svelte";
   import { LinkType } from "@21n/products/memotron/linking/link.type";
   import type { IRecordId } from "@21n/types/data.type";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
   import type { IActiveCaptureStore } from "@21n/products/memotron/capture/capture.store";
   import { cn } from "@21n/utils/ui.utils";
-  export let captureStore: IActiveCaptureStore;
-  export let expand: IRecordId | null = null;
-  const dispatch = createEventDispatcher();
-  let link: string;
-  let searchRef: LinkSearch;
+  let {
+    captureStore,
+    expand = $bindable(null),
+    onLinked = undefined,
+    onPropertyChange = undefined,
+    onUnlinked = undefined
+  }: {
+    captureStore: IActiveCaptureStore;
+    expand?: IRecordId | null;
+    onLinked?: ((event: CustomEvent<any>) => void) | undefined;
+    onPropertyChange?: ((event: CustomEvent<any>) => void) | undefined;
+    onUnlinked?: ((event: CustomEvent<IRecordId>) => void) | undefined;
+  } = $props();
+  let link = $state("");
+  let searchRef = $state<LinkSearch | undefined>(undefined);
   async function propagatePropertyChanges(e: CustomEvent) {
     if (!e.detail || !e.detail?.id || e.detail?.value === undefined) return;
     captureStore.updateProperty({
       id: e.detail.id,
       value: e.detail.value
     });
+    onPropertyChange?.(e);
   }
 
   export function focus() {
     searchRef?.focus();
   }
-  $: hasLinks = isValidArrayWithData($captureStore.links);
+  const hasLinks = $derived(isValidArrayWithData($captureStore.links));
 </script>
 
 <section
@@ -39,11 +49,14 @@
     <LinkSearch
       accessPoint={ResourceAccessPoint.CAPTURE}
       searchQuery={link}
-      on:select={async (e) => {
+      onSelect={async (e) => {
         if (!e.detail.item) return;
         await captureStore.directLink(e.detail.item);
         link = "";
-        dispatch("linked", e.detail.item);
+        const linkedEvent = new CustomEvent<any>("linked", {
+          detail: e.detail.item
+        });
+        onLinked?.(linkedEvent);
       }}
       bind:this={searchRef}
     />
@@ -60,14 +73,14 @@
           ?.map((x) => x.to) ?? []}
         nodeId={$captureStore.nodeId}
         propertyValues={$captureStore.properties}
-        on:unlink={(e) => {
+        onUnlink={(e) => {
           if (expand && isSameResource(expand, e.detail)) {
             expand = null;
           }
           captureStore.removeDLink(e.detail);
-          dispatch("unlinked", e.detail);
+          onUnlinked?.(e);
         }}
-        on:propertyChange={propagatePropertyChanges}
+        onPropertyChange={propagatePropertyChanges}
       />
     </div>
   {/if}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { onMount } from "svelte";
   import view from "@21n/stores/view.store";
   import appearance, {
@@ -10,7 +11,13 @@
   import "@fontsource-variable/sen";
   import "@fontsource/noto-color-emoji";
 
-  export let extensionContext: string | undefined = undefined;
+  let {
+    extensionContext = undefined,
+    children
+  }: {
+    extensionContext?: string;
+    children?: Snippet;
+  } = $props();
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
   let rootFontSize: number = defaultRootFontSize + 0.6 * $view?.scale;
@@ -102,5 +109,5 @@
     dark: $appearance?.colorScheme?.isDark
   })}
 >
-  <slot />
+  {@render children?.()}
 </div>

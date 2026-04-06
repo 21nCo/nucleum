@@ -4,7 +4,8 @@
   import { formatSeconds } from "@21n/utils/time.utils";
   import { cn } from "@21n/utils/ui.utils";
   import type { TopNCardDataRecord } from "@21n/products/pointron/analytics/analytics.types";
-  export let row: TopNCardDataRecord;
+
+  let { row }: { row: TopNCardDataRecord } = $props();
 </script>
 
 <span

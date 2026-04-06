@@ -16,11 +16,18 @@
   import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
   import GoalFocusSessionThumbnail from "@21n/components/goals/history/GoalFocusSessionThumbnail.svelte";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  export let id: IRecordId;
-  export let isIncludeSubGoals = false;
-  let sessions: ISessionThumb[] = [];
-  let sessionLogs: ISessionLogThumb[] = [];
-  let isLoading = true;
+
+  let {
+    id,
+    isIncludeSubGoals = false
+  }: {
+    id: IRecordId;
+    isIncludeSubGoals?: boolean;
+  } = $props();
+
+  let sessions = $state<ISessionThumb[]>([]);
+  let sessionLogs = $state<ISessionLogThumb[]>([]);
+  let isLoading = $state(true);
 
   async function refresh() {
     isLoading = true;

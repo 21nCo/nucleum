@@ -5,20 +5,31 @@
   import { GlobalEvent } from "@21n/types/event.enum";
   import { Size } from "@21n/types/size.enum";
   import { bg, cn } from "@21n/utils/ui.utils";
-  import { onMount } from "svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import type { IKeyboardShortcut } from "@21n/components/shortcuts/shortcut.type";
   import { KeyboardKey } from "@21n/types/keyboard.type";
   import { Embed } from "@21n/types/context.type";
   import { uiStateDerived } from "@21n/stores/uiState/uiState.store";
 
-  export let shortcut: string | IKeyboardShortcut | undefined;
-  export let parentBgIndex: number | undefined = undefined;
-  export let isPlainText: boolean = false;
-  export let isAccentOutlined: boolean = false;
-  export let size: Size.sm | Size.md = Size.md;
-  export let isAlwaysShown: boolean = false;
-  let detail: IKeyboardShortcut | undefined = undefined;
+  let {
+    shortcut,
+    parentBgIndex = undefined,
+    isPlainText = false,
+    isAccentOutlined = false,
+    size = Size.md,
+    isAlwaysShown = false
+  }: {
+    shortcut: string | IKeyboardShortcut | undefined;
+    parentBgIndex?: number | undefined;
+    isPlainText?: boolean;
+    isAccentOutlined?: boolean;
+    size?: Size.sm | Size.md;
+    isAlwaysShown?: boolean;
+  } = $props();
+
+  let detail = $state<IKeyboardShortcut | undefined>(undefined);
+  let text = $state<string | undefined>(undefined);
+
   const iconKeys = new Map<KeyboardKey, string>([
     // [KeyboardKey.ENTER, "arrow-turn-down-left"],
     // [KeyboardKey.ARROW_LEFT, "arrow-left"],
@@ -35,13 +46,13 @@
     { key: KeyboardKey.ARROW_DOWN, text: "↓" }
   ];
 
-  $: text = resolveText(shortcut);
-  $: trimmedText = text?.trim();
-  $: shortcutKey = detail?.key as KeyboardKey | undefined;
-  $: isSingleLetterShortcut =
+  const trimmedText = $derived(text?.trim());
+  const shortcutKey = $derived(detail?.key as KeyboardKey | undefined);
+  const isSingleLetterShortcut = $derived(
     !!trimmedText &&
-    Array.from(trimmedText).length === 1 &&
-    (!detail?.modifiers || detail?.modifiers.length === 0);
+      Array.from(trimmedText).length === 1 &&
+      (!detail?.modifiers || detail?.modifiers.length === 0)
+  );
 
   function resolveText(shortcut: string | IKeyboardShortcut | undefined) {
     if (!shortcut) return;
@@ -49,24 +60,22 @@
       if (shortcut === GlobalEvent.ESCAPE) return "Esc";
       detail = keyboardShortcuts.resolveShortcutForAction(shortcut);
     } else {
-      detail = shortcut as IKeyboardShortcut;
+      detail = shortcut;
     }
     if (!detail) return;
-    let text = resolveShortcutText({
+    return resolveShortcutText({
       key: detail.key,
       modifiers: detail.modifiers,
       os: $context.os
     });
-    return text;
   }
-  onMount(() => {
-    const unsubscribe = keyboardShortcuts.subscribe((x) => {
+
+  $effect(() => {
+    text = resolveText(shortcut);
+    const unsubscribe = keyboardShortcuts.subscribe(() => {
       text = resolveText(shortcut);
     });
-
-    return () => {
-      unsubscribe();
-    };
+    return unsubscribe;
   });
 </script>
 
@@ -113,7 +122,7 @@
           "text-aps1": parentBgIndex === undefined && isAccentOutlined
         })}
       />
-    {:else if text && textReplacements.some( (x) => text?.includes(x.key.toUpperCase()) )}
+    {:else if text && textReplacements.some((x) => text?.includes(x.key.toUpperCase()))}
       {@const replacement = textReplacements.find((x) =>
         text?.includes(x.key.toUpperCase())
       )}

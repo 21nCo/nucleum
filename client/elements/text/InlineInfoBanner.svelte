@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
   import {
     ButtonStyle,
@@ -11,13 +12,25 @@
   import Icon from "@21n/elements/Icon.svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import Link from "@21n/elements/text/Link.svelte";
-  export let content: string | undefined = undefined;
-  export let icon: string | undefined = undefined;
-  export let isIconFilled: boolean = false;
-  export let type: InfoTextType = InfoTextType.INFO;
-  export let action: IButtonParams | undefined = undefined;
-  export let parentBgIndex: number = 1;
-  export let size: Size.sm | Size.md = Size.md;
+    let {
+    content = undefined,
+    icon = undefined,
+    isIconFilled = false,
+    type = InfoTextType.INFO,
+    action = undefined,
+    parentBgIndex = 1,
+    size = Size.md,
+    children = undefined
+  }: {
+    content?: string | undefined;
+    icon?: string | undefined;
+    isIconFilled?: boolean;
+    type?: InfoTextType;
+    action?: IButtonParams | undefined;
+    parentBgIndex?: number;
+    size?: Size.sm | Size.md;
+    children?: Snippet | undefined;
+  } = $props();
 </script>
 
 <div
@@ -63,7 +76,7 @@
         {@html renderMdAsHtml(content)}
       </div>
     {:else}
-      <slot />
+      {@render children?.()}
     {/if}
     {#if action}
       <div class="text-b3">
@@ -77,7 +90,7 @@
               ? ButtonVariant.DANGER
               : ButtonVariant.PRIMARY}
             style={ButtonStyle.OUTLINED}
-            on:click={() => {
+            onclick={() => {
               if (action.callback) action.callback();
             }}
           />

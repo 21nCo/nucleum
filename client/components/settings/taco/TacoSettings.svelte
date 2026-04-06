@@ -36,6 +36,9 @@
   let transcriptionModel =
     $preferences?.[Preference.TRANSCRIPTION_MODEL] || "tiny";
   let autoTranscribe = $preferences?.[Preference.AUTO_TRANSCRIBE] || false;
+  let lastTranscriptionMethod = $state(transcriptionMethod);
+  let lastTranscriptionModel = $state(transcriptionModel);
+  let lastAutoTranscribe = $state(autoTranscribe);
 
   function onTranscriptionMethodChange(e: CustomEvent) {
     preferences.save(Preference.TRANSCRIPTION_METHOD, e.detail);
@@ -150,6 +153,26 @@
         return [];
     }
   }
+
+  $effect(() => {
+    if (transcriptionMethod === lastTranscriptionMethod) return;
+    lastTranscriptionMethod = transcriptionMethod;
+    preferences.save(Preference.TRANSCRIPTION_METHOD, transcriptionMethod);
+  });
+
+  $effect(() => {
+    if (transcriptionModel === lastTranscriptionModel) return;
+    lastTranscriptionModel = transcriptionModel;
+    void onTranscriptionModelChange(
+      new CustomEvent("select", { detail: transcriptionModel })
+    );
+  });
+
+  $effect(() => {
+    if (autoTranscribe === lastAutoTranscribe) return;
+    lastAutoTranscribe = autoTranscribe;
+    preferences.save(Preference.AUTO_TRANSCRIBE, autoTranscribe);
+  });
 </script>
 
 <div class="flex flex-col h-full w-full gap-8">
@@ -168,7 +191,6 @@
         }}
         isDisableSearch={true}
         bind:value={transcriptionMethod}
-        on:select={onTranscriptionMethodChange}
       />
       <DropDown
         items={[
@@ -194,7 +216,6 @@
         }}
         isDisableSearch={true}
         bind:value={transcriptionModel}
-        on:select={onTranscriptionModelChange}
       />
       <div data-testid="auto-transcribe-toggle">
         <SwitchInput
@@ -206,7 +227,6 @@
           }}
           isExpanded={true}
           bind:checked={autoTranscribe}
-          on:change={onAutoTranscribeChange}
         />
       </div>
       {#if !$context.isEmbed}
@@ -266,7 +286,7 @@
     {#if $appStore.env == "dev" && $userPreferences.localAI.semanticSearch}
       <Button
         label="Regenerate-Vectors-For-All-MDs"
-        on:click={() => {
+        onclick={() => {
           $userPreferences.localAI.vectorGenerationInProgress = true;
           runVectorGeneration(true);
         }}
@@ -283,7 +303,7 @@
           label="Dismiss"
           type={ButtonVariant.PRIMARY}
           {isDisabled}
-          on:click={() => {
+          onclick={() => {
             modalEvent.hide(Action.LOCAL_AI_SETTINGS);
           }}
         />

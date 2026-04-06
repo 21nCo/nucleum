@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { Size } from "@21n/types/size.enum";
   import view from "@21n/stores/view.store";
   import { resizeListener } from "@21n/actions/resize.action";
@@ -19,11 +20,21 @@
   const overviewPanelSwitcherItems =
     resolveProductConfig(Product.NUCLEUS).overviewPanelSwitcherItems ?? [];
 
-  export let isConstrainedWidth = false;
+  let {
+    isConstrainedWidth = $bindable(false),
+    children,
+    right
+  }: {
+    isConstrainedWidth?: boolean;
+    children?: Snippet;
+    right?: Snippet;
+  } = $props();
   let selectedPanel: OverviewPanel = resolveSavedState() ?? OverviewPanel.FOCUS;
 
   let containerWidth = 0;
-  $: isConstrainedWidth = containerWidth < 1000 || $view.isConstrainedWidth;
+  $effect(() => {
+    isConstrainedWidth = containerWidth < 1000 || $view.isConstrainedWidth;
+  });
 
   function resolveSavedState() {
     const savedPanel = uiState.getState(UIState.nucleusOverviewPanel, {
@@ -57,14 +68,16 @@
       isExpandToFullWidth={true}
       size={Size.sm}
       bind:value={selectedPanel}
-      on:switch={onPanelSwitch}
+      onSwitch={onPanelSwitch}
     >
-      <div slot="right" class="mr-3">
-        <slot name="right" />
-      </div>
+      {#snippet right()}
+        <div class="mr-3">
+          {@render right?.()}
+        </div>
+      {/snippet}
     </PanelSwitcher>
   </div>
   <div class="relative w-full h-full">
-    <slot />
+    {@render children?.()}
   </div>
 </div>

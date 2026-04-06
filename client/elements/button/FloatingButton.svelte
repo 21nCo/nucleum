@@ -3,9 +3,13 @@
   import type { IButtonParams } from "@21n/types/button.type";
   import BottomFloat from "@21n/elements/BottomFloat.svelte";
   import FloatingButtonItem from "@21n/elements/button/floating/FloatingButtonItem.svelte";
-  export let params: IButtonParams[];
-  let classList: string = "";
-  export { classList as class };
+  let {
+    params,
+    class: classList = ""
+  }: {
+    params: IButtonParams[];
+    class?: string;
+  } = $props();
 </script>
 
 <BottomFloat class={classList}>
@@ -14,7 +18,7 @@
       {...params[0]}
       parentBgIndex={params[0].parentBgIndex}
       type={params[0].variant}
-      on:click={async () => {
+      onclick={async () => {
         if (params[0].callback) await params[0]?.callback();
       }}
     />

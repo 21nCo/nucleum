@@ -1,24 +1,39 @@
 <script lang="ts">
   import { Orientation } from "@21n/types/direction.enum";
   import { TimeUnit } from "@21n/types/time.type";
-  import { createEventDispatcher } from "svelte";
   import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
   import TimeInputWithSuggestions from "@21n/elements/input/durationInput/TimeInputWithSuggestions.svelte";
   import TimeUnitDropdown from "@21n/elements/input/durationInput/TimeUnitDropdown.svelte";
   import type { InputLabel } from "@21n/types/input.type";
   import { debouncer } from "@21n/utils/utils";
-  export let parentBackgroundIndex: number = 1;
-  $: void parentBackgroundIndex;
-  export let value: number;
-  export let label: InputLabel | undefined = undefined;
-  export let placeholder: string | undefined = undefined;
-  $: void placeholder;
-  export let isExpanded: boolean = false;
-  const dispatch = createEventDispatcher();
+
+  let {
+    parentBackgroundIndex = 1,
+    value = $bindable(0),
+    label = undefined,
+    placeholder = undefined,
+    isExpanded = false,
+    onChange = undefined,
+    onDebouncedChange = undefined
+  }: {
+    parentBackgroundIndex?: number;
+    value?: number;
+    label?: InputLabel | undefined;
+    placeholder?: string | undefined;
+    isExpanded?: boolean;
+    onChange?: ((event: CustomEvent<{ value: number }>) => void) | undefined;
+    onDebouncedChange?:
+      | ((event: CustomEvent<{ value: number }>) => void)
+      | undefined;
+  } = $props();
+  void parentBackgroundIndex;
+  void placeholder;
   let inputRef: any;
 
-  let units: TimeUnit[] = [TimeUnit.MINUTES, TimeUnit.HOURS];
-  let currentUnit: TimeUnit = value < 3600 ? TimeUnit.MINUTES : TimeUnit.HOURS;
+  const units: TimeUnit[] = [TimeUnit.MINUTES, TimeUnit.HOURS];
+  let currentUnit = $state(
+    value != undefined && value < 3600 ? TimeUnit.MINUTES : TimeUnit.HOURS
+  );
 
   export function focus() {
     if (inputRef) inputRef.focus();
@@ -54,14 +69,18 @@
     debouncedChange(value);
   }
 
-  const debouncedChange = debouncer(onDebouncedChange, 1000);
+  const debouncedChange = debouncer(onDebouncedValueChange, 1000);
 
   function propagateChange(value: number) {
-    dispatch("change", { value });
+    const changeEvent = new CustomEvent("change", { detail: { value } });
+    onChange?.(changeEvent);
   }
 
-  function onDebouncedChange(value: number) {
-    dispatch("debouncedChange", { value });
+  function onDebouncedValueChange(value: number) {
+    const debouncedChangeEvent = new CustomEvent("debouncedChange", {
+      detail: { value }
+    });
+    onDebouncedChange?.(debouncedChangeEvent);
   }
 </script>
 
@@ -80,10 +99,14 @@
             {units}
             bind:duration={value}
             bind:currentUnit
-            on:change
+            onChange={(event) => {
+              const detail = event.detail;
+              value = detail.value;
+              propagateChange(detail.value);
+            }}
           />
           <TimeUnitDropdown
-            on:change={handleUnitChanged}
+            onChange={handleUnitChanged}
             {units}
             bind:currentTimeUnit={currentUnit}
           />

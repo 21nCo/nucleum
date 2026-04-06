@@ -41,9 +41,10 @@
   };
   let isRenderPip: boolean = false;
   let curentFocusItemExpanded: ITaskThumb | IGoalThumb | undefined = undefined;
-  $: isBreakReminderMode =
+  const isBreakReminderMode = $derived(
     $activeSession.timeRemainingToTakeBreak != undefined &&
-    $activeSession.timeRemainingToTakeBreak < 0;
+    $activeSession.timeRemainingToTakeBreak < 0
+  );
 
   function enableFullScreenPlayer() {
     if (isPipShown) return;
@@ -189,8 +190,12 @@
 </script>
 
 <div
-  on:touchstart|stopPropagation={startTouch}
-  on:touchmove|stopPropagation={() =>
+  ontouchstart={(event) => {
+    event.stopPropagation();
+    startTouch(event);
+  }}
+  ontouchmove={(event) => {
+    event.stopPropagation();
     moveTouch(
       event,
       enableFullScreenPlayer,
@@ -198,7 +203,8 @@
       undefined,
       undefined,
       20
-    )}
+    );
+  }}
   id="playercontainer"
   class={!$view.isPortrait ? "m--6" : "w-full"}
   bind:this={playerContainerRef}
@@ -246,7 +252,7 @@
               "w-full": true
             }
           )}
-          on:click={clickHandler}
+          onclick={clickHandler}
         >
           {#if $activeSession.state === SessionState.FINISHED}
             <div class="flex w-full h-12 justify-center items-center">
@@ -270,7 +276,8 @@
                 {#if !$context.isEmbed}
                   <button
                     class="flex items-center justify-center"
-                    on:click|stopPropagation={(event) => {
+                    onclick={(event) => {
+                      event.stopPropagation();
                       player.togglePip(PointronAction.FOCUS_PLAYER);
                     }}
                     use:hoverable={{
@@ -310,7 +317,7 @@
                 >
                   <Icon
                     icon="chevron-up"
-                    on:click={clickHandler}
+                    onclick={clickHandler}
                     isTabbable={true}
                     isFilled={hoverState.caretHovering}
                     class={cn({

@@ -14,12 +14,18 @@
   import { BillingCycle } from "@21n/components/subscription/userPlan.type";
 
   let isCancelInProgress = false;
-  $: isFullRefundable = resolveIfEligibleForFullRefund(
-    $account.plan?.paymentDate
-  );
-  $: currentPlanFeatures = $account.plan
-    ? SUBSCRIPTION_PLANS.find((p) => p.type === $account.plan?.plan)?.features
-    : [];
+
+  function resolveIsFullRefundable() {
+    return resolveIfEligibleForFullRefund($account.plan?.paymentDate);
+  }
+
+  function resolveCurrentPlanFeatures() {
+    return $account.plan
+      ? SUBSCRIPTION_PLANS.find((plan) => plan.type === $account.plan?.plan)
+          ?.features
+      : [];
+  }
+
   async function proceed() {
     if (isCancelInProgress) return;
     if ($account.plan?.provider === PaymentProvider.APPLE) {
@@ -61,7 +67,7 @@
     </div>
     <div class="flex flex-col gap-2">
       <div>You will no longer have access to the following features:</div>
-      <PlanFeatureList features={currentPlanFeatures} />
+      <PlanFeatureList features={resolveCurrentPlanFeatures()} />
     </div>
   </div>
   <div class="flex flex-col items-center gap-4">
@@ -69,7 +75,7 @@
       {#if $account.plan?.provider === PaymentProvider.APPLE}
         You will be redirected to the Apple App Store to modify your
         subscription.
-      {:else if isFullRefundable}
+      {:else if resolveIsFullRefundable()}
         You will receive a full refund and your plan will be cancelled
         immediately.
       {:else if $account.plan}
@@ -80,13 +86,13 @@
       {/if}
     </div>
     <div class="flex gap-2 w-full justify-center">
-      <Button label="Go back" on:click={hide} />
+      <Button label="Go back" onclick={hide} />
       <Button
         label={isCancelInProgress ? "Cancelling..." : "Proceed to cancel"}
         isDisabled={isCancelInProgress}
         type={ButtonVariant.DANGER}
         style={ButtonStyle.OUTLINED}
-        on:click={proceed}
+        onclick={proceed}
       />
     </div>
   </div>

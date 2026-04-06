@@ -4,7 +4,7 @@
   import { focusById } from "@21n/actions/focusById.action";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 
-  export let node: IActiveNodeStore;
+  let { node }: { node: IActiveNodeStore } = $props();
   const inputId = generateSimpleRandomId();
   function onChange(e: any) {
     if ($node.notes) node.modify({ notes: $node.notes });
@@ -20,7 +20,7 @@
       id={inputId}
       placeholder="Add notes"
       bind:content={$node.notes}
-      on:debouncedChange={onChange}
+      onDebouncedChange={onChange}
     />
   </button>
 </div>

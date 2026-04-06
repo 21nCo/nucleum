@@ -3,9 +3,12 @@
   import { appStore } from "@21n/stores/app.store";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
-  export let context: "docs" | "roadmap" | "changelog" | "faqs";
-  $: url = $appStore?.appData?.urls?.[context] ?? "";
-  $: console.log({ url, context });
+  let {
+    context
+  }: {
+    context: "docs" | "roadmap" | "changelog" | "faqs";
+  } = $props();
+  const url = $derived($appStore?.appData?.urls?.[context] ?? "");
 </script>
 
 <div class="realtive w-full h-full rounded-md">
@@ -25,7 +28,7 @@
       size={Size.sm}
       type={ButtonVariant.PRIMARY}
       style={ButtonStyle.OUTLINED}
-      on:click={() => {
+      onclick={() => {
         appStore.openLink(url);
       }}
     />

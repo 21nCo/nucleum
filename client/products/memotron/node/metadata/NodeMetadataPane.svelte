@@ -17,16 +17,22 @@
   import AudioMetadata from "@21n/products/memotron/node/metadata/AudioMetadata.svelte";
   import ImageMetadata from "@21n/products/memotron/node/metadata/ImageMetadata.svelte";
   import LocationProperty from "@21n/components/collection/properties/locationProperty/LocationProperty.svelte";
-  export let node: IActiveNodeStore;
-  export let renderingDetails: any = undefined;
+  let {
+    node,
+    renderingDetails = undefined
+  }: {
+    node: IActiveNodeStore;
+    renderingDetails?: any;
+  } = $props();
   let lastAccessLog: IAccessLog | undefined = undefined;
   let viewLogs: IAccessLog[] | undefined = undefined;
-  $: kind = resolveKind($node.contentType);
-  $: isMediaNode =
+  let kind = $derived(resolveKind($node.contentType));
+  let isMediaNode = $derived(
     $node.contentType !== NodeType.NODULAR_MARKDOWN &&
-    $node.contentType !== NodeType.NON_NODULAR_MARKDOWN &&
-    $node.contentType !== NodeType.PDF;
-  $: isWebNode = webNodeTypeList.includes($node.contentType);
+      $node.contentType !== NodeType.NON_NODULAR_MARKDOWN &&
+      $node.contentType !== NodeType.PDF
+  );
+  let isWebNode = $derived(webNodeTypeList.includes($node.contentType));
 
   function resolveKind(contentType: NodeType) {
     if (

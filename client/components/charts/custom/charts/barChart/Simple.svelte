@@ -9,7 +9,7 @@
     axisLeft,
     axisBottom
   } from "d3";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { beforeUpdate, onDestroy, onMount } from "svelte";
   //TODO - import dependency on local
   import { roundOffToNdigitsAfterDecimal } from "@21n/products/pointron/pointron.utils";
   import {
@@ -20,13 +20,13 @@
   import { generateUID } from "@21n/utils/utils";
   import appearance from "@21n/stores/appearance.store";
 
-  export let data: ChartDataPoint[] = [];
-  export let options: BarChartOptions;
-  // in these options prop we can define, various options for the chart
-  // like width, height, bars width, spacing between bars, etc.
-  export let orientation: Orientation = Orientation.Vertical;
-  $: themeColors = retrieveCurrentColors($appearance);
+  let data: ChartDataPoint[] = [];
+  let options: BarChartOptions;
+  let orientation: Orientation = Orientation.Vertical;
+  let themeColors = retrieveCurrentColors($appearance);
   const chartID = generateUID();
+
+  export { data, options, orientation };
 
   let containerRef: any = null;
   let scrollableElementContainerRef: any = null;
@@ -37,7 +37,6 @@
   let informationModal: any = null;
   let previouslyCheckedItem: HTMLInputElement;
   // let previouslyCheckedId: string = "";
-  const dispatch = createEventDispatcher();
 
   let currentDataLength: number = 0;
 
@@ -115,31 +114,17 @@
     spacingFactor: options.bars?.spacingFactor ?? DEFAULT_BARS.spacingFactor
   };
 
-  $: {
+  function refreshDerivedState() {
+    themeColors = retrieveCurrentColors($appearance);
     CONTAINER_DIMENSIONS = {
       width: options.width ?? DEFAULT_CONTAINER_DIMENSIONS.width,
       height: options.height ?? DEFAULT_CONTAINER_DIMENSIONS.height
     };
-  }
-  $: {
     BARS = {
       width:
         calculateBarWidth(SVGScrollableDimensionLength) ?? DEFAULT_BARS.width,
       spacingFactor: options.bars?.spacingFactor ?? DEFAULT_BARS.spacingFactor
     };
-  }
-
-  // $: {
-  //   data.forEach((d) => {
-  //     if (!sanitizedData.find((sd) => sd.key === d.key)) {
-  //       sanitizedData.push(d);
-  //     }
-  //   });
-  //   // filteredData = sanitizedData;//*this is done so that the chart is rendered with the data that is present at the time of mounting
-  //   filteredData = data;
-  // }
-
-  $: {
     groups = [...new Set(data.map((d) => d.group))];
   }
 
@@ -738,19 +723,18 @@
 
       if (orientation === Orientation.Vertical) {
         if (scrollLeft === -(scrollWidth - offsetWidth - relaxationFactor)) {
-          dispatch("fetch-data");
+          return;
         }
       } else {
         if (scrollTop === scrollHeight - offsetHeight) {
-          dispatch("fetch-data");
+          return;
         }
       }
     }
   }
 
-  import { onDestroy } from "svelte";
   onMount(() => {
-    // filteredData = sanitizedData;//*this is done so that the chart is rendered with the data that is present at the time of mounting
+    refreshDerivedState();
     console.log("data received in Simple.svelte ", data);
     console.log("options received in Simple.svelte ", options);
     filteredData = data.filter((d) => d.group === previouslyCheckedItem?.value);
@@ -781,6 +765,10 @@
       scrollableElementContainerRef.addEventListener("scroll", detectScrollEnd);
     }
     handleEventListeningForBars();
+  });
+
+  beforeUpdate(() => {
+    refreshDerivedState();
   });
 
   onDestroy(() => {
@@ -840,7 +828,7 @@
         <div class="checkbox-container">
           {#if index === 0}
             <input
-              on:change={() => updateGraph2(group + chartID)}
+              onchange={() => updateGraph2(group + chartID)}
               class="w-[10px] h-[10px] cursor-pointer p-1"
               id={group + chartID}
               type="checkbox"
@@ -849,7 +837,7 @@
               bind:this={previouslyCheckedItem}
             />{/if}
           <input
-            on:change={() => updateGraph2(group + chartID)}
+            onchange={() => updateGraph2(group + chartID)}
             class="w-[10px] h-[10px] cursor-pointer p-1"
             id={group + chartID}
             type="checkbox"

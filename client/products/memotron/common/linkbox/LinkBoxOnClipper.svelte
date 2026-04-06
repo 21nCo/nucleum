@@ -1,15 +1,33 @@
 <script lang="ts">
   import { toolbarState } from "@21n/extensions/clipper/contentScripts/store";
   import { Placement } from "@21n/types/direction.enum";
-  import { createEventDispatcher } from "svelte";
   import LinkSearch from "@21n/products/memotron/common/linkbox/LinkSearch.svelte";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
-  const dispatch = createEventDispatcher();
-  let searchQuery: string;
-  let searchRef: LinkSearch;
+  import type { IRecordId } from "@21n/types/data.type";
+  let {
+    onFocus = undefined,
+    onLink = undefined
+  }: {
+    onFocus?: ((event: CustomEvent<void>) => void) | undefined;
+    onLink?: ((event: CustomEvent<IRecordId>) => void) | undefined;
+  } = $props();
+  let searchQuery = $state("");
+  let searchRef = $state<LinkSearch | undefined>(undefined);
 
   export function focus() {
     searchRef?.focus();
+  }
+
+  function handleLink(id: IRecordId) {
+    const linkEvent = new CustomEvent<IRecordId>("link", {
+      detail: id
+    });
+    onLink?.(linkEvent);
+  }
+
+  function handleFocus() {
+    const focusEvent = new CustomEvent<void>("focus");
+    onFocus?.(focusEvent);
   }
 </script>
 
@@ -20,9 +38,9 @@
   resultsPlacement={$toolbarState.position === Placement.Bottom
     ? Placement.TopCenter
     : Placement.BottomCenter}
-  on:select={(e) => {
-    if (e.detail?.item?.id) dispatch("link", e.detail?.item?.id);
+  onSelect={(e) => {
+    if (e.detail?.item?.id) handleLink(e.detail?.item?.id);
     searchQuery = "";
   }}
-  on:focus
+  onFocus={handleFocus}
 />

@@ -1,27 +1,35 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  export let factor: number;
-  export let isActive: boolean = false;
-  export let parentBackgroundIndex: number = 1;
-  let classList = "h-16 w-28 rounded-md ";
-  let label: string = "";
-  onMount(() => {
+  let {
+    factor,
+    isActive = false,
+    parentBackgroundIndex = 1,
+    onclick = undefined
+  }: {
+    factor: number;
+    isActive?: boolean;
+    parentBackgroundIndex?: number;
+    onclick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
+  void parentBackgroundIndex;
+  const classList = $derived.by(() => {
+    let value = "h-16 w-28 rounded-md ";
     if (factor === 0) {
-      classList += " text-b2";
-      label = "smaller";
+      value += " text-b2";
     } else if (factor === 1) {
-      classList += " text-base";
-      label = "default";
+      value += " text-base";
     } else if (factor === 2) {
-      classList += " text-h3";
-      label = "larger";
+      value += " text-h3";
     }
+    return value;
   });
+  const label = $derived(
+    factor === 0 ? "smaller" : factor === 1 ? "default" : "larger"
+  );
 </script>
 
 <div class="flex flex-col gap-1 items-center">
   <button
-    on:click
+    {onclick}
     class={classList + (isActive ? " bg-aps1 text-bgs1" : " bg-bgs2 text-fgs3")}
     >Abc</button
   >

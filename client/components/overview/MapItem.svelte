@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import { appStore } from "@21n/stores/app.store";
   import type { IRecordId } from "@21n/types/data.type";
   import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
@@ -17,33 +16,36 @@
     metadata?: any;
   }
 
-  export let data: MapItemData;
-  let resourceType = determineResourceType(data.id);
-  let nodeItem: INodeThumb;
-  $: resourceType = determineResourceType(data.id);
-  $: nodeItem = data as unknown as INodeThumb;
-
-  const dispatch = createEventDispatcher();
+  let { data }: { data: MapItemData } = $props();
+  const resourceType = $derived(determineResourceType(data.id));
+  const nodeItem = $derived(data as unknown as INodeThumb);
 
   function handleClick(event: MouseEvent) {
     const id: IRecordId = data.id;
     appStore.resourceClickHandler(event, id);
-    dispatch("resourceOpened", { id });
+  }
+
+  function handleKeyDown(event: KeyboardEvent) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleClick(event as unknown as MouseEvent);
+    }
   }
 </script>
 
 {#if resourceType === Resource.node}
-  <NodeThumbnail
-    item={nodeItem}
-    on:click={handleClick}
-    accessPoint={ResourceAccessPoint.MAP}
-    accessPointId={data.id}
-  />
+  <div onclick={handleClick}>
+    <NodeThumbnail
+      item={nodeItem}
+      accessPoint={ResourceAccessPoint.MAP}
+      accessPointId={data.id}
+    />
+  </div>
 {:else}
   <div
     class="map-item-container bg-bgs1 border border-brs2 rounded-md p-3 cursor-pointer hover:bg-bgs2 transition-colors"
-    on:click={handleClick}
-    on:keydown
+    onclick={handleClick}
+    onkeydown={handleKeyDown}
     role="button"
     tabindex="0"
   >

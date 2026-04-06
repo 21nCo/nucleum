@@ -5,11 +5,24 @@
   import { properCase } from "@21n/shared-utils/text.utils";
   import MarkdownRenderer from "@21n/landing/shared/elements/MarkdownRenderer.svelte";
   import { onMount } from "svelte";
-  export let content: string;
-  export let style: TextStyle;
-  export let customStyle: string = "";
-  export let width: string = "";
-  export let isPreventProperCasing: boolean = false;
+    let {
+    content,
+    style,
+    customStyle = "",
+    width = "",
+    isPreventProperCasing = false,
+  }: {
+    content: string;
+    style: TextStyle;
+    customStyle?: string;
+    width?: string;
+    isPreventProperCasing?: boolean;
+  } = $props();
+
+  
+  
+  
+  
   let classList: string = "";
   onMount(() => {
     switch (style) {

@@ -4,32 +4,36 @@
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
   import { taskStore } from "@21n/components/tasks/task.store";
-  import { createEventDispatcher } from "svelte";
   import type { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
-  const dispatch = createEventDispatcher();
-  export let isChecked = false;
-  export let id: IRecordId;
-  export let size: Size = Size.md;
-  export let accessPoint: ResourceAccessPoint;
-  export let isAccentBg = false;
-  function onToggle(e: MouseEvent) {
-    e.stopPropagation();
+
+  let {
+    isChecked = $bindable(false),
+    id,
+    size = Size.md,
+    accessPoint,
+    isAccentBg = false,
+    onToggle = undefined
+  }: {
+    isChecked?: boolean;
+    id: IRecordId;
+    size?: Size;
+    accessPoint: ResourceAccessPoint;
+    isAccentBg?: boolean;
+    onToggle?: ((event: CustomEvent<IRecordId>) => void) | undefined;
+  } = $props();
+
+  function handleToggle(event: MouseEvent) {
+    event.stopPropagation();
     isChecked = !isChecked;
     taskStore.toggle(id, {
       context: accessPoint
     });
-    dispatch("toggle", id);
+    const toggleEvent = new CustomEvent<IRecordId>("toggle", { detail: id });
+    onToggle?.(toggleEvent);
   }
 </script>
 
-<!-- <input
-  class="w-4 h-4"
-  type="checkbox"
-  bind:checked={isChecked}
-  on:change={onToggle}
-/> -->
-
-<button on:click={onToggle}>
+<button onclick={handleToggle}>
   <div
     class={cn("rounded-md flex items-center justify-center border", {
       "bg-aps1 border-transparent": isChecked && !isAccentBg,

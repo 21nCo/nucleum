@@ -65,7 +65,7 @@
         type={ButtonVariant.PRIMARY}
         label={resolveButtonLabel($syncStore.status)}
         isDisabled={$syncStore.status === SyncStatus.SYNCING}
-        on:click={() => {
+        onclick={() => {
           if ($syncStore.status === SyncStatus.SYNCING) return;
           appEvents.publish(ClipperExtensionEvent.START_SYNC);
         }}

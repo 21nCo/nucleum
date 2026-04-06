@@ -1,6 +1,5 @@
 <script lang="ts">
   import PdfViewer from "@21n/products/memotron/pdfAnnotator/PdfViewer.svelte";
-
   import {
     AnnotationType,
     type Coords,
@@ -20,7 +19,7 @@
     viewportToScaled
   } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.utils";
   import { debouncer } from "@21n/utils/utils";
-  import { onMount, onDestroy, createEventDispatcher } from "svelte";
+  import { mount, onDestroy, onMount, unmount } from "svelte";
   import TextHiglighter from "@21n/products/memotron/pdfAnnotator/TextHiglighter.svelte";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import InlineToolBar from "@21n/products/memotron/pdfAnnotator/toolbar/InlineToolBar.svelte";
@@ -38,57 +37,90 @@
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import context from "@21n/stores/context.store";
   import { Embed, OperatingSystem } from "@21n/types/context.type";
-  import view from "@21n/stores/view.store";
   import { fileStore } from "@21n/components/files/file.store";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { fileEmbedChannel } from "@21n/components/files/fileEmbedChannel.store";
   import { fly } from "svelte/transition";
   import type { IPdfBookmarkBody } from "@21n/products/memotron/node/node.type";
-  const dispatch = createEventDispatcher();
-  export let url: string;
-  export let node: any;
-  export let annots: IPdfBookmarkBody[] = [];
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+
+  let {
+    url,
+    node,
+    annots: initialAnnots = [],
+    accessPoint = ResourceAccessPoint.SELF,
+    onAnnotation = undefined,
+    onConfigUpdate = undefined
+  }: {
+    url: string;
+    node: any;
+    annots?: IPdfBookmarkBody[];
+    accessPoint?: ResourceAccessPoint;
+    onAnnotation?: ((annotations: IPdfBookmarkBody[]) => void) | undefined;
+    onConfigUpdate?: ((detail: {
+      config: { pdfScale: number; pdfPage: number };
+    }) => void) | undefined;
+  } = $props();
 
   const pdfPersistence = new PdfHandler(node.id);
-  /**
-   * varibales for drawing shapes adding shapes or click annotations
-   */
-  let containerBoundingRect: DOMRect | null = null;
-  let container: HTMLElement;
-  let start: Coords | null, locked: boolean, end: Coords | null;
-  let startPageNumber: number | undefined;
-  let endPageNumber: number | undefined;
-  let currentPageNumber: number | undefined;
-  let viewerContainerElement: HTMLElement;
-  /**
-   * Disabling due to failure in webview, misplacement of highlights in downloaded file
-   */
-  let dev_isEnableDownloadAnnotatedPdf = false;
-  const mouseUpHandler = (event: any) =>
-    handleMouseUp(event, viewerContainerElement);
-  let shapeVisible = false;
-  /**
-   * render variables
-   * DPR-Device Pixel Ratio
-   */
-  let DPR = window.devicePixelRatio;
-  let ranOnce: boolean = false;
-  let scale: number =
-    node?.config?.pdfScale ??
-    ($context.os == OperatingSystem.WINDOWS
-      ? 1
-      : $context.os == OperatingSystem.IOS && $context.embed === Embed.HANDSET
-        ? 0.15
-        : $context.os == OperatingSystem.IOS && $context.embed === Embed.TABLET
-          ? 0.3
-          : 0.5);
+  const dev_isEnableDownloadAnnotatedPdf = false;
+  const DPR = window.devicePixelRatio;
   const MIN_SCALE = $context.os == OperatingSystem.WINDOWS ? 0.5 : 0.1;
   const MAX_SCALE = $context.os == OperatingSystem.WINDOWS ? 2.3 : 1.8;
+
+  let annots = $state<IPdfBookmarkBody[]>(initialAnnots);
+  let shapeVisible = $state(false);
+  let scale = $state(
+    node?.config?.pdfScale ??
+      ($context.os == OperatingSystem.WINDOWS
+        ? 1
+        : $context.os == OperatingSystem.IOS && $context.embed === Embed.HANDSET
+          ? 0.15
+          : $context.os == OperatingSystem.IOS && $context.embed === Embed.TABLET
+            ? 0.3
+            : 0.5)
+  );
+  let pageNumber = $state(node?.config?.pdfPage ?? 1);
+  let annotationMode = $state<AnnotationType>(AnnotationType.NONE);
+  let isSearchActive = $state(false);
+  let searchText = $state("");
+  let searchCaseSensitive = $state(false);
+  let searchHighlightAll = $state(true);
+  let inlineToolBarVisible = $state(false);
+  let isInlineEditBarVisible = $state(false);
+  let commentEditorVisible = $state(false);
+  let popupStyle = $state("");
+  let pdfViewer = $state<any>(undefined);
+  let annotation = $state<any>({});
+  let annotClickedId = $state("");
+  let annotClickedColor = $state("");
+  let annotCickedType = $state("");
+  let selectedColor = $state($highlightStore.highlighters[0].id);
+  let annotClickedComment = $state("");
+  let clickBoundingRect = $state<LTWH | null>(null);
+  let pdfDocument = $state<any>(undefined);
+
+  let containerBoundingRect: DOMRect | null = null;
+  let container: HTMLElement;
+  let start: Coords | null;
+  let locked = false;
+  let end: Coords | null;
+  let startPageNumber: number | undefined;
+  let endPageNumber: number | undefined;
+  let viewerContainerElement: HTMLElement;
   let scrollTop = 0;
-  let pageNumber = node?.config?.pdfPage ?? 1;
-  let annotationMode: AnnotationType = AnnotationType.NONE;
-  let isSearchActive = false;
+  let removeAllRanges: any;
+  let eventBusViewer: any = null;
+  let textLayerRenderedHandler: (() => void) | null = null;
+  let findControlStateHandler: ((data: any) => void) | null = null;
+  let ranOnce = false;
+  let mainRects: any = [];
+  let onViewerMouseDown: ((event: MouseEvent) => void) | null = null;
+
+  const highlightLayerComponents = new Map<HTMLElement, Record<string, any>[]>();
+
+  $effect(() => {
+    annots = initialAnnots;
+  });
 
   function resolveKeyboardKey(event: KeyboardEvent | CustomEvent) {
     if (event instanceof KeyboardEvent) return event.key;
@@ -109,79 +141,35 @@
     return Uint8Array.from(new Uint8Array(buffer)).buffer;
   }
 
-  enum SpreadModes {
-    //init display modes.
-    "NONE",
-    "ODD",
-    "EVEN"
-  }
-  let display_mode = "";
-  let _spread_mode = SpreadModes.NONE;
-  if (display_mode in SpreadModes) {
-    _spread_mode = SpreadModes[display_mode as "NONE" | "ODD" | "EVEN"];
+  function resolveSearchParams() {
+    return {
+      query: searchText,
+      caseSensitive: searchCaseSensitive,
+      entireWord: false,
+      highlightAll: searchHighlightAll,
+      findPrevious: false
+    };
   }
 
-  /**
-   * search variables
-   */
-  let searchText = "";
-  let searchCaseSensitive = false;
-  let searchHighlightAll = true;
-  let searchParams: any;
-  $: searchParams = {
-    query: searchText,
-    caseSensitive: searchCaseSensitive,
-    entireWord: false,
-    highlightAll: searchHighlightAll,
-    findPrevious: false
-  };
-
-  /**
-   * annotations variables
-   */
-  let inlineToolBarVisible = false;
-  let isInlineEditBarVisible = false;
-  let commentEditorVisible = false;
-  let popupStyle = "";
-  let removeAllRanges: any;
-  let pdfViewer: any;
-  let annotation: any = {};
-  let annotClickedId = "";
-  let annotClickedColor = "";
-  let annotCickedType = "";
-  let selectedColor = $highlightStore.highlighters[0].id;
-  let annotClickedComment = "";
-  let clickBoundingRect: LTWH | null;
-  let eventBusViewer: any = null;
-  let textLayerRenderedHandler: (() => void) | null = null;
-  let findControlStateHandler: ((data: any) => void) | null = null;
-  let pdfDocument: any;
-
-  let mainRects: any = [];
-
-  function onInlineAnnotate(event: CustomEvent<AnnotationType>) {
+  function onInlineAnnotate(nextAnnotationMode: AnnotationType) {
     if (
-      event.detail == AnnotationType.COMMENT ||
-      event.detail == AnnotationType.TASK
+      nextAnnotationMode == AnnotationType.COMMENT ||
+      nextAnnotationMode == AnnotationType.TASK
     ) {
-      annotCickedType = event.detail;
+      annotCickedType = nextAnnotationMode;
       commentEditorVisible = true;
     } else {
-      annotate(event);
+      annotate({ detail: nextAnnotationMode });
     }
     inlineToolBarVisible = false;
   }
 
-  /**
-   * To convert top left height width to coordinates and height & width of the page.
-   * No actual scalling happens here.
-   */
   function viewportPositionToScaled({
     pageNumber,
     boundingRect,
     rects
   }: any): ScaledPosition {
-    let viewport = pdfViewer?.getPageView(pageNumber - 1)?.viewport;
+    const viewport = pdfViewer?.getPageView(pageNumber - 1)?.viewport;
 
     return {
       boundingRect: viewportToScaled(boundingRect, viewport),
@@ -192,45 +180,31 @@
     };
   }
 
-  /**
-   * to disabe the inline toolbar, editor and comment editor when the user clicks outside or presses escape key
-   */
   function falseAll() {
     inlineToolBarVisible = false;
     isInlineEditBarVisible = false;
     commentEditorVisible = false;
   }
 
-  /**
-   * To get the rect of the user selected text and display the corresponding popup next to selection and finally have the required values to add the annotation to the store.
-   */
   function selectionChangeHandler(selection: any) {
     const range: Range | null =
       selection?.rangeCount || 0 > 0 ? selection?.getRangeAt(0) : null;
-    if (selection.isCollapsed) {
-      return;
-    }
-    if (!range) return;
-    const pages = getPagesFromRange(range);
-    if (!pages || pages.length === 0) {
-      return;
-    }
-    const rects = getClientRects(range, pages, scale);
-    if (rects.length === 0) {
-      return;
-    }
-    const selectedText = selection.toString();
-    const rect = range.getBoundingClientRect();
-    const top = rect.bottom; //+ scrollTop - 200;
-    // const left = rect.right - 80;
-    const left = rect.left;
+    if (selection.isCollapsed || !range) return;
 
-    const boundingRect = getBoundingRect(rects[pages[0].number - 1]); //TODO-add boundingRect to each page for now adding for start page alone
+    const pages = getPagesFromRange(range);
+    if (!pages || pages.length === 0) return;
+
+    const rects = getClientRects(range, pages, scale);
+    if (rects.length === 0) return;
+
+    const selectedText = selection.toString();
+    const boundingRect = getBoundingRect(rects[pages[0].number - 1]);
     const viewportPosition: any = {
       boundingRect,
       rects,
       pageNumber: pages[0].number
     };
+
     annotation = viewportPositionToScaled(viewportPosition);
     annotation.selectedText = selectedText;
     removeAllRanges = () => {
@@ -238,8 +212,8 @@
     };
     falseAll();
     annotClickedComment = "";
-    // popupStyle = `position: fixed; top: ${top}px; left: ${left}px;z-index: 2000;`;
     popupStyle = `position: fixed; top: ${end?.y}px; left: ${end?.x}px;z-index: 2000;`;
+
     if (annotationMode !== AnnotationType.NONE) {
       if (
         annotationMode === AnnotationType.COMMENT ||
@@ -249,16 +223,14 @@
       } else {
         annotate({ detail: annotationMode });
       }
-    } else inlineToolBarVisible = true;
+    } else {
+      inlineToolBarVisible = true;
+    }
   }
 
-  /**
-   * To add the annotation to the store and eventually persisting.
-   * @param event
-   * @param editorValues
-   */
   async function annotate(event: any, editorValues: any = {}) {
     annotation.annotType = event.detail;
+
     if (
       event.detail === AnnotationType.COMMENT ||
       event.detail === AnnotationType.TASK
@@ -272,6 +244,7 @@
         annotation.due.completed = false;
       }
     }
+
     annotation.color = selectedColor;
     annotation.date = new Date().toLocaleDateString("en-CA");
     annotation.startPageNumber = startPageNumber;
@@ -279,48 +252,30 @@
     await pdfPersistence.saveClip(annotation);
     await refreshAnnotations();
     renderHighlightLayers();
-    if (removeAllRanges) removeAllRanges();
+    removeAllRanges?.();
     annotation = {};
   }
 
-  /**
-   * To handle the click event on the annotation, the function is invoked when the user clicks on the annotation.
-   * gets the annotation id and the color of the annotation and the type of the annotation.
-   * gets the comment if the annotation is of type comment or task.
-   * calculates the top and left position of the popup based on the annotation position.
-   * sets the inline editor visible to true.
-   * Using class instead of id since we need to get the annoation irrespective of which line of the annotation was clicked.
-   * @param id
-   */
   function handleAnnotClick(id: string) {
-    // let element = document.getElementById(id);
-    let elements = document.getElementsByClassName(id);
-    let element = elements[0] as HTMLElement | undefined;
+    const elements = document.getElementsByClassName(id);
+    const element = elements[0] as HTMLElement | undefined;
     annotClickedId = id;
     annotClickedColor = element?.dataset?.highlighter || "";
     annotCickedType = element?.dataset?.annottype || "";
     if (
       annotCickedType == AnnotationType.COMMENT ||
       annotCickedType == AnnotationType.TASK
-    )
+    ) {
       annotClickedComment = element?.dataset?.comment || "";
-    let rect = element?.getBoundingClientRect();
-    let top = rect?.top || 0;
-    let left = rect?.left;
-    // top += Number(scrollTop);
+    }
+
     commentEditorVisible = false;
     inlineToolBarVisible = false;
     isInlineEditBarVisible = false;
-    // popupStyle = `position: fixed; top: ${top}px; left: ${left}px;z-index: 1000;`;
     popupStyle = `position: fixed; top: ${end?.y}px; left: ${end?.x}px;z-index: 1000;`;
     isInlineEditBarVisible = true;
   }
 
-  /**
-   * To render all the annotations for a given page over the pdf viewer.
-   * Removing existing highlight layer and creating a new one if exsits instead of changing innerhtml is, to fix functionality issues such as click events not working on annoatations.
-   * @param pageNumber
-   */
   async function findOrCreateHighlightLayer(page: number) {
     const { textLayer } = pdfViewer.getPageView(page - 1) || {};
     if (!textLayer) {
@@ -333,33 +288,40 @@
         (highlight.rect && highlight.pageNumber == page)
     );
     if (!mainRects) return;
+
     let highlightsContainer = textLayer.div.querySelector(
       ".Pdf-Highlighter-Container"
-    );
+    ) as HTMLElement | null;
 
-    if (highlightsContainer) textLayer.div.removeChild(highlightsContainer);
+    if (highlightsContainer) {
+      removeHighlightLayerComponents(highlightsContainer);
+      textLayer.div.removeChild(highlightsContainer);
+    }
+
     highlightsContainer = document.createElement("div");
     highlightsContainer.classList.add("Pdf-Highlighter-Container");
     highlightsContainer.style =
       "-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;";
     textLayer.div.appendChild(highlightsContainer);
+    highlightLayerComponents.set(highlightsContainer, []);
 
     mainRects?.forEach((highlight: any) => {
       let modifiedRects;
       let modifiedRect;
-      if (highlight.rects)
-        modifiedRects = highlight?.rects[page - 1]?.map((rect: any) => {
-          let modifiedRect: any = scaleValues(rect);
-          return modifiedRect;
-        });
-      else if (highlight.rect) {
+
+      if (highlight.rects) {
+        modifiedRects = highlight?.rects[page - 1]?.map((rect: any) =>
+          scaleValues(rect)
+        );
+      } else if (highlight.rect) {
         modifiedRect = scaleValues(highlight.rect);
       }
+
       if (
         highlight.annotType == AnnotationType.COMMENT ||
         highlight.annotType == AnnotationType.TASK
       ) {
-        new Comment({
+        const component = mount(Comment, {
           target: highlightsContainer,
           props: {
             rects: modifiedRects,
@@ -371,36 +333,33 @@
             pageRectTop: highlight?.rect?.pageRectTop,
             showIcon:
               (highlight.rects && highlight.rects[page - 2] == undefined) ||
-              highlight.rect
+              highlight.rect,
+            onClick: handleAnnotClick
           }
-        }).$on("click", (event) => handleAnnotClick(event.detail));
-      } else if (highlight.annotType == "SHAPE") {
-        //TODO: Implement Shape rednder from storage
-      } else {
-        new TextHiglighter({
+        });
+        highlightLayerComponents.get(highlightsContainer)?.push(component);
+      } else if (highlight.annotType !== "SHAPE") {
+        const component = mount(TextHiglighter, {
           target: highlightsContainer,
           props: {
             rects: modifiedRects,
             annotType: highlight.annotType,
             id: highlight.id,
-            highlighter: highlight.color
+            highlighter: highlight.color,
+            onClick: handleAnnotClick
           }
-        }).$on("click", (event) => handleAnnotClick(event.detail));
+        });
+        highlightLayerComponents.get(highlightsContainer)?.push(component);
       }
     });
+
     mainRects = [];
     return "LayerCreated";
   }
 
-  /**
-   * To scroll to the annotation, the function is invoked when the user clicks on the annotation in the traces panel.
-   * The function scrolls to the page,then to the annotation and the annotation is highlighted for 2 seconds.
-   * @param id
-   * @param pageNumber
-   */
-  export function scrollToAnnot(id: string, pageNumber: Number) {
+  export function scrollToAnnot(id: string, targetPageNumber: Number) {
     pdfViewer.scrollPageIntoView({
-      pageNumber: pageNumber
+      pageNumber: targetPageNumber
     });
     handleScroll("");
     setTimeout(() => {
@@ -410,58 +369,41 @@
         (viewerContainerElement?.scrollTop || 0) -
         100;
       viewerContainerElement?.scrollTo({
-        top: top,
+        top,
         left: 0,
         behavior: "smooth"
       });
       annotItems.forEach((item) => {
-        let style = window.getComputedStyle(item);
-        let bgColor = style.backgroundColor;
-        let opacity = style.opacity;
+        const style = window.getComputedStyle(item);
+        const backgroundColor = style.backgroundColor;
+        const opacity = style.opacity;
         item.style.backgroundColor = "hotpink";
         item.style.opacity = "0.6";
         setTimeout(() => {
-          item.style.backgroundColor = bgColor;
+          item.style.backgroundColor = backgroundColor;
           item.style.opacity = opacity;
         }, 2000);
       });
     }, 500);
   }
 
-  /**
-   * To render the highlight layers, the function is invoked whenever a new annotation is added or deleted or when the pdf is loaded or new pdf page is rendered in the background.
-   */
   function renderHighlightLayers() {
-    // pdfDocument.getPage(1).then((page) => {
-    //   page.getAnnotations().then((annotations) => {
-    //     console.log("checking pdfjs ", annotations);
-    //   });
-    // });
-
     if (!ranOnce) {
       const scaleFactor =
         pdfViewer.viewer?.style?.getPropertyValue("--scale-factor");
-      if (pdfViewer.viewer)
+      if (pdfViewer.viewer) {
         pdfViewer.viewer.style.setProperty("--scale-factor", scaleFactor * DPR);
+      }
       ranOnce = true;
     }
+
     scale = pdfViewer.currentScale;
-    for (let pageNumber = 1; pageNumber <= pdfDocument.numPages; pageNumber++) {
-      // if (!pageNumbers.includes(pageNumber)) {
-      //   pageNumbers.push(pageNumber);
-      //   console.log(pageNumber, "LayerYetToBeCreated");
-      // } else {
-      //   console.log(pageNumber, "LayerAlreadyExists Checking if Missed");
-      // }
-      findOrCreateHighlightLayer(pageNumber);
-      // scrollToAnnot("annotlu2h0zhv4zuu6", 13);
-      // flag = true;
+
+    for (let page = 1; page <= pdfDocument.numPages; page++) {
+      findOrCreateHighlightLayer(page);
     }
   }
 
-  /**
-   * To scale the values of the annotation based on the current scale & current DPR of the pdf viewer since the scale & DPR when annotation was created might be different from the current scale.
-   */
   function scaleValues({ x1, y1, x2, y2, height, width }: any) {
     x1 *= scale * DPR;
     y1 *= scale * DPR;
@@ -469,22 +411,12 @@
     y2 *= scale * DPR;
     height *= scale * DPR;
     width *= scale * DPR;
-    return {
-      x1: x1,
-      y1: y1,
-      x2: x2,
-      y2: y2,
-      height: height,
-      width: width
-    };
+
+    return { x1, y1, x2, y2, height, width };
   }
-  /**
-   * To handle the deletion of the annotation, the function is invoked when the user deletes a specific annotation.
-   */
-  async function handleAnnotDelete(e?: any, id?: string) {
-    let deleteAnnot;
-    if (id) deleteAnnot = id;
-    else deleteAnnot = annotClickedId;
+
+  async function handleAnnotDelete(_event?: any, id?: string) {
+    const deleteAnnot = id || annotClickedId;
     await pdfPersistence.deleteClip(deleteAnnot);
     annotClickedComment = "";
     await refreshAnnotations();
@@ -492,16 +424,15 @@
     isInlineEditBarVisible = false;
   }
 
-  /**
-   * To handle the color change of the annotation, the function is invoked when the user changes the color of the annotation.
-   * @param highlighter
-   */
   async function handleColorChange(highlighter: IHighlighter) {
-    const annotation = annots.find((annot: any) => annot.id === annotClickedId);
-    if (!annotation) return;
-    annotation.color = highlighter.id;
+    const selectedAnnotation = annots.find(
+      (annot: any) => annot.id === annotClickedId
+    );
+    if (!selectedAnnotation) return;
+
+    selectedAnnotation.color = highlighter.id;
     await pdfPersistence.updateClip(annotClickedId, {
-      ...annotation,
+      ...selectedAnnotation,
       color: highlighter.id
     });
     selectedColor = highlighter.id;
@@ -510,103 +441,57 @@
     isInlineEditBarVisible = false;
   }
 
-  /**
-   * To handle the update of the comment, the function is invoked when the user updates the comment in the comment editor.
-   * @param comment
-   */
   async function handleUpdateComment(comment: string) {
-    const annotation = annots.find((annot: any) => annot.id === annotClickedId);
-    if (!annotation) return;
-    annotation.comment = comment;
+    const selectedAnnotation = annots.find(
+      (annot: any) => annot.id === annotClickedId
+    );
+    if (!selectedAnnotation) return;
+
+    selectedAnnotation.comment = comment;
     await pdfPersistence.updateClip(annotClickedId, {
-      ...annotation,
-      comment: comment
+      ...selectedAnnotation,
+      comment
     });
     annotClickedComment = "";
     await refreshAnnotations();
     renderHighlightLayers();
   }
 
-  /**
-   * To handle the inline toolbar, the function is invoked when the user selects a text, the inline toolbar is shown, comment editor is shown.
-   * TO quickly close or escape out of the current action.
-   * @param event
-   */
   function handleKeyDown(event: KeyboardEvent) {
     if (event.key === "Escape") {
       falseAll();
       annotClickedComment = "";
       annotation = {};
-      if (removeAllRanges) removeAllRanges();
+      removeAllRanges?.();
     }
   }
 
-  /**
-   * To handle the search functionality, the searchParams object is used to pass the search query and other search related parameters to the findcontroller of pdfjs library.
-   * The commented code might help later to modify scroll into view behaviour.
-   */
   function onSearch() {
-    searchParams.findPrevious = false;
-    // searchParams.query = searchText;
+    const searchParams = resolveSearchParams();
     pdfViewer.eventBus.dispatch("find", {
       source: "searchFunctionality",
       type: "find",
       ...searchParams
     });
-
-    // pdfViewer.eventBus.on("updatetextlayermatches", function (data) {
-    //   // Assuming there is a function that handles the rendering updates
-    //   // updateTextLayerHighlights(data.pageIndex);
-    //   // console.log("updatetextlayermatches", data);
-    // });
-    // pdfViewer.eventBus.on("searchResultSelected", (event) => {
-    //   console.log("searchResultSelected");
-    //   pdfViewer.findController.scrollMatchIntoView({
-    //     element: document.getElementById(`match-${event.matchIndex}`), // Ensure your matches have identifiable elements
-    //     selectedLeft: 0, // Customize as necessary
-    //     pageIndex: event.pageIndex,
-    //     matchIndex: event.matchIndex
-    //   });
-    // });
-
-    // pdfViewer.eventBus.on("selectedMatchChanged", (event) => {
-    //   console.log("selectedMatchChanged");
-    //   // const element = document.querySelector(
-    //   //   `#match-${event.pageIndex}-${event.matchIndex}`
-    //   // );
-    //   const element = document.getElementsByClassName("highlight selected")[0];
-    //   if (element) {
-    //     // pdfViewer.findController.scrollMatchIntoView({
-    //     //   element: element,
-    //     //   selectedLeft: element.offsetLeft,
-    //     //   pageIndex: event.pageIndex,
-    //     //   matchIndex: event.matchIndex
-    //     // });
-    //     element?.scrollIntoView({
-    //       behavior: "smooth",
-    //       block: "end",
-    //       inline: "nearest"
-    //     });
-    //   }
-    // });
   }
 
-  /**
-   * To find the next occurence of the search text
-   */
   function findNext() {
-    searchParams.findPrevious = false;
+    const searchParams = {
+      ...resolveSearchParams(),
+      findPrevious: false
+    };
     pdfViewer.eventBus.dispatch("find", {
       source: "searchFunctionality",
       type: "again",
       ...searchParams
     });
   }
-  /**
-   * To find the previous occurence of the search text
-   */
+
   function findPrevious() {
-    searchParams.findPrevious = true;
+    const searchParams = {
+      ...resolveSearchParams(),
+      findPrevious: true
+    };
     pdfViewer.eventBus.dispatch("find", {
       source: "searchFunctionality",
       type: "again",
@@ -616,7 +501,7 @@
 
   function resetSearch() {
     const clearParams = {
-      ...searchParams,
+      ...resolveSearchParams(),
       query: "",
       highlightAll: false,
       findPrevious: false
@@ -640,6 +525,7 @@
 
   function handlePageNavigation(targetPage: number) {
     if (!pdfViewer) return;
+
     const clampedPage = Math.min(
       Math.max(targetPage, 1),
       pdfViewer.pagesCount || 1
@@ -658,18 +544,12 @@
     }
   }
 
-  /**
-   * Fix for PDF getting cropped/skewed in larger screens for deployed version.
-   */
   function updateScaleFactor() {
     const scaleFactor =
       pdfViewer.viewer.style.getPropertyValue("--scale-factor");
     pdfViewer.viewer.style.setProperty("--scale-factor", scaleFactor * DPR);
   }
-  /**
-   * To handle events provided by pdfjs library itself, for now used for zooming later rotation can also be added here.
-   * @param option
-   */
+
   async function handleRenderOptions(option: string) {
     if (option === "ZOOMIN") {
       if (scale <= MAX_SCALE) {
@@ -690,7 +570,7 @@
 
   async function persistPdfState() {
     if (!node?.id) return;
-    dispatch("configUpdate", {
+    onConfigUpdate?.({
       config: {
         pdfScale: scale,
         pdfPage: pageNumber
@@ -698,9 +578,6 @@
     });
   }
 
-  /**
-   * To get the current page number and the scroll top value whenever a scroll event happens
-   */
   const debouncedPersistPdfState = debouncer(async () => {
     await persistPdfState();
   }, 1000);
@@ -710,181 +587,117 @@
     scrollTop = event?.target?.scrollTop || scrollTop;
     debouncedPersistPdfState();
   }
-  /**
-   * To get the coordinates of the mousedown or mouseup relative to the pdf viewer container used for drawing shapes
-   */
-  const containerCoords = (pageX: number, pageY: number) => {
-    if (!containerBoundingRect && container) {
-      containerBoundingRect = container.getBoundingClientRect();
-    }
-    return {
-      x: pageX - (containerBoundingRect?.left || 0) + container.scrollLeft,
-      y: Math.abs(
-        pageY -
-          (containerBoundingRect?.top || 0) -
-          container.scrollTop -
-          window.scrollY
-      )
-    };
-  };
 
-  /**
-   * Temporary Use: to position all popups in page
-   * Actual Use: The function is used to draw the shape, the box which you see responsively getting expanded or reduced based on mouse movement for area selection is based on this mousemove event listener's callback function.
-   */
   function handleMouseMove(event: MouseEvent) {
     end = { x: event.pageX, y: event.pageY };
-    // let target = event.target as HTMLElement;
-    // while (target && !target.classList.contains("page")) {
-    //   target = target.parentElement as HTMLElement;
-    // }
-    // if (target) {
-    //   currentPageNumber = Number(target.dataset.pageNumber);
-    // }
-    // if (!start || locked || currentPageNumber !== startPageNumber) {
-    //   return;
-    // }
-
-    // // end = containerCoords(event.pageX, event.pageY);
-    // // console.log("mouse move", end);
-    // clickBoundingRect = getBoundingRectSE(start, end);
-    // if (annotationMode === AnnotationType.SHAPE) shapeVisible = true;
   }
 
-  /**
-   * Provides the starting coordinates for the mouseEvent and also add's event listners for mousemove and mouseup.
-   * Disables the text selection if annotation mode is shape
-   * @param event
-   * @param viewerContainerElement
-   */
   function handleMouseDown(
     event: MouseEvent,
-    viewerContainerElement: HTMLElement
+    targetViewerContainerElement: HTMLElement
   ) {
-    viewerContainerElement?.addEventListener("mouseup", mouseUpHandler);
+    targetViewerContainerElement?.addEventListener("mouseup", mouseUpHandler);
     falseAll();
     annotClickedComment = "";
-    let target = event.target as HTMLElement;
-    // while (target && !target.classList.contains("page")) {
-    //   target = target.parentElement as HTMLElement;
-    // }
-    const node = asElement(target.closest(".page"));
-    startPageNumber = Number(node.dataset.pageNumber);
-    // if (node) {
-    //   startPageNumber = Number(node.dataset.pageNumber);
-    //   // console.log("Found ancestor with class 'page':", target.dataset.pageNumber);
-    // } else {
-    //   // console.log("No ancestor with class 'page' found");
-    // }
+
+    const target = event.target as HTMLElement;
+    const pageNode = asElement(target.closest(".page"));
+    startPageNumber = Number(pageNode.dataset.pageNumber);
     if (
       event.button == 2 ||
       (annotationMode !== AnnotationType.COMMENT &&
         annotationMode !== AnnotationType.TASK &&
         annotationMode !== AnnotationType.SHAPE)
-    )
+    ) {
       return;
-    container = viewerContainerElement;
-    const startTarget = asElement(event.target);
+    }
 
+    container = targetViewerContainerElement;
+    const startTarget = asElement(event.target);
     if (!isHTMLElement(startTarget)) {
       return;
     }
 
-    // start = containerCoords(event.pageX, event.pageY);
-    // console.log("mouse down", start);
     start = { x: event.pageX, y: event.pageY };
     end = null;
     locked = false;
     if (annotationMode === AnnotationType.SHAPE) {
       shapeVisible = true;
-      viewerContainerElement.classList.add("disable-select");
-      // console.log("shapeVisible mouseDown", shapeVisible);
+      targetViewerContainerElement.classList.add("disable-select");
     }
   }
 
-  /**
-   * the function is invoked only when an annotation mode is selected, the function after providing the ending coordinates, calculates the rect using both start and end and if the start and end is on the same place then the annotation icon needs to be placed else it's an indication for shape since mouse event position values are in respect to the window and not to the pdf And the function inturn calls the handleMouseEvent if mouse move didn't happen.
-   * The function also removes the event listeners for mousemove and mouseup else would cause issues with next mouse down event.
-   * @param event
-   * @param viewerContainerElement
-   */
+  const mouseUpHandler = (event: any) =>
+    handleMouseUp(event, viewerContainerElement);
+
   function handleMouseUp(
     event: MouseEvent,
-    viewerContainerElement: HTMLElement
+    targetViewerContainerElement: HTMLElement
   ) {
-    viewerContainerElement?.removeEventListener("mouseup", mouseUpHandler);
-    let target = event.target as HTMLElement;
-    const node = asElement(target.closest(".page"));
-    endPageNumber = Number(asElement(node)?.dataset?.pageNumber);
+    targetViewerContainerElement?.removeEventListener("mouseup", mouseUpHandler);
+    const target = event.target as HTMLElement;
+    const pageNode = asElement(target.closest(".page"));
+    endPageNumber = Number(asElement(pageNode)?.dataset?.pageNumber);
     const selection = window.getSelection();
+
     if (!selection?.isCollapsed) {
       selectionChangeHandler(selection);
       return;
     }
-    if (!node || !isHTMLElement(node)) {
+
+    if (!pageNode || !isHTMLElement(pageNode)) {
       return null;
     }
-    let pageRect = node.getBoundingClientRect();
+
+    const pageRect = pageNode.getBoundingClientRect();
 
     if (!start || startPageNumber !== endPageNumber) {
       return;
     }
-    // end = containerCoords(event.pageX, event.pageY);
+
     end = { x: event.pageX, y: event.pageY };
+
     if (annotationMode === AnnotationType.SHAPE) {
       shapeVisible = false;
-      viewerContainerElement.classList.remove("disable-select"); //should be called only for shapes
-      // console.log("shapeVisible", shapeVisible);
+      targetViewerContainerElement.classList.remove("disable-select");
     }
-    // console.log({ start, end, locked });
+
     const clientRect = getBoundingRectSE(start, end);
     const highlightedRect = {
-      top: clientRect.top / scale - pageRect.top / scale, //+ page.node.scrollTop - pageRect.top,
-      left: clientRect.left / scale - pageRect.left / scale, //+ page.node.scrollLeft - pageRect.left,
+      top: clientRect.top / scale - pageRect.top / scale,
+      left: clientRect.left / scale - pageRect.left / scale,
       width: clientRect.width / scale,
       height: clientRect.height / scale,
       pageNumber: endPageNumber
     } as LTWHP;
 
-    let width = highlightedRect.width;
-    let height = highlightedRect.height;
     const viewport = pdfViewer?.getPageView(pageNumber - 1)?.viewport;
-    let convertedRect: any = viewportToScaled(highlightedRect, viewport);
+    const convertedRect: any = viewportToScaled(highlightedRect, viewport);
     convertedRect.pageRectTop = pageRect.top / scale;
     start = null;
     locked = true;
-    if (height == 0 && width == 0)
+    if (highlightedRect.height == 0 && highlightedRect.width == 0) {
       handleMouseEvent(convertedRect, endPageNumber!, pageRect.top / scale);
+    }
     end = null;
     clickBoundingRect = null;
   }
 
-  /**
-   * once mousevent cycle is comeplete, this function is invoked to handle the on spot annotation by positioning the commment editor or task editor popup
-   */
   function handleMouseEvent(
     boundingRect: any,
-    pageNumber: number,
+    targetPageNumber: number,
     pageRectTop: number
   ) {
     annotCickedType = "";
     annotation.rect = boundingRect;
-    annotation.pageNumber = pageNumber;
-    // popupStyle = `position: fixed; top: ${boundingRect.y1 + pageRectTop}px; left: ${boundingRect.x1}px;z-index: 1000;`;
+    annotation.pageNumber = targetPageNumber;
     popupStyle = `position: fixed; top: ${end?.y}px; left: ${end?.x}px;z-index: 1000;`;
     if (
       annotationMode === AnnotationType.COMMENT ||
       annotationMode === AnnotationType.TASK
-    )
+    ) {
       commentEditorVisible = true;
-  }
-
-  /**
-   * To delete all the annotations and render the highlight layers
-   */
-  function deleleAllAnnotations() {
-    $userPreferences.annotations = [];
-    renderHighlightLayers();
+    }
   }
 
   const detachPdfViewerListeners = () => {
@@ -902,6 +715,7 @@
         );
       }
     }
+
     eventBusViewer = null;
     textLayerRenderedHandler = null;
     findControlStateHandler = null;
@@ -914,11 +728,11 @@
       )[0] as HTMLElement | undefined;
       if (element && viewerContainerElement) {
         const containerRect = viewerContainerElement.getBoundingClientRect();
-        const elRect = element.getBoundingClientRect();
+        const elementRect = element.getBoundingClientRect();
         const offset = 100;
         const targetTop =
           viewerContainerElement.scrollTop +
-          (elRect.top - containerRect.top) -
+          (elementRect.top - containerRect.top) -
           offset;
         viewerContainerElement.scrollTo({
           top: Math.max(0, targetTop),
@@ -933,30 +747,50 @@
     annots = (await pdfPersistence.fetchAllClips())
       .filter((annot: any) => annot.startPageNumber)
       .sort((a: any, b: any) => a.startPageNumber - b.startPageNumber);
-    dispatch("annotation", annots);
+    onAnnotation?.(annots);
   }
 
-  $: {
-    if (pdfViewer) {
-      detachPdfViewerListeners();
-      eventBusViewer = pdfViewer;
-      textLayerRenderedHandler = renderHighlightLayers;
-      findControlStateHandler = handleFindControlStateUpdate;
-      pdfViewer.eventBus.on("textlayerrendered", textLayerRenderedHandler);
-      pdfViewer.eventBus.on("updatefindcontrolstate", findControlStateHandler);
-    } else {
-      detachPdfViewerListeners();
+  function removeHighlightLayerComponents(container?: HTMLElement) {
+    if (container) {
+      const components = highlightLayerComponents.get(container) ?? [];
+      components.forEach((component) => {
+        void unmount(component);
+      });
+      highlightLayerComponents.delete(container);
+      return;
     }
+
+    highlightLayerComponents.forEach((components) => {
+      components.forEach((component) => {
+        void unmount(component);
+      });
+    });
+    highlightLayerComponents.clear();
   }
 
-  /**
-   * Getting viewerContainer that is the parent of the pdf viewer to listen to scroll events and get scroll properties later on.
-   * Adding event listeners for selection change, keydown, mousedown and scroll
-   * selection change for enabling the inline toolbar
-   * keydown for escape key to close the inline toolbar
-   * mousedown for on spot annotations(Task and Comment)
-   */
-  let onViewerMouseDown: ((event: MouseEvent) => void) | null = null;
+  $effect(() => {
+    const currentViewer = pdfViewer;
+
+    if (!currentViewer) {
+      detachPdfViewerListeners();
+      return;
+    }
+
+    detachPdfViewerListeners();
+    eventBusViewer = currentViewer;
+    textLayerRenderedHandler = renderHighlightLayers;
+    findControlStateHandler = handleFindControlStateUpdate;
+    currentViewer.eventBus.on("textlayerrendered", textLayerRenderedHandler);
+    currentViewer.eventBus.on(
+      "updatefindcontrolstate",
+      findControlStateHandler
+    );
+
+    return () => {
+      detachPdfViewerListeners();
+    };
+  });
+
   onMount(() => {
     void refreshAnnotations();
     viewerContainerElement = document.getElementById("viewerContainer")!;
@@ -970,6 +804,7 @@
     if (node?.config?.pdfPage) {
       restorePagePosition();
     }
+
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
       if (onViewerMouseDown) {
@@ -981,6 +816,7 @@
       viewerContainerElement?.removeEventListener("scroll", handleScroll);
       viewerContainerElement?.removeEventListener("mousemove", handleMouseMove);
       detachPdfViewerListeners();
+      removeHighlightLayerComponents();
     };
   });
 
@@ -994,6 +830,7 @@
 
   onDestroy(() => {
     detachPdfViewerListeners();
+    removeHighlightLayerComponents();
   });
 </script>
 
@@ -1009,48 +846,27 @@
             <TextInput
               placeholder="Search"
               bind:value={searchText}
-              on:keydown={(e) => {
-                if (resolveKeyboardKey(e) === "Enter") onSearch();
+              onKeydown={(event) => {
+                if (resolveKeyboardKey(event) === "Enter") onSearch();
               }}
               size={Size.sm}
               icon="search"
             />
-            <!-- <input
-            type="search"
-            placeholder="Search"
-            bind:value={searchText}
-            on:keydown={(e) => {
-              if (e.key === "Enter") onSearch();
-            }}
-            class="w-full h-full p-0.5 pl-2 bg-bgs2 text-fgs1 text-sm truncate outline-none"
-          /> -->
           </div>
-          <!-- <button on:click={onSearch}>Search</button> -->
           <div class="flex gap-2 items-center">
-            <Button icon="chevron-down" on:click={findNext} />
-            <Button icon="chevron-up" on:click={findPrevious} />
+            <Button icon="chevron-down" onclick={findNext} />
+            <Button icon="chevron-up" onclick={findPrevious} />
           </div>
         </div>
-        <!-- <input type="text" bind:value={searchText} placeholder="Search text" /> -->
-        <!-- <label class="text-xs mt-2">
-        <input type="checkbox" bind:checked={searchCaseSensitive} /> Case sensitive</label
-      >
-      <label class="text-xs mt-2"
-        ><input type="checkbox" bind:checked={searchHighlightAll} /> Highlight all</label
-      > -->
         <div class="flex gap-4 items-center justify-start">
           <SwitchInput
             size={Size.sm}
-            label={{
-              label: "Case sensitive"
-            }}
+            label={{ label: "Case sensitive" }}
             bind:checked={searchCaseSensitive}
           />
           <SwitchInput
             size={Size.sm}
-            label={{
-              label: "Highlight all"
-            }}
+            label={{ label: "Highlight all" }}
             bind:checked={searchHighlightAll}
           />
         </div>
@@ -1061,7 +877,7 @@
             icon="download"
             size={Size.sm}
             label="Download"
-            on:click={async () => {
+            onclick={async () => {
               let pdfData;
               if ($context.isEmbed) {
                 const embed_message_id = generateSimpleRandomId();
@@ -1069,7 +885,6 @@
                   url.toString(),
                   embed_message_id
                 );
-                // Browser-safe: use base64ToUint8Array like PdfViewer; no Buffer in browser
                 const uint8 =
                   fileEmbedChannel.base64ToUint8Array?.(response) ??
                   (response instanceof ArrayBuffer
@@ -1093,10 +908,6 @@
               });
             }}
           />
-          <!-- <button
-    on:click={deleleAllAnnotations}
-    class="material-symbols-rounded mx-2">{@html "&#Xe16c"}</button
-    > -->
         </div>
       {/if}
     </div>
@@ -1107,36 +918,38 @@
       bind:pdfDocument
       bind:scale
       {url}
-      on:ready={() => {
+      onReady={() => {
         restorePagePosition();
       }}
-      >{#if shapeVisible}
+    >
+      {#if shapeVisible}
         <div
           style="position:absolute;top: {clickBoundingRect?.top}px; left: {clickBoundingRect?.left}px; width: {clickBoundingRect?.width}px; height: {clickBoundingRect?.height}px; border: 2px solid red;z-index:1000;pointer-events:none;"
-        ></div>{/if}
+        ></div>
+      {/if}
       {#if inlineToolBarVisible}
         <InlineToolBar
           style={popupStyle}
           bind:selectedColor
-          on:annotate={onInlineAnnotate}
+          onAnnotate={onInlineAnnotate}
         />
       {/if}
       {#if commentEditorVisible}
         <CommentEditor
           bind:annotationMode
           style={popupStyle}
-          on:save={(event) => {
+          onSave={(detail) => {
             commentEditorVisible = false;
-            let detail = event.detail.dueDate
+            const annotationDetail = detail.dueDate
               ? AnnotationType.TASK
               : AnnotationType.COMMENT;
-            annotate({ detail }, event.detail);
+            annotate({ detail: annotationDetail }, detail);
           }}
-          on:update={(event) => {
+          onUpdate={(comment) => {
             commentEditorVisible = false;
-            handleUpdateComment(event.detail);
+            handleUpdateComment(comment);
           }}
-          on:cancel={() => {
+          onCancel={() => {
             commentEditorVisible = false;
           }}
           comment={annotClickedComment}
@@ -1147,9 +960,9 @@
         <InlineEditToolBar
           style={popupStyle}
           bind:selectedColor={annotClickedColor}
-          on:delete={handleAnnotDelete}
-          on:color={(event) => handleColorChange(event.detail)}
-          on:edit={() => {
+          onDelete={handleAnnotDelete}
+          onColor={handleColorChange}
+          onEdit={() => {
             commentEditorVisible = true;
             isInlineEditBarVisible = false;
           }}
@@ -1159,12 +972,6 @@
       {/if}
     </PdfViewer>
   </div>
-  <!-- <TracesPanel
-    {annots}
-    {handleAnnotDelete}
-    on:traceclicked={(event) =>
-      scrollToAnnot(event.detail.id, event.detail.pageNumber)}
-  /> -->
   <div
     class={"absolute cw:bottom-0 cw:inset-x-0 right-0 inset-y-0 m-2 flex gap-2 items-center justify-center"}
   >
@@ -1175,9 +982,9 @@
       totalPages={pdfViewer?.pagesCount ?? 1}
       {accessPoint}
       {isSearchActive}
-      on:pageRerender={(event) => handleRenderOptions(event.detail)}
-      on:searchToggle={(event) => handleSearchToggle(event.detail)}
-      on:goToPage={(event) => handlePageNavigation(event.detail.page)}
+      onPageRerender={handleRenderOptions}
+      onSearchToggle={handleSearchToggle}
+      onGoToPage={(detail) => handlePageNavigation(detail.page)}
     />
   </div>
 </div>

@@ -19,16 +19,22 @@
   } from "@21n/components/flux/resourceStores/resource.utils";
   import TableOfContentsList from "@21n/components/markdown/TableOfContentsList.svelte";
   import { hoverable } from "@21n/actions/hover.action";
-  export let mdId: string;
-  export let isHideEmptyPlaceholder: boolean = false;
-  export let isExpandOnHover: boolean = false;
+  let {
+    mdId,
+    isHideEmptyPlaceholder = false,
+    isExpandOnHover = false
+  }: {
+    mdId: string;
+    isHideEmptyPlaceholder?: boolean;
+    isExpandOnHover?: boolean;
+  } = $props();
   const mdStore = getMdStore(mdId);
-  let mdcontainerID = "markDown-" + mdId;
-  let mdContainerHeight: number | undefined;
-  let headingBlocks: any;
-  let isHeadingAvailable: boolean = false;
+  const mdcontainerID = `markDown-${mdId}`;
+  let mdContainerHeight = $state<number | undefined>();
+  let headingBlocks = $state<any>([]);
+  let isHeadingAvailable = $state(false);
   const dev_isShowFocusState: boolean = false;
-  let isHovered: boolean = false;
+  let isHovered = $state(false);
   onMount(() => {
     let mdContainerElement = document.getElementById(mdcontainerID);
     mdContainerHeight = mdContainerElement?.offsetHeight;
@@ -86,7 +92,7 @@
             {@const lineWidth = 24 - block.HEADING * 6}
             <a
               href="#{block.id}"
-              on:click={(e) => scrollToHeading(e, block.id)}
+              onclick={(e) => scrollToHeading(e, block.id)}
               class="flex items-center py-0.5"
               use:tooltip={{
                 text: block.content,

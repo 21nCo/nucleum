@@ -6,19 +6,26 @@
   import { Display } from "@21n/types/view.type";
   import { determineTruncateLength } from "@21n/shared-utils/text.utils";
   import { appStore } from "@21n/stores/app.store";
-  import { createEventDispatcher } from "svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { Size } from "@21n/types/size.enum";
-  const dispatch = createEventDispatcher();
-  export let items: IBreadcrumbItem[] = [];
-  export let isPreventDefault: boolean = false;
-  export let spaceAvailable: Size.sm | Size.md | Size.lg = Size.md;
-  export let isSubtleContext: boolean = false;
-  $: slice = resolveSlice($view.display);
-  $: truncateLength = determineTruncateLength($view.display, spaceAvailable);
-  // let truncateLength = undefined;
-  let _items: IBreadcrumbItem[] = [];
-  $: _items =
+  let {
+    items = [],
+    isPreventDefault = false,
+    spaceAvailable = Size.md,
+    isSubtleContext = false,
+    onItemClick = () => {}
+  }: {
+    items?: IBreadcrumbItem[];
+    isPreventDefault?: boolean;
+    spaceAvailable?: Size.sm | Size.md | Size.lg;
+    isSubtleContext?: boolean;
+    onItemClick?: (payload: { event: MouseEvent | KeyboardEvent; item: IBreadcrumbItem }) => void;
+  } = $props();
+  const slice = $derived(resolveSlice($view.display));
+  const truncateLength = $derived(
+    determineTruncateLength($view.display, spaceAvailable)
+  );
+  const resolvedItems = $derived(
     slice != undefined && slice <= items.length
       ? [
           ...items.slice(0, Math.floor(slice / 2)),
@@ -38,6 +45,7 @@
           ...items.slice(-Math.ceil(slice / 2))
         ]
       : items;
+  );
 
   function resolveSlice(display: Display) {
     if (display === Display.MO || display === Display.CW) {
@@ -50,9 +58,9 @@
       return 2;
     }
   }
-  function onClick(e: MouseEvent, item: IBreadcrumbItem) {
+  function onClick(e: MouseEvent | KeyboardEvent, item: IBreadcrumbItem) {
     if (isPreventDefault) {
-      dispatch("click", { event: e, item });
+      onItemClick({ event: e, item });
       return;
     }
     if (item.path) appStore.gotoPath(item.path);
@@ -64,15 +72,15 @@
   }
 </script>
 
-{#if _items?.length > 0}
+{#if resolvedItems?.length > 0}
   <div class="flex remove-scrollbar rounded-md">
-    {#each _items as item, index (item)}
+    {#each resolvedItems as item, index (item)}
       <BreadcrumbItemView
         {truncateLength}
         {isSubtleContext}
         {...item}
-        isLast={index === _items.length - 1}
-        on:click={(e) => {
+        isLast={index === resolvedItems.length - 1}
+        onActivate={(e) => {
           onClick(e, item);
         }}
       />

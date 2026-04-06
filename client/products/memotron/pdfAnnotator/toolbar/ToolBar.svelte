@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import { AnnotationType } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
   import ToggleGroup from "@21n/elements/toggle/ToggleGroup.svelte";
   import Toggle from "@21n/elements/toggle/Toggle.svelte";
@@ -17,25 +16,49 @@
   import context from "@21n/stores/context.store";
   import { Embed, OperatingSystem } from "@21n/types/context.type";
   import view from "@21n/stores/view.store";
-  export let selectedColor = "";
-  export let style = "";
-  export let pageNumber = 1;
-  export let totalPages = 1;
-  export let selectedAnnotationMode: AnnotationType;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  export let isSearchActive = false;
-  $: isExpanded =
-    accessPoint === ResourceAccessPoint.SELF &&
-    $context.embed !== Embed.HANDSET &&
-    $context.os !== OperatingSystem.IOS;
-  let dispatchEvent = createEventDispatcher();
-  const annotationModes: IToggleItem[] = resolveAnnotationModes();
-  let pageInput = "";
-  let isEditingPage = false;
-  const dev_isEnableJumpToPage: boolean = false;
 
-  $: if (!isEditingPage) {
-    pageInput = `${pageNumber}`;
+  let {
+    selectedColor = $bindable(""),
+    style = "",
+    pageNumber = 1,
+    totalPages = 1,
+    selectedAnnotationMode = $bindable(),
+    accessPoint = ResourceAccessPoint.SELF,
+    isSearchActive = false,
+    onGoToPage = undefined,
+    onSearchToggle = undefined,
+    onPageRerender = undefined
+  }: {
+    selectedColor?: string;
+    style?: string;
+    pageNumber?: number;
+    totalPages?: number;
+    selectedAnnotationMode?: AnnotationType;
+    accessPoint?: ResourceAccessPoint;
+    isSearchActive?: boolean;
+    onGoToPage?: ((detail: { page: number }) => void) | undefined;
+    onSearchToggle?: ((isActive: boolean) => void) | undefined;
+    onPageRerender?: ((mode: string) => void) | undefined;
+  } = $props();
+
+  const annotationModes: IToggleItem[] = resolveAnnotationModes();
+  const dev_isEnableJumpToPage = false;
+
+  let pageInput = $state("");
+  let isEditingPage = $state(false);
+
+  $effect(() => {
+    if (!isEditingPage) {
+      pageInput = `${pageNumber}`;
+    }
+  });
+
+  function isExpanded() {
+    return (
+      accessPoint === ResourceAccessPoint.SELF &&
+      $context.embed !== Embed.HANDSET &&
+      $context.os !== OperatingSystem.IOS
+    );
   }
 
   function commitPageInput() {
@@ -44,8 +67,13 @@
       pageInput = `${pageNumber}`;
       return;
     }
+
     const limited = Math.min(Math.max(parsed, 1), totalPages || 1);
-    dispatchEvent("goToPage", { page: limited });
+    onGoToPage?.({ page: limited });
+  }
+
+  function handleAnnotationModeChange(value: string) {
+    selectedAnnotationMode = value as AnnotationType;
   }
 </script>
 
@@ -53,16 +81,14 @@
   class="flex portrait:flex-row flex-col portrait:h-12 min-w-fit min-h-fit py-2 px-1 justify-between items-center bg-bgs2 rounded-md border border-brs3 shadow-sm"
   {style}
 >
-  {#if isExpanded}
+  {#if isExpanded()}
     <ToggleGroup
       class="portrait:flex-row flex-col"
       items={annotationModes}
       size={Size.lg}
       parentBgIndex={2}
-      on:change={(e) => {
-        selectedAnnotationMode = e.detail;
-      }}
-      on:none={() => {
+      onChange={(event) => handleAnnotationModeChange(event.detail)}
+      onNone={() => {
         selectedAnnotationMode = AnnotationType.NONE;
       }}
     />
@@ -71,11 +97,11 @@
       tooltip="Search"
       parentBgIndex={2}
       on={isSearchActive}
-      on:change={() => {
-        dispatchEvent("searchToggle", !isSearchActive);
+      onChange={() => {
+        onSearchToggle?.(!isSearchActive);
       }}
     />
-    <span class="portrait:px-1 py-1" />
+    <span class="portrait:px-1 py-1"></span>
     <Divider
       orientation={$view.isPortrait
         ? Orientation.Vertical
@@ -89,8 +115,8 @@
     <Button
       icon="magnifying-glass-plus"
       parentBgIndex={2}
-      on:click={() => {
-        dispatchEvent("pageRerender", "ZOOMIN");
+      onclick={() => {
+        onPageRerender?.("ZOOMIN");
       }}
     />
     {#if dev_isEnableJumpToPage}
@@ -105,14 +131,14 @@
             size={Size.sm}
             parentBackgroundIndex={2}
             numberInputParams={{ min: 1, max: totalPages, step: 1 }}
-            on:focus={() => {
+            onFocus={() => {
               isEditingPage = true;
             }}
-            on:blur={() => {
+            onBlur={() => {
               commitPageInput();
               isEditingPage = false;
             }}
-            on:enter={() => {
+            onEnter={() => {
               commitPageInput();
               isEditingPage = false;
             }}
@@ -125,12 +151,12 @@
     <Button
       icon="magnifying-glass-minus"
       parentBgIndex={2}
-      on:click={() => {
-        dispatchEvent("pageRerender", "ZOOMOUT");
+      onclick={() => {
+        onPageRerender?.("ZOOMOUT");
       }}
     />
   </div>
-  {#if isExpanded}
+  {#if isExpanded()}
     <Divider
       orientation={$view.isPortrait
         ? Orientation.Vertical
@@ -138,13 +164,12 @@
       colorStrength={ColorStrength.Strong}
     />
     <span class="flex portrait:flex-row flex-col items-center py-2">
-      <HighlightColors
-        bind:selected={selectedColor}
-        on:color
-        orientation={$view.isPortrait
-          ? Orientation.Horizontal
-          : Orientation.Vertical}
-      />
+  <HighlightColors
+    bind:selected={selectedColor}
+    orientation={$view.isPortrait
+      ? Orientation.Horizontal
+      : Orientation.Vertical}
+  />
     </span>
   {/if}
 </div>

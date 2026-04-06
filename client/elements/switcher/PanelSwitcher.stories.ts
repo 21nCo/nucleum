@@ -5,6 +5,7 @@ import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
 import { Size } from "@21n/types/size.enum";
 import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
 const meta = {
+  title: "Elements/Switcher/PanelSwitcher",
   component: PanelSwitcher,
   argTypes: {
     activeColor: { control: { type: "range", min: -1, max: 255, step: 1 } },
@@ -15,7 +16,7 @@ const meta = {
   },
   args: {
     items: ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"],
-    selected: "Item 2",
+    value: "Item 2",
     activeColor: undefined,
     isDisableEnabled: false,
     parentBgIndex: 2,

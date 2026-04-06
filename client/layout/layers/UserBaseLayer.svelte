@@ -1,4 +1,7 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { onDestroy, onMount } from "svelte";
   import { GlobalEvent } from "@21n/types/event.enum";
   import { detectTimeZone } from "@21n/utils/time.utils";
@@ -35,8 +38,6 @@
   import { clientStorage, getDapId } from "@21n/persistence/persistence.utils";
   import PageError from "@21n/components/error/PageError.svelte";
   import posthog from "posthog-js";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
   import { recentsStore } from "@21n/components/record/recent.store";
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { Action } from "@21n/types/action.enum";
@@ -60,6 +61,15 @@
   import { resolveProductConfig } from "@21n/products/product.config";
   import { resourceStores } from "@21n/components/flux/resourceStores/resource.store";
   import { kvStores } from "@21n/components/flux/resourceStores/kv.store";
+  let {
+    children,
+    topnav: topnavContent,
+    onReady
+  }: {
+    children?: Snippet;
+    topnav?: Snippet;
+    onReady?: () => void | Promise<void>;
+  } = $props();
   const loadingMessages = {
     cloneUp: {
       message: "Syncing your local data with the cloud...",
@@ -75,21 +85,22 @@
 
   const ONE_WEEK_IN_MS = 7 * 24 * 60 * 60 * 1000;
 
-  let loadingMessage: {
+  let loadingMessage = $state<{
     message: string;
     subMessage?: string;
     duration?: number;
     percentage?: number;
-  } = {
+  }>({
     message: ""
-  };
-  let isAppLoading = false;
-  let error: string | null = null;
+  });
+  let isAppLoading = $state(false);
+  let error = $state<string | null>(null);
   let dev_isDisableSyncOnAppear = false;
   let subs: any[] = [];
   const isDebug = import.meta.env?.DEV;
-  $: searcheableResources =
-    resolveProductResources($appStore.product, "search") ?? [];
+  let searcheableResources = $derived(
+    resolveProductResources($appStore.product, "search") ?? []
+  );
 
   async function shouldRunFluxIndex() {
     const lastIndexedAt = await clientStorage.get(
@@ -128,7 +139,7 @@
     const initState = await initializeDatabase();
     if (initState === 1) {
       $appLoadingState.isBaseLoaded = true;
-      dispatch("ready");
+      await onReady?.();
     }
     let userDataState: any;
     if (initState !== undefined)
@@ -158,7 +169,7 @@
     await Promise.all(initializationTasks);
     if (initState !== 1) {
       $appLoadingState.isBaseLoaded = true;
-      dispatch("ready");
+      await onReady?.();
     }
     console.timeEnd("init");
 
@@ -559,6 +570,10 @@
     );
     window.addEventListener(GlobalEvent.ADD_TO_RECENTS, handleAddToRecents);
     window.addEventListener("message", handleMessageFromParent);
+    window.addEventListener("focus", onAppear);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("unload", handleBeforeUnload);
+    document.addEventListener("visibilitychange", visibilityChangeListener);
   }
   function removeWindowEventListeners() {
     window.removeEventListener(
@@ -571,6 +586,10 @@
     );
     window.removeEventListener(GlobalEvent.ADD_TO_RECENTS, handleAddToRecents);
     window.removeEventListener("message", handleMessageFromParent);
+    window.removeEventListener("focus", onAppear);
+    window.removeEventListener("beforeunload", handleBeforeUnload);
+    window.removeEventListener("unload", handleBeforeUnload);
+    document.removeEventListener("visibilitychange", visibilityChangeListener);
   }
   function handleBeforeUnload(event: any) {
     if (
@@ -613,9 +632,8 @@
   {:else if error}
     <PageError />
   {:else}
-    <UserLayout>
-      <slot slot="topnav" name="topnav" />
-      <slot />
+    <UserLayout topnav={topnavContent}>
+      {@render children?.()}
     </UserLayout>
   {/if}
 </div>
@@ -637,11 +655,3 @@
   {/if}
 {/if}
 <Intercom />
-
-<svelte:window
-  on:focus={onAppear}
-  on:beforeunload={handleBeforeUnload}
-  on:unload={handleBeforeUnload}
-/>
-
-<svelte:document on:visibilitychange={visibilityChangeListener} />

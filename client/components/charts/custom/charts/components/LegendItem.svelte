@@ -1,9 +1,11 @@
 <script lang="ts">
   import { generateUID } from "@21n/utils/utils";
 
-  export let label: string;
-  export let checked: boolean;
-  export let id = generateUID();
+  let label: string;
+  let checked: boolean;
+  let id = generateUID();
+
+  export { label, checked, id };
 </script>
 
 <div class="flex gap-1 items-center justify-center">

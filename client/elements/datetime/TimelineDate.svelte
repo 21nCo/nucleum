@@ -6,8 +6,8 @@
   import Popover from "@21n/elements/popover/Popover.svelte";
   import AbsoluteTimeRangePopover from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopover.svelte";
   import { cn } from "@21n/utils/ui.utils";
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
-  let ref: any;
+  let { size = Size.md }: any = $props();
+  let ref = $state<any>();
 </script>
 
 <Popover bind:this={ref}>
@@ -28,11 +28,11 @@
       {parseAndFormatDate($selectedTimePeriod)}
     </span>
   </button>
-  <slot:fragment slot="popover">
+  {#snippet popover()}
     <AbsoluteTimeRangePopover
       isDatePickerMode={true}
       bind:selectedDate={$selectedTimePeriod}
-      on:change={() => ref.toggle()}
+      onChange={() => ref.toggle()}
     />
-  </slot:fragment>
+  {/snippet}
 </Popover>

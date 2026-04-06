@@ -11,18 +11,27 @@
   import type { IRecordId } from "@21n/client/types/data.type";
   import Goal from "../goals/Goal.svelte";
 
-  export let resourceId: IRecordId | undefined = undefined;
-  export let resourceType: Resource | undefined = undefined;
-  export let accessMode: AccessMode = AccessMode.INLINE;
-  export let visitedCombinationIds: Set<string> = new Set();
-  export let parentCombinationId: IRecordId | undefined = undefined;
+  let {
+    resourceId = undefined,
+    resourceType = undefined,
+    accessMode = AccessMode.INLINE,
+    visitedCombinationIds = new Set(),
+    parentCombinationId = undefined
+  }: {
+    resourceId?: IRecordId | undefined;
+    resourceType?: Resource | undefined;
+    accessMode?: AccessMode;
+    visitedCombinationIds?: Set<string>;
+    parentCombinationId?: IRecordId | undefined;
+  } = $props();
 
   const unsupportedMessage = "Selected resource type is not yet supported";
 
-  $: isRecursiveLoop =
+  let isRecursiveLoop = $derived(
     resourceType === Resource.combination &&
     resourceId &&
-    visitedCombinationIds.has(resourceId.toString());
+    visitedCombinationIds.has(resourceId.toString())
+  );
 
   function resolveVisitedIds() {
     if (resourceType !== Resource.combination || !resourceId)

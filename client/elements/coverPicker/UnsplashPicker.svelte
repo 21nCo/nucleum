@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import { Size } from "@21n/types/size.enum";
   import { InputStyle } from "@21n/types/input.type";
@@ -11,7 +10,11 @@
   import { persistenceInstance } from "@21n/persistence/persistence";
   import { safeRequestIdleCallback } from "@21n/utils/browser.utils";
 
-  const dispatch = createEventDispatcher();
+  let {
+    onSelect = undefined
+  }: {
+    onSelect?: ((event: CustomEvent<string>) => void) | undefined;
+  } = $props();
   let searchQuery = "";
   let images: any[] = [];
   let isLoading = false;
@@ -62,12 +65,23 @@
   }
 
   async function handleImageSelect(image: any) {
-    dispatch("select", `unsplash_${image.urls.raw}`);
+    onSelect?.(
+      new CustomEvent("select", {
+        detail: `unsplash_${image.urls.raw}`
+      })
+    );
     safeRequestIdleCallback(async () => {
       await persistenceInstance.triggerUnsplashDownload({
         url: image.links.download_location
       });
     });
+  }
+
+  function handleImageKeyDown(event: KeyboardEvent, image: any) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      void handleImageSelect(image);
+    }
   }
 
   searchImages("");
@@ -80,7 +94,7 @@
       style={InputStyle.BORDERED}
       size={Size.sm}
       placeholder="Search Unsplash photos..."
-      on:debouncedChange={() => searchImages(searchQuery)}
+      onDebouncedChange={() => searchImages(searchQuery)}
     />
     {#if isLoading}
       <Icon icon="svg-spinners:90-ring-with-bg" class="stroke-fgs1" />
@@ -94,12 +108,15 @@
   {:else}
     <div
       class="grid mo:grid-cols-[repeat(auto-fill,minmax(120px,1fr))] grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-4 overflow-y-auto min-h-0 flex-1 p-2"
-      on:scroll={handleScroll}
+      onscroll={handleScroll}
     >
       {#each images as image (image.id)}
-        <button
+        <div
           class="relative mo:h-32 h-52 group overflow-hidden rounded-md notouch:hover:opacity-90 touch:flex touch:flex-col transition-opacity"
-          on:click={() => handleImageSelect(image)}
+          role="button"
+          tabindex="0"
+          onclick={() => handleImageSelect(image)}
+          onkeydown={(event) => handleImageKeyDown(event, image)}
         >
           <img
             src={image.urls.small}
@@ -107,8 +124,10 @@
             class="w-full notouch:h-full touch:flex-1 touch:min-h-0 object-cover"
           />
           <button
+            type="button"
             class="notouch:absolute bottom-0 inset-x-0 p-2 notouch:bg-bgs2 text-fgs2 text-b3 notouch:opacity-0 notouch:group-hover:opacity-100 notouch:transition-opacity notouch:hover:underline touch:underline truncate"
-            on:click={() => {
+            onclick={(event) => {
+              event.stopPropagation();
               const url =
                 image.user.links.html +
                 `?utm_source=${$appStore.product ?? "21n"}&utm_medium=referral`;
@@ -117,7 +136,7 @@
           >
             by {image.user.name}
           </button>
-        </button>
+        </div>
       {/each}
       <ScrollViewBottomSpacer />
     </div>

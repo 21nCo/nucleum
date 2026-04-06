@@ -1,7 +1,13 @@
 <script lang="ts">
-  export let fg: string;
-  export let bg: string;
-  export let isActive: boolean = false;
+  let {
+    fg,
+    bg,
+    isActive = false
+  }: {
+    fg: string;
+    bg: string;
+    isActive?: boolean;
+  } = $props();
 </script>
 
 <svg

@@ -5,29 +5,45 @@
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
   import { SubGoalsLayout, GoalStatus, type IGoal } from "@21n/components/goals/goal.type";
-  import { createEventDispatcher } from "svelte";
   import StepMarker from "@21n/components/goals/sub/StepMarker.svelte";
   import { parseAndFormatDate } from "@21n/utils/time.utils";
 
   type IAddSubGoalItem = { label?: string; type: "add" };
 
-  export let subGoal: IGoal | IAddSubGoalItem;
-  export let index: number;
-  export let totalLength: number;
-  export let method: SubGoalsLayout = SubGoalsLayout.DEFAULT;
-  let newSubGoalLabel = "";
-  const dispatch = createEventDispatcher();
+  let {
+    subGoal,
+    index,
+    totalLength,
+    method = SubGoalsLayout.DEFAULT,
+    onAdd = undefined,
+    onClick = undefined
+  }: {
+    subGoal: IGoal | IAddSubGoalItem;
+    index: number;
+    totalLength: number;
+    method?: SubGoalsLayout;
+    onAdd?: ((event: CustomEvent<{ label: string }>) => void) | undefined;
+    onClick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
+
+  let newSubGoalLabel = $state("");
 
   function isSavedSubGoal(subGoal: IGoal | IAddSubGoalItem): subGoal is IGoal {
     return "id" in subGoal;
   }
 
-  $: stepMarkerItem = isSavedSubGoal(subGoal)
-    ? subGoal
-    : { ...subGoal, status: GoalStatus.NOT_STARTED };
+  const stepMarkerItem = $derived(
+    isSavedSubGoal(subGoal)
+      ? subGoal
+      : { ...subGoal, status: GoalStatus.NOT_STARTED }
+  );
 
   function onSave() {
-    dispatch("add", { label: newSubGoalLabel });
+    onAdd?.(
+      new CustomEvent("add", {
+        detail: { label: newSubGoalLabel }
+      })
+    );
     newSubGoalLabel = "";
   }
 </script>
@@ -40,7 +56,7 @@
         "hover:border-ccs2 hover:bg-ccs3": subGoal.label
       }
     )}
-    on:click
+    onclick={onClick}
     data-id={isSavedSubGoal(subGoal) ? subGoal.id : undefined}
     data-index={index}
     data-type={subGoal.type}
@@ -69,16 +85,16 @@
         placeholder="Add a subgoal"
         style={InputStyle.PLAIN}
         isShowSaveControl={newSubGoalLabel !== ""}
-        on:enter={onSave}
-        on:cancel={() => (newSubGoalLabel = "")}
-        on:save={onSave}
+        onEnter={onSave}
+        onCancel={() => (newSubGoalLabel = "")}
+        onSave={onSave}
       />
     {/if}
   </button>
 {:else}
   <button
     class="flex items-center group gap-4 p-2 border border-transparent hover:border-aps2 rounded-md"
-    on:click
+    onclick={onClick}
   >
     {#if subGoal.label}
       <div class="text-left flex-1 group-hover:text-aps1">
@@ -90,9 +106,9 @@
         placeholder="Add a subgoal"
         style={InputStyle.PLAIN}
         isShowSaveControl={newSubGoalLabel !== ""}
-        on:enter={onSave}
-        on:save={onSave}
-        on:cancel={() => (newSubGoalLabel = "")}
+        onEnter={onSave}
+        onSave={onSave}
+        onCancel={() => (newSubGoalLabel = "")}
       />
     {/if}
   </button>

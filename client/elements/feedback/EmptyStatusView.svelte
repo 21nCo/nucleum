@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import EmptyStatus from "@21n/illustrations/EmptyStatus.svelte";
   import EmptyStatusInbox from "@21n/illustrations/EmptyStatusInbox.svelte";
   import { LoadingAnimationType } from "@21n/types/feedback.type";
@@ -24,22 +25,44 @@
   import OverviewCardsPulse from "@21n/elements/feedback/animations/DashboardPulse/OverviewCardsPulse.svelte";
   import OnThisDayPulse from "@21n/elements/feedback/animations/DashboardPulse/OnThisDayPulse.svelte";
   import AnalyticsChartPulse from "@21n/elements/feedback/animations/DashboardPulse/AnalyticsChartPulse.svelte";
-  export let mainText: string | undefined = undefined;
-  export let subText: string | undefined = undefined;
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
-  export let isLoadingState: boolean = false;
-  export let isSearchContext: boolean = false;
-  export let isNotAvailableContext: boolean = false;
-  export let actionText: string | undefined = undefined;
-  export let actionShortcut: string | IKeyboardShortcut | undefined = undefined;
-  export let loadingText: string | undefined = undefined;
-  export let loadingAnimation: LoadingAnimationType =
-    LoadingAnimationType.SPINNER;
-  export let pulseCount: number = 0;
-  export let parentBgIndex: number = 1;
-  export let emptyIllustration: string | undefined = undefined;
-  export let isFullPage: boolean = false;
-  $: isFullPage;
+  let {
+    mainText = undefined,
+    subText = undefined,
+    size = Size.md,
+    isLoadingState = false,
+    isSearchContext = false,
+    isNotAvailableContext = false,
+    actionText = undefined,
+    actionShortcut = undefined,
+    loadingText = undefined,
+    loadingAnimation = LoadingAnimationType.SPINNER,
+    pulseCount = 0,
+    parentBgIndex = 1,
+    emptyIllustration = undefined,
+    isFullPage = false,
+    children = undefined,
+    subtext = undefined,
+    onclick = undefined,
+  }: {
+    mainText?: string | undefined;
+    subText?: string | undefined;
+    size?: Size.sm | Size.md | Size.lg;
+    isLoadingState?: boolean;
+    isSearchContext?: boolean;
+    isNotAvailableContext?: boolean;
+    actionText?: string | undefined;
+    actionShortcut?: string | IKeyboardShortcut | undefined;
+    loadingText?: string | undefined;
+    loadingAnimation?: LoadingAnimationType;
+    pulseCount?: number;
+    parentBgIndex?: number;
+    emptyIllustration?: string | undefined;
+    isFullPage?: boolean;
+    children?: Snippet | undefined;
+    subtext?: Snippet | undefined;
+    onclick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
+  void isFullPage;
 </script>
 
 <div
@@ -112,19 +135,21 @@
         {mainText ?? (isSearchContext ? "No results found." : "")}
       </div>
       <div class="text-fgs3 text-center text-b3">
-        {#if $$slots.subtext}
-          <slot name="subtext" />
+        {#if subtext}
+          {@render subtext?.()}
         {:else}
           {@html renderMdAsHtml(subText ?? "")}
         {/if}
       </div>
-      <slot />
+      {@render children?.()}
       {#if actionText}
         <div class="mt-4">
           <Button
             label={actionText}
             size={Size.xs}
-            on:click
+            onclick={(event) => {
+              onclick?.(event);
+            }}
             {parentBgIndex}
             shortcut={actionShortcut}
           />

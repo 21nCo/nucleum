@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, createEventDispatcher, tick } from "svelte";
+  import { onMount, tick } from "svelte";
   import type { ICodeBlockBody } from "@21n/components/markdown/md.type";
   import hljs from "highlight.js";
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
@@ -10,11 +10,17 @@
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import type { MdStoreType } from "@21n/components/markdown/markdown.store";
   import { hoverable } from "@21n/actions/hover.action";
-
-  export let mdStore: MdStoreType;
-  export let body: ICodeBlockBody;
-  
-  const dispatch = createEventDispatcher();
+  let {
+    mdStore,
+    body,
+    onUpdate = undefined,
+    onDelete = undefined
+  }: {
+    mdStore: MdStoreType;
+    body: ICodeBlockBody;
+    onUpdate?: ((event: CustomEvent<any>) => void) | undefined;
+    onDelete?: (() => void) | undefined;
+  } = $props();
 
   let language = body?.language ?? "javascript";
   let code = body?.text ?? "";
@@ -81,17 +87,13 @@
   });
 
   async function handleLanguageChange() {
-    dispatch("update", {
-      language
-    });
+    onUpdate?.(new CustomEvent("update", { detail: { language } }));
     await tick();
     highlightCode();
   }
 
   function handleCodeChange() {
-    dispatch("update", {
-      text: code
-    });
+    onUpdate?.(new CustomEvent("update", { detail: { text: code } }));
   }
 
   function handleFocus() {
@@ -128,12 +130,13 @@
   }
 
   function handleDeleteCode() {
-    dispatch("delete");
+    onDelete?.();
   }
 
-  $: if (code !== undefined && !isEditing) {
+  $effect(() => {
+    if (code === undefined || isEditing) return;
     tick().then(highlightCode);
-  }
+  });
 </script>
 
 <div
@@ -157,7 +160,7 @@
           size={Size.sm}
           popoverWidth="w-60"
           bind:value={language}
-          on:select={handleLanguageChange}
+          onSelect={handleLanguageChange}
         />
       </div>
       {#if isHovering}
@@ -167,7 +170,7 @@
             size={Size.sm}
             tooltip="Copy code"
             style={ButtonStyle.OUTLINED}
-            on:click={handleCopyCode}
+            onclick={handleCopyCode}
           />
           <Button
             icon="trash"
@@ -175,7 +178,7 @@
             type={ButtonVariant.DANGER}
             style={ButtonStyle.OUTLINED}
             tooltip="Delete block"
-            on:click={handleDeleteCode}
+            onclick={handleDeleteCode}
           />
         </div>
       {/if}
@@ -197,9 +200,9 @@
       <textarea
         bind:this={textareaElement}
         bind:value={code}
-        on:input={() => { handleCodeChange(); autoResize(); }}
-        on:focus={handleFocus}
-        on:blur={handleBlur}
+        oninput={() => { handleCodeChange(); autoResize(); }}
+        onfocus={handleFocus}
+        onblur={handleBlur}
         class="bg-[#1e1e1e] text-[#d4d4d4] p-4 text-sm font-mono leading-relaxed resize-none w-full h-full border-none outline-none rounded-md"
         placeholder="Enter your code here..."
         spellcheck={false}
@@ -210,7 +213,7 @@
       <button
         type="button"
         class="block h-full w-full cursor-text border-none bg-transparent p-0 text-left"
-        on:click={async () => {
+        onclick={async () => {
           isEditing = true;
           await tick();
           textareaElement?.focus();

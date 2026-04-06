@@ -1,14 +1,22 @@
 <script lang="ts">
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let item: string;
-  export let size: Size = Size.lg;
+  let {
+    item,
+    size = Size.lg,
+    onClick = undefined
+  }: {
+    item: string;
+    size?: Size;
+    onClick?: ((event: CustomEvent<{ item: string }>) => void) | undefined;
+  } = $props();
   let isActive: boolean = false;
   function clickHandler() {
     isActive = !isActive;
-    dispatch("click", { item });
+    const clickEvent = new CustomEvent<{ item: string }>("click", {
+      detail: { item }
+    });
+    onClick?.(clickEvent);
   }
 </script>
 
@@ -20,7 +28,7 @@
     : size === Size.md
       ? 'w-12 h-12'
       : 'w-12 h-12'}"
-  on:click={clickHandler}
+  onclick={clickHandler}
 >
   <Icon icon={item} {size} {isActive} />
 </button>

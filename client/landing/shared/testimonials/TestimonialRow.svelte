@@ -3,8 +3,13 @@
   import TestimonialItem from "@21n/landing/shared/testimonials/TestimonialItem.svelte";
   import { onMount, onDestroy } from "svelte";
 
-  export let testimonials: ITestimonial[] = [];
-  export let transitionDirection: "left" | "right" = "left";
+  let {
+    testimonials = [],
+    transitionDirection = "left",
+  }: {
+    testimonials?: ITestimonial[];
+    transitionDirection?: "left" | "right";
+  } = $props();
 
   let animationContainer: HTMLElement;
   let animationActive = false;
@@ -134,8 +139,8 @@
   <div
     bind:this={animationContainer}
     class="flex gap-6 transition-transform duration-0"
-    on:mouseenter={handleMouseEnter}
-    on:mouseleave={handleMouseLeave}
+    onmouseenter={handleMouseEnter}
+    onmouseleave={handleMouseLeave}
   >
     {#each testimonials as testimonial}
       <TestimonialItem {testimonial} />

@@ -1,5 +1,13 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount, onDestroy } from "svelte";
+  import {
+    flushSync,
+    mount,
+    onMount,
+    onDestroy,
+    unmount,
+    type Component,
+    type ComponentType
+  } from "svelte";
   import { type IBlock, InlineType } from "@21n/components/markdown/md.type";
   import { debouncer, generateUID } from "@21n/utils/utils";
   import {
@@ -26,16 +34,59 @@
   import type { IRecordId } from "@21n/types/data.type";
   import { Size } from "@21n/types/size.enum";
 
-  const dispatch = createEventDispatcher();
-  //   export let block: Block<TextContent>;
-  export let id: string = generateUID();
-  export let dataType: string = "";
-  export let content: string | undefined = "";
-  export let placeholder: string | undefined = "";
-  export let isMarkdown: boolean = false;
-  export let isReadOnly: boolean = false;
-  let classList: string = "";
-  export { classList as class };
+  interface $$Events {
+    blur: FocusEvent;
+    change: CustomEvent<string | undefined>;
+    debouncedChange: CustomEvent<string | undefined>;
+    enter: CustomEvent<any>;
+    focus: FocusEvent;
+    input: InputEvent;
+    keydown: CustomEvent<any>;
+    keyup: CustomEvent<any>;
+    paste: CustomEvent<any>;
+    pointerenter: PointerEvent;
+    pointerleave: PointerEvent;
+  }
+
+  let {
+    id = generateUID(),
+    dataType = "",
+    content = $bindable(""),
+    placeholder = $bindable(""),
+    isMarkdown = false,
+    isReadOnly = false,
+    class: classList = "",
+    onBlur = undefined,
+    onChange = undefined,
+    onDebouncedChange = undefined,
+    onEnter = undefined,
+    onFocus = undefined,
+    onInput = undefined,
+    onKeydown = undefined,
+    onKeyup = undefined,
+    onPaste = undefined,
+    onPointerenter = undefined,
+    onPointerleave = undefined
+  }: {
+    id?: string;
+    dataType?: string;
+    content?: string | undefined;
+    placeholder?: string | undefined;
+    isMarkdown?: boolean;
+    isReadOnly?: boolean;
+    class?: string;
+    onBlur?: ((event: FocusEvent) => void) | undefined;
+    onChange?: ((event: CustomEvent<string | undefined>) => void) | undefined;
+    onDebouncedChange?: ((event: CustomEvent<string | undefined>) => void) | undefined;
+    onEnter?: ((event: CustomEvent<any>) => void) | undefined;
+    onFocus?: ((event: FocusEvent) => void) | undefined;
+    onInput?: ((event: InputEvent) => void) | undefined;
+    onKeydown?: ((event: CustomEvent<any>) => void) | undefined;
+    onKeyup?: ((event: CustomEvent<any>) => void) | undefined;
+    onPaste?: ((event: CustomEvent<any>) => void) | undefined;
+    onPointerenter?: ((event: PointerEvent) => void) | undefined;
+    onPointerleave?: ((event: PointerEvent) => void) | undefined;
+  } = $props();
   let blockRef: any;
 
   enum InlineCaretResolutionMethod {
@@ -93,6 +144,13 @@
   let isKeyboardInput = false;
   let keyboardTimeout: any;
   let isInitialRender = true;
+  const mountedInlineComponents = new Map<
+    Node,
+    {
+      component: Record<string, any>;
+      roots: ChildNode[];
+    }
+  >();
 
   onMount(() => {
     customCaret = document.getElementById("customcaret");
@@ -135,7 +193,38 @@
     if (mutationObserver) {
       mutationObserver.disconnect();
     }
+    cleanupInlineComponents(true);
   });
+
+  function cleanupInlineComponents(force = false) {
+    mountedInlineComponents.forEach((entry, key) => {
+      if (!force && entry.roots.some((root) => root.isConnected)) {
+        return;
+      }
+      void unmount(entry.component);
+      mountedInlineComponents.delete(key);
+    });
+  }
+
+  function renderInlineComponent(
+    componentToRender: ComponentType | Component<any>,
+    props: Record<string, any>
+  ) {
+    cleanupInlineComponents();
+    const target = document.createElement("div");
+    const component = mount(componentToRender, {
+      target,
+      props
+    });
+    flushSync();
+    const roots = Array.from(target.childNodes);
+    if (!roots.length) {
+      void unmount(component);
+      return [];
+    }
+    mountedInlineComponents.set(roots[0], { component, roots });
+    return roots;
+  }
 
   function renderMentionPlaceholders() {
     const pattern = inlineLinkPatterns.find(
@@ -329,15 +418,16 @@
    * @deprecated
    */
   export function renderMentionsv1() {
-    const mentions = document.querySelectorAll("mention");
     document.querySelectorAll("mention").forEach((el) => {
       const id = el.getAttribute("data-id") ?? "";
-      new InlineMention({ target: el, props: { id } });
+      const nodes = renderInlineComponent(InlineMention, { id });
+      if (!nodes.length) return;
+      el.replaceWith(...nodes);
 
       // Restore the caret position
       const range = document.createRange();
       const sel = window.getSelection();
-      range.setStartAfter(el);
+      range.setStartAfter(nodes[nodes.length - 1]);
       range.collapse(true);
       if (!sel) return;
       sel.removeAllRanges();
@@ -355,13 +445,13 @@
           ? el.getAttribute("data-record-id")
           : "";
         const label = el.getAttribute("data-label");
-        const placeholder = document.createElement("div");
-        const inlineMention = new InlineMention({
-          target: placeholder,
-          props: { id: id ?? "", label }
+        const nodes = renderInlineComponent(InlineMention, {
+          id: id ?? "",
+          label
         });
+        if (!nodes.length) return;
         if (isInitialRender) {
-          el.replaceWith(...placeholder.childNodes);
+          el.replaceWith(...nodes);
           return;
         }
         newInlineSpanId = generateSimpleRandomId();
@@ -373,8 +463,7 @@
         let newSpan = document.createElement("span");
         newSpan.id = newInlineSpanId;
         newSpan.innerHTML = "&#8203;";
-        placeholder.appendChild(newSpan);
-        el.replaceWith(...placeholder.childNodes);
+        el.replaceWith(...nodes, newSpan);
         restoreCaretPosition();
       });
     } catch (error) {
@@ -395,13 +484,13 @@
         const label = el.getAttribute("data-label")
           ? el.getAttribute("data-label")
           : "";
-        const placeholder = document.createElement("div");
-        const inlineLink = new InlineLink({
-          target: placeholder,
-          props: { href: href ?? "", label: label ?? "" }
+        const nodes = renderInlineComponent(InlineLink, {
+          href: href ?? "",
+          label: label ?? ""
         });
+        if (!nodes.length) return;
         if (isInitialRender) {
-          el.replaceWith(...placeholder.childNodes);
+          el.replaceWith(...nodes);
           return;
         }
         newInlineSpanId = generateSimpleRandomId();
@@ -413,8 +502,7 @@
         let newSpan = document.createElement("span");
         newSpan.id = newInlineSpanId;
         newSpan.innerHTML = "&#8203;";
-        placeholder.appendChild(newSpan);
-        el.replaceWith(...placeholder.childNodes);
+        el.replaceWith(...nodes, newSpan);
         restoreCaretPosition();
       });
       return true;
@@ -712,12 +800,18 @@
     typing = true;
     if (isMarkdown) {
       const position = resolveCaretPosition();
-      dispatch("keydown", {
-        event,
-        position
+      const keydownEvent = new CustomEvent("keydown", {
+        detail: {
+          event,
+          position
+        }
       });
+      onKeydown?.(keydownEvent);
     } else {
-      dispatch("keydown", event);
+      const keydownEvent = new CustomEvent("keydown", {
+        detail: event
+      });
+      onKeydown?.(keydownEvent);
     }
   }
 
@@ -909,11 +1003,25 @@
     }
     if (isMarkdown) {
       const position = resolveCaretPosition();
-      dispatch("keyup", {
-        event,
-        caretPosition: caretPositionT2?.index,
-        position
+      if (event.key === "Enter") {
+        const enterEvent = new CustomEvent("enter", {
+          detail: {
+            value: content,
+            event,
+            caretPosition: caretPositionT2?.index,
+            position
+          }
+        });
+        onEnter?.(enterEvent);
+      }
+      const keyupEvent = new CustomEvent("keyup", {
+        detail: {
+          event,
+          caretPosition: caretPositionT2?.index,
+          position
+        }
       });
+      onKeyup?.(keyupEvent);
       setTimeout(() => {
         if (blockRef) {
           const parsedMdContent = extractInlineMarkdownFromHtml(
@@ -1082,7 +1190,10 @@
           NodeType.CODE
         ].includes(data.contentType))
     ) {
-      dispatch("paste", event);
+      const pasteEvent = new CustomEvent("paste", {
+        detail: event
+      });
+      onPaste?.(pasteEvent);
       return;
     }
     if (data.text && data.textMetadata?.isUrl) {
@@ -1111,17 +1222,31 @@
       range?.deleteContents();
       range?.insertNode(document.createTextNode(text));
       content = blockRef.textContent ?? "";
-      dispatch("paste", { value: text });
+      const pasteEvent = new CustomEvent("paste", {
+        detail: { value: text }
+      });
+      onPaste?.(pasteEvent);
       dispatchChangeEvent();
     }
   }
 
   function dispatchChangeEvent() {
-    dispatch("change", content);
+    const changeEvent = new CustomEvent<string | undefined>("change", {
+      detail: content
+    });
+    onChange?.(changeEvent);
     debouncedDispatchChange();
   }
   const debouncedDispatchChange = debouncer(
-    () => dispatch("debouncedChange", content),
+    () => {
+      const debouncedChangeEvent = new CustomEvent<string | undefined>(
+        "debouncedChange",
+        {
+          detail: content
+        }
+      );
+      onDebouncedChange?.(debouncedChangeEvent);
+    },
     1000
   );
 
@@ -1139,7 +1264,7 @@
     if (event.target.innerHTML === "<br>" || event.target.innerHTML === "") {
       event.target.innerHTML = "";
     }
-    dispatch("input", event);
+    onInput?.(event);
   }
 </script>
 
@@ -1170,17 +1295,25 @@
       )}
       role="textbox"
       tabindex="0"
-      on:keyup={handleKeyUp}
-      on:keydown={handleKeyDown}
-      on:keypress={handleKeyPress}
-      on:input={oninput}
-      on:mouseup={handleMouseup}
-      on:mousedown={handleMouseDown}
-      on:paste={handlePaste}
-      on:blur
-      on:focus
-      on:pointerenter
-      on:pointerleave
+      onkeyup={handleKeyUp}
+      onkeydown={handleKeyDown}
+      onkeypress={handleKeyPress}
+      oninput={oninput}
+      onmouseup={handleMouseup}
+      onmousedown={handleMouseDown}
+      onpaste={handlePaste}
+      onblur={(event) => {
+        onBlur?.(event);
+      }}
+      onfocus={(event) => {
+        onFocus?.(event);
+      }}
+      onpointerenter={(event) => {
+        onPointerenter?.(event);
+      }}
+      onpointerleave={(event) => {
+        onPointerleave?.(event);
+      }}
       bind:innerHTML
       contenteditable
       {placeholder}
@@ -1212,7 +1345,7 @@
         parentBgIndex={2}
         size={Size.sm}
         isPreventMinWidth={true}
-        on:click={blurActiveElement}
+        onclick={blurActiveElement}
       />
     </div>
   </KeyboardToolbar>

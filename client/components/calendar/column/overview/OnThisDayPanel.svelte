@@ -9,36 +9,40 @@
   import { onMount } from "svelte";
   import HistoricalMetrics from "@21n/components/calendar/column/overview/HistoricalMetrics.svelte";
 
-  export let date: Date;
-  export let isRefreshing = false;
+  let {
+    date,
+    isRefreshing = $bindable(false)
+  }: {
+    date: Date;
+    isRefreshing?: boolean;
+  } = $props();
 
-  let lastMonthData: ISessionLog[] = [];
-  let lastYearData: ISessionLog[] = [];
-  let twoYearsAgoData: ISessionLog[] = [];
+  let lastMonthData = $state<ISessionLog[]>([]);
+  let lastYearData = $state<ISessionLog[]>([]);
+  let twoYearsAgoData = $state<ISessionLog[]>([]);
   let dev_isUseCloud = false;
-  let hasData = false;
-
-  let lastMonthDate: Date | null = null;
-  let lastYearDate: Date | null = null;
-  let twoYearsAgoDate: Date | null = null;
-
-  $: lastMonthFocusHours = lastMonthData.reduce(
-    (acc, curr) => acc + (curr.focus ?? 0),
-    0
-  );
-  $: lastYearFocusHours = lastYearData.reduce(
-    (acc, curr) => acc + (curr.focus ?? 0),
-    0
-  );
-  $: twoYearsAgoFocusHours = twoYearsAgoData.reduce(
-    (acc, curr) => acc + (curr.focus ?? 0),
-    0
-  );
-
-  $: hasData =
+  const hasData = $derived(
     lastMonthData.length > 0 ||
-    lastYearData.length > 0 ||
-    twoYearsAgoData.length > 0;
+      lastYearData.length > 0 ||
+      twoYearsAgoData.length > 0
+  );
+
+  let lastMonthDate = $state<Date | null>(null);
+  let lastYearDate = $state<Date | null>(null);
+  let twoYearsAgoDate = $state<Date | null>(null);
+
+  const lastMonthFocusHours = $derived(lastMonthData.reduce(
+    (acc, curr) => acc + (curr.focus ?? 0),
+    0
+  ));
+  const lastYearFocusHours = $derived(lastYearData.reduce(
+    (acc, curr) => acc + (curr.focus ?? 0),
+    0
+  ));
+  const twoYearsAgoFocusHours = $derived(twoYearsAgoData.reduce(
+    (acc, curr) => acc + (curr.focus ?? 0),
+    0
+  ));
 
   onMount(() => {
     refresh();

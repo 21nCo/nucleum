@@ -2,8 +2,15 @@
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { formatDatetime } from "@21n/utils/time.utils";
 
-  export let label: string;
-  export let value: string | string[] | number | undefined = undefined;
+  let {
+    label,
+    value = undefined,
+    children
+  }: {
+    label: string;
+    value?: string | string[] | number | undefined;
+    children?: import("svelte").Snippet | undefined;
+  } = $props();
   function valueFormatter(value: string | string[] | number) {
     if (typeof value === "number") {
       return value;
@@ -22,11 +29,12 @@
 {#if label}
   <div class="flex justify-between gap-2 items-center w-full">
     <span class="text-fgs3 text-b3">{label}</span>
-    <slot>
+    {@render children?.()}
+    {#if !children}
       {#if value}
         <span class="text-fgs1 text-b2 text-right">{valueFormatter(value)}</span
         >
       {/if}
-    </slot>
+    {/if}
   </div>
 {/if}

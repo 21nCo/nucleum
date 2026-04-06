@@ -2,7 +2,11 @@
   import CollapsibleList from "@21n/landing/shared/collapsible/CollapsibleList.svelte";
   import Title from "@21n/landing/shared/Title.svelte";
   import type { IFaq } from "@21n/landing/shared/landing.type";
-  export let faqs: IFaq[] = [];
+  let {
+    faqs = [],
+  }: {
+    faqs?: IFaq[];
+  } = $props();
 </script>
 
 <div class="flex flex-col gap-10">

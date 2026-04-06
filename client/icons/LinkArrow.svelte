@@ -1,5 +1,10 @@
 <script lang="ts">
-  export let width: number = 50;
+  let {
+    width = 50
+  }: {
+    width?: number;
+  } = $props();
+
 </script>
 
 <svg

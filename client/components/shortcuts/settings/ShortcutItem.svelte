@@ -2,7 +2,6 @@
   import Button from "@21n/elements/button/Button.svelte";
   import { appStore } from "@21n/stores/app.store";
   import { Size } from "@21n/types/size.enum";
-  import { createEventDispatcher } from "svelte";
   import { keyboardShortcuts } from "@21n/components/shortcuts/shortcuts.store";
   import type { IKeyboardShortcut } from "@21n/components/shortcuts/shortcut.type";
   import { KeyboardKey, ModifierKey } from "@21n/types/keyboard.type";
@@ -10,21 +9,35 @@
   import context from "@21n/stores/context.store";
   import { resolveShortcutText, resolveModifiers } from "@21n/components/shortcuts/shortcut.utils";
   import { tooltip } from "@21n/actions/popover.action";
-  const dispatch = createEventDispatcher();
-  export let action: string;
-  export let shortcut: IKeyboardShortcut;
-  let existingValue = resolveShortcutText({
-    key: shortcut.key,
-    modifiers: shortcut.modifiers,
-    os: $context.os
+  let {
+    action,
+    shortcut,
+    onError = undefined
+  }: {
+    action: string;
+    shortcut: IKeyboardShortcut;
+    onError?: ((event: CustomEvent<string>) => void) | undefined;
+  } = $props();
+  let isConfigurationInProgress = $state(false);
+  let value = $state("");
+  let key = $state("");
+  let modifiers = $state<ModifierKey[]>([]);
+  let inputRef = $state<HTMLInputElement | undefined>(undefined);
+  let savedKey = $state(shortcut.key);
+  let savedModifiers = $state<ModifierKey[]>([...shortcut.modifiers]);
+  const actionDetails = $derived(appStore.resolveAction(action));
+  const systemShortcuts = $derived.by(() => resolveSystemShortcuts());
+
+  $effect(() => {
+    if (isConfigurationInProgress) return;
+    savedKey = shortcut.key;
+    savedModifiers = [...shortcut.modifiers];
+    value = resolveShortcutText({
+      key: savedKey,
+      modifiers: savedModifiers,
+      os: $context.os
+    });
   });
-  let isConfigurationInProgress: boolean = false;
-  let value: string = existingValue;
-  let key: string;
-  let modifiers: ModifierKey[] = [];
-  let inputRef: HTMLInputElement;
-  const actionDetails = appStore.resolveAction(action);
-  const systemShortcuts = resolveSystemShortcuts();
 
   function resolveSystemShortcuts() {
     let primaryModifier = ModifierKey.CTRL;
@@ -90,7 +103,10 @@
   }
   function isValidConfiguration() {
     if (!key || !modifiers) {
-      dispatch("error", "Invalid shortcut");
+      const errorEvent = new CustomEvent<string>("error", {
+        detail: "Invalid shortcut"
+      });
+      onError?.(errorEvent);
       return false;
     }
     if (
@@ -101,10 +117,10 @@
           x.modifiers.every((y) => modifiers.includes(y))
       )
     ) {
-      dispatch(
-        "error",
-        "This is a system shortcut. Please use some other shortcut."
-      );
+      const errorEvent = new CustomEvent<string>("error", {
+        detail: "This is a system shortcut. Please use some other shortcut."
+      });
+      onError?.(errorEvent);
       return false;
     }
     return true;
@@ -114,7 +130,8 @@
       key,
       modifiers
     });
-    existingValue = value;
+    savedKey = key;
+    savedModifiers = [...modifiers];
   }
   function reset() {
     value = "";
@@ -123,7 +140,11 @@
   }
   function resetToOldValue(event: MouseEvent | KeyboardEvent) {
     isConfigurationInProgress = false;
-    value = existingValue;
+    value = resolveShortcutText({
+      key: savedKey,
+      modifiers: savedModifiers,
+      os: $context.os
+    });
     if (event instanceof MouseEvent) event.stopPropagation();
   }
   function accept(event: CustomEvent | KeyboardEvent | MouseEvent) {
@@ -142,12 +163,12 @@
     </span>
     <button
       class="flex justify-center items-center bg-bgs2 rounded-md p-2 hover:text-aps1 w-60 h-10"
-      on:click={() => {
+      onclick={() => {
         console.log("clicked");
         if (!isConfigurationInProgress) {
           isConfigurationInProgress = true;
           reset();
-          inputRef.focus();
+          inputRef?.focus();
         }
       }}
       use:tooltip={{
@@ -163,8 +184,11 @@
         class="bg-transparent cursor-pointer focus:outline-none w-32 text-fgs2 text-center"
         placeholder="record shortcut"
         type="text"
-        on:keydown|stopPropagation={onKeydown}
-        on:paste|preventDefault
+        onkeydown={(event) => {
+          event.stopPropagation();
+          onKeydown(event);
+        }}
+        onpaste={(event) => event.preventDefault()}
       />
       {#if isConfigurationInProgress}
         {@const parentBgIndex = 2}
@@ -174,13 +198,13 @@
             size={Size.sm}
             {parentBgIndex}
             icon="cross"
-            on:click={(event) => {
+            onclick={(event) => {
               if (!key) {
                 resetToOldValue(event);
                 return;
               }
               reset();
-              inputRef.focus();
+              inputRef?.focus();
               event.stopPropagation();
             }}
           />
@@ -190,7 +214,7 @@
               icon="check-circle"
               size={Size.sm}
               {parentBgIndex}
-              on:click={accept}
+              onclick={accept}
             />
           </span>
           <Button
@@ -198,7 +222,7 @@
             icon="reload"
             size={Size.sm}
             {parentBgIndex}
-            on:click={resetToOldValue}
+            onclick={resetToOldValue}
           />
         </div>
       {/if}

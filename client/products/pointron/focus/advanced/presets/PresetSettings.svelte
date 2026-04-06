@@ -11,5 +11,5 @@
 </script>
 
 <div class="w-full h-full overflow-y-auto flex flex-col gap-2 dp:gap-3">
-  <Presets isInEditMode={true} on:edit={handleEdit} isSettingsContext={true} />
+  <Presets isInEditMode={true} onEdit={handleEdit} isSettingsContext={true} />
 </div>

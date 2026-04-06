@@ -1,7 +1,13 @@
 <script lang="ts">
   import { ChatIconVariant, IconVariant } from "@21n/types/icon.type";
-  export let variant: IconVariant = IconVariant.Outline;
-  export let chatIconVariant: ChatIconVariant = ChatIconVariant.Default;
+
+  let {
+    variant = IconVariant.Outline,
+    chatIconVariant = ChatIconVariant.Default
+  }: {
+    variant?: IconVariant;
+    chatIconVariant?: ChatIconVariant;
+  } = $props();
 </script>
 
 {#if chatIconVariant === ChatIconVariant.LeftRight}

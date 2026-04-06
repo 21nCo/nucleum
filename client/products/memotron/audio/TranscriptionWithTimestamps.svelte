@@ -1,19 +1,25 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import { cn } from "@21n/utils/ui.utils";
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
 
-  export let transcription: string = "";
-  export let currentTime: number = 0;
-  export let groupSegments: boolean = true;
-  export let maxGroupGapSeconds: number = 3;
-  export let minGroupDuration: number = 8;
+  let {
+    transcription = "",
+    currentTime = 0,
+    groupSegments = true,
+    maxGroupGapSeconds = 3,
+    minGroupDuration = 8,
+    onSeek = undefined
+  }: {
+    transcription?: string;
+    currentTime?: number;
+    groupSegments?: boolean;
+    maxGroupGapSeconds?: number;
+    minGroupDuration?: number;
+    onSeek?: ((detail: { time: number }) => void) | undefined;
+  } = $props();
   const dev_isDisplayOriginalSegmentCount: boolean = false;
 
-  // Check if transcription contains markdown highlighting
-  $: hasHighlighting = transcription.includes("`**");
-
-  const dispatch = createEventDispatcher();
+  const hasHighlighting = $derived(transcription.includes("`**"));
 
   interface TranscriptionSegment {
     startTime: number;
@@ -149,25 +155,25 @@
     return topicStarters.some((starter) => trimmed.startsWith(starter));
   }
 
-  $: segments = parseTranscription(transcription);
-  $: activeSegmentIndex = segments.findIndex((segment) => {
-    // For grouped segments, check if current time is within any of the original segments
-    if (segment.originalSegments) {
-      return segment.originalSegments.some(
-        (originalSeg) =>
-          currentTime >= originalSeg.startTime &&
-          currentTime < originalSeg.endTime
-      );
-    }
-    // For individual segments
-    return currentTime >= segment.startTime && currentTime < segment.endTime;
-  });
+  const segments = $derived(parseTranscription(transcription));
+  const activeSegmentIndex = $derived(
+    segments.findIndex((segment) => {
+      if (segment.originalSegments) {
+        return segment.originalSegments.some(
+          (originalSeg) =>
+            currentTime >= originalSeg.startTime &&
+            currentTime < originalSeg.endTime
+        );
+      }
+      return currentTime >= segment.startTime && currentTime < segment.endTime;
+    })
+  );
 
   let segmentElements: HTMLElement[] = [];
   let scrollContainer: HTMLElement;
   let previousActiveIndex = -1;
 
-  $: {
+  $effect(() => {
     if (
       activeSegmentIndex !== -1 &&
       activeSegmentIndex !== previousActiveIndex &&
@@ -191,10 +197,10 @@
       }
       previousActiveIndex = activeSegmentIndex;
     }
-  }
+  });
 
   function handleTimestampClick(segment: TranscriptionSegment) {
-    dispatch("seek", { time: segment.startTime });
+    onSeek?.({ time: segment.startTime });
   }
 </script>
 
@@ -214,10 +220,10 @@
               !groupSegments || index < segments.length - 1
           }
         )}
-        on:click={() => handleTimestampClick(segment)}
+        onclick={() => handleTimestampClick(segment)}
         role="button"
         tabindex="0"
-        on:keydown={(e) => {
+        onkeydown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             handleTimestampClick(segment);

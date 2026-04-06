@@ -171,7 +171,7 @@
 
 <canvas
   id="gridCanvas"
-  on:mousedown={handleMouseDown}
+  onmousedown={handleMouseDown}
   style="position:relative;"
 >
 </canvas>

@@ -5,15 +5,27 @@
   } from "@21n/types/featureWheel.type";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-  export let spoke: IFeatureWheelSpoke;
-  export let mode: FeatureWheelMode;
-  export let xCoord: number;
-  export let yCoord: number;
-  export let size: Size = Size.md;
-  export let isActive: boolean = false;
-  export let groupColor: string = "fgs2";
-  $: widthFactor = size === Size.lg ? 8 : size === Size.md ? 7 : 5;
-  $: label = spoke.shortLabel || spoke.label;
+  let {
+    spoke,
+    mode,
+    xCoord,
+    yCoord,
+    size = Size.md,
+    isActive = false,
+    groupColor = "fgs2",
+    onclick = (_event: MouseEvent) => {}
+  }: {
+    spoke: IFeatureWheelSpoke;
+    mode: FeatureWheelMode;
+    xCoord: number;
+    yCoord: number;
+    size?: Size;
+    isActive?: boolean;
+    groupColor?: string;
+    onclick?: (event: MouseEvent) => void;
+  } = $props();
+  const widthFactor = $derived(size === Size.lg ? 8 : size === Size.md ? 7 : 5);
+  const label = $derived(spoke.shortLabel || spoke.label);
 </script>
 
 {#if isActive || (mode !== FeatureWheelMode.COMPARER && (spoke.isProminent || spoke.isNovel))}
@@ -54,8 +66,8 @@
     "opacity-60": spoke.isPlanned
   })}
   fill={groupColor ? groupColor : ""}
-  on:click
-  on:keydown={(e) =>
+  {onclick}
+  onkeydown={(e) =>
     e.key === "Enter" &&
     e.target &&
     e.target.dispatchEvent(new MouseEvent("click"))}

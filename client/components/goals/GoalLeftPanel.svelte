@@ -6,9 +6,16 @@
   import { cn } from "@21n/utils/ui.utils";
   import { type IInlineStatus } from "@21n/types/notification.type";
   import SubGoalsPanel from "@21n/components/goals/sub/SubGoalsPanel.svelte";
-  export let goal: IActiveGoalStore;
-  export let isConstrainedWidth = false;
-  export let status: IInlineStatus | undefined = undefined;
+
+  let {
+    goal,
+    isConstrainedWidth = false,
+    status = $bindable(undefined)
+  }: {
+    goal: IActiveGoalStore;
+    isConstrainedWidth?: boolean;
+    status?: IInlineStatus | undefined;
+  } = $props();
 </script>
 
 <div

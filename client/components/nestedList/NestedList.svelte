@@ -7,20 +7,45 @@
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import { NestedListStyle, type NestedItemContent } from "@21n/components/nestedList/nestedList.type";
   import NestedListItem from "@21n/components/nestedList/NestedListItem.svelte";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let items: string[] = [];
-  export let contentCallback: (id: string) => Promise<NestedItemContent>;
-  export let childrenCallback: (id: string) => Promise<IRecordId[]>;
-  export let style: NestedListStyle = NestedListStyle.DEFAULT;
-  export let isExpandOnClickAnywhere: boolean = false;
-  export let isShowAddTextInput: boolean = false;
-  export let addPlaceholder: string = "Add new item";
-  let addTextInputValue: string = "";
-  let expandedItem: IRecordId | undefined = undefined;
+  let {
+    items = [],
+    contentCallback,
+    childrenCallback,
+    style = NestedListStyle.DEFAULT,
+    isExpandOnClickAnywhere = false,
+    isShowAddTextInput = false,
+    addPlaceholder = "Add new item",
+    onAddAction = undefined,
+    onAddSub = undefined,
+    onClick = undefined
+  }: {
+    items?: string[];
+    contentCallback: (id: string) => Promise<NestedItemContent>;
+    childrenCallback: (id: string) => Promise<IRecordId[]>;
+    style?: NestedListStyle;
+    isExpandOnClickAnywhere?: boolean;
+    isShowAddTextInput?: boolean;
+    addPlaceholder?: string;
+    onAddAction?: ((payload: { label: string }) => void) | undefined;
+    onAddSub?:
+      | ((payload: {
+          id: string;
+          label: string;
+          children: IRecordId[];
+        }) => void)
+      | undefined;
+    onClick?:
+      | ((payload: {
+          id: string;
+          event: MouseEvent;
+        }) => void)
+      | undefined;
+  } = $props();
+  let addTextInputValue = $state("");
+  let expandedItem = $state<IRecordId | undefined>(undefined);
 
-  function onAdd() {
-    dispatch("add", {
+  function handleAdd() {
+    onAddAction?.({
       label: addTextInputValue
     });
     addTextInputValue = "";
@@ -45,10 +70,10 @@
           {isExpandOnClickAnywhere}
           {isShowAddTextInput}
           {expandedItem}
-          on:click
-          on:addSub
-          on:expand={(e) => {
-            if (e.detail) expandedItem = e.detail;
+          {onClick}
+          onAddSubAction={onAddSub}
+          onExpand={(id) => {
+            if (id) expandedItem = id;
           }}
         />
         {#if style === NestedListStyle.OUTLINED && index !== items.length - 1}
@@ -64,9 +89,9 @@
           icon="plus"
           placeholder={addPlaceholder}
           isShowSaveControl={addTextInputValue !== ""}
-          on:save={onAdd}
-          on:cancel={() => (addTextInputValue = "")}
-          on:enter={onAdd}
+          onSave={handleAdd}
+          onCancel={() => (addTextInputValue = "")}
+          onEnter={handleAdd}
         />
       </div>
     {/if}

@@ -27,9 +27,14 @@
   ];
   let isSelfHosted =
     typeof window !== "undefined" ? resolveIfSelfHostedInstance() : false;
-  $: productName = properCase($appStore.product);
-  $: isExpandOAuthButtons =
-    !$view.isConstrainedWidth && $view.display === Display.TK;
+
+  function resolveProductName() {
+    return properCase($appStore.product);
+  }
+
+  function resolveIsExpandOAuthButtons() {
+    return !$view.isConstrainedWidth && $view.display === Display.TK;
+  }
 
   function resolveIfSelfHostedInstance() {
     const host = window.location.hostname;
@@ -105,7 +110,7 @@
         class="flex flex-col gap-2 justify-center items-center w-full cw:pt-6 pt-12"
       >
         <div class="text-h4 text-center w-full">
-          Thanks for installing {productName} extension.
+          Thanks for installing {resolveProductName()} extension.
         </div>
         <div class="text-fgs3 text-b2 text-center">
           Click continue to login to your account.
@@ -114,7 +119,7 @@
     {:else}
       <div class="flex flex-col items-center gap-1 cw:pt-6 pt-12">
         <h3 class="text-h3 text-center font-medium">
-          Welcome to {productName}
+          Welcome to {resolveProductName()}
         </h3>
         <!-- <div class="text-fgs3 text-b2 text-center">
                 {isSelfHosted ? "[Self-hosted instance]" : "Sign up or Log in"}
@@ -145,7 +150,7 @@
               label: "Offline"
             }
           ]}
-          on:select={() => {
+          onSelect={() => {
             if (cloudSyncLoginRef) {
               cloudSyncLoginRef.reset();
             }
@@ -156,22 +161,22 @@
         class={cn(
           "cw:h-[30rem] flex flex-col gap-6 justify-center transition-all duration-300",
           {
-            "h-[42rem]": isExpandOAuthButtons,
-            "h-[32rem]": !isExpandOAuthButtons
+            "h-[42rem]": resolveIsExpandOAuthButtons(),
+            "h-[32rem]": !resolveIsExpandOAuthButtons()
           }
         )}
       >
         {#if selectedMode === "signup" || selectedMode === "signin"}
           <CloudSyncLogin
             isSignup={selectedMode === "signup"}
-            {isExpandOAuthButtons}
+            isExpandOAuthButtons={resolveIsExpandOAuthButtons()}
             bind:this={cloudSyncLoginRef}
           />
         {:else}
           <Button
             label="Continue using offline"
             icon="proceed"
-            on:click={() => {}}
+            onclick={() => {}}
           />
         {/if}
         <div
@@ -211,7 +216,7 @@
             style={ButtonStyle.PLAIN}
             icon="weblink-two"
             size={Size.sm}
-            on:click={() => {
+            onclick={() => {
               if ($appStore.appData?.urls?.git)
                 appStore.openLink($appStore.appData?.urls?.git);
             }}
@@ -222,7 +227,7 @@
           style={ButtonStyle.PLAIN}
           icon="weblink-two"
           size={Size.sm}
-          on:click={() => {
+          onclick={() => {
             if ($appStore.appData?.urls?.pricing)
               appStore.openLink($appStore.appData?.urls?.pricing);
             else if ($appStore.appData?.urls?.landing)
@@ -236,7 +241,7 @@
           icon="weblink-two"
           style={ButtonStyle.PLAIN}
           size={Size.sm}
-          on:click={() => {
+          onclick={() => {
             if ($appStore.appData?.urls?.docs)
               appStore.openLink($appStore.appData?.urls?.docs);
           }}
@@ -246,7 +251,7 @@
           icon="weblink-two"
           style={ButtonStyle.PLAIN}
           size={Size.sm}
-          on:click={() => {
+          onclick={() => {
             if ($appStore.appData?.urls?.discord)
               appStore.openLink($appStore.appData?.urls?.discord);
           }}
@@ -264,4 +269,4 @@
     defer
   ></script>
 </svelte:head>
-<svelte:window on:message={handleMessageFromParent} />
+<svelte:window onmessage={handleMessageFromParent} />

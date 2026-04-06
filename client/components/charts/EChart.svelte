@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, onMount } from "svelte";
+  import { beforeUpdate, onDestroy, onMount } from "svelte";
   import * as echarts from "echarts";
   import type { ECharts, EChartsOption } from "echarts";
   import { ChartType } from "@21n/types/analytics.type";
@@ -15,11 +15,13 @@
   } from "./chart.utils";
   import { userPreferences } from "../settings/userPreferences.store";
 
-  export let type: ChartType;
-  export let data: any;
-  export let options: any;
-  export let showLegend: boolean = true;
-  export let isConstrainedWidth: boolean = false;
+  let type: ChartType;
+  let data: any;
+  let options: any;
+  let showLegend: boolean = true;
+  let isConstrainedWidth: boolean = false;
+
+  export { type, data, options, showLegend, isConstrainedWidth };
 
   const supportedTypes = new Set([
     ChartType.BAR,
@@ -40,11 +42,11 @@
   let chart: ECharts | undefined;
   let resizeObserver: ResizeObserver | undefined;
 
-  $: currentAppearance = $appearance;
-  $: currentColors = currentAppearance
+  let currentAppearance = $appearance;
+  let currentColors = currentAppearance
     ? retrieveCurrentColors(currentAppearance)
     : undefined;
-  $: shouldRenderChart = supportedTypes.has(type);
+  let shouldRenderChart = supportedTypes.has(type);
 
   const defaultPaletteKeys = [
     "aps1",
@@ -1487,17 +1489,29 @@
     chart?.resize();
   }
 
+  function refreshDerivedState() {
+    currentAppearance = $appearance;
+    currentColors = currentAppearance
+      ? retrieveCurrentColors(currentAppearance)
+      : undefined;
+    shouldRenderChart = supportedTypes.has(type);
+  }
+
   onMount(() => {
+    refreshDerivedState();
     ensureChart();
     updateChart();
   });
 
-  $: if (shouldRenderChart) {
-    ensureChart();
-    updateChart();
-  } else if (chart) {
-    destroyChart();
-  }
+  beforeUpdate(() => {
+    refreshDerivedState();
+    if (shouldRenderChart) {
+      ensureChart();
+      updateChart();
+    } else if (chart) {
+      destroyChart();
+    }
+  });
 
   onDestroy(() => {
     destroyChart();

@@ -6,9 +6,15 @@
   import { appStore } from "@21n/stores/app.store";
   import { ActionType } from "@21n/types/action.type";
   import { AppSearchParam } from "@21n/types/appStore.type";
-  export let items: string[] = [];
-  export let sectionName: string;
-  export let orientation: Orientation = Orientation.Horizontal;
+  let {
+    items = [],
+    sectionName,
+    orientation = Orientation.Horizontal
+  }: {
+    items?: string[];
+    sectionName: string;
+    orientation?: Orientation;
+  } = $props();
   function onClick(item: string) {
     const component = appStore.resolveAction(item);
     if (
@@ -46,7 +52,7 @@
           isShowDivider={true}
           isRoundedTop={!sectionName}
           isRoundedBottom={index === items.length - 1}
-          on:click={() => {
+          onclick={() => {
             onClick(item);
           }}
         />

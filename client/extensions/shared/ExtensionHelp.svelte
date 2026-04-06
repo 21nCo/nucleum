@@ -2,10 +2,15 @@
   import Button from "@21n/elements/button/Button.svelte";
   import Text from "@21n/elements/text/Text.svelte";
   import { TextStyle } from "@21n/types/text.enum";
-  import { createEventDispatcher } from "svelte";
   import HelpItem from "@21n/extensions/shared/HelpItem.svelte";
 
-  const dispatch = createEventDispatcher();
+  let {
+    onClose = undefined,
+    onResync = undefined
+  }: {
+    onClose?: (() => void) | undefined;
+    onResync?: (() => void) | undefined;
+  } = $props();
 
   function openDiscord() {
     const discordUrl = "https://discord.com/invite/9HJqKYTZKg";
@@ -25,7 +30,7 @@
       label: "Resync data",
       icon: "reload",
       callback: () => {
-        dispatch("resync");
+        onResync?.();
       }
     },
     {
@@ -60,8 +65,8 @@
     <Text content="Help center" style={TextStyle.PANEL_HEADING} />
     <Button
       icon="cross"
-      on:click={() => {
-        dispatch("close");
+      onclick={() => {
+        onClose?.();
       }}
     />
   </div>
@@ -69,7 +74,7 @@
     class="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-2 w-full overflow-y-auto"
   >
     {#each helpItems as item}
-      <HelpItem {...item} on:click={() => item.callback()} />
+      <HelpItem {...item} onclick={() => item.callback()} />
     {/each}
   </div>
   <div class="text-fgs3 text-b2 w-full flex justify-center">

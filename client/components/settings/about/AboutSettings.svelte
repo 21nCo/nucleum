@@ -40,7 +40,7 @@
         {size}
         type={ButtonVariant.PRIMARY}
         icon="discord"
-        on:click={() => {
+        onclick={() => {
           appStore.openLink($appStore.appData?.urls?.discord);
         }}
       />
@@ -48,7 +48,7 @@
         label="Read our white paper"
         {size}
         icon="weblink"
-        on:click={() => {
+        onclick={() => {
           appStore.openLink($appStore.appData?.urls?.soft);
         }}
       />

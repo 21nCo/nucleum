@@ -1,6 +1,11 @@
 <script lang="ts">
-  export let label: string;
-  export let value: string | number | boolean | undefined | null;
+  let {
+    label,
+    value
+  }: {
+    label: string;
+    value: string | number | boolean | undefined | null;
+  } = $props();
 </script>
 
 <div class="flex gap-1 text-b2 w-full">

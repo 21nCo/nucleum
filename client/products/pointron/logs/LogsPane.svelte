@@ -29,17 +29,26 @@
   import { tzStore } from "@21n/components/settings/timezone/tz.store";
   import { generateSummary } from "@21n/products/pointron/focus/session.utils";
 
-  export let date: Date = new Date();
-
-  export let context: "journal" | "logs" = "logs";
+  let {
+    date = $bindable(new Date()),
+    context = "logs"
+  }: {
+    date?: Date;
+    context?: "journal" | "logs";
+  } = $props();
   let selectedId: string | undefined = undefined;
   let isRefreshing: boolean = false;
   let sessions: (ISessionThumb & {
     splits: { focus: number; brek: number };
   })[] = [];
   let summary: DaySummary = { focus: 0, break: 0 };
-  $: dateString = date.toISOString().split("T")[0];
-  $: if (dateString) refresh();
+  let dateString = $derived(date.toISOString().split("T")[0]);
+
+  $effect(() => {
+    if (dateString) {
+      void refresh();
+    }
+  });
   onMount(() => {
     postMessageToParent(EmbedMessage.SHEET_MOUNTED);
   });
@@ -79,7 +88,7 @@
     <div class="h-10">
       <BackButton
         text="Back to all logs"
-        on:click={() => {
+        onclick={() => {
           selectedId = undefined;
         }}
       />
@@ -99,40 +108,26 @@
           <Icon
             icon="chevron-left"
             size={Size.lg}
-            on:click={() => {
+            onclick={() => {
               let newDate = new Date(date.getTime());
               newDate.setDate(newDate.getDate() - 1);
               date = newDate;
-              refresh();
             }}
           />
-          <!-- <input
-            class="bg-bgs2 flex-grow rounded-md {context === 'journal-portrait'
-              ? 'py-1 px-2'
-              : 'py-2 px-4'}"
-            type="date"
-            bind:value={dateString}
-            on:change={(e) => {
-              selectedDate = new Date(dateString);
-              refresh();
-            }}
-          /> -->
           <DatePicker
             variant="wide-center"
             bind:date
-            on:change={(e) => {
+            onChange={(e) => {
               date = e.detail;
-              refresh();
             }}
           />
           <Icon
             icon="chevron-right"
             size={Size.lg}
-            on:click={() => {
+            onclick={() => {
               let newDate = new Date(date.getTime());
               newDate.setDate(date.getDate() + 1);
               date = newDate;
-              refresh();
             }}
           />
         </div>
@@ -152,14 +147,13 @@
             {session}
             {context}
             isLast={index === sessions.length - 1}
-            on:click={() => {
+            onclick={() => {
               if (context === "journal") {
                 appStore.openResource(session.id, AccessMode.POP);
                 return;
               }
               selectedId = session.id;
             }}
-            on:refresh={refresh}
           />
         {/each}
       </ScrollView>
@@ -183,5 +177,5 @@
     PointronAction.DELETE_SESSION,
     PointronAction.MANUAL_FOCUS_ENTRY
   ])}
-  on:change={onChangesSubscription}
+  onChange={onChangesSubscription}
 />

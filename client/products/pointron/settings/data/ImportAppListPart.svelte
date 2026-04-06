@@ -3,8 +3,9 @@
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   import { appStore } from "@21n/stores/app.store";
   import { ImportSource } from "@21n/products/pointron/settings/data/data.type";
-  export let isIncludeSelf: boolean = true;
-  const importSources = [
+
+  let { isIncludeSelf = true }: { isIncludeSelf?: boolean } = $props();
+  const baseImportSources = [
     {
       label: "Atracker",
       id: ImportSource.ATRACKER
@@ -22,8 +23,13 @@
       id: ImportSource.TIMEMATOR
     }
   ];
-  if (isIncludeSelf)
-    importSources.push({ label: "Pointron", id: ImportSource.SELF });
+  let importSources = $derived.by(() => {
+    const sources = [...baseImportSources];
+    if (isIncludeSelf)
+      sources.push({ label: "Pointron", id: ImportSource.SELF });
+    return sources;
+  });
+
   function onImportButtonClick(id: string) {
     appStore.runAction(PointronAction.IMPORT_APP_DATA, {
       componentParams: { importSource: id }
@@ -39,7 +45,7 @@
     class="protrait:grid portrait:grid-cols-2 portrait:gap-3 flex gap-4 flex-wrap"
   >
     {#each importSources as { label, id }}
-      <Button on:click={() => onImportButtonClick(id)} {label} />
+      <Button onclick={() => onImportButtonClick(id)} {label} />
     {/each}
   </div>
 </div>

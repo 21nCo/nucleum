@@ -2,8 +2,14 @@
   import Text from "@21n/elements/text/Text.svelte";
   import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
   import { TextStyle } from "@21n/types/text.enum";
-  export let isGroupByTopLevelGoals = false;
-  export let onGroupByChange: (e: CustomEvent) => void;
+
+  let {
+    isGroupByTopLevelGoals = $bindable(false),
+    onGroupByChange
+  }: {
+    isGroupByTopLevelGoals?: boolean;
+    onGroupByChange: (e: CustomEvent) => void;
+  } = $props();
 </script>
 
 <div class="cw:w-full w-96 h-60 flex flex-col gap-6 cw:p-2 p-4 bg-bgs1">
@@ -15,7 +21,7 @@
       }}
       isExpanded={true}
       bind:checked={isGroupByTopLevelGoals}
-      on:change={onGroupByChange}
+      onChange={onGroupByChange}
     />
   </div>
 </div>

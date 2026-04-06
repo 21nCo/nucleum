@@ -1,8 +1,6 @@
 <script lang="ts">
   import Icon from "@21n/elements/Icon.svelte";
   import view from "@21n/stores/view.store";
-  import { createEventDispatcher } from "svelte";
-  import TextWithHoverTooltip from "@21n/elements/text/TextWithHoverTooltip.svelte";
   import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import { NestedListStyle, type NestedItemContent } from "@21n/components/nestedList/nestedList.type";
@@ -12,27 +10,61 @@
   import type { IRecordId } from "@21n/types/data.type";
   import { hoverable } from "@21n/actions/hover.action";
   import { tooltip } from "@21n/actions/popover.action";
-  const dispatch = createEventDispatcher();
-  export let id: string;
-  export let index: number;
-  export let totalLength: number;
-  export let contentCallback: (id: string) => Promise<NestedItemContent>;
-  export let childrenCallback: (id: string) => Promise<IRecordId[]>;
-  export let nestingLevel: number = 0;
-  export let style: NestedListStyle = NestedListStyle.DEFAULT;
-  export let isExpandOnClickAnywhere: boolean = false;
-  export let isShowAddTextInput: boolean = false;
-  export let isActive: boolean = false;
-  export let expandedItem: IRecordId | undefined = undefined;
-  $: style;
-  let addTextInputValue: string = "";
-  let content: NestedItemContent | undefined = undefined;
-  let children: IRecordId[] = [];
-  let isCollapsed = true;
-  let isIconHovering = false;
-  $: if (id) {
-    refreshContentAndChildren(id);
-  }
+  import NestedListItem from "@21n/components/nestedList/NestedListItem.svelte";
+  let {
+    id,
+    index,
+    totalLength,
+    contentCallback,
+    childrenCallback,
+    nestingLevel = 0,
+    style = NestedListStyle.DEFAULT,
+    isExpandOnClickAnywhere = false,
+    isShowAddTextInput = false,
+    isActive = false,
+    expandedItem = undefined,
+    onAddSubAction = undefined,
+    onClick = undefined,
+    onExpand = undefined
+  }: {
+    id: string;
+    index: number;
+    totalLength: number;
+    contentCallback: (id: string) => Promise<NestedItemContent>;
+    childrenCallback: (id: string) => Promise<IRecordId[]>;
+    nestingLevel?: number;
+    style?: NestedListStyle;
+    isExpandOnClickAnywhere?: boolean;
+    isShowAddTextInput?: boolean;
+    isActive?: boolean;
+    expandedItem?: IRecordId | undefined;
+    onAddSubAction?:
+      | ((payload: {
+          id: string;
+          label: string;
+          children: IRecordId[];
+        }) => void)
+      | undefined;
+    onClick?:
+      | ((payload: {
+          id: string;
+          event: MouseEvent;
+        }) => void)
+      | undefined;
+    onExpand?: ((id: IRecordId) => void) | undefined;
+  } = $props();
+  let addTextInputValue = $state("");
+  let content = $state<NestedItemContent | undefined>(undefined);
+  let children = $state<IRecordId[]>([]);
+  let isCollapsed = $state(true);
+  let isIconHovering = $state(false);
+
+  $effect(() => {
+    if (!id) return;
+    contentCallback;
+    childrenCallback;
+    void refreshContentAndChildren(id);
+  });
 
   async function refreshContentAndChildren(id: string) {
     content = await contentCallback(id);
@@ -44,18 +76,18 @@
       if (!$view.isPortrait) isCollapsed = !isCollapsed;
     }
     e.stopPropagation();
-    dispatch("click", {
+    onClick?.({
       id,
       event: e
     });
   }
   function onchevclick(e: MouseEvent) {
     isCollapsed = !isCollapsed;
-    if (!isCollapsed) dispatch("expand", id);
+    if (!isCollapsed) onExpand?.(id);
     e.stopPropagation();
   }
-  function onAddSub(e: any) {
-    dispatch("addSub", {
+  function handleAddSub() {
+    onAddSubAction?.({
       id,
       label: addTextInputValue,
       children
@@ -69,7 +101,7 @@
 
 {#if content}
   <button
-    on:click={onclick}
+    onclick={onclick}
     class="relative flex flex-col w-full border border-transparent"
     data-id={id}
     data-index={index}
@@ -114,7 +146,7 @@
                 "stroke-cbg": isActive,
                 "stroke-fgs1": !isActive
               })}
-              on:click={onchevclick}
+              onclick={onchevclick}
             />
           {/if}
         </span>
@@ -126,7 +158,6 @@
         >
           {content.label}
         </span>
-        <!-- <TextWithHoverTooltip text={content.label} class="truncate" /> -->
       </span>
       <span class="shrink-0">
         {#if children.length > 0}
@@ -138,16 +169,21 @@
     </CustomColorPropagator>
     <div class="w-full">
       {#if children?.length > 0 && !isCollapsed && children}
-        {#each children as child}
-          <svelte:self
+        {#each children as child, childIndex}
+          <NestedListItem
             id={child}
+            index={childIndex}
+            totalLength={children.length}
             {contentCallback}
             {childrenCallback}
+            {style}
+            {isExpandOnClickAnywhere}
             {isShowAddTextInput}
             {expandedItem}
             nestingLevel={nestingLevel + 1}
-            on:click
-            on:expand
+            {onClick}
+            onAddSubAction={onAddSubAction}
+            {onExpand}
           />
         {/each}
       {/if}
@@ -159,7 +195,7 @@
       >
         <button
           class="px--4 py-3 w-full"
-          on:click={(e) => {
+          onclick={(e) => {
             e.stopPropagation();
           }}
         >
@@ -169,8 +205,8 @@
             icon="plus"
             placeholder="Add new item"
             isShowSaveControl={addTextInputValue !== ""}
-            on:save={onAddSub}
-            on:enter={onAddSub}
+            onSave={handleAddSub}
+            onEnter={handleAddSub}
           />
         </button>
       </div>

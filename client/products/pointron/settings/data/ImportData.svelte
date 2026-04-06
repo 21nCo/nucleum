@@ -1,5 +1,4 @@
 <script lang="ts">
-  // import { PointronPersistence } from "$lib/client/products/pointron/pointron.persistence";
   import Icon from "@21n/elements/Icon.svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import { toasts } from "@21n/stores/notification.store";
@@ -7,11 +6,8 @@
   import { AlertType } from "@21n/types/notification.type";
   import { Size } from "@21n/types/size.enum";
   import { isEmptyArray, isValidArray } from "@21n/shared-utils/obj.utils";
-  import { generateUID } from "@21n/utils/utils";
-  import { createEventDispatcher } from "svelte";
   import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
   import { parse } from "@21n/shared-utils/json.utils";
-  const dispatch = createEventDispatcher();
   let fileInput: HTMLInputElement;
   let isProcessingImport: boolean = false;
   let fileName: string = "";
@@ -63,18 +59,6 @@
       isProcessingImport = false;
       return;
     }
-    // const response = await new PointronPersistence().importData(
-    //   jsonData,
-    //   fileName,
-    //   fileSize
-    // );
-    // if (response) {
-    //   toasts.success("Data imported successfully");
-    //   dispatch("refresh");
-    //   resetFile();
-    // } else {
-    //   toasts.error("Error importing data. Please try again");
-    // }
     isProcessingImport = false;
   }
 
@@ -92,7 +76,7 @@
         type="file"
         id="fileInput"
         bind:this={fileInput}
-        on:change={importData}
+        onchange={importData}
         accept=".json"
         class="hidden"
       />
@@ -104,13 +88,13 @@
       </label>
       {#if fileName}
         {fileName}
-        <Icon icon="cross" on:click={resetFile} />
+        <Icon icon="cross" onclick={resetFile} />
       {/if}
     </div>
 
     <Button
       size={Size.sm}
-      on:click={processImport}
+      onclick={processImport}
       type={ButtonVariant.PRIMARY}
       label={isProcessingImport ? "Uploading..." : "Import"}
       isLoading={isProcessingImport}

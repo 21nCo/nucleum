@@ -2,12 +2,19 @@
   import { paintQRCode } from "@21n/utils/ui.utils";
   import { onMount } from "svelte";
   import { org } from "@21n/landing/shared/store/shared.store";
-  export let url: string = org.website;
-  export let enableHover: boolean = true;
-  export let width: number = 72;
+  let {
+    url = org.website,
+    enableHover = true,
+    width = 72,
+    isHovering = $bindable(false),
+  }: {
+    url?: string;
+    enableHover?: boolean;
+    width?: number;
+    isHovering?: boolean;
+  } = $props();
 
   let canvas: HTMLCanvasElement;
-  export let isHovering: boolean = false;
 
   function handleHover() {
     if (!enableHover) return;
@@ -25,8 +32,8 @@
 
 <canvas
   bind:this={canvas}
-  on:mouseenter={handleHover}
-  on:mouseleave={handleLeave}
+  onmouseenter={handleHover}
+  onmouseleave={handleLeave}
   class:scale-[1.8]={isHovering}
   class:scale-[1]={!isHovering}
   class="border-2 transition-transform duration-300 ease-in-out origin-bottom-left"

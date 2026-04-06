@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { IKindleBook } from "@21n/products/memotron/node/node.type";
-  export let node: IKindleBook;
+  let { node }: { node: IKindleBook } = $props();
 </script>
 
 <div class="w-full h-full mo:p-4 flex justify-center items-center">

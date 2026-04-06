@@ -9,10 +9,14 @@
   import { TextStyle } from "@21n/types/text.enum";
   import { cn } from "@21n/utils/ui.utils";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
 
-  export let isLibraryNavContext: boolean = false;
+  let {
+    isLibraryNavContext = false,
+    onBack = undefined
+  }: {
+    isLibraryNavContext?: boolean;
+    onBack?: (() => void) | undefined;
+  } = $props();
   let selectedSubType: Resource = Resource.linkTag;
 </script>
 
@@ -22,9 +26,7 @@
       class={cn("flex items-center gap-2 rounded-md", {
         "notouch:hover:bg-bgs2 active:bg-bgs2": isLibraryNavContext
       })}
-      on:click={() => {
-        dispatch("back");
-      }}
+      onclick={onBack}
     >
       {#if isLibraryNavContext}
         <Icon icon="chevron-left" class="text-fgs3" />

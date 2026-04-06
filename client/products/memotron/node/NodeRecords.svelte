@@ -8,7 +8,7 @@
   } from "@21n/products/memotron/node/node.type";
   import { cn } from "@21n/utils/ui.utils";
   import NodeThumbnail from "@21n/products/memotron/node/thumbnail/NodeThumbnail.svelte";
-import { afterUpdate, onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import { fade } from "svelte/transition";
   import view from "@21n/stores/view.store";
   import NodeThumbnailTitle from "@21n/products/memotron/node/thumbnail/NodeThumbnailTitle.svelte";
@@ -17,40 +17,52 @@ import { afterUpdate, onDestroy, onMount } from "svelte";
   import { hoverable } from "@21n/actions/hover.action";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import type { IProperty } from "@21n/components/collection/properties/property.type";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-import { bulkEditStore } from "@21n/components/record/bulkedit.store";
-import { BulkEditor } from "@21n/components/record/record.store";
-import { toasts } from "@21n/stores/notification.store";
+  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { bulkEditStore } from "@21n/components/record/bulkedit.store";
+  import { BulkEditor } from "@21n/components/record/record.store";
+  import { toasts } from "@21n/stores/notification.store";
   import { logger } from "@21n/components/debug/logger.client";
   import { resolveFilePreview } from "@21n/products/memotron/node/node.utils";
 
-  export let nodes: INodeThumb[] = [];
-  export let arrangement: Arrangement = Arrangement.LIST;
-  export let density = 1;
-  export let isHidePreview: boolean = false;
-  export let isHideTitle: boolean = false;
-  export let parentBgIndex = 1;
-  export let isApplyCustomColor: boolean = false;
-  export let isDraggable: boolean = false;
-  export let accessPointId: IRecordId | undefined = undefined;
-  export let accessPoint: ResourceAccessPoint | undefined = undefined;
-  export let visibleProps: IProperty[] = [];
+  let {
+    nodes = [],
+    arrangement = Arrangement.LIST,
+    density = 1,
+    isHidePreview = false,
+    isHideTitle = false,
+    parentBgIndex = 1,
+    isApplyCustomColor = false,
+    isDraggable = false,
+    accessPointId = undefined,
+    accessPoint = undefined,
+    visibleProps = [],
+    gap = 12
+  }: {
+    nodes?: INodeThumb[];
+    arrangement?: Arrangement;
+    density?: number;
+    isHidePreview?: boolean;
+    isHideTitle?: boolean;
+    parentBgIndex?: number;
+    isApplyCustomColor?: boolean;
+    isDraggable?: boolean;
+    accessPointId?: IRecordId | undefined;
+    accessPoint?: ResourceAccessPoint | undefined;
+    visibleProps?: IProperty[];
+    gap?: number;
+  } = $props();
 
-  $: columns = Math.max(1, Math.floor(($view.width / 500) * density));
+  let columns = $derived(Math.max(1, Math.floor(($view.width / 500) * density)));
 
-  export let gap = 12;
   let rowHeight = 4;
   let gridRef: any;
   let hoveredMasonryItem: IRecordId | undefined = undefined;
 
-  $: if (arrangement === Arrangement.MASONRY && gridRef) {
-    resizeAllMasonryItems();
-  }
-  $: multiSelectContext = {
+  let multiSelectContext = $derived({
     resource: Resource.node,
     accessPoint: accessPoint ?? ResourceAccessPoint.BROWSER,
     accessPointId
-  };
+  });
 
   function selectAll() {
     return nodes.map((item) => item.id);
@@ -77,16 +89,16 @@ import { toasts } from "@21n/stores/notification.store";
     });
   }
 
-  $: {
+  $effect(() => {
+    if (arrangement === Arrangement.MASONRY && gridRef) {
+      resizeAllMasonryItems();
+    }
+  });
+
+  $effect(() => {
     multiSelectContext;
     nodes;
     resolveBulkEditorInstance();
-  }
-
-  afterUpdate(() => {
-    if (arrangement === Arrangement.MASONRY) {
-      resizeAllMasonryItems();
-    }
   });
 
   onMount(() => {
@@ -181,7 +193,7 @@ import { toasts } from "@21n/stores/notification.store";
                 hoveredMasonryItem = undefined;
             }
           }}
-          on:click={(e) => onClick(e, item)}
+          onclick={(e) => onClick(e, item)}
         >
           <NodeThumbnail
             {item}
@@ -192,7 +204,7 @@ import { toasts } from "@21n/stores/notification.store";
             accessPointId={accessPointId ?? item.id}
             {isHideTitle}
             {visibleProps}
-            on:load={(e) => {
+            onLoad={() => {
               resizeMasonryItem(
                 gridRef.querySelector(`[data-id="${item.id}"]`)
               );
@@ -225,7 +237,7 @@ import { toasts } from "@21n/stores/notification.store";
           {visibleProps}
           collectionContext={"board"}
           {isApplyCustomColor}
-          on:click={(e) => onClick(e, item)}
+          onClick={(event) => onClick(event, item)}
         />
       {/each}
     </div>

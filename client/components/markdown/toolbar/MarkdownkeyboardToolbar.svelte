@@ -27,16 +27,35 @@
   import BlockBrowserOnKeyboard from "@21n/components/markdown/blockBrowser/BlockBrowserOnKeyboard.svelte";
   import { BlockAction } from "@21n/components/markdown/md.type";
   import MdKeyboardKeysRow from "@21n/components/markdown/toolbar/MdKeyboardKeysRow.svelte";
-  import { createEventDispatcher, getContext } from "svelte";
+  import { getContext } from "svelte";
   import type { IRecordId } from "@21n/types/data.type";
   import { Context } from "@21n/types/appStore.type";
-  const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>(Context.NODE);
 
-  export let keyboardToolbarPanelSelection: string | undefined = undefined;
-  export let selectedBlocks: IRecordId[] = [];
-  let isPreventDefaultOnKeyboardClose: boolean = false;
-  let keyboardToolbarRef: KeyboardToolbar;
+  let {
+    keyboardToolbarPanelSelection = $bindable(undefined),
+    selectedBlocks = [],
+    onAction = undefined,
+    onFocus = undefined,
+    onInsert = undefined,
+    onSelect = undefined,
+    onUnselect = undefined
+  }: {
+    keyboardToolbarPanelSelection?: string | undefined;
+    selectedBlocks?: IRecordId[];
+    onAction?:
+      | ((payload: {
+          action: BlockAction;
+          data: any;
+        }) => void)
+      | undefined;
+    onFocus?: (() => void) | undefined;
+    onInsert?: ((type: NodeType) => void) | undefined;
+    onSelect?: (() => void) | undefined;
+    onUnselect?: (() => void) | undefined;
+  } = $props();
+  let isPreventDefaultOnKeyboardClose = $state(false);
+  let keyboardToolbarRef = $state<KeyboardToolbar>();
   const keyboardToolbarActions: {
     value: BlockAction;
     icon: string;
@@ -101,13 +120,13 @@
     context: $context
   });
 
-  $: categories = [
+  const categories = $derived([
     ...(configData.config.map((section) => ({
       label: properCase(section.section),
       value: section.section
     })) ?? [])
-  ];
-  let selectedSection = configData.config[0].section;
+  ]);
+  let selectedSection = $state(configData.config[0].section);
 
   export function action(action: "actions" | "insert") {
     isPreventDefaultOnKeyboardClose = true;
@@ -230,31 +249,32 @@
       !keyboardToolbarPanelSelection ||
       keyboardToolbarPanelSelection !== action
     ) {
-      if (!keyboardToolbarPanelSelection) dispatch("select");
+      if (!keyboardToolbarPanelSelection) {
+        onSelect?.();
+      }
       isPreventDefaultOnKeyboardClose = true;
       keyboardToolbarPanelSelection = action;
       const activeElement = document.activeElement;
       if (activeElement instanceof HTMLElement) activeElement.blur();
     } else {
       keyboardToolbarPanelSelection = undefined;
-      dispatch("focus");
-      dispatch("unselect");
+      onFocus?.();
+      onUnselect?.();
     }
   }
 
-  function onKeyboardToolbarKeyPress(e: CustomEvent<string>) {
-    const key = e.detail;
+  function onKeyboardToolbarKeyPress(key: string) {
     if (["@", "#", "*", '"', "[]", "-"].includes(key)) {
       insertTextAtCursor(key);
     } else if (key === "--") {
-      onAction(BlockAction.INSERT, {
+      emitAction(BlockAction.INSERT, {
         blockType: NodeType.DIVIDER
       });
     }
   }
 
-  function onAction(action: BlockAction, data: any) {
-    dispatch("action", {
+  function emitAction(action: BlockAction, data: any) {
+    onAction?.({
       action,
       data
     });
@@ -288,8 +308,8 @@
           icon="plus-circle"
           parentBgIndex={2}
           on={keyboardToolbarPanelSelection === "insert"}
-          on:mousedown={(e) => e.preventDefault()}
-          on:change={() => {
+          onMouseDown={(e) => e.preventDefault()}
+          onChange={() => {
             onKeyboardToolbarAction("insert");
           }}
         />
@@ -309,7 +329,7 @@
             parentBgIndex={2}
             style={PanelSwitcherStyle.BAR}
             barStyle={BarStyle.UNDER}
-            on:switch={(e) => {
+            onSwitch={(e) => {
               selectedSection = e.detail;
             }}
           />
@@ -319,8 +339,8 @@
           icon="command"
           parentBgIndex={2}
           on={keyboardToolbarPanelSelection === "actions"}
-          on:mousedown={(e) => e.preventDefault()}
-          on:change={(e) => {
+          onMouseDown={(e) => e.preventDefault()}
+          onChange={(e) => {
             onKeyboardToolbarAction("actions");
           }}
         />
@@ -334,8 +354,8 @@
 
     {#if !keyboardToolbarPanelSelection}
       <MdKeyboardKeysRow
-        on:key={onKeyboardToolbarKeyPress}
-        on:close={onClose}
+        onKey={onKeyboardToolbarKeyPress}
+        {onClose}
       />
     {/if}
   </div>
@@ -358,11 +378,11 @@
               ? ButtonStyle.OUTLINED
               : undefined}
             size={Size.sm}
-            on:click={() => {
-              onAction(action.value, undefined);
+            onclick={() => {
+              emitAction(action.value, undefined);
               keyboardToolbarPanelSelection = undefined;
             }}
-            on:mousedown={(e) => e.preventDefault()}
+            onmousedown={(e) => e.preventDefault()}
           />
         {/each}
       </div>
@@ -373,8 +393,7 @@
       <BlockBrowserOnKeyboard
         {configData}
         {selectedSection}
-        on:select={(e) => {
-          const toType = e.detail;
+        onSelect={(toType) => {
           if (
             [
               ...mediaNodeTypeList,
@@ -387,7 +406,7 @@
             isPreventDefaultOnKeyboardClose = false;
             keyboardToolbarRef?.close();
           }
-          dispatch("insert", toType);
+          onInsert?.(toType);
           keyboardToolbarPanelSelection = undefined;
         }}
       />

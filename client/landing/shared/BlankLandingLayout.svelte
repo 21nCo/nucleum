@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import RightPanel from "@21n/landing/shared/RightPanel.svelte";
   import LandingBaseLayer from "@21n/landing/LandingBaseLayer.svelte";
   import LeftPanel from "@21n/landing/shared/LeftPanel.svelte";
@@ -15,11 +16,22 @@
 
   let id: string = "main";
   let centralContainerRef: HTMLDivElement;
-  export let topNavBarValues: ITopNavBar;
-  export let isComingSoon: boolean = false;
-  export let isProduct: boolean = false;
-  export let footerValues: IFooter;
-  export let isComparePage: boolean = false;
+  let {
+    topNavBarValues,
+    isComingSoon = false,
+    isProduct = false,
+    footerValues,
+    isComparePage = false,
+    children
+  }: {
+    topNavBarValues: ITopNavBar;
+    isComingSoon?: boolean;
+    isProduct?: boolean;
+    footerValues: IFooter;
+    isComparePage?: boolean;
+    children?: Snippet;
+  } = $props();
+
   let scrollY: number = 0;
   let isShowLoadingOverlay: boolean = false;
   let transformedProducts: IListItem[] = [
@@ -30,7 +42,7 @@
     }))
   ];
 
-  $: isShowGrid = !isComparePage && scrollY < 70;
+  const isShowGrid = $derived(!isComparePage && scrollY < 70);
 
   function addEntryAnimation(id: string) {
     if (isProduct) addAnimateClass("animate-open-left", id);
@@ -91,7 +103,7 @@
     {id}
     class="flex flex-col w-full h-full overflow-y-auto"
     bind:this={centralContainerRef}
-    on:scroll={handleScroll}
+    onscroll={handleScroll}
   >
     <TopNavBar {topNavBarValues} {scrollY} isPreventSticky={isComparePage} />
     <main class="flex w-full justify-center flex-1 min-h-0">
@@ -101,7 +113,7 @@
           "flex-1 min-h-0": isComparePage
         })}
       >
-        <slot />
+        {@render children?.()}
         {#if !isComingSoon && !isComparePage}
           <Footer products={transformedProducts} {footerValues} />
         {/if}
@@ -113,4 +125,4 @@
   {/if}
 </LandingBaseLayer>
 
-<svelte:window on:resize={windowResizeListener} />
+<svelte:window onresize={windowResizeListener} />

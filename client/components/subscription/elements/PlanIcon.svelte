@@ -2,11 +2,15 @@
   import view from "@21n/stores/view.store";
   import { Product } from "@21n/products/product.type";
   import { PlanType } from "@21n/components/subscription/userPlan.type";
+  let {
+    type,
+    product
+  }: {
+    type: PlanType;
+    product: Product;
+  } = $props();
 
-  export let type: PlanType;
-  export let product: Product;
-
-  $: width = resolveWidth(type);
+  const width = $derived(resolveWidth(type));
 
   function resolveWidth(type: PlanType) {
     if (type === PlanType.CLOUD_SYNC) {

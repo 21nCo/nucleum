@@ -88,10 +88,10 @@
       <TextInput
         bind:value={question}
         placeholder="Ask question on any markdown"
-        on:enter={onQuestion}
+        onEnter={onQuestion}
       />
       <span class="absolute right-2 top-[10px]">
-        <Icon icon="proicons:send" on:click={onQuestion} /></span
+        <Icon icon="proicons:send" onclick={onQuestion} /></span
       >
     </div>
   </div>

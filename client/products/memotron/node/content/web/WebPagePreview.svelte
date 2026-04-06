@@ -16,13 +16,19 @@
   import { parse } from "@21n/shared-utils/json.utils";
   import context from "@21n/stores/context.store";
 
-  export let node: IWebPage;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  let isCheckingIframability: boolean = true;
-  let isIframeShown: boolean = false;
-  let isIframeable: boolean = false;
-  let isHovering: boolean = false;
-  let customMessage: string | undefined = undefined;
+  let {
+    node,
+    accessPoint = ResourceAccessPoint.SELF,
+    isHovering = $bindable(false)
+  }: {
+    node: IWebPage;
+    accessPoint?: ResourceAccessPoint;
+    isHovering?: boolean;
+  } = $props();
+  let isCheckingIframability = $state(true);
+  let isIframeShown = $state(false);
+  let isIframeable = $state(false);
+  let customMessage = $state<string | undefined>(undefined);
 
   onMount(async () => {
     await initialize();
@@ -153,7 +159,7 @@
         type={ButtonVariant.PRIMARY}
         style={ButtonStyle.OUTLINED}
         tooltip="Close preview"
-        on:click={() => {
+        onclick={() => {
           isIframeShown = !isIframeShown;
         }}
       />
@@ -167,7 +173,7 @@
         label="Preview"
         type={ButtonVariant.PRIMARY}
         style={ButtonStyle.DEFAULT}
-        on:click={() => {
+        onclick={() => {
           isIframeShown = !isIframeShown;
         }}
       />

@@ -13,9 +13,11 @@
   import { Orientation } from "@21n/types/direction.enum";
   import view from "@21n/stores/view.store";
   import TypefaceSelector from "@21n/components/settings/appearance/TypefaceSelector.svelte";
-  export let parentBackgroundIndex: number = 1;
+  let { parentBackgroundIndex = 1 }: { parentBackgroundIndex?: number } =
+    $props();
+  void parentBackgroundIndex;
   let selectedSkinIndex: number = 0;
-  let selectedTheme: Theme;
+  let selectedTheme = $state<Theme | undefined>(undefined);
   let selectedTempSchemeIndex: number = 0;
   onMount(() => {
     selectedSkinIndex = appConstants.themes.findIndex(
@@ -29,16 +31,6 @@
   function saveColorScheme(e: CustomEvent) {
     appearance.setColorScheme(e.detail);
     //todo showChangesFeedback();
-  }
-  function saveSkin() {
-    $userPreferences.appearance.skin =
-      selectedSkinIndex != undefined
-        ? appConstants.themes[selectedSkinIndex]
-        : $userPreferences.appearance.skin;
-    //showChangesFeedback();
-  }
-  function onSkinChange(e: any) {
-    saveSkin();
   }
   function onTempSchemeChange(event: any) {
     $userPreferences.tempColorScheme =
@@ -54,29 +46,22 @@
     $userPreferences.appearance.typeface = selectedTypeface;
   }
 
-  //TODO - use change event on switchInput instead
-  $: appearance.modifySyncWithSystem($appearance.isSyncWithSystem);
+  $effect(() => {
+    appearance.modifySyncWithSystem($appearance.isSyncWithSystem);
+  });
 </script>
 
 <ScrollView class="flex flex-col gap-8" bottomSpacerSize={Size.sm}>
-  <!-- <Switcher
-    label="Theme"
-    {parentBackgroundIndex}
-    items={appConstants.themes}
-    selectionStyle={SelectionItemActiveStyle.CIRCLE_WITH_BACKGROUND}
-    on:switch={onSkinChange}
-    bind:selectedIndex={selectedSkinIndex}
-  /> -->
   <TypefaceSelector
     label={{ label: "Font", orientation: Orientation.Vertical }}
     value={$userPreferences.appearance.typeface || "Sen"}
-    on:select={onTypefaceChange}
+    onSelect={onTypefaceChange}
     size={Size.sm}
     {parentBackgroundIndex}
   />
   <SwitchInput
     bind:checked={$appearance.isSyncWithSystem}
-    on:change={switchTheme}
+    onChange={switchTheme}
     isExpanded={true}
     label={{
       label: "Sync theme with system",
@@ -93,19 +78,19 @@
         { label: "Dark", value: Theme.DARK }
       ]}
       size={Size.sm}
-      on:select={switchTheme}
+      onSelect={switchTheme}
       bind:selected={selectedTheme}
     />
   {:else if $userPreferences?.appearance?.skin === AppSkin.Glassy}
     <div class="text-b3 text-fgs2">{`[ Experimental theme ]`}</div>
   {/if}
   {#if !$appearance.isSyncWithSystem}
-    <ColorSchemeSelector
-      theme={$appearance.userThemeSetting}
-      selectedSchemeId={$appearance.colorScheme.id}
-      on:select={saveColorScheme}
-      size={Size.sm}
-    />
+      <ColorSchemeSelector
+        theme={$appearance.userThemeSetting}
+        selectedSchemeId={$appearance.colorScheme.id}
+        onSelect={saveColorScheme}
+        size={Size.sm}
+      />
   {:else}
     <div class="flex flex-col gap-8">
       <div>
@@ -114,7 +99,7 @@
           theme={Theme.LIGHT}
           size={Size.sm}
           selectedSchemeId={$appearance.lightColorSchemeId}
-          on:select={saveColorScheme}
+          onSelect={saveColorScheme}
         />
       </div>
       <div>
@@ -123,7 +108,7 @@
           theme={Theme.DARK}
           size={Size.sm}
           selectedSchemeId={$appearance.darkColorSchemeId}
-          on:select={saveColorScheme}
+          onSelect={saveColorScheme}
         />
       </div>
     </div>
@@ -135,7 +120,7 @@
         {parentBackgroundIndex}
         items={appConstants.tempColorSchemes}
         selectionStyle={SelectionItemActiveStyle.SIDEBAR}
-        on:switch={onTempSchemeChange}
+        onSwitch={onTempSchemeChange}
         bind:selectedIndex={selectedTempSchemeIndex}
       />
     </div>

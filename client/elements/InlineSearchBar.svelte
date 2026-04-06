@@ -1,25 +1,44 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { InputStyle } from "@21n/types/input.type";
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import { Size } from "@21n/types/size.enum";
-  import { createEventDispatcher, onMount, tick } from "svelte";
+  import { onMount, tick } from "svelte";
   import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
   import { GlobalEvent } from "@21n/types/event.enum";
   import { appEvents } from "@21n/stores/notification.store";
   import type { IEvent } from "@21n/types/event.type";
   import { cn } from "@21n/utils/ui.utils";
   import { debouncer } from "@21n/utils/utils";
-  export let query: string = "";
-  export let size: Size = Size.md;
-  export let placeholder: string = "Search";
-  export let parentBgIndex: number = 1;
-  export let style: InputStyle = InputStyle.PLAIN;
-  export let isPadded: boolean = false;
-  export let padding: string = "";
-  export let testId: string | undefined = undefined;
-  const dispatch = createEventDispatcher();
+  let {
+    query = $bindable(""),
+    size = Size.md,
+    placeholder = "Search",
+    parentBgIndex = 1,
+    style = InputStyle.PLAIN,
+    isPadded = false,
+    padding = "",
+    testId = undefined,
+    children = undefined,
+    onEnter = undefined,
+    onFocus = undefined,
+    onSearch = undefined
+  }: {
+    query?: string;
+    size?: Size;
+    placeholder?: string;
+    parentBgIndex?: number;
+    style?: InputStyle;
+    isPadded?: boolean;
+    padding?: string;
+    testId?: string | undefined;
+    children?: Snippet | undefined;
+    onEnter?: ((query: string) => void) | undefined;
+    onFocus?: (() => void) | undefined;
+    onSearch?: ((query: string) => void) | undefined;
+  } = $props();
   let searchInputRef: any;
-  let isSearchFocused: boolean = false;
+  let isSearchFocused = $state(false);
 
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
@@ -44,7 +63,7 @@
   }
 
   function propagate() {
-    dispatch("search", query);
+    onSearch?.(query);
   }
 
   const debouncedSearch = debouncer(propagate, 500);
@@ -73,25 +92,27 @@
     height="h-10"
     icon={style === InputStyle.PLAIN ? undefined : "search"}
     isShowClearControl={query !== ""}
-    on:focus={() => {
+    onFocus={() => {
       isSearchFocused = true;
-      dispatch("focus");
+      onFocus?.();
     }}
-    on:blur={() => (isSearchFocused = false)}
-    on:cancel={() => {
+    onBlur={() => (isSearchFocused = false)}
+    onCancel={() => {
       query = "";
-      dispatch("search");
+      onSearch?.(query);
     }}
-    on:change={debouncedSearch}
-    on:enter
+    onChange={debouncedSearch}
+    onEnter={() => onEnter?.(query)}
   >
-    <slot>
+    {#if children}
+      {@render children()}
+    {:else}
       <span>
         <ShortcutText
           shortcut={GlobalEvent.ACTIVATE_SEARCH_BOX}
           {parentBgIndex}
         />
       </span>
-    </slot>
+    {/if}
   </TextInput>
 </div>

@@ -5,26 +5,29 @@
   import { cn } from "@21n/utils/ui.utils";
   import { isValidEmail } from "@21n/shared-utils/text.utils";
   import { isUrlMatchPattern } from "@21n/shared-utils/utils";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  /**
-   * href can be a literal url like "https://blank.com" or an action from actionMap
-   */
-  export let href: string | undefined = undefined;
-  export let label: string;
-  export let variant: LinkVariant = LinkVariant.DOTTED;
-  /**
-   * If the text is a valid external url without http included, then http will be prepended and navigation will be followed
-   */
-  export let isEnforeHttpIfMatchPattern = false;
-  function onClick() {
+
+  let {
+    href = undefined,
+    label,
+    variant = LinkVariant.DOTTED,
+    isEnforeHttpIfMatchPattern = false,
+    onclick = undefined
+  }: {
+    href?: string | undefined;
+    label: string;
+    variant?: LinkVariant;
+    isEnforeHttpIfMatchPattern?: boolean;
+    onclick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
+
+  function handleClick(event: MouseEvent) {
     if (!href) return;
     if (href.includes("http")) appStore.openLink(href);
     else if (isEnforeHttpIfMatchPattern && isUrlMatchPattern(href))
       appStore.openLink(`https://${href}`);
     else if (isValidEmail(href)) appStore.openLink(`mailto:${href}`);
     else if (href) appStore.runAction(href);
-    dispatch("click");
+    onclick?.(event);
   }
 </script>
 
@@ -41,7 +44,7 @@
   </a>
 {:else}
   <button
-    on:click={onClick}
+    onclick={handleClick}
     class={cn("hover:text-aps1 whitespace-nowrap min-w-fit", {
       "underline-dotted hover:underline-dotted-hover":
         variant === LinkVariant.DOTTED

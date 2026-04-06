@@ -1,9 +1,20 @@
 <!-- TODO - slider not supported on touch devices -->
 <script lang="ts">
-  export let value: number;
-  export let min = 0;
-  export let max = 6;
-  export let step = 1;
+  let {
+    value = $bindable(0),
+    min = 0,
+    max = 6,
+    step = 1,
+    onInput = undefined,
+    onChange = undefined
+  }: {
+    value?: number;
+    min?: number;
+    max?: number;
+    step?: number;
+    onInput?: ((event: Event) => void) | undefined;
+    onChange?: ((event: Event) => void) | undefined;
+  } = $props();
 </script>
 
 <div class="flex items-center justify-center p-2">
@@ -13,9 +24,11 @@
     {max}
     {step}
     bind:value
-    on:click|stopPropagation
-    on:input
-    on:change
+    onclick={(event) => {
+      event.stopPropagation();
+    }}
+    oninput={onInput}
+    onchange={onChange}
     class="appearance-none w-full h-1 rounded bg-aps2 text-aps1 focus:outline-none"
   />
 </div>

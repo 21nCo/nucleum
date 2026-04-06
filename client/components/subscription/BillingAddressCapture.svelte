@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import type { IBillingAddress } from "@21n/components/subscription/userPlan.type";
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import Dropdown from "@21n/elements/dropdown/DropDown.svelte";
@@ -13,18 +12,22 @@
   import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
   import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
   import { isValidEmail } from "@21n/shared-utils/text.utils";
-
-  const dispatch = createEventDispatcher();
-  let error: string | undefined = undefined;
-  export let billingAddress: IBillingAddress = {
-    name: "",
-    email: "",
-    street: "",
-    city: "",
-    state: "",
-    country: "",
-    zipcode: ""
-  };
+  let error = $state<string | null>(null);
+  let {
+    billingAddress = $bindable({
+      name: "",
+      email: "",
+      street: "",
+      city: "",
+      state: "",
+      country: "",
+      zipcode: ""
+    }),
+    onProceed = undefined
+  }: {
+    billingAddress?: IBillingAddress;
+    onProceed?: ((event: CustomEvent<IBillingAddress>) => void) | undefined;
+  } = $props();
 
   const labels = {
     name: {
@@ -118,7 +121,10 @@
 
   function handleSubmit() {
     if (isValid()) {
-      dispatch("proceed", billingAddress);
+      const proceedEvent = new CustomEvent<IBillingAddress>("proceed", {
+        detail: billingAddress
+      });
+      onProceed?.(proceedEvent);
     }
   }
 
@@ -204,7 +210,7 @@
   </div>
   <InlineErrorMessage bind:error />
   <div class="flex mt-4">
-    <Button on:click={handleSubmit} type={ButtonVariant.PRIMARY} icon="proceed">
+    <Button onclick={handleSubmit} type={ButtonVariant.PRIMARY} icon="proceed">
       Proceed to Payment
     </Button>
   </div>

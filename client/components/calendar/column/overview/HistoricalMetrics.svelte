@@ -7,15 +7,22 @@
   import { TimeFormat } from "@21n/types/time.type";
   import { parseAndFormatDate, formatSeconds } from "@21n/utils/time.utils";
 
-  export let date: Date;
-  export let title: string;
-  export let totalFocus: number;
-  export let goals: string[] = [];
+  let {
+    date,
+    title,
+    totalFocus,
+    goals = []
+  }: {
+    date: Date;
+    title: string;
+    totalFocus: number;
+    goals?: string[];
+  } = $props();
 </script>
 
 <button
   class="flex flex-col items-center h-48 w-48 rounded-xl bg-bgs2 hover:bg-bgs3-striped overflow-hidden flex-1 min-w-48"
-  on:click={() => {
+  onclick={() => {
     appStore.openResource(Action.CALENDAR_DAY, AccessMode.POP, {
       searchParams: { [AppSearchParam.DATE]: date.toISOString() }
     });

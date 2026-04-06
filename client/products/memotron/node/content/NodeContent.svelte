@@ -45,14 +45,19 @@
   } from "@21n/components/flux/resourceStores/resource.utils";
   import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
   import { Context } from "@21n/types/appStore.type";
-
-  export let node: IActiveNodeStore;
-  export let mdId: string;
-  export let isReadOnlyMode: boolean = false;
+  let {
+    node,
+    mdId,
+    isReadOnlyMode = false
+  }: {
+    node: IActiveNodeStore;
+    mdId: string;
+    isReadOnlyMode?: boolean;
+  } = $props();
   let previousRootStructure: string[] = [];
-  let refreshId: number | undefined = undefined;
-  let markdownRef: any;
-  let dev_isEnableBottomDivider: boolean = false;
+  let refreshId = $state<number | undefined>(undefined);
+  let markdownRef = $state<any>(undefined);
+  const dev_isEnableBottomDivider = false;
 
   const calendarContentContext = getContext<any>(Context.CALENDAR_CONTENT);
 
@@ -397,10 +402,10 @@
           }}
           bind:md={$node.md}
           bind:this={markdownRef}
-          on:change={onMarkdownContentChange}
-          on:restructure={onReStructure}
-          on:focus={onFocus}
-          on:action={onBlockAction}
+          onChange={onMarkdownContentChange}
+          onRestructure={onReStructure}
+          onFocus={onFocus}
+          onAction={onBlockAction}
         />
         {#if !$view.isConstrainedWidth && dev_isEnableBottomDivider}
           <div

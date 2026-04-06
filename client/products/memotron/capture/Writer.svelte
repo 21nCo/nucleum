@@ -7,7 +7,6 @@
   import { setContext } from "svelte";
   import type { IRecordId } from "@21n/types/data.type";
   import CameraCapture from "@21n/products/memotron/capture/CameraCapture.svelte";
-  import { createEventDispatcher } from "svelte";
   import context from "@21n/stores/context.store";
   import type { IActiveCaptureStore } from "@21n/products/memotron/capture/capture.store";
   import { fly } from "svelte/transition";
@@ -15,9 +14,16 @@
   import { Size } from "@21n/types/size.enum";
   import { ButtonStyle } from "@21n/types/button.type";
   import { Context } from "@21n/types/appStore.type";
-  const dispatch = createEventDispatcher();
 
-  export let captureStore: IActiveCaptureStore;
+  let {
+    captureStore,
+    onChange = undefined,
+    onClear = undefined
+  }: {
+    captureStore: IActiveCaptureStore;
+    onChange?: ((event: CustomEvent) => void) | undefined;
+    onClear?: (() => void) | undefined;
+  } = $props();
   let mdRef: NodularMarkdown | undefined = undefined;
 
   function handleEvent(event: string, data: any) {
@@ -66,15 +72,14 @@
       class="w-full h-full flex items-center justify-center"
       in:fly={{ y: 50, duration: 250 }}
     >
-      <AudioCapture {captureStore} on:clear on:saved />
+      <AudioCapture {captureStore} onClear={onClear} />
     </div>
   {:else if $captureStore.method === CaptureMethod.CAMERA}
     <div class="w-full h-full flex items-center justify-center">
-      <CameraCapture {captureStore} on:clear on:saved />
+      <CameraCapture {captureStore} onClear={onClear} />
     </div>
   {:else if $captureStore.body && "blocks" in $captureStore.body}
     <div class="overflow-auto h-full w-full dp:px--10" data-testid="capture-editor">
-      <!-- TODO - check if on syncdown the kv:capture is reloaded in the background - whether this is automatically updated - if not subscribe to syncDown from ComponentBaseLayer and refresh -->
       <NodularMarkdown
         isNodular={true}
         mdId={$captureStore.id}
@@ -83,16 +88,17 @@
         bind:rootStructure={$captureStore.rootStructure}
         bind:this={mdRef}
         params={{ isPreventFocusOnLoad: $context.isTouchDevice }}
-        on:change
-        on:action={(e) => {
-          dispatch("change", e.detail);
+        onChange={(e) => {
+          onChange?.(e);
         }}
-        on:restructure={(e) => {
-          dispatch("change", e.detail);
+        onAction={(e) => {
+          onChange?.(e);
+        }}
+        onRestructure={(e) => {
+          onChange?.(e);
         }}
       />
     </div>
-    <!-- TODO - add condition for if headings present or if mentions present -->
     {#if isShowTOC}
       <aside class="w-72 flex flex-col h-full py-6 rounded-md items-center">
         <div class="flex flex-col flex-grow justify-center">
@@ -106,8 +112,8 @@
   {:else}
     <div class="pb-8">
       <PlayerControl
-        on:click={() => {
-          dispatch("clear");
+        onclick={() => {
+          onClear?.();
         }}
         icon="back"
         tooltip="Go back"

@@ -7,8 +7,13 @@
   import GetEarlyAccess from "@21n/landing/shared/GetEarlyAccess.svelte";
   import LandingButton from "@21n/landing/shared/elements/Button.svelte";
   import { goto } from "$app/navigation";
-  export let url: string | undefined = undefined;
-  export let version: "V1" | "V2" | "V3" = "V1";
+  let {
+    url = undefined,
+    version = "V1"
+  }: {
+    url?: string | undefined;
+    version?: "V1" | "V2" | "V3";
+  } = $props();
   let email = "";
   let message = "";
   let error: string | null = null;
@@ -55,7 +60,7 @@
       <div>
         <Button
           size={Size.sm}
-          on:click={onSubscribe}
+          onclick={onSubscribe}
           label="Get Early Access"
           type="primary"
         />
@@ -68,12 +73,12 @@
       <LandingButton
         type="secondary"
         label="Read our mission"
-        on:click={() => goto("/mission")}
+        onclick={() => goto("/mission")}
       />
       <LandingButton
         type="primary"
         label="Get early access"
-        on:click={() => {
+        onclick={() => {
           if (url) {
             window.location.href = url;
           } else {

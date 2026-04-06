@@ -2,19 +2,26 @@
   import MetricItem from "@21n/products/pointron/analytics/cards/metrics/MetricItem.svelte";
   import type { ISessionLog } from "@21n/products/pointron/logs/log.type";
 
-  export let data: ISessionLog[];
-  export let previousTimePeriodData: ISessionLog[];
+  let {
+    data,
+    previousTimePeriodData
+  }: {
+    data: ISessionLog[];
+    previousTimePeriodData: ISessionLog[];
+  } = $props();
 
-  const totalFocus = data.reduce((acc, curr) => acc + (curr.focus ?? 0), 0);
-  const totalBreak = data.reduce((acc, curr) => acc + (curr.breakTime ?? 0), 0);
-  const previousFocus = previousTimePeriodData.reduce(
+  const totalFocus = $derived(data.reduce((acc, curr) => acc + (curr.focus ?? 0), 0));
+  const totalBreak = $derived(
+    data.reduce((acc, curr) => acc + (curr.breakTime ?? 0), 0)
+  );
+  const previousFocus = $derived(previousTimePeriodData.reduce(
     (acc, curr) => acc + (curr.focus ?? 0),
     0
-  );
-  const previousBreak = previousTimePeriodData.reduce(
+  ));
+  const previousBreak = $derived(previousTimePeriodData.reduce(
     (acc, curr) => acc + (curr.breakTime ?? 0),
     0
-  );
+  ));
 </script>
 
 <div

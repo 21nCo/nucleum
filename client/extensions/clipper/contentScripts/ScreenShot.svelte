@@ -1,7 +1,7 @@
 <script lang="ts">
   import { ExtensionEvent } from "@21n/types/extension.type";
   import { cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher, onMount, onDestroy } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import type { IArea } from "@21n/extensions/clipper/contentScripts/types";
   import {
     feedbackPane,
@@ -15,7 +15,13 @@
   import { logger } from "@21n/components/debug/logger.client";
   import { relayToBackgroundScript } from "@21n/utils/extension.utils";
   import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
-  const dispatch = createEventDispatcher();
+  let {
+    onSaved = undefined,
+    onClose = undefined
+  }: {
+    onSaved?: ((event: CustomEvent<{ id?: string }>) => void) | undefined;
+    onClose?: (() => void) | undefined;
+  } = $props();
   let screenshotElement: HTMLElement;
   let topValue: number = 0;
   let leftValue: number = 0;
@@ -69,7 +75,11 @@
         }
       };
       const response = await webpage.saveClip(snip);
-      dispatch("saved", { id: response?.id });
+      onSaved?.(
+        new CustomEvent<{ id?: string }>("saved", {
+          detail: { id: response?.id }
+        })
+      );
     } catch (e) {
       logger.error({ at: "ScreenShot - saveSnip", error: e });
     } finally {
@@ -224,7 +234,7 @@
   }
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === "Escape") {
-      dispatch("close");
+      onClose?.();
     }
   }
   onDestroy(() => {
@@ -241,9 +251,9 @@
 <button
   bind:this={screenshotElement}
   class={cn("-z-10 fixed h-dvh w-full")}
-  on:mousedown={onMousedown}
-  on:mouseup={onMouseup}
-  on:mousemove={onMousemove}
+  onmousedown={onMousedown}
+  onmouseup={onMouseup}
+  onmousemove={onMousemove}
 >
   <div
     class="fixed inset-0"
@@ -280,4 +290,4 @@
     style="top:{topValue}px; left:{leftValue}px;height:{heightValue}px; width:{widthValue}px;border:1.5px solid {bgColor};"
   ></div> -->
 </button>
-<svelte:window on:keydown={handleKeyDown} />
+<svelte:window onkeydown={handleKeyDown} />

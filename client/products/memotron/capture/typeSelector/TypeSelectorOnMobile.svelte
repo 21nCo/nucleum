@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import { Size } from "@21n/types/size.enum";
   import CaptureDraftsAction from "@21n/products/memotron/capture/draftSelector/CaptureDraftsAction.svelte";
   import { CaptureMethod } from "@21n/products/memotron/capture/capture.type";
@@ -20,10 +19,22 @@
     label: string;
     value: CaptureMethod;
   };
-  const dispatch = createEventDispatcher();
-  export let selected: CaptureMethod | undefined = undefined;
-  export let isBoxedLayout = true;
-  let types: any[] = [];
+  let {
+    selected = undefined,
+    isBoxedLayout = true,
+    onSelect = undefined,
+    onCapture = undefined,
+    onCancel = undefined,
+    onDraftSelect = undefined
+  }: {
+    selected?: CaptureMethod | undefined;
+    isBoxedLayout?: boolean;
+    onSelect?: ((value: string) => void) | undefined;
+    onCapture?: ((event: Event) => void) | undefined;
+    onCancel?: (() => void) | undefined;
+    onDraftSelect?: ((draft: any) => void) | undefined;
+  } = $props();
+  let types = $state<any[]>([]);
   const isDev = import.meta.env.DEV;
   const baseTypes = [
     { icon: "microphone", label: "Record", value: CaptureMethod.AUDIO },
@@ -63,8 +74,8 @@
     ];
   }
 
-  function handleDraftSelect(event: CustomEvent) {
-    dispatch("draftSelect", event.detail);
+  function handleDraftSelect(draft: any) {
+    onDraftSelect?.(draft);
   }
 </script>
 
@@ -89,9 +100,9 @@
           <TypeSelectorItem
             {item}
             isActive={selected === item.value}
-            on:select
-            on:capture
-            on:cancel
+            {onSelect}
+            {onCapture}
+            {onCancel}
             isBoxed={isBoxedLayout}
           />
         </div>
@@ -105,7 +116,7 @@
             "w-full h-full col-span-1": types.length % 3 !== 0
           }
         )}
-        on:click={() => {
+        onclick={() => {
           appStore.runAction(MemotronAction.CAPTURE_SETTINGS);
         }}
       >
@@ -116,9 +127,9 @@
         <TypeSelectorItem
           {item}
           isActive={selected === item.value}
-          on:select
-          on:capture
-          on:cancel
+          {onSelect}
+          {onCapture}
+          {onCancel}
           isBoxed={isBoxedLayout}
         />
       {/each}
@@ -128,7 +139,7 @@
     {/await}
   </div>
   <div class="mt-6">
-    <CaptureDraftsAction on:select={handleDraftSelect} size={Size.sm} />
+    <CaptureDraftsAction onSelect={handleDraftSelect} size={Size.sm} />
   </div>
   <ScrollViewBottomSpacer />
 </div>
@@ -137,5 +148,5 @@
   subscriptionPropsForMergeAction={[
     CollectionObjectKey.isCaptureShortcutEnabled
   ]}
-  on:change={refreshTypes}
+  onChange={refreshTypes}
 />

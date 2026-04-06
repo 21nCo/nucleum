@@ -3,7 +3,7 @@
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { onMount } from "svelte";
 
-  export let tweetUrl: string;
+  let { tweetUrl }: { tweetUrl: string } = $props();
   let id: string = generateSimpleRandomId();
   let widgetScriptLoaded = false;
 

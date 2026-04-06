@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { page } from "$app/stores";
   import { hoverable } from "@21n/actions/hover.action";
@@ -25,7 +27,6 @@
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { rearrangeOnAxis } from "@21n/actions/rearrange.action";
-  import { createEventDispatcher } from "svelte";
   import { isValidString } from "@21n/shared-utils/text.utils";
   import Button from "@21n/elements/button/Button.svelte";
   import { AppSearchParam } from "@21n/types/appStore.type";
@@ -33,14 +34,27 @@
   import { ResourceActions } from "@21n/components/record/resource.actions";
   import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
   import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
-  const dispatch = createEventDispatcher();
-  export let item: IRecordId;
-  export let isInterimTab: boolean = false;
-  export let isTrail: boolean = false;
-  let resource: any;
-  let action: any;
-  let isHovering: boolean = false;
-  let resourceType: Resource = Resource.unknown;
+  let {
+    item,
+    isInterimTab = false,
+    isTrail = false,
+    onClick,
+    onClose,
+    onRearrange,
+    onRearranged
+  }: {
+    item: IRecordId;
+    isInterimTab?: boolean;
+    isTrail?: boolean;
+    onClick?: () => void;
+    onClose?: () => void;
+    onRearrange?: (displacement: number) => void;
+    onRearranged?: (displacement: number) => void;
+  } = $props();
+  let resource = $state<any>(undefined);
+  let action = $state<any>(undefined);
+  let isHovering = $state(false);
+  let resourceType = $state<Resource>(Resource.unknown);
   const dev_isFullHeightTabStyle = true;
   let contextMenu = [
     {
@@ -55,7 +69,9 @@
       ]
     }
   ];
-  $: isActive = item.toString() === $page.url.searchParams.get(AccessMode.POP);
+  let isActive = $derived(
+    item.toString() === $page.url.searchParams.get(AccessMode.POP)
+  );
   onMount(async () => {
     if (isRecordId(item)) {
       resourceType = determineResourceType(item);
@@ -94,11 +110,23 @@
   }
 
   function handleRearrange(displacement: number) {
-    dispatch("rearrange", displacement);
+    onRearrange?.(displacement);
   }
 
   function handleRearranged(displacement: number) {
-    dispatch("rearranged", displacement);
+    onRearranged?.(displacement);
+  }
+
+  function handleTabClick(event?: Event) {
+    onClick?.();
+    void event;
+  }
+
+  function handleTabKeyDown(event: KeyboardEvent) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleTabClick();
+    }
   }
 </script>
 
@@ -108,7 +136,7 @@
     "p-1": !isTrail && (!dev_isFullHeightTabStyle || isInterimTab)
   })}
 >
-  <button
+  <div
     use:popover={{
       placement: Placement.BottomCenter,
       content: ContextMenu,
@@ -150,14 +178,17 @@
           "border-aps1": isActive
         }
     )}
-    on:click
+    role="button"
+    tabindex="0"
+    onclick={handleTabClick}
+    onkeydown={handleTabKeyDown}
   >
     <div class="truncate text-b3">
       {#if !resource}
         <span class="w-32"> loading... </span>
       {:else if action?.resourceLabelRenderer && resource}
-        <svelte:component
-          this={action.resourceLabelRenderer}
+        {@const ResourceLabelRenderer = action.resourceLabelRenderer}
+        <ResourceLabelRenderer
           item={resource}
           accessPoint={ResourceAccessPoint.TABS}
         />
@@ -177,7 +208,7 @@
           tooltip="Pin to tabs"
           size={Size.sm}
           parentBgIndex={2}
-          on:click={() => {
+          onclick={() => {
             const backParam = $page.url.searchParams.get(AppSearchParam.BACK);
             tabs.open(item, backParam ?? undefined);
           }}
@@ -187,14 +218,14 @@
           tooltip="Close"
           size={Size.sm}
           parentBgIndex={2}
-          on:click={() => {
-            dispatch("close");
+          onclick={() => {
+            onClose?.();
           }}
         />
       </div>
     {/if}
     {#if !isTrail && !isInterimTab && (isHovering || $context.isTouchDevice)}
-      <button
+      <div
         class={cn(
           "absolute right-0 h-full rounded-r-md bg-gradient-to-l  to-transparent pl-10",
           {
@@ -205,7 +236,9 @@
         )}
       >
         <button
-          on:click={() => {
+          type="button"
+          onclick={(event) => {
+            event.stopPropagation();
             tabs.remove(item);
             if (isActive) {
               appStore.goBack();
@@ -218,16 +251,16 @@
         >
           <Icon icon="cross" size={Size.sm} class="stroke-fgs2" />
         </button>
-      </button>
+      </div>
     {/if}
-  </button>
+  </div>
 </div>
 
 <ComponentBaseLayer
   subscribeToRecords={[item]}
-  on:change={(e) => {
-    const record = e?.detail?.params?.record;
-    if (record) {
+  onChange={(data) => {
+    if ("params" in data && data.params?.record) {
+      const record = data.params.record;
       resource = { ...resource, ...record };
     }
   }}

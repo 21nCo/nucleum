@@ -22,7 +22,7 @@
     IMultiFileCaptureData
   } from "@21n/products/memotron/capture/capture.type";
   import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
-  import { onMount, createEventDispatcher } from "svelte";
+  import { onMount } from "svelte";
   import {
     ActiveCaptureStore,
     type IActiveCaptureStore
@@ -47,14 +47,32 @@
   import { tick } from "svelte";
   import { cn } from "@21n/utils/ui.utils";
 
-  export let data: IPasteCaptureData | undefined = undefined;
-  export let nodeType: NodeType;
-  export let error: string | undefined = undefined;
-  export let isOffline: boolean = false;
-  export let isShowInsertIntoMarkdown: boolean = false;
-  export let saveAsNodeFilesCount: number = 0;
-  let feedback: IInlineStatus | undefined = undefined;
-  const dispatch = createEventDispatcher();
+  let {
+    data = undefined,
+    nodeType,
+    error = undefined,
+    isOffline = false,
+    isShowInsertIntoMarkdown = false,
+    saveAsNodeFilesCount = 0,
+    onSaved = void 0,
+    onOpen = void 0,
+    onClose = void 0,
+    onInsertIntoMarkdown = void 0,
+    onError = void 0
+  }: {
+    data?: IPasteCaptureData | undefined;
+    nodeType: NodeType;
+    error?: string | undefined;
+    isOffline?: boolean;
+    isShowInsertIntoMarkdown?: boolean;
+    saveAsNodeFilesCount?: number;
+    onSaved?: (payload: { nodeId: string | undefined }) => void;
+    onOpen?: (payload: { nodeId: string | undefined }) => void;
+    onClose?: () => void;
+    onInsertIntoMarkdown?: () => void;
+    onError?: (payload: { error: unknown }) => void;
+  } = $props();
+  let feedback = $state<IInlineStatus | undefined>(undefined);
   const unsupportedNodeTypes = [NodeType.TWITTER_PROFILE];
   const cannotSaveAsStandaloneNodeTypes = [
     NodeType.SIMPLE_TEXT,
@@ -63,29 +81,31 @@
     NodeType.UNKNOWN
   ];
 
-  let nodeTypeLabel: string | undefined = undefined;
-  let isSaveInProgress: boolean = false;
-  let savedNodeId: string | undefined = undefined;
-  let expandedLink: IRecordId | null = null;
-  let savedNode: INodeThumb | undefined = undefined;
-  let sideNotes: string = "";
-  let isSavingSideNotes: boolean = false;
+  let isSaveInProgress = $state(false);
+  let savedNodeId = $state<string | undefined>(undefined);
+  let expandedLink = $state<IRecordId | null>(null);
+  let savedNode = $state<INodeThumb | undefined>(undefined);
+  let sideNotes = $state("");
+  let isSavingSideNotes = $state(false);
   let captureStore: IActiveCaptureStore;
-  let refreshId: number = new Date().getTime();
-  let isEditingLabel: boolean = false;
-  let editedLabel: string = "";
-  let previousLabel: string = "";
+  let refreshId = $state(new Date().getTime());
+  let isEditingLabel = $state(false);
+  let editedLabel = $state("");
+  let previousLabel = $state("");
   let textInputRef: TextInput;
   let linkBoxRef: LinkBoxOnSaver | null = null;
 
-  $: if (nodeType) nodeTypeLabel = resolveNodeContentLabel(nodeType);
-  $: isShowSaveOptions =
+  const nodeTypeLabel = $derived(
+    nodeType ? resolveNodeContentLabel(nodeType) : undefined
+  );
+  const isShowSaveOptions = $derived(
     !savedNodeId &&
     !error &&
     !isOffline &&
     nodeType &&
-    !unsupportedNodeTypes.includes(nodeType);
-  $: multipleFilesLength = data?.multipleFiles?.files?.length ?? 0;
+    !unsupportedNodeTypes.includes(nodeType)
+  );
+  const multipleFilesLength = $derived(data?.multipleFiles?.files?.length ?? 0);
 
   onMount(() => {
     const id = generateResourceId(Resource.capture);
@@ -106,12 +126,6 @@
 
   async function handleSave(isOpenOnSave: boolean) {
     try {
-      console.log({
-        at: "ShareContentSaver.handleSave",
-        nodeType,
-        data,
-        captureStore
-      });
       if (!data || !captureStore) return;
       isSaveInProgress = true;
       const nodeIdCheck = await performAlreadySavedCheck();
@@ -157,9 +171,9 @@
           });
         }
         if (isOpenOnSave) {
-          dispatch("open", { nodeId: savedNodeId });
+          onOpen?.({ nodeId: savedNodeId });
         }
-        dispatch("saved", { nodeId: savedNodeId });
+        onSaved?.({ nodeId: savedNodeId });
         feedback = {
           message: `${nodeTypeLabel} saved!`,
           type: AlertType.SUCCESS
@@ -170,7 +184,7 @@
       }
     } catch (error) {
       logger.error({ at: "ShareContentSaver.handleSave", error });
-      dispatch("error", { error });
+      onError?.({ error });
       feedback = {
         message: "Failed to save",
         type: AlertType.ERROR
@@ -220,7 +234,6 @@
           });
         }
       }
-      dispatch("notesSaved");
     } catch (error) {
       logger.error({ at: "ShareContentSaver.handleSaveSideNotes", error });
       feedback = {
@@ -235,17 +248,17 @@
   }
 
   async function handleClose() {
-    dispatch("close");
+    onClose?.();
   }
 
   async function handleOpen() {
     if (savedNodeId) {
-      dispatch("open", { nodeId: savedNodeId });
+      onOpen?.({ nodeId: savedNodeId });
     }
   }
 
   function handleInsertIntoMarkdown() {
-    dispatch("insertIntoMarkdown");
+    onInsertIntoMarkdown?.();
   }
 
   function resolvePasteResolutionMessage(data: IPasteCaptureData | undefined) {
@@ -331,10 +344,12 @@
     await linkBoxRef?.refreshLinkedData(nodeId);
   }
 
-  function handleSavedNodeChange(
-    event: CustomEvent<{ savedNode: INodeThumb }>
-  ) {
-    savedNode = event.detail.savedNode;
+  function handleSavedNodeChange({
+    savedNode: nextSavedNode
+  }: {
+    savedNode: INodeThumb;
+  }) {
+    savedNode = nextSavedNode;
     refreshId = Date.now();
   }
 </script>
@@ -392,14 +407,14 @@
             isLoading={isSaveInProgress}
             isExpandToFullWidth={true}
             type={ButtonVariant.PRIMARY}
-            on:click={() => handleSave(true)}
+            onclick={() => handleSave(true)}
           />
           <Button
             label="Save and close"
             icon="ph:arrow-u-down-left-light"
             isLoading={isSaveInProgress}
             isExpandToFullWidth={true}
-            on:click={() => handleSave(false)}
+            onclick={() => handleSave(false)}
           />
         {/if}
         {#if data?.multipleFiles && saveAsNodeFilesCount >= 1}
@@ -411,20 +426,20 @@
             isLoading={isSaveInProgress}
             isExpandToFullWidth={true}
             type={ButtonVariant.PRIMARY}
-            on:click={() => handleSave(false)}
+            onclick={() => handleSave(false)}
           />
         {/if}
         {#if isShowInsertIntoMarkdown}
           <Button
             label={resolveInsertIntoMdLabel(data)}
             icon="markdown"
-            on:click={handleInsertIntoMarkdown}
+            onclick={handleInsertIntoMarkdown}
             isExpandToFullWidth={true}
           />
           <Button
             label="Close"
             icon="cross"
-            on:click={handleClose}
+            onclick={handleClose}
             isExpandToFullWidth={true}
           />
         {/if}
@@ -449,18 +464,18 @@
                   placeholder="Enter node label..."
                   size={Size.md}
                   isShowSaveControl={true}
-                  on:mount={() => {
+                  onMount={() => {
                     textInputRef?.focus();
                   }}
-                  on:enter={handleSaveLabel}
-                  on:save={handleSaveLabel}
-                  on:cancel={handleCancelEditLabel}
+                  onEnter={handleSaveLabel}
+                  onSave={handleSaveLabel}
+                  onCancel={handleCancelEditLabel}
                 />
               </div>
             {:else}
               <button
                 class="w-full"
-                on:click={handleThumbnailClick}
+                onclick={handleThumbnailClick}
                 disabled={!$context.isStandaloneSheet}
               >
                 <NodeThumbnail
@@ -483,7 +498,7 @@
             {savedNodeId}
             {savedNode}
             bind:expandedLink
-            on:savedNodeChange={handleSavedNodeChange}
+            onSavedNodeChange={handleSavedNodeChange}
           />
         </div>
       {/if}
@@ -506,7 +521,7 @@
             <InlineMarkdownTextInput
               placeholder="Start typing to add notes..."
               bind:content={sideNotes}
-              on:debouncedChange={handleSaveSideNotes}
+              onDebouncedChange={handleSaveSideNotes}
             />
           </div>
         </div>

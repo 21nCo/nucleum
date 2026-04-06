@@ -4,23 +4,31 @@
   import { Size } from "@21n/types/size.enum";
   import type { Dayjs } from "dayjs";
 
-  export let parentBgIndex: number = 0;
-  export let isActive: boolean = false;
-  export let selectedDate: Dayjs | null = null;
-  export let label: string;
-  export let onInputChange: (value: string) => void;
-  export let onClear: (event: MouseEvent) => void;
-  export let onBoxClick: (event: MouseEvent) => void;
+  let {
+    parentBgIndex = 0,
+    isActive = false,
+    selectedDate = null,
+    label,
+    onInputChange,
+    onClear,
+    onBoxClick
+  }: any = $props();
+  const selectedDateFormatted = $derived(
+    selectedDate?.format("YYYY-MM-DD") || ""
+  );
+  let inputValue = $state("");
+  $effect(() => {
+    inputValue = selectedDateFormatted;
+  });
 
-  $: selectedDateFormatted = selectedDate?.format("YYYY-MM-DD") || "";
-  $: inputValue = selectedDateFormatted;
-
-  function handleClick(e: MouseEvent) {
+  function handleClick(e?: MouseEvent) {
     inputValue = selectedDate?.format("YYYY-MM-DD") || "";
     if (!isActive) {
       isActive = true;
     }
-    onBoxClick(e);
+    if (e) {
+      onBoxClick(e);
+    }
   }
 
   function handleBlur() {
@@ -46,7 +54,7 @@
 
 <div class="flex flex-col items-start gap-1 flex-1">
   <div class="text-b2">{label}</div>
-  <button
+  <div
     class={cn(
       "w-full text-b2 text-fgs3 px-2 py-1 rounded-md cursor-pointer flex items-center justify-between",
       {
@@ -54,7 +62,15 @@
         "ring-2 ring-aps1": isActive
       }
     )}
-    on:click={handleClick}
+    role="button"
+    tabindex="0"
+    onclick={handleClick}
+    onkeydown={(event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        handleClick();
+      }
+    }}
   >
     {#if selectedDate && !isActive}
       <span class="truncate">{selectedDate.format("YYYY-MM-DD")}</span>
@@ -64,21 +80,18 @@
         class="bg-transparent outline-none w-full"
         placeholder="yyyy-mm-dd"
         bind:value={inputValue}
-        on:input={handleInput}
-        on:blur={handleBlur}
+        oninput={handleInput}
+        onblur={handleBlur}
       />
     {/if}
     {#if selectedDate}
       <button
+        type="button"
         class="flex-shrink-0 p-1 flex items-center justify-center hover:bg-bgs3 rounded-md"
+        onclick={handleClear}
       >
-        <Icon
-          icon="x-circle"
-          size={Size.xs}
-          class="stroke-ars1"
-          on:click={handleClear}
-        />
+        <Icon icon="x-circle" size={Size.xs} class="stroke-ars1" />
       </button>
     {/if}
-  </button>
+  </div>
 </div>

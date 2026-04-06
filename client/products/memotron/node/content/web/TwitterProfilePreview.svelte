@@ -2,7 +2,7 @@
   import { appStore } from "@21n/stores/app.store";
   import type { ITwitterProfile } from "@21n/products/memotron/node/node.type";
 
-  export let node: ITwitterProfile;
+  let { node }: { node: ITwitterProfile } = $props();
 
   function resolveUsername() {
     return node.url.split("x.com/")[1];
@@ -10,10 +10,18 @@
 </script>
 
 <div class="flex justify-center items-center h-full w-full">
-  <button
+  <div
     class="flex flex-col items-center gap-6 p-8 border border-fgs4 rounded-md hover:bg-bgs2"
-    on:click={() => {
+    role="button"
+    tabindex="0"
+    onclick={() => {
       appStore.openLink(node.url);
+    }}
+    onkeydown={(event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        appStore.openLink(node.url);
+      }
     }}
   >
     <div>
@@ -30,5 +38,5 @@
     {#if node.body.bio}
       <div>{node.body.bio}</div>
     {/if}
-  </button>
+  </div>
 </div>

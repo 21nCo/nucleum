@@ -9,27 +9,30 @@
   import Text from "@21n/elements/text/Text.svelte";
   import { TextStyle } from "@21n/types/text.enum";
   import ContextMenuItem from "@21n/elements/contextMenu/ContextMenuItem.svelte";
-  import { onMount } from "svelte";
   import { ColorStrength } from "@21n/types/appearance.type";
   import view from "@21n/stores/view.store";
-  export let menuResolver: () => { group: string; items: IContextMenuItem[] }[];
-  export let size: Size.sm | Size.md | Size.lg | Size.xl = Size.md;
-  export let heading: string | undefined = undefined;
-  export let onSelect: (item: IContextMenuItem) => void = () => {};
-  export let parentBgIndex: number = 1;
-  export let isFullWidth: boolean = $view.isConstrainedWidth;
-  export let bottomRender: string | undefined = undefined;
-  let menu: IContextMenuGroup[] = [];
+  let {
+    menuResolver,
+    size = Size.md,
+    heading = undefined,
+    onSelect = () => {},
+    parentBgIndex = 1,
+    isFullWidth = $view.isConstrainedWidth,
+    bottomRender = undefined
+  }: {
+    menuResolver: () => IContextMenuGroup[];
+    size?: Size.sm | Size.md | Size.lg | Size.xl;
+    heading?: string | undefined;
+    onSelect?: (item: IContextMenuItem) => void;
+    parentBgIndex?: number;
+    isFullWidth?: boolean;
+    bottomRender?: string | undefined;
+  } = $props();
+  const menu = $derived<IContextMenuGroup[]>(menuResolver ? menuResolver() : []);
 
   function resolveItemSize() {
     return size === Size.xl ? Size.lg : size;
   }
-
-  onMount(() => {
-    if (!menuResolver) return;
-    const resolution = menuResolver();
-    menu = resolution;
-  });
 </script>
 
 <div
@@ -74,7 +77,7 @@
           size={resolveItemSize()}
           isToggleGroup={group.isToggleGroup}
           {parentBgIndex}
-          on:select={() => onSelect(item)}
+          onSelect={() => onSelect(item)}
         />
       {/each}
     </div>

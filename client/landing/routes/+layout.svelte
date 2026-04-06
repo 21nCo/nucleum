@@ -1,20 +1,23 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { page } from "$app/stores";
   import "@21n/client/app.css";
   import BlankLandingLayout from "@21n/landing/shared/BlankLandingLayout.svelte";
   import { landing } from "@21n/landing/shared/store/shared.store";
 
-  export let data: {
+  let { data, children }: {
     urls?: any;
     topNavBarValues?: any;
     footerValues?: any;
     isProduct?: boolean;
-  };
+    children?: Snippet;
+  } = $props();
 
-  if (data?.urls) landing.load(data.urls);
+  $effect(() => {
+    if (data?.urls) landing.load(data.urls);
+  });
 
-  let isComparePage: boolean;
-  $: isComparePage = $page.url.pathname.includes("compare");
+  let isComparePage = $derived($page.url.pathname.includes("compare"));
 </script>
 
 <BlankLandingLayout
@@ -23,5 +26,5 @@
   isProduct={data?.isProduct ?? true}
   {isComparePage}
 >
-  <slot />
+  {@render children?.()}
 </BlankLandingLayout>

@@ -2,25 +2,45 @@
   import type { SessionComposition } from "@21n/types/pointron/sessionComposition.type";
   import PresetItem from "@21n/products/pointron/focus/advanced/presets/PresetItem.svelte";
   import { pointronPreferences } from "@21n/products/pointron/pointron.store";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import { activeSession } from "@21n/products/pointron/focus/session.store";
   import { compareObjects } from "@21n/shared-utils/obj.utils";
-  const dispatch = createEventDispatcher();
-  export let parentBackgroundIndex = 1;
-  export let isExpandedVariant: boolean = true;
-  export let isInEditMode: boolean = false;
-  export let isSettingsContext: boolean = false;
+  let {
+    parentBackgroundIndex = 1,
+    isExpandedVariant = true,
+    isInEditMode = false,
+    isSettingsContext = false,
+    onEdit = undefined,
+    onSelect = undefined
+  }: {
+    parentBackgroundIndex?: number;
+    isExpandedVariant?: boolean;
+    isInEditMode?: boolean;
+    isSettingsContext?: boolean;
+    onEdit?: ((event: CustomEvent<SessionComposition>) => void) | undefined;
+    onSelect?:
+      | ((event: CustomEvent<{ preset: SessionComposition }>) => void)
+      | undefined;
+  } = $props();
   let selectedPresetIndex: number = -1;
   let selectedPreset: SessionComposition;
   function presetClickHandler(event: any) {
     selectedPreset = event.detail.preset;
     selectedPresetIndex = resolveSelectedPresetIndex(selectedPreset);
     if (!isInEditMode) {
-      dispatch("select", { preset: event.detail.preset });
+      const selectEvent = new CustomEvent<{ preset: SessionComposition }>(
+        "select",
+        {
+          detail: { preset: event.detail.preset }
+        }
+      );
+      onSelect?.(selectEvent);
       return;
     }
-    // showEditor(selectedPreset.id);
-    dispatch("edit", selectedPreset);
+    const editEvent = new CustomEvent<SessionComposition>("edit", {
+      detail: selectedPreset
+    });
+    onEdit?.(editEvent);
   }
 
   onMount(() => {
@@ -57,7 +77,7 @@
     {isExpandedVariant}
     {isSettingsContext}
     isActive={selectedPresetIndex === index && !isInEditMode}
-    on:click={presetClickHandler}
+    onClick={presetClickHandler}
   />
 {/each}
 <!-- </div> -->

@@ -2,6 +2,7 @@
   import Roller from "@21n/components/calendar/birdView/Roller.svelte";
   import {
     Itemtype,
+    type YearPhase,
     type ProgrammedVerticalWheelEvent
   } from "@21n/components/calendar/birdView/Birdview.type";
   import {
@@ -13,11 +14,44 @@
     getLastAlphabetPosition,
     waitForTimeout
   } from "@21n/components/calendar/birdView/Birdview.utils";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount as onLifecycleMount } from "svelte";
   import { debouncer } from "@21n/utils/utils";
   import { TimeScaleUnit } from "@21n/types/time.type";
-  const dispatch = createEventDispatcher();
-  let containerHeight: number;
+
+  type SelectedDateChange =
+    | string
+    | {
+        selectedDate: string;
+        isPostive: boolean;
+      };
+
+  type SelectedMonthChange =
+    | string
+    | {
+        selectedMonth: string;
+        isPostive: boolean;
+      };
+
+  type SelectedYearChange =
+    | number
+    | {
+        selectedYear: number;
+        isPostive: boolean;
+      };
+
+  type RollerPickerMountPayload = {
+    handleDaysWheelEvent: (
+      e: WheelEvent | ProgrammedVerticalWheelEvent
+    ) => Promise<void | true>;
+    handleMonthsWheelEvent: (
+      e: WheelEvent | ProgrammedVerticalWheelEvent
+    ) => Promise<void | true>;
+    handleYearsWheelEvent: (
+      e: WheelEvent | ProgrammedVerticalWheelEvent
+    ) => Promise<void | true>;
+  };
+
+  let containerHeight = $state(0);
   let monthNames = [
     "Jan",
     "Feb",
@@ -32,16 +66,38 @@
     "Nov",
     "Dec"
   ];
-  export let mode: TimeScaleUnit;
+  let {
+    mode,
+    birthdate = undefined,
+    groupByBirthdate = false,
+    yearPhases = [],
+    onSelectedDateReset = undefined,
+    onSelectedMonthReset = undefined,
+    onSelectedDateChange = undefined,
+    onSelectedMonthChange = undefined,
+    onSelectedYearChange = undefined,
+    onMount = undefined
+  }: {
+    mode: TimeScaleUnit;
+    birthdate?: Date | string;
+    groupByBirthdate?: boolean;
+    yearPhases?: YearPhase[];
+    onSelectedDateReset?: ((selectedDate: string) => void) | undefined;
+    onSelectedMonthReset?: ((selectedMonth: string) => void) | undefined;
+    onSelectedDateChange?: ((detail: SelectedDateChange) => void) | undefined;
+    onSelectedMonthChange?: ((detail: SelectedMonthChange) => void) | undefined;
+    onSelectedYearChange?: ((detail: SelectedYearChange) => void) | undefined;
+    onMount?: ((detail: RollerPickerMountPayload) => void) | undefined;
+  } = $props();
 
-  let selectedYear: number = currentYear;
-  let selectedMonth: string = currentYear + currentMonth;
-  let selectedMonthEndDate: number = currentMonthEndDate;
-  let selectedDate: string = selectedMonth + currentDate.getDate();
-  let lowerYearLimit = currentYear - 25;
-  let years: any[] = Array.from({ length: 50 }, (_, i) => lowerYearLimit + i);
-  let yearsForMonths: any[] = getYearsForMonths();
-  let days: string[] = [];
+  let selectedYear = $state(currentYear);
+  let selectedMonth = $state(currentYear + currentMonth);
+  let selectedMonthEndDate = $state(currentMonthEndDate);
+  let selectedDate = $state(selectedMonth + currentDate.getDate());
+  const lowerYearLimit = currentYear - 25;
+  let years = $state(Array.from({ length: 50 }, (_, i) => lowerYearLimit + i));
+  let yearsForMonths = $state(getYearsForMonths());
+  let days = $state([] as string[]);
 
   let monthContainer: HTMLDivElement;
   let yearContainer: HTMLDivElement;
@@ -49,19 +105,20 @@
   let scrollToSelectedYear: () => void;
   let scrollToSelectedMonth: () => void;
   let scrollToSelectedDay: () => void;
+  const rollerItemHeight = 30;
 
-  let rollerConfig = {
-    itemHeight: 24,
+  let rollerConfig = $state({
+    itemHeight: rollerItemHeight,
     containerHeight: 744
-  };
+  });
 
   const debouncedDispatchSelectedDateReset = debouncer(
-    () => dispatch("selectedDateReset", selectedDate),
+    () => onSelectedDateReset?.(selectedDate),
     200
   );
 
   const debouncedDispatchSelectedMonthReset = debouncer(
-    () => dispatch("selectedMonthReset", selectedMonth),
+    () => onSelectedMonthReset?.(selectedMonth),
     200
   );
 
@@ -115,7 +172,8 @@
       const selectedItemElement: HTMLElement | null =
         yearContainer.querySelector(`[data-year="${item}"]`);
       if (
-        Math.ceil(yearContainer.scrollTop) + 77 ==
+        Math.ceil(yearContainer.scrollTop) +
+          (yearContainer.clientHeight - rollerConfig.itemHeight) / 2 ==
         selectedItemElement?.offsetTop
       ) {
         value = item;
@@ -184,7 +242,7 @@
         debouncedDispatchSelectedMonthReset();
       else if (mode == TimeScaleUnit.MONTH)
         if (!e?.isPanelEvent) {
-          dispatch("selectedYearChange", {
+          onSelectedYearChange?.({
             selectedYear,
             isPostive: e?.deltaY > 0
           });
@@ -240,7 +298,7 @@
         debouncedDispatchSelectedDateReset();
         await waitForTimeout(scrollToSelectedDay);
       } else if (mode == TimeScaleUnit.DAY)
-        dispatch("selectedMonthChange", {
+        onSelectedMonthChange?.({
           selectedMonth,
           isPostive: e?.deltaY > 0
         });
@@ -281,26 +339,26 @@
     }
 
     if (!e?.isPanelEvent) {
-      dispatch("selectedDateChange", {
+      onSelectedDateChange?.({
         selectedDate,
         isPostive: e?.deltaY > 0
       });
     }
     await waitForTimeout(scrollToSelectedDay);
   }
-  onMount(() => {
+  onLifecycleMount(() => {
     rollerConfig = {
-      itemHeight: 24,
+      itemHeight: rollerItemHeight,
       containerHeight: containerHeight
     };
     if (mode == TimeScaleUnit.PART)
-      dispatch("selectedDateChange", selectedDate);
+      onSelectedDateChange?.(selectedDate);
     else if (mode == TimeScaleUnit.DAY)
-      dispatch("selectedMonthChange", selectedMonth);
+      onSelectedMonthChange?.(selectedMonth);
     else if (mode == TimeScaleUnit.MONTH)
-      dispatch("selectedYearChange", selectedYear);
+      onSelectedYearChange?.(selectedYear);
 
-    dispatch("mount", {
+    onMount?.({
       handleDaysWheelEvent,
       handleMonthsWheelEvent,
       handleYearsWheelEvent
@@ -314,8 +372,15 @@
     items={years}
     bind:container={yearContainer}
     bind:selectedItem={selectedYear}
-    config={{ ...rollerConfig, itemType: Itemtype.YEAR }}
-    on:mount={(e) => (scrollToSelectedYear = e.detail)}
+    config={{
+      ...rollerConfig,
+      itemType: Itemtype.YEAR,
+      birthdate,
+      groupByBirthdate,
+      yearPhases
+    }}
+    onMount={(scrollToSelectedItem) =>
+      (scrollToSelectedYear = scrollToSelectedItem)}
   />
   {#if mode == TimeScaleUnit.MONTH || mode == TimeScaleUnit.DAY || mode == TimeScaleUnit.PART}
     <Roller
@@ -323,8 +388,14 @@
       items={yearsForMonths}
       bind:container={monthContainer}
       bind:selectedItem={selectedMonth}
-      config={{ ...rollerConfig, itemType: Itemtype.MONTH }}
-      on:mount={(e) => (scrollToSelectedMonth = e.detail)}
+      config={{
+        ...rollerConfig,
+        itemType: Itemtype.MONTH,
+        birthdate,
+        groupByBirthdate
+      }}
+      onMount={(scrollToSelectedItem) =>
+        (scrollToSelectedMonth = scrollToSelectedItem)}
     />
   {/if}
   {#if mode == TimeScaleUnit.DAY || mode == TimeScaleUnit.PART}
@@ -333,13 +404,20 @@
       items={days}
       bind:container={dayContainer}
       bind:selectedItem={selectedDate}
-      config={{ ...rollerConfig, itemType: Itemtype.DAY }}
-      on:mount={(e) => (scrollToSelectedDay = e.detail)}
+      config={{
+        ...rollerConfig,
+        itemType: Itemtype.DAY,
+        birthdate,
+        groupByBirthdate
+      }}
+      onMount={(scrollToSelectedItem) =>
+        (scrollToSelectedDay = scrollToSelectedItem)}
     />
   {/if}
   <div
     class="absolute z-0 w-full bg-aps3"
     style="top:{containerHeight / 2 -
-      rollerConfig.itemHeight}px;height:{rollerConfig.itemHeight}px;max-height:{rollerConfig.itemHeight}px;"
+      rollerConfig.itemHeight /
+        2}px;height:{rollerConfig.itemHeight}px;max-height:{rollerConfig.itemHeight}px;"
   ></div>
 </div>

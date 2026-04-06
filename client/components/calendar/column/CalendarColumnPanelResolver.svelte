@@ -5,11 +5,20 @@
   import CalendarNotesPanel from "@21n/components/calendar/column/CalendarNotesPanel.svelte";
   import CalendarOverviewPanel from "@21n/components/calendar/column/overview/CalendarOverviewPanel.svelte";
   import { cn } from "@21n/utils/ui.utils";
-  export let selectedPanel: CalendarColumnPanel;
-  export let date: Date;
-  export let scale: TimeScaleUnit;
-  export let isRewind: boolean = false;
-  export let mdId: string;
+
+  let {
+    selectedPanel,
+    date,
+    scale,
+    isRewind = false,
+    mdId
+  }: {
+    selectedPanel: CalendarColumnPanel;
+    date: Date;
+    scale: TimeScaleUnit;
+    isRewind?: boolean;
+    mdId: string;
+  } = $props();
 </script>
 
 <div

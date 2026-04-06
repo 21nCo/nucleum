@@ -39,27 +39,39 @@
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
 
-  export let id: string;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  export let accessMode: AccessMode = AccessMode.POP;
-  export let status: IInlineStatus | undefined = undefined;
-  $: accessPoint;
+  let {
+    id,
+    accessPoint = ResourceAccessPoint.SELF,
+    accessMode = AccessMode.POP,
+    status = $bindable(undefined)
+  }: {
+    id: string;
+    accessPoint?: ResourceAccessPoint;
+    accessMode?: AccessMode;
+    status?: IInlineStatus | undefined;
+  } = $props();
+
+  void accessPoint;
   const dev_isPanelSwitcherOnTop = false;
 
   const container =
     getContext<Writable<IContainer | undefined>>(Context.CONTAINER) ||
     readable(undefined);
-  let goal: IActiveGoalStore = ActiveGoalStore.resolve(id);
-  let isReady = false;
+  const goal: IActiveGoalStore = ActiveGoalStore.resolve(id);
+  let isReady = $state(false);
 
-  $: isConstrainedWidth =
-    ($container && $container.width < resolveMinWidth(2)) ?? false;
-  $: isThreeColumned =
-    ($container && $container.width >= resolveMinWidth(3)) ?? false;
+  const isConstrainedWidth = $derived(
+    ($container && $container.width < resolveMinWidth(2)) ?? false
+  );
+  const isThreeColumned = $derived(
+    ($container && $container.width >= resolveMinWidth(3)) ?? false
+  );
 
-  $: tabs = resolvePanelOptions($goal, { isConstrainedWidth, isThreeColumned });
+  const tabs = $derived(
+    resolvePanelOptions($goal, { isConstrainedWidth, isThreeColumned })
+  );
 
-  $: {
+  $effect(() => {
     if (
       tabs &&
       $goal &&
@@ -68,7 +80,7 @@
     ) {
       goal.switchPanel(tabs[0].value);
     }
-  }
+  });
 
   onDestroy(() => {
     const latestAccessMode = $goal?.accessMode ?? accessMode;
@@ -104,7 +116,7 @@
     return goal.afterInit();
   }
 
-  let initPromise: Promise<void> = initialize();
+  let initPromise = $state<Promise<void>>(initialize());
 
   async function rearrangePanels(e: CustomEvent) {
     if (!Array.isArray(e.detail)) {
@@ -167,20 +179,22 @@
                       isBgBar={true}
                       size={Size.sm}
                       isRearrangeableByDefault={true}
-                      on:rearrange={rearrangePanels}
-                      on:switch={(e) => {
+                      onRearrange={rearrangePanels}
+                      onSwitch={(e) => {
                         goal.switchPanel(e.detail);
                       }}
                     >
-                      <div slot="right">
-                        {#if $goal.accessMode === AccessMode.FULL && !isConstrainedWidth}
-                          <ResourceInlineCloseButton
-                            accessMode={$goal.accessMode}
-                            parentBgIndex={2}
-                            id={$goal.id}
-                          />
-                        {/if}
-                      </div>
+                      {#snippet right()}
+                        <div>
+                          {#if $goal.accessMode === AccessMode.FULL && !isConstrainedWidth}
+                            <ResourceInlineCloseButton
+                              accessMode={$goal.accessMode}
+                              parentBgIndex={2}
+                              id={$goal.id}
+                            />
+                          {/if}
+                        </div>
+                      {/snippet}
                     </PanelSwitcher>
                     {#if isConstrainedWidth}
                       <div
@@ -219,9 +233,9 @@
 
     <ComponentBaseLayer
       subscribeToRecords={[id]}
-      on:change={(e) => {
+      onChange={(e) => {
         try {
-          if ("parent" in e.detail.params.record) {
+          if ("params" in e && e.params?.record && "parent" in e.params.record) {
             isReady = false;
             initPromise = initialize();
           }

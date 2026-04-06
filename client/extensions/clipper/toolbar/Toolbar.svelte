@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
+  import type { IHighlighter } from "@21n/products/memotron/common/highlighters/highlight.type";
+  import { onMount } from "svelte";
   import HightlightColorItem from "@21n/products/memotron/common/highlighters/HightlightColorItem.svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import Divider from "@21n/elements/Divider.svelte";
@@ -22,37 +23,55 @@
   import { hoverable } from "@21n/actions/hover.action";
   import { resolveContentTypeString } from "@21n/extensions/clipper/clipper.utils";
 
-  const dispatch = createEventDispatcher();
-  export let activeHighlighter: string | null = null;
-  export let isSnipActive: boolean = false;
-  export let contentType: NodeType = NodeType.WEB_PAGE;
-  export let isDragging: boolean = false;
-  export let isSidePanelOpen: boolean = false;
+  let {
+    activeHighlighter = $bindable<string | null>(null),
+    isSnipActive = $bindable(false),
+    contentType = NodeType.WEB_PAGE,
+    isDragging = $bindable(false),
+    isSidePanelOpen = false,
+    onColor = undefined,
+    onSave = undefined,
+    onSaved = undefined,
+    onCollapse = undefined,
+    onClose = undefined
+  }: {
+    activeHighlighter?: string | null;
+    isSnipActive?: boolean;
+    contentType?: NodeType;
+    isDragging?: boolean;
+    isSidePanelOpen?: boolean;
+    onColor?: ((event: CustomEvent<IHighlighter | number>) => void) | undefined;
+    onSave?: (() => void) | undefined;
+    onSaved?: (() => void) | undefined;
+    onCollapse?: (() => void) | undefined;
+    onClose?: (() => void) | undefined;
+  } = $props();
   let isHovering = false;
   let isSidePanelAvailable = true;
   let isAutoHighlighterExpanded = false;
-  $: contentTypeStr = resolveContentTypeString(contentType);
-  $: isScreenShotOnly = screenShotOnlyPages.some((regex) =>
-    regex.test($webpage.url)
+  const contentTypeStr = $derived(resolveContentTypeString(contentType));
+  const isScreenShotOnly = $derived(
+    screenShotOnlyPages.some((regex) => regex.test($webpage.url))
   );
-
-  $: isSaveOnly = saveOnlyPages.some((regex) => regex.test($webpage.url));
+  const isSaveOnly = $derived(
+    saveOnlyPages.some((regex) => regex.test($webpage.url))
+  );
 
   if ($toolbarState.position === undefined) {
     toolbarState.changePosition(Placement.Right);
   }
 
-  $: tooltipOptions = {
+  const tooltipOptions = $derived({
     placement:
       $toolbarState.position === Placement.Bottom
         ? Placement.TopCenter
         : Placement.Left,
     isUseAbsolutePositioning: true,
     offsetInPx: 8
-  };
-  $: buttonParams = {
+  });
+  const buttonParams = $derived({
     tooltipOptions
-  };
+  });
 
   onMount(() => {
     setTimeout(() => {
@@ -66,12 +85,16 @@
   function toggleAutoHighligher() {
     if (!isAutoHighlighterExpanded) {
       activeHighlighter = null;
-      dispatch("color", 0);
+      onColor?.(new CustomEvent<IHighlighter | number>("color", { detail: 0 }));
     } else {
       resetAll("highlighter");
       const highlighter = $highlightStore.highlighters[0];
       if (!highlighter) return;
-      dispatch("color", highlighter);
+      onColor?.(
+        new CustomEvent<IHighlighter | number>("color", {
+          detail: highlighter
+        })
+      );
       activeHighlighter = highlighter.id;
     }
   }
@@ -119,8 +142,8 @@
     }
   )}
   draggable="true"
-  on:dragstart={() => (isDragging = true)}
-  on:dragend={() => (isDragging = false)}
+  ondragstart={() => (isDragging = true)}
+  ondragend={() => (isDragging = false)}
   use:hoverable={{
     onHover: (e) => {
       isHovering = e;
@@ -137,16 +160,16 @@
           text: "This page is already saved. Click to link",
           direction: Placement.Left
         }}
-        on:click={() => {
-          dispatch("saved");
+        onclick={() => {
+          onSaved?.();
         }}
       >
         <Icon icon="check-circle" class="fill-fgs2" isFilled={true} />
       </button>
     {:else}
       <button
-        on:click={() => {
-          dispatch("save");
+        onclick={() => {
+          onSave?.();
         }}
         use:tooltip={{
           text: `**Save ${contentTypeStr.toLowerCase()}** (Cmd/Ctrl + J)`,
@@ -158,14 +181,6 @@
       </button>
     {/if}
   {:else if $syncStore.id}
-    <!-- <Button
-      icon="sync"
-      tooltip="Sync"
-      {...buttonParams}
-      on:click={() => {
-        syncStore.togglePane();
-      }}
-    /> -->
     <Toggle
       icon="sync"
       tooltip="Sync"
@@ -180,18 +195,9 @@
     bgSize={Size.sm}
     bind:on={isSnipActive}
     {tooltipOptions}
-    on:change={() => resetAll("snip")}
+    onChange={() => resetAll("snip")}
   />
   {#if !isScreenShotOnly && !isSaveOnly}
-    <!-- TODO - enable this when generate summary is implemented -->
-    <!-- <Button
-      icon="document-text"
-      tooltip="Generate summary"
-      {...buttonParams}
-      on:click={() => {
-        dispatch("summarize");
-      }}
-    /> -->
     <div
       class={cn("flex gap-3 items-center", {
         "flex-col w-full":
@@ -211,7 +217,7 @@
         bgSize={Size.sm}
         bind:on={isAutoHighlighterExpanded}
         {tooltipOptions}
-        on:change={toggleAutoHighligher}
+        onChange={toggleAutoHighligher}
       />
       {#if isAutoHighlighterExpanded}
         <div
@@ -226,9 +232,13 @@
             <HightlightColorItem
               {highlighter}
               isActive={highlighter.id === activeHighlighter}
-              on:click={() => {
+              onClick={() => {
                 activeHighlighter = highlighter.id;
-                dispatch("color", highlighter);
+                onColor?.(
+                  new CustomEvent<IHighlighter | number>("color", {
+                    detail: highlighter
+                  })
+                );
               }}
             />
           {/each}
@@ -246,31 +256,16 @@
       icon="hugeicons:sidebar-right"
       tooltip="Open Side panel"
       {...buttonParams}
-      on:click={() =>
+      onclick={() =>
         relayToBackgroundScript({
           event: ExtensionEvent.RUN,
           data: { action: ExtensionEvent.TOGGLE_SIDEPANEL }
         })}
     />
   {/if}
-  <!-- <Button
-    icon="minus-circle"
-    tooltip="Collapse"
-    {...buttonParams}
-    on:click={() => {
-      dispatch("collapse");
-    }}
-  /> -->
-  <!-- <div
-    class={cn("flex", {
-      "flex-col gap-2":
-        $toolbarState.position === Placement.Right ||
-        $toolbarState.position === Placement.Left
-    })}
-  > -->
   <button
-    on:click={() => {
-      dispatch("collapse");
+    onclick={() => {
+      onCollapse?.();
     }}
     use:tooltip={{
       text: "**Minimize toolbar** (Alt + M)",
@@ -281,8 +276,8 @@
     <Icon icon="minus-circle" class="text-ass1" />
   </button>
   <button
-    on:click={() => {
-      dispatch("close");
+    onclick={() => {
+      onClose?.();
     }}
     use:tooltip={{
       text: "**Hide toolbar** (Alt + X)",

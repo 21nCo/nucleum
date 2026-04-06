@@ -12,8 +12,10 @@
   import { SessionUIContext } from "@21n/types/pointron/session.type";
   import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
   import { Size } from "@21n/types/size.enum";
-  $: isExpandedMode =
-    ($view.landscapiness > 1.4 && $view.scale > 1) || $view.scale > 1.3;
+
+  let isExpandedMode = $derived(
+    ($view.landscapiness > 1.4 && $view.scale > 1) || $view.scale > 1.3
+  );
 </script>
 
 <div class="relative flex flex-col w-full h-full p-4 pb-2 bg--bgs2/40">

@@ -9,7 +9,6 @@
   import { TextStyle } from "@21n/types/text.enum";
   import { TimeScaleUnit } from "@21n/types/time.type";
   import { cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
   import {
     CalendarColumnLayout,
     CalendarColumnPanel,
@@ -33,19 +32,28 @@
   import { AppSearchParam } from "@21n/types/appStore.type";
   import DayTimeline from "./timeline/daytimeline/DayTimeline.svelte";
   import BoxButton from "@21n/elements/button/BoxButton.svelte";
-  const dispatch = createEventDispatcher();
 
-  export let scale: TimeScaleUnit;
-  export let viewScale: TimeScaleUnit = TimeScaleUnit.DAY;
-  export let date: Date;
-  export let expansionMode: CalendarExpansionMode =
-    CalendarExpansionMode.JOURNAL;
-  export let isRewind: boolean = false;
-  export let isCwContext: boolean = false;
+  let {
+    scale,
+    viewScale = TimeScaleUnit.DAY,
+    date = $bindable(),
+    expansionMode = CalendarExpansionMode.JOURNAL,
+    isRewind = false,
+    isCwContext = false,
+    onDateChange = undefined
+  }: {
+    scale: TimeScaleUnit;
+    viewScale?: TimeScaleUnit;
+    date?: Date;
+    expansionMode?: CalendarExpansionMode;
+    isRewind?: boolean;
+    isCwContext?: boolean;
+    onDateChange?: ((event: CustomEvent<Date>) => void) | undefined;
+  } = $props();
   let mdId = generateSimpleRandomId();
-  const backPath = $page.url.searchParams.get(AppSearchParam.RETURN_TO);
+  const backPath = $derived($page.url.searchParams.get(AppSearchParam.RETURN_TO));
 
-  let selectedPanel: CalendarColumnPanel = resolvePanelSelection();
+  let selectedPanel = $state<CalendarColumnPanel>(resolvePanelSelection());
 
   function resolvePanelSelection() {
     const panelState = uiState.getState(UIState.calendarColumnPanel, {
@@ -59,14 +67,15 @@
     );
   }
 
-  let containerWidth = 0;
+  let containerWidth = $state(0);
+  const layout = $derived(resolveLayout(containerWidth));
+  const panels = $derived(resolveCalendarColumnPanels($appStore.product, layout));
 
-  $: layout = resolveLayout(containerWidth);
-
-  $: panels = resolveCalendarColumnPanels($appStore.product, layout);
-  $: if (panels.length === 1) {
-    selectedPanel = panels[0].value;
-  }
+  $effect(() => {
+    if (panels.length === 1) {
+      selectedPanel = panels[0].value;
+    }
+  });
 
   function resolveLayout(width: number) {
     if (width > 1400) {
@@ -79,7 +88,7 @@
   }
 
   function handleDateChange(e: CustomEvent<Date>) {
-    dispatch("dateChange", e.detail);
+    onDateChange?.(e);
   }
 
   function openNotesInFullScreen() {
@@ -106,7 +115,7 @@
             icon="ph:caret-left"
             class="text-fgs3"
             size={Size.lg}
-            on:click={() => {
+            onclick={() => {
               appStore.gotoPath(backPath);
             }}
           />
@@ -115,7 +124,7 @@
           <!-- {formatDate(date)} -->
           <DatePicker
             bind:date
-            on:change={handleDateChange}
+            onChange={handleDateChange}
             variant="inline-with-icon"
           />
         </div>
@@ -126,7 +135,7 @@
             icon="expand"
             tooltip="Expand notes"
             size={Size.sm}
-            on:click={openNotesInFullScreen}
+            onclick={openNotesInFullScreen}
           />
         {/if}
         <CalendarColumnPanelSelector bind:selectedPanel {panels} />
@@ -151,7 +160,7 @@
           scale={viewScale}
           isExpandable={layout === CalendarColumnLayout.FULL}
           {layout}
-          on:dateChange={handleDateChange}
+          onDateChange={handleDateChange}
         />
       {/if}
       {#if layout !== CalendarColumnLayout.TABS}
@@ -179,7 +188,7 @@
                     icon="expand"
                     tooltip="Expand notes"
                     size={Size.sm}
-                    on:click={openNotesInFullScreen}
+                    onclick={openNotesInFullScreen}
                   />
                 </div>
               {/if}
@@ -209,7 +218,7 @@
           scale={viewScale}
           isExpandable={true}
           {layout}
-          on:dateChange={handleDateChange}
+          onDateChange={handleDateChange}
         />
       {/if}
     {/key}

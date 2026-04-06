@@ -20,12 +20,20 @@
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { PlanType } from "@21n/components/subscription/userPlan.type";
   import Icon from "@21n/elements/Icon.svelte";
-  export let context: "page" | "modal" = "page";
-  export let parentBackgroundIndex: number = 1;
-  let isActivePlan = false;
+  let {
+    context = "page",
+    parentBackgroundIndex = 1,
+    onclick = undefined
+  }: {
+    context?: "page" | "modal";
+    parentBackgroundIndex?: number;
+    onclick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
+  const isActivePlan = $derived(
+    $account.plan ? determineIfPlanIsActive($account.plan) : false
+  );
   function determineLicense() {
     if (!$account.plan) return "Unknown";
-    isActivePlan = determineIfPlanIsActive($account.plan);
     if ($account.plan?.plan === PlanType.TRIAL) {
       if (!isActivePlan) {
         return "Trial expired - Please upgrade";
@@ -46,7 +54,7 @@
   {#if $account.dataMode === UserDataMode.CLOUD}
     <button
       class="flex flex-col justify-between items-center w-full h-full"
-      on:click
+      {onclick}
     >
       <div class="flex w-full justify-end text-b4 text-fgs3 px-3 pt-2">
         {$account.userInfo?.joinDate
@@ -110,7 +118,7 @@
             : "Go to signup/signin"}
           parentBgIndex={3}
           size={Size.sm}
-          on:click={() => {
+          onclick={() => {
             account.signOut({ isPreventDapIdClear: true });
             modalEvent.hide(Action.SETTINGS);
           }}

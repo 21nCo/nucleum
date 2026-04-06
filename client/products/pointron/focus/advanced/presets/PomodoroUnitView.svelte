@@ -1,7 +1,6 @@
 <script lang="ts">
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import type { SessionComposition } from "@21n/types/pointron/sessionComposition.type";
-  import { createEventDispatcher, onMount } from "svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
   import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
@@ -9,16 +8,39 @@
   import { Orientation } from "@21n/types/direction.enum";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
-  const dispatch = createEventDispatcher();
-  export let composition: SessionComposition;
-  export let isShowRemove: boolean = false;
+  let {
+    composition = $bindable(),
+    isShowRemove = false,
+    variant = "v2",
+    onChange = undefined,
+    onRemove = undefined
+  }: {
+    composition: SessionComposition;
+    isShowRemove?: boolean;
+    variant?: "v1" | "v2";
+    onChange?: ((event: CustomEvent<SessionComposition>) => void) | undefined;
+    onRemove?:
+      | ((event: CustomEvent<{ preset: SessionComposition }>) => void)
+      | undefined;
+  } = $props();
   let error: string | null = null;
-  export let variant: "v1" | "v2" = "v2";
   // let rounds = composition.numberOfFocusRounds ?? 2;
   // let focus = composition.focusDuration ?? 28;
   // let brek = composition.breakDuration ?? 2;
+  function emitChange() {
+    const changeEvent = new CustomEvent<SessionComposition>("change", {
+      detail: composition
+    });
+    onChange?.(changeEvent);
+  }
   function onRemoveClicked() {
-    dispatch("remove", { preset: composition });
+    const removeEvent = new CustomEvent<{ preset: SessionComposition }>(
+      "remove",
+      {
+        detail: { preset: composition }
+      }
+    );
+    onRemove?.(removeEvent);
   }
   // function onChange(event: any) {
   //   let presetToBeSaved = {
@@ -37,9 +59,6 @@
   class="relative flex flex-col w-full gap-6 2k:gap-8 p-3 dp:p-4 2k:p-6 rounded-md border-2 border-bgs2 userdata"
 >
   {#if isShowRemove}
-    <!-- <div class="self-end">
-      <Button icon="cross" on:click={onRemoveClicked} />
-    </div> -->
     <div class="absolute bg-bgs1 right-1 -top-3">
       <Button
         icon="minus-circle"
@@ -47,7 +66,7 @@
         type={ButtonVariant.DANGER}
         style={ButtonStyle.OUTLINED}
         label="Remove"
-        on:click={onRemoveClicked}
+        onclick={onRemoveClicked}
       />
     </div>
   {/if}
@@ -61,12 +80,12 @@
             placeholder="rounds"
             type="number"
             numberInputParams={{ min: 1, max: 100, step: 1 }}
-            on:change
+            onChange={emitChange}
           />
         </div>
         <div class="self-end flex gap-3 items-center">
           <div>x</div>
-          <DurationInput bind:value={composition.focusDuration} on:change />
+          <DurationInput bind:value={composition.focusDuration} onChange={emitChange} />
         </div>
       </div>
     </div>
@@ -80,18 +99,18 @@
         label: "Number of focus rounds",
         orientation: Orientation.Vertical
       }}
-      on:change
+      onChange={emitChange}
     />
     <DurationInput
       bind:value={composition.focusDuration}
-      on:change
+      onChange={emitChange}
       label={{ label: "Focus duration", orientation: Orientation.Vertical }}
     />
   {/if}
 
   <DurationInput
     bind:value={composition.breakDuration}
-    on:change
+    onChange={emitChange}
     label={{ label: "Break duration", orientation: Orientation.Vertical }}
   />
   <!-- <InlineErrorMessage bind:error /> -->

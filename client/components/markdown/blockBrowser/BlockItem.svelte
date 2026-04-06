@@ -1,6 +1,5 @@
 <script lang="ts">
   import Icon from "@21n/elements/Icon.svelte";
-  import { createEventDispatcher } from "svelte";
   import { cn } from "@21n/utils/ui.utils";
   import Badge from "@21n/elements/text/Badge.svelte";
   import type { IBlockBrowserItem } from "@21n/components/markdown/blockBrowser/blockBrowser.type";
@@ -8,14 +7,23 @@
   import { Placement } from "@21n/types/direction.enum";
   import MdShortcutText from "@21n/components/markdown/shortcuts/MdShortcutText.svelte";
 
-  export let block: IBlockBrowserItem;
-  export let width: string = "w-full";
-  export let isFocused: boolean = false;
-  const dispatch = createEventDispatcher();
-  let ref: HTMLElement;
-  $: if (isFocused && ref) {
-    ref.scrollIntoView({ behavior: "smooth", block: "end" });
-  }
+  let {
+    block,
+    width = "w-full",
+    isFocused = false,
+    onSelect = undefined
+  }: {
+    block: IBlockBrowserItem;
+    width?: string;
+    isFocused?: boolean;
+    onSelect?: ((event: CustomEvent<IBlockBrowserItem>) => void) | undefined;
+  } = $props();
+  let ref = $state<HTMLElement>();
+  $effect(() => {
+    if (isFocused && ref) {
+      ref.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  });
 </script>
 
 <button
@@ -28,8 +36,12 @@
       "opacity-70 cursor-not-allowed": block.isDisabled
     }
   )}
-  on:click={() => {
-    if (!block.isDisabled) dispatch("select", block);
+  onclick={() => {
+    if (block.isDisabled) return;
+    const event = new CustomEvent<IBlockBrowserItem>("select", {
+      detail: block
+    });
+    onSelect?.(event);
   }}
   use:tooltip={{
     disabled: !block.tooltip,

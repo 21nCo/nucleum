@@ -1,4 +1,7 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import AppMenuSwitcher from "@21n/layout/leftPanel/appMenuSwitcher/AppMenuSwitcher.svelte";
   import { appStore } from "@21n/stores/app.store";
   import view from "@21n/stores/view.store";
@@ -12,12 +15,23 @@
   import { UIState } from "@21n/stores/uiState/uiState.type";
   import LeftNavCommandAction from "@21n/layout/leftPanel/LeftNavCommandAction.svelte";
   import LeftNavOfflineStatus from "@21n/layout/leftPanel/LeftNavOfflineStatus.svelte";
-
-  export let isRounded = false;
-  let isMinimized: boolean = false;
-  let headerHeight: number = 150;
-  let isHovered: boolean = false;
-  let isInThinMode = refreshSidebarCollapseState();
+  let {
+    isRounded = false,
+    top,
+    header,
+    headerThin,
+    mid
+  }: {
+    isRounded?: boolean;
+    top?: Snippet;
+    header?: Snippet;
+    headerThin?: Snippet;
+    mid?: Snippet;
+  } = $props();
+  let isMinimized = $state(false);
+  const headerHeight = 150;
+  let isHovered = $state(false);
+  let isInThinMode = $state(refreshSidebarCollapseState());
   onMount(() => {
     if ($view.landscapiness < 1.25) {
       isInThinMode = true;
@@ -44,20 +58,20 @@
       ? 'bg-bgs3 p-4 w-48'
       : 'bg-aps1 opacity-50'}"
     style="top: {headerHeight}px"
-    on:mouseenter={() => (isHovered = true)}
-    on:mouseleave={() => (isHovered = false)}
+    onmouseenter={() => (isHovered = true)}
+    onmouseleave={() => (isHovered = false)}
   >
     <AppMenuSwitcher
       {isHovered}
       parentBackgroundIndex={1}
       layoutContext={LayoutContext.MINIMIZED}
     />
-    {#if isHovered}
-      <Button
-        on:click={onMinimizeToggled}
-        size={Size.sm}
-        label="switch to verbose"
-      />
+      {#if isHovered}
+        <Button
+          onclick={onMinimizeToggled}
+          size={Size.sm}
+          label="switch to verbose"
+        />
     {/if}
   </button>
 {:else}
@@ -68,8 +82,8 @@
       "ml-2": isRounded,
       "border--r border-r-brs2": !isRounded
     })}
-    on:mouseenter={() => (isHovered = true)}
-    on:mouseleave={() => (isHovered = false)}
+    onmouseenter={() => (isHovered = true)}
+    onmouseleave={() => (isHovered = false)}
   >
     <div
       class={cn(
@@ -85,27 +99,27 @@
         <div
           class="w-full flex items-center h-6 {isInThinMode
             ? 'justify-center'
-            : $$slots.top
+            : top
               ? 'justify-between'
               : 'justify-end'}  px-2"
         >
           {#if !isInThinMode}
-            <slot name="top" />
+            {@render top?.()}
           {/if}
           {#if isHovered}
             <Button
               icon="sidebar-toggle"
               size={Size.lg}
-              on:click={() => {
+              onclick={() => {
                 uiState.toggleSidebar();
               }}
             />
           {/if}
         </div>
         {#if isInThinMode}
-          <slot name="header-thin" />
+          {@render headerThin?.()}
         {:else}
-          <slot name="header" />
+          {@render header?.()}
         {/if}
         <div class="flex flex-col gap-8 items-center w-full p-2">
           <AppMenuSwitcher
@@ -115,14 +129,14 @@
               : LayoutContext.DEFAULT}
           />
           {#if !isInThinMode}
-            <slot name="mid" />
+            {@render mid?.()}
           {/if}
         </div>
       </div>
       <div class="w-full flex flex-col gap-2 items-center">
         {#if $appStore.isDebugMode}
           <Button
-            on:click={onMinimizeToggled}
+            onclick={onMinimizeToggled}
             size={Size.xs}
             label={isInThinMode ? "min" : "switch to min mode"}
             parentBgIndex={2}

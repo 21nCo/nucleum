@@ -8,42 +8,51 @@
   import PointronLogo from "./PointronLogo.svelte";
   import NucleusLogo from "./NucleusLogo.svelte";
   import NucleusAnimation from "./NucleusAnimation.svelte";
-
-  export let subatom: string | undefined = undefined;
-  export let size: Size.sm | Size.md | Size.xs = Size.md;
-  export let isShowAnimation: boolean = false;
-  let cssRoot: HTMLElement | null;
-  let logoRoot: HTMLElement | null = null;
-  export let variant: "accent" | "subtle" | "primary" = "primary";
+  let {
+    subatom = $bindable(undefined),
+    size = Size.md,
+    isShowAnimation = false,
+    variant = "primary"
+  }: {
+    subatom?: string | undefined;
+    size?: Size.sm | Size.md | Size.xs;
+    isShowAnimation?: boolean;
+    variant?: "accent" | "subtle" | "primary";
+  } = $props();
+  let cssRoot = $state<HTMLElement | null>(null);
+  let logoRoot = $state<HTMLElement | null>(null);
 
   onMount(async () => {
     if (!subatom)
       subatom =
         (await clientStorage.get(ClientStorageKey.PRODUCT)) ?? "tidigit";
   });
-  $: width = size === Size.md ? 180 : size === Size.sm ? 30 : 25;
-
-  $: threadColor =
+  const width = $derived(size === Size.md ? 180 : size === Size.sm ? 30 : 25);
+  const threadColor = $derived(
     variant === "accent"
       ? "rgba(var(--colors-aps1), 0.5)"
       : variant === "subtle"
         ? "rgba(var(--colors-fgs3), 0.4)"
-        : "rgba(var(--colors-fgs1), 0.45)";
-
-  $: bgColor =
+        : "rgba(var(--colors-fgs1), 0.45)"
+  );
+  const bgColor = $derived(
     variant === "accent"
       ? "rgba(var(--colors-aps2), 0.05)"
       : variant === "subtle"
         ? "rgba(var(--colors-bgs3), 0.5)"
-        : "rgba(var(--colors-bgs2), 0.5)";
+        : "rgba(var(--colors-bgs2), 0.5)"
+  );
   onMount(() => {
     cssRoot = logoRoot;
     cssRoot?.style.setProperty("--thread-color", threadColor);
   });
-
-  $: if (cssRoot) {
+  $effect(() => {
+    bgColor;
+    if (!cssRoot) {
+      return;
+    }
     cssRoot.style.setProperty("--thread-color", threadColor);
-  }
+  });
 </script>
 
 <div class="relative">

@@ -4,18 +4,14 @@
   import { HapticFeedback } from "@21n/types/haptic.enum";
   import { IconVariant } from "@21n/types/icon.type";
   import { Size } from "@21n/types/size.enum";
-  import {
-    hapticFeedback,
-    postMessageToParent
-  } from "@21n/utils/embed.utils";
+  import { hapticFeedback, postMessageToParent } from "@21n/utils/embed.utils";
   import { EmbedMessage } from "@21n/types/embedMessage.enum";
   type restrictedlengthArray = [string, string, string, string];
-  export let IconsList: restrictedlengthArray = [
-    "play",
-    "camera",
-    "video-camera",
-    "music"
-  ];
+  let {
+    IconsList = ["play", "camera", "video-camera", "music"]
+  }: {
+    IconsList?: restrictedlengthArray;
+  } = $props();
   let touchAndHold = false;
   let fingerId = "";
   let timerId: ReturnType<typeof setTimeout> | undefined;
@@ -25,9 +21,11 @@
   let containerTouchY = 0;
   let rem = 16;
   let captureButtonTop: number | undefined;
-  $: if (touchY && touchAndHold) {
+  //1.37rem is half the height of the capture button
+  $effect(() => {
+    if (!touchY || !touchAndHold) return;
     let [top, , ,] = getCurrentPosition("captureIconsHolder");
-    if (top) top += 1.37 * rem; //1.37rem is half the height of the capture button
+    if (top) top += 1.37 * rem;
     if (touchY > (top ?? 10000)) {
       containerTouchY = touchY;
       let flag = false;
@@ -41,7 +39,7 @@
         fingerId = "";
       }
     }
-  }
+  });
   /**
    *
    * @param event
@@ -120,8 +118,8 @@
         id={icon}
         role="button"
         tabindex="0"
-        on:click={() => handleIconClick(icon)}
-        on:keydown={(event) => {
+        onclick={() => handleIconClick(icon)}
+        onkeydown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault();
             handleIconClick(icon);
@@ -156,18 +154,23 @@
     role="button"
     tabindex="0"
     style={touchAndHold ? "opacity:0" : ""}
-    on:touchstart|stopPropagation={(event) => {
+    ontouchstart={(event) => {
+      event.stopPropagation();
       handleTouchStart(event);
     }}
-    on:touchmove|stopPropagation={(event) => handleTouchMove(event)}
-    on:touchend|stopPropagation={() => {
+    ontouchmove={(event) => {
+      event.stopPropagation();
+      handleTouchMove(event);
+    }}
+    ontouchend={(event) => {
+      event.stopPropagation();
       handleTouchEnd();
     }}
-    on:click={() => {
+    onclick={() => {
       startedOnClick = !startedOnClick;
       touchAndHold = !touchAndHold;
     }}
-    on:keydown={(event) => {
+    onkeydown={(event) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
         startedOnClick = !startedOnClick;

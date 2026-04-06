@@ -5,7 +5,7 @@
     type IMarkdown,
     type IMarkdownParams
   } from "@21n/components/markdown/md.type";
-  import { createEventDispatcher, onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount, type Snippet } from "svelte";
   import Block from "@21n/components/markdown/Block.svelte";
   import {
     getMdStore,
@@ -51,6 +51,16 @@
   import { stringify } from "@21n/shared-utils/json.utils";
   import { Context } from "@21n/types/appStore.type";
 
+  interface $$Events {
+    action: CustomEvent<any>;
+    blocks: CustomEvent<IBlock[]>;
+    blur: CustomEvent<any>;
+    change: CustomEvent<any>;
+    debouncedChange: CustomEvent<IMarkdown | undefined>;
+    focus: CustomEvent<any>;
+    rearrange: CustomEvent<{ md: IMarkdown | undefined }>;
+  }
+
   /**
    * Propagates the event to the parent component.
    *
@@ -60,10 +70,20 @@
    * @param data
    */
   function propagate(event: string, data: any) {
-    dispatch(event, {
+    const detail = {
       ...data,
       md: { ...md, blocks: $mdStore.blocks }
-    });
+    };
+    const customEvent = new CustomEvent(event, { detail });
+    if (event === "action") {
+      onAction?.(customEvent);
+    } else if (event === "change") {
+      onChange?.(customEvent);
+    } else if (event === "focus") {
+      onFocus?.(customEvent);
+    } else if (event === "blur") {
+      onBlur?.(customEvent);
+    }
   }
 
   function markdownContext(message: any) {
@@ -81,33 +101,59 @@
   }
   setContext(Context.MARKDOWN, markdownContext);
 
-  export let md: IMarkdown | undefined = undefined;
-  export let params: IMarkdownParams | undefined = undefined;
-  export let parentBackgroundIndex: number | undefined = undefined;
-  const dispatch = createEventDispatcher();
-  export let id: string | undefined = undefined;
-  let mdId: string = id ?? generateSimpleRandomId();
+  let {
+    md = $bindable(undefined),
+    params = undefined,
+    parentBackgroundIndex = undefined,
+    id = undefined,
+    onAction = undefined,
+    onBlocks = undefined,
+    onBlur = undefined,
+    onChange = undefined,
+    onDebouncedChange = undefined,
+    onFocus = undefined,
+    onRearrange = undefined,
+    title = undefined
+  }: {
+    md?: IMarkdown | undefined;
+    params?: IMarkdownParams | undefined;
+    parentBackgroundIndex?: number | undefined;
+    id?: string | undefined;
+    onAction?: ((event: CustomEvent<any>) => void) | undefined;
+    onBlocks?: ((event: CustomEvent<IBlock[]>) => void) | undefined;
+    onBlur?: ((event: CustomEvent<any>) => void) | undefined;
+    onChange?: ((event: CustomEvent<any>) => void) | undefined;
+    onDebouncedChange?: ((event: CustomEvent<IMarkdown | undefined>) => void) | undefined;
+    onFocus?: ((event: CustomEvent<any>) => void) | undefined;
+    onRearrange?: ((event: CustomEvent<{ md: IMarkdown | undefined }>) => void) | undefined;
+    title?: Snippet | undefined;
+  } = $props();
+  const mdId: string = id ?? generateSimpleRandomId();
   const mdStore = getMdStore(mdId);
   const containerId = `mdcontainer-${mdId}`;
   load(md);
-  $: if (params) mdStore?.setParams(params);
+  $effect(() => {
+    if (params) mdStore?.setParams(params);
+  });
   // $: console.log("blocks", $mdStore.blocks);
-  let keyboardToolbarPanelSelection: string | undefined = undefined;
-  let keyboardToolbarRef: MarkdownkeyboardToolbar | undefined = undefined;
-  let focusedBlock: IRecordId | undefined = undefined;
-  let containerWidth: number = 0;
-  let isInSelectionMode = false;
-  let isSelectionConsecutive = false;
-  $: multiSelectContext = {
+  let keyboardToolbarPanelSelection = $state<string | undefined>();
+  let keyboardToolbarRef = $state<MarkdownkeyboardToolbar | undefined>();
+  let focusedBlock = $state<IRecordId | undefined>();
+  let containerWidth = $state(0);
+  let isInSelectionMode = $state(false);
+  let isSelectionConsecutive = $state(false);
+  const multiSelectContext = $derived.by(() => ({
     resource: Resource.node,
     accessPoint: ResourceAccessPoint.MARKDOWN,
     accessPointId: id
-  };
-  let bulkSelection: IRecordId[] = [];
+  }));
+  let bulkSelection = $state<IRecordId[]>([]);
   let bulkEditUnsub: (() => void) | undefined;
-  $: if (globalBulkEditStore.matchesContext(multiSelectContext)) {
-    resolveBulkEditorInstance();
-  } else {
+  $effect(() => {
+    if (globalBulkEditStore.matchesContext(multiSelectContext)) {
+      resolveBulkEditorInstance();
+      return;
+    }
     bulkEditUnsub?.();
     bulkEditUnsub = undefined;
     if (bulkSelection.length > 0) {
@@ -116,13 +162,16 @@
       isSelectionConsecutive = false;
       keyboardToolbarPanelSelection = undefined;
     }
-  }
+  });
 
   onMount(() => {
     const mdChangeSub = mdContentChangeEvent.subscribe((val) => {
       if (md && "blocks" in md) md = { ...md, blocks: $mdStore.blocks };
       else md = { blocks: $mdStore.blocks };
-      dispatch("blocks", $mdStore.blocks);
+      const event = new CustomEvent<IBlock[]>("blocks", {
+        detail: $mdStore.blocks
+      });
+      onBlocks?.(event);
       dispatchDebouncedChangeEvent();
     });
     return () => {
@@ -138,7 +187,10 @@
   });
 
   const dispatchDebouncedChangeEvent = debouncer(() => {
-    dispatch("debouncedChange", md);
+    const event = new CustomEvent<IMarkdown | undefined>("debouncedChange", {
+      detail: md
+    });
+    onDebouncedChange?.(event);
   }, 1000);
 
   function resolveBulkEditorInstance() {
@@ -231,9 +283,13 @@
       (toBlock?.contentType === NodeType.ORDERED_LIST ||
         toSiblingBlock?.contentType === NodeType.ORDERED_LIST);
     $mdStore.blocks = shiftResourceInArray($mdStore.blocks, fromId, toId, true);
-    dispatch("rearrange", {
-      md: { ...md, blocks: $mdStore.blocks }
-    });
+    const rearrangeEvent = new CustomEvent<{ md: IMarkdown | undefined }>(
+      "rearrange",
+      {
+        detail: { md: { ...md, blocks: $mdStore.blocks } }
+      }
+    );
+    onRearrange?.(rearrangeEvent);
     if (needsReconciliation) {
       const changedBlocks = mdStore.reconcileOrderedListOnDrag(fromId);
       changedBlocks?.forEach((b) => {
@@ -266,9 +322,13 @@
     newBlocks.splice(insertIndex, 0, ...selectedBlocks);
     $mdStore.blocks = newBlocks;
     //TODO - check for reconciliation scenarios
-    dispatch("rearrange", {
-      md: { ...md, blocks: $mdStore.blocks }
-    });
+    const rearrangeEvent = new CustomEvent<{ md: IMarkdown | undefined }>(
+      "rearrange",
+      {
+        detail: { md: { ...md, blocks: $mdStore.blocks } }
+      }
+    );
+    onRearrange?.(rearrangeEvent);
     resetSelection();
   }
 
@@ -374,18 +434,18 @@
   aria-label="Markdown editor"
   role="textbox"
   tabindex="-1"
-  on:keydown={onKeyDown}
+  onkeydown={onKeyDown}
   use:resizeListener={(e) => {
     containerWidth = e.width;
   }}
 >
   <div class="flex justify-between">
     <div class="flex gap-2 items-center">
-      <slot name="title">
-        {#if params?.title}
-          <Text content={params.title} style={TextStyle.PANEL_HEADING} />
-        {/if}
-      </slot>
+      {#if title}
+        {@render title()}
+      {:else if params?.title}
+        <Text content={params.title} style={TextStyle.PANEL_HEADING} />
+      {/if}
     </div>
     <div class="absolute flex gap-2 top-0 right-0 z-40">
       {#if params?.actions?.includes("copy")}
@@ -395,7 +455,7 @@
             label="Copy markdown"
             size={Size.xs}
             parentBgIndex={parentBackgroundIndex}
-            on:click={() => {
+            onclick={() => {
               const markdownAsText = generateMarkdownText($mdStore.blocks, {
                 isIncludeNonSearchBlocks: true
               });
@@ -413,7 +473,7 @@
             label="Copy raw md"
             size={Size.xs}
             parentBgIndex={parentBackgroundIndex}
-            on:click={() => {
+            onclick={() => {
               const rawMdJson = stringify($mdStore.blocks, {
                 isPreventReplacer: true
               });
@@ -487,15 +547,15 @@
               )
               ?.id.toString() === block.id.toString()}
           isInSelectionMode={bulkSelection.length > 0}
-          on:nodularize={(e) => {
+          onNodularize={(e) => {
             propagate("focus", e.detail);
           }}
-          on:popoverVisibility={(e) => {
+          onPopoverVisibility={(e) => {
             if (e.detail) {
               resetSelection();
             }
           }}
-          on:select={(e) => {
+          onSelect={() => {
             resolveBulkEditorInstance();
             const current = globalBulkEditStore.getState().selectedIds;
             const resourceId = block.id.toString();
@@ -528,16 +588,16 @@
     bind:this={keyboardToolbarRef}
     bind:keyboardToolbarPanelSelection
     selectedBlocks={bulkSelection}
-    on:select={() => {
+    onSelect={() => {
       resolveBulkEditorInstance();
       if (focusedBlock) globalBulkEditStore.select([focusedBlock]);
     }}
-    on:unselect={() => {
+    onUnselect={() => {
       resolveBulkEditorInstance();
       globalBulkEditStore.select([]);
     }}
-    on:action={(e) => {
-      const { action, data } = e.detail;
+    onAction={(e) => {
+      const { action, data } = e;
       if (bulkSelection.length === 1) {
         mdStore.alterBlock({ action, data, blockId: bulkSelection[0] });
       } else if (
@@ -552,8 +612,7 @@
       resolveBulkEditorInstance();
       globalBulkEditStore.select([]);
     }}
-    on:insert={(e) => {
-      const toType = e.detail;
+    onInsert={(toType) => {
       const block = $mdStore.blocks.find(resourceInList(bulkSelection[0]));
       if (!block) return;
       if (block.contentType === NodeType.SIMPLE_TEXT && !block.body) {
@@ -572,7 +631,7 @@
       resolveBulkEditorInstance();
       globalBulkEditStore.select([]);
     }}
-    on:focus={() => {
+    onFocus={() => {
       if (bulkSelection.length === 1) mdStore.focusBlock(bulkSelection[0]);
     }}
   />

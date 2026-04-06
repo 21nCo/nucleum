@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import { Orientation, Placement } from "@21n/types/direction.enum";
   import { Size } from "@21n/types/size.enum";
   import Icon from "@21n/elements/Icon.svelte";
@@ -8,10 +7,20 @@
   import TypefaceDropdown from "@21n/components/settings/appearance/TypefaceDropdown.svelte";
   import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
 
-  export let value: string;
-  export let label: { label: string; orientation: Orientation };
-  export let parentBackgroundIndex: number = 1;
-  export let size: Size.md | Size.sm = Size.sm;
+  let {
+    value,
+    label,
+    parentBackgroundIndex = 1,
+    size = Size.sm,
+    onSelect = undefined
+  }: {
+    value: string;
+    label: { label: string; orientation: Orientation };
+    parentBackgroundIndex?: number;
+    size?: Size.md | Size.sm;
+    onSelect?: ((event: CustomEvent<string>) => void) | undefined;
+  } = $props();
+  void parentBackgroundIndex;
 
   type FontOption = {
     label: string;
@@ -63,23 +72,31 @@
     { label: "Varela Round", value: "Varela Round" }
   ];
 
-  const dispatch = createEventDispatcher();
-
-  let isOpen = false;
+  let isOpen = $state(false);
   let triggerRef: HTMLButtonElement;
-  let selectedFont =
+  let selectedFont = $state(
     fontOptions.find((font) => font.value === value) ||
-    fontOptions.find((font) => font.badge === "Default") ||
-    fontOptions[0];
+      fontOptions.find((font) => font.badge === "Default") ||
+      fontOptions[0]
+  );
 
   function handleFontSelect(selectedValue: string) {
     const font = fontOptions.find((f) => f.value === selectedValue);
     if (font) {
       selectedFont = font;
-      value = font.value;
-      dispatch("select", font.value);
+      const selectEvent = new CustomEvent<string>("select", {
+        detail: font.value
+      });
+      onSelect?.(selectEvent);
     }
   }
+
+  $effect(() => {
+    selectedFont =
+      fontOptions.find((font) => font.value === value) ||
+      fontOptions.find((font) => font.badge === "Default") ||
+      fontOptions[0];
+  });
 
   /**
    * Handle change event from popover action
@@ -118,7 +135,7 @@
         onSelect: handleFontSelect
       }
     }}
-    on:change={handleChange}
+    onchange={handleChange}
     aria-haspopup="listbox"
     aria-expanded={isOpen}
   >

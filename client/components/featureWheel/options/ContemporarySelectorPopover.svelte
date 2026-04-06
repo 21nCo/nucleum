@@ -1,7 +1,7 @@
 <script lang="ts">
   import ExternalLogo from "@21n/branding/external/ExternalLogo.svelte";
   import SvgIcon from "@21n/elements/SVGIcon.svelte";
-  import Button from "@21n/landing/shared/elements/Button.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
   import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
   import type {
     ISelectItem,
@@ -9,29 +9,42 @@
   } from "@21n/types/select.type";
   import { cn } from "@21n/utils/ui.utils";
   import Divider from "@21n/elements/Divider.svelte";
+  import { Size } from "@21n/types/size.enum";
 
-  export let title: string;
-  export let options: ISelectItem[] = [];
-  export let comingsoonOptions: ISelectItem[] = [];
-  export let selected: ISelectValue[] | undefined = undefined;
-  export let isUseExternalLogoForIcon: boolean = false;
-  export let onSelect: (selected: ISelectValue[]) => void = () => {};
-  export let onSeeComparisonReport: () => void = () => {};
+  let {
+    title,
+    options = [],
+    comingsoonOptions = [],
+    selected = $bindable(),
+    isUseExternalLogoForIcon = false,
+    onSelect = () => {},
+    onSeeComparisonReport = () => {}
+  }: {
+    title: string;
+    options?: ISelectItem[];
+    comingsoonOptions?: ISelectItem[];
+    selected?: ISelectValue[] | undefined;
+    isUseExternalLogoForIcon?: boolean;
+    onSelect?: (selected: ISelectValue[]) => void;
+    onSeeComparisonReport?: () => void;
+  } = $props();
 
-  let searchTerm = "";
-  let errorMessage: string | null = null;
+  let searchTerm = $state("");
+  let errorMessage = $state<string | null>(null);
   const MAX_SELECTIONS = 3;
 
-  $: filteredOptions = searchTerm
-    ? options.filter(
-        (option) =>
-          option.label?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          option.value
-            .toString()
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase())
-      )
-    : options;
+  const filteredOptions = $derived(
+    searchTerm
+      ? options.filter(
+          (option) =>
+            option.label?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            option.value
+              .toString()
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())
+        )
+      : options
+  );
 </script>
 
 <div
@@ -46,16 +59,18 @@
         <Button
           label="See report"
           type="primary"
-          isShort={true}
-          on:click={() => {
+          size={Size.sm}
+          isPreventMinWidth={true}
+          onclick={() => {
             onSeeComparisonReport();
           }}
         />
         <Button
           label="Clear"
           type="secondary"
-          isShort={true}
-          on:click={() => {
+          size={Size.sm}
+          isPreventMinWidth={true}
+          onclick={() => {
             selected = undefined;
             onSelect(selected ?? []);
             errorMessage = null;
@@ -86,7 +101,7 @@
               "border-brs3 hover:bg-bgs2": !selected?.includes(option.value)
             }
           )}
-          on:click={() => {
+          onclick={() => {
             if (selected?.includes(option.value)) {
               selected = selected?.filter((value) => value !== option.value);
               errorMessage = null;

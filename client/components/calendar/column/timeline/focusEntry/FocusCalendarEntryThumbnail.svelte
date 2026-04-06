@@ -10,22 +10,30 @@
   import FocusEntryGoalsInfoShort from "@21n/components/calendar/column/timeline/focusEntry/FocusEntryGoalsInfoShort.svelte";
   import FocusEntryFocusSplitInfo from "@21n/components/calendar/column/timeline/focusEntry/FocusEntryFocusSplitInfo.svelte";
   import { Size } from "@21n/types/size.enum";
-  export let item: ISessionThumb & {
-    splits: {
-      focus: number;
-      brek: number;
+
+  let {
+    item,
+    height,
+    isOverlapping
+  }: {
+    item: ISessionThumb & {
+      splits: {
+        focus: number;
+        brek: number;
+      };
     };
-  };
-  export let height: number;
-  export let isOverlapping: boolean;
-  let width: number;
-  $: isConstrainedHeight = height > 0 && height < 100;
-  $: isConstrainedWidth = width > 0 && width < 200;
+    height: number;
+    isOverlapping: boolean;
+  } = $props();
+
+  let width = $state(0);
+  const isConstrainedHeight = $derived(height > 0 && height < 100);
+  const isConstrainedWidth = $derived(width > 0 && width < 200);
 </script>
 
 <button
   class="flex flex-col w-full px-1"
-  on:click={() => {
+  onclick={() => {
     appStore.openResource(item.id, AccessMode.POP);
   }}
   use:resizeListener={(el) => {

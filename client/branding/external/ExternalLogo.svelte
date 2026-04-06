@@ -45,15 +45,20 @@
   import Raindrop from "@21n/branding/external/logos/Raindrop.svelte";
 
   import SvgIcon from "@21n/elements/SVGIcon.svelte";
-  export let provider: IdentityProvider | string | IContemporary | undefined =
-    undefined;
-  export let url: string | undefined = undefined;
-  export let width = 20;
-  let className = "";
-  export { className as class };
-  let selected: any = Link;
+  let {
+    provider = undefined,
+    url = undefined,
+    width = 20,
+    class: className = ""
+  }: {
+    provider?: IdentityProvider | string | IContemporary | undefined;
+    url?: string | undefined;
+    width?: number;
+    class?: string;
+  } = $props();
+  let selected = $state<any>(Link);
   const brandfetchKey = import.meta.env.VITE_BRANDFETCH_KEY;
-  $: {
+  $effect(() => {
     if (provider === IdentityProvider.GenericLink) selected = Link;
     else if (provider === IdentityProvider.Behance) selected = Behance;
     else if (provider === IdentityProvider.Github) selected = Github;
@@ -72,13 +77,15 @@
     else if (provider === IdentityProvider.Medium) selected = Medium;
     else if (provider === IdentityProvider.Spotify) selected = Spotify;
     else selected = Default;
-  }
-  $: icon =
+  });
+  const icon = $derived(
     typeof provider === "string"
       ? provider
       : provider
         ? provider?.icon || provider?.label?.toLowerCase()
-        : undefined;
+        : undefined
+  );
+  const SelectedLogo = $derived(selected);
   // $: console.log({ provider });
 </script>
 
@@ -154,7 +161,7 @@
     {:else if icon === "noted"}
       <Noted />
     {:else}
-      <svelte:component this={selected} />
+      <SelectedLogo />
     {/if}
   </svg>
 {/if}

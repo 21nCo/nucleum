@@ -6,49 +6,72 @@
   import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
   import type { InputLabel } from "@21n/types/input.type";
   import ColorPickerElement from "@21n/elements/colorPicker/ColorPickerElement.svelte";
-  import { createEventDispatcher } from "svelte";
   import { debouncer } from "@21n/utils/utils";
-  const dispatch = createEventDispatcher();
+  let {
+    hue = $bindable(0),
+    label = undefined,
+    isShowPreview = true,
+    isHueMode = true,
+    hex = $bindable("#000000"),
+    onChangeCallback = () => {},
+    onDebouncedChangeCallback = () => {}
+  }: {
+    hue?: number;
+    label?: InputLabel | undefined;
+    isShowPreview?: boolean;
+    isHueMode?: boolean;
+    hex?: string;
+    onChangeCallback?: (
+      value: number | string,
+      additional?: {
+        saturation?: number;
+        lightness?: number;
+      }
+    ) => void;
+    onDebouncedChangeCallback?: (
+      value: number | string,
+      additional?: {
+        saturation?: number;
+        lightness?: number;
+      }
+    ) => void;
+  } = $props();
+  let saturation = $state(50);
+  let lightness = $state(50);
+  let fgColorHsl = $state("");
+  let isDark = $state($appearance.colorScheme.isDark);
+  $effect(() => {
+    isDark = $appearance.colorScheme.isDark;
+  });
 
-  export let hue = 0;
-  export let label: InputLabel | undefined = undefined;
-  export let isShowPreview: boolean = true;
-  export let isHueMode: boolean = true;
-  export let hex: string = "#000000";
-  export let onChangeCallback: (
-    value: number | string,
-    additional?: {
-      saturation?: number;
-      lightness?: number;
-    }
-  ) => void = () => {};
-  export let onDebouncedChangeCallback: (
-    value: number | string,
-    additional?: {
-      saturation?: number;
-      lightness?: number;
-    }
-  ) => void = () => {};
-  let saturation = 50;
-  let lightness = 50;
-  let fgColorHsl = "";
-  let isDark: boolean = false;
-  $: isDark = $appearance.colorScheme.isDark;
-
-  function onChange(e: CustomEvent<number | string>) {
-    dispatch("change", e.detail);
-    onChangeCallback(e.detail, {
+  function onChange(value: number | string) {
+    onChangeCallback(value, {
       saturation,
       lightness
     });
   }
 
-  function onDebouncedChange(e: CustomEvent<number | string>) {
-    dispatch("debouncedChange", e.detail);
-    onDebouncedChangeCallback(e.detail, {
+  function onDebouncedChange(value: number | string) {
+    onDebouncedChangeCallback(value, {
       saturation,
       lightness
     });
+  }
+
+  function onElementChange(payload: {
+    rgb: { r: number; g: number; b: number; a: number };
+    hex: string;
+  }) {
+    hex = payload.hex;
+    onChange(payload.hex);
+  }
+
+  function onElementDebouncedChange(payload: {
+    rgb: { r: number; g: number; b: number; a: number };
+    hex: string;
+  }) {
+    hex = payload.hex;
+    debouncedChangePropagation(payload.hex);
   }
 
   const debouncedChangePropagation = debouncer(onDebouncedChange, 1000);
@@ -62,20 +85,20 @@
         bind:saturation
         bind:fgColorHsl
         bind:lightness
-        on:change={onChange}
-        on:debouncedChange={debouncedChangePropagation}
+        {onChange}
+        onDebouncedChange={debouncedChangePropagation}
       />
     {:else}
       <ColorPickerElement
-        on:change={onChange}
-        on:debouncedChange={debouncedChangePropagation}
+        onChange={onElementChange}
+        onDebouncedChange={onElementDebouncedChange}
         bind:value={hex}
       />
     {/if}
     {#if $appStore.isDebugMode}
       <Button
         label={isDark ? "Dark" : "Light"}
-        on:click={() => {
+        onclick={() => {
           isDark = !isDark;
         }}
       />

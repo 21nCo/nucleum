@@ -2,10 +2,12 @@
   import type { ChartType } from "@21n/types/analytics.type";
   import EChart from "./EChart.svelte";
   import view from "@21n/stores/view.store";
-  export let type: ChartType;
-  export let data: any;
-  export let options: any;
-  export let showLegend: boolean = true;
+  let type: ChartType;
+  let data: any;
+  let options: any;
+  let showLegend: boolean = true;
+
+  export { type, data, options, showLegend };
 </script>
 
 <EChart

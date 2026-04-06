@@ -9,12 +9,7 @@ const config = {
       fallback: "index.html"
     }),
     alias: {
-      $local: "./src",
-      $lib: "../../"
-    },
-    files: {
-      lib: "../../"
-      // routes: "../../client/routes"
+      $local: "./src"
     }
   }
 };

@@ -1,8 +1,14 @@
 <script lang="ts">
   import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
-  export let label: string;
-  export let checked: boolean = false;
-  export let width: string = "max-w-md";
+  let {
+    label,
+    checked = $bindable(false),
+    width = "max-w-md"
+  }: {
+    label: string;
+    checked?: boolean;
+    width?: string;
+  } = $props();
 </script>
 
 <div class="flex w-full gap-2 items-center {width}">

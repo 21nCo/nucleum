@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import { hoverable } from "@21n/client/actions/hover.action";
   import Icon from "@21n/client/elements/Icon.svelte";
   import TextInput from "@21n/client/elements/input/TextInput.svelte";
@@ -13,32 +12,66 @@
     type ICombinationNavItem
   } from "./combination.type";
 
-  export let item: ICombinationNavItem;
-  export let depth: number = 0;
-  export let activeItemId: string | null = null;
-  export let isEditMode: boolean = false;
-  export let collapsedItems: Set<string> = new Set();
-  export let editingItemId: string | null = null;
-  export let draggedItemId: string | null = null;
+  let {
+    item,
+    depth = 0,
+    activeItemId = null,
+    isEditMode = false,
+    collapsedItems = new Set(),
+    editingItemId = null,
+    draggedItemId = null,
+    onSelect = undefined,
+    onToggle = undefined,
+    onEdit = undefined,
+    onStartEdit = undefined,
+    onDelete = undefined,
+    onDragStart = undefined,
+    onDragEnd = undefined,
+    onDrop = undefined
+  }: {
+    item: ICombinationNavItem;
+    depth?: number;
+    activeItemId?: string | null;
+    isEditMode?: boolean;
+    collapsedItems?: Set<string>;
+    editingItemId?: string | null;
+    draggedItemId?: string | null;
+    onSelect?: ((item: ICombinationNavItem) => void) | undefined;
+    onToggle?: ((id: string) => void) | undefined;
+    onEdit?:
+      | ((detail: { id: string; label: string }) => void)
+      | undefined;
+    onStartEdit?: ((id: string) => void) | undefined;
+    onDelete?: ((id: string) => void) | undefined;
+    onDragStart?: ((id: string) => void) | undefined;
+    onDragEnd?: ((id: string) => void) | undefined;
+    onDrop?:
+      | ((detail: {
+          itemId: string;
+          targetId: string;
+          position: "before" | "after" | "inside";
+        }) => void)
+      | undefined;
+  } = $props();
 
-  const dispatch = createEventDispatcher();
+  let editLabel = $state(item.label);
+  let isHoveringItem = $state(false);
+  let dropPosition = $state<"before" | "after" | "inside" | null>(null);
 
-  let editLabel = item.label;
-  let avatar: IAvatar | undefined;
-  let isHoveringItem = false;
-  let dropPosition: "before" | "after" | "inside" | null = null;
-
-  $: isCollapsed = collapsedItems.has(item.id);
-  $: isEditing = isEditMode && editingItemId === item.id;
-  $: isActive = activeItemId === item.id;
-  $: avatar = resolveAvatar();
-  $: resourceIcon =
+  let isCollapsed = $derived(collapsedItems.has(item.id));
+  let isEditing = $derived(isEditMode && editingItemId === item.id);
+  let isActive = $derived(activeItemId === item.id);
+  let avatar = $derived(resolveAvatar());
+  let resourceIcon = $derived(
     item.type === CombinationNavItemType.RESOURCE
       ? resolveResourceIcon(item.resourceType)
-      : "folder";
-  $: if (!isEditing) {
+      : "folder"
+  );
+  $effect(() => {
+    if (!isEditing) {
     editLabel = item.label;
-  }
+    }
+  });
 
   function resolveAvatar(): IAvatar | undefined {
     if (item.avatar) return item.avatar;
@@ -47,16 +80,16 @@
     return undefined;
   }
 
-  function onSelect(event: MouseEvent) {
+  function handleSelectClick(event: MouseEvent) {
     event.stopPropagation();
     activateItem();
   }
 
   function activateItem() {
     if (item.type === CombinationNavItemType.RESOURCE) {
-      dispatch("select", item);
+      onSelect?.(item);
     } else if (item.children && item.children.length > 0) {
-      dispatch("toggle", item.id);
+      onToggle?.(item.id);
     }
   }
 
@@ -70,26 +103,26 @@
 
   function onChevronClick(event: MouseEvent) {
     event.stopPropagation();
-    dispatch("toggle", item.id);
+    onToggle?.(item.id);
   }
 
   function onSaveLabel(value: string) {
     const trimmed = value.trim();
     if (trimmed.length === 0) return;
-    dispatch("edit", { id: item.id, label: trimmed });
+    onEdit?.({ id: item.id, label: trimmed });
   }
 
   function handleDragStart(event: DragEvent) {
     if (!isEditMode || isEditing) return;
     event.stopPropagation();
     event.dataTransfer?.setData("text/plain", item.id);
-    dispatch("dragstart", item.id);
+    onDragStart?.(item.id);
   }
 
   function handleDragEnd(event: DragEvent) {
     event.stopPropagation();
     dropPosition = null;
-    dispatch("dragend", item.id);
+    onDragEnd?.(item.id);
   }
 
   function resolveDropPosition(event: DragEvent) {
@@ -130,7 +163,7 @@
     const position =
       dropPosition ??
       (item.type === CombinationNavItemType.SECTION ? "inside" : "after");
-    dispatch("drop", {
+    onDrop?.({
       itemId: draggedItemId,
       targetId: item.id,
       position
@@ -156,11 +189,11 @@
     use:hoverable={{
       onHover: (val) => (isHoveringItem = val)
     }}
-    on:dragstart={handleDragStart}
-    on:dragend={handleDragEnd}
-    on:dragover={handleDragOver}
-    on:dragleave={handleDragLeave}
-    on:drop={handleDrop}
+    ondragstart={handleDragStart}
+    ondragend={handleDragEnd}
+    ondragover={handleDragOver}
+    ondragleave={handleDragLeave}
+    ondrop={handleDrop}
     style={`padding-left: ${Math.min(depth * 1.25 + 0.75, 4)}rem;` +
       dropPosition ===
     "before"
@@ -168,17 +201,17 @@
       : dropPosition === "after"
         ? "box-shadow: inset 0 -2px 0 0 var(--aps1);"
         : dropPosition === "inside"
-          ? "box-shadow: inset 0 0 0 2px var(--aps1);"
+        ? "box-shadow: inset 0 0 0 2px var(--aps1);"
           : undefined}
-    on:click={onSelect}
-    on:keydown={handleItemKeydown}
+    onclick={handleSelectClick}
+    onkeydown={handleItemKeydown}
   >
     {#if item.children && item.children.length > 0}
       <button
         type="button"
         aria-label={isCollapsed ? "Expand section" : "Collapse section"}
         class="flex items-center justify-center w-6 h-6 rounded-md hover:bg-bgs3"
-        on:click={onChevronClick}
+        onclick={onChevronClick}
       >
         <Icon
           icon={isCollapsed ? "chevron-right" : "chevron-down"}
@@ -197,9 +230,9 @@
         <TextInput
           bind:value={editLabel}
           size={Size.sm}
-          on:save={(e) => onSaveLabel(e.detail.value)}
-          on:enter={(e) => onSaveLabel(e.detail.value)}
-          on:blur={() => onSaveLabel(editLabel)}
+          onSave={(e) => onSaveLabel(e.detail.value)}
+          onEnter={(e) => onSaveLabel(e.detail.value)}
+          onBlur={() => onSaveLabel(editLabel)}
           isShowSaveControl={false}
         />
       {:else}
@@ -214,9 +247,9 @@
         <button
           class="p-1 rounded-md hover:bg-bgs3"
           title="Rename"
-          on:click={(e) => {
+          onclick={(e) => {
             e.stopPropagation();
-            dispatch("startEdit", item.id);
+            onStartEdit?.(item.id);
           }}
         >
           <Icon icon="edit" size={Size.sm} class="stroke-fgs2" />
@@ -230,9 +263,9 @@
             }
           )}
           title="Remove"
-          on:click={(e) => {
+          onclick={(e) => {
             e.stopPropagation();
-            dispatch("delete", item.id);
+            onDelete?.(item.id);
           }}
         >
           <Icon icon="trash" size={Size.sm} class="stroke-err" />
@@ -252,14 +285,14 @@
           {collapsedItems}
           {editingItemId}
           {draggedItemId}
-          on:select={(e) => dispatch("select", e.detail)}
-          on:toggle={(e) => dispatch("toggle", e.detail)}
-          on:edit={(e) => dispatch("edit", e.detail)}
-          on:startEdit={(e) => dispatch("startEdit", e.detail)}
-          on:delete={(e) => dispatch("delete", e.detail)}
-          on:dragstart={(e) => dispatch("dragstart", e.detail)}
-          on:dragend={(e) => dispatch("dragend", e.detail)}
-          on:drop={(e) => dispatch("drop", e.detail)}
+          {onSelect}
+          {onToggle}
+          {onEdit}
+          {onStartEdit}
+          {onDelete}
+          {onDragStart}
+          {onDragEnd}
+          {onDrop}
         />
       {/each}
     </div>

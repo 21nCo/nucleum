@@ -10,7 +10,7 @@
   import appearance from "@21n/stores/appearance.store";
   import view from "@21n/stores/view.store";
   import PlayerControl from "@21n/elements/player/controls/PlayerControl.svelte";
-  import { createEventDispatcher, onDestroy } from "svelte";
+  import { onDestroy } from "svelte";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import type { IRecordId } from "@21n/types/data.type";
   import type { IActiveCaptureStore } from "@21n/products/memotron/capture/capture.store";
@@ -18,29 +18,35 @@
   import { Size } from "@21n/types/size.enum";
   import { confirmationNotification } from "@21n/stores/notification.store";
   import { cn } from "@21n/utils/ui.utils";
-  const dispatch = createEventDispatcher();
-  export let captureStore: IActiveCaptureStore;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CAPTURE;
-  export let creationContext: IRecordId | undefined = undefined;
 
-  let recordingState: PlayActionState = PlayActionState.NOT_STARTED;
+  let {
+    captureStore,
+    accessPoint = ResourceAccessPoint.CAPTURE,
+    creationContext = undefined,
+    onSaved = undefined,
+    onClear = undefined
+  }: {
+    captureStore: IActiveCaptureStore;
+    accessPoint?: ResourceAccessPoint;
+    creationContext?: IRecordId | undefined;
+    onSaved?: ((result: any) => void) | undefined;
+    onClear?: (() => void) | undefined;
+  } = $props();
+
+  let recordingState = $state(PlayActionState.NOT_STARTED);
   let url: string;
-  let recordingDuration: number = 0;
+  let recordingDuration = $state(0);
   let blobRefernce: any = undefined;
   let wavesurfer: WaveSurfer;
   let record: RecordPlugin;
-  let isShowPreview = false;
-  let error: string | undefined = undefined;
+  let isShowPreview = $state(false);
+  let error = $state<string | undefined>(undefined);
   const currentColors: any = retrieveCurrentColors($appearance);
-  /**
-   * @description Start recording audio, if already recording or previewing, it will reset the recording states and wavesurfer instances
-   */
 
   onDestroy(() => {
     cleanup();
   });
 
-  //TODO - Add a recording limit of 1hr 15min
   function startRecording() {
     isShowPreview = true;
     if (record?.isRecording()) {
@@ -56,9 +62,6 @@
       });
     }, 10);
   }
-  /**
-   * @description Pause or resume recording audio
-   */
   function toggleRecording() {
     if (record.isPaused()) {
       record.resumeRecording();
@@ -68,9 +71,6 @@
     recordingState = PlayActionState.PAUSED;
     record.pauseRecording();
   }
-  /**
-   * @description Stop recording audio
-   */
   function stopRecording() {
     if (record.isRecording() || record.isPaused()) {
       record.stopRecording();
@@ -94,11 +94,6 @@
     isShowPreview = false;
   }
 
-  /**
-   * @description Creates wavesurfer instance for live visualizer and encapsulates wavesurfer inside the record plugin
-   * record is a plugin for wavesurfer to record audio and to visualize in real time
-   * record has subscribed events like record-end, record-progress
-   */
   function createWaveSurferForLiveVisualizer() {
     if (wavesurfer) {
       wavesurfer.destroy();
@@ -143,7 +138,7 @@
         thumbnailBlob: waveformBlob
       }
     );
-    dispatch("saved", result);
+    onSaved?.(result);
   }
 
   async function resolveWaveFormBlob() {
@@ -175,7 +170,7 @@
 
   function proceedToGoBack() {
     cleanup();
-    dispatch("clear");
+    onClear?.();
   }
 </script>
 
@@ -195,7 +190,7 @@
             recordingState !== PlayActionState.PAUSED
               ? ""
               : "border-right:2px solid " + currentColors["aps1"]}
-          />
+          ></div>
         </div>
         <p class="text-h1 font-medium text-fgs2 text-center">
           {formatSeconds(recordingDuration, TimeFormat.CLOCK)}
@@ -211,7 +206,7 @@
         })}
       >
         <PlayerControl
-          on:click={onGoBack}
+          onclick={onGoBack}
           icon="back"
           label={recordingState === PlayActionState.NOT_STARTED
             ? undefined
@@ -223,7 +218,7 @@
         />
         {#if recordingState === PlayActionState.NOT_STARTED}
           <PlayerControl
-            on:click={startRecording}
+            onclick={startRecording}
             icon="microphone"
             type={ButtonVariant.PRIMARY}
             label="Start"
@@ -231,25 +226,25 @@
           />
         {:else if recordingState === PlayActionState.RUNNING}
           <PlayerControl
-            on:click={toggleRecording}
+            onclick={toggleRecording}
             style={ButtonStyle.OUTLINED}
             icon="pause"
             label="Pause"
           />
           <PlayerControl
-            on:click={stopRecording}
+            onclick={stopRecording}
             type={ButtonVariant.PRIMARY}
             icon="stop"
             label="Finish"
           />
         {:else if recordingState === PlayActionState.PAUSED}
           <PlayerControl
-            on:click={toggleRecording}
+            onclick={toggleRecording}
             icon="play"
             label="Resume"
           />
           <PlayerControl
-            on:click={stopRecording}
+            onclick={stopRecording}
             type={ButtonVariant.PRIMARY}
             icon="stop"
             label="Finish"
@@ -260,28 +255,28 @@
   {:else}
     <div class="flex w-full justify-center gap-6">
       <Button
-        on:click={onGoBack}
+        onclick={onGoBack}
         icon="back"
         style={ButtonStyle.OUTLINED}
         label="Go back"
       />
       {#if recordingState === PlayActionState.RUNNING}
         <Button
-          on:click={toggleRecording}
+          onclick={toggleRecording}
           icon="pause"
           style={ButtonStyle.OUTLINED}
           label="Pause"
         />
         <Button
-          on:click={stopRecording}
+          onclick={stopRecording}
           type={ButtonVariant.PRIMARY}
           icon="stop"
           label="Finish"
         />
       {:else if recordingState === PlayActionState.PAUSED}
-        <Button on:click={toggleRecording} icon="play" label="Resume" />
+        <Button onclick={toggleRecording} icon="play" label="Resume" />
         <Button
-          on:click={stopRecording}
+          onclick={stopRecording}
           type={ButtonVariant.PRIMARY}
           icon="stop"
           label="Finish"

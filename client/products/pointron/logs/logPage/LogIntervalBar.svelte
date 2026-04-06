@@ -6,17 +6,22 @@
   import IntervalBarItem from "@21n/products/pointron/focus/elements/intervalbar/IntervalBarItem.svelte";
   import type { ISessionInterval } from "@21n/types/pointron/session.type";
   import MoreBarsInfo from "@21n/products/pointron/focus/elements/intervalbar/MoreBarsInfo.svelte";
-  export let log: any;
-  let blocks = log.blocks;
-  $: visibleLimit = $view.isPortrait ? 6 : 12;
-  let overFlowBlocks: ISessionInterval[] = [];
-  if (isEmptyArray(log.blocks)) {
-    blocks = [{ duration: log.elapsed, type: 1, progress: 1 }];
-  }
-  if (blocks.length > visibleLimit) {
-    blocks = blocks.slice(0, visibleLimit);
-    overFlowBlocks = log.blocks.slice(visibleLimit);
-  }
+
+  let { log }: { log: any } = $props();
+  let visibleLimit = $derived($view.isPortrait ? 6 : 12);
+  let blockData = $derived.by(() => {
+    let blocks: ISessionInterval[] = isEmptyArray(log.blocks)
+      ? [{ duration: log.elapsed, type: 1, progress: 1 }]
+      : log.blocks;
+    let overFlowBlocks: ISessionInterval[] = [];
+
+    if (blocks.length > visibleLimit) {
+      overFlowBlocks = log.blocks.slice(visibleLimit);
+      blocks = blocks.slice(0, visibleLimit);
+    }
+
+    return { blocks, overFlowBlocks };
+  });
 </script>
 
 <div class="flex items-center gap-4 w-full">
@@ -24,7 +29,7 @@
     {formatTime($userPreferences, new Date(log.startUnix))}
   </div>
   <div class="flex flex-row items-center gap-3 w-full">
-    {#each blocks as bar}
+    {#each blockData.blocks as bar}
       <div
         style="width: {(log.elapsed
           ? (bar?.duration ?? 0) / log.elapsed
@@ -33,8 +38,8 @@
         <IntervalBarItem progress={bar?.progress} type={bar?.type} />
       </div>
     {/each}
-    {#if overFlowBlocks.length > 0}
-      <MoreBarsInfo length={overFlowBlocks.length} />
+    {#if blockData.overFlowBlocks.length > 0}
+      <MoreBarsInfo length={blockData.overFlowBlocks.length} />
     {/if}
   </div>
   <div class="text-fgs2 min-w-fit {$view.isPortrait && 'text-b3'}">

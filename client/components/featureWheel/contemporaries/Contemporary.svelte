@@ -1,8 +1,14 @@
 <script lang="ts">
   import ExternalLogo from "@21n/branding/external/ExternalLogo.svelte";
-  export let icon: string | undefined = undefined;
-  export let url: string | undefined = undefined;
-  export let width: number;
+  let {
+    icon = undefined,
+    url = undefined,
+    width
+  }: {
+    icon?: string | undefined;
+    url?: string | undefined;
+    width: number;
+  } = $props();
 </script>
 
 <ExternalLogo

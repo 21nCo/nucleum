@@ -21,15 +21,15 @@
     "December"
   ];
   const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-  export let date: string;
-  const firstAlphPos = getFirstAlphabetPosition(date);
-  let year = Number(date.slice(0, firstAlphPos));
-  let month = date.slice(-3);
-  let monthIndex = monthNames.indexOf(month);
-  let monthFull = monthNamesFull[monthIndex];
-  let monthEndDate = getDaysInMonth(monthIndex, year);
-  let data = Array.from({ length: monthEndDate }, (_, i) => i + 1);
-  let startDay = new Date(Date.UTC(year, monthIndex, 1)).getDay() + 1;
+  let { date }: { date: string } = $props();
+  const firstAlphPos = $derived(getFirstAlphabetPosition(date));
+  const year = $derived(Number(date.slice(0, firstAlphPos)));
+  const month = $derived(date.slice(-3));
+  const monthIndex = $derived(monthNames.indexOf(month));
+  const monthFull = $derived(monthNamesFull[monthIndex]);
+  const monthEndDate = $derived(getDaysInMonth(monthIndex, year));
+  const data = $derived(Array.from({ length: monthEndDate }, (_, i) => i + 1));
+  const startDay = $derived(new Date(Date.UTC(year, monthIndex, 1)).getDay() + 1);
 </script>
 
 <div

@@ -3,28 +3,33 @@
   import { ActionType } from "@21n/types/action.type";
   import { GlobalEvent } from "@21n/types/event.enum";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import { createEventDispatcher } from "svelte";
   import CmdResultItem from "@21n/components/commandBar/CmdResultItem.svelte";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import type { ICommandAction } from "@21n/components/commandBar/cmd.type";
-  const dispatch = createEventDispatcher();
-  export let search: string = "";
-  let allActions: ICommandAction[] = [];
-  let filteredActions: ICommandAction[] = [];
-  let selectedAction: ICommandAction | null = null;
+  let {
+    search = "",
+    onClose = void 0,
+    onSearchAction = void 0
+  }: {
+    search?: string;
+    onClose?: () => void;
+    onSearchAction?: (action: ICommandAction) => void;
+  } = $props();
+  let allActions = $state<ICommandAction[]>([]);
+  let filteredActions = $state<ICommandAction[]>([]);
+  let selectedAction = $state<ICommandAction | null>(null);
   loadAllActions();
   loadDefaultFilteredActions();
-  $: if (search) {
-    filteredActions = search
-      ? allActions.filter((x) =>
-          x.cmdLabel.toLowerCase().includes(search.toLowerCase())
-        )
-      : allActions;
-    selectedAction = filteredActions?.[0];
-  } else {
-    loadDefaultFilteredActions();
-    selectedAction = filteredActions?.[0];
-  }
+  $effect(() => {
+    if (search) {
+      filteredActions = allActions.filter((x) =>
+        x.cmdLabel.toLowerCase().includes(search.toLowerCase())
+      );
+    } else {
+      loadDefaultFilteredActions();
+    }
+    selectedAction = filteredActions?.[0] ?? null;
+  });
   export function moveSelection(direction: "up" | "down") {
     const currentIndex = filteredActions?.findIndex(findInList(selectedAction));
     let nextIndex = currentIndex;
@@ -45,9 +50,9 @@
     if (selectedAction) {
       const action = filteredActions.find(findInList(selectedAction));
       if (action && action.type === ActionType.SEARCH_CMD) {
-        dispatch("searchAction", action);
+        onSearchAction?.(action);
       } else {
-        dispatch("close");
+        onClose?.();
         appStore.runAction(selectedAction.action, {
           componentParams: {
             isCmdBarLaunch: true
@@ -81,6 +86,7 @@
   }
 
   function loadAllActions() {
+    allActions = [];
     const rawActions = $appStore.actions;
     const primitive = rawActions.filter(
       (action) =>
@@ -166,7 +172,7 @@
     {action}
     {index}
     isActive={isSameAction(selectedAction, action)}
-    on:click={() => {
+    onclick={() => {
       selectedAction = action;
       select();
     }}

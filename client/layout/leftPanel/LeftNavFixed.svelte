@@ -1,4 +1,7 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import AppMenuSwitcher from "@21n/layout/leftPanel/appMenuSwitcher/AppMenuSwitcher.svelte";
   import { LayoutContext } from "@21n/types/layout.type";
   import { Size } from "@21n/types/size.enum";
@@ -14,11 +17,19 @@
   import { onMount } from "svelte";
   import { appStore } from "@21n/stores/app.store";
   import OfflineStatusMessage from "@21n/elements/feedback/OfflineStatusMessage.svelte";
-  export let isRounded = false;
+  let {
+    isRounded = false,
+    panel
+  }: {
+    isRounded?: boolean;
+    panel?: Snippet;
+  } = $props();
   const dev_mixedPanel = false;
-  let isHideMenuLabels = uiState.getState(UIState.hideLeftNavMenuLabels, {
-    scope: UIStateScope.DAP
-  });
+  let isHideMenuLabels = $state(
+    uiState.getState(UIState.hideLeftNavMenuLabels, {
+      scope: UIStateScope.DAP
+    })
+  );
 
   onMount(() => {
     const unsubscribe = uiState.subscribe(() => {
@@ -36,6 +47,13 @@
     uiState.setState(UIState.hideLeftNavMenuLabels, !isHideMenuLabels, {
       scope: UIStateScope.DAP
     });
+  }
+
+  function handleLeftNavKeyDown(event: KeyboardEvent) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleToggleMenuLabels();
+    }
   }
 </script>
 
@@ -59,7 +77,7 @@
       }
     )}
   >
-    <button
+    <div
       class={cn(
         "flex flex-col items-center justify-between overflow-auto bg-bgs2",
         {
@@ -71,7 +89,10 @@
           "border-r border-bgs4": !isRounded
         }
       )}
-      on:click={handleToggleMenuLabels}
+      role="button"
+      tabindex="0"
+      onclick={handleToggleMenuLabels}
+      onkeydown={handleLeftNavKeyDown}
       style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
     >
       <div class="w-full flex flex-col gap-8 overflow-auto">
@@ -98,6 +119,7 @@
             use:tooltip={{
               text: "Menu settings"
             }}
+            role="presentation"
           >
             <button
               data-testid="leftnav-settings"
@@ -109,7 +131,9 @@
                 triggerMethod: [PopoverTriggerMethod.CLICK],
                 offsetInPx: 10
               }}
-              on:click|stopPropagation
+              onclick={(event) => {
+                event.stopPropagation();
+              }}
             >
               <Icon
                 icon="more-outline-horizontal"
@@ -125,7 +149,7 @@
         <!-- <LeftNavCommandAction isInThinMode={true} size={Size.lg} /> -->
         <LeftBottomBar {isRounded} />
       </div>
-    </button>
-    <slot name="panel" />
+    </div>
+    {@render panel?.()}
   </div>
 </div>

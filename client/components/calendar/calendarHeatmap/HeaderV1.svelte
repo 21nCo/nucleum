@@ -15,8 +15,13 @@
     handleEvent(data);
   }
 
-  export let provider: ICalendarHeatMapDataProvider;
-  export let options: CalendarHeatmapOptions = {};
+  let {
+    provider,
+    options = {}
+  }: {
+    provider: ICalendarHeatMapDataProvider;
+    options?: CalendarHeatmapOptions;
+  } = $props();
   let dataManager = new CalendarHeatmapDataManager(provider, options);
   let logstartdate = "2000-01-01";
   let logstartYear = new Date(logstartdate).getFullYear();
@@ -46,7 +51,7 @@
 <div class="flex gap-2 px-2 w-full justify-end items-center p-1">
   <span class="w-40">
     <DropDown
-      on:select={handleSelect}
+      onSelect={handleSelect}
       {items}
       bind:value
       style={InputStyle.PLAIN}

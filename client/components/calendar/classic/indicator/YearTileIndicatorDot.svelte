@@ -1,8 +1,14 @@
 <script lang="ts">
   import { cn } from "@21n/utils/ui.utils";
-  export let color: string;
-  export let isActive: boolean = false;
-  export let isMemory: boolean = false;
+  let {
+    color,
+    isActive = false,
+    isMemory = false
+  }: {
+    color: string;
+    isActive?: boolean;
+    isMemory?: boolean;
+  } = $props();
 </script>
 
 <div

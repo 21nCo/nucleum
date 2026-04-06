@@ -1,7 +1,8 @@
 <script lang="ts">
   import MicroIndicatorTile from "@21n/components/calendar/calendarHeatmap/MicroIndicatorTile.svelte";
-  export let data: any;
-  let [year, yearData] = data;
+  let { data }: { data: any } = $props();
+  const year = $derived(data[0]);
+  const yearData = $derived(data[1]);
 </script>
 
 <div class="yearHolder">

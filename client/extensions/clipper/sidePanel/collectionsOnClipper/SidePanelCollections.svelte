@@ -19,7 +19,11 @@
   import { logger } from "@21n/components/debug/logger.client";
   import ErrorStatusPane from "@21n/elements/feedback/ErrorStatusPane.svelte";
 
-  export let currentUrl: string;
+  let {
+    currentUrl
+  }: {
+    currentUrl: string;
+  } = $props();
 
   let collections: CollectionData[] = [];
   let selectedCollection: CollectionData | null = null;
@@ -212,8 +216,8 @@
     }
   }
 
-  function handleCollectionClick(event: CustomEvent<CollectionData>) {
-    loadCollectionItems(event.detail);
+  function handleCollectionClick(collection: CollectionData) {
+    loadCollectionItems(collection);
   }
 
   function handleBackClick() {
@@ -226,8 +230,8 @@
     loadCollections();
   }
 
-  async function handleNewCollectionSave(event: CustomEvent<string>) {
-    newCollectionLabel = event.detail;
+  async function handleNewCollectionSave(label: string) {
+    newCollectionLabel = label;
     const result = await collectionStore.save({
       label: newCollectionLabel,
       resource: Resource.node
@@ -251,7 +255,7 @@
         {collectionItems}
         {isLoadingItems}
         {currentUrl}
-        on:back={handleBackClick}
+        onBack={handleBackClick}
       />
       <div class="p-4 border-b border-bgs3 bg-bgs2">
         <div class="text-fgs3 text-b3 text-center">
@@ -289,7 +293,7 @@
               bgSize={Size.sm}
               tooltip={isHideEmptyCollections ? "Show empty" : "Hide empty"}
               on={isHideEmptyCollections}
-              on:change={handleHideEmptyToggle}
+              onChange={handleHideEmptyToggle}
             />
           </div>
         </div>
@@ -297,13 +301,10 @@
       {#if isShowNewCollectionWizard}
         <NewCollectionWizard
           bind:label={newCollectionLabel}
-          on:save={handleNewCollectionSave}
+          onSave={handleNewCollectionSave}
         />
       {/if}
-      <CollectionsList
-        {collections}
-        on:collectionClick={handleCollectionClick}
-      />
+      <CollectionsList {collections} onCollectionClick={handleCollectionClick} />
     {/if}
   {:catch}
     <ErrorStatusPane

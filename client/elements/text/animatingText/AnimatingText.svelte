@@ -2,9 +2,18 @@
   import { fly } from "svelte/transition";
   import { onMount } from "svelte";
 
-  export let roll = ["Auth provider", "Cloud provider", "Identity provider"];
-  export let width = 300;
-  export let isCentered: boolean = false;
+    let {
+    roll = ["Auth provider", "Cloud provider", "Identity provider"],
+    width = 300,
+    isCentered = false,
+  }: {
+    roll?: unknown[];
+    width?: number;
+    isCentered?: boolean;
+  } = $props();
+
+  
+  
   let activeTextIndex = 0;
   let parentElement: HTMLElement;
   let childElement: HTMLElement;

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher, onDestroy, onMount } from "svelte";
   import AutocompleteResultItem from "@21n/elements/autocomplete/AutocompleteResultItem.svelte";
   import type { AutocompleteListItemType } from "@21n/types/autocompleteListItem.type";
   import { generateUID } from "@21n/utils/utils";
@@ -11,33 +10,68 @@
   import Button from "@21n/elements/button/Button.svelte";
   import { appStore } from "@21n/stores/app.store";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
-  export let listContainerStyle: string = "";
-  export let listItemStyle: string = "";
-  export let size: Size = Size.md;
-  export let parentBackgroundIndex: number = 1;
-  export let inputStyle: TextInputStyle = TextInputStyle.OUTLINED;
-  export let isListVisible: boolean = false;
-  export let options: AutocompleteListItemType[] = [];
-  export let placeholder: string = "";
-  export let values: string[] = [];
-  export let label: string = "";
-  export let chipsVariant: ChipVariant = ChipVariant.FILLED;
-  let selected: AutocompleteListItemType[] = [];
-  initSelected();
+  let {
+    listContainerStyle = "",
+    listItemStyle = "",
+    size = Size.md,
+    parentBackgroundIndex = 1,
+    inputStyle = TextInputStyle.OUTLINED,
+    isListVisible = $bindable(false),
+    options = [],
+    placeholder = "",
+    values = $bindable([]),
+    label = "",
+    chipsVariant = ChipVariant.FILLED,
+    onListItemClick = undefined
+  }: {
+    listContainerStyle?: string;
+    listItemStyle?: string;
+    size?: Size;
+    parentBackgroundIndex?: number;
+    inputStyle?: TextInputStyle;
+    isListVisible?: boolean;
+    options?: AutocompleteListItemType[];
+    placeholder?: string;
+    values?: string[];
+    label?: string;
+    chipsVariant?: ChipVariant;
+    onListItemClick?: ((event: CustomEvent<AutocompleteListItemType>) => void) | undefined;
+  } = $props();
+  void parentBackgroundIndex;
 
-  let listContainerClassList: string = "bg-bgs2 shadow-sm shadow-fgs3";
-  let isFocusing: boolean = false;
-  let inputValue: string;
+  const selected = $derived(options.filter((x) => values.includes(x.id)));
+
+  let listContainerClassList = "bg-bgs2 shadow-sm shadow-fgs3";
+  let isFocusing = $state(false);
+  let inputValue = $state("");
   const wrapperId = generateUID(); // main wrapper, outside which if clicked then the list will be hidden
   let id = generateUID(); // this is the id of the input field
-  let isActive: boolean = false;
-  let backgroundColor: string;
-  let defaultInputClasses: string = "text-input w-full rounded-sm";
-  let filteredOptions: AutocompleteListItemType[] = [];
+  let isActive = $state(false);
+  const defaultInputClasses = $derived.by(() => {
+    let classes = "text-input w-full rounded-sm";
+    if (
+      inputStyle === TextInputStyle.PLAIN ||
+      inputStyle === TextInputStyle.OUTLINED
+    ) {
+      classes += " bg-transparent";
+    } else if (inputStyle === TextInputStyle.WITH_BACKGROUND) {
+      classes += " outline p-2";
+    }
+    if (inputStyle === TextInputStyle.OUTLINED) classes += " outline px-2 py-1";
+    if (size == Size.xl) classes += " text-h3";
+    else if (size == Size.lg || size == Size.md) classes += " text-base";
+    else if (size == Size.sm) classes += " text-b2";
+    else if (size == Size.xs) classes += " text-b3";
+    return classes;
+  });
+  const filteredOptions = $derived.by(() => {
+    if (!inputValue) return options;
+    return options.filter((x) =>
+      x.label.toLowerCase().includes(inputValue.toLowerCase())
+    );
+  });
 
-  const dispatch = createEventDispatcher();
-
-  let selectedListItemIndex: number = -1;
+  let selectedListItemIndex = $state(-1);
 
   function focusOnInput() {
     const input = document.getElementById(id);
@@ -47,7 +81,6 @@
   function toggleActiveState(value?: boolean) {
     if (value !== undefined) {
       isActive = value;
-      // make focus on id
     } else {
       isActive = !isActive;
     }
@@ -66,7 +99,6 @@
     selectedListItemIndex = -1;
     if (options === undefined || options.length === 0) return;
     isActive = false;
-    // options = [];
   }
 
   function performDefaultClickActions() {
@@ -76,30 +108,22 @@
     updateListVisibility(false);
   }
 
-  function initSelected() {
-    selected = options.filter((x) => values.includes(x.id));
-  }
-
   function updateSelected({ label, id }: { label: string; id: string }) {
     if (selected.some((x) => x.id === id)) {
-      selected = selected.filter((x) => x.id !== id);
+      values = selected.filter((x) => x.id !== id).map((x) => x.id);
     } else {
-      selected = [...selected, { label, id }];
+      values = [...selected, { label, id }].map((x) => x.id);
     }
-    values = selected.map((x) => x.id);
   }
 
   function handleResultItemClick(detail: { label: string; id: string }) {
-    dispatch("list-item-click", detail);
+    onListItemClick?.(
+      new CustomEvent("list-item-click", {
+        detail
+      })
+    );
     updateSelected(detail);
     performDefaultClickActions();
-    // if (!escapeDefaultClickBehaviour) {
-    //   performDefaultClickActions();
-    // }
-  }
-
-  function handleResultItemClickViaCustomEvent({ detail }: CustomEvent) {
-    handleResultItemClick(detail);
   }
 
   function handleKeyDownInDropdown(event: KeyboardEvent) {
@@ -118,12 +142,9 @@
     }
     if (event.key === "Enter") {
       if (selectedListItemIndex > -1) {
-        const { label: title, id } = filteredOptions[selectedListItemIndex];
+        const { label, id } = filteredOptions[selectedListItemIndex];
         handleResultItemClick({ label, id });
         performDefaultClickActions();
-        // if (!escapeDefaultClickBehaviour) {
-        //   performDefaultClickActions();
-        // }
       }
     }
   }
@@ -132,33 +153,8 @@
     isListVisible = value;
   }
 
-  // function getStateWiseStyles() {
-  //   if (isActive) {
-  //     if (classList.active) return classList.active;
-  //     if (
-  //       inputStyle === TextInputStyle.WITH_BACKGROUND ||
-  //       inputStyle === TextInputStyle.OUTLINED
-  //     ) {
-  //       return `outline-2 outline-aps1`;
-  //     } else {
-  //       return `border-none outline-none`;
-  //     }
-  //   } else if (classList.inactive) return classList.inactive;
-  //   else if (inputStyle === TextInputStyle.WITH_BACKGROUND) {
-  //     return `focus:outline-aps1`;
-  //   } else if (inputStyle === TextInputStyle.OUTLINED) {
-  //     return `outline outline-2 outline-brs3 focus:outline-aps1`;
-  //   } else {
-  //     return `border-none outline-none`;
-  //   }
-  // }
-
-  // this is used to filter the options based on the input value
-  $: {
+  $effect(() => {
     selectedListItemIndex = -1;
-    if (!inputValue) {
-      filteredOptions = options;
-    }
     if (
       inputValue !== undefined &&
       inputValue !== null &&
@@ -166,29 +162,7 @@
       options.length !== 0
     ) {
       updateListVisibility(true);
-      filteredOptions = options.filter((x) =>
-        x.label.toLowerCase().includes(inputValue.toLowerCase())
-      );
     }
-  }
-
-  onMount(() => {
-    if (
-      inputStyle == TextInputStyle.PLAIN ||
-      inputStyle == TextInputStyle.OUTLINED
-    ) {
-      defaultInputClasses += " bg-transparent";
-    } else if (inputStyle === TextInputStyle.WITH_BACKGROUND) {
-      defaultInputClasses += ` bg-${backgroundColor} outline p-2`;
-    }
-    if (inputStyle === TextInputStyle.OUTLINED)
-      defaultInputClasses += ` outline px-2 py-1`;
-
-    if (size == Size.xl) defaultInputClasses += " text-h3";
-    else if (size == Size.lg) defaultInputClasses += " text-base";
-    else if (size == Size.md) defaultInputClasses += " text-base";
-    else if (size == Size.sm) defaultInputClasses += " text-b2";
-    else if (size == Size.xs) defaultInputClasses += " text-b3";
   });
 </script>
 
@@ -201,11 +175,11 @@
       <span class="relative w-full">
         <span
           tabindex="0"
-          on:click={() => {
+          onclick={() => {
             toggleActiveState(true);
             updateListVisibility(true);
           }}
-          on:keydown={(e) => {
+          onkeydown={(e) => {
             if (e.key === "Enter") {
               toggleActiveState(true);
             }
@@ -215,27 +189,30 @@
             : 'border-brs3'}"
         >
           {#each selected as value}
-            <Chip on:click hideCloseIcon variant={chipsVariant}
-              >{value.label}</Chip
-            >
+            <Chip hideCloseIcon variant={chipsVariant}>{value.label}</Chip>
           {/each}
           <input
             {id}
-            on:focusin={() => {
+            onfocusin={() => {
               toggleActiveState(true);
               updateListVisibility(true);
             }}
             type="text"
             {placeholder}
             bind:value={inputValue}
-            on:input|stopPropagation
-            on:focus={() => {
+            oninput={(event) => {
+              event.stopPropagation();
+            }}
+            onfocus={() => {
               isFocusing = true;
             }}
-            on:focusout={() => {
+            onfocusout={() => {
               isFocusing = false;
             }}
-            on:keydown|stopPropagation={handleKeyDownInDropdown}
+            onkeydown={(event) => {
+              event.stopPropagation();
+              handleKeyDownInDropdown(event);
+            }}
             class="bg-transparent pl-1 py-1 text-base min-w-[100px] flex-1 outline-none"
             aria-label="Search"
             aria-describedby="search-addon"
@@ -253,7 +230,7 @@
                 isSelected={selected.some((x) => x.id === listItem.id)}
                 isActive={selectedListItemIndex === index}
                 style={listItemStyle}
-                on:click={handleResultItemClickViaCustomEvent}
+                onClick={handleResultItemClick}
               />
             {/each}
 
@@ -262,7 +239,7 @@
                 label="edit tags"
                 size={Size.xs}
                 parentBgIndex={2}
-                on:click={() => {
+                onclick={() => {
                   appStore.runAction(PointronAction.TAGS);
                 }}
               />
@@ -274,7 +251,7 @@
         icon="pencil-square"
         tooltip="Edit tags"
         parentBgIndex={2}
-        on:click={() => {
+        onclick={() => {
           appStore.runAction(PointronAction.TAGS);
         }}
       />

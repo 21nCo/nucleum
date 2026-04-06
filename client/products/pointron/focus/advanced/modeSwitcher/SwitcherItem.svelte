@@ -1,8 +1,15 @@
 <script lang="ts">
   import Icon from "@21n/elements/Icon.svelte";
   import { cn } from "@21n/utils/ui.utils";
-  export let mode: number = 0;
-  export let isActive: boolean = false;
+  let {
+    mode = 0,
+    isActive = false,
+    onclick = undefined
+  }: {
+    mode?: number;
+    isActive?: boolean;
+    onclick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
 </script>
 
 <button
@@ -12,7 +19,7 @@
   style={mode == 0
     ? "border-bottom-right-radius: 0rem;"
     : "border-bottom-left-radius: 0rem;"}
-  on:click
+  {onclick}
 >
   {#if mode === 0}
     <Icon

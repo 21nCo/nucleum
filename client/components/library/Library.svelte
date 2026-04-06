@@ -35,15 +35,11 @@
   import { AppSearchParam } from "@21n/types/appStore.type";
   import ComponentShortcutListener from "@21n/components/shortcuts/ComponentShortcutListener.svelte";
 
-  export let resources: Resource[] = [];
+  let { resources = [] }: { resources?: Resource[] } = $props();
 
-  let selectedResource: Resource = $view.isConstrainedWidth
-    ? Resource.unknown
-    : resources[0];
-  let syncFeedbackRef: InlineSyncingFeedback;
-  let recordsPaneRef: LibraryRecordsPane;
-
-  $: floatingButton =
+  let selectedResource = $state<Resource>(Resource.unknown);
+  let syncFeedbackRef = $state<InlineSyncingFeedback>();
+  let floatingButton = $derived(
     $view.isConstrainedWidth && selectedResource === Resource.unknown
       ? [
           {
@@ -81,7 +77,14 @@
             parentBgIndex: 2,
             shortcut: Action.CREATE,
             style: ButtonStyle.OUTLINED
-          };
+          }
+  );
+
+  $effect(() => {
+    if (!$view.isConstrainedWidth && selectedResource === Resource.unknown) {
+      selectedResource = resources[0] ?? Resource.unknown;
+    }
+  });
 
   onMount(() => {
     const pageSub = page.subscribe(async (p) => {
@@ -165,14 +168,14 @@
       {resources}
       selected={selectedResource}
       isShowCount={true}
-      on:select={(e) => {
+      onSelect={(selectedValue) => {
         appStore.toggleSearchParam({
-          [AppSearchParam.RESOURCE]: e.detail,
+          [AppSearchParam.RESOURCE]: selectedValue,
           [AppSearchParam.TYPE]: "all",
           [AppSearchParam.STARRED]: null,
           [AppSearchParam.ARCHIVED]: null
         });
-        syncFeedbackRef?.refresh(e.detail);
+        syncFeedbackRef?.refresh(selectedValue);
       }}
     />
   </div>
@@ -207,24 +210,27 @@
       </div>
     </div>
   {/if}
-  <div slot="nav" class="flex flex-grow">
-    <ResourceBrowser
-      resource={selectedResource}
-      isPreventCwPadding={true}
-      onBack={() => {
-        selectedResource = Resource.unknown;
-        appStore.toggleSearchParam([AppSearchParam.RESOURCE]);
-      }}
-    />
-  </div>
-  <div slot="right" class="flex flex-col gap-4 w-full">
-    {#key selectedResource}
-      <LibraryRecordsPane
+  {#snippet nav()}
+    <div class="flex flex-grow">
+      <ResourceBrowser
         resource={selectedResource}
-        bind:this={recordsPaneRef}
+        isPreventCwPadding={true}
+        onBack={() => {
+          selectedResource = Resource.unknown;
+          appStore.toggleSearchParam([AppSearchParam.RESOURCE]);
+        }}
       />
-    {/key}
-  </div>
+    </div>
+  {/snippet}
+  {#snippet right()}
+    <div class="flex flex-col gap-4 w-full">
+      {#key selectedResource}
+        <LibraryRecordsPane
+          resource={selectedResource}
+        />
+      {/key}
+    </div>
+  {/snippet}
 </Panel>
 
 {#if selectedResource !== Resource.task}

@@ -6,29 +6,37 @@
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import { properCase } from "@21n/shared-utils/text.utils";
   import BlockItem from "@21n/components/markdown/blockBrowser/BlockItem.svelte";
-  import { createEventDispatcher, getContext } from "svelte";
+  import { getContext } from "svelte";
   import { cn } from "@21n/utils/ui.utils";
   import Badge from "@21n/elements/text/Badge.svelte";
   import context from "@21n/stores/context.store";
   import type { IBlockBrowserSection } from "@21n/components/markdown/blockBrowser/blockBrowser.type";
   import { resolveBlockBrowserConfig } from "@21n/components/markdown/blockBrowser/blockBrowser.utils";
   import { Context } from "@21n/types/appStore.type";
-  const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>(Context.NODE);
 
-  export let variant: "v1" | "v2" = "v2";
-  export let isSingleColumnMode: boolean = false;
-  export let onSelect: (e: any) => void = () => {};
+  let {
+    variant = "v2",
+    isSingleColumnMode = false,
+    onSelect = () => {},
+    searchQueryString = $bindable("")
+  }: {
+    variant?: "v1" | "v2";
+    isSingleColumnMode?: boolean;
+    onSelect?: (e: any) => void;
+    searchQueryString?: string;
+  } = $props();
 
-  let selectedSection = "";
-  let focusedItem: any;
+  let selectedSection = $state("");
+  let focusedItem = $state<any>();
 
-  let config: IBlockBrowserSection[] = resolveBlockBrowserConfig({
+  const config: IBlockBrowserSection[] = resolveBlockBrowserConfig({
     contentType: nodeContext?.contentType,
     context: $context
   });
 
-  let filteredResults: any[] = config
+  let filteredResults = $state<any[]>(
+    config
     .map((section) => {
       return {
         section: section.section,
@@ -42,13 +50,10 @@
           })
       };
     })
-    .filter((section) => section.children.length > 0);
+    .filter((section) => section.children.length > 0)
+  );
   selectedSection = filteredResults[0].section;
   focusedItem = filteredResults[0].children[0];
-  /**
-   * @readonly
-   */
-  export let searchQueryString = "";
 
   function mapSectionNameToBlock(c: any, sectionName: string) {
     return {
@@ -131,8 +136,8 @@
   function onSelection(e?: CustomEvent) {
     const item = e?.detail || focusedItem;
     if (item.isDisabled) return;
-    dispatch("select", item);
-    onSelect(item);
+    const event = new CustomEvent("select", { detail: item });
+    onSelect(event);
   }
 
   function compareBlock(a: any, b: any) {
@@ -161,7 +166,7 @@
             {#each section.children as block}
               <BlockItem
                 {block}
-                on:select={onSelection}
+                onSelect={onSelection}
                 isFocused={compareBlock(focusedItem, block)}
                 width={searchQueryString || isSingleColumnMode
                   ? "w-full min-w-full"
@@ -194,8 +199,10 @@
                   "opacity-70": section.isDisabled
                 }
               )}
-              on:click|stopPropagation={() =>
-                (selectedSection = section.section)}
+              onclick={(event) => {
+                event.stopPropagation();
+                selectedSection = section.section;
+              }}
             >
               <div class="text-left">{properCase(section.section)}</div>
               {#if section.badge}
@@ -213,7 +220,7 @@
             {#each section.children as block}
               <BlockItem
                 {block}
-                on:select={onSelection}
+                onSelect={onSelection}
                 isFocused={compareBlock(focusedItem, block)}
               />
             {/each}

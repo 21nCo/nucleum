@@ -6,7 +6,7 @@
     type INode,
     type INodeThumb
   } from "@21n/products/memotron/node/node.type";
-  import { getContext, onMount, createEventDispatcher } from "svelte";
+  import { getContext, onMount } from "svelte";
   import type { IEmbedBlockBody } from "@21n/components/markdown/md.type";
   import EmbedContentPlaceholder from "@21n/components/markdown/embed/EmbedContentPlaceholder.svelte";
   import { logger } from "@21n/components/debug/logger.client";
@@ -47,33 +47,45 @@
   import Task from "@21n/components/tasks/Task.svelte";
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { Context } from "@21n/types/appStore.type";
-
-  const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>(Context.NODE);
   const captureContext = getContext<any>(Context.CAPTURE);
-  let captureStore: IActiveCaptureStore | undefined;
-  $: if (nodeContext?.id || captureContext?.id) {
+  const captureStore = $derived.by<IActiveCaptureStore | undefined>(() => {
+    if (!nodeContext?.id && !captureContext?.id) return undefined;
     const id = nodeContext?.id
       ? nodeContext?.id + "capture"
       : captureContext?.id;
-    captureStore = ActiveCaptureStore.resolve(id);
-  }
+    return ActiveCaptureStore.resolve(id);
+  });
   const contentContext = getContext<any>(Context.CONTENT);
-  export let id: IRecordId;
-  export let body: IEmbedBlockBody;
-  export let mdStore: MdStoreType;
-  export let isHovering = false;
-  let embedResourceType: Resource | undefined;
-  $: embedResourceType = body?.id ? determineResourceType(body.id) : undefined;
+  let {
+    id,
+    body,
+    mdStore,
+    isHovering = false,
+    onDelete = undefined,
+    onUpdate = undefined
+  }: {
+    id: IRecordId;
+    body: IEmbedBlockBody;
+    mdStore: MdStoreType;
+    isHovering?: boolean;
+    onDelete?: ((event?: CustomEvent<void>) => void) | undefined;
+    onUpdate?:
+      | ((event: CustomEvent<Partial<IEmbedBlockBody>>) => void)
+      | undefined;
+  } = $props();
+  const embedResourceType = $derived(
+    body?.id ? determineResourceType(body.id) : undefined
+  );
 
-  let linkInputValue = "";
-  let _mediaBlock: INode | undefined;
-  let refreshId = new Date().getTime();
-  let _mediaBlockFile: IFile | undefined;
-  let height = body?.height ?? 300;
-  let isLoading = true;
-  let isEditingTitle = false;
-  let titleInputValue = "";
+  let linkInputValue = $state("");
+  let _mediaBlock = $state<INode | undefined>(undefined);
+  let refreshId = $state(new Date().getTime());
+  let _mediaBlockFile = $state<IFile | undefined>(undefined);
+  let height = $state(body?.height ?? 300);
+  let isLoading = $state(true);
+  let isEditingTitle = $state(false);
+  let titleInputValue = $state("");
   let titleInputRef: TextInput | undefined;
 
   const titleNotRequiredTypes = [NodeType.KINDLE_BOOK];
@@ -88,21 +100,24 @@
     NodeType.GIST
   ];
 
-  $: isResizable =
+  const isResizable = $derived(
     (!$mdStore.params?.isReadOnly &&
       _mediaBlock?.contentType &&
       resizableTypes.includes(_mediaBlock?.contentType) &&
       !body?.isHidePreview) ??
-    false;
+      false
+  );
 
-  $: isShowTitle =
+  const isShowTitle = $derived(
     _mediaBlock?.contentType &&
-    !titleNotRequiredTypes.includes(_mediaBlock?.contentType);
+      !titleNotRequiredTypes.includes(_mediaBlock?.contentType)
+  );
 
-  $: isShowPreview =
+  const isShowPreview = $derived(
     _mediaBlock?.contentType &&
-    !body?.isHidePreview &&
-    _mediaBlock?.contentType !== NodeType.FILE;
+      !body?.isHidePreview &&
+      _mediaBlock?.contentType !== NodeType.FILE
+  );
 
   function onSelectFromLibrary(event: CustomEvent) {
     logger.debug({ at: "EmbedContent onSelectFromLibrary", event });
@@ -132,22 +147,17 @@
   }
 
   function dispatchUpdateEvent(body: Partial<IEmbedBlockBody>) {
-    dispatch("update", body);
+    const updateEvent = new CustomEvent<Partial<IEmbedBlockBody>>("update", {
+      detail: body
+    });
+    onUpdate?.(updateEvent);
   }
   const debouncedDispatchUpdateEvent = debouncer(dispatchUpdateEvent, 500);
 
-  onMount(async () => {
-    try {
-      isLoading = true;
-      if (!body?.id) return;
-      if (embedResourceType === Resource.node)
-        await assignNodeMediaContent(body.id);
-    } catch (e) {
-      logger.error({ at: "EmbedContent onMount", e });
-    } finally {
-      isLoading = false;
-    }
-  });
+  function emitDelete() {
+    const deleteEvent = new CustomEvent<void>("delete");
+    onDelete?.(deleteEvent);
+  }
 
   async function assignNodeMediaContent(id: IRecordId) {
     const node = await nodeStore.select(id, {
@@ -156,8 +166,40 @@
     if (node) {
       _mediaBlock = node;
       _mediaBlockFile = node.file as IFile;
+      return;
     }
+    _mediaBlock = undefined;
+    _mediaBlockFile = undefined;
   }
+
+  $effect(() => {
+    const nextHeight = body?.height ?? 300;
+    if (height !== nextHeight) height = nextHeight;
+  });
+
+  $effect(() => {
+    const bodyId = body?.id;
+
+    if (!bodyId || embedResourceType !== Resource.node) {
+      isLoading = false;
+      return;
+    }
+
+    let cancelled = false;
+    isLoading = true;
+
+    void assignNodeMediaContent(bodyId)
+      .catch((e) => {
+        logger.error({ at: "EmbedContent assignNodeMediaContent", e });
+      })
+      .finally(() => {
+        if (!cancelled) isLoading = false;
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  });
 
   async function onLinkInput() {
     try {
@@ -248,7 +290,7 @@
         edges: ["bottom"],
         onResize: onResize
       }}
-      on:click={(e) => {
+      onclick={(e) => {
         if (resolveEmbedTarget(e.target)?.classList.contains("resizer")) return;
         if (_mediaBlock?.contentType === NodeType.FILE) return;
         if (body.id) appStore.openResource(body.id, AccessMode.POP);
@@ -268,7 +310,6 @@
           <MediaContentResolver
             node={_mediaBlock}
             accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
-            on:delete
           />
         </div>
       {/if}
@@ -276,7 +317,9 @@
         {#if isEditingTitle && !$mdStore.params?.isReadOnly}
           <button
             class="flex justify-center items-center w-full h-16 rounded-md"
-            on:click|stopPropagation
+            onclick={(event) => {
+              event.stopPropagation();
+            }}
           >
             <TextInput
               bind:value={titleInputValue}
@@ -285,7 +328,7 @@
               placeholder="Title"
               width="w-full"
               size={Size.sm}
-              on:save={() => {
+              onSave={() => {
                 if (_mediaBlock) {
                   _mediaBlock.label = titleInputValue;
                   nodeStore.modify(_mediaBlock.id, { label: titleInputValue });
@@ -294,7 +337,7 @@
                   isEditingTitle = false;
                 }, 100);
               }}
-              on:cancel={() => {
+              onCancel={() => {
                 setTimeout(() => {
                   titleInputValue = _mediaBlock?.label ?? "";
                   isEditingTitle = false;
@@ -315,7 +358,7 @@
                 "h-20": isShowPreview
               }
             )}
-            on:click={onEditTitle}
+            onclick={onEditTitle}
           >
             <div
               class={cn("flex w-96 mo:w-full", {
@@ -338,7 +381,7 @@
               {:else if !isShowPreview && _mediaBlock?.url}
                 <button
                   class="text-xs text-left text-fgs4 whitespace-nowrap shrink-0 hover:underline"
-                  on:click={(e) => {
+                  onclick={(e) => {
                     if (_mediaBlock?.url) {
                       appStore.openLink(_mediaBlock.url);
                     }
@@ -357,7 +400,7 @@
                     tooltip="Edit title"
                     size={Size.sm}
                     style={ButtonStyle.OUTLINED}
-                    on:click={onEditTitle}
+                    onclick={onEditTitle}
                   />
                 {/if}
                 {#if _mediaBlock?.contentType !== NodeType.FILE}
@@ -366,7 +409,7 @@
                     tooltip="Go to node"
                     size={Size.sm}
                     style={ButtonStyle.OUTLINED}
-                    on:click={() => {
+                    onclick={() => {
                       if (body.id)
                         appStore.openResource(body.id, AccessMode.POP);
                     }}
@@ -378,7 +421,7 @@
                     tooltip="Download"
                     size={Size.sm}
                     style={ButtonStyle.OUTLINED}
-                    on:click={(e) => {
+                    onclick={(e) => {
                       if (_mediaBlock?.file) {
                         fileStore.download(_mediaBlock.file);
                       }
@@ -392,7 +435,7 @@
                     tooltip="Go to external link"
                     size={Size.sm}
                     style={ButtonStyle.OUTLINED}
-                    on:click={(e) => {
+                    onclick={(e) => {
                       if (_mediaBlock?.url) {
                         appStore.openLink(_mediaBlock.url);
                       }
@@ -407,9 +450,7 @@
                     size={Size.sm}
                     type={ButtonVariant.DANGER}
                     style={ButtonStyle.OUTLINED}
-                    on:click={() => {
-                      dispatch("delete");
-                    }}
+                    onclick={emitDelete}
                   />
                 {/if}
               </div>
@@ -445,10 +486,10 @@
       ? body.subType
       : undefined}
     bind:linkInputValue
-    on:select={onSelectFromLibrary}
-    on:linkInput={onLinkInput}
+    onSelect={onSelectFromLibrary}
+    onLinkInput={onLinkInput}
   />
 {/if}
 {#if body?.id && embedResourceType === Resource.node}
-  <ComponentBaseLayer subscribeToRecords={[body.id]} on:change={onNodeChange} />
+  <ComponentBaseLayer subscribeToRecords={[body.id]} onChange={onNodeChange} />
 {/if}

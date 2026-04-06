@@ -56,10 +56,6 @@
       if (!src) return;
       try {
         setTimeout(() => {
-          // const notification = new Notification("Pointron session", {
-          //   body,
-          //   icon: "",
-          // });
           postNotificationToParent({
             message: "",
             sound: src ? src.split("/sounds/")[1] : ""

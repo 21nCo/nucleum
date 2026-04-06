@@ -1,5 +1,10 @@
 <script lang="ts">
-  export let variant: "bar" | "pie" | "mixed" = "bar";
+    let {
+    variant = "bar",
+  }: {
+    variant?: "bar" | "pie" | "mixed";
+  } = $props();
+
 </script>
 
 <div class="animate-pulse w-full h-full p-4">

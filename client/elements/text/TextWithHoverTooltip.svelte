@@ -1,18 +1,24 @@
 <script lang="ts">
   import { cn } from "@21n/utils/ui.utils";
   import HoverableElement from "@21n/elements/HoverableElement.svelte";
-  export let text: string = "";
-  export let tooltip: string | undefined = undefined;
-  export let delay: number = 1500;
-  export let id: string = "";
-  export let truncateLength: number | undefined = undefined;
+  let {
+    text = "",
+    tooltip = undefined,
+    delay = 1500,
+    id = "",
+    truncateLength = undefined,
+    isHovering = $bindable(false),
+    class: classList = ""
+  }: {
+    text?: string;
+    tooltip?: string | undefined;
+    delay?: number;
+    id?: string;
+    truncateLength?: number | undefined;
+    isHovering?: boolean;
+    class?: string;
+  } = $props();
   let textRef: any;
-  let classList: string = "";
-  /**
-   * @readonly
-   */
-  export let isHovering: boolean = false;
-  export { classList as class };
 </script>
 
 <HoverableElement

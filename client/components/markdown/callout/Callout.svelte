@@ -14,17 +14,24 @@
   import { appStore } from "@21n/stores/app.store";
   import { cn } from "@21n/utils/ui.utils";
   import { logger } from "@21n/components/debug/logger.client";
-  import { createEventDispatcher } from "svelte";
   import { NodeType } from "@21n/products/memotron/node/node.type";
   import type { IRecordId } from "@21n/types/data.type";
-  const dispatch = createEventDispatcher();
 
-  export let id: IRecordId;
-  export let body: ICalloutBody;
-  export let mdStore: MdStoreType;
-  export let isHovering: boolean = false;
-  let _callout: ICalloutSetting = resolveCallout();
-  let ref: HTMLElement;
+  let {
+    id,
+    body,
+    mdStore,
+    isHovering = false,
+    onUpdate = undefined
+  }: {
+    id: IRecordId;
+    body: ICalloutBody;
+    mdStore: MdStoreType;
+    isHovering?: boolean;
+    onUpdate?: ((event: CustomEvent<{ callout?: ICalloutSetting; text?: string }>) => void) | undefined;
+  } = $props();
+  let _callout = $state<ICalloutSetting>(resolveCallout());
+  let ref = $state<HTMLElement>();
 
   function resolveCallout(): ICalloutSetting {
     if (body.callout) {
@@ -46,10 +53,10 @@
         onSelect: (callout: ICalloutSetting) => {
           _callout = callout;
           saveCalloutSetting(callout);
-          ref.dispatchEvent(new CustomEvent("hide"));
+          ref?.dispatchEvent(new CustomEvent("hide"));
         },
         onEdit: () => {
-          ref.dispatchEvent(new CustomEvent("hide"));
+          ref?.dispatchEvent(new CustomEvent("hide"));
           appStore.runAction(MemotronAction.CALLOUT_SETTINGS);
         }
       }
@@ -57,15 +64,19 @@
   }
 
   function saveCalloutSetting(callout: ICalloutSetting) {
-    dispatch("update", {
-      callout
-    });
+    onUpdate?.(
+      new CustomEvent("update", {
+        detail: { callout }
+      })
+    );
   }
 
   function handleUpdate(e: CustomEvent<string>) {
-    dispatch("update", {
-      text: e.detail
-    });
+    onUpdate?.(
+      new CustomEvent("update", {
+        detail: { text: e.detail }
+      })
+    );
   }
 </script>
 
@@ -104,7 +115,7 @@
   <div class="w-full">
     <TextContent
       bind:text={body.text}
-      on:update={handleUpdate}
+      onUpdate={handleUpdate}
       {id}
       contentType={NodeType.CALLOUT}
       {mdStore}

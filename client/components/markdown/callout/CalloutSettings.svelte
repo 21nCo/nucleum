@@ -38,7 +38,7 @@
       key: "avatar",
       width: 0.5,
       type: TableCellType.CUSTOM,
-      component: Avatar,
+      component: Avatar as unknown as ConstructorOfATypedSvelteComponent,
       componentProps: (row: any) => ({
         avatar: row.avatar,
         isInEditMode: true,
@@ -65,7 +65,7 @@
       key: "color",
       width: 1,
       type: TableCellType.CUSTOM,
-      component: ColorPickerMini,
+      component: ColorPickerMini as unknown as ConstructorOfATypedSvelteComponent,
       componentProps: (row: any) => ({
         hue: row.color,
         changeCallback: (value: number | string) => {
@@ -111,7 +111,7 @@
       bind:data={$markdownSettings.callout}
       actions={[{ action: TableCellDefaultAction.REMOVE, index: 0 }]}
       addAction="Add"
-      on:add={addCallout}
+      onAdd={addCallout}
     />
   </ModalContentPadded>
   <!-- Callout Preview -->

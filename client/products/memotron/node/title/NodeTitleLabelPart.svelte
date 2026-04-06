@@ -17,9 +17,17 @@
   import { Size } from "@21n/types/size.enum";
   import { resolveNodeLabel } from "@21n/products/memotron/node/node.utils";
   import NodeTitleBreadcrumbs from "@21n/products/memotron/node/title/NodeTitleBreadcrumbs.svelte";
-  export let item: INode | INodeThumb;
-  export let isNodePageContext: boolean = false;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+  let {
+    item,
+    isNodePageContext = false,
+    accessPoint = ResourceAccessPoint.BROWSER,
+    onClick = undefined
+  }: {
+    item: INode | INodeThumb;
+    isNodePageContext?: boolean;
+    accessPoint?: ResourceAccessPoint;
+    onClick?: (() => void) | undefined;
+  } = $props();
   let _label:
     | string
     | {
@@ -62,6 +70,17 @@
   onMount(async () => {
     _label = await resolveNodeLabel(item as INodeThumb);
   });
+
+  function handleRootClick() {
+    onClick?.();
+  }
+
+  function handleRootKeyDown(event: KeyboardEvent) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleRootClick();
+    }
+  }
 </script>
 
 <div>
@@ -70,11 +89,11 @@
       id={item.id}
       mdParent={item.mdParent}
       currentLabel={item.label}
-      on:click
+      onClick={handleRootClick}
       isThumbnailContext={true}
     />
   {/if}
-  <button
+  <div
     class={cn("flex gap-1 items-center truncate userdata", {
       "text-b2":
         accessPoint !== ResourceAccessPoint.TABS &&
@@ -82,7 +101,10 @@
       "text-fgs2": accessPoint === ResourceAccessPoint.MARKDOWN_EMBED,
       "text-h4 cw:text-h5 font-medium": accessPoint === ResourceAccessPoint.SELF
     })}
-    on:click
+    role="button"
+    tabindex="0"
+    onclick={handleRootClick}
+    onkeydown={handleRootKeyDown}
   >
     <NodeAvatar node={item} {accessPoint} />
     {#if item.labelSearch}
@@ -102,7 +124,7 @@
               "underline-dotted cursor-pointer hover:underline-dotted-primary":
                 isNodePageContext
             })}
-            on:click={onParentClick}
+            onclick={onParentClick}
           >
             {resolveLabelObject()?.parent?.label}
           </button>
@@ -111,6 +133,5 @@
     {:else}
       {resolveEmptyLabel()}
     {/if}
-    <!-- {item.label ?? item.body ?? resolveEmptyLabel()} -->
-  </button>
+  </div>
 </div>

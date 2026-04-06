@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
+  import type { Snippet } from "svelte";
   import type { IActiveCollectionStore } from "@21n/components/collection/collection.store";
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import { Size } from "@21n/types/size.enum";
@@ -37,23 +37,38 @@
   import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
   import type { ICollection } from "@21n/components/collection/collection.type";
 
-  const dispatch = createEventDispatcher();
-  export let searchQuery: string = "";
-  export let collection: IActiveCollectionStore;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  export let isShowMetaViews: boolean = false;
-  export let isSingleViewMode: boolean = false;
-  export let isConstrainedWidth: boolean = false;
+  let {
+    searchQuery = $bindable(""),
+    collection,
+    accessPoint = ResourceAccessPoint.SELF,
+    isShowMetaViews = $bindable(false),
+    isSingleViewMode = false,
+    isConstrainedWidth = false,
+    onSearch = undefined,
+    onAdd = undefined,
+    additionalContent = undefined
+  }: {
+    searchQuery?: string;
+    collection: IActiveCollectionStore;
+    accessPoint?: ResourceAccessPoint;
+    isShowMetaViews?: boolean;
+    isSingleViewMode?: boolean;
+    isConstrainedWidth?: boolean;
+    onSearch?: ((event?: CustomEvent<{ value: any }>) => void) | undefined;
+    onAdd?: ((event: CustomEvent<string>) => void) | undefined;
+    additionalContent?: Snippet | undefined;
+  } = $props();
   let dev_isEnableMetaViewsToggle: boolean = false;
 
   let isSearchFocused: boolean = false;
   let searchBoxRef: TextInput;
   let rightPartWidth = 0;
 
-  $: isMiniSearch = rightPartWidth < 530;
-  $: isDetailsBesideTitleRenderable =
+  let isMiniSearch = $derived(rightPartWidth < 530);
+  let isDetailsBesideTitleRenderable = $derived(
     !isConstrainedWidth &&
-    (!isMiniSearch || (isMiniSearch && !isSearchFocused));
+      (!isMiniSearch || (isMiniSearch && !isSearchFocused))
+  );
 
   function onLabelChange(e: any) {
     if ($collection.label) collection.modify({ label: $collection.label });
@@ -64,7 +79,7 @@
   }
 
   function onSearchQueryChange(e: any) {
-    dispatch("search", e);
+    onSearch?.(e);
   }
 
   function openPropertiesEditor() {
@@ -127,7 +142,7 @@
           <Avatar
             bind:avatar={$collection.avatar}
             isInEditMode={true}
-            on:change={onAvatarChange}
+            onChange={onAvatarChange}
             size={Size.md}
           />
         {:else if isAvatarPresent}
@@ -154,7 +169,7 @@
           placeholder="Collection title"
           style={InputStyle.PLAIN}
           width="w-full"
-          on:debouncedChange={onLabelChange}
+          onDebouncedChange={onLabelChange}
         />
       {:else}
         {@const title =
@@ -193,7 +208,7 @@
           class="flex items-center justify-center"
           type="button"
           aria-pressed={$collection.isStarred}
-          on:click={() => {
+          onclick={() => {
             collection.modify({ isStarred: false });
           }}
           use:tooltip={{ text: "Unstar collection" }}
@@ -207,7 +222,7 @@
       {#if !$collection.isInEditMode && $collection.type === CollectionType.TYPED && isDetailsBesideTitleRenderable}
         <button
           class="flex text-b3 text-fgs3 rounded-md border border-brs3"
-          on:click={openPropertiesEditor}
+          onclick={openPropertiesEditor}
           use:tooltip={{
             text: "Edit properties"
           }}
@@ -225,7 +240,7 @@
       {:else if $collection.isInEditMode && $collection.type === CollectionType.TYPED && !isConstrainedWidth}
         <button
           class="flex text-b3 text-fgs3 rounded-md border border-brs3 px-2 py-0.5 items-center gap-1 hover:bg-bgs2"
-          on:click={openPropertiesEditor}
+          onclick={openPropertiesEditor}
         >
           <Icon icon="ph:cube-light" size={Size.sm} class="stroke-fgs3" />
           Edit properties ({$collection.properties?.length ?? 0})
@@ -276,7 +291,7 @@
         >
           {#if isMiniSearch && !isSearchFocused}
             <button
-              on:click={() => {
+              onclick={() => {
                 isSearchFocused = true;
                 setTimeout(() => {
                   searchBoxRef?.focus();
@@ -294,21 +309,21 @@
               bind:this={searchBoxRef}
               icon="search"
               placeholder={resolveSearchPlaceholder($collection.totalItemCount)}
-              on:focus={() => (isSearchFocused = true)}
-              on:blur={(e) => (isSearchFocused = false)}
+              onFocus={() => (isSearchFocused = true)}
+              onBlur={() => (isSearchFocused = false)}
               isShowClearControl={searchQuery !== "" || isSearchFocused}
-              on:cancel={() => {
+              onCancel={() => {
                 searchQuery = "";
-                dispatch("search");
+                onSearch?.();
                 isSearchFocused = false;
               }}
-              on:input={onSearchQueryChange}
+              onInput={onSearchQueryChange}
             />
           {/if}
         </div>
       {/if}
       {#if !isSearchFocused}
-        <slot name="additional"></slot>
+        {@render additionalContent?.()}
         {#if !$collection.isInEditMode && dev_isEnableMetaViewsToggle}
           <Toggle
             icon="ph:monitor-play-light"
@@ -337,7 +352,7 @@
           size={Size.lg}
         />
         {#if isSingleViewMode}
-          <AddResourceAction on:add variant="default" />
+          <AddResourceAction onAdd={onAdd} variant="default" />
         {/if}
         <ResourceInlineCloseButton
           accessMode={$collection.accessMode}

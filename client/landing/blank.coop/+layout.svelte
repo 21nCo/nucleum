@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import "@21n/client/app.css";
   import BlankLandingLayout from "@21n/landing/shared/BlankLandingLayout.svelte";
   import type { IMetadata } from "@21n/layout/metadata.type";
@@ -43,6 +44,7 @@
     blogUrl: org.blog,
     twitterUrl: urls.socials?.twitter
   };
+  let { children }: { children?: Snippet } = $props();
   let metadata: IMetadata = {
     title: "21n - 21st century native organization",
     description:
@@ -56,5 +58,5 @@
 </script>
 
 <BlankLandingLayout {topNavBarValues} {footerValues}>
-  <slot />
+  {@render children?.()}
 </BlankLandingLayout>

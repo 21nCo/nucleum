@@ -9,7 +9,7 @@
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
   import { isShowStatusBanner } from "@21n/components/flux/resourceStores/resource.utils";
   import RecordTrashBanner from "@21n/components/record/RecordTrashBanner.svelte";
-  export let resource: ActiveResourceStore<any, any, any>;
+  let { resource }: { resource: ActiveResourceStore<any, any, any> } = $props();
 </script>
 
 {#if isShowStatusBanner($resource)}
@@ -17,7 +17,7 @@
     {#if $resource.trashInformation}
       <RecordTrashBanner
         deletedAt={$resource.trashInformation.deletedAt.toISOString()}
-        on:restore={() => {
+        onRestore={() => {
           resource.restore();
         }}
       />
@@ -64,7 +64,7 @@
         </span>
         <button
           class="text-b3 font-medium underline"
-          on:click={() => {
+          onclick={() => {
             resource.toggleLock(false);
           }}>Unlock</button
         >
@@ -79,7 +79,7 @@
         </span>
         <button
           class="text-b3 font-medium underline"
-          on:click={() => {
+          onclick={() => {
             resource.toggleReadMode(false);
             // floatingBarRef?.resetToggle();
           }}>turn off</button

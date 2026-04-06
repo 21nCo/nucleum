@@ -6,14 +6,21 @@
   import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import view from "@21n/stores/view.store";
   import { Display } from "@21n/types/view.type";
-  export let node: IActiveNodeStore;
-  export let mdId: string;
-  export let nodePageVariant: "v1" | "v2" = "v2";
+  let {
+    node,
+    mdId,
+    nodePageVariant = "v2"
+  }: {
+    node: IActiveNodeStore;
+    mdId: string;
+    nodePageVariant?: "v1" | "v2";
+  } = $props();
 
-  $: isValidPane =
+  let isValidPane = $derived(
     $node.panel &&
-    $node.panel !== ResourcePanelType.NONE &&
-    $node.panel !== ResourcePanelType.DEFAULT;
+      $node.panel !== ResourcePanelType.NONE &&
+      $node.panel !== ResourcePanelType.DEFAULT
+  );
 </script>
 
 <aside

@@ -13,8 +13,13 @@
   import { InfoTextType } from "@21n/types/text.type";
   import { parse } from "@21n/shared-utils/json.utils";
   import { Context } from "@21n/types/appStore.type";
-  export let node: ITweet;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  let {
+    node,
+    accessPoint = ResourceAccessPoint.SELF
+  }: {
+    node: ITweet;
+    accessPoint?: ResourceAccessPoint;
+  } = $props();
   const nodeContext = getContext<any>(Context.NODE);
 
   let parent: any;
@@ -34,9 +39,6 @@
     if (nodeContext?.parent) parent = nodeContext.parent;
   }
 
-  /**
-   * @deprecated - using TweetPreviewUsingWidget instead
-   */
   async function resolveOembedHtml() {
     const oEmbedUrl = `https://publish.twitter.com/oembed?url=${node.url}`;
     const urlData = await new Persistence().retrieveUrlData(oEmbedUrl, {
@@ -52,7 +54,7 @@
 {:else if account.isCloudUserAndOnline()}
   <button
     class="w-full h-full px-4 flex justify-center items-center overflow-y-auto"
-    on:click={() => {
+    onclick={() => {
       appStore.openLink(node.url);
     }}
   >
@@ -64,7 +66,8 @@
   >
     <button
       class="flex flex-col gap-5 p-4 hover:bg-bgs2 border border-fgs4 rounded-md mo:w-full w-3/4"
-      on:click|stopPropagation={() => {
+      onclick={(event) => {
+        event.stopPropagation();
         appStore.openLink(node.url);
       }}
     >

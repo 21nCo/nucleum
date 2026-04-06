@@ -12,13 +12,25 @@
   import type { ISessionThumb } from "@21n/products/pointron/logs/log.type";
   import { resolveSessionTimeSplit } from "@21n/products/pointron/pointron.utils";
 
-  export let date: Date;
-  export let isExpandable: boolean = false;
-  export let layout: CalendarColumnLayout;
-  $: dateString = date.toISOString().split("T")[0];
-  $: if (dateString) refreshTimelineEntries();
-  let isRefreshing: boolean = false;
-  let timelineEntries: CalendarTimelineEntry[] = [];
+  let {
+    date,
+    isExpandable = false,
+    layout
+  }: {
+    date: Date;
+    isExpandable?: boolean;
+    layout: CalendarColumnLayout;
+  } = $props();
+
+  const dateString = $derived(date.toISOString().split("T")[0]);
+  let isRefreshing = $state(false);
+  let timelineEntries = $state<CalendarTimelineEntry[]>([]);
+
+  $effect(() => {
+    if (dateString) {
+      refreshTimelineEntries();
+    }
+  });
 
   async function refreshFocusEntries() {
     const dayFilter = tzStore.resolveTimePeriodFilterForDay(date);
@@ -61,5 +73,5 @@
 <DayTimelineCore {date} data={timelineEntries} {layout} {isRefreshing} />
 <ComponentBaseLayer
   subscribeToResource={new Set([Resource.session])}
-  on:change={refreshTimelineEntries}
+  onChange={refreshTimelineEntries}
 />

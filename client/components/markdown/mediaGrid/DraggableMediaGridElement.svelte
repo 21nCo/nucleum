@@ -1,59 +1,82 @@
-<svelte:options accessors={true} />
-
 <script lang="ts">
   import type { IMediaGridItem } from "@21n/products/memotron/node/node.type";
   import { dragAndDropStore } from "@21n/stores/app.store";
   import view from "@21n/stores/view.store";
   import { DragStatus } from "@21n/types/dragstatus.enum";
-  import { onMount } from "svelte";
   import type { IFile } from "@21n/components/files/file.type";
   import type { IRecordId } from "@21n/types/data.type";
   import { fileStore } from "@21n/components/files/file.store";
   import FileView from "@21n/components/files/FileView.svelte";
   import { cn } from "@21n/utils/ui.utils";
 
-  export let isGridItem: boolean = true;
-  export let item: IMediaGridItem;
-  export let file: IFile | null = null;
-  export let isDraggable: boolean = false;
-  export let isDragging: boolean = false;
-  export let id: any;
-  export let ref: any = null;
-  export let sizeProperty: "width" | "height" = "height";
-  export let gap: number = 8;
-  export let handleFileUpload: (
-    param1: any,
-    param2: any,
-    param3: any,
-    param4: any
-  ) => void;
-  let _file: IFile | null = null;
-
-  let classList: string = `{isDraggable
-      ? 'cursor-move'
-      : ''}  box-border inline-block border-[2.5px] border-transparent`;
-  let style = `${sizeProperty}: 100%;
+  let {
+    isGridItem = true,
+    item,
+    file = null,
+    isDraggable = false,
+    isDragging = $bindable(false),
+    id,
+    ref = $bindable<HTMLElement | undefined>(undefined),
+    sizeProperty = "height",
+    gap = $bindable(8),
+    handleFileUpload,
+    onLoad = undefined
+  }: {
+    isGridItem?: boolean;
+    item: IMediaGridItem;
+    file?: IFile | null;
+    isDraggable?: boolean;
+    isDragging?: boolean;
+    id: any;
+    ref?: HTMLElement | undefined;
+    sizeProperty?: "width" | "height";
+    gap?: number;
+    onLoad?: ((event: CustomEvent<Event>) => void) | undefined;
+    handleFileUpload: (
+      param1: any,
+      param2: any,
+      param3: any,
+      param4: any
+    ) => void;
+  } = $props();
+  let _file = $state<IFile | null>(null);
+  const classList = $derived(
+    `${isDraggable ? "cursor-move" : ""} box-border inline-block border-[2.5px] border-transparent`
+  );
+  const style = $derived(`${sizeProperty}: 100%;
 object-fit: scale-down;
-cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
-  $: style = `${sizeProperty}: 100%;
-object-fit: scale-down;
-cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
-  let isDragOver = false;
-  let highlightBorder = "left";
-  let dragId: any;
-  let dragEnterId: any;
-  let dropId: any;
-  $: dragId = dragEnterId = dropId = id;
-
-  onMount(async () => {
-    if (!_file && file) _file = file;
-    else if (item.file) await resolveFile(item.file);
-  });
+cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`);
+  let isDragOver = $state(false);
+  let highlightBorder = $state("left");
+  const dragId = $derived(id);
+  const dragEnterId = $derived(id);
+  const dropId = $derived(id);
 
   async function resolveFile(fileId: IRecordId) {
     const response = await fileStore.select(fileId);
-    if (response?.url) _file = response;
+    return response?.url ? response : null;
   }
+
+  $effect(() => {
+    let cancelled = false;
+
+    if (file) {
+      _file = file;
+      return;
+    }
+    if (!item.file) {
+      _file = null;
+      return;
+    }
+
+    void resolveFile(item.file).then((response) => {
+      if (!cancelled) _file = response;
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  });
 
   function removeBorders(element: HTMLElement) {
     element.classList.remove(`${highlightBorder}Throbbing`);
@@ -86,6 +109,7 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
         boundingBox.top >= 0 && boundingBox.bottom <= parentBoundingBox.bottom
       );
     }
+    if (!ref) return;
     let isInV = isInView(ref);
     if ($view.isPortrait || !isInV) {
       await ref.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -196,13 +220,13 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
     class={classList}
     {style}
     {isDraggable}
-    on:load
-    on:dragstart={handleDragStart}
-    on:dragend={handleDragEnd}
-    on:dragover={onDragOver}
-    on:dragenter={handleDragEnter}
-    on:dragleave={handleDragLeave}
-    on:drop={handleDrop}
+    {onLoad}
+    onDragStart={handleDragStart}
+    onDragEnd={handleDragEnd}
+    onDragOver={onDragOver}
+    onDragEnter={handleDragEnter}
+    onDragLeave={handleDragLeave}
+    onDrop={handleDrop}
     bind:ref
   />
 {:else if id.includes("DropArea")}
@@ -220,41 +244,6 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`;
     Column: {item.position.columns.columnNo + 1}
   </div>
 {/if}
-<!-- {#if file?.type.startsWith("image/")}
-  <img
-    alt="..."
-    class={classList}
-    on:load
-    src={file.url}
-    {style}
-    draggable={isDraggable}
-    use:draggable
-    bind:this={ref}
-  />
-{:else if file?.type.startsWith("video/")}
-  <video
-    controls
-    class={classList}
-    {style}
-    draggable={isDraggable}
-    use:draggable
-    bind:this={ref}
-  >
-    <source src={file.url} />
-    <track kind="captions" />
-  </video>
-{:else if file?.type.startsWith("audio/")}
-  <audio
-    controls
-    class={classList}
-    {style}
-    draggable={isDraggable}
-    use:draggable
-    bind:this={ref}
-  >
-    <source src={file.url} />
-  </audio> -->
-<!-- TODO - FileView component for pdf -->
 {#if file?.type.startsWith("application/pdf")}
   <div
     class="{classList} min-w-[100px] h-full overflow-hidden"

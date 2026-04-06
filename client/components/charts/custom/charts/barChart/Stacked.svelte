@@ -9,7 +9,7 @@
     axisLeft,
     axisBottom
   } from "d3";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { beforeUpdate, onDestroy, onMount } from "svelte";
   //TODO - import dependency on local
   import { roundOffToNdigitsAfterDecimal } from "@21n/products/pointron/pointron.utils";
   import {
@@ -22,13 +22,13 @@
   import appearance from "@21n/stores/appearance.store";
   import view from "@21n/stores/view.store";
 
-  export let data: ChartDataPoint[] = [];
-  export let options: any;
-  // in these options prop we can define, various options for the chart
-  // like width, height, bars width, spacing between bars, etc.
-  export let orientation: Orientation = Orientation.Vertical;
-  $: themeColors = retrieveCurrentColors($appearance);
+  let data: ChartDataPoint[] = [];
+  let options: any;
+  let orientation: Orientation = Orientation.Vertical;
+  let themeColors = retrieveCurrentColors($appearance);
   const chartID = generateUID();
+
+  export { data, options, orientation };
 
   let containerRef: any = null;
   let scrollableElementContainerRef: any = null;
@@ -38,7 +38,6 @@
   let wrapperRef: any = null;
   let informationModal: any = null;
 
-  const dispatch = createEventDispatcher();
 
   let SVGScrollableDimensionLength: number = 0;
 
@@ -125,17 +124,15 @@
     spacingFactor: options.bars?.spacingFactor ?? DEFAULT_BARS.spacingFactor
   };
 
-  // $: {
+  let previousData = data;
+  let previousXDomain = JSON.stringify(options?.xDomain ?? null);
 
-  // }
-
-  $: {
+  function refreshDimensions() {
+    themeColors = retrieveCurrentColors($appearance);
     CONTAINER_DIMENSIONS = {
       width: options.width ?? DEFAULT_CONTAINER_DIMENSIONS.width,
       height: options.height ?? DEFAULT_CONTAINER_DIMENSIONS.height
     };
-  }
-  $: {
     BARS = {
       width:
         calculateBarWidth(SVGScrollableDimensionLength) ?? DEFAULT_BARS.width,
@@ -143,38 +140,10 @@
     };
   }
 
-  $: {
-    if (options.xDomain)
-      data.sort(
-        (a, b) =>
-          options.xDomain.indexOf(a.key) - options.xDomain.indexOf(b.key)
-      );
-    // console.log("data is", data);
-    data.forEach((d, dataIndex) => {
-      if (sanitizedData.length === 0) {
-        sanitizedData[0] = d;
-      } else {
-        let isElementAdded: boolean = false;
-        sanitizedData.forEach((data, index) => {
-          if (isElementAdded) return;
-          if (data.key === d.key && data.group === d.group) {
-            sanitizedData[index].value += d.value;
-            isElementAdded = true;
-          } else if (index === sanitizedData.length - 1) {
-            sanitizedData.push(d);
-          }
-        });
-      }
-    });
-    filteredData = sanitizedData;
-  }
-
-  $: {
-    // groups = [...new Set(data.map((d) => d.key))];
-    //groups are now updated and they should be array of arrays in which each inside array will be the array of data items of that group
+  function regroupData() {
     let tempGroups: ChartDataPoint[][] = [];
 
-    sanitizedData.forEach((d, dataIndex) => {
+    sanitizedData.forEach((d) => {
       if (tempGroups.length === 0) {
         tempGroups[0] = [d];
       } else {
@@ -192,7 +161,7 @@
     });
 
     let tempGroupingBasedOnKey: ChartDataPoint[][] = [];
-    filteredData.forEach((d, dataIndex) => {
+    filteredData.forEach((d) => {
       if (tempGroupingBasedOnKey.length === 0) {
         tempGroupingBasedOnKey[0] = [d];
       } else {
@@ -208,10 +177,39 @@
         });
       }
     });
+
     groups = tempGroups;
     groupsBasedOnKey = tempGroupingBasedOnKey;
-    // console.log("reactive groups", groups);
-    // console.log("reactive groupsBasedOnKey", groupsBasedOnKey);
+  }
+
+  function refreshSanitizedData() {
+    sanitizedData = [];
+    const sourceData = options.xDomain
+      ? [...data].sort(
+          (a, b) =>
+            options.xDomain.indexOf(a.key) - options.xDomain.indexOf(b.key)
+        )
+      : data;
+
+    sourceData.forEach((d) => {
+      if (sanitizedData.length === 0) {
+        sanitizedData[0] = { ...d };
+      } else {
+        let isElementAdded: boolean = false;
+        sanitizedData.forEach((dataPoint, index) => {
+          if (isElementAdded) return;
+          if (dataPoint.key === d.key && dataPoint.group === d.group) {
+            sanitizedData[index].value += d.value;
+            isElementAdded = true;
+          } else if (index === sanitizedData.length - 1) {
+            sanitizedData.push({ ...d });
+          }
+        });
+      }
+    });
+
+    filteredData = sanitizedData;
+    regroupData();
   }
 
   function sanitizeLinearScaleValue(
@@ -893,18 +891,19 @@
 
       if (orientation === Orientation.Vertical) {
         if (scrollLeft === -(scrollWidth - offsetWidth - relaxationFactor)) {
-          dispatch("fetch-data");
+          return;
         }
       } else {
         if (scrollTop === scrollHeight - offsetHeight) {
-          dispatch("fetch-data");
+          return;
         }
       }
     }
   }
 
-  import { onDestroy } from "svelte";
   onMount(() => {
+    refreshDimensions();
+    refreshSanitizedData();
     filteredData = sanitizedData;
     // console.log("options is", options);
 
@@ -929,6 +928,16 @@
       scrollableElementContainerRef.addEventListener("scroll", detectScrollEnd);
     }
     handleEventListeningForBars();
+  });
+
+  beforeUpdate(() => {
+    refreshDimensions();
+    const currentXDomain = JSON.stringify(options?.xDomain ?? null);
+    if (previousData !== data || previousXDomain !== currentXDomain) {
+      previousData = data;
+      previousXDomain = currentXDomain;
+      refreshSanitizedData();
+    }
   });
 
   onDestroy(() => {
@@ -988,7 +997,7 @@
       >
         <div class="checkbox-container">
           <input
-            on:change={updateGraph}
+            onchange={updateGraph}
             class="w-[10px] h-[10px] cursor-pointer p-1 checkbox"
             id={dataItem[0].group +
               dataItem[0].key +

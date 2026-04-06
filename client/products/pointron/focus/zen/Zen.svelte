@@ -33,26 +33,28 @@
     getContext<Writable<IContainer | undefined>>(Context.CONTAINER) ||
     readable(undefined);
 
-  export let isInline: boolean = false;
+  let { isInline = false }: { isInline?: boolean } = $props();
   const MIN_WIDTH_TO_EXPAND = resolveMinWidth(2);
   let layout: number = 1;
   let isShowTimeLeftOnMobile: boolean = false;
-  $: fullScreenFocusIsEnabled =
+  let fullScreenFocusIsEnabled = $derived(
     $page?.url?.searchParams?.get(AccessMode.FULL) ===
-    PointronAction.FULL_SCREEN_FOCUS;
-  $: isExtraLargeScreen =
-    $container && $container.landscapiness > 1.7 && $view.scale > 1.8;
+      PointronAction.FULL_SCREEN_FOCUS
+  );
+  let isExtraLargeScreen = $derived(
+    $container && $container.landscapiness > 1.7 && $view.scale > 1.8
+  );
 </script>
-
-<!-- {#snippet focusItemsHeading()}
-<FocusItemsHeading {isInEditMode} on:click={onEditClicked} />
-{/snippet} -->
 
 {#if $view.isPortrait || ($container && ($container.isPortrait || $container.width < MIN_WIDTH_TO_EXPAND))}
   {@const isMobile = $view.isPortrait}
   <div
-    on:touchstart|stopPropagation={startTouch}
-    on:touchmove|stopPropagation={() =>
+    ontouchstart={(event) => {
+      event.stopPropagation();
+      startTouch(event);
+    }}
+    ontouchmove={(event) => {
+      event.stopPropagation();
       moveTouch(
         event,
         undefined,
@@ -60,7 +62,8 @@
         fullScreen.hide,
         undefined,
         undefined
-      )}
+      );
+    }}
     class="flex flex-col w-full h-full px-4 py-8 glassthick bg-bgs1 otop:pt-12"
   >
     <div class="flex flex-col gap-6 flex-grow w-full items-center">
@@ -79,7 +82,10 @@
       {/if}
       <div
         id="focusItems"
-        on:touchstart|stopPropagation={startTouch}
+        ontouchstart={(event) => {
+          event.stopPropagation();
+          startTouch(event);
+        }}
         class="flex flex-col flex-grow gap-2 p-2 w-full h-64 overflow-auto styledscroll rounded-md bg-bgs1 transition-all duration-300"
       >
         <FocusItemsHeading />

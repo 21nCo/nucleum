@@ -18,6 +18,7 @@
     value: string;
   })[];
   let selectedTimezone: string;
+  let isTimezoneReady = $state(false);
   let labelProps = { orientation: Orientation.Vertical };
   let timescaleOptions = Object.keys(TimeScale).map((key) => {
     return {
@@ -44,6 +45,13 @@
         value: zone.label
       };
     });
+    isTimezoneReady = true;
+  });
+
+  $effect(() => {
+    if (!isTimezoneReady || !selectedTimezone) return;
+    const zone = timeZones.find((z) => z.label === selectedTimezone);
+    if (zone) userPreferences.setTimeZone(zone.offset * 60, zone.label);
   });
 </script>
 
@@ -73,10 +81,6 @@
           }}
           style={InputStyle.BORDERED}
           items={timeZoneDropdownItems}
-          on:select={(e) => {
-            const zone = timeZones.find((z) => z.label === e.detail);
-            if (zone) userPreferences.setTimeZone(zone.offset * 60, zone.label);
-          }}
           bind:value={selectedTimezone}
         />
       </div>
@@ -86,7 +90,7 @@
           icon="sync"
           style={ButtonStyle.PLAIN}
           size={Size.sm}
-          on:click={() => userPreferences.setTimeZone()}
+          onclick={() => userPreferences.setTimeZone()}
         />
       </div>
     </div>

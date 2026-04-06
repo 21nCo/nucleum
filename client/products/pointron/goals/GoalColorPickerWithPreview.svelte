@@ -4,16 +4,21 @@
   import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
   import { appStore } from "@21n/stores/app.store";
   import { isValidString, truncateString } from "@21n/shared-utils/text.utils";
-  export let hue: number | undefined = 0;
-  export let label: string = "";
+
+  let {
+    hue = $bindable(0),
+    label = ""
+  }: {
+    hue?: number;
+    label?: string;
+  } = $props();
 </script>
 
 <div class="flex flex-col gap-2 items-start w-full">
   <FormControlLabel props={{ label: "Color" }} forId="color-picker" />
   <div class="flex flex-wrap gap-4 w-full items-center justify-between">
-    <!-- TODO - color picker improvements - used colors, color from custom hex -->
     <div class="w-full xl:w-1/2">
-      <ColorSlider bind:hue on:change />
+      <ColorSlider bind:hue />
     </div>
     {#if label}
       <div

@@ -23,21 +23,26 @@
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
   import { detectUserRegion } from "@21n/utils/network.utils";
   import { peformAccountApiCall } from "../network";
-
-  export let isSignup = false;
-  export let currentProgress: string | undefined = undefined;
-  export let isExpandOAuthButtons: boolean = false;
-  let passwordMode: "password" | "otp" | "unselected" = "unselected";
-  let email = "";
-  let pass = "";
-  let otp = "";
-  let error: string | null = null;
-  let info: string | null = null;
-  let isTrusted = true;
-  let actionInProgress = false;
-  let showPassword = false;
-  let userRegionMap: Record<string, string> = {};
-  let region: string = "useast";
+  let {
+    isSignup = $bindable(false),
+    currentProgress = undefined,
+    isExpandOAuthButtons = false
+  }: {
+    isSignup?: boolean;
+    currentProgress?: string | undefined;
+    isExpandOAuthButtons?: boolean;
+  } = $props();
+  let passwordMode = $state<"password" | "otp" | "unselected">("unselected");
+  let email = $state("");
+  let pass = $state("");
+  let otp = $state("");
+  let error = $state<string | null>(null);
+  let info = $state<string | null>(null);
+  let isTrusted = $state(true);
+  let actionInProgress = $state(false);
+  let showPassword = $state(false);
+  let userRegionMap = $state<Record<string, string>>({});
+  let region = $state("useast");
   const dev_isShowTrustOption = false;
   const oAuthProviders = resolveProductConfig().oAuthProviders;
 
@@ -311,7 +316,6 @@
   }
 </script>
 
-<!-- transition:fade -->
 <div class="flex flex-col w-80 {$view.scale > 0.6 ? 'gap-10' : 'gap-6'}">
   <div class="flex flex-col gap-2 justify-center items-center">
     <div class="flex flex-col w-full gap-4">
@@ -356,14 +360,14 @@
             style={ButtonStyle.OUTLINED}
             isExpandToFullWidth={true}
             label={isSignup ? "Create password" : "Enter password"}
-            on:click={() => emailProceedOptionSelection("password")}
+            onclick={() => emailProceedOptionSelection("password")}
           />
           <Button
             size={Size.sm}
             style={ButtonStyle.OUTLINED}
             isExpandToFullWidth={true}
             label="Send OTP"
-            on:click={() => emailProceedOptionSelection("otp")}
+            onclick={() => emailProceedOptionSelection("otp")}
           />
         </div>
       {:else if passwordMode === "password"}
@@ -384,7 +388,7 @@
         >
           <button
             type="button"
-            on:click={() => (showPassword = !showPassword)}
+            onclick={() => (showPassword = !showPassword)}
             class="flex items-center justify-center"
           >
             <Icon
@@ -413,7 +417,7 @@
       {#if dev_isShowTrustOption}
         <button
           class="flex items-center gap-2 w-full"
-          on:click={() => {
+          onclick={() => {
             isTrusted = !isTrusted;
           }}
         >
@@ -427,7 +431,7 @@
             style={ButtonStyle.PLAIN}
             size={Size.xs}
             label="Forgot password?"
-            on:click={() => {
+            onclick={() => {
               appStore.gotoPath("/account/forgot-password");
             }}
           />
@@ -453,7 +457,7 @@
           ? "Signing in..."
           : "Log in"}
       isLoading={actionInProgress}
-      on:click={handleClick}
+      onclick={handleClick}
     />
   </div>
   {#if oAuthProviders && oAuthProviders.length > 0}

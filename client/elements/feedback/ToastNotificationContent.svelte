@@ -4,7 +4,12 @@
   import { cn } from "@21n/utils/ui.utils";
   import Icon from "../Icon.svelte";
 
-  export let notification: Toast;
+    let {
+    notification,
+  }: {
+    notification: Toast;
+  } = $props();
+
 </script>
 
 <div class="flex gap-2 items-center">

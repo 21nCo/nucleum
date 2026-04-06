@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
@@ -11,14 +10,19 @@
   import Button from "@21n/elements/button/Button.svelte";
   import { openAppPath } from "@21n/utils/extension.utils";
 
-  export let selectedCollection: CollectionData;
-  export let collectionItems: CollectionItem[];
-  export let isLoadingItems: boolean;
-  export let currentUrl: string;
-
-  const dispatch = createEventDispatcher<{
-    back: void;
-  }>();
+  let {
+    selectedCollection,
+    collectionItems,
+    isLoadingItems,
+    currentUrl,
+    onBack = undefined
+  }: {
+    selectedCollection: CollectionData;
+    collectionItems: CollectionItem[];
+    isLoadingItems: boolean;
+    currentUrl: string;
+    onBack?: (() => void) | undefined;
+  } = $props();
 
   function getCollectionIcon(collection: CollectionData): string | null {
     if (collection.type === CollectionType.TYPED && collection.avatar) {
@@ -31,7 +35,7 @@
   }
 
   function handleBackClick() {
-    dispatch("back");
+    onBack?.();
   }
 
   function handleOpenInAppClick() {
@@ -46,7 +50,7 @@
     icon="chevron-left"
     tooltip="Back"
     parentBgIndex={2}
-    on:click={handleBackClick}
+    onclick={handleBackClick}
   />
   <div class="flex items-center gap-2 flex-1">
     {#if selectedCollection.type === CollectionType.TYPED && selectedCollection.avatar}
@@ -72,7 +76,7 @@
     icon="weblink-two"
     tooltip="Open in app"
     parentBgIndex={2}
-    on:click={handleOpenInAppClick}
+    onclick={handleOpenInAppClick}
   />
 </div>
 

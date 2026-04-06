@@ -1,9 +1,23 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import SizeFactorItem from "@21n/components/settings/appearance/accessibility/sizeFactor/SizeFactorItem.svelte";
-  export let selectedFactor: number = 1;
-  export let parentBackgroundIndex: number = 1;
-  let dispatch = createEventDispatcher();
+  let {
+    selectedFactor = 1,
+    parentBackgroundIndex = 1,
+    onChange = undefined
+  }: {
+    selectedFactor?: number;
+    parentBackgroundIndex?: number;
+    onChange?:
+      | ((event: CustomEvent<{ factor: number }>) => void)
+      | undefined;
+  } = $props();
+
+  function emitChange(factor: number) {
+    const changeEvent = new CustomEvent<{ factor: number }>("change", {
+      detail: { factor }
+    });
+    onChange?.(changeEvent);
+  }
 </script>
 
 <div class="flex gap-4 flex-wrap">
@@ -12,10 +26,7 @@
       {factor}
       {parentBackgroundIndex}
       isActive={selectedFactor === factor}
-      on:click={() => {
-        selectedFactor = factor;
-        dispatch("change", { factor });
-      }}
+      onclick={() => emitChange(factor)}
     />
   {/each}
 </div>

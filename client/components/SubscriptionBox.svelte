@@ -4,12 +4,18 @@
   import { isValidEmail } from "@21n/shared-utils/text.utils";
   import { stringify } from "@21n/shared-utils/json.utils";
 
-  export let product: any;
+  let { product }: { product: any } = $props();
   let emailEntered = "";
   let errorMessage: string | undefined = undefined;
   let successMessage: string | undefined = undefined;
+  let previousEmailEntered = "";
   const subscriptionUrl =
     "https://3yin6uycm6.execute-api.us-east-1.amazonaws.com/prod/utils/communication";
+  $effect(() => {
+    if (emailEntered === previousEmailEntered) return;
+    previousEmailEntered = emailEntered;
+    errorMessage = undefined;
+  });
   async function handleSubmit() {
     if (!isValidEmail(emailEntered)) {
       successMessage = undefined;
@@ -42,9 +48,6 @@
       errorMessage = undefined;
     }, 3000);
   }
-  function onEmailEntryChange() {
-    errorMessage = undefined;
-  }
 </script>
 
 <div class="flex flex-col gap-2 items-center justify-center">
@@ -52,9 +55,8 @@
     <TextInput
       placeholder="enter your email"
       bind:value={emailEntered}
-      on:input={onEmailEntryChange}
     />
-    <Button label="Get early access" type="primary" on:click={handleSubmit} />
+    <Button label="Get early access" type="primary" onclick={handleSubmit} />
   </div>
   <div class="h-6">
     {#if errorMessage}

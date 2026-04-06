@@ -17,10 +17,20 @@
   import { CollectionObjectKey } from "@21n/components/collection/collection.type";
   import context from "@21n/stores/context.store";
   import { cn } from "@21n/utils/ui.utils";
-  export let selected: string;
-  export let isHideTypeShortcuts: boolean = false;
+
+  let {
+    selected,
+    isHideTypeShortcuts = false,
+    onSelect = undefined,
+    onCapture = undefined
+  }: {
+    selected: string;
+    isHideTypeShortcuts?: boolean;
+    onSelect?: ((value: string) => void) | undefined;
+    onCapture?: ((event: Event) => void) | undefined;
+  } = $props();
   let dev_isEnableEditShortcuts: boolean = true;
-  let refreshId: number = new Date().getTime();
+  let refreshId = $state(new Date().getTime());
   const isDev = import.meta.env.DEV;
   const dev_isBoxed: boolean = true;
 
@@ -114,8 +124,8 @@
               {item}
               isActive={selected === item.value}
               isBoxed={true}
-              on:select
-              on:capture
+              {onSelect}
+              {onCapture}
             />
           </div>
         {/each}
@@ -129,7 +139,7 @@
                 "w-full h-full col-span-1": types.length % 4 !== 0
               }
             )}
-            on:click={() => {
+            onclick={() => {
               appStore.runAction(MemotronAction.CAPTURE_SETTINGS);
             }}
           >
@@ -145,7 +155,7 @@
       style={ButtonStyle.PLAIN}
       isUnderlined={true}
       size={Size.sm}
-      on:click={() => {
+      onclick={() => {
         appStore.runAction(MemotronAction.CAPTURE_SETTINGS);
       }}
     />
@@ -157,7 +167,7 @@
   subscriptionPropsForMergeAction={[
     CollectionObjectKey.isCaptureShortcutEnabled
   ]}
-  on:change={() => {
+  onChange={() => {
     refreshId = new Date().getTime();
   }}
 />

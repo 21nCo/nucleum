@@ -2,23 +2,44 @@
   import type { ISelectItem, ISelectValue } from "@21n/types/select.type";
   import Icon from "../Icon.svelte";
   import { bg, cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
   import { Size } from "@21n/types/size.enum";
   import { onMount } from "svelte";
   import { tooltip } from "@21n/actions/popover.action";
-  export let options: ISelectItem[];
-  export let selected: ISelectValue | undefined = undefined;
-  export let isIconOnlyMode: boolean = false;
-  export let isExpandOnActiveForIcon = false;
-  export let parentBgIndex: number = 1;
-  export let isAccentColor: boolean = false;
-  export let size: Size.sm | Size.md = Size.sm;
-  export let isActiveIndicatorOnTop: boolean = false;
-  if (selected === undefined) selected = options[0]?.value;
-  const dispatch = createEventDispatcher();
 
-  let containerWidth = 0;
-  let containerEl: HTMLDivElement;
+  let {
+    options,
+    selected = $bindable<ISelectValue | undefined>(undefined),
+    isIconOnlyMode = false,
+    isExpandOnActiveForIcon = false,
+    parentBgIndex = 1,
+    isAccentColor = false,
+    size = Size.sm,
+    isActiveIndicatorOnTop = false,
+    onSelect = undefined
+  }: {
+    options: ISelectItem[];
+    selected?: ISelectValue | undefined;
+    isIconOnlyMode?: boolean;
+    isExpandOnActiveForIcon?: boolean;
+    parentBgIndex?: number;
+    isAccentColor?: boolean;
+    size?: Size.sm | Size.md;
+    isActiveIndicatorOnTop?: boolean;
+    onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
+  $effect(() => {
+    if (selected === undefined) selected = options[0]?.value;
+  });
+
+  let containerWidth = $state(0);
+  let containerEl = $state<HTMLDivElement | undefined>();
+
+  function emitSelect(nextSelected: ISelectValue) {
+    const selectEvent = new CustomEvent<any>("select", {
+      detail: nextSelected
+    });
+    onSelect?.(selectEvent);
+  }
 
   onMount(() => {
     if (isExpandOnActiveForIcon && containerEl) {
@@ -78,9 +99,9 @@
           [`hover:${bg(parentBgIndex)}-striped`]: !isSelected
         }
       )}
-      on:click={() => {
+      onclick={() => {
         selected = option.value;
-        dispatch("select", option.value);
+        emitSelect(option.value);
       }}
       use:tooltip={{
         text: option.label,

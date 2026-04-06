@@ -12,12 +12,20 @@
   import { cn } from "@21n/utils/ui.utils";
   import type { IOnboardingConfig } from "@21n/components/onboarding/onboarding.type";
 
-  export let config: IOnboardingConfig;
-  const onboardingVideoUrl = $appStore?.appData?.urls?.onboardingVideo;
-  const docsUrl = $appStore.appData?.urls?.docs ?? $appStore.appData?.urls?.guides;
-  const isShowVideo = !$view.isConstrainedWidth && Boolean(onboardingVideoUrl);
+  let {
+    config
+  }: {
+    config: IOnboardingConfig;
+  } = $props();
+  const onboardingVideoUrl = $derived($appStore?.appData?.urls?.onboardingVideo);
+  const docsUrl = $derived(
+    $appStore.appData?.urls?.docs ?? $appStore.appData?.urls?.guides
+  );
+  const isShowVideo = $derived(
+    !$view.isConstrainedWidth && Boolean(onboardingVideoUrl)
+  );
 
-  function saveColorScheme(e: CustomEvent) {
+  function saveColorScheme(e: CustomEvent<string>) {
     appearance.setColorScheme(e.detail);
     appearance.modifySyncWithSystem($appearance.isSyncWithSystem);
   }
@@ -52,7 +60,7 @@
             selectedSchemeId={$appearance?.colorScheme?.isDark
               ? $appearance.darkColorSchemeId
               : $appearance.lightColorSchemeId}
-            on:select={saveColorScheme}
+            onSelect={saveColorScheme}
           />
         </div>
         <div class="flex cw:flex-col w-full cw:justify-center gap-4">
@@ -60,12 +68,12 @@
             label="Get started"
             icon="proceed"
             type={ButtonVariant.PRIMARY}
-            on:click={() => appStore.gotoPath("/")}
+            onclick={() => appStore.gotoPath("/")}
           />
           <Button
             label="Read the docs"
             icon="book-open"
-            on:click={() => {
+            onclick={() => {
               if (docsUrl) appStore.openLink(docsUrl);
             }}
           />

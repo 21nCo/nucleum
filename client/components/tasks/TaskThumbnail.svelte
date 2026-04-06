@@ -22,7 +22,6 @@
   import Icon from "@21n/elements/Icon.svelte";
   import ResourceThumbnailContextMenu from "@21n/components/record/thumbnail/ResourceThumbnailContextMenu.svelte";
   import view from "@21n/stores/view.store";
-  import { createEventDispatcher } from "svelte";
   import { popover, tooltip } from "@21n/actions/popover.action";
   import AbsoluteTimeRangePopoverV2 from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
@@ -42,41 +41,56 @@
   import Task from "@21n/components/tasks/Task.svelte";
   import context from "@21n/stores/context.store";
   import { stringify } from "@21n/shared-utils/json.utils";
-  const dispatch = createEventDispatcher();
-  export let item: ITaskThumb;
-  export let arrangement: Arrangement = Arrangement.LIST;
-  export let size: Size.sm | Size.md | Size.lg = Size.lg;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
-  export let accessPointId: IRecordId | undefined = undefined;
-  export let isApplyCustomColor: boolean = false;
-  export let isDraggable: boolean = false;
-  export let parentBgIndex: number = 1;
-  export let isShowGoal: boolean = false;
-  $: void size;
-  $: void parentBgIndex;
-  let isHovering = false;
-  let isDatePickerOpen = false;
-  let isShowDatePickerOnCw = false;
-  let isTaskOpened = false;
+
+  let {
+    item: initialItem,
+    arrangement = Arrangement.LIST,
+    size = Size.lg,
+    accessPoint = ResourceAccessPoint.BROWSER,
+    accessPointId = undefined,
+    isApplyCustomColor = false,
+    isDraggable = false,
+    parentBgIndex = 1,
+    isShowGoal = false,
+    onClick = undefined
+  }: {
+    item: ITaskThumb;
+    arrangement?: Arrangement;
+    size?: Size.sm | Size.md | Size.lg;
+    accessPoint?: ResourceAccessPoint;
+    accessPointId?: IRecordId | undefined;
+    isApplyCustomColor?: boolean;
+    isDraggable?: boolean;
+    parentBgIndex?: number;
+    isShowGoal?: boolean;
+    onClick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
+
+  let item = $state(initialItem);
+  void size;
+  void parentBgIndex;
+  let isHovering = $state(false);
+  let isDatePickerOpen = $state(false);
+  let isShowDatePickerOnCw = $state(false);
+  let isTaskOpened = $state(false);
   const dev_isEnableBorderAnimation = false;
   const dev_isRenderTaskAsSheetOnMobile = false;
-  $: isOverdue =
-    !item.isChecked &&
-    item.dateUnix &&
-    compareDates(new Date(item.dateUnix), new Date(), "<");
-
-  $: isCurrentlyFocusing = activeSession.isCurrentFocusItem(
-    item.id,
-    $currentFocusItem
+  const isOverdue = $derived(
+    !!item.dateUnix &&
+      !item.isChecked &&
+      compareDates(new Date(item.dateUnix), new Date(), "<")
   );
-
-  $: multiSelectContext = {
+  const isCurrentlyFocusing = $derived(
+    activeSession.isCurrentFocusItem(item.id, $currentFocusItem)
+  );
+  const multiSelectContext = $derived({
     resource: Resource.task,
     accessPoint,
     accessPointId
-  };
-  let hasBulkSelection = false;
-  $: {
+  });
+  let hasBulkSelection = $state(false);
+
+  $effect(() => {
     const state = bulkEditStore.getState();
     if (
       state.context &&
@@ -87,13 +101,26 @@
     } else {
       hasBulkSelection = false;
     }
-  }
+  });
 
   const instanceId = generateMiniRandomId();
 
-  async function onTaskChanges(event: CustomEvent) {
-    const record = event.detail.params?.record;
-    if ("isChecked" in record) {
+  type TaskMutationRecord = {
+    isChecked?: boolean;
+    goalId?: string | undefined;
+    label?: string;
+    dateUnix?: number | undefined;
+    completedAtUnix?: number | undefined;
+  };
+
+  async function onTaskChanges(detail: {
+    resource?: unknown;
+    params?: { record?: TaskMutationRecord };
+    context?: string;
+  } | { key: string }) {
+    const record = "params" in detail ? detail.params?.record : undefined;
+    if (!record) return;
+    if (record.isChecked !== undefined) {
       if (!record.isChecked) {
         item.isChecked = false;
         item.completedAtUnix = undefined;
@@ -101,15 +128,15 @@
         item.isChecked = true;
         item.completedAtUnix = resolveUnixTimestamp();
       }
-    } else if ("goalId" in record && record.goalId !== item.goalId) {
+    } else if (record.goalId !== undefined && record.goalId !== item.goalId) {
       item.goalId = record.goalId;
       item.goal = await goalStore.select(record.goalId);
-    } else if ("label" in record && record.label !== item.label) {
+    } else if (record.label !== undefined && record.label !== item.label) {
       item.label = record.label;
-    } else if ("dateUnix" in record && record.dateUnix !== item.dateUnix) {
+    } else if (record.dateUnix !== undefined && record.dateUnix !== item.dateUnix) {
       item.dateUnix = record.dateUnix;
     } else if (
-      "completedAtUnix" in record &&
+      record.completedAtUnix !== undefined &&
       record.completedAtUnix !== item.completedAtUnix
     ) {
       item.completedAtUnix = record.completedAtUnix;
@@ -125,7 +152,6 @@
         isTaskOpened = true;
       else appStore.openResource(item.id, AccessMode.POP);
     }
-    dispatch("action", event.detail);
   }
 
   async function onDateChange(val: Date | undefined) {
@@ -167,9 +193,10 @@
   {arrangement}
   {accessPoint}
   {accessPointId}
-  {isApplyCustomColor}
-  {isDraggable}
-  isPreventDefaultContextMenu={true}
+    {isApplyCustomColor}
+    {isDraggable}
+    isPreventDefaultContextMenu={true}
+    onClick={onClick}
 >
   {#if $view.isConstrainedWidth && isTaskOpened}
     <div
@@ -184,7 +211,7 @@
           accessMode: AccessMode.SHEET
         }
       }}
-      on:change={onTaskPopoverChange}
+      onchange={onTaskPopoverChange}
     />
   {/if}
   <div
@@ -238,7 +265,7 @@
             bind:value={item.label}
             style={InputStyle.PLAIN}
             placeholder="Task name"
-            on:debouncedChange={(e) => {
+            onDebouncedChange={(e) => {
               taskStore.modify(
                 item.id,
                 { label: e.detail },
@@ -262,8 +289,8 @@
             onDateChange
           }
         }}
-        on:change={onDatePickerPopoverChange}
-      ></div>
+        onchange={onDatePickerPopoverChange}
+      />
     {/if}
     {#if !isHovering && isCurrentlyFocusing}
       <div class="flex flex-col items-end">
@@ -304,8 +331,9 @@
 
       {#if isHovering || isDatePickerOpen || ($context.isTouchDevice && !$view.isPortrait)}
         {@const isInlineContext =
-          accessPoint === ResourceAccessPoint.BROWSER &&
-          !$view.isConstrainedWidth}
+          !$view.isConstrainedWidth &&
+          (accessPoint === ResourceAccessPoint.BROWSER ||
+            accessPoint === ResourceAccessPoint.GOAL)}
         {#if !isCurrentlyFocusing}
           <Button
             icon="circle"
@@ -313,7 +341,7 @@
             size={Size.sm}
             type={ButtonVariant.PRIMARY}
             style={ButtonStyle.OUTLINED}
-            on:click={() => {
+            onclick={() => {
               activeSession.focusTask(item.id, item.goalId);
             }}
           />
@@ -330,13 +358,13 @@
             id={instanceId}
             variant="icon-only"
             size={Size.sm}
-            on:change={(e) => {
+            onChange={(e) => {
               onDateChange(e.detail);
             }}
-            on:opened={() => {
+            onOpened={() => {
               isDatePickerOpen = true;
             }}
-            on:closed={() => {
+            onClosed={() => {
               isDatePickerOpen = false;
             }}
           />
@@ -348,7 +376,7 @@
           size={Size.sm}
           style={ButtonStyle.OUTLINED}
           isPreventMinWidth={true}
-          on:click={() => {
+          onclick={() => {
             if (isInlineContext && accessPoint === ResourceAccessPoint.GOAL) {
               if (accessPointId)
                 appStore.toggleSearchParamRecordSpecific(accessPointId, {
@@ -370,7 +398,7 @@
         {arrangement}
         {isApplyCustomColor}
         bgSize={Size.sm}
-        on:action={onContextMenuAction}
+        onAction={onContextMenuAction}
         isInline={true}
       />
     {:else if accessPoint === ResourceAccessPoint.PICKER}
@@ -378,4 +406,4 @@
     {/if}
   </div>
 </ResourceThumbnailBase>
-<ComponentBaseLayer subscribeToRecords={[item.id]} on:change={onTaskChanges} />
+<ComponentBaseLayer subscribeToRecords={[item.id]} onChange={onTaskChanges} />

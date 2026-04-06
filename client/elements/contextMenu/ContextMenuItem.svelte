@@ -8,14 +8,28 @@
   import ContextMenuItemBase from "@21n/elements/contextMenu/ContextMenuItemBase.svelte";
   import ContextMenuItemWithSecondary from "@21n/elements/contextMenu/ContextMenuItemWithSecondary.svelte";
   import { appStore } from "@21n/stores/app.store";
-  import { createEventDispatcher } from "svelte";
   import ContextMenuToggleItem from "@21n/elements/contextMenu/ContextMenuToggleItem.svelte";
-  const dispatch = createEventDispatcher();
-  export let item: IContextMenuItem;
-  export let isToggleGroup = false;
-  export let parentBgIndex = 1;
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
-  let contextMenuItemRef: any;
+  let {
+    item,
+    isToggleGroup = false,
+    parentBgIndex = 1,
+    size = Size.md,
+    onSelect = undefined
+  }: {
+    item: IContextMenuItem;
+    isToggleGroup?: boolean;
+    parentBgIndex?: number;
+    size?: Size.sm | Size.md | Size.lg;
+    onSelect?: ((event: CustomEvent<IContextMenuItem>) => void) | undefined;
+  } = $props();
+  let contextMenuItemRef = $state<any>();
+
+  function emitSelect() {
+    const selectEvent = new CustomEvent<IContextMenuItem>("select", {
+      detail: item
+    });
+    onSelect?.(selectEvent);
+  }
 </script>
 
 {#if isToggleGroup}
@@ -23,13 +37,24 @@
     {item}
     {size}
     {parentBgIndex}
-    on:change={(e) => {
+    onChange={(e) => {
       if (item.callback) item.callback(e.detail);
-      dispatch("select", item);
+      emitSelect();
     }}
   />
 {:else if item.secondStepComponent?.component}
-  <ContextMenuItemWithSecondary {item} {size} on:select on:action />
+  <ContextMenuItemWithSecondary
+    {item}
+    {size}
+    onSelect={(e) => {
+      if (item.callback) item.callback(e.detail);
+      emitSelect();
+    }}
+    onAction={(e) => {
+      if (item.callback) item.callback(e.detail);
+      emitSelect();
+    }}
+  />
 {:else}
   {@const isRedAccent = item.value?.toString()?.toLowerCase() === "delete"}
   <button
@@ -44,14 +69,14 @@
       }
     )}
     data-context-menu-item-id={item.value}
-    on:click={(e) => {
+    onclick={(e) => {
       if (item.type === ContextMenuType.SWITCH) {
         if (contextMenuItemRef) contextMenuItemRef.toggle();
         return;
       }
       if (item.callback) item.callback();
       else if (item.action) appStore.runAction(item.action);
-      dispatch("select", item);
+      emitSelect();
       e.stopPropagation();
     }}
   >
@@ -59,7 +84,7 @@
       {item}
       bind:this={contextMenuItemRef}
       {isRedAccent}
-      on:change={(e) => {
+      onChange={(e) => {
         if (item.callback) item.callback(e.detail);
       }}
     />

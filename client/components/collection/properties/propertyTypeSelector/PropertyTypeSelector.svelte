@@ -15,9 +15,14 @@
     type IPropertyTypeSelectorGroup
   } from "@21n/components/collection/properties/propertyTypeSelector/propertyTypeSelector.type";
 
-  export let row: IProperty;
-  export let onChange: (e: { id: IRecordId; type: PropertyType }) => void;
-  let isPopoverVisible = false;
+  let {
+    row,
+    onChange
+  }: {
+    row: IProperty;
+    onChange: (e: { id: IRecordId; type: PropertyType }) => void;
+  } = $props();
+  let isPopoverVisible = $state(false);
   let ref: HTMLDivElement;
 
   const groups: IPropertyTypeSelectorGroup[] = [
@@ -59,7 +64,7 @@
     }
   ];
   const options: DropdownItem[] = [...propertyOptions, ...autoPropertyOptions];
-  $: selected = options.find((option) => option.value === row.type);
+  let selected = $derived(options.find((option) => option.value === row.type));
 </script>
 
 <div
@@ -85,7 +90,7 @@
       }
     }
   }}
-  on:change={(e) => {
+  onchange={(e) => {
     isPopoverVisible = e.detail?.open;
   }}
 >

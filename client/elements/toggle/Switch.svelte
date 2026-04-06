@@ -2,13 +2,19 @@
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let on = false;
-  // export let label = "";
-  export let id = "toggle-switch" + generateSimpleRandomId();
-  export let size: Size = Size.md;
-  export let isDisabled = false;
+  let {
+    on = $bindable(false),
+    id = "toggle-switch" + generateSimpleRandomId(),
+    size = Size.md,
+    isDisabled = false,
+    onChange = undefined
+  }: {
+    on?: boolean;
+    id?: string;
+    size?: Size;
+    isDisabled?: boolean;
+    onChange?: ((event: CustomEvent<boolean>) => void) | undefined;
+  } = $props();
 </script>
 
 <label
@@ -25,10 +31,12 @@
       bind:checked={on}
       class="sr-only"
       disabled={isDisabled}
-      on:change={() => {
-        dispatch("change", on);
+      onchange={() => {
+        onChange?.(new CustomEvent("change", { detail: on }));
       }}
-      on:click|stopPropagation
+      onclick={(event) => {
+        event.stopPropagation();
+      }}
     />
     <div
       data-class={"block bg-bgs4 rounded-full" +
@@ -50,9 +58,6 @@
 </label>
 
 <style>
-  /* input:checked + .block {
-    background-color: rgba(var(--colors-aps1), 1);
-  } */
   input:checked + .block + .dot {
     transform: translateX(100%);
   }

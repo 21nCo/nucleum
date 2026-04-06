@@ -1,8 +1,13 @@
 <script lang="ts">
   import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
   import { Orientation } from "@21n/types/direction.enum";
-  export let estimatedTime: number;
-  export let onChange: (event: CustomEvent<number>) => void;
+  let {
+    estimatedTime = 0,
+    onChange
+  }: {
+    estimatedTime?: number;
+    onChange: (event: CustomEvent<{ value: number }>) => void;
+  } = $props();
   if (!estimatedTime) estimatedTime = 0;
 </script>
 
@@ -17,7 +22,7 @@
           label: "Estimated time",
           orientation: Orientation.Vertical
         }}
-        on:change={onChange}
+        onChange={onChange}
       />
     </div>
   </div>

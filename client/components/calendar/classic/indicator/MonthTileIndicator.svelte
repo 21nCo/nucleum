@@ -8,13 +8,18 @@
   import { formatSeconds } from "@21n/utils/time.utils";
   import { cn } from "@21n/utils/ui.utils";
   import TinyPieChart from "@21n/components/calendar/classic/indicator/TinyPieChart.svelte";
-  export let data: {
-    tasks: ITaskThumb[];
-    focusSummary: DaySummary;
-    nodes: any;
-    calendarNotes: any;
-  };
-  export let isActive: boolean = false;
+  let {
+    data,
+    isActive = false
+  }: {
+    data: {
+      tasks: ITaskThumb[];
+      focusSummary: DaySummary;
+      nodes: any;
+      calendarNotes: any;
+    };
+    isActive?: boolean;
+  } = $props();
 </script>
 
 <div

@@ -4,7 +4,7 @@
   import { rgbToHex } from "@21n/utils/ui.utils";
   import { copyToClipboard } from "@21n/utils/utils";
 
-  export let colors: string[] | undefined = [];
+  let { colors = [] }: { colors?: string[] | undefined } = $props();
 </script>
 
 <div class="flex flex-wrap gap-2 w-full items-start">
@@ -14,14 +14,15 @@
       <button
         class="w-8 h-8 border border-brs2 rounded-md"
         style={`background-color: ${color}`}
+        aria-label={`Copy ${hex}`}
         use:tooltip={{
           text: hex
         }}
-        on:click={() => {
+        onclick={() => {
           copyToClipboard(hex);
           toasts.success(`Copied ${hex} to clipboard!`);
         }}
-      />
+      ></button>
     {/each}
   {:else}
     NA

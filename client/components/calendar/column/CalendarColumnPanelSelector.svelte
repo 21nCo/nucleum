@@ -9,9 +9,16 @@
   import BoxSwitcher from "@21n/elements/switcher/BoxSwitcher.svelte";
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
   import { Size } from "@21n/types/size.enum";
-  export let panels: ISelectItem[];
-  export let selectedPanel: CalendarColumnPanel;
-  export let isBoxed: boolean = true;
+
+  let {
+    panels,
+    selectedPanel = $bindable(),
+    isBoxed = true
+  }: {
+    panels: ISelectItem[];
+    selectedPanel?: CalendarColumnPanel;
+    isBoxed?: boolean;
+  } = $props();
 
   function onPanelSelection(e: CustomEvent) {
     if (!e.detail) return;
@@ -25,7 +32,7 @@
   <BoxSwitcher
     options={panels}
     bind:selected={selectedPanel}
-    on:select={onPanelSelection}
+    onSelect={onPanelSelection}
     isExpandOnActiveForIcon={true}
   />
 {:else}
@@ -34,7 +41,7 @@
       options={panels}
       size={Size.sm}
       bind:selected={selectedPanel}
-      on:select={onPanelSelection}
+      onSelect={onPanelSelection}
       isExpandOnActiveForIcon={true}
       style={OptionSelectorStyle.ICON}
     />

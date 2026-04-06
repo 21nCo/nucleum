@@ -1,20 +1,26 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
   import { DropDownStyle } from "@21n/types/dropdownItem.type";
   import { appConstants } from "@21n/stores/app.store";
+  let { children }: { children?: Snippet } = $props();
   let items = appConstants.colorSchemes.map((x) => ({
     value: x.tailwindSelector,
     label: x.label + " " + (x.isDark ? "dark" : "light")
   }));
   let className: string = items[0].value;
+
+  function handleWrapperClick(event: MouseEvent) {
+    event.stopPropagation();
+  }
 </script>
 
-<!-- svelte-ignore a11y-click-events-have-key-events -->
-<div class={className + " bg-bgs1 border border-fgs1"} on:click|stopPropagation>
-  <!-- Note Clicks must be made outside of the theme wrapper for those to be detected by the document's click eventlistners -->
-
+<div
+  class={className + " bg-bgs1 border border-fgs1"}
+  onclick={handleWrapperClick}
+>
   <DropDown
-    on:select={(e) => (className = e.detail)}
+    bind:value={className}
     {items}
     value={items[0].value}
     style={DropDownStyle.OUTLINED}
@@ -24,24 +30,6 @@
     class="flex items-center justify-center"
     style="min-width:320px; min-height:500px;padding:20px;"
   >
-    <slot />
+    {@render children?.()}
   </div>
 </div>
-<!-- <div
-  class={className +
-    " flex flex-col justify-around items-center bg-bgs1 border border-fgs1"}
-  style="min-width:320px; min-height:500px;padding:20px;"
-  on:click|stopPropagation
->
-  Note Clicks must be made outside of the theme wrapper for those to be detected by the document's click eventlistners
-  <div style="width:70%;">
-    <DropDown
-      on:select={(e) => (className = e.detail)}
-      {items}
-      value={items[0].value}
-      style={DropDownStyle.OUTLINED}
-      isActive={true}
-    />
-  </div>
-  <slot />
-</div> -->

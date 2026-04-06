@@ -75,9 +75,17 @@
   import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
   import ComponentEmbedLayer from "@21n/layout/layers/ComponentEmbedLayer.svelte";
 
-  export let id: string = "";
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  export let parentBgIndex: number = 1;
+  let {
+    id = "",
+    accessPoint = ResourceAccessPoint.SELF,
+    parentBgIndex = 1,
+    accessMode = AccessMode.POP
+  }: {
+    id?: string;
+    accessPoint?: ResourceAccessPoint;
+    parentBgIndex?: number;
+    accessMode?: AccessMode;
+  } = $props();
 
   function hasSelectMany(
     store: ReturnType<typeof resolveResourceStore>
@@ -118,7 +126,6 @@
       .toLowerCase();
   }
 
-  export let accessMode: AccessMode = AccessMode.POP;
   let collection: IActiveCollectionStore = ActiveCollectionStore.resolve(id);
   let activeView: ICollectionViewWithData | null = null;
   let viewData: ICollectionItem[] = [];
@@ -146,25 +153,32 @@
   let searchQuery: string = "";
   let containerWidth = 0;
 
-  $: isConstrainedWidth =
+  let isConstrainedWidth = $derived(
     $view.isConstrainedWidth ||
-    $view.isPortrait ||
-    $collection?.accessMode === AccessMode.SPLIT ||
-    $collection?.accessMode === AccessMode.FSPLIT ||
-    (containerWidth < 1000 &&
-      ($collection?.coverLayout?.placement === Placement.Right ||
-        $collection?.coverLayout?.placement === Placement.Left));
+      $view.isPortrait ||
+      $collection?.accessMode === AccessMode.SPLIT ||
+      $collection?.accessMode === AccessMode.FSPLIT ||
+      (containerWidth < 1000 &&
+        ($collection?.coverLayout?.placement === Placement.Right ||
+          $collection?.coverLayout?.placement === Placement.Left))
+  );
 
-  $: coverPlacement =
+  let coverPlacement = $derived(
     $collection?.coverLayout?.placement === Placement.Top ||
-    !$collection?.coverLayout?.placement ||
-    isConstrainedWidth
+      !$collection?.coverLayout?.placement ||
+      isConstrainedWidth
       ? Placement.Top
-      : $collection?.coverLayout?.placement;
+      : $collection?.coverLayout?.placement
+  );
 
-  $: isBoardContext =
-    activeView?.layout === CollectionLayout.BOARD &&
-    !isNoneResource(activeView?.groupBy);
+  let isBoardContext = $derived.by(() => {
+    const currentView = activeView;
+    if (!currentView) return false;
+    return (
+      currentView.layout === CollectionLayout.BOARD &&
+      !isNoneResource(currentView.groupBy)
+    );
+  });
 
   onMount(async () => {
     const viewQueryParam = new URLSearchParams(location.search).get(
@@ -548,7 +562,7 @@
     class={cn("relative flex w-full h-full", {
       "flex-col overflow-auto": coverPlacement === Placement.Top
     })}
-    on:scroll={onScroll}
+    onscroll={onScroll}
     use:resizeListener={(e) => {
       containerWidth = e.width;
     }}
@@ -563,12 +577,12 @@
         {dev_isRoundedCover}
         {isConstrainedWidth}
         bind:isCoverPickerOpen
-        on:change={onCoverChange}
-        on:placement={onPlacementChange}
-        on:reposition={onCoverReposition}
-        on:repositionDebounced={onCoverRepositionDebounced}
-        on:resize={onCoverResize}
-        on:resizeDebounced={onCoverResizeDebounced}
+        onChange={onCoverChange}
+        onPlacement={onPlacementChange}
+        onReposition={onCoverReposition}
+        onRepositionDebounced={onCoverRepositionDebounced}
+        onResize={onCoverResize}
+        onResizeDebounced={onCoverResizeDebounced}
       />
     {/if}
     {#if isCoverPickerOpen}
@@ -580,12 +594,12 @@
       >
         <CoverPicker
           value={$collection.cover}
-          on:change={onCoverChange}
-          on:select={persistCoverChange}
+          onChange={onCoverChange}
+          onSelect={persistCoverChange}
           orientation={coverPlacement === Placement.Top && !isConstrainedWidth
             ? Orientation.Horizontal
             : Orientation.Vertical}
-          on:close={() => (isCoverPickerOpen = false)}
+          onClose={() => (isCoverPickerOpen = false)}
         />
       </div>
     {:else}
@@ -595,12 +609,12 @@
           "h-full overflow-auto": coverPlacement !== Placement.Top,
           "w-full": coverPlacement === Placement.Top
         })}
-        on:scroll={onScroll}
+        onscroll={onScroll}
       >
         {#if $collection.isInEditMode && !isCoverPickerOpen}
           <button
             class="w-full min-h-12 bg-ass1 text-abg flex gap-2 items-center justify-center"
-            on:click={() => {
+            onclick={() => {
               collection.toggleEditMode(false);
             }}
           >
@@ -623,32 +637,33 @@
           })}
         >
           <CollectionTitleBar
-            on:back
             {collection}
             {accessPoint}
             {isSingleViewMode}
             {isConstrainedWidth}
             bind:searchQuery
             bind:isShowMetaViews
-            on:search={onSearch}
-            on:add={onAddResource}
+            onSearch={onSearch}
+            onAdd={onAddResource}
           >
-            <span slot="additional" class="flex items-center gap-2">
-              {#if isSingleViewMode && !$collection.isInEditMode}
-                <ArrangementSelector
-                  {isBoardContext}
-                  resource={$collection.resource}
-                  arrangement={activeView?.arrangement ?? Arrangement.LIST}
-                  density={activeView?.density}
-                  isHideThumbnailPreview={activeView?.isHideThumbnailPreview}
-                  isHideThumbnailTitle={activeView?.isHideThumbnailTitle}
-                  on:arrangementChange={onArrangementChange}
-                  on:densityChange={onDensityChange}
-                  on:previewSettingChange={onPreviewSettingChange}
-                  on:titleSettingChange={onTitleSettingChange}
-                />
-              {/if}
-            </span>
+            {#snippet additionalContent()}
+              <span class="flex items-center gap-2">
+                {#if isSingleViewMode && !$collection.isInEditMode}
+                  <ArrangementSelector
+                    {isBoardContext}
+                    resource={$collection.resource}
+                    arrangement={activeView?.arrangement ?? Arrangement.LIST}
+                    density={activeView?.density}
+                    isHideThumbnailPreview={activeView?.isHideThumbnailPreview}
+                    isHideThumbnailTitle={activeView?.isHideThumbnailTitle}
+                    onArrangementChange={onArrangementChange}
+                    onDensityChange={onDensityChange}
+                    onPreviewSettingChange={onPreviewSettingChange}
+                    onTitleSettingChange={onTitleSettingChange}
+                  />
+                {/if}
+              </span>
+            {/snippet}
           </CollectionTitleBar>
         </div>
         {#if isConstrainedWidth && !$collection.isInEditMode}
@@ -667,13 +682,13 @@
               <InlineSearchBar
                 bind:query={searchQuery}
                 style={InputStyle.FILLED}
-                on:search={onSearch}
+                onSearch={onSearch}
                 placeholder={$collection.totalItemCount
                   ? `Search this collection (${$collection.totalItemCount ?? 0} items)`
                   : "No items found"}
               />
               {#if !$collection.isInEditMode}
-                <AddResourceAction on:add={onAddResource} variant="minimal" />
+                <AddResourceAction onAdd={onAddResource} variant="minimal" />
               {/if}
             </div>
           </div>
@@ -730,46 +745,35 @@
                 isInEditMode={$collection.isInEditMode}
                 {parentBgIndex}
                 bind:triggerItemEdit
-                on:remove={onViewRemove}
-                on:add={onViewAdd}
+                onRemove={onViewRemove}
+                onAdd={onViewAdd}
                 bind:value={selectedViewId}
-                on:switch={onViewSwitch}
-                on:change={onViewLabelChange}
-                on:rearrange={onViewRearrange}
+                onSwitch={() => onViewSwitch()}
+                onChange={onViewLabelChange}
+                onRearrange={onViewRearrange}
               >
-                <span class="flex items-center gap-4 mo:pr-0 pr-4" slot="right">
-                  <!-- <ToggleGroup
-                    class="gap-3"
-                    items={[
-                      {
-                        value: "filter",
-                        icon: "funnel"
-                      },
-                      {
-                        value: "sort",
-                        icon: "ph:arrows-down-up-light"
-                      }
-                    ]}
-                  /> -->
-                  <ArrangementSelector
-                    {isBoardContext}
-                    resource={$collection.resource}
-                    arrangement={activeView?.arrangement ?? Arrangement.LIST}
-                    density={activeView?.density}
-                    isHideThumbnailPreview={activeView?.isHideThumbnailPreview}
-                    isHideThumbnailTitle={activeView?.isHideThumbnailTitle}
-                    on:arrangementChange={onArrangementChange}
-                    on:densityChange={onDensityChange}
-                    on:previewSettingChange={onPreviewSettingChange}
-                    on:titleSettingChange={onTitleSettingChange}
-                  />
-                  {#if !$collection.isInEditMode && !isConstrainedWidth}
-                    <AddResourceAction
-                      variant="strong"
-                      on:add={onAddResource}
+                {#snippet right()}
+                  <span class="flex items-center gap-4 mo:pr-0 pr-4">
+                    <ArrangementSelector
+                      {isBoardContext}
+                      resource={$collection.resource}
+                      arrangement={activeView?.arrangement ?? Arrangement.LIST}
+                      density={activeView?.density}
+                      isHideThumbnailPreview={activeView?.isHideThumbnailPreview}
+                      isHideThumbnailTitle={activeView?.isHideThumbnailTitle}
+                      onArrangementChange={onArrangementChange}
+                      onDensityChange={onDensityChange}
+                      onPreviewSettingChange={onPreviewSettingChange}
+                      onTitleSettingChange={onTitleSettingChange}
                     />
-                  {/if}
-                </span>
+                    {#if !$collection.isInEditMode && !isConstrainedWidth}
+                      <AddResourceAction
+                        variant="strong"
+                        onAdd={onAddResource}
+                      />
+                    {/if}
+                  </span>
+                {/snippet}
               </PanelSwitcher>
             {/if}
             {#if activeView && ($collection.isInEditMode || !isNoneResource(activeView.tabBy))}
@@ -782,9 +786,9 @@
                     </span>
                   {:else}
                     <ViewSettingsBar
-                      bind:view={activeView}
+                      view={activeView}
                       {properties}
-                      on:change={onViewSettingsChange}
+                      onChange={onViewSettingsChange}
                     />
                   {/if}
                 {/if}
@@ -793,7 +797,7 @@
                     view={activeView}
                     bind:value={selectedTab}
                     properties={$collection?.properties}
-                    on:select={onTabSwitch}
+                    onSelect={onTabSwitch}
                   />
                 {/if}
               </div>
@@ -831,21 +835,21 @@
         {dev_isRoundedCover}
         {isConstrainedWidth}
         bind:isCoverPickerOpen
-        on:change={onCoverChange}
-        on:placement={onPlacementChange}
-        on:reposition={onCoverReposition}
-        on:repositionDebounced={onCoverRepositionDebounced}
-        on:resize={onCoverResize}
-        on:resizeDebounced={onCoverResizeDebounced}
+        onChange={onCoverChange}
+        onPlacement={onPlacementChange}
+        onReposition={onCoverReposition}
+        onRepositionDebounced={onCoverRepositionDebounced}
+        onResize={onCoverResize}
+        onResizeDebounced={onCoverResizeDebounced}
       />
     {/if}
   </div>
 {/if}
 <ComponentBaseLayer
   hasDragAndDrop={true}
-  on:syncDown={() => refresh()}
+  onSyncDown={() => refresh()}
   subscribeToResource={new Set([Resource.link])}
   subscribeToContext={new Set([id.toString()])}
-  on:change={() => refresh()}
+  onChange={() => refresh()}
 />
 <ComponentEmbedLayer isBackNavigable={true} />

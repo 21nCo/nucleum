@@ -34,11 +34,11 @@
       bind:hour
       bind:minute
       labelOrientation={Orientation.Horizontal}
-      on:change={onChange}
+      onChange={onChange}
       isShowOnlyAfterCurrentTime={true}
     />
     <ComposeBreak
-      on:change={onChange}
+      onChange={onChange}
       bind:composition={$activeSession.composition}
     />
   </div>

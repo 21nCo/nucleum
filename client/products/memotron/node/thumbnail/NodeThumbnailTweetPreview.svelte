@@ -1,10 +1,17 @@
 <script lang="ts">
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { cn } from "@21n/utils/ui.utils";
-  export let text: string;
-  export let isVertical: boolean = false;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  export let isFullExpand: boolean = false;
+  let {
+    text,
+    isVertical = false,
+    accessPoint = ResourceAccessPoint.SELF,
+    isFullExpand = false
+  }: {
+    text: string;
+    isVertical?: boolean;
+    accessPoint?: ResourceAccessPoint;
+    isFullExpand?: boolean;
+  } = $props();
 </script>
 
 <p

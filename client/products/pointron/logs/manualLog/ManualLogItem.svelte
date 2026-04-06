@@ -49,7 +49,8 @@
   import view from "@21n/stores/view.store";
   import { cn } from "@21n/utils/ui.utils";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  export let item: IManualSessionLogForm;
+
+  let { item }: { item: IManualSessionLogForm } = $props();
 
   let previousStartDate: Date = item.startDate;
   let previousEndDate: Date = item.endDate;
@@ -69,7 +70,10 @@
     }) ?? "duration";
   const searchStore = new SearchStore(Resource.goal);
   let recentGoals: IGoal[] = [];
-  $: item.notes = notes;
+
+  $effect(() => {
+    item.notes = notes;
+  });
 
   onMount(() => {
     resolveRecentGoals();
@@ -157,7 +161,6 @@
       inputRef.focus();
     }, 100);
     performValidationChecks();
-    // inputRef.focus();
   }
 
   function setTimeToDate(
@@ -267,7 +270,6 @@
   }
 
   function performValidationChecks(src?: string) {
-    // console.log({ src, item });
     if (selectedMethod === "duration") {
       if (item.duration <= 0) {
         error = "Duration should be greater than 0.";
@@ -328,7 +330,7 @@
         style={ButtonStyle.OUTLINED}
         isPreventMinWidth={true}
         label="Remove"
-        on:click={() => manualLogStore.remove(item.id)}
+        onclick={() => manualLogStore.remove(item.id)}
       />
     </div>
   {/if}
@@ -341,7 +343,7 @@
         <CustomColorPropagator
           color={resolveGoalColor(selectedGoal)}
           class="flex justify-between items-center w-full text-ccs1"
-          on:click={onGoalClicked}
+          onclick={onGoalClicked}
         >
           {selectedGoal.label || "Untitled"}
           <Button icon="cross" />
@@ -349,9 +351,7 @@
       </div>
     {:else}
       <TextSearchInput
-        on:focus
-        on:blur
-        on:select={(e) => onGoalSelect(e?.detail?.item)}
+        onSelect={(e) => onGoalSelect(e?.detail?.item)}
         bind:value={label}
         bind:this={inputRef}
         searchResultComponent={GoalSearchResultItem}
@@ -366,7 +366,7 @@
             <CustomColorPropagator
               color={resolveGoalColor(resolveGoalThumb(goal))}
               class="flex items-center gap-2 border border-ccs1 rounded-md px-2 py-1 text-ccs1 bg-ccs5 hover:bg-ccs4 userdata"
-              on:click={() => {
+              onclick={() => {
                 onGoalSelect(goal);
               }}
             >
@@ -382,7 +382,7 @@
   {/if}
   <div class="flex flex-col gap-6">
     <div class="flex justify-start">
-      <PanelSwitcher
+        <PanelSwitcher
         items={[
           { label: "Duration", value: "duration" },
           { label: "Start and End", value: "startEnd" }
@@ -392,7 +392,7 @@
         isExpandToFullWidth={true}
         size={Size.sm}
         bind:value={selectedMethod}
-        on:switch={() => {
+        onSwitch={() => {
           uiState.setState(UIState.manualLogDurationMethod, selectedMethod, {
             scope: UIStateScope.DEVICE
           });
@@ -404,7 +404,7 @@
       {#if selectedMethod === "duration"}
         <div class="w-full max-w-full">
           <DurationSuggestions
-            on:select={onQuickDurationSelected}
+            onSelect={onQuickDurationSelected}
             bind:selectedItem={selectedQuickAddItem}
           />
         </div>
@@ -415,22 +415,22 @@
               orientation: Orientation.Vertical
             }}
             value={item.duration}
-            on:change={onDurationChange}
+            onChange={onDurationChange}
           />
         </div>
       {:else}
         <div class="flex flex-col gap-2">
           <FormControlLabel props={{ label: "Start" }} />
           <div class="flex items-center w-full gap-4">
-            <DatePicker bind:date={item.startDate} on:change={onTimeChange} />
-            <TimeInput bind:value={item.startTime} on:change={onTimeChange} />
+            <DatePicker bind:date={item.startDate} onChange={onTimeChange} />
+            <TimeInput bind:value={item.startTime} onChange={onTimeChange} />
           </div>
         </div>
         <div class="flex flex-col gap-2">
           <FormControlLabel props={{ label: "End" }} />
           <div class="flex items-center w-full gap-4">
-            <DatePicker bind:date={item.endDate} on:change={onTimeChange} />
-            <TimeInput bind:value={item.endTime} on:change={onTimeChange} />
+            <DatePicker bind:date={item.endDate} onChange={onTimeChange} />
+            <TimeInput bind:value={item.endTime} onChange={onTimeChange} />
           </div>
         </div>
       {/if}

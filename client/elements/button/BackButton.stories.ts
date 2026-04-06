@@ -19,13 +19,11 @@ export const defaultCase: Story = {
 };
 export const example1: Story = {
   args: {
-    color: "red",
     text: "example1"
   }
 };
 export const example2: Story = {
   args: {
-    color: "blue",
     text: "example2"
   }
 };

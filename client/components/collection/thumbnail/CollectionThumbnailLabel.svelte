@@ -4,10 +4,17 @@
   import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
   import type { ICollectionThumb } from "@21n/components/collection/collection.type";
   import CollectionThumbnailAvatar from "@21n/components/collection/thumbnail/CollectionThumbnailAvatar.svelte";
-  export let item: ICollectionThumb;
-  export let isShowFallbackIcons: boolean = false;
-  export let isShowAvatar: boolean = true;
-  export let isShowStarStatus: boolean = false;
+  let {
+    item,
+    isShowFallbackIcons = false,
+    isShowAvatar = true,
+    isShowStarStatus = false
+  }: {
+    item: ICollectionThumb;
+    isShowFallbackIcons?: boolean;
+    isShowAvatar?: boolean;
+    isShowStarStatus?: boolean;
+  } = $props();
 
   function resolveEmptyLabel() {
     //TODO - based on resource type

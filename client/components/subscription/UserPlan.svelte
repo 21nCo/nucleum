@@ -28,13 +28,7 @@
   let billingAddress: IBillingAddress | undefined = undefined;
   let isRedirecting = false;
   let isSwitching = false;
-  $: currentPlan = $account.plan;
-  $: isAppleContext =
-    $context.isEmbed &&
-    ($context.os === OperatingSystem.IOS ||
-      $context.os === OperatingSystem.MACOS);
-
-  let billingPeriods = [
+  const billingPeriods = [
     { value: BillingCycle.MONTHLY, label: "Billed monthly" },
     {
       value: BillingCycle.YEARLY,
@@ -42,20 +36,26 @@
       badge: "-20%"
     }
   ];
-  $: if (!isAppleContext) {
-    billingPeriods = billingPeriods.filter(
-      (p) => p.value !== BillingCycle.LIFETIME
+
+  function resolveIsAppleContext() {
+    return (
+      $context.isEmbed &&
+      ($context.os === OperatingSystem.IOS ||
+        $context.os === OperatingSystem.MACOS)
     );
-    billingPeriods.push({ value: BillingCycle.LIFETIME, label: "Lifetime" });
-  } else {
-    billingPeriods = billingPeriods.filter(
-      (p) => p.value !== BillingCycle.LIFETIME
-    );
+  }
+
+  function resolveBillingPeriods() {
+    const periods = [...billingPeriods];
+    if (!resolveIsAppleContext()) {
+      periods.push({ value: BillingCycle.LIFETIME, label: "Lifetime" });
+    }
+    return periods;
   }
 
   async function onSwitch(plan?: IPlan) {
     selectedPlan = plan || null;
-    if (isAppleContext) {
+    if (resolveIsAppleContext()) {
       await completePurchaseOnIOS();
       return;
     }
@@ -84,7 +84,7 @@
 
   async function onChoose(plan: IPlan) {
     selectedPlan = plan;
-    if (isAppleContext) {
+    if (resolveIsAppleContext()) {
       await completePurchaseOnIOS();
       return;
     }
@@ -144,7 +144,7 @@
     loadingText="Redirecting to payment..."
   />
 {:else if isBillingAddressCapture}
-  <BillingAddressCapture bind:billingAddress on:proceed={onProceed} />
+  <BillingAddressCapture bind:billingAddress onProceed={onProceed} />
 {:else}
   <div
     class="flex flex-col gap-8 h-full w-full overflow-auto max-w-4xl mx-auto"
@@ -154,7 +154,7 @@
     >
       <div class="flex items-center flex-wrap gap-2">
         <div class="cw:text-h3 text-h1 text-fgs2">Choose your plan</div>
-        {#if $account.plan?.discount && !isAppleContext && selectedCycle !== BillingCycle.MONTHLY}
+        {#if $account.plan?.discount && !resolveIsAppleContext() && selectedCycle !== BillingCycle.MONTHLY}
           <div
             class="cw:text-b3 text-b2 px-2 py-1 rounded-md bg-bgs2 text-ags1 font-medium border border-brs3"
           >
@@ -164,7 +164,7 @@
       </div>
       <div>
         <DropDown
-          items={billingPeriods}
+          items={resolveBillingPeriods()}
           isDisableSearch={true}
           bind:value={selectedCycle}
           size={Size.sm}
@@ -179,12 +179,12 @@
           <PlanCard
             plans={SUBSCRIPTION_PLANS}
             {plan}
-            {currentPlan}
+            currentPlan={$account.plan}
             period={selectedCycle}
-            isPreventDiscounting={isAppleContext}
-            on:switch={() => onSwitch(plan)}
-            on:choose={() => onChoose(plan)}
-            on:cancel={() => onCancel()}
+            isPreventDiscounting={resolveIsAppleContext()}
+            onSwitch={() => onSwitch(plan)}
+            onChoose={() => onChoose(plan)}
+            onCancel={() => onCancel()}
           />
         {/each}
       </div>

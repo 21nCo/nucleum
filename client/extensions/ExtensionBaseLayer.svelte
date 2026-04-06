@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount as onComponentMount, type Snippet } from "svelte";
   import { isTokenExpired, resolveToken } from "@21n/utils/account.utils";
   import account from "@21n/stores/account.store";
   import ExtensionThemeBase from "@21n/extensions/ExtensionThemeBase.svelte";
   import { ClientStorageKey } from "@21n/persistence/persistence.type";
   import { logger } from "@21n/components/debug/logger.client";
   import { clientStorage } from "@21n/persistence/persistence.utils";
-  import { createEventDispatcher } from "svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { extractProduct } from "@21n/shared-utils/utils";
   import {
@@ -27,15 +26,30 @@
   import { parse } from "@21n/shared-utils/json.utils";
   import { ExtensionStore } from "@21n/extensions/extension.store";
   import { Extension } from "@21n/products/product.type";
-  const dispatch = createEventDispatcher();
-  export let id: string;
-  export let extention: Extension;
-  export let isLoggedIn: boolean = false;
-  export let product: { product: string; env: string };
-  $: currentPage = extractProduct(window.location.hostname);
-  $: isSelfPage =
+  let {
+    id,
+    extention,
+    isLoggedIn = $bindable(false),
+    product,
+    stores = undefined,
+    onLogin = undefined,
+    onMount = undefined,
+    children = undefined
+  }: {
+    id: string;
+    extention: Extension;
+    isLoggedIn?: boolean;
+    product: { product: string; env: string };
+    stores?: unknown;
+    onLogin?: ((event: CustomEvent<{ code: number }>) => void) | undefined;
+    onMount?: ((event: CustomEvent<void>) => void) | undefined;
+    children?: Snippet | undefined;
+  } = $props();
+  const currentPage = extractProduct(window.location.hostname);
+  const isSelfPage =
     currentPage.product === "memotron" ||
     (typeof process !== "undefined" ? process.env?.NODE_ENV === "development" : false);
+  void stores;
 
   const sprites = [
     "sprite",
@@ -53,8 +67,8 @@
   });
 
   let windowMessageHandler: (event: MessageEvent) => void;
-  onMount(async () => {
-    dispatch("mount");
+  onComponentMount(async () => {
+    onMount?.(new CustomEvent("mount"));
     appStore.initializeProductInformation(product);
     addEventListeners();
     windowMessageHandler = async function (event: MessageEvent) {
@@ -68,9 +82,13 @@
           ClientStorageKey.USER_INFO,
           event.data.token.userInfo
         );
-        dispatch("login", {
-          code: 1
-        });
+        onLogin?.(
+          new CustomEvent("login", {
+            detail: {
+              code: 1
+            }
+          })
+        );
         await bootup();
       }
     };
@@ -99,9 +117,13 @@
     let isSessionExpired = false;
     if (token) isSessionExpired = await checkIfSessionExpired(token);
     if (!token || isSessionExpired) {
-      dispatch("login", {
-        code: -1
-      });
+      onLogin?.(
+        new CustomEvent("login", {
+          detail: {
+            code: -1
+          }
+        })
+      );
       return;
     }
     await bootup();
@@ -181,22 +203,7 @@
   }
 </script>
 
-<!-- <div
-  {id}
-  class={cn(
-    "text-base text-fgs1 relative",
-    $appearance.theme,
-    $appearance.colorScheme.tailwindSelector
-  )}
->
-  <ThemeLayer extensionContext={id}>
-    <slot />
-  </ThemeLayer>
-  {#if isMounted}
-    <CacheLayer />
-  {/if}
-</div> -->
 <ExtensionThemeBase {id}>
-  <slot />
+  {@render children?.()}
 </ExtensionThemeBase>
-<svelte:window on:focus={onFocus} />
+<svelte:window onfocus={onFocus} />

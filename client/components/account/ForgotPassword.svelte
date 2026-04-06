@@ -23,13 +23,17 @@
   let showNewPassword = false;
   let showConfirmPassword = false;
 
-  $: inlineFeedback = info
-    ? { type: AlertType.SUCCESS, message: info }
-    : error
-      ? { type: AlertType.ERROR, message: error }
-      : undefined;
+  function resolveInlineFeedback() {
+    return info
+      ? { type: AlertType.SUCCESS, message: info }
+      : error
+        ? { type: AlertType.ERROR, message: error }
+        : undefined;
+  }
 
-  $: trimmedEmail = email.trim();
+  function resolveTrimmedEmail() {
+    return email.trim();
+  }
 
   function clearFeedback() {
     error = null;
@@ -42,12 +46,12 @@
 
     clearFeedback();
 
-    if (!trimmedEmail) {
+    if (!resolveTrimmedEmail()) {
       error = "Please enter your email address.";
       return;
     }
 
-    if (!isValidEmail(trimmedEmail)) {
+    if (!isValidEmail(resolveTrimmedEmail())) {
       error = "Please enter a valid email address.";
       return;
     }
@@ -57,7 +61,7 @@
       const { data, error: otpError } = await (
         await authClient()
       ).forgetPassword.emailOtp({
-        email: trimmedEmail
+        email: resolveTrimmedEmail()
       });
 
       if (otpError) {
@@ -93,7 +97,7 @@
       const { data, error: verifyError } = await (
         await authClient()
       ).emailOtp.checkVerificationOtp({
-        email: trimmedEmail,
+        email: resolveTrimmedEmail(),
         type: "forget-password",
         otp
       });
@@ -140,7 +144,7 @@
       const { data, error: resetError } = await (
         await authClient()
       ).emailOtp.resetPassword({
-        email: trimmedEmail,
+        email: resolveTrimmedEmail(),
         otp,
         password: newPassword
       });
@@ -200,7 +204,6 @@
   async function handleResendOTP() {
     clearFeedback();
     otp = "";
-    //TODO - pass retry flag and use different provider in the backend for resend
     await handleSendOTP();
   }
 </script>
@@ -223,11 +226,14 @@
 
     <form
       class="flex flex-col gap-4"
-      on:submit|preventDefault={step === "email"
-        ? handleSendOTP
-        : step === "otp"
-          ? handleVerifyOTP
-          : handleResetPassword}
+      onsubmit={(event) => {
+        event.preventDefault();
+        return step === "email"
+          ? handleSendOTP()
+          : step === "otp"
+            ? handleVerifyOTP()
+            : handleResetPassword();
+      }}
     >
       {#if step === "email"}
         <TextInput
@@ -238,8 +244,8 @@
             orientation: Orientation.Vertical
           }}
           placeholder="name@email.com"
-          on:input={clearFeedback}
-          on:enter={handleSendOTP}
+          onInput={clearFeedback}
+          onEnter={handleSendOTP}
         />
       {:else if step === "otp"}
         <TextInput
@@ -260,8 +266,8 @@
             orientation: Orientation.Vertical
           }}
           placeholder="123456"
-          on:input={clearFeedback}
-          on:enter={handleVerifyOTP}
+          onInput={clearFeedback}
+          onEnter={handleVerifyOTP}
         />
       {:else}
         <TextInput
@@ -275,11 +281,11 @@
             }
           }}
           placeholder="********"
-          on:input={clearFeedback}
+          onInput={clearFeedback}
         >
           <button
             type="button"
-            on:click={() => (showNewPassword = !showNewPassword)}
+            onclick={() => (showNewPassword = !showNewPassword)}
             class="flex items-center justify-center"
           >
             <Icon
@@ -297,12 +303,12 @@
             orientation: Orientation.Vertical
           }}
           placeholder="********"
-          on:input={clearFeedback}
-          on:enter={handleResetPassword}
+          onInput={clearFeedback}
+          onEnter={handleResetPassword}
         >
           <button
             type="button"
-            on:click={() => (showConfirmPassword = !showConfirmPassword)}
+            onclick={() => (showConfirmPassword = !showConfirmPassword)}
             class="flex items-center justify-center"
           >
             <Icon
@@ -316,7 +322,7 @@
 
       <InlineFeedbackText
         isRenderEmptyHeight={true}
-        feedback={inlineFeedback}
+        feedback={resolveInlineFeedback()}
         isAutoDissappear={false}
         size={Size.sm}
       />
@@ -337,7 +343,7 @@
         style={ButtonStyle.OUTLINED}
         isLoading={actionInProgress}
         isDisabled={actionInProgress}
-        on:click={step === "email"
+        onclick={step === "email"
           ? handleSendOTP
           : step === "otp"
             ? handleVerifyOTP
@@ -349,7 +355,7 @@
           label="Resend OTP"
           style={ButtonStyle.PLAIN}
           size={Size.sm}
-          on:click={handleResendOTP}
+          onclick={handleResendOTP}
         />
       {/if}
     </form>
@@ -359,7 +365,7 @@
         label="Back to log in"
         style={ButtonStyle.PLAIN}
         size={Size.sm}
-        on:click={handleBackToLogin}
+        onclick={handleBackToLogin}
         isUnderlined={true}
       />
     </div>

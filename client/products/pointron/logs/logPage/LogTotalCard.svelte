@@ -4,8 +4,14 @@
   import { properCase } from "@21n/shared-utils/text.utils";
   import { formatSeconds } from "@21n/utils/time.utils";
   import { cn } from "@21n/utils/ui.utils";
-  export let value: number;
-  export let type: "total" | "focus" | "break" = "total";
+
+  let {
+    value,
+    type = "total"
+  }: {
+    value: number;
+    type?: "total" | "focus" | "break";
+  } = $props();
 </script>
 
 <div

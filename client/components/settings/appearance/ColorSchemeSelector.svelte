@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import { Theme, type ColorScheme } from "@21n/types/appearance.type";
   import { appConstants } from "@21n/stores/app.store";
   import appearance from "@21n/stores/appearance.store";
@@ -10,24 +9,37 @@
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
-  export let theme: Theme = Theme.LIGHT;
-  export let label: string = "Color scheme";
-  export let size: Size.sm | Size.md = Size.md;
-  let filteredColorSchemes: ColorScheme[];
-  export let selectedSchemeId: string;
-  const dispatch = createEventDispatcher();
-  $: if (theme) refreshColorSchemes();
-  function refreshColorSchemes(e: any = undefined) {
-    filteredColorSchemes = appConstants.colorSchemes?.filter(
+
+  let {
+    theme = Theme.LIGHT,
+    label = "Color scheme",
+    size = Size.md,
+    selectedSchemeId,
+    onSelect = undefined
+  }: {
+    theme?: Theme;
+    label?: string;
+    size?: Size.sm | Size.md;
+    selectedSchemeId: string;
+    onSelect?: ((event: CustomEvent<string>) => void) | undefined;
+  } = $props();
+  const filteredColorSchemes = $derived.by(() => {
+    if (!theme) return [];
+    let items = appConstants.colorSchemes?.filter(
       (x) => x.theme == $userPreferences?.appearance?.skin
     );
-    filteredColorSchemes = filteredColorSchemes?.filter((x: ColorScheme) => {
+    items = items?.filter((x: ColorScheme) => {
       return (
         (theme === Theme.LIGHT && !x.isDark) ||
         (theme == Theme.DARK && x.isDark)
       );
     });
-    filteredColorSchemes = sortArrayByOrder(filteredColorSchemes);
+    return sortArrayByOrder(items);
+  });
+
+  function emitSelect(id: string) {
+    const selectEvent = new CustomEvent<string>("select", { detail: id });
+    onSelect?.(selectEvent);
   }
 </script>
 
@@ -44,9 +56,7 @@
           {colorScheme}
           {size}
           isActive={colorScheme.id === selectedSchemeId}
-          on:click={() => {
-            dispatch("select", colorScheme.id);
-          }}
+          onclick={() => emitSelect(colorScheme.id)}
         />
       {/each}
     </div>

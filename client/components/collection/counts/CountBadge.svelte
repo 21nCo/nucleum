@@ -2,11 +2,18 @@
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
 
-  export let count: number = 0;
-  export let label: string | undefined = undefined;
-  export let icon: string | undefined = undefined;
-  let fullLabel: string = count.toString() + (label ? " " + label : "");
-  if (count > 99) fullLabel = "99+ " + (label ? " " + label : "");
+  let {
+    count = 0,
+    label = undefined,
+    icon = undefined
+  }: {
+    count?: number;
+    label?: string | undefined;
+    icon?: string | undefined;
+  } = $props();
+  let fullLabel = $derived(
+    `${count > 99 ? "99+" : count.toString()}${label ? ` ${label}` : ""}`
+  );
 </script>
 
 <span

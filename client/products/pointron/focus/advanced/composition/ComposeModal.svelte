@@ -8,5 +8,5 @@
 
 <ComposeDuration
   bind:composition={$activeSession.composition}
-  on:change={onCompositionChanges}
+  onChange={onCompositionChanges}
 />

@@ -1,17 +1,23 @@
 <script lang="ts">
   import { tooltip } from "@21n/actions/popover.action";
   import { cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-
-  export let label: string = "";
-  export let isDisabled: boolean = false;
-  export let isLast: boolean = false;
-  export let isOverflowItem: boolean = false;
+  let {
+    label = "",
+    isDisabled = false,
+    isLast = false,
+    isOverflowItem = false,
+    onClick = undefined
+  }: {
+    label?: string;
+    isDisabled?: boolean;
+    isLast?: boolean;
+    isOverflowItem?: boolean;
+    onClick?: ((event: MouseEvent | KeyboardEvent) => void) | undefined;
+  } = $props();
 
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === "Enter") {
-      dispatch("enter");
+      onClick?.(e);
     }
   }
 </script>
@@ -24,8 +30,8 @@
   })}
 >
   <button
-    on:click
-    on:keydown={handleKeyDown}
+    onclick={onClick}
+    onkeydown={handleKeyDown}
     id="breadcrumb-item-label"
     class={cn("cursor-pointer text-b2 truncate text-left", {
       "opacity-50 cursor-not-allowed": isDisabled,

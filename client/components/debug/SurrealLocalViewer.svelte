@@ -43,10 +43,10 @@
   <div class="flex justify-center gap-2">
     <Button
       label="Execute"
-      on:click={executeQuery}
+      onclick={executeQuery}
       type={ButtonVariant.PRIMARY}
     />
-    <Button label="Clear" on:click={() => (query = "")} />
+    <Button label="Clear" onclick={() => (query = "")} />
   </div>
   <div class="overflow-auto w-full">
     <div id="json-viewer"></div>
@@ -65,7 +65,7 @@
             label="Copy"
             size={Size.sm}
             isPreventMinWidth={true}
-            on:click={() => {
+            onclick={() => {
               navigator.clipboard.writeText(queryItem);
             }}
           />
@@ -73,7 +73,7 @@
             label="Execute"
             size={Size.sm}
             isPreventMinWidth={true}
-            on:click={() => {
+            onclick={() => {
               query = queryItem;
               executeQuery();
             }}

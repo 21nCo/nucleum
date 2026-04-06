@@ -1,4 +1,7 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { onMount } from "svelte";
   import { activeSession } from "@21n/products/pointron/focus/session.store";
   import { appLoadingState, appStore } from "@21n/stores/app.store";
@@ -21,14 +24,16 @@
   import { defaultsMigrationForNodes } from "@21n/products/memotron/base/migrations";
   import TopNavLeftMenuItem from "@21n/layout/topNav/TopNavLeftMenuItem.svelte";
   import { Action } from "@21n/types/action.enum";
-
-  let isLiteMode = $context.isEmbed && $context.isSheet;
+  let { children }: { children?: Snippet } = $props();
+  let isLiteMode = $state($context.isEmbed && $context.isSheet);
   const isDebug = import.meta.env?.DEV;
 
   onMount(() => {
     initializeData();
+    window.addEventListener("focus", onAppear);
     return () => {
       activeSession.clearIntervals();
+      window.removeEventListener("focus", onAppear);
     };
   });
 
@@ -64,21 +69,22 @@
   }
 </script>
 
-<UserBaseLayer on:ready={onReady}>
-  <div slot="topnav" class="flex gap-1 items-center h-full">
-    <TopNavLeftMenuItem
-      action={resourceAction(Resource.node, ResourceActionType.CREATE)}
-    />
-    <FocusTopNavWidget />
-    {#if isDebug}
-      <TopNavLeftMenuItem action={Action.FEED} />
-    {/if}
-  </div>
-  <slot />
+<UserBaseLayer onReady={onReady}>
+  {#snippet topnav()}
+    <div class="flex gap-1 items-center h-full">
+      <TopNavLeftMenuItem
+        action={resourceAction(Resource.node, ResourceActionType.CREATE)}
+      />
+      <FocusTopNavWidget />
+      {#if isDebug}
+        <TopNavLeftMenuItem action={Action.FEED} />
+      {/if}
+    </div>
+  {/snippet}
+  {@render children?.()}
   <PointronNotifications />
   <MemotronNotifications />
   <BackgroundSoundPlayer />
   <SessionTitle />
 </UserBaseLayer>
-<svelte:window on:focus={onAppear} />
 <MemoryBase />

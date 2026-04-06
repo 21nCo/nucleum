@@ -1,17 +1,27 @@
 <script lang="ts">
   import type { IBreadcrumbItem } from "@21n/elements/breadcrumbsV2/breadcrumbItem.type";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import type { IRecordId } from "@21n/types/data.type";
   import { nodeStore } from "@21n/products/memotron/node/node.store";
   import Breadcrumbs from "@21n/elements/breadcrumbsV2/Breadcrumbs.svelte";
   import { headingNodeTypes, NodeType, type INode } from "@21n/products/memotron/node/node.type";
   import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
   import BreadcrumbMini from "@21n/elements/breadcrumb/BreadcrumbMini.svelte";
-  const dispatch = createEventDispatcher();
-  export let mdParent: IRecordId[] | INode[] | undefined = undefined;
-  export let id: IRecordId | undefined = undefined;
-  export let currentLabel: string | undefined = undefined;
-  export let isThumbnailContext: boolean = false;
+  let {
+    mdParent = undefined,
+    id = undefined,
+    currentLabel = undefined,
+    isThumbnailContext = false,
+    onClick = undefined
+  }: {
+    mdParent?: IRecordId[] | INode[] | undefined;
+    id?: IRecordId | undefined;
+    currentLabel?: string | undefined;
+    isThumbnailContext?: boolean;
+    onClick?:
+      | ((event: CustomEvent<{ event: MouseEvent; item: IBreadcrumbItem }>) => void)
+      | undefined;
+  } = $props();
 
   let breadcrumbs: IBreadcrumbItem[] | undefined = undefined;
   onMount(async () => {
@@ -61,7 +71,7 @@
   }
   function onBreadcrumbClick(e: CustomEvent) {
     if (!e.detail.item.resourceId) return;
-    dispatch("click", e.detail);
+    onClick?.(e as CustomEvent<{ event: MouseEvent; item: IBreadcrumbItem }>);
   }
 </script>
 
@@ -69,14 +79,13 @@
   {#if isThumbnailContext}
     <BreadcrumbMini
       hierarchy={breadcrumbs?.map((x) => x.label)}
-      on:click={onBreadcrumbClick}
       truncateLength={30}
     />
   {:else}
     <Breadcrumbs
       items={breadcrumbs}
       isPreventDefault={true}
-      on:click={onBreadcrumbClick}
+      onClick={onBreadcrumbClick}
       limit={4}
     />
   {/if}

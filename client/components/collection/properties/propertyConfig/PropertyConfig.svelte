@@ -6,9 +6,9 @@
   import RatingPropertyConfig from "@21n/components/collection/properties/ratingProperty/config/RatingPropertyConfig.svelte";
   import SelectPropertyConfig from "@21n/components/collection/properties/propertyConfig/selectProperty/SelectPropertyConfig.svelte";
   import UniversalPropertyConfig from "@21n/components/collection/properties/propertyConfig/universalProperty/UniversalPropertyConfig.svelte";
-  export let row: IProperty;
+  let { row }: { row: IProperty } = $props();
   let dev_isEnableDefaultSelection: boolean = false;
-  let isPopoverOpen: boolean = false;
+  let isPopoverOpen = $state(false);
   let propertyTypesWithConfiguration = [
     PropertyType.SINGLE_SELECT,
     PropertyType.MULTI_SELECT,

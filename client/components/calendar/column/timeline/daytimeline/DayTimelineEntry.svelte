@@ -3,33 +3,38 @@
   import type { CalendarTimelineEntry } from "@21n/components/calendar/calendar.type";
   import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
   import { resizeListener } from "@21n/actions/resize.action";
-  export let entry: CalendarTimelineEntry & {
-    top: number;
-    height: number;
-    groupSize?: number;
-    positionInGroup?: number;
-  };
+
+  let {
+    entry
+  }: {
+    entry: CalendarTimelineEntry & {
+      top: number;
+      height: number;
+      groupSize?: number;
+      positionInGroup?: number;
+    };
+  } = $props();
   /**
    * Offset from the left side edge of the timeline to accomodate the
    * timeline markers
    */
   const leftOffset = 72;
   const offsetDeduction = leftOffset + 4;
-  let height = 0;
+  let height = $state(0);
 
-  // Calculate the width and position based on group data
-  $: isOverlapping = entry.groupSize && entry.groupSize > 1;
+  const isOverlapping = $derived(!!entry.groupSize && entry.groupSize > 1);
 
-  // Use full width for non-overlapping events, divide evenly for overlapping ones
-  $: width = isOverlapping
-    ? `calc((100% - ${offsetDeduction}px) / ${entry.groupSize})`
-    : `calc(100% - ${offsetDeduction}px)`;
+  const width = $derived(
+    isOverlapping
+      ? `calc((100% - ${offsetDeduction}px) / ${entry.groupSize})`
+      : `calc(100% - ${offsetDeduction}px)`
+  );
 
-  // Calculate left position - either at standard margin or offset for overlap column
-  $: left =
+  const left = $derived(
     isOverlapping && entry.positionInGroup !== undefined
       ? `calc(${leftOffset}px + (${entry.positionInGroup} * (100% - ${offsetDeduction}px) / ${entry.groupSize}))`
-      : `${leftOffset}px`;
+      : `${leftOffset}px`
+  );
 </script>
 
 <button

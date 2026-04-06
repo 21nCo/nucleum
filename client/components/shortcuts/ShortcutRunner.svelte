@@ -68,4 +68,4 @@
   };
 </script>
 
-<svelte:window on:keydown={shortcutListener} />
+<svelte:window onkeydown={shortcutListener} />

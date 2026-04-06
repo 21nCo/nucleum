@@ -3,13 +3,19 @@
   import SvgIcon from "@21n/elements/SVGIcon.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import { page } from "$app/stores";
-  export let item: ITopNavBarItem;
-  export let isStickedContext: boolean = false;
-  export let renderAs: "a" | "button" = "a";
+  let {
+    item,
+    isStickedContext = false,
+    renderAs = "a",
+  }: {
+    item: ITopNavBarItem;
+    isStickedContext?: boolean;
+    renderAs?: "a" | "button";
+  } = $props();
 
-  $: isActive = item.href
-    ? $page.url.pathname.includes(item.href.toLowerCase())
-    : false;
+  const isActive = $derived(
+    item.href ? $page.url.pathname.includes(item.href.toLowerCase()) : false
+  );
 </script>
 
 <svelte:element
@@ -24,7 +30,7 @@
       "hover:bg-bgs2": !isActive && isStickedContext
     }
   )}
-  on:click={() => {
+  onclick={() => {
     if (item.callback) {
       item.callback();
     }

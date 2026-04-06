@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { page } from "$app/stores";
   import { appStore } from "@21n/stores/app.store";
@@ -7,10 +9,16 @@
   import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
   import { resolveProductConfig } from "@21n/products/product.config";
   import view from "@21n/stores/view.store";
-  export let prefix: string | undefined = undefined;
-  export let cmdPageLaunch: string | undefined = undefined;
 
-  let action: IAction | null = null;
+  let {
+    prefix = undefined,
+    cmdPageLaunch = undefined
+  }: {
+    prefix?: string;
+    cmdPageLaunch?: string;
+  } = $props();
+
+  let action = $state<IAction | null>(null);
   let pageSub: any;
   const fileBasedRoutes = ["cparchived"];
   const productConfig = resolveProductConfig();

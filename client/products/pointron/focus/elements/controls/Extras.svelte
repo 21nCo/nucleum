@@ -14,8 +14,13 @@
     fullScreen,
     player
   } from "@21n/components/modal/modal.store";
-  export let isInFullScreen: boolean = false;
-  export let parentBgIndex: number = 1;
+  let {
+    isInFullScreen = false,
+    parentBgIndex = 1
+  }: {
+    isInFullScreen?: boolean;
+    parentBgIndex?: number;
+  } = $props();
   const buttonProps: {
     parentBgIndex: number;
     size: Size.sm | Size.md | Size.lg;
@@ -45,18 +50,11 @@
 <div
   class="flex gap-2 dp:gap-4 rounded-full border border-brs3 mo:px-2 py-1 dp:p-2 w-full justify-around"
 >
-  <!-- <Button
-    icon="music"
-    {size}
-    tooltip="Background music"
-    {toolTipPlacement}
-    on:click={() => appStore.runAction(PointronEventEnum.BACKGROUND_MUSIC)}
-  /> -->
   <Button
     icon="ph:flower-lotus-light"
     tooltip="Think mode"
     {...buttonProps}
-    on:click={() => {
+    onclick={() => {
       appStore.runAction(PointronAction.THINK_MODE);
     }}
   />
@@ -65,7 +63,7 @@
       icon="x-circle"
       tooltip="Abandon focus session"
       {...buttonProps}
-      on:click={() => {
+      onclick={() => {
         appStore.runAction(PointronAction.ABANDON_SESSION);
       }}
     />
@@ -75,7 +73,7 @@
       icon="pip"
       tooltip="Picture in picture"
       {...buttonProps}
-      on:click={() => {
+      onclick={() => {
         player.togglePip(PointronAction.FOCUS_PLAYER);
       }}
     />
@@ -84,6 +82,6 @@
     icon={isInFullScreen ? "exitfullscreen" : "fullscreen"}
     tooltip={isInFullScreen ? "Exit full screen" : "Full screen"}
     {...buttonProps}
-    on:click={onFullScreenToggle}
+    onclick={onFullScreenToggle}
   />
 </div>

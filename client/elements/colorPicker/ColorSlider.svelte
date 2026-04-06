@@ -7,28 +7,38 @@
     retrieveCurrentColors
   } from "@21n/utils/theme.utils";
   import { debouncer } from "@21n/utils/utils";
-  import { createEventDispatcher } from "svelte";
-
-  export let hue: number | undefined = 0;
-  export let saturation: number = 50;
-  export let lightness: number = 50;
-  const currentColors = retrieveCurrentColors($appearance);
-  export let fgColorHsl: string = refreshFgColorHsl(hue);
-  $: fgColorHsl = refreshFgColorHsl(hue);
-  const dispatch = createEventDispatcher();
+  let {
+    hue = $bindable(0),
+    saturation = $bindable(50),
+    lightness = $bindable(50),
+    fgColorHsl = $bindable(""),
+    onChange = undefined,
+    onDebouncedChange = undefined
+  }: {
+    hue?: number;
+    saturation?: number;
+    lightness?: number;
+    fgColorHsl?: string;
+    onChange?: ((value: number) => void) | undefined;
+    onDebouncedChange?: ((value: number) => void) | undefined;
+  } = $props();
+  const currentColors = $derived(retrieveCurrentColors($appearance));
+  $effect(() => {
+    fgColorHsl = refreshFgColorHsl(hue ?? 0);
+  });
 
   const handleHueChange = (event: Event) => {
     const target = event.target as HTMLInputElement;
     hue = parseInt(target.value);
-    dispatch("change", hue);
+    onChange?.(hue);
     debouncedChangePropagation();
   };
 
-  function onDebouncedChange() {
-    dispatch("debouncedChange", hue);
+  function emitDebouncedChange() {
+    onDebouncedChange?.(hue);
   }
 
-  const debouncedChangePropagation = debouncer(onDebouncedChange, 1000);
+  const debouncedChangePropagation = debouncer(emitDebouncedChange, 1000);
 
   let values = resolveSaturationAndLightness($appearance);
   if (values) {
@@ -53,7 +63,7 @@
     min="0"
     max="360"
     value={hue}
-    on:input={handleHueChange}
+    oninput={handleHueChange}
     class="w-full h-3 bg-transparent appearance-none focus:outline-none"
     style="--hue: {hue};"
   />

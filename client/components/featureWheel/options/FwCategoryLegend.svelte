@@ -1,11 +1,17 @@
 <script lang="ts">
   import type { IFwCategory } from "@21n/types/featureWheel.type";
   import { cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
-  export let categories: IFwCategory[] = [];
-  export let selectedCategories: string[] = [];
-  export let isHorizontal: boolean = false;
-  const dispatch = createEventDispatcher();
+  let {
+    categories = [],
+    selectedCategories = [],
+    isHorizontal = false,
+    onCategoryClick = (_category: IFwCategory) => {}
+  }: {
+    categories?: IFwCategory[];
+    selectedCategories?: string[];
+    isHorizontal?: boolean;
+    onCategoryClick?: (category: IFwCategory) => void;
+  } = $props();
 </script>
 
 <div class="w-full h-full flex flex-col gap-3">
@@ -22,8 +28,8 @@
         class={cn("flex items-center gap-3 p-1 rounded-md", {
           "bg-bgs3": selectedCategories.includes(category.label)
         })}
-        on:click={() => {
-          dispatch("categoryClick", category);
+        onclick={() => {
+          onCategoryClick(category);
         }}
       >
         <div

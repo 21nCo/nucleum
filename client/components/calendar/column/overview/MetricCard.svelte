@@ -2,10 +2,17 @@
   import { cn } from "@21n/utils/ui.utils";
   import view from "@21n/stores/view.store";
 
-  export let label: string;
-  export let value: number;
-  export let isAccent: boolean = false;
-  export let callback: (() => void) | undefined = undefined;
+  let {
+    label,
+    value,
+    isAccent = false,
+    callback = undefined
+  }: {
+    label: string;
+    value: number;
+    isAccent?: boolean;
+    callback?: (() => void) | undefined;
+  } = $props();
 </script>
 
 <button
@@ -18,7 +25,7 @@
       "cursor-default": !callback
     }
   )}
-  on:click={callback}
+  onclick={callback}
 >
   <div class="text-b2">
     {label}

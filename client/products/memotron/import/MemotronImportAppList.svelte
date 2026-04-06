@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import { Size } from "@21n/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
@@ -10,8 +9,6 @@
   import { ImportSource } from "@21n/products/memotron/import/data.type";
   import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
   import ExternalLogo from "@21n/branding/external/ExternalLogo.svelte";
-
-  const dispatch = createEventDispatcher();
 
   const availableImports = [
     {
@@ -28,7 +25,6 @@
     appStore.runAction(MemotronAction.IMPORT_APP_DATA, {
       componentParams: { importSource: source }
     });
-    dispatch("importTriggered", { source });
   }
 </script>
 
@@ -60,7 +56,7 @@
             type={ButtonVariant.PRIMARY}
             style={ButtonStyle.OUTLINED}
             isDisabled={!importApp.isAvailable}
-            on:click={() => triggerImport(importApp.source)}
+            onclick={() => triggerImport(importApp.source)}
           >
             Import from {importApp.name}
           </Button>

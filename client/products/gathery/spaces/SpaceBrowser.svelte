@@ -25,7 +25,7 @@
       style={OptionSelectorStyle.OUTLINE}
       {selected}
       labelProps={{ label: "Spaces", orientation: Orientation.Vertical }}
-      on:select={(e) => {
+      onSelect={(e) => {
         console.log("switch space", e);
         spaceStore.switchToSpace(e.detail);
       }}

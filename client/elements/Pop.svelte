@@ -1,24 +1,22 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
   import { IconVariant } from "@21n/types/icon.type";
   import Icon from "@21n/elements/Icon.svelte";
   import { generateUID } from "@21n/utils/utils";
   import { Size } from "@21n/types/size.enum";
-
-  export let isVisible: boolean = false;
-  export let hideCloseButton: boolean = false;
-  export let hideHeader: boolean = false;
-  export let size: Size = Size.md;
-
-  export let title: string = "";
-
-  export let classList: string = "";
-  export let style: string = "";
-
-  const dispatch = createEventDispatcher();
+  let {
+    isVisible = false,
+    hideCloseButton = false,
+    hideHeader = false,
+    size = Size.md,
+    title = "",
+    classList = "",
+    style = "",
+    onClose = () => {},
+    children
+  }: any = $props();
 
   function handleClose() {
-    dispatch("close");
+    onClose();
   }
 </script>
 
@@ -50,11 +48,9 @@
         >
       {/if}
       {#if !hideCloseButton}
-        <Icon on:click={handleClose} icon="cross" />
+        <Icon onclick={handleClose} icon="cross" />
       {/if}
     </div>
   {/if}
-  <slot />
+  {@render children?.()}
 </div>
-
-<!-- Note: In order to get the desired placement, make the parent(where ever necessary) position:relative, -->

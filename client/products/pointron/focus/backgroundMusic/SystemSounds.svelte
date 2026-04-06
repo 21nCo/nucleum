@@ -4,8 +4,8 @@
     SelectionItemActiveStyle,
     SwitcherStyle
   } from "@21n/types/switcher.enum";
-  export let selectedSound: string = "";
-  $: selectedSound;
+
+  let { selectedSound = $bindable("") }: { selectedSound?: string } = $props();
   let sounds: string[] = [
     "None",
     "Tick",
@@ -32,8 +32,4 @@
   selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
   parentBackgroundIndex={1}
   labelOrientation={Orientation.Vertical}
-  on:switch={($event) => {
-    console.log($event.detail);
-    selectedSound = sounds[$event.detail.selected];
-  }}
 /> -->

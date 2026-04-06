@@ -6,7 +6,12 @@
   import { Size } from "@21n/types/size.enum";
   import type { Toast } from "@21n/types/notification.type";
   import ToastNotification from "@21n/elements/feedback/ToastNotification.svelte";
-  export let id: string;
+    let {
+    id,
+  }: {
+    id: string;
+  } = $props();
+
   let notification: Toast | undefined;
   if (id) notification = $toasts.find((x: Toast) => x.id == id);
 </script>

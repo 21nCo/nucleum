@@ -8,18 +8,31 @@
   import { popover } from "@21n/actions/popover.action";
   import context from "@21n/stores/context.store";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
-  import { createEventDispatcher } from "svelte";
   import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
-  const dispatch = createEventDispatcher();
 
-  export let id: IRecordId;
-  export let parentBgIndex: number = 1;
-  export let isActive: boolean = false;
-  export let isRemovable: boolean = true;
-  export let isAlwaysShowRemove: boolean = false;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CLIPPER;
-  let item: any;
+  let {
+    id,
+    parentBgIndex = 1,
+    isActive = false,
+    isRemovable = true,
+    isAlwaysShowRemove = false,
+    accessPoint = ResourceAccessPoint.CLIPPER,
+    onclick = undefined,
+    onGoToResource = undefined,
+    onRemove = undefined
+  }: {
+    id: IRecordId;
+    parentBgIndex?: number;
+    isActive?: boolean;
+    isRemovable?: boolean;
+    isAlwaysShowRemove?: boolean;
+    accessPoint?: ResourceAccessPoint;
+    onclick?: ((event: MouseEvent) => void) | undefined;
+    onGoToResource?: ((event: CustomEvent<IRecordId>) => void) | undefined;
+    onRemove?: ((event: CustomEvent<IRecordId>) => void) | undefined;
+  } = $props();
+  let item = $state<any>(undefined);
 
   async function resolveItem() {
     const resource = determineResourceType(id);
@@ -46,7 +59,10 @@
       value: "delete",
       icon: "trash",
       callback: async () => {
-        dispatch("remove", id);
+        const removeEvent = new CustomEvent<IRecordId>("remove", {
+          detail: id
+        });
+        onRemove?.(removeEvent);
       }
     };
     if (
@@ -69,7 +85,13 @@
             value: "goToResource",
             icon: "proceed",
             callback: async () => {
-              dispatch("goToResource", id);
+              const goToResourceEvent = new CustomEvent<IRecordId>(
+                "goToResource",
+                {
+                  detail: id
+                }
+              );
+              onGoToResource?.(goToResourceEvent);
             }
           },
           removeItem
@@ -89,15 +111,6 @@
         $context.isTouchDevice && accessPoint === ResourceAccessPoint.SELF
           ? [PopoverTriggerMethod.CLICK]
           : [PopoverTriggerMethod.RIGHT_CLICK],
-      // componentProps: {
-      //   label: item?.label,
-      //   onGoToResource: () => {
-      //     dispatch("goToResource", id);
-      //   },
-      //   onRemove: () => {
-      //     dispatch("remove", id);
-      //   }
-      // },
       componentProps: { menuResolver: resolveContextMenu },
       id: "linkItemContextMenu",
       groupId: "linkItemContextMenuGroup"
@@ -112,8 +125,15 @@
       icon={resovleIcon()}
       {isRemovable}
       removeStyle={isAlwaysShowRemove ? "always-show" : "inline"}
-      on:click
-      on:remove
+      onclick={(event) => {
+        onclick?.(event);
+      }}
+      onRemove={() => {
+        const removeEvent = new CustomEvent<IRecordId>("remove", {
+          detail: id
+        });
+        onRemove?.(removeEvent);
+      }}
     />
   </div>
 {/await}

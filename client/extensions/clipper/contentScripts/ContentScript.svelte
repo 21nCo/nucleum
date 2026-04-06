@@ -30,8 +30,7 @@
   import ClipperInMemoryCache from "@21n/extensions/clipper/ClipperInMemoryCache.svelte";
   import { parse } from "@21n/shared-utils/json.utils";
   import ClipModal from "@21n/extensions/clipper/ClipModal.svelte";
-
-  export let id: string;
+  let { id }: { id: string } = $props();
   let textClipperRef: TextClipper;
   let extensionBaseRef: ExtensionBaseLayer;
   let isSnipActive: boolean = false;
@@ -43,11 +42,13 @@
   let isBaseMounted: boolean = false;
   let feedbackPaneRef: FeedbackPane;
 
-  $: isDisableClipper = toolbarUnavailableUrlsList.some((regex) => {
-    return regex.test(window.location.href);
-  });
-  $: contentType = resolveContentTypeForUrl($webpage.url);
-  $: contentTypeStr = resolveContentTypeString(contentType);
+  let isDisableClipper = $derived(
+    toolbarUnavailableUrlsList.some((regex) => {
+      return regex.test(window.location.href);
+    })
+  );
+  let contentType = $derived(resolveContentTypeForUrl($webpage.url));
+  let contentTypeStr = $derived(resolveContentTypeString(contentType));
 
   function onActivateColor(e: CustomEvent<IHighlighter | number>) {
     textClipperRef.onActivateColor(e);
@@ -322,15 +323,15 @@
   {id}
   product={{ product: Product.MEMOTRON, env: "live" }}
   stores={[...clipperCacheableStores]}
-  on:login={(e) => setLoginState(e.detail.code)}
-  on:mount={() => {
+  onLogin={(e) => setLoginState(e.detail.code)}
+  onMount={() => {
     isBaseMounted = true;
   }}
 >
   {#if !isDisableClipper}
     {#if !$toolbarState?.isOpen && !$toolbarState?.isHidden}
       <ToolbarOpener
-        on:click={() => {
+        onclick={() => {
           toolbarState.toggle(true);
           clientStorage.remove(ClientStorageKey.GUEST_TOOLBAR_STATE);
         }}
@@ -342,15 +343,14 @@
           {isSidePanelOpen}
           bind:isSnipActive
           bind:isDragging={isDraggingToolbar}
-          on:color={onActivateColor}
-          on:save={onSaveClick}
-          on:saved={() => {
+          onColor={onActivateColor}
+          onSave={onSaveClick}
+          onSaved={() => {
             feedbackPane.onPageSaved(`${contentTypeStr} already saved!`);
             feedbackPane.toggle({ isUserInitiated: true });
           }}
-          on:summarize
-          on:collapse={() => toolbarState.toggle(false)}
-          on:close={() => {
+          onCollapse={() => toolbarState.toggle(false)}
+          onClose={() => {
             toolbarState.toggleVisibility(true);
           }}
         />
@@ -360,13 +360,13 @@
         <LoginNotification
           isWithoutToolbarContext={!isLoggedIn}
           code={loginState}
-          on:later={async () => {
+          onLater={async () => {
             toolbarState.toggle(false);
             await clientStorage.set(ClientStorageKey.GUEST_TOOLBAR_STATE, {
               isCollapsed: true
             });
           }}
-          on:click={() => {
+          onclick={() => {
             relayToBackgroundScript({
               event: ExtensionEvent.LOGIN
             });
@@ -386,10 +386,10 @@
       {/if}
       {#if isSnipActive}
         <ScreenShot
-          on:saved={() => {
+          onSaved={() => {
             isSnipActive = false;
           }}
-          on:close={() => {
+          onClose={() => {
             isSnipActive = false;
           }}
         />
@@ -411,14 +411,6 @@
       <ClipModal clip={$feedbackPane.modalClip} onAction={onMutationRelay} />
     {/if}
   {/if}
-
-  <!-- Not needed as shortcuts are listened from extension command API -->
-  <!-- <ClipperShortcuts
-    on:save={onSaveClick}
-    on:collapse={() => {
-      toolbarState.toggle();
-    }}
-  /> -->
   {#if isBaseMounted}
     <ClipperInMemoryCache />
   {/if}

@@ -6,16 +6,29 @@
   import { PanelName } from "@21n/landing/shared/landing.type";
   import DayAndNightToggle from "@21n/landing/shared/DayAndNightToggle.svelte";
   import { hoverable } from "@21n/actions/hover.action";
-  export let label: string;
-  export let description: string;
-  export let icon: string;
+  let {
+    label,
+    description,
+    icon,
+    id = "",
+    isProduct = false,
+    isRightPanel = false,
+    onclick
+  }: {
+    label: string;
+    description: string;
+    icon: string;
+    id?: string;
+    isProduct?: boolean;
+    isRightPanel?: boolean;
+    onclick?: () => void;
+  } = $props();
+
   let className: string = "";
   export { className as class };
-  export let id: string = "";
-  export let isProduct: boolean = false;
-  export let isRightPanel: boolean = false;
+
   let isHovered: boolean = false;
-  $: isInteractive = isProduct || isRightPanel;
+  const isInteractive = $derived(isProduct || isRightPanel);
 </script>
 
 {#if !$view.isPortrait}
@@ -30,7 +43,7 @@
         "hover:text-fgs1": isInteractive
       }
     )}
-    on:click
+    onclick={onclick}
     use:hoverable={{
       onHover: (value) => {
         isHovered = value;

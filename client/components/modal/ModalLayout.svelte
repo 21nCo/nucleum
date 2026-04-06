@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import modalEvent from "@21n/components/modal/modal.store";
   import {
     appEvents,
@@ -28,12 +29,19 @@
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
 
-  export let path: string;
-  export let resource: string | undefined = undefined;
-  export let params: ModalParams;
-  let size: Size = Size.md;
-  if (params.layout?.size) size = params.layout.size;
-  let footerRef: any;
+  let {
+    path,
+    resource = undefined,
+    params = $bindable(),
+    children = undefined
+  }: {
+    path: string;
+    resource?: string | undefined;
+    params: ModalParams;
+    children?: Snippet | undefined;
+  } = $props();
+  const size = $derived(params.layout?.size ?? Size.md);
+  let footerRef = $state<any>();
   onMount(() => {
     const appEventSub = appEvents.subscribe((x) => {
       const frontModal = resolveModalOnFront();
@@ -53,7 +61,7 @@
   });
 
   export function close() {
-    footerRef.close();
+    footerRef?.close();
   }
   function handleClose(accessMode?: AccessMode) {
     if (params.isDismissable === false) return;
@@ -88,14 +96,14 @@
         {#if params.title}
           <ModalHeader
             title={params.title}
-            on:close={() => handleClose()}
+            onClose={() => handleClose()}
             isShowClose={true}
           />
         {/if}
-        <slot />
+        {@render children?.()}
       </div>
     {:else}
-      <slot />
+      {@render children?.()}
     {/if}
   </div>
 {:else}
@@ -125,7 +133,7 @@
     {#if params.title && !$context.isSheet}
       <ModalHeader
         title={params.title}
-        on:close={() => handleClose()}
+        onClose={() => handleClose()}
         isShowClose={$context.embed === Embed.HANDSET && size !== Size.xs
           ? true
           : params.layout?.isShowClose}
@@ -144,11 +152,10 @@
         <ModalContentPadded
           isExtraSmall={size === Size.xs}
           isDynamicSize={params.layout?.isDynamicSize}
-        >
-          <slot />
-        </ModalContentPadded>
+          {children}
+        />
       {:else}
-        <slot />
+        {@render children?.()}
       {/if}
     </div>
 
@@ -164,7 +171,7 @@
         secondaryAction={params.layout?.secondaryAction}
         isDelegateClose={true}
         bind:this={footerRef}
-        on:close={() => handleClose()}
+        onClose={() => handleClose()}
         isShowClose={params.layout?.isShowClose}
       />
     {/if}
@@ -174,7 +181,7 @@
         aria-label="Close"
         data-testid="modal-close"
         class="absolute top-2 -right-10 bg-ars1 w-10 h-12 rounded-r-md flex justify-center items-center hover:brightness-110"
-        on:click={() => handleClose(AccessMode.POP)}
+        onclick={() => handleClose(AccessMode.POP)}
         use:popover={{
           content: ButtonTooltip,
           triggerMethod: [PopoverTriggerMethod.HOVER],
@@ -195,7 +202,7 @@
     {#if params.layout?.isShowBackButton}
       <button
         class="absolute top-16 -right-10 bg-bgs4 w-10 h-12 rounded-r-md flex justify-center items-center hover:brightness-110"
-        on:click={() => appStore.goBack(resource)}
+        onclick={() => appStore.goBack(resource)}
         use:tooltip={{ text: "Go back", direction: Placement.Left }}
       >
         <Icon icon="back" size={Size.lg} class="stroke-fgs1" />

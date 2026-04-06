@@ -8,16 +8,21 @@
   import { appStore } from "@21n/stores/app.store";
   import { Action } from "@21n/types/action.enum";
 
-  export let isIconOnly: boolean = false;
+  let {
+    isIconOnly = false,
+  }: {
+    isIconOnly?: boolean;
+  } = $props();
 
   function onClick() {
     appStore.runAction(Action.OFFLINE_STATUS);
   }
 
-  $: label =
+  const label = $derived(
     !$context.isEmbed && $account.dataMode === UserDataMode.LOCAL
       ? "Data warning"
-      : "Offline";
+      : "Offline"
+  );
 </script>
 
 {#if $context.isInOfflineMode || $account.dataMode === UserDataMode.LOCAL}
@@ -27,7 +32,7 @@
       class="flex items-center gap-1 p-1 rounded-md hover:bg-ass2/10"
       aria-label={label}
       title={label}
-      on:click={onClick}
+      onclick={onClick}
     >
       <Icon icon="offline" class="text-ass1" />
     </button>
@@ -35,7 +40,7 @@
     <button
       type="button"
       class="flex items-center gap-1 text-ass1 px-1.5 py-0.5 text-b3 border border-dashed dark:border-ass1/50 border-ass1 hover:bg-ass2/10 rounded-md"
-      on:click={onClick}
+      onclick={onClick}
     >
       <Icon icon="offline" class="text-ass1" size={Size.sm} />
       {label}

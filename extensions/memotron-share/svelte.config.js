@@ -9,7 +9,9 @@ const kitAliases = buildKitAliases(loadAliasMap(), __dirname);
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-  preprocess: vitePreprocess(),
+  preprocess: vitePreprocess({
+    script: true
+  }),
   kit: {
     adapter: adapter({
       fallback: "index.html"

@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { cn } from "@21n/utils/ui.utils";
   import { Size } from "@21n/types/size.enum";
@@ -13,14 +15,21 @@
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { onMount } from "svelte";
   import Icon from "@21n/elements/Icon.svelte";
+  let {
+    action = undefined,
+    isRenderProfilePicture = false,
+    callback = undefined
+  }: {
+    action?: string;
+    isRenderProfilePicture?: boolean;
+    callback?: () => void;
+  } = $props();
 
-  export let action: string | undefined = undefined;
-  export let isRenderProfilePicture: boolean = false;
-  export let callback: (() => void) | undefined = undefined;
-
-  let isHideMenuLabels = uiState.getState(UIState.hideLeftNavMenuLabels, {
-    scope: UIStateScope.DAP
-  });
+  let isHideMenuLabels = $state(
+    uiState.getState(UIState.hideLeftNavMenuLabels, {
+      scope: UIStateScope.DAP
+    })
+  );
 
   onMount(() => {
     const unsubscribe = uiState.subscribe((x) => {
@@ -33,10 +42,11 @@
     };
   });
 
-  $: isSubscriber =
+  let isSubscriber = $derived(
     $account?.plan && $account?.dataMode === UserDataMode.CLOUD
       ? determineIfActiveSubscriber($account.plan)
-      : false;
+      : false
+  );
 </script>
 
 <button
@@ -52,7 +62,7 @@
       "px-[2.08rem]": !isHideMenuLabels
     }
   )}
-  on:click={() => {
+  onclick={() => {
     if (callback) {
       callback();
     } else {

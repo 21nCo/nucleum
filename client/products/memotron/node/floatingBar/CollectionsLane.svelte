@@ -30,10 +30,17 @@
   import { resolveProductConfig } from "@21n/products/product.config";
   import { Action } from "@21n/types/action.enum";
 
-  export let node: IActiveNodeStore;
-  export let isReadOnlyMode: boolean = false;
+  let {
+    node,
+    isReadOnlyMode = false
+  }: {
+    node: IActiveNodeStore;
+    isReadOnlyMode?: boolean;
+  } = $props();
   let popoverRef: any;
-  $: isPreventContentTypeRender = headingNodeTypes.includes($node.contentType);
+  let isPreventContentTypeRender = $derived(
+    headingNodeTypes.includes($node.contentType)
+  );
   async function onUnlink(e: CustomEvent) {
     await node.unlinkCollection(e.detail);
   }
@@ -80,7 +87,7 @@
   {#if !isPreventContentTypeRender}
     <button
       class="flex items-center gap-2 h-full border border-bgs4 hover:border-fgs3 rounded-full px-2 py-0.5 text-b2 whitespace-nowrap bg-bgs2 text-fgs1"
-      on:click={() => {
+      onclick={() => {
         appStore.closeResource();
         const path = $view.isPortrait
           ? resourceAction(Resource.node, ResourceActionType.BROWSE)
@@ -122,8 +129,8 @@
         accessPoint={ResourceAccessPoint.SELF}
         links={$node.collections}
         {isReadOnlyMode}
-        on:unlink={onUnlink}
-        on:click={onClick}
+        onUnlink={onUnlink}
+        onClick={onClick}
       />
     </span>
   {/if}

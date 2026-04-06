@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   let panelSwitcherCounter = 0;
 
   export const resolvePanelSwitcherId = () => {
@@ -8,12 +8,13 @@
 </script>
 
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import {
     BarStyle,
     PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle
   } from "@21n/types/switcher.enum";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import PanelSwitcherItem from "@21n/elements/switcher/PanelSwitcherItem.svelte";
   import { Size } from "@21n/types/size.enum";
   import { bg, cn, emptyTranstition } from "@21n/utils/ui.utils";
@@ -31,49 +32,119 @@
   import Icon from "@21n/elements/Icon.svelte";
   import TrainPanelSwitcher from "@21n/elements/switcher/train/TrainPanelSwitcher.svelte";
   import { KeyboardKey } from "@21n/types/keyboard.type";
-  const dispatch = createEventDispatcher();
 
   const PANEL_SWITCHER_ATTR = "data-panel-switcher-id";
-  export let items: ISelectItem[] | string[];
-  export let value: ISelectValue | undefined = undefined;
-  export let isDisableEnabled: boolean = false;
-  export let parentBgIndex: number = 1;
-  export let isInEditMode: boolean = false;
-  export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
-  export let style: PanelSwitcherStyle;
-  export let isExpandToFullWidth: boolean = false;
-  export let isEnableAnimationForTitle: boolean = false;
-  export let title: string = "";
-  export let barStyle: BarStyle = BarStyle.EXACT;
-  export let activeItemStrength: PanelSwitcherActiveItemStrength =
-    PanelSwitcherActiveItemStrength.DEFAULT;
-  /**
-   * Shows the bars or train upside down
-   */
-  export let isInversePlacement: boolean = false;
-  export let triggerItemEdit: string | null = null;
-  export let addText: string | undefined = undefined;
-  export let isRenderDropdownForCW: boolean = false;
-  /**
-   * Bar style rendered over a bg shade to give TRAIN style but with bars
-   */
-  export let isBgBar: boolean = false;
-  export let isRearrangeableByDefault: boolean = false;
-  export let isEnableTitleAction: boolean = false;
-  export let isPreventTabShortcut: boolean = false;
-  export let tempTitleWithActionDisabled: boolean = false;
+  let {
+    items,
+    value = $bindable(undefined),
+    isDisableEnabled = false,
+    parentBgIndex = 1,
+    isInEditMode = false,
+    size = Size.md,
+    style,
+    isExpandToFullWidth = false,
+    isEnableAnimationForTitle = false,
+    title = "",
+    barStyle = BarStyle.EXACT,
+    activeItemStrength = PanelSwitcherActiveItemStrength.DEFAULT,
+    isInversePlacement = false,
+    triggerItemEdit = $bindable(null),
+    addText = undefined,
+    isRenderDropdownForCW = false,
+    isBgBar = false,
+    isRearrangeableByDefault = false,
+    isEnableTitleAction = false,
+    isPreventTabShortcut = false,
+    tempTitleWithActionDisabled = false,
+    left = undefined,
+    right = undefined,
+    onAdd = undefined,
+    onChange = undefined,
+    onDebouncedChange = undefined,
+    onRearrange = undefined,
+    onRemove = undefined,
+    onSwitch = undefined
+  }: {
+    items: ISelectItem[] | string[];
+    value?: ISelectValue | undefined;
+    isDisableEnabled?: boolean;
+    parentBgIndex?: number;
+    isInEditMode?: boolean;
+    size?: Size.xs | Size.sm | Size.md | Size.lg;
+    style: PanelSwitcherStyle;
+    isExpandToFullWidth?: boolean;
+    isEnableAnimationForTitle?: boolean;
+    title?: string;
+    barStyle?: BarStyle;
+    activeItemStrength?: PanelSwitcherActiveItemStrength;
+    isInversePlacement?: boolean;
+    triggerItemEdit?: string | null;
+    addText?: string | undefined;
+    isRenderDropdownForCW?: boolean;
+    isBgBar?: boolean;
+    isRearrangeableByDefault?: boolean;
+    isEnableTitleAction?: boolean;
+    isPreventTabShortcut?: boolean;
+    tempTitleWithActionDisabled?: boolean;
+    left?: Snippet | undefined;
+    right?: Snippet | undefined;
+    onAdd?: ((event: CustomEvent<void>) => void) | undefined;
+    onChange?: ((event: CustomEvent<any>) => void) | undefined;
+    onDebouncedChange?: ((event: CustomEvent<any>) => void) | undefined;
+    onRearrange?: ((event: CustomEvent<any>) => void) | undefined;
+    onRemove?: ((event: CustomEvent<any>) => void) | undefined;
+    onSwitch?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
 
-  let _items: ISelectItem[];
+  let _items = $state<ISelectItem[]>([]);
   const titleValue = "$title";
   const switcherId = resolvePanelSwitcherId();
+  function emitSwitch(nextValue: ISelectValue) {
+    const switchEvent = new CustomEvent<ISelectValue>("switch", {
+      detail: nextValue
+    });
+    onSwitch?.(switchEvent);
+  }
+
+  function emitAdd() {
+    const addEvent = new CustomEvent<void>("add");
+    onAdd?.(addEvent);
+  }
+
+  function emitChange(detail: any) {
+    const changeEvent = new CustomEvent<any>("change", { detail });
+    onChange?.(changeEvent);
+  }
+
+  function emitDebouncedChange(detail: any) {
+    const debouncedChangeEvent = new CustomEvent<any>("debouncedChange", {
+      detail
+    });
+    onDebouncedChange?.(debouncedChangeEvent);
+  }
+
+  function emitRemove(detail: any) {
+    const removeEvent = new CustomEvent<any>("remove", { detail });
+    onRemove?.(removeEvent);
+  }
+
+  function emitRearrange(detail: any) {
+    const rearrangeEvent = new CustomEvent<any>("rearrange", { detail });
+    onRearrange?.(rearrangeEvent);
+  }
+
   function dispatchSwitch(nextValue: ISelectValue) {
     value = nextValue;
-    dispatch("switch", nextValue);
+    emitSwitch(nextValue);
   }
-  $: _items = items.every((x) => typeof x === "string")
-    ? items.map((x) => ({ label: x, value: x }))
-    : items;
-  $: isRenderAsDropdown = $view.isConstrainedWidth && isRenderDropdownForCW;
+  $effect(() => {
+    _items = items.every((item) => typeof item === "string")
+      ? items.map((item) => ({ label: item, value: item }))
+      : [...items];
+  });
+  const isRenderAsDropdown = $derived(
+    $view.isConstrainedWidth && isRenderDropdownForCW
+  );
   onMount(() => {
     parent?.setAttribute(PANEL_SWITCHER_ATTR, switcherId);
     if (
@@ -85,8 +156,8 @@
       value = _items[0]?.value;
   });
 
-  let parent: any;
-  let child: any;
+  let parent = $state<any>();
+  let child = $state<any>();
   function conditionalTransition(node: any) {
     if (isEnableAnimationForTitle) {
       return fly(node, { y: -100, duration: 300 });
@@ -123,21 +194,19 @@
     {isDisableEnabled}
     {parentBgIndex}
     {activeItemStrength}
-    on:switch
+    onSwitch={(event) => emitSwitch(event.detail)}
   />
 {:else if isRenderAsDropdown}
   <div class="flex">
     <DropDown
       items={_items}
+      bind:value
       style={InputStyle.PLAIN}
       width="min-w-32"
       popoverWidth="min-w-fit"
       isDisableSearch={true}
       isEnforceWidth={true}
-      on:select={(e) => {
-        value = e.detail;
-        dispatch("switch", e.detail);
-      }}
+      onSelect={(e) => emitSwitch(e.detail)}
     />
   </div>
 {:else}
@@ -166,11 +235,13 @@
         }
       )}
     >
-      {#if title || $$slots.left}
+      {#if title || left}
         {@const isEnableTitleActionResolved =
           isEnableTitleAction && !tempTitleWithActionDisabled}
         <div class="flex mo:mr-3 h-full" transition:conditionalTransition>
-          <slot name="left">
+          {#if left}
+            {@render left?.()}
+          {:else}
             <button
               class={cn(
                 "flex items-center gap-2",
@@ -182,13 +253,13 @@
                 },
                 isEnableTitleActionResolved && {
                   "text-aps1 bg-aps3": value === titleValue,
-                  [`text-fgs2 hover:${bg(parentBgIndex)}`]: value !== titleValue
+                  [`text-fgs2 hover:${bg(parentBgIndex)}`]:
+                    value !== titleValue
                 }
               )}
-              on:click={() => {
+              onclick={() => {
                 if (isEnableTitleActionResolved) {
-                  value = titleValue;
-                  dispatch("switch", titleValue);
+                  dispatchSwitch(titleValue);
                 }
               }}
             >
@@ -203,7 +274,7 @@
               {/if}
               {title}
             </button>
-          </slot>
+          {/if}
         </div>
       {/if}
       <div
@@ -234,22 +305,18 @@
             bind:triggerItemEdit
             isActive={value === item.value}
             isDisabled={isDisableEnabled && value !== item.value}
-            on:click={() => {
-              value = item.value;
-              dispatch("switch", item.value);
+            onClick={() => {
+              dispatchSwitch(item.value);
             }}
-            on:rearrange={(e) => {
+            onRearrange={(e) => {
               _items = moveItemInArray(_items, index, e.detail > 0 ? 1 : -1);
             }}
-            on:rearranged={(e) => {
-              dispatch(
-                "rearrange",
-                _items.map((x) => x.value)
-              );
+            onRearranged={() => {
+              emitRearrange(_items.map((x) => x.value));
             }}
-            on:change
-            on:debouncedChange
-            on:remove
+            onChange={(e) => emitChange(e.detail)}
+            onDebouncedChange={(e) => emitDebouncedChange(e.detail)}
+            onRemove={(e) => emitRemove(e.detail)}
           />
         {/each}
         {#if isInEditMode && !$view.isConstrainedWidth}
@@ -262,15 +329,13 @@
             {isInversePlacement}
             {parentBgIndex}
             bind:triggerItemEdit
-            on:add
+            onAdd={() => emitAdd()}
           />
         {/if}
       </div>
-      {#if $$slots.right}
+      {#if right}
         <span class="ml-4">
-          <slot name="right">
-            <span>no content</span>
-          </slot>
+          {@render right?.()}
         </span>
       {/if}
     </div>
@@ -278,7 +343,7 @@
 {/if}
 
 <svelte:document
-  on:keydown={(event) => {
+  onkeydown={(event) => {
     try {
       const isBackwardKey = event.key === KeyboardKey.ARROW_LEFT;
       const isForwardKey = event.key === KeyboardKey.ARROW_RIGHT;

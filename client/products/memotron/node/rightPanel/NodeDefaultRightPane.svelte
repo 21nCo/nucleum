@@ -22,7 +22,7 @@
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import WebNodeUrlSegment from "../content/web/WebNodeUrlSegment.svelte";
   import SocialPostActions from "../content/web/SocialPostActions.svelte";
-  export let node: IActiveNodeStore;
+  let { node }: { node: IActiveNodeStore } = $props();
   let _notes = $node.notes;
   const notesInputId = generateSimpleRandomId();
 
@@ -31,7 +31,7 @@
       node.modify({ notes: _notes }, { isPreventBackPropagation: true });
   }
 
-  $: _label = resolveNodeLabel($node);
+  let _label = $derived(resolveNodeLabel($node));
 </script>
 
 <div class="flex flex-col w-full h-full bg-bgs2">
@@ -39,11 +39,11 @@
     <div class="flex w-full justify-between py-2">
       <NodeTitle
         node={$node}
-        on:labelChange={(e) => {
+        onLabelChange={() => {
           if ($node.label !== undefined) node.modify({ label: $node.label });
         }}
-        on:editModeChange={(e) => {
-          node.toggleEditMode(e.detail);
+        onEditModeChange={(value) => {
+          node.toggleEditMode(value);
         }}
       />
     </div>
@@ -59,7 +59,7 @@
           value={_label.parent.label}
           parentBgIndex={0}
           span="col-span-2"
-          on:click={(e) => {
+          onclick={(e) => {
             appStore.resourceClickHandler(e, _label?.parent.id, {
               origin: $node.id
             });
@@ -70,29 +70,26 @@
         label="Saved at"
         value={$node.createdAt.toISOString()}
         parentBgIndex={0}
-        on:click={() => node.switchPanel(ResourcePanelType.METADATA)}
+        onclick={() => node.switchPanel(ResourcePanelType.METADATA)}
       />
-      <!-- <InfoCard label="Genre" value={"Sci fi (3 items in library)"} parentBgIndex={0}
-      on:click={() => (pane = ResourcePanelType.LINKS)}
-      /> -->
       <InfoCard
         label="Links"
         value={$node.links?.length || 0}
         parentBgIndex={0}
-        on:click={() => node.switchPanel(ResourcePanelType.LINKS)}
+        onclick={() => node.switchPanel(ResourcePanelType.LINKS)}
       />
       <InfoCard
         label="Properties"
         value={$node.properties?.length || 0}
         parentBgIndex={0}
-        on:click={() => node.switchPanel(ResourcePanelType.PROPERTIES)}
+        onclick={() => node.switchPanel(ResourcePanelType.PROPERTIES)}
       />
       {#if canHaveTraces.includes($node.contentType)}
         <InfoCard
           label="Bookmarks"
           value={$node.clips?.length || 0}
           parentBgIndex={0}
-          on:click={() => node.switchPanel(ResourcePanelType.BOOKMARKS)}
+          onclick={() => node.switchPanel(ResourcePanelType.BOOKMARKS)}
         />
       {/if}
     </div>
@@ -123,7 +120,7 @@
           tooltip="Expand side notes"
           size={Size.sm}
           parentBgIndex={2}
-          on:click={() => node.switchPanel(ResourcePanelType.SIDENOTES)}
+          onclick={() => node.switchPanel(ResourcePanelType.SIDENOTES)}
         />
       </span>
       <button class="flex w-full flex-1 px-4 py-2" use:focusById={notesInputId}>
@@ -131,7 +128,7 @@
           id={notesInputId}
           placeholder="Start writing side notes here..."
           bind:content={_notes}
-          on:debouncedChange={onNotesChange}
+          onDebouncedChange={onNotesChange}
         />
       </button>
     </div>

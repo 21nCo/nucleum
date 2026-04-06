@@ -21,7 +21,7 @@
   import { Size } from "@21n/types/size.enum";
   import VideoTimelineClipItem from "@21n/extensions/clipper/contentScripts/parts/VideoTimelineClipItem.svelte";
 
-  export let contentType: NodeType;
+  let { contentType }: { contentType: NodeType } = $props();
 
   let clips: any[] = [];
   let isBookmarking = false;
@@ -176,7 +176,7 @@
   <div class="flex w-full h-20 items-center">
     <button
       class="flex justify-center items-center px-3 h-full hover:bg-bgs2 border-r border-r-brs2 rounded-l-md"
-      on:click={onBookmarkClick}
+      onclick={onBookmarkClick}
       title="Bookmark current timestamp"
       disabled={isBookmarking}
     >
@@ -189,8 +189,8 @@
     <div
       class="timeline relative flex items-center overflow-x-auto w-full h-full"
       bind:this={timelineElement}
-      on:mouseenter={() => (isMouseOverTimeline = true)}
-      on:mouseleave={() => (isMouseOverTimeline = false)}
+      onmouseenter={() => (isMouseOverTimeline = true)}
+      onmouseleave={() => (isMouseOverTimeline = false)}
       role="search"
     >
       {#if clips && clips.length > 0 && !isAdPlaying}
@@ -262,7 +262,7 @@
         <button
           class="flex justify-center items-center px-3 border-l border-l-brs2 h-full hover:bg-bgs3"
           title="Open side panel"
-          on:click={() =>
+          onclick={() =>
             relayToBackgroundScript({
               event: ExtensionEvent.RUN,
               data: { action: ExtensionEvent.TOGGLE_SIDEPANEL }

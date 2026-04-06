@@ -7,19 +7,34 @@
   import { ColorStrength } from "@21n/types/appearance.type";
   import { Orientation } from "@21n/types/direction.enum";
   import { abg, bg, cn } from "@21n/utils/ui.utils";
-  export let action: string;
-  export let orientation: Orientation = Orientation.Horizontal;
-  export let width: string = "w-24";
-  export let parentBackgroundIndex: number = 1;
-  export let isActive: boolean = false;
-  export let setActiveByPath: boolean = false;
-  export let isShowDivider: boolean = false;
-  export let isRoundedTop: boolean = false;
-  export let isRoundedBottom: boolean = false;
+  let {
+    action,
+    orientation = Orientation.Horizontal,
+    width = "w-24",
+    parentBackgroundIndex = 1,
+    isActive = false,
+    setActiveByPath = false,
+    isShowDivider = false,
+    isRoundedTop = false,
+    isRoundedBottom = false,
+    onclick = undefined
+  }: {
+    action: string;
+    orientation?: Orientation;
+    width?: string;
+    parentBackgroundIndex?: number;
+    isActive?: boolean;
+    setActiveByPath?: boolean;
+    isShowDivider?: boolean;
+    isRoundedTop?: boolean;
+    isRoundedBottom?: boolean;
+    onclick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
   const dev_isOutlineStyle: boolean = true;
-  let component = appStore.resolveAction(action);
-  $: if (setActiveByPath)
-    isActive = $view.currentPath === "/" + component?.path;
+  const component = $derived(appStore.resolveAction(action));
+  const activeState = $derived(
+    setActiveByPath ? $view.currentPath === "/" + component?.path : isActive
+  );
 </script>
 
 {#if component && !component.isInactive}
@@ -29,28 +44,28 @@
       "rounded-b-lg": isRoundedBottom,
       "flex px-4 py-3 w-full items-center justify-between":
         orientation === Orientation.Horizontal,
-      "border-y border-transparent": !isActive && dev_isOutlineStyle,
-      "notouch:hover:bg-bgs3-striped": !isActive,
+      "border-y border-transparent": !activeState && dev_isOutlineStyle,
+      "notouch:hover:bg-bgs3-striped": !activeState,
       "bg-aps3 border-y border-aps3 hover:bg-aps2 hover:bg-opacity-50 text-aps1":
-        isActive && dev_isOutlineStyle,
-      [abg()]: !dev_isOutlineStyle && isActive,
+        activeState && dev_isOutlineStyle,
+      [abg()]: !dev_isOutlineStyle && activeState,
       "px-2 py-3 rounded-md hover:bg-bgs3-striped":
         orientation === Orientation.Vertical,
       [bg(
         orientation === Orientation.Vertical
           ? parentBackgroundIndex
           : parentBackgroundIndex - 1
-      )]: !isActive
+      )]: !activeState
     })}
-    on:click
+    {onclick}
   >
     {#if orientation === Orientation.Horizontal}
       <div class="flex gap-2 w-full">
         <Icon
           icon={component.icon ?? "info"}
           class={cn({
-            "fill-aps1": isActive && dev_isOutlineStyle,
-            "fill-abg": isActive && !dev_isOutlineStyle
+            "fill-aps1": activeState && dev_isOutlineStyle,
+            "fill-abg": activeState && !dev_isOutlineStyle
           })}
         />
         <div>{component.label}</div>
@@ -60,8 +75,8 @@
           ? "weblink-two"
           : "chevron-right"}
         class={cn({
-          "text-abg": isActive && !dev_isOutlineStyle,
-          "text-aps1": isActive && dev_isOutlineStyle
+          "text-abg": activeState && !dev_isOutlineStyle,
+          "text-aps1": activeState && dev_isOutlineStyle
         })}
       />
     {:else}
@@ -69,8 +84,8 @@
         <Icon
           icon={component.icon}
           class={cn({
-            "fill-aps1": isActive && dev_isOutlineStyle,
-            "fill-abg": isActive && !dev_isOutlineStyle
+            "fill-aps1": activeState && dev_isOutlineStyle,
+            "fill-abg": activeState && !dev_isOutlineStyle
           })}
         />
         <div class="text-b2">{component.label}</div>

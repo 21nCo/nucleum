@@ -2,7 +2,7 @@
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { formatDatetime } from "@21n/utils/time.utils";
 
-  export let item: { action: string; timestamp: Date };
+  let { item }: { item: { action: string; timestamp: Date } } = $props();
 </script>
 
 <div class="flex w-full items-center justify-between">

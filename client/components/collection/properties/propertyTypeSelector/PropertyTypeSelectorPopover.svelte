@@ -18,16 +18,17 @@
   } from "@21n/components/collection/properties/propertyTypeSelector/propertyTypeSelector.type";
   import { tooltip } from "@21n/actions/popover.action";
   import { Placement } from "@21n/types/direction.enum";
-  export let groups: IPropertyTypeSelectorGroup[];
-  export let options: DropdownItem[];
-  export let onSelect: (e: string) => void;
-  let mode: PropertyTypeMode = PropertyTypeMode.MANUAL;
-  let _groups: IPropertyTypeSelectorGroup[] = [];
-  refreshGroups();
-
-  function refreshGroups() {
-    _groups = groups.filter((group) => group.mode === mode);
-  }
+  let {
+    groups,
+    options,
+    onSelect
+  }: {
+    groups: IPropertyTypeSelectorGroup[];
+    options: DropdownItem[];
+    onSelect: (e: string) => void;
+  } = $props();
+  let mode = $state<PropertyTypeMode>(PropertyTypeMode.MANUAL);
+  let _groups = $derived(groups.filter((group) => group.mode === mode));
 </script>
 
 <div
@@ -53,9 +54,6 @@
         size={Size.sm}
         style={PanelSwitcherStyle.TRAIN}
         bind:value={mode}
-        on:switch={(e) => {
-          refreshGroups();
-        }}
       />
     </div>
   </div>
@@ -87,7 +85,7 @@
             text: option.tooltip,
             direction: Placement.Bottom
           }}
-          on:click={() => {
+          onclick={() => {
             if (option.isDisabled) return;
             onSelect(option.value);
           }}

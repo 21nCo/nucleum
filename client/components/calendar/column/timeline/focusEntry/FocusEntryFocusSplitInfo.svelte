@@ -3,12 +3,16 @@
   import { formatSeconds } from "@21n/utils/time.utils";
   import { cn } from "@21n/utils/ui.utils";
 
-  export let splits: {
-    focus: number;
-    brek: number;
-  };
-  export let size: Size.sm | Size.md = Size.sm;
-  $: total = splits.focus + splits.brek;
+  let {
+    splits,
+    size = Size.sm
+  }: {
+    splits: {
+      focus: number;
+      brek: number;
+    };
+    size?: Size.sm | Size.md;
+  } = $props();
 </script>
 
 <div

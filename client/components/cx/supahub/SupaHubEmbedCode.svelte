@@ -1,7 +1,13 @@
 <script lang="ts">
-  export let context: "Roadmap" | "Changelog" | "Board" = "Board";
-  localStorage.setItem("supahub-context", context);
-  console.log({ context });
+  let {
+    context = "Board"
+  }: {
+    context?: "Roadmap" | "Changelog" | "Board";
+  } = $props();
+
+  $effect(() => {
+    localStorage.setItem("supahub-context", context);
+  });
 </script>
 
 <svelte:head>

@@ -1,7 +1,14 @@
 <script lang="ts">
   import SomethingWentWrongIllustration from "@21n/illustrations/SomethingWentWrongIllustration.svelte";
-  export let error: string | undefined = undefined;
-  export let subText: string | undefined = undefined;
+    let {
+    error = undefined,
+    subText = undefined,
+  }: {
+    error?: string | undefined;
+    subText?: string | undefined;
+  } = $props();
+
+  
 </script>
 
 <div class="flex flex-col gap-6 justify-center items-center w-full h-full">

@@ -116,7 +116,7 @@
         <Button
           icon="cross"
           size={Size.sm}
-          on:click={() => (editingTemplate = null)}
+          onclick={() => (editingTemplate = null)}
         />
       </div>
 
@@ -136,13 +136,13 @@
           type={ButtonVariant.SECONDARY}
           style={ButtonStyle.OUTLINED}
           label="Cancel"
-          on:click={() => (editingTemplate = null)}
+          onclick={() => (editingTemplate = null)}
         />
         <Button
           type={ButtonVariant.PRIMARY}
           label="Update"
           icon="save"
-          on:click={saveTemplate}
+          onclick={saveTemplate}
         />
       </div>
     </div>
@@ -188,7 +188,7 @@
               </div>
               <Switch
                 on={setting.value()}
-                on:change={() => {
+                onChange={() => {
                   const newValue = !setting.value();
                   setting.setValue(newValue);
                   preferences.save(setting.preference, newValue);

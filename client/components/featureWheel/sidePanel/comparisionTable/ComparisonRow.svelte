@@ -9,10 +9,18 @@
     type IFwFeature
   } from "@21n/types/featureWheel.type";
   import { mapValue } from "@21n/components/featureWheel/sidePanel/comparisionTable/table.utils";
-  export let contemporary: IFeatureWheelContemporary;
-  export let feature: IFwFeature;
-  export let contemporaryDetail: IContemporary | undefined = undefined;
-  export let additionalProperties: string[] = [];
+
+  let {
+    contemporary,
+    feature,
+    contemporaryDetail = undefined,
+    additionalProperties = []
+  }: {
+    contemporary: IFeatureWheelContemporary;
+    feature: IFwFeature;
+    contemporaryDetail?: IContemporary;
+    additionalProperties?: string[];
+  } = $props();
 
   function resolveAdditionalProperty(property: string) {
     const key = property as keyof IContemporary;

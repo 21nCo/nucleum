@@ -27,7 +27,7 @@
     <Button
       label="Add another entry"
       icon="plus"
-      on:click={() => manualLogStore.addNew()}
+      onclick={() => manualLogStore.addNew()}
     />
   </div>
 </div>

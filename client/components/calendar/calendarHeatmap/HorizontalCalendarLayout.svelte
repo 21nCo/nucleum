@@ -1,9 +1,17 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { TileScale } from "@21n/components/calendar/calendarHeatmap/calendarHeatmap.types";
   import { startTouch } from "@21n/utils/touchGesture";
   import WeekDays from "@21n/components/calendar/calendarHeatmap/WeekDays.svelte";
-  export let scale: TileScale;
-  export let data: any;
+  let {
+    scale,
+    data,
+    children = undefined
+  }: {
+    scale: TileScale;
+    data: any;
+    children?: Snippet<[any]> | undefined;
+  } = $props();
 </script>
 
 <div
@@ -18,8 +26,7 @@
     : scale === TileScale.MONTHS
       ? "4px"
       : "20px"}
-  on:touchstart={startTouch}
-  on:touchmove
+  ontouchstart={startTouch}
 >
   {#if scale === TileScale.DAYS}
     <WeekDays />
@@ -28,7 +35,7 @@
   {/if}
 
   {#each Object.entries(data) as [slot, slotData] (slot)}
-    <slot datum={[slot, slotData]} />
+    {@render children?.([slot, slotData])}
   {/each}
 </div>
 

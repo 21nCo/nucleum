@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import Divider from "@21n/elements/Divider.svelte";
   import Text from "@21n/elements/text/Text.svelte";
   import view from "@21n/stores/view.store";
@@ -13,7 +14,6 @@
   import { GlobalEvent } from "@21n/types/event.enum";
   import { Display } from "@21n/types/view.type";
   import Icon from "@21n/elements/Icon.svelte";
-  import { createEventDispatcher } from "svelte";
   import { appStore } from "@21n/stores/app.store";
   import { InteractionMode } from "@21n/components/settings/interactionMode/interactionMode.type";
   import { tooltip } from "@21n/actions/popover.action";
@@ -21,28 +21,59 @@
   import type { InputLabelInfoToolTip } from "@21n/types/input.type";
   import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
   import { fly } from "svelte/transition";
-  import BackButton from "@21n/elements/button/BackButton.svelte";
   import ButtonGroup from "@21n/elements/button/ButtonGroup.svelte";
-  const dispatch = createEventDispatcher();
-
-  export let title: string | undefined = undefined;
-  export let titleStyle: TextStyle = TextStyle.PANEL_HEADING;
-  export let floatingButton: IButtonParams | IButtonParams[] | undefined =
-    undefined;
-  export let panelSize: Size.sm | Size.md | Size.lg | Size.xl = Size.md;
-  export let isNavActivated: boolean = false;
-  export let isShowBackButton: boolean = false;
-  export let parentBgIndex: number = 1;
-  /**
-   * If true, the panel will be expanded by default and there will be no right slot for record view.
-   */
-  export let isExpanded: boolean = false;
-  export let isProminentDivider: boolean = false;
-  export let extraLargeScreenComponent: string | undefined = undefined;
-  export let info: InputLabelInfoToolTip | undefined = undefined;
-  export let isPreventCwPadding: boolean = false;
-  export let isHideRightSplit: boolean = false;
+  let {
+    children,
+    title = undefined,
+    titleStyle = TextStyle.PANEL_HEADING,
+    floatingButton = undefined,
+    panelSize = Size.md,
+    isNavActivated = false,
+    isShowBackButton = false,
+    parentBgIndex = 1,
+    isExpanded = false,
+    isProminentDivider = false,
+    extraLargeScreenComponent = undefined,
+    info = undefined,
+    isPreventCwPadding = false,
+    isHideRightSplit = false,
+    onBack = undefined,
+    topRightActions,
+    nonPadded,
+    nav,
+    right
+  }: {
+    children?: Snippet;
+    title?: string;
+    titleStyle?: TextStyle;
+    floatingButton?: IButtonParams | IButtonParams[];
+    panelSize?: Size.sm | Size.md | Size.lg | Size.xl;
+    isNavActivated?: boolean;
+    isShowBackButton?: boolean;
+    parentBgIndex?: number;
+    isExpanded?: boolean;
+    isProminentDivider?: boolean;
+    extraLargeScreenComponent?: string;
+    info?: InputLabelInfoToolTip;
+    isPreventCwPadding?: boolean;
+    isHideRightSplit?: boolean;
+    onBack?: () => void;
+    topRightActions?: Snippet;
+    nonPadded?: Snippet;
+    nav?: Snippet;
+    right?: Snippet;
+  } = $props();
   let isExplicitlyCollapsed = false;
+  let isCollapsed = $state(false);
+  const isShowCollapseButton = $derived(
+    $view.display !== Display.TK &&
+      !$view.isConstrainedWidth &&
+      panelSize !== Size.xl &&
+      $appStore.interactionMode !== InteractionMode.AGENT
+  );
+  const isExtraLargeScreen = $derived(
+    $view.landscapiness > 1.7 && $view.scale > 1.8
+  );
 
   onMount(() => {
     const collapsePanelHandler: EventListener = () => {
@@ -71,15 +102,6 @@
       if (unsubscribe) unsubscribe();
     };
   });
-
-  let isCollapsed = false;
-
-  $: isShowCollapseButton =
-    $view.display !== Display.TK &&
-    !$view.isConstrainedWidth &&
-    panelSize !== Size.xl &&
-    $appStore.interactionMode !== InteractionMode.AGENT;
-  $: isExtraLargeScreen = $view.landscapiness > 1.7 && $view.scale > 1.8;
 </script>
 
 <div class="flex w-full h-full">
@@ -108,43 +130,47 @@
             "flex justify-between items-center w-full px-4 pt-2 overflow-auto min-h-fit mo:min-h-14"
           )}
         >
-          <BackButton
-            isEnabled={isShowBackButton}
-            {parentBgIndex}
-            isPreventDefault={true}
-            on:click={() => dispatch("back")}
+          <button
+            type="button"
+            class="flex items-center rounded-md gap-2 px-1"
+            onclick={() => {
+              if (!isShowBackButton) return;
+              onBack?.();
+            }}
           >
+            {#if isShowBackButton}
+              <Icon icon="chevron-left" size={Size.lg} />
+            {/if}
             <Text style={titleStyle} content={title || ""} />
             {#if info}
               <FormLabelTooltip {info} />
             {/if}
-          </BackButton>
-          <slot name="toprightactions">
-            {#if !isExpanded && isShowCollapseButton && !isShowBackButton}
-              <button
-                class="flex items-center text-fgs3 p-1 hover:bg-bgs2 rounded-md"
-                use:tooltip={{
-                  text: "Collapse panel"
-                }}
-                on:click={() => {
-                  isCollapsed = true;
-                  isExplicitlyCollapsed = true;
-                }}
-              >
-                <Icon icon="chevron-left" class="text-fgs3" size={Size.lg} />
-              </button>
-            {/if}
-          </slot>
+          </button>
+          {#if topRightActions}
+            {@render topRightActions()}
+          {:else if !isExpanded && isShowCollapseButton && !isShowBackButton}
+            <button
+              class="flex items-center text-fgs3 p-1 hover:bg-bgs2 rounded-md"
+              use:tooltip={{
+                text: "Collapse panel"
+              }}
+              onclick={() => {
+                isCollapsed = true;
+                isExplicitlyCollapsed = true;
+              }}
+            >
+              <Icon icon="chevron-left" class="text-fgs3" size={Size.lg} />
+            </button>
+          {/if}
         </div>
       {/if}
-      {#if $$slots.nonpadded}
-        <slot name="nonpadded" />
-      {:else if isNavActivated && $$slots.nav}
-        <!-- TODO - overlay nav on top and add gesture to go back instead / or use safari webview existing gesture for browser back navigation -->
-        <slot name="nav" />
+      {#if nonPadded}
+        {@render nonPadded()}
+      {:else if isNavActivated && nav}
+        {@render nav()}
       {:else}
         <div class="px-4 flex-grow">
-          <slot />
+          {@render children?.()}
         </div>
       {/if}
       {#if floatingButton}
@@ -158,8 +184,7 @@
     </div>
   {/if}
   {#if !$view.isConstrainedWidth && !isExpanded && !isHideRightSplit}
-    <!-- Right split -->
-    {#if $$slots.right}
+    {#if right}
       <Divider
         orientation={Orientation.Vertical}
         colorStrength={ColorStrength.Normal}
@@ -177,7 +202,7 @@
         "max-w-6xl": extraLargeScreenComponent
       })}
     >
-      <slot name="right" />
+      {@render right?.()}
     </div>
     {#if isExtraLargeScreen && extraLargeScreenComponent}
       <div class="flex h-full flex-grow">

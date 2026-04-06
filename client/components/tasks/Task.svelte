@@ -39,26 +39,33 @@
   import { cn } from "@21n/utils/ui.utils";
   import view from "@21n/stores/view.store";
 
-  export let id: IRecordId;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  export let accessMode: AccessMode = AccessMode.POP;
-  export let accessPointId: IRecordId | undefined = undefined;
-  let isRefreshing = false;
-  let status: IInlineStatus | undefined = undefined;
-  let task: ITaskThumb | undefined = undefined;
-  let date: Date | undefined = undefined;
-  let completedDate: Date | undefined = undefined;
-  let inputRef: TextInput | undefined = undefined;
-  let isShowGoalPicker =
-    $appStore.product === Product.POINTRON ||
-    $appStore.product === Product.NUCLEUS;
-  let goalSearchQuery = "";
-  let goal: IGoalThumb | undefined = undefined;
-  const searchStore = new SearchStore(Resource.goal);
-
-  $: isCurrentlyFocusing = activeSession.isCurrentFocusItem(
+  let {
     id,
-    $currentFocusItem
+    accessPoint = ResourceAccessPoint.SELF,
+    accessMode = AccessMode.POP,
+    accessPointId = undefined
+  }: {
+    id: IRecordId;
+    accessPoint?: ResourceAccessPoint;
+    accessMode?: AccessMode;
+    accessPointId?: IRecordId | undefined;
+  } = $props();
+
+  let isRefreshing = $state(false);
+  let status = $state<IInlineStatus | undefined>(undefined);
+  let task = $state<ITaskThumb | undefined>(undefined);
+  let date = $state<Date | undefined>(undefined);
+  let completedDate = $state<Date | undefined>(undefined);
+  let inputRef = $state<TextInput | undefined>(undefined);
+  let isShowGoalPicker = $state(
+    $appStore.product === Product.POINTRON ||
+    $appStore.product === Product.NUCLEUS
+  );
+  let goalSearchQuery = $state("");
+  let goal = $state<IGoalThumb | undefined>(undefined);
+  const searchStore = new SearchStore(Resource.goal);
+  const isCurrentlyFocusing = $derived(
+    activeSession.isCurrentFocusItem(id, $currentFocusItem)
   );
 
   onMount(async () => {
@@ -275,7 +282,7 @@
             <Button
               icon="cross"
               style={ButtonStyle.OUTLINED}
-              on:click={onClose}
+              onclick={onClose}
             />
           </div>
         {/if}
@@ -286,13 +293,13 @@
               searchCallback={goalSearchGoalCallback}
               placeholder="Search to assign a goal"
               icon="plus"
-              on:select={onGoalSelect}
+              onSelect={onGoalSelect}
               style={InputStyle.PLAIN}
             />
           {:else if goal}
             <TaskThumbnailGoalLabel
               {goal}
-              on:clearGoal={onGoalClear}
+              onClearGoal={onGoalClear}
               {accessPoint}
             />
           {/if}
@@ -302,7 +309,7 @@
               bind:isChecked={task.isChecked}
               size={Size.lg}
               {accessPoint}
-              on:toggle={() => {
+              onToggle={() => {
                 if (task?.isChecked) {
                   completedDate = new Date();
                 }
@@ -312,13 +319,13 @@
               bind:value={task.label}
               bind:this={inputRef}
               size={Size.lg}
-              on:mount={() => {
+              onMount={() => {
                 inputRef?.focus();
               }}
               placeholder="Enter task name"
               testId="task-name-input"
               style={InputStyle.PLAIN}
-              on:debouncedChange={handleLabelChange}
+              onDebouncedChange={handleLabelChange}
             />
           </div>
         </div>
@@ -328,7 +335,7 @@
             bind:date
             placeholder="Set due date"
             label={{ label: "Due date", orientation: Orientation.Vertical }}
-            on:change={onDateChange}
+            onChange={onDateChange}
           />
           {#if task.isChecked}
             <DatePicker
@@ -338,13 +345,13 @@
                 label: "Completed date",
                 orientation: Orientation.Vertical
               }}
-              on:change={onCompletedDateChange}
+              onChange={onCompletedDateChange}
             />
           {/if}
         </div>
         {#if isCurrentlyFocusing}
           <button
-            on:click={() => {
+            onclick={() => {
               appStore.gotoPath(PointronAction.FOCUS);
             }}
             class="flex items-center gap-1 text-b3 text-aps1"
@@ -356,7 +363,7 @@
         {#if task.trashInformation}
           <RecordTrashBanner
             deletedAt={task.trashInformation.deletedAt.toISOString()}
-            on:restore={() => {
+            onRestore={() => {
               taskStore.restore(id, {
                 context: accessPoint
               });
@@ -372,7 +379,7 @@
             label="Delete"
             style={ButtonStyle.OUTLINED}
             type={ButtonVariant.DANGER}
-            on:click={() => {
+            onclick={() => {
               taskStore.trash(id, {
                 context: accessPoint
               });
@@ -382,7 +389,7 @@
             }}
           />
           {#if !$view.isConstrainedWidth}
-            <Button icon="x-circle" label="Close" on:click={onClose} />
+            <Button icon="x-circle" label="Close" onclick={onClose} />
           {/if}
         </div>
       </div>

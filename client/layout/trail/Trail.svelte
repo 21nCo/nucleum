@@ -12,23 +12,26 @@
   const VISIBLE_ITEMS = 3;
 
   let containerRef: HTMLDivElement;
-  let virtualScrollLeft = 0;
-  let startItemIndex = 0;
-  let visibleItems: (Action | IRecordId)[] = [];
-  let isMounted = false;
+  let virtualScrollLeft = $state(0);
+  let startItemIndex = $state(0);
+  let visibleItems = $state<(Action | IRecordId)[]>([]);
+  let isMounted = $state(false);
 
-  $: path = $hTrail.path;
-  $: activatedItem = $hTrail.activated;
-  $: totalWidth =
-    ($hTrail.isBaseNonRecord ? path.length - 1 : path.length) * ITEM_WIDTH;
+  const path = $derived($hTrail.path);
+  const activatedItem = $derived($hTrail.activated);
+  const totalWidth = $derived(
+    ($hTrail.isBaseNonRecord ? path.length - 1 : path.length) * ITEM_WIDTH
+  );
 
-  $: if (activatedItem && isMounted) {
-    scrollToItem(activatedItem);
-  }
+  $effect(() => {
+    if (activatedItem && isMounted) {
+      scrollToItem(activatedItem);
+    }
+  });
 
-  $: {
+  $effect(() => {
     updateVisibleItems(path, virtualScrollLeft);
-  }
+  });
 
   onMount(() => {
     tick().then(() => {
@@ -86,7 +89,7 @@
 <div
   bind:this={containerRef}
   class="relative w-screen h-full overflow-x-auto overflow-y-hidden"
-  on:scroll={onScroll}
+  onscroll={onScroll}
   style="scroll-behavior: smooth;"
 >
   <div class="relative h-full" style="width: {totalWidth}px;">

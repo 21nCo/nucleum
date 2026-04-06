@@ -2,7 +2,11 @@
   import { addAnimateClass } from "@21n/utils/ui.utils";
   import PanelButton from "@21n/landing/shared/elements/PanelButton.svelte";
   import { org, landing } from "@21n/landing/shared/store/shared.store";
-  export let isProduct: boolean = false;
+  let {
+    isProduct = false,
+  }: {
+    isProduct?: boolean;
+  } = $props();
   const id: string = "left-panel";
 </script>
 
@@ -12,7 +16,7 @@
   description="Built at 21n"
   {isProduct}
   icon="long-arrow-left"
-  on:click={async () => {
+  onclick={async () => {
     if (!isProduct) return;
     await addAnimateClass("animate-bounce-l", id);
     landing.openLink(org.website, { target: "_self" });

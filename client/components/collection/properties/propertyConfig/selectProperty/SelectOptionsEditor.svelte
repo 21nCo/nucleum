@@ -23,31 +23,40 @@
     IPropertyConfigOptionGroup
   } from "@21n/components/collection/properties/property.type";
   import SelectOptionEditListView from "@21n/components/collection/properties/propertyConfig/selectProperty/SelectOptionEditListView.svelte";
-  import { createEventDispatcher, onMount } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let config: ISelectPropertyConfig;
-  export let defaultOptionId: string | null = null;
-  export let parentBgIndex: number = 1;
-  export let onChange: ((config: ISelectPropertyConfig) => void) | undefined =
-    undefined;
-  export let onDefault: ((defaultOptionId: string) => void) | undefined =
-    undefined;
-  export let isPopoverContext: boolean = false;
-  let isGrouping = false;
-  let focusedOptionId: string | null = null;
+  import { onMount } from "svelte";
+  const resolveEmptyConfig = (): ISelectPropertyConfig => ({
+    options: [],
+    groups: []
+  });
+  let {
+    config = $bindable(resolveEmptyConfig()),
+    defaultOptionId = $bindable(null),
+    parentBgIndex = 1,
+    onChange = undefined,
+    onDefault = undefined,
+    isPopoverContext = false
+  }: {
+    config?: ISelectPropertyConfig;
+    defaultOptionId?: string | null;
+    parentBgIndex?: number;
+    onChange?: ((config: ISelectPropertyConfig) => void) | undefined;
+    onDefault?: ((defaultOptionId: string | null) => void) | undefined;
+    isPopoverContext?: boolean;
+  } = $props();
+  let isGrouping = $state(false);
+  let focusedOptionId = $state<string | null>(null);
   let dev_isEnableGrouping = false;
-  let error: string | null = null;
+  let error = $state<string | null>(null);
   let isCreatedUsingGlobalEnterKey = false;
-  let newLabel: string = "";
-  let refreshGroupsId: number = new Date().getTime();
+  let newLabel = $state("");
+  let refreshGroupsId = $state(new Date().getTime());
   function onremove(e: CustomEvent<string>) {
-    console.log("remove", e.detail);
     const id = e.detail;
     config.options = config.options?.filter((option) => option.id !== id);
     focusedOptionId = null;
     propagateChange();
   }
-  function ondefault(e: CustomEvent<string>) {
+  function ondefault(e: CustomEvent<string | null>) {
     defaultOptionId = e.detail;
     onDefault?.(e.detail);
   }
@@ -59,7 +68,6 @@
     addGroupOption(option.groupId, index);
   }
   function propagateChange() {
-    dispatch("change", config);
     onChange?.(config);
   }
   function onReorderOptions(e: DragDropEvent) {
@@ -136,7 +144,7 @@
     newLabel = "";
   }
 
-  function handleAddOptionFromGroup(e: CustomEvent<string>) {
+  function handleAddOptionFromGroup(e: CustomEvent<string | undefined>) {
     let group: IPropertyConfigOptionGroup | undefined = undefined;
     if (e.detail) {
       group = config.groups?.find((g) => g.id === e.detail);
@@ -213,9 +221,9 @@
     <TextInput
       bind:value={newLabel}
       hasControls={true}
-      on:enter={addOption}
-      on:save={addOption}
-      on:cancel={() => {
+      onEnter={addOption}
+      onSave={addOption}
+      onCancel={() => {
         newLabel = "";
       }}
       placeholder="Add option or group:option"
@@ -240,12 +248,12 @@
             {focusedOptionId}
             {defaultOptionId}
             {parentBgIndex}
-            on:enter={onenter}
-            on:default={ondefault}
-            on:remove={onremove}
-            on:add={handleAddOptionFromGroup}
-            on:group={onGroupAction}
-            on:change={() => {
+            onEnter={onenter}
+            onDefault={ondefault}
+            onRemove={onremove}
+            onAdd={handleAddOptionFromGroup}
+            onGroup={onGroupAction}
+            onChange={() => {
               propagateChange();
             }}
           />
@@ -258,11 +266,11 @@
       {defaultOptionId}
       {parentBgIndex}
       isPreventDefaultGroupLabel={!config.groups || config.groups.length === 0}
-      on:enter={onenter}
-      on:default={ondefault}
-      on:remove={onremove}
-      on:add={handleAddOptionFromGroup}
-      on:change={() => {
+      onEnter={onenter}
+      onDefault={ondefault}
+      onRemove={onremove}
+      onAdd={handleAddOptionFromGroup}
+      onChange={() => {
         propagateChange();
       }}
     />

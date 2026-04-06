@@ -1,23 +1,21 @@
-<!-- DraggableItem.svelte -->
 <script lang="ts">
   import { dragAndDropStore } from "@21n/stores/app.store";
   import view from "@21n/stores/view.store";
   import { DragStatus } from "@21n/types/dragstatus.enum";
-  export let item: any;
-  export let classList: string;
-  export let isDraggable: boolean = false;
-  export let isDragging: boolean = false;
-  export let id: any;
-  let ref: any;
-  let dragId: any;
-  let dragEnterId: any;
-  let dropId: any;
-  $: dragId = dragEnterId = dropId = id;
+  let {
+    item,
+    classList = "",
+    isDraggable = false,
+    isDragging = false,
+    id,
+    children
+  }: any = $props();
+  let ref = $state<any>();
   const handleDragStart = () => {
     // console.log("drag started ",item.label)
     isDragging = true;
     dragAndDropStore.update((x: any) => {
-      x = { ...x, dragStatus: DragStatus.STARTED, dragItem: item, dragId };
+      x = { ...x, dragStatus: DragStatus.STARTED, dragItem: item, dragId: id };
       return x;
     });
   };
@@ -28,7 +26,7 @@
         ...x,
         dragStatus: DragStatus.DRAGGING,
         dragEnterItem: item,
-        dragEnterId
+        dragEnterId: id
       };
       return x;
     });
@@ -54,7 +52,7 @@
   const handleDrop = () => {
     // console.log("dropped on",item.label)
     dragAndDropStore.update((x: any) => {
-      x = { ...x, dragStatus: DragStatus.DROPPED, dropItem: item, dropId };
+      x = { ...x, dragStatus: DragStatus.DROPPED, dropItem: item, dropId: id };
       return x;
     });
   };
@@ -67,14 +65,33 @@
 <div
   class="{isDraggable ? 'cursor-move' : ''} {classList}"
   draggable={isDraggable}
-  on:dragstart|stopPropagation={handleDragStart}
-  on:dragend|stopPropagation={handleDragEnd}
-  on:dragover|stopPropagation={onDragOver}
-  on:dragenter|stopPropagation={handleDragEnter}
-  on:drop|stopPropagation={handleDrop}
-  on:mouseenter|stopPropagation
-  on:mouseleave|stopPropagation
+  ondragstart={(event) => {
+    event.stopPropagation();
+    handleDragStart();
+  }}
+  ondragend={(event) => {
+    event.stopPropagation();
+    handleDragEnd();
+  }}
+  ondragover={(event) => {
+    event.stopPropagation();
+    onDragOver(event);
+  }}
+  ondragenter={async (event) => {
+    event.stopPropagation();
+    await handleDragEnter();
+  }}
+  ondrop={(event) => {
+    event.stopPropagation();
+    handleDrop();
+  }}
+  onmouseenter={(event) => {
+    event.stopPropagation();
+  }}
+  onmouseleave={(event) => {
+    event.stopPropagation();
+  }}
   bind:this={ref}
 >
-  <slot />
+  {@render children?.()}
 </div>

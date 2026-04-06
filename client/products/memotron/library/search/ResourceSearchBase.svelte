@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import Toggle from "@21n/elements/toggle/Toggle.svelte";
@@ -26,27 +27,35 @@
   import { cn } from "@21n/utils/ui.utils";
   import context from "@21n/stores/context.store";
   import { Embed } from "@21n/types/context.type";
-  import { createEventDispatcher } from "svelte";
   import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { Action } from "@21n/types/action.enum";
   import { searchStore } from "@21n/components/search";
 
-  const dispatch = createEventDispatcher();
+  let {
+    children,
+    isGlobalSearchModal = false,
+    isInline = false,
+    isExpanded = isGlobalSearchModal,
+    parentBgIndex = 1,
+    onClose = undefined
+  }: {
+    children?: Snippet;
+    isGlobalSearchModal?: boolean;
+    isInline?: boolean;
+    isExpanded?: boolean;
+    parentBgIndex?: number;
+    onClose?: ((event: CustomEvent<void>) => void) | undefined;
+  } = $props();
 
-  export let isGlobalSearchModal: boolean = false;
-  export let isInline: boolean = false;
-  export let isExpanded: boolean = isGlobalSearchModal;
-  export let parentBgIndex: number = 1;
-
-  let isFiltersVisible: boolean = false;
-  let data: any[] = [];
-  let recents: any[] = [];
+  let isFiltersVisible = $state(false);
+  let data = $state<any[]>([]);
+  let recents = $state<any[]>([]);
   let resourceSearch = new SearchStore();
-  let isRefreshing: boolean = false;
+  let isRefreshing = $state(false);
   let searchResultsPopover: SearchResultsPopover;
   let groupedSearchRef: GroupedSearchResults;
-  const resources = resolveProductResources($appStore.product, "search");
-  const switchItems = [
+  const resources = $derived(resolveProductResources($appStore.product, "search"));
+  const switchItems = $derived([
     {
       label: "Everything",
       value: Resource.everything,
@@ -57,11 +66,11 @@
       value: x,
       icon: resolveResourceIcon(x)
     }))
-  ];
-
-  $: isGroupedResultsMode =
+  ]);
+  const isGroupedResultsMode = $derived(
     !$view.isConstrainedWidth &&
-    $searchStore.resourceType === Resource.everything;
+      $searchStore.resourceType === Resource.everything
+  );
 
   onMount(async () => {
     searchStore.setKeyboardHandlers({
@@ -184,7 +193,7 @@
       })}
     >
       <span class="min-w-0 flex-1">
-        <slot />
+        {@render children?.()}
       </span>
       {#if isExpanded}
         <div class="flex h-full items-center gap-2 pr-4">
@@ -193,9 +202,9 @@
               icon="cross"
               size={Size.lg}
               style={ButtonStyle.OUTLINED}
-              on:click={() => {
+              onclick={() => {
                 searchStore.reset();
-                dispatch("close");
+                onClose?.(new CustomEvent("close"));
               }}
             />
           {/if}
@@ -231,7 +240,7 @@
         isExpandToFullWidth={true}
         {parentBgIndex}
         size={Size.sm}
-        on:switch={(e) => {
+        onSwitch={(e) => {
           searchStore.setResourceType(e.detail);
           setTimeout(() => {
             if (isGroupedResultsMode) {
@@ -279,12 +288,12 @@
               groups={switchItems.filter(
                 (x) => x.value !== Resource.everything
               )}
-              on:expand={(e) => {
+              onExpand={(e) => {
                 const resourceType = e.detail?.group?.value;
                 if (!resourceType) return;
                 expandGroup(resourceType);
               }}
-              on:select={onSelect}
+              {onSelect}
             />
           </div>
         </div>
@@ -296,10 +305,7 @@
           searchResultComponent={LinkSearchResultItem}
           isInlineContext={true}
           isAlwaysShowSearchFeedback={true}
-          on:select={onSelect}
-          on:empty-enter
-          on:reset
-          on:hide
+          {onSelect}
         />
       {/if}
     </main>

@@ -7,10 +7,19 @@
   } from "@21n/utils/time.utils";
   import Icon from "@21n/elements/Icon.svelte";
 
-  export let label: string;
-  export let value: string | number | undefined;
-  export let parentBgIndex: number = 1;
-  export let span: string = "";
+  let {
+    label,
+    value,
+    parentBgIndex = 1,
+    span = "",
+    onclick = undefined
+  }: {
+    label: string;
+    value: string | number | undefined;
+    parentBgIndex?: number;
+    span?: string;
+    onclick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
 
   function valueFormatter(value: string | string[] | number) {
     if (typeof value === "number") {
@@ -33,7 +42,7 @@
     span,
     bg(parentBgIndex)
   )}
-  on:click
+  {onclick}
 >
   <div class="flex flex-col items-start gap-1">
     <span class="text-fgs3 text-b3">{label}</span>

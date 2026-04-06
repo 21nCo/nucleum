@@ -30,7 +30,11 @@
   import { InputStyle } from "@21n/types/input.type";
   const contentContext = getContext<any>("content");
 
-  export let node: IActiveNodeStore | null = null;
+  let {
+    node = null
+  }: {
+    node?: IActiveNodeStore | null;
+  } = $props();
   type PdfTrace = IPdfBookmarkBody & {
     id?: string;
     due?: {
@@ -38,10 +42,9 @@
       completed?: boolean;
     };
   };
-  let options = resolveOptions($node?.contentType);
+  let options = $derived(resolveOptions($node?.contentType));
   let selectedType: string | undefined = undefined;
   let searchQuery: string = "";
-  let pdfAnnotations: PdfTrace[] = [];
   const hideHighlightColors = derived(
     [preferences, appStore],
     ([$preferences, $appStore]) => {
@@ -102,7 +105,7 @@
     }
   }
 
-  $: pdfAnnotations = (() => {
+  let pdfAnnotations = $derived.by(() => {
     const baseAnnots = ($node?.pdfAnnotations ?? []) as PdfTrace[];
     const q = searchQuery.trim().toLowerCase();
 
@@ -115,9 +118,9 @@
     }
 
     return baseAnnots;
-  })();
+  });
 
-  $: clips = (() => {
+  let clips = $derived.by(() => {
     const baseClips = $node?.clips ?? [];
     const q = searchQuery.trim().toLowerCase();
 
@@ -126,7 +129,7 @@
     }
 
     return baseClips;
-  })();
+  });
 </script>
 
 {#if options && options.length > 1}
@@ -157,19 +160,13 @@
             : highlightStore.resolveColor(trace.color)}
         <button
           class="flex flex-col gap-2 w-full cw:p-2 p-3 text-b2 text-left border border-brs3 rounded-md hover:bg-bgs2"
-              on:click={() => {
-                contentContext.publish("pdf-trace-click", {
-                  id: trace.id ?? `${trace.pageNumber ?? index}`,
-                  pageNumber: trace.pageNumber
-                });
-              }}
+          onclick={() => {
+            contentContext.publish("pdf-trace-click", {
+              id: trace.id ?? `${trace.pageNumber ?? index}`,
+              pageNumber: trace.pageNumber
+            });
+          }}
         >
-          <!-- TODO - delete, link, edit actions within traces panel -->
-          <!-- <button
-          on:click|stopPropagation={() => handleAnnotDelete(null, trace.id)}
-          class="absolute top-1 right-0 material-symbols-rounded text-base text-fgs4 hover:text-h4 hover:text-fgs2 z-40"
-          >{@html "&#Xe92b"}</button
-        > -->
           {#if trace.comment}
             <div
               class="flex flex-col gap-2 w-full min-h-fit cw:py-2 py-3 rounded-md"
@@ -264,16 +261,17 @@
         size={Size.sm}
         isPreventDefault={$node?.contentType === NodeType.YOUTUBE_VIDEO ||
           $node?.contentType === NodeType.YOUTUBE_SHORT}
-        on:click={(e) => {
-          if (!e?.detail) return;
+        onClick={(event) => {
+          if (!event?.detail) return;
+          if (!("body" in event.detail)) return;
           if (
             $node?.contentType !== NodeType.YOUTUBE_VIDEO &&
             $node?.contentType !== NodeType.YOUTUBE_SHORT
           )
             return;
           contentContext.publish("yt-trace-click", {
-            id: e.detail.id,
-            timestamp: e.detail.body.timestamp
+            id: event.detail.id,
+            timestamp: event.detail.body.timestamp
           });
         }}
       />

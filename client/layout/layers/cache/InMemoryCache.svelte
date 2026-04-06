@@ -23,6 +23,7 @@
 
 <div>
   {#each components as item (item.action)}
-    <svelte:component this={item.component} {...item.componentParams} />
+    {@const Component = item.component}
+    <Component {...item.componentParams} />
   {/each}
 </div>

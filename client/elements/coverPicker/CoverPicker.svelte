@@ -10,7 +10,7 @@
   import ColorPicker from "@21n/elements/colorPicker/ColorPicker.svelte";
   import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import Text from "@21n/elements/text/Text.svelte";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import GradientsSelector from "@21n/elements/colorPicker/gradients/GradientsSelector.svelte";
   import { fileDrop } from "@21n/actions/fileDrop.action";
   import Icon from "@21n/elements/Icon.svelte";
@@ -29,8 +29,6 @@
   import { appStore } from "@21n/stores/app.store";
   import { resolveProductConfig } from "@21n/products/product.config";
 
-  const dispatch = createEventDispatcher();
-
   enum Method {
     COLOR = "color",
     GRADIENT = "gradient",
@@ -39,16 +37,28 @@
     AI = "ai"
   }
 
-  export let orientation: Orientation = Orientation.Vertical;
-  export let value: IRecordId | undefined = undefined;
+  let {
+    orientation = Orientation.Vertical,
+    value = undefined,
+    onClose: onCloseCallback = undefined,
+    onChange = undefined,
+    onSelect = undefined
+  }: {
+    orientation?: Orientation;
+    value?: IRecordId | undefined;
+    onClose?: ((event: CustomEvent<void>) => void) | undefined;
+    onChange?: ((event: CustomEvent<string>) => void) | undefined;
+    onSelect?: ((event: CustomEvent<string>) => void) | undefined;
+  } = $props();
+  const isFileUploadAvailable = $derived(
+    resolveProductConfig($appStore.product).tableConfig.some(
+      (table) => table.name === Resource.file
+    )
+  );
 
-  $: isFileUploadAvailable = resolveProductConfig(
-    $appStore.product
-  ).tableConfig.some((table) => table.name === Resource.file);
-
-  let selectedMethod: Method = Method.COLOR;
-  let _value: string | undefined = transformValue(value);
-  let isUploadInProgress = false;
+  let selectedMethod = $state<Method>(Method.COLOR);
+  let _value = $state<string | undefined>(transformValue(value));
+  let isUploadInProgress = $state(false);
 
   onMount(async () => {
     if ($view.isConstrainedWidth) {
@@ -68,25 +78,37 @@
     return value;
   }
 
-  function onClose() {
-    dispatch("close");
+  function handleClose() {
+    onCloseCallback?.(new CustomEvent("close"));
     modalEvent.hide(Action.COVER_PICKER);
   }
 
-  function handleColorChange(e: CustomEvent) {
-    if (e.detail.hex) {
-      dispatch("change", `hex_${e.detail.hex}`);
+  function handleColorChange(value: number | string) {
+    if (typeof value === "string") {
+      onChange?.(
+        new CustomEvent("change", {
+          detail: `hex_${value}`
+        })
+      );
     }
   }
 
-  function handleColorChangeDebounced(e: CustomEvent) {
-    if (e.detail.hex) {
-      dispatch("select", `hex_${e.detail.hex}`);
+  function handleColorChangeDebounced(value: number | string) {
+    if (typeof value === "string") {
+      onSelect?.(
+        new CustomEvent("select", {
+          detail: `hex_${value}`
+        })
+      );
     }
   }
 
-  function handleGradientChange(e: CustomEvent) {
-    dispatch("select", `gradient_${e.detail}`);
+  function handleGradientChange(value: string) {
+    onSelect?.(
+      new CustomEvent("select", {
+        detail: `gradient_${value}`
+      })
+    );
   }
   async function handleDrop(droppedFiles: File[]) {
     let files = Array.isArray(droppedFiles) ? droppedFiles : [droppedFiles];
@@ -105,7 +127,11 @@
       if (!response[0].id) return;
       value = response[0].id;
       _value = value;
-      dispatch("select", value);
+      onSelect?.(
+        new CustomEvent("select", {
+          detail: value
+        })
+      );
     }
     isUploadInProgress = false;
   }
@@ -152,7 +178,7 @@
 <div class="flex flex-col gap-6 w-full h-full p-6">
   <div class="flex flex-row items-center justify-between">
     <Text content="Pick a cover" style={TextStyle.PANEL_HEADING} />
-    <Button icon="cross" on:click={onClose} />
+    <Button icon="cross" onclick={handleClose} />
   </div>
   <div
     class={cn("flex flex-1 gap-6 w-full overflow-auto", {
@@ -207,50 +233,49 @@
         "h-full": orientation === Orientation.Horizontal
       })}
     >
-      <PanelSwitcher
-        barStyle={BarStyle.EXACT}
-        bind:value={selectedMethod}
-        items={resolvePanelSwitcherItems(isFileUploadAvailable)}
-        style={PanelSwitcherStyle.BAR}
-        isExpandToFullWidth={true}
-        on:switch={(e) => {
-          console.log(e);
-        }}
+        <PanelSwitcher
+          barStyle={BarStyle.EXACT}
+          bind:value={selectedMethod}
+          items={resolvePanelSwitcherItems(isFileUploadAvailable)}
+          style={PanelSwitcherStyle.BAR}
+          isExpandToFullWidth={true}
+          onSwitch={() => {}}
       >
-        <!-- <div slot="right">
-          <Button icon="randomize" tooltip="Randomize" />
-        </div> -->
       </PanelSwitcher>
       {#if selectedMethod === Method.COLOR}
         <div class="flex-1 flex items-center justify-center">
           <ColorPicker
             isHueMode={false}
             isShowPreview={false}
-            on:change={handleColorChange}
-            on:debouncedChange={handleColorChangeDebounced}
+            onChangeCallback={handleColorChange}
+            onDebouncedChangeCallback={handleColorChangeDebounced}
             bind:hex={_value}
           />
         </div>
       {:else if selectedMethod === Method.GRADIENT}
         <GradientsSelector
-          on:change={handleGradientChange}
+          onChange={handleGradientChange}
           value={_value ?? ""}
         />
       {:else if selectedMethod === Method.LIBRARY}
         <CoverPickerFromLibrary
-          on:click={(e) => {
+          onSelect={(e) => {
             if (e.detail.file) {
               const _id = isRecordId(e.detail.file)
                 ? e.detail.file
                 : e.detail.file.id;
               value = _id;
               _value = value;
-              dispatch("select", value);
+              onSelect?.(
+                new CustomEvent("select", {
+                  detail: value
+                })
+              );
             }
           }}
         />
       {:else if selectedMethod === Method.UNSPLASH}
-        <UnsplashPicker on:select={(e) => dispatch("select", e.detail)} />
+        <UnsplashPicker {onSelect} />
       {:else}
         <div class="flex flex-1 w-full items-center justify-center">
           <ComingSoonView />

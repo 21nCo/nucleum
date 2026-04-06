@@ -21,17 +21,23 @@
   import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
   import { focusAggregates } from "@21n/products/pointron/analytics/analytics.store";
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
-  import { createEventDispatcher } from "svelte";
   import { appStore } from "@21n/stores/app.store";
   import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import context from "@21n/stores/context.store";
-  const dispatch = createEventDispatcher();
 
-  export let item: Pick<IGoalThumb, "id" | "label" | "color" | "parent"> & {
-    focus?: number;
-  };
-  export let layout: Layout;
-  export let isInEditMode: boolean = false;
+  let {
+    item,
+    layout,
+    isInEditMode = false,
+    onUnpin = undefined
+  }: {
+    item: Pick<IGoalThumb, "id" | "label" | "color" | "parent"> & {
+      focus?: number;
+    };
+    layout: Layout;
+    isInEditMode?: boolean;
+    onUnpin?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
   let isColorGoalTextExperimental = false;
   let todayFocusDuration: number | undefined = item.focus;
   let parentLabels: string[] = [];
@@ -39,19 +45,21 @@
   let isHovering = false;
   let isFinishingState: boolean = false;
 
-  $: isActive =
+  let isActive = $derived(
     $currentFocusItem &&
-    isSameResource(item, $currentFocusItem) &&
-    $activeSession.isQuickStartOn &&
-    $activeSession.isSessionRunning &&
-    !isFinishingState;
-  $: if (isActive) {
+      isSameResource(item, $currentFocusItem) &&
+      $activeSession.isQuickStartOn &&
+      $activeSession.isSessionRunning &&
+      !isFinishingState
+  );
+  $effect(() => {
+    if (!isActive) return;
     focusTime = resolveTaskFocus(
       $activeSession.intervals,
       undefined,
       $currentFocusItem?.start
     );
-  }
+  });
 
   onMount(async () => {
     if (item.parent && item.parent?.length > 0)
@@ -84,7 +92,10 @@
     e.stopPropagation();
     await goalStore.modify(item.id, { isPinnedForQuickFocus: false });
     toasts.success(`Goal **${item.label}** unpinned from quick focus`);
-    dispatch("unpin", item.id);
+    const unpinEvent = new CustomEvent("unpin", {
+      detail: item.id
+    });
+    onUnpin?.(unpinEvent);
   }
 
   async function onGoalChanges() {
@@ -134,7 +145,7 @@
         }
       )}
       color={item.color}
-      on:click={toggleSession}
+      onclick={toggleSession}
     >
       <div class="flex gap-2 items-center h-full flex-1 min-w-0">
         {#if !isActive && !isInEditMode}
@@ -202,7 +213,7 @@
       {/if}
     </CustomColorPropagator>
     {#if isInEditMode}
-      <UnpinAction on:click={unPin} />
+      <UnpinAction onclick={unPin} />
     {/if}
   </button>
 {:else}
@@ -222,7 +233,7 @@
       }
     )}
     color={item.color}
-    on:click={toggleSession}
+    onclick={toggleSession}
   >
     <div
       use:hoverable={{
@@ -263,8 +274,8 @@
       {/if}
     </div>
     {#if isInEditMode}
-      <UnpinAction on:click={unPin} />
+      <UnpinAction onclick={unPin} />
     {/if}
   </CustomColorPropagator>
 {/if}
-<ComponentBaseLayer subscribeToRecords={[item.id]} on:change={onGoalChanges} />
+<ComponentBaseLayer subscribeToRecords={[item.id]} onChange={onGoalChanges} />

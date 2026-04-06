@@ -23,16 +23,23 @@
     refreshList: () => Promise<void>;
   };
 
-  export let isHovering: boolean = false;
-  export let item: any;
-  $: resourceType = determineResourceType(item.id);
+  let {
+    isHovering = false,
+    item
+  }: {
+    isHovering?: boolean;
+    item: any;
+  } = $props();
+  let resourceType = $derived(determineResourceType(item.id));
   const { refreshList } = getContext<FocusItemContext>("focus-item-context");
 
-  $: isAdded = $focusItemsStore.items.some(resourceInList(item.id));
+  let isAdded = $derived($focusItemsStore.items.some(resourceInList(item.id)));
 
-  $: isInprogress = activeSession.isCurrentFocusItem(
-    item.id,
-    $currentFocusItem
+  let isInprogress = $derived(
+    activeSession.isCurrentFocusItem(
+      item.id,
+      $currentFocusItem
+    )
   );
 
   async function onAdd(e: any) {
@@ -67,7 +74,7 @@
           size={Size.sm}
           style={ButtonStyle.OUTLINED}
           parentBgIndex={2}
-          on:click={() => {
+          onclick={() => {
             appStore.openResource(item.id, AccessMode.POP);
           }}
         />
@@ -80,7 +87,7 @@
           tooltip="Start focusing"
           style={ButtonStyle.OUTLINED}
           size={Size.sm}
-          on:click={onStartFocusing}
+          onclick={onStartFocusing}
         />
         <Button
           icon="plus"
@@ -88,7 +95,7 @@
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
           size={Size.sm}
-          on:click={onAdd}
+          onclick={onAdd}
         />
       {/if}
     {:else}
@@ -114,7 +121,7 @@
     size={Size.sm}
     style={ButtonStyle.OUTLINED}
     parentBgIndex={2}
-    on:click={() => {
+    onclick={() => {
       appStore.openResource(item.id, AccessMode.POP);
     }}
   />

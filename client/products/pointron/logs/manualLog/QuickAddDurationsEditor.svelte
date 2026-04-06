@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
   import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
   import Button from "@21n/elements/button/Button.svelte";
@@ -13,34 +12,45 @@
   import { TimeFormat } from "@21n/types/time.type";
   import { Size } from "@21n/types/size.enum";
 
-  export let values: number[] | undefined = undefined;
-  export let label: InputLabel = {
-    label: "Manual logs - Quick durations",
-    tooltip: {
-      body: "Quick duration options for manual time entries. Use these to quickly add durations to your manual logs."
+  let {
+    values = $bindable<number[]>([]),
+    label = {
+      label: "Manual logs - Quick durations",
+      tooltip: {
+        body: "Quick duration options for manual time entries. Use these to quickly add durations to your manual logs."
+      },
+      orientation: Orientation.Vertical
     },
-    orientation: Orientation.Vertical
-  };
-  export let placeholder: string | undefined = undefined;
+    placeholder = undefined,
+    onChange = undefined
+  }: {
+    values?: number[];
+    label?: InputLabel;
+    placeholder?: string;
+    onChange?:
+      | ((event: CustomEvent<{ values: number[] | undefined }>) => void)
+      | undefined;
+  } = $props();
   let parentBgIndex: number = 1;
 
-  const dispatch = createEventDispatcher();
   let currentValue: number = 0;
 
-  $: if (values === undefined) {
-    values = [];
+  function emitChange(nextValues: number[] | undefined) {
+    const changeEvent = new CustomEvent<{ values: number[] | undefined }>(
+      "change",
+      {
+        detail: { values: nextValues }
+      }
+    );
+    onChange?.(changeEvent);
   }
 
-  /**
-   * Add a new value to the list
-   * Convert the value to minutes before adding
-   */
   function addValue() {
     if (currentValue > 0 && values) {
       const newValues = [...values, currentValue / 60];
       values = newValues;
       currentValue = 0;
-      dispatch("change", { values: newValues });
+      emitChange(newValues);
     }
   }
 
@@ -48,16 +58,16 @@
     if (values) {
       const newValues = values.filter((_, i) => i !== index);
       values = newValues;
-      dispatch("change", { values: newValues });
+      emitChange(newValues);
     }
   }
 
   function handleRearrange(index: number, displacement: number) {
-    values = moveItemInArray(values, index, displacement > 0 ? 1 : -1);
+    values = moveItemInArray(values ?? [], index, displacement > 0 ? 1 : -1);
   }
 
   function handleRearranged() {
-    dispatch("change", { values: values });
+    emitChange(values);
   }
 </script>
 
@@ -77,7 +87,7 @@
           icon="plus"
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.DEFAULT}
-          on:click={addValue}
+          onclick={addValue}
         />
       </div>
       <div class="flex flex-wrap gap-2">
@@ -102,7 +112,7 @@
               })}</span
             >
             <Button
-              on:click={() => removeValue(index)}
+              onclick={() => removeValue(index)}
               icon="cross"
               parentBgIndex={parentBgIndex + 1}
             />

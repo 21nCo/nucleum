@@ -13,7 +13,6 @@
   import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
-  import { createEventDispatcher } from "svelte";
   import ButtonGroup from "@21n/elements/button/ButtonGroup.svelte";
   import { Size } from "@21n/types/size.enum";
   import BoxSwitcher from "@21n/elements/switcher/BoxSwitcher.svelte";
@@ -23,18 +22,29 @@
   import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   import { Action } from "@21n/types/action.enum";
-  const dispatch = createEventDispatcher();
-  export let date: Date;
-  export let isExpandable: boolean = false;
-  export let layout: CalendarColumnLayout;
-  export let scale: TimeScaleUnit;
-  let timelinePanelSubItem: "tasks" | "events" = resolveTimlinePanelSelection();
-  let allDayPanelState: "default" | "collapsed" | "expanded" = "default";
-  let tasksPanelRef: CalendarColumnTasksPanel | undefined = undefined;
-  $: timelinePanelSubItems = resolveTimelinePanelSubItems($appStore.product);
 
-  $: createNewLabel =
-    timelinePanelSubItem === "tasks" ? "New task" : "New event";
+  let {
+    date = $bindable(),
+    isExpandable = false,
+    layout,
+    scale,
+    onDateChange = undefined
+  }: {
+    date?: Date;
+    isExpandable?: boolean;
+    layout: CalendarColumnLayout;
+    scale: TimeScaleUnit;
+    onDateChange?: ((event: CustomEvent<Date>) => void) | undefined;
+  } = $props();
+
+  let timelinePanelSubItem = $state<"tasks" | "events">(resolveTimlinePanelSelection());
+  let allDayPanelState = $state<"default" | "collapsed" | "expanded">("default");
+  let tasksPanelRef: CalendarColumnTasksPanel | undefined = undefined;
+  const timelinePanelSubItems = $derived(resolveTimelinePanelSubItems($appStore.product));
+
+  const createNewLabel = $derived(
+    timelinePanelSubItem === "tasks" ? "New task" : "New event"
+  );
 
   function resolveTimlinePanelSelection() {
     const persistedValue = uiState.getState(
@@ -79,6 +89,10 @@
     });
   }
 
+  function emitDateChange(event: CustomEvent<Date>) {
+    onDateChange?.(event);
+  }
+
   function handleCreate() {
     if (timelinePanelSubItem === "tasks") {
       handleCreateTask();
@@ -119,9 +133,7 @@
           <div class="hover:bg-bgs2-striped">
             <DatePicker
               bind:date
-              on:change={(e) => {
-                dispatch("dateChange", e.detail);
-              }}
+              onChange={emitDateChange}
               variant="inline-with-icon"
             />
           </div>
@@ -133,7 +145,7 @@
             label={scale === TimeScaleUnit.DAY ? createNewLabel : undefined}
             tooltip={scale !== TimeScaleUnit.DAY ? createNewLabel : undefined}
             shortcut={Action.CREATE}
-            on:click={handleCreate}
+            onclick={handleCreate}
           />
         </span>
       </div>
@@ -142,7 +154,7 @@
           <BoxSwitcher
             options={timelinePanelSubItems}
             bind:selected={timelinePanelSubItem}
-            on:select={onTimelinePanelSwitch}
+            onSelect={onTimelinePanelSwitch}
           />
         </div>
       {/if}
@@ -172,16 +184,18 @@
             style={PanelSwitcherStyle.BAR}
             barStyle={BarStyle.DOT}
             isExpandToFullWidth={layout === CalendarColumnLayout.TABS}
-            on:switch={onTimelinePanelSwitch}
+            onSwitch={onTimelinePanelSwitch}
           >
-            <div slot="right" class="flex items-center gap-2 mr-3">
-              <Button
-                icon="plus"
-                tooltip={createNewLabel}
-                on:click={handleCreate}
-                shortcut={Action.CREATE}
-              />
-            </div>
+            {#snippet right()}
+              <div class="flex items-center gap-2 mr-3">
+                <Button
+                  icon="plus"
+                  tooltip={createNewLabel}
+                  onclick={handleCreate}
+                  shortcut={Action.CREATE}
+                />
+              </div>
+            {/snippet}
           </PanelSwitcher>
         </div>
       {/if}

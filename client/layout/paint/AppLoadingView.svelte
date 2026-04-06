@@ -1,5 +1,7 @@
 <!-- FILEPATH: /Users/ar/dev/devving/Tidigit/pointron/src/lib/tidy/layout/paint/LoadingView.svelte -->
 
+<svelte:options runes={true} />
+
 <script lang="ts">
   import SubAtomLogo from "@21n/branding/SubAtomLogo.svelte";
   import PageLoadingAnimation from "@21n/elements/feedback/animations/PageLoadingAnimation.svelte";
@@ -7,10 +9,18 @@
   import ProgressBar from "@21n/elements/ProgressBar.svelte";
   import { Size } from "@21n/types/size.enum";
   import { fade } from "svelte/transition";
-  export let message: string | undefined = undefined;
-  export let subMessage: string | undefined = undefined;
-  export let duration: number | undefined = undefined;
-  export let percentage: number | undefined = undefined;
+
+  let {
+    message = undefined,
+    subMessage = undefined,
+    duration = undefined,
+    percentage = undefined
+  }: {
+    message?: string;
+    subMessage?: string;
+    duration?: number;
+    percentage?: number;
+  } = $props();
 </script>
 
 <div

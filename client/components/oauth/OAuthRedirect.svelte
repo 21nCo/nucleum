@@ -13,11 +13,6 @@
   import { clientStorage } from "@21n/persistence/persistence.utils";
   import { AppSearchParam } from "@21n/types/appStore.type";
   let debugMessage = "debug";
-  $: {
-    if (debugMessage) {
-      console.log({ debugMessage });
-    }
-  }
   onMount(async () => {
     try {
       let codeQueryParam = $page.url.searchParams.get(AppSearchParam.CODE);

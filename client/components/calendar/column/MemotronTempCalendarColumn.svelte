@@ -19,10 +19,9 @@
   import { resolveCalendarNotesId } from "@21n/components/calendar/calendar.utils";
   import { properCase } from "@21n/shared-utils/text.utils";
 
-  export let date: Date;
-  export let scale: TimeScaleUnit;
+  let { date, scale }: { date: Date; scale: TimeScaleUnit } = $props();
   let mdId = generateSimpleRandomId();
-  let feedback: IInlineStatus | undefined = undefined;
+  let feedback = $state<IInlineStatus | undefined>(undefined);
 
   function handleContentEvent(event: string, data: any) {
     debouncedShowFeedback(event);
@@ -95,12 +94,12 @@
       <Button
         icon="fullscreen"
         tooltip="Open notes in full screen"
-        on:click={openNotesInFullScreen}
+        onclick={openNotesInFullScreen}
       />
       <Button
         icon="history"
         tooltip="History"
-        on:click={() => {
+        onclick={() => {
           appStore.openResource(Action.HISTORY, AccessMode.POP, {
             searchParams: { [AppSearchParam.DATE]: date.toISOString() }
           });

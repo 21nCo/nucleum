@@ -10,13 +10,24 @@
   import { Size } from "@21n/types/size.enum";
   import { TextStyle } from "@21n/types/text.enum";
   import { cn } from "@21n/utils/ui.utils";
-  export let onAvatarSelect: (icon: string) => void;
-  export let onSizeSelect: (size: number) => void;
-  export let scale: number = 5;
-  export let avatar: string;
-  let _scale: number | "custom" =
-    scale === 3 || scale === 5 || scale === 10 ? scale : "custom";
-  let _customScaleValue: number = scale;
+  let {
+    onAvatarSelect,
+    onSizeSelect,
+    scale = 5,
+    avatar = $bindable("")
+  }: {
+    onAvatarSelect: (icon: string) => void;
+    onSizeSelect: (size: number) => void;
+    scale?: number;
+    avatar?: string;
+  } = $props();
+  let _scale = $state<number | "custom">("custom");
+  let _customScaleValue = $state(5);
+
+  $effect(() => {
+    _scale = scale === 3 || scale === 5 || scale === 10 ? scale : "custom";
+    _customScaleValue = scale;
+  });
 </script>
 
 <div
@@ -28,7 +39,7 @@
     options={[{ value: 3 }, { value: 5 }, { value: 10 }, { value: "custom" }]}
     parentBackgroundIndex={2}
     bind:selected={_scale}
-    on:select={() => {
+    onSelect={() => {
       if (_scale !== "custom") {
         _customScaleValue = _scale;
         onSizeSelect(_scale);
@@ -39,7 +50,7 @@
     <TextInput
       type="number"
       bind:value={_customScaleValue}
-      on:change={(e) => {
+      onChange={() => {
         onSizeSelect(_customScaleValue);
       }}
       placeholder="Enter custom scale"
@@ -57,7 +68,7 @@
           }
         )}
         use:tooltip={{ text: icon }}
-        on:click={() => {
+        onclick={() => {
           avatar = icon;
           onAvatarSelect(icon);
         }}

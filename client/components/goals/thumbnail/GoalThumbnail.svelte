@@ -17,21 +17,37 @@
   import GoalThumbnailTitle from "@21n/components/goals/thumbnail/GoalThumbnailTitle.svelte";
   import FocusItemPickOverlay from "@21n/products/pointron/focus/elements/focusitem/FocusItemPickOverlay.svelte";
   import { resolveGoalColor } from "@21n/components/goals/goal.utils";
-  export let item: IGoalThumb;
-  export let arrangement: Arrangement = Arrangement.LIST;
-  export let size: Size.sm | Size.md = Size.md;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
-  export let accessPointId: string;
-  export let isApplyCustomColor: boolean = false;
-  export let isDraggable: boolean = false;
-  export let refreshId: number = new Date().getTime();
-  $: color = resolveGoalColor(item);
-  $: isCurrentlyFocusing = activeSession.isCurrentFocusItem(
-    item.id,
-    $currentFocusItem
-  );
 
-  let isHovering: boolean = false;
+  let {
+    item: initialItem,
+    arrangement = Arrangement.LIST,
+    size = Size.md,
+    accessPoint = ResourceAccessPoint.BROWSER,
+    accessPointId,
+    isApplyCustomColor = false,
+    isDraggable = false,
+    refreshId: initialRefreshId = new Date().getTime(),
+    onClick = undefined
+  }: {
+    item: IGoalThumb;
+    arrangement?: Arrangement;
+    size?: Size.sm | Size.md;
+    accessPoint?: ResourceAccessPoint;
+    accessPointId: string;
+    isApplyCustomColor?: boolean;
+    isDraggable?: boolean;
+    refreshId?: number;
+    onClick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
+
+  let item = $state(initialItem);
+  let refreshId = $state(initialRefreshId);
+  let isHovering = $state(false);
+  void size;
+  const color = $derived(resolveGoalColor(item));
+  const isCurrentlyFocusing = $derived(
+    activeSession.isCurrentFocusItem(item.id, $currentFocusItem)
+  );
 
   function onGoalChanges(e: any) {
     const data = e.detail?.params?.record;
@@ -51,7 +67,6 @@
   {arrangement}
   isHidePreview={true}
   bind:isHovering
-  on:action
 >
   <CustomColorPropagator {color}>
     {#if arrangement === Arrangement.LIST}
@@ -70,7 +85,7 @@
           }
         )}
       >
-        <button class="flex w-full items-center h-16 truncate" on:click>
+        <button class="flex w-full items-center h-16 truncate" onclick={onClick}>
           <div class="flex flex-col gap-1 p-3 w-full">
             <GoalThumbnailTitle {item} {isCurrentlyFocusing} {color} />
             <GoalThumbnailSub {item} {isCurrentlyFocusing} {accessPoint} />
@@ -83,20 +98,22 @@
     {:else if arrangement === Arrangement.GRID}
       <ResourceGridThumbnail
         {item}
-        on:click
+        onclick={onClick}
         {isApplyCustomColor}
         {size}
         isHidePreview={true}
       >
-        <div slot="bottom" class="flex flex-col w-full min-h-12">
+        {#snippet bottom()}
+        <div class="flex flex-col w-full min-h-12">
           <div class="flex flex-col gap-2">
             <GoalThumbnailTitle {item} {isCurrentlyFocusing} {color} />
             <GoalThumbnailSub {item} {isCurrentlyFocusing} {accessPoint} />
           </div>
         </div>
+        {/snippet}
       </ResourceGridThumbnail>
     {/if}
   </CustomColorPropagator>
 </ResourceThumbnailBase>
 
-<ComponentBaseLayer subscribeToRecords={[item.id]} on:change={onGoalChanges} />
+<ComponentBaseLayer subscribeToRecords={[item.id]} onChange={onGoalChanges} />

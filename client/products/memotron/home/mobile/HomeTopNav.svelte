@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import ProfilePicture from "@21n/components/settings/account/ProfilePicture.svelte";
   import { Size } from "@21n/types/size.enum";
   import account from "@21n/stores/account.store";
@@ -10,17 +9,24 @@
   import { fly } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   import OfflineStatusMessage from "@21n/elements/feedback/OfflineStatusMessage.svelte";
-  export let transitionDuration: number = 250;
-  const dispatch = createEventDispatcher();
+  let {
+    transitionDuration = 250,
+    onSettings = undefined
+  }: {
+    transitionDuration?: number;
+    onSettings?: (() => void) | undefined;
+  } = $props();
 
   function handleSettingsClick() {
-    dispatch("settings");
+    onSettings?.();
   }
 
-  $: displayName =
-    isValidString($userPreferences.name) ||
-    isValidString($account.userInfo?.nickName) ||
-    "User";
+  const displayName =
+    $derived(
+      isValidString($userPreferences.name) ||
+      isValidString($account.userInfo?.nickName) ||
+      "User"
+    );
 
   function getGreeting() {
     const hour = new Date().getHours();
@@ -35,7 +41,7 @@
   transition:fly={{ y: -10, duration: transitionDuration, easing: quintOut }}
 >
   <div class="flex items-center gap-3">
-    <button class="flex items-center gap-3" on:click={handleSettingsClick}>
+    <button class="flex items-center gap-3" onclick={handleSettingsClick}>
       <ProfilePicture context="mobile-topbar" />
       <div class="flex flex-col items-start">
         <span class="text-fgs3 text-b3">Good {getGreeting()}</span>
@@ -49,7 +55,7 @@
       icon="gear"
       style={ButtonStyle.OUTLINED}
       size={Size.lg}
-      on:click={handleSettingsClick}
+      onclick={handleSettingsClick}
     />
   </div>
 </div>

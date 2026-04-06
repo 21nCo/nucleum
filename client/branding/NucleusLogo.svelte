@@ -1,7 +1,11 @@
 <script lang="ts">
-  export let width: number;
-  export let variant: "v1" | "v2" = "v2";
-  $: width;
+  let {
+    width,
+    variant = "v2"
+  }: {
+    width: number;
+    variant?: "v1" | "v2";
+  } = $props();
 </script>
 
 {#if variant === "v1"}

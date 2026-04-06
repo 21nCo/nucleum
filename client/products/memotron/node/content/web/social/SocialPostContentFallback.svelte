@@ -2,7 +2,7 @@
   import { appStore } from "@21n/stores/app.store";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { formatDatetime } from "@21n/utils/time.utils";
-  import { createEventDispatcher, getContext, onMount } from "svelte";
+  import { getContext, onMount } from "svelte";
   import { resolveContentPreview } from "@21n/products/memotron/node/node.utils";
   import {
     NodeType,
@@ -21,15 +21,26 @@
   import { toasts } from "@21n/stores/notification.store";
   import { Context } from "@21n/types/appStore.type";
 
-  export let node: INode;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  const dispatch = createEventDispatcher();
+  let {
+    node,
+    accessPoint = ResourceAccessPoint.SELF,
+    onViewEmbed = undefined
+  }: {
+    node: INode;
+    accessPoint?: ResourceAccessPoint;
+    onViewEmbed?: (() => void) | undefined;
+  } = $props();
   const nodeContext = getContext<any>(Context.NODE);
-  let parent: any;
-  let parentUsername: string = "";
+  let parent = $state<any>(undefined);
+  let parentUsername = $state("");
   let oembedHtml: string | null = null;
-  let platformName: string = "";
-  let platformDisplay: string = "";
+  let platformInfo = $derived(
+    socialPostNodeTypeList.has(node.contentType)
+      ? resolvePlatformInfo(node.contentType)
+      : { name: "", display: "" }
+  );
+  let platformName = $derived(platformInfo.name);
+  let platformDisplay = $derived(platformInfo.display);
 
   function isObject(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null;
@@ -49,21 +60,15 @@
     return undefined;
   }
 
-  const contentPreview = resolveContentPreview(node);
-  $: void accessPoint;
-
-  $: {
-    if (socialPostNodeTypeList.has(node.contentType)) {
-      setPlatformInfo(node.contentType);
-    }
-  }
+  let contentPreview = $derived(resolveContentPreview(node));
+  void accessPoint;
 
   onMount(async () => {
     resolveParentUsername();
     await resolveParent();
   });
 
-  function setPlatformInfo(contentType: NodeType) {
+  function resolvePlatformInfo(contentType: NodeType) {
     const platformMap: Partial<Record<NodeType, { name: string; display: string }>> = {
       [NodeType.TWEET]: { name: "twitter", display: "X" },
       [NodeType.MASTODON_POST]: { name: "mastodon", display: "Mastodon" },
@@ -76,11 +81,7 @@
       [NodeType.REDDIT_POST]: { name: "reddit", display: "Reddit" }
     };
 
-    const platform = platformMap[contentType];
-    if (platform) {
-      platformName = platform.name;
-      platformDisplay = platform.display;
-    }
+    return platformMap[contentType] ?? { name: "", display: "" };
   }
 
   function resolveParentUsername() {
@@ -176,7 +177,8 @@
 >
   <button
     class="flex flex-col gap-5 p-4 hover:bg-bgs2 border border-fgs4 rounded-md mo:w-full w-3/4"
-    on:click|stopPropagation={() => {
+    onclick={(event) => {
+      event.stopPropagation();
       if (node.url) {
         appStore.openLink(node.url);
       }
@@ -218,7 +220,7 @@
         label="Copy content"
         isUnderlined={true}
         size={Size.sm}
-        on:click={(e) => {
+        onclick={(e) => {
           e.stopPropagation();
           copyTextContent();
         }}
@@ -228,9 +230,9 @@
         label="View as embed"
         isUnderlined={true}
         size={Size.sm}
-        on:click={(e) => {
+        onclick={(e) => {
           e.stopPropagation();
-          dispatch("viewEmbed");
+          onViewEmbed?.();
         }}
       />
     </div>

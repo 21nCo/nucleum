@@ -11,11 +11,17 @@
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import FocusMetricCards from "@21n/components/calendar/column/overview/FocusMetricCards.svelte";
 
-  export let date: Date;
-  export let scale: TimeScale = TimeScale.DAYS;
-  let data: ISessionLog[] = [];
-  let previousTimePeriodData: ISessionLog[] = [];
-  let isRefreshing = false;
+  let {
+    date,
+    scale = TimeScale.DAYS
+  }: {
+    date: Date;
+    scale?: TimeScale;
+  } = $props();
+
+  let data = $state<ISessionLog[]>([]);
+  let previousTimePeriodData = $state<ISessionLog[]>([]);
+  let isRefreshing = $state(false);
   let dev_isUseCloud = false;
 
   async function refresh() {
@@ -67,7 +73,7 @@
 
 <ComponentBaseLayer
   subscribeToResource={new Set([Resource.sessionLog])}
-  on:change={() => {
+  onChange={() => {
     refresh();
   }}
 />

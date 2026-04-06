@@ -35,21 +35,25 @@
   import { logger } from "@21n/components/debug/logger.client";
   import { RemovalProperty } from "@21n/types/data.type";
   import YearViewV2 from "@21n/components/calendar/classic/YearViewV2.svelte";
-  export let panel: CalendarLayout = CalendarLayout.Classic;
+  let {
+    panel = $bindable(CalendarLayout.Classic)
+  }: {
+    panel?: CalendarLayout;
+  } = $props();
 
-  let selectedDate = new Date();
-  let selectedView: TimeScaleUnit = resolveSavedScaleSelection();
-  let selectedScale: TimeScaleUnit = TimeScaleUnit.DAY;
-  let events: any[] = [];
+  let selectedDate = $state(new Date());
+  let selectedView = $state<TimeScaleUnit>(resolveSavedScaleSelection());
+  let selectedScale = $state<TimeScaleUnit>(TimeScaleUnit.DAY);
+  let events = $state<any[]>([]);
   let yearViewRef: YearViewV2;
   let weekViewRef: WeekView;
-  let visibleWeekDates: Date[] | undefined;
-  let width = resolveSavedWidthSelection(selectedView);
-  let indicatorData: ICalendarIndicatorData[] = [];
-  let indicatorRefreshId: number = new Date().getTime();
+  let visibleWeekDates = $state<Date[] | undefined>(undefined);
+  let width = $state(resolveSavedWidthSelection(selectedView));
+  let indicatorData = $state<ICalendarIndicatorData[]>([]);
+  let indicatorRefreshId = $state<number>(new Date().getTime());
   let currentDateFilterForIndicatorData: any = {};
-  let isRefreshing = false;
-  let yearViewRefreshId = new Date().getTime();
+  let isRefreshing = $state(false);
+  let yearViewRefreshId = $state(new Date().getTime());
 
   onMount(() => {
     refreshIndicatorDataWithDelay();
@@ -72,42 +76,42 @@
     return widthState ?? defaultVal;
   }
 
-  function handleYearChange(event: CustomEvent) {
-    if (!event.detail) return;
+  function handleYearChange(payload?: { year: number }) {
+    if (!payload) return;
     setDate(
       new Date(
-        event.detail.year,
+        payload.year,
         selectedDate.getMonth(),
         selectedDate.getDate()
       )
     );
   }
 
-  function handleMonthChange(event: CustomEvent) {
-    if (!event.detail) return;
-    setDate(event.detail);
+  function handleMonthChange(date?: Date) {
+    if (!date) return;
+    setDate(date);
   }
 
-  function handleMonthSelect(event: CustomEvent) {
-    if (!event.detail || $appStore.product === Product.POINTRON) return;
+  function handleMonthSelect(payload?: { date: Date }) {
+    if (!payload || $appStore.product === Product.POINTRON) return;
     selectedScale = TimeScaleUnit.MONTH;
-    setDate(event.detail.date);
+    setDate(payload.date);
   }
 
-  function handleYearSelect(event: CustomEvent) {
-    if (!event.detail || $appStore.product === Product.POINTRON) return;
+  function handleYearSelect(payload?: { date: Date }) {
+    if (!payload || $appStore.product === Product.POINTRON) return;
     selectedScale = TimeScaleUnit.YEAR;
-    setDate(event.detail.date);
+    setDate(payload.date);
   }
 
-  function handleWeekSelect(event: CustomEvent) {
-    if (!event.detail || $appStore.product === Product.POINTRON) return;
+  function handleWeekSelect(payload?: { date: Date }) {
+    if (!payload || $appStore.product === Product.POINTRON) return;
     selectedScale = TimeScaleUnit.WEEK;
-    setDate(event.detail.date);
+    setDate(payload.date);
   }
 
-  function handleVisibleDatesChange(event: CustomEvent) {
-    visibleWeekDates = event.detail.dates;
+  function handleVisibleDatesChange(payload?: { dates: Date[] }) {
+    visibleWeekDates = payload?.dates;
   }
 
   function onResize(e: any) {
@@ -294,7 +298,7 @@
 
 <CalendarLayoutView
   bind:panel
-  on:goToToday={() => {
+  onGoToToday={() => {
     if (
       selectedView === TimeScaleUnit.YEAR ||
       selectedView === TimeScaleUnit.WEEK
@@ -311,27 +315,27 @@
     }
   }}
 >
-  <slot name="header-left-options" slot="header-left-options">
+  {#snippet headerLeftOptions()}
     <ClassicCalendarHeaderLeftOptions
       bind:selectedView
       {isRefreshing}
-      on:scaleSelection={handleScaleSelection}
+      onScaleSelection={handleScaleSelection}
     />
-  </slot>
-  <slot name="header" slot="header">
+  {/snippet}
+  {#snippet header()}
     <CalendarHeader
       bind:selectedDate
       bind:selectedView
       {visibleWeekDates}
-      on:dateChange={onDateChange}
-      on:goToPrevious={() => {
+      onDateChange={onDateChange}
+      onGoToPrevious={() => {
         if (selectedView === TimeScaleUnit.YEAR) {
           yearViewRef?.navigatePrevYear();
         } else if (selectedView === TimeScaleUnit.WEEK) {
           weekViewRef?.scrollToPrevWeek();
         }
       }}
-      on:goToNext={() => {
+      onGoToNext={() => {
         if (selectedView === TimeScaleUnit.YEAR) {
           yearViewRef?.navigateNextYear();
         } else if (selectedView === TimeScaleUnit.WEEK) {
@@ -339,7 +343,7 @@
         }
       }}
     />
-  </slot>
+  {/snippet}
 
   <div class="flex h-full">
     <!-- <CalendarSidebar {events} /> -->
@@ -354,12 +358,12 @@
           {selectedScale}
           {indicatorData}
           {indicatorRefreshId}
-          on:monthChange={handleMonthChange}
-          on:dateChange={(e) => {
+          onMonthChange={handleMonthChange}
+          onDateChange={() => {
             selectedScale = TimeScaleUnit.DAY;
             onDateChange();
           }}
-          on:weekSelect={handleWeekSelect}
+          onWeekSelect={handleWeekSelect}
         />
       {:else if selectedView === TimeScaleUnit.YEAR}
         {#key yearViewRefreshId}
@@ -369,13 +373,13 @@
             {selectedScale}
             {indicatorData}
             {indicatorRefreshId}
-            on:yearChange={handleYearChange}
-            on:dateChange={(e) => {
+            onYearChange={handleYearChange}
+            onDateChange={() => {
               selectedScale = TimeScaleUnit.DAY;
               onDateChange();
             }}
-            on:monthSelect={handleMonthSelect}
-            on:yearSelect={handleYearSelect}
+            onMonthSelect={handleMonthSelect}
+            onYearSelect={handleYearSelect}
           />
         {/key}
       {/if}
@@ -412,7 +416,7 @@
               scale={selectedScale}
               viewScale={selectedView}
               date={selectedDate}
-              on:dateChange={(e) => {
+              onDateChange={(e) => {
                 if (e.detail) {
                   if (selectedView === TimeScaleUnit.YEAR) {
                     yearViewRef?.scrollToDate(e.detail);
@@ -439,13 +443,13 @@
     "dateUnix",
     "isChecked"
   ]}
-  on:change={() => {
+  onChange={() => {
     refreshIndicatorDataWithDelay([Resource.task]);
   }}
 />
 <ComponentBaseLayer
   subscribeToResource={new Set([Resource.session])}
-  on:change={() => {
+  onChange={() => {
     refreshIndicatorDataWithDelay([Resource.session]);
   }}
 />
@@ -456,8 +460,8 @@
     RemovalProperty.TRASH_INFORMATION,
     "text"
   ]}
-  on:change={() => {
+  onChange={() => {
     refreshIndicatorDataWithDelay([Resource.node, MetaResource.calendarNotes]);
   }}
 />
-<svelte:window on:resize={onWindowResize} />
+<svelte:window onresize={onWindowResize} />

@@ -1,8 +1,14 @@
 <script lang="ts">
   import SvgIcon from "@21n/elements/SVGIcon.svelte";
   let isVideoPlaying = false;
-  export let videoUrl: string;
-  export let thumbnailUrl: string | undefined = undefined;
+  let {
+    videoUrl,
+    thumbnailUrl = undefined,
+  }: {
+    videoUrl: string;
+    thumbnailUrl?: string | undefined;
+  } = $props();
+
   function playVideo() {
     isVideoPlaying = true;
   }
@@ -22,7 +28,7 @@
         class="absolute inset-0 bg-fgs2 bg-opacity-30 rounded-xl flex items-center justify-center"
       >
         <button
-          on:click={playVideo}
+          onclick={playVideo}
           class="w-[72px] h-[48px] bg-bgs1 flex items-center justify-center rounded-md"
         >
           <SvgIcon icon="play" />

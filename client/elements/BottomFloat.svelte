@@ -1,24 +1,33 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { onMount, onDestroy } from "svelte";
   import { player } from "@21n/components/modal/modal.store";
   import view from "@21n/stores/view.store";
   import { cn } from "@21n/utils/ui.utils";
   import { generateRandomId } from "@21n/shared-utils/crypto.utils";
-  export let margin: string | undefined = undefined;
-  export let zIndex: string = "z-20";
-  export let containerId: string | undefined = undefined;
-  let isAppMenuHidden: boolean = resolveIfAppMenuHidden();
+  let {
+    margin = undefined,
+    zIndex = "z-20",
+    containerId = undefined,
+    class: classList = "",
+    children = undefined
+  }: {
+    margin?: string | undefined;
+    zIndex?: string;
+    containerId?: string | undefined;
+    class?: string;
+    children?: Snippet | undefined;
+  } = $props();
+  let isAppMenuHidden = $state(resolveIfAppMenuHidden());
   const fallbackContainerId = generateRandomId();
-  let classList: string = "";
-  export { classList as class };
   let ref: HTMLElement;
   let portal: HTMLElement | undefined = undefined;
+  const resolvedClassList = $derived(
+    classList.includes("justify") ? classList : `${classList} justify-center`.trim()
+  );
 
   onMount(() => {
     isAppMenuHidden = resolveIfAppMenuHidden();
-    if (!classList.includes("justify")) {
-      classList += " justify-center";
-    }
     const finalContainerId = containerId || fallbackContainerId;
     if (finalContainerId && ref) {
       portal = document.createElement("div");
@@ -59,9 +68,9 @@
         "mb-24": $view.isPortrait && !isAppMenuHidden,
         "mb-4": !$view.isPortrait
       },
-      classList
+      resolvedClassList
     )}
   >
-    <slot />
+    {@render children?.()}
   </div>
 </div>

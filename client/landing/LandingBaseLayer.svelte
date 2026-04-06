@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { onMount } from "svelte";
   import { cn } from "@21n/utils/ui.utils";
   import LandingThemeLayer from "@21n/landing/LandingThemeLayer.svelte";
@@ -10,7 +11,13 @@
   import PosthogTelemetry from "@21n/layout/layers/analytics/PosthogTelemetry.svelte";
   import BottomModal from "@21n/components/bottomModal/BottomModal.svelte";
   import { landing } from "@21n/landing/shared/store/shared.store";
-  export let bgColor: string = "bg-bgs1";
+  let {
+    bgColor = "bg-bgs1",
+    children
+  }: {
+    bgColor?: string;
+    children?: Snippet;
+  } = $props();
 
   onMount(() => {
     setContext();
@@ -47,9 +54,9 @@
   <!-- <AnalyticsLayer isLanding={true} /> -->
   <LandingThemeLayer>
     <div class="flex w-full h-full">
-      <slot />
+      {@render children?.()}
     </div>
   </LandingThemeLayer>
   <BottomModal />
 </div>
-<svelte:document on:click={handleInlineLinkClick} />
+<svelte:document onclick={handleInlineLinkClick} />

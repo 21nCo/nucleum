@@ -2,7 +2,8 @@
   import AnalyticsChartStandalone from "@21n/products/pointron/analytics/page/AnalyticsChartStandalone.svelte";
   import type { IRecordId } from "@21n/types/data.type";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
-  export let id: IRecordId;
+
+  let { id }: { id: IRecordId } = $props();
 </script>
 
 <div class="w-full h-full">

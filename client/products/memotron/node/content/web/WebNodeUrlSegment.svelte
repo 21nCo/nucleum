@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { IContextMenu } from "@21n/types/select.type";
   import { appStore } from "@21n/stores/app.store";
-  export let url: string;
-  let copyLabel: string = "Copy link";
+  let { url }: { url: string } = $props();
+  let copyLabel = $state("Copy link");
   let copyTimeoutId: ReturnType<typeof setTimeout> | null = null;
   const linkContextMenu: IContextMenu = [
     {
@@ -42,7 +42,7 @@
   <button
     class="flex border-r border-brs2 px-3 py-1.5 hover:bg-aps2-striped hover:text-aps1 truncate min-w-0 flex-1"
     title="Open link"
-    on:click={() => {
+    onclick={() => {
       if (!url) return;
       appStore.openLink(url);
     }}
@@ -54,7 +54,7 @@
   <!-- </ContextMenuAction> -->
   <button
     class="flex px-3 py-1.5 hover:bg-bgs2-striped"
-    on:click={() => {
+    onclick={() => {
       if (!url) return;
       navigator.clipboard.writeText(url);
       copyLabel = "Copied!";

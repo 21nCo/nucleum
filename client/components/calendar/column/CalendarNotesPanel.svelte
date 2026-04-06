@@ -26,19 +26,22 @@
   import { page } from "$app/stores";
   import { Context } from "@21n/types/appStore.type";
 
-  export let date: Date;
-  export let scale: TimeScaleUnit;
-  export let mdId: string;
-  let node: IActiveNodeStore;
-  const captureStore = ActiveCaptureStore.resolve(mdId);
-  let isSyncing: boolean = false;
-  let isFullScreenActive: boolean = false;
+  let {
+    date,
+    scale,
+    mdId
+  }: {
+    date: Date;
+    scale: TimeScaleUnit;
+    mdId: string;
+  } = $props();
 
-  $: {
-    const expandScreenParam = $page.url.searchParams.get(AccessMode.POP);
-    const nodeId = resolveCalendarNotesId(date, scale);
-    isFullScreenActive = expandScreenParam === nodeId;
-  }
+  let node = $state<IActiveNodeStore | undefined>(undefined);
+  const captureStore = ActiveCaptureStore.resolve(mdId);
+  let isSyncing = $state(false);
+  const isFullScreenActive = $derived(
+    $page.url.searchParams.get(AccessMode.POP) === resolveCalendarNotesId(date, scale)
+  );
 
   async function initialize(scaleParam: TimeScaleUnit) {
     if (isSyncing) return;
@@ -93,7 +96,9 @@
     </div>
   {:then _}
     <div class="flex w-full h-full overflow-y-auto">
-      <NodeContent {node} {mdId} />
+      {#if node}
+        <NodeContent {node} {mdId} />
+      {/if}
     </div>
   {:catch err}
     <EmptyStatusView

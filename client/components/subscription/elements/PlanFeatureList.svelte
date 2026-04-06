@@ -1,11 +1,16 @@
 <script lang="ts">
   import Icon from "@21n/elements/Icon.svelte";
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
-  export let features: {
-    icon: string;
-    label: string;
-  }[] = [];
-  export let moreLink: string | undefined = undefined;
+  let {
+    features = [],
+    moreLink = undefined
+  }: {
+    features?: {
+      icon: string;
+      label: string;
+    }[];
+    moreLink?: string | undefined;
+  } = $props();
 </script>
 
 <ul class="space-y-3.5">

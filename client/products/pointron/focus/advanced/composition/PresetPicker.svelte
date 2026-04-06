@@ -8,12 +8,17 @@
   import { cn } from "@21n/utils/ui.utils";
   import { appStore } from "@21n/stores/app.store";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
-  export let isExpandedVariant: boolean = true;
+  let {
+    isExpandedVariant = true,
+    parentBackgroundIndex = 1
+  }: {
+    isExpandedVariant?: boolean;
+    parentBackgroundIndex?: number;
+  } = $props();
   let isInEditMode: boolean = false;
   let selectedPresetIndex: number = $activeSession.composition
     ? $pointronPreferences.presets.indexOf($activeSession.composition)
     : 0;
-  export let parentBackgroundIndex: number = 1;
 
   function onPresetSelection(event: any) {
     const preset = event.detail.preset;
@@ -48,13 +53,13 @@
       {parentBackgroundIndex}
       {isExpandedVariant}
       {isInEditMode}
-      on:edit={onEdit}
-      on:select={onPresetSelection}
+      onEdit={onEdit}
+      onSelect={onPresetSelection}
     />
     {#if isInEditMode}
-      <Button
-        parentBgIndex={parentBackgroundIndex}
-        on:click={onAddNewClicked}
+        <Button
+          parentBgIndex={parentBackgroundIndex}
+          onclick={onAddNewClicked}
         type={ButtonVariant.PRIMARY}
         style={ButtonStyle.OUTLINED}
         size={Size.sm}
@@ -72,7 +77,7 @@
           size={Size.sm}
           style={ButtonStyle.OUTLINED}
           isPreventMinWidth={true}
-          on:click={() => {
+          onclick={() => {
             isInEditMode = !isInEditMode;
           }}
           >{isInEditMode ? "Close editor" : "Edit"}
@@ -80,7 +85,7 @@
       {:else}
         <button
           class="text-fgs3 text-b2 underline notouch:hover:text-aps1"
-          on:click={() => {
+          onclick={() => {
             isInEditMode = !isInEditMode;
           }}>{isInEditMode ? "close editor" : "edit"}</button
         >

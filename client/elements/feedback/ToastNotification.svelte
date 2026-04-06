@@ -10,13 +10,24 @@
   import { linear } from "svelte/easing";
   import { onMount } from "svelte";
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
-  export let notification: Toast;
-  export let isShownAsModal = false;
+    let {
+    notification,
+    isShownAsModal = false,
+  }: {
+    notification: Toast;
+    isShownAsModal?: boolean;
+  } = $props();
+
+  
+
 
   const progress = tweened(100, {
     duration: toastDefaultDuration,
     easing: linear
   });
+  function stopPropagation(event: Event) {
+    event.stopPropagation();
+  }
   function close(event: MouseEvent) {
     toasts.reset();
     event.stopPropagation();
@@ -42,7 +53,7 @@
     </div>
   </div>
 {:else}
-  <button
+  <div
     class={cn(
       "relative flex gap-2 bg-fgs1 text-bgs1 shadow-md text--fgs2 items-center portrait:flex-1 portrait:min-w-0 portrait:mx-4 portrait:w-4/5 pr-2 rounded-md",
       {
@@ -52,7 +63,8 @@
         "w-fit": notification.type === AlertType.PROGRESS
       }
     )}
-    on:click|stopPropagation
+    onclick={stopPropagation}
+    onkeydown={stopPropagation}
   >
     <div
       class={cn("h-3/4 rounded-full min-w-1 shrink-0", {
@@ -98,15 +110,22 @@
     <div class="flex gap-2 items-center">
       {#if notification.actionText}
         <button
-          on:click={notification.callback}
+          type="button"
+          onclick={(event) => {
+            event.stopPropagation();
+            notification.callback?.();
+          }}
           class="bg-fgs2 rounded-full px-2 py-1 text-b3"
         >
           {notification.actionText}
         </button>
       {/if}
       {#if !notification.isNonDismissable && notification.type !== AlertType.PROGRESS}
-        <div class="flex items-center justify-center hover:bg-fgs3 rounded-md">
-          <Icon icon="cross" on:click={close} class="stroke-bgs1" />
+        <div
+          class="flex items-center justify-center hover:bg-fgs3 rounded-md"
+          onclick={close}
+        >
+          <Icon icon="cross" class="stroke-bgs1" />
         </div>
       {/if}
     </div>
@@ -120,5 +139,5 @@
         ></div>
       </div>
     {/if}
-  </button>
+  </div>
 {/if}

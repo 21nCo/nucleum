@@ -1,10 +1,19 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import SwitcherItem from "@21n/products/pointron/focus/advanced/modeSwitcher/SwitcherItem.svelte";
-  const dispatch = createEventDispatcher();
-  export let selectedMode: number;
+
+  let {
+    selectedMode = $bindable(0),
+    onSwitch = undefined
+  }: {
+    selectedMode?: number;
+    onSwitch?: ((event: CustomEvent<{ selected: number }>) => void) | undefined;
+  } = $props();
   function switchMode(mode: number) {
-    dispatch("switch", { selected: mode });
+    selectedMode = mode;
+    const switchEvent = new CustomEvent<{ selected: number }>("switch", {
+      detail: { selected: mode }
+    });
+    onSwitch?.(switchEvent);
   }
 </script>
 
@@ -12,11 +21,11 @@
   <SwitcherItem
     mode={0}
     isActive={selectedMode === 0}
-    on:click={() => switchMode(0)}
+    onclick={() => switchMode(0)}
   />
   <SwitcherItem
     mode={1}
     isActive={selectedMode === 1}
-    on:click={() => switchMode(1)}
+    onclick={() => switchMode(1)}
   />
 </div>

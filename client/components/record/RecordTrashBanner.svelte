@@ -3,9 +3,19 @@
   import { InfoTextType } from "@21n/types/text.type";
   import { formatDatetime } from "@21n/utils/time.utils";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let deletedAt: string;
+
+  let {
+    deletedAt,
+    onRestore = undefined
+  }: {
+    deletedAt: string;
+    onRestore?: ((event: CustomEvent<void>) => void) | undefined;
+  } = $props();
+
+  function emitRestore() {
+    const restoreEvent = new CustomEvent<void>("restore");
+    onRestore?.(restoreEvent);
+  }
 </script>
 
 <InlineInfoBanner
@@ -17,7 +27,7 @@
   action={{
     label: "Restore",
     callback: async () => {
-      dispatch("restore");
+      emitRestore();
     }
   }}
 />

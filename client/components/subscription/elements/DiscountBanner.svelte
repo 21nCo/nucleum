@@ -1,7 +1,11 @@
 <script lang="ts">
   import account from "@21n/stores/account.store";
   import { resolveDiscountLabel } from "@21n/components/subscription/userPlan.utils";
-  export let isPreventDiscounting = false;
+  let {
+    isPreventDiscounting = false
+  }: {
+    isPreventDiscounting?: boolean;
+  } = $props();
 </script>
 
 {#if $account.plan?.discount && !isPreventDiscounting}

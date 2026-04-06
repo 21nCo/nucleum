@@ -2,17 +2,26 @@
   import { AlertType } from "@21n/types/notification.type";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-  export let message: string | null = null;
-  export let type: AlertType = AlertType.INFO;
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
-  export let isDissappear: boolean = true;
-  let timer: any;
-  $: if (message && isDissappear) {
+  let {
+    message = $bindable(null),
+    type = AlertType.INFO,
+    size = Size.md,
+    isDissappear = true
+  }: {
+    message?: string | null;
+    type?: AlertType;
+    size?: Size.sm | Size.md | Size.lg;
+    isDissappear?: boolean;
+  } = $props();
+  let timer: ReturnType<typeof setTimeout> | undefined = undefined;
+  $effect(() => {
+    if (!message || !isDissappear) return;
     clearTimeout(timer);
     timer = setTimeout(() => {
       message = null;
     }, 4000);
-  }
+    return () => clearTimeout(timer);
+  });
 </script>
 
 <div class="h-6 w-full flex justify-center">

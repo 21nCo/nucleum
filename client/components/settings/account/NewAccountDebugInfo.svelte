@@ -1,5 +1,5 @@
-<script>
-  export let user;
+<script lang="ts">
+  let { user }: { user: any } = $props();
 </script>
 
 <div>

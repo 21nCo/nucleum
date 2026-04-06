@@ -1,8 +1,9 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { cn } from "@21n/utils/ui.utils";
+  let { children }: { children?: Snippet } = $props();
   let className: string = "";
   export { className as class };
-  // export let backgroundImage: string;
 </script>
 
 <section class="flex w-full justify-center">
@@ -12,6 +13,6 @@
       className
     )}
   >
-    <slot />
+    {@render children?.()}
   </div>
 </section>

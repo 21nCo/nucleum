@@ -1,5 +1,10 @@
 <script lang="ts">
-  export let minutes: number;
+  let {
+    minutes
+  }: {
+    minutes: number;
+  } = $props();
+
 </script>
 
 <!-- <svg {width} height={width}>

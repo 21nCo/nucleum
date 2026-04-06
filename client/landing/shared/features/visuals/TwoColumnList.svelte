@@ -1,9 +1,16 @@
 <script lang="ts">
   import type { IListItem } from "@21n/landing/shared/landing.type";
   import List from "@21n/landing/shared/list/List.svelte";
-  export let items: IListItem[];
-  export let slice: number = 4;
-  export let color: "aps1" | "ags1" = "ags1";
+  let {
+    items,
+    slice = 4,
+    color = "ags1",
+  }: {
+    items: IListItem[];
+    slice?: number;
+    color?: "aps1" | "ags1";
+  } = $props();
+
 </script>
 
 <div class="flex gap-x-20 gap-y-2 flex-wrap w-full text-{color}">

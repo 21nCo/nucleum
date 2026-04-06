@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { LayoutContext } from "@21n/types/layout.type";
   import { onMount } from "svelte";
@@ -19,11 +21,16 @@
   import { resolveProductConfig } from "@21n/products/product.config";
   import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { hTrail, vTrail } from "@21n/layout/topNav/tabs/tabs.store";
-
-  export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
-  export let parentBackgroundIndex: number;
-  export let isHovered: boolean = false;
-  $: isHovered;
+  let {
+    layoutContext = LayoutContext.DEFAULT,
+    parentBackgroundIndex,
+    isHovered = false
+  }: {
+    layoutContext?: LayoutContext;
+    parentBackgroundIndex: number;
+    isHovered?: boolean;
+  } = $props();
+  void isHovered;
   let allPages: IAction[] = [];
   let defaultPages: IAction[] = [];
   let userPinnedPages: IAction[] = [];
@@ -121,7 +128,7 @@
       <AppMenuSwitcherItem
         {parentBackgroundIndex}
         {layoutContext}
-        on:click={() => onClick(item)}
+        onClick={() => onClick(item)}
         {item}
       />
     {/each}
@@ -138,7 +145,7 @@
       {parentBackgroundIndex}
       {layoutContext}
       items={defaultPages}
-      on:click={onClickFromGroup}
+      onClick={onClick}
     />
     {#if userPinnedPages.length > 0}
       <div
@@ -156,7 +163,7 @@
           {parentBackgroundIndex}
           {layoutContext}
           items={userPinnedPages}
-          on:click={onClickFromGroup}
+          onClick={onClick}
         />
       </div>
     {/if}

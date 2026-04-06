@@ -9,10 +9,17 @@
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { appStore } from "@21n/stores/app.store";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
-  export let size: Size = Size.sm;
-  export let type: "semi" | "full" = "semi";
-  export let parentBgIndex: number = 1;
-  export let data:
+
+  let {
+    size = Size.sm,
+    type = "semi",
+    parentBgIndex = 1,
+    data = []
+  }: {
+    size?: Size;
+    type?: "semi" | "full";
+    parentBgIndex?: number;
+    data?:
     | {
         scale: TimeScale;
         actual: number;
@@ -20,16 +27,10 @@
         streak: { value: number; lastWhenStreakBroke: string };
         isCurrentAchieved: boolean;
       }[]
-    | [] = [];
-  let guages: {
-    label: string;
-    total: number;
-    actual: number;
-    streak: number;
-  }[];
-  // const aggPersistance = new AnalyticsPersistence();
-  refresh();
-  async function refresh() {
+    | [];
+  } = $props();
+
+  let guages = $derived.by(() => {
     let items: {
       label: string;
       total: number;
@@ -37,10 +38,8 @@
       streak: number;
     }[] = [];
     if (!isValidArrayWithData(data)) {
-      //TODO - use latest persistence
-      // data = await aggPersistance.fetchTargetsData();
+      return undefined;
     }
-    if (!isValidArrayWithData(data)) return;
     Object.keys(TimeScale).forEach((key) => {
       if (data.some((x) => x.scale === key)) {
         let item = data.find((x) => x.scale === key);
@@ -62,11 +61,10 @@
         } catch (e) {
           console.error(e);
         }
-        guages = items;
       }
     });
-  }
-  // $: console.log({ guages });
+    return items;
+  });
 </script>
 
 <div class="flex justify-evenly w-full flex-wrap gap-8">
@@ -98,7 +96,7 @@
       subText="Please set targets to see them here."
       actionText="Set targets"
       {parentBgIndex}
-      on:click={() => {
+      onclick={() => {
         appStore.runAction(PointronAction.SET_TARGETS);
       }}
     />

@@ -6,7 +6,8 @@
   import { TextStyle } from "@21n/types/text.enum";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import TargetGuages from "@21n/products/pointron/analytics/targets/TargetGuages.svelte";
-  export let data: any;
+
+  let { data }: { data: any } = $props();
 </script>
 
 <div class="w-full flex flex-col gap-6 pb-4">
@@ -23,7 +24,7 @@
       mainText="No targets set"
       subText="Set targets to see them here"
       actionText="Set targets"
-      on:click={() => {
+      onclick={() => {
         appStore.gotoPath("/cp/targets");
       }}
     />

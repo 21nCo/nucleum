@@ -1,6 +1,12 @@
 <script lang="ts">
-  export let width: number = 187;
-  export let label: string = "empty";
+  let {
+    width = 187,
+    label = "empty"
+  }: {
+    width?: number;
+    label?: string;
+  } = $props();
+
 </script>
 
 <!-- source: manypixels.co -->

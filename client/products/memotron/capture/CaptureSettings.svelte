@@ -36,7 +36,7 @@
         body: "Disabling this will save the nodes in the background without opening."
       }
     }}
-    on:change={handleToggleChange}
+    onChange={handleToggleChange}
   />
   <div class="flex flex-col flex-grow w-full">
     <Text content="Shortcuts" style={TextStyle.PANEL_HEADING_SMALL} />

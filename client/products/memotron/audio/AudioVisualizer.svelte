@@ -4,7 +4,7 @@
   import { onMount, onDestroy } from "svelte";
   let canvasElement: HTMLCanvasElement;
   let canvasContext: CanvasRenderingContext2D;
-  export let audioContext: AudioContext;
+  let { audioContext }: { audioContext: AudioContext } = $props();
   let analyser: AnalyserNode;
   let dataArray: Uint8Array;
   let bufferLength: number;
@@ -16,10 +16,10 @@
     | "CENTER_LEFT"
     | "CENTER_CENTER" = "CENTER_LEFT";
 
-  $: currentColors = retrieveCurrentColors($appearance);
-  const bgHsl = currentColors.bgs1;
-  const apHsl = currentColors.aps1;
-  const apHue = apHsl?.split(" ")[0].split("(")[1];
+  const currentColors = $derived(retrieveCurrentColors($appearance));
+  const bgHsl = $derived(currentColors.bgs1);
+  const apHsl = $derived(currentColors.aps1);
+  const apHue = $derived(apHsl?.split(" ")[0].split("(")[1]);
   let stream: MediaStream | null = null;
 
   onMount(() => {

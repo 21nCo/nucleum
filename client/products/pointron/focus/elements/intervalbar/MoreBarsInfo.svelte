@@ -1,6 +1,6 @@
 <script lang="ts">
   import view from "@21n/stores/view.store";
-  export let length: number = 0;
+  let { length = 0 }: { length?: number } = $props();
 </script>
 
 <span

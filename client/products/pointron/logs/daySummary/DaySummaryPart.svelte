@@ -2,7 +2,8 @@
   import Divider from "@21n/elements/Divider.svelte";
   import type { DaySummary } from "@21n/products/pointron/logs/log.type";
   import DaySummaryTotalItem from "@21n/products/pointron/logs/daySummary/DaySummaryTotalItem.svelte";
-  export let summary: DaySummary;
+
+  let { summary }: { summary: DaySummary } = $props();
 </script>
 
 <div class="flex flex-col gap-1 w-full max-w-md">

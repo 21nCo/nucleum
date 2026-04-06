@@ -2,8 +2,13 @@
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
 
-  export let selectedDate: Date;
-  export let events: any[] = [];
+  let {
+    selectedDate,
+    events = []
+  }: {
+    selectedDate: Date;
+    events?: any[];
+  } = $props();
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const weekDays = [
@@ -16,10 +21,11 @@
     "Saturday"
   ];
 
-  $: isToday =
+  const isToday = $derived(
     selectedDate.getDate() === new Date().getDate() &&
-    selectedDate.getMonth() === new Date().getMonth() &&
-    selectedDate.getFullYear() === new Date().getFullYear();
+      selectedDate.getMonth() === new Date().getMonth() &&
+      selectedDate.getFullYear() === new Date().getFullYear()
+  );
 </script>
 
 <div class="grid grid-cols-[auto_1fr] h-full">

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { emojis } from "$lib/client/data/avatars";
   import { userPreferences } from "$lib/client/components/settings/userPreferences.store";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import { cn } from "$lib/client/utils/ui.utils";
   import {
     AvatarType,
@@ -10,12 +10,18 @@
     type IAvatar
   } from "$lib/client/types/avatar.type";
 
-  const dispatch = createEventDispatcher();
-
-  export let searchQuery: string = "";
-  export let isPopoverContext: boolean = false;
-  export let onNoresults: (() => void) | undefined = undefined;
-  $: void isPopoverContext;
+  let {
+    searchQuery = $bindable(""),
+    isPopoverContext = false,
+    onNoresults,
+    onSelect
+  }: {
+    searchQuery?: string;
+    isPopoverContext?: boolean;
+    onNoresults?: (() => void) | undefined;
+    onSelect?: ((event: CustomEvent<{ emoji: AvatarWithCode<EmojiAvatar> }>) => void) | undefined;
+  } = $props();
+  void isPopoverContext;
 
   type EmojiData = IAvatar;
   type EmojiEntry = [IAvatar];
@@ -34,9 +40,9 @@
   let selectedIndex = 0;
   let flatEmojiList: EmojiEntry[] = [];
 
-  $: {
+  $effect(() => {
     filterEmojis(searchQuery);
-  }
+  });
 
   function resolveEmojiData(emoji: EmojiEntry | undefined) {
     return emoji?.[0];
@@ -74,7 +80,6 @@
       displayEmojis = {};
       flatEmojiList = [];
       selectedIndex = 0;
-      dispatch("noresults");
       if (onNoresults) onNoresults();
       return;
     }
@@ -107,7 +112,6 @@
     selectedIndex = 0;
     
     if (totalCount === 0) {
-      dispatch("noresults");
       if (onNoresults) onNoresults();
     }
   }
@@ -146,7 +150,13 @@
     const selectedEmoji = resolveEmojiData(emoji);
     if (!isEmojiAvatar(selectedEmoji)) return;
     addToUsedList(selectedEmoji);
-    dispatch("select", { emoji: selectedEmoji });
+    const event = new CustomEvent<{ emoji: AvatarWithCode<EmojiAvatar> }>(
+      "select",
+      {
+        detail: { emoji: selectedEmoji }
+      }
+    );
+    onSelect?.(event);
   }
 
   export function key(key: string) {
@@ -204,7 +214,7 @@
             }
           )}
           data-index={index}
-          on:click={() => itemClickHandler(emoji)}
+          onclick={() => itemClickHandler(emoji)}
         >
           <span class="text-lg flex-shrink-0">
             {@html resolveEmojiCode(emoji)}

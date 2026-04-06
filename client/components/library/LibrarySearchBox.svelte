@@ -5,7 +5,7 @@
   import { ColorStrength } from "@21n/types/appearance.type";
   import { ButtonStyle } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
   import { Orientation } from "@21n/types/direction.enum";
   import { SearchType } from "@21n/types/data.type";
@@ -15,14 +15,24 @@
   import { appEvents } from "@21n/stores/notification.store";
   import { GlobalEvent } from "@21n/types/event.enum";
   import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
-  const dispatch = createEventDispatcher();
-  export let resource: Resource;
-  export let searchQuery: string = "";
-  export let searchStore;
-  export let selectedSubType: any;
-  let isFiltersVisible: boolean = false;
-  let isSearchFocused: boolean = false;
-  let dev_enableSemanticSearch: boolean = false;
+  let {
+    resource,
+    searchQuery = $bindable(""),
+    searchStore,
+    selectedSubType,
+    onRefresh = undefined,
+    onSemanticSearch = undefined
+  }: {
+    resource: Resource;
+    searchQuery?: string;
+    searchStore: any;
+    selectedSubType: any;
+    onRefresh?: ((event: CustomEvent<void>) => void) | undefined;
+    onSemanticSearch?: ((event: CustomEvent<boolean>) => void) | undefined;
+  } = $props();
+  let isFiltersVisible = $state(false);
+  let isSearchFocused = $state(false);
+  let dev_enableSemanticSearch = $state(false);
   let searchInputRef: HTMLInputElement;
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
@@ -42,7 +52,15 @@
     refresh();
   }
   function refresh() {
-    dispatch("refresh");
+    const refreshEvent = new CustomEvent<void>("refresh");
+    onRefresh?.(refreshEvent);
+  }
+
+  function emitSemanticSearch(value: boolean) {
+    const semanticSearchEvent = new CustomEvent<boolean>("semanticSearch", {
+      detail: value
+    });
+    onSemanticSearch?.(semanticSearchEvent);
   }
 </script>
 
@@ -55,10 +73,10 @@
       type="text"
       bind:this={searchInputRef}
       bind:value={searchQuery}
-      on:keydown={onKeydown}
-      on:keyup={onKeyup}
-      on:focus={() => (isSearchFocused = true)}
-      on:blur={() => (isSearchFocused = false)}
+      onkeydown={onKeydown}
+      onkeyup={onKeyup}
+      onfocus={() => (isSearchFocused = true)}
+      onblur={() => (isSearchFocused = false)}
       placeholder={"Search " + resource + "s"}
     />
     <div class="flex items-center gap-2">
@@ -73,7 +91,7 @@
           label={{ label: "Semantic", orientation: Orientation.Horizontal }}
           size={Size.sm}
           style={InputStyle.PLAIN}
-          on:change={(e) => dispatch("semanticSearch", e.detail)}
+          onChange={(e) => emitSemanticSearch(e.detail)}
           checked={searchStore.searchType === SearchType.SEMANTIC}
         />
       {/if}

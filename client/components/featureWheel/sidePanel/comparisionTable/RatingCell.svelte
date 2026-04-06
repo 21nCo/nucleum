@@ -1,7 +1,13 @@
 <script lang="ts">
   import Icon from "@21n/elements/Icon.svelte";
-  export let value: number;
-  export let showJustAvailability: boolean = false;
+
+  let {
+    value,
+    showJustAvailability = false
+  }: {
+    value: number;
+    showJustAvailability?: boolean;
+  } = $props();
 </script>
 
 {#if showJustAvailability}

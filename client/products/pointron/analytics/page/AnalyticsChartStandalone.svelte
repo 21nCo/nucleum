@@ -55,39 +55,46 @@
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CALENDAR;
-  export let date: Date | undefined = undefined;
-  export let showLegend: boolean = true;
-  export let scale: TimeScale | undefined = undefined;
-  export let goalId: IRecordId | undefined = undefined;
-  let periodValue: TimePeriodValue = {
+  let {
+    accessPoint = ResourceAccessPoint.CALENDAR,
+    date = undefined,
+    showLegend = true,
+    scale = undefined,
+    goalId = undefined
+  }: {
+    accessPoint?: ResourceAccessPoint;
+    date?: Date;
+    showLegend?: boolean;
+    scale?: TimeScale;
+    goalId?: IRecordId;
+  } = $props();
+  let periodValue = $state<TimePeriodValue>({
     type: TimePeriodType.RELATIVE,
     param: 0
-  };
+  });
 
-  let resolvedTimePeriod:
+  let resolvedTimePeriod = $state<
     | {
         begin: Date;
         end: Date;
         title: string;
       }
-    | undefined = undefined;
-  let goals: IGoalThumb[] = [];
-  let goalColors: IAnalyticsLabelColor[] = [];
-  let data: AnalyticsDataRecord[] = [];
-  let chartType = AnalyticsCardType.DONUT;
-  let isRefreshing = false;
-  let timePeriodOptions: ISelectItem[] = [];
+    | undefined
+  >(undefined);
+  let goals = $state<IGoalThumb[]>([]);
+  let goalColors = $state<IAnalyticsLabelColor[]>([]);
+  let data = $state<AnalyticsDataRecord[]>([]);
+  let chartType = $state(AnalyticsCardType.DONUT);
+  let isRefreshing = $state(false);
   const scales = $userPreferences.timeScales ?? [
     TimeScale.DAYS,
     TimeScale.MONTHS,
     TimeScale.YEARS
   ];
-  let isShowOptions = resolveShowOptionsState();
-  let isIncludeSubgoals = false;
-
-  $: timePeriodOptions = resolveRelativeTimePeriodOptions(
-    scale ?? TimeScale.DAYS
+  let isShowOptions = $state(resolveShowOptionsState());
+  let isIncludeSubgoals = $state(false);
+  let timePeriodOptions = $derived(
+    resolveRelativeTimePeriodOptions(scale ?? TimeScale.DAYS)
   );
 
   function resolveShowOptionsState() {
@@ -255,7 +262,7 @@
               bind:value={scale}
               popoverWidth={"w-36"}
               isDisableSearch={true}
-              on:select={(event) => {
+              onSelect={(event) => {
                 const val = event.detail;
                 if (!val) return;
                 refresh();
@@ -263,12 +270,12 @@
             />
           </div>
           <div class="flex items-center gap-2">
-            <CardSelector {accessPoint} bind:selected={chartType} on:select />
+            <CardSelector {accessPoint} bind:selected={chartType} />
             <Toggle
               icon="sliders"
               bgSize={Size.sm}
               bind:on={isShowOptions}
-              on:change={() => persistShowOptionsState()}
+              onChange={() => persistShowOptionsState()}
             />
           </div>
         </div>
@@ -282,7 +289,7 @@
             bind:checked={isIncludeSubgoals}
             label={{ label: "Include subgoals" }}
             isExpanded={true}
-            on:change={(event) => {
+            onChange={(event) => {
               refresh();
             }}
           />
@@ -295,7 +302,7 @@
             size={Size.sm}
             isPreventWrap={true}
             style={OptionSelectorStyle.OUTLINE}
-            on:select={(event) => {
+            onSelect={(event) => {
               const val = event.detail;
               const segments = val.split("#");
               if (!val) return;
@@ -341,7 +348,7 @@
 </div>
 <ComponentBaseLayer
   subscribeToResource={new Set([Resource.sessionLog])}
-  on:change={() => {
+  onChange={() => {
     refresh();
   }}
 />

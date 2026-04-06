@@ -1,5 +1,5 @@
 <script lang="ts">
-  export let text: string;
+  let { text }: { text: string } = $props();
 </script>
 
 <span class="text-b4 text-fgs3">{text}</span>

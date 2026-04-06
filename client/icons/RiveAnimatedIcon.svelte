@@ -1,7 +1,12 @@
 <script lang="ts">
   import { Rive } from "@rive-app/canvas";
   import { onMount } from "svelte";
-  export let icon: string;
+
+  let {
+    icon
+  }: {
+    icon: string;
+  } = $props();
   let trigger: any;
   onMount(() => {
     const r = new Rive({

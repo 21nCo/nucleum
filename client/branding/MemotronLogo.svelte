@@ -1,10 +1,10 @@
 <script lang="ts">
-  export let width: number;
+  let { width }: { width: number } = $props();
   // Hexagon base radius (approximate distance from center to vertex)
   const HEXAGON_BASE_RADIUS = 102.4;
   const HEXAGON_CENTER_X = 237;
   const HEXAGON_CENTER_Y = 225;
-  $: hexagonScale = width / HEXAGON_BASE_RADIUS;
+  const hexagonScale = $derived(width / HEXAGON_BASE_RADIUS);
 </script>
 
 <!-- <rect

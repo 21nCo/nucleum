@@ -5,9 +5,16 @@
   import { GoalType, type IGoalThumb } from "@21n/components/goals/goal.type";
   import GoalThumbnailSubBadge from "@21n/components/goals/thumbnail/GoalThumbnailSubBadge.svelte";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
-  export let item: IGoalThumb;
-  export let isCurrentlyFocusing: boolean = false;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
+
+  let {
+    item,
+    isCurrentlyFocusing = false,
+    accessPoint = ResourceAccessPoint.BROWSER
+  }: {
+    item: IGoalThumb;
+    isCurrentlyFocusing?: boolean;
+    accessPoint?: ResourceAccessPoint;
+  } = $props();
 </script>
 
 <div class="flex justify-between items-center gap-1">

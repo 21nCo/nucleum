@@ -9,7 +9,6 @@
   import { enumToString } from "@21n/shared-utils/text.utils";
   import { fade } from "svelte/transition";
   import { CaptureMethod } from "@21n/products/memotron/capture/capture.type";
-  import { createEventDispatcher } from "svelte";
   import view from "@21n/stores/view.store";
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { UIState } from "@21n/stores/uiState/uiState.type";
@@ -18,17 +17,33 @@
     removeDuplicatesFilter,
     resourceInList
   } from "@21n/components/flux/resourceStores/resource.utils";
-  const dispatch = createEventDispatcher();
-
-  export let item: ISelectItem & { isShortcut?: boolean };
-  export let isBoxed: boolean = false;
-  export let isActive: boolean = false;
+  let {
+    item,
+    isBoxed = false,
+    isActive = false,
+    onSelect = undefined,
+    onCapture = undefined,
+    onCancel = undefined
+  }: {
+    item: ISelectItem & { isShortcut?: boolean };
+    isBoxed?: boolean;
+    isActive?: boolean;
+    onSelect?: ((value: string) => void) | undefined;
+    onCapture?: ((event: Event) => void) | undefined;
+    onCancel?: (() => void) | undefined;
+  } = $props();
 
   let inputRef: HTMLInputElement;
-  $: size = isBoxed && $view.isConstrainedWidth ? Size.lg : $view.isConstrainedWidth ? Size.sm : Size.md;
+  const size = $derived(
+    isBoxed && $view.isConstrainedWidth
+      ? Size.lg
+      : $view.isConstrainedWidth
+        ? Size.sm
+        : Size.md
+  );
 
   function handleCapture(e: Event) {
-    dispatch("capture", e);
+    onCapture?.(e);
   }
 
   function handleClick(e: MouseEvent) {
@@ -53,7 +68,7 @@
     }
     recents = recents.filter(removeDuplicatesFilter);
     uiState.setState(UIState.captureShortcutRecents, recents);
-    dispatch("select", val);
+    onSelect?.(val);
   }
 </script>
 
@@ -75,7 +90,7 @@
     }
   )}
   data-value={item.value}
-  on:click={handleClick}
+  onclick={handleClick}
   in:fade
 >
   {#if item.value === CaptureMethod.UPLOAD && $context.isEmbed && $context.os === OperatingSystem.IOS}
@@ -83,8 +98,8 @@
       bind:this={inputRef}
       type="file"
       accept="*"
-      on:change={handleCapture}
-      on:cancel
+      onchange={handleCapture}
+      oncancel={() => onCancel?.()}
       id="nativeFileInput"
       class="hidden"
     />

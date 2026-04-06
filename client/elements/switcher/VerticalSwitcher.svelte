@@ -5,22 +5,37 @@
   import { VerticalSwitcherStyle } from "@21n/types/switcher.enum";
   import { cn } from "@21n/utils/ui.utils";
   import VerticalSwitcherItem from "@21n/elements/switcher/VerticalSwitcherItem.svelte";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let style: VerticalSwitcherStyle = VerticalSwitcherStyle.BAR;
-  export let labelOrientation: Orientation = Orientation.Vertical;
-  export let items: ISelectItem[];
-  export let selected: ISelectValue;
-  export let isHideBar: boolean = false;
-  export let parentBgIndex: number = 1;
-  export let itemProps: {
-    size?: Size.sm | Size.md | Size.lg;
-    activeStatusPlacement?: Placement;
-    isHideLabel?: boolean;
-  } = {
-    size: Size.md,
-    activeStatusPlacement: Placement.Right
-  };
+  let {
+    style = VerticalSwitcherStyle.BAR,
+    labelOrientation = Orientation.Vertical,
+    items,
+    selected = $bindable(undefined),
+    isHideBar = false,
+    parentBgIndex = 1,
+    onSwitch,
+    itemProps = {
+      size: Size.md,
+      activeStatusPlacement: Placement.Right
+    }
+  }: {
+    style?: VerticalSwitcherStyle;
+    labelOrientation?: Orientation;
+    items: ISelectItem[];
+    selected?: ISelectValue;
+    isHideBar?: boolean;
+    parentBgIndex?: number;
+    onSwitch?: (selected: ISelectValue) => void;
+    itemProps?: {
+      size?: Size.sm | Size.md | Size.lg;
+      activeStatusPlacement?: Placement;
+      isHideLabel?: boolean;
+    };
+  } = $props();
+
+  function switchToItem(value: ISelectValue) {
+    selected = value;
+    onSwitch?.(value);
+  }
 </script>
 
 <aside
@@ -43,10 +58,7 @@
       {style}
       {isHideBar}
       isActive={selected === item.value}
-      on:click={() => {
-        selected = item.value;
-        dispatch("switch", selected);
-      }}
+      onSelect={() => switchToItem(item.value)}
     />
   {/each}
 </aside>

@@ -4,7 +4,7 @@
   import { spaceInContext } from "@21n/products/gathery/space.store";
   import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import { stripTablePrefix } from "@21n/shared-utils/text.utils";
-  export let id: string;
+  let { id }: { id: string } = $props();
   let docSlug = stripTablePrefix(id);
   let selected = "Access from web";
 </script>

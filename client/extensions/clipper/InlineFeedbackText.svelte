@@ -6,18 +6,28 @@
   } from "@21n/types/notification.type";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-
-  export let feedback: IInlineStatus | string | undefined = undefined;
-  export let isRenderEmptyHeight = false;
-  export let isAutoDissappear: boolean = true;
-  export let size: Size.md | Size.sm = Size.md;
-  let timer: any;
-  $: if (feedback && isAutoDissappear) {
+  let {
+    feedback = $bindable(undefined),
+    isRenderEmptyHeight = false,
+    isAutoDissappear = true,
+    size = Size.md
+  }: {
+    feedback?: IInlineStatus | string | undefined;
+    isRenderEmptyHeight?: boolean;
+    isAutoDissappear?: boolean;
+    size?: Size.md | Size.sm;
+  } = $props();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  $effect(() => {
     clearTimeout(timer);
+    if (!(feedback && isAutoDissappear)) return;
     timer = setTimeout(() => {
       feedback = undefined;
     }, 4000);
-  }
+    return () => {
+      clearTimeout(timer);
+    };
+  });
 </script>
 
 {#if feedback}

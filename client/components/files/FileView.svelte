@@ -6,39 +6,70 @@
     type IImageRepositionerOptions
   } from "@21n/components/files/file.type";
   import { fileStore } from "@21n/components/files/file.store";
-  import { logger } from "@21n/components/debug/logger.client";
   import { onMount } from "svelte";
   import {
     fileLoader,
     fileLoaderv2
   } from "@21n/actions/lazyload.action";
   import { imageRepositioner } from "@21n/actions/imageRepositioning.action";
-  import { createEventDispatcher } from "svelte";
   import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
   import { debouncer } from "@21n/utils/utils";
 
-  const dispatch = createEventDispatcher();
-
-  export let file: IFile | undefined = undefined;
-  export let id: IRecordId | undefined = undefined;
-  export let blob: Blob | undefined = undefined;
-  export let isLazyLoad: boolean = false;
-  export let type: FileType = FileType.UNKNOWN;
-  export let isDraggable: boolean = false;
-  export let style: string = "";
-  export let ref: HTMLElement | undefined = undefined;
-  export let repositionParams: IImageRepositionerOptions | undefined =
-    undefined;
-  export let isHideControls: boolean = false;
-  export let renderingDetails: any = undefined;
+  let {
+    file = $bindable(),
+    id = undefined,
+    blob = undefined,
+    isLazyLoad = false,
+    type = $bindable(FileType.UNKNOWN),
+    isDraggable = false,
+    style = "",
+    ref = $bindable(),
+    repositionParams = undefined,
+    isHideControls = false,
+    renderingDetails = $bindable(),
+    isUseThumbnailIfAvailable = false,
+    isApplyBgColor = false,
+    class: classList = "",
+    onLoad = undefined,
+    onReposition = undefined,
+    onRepositionDebounced = undefined,
+    onDragStart = undefined,
+    onDragEnd = undefined,
+    onDragOver = undefined,
+    onDragEnter = undefined,
+    onDragLeave = undefined,
+    onDrop = undefined
+  }: {
+    file?: IFile | undefined;
+    id?: IRecordId | undefined;
+    blob?: Blob | undefined;
+    isLazyLoad?: boolean;
+    type?: FileType;
+    isDraggable?: boolean;
+    style?: string;
+    ref?: HTMLElement | undefined;
+    repositionParams?: IImageRepositionerOptions | undefined;
+    isHideControls?: boolean;
+    renderingDetails?: any;
+    isUseThumbnailIfAvailable?: boolean;
+    isApplyBgColor?: boolean;
+    class?: string;
+    onLoad?: ((event: CustomEvent<Event>) => void) | undefined;
+    onReposition?: ((event: CustomEvent<number>) => void) | undefined;
+    onRepositionDebounced?:
+      | ((event: CustomEvent<number>) => void)
+      | undefined;
+    onDragStart?: ((event: DragEvent) => void) | undefined;
+    onDragEnd?: ((event: DragEvent) => void) | undefined;
+    onDragOver?: ((event: DragEvent) => void) | undefined;
+    onDragEnter?: ((event: DragEvent) => void) | undefined;
+    onDragLeave?: ((event: DragEvent) => void) | undefined;
+    onDrop?: ((event: DragEvent) => void) | undefined;
+  } = $props();
   /**
    * If true, then use the thumbnail if available
    */
-  export let isUseThumbnailIfAvailable: boolean = false;
-  export let isApplyBgColor: boolean = false;
-  let classList: string = "";
-  export { classList as class };
-  $: _id = id ?? file?.id;
+  const _id = $derived(id ?? file?.id);
 
   function resolveType() {
     if (!id && !file && !blob) {
@@ -79,11 +110,18 @@
   }
 
   function handlePositionChange(newPosition: number) {
-    dispatch("reposition", newPosition);
+    const repositionEvent = new CustomEvent<number>("reposition", {
+      detail: newPosition
+    });
+    onReposition?.(repositionEvent);
     debouncedRepositionPropagation(newPosition);
   }
   const debouncedRepositionPropagation = debouncer((newPosition: number) => {
-    dispatch("repositionDebounced", newPosition);
+    const repositionDebouncedEvent = new CustomEvent<number>(
+      "repositionDebounced",
+      { detail: newPosition }
+    );
+    onRepositionDebounced?.(repositionDebouncedEvent);
   }, 1000);
 
   function onImageLoad(e: Event) {
@@ -95,14 +133,17 @@
         renderedWidth: ref.clientWidth
       };
     }
-    dispatch("load", e);
+    const loadEvent = new CustomEvent<Event>("load", {
+      detail: e
+    });
+    onLoad?.(loadEvent);
   }
 </script>
 
 {#if type === FileType.IMAGE || (isUseThumbnailIfAvailable && file?.thumbnailUrl)}
   <img
     alt="..."
-    on:load={onImageLoad}
+    onload={onImageLoad}
     class={classList + " ph-no-capture userdata"}
     draggable={isDraggable}
     use:fileLoaderv2={{
@@ -119,12 +160,12 @@
     }}
     {style}
     bind:this={ref}
-    on:dragstart
-    on:dragend
-    on:dragover
-    on:dragenter
-    on:dragleave
-    on:drop
+    ondragstart={onDragStart}
+    ondragend={onDragEnd}
+    ondragover={onDragOver}
+    ondragenter={onDragEnter}
+    ondragleave={onDragLeave}
+    ondrop={onDrop}
   />
 {:else if type === FileType.VIDEO}
   <video
@@ -134,12 +175,12 @@
     use:fileLoaderv2={{ source: resolveSrc, isLazyLoad, id: _id?.toString() }}
     {style}
     bind:this={ref}
-    on:dragstart
-    on:dragend
-    on:dragover
-    on:dragenter
-    on:dragleave
-    on:drop
+    ondragstart={onDragStart}
+    ondragend={onDragEnd}
+    ondragover={onDragOver}
+    ondragenter={onDragEnter}
+    ondragleave={onDragLeave}
+    ondrop={onDrop}
   >
     <track kind="captions" />
   </video>

@@ -1,19 +1,21 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  import { createEventDispatcher } from "svelte";
   import { Persistence } from "@21n/persistence/persistence";
   import { parse } from "@21n/shared-utils/json.utils";
   import SocialPostLoadingInfo from "@21n/products/memotron/node/content/web/social/SocialPostLoadingInfo.svelte";
-
-  const dispatch = createEventDispatcher();
-
-  export let postUrl: string;
+  let {
+    postUrl,
+    onError = undefined
+  }: {
+    postUrl: string;
+    onError?: ((message: string) => void) | undefined;
+  } = $props();
 
   let id: string = generateSimpleRandomId();
-  let embedHtml: string = "";
-  let loading: boolean = true;
-  let error: string = "";
+  let embedHtml = $state("");
+  let loading = $state(true);
+  let error = $state("");
   let dev_isUseOEmbedAPI = false;
 
   onMount(async () => {
@@ -33,7 +35,7 @@
 
       if (!embedHtml) {
         error = "Unable to load Instagram post";
-        dispatch("error", "Unable to load Instagram post");
+        onError?.("Unable to load Instagram post");
       }
     } catch (err) {
       console.error("Instagram embed error:", err);
@@ -55,7 +57,7 @@
         const data = parse(urlData.text);
         console.log({ data });
         if (data && data.error) {
-          dispatch("error", data.error);
+          onError?.(data.error);
           return false;
         } else if (data && data.html) {
           embedHtml = data.html;

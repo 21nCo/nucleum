@@ -8,11 +8,20 @@
   import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
   import { AlertType, type IInlineStatus } from "@21n/types/notification.type";
   import ResourceInlineCloseButton from "@21n/elements/button/ResourceInlineCloseButton.svelte";
-  export let goal: IActiveGoalStore;
-  export let isConstrainedWidth = false;
-  export let status: IInlineStatus | undefined = undefined;
-  let labelEditVal = $goal.label;
-  let inputRef: TextInput;
+
+  let {
+    goal,
+    isConstrainedWidth = false,
+    status = $bindable(undefined)
+  }: {
+    goal: IActiveGoalStore;
+    isConstrainedWidth?: boolean;
+    status?: IInlineStatus | undefined;
+  } = $props();
+
+  let labelEditVal = $state($goal.label);
+  let inputRef = $state<TextInput | undefined>(undefined);
+
   function resolveBreadcrumbs() {
     if (!$goal.parent) return [];
     const parentItems = $goal.parent?.map((p) => ({
@@ -50,6 +59,7 @@
   }
 
   function handleLabelSave(e: any) {
+    void e;
     $goal.label = labelEditVal;
     goal.modify({
       label: labelEditVal
@@ -86,10 +96,10 @@
               testId="goal-name-input"
               width="w-full"
               parentBackgroundIndex={2}
-              on:debouncedChange={handleLabelChange}
-              on:save={handleLabelSave}
-              on:enter={handleLabelSave}
-              on:cancel={() => {
+              onDebouncedChange={handleLabelChange}
+              onSave={handleLabelSave}
+              onEnter={handleLabelSave}
+              onCancel={() => {
                 goal.toggleEditMode(false);
                 labelEditVal = "";
               }}
@@ -99,7 +109,7 @@
       {:else}
         <button
           class="w-full"
-          on:click={() => {
+          onclick={() => {
             goal.toggleEditMode(true);
             labelEditVal = $goal.label;
           }}

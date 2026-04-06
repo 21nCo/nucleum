@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { MouseEventHandler } from "svelte/elements";
   import { Size } from "@21n/types/size.enum";
   import { bg, cn } from "@21n/utils/ui.utils";
   import Icon from "../Icon.svelte";
@@ -9,14 +10,36 @@
   import ShortcutText from "../text/ShortcutText.svelte";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  export let icon: string | undefined = undefined;
-  export let tooltip: string | undefined = undefined;
-  export let label: string | undefined = undefined;
-  export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
-  export let parentBgIndex: number = 1;
-  export let width: string = "";
-  export let type: ButtonVariant = ButtonVariant.SECONDARY;
-  export let shortcut: string | IKeyboardShortcut | undefined = undefined;
+
+  let {
+    icon = undefined,
+    tooltip = undefined,
+    label = undefined,
+    size = Size.md,
+    parentBgIndex = 1,
+    width = "",
+    type = ButtonVariant.SECONDARY,
+    shortcut = undefined,
+    onclick = undefined
+  }: {
+    icon?: string | undefined;
+    tooltip?: string | undefined;
+    label?: string | undefined;
+    size?: Size.xs | Size.sm | Size.md | Size.lg;
+    parentBgIndex?: number;
+    width?: string;
+    type?: ButtonVariant;
+    shortcut?: string | IKeyboardShortcut | undefined;
+    onclick?: MouseEventHandler<HTMLButtonElement> | undefined;
+  } = $props();
+
+  
+  
+  
+  
+  
+  
+  
   const id = generateSimpleRandomId();
 </script>
 
@@ -31,7 +54,10 @@
       "text-ars1": type === ButtonVariant.DANGER
     }
   )}
-  on:click|stopPropagation
+  onclick={(event) => {
+    event.stopPropagation();
+    onclick?.(event);
+  }}
   use:popover={{
     content: tooltip ? ButtonTooltip : "",
     triggerMethod: tooltip ? [PopoverTriggerMethod.HOVER] : [],

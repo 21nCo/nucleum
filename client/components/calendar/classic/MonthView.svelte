@@ -1,6 +1,6 @@
 <script lang="ts">
   import { cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher, onDestroy } from "svelte";
+  import { onDestroy } from "svelte";
   import {
     CalendarTileIndicatorDisplayType,
     type ICalendarIndicatorData
@@ -14,24 +14,34 @@
   import { TimeScaleUnit } from "@21n/types/time.type";
   import { getWeekNumber } from "@21n/utils/time.utils";
 
-  export let selectedDate: Date;
-  export let indicatorData: ICalendarIndicatorData[] = [];
-  export let indicatorRefreshId: number = 0;
-  export let selectedScale: TimeScaleUnit = TimeScaleUnit.DAY;
-
-  const dispatch = createEventDispatcher();
+  let {
+    selectedDate = $bindable(new Date()),
+    indicatorData = [],
+    indicatorRefreshId = 0,
+    selectedScale = $bindable(TimeScaleUnit.DAY),
+    onDateChange = void 0,
+    onMonthChange = void 0,
+    onWeekSelect = void 0
+  }: {
+    selectedDate?: Date;
+    indicatorData?: ICalendarIndicatorData[];
+    indicatorRefreshId?: number;
+    selectedScale?: TimeScaleUnit;
+    onDateChange?: (date: Date) => void;
+    onMonthChange?: (date: Date) => void;
+    onWeekSelect?: (payload: { date: Date }) => void;
+  } = $props();
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   let isScrolling = false;
   let scrollTimeout: NodeJS.Timeout;
-  let containerWidth: number = 0;
-  let today = new Date();
+  let containerWidth = $state(0);
+  let today = $state(new Date());
+  const isConstrainedWidth = $derived(containerWidth < 600);
 
-  $: isConstrainedWidth = containerWidth < 600;
-
-  let showMonthIndicators =
-    preferences.resolve(Preference.CALENDAR_TILE_INDICATORS_MONTH) ?? true;
-
+  let showMonthIndicators = $state(
+    preferences.resolve(Preference.CALENDAR_TILE_INDICATORS_MONTH) ?? true
+  );
   const unsubscribe = preferences.subscribe((prefs) => {
     showMonthIndicators =
       prefs[Preference.CALENDAR_TILE_INDICATORS_MONTH] ?? true;
@@ -54,7 +64,7 @@
     }
 
     selectedDate = newDate;
-    dispatch("monthChange", newDate);
+    onMonthChange?.(newDate);
 
     scrollTimeout = setTimeout(() => {
       isScrolling = false;
@@ -85,7 +95,7 @@
     return [...prevMonthDays, ...daysInMonth, ...nextMonthDays];
   }
 
-  $: calendarDays = getDaysInMonth(selectedDate);
+  const calendarDays = $derived(getDaysInMonth(selectedDate));
 
   /**
    *
@@ -103,13 +113,13 @@
   }
 
   function handleWeekSelect(weekReferenceDay: Date) {
-    dispatch("weekSelect", { date: weekReferenceDay });
+    onWeekSelect?.({ date: weekReferenceDay });
   }
 </script>
 
 <div
   class="flex-1 overflow-auto h-full"
-  on:wheel={handleWheel}
+  onwheel={handleWheel}
   use:resizeListener={(e) => {
     containerWidth = e.width;
   }}
@@ -155,7 +165,7 @@
             text: `${referenceDay.getFullYear()}: Week ${weekNumber}`,
             direction: Placement.Right
           }}
-          on:click={() => handleWeekSelect(referenceDay)}
+          onclick={() => handleWeekSelect(referenceDay)}
         >
           {weekNumber}
         </button>
@@ -184,9 +194,9 @@
             "bg-bgs2": isInSelectedWeek
           }
         )}
-        on:click={() => {
+        onclick={() => {
           selectedDate = day;
-          dispatch("dateChange", day);
+          onDateChange?.(day);
         }}
       >
         <span class="flex items-center justify-center">
@@ -224,7 +234,7 @@
   </div>
 </div>
 <svelte:window
-  on:focus={() => {
+  onfocus={() => {
     today = new Date();
   }}
 />

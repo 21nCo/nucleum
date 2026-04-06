@@ -1,17 +1,27 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import RefreshingOverlayFeedback from "@21n/elements/feedback/RefreshingOverlayFeedback.svelte";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-  export let isRefreshOnPull: boolean = false;
-  export let bottomSpacerSize: Size.sm | Size.md | Size.lg = Size.md;
-  export let isEnableScrollbar: boolean = false;
-  export let isRefreshing: boolean = false;
-  let classList: string | object = "";
-  export { classList as class };
   import { spring } from "svelte/motion";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
+  let {
+    children,
+    isRefreshOnPull = false,
+    bottomSpacerSize = Size.md,
+    isEnableScrollbar = false,
+    isRefreshing = false,
+    class: classList = "",
+    onRefresh = undefined
+  }: {
+    children?: Snippet;
+    isRefreshOnPull?: boolean;
+    bottomSpacerSize?: Size.sm | Size.md | Size.lg;
+    isEnableScrollbar?: boolean;
+    isRefreshing?: boolean;
+    class?: string | object;
+    onRefresh?: () => void | Promise<void>;
+  } = $props();
 
   let container: HTMLDivElement;
   let innerContainer: HTMLDivElement;
@@ -52,7 +62,7 @@
 
   async function refresh() {
     pullDistance.set(threshold);
-    dispatch("refresh");
+    await onRefresh?.();
     // await new Promise((resolve) => setTimeout(resolve, 2000));
     // pullDistance.set(0);
   }
@@ -62,9 +72,9 @@
 <div
   class="relative flex flex-col flex-grow w-full"
   bind:this={container}
-  on:touchstart={onTouchStart}
-  on:touchmove={onTouchMove}
-  on:touchend={onTouchEnd}
+  ontouchstart={onTouchStart}
+  ontouchmove={onTouchMove}
+  ontouchend={onTouchEnd}
 >
   {#if isRefreshing}
     <RefreshingOverlayFeedback />
@@ -92,7 +102,7 @@
       "no-scrollbar": !isEnableScrollbar
     })}
   >
-    <slot />
+    {@render children?.()}
     <ScrollViewBottomSpacer size={bottomSpacerSize} />
   </div>
 </div>

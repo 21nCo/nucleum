@@ -1,5 +1,3 @@
-import { tick } from "svelte";
-
 export const monthNames: string[] = [
   "Jan",
   "Feb",
@@ -24,11 +22,11 @@ export const dayNames: string[] = [
   "Friday",
   "Saturday"
 ];
-export let currentDate = new Date();
-export let currentMonthIndex = currentDate.getMonth();
-export let currentMonth = monthNames[currentMonthIndex];
-export let currentYear = currentDate.getFullYear();
-export let currentMonthEndDate = getDaysInMonth(
+export const currentDate = new Date();
+export const currentMonthIndex = currentDate.getMonth();
+export const currentMonth = monthNames[currentMonthIndex];
+export const currentYear = currentDate.getFullYear();
+export const currentMonthEndDate = getDaysInMonth(
   monthNames.indexOf(currentMonth),
   currentYear
 );

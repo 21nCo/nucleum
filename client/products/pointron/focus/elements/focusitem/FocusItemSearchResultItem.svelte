@@ -5,7 +5,7 @@
   import GoalSearchResultItem from "@21n/components/goals/GoalSearchResultItem.svelte";
   import type { ITaskThumb } from "@21n/components/tasks/task.type";
 
-  export let item: IGoalThumb | ITaskThumb;
+  let { item }: { item: IGoalThumb | ITaskThumb } = $props();
   let goalItem: IGoalThumb | undefined = undefined;
 
   function resolveGoalItem(item: IGoalThumb | ITaskThumb) {
@@ -13,11 +13,11 @@
     return item as IGoalThumb;
   }
 
-  $: goalItem = resolveGoalItem(item);
+  let goalItemDerived = $derived(resolveGoalItem(item));
 </script>
 
-{#if goalItem}
-  <GoalSearchResultItem item={goalItem} />
+{#if goalItemDerived}
+  <GoalSearchResultItem item={goalItemDerived} />
 {:else}
   <div class="flex w-full justify-between text-start">
     <span>{item.label}</span>

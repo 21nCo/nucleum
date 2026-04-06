@@ -1,15 +1,21 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import type { IActiveCaptureStore } from "@21n/products/memotron/capture/capture.store";
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import { InputStyle } from "@21n/types/input.type";
   import { cn } from "@21n/utils/ui.utils";
-  export let captureStore: IActiveCaptureStore;
-  export let isHomeContext: boolean = false;
-  const dispatch = createEventDispatcher();
+
+  let {
+    captureStore,
+    isHomeContext = false,
+    onFocusBody = undefined
+  }: {
+    captureStore: IActiveCaptureStore;
+    isHomeContext?: boolean;
+    onFocusBody?: (() => void) | undefined;
+  } = $props();
 
   function focusBody() {
-    dispatch("focusBody");
+    onFocusBody?.();
   }
 
   function persistLabel() {
@@ -34,15 +40,15 @@
     isExperimentalMdInput={true}
     placeholder="Title"
     isPreventDefaultOnEnter={true}
-    on:change={() => {
+    onChange={() => {
       captureStore.refreshEmptyState();
     }}
-    on:debouncedChange={persistLabel}
-    on:enter={() => {
+    onDebouncedChange={persistLabel}
+    onEnter={() => {
       focusBody();
       captureStore.refreshEmptyState();
     }}
-    on:keydown={(e) => {
+    onKeydown={(e) => {
       const event = e.detail;
       if (event.key === "ArrowDown") {
         event.preventDefault();

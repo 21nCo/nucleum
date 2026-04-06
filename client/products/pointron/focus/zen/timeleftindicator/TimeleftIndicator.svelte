@@ -2,7 +2,7 @@
   import { activeSession } from "@21n/products/pointron/focus/session.store";
   import { onMount } from "svelte";
   import Spoke from "@21n/products/pointron/focus/zen/timeleftindicator/Spoke.svelte";
-  export let parentBgIndex: number = 1;
+  let { parentBgIndex = 1 }: { parentBgIndex?: number } = $props();
   let numberOfSpokes = 0;
   let minorStops = 6;
   let stopValueInSeconds = 0;
@@ -12,9 +12,9 @@
   let desiredPartValues = [480, 240, 120, 60, 30, 15, 10, 5, 1];
   let desiredNumberOfParts = [3, 4, 5, 6];
   let majorStops: number[] = [];
-  $: timeRemaining =
-    $activeSession.plannedDuration - $activeSession.totalElapsed;
-  //$: console.log({ timeRemaining });
+  let timeRemaining = $derived(
+    $activeSession.plannedDuration - $activeSession.totalElapsed
+  );
   onMount(() => {
     // sessionStore.subscribe((x) => {
     //   refresh();

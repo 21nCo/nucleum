@@ -34,6 +34,6 @@
         body: "When enabled, text highlights from Kindle and web clips will not display their colors."
       }
     }}
-    on:change={handleToggleChange}
+    onChange={handleToggleChange}
   />
 </div>

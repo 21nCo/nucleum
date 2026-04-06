@@ -1,6 +1,6 @@
 <script lang="ts">
+  import { tick, type Snippet } from "svelte";
   import { Size } from "@21n/types/size.enum";
-  import { createEventDispatcher, onMount, tick } from "svelte";
   import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import { InputStyle, type InputLabel } from "@21n/types/input.type";
@@ -15,101 +15,244 @@
   import context from "@21n/stores/context.store";
   import { OperatingSystem } from "@21n/types/context.type";
   import { mount } from "@21n/actions/mount.action";
-  export let value: any;
-  export let placeholder: string | undefined = undefined;
-  export let label: InputLabel | undefined = undefined;
-  export let style: InputStyle = InputStyle.BORDERED;
-  export let size: Size = Size.md;
-  export let parentBackgroundIndex: number = 1;
-  export let type: string = "text";
-  export let id: string = "";
-  export let width: string | undefined = undefined;
-  export let numberInputParams:
-    | { min: number; max: number; step: number }
-    | undefined = undefined;
-  export let isExperimentalMdInput: boolean = false;
-  export let icon: string | undefined = undefined;
-  export let hasControls: boolean = false;
-  export let isShowSaveControl: boolean = false;
-  export let isShowClearControl: boolean = false;
-  export let isPreventDefaultOnEnter: boolean = false;
-  export let isRounded: boolean = false;
-  export let height: string = style === InputStyle.PLAIN ? "" : "h-11";
-  export let isPreventKeyboardToolbar: boolean = false;
-  export let isPreserveKeyboardToolbar: boolean = false;
-  export let isAccentBackground: boolean = false;
-  export let testId: string | undefined = undefined;
-  $: width;
-  let isFocused: boolean = false;
+
+  type KeyboardEventDetail = KeyboardEvent & { event: KeyboardEvent };
+
+  let {
+    value = $bindable(),
+    placeholder = undefined,
+    label = undefined,
+    style = InputStyle.BORDERED,
+    size = Size.md,
+    parentBackgroundIndex = 1,
+    type = "text",
+    id = "",
+    width = undefined,
+    numberInputParams = undefined,
+    isExperimentalMdInput = false,
+    icon = undefined,
+    hasControls = false,
+    isShowSaveControl = false,
+    isShowClearControl = false,
+    isPreventDefaultOnEnter = false,
+    isRounded = false,
+    height = undefined,
+    isPreventKeyboardToolbar = false,
+    isPreserveKeyboardToolbar = false,
+    isAccentBackground = false,
+    testId = undefined,
+    isDisabled = false,
+    children = undefined,
+    onBlur = undefined,
+    onCancel = undefined,
+    onChange = undefined,
+    onClear = undefined,
+    onDebouncedChange = undefined,
+    onEnter = undefined,
+    onFocus = undefined,
+    onInput = undefined,
+    onKeydown = undefined,
+    onKeyup = undefined,
+    onMount = undefined,
+    onPaste = undefined,
+    onSave = undefined
+  }: {
+    value?: any;
+    placeholder?: string | undefined;
+    label?: InputLabel | undefined;
+    style?: InputStyle;
+    size?: Size;
+    parentBackgroundIndex?: number;
+    type?: string;
+    id?: string;
+    width?: string | undefined;
+    numberInputParams?:
+      | { min: number; max: number; step: number }
+      | undefined;
+    isExperimentalMdInput?: boolean;
+    icon?: string | undefined;
+    hasControls?: boolean;
+    isShowSaveControl?: boolean;
+    isShowClearControl?: boolean;
+    isPreventDefaultOnEnter?: boolean;
+    isRounded?: boolean;
+    height?: string | undefined;
+    isPreventKeyboardToolbar?: boolean;
+    isPreserveKeyboardToolbar?: boolean;
+    isAccentBackground?: boolean;
+    testId?: string | undefined;
+    isDisabled?: boolean;
+    children?: Snippet | undefined;
+    onBlur?: ((event: CustomEvent<void>) => void) | undefined;
+    onCancel?:
+      | ((event: CustomEvent<{ event?: MouseEvent }>) => void)
+      | undefined;
+    onChange?: ((event: CustomEvent<any>) => void) | undefined;
+    onClear?: (() => void) | undefined;
+    onDebouncedChange?: ((event: CustomEvent<any>) => void) | undefined;
+    onEnter?:
+      | ((event: CustomEvent<{ value?: any; event: KeyboardEvent }>) => void)
+      | undefined;
+    onFocus?: ((event: CustomEvent<void>) => void) | undefined;
+    onInput?: ((event: CustomEvent<{ value: any }>) => void) | undefined;
+    onKeydown?: ((event: CustomEvent<KeyboardEventDetail>) => void) | undefined;
+    onKeyup?:
+      | ((event: CustomEvent<{ value: any; event: KeyboardEvent }>) => void)
+      | undefined;
+    onMount?: ((event: CustomEvent<void>) => void) | undefined;
+    onPaste?: ((event: ClipboardEvent | CustomEvent<any>) => void) | undefined;
+    onSave?:
+      | ((event: CustomEvent<{ event: MouseEvent; value: any }>) => void)
+      | undefined;
+  } = $props();
+
+  void width;
+
+  let isFocused = $state(false);
+  let inputRef = $state<any>();
+  let isValidLink = $state(false);
+
   export async function focus() {
     await tick();
     if (inputRef) inputRef.focus();
   }
+
   export function blur() {
     if (inputRef) inputRef.blur();
   }
+
   export function reset() {
     value = "";
   }
-  let inputRef: any;
-  let isValidLink: boolean = false;
-  export let isDisabled = false;
-  let inputClasses: string =
-    "text-input w-full bg-transparent focus:outline-none focus:border-none";
-  const dispatch = createEventDispatcher();
 
-  $: isLinkType = type === "url" || type === "link" || type === "email";
+  const resolvedHeight = $derived(
+    height ?? (style === InputStyle.PLAIN ? "" : "h-11")
+  );
+  const inputClasses = $derived.by(() => {
+    let classes =
+      "text-input w-full bg-transparent focus:outline-none focus:border-none";
+    if (style != InputStyle.PLAIN) {
+      classes += " text-fgs2";
+    }
+    return classes;
+  });
+  const isLinkType = $derived(
+    type === "url" || type === "link" || type === "email"
+  );
 
-  onMount(() => {
-    inputClasses = inputClasses + " " + resolveStyles().join(" ");
+  $effect(() => {
     if (isLinkType) {
       isValidLink = isValidHyperlink(value);
+      return;
     }
+    isValidLink = false;
   });
 
-  function resolveStyles() {
-    let styles: string[] = [];
-    // if (icon) {
-    //   styles.push("pl-4");
-    // }
-    if (style != InputStyle.PLAIN) {
-      styles.push("text-fgs2");
-    }
-    return styles;
-  }
-  function onChange() {
-    dispatch("input", { value });
-    dispatch("change", value);
+  function emitInputChange() {
+    const inputEvent = new CustomEvent<{ value: any }>("input", {
+      detail: { value }
+    });
+    onInput?.(inputEvent);
+
+    const changeEvent = new CustomEvent<any>("change", { detail: value });
+    onChange?.(changeEvent);
+
     debouncedChangeEvent();
   }
 
-  const debouncedChangeEvent = debouncer(
-    () => dispatch("debouncedChange", value),
-    1000
-  );
+  const debouncedChangeEvent = debouncer(() => {
+    const debouncedChange = new CustomEvent<any>("debouncedChange", {
+      detail: value
+    });
+    onDebouncedChange?.(debouncedChange);
+  }, 1000);
 
-  function handleKeyUp(event: any) {
-    if (event.key === "Enter") {
-      dispatch("enter", { value, event });
-    } else if (event.key === "Escape") {
-      inputRef.blur();
-      dispatch("blur");
-    }
-    dispatch("keyup", { value, event });
+  function createKeyboardEventDetail(event: KeyboardEvent): KeyboardEventDetail {
+    return new Proxy(event as KeyboardEvent, {
+      get(target, prop, receiver) {
+        if (prop === "event") return target;
+        return Reflect.get(target, prop, receiver);
+      }
+    }) as KeyboardEventDetail;
   }
-  function onBlur(e: any) {
+
+  function emitKeyDown(event: KeyboardEvent) {
+    const keydownEvent = new CustomEvent<KeyboardEventDetail>("keydown", {
+      detail: createKeyboardEventDetail(event)
+    });
+    onKeydown?.(keydownEvent);
+  }
+
+  function emitFocus() {
+    const focusEvent = new CustomEvent<void>("focus");
+    onFocus?.(focusEvent);
+  }
+
+  function emitBlur() {
+    const blurEvent = new CustomEvent<void>("blur");
+    onBlur?.(blurEvent);
+  }
+
+  function emitSave(event: MouseEvent) {
+    const saveEvent = new CustomEvent<{ event: MouseEvent; value: any }>("save", {
+      detail: { event, value }
+    });
+    onSave?.(saveEvent);
+  }
+
+  function emitCancel(event?: MouseEvent) {
+    const cancelEvent = new CustomEvent<{ event?: MouseEvent }>("cancel", {
+      detail: { event }
+    });
+    onCancel?.(cancelEvent);
+  }
+
+  function emitClear() {
+    onClear?.();
+  }
+
+  function handleKeyUp(event: KeyboardEvent) {
+    if (event.key === "Enter") {
+      const enterEvent = new CustomEvent<{ value: any; event: KeyboardEvent }>(
+        "enter",
+        { detail: { value, event } }
+      );
+      onEnter?.(enterEvent);
+    } else if (event.key === "Escape") {
+      inputRef?.blur();
+      emitBlur();
+    }
+    const keyupEvent = new CustomEvent<{ value: any; event: KeyboardEvent }>(
+      "keyup",
+      { detail: { value, event } }
+    );
+    onKeyup?.(keyupEvent);
+  }
+
+  function onInputBlur(event: FocusEvent) {
     if (isLinkType) {
       isValidLink = isValidHyperlink(value);
     }
-    if (isShowClearControl && e.relatedTarget?.id === "input-cancel-control")
+    if (
+      isShowClearControl &&
+      (event.relatedTarget as HTMLElement | null)?.id === "input-cancel-control"
+    ) {
       return;
+    }
     isFocused = false;
-    dispatch("blur");
+    emitBlur();
   }
 
   function blurActiveElement() {
     const activeElement = document.activeElement as HTMLElement | null;
     activeElement?.blur?.();
+  }
+
+  function focusInput() {
+    isFocused = true;
+    requestAnimationFrame(() => {
+      inputRef?.focus();
+    });
   }
 </script>
 
@@ -119,22 +262,42 @@
       {id}
       bind:content={value}
       {placeholder}
-      on:keydown={(e) => {
-        const event = e.detail;
-        if (isPreventDefaultOnEnter && event.key === "Enter") {
-          event.preventDefault();
-          dispatch("enter", { event });
+      onKeydown={(event) => {
+        const keyboardEvent = event.detail;
+        if (isPreventDefaultOnEnter && keyboardEvent.key === "Enter") {
+          keyboardEvent.preventDefault();
+          const enterEvent = new CustomEvent<{ event: KeyboardEvent }>("enter", {
+            detail: { event: keyboardEvent }
+          });
+          onEnter?.(enterEvent);
         } else {
-          dispatch("keydown", event);
+          const keydownEvent = new CustomEvent<KeyboardEventDetail>("keydown", {
+            detail: createKeyboardEventDetail(keyboardEvent)
+          });
+          onKeydown?.(keydownEvent);
         }
       }}
-      on:keyup
-      on:focus
-      on:blur
-      on:change
-      on:debouncedChange
-      on:enter
-      on:paste
+      onKeyup={(event) => {
+        onKeyup?.(event);
+      }}
+      onFocus={() => {
+        emitFocus();
+      }}
+      onBlur={() => {
+        emitBlur();
+      }}
+      onChange={(event) => {
+        onChange?.(event);
+      }}
+      onDebouncedChange={(event) => {
+        onDebouncedChange?.(event);
+      }}
+      onEnter={(event: CustomEvent<any>) => {
+        onEnter?.(event);
+      }}
+      onPaste={(event) => {
+        onPaste?.(event);
+      }}
     />
   </div>
 {:else}
@@ -143,7 +306,7 @@
     parentBgIndex={parentBackgroundIndex}
     {isFocused}
     {label}
-    class={cn(height, { "!rounded-full": isRounded })}
+    class={cn(resolvedHeight, { "!rounded-full": isRounded })}
   >
     {#if type === "password"}
       <input
@@ -151,19 +314,28 @@
         data-testid={testId}
         class={inputClasses}
         bind:value
-        on:change|stopPropagation
-        on:keydown|stopPropagation
-        on:keyup|stopPropagation
-        on:paste|stopPropagation
-        on:input|stopPropagation={onChange}
-        type="password"
-        on:blur={() => {
-          isFocused = false;
-          dispatch("blur");
+        onchange={(event) => event.stopPropagation()}
+        onkeydown={(event) => {
+          event.stopPropagation();
+          emitKeyDown(event);
         }}
-        on:focus={() => {
+        onkeyup={(event) => event.stopPropagation()}
+        onpaste={(event) => {
+          event.stopPropagation();
+          onPaste?.(event);
+        }}
+        oninput={(event) => {
+          event.stopPropagation();
+          emitInputChange();
+        }}
+        type="password"
+        onblur={() => {
+          isFocused = false;
+          emitBlur();
+        }}
+        onfocus={() => {
           isFocused = true;
-          dispatch("focus");
+          emitFocus();
         }}
         {placeholder}
         disabled={isDisabled}
@@ -176,19 +348,28 @@
         data-testid={testId}
         class={inputClasses}
         bind:value
-        on:change|stopPropagation
-        on:keydown|stopPropagation
-        on:keyup|stopPropagation
-        on:paste|stopPropagation
-        on:blur={() => {
+        onchange={(event) => event.stopPropagation()}
+        onkeydown={(event) => {
+          event.stopPropagation();
+          emitKeyDown(event);
+        }}
+        onkeyup={(event) => event.stopPropagation()}
+        onpaste={(event) => {
+          event.stopPropagation();
+          onPaste?.(event);
+        }}
+        onblur={() => {
           isFocused = false;
-          dispatch("blur");
+          emitBlur();
         }}
-        on:focus={() => {
+        onfocus={() => {
           isFocused = true;
-          dispatch("focus");
+          emitFocus();
         }}
-        on:input|stopPropagation={onChange}
+        oninput={(event) => {
+          event.stopPropagation();
+          emitInputChange();
+        }}
         type="number"
         min={numberInputParams?.min}
         max={numberInputParams?.max}
@@ -200,13 +381,16 @@
     {:else}
       {#if !isFocused && isLinkType && value}
         <div class="w-full truncate">
-          <button
+          <div
             class="text-fgs3 h-6 w-full flex gap-2 items-center justify-start"
-            on:click={() => {
-              isFocused = true;
-              requestAnimationFrame(() => {
-                inputRef?.focus();
-              });
+            onclick={focusInput}
+            role="button"
+            tabindex="0"
+            onkeydown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                focusInput();
+              }
             }}
           >
             {#if isValidLink}
@@ -215,20 +399,20 @@
                 size={Size.sm}
                 class="stroke-fgs3"
               />
-              <button
+              <span
                 class="min-w-0 w-3/4 max-w-fit truncate flex justify-start"
-                on:click={(e) => e.stopPropagation()}
+                onclick={(event) => event.stopPropagation()}
               >
                 <Link
                   href={value}
                   label={value}
                   isEnforeHttpIfMatchPattern={true}
                 />
-              </button>
+              </span>
             {:else}
               {value}
             {/if}
-          </button>
+          </div>
         </div>
       {:else}
         {#if icon}
@@ -243,16 +427,25 @@
             "placeholder:text-bgs3 placeholder:opacity-70": isAccentBackground
           })}
           bind:value
-          on:paste|stopPropagation
-          on:change|stopPropagation
-          on:keydown
-          on:keyup|stopPropagation={handleKeyUp}
-          on:blur={onBlur}
-          on:focus={() => {
-            isFocused = true;
-            dispatch("focus");
+          onpaste={(event) => {
+            event.stopPropagation();
+            onPaste?.(event);
           }}
-          on:input|stopPropagation={onChange}
+          onchange={(event) => event.stopPropagation()}
+          onkeydown={emitKeyDown}
+          onkeyup={(event) => {
+            event.stopPropagation();
+            handleKeyUp(event);
+          }}
+          onblur={onInputBlur}
+          onfocus={() => {
+            isFocused = true;
+            emitFocus();
+          }}
+          oninput={(event) => {
+            event.stopPropagation();
+            emitInputChange();
+          }}
           {placeholder}
           disabled={isDisabled}
           bind:this={inputRef}
@@ -260,70 +453,44 @@
           tabindex={isDisabled ? -1 : 0}
           {...type ? { type } : {}}
           use:mount={() => {
-            dispatch("mount");
+            const mountEvent = new CustomEvent<void>("mount");
+            onMount?.(mountEvent);
           }}
         />
       {/if}
-      <!-- {#if icon}
-        <div class="absolute left-0 top-0 bottom-0 flex items-center px-1.5">
-          <Icon {icon} size={Size.sm} class="stroke-fgs3" />
-        </div>
-      {/if} -->
       {#if isShowSaveControl || isShowClearControl}
         <div class="flex items-center gap-1">
           {#if isShowSaveControl}
-            <Icon
-              icon="check"
+            <button
+              type="button"
               id="input-save-control"
-              on:click={(e) => dispatch("save", { event: e, value })}
-            />
+              onclick={(event) => emitSave(event)}
+            >
+              <Icon icon="check" />
+            </button>
           {/if}
           {#if isShowSaveControl || isShowClearControl}
-            <Icon
-              icon="cross"
+            <button
+              type="button"
               id="input-cancel-control"
-              on:click={(e) => {
-                e.stopPropagation();
-                dispatch("cancel", { event: e });
+              onclick={(event) => {
+                event.stopPropagation();
+                if (isShowClearControl) emitClear();
+                emitCancel(event);
               }}
-            />
+            >
+              <Icon icon="cross" />
+            </button>
           {/if}
         </div>
       {/if}
     {/if}
-    <slot />
+    {@render children?.()}
   </InputBaseElement>
 {/if}
 {#if isPreserveKeyboardToolbar || (!isPreventKeyboardToolbar && isFocused)}
   <KeyboardToolbar class="bg-bgs2 h-14 px-4 flex items-center justify-between">
-    <div class="flex items-center justify-center gap-2">
-      <!-- <Button
-        icon="undo"
-        parentBgIndex={2}
-        on:click={() => {
-          // TODO: undo
-        }}
-      />
-      <Button
-        icon="redo"
-        parentBgIndex={2}
-        on:click={() => {
-          // TODO: redo
-        }}
-      /> -->
-      <!-- <Button
-        icon="copy"
-        label="paste"
-        size={Size.sm}
-        parentBgIndex={2}
-        style={ButtonStyle.DEFAULT}
-        isPreventMinWidth={true}
-        on:click={() => {
-          // TODO: paste
-        }}
-        on:mousedown={(e) => e.preventDefault()}
-      /> -->
-    </div>
+    <div class="flex items-center justify-center gap-2"></div>
     <div class="flex items-center justify-center gap-2">
       <Button
         icon="cross"
@@ -332,11 +499,12 @@
         size={Size.sm}
         style={ButtonStyle.DEFAULT}
         isPreventMinWidth={true}
-        on:click={() => {
+        onclick={() => {
           value = "";
-          dispatch("cancel");
+          emitClear();
+          emitCancel();
         }}
-        on:mousedown={(e) => e.preventDefault()}
+        onmousedown={(event) => event.preventDefault()}
       />
       <Button
         icon="chevron-down"
@@ -345,7 +513,7 @@
         size={Size.sm}
         style={ButtonStyle.DEFAULT}
         isPreventMinWidth={true}
-        on:click={blurActiveElement}
+        onclick={blurActiveElement}
       />
     </div>
   </KeyboardToolbar>

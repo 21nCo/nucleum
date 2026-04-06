@@ -9,14 +9,18 @@
   import { AlertType } from "@21n/types/notification.type";
   import type { NodeType } from "@21n/products/memotron/node/node.type";
   import { enumToString } from "@21n/shared-utils/text.utils";
-  export let contentType: NodeType;
-  let classList: string | undefined = undefined;
-  export { classList as class };
-  export let isHideLabel: boolean = false;
+  let {
+    contentType,
+    class: classList = undefined,
+    isHideLabel = false
+  }: {
+    contentType: NodeType;
+    class?: string | undefined;
+    isHideLabel?: boolean;
+  } = $props();
   let isSaving: boolean = false;
-  let isSaved: boolean = false;
-  $: contentTypeStr = enumToString(contentType);
-  $: isSaved = !!$webpage.id;
+  let contentTypeStr = $derived(enumToString(contentType));
+  let isSaved = $derived(!!$webpage.id);
 
   async function onClick(e: MouseEvent) {
     try {
@@ -51,7 +55,7 @@
     },
     classList
   )}
-  on:click={onClick}
+  onclick={onClick}
   disabled={isSaving}
 >
   <Icon

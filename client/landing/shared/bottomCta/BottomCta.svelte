@@ -5,12 +5,19 @@
   import { onMount } from "svelte";
   import type { IButton } from "@21n/landing/shared/landing.type";
   import view from "@21n/stores/view.store";
-  export let deviceImages: string[] = [];
-  export let body: string =
-    "Sign up for a free trial and see how Pointron can help you get more done.";
-  export let primaryAction: IButton;
-  export let secondaryAction: IButton | undefined = undefined;
-  export let title: string | undefined = undefined;
+  let {
+    deviceImages = [],
+    body = "Sign up for a free trial and see how Pointron can help you get more done.",
+    primaryAction,
+    secondaryAction = undefined,
+    title = undefined,
+  }: {
+    deviceImages?: string[];
+    body?: string;
+    primaryAction: IButton;
+    secondaryAction?: IButton | undefined;
+    title?: string | undefined;
+  } = $props();
 
   let deviceImagesContainer: HTMLElement;
   let phoneImage: HTMLImageElement | null = null;

@@ -10,9 +10,15 @@
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import view from "@21n/stores/view.store";
   import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
-  export let node: INode;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
-  export let isUrlOnIcon: boolean = false;
+  let {
+    node,
+    accessPoint = ResourceAccessPoint.BROWSER,
+    isUrlOnIcon = false
+  }: {
+    node: INode;
+    accessPoint?: ResourceAccessPoint;
+    isUrlOnIcon?: boolean;
+  } = $props();
   let isHovering = false;
   let isHoveringUrl = false;
   let isHoveringUrlIcon = false;
@@ -31,7 +37,7 @@
   {#if !isUrlOnIcon && isHovering && node.url}
     <button
       class="flex items-center gap-1 text-b3 w-full hover:text-aps1 hover:underline"
-      on:click={(e) => {
+      onclick={(e) => {
         e.stopPropagation();
         if (!node.url) return;
         appStore.openLink(node.url);
@@ -69,7 +75,7 @@
           <Icon icon="weblink" class="fill-fgs3" size={Size.sm} />
         {:else if isUrlOnIcon && isHoveringUrlIcon}
           <button
-            on:click={() => {
+            onclick={() => {
               if (!node.url) return;
               appStore.openLink(node.url);
             }}

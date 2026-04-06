@@ -66,7 +66,6 @@
   import type { IMultiFileCaptureData } from "@21n/products/memotron/capture/capture.type";
   import { AlertType } from "@21n/types/notification.type";
   import FocusRing from "@21n/components/markdown/contextMenu/FocusRing.svelte";
-  import { createEventDispatcher } from "svelte";
   import { tooltip } from "@21n/actions/popover.action";
   import { Placement } from "@21n/types/direction.enum";
   import { observeAttributes } from "@21n/actions/observe.action";
@@ -80,45 +79,78 @@
   import Check from "@21n/icons/Check.svelte";
   import { Context } from "@21n/types/appStore.type";
 
-  const dispatch = createEventDispatcher();
-
-  export let block: IBlock;
-  export let mdStore: MdStoreType;
-  export let index: number;
-  export let isSelected: boolean = false;
-  export let isRearrangeBlockInSelectionMode: boolean = false;
-  export let isInSelectionMode: boolean = false;
-  let isHovering: boolean = false;
-  let isFocusing: boolean = false;
-  let contentRefreshId: number = new Date().getTime();
-  let isDragging: boolean = false;
-  let progressState: string | undefined = undefined;
+  let {
+    block = $bindable(),
+    mdStore,
+    index,
+    isSelected = false,
+    isRearrangeBlockInSelectionMode = false,
+    isInSelectionMode = false,
+    onNodularize = undefined,
+    onPopoverVisibility = undefined,
+    onSelect = undefined
+  }: {
+    block: IBlock;
+    mdStore: MdStoreType;
+    index: number;
+    isSelected?: boolean;
+    isRearrangeBlockInSelectionMode?: boolean;
+    isInSelectionMode?: boolean;
+    onNodularize?: ((event: CustomEvent<{ id: IRecordId }>) => void) | undefined;
+    onPopoverVisibility?: ((event: CustomEvent<any>) => void) | undefined;
+    onSelect?: ((event: CustomEvent<void>) => void) | undefined;
+  } = $props();
+  let isHovering = $state(false);
+  let isFocusing = $state(false);
+  let contentRefreshId = $state(new Date().getTime());
+  let isDragging = $state(false);
+  let progressState = $state<string | undefined>();
   const uploadProgressElementId = "node-embed-upload-progress";
-  $: isNodularizable =
-    $mdStore.params?.isNodular && headingNodeTypes.includes(block.contentType);
-
-  $: isLeftControlsEnabled =
-    $mdStore.params?.isNodular && !$view.isConstrainedWidth;
-
-  $: isSoleBlock =
-    isSameResource($mdStore.blocks[0], block) && $mdStore.blocks.length === 1;
+  const isNodularizable = $derived(
+    $mdStore.params?.isNodular && headingNodeTypes.includes(block.contentType)
+  );
+  const isLeftControlsEnabled = $derived(
+    $mdStore.params?.isNodular && !$view.isConstrainedWidth
+  );
+  const isSoleBlock = $derived(
+    isSameResource($mdStore.blocks[0], block) && $mdStore.blocks.length === 1
+  );
 
   const markdownContext = getContext<any>(Context.MARKDOWN);
   const nodeContext = getContext<any>(Context.NODE);
   const contentContext = getContext<any>(Context.CONTENT);
   const captureContext = getContext<any>(Context.CAPTURE);
-  let captureStore: IActiveCaptureStore | undefined;
-  $: if (nodeContext?.id || captureContext?.id) {
-    const id = nodeContext?.id
-      ? nodeContext?.id + "capture"
-      : captureContext?.id;
-    captureStore = ActiveCaptureStore.resolve(id);
-  }
+  let captureStore = $state<IActiveCaptureStore | undefined>();
+  $effect(() => {
+    if (nodeContext?.id || captureContext?.id) {
+      const id = nodeContext?.id
+        ? nodeContext?.id + "capture"
+        : captureContext?.id;
+      captureStore = ActiveCaptureStore.resolve(id);
+      return;
+    }
+    captureStore = undefined;
+  });
 
   const blockContext = {
     publish: blockEvent
   };
   setContext(Context.BLOCK, blockContext);
+
+  function emitNodularize(detail: { id: IRecordId }) {
+    const event = new CustomEvent<{ id: IRecordId }>("nodularize", { detail });
+    onNodularize?.(event);
+  }
+
+  function emitPopoverVisibility(detail: any) {
+    const event = new CustomEvent("popoverVisibility", { detail });
+    onPopoverVisibility?.(event);
+  }
+
+  function emitSelect() {
+    const event = new CustomEvent<void>("select");
+    onSelect?.(event);
+  }
 
   function propagate(event: string, data: any) {
     markdownContext({
@@ -598,7 +630,7 @@
   function onContextMenuAction(
     e: CustomEvent<{
       action: BlockAction;
-      data: any;
+      data?: any;
     }>
   ) {
     blockEvent(e.detail.action, e.detail.data);
@@ -931,7 +963,7 @@
 
   function onGestureAction() {
     isSelected = !isSelected;
-    dispatch("select");
+    emitSelect();
   }
 </script>
 
@@ -961,8 +993,8 @@
   data-id={block.id}
   data-content={block.contentType}
   data-node={block.id}
-  on:dragstart={() => (isDragging = true)}
-  on:dragend={() => (isDragging = false)}
+  ondragstart={() => (isDragging = true)}
+  ondragend={() => (isDragging = false)}
   role="listitem"
   use:rightswipe={{
     callback: onGestureAction
@@ -994,9 +1026,9 @@
     {#if isInSelectionMode}
       <button
         class="flex items-center justify-center"
-        on:click={() => {
-          dispatch("select");
-        }}
+          onclick={() => {
+            emitSelect();
+          }}
       >
         {#if isRearrangeBlockInSelectionMode}
           <div
@@ -1028,8 +1060,8 @@
           }}
         >
           <FocusRing
-            on:click={() => {
-              dispatch("nodularize", { id: block.id });
+            onclick={() => {
+              emitNodularize({ id: block.id });
             }}
           />
         </div>
@@ -1044,9 +1076,9 @@
         {isNodularizable}
         isDisableTooltip={isDragging}
         isBlockHovering={isHovering}
-        on:nodularize
-        on:action={onContextMenuAction}
-        on:popoverVisibility
+        onNodularize={(event) => emitNodularize(event.detail)}
+        onAction={onContextMenuAction}
+        onPopoverVisibility={(event) => emitPopoverVisibility(event.detail)}
       />
     {/if}
   {/if}
@@ -1058,11 +1090,11 @@
         {mdStore}
         {isHovering}
         bind:isFocusing
-        on:blur={() => {
+        onBlur={() => {
           isHovering = false;
         }}
-        on:update={onBlockUpdate}
-        on:delete={deleteBlock}
+        onUpdate={onBlockUpdate}
+        onDelete={deleteBlock}
       />
     {/key}
     {#if progressState}
@@ -1082,7 +1114,7 @@
           icon="trash"
           size={Size.md}
           tooltip="Delete block"
-          on:click={deleteBlock}
+          onclick={deleteBlock}
         />
       {/if}
     </div>

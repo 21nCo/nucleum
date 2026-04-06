@@ -4,17 +4,30 @@
   import type { MdStoreType } from "@21n/components/markdown/markdown.store";
   import type { IListBlockBody } from "@21n/components/markdown/md.type";
   import type { IRecordId } from "@21n/types/data.type";
-  import { createEventDispatcher } from "svelte";
   import Check from "@21n/icons/Check.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import { Size } from "@21n/types/size.enum";
-  const dispatch = createEventDispatcher();
-  export let id: IRecordId;
-  export let body: IListBlockBody;
-  export let contentType: NodeType;
-  export let mdStore: MdStoreType;
-  export let isHovering: boolean = false;
-  export let isFocusing: boolean = false;
+  let {
+    id,
+    body,
+    contentType,
+    mdStore,
+    isHovering = false,
+    isFocusing = $bindable(false),
+    onBlur = undefined,
+    onUpdate = undefined
+  }: {
+    id: IRecordId;
+    body: IListBlockBody;
+    contentType: NodeType;
+    mdStore: MdStoreType;
+    isHovering?: boolean;
+    isFocusing?: boolean;
+    onBlur?: ((event: CustomEvent<void>) => void) | undefined;
+    onUpdate?:
+      | ((event: CustomEvent<{ checked?: boolean; text?: string }>) => void)
+      | undefined;
+  } = $props();
 
   // if (typeof body === "string") {
   //   body = {
@@ -24,11 +37,13 @@
   // }
 
   function handleUpdate(e: CustomEvent<string>) {
-    dispatch("update", { text: e.detail });
+    onUpdate?.(new CustomEvent("update", { detail: { text: e.detail } }));
   }
 
   function onCheckClicked() {
-    dispatch("update", { checked: !body.checked });
+    onUpdate?.(
+      new CustomEvent("update", { detail: { checked: !body.checked } })
+    );
   }
 
   function toRoman(num: number): string {
@@ -74,7 +89,7 @@
       {/if}
     </div>
   {:else if contentType === NodeType.CHECKLIST}
-    <Check isChecked={body.checked} on:click={onCheckClicked} size={Size.sm} />
+    <Check isChecked={body.checked} onclick={onCheckClicked} size={Size.sm} />
   {:else if !body.indent || body.indent % 3 === 0}
     <div
       class="w-1.5 h-1.5 min-w-[0.375rem] rounded-full self-start bg-fgs1 mt-3 mx-2"
@@ -92,11 +107,11 @@
   <div class={cn("flex flex-col w-full", { "line-through": body.checked })}>
     <TextContent
       bind:isFocusing
-      on:blur
+      {onBlur}
       {mdStore}
       {isHovering}
       bind:text={body.text}
-      on:update={handleUpdate}
+      onUpdate={handleUpdate}
       {contentType}
       {id}
     />

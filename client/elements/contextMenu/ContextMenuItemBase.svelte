@@ -9,19 +9,33 @@
   } from "@21n/types/select.type";
   import Badge from "@21n/elements/text/Badge.svelte";
   import Switch from "@21n/elements/toggle/Switch.svelte";
-  import { createEventDispatcher, onMount } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let item: IContextMenuItem;
-  export let checked: boolean = item.initialValue ?? false;
-  export let isRedAccent: boolean = false;
+  let {
+    item,
+    checked = $bindable(false),
+    isRedAccent = false,
+    onChange = undefined
+  }: {
+    item: IContextMenuItem;
+    checked?: boolean;
+    isRedAccent?: boolean;
+    onChange?: ((event: CustomEvent<boolean>) => void) | undefined;
+  } = $props();
 
   export function toggle() {
     if (item.type === ContextMenuType.SWITCH) {
       checked = !checked;
-      dispatch("change", checked);
+      onChange?.(new CustomEvent<boolean>("change", { detail: checked }));
     }
   }
-  onMount(() => {});
+
+  function handleSwitchChange(event: CustomEvent<boolean>) {
+    onChange?.(new CustomEvent<boolean>("change", { detail: event.detail }));
+  }
+
+  $effect(() => {
+    if (item.type !== ContextMenuType.SWITCH) return;
+    checked = item.initialValue ?? false;
+  });
 </script>
 
 <span class="flex items-center gap-2.5 flex-1 min-w-0">
@@ -47,5 +61,5 @@
   <Badge text={item.badge} />
 {/if}
 {#if item.type === ContextMenuType.SWITCH}
-  <Switch bind:on={checked} size={Size.sm} on:change />
+  <Switch bind:on={checked} size={Size.sm} onChange={handleSwitchChange} />
 {/if}

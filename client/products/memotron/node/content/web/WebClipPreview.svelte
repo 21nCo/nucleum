@@ -10,10 +10,16 @@
   } from "@21n/products/memotron/node/node.type";
   import { resolveContentPreview } from "@21n/products/memotron/node/node.utils";
   import TextClipPreview from "@21n/products/memotron/node/content/web/TextClipPreview.svelte";
-  export let node: ITextClip | IWebScreenshotClip | IKindleHighlight;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  export let truncateLength: number | undefined = undefined;
-  const contentPreview = resolveContentPreview(node);
+  let {
+    node,
+    accessPoint = ResourceAccessPoint.SELF,
+    truncateLength = undefined
+  }: {
+    node: ITextClip | IWebScreenshotClip | IKindleHighlight;
+    accessPoint?: ResourceAccessPoint;
+    truncateLength?: number | undefined;
+  } = $props();
+  let contentPreview = $derived(resolveContentPreview(node));
 </script>
 
 <div

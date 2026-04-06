@@ -3,7 +3,11 @@
   import { Size } from "@21n/types/size.enum";
   import Button from "@21n/elements/button/Button.svelte";
   import Switch from "@21n/elements/toggle/Switch.svelte";
-  export let isReadModeVariant: boolean = false;
+  let {
+    isReadModeVariant = false
+  }: {
+    isReadModeVariant?: boolean;
+  } = $props();
 </script>
 
 {#if isReadModeVariant}
@@ -11,7 +15,7 @@
     tooltip="Toggle read mode"
     icon="book-open"
     size={Size.sm}
-    on:click={() => isInEditMode.toggle()}
+    onclick={() => isInEditMode.toggle()}
   />
 {:else}
   <button class="rounded-full flex items-center gap-2 px-3 py-1">

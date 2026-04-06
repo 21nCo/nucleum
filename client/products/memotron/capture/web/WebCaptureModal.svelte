@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onDestroy } from "svelte";
+  import { onDestroy } from "svelte";
   import { fade } from "svelte/transition";
   import Icon from "$lib/client/elements/Icon.svelte";
   import { Size } from "$lib/client/types/size.enum";
@@ -38,13 +38,19 @@
   const MIN_QUERY_LENGTH = 2;
   const SEARCH_DEBOUNCE = 350;
 
-  export let open = false;
-
-  const dispatch = createEventDispatcher<{
-    close: void;
-    add: { item: WebArtifact; tab: TabId };
-    preview: { item: WebArtifact; tab: TabId };
-  }>();
+  let {
+    open = false,
+    onClose = undefined,
+    onAdd = undefined,
+    onPreview = undefined
+  }: {
+    open?: boolean;
+    onClose?: (() => void) | undefined;
+    onAdd?: ((detail: { item: WebArtifact; tab: TabId }) => void) | undefined;
+    onPreview?:
+      | ((detail: { item: WebArtifact; tab: TabId }) => void)
+      | undefined;
+  } = $props();
 
   type SearchStatus = "idle" | "loading" | "success" | "error";
   type SearchState = {
@@ -72,16 +78,15 @@
     }, {} as Record<TabId, SearchState>);
   }
 
-  let searchStates: Record<TabId, SearchState> = createInitialState();
-  let activeTab: TabId = tabs[0].id;
-  let searchTerm = "";
-  let trimmedQuery = "";
-  let wasOpen = false;
-  let previousOverflow: string | null = null;
+  let searchStates = $state<Record<TabId, SearchState>>(createInitialState());
+  let activeTab = $state<TabId>(tabs[0].id);
+  let searchTerm = $state("");
+  let wasOpen = $state(false);
   let debounceTimer: ReturnType<typeof setTimeout> | null = null;
   let activeController: AbortController | null = null;
   let activeRequestKey: string | null = null;
   let requestCounter = 0;
+  const trimmedQuery = $derived(searchTerm.trim());
 
   const updateState = (category: TabId, partial: Partial<SearchState>) => {
     searchStates = {
@@ -211,40 +216,37 @@
     debounceTimer = setTimeout(() => fetchCategory(category, normalized), SEARCH_DEBOUNCE);
   }
 
-  $: if (!open && wasOpen) {
-    cancelInFlight();
-    resetAllStates();
-    searchTerm = "";
-    activeTab = tabs[0].id;
-  }
-
-  $: wasOpen = open;
-  $: trimmedQuery = searchTerm.trim();
-
-  $: if (open) {
-    triggerSearch(activeTab, trimmedQuery);
-  }
-
-  $: if (browser) {
-    if (open) {
-      if (previousOverflow === null) previousOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-    } else if (previousOverflow !== null) {
-      document.body.style.overflow = previousOverflow;
-      previousOverflow = null;
+  $effect(() => {
+    if (!open && wasOpen) {
+      cancelInFlight();
+      resetAllStates();
+      searchTerm = "";
+      activeTab = tabs[0].id;
     }
-  }
+    wasOpen = open;
+  });
 
-  onDestroy(() => {
-    cancelInFlight();
-    if (browser && previousOverflow !== null) {
-      document.body.style.overflow = previousOverflow;
-      previousOverflow = null;
+  $effect(() => {
+    if (open) {
+      triggerSearch(activeTab, trimmedQuery);
     }
   });
 
+  $effect(() => {
+    if (!browser || !open) return;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = overflow;
+    };
+  });
+
+  onDestroy(() => {
+    cancelInFlight();
+  });
+
   function close() {
-    dispatch("close");
+    onClose?.();
   }
 
   function selectTab(id: TabId) {
@@ -254,7 +256,7 @@
   }
 
   function addItem(item: WebArtifact) {
-    dispatch("add", { item, tab: activeTab });
+    onAdd?.({ item, tab: activeTab });
   }
 
   function initials(title: string) {
@@ -295,22 +297,22 @@
     }
   }
 
-  $: searchPlaceholder = (() => {
+  const searchPlaceholder = $derived.by(() => {
     const label = tabLookup.get(activeTab);
     return label ? `Search ${label.toLowerCase()}` : "Search";
-  })();
+  });
 
-  $: currentState = searchStates[activeTab];
-  $: items = currentState.items ?? [];
-  $: isLoading = currentState.status === "loading";
-  $: isError = currentState.status === "error";
-  $: hasQuery = trimmedQuery.length >= MIN_QUERY_LENGTH;
-  $: showSkeleton = isLoading && items.length === 0;
-  $: showLoadingOverlay = isLoading && items.length > 0;
-  $: showPrompt = !hasQuery;
+  const currentState = $derived(searchStates[activeTab]);
+  const items = $derived(currentState.items ?? []);
+  const isLoading = $derived(currentState.status === "loading");
+  const isError = $derived(currentState.status === "error");
+  const hasQuery = $derived(trimmedQuery.length >= MIN_QUERY_LENGTH);
+  const showSkeleton = $derived(isLoading && items.length === 0);
+  const showLoadingOverlay = $derived(isLoading && items.length > 0);
+  const showPrompt = $derived(!hasQuery);
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} />
 
 {#if open}
   <div class="fixed inset-0 z-[120] flex items-center justify-center" transition:fade>
@@ -318,7 +320,7 @@
       type="button"
       aria-label="Close dialog"
       class="absolute inset-0 bg-bgs1/80 backdrop-blur-xl"
-      on:click={close}
+      onclick={close}
     />
     <div
       class="relative z-[121] flex h-full w-full max-w-6xl items-stretch justify-center p-6 mo:p-0"
@@ -330,7 +332,7 @@
         <header class="grid grid-cols-[auto,1fr,auto] items-center gap-4 border-b border-brs3 px-6 py-4 mo:px-4">
           <button
             class="flex items-center gap-2 rounded-full border border-transparent px-3 py-1 text-b3 text-fgs3 transition hover:border-brs3 hover:text-fgs1"
-            on:click={close}
+            onclick={close}
           >
             <Icon icon="arrow-left" size={Size.sm} />
             <span>Back</span>
@@ -339,7 +341,7 @@
           <div class="flex justify-end">
             <button
               class="flex h-10 w-10 items-center justify-center rounded-full border border-brs3 text-fgs3 transition hover:border-aps1 hover:text-aps1"
-              on:click={close}
+              onclick={close}
             >
               <Icon icon="cross" size={Size.sm} />
             </button>
@@ -370,7 +372,7 @@
               {#if trimmedQuery.length > 0}
                 <button
                   class="rounded-full p-1 text-fgs3 transition hover:text-aps1"
-                  on:click={() => {
+                  onclick={() => {
                     searchTerm = "";
                   }}
                 >
@@ -391,7 +393,7 @@
                   role="tab"
                   aria-selected={tab.id === activeTab}
                   tabindex={tab.id === activeTab ? 0 : -1}
-                  on:click={() => selectTab(tab.id)}
+                  onclick={() => selectTab(tab.id)}
                 >
                   <Icon icon={tab.icon} size={Size.sm} isAccentBgContext={tab.id === activeTab} />
                   <span>{tab.label}</span>
@@ -443,7 +445,7 @@
               <div class="max-w-md text-b2 text-fgs1">{currentState.error ?? "We ran into a problem while searching."}</div>
               <button
                 class="rounded-full border border-brs3 px-4 py-2 text-b3 text-fgs1 transition hover:border-aps1 hover:text-aps1"
-                on:click={handleRetry}
+                onclick={handleRetry}
               >
                 Try again
               </button>
@@ -503,13 +505,13 @@
                     <div class="flex w-full flex-col items-stretch gap-2 dp:w-auto dp:flex-row dp:items-center">
                       <button
                         class="w-full rounded-full bg-aps1 px-5 py-2 text-sm font-medium text-bgs1 transition hover:bg-aps2 dp:w-auto"
-                        on:click={() => addItem(item)}
+                        onclick={() => addItem(item)}
                       >
                         Add
                       </button>
                       <button
                         class="flex h-10 w-full items-center justify-center rounded-full border border-brs3 text-fgs3 transition hover:border-aps1 hover:text-aps1 dp:h-10 dp:w-10"
-                        on:click={() => dispatch("preview", { item, tab: activeTab })}
+                        onclick={() => onPreview?.({ item, tab: activeTab })}
                       >
                         <Icon icon="link" size={Size.sm} />
                       </button>

@@ -10,8 +10,13 @@
   import ColorsProperty from "@21n/components/collection/properties/colorsProperty/ColorsProperty.svelte";
   import LocationProperty from "@21n/components/collection/properties/locationProperty/LocationProperty.svelte";
   import type { ICollectionItem } from "@21n/components/collection/collection.type";
-  export let property: IProperty;
-  export let item: ICollectionItem | null | undefined;
+  let {
+    property,
+    item
+  }: {
+    property: IProperty;
+    item: ICollectionItem | null | undefined;
+  } = $props();
 
   function resolveMetadata() {
     if (item && "metadata" in item) return item.metadata;

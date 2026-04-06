@@ -3,28 +3,38 @@
   import Divider from "@21n/elements/Divider.svelte";
   import { ColorStrength } from "@21n/types/appearance.type";
   import { Orientation } from "@21n/types/direction.enum";
-  import { createEventDispatcher } from "svelte";
   import HighlightColors from "@21n/products/memotron/common/highlighters/HighlightColors.svelte";
   import { ButtonVariant } from "@21n/types/button.type";
-  let dispatch = createEventDispatcher();
-  export let style = "";
-  export let selectedColor = "";
-  export let editable = false;
+  let {
+    style = "",
+    selectedColor = $bindable(""),
+    editable = false,
+    onEdit = undefined,
+    onDelete = undefined,
+    onColor = undefined
+  }: {
+    style?: string;
+    selectedColor?: string;
+    editable?: boolean;
+    onEdit?: (() => void) | undefined;
+    onDelete?: (() => void) | undefined;
+    onColor?: ((highlighter: any) => void) | undefined;
+  } = $props();
 </script>
 
 <button
   class="flex gap-1 min-h-fit h-10 items-center bg-bgs2 text-fgs1 rounded-md px-2 py-1 border border-brs3"
   {style}
-  on:click|stopPropagation
-  on:mousedown|stopPropagation
+  onclick={(event) => event.stopPropagation()}
+  onmousedown={(event) => event.stopPropagation()}
 >
   {#if editable}
     <Button
       icon="edit"
       tooltip="Edit"
       parentBgIndex={2}
-      on:click={() => {
-        dispatch("edit");
+      onclick={() => {
+        onEdit?.();
       }}
     />
   {/if}
@@ -33,13 +43,16 @@
     parentBgIndex={2}
     tooltip="Delete"
     type={ButtonVariant.DANGER}
-    on:click={() => {
-      dispatch("delete");
+    onclick={() => {
+      onDelete?.();
     }}
   />
   <Divider
     orientation={Orientation.Vertical}
     colorStrength={ColorStrength.Strong}
   />
-  <HighlightColors bind:selected={selectedColor} on:color />
+  <HighlightColors
+    bind:selected={selectedColor}
+    onColor={onColor}
+  />
 </button>

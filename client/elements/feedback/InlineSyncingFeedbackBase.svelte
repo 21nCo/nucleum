@@ -5,11 +5,24 @@
   import { scale } from "svelte/transition";
   import { bounceIn, bounceOut } from "svelte/easing";
 
-  export let isShorter: boolean = false;
-  export let text: string | undefined = undefined;
-  export let padding: string = "";
-  export let isSyncing: boolean = false;
-  export let isDisableOutTransition: boolean = false;
+    let {
+    isShorter = false,
+    text = undefined,
+    padding = "",
+    isSyncing = false,
+    isDisableOutTransition = false,
+  }: {
+    isShorter?: boolean;
+    text?: string | undefined;
+    padding?: string;
+    isSyncing?: boolean;
+    isDisableOutTransition?: boolean;
+  } = $props();
+
+  
+  
+  
+  
   /**
    * out: transition interfering issue with TopNav transitions hence duration is used as 1 ms
    */

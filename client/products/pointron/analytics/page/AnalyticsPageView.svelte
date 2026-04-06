@@ -25,20 +25,24 @@
   import { sessionLogStore } from "@21n/products/pointron/logs/log.store";
   import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
   import { logger } from "@21n/components/debug/logger.client";
-  export let id: string;
-  export let parentBgIndex: number = 1;
-  let goals: IGoalThumb[] = [];
-  let logs: ISessionLog[] = [];
-  let isLoading = true;
-  let config: AnalyticsPage | undefined;
-  let cardsTimePeriods: { [key: string]: ITimePeriodResolved } = {};
-  let timeRangeForPage: { begin: number; end: number } | undefined;
 
-  /**
-   * calculation: (bottom 1 rem + gap between cards (0.5 rem) + top 0.5 rem + 4.2 rem (analytics page header height) + 2.75rem (top nav height)) / 2
-   *
-   * This is to determine the card height so that cards fit exactly in the view. See {@link AnalyticsCardView} where 50vh - heightAdjuster is used.
-   */
+  let {
+    id,
+    parentBgIndex = 1
+  }: {
+    id: string;
+    parentBgIndex?: number;
+  } = $props();
+
+  let goals = $state<IGoalThumb[]>([]);
+  let logs = $state<ISessionLog[]>([]);
+  let isLoading = $state(true);
+  let config = $state<AnalyticsPage | undefined>(undefined);
+  let cardsTimePeriods = $state<{ [key: string]: ITimePeriodResolved }>({});
+  let timeRangeForPage = $state<{ begin: number; end: number } | undefined>(
+    undefined
+  );
+
   const heightAdjuster = "4.475rem";
 
   async function addCard() {
@@ -155,8 +159,8 @@
         pageId={id}
         {parentBgIndex}
         {heightAdjuster}
-        on:reload={onReload}
-        on:removed={() => refreshConfig()}
+        onReload={onReload}
+        onRemoved={() => refreshConfig()}
       />
     {/each}
     {#if $isInEditMode && config.cards.length < 10}
@@ -177,7 +181,7 @@
                 ? `height: calc(70vh - ${heightAdjuster});`
                 : `height: calc(60vh - ${heightAdjuster});`
             : ""}
-          on:click={addCard}
+          onclick={addCard}
         >
           <Icon icon="plus-circled" />
           <Button label="Add card" style={ButtonStyle.PLAIN} />

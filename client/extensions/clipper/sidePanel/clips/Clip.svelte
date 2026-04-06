@@ -19,7 +19,7 @@
   } from "@21n/utils/extension.utils";
   import { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
   import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
-  import { onMount, createEventDispatcher, onDestroy } from "svelte";
+  import { onMount, onDestroy } from "svelte";
   import FileView from "@21n/components/files/FileView.svelte";
   import TextClip from "@21n/extensions/clipper/sidePanel/clips/TextClip.svelte";
   import { hoverable } from "@21n/actions/hover.action";
@@ -38,17 +38,28 @@
   import NodeTitle from "@21n/products/memotron/node/title/NodeTitle.svelte";
   import { fly } from "svelte/transition";
 
-  const dispatch = createEventDispatcher();
-
-  export let clip: (IVideoTimestampClip | ITextClip | IWebScreenshotClip) & {
-    isInEditMode?: boolean;
-  };
+  let {
+    clip,
+    onclick = undefined,
+    onDelete = undefined
+  }: {
+    clip: (IVideoTimestampClip | ITextClip | IWebScreenshotClip) & {
+      isInEditMode?: boolean;
+    };
+    onclick?: ((event: MouseEvent) => void) | undefined;
+    onDelete?: (() => void) | undefined;
+  } = $props();
   let isLinkboxOpened: boolean = false;
   let isNotesOpened: boolean = false;
   let feedback: string | { message: string; type: AlertType } = "";
   let notes: string = "";
   let isHovered: boolean = false;
   refreshDerivedData();
+  $effect(() => {
+    if (isLinkboxOpened) {
+      isNotesOpened = false;
+    }
+  });
 
   onMount(() => {
     chrome.runtime.onMessage.addListener(messageListener);
@@ -160,10 +171,10 @@
       target.nodeName === "path"
     )
       return;
-    dispatch("click");
+    onclick?.(new MouseEvent("click"));
   }
 
-  async function onDelete() {
+  async function handleDelete() {
     const result = await relayToContentScript({
       event: ClipperExtensionEvent.MUTATION_RELAY,
       data: {
@@ -171,7 +182,7 @@
         clipId: clip.id
       }
     });
-    dispatch("delete");
+    onDelete?.();
   }
 
   async function onPropertyChanges(e: CustomEvent) {
@@ -202,8 +213,8 @@
     if (result.clip.properties) clip.properties = result.clip.properties;
   }
 
-  async function onLabelChanges(e: CustomEvent) {
-    if (!e.detail || e.detail === undefined) return;
+  async function onLabelChanges(label: string) {
+    if (!label || label === undefined) return;
     feedback = {
       message: "Syncing changes...",
       type: AlertType.PROGRESS
@@ -213,7 +224,7 @@
       data: {
         action: "label",
         clipId: clip.id,
-        label: e.detail
+        label
       }
     });
     if (!result || result.error) {
@@ -242,11 +253,11 @@
   {#if clip.contentType === NodeType.WEB_TEXT_BOOKMARK || clip.contentType === NodeType.WEB_SCREENSHOT}
     <div class="flex flex-col gap-2 text-left w-full">
       {#key clip.body.highlighterId}
-        <TextClip {clip} on:click={onClick} on:keydown />
+        <TextClip {clip} onclick={onClick} />
       {/key}
     </div>
   {:else if clip.contentType === NodeType.YOUTUBE_BOOKMARK && "timestamp" in clip.body}
-    <button class="flex gap-4 w-full" on:click={onClick}>
+    <button class="flex gap-4 w-full" onclick={onClick}>
       <FileView
         id={clip.body.thumbnail}
         class="thumbnail w-32 h-[72px] rounded-md"
@@ -258,9 +269,9 @@
           <NodeTitle
             node={clip}
             accessPoint={ResourceAccessPoint.CLIPPER}
-            on:labelChange={onLabelChanges}
-            on:editModeChange={(e) => {
-              clip.isInEditMode = e.detail;
+            onLabelChange={onLabelChanges}
+            onEditModeChange={(value) => {
+              clip.isInEditMode = value;
             }}
           />
         </div>
@@ -276,9 +287,9 @@
         <NodeTitle
           node={clip}
           accessPoint={ResourceAccessPoint.CLIPPER}
-          on:labelChange={onLabelChanges}
-          on:editModeChange={(e) => {
-            clip.isInEditMode = e.detail;
+          onLabelChange={onLabelChanges}
+          onEditModeChange={(value) => {
+            clip.isInEditMode = value;
           }}
         />
       </div>
@@ -304,7 +315,7 @@
                 tooltip={clip?.notes ? "View notes" : "Add notes"}
                 bind:on={isNotesOpened}
                 bgSize={Size.sm}
-                on:change={(e) => {
+                onChange={(e) => {
                   if (e.detail) isLinkboxOpened = false;
                 }}
               />
@@ -313,9 +324,6 @@
               <LinkActionOnClipper
                 links={clip?.links}
                 bind:isLinkboxOpened
-                on:change={(e) => {
-                  if (e.detail) isNotesOpened = false;
-                }}
               />
             {/if}
           {/if}
@@ -326,10 +334,10 @@
             accessPoint={ResourceAccessPoint.CLIPPER}
             bgSize={Size.sm}
             icon="more-outline-horizontal"
-            on:action={(e) => {
+            onAction={(e) => {
               const action = e?.detail?.action;
               if (action === ResourceActionType.DELETE) {
-                onDelete();
+                handleDelete();
               } else if (action === ResourceActionType.OPEN) {
                 // onOpenInApp();
                 openAppPath(`library?pop=${clip.id}`);
@@ -349,23 +357,22 @@
         </span>
       </div>
       {#if isLinkboxOpened}
-        <LinkBoxOnClipper on:link={onLinkAction} />
+        <LinkBoxOnClipper onLink={onLinkAction} />
         <LinkItems
           links={clip?.links}
           nodeId={clip.id}
           propertyValues={clip?.properties}
           isWrapItems={true}
           isExpandable={true}
-          on:click
-          on:unlink={(e) => onLinkAction(e, "unlink")}
-          on:propertyChange={onPropertyChanges}
+          onUnlink={(e) => onLinkAction(e, "unlink")}
+          onPropertyChange={onPropertyChanges}
         />
       {/if}
       {#if isNotesOpened}
         <InlineMarkdownTextInput
           placeholder="Add notes"
           bind:content={notes}
-          on:debouncedChange={onNotesChange}
+          onDebouncedChange={onNotesChange}
         />
       {/if}
       {#if feedback}

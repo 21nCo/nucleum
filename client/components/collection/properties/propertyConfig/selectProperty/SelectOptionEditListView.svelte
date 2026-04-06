@@ -6,17 +6,38 @@
   import { Size } from "@21n/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import TextInput from "@21n/elements/input/TextInput.svelte";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let options: IPropertyConfigOption[];
-  export let group: IPropertyConfigOptionGroup | undefined = undefined;
-  export let focusedOptionId: string | null = null;
-  export let defaultOptionId: string | null = null;
-  export let isPreventDefaultGroupLabel = false;
-  export let parentBgIndex: number = 1;
-  let isEditingGroupLabel = false;
-  let groupLabelInput = "";
-  $: _options = filterOptions(options, group);
+  let {
+    options,
+    group = undefined,
+    focusedOptionId = null,
+    defaultOptionId = null,
+    isPreventDefaultGroupLabel = false,
+    parentBgIndex = 1,
+    onAdd = undefined,
+    onGroup = undefined,
+    onRemove = undefined,
+    onDefault = undefined,
+    onEnter = undefined,
+    onChange = undefined
+  }: {
+    options: IPropertyConfigOption[];
+    group?: IPropertyConfigOptionGroup | undefined;
+    focusedOptionId?: string | null;
+    defaultOptionId?: string | null;
+    isPreventDefaultGroupLabel?: boolean;
+    parentBgIndex?: number;
+    onAdd?: ((event: CustomEvent<string | undefined>) => void) | undefined;
+    onGroup?:
+      | ((event: CustomEvent<{ action: string; groupId: string }>) => void)
+      | undefined;
+    onRemove?: ((event: CustomEvent<string>) => void) | undefined;
+    onDefault?: ((event: CustomEvent<string | null>) => void) | undefined;
+    onEnter?: ((event: CustomEvent<string>) => void) | undefined;
+    onChange?: ((event?: CustomEvent<void>) => void) | undefined;
+  } = $props();
+  let isEditingGroupLabel = $state(false);
+  let groupLabelInput = $state("");
+  let _options = $derived(filterOptions(options, group));
 
   function filterOptions(
     options: IPropertyConfigOption[],
@@ -30,7 +51,10 @@
   }
 
   function addOption() {
-    dispatch("add", group?.id);
+    const event = new CustomEvent<string | undefined>("add", {
+      detail: group?.id
+    });
+    onAdd?.(event);
   }
 </script>
 
@@ -41,12 +65,13 @@
         bind:value={groupLabelInput}
         isShowSaveControl={true}
         placeholder="Group name"
-        on:save={() => {
+        onSave={() => {
           if (!groupLabelInput) return;
           if (group) group.label = groupLabelInput;
           isEditingGroupLabel = false;
+          onChange?.();
         }}
-        on:cancel={() => {
+        onCancel={() => {
           isEditingGroupLabel = false;
         }}
       />
@@ -54,7 +79,7 @@
       <button
         class="text-b2 text-fgs3 text-left"
         data-popover-id="select-options-popover"
-        on:click={() => {
+        onclick={() => {
           if (!group) return;
           isEditingGroupLabel = true;
           groupLabelInput = group.label;
@@ -70,34 +95,42 @@
             icon="edit"
             tooltip="Edit group label"
             size={Size.sm}
-            on:click={() => {
+            onclick={() => {
               isEditingGroupLabel = true;
               groupLabelInput = group.label;
             }}
           />
         {/if}
-        <Button
-          icon="ph:arrow-up"
-          style={ButtonStyle.PLAIN}
-          tooltip="Move this group up"
-          size={Size.sm}
-          on:click={() => {
-            dispatch("group", {
-              action: "up",
-              groupId: group.id
-            });
-          }}
-        />
+          <Button
+            icon="ph:arrow-up"
+            style={ButtonStyle.PLAIN}
+            tooltip="Move this group up"
+            size={Size.sm}
+            onclick={() => {
+              onGroup?.(
+                new CustomEvent("group", {
+                  detail: {
+                    action: "up",
+                    groupId: group.id
+                  }
+                })
+              );
+            }}
+          />
         <Button
           icon="arrow-down"
           style={ButtonStyle.PLAIN}
           tooltip="Move this group down"
           size={Size.sm}
-          on:click={() => {
-            dispatch("group", {
-              action: "down",
-              groupId: group.id
-            });
+          onclick={() => {
+            onGroup?.(
+              new CustomEvent("group", {
+                detail: {
+                  action: "down",
+                  groupId: group.id
+                }
+              })
+            );
           }}
         />
         <Button
@@ -106,11 +139,15 @@
           type={ButtonVariant.DANGER}
           tooltip="Delete this group"
           size={Size.sm}
-          on:click={() => {
-            dispatch("group", {
-              action: "delete",
-              groupId: group.id
-            });
+          onclick={() => {
+            onGroup?.(
+              new CustomEvent("group", {
+                detail: {
+                  action: "delete",
+                  groupId: group.id
+                }
+              })
+            );
           }}
         />
       </span>
@@ -124,10 +161,10 @@
       groupId={group?.id ?? "ungrouped"}
       isFocusing={option.id === focusedOptionId}
       isDefault={option.id === defaultOptionId}
-      on:remove
-      on:default
-      on:enter
-      on:change
+      onRemove={onRemove}
+      onDefault={onDefault}
+      onEnter={onEnter}
+      onChange={onChange}
     />
   {/each}
   <div class="flex justify-center mt-1">
@@ -136,7 +173,7 @@
       style={ButtonStyle.PLAIN}
       size={Size.sm}
       isUnderlined={true}
-      on:click={() => addOption()}
+      onclick={() => addOption()}
     />
   </div>
 </div>

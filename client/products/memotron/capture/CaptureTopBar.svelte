@@ -16,13 +16,24 @@
   import type { IActiveCaptureStore } from "@21n/products/memotron/capture/capture.store";
   import { LinkType } from "@21n/products/memotron/linking/link.type";
   import { CollectionType } from "@21n/components/collection/collection.type";
-  import { createEventDispatcher, tick } from "svelte";
+  import { tick } from "svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import { haptic } from "@21n/utils/embed.utils";
   import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
-  const dispatch = createEventDispatcher();
-  export let captureStore: IActiveCaptureStore;
-  export let isHomeContext: boolean = $view.isConstrainedWidth;
+
+  let {
+    captureStore,
+    isHomeContext = $view.isConstrainedWidth,
+    onSave = undefined,
+    onClear = undefined,
+    onFocusBody = undefined
+  }: {
+    captureStore: IActiveCaptureStore;
+    isHomeContext?: boolean;
+    onSave?: (() => void) | undefined;
+    onClear?: (() => void) | undefined;
+    onFocusBody?: (() => void) | undefined;
+  } = $props();
   let linkBoxRef: LinkboxOnCapture;
 
   async function onLink(e: CustomEvent) {
@@ -41,9 +52,14 @@
     return undefined;
   }
 
-  function onSave() {
+  function handleSave() {
     haptic();
-    dispatch("save");
+    onSave?.();
+  }
+
+  function handleClear() {
+    haptic();
+    onClear?.();
   }
 
   export async function toggleLinkBox() {
@@ -68,29 +84,11 @@
     })}
   >
     <div class="flex gap--4 grow">
-      <!-- TODO - if nodularized and type is added to a heading node, then replace "root" with the heading node id -->
-      <!-- <NodeAvatar {types} /> -->
-      <!-- <div class="text-h3 font-medium w-full">
-      <TextInput
-        bind:value={$captureStore.label}
-        style={InputStyle.PLAIN}
-        id="capture-title"
-        isExperimentalMdInput={true}
-        placeholder="Title"
-        isPreventDefaultOnEnter={true}
-        on:change={refreshEmptyState}
-        on:debouncedChange={persistLabel}
-        on:enter={onTitleEnter}
-        on:keydown={(e) => {
-          const event = e.detail;
-          if (event.key === "ArrowDown") {
-            event.preventDefault();
-            writerRef?.focus();
-          }
-        }}
+      <CaptureTitle
+        {captureStore}
+        {isHomeContext}
+        {onFocusBody}
       />
-    </div> -->
-      <CaptureTitle {captureStore} {isHomeContext} on:focusBody />
     </div>
     <div class="flex cw:gap-2 gap-3 items-center h-full">
       {#if (!$captureStore.isEmpty && $captureStore.method === CaptureMethod.MARKDOWN) || isHomeContext}
@@ -101,7 +99,7 @@
             count={resolveDirectLinksCount($captureStore.links)}
             on={$captureStore.isLinksExpanded}
             bgSize={Size.md}
-            on:change={toggleLinkExpansion}
+            onChange={toggleLinkExpansion}
             shortcut={MemotronAction.ACTIVATE_LINK_BOX}
           />
         {:else}
@@ -112,7 +110,7 @@
             count={resolveDirectLinksCount($captureStore.links)}
             isShowExpandFeedbackOnActive={true}
             isRemovable={false}
-            on:click={toggleLinkExpansion}
+            onclick={toggleLinkExpansion}
             shortcut={MemotronAction.ACTIVATE_LINK_BOX}
           />
           <div class="h-full py-2">
@@ -136,7 +134,7 @@
               modifiers: [ModifierKey.META]
             }}
             icon="save"
-            on:click={onSave}
+            onclick={handleSave}
           />
           <Button
             label={isHomeContext ? undefined : "Clear"}
@@ -144,10 +142,7 @@
             isPreventMinWidth={true}
             size={isHomeContext ? Size.md : Size.sm}
             icon="cross"
-            on:click={() => {
-              haptic();
-              dispatch("clear");
-            }}
+            onclick={handleClear}
           />
         {/if}
       {/if}
@@ -163,7 +158,7 @@
       <LinkboxOnCapture
         bind:this={linkBoxRef}
         {captureStore}
-        on:linked={onLink}
+        onLinked={onLink}
         expand={$captureStore.expandedType}
       />
     </div>

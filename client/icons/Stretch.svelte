@@ -1,6 +1,12 @@
 <script lang="ts">
-  export let color: string = "";
-  export let opacity: number = 1;
+  let {
+    color = "",
+    opacity = 1
+  }: {
+    color?: string;
+    opacity?: number;
+  } = $props();
+
 </script>
 
 <svg

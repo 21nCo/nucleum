@@ -19,17 +19,36 @@
   import { TextStyle } from "@21n/types/text.enum";
   import { cn } from "@21n/utils/ui.utils";
   import type { ILinkTagGroup } from "@21n/products/memotron/linking/link.type";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
+  import type { IRecordId } from "@21n/types/data.type";
 
-  export let group: ILinkTagGroup;
-  $: isWithoutGroup = group.group === "" || !group.group;
-  let isHovered = false;
-  let inputValueWithinGroup = "";
+  let {
+    group,
+    onBulkDelete = undefined,
+    onRemove = undefined,
+    onSave = undefined,
+    onUpdate = undefined,
+    onUpdateGroupName = undefined
+  }: {
+    group: ILinkTagGroup;
+    onBulkDelete?: ((event: CustomEvent<string>) => void) | undefined;
+    onRemove?: ((event: CustomEvent<IRecordId>) => void) | undefined;
+    onSave?:
+      | ((event: CustomEvent<{ group: string; label: string }>) => void)
+      | undefined;
+    onUpdate?:
+      | ((event: CustomEvent<{ id: IRecordId; label: string }>) => void)
+      | undefined;
+    onUpdateGroupName?:
+      | ((event: CustomEvent<{ group: string; newgroup: string }>) => void)
+      | undefined;
+  } = $props();
+  const isWithoutGroup = $derived(group.group === "" || !group.group);
+  let isHovered = $state(false);
+  let inputValueWithinGroup = $state("");
   let addTagPopover: Popover;
   let editTagPopover: Popover;
-  let isEditingGroupName = false;
-  let errorMessage = "";
+  let isEditingGroupName = $state(false);
+  let errorMessage = $state("");
 
   const buttonProps: IButtonParams = {
     size: Size.xs,
@@ -37,13 +56,54 @@
     style: ButtonStyle.OUTLINED
   };
 
+  function emitSave(detail: { group: string; label: string }) {
+    const saveEvent = new CustomEvent<{ group: string; label: string }>("save", {
+      detail
+    });
+    onSave?.(saveEvent);
+  }
+
+  function emitUpdateGroupName(detail: { group: string; newgroup: string }) {
+    const updateGroupNameEvent = new CustomEvent<{
+      group: string;
+      newgroup: string;
+    }>("updateGroupName", {
+      detail
+    });
+    onUpdateGroupName?.(updateGroupNameEvent);
+  }
+
+  function emitBulkDelete(groupName: string) {
+    const bulkDeleteEvent = new CustomEvent<string>("bulkDelete", {
+      detail: groupName
+    });
+    onBulkDelete?.(bulkDeleteEvent);
+  }
+
+  function emitRemove(id: IRecordId) {
+    const removeEvent = new CustomEvent<IRecordId>("remove", {
+      detail: id
+    });
+    onRemove?.(removeEvent);
+  }
+
+  function emitUpdate(detail: { id: IRecordId; label: string }) {
+    const updateEvent = new CustomEvent<{ id: IRecordId; label: string }>(
+      "update",
+      {
+        detail
+      }
+    );
+    onUpdate?.(updateEvent);
+  }
+
   function save(groupSelected?: string) {
     if (!inputValueWithinGroup) {
       errorMessage = "Tag cannot be empty";
       addTagPopover?.hide();
       return;
     }
-    dispatch("save", {
+    emitSave({
       group: groupSelected ?? "",
       label: inputValueWithinGroup
     });
@@ -51,8 +111,8 @@
     addTagPopover?.hide();
   }
 
-  function onUpdateGroupName() {
-    dispatch("updateGroupName", {
+  function handleUpdateGroupName() {
+    emitUpdateGroupName({
       group: group.group,
       newgroup: inputValueWithinGroup
     });
@@ -82,10 +142,10 @@
       <TextInput
         bind:value={inputValueWithinGroup}
         placeholder="Edit group name"
-        on:enter={onUpdateGroupName}
+        onEnter={handleUpdateGroupName}
         isShowSaveControl={true}
-        on:save={onUpdateGroupName}
-        on:cancel={onGroupNameCancel}
+        onSave={handleUpdateGroupName}
+        onCancel={onGroupNameCancel}
       />
     {:else}
       <Text
@@ -100,7 +160,7 @@
             icon="edit"
             label={$view.isConstrainedWidth ? undefined : "Edit group name"}
             {...buttonProps}
-            on:click={() => {
+            onclick={() => {
               isEditingGroupName = true;
               inputValueWithinGroup = group.group;
             }}
@@ -111,28 +171,30 @@
             icon="plus"
             label={$view.isConstrainedWidth ? undefined : "Add tag"}
             {...buttonProps}
-            on:click={() => {}}
+            onclick={() => {}}
           />
-          <div slot="popover" class="flex flex-col items-center gap-6 p-3 w-80">
-            <TextInput
-              bind:value={inputValueWithinGroup}
-              placeholder={`Add tag ${group.group ? `to ${group.group}` : ""}`}
-            />
-            <span>
-              <Button
-                label="Save"
-                on:click={() => save(group.group)}
-                size={Size.sm}
+          {#snippet popover()}
+            <div class="flex flex-col items-center gap-6 p-3 w-80">
+              <TextInput
+                bind:value={inputValueWithinGroup}
+                placeholder={`Add tag ${group.group ? `to ${group.group}` : ""}`}
               />
-            </span>
-          </div>
+              <span>
+                <Button
+                  label="Save"
+                  onclick={() => save(group.group)}
+                  size={Size.sm}
+                />
+              </span>
+            </div>
+          {/snippet}
         </Popover>
         <Button
           icon="trash"
           label={$view.isConstrainedWidth ? undefined : "Delete all"}
           {...buttonProps}
           type={ButtonVariant.DANGER}
-          on:click={() => {
+          onclick={() => {
             confirmationNotification.notify({
               title: "Delete all tags",
               message: `Are you sure you want to delete all tags ${group.group ? `in **${group.group}**` : "without prefix"}?`,
@@ -140,7 +202,7 @@
                 label: "Proceed",
                 variant: ButtonVariant.DANGER,
                 callback: async () => {
-                  dispatch("bulkDelete", group.group);
+                  emitBulkDelete(group.group);
                   return true;
                 }
               }
@@ -159,53 +221,55 @@
       {#if item.label}
         <Popover
           bind:this={editTagPopover}
-          on:hide={() => {
+          onHide={() => {
             inputValueWithinGroup = "";
           }}
         >
           <Tag
             label={item.label}
             icon="relation"
-            on:click={() => {
+            onclick={() => {
               inputValueWithinGroup = item.label ?? "";
             }}
-            on:remove={() => {
-              dispatch("remove", item.id);
+            onRemove={() => {
+              emitRemove(item.id);
             }}
           />
-          <div slot="popover" class="flex flex-col items-center gap-6 p-3 w-80">
-            <TextInput
-              bind:value={inputValueWithinGroup}
-              placeholder="Editing tag"
-            />
-            <span class="flex gap-2">
-              <Button
-                label="Update"
-                icon="check"
-                isPreventMinWidth={true}
-                on:click={(e) => {
-                  dispatch("update", {
-                    id: item.id,
-                    label: inputValueWithinGroup
-                  });
-                  editTagPopover?.hide();
-                  inputValueWithinGroup = "";
-                }}
-                size={Size.sm}
+          {#snippet popover()}
+            <div class="flex flex-col items-center gap-6 p-3 w-80">
+              <TextInput
+                bind:value={inputValueWithinGroup}
+                placeholder="Editing tag"
               />
-              <Button
-                label="Delete"
-                icon="trash"
-                isPreventMinWidth={true}
-                type={ButtonVariant.DANGER}
-                on:click={(e) => {
-                  dispatch("remove", item.id);
-                  editTagPopover?.hide();
-                }}
-                size={Size.sm}
-              />
-            </span>
-          </div>
+              <span class="flex gap-2">
+                <Button
+                  label="Update"
+                  icon="check"
+                  isPreventMinWidth={true}
+                  onclick={() => {
+                    emitUpdate({
+                      id: item.id,
+                      label: inputValueWithinGroup
+                    });
+                    editTagPopover?.hide();
+                    inputValueWithinGroup = "";
+                  }}
+                  size={Size.sm}
+                />
+                <Button
+                  label="Delete"
+                  icon="trash"
+                  isPreventMinWidth={true}
+                  type={ButtonVariant.DANGER}
+                  onclick={() => {
+                    emitRemove(item.id);
+                    editTagPopover?.hide();
+                  }}
+                  size={Size.sm}
+                />
+              </span>
+            </div>
+          {/snippet}
         </Popover>
       {/if}
     {/each}

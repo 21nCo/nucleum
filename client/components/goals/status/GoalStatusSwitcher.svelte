@@ -2,12 +2,21 @@
   import { cn } from "@21n/utils/ui.utils";
   import { GoalStatus } from "@21n/components/goals/goal.type";
   import GoalStatusSwitcherItem from "@21n/components/goals/status/GoalStatusSwitcherItem.svelte";
-  import { createEventDispatcher } from "svelte";
-  export let status: GoalStatus = GoalStatus.NOT_STARTED;
-  export let variant: "spread" | "dropdown" = "spread";
-  const dispatch = createEventDispatcher();
-  $: if (!status) {
-    status = GoalStatus.NOT_STARTED;
+
+  let {
+    status = $bindable(GoalStatus.NOT_STARTED),
+    variant = "spread",
+    onChange = undefined
+  }: {
+    status?: GoalStatus;
+    variant?: "spread" | "dropdown";
+    onChange?: ((event: CustomEvent<GoalStatus>) => void) | undefined;
+  } = $props();
+  function emitChange(nextStatus: GoalStatus) {
+    const changeEvent = new CustomEvent<GoalStatus>("change", {
+      detail: nextStatus
+    });
+    onChange?.(changeEvent);
   }
 </script>
 
@@ -33,9 +42,9 @@
         isAccent={status === GoalStatus.COMPLETED ||
           (status === GoalStatus.IN_PROGRESS &&
             item === GoalStatus.NOT_STARTED)}
-        on:click={() => {
+        onClick={() => {
           status = item;
-          dispatch("change", status);
+          emitChange(status);
         }}
       />
     {/each}

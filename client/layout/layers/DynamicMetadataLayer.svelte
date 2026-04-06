@@ -1,13 +1,15 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import type { IMetadata } from "@21n/layout/metadata.type";
-  export let metadata: IMetadata = {
+  let { metadata = {
     title: "",
     description: "",
     keywords: "",
     url: "",
     image: "",
     twitterCard: ""
-  };
+  } }: { metadata?: IMetadata } = $props();
 </script>
 
 <svelte:head>

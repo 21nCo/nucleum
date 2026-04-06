@@ -12,15 +12,17 @@
   import { resolvePropertyDefaultConfig } from "@21n/components/collection/properties/property.utils";
   import RatingAvatarPicker from "@21n/components/collection/properties/ratingProperty/config/RatingAvatarPicker.svelte";
   import { popover } from "@21n/actions/popover.action";
-  export let property: IRatingProperty;
-  let popoverRef: HTMLElement;
-  let isPopoverOpen: boolean = false;
+  let { property }: { property: IRatingProperty } = $props();
+  let popoverRef = $state<HTMLElement | undefined>();
+  let isPopoverOpen = $state(false);
 
-  if (!property.config || !property.config?.avatar) {
-    property.config = resolvePropertyDefaultConfig(
-      property.type
-    ) as IRatingPropertyConfig;
-  }
+  $effect(() => {
+    if (!property.config || !property.config?.avatar) {
+      property.config = resolvePropertyDefaultConfig(
+        property.type
+      ) as IRatingPropertyConfig;
+    }
+  });
   function onAvatarSelect(icon: string) {
     if (!property.config || !icon) return;
     property.config.avatar = icon;
@@ -48,7 +50,7 @@
           avatar: property.config?.avatar
         }
       }}
-      on:change={(e) => {
+      onchange={(e) => {
         isPopoverOpen = e.detail?.open;
       }}
     >

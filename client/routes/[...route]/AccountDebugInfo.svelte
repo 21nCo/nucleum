@@ -22,11 +22,11 @@
 {:then user}
   <div class="flex flex-col gap-1 w-full h-full justify-center items-center">
     <NewAccountDebugInfo {user} />
-    <Button on:click={signOut} label="Sign out" />
+    <Button onclick={signOut} label="Sign out" />
   </div>
 {:catch error}
   <div class="flex flex-col gap-1 w-full h-full justify-center items-center">
     <p class="text-red-500">Error loading account data: {error.message}</p>
-    <Button on:click={signOut} label="Sign out" />
+    <Button onclick={signOut} label="Sign out" />
   </div>
 {/await}

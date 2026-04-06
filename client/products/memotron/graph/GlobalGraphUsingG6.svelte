@@ -4,11 +4,21 @@
   import { retrieveCurrentColors } from "@21n/utils/theme.utils";
   import { truncateString } from "@21n/shared-utils/text.utils";
   import { Graph, GraphEvent, NodeEvent, CanvasEvent } from "@antv/g6";
-  import { onMount, createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
+  import { onMount } from "svelte";
 
-  export let data: { nodes: any[]; edges: any[] } = { nodes: [], edges: [] };
-  export let layout: string = "force-1";
+  let {
+    data = { nodes: [], edges: [] },
+    layout = "force-1",
+    onCanvasClick = undefined,
+    onRender = undefined,
+    onSelect = undefined
+  }: {
+    data?: { nodes: any[]; edges: any[] };
+    layout?: string;
+    onCanvasClick?: ((event: any) => void) | undefined;
+    onRender?: (() => void) | undefined;
+    onSelect?: ((event: any) => void) | undefined;
+  } = $props();
   let _data: { nodes: any[]; edges: any[] } = { nodes: [], edges: [] };
   let graph: Graph;
   const currentColors: any = retrieveCurrentColors($appearance);
@@ -133,26 +143,26 @@
     });
     graph.render();
     // graph.draw();
-    graph.on(GraphEvent.AFTER_RENDER, onAfterRender);
-    graph.on(CanvasEvent.CLICK, onCanvasClick);
-    graph.on(NodeEvent.CLICK, onNodeClick);
+    graph.on(GraphEvent.AFTER_RENDER, handleAfterRender);
+    graph.on(CanvasEvent.CLICK, handleCanvasClick);
+    graph.on(NodeEvent.CLICK, handleNodeClick);
   }
 
-  function onCanvasClick(e: any) {
-    dispatch("canvasClick", e);
+  function handleCanvasClick(event: any) {
+    onCanvasClick?.(event);
   }
 
-  function onNodeClick(event: any) {
-    dispatch("select", event);
+  function handleNodeClick(event: any) {
+    onSelect?.(event);
   }
-  function onAfterRender() {
-    dispatch("render");
+  function handleAfterRender() {
+    onRender?.();
   }
 </script>
 
 <div
   id="globalgraphcontainer"
-  use:resizeListener={(e) => {
+  use:resizeListener={() => {
     if (graph) {
       graph.resize();
     }

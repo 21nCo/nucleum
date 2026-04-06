@@ -2,7 +2,7 @@
   import { pointronPreferences } from "@21n/products/pointron/pointron.store";
   import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
   import { formatSeconds } from "@21n/utils/time.utils";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import { abg, cn } from "@21n/utils/ui.utils";
   import { Size } from "@21n/types/size.enum";
   import { TimeFormat } from "@21n/types/time.type";
@@ -15,8 +15,21 @@
   import { ButtonStyle } from "@21n/types/button.type";
   import { appStore } from "@21n/stores/app.store";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
-  const dispatch = createEventDispatcher();
-  export let selectedItem: number = 0;
+  let {
+    selectedItem = $bindable(0),
+    onSelect = undefined
+  }: {
+    selectedItem?: number;
+    onSelect?: ((event: CustomEvent<number>) => void) | undefined;
+  } = $props();
+
+  function emitSelect(item: number) {
+    const selectEvent = new CustomEvent<number>("select", {
+      detail: item
+    });
+    onSelect?.(selectEvent);
+  }
+
   onMount(() => {
     if (
       !$pointronPreferences.manualEntryQuickDurations ||
@@ -37,7 +50,7 @@
         style={ButtonStyle.PLAIN}
         size={Size.xs}
         isUnderlined={true}
-        on:click={() => {
+        onclick={() => {
           appStore.runAction(PointronAction.SESSION_SETTINGS_MODAL);
         }}
       />
@@ -53,12 +66,12 @@
               "border-brs2 hover:bg-bgs3": item != selectedItem
             }
           )}
-          on:click={() => {
+          onclick={() => {
             selectedItem = item;
             uiState.setState(UIState.manualLogQuickDuration, item, {
               scope: UIStateScope.DEVICE
             });
-            dispatch("select", item);
+            emitSelect(item);
           }}
         >
           last {formatSeconds(item * 60, TimeFormat.VERBOSE, {

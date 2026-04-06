@@ -27,17 +27,27 @@
   } from "@21n/products/pointron/analytics/analytics.types";
   import { cn } from "@21n/utils/ui.utils";
   import view from "@21n/stores/view.store";
-  export let chart: IAnalyticsCard;
-  export let rawData: AnalyticsDataRecord[];
-  export let goalColors: IAnalyticsLabelColor[];
-  export let showLegend: boolean = true;
-  let data: (ChartDataRecord & { topLevelGoal?: string })[];
-  let options: any;
-  let isLoadingState = true;
-  const colors = retrieveCurrentColors($appearance);
-  isLoadingState = false;
+  let {
+    chart,
+    rawData,
+    goalColors,
+    showLegend = true
+  }: {
+    chart: IAnalyticsCard;
+    rawData: AnalyticsDataRecord[];
+    goalColors: IAnalyticsLabelColor[];
+    showLegend?: boolean;
+  } = $props();
+  let data = $state<(ChartDataRecord & { topLevelGoal?: string })[]>([]);
+  let options = $state<any>({});
+  let isLoadingState = $state(true);
+  const colors = $derived(retrieveCurrentColors($appearance));
 
-  initialize();
+  $effect(() => {
+    isLoadingState = true;
+    initialize();
+    isLoadingState = false;
+  });
 
   function initialize() {
     setBaseOptions();

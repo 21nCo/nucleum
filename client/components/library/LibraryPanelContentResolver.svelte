@@ -7,7 +7,8 @@
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { isValidEnumValue } from "@21n/shared-utils/text.utils";
 
-  export let defaultResource: Resource = Resource.node;
+  let { defaultResource = Resource.node }: { defaultResource?: Resource } =
+    $props();
 
   let selectedResource: Resource = $view.isConstrainedWidth
     ? Resource.unknown

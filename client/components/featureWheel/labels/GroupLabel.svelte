@@ -1,9 +1,18 @@
 <script lang="ts">
   import { cn } from "@21n/utils/ui.utils";
-  export let label: string;
-  export let color: string | undefined;
-  export let xCoord: number;
-  export let yCoord: number;
+  let {
+    label,
+    color,
+    xCoord,
+    yCoord,
+    onclick = (_event: MouseEvent) => {}
+  }: {
+    label: string;
+    color: string | undefined;
+    xCoord: number;
+    yCoord: number;
+    onclick?: (event: MouseEvent) => void;
+  } = $props();
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
@@ -17,7 +26,7 @@
     "fill-fgs2": !color
   })}
   fill={color}
-  on:click
+  {onclick}
 >
   {label}
 </text>

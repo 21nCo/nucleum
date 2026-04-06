@@ -1,10 +1,19 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import { Size } from "@21n/types/size.enum";
   import { logger } from "@21n/components/debug/logger.client";
 
-  export let logs: string[] = [];
-  export let isShowLogs = import.meta.env.DEV;
+  let {
+    logs = [],
+    isShowLogs = import.meta.env.DEV,
+    children
+  }: {
+    logs?: string[];
+    isShowLogs?: boolean;
+    children?: Snippet;
+  } = $props();
+
   const copy = async () => {
     try {
       if (!navigator?.clipboard?.writeText) {
@@ -28,11 +37,11 @@
       <Button
         label="copy"
         aria-label="Copy debug logs"
-        on:click={copy}
+        onclick={copy}
         size={Size.sm}
       />
     </div>
-    <slot />
+    {@render children?.()}
     <ul class="flex flex-col gap-1" role="list">
       {#each logs as log, index (index)}
         <li class="text-wrap">

@@ -38,7 +38,7 @@
           icon="play"
           label="play"
           size={Size.sm}
-          on:click={() => {
+          onclick={() => {
             if (!youtubeUrl) return;
             backgroundSoundStore.playYoutube(youtubeUrl);
           }}
@@ -47,7 +47,7 @@
           icon="sync"
           label="reset"
           size={Size.sm}
-          on:click={() => {
+          onclick={() => {
             youtubeUrl = "";
             backgroundSoundStore.resetYoutube();
           }}

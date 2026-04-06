@@ -1,28 +1,29 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import { CollectionType } from "@21n/components/collection/collection.type";
   import type { CollectionData } from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/types";
 
-  export let collection: CollectionData;
-
-  const dispatch = createEventDispatcher<{
-    click: CollectionData;
-  }>();
+  let {
+    collection,
+    onclick = undefined
+  }: {
+    collection: CollectionData;
+    onclick?: ((collection: CollectionData) => void) | undefined;
+  } = $props();
 
   function handleClick() {
-    dispatch("click", collection);
+    onclick?.(collection);
   }
 </script>
 
 <div
   class="flex items-center gap-3 p-3 rounded-lg hover:bg-bgs2 cursor-pointer group transition-colors"
-  on:click={handleClick}
+  onclick={handleClick}
   role="button"
   tabindex="0"
-  on:keydown={(e) => e.key === "Enter" && handleClick()}
+  onkeydown={(e) => e.key === "Enter" && handleClick()}
 >
   <div class="flex-shrink-0">
     {#if collection.type === CollectionType.TYPED && collection.avatar}

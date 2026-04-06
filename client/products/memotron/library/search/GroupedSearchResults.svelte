@@ -5,11 +5,21 @@
   import { KeyboardKey } from "@21n/types/keyboard.type";
   import GroupItem from "@21n/products/memotron/library/search/GroupItem.svelte";
 
-  export let searchCallback: (query: string, resourceType: Resource) => void;
-  export let groups: any[] = [];
-  export let isDefaultState: boolean = false;
+  let {
+    searchCallback,
+    groups = [],
+    isDefaultState = false,
+    onExpand = undefined,
+    onSelect = undefined
+  }: {
+    searchCallback: (query: string, resourceType: Resource) => void;
+    groups?: any[];
+    isDefaultState?: boolean;
+    onExpand?: ((event: CustomEvent<{ group: any }>) => void) | undefined;
+    onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
   let groupRefs: GroupItem[] = [];
-  let activeGroupIndex: number = 0;
+  let activeGroupIndex = $state(0);
 
   const groupSwitcherKeys = new Set([
     KeyboardKey.ARROW_LEFT,
@@ -85,8 +95,8 @@
       searchCallback={(query) => {
         return searchCallback(query, group.value);
       }}
-      on:expand
-      on:select
+      {onExpand}
+      {onSelect}
     />
   {/each}
 </div>

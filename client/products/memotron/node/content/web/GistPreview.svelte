@@ -2,14 +2,21 @@
   import type { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
   import type { IGist } from "@21n/products/memotron/node/node.type";
-  export let node: IGist;
-  export let accessPoint: ResourceAccessPoint;
-  $: accessPoint;
+  let {
+    node,
+    accessPoint
+  }: {
+    node: IGist;
+    accessPoint: ResourceAccessPoint;
+  } = $props();
+  void accessPoint;
 
-  let snippetContent = "";
-  let snippetMetadata: { title?: string; description?: string } | null = null;
-  let loading = true;
-  let error = "";
+  let snippetContent = $state("");
+  let snippetMetadata = $state<{ title?: string; description?: string } | null>(
+    null
+  );
+  let loading = $state(true);
+  let error = $state("");
 
   async function fetchGitLabSnippet(url: string) {
     try {
@@ -48,9 +55,11 @@
     return url.includes("gitlab.com/-/snippets");
   }
 
-  $: if (node.url && isGitLabSnippet(node.url)) {
-    fetchGitLabSnippet(node.url);
-  }
+  $effect(() => {
+    if (node.url && isGitLabSnippet(node.url)) {
+      fetchGitLabSnippet(node.url);
+    }
+  });
 </script>
 
 <div class="w-full h-full flex justify-center items-center">

@@ -7,8 +7,14 @@
   import { isProductsPanelOpen } from "@21n/landing/shared/store/shared.store";
   import IrregularTileItem from "@21n/landing/shared/tile/IrregularTileItem.svelte";
 
-  export let title: string;
-  export let items: ITileItem[];
+  let {
+    title,
+    items,
+  }: {
+    title: string;
+    items: ITileItem[];
+  } = $props();
+
   let list1 = items.slice(0, items.length / 2);
   let list2 = items.slice(items.length / 2, items.length);
 </script>
@@ -32,9 +38,4 @@
       {/each}
     </div>
   </div>
-  <!-- <Button
-    label="More Products"
-    icon="long-arrow-right"
-    on:click={() => ($isProductsPanelOpen = true)}
-  /> -->
 </Section>

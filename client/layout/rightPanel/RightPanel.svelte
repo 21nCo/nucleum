@@ -3,7 +3,7 @@
   import ComponentResolver from "../paint/ComponentResolver.svelte";
   import type { IAction } from "@21n/types/action.type";
   import { Size } from "@21n/types/size.enum";
-  export let action: IAction;
+  let { action }: { action: IAction } = $props();
 </script>
 
 <div

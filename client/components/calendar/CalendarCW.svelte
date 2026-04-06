@@ -11,26 +11,13 @@
 
 <main class="flex flex-col gap-6 w-full p-4 cw:pt-16">
   <!-- <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Calendar" /> -->
-  <!-- <DatePickerRow
-    density={Size.lg}
-    isDateMode={true}
-    date={selectedDate}
-    on:pageChange={(e) => {
-      console.log({ e });
-      viewDate = e.detail.viewDate;
-    }}
-    on:change={(e) => {
-      selectedDate = e.detail;
-      viewDate = selectedDate;
-    }}
-  /> -->
   <div class="flex flex-grow w-full">
     {#key selectedDate}
       <CalendarColumn
         scale={TimeScaleUnit.DAY}
         date={selectedDate}
         isCwContext={true}
-        on:dateChange={(e) => {
+        onDateChange={(e) => {
           if (e.detail) selectedDate = e.detail;
         }}
       />

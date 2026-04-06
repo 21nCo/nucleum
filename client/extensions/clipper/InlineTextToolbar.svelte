@@ -20,15 +20,24 @@
   import { Size } from "@21n/types/size.enum";
   import { Orientation } from "@21n/types/direction.enum";
   import { cn } from "@21n/utils/ui.utils";
-
-  export let id: string | null = null;
-  export let selectedHighlighterId: string | null = null;
-  export let feedback: { message: string; type: AlertType } | string = "";
+  let {
+    id = null,
+    selectedHighlighterId = $bindable(null),
+    feedback = $bindable(""),
+    onColor = undefined
+  }: {
+    id?: string | null;
+    selectedHighlighterId?: string | null;
+    feedback?: { message: string; type: AlertType } | string;
+    onColor?: ((highlighter: any) => void) | undefined;
+  } = $props();
   let isLinkboxOpened = false;
   let isNotesOpened = false;
   let clip: any;
   let notes: string = "";
-  $: if (id) refreshClip(id, $webpage.clips);
+  $effect(() => {
+    if (id) refreshClip(id, $webpage.clips);
+  });
   function refreshClip(id: string, clips: any[] | undefined = undefined) {
     if (!clips) {
       clips = $webpage.clips;
@@ -136,7 +145,7 @@
 >
   <div class="flex justify-center items-center gap-3">
     <!-- TODO test colors change from pdf annotator changes -->
-    <HighlightColors bind:selected={selectedHighlighterId} on:color />
+    <HighlightColors bind:selected={selectedHighlighterId} {onColor} />
     {#if id}
       <Divider orientation={Orientation.Vertical} />
       <!-- <Button
@@ -151,7 +160,7 @@
         tooltip={notes ? "View notes" : "Add notes"}
         bind:on={isNotesOpened}
         bgSize={Size.sm}
-        on:change={(e) => {
+        onChange={(e) => {
           if (e.detail) isLinkboxOpened = false;
         }}
       />
@@ -159,7 +168,7 @@
         icon="trash"
         tooltip="Delete clip"
         type={ButtonVariant.DANGER}
-        on:click={async () => {
+        onclick={async () => {
           let result = await webpage.removeClip(id);
           feedback = result?.message
             ? result
@@ -169,16 +178,15 @@
     {/if}
   </div>
   {#if isLinkboxOpened}
-    <LinkBoxOnClipper on:link={onLink} />
+    <LinkBoxOnClipper onLink={onLink} />
     <LinkItems
       links={clip?.links}
       isWrapItems={true}
       nodeId={id}
       propertyValues={clip?.properties}
-      on:propertyChange={onPropertyUpdate}
+      onPropertyChange={onPropertyUpdate}
       isExpandable={true}
-      on:click
-      on:unlink={async (e) => {
+      onUnlink={async (e) => {
         feedback = "Removing link...";
         let result;
         if (e.detail) result = await webpage.removeLinkForClip(id, e.detail);
@@ -190,12 +198,11 @@
     />
   {/if}
   {#if isNotesOpened}
-    <!--TODO: Fix on:input event not accounting the last character -->
     <div class="w-full overflow-y-auto">
       <InlineMarkdownTextInput
         placeholder="Add notes"
         bind:content={notes}
-        on:change={debouncedNotesChange}
+        onChange={debouncedNotesChange}
       />
     </div>
   {/if}

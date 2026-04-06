@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { cn } from "@21n/utils/ui.utils";
   import { appStore } from "@21n/stores/app.store";
@@ -7,12 +9,17 @@
   import { resolveTrialDaysLeft } from "@21n/components/subscription/userPlan.utils";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { Orientation } from "@21n/types/direction.enum";
-  export let orientation: Orientation = Orientation.Horizontal;
+  let {
+    orientation = Orientation.Horizontal
+  }: {
+    orientation?: Orientation;
+  } = $props();
 
-  $: trialDaysLeft =
+  let trialDaysLeft = $derived(
     $account.plan?.plan === PlanType.TRIAL
       ? resolveTrialDaysLeft($account.plan)
-      : undefined;
+      : undefined
+  );
 </script>
 
 {#if trialDaysLeft !== undefined && trialDaysLeft !== null && trialDaysLeft < 15}
@@ -27,7 +34,7 @@
         "hover:bg-ass2/10 border-ass1/50 text-ass1": !isTrialExpired
       }
     )}
-    on:click={() =>
+    onclick={() =>
       appStore.runAction(Action.SETTINGS, {
         searchParams: {
           [AppSearchParam.SETTING]: Action.USER_BILLING

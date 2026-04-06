@@ -1,4 +1,6 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
+  import type { MouseEventHandler } from "svelte/elements";
   import { Size } from "@21n/types/size.enum";
   import Icon from "@21n/elements/Icon.svelte";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
@@ -12,44 +14,75 @@
   import type { IKeyboardShortcut } from "@21n/components/shortcuts/shortcut.type";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
   import ButtonTooltip from "@21n/elements/button/ButtonTooltip.svelte";
-  export let parentBgIndex: number = 1;
-  export let label: string | undefined = undefined;
-  export let className: string = "";
-  export { className as class };
-  export let variant: ButtonVariant = ButtonVariant.SECONDARY;
-  /** button type description to be rendered in stories and code editor tooltips*/
-  export let type: "primary" | "secondary" | "danger" | ButtonVariant = variant;
-  export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
-  export let isExpandToFullWidth: boolean = false;
-  export let style: ButtonStyle = ButtonStyle.DEFAULT;
-  export let icon: string | undefined = undefined;
-  export let isDisabled: boolean = false;
-  export let tooltip: string | undefined = undefined;
-  export let isPreventMinWidth: boolean = false;
-  export let tooltipOptions: IPopoverRenderBaseParams = {
-    placement: Placement.BottomCenter,
-    offsetInPx: 4,
-    isSpanToTriggerWidth: false,
-    isUseAbsolutePositioning: false
-  };
-  export let isLoading: boolean = false;
-  /**
-   * Applicable when {@link ButtonStyle.PLAIN} style is choosen
-   */
-  export let isUnderlined: boolean = false;
-  export let id: string = "";
-  export let ariaLabel: string | undefined = undefined;
-  /** Optional test id for e2e (e.g. data-testid) */
-  export let testId: string | undefined = undefined;
+
+  let {
+    parentBgIndex = 1,
+    label = undefined,
+    class: className = "",
+    variant = ButtonVariant.SECONDARY,
+    type: buttonType = undefined,
+    size = Size.md,
+    isExpandToFullWidth = false,
+    style = ButtonStyle.DEFAULT,
+    icon = undefined,
+    isDisabled = false,
+    tooltip = undefined,
+    isPreventMinWidth = false,
+    tooltipOptions = {
+      placement: Placement.BottomCenter,
+      offsetInPx: 4,
+      isSpanToTriggerWidth: false,
+      isUseAbsolutePositioning: false
+    },
+    isLoading = false,
+    isUnderlined = false,
+    id = "",
+    ariaLabel = undefined,
+    testId = undefined,
+    isHovering = $bindable(false),
+    shortcut = undefined,
+    badge = undefined,
+    isBoxed = false,
+    onclick = undefined,
+    onmousedown = undefined,
+    children = undefined
+  }: {
+    parentBgIndex?: number;
+    label?: string | undefined;
+    class?: string;
+    variant?: ButtonVariant;
+    type?: "primary" | "secondary" | "danger" | ButtonVariant | undefined;
+    size?: Size.xs | Size.sm | Size.md | Size.lg;
+    isExpandToFullWidth?: boolean;
+    style?: ButtonStyle;
+    icon?: string | undefined;
+    isDisabled?: boolean;
+    tooltip?: string | undefined;
+    isPreventMinWidth?: boolean;
+    tooltipOptions?: IPopoverRenderBaseParams;
+    isLoading?: boolean;
+    isUnderlined?: boolean;
+    id?: string;
+    ariaLabel?: string | undefined;
+    testId?: string | undefined;
+    isHovering?: boolean;
+    shortcut?: string | IKeyboardShortcut | undefined;
+    badge?: string | undefined;
+    isBoxed?: boolean;
+    onclick?: MouseEventHandler<HTMLButtonElement> | undefined;
+    onmousedown?: MouseEventHandler<HTMLButtonElement> | undefined;
+    children?: Snippet | undefined;
+  } = $props();
+
   let buttonRef: any;
-  export let isHovering: boolean = false;
-  export let shortcut: string | IKeyboardShortcut | undefined = undefined;
-  export let badge: string | undefined = undefined;
-  export let isBoxed: boolean = false;
-  $: isIconOnlyButton = !label && !$$slots.default;
-  $: shortcutSize = size === Size.xs ? Size.sm : Size.md;
-  $: iconSize = size === Size.xs ? Size.sm : size;
-  $: iconClass = {
+  const hasDefaultContent = $derived(!!children);
+  const type = $derived(
+    (buttonType ?? variant) as "primary" | "secondary" | "danger" | ButtonVariant
+  );
+  const isIconOnlyButton = $derived(!label && !hasDefaultContent);
+  const shortcutSize = $derived(size === Size.xs ? Size.sm : Size.md);
+  const iconSize = $derived(size === Size.xs ? Size.sm : size);
+  const iconClass = $derived({
     "text-aps1":
       (style === ButtonStyle.OUTLINED && type === ButtonVariant.PRIMARY) ||
       (isHovering &&
@@ -68,7 +101,7 @@
       style === ButtonStyle.DEFAULT &&
       type === ButtonVariant.SECONDARY &&
       isHovering
-  };
+  });
 </script>
 
 <button
@@ -146,8 +179,12 @@
     ],
     className
   )}
-  on:click
-  on:mousedown
+  onclick={(event) => {
+    onclick?.(event);
+  }}
+  onmousedown={(event) => {
+    onmousedown?.(event);
+  }}
   bind:this={buttonRef}
   use:popover={{
     content: tooltip ? ButtonTooltip : "",
@@ -196,7 +233,7 @@
         <Badge text={badge} />
       {/if}
     {:else}
-      <slot />
+      {@render children?.()}
     {/if}
   {/if}
 </button>

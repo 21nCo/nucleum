@@ -8,10 +8,18 @@
   import { Size } from "@21n/types/size.enum";
   import Divider from "@21n/elements/Divider.svelte";
   import { Orientation } from "@21n/types/direction.enum";
-  export let topNavBarValues: ITopNavBar;
-  export let isStickied: boolean = false;
-  export let isShowCta: boolean = false;
-  export let isPreventSticky: boolean = false;
+  let {
+    topNavBarValues,
+    isStickied = false,
+    isShowCta = false,
+    isPreventSticky = false,
+  }: {
+    topNavBarValues: ITopNavBar;
+    isStickied?: boolean;
+    isShowCta?: boolean;
+    isPreventSticky?: boolean;
+  } = $props();
+
 </script>
 
 <div

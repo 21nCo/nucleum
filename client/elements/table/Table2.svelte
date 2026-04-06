@@ -18,25 +18,45 @@
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
   import Switch from "@21n/elements/toggle/Switch.svelte";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
   type TableRow = Record<string, any> & { id?: string | number };
-  export let columns: TableColumn[] = [];
-  export let data: TableRow[] = [];
-  export let actions: { action: TableCellDefaultAction; index: number }[] = [];
-  export let isStyled: boolean = false;
-  export let addAction: string | undefined = undefined;
-  export let id: string = "table";
-  export let width: string = "";
-  $: if (actions.length > 0) {
-    actions.forEach((action) => {
-      columns = [
-        ...columns.slice(0, action.index),
-        resolveDefaultAction(action.action),
-        ...columns.slice(action.index)
-      ].filter(isTableColumn);
-    });
-  }
+  let {
+    columns = [],
+    data = $bindable([]),
+    actions = [],
+    isStyled = false,
+    addAction = undefined,
+    id = "table",
+    width = "",
+    onSelect = undefined,
+    onMultiSelect = undefined,
+    onReorder = undefined,
+    onAdd = undefined
+  }: {
+    columns?: TableColumn[];
+    data?: TableRow[];
+    actions?: { action: TableCellDefaultAction; index: number }[];
+    isStyled?: boolean;
+    addAction?: string | undefined;
+    id?: string;
+    width?: string;
+    onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+    onMultiSelect?: ((event: CustomEvent<any>) => void) | undefined;
+    onReorder?: ((event: CustomEvent<DragDropEvent>) => void) | undefined;
+    onAdd?: ((event: CustomEvent<void>) => void) | undefined;
+  } = $props();
+  const renderColumns = $derived.by(() => {
+    let nextColumns = columns;
+    if (actions.length > 0) {
+      actions.forEach((action) => {
+        nextColumns = [
+          ...nextColumns.slice(0, action.index),
+          resolveDefaultAction(action.action),
+          ...nextColumns.slice(action.index)
+        ].filter(isTableColumn);
+      });
+    }
+    return nextColumns;
+  });
   function isTableColumn(column: TableColumn | undefined): column is TableColumn {
     return column !== undefined;
   }
@@ -65,7 +85,7 @@
           key: "circle",
           type: TableCellType.ACTION,
           action: (row: any) => {
-            dispatch("select", row);
+            onSelect?.(new CustomEvent("select", { detail: row }));
           }
         };
       case TableCellDefaultAction.MULTI_SELECT_ROW:
@@ -73,7 +93,7 @@
           key: "check",
           type: TableCellType.ACTION,
           action: (row: any) => {
-            dispatch("multiSelect", row);
+            onMultiSelect?.(new CustomEvent("multiSelect", { detail: row }));
           }
         };
     }
@@ -94,8 +114,8 @@
     return "actionTooltip" in column ? column.actionTooltip?.body : undefined;
   }
 
-  function onReorder(detail: DragDropEvent) {
-    dispatch("reorder", detail);
+  function handleReorder(detail: DragDropEvent) {
+    onReorder?.(new CustomEvent("reorder", { detail }));
   }
 </script>
 
@@ -108,11 +128,11 @@
     class={cn("grid gap-8 text-fgs3 text-left text-b2 rounded-md p-3", {
       "bg-bgs2": isStyled
     })}
-    style="grid-template-columns: {columns
+    style="grid-template-columns: {renderColumns
       .map((column) => `${resolveWidth(column)}fr`)
       .join(' ')}"
   >
-    {#each columns as column (column.key)}
+    {#each renderColumns as column (column.key)}
       <div
         class={cn("flex items-center gap-1", {
           "w-8": column.type === TableCellType.ACTION
@@ -134,19 +154,19 @@
       listId: id,
       draggedOverClass: "!outline-aps1",
       dragImage: "dragimage",
-      onDrop: onReorder
+      onDrop: handleReorder
     }}
   >
     {#each data as row, i (row.id)}
       <div
         class="grid gap-8 py-2 text-left outline outline-transparent rounded-md"
-        style="grid-template-columns: {columns
+        style="grid-template-columns: {renderColumns
           .map((column) => `${resolveWidth(column)}fr`)
           .join(' ')}"
         draggable="true"
         data-index={i}
       >
-        {#each columns as column}
+        {#each renderColumns as column}
           {#if column.type === TableCellType.TEXT_INPUT}
             <TextInput
               bind:value={row[column.key]}
@@ -175,7 +195,7 @@
             <Button
               icon={column.key}
               tooltip={resolveActionTooltip(column)}
-              on:click={() => resolveAction(column, row)}
+              onclick={() => resolveAction(column, row)}
             />
           {:else if column.type === TableCellType.CUSTOM && "component" in column}
             {@const componentProps =
@@ -188,11 +208,7 @@
                 params={{ row, ...componentProps }}
               />
             {:else}
-              <svelte:component
-                this={column.component}
-                {row}
-                {...componentProps}
-              />
+              <column.component {row} {...componentProps} />
             {/if}
           {:else}
             <div>{row[column.key] ?? "NA"}</div>
@@ -208,8 +224,8 @@
         icon="plus"
         style={ButtonStyle.PLAIN}
         type={ButtonVariant.SECONDARY}
-        on:click={() => {
-          dispatch("add");
+        onclick={() => {
+          onAdd?.(new CustomEvent("add"));
         }}
       />
     </div>

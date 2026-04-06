@@ -9,7 +9,12 @@
   import BarsScale from "@21n/icons-v2/svgSpinners/BarsScale.svelte";
   import BarsScaleMiddle from "@21n/icons-v2/svgSpinners/BarsScaleMiddle.svelte";
   import EclipseHalf from "@21n/icons-v2/svgSpinners/EclipseHalf.svelte";
-  export let icon: string;
+
+  let {
+    icon
+  }: {
+    icon: string;
+  } = $props();
 </script>
 
 {#if icon.includes("3-dots-fade")}

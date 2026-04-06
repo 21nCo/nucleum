@@ -4,10 +4,21 @@
   import type { IKeyboardShortcut } from "@21n/components/shortcuts/shortcut.type";
   import { fade } from "svelte/transition";
 
-  export let tooltip: string;
-  export let shortcut: string | IKeyboardShortcut | undefined = undefined;
-  export let size: Size.sm | Size.md = Size.md;
-  export let parentBgIndex: number = 1;
+    let {
+    tooltip,
+    shortcut = undefined,
+    size = Size.md,
+    parentBgIndex = 1,
+  }: {
+    tooltip: string;
+    shortcut?: string | IKeyboardShortcut | undefined;
+    size?: Size.sm | Size.md;
+    parentBgIndex?: number;
+  } = $props();
+
+  
+  
+  
 </script>
 
 <div

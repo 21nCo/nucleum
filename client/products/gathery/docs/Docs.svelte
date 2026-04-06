@@ -12,7 +12,7 @@
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import { docStore } from "$local/client/products/gathery/docs.store";
   import { GatheryEvent } from "@21n/types/gathery/gatheryEvent.enum";
-  export let searchInput = "";
+  let { searchInput = $bindable("") }: { searchInput?: string } = $props();
   docStore.refresh();
 </script>
 
@@ -32,8 +32,8 @@
       bind:inputValue={searchInput}
       placeholder="search docs"
       hideResetIcon={true}
-      on:search
-      on:reset={() => {
+      onSearch={() => {}}
+      onReset={() => {
         // isShowSearchBar = false;
       }}
     />
@@ -41,7 +41,7 @@
       label="Create new doc"
       size={Size.sm}
       type={ButtonVariant.PRIMARY}
-      on:click={() => {
+      onclick={() => {
         appStore.runAction(GatheryEvent.NEW_DOC);
       }}
     />
@@ -59,7 +59,7 @@
         {#each $docStore.docs as doc}
           <NodeThumbnail
             item={doc}
-            on:click={() => {
+            onClick={() => {
               appStore.toggleSearchParam({ doc: doc.id });
               appStore.runAction(GatheryEvent.OPEN_DOC, doc);
             }}

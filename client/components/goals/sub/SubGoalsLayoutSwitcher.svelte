@@ -2,7 +2,14 @@
   import { SubGoalsLayout } from "@21n/components/goals/goal.type";
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
   import { InputStyle } from "@21n/types/input.type";
-  export let layout: SubGoalsLayout | undefined = undefined;
+
+  let {
+    layout = $bindable(undefined),
+    onSelect = undefined
+  }: {
+    layout?: SubGoalsLayout | undefined;
+    onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
 </script>
 
 <div class="text-fgs3">
@@ -23,6 +30,6 @@
         label: "Steps"
       }
     ]}
-    on:select
+    {onSelect}
   />
 </div>

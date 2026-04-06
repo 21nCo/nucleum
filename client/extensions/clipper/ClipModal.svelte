@@ -17,8 +17,15 @@
   import { AlertType } from "@21n/types/notification.type";
   import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  export let clip: IClip;
-  export let onAction: (data: any) => Promise<any>;
+
+  let {
+    clip,
+    onAction
+  }: {
+    clip: IClip;
+    onAction: (data: any) => Promise<any>;
+  } = $props();
+
   let feedback: string | { message: string; type: AlertType } = "";
 
   let _clip = {
@@ -26,8 +33,8 @@
     isInEditMode: !clip.label
   };
 
-  async function onLabelChanges(e: CustomEvent) {
-    if (!e.detail || e.detail === undefined) return;
+  async function onLabelChanges(label: string) {
+    if (!label || label === undefined) return;
     feedback = {
       message: "Syncing changes...",
       type: AlertType.PROGRESS
@@ -35,7 +42,7 @@
     const result = await onAction({
       action: "label",
       clipId: clip.id,
-      label: e.detail
+      label
     });
     if (!result || result.error) {
       feedback = {
@@ -168,7 +175,7 @@
     y: 10,
     duration: 300
   }}
-  on:click={close}
+  onclick={close}
 >
   <div
     class="absolute inset-x-0 mx-auto bottom-4 bg-bgs1 w-[40rem] max-w-full h-[30rem] p-4 rounded-md shadow-md"
@@ -177,9 +184,9 @@
       <NodeTitle
         node={_clip}
         accessPoint={ResourceAccessPoint.CLIPPER}
-        on:labelChange={onLabelChanges}
-        on:editModeChange={(e) => {
-          _clip.isInEditMode = e.detail;
+        onLabelChange={onLabelChanges}
+        onEditModeChange={(value) => {
+          _clip.isInEditMode = value;
         }}
       />
       <div class="flex items-center gap-2">
@@ -188,7 +195,7 @@
             icon="edit"
             tooltip="Edit title"
             style={ButtonStyle.OUTLINED}
-            on:click={() => {
+            onclick={() => {
               _clip.isInEditMode = true;
             }}
           />
@@ -198,7 +205,7 @@
           tooltip="Delete bookmark"
           style={ButtonStyle.OUTLINED}
           type={ButtonVariant.DANGER}
-          on:click={() => {
+          onclick={() => {
             onAction({
               action: "delete",
               clipId: clip.id
@@ -211,12 +218,12 @@
           tooltip="Close"
           id="close-btn"
           style={ButtonStyle.OUTLINED}
-          on:click={() => close()}
+          onclick={() => close()}
         />
       </div>
     </div>
     <div class="flex flex-col gap-2 w-full h-96">
-      <LinkBoxOnClipper on:link={onLinkAction} />
+      <LinkBoxOnClipper onLink={onLinkAction} />
       <LinkItems
         links={_clip?.links}
         nodeId={_clip?.id}
@@ -225,15 +232,14 @@
         isExpandable={true}
         accessPoint={ResourceAccessPoint.CLIPPER}
         subContext="clipper-modal"
-        on:click
-        on:unlink={(e) => onLinkAction(e, "unlink")}
-        on:propertyChange={onPropertyChanges}
+        onUnlink={(e) => onLinkAction(e, "unlink")}
+        onPropertyChange={onPropertyChanges}
       />
       <div class="bg-bgs2 rounded-md flex-grow w-full py-1 px-2">
         <InlineMarkdownTextInput
           placeholder="Add notes"
           bind:content={_clip.notes}
-          on:debouncedChange={onNotesChange}
+          onDebouncedChange={onNotesChange}
         />
       </div>
       {#if feedback}

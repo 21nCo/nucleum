@@ -1,10 +1,8 @@
 <script lang="ts">
   import MacroIndicatorTIle from "@21n/components/calendar/calendarHeatmap/MacroIndicatorTIle.svelte";
-  export let data: any;
-  let [QD, QDData] = data;
-  $: {
-    [QD, QDData] = data;
-  }
+  let { data }: { data: any } = $props();
+  const QD = $derived(data[0]);
+  const QDData = $derived(data[1]);
 </script>
 
 <div id={QD} class="quad">

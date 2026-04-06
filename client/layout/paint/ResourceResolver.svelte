@@ -9,13 +9,24 @@
   import { appStore } from "@21n/stores/app.store";
   import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
   import { onMount } from "svelte";
-  export let id: string;
-  export let isFromSplitView: boolean = false;
-  export let componentParams: any = {};
-  export let accessMode: AccessMode = AccessMode.INLINE;
-  let refreshId: number = new Date().getTime();
+  let {
+    id,
+    isFromSplitView = false,
+    componentParams = {},
+    accessMode = AccessMode.INLINE
+  }: {
+    id: string;
+    isFromSplitView?: boolean;
+    componentParams?: any;
+    accessMode?: AccessMode;
+  } = $props();
+  let refreshId = $state<number>(new Date().getTime());
 
-  $: if (accessMode === AccessMode.TAB && id) setCurrentComponent();
+  $effect(() => {
+    if (accessMode === AccessMode.TAB && id) {
+      setCurrentComponent();
+    }
+  });
 
   onMount(() => {
     const reloadResourceHandler: EventListener = (event) => {

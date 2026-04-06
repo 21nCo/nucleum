@@ -1,9 +1,7 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import account from "@21n/stores/account.store";
   import { PlanType, BillingCycle } from "@21n/components/subscription/userPlan.type";
   import { Action } from "@21n/types/action.enum";
-  import { goto } from "$app/navigation";
   import Button from "@21n/elements/button/Button.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import { ButtonVariant } from "@21n/types/button.type";
@@ -19,21 +17,18 @@
   import PlanIcon from "@21n/components/subscription/elements/PlanIcon.svelte";
   import modalEvent from "@21n/components/modal/modal.store";
 
-  let currentPlanFeatures: Array<{ icon: string; label: string }> = [];
-  $: renewalDate = $account.plan?.plan
-    ? resolveNextRenewalDate($account.plan)
-    : undefined;
+  function resolveRenewalDate() {
+    return $account.plan?.plan ? resolveNextRenewalDate($account.plan) : undefined;
+  }
 
-  $: {
-    if ($account.plan?.plan) {
-      // Get features from the shared plans data
-      const selectedPlan = SUBSCRIPTION_PLANS.find(
-        (p) => p.type === $account.plan?.plan
-      );
-      if (selectedPlan) {
-        currentPlanFeatures = selectedPlan.features;
-      }
+  function resolveCurrentPlanFeatures() {
+    if (!$account.plan?.plan) {
+      return [];
     }
+    return (
+      SUBSCRIPTION_PLANS.find((plan) => plan.type === $account.plan?.plan)
+        ?.features ?? []
+    );
   }
 </script>
 
@@ -55,16 +50,16 @@
       </div>
     {/if}
 
-    {#if renewalDate}
+    {#if resolveRenewalDate()}
       <p class="text-sm text-fgs3 mb-8">
-        Next payment: {parseAndFormatDate(renewalDate)}
+        Next payment: {parseAndFormatDate(resolveRenewalDate())}
       </p>
     {/if}
 
     <div class="text-left">
       <h2 class="text-lg text-fgs1 mb-4">What's included:</h2>
       <ul class="space-y-3">
-        {#each currentPlanFeatures as feature}
+        {#each resolveCurrentPlanFeatures() as feature}
           <li class="flex items-center gap-2 text-fgs2">
             <Icon icon={feature.icon} size={Size.md} class="text-fgs1" />
             <span>
@@ -79,7 +74,7 @@
         type={ButtonVariant.PRIMARY}
         icon="rocket"
         label="Get started"
-        on:click={() => {
+        onclick={() => {
           modalEvent.hide(Action.PLAN_ONBOARDING);
           appStore.gotoPath("/");
         }}

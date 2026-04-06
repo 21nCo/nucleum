@@ -38,7 +38,14 @@
     message: undefined,
     type: StatusMessageType.DEFAULT
   };
-  $: if ($lastImportTime) refreshImportHistory();
+  $effect(() => {
+    const importTime = $lastImportTime;
+    if (importTime) {
+      queueMicrotask(() => {
+        void refreshImportHistory();
+      });
+    }
+  });
   function handleDeleteImportEntry(rowId: string) {
     confirmationNotification.notify({
       title: "Revert this import",

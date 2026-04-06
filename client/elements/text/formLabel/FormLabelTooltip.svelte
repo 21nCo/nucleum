@@ -8,8 +8,15 @@
   import { popover } from "@21n/actions/popover.action";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
   import view from "@21n/stores/view.store";
-  export let info: InputLabelInfoToolTip;
-  export let icon: string = "info";
+    let {
+    info,
+    icon = "info",
+  }: {
+    info: InputLabelInfoToolTip;
+    icon?: string;
+  } = $props();
+
+  
   let ref: HTMLElement;
 
   function resolveIconSize(size: Size | undefined): Size.sm | Size.md | Size.lg {
@@ -29,7 +36,7 @@
     callback: closeTooltip
   }}
   bind:this={ref}
-  on:click|stopPropagation
+  onclick={(event) => event.stopPropagation()}
   use:popover={{
     content: Tooltip,
     triggerMethod: $view.isConstrainedWidth

@@ -10,8 +10,13 @@
   import { formatTime } from "@21n/utils/time.utils";
   import { onMount } from "svelte";
   import { cn } from "@21n/utils/ui.utils";
-  export let label: "start" | "end" = "start";
-  export let context: SessionUIContext = SessionUIContext.DEFAULT;
+  let {
+    label = "start",
+    context = SessionUIContext.DEFAULT
+  }: {
+    label?: "start" | "end";
+    context?: SessionUIContext;
+  } = $props();
   let timeClassList = "";
   let labelClassList = "";
   let labelRef: HTMLElement;
@@ -68,7 +73,7 @@
           .composition?.type === SessionCompositionType.COUNTUP
           ? 'text--base px--2'
           : 'text--b3 px--2 py--[0.2rem]'}"
-        on:click={() =>
+        onclick={() =>
           appStore.runAction(PointronAction.COMPOSE_BY_END_TIME_MODAL)}
       >
         {#if $activeSession.composition?.type === SessionCompositionType.END_TIME_FIXED && $activeSession.end}

@@ -1,24 +1,43 @@
 <script lang="ts">
   import { appStore } from "@21n/stores/app.store";
   import { debouncer } from "@21n/utils/utils";
-  import { onMount, createEventDispatcher } from "svelte";
-  export let value: string;
-  const dispatch = createEventDispatcher();
-
-  let canvas: HTMLCanvasElement;
-  let ctx: CanvasRenderingContext2D | null = null;
-  let isDragging = false;
-  export let selectedColor = { r: 255, g: 0, b: 0, a: 1 };
+  import { onMount } from "svelte";
+  let {
+    value = $bindable(""),
+    selectedColor = { r: 255, g: 0, b: 0, a: 1 },
+    onChange = undefined,
+    onDebouncedChange = undefined
+  }: {
+    value?: string;
+    selectedColor?: { r: number; g: number; b: number; a: number };
+    onChange?:
+      | ((payload: {
+          rgb: { r: number; g: number; b: number; a: number };
+          hex: string;
+        }) => void)
+      | undefined;
+    onDebouncedChange?:
+      | ((payload: {
+          rgb: { r: number; g: number; b: number; a: number };
+          hex: string;
+        }) => void)
+      | undefined;
+  } = $props();
+  let canvas = $state<HTMLCanvasElement>();
+  let ctx = $state<CanvasRenderingContext2D | null>(null);
+  let isDragging = $state(false);
 
   onMount(() => {
+    if (!canvas) return;
     ctx = canvas.getContext("2d");
     if (!ctx) return;
     drawColorSpectrum();
   });
 
   function drawColorSpectrum() {
-    if (!ctx) return;
-    const gradient = ctx.createLinearGradient(0, 0, canvas.width, 0);
+    const activeCanvas = canvas;
+    if (!ctx || !activeCanvas) return;
+    const gradient = ctx.createLinearGradient(0, 0, activeCanvas.width, 0);
     gradient.addColorStop(0, "rgb(255, 0, 0)");
     gradient.addColorStop(1 / 6, "rgb(255, 255, 0)");
     gradient.addColorStop(2 / 6, "rgb(0, 255, 0)");
@@ -28,15 +47,20 @@
     gradient.addColorStop(1, "rgb(255, 0, 0)");
 
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, activeCanvas.width, activeCanvas.height);
 
-    const whiteGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    const whiteGradient = ctx.createLinearGradient(
+      0,
+      0,
+      0,
+      activeCanvas.height
+    );
     whiteGradient.addColorStop(0, "rgba(255, 255, 255, 1)");
     whiteGradient.addColorStop(0.5, "rgba(255, 255, 255, 0)");
     whiteGradient.addColorStop(1, "rgba(0, 0, 0, 0.5)");
 
     ctx.fillStyle = whiteGradient;
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(0, 0, activeCanvas.width, activeCanvas.height);
   }
 
   function handleMouseDown(event: MouseEvent) {
@@ -55,15 +79,16 @@
   }
 
   function updateColor(event: MouseEvent) {
-    if (!ctx) return;
-    const rect = canvas.getBoundingClientRect();
+    const activeCanvas = canvas;
+    if (!ctx || !activeCanvas) return;
+    const rect = activeCanvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     const imageData = ctx.getImageData(x, y, 1, 1);
     const [r, g, b] = imageData.data;
     selectedColor = { r, g, b, a: 1 };
     value = `#${selectedColor.r.toString(16).padStart(2, "0")}${selectedColor.g.toString(16).padStart(2, "0")}${selectedColor.b.toString(16).padStart(2, "0")}`;
-    dispatch("change", {
+    onChange?.({
       rgb: selectedColor,
       hex: value
     });
@@ -71,7 +96,7 @@
   }
 
   const debouncedChangePropagation = debouncer(() => {
-    dispatch("debouncedChange", {
+    onDebouncedChange?.({
       rgb: selectedColor,
       hex: value
     });
@@ -85,10 +110,10 @@
       width="400"
       height="250"
       class="cursor-crosshair rounded-lg shadow-inner"
-      on:mousedown={handleMouseDown}
-      on:mousemove={handleMouseMove}
-      on:mouseup={handleMouseUp}
-      on:mouseleave={handleMouseUp}
+      onmousedown={handleMouseDown}
+      onmousemove={handleMouseMove}
+      onmouseup={handleMouseUp}
+      onmouseleave={handleMouseUp}
     ></canvas>
     <div
       class="absolute inset-0 rounded-lg border border-brs3 shadow-sm pointer-events-none"

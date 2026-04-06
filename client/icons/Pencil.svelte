@@ -1,7 +1,13 @@
 <script lang="ts">
   import { IconVariant } from "@21n/types/icon.type";
-  export let variant: IconVariant = IconVariant.Outline;
-  export let isWithSquare: boolean = false;
+
+  let {
+    variant = IconVariant.Outline,
+    isWithSquare = false
+  }: {
+    variant?: IconVariant;
+    isWithSquare?: boolean;
+  } = $props();
 </script>
 
 {#if isWithSquare}

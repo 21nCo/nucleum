@@ -28,7 +28,7 @@
   import { logger } from "@21n/components/debug/logger.client";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import EmbedLibrarySearch from "@21n/components/markdown/embed/EmbedLibrarySearch.svelte";
-  import { createEventDispatcher, getContext } from "svelte";
+  import { getContext } from "svelte";
   import view from "@21n/stores/view.store";
   import {
     ActiveCaptureStore,
@@ -36,18 +36,26 @@
   } from "@21n/products/memotron/capture/capture.store";
   import { taskStore } from "@21n/components/tasks/task.store";
   import { Context } from "@21n/types/appStore.type";
-  const dispatch = createEventDispatcher();
   const nodeContext = getContext<any>(Context.NODE);
   const captureContext = getContext<any>(Context.CAPTURE);
-  let captureStore: IActiveCaptureStore | undefined;
-  $: if (nodeContext?.id || captureContext?.id) {
+  const captureStore = $derived.by<IActiveCaptureStore | undefined>(() => {
+    if (!nodeContext?.id && !captureContext?.id) return undefined;
     const id = nodeContext?.id
       ? nodeContext?.id + "capture"
       : captureContext?.id;
-    captureStore = ActiveCaptureStore.resolve(id);
-  }
-  export let linkInputValue = "";
-  export let subType: NodeType | undefined;
+    return ActiveCaptureStore.resolve(id);
+  });
+  let {
+    linkInputValue = $bindable(""),
+    subType,
+    onLinkInput = undefined,
+    onSelect = undefined
+  }: {
+    linkInputValue?: string;
+    subType?: NodeType | undefined;
+    onLinkInput?: ((event: CustomEvent<string>) => void) | undefined;
+    onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
   let librarySearchPopoverRef: HTMLElement | undefined = undefined;
   const commonButtonParams: IButtonParams = {
     size: Size.sm,
@@ -88,12 +96,26 @@
     NodeType.YOUTUBE_CHANNEL
   ];
 
-  let error: string | undefined = undefined;
-  let isSaveInProgress: boolean = false;
-  let isAudioCaptureInProgress: boolean = false;
+  let error = $state<string | undefined>(undefined);
+  let isSaveInProgress = $state(false);
+  let isAudioCaptureInProgress = $state(false);
   let ref: HTMLElement | undefined = undefined;
 
-  $: label = subType ? resolveLabel(subType) : undefined;
+  const label = $derived(subType ? resolveLabel(subType) : undefined);
+
+  function emitSelect(item: any) {
+    const selectEvent = new CustomEvent<any>("select", {
+      detail: item
+    });
+    onSelect?.(selectEvent);
+  }
+
+  function emitLinkInput() {
+    const linkInputEvent = new CustomEvent<string>("linkInput", {
+      detail: linkInputValue
+    });
+    onLinkInput?.(linkInputEvent);
+  }
 
   function resolveLabel(subType: NodeType) {
     if (nonUploadTypes.includes(subType)) {
@@ -108,11 +130,7 @@
   }
 
   function onSelectFromLibrary(event: CustomEvent) {
-    if (event.detail.item) dispatch("select", event.detail.item);
-  }
-
-  function onLinkInput() {
-    dispatch("linkInput", linkInputValue);
+    if (event.detail.item) emitSelect(event.detail.item);
   }
 
   async function handleDrop(
@@ -141,7 +159,7 @@
           isEmbedContext: true,
           creationContext: nodeContext?.id ?? undefined
         });
-        if (result) dispatch("select", result);
+        if (result) emitSelect(result);
       } else if (all.length > 1) {
         error = "Multiple files are not supported";
       }
@@ -169,9 +187,9 @@
     }
   }
 
-  function onAudioCaptureSave(e: CustomEvent) {
+  function onAudioCaptureSave(node: any) {
     isAudioCaptureInProgress = false;
-    dispatch("select", e.detail);
+    emitSelect(node);
   }
 
   async function onCreateNewTask() {
@@ -179,7 +197,7 @@
       label: "",
       isChecked: false
     });
-    if (Array.isArray(task) && task.length > 0) dispatch("select", task[0]);
+    if (Array.isArray(task) && task.length > 0) emitSelect(task[0]);
   }
 </script>
 
@@ -196,8 +214,8 @@
         {captureStore}
         accessPoint={ResourceAccessPoint.MARKDOWN_EMBED}
         creationContext={nodeContext?.id}
-        on:saved={onAudioCaptureSave}
-        on:clear={() => (isAudioCaptureInProgress = false)}
+        onSaved={onAudioCaptureSave}
+        onClear={() => (isAudioCaptureInProgress = false)}
       />
     {/if}
   </div>
@@ -264,7 +282,9 @@
         {#if (subType && webNodeTypeList.includes(subType) && !libraryOnlyTypesTemporary.includes(subType)) || !subType}
           <button
             class="flex justify-center items-center gap-3 mo:w-full w-3/4"
-            on:click|stopPropagation
+            onclick={(event) => {
+              event.stopPropagation();
+            }}
           >
             <TextInput
               bind:value={linkInputValue}
@@ -276,7 +296,7 @@
               icon="proceed"
               type={ButtonVariant.PRIMARY}
               style={ButtonStyle.OUTLINED}
-              on:click={onLinkInput}
+              onclick={emitLinkInput}
             />
           </button>
         {/if}
@@ -300,7 +320,7 @@
                 icon="microphone"
                 {...commonButtonParams}
                 type={ButtonVariant.PRIMARY}
-                on:click={() => (isAudioCaptureInProgress = true)}
+                onclick={() => (isAudioCaptureInProgress = true)}
               />
             {/if}
             <Button
@@ -310,7 +330,7 @@
               icon="upload"
               {...commonButtonParams}
               type={ButtonVariant.PRIMARY}
-              on:click={() => {
+              onclick={() => {
                 ref?.dispatchEvent(new CustomEvent("browse"));
               }}
             />
@@ -321,11 +341,13 @@
               icon="plus"
               {...commonButtonParams}
               type={ButtonVariant.PRIMARY}
-              on:click={onCreateNewTask}
+              onclick={onCreateNewTask}
             />
           {/if}
           <button
-            on:click|stopPropagation
+            onclick={(event) => {
+              event.stopPropagation();
+            }}
             bind:this={librarySearchPopoverRef}
             use:popover={{
               content: EmbedLibrarySearch,

@@ -17,10 +17,17 @@
     Context.CONTAINER,
     containerStore
   );
-  export let action: IAction | null = null;
-  export let path: string = "";
-  export let params: any = {};
-  export let isPreventErrorFeedback: boolean = false;
+  let {
+    action = null,
+    path = "",
+    params = {},
+    isPreventErrorFeedback = false
+  }: {
+    action?: IAction | null;
+    path?: string;
+    params?: any;
+    isPreventErrorFeedback?: boolean;
+  } = $props();
 
   let containerElement: HTMLDivElement | undefined;
 
@@ -55,11 +62,13 @@
   });
 </script>
 
-{#if $context.isSheet && action}
+{#if $context.isSheet && action?.component}
+  {@const ResolvedComponent = action.component}
   <ModalLayout path={action.action} params={action.modalParams ?? {}}>
-    <svelte:component this={action?.component} {...params} />
+    <ResolvedComponent {...params} />
   </ModalLayout>
 {:else if action?.component}
+  {@const ResolvedComponent = action.component}
   <div
     bind:this={containerElement}
     class="flex justify-center w-full h-full"
@@ -67,7 +76,7 @@
       containerStore.set(e);
     }}
   >
-    <svelte:component this={action?.component} {...params} />
+    <ResolvedComponent {...params} />
   </div>
 {:else if !isPreventErrorFeedback}
   <PageError isNotFoundPage={true} />

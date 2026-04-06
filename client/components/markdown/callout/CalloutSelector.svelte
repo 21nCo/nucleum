@@ -6,9 +6,15 @@
   import { cn } from "@21n/utils/ui.utils";
   import { markdownSettings } from "@21n/components/markdown/markdown.settings";
   import type { ICalloutSetting } from "@21n/components/markdown/md.type";
-  export let selected: ICalloutSetting;
-  export let onSelect: (callout: ICalloutSetting) => void;
-  export let onEdit: () => void;
+  let {
+    selected = $bindable(),
+    onSelect,
+    onEdit
+  }: {
+    selected?: ICalloutSetting;
+    onSelect?: (callout: ICalloutSetting) => void;
+    onEdit?: () => void;
+  } = $props();
 </script>
 
 <div
@@ -23,7 +29,7 @@
         selected?.id === callout.id && "bg-ccs4",
         selected?.id !== callout.id && "hover:bg-ccs4"
       )}
-      on:click={() => {
+      onclick={() => {
         selected = callout;
         onSelect?.(callout);
       }}
@@ -38,7 +44,7 @@
       label="Edit"
       size={Size.xs}
       isPreventMinWidth={true}
-      on:click={() => {
+      onclick={() => {
         onEdit?.();
       }}
     />

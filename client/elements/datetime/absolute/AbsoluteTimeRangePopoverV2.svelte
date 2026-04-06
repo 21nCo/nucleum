@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import Divider from "@21n/elements/Divider.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import dayjs from "dayjs";
@@ -9,17 +9,16 @@
   import { abg, bg, cn } from "@21n/utils/ui.utils";
   import { isSameDay } from "@21n/utils/time.utils";
   import DateInputBox from "@21n/elements/datetime/absolute/DateInputBox.svelte";
-
-  const dispatch = createEventDispatcher();
-
-  export let parentBgIndex: number = 0;
-  export let isDatePickerMode: boolean = false;
-  export let selectedDate: Date = new Date();
-  export let isInline: boolean = false;
-  export let initialStartDate: Date | null = null;
-  export let initialEndDate: Date | null = null;
-  export let onDateChange: (val: Date) => void;
-  export let onRangeChange: (val: { start: string; end: string }) => void;
+  let {
+    parentBgIndex = 0,
+    isDatePickerMode = false,
+    selectedDate = new Date(),
+    isInline = false,
+    initialStartDate = null,
+    initialEndDate = null,
+    onDateChange,
+    onRangeChange
+  }: any = $props();
 
   const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
   const MONTHS = Array.from({ length: 12 }, (_, i) =>
@@ -27,25 +26,29 @@
   );
 
   let today = dayjs();
-  let currentView = isDatePickerMode
+  let currentView = $state(
+    isDatePickerMode
     ? dayjs(selectedDate)
     : initialStartDate && dayjs(initialStartDate).isValid()
       ? dayjs(initialStartDate)
-      : dayjs();
-  let selectedYear = currentView.year();
+      : dayjs()
+  );
+  let selectedYear = $state(currentView.year());
 
-  let startDate: dayjs.Dayjs | null =
+  let startDate = $state<dayjs.Dayjs | null>(
     initialStartDate && dayjs(initialStartDate).isValid()
       ? dayjs(initialStartDate)
-      : null;
-  let endDate: dayjs.Dayjs | null =
+      : null
+  );
+  let endDate = $state<dayjs.Dayjs | null>(
     initialEndDate && dayjs(initialEndDate).isValid()
       ? dayjs(initialEndDate)
-      : null;
-  let isSelectingEnd = false;
-  let isSelectingStart = true;
-  $: selectedMonth = currentView.month();
-  $: calendarRows = generateCalendarRows(currentView);
+      : null
+  );
+  let isSelectingEnd = $state(false);
+  let isSelectingStart = $state(true);
+  const selectedMonth = $derived(currentView.month());
+  const calendarRows = $derived(generateCalendarRows(currentView));
 
   onMount(() => {
     dayjs.locale("en");
@@ -140,12 +143,10 @@
   }
 
   function dispatchDateChange(val: Date) {
-    dispatch("change", val);
     if (onDateChange) onDateChange(val);
   }
 
   function dispatchRangeChange(val: { start: string; end: string }) {
-    dispatch("rangePicked", val);
     if (onRangeChange) onRangeChange(val);
   }
 
@@ -275,6 +276,30 @@
       }
     }
   }
+
+  function onStartInputChange(value: string) {
+    handleDateInput(value, true);
+  }
+
+  function onStartClear(event: MouseEvent) {
+    handleClearClick(true, event);
+  }
+
+  function onStartBoxClick(event: MouseEvent) {
+    setSelectionMode(false, event);
+  }
+
+  function onEndInputChange(value: string) {
+    handleDateInput(value, false);
+  }
+
+  function onEndClear(event: MouseEvent) {
+    handleClearClick(false, event);
+  }
+
+  function onEndBoxClick(event: MouseEvent) {
+    setSelectionMode(true, event);
+  }
 </script>
 
 <button
@@ -283,7 +308,7 @@
     "p-3 cw:rounded-none rounded-md cw:shadow-none shadow-lg cw:border-none border border-brs2":
       !isInline
   })}
-  on:click|stopPropagation
+  onclick={(event) => event.stopPropagation()}
 >
   {#if !isDatePickerMode}
     <div class="flex w-full gap-4">
@@ -292,18 +317,18 @@
         isActive={isSelectingStart && !isSelectingEnd}
         selectedDate={startDate}
         label="Start"
-        onInputChange={(value) => handleDateInput(value, true)}
-        onClear={(e) => handleClearClick(true, e)}
-        onBoxClick={(e) => setSelectionMode(false, e)}
+        onInputChange={onStartInputChange}
+        onClear={onStartClear}
+        onBoxClick={onStartBoxClick}
       />
       <DateInputBox
         {parentBgIndex}
         isActive={isSelectingEnd}
         selectedDate={endDate}
         label="End"
-        onInputChange={(value) => handleDateInput(value, false)}
-        onClear={(e) => handleClearClick(false, e)}
-        onBoxClick={(e) => setSelectionMode(true, e)}
+        onInputChange={onEndInputChange}
+        onClear={onEndClear}
+        onBoxClick={onEndBoxClick}
       />
     </div>
     <Divider />
@@ -313,7 +338,7 @@
       <Button
         icon="chevron-left"
         size={Size.xs}
-        on:click={() => navigateYear(-1)}
+        onclick={() => navigateYear(-1)}
       />
       <input
         type="number"
@@ -321,25 +346,14 @@
         max="2100"
         class={cn("w-20 px-2 py-1 rounded-md", bg(parentBgIndex + 1))}
         value={selectedYear}
-        on:change={handleYearChange}
+        onchange={handleYearChange}
       />
       <Button
         icon="chevron-right"
         size={Size.xs}
-        on:click={() => navigateYear(1)}
+        onclick={() => navigateYear(1)}
       />
     </div>
-    <!-- {#if !isSameDay(selectedDate, new Date())}
-      <Button
-        icon="calendar"
-        label="Today"
-        size={Size.xs}
-        on:click={() => {
-          currentView = today;
-          selectedYear = today.year();
-        }}
-      />
-    {/if} -->
   </div>
 
   <div class="grid grid-rows-2 gap-1 w-full">
@@ -350,7 +364,7 @@
             "px-1.5 py-1 rounded-md text-b3 transition-colors",
             i === selectedMonth ? abg() : "hover:bg-bgs2"
           )}
-          on:click={() => selectMonth(i + 1)}
+          onclick={() => selectMonth(i + 1)}
         >
           {month}
         </button>
@@ -363,7 +377,7 @@
             "px-1.5 py-1 rounded-md text-b3 transition-colors",
             i + 6 === selectedMonth ? abg() : "hover:bg-bgs2"
           )}
-          on:click={() => selectMonth(i + 7)}
+          onclick={() => selectMonth(i + 7)}
         >
           {month}
         </button>
@@ -387,7 +401,7 @@
         </tr>
       </thead>
       <tbody>
-        {#each generateCalendarRows(currentView) as week}
+        {#each calendarRows as week}
           <tr>
             {#each week as day}
               <td class="p-0">
@@ -431,7 +445,7 @@
                             !date.isSame(endDate, "day")
                         }
                       )}
-                      on:click={() => selectDay(day)}
+                      onclick={() => selectDay(day)}
                     >
                       {day}
                     </button>

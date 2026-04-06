@@ -1,48 +1,43 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-
-  export let variant: "accent" | "subtle" | "primary" = "primary";
-  export let size: number = 35;
-  export let shape: "circle" | "triangle" | "hexagon" = "circle";
-
-  let cssRoot: HTMLElement | null;
-
-  $: threadColor =
+  let {
+    variant = "primary",
+    size = 35,
+    shape = "circle",
+  }: {
+    variant?: "accent" | "subtle" | "primary";
+    size?: number;
+    shape?: "circle" | "triangle" | "hexagon";
+  } = $props();
+  let cssRoot: HTMLDivElement | undefined = undefined;
+  const threadColor = $derived(
     variant === "accent"
       ? "rgba(var(--colors-aps1), 0.5)"
       : variant === "subtle"
         ? "rgba(var(--colors-fgs3), 0.4)"
-        : "rgba(var(--colors-fgs1), 0.45)";
-
-  $: bgColor =
+        : "rgba(var(--colors-fgs1), 0.45)"
+  );
+  const bgColor = $derived(
     variant === "accent"
       ? "rgba(var(--colors-aps2), 0.05)"
       : variant === "subtle"
         ? "rgba(var(--colors-bgs3), 0.5)"
-        : "rgba(var(--colors-bgs2), 0.5)";
-
-  $: clipPath =
+        : "rgba(var(--colors-bgs2), 0.5)"
+  );
+  const clipPath = $derived(
     shape === "circle"
       ? "circle(50% at 50% 50%)"
       : shape === "triangle"
         ? "polygon(50% 0%, 0% 100%, 100% 100%)"
-        : "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
+        : "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"
+  );
 
-  onMount(() => {
-    if (cssRoot) {
-      cssRoot.style.setProperty("--thread-size", `${size}px`);
-      cssRoot.style.setProperty("--thread-color", threadColor);
-      cssRoot.style.setProperty("--thread-bg", bgColor);
-      cssRoot.style.setProperty("--clip-path", clipPath);
-    }
-  });
-
-  $: if (cssRoot) {
+  $effect(() => {
+    if (!cssRoot) return;
     cssRoot.style.setProperty("--thread-color", threadColor);
     cssRoot.style.setProperty("--thread-bg", bgColor);
     cssRoot.style.setProperty("--clip-path", clipPath);
     cssRoot.style.setProperty("--thread-size", `${size}px`);
-  }
+  });
 </script>
 
 <div bind:this={cssRoot} class="threads-container">

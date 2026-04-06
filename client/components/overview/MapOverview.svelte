@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
+  import { mount, onMount, onDestroy } from "svelte";
   import maplibregl from "maplibre-gl";
   import "maplibre-gl/dist/maplibre-gl.css";
   import MapItem from "@21n/components/overview/MapItem.svelte";
@@ -16,11 +16,16 @@
     metadata: any;
   }
 
-  export let data: MapDataPoint[] = [];
-  export let isShowHeatmap = false;
+  let {
+    data = [],
+    isShowHeatmap = false
+  }: {
+    data?: MapDataPoint[];
+    isShowHeatmap?: boolean;
+  } = $props();
 
-  let mapContainer: HTMLDivElement;
-  let map: maplibregl.Map;
+  let mapContainer = $state<HTMLDivElement | null>(null);
+  let map = $state<maplibregl.Map | null>(null);
 
   onMount(() => {
     initializeMap();
@@ -32,12 +37,17 @@
     }
   });
 
-  $: if (map && data) {
-    updateMapData(isShowHeatmap);
-  }
+  $effect(() => {
+    if (map && data) {
+      updateMapData(isShowHeatmap);
+    }
+  });
 
   function initializeMap() {
     try {
+      if (!mapContainer) {
+        return;
+      }
       map = new maplibregl.Map({
         container: mapContainer,
         style: mapTileStyles.osm as any,
@@ -59,13 +69,16 @@
 
   function updateMapData(isShowHeatmap: boolean) {
     try {
-      if (!map || !data || data.length === 0) return;
+      const mapInstance = map;
+      if (!mapInstance || !data || data.length === 0) return;
 
-      if (map.getSource("nodes")) {
+      if (mapInstance.getSource("nodes")) {
         try {
-          if (map.getLayer("nodes-layer")) map.removeLayer("nodes-layer");
-          if (map.getLayer("heatmap-layer")) map.removeLayer("heatmap-layer");
-          map.removeSource("nodes");
+          if (mapInstance.getLayer("nodes-layer"))
+            mapInstance.removeLayer("nodes-layer");
+          if (mapInstance.getLayer("heatmap-layer"))
+            mapInstance.removeLayer("heatmap-layer");
+          mapInstance.removeSource("nodes");
         } catch (error) {
           console.error("Error removing existing map layers/sources:", error);
         }
@@ -104,13 +117,13 @@
           )
       };
 
-      map.addSource("nodes", {
+      mapInstance.addSource("nodes", {
         type: "geojson",
         data: geojsonData
       });
 
       if (isShowHeatmap) {
-        map.addLayer({
+        mapInstance.addLayer({
           id: "heatmap-layer",
           type: "heatmap",
           source: "nodes",
@@ -172,7 +185,7 @@
           }
         });
 
-        map.addLayer({
+        mapInstance.addLayer({
           id: "nodes-layer",
           type: "circle",
           source: "nodes",
@@ -194,7 +207,7 @@
           }
         });
       } else {
-        map.addLayer({
+        mapInstance.addLayer({
           id: "nodes-layer",
           type: "circle",
           source: "nodes",
@@ -208,7 +221,7 @@
         });
       }
 
-      map.on("click", "nodes-layer", (e) => {
+      mapInstance.on("click", "nodes-layer", (e) => {
         try {
           if (!e.features || !e.features[0]) return;
 
@@ -236,7 +249,7 @@
             metadata: properties?.metadata || {}
           };
 
-          new MapItem({
+          mount(MapItem, {
             target: popupContainer,
             props: {
               data: mapItemData
@@ -246,23 +259,23 @@
           new maplibregl.Popup()
             .setLngLat(coordinates)
             .setDOMContent(popupContainer)
-            .addTo(map);
+            .addTo(mapInstance);
         } catch (error) {
           console.error("Error handling map click:", error);
         }
       });
 
-      map.on("mouseenter", "nodes-layer", () => {
+      mapInstance.on("mouseenter", "nodes-layer", () => {
         try {
-          map.getCanvas().style.cursor = "pointer";
+          mapInstance.getCanvas().style.cursor = "pointer";
         } catch (error) {
           console.error("Error setting cursor:", error);
         }
       });
 
-      map.on("mouseleave", "nodes-layer", () => {
+      mapInstance.on("mouseleave", "nodes-layer", () => {
         try {
-          map.getCanvas().style.cursor = "";
+          mapInstance.getCanvas().style.cursor = "";
         } catch (error) {
           console.error("Error resetting cursor:", error);
         }
@@ -280,7 +293,7 @@
             }
           });
 
-          map.fitBounds(bounds, {
+          mapInstance.fitBounds(bounds, {
             padding: 50,
             maxZoom: 10
           });

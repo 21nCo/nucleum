@@ -3,13 +3,19 @@
   import { Action } from "@21n/types/action.enum";
   import { OperatingSystem } from "@21n/types/context.type";
   import Link from "@21n/elements/text/Link.svelte";
-  export let pretext: string = "By signing up, you agree to our";
-  $: tosLink =
+  let {
+    pretext = "By signing up, you agree to our",
+  }: {
+    pretext?: string;
+  } = $props();
+
+  const tosLink = $derived(
     $context.isEmbed &&
     ($context.os === OperatingSystem.IOS ||
       $context.os === OperatingSystem.MACOS)
       ? Action.TERMS_OF_SERVICE_APPLE
-      : Action.TERMS_OF_SERVICE;
+      : Action.TERMS_OF_SERVICE
+  );
 </script>
 
 <footer class="px-8">

@@ -6,11 +6,20 @@
     type IFwFeature,
     type IContemporary
   } from "@21n/types/featureWheel.type";
-  export let product: string;
-  export let title: string;
-  export let features: IFwFeature[];
-  export let categories: IFwCategory[];
-  export let contemporaries: IContemporary[];
+  let {
+    product,
+    title,
+    features,
+    categories,
+    contemporaries,
+  }: {
+    product: string;
+    title: string;
+    features: IFwFeature[];
+    categories: IFwCategory[];
+    contemporaries: IContemporary[];
+  } = $props();
+
 </script>
 
 <FeatureWheel

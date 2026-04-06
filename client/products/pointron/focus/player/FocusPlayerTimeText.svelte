@@ -14,7 +14,9 @@
   import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import type { IRecordId } from "@21n/types/data.type";
-  export let context: SessionUIContext = SessionUIContext.DEFAULT;
+
+  let { context = SessionUIContext.DEFAULT }: { context?: SessionUIContext } =
+    $props();
   let currentTask: { id: IRecordId; label: string } | undefined = undefined;
   onMount(() => {
     const sub = currentFocusItem.subscribe(async (s) => {
@@ -41,9 +43,10 @@
     }
   }
 
-  $: isBreakReminderMode =
+  let isBreakReminderMode = $derived(
     $activeSession.timeRemainingToTakeBreak != undefined &&
-    $activeSession.timeRemainingToTakeBreak < 0;
+      $activeSession.timeRemainingToTakeBreak < 0
+  );
 </script>
 
 <div class="flex flex-col items-start w-full">
@@ -76,6 +79,6 @@
 {#if currentTask}
   <ComponentBaseLayer
     subscribeToRecords={[currentTask?.id]}
-    on:change={() => refreshCurrentTask()}
+    onChange={() => refreshCurrentTask()}
   />
 {/if}

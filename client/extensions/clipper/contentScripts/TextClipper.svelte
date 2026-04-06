@@ -31,7 +31,6 @@
   let isShowInlineToolbar: boolean = false;
   let popoverPosition: { top: number; left: number } = { top: 0, left: 0 };
   let activeHighlighter: IHighlighter | null = null;
-  // export let page: any;
   let selectedClip: { highlighterId: string; id: string } | null = null;
   let selectedClipId: string = "";
   let inlineToolbarFeedback: { message: string; type: AlertType } | string = "";
@@ -265,21 +264,23 @@
     }
   }
 
-  export function onActivateColor(e: CustomEvent<IHighlighter | number>) {
-    logger.log({ at: "onActivateColor", e });
-    if (e.detail === 0) {
+  export function onActivateColor(
+    value: CustomEvent<IHighlighter | number> | IHighlighter | number
+  ) {
+    logger.log({ at: "onActivateColor", value });
+    const detail =
+      typeof value === "object" && value && "detail" in value
+        ? value.detail
+        : value;
+    if (detail === 0) {
       activeHighlighter = null;
-    } else if (typeof e.detail !== "number") {
-      activeHighlighter = e.detail;
+    } else if (typeof detail !== "number") {
+      activeHighlighter = detail;
     }
   }
-  async function onInlineColorSelection(
-    e: CustomEvent<IHighlighter>,
-    clip?: any
-  ) {
-    logger.log({ at: "onInlineColorSelection", detail: e.detail });
+  async function onInlineColorSelection(highlighter: IHighlighter, clip?: any) {
+    logger.log({ at: "onInlineColorSelection", detail: highlighter });
     try {
-      const highlighter = e.detail;
       const selection = window.getSelection();
       console.log({ selection, clip, highlighter });
       if (clip && isRecordId(clip.id)) {
@@ -338,8 +339,8 @@
   >
     {#if isShowInlineToolbar}
       <InlineTextToolbar
-        on:color={(e) => {
-          onInlineColorSelection(e, selectedClip);
+        onColor={(highlighter) => {
+          onInlineColorSelection(highlighter, selectedClip);
         }}
         bind:feedback={inlineToolbarFeedback}
         selectedHighlighterId={selectedClip?.highlighterId ?? ""}
@@ -356,4 +357,4 @@
   </div>
 {/if}
 
-<svelte:window on:scroll={onscroll} on:mouseup={onmouseup} />
+<svelte:window onscroll={onscroll} onmouseup={onmouseup} />

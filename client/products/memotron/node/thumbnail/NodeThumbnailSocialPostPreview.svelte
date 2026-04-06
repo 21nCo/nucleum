@@ -5,11 +5,19 @@
   import { Size } from "@21n/types/size.enum";
   import { NodeType } from "@21n/products/memotron/node/node.type";
   import { resolveNodeIcon } from "@21n/products/memotron/node/node.utils";
-  export let text: string;
-  export let contentType: NodeType;
-  export let isVertical: boolean = false;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  export let isFullExpand: boolean = false;
+  let {
+    text,
+    contentType,
+    isVertical = false,
+    accessPoint = ResourceAccessPoint.SELF,
+    isFullExpand = false
+  }: {
+    text: string;
+    contentType: NodeType;
+    isVertical?: boolean;
+    accessPoint?: ResourceAccessPoint;
+    isFullExpand?: boolean;
+  } = $props();
 </script>
 
 <p

@@ -1,26 +1,24 @@
 <script lang="ts">
-  import view from "@21n/stores/view.store";
-  import { onMount } from "svelte";
-  export let variant: "panel-refresh" | "page" = "page";
-  let cssRoot: any;
-  let width: any;
-  let margin: any;
-  onMount(() => {
-    cssRoot = document.querySelector("#pageLoadingAnim");
-  });
+  let {
+    variant = "page",
+  }: {
+    variant?: "panel-refresh" | "page";
+  } = $props();
 
-  $: circleFill = variant === "panel-refresh" ? "fill-fgs3" : "fill-fgs1";
-  $: svgBorder = variant === "panel-refresh" ? "border-fgs3" : "border-fgs1";
-  $: width = variant === "panel-refresh" ? 20 : 25;
-  $: if (cssRoot) {
-    margin = width / 2;
-    margin = width / 2;
-    width += "px";
-    margin = -margin;
-    margin += "px";
-    cssRoot.style.setProperty("--width", width);
-    cssRoot.style.setProperty("--margin", margin);
-  }
+  let cssRoot: SVGElement | undefined = undefined;
+  const circleFill = $derived(
+    variant === "panel-refresh" ? "fill-fgs3" : "fill-fgs1"
+  );
+  const svgBorder = $derived(
+    variant === "panel-refresh" ? "border-fgs3" : "border-fgs1"
+  );
+  const width = $derived(variant === "panel-refresh" ? 20 : 25);
+
+  $effect(() => {
+    if (!cssRoot) return;
+    cssRoot.style.setProperty("--width", `${width}px`);
+    cssRoot.style.setProperty("--margin", `${0 - width / 2}px`);
+  });
 </script>
 
 <svg
@@ -28,6 +26,7 @@
   xmlns="http://www.w3.org/2000/svg"
   fill="none"
   class={svgBorder}
+  bind:this={cssRoot}
   viewBox="0 0 100 100"
 >
   <circle class={circleFill} cx="50" cy="50" r="25" />

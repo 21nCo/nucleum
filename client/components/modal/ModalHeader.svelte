@@ -4,10 +4,20 @@
   import { ButtonStyle } from "@21n/types/button.type";
   import { TextStyle } from "@21n/types/text.enum";
   import { cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let title: string;
-  export let isShowClose: boolean = false;
+  let {
+    title,
+    isShowClose = false,
+    onClose = undefined
+  }: {
+    title: string;
+    isShowClose?: boolean;
+    onClose?: ((event: CustomEvent<void>) => void) | undefined;
+  } = $props();
+
+  function emitClose() {
+    const closeEvent = new CustomEvent<void>("close");
+    onClose?.(closeEvent);
+  }
 </script>
 
 <div
@@ -22,7 +32,7 @@
       <Button
         icon="cross"
         style={ButtonStyle.OUTLINED}
-        on:click={() => dispatch("close")}
+        onclick={() => emitClose()}
       />
     </div>
   {/if}

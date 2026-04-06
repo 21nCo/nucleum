@@ -1,12 +1,21 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { appearance } from "@21n/stores/appearance.store";
   import ThemeLayer from "@21n/layout/layers/themeLayer/ThemeLayer.svelte";
   import { cn } from "@21n/utils/ui.utils";
 
-  export let id: string;
+  let {
+    id,
+    isInlineExtensionContext = false,
+    children
+  }: {
+    id: string;
+    isInlineExtensionContext?: boolean;
+    children?: Snippet;
+  } = $props();
+
   let classList: string = "";
   export { classList as class };
-  export let isInlineExtensionContext: boolean = false;
 </script>
 
 <div
@@ -17,11 +26,15 @@
     $appearance.theme,
     $appearance.colorScheme.tailwindSelector
   )}
-  on:keydown|stopPropagation
-  on:keyup|stopPropagation
+  onkeydown={(event) => {
+    event.stopPropagation();
+  }}
+  onkeyup={(event) => {
+    event.stopPropagation();
+  }}
 >
   <ThemeLayer extensionContext={id} {isInlineExtensionContext}>
-    <slot />
+    {@render children?.()}
     <div id="popovers"></div>
     <div id="secondary-popovers"></div>
     <div id="tooltips"></div>

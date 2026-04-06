@@ -3,7 +3,7 @@
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
 
-  export let items: IListContentItem[];
+  let { items }: { items: IListContentItem[] } = $props();
 </script>
 
 <div class="flex flex-col gap-1 text-b2">

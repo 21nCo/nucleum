@@ -15,18 +15,23 @@
   import { universalPropertyOptions } from "@21n/components/collection/properties/property.store";
   import { resolveUniversalPropertyOptions } from "@21n/components/collection/properties/property.utils";
   import UniversalPropertyConfigPopover from "@21n/components/collection/properties/propertyConfig/universalProperty/UniversalPropertyConfigPopover.svelte";
-  export let property: IUniversalProperty;
-  export let isPopoverOpen: boolean = false;
+  let {
+    property,
+    isPopoverOpen = $bindable(false)
+  }: {
+    property: IUniversalProperty;
+    isPopoverOpen?: boolean;
+  } = $props();
   let ref: HTMLElement;
-  let options: IPropertyConfigOption[] = [];
-
-  $: isIconSelectType =
+  let isIconSelectType = $derived(
     property.config?.type &&
-    iconSelectPropertyTypes.includes(property.config.type);
-
-  $: if (property.config?.type) {
-    options = resolveUniversalPropertyOptions(property.config.type);
-  }
+      iconSelectPropertyTypes.includes(property.config.type)
+  );
+  let options = $derived.by(() =>
+    property.config?.type
+      ? resolveUniversalPropertyOptions(property.config.type)
+      : []
+  );
 
   function resolvePropertyIcon(type: UniversalPropertyType) {
     return (
@@ -53,7 +58,7 @@
       }
     }
   }}
-  on:change={(e) => {
+  onchange={(e) => {
     isPopoverOpen = e.detail?.open;
   }}
 >

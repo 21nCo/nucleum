@@ -57,8 +57,8 @@
     }
   }
 
-  function onSearch(event: CustomEvent<string>) {
-    query = event.detail;
+  function onSearch(nextQuery: string) {
+    query = nextQuery;
     if (query) {
       filteredCollections = collections.filter(
         (collection) =>
@@ -85,7 +85,7 @@
         <EmptyStatusView
           mainText="No collections found. Please create a new collection."
           actionText="Create new collection"
-          on:click={() => {
+          onclick={() => {
             appStore.runAction(
               resourceAction(Resource.collection, ResourceActionType.CREATE)
             );
@@ -94,7 +94,7 @@
       {:else}
         <InlineSearchBar
           bind:query
-          on:search={onSearch}
+          onSearch={onSearch}
           style={InputStyle.FILLED}
           placeholder="Search collections"
         />
@@ -110,7 +110,7 @@
             </div>
             <Switch
               bind:on={collection.isCaptureShortcutEnabled}
-              on:change={(e) => toggleShortcut(collection.id, e.detail)}
+              onChange={(e) => toggleShortcut(collection.id, e.detail)}
             />
           </div>
         {/each}

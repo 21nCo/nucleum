@@ -156,18 +156,6 @@
   </div>
 {/if}
 
-<!-- {#if $appStore.appData?.bottomRightAction && !$view.isPortrait}
-  <div class="fixed bottom-0 right-0 mr-6 mb-6">
-    <Button
-      icon={$appStore.appData?.bottomRightAction}
-      type={ButtonVariant.PRIMARY}
-      on:click={() => {
-        appStore.runAction($appStore.appData?.bottomRightAction);
-      }}
-    />
-  </div>
-{/if} -->
-
 {#if !$view.isPortrait && $player.isMiniOn}
   <div
     class={cn(
@@ -323,4 +311,4 @@
   </Modal>
 {/if}
 
-<svelte:document on:visibilitychange={visibilityChangeListener} />
+<svelte:document onvisibilitychange={visibilityChangeListener} />

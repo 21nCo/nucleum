@@ -1,10 +1,18 @@
 <script lang="ts">
   import TextWithHoverTooltip from "@21n/elements/text/TextWithHoverTooltip.svelte";
   import { textTruncateMapper } from "@21n/utils/utils";
-  export let hierarchy: string[] = [];
-  export let slice: number | undefined = undefined;
-  export let truncateLength: number = 15;
-  let val =
+  let {
+    hierarchy = [],
+    slice = undefined,
+    truncateLength = 15,
+    onclick = void 0
+  }: {
+    hierarchy?: string[];
+    slice?: number | undefined;
+    truncateLength?: number;
+    onclick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
+  const val = $derived(
     slice != undefined && slice <= hierarchy?.length
       ? [
           ...hierarchy
@@ -19,11 +27,12 @@
           .replace("・ ・ ・", "・・")
       : hierarchy
           .map((text) => textTruncateMapper(text, truncateLength))
-          .join(" ・ ");
+          .join(" ・ ")
+  );
 </script>
 
 {#if hierarchy?.length > 0}
-  <div class="text-start text-b4 truncate">
+  <div class="text-start text-b4 truncate" {onclick}>
     <TextWithHoverTooltip text={val} tooltip={hierarchy.join(" ・ ")} />
   </div>
 {/if}

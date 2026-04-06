@@ -1,47 +1,35 @@
 <script lang="ts">
-  import { createEventDispatcher, onDestroy, onMount } from "svelte";
   import type { IContextMenuItem } from "@21n/types/select.type";
   import { Placement } from "@21n/types/direction.enum";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
   import ContextMenuItemBase from "@21n/elements/contextMenu/ContextMenuItemBase.svelte";
-  import Popover from "@21n/elements/popover/Popover.svelte";
-  import { createEventPropagator } from "@21n/components/events/event.utils";
   import { popover } from "@21n/actions/popover.action";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
-  import { hoverable } from "@21n/actions/hover.action";
-  const dispatch = createEventDispatcher();
-  export let item: IContextMenuItem;
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
-  let popoverRef: any;
-  let isPopoverVisible: boolean = false;
+  let {
+    item,
+    size = Size.md,
+    onAction = undefined,
+    onSelect = undefined
+  }: {
+    item: IContextMenuItem;
+    size?: Size.sm | Size.md | Size.lg;
+    onAction?: ((event: CustomEvent<unknown>) => void) | undefined;
+    onSelect?: ((event: CustomEvent<unknown>) => void) | undefined;
+  } = $props();
+  let isPopoverVisible = $state(false);
 
-  function onSelect(value: unknown) {
-    dispatch("select", value);
+  function handleSelect(value: unknown) {
+    onSelect?.(new CustomEvent<unknown>("select", { detail: value }));
   }
 
-  function onAction(value: unknown) {
-    dispatch("action", value);
+  function handleAction(value: unknown) {
+    onAction?.(new CustomEvent<unknown>("action", { detail: value }));
   }
 
-  function onPopoverChange(e: Event) {
+  function handlePopoverChange(e: Event) {
     isPopoverVisible = (e as CustomEvent<{ open?: boolean }>).detail?.open ?? false;
   }
-
-  // const { getEventContext } = createEventPropagator("contextMenuAction");
-  // const { addEventListener, removeEventListener } = getEventContext();
-
-  // function handleParentEvent(detail: any) {
-  //   popoverRef.hide();
-  // }
-
-  // onMount(() => {
-  //   addEventListener("hideSecondaryMenu", handleParentEvent);
-  // });
-
-  // onDestroy(() => {
-  //   removeEventListener("hideSecondaryMenu", handleParentEvent);
-  // });
 </script>
 
 <button
@@ -52,15 +40,15 @@
     content: item.secondStepComponent?.component,
     isSecondary: true,
     componentProps: {
-      onSelect,
-      onAction,
+      onSelect: handleSelect,
+      onAction: handleAction,
       ...item.secondStepComponent?.props
     },
     groupId: "contextMenuPopoverSecondaryScreen",
     id: "contextMenuPopoverSecondaryScreen",
     classForHoverDismissal: "contextmenuitem"
   }}
-  on:change={onPopoverChange}
+  onchange={handlePopoverChange}
   class={cn(
     "contextmenuitem flex items-center gap-2.5 justify-between hover:bg-bgs3 rounded-md",
     {

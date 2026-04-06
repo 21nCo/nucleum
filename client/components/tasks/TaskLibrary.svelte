@@ -69,34 +69,44 @@
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { logger } from "@21n/components/debug/logger.client";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
-  export let goalId: IRecordId | undefined = undefined;
-  export let collectionId: IRecordId | undefined = undefined;
-  export let accessPoint: ResourceAccessPoint | undefined = undefined;
-  export let parentBgIndex: number = 1;
-  export let isPreventAddNew: boolean = false;
+
+  let {
+    goalId = undefined,
+    collectionId = undefined,
+    accessPoint = undefined,
+    parentBgIndex = 1,
+    isPreventAddNew = false
+  }: {
+    goalId?: IRecordId | undefined;
+    collectionId?: IRecordId | undefined;
+    accessPoint?: ResourceAccessPoint | undefined;
+    parentBgIndex?: number;
+    isPreventAddNew?: boolean;
+  } = $props();
+
   const instance = generateMiniRandomId();
-  let tasks: ITaskThumb[] = [];
+  let tasks = $state<ITaskThumb[]>([]);
   let searchStore = new SearchStore(Resource.task);
-  let searchQuery = "";
-  let searchInputRef: InlineSearchBar | undefined;
-  let isArchivedFilterSelected = false;
-  let isHideGoalTasksFilterSelected = false;
-  let dueDateFilter: TaskDueDateFilter = TaskDueDateFilter.ALL;
-  let isFiltersExpanded = false;
-  let selectedSubType: SubType = "all";
-  let selectedDate: Date = new Date();
-  let viewDate: Date = new Date();
-  let taskRecordsRef: TaskRecords | undefined;
-  let dateSelectionPopoverRef: HTMLButtonElement | undefined;
-  let isRefreshing = false;
-  let isInSelectionMode = false;
-  let isShowSearchBar = false;
-  let bulkEditChangeUnsub: (() => void) | undefined;
-  $: multiSelectContext = {
+  let searchQuery = $state("");
+  let searchInputRef = $state<InlineSearchBar | undefined>(undefined);
+  let isArchivedFilterSelected = $state(false);
+  let isHideGoalTasksFilterSelected = $state(false);
+  let dueDateFilter = $state<TaskDueDateFilter>(TaskDueDateFilter.ALL);
+  let isFiltersExpanded = $state(false);
+  let selectedSubType = $state<SubType>("all");
+  let selectedDate = $state(new Date());
+  let viewDate = $state(new Date());
+  let taskRecordsRef = $state<TaskRecords | undefined>(undefined);
+  let dateSelectionPopoverRef = $state<HTMLButtonElement | undefined>(undefined);
+  let isRefreshing = $state(false);
+  let isInSelectionMode = $state(false);
+  let isShowSearchBar = $state(false);
+  let bulkEditChangeUnsub = $state<(() => void) | undefined>(undefined);
+  const multiSelectContext = $derived.by(() => ({
     resource: Resource.task,
     accessPoint: resolveAccessPoint(),
     accessPointId: resolveAccessPointId()
-  };
+  }));
 
   function resolveBulkEditSubContext() {
     return selectedSubType + (isArchivedFilterSelected ? "archived" : "");
@@ -110,9 +120,11 @@
     });
   }
 
-  $: if (bulkEditStore.matchesContext(multiSelectContext)) {
-    resolveBulkEditorInstance();
-  }
+  $effect(() => {
+    if (bulkEditStore.matchesContext(multiSelectContext)) {
+      resolveBulkEditorInstance();
+    }
+  });
 
   function resolveFiltersExpandedState() {
     return (
@@ -211,7 +223,6 @@
         isIgnoreParentInactive: goalId ? true : false
       });
       if (isValidArray(result)) {
-        //TODO - for by_month case + overdue - the date filter has 2 conditions with AND operator - below is temporary fix until complex filters are implemented
         if (dueDateFilter === TaskDueDateFilter.OVERDUE) {
           result = result.filter((x: any) => {
             return (
@@ -319,7 +330,6 @@
   }
 
   function onResourceMutation(e: any) {
-    console.log("onResourceMutation  - task library", e);
     refresh();
   }
 
@@ -353,7 +363,7 @@
         if (taskRecordsRef) taskRecordsRef.scrollToDate(selectedDate);
       }, 100);
     } catch (e) {
-      console.error("Failed to scroll to date", e);
+      logger.error({ at: "TaskLibrary.scrollToDate", e });
     }
   }
 </script>
@@ -397,7 +407,7 @@
         bind:on={isFiltersExpanded}
         icon="ph:sliders-light"
         tooltip="Filters and options"
-        on:change={() => persistFiltersExpandedState()}
+        onChange={() => persistFiltersExpandedState()}
       />
     {/if}
     {#if !isPreventAddNew && ((!$view.isConstrainedWidth && accessPoint === ResourceAccessPoint.LIBRARY) || accessPoint === ResourceAccessPoint.GOAL)}
@@ -407,7 +417,7 @@
         style={ButtonStyle.OUTLINED}
         size={Size.md}
         isPreventMinWidth={true}
-        on:click={() => {
+        onclick={() => {
           appStore.runAction(PointronAction.CREATE_TASK_INLINE, {
             componentParams: {
               date:
@@ -440,9 +450,9 @@
           selected={dueDateFilter}
           size={Size.sm}
           style={OptionSelectorStyle.TRAIN}
-          on:select={(e) => {
-            if (!e?.detail) return;
-            dueDateFilter = e.detail;
+          onSelect={(event: CustomEvent<TaskDueDateFilter>) => {
+            if (!event.detail) return;
+            dueDateFilter = event.detail;
             refresh();
           }}
         />
@@ -452,7 +462,7 @@
           bind:checked={isHideGoalTasksFilterSelected}
           isExpanded={true}
           label={{ label: "Hide tasks with a goal" }}
-          on:change={() => refresh()}
+          onChange={() => refresh()}
         />
       {/if}
     </div>
@@ -479,7 +489,6 @@
           }
         }}
       >
-        <!-- <Icon icon="ph:calendar" /> -->
         {selectedSubType === TaskSubTypeForSwitcher.BY_DATE &&
         isSameDay(viewDate, selectedDate)
           ? parseAndFormatDate(viewDate)
@@ -493,11 +502,13 @@
         <DatePickerRow
           isDateMode={selectedSubType === TaskSubTypeForSwitcher.BY_DATE}
           date={selectedDate}
-          on:pageChange={(e) => {
-            viewDate = e.detail.viewDate;
+          onPageChange={(
+            event: CustomEvent<{ page: number; viewDate: Date }>
+          ) => {
+            viewDate = event.detail.viewDate;
           }}
-          on:change={(e) => {
-            selectedDate = e.detail;
+          onChange={(event: CustomEvent<Date>) => {
+            selectedDate = event.detail;
             viewDate = selectedDate;
             refresh({ scrollToDate: true });
           }}
@@ -510,7 +521,7 @@
       <InlineSearchBar
         bind:this={searchInputRef}
         bind:query={searchQuery}
-        on:search={() => refresh()}
+        onSearch={() => refresh()}
         padding={cn({
           "pl-4":
             !$view.isConstrainedWidth &&
@@ -546,7 +557,7 @@
       subType={selectedSubType}
       {isRefreshing}
       {searchQuery}
-      on:create={() => {
+      onCreate={() => {
         appStore.runAction(PointronAction.CREATE_TASK_INLINE, {
           componentParams: {
             date:
@@ -579,8 +590,8 @@
     RemovalProperty.TRASH_INFORMATION,
     "dateUnix"
   ]}
-  on:syncDown={() => {
+  onSyncDown={() => {
     refresh();
   }}
-  on:change={onResourceMutation}
+  onChange={onResourceMutation}
 />

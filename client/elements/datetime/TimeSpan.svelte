@@ -3,29 +3,38 @@
   import { popover } from "@21n/actions/popover.action";
   import { Placement } from "@21n/types/direction.enum";
   import TimeScaleSelector from "@21n/elements/datetime/TimeScaleSelector.svelte";
-  import { createEventDispatcher } from "svelte";
   import {
     calculateTimeSpan,
     getDaysCount,
     scaleThresholds
   } from "@21n/elements/datetime/datetime.utils";
-  const dispatch = createEventDispatcher();
 
-  export let start: Date;
-  export let end: Date;
-  export let scales: TimeScale[] = Object.values(TimeScale);
-  export let spanScale: TimeScale | undefined = undefined;
-  let ref: HTMLButtonElement | undefined;
-
-  $: timeSpan = calculateTimeSpan(start, end, scales, spanScale);
-  $: totalDays = getDaysCount(start, end);
-  $: availableScales = scales.filter(
-    (scale) => totalDays >= scaleThresholds[scale]
+  let {
+    start,
+    end,
+    scales = Object.values(TimeScale),
+    spanScale = undefined,
+    onChange = undefined
+  }: {
+    start: Date;
+    end: Date;
+    scales?: TimeScale[];
+    spanScale?: TimeScale | undefined;
+    onChange?: ((event: CustomEvent<TimeScale>) => void) | undefined;
+  } = $props();
+  let ref = $state<HTMLButtonElement | undefined>();
+  const timeSpan = $derived(calculateTimeSpan(start, end, scales, spanScale));
+  const totalDays = $derived(getDaysCount(start, end));
+  const availableScales = $derived(
+    scales.filter((scale: TimeScale) => totalDays >= scaleThresholds[scale])
   );
 
   function handleScaleSelect(scale: TimeScale) {
     spanScale = scale;
-    dispatch("change", scale);
+    const changeEvent = new CustomEvent<TimeScale>("change", {
+      detail: scale
+    });
+    onChange?.(changeEvent);
     hidePopover();
   }
 

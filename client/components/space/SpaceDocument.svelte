@@ -7,22 +7,44 @@
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { performApiCall } from "@21n/utils/network.utils";
   import type { IMarkdown } from "@21n/components/markdown/md.type";
-  export let params: { spaceId: string; documentId: string };
-  export let mdId = generateUID();
-  let document: INode;
-  let md: IMarkdown;
-  let isLoading: boolean = true;
-  let isValidDocIdNotPresent: boolean = false;
-  // console.log("SpaceDocument", spaceId, documentId);
-  $: if (params.spaceId && params.documentId) {
-    fetchDoc();
-  } else {
-    isValidDocIdNotPresent = true;
-  }
-  async function fetchDoc() {
+  let {
+    params,
+    mdId = generateUID()
+  }: {
+    params: { spaceId: string; documentId: string };
+    mdId?: string;
+  } = $props();
+  let document = $state<INode | undefined>(undefined);
+  let md = $state<IMarkdown | undefined>(undefined);
+  let isLoading = $state(true);
+  let isValidDocIdNotPresent = $state(false);
+  let requestVersion = 0;
+
+  $effect(() => {
+    const { spaceId, documentId } = params;
+    if (!spaceId || !documentId) {
+      isValidDocIdNotPresent = true;
+      isLoading = false;
+      document = undefined;
+      return;
+    }
+    isValidDocIdNotPresent = false;
+    isLoading = true;
+    document = undefined;
+    requestVersion += 1;
+    void fetchDoc(spaceId, documentId, requestVersion);
+  });
+
+  async function fetchDoc(
+    spaceId: string,
+    documentId: string,
+    version: number
+  ) {
     const response = await performApiCall("space/n/doc", "POST", {
-      ...params
+      spaceId,
+      documentId
     });
+    if (version !== requestVersion) return;
     if (response?.ok) {
       const result = await response.json();
       document = result.result;

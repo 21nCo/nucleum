@@ -1,11 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
 
 import MultiselectDropdown from "@21n/elements/dropdown/MultiselectDropdown.svelte";
-import {
-  DropDownStyle,
-  type DropdownItem
-} from "@21n/types/dropdownItem.type";
+import { InputStyle } from "@21n/types/input.type";
+
 const meta = {
+  title: "Elements/Dropdown/MultiselectDropdown",
   component: MultiselectDropdown,
   argTypes: {
     parentBackgroundIndex: {
@@ -24,25 +23,25 @@ const meta = {
     parentBackgroundIndex: 2,
     placeholder: "multiselect an item",
     containerId: "1234",
-    style: DropDownStyle.DEFAULT
+    style: InputStyle.BORDERED
   }
 } satisfies Meta<MultiselectDropdown>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
+export const Bordered: Story = {
   args: {
-    style: DropDownStyle.DEFAULT
+    style: InputStyle.BORDERED
   }
 };
-export const Outlined: Story = {
+export const Plain: Story = {
   args: {
-    style: DropDownStyle.OUTLINED
+    style: InputStyle.PLAIN
   }
 };
-export const PanelSwitch: Story = {
+export const Filled: Story = {
   args: {
-    style: DropDownStyle.PANEL_SWITCH
+    style: InputStyle.FILLED
   }
 };

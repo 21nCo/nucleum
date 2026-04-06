@@ -7,34 +7,40 @@
   } from "@21n/types/avatar.type";
   import { Size } from "@21n/types/size.enum";
   import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
-  import { createEventDispatcher } from "svelte";
   import { objIsEmpty } from "@21n/shared-utils/obj.utils";
   import { popover } from "@21n/actions/popover.action";
   import { Placement } from "@21n/types/direction.enum";
-  const dispatch = createEventDispatcher();
-  export let avatar: IAvatar | undefined = undefined;
-  export let size: Size = Size.md;
-  export let isInEditMode = false;
-  export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;
-  export let changeCallback: (avatar: IAvatar) => void = () => {};
-  let ref: any;
-  let avatarPreview: IAvatar | undefined = undefined;
+  let {
+    avatar = $bindable(undefined),
+    size = Size.md,
+    isInEditMode = false,
+    context = AvatarPickerContext.DEFAULT,
+    changeCallback = () => {},
+    onChange = undefined
+  }: any = $props();
+  let ref = $state<any>();
+  function emitChange(avatarVal: any) {
+    const changeEvent = new CustomEvent("change", {
+      detail: avatarVal
+    });
+    onChange?.(changeEvent);
+    changeCallback?.(avatarVal);
+  }
+
   function handleAvatarEmitted(avatarVal: any) {
     if (!avatarVal) return;
-    //TODO - send avatar type from avatar picker itself
     if ("color" in avatarVal) {
       avatarVal.type = AvatarType.ICON;
     } else {
       avatarVal.type = AvatarType.EMOJI;
     }
     avatar = avatarVal;
-    dispatch("change", avatarVal);
-    changeCallback?.(avatarVal);
+    emitChange(avatarVal);
     closePopover();
   }
   function handleDeleteEmitted() {
     avatar = undefined;
-    dispatch("change", avatar);
+    emitChange(avatar);
     closePopover();
   }
 
@@ -54,7 +60,7 @@
     if (!hasAvatarPreview(avatarValue)) return undefined;
     return avatarValue;
   }
-  $: avatarPreview = resolveAvatarPreview(avatar);
+  const avatarPreview = $derived(resolveAvatarPreview(avatar));
 </script>
 
 {#if avatar && !isInEditMode}

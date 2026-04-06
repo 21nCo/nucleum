@@ -42,3 +42,23 @@ declare module "qrcode" {
 
   export default QRCode;
 }
+
+declare module "@carbon/charts-svelte" {
+  import { SvelteComponentTyped } from "svelte";
+
+  export type ChartOptions = any;
+  export type BarChartOptions = any;
+
+  export const Alignments: any;
+  export const ChartTheme: any;
+  export const ScaleTypes: any;
+
+  export class AreaChart extends SvelteComponentTyped<any, any, any> {}
+  export class BarChartSimple extends SvelteComponentTyped<any, any, any> {}
+  export class BarChartStacked extends SvelteComponentTyped<any, any, any> {}
+  export class DonutChart extends SvelteComponentTyped<any, any, any> {}
+  export class GaugeChart extends SvelteComponentTyped<any, any, any> {}
+  export class LineChart extends SvelteComponentTyped<any, any, any> {}
+  export class PieChart extends SvelteComponentTyped<any, any, any> {}
+  export class StackedAreaChart extends SvelteComponentTyped<any, any, any> {}
+}

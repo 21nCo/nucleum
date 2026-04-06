@@ -9,13 +9,24 @@
   import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
   import { SearchStore } from "@21n/components/record/record.store";
   import FocusItemSearchResultItem from "@21n/products/pointron/focus/elements/focusitem/FocusItemSearchResultItem.svelte";
-  import { createEventDispatcher } from "svelte";
   import { GoalStatus } from "@21n/components/goals/goal.type";
   let label: string = "";
   let inputRef: any;
   let searchStore = new SearchStore();
-  const dispatch = createEventDispatcher();
-  async function onSelect(event: any) {
+  let {
+    onBlur = undefined,
+    onFocus = undefined,
+    onSelect = undefined,
+    onCreateGoal = undefined,
+    onCreateTask = undefined
+  }: {
+    onBlur?: ((event: CustomEvent<void>) => void) | undefined;
+    onFocus?: ((event: CustomEvent<void>) => void) | undefined;
+    onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+    onCreateGoal?: ((event: CustomEvent<string>) => void) | undefined;
+    onCreateTask?: ((event: CustomEvent<string>) => void) | undefined;
+  } = $props();
+  async function handleSelect(event: any) {
     let item = event?.detail?.item;
     if (!item || !item.id) return;
     if ($focusItemsStore.items.some(resourceInList(item))) {
@@ -23,7 +34,8 @@
       return;
     }
     reset();
-    dispatch("select", item);
+    const selectEvent = new CustomEvent("select", { detail: item });
+    onSelect?.(selectEvent);
   }
 
   function reset() {
@@ -35,14 +47,20 @@
     e: CustomEvent<{ event: KeyboardEvent; value: string }>
   ) {
     if (e.detail.event.shiftKey) {
-      dispatch("createGoal", e.detail.value);
+      const createGoalEvent = new CustomEvent<string>("createGoal", {
+        detail: e.detail.value
+      });
+      onCreateGoal?.(createGoalEvent);
       setTimeout(() => {
         reset();
       }, 500);
       return;
     }
     reset();
-    dispatch("createTask", e.detail.value);
+    const createTaskEvent = new CustomEvent<string>("createTask", {
+      detail: e.detail.value
+    });
+    onCreateTask?.(createTaskEvent);
   }
 
   async function searchCallback(searchQuery: string) {
@@ -71,10 +89,10 @@
 
 <div class="flex items-center gap-2 w-full px-4 h-14">
   <TextSearchInput
-    on:blur
-    on:focus
-    on:select={onSelect}
-    on:empty-enter={handleEmptyEnter}
+    {onBlur}
+    {onFocus}
+    onSelect={handleSelect}
+    onEmptyEnter={handleEmptyEnter}
     bind:value={label}
     bind:this={inputRef}
     icon="plus"
@@ -94,7 +112,7 @@
     {#if label}
       <div class="flex gap-2">
         <Button
-          on:click={reset}
+          onclick={reset}
           icon="cross"
           tooltip="Clear"
           tooltipOptions={{

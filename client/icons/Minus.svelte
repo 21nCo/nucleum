@@ -1,7 +1,13 @@
 <script lang="ts">
   import { IconVariant } from "@21n/types/icon.type";
-  export let variant: IconVariant = IconVariant.Outline;
-  export let isCircled: boolean = false;
+
+  let {
+    variant = IconVariant.Outline,
+    isCircled = false
+  }: {
+    variant?: IconVariant;
+    isCircled?: boolean;
+  } = $props();
 </script>
 
 {#if isCircled}

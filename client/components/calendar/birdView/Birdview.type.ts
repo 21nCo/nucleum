@@ -4,6 +4,14 @@ export enum Itemtype {
   DAY = "DAY"
 }
 
+export type YearPhase = {
+  startYear: number;
+  endYear: number;
+  label: string;
+  description: string;
+  emoji?: string;
+};
+
 export type ProgrammedHorizontalWheelEvent = {
   deltaX: number;
   isWheelEvent: boolean;

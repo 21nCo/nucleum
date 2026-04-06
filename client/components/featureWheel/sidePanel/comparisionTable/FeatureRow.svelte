@@ -6,10 +6,14 @@
   import RatingCell from "@21n/components/featureWheel/sidePanel/comparisionTable/RatingCell.svelte";
   import NotesCell from "@21n/components/featureWheel/sidePanel/comparisionTable/NotesCell.svelte";
 
-  export let feature: IFwFeature;
-  export let contemporaries: IContemporary[] = [];
+  let {
+    feature,
+    contemporaries = []
+  }: {
+    feature: IFwFeature;
+    contemporaries?: IContemporary[];
+  } = $props();
 
-  // Find the rating for a specific contemporary in this feature
   function getContemporaryRating(
     contemporaryLabel: string
   ): number | undefined {
@@ -19,7 +23,6 @@
     return contemporary?.value;
   }
 
-  // Find the notes for a specific contemporary in this feature
   function getContemporaryNotes(contemporaryLabel: string): string | undefined {
     const contemporary = feature.contemporaries.find(
       (c) => c.label.toLowerCase() === contemporaryLabel.toLowerCase()

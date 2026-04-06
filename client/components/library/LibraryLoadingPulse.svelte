@@ -1,14 +1,20 @@
 <script lang="ts">
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { Arrangement } from "@21n/types/direction.enum";
-  export let isTail: boolean = false;
-  export let arrangement: Arrangement | null = Arrangement.LIST;
-  export let isConstrainedWidth: boolean = false;
+  let {
+    isTail = false,
+    arrangement = Arrangement.LIST,
+    isConstrainedWidth = false,
+    resource = Resource.unknown
+  }: {
+    isTail?: boolean;
+    arrangement?: Arrangement | null;
+    isConstrainedWidth?: boolean;
+    resource?: Resource;
+  } = $props();
   /**
    * @deprecated
    */
-  export let resource: Resource = Resource.unknown;
-  $: resource;
 </script>
 
 {#if arrangement === Arrangement.LIST}

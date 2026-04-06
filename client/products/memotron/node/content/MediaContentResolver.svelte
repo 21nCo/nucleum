@@ -19,27 +19,39 @@
   import { Size } from "@21n/types/size.enum";
   import { formatBytes } from "@21n/shared-utils/text.utils";
   import { resolveFileIcon } from "@21n/products/memotron/node/node.utils";
-
-  export let node: INode;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  export let isHidePreview: boolean = false;
-  export let renderingDetails: any = undefined;
-  let pdfContent: any;
-  let webContentRef: any;
-  let _file: IFile;
-  let _url: string;
+  let {
+    node,
+    accessPoint = ResourceAccessPoint.SELF,
+    isHidePreview = false,
+    renderingDetails = $bindable(),
+    onAnnotation = undefined,
+    onConfigUpdate = undefined,
+    onRefresh = undefined
+  }: {
+    node: INode;
+    accessPoint?: ResourceAccessPoint;
+    isHidePreview?: boolean;
+    renderingDetails?: any;
+    onAnnotation?: ((annotations: any[]) => void) | undefined;
+    onConfigUpdate?: ((detail: any) => void) | undefined;
+    onRefresh?: ((event: CustomEvent<void>) => void) | undefined;
+  } = $props();
+  let pdfContent = $state<any>(undefined);
+  let webContentRef = $state<any>(undefined);
+  let _file = $state<IFile | undefined>(undefined);
+  let _url = $state("");
   onMount(() => {
     resolveData();
   });
 
   export function onTraceClick(details: any) {
     if (node.contentType === NodeType.PDF) {
-      pdfContent.scrollToAnnot(details.id, details.pageNumber);
+      pdfContent?.scrollToAnnot(details.id, details.pageNumber);
     } else if (
       node.contentType === NodeType.YOUTUBE_VIDEO ||
       node.contentType === NodeType.YOUTUBE_SHORT
     ) {
-      webContentRef.onTrace(details);
+      webContentRef?.onTrace(details);
     }
   }
 
@@ -81,7 +93,7 @@
     <!-- <audio controls src={$node.body?.url} /> -->
     <!-- TODO - relay refresh event to top instead of refreshing here -->
     <AudioContent
-      on:refresh
+      {onRefresh}
       body={resolveAudioBody(node.body)}
       url={_url}
       nodeId={node.id.toString()}
@@ -102,8 +114,8 @@
       url={_url}
       {node}
       {accessPoint}
-      on:annotation
-      on:configUpdate
+      {onAnnotation}
+      {onConfigUpdate}
     />
   {/if}
 {/await}

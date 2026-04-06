@@ -6,7 +6,8 @@
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import view from "@21n/stores/view.store";
   import CalendarCw from "@21n/components/calendar/CalendarCW.svelte";
-  export let panel: CalendarLayout = resolvePanelSelection();
+  let { panel = $bindable(resolvePanelSelection()) }: { panel?: CalendarLayout } =
+    $props();
 
   function resolvePanelSelection() {
     const layoutState = uiState.getState(UIState.calendarLayout, {
@@ -21,8 +22,8 @@
 
 {#if $view.isConstrainedWidth}
   <CalendarCw />
-{:else if panel === CalendarLayout.Bird}
-  <BirdCalendar bind:panel />
 {:else if panel === CalendarLayout.Classic}
+  <BirdCalendar bind:panel />
+{:else if panel === CalendarLayout.Bird}
   <ClassicCalendar bind:panel />
 {/if}

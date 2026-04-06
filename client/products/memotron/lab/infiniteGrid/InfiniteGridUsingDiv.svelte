@@ -17,7 +17,10 @@
   let cols = canvasWidth / oneSquare;
   let grid: any = $userPreferences.infiniteGrid.grid;
 
-  $: $userPreferences.infiniteGrid.grid = grid;
+  function syncGrid() {
+    $userPreferences.infiniteGrid.grid = grid;
+  }
+
   function createGrid() {
     console.log("creating grid", { rows }, { cols });
     grid = [];
@@ -37,8 +40,7 @@
       }
       grid.push(row);
     }
-    grid = grid;
-    // $userPreferences.infiniteGrid.grid = grid;
+    syncGrid();
     console.log("grid created", { grid });
   }
   function addRow() {
@@ -55,8 +57,7 @@
       });
     }
     grid.push(row);
-    grid = grid;
-    // $userPreferences.infiniteGrid.grid = grid;
+    syncGrid();
   }
   function addCell(
     { r, c }: { r: number; c: number },
@@ -100,9 +101,7 @@
     }
 
     // grid[r] = row;
-    grid = grid;
-    // grid = [...grid];
-    // $userPreferences.infiniteGrid.grid = grid;
+    syncGrid();
     console.log("cell added", { grid });
   }
   function resetGrid() {
@@ -125,7 +124,7 @@
   });
 </script>
 
-<button on:click={resetGrid}>Reset Grid</button>
+<button onclick={resetGrid}>Reset Grid</button>
 <div
   style="position:relative;width:{canvasWidth}px;height:{canvasWidth}px;border:1px solid pink;overflow:scroll;"
 >
@@ -137,13 +136,13 @@
       <GridInputElement
         bind:value={cell.value}
         bind:size={cell.size}
-        bind:children={cell.children}
+        bind:childItems={cell.children}
         {...cell}
-        on:bottomSiblingRequired={() => {
+        onBottomSiblingRequired={() => {
           console.log("bottom");
           addCell(cell.index, "bottom");
         }}
-        on:rightSiblingRequired={() => {
+        onRightSiblingRequired={() => {
           console.log("right");
           addCell(cell.index, "right");
         }}

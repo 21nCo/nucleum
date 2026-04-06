@@ -2,7 +2,11 @@
   import { cn } from "@21n/utils/ui.utils";
   import type { IListItem } from "@21n/landing/shared/landing.type";
 
-  export let items: IListItem[];
+  let {
+    items,
+  }: {
+    items: IListItem[];
+  } = $props();
   const currentPath = typeof window !== "undefined" ? window.location.href : "";
 </script>
 

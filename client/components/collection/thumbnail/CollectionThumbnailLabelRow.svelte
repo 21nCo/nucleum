@@ -10,11 +10,17 @@
   import CollectionThumbnailLabel from "@21n/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
   import CollectionNodeCount from "@21n/components/collection/counts/CollectionItemCount.svelte";
   import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
-  export let item: ICollectionThumb;
-  export let arrangement: Arrangement = Arrangement.LIST;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
-  export let accessPointState: ResourceAccessPointState =
-    ResourceAccessPointState.DEFAULT;
+  let {
+    item,
+    arrangement = Arrangement.LIST,
+    accessPoint = ResourceAccessPoint.BROWSER,
+    accessPointState = ResourceAccessPointState.DEFAULT
+  }: {
+    item: ICollectionThumb;
+    arrangement?: Arrangement;
+    accessPoint?: ResourceAccessPoint;
+    accessPointState?: ResourceAccessPointState;
+  } = $props();
 </script>
 
 <div

@@ -7,9 +7,15 @@
   import NodeDefaultRightPane from "./NodeDefaultRightPane.svelte";
   import { fly } from "svelte/transition";
   import { quadInOut } from "svelte/easing";
-  export let node: IActiveNodeStore;
-  export let renderingDetails: any = undefined;
-  export let isConstrainedWidth: boolean = false;
+  let {
+    node,
+    renderingDetails = undefined,
+    isConstrainedWidth = false
+  }: {
+    node: IActiveNodeStore;
+    renderingDetails?: any;
+    isConstrainedWidth?: boolean;
+  } = $props();
   const typesWithLargerContent = [
     NodeType.PDF,
     NodeType.YOUTUBE_VIDEO,
@@ -25,11 +31,12 @@
     ResourcePanelType.LINKS,
     ResourcePanelType.ACTIVITY
   ];
-  $: isExpanded =
+  let isExpanded = $derived(
     ((!$node.panel || $node.panel === ResourcePanelType.OVERVIEW) &&
       !typesWithLargerContent.includes($node.contentType)) ||
-    ($node.panel &&
-      panelsWithLargerContent.includes($node.panel as ResourcePanelType));
+      ($node.panel &&
+        panelsWithLargerContent.includes($node.panel as ResourcePanelType))
+  );
 </script>
 
 <aside

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import LinkItem from "@21n/products/memotron/common/linkbox/LinkItem.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import type { IRecordId } from "@21n/types/data.type";
@@ -25,32 +24,67 @@
   import { fly } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   import view from "@21n/stores/view.store";
-  const dispatch = createEventDispatcher();
-  export let links: IRecordId[];
-  export let propertyValues: ICollectionItemPropertyValue[] = [];
-  export let isWrapItems: boolean = false;
-  export let parentBgIndex: number = 1;
-  export let isExpandable: boolean = false;
-  export let nodeId: IRecordId | undefined = undefined;
-  export let isReadOnlyMode: boolean = false;
-  export let expand: IRecordId | null = null;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CLIPPER;
-  export let subContext: "clipper-modal" | undefined = undefined;
-  // export let ctx: "clip" | "capture" = "clip";
-  let expansionState:
+  let {
+    links = [],
+    propertyValues = [],
+    isWrapItems = false,
+    parentBgIndex = 1,
+    isExpandable = false,
+    nodeId = undefined,
+    isReadOnlyMode = false,
+    expand = $bindable(null),
+    accessPoint = ResourceAccessPoint.CLIPPER,
+    subContext = undefined,
+    onClick = undefined,
+    onExpansion = undefined,
+    onPropertyChange = undefined,
+    onUnlink = undefined
+  }: {
+    links?: IRecordId[];
+    propertyValues?: ICollectionItemPropertyValue[];
+    isWrapItems?: boolean;
+    parentBgIndex?: number;
+    isExpandable?: boolean;
+    nodeId?: IRecordId | undefined;
+    isReadOnlyMode?: boolean;
+    expand?: IRecordId | null;
+    accessPoint?: ResourceAccessPoint;
+    subContext?: "clipper-modal" | undefined;
+    onClick?:
+      | ((event: CustomEvent<{ item: IRecordId; event: MouseEvent | Event }>) => void)
+      | undefined;
+    onExpansion?:
+      | ((event: CustomEvent<
+          | "not-type"
+          | "node"
+          | "no-props"
+          | "has-props"
+          | "loading"
+          | "error"
+          | null
+        >) => void)
+      | undefined;
+    onPropertyChange?: ((event: CustomEvent<any>) => void) | undefined;
+    onUnlink?: ((event: CustomEvent<IRecordId>) => void) | undefined;
+  } = $props();
+  let expansionState = $state<
     | "not-type"
     | "node"
     | "no-props"
     | "has-props"
     | "loading"
-    | "error" = "loading";
-  let types: any[] = [];
-  let link: INodeLinkThumb;
-  let propertyCount: number | undefined = undefined;
-  $: _links = links?.filter(removeDuplicatesFilter) ?? [];
-  $: if (expand) {
-    refreshExpansion(expand);
-  }
+    | "error"
+  >("loading");
+  let types = $state<any[]>([]);
+  let link = $state({} as INodeLinkThumb);
+  let propertyCount = $state<number | undefined>(undefined);
+  const _links = $derived(links?.filter(removeDuplicatesFilter) ?? []);
+
+  $effect(() => {
+    if (expand) {
+      refreshExpansion(expand);
+    }
+  });
 
   async function refreshExpansion(item: IRecordId) {
     try {
@@ -96,7 +130,18 @@
   }
 
   function propagateExpansionState() {
-    dispatch("expansion", expand ? expansionState : null);
+    const expansionEvent = new CustomEvent<
+      | "not-type"
+      | "node"
+      | "no-props"
+      | "has-props"
+      | "loading"
+      | "error"
+      | null
+    >("expansion", {
+      detail: expand ? expansionState : null
+    });
+    onExpansion?.(expansionEvent);
   }
 
   function onClickItem(item: IRecordId, e: any) {
@@ -106,10 +151,16 @@
       propagateExpansionState();
       e.stopPropagation();
     } else {
-      dispatch("click", {
-        item,
-        event: e
+      const clickEvent = new CustomEvent<{
+        item: IRecordId;
+        event: MouseEvent | Event;
+      }>("click", {
+        detail: {
+          item,
+          event: e
+        }
       });
+      onClick?.(clickEvent);
     }
   }
 </script>
@@ -133,7 +184,7 @@
             (accessPoint === ResourceAccessPoint.SELF &&
               !$context.isTouchDevice))}
         isActive={expand && isSameResource(expand, item) ? true : undefined}
-        on:click={(e) => {
+        onclick={(e) => {
           if (
             $context.isTouchDevice &&
             accessPoint === ResourceAccessPoint.SELF
@@ -141,14 +192,17 @@
             return;
           onClickItem(item, e);
         }}
-        on:goToResource={(e) => {
+        onGoToResource={(e) => {
           onClickItem(item, e);
         }}
-        on:remove={() => {
+        onRemove={() => {
           if (expand && isSameResource(expand, item)) {
             expand = null;
           }
-          dispatch("unlink", item);
+          const unlinkEvent = new CustomEvent<IRecordId>("unlink", {
+            detail: item
+          });
+          onUnlink?.(unlinkEvent);
         }}
       />
     {/each}
@@ -216,11 +270,17 @@
             values={propertyValues}
             resource={Resource.node}
             context="clip"
-            on:change={(e) => {
-              dispatch("propertyChange", e.detail);
+            onChange={(e) => {
+              const propertyChangeEvent = new CustomEvent<any>(
+                "propertyChange",
+                {
+                  detail: e.detail
+                }
+              );
+              onPropertyChange?.(propertyChangeEvent);
             }}
-            on:propertyCount={(e) => {
-              propertyCount = e.detail;
+            onPropertyCount={(count) => {
+              propertyCount = count;
             }}
           />
           {#if accessPoint === ResourceAccessPoint.CLIPPER}

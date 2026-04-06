@@ -22,24 +22,36 @@
   import { Product } from "@21n/products/product.type";
   import { appStore } from "@21n/stores/app.store";
 
-  export let date: Date;
-  export let data: ICalendarIndicatorData[] = [];
-  export let type: CalendarTileIndicatorDisplayType =
-    CalendarTileIndicatorDisplayType.DOTS;
-  export let isActive: boolean = false;
-  export let indicatorRefreshId: number = 0;
+  let {
+    date,
+    data = [],
+    type = CalendarTileIndicatorDisplayType.DOTS,
+    isActive = false,
+    indicatorRefreshId = 0
+  }: {
+    date: Date;
+    data?: ICalendarIndicatorData[];
+    type?: CalendarTileIndicatorDisplayType;
+    isActive?: boolean;
+    indicatorRefreshId?: number;
+  } = $props();
 
-  let tasks: ITaskThumb[] = [];
-  let focusSessions: (ISessionThumb & {
-    splits: { focus: number; brek: number };
-  })[] = [];
-  let nodes: any[] = [];
-  let calendarNotes: any[] = [];
-  let summary: DaySummary = { focus: 0, break: 0 };
-  $: dayFilter = tzStore.resolveTimePeriodFilterForDay(date);
-  $: if (indicatorRefreshId > 0) {
-    resolveData();
-  }
+  let tasks = $state<ITaskThumb[]>([]);
+  let focusSessions = $state<
+    (ISessionThumb & {
+      splits: { focus: number; brek: number };
+    })[]
+  >([]);
+  let nodes = $state<any[]>([]);
+  let calendarNotes = $state<any[]>([]);
+  let summary = $state<DaySummary>({ focus: 0, break: 0 });
+  const dayFilter = $derived(tzStore.resolveTimePeriodFilterForDay(date));
+
+  $effect(() => {
+    if (indicatorRefreshId > 0) {
+      resolveData();
+    }
+  });
 
   function resolveData() {
     const product = $appStore.product;

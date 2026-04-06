@@ -2,21 +2,25 @@
   import { onMount } from "svelte";
   import appearance from "@21n/stores/appearance.store";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  import { createEventDispatcher } from "svelte";
   import MastodonWidgetScript from "@21n/products/memotron/node/content/web/social/MastodonWidgetScript.svelte";
   import { Persistence } from "@21n/persistence/persistence";
   import { parse } from "@21n/shared-utils/json.utils";
   import SocialPostLoadingInfo from "@21n/products/memotron/node/content/web/social/SocialPostLoadingInfo.svelte";
-
-  const dispatch = createEventDispatcher();
-
-  export let postUrl: string;
+  let {
+    postUrl,
+    onError = undefined,
+    onFallback = undefined
+  }: {
+    postUrl: string;
+    onError?: ((message: string) => void) | undefined;
+    onFallback?: ((message: string) => void) | undefined;
+  } = $props();
 
   let id: string = generateSimpleRandomId();
-  let embedHtml: string = "";
-  let loading: boolean = true;
-  let error: string = "";
-  let isIframeable = false;
+  let embedHtml = $state("");
+  let loading = $state(true);
+  let error = $state("");
+  let isIframeable = $state(false);
   let dev_isUseDirectAPIApproach = false;
 
   onMount(async () => {
@@ -38,8 +42,10 @@
       if (!embedHtml) {
         if (dev_isUseDirectAPIApproach)
           await tryDirectAPIApproach(instanceDomain);
-        if (!isIframeable) dispatch("error", "Unable to load Mastodon post");
-        else await tryIframeApproach();
+        if (!isIframeable) {
+          onError?.("Unable to load Mastodon post");
+          onFallback?.("Unable to load Mastodon post");
+        } else await tryIframeApproach();
       }
 
       if (!embedHtml) {
@@ -81,7 +87,7 @@
         const parsed = parse(urlData.text);
         console.log({ parsed });
         if (parsed && parsed.error) {
-          dispatch("error", parsed.error);
+          onError?.(parsed.error);
         } else if (parsed && parsed.html) {
           embedHtml = sanitizeAndStyleHTML(parsed.html);
         }

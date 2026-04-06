@@ -1,27 +1,44 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import { Orientation } from "@21n/types/direction.enum";
   import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
-  export let value: string | undefined = undefined;
-  export let label: string | undefined = undefined;
-  export let info: string | undefined = undefined;
-  export let hour: number | undefined = undefined;
-  export let minute: number | undefined = undefined;
-  export let labelOrientation: Orientation = Orientation.Vertical;
-  export let isShowOnlyAfterCurrentTime: boolean = false;
-  let hours: any[] = [];
-  let minutes: any[] = [];
-  if (value) {
-    let parts = value.split(":");
-    hour = +parts[0];
-    minute = +parts[1];
-  } else if (!hour && !minute) {
-    hour = 0;
-    minute = 0;
-  }
-  const dispatch = createEventDispatcher();
+  let {
+    value = $bindable(),
+    label = undefined,
+    info = undefined,
+    hour = $bindable(),
+    minute = $bindable(),
+    labelOrientation = Orientation.Vertical,
+    isShowOnlyAfterCurrentTime = false,
+    onChange: onValueChange = undefined
+  }: {
+    value?: string | undefined;
+    label?: string | undefined;
+    info?: string | undefined;
+    hour?: number | undefined;
+    minute?: number | undefined;
+    labelOrientation?: Orientation;
+    isShowOnlyAfterCurrentTime?: boolean;
+    onChange?: ((event: CustomEvent<{ value: string }>) => void) | undefined;
+  } = $props();
+  let hours = $state<string[]>([]);
+  let minutes = $state<string[]>([]);
 
-  $: {
+  $effect(() => {
+    if (value) {
+      let parts = value.split(":");
+      let nextHour = +parts[0];
+      let nextMinute = +parts[1];
+      if (hour !== nextHour) hour = nextHour;
+      if (minute !== nextMinute) minute = nextMinute;
+      return;
+    }
+    if (hour == null && minute == null) {
+      hour = 0;
+      minute = 0;
+    }
+  });
+
+  $effect(() => {
     if (isShowOnlyAfterCurrentTime) {
       let now = new Date();
       hours = Array.from({ length: 24 - now.getHours() }, (_, i) =>
@@ -44,11 +61,14 @@
         i.toString().padStart(2, "0")
       );
     }
-  }
+  });
 
-  function onChange() {
+  function emitChange() {
     value = `${hour}:${minute}`;
-    dispatch("change", { value: hour + ":" + minute });
+    const changeEvent = new CustomEvent<{ value: string }>("change", {
+      detail: { value: hour + ":" + minute }
+    });
+    onValueChange?.(changeEvent);
   }
 </script>
 
@@ -63,7 +83,7 @@
     <select
       class="bg-bgs2 p-2 border rounded-lg"
       bind:value={hour}
-      on:change={onChange}
+      onchange={emitChange}
     >
       {#each hours as hour}
         <option value={+hour}>{hour}</option>
@@ -75,7 +95,7 @@
     <select
       class="bg-bgs2 p-2 border rounded-lg"
       bind:value={minute}
-      on:change={onChange}
+      onchange={emitChange}
     >
       {#each minutes as minute}
         <option value={+minute}>{minute}</option>

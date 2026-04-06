@@ -10,27 +10,34 @@
   import SvgIcon from "@21n/elements/SVGIcon.svelte";
   import NotesCell from "@21n/components/featureWheel/sidePanel/comparisionTable/NotesCell.svelte";
   import Icon from "@21n/elements/Icon.svelte";
-  import { createEventDispatcher } from "svelte";
   import Badge from "@21n/elements/text/Badge.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import FooterInfo from "@21n/components/featureWheel/sidePanel/comparisionTable/FooterInfo.svelte";
   import { mapValue } from "@21n/components/featureWheel/sidePanel/comparisionTable/table.utils";
+  let {
+    product,
+    features = [],
+    categories = [],
+    contemporaries = [],
+    selectedCompare = undefined,
+    selectedFeatures = undefined,
+    selectedCategories = undefined,
+    onFeature = (_value: string) => {}
+  }: {
+    product: string;
+    features?: IFwFeature[];
+    categories?: IFwCategory[];
+    contemporaries?: IContemporary[];
+    selectedCompare?: string[];
+    selectedFeatures?: string[];
+    selectedCategories?: string[];
+    onFeature?: (value: string) => void;
+  } = $props();
 
-  const dispatch = createEventDispatcher();
-  export let product: string;
-  export let features: IFwFeature[] = [];
-  export let categories: IFwCategory[] = [];
-  export let contemporaries: IContemporary[] = [];
-  export let selectedCompare: string[] | undefined = undefined;
-  export let selectedFeatures: string[] | undefined = undefined;
-  export let selectedCategories: string[] | undefined = undefined;
-  $: categories;
-
-  // Toggle for showing planned features
-  let showPlannedFeatures = false;
-  let showJustAvailability = false;
+  let showPlannedFeatures = $state(false);
+  let showJustAvailability = $state(false);
   const dev_isEnablePlannedFeaturesToggle = true;
-  // Find the rating for a specific contemporary in a feature
+
   function getContemporaryRating(
     feature: IFwFeature,
     contemporaryLabel: string
@@ -52,47 +59,48 @@
     return contemporary?.notes;
   }
 
-  // Filter features based on selected features or categories and planned status
-  $: filteredFeatures = selectedFeatures?.length
-    ? features.filter(
-        (feature) =>
-          selectedFeatures.includes(feature.label) &&
-          (showPlannedFeatures || !feature.isPlanned) &&
-          !feature.isHideForComparer
-      )
-    : selectedCategories?.length
+  const filteredFeatures = $derived.by<IFwFeature[]>(() =>
+    selectedFeatures?.length
       ? features.filter(
           (feature) =>
-            selectedCategories.includes(feature.category) &&
+            selectedFeatures.includes(feature.label) &&
             (showPlannedFeatures || !feature.isPlanned) &&
             !feature.isHideForComparer
         )
-      : features.filter(
-          (feature) =>
-            !feature.isHideForComparer &&
-            (showPlannedFeatures || !feature.isPlanned)
-        );
-
-  // Group features by category
-  $: groupedFeatures = filteredFeatures.reduce(
-    (acc, feature) => {
-      const category = feature.category;
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      acc[category].push(feature);
-      return acc;
-    },
-    {} as Record<string, IFwFeature[]>
+      : selectedCategories?.length
+        ? features.filter(
+            (feature) =>
+              selectedCategories.includes(feature.category) &&
+              (showPlannedFeatures || !feature.isPlanned) &&
+              !feature.isHideForComparer
+          )
+        : features.filter(
+            (feature) =>
+              !feature.isHideForComparer &&
+              (showPlannedFeatures || !feature.isPlanned)
+          )
   );
 
-  // Get unique category labels
-  $: categoryLabels = Object.keys(groupedFeatures).sort();
+  const groupedFeatures = $derived.by<Record<string, IFwFeature[]>>(() =>
+    filteredFeatures.reduce(
+      (acc, feature) => {
+        const category = feature.category;
+        if (!acc[category]) {
+          acc[category] = [];
+        }
+        acc[category].push(feature);
+        return acc;
+      },
+      {} as Record<string, IFwFeature[]>
+    )
+  );
 
-  // Filter contemporaries based on selectedCompare
-  $: filteredContemporaries = selectedCompare?.length
-    ? contemporaries.filter((c) => selectedCompare.includes(c.label))
-    : contemporaries;
+  const categoryLabels = $derived(Object.keys(groupedFeatures).sort());
+  const filteredContemporaries = $derived(
+    selectedCompare?.length
+      ? contemporaries.filter((c) => selectedCompare.includes(c.label))
+      : contemporaries
+  );
 </script>
 
 <div class="flex flex-col gap-2">
@@ -173,11 +181,11 @@
                 "text-fgs3": feature.isPlanned,
                 "hover:text-aps1": !feature.isPlanned
               })}
-              on:click={() => {
+              onclick={() => {
                 if (feature.isPlanned) {
                   return;
                 }
-                dispatch("feature", feature.label);
+                onFeature(feature.label);
               }}>{feature.label}</td
             >
             <td class="border border-brs3 p-2 font-medium">

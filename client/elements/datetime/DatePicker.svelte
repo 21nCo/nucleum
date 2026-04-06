@@ -1,44 +1,77 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import { parseAndFormatDate } from "@21n/utils/time.utils";
   import { InputStyle, type InputLabel } from "@21n/types/input.type";
-  import InputBaseElement from "@21n/elements/InputBaseElement.svelte";
-  import AbsoluteTimeRangePopover from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopover.svelte";
   import FormElement from "@21n/elements/FormElement.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import { popover } from "@21n/actions/popover.action";
   import AbsoluteTimeRangePopoverV2 from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
-  import view from "@21n/stores/view.store";
-  const dispatch = createEventDispatcher();
-  export let parentBackgroundIndex: number = 1;
-  export let date: Date | undefined = undefined;
-  export let style: InputStyle = InputStyle.BORDERED;
-  export let label: InputLabel | undefined = undefined;
-  export let placeholder: string = "Select a date";
-  export let variant:
-    | "wide"
-    | "wide-center"
-    | "inline"
-    | "icon-only"
-    | "inline-with-icon"
-    | "use-time-period-picker" = "wide";
-  export let id: string = "";
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
-  let ref: any;
-  /**
-   * @deprecated
-   */
-  let isPopoverActive: boolean = false;
-  let isPopoverVisible: boolean = false;
-  let dateInput: HTMLInputElement;
-  let _date: Date = date ?? new Date();
+  let {
+    parentBackgroundIndex = 1,
+    date = $bindable(undefined),
+    style = InputStyle.BORDERED,
+    label = undefined,
+    placeholder = "Select a date",
+    variant = "wide",
+    id = "",
+    size = Size.md,
+    onChange = undefined,
+    onOpened = undefined,
+    onClosed = undefined
+  }: {
+    parentBackgroundIndex?: number;
+    date?: Date | undefined;
+    style?: InputStyle;
+    label?: InputLabel | undefined;
+    placeholder?: string;
+    variant?:
+      | "wide"
+      | "wide-center"
+      | "inline"
+      | "icon-only"
+      | "inline-with-icon"
+      | "use-time-period-picker";
+    id?: string;
+    size?: Size.sm | Size.md | Size.lg;
+    onChange?: ((event: CustomEvent<Date>) => void) | undefined;
+    onOpened?: ((event: CustomEvent<void>) => void) | undefined;
+    onClosed?: ((event: CustomEvent<void>) => void) | undefined;
+  } = $props();
+  let ref = $state<HTMLElement>();
+  let isPopoverActive = $state(false);
+  let isPopoverVisible = $state(false);
+  let dateInput = $state<HTMLInputElement>();
+  let _date = $state<Date>(date ?? new Date());
+
+  $effect(() => {
+    if (date) {
+      _date = date;
+    }
+  });
+
+  function emitChange(nextDate: Date) {
+    const changeEvent = new CustomEvent<Date>("change", {
+      detail: nextDate
+    });
+    onChange?.(changeEvent);
+  }
+
+  function emitOpened() {
+    const openedEvent = new CustomEvent<void>("opened");
+    onOpened?.(openedEvent);
+  }
+
+  function emitClosed() {
+    const closedEvent = new CustomEvent<void>("closed");
+    onClosed?.(closedEvent);
+  }
+
   function updateDate(e: any) {
     const newDate = new Date(e.target.value);
     date = newDate;
     _date = newDate;
-    dispatch("change", date);
+    emitChange(newDate);
   }
 
   function hidePopover() {
@@ -48,7 +81,7 @@
   function onDateChange(val: Date) {
     date = val;
     _date = val;
-    dispatch("change", val);
+    emitChange(val);
     hidePopover();
   }
 
@@ -56,47 +89,14 @@
     const detail = (e as CustomEvent<{ open?: boolean }>).detail;
     isPopoverVisible = detail?.open ?? false;
     if (isPopoverVisible) {
-      dispatch("opened");
+      emitOpened();
     } else {
-      dispatch("closed");
+      emitClosed();
     }
   }
 </script>
 
 {#if variant == "wide" || variant == "wide-center"}
-  <!-- <InputBaseElement
-    class="gap-2 min-w-fit {variant === 'wide-center'
-      ? 'justify-center'
-      : 'justify-start'}"
-    {style}
-    {label}
-    isFocused={isPopoverVisible}
-    popoverOptions={{
-      isSpanToTriggerWidth: false,
-      parentBgIndex: parentBackgroundIndex
-    }}
-  >
-    <Icon icon="calendar" size={Size.md} />
-    {#if date}
-      <span class="text-fgs2 text-base">
-        {formatDate(date)}
-      </span>
-    {:else}
-      <span class="text-fgs2 text-b2">Select a date</span>
-    {/if}
-    <slot:fragment slot="popover">
-      <AbsoluteTimeRangePopover
-        isDatePickerMode={true}
-        bind:selectedDate={_date}
-        on:change={() => {
-          // popoverRef?.toggle();
-          date = _date;
-          dispatch("change", _date);
-        }}
-      />
-    </slot:fragment>
-  </InputBaseElement> -->
-
   <FormElement
     {style}
     {label}
@@ -119,7 +119,7 @@
           onDateChange
         }
       }}
-      on:change={onPopoverChange}
+      onchange={onPopoverChange}
     >
       <Icon icon="calendar" size={Size.md} />
       {#if date}
@@ -155,7 +155,7 @@
           onDateChange
         }
       }}
-      on:change={onPopoverChange}
+      onchange={onPopoverChange}
     >
     {#if variant === "icon-only" || variant === "inline-with-icon"}
       <Icon icon="calendar-blank" />
@@ -169,14 +169,15 @@
     <input
       bind:this={dateInput}
       bind:value={date}
-      on:input={updateDate}
+      oninput={updateDate}
       type="date"
       class="absolute w-full h-full opacity-0 cursor-pointer bg-bgs3"
     />
     <button
       class="flex items-center rounded-md p-2"
-      on:click={(e) => {
+      onclick={(e) => {
         console.log("clicked", e, isPopoverActive);
+        if (!dateInput) return;
         if (isPopoverActive) {
           dateInput.blur();
           isPopoverActive = false;

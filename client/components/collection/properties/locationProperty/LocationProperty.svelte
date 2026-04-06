@@ -1,11 +1,15 @@
 <script lang="ts">
   import PointInMap from "@21n/components/maps/PointInMap.svelte";
-  export let location:
-    | {
-        latitude?: number;
-        longitude?: number;
-      }
-    | undefined = undefined;
+  let {
+    location = undefined
+  }: {
+    location?:
+      | {
+          latitude?: number;
+          longitude?: number;
+        }
+      | undefined;
+  } = $props();
 </script>
 
 <PointInMap {location} />

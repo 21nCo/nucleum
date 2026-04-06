@@ -1,20 +1,38 @@
 <script lang="ts">
-  export let primary: number = 0;
-  export let secondary: number = 0;
-  export let size: number = 12;
-  export let strokeWidth: number = 2;
-  export let primaryColor: string = "stroke-fgs1";
-  export let secondaryColor: string = "stroke-fgs2";
-  export let secondaryOpacity: number = 0.3;
+  let {
+    primary = 0,
+    secondary = 0,
+    size = 12,
+    strokeWidth = 2,
+    primaryColor = "stroke-fgs1",
+    secondaryColor = "stroke-fgs2",
+    secondaryOpacity = 0.3
+  }: {
+    primary?: number;
+    secondary?: number;
+    size?: number;
+    strokeWidth?: number;
+    primaryColor?: string;
+    secondaryColor?: string;
+    secondaryOpacity?: number;
+  } = $props();
 
-  $: total = primary + secondary;
-  $: primaryPercentage = total > 0 ? (primary / total) * 100 : 0;
-  $: secondaryPercentage = total > 0 ? (secondary / total) * 100 : 0;
-  $: radius = (size - strokeWidth) / 2;
-  $: circumference = 2 * Math.PI * radius;
-  $: primaryStrokeDasharray = `${(primaryPercentage / 100) * circumference} ${circumference}`;
-  $: secondaryStrokeDasharray = `${(secondaryPercentage / 100) * circumference} ${circumference}`;
-  $: secondaryStrokeDashoffset = -((primaryPercentage / 100) * circumference);
+  const total = $derived(primary + secondary);
+  const primaryPercentage = $derived(total > 0 ? (primary / total) * 100 : 0);
+  const secondaryPercentage = $derived(
+    total > 0 ? (secondary / total) * 100 : 0
+  );
+  const radius = $derived((size - strokeWidth) / 2);
+  const circumference = $derived(2 * Math.PI * radius);
+  const primaryStrokeDasharray = $derived(
+    `${(primaryPercentage / 100) * circumference} ${circumference}`
+  );
+  const secondaryStrokeDasharray = $derived(
+    `${(secondaryPercentage / 100) * circumference} ${circumference}`
+  );
+  const secondaryStrokeDashoffset = $derived(
+    -((primaryPercentage / 100) * circumference)
+  );
 </script>
 
 <svg

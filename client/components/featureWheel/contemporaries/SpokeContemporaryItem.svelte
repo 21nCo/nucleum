@@ -4,16 +4,28 @@
   import { resolveHoverState } from "@21n/utils/browser.utils";
   import { cn } from "@21n/utils/ui.utils";
   import Contemporary from "@21n/components/featureWheel/contemporaries/Contemporary.svelte";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let xCoord: number;
-  export let yCoord: number;
-  export let group: IFeatureWheelContemporary[] = [];
-  export let contemporary: IFeatureWheelContemporary | undefined = undefined;
-  export let size: Size = Size.md;
-  $: width = size === Size.sm ? 13 : size === Size.md ? 16 : 20;
-  let isHovering = false;
-  let isClicked = false;
+  let {
+    xCoord,
+    yCoord,
+    group = [],
+    contemporary = undefined,
+    size = Size.md,
+    onContemporary = (
+      _value: IFeatureWheelContemporary | IFeatureWheelContemporary[]
+    ) => {}
+  }: {
+    xCoord: number;
+    yCoord: number;
+    group?: IFeatureWheelContemporary[];
+    contemporary?: IFeatureWheelContemporary | undefined;
+    size?: Size;
+    onContemporary?: (
+      value: IFeatureWheelContemporary | IFeatureWheelContemporary[]
+    ) => void;
+  } = $props();
+  const width = $derived(size === Size.sm ? 13 : size === Size.md ? 16 : 20);
+  let isHovering = $state(false);
+  let isClicked = $state(false);
   const dev_isEnableExpandForGroup = false;
   const toggleHoveringState = (event: MouseEvent | FocusEvent) => {
     isHovering = resolveHoverState(event);
@@ -21,8 +33,8 @@
   /**
    * Adjust the x and y coordinates to center the line by offseting the width and height - as by default the logo's top left corner is placed at the x and y coordinates.
    */
-  $: xCoordAdjusted = xCoord - width / 2;
-  $: yCoordAdjusted = yCoord - width / 2;
+  const xCoordAdjusted = $derived(xCoord - width / 2);
+  const yCoordAdjusted = $derived(yCoord - width / 2);
 </script>
 
 <foreignObject
@@ -35,15 +47,15 @@
 >
   {#if group && group.length > 0}
     <button
-      on:click={() => {
+      onclick={() => {
         isClicked = !isClicked;
         if (!isClicked) isHovering = false;
-        dispatch("contemporary", group);
+        onContemporary(group);
       }}
-      on:mouseover={toggleHoveringState}
-      on:mouseout={toggleHoveringState}
-      on:focus={toggleHoveringState}
-      on:blur={toggleHoveringState}
+      onmouseover={toggleHoveringState}
+      onmouseout={toggleHoveringState}
+      onfocus={toggleHoveringState}
+      onblur={toggleHoveringState}
       class={cn("flex bg-bgs2 rounded-md border-[0.5px] border-brs3", {
         "text-[0.28rem] p-[1.5px] px-0.5": group.length > 9,
         "text-[0.33rem] p-[1.5px] px-1": group.length <= 9
@@ -53,8 +65,8 @@
     </button>
   {:else if contemporary}
     <button
-      on:click={() => {
-        dispatch("contemporary", contemporary);
+      onclick={() => {
+        onContemporary(contemporary);
       }}
       class="flex"
     >

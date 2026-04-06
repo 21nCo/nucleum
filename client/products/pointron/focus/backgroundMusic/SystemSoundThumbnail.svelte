@@ -1,6 +1,6 @@
 <script lang="ts">
-  export let sound: string = "";
-  export let isActive: boolean = false;
+  let { sound = "", isActive = false }: { sound?: string; isActive?: boolean } =
+    $props();
 </script>
 
 <!-- <div class="h-16 w-72 flex bg-bgs2 gap-4 items-center rounded-md">

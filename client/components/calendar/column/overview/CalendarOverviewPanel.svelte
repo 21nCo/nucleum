@@ -4,9 +4,16 @@
   import { Product } from "@21n/products/product.type";
   import CalendarOverviewPanelNucleus from "@21n/components/calendar/column/overview/CalendarOverviewPanelNucleus.svelte";
   import CalendarOverviewPanelPointron from "@21n/components/calendar/column/overview/CalendarOverviewPanelPointron.svelte";
-  export let date: Date;
-  export let isRewind: boolean = false;
-  $: product = $appStore.product;
+
+  let {
+    date,
+    isRewind = false
+  }: {
+    date: Date;
+    isRewind?: boolean;
+  } = $props();
+
+  const product = $derived($appStore.product);
 </script>
 
 <div class="w-full h-full flex flex-grow">

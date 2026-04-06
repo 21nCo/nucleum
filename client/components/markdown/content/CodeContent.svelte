@@ -4,18 +4,28 @@
   // import CodeContentUsingMonaco from "@21n/components/markdown/content/CodeContentUsingMonaco.svelte";
   import CodeContentUsingHighlight from "@21n/components/markdown/content/CodeContentUsingHighlight.svelte";
 
-  export let mdStore: MdStoreType;
-  export let body: ICodeBlockBody;
-  export let useMonacoEditor: boolean = false;
+  let {
+    mdStore,
+    body,
+    useMonacoEditor = false,
+    onUpdate = undefined,
+    onDelete = undefined
+  }: {
+    mdStore: MdStoreType;
+    body: ICodeBlockBody;
+    useMonacoEditor?: boolean;
+    onUpdate?: ((event: CustomEvent<any>) => void) | undefined;
+    onDelete?: (() => void) | undefined;
+  } = $props();
 </script>
 
 {#if useMonacoEditor}
   <!-- <CodeContentUsingMonaco
     {mdStore}
     {body}
-    on:update
-    on:delete
+    {onUpdate}
+    {onDelete}
   /> -->
 {:else}
-  <CodeContentUsingHighlight {mdStore} {body} on:update on:delete />
+  <CodeContentUsingHighlight {mdStore} {body} {onUpdate} {onDelete} />
 {/if}

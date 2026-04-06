@@ -1,81 +1,88 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
-  import { createEventDispatcher } from "svelte";
   import TextHiglighter from "@21n/products/memotron/pdfAnnotator/TextHiglighter.svelte";
   import { AnnotationType } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
-  import { page } from "$app/stores";
   import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
 
-  export let rects: any;
-  export let rect: any;
-  export let id: string;
-  export let highlighter: string = "";
-  export let annotType: AnnotationType.TASK | AnnotationType.COMMENT =
-    AnnotationType.COMMENT;
-  export let comment = "";
-  export let showIcon = true;
-  export let pageRectTop = 0;
-  let color = highlightStore.resolveColor(highlighter);
-  //TODO- svg height and width should be scaled dynamically with respect to pdf viewer scale
-  let svgheight = 24;
-  let svgwidth = 24;
-  let tally = annotType == AnnotationType.COMMENT ? svgheight : svgheight / 2;
-  let x1, x2, y1, y2;
-  let left: any, top: any, width: any, height: any, scale: any;
-  x1 = rect?.x1 || (AnnotationType.COMMENT == annotType ? 30 : 20);
-  x2 = rect?.x2 || rects[0].x2;
-  y1 = rect?.y1 || rects[0].y1;
-  y2 = rect?.y2 || rects[0].y2;
-  left = x1;
-  top = y1;
-  width = Math.abs(x2 - left);
-  height = Math.abs(y2 - top);
-  scale = 2;
-  left -= rects == undefined ? 0 : scale;
-  top -= scale;
-  width += scale * 2;
-  height += scale * 2;
-  // if (rects !== undefined) console.log("x1 ", rects[0].x1, " left ", left);
-  // if (annotType == AnnotationType.TASK) console.log("TASK ", left);
-  const dispatchEvent = createEventDispatcher();
+  let {
+    rects,
+    rect,
+    id,
+    highlighter = "",
+    annotType = AnnotationType.COMMENT,
+    comment = "",
+    showIcon = true,
+    pageRectTop = 0,
+    onClick = undefined
+  }: {
+    rects?: any;
+    rect?: any;
+    id: string;
+    highlighter?: string;
+    annotType?: AnnotationType.TASK | AnnotationType.COMMENT;
+    comment?: string;
+    showIcon?: boolean;
+    pageRectTop?: number;
+    onClick?: ((id: string) => void) | undefined;
+  } = $props();
+
+  const svgheight = 24;
+  const svgwidth = 24;
+
+  function resolveColor() {
+    return highlightStore.resolveColor(highlighter);
+  }
+
+  function resolvePosition() {
+    const x1 = rect?.x1 || (annotType === AnnotationType.COMMENT ? 30 : 20);
+    const sourceRect = rects?.[0] ?? {};
+    const x2 = rect?.x2 || sourceRect.x2 || x1;
+    const y1 = rect?.y1 || sourceRect.y1 || 0;
+    const y2 = rect?.y2 || sourceRect.y2 || y1;
+    let left = x1;
+    let top = y1;
+    const scale = 2;
+    const tally =
+      annotType === AnnotationType.COMMENT ? svgheight : svgheight / 2;
+
+    left -= rects == undefined ? 0 : scale;
+    top -= scale;
+
+    return {
+      left: left - tally,
+      top: top - tally
+    };
+  }
 
   function handleClick() {
-    dispatchEvent("click", id);
+    onClick?.(id);
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === "Enter" || e.key === " ") {
+      handleClick();
+    }
   }
 </script>
 
-<!-- <div
-  {id}
-  class={id}
-  data-color={color}
-  data-annotType={annotType}
-  data-comment={comment}
-  on:click={() => {
-    dispatchEvent("click", id);
-    console.log("comment clicked");
-  }}
-  on:keydown={() => {}}
-  style="position: absolute; left: {left}px; top: {top}px; width: {width}px; height: {height}px; border: 3px solid {color};"
-> -->
-<!-- svelte-ignore a11y-no-static-element-interactions -->
 <div
   class={id}
-  data-color={color}
+  role="button"
+  tabindex="0"
+  data-color={resolveColor()}
   data-highlighter={highlighter}
   data-annotType={annotType}
   data-comment={comment}
   data-pageRectTop={pageRectTop}
-  style="position: absolute; left: {left - tally}px; top: {top -
-    tally}px; opacity: 0.5;"
-  on:click|stopPropagation={() => {
+  style="position: absolute; left: {resolvePosition().left}px; top: {resolvePosition().top}px; opacity: 0.5;"
+  onclick={(event) => {
+    event.stopPropagation();
     handleClick();
   }}
-  on:keydown|stopPropagation={(e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      handleClick();
-    }
+  onkeydown={(event) => {
+    event.stopPropagation();
+    handleKeydown(event);
   }}
-  on:mousedown|stopPropagation
+  onmousedown={(event) => event.stopPropagation()}
 >
   {#if showIcon && annotType === AnnotationType.COMMENT}
     <svg
@@ -87,8 +94,6 @@
         d="M240-400h480v-80H240v80Zm0-120h480v-80H240v80Zm0-120h480v-80H240v80ZM880-80 720-240H160q-33 0-56.5-23.5T80-320v-480q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v720ZM160-320h594l46 45v-525H160v480Zm0 0v-480 480Z"
       /></svg
     >
-    <!-- NOTE - switchcd back to old SVG since this icon is not visible in dark mode -->
-    <!-- <Icon icon="chat-bubble-bottom-center" /> -->
   {:else if annotType === AnnotationType.TASK}
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -101,16 +106,6 @@
     >
   {/if}
 </div>
-<!-- </div> -->
 {#if rects != undefined}
-  <TextHiglighter
-    {highlighter}
-    {annotType}
-    {id}
-    {rects}
-    on:click={() => {
-      dispatchEvent("click", id);
-      console.log("comment clicked");
-    }}
-  />
+  <TextHiglighter {highlighter} {annotType} {id} {rects} {onClick} />
 {/if}

@@ -2,16 +2,26 @@
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import NodeGraphUsingG6 from "@21n/products/memotron/graph/NodeGraphUsingG6.svelte";
 
-  export let nodeId: string;
-  export let layout: string;
-  export let data: {
-    nodes: any[];
-    edges: any[];
-    combos: any[];
-  } = { nodes: [], edges: [], combos: [] };
+  let {
+    nodeId,
+    layout,
+    data = { nodes: [], edges: [], combos: [] },
+    onCanvasClick = undefined,
+    onSelect = undefined
+  }: {
+    nodeId: string;
+    layout: string;
+    data?: {
+      nodes: any[];
+      edges: any[];
+      combos: any[];
+    };
+    onCanvasClick?: ((event: CustomEvent<void>) => void) | undefined;
+    onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
   let isRendered = false;
   let graphRef: NodeGraphUsingG6;
-  $: hasData = data?.nodes && data.nodes.length > 0;
+  const hasData = $derived(!!(data?.nodes && data.nodes.length > 0));
 
   export function rerender() {
     graphRef?.rerender();
@@ -23,6 +33,14 @@
 
   function onRender() {
     isRendered = true;
+  }
+
+  function handleSelect(event: any) {
+    onSelect?.(new CustomEvent("select", { detail: event }));
+  }
+
+  function handleCanvasClick() {
+    onCanvasClick?.(new CustomEvent("canvasClick"));
   }
 </script>
 
@@ -40,9 +58,9 @@
       {data}
       {layout}
       centerNodeId={nodeId}
-      on:select
-      on:render={onRender}
-      on:canvasClick
+      onSelect={handleSelect}
+      onRender={onRender}
+      onCanvasClick={handleCanvasClick}
     />
   {/if}
 </div>

@@ -51,6 +51,10 @@
       scope: UIStateScope.PRODUCT
     });
   }
+
+  $effect(() => {
+    onInteractionModeSelect();
+  });
 </script>
 
 <div class="flex flex-col gap-6 overflow-auto" data-testid="mode-of-interaction-settings">
@@ -65,7 +69,6 @@
       },
       orientation: Orientation.Vertical
     }}
-    on:select={onInteractionModeSelect}
     options={[
       {
         value: InteractionMode.DEFAULT,
@@ -89,7 +92,7 @@
       }}
       isExpanded={true}
       bind:checked={isShortcutHintsEnabled}
-      on:change={(e) => {
+      onChange={(e) => {
         uiState.setState(UIState.hideShortcutHints, e.detail, {
           scope: UIStateScope.DEVICE
         });
@@ -99,7 +102,7 @@
     <div data-testid="toggle-hide-menu-bar">
       <SwitchInput
         bind:checked={isCompletelyHideLeftNavBar}
-      on:change={(e) => {
+      onChange={(e) => {
         uiState.setState(UIState.completelyHideLeftNavBar, e.detail, {
           scope: UIStateScope.PRODUCT
         });

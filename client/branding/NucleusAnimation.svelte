@@ -1,8 +1,11 @@
 <script lang="ts">
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-
-  export let size: Size.sm | Size.md | Size.xs = Size.md;
+  let {
+    size = Size.md
+  }: {
+    size?: Size.sm | Size.md | Size.xs;
+  } = $props();
 </script>
 
 <div class="nucleus-animation">

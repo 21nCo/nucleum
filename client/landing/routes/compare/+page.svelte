@@ -2,13 +2,13 @@
   import FeatureWheelComparer from "@21n/landing/shared/FeatureWheelComparer.svelte";
   import PageSeo from "@21n/landing/shared/seo/PageSEO.svelte";
 
-  export let data: {
+  let { data }: {
     product?: string;
     features?: any[];
     categories?: any[];
     contemporaries?: any[];
     website: string;
-  };
+  } = $props();
 
   const productName = data?.product ?? "";
   const safeProduct = data?.product?.toLowerCase() ?? "";

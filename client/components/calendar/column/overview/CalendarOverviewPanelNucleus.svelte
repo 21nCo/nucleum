@@ -3,9 +3,15 @@
   import CalendarOverviewPanelPointron from "@21n/components/calendar/column/overview/CalendarOverviewPanelPointron.svelte";
   import MemoryOverviewForTimePeriod from "@21n/components/calendar/column/overview/MemoryOverviewForTimePeriod.svelte";
 
-  export let date: Date;
-  export let scale: TimeScaleUnit = TimeScaleUnit.DAY;
-  export let isRewind: boolean = false;
+  let {
+    date,
+    scale = TimeScaleUnit.DAY,
+    isRewind = false
+  }: {
+    date: Date;
+    scale?: TimeScaleUnit;
+    isRewind?: boolean;
+  } = $props();
 </script>
 
 <!-- TODO - combined query for all data -->

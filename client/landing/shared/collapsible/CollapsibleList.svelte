@@ -1,6 +1,10 @@
 <script lang="ts">
   import CollapsibleItem from "@21n/landing/shared/collapsible/CollapsibleItem.svelte";
-  export let items: Array<{ title: string; body: string }> = [];
+  let {
+    items = [],
+  }: {
+    items?: Array<{ title: string; body: string }>;
+  } = $props();
 
   let expandedItems: Record<number, boolean> = {};
 

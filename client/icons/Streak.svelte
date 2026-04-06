@@ -1,5 +1,10 @@
 <script lang="ts">
-  export let color: string | undefined = undefined;
+  let {
+    color = undefined
+  }: {
+    color?: string | undefined;
+  } = $props();
+
 </script>
 
 <svg

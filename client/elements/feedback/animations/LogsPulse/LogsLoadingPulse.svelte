@@ -1,7 +1,12 @@
 <script lang="ts">
   import Divider from "@21n/elements/Divider.svelte";
   import LogsPulseItem from "@21n/elements/feedback/animations/LogsPulse/LogsPulseItem.svelte";
-  export let count: number = 0;
+    let {
+    count = 0,
+  }: {
+    count?: number;
+  } = $props();
+
   if (count < 1) count = 1;
 </script>
 

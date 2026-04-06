@@ -1,7 +1,7 @@
 <script lang="ts">
   import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
 
-  export let row: any;
+  let { row }: { row: any } = $props();
 </script>
 
 <ShortcutText shortcut={row.shortcut} isPlainText={true} />

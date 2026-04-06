@@ -5,10 +5,11 @@ import PanelSwitcherWithAnimation from "@21n/elements/switcher/PanelSwitcherWith
 import { Size } from "@21n/types/size.enum";
 import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
 const meta = {
+  title: "Elements/Switcher/PanelSwitcherWithAnimation",
   component: PanelSwitcherWithAnimation,
   argTypes: {
     items: { control: { type: "object" } },
-    selected: { control: "text" },
+    value: { control: "text" },
     style: PanelSwitcherStyle,
     interval: { control: "number" }
   }
@@ -20,7 +21,7 @@ type Story = StoryObj<typeof meta>;
 export const Bar: Story = {
   args: {
     items: ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"],
-    selected: "Item 2",
+    value: "Item 2",
     style: PanelSwitcherStyle.BAR,
     interval: 4000
   }
@@ -29,7 +30,7 @@ export const Bar: Story = {
 export const Train: Story = {
   args: {
     items: ["Item 1", "Item 2", "Item 3", "Item 4", "Item 5"],
-    selected: "Item 2",
+    value: "Item 2",
     style: PanelSwitcherStyle.TRAIN,
     interval: 4000
   }

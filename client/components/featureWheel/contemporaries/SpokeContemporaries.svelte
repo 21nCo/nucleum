@@ -5,36 +5,54 @@
   } from "@21n/types/featureWheel.type";
   import type { Size } from "@21n/types/size.enum";
   import SpokeContemporaryItem from "@21n/components/featureWheel/contemporaries/SpokeContemporaryItem.svelte";
-  export let size: Size;
-  export let selectedSpoke: string | undefined = undefined;
-  export let spoke: IFeatureWheelSpoke;
-  export let contemporaries: IFeatureWheelContemporary[];
-  export let radius: number;
-  export let startAngles: number[];
-  export let groupAngles: number[];
-  export let i: number;
-  export let j: number;
-  export let groupSpokeLength: number;
-  // Group contemporaries by their value
-  $: contemporaryGroups = contemporaries.reduce((groups, contemporary) => {
-    const value = contemporary.value;
-    const existingGroup = groups.find((g) => g[0].value === value);
-    if (existingGroup) {
-      existingGroup.push(contemporary);
-    } else {
-      groups.push([contemporary]);
-    }
-    return groups;
-  }, [] as IFeatureWheelContemporary[][]);
-
-  // Single contemporaries are those that have unique values
-  $: singleContemporaries = contemporaryGroups
-    .filter((group) => group.length === 1)
-    .map((group) => group[0]);
-
-  // Groups are those with multiple contemporaries sharing same value
-  $: groupedContemporaries = contemporaryGroups.filter(
-    (group) => group.length > 1
+  let {
+    size,
+    selectedSpoke = undefined,
+    spoke,
+    contemporaries,
+    radius,
+    startAngles,
+    groupAngles,
+    i,
+    j,
+    groupSpokeLength,
+    onContemporary = (
+      _value: IFeatureWheelContemporary | IFeatureWheelContemporary[]
+    ) => {}
+  }: {
+    size: Size;
+    selectedSpoke?: string | undefined;
+    spoke: IFeatureWheelSpoke;
+    contemporaries: IFeatureWheelContemporary[];
+    radius: number;
+    startAngles: number[];
+    groupAngles: number[];
+    i: number;
+    j: number;
+    groupSpokeLength: number;
+    onContemporary?: (
+      value: IFeatureWheelContemporary | IFeatureWheelContemporary[]
+    ) => void;
+  } = $props();
+  const contemporaryGroups = $derived.by(() =>
+    contemporaries.reduce((groups, contemporary) => {
+      const value = contemporary.value;
+      const existingGroup = groups.find((g) => g[0].value === value);
+      if (existingGroup) {
+        existingGroup.push(contemporary);
+      } else {
+        groups.push([contemporary]);
+      }
+      return groups;
+    }, [] as IFeatureWheelContemporary[][])
+  );
+  const singleContemporaries = $derived(
+    contemporaryGroups
+      .filter((group) => group.length === 1)
+      .map((group) => group[0])
+  );
+  const groupedContemporaries = $derived(
+    contemporaryGroups.filter((group) => group.length > 1)
   );
 
   function resolveYCoord(contemporary: IFeatureWheelContemporary) {
@@ -58,7 +76,7 @@
   {#each singleContemporaries as contemporary}
     <SpokeContemporaryItem
       {size}
-      on:contemporary
+      {onContemporary}
       xCoord={resolveXCoord(contemporary)}
       yCoord={resolveYCoord(contemporary)}
       {contemporary}
@@ -67,7 +85,7 @@
   {#each groupedContemporaries as contemporary}
     <SpokeContemporaryItem
       {size}
-      on:contemporary
+      {onContemporary}
       xCoord={resolveXCoord(contemporary[0])}
       yCoord={resolveYCoord(contemporary[0])}
       group={contemporary}

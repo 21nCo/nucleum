@@ -1,6 +1,11 @@
 <script lang="ts">
   import DashboardPulseCardItem from "@21n/elements/feedback/animations/DashboardPulse/DashboardPulseCardItem.svelte";
-  export let count: number = 0;
+    let {
+    count = 0,
+  }: {
+    count?: number;
+  } = $props();
+
   if (count < 1) count = 4;
 </script>
 

@@ -1,31 +1,36 @@
 <!-- source: https://illustrationkit.com/illustrations/halo -->
 <script lang="ts">
   import { Size } from "@21n/types/size.enum";
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
-  let width = 143;
-  let height = 156;
-  resolveDimensions();
-  function resolveDimensions() {
+
+  let {
+    size = Size.md
+  }: {
+    size?: Size.sm | Size.md | Size.lg;
+  } = $props();
+  const dimensions = $derived.by(() => {
     switch (size) {
       case Size.sm:
-        width = 143 / 1.6;
-        height = 156 / 1.6;
-        break;
+        return {
+          width: 143 / 1.6,
+          height: 156 / 1.6
+        };
       case Size.md:
-        width = 143 / 1.3;
-        height = 156 / 1.3;
-        break;
+        return {
+          width: 143 / 1.3,
+          height: 156 / 1.3
+        };
       case Size.lg:
-        width = 143;
-        height = 156;
-        break;
+        return {
+          width: 143,
+          height: 156
+        };
     }
-  }
+  });
 </script>
 
 <svg
-  {width}
-  {height}
+  width={dimensions.width}
+  height={dimensions.height}
   viewBox="0 0 143 156"
   fill="none"
   xmlns="http://www.w3.org/2000/svg"

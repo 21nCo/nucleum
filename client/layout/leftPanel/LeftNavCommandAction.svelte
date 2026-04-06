@@ -1,11 +1,18 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import Icon from "@21n/elements/Icon.svelte";
   import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
   import { appStore } from "@21n/stores/app.store";
   import { Action } from "@21n/types/action.enum";
   import { Size } from "@21n/types/size.enum";
-  export let isInThinMode = false;
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
+  let {
+    isInThinMode = false,
+    size = Size.md
+  }: {
+    isInThinMode?: boolean;
+    size?: Size.sm | Size.md | Size.lg;
+  } = $props();
 </script>
 
 {#if $appStore?.appData?.isCmdBarEnabled === true}
@@ -14,13 +21,13 @@
       icon="terminal-window"
       {size}
       class="text-fgs2 hover:text-aps1"
-      on:click={() => appStore.runAction(Action.CMD)}
+      onclick={() => appStore.runAction(Action.CMD)}
     />
   {:else}
     <div class="text-b3 text-fgs3 mb-4">
       Press <button
         class="text-fgs2 px-1 py-[1px] rounded-md border border-brs3 hover:bg-bgs3"
-        on:click={() => appStore.runAction(Action.CMD)}
+        onclick={() => appStore.runAction(Action.CMD)}
       >
         <ShortcutText
           shortcut={Action.CMD}

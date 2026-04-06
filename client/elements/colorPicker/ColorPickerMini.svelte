@@ -5,16 +5,14 @@
   import Icon from "@21n/elements/Icon.svelte";
   import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
   import ColorPickerPopover from "@21n/elements/colorPicker/ColorPickerPopover.svelte";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let hue: number | undefined = undefined;
-  export let changeCallback: (value: number | string) => void = () => {};
-  export let onDebouncedChangeCallback: (
-    value: number | string
-  ) => void = () => {};
-  export let width: string | undefined = undefined;
-  let saturation = 50;
-  let lightness = 50;
+  let {
+    hue = $bindable(undefined),
+    changeCallback = () => {},
+    onDebouncedChangeCallback = () => {},
+    width = undefined
+  }: any = $props();
+  let saturation = $state(50);
+  let lightness = $state(50);
 
   function onChange(
     value: number | string,
@@ -28,7 +26,6 @@
       saturation = additional.saturation || 50;
       lightness = additional.lightness || 50;
     }
-    dispatch("change", value);
     changeCallback?.(value);
   }
 </script>

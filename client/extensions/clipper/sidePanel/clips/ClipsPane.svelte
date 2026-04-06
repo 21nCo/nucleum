@@ -17,8 +17,14 @@
   import type { IRecordId } from "@21n/types/data.type";
   import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
 
-  export let clips: IClip[] = [];
-  export let isMemotronPage: boolean = false;
+  let {
+    clips = [],
+    isMemotronPage = false
+  }: {
+    clips?: IClip[];
+    isMemotronPage?: boolean;
+  } = $props();
+
   let transformedClips: IClip[] = [];
   let isLoadingState: boolean = true;
 
@@ -97,20 +103,11 @@
   {#if transformedClips?.length > 0}
     <div class="flex flex-col h-full w-full gap-3 overflow-y-auto">
       {#each transformedClips as clip, index (clip.id)}
-        <!-- {#if clip.contentType === NodeType.WEB_TEXT_BOOKMARK || clip.contentType === NodeType.WEB_SCREENSHOT}
-          <TextClip
-            {clip}
-            on:click={() => onThumbnailClick(clip.id)}
-            on:keydown
-          />
-        {:else if clip.contentType === NodeType.YOUTUBE_BOOKMARK && "timestamp" in clip.body} -->
         <Clip
           {clip}
-          on:click={() => onThumbnailClick(clip.id)}
-          on:keydown
-          on:delete={() => onClipDelete(clip.id)}
+          onclick={() => onThumbnailClick(clip.id)}
+          onDelete={() => onClipDelete(clip.id)}
         />
-        <!-- {/if} -->
       {/each}
       <ScrollViewBottomSpacer />
     </div>

@@ -2,6 +2,8 @@
   import { tooltip } from "@21n/actions/popover.action";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
+
+  let { onclick = undefined } = $props();
 </script>
 
 <div
@@ -9,6 +11,7 @@
   use:tooltip={{
     text: "Unpin from quick focus"
   }}
+  {onclick}
 >
-  <Icon icon="minus-circle" size={Size.md} class="fill-ars1" on:click />
+  <Icon icon="minus-circle" size={Size.md} class="fill-ars1" />
 </div>

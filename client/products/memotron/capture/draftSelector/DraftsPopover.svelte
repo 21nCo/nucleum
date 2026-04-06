@@ -6,15 +6,25 @@
   import DraftItem from "@21n/products/memotron/capture/draftSelector/DraftItem.svelte";
   import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
   import EdgeButton from "@21n/elements/button/EdgeButton.svelte";
-  export let drafts: ICapture[] = [];
-  export let onClose: () => void;
-  export let onSelect: (draft: ICapture) => void;
-  export let onDelete: (id: IRecordId) => void;
 
-  async function deleteDraft(e: CustomEvent) {
-    if (!e.detail.id) return;
-    onDelete(e.detail.id);
-    drafts = drafts.filter((draft) => !isSameResource(draft, e.detail.id));
+  let {
+    drafts: initialDrafts = [],
+    onClose,
+    onSelect,
+    onDelete
+  }: {
+    drafts?: ICapture[];
+    onClose: () => void;
+    onSelect: (draft: ICapture) => void;
+    onDelete: (id: IRecordId) => void;
+  } = $props();
+
+  let drafts = $state(initialDrafts);
+
+  async function deleteDraft(draft: ICapture) {
+    if (!draft?.id) return;
+    onDelete(draft.id);
+    drafts = drafts.filter((item) => !isSameResource(item, draft.id));
   }
 </script>
 
@@ -29,8 +39,8 @@
       {#each drafts as draft (draft.id.toString())}
         <DraftItem
           {draft}
-          on:click={() => onSelect(draft)}
-          on:delete={deleteDraft}
+          onSelect={() => onSelect(draft)}
+          onDelete={deleteDraft}
         />
       {/each}
     </div>
@@ -40,7 +50,7 @@
       icon="cross"
       tooltip="Close"
       label="Close"
-      on:click={() => onClose()}
+      onclick={() => onClose()}
     />
   </div>
 </div>

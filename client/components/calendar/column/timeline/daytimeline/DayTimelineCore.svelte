@@ -18,23 +18,32 @@
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { appStore } from "@21n/stores/app.store";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
-  export let date: Date = new Date();
-  export let data: Array<CalendarTimelineEntry> = [];
-  export let layout: CalendarColumnLayout;
-  export let isRefreshing: boolean = false;
+
+  let {
+    date = new Date(),
+    data = [],
+    layout,
+    isRefreshing = false
+  }: {
+    date?: Date;
+    data?: Array<CalendarTimelineEntry>;
+    layout: CalendarColumnLayout;
+    isRefreshing?: boolean;
+  } = $props();
 
   let container: HTMLElement;
-  $: isToday = dayjs(date).isSame(dayjs(), "day");
-  $: isFocusing =
+  const isToday = $derived(dayjs(date).isSame(dayjs(), "day"));
+  const isFocusing = $derived(
     isToday &&
-    document.getElementById("focusData")?.getAttribute("data-focus-active") ===
-      "true";
+      typeof document !== "undefined" &&
+      document.getElementById("focusData")?.getAttribute("data-focus-active") ===
+        "true"
+  );
   const BASE_HOUR_HEIGHT = 80;
-  let scale = resolveInitialScale();
-  let hourHeight = BASE_HOUR_HEIGHT * scale;
+  let scale = $state(resolveInitialScale());
+  const hourHeight = $derived(BASE_HOUR_HEIGHT * scale);
 
-  // Time markers
-  let hours = Array.from({ length: 24 }, (_, i) => i);
+  const hours = Array.from({ length: 24 }, (_, i) => i);
 
   function resolveInitialScale() {
     const scale = uiState.getState(UIState.calendarDayTimelineScale, {
@@ -51,24 +60,20 @@
   // Handle zoom
   function zoomIn() {
     scale = Math.min(2.5, scale + 0.1);
-    hourHeight = BASE_HOUR_HEIGHT * scale;
     persistScaleState();
   }
 
   function zoomOut() {
     scale = Math.max(0.4, scale - 0.1);
-    hourHeight = BASE_HOUR_HEIGHT * scale;
     persistScaleState();
   }
 
   function resetZoom() {
     scale = 1;
-    hourHeight = BASE_HOUR_HEIGHT;
     persistScaleState();
   }
 
-  // Update time
-  let now = new Date();
+  let now = $state(new Date());
   let interval: ReturnType<typeof setInterval>;
 
   function updateTime() {
@@ -91,28 +96,28 @@
     if (interval) clearInterval(interval);
   });
 
-  $: {
-    // Update isToday when date changes
+  $effect(() => {
     if (interval) clearInterval(interval);
     if (isToday) {
       interval = setInterval(updateTime, 60000);
     }
-  }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  });
 
-  // Get positioned top based on time - recalculates when hourHeight changes
-  $: getTimePosition = (unixTime: number): number => {
+  function getTimePosition(unixTime: number): number {
     const timeDate = new Date(unixTime);
     const hours = timeDate.getHours();
     const minutes = timeDate.getMinutes();
     const seconds = timeDate.getSeconds();
     return (hours + minutes / 60 + seconds / 3600) * hourHeight;
-  };
+  }
 
-  // Get event dimensions - recalculates when hourHeight changes
-  $: getEventHeight = (start: number, end: number): number => {
+  function getEventHeight(start: number, end: number): number {
     const duration = (end - start) / 3600000; // hours
     return Math.max(30, duration * hourHeight); // Minimum 30px height
-  };
+  }
 
   // Function to detect overlapping events and group them accordingly
   function calculatePositionGroups(
@@ -280,17 +285,17 @@
     });
   }
 
-  // Recalculate event positions and heights whenever hourHeight changes
-  $: entriesWithBasicPosition = data.map((entry) => ({
-    ...entry,
-    top: getTimePosition(entry.startUnix),
-    height: getEventHeight(entry.startUnix, entry.endUnix)
-  }));
+  const entriesWithBasicPosition = $derived(
+    data.map((entry) => ({
+      ...entry,
+      top: getTimePosition(entry.startUnix),
+      height: getEventHeight(entry.startUnix, entry.endUnix)
+    }))
+  );
 
-  // Calculate overlap groups and positions
-  $: entries = calculatePositionGroups(entriesWithBasicPosition);
+  const entries = $derived(calculatePositionGroups(entriesWithBasicPosition));
 
-  $: nowPosition = isToday ? getTimePosition(now.getTime()) : -1;
+  const nowPosition = $derived(isToday ? getTimePosition(now.getTime()) : -1);
 </script>
 
 <div
@@ -359,7 +364,7 @@
           <button
             class="absolute z-20 text-abg text-b3 flex justify-end rounded-md px-2 mr-1 right-0 whitespace-nowrap bg-aps1"
             style="top: {nowPosition - 10}px;"
-            on:click={() => {
+            onclick={() => {
               const action = PointronAction.FOCUS;
               appStore.runAction(action);
             }}
@@ -388,15 +393,15 @@
           size={Size.sm}
           style={ButtonStyle.PLAIN}
           isPreventMinWidth={true}
-          on:click={resetZoom}
+          onclick={resetZoom}
         />
       </div>
     {/if}
-    <Button icon="magnifying-glass-plus" parentBgIndex={2} on:click={zoomIn} />
+    <Button icon="magnifying-glass-plus" parentBgIndex={2} onclick={zoomIn} />
     <Button
       icon="magnifying-glass-minus"
       parentBgIndex={2}
-      on:click={zoomOut}
+      onclick={zoomOut}
     />
   </div>
 </div>

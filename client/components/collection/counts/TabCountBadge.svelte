@@ -1,11 +1,17 @@
 <script lang="ts">
   import { cn } from "@21n/utils/ui.utils";
 
-  export let count: number = 0;
-  export let isActive: boolean = false;
-  export let hasCustomColor: boolean = false;
+  let {
+    count = 0,
+    isActive = false,
+    hasCustomColor = false
+  }: {
+    count?: number;
+    isActive?: boolean;
+    hasCustomColor?: boolean;
+  } = $props();
 
-  $: displayCount = count > 99 ? "99+" : count.toString();
+  let displayCount = $derived(count > 99 ? "99+" : count.toString());
 </script>
 
 <span

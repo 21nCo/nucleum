@@ -4,11 +4,15 @@
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
   import type { CollectionItem } from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/types";
+  let {
+    item,
+    currentUrl
+  }: {
+    item: CollectionItem;
+    currentUrl: string;
+  } = $props();
 
-  export let item: CollectionItem;
-  export let currentUrl: string;
-
-  $: isActive = currentUrl === item.url;
+  let isActive = $derived(currentUrl === item.url);
 
   function getFaviconUrl(url?: string): string | null {
     if (!url) return null;
@@ -36,7 +40,7 @@
       "hover:bg-bgs2 border-transparent": !isActive
     }
   )}
-  on:click={(e) => {
+  onclick={(e) => {
     if (!item.url) return;
     if (e.metaKey || e.ctrlKey) {
       window.open(item.url, "_blank");
@@ -51,7 +55,7 @@
         src={getFaviconUrl(item.url)}
         alt="favicon"
         class="w-4 h-4 rounded"
-        on:error={handleImageError}
+        onerror={handleImageError}
       />
     {:else}
       <Icon icon="globe" size={Size.sm} />

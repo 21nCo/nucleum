@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { MouseEventHandler } from "svelte/elements";
   import { Orientation } from "@21n/types/direction.enum";
   import { Size } from "@21n/types/size.enum";
   import { properCase } from "@21n/shared-utils/text.utils";
@@ -14,14 +15,27 @@
   import Badge from "@21n/elements/text/Badge.svelte";
   import { tooltip } from "@21n/actions/popover.action";
   import { backOut } from "svelte/easing";
-  export let item: ISelectItem;
-  export let size: Size.lg | Size.md | Size.sm = Size.md;
-  export let isActive: boolean = false;
-  export let style: OptionSelectorStyle = OptionSelectorStyle.TRAIN;
-  export let iconOrientation: Orientation = Orientation.Horizontal;
-  export let isShowExpandFeedbackOnActive = false;
-  export let isExpandOnActiveForIcon = false;
-  export let parentBgIndex: number = 1;
+  let {
+    item,
+    size = Size.md,
+    isActive = false,
+    style = OptionSelectorStyle.TRAIN,
+    iconOrientation = Orientation.Horizontal,
+    isShowExpandFeedbackOnActive = false,
+    isExpandOnActiveForIcon = false,
+    parentBgIndex = 1,
+    onclick = undefined
+  }: {
+    item: ISelectItem;
+    size?: Size.lg | Size.md | Size.sm;
+    isActive?: boolean;
+    style?: OptionSelectorStyle;
+    iconOrientation?: Orientation;
+    isShowExpandFeedbackOnActive?: boolean;
+    isExpandOnActiveForIcon?: boolean;
+    parentBgIndex?: number;
+    onclick?: MouseEventHandler<HTMLButtonElement> | undefined;
+  } = $props();
 </script>
 
 {#if style === OptionSelectorStyle.TRAIN || style === OptionSelectorStyle.OUTLINE || style === OptionSelectorStyle.ICON}
@@ -67,7 +81,7 @@
           iconOrientation === Orientation.Vertical && size === Size.sm
       }
     )}
-    on:click
+    onclick={(event) => onclick?.(event)}
     use:tooltip={{
       disabled:
         (style !== OptionSelectorStyle.ICON && !item.tooltip) ||
@@ -142,7 +156,7 @@
   </button>
 {:else if style === OptionSelectorStyle.CHECK_CIRCLE}
   <button
-    on:click
+    onclick={(event) => onclick?.(event)}
     class="flex gap-2 items-center {item.isDisabled && 'cursor-not-allowed'}"
   >
     <div

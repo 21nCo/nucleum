@@ -2,7 +2,11 @@
   import type { IListItem } from "@21n/landing/shared/landing.type";
   import SVGIcon from "@21n/elements/SVGIcon.svelte";
   import { Size } from "@21n/types/size.enum";
-  export let item: IListItem;
+  let {
+    item,
+  }: {
+    item: IListItem;
+  } = $props();
 </script>
 
 <a class="flex items-center gap-1.5 text-lb2" href={item.href} target="_blank" rel="noopener noreferrer">

@@ -5,20 +5,32 @@
   import Icon from "@21n/elements/Icon.svelte";
   import NodeTitleLabelPart from "@21n/products/memotron/node/title/NodeTitleLabelPart.svelte";
   import type { IActiveNode } from "@21n/products/memotron/node/node.type";
-  import { createEventDispatcher } from "svelte";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import context from "@21n/stores/context.store";
   import TextInputOnKeyboardToolbar from "@21n/elements/input/TextInputOnKeyboardToolbar.svelte";
   import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
-  export let node: IActiveNode;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  let {
+    node,
+    accessPoint = ResourceAccessPoint.SELF,
+    onLabelChange = undefined,
+    onEditModeChange = undefined
+  }: {
+    node: IActiveNode;
+    accessPoint?: ResourceAccessPoint;
+    onLabelChange?: ((label: string) => void) | undefined;
+    onEditModeChange?: ((value: boolean) => void) | undefined;
+  } = $props();
   let previousLabel = node.label;
   let isKeyboardEditorMounted = false;
-  const dispatch = createEventDispatcher();
   let keyboardEditorRef: TextInputOnKeyboardToolbar;
   let textInputRef: TextInput;
-  function onLabelChange(e: any) {
-    dispatch("labelChange", e.detail);
+
+  function propagateLabelChange(label: string) {
+    onLabelChange?.(label);
+  }
+
+  function propagateEditModeChange(value: boolean) {
+    onEditModeChange?.(value);
   }
 </script>
 
@@ -34,19 +46,21 @@
         <TextInputOnKeyboardToolbar
           bind:value={node.label}
           bind:this={keyboardEditorRef}
-          on:debouncedChange={onLabelChange}
-          on:mount={() => {
+          onDebouncedChange={(event) => {
+            propagateLabelChange(event.detail);
+          }}
+          onMount={() => {
             isKeyboardEditorMounted = true;
             keyboardEditorRef?.focus();
           }}
-          on:save={() => {
-            dispatch("editModeChange", false);
+          onSave={() => {
+            propagateEditModeChange(false);
           }}
-          on:cancel={() => {
+          onCancel={() => {
             node.label = previousLabel;
             isKeyboardEditorMounted = false;
-            dispatch("labelChange", node.label);
-            dispatch("editModeChange", false);
+            propagateLabelChange(node.label);
+            propagateEditModeChange(false);
           }}
         />
       {/if}
@@ -56,36 +70,35 @@
         bind:this={textInputRef}
         placeholder="Enter title"
         width="w-full"
-        on:mount={() => {
+        onMount={() => {
           textInputRef?.focus();
           keyboardEditorRef?.focus();
         }}
         isPreserveKeyboardToolbar={isKeyboardEditorMounted}
         isShowSaveControl={true}
-        on:enter={() => {
-          dispatch("labelChange", node.label);
-          dispatch("editModeChange", false);
+        onEnter={() => {
+          propagateLabelChange(node.label);
+          propagateEditModeChange(false);
         }}
-        on:save={() => {
-          dispatch("labelChange", node.label);
-          dispatch("editModeChange", false);
+        onSave={() => {
+          propagateLabelChange(node.label);
+          propagateEditModeChange(false);
         }}
-        on:cancel={() => {
+        onCancel={() => {
           node.label = previousLabel;
-          dispatch("labelChange", node.label);
-          dispatch("editModeChange", false);
+          propagateLabelChange(node.label);
+          propagateEditModeChange(false);
         }}
       />
     {:else}
       <span class="text-start truncate">
-        <!-- {$node.label ?? $node.body ?? ""} -->
         <NodeTitleLabelPart
           item={node}
           isNodePageContext={true}
           {accessPoint}
-          on:click={() => {
+          onClick={() => {
             previousLabel = node.label;
-            dispatch("editModeChange", true);
+            propagateEditModeChange(true);
           }}
         />
       </span>

@@ -11,7 +11,11 @@
   import type { IEmbedBlock } from "@21n/components/markdown/md.type";
   import type { IRecordId } from "@21n/types/data.type";
 
-  export let node: IActiveNodeStore | null = null;
+  let {
+    node = null
+  }: {
+    node?: IActiveNodeStore | null;
+  } = $props();
   let tasks: ITaskThumb[] = [];
   let isRefreshing = false;
 

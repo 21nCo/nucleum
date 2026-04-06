@@ -1,4 +1,7 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { performSessionCheck } from "@21n/components/account/auth";
   import AppLoadingView from "@21n/layout/paint/AppLoadingView.svelte";
   import Button from "@21n/elements/button/Button.svelte";
@@ -9,7 +12,8 @@
   import { EmbedMessage } from "@21n/types/embedMessage.enum";
   import { onMount } from "svelte";
   import AccountDebugInfo from "./AccountDebugInfo.svelte";
-  let isEmbedTokenPresent = false;
+  let { children: pageChildren }: { children?: Snippet } = $props();
+  let isEmbedTokenPresent = $state(false);
   const dev_isDebugAccountMode = false;
   onMount(() => {
     postMessageToParent(EmbedMessage.MOUNT);
@@ -25,12 +29,15 @@
     {#if dev_isDebugAccountMode}
       <AccountDebugInfo />
     {:else}
-      <AuthGuard let:isLoggedIn>
-        {#if isLoggedIn}
-          <svelte:component this={productData.base}>
-            <slot />
-          </svelte:component>
-        {/if}
+      <AuthGuard>
+        {#snippet children(isLoggedIn)}
+          {#if isLoggedIn}
+            {@const ProductBase = productData.base}
+            <ProductBase>
+              {@render pageChildren?.()}
+            </ProductBase>
+          {/if}
+        {/snippet}
       </AuthGuard>
     {/if}
   {:else}
@@ -38,7 +45,7 @@
       Embed token: {isEmbedTokenPresent}
       <Button
         label="Login/Signup"
-        on:click={() => {
+        onclick={() => {
           appStore.gotoPath("/account/login");
         }}
       />
@@ -49,7 +56,7 @@
     <div class="text-ass1 text-b2 mb-4">Authentication error</div>
     <Button
       label="Login/Signup"
-      on:click={() => {
+      onclick={() => {
         appStore.gotoPath("/account/login");
       }}
     />

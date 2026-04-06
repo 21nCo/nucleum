@@ -1,9 +1,16 @@
 <script lang="ts">
   import SvgIcon from "@21n/elements/SVGIcon.svelte";
   import { cn } from "@21n/utils/ui.utils";
-  export let url: string;
-  export let deviceImages: string[];
-  export let frameImage: string;
+  let {
+    url,
+    deviceImages,
+    frameImage,
+  }: {
+    url: string;
+    deviceImages: string[];
+    frameImage: string;
+  } = $props();
+
   let isVideoPlaying = false;
   let laptopImageSrc = deviceImages.find((image) => image.includes("laptop"));
 </script>
@@ -39,7 +46,7 @@
       </div>
       <button
         class="absolute inset-0 flex items-center justify-center z-40 text-fgs1 hover:scale-110 transition-all ease-out duration-200"
-        on:click={() => (isVideoPlaying = true)}
+        onclick={() => (isVideoPlaying = true)}
       >
         <SvgIcon icon="play" isRenderRaw={true} />
       </button>
