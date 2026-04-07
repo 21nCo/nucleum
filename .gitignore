@@ -50,3 +50,6 @@ artifacts/
 
 .opencode
 .conduct
+
+# Local dev seed files — not for tracking
+**/seed.local.ts
