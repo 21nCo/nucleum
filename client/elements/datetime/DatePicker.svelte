@@ -9,7 +9,7 @@
   import AbsoluteTimeRangePopoverV2 from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
   let {
     parentBackgroundIndex = 1,
-    date = $bindable(undefined),
+    date = $bindable(),
     style = InputStyle.BORDERED,
     label = undefined,
     placeholder = "Select a date",

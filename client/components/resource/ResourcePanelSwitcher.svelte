@@ -102,6 +102,7 @@ function handleContextMenuAction(event: CustomEvent<any>) {
           />
         </div>
         <BoxSwitcher
+          isTablist={true}
           isExpandOnActiveForIcon={true}
           options={panels}
           size={$view.isConstrainedWidth ? Size.sm : Size.md}

@@ -44,6 +44,24 @@
     onAppear?: (() => void) | undefined;
     onSyncDown?: (() => void) | undefined;
   } = $props();
+  const normalizedSubscribeToResource = $derived.by(() => {
+    if (subscribeToResource && typeof subscribeToResource.has === "function") {
+      return subscribeToResource;
+    }
+    if (Array.isArray(subscribeToResource)) {
+      return new Set<Resource>(subscribeToResource);
+    }
+    return new Set<Resource>();
+  });
+  const normalizedSubscribeToContext = $derived.by(() => {
+    if (subscribeToContext && typeof subscribeToContext.has === "function") {
+      return subscribeToContext;
+    }
+    if (Array.isArray(subscribeToContext)) {
+      return new Set<string>(subscribeToContext);
+    }
+    return undefined;
+  });
 
   function visibilityChangeListener() {
     onAppear?.();
@@ -109,8 +127,12 @@
       }
       return;
     }
-    if (!subscribeToResource.has(data.resource)) return;
-    if (subscribeToContext && !subscribeToContext.has(data.context)) return;
+    if (!normalizedSubscribeToResource.has(data.resource)) return;
+    if (
+      normalizedSubscribeToContext &&
+      !normalizedSubscribeToContext.has(data.context)
+    )
+      return;
 
     if (
       (isMergeAction && subscriptionPropsForMergeAction === undefined) ||

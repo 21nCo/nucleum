@@ -30,6 +30,20 @@
   } = $props();
 
   let containerElement: HTMLDivElement | undefined;
+  const resolvedAction = $derived.by(() => {
+    if (action) return action;
+    if (!path) return null;
+    let nextAction = appStore.resolveComponentFromPath(path);
+    if (!nextAction && path.includes("/")) {
+      const pathWithPrefixStripped = path.split("/")[1];
+      nextAction = appStore.resolveComponentFromPath(pathWithPrefixStripped);
+    }
+    return nextAction;
+  });
+  const resolvedParams = $derived.by(() => ({
+    ...(resolvedAction?.componentParams ?? {}),
+    ...(params ?? {})
+  }));
 
   function measureContainer(element: HTMLDivElement) {
     const rect = element.getBoundingClientRect();
@@ -42,19 +56,6 @@
   }
 
   onMount(() => {
-    if (action === null && path !== "") {
-      action = appStore.resolveComponentFromPath(path);
-      if (!action && path.includes("/")) {
-        const pathWithPrefixStripped = path.split("/")[1];
-        action = appStore.resolveComponentFromPath(pathWithPrefixStripped);
-      }
-      if (action) {
-        params = {
-          ...(action.componentParams ?? {}),
-          ...(params ?? {})
-        };
-      }
-    }
     if ($context.isSheet) postMessageToParent(EmbedMessage.SHEET_MOUNTED);
     if (containerElement) {
       measureContainer(containerElement);
@@ -62,13 +63,13 @@
   });
 </script>
 
-{#if $context.isSheet && action?.component}
-  {@const ResolvedComponent = action.component}
-  <ModalLayout path={action.action} params={action.modalParams ?? {}}>
-    <ResolvedComponent {...params} />
+{#if $context.isSheet && resolvedAction?.component}
+  {@const ResolvedComponent = resolvedAction.component}
+  <ModalLayout path={resolvedAction.action} params={resolvedAction.modalParams ?? {}}>
+    <ResolvedComponent {...resolvedParams} />
   </ModalLayout>
-{:else if action?.component}
-  {@const ResolvedComponent = action.component}
+{:else if resolvedAction?.component}
+  {@const ResolvedComponent = resolvedAction.component}
   <div
     bind:this={containerElement}
     class="flex justify-center w-full h-full"
@@ -76,7 +77,7 @@
       containerStore.set(e);
     }}
   >
-    <ResolvedComponent {...params} />
+    <ResolvedComponent {...resolvedParams} />
   </div>
 {:else if !isPreventErrorFeedback}
   <PageError isNotFoundPage={true} />

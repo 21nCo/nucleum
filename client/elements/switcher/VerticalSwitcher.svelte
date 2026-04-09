@@ -9,7 +9,7 @@
     style = VerticalSwitcherStyle.BAR,
     labelOrientation = Orientation.Vertical,
     items,
-    selected = $bindable(undefined),
+    selected = $bindable(),
     isHideBar = false,
     parentBgIndex = 1,
     onSwitch,

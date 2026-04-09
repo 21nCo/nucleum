@@ -102,6 +102,15 @@
       type === ButtonVariant.SECONDARY &&
       isHovering
   });
+
+  function invokeMouseHandler(
+    handler: MouseEventHandler<HTMLButtonElement> | undefined,
+    event: Parameters<NonNullable<MouseEventHandler<HTMLButtonElement>>>[0]
+  ) {
+    if (typeof handler === "function") {
+      handler(event);
+    }
+  }
 </script>
 
 <button
@@ -110,7 +119,9 @@
   data-testid={testId}
   use:hoverable={{
     onHover: (val) => {
-      isHovering = val;
+      queueMicrotask(() => {
+        isHovering = val;
+      });
     }
   }}
   type="button"
@@ -180,10 +191,10 @@
     className
   )}
   onclick={(event) => {
-    onclick?.(event);
+    invokeMouseHandler(onclick, event);
   }}
   onmousedown={(event) => {
-    onmousedown?.(event);
+    invokeMouseHandler(onmousedown, event);
   }}
   bind:this={buttonRef}
   use:popover={{

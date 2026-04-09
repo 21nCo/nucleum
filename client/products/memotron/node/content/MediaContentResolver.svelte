@@ -11,7 +11,6 @@
   import PdfAnnotator from "@21n/products/memotron/pdfAnnotator/PdfAnnotator.svelte";
   import FileView from "@21n/components/files/FileView.svelte";
   import AudioContent from "@21n/products/memotron/audio/AudioContent.svelte";
-  import { onMount } from "svelte";
   import type { IFile } from "@21n/components/files/file.type";
   import { fileStore } from "@21n/components/files/file.store";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
@@ -40,9 +39,8 @@
   let webContentRef = $state<any>(undefined);
   let _file = $state<IFile | undefined>(undefined);
   let _url = $state("");
-  onMount(() => {
-    resolveData();
-  });
+  let dataPromise = $state<Promise<void>>(Promise.resolve());
+  let currentFileId = "";
 
   export function onTraceClick(details: any) {
     if (node.contentType === NodeType.PDF) {
@@ -63,6 +61,24 @@
     _url = _file.url ?? "";
   }
 
+  function resolveFileId() {
+    const file = node.file as string | { id?: string | number } | undefined;
+    if (typeof file === "string") return file;
+    if (file && typeof file === "object" && file.id != null) {
+      return String(file.id);
+    }
+    return "";
+  }
+
+  $effect(() => {
+    const fileId = resolveFileId();
+    if (fileId === currentFileId) return;
+    currentFileId = fileId;
+    _file = undefined;
+    _url = "";
+    dataPromise = fileId ? resolveData() : Promise.resolve();
+  });
+
   function resolveAudioBody(body: INode["body"]) {
     return typeof body === "object" && body ? (body as IAudioBody) : undefined;
   }
@@ -72,7 +88,7 @@
   }
 </script>
 
-{#await resolveData()}
+{#await dataPromise}
   <div class="flex w-full h-full items-center justify-center">
     <div
       class="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"

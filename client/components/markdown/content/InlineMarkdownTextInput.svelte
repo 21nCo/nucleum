@@ -52,7 +52,7 @@
     id = generateUID(),
     dataType = "",
     content = $bindable(""),
-    placeholder = $bindable(""),
+    placeholder = "",
     isMarkdown = false,
     isReadOnly = false,
     class: classList = "",
@@ -87,7 +87,7 @@
     onPointerenter?: ((event: PointerEvent) => void) | undefined;
     onPointerleave?: ((event: PointerEvent) => void) | undefined;
   } = $props();
-  let blockRef: any;
+  let blockRef = $state<any>(undefined);
 
   enum InlineCaretResolutionMethod {
     T1 = "t1",
@@ -116,9 +116,9 @@
    */
   let isCustomCaret = false;
   let customCaret: HTMLElement | null = null;
-  let typing: boolean = false;
+  let typing = $state(false);
   let typingTimeout: any;
-  let innerHTML: string;
+  let innerHTML = $state<string>("");
 
   let newInlineSpanId: string;
   let caretPositionT2:

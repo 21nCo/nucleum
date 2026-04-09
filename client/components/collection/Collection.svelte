@@ -20,7 +20,7 @@
     type IProperty
   } from "@21n/components/collection/properties/property.type";
   import { activeResourceFilter } from "@21n/utils/utils";
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, untrack } from "svelte";
   import type { DropdownItem } from "@21n/types/dropdownItem.type";
   import type { ISelectItem, ISelectValue } from "@21n/types/select.type";
   import {
@@ -126,15 +126,17 @@
       .toLowerCase();
   }
 
-  let collection: IActiveCollectionStore = ActiveCollectionStore.resolve(id);
-  let activeView: ICollectionViewWithData | null = null;
-  let viewData: ICollectionItem[] = [];
-  let _filtered: ICollectionItem[] = [];
-  let selectedViewId: string;
-  let selectedTab: ISelectValue | undefined = undefined;
+  let collection: IActiveCollectionStore = $derived(
+    ActiveCollectionStore.resolve(id)
+  );
+  let activeView = $state<ICollectionViewWithData | null>(null);
+  let viewData = $state<ICollectionItem[]>([]);
+  let _filtered = $state<ICollectionItem[]>([]);
+  let selectedViewId = $state<string>("");
+  let selectedTab = $state<ISelectValue | undefined>(undefined);
   let dev_isRoundedCover = false;
-  let isStickied = false;
-  let triggerItemEdit = "";
+  let isStickied = $state(false);
+  let triggerItemEdit = $state("");
   let viewRightButtonOptions: {
     size: Size.sm;
     style: ButtonStyle;
@@ -144,14 +146,16 @@
     size: Size.sm,
     isPreventMinWidth: true
   };
-  let properties: DropdownItem[];
-  let viewsForSwitcher: ISelectItem[];
-  let isReady = false;
-  let isCoverPickerOpen = false;
-  let isShowMetaViews = false;
-  let isSingleViewMode = true;
-  let searchQuery: string = "";
-  let containerWidth = 0;
+  let properties = $state<DropdownItem[]>([]);
+  let viewsForSwitcher = $state<ISelectItem[]>([]);
+  let isReady = $state(false);
+  let isInitializing = $state(false);
+  let isCoverPickerOpen = $state(false);
+  let isShowMetaViews = $state(false);
+  let isSingleViewMode = $state(true);
+  let searchQuery = $state("");
+  let containerWidth = $state(0);
+  let initializedKey = $state("");
 
   let isConstrainedWidth = $derived(
     $view.isConstrainedWidth ||
@@ -180,30 +184,50 @@
     );
   });
 
-  onMount(async () => {
-    const viewQueryParam = new URLSearchParams(location.search).get(
-      AppSearchParam.VIEW
-    );
-    if (viewQueryParam) {
-      selectedViewId = viewQueryParam;
-    }
-    await collection.init(accessMode);
-    loadActiveView();
-    if (!activeView) {
-      activeView = $collection?.views
-        ? $collection.views.filter(activeResourceFilter)?.[0]
-        : null;
-      selectedViewId = activeView?.id?.toString() ?? "";
-    }
-    properties = await resolvePropertyList();
-    refreshViewsLane();
-    isReady = true;
-    await refresh({ isNewView: true });
+  $effect(() => {
+    const nextKey = id ? `${id}:${accessMode}` : "";
+    if (!nextKey || initializedKey === nextKey) return;
+    initializedKey = nextKey;
+    untrack(() => {
+      initialize();
+    });
   });
 
   onDestroy(() => {
     ActiveCollectionStore.destroy(id, accessMode);
   });
+
+  async function initialize() {
+    if (!id || isInitializing) return;
+    isInitializing = true;
+    isReady = false;
+    activeView = null;
+    viewData = [];
+    _filtered = [];
+    selectedTab = undefined;
+    try {
+      const viewQueryParam = new URLSearchParams(location.search).get(
+        AppSearchParam.VIEW
+      );
+      selectedViewId = viewQueryParam ?? "";
+      await collection.init(accessMode);
+      loadActiveView();
+      if (!activeView) {
+        activeView = $collection?.views
+          ? $collection.views.filter(activeResourceFilter)?.[0]
+          : null;
+        selectedViewId = activeView?.id?.toString() ?? "";
+      }
+      properties = await resolvePropertyList();
+      refreshViewsLane();
+      await refresh({ isNewView: true });
+    } catch (error) {
+      logger.error({ at: "Collection.initialize", error, id, accessMode });
+    } finally {
+      isInitializing = false;
+      isReady = true;
+    }
+  }
 
   async function resolvePropertyList() {
     const noneOption = {
@@ -317,7 +341,7 @@
     );
   }
 
-  let positionFromTop: number | undefined = undefined;
+  let positionFromTop = $state<number | undefined>(undefined);
   function onScroll() {
     const elementTarget = document.querySelector(".stickyheader");
     positionFromTop = elementTarget?.getBoundingClientRect().top;
@@ -361,7 +385,7 @@
 
   function loadActiveView() {
     logger.log({ at: "loadActiveView", selectedViewId });
-    if (!selectedViewId) return;
+    if (!selectedViewId || !$collection?.views) return;
     const view =
       $collection.views.find((x) => x.id.toString() === selectedViewId) ?? null;
     if (!view) return;
@@ -374,7 +398,7 @@
       isNewView: false
     }
   ) {
-    if (!activeView) return;
+    if (!activeView || !$collection) return;
     const tabBy = activeView.tabBy;
     const resourceStore = resolveResourceStore(
       $collection.resource ?? Resource.node
@@ -553,7 +577,7 @@
   }
 </script>
 
-{#if !$collection || $collection.isPageLoading || !isReady}
+{#if !$collection || $collection.isPageLoading || !isReady || isInitializing}
   <div class="w-full h-full p-4 otop:pt-12">
     <PageLoadingPulse />
   </div>

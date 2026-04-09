@@ -35,10 +35,15 @@
   const activeState = $derived(
     setActiveByPath ? $view.currentPath === "/" + component?.path : isActive
   );
+
+  function handleInteraction(event: MouseEvent) {
+    onclick?.(event);
+  }
 </script>
 
 {#if component && !component.isInactive}
   <button
+    type="button"
     class={cn(orientation === Orientation.Vertical ? width : "", {
       "rounded-t-lg": isRoundedTop,
       "rounded-b-lg": isRoundedBottom,
@@ -57,13 +62,14 @@
           : parentBackgroundIndex - 1
       )]: !activeState
     })}
-    {onclick}
+    onclick={handleInteraction}
   >
     {#if orientation === Orientation.Horizontal}
       <div class="flex gap-2 w-full">
         <Icon
           icon={component.icon ?? "info"}
           class={cn({
+            "pointer-events-none": true,
             "fill-aps1": activeState && dev_isOutlineStyle,
             "fill-abg": activeState && !dev_isOutlineStyle
           })}
@@ -75,6 +81,7 @@
           ? "weblink-two"
           : "chevron-right"}
         class={cn({
+          "pointer-events-none": true,
           "text-abg": activeState && !dev_isOutlineStyle,
           "text-aps1": activeState && dev_isOutlineStyle
         })}
@@ -84,6 +91,7 @@
         <Icon
           icon={component.icon}
           class={cn({
+            "pointer-events-none": true,
             "fill-aps1": activeState && dev_isOutlineStyle,
             "fill-abg": activeState && !dev_isOutlineStyle
           })}

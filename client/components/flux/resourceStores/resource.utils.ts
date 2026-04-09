@@ -2,7 +2,7 @@ import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import {
   AccessMode,
   ResourceActionType,
-  type ResourceAccessPoint
+  ResourceAccessPoint
 } from "@21n/components/flux/resourceStores/resource.type";
 import type { IRecordId } from "@21n/types/data.type";
 import { logger } from "@21n/components/debug/logger.client";
@@ -209,6 +209,18 @@ export function resourceIdToElementId(
   accessPointId: IRecordId | undefined = undefined
 ) {
   return `${elementType}-${resourceId}-${accessPoint ?? "none"}-${accessPointId ?? "none"}`;
+}
+
+export function resolveBulkSelectionAccessPointId(
+  accessPoint: ResourceAccessPoint | undefined,
+  accessPointId: IRecordId | undefined = undefined
+) {
+  if (accessPoint === undefined) return accessPointId;
+  if (
+    accessPoint === ResourceAccessPoint.BROWSER ||
+    accessPoint === ResourceAccessPoint.LIBRARY
+  ) return undefined;
+  return accessPointId;
 }
 
 const baseResourceIcons: Record<string, string> = {

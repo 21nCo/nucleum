@@ -17,7 +17,7 @@
   let {
     providers,
     isExpanded = false,
-    currentProgress = $bindable(undefined),
+    currentProgress = $bindable(),
     region = undefined
   }: {
     providers: string[];

@@ -10,7 +10,7 @@
     size = Size.md,
     bgSize = Size.md,
     parentBgIndex = 1,
-    selected = $bindable(undefined),
+    selected = $bindable(),
     onChange = undefined,
     onNone = undefined,
     class: classList = ""

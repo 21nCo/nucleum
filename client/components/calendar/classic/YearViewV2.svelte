@@ -8,6 +8,10 @@
   import { Preference } from "@21n/stores/preferences/preferences.type";
   import { TimeScaleUnit } from "@21n/types/time.type";
   import { logger } from "@21n/components/debug/logger.client";
+  import {
+    buildResolvedIndicatorDataByDayMap,
+    resolveIndicatorDayKey
+  } from "@21n/components/calendar/classic/indicator/resolveIndicatorDataByDay";
 
   let {
     selectedDate = $bindable(new Date()),
@@ -71,6 +75,9 @@
 
   let showYearIndicators = $state(
     preferences.resolve(Preference.CALENDAR_TILE_INDICATORS_YEAR) ?? true
+  );
+  const resolvedIndicatorDataByDay = $derived.by(() =>
+    buildResolvedIndicatorDataByDayMap(indicatorData)
   );
 
   const unsubscribe = preferences.subscribe((prefs) => {
@@ -514,8 +521,9 @@
                         {#if indicatorData.length > 0 && showYearIndicators}
                           <CalendarTileIndicator
                             {date}
-                            {indicatorRefreshId}
-                            data={indicatorData}
+                            resolvedData={resolvedIndicatorDataByDay.get(
+                              resolveIndicatorDayKey(date)
+                            )}
                             isActive={isSelected}
                           />
                         {/if}

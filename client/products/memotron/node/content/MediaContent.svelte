@@ -41,8 +41,12 @@
   setContext(Context.CONTENT, contentContext);
 
   function onAnnotation(annotations: any[]) {
-    if ($node.contentType === NodeType.PDF && annotations)
-      $node.pdfAnnotations = annotations;
+    if ($node.contentType === NodeType.PDF && annotations) {
+      node.update((current) => ({
+        ...current,
+        pdfAnnotations: annotations
+      }));
+    }
   }
 
   function onConfigUpdate(detail: any) {

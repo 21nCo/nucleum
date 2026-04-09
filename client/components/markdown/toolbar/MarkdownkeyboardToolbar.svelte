@@ -33,7 +33,7 @@
   const nodeContext = getContext<any>(Context.NODE);
 
   let {
-    keyboardToolbarPanelSelection = $bindable(undefined),
+    keyboardToolbarPanelSelection = $bindable(),
     selectedBlocks = [],
     onAction = undefined,
     onFocus = undefined,

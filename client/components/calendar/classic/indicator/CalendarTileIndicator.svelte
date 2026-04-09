@@ -27,28 +27,47 @@
     data = [],
     type = CalendarTileIndicatorDisplayType.DOTS,
     isActive = false,
-    indicatorRefreshId = 0
+    indicatorRefreshId = 0,
+    resolvedData = undefined
   }: {
     date: Date;
     data?: ICalendarIndicatorData[];
     type?: CalendarTileIndicatorDisplayType;
     isActive?: boolean;
     indicatorRefreshId?: number;
+    resolvedData?: {
+      tasks: ITaskThumb[];
+      focusSessions: (ISessionThumb & {
+        splits: { focus: number; brek: number };
+      })[];
+      nodes: any[];
+      calendarNotes: any[];
+      summary: DaySummary;
+    };
   } = $props();
 
-  let tasks = $state<ITaskThumb[]>([]);
-  let focusSessions = $state<
+  let fallbackTasks = $state<ITaskThumb[]>([]);
+  let fallbackFocusSessions = $state<
     (ISessionThumb & {
       splits: { focus: number; brek: number };
     })[]
   >([]);
-  let nodes = $state<any[]>([]);
-  let calendarNotes = $state<any[]>([]);
-  let summary = $state<DaySummary>({ focus: 0, break: 0 });
+  let fallbackNodes = $state<any[]>([]);
+  let fallbackCalendarNotes = $state<any[]>([]);
+  let fallbackSummary = $state<DaySummary>({ focus: 0, break: 0 });
   const dayFilter = $derived(tzStore.resolveTimePeriodFilterForDay(date));
+  const tasks = $derived(resolvedData?.tasks ?? fallbackTasks);
+  const focusSessions = $derived(
+    resolvedData?.focusSessions ?? fallbackFocusSessions
+  );
+  const nodes = $derived(resolvedData?.nodes ?? fallbackNodes);
+  const calendarNotes = $derived(
+    resolvedData?.calendarNotes ?? fallbackCalendarNotes
+  );
+  const summary = $derived(resolvedData?.summary ?? fallbackSummary);
 
   $effect(() => {
-    if (indicatorRefreshId > 0) {
+    if (!resolvedData && indicatorRefreshId > 0) {
       resolveData();
     }
   });
@@ -69,28 +88,26 @@
     try {
       const tasksData = data.find((x) => x.resource === Resource.task);
       if (tasksData) {
-        tasks = tasksData.data.filter(
+        fallbackTasks = tasksData.data.filter(
           (x) =>
             x.dateUnix >= dayFilter.greaterThanOrEqual &&
             x.dateUnix <= dayFilter.lessThanOrEqual
         );
-        // console.log({ tasks, ...dayFilter, date });
       }
       const sessionsData = data.find((x) => x.resource === Resource.session);
       if (sessionsData) {
-        focusSessions = sessionsData.data.filter(
+        fallbackFocusSessions = sessionsData.data.filter(
           (x) =>
             x &&
             x.startUnix >= dayFilter.greaterThanOrEqual &&
             x.startUnix <= dayFilter.lessThanOrEqual
         );
 
-        focusSessions = focusSessions.map((session: ISessionThumb) => ({
+        fallbackFocusSessions = fallbackFocusSessions.map((session: ISessionThumb) => ({
           ...session,
           splits: resolveSessionTimeSplit(session)
         }));
-        summary = generateSummary(focusSessions);
-        // console.log({ focusSessions, summary, ...dayFilter, date, data });
+        fallbackSummary = generateSummary(fallbackFocusSessions);
       }
     } catch (e) {
       logger.error({ at: "CalendarTileIndicator.resolveData", date, error: e });
@@ -101,7 +118,7 @@
     try {
       const nodesData = data.find((x) => x.resource === Resource.node);
       if (nodesData) {
-        nodes = nodesData.data.filter(
+        fallbackNodes = nodesData.data.filter(
           (x) =>
             new Date(x.createdAt).getTime() >= dayFilter.greaterThanOrEqual &&
             new Date(x.createdAt).getTime() <= dayFilter.lessThanOrEqual
@@ -111,7 +128,7 @@
         (x) => x.resource === MetaResource.calendarNotes
       );
       if (calendarNotesData) {
-        calendarNotes = calendarNotesData.data.filter(
+        fallbackCalendarNotes = calendarNotesData.data.filter(
           (x) =>
             new Date(x.date).getTime() >= dayFilter.greaterThanOrEqual &&
             new Date(x.date).getTime() <= dayFilter.lessThanOrEqual &&
@@ -124,6 +141,13 @@
   }
 
   function getColor(resource: Resource) {
+    if (resolvedData) {
+      if (resource === Resource.task && tasks.length > 0) return "fgs4";
+      if (resource === Resource.session && focusSessions.length > 0) return "aps1";
+      if (resource === Resource.node && (nodes.length > 0 || calendarNotes.length > 0)) {
+        return "aps1";
+      }
+    }
     const resourceData = data.find((x) => x.resource === resource);
     return resourceData?.color ?? "fgs4";
   }

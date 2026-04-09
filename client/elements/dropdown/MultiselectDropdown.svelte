@@ -19,7 +19,7 @@
     placeholder = "Plese select",
     containerId = generateUID(),
     onSelect = undefined,
-    popover = undefined
+    popover: popoverContent = undefined
   }: {
     options: DropdownItem[];
     selected?: ISelectValue[];
@@ -32,7 +32,6 @@
     popover?: Snippet | undefined;
   } = $props();
   let isActive = $state(false);
-  void containerId;
   const selectedItems = $derived(options.filter((item) =>
     selected.some((x) => x == item.value)
   ));
@@ -96,8 +95,8 @@
   <Icon icon={isActive ? "chevron-up" : "chevron-down"} size={Size.sm} />
   {#snippet popover()}
     <div>
-      {#if popover}
-        {@render popover()}
+      {#if popoverContent}
+        {@render popoverContent()}
       {:else}
         {#each options as item, index}
           <button

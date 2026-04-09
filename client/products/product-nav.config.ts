@@ -19,7 +19,7 @@ export type PathByNavLabel = Record<string, string>;
 export interface IProductNavConfig {
   /** App menu action IDs for landscape (used by app). */
   appMenu: readonly string[];
-  /** App menu for landscape in dev (Nucleus only; optional "home"). */
+  /** App menu for landscape in dev (Nucleum only; optional "home"). */
   appMenuDev?: readonly string[];
   /** App menu action IDs for portrait (used by app). */
   appMenuPt: readonly string[];
@@ -32,7 +32,7 @@ export interface IProductNavConfig {
   timelinePageLabel: string;
   /** E2E: path for each nav label. */
   pathByNavLabel: PathByNavLabel;
-  /** E2E: whether "Home" can appear in nav (Nucleus dev). */
+  /** E2E: whether "Home" can appear in nav (Nucleum dev). */
   includeHomeInNav?: boolean;
 }
 
@@ -43,7 +43,7 @@ const productNavConfig = {
     appMenuPt: [Action.CALENDAR, Action.LIBRARY_PORTRAIT, Action.OVERVIEW] as const,
     homePath: Action.CALENDAR,
     homePathPt: Action.LIBRARY_PORTRAIT,
-    librarySectionLabel: "Nucleus",
+    librarySectionLabel: "Nucleum",
     appMenuNavLabels: ["Calendar", "Overview", "Library"] as const,
     includeHomeInNav: false,
     timelinePageLabel: "Calendar",

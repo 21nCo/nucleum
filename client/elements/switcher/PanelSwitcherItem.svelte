@@ -112,6 +112,8 @@
 </script>
 {#if style === PanelSwitcherStyle.BAR}
   <button
+    role="tab"
+    aria-selected={isActive}
     class={cn("relative group flex bg-transparent h-full", {
       "px-4":
         (size === Size.md || size === Size.lg) &&
@@ -175,11 +177,13 @@
           "bottom-0 border-b-2 border-ccs1 left-1/3 w-1/3":
             barStyle === BarStyle.UNDER
         })}
-      />
+      ></div>
     {/if}
   </button>
 {:else if style === PanelSwitcherStyle.SNAKE}
   <button
+    role="tab"
+    aria-selected={isActive}
     class={cn("relative group flex items-center gap-1 py-2", {
       "px-6": item.icon,
       "px-4": !item.icon,
@@ -216,7 +220,7 @@
           "absolute h-2 w-full -bottom-1 left-0",
           bg(parentBgIndex - 1)
         )}
-      />
+      ></div>
     {/if}
   </button>
 {/if}

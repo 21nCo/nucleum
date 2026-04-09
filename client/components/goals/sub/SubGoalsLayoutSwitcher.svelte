@@ -4,7 +4,7 @@
   import { InputStyle } from "@21n/types/input.type";
 
   let {
-    layout = $bindable(undefined),
+    layout = $bindable(),
     onSelect = undefined
   }: {
     layout?: SubGoalsLayout | undefined;

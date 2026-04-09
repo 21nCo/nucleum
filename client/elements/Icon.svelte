@@ -328,12 +328,7 @@
   }
 </script>
 
-<button
-  {id}
-  class={cn("relative inline-flex items-center justify-center")}
-  tabindex={isTabbable ? 0 : -1}
-  {onclick}
->
+{#snippet iconContent()}
   {#if resolvedIcon?.includes(":") && renderedIconifyIcon}
     {@const sizeClass =
       size === Size.xxl
@@ -757,7 +752,26 @@
       {/if}
     </svg>
   {/if}
-</button>
+{/snippet}
+
+{#if onclick || isTabbable}
+  <button
+    {id}
+    class={cn("relative inline-flex items-center justify-center")}
+    tabindex={isTabbable ? 0 : -1}
+    {onclick}
+  >
+    {@render iconContent()}
+  </button>
+{:else}
+  <span
+    {id}
+    class={cn("relative inline-flex items-center justify-center")}
+    aria-hidden="true"
+  >
+    {@render iconContent()}
+  </span>
+{/if}
 
 <style>
   :global(.iconifysvg *) {

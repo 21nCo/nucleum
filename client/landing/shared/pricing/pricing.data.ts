@@ -17,12 +17,12 @@ export const freePlan: PricingPlan = {
 export const nucleusPlan: PricingPlan = {
   id: "nucleus",
   icon: "nucleus-plan",
-  title: "Nucleus",
+  title: "Nucleum",
   subtitle: "Everything productivity, single plan",
   price: { monthly: 15, yearly: 144, lifetime: 450 },
   features: [
     { text: "Everything in sync plan" },
-    { text: "Access to Nucleus (web)" },
+    { text: "Access to Nucleum (web)" },
     { text: "100 GB of included large file storage" },
     { text: "Early access to new features" },
     { text: "Priority chat support" },
@@ -41,7 +41,7 @@ export const databasePlan: PricingPlan = {
   features: [
     { text: "All features without limits" },
     {
-      text: "Access to Nucleus - the everything productivity app"
+      text: "Access to Nucleum - the everything productivity app"
     },
     { text: "Access to MCP server" },
     { text: "Priority chat support" },

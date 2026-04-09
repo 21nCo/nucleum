@@ -22,9 +22,9 @@
   let value = $state("");
   let key = $state("");
   let modifiers = $state<ModifierKey[]>([]);
-  let inputRef = $state<HTMLInputElement | undefined>(undefined);
-  let savedKey = $state(shortcut.key);
-  let savedModifiers = $state<ModifierKey[]>([...shortcut.modifiers]);
+  let inputRef: HTMLInputElement | undefined = undefined;
+  let savedKey = shortcut.key;
+  let savedModifiers: ModifierKey[] = [...shortcut.modifiers];
   const actionDetails = $derived(appStore.resolveAction(action));
   const systemShortcuts = $derived.by(() => resolveSystemShortcuts());
 
@@ -33,8 +33,8 @@
     savedKey = shortcut.key;
     savedModifiers = [...shortcut.modifiers];
     value = resolveShortcutText({
-      key: savedKey,
-      modifiers: savedModifiers,
+      key: shortcut.key,
+      modifiers: shortcut.modifiers,
       os: $context.os
     });
   });
@@ -164,7 +164,6 @@
     <button
       class="flex justify-center items-center bg-bgs2 rounded-md p-2 hover:text-aps1 w-60 h-10"
       onclick={() => {
-        console.log("clicked");
         if (!isConfigurationInProgress) {
           isConfigurationInProgress = true;
           reset();

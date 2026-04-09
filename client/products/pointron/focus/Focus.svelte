@@ -39,15 +39,15 @@
 
   let {
     accessMode = AccessMode.INLINE,
-    nonPadded = undefined,
-    right = undefined
+    nonPadded: nonPaddedContent = undefined,
+    right: rightContent = undefined
   }: {
     accessMode?: AccessMode;
     nonPadded?: Snippet | undefined;
     right?: Snippet | undefined;
   } = $props();
-  let mode: number = 0;
-  let isInlineEnabled: boolean = true;
+  let mode = $state(0);
+  let isInlineEnabled = $state(true);
   const manualLogHotKey = {
     key: "m"
   };
@@ -152,8 +152,8 @@
           : "simpleDigitalClock"}
       >
         {#snippet nonPadded()}
-          {#if nonPadded}
-            {@render nonPadded?.()}
+          {#if nonPaddedContent}
+            {@render nonPaddedContent?.()}
           {:else}
             <QuickStart />
           {/if}
@@ -164,8 +164,8 @@
           </span>
         {/snippet}
         {#snippet right()}
-          {#if right}
-            {@render right?.()}
+          {#if rightContent}
+            {@render rightContent?.()}
           {:else}
             {#if $activeSession.isSessionRunning}
               <Zen isInline={true} />

@@ -4,6 +4,7 @@
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import {
     determineResourceType,
+    resolveBulkSelectionAccessPointId,
     resourceIdToElementId,
     resourceInList,
     isSameResource
@@ -56,10 +57,14 @@
   let multiSelectContext = $derived({
     resource: determineResourceType(item.id),
     accessPoint,
-    accessPointId
+    accessPointId: resolveBulkSelectionAccessPointId(
+      accessPoint,
+      accessPointId
+    )
   });
   let isSelected = $state(false);
   let hasSelection = $state(false);
+  let isContextMenuVisible = $state(false);
   let currentSelectionCount = $derived($bulkEditStore?.length ?? 0);
 
   $effect(() => {
@@ -140,9 +145,10 @@
       {/if}
     </button>
   {/if}
-  {#if (isHovering && accessPoint !== ResourceAccessPoint.PICKER && accessPoint !== ResourceAccessPoint.MAP && !isPreventDefaultContextMenu) || (isAlwaysShowContextMenuOnTouchDevice && $context.isTouchDevice)}
+  {#if ((isHovering || isContextMenuVisible) && accessPoint !== ResourceAccessPoint.PICKER && accessPoint !== ResourceAccessPoint.MAP && !isPreventDefaultContextMenu) || (isAlwaysShowContextMenuOnTouchDevice && $context.isTouchDevice)}
     <ResourceThumbnailContextMenu
       bind:item
+      bind:isPopoverVisible={isContextMenuVisible}
       {accessPoint}
       {accessPointId}
       {accessPointContext}

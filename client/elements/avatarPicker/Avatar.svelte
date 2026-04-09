@@ -11,7 +11,7 @@
   import { popover } from "@21n/actions/popover.action";
   import { Placement } from "@21n/types/direction.enum";
   let {
-    avatar = $bindable(undefined),
+    avatar = $bindable(),
     size = Size.md,
     isInEditMode = false,
     context = AvatarPickerContext.DEFAULT,

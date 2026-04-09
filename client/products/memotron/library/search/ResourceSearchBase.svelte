@@ -52,8 +52,8 @@
   let recents = $state<any[]>([]);
   let resourceSearch = new SearchStore();
   let isRefreshing = $state(false);
-  let searchResultsPopover: SearchResultsPopover;
-  let groupedSearchRef: GroupedSearchResults;
+  let searchResultsPopover = $state<SearchResultsPopover | undefined>(undefined);
+  let groupedSearchRef = $state<GroupedSearchResults | undefined>(undefined);
   const resources = $derived(resolveProductResources($appStore.product, "search"));
   const switchItems = $derived([
     {

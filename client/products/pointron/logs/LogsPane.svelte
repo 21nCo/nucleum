@@ -36,12 +36,14 @@
     date?: Date;
     context?: "journal" | "logs";
   } = $props();
-  let selectedId: string | undefined = undefined;
-  let isRefreshing: boolean = false;
-  let sessions: (ISessionThumb & {
-    splits: { focus: number; brek: number };
-  })[] = [];
-  let summary: DaySummary = { focus: 0, break: 0 };
+  let selectedId = $state<string | undefined>(undefined);
+  let isRefreshing = $state(false);
+  let sessions = $state<
+    (ISessionThumb & {
+      splits: { focus: number; brek: number };
+    })[]
+  >([]);
+  let summary = $state<DaySummary>({ focus: 0, break: 0 });
   let dateString = $derived(date.toISOString().split("T")[0]);
 
   $effect(() => {

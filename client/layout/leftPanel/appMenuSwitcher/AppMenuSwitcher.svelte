@@ -21,6 +21,7 @@
   import { resolveProductConfig } from "@21n/products/product.config";
   import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { hTrail, vTrail } from "@21n/layout/topNav/tabs/tabs.store";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   let {
     layoutContext = LayoutContext.DEFAULT,
     parentBackgroundIndex,
@@ -30,11 +31,10 @@
     parentBackgroundIndex: number;
     isHovered?: boolean;
   } = $props();
-  void isHovered;
-  let allPages: IAction[] = [];
-  let defaultPages: IAction[] = [];
-  let userPinnedPages: IAction[] = [];
-  let current: string;
+  let allPages = $state<IAction[]>([]);
+  let defaultPages = $state<IAction[]>([]);
+  let userPinnedPages = $state<IAction[]>([]);
+  let current = $state("");
   const productConfig = resolveProductConfig();
 
   refresh(appMenuStore.get());
@@ -97,11 +97,20 @@
     isInEditMode.set(false);
     hTrail.clear();
     vTrail.clear();
-    // console.log({ item, selected: current });
+    const currentPath = window.location.pathname.replace("/", "");
+    const resolvedCurrent =
+      allPages.find((pageItem) =>
+        currentPath.includes(pageItem.path ?? pageItem.action)
+      )?.action ?? "";
+    const isActivePageWithRightPanel =
+      resolvedCurrent === item.action &&
+      item.type === ActionType.PAGE &&
+      Boolean(new URL(window.location.href).searchParams.get(AccessMode.RIGHT));
     if (
-      current !== item.action ||
+      resolvedCurrent !== item.action ||
       window.location.pathname.includes("/tab") ||
-      item.type !== ActionType.PAGE
+      item.type !== ActionType.PAGE ||
+      isActivePageWithRightPanel
     ) {
       appStore.runAction(item.action);
     }

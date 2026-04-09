@@ -1,5 +1,6 @@
 import { Extension, OverviewPanel, Product } from "@21n/products/product.type";
 import { getProductNavConfig } from "./product-nav.config";
+import { productE2EConfigs } from "./product.e2e-config";
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { Action } from "@21n/types/action.enum";
 import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
@@ -17,6 +18,46 @@ interface SettingsSection {
   section: string;
 }
 
+export interface IProductE2ECapabilities {
+  ui?: {
+    pinnedResourceBrowser?: boolean;
+  };
+  commands?: {
+    directGoalLibraryCommand?: boolean;
+    focus?: boolean;
+    manualTimeEntry?: boolean;
+  };
+  calendar?: {
+    manualLogUiEntry?: boolean;
+    dateNavigation?: boolean;
+  };
+  overview?: {
+    focusAnalyticsDashboard?: boolean;
+    memoryPanelSwitch?: boolean;
+  };
+  settings?: {
+    focusPanel?: boolean;
+    nodeSettingsPanel?: boolean;
+    sharedSidebarSmoke?: boolean;
+    sharedModeOfInteraction?: boolean;
+    sharedHotKeyMatrix?: boolean;
+    sharedShortcutCustomization?: boolean;
+    focusPipToggle?: boolean;
+  };
+  records?: {
+    collection?: boolean;
+    collectionTabs?: boolean;
+    collectionRename?: boolean;
+    goal?: boolean;
+    goalTabs?: boolean;
+    task?: boolean;
+    taskTabs?: boolean;
+    node?: boolean;
+    nodeTabs?: boolean;
+    session?: boolean;
+  };
+}
+
 interface IProductConfigBase {
   name: string;
   resources: {
@@ -28,6 +69,7 @@ interface IProductConfigBase {
   };
   displayName: string;
   tagline: string;
+  e2eCapabilities?: IProductE2ECapabilities;
 }
 
 export interface IAppConfigBase extends IProductConfigBase {
@@ -113,7 +155,7 @@ const pointronNav = getProductNavConfig(Product.POINTRON);
 
 export const products: Record<string, IAppConfigBase> = {
   [Product.NUCLEUS]: {
-    name: "Nucleus",
+    name: "Nucleum",
     appMenu: (isDev && nucleusNav.appMenuDev
       ? nucleusNav.appMenuDev
       : nucleusNav.appMenu) as string[],
@@ -132,7 +174,7 @@ export const products: Record<string, IAppConfigBase> = {
       ]
     },
     librarySectionLabel: nucleusNav.librarySectionLabel,
-    displayName: "Nucleus",
+    displayName: "Nucleum",
     tagline: "Your digital harmony",
     configurableShortcuts: [
       ...commonConfigurableShortcuts,
@@ -144,6 +186,7 @@ export const products: Record<string, IAppConfigBase> = {
       { label: "Memory", value: OverviewPanel.MEMORY, icon: "hexagon" },
       ...nextNucleusOverviewPanelSwitcherItems
     ],
+    e2eCapabilities: productE2EConfigs.nucleus.capabilities,
     settings: [
       {
         children: [
@@ -209,6 +252,7 @@ export const products: Record<string, IAppConfigBase> = {
       "SAVE_CAPTURE_SHORTCUT",
       "ACTIVATE_LINK_BOX"
     ],
+    e2eCapabilities: productE2EConfigs.memotron.capabilities,
     settings: [
       {
         children: [
@@ -271,6 +315,7 @@ export const products: Record<string, IAppConfigBase> = {
     librarySectionLabel: pointronNav.librarySectionLabel,
     displayName: "Pointron",
     tagline: "Your focus haven",
+    e2eCapabilities: productE2EConfigs.pointron.capabilities,
     settings: [
       {
         children: [

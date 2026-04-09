@@ -7,7 +7,7 @@
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
   let {
-    feedback = $bindable(undefined),
+    feedback = $bindable(),
     isRenderEmptyHeight = false,
     isAutoDissappear = true,
     size = Size.md

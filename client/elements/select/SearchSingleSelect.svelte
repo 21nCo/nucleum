@@ -5,7 +5,7 @@
   import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
   import { Size } from "@21n/types/size.enum";
   let {
-    selected = $bindable(undefined),
+    selected = $bindable(),
     placeholder = "Start typing to select",
     searchStoreId = undefined,
     searchCallback = undefined,

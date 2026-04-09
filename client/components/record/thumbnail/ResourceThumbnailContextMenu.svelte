@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import ContextMenuAction from "@21n/elements/contextMenu/ContextMenuAction.svelte";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
   import { Size } from "@21n/types/size.enum";
   import { resolveCollectionContextMenu } from "@21n/components/collection/collection.store";
   import { resolveNodeContextMenu } from "@21n/products/memotron/node/node.store";
@@ -26,6 +27,7 @@
     bgSize = Size.md,
     isInline = false,
     icon = "more",
+    isPopoverVisible = $bindable(false),
     onAction = undefined,
     right = undefined
   }: {
@@ -40,6 +42,7 @@
     bgSize?: Size.sm | Size.md | Size.lg;
     isInline?: boolean;
     icon?: string;
+    isPopoverVisible?: boolean;
     onAction?:
       | ((event: CustomEvent<{ action: string; id: string }>) => void)
       | undefined;
@@ -72,8 +75,17 @@
   }
 </script>
 
-<button
-  data-testid="thumbnail-context-menu-trigger"
+<ContextMenuAction
+  id="resourceThumbnailContextMenu"
+  testId="thumbnail-context-menu-trigger"
+  menuResolver={() => resolveContextMenu(item, accessPoint)}
+  bind:isPopoverVisible
+  {size}
+  actionSize={bgSize ?? size}
+  onAction={handleAction}
+  position={Placement.BottomCenter}
+  isRenderAsSibling={!$view.isConstrainedWidth}
+  isStopPropagation={true}
   class={cn(
     "flex gap-2 p--1",
     {
@@ -91,32 +103,30 @@
         "bg-bgs2 border-brs3": !isApplyCustomColor
       }
   )}
-  onclick={(event) => event.stopPropagation()}
 >
-  <div class="flex">
-    {@render right?.()}
-    <div
-      class={cn(
-        !isInline &&
-          arrangement === Arrangement.LIST && {
-            "mx-2 border rounded-md": arrangement === Arrangement.LIST,
-            "bg-ccs4 border-ccs2":
-              arrangement === Arrangement.LIST && isApplyCustomColor,
-            "bg-bgs2 border-brs3":
-              arrangement === Arrangement.LIST && !isApplyCustomColor
-          }
-      )}
-    >
-      <ContextMenuAction
-        id="resourceThumbnailContextMenu"
-        menuResolver={() => resolveContextMenu(item, accessPoint)}
-        {size}
-        actionSize={bgSize ?? size}
-        onAction={handleAction}
-        position={Placement.BottomCenter}
-        isRenderAsSibling={!$view.isConstrainedWidth}
-        {icon}
-      />
+  {#snippet children()}
+    <div class="flex">
+      {@render right?.()}
+      <div
+        class={cn(
+          !isInline &&
+            arrangement === Arrangement.LIST && {
+              "mx-2 border rounded-md": arrangement === Arrangement.LIST,
+              "bg-ccs4 border-ccs2":
+                arrangement === Arrangement.LIST && isApplyCustomColor,
+              "bg-bgs2 border-brs3":
+                arrangement === Arrangement.LIST && !isApplyCustomColor
+            }
+        )}
+      >
+        <Toggle
+          {icon}
+          isPreventFillOnActive={true}
+          size={bgSize ?? size}
+          bgSize={bgSize ?? size}
+          bind:on={isPopoverVisible}
+        />
+      </div>
     </div>
-  </div>
-</button>
+  {/snippet}
+</ContextMenuAction>

@@ -30,6 +30,8 @@
     isPopoverVisible = $bindable(false),
     isRenderAsSibling = false,
     icon = undefined,
+    testId = undefined,
+    isStopPropagation = false,
     class: className = "",
     onAction = undefined,
     children = undefined
@@ -50,6 +52,8 @@
     isPopoverVisible?: boolean;
     isRenderAsSibling?: boolean;
     icon?: string | undefined;
+    testId?: string | undefined;
+    isStopPropagation?: boolean;
     class?: string;
     onAction?: ((event: CustomEvent<any>) => void) | undefined;
     children?: Snippet | undefined;
@@ -106,7 +110,11 @@
     id,
     isRenderAsSibling
   }}
+  data-testid={testId}
   class={className}
+  onclick={(event) => {
+    if (isStopPropagation) event.stopPropagation();
+  }}
   onchange={onPopoverChange}
   bind:this={contextMenuPopoverRef}
 >
@@ -117,6 +125,8 @@
       icon={resolvedIcon}
       {tooltip}
       {isBoxed}
+      isRenderAsDiv={true}
+      isPassive={true}
       parentBgIndex={parentBgIndex + 1}
       isPreventFillOnActive={true}
       size={actionSize}

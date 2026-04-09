@@ -33,7 +33,6 @@
     onDebouncedChange?: ((event: CustomEvent<any>) => void) | undefined;
     onRemove?: ((event: CustomEvent<any>) => void) | undefined;
   } = $props();
-  void index;
 
   const dev_isApplyBorderForDefaultActive = false;
 

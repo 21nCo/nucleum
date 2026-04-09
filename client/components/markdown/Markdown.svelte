@@ -76,13 +76,21 @@
     };
     const customEvent = new CustomEvent(event, { detail });
     if (event === "action") {
-      onAction?.(customEvent);
+      if (typeof onAction === "function") {
+        onAction(customEvent);
+      }
     } else if (event === "change") {
-      onChange?.(customEvent);
+      if (typeof onChange === "function") {
+        onChange(customEvent);
+      }
     } else if (event === "focus") {
-      onFocus?.(customEvent);
+      if (typeof onFocus === "function") {
+        onFocus(customEvent);
+      }
     } else if (event === "blur") {
-      onBlur?.(customEvent);
+      if (typeof onBlur === "function") {
+        onBlur(customEvent);
+      }
     }
   }
 
@@ -102,7 +110,7 @@
   setContext(Context.MARKDOWN, markdownContext);
 
   let {
-    md = $bindable(undefined),
+    md = $bindable(),
     params = undefined,
     parentBackgroundIndex = undefined,
     id = undefined,
@@ -128,12 +136,21 @@
     onRearrange?: ((event: CustomEvent<{ md: IMarkdown | undefined }>) => void) | undefined;
     title?: Snippet | undefined;
   } = $props();
-  const mdId: string = id ?? generateSimpleRandomId();
-  const mdStore = getMdStore(mdId);
-  const containerId = `mdcontainer-${mdId}`;
+  const generatedMdId = generateSimpleRandomId();
+  const mdId = $derived(id ?? generatedMdId);
+  const mdStore = $derived(getMdStore(mdId));
+  const containerId = $derived(`mdcontainer-${mdId}`);
   load(md);
+  let lastParamsSignature = $state<string | undefined>(undefined);
   $effect(() => {
-    if (params) mdStore?.setParams(params);
+    if (!params) {
+      lastParamsSignature = undefined;
+      return;
+    }
+    const nextParamsSignature = stringify(params);
+    if (nextParamsSignature === lastParamsSignature) return;
+    lastParamsSignature = nextParamsSignature;
+    mdStore?.setParams(params);
   });
   // $: console.log("blocks", $mdStore.blocks);
   let keyboardToolbarPanelSelection = $state<string | undefined>();
@@ -171,7 +188,9 @@
       const event = new CustomEvent<IBlock[]>("blocks", {
         detail: $mdStore.blocks
       });
-      onBlocks?.(event);
+      if (typeof onBlocks === "function") {
+        onBlocks(event);
+      }
       dispatchDebouncedChangeEvent();
     });
     return () => {
@@ -190,7 +209,9 @@
     const event = new CustomEvent<IMarkdown | undefined>("debouncedChange", {
       detail: md
     });
-    onDebouncedChange?.(event);
+    if (typeof onDebouncedChange === "function") {
+      onDebouncedChange(event);
+    }
   }, 1000);
 
   function resolveBulkEditorInstance() {

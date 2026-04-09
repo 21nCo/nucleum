@@ -34,11 +34,27 @@
   import { isHideCreateAction } from "@21n/components/library/library.utils";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import ComponentShortcutListener from "@21n/components/shortcuts/ComponentShortcutListener.svelte";
+  import { GlobalEvent } from "@21n/types/event.enum";
+  import { isValidEnumValue } from "@21n/shared-utils/text.utils";
 
   let { resources = [] }: { resources?: Resource[] } = $props();
 
   let selectedResource = $state<Resource>(Resource.unknown);
   let syncFeedbackRef = $state<InlineSyncingFeedback>();
+
+  function syncSelectedResource(resourceParam?: string | null) {
+    if (resourceParam && isValidEnumValue(resourceParam, Resource)) {
+      selectedResource = resourceParam as Resource;
+      return;
+    }
+    if (!resourceParam && $view.isConstrainedWidth) {
+      selectedResource = Resource.unknown;
+      return;
+    }
+    if (!$view.isConstrainedWidth && selectedResource === Resource.unknown) {
+      selectedResource = resources[0] ?? Resource.unknown;
+    }
+  }
   let floatingButton = $derived(
     $view.isConstrainedWidth && selectedResource === Resource.unknown
       ? [
@@ -87,18 +103,22 @@
   });
 
   onMount(() => {
+    const syncFromWindow = () => {
+      const resourceParam = new URL(window.location.href).searchParams.get(
+        AppSearchParam.RESOURCE
+      );
+      syncSelectedResource(resourceParam);
+    };
     const pageSub = page.subscribe(async (p) => {
-      const resourceParam = p.url.searchParams.get(AppSearchParam.RESOURCE);
-      if (resourceParam && resourceParam !== selectedResource) {
-        selectedResource =
-          (resourceParam as Resource) ?? selectedResource ?? Resource.node;
-      }
-      if (!resourceParam && $view.isConstrainedWidth) {
-        selectedResource = Resource.unknown;
-      }
+      syncSelectedResource(p.url.searchParams.get(AppSearchParam.RESOURCE));
     });
+    window.addEventListener(GlobalEvent.CUSTOM_NAVIGATION, syncFromWindow);
+    window.addEventListener("popstate", syncFromWindow);
+    syncFromWindow();
     return () => {
       pageSub();
+      window.removeEventListener(GlobalEvent.CUSTOM_NAVIGATION, syncFromWindow);
+      window.removeEventListener("popstate", syncFromWindow);
     };
   });
 
@@ -169,6 +189,7 @@
       selected={selectedResource}
       isShowCount={true}
       onSelect={(selectedValue) => {
+        selectedResource = selectedValue;
         appStore.toggleSearchParam({
           [AppSearchParam.RESOURCE]: selectedValue,
           [AppSearchParam.TYPE]: "all",

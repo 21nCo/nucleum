@@ -17,7 +17,7 @@
   import CollectionThumbnailLabel from "@21n/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
   import CollectionThumbnailAvatar from "@21n/components/collection/thumbnail/CollectionThumbnailAvatar.svelte";
   let {
-    item = $bindable(undefined),
+    item = $bindable(),
     arrangement = Arrangement.LIST,
     size = Size.md,
     accessPoint = ResourceAccessPoint.BROWSER,

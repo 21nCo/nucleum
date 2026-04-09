@@ -93,8 +93,11 @@
     onUpdate?: ((event: CustomEvent<string>) => void) | undefined;
   } = $props();
 
-  let isFirstBlockAndIsEmpty = $state(mdStore.isFirstBlockAndIsEmpty(id));
+  let isFirstBlockAndIsEmpty = $state(false);
   let textRef: InlineMarkdownTextInput;
+  function refreshFirstBlockEmptyState() {
+    isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(id);
+  }
   const resolvedBlockStyle = $derived.by(() => {
     switch (contentType) {
       case NodeType.HEADING1:
@@ -150,19 +153,19 @@
     resolvedBlockStyle.blockSpecificPlaceholder
   );
   let placeholder = $state<string | undefined>();
-  let popoverRef: any;
-  let blockBrowserRef: any;
-  let isBlockBrowserRendered: boolean = false;
-  let isRenderMentionSearch: boolean = false;
-  let isRenderEmojiPicker: boolean = false;
-  let blockSearchQuery = "";
-  let mentionSearchQuery = "";
-  let emojiSearchQuery = "";
+  let popoverRef = $state<any>(undefined);
+  let blockBrowserRef = $state<any>(undefined);
+  let isBlockBrowserRendered = $state(false);
+  let isRenderMentionSearch = $state(false);
+  let isRenderEmojiPicker = $state(false);
+  let blockSearchQuery = $state("");
+  let mentionSearchQuery = $state("");
+  let emojiSearchQuery = $state("");
   let previousVal = text ? deepCopy(text) : "";
-  let mentionTriggerKey: string;
-  let mentionSearchPopoverId: string = generateSimpleRandomId();
-  let emojiPickerRef: any;
-  let isEmojiPickerDismissed: boolean = false;
+  let mentionTriggerKey = $state<string>("");
+  let mentionSearchPopoverId = $state<string>(generateSimpleRandomId());
+  let emojiPickerRef = $state<any>(undefined);
+  let isEmojiPickerDismissed = $state(false);
   let caretPositionT2:
     | {
         element?: any;
@@ -651,7 +654,7 @@
       position: any;
     }>
   ) {
-    isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(id);
+    refreshFirstBlockEmptyState();
     const event = e.detail.event;
     const caretPosition = e.detail.caretPosition;
     logger.log({
@@ -781,7 +784,7 @@
     if (isHoveringParam === undefined) isHoveringParam = isHovering;
     if (blockSpecificPlaceholderParam === undefined)
       blockSpecificPlaceholderParam = blockSpecificPlaceholder;
-    isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(id);
+    refreshFirstBlockEmptyState();
     if (
       isHoveringParam ||
       isFirstBlockAndIsEmpty ||
@@ -908,12 +911,12 @@
         onFocus={handleFocus}
         onBlur={handleBlur}
         onPaste={handlePaste}
-        bind:placeholder
+        placeholder={placeholder ?? ""}
       />
     </div>
     {#if contentType === NodeType.QUOTE}
       <div class="absolute top-0 left-0 h-full flex flex-col justify-center">
-        <span class="w-1 bg-aps1 h-full my-2 rounded-md" />
+        <span class="w-1 bg-aps1 h-full my-2 rounded-md"></span>
       </div>
     {/if}
   </div>
@@ -970,7 +973,7 @@
         }
       }
     }}
-  />
+  ></div>
 {/if}
 {#if $view.isConstrainedWidth && isRenderEmojiPicker}
   <div
@@ -989,5 +992,5 @@
         isPopoverContext: true
       }
     }}
-  />
+  ></div>
 {/if}

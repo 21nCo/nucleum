@@ -9,6 +9,7 @@
   let {
     options,
     selected = $bindable<ISelectValue | undefined>(undefined),
+    isTablist = false,
     isIconOnlyMode = false,
     isExpandOnActiveForIcon = false,
     parentBgIndex = 1,
@@ -19,6 +20,7 @@
   }: {
     options: ISelectItem[];
     selected?: ISelectValue | undefined;
+    isTablist?: boolean;
     isIconOnlyMode?: boolean;
     isExpandOnActiveForIcon?: boolean;
     parentBgIndex?: number;
@@ -71,6 +73,7 @@
 </script>
 
 <div
+  role={isTablist ? "tablist" : undefined}
   bind:this={containerEl}
   class={cn("grid grid-flow-col h-full", {
     "auto-cols-max w-full": !isExpandOnActiveForIcon || isIconOnlyMode
@@ -85,6 +88,9 @@
   {#each options as option (option.value)}
     {@const isSelected = selected === option.value}
     <button
+      type="button"
+      role={isTablist ? "tab" : undefined}
+      aria-selected={isTablist ? isSelected : undefined}
       class={cn(
         "flex items-center justify-center gap-1 h-full text-b2 transition-all duration-300",
         {

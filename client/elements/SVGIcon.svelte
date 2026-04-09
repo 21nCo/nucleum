@@ -36,13 +36,23 @@
     {@html mod.default}
   {/await}
 {:else if icon && !isRenderRaw}
-  <button {onclick} class={cn(tailwindSizes[size])}>
-    {#await importIcon(icon)}
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" />
-    {:then mod}
-      {@html mod.default}
-    {/await}
-  </button>
+  {#if onclick}
+    <button {onclick} class={cn(tailwindSizes[size])}>
+      {#await importIcon(icon)}
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" />
+      {:then mod}
+        {@html mod.default}
+      {/await}
+    </button>
+  {:else}
+    <span class={cn("inline-flex", tailwindSizes[size])} aria-hidden="true">
+      {#await importIcon(icon)}
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" />
+      {:then mod}
+        {@html mod.default}
+      {/await}
+    </span>
+  {/if}
 {:else if icon && isRenderRaw}
   {#await importIcon(icon)}
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" />

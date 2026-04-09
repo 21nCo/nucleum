@@ -23,12 +23,11 @@
   import WebNodeUrlSegment from "../content/web/WebNodeUrlSegment.svelte";
   import SocialPostActions from "../content/web/SocialPostActions.svelte";
   let { node }: { node: IActiveNodeStore } = $props();
-  let _notes = $node.notes;
+  let _notes = $state($node.notes ?? "");
   const notesInputId = generateSimpleRandomId();
 
   function onNotesChange(e: any) {
-    if (_notes !== undefined)
-      node.modify({ notes: _notes }, { isPreventBackPropagation: true });
+    node.modify({ notes: _notes }, { isPreventBackPropagation: true });
   }
 
   let _label = $derived(resolveNodeLabel($node));

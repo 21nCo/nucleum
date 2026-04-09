@@ -10,7 +10,7 @@
 </script>
 
 <!-- Logo from shared assets -->
-<img src={assets.nucleusLogo} alt="Nucleus Logo" class="logo" />
+<img src={assets.nucleusLogo} alt="Nucleum Logo" class="logo" />
 
 <!-- Sounds from shared assets -->
 <div class="sound-controls">

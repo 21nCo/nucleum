@@ -22,6 +22,8 @@
     bgSize = Size.md,
     shortcut = undefined,
     isBoxed = false,
+    isRenderAsDiv = false,
+    isPassive = false,
     onChange = undefined,
     onMouseDown = undefined
   }: {
@@ -36,22 +38,28 @@
     bgSize?: Size.sm | Size.md | Size.lg;
     shortcut?: string | IKeyboardShortcut | undefined;
     isBoxed?: boolean;
+    isRenderAsDiv?: boolean;
+    isPassive?: boolean;
     onChange?: ((event: CustomEvent<boolean>) => void) | undefined;
     onMouseDown?: ((event: MouseEvent) => void) | undefined;
   } = $props();
   let isHovering = $state(false);
   function onclick() {
+    if (isPassive) return;
     on = !on;
     onChange?.(new CustomEvent("change", { detail: on }));
   }
   const shortcutSize = $derived(size === Size.lg ? Size.md : size);
 </script>
 
-<button
+<svelte:element
+  this={isRenderAsDiv ? "div" : "button"}
   onclick={onclick}
   onmousedown={(event) => {
     onMouseDown?.(event);
   }}
+  role={isRenderAsDiv && !isPassive ? "button" : undefined}
+  tabindex={isRenderAsDiv && !isPassive ? 0 : undefined}
   use:hoverable={{
     onHover: (value) => {
       isHovering = value;
@@ -99,4 +107,4 @@
   {#if shortcut}
     <ShortcutText {shortcut} size={shortcutSize} {parentBgIndex} />
   {/if}
-</button>
+</svelte:element>

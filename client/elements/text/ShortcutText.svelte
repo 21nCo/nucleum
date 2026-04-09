@@ -27,9 +27,6 @@
     isAlwaysShown?: boolean;
   } = $props();
 
-  let detail = $state<IKeyboardShortcut | undefined>(undefined);
-  let text = $state<string | undefined>(undefined);
-
   const iconKeys = new Map<KeyboardKey, string>([
     // [KeyboardKey.ENTER, "arrow-turn-down-left"],
     // [KeyboardKey.ARROW_LEFT, "arrow-left"],
@@ -46,21 +43,23 @@
     { key: KeyboardKey.ARROW_DOWN, text: "↓" }
   ];
 
-  const trimmedText = $derived(text?.trim());
-  const shortcutKey = $derived(detail?.key as KeyboardKey | undefined);
-  const isSingleLetterShortcut = $derived(
-    !!trimmedText &&
-      Array.from(trimmedText).length === 1 &&
-      (!detail?.modifiers || detail?.modifiers.length === 0)
-  );
-
-  function resolveText(shortcut: string | IKeyboardShortcut | undefined) {
+  const detail = $derived.by((): IKeyboardShortcut | undefined => {
+    $keyboardShortcuts;
+    if (!shortcut) {
+      return;
+    }
+    if (typeof shortcut !== "string") {
+      return shortcut;
+    }
+    if (shortcut === GlobalEvent.ESCAPE) {
+      return;
+    }
+    return keyboardShortcuts.resolveShortcutForAction(shortcut);
+  });
+  const text = $derived.by(() => {
     if (!shortcut) return;
-    if (typeof shortcut === "string") {
-      if (shortcut === GlobalEvent.ESCAPE) return "Esc";
-      detail = keyboardShortcuts.resolveShortcutForAction(shortcut);
-    } else {
-      detail = shortcut;
+    if (typeof shortcut === "string" && shortcut === GlobalEvent.ESCAPE) {
+      return "Esc";
     }
     if (!detail) return;
     return resolveShortcutText({
@@ -68,15 +67,14 @@
       modifiers: detail.modifiers,
       os: $context.os
     });
-  }
-
-  $effect(() => {
-    text = resolveText(shortcut);
-    const unsubscribe = keyboardShortcuts.subscribe(() => {
-      text = resolveText(shortcut);
-    });
-    return unsubscribe;
   });
+  const trimmedText = $derived(text?.trim());
+  const shortcutKey = $derived(detail?.key as KeyboardKey | undefined);
+  const isSingleLetterShortcut = $derived(
+    !!trimmedText &&
+      Array.from(trimmedText).length === 1 &&
+      (!detail?.modifiers || detail?.modifiers.length === 0)
+  );
 </script>
 
 {#if ($uiStateDerived?.isShowHotKeyHints || isAlwaysShown) && shortcut && $context.embed !== Embed.HANDSET && $context.embed !== Embed.TABLET}

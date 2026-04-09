@@ -13,6 +13,10 @@
   import { Placement } from "@21n/types/direction.enum";
   import { TimeScaleUnit } from "@21n/types/time.type";
   import { getWeekNumber } from "@21n/utils/time.utils";
+  import {
+    buildResolvedIndicatorDataByDayMap,
+    resolveIndicatorDayKey
+  } from "@21n/components/calendar/classic/indicator/resolveIndicatorDataByDay";
 
   let {
     selectedDate = $bindable(new Date()),
@@ -96,6 +100,9 @@
   }
 
   const calendarDays = $derived(getDaysInMonth(selectedDate));
+  const resolvedIndicatorDataByDay = $derived.by(() =>
+    buildResolvedIndicatorDataByDayMap(indicatorData)
+  );
 
   /**
    *
@@ -221,8 +228,9 @@
             <CalendarTileIndicator
               date={day}
               isActive={isSelected}
-              data={indicatorData}
-              {indicatorRefreshId}
+              resolvedData={resolvedIndicatorDataByDay.get(
+                resolveIndicatorDayKey(day)
+              )}
               type={isConstrainedWidth
                 ? CalendarTileIndicatorDisplayType.DOTS
                 : CalendarTileIndicatorDisplayType.METRICS}

@@ -14,7 +14,7 @@
     goal,
     isConstrainedWidth = false,
     isThreeColumned = false,
-    status = $bindable(undefined)
+    status = $bindable()
   }: {
     goal: IActiveGoalStore;
     isConstrainedWidth?: boolean;

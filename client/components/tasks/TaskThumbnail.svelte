@@ -38,6 +38,7 @@
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { bulkEditStore } from "@21n/components/record/bulkedit.store";
+  import { resolveBulkSelectionAccessPointId } from "@21n/components/flux/resourceStores/resource.utils";
   import Task from "@21n/components/tasks/Task.svelte";
   import context from "@21n/stores/context.store";
   import { stringify } from "@21n/shared-utils/json.utils";
@@ -86,7 +87,10 @@
   const multiSelectContext = $derived({
     resource: Resource.task,
     accessPoint,
-    accessPointId
+    accessPointId: resolveBulkSelectionAccessPointId(
+      accessPoint,
+      accessPointId
+    )
   });
   let hasBulkSelection = $state(false);
 

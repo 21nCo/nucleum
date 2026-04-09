@@ -79,7 +79,9 @@
     )}
     use:hoverable={{
       onHover: (val) => {
-        isHovered = val;
+        queueMicrotask(() => {
+          isHovered = val;
+        });
       }
     }}
     use:popover={{

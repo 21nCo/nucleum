@@ -106,8 +106,6 @@
       | undefined;
   } = $props();
 
-  void width;
-
   let isFocused = $state(false);
   let inputRef = $state<any>();
   let isValidLink = $state(false);
@@ -152,10 +150,14 @@
     const inputEvent = new CustomEvent<{ value: any }>("input", {
       detail: { value }
     });
-    onInput?.(inputEvent);
+    if (typeof onInput === "function") {
+      onInput(inputEvent);
+    }
 
     const changeEvent = new CustomEvent<any>("change", { detail: value });
-    onChange?.(changeEvent);
+    if (typeof onChange === "function") {
+      onChange(changeEvent);
+    }
 
     debouncedChangeEvent();
   }
@@ -164,7 +166,9 @@
     const debouncedChange = new CustomEvent<any>("debouncedChange", {
       detail: value
     });
-    onDebouncedChange?.(debouncedChange);
+    if (typeof onDebouncedChange === "function") {
+      onDebouncedChange(debouncedChange);
+    }
   }, 1000);
 
   function createKeyboardEventDetail(event: KeyboardEvent): KeyboardEventDetail {
@@ -180,35 +184,47 @@
     const keydownEvent = new CustomEvent<KeyboardEventDetail>("keydown", {
       detail: createKeyboardEventDetail(event)
     });
-    onKeydown?.(keydownEvent);
+    if (typeof onKeydown === "function") {
+      onKeydown(keydownEvent);
+    }
   }
 
   function emitFocus() {
     const focusEvent = new CustomEvent<void>("focus");
-    onFocus?.(focusEvent);
+    if (typeof onFocus === "function") {
+      onFocus(focusEvent);
+    }
   }
 
   function emitBlur() {
     const blurEvent = new CustomEvent<void>("blur");
-    onBlur?.(blurEvent);
+    if (typeof onBlur === "function") {
+      onBlur(blurEvent);
+    }
   }
 
   function emitSave(event: MouseEvent) {
     const saveEvent = new CustomEvent<{ event: MouseEvent; value: any }>("save", {
       detail: { event, value }
     });
-    onSave?.(saveEvent);
+    if (typeof onSave === "function") {
+      onSave(saveEvent);
+    }
   }
 
   function emitCancel(event?: MouseEvent) {
     const cancelEvent = new CustomEvent<{ event?: MouseEvent }>("cancel", {
       detail: { event }
     });
-    onCancel?.(cancelEvent);
+    if (typeof onCancel === "function") {
+      onCancel(cancelEvent);
+    }
   }
 
   function emitClear() {
-    onClear?.();
+    if (typeof onClear === "function") {
+      onClear();
+    }
   }
 
   function handleKeyUp(event: KeyboardEvent) {
@@ -217,7 +233,9 @@
         "enter",
         { detail: { value, event } }
       );
-      onEnter?.(enterEvent);
+      if (typeof onEnter === "function") {
+        onEnter(enterEvent);
+      }
     } else if (event.key === "Escape") {
       inputRef?.blur();
       emitBlur();
@@ -226,7 +244,9 @@
       "keyup",
       { detail: { value, event } }
     );
-    onKeyup?.(keyupEvent);
+    if (typeof onKeyup === "function") {
+      onKeyup(keyupEvent);
+    }
   }
 
   function onInputBlur(event: FocusEvent) {
@@ -401,7 +421,8 @@
               />
               <span
                 class="min-w-0 w-3/4 max-w-fit truncate flex justify-start"
-                onclick={(event) => event.stopPropagation()}
+                role="presentation"
+                onmousedown={(event) => event.stopPropagation()}
               >
                 <Link
                   href={value}

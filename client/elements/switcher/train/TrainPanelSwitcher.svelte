@@ -9,7 +9,7 @@
   import { PanelSwitcherActiveItemStrength } from "@21n/types/switcher.enum";
   let {
     items,
-    value = $bindable(undefined),
+    value = $bindable(),
     size = Size.md,
     isDisableEnabled = false,
     parentBgIndex = 1,
@@ -24,12 +24,13 @@
     activeItemStrength?: PanelSwitcherActiveItemStrength;
     onSwitch?: ((event: CustomEvent<ISelectValue>) => void) | undefined;
   } = $props();
-  const effectiveParentBgIndex =
+  const effectiveParentBgIndex = $derived(
     activeItemStrength === PanelSwitcherActiveItemStrength.STRONG
       ? parentBgIndex
       : activeItemStrength === PanelSwitcherActiveItemStrength.SUBTLE
         ? parentBgIndex + 1
-        : parentBgIndex - 1;
+        : parentBgIndex - 1
+  );
 
   function emitSwitch(nextValue: ISelectValue) {
     const switchEvent = new CustomEvent<ISelectValue>("switch", {

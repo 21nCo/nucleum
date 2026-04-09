@@ -7,12 +7,14 @@
     id = "toggle-switch" + generateSimpleRandomId(),
     size = Size.md,
     isDisabled = false,
+    ariaLabel = undefined,
     onChange = undefined
   }: {
     on?: boolean;
     id?: string;
     size?: Size;
     isDisabled?: boolean;
+    ariaLabel?: string | undefined;
     onChange?: ((event: CustomEvent<boolean>) => void) | undefined;
   } = $props();
 </script>
@@ -29,7 +31,8 @@
       type="checkbox"
       {id}
       bind:checked={on}
-      class="sr-only"
+      aria-label={ariaLabel}
+      class="absolute inset-0 z-10 m-0 h-full w-full cursor-pointer opacity-0"
       disabled={isDisabled}
       onchange={() => {
         onChange?.(new CustomEvent("change", { detail: on }));

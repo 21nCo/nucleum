@@ -14,7 +14,7 @@
   let {
     goal,
     control,
-    status = $bindable(undefined)
+    status = $bindable()
   }: {
     goal: IActiveGoalStore;
     control: "color" | "type";

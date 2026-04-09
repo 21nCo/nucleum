@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import type { IAction } from "@21n/types/action.type";
   import type { Component } from "svelte";
@@ -77,24 +78,19 @@
       logger.error({ at: "Cmd bar - SearchActionResults", error: e });
     }
   }
-  export function select() {
-    const selectedItem = results[selectedIndex];
+  export async function select() {
+    const selectedItem = results[selectedIndex] ?? results[0];
     if (!selectedItem.id) return;
-    action.searchActionParams?.callback(selectedItem, componentParams);
     onClose?.();
+    await tick();
+    action.searchActionParams?.callback(selectedItem, componentParams);
   }
   export function moveSelection(direction: "up" | "down") {
     let nextIndex = selectedIndex;
     if (direction === "down") {
-      nextIndex = Math.min(selectedIndex + 1);
-      if (nextIndex === results?.length) {
-        nextIndex = 0;
-      }
+      nextIndex = selectedIndex + 1 >= results.length ? 0 : selectedIndex + 1;
     } else if (direction === "up") {
-      nextIndex = Math.max(selectedIndex - 1, -1);
-      if (nextIndex === -1) {
-        nextIndex = results?.length - 1;
-      }
+      nextIndex = selectedIndex - 1 < 0 ? results.length - 1 : selectedIndex - 1;
     }
     selectedIndex = nextIndex;
   }

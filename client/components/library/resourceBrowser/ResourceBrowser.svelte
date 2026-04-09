@@ -36,7 +36,7 @@
     resource,
     onBack = undefined,
     isPreventCwPadding = false,
-    right = undefined
+    right: rightSnippet = undefined
   }: {
     resource: Resource;
     onBack?: (() => void) | undefined;
@@ -147,8 +147,8 @@
       </div>
     {/snippet}
     {#snippet right()}
-      {#if right}
-        {@render right()}
+      {#if rightSnippet}
+        {@render rightSnippet?.()}
       {:else}
         {#key id}
           {#if id}

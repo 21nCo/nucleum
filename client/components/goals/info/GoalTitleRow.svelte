@@ -12,7 +12,7 @@
   let {
     goal,
     isConstrainedWidth = false,
-    status = $bindable(undefined)
+    status = $bindable()
   }: {
     goal: IActiveGoalStore;
     isConstrainedWidth?: boolean;
@@ -58,11 +58,11 @@
     }
   }
 
-  function handleLabelSave(e: any) {
-    void e;
-    $goal.label = labelEditVal;
+  function handleLabelSave(e: CustomEvent<{ value?: string }>) {
+    const nextLabel = e.detail?.value ?? labelEditVal;
+    $goal.label = nextLabel;
     goal.modify({
-      label: labelEditVal
+      label: nextLabel
     });
     labelEditVal = "";
     goal.toggleEditMode(false);

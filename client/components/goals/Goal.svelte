@@ -43,7 +43,7 @@
     id,
     accessPoint = ResourceAccessPoint.SELF,
     accessMode = AccessMode.POP,
-    status = $bindable(undefined)
+    status = $bindable()
   }: {
     id: string;
     accessPoint?: ResourceAccessPoint;
@@ -51,13 +51,12 @@
     status?: IInlineStatus | undefined;
   } = $props();
 
-  void accessPoint;
   const dev_isPanelSwitcherOnTop = false;
 
   const container =
     getContext<Writable<IContainer | undefined>>(Context.CONTAINER) ||
     readable(undefined);
-  const goal: IActiveGoalStore = ActiveGoalStore.resolve(id);
+  const goal: IActiveGoalStore = $derived(ActiveGoalStore.resolve(id));
   let isReady = $state(false);
 
   const isConstrainedWidth = $derived(
@@ -157,6 +156,12 @@
               <GoalLeftPanel {goal} {isConstrainedWidth} bind:status />
             </aside>
           {/if}
+          <GoalPanelSwitcher
+            panels={tabs}
+            {goal}
+            {isConstrainedWidth}
+            {isThreeColumned}
+          />
           <main class="flex flex-col flex-1 overflow-auto">
             {#if isConstrainedWidth}
               <div
@@ -199,7 +204,7 @@
                     {#if isConstrainedWidth}
                       <div
                         class="w-10 bg-gradient-to-r from-bgs2/20 to-bgs2 absolute right-0 top-0 h-full"
-                      />
+                      ></div>
                     {/if}
                   </div>
                 {/if}
@@ -221,12 +226,6 @@
               {/if}
             </div>
           </main>
-          <GoalPanelSwitcher
-            panels={tabs}
-            {goal}
-            {isConstrainedWidth}
-            {isThreeColumned}
-          />
         </div>
       {/if}
     </CustomColorPropagator>

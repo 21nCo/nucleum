@@ -16,7 +16,8 @@
     parentBgIndex?: number;
     additionalAccessModes?: AccessMode[];
   } = $props();
-  const elementId = id + "-closeButton-" + generateSimpleRandomId();
+  const elementIdSuffix = generateSimpleRandomId();
+  const elementId = $derived(`${id}-closeButton-${elementIdSuffix}`);
   const tooltip = $derived(
     accessMode === AccessMode.FULL ? "Close full screen" : "Close"
   );
@@ -30,6 +31,7 @@
   >
     <Button
       icon="cross"
+      ariaLabel="Close"
       {tooltip}
       style={ButtonStyle.OUTLINED}
       type={ButtonVariant.DANGER}

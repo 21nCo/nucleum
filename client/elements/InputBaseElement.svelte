@@ -63,6 +63,7 @@
     options={popoverOptions}
     isPreventDefaultStyling={popoverOptions?.isPreventDefaultStyling}
     bind:isPopoverVisible={isOptionsVisible}
+    {popover}
     triggerClass={cn("flex items-center gap-1 rounded-md", classList, {
       "w-full":
         (label?.orientation === Orientation.Vertical && !label?.isShrink) ||
@@ -78,8 +79,5 @@
     })}
   >
     {@render children?.()}
-    {#snippet popover()}
-      {@render popover?.()}
-    {/snippet}
   </Popover>
 </FormControlLabelWrapper>

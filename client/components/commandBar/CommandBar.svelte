@@ -55,11 +55,18 @@
   });
   onMount(() => {
     inputRef?.focus();
-    if (command && commandType && commandType === ActionType.SEARCH_CMD) {
-      const action = appStore.resolveAction(command);
-      if (!action) return;
-      onSearchAction({ detail: action });
+  });
+  $effect(() => {
+    if (
+      !command ||
+      commandType !== ActionType.SEARCH_CMD ||
+      (isPerformingSearchAction && searchAction?.action === command)
+    ) {
+      return;
     }
+    const action = appStore.resolveAction(command);
+    if (!action) return;
+    onSearchAction({ detail: action });
   });
   function handleKeyUp(event: any) {
     if (event.key === "ArrowDown") {
@@ -84,8 +91,24 @@
     placeholder = defaultPlaceholder;
   }
 
-  function onSearchAction(event: any) {
-    const nextSearchAction = event.detail as IAction;
+  function isSearchActionEvent(
+    actionOrEvent: IAction | { detail?: IAction }
+  ): actionOrEvent is { detail?: IAction } {
+    return "detail" in actionOrEvent;
+  }
+
+  function resolveSearchActionPayload(
+    actionOrEvent: IAction | { detail?: IAction }
+  ): IAction | null {
+    if (isSearchActionEvent(actionOrEvent)) {
+      return actionOrEvent.detail ?? null;
+    }
+    return actionOrEvent;
+  }
+
+  function onSearchAction(actionOrEvent: IAction | { detail?: IAction }) {
+    const nextSearchAction = resolveSearchActionPayload(actionOrEvent);
+    if (!nextSearchAction) return;
     value = "";
     searchAction = nextSearchAction;
     isPerformingSearchAction = true;
@@ -101,6 +124,10 @@
 
   function resolveSearchAction() {
     return searchAction as IAction;
+  }
+
+  function resolveSearchActionLabel() {
+    return componentParams?.label ?? searchAction?.cmdLabel ?? searchAction?.label ?? "";
   }
   /**
    * Used in command-only mode.
@@ -143,7 +170,7 @@
       in:fly={{ y: -10, easing: quadInOut, duration: 250 }}
     >
       <span class="truncate">
-        {@html renderMdAsHtml(componentParams?.label ?? searchAction?.cmdLabel)}
+        {@html renderMdAsHtml(resolveSearchActionLabel())}
       </span>
       {#if $view.isConstrainedWidth}
         <Button icon="cross" tooltip="Close" onclick={close} />

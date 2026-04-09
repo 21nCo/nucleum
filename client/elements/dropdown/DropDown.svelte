@@ -20,7 +20,7 @@
   let {
     items,
     groups = [],
-    value = $bindable<ISelectValue | undefined>(undefined),
+    value = $bindable<ISelectValue | undefined>(),
     parentBackgroundIndex = 1,
     label = undefined,
     style = InputStyle.BORDERED,

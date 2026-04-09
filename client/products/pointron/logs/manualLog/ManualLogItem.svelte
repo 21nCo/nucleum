@@ -52,30 +52,36 @@
 
   let { item }: { item: IManualSessionLogForm } = $props();
 
-  let previousStartDate: Date = item.startDate;
-  let previousEndDate: Date = item.endDate;
-  let previousStartTime: string = item.startTime;
-  let previousEndTime: string = item.endTime;
-  let lastActionPerformed: LastActionPerformed | null = null;
-  let label: string = "";
-  let selectedGoal: any = undefined;
-  let inputRef: any;
-  let selectedQuickAddItem: number = resolveQuickAddSelection();
-  let error: string = "";
+  let previousStartDate = $state<Date>(new Date());
+  let previousEndDate = $state<Date>(new Date());
+  let previousStartTime = $state<string>("");
+  let previousEndTime = $state<string>("");
+  let lastActionPerformed = $state<LastActionPerformed | null>(null);
+  let label = $state<string>("");
+  let selectedGoal = $state<any>(undefined);
+  let inputRef = $state<any>(undefined);
+  let selectedQuickAddItem = $state<number>(resolveQuickAddSelection());
+  let error = $state<string>("");
   let defaultTime = Date.now();
-  let notes = item.notes ?? { blocks: [] };
-  let selectedMethod: "duration" | "startEnd" =
+  let notes = $state<any>({ blocks: [] });
+  let selectedMethod = $state<"duration" | "startEnd">(
     uiState.getState(UIState.manualLogDurationMethod, {
       scope: UIStateScope.DEVICE
-    }) ?? "duration";
+    }) ?? "duration"
+  );
   const searchStore = new SearchStore(Resource.goal);
-  let recentGoals: IGoal[] = [];
+  let recentGoals = $state<IGoal[]>([]);
 
   $effect(() => {
     item.notes = notes;
   });
 
   onMount(() => {
+    previousStartDate = item.startDate;
+    previousEndDate = item.endDate;
+    previousStartTime = item.startTime;
+    previousEndTime = item.endTime;
+    notes = item.notes ?? { blocks: [] };
     resolveRecentGoals();
     onQuickDurationSelectDelegate(selectedQuickAddItem, true);
     setTimeout(() => {

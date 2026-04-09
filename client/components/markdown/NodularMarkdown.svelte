@@ -11,7 +11,7 @@
     type INodeHierarchyV1,
     type INodeStructure
   } from "@21n/products/memotron/node/node.type";
-  import { onDestroy } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import Markdown from "@21n/components/markdown/Markdown.svelte";
   import {
     extractRootStructure,
@@ -37,7 +37,7 @@
     md = $bindable(),
     childrenWithStructure = $bindable([]),
     focusedBlockChildrenWithStructure = $bindable([]),
-    rootStructure = $bindable(undefined),
+    rootStructure = $bindable(),
     mdId,
     isNodular = node != undefined,
     params = undefined,
@@ -65,7 +65,12 @@
   /**
    * Since node is undefined when NodularMarkdown is created from Writer we use this to decide if the media needs to be stored in temporary s3 storage or not
    */
-  if (node == undefined) $isReplaceableMd = true;
+  $effect(() => {
+    $isReplaceableMd = node == undefined;
+    return () => {
+      $isReplaceableMd = false;
+    };
+  });
   onDestroy(() => {
     $isReplaceableMd = false;
   });
@@ -132,20 +137,22 @@
     onRestructure?.(event);
   }
 
-  if (node) {
-    _md = {
-      blocks: recursivelyExtractAllChildrenIntoArray(node) as IBlock[]
-    };
-    reCalculateStructure(_md, true);
-    setTimeout(() => {
-      md = _md;
-      emitReady();
-    }, 1000);
-  } else {
+  onMount(() => {
+    if (node) {
+      _md = {
+        blocks: recursivelyExtractAllChildrenIntoArray(node) as IBlock[]
+      };
+      reCalculateStructure(_md, true);
+      setTimeout(() => {
+        md = _md;
+        emitReady();
+      }, 1000);
+      return;
+    }
     _md = md;
     reCalculateStructure(_md, true);
     emitReady();
-  }
+  });
   /**
    * @deprecated - used with v1 resolution of {@link hierarchyV1}
    * @param blockType

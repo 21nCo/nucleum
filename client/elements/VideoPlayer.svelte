@@ -2,7 +2,7 @@
   import Icon from "@21n/elements/Icon.svelte";
   let {
     time = $bindable(0),
-    duration = $bindable(undefined),
+    duration = $bindable(),
     isPaused = $bindable(true),
     autoplay = false,
     loop = false,

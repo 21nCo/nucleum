@@ -59,6 +59,7 @@
     <Switch
       bind:on={checked}
       {size}
+      ariaLabel={resolvedLabel.label}
       onChange={(event) => {
         propagateChange(event.detail);
       }}
@@ -75,6 +76,7 @@
     <Switch
       bind:on={checked}
       {size}
+      ariaLabel={resolvedLabel.label}
       onChange={(event) => {
         propagateChange(event.detail);
       }}

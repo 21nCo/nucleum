@@ -61,25 +61,28 @@
     }) => void) | undefined;
   } = $props();
 
-  const pdfPersistence = new PdfHandler(node.id);
+  const pdfPersistence = $derived(
+    node?.id ? new PdfHandler(node.id) : undefined
+  );
   const dev_isEnableDownloadAnnotatedPdf = false;
   const DPR = window.devicePixelRatio;
   const MIN_SCALE = $context.os == OperatingSystem.WINDOWS ? 0.5 : 0.1;
   const MAX_SCALE = $context.os == OperatingSystem.WINDOWS ? 2.3 : 1.8;
 
-  let annots = $state<IPdfBookmarkBody[]>(initialAnnots);
+  function resolveDefaultScale() {
+    return $context.os == OperatingSystem.WINDOWS
+      ? 1
+      : $context.os == OperatingSystem.IOS && $context.embed === Embed.HANDSET
+        ? 0.15
+        : $context.os == OperatingSystem.IOS && $context.embed === Embed.TABLET
+          ? 0.3
+          : 0.5;
+  }
+
+  let annots = $state<IPdfBookmarkBody[]>([]);
   let shapeVisible = $state(false);
-  let scale = $state(
-    node?.config?.pdfScale ??
-      ($context.os == OperatingSystem.WINDOWS
-        ? 1
-        : $context.os == OperatingSystem.IOS && $context.embed === Embed.HANDSET
-          ? 0.15
-          : $context.os == OperatingSystem.IOS && $context.embed === Embed.TABLET
-            ? 0.3
-            : 0.5)
-  );
-  let pageNumber = $state(node?.config?.pdfPage ?? 1);
+  let scale = $state(resolveDefaultScale());
+  let pageNumber = $state(1);
   let annotationMode = $state<AnnotationType>(AnnotationType.NONE);
   let isSearchActive = $state(false);
   let searchText = $state("");
@@ -229,6 +232,7 @@
   }
 
   async function annotate(event: any, editorValues: any = {}) {
+    if (!pdfPersistence) return;
     annotation.annotType = event.detail;
 
     if (
@@ -416,6 +420,7 @@
   }
 
   async function handleAnnotDelete(_event?: any, id?: string) {
+    if (!pdfPersistence) return;
     const deleteAnnot = id || annotClickedId;
     await pdfPersistence.deleteClip(deleteAnnot);
     annotClickedComment = "";
@@ -425,6 +430,7 @@
   }
 
   async function handleColorChange(highlighter: IHighlighter) {
+    if (!pdfPersistence) return;
     const selectedAnnotation = annots.find(
       (annot: any) => annot.id === annotClickedId
     );
@@ -442,6 +448,7 @@
   }
 
   async function handleUpdateComment(comment: string) {
+    if (!pdfPersistence) return;
     const selectedAnnotation = annots.find(
       (annot: any) => annot.id === annotClickedId
     );
@@ -744,6 +751,7 @@
   };
 
   async function refreshAnnotations() {
+    if (!pdfPersistence) return;
     annots = (await pdfPersistence.fetchAllClips())
       .filter((annot: any) => annot.startPageNumber)
       .sort((a: any, b: any) => a.startPageNumber - b.startPageNumber);
@@ -792,6 +800,9 @@
   });
 
   onMount(() => {
+    annots = initialAnnots;
+    scale = node?.config?.pdfScale ?? resolveDefaultScale();
+    pageNumber = node?.config?.pdfPage ?? 1;
     void refreshAnnotations();
     viewerContainerElement = document.getElementById("viewerContainer")!;
     document.addEventListener("keydown", handleKeyDown);

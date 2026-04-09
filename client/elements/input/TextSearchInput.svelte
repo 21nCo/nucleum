@@ -34,7 +34,7 @@
     isInline = false,
     width = undefined,
     bottomMessage = undefined,
-    popover = undefined,
+    popover: popoverSnippet = undefined,
     isShowPopoverOnFocus = false,
     isShowDefaultResultsOnMount = false,
     onBlur = undefined,
@@ -142,7 +142,9 @@
         isShowSearchResults: !!searchCallback || !!searchStoreId
       }
     });
-    onKeyup?.(keyupEvent);
+    if (typeof onKeyup === "function") {
+      onKeyup(keyupEvent);
+    }
   }
 
   function onInlineKeyup(
@@ -173,7 +175,9 @@
     const changeEvent = new CustomEvent<{ value: any }>("change", {
       detail: { value }
     });
-    onChange?.(changeEvent);
+    if (typeof onChange === "function") {
+      onChange(changeEvent);
+    }
     emitKeyup(event);
   }
 
@@ -185,7 +189,9 @@
   function onInputBlur(event: FocusEvent) {
     isFocused = false;
     const blurEvent = new CustomEvent<void>("blur");
-    onBlur?.(blurEvent);
+    if (typeof onBlur === "function") {
+      onBlur(blurEvent);
+    }
     if (isShowPopoverOnFocus) {
       const target = event.target as HTMLElement | null;
       if (!target?.classList?.contains("text-input")) {
@@ -198,12 +204,16 @@
     value = "";
     hide();
     const resetEvent = new CustomEvent<void>("reset");
-    onReset?.(resetEvent);
+    if (typeof onReset === "function") {
+      onReset(resetEvent);
+    }
   }
 
   function onSelectInput(event: CustomEvent) {
     if (!isChipsMode) {
-      onSelect?.(event);
+      if (typeof onSelect === "function") {
+        onSelect(event);
+      }
     }
     chips = [...chips, event.detail.item];
     value = "";
@@ -242,7 +252,9 @@
       }}
       onReset={(event: CustomEvent<void>) => onReset?.(event)}
       onHide={(event) => {
-        onHide?.(event);
+        if (typeof onHide === "function") {
+          onHide(event);
+        }
       }}
     />
   </div>
@@ -297,7 +309,9 @@
       }}
       onkeydown={(event) => {
         searchResultsPopover?.keydown(event);
-        onKeydown?.(event);
+        if (typeof onKeydown === "function") {
+          onKeydown(event);
+        }
       }}
       onkeyup={(event) => {
         event.stopPropagation();
@@ -313,7 +327,9 @@
       onfocus={() => {
         isFocused = true;
         const focusEvent = new CustomEvent<void>("focus");
-        onFocus?.(focusEvent);
+        if (typeof onFocus === "function") {
+          onFocus(focusEvent);
+        }
         if (isShowPopoverOnFocus) {
           show();
           showDefaultResults();
@@ -326,8 +342,8 @@
       autocomplete="off"
     />
     {#snippet popover()}
-      {#if popover}
-        {@render popover()}
+      {#if popoverSnippet}
+        {@render popoverSnippet()}
       {:else}
         <SearchResultsPopover
           bind:this={searchResultsPopover}
@@ -340,7 +356,9 @@
           {bottomMessage}
           onSelect={onSelectInput}
           onEmptyEnter={(event) => {
-            onEmptyEnter?.(event);
+            if (typeof onEmptyEnter === "function") {
+              onEmptyEnter(event);
+            }
           }}
           onReset={onResetInput}
         />

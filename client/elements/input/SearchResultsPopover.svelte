@@ -63,7 +63,6 @@
     id?: string;
     isPreventAutoSelectZeroIndex?: boolean;
   } = $props();
-  void searchStoreId;
 
   let value = $state("");
   interface SearchResultWindowEventDetail {
@@ -74,7 +73,7 @@
   let selectedIndex = $state(resolveDefaultIndexSelection());
   let previousValue = $state("");
   let currentValue = $state("");
-  let isSearchInProgress = $state(!isPreventDefaultResults);
+  let isSearchInProgress = $state(false);
 
   export function reset() {
     resetSearch();
@@ -146,6 +145,7 @@
   }
 
   onMount(() => {
+    isSearchInProgress = !isPreventDefaultResults;
     window.addEventListener(
       "searchresultkeyup",
       onWindowSearchResultKeyup as EventListener

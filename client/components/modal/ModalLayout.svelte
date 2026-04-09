@@ -28,11 +28,12 @@
   import ButtonTooltip from "@21n/elements/button/ButtonTooltip.svelte";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
+  import { KeyboardKey } from "@21n/types/keyboard.type";
 
   let {
     path,
     resource = undefined,
-    params = $bindable(),
+    params,
     children = undefined
   }: {
     path: string;
@@ -55,7 +56,17 @@
         handleClose();
       }
     });
+    const keydownListener = (event: KeyboardEvent) => {
+      if (event.key !== KeyboardKey.ESCAPE) return;
+      const frontModal = resolveModalOnFront();
+      if (!frontModal || path != frontModal?.id) return;
+      event.preventDefault();
+      event.stopPropagation();
+      handleClose();
+    };
+    window.addEventListener("keydown", keydownListener);
     return () => {
+      window.removeEventListener("keydown", keydownListener);
       appEventSub();
     };
   });

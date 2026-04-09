@@ -26,36 +26,7 @@
     mode = TimeScaleUnit.DAY,
     birthdate = new Date(1995, 3, 10),
     groupByBirthdate = true,
-    yearPhases = [
-      {
-        startYear: 2013,
-        endYear: 2017,
-        label: "Bachelors",
-        description: "",
-        emoji: "🎓"
-      },
-      {
-        startYear: 2018,
-        endYear: 2022,
-        label: "US",
-        description: "In US - Masters degree and day job",
-        emoji: "✈️"
-      },
-      {
-        startYear: 2023,
-        endYear: 2030,
-        label: "21n",
-        description: "🚀",
-        emoji: "🚀"
-      },
-      {
-        startYear: 2026,
-        endYear: 2027,
-        label: "Day job again",
-        description: "Serro",
-        emoji: "💼"
-      }
-    ]
+    yearPhases = []
   }: {
     mode?: TimeScaleUnit;
     birthdate?: Date | string;
@@ -88,9 +59,9 @@
   let engadged = $state(false);
   let startPoint = $state<any>(null);
   let thresholdCrossed = $state(false);
-  let cursorDirection = $state<
-    "right" | "left" | "bidirectional" | "default"
-  >("default");
+  let cursorDirection = $state<"right" | "left" | "bidirectional" | "default">(
+    "default"
+  );
   const zones = [
     "6am-9am",
     "9am-12pm",

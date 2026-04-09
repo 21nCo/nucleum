@@ -10,7 +10,7 @@
   let {
     goal,
     isConstrainedWidth = false,
-    status = $bindable(undefined)
+    status = $bindable()
   }: {
     goal: IActiveGoalStore;
     isConstrainedWidth?: boolean;

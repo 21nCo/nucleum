@@ -16,39 +16,22 @@
   let { parentBackgroundIndex = 1 }: { parentBackgroundIndex?: number } =
     $props();
   void parentBackgroundIndex;
-  let selectedSkinIndex: number = 0;
-  let selectedTheme = $state<Theme | undefined>(undefined);
-  let selectedTempSchemeIndex: number = 0;
   onMount(() => {
-    selectedSkinIndex = appConstants.themes.findIndex(
-      (x) => x == $userPreferences?.appearance?.skin
-    );
-    selectedTheme = $appearance.userThemeSetting;
     if ($userPreferences.appearance.skin !== AppSkin.Clean) {
       $userPreferences.appearance.skin = AppSkin.Clean;
     }
   });
   function saveColorScheme(e: CustomEvent) {
     appearance.setColorScheme(e.detail);
-    //todo showChangesFeedback();
   }
-  function onTempSchemeChange(event: any) {
-    $userPreferences.tempColorScheme =
-      selectedTempSchemeIndex != undefined
-        ? appConstants.tempColorSchemes[selectedTempSchemeIndex]
-        : $userPreferences.tempColorScheme;
-  }
-  function switchTheme(e: any) {
-    appearance.modifyUserThemeSetting(selectedTheme);
+  function switchTheme(theme: Theme | undefined) {
+    if (!theme) return;
+    appearance.modifyUserThemeSetting(theme);
   }
   function onTypefaceChange(e: CustomEvent) {
     const selectedTypeface = e.detail;
     $userPreferences.appearance.typeface = selectedTypeface;
   }
-
-  $effect(() => {
-    appearance.modifySyncWithSystem($appearance.isSyncWithSystem);
-  });
 </script>
 
 <ScrollView class="flex flex-col gap-8" bottomSpacerSize={Size.sm}>
@@ -60,8 +43,10 @@
     {parentBackgroundIndex}
   />
   <SwitchInput
-    bind:checked={$appearance.isSyncWithSystem}
-    onChange={switchTheme}
+    checked={$appearance.isSyncWithSystem}
+    onChange={(event) => {
+      appearance.modifySyncWithSystem(event.detail);
+    }}
     isExpanded={true}
     label={{
       label: "Sync theme with system",
@@ -78,8 +63,10 @@
         { label: "Dark", value: Theme.DARK }
       ]}
       size={Size.sm}
-      onSelect={switchTheme}
-      bind:selected={selectedTheme}
+      selected={$appearance.userThemeSetting}
+      onSelect={(event) => {
+        switchTheme(event.detail);
+      }}
     />
   {:else if $userPreferences?.appearance?.skin === AppSkin.Glassy}
     <div class="text-b3 text-fgs2">{`[ Experimental theme ]`}</div>

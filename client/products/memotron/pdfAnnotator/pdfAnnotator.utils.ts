@@ -532,7 +532,7 @@ export function getBoundingRectSE(start: Coords, end: Coords): LTWH {
 
 /**
  *
- * TODO - re enable tasks only in Nucleus and to use task: resource instead
+ * TODO - re enable tasks only in Nucleum and to use task: resource instead
  * @returns
  */
 export function resolveAnnotationModes(): IToggleItem[] {

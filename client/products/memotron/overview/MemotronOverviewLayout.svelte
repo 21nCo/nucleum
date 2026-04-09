@@ -20,15 +20,16 @@
 
   let {
     isConstrainedWidth = $bindable(false),
-    right = undefined,
+    right: rightSnippet = undefined,
     children = undefined
   }: {
     isConstrainedWidth?: boolean;
     right?: Snippet | undefined;
     children?: Snippet | undefined;
   } = $props();
-  let selectedPanel: MemotronOverviewPanel =
-    resolveSavedState() ?? MemotronOverviewPanel.GRAPH;
+  let selectedPanel = $state<MemotronOverviewPanel>(
+    resolveSavedState() ?? MemotronOverviewPanel.GRAPH
+  );
   const isNucleusContext = $derived($appStore.product === Product.NUCLEUS);
 
   let containerWidth = 0;
@@ -90,7 +91,7 @@
     >
       {#snippet right()}
         <div class="mr-3">
-          {@render right?.()}
+          {@render rightSnippet?.()}
         </div>
       {/snippet}
     </PanelSwitcher>

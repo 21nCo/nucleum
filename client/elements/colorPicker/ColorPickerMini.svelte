@@ -6,7 +6,7 @@
   import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
   import ColorPickerPopover from "@21n/elements/colorPicker/ColorPickerPopover.svelte";
   let {
-    hue = $bindable(undefined),
+    hue = $bindable(),
     changeCallback = () => {},
     onDebouncedChangeCallback = () => {},
     width = undefined

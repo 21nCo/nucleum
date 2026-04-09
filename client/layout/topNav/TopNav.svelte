@@ -59,27 +59,38 @@
 
   onMount(() => {
     const unsubscribe = uiState.subscribe((x) => {
-      pinnedItems = tabs.get() ?? [];
+      void x;
+      queueMicrotask(() => {
+        pinnedItems = tabs.get() ?? [];
+      });
     });
     const bulkEditCountUnsub = bulkEditStore.count.subscribe((count) => {
-      bulkEditCount = count;
+      queueMicrotask(() => {
+        bulkEditCount = count;
+      });
     });
     const bulkEditContextUnsub = bulkEditStore.context.subscribe((ctx) => {
-      bulkEditContext = ctx;
+      queueMicrotask(() => {
+        bulkEditContext = ctx;
+      });
     });
     const bulkEditSubContextUnsub = bulkEditStore.subContext.subscribe(
       (sub) => {
-        bulkEditSubContext = sub;
+        queueMicrotask(() => {
+          bulkEditSubContext = sub;
+        });
       }
     );
 
     const pageSub = page.subscribe((p) => {
-      isSearchMode =
-        p.url.searchParams.get(AccessMode.MAIN) === Action.SEARCH &&
-        !p.url.searchParams.get(AccessMode.POP);
-      isShowBackToSearch =
-        $vTrail.base === Action.SEARCH &&
-        p.url.searchParams.get(AccessMode.POP) !== null;
+      queueMicrotask(() => {
+        isSearchMode =
+          p.url.searchParams.get(AccessMode.MAIN) === Action.SEARCH &&
+          !p.url.searchParams.get(AccessMode.POP);
+        isShowBackToSearch =
+          $vTrail.base === Action.SEARCH &&
+          p.url.searchParams.get(AccessMode.POP) !== null;
+      });
     });
 
     return () => {

@@ -324,6 +324,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         if (val) val.isPageLoading = true;
         else val = { isPageLoading: true } as IActiveCollection;
         val.accessMode = accessMode;
+        val.isInEditMode ??= false;
         return val;
       });
       console.time("ActiveCollectionStore.init - select");
@@ -344,6 +345,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       this.set({
         ...record,
         accessMode,
+        isInEditMode: record.isInEditMode ?? false,
         isViewDataLoading: true,
         isPageLoading: false,
         properties: record.properties ?? [],

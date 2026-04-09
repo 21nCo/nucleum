@@ -14,52 +14,37 @@
   import { TextStyle } from "@21n/types/text.enum";
   import ShortcutSettings from "@21n/components/shortcuts/settings/ShortcutSettings.svelte";
   import { InteractionMode } from "@21n/components/settings/interactionMode/interactionMode.type";
-  let selectedMode: InteractionMode = uiState.getState(
-    Action.MODE_OF_INTERACTION,
-    {
-      scope: UIStateScope.PRODUCT
-    }
-  );
-
-  // Auto-change from deprecated KEYBOARD_CENTRIC to DEFAULT
-  if (selectedMode === InteractionMode.KEYBOARD_CENTRIC) {
-    selectedMode = InteractionMode.DEFAULT;
-    uiState.setState(Action.MODE_OF_INTERACTION, selectedMode, {
-      scope: UIStateScope.PRODUCT
-    });
-  }
-  if (
-    selectedMode === InteractionMode.COMMAND_ONLY ||
-    selectedMode === InteractionMode.VOICE_ONLY
-  ) {
-    selectedMode = InteractionMode.AGENT;
-    uiState.setState(Action.MODE_OF_INTERACTION, selectedMode, {
-      scope: UIStateScope.PRODUCT
-    });
-  }
-  let isShortcutHintsEnabled = uiState.getState(UIState.hideShortcutHints, {
-    scope: UIStateScope.DEVICE
+  const persistedMode = uiState.getState(Action.MODE_OF_INTERACTION, {
+    scope: UIStateScope.PRODUCT
   });
-  let isCompletelyHideLeftNavBar = uiState.getState(
-    UIState.completelyHideLeftNavBar,
-    {
-      scope: UIStateScope.PRODUCT
-    }
+  const initialMode =
+    persistedMode === InteractionMode.KEYBOARD_CENTRIC
+      ? InteractionMode.DEFAULT
+      : persistedMode === InteractionMode.COMMAND_ONLY ||
+          persistedMode === InteractionMode.VOICE_ONLY
+        ? InteractionMode.AGENT
+        : (persistedMode ?? InteractionMode.DEFAULT);
+  let selectedMode = $state<InteractionMode>(initialMode);
+  let isShortcutHintsEnabled = $state(
+    uiState.getState(UIState.hideShortcutHints, {
+      scope: UIStateScope.DEVICE
+    }) ?? false
   );
-  function onInteractionModeSelect() {
-    uiState.setState(Action.MODE_OF_INTERACTION, selectedMode, {
+  let isCompletelyHideLeftNavBar = $state(
+    uiState.getState(UIState.completelyHideLeftNavBar, {
       scope: UIStateScope.PRODUCT
-    });
-  }
-
-  $effect(() => {
-    onInteractionModeSelect();
-  });
+    }) ?? false
+  );
 </script>
 
 <div class="flex flex-col gap-6 overflow-auto" data-testid="mode-of-interaction-settings">
   <OptionSelector
     bind:selected={selectedMode}
+    onSelect={(event) => {
+      uiState.setState(Action.MODE_OF_INTERACTION, event.detail, {
+        scope: UIStateScope.PRODUCT
+      });
+    }}
     style={OptionSelectorStyle.TRAIN}
     size={$view.isConstrainedWidth ? Size.sm : Size.md}
     labelProps={{

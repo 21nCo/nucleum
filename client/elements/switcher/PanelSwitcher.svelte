@@ -36,7 +36,7 @@
   const PANEL_SWITCHER_ATTR = "data-panel-switcher-id";
   let {
     items,
-    value = $bindable(undefined),
+    value = $bindable(),
     isDisableEnabled = false,
     parentBgIndex = 1,
     isInEditMode = false,
@@ -279,6 +279,7 @@
       {/if}
       <div
         bind:this={child}
+        role="tablist"
         class={cn("flex items-center", bg(parentBgIndex - 1), {
           "h-full": style === PanelSwitcherStyle.BAR,
           "overflow-x-auto mr-auto": isExpandToFullWidth,
