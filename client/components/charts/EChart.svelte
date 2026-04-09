@@ -1288,8 +1288,12 @@
 
   function buildPieOption(isDonut: boolean): EChartsOption {
     const dataset = Array.isArray(data) ? data : [];
-    const palette = resolvePalette(
-      dataset.map((item: any) => String(item?.group ?? item?.key ?? "Value"))
+    const groups = dataset.map((item: any) =>
+      String(item?.group ?? item?.key ?? "Value")
+    );
+    const palette = resolvePalette(groups);
+    const sliceColors = groups.map((group, index) =>
+      resolveColor(group, index, palette)
     );
     const labelColor = resolveAxisLabelColor();
     const valueData = dataset.map((item: any) => ({
@@ -1313,7 +1317,7 @@
         borderRadius: 6,
         borderColor: normalizeColor(currentColors?.bgs1) ?? "#fff",
         borderWidth: 2,
-        color: ({ dataIndex }) => palette[dataIndex % palette.length]
+        color: ({ dataIndex }) => sliceColors[dataIndex % sliceColors.length]
       },
       label: {
         color: labelColor,

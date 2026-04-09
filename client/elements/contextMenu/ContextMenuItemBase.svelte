@@ -51,8 +51,10 @@
   <span
     class={cn("min-w-fit whitespace-nowrap", {
       "text-ars1": isRedAccent
-    })}>{item.label ?? properCase(enumToString(item.value.toString()))}</span
-  >
+    })}>
+    {item.label ??
+      (item.value != null ? properCase(enumToString(item.value.toString())) : "")}
+  </span>
 </span>
 {#if item.secondStepComponent || item.action}
   <Icon icon="chevron-right" size={Size.sm} />

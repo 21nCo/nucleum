@@ -110,6 +110,8 @@
             <Button
               icon="sidebar-toggle"
               size={Size.lg}
+              testId="leftnav-sidebar-toggle-icon"
+              ariaLabel="Toggle sidebar width"
               onclick={() => {
                 uiState.toggleSidebar();
               }}

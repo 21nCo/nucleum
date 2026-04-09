@@ -62,16 +62,18 @@
   };
 
   const VISIBLE_YEARS = getVisibleYears();
-
   let visibleYears = $state<ReturnType<typeof getYearData>[]>([]);
   let visibleYear = $state<number>(selectedDate.getFullYear());
-  let lastScrollTop = 0;
   let scrollTimeout: ReturnType<typeof setTimeout> | undefined;
   let containerRef: HTMLDivElement;
   let isExplicitNavigation = false;
-  let virtualScrollTop = $state(0);
+  let virtualScrollTop = $state(
+    (selectedDate.getFullYear() - BASE_YEAR) * yearHeight
+  );
   let startYearIndex = $state(0);
   let isMounted = $state(false);
+  let isRecalibrating = false;
+  let calibratedWidth = 0;
 
   let showYearIndicators = $state(
     preferences.resolve(Preference.CALENDAR_TILE_INDICATORS_YEAR) ?? true
@@ -88,20 +90,9 @@
   onDestroy(unsubscribe);
   onMount(() => {
     updateVisibleYears();
+    calibratedWidth = containerRef?.clientWidth ?? 0;
     requestAnimationFrame(() => {
-      const yearElement = document.querySelector(
-        '[id^="year-"]'
-      ) as HTMLElement;
-      if (yearElement) {
-        const actualHeight = yearElement.offsetHeight;
-        if (actualHeight > 0) {
-          yearHeight = actualHeight;
-          const currentYear = selectedDate.getFullYear();
-          virtualScrollTop = getVirtualPosition(currentYear);
-          updateVisibleYears();
-          containerRef.scrollTop = virtualScrollTop;
-        }
-      }
+      remeasureAndRecalibrate(selectedDate.getFullYear());
     });
 
     let timeoutId: ReturnType<typeof setTimeout>;
@@ -112,10 +103,70 @@
       });
     }, 500);
 
+    // Re-calibrate YEAR_HEIGHT when the container is resized (e.g. side panels
+    // opening/closing narrow the calendar area, making year elements taller).
+    let lastContainerWidth = 0;
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const newWidth = Math.round(entry.contentRect.width);
+        if (lastContainerWidth !== 0 && newWidth !== lastContainerWidth) {
+          // Capture the current year+month and block onScroll BEFORE the rAF
+          // so that any scroll events fired by the layout change cannot
+          // corrupt state.
+          const targetYear = visibleYear || selectedDate.getFullYear();
+          const targetMonth = selectedDate.getMonth();
+          isRecalibrating = true;
+          requestAnimationFrame(() => {
+            remeasureAndRecalibrate(targetYear, targetMonth);
+          });
+        }
+        lastContainerWidth = newWidth;
+      }
+    });
+    resizeObserver.observe(containerRef);
+
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
+      resizeObserver.disconnect();
     };
   });
+
+  function remeasureAndRecalibrate(targetYear: number, targetMonth?: number) {
+    const yearElement = containerRef?.querySelector(
+      '[id^="year-"]'
+    ) as HTMLElement | null;
+    if (!yearElement) { isRecalibrating = false; return; }
+    const actualHeight = yearElement.offsetHeight;
+    if (actualHeight <= 0) { isRecalibrating = false; return; }
+    yearHeight = actualHeight;
+    virtualScrollTop = getVirtualPosition(targetYear);
+    updateVisibleYears();
+
+    // Flush Svelte DOM updates first, then set scrollTop so the browser
+    // scrolls into already-rendered content.  After the year is in view,
+    // refine to the exact month so the user's position is fully restored.
+    tick().then(() => {
+      if (!containerRef) { isRecalibrating = false; return; }
+      containerRef.scrollTop = virtualScrollTop;
+      requestAnimationFrame(() => {
+        if (targetMonth !== undefined) {
+          const useYearLevel =
+            containerRef?.clientWidth > 1200;
+          const targetId = useYearLevel
+            ? `year-${targetYear}`
+            : `month-${targetYear}-${targetMonth}`;
+          const el = document.getElementById(targetId);
+          if (el) {
+            el.scrollIntoView({ block: useYearLevel ? "start" : "center" });
+          }
+        }
+        requestAnimationFrame(() => {
+          if (containerRef) calibratedWidth = containerRef.clientWidth;
+          isRecalibrating = false;
+        });
+      });
+    });
+  }
 
   function getYearFromIndex(index: number): number {
     return BASE_YEAR + index;
@@ -209,7 +260,15 @@
   }
 
   function onScroll(e: Event) {
-    if (!isMounted) return;
+    if (!isMounted || isRecalibrating) return;
+
+    // If the container width changed since the last calibration, a layout
+    // transition is in progress (e.g. side panel opening/closing).  Year
+    // element positions are stale so skip all year detection until the
+    // ResizeObserver recalibrates.
+    if (calibratedWidth && containerRef &&
+        containerRef.clientWidth !== calibratedWidth) return;
+
     const target = e.target as HTMLElement;
     const { scrollTop } = target;
 
@@ -218,45 +277,39 @@
     }
 
     virtualScrollTop = scrollTop;
-    const isScrollingDown = scrollTop > lastScrollTop;
-    lastScrollTop = scrollTop;
 
-    const currentMonth = selectedDate.getMonth();
-    const currentDay = selectedDate.getDate();
-    const currentYear = selectedDate.getFullYear();
+    const newVisibleYear = getVisibleYearFromDOM();
 
-    const targetYear = isScrollingDown ? currentYear + 1 : currentYear - 1;
-
-    const targetDate = createSafeDate(targetYear, currentMonth, currentDay);
-    const dateButtons = Array.from(
-      containerRef.querySelectorAll("button")
-    ).filter((btn) => {
-      const btnText = btn.textContent?.trim();
-      if (btnText === currentDay.toString()) {
-        const monthContainer = btn.closest('[id^="month-"]');
-        return monthContainer?.id === `month-${targetYear}-${currentMonth}`;
-      }
-      return false;
-    });
-
-    if (dateButtons.length > 0) {
-      const containerRect = containerRef.getBoundingClientRect();
-      const dateButton = dateButtons[0];
-      const buttonRect = dateButton.getBoundingClientRect();
-      const isDateVisible =
-        buttonRect.top >= containerRect.top &&
-        buttonRect.bottom <= containerRect.bottom;
-
-      if (isDateVisible && targetYear !== visibleYear) {
-        visibleYear = targetYear;
-        selectedDate = createSafeDate(targetYear, currentMonth, currentDay);
-        onYearChange?.({ year: targetYear });
-      }
+    if (newVisibleYear !== null &&
+      newVisibleYear !== visibleYear &&
+      newVisibleYear >= BASE_YEAR &&
+      newVisibleYear < BASE_YEAR + YEAR_RANGE
+    ) {
+      visibleYear = newVisibleYear;
+      selectedDate = createSafeDate(
+        newVisibleYear,
+        selectedDate.getMonth(),
+        selectedDate.getDate()
+      );
+      onYearChange?.({ year: newVisibleYear });
     }
 
     scrollTimeout = setTimeout(() => {
       updateVisibleYears();
     }, 16);
+  }
+
+  function getVisibleYearFromDOM(): number | null {
+    if (!containerRef) return null;
+    const containerRect = containerRef.getBoundingClientRect();
+    const centerY = containerRect.top + containerRef.clientHeight / 2;
+    for (const { year } of visibleYears) {
+      const yearEl = document.getElementById(`year-${year}`);
+      if (!yearEl) continue;
+      const rect = yearEl.getBoundingClientRect();
+      if (rect.top <= centerY && rect.bottom >= centerY) return year;
+    }
+    return null;
   }
 
   export function scrollToToday() {
