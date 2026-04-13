@@ -22,10 +22,11 @@
     classList?: string;
     tileValue?: string;
   } = $props();
-  const initialTileValue =
+  const initialTileValue = $derived(
     data.display == TileAppearance.FTile || data.display == TileAppearance.LTile
       ? "🔥"
-      : tileValue;
+      : tileValue
+  );
   const colors = $derived(heatMapColorRange($appearance, "aps1", 6));
   let tileRef: HTMLSpanElement;
   const tooltip = $derived(resolveToolTip(data.date));

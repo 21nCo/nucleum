@@ -72,8 +72,10 @@ export function dropzone(
 
       onDrop(nodeDetails);
       node.dispatchEvent(
-        new CustomEvent<DroppedNodeDetails>("drop", {
-          detail: nodeDetails
+        new CustomEvent<DroppedNodeDetails>("dropzone:drop", {
+          detail: nodeDetails,
+          bubbles: true,
+          composed: true
         })
       );
     }
