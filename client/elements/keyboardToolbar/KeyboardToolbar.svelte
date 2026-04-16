@@ -1,15 +1,25 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { onMount, onDestroy } from "svelte";
   import { mdToolbar, simpleToolbar } from "@21n/elements/keyboardToolbar/keyboardToolbar.action";
   import { cn } from "@21n/utils/ui.utils";
   import { fly } from "svelte/transition";
-  let classList: string = "";
-  export { classList as class };
-  export let isMdToolbar: boolean = false;
-  export let offset: number = 0;
-  export let isPreventDefaultOnKeyboardClose: boolean = false;
-  export let zIndex: number = 70;
-  let dev_enableKeyboardToolbar: boolean = false;
+  let {
+    class: classList = "",
+    isMdToolbar = false,
+    offset = 0,
+    isPreventDefaultOnKeyboardClose = false,
+    zIndex = 70,
+    children = undefined
+  }: {
+    class?: string;
+    isMdToolbar?: boolean;
+    offset?: number;
+    isPreventDefaultOnKeyboardClose?: boolean;
+    zIndex?: number;
+    children?: Snippet | undefined;
+  } = $props();
+  const dev_enableKeyboardToolbar = false;
   let ref: HTMLElement;
   let portal: HTMLElement;
 
@@ -52,7 +62,7 @@
           }}
           style="display: none; z-index: {zIndex};"
         >
-          <slot />
+          {@render children?.()}
         </div>
       {:else}
         <div
@@ -64,7 +74,7 @@
           use:simpleToolbar
           style="display: none; z-index: {zIndex};"
         >
-          <slot />
+          {@render children?.()}
         </div>
       {/if}
     </div>

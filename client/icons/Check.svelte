@@ -1,14 +1,32 @@
 <script lang="ts">
+  import type { HTMLButtonAttributes } from "svelte/elements";
   import { Size } from "@21n/types/size.enum";
 
-  export let isChecked: boolean = false;
-  export let isAccentBgActive: boolean = false;
-  export let isRounded: boolean = false;
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
-  $: width = size === Size.sm ? 15 : size === Size.md ? 18 : 20;
+  let {
+    isChecked = false,
+    isAccentBgActive = false,
+    isRounded = false,
+    size = Size.md,
+    onclick = undefined,
+    ...buttonProps
+  }: {
+    isChecked?: boolean;
+    isAccentBgActive?: boolean;
+    isRounded?: boolean;
+    size?: Size.sm | Size.md | Size.lg;
+    onclick?:
+      | ((event: MouseEvent & { currentTarget: EventTarget & HTMLButtonElement }) => void)
+      | undefined;
+  } & HTMLButtonAttributes = $props();
+
+  const width = $derived(size === Size.sm ? 15 : size === Size.md ? 18 : 20);
 </script>
 
-<button on:click on:mousedown={(e) => e.preventDefault()}>
+<button
+  {...buttonProps}
+  {onclick}
+  onmousedown={(e) => e.preventDefault()}
+>
   {#if isChecked}
     <svg
       {width}

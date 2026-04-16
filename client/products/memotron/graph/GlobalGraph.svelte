@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { flushSync, mount, onMount, unmount } from "svelte";
   import { nodeStore } from "@21n/products/memotron/node/node.store";
   import { linker } from "@21n/products/memotron/linking/link.store";
   import GlobalGraphUsingG6 from "@21n/products/memotron/graph/GlobalGraphUsingG6.svelte";
@@ -125,15 +125,16 @@
   }
 
   function renderComponentToString(node: any) {
-    const component = new NodeTitleLabelPart({
-      target: document.createElement("div"),
+    const target = document.createElement("div");
+    const component = mount(NodeTitleLabelPart, {
+      target,
       props: {
         item: node
       }
     });
-
-    const html = component.$$.root.innerHTML;
-    component.$destroy();
+    flushSync();
+    const html = target.innerHTML;
+    void unmount(component);
     return html;
   }
 
@@ -141,8 +142,7 @@
     isRendered = true;
   }
 
-  function onNodeSelect(e: CustomEvent) {
-    const event = e.detail;
+  function onNodeSelect(event: any) {
     const newResource = event.target.id;
     logger.log({
       at: "globalGraph - onNodeSelect",
@@ -164,12 +164,37 @@
     splitResource = undefined;
   }
 
-  function onCanvasClick(event: CustomEvent) {
+  function onCanvasClick() {
     appStore.closeResource({ accessMode: AccessMode.SPLIT });
   }
 </script>
 
 <MemotronOverviewLayout bind:isConstrainedWidth>
+  {#snippet right()}
+    <span class="flex items-center gap-3 text-fgs3 text-b3 h-full">
+      {#if !isConstrainedWidth && data.nodes.length > 0}
+        <span>
+          {data.nodes.length} nodes
+        </span>
+        <span>
+          {data.edges.length} connections
+        </span>
+        <Divider
+          orientation={Orientation.Vertical}
+          colorStrength={ColorStrength.Strong}
+        />
+      {/if}
+      <SwitchInput
+        label={{ label: "Hide orphans" }}
+        size={Size.sm}
+        bind:checked={isHideOrphans}
+        onChange={() => {
+          applyFilters();
+          graphRef?.rerender();
+        }}
+      />
+    </span>
+  {/snippet}
   {#if !isRendered}
     <div
       class="absolute z-10 inset-0 w-full h-full flex justify-center items-center bg-bgs1"
@@ -177,36 +202,13 @@
       <EmptyStatusView isLoadingState={isLoading} mainText="Not enough data." />
     </div>
   {/if}
-  <span class="flex items-center gap-3 text-fgs3 text-b3 h-full" slot="right">
-    {#if !isConstrainedWidth && data.nodes.length > 0}
-      <span>
-        {data.nodes.length} nodes
-      </span>
-      <span>
-        {data.edges.length} connections
-      </span>
-      <Divider
-        orientation={Orientation.Vertical}
-        colorStrength={ColorStrength.Strong}
-      />
-    {/if}
-    <SwitchInput
-      label={{ label: "Hide orphans" }}
-      size={Size.sm}
-      bind:checked={isHideOrphans}
-      on:change={() => {
-        applyFilters();
-        graphRef?.rerender();
-      }}
-    />
-  </span>
   {#if data.nodes.length > 0}
     <GlobalGraphUsingG6
       bind:this={graphRef}
       {data}
-      on:render={onRender}
-      on:select={onNodeSelect}
-      on:canvasClick={onCanvasClick}
+      onRender={onRender}
+      onSelect={onNodeSelect}
+      onCanvasClick={onCanvasClick}
       layout="d3-force"
     />
   {/if}

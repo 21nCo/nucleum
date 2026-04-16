@@ -1,9 +1,17 @@
 <script lang="ts">
   import { Orientation } from "@21n/types/direction.enum";
   import { IconVariant } from "@21n/types/icon.type";
-  export let orientation: Orientation = Orientation.Horizontal;
-  export let variant: IconVariant = IconVariant.Outline;
-  export let isCircled: boolean = false;
+
+  let {
+    orientation = Orientation.Horizontal,
+    variant = IconVariant.Outline,
+    isCircled = false
+  }: {
+    orientation?: Orientation;
+    variant?: IconVariant;
+    isCircled?: boolean;
+  } = $props();
+
 </script>
 
 {#if isCircled && orientation === Orientation.Horizontal}

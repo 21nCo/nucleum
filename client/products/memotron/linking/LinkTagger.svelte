@@ -2,7 +2,6 @@
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
   import { InputStyle } from "@21n/types/input.type";
-  import { createEventDispatcher } from "svelte";
   import {
     linker,
     linkTagStore
@@ -11,14 +10,26 @@
   import type { IRecordId } from "@21n/types/data.type";
   import { logger } from "@21n/components/debug/logger.client";
   import { LinkType } from "@21n/products/memotron/linking/link.type";
-  const dispatch = createEventDispatcher();
 
-  export let link: INodeLinkThumb;
-  let searchQuery = "";
+  let {
+    link = $bindable(),
+    onTag = undefined
+  }: {
+    link: INodeLinkThumb;
+    onTag?: ((event: CustomEvent<IRecordId>) => void) | undefined;
+  } = $props();
+  let searchQuery = $state("");
   let searchInputRef: any;
-  async function onselect(e: CustomEvent) {
+  async function handleSelect(e: CustomEvent) {
     if (!e.detail.item) return;
     processSelect(e.detail.item.id);
+  }
+
+  function emitTag(id: IRecordId) {
+    const tagEvent = new CustomEvent<IRecordId>("tag", {
+      detail: id
+    });
+    onTag?.(tagEvent);
   }
 
   async function processSelect(id: IRecordId) {
@@ -31,7 +42,7 @@
       tags: link.tags
     });
     logger.log({ at: "processSelect", result });
-    dispatch("tag", id);
+    emitTag(id);
   }
 
   async function onEmptyEnter() {
@@ -54,14 +65,19 @@
   }
 </script>
 
-<button on:click|stopPropagation class="w-full">
+<button
+  onclick={(event) => {
+    event.stopPropagation();
+  }}
+  class="w-full"
+>
   <TextSearchInput
     bind:this={searchInputRef}
     bind:value={searchQuery}
     style={InputStyle.PLAIN}
     {searchCallback}
-    on:select={onselect}
-    on:empty-enter={onEmptyEnter}
+    onSelect={handleSelect}
+    onEmptyEnter={onEmptyEnter}
     emptyStateLabel="No relations found. Press enter to create a new relation"
     placeholder="Start typing to add relations"
   />

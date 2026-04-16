@@ -1,7 +1,8 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { appMenuStore } from "@21n/stores/appMenu/appMenu.store";
   import { appStore } from "@21n/stores/app.store";
-  import { createEventDispatcher } from "svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
@@ -26,8 +27,7 @@
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
   import { InfoTextType } from "@21n/types/text.type";
-
-  const dispatch = createEventDispatcher();
+  let { onUpdate }: { onUpdate?: () => void } = $props();
 
   interface ResourceItem {
     id: Resource;
@@ -35,12 +35,13 @@
     isPinned: boolean;
   }
 
-  let resources: ResourceItem[] = [];
+  let resources = $state<ResourceItem[]>([]);
   let userPinnedItems: string[] = [];
-  let hideMenuLabels =
+  let hideMenuLabels = $state(
     uiState.getState(UIState.hideLeftNavMenuLabels, {
       scope: UIStateScope.DAP
-    }) || false;
+    }) || false
+  );
 
   initResources();
 
@@ -61,7 +62,7 @@
   function persistChanges(): void {
     userPinnedItems = resources.filter((r) => r.isPinned).map((r) => r.id);
     appMenuStore.setUserMenuItems(userPinnedItems);
-    dispatch("update");
+    onUpdate?.();
   }
 
   function handleReorder(e: DragDropEvent): void {
@@ -76,7 +77,7 @@
     uiState.setState(UIState.hideLeftNavMenuLabels, hideMenuLabels, {
       scope: UIStateScope.DAP
     });
-    dispatch("update");
+    onUpdate?.();
   }
 </script>
 
@@ -86,7 +87,7 @@
     label={{ label: "Hide menu labels" }}
     isExpanded={true}
     checked={hideMenuLabels}
-    on:change={handleToggleMenuLabels}
+    onChange={handleToggleMenuLabels}
   />
   <div class="flex flex-col gap-2">
     <Text content="Pin resources" style={TextStyle.SECTION_HEADING} />
@@ -116,14 +117,14 @@
               <span class="text-fgs2">{resource.name}</span>
             </div>
             <label class="relative inline-block w-10 h-5 cursor-pointer">
-              <input
-                type="checkbox"
-                class="opacity-0 w-0 h-0"
-                checked={resource.isPinned}
-                on:change={() => {
-                  resource.isPinned = !resource.isPinned;
-                  persistChanges();
-                }}
+                <input
+                  type="checkbox"
+                  class="opacity-0 w-0 h-0"
+                  checked={resource.isPinned}
+                  onchange={() => {
+                    resource.isPinned = !resource.isPinned;
+                    persistChanges();
+                  }}
               />
               <span
                 class={cn(

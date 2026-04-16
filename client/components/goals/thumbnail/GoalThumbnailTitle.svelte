@@ -4,9 +4,16 @@
   import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
   import { GoalStatus, GoalType, type IGoalThumb } from "@21n/components/goals/goal.type";
   import { resolveGoalTypeIcon } from "@21n/components/goals/goal.utils";
-  export let item: IGoalThumb;
-  export let isCurrentlyFocusing: boolean = false;
-  export let color: number | undefined = undefined;
+
+  let {
+    item,
+    isCurrentlyFocusing = false,
+    color = undefined
+  }: {
+    item: IGoalThumb;
+    isCurrentlyFocusing?: boolean;
+    color?: number | undefined;
+  } = $props();
 </script>
 
 <div class="flex items-center gap-1.5 userdata">

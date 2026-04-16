@@ -1,7 +1,8 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import ContextMenuAction from "@21n/elements/contextMenu/ContextMenuAction.svelte";
+  import Toggle from "@21n/elements/toggle/Toggle.svelte";
   import { Size } from "@21n/types/size.enum";
-  import { createEventDispatcher } from "svelte";
   import { resolveCollectionContextMenu } from "@21n/components/collection/collection.store";
   import { resolveNodeContextMenu } from "@21n/products/memotron/node/node.store";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
@@ -14,22 +15,46 @@
   import { resolveTaskContextMenu } from "@21n/components/tasks/task.store";
   import context from "@21n/stores/context.store";
   import view from "@21n/stores/view.store";
-
-  const dispatch = createEventDispatcher();
-  export let item: any;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
-  export let accessPointId: IRecordId | undefined = undefined;
-  export let accessPointContext: string | undefined = undefined;
-  export let arrangement: Arrangement = Arrangement.LIST;
-  export let isHidePreview: boolean = false;
-  export let isApplyCustomColor: boolean = false;
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
-  export let bgSize: Size.sm | Size.md | Size.lg = Size.md;
-  export let isInline: boolean = false;
-  export let icon: string = "more";
-  function onAction(e: CustomEvent<string>) {
+  let {
+    item = $bindable(),
+    accessPoint = ResourceAccessPoint.BROWSER,
+    accessPointId = undefined,
+    accessPointContext = undefined,
+    arrangement = Arrangement.LIST,
+    isHidePreview = false,
+    isApplyCustomColor = false,
+    size = Size.md,
+    bgSize = Size.md,
+    isInline = false,
+    icon = "more",
+    isPopoverVisible = $bindable(false),
+    onAction = undefined,
+    right = undefined
+  }: {
+    item: any;
+    accessPoint?: ResourceAccessPoint;
+    accessPointId?: IRecordId | undefined;
+    accessPointContext?: string | undefined;
+    arrangement?: Arrangement;
+    isHidePreview?: boolean;
+    isApplyCustomColor?: boolean;
+    size?: Size.sm | Size.md | Size.lg;
+    bgSize?: Size.sm | Size.md | Size.lg;
+    isInline?: boolean;
+    icon?: string;
+    isPopoverVisible?: boolean;
+    onAction?:
+      | ((event: CustomEvent<{ action: string; id: string }>) => void)
+      | undefined;
+    right?: Snippet | undefined;
+  } = $props();
+  function handleAction(e: CustomEvent<string>) {
     if (e.detail === "star") item.isStarred = !item.isStarred;
-    dispatch("action", { action: e.detail, id: item.id });
+    const actionEvent = new CustomEvent<{ action: string; id: string }>(
+      "action",
+      { detail: { action: e.detail, id: item.id } }
+    );
+    onAction?.(actionEvent);
   }
   function resolveContextMenu(item: any, accessPoint: ResourceAccessPoint) {
     const resourceType = determineResourceType(item.id);
@@ -50,8 +75,17 @@
   }
 </script>
 
-<button
-  data-testid="thumbnail-context-menu-trigger"
+<ContextMenuAction
+  id="resourceThumbnailContextMenu"
+  testId="thumbnail-context-menu-trigger"
+  menuResolver={() => resolveContextMenu(item, accessPoint)}
+  bind:isPopoverVisible
+  {size}
+  actionSize={bgSize ?? size}
+  onAction={handleAction}
+  position={Placement.BottomCenter}
+  isRenderAsSibling={!$view.isConstrainedWidth}
+  isStopPropagation={true}
   class={cn(
     "flex gap-2 p--1",
     {
@@ -69,32 +103,30 @@
         "bg-bgs2 border-brs3": !isApplyCustomColor
       }
   )}
-  on:click|stopPropagation
 >
-  <div class="flex">
-    <slot name="right" />
-    <div
-      class={cn(
-        !isInline &&
-          arrangement === Arrangement.LIST && {
-            "mx-2 border rounded-md": arrangement === Arrangement.LIST,
-            "bg-ccs4 border-ccs2":
-              arrangement === Arrangement.LIST && isApplyCustomColor,
-            "bg-bgs2 border-brs3":
-              arrangement === Arrangement.LIST && !isApplyCustomColor
-          }
-      )}
-    >
-      <ContextMenuAction
-        id="resourceThumbnailContextMenu"
-        menuResolver={() => resolveContextMenu(item, accessPoint)}
-        {size}
-        actionSize={bgSize ?? size}
-        on:action={onAction}
-        position={Placement.BottomCenter}
-        isRenderAsSibling={!$view.isConstrainedWidth}
-        {icon}
-      />
+  {#snippet children()}
+    <div class="flex">
+      {@render right?.()}
+      <div
+        class={cn(
+          !isInline &&
+            arrangement === Arrangement.LIST && {
+              "mx-2 border rounded-md": arrangement === Arrangement.LIST,
+              "bg-ccs4 border-ccs2":
+                arrangement === Arrangement.LIST && isApplyCustomColor,
+              "bg-bgs2 border-brs3":
+                arrangement === Arrangement.LIST && !isApplyCustomColor
+            }
+        )}
+      >
+        <Toggle
+          {icon}
+          isPreventFillOnActive={true}
+          size={bgSize ?? size}
+          bgSize={bgSize ?? size}
+          bind:on={isPopoverVisible}
+        />
+      </div>
     </div>
-  </div>
-</button>
+  {/snippet}
+</ContextMenuAction>

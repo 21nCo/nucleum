@@ -25,27 +25,48 @@
   import { fly } from "svelte/transition";
   import { quadInOut } from "svelte/easing";
 
-  export let command: string | undefined = undefined;
-  export let commandType: ActionType | undefined = undefined;
-  export let componentParams: any = undefined;
-  export let isFullPageContext: boolean = false;
-  let value: string = "";
-  let inputRef: HTMLInputElement;
-  let resultsRef: any;
-  let isPerformingSearchAction: boolean = false;
-  let searchAction: IAction;
-  let isFocusing: boolean = false;
-  let defaultPlaceholder = isFullPageContext
-    ? "Search for a command"
-    : "Search for a command or scroll to see full list";
-  let placeholder = defaultPlaceholder;
+  let {
+    command = undefined,
+    commandType = undefined,
+    componentParams = undefined,
+    isFullPageContext = false
+  }: {
+    command?: string | undefined;
+    commandType?: ActionType | undefined;
+    componentParams?: any;
+    isFullPageContext?: boolean;
+  } = $props();
+  let value = $state("");
+  let inputRef = $state<HTMLInputElement | undefined>();
+  let resultsRef = $state<any>();
+  let isPerformingSearchAction = $state(false);
+  let searchAction = $state<IAction | null>(null);
+  let isFocusing = $state(false);
+  const defaultPlaceholder = $derived(
+    isFullPageContext
+      ? "Search for a command"
+      : "Search for a command or scroll to see full list"
+  );
+  let placeholder = $state("");
+  $effect(() => {
+    if (!isPerformingSearchAction) {
+      placeholder = defaultPlaceholder;
+    }
+  });
   onMount(() => {
     inputRef?.focus();
-    if (command && commandType && commandType === ActionType.SEARCH_CMD) {
-      const action = appStore.resolveAction(command);
-      if (!action) return;
-      onSearchAction({ detail: action });
+  });
+  $effect(() => {
+    if (
+      !command ||
+      commandType !== ActionType.SEARCH_CMD ||
+      (isPerformingSearchAction && searchAction?.action === command)
+    ) {
+      return;
     }
+    const action = appStore.resolveAction(command);
+    if (!action) return;
+    onSearchAction({ detail: action });
   });
   function handleKeyUp(event: any) {
     if (event.key === "ArrowDown") {
@@ -70,18 +91,43 @@
     placeholder = defaultPlaceholder;
   }
 
-  function onSearchAction(event: any) {
+  function isSearchActionEvent(
+    actionOrEvent: IAction | { detail?: IAction }
+  ): actionOrEvent is { detail?: IAction } {
+    return "detail" in actionOrEvent;
+  }
+
+  function resolveSearchActionPayload(
+    actionOrEvent: IAction | { detail?: IAction }
+  ): IAction | null {
+    if (isSearchActionEvent(actionOrEvent)) {
+      return actionOrEvent.detail ?? null;
+    }
+    return actionOrEvent;
+  }
+
+  function onSearchAction(actionOrEvent: IAction | { detail?: IAction }) {
+    const nextSearchAction = resolveSearchActionPayload(actionOrEvent);
+    if (!nextSearchAction) return;
     value = "";
+    searchAction = nextSearchAction;
     isPerformingSearchAction = true;
-    searchAction = event.detail;
     placeholder =
-      typeof searchAction.searchActionParams?.placeholder === "function"
-        ? searchAction.searchActionParams.placeholder(componentParams)
-        : (searchAction.searchActionParams?.placeholder ?? "select an item");
+      typeof nextSearchAction.searchActionParams?.placeholder === "function"
+        ? nextSearchAction.searchActionParams.placeholder(componentParams)
+        : (nextSearchAction.searchActionParams?.placeholder ?? "select an item");
   }
   function close() {
     value = "";
     modalEvent.hide(Action.CMD);
+  }
+
+  function resolveSearchAction() {
+    return searchAction as IAction;
+  }
+
+  function resolveSearchActionLabel() {
+    return componentParams?.label ?? searchAction?.cmdLabel ?? searchAction?.label ?? "";
   }
   /**
    * Used in command-only mode.
@@ -90,7 +136,7 @@
   const shortcutListener = (event: KeyboardEvent) => {
     const { shortcut, modifiers } = keyboardShortcuts.resolveShortcut(event);
     if (!shortcut && event?.key === KeyboardKey.ESCAPE && isFocusing) {
-      inputRef.blur();
+      inputRef?.blur();
       isFocusing = false;
       return;
     }
@@ -99,9 +145,9 @@
       (!shortcut && modifiers.length === 0 && event.code === KeyboardKey.SPACE)
     ) {
       event.preventDefault();
-      if (!isFocusing) inputRef.focus();
+      if (!isFocusing) inputRef?.focus();
       else {
-        inputRef.blur();
+        inputRef?.blur();
         isFocusing = false;
       }
     }
@@ -118,21 +164,21 @@
     }
   )}
 >
-  {#if isPerformingSearchAction}
+  {#if isPerformingSearchAction && searchAction}
     <div
       class="h-fit min-h-fit flex gap-2 justify-between items-center cw:w-full cw:max-w-full w-fit max-w-60 cw:ml-0 ml-2 mt-2 bg-bgs2 cw:px-3 cw:py-2 pr-1 pl-3 cw:rounded-none rounded-md truncate"
       in:fly={{ y: -10, easing: quadInOut, duration: 250 }}
     >
       <span class="truncate">
-        {@html renderMdAsHtml(componentParams?.label ?? searchAction.cmdLabel)}
+        {@html renderMdAsHtml(resolveSearchActionLabel())}
       </span>
       {#if $view.isConstrainedWidth}
-        <Button icon="cross" tooltip="Close" on:click={close} />
+        <Button icon="cross" tooltip="Close" onclick={close} />
       {:else}
         <Button
           icon="backspace"
           tooltip="Clear"
-          on:click={() => {
+          onclick={() => {
             value = "";
             resetContext();
           }}
@@ -150,9 +196,9 @@
       bind:this={inputRef}
       type="text"
       bind:value
-      on:keyup={handleKeyUp}
-      on:keydown={handleKeyDown}
-      on:focus={() => {
+      onkeyup={handleKeyUp}
+      onkeydown={handleKeyDown}
+      onfocus={() => {
         isFocusing = true;
       }}
       class="h-[3.6rem] mo:h-20 mo:w-full bg-transparent px-4 grow focus:border-none focus:outline-none text-h5 transition-all duration-300"
@@ -196,8 +242,8 @@
         search={value}
         {componentParams}
         bind:this={resultsRef}
-        action={searchAction}
-        on:close={close}
+        action={resolveSearchAction()}
+        onClose={close}
       />
       <!-- {:else}
         <EmptyStatusView size={Size.sm} subText="start typing to search..." />
@@ -206,14 +252,14 @@
       <CmdResults
         search={value}
         bind:this={resultsRef}
-        on:searchAction={onSearchAction}
-        on:close={close}
+        onSearchAction={onSearchAction}
+        onClose={close}
       />
     {/if}
   </div>
   {#if $view.display === Display.MO || $context.embed === Embed.HANDSET}
     <div class="flex w-full justify-center py-2 pb-8">
-      <Button label="Close" style={ButtonStyle.PLAIN} on:click={close} />
+      <Button label="Close" style={ButtonStyle.PLAIN} onclick={close} />
     </div>
   {:else if !isFullPageContext}
     <div
@@ -251,10 +297,10 @@
       size={Size.sm}
       style={ButtonStyle.DEFAULT}
       isPreventMinWidth={true}
-      on:click={() => {
+      onclick={() => {
         value = "";
       }}
-      on:mousedown={(e) => e.preventDefault()}
+      onmousedown={(e) => e.preventDefault()}
     />
     <Button
       icon="ph:caret-line-down-light"
@@ -263,9 +309,9 @@
       size={Size.sm}
       style={ButtonStyle.DEFAULT}
       isPreventMinWidth={true}
-      on:click={close}
+      onclick={close}
     />
   </div>
 </KeyboardToolbar>
 
-<svelte:window on:keydown={shortcutListener} />
+<svelte:window onkeydown={shortcutListener} />

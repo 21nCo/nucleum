@@ -4,10 +4,15 @@
   import type { IHighlight } from "@21n/landing/shared/landing.type";
   import Title from "@21n/landing/shared/Title.svelte";
 
-  export let title: string = "Details that matter";
-  export let subtitle: string =
-    "We believe true quality is built one detail at a time";
-  export let highlights: IHighlight[] = [];
+  let {
+    title = "Details that matter",
+    subtitle = "We believe true quality is built one detail at a time",
+    highlights = [],
+  }: {
+    title?: string;
+    subtitle?: string;
+    highlights?: IHighlight[];
+  } = $props();
 
   function isShorterHighlight(num: number) {
     if (num < 2) return false;

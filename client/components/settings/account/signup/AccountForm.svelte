@@ -22,18 +22,29 @@
   import { cn } from "@21n/utils/ui.utils";
   import { ButtonStyle } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
-  export let isSignup = false;
-  export let currentProgress: string | undefined = undefined;
-  export let isLoginFromExtension = false;
-  export let isSelfHosted = false;
-  let mode: "offline-only" | "all" | "cloud-only" = "all";
-  let email = "";
-  let pass = "";
-  let nickName = "";
-  let error: string | null = null;
+  let {
+    isSignup: initialIsSignup = false,
+    currentProgress = $bindable(),
+    isLoginFromExtension = false,
+    isSelfHosted = false
+  }: {
+    isSignup?: boolean;
+    currentProgress?: string | undefined;
+    isLoginFromExtension?: boolean;
+    isSelfHosted?: boolean;
+  } = $props();
+  let isSignup = $state(false);
+  let email = $state("");
+  let pass = $state("");
+  let nickName = $state("");
+  let error = $state<string | null>(null);
   let isTrusted = true;
-  let actionInProgress = false;
-  $: mode = resolveMode(isLoginFromExtension, isSelfHosted);
+  let actionInProgress = $state(false);
+  const mode = $derived(resolveMode(isLoginFromExtension, isSelfHosted));
+
+  $effect(() => {
+    isSignup = initialIsSignup;
+  });
 
   onMount(() => {
     postMessageToParent(EmbedMessage.MOUNT);
@@ -180,15 +191,6 @@
           type="password"
           placeholder="********"
         />
-        <!-- <button
-        class="flex items-center gap-2 w-full"
-        on:click={() => {
-          isTrusted = !isTrusted;
-        }}
-      >
-        <input type="checkbox" class="h-4 w-4" bind:checked={isTrusted} />
-        <div class="text-fgs3">Trust this device for 30 days</div>
-      </button> -->
       </div>
       <InlineErrorMessage bind:error />
       <Button
@@ -202,7 +204,7 @@
             ? "Signing in..."
             : "Sign in"}
         isLoading={actionInProgress}
-        on:click={handleClick}
+        onclick={handleClick}
       />
     </div>
   {/if}
@@ -250,7 +252,7 @@
           size={Size.lg}
           isExpandToFullWidth={true}
           style={ButtonStyle.OUTLINED}
-          on:click={onOfflineClick}
+          onclick={onOfflineClick}
         />
       </div>
     {:else if mode !== "cloud-only" && !$view.isPortrait}
@@ -262,7 +264,7 @@
               mode === "all"
           }
         )}
-        on:click={onOfflineClick}
+        onclick={onOfflineClick}
       >
         <div
           class="flex items-center gap-2 group-hover:translate-x-1 transition-transform duration-300 my-auto"

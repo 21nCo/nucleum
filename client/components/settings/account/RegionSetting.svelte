@@ -4,18 +4,20 @@
   import { Orientation } from "@21n/types/direction.enum";
   import { Size } from "@21n/types/size.enum";
   import regions from "$lib/deployment/regions.json";
-  export let region: string = "";
-  export let isDisabled: boolean = false;
-  let activeRegions: any[] = [];
-  $: resolveRegions(isDisabled);
-
-  function resolveRegions(isDisabled: boolean) {
-    activeRegions = regions
+  let {
+    region = $bindable(""),
+    isDisabled = false
+  }: {
+    region?: string;
+    isDisabled?: boolean;
+  } = $props();
+  const activeRegions = $derived.by(() =>
+    regions
       .filter((x) => x.isAvailable)
       .map((x) => {
         return { label: x.label, value: x.code, isDisabled };
-      });
-  }
+      })
+  );
 </script>
 
 <div class="flex flex-col items-center gap-8">
@@ -30,6 +32,5 @@
         body: "We will use this preference to host your data closest to you. This will help us to provide you with the best experience possible."
       }
     }}
-    on:select
   />
 </div>

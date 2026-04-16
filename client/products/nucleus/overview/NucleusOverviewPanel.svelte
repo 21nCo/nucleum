@@ -9,6 +9,7 @@
   import { Placement } from "@21n/types/direction.enum";
   import { Size } from "@21n/types/size.enum";
   import { VerticalSwitcherStyle } from "@21n/types/switcher.enum";
+  import type { ISelectValue } from "@21n/types/select.type";
   import { OverviewPanel } from "@21n/products/product.type";
   import { Product } from "@21n/products/product.type";
   import { resolveProductConfig } from "@21n/products/product.config";
@@ -17,6 +18,10 @@
     resolveProductConfig(Product.NUCLEUS).overviewPanelSwitcherItems ?? [];
 
   let selectedPanel: OverviewPanel = resolveSavedState() ?? OverviewPanel.FOCUS;
+
+  function isOverviewPanel(val: ISelectValue): val is OverviewPanel {
+    return Object.values(OverviewPanel).includes(val as OverviewPanel);
+  }
 
   function resolveSavedState() {
     const savedPanel = uiState.getState(UIState.nucleusOverviewPanel, {
@@ -27,9 +32,8 @@
     }
   }
 
-  function onSwitch(event: CustomEvent) {
-    const val = event.detail;
-    if (!val || !Object.values(OverviewPanel).includes(val)) return;
+  function onSwitch(val: ISelectValue) {
+    if (!val || !isOverviewPanel(val)) return;
     appStore.toggleSearchParamRecordSpecific("overview", { tab: val });
     uiState.setState(UIState.nucleusOverviewPanel, val, {
       scope: UIStateScope.DEVICE
@@ -43,6 +47,6 @@
     selected={selectedPanel}
     itemProps={{ size: Size.sm, activeStatusPlacement: Placement.Right }}
     style={VerticalSwitcherStyle.GRADIENT}
-    on:switch={onSwitch}
+    {onSwitch}
   />
 </div>

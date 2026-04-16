@@ -5,28 +5,22 @@
   import { cn } from "@21n/utils/ui.utils";
   export { className as class };
 
-  $: greenGradient =
-    $appearance.theme === Theme.DARK
-      ? "rgba(97, 255, 113, 0.30)"
-      : "rgba(97, 255, 113, 0.2)";
-  // let gradientColor2 = "rgba(240, 248, 255, 0.7)";
-  // let gradientColor2 = "rgba(127, 227, 154, 0.3)";
-  // let gradientColor2 = "rgba(127, 184, 227, 0.3)";
-  // let gradientColor2 = "rgba(97, 255, 113, 0.15)";
-
-  $: monoGradient =
+  const monoGradient = $derived(
     $appearance.theme === Theme.DARK
       ? "rgba(240, 248, 255, 0.2)"
-      : "rgba(0,0,0, 0.1)";
+      : "rgba(0,0,0, 0.1)"
+  );
+  const mainGradient = $derived(monoGradient);
+  const gradientColor2 = $derived(monoGradient);
 
-  $: mainGradient = monoGradient;
-  $: gradientColor2 = monoGradient;
-
-  export let dev_gradientBgVariant:
-    | "one-center"
+  let {
+    dev_gradientBgVariant = "one-center",
+  }: {
+    dev_gradientBgVariant?: | "one-center"
     | "two-center-sides"
     | "two-corners"
-    | "none" = "one-center";
+    | "none";
+  } = $props();
 </script>
 
 <!-- <div

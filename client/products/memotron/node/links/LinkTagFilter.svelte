@@ -6,21 +6,29 @@
   import { linkTagStore } from "@21n/products/memotron/linking/link.store";
   import { linkTagLabelMapper } from "@21n/products/memotron/linking/link.utils";
   import type { INodeLinkThumb } from "@21n/products/memotron/node/node.type";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let links: INodeLinkThumb[] = [];
-  export let selected: IRecordId[] = [];
+  let {
+    links = [],
+    selected = $bindable([]),
+    onChange = undefined
+  }: {
+    links?: INodeLinkThumb[];
+    selected?: IRecordId[];
+    onChange?: (() => void) | undefined;
+  } = $props();
 
-  $: tags = $linkTagStore
-    ?.filter((x) => links.some((y) => y.tags?.some(resourceInList(x))))
-    ?.map(linkTagLabelMapper);
+  let tags = $derived.by(
+    () =>
+      $linkTagStore
+        ?.filter((x) => links.some((y) => y.tags?.some(resourceInList(x))))
+        ?.map(linkTagLabelMapper) ?? []
+  );
 
   function resolveCount(tagId: IRecordId) {
     return links.filter((x) => x.tags?.some(resourceInList(tagId))).length;
   }
 </script>
 
-{#if tags && tags.length > 0}
+{#if tags.length > 0}
   <div class="flex flex-wrap gap-2">
     {#each tags as tag}
       <div class="flex gap-2">
@@ -30,13 +38,13 @@
           size={Size.md}
           isActive={selected.some(resourceInList(tag.id))}
           isRemovable={false}
-          on:click={(e) => {
+          onclick={() => {
             if (selected.some(resourceInList(tag.id))) {
               selected = selected.filter((x) => !resourceInList(tag.id)(x));
             } else {
               selected = [...selected, tag.id];
             }
-            dispatch("change");
+            onChange?.();
           }}
         />
       </div>

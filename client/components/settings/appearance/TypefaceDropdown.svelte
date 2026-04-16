@@ -9,10 +9,17 @@
     badge?: string;
   };
 
-  export let fontOptions: FontOption[] = [];
-  export let selectedValue: string;
-  export let size: Size.md | Size.sm = Size.sm;
-  export let onSelect: (value: string) => void;
+  let {
+    fontOptions = [],
+    selectedValue,
+    size = Size.sm,
+    onSelect
+  }: {
+    fontOptions?: FontOption[];
+    selectedValue: string;
+    size?: Size.md | Size.sm;
+    onSelect: (value: string) => void;
+  } = $props();
 
   function handleSelect(value: string) {
     if (onSelect) {
@@ -34,7 +41,7 @@
         }
       )}
       style="font-family: '{font.value}'"
-      on:click={() => handleSelect(font.value)}
+      onclick={() => handleSelect(font.value)}
       role="option"
       aria-selected={font.value === selectedValue}
     >

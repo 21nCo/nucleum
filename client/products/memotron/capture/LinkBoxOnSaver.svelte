@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import LinkItems from "@21n/products/memotron/common/linkbox/LinkItems.svelte";
   import LinkSearch from "@21n/products/memotron/common/linkbox/LinkSearch.svelte";
   import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
@@ -27,11 +26,19 @@
   import { logger } from "@21n/components/debug/logger.client";
   import { Size } from "@21n/types/size.enum";
 
-  const dispatcher = createEventDispatcher();
-
-  export let savedNodeId: IRecordId | undefined;
-  export let savedNode: INodeThumb | undefined;
-  export let expandedLink: IRecordId | null = null;
+  let {
+    savedNodeId,
+    savedNode,
+    expandedLink = $bindable(null),
+    onSavedNodeChange = undefined
+  }: {
+    savedNodeId?: IRecordId | undefined;
+    savedNode?: INodeThumb | undefined;
+    expandedLink?: IRecordId | null;
+    onSavedNodeChange?:
+      | ((detail: { savedNode: LinkedNodeThumb }) => void)
+      | undefined;
+  } = $props();
 
   type LinkedNodeThumb = INodeThumb & {
     links?: INodeLinkThumb[];
@@ -39,37 +46,37 @@
     properties?: ICollectionItemPropertyValue[];
   };
 
-  let linkSearchQuery: string = "";
-  let linkedResources: IRecordId[] = [];
-  let linkedProperties: ICollectionItemPropertyValue[] = [];
-  let linkFeedback: IInlineStatus | undefined = undefined;
-  let isLinkboxLoading: boolean = false;
+  let linkSearchQuery = $state("");
+  let linkedResources = $state<IRecordId[]>([]);
+  let linkedProperties = $state<ICollectionItemPropertyValue[]>([]);
+  let linkFeedback = $state<IInlineStatus | undefined>(undefined);
+  let isLinkboxLoading = $state(false);
 
-  let linkSearchExclusions: IRecordId[] = [];
-  let hasLinkedResources: boolean = false;
   let lastRefreshedId: string | undefined;
-
-  $: linkSearchExclusions = [
+  const linkSearchExclusions = $derived([
     ...(linkedResources ?? []),
     ...(savedNodeId ? [savedNodeId] : [])
-  ].filter(Boolean) as IRecordId[];
+  ].filter(Boolean) as IRecordId[]);
 
-  $: hasLinkedResources = linkedResources.length > 0;
+  const hasLinkedResources = $derived(linkedResources.length > 0);
 
-  $: if (savedNodeId) {
-    const nodeIdStr = savedNodeId.toString();
-    if (lastRefreshedId !== nodeIdStr) {
-      lastRefreshedId = nodeIdStr;
-      refreshLinkedData(savedNodeId).catch((error) => {
-        logger.error({ at: "LinkBoxOnSaver.reactiveRefresh", error });
-      });
+  $effect(() => {
+    if (savedNodeId) {
+      const nodeIdStr = savedNodeId.toString();
+      if (lastRefreshedId !== nodeIdStr) {
+        lastRefreshedId = nodeIdStr;
+        refreshLinkedData(savedNodeId).catch((error) => {
+          logger.error({ at: "LinkBoxOnSaver.reactiveRefresh", error });
+        });
+      }
+      return;
     }
-  } else {
+
     linkedResources = [];
     linkedProperties = [];
     expandedLink = null;
     lastRefreshedId = undefined;
-  }
+  });
 
   export async function refreshLinkedData(nodeId: IRecordId | undefined) {
     if (!nodeId) return;
@@ -158,7 +165,7 @@
 
       if (updatedNode) {
         savedNode = updatedNode;
-        dispatcher("savedNodeChange", { savedNode: updatedNode });
+        onSavedNodeChange?.({ savedNode: updatedNode });
       }
     } catch (error) {
       logger.error({ at: "LinkBoxOnSaver.refreshLinkedData", error });
@@ -271,7 +278,7 @@
       linkedProperties = properties;
       if (savedNode) {
         savedNode = { ...savedNode, properties };
-        dispatcher("savedNodeChange", { savedNode });
+        onSavedNodeChange?.({ savedNode });
       }
       await nodeStore.modify(
         savedNodeId,
@@ -305,7 +312,7 @@
       accessPoint={ResourceAccessPoint.CAPTURE}
       bind:searchQuery={linkSearchQuery}
       excludeFromSearch={linkSearchExclusions}
-      on:select={handleLinkSelect}
+      onSelect={handleLinkSelect}
     />
   </div>
   {#if hasLinkedResources}
@@ -317,8 +324,8 @@
         propertyValues={linkedProperties}
         isExpandable={true}
         bind:expand={expandedLink}
-        on:unlink={handleUnlink}
-        on:propertyChange={handlePropertyChange}
+        onUnlink={handleUnlink}
+        onPropertyChange={handlePropertyChange}
       />
     </div>
   {/if}

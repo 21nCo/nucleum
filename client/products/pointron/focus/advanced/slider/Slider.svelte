@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, afterUpdate, createEventDispatcher } from "svelte";
+  import { onMount } from "svelte";
   import { roundOffToNdigitsAfterDecimal } from "@21n/products/pointron/pointron.utils";
   import { activeSession } from "@21n/products/pointron/focus/session.store";
   import type { IActiveSessionStore } from "@21n/types/pointron/session.type";
@@ -11,22 +11,26 @@
   import { SessionType } from "@21n/products/pointron/logs/log.type";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
 
-  export let parentBackgroundIndex: number | undefined = 1;
-  export let isShowTextBoxByDefault: boolean = false;
+  let {
+    parentBackgroundIndex = 1,
+    isShowTextBoxByDefault = false,
+    val = $bindable(0),
+    color = undefined,
+    onTimeChange = undefined
+  }: {
+    parentBackgroundIndex?: number;
+    isShowTextBoxByDefault?: boolean;
+    val?: number;
+    color?: string;
+    onTimeChange?:
+      | ((event: CustomEvent<{ value: number }>) => void)
+      | undefined;
+  } = $props();
   let isShowTextBoxPopOver: boolean = false;
   let inputTextBox: any;
   let isPreventReverseEvent: boolean = false;
   let reverseEventTimeout: any;
-  $: skin = $userPreferences?.appearance?.skin;
-  // export let id: any = "dynamic-slider";
-  // export let min = 0;
-  // export let max = 200;
-  // export let step = 5;
-  export let val = 0;
-  export let color: string | undefined = undefined;
-  $: color;
-  // export let color: string | undefined = undefined
-  const dispatch = createEventDispatcher();
+  const skin = $derived($userPreferences?.appearance?.skin);
 
   // let remainingTimeInMinutes: number | undefined = undefined; //this will be used for count-down mode and will be updated every second
   // let timeElapsedInMinutes: number | undefined = undefined; //this will be used for count-up mode and will be updated every second
@@ -518,7 +522,10 @@
 
   function NotifyTimeValueChangeToParent(val: number) {
     if (isPreventReverseEvent) return;
-    dispatch("time-change", { value: val });
+    const timeChangeEvent = new CustomEvent<{ value: number }>("time-change", {
+      detail: { value: val }
+    });
+    onTimeChange?.(timeChangeEvent);
   }
 
   function handleMouseWheel(e: WheelEvent) {
@@ -531,10 +538,10 @@
     handleScroll(e);
   }
 
-  $: {
+  $effect(() => {
     if (val >= 0) handleTimeValueChange();
     NotifyTimeValueChangeToParent(val);
-  }
+  });
 
   function showTextPopover() {
     if (isShowTextBoxByDefault) return;
@@ -582,7 +589,7 @@
     };
   });
 
-  afterUpdate(() => {
+  $effect(() => {
     calculateTimeBasedOnTranslation();
   });
 </script>
@@ -594,7 +601,7 @@
     <div class="relative h-[1px] w-full overflow-hidden">
       <div
         class="gradient-to-right slider-border absolute top-0 left-0 h-[1px] w-full"
-      />
+      ></div>
       <!-- In the below div, we want the animation as soon as user starts sliding(i.e when translation is non-zero) -->
       <div
         style={`left:${
@@ -603,7 +610,7 @@
             : `calc(${paddingForSliderTrack.left}px - 100% )`
         };`}
         class="slider-border bg-bgs2 transition-all duration-300 ease-out absolute top-0 h-[1px] w-full"
-      />
+      ></div>
     </div>
 
     <!-- Below is the container which contains the overlays at the extremes of the slider along with the current-time(white box) at the center of the slider -->
@@ -616,13 +623,13 @@
           type="button"
           aria-label="Session duration slider"
           style={`padding:0 ${paddingForSliderTrack.right}px 0 ${paddingForSliderTrack.left}px; transform: translateX(${sliderTranslation}px)`}
-          on:mouseup={handleDragEnd}
-          on:mousemove={handleDrag}
-          on:mousedown={handleDragStart}
-          on:touchstart={handleDragStart}
-          on:touchmove={handleDrag}
-          on:touchend={handleDragEnd}
-          on:wheel={handleMouseWheel}
+          onmouseup={handleDragEnd}
+          onmousemove={handleDrag}
+          onmousedown={handleDragStart}
+          ontouchstart={handleDragStart}
+          ontouchmove={handleDrag}
+          ontouchend={handleDragEnd}
+          onwheel={handleMouseWheel}
           class={`slider-track flex w-[fit-content] border-none bg-transparent p-0 ${
             isSessionRunning ? `cursor-default` : `cursor-pointer`
           } transition-all duration-150 ease-out`}
@@ -645,26 +652,26 @@
                 <div
                   style={`width:${widthOfDial}px;`}
                   class={`gradient-to-bottom absolute left-0 top-0 h-full`}
-                />
+                ></div>
                 <!-- This below div will be responsible for the animation of left count-up border, Also we want the animation as soon as user starts sliding(i.e when translation is non-zero)-->
                 <div
                   class={`left-border-overlapping-layer bg-bgs2 transition-all duration-300 ease-out left-[-1px] absolute w-[3px] h-full ${
                     Math.abs(sliderTranslation) > 0 ? "top-0" : "top-[100%]"
                   }`}
-                />
+                ></div>
                 <!-- Width of the overlapping layer is 3px to cover the glow created by the gradient of the main border(1px) -->
 
                 <!-- Right gradient border -->
                 <div
                   style={`width:${widthOfDial}px;`}
                   class={`gradient-to-bottom absolute right-0 top-0 w-[${widthOfDial}px] h-full`}
-                />
+                ></div>
                 <!-- This below div will be responsible for the animation of right count-up border, Also we want the animation as soon as user starts sliding(i.e when translation is non-zero) -->
                 <div
                   class={`right-border-overlapping-layer absolute bg-bgs2 transition-all duration-300 ease-out right-[-1px] w-[3px] h-full ${
                     Math.abs(sliderTranslation) > 0 ? "top-0" : "top-[-100%]"
                   }`}
-                />
+                ></div>
               </div>
             {:else}
               <!-- Dials along with their time label -->
@@ -682,11 +689,11 @@
                     <div
                       style={`height:${heightOfTheSmallDial}px; margin-right:${gapBetweenDials}px; width:${widthOfDial}px;`}
                       class={`bg-fgs1 rounded-full`}
-                    />
+                    ></div>
                     <div
                       style={`height:${heightOfTheSmallDial}px; width:${widthOfDial}px;`}
                       class={`bg-fgs1 rounded-full`}
-                    />
+                    ></div>
                   {/if}
 
                   <!-- Main dial for each time-stop -->
@@ -713,11 +720,11 @@
                     <div
                       style={`height:${heightOfTheSmallDial}px; width:${widthOfDial}px;`}
                       class={`w-[${widthOfDial}px] bg-fgs1 rounded-full`}
-                    />
+                    ></div>
                     <div
                       style={`height:${heightOfTheSmallDial}px; margin-left:${gapBetweenDials}px; width:${widthOfDial}px;`}
                       class={`w-[${widthOfDial}px] bg-fgs1 rounded-full`}
-                    />
+                    ></div>
                   {/if}
                 </div>
 
@@ -769,17 +776,19 @@
         <!-- Above bottom-[2px] value should be same as time-stop__label's value -->
         <!-- Left side of the current time white box(black overlay) -->
         <button
+          type="button"
+          aria-label="Show session duration details"
           class="w-10 h-4 {skin === AppSkin.Clean
             ? 'bg-gradient-to-r from-transparent ' +
               (parentBackgroundIndex === 1
                 ? 'via-bgs1/50 to-bgs1'
                 : 'via-bgs2/50 to-bgs2')
             : ''}"
-          on:click={showTextPopover}
-        />
+          onclick={showTextPopover}
+        ></button>
         <button
           class="bg-fgs1 px-1 min-w-[45px] flex justify-center items-center rounded-[1px]"
-          on:click={showTextPopover}
+          onclick={showTextPopover}
         >
           <p class="text-bgs1 text-[12px]">
             {currentDisplayedTime}{isSessionRunning ? " left" : ""}
@@ -787,14 +796,16 @@
         </button>
         <!-- Right side of the current time white box(black overlay) -->
         <button
+          type="button"
+          aria-label="Show session duration details"
           class="w-10 h-4 {skin === AppSkin.Clean
             ? 'bg-gradient-to-l from-transparent ' +
               (parentBackgroundIndex === 1
                 ? 'via-bgs1/50 to-bgs1'
                 : 'via-bgs2/50 to-bgs2')
             : ''}"
-          on:click={showTextPopover}
-        />
+          onclick={showTextPopover}
+        ></button>
       </div>
 
       <!-- Below are the two overlays which are causing that blurry effect on the extremes of the timer-->
@@ -803,20 +814,20 @@
           ? 'bg-gradient-to-l from-transparent ' +
             (parentBackgroundIndex === 1 ? 'to-bgs1' : 'to-bgs2')
           : ''}"
-      />
+      ></div>
       <div
         class="absolute w-[10%] h-full right-0 top-0 {skin === AppSkin.Clean
           ? 'bg-gradient-to-r from-transparent ' +
             (parentBackgroundIndex === 1 ? 'to-bgs1' : 'to-bgs2')
           : ''}"
-      />
+      ></div>
     </div>
 
     <!-- Slider bottom gradient(same as top), AKA slider's bottom border-->
     <div class="relative h-[1px] w-full overflow-hidden">
       <div
         class="gradient-to-right slider-border absolute top-0 left-0 h-[1px] w-full"
-      />
+      ></div>
 
       <!-- In the below div, we want the animation as soon as user starts sliding(i.e when translation is non-zero) -->
       <div
@@ -826,52 +837,32 @@
             : `calc(${paddingForSliderTrack.left}px - 100% )`
         };`}
         class="slider-border bg-bgs2 transition-all duration-300 ease-outr absolute top-0 h-[1px] w-full"
-      />
+      ></div>
     </div>
 
     <!-- Center white triangle -->
     <button
+      type="button"
+      aria-label="Show session duration details"
       class="center-triangle bg-fgs1 w-[20px] h-[18px] mt-3"
-      on:click={showTextPopover}
-    />
+      onclick={showTextPopover}
+    ></button>
   </div>
 
   {#if !isSessionRunning && isShowTextBoxByDefault}
-    <!-- <TextInputWithDropdown
-      {units}
-      {currentTimeUnit}
-      {parentBackgroundIndex}
-      bind:value={val}
-      on:change
-    /> -->
     <!-- TODO - use DurationInput instead of TextInputWithDropdown -->
-    <!-- {:else}
-    <button
-      class="border border-fgs2 text-fgs2 rounded-md px-2"
-      on:click={showTextPopover}>enter manually</button
-    > -->
   {/if}
 </div>
 
 <Popover
   isUseDialog={false}
   bind:show={isShowTextBoxPopOver}
-  on:primary={showTextPopover}
 >
   <div class="flex w-full justify-center">
     <div class="flex flex-col gap-2 justify-center">
       <div>Enter duration</div>
       <div>
         <!-- TODO - use DurationInput -->
-        <!-- <TextInputWithDropdown
-          {units}
-          bind:currentTimeUnit={textInputWithDropdownUnit}
-          {parentBackgroundIndex}
-          bind:value={val}
-          on:change
-          on:enter={showTextPopover}
-          bind:this={inputTextBox}
-        /> -->
       </div>
     </div>
   </div>

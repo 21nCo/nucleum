@@ -8,12 +8,23 @@
   import PropertiesPane from "@21n/components/collection/properties/PropertiesPane.svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
-  export let goal: IActiveGoalStore;
-  export let isConstrainedWidth: boolean = false;
-  export let isThreeColumned: boolean = false;
-  export let status: any;
-  $: isActiveResource =
-    !$goal?.isArchived && !$goal?.trashInformation && !$goal?.isParentInactive;
+  import type { IInlineStatus } from "@21n/types/notification.type";
+
+  let {
+    goal,
+    isConstrainedWidth = false,
+    isThreeColumned = false,
+    status = $bindable()
+  }: {
+    goal: IActiveGoalStore;
+    isConstrainedWidth?: boolean;
+    isThreeColumned?: boolean;
+    status?: IInlineStatus | undefined;
+  } = $props();
+
+  const isActiveResource = $derived(
+    !$goal?.isArchived && !$goal?.trashInformation && !$goal?.isParentInactive
+  );
 </script>
 
 <div class="cw:w-full h-full transition-all flex">

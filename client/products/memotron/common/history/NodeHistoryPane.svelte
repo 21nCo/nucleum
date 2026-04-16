@@ -15,9 +15,9 @@
   } from "@21n/types/data.type";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { resolveMutationAction } from "@21n/components/flux/flux.utils";
-  export let node: IActiveNodeStore | null = null;
-  let accessLogs: { action: string; timestamp: Date }[] = [];
-  let isLoading: boolean = false;
+  let { node = null }: { node?: IActiveNodeStore | null } = $props();
+  let accessLogs = $state<{ action: string; timestamp: Date }[]>([]);
+  let isLoading = $state(false);
   onMount(() => {
     refresh();
   });

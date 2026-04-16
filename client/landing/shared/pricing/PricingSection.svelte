@@ -6,10 +6,16 @@
   import TimeUnitToggle from "@21n/landing/shared/pricing/TimeUnitToggle.svelte";
   import type { PricingPlan, PricingToggleOption } from "@21n/landing/shared/pricing/pricing.types";
 
-  export let plans: PricingPlan[] = [];
-  export let title = "Pricing";
-  export let earlyAdopterMessage =
-    "Become an early adopter - Sign up now and get 35% off your first yearly or lifetime plan!";
+  let {
+    plans = [],
+    title = "Pricing",
+    earlyAdopterMessage = "Become an early adopter - Sign up now and get 35% off your first yearly or lifetime plan!",
+  }: {
+    plans?: PricingPlan[];
+    title?: string;
+    earlyAdopterMessage?: string;
+  } = $props();
+
   let unit: PricingToggleOption = "yearly";
   let className: string = "";
   export { className as class };

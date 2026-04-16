@@ -108,7 +108,7 @@
           {#if user}
             <span class="text-sm text-gray-700">{user.name}</span>
             <button
-              on:click={logout}
+              onclick={logout}
               class="text-sm text-gray-700 hover:text-gray-900"
             >
               Logout

@@ -1,7 +1,8 @@
 <script lang="ts">
   import ExternalLogo from "@21n/branding/external/ExternalLogo.svelte";
   import type { IContemporary } from "@21n/types/featureWheel.type";
-  export let contemporary: IContemporary;
+
+  let { contemporary }: { contemporary: IContemporary } = $props();
 </script>
 
 <th class="border border-bgs3 p-2 text-left">

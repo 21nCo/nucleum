@@ -29,6 +29,18 @@
       href: x?.href
     };
   });
+
+  async function closeProductsPanel() {
+    await addAnimateClass("animate-close-right", "products-panel");
+    $isProductsPanelOpen = false;
+  }
+
+  function handleOverlayKeydown(event: KeyboardEvent) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      void closeProductsPanel();
+    }
+  }
 </script>
 
 {#if $isProductsPanelOpen}
@@ -42,11 +54,8 @@
         !$view.isPortrait &&
         "bg-[hsla(0,0%,100%,0.3)]"
     )}
-    on:click={async () => {
-      await addAnimateClass("animate-close-right", "products-panel");
-      $isProductsPanelOpen = false;
-    }}
-    on:keypress
+    onclick={closeProductsPanel}
+    onkeydown={handleOverlayKeydown}
     role="button"
     tabindex="0"
   >
@@ -59,7 +68,7 @@
   label="Products"
   description="Products from 21n"
   icon="long-arrow-right"
-  on:click={async () => {
+  onclick={async () => {
     await addAnimateClass("animate-bounce-r", id);
     $isProductsPanelOpen = true;
   }}

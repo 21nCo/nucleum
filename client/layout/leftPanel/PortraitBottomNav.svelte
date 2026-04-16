@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import AppMenuSwitcher from "@21n/layout/leftPanel/appMenuSwitcher/AppMenuSwitcher.svelte";
   import { LayoutContext } from "@21n/types/layout.type";
@@ -8,11 +10,12 @@
   import LibrarySearchPortrait from "@21n/products/memotron/library/search/LibrarySearchPortrait.svelte";
 
   let testingInMobileBrowser: boolean = false;
-  let isSearchFocused: boolean = false;
+  let isSearchFocused = $state(false);
   let dev_isAppNavLibrarySearch: boolean = false;
-  $: isLibraryActive =
+  let isLibraryActive = $derived(
     $page.params.route?.includes("library") ||
-    $page.route.id?.includes("library");
+      $page.route.id?.includes("library")
+  );
 </script>
 
 <div

@@ -28,23 +28,34 @@
   import type { IActiveGoal } from "@21n/components/goals/goal.type";
   import type { IActiveNode } from "@21n/products/memotron/node/node.type";
 
-  export let item: IActiveNodeStore | IActiveGoalStore;
-  export let resource: Resource;
-  export let isVisibleProps: boolean = false;
-  export let parentBgIndex: number = 1;
-  let _types: ICollectionExpanded[] | null = null;
-  let multipleTypesList: ICollectionExpanded[] = [];
-  let refreshId: number = new Date().getTime();
+  let {
+    item,
+    resource,
+    isVisibleProps = false,
+    parentBgIndex = 1,
+    onShowAll = undefined
+  }: {
+    item: IActiveNodeStore | IActiveGoalStore;
+    resource: Resource;
+    isVisibleProps?: boolean;
+    parentBgIndex?: number;
+    onShowAll?: (() => void) | undefined;
+  } = $props();
+  let _types = $state<ICollectionExpanded[] | null>(null);
+  let multipleTypesList = $state<ICollectionExpanded[]>([]);
+  let refreshId = $state(new Date().getTime());
 
   function asCollectionItem(item: IActiveNode | IActiveGoal): ICollectionItem {
     return item as ICollectionItem;
   }
 
-  $: isReadOnlyMode =
-    $item.isInReadOnlyMode ||
-    ("isLocked" in $item ? Boolean($item.isLocked) : false) ||
-    Boolean($item.isArchived) ||
-    $item.trashInformation !== undefined;
+  let isReadOnlyMode = $derived.by(
+    () =>
+      $item.isInReadOnlyMode ||
+      ("isLocked" in $item ? Boolean($item.isLocked) : false) ||
+      Boolean($item.isArchived) ||
+      $item.trashInformation !== undefined
+  );
 
   async function propagateChanges(e: CustomEvent) {
     if (!e.detail || !e.detail?.id || e.detail?.value === undefined) return;
@@ -163,7 +174,7 @@
       size={Size.sm}
       isShowExpandFeedbackOnActive={true}
       selected={multipleTypesList[0].id.toString()}
-      on:select={handleTypeChange}
+      onSelect={handleTypeChange}
     />
   {/if}
   <div class="flex flex-col gap-6 w-full h-full overflow-auto">
@@ -181,8 +192,8 @@
           {isReadOnlyMode}
           item={asCollectionItem($item)}
           {parentBgIndex}
-          on:change={propagateChanges}
-          on:showAll
+          onChange={propagateChanges}
+          {onShowAll}
         />
         {#if !isVisibleProps && !isReadOnlyMode && _types.length === 1}
           <div class="flex justify-center">
@@ -193,7 +204,7 @@
               size={Size.xs}
               icon="edit"
               isPreventMinWidth={true}
-              on:click={onEditProperties}
+              onclick={onEditProperties}
             />
           </div>
         {/if}
@@ -208,7 +219,7 @@
             ? "Please edit properties to see them here."
             : "Add this node to a typed collection to see properties."}
           actionText={typesPresent ? "Edit properties" : undefined}
-          on:click={onEditProperties}
+          onclick={onEditProperties}
         />
       </div>
     {/if}
@@ -219,10 +230,10 @@
 </div>
 <ComponentBaseLayer
   subscribeToRecords={$item.types?.map((x) => x.id) ?? []}
-  on:change={refreshTypeData}
+  onChange={refreshTypeData}
 />
 <ComponentBaseLayer
   subscribeToRecords={[item.id]}
   subscriptionPropsForMergeAction={["collections"]}
-  on:change={refreshTypeData}
+  onChange={refreshTypeData}
 />

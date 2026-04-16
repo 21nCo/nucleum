@@ -1,20 +1,27 @@
 <script lang="ts">
+  import { tick } from "svelte";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import type { IAction } from "@21n/types/action.type";
+  import type { Component } from "svelte";
   import { Size } from "@21n/types/size.enum";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import { createEventDispatcher } from "svelte";
   import ResultItem from "@21n/components/commandBar/ResultItem.svelte";
   import type { IResource } from "@21n/components/flux/resourceStores/resource.type";
   import TextWithHoverTooltip from "@21n/elements/text/TextWithHoverTooltip.svelte";
   import { debouncer } from "@21n/utils/utils";
   import { logger } from "@21n/components/debug/logger.client";
   import BreadcrumbMini from "@21n/elements/breadcrumb/BreadcrumbMini.svelte";
-
-  const dispatch = createEventDispatcher();
-  export let action: IAction;
-  export let componentParams: any = undefined;
-  export let search: string = "";
+  let {
+    action,
+    componentParams = undefined,
+    search = "",
+    onClose = void 0
+  }: {
+    action: IAction;
+    componentParams?: any;
+    search?: string;
+    onClose?: () => void;
+  } = $props();
   type SearchActionResult = IResource &
     Partial<{
       label: string;
@@ -23,9 +30,9 @@
       };
     }> &
     Record<string, unknown>;
-  let selectedIndex: number = 0;
-  let isSearchInProgress: boolean = false;
-  let results: SearchActionResult[] = [];
+  let selectedIndex = $state(0);
+  let isSearchInProgress = $state(false);
+  let results = $state<SearchActionResult[]>([]);
 
   function resolveHierarchy(result: SearchActionResult) {
     const parent = result.parent;
@@ -46,8 +53,13 @@
     results = [];
     selectedIndex = 0;
   }
-  $: if (search || search === "") debouncedSearch();
   const debouncedSearch = debouncer(searchResources, 500);
+  $effect(() => {
+    search;
+    action;
+    componentParams;
+    debouncedSearch();
+  });
   async function searchResources() {
     try {
       resetSearch();
@@ -66,26 +78,27 @@
       logger.error({ at: "Cmd bar - SearchActionResults", error: e });
     }
   }
-  export function select() {
-    const selectedItem = results[selectedIndex];
+  export async function select() {
+    const selectedItem = results[selectedIndex] ?? results[0];
     if (!selectedItem.id) return;
+    onClose?.();
+    await tick();
     action.searchActionParams?.callback(selectedItem, componentParams);
-    dispatch("close");
   }
   export function moveSelection(direction: "up" | "down") {
     let nextIndex = selectedIndex;
     if (direction === "down") {
-      nextIndex = Math.min(selectedIndex + 1);
-      if (nextIndex === results?.length) {
-        nextIndex = 0;
-      }
+      nextIndex = selectedIndex + 1 >= results.length ? 0 : selectedIndex + 1;
     } else if (direction === "up") {
-      nextIndex = Math.max(selectedIndex - 1, -1);
-      if (nextIndex === -1) {
-        nextIndex = results?.length - 1;
-      }
+      nextIndex = selectedIndex - 1 < 0 ? results.length - 1 : selectedIndex - 1;
     }
     selectedIndex = nextIndex;
+  }
+
+  function resolveSearchResultComponent() {
+    return action.searchActionParams?.searchResultComponent as
+      | Component<{ item: SearchActionResult }>
+      | undefined;
   }
 </script>
 
@@ -93,17 +106,15 @@
   {#each results as result, index (result.id)}
     <ResultItem
       isActive={selectedIndex === index}
-      on:click={() => {
+      onclick={() => {
         selectedIndex = index;
         select();
       }}
       isSearchAction={true}
     >
-      {#if action.searchActionParams?.searchResultComponent}
-        <svelte:component
-          this={action.searchActionParams.searchResultComponent}
-          item={result}
-        />
+      {@const SearchResultComponent = resolveSearchResultComponent()}
+      {#if SearchResultComponent}
+        <SearchResultComponent item={result} />
       {:else}
         {@const hierarchy = resolveHierarchy(result)}
         <div class="flex flex-col w-full items-start">

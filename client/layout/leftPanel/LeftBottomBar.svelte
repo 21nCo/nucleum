@@ -1,10 +1,18 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import BoxButton from "@21n/elements/button/BoxButton.svelte";
   import { appStore } from "@21n/stores/app.store";
   import { Action } from "@21n/types/action.enum";
-  export let isInThinMode: boolean = false;
-  export let isRounded: boolean = false;
-  $: [isInThinMode, isRounded];
+  let {
+    isInThinMode = false,
+    isRounded = false
+  }: {
+    isInThinMode?: boolean;
+    isRounded?: boolean;
+  } = $props();
+  void isInThinMode;
+  void isRounded;
 </script>
 
 <div class="w-full h-12">
@@ -12,6 +20,6 @@
     icon="question"
     tooltip="Help"
     parentBgIndex={2}
-    on:click={async () => appStore.runAction(Action.HELP)}
+    onclick={async () => appStore.runAction(Action.HELP)}
   />
 </div>

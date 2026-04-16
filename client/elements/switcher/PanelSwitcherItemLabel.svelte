@@ -4,7 +4,6 @@
     PanelSwitcherStyle,
     type PanelSwitcherEditModeOptions
   } from "@21n/types/switcher.enum";
-  import { createEventDispatcher } from "svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import { Size } from "@21n/types/size.enum";
@@ -16,49 +15,83 @@
   import { tooltip } from "@21n/actions/popover.action";
   import { isValidString } from "@21n/shared-utils/text.utils";
   import Badge from "@21n/elements/text/Badge.svelte";
-  const dispatch = createEventDispatcher();
-  export let item: ISelectItem;
-  export let isInEditMode: boolean = false;
-  export let isDisabled: boolean = false;
-  export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
-  export let style: PanelSwitcherStyle = PanelSwitcherStyle.BAR;
-  export let editModeOptions: PanelSwitcherEditModeOptions | undefined =
-    undefined;
-  export let isActive: boolean = false;
-  export let triggerItemEdit: string | null = null;
-  export let parentBgIndex: number = 1;
-  export let activeItemStrength: PanelSwitcherActiveItemStrength =
-    PanelSwitcherActiveItemStrength.DEFAULT;
-  $: isAddNewItem = item.value === "$add";
-  let labelEditPopoverRef: any;
-  let inputRef: any;
-  $: if (triggerItemEdit && triggerItemEdit === item.value.toString()) {
-    // console.log({ triggerItemEdit, labelEditPopoverRef });
-    setTimeout(() => {
-      labelEditPopoverRef?.show();
-      inputRef?.focus();
-    }, 100);
-  } else if (triggerItemEdit && triggerItemEdit !== item.value.toString()) {
-    labelEditPopoverRef?.hide();
+  let {
+    item,
+    isInEditMode = false,
+    isDisabled = false,
+    size = Size.md,
+    style = PanelSwitcherStyle.BAR,
+    editModeOptions = undefined,
+    isActive = false,
+    triggerItemEdit = $bindable(null),
+    parentBgIndex = 1,
+    activeItemStrength = PanelSwitcherActiveItemStrength.DEFAULT,
+    onChange = undefined,
+    onDebouncedChange = undefined,
+    onRemove = undefined
+  }: {
+    item: ISelectItem;
+    isInEditMode?: boolean;
+    isDisabled?: boolean;
+    size?: Size.xs | Size.sm | Size.md | Size.lg;
+    style?: PanelSwitcherStyle;
+    editModeOptions?: PanelSwitcherEditModeOptions | undefined;
+    isActive?: boolean;
+    triggerItemEdit?: string | null;
+    parentBgIndex?: number;
+    activeItemStrength?: PanelSwitcherActiveItemStrength;
+    onChange?: ((event: CustomEvent<any>) => void) | undefined;
+    onDebouncedChange?: ((event: CustomEvent<any>) => void) | undefined;
+    onRemove?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
+  const isAddNewItem = $derived(item.value === "$add");
+  let labelEditPopoverRef = $state<any>();
+  let inputRef = $state<any>();
+
+  function emitChange() {
+    onChange?.(new CustomEvent<any>("change", { detail: { ...item } }));
   }
+
+  function emitDebouncedChange() {
+    onDebouncedChange?.(
+      new CustomEvent<any>("debouncedChange", { detail: { ...item } })
+    );
+  }
+
+  function emitRemove() {
+    onRemove?.(new CustomEvent<any>("remove", { detail: item.value }));
+  }
+
+  $effect(() => {
+    if (triggerItemEdit && triggerItemEdit === item.value.toString()) {
+      setTimeout(() => {
+        labelEditPopoverRef?.show();
+        inputRef?.focus();
+      }, 100);
+    } else if (
+      triggerItemEdit &&
+      triggerItemEdit !== item.value.toString()
+    ) {
+      labelEditPopoverRef?.hide();
+    }
+  });
 </script>
 
 {#if isAddNewItem}
   <AddNewButton {size} text={item.label} />
 {:else if isInEditMode}
   <span class="flex gap-2 items-center">
-    <!-- TODO - rearrange - disabling until this feature is complete -->
     <Icon icon="rearrange" class="text-fgs2" {size} />
     <Popover
       bind:this={labelEditPopoverRef}
       isPreventDefault={!isActive}
-      on:hide={() => {
+      onHide={() => {
         if (triggerItemEdit) triggerItemEdit = null;
       }}
     >
       <button
         class="flex items-center max-w-36 whitespace-nowrap"
-        on:dblclick={() => {
+        ondblclick={() => {
           labelEditPopoverRef.toggle();
         }}
       >
@@ -72,28 +105,29 @@
           {isValidString(item.label) ? item.label : "Untitled"}
         </div>
       </button>
-      <button slot="popover" class="w-60 h-20 p-4" on:click|stopPropagation>
-        <TextInput
-          bind:this={inputRef}
-          bind:value={item.label}
-          placeholder="Label"
-          on:input={(e) => {
-            dispatch("change", { ...item });
-          }}
-          on:debouncedChange={(e) => {
-            dispatch("debouncedChange", { ...item });
-          }}
-        />
-      </button>
+      {#snippet popover()}
+        <button
+          class="w-60 h-20 p-4"
+          onclick={(event) => event.stopPropagation()}
+        >
+          <TextInput
+            bind:this={inputRef}
+            bind:value={item.label}
+            placeholder="Label"
+            onInput={() => emitChange()}
+            onDebouncedChange={() => emitDebouncedChange()}
+          />
+        </button>
+      {/snippet}
     </Popover>
     <span class="ml-4">
       <Button
         icon="cross"
         size={Size.sm}
         tooltip={editModeOptions?.removeTooltip ?? "Remove"}
-        on:click={(e) => {
-          dispatch("remove", item.value);
-          e.stopPropagation();
+        onclick={(event) => {
+          emitRemove();
+          event.stopPropagation();
         }}
       />
     </span>
@@ -174,48 +208,3 @@
     </div>
   </span>
 {/if}
-
-<!-- {#if isInEditMode && isAddNewItem}
-<Icon icon="plus" {size} />
-{/if}
-{#if isInEditMode && !isAddNewItem}
-<div class="flex gap-4">
-  <Popover bind:this={labelEditPopoverRef} isPreventDefault={true}>
-    <div slot="trigger">
-      {item.label}
-    </div>
-    <div slot="popover" class="w-60 h-20 p-4">
-      <TextInput
-        bind:value={item.label}
-        on:input={(e) => {
-          dispatch("change", { ...item });
-        }}
-      />
-    </div>
-  </Popover>
-  <div class="flex gap-2">
-    <Icon
-      icon="pencil-square"
-      {size}
-      {isActive}
-      selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
-      on:click={(e) => {
-        labelEditPopoverRef.toggle();
-        e.stopPropagation();
-      }}
-    />
-    <Icon
-      icon="cross-circled"
-      {size}
-      {isActive}
-      selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
-      on:click={(e) => {
-        dispatch("remove", item.value);
-        e.stopPropagation();
-      }}
-    />
-  </div>
-</div>
-{:else}
-{item.label}
-{/if} -->

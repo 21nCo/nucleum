@@ -22,17 +22,22 @@
   import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { cn } from "@21n/utils/ui.utils";
 
-  export let goalId: string;
-  export let createdAt: string;
+  let {
+    goalId,
+    createdAt
+  }: {
+    goalId: string;
+    createdAt: string;
+  } = $props();
 
-  let accessLogs: {
+  let accessLogs = $state<{
     action: string;
     timestamp: Date;
     type: "activity" | "focus";
     session?: ISessionThumb;
     logs?: ISessionLog[];
-  }[] = [];
-  let isLoading: boolean = false;
+  }[]>([]);
+  let isLoading = $state(false);
 
   onMount(() => {
     refresh();
@@ -156,7 +161,7 @@
           class={cn("flex items-center justify-between gap-2 p-2 rounded-lg", {
             "cursor-pointer hover:bg-bgs2": accessLog.type === "focus"
           })}
-          on:click={() => {
+          onclick={() => {
             if (accessLog.type === "focus" && accessLog.session?.id) {
               appStore.openResource(accessLog.session.id, AccessMode.POP, {
                 origin: goalId

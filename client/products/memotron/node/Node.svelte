@@ -41,39 +41,45 @@
     getContext<Writable<IContainer | undefined>>(Context.CONTAINER) ||
     readable(undefined);
 
-  export let id: string;
-  export let accessMode: AccessMode;
-
-  export let isFromSplitView: boolean = false;
-  let view: NodeView = NodeView.CONTENT;
-  let isShowFloatingBar = true;
-
-  const nodeViewParam = appStore.resolveRecordSpecificSearchParam(
+  let {
     id,
-    AppSearchParam.NODE_VIEW
+    accessMode,
+    isFromSplitView = false
+  }: {
+    id: string;
+    accessMode: AccessMode;
+    isFromSplitView?: boolean;
+  } = $props();
+  let view = $state<NodeView>(NodeView.CONTENT);
+  let isShowFloatingBar = $state(true);
+
+  let nodeViewParam = $derived(
+    appStore.resolveRecordSpecificSearchParam(id, AppSearchParam.NODE_VIEW)
   );
-  $: if ($page.url?.searchParams?.get(nodeViewParam)) {
-    view = $page.url?.searchParams?.get(nodeViewParam) as NodeView;
-  }
+  $effect(() => {
+    const currentView = $page.url?.searchParams?.get(nodeViewParam);
+    if (currentView) {
+      view = currentView as NodeView;
+    }
+  });
   let isRenderSplitView = false;
-  // $: isRenderSplitView =
-  //   !isFromSplitView && $view.width > 1500 && $view.scale > 1.5;
-  let node: IActiveNodeStore;
-  // $: if (id) node = resolveActiveNodeStore(id);
-  $: if (id) node = ActiveNodeStore.resolve(id);
-  $: isConstrainedWidth =
-    ($container &&
+  let node = $derived(ActiveNodeStore.resolve(id));
+  let isConstrainedWidth = $derived(
+    (($container &&
       $container.width <
         resolveMinWidth(
           $node?.contentType === NodeType.NODULAR_MARKDOWN ? 3 : 2
         )) ??
-    false;
+      false) as boolean
+  );
 
-  let isLoading = false;
-  let error: any;
-  $: if (id && (isFromSplitView || !isRenderSplitView)) {
-    initialize();
-  }
+  let isLoading = $state(false);
+  let error = $state<any>(undefined);
+  $effect(() => {
+    if (id && (isFromSplitView || !isRenderSplitView)) {
+      initialize();
+    }
+  });
   appStore.clearAllTooltips();
 
   async function initialize(ctx?: string) {
@@ -141,7 +147,7 @@
 <ComponentBaseLayer
   hasDragAndDrop={true}
   subscribeToResource={new Set([Resource.property])}
-  on:change={debouncedInitialize}
+  onChange={debouncedInitialize}
 />
 {#if $context.isEmbed && accessMode !== AccessMode.POP && !isFromSplitView}
   <ComponentEmbedLayer isBackNavigable={true} />

@@ -49,7 +49,11 @@
   import { resolveProductConfig } from "@21n/products/product.config";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { searchStore } from "@21n/components/search";
-  export let captureId: IRecordId = generateResourceId(Resource.capture);
+  let {
+    captureId = $bindable(generateResourceId(Resource.capture))
+  }: {
+    captureId?: IRecordId;
+  } = $props();
   let mode: "search" | "capture" | undefined = undefined;
   let captureStore: IActiveCaptureStore;
   let writerRef: Writer | null = null;
@@ -129,22 +133,22 @@
     }
   }
 
-  async function onTypeSelect(e: CustomEvent) {
+  async function onTypeSelect(selected: string) {
     haptic("capture");
     if (
-      e.detail === CaptureMethod.CAMERA &&
+      selected === CaptureMethod.CAMERA &&
       $context.isEmbed &&
       $context.os === OperatingSystem.IOS &&
       dev_iosCameraCaptureMethod === "input"
     ) {
       triggerNativeCameraCaptureUsingInputAPI();
     } else if (
-      e.detail !== CaptureMethod.UPLOAD &&
-      e.detail !== CaptureMethod.PASTE
+      selected !== CaptureMethod.UPLOAD &&
+      selected !== CaptureMethod.PASTE
     ) {
       mode = "capture";
     }
-    await captureStore.onTypeSelect(e.detail);
+    await captureStore.onTypeSelect(selected);
 
     function triggerNativeCameraCaptureUsingInputAPI() {
       setTimeout(() => {
@@ -160,8 +164,7 @@
     }
   }
 
-  function onCaptureDraftSelect(event: CustomEvent) {
-    const draft = event.detail;
+  function onCaptureDraftSelect(draft: any) {
     captureStore = ActiveCaptureStore.resolve(draft.id);
     captureStore.load(draft);
     setModeToCapture();
@@ -232,7 +235,7 @@
       })}
     >
       {#if !mode}
-        <HomeTopNav {transitionDuration} on:settings={handleSettingsClick} />
+        <HomeTopNav {transitionDuration} onSettings={handleSettingsClick} />
       {/if}
       {#if !mode}
         <div class="px-4">
@@ -252,11 +255,11 @@
         <CaptureTopBar
           {captureStore}
           isHomeContext={true}
-          on:focusBody={() => {
+          onFocusBody={() => {
             writerRef?.focus();
           }}
-          on:clear={onClear}
-          on:save={onSave}
+          {onClear}
+          {onSave}
         />
       </div>
     {/if}
@@ -271,7 +274,7 @@
           bind:this={searchBaseRef}
           isExpanded={mode === "search"}
           parentBgIndex={2}
-          on:close={() => {
+          onClose={() => {
             mode = undefined;
           }}
         >
@@ -286,16 +289,16 @@
               placeholder={$searchStore.resourceType === Resource.everything
                 ? "Search across your memory..."
                 : "Search " + $searchStore.resourceType + "s"}
-              on:focus={() => {
+              onFocus={() => {
                 mode = "search";
                 setTimeout(() => {
                   searchBaseRef?.search();
                 }, 100);
               }}
-              on:keydown={(e) => {
+              onKeydown={(e) => {
                 searchStore.keydown(e.detail.event);
               }}
-              on:keyup={(e) => {
+              onKeyup={(e) => {
                 searchStore.keyup(e.detail.event);
               }}
             />
@@ -317,7 +320,7 @@
         >
           <HomeQuickAccess
             {items}
-            on:itemClick={(e) => handleQuickAccessClick(e.detail)}
+            onItemClick={handleQuickAccessClick}
           />
         </div>
       {:catch error}
@@ -360,10 +363,10 @@
                 size={Size.sm}
                 isPreventMinWidth={true}
                 type={ButtonVariant.PRIMARY}
-                on:click={onInlineToastAction}
+                onclick={onInlineToastAction}
               />
             {/if}
-            <Button icon="cross" on:click={onInlineToastClose} />
+            <Button icon="cross" onclick={onInlineToastClose} />
           </div>
         </div>
       </div>
@@ -390,21 +393,17 @@
             >
               <!-- Double entry here to avoid keyboard adjustment issues on iOS Webview -->
               <button
+                type="button"
+                aria-label="Focus capture editor"
                 class={cn("absolute w-full h-full", {
                   "z-50": mode === undefined,
                   "-z-10": mode === "capture"
                 })}
-                on:click={() => {
+                onclick={() => {
                   focusWriter();
+                  if (!mode) setModeToCapture();
                 }}
-              >
-                <button
-                  class="w-full h-full"
-                  on:click={() => {
-                    if (!mode) setModeToCapture();
-                  }}
-                />
-              </button>
+              ></button>
               {#if $captureStore.method === CaptureMethod.CAMERA && dev_iosCameraCaptureMethod === "input" && $context.isEmbed && $context.os === OperatingSystem.IOS}
                 <!-- <CameraCaptureUsingInput {captureStore} /> -->
                 <input
@@ -412,23 +411,22 @@
                   type="file"
                   accept="image/*"
                   capture="environment"
-                  on:change={handleCapture}
-                  on:cancel={onCameraCancel}
+                  onchange={handleCapture}
+                  oncancel={onCameraCancel}
                   id="cameraInput"
                   class="hidden"
                 />
               {:else if $captureStore.method === CaptureMethod.UPLOAD && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
-                <FileUploader {captureStore} on:cancel={onClear} />
+                <FileUploader {captureStore} onClear={onClear} />
               {:else}
                 {#key $captureStore.refreshId}
                   <Writer
                     bind:this={writerRef}
                     {captureStore}
-                    on:change={(e) => {
+                    onChange={(e) => {
                       captureStore.onMdContentChanges(e);
                     }}
-                    on:clear={onClear}
-                    on:saved={reset}
+                    onClear={onClear}
                   />
                 {/key}
               {/if}
@@ -446,12 +444,10 @@
           {#if !mode}
             <TypeSelectorOnMobile
               selected={$captureStore.method}
-              on:capture={(e) => {
-                handleCapture(e.detail);
-              }}
-              on:draftSelect={onCaptureDraftSelect}
-              on:select={onTypeSelect}
-              on:cancel={onClear}
+              onCapture={handleCapture}
+              onDraftSelect={onCaptureDraftSelect}
+              onSelect={onTypeSelect}
+              onCancel={onClear}
             />
           {/if}
         </div>
@@ -463,6 +459,6 @@
 <NotificationListener
   event={[GlobalEvent.INLINE_TOAST]}
   inlineToastId="nodecapture"
-  on:inlinetoast={onInlineToastEvent}
+  onInlineToast={onInlineToastEvent}
 />
 <ComponentEmbedLayer bg={2} />

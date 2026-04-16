@@ -8,7 +8,6 @@
   import { InputStyle } from "@21n/types/input.type";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher, onMount } from "svelte";
   import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
   import type { IPropertyConfigOption } from "@21n/components/collection/properties/property.type";
   import { hoverable } from "@21n/actions/hover.action";
@@ -16,23 +15,41 @@
   import Badge from "@21n/elements/text/Badge.svelte";
   import context from "@21n/stores/context.store";
   import { OperatingSystem } from "@21n/types/context.type";
-  const dispatch = createEventDispatcher();
-  export let option: IPropertyConfigOption;
-  export let index: number;
-  export let isFocusing: boolean = false;
-  export let isHovering: boolean = false;
-  export let isDefault: boolean = false;
-  export let groupId: string = "ungrouped";
-  export let parentBgIndex: number = 1;
+  let {
+    option,
+    index,
+    isFocusing = $bindable(false),
+    isHovering = $bindable(false),
+    isDefault = false,
+    groupId = "ungrouped",
+    parentBgIndex = 1,
+    onRemove = undefined,
+    onDefault = undefined,
+    onEnter = undefined,
+    onChange = undefined
+  }: {
+    option: IPropertyConfigOption;
+    index: number;
+    isFocusing?: boolean;
+    isHovering?: boolean;
+    isDefault?: boolean;
+    groupId?: string;
+    parentBgIndex?: number;
+    onRemove?: ((event: CustomEvent<string>) => void) | undefined;
+    onDefault?: ((event: CustomEvent<string | null>) => void) | undefined;
+    onEnter?: ((event: CustomEvent<string>) => void) | undefined;
+    onChange?: ((event?: CustomEvent<any>) => void) | undefined;
+  } = $props();
   let textInputRef: any;
-  let isColorPickerOpen: boolean = false;
+  let isColorPickerOpen = $state(false);
   let colorPickerPopoverRef: any;
   let dev_isEnableDefaultSelection: boolean = false;
-  if (isFocusing) textInputRef?.focus();
-  onMount(() => {
+  $effect(() => {
     if (isFocusing) textInputRef?.focus();
   });
-  if (option && !option.color) option.color = Math.random() * 360;
+  $effect(() => {
+    if (option && !option.color) option.color = Math.random() * 360;
+  });
 
   function onHoverChange(isHovered: boolean) {
     isHovering = isHovered;
@@ -82,40 +99,50 @@
     >
       <div
         class="absolute top-0.5 left-0.5 rounded-full h-4 w-4 border-[1.5px] border-brs2 bg-ccs1"
-      />
+      ></div>
     </CustomColorPropagator>
-    <div slot="popover" class="flex flex-col items-center justify-center gap-8">
-      <ColorPicker
-        bind:hue={option.color}
-        on:change
-        isShowPreview={false}
-        label={{ label: "Choose color", orientation: Orientation.Vertical }}
-      />
-      <Button
-        label="Done"
-        style={ButtonStyle.OUTLINED}
-        size={Size.sm}
-        on:click={() => {
-          colorPickerPopoverRef?.hide();
-        }}
-      />
-    </div>
+    {#snippet popover()}
+      <div class="flex flex-col items-center justify-center gap-8">
+        <ColorPicker
+          bind:hue={option.color}
+          onChangeCallback={() => {
+            onChange?.();
+          }}
+          isShowPreview={false}
+          label={{ label: "Choose color", orientation: Orientation.Vertical }}
+        />
+        <Button
+          label="Done"
+          style={ButtonStyle.OUTLINED}
+          size={Size.sm}
+          onclick={() => {
+            colorPickerPopoverRef?.hide();
+          }}
+        />
+      </div>
+    {/snippet}
   </Popover>
   <TextInput
     bind:this={textInputRef}
     bind:value={option.label}
     style={InputStyle.PLAIN}
     placeholder="option..."
-    on:change
-    on:enter={(e) => {
-      dispatch("enter", option.id);
+    onChange={() => {
+      onChange?.();
     }}
-    on:keydown={onOptionKeydown}
-    on:focus={() => {
+    onEnter={() => {
+      onEnter?.(
+        new CustomEvent("enter", {
+          detail: option.id
+        })
+      );
+    }}
+    onKeydown={onOptionKeydown}
+    onFocus={() => {
       isFocusing = true;
       colorPickerPopoverRef?.hide();
     }}
-    on:blur={() => {
+    onBlur={() => {
       isFocusing = false;
     }}
   />
@@ -132,12 +159,20 @@
           icon={isDefault ? "minus-circle" : "circle-dashed"}
           size={Size.sm}
           tooltip={isDefault ? "Remove default" : "Set as default"}
-          on:click={(event) => {
+          onclick={(event) => {
             event.stopPropagation();
             if (isDefault) {
-              dispatch("default", null);
+              onDefault?.(
+                new CustomEvent("default", {
+                  detail: null
+                })
+              );
             } else {
-              dispatch("default", option.id);
+              onDefault?.(
+                new CustomEvent("default", {
+                  detail: option.id
+                })
+              );
             }
           }}
         />
@@ -146,9 +181,13 @@
         icon="cross"
         size={Size.sm}
         tooltip={"Remove"}
-        on:click={(event) => {
+        onclick={(event) => {
           event.stopPropagation();
-          dispatch("remove", option.id);
+          onRemove?.(
+            new CustomEvent("remove", {
+              detail: option.id
+            })
+          );
         }}
       />
     {:else if isDefault && dev_isEnableDefaultSelection}

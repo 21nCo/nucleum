@@ -5,9 +5,15 @@
   } from "@21n/types/featureWheel.type";
   import FeatureRow from "@21n/components/featureWheel/sidePanel/comparisionTable/FeatureRow.svelte";
 
-  export let category: string;
-  export let features: IFwFeature[] = [];
-  export let contemporaries: IContemporary[] = [];
+  let {
+    category,
+    features = [],
+    contemporaries = []
+  }: {
+    category: string;
+    features?: IFwFeature[];
+    contemporaries?: IContemporary[];
+  } = $props();
 </script>
 
 <tr>

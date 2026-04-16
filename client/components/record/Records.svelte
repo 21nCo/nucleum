@@ -13,7 +13,6 @@
   } from "@21n/components/flux/resourceStores/resource.type";
   import { bulkEditStore } from "@21n/components/record/bulkedit.store";
   import FileView from "@21n/components/files/FileView.svelte";
-  import { createEventDispatcher } from "svelte";
   import type { INodeThumb } from "@21n/products/memotron/node/node.type";
   import type {
     ICollection,
@@ -33,7 +32,6 @@
   import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
   import { stringify } from "@21n/shared-utils/json.utils";
   import { appStore } from "@21n/stores/app.store";
-  const dispatch = createEventDispatcher();
   type RecordItem =
     | INodeThumb
     | ICollection
@@ -42,23 +40,38 @@
     | IGoalThumb
     | ITaskThumb;
 
-  export let data: RecordItem[] = [];
-  export let resource: Resource = Resource.node;
-  export let arrangement: Arrangement = Arrangement.LIST;
-  export let defaultAccessMode: AccessMode = AccessMode.POP;
-  export let size: Size.sm | Size.md = Size.md;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
-  export let accessPointState: ResourceAccessPointState =
-    ResourceAccessPointState.DEFAULT;
-  export let isPreventDefault = false;
-  export let width: number = 290;
-  export let isShowLoadingPulseAtTheEnd: boolean = false;
-  export let isShowBottomSpacer: boolean = false;
+  let {
+    data = [],
+    resource = Resource.node,
+    arrangement = Arrangement.LIST,
+    defaultAccessMode = AccessMode.POP,
+    size = Size.md,
+    accessPoint = ResourceAccessPoint.BROWSER,
+    accessPointState = ResourceAccessPointState.DEFAULT,
+    isPreventDefault = false,
+    width = 290,
+    isShowLoadingPulseAtTheEnd = false,
+    isShowBottomSpacer = false,
+    onClick: onRecordClick = undefined
+  }: {
+    data?: RecordItem[];
+    resource?: Resource;
+    arrangement?: Arrangement;
+    defaultAccessMode?: AccessMode;
+    size?: Size.sm | Size.md;
+    accessPoint?: ResourceAccessPoint;
+    accessPointState?: ResourceAccessPointState;
+    isPreventDefault?: boolean;
+    width?: number;
+    isShowLoadingPulseAtTheEnd?: boolean;
+    isShowBottomSpacer?: boolean;
+    onClick?: ((event: CustomEvent<RecordItem>) => void) | undefined;
+  } = $props();
   let parentBgIndex = 1;
-  $: multiSelectContext = {
+  let multiSelectContext = $derived({
     resource,
     accessPoint
-  };
+  });
 
   function asNodeThumb(item: RecordItem): INodeThumb {
     return item as INodeThumb;
@@ -96,9 +109,10 @@
     return event instanceof MouseEvent ? event : undefined;
   }
 
-  function onClick(e: MouseEvent | CustomEvent, item: RecordItem) {
+  function handleClick(e: MouseEvent | CustomEvent, item: RecordItem) {
     if (isPreventDefault) {
-      dispatch("click", item);
+      const clickEvent = new CustomEvent<any>("click", { detail: item });
+      onRecordClick?.(clickEvent);
       return;
     }
     const state = bulkEditStore.getState();
@@ -168,7 +182,7 @@
               accessPointId={item.id}
               {parentBgIndex}
               {arrangement}
-              on:click={(e) => onClick(e, item)}
+              onClick={(event) => handleClick(event, item)}
             />
           {:else if resourceType === Resource.collection}
             <CollectionThumbnail
@@ -177,7 +191,7 @@
               {accessPoint}
               {accessPointState}
               {arrangement}
-              on:click={(e) => onClick(e, item)}
+              onClick={(e) => handleClick(e, item)}
             />
           {:else if resourceType === Resource.combination}
             <CombinationThumbnail
@@ -186,7 +200,7 @@
               {accessPoint}
               {accessPointState}
               {arrangement}
-              on:click={(e) => onClick(e, item)}
+              onClick={(e) => handleClick(e, item)}
             />
           {:else if resourceType === Resource.goal}
             <GoalThumbnail
@@ -194,7 +208,7 @@
               {accessPoint}
               accessPointId={item.id}
               {arrangement}
-              on:click={(e) => onClick(e, item)}
+              onClick={(e) => handleClick(e, item)}
             />
           {:else if resourceType === Resource.task}
             <TaskThumbnail
@@ -217,7 +231,7 @@
             accessPointId={item.id}
             {parentBgIndex}
             {arrangement}
-            on:click={(e) => onClick(e, item)}
+            onClick={(event) => handleClick(event, item)}
           />
         {:else if resource === Resource.goal && arrangement !== Arrangement.MASONRY}
           <GoalThumbnail
@@ -225,7 +239,7 @@
             {accessPoint}
             accessPointId={item.id}
             {arrangement}
-            on:click={(e) => onClick(e, item)}
+            onClick={(e) => handleClick(e, item)}
           />
         {:else if resource === Resource.task && arrangement !== Arrangement.MASONRY}
           <TaskThumbnail
@@ -233,7 +247,7 @@
             {accessPoint}
             {parentBgIndex}
             {arrangement}
-            on:click={(e) => onClick(e, item)}
+            onClick={(e) => handleClick(e, item)}
           />
         {:else if resource === Resource.collection}
           <CollectionThumbnail
@@ -242,7 +256,7 @@
             {accessPoint}
             {accessPointState}
             {arrangement}
-            on:click={(e) => onClick(e, item)}
+            onClick={(e) => handleClick(e, item)}
           />
         {:else if resource === Resource.combination}
           <CombinationThumbnail
@@ -251,10 +265,10 @@
             {accessPoint}
             {accessPointState}
             {arrangement}
-            on:click={(e) => onClick(e, item)}
+            onClick={(e) => handleClick(e, item)}
           />
         {:else if resource === Resource.file}
-          <button class="h-40" on:click={(e) => onClick(e, item)}>
+          <button class="h-40" onclick={(e) => handleClick(e, item)}>
             <FileView
               file={asFile(item)}
               isLazyLoad={true}

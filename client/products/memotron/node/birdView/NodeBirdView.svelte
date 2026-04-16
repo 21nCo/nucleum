@@ -54,7 +54,7 @@
   import { NodeBirdViewMode } from "@21n/products/memotron/node/birdView/birdView.type";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { page } from "$app/stores";
-  export let node: IActiveNodeStore;
+  let { node }: { node: IActiveNodeStore } = $props();
   let linkedNodes: INode[];
   let selectedView = NodeBirdViewMode.Graph;
   let depth = $page.url?.searchParams?.get(AppSearchParam.DEPTH)
@@ -516,7 +516,7 @@
             isDisableSearch={true}
             value={depth}
             size={Size.sm}
-            on:select={async (e) => {
+            onSelect={async (e) => {
               depth = e.detail;
               appStore.toggleSearchParam({
                 [AppSearchParam.DEPTH]: depth
@@ -536,7 +536,7 @@
               : "Switch to traverse mode"}
             parentBgIndex={2}
             on={isTraverseMode}
-            on:change={(e) => {
+            onChange={(e) => {
               isTraverseMode = e.detail;
               appStore.toggleSearchParam({
                 [AppSearchParam.TRAVERSE]: isTraverseMode
@@ -551,7 +551,7 @@
           icon="link"
           tooltip="See all links"
           parentBgIndex={2}
-          on:change={(e) => {
+          onChange={(e) => {
             if (e.detail) {
               node.switchPanel(ResourcePanelType.LINKS);
             } else if ($node.panel === ResourcePanelType.LINKS) {
@@ -577,8 +577,8 @@
               : "radial-2"}
             data={graphData}
             nodeId={$node.id.toString()}
-            on:select={onNodeSelect}
-            on:canvasClick={closeSplitResource}
+            onSelect={onNodeSelect}
+            onCanvasClick={closeSplitResource}
           />
         {/await}
       {:else if selectedView === NodeBirdViewMode.Timeline}

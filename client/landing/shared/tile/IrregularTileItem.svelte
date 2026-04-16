@@ -7,8 +7,13 @@
   import type { ITileItem } from "@21n/landing/shared/landing.type";
   import { landing } from "@21n/landing/shared/store/shared.store";
 
-  export let item: ITileItem;
-  export let isEnableBackground: Boolean = false;
+  let {
+    item,
+    isEnableBackground = false,
+  }: {
+    item: ITileItem;
+    isEnableBackground?: Boolean;
+  } = $props();
 
   let className: string = "";
   export { className as class };
@@ -32,9 +37,9 @@
     "relative flex flex-col items-start justify-start gap-4 min-w-[320px] max-w-[512px] mo:h-[400px] bg-bgs2 px-7 pt-7 rounded-2xl hover:bg-bgs3",
     className
   )}
-  on:mouseenter={onMouseEnter}
-  on:mouseleave={onMouseLeave}
-  on:click={onClick}
+  onmouseenter={onMouseEnter}
+  onmouseleave={onMouseLeave}
+  onclick={onClick}
 >
   {#if item?.title}
     {@const title = item.title}

@@ -1,26 +1,37 @@
 <script lang="ts">
   import Extend from "@21n/icons/Extend.svelte";
   import { Control } from "@21n/types/pointron/control.enum";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import { pointronPreferences } from "@21n/products/pointron/pointron.store";
   import ControlIcon from "@21n/products/pointron/focus/elements/controls/ControlIcon.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import { activeSession } from "@21n/products/pointron/focus/session.store";
   import { SessionState } from "@21n/types/pointron/sessionState.enum";
   import { SessionUIContext } from "@21n/types/pointron/session.type";
-  export let control: Control;
-  export let isProminent: boolean = false;
-  export let context: SessionUIContext = SessionUIContext.DEFAULT;
-  $: iconProps = { context };
-  $: extendDuration = $pointronPreferences.extendDuration;
+  let {
+    control,
+    isProminent = false,
+    context = SessionUIContext.DEFAULT,
+    onClick = undefined
+  }: {
+    control: Control;
+    isProminent?: boolean;
+    context?: SessionUIContext;
+    onClick?: ((event: CustomEvent<{ control: Control }>) => void) | undefined;
+  } = $props();
+  let iconProps = $derived({ context });
+  let extendDuration = $derived($pointronPreferences.extendDuration);
   let timer: any;
-  const dispatch = createEventDispatcher();
   function clickHandler() {
-    dispatch("click", { control });
+    const clickEvent = new CustomEvent<{ control: Control }>("click", {
+      detail: { control }
+    });
+    onClick?.(clickEvent);
   }
-  $: isBreakReminderMode =
+  let isBreakReminderMode = $derived(
     $activeSession.timeRemainingToTakeBreak != undefined &&
-    $activeSession.timeRemainingToTakeBreak < 0;
+      $activeSession.timeRemainingToTakeBreak < 0
+  );
   onMount(() => {
     //todo - later - causing flickering of the screen
     // if (isProminent) {
@@ -41,7 +52,7 @@
 </script>
 
 <button
-  on:click={(event) => {
+  onclick={(event) => {
     clickHandler();
     event.stopPropagation();
   }}

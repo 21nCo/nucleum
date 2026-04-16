@@ -21,7 +21,7 @@
   import PresetGoalsSelector from "@21n/products/pointron/focus/advanced/presets/PresetGoalsSelector.svelte";
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
 
-  export let id: string;
+  let { id = "" }: { id?: string } = $props();
   let composition: SessionComposition;
   let selectedGoals: IGoalThumb[] = [];
 
@@ -91,7 +91,7 @@
       <ComposeTotalsText {composition} />
       <ComposeDuration
         bind:composition
-        on:change={() => (composition = composition)}
+        onChange={() => (composition = composition)}
       />
       <PresetGoalsSelector bind:selectedGoals />
     </ModalContentPadded>

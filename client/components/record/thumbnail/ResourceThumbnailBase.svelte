@@ -1,8 +1,10 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { hoverable } from "@21n/actions/hover.action";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import {
     determineResourceType,
+    resolveBulkSelectionAccessPointId,
     resourceIdToElementId,
     resourceInList,
     isSameResource
@@ -17,31 +19,55 @@
   import ResourceThumbnailContextMenu from "@21n/components/record/thumbnail/ResourceThumbnailContextMenu.svelte";
   import { stringify } from "@21n/shared-utils/json.utils";
 
-  export let isHovering = false;
-  export let item: any;
-  export let isDraggable: boolean = false;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
-  export let accessPointContext: string | undefined = undefined;
-  export let arrangement: Arrangement = Arrangement.LIST;
-  export let isHidePreview: boolean = false;
-  export let isApplyCustomColor: boolean = false;
-  export let accessPointId: IRecordId | undefined = undefined;
-  export let isPreventDefaultContextMenu: boolean = false;
-  /**
-   * If true, the context menu will be shown on touch devices even if the hover is not active
-   */
-  export let isAlwaysShowContextMenuOnTouchDevice: boolean = false;
-  $: multiSelectContext = {
+  let {
+    isHovering = $bindable(false),
+    item = $bindable(),
+    isDraggable = false,
+    accessPoint = ResourceAccessPoint.BROWSER,
+    accessPointContext = undefined,
+    arrangement = Arrangement.LIST,
+    isHidePreview = false,
+    isApplyCustomColor = false,
+    accessPointId = undefined,
+    isPreventDefaultContextMenu = false,
+    isAlwaysShowContextMenuOnTouchDevice = false,
+    children,
+    right,
+    onAction = undefined,
+    onClick = undefined
+  }: {
+    isHovering?: boolean;
+    item: any;
+    isDraggable?: boolean;
+    accessPoint?: ResourceAccessPoint;
+    accessPointContext?: string | undefined;
+    arrangement?: Arrangement;
+    isHidePreview?: boolean;
+    isApplyCustomColor?: boolean;
+    accessPointId?: IRecordId | undefined;
+    isPreventDefaultContextMenu?: boolean;
+    isAlwaysShowContextMenuOnTouchDevice?: boolean;
+    children?: Snippet;
+    right?: Snippet;
+    onAction?:
+      | ((event: CustomEvent<{ action: string; id: string }>) => void)
+      | undefined;
+    onClick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
+  let multiSelectContext = $derived({
     resource: determineResourceType(item.id),
     accessPoint,
-    accessPointId
-  };
-  let isSelected = false;
-  let hasSelection = false;
-  
-  $: currentSelectionCount = $bulkEditStore?.length ?? 0;
-  
-  $: {
+    accessPointId: resolveBulkSelectionAccessPointId(
+      accessPoint,
+      accessPointId
+    )
+  });
+  let isSelected = $state(false);
+  let hasSelection = $state(false);
+  let isContextMenuVisible = $state(false);
+  let currentSelectionCount = $derived($bulkEditStore?.length ?? 0);
+
+  $effect(() => {
     currentSelectionCount;
     const state = bulkEditStore.getState();
     if (
@@ -55,7 +81,7 @@
       isSelected = false;
       hasSelection = false;
     }
-  }
+  });
 
   function toggleSelection(shouldSelect: boolean) {
     const state = bulkEditStore.getState();
@@ -87,22 +113,23 @@
   id={resourceIdToElementId("thumbnail", item.id, accessPoint, accessPointId)}
   data-id={item.id}
   draggable={isDraggable}
+  onclick={onClick}
   use:hoverable={{
     onHover: (e) => (isHovering = e)
   }}
 >
-  <slot />
+  {@render children?.()}
   {#if isSelected || hasSelection}
     <button
       class="absolute inset-x-0 top-0 w-6 h-6 gap-2 bg-bgs2 border border-brs3 rounded-full m-2 flex items-center justify-center"
-      on:click|stopPropagation
+      onclick={(event) => event.stopPropagation()}
     >
       {#if isSelected}
         <Check
           isChecked={true}
           isRounded={true}
           size={Size.lg}
-          on:click={() => {
+          onclick={() => {
             toggleSelection(false);
           }}
         />
@@ -111,27 +138,26 @@
           isChecked={false}
           isRounded={true}
           size={Size.lg}
-          on:click={() => {
+          onclick={() => {
             toggleSelection(true);
           }}
         />
       {/if}
     </button>
   {/if}
-  {#if (isHovering && accessPoint !== ResourceAccessPoint.PICKER && accessPoint !== ResourceAccessPoint.MAP && !isPreventDefaultContextMenu) || (isAlwaysShowContextMenuOnTouchDevice && $context.isTouchDevice)}
+  {#if ((isHovering || isContextMenuVisible) && accessPoint !== ResourceAccessPoint.PICKER && accessPoint !== ResourceAccessPoint.MAP && !isPreventDefaultContextMenu) || (isAlwaysShowContextMenuOnTouchDevice && $context.isTouchDevice)}
     <ResourceThumbnailContextMenu
       bind:item
+      bind:isPopoverVisible={isContextMenuVisible}
       {accessPoint}
       {accessPointId}
       {accessPointContext}
       {arrangement}
       {isHidePreview}
       {isApplyCustomColor}
-      on:action
+      {onAction}
+      {right}
     >
-      <slot slot="right" name="right">
-        <slot name="right" />
-      </slot>
     </ResourceThumbnailContextMenu>
   {/if}
 </div>

@@ -1,9 +1,17 @@
 <script lang="ts">
   import { Placement } from "@21n/types/direction.enum";
   import { IconVariant } from "@21n/types/icon.type";
-  export let direction: Placement = Placement.Left;
-  export let variant: IconVariant = IconVariant.Outline;
-  export let isCircled: boolean = false;
+
+  let {
+    direction = Placement.Left,
+    variant = IconVariant.Outline,
+    isCircled = false
+  }: {
+    direction?: Placement;
+    variant?: IconVariant;
+    isCircled?: boolean;
+  } = $props();
+
 </script>
 
 {#if isCircled}

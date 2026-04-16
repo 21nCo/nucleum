@@ -3,7 +3,6 @@
   import { ButtonVariant } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
   import CoverRenderer from "@21n/elements/coverPicker/CoverRenderer.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import ToggleGroup from "@21n/elements/toggle/ToggleGroup.svelte";
@@ -16,27 +15,52 @@
   import { debouncer } from "@21n/utils/utils";
   import context from "@21n/stores/context.store";
 
-  const dispatch = createEventDispatcher();
-  export let cover: string | undefined = undefined;
-  export let placement: Placement = Placement.Top;
-  export let position: { x?: number; y?: number } = {};
-  export let size: { width?: number; height?: number } = {};
-  export let dev_isRoundedCover = false;
-  export let isInEditMode = false;
-  export let isCoverPickerOpen = false;
-  export let isHovered = false;
-  export let isConstrainedWidth: boolean = false;
+  let {
+    cover = $bindable(),
+    placement = Placement.Top,
+    position = {},
+    size = {},
+    dev_isRoundedCover = false,
+    isInEditMode = false,
+    isCoverPickerOpen = $bindable(false),
+    isHovered = $bindable(false),
+    isConstrainedWidth = false,
+    onChange,
+    onPlacement,
+    onReposition,
+    onRepositionDebounced,
+    onResize: onResizeCallback,
+    onResizeDebounced: onResizeDebouncedCallback
+  }: {
+    cover?: string | undefined;
+    placement?: Placement;
+    position?: { x?: number; y?: number };
+    size?: { width?: number; height?: number };
+    dev_isRoundedCover?: boolean;
+    isInEditMode?: boolean;
+    isCoverPickerOpen?: boolean;
+    isHovered?: boolean;
+    isConstrainedWidth?: boolean;
+    onChange?: ((event: CustomEvent<string | undefined>) => void) | undefined;
+    onPlacement?: ((event: CustomEvent<Placement>) => void) | undefined;
+    onReposition?: ((event: CustomEvent<number>) => void) | undefined;
+    onRepositionDebounced?: ((event: CustomEvent<number>) => void) | undefined;
+    onResize?: ((event: CustomEvent<any>) => void) | undefined;
+    onResizeDebounced?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
 
-  $: isPositionable =
+  let isPositionable = $derived(
     (cover?.toString().includes("file:") ||
       cover?.toString().includes("unsplash_")) &&
-    isInEditMode;
+      isInEditMode
+  );
 
-  $: height = isConstrainedWidth ? 180 : size?.height ?? $view.height / 5;
+  let height = $derived(
+    isConstrainedWidth ? 180 : size?.height ?? $view.height / 5
+  );
 
   function onReplace(e: MouseEvent) {
     isCoverPickerOpen = true;
-    dispatch("pick");
     if (e instanceof MouseEvent) e.stopPropagation();
   }
 
@@ -47,20 +71,27 @@
 
   function onRemove(e: MouseEvent) {
     cover = undefined;
-    dispatch("change", cover);
+    onChange?.(
+      new CustomEvent("change", {
+        detail: cover
+      })
+    );
     if (e instanceof MouseEvent) e.stopPropagation();
   }
 
   function onClick(e: MouseEvent) {
     if (!cover) {
       isCoverPickerOpen = true;
-      dispatch("pick");
     }
     e.stopPropagation();
   }
 
   function onPlacementChange(e: CustomEvent) {
-    dispatch("placement", e.detail);
+    onPlacement?.(
+      new CustomEvent("placement", {
+        detail: e.detail
+      })
+    );
   }
 
   function onHoverChange(value: boolean) {
@@ -103,17 +134,25 @@
           : placement === Placement.Right
             ? (["left"] as ("left")[])
             : (["right"] as ("right")[]),
-      onResize: onResize
+      onResize: handleResize
     };
   }
 
-  function onResize(e: any) {
-    dispatch("resize", e);
+  function handleResize(e: any) {
+    onResizeCallback?.(
+      new CustomEvent("resize", {
+        detail: e
+      })
+    );
     debouncedResizePropagation(e);
   }
 
   const debouncedResizePropagation = debouncer((e: any) => {
-    dispatch("resizeDebounced", e);
+    onResizeDebouncedCallback?.(
+      new CustomEvent("resizeDebounced", {
+        detail: e
+      })
+    );
   }, 1000);
 </script>
 
@@ -133,7 +172,7 @@
     style={placement === Placement.Top || !placement
       ? `min-height: ${height}px; max-height: ${height}px;`
       : `min-width: ${size?.width ?? 300}px; max-width: ${size?.width ?? 300}px;`}
-    on:click={onClick}
+    onclick={onClick}
     use:hoverable={{ onHover: onHoverChange }}
     use:resizable={resolveResizeParams(placement, isInEditMode)}
   >
@@ -145,8 +184,8 @@
         class={cn({
           "rounded-xl": dev_isRoundedCover
         })}
-        on:reposition
-        on:repositionDebounced
+        onReposition={onReposition}
+        onRepositionDebounced={onRepositionDebounced}
       />
     {:else if isInEditMode}
       + Add cover photo
@@ -184,7 +223,7 @@
                 size={Size.sm}
                 bgSize={Size.sm}
                 selected={placement}
-                on:change={onPlacementChange}
+                onChange={onPlacementChange}
                 parentBgIndex={2}
                 class="gap-1"
                 items={[
@@ -208,14 +247,14 @@
             label={isCoverPickerOpen ? "Close" : "Replace"}
             icon={isCoverPickerOpen ? "x-circle" : "reset"}
             size={Size.sm}
-            on:click={isCoverPickerOpen ? onClose : onReplace}
+            onclick={isCoverPickerOpen ? onClose : onReplace}
           />
           <Button
             label="Remove"
             icon="trash"
             type={ButtonVariant.DANGER}
             size={Size.sm}
-            on:click={onRemove}
+            onclick={onRemove}
           />
         </span>
       </div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { appStore } from "@21n/stores/app.store";
   import {
     OptionSelectorStyle,
@@ -35,11 +36,21 @@
   import { CacheKey } from "@21n/layout/layers/cache/cache.type";
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { fade } from "svelte/transition";
-  export let resource: Resource;
-  export let isConstrainedWidth: boolean = $view.isConstrainedWidth;
-  export let accessPoint: ResourceAccessPoint;
-  export let subContext: string | undefined = undefined;
-  export let selectedSubType: SubType = "all";
+  let {
+    resource,
+    isConstrainedWidth = $view.isConstrainedWidth,
+    accessPoint,
+    subContext = undefined,
+    selectedSubType = "all",
+    children = undefined
+  }: {
+    resource: Resource;
+    isConstrainedWidth?: boolean;
+    accessPoint: ResourceAccessPoint;
+    subContext?: string | undefined;
+    selectedSubType?: SubType;
+    children?: Snippet | undefined;
+  } = $props();
 
   const nodeSubTypesForSwitcher = resolveNodeSubTypesForSwitcher();
   const collectionSubTypesForSwitcher = resolveCollectionSubTypesForSwitcher();
@@ -55,26 +66,29 @@
     value: "starred",
     icon: "star"
   };
-  let subTypeCounts: Map<NodeType | CollectionType, number> = new Map();
-  let isExpandableSubTypes: boolean = false;
-  let isExpandSubTypes: boolean = false;
-  let isStarFilterSelected: boolean = $page.url.searchParams.get(
+  let subTypeCounts = $state(new Map<NodeType | CollectionType, number>());
+  let isExpandSubTypes = $state(false);
+  let isStarFilterSelected = $state(
+    $page.url.searchParams.get(
     AppSearchParam.STARRED
   )
     ? true
-    : false;
-  let isArchivedFilterSelected: boolean = $page.url.searchParams.get(
+    : false
+  );
+  let isArchivedFilterSelected = $state(
+    $page.url.searchParams.get(
     AppSearchParam.ARCHIVED
   )
     ? true
-    : false;
-  let allSubTypes: ISelectItem[] = [];
-  let renderedSubTypes: ISelectItem[] = [];
-  let searchStore = new SearchStore();
+    : false
+  );
+  let allSubTypes = $state<ISelectItem[]>([]);
+  let renderedSubTypes = $state<ISelectItem[]>([]);
+  const searchStore = new SearchStore();
 
-  $: isExpandableSubTypes = [Resource.node].includes(resource);
-  $: isNonStarrable = [Resource.task].includes(resource);
-  $: isNonArchivable = [Resource.task].includes(resource);
+  let isExpandableSubTypes = $derived([Resource.node].includes(resource));
+  let isNonStarrable = $derived([Resource.task].includes(resource));
+  let isNonArchivable = $derived([Resource.task].includes(resource));
 
   export function refresh() {
     refreshSubTypeSwitcher();
@@ -205,13 +219,13 @@
         options={renderedSubTypes}
         selected={selectedSubType}
         isPreventWrap={true}
-        on:select={(e) => {
+        onSelect={(e) => {
           if (!e?.detail) return;
           onSelect(e.detail);
         }}
       />
     </div>
-    <slot />
+    {@render children?.()}
   </div>
 {:else}
   <div
@@ -232,7 +246,7 @@
             size={Size.sm}
             style={PanelSwitcherStyle.BAR}
             barStyle={BarStyle.DOT}
-            on:switch={(e) => {
+            onSwitch={(e) => {
               if (!e?.detail) return;
               onSelect(e.detail);
             }}
@@ -246,7 +260,7 @@
               icon="star"
               tooltip="Show starred items"
               bgSize={Size.sm}
-              on:change={() => {
+              onChange={() => {
                 if (isStarFilterSelected) {
                   appStore.toggleSearchParam({
                     [AppSearchParam.STARRED]: isStarFilterSelected
@@ -265,7 +279,7 @@
               options={renderedSubTypes}
               selected={selectedSubType}
               isPreventWrap={isExpandableSubTypes && !isExpandSubTypes}
-              on:select={(e) => {
+              onSelect={(e) => {
                 if (!e?.detail) return;
                 onSelect(e.detail);
               }}
@@ -284,7 +298,7 @@
             bind:on={isArchivedFilterSelected}
             icon="archive"
             tooltip="Show archived items"
-            on:change={() => {
+            onChange={() => {
               if (isArchivedFilterSelected) {
                 appStore.toggleSearchParam({
                   [AppSearchParam.ARCHIVED]: isArchivedFilterSelected
@@ -297,14 +311,14 @@
           />
         {/if}
       {/if}
-      <slot />
+      {@render children?.()}
       {#if isExpandableSubTypes}
         <Toggle
           bind:on={isExpandSubTypes}
           icon={isExpandSubTypes ? "chevron-left" : "chevron-down"}
           tooltip="Show all sub types"
           bgSize={Size.sm}
-          on:change={() => refreshSubTypeSwitcher()}
+          onChange={() => refreshSubTypeSwitcher()}
         />
       {/if}
     </div>
@@ -316,6 +330,6 @@
     subscribeToCacheUpdate={[
       resourceCacheKey(resource, CacheKey.SUB_TYPE_COUNTS)
     ]}
-    on:change={refreshSubTypeSwitcher}
+    onChange={refreshSubTypeSwitcher}
   />
 {/if}

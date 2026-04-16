@@ -1,8 +1,16 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { ChipVariant } from "@21n/types/chipVariant.enum";
   import Icon from "@21n/elements/Icon.svelte";
-  export let hideCloseIcon: boolean = false;
-  export let variant: ChipVariant;
+  let {
+    children,
+    hideCloseIcon = false,
+    variant
+  }: {
+    children?: Snippet;
+    hideCloseIcon?: boolean;
+    variant: ChipVariant;
+  } = $props();
 
   function getClassesBasedOnVariant() {
     switch (variant) {
@@ -19,8 +27,8 @@
 <div
   class={`py-1 px-3 gap-1 flex items-center text-fgs2 ${getClassesBasedOnVariant()}`}
 >
-  <slot />
+  {@render children?.()}
   {#if !hideCloseIcon}
-    <Icon on:click icon="cross" />
+    <Icon icon="cross" />
   {/if}
 </div>

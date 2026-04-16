@@ -10,14 +10,23 @@
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import BoardView from "@21n/components/collection/boardView/BoardView.svelte";
   import type { IActiveCollectionStore } from "@21n/components/collection/collection.store";
-  export let collection: IActiveCollectionStore;
-  export let view: ICollectionView;
-  export let data: ICollectionItem[] = [];
-  export let isBoardOverflow = false;
+  let {
+    collection,
+    view,
+    data = [],
+    isBoardOverflow = false
+  }: {
+    collection: IActiveCollectionStore;
+    view: ICollectionView;
+    data?: ICollectionItem[];
+    isBoardOverflow?: boolean;
+  } = $props();
 
-  $: if (!view.arrangement) {
-    view.arrangement = Arrangement.LIST;
-  }
+  $effect(() => {
+    if (!view.arrangement) {
+      view.arrangement = Arrangement.LIST;
+    }
+  });
 </script>
 
 {#if isValidArrayWithData(data)}

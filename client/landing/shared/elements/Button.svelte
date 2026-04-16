@@ -7,28 +7,42 @@
   import { Size } from "@21n/types/size.enum";
   import { landing } from "@21n/landing/shared/store/shared.store";
   import QrElement from "@21n/landing/shared/elements/QRElement.svelte";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
 
-  export let type: "primary" | "secondary" = "primary";
-  export let isShort: boolean = false;
-  export let isDownloadButton: boolean = false;
-  export let label = "";
-  export let icon = "";
-  export let href: string | null = null;
-  /**
-   * @deprecated - no longer used
-   */
-  export let QRURL: string | null = null;
-  export let iconPosition: "start" | "end" = "end";
-  export let isHovering: boolean = false;
-  export let enableHover: boolean = true;
+  let {
+    type = "primary",
+    isShort = false,
+    isDownloadButton = false,
+    label: providedLabel = "",
+    icon: providedIcon = "",
+    href: providedHref = null,
+    QRURL = null,
+    iconPosition = "end",
+    isHovering = $bindable(false),
+    enableHover = true,
+    onclick
+  }: {
+    type?: "primary" | "secondary";
+    isShort?: boolean;
+    isDownloadButton?: boolean;
+    label?: string;
+    icon?: string;
+    href?: string | null;
+    QRURL?: string | null;
+    iconPosition?: "start" | "end";
+    isHovering?: boolean;
+    enableHover?: boolean;
+    onclick?: () => void;
+  } = $props();
 
-  if (isDownloadButton) {
-    href = resolveDownloadUrl() ?? null;
-    icon = resolveDownloadButtonIcon();
-    label = resolveDownloadButtonLabel();
-  }
+  const href = $derived(
+    isDownloadButton ? (resolveDownloadUrl(providedHref) ?? null) : providedHref
+  );
+  const icon = $derived(
+    isDownloadButton ? resolveDownloadButtonIcon(href) : providedIcon
+  );
+  const label = $derived(
+    isDownloadButton ? resolveDownloadButtonLabel(href) : providedLabel
+  );
 
   function handleHover() {
     if (!enableHover) return;
@@ -41,11 +55,11 @@
 
   function handleClick() {
     if (!href && !isDownloadButton) {
-      dispatch("click");
+      onclick?.();
     }
   }
 
-  function resolveDownloadUrl() {
+  function resolveDownloadUrl(fallbackHref: string | null) {
     switch ($context.os) {
       case OperatingSystem.MACOS:
       case OperatingSystem.IOS:
@@ -55,13 +69,13 @@
       case OperatingSystem.ANDROID:
         return $landing.urls.downloads?.android;
       default:
-        return href;
+        return fallbackHref;
     }
   }
 
-  function resolveDownloadButtonIcon() {
+  function resolveDownloadButtonIcon(resolvedHref: string | null) {
     const defaultIcon = "arrowright";
-    if (!href) {
+    if (!resolvedHref) {
       return defaultIcon;
     }
     switch ($context.os) {
@@ -77,9 +91,9 @@
     }
   }
 
-  function resolveDownloadButtonLabel() {
+  function resolveDownloadButtonLabel(resolvedHref: string | null) {
     const defaultLabel = "Get started for free";
-    if (!href) {
+    if (!resolvedHref) {
       return defaultLabel;
     }
     switch ($context.os) {
@@ -98,8 +112,8 @@
 </script>
 
 <a
-  on:mouseenter={handleHover}
-  on:mouseleave={handleLeave}
+  onmouseenter={handleHover}
+  onmouseleave={handleLeave}
   class={cn(
     "box-border flex items-center justify-center gap-2 rounded-full mo:text-[16px] leading--[33px] mo:leading--[22px] cursor-pointer",
     {
@@ -114,7 +128,7 @@
   href={isDownloadButton && !href ? $landing?.urls?.web : href}
   target={href ? "_blank" : "_self"}
   rel={href ? "noopener noreferrer" : undefined}
-  on:click={handleClick}
+  onclick={handleClick}
 >
   {#if icon}
     <SvgIcon
@@ -124,7 +138,7 @@
       isAccentBg={type === "primary"}
     />
   {:else if QRURL && !$view.isPortrait}
-    <QrElement bind:isHovering bind:enableHover url={QRURL} width={48} />
+    <QrElement bind:isHovering {enableHover} url={QRURL} width={48} />
   {/if}
   {#if label}
     <span class="text-nowrap">{label}</span>

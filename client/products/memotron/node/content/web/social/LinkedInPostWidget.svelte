@@ -3,11 +3,11 @@
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import SocialPostLoadingInfo from "@21n/products/memotron/node/content/web/social/SocialPostLoadingInfo.svelte";
 
-  export let postUrl: string;
+  let { postUrl }: { postUrl: string } = $props();
 
   let id: string = generateSimpleRandomId();
-  let loading: boolean = true;
-  let error: string = "";
+  let loading = $state(true);
+  let error = $state("");
   const dev_isUseEmbedScriptApproach = false;
   type LinkedInWindow = Window & {
     IN?: {

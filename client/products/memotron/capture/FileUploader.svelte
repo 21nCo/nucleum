@@ -19,12 +19,17 @@
   import type { NodeType } from "@21n/products/memotron/node/node.type";
   import type { IMultiFileCaptureData } from "@21n/products/memotron/capture/capture.type";
   import { resolveMultipleFilesData } from "@21n/products/memotron/capture/capture.utils";
-  import { createEventDispatcher } from "svelte";
   import { clipboard, type IActiveCaptureStore } from "@21n/products/memotron/capture/capture.store";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { fly } from "svelte/transition";
-  export let captureStore: IActiveCaptureStore;
-  const dispatch = createEventDispatcher();
+
+  let {
+    captureStore,
+    onClear = undefined
+  }: {
+    captureStore: IActiveCaptureStore;
+    onClear?: (() => void) | undefined;
+  } = $props();
 
   const imageFileTypes = [
     ".jpg",
@@ -47,10 +52,10 @@
     ".md"
   ].join(",");
 
-  let multipleFilesData: IMultiFileCaptureData | undefined = undefined;
-  let error: string | undefined = undefined;
+  let multipleFilesData = $state<IMultiFileCaptureData | undefined>(undefined);
+  let error = $state<string | undefined>(undefined);
 
-  let isValidMultipleFiles = false;
+  let isValidMultipleFiles = $state(false);
   const uploadProgressElementId = "node-embed-upload-progress";
 
   async function handleDrop(
@@ -98,12 +103,6 @@
       uploadProgressId: uploadProgressElementId
     });
   }
-
-  /**
-   * Handles insert into markdown option
-   *
-   * Note: MemotronAction.CAPTURE_SECONDARY is used as fileUploader can be triggered either via global drag and drop (MemotronAction.CAPTURE_DND) or regular capture (MemotronAction.CAPTURE). Using .CAPTURE will not reload the capture as search param remains the same.
-   */
   async function handleInsertIntoMd(e: MouseEvent) {
     if (e) e.stopPropagation();
     if (!multipleFilesData) return;
@@ -147,7 +146,7 @@
             icon="back"
             tooltip="Go back"
             parentBgIndex={2}
-            on:click={() => dispatch("clear")}
+            onclick={() => onClear?.()}
           />
         </div>
       </div>
@@ -174,7 +173,6 @@
             <div class="flex gap-3 items-center">
               <Icon icon="ph:image" class="stroke-fgs3" />
               <Icon icon="ph:music-note" class="stroke-fgs3" />
-              <!-- <Icon icon="ph:video" class="stroke-fgs3" /> -->
               <Icon icon="ph:file-pdf" class="stroke-fgs3" />
             </div>
           {/if}
@@ -190,13 +188,13 @@
               type={ButtonVariant.PRIMARY}
               icon="proceed"
               parentBgIndex={2}
-              on:click={saveAll}
+              onclick={saveAll}
             />
             <Button
               label="Insert into markdown"
               icon="markdown"
               parentBgIndex={2}
-              on:click={handleInsertIntoMd}
+              onclick={handleInsertIntoMd}
             />
           {:else}
             <Button label="Select file" icon="upload" parentBgIndex={2} />

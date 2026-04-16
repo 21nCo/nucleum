@@ -1,44 +1,59 @@
 <script lang="ts">
   import { Size } from "@21n/types/size.enum";
-  import { onMount } from "svelte";
   import { tweened } from "svelte/motion";
   import { linear } from "svelte/easing";
   /**
    * @param duration - The duration of the progress bar animation in seconds
    * @param percentage - Static percentage value (0-1 range, e.g., 0.5 = 50%)
    */
-  export let duration: number = 0;
-  export let percentage: number | undefined = undefined;
-  export let size: Size = Size.md;
-  export let label: string = "";
-  export let showPercentage: boolean = false;
-  let sizeClasses: string = "";
-  let progress = tweened(0, {
+  let {
+    duration = 0,
+    percentage = undefined,
+    size = Size.md,
+    label = "",
+    showPercentage = false,
+  }: {
+    duration?: number;
+    percentage?: number | undefined;
+    size?: Size;
+    label?: string;
+    showPercentage?: boolean;
+  } = $props();
+
+  
+  
+  
+  
+  const progress = tweened(0, {
     duration: duration * 1000,
     easing: linear
   });
-
-  $: if (percentage !== undefined) {
-    progress.set(percentage * 100);
-  } else if (duration > 0) {
-    progress.set(100);
-  }
-
-  onMount(() => {
+  const sizeClasses = $derived.by(() => {
     switch (size) {
       case Size.xxs:
       case Size.xs:
       case Size.sm:
-        sizeClasses = "h-1";
-        break;
+        return "h-1";
       case Size.md:
-        sizeClasses = "h-2";
-        break;
+        return "h-2";
       case Size.lg:
       case Size.xl:
       case Size.xxl:
-        sizeClasses = "h-3";
-        break;
+        return "h-3";
+    }
+  });
+
+  $effect(() => {
+    if (percentage !== undefined) {
+      progress.set(percentage * 100, {
+        duration: duration * 1000,
+        easing: linear
+      });
+    } else if (duration > 0) {
+      progress.set(100, {
+        duration: duration * 1000,
+        easing: linear
+      });
     }
   });
 </script>

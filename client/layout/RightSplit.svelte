@@ -3,8 +3,13 @@
   import { fly } from "svelte/transition";
   import ResourceResolver from "@21n/layout/paint/ResourceResolver.svelte";
   import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
-  export let split: string;
-  export let accessMode: AccessMode = AccessMode.SPLIT;
+  let {
+    split,
+    accessMode = AccessMode.SPLIT
+  }: {
+    split: string;
+    accessMode?: AccessMode;
+  } = $props();
 </script>
 
 <div

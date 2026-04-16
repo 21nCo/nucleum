@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import Divider from "@21n/elements/Divider.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import dayjs from "dayjs";
@@ -9,62 +9,48 @@
   import Button from "@21n/elements/button/Button.svelte";
   import { abg, bg, cn } from "@21n/utils/ui.utils";
   import { isSameDay } from "@21n/utils/time.utils";
-  const dispatch = createEventDispatcher();
-  // let decadeMode  = false; // true: show decade
-  export let scale: TimeScale.DAYS | TimeScale.MONTHS | TimeScale.YEARS =
-    TimeScale.DAYS;
-  export let parentBgIndex: number = 0;
-  export let isDatePickerMode: boolean = false;
-  /**
-   * @description selected date - used for date picker mode
-   * @type {Date}
-   */
-  export let selectedDate: Date = new Date();
-  export let onDateChange: (val: Date) => void;
-  let yearMode: boolean = scale === TimeScale.YEARS;
-  let monthMode: boolean = scale === TimeScale.MONTHS;
-  let dayMode: boolean = scale === TimeScale.DAYS;
-  export let isPickerOpen: boolean = true; // true: show picker
+  let {
+    scale = TimeScale.DAYS,
+    parentBgIndex = 0,
+    isDatePickerMode = false,
+    selectedDate = $bindable(new Date()),
+    onDateChange,
+    onChange,
+    onRangePicked,
+    isPickerOpen = true
+  }: any = $props();
+  const yearMode = $derived(scale === TimeScale.YEARS);
+  const monthMode = $derived(scale === TimeScale.MONTHS);
+  const dayMode = $derived(scale === TimeScale.DAYS);
   const arrDays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-  let thisDay = +dayjs().format("D"); // 1..31
-  let thisMonth = +dayjs().format("M"); // 1..12
-  let thisYear = +dayjs().format("YYYY"); // 2021...
-  let mapDay = +dayjs().format("D"); // 1..31
-  let mapMonth = +dayjs().format("M"); // 1..12
-  let mapYear = +dayjs().format("YYYY"); // 2021...
-  let startDay: number | undefined = undefined;
-  let startMonth: number | undefined = undefined;
-  let startYear: number | undefined = undefined;
-  let endDay: number | undefined = undefined;
-  let endMonth: number | undefined = undefined;
-  let endYear: number | undefined = undefined;
-  let startString = "";
-  let endString = "";
-  let startSelected: boolean = false;
-  let endSelected: boolean = false;
-  let selectedDecade = Math.floor(mapYear / 10) * 10; // 2021...
-  let rows: any;
-  // let monthPool: any[] = [
-  //   mapMonth - 2,
-  //   mapMonth - 1,
-  //   mapMonth,
-  //   mapMonth + 1,
-  //   mapMonth + 2
-  // ];
-  let monthPool: any[] = [...Array.from({ length: 12 }, (_, i) => i + 1)];
-  let yearPool: any[] = [
+  let thisDay = +dayjs().format("D");
+  let thisMonth = +dayjs().format("M");
+  let thisYear = +dayjs().format("YYYY");
+  let mapDay = $state(+dayjs().format("D"));
+  let mapMonth = $state(+dayjs().format("M"));
+  let mapYear = $state(+dayjs().format("YYYY"));
+  let startDay = $state<number | undefined>(undefined);
+  let startMonth = $state<number | undefined>(undefined);
+  let startYear = $state<number | undefined>(undefined);
+  let endDay = $state<number | undefined>(undefined);
+  let endMonth = $state<number | undefined>(undefined);
+  let endYear = $state<number | undefined>(undefined);
+  let startString = $state("");
+  let endString = $state("");
+  let startSelected = $state(false);
+  let endSelected = $state(false);
+  let selectedDecade = $state(Math.floor(mapYear / 10) * 10);
+  let rows = $state<any>();
+  let monthPool = $state<any[]>([...Array.from({ length: 12 }, (_, i) => i + 1)]);
+  let yearPool = $state<any[]>([
     mapYear - 2,
     mapYear - 1,
     mapYear,
     mapYear + 1,
     mapYear + 2
-  ];
-  // $: if (isPickerOpen) {
-  //   document.addEventListener("click", handleOutsideClickModal);
-  // } else {
-  //   document.removeEventListener("click", handleOutsideClickModal);
-  // }
-  $: if (isDatePickerMode && selectedDate) {
+  ]);
+  $effect(() => {
+    if (!isDatePickerMode || !selectedDate) return;
     mapDay = +dayjs(selectedDate).format("D");
     mapMonth = +dayjs(selectedDate).format("M");
     mapYear = +dayjs(selectedDate).format("YYYY");
@@ -74,19 +60,21 @@
     startSelected = true;
     handlePoolChangeForYears();
     getDecade();
-  }
-  $: if (monthMode) {
-    rows = initMonth();
-  } else if (yearMode) {
-    rows = initYear();
-  } else {
-    changeRows();
-  }
+  });
+  $effect(() => {
+    if (monthMode) {
+      rows = initMonth();
+    } else if (yearMode) {
+      rows = initYear();
+    } else {
+      changeRows();
+    }
+  });
   let getDecade = () => {
     selectedDecade = Math.floor(mapYear / 10) * 10;
   };
   onMount(() => {
-    dayjs.locale("en"); // use locale
+    dayjs.locale("en");
     if (dayMode) {
       changeRows();
     } else if (monthMode) {
@@ -95,10 +83,6 @@
       rows = initYear();
     }
   });
-  /**
-   * @description closure to remember initialized or previously passed value to handle the monthPool change for the month range slider
-   * @param index
-   */
   let handlePoolChange = (function () {
     let previousIndex = 1;
     return function (index?: number) {
@@ -126,11 +110,6 @@
       }
     };
   })();
-  /**
-   * @description Resets all start values or all end values or both.
-   * @param start
-   * @param end
-   */
   function reset(start: boolean = false, end: boolean = false) {
     if (start) {
       startDay = undefined;
@@ -148,9 +127,6 @@
     }
   }
 
-  /**
-   * @description resets all start and end variables, reset picker current range and view, sets current date and opens the picker.
-   */
   function enablePicker() {
     mapDay = +dayjs().format("D");
     mapMonth = +dayjs().format("M");
@@ -161,15 +137,13 @@
     isPickerOpen = true;
   }
 
-  /**
-   *@description  Dispatches range picked if exists, closes the picker and resets the start and end values.
-   *
-   */
+  function dispatchRangePicked(val: { start: string; end: string }) {
+    onRangePicked?.(val);
+  }
+
   function handleOutsideClickModal() {
-    // console.log("RangePicked", { start: startString, end: endString });
     if (startString && endString)
-      dispatch("rangePicked", { start: startString, end: endString });
-    // isPickerOpen = false;
+      dispatchRangePicked({ start: startString, end: endString });
     startString = "";
     endString = "";
   }
@@ -193,10 +167,10 @@
         dayjs(mapYear + "-" + mapMonth)
           .startOf("month")
           .format("ddd")
-      ).toUpperCase(); // 'Wed'
+      ).toUpperCase();
       const lastDayOfCurrentMonth = +dayjs(mapYear + "-" + mapMonth)
         .endOf("month")
-        .format("D"); // 31
+        .format("D");
       let iRow = 0;
       let iCol = 0;
       let start = false;
@@ -245,7 +219,6 @@
   function previousDecade() {
     selectedDecade--;
     previousYear(10);
-    // changeRows()
   }
 
   function previousMonth(decreaseConst: number) {
@@ -287,8 +260,8 @@
   }
 
   function dispatchDateChange(val: Date) {
-    dispatch("change", val);
-    onDateChange(val);
+    onChange?.(val);
+    onDateChange?.(val);
   }
 
   function selectDate(y: number, m: number, d: number) {
@@ -303,7 +276,6 @@
       startDay = +d;
       startMonth = +m;
       startYear = +y;
-      // endSelected = false;
       startString = dayMode
         ? dayjs(date).format("YYYY-MM-DD")
         : monthMode
@@ -316,13 +288,12 @@
       if (monthMode) {
         endDay = +dayjs(y + "-" + m)
           .endOf("month")
-          .format("D"); // 31
+          .format("D");
       }
       if (yearMode) {
         endDay = 31;
         endMonth = 12;
       }
-      // startSelected = false;
       endSelected = true;
 
       endString = dayMode
@@ -350,27 +321,21 @@
   }
 </script>
 
-<svelte:window on:click={handleOutsideClickModal} />
+<svelte:window onclick={handleOutsideClickModal} />
 {#if isPickerOpen}
   <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <button
+  <div
     class={cn(
       "flex flex-col gap-4  cw:w-full w-80 px-4 py-4 text-fgs3 rounded-md shadow-lg border border-brs2",
       bg(parentBgIndex)
     )}
-    on:click|stopPropagation
+    onclick={(event) => event.stopPropagation()}
   >
     <div class="flex items-center w-full justify-between text-b2">
       <div class="flex gap-1 items-center">
-        <Button icon="chevron-left" on:click={previousDecade} size={Size.sm} />
+        <Button icon="chevron-left" onclick={previousDecade} size={Size.sm} />
 
         <div class="flex justify-between">
-          <!-- <button on:click={previousDecade} class="focus:outline-none"
-            >{selectedDecade -
-              10 +
-              "-" +
-              selectedDecade.toString().slice(2)}</button
-          > -->
           <div
             class={cn(
               "focus:outline-none rounded-md px-2 py-1 text-center",
@@ -379,23 +344,15 @@
           >
             {selectedDecade + "-" + (selectedDecade + 10).toString().slice(2)}
           </div>
-
-          <!-- <button on:click={nextDecade} class="focus:outline-none"
-            >{selectedDecade +
-              10 +
-              "-" +
-              (selectedDecade + 20).toString().slice(2)}</button
-          > -->
         </div>
-        <Button icon="chevron-right" on:click={nextDecade} size={Size.sm} />
+        <Button icon="chevron-right" onclick={nextDecade} size={Size.sm} />
       </div>
       {#if !isSameDay(selectedDate, new Date())}
         <Button
           icon="calendar"
           label="Jump to Today"
           size={Size.xs}
-          on:click={() => {
-            // selectDate(thisYear, thisMonth, thisDay);
+          onclick={() => {
             selectedDate = new Date();
           }}
         />
@@ -405,58 +362,13 @@
       <div class="w-full flex items-center justify-between text-b3">
         <Button
           icon="chevron-left"
-          on:click={() => previousYear(2)}
+          onclick={() => previousYear(2)}
           size={Size.sm}
         />
         <div class="grow flex items-center justify-around">
-          <!-- <button
-            on:click={() => {
-              previousYear(2);
-            }}
-            class="focus:outline-none"
-            >{ucFirst(
-              dayjs(mapYear - 2 + "-" + mapMonth).format("YYYY")
-            )}</button
-          >
-          <button
-            on:click={() => {
-              previousYear(1);
-            }}
-            class="focus:outline-none"
-            >{ucFirst(
-              dayjs(mapYear - 1 + "-" + mapMonth).format("YYYY")
-            )}</button
-          >
-
-          <div
-            parentBgIndex={parentBgIndex + 1}
-            classList="focus:outline-none rounded-md px-2 py-1 text-center"
-            >{ucFirst(
-              dayjs(mapYear + "-" + mapMonth).format("YYYY")
-            )}</div
-          >
-
-          <button
-            on:click={() => {
-              nextYear(1);
-            }}
-            class="focus:outline-none"
-            >{ucFirst(
-              dayjs(mapYear + 1 + "-" + mapMonth).format("YYYY")
-            )}</button
-          >
-          <button
-            on:click={() => {
-              nextYear(2);
-            }}
-            class="focus:outline-none"
-            >{ucFirst(
-              dayjs(mapYear + 2 + "-" + mapMonth).format("YYYY")
-            )}</button
-          > -->
           {#each yearPool as year, index (year)}
             <button
-              on:click={() => {
+              onclick={() => {
                 mapYear = yearPool[index];
                 handlePoolChangeForYears(index);
               }}
@@ -476,7 +388,7 @@
         </div>
         <Button
           icon="chevron-right"
-          on:click={() => nextYear(2)}
+          onclick={() => nextYear(2)}
           size={Size.sm}
         />
       </div>
@@ -484,20 +396,12 @@
 
     {#if dayMode}
       <div class="flex w-full items-center text-b3 justify-between">
-        <!-- <button
-          on:click={() => {
-            previousMonth(4);
-          }}
-          aria-label="calendar backward"
-        >
-          <Icon icon="chevron-left" />
-        </button> -->
         <div
           class="px-2 w-full flex items-center justify-evenly gap-3 flex-wrap"
         >
           {#each monthPool as month, index (month)}
             <button
-              on:click={() => {
+              onclick={() => {
                 mapMonth = monthPool[index];
                 handlePoolChange(index);
               }}
@@ -511,19 +415,10 @@
               )}
               >{ucFirst(
                 dayjs(mapYear + "-" + monthPool[index]).format("MMM")
-                // .charAt(0)
               )}</button
             >
           {/each}
         </div>
-        <!-- <button
-          on:click={() => {
-            nextMonth(4);
-          }}
-          aria-label="calendar forward"
-        >
-          <Icon icon="chevron-right" />
-        </button> -->
       </div>
       <div class="flex w-full justify-center">
         <div class="w-1/2">
@@ -558,14 +453,14 @@
                               "rounded-md w-full h-full focus:ring-1 focus:opacity-80 hover:opacity-80 text-b2 flex items-center justify-center",
                               abg()
                             )}
-                            on:click={() => selectDate(mapYear, mapMonth, i)}
+                            onclick={() => selectDate(mapYear, mapMonth, i)}
                           >
                             {i}
                           </button>
                         {:else if startDay && startMonth && startYear && laterDate(startDay, startMonth, startYear, i, mapMonth, mapYear) && endDay && endMonth && endYear && laterDate(i, mapMonth, mapYear, endDay, endMonth, endYear) && endSelected == true}
                           <button
                             class="w-full h-full flex items-center justify-center hover:bg-aps1 hover:text-abg text-b2 text-bgs1 bg-aps2"
-                            on:click={() => {
+                            onclick={() => {
                               selectDate(mapYear, mapMonth, i);
                             }}
                           >
@@ -574,7 +469,7 @@
                         {:else if i === thisDay && mapMonth === thisMonth && mapYear === thisYear}
                           <button
                             class="rounded-full w-7 h-7 focus:ring-1 focus:opacity-90 hover:bg-aps1 text-base flex items-center justify-center font-medium text-abg bg-ass1"
-                            on:click={() => {
+                            onclick={() => {
                               selectDate(mapYear, mapMonth, i);
                             }}
                           >
@@ -583,7 +478,7 @@
                         {:else}
                           <button
                             class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:bg-bgs2 flex items-center justify-center"
-                            on:click={() => {
+                            onclick={() => {
                               selectDate(mapYear, mapMonth, i);
                             }}
                           >
@@ -615,14 +510,14 @@
                         {#if (i === startMonth && mapYear === startYear && startSelected) || (i === endMonth && mapYear === endYear && endSelected)}
                           <button
                             class="rounded w-full h-full focus:ring-1focus:opacity-80 hover:opacity-80 text-b2 flex items-center justify-center text-bgs1 bg-aps1"
-                            on:click={() => {
+                            onclick={() => {
                               selectDate(mapYear, i, 1);
                             }}>{dayjs(mapYear + "-" + i).format("MMM")}</button
                           >
                         {:else if startMonth && startYear && laterDate(1, startMonth, startYear, 1, i, mapYear) && endMonth && endYear && laterDate(1, i, mapYear, 1, endMonth, endYear) && endSelected == true}
                           <button
                             class=" bg-aps2 text-bgs1 w-full text-b2 text-center hover:bg-aps1 hover:text-bgs1"
-                            on:click={() => {
+                            onclick={() => {
                               selectDate(mapYear, i, 1);
                             }}
                           >
@@ -631,7 +526,7 @@
                         {:else if i === thisMonth && mapYear === thisYear}
                           <button
                             class="rounded-full w-full h-full focus:ring-1 focus:bg-aps1 hover:bg-aps1 hover:text-white flex items-center justify-center text-b2 text-bgs1 bg-ass1"
-                            on:click={() => {
+                            onclick={() => {
                               selectDate(mapYear, i, 1);
                             }}
                           >
@@ -640,7 +535,7 @@
                         {:else}
                           <button
                             class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:bg-aps1 hover:text-bgs1 text-b2 flex items-center justify-center"
-                            on:click={() => {
+                            onclick={() => {
                               selectDate(mapYear, i, 1);
                             }}
                           >
@@ -670,7 +565,7 @@
                         {#if (i + selectedDecade === startYear && startSelected) || (selectedDecade + i == endYear && endSelected)}
                           <button
                             class="rounded w-full h-full focus:ring-1 focus:opacity-80 hover:opacity-80 text-b2 flex items-center justify-center text-bgs1 bg-aps1"
-                            on:click={() => {
+                            onclick={() => {
                               selectDate(selectedDecade + i, 1, 1);
                             }}
                           >
@@ -679,7 +574,7 @@
                         {:else if startYear && laterDate(1, 1, startYear, 1, 1, selectedDecade + i) && endYear && laterDate(1, 1, selectedDecade + i, 1, 1, endYear) && endSelected == true}
                           <button
                             class="rounded w-full h-full focus:ring-1 focus:bg-aps1 text-bgs1 bg-aps2 text-b2 flex items-center justify-center hover:text-bgs1 hover:bg-aps1"
-                            on:click={() => {
+                            onclick={() => {
                               selectDate(selectedDecade + i, 1, 1);
                             }}
                           >
@@ -688,7 +583,7 @@
                         {:else if i + selectedDecade === thisYear}
                           <button
                             class="rounded-full w-full h-full focus:ring-1 focus:bg-aps1 hover:bg-aps1 text-b2 flex items-center justify-center text-bgs1 bg-ass1"
-                            on:click={() => {
+                            onclick={() => {
                               selectDate(mapYear, i, 1);
                             }}
                           >
@@ -697,7 +592,7 @@
                         {:else}
                           <button
                             class="rounded w-full h-full focus:ring-1 focus:bg-aps1 focus:text-bgs1 text-b2 flex items-center justify-center hover:text-bgs1 hover:bg-aps1"
-                            on:click={() => {
+                            onclick={() => {
                               selectDate(selectedDecade + i, 1, 1);
                             }}
                           >
@@ -727,11 +622,11 @@
           >
             {#if startSelected}
               {startString}<button
+                onclick={() => reset(true, false)}
                 ><Icon
                   icon="ph:x-circle-light"
                   size={Size.xs}
                   class="stroke-ars1"
-                  on:click={() => reset(true, false)}
                 /></button
               >
             {:else}
@@ -750,11 +645,11 @@
           >
             {#if endSelected}
               {endString}<button
+                onclick={() => reset(false, true)}
                 ><Icon
                   icon="ph:x-circle-light"
                   size={Size.xs}
                   class="stroke-ars1"
-                  on:click={() => reset(false, true)}
                 /></button
               >
             {:else}
@@ -764,9 +659,15 @@
         </div>
       </div>
     {/if}
-  </button>
+  </div>
 {:else}
-  <button on:click|stopPropagation={enablePicker} class="text-fgs1">
+  <button
+    onclick={(event) => {
+      event.stopPropagation();
+      enablePicker();
+    }}
+    class="text-fgs1"
+  >
     -- Pick Range --
   </button>
 {/if}

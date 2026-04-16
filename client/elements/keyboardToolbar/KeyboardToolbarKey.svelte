@@ -2,8 +2,15 @@
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-  export let icon: string;
-  export let isApplySystemColors = false;
+  let {
+    icon,
+    isApplySystemColors = false,
+    onclick = undefined
+  }: {
+    icon: string;
+    isApplySystemColors?: boolean;
+    onclick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
 </script>
 
 <button
@@ -14,8 +21,8 @@
       "bg-bgs3 active:bg-bgs4": !isApplySystemColors
     }
   )}
-  on:click
-  on:mousedown={(e) => {
+  {onclick}
+  onmousedown={(e) => {
     e.preventDefault();
     e.stopPropagation();
   }}

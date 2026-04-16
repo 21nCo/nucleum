@@ -64,18 +64,17 @@
 </script>
 
 <MemotronOverviewLayout bind:isConstrainedWidth>
-  <span class="flex items-center gap-3 text-fgs3 text-b3 h-full" slot="right">
-    {#if !isConstrainedWidth && mapData.length > 0}
-      <!-- <span>
-        {mapData.length} locations
-      </span> -->
-      <SwitchInput
-        label={{ label: "Show as heatmap" }}
-        size={Size.sm}
-        bind:checked={isShowHeatmap}
-      />
-    {/if}
-  </span>
+  {#snippet right()}
+    <span class="flex items-center gap-3 text-fgs3 text-b3 h-full">
+      {#if !isConstrainedWidth && mapData.length > 0}
+        <SwitchInput
+          label={{ label: "Show as heatmap" }}
+          size={Size.sm}
+          bind:checked={isShowHeatmap}
+        />
+      {/if}
+    </span>
+  {/snippet}
 
   {#if isLoading}
     <div

@@ -5,18 +5,30 @@
     resolveIfActiveFgFg,
     retrieveCurrentColors
   } from "@21n/utils/theme.utils";
-  export let type: string = "div";
-  export let id: string = "";
-  export let role: string | undefined = undefined;
-  export let color: number | undefined = undefined;
-  let classList: string = "w-full h-full";
-  let styles: string = "";
-  export { classList as class };
-  export { styles as style };
-  $: customColorShades =
-    color != undefined ? generateCustomColorShades($appearance, color) : [];
-  $: isActiveFgFg = resolveIfActiveFgFg(color, $appearance);
-  $: currentColors = retrieveCurrentColors($appearance);
+  let {
+    type = "div",
+    id = "",
+    role = undefined,
+    color = undefined,
+    class: classList = "w-full h-full",
+    style: styles = "",
+    onclick = undefined,
+    children
+  }: {
+    type?: string;
+    id?: string;
+    role?: string | undefined;
+    color?: number | undefined;
+    class?: string;
+    style?: string;
+    onclick?: ((event: MouseEvent) => void) | undefined;
+    children?: import("svelte").Snippet;
+  } = $props();
+  const customColorShades = $derived(
+    color != undefined ? generateCustomColorShades($appearance, color) : []
+  );
+  const isActiveFgFg = $derived(resolveIfActiveFgFg(color, $appearance));
+  const currentColors = $derived(retrieveCurrentColors($appearance));
 </script>
 
 <svelte:element
@@ -25,7 +37,9 @@
   role={role ?? (type === "button" ? undefined : "button")}
   tabindex={type === "button" ? undefined : 0}
   class={classList}
-  on:click
+  onclick={(event) => {
+    onclick?.(event);
+  }}
   style:--customcolor={customColorShades[0]}
   style:--customcolorshadetwo={customColorShades[1]}
   style:--customcolorshadethree={customColorShades[2]}
@@ -36,7 +50,7 @@
     : currentColors.bgs1}
   style={styles}
 >
-  <slot />
+  {@render children?.()}
 </svelte:element>
 
 <style>

@@ -36,19 +36,22 @@
   import { cn } from "@21n/utils/ui.utils";
   import ConfirmationNotification from "@21n/components/notifications/ConfirmationNotification.svelte";
   import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
-  let modals: ModalEvent[] = [];
-  let isShowAppearancePreview = false;
-  let fullscreen: string | undefined;
-  let pop:
+  let modals = $state<ModalEvent[]>([]);
+  let isShowAppearancePreview = $state(false);
+  let fullscreen = $state<string | undefined>(undefined);
+  let pop = $state<
     | { path: string; resource: string; modalParams: ModalParams }
-    | undefined;
+    | undefined
+  >(undefined);
+  const activePopModalPaths = $derived(
+    pop ? new Set([pop.path, `${pop.path}-resource`]) : undefined
+  );
   //TODO offline mode detection and showing changes pending sync
-  let isShowSyncErrorMessage: boolean = false;
+  let isShowSyncErrorMessage = $state(false);
 
-  let isWindowVisible: boolean = true;
-  let isDialogEnabled: boolean = false;
-  const dev_isRenderPopAsModal = false;
-
+  let isWindowVisible = $state(true);
+  let isDialogEnabled = $state(false);
+  const isRenderPopAsModal = false;
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
       if (x.event == GlobalEvent.SHOW_APPEARANCE_PREVIEW) {
@@ -59,12 +62,13 @@
     });
     const pageSub = page.subscribe((value) => {
       fullscreen = value.url.searchParams.get(AccessMode.FULL) ?? undefined;
-      if (!dev_isRenderPopAsModal) return;
-      const popParam = value.url.searchParams.get(AccessMode.POP) ?? undefined;
-      if (popParam) {
-        resolvePop(popParam);
-      } else {
-        pop = undefined;
+      if (isRenderPopAsModal) {
+        const popParam = value.url.searchParams.get(AccessMode.POP) ?? undefined;
+        if (popParam) {
+          resolvePop(popParam);
+        } else {
+          pop = undefined;
+        }
       }
       // console.log({ pop, fullscreen });
     });
@@ -106,9 +110,15 @@
           params: x.componentParams
           // id: x.id TODO - send component params
         });
-      } else if (x.path && x.isShow && !modals.find((y) => y.path == x.path)) {
-        // modals = [x];
-        modals = [...modals, x];
+      } else if (x.path && x.isShow) {
+        const existingIndex = modals.findIndex((y) => y.path == x.path);
+        if (existingIndex > -1) {
+          const nextModals = [...modals];
+          nextModals.splice(existingIndex, 1);
+          modals = [...nextModals, x];
+        } else {
+          modals = [...modals, x];
+        }
         if ($view.isPortrait) toasts.reset();
         postDataToParent(EmbedDataMessage.ENABLE_GESTURE_NAVIGATION, false);
       }
@@ -155,18 +165,6 @@
     </div>
   </div>
 {/if}
-
-<!-- {#if $appStore.appData?.bottomRightAction && !$view.isPortrait}
-  <div class="fixed bottom-0 right-0 mr-6 mb-6">
-    <Button
-      icon={$appStore.appData?.bottomRightAction}
-      type={ButtonVariant.PRIMARY}
-      on:click={() => {
-        appStore.runAction($appStore.appData?.bottomRightAction);
-      }}
-    />
-  </div>
-{/if} -->
 
 {#if !$view.isPortrait && $player.isMiniOn}
   <div
@@ -272,7 +270,9 @@
     </Modal>
   {/if}
 {/key}
-{#each modals as modal, index (modal.path)}
+{#each modals.filter((modal) => modal?.path && !activePopModalPaths?.has(modal.path)) as modal, index (modal.path === Action.CMD
+    ? `${modal.path}-${modal.componentParams?.command ?? "default"}-${modal.componentParams?.commandType ?? "default"}`
+    : modal.path)}
   <Modal
     show={modal.isShow}
     id={modal.path}
@@ -290,7 +290,7 @@
     hasCantileverButtons={modal.layout?.isShowCantileverClose ||
       modal.layout?.isShowBackButton}
   >
-    <ModalLayout path={modal.path} bind:params={modal}>
+    <ModalLayout path={modal.path} params={modal}>
       <ComponentResolver
         path={modal.path}
         params={{ ...modal.componentParams, isModal: true }}
@@ -323,4 +323,4 @@
   </Modal>
 {/if}
 
-<svelte:document on:visibilitychange={visibilityChangeListener} />
+<svelte:document onvisibilitychange={visibilityChangeListener} />

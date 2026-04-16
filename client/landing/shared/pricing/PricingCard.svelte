@@ -5,8 +5,14 @@
   import { Size } from "@21n/types/size.enum";
   import type { PricingPlan, PricingToggleOption } from "@21n/landing/shared/pricing/pricing.types";
   import { landing } from "@21n/landing/shared/store/shared.store";
-  export let plan: PricingPlan;
-  export let unit: PricingToggleOption;
+  let {
+    plan,
+    unit,
+  }: {
+    plan: PricingPlan;
+    unit: PricingToggleOption;
+  } = $props();
+
 </script>
 
 <div class={cn("border border-brs3 rounded-lg p-6 flex flex-col")}>

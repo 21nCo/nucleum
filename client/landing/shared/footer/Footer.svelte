@@ -17,10 +17,15 @@
     org
   } from "@21n/landing/shared/store/shared.store";
   import ButtonAsLink from "@21n/landing/shared/ButtonAsLink.svelte";
-  export let products: IListItem[];
-  export let footerValues: IFooter;
-  export let appStoreUrl: string =
-    "https://apps.apple.com/in/developer/blank-labs-private-limited/id1621745929";
+  let {
+    products,
+    footerValues,
+    appStoreUrl = "https://apps.apple.com/in/developer/blank-labs-private-limited/id1621745929",
+  }: {
+    products: IListItem[];
+    footerValues: IFooter;
+    appStoreUrl?: string;
+  } = $props();
 
   const ourStoryBgImage =
     import.meta.env.VITE_STATIC_URL + "/images/our-story2.png";
@@ -157,7 +162,7 @@
       <ButtonAsLink
         class="mt-[16px] ml-[0px]"
         label="See all products"
-        on:click={() => ($isProductsPanelOpen = true)}
+        onclick={() => ($isProductsPanelOpen = true)}
       />
     </div>
   {:else}
@@ -182,10 +187,6 @@
           </Box>
           <Box>
             <ListWithTitle items={products} />
-            <!-- <ButtonAsLink
-              label="See all products"
-              on:click={() => ($isProductsPanelOpen = true)}
-            /> -->
           </Box>
         </div>
 
@@ -233,8 +234,8 @@
               ? iconColors.fgDark
               : iconColors.fgLight};
                 height:32px;width:32px;"
-          on:mouseenter={() => handleHover(index)}
-          on:mouseleave={() => handleLeave(index)}
+          onmouseenter={() => handleHover(index)}
+          onmouseleave={() => handleLeave(index)}
           tabindex="0"
           href={social.href}
           target="_blank"

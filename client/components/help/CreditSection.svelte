@@ -2,13 +2,18 @@
   import Text from "@21n/elements/text/Text.svelte";
   import { TextStyle } from "@21n/types/text.enum";
 
-  export let title: string;
-  export let items: Array<{
-    name: string;
-    description: string;
-    creator: string;
-    link: string;
-  }>;
+  let {
+    title,
+    items
+  }: {
+    title: string;
+    items: Array<{
+      name: string;
+      description: string;
+      creator: string;
+      link: string;
+    }>;
+  } = $props();
 </script>
 
 <div class="flex flex-col gap-4">

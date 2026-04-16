@@ -22,10 +22,10 @@
     {#each $hTrail.path as item (item)}
       <TopBarResourceItem
         {item}
-        on:click={() => handleClick(item)}
+        onClick={() => handleClick(item)}
         isInterimTab={isRecordId(item)}
         isTrail
-        on:close={() => {
+        onClose={() => {
           hTrail.remove(item);
         }}
       />

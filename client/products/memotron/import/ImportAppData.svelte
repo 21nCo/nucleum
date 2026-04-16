@@ -26,7 +26,11 @@
   import { PocketImporter } from "@21n/products/memotron/import/pocket.importer";
   import { Action } from "@21n/types/action.enum";
 
-  export let importSource: ImportSource = ImportSource.POCKET;
+  let {
+    importSource = ImportSource.POCKET
+  }: {
+    importSource?: ImportSource;
+  } = $props();
 
   let inputRef: HTMLInputElement;
   let activeStepIndex: number = 0;
@@ -385,20 +389,19 @@
     };
   }
 
-  $: {
+  $effect(() => {
     if (tempFileList && tempFileList.length > 0) {
       isEverythingUploaded =
-        tempFileList?.every(
-          (item) => item.uploadStatus === UploadStatus.UPLOADED
-        ) ?? false;
+        tempFileList.every((item) => item.uploadStatus === UploadStatus.UPLOADED) ??
+        false;
     } else {
       isEverythingUploaded = false;
     }
-  }
+  });
 
-  $: {
+  $effect(() => {
     tempFileList = handleLocallyUploadedFileChange(locallyUploadedFiles);
-  }
+  });
 
   function resolveTitle(importSource: ImportSource) {
     return `Import from ${config.name}`;
@@ -415,10 +418,13 @@
       : "/images/blank.png";
   }
 
-  function handleFieldMappingChange(
-    event: CustomEvent<{ field: string; value: string }>
-  ) {
-    const { field, value } = event.detail;
+  function handleFieldMappingChange({
+    field,
+    value
+  }: {
+    field: string;
+    value: string;
+  }) {
     fieldMappings[field] = value;
   }
 
@@ -429,12 +435,14 @@
   {#if $view.display === Display.MO}
     <div class="header flex justify-between">
       {#if activeStepIndex !== 0}
-        <Icon size={Size.sm} on:click={onBack} icon={"chevron-left"} />
+        <button onclick={onBack}>
+          <Icon size={Size.sm} icon={"chevron-left"} />
+        </button>
       {/if}
       <div class="ml-auto">
         <Button
           size={$view.isPortrait ? Size.sm : Size.md}
-          on:click={onClose}
+          onclick={onClose}
           icon={"cross"}
         />
       </div>
@@ -556,7 +564,7 @@
           <FieldMapping
             fieldMappingConfig={config.fieldMappingConfig}
             bind:fieldMappings
-            on:mappingChange={handleFieldMappingChange}
+            onMappingChange={handleFieldMappingChange}
           />
         </div>
       {/if}
@@ -631,7 +639,7 @@
             />
             <Button
               size={Size.sm}
-              on:click={() => {
+              onclick={() => {
                 inputRef.click();
               }}
             >
@@ -650,7 +658,7 @@
               size={getSizeString(file.size)}
               uploadStatus={file.uploadStatus}
               uploadProgress={file.uploadProgress}
-              on:remove={handleRemove(index)}
+              onRemove={handleRemove(index)}
             />
           {/each}
         </div>
@@ -665,7 +673,7 @@
             "bg-aps1": activeStepIndex === index,
             "bg-fgs2": activeStepIndex !== index
           })}
-          on:click={() => {
+          onclick={() => {
             activeStepIndex = index;
           }}
         />
@@ -683,30 +691,30 @@
     <div class="flex mo:px-3 mo:py-2 p-4">
       {#if $view.isPortrait}
         {#if activeStepIndex !== config.steps.length - 1}
-          <Button size={Size.sm} on:click={onJumpToUpload}
+          <Button size={Size.sm} onclick={onJumpToUpload}
             >Jump to upload</Button
           >
         {:else}
-          <Button size={Size.sm} on:click={onClose}>Cancel</Button>
+          <Button size={Size.sm} onclick={onClose}>Cancel</Button>
         {/if}
       {:else if activeStepIndex !== 0}
-        <Button size={Size.sm} on:click={onBack}>Back</Button>
+        <Button size={Size.sm} onclick={onBack}>Back</Button>
       {/if}
       <div class="ml-auto flex gap-3">
         {#if !$view.isPortrait && !config.fieldMappingConfig}
           {#if activeStepIndex !== config.steps.length - 1}
-            <Button size={Size.sm} on:click={onJumpToUpload}
+            <Button size={Size.sm} onclick={onJumpToUpload}
               >Jump to upload</Button
             >
           {:else if activeStepIndex === config.steps.length - 1}
-            <Button size={Size.sm} on:click={onClose}>Cancel</Button>
+            <Button size={Size.sm} onclick={onClose}>Cancel</Button>
           {/if}
         {/if}
 
         {#if activeStepIndex !== config.steps.length - 1}
           <Button
             size={Size.sm}
-            on:click={onNext}
+            onclick={onNext}
             type={ButtonVariant.PRIMARY}
             style={ButtonStyle.OUTLINED}>Next</Button
           >
@@ -714,11 +722,11 @@
           <Button
             isLoading={isUploading}
             size={Size.sm}
-            on:click={onUpload}
+            onclick={onUpload}
             type={ButtonVariant.PRIMARY}>Import</Button
           >
         {:else if activeStepIndex === config.steps.length - 1 && isEverythingUploaded}
-          <Button size={Size.sm} on:click={onClose}>Done</Button>
+          <Button size={Size.sm} onclick={onClose}>Done</Button>
         {/if}
       </div>
     </div>

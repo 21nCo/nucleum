@@ -1,27 +1,34 @@
 <script lang="ts">
+  import type { SVGAttributes } from "svelte/elements";
   import { IconVariant } from "@21n/types/icon.type";
 
-  export let variant: IconVariant = IconVariant.Outline;
-  export let _variant: "duotone" | "light" | "thin" = "light";
+  let {
+    variant = IconVariant.Outline,
+    _variant = "light",
+    ...svgProps
+  }: {
+    variant?: IconVariant;
+    _variant?: "duotone" | "light" | "thin";
+  } & SVGAttributes<SVGSVGElement> = $props();
 </script>
 
 {#if variant === IconVariant.Outline}
   {#if _variant === "thin"}
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...$$props}>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...svgProps}>
       <path
         class="fill-fgs1"
         d="M250.83 109.17a4 4 0 0 0-5.66 0l-50.34 50.34a4 4 0 0 1-5.66 0l-84.68-84.68a4 4 0 0 1 0-5.66l50.34-50.34a4 4 0 0 0-5.66-5.66L98.83 63.51A12 12 0 0 0 98.37 80l-23.54 23.51a12 12 0 0 0 0 17l7.51 7.49l-61.17 61.17a4 4 0 0 0 1.57 6.62l72 24A3.9 3.9 0 0 0 96 220a4 4 0 0 0 2.83-1.17L136 181.66l7.51 7.51a12 12 0 0 0 17 0L184 165.63a12 12 0 0 0 16.47-.46l50.34-50.34a4 4 0 0 0 .02-5.66M94.92 211.42L31.4 190.25L88 133.66L130.34 176Zm59.91-27.91a4 4 0 0 1-5.66 0l-68.68-68.68a4 4 0 0 1 0-5.66L104 85.66L178.34 160Z"
       />
     </svg>
   {:else if _variant === "light"}
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...$$props}>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...svgProps}>
       <path
         class="fill-fgs1"
         d="M252.24 107.76a6 6 0 0 0-8.48 0l-50.35 50.34a2 2 0 0 1-2.82 0L105.9 73.41a2 2 0 0 1 0-2.82l50.34-50.35a6 6 0 0 0-8.48-8.48L97.41 62.1a14 14 0 0 0-1.71 17.71L73.41 102.1a14 14 0 0 0 0 19.8l6.1 6.1l-59.75 59.76a6 6 0 0 0 2.34 9.93l72 24a6 6 0 0 0 6.14-1.45L136 184.49l6.1 6.1a14 14 0 0 0 19.8 0l22.28-22.29a14 14 0 0 0 17.72-1.71l50.34-50.35a6 6 0 0 0 0-8.48M94.38 209.14l-59.27-19.76L88 136.49L127.51 176Zm59-27a2 2 0 0 1-2.82 0l-10.35-10.34l-48-48l-10.31-10.39a2 2 0 0 1 0-2.82l22.1-22.1L175.51 160Z"
       />
     </svg>
   {:else if _variant === "duotone"}
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...$$props}>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...svgProps}>
       <g class="fill-fgs1">
         <path d="m136 176l-40 40l-72-24l64-64Z" opacity="0.2" />
         <path
@@ -31,7 +38,7 @@
     </svg>
   {/if}
 {:else if variant === IconVariant.Solid}
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...$$props}>
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" {...svgProps}>
     <path
       class="fill-aps1"
       d="M253.66 106.34a8 8 0 0 0-11.32 0L192 156.69L107.31 72l50.35-50.34a8 8 0 1 0-11.32-11.32L96 60.69a16 16 0 0 0-2.82 18.81L72 100.69a16 16 0 0 0 0 22.62l4.69 4.69l-58.35 58.34a8 8 0 0 0 3.13 13.25l72 24A7.9 7.9 0 0 0 96 224a8 8 0 0 0 5.66-2.34L136 187.31l4.69 4.69a16 16 0 0 0 22.62 0l21.18-21.18a16 16 0 0 0 18.82-2.82l50.35-50.34a8 8 0 0 0 0-11.32M152 180.69L83.31 112L104 91.31L172.69 160Z"

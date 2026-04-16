@@ -1,26 +1,28 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import SubAtomLogo from "@21n/branding/SubAtomLogo.svelte";
   import { properCase } from "@21n/shared-utils/text.utils";
   import { appStore } from "@21n/stores/app.store";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { page } from "$app/stores";
 
-  let message: string | undefined = undefined;
-  $: productName = properCase($appStore.product);
-  $: {
+  let { children }: { children?: Snippet } = $props();
+  const productName = $derived(properCase($appStore.product));
+  const message = $derived.by(() => {
     const messageParam = $page.url.searchParams.get(AppSearchParam.MSG);
     if (messageParam === "deleted") {
-      message = "Your account has been deleted.";
+      return "Your account has been deleted.";
     } else if (messageParam === "signedout") {
-      message = "You have been signed out.";
+      return "You have been signed out.";
     } else if (messageParam === "expired") {
-      message = "Your session has expired. Please login again.";
+      return "Your session has expired. Please login again.";
     } else if (messageParam === "notfound") {
-      message = "User not found. Please login again.";
-    } else {
-      message = undefined;
+      return "User not found. Please login again.";
     }
-  }
+    return undefined;
+  });
 </script>
 
 <div class="flex flex-col w-full h-full justify-center cw:pt-8">
@@ -51,6 +53,6 @@
         </div>
       {/if}
     </div>
-    <slot />
+    {@render children?.()}
   </div>
 </div>

@@ -2,11 +2,18 @@
   import type { PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import { onMount } from "svelte";
   import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  export let items: string[];
-  export let value: string;
-  export let style: PanelSwitcherStyle;
-  export let interval: number = 4000;
-  let intervalTimer: any;
+  let {
+    items,
+    value = $bindable(""),
+    style,
+    interval = 4000
+  }: {
+    items: string[];
+    value?: string;
+    style: PanelSwitcherStyle;
+    interval?: number;
+  } = $props();
+  let intervalTimer = $state<any>();
   onMount(() => {
     intervalTimer = startIntervalTimer();
     return () => {
@@ -26,7 +33,7 @@
   {items}
   bind:value
   {style}
-  on:switch={() => {
+  onSwitch={() => {
     clearInterval(intervalTimer);
     intervalTimer = startIntervalTimer();
   }}

@@ -1,45 +1,48 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
   import GridInputElement from "@21n/products/memotron/lab/infiniteGrid/GridInputElement.svelte";
   import { generateUID } from "@21n/utils/utils";
-  export let size: number;
-  export let id: string;
-  export let top: number;
-  export let left: number;
-  export let index: { r: number; c: number };
-  export let children: any;
-  export let value: string;
-  let isChild = id.split("-")[0] == "child";
+  let {
+    size = $bindable(0),
+    id,
+    top,
+    left,
+    index,
+    childItems = $bindable([]),
+    value = $bindable(""),
+    onBottomSiblingRequired = undefined,
+    onRightSiblingRequired = undefined
+  }: {
+    size?: number;
+    id: string;
+    top: number;
+    left: number;
+    index: { r: number; c: number };
+    childItems?: any[];
+    value?: string;
+    onBottomSiblingRequired?:
+      | ((index: { r: number; c: number }) => void)
+      | undefined;
+    onRightSiblingRequired?:
+      | ((index: { r: number; c: number }) => void)
+      | undefined;
+  } = $props();
+  const isChild = $derived(id.split("-")[0] == "child");
   let colors = ["red", "blue", "green", "yellow", "pink"];
-  // console.log({ index });
-  const dispatch = createEventDispatcher();
-  let textarea: HTMLDivElement;
-  let parent: HTMLDivElement;
-  function addChild() {
-    children.push({
-      id: "child-" + generateUID(),
-      value: "child",
-      children: [],
-      size: size * 0.8,
-      top: 0,
-      left: 0,
-      index: { r: 0, c: 0 }
-    });
-    console.log("children added");
-    // size = size * 1.5;
-    children = children;
-  }
-  onMount(() => {
-    // for (let i = 0; i < children
-    // textarea.style.height = "auto";
-    // textarea.style.height = `${textarea.scrollHeight}px`;
-  });
 
-  const resize = () => {
-    console.log("resizing", textarea.style.height);
-    textarea.style.height = "auto";
-    textarea.style.height = `${textarea.scrollHeight}px`;
-  };
+  function addChild() {
+    childItems = [
+      ...childItems,
+      {
+        id: "child-" + generateUID(),
+        value: "child",
+        children: [],
+        size: size * 0.8,
+        top: 0,
+        left: 0,
+        index: { r: 0, c: 0 }
+      }
+    ];
+  }
 </script>
 
 <div
@@ -52,43 +55,26 @@
     index.r % colors.length
   ]}; "
 >
-  <!-- <div bind:this={textarea} on:input> -->
   <div
     {id}
-    bind:this={parent}
     style="width:{size * 0.8}px;border:2px solid yellow"
   >
     <span contenteditable="true" bind:innerText={value}></span>
-    <button on:click={addChild} style="background-color:gray">+Child</button>
-    {#each children as child (child.id)}
+    <button onclick={addChild} style="background-color:gray">+Child</button>
+    {#each childItems as child (child.id)}
       <GridInputElement bind:value={child.value} size={size * 0.8} {...child} />
     {/each}
   </div>
-  <!-- <div
-      contenteditable="true"
-      bind:this={textarea}
-      on:input
-      bind:innerText={value}
-      style="position:absolute;top:0px;left:0px;"
-    >
-      <button>Button</button>
-    </div> -->
-  <!-- <input
-      type="textarea"
-      value={index.r + "," + index.c}
-      style="position:absolute;top:0px;left:0px;width:{size *
-        0.8}px;height:{size * 0.8}px;"
-    />-->
   {#if !isChild}
     <button
       id={"sib" + id}
       style="background-color:pink;position:absolute;top:0px;right:0px;width:{size *
         0.1}px;height:{size * 0.9}px;"
-      on:click={() => dispatch("rightSiblingRequired", index)}>+</button
+      onclick={() => onRightSiblingRequired?.(index)}>+</button
     ><button
       id={"child" + id}
       style="background-color:pink;position:absolute;bottom:0px;left:0px;width:{size *
         0.9}px;height:{size * 0.1}px;"
-      on:click={() => dispatch("bottomSiblingRequired", index)}>+</button
+      onclick={() => onBottomSiblingRequired?.(index)}>+</button
     >{/if}
 </div>

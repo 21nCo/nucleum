@@ -6,10 +6,17 @@
   import { Size } from "@21n/types/size.enum";
   import { parseAndFormatDate } from "@21n/utils/time.utils";
   import type { ICapture } from "@21n/products/memotron/capture/capture.type";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let draft: ICapture;
-  let isHovered = false;
+
+  let {
+    draft,
+    onSelect = undefined,
+    onDelete = undefined
+  }: {
+    draft: ICapture;
+    onSelect?: (() => void) | undefined;
+    onDelete?: ((draft: ICapture) => void) | undefined;
+  } = $props();
+  let isHovered = $state(false);
 </script>
 
 <button
@@ -19,7 +26,7 @@
       isHovered = val;
     }
   }}
-  on:click
+  onclick={() => onSelect?.()}
 >
   <div class="text-b2 font-medium text-fgs1 text-start">
     {draft.label ? draft.label : "Untitled"}
@@ -35,9 +42,9 @@
         size={Size.sm}
         type={ButtonVariant.DANGER}
         style={ButtonStyle.OUTLINED}
-        on:click={(e) => {
+        onclick={(e) => {
           e.stopPropagation();
-          dispatch("delete", draft);
+          onDelete?.(draft);
         }}
       />
     {/if}

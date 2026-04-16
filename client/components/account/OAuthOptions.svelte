@@ -14,11 +14,17 @@
   import { appStore } from "@21n/stores/app.store";
   import { ClientStorageKey } from "@21n/persistence/persistence.type";
   import { clientStorage } from "@21n/persistence/persistence.utils";
-
-  export let providers: string[];
-  export let isExpanded: boolean = false;
-  export let currentProgress: string | undefined = undefined;
-  export let region: string | undefined = undefined;
+  let {
+    providers,
+    isExpanded = false,
+    currentProgress = $bindable(),
+    region = undefined
+  }: {
+    providers: string[];
+    isExpanded?: boolean;
+    currentProgress?: string | undefined;
+    region?: string | undefined;
+  } = $props();
   const dev_isUseIntermediateApproach = true;
   const signIn = async (provider: string) => {
     await (
@@ -93,12 +99,12 @@
           label={isExpanded
             ? "Continue with " + properCase(provider)
             : undefined}
-          on:click={() => onClick(provider)}
+          onclick={() => onClick(provider)}
         />
       {:else}
         <button
           class="w-12 h-12 rounded-full flex items-center justify-center bg-bgs2 hover:bg-bgs2-striped"
-          on:click={() => onClick(provider)}
+          onclick={() => onClick(provider)}
         >
           <Icon
             icon={provider + "-oauth-logo"}

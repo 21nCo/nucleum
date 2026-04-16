@@ -20,9 +20,15 @@
   import { enumToString } from "@21n/shared-utils/text.utils";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
 
-  export let goal: IActiveGoalStore;
-  export let isReadOnlyMode: boolean = false;
-  let popoverRef: any;
+  let {
+    goal,
+    isReadOnlyMode = false
+  }: {
+    goal: IActiveGoalStore;
+    isReadOnlyMode?: boolean;
+  } = $props();
+
+  let popoverRef = $state<any>(undefined);
 
   async function onUnlink(e: CustomEvent) {
     await goal.unlinkCollection(e.detail);
@@ -70,7 +76,7 @@
 <div class="flex gap-2 items-center h-full w-full overflow-x-auto mo:pr-4">
   <button
     class="flex items-center gap-2 h-full border border-bgs4 hover:border-fgs3 rounded-full px-2 py-0.5 text-b2 whitespace-nowrap bg-bgs2 text-fgs1"
-    on:click={() => {
+    onclick={() => {
       appStore.closeResource();
       appStore.gotoPath("/library", {
         queryParams: {
@@ -103,8 +109,8 @@
       <LinkItems
         links={$goal.collections}
         {isReadOnlyMode}
-        on:unlink={onUnlink}
-        on:click={onClick}
+        onUnlink={onUnlink}
+        onClick={onClick}
       />
     </span>
   {/if}

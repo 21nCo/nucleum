@@ -92,8 +92,7 @@
     isLoadingState = false;
   }
 
-  async function onSearch(event: any) {
-    const val = event.detail;
+  async function onSearch(val: string) {
     if (!val) {
       searchQuery = "";
       refresh({ isPreventLoadingPulse: true });
@@ -142,10 +141,10 @@
   <InlineSearchBar
     query={searchQuery}
     isPadded={true}
-    on:search={onSearch}
+    onSearch={onSearch}
     placeholder="Search a goal to quick focus"
     testId="quick-focus-search"
-    on:enter={() => createNewGoal()}
+    onEnter={() => createNewGoal()}
     padding={$context.embed === Embed.HANDSET || $view.isConstrainedWidth
       ? "pl-4 pr-2"
       : undefined}
@@ -184,7 +183,7 @@
           size={Size.sm}
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
-          on:click={() => {
+          onclick={() => {
             appStore.runAction(PointronAction.PIN_TO_QUICK_FOCUS);
           }}
         />
@@ -194,7 +193,7 @@
         size={Size.sm}
         style={ButtonStyle.OUTLINED}
         isPreventMinWidth={true}
-        on:click={() => (isInEditMode = !isInEditMode)}
+        onclick={() => (isInEditMode = !isInEditMode)}
       />
     </div>
     <ScrollViewBottomSpacer />
@@ -213,7 +212,7 @@
         ? "Press **Enter** to create a new goal & pin it here"
         : "Please create a new goal or pin an existing one"}
       actionText={"Create new goal"}
-      on:click={() => createNewGoal(false)}
+      onclick={() => createNewGoal(false)}
     />
   {/if}
 </div>
@@ -225,7 +224,7 @@
     PointronAction.FINISH_FOCUS_SESSION,
     PointronAction.MANUAL_FOCUS_ENTRY
   ])}
-  on:change={() => {
+  onChange={() => {
     refresh({ isPreventLoadingPulse: true });
   }}
 />

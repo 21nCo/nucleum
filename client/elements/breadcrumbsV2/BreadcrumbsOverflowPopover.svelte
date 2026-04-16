@@ -4,8 +4,13 @@
   import type { IRecordId } from "@21n/types/data.type";
   import BreadcrumbItem from "@21n/elements/breadcrumbsV2/BreadcrumbItem.svelte";
   import type { IBreadcrumbItem } from "@21n/elements/breadcrumbsV2/breadcrumbItem.type";
-  export let items: IBreadcrumbItem[];
-  export let replaceId: IRecordId;
+  let {
+    items,
+    replaceId
+  }: {
+    items: IBreadcrumbItem[];
+    replaceId: IRecordId;
+  } = $props();
 </script>
 
 <div class="p-2 w-72 bg-bgs2 flex flex-col gap-2">
@@ -14,7 +19,7 @@
       <BreadcrumbItem
         label={item.label}
         isOverflowItem={true}
-        on:click={(e) => {
+        onClick={() => {
           if (item.resourceId) {
             appStore.openResource(item.resourceId, AccessMode.POP, {
               replaceId

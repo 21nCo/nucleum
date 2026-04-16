@@ -3,7 +3,11 @@
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import Section from "@21n/landing/shared/Section.svelte";
   import Button from "@21n/landing/shared/elements/Button.svelte";
-  export let commingSoonSectionInputs: any;
+  let {
+    commingSoonSectionInputs,
+  }: {
+    commingSoonSectionInputs: any;
+  } = $props();
   let email: string = "";
 </script>
 

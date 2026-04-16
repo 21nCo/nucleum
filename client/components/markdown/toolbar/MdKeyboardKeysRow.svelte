@@ -1,12 +1,15 @@
 <script lang="ts">
-  import context from "@21n/stores/context.store";
-  import { OperatingSystem } from "@21n/types/context.type";
   import { cn } from "@21n/utils/ui.utils";
   import KeyboardToolbarKey from "@21n/elements/keyboardToolbar/KeyboardToolbarKey.svelte";
-  import { createEventDispatcher } from "svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import { fly } from "svelte/transition";
-  const dispatch = createEventDispatcher();
+  let {
+    onKey = undefined,
+    onClose = undefined
+  }: {
+    onKey?: ((key: string) => void) | undefined;
+    onClose?: (() => void) | undefined;
+  } = $props();
 </script>
 
 <div
@@ -22,44 +25,44 @@
 >
   <KeyboardToolbarKey
     icon="at"
-    on:click={(e) => {
-      dispatch("key", "@");
+    onclick={() => {
+      onKey?.("@");
     }}
   />
   <KeyboardToolbarKey
     icon="hash"
-    on:click={(e) => {
-      dispatch("key", "#");
+    onclick={() => {
+      onKey?.("#");
     }}
   />
   <KeyboardToolbarKey
     icon="asterisk"
-    on:click={(e) => {
-      dispatch("key", "*");
+    onclick={() => {
+      onKey?.("*");
     }}
   />
   <KeyboardToolbarKey
     icon="quote"
-    on:click={(e) => {
-      dispatch("key", '"');
+    onclick={() => {
+      onKey?.('"');
     }}
   />
   <KeyboardToolbarKey
     icon="brackets-square"
-    on:click={(e) => {
-      dispatch("key", "[]");
+    onclick={() => {
+      onKey?.("[]");
     }}
   />
   <KeyboardToolbarKey
     icon="hugeicons:solid-line-01"
-    on:click={(e) => {
-      dispatch("key", "-");
+    onclick={() => {
+      onKey?.("-");
     }}
   />
   <button
     class="p-1 h-[42px] rounded-md flex items-center justify-center flex-1 min-w-0 hover:bg-bgs3"
-    on:click={(e) => {
-      dispatch("close");
+    onclick={() => {
+      onClose?.();
     }}
   >
     <Icon icon="ph:caret-line-down-light" />

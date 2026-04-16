@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
+  import type { Snippet } from "svelte";
   import SearchResultsPopover from "@21n/elements/input/SearchResultsPopover.svelte";
   import InputBaseElement from "@21n/elements/InputBaseElement.svelte";
   import {
@@ -15,55 +15,106 @@
   import { cn } from "@21n/utils/ui.utils";
   import { isExtensionEnvironment } from "@21n/utils/browser.utils";
   import TextInput from "@21n/elements/input/TextInput.svelte";
-  const dispatch = createEventDispatcher();
-  export let id: string = "";
-  export let placeholder: string | undefined = undefined;
-  export let value: any;
-  export let isDisabled = false;
-  export let icon: string | undefined = undefined;
-  export let style: InputStyle = InputStyle.BORDERED;
-  export let label: InputLabel | undefined = undefined;
-  export let popoverOptions: PopoverInputOptions | undefined = undefined;
-  export let searchStoreId: string | undefined = undefined;
-  export let searchCallback: Function | undefined = undefined;
-  export let searchResultComponent: any = undefined;
-  export let searchResultComponentProps: Record<string, unknown> = {};
-  export let emptyStateLabel:
-    | string
-    | { mainText?: string; subText?: string }
-    | undefined = undefined;
-  export let isChipsMode: boolean = false;
-  /**
-   * If true, the search results popover will be shown inline with the input element instead as a popover.
-   */
-  export let isInline: boolean = false;
-  export let width: string | undefined = undefined;
-  /**
-   * Message to be shown at the bottom of the search results popover - will be shown at the bottom left corner
-   */
-  export let bottomMessage: string | undefined = undefined;
-  /**
-   * If true, the search results popover will be shown when the input is focused and hidden when the input is blurred.
-   */
-  export let isShowPopoverOnFocus: boolean = false;
-  export let isShowDefaultResultsOnMount: boolean = false;
-  let isFocused: boolean = false;
-  let chips: any[] = [];
-  let inputRef: any;
-  let popoverRef: any;
-  let searchResultsPopover: SearchResultsPopover;
+
+  let {
+    id = "",
+    placeholder = undefined,
+    value = $bindable(),
+    isDisabled = false,
+    icon = undefined,
+    style = InputStyle.BORDERED,
+    label = undefined,
+    popoverOptions = undefined,
+    searchStoreId = undefined,
+    searchCallback = undefined,
+    searchResultComponent = undefined,
+    searchResultComponentProps = {},
+    emptyStateLabel = undefined,
+    isChipsMode = false,
+    isInline = false,
+    width = undefined,
+    bottomMessage = undefined,
+    popover: popoverSnippet = undefined,
+    isShowPopoverOnFocus = false,
+    isShowDefaultResultsOnMount = false,
+    onBlur = undefined,
+    onChange = undefined,
+    onEmptyEnter = undefined,
+    onFocus = undefined,
+    onHide = undefined,
+    onKeydown = undefined,
+    onKeyup = undefined,
+    onReset = undefined,
+    onSelect = undefined
+  }: {
+    id?: string;
+    placeholder?: string | undefined;
+    value?: any;
+    isDisabled?: boolean;
+    icon?: string | undefined;
+    style?: InputStyle;
+    label?: InputLabel | undefined;
+    popoverOptions?: PopoverInputOptions | undefined;
+    searchStoreId?: string | undefined;
+    searchCallback?: Function | undefined;
+    searchResultComponent?: any;
+    searchResultComponentProps?: Record<string, unknown>;
+    emptyStateLabel?:
+      | string
+      | { mainText?: string; subText?: string }
+      | undefined;
+    isChipsMode?: boolean;
+    isInline?: boolean;
+    width?: string | undefined;
+    bottomMessage?: string | undefined;
+    popover?: Snippet | undefined;
+    isShowPopoverOnFocus?: boolean;
+    isShowDefaultResultsOnMount?: boolean;
+    onBlur?: ((event: CustomEvent<void>) => void) | undefined;
+    onChange?: ((event: CustomEvent<{ value: any }>) => void) | undefined;
+    onEmptyEnter?:
+      | ((event: CustomEvent<{ event: KeyboardEvent; value: any }>) => void)
+      | undefined;
+    onFocus?: ((event: CustomEvent<void>) => void) | undefined;
+    onHide?: ((event: CustomEvent<void>) => void) | undefined;
+    onKeydown?: ((event: KeyboardEvent) => void) | undefined;
+    onKeyup?:
+      | ((event: CustomEvent<{
+          value: any;
+          event: KeyboardEvent;
+          isShowSearchResults: boolean;
+        }>) => void)
+      | undefined;
+    onReset?: ((event: CustomEvent<void>) => void) | undefined;
+    onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
+
+  let isFocused = $state(false);
+  let chips = $state<any[]>([]);
+  let inputRef = $state<any>();
+  let popoverRef = $state<any>();
+  let searchResultsPopover = $state<SearchResultsPopover | undefined>(undefined);
+
   export function focus() {
     if (inputRef) inputRef.focus();
   }
+
   export function blur() {
     if (inputRef) inputRef.blur();
   }
+
   function show() {
     popoverRef?.showPopover();
   }
+
+  function emitHide() {
+    const hideEvent = new CustomEvent<void>("hide");
+    onHide?.(hideEvent);
+  }
+
   function hide() {
     popoverRef?.hidePopover();
-    dispatch("hide");
+    emitHide();
   }
 
   export function showDefaultResults() {
@@ -79,12 +130,30 @@
     return event as unknown as KeyboardEvent;
   }
 
+  function emitKeyup(event: KeyboardEvent) {
+    const keyupEvent = new CustomEvent<{
+      value: any;
+      event: KeyboardEvent;
+      isShowSearchResults: boolean;
+    }>("keyup", {
+      detail: {
+        value,
+        event,
+        isShowSearchResults: !!searchCallback || !!searchStoreId
+      }
+    });
+    if (typeof onKeyup === "function") {
+      onKeyup(keyupEvent);
+    }
+  }
+
   function onInlineKeyup(
     event: CustomEvent<{ event?: KeyboardEvent } | KeyboardEvent>
   ) {
     const keyboardEvent = resolveKeyboardEvent(event);
     if (!keyboardEvent) return;
-    searchResultsPopover.keyup(keyboardEvent);
+    searchResultsPopover?.keyup(keyboardEvent);
+    emitKeyup(keyboardEvent);
   }
 
   function onInlineKeydown(
@@ -92,43 +161,61 @@
   ) {
     const keyboardEvent = resolveKeyboardEvent(event);
     if (!keyboardEvent) return;
-    searchResultsPopover.keydown(keyboardEvent);
+    searchResultsPopover?.keydown(keyboardEvent);
+    onKeydown?.(keyboardEvent);
   }
 
-  function onKeyup(event: any) {
+  function onInputKeyup(event: KeyboardEvent) {
     if (!searchCallback && !searchStoreId) {
       hide();
-      // return;
-    } else show();
-    searchResultsPopover.keyup(event);
-    dispatch("change", { value });
+    } else {
+      show();
+    }
+    searchResultsPopover?.keyup(event);
+    const changeEvent = new CustomEvent<{ value: any }>("change", {
+      detail: { value }
+    });
+    if (typeof onChange === "function") {
+      onChange(changeEvent);
+    }
+    emitKeyup(event);
   }
+
   export function reset() {
-    onReset();
+    onResetInput();
     searchResultsPopover?.reset();
   }
 
-  function onInputBlur(e: FocusEvent) {
+  function onInputBlur(event: FocusEvent) {
     isFocused = false;
-    dispatch("blur");
+    const blurEvent = new CustomEvent<void>("blur");
+    if (typeof onBlur === "function") {
+      onBlur(blurEvent);
+    }
     if (isShowPopoverOnFocus) {
-      const target = e.target as HTMLElement | null;
+      const target = event.target as HTMLElement | null;
       if (!target?.classList?.contains("text-input")) {
         hide();
       }
     }
   }
 
-  function onReset() {
+  function onResetInput() {
     value = "";
     hide();
+    const resetEvent = new CustomEvent<void>("reset");
+    if (typeof onReset === "function") {
+      onReset(resetEvent);
+    }
   }
 
-  function onSelect(e: CustomEvent) {
+  function onSelectInput(event: CustomEvent) {
     if (!isChipsMode) {
-      dispatch("select", e.detail);
+      if (typeof onSelect === "function") {
+        onSelect(event);
+      }
     }
-    chips = [...chips, e.detail.item];
+    chips = [...chips, event.detail.item];
     value = "";
   }
 </script>
@@ -148,8 +235,8 @@
       bind:this={inputRef}
       {placeholder}
       {style}
-      on:keyup={onInlineKeyup}
-      on:keydown={onInlineKeydown}
+      onKeyup={onInlineKeyup}
+      onKeydown={onInlineKeydown}
     />
     <SearchResultsPopover
       bind:this={searchResultsPopover}
@@ -159,10 +246,16 @@
       {searchResultComponent}
       {searchResultComponentProps}
       {bottomMessage}
-      on:select={onSelect}
-      on:empty-enter
-      on:reset
-      on:hide
+      onSelect={onSelectInput}
+      onEmptyEnter={(event) => {
+        onEmptyEnter?.(event);
+      }}
+      onReset={(event: CustomEvent<void>) => onReset?.(event)}
+      onHide={(event) => {
+        if (typeof onHide === "function") {
+          onHide(event);
+        }
+      }}
     />
   </div>
 {:else}
@@ -192,7 +285,7 @@
           <Tag
             label={chip.label}
             size={Size.sm}
-            on:remove={() => {
+            onRemove={() => {
               chips = chips.filter((c) => c.id !== chip.id);
             }}
           />
@@ -211,19 +304,32 @@
       )}
       tabindex="0"
       bind:value
-      on:change|stopPropagation
-      on:keydown={(event) => {
-        searchResultsPopover.keydown(event);
-        dispatch("keydown", event);
+      onchange={(event) => {
+        event.stopPropagation();
       }}
-      on:keyup|stopPropagation={onKeyup}
-      on:blur
-      on:click|stopPropagation
-      on:mouseup|stopPropagation
-      on:blur={onInputBlur}
-      on:focus={() => {
+      onkeydown={(event) => {
+        searchResultsPopover?.keydown(event);
+        if (typeof onKeydown === "function") {
+          onKeydown(event);
+        }
+      }}
+      onkeyup={(event) => {
+        event.stopPropagation();
+        onInputKeyup(event);
+      }}
+      onclick={(event) => {
+        event.stopPropagation();
+      }}
+      onmouseup={(event) => {
+        event.stopPropagation();
+      }}
+      onblur={onInputBlur}
+      onfocus={() => {
         isFocused = true;
-        dispatch("focus");
+        const focusEvent = new CustomEvent<void>("focus");
+        if (typeof onFocus === "function") {
+          onFocus(focusEvent);
+        }
         if (isShowPopoverOnFocus) {
           show();
           showDefaultResults();
@@ -235,20 +341,28 @@
       bind:this={inputRef}
       autocomplete="off"
     />
-    <slot name="popover" slot="popover">
-      <SearchResultsPopover
-        bind:this={searchResultsPopover}
-        on:hide={hide}
-        {searchStoreId}
-        {searchCallback}
-        {emptyStateLabel}
-        {searchResultComponent}
-        {searchResultComponentProps}
-        {bottomMessage}
-        on:select={onSelect}
-        on:empty-enter
-        on:reset={onReset}
-      />
-    </slot>
+    {#snippet popover()}
+      {#if popoverSnippet}
+        {@render popoverSnippet()}
+      {:else}
+        <SearchResultsPopover
+          bind:this={searchResultsPopover}
+          onHide={hide}
+          {searchStoreId}
+          {searchCallback}
+          {emptyStateLabel}
+          {searchResultComponent}
+          {searchResultComponentProps}
+          {bottomMessage}
+          onSelect={onSelectInput}
+          onEmptyEnter={(event) => {
+            if (typeof onEmptyEnter === "function") {
+              onEmptyEnter(event);
+            }
+          }}
+          onReset={onResetInput}
+        />
+      {/if}
+    {/snippet}
   </InputBaseElement>
 {/if}

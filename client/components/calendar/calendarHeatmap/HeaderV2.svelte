@@ -1,26 +1,34 @@
 <script lang="ts">
   import Button from "@21n/elements/button/Button.svelte";
   import { TileScale } from "@21n/components/calendar/calendarHeatmap/calendarHeatmap.types";
-  import { createEventDispatcher } from "svelte";
   import { isTouchDevice } from "@21n/stores/app.store";
   import { moveTouch } from "@21n/utils/touchGesture";
   import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import { Size } from "@21n/types/size.enum";
   import { Orientation } from "@21n/types/direction.enum";
-  export let orientation: Orientation;
-  let dispatch = createEventDispatcher();
-  let activeButton: TileScale = TileScale.DAYS;
+  let {
+    orientation,
+    onPrev = undefined,
+    onNext = undefined,
+    onSwitch = undefined
+  }: {
+    orientation: Orientation;
+    onPrev?: (() => void) | undefined;
+    onNext?: (() => void) | undefined;
+    onSwitch?: ((scale: TileScale) => void) | undefined;
+  } = $props();
+  let activeButton = $state<TileScale>(TileScale.DAYS);
   function chevleft() {
-    dispatch("prev");
+    onPrev?.();
   }
   function chevright() {
-    dispatch("next");
+    onNext?.();
   }
 </script>
 
 <div
-  on:touchmove={() => {
+  ontouchmove={(event) => {
     if (orientation === Orientation.Vertical)
       moveTouch(event, chevright, undefined, chevleft, undefined);
     else moveTouch(event, undefined, chevleft, undefined, chevright, undefined);
@@ -33,26 +41,27 @@
         bind:value={activeButton}
         size={Size.sm}
         style={PanelSwitcherStyle.TRAIN}
-        on:switch
+        onSwitch={(event) => {
+          onSwitch?.(event.detail);
+        }}
       />
     </div>
     <div class="ml-auto flex">
       {#if $isTouchDevice == false}
         {#if orientation === Orientation.Vertical}
           <div class="flex flex-col">
-            <Button icon="chevron-up" size={Size.sm} on:click={chevleft} />
-            <Button icon="chevron-down" size={Size.sm} on:click={chevright} />
+            <Button icon="chevron-up" size={Size.sm} onclick={chevleft} />
+            <Button icon="chevron-down" size={Size.sm} onclick={chevright} />
           </div>
         {:else}
           <div class="self-center">
-            <Button icon="chevron-left" on:click={chevleft} />
+            <Button icon="chevron-left" onclick={chevleft} />
           </div>
           <div class="self-center mr-2">
-            <Button icon="chevron-right" on:click={chevright} />
+            <Button icon="chevron-right" onclick={chevright} />
           </div>
         {/if}
       {/if}
     </div>
   </div>
-  <slot />
 </div>

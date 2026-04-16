@@ -1,17 +1,18 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import type { YearlyData } from "@21n/components/calendar/calendarHeatmap/calendarHeatmap.types";
-  export let data: YearlyData;
-  export let tileValue: string = "";
-  $: if (tileValue == "") {
-    tileValue = String(data.year);
-  }
+  let {
+    data,
+    tileValue = ""
+  }: {
+    data: YearlyData;
+    tileValue?: string;
+  } = $props();
+  const resolvedTileValue = $derived(tileValue === "" ? String(data.year) : tileValue);
 </script>
 
 <span>
   <button id="MaITile">
-    <!--on:click dispatch required event along with data/data.year available here-->
-    {tileValue ?? ""}
+    {resolvedTileValue ?? ""}
   </button>
 </span>
 

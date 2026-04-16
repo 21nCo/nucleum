@@ -10,26 +10,38 @@
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { appStore } from "@21n/stores/app.store";
   import { Product } from "@21n/products/product.type";
-  export let context:
-    | "cmd-page"
-    | "cp-profile"
-    | "account-settings"
-    | "topbar"
-    | "mobile-topbar" = "cp-profile";
-  export let fileId: IRecordId | undefined = undefined;
-  export let isEditing = false;
-  export let isLoading = false;
-  let initials: string | undefined = undefined;
-  let profilePictureUrl: string | undefined = undefined;
+  let {
+    context = "cp-profile",
+    fileId: providedFileId = undefined,
+    isEditing = false,
+    isLoading = false
+  }: {
+    context?:
+      | "cmd-page"
+      | "cp-profile"
+      | "account-settings"
+      | "topbar"
+      | "mobile-topbar";
+    fileId?: IRecordId | undefined;
+    isEditing?: boolean;
+    isLoading?: boolean;
+  } = $props();
+  let fileId = $state<IRecordId | undefined>(undefined);
+  let initials = $state<string | undefined>(undefined);
+  let profilePictureUrl = $state<string | undefined>(undefined);
   const Emojis: string[] = ["🚀", "😁", "✌️", "👓", "⭐️", "🔥", "⚽️", "🛵"];
+  const renderFileBasedProfilePicture = $derived(
+    $appStore.product === Product.MEMOTRON ||
+      $appStore.product === Product.NUCLEUS
+  );
 
   function pickRandomEmoji() {
     return Emojis[Math.floor(Math.random() * Emojis.length)];
   }
 
-  $: renderFileBasedProfilePicture =
-    $appStore.product === Product.MEMOTRON ||
-    $appStore.product === Product.NUCLEUS;
+  $effect(() => {
+    fileId = providedFileId;
+  });
 
   onMount(() => {
     void refresh($account);

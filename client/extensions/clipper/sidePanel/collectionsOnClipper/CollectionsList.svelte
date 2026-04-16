@@ -1,19 +1,16 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import CollectionItem from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/CollectionItem.svelte";
   import type { CollectionData } from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/types";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
 
-  export let collections: CollectionData[];
-
-  const dispatch = createEventDispatcher<{
-    collectionClick: CollectionData;
-  }>();
-
-  function handleCollectionClick(event: CustomEvent<CollectionData>) {
-    dispatch("collectionClick", event.detail);
-  }
+  let {
+    collections,
+    onCollectionClick = undefined
+  }: {
+    collections: CollectionData[];
+    onCollectionClick?: ((collection: CollectionData) => void) | undefined;
+  } = $props();
 </script>
 
 <div class="flex-1 overflow-y-auto">
@@ -26,7 +23,7 @@
   {:else}
     <div class="p-3 space-y-1">
       {#each collections as collection (collection.id)}
-        <CollectionItem {collection} on:click={handleCollectionClick} />
+        <CollectionItem {collection} onclick={onCollectionClick} />
       {/each}
       <ScrollViewBottomSpacer />
     </div>

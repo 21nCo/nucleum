@@ -1,11 +1,11 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { appStore } from "@21n/stores/app.store";
   import view from "@21n/stores/view.store";
   import LeftNavExpandable from "@21n/layout/leftPanel/LeftNavExpandable.svelte";
   import LeftNavFixed from "@21n/layout/leftPanel/LeftNavFixed.svelte";
   import PortraitBottomNav from "@21n/layout/leftPanel/PortraitBottomNav.svelte";
-
-  export let variant: "fixed" | "expandable" = "expandable";
   import ProfileLeftPanelSection from "@21n/components/settings/account/ProfileLeftPanelSection.svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import Icon from "@21n/elements/Icon.svelte";
@@ -13,10 +13,15 @@
   import { Action } from "@21n/types/action.enum";
   import { Size } from "@21n/types/size.enum";
   import { resolveProductConfig } from "@21n/products/product.config";
-  export let isHidePanel = false;
+  let {
+    variant = "expandable",
+    isHidePanel = false
+  }: {
+    variant?: "fixed" | "expandable";
+    isHidePanel?: boolean;
+  } = $props();
   let isRounded = false;
   const productConfig = resolveProductConfig();
-  // $: isRounded = $appearance.skin === AppSkin.Glassy ? true : false;
 </script>
 
 {#if !$appStore.isMenuHidden}
@@ -25,13 +30,13 @@
   {:else if !$view.isPortrait && productConfig.appMenu.length > 0}
     {#if variant === "expandable"}
       <LeftNavExpandable {isRounded}>
-        <slot name="header" slot="header">
+        {#snippet header()}
           <div class="flex flex-col w-full justify-center items-center gap-4">
             <ProfileLeftPanelSection />
             <div class="px-3 w-full mt-4">
               <button
                 class="h-10 w-full flex justify-between items-center px-2 border border-brs3 rounded-md hover:bg-bgs3 text-b2 text-fgs2 font-light"
-                on:click={() => appStore.runAction(Action.SEARCH)}
+                onclick={() => appStore.runAction(Action.SEARCH)}
               >
                 <span class="flex gap-2 items-center">
                   <Icon icon="search" size={Size.sm} />
@@ -45,24 +50,27 @@
               </button>
             </div>
           </div>
-        </slot>
-        <slot name="header-thin" slot="header-thin">
+        {/snippet}
+        {#snippet headerThin()}
           <div class="w-full flex justify-center">
             <Button
               icon="search"
               parentBgIndex={2}
-              on:click={() => appStore.runAction(Action.SEARCH)}
+              onclick={() => appStore.runAction(Action.SEARCH)}
             />
           </div>
-        </slot>
+        {/snippet}
       </LeftNavExpandable>
     {:else if variant === "fixed"}
       <LeftNavFixed {isRounded}>
-        <div slot="panel" class="h-full overflow-auto relative">
-          {#if !isHidePanel && $appStore.currentComponent?.panel}
-            <svelte:component this={$appStore.currentComponent.panel} />
-          {/if}
-        </div>
+        {#snippet panel()}
+          <div class="h-full overflow-auto relative">
+            {#if !isHidePanel && $appStore.currentComponent?.panel}
+              {@const PanelComponent = $appStore.currentComponent.panel}
+              <PanelComponent />
+            {/if}
+          </div>
+        {/snippet}
       </LeftNavFixed>
     {/if}
   {/if}

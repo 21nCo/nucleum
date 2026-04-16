@@ -6,16 +6,12 @@
   import Icon from "@21n/elements/Icon.svelte";
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
-  import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { appStore } from "@21n/stores/app.store";
   import { toasts } from "@21n/stores/notification.store";
   import view from "@21n/stores/view.store";
-  import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
+  import { ButtonVariant } from "@21n/types/button.type";
   import type { IRecordId } from "@21n/types/data.type";
   import { InputStyle } from "@21n/types/input.type";
-  import { Size } from "@21n/types/size.enum";
-  import { InfoTextType } from "@21n/types/text.type";
   import { cn } from "@21n/utils/ui.utils";
   import { linkTagStore } from "@21n/products/memotron/linking/link.store";
   import type {
@@ -24,11 +20,21 @@
   } from "@21n/products/memotron/linking/link.type";
   import LinkTagsGroup from "@21n/products/memotron/linking/LinkTagsGroup.svelte";
 
-  export let accessPoint: ResourceAccessPoint | null = null;
-  let inputValue: string = "";
-  let errorMessage: string | null = null;
-  let isAddFocused = false;
-  let groups: ILinkTagGroup[] = [];
+  let {
+    accessPoint = null
+  }: {
+    accessPoint?: ResourceAccessPoint | null;
+  } = $props();
+  let inputValue = $state("");
+  let errorMessage = $state<string | null>(null);
+  let isAddFocused = $state(false);
+  const groups = $derived.by(() =>
+    $linkTagStore
+      ? linkTagStore
+          .transform($linkTagStore)
+          .filter((group): group is ILinkTagGroup => Boolean(group))
+      : []
+  );
 
   function resolveSavedLinkTag(result: ILinkTag | ILinkTag[] | undefined) {
     return Array.isArray(result) ? result[0] : result;
@@ -62,9 +68,11 @@
     linkTagStore.trash(e.detail);
   }
 
-  function onUpdate(e: CustomEvent<ILinkTag>) {
+  function onUpdate(e: CustomEvent<{ id: IRecordId; label: string }>) {
     logger.log({ at: "LinkTagsControlPanel onUpdate", ...e.detail });
-    linkTagStore.modify(e.detail.id, e.detail);
+    linkTagStore.modify(e.detail.id, {
+      label: e.detail.label
+    });
   }
 
   function onUpdategroup(e: CustomEvent<{ group: string; newgroup: string }>) {
@@ -86,12 +94,6 @@
     if (tags) await linkTagStore.bulkTrash(tags);
     else toasts.error("No tags to delete");
   }
-
-  $: groups = $linkTagStore
-    ? linkTagStore
-        .transform($linkTagStore)
-        .filter((group): group is ILinkTagGroup => Boolean(group))
-    : [];
 </script>
 
 <div
@@ -115,15 +117,15 @@
         bind:value={inputValue}
         style={InputStyle.PLAIN}
         placeholder="Type relation or group:relation"
-        on:enter={() => save()}
-        on:focus={() => (isAddFocused = true)}
-        on:blur={() => (isAddFocused = false)}
+        onEnter={() => save()}
+        onFocus={() => (isAddFocused = true)}
+        onBlur={() => (isAddFocused = false)}
       />
     </div>
     {#if $view.isConstrainedWidth}
       <button
         class="w-14 h-full flex justify-center items-center bg-bgs2 rounded-md"
-        on:click={() => save()}
+        onclick={() => save()}
       >
         <Icon icon="plus" />
       </button>
@@ -132,7 +134,7 @@
         icon="plus"
         label="Add"
         type={ButtonVariant.PRIMARY}
-        on:click={() => save()}
+        onclick={() => save()}
       />
     {/if}
   </div>
@@ -152,11 +154,11 @@
         {#if group?.items && group.items.length > 0}
           <LinkTagsGroup
             {group}
-            on:save={(e) => save(e.detail)}
-            on:updateGroupName={onUpdategroup}
-            on:bulkDelete={onBulkDelete}
-            on:remove={onRemove}
-            on:update={onUpdate}
+            onSave={(e) => save(e.detail)}
+            onUpdateGroupName={onUpdategroup}
+            onBulkDelete={onBulkDelete}
+            onRemove={onRemove}
+            onUpdate={onUpdate}
           />
         {/if}
       {/each}

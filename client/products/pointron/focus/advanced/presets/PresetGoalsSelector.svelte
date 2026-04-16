@@ -17,7 +17,11 @@
   import type { IRecordId } from "@21n/types/data.type";
   import Icon from "@21n/elements/Icon.svelte";
 
-  export let selectedGoals: IGoalThumb[] = [];
+  let {
+    selectedGoals = $bindable([])
+  }: {
+    selectedGoals?: IGoalThumb[];
+  } = $props();
   let searchStore = new SearchStore(Resource.goal);
   let label: string = "";
   let inputRef: any;
@@ -49,9 +53,7 @@
 
 <div class="flex flex-col gap-2">
   <TextSearchInput
-    on:focus
-    on:blur
-    on:select={(e) => onGoalSelect(e?.detail?.item)}
+    onSelect={(e) => onGoalSelect(e?.detail?.item)}
     label={{
       label: "Preset goals (Optional)",
       tooltip: {
@@ -76,7 +78,8 @@
           <Icon
             icon="cross"
             class="text-ccs1 hover:text-ccs2"
-            on:click={() => removeGoal(goal.id)}
+            data-testid={`remove-goal-${goal.id}`}
+            onclick={() => removeGoal(goal.id)}
           />
         </CustomColorPropagator>
       {/each}

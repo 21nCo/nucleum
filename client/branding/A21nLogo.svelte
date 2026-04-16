@@ -1,10 +1,15 @@
 <script lang="ts">
   import { Size } from "@21n/types/size.enum";
-
-  export let fill = "fgs1";
-  export let size: Size = Size.md;
-  let height =
-    size === Size.md ? 61 : size === Size.sm ? 40 : Size.xs ? 28 : 61;
+  let {
+    fill = "fgs1",
+    size = Size.md
+  }: {
+    fill?: string;
+    size?: Size;
+  } = $props();
+  const height = $derived(
+    size === Size.md ? 61 : size === Size.sm ? 40 : size === Size.xs ? 28 : 61
+  );
 </script>
 
 <svg

@@ -1,5 +1,10 @@
 <script lang="ts">
-  export let count: number = 2;
+    let {
+    count = 2,
+  }: {
+    count?: number;
+  } = $props();
+
 </script>
 
 <div class="grid grid-cols-2 gap-2 animate-pulse w-full h-full">

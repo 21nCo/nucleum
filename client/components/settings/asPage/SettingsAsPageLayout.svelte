@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { appStore } from "@21n/stores/app.store";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { Orientation } from "@21n/types/direction.enum";
@@ -15,10 +16,19 @@
   import SettingsFooter from "@21n/components/settings/SettingsFooter.svelte";
   import { resolveProductConfig } from "@21n/products/product.config";
   import OfflineStatusMessage from "@21n/elements/feedback/OfflineStatusMessage.svelte";
-  export let isShowBackButton: boolean = false;
-  $: isCpHome = $page.url.searchParams.get("setting") === null;
+  let {
+    isShowBackButton = false,
+    children = undefined,
+    right = undefined
+  }: {
+    isShowBackButton?: boolean;
+    children?: Snippet | undefined;
+    right?: Snippet | undefined;
+  } = $props();
+  const isCpHome = $derived($page.url.searchParams.get("setting") === null);
   let color = retrieveCurrentColors($appearance)?.aps1;
   const cpConfiguration = resolveProductConfig().settings;
+  void color;
 </script>
 
 {#if $view.isPortrait && !isCpHome}
@@ -30,54 +40,64 @@
       }}
     />
     <div class="flex flex-col flex-grow">
-      <slot />
+      {@render children?.()}
     </div>
   </div>
 {:else if isCpHome || !$view.isPortrait}
   <div class="flex w-full h-full bg-bgs2">
-    <Panel title="Settings" {isShowBackButton} on:back parentBgIndex={2}>
-      <div
-        slot="nonpadded"
-        class="flex flex-col gap-8 grow overflow-auto portrait:pb-40 pb-20"
-      >
-        <div class="pt-4">
-          <ProfileCpSection
-            on:click={() =>
-              appStore.toggleSearchParam({
-                [AppSearchParam.SETTING]: "account"
-              })}
-            parentBackgroundIndex={0}
-          />
-        </div>
-        {#if cpConfiguration}
-          {#each cpConfiguration as item}
-            <SettingsList
-              sectionName={item.isHideTitle ? "" : item.section}
-              items={item.children}
-              orientation={item.orientation
-                ? item.orientation
-                : Orientation.Horizontal}
+    <Panel
+      title="Settings"
+      {isShowBackButton}
+      parentBgIndex={2}
+      onBack={() => {
+        appStore.toggleSearchParam([AppSearchParam.SETTING]);
+      }}
+    >
+      {#snippet nonPadded()}
+        <div class="flex flex-col gap-8 grow overflow-auto portrait:pb-40 pb-20">
+          <div class="pt-4">
+            <ProfileCpSection
+              onclick={() =>
+                appStore.toggleSearchParam({
+                  [AppSearchParam.SETTING]: "account"
+                })}
+              parentBackgroundIndex={0}
             />
-          {/each}
-        {/if}
-        <SettingsFooter />
-      </div>
-      <div slot="toprightactions">
-        <OfflineStatusMessage />
-      </div>
-      <slot name="right" slot="right">
-        <div class="p-4 flex flex-col gap-4 w-full h-full items-start">
-          {#if !isCpHome}
-            <Text
-              style={TextStyle.PANEL_HEADING}
-              content={$view.currentComponent?.label ?? ""}
-            />
-          {/if}
-          <div class="w-full flex-grow">
-            <slot />
           </div>
+          {#if cpConfiguration}
+            {#each cpConfiguration as item}
+              <SettingsList
+                sectionName={item.isHideTitle ? "" : item.section}
+                items={item.children}
+                orientation={item.orientation
+                  ? item.orientation
+                  : Orientation.Horizontal}
+              />
+            {/each}
+          {/if}
+          <SettingsFooter />
         </div>
-      </slot>
+      {/snippet}
+      {#snippet topRightActions()}
+        <OfflineStatusMessage />
+      {/snippet}
+      {#snippet right()}
+        {#if right}
+          {@render right?.()}
+        {:else}
+          <div class="p-4 flex flex-col gap-4 w-full h-full items-start">
+            {#if !isCpHome}
+              <Text
+                style={TextStyle.PANEL_HEADING}
+                content={$view.currentComponent?.label ?? ""}
+              />
+            {/if}
+            <div class="w-full flex-grow">
+              {@render children?.()}
+            </div>
+          </div>
+        {/if}
+      {/snippet}
     </Panel>
   </div>
 {/if}

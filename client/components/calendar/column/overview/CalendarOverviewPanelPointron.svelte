@@ -6,10 +6,17 @@
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import CalendarOverviewFocusMetrics from "./CalendarOverviewFocusMetrics.svelte";
 
-  export let date: Date;
-  export let scale: TimeScale = TimeScale.DAYS;
-  export let isRewind: boolean = false;
-  let isRefreshing = false;
+  let {
+    date,
+    scale = TimeScale.DAYS,
+    isRewind = false
+  }: {
+    date: Date;
+    scale?: TimeScale;
+    isRewind?: boolean;
+  } = $props();
+
+  let isRefreshing = $state(false);
 </script>
 
 <div class="flex flex-col gap-4 h-full w-full">

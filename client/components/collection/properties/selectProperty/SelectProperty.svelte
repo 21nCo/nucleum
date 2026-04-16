@@ -1,6 +1,5 @@
 <script lang="ts">
   import { InputStyle, type InputLabel } from "@21n/types/input.type";
-  import { createEventDispatcher } from "svelte";
   import { Size } from "@21n/types/size.enum";
   import Icon from "@21n/elements/Icon.svelte";
   import SelectPropertyOption from "@21n/components/collection/properties/selectProperty/SelectPropertyOption.svelte";
@@ -17,39 +16,69 @@
   import type { IRecordId } from "@21n/types/data.type";
   import FormElement from "@21n/elements/FormElement.svelte";
   import IconSelect from "@21n/components/collection/properties/selectProperty/IconSelect.svelte";
-  const dispatch = createEventDispatcher();
-  export let property: ISelectProperty | IUniversalProperty;
-  export let options: IPropertyConfigOption[];
-  export let style: InputStyle = InputStyle.FILLED;
-  export let label: InputLabel | undefined = undefined;
-  export let value: string | string[] | null;
-  export let parentBackgroundIndex: number = 0;
-  let isOptionsVisible: boolean = false;
+  let {
+    property,
+    options,
+    style = InputStyle.FILLED,
+    label = undefined,
+    value = $bindable(null),
+    parentBackgroundIndex = 0,
+    onChange = undefined,
+    onNewOption = undefined,
+    onConfigChange = undefined
+  }: {
+    property: ISelectProperty | IUniversalProperty;
+    options: IPropertyConfigOption[];
+    style?: InputStyle;
+    label?: InputLabel | undefined;
+    value?: string | string[] | null;
+    parentBackgroundIndex?: number;
+    onChange?: ((event: CustomEvent<string | string[]>) => void) | undefined;
+    onNewOption?:
+      | ((event: CustomEvent<{ id: IRecordId; label: string }>) => void)
+      | undefined;
+    onConfigChange?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
+  let isOptionsVisible = $state(false);
   let classList = "relative flex flex-col items-start gap-1 w-full";
-  let ref: HTMLElement;
-  $: isMultiSelect =
+  let ref = $state<HTMLElement | undefined>();
+  let isMultiSelect = $derived(
     property.type === PropertyType.MULTI_SELECT ||
-    (property.type === PropertyType.UNIVERSAL &&
-      property.config?.isMultiSelect);
+      (property.type === PropertyType.UNIVERSAL &&
+        property.config?.isMultiSelect)
+  );
 
-  $: isIconSelectType =
+  let isIconSelectType = $derived(
     property.type === PropertyType.UNIVERSAL &&
-    property.config?.type &&
-    iconSelectPropertyTypes.includes(property.config.type);
+      property.config?.type &&
+      iconSelectPropertyTypes.includes(property.config.type)
+  );
 
-  function onSelect(val: string | string[]) {
+  function handleSelect(val: string | string[]) {
     value = val;
     if (!isMultiSelect) hidePopover();
-    dispatch("change", value);
+    onChange?.(
+      new CustomEvent("change", {
+        detail: value
+      })
+    );
   }
 
-  function onNewOption(option: { id: IRecordId; label: string }) {
-    dispatch("newOption", option);
+  function handleNewOption(option: { id: IRecordId; label: string }) {
+    onNewOption?.(
+      new CustomEvent("newOption", {
+        detail: option
+      })
+    );
     hidePopover();
   }
-  function onConfigChange(changes: any) {
+  function handleConfigChange(changes: any) {
     property.config = changes.config;
-    dispatch("configChange", changes);
+    onConfigChange?.(
+      new CustomEvent("configChange", {
+        detail: changes
+      })
+    );
   }
 
   function hidePopover() {
@@ -108,7 +137,7 @@
     isFocused={isOptionsVisible}
   >
     {#if isIconSelectType}
-      <IconSelect {options} {value} {onSelect} {isMultiSelect} />
+      <IconSelect {options} {value} onSelect={handleSelect} {isMultiSelect} />
     {:else}
       <div
         class="flex justify-between gap-4 w-full p-2"
@@ -132,12 +161,12 @@
             },
             isMultiSelect,
             value,
-            onNewOption,
-            onConfigChange,
-            onSelect
+            onNewOption: handleNewOption,
+            onConfigChange: handleConfigChange,
+            onSelect: handleSelect
           }
         }}
-        on:change={onPopoverChange}
+        onchange={onPopoverChange}
       >
         {#if shouldShowPlaceholder(value)}
           <span class="placeholder">

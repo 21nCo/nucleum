@@ -1,23 +1,28 @@
 <script lang="ts">
   import type { ClassListProp } from "@21n/types/classListProp.type";
-  import { createEventDispatcher } from "svelte";
-
-  export let style: string;
-  export let label: string;
-  export let id: string;
-  export let isActive: boolean = false;
-  export let isSelected: boolean = false;
-  let classList: ClassListProp = {
+  let {
+    style,
+    label,
+    id,
+    isActive = false,
+    isSelected = false,
+    onClick = undefined
+  }: {
+    style: string;
+    label: string;
+    id: string;
+    isActive?: boolean;
+    isSelected?: boolean;
+    onClick?: ((detail: { label: string; id: string }) => void) | undefined;
+  } = $props();
+  const classList: ClassListProp = {
     active: "bg-aps1 text-bgs1",
     inactive: "bg-bgs2",
     common: "bg-bgs2 hover:bg-bgs3",
     selected: "bg-bgs4"
   };
-
-  const dispatch = createEventDispatcher();
-
   function handleClick() {
-    dispatch("click", { label, id });
+    onClick?.({ label, id });
   }
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === "Enter") {
@@ -31,8 +36,8 @@
   <div
     tabindex="0"
     {style}
-    on:click={handleClick}
-    on:keydown={handleKeyDown}
+    onclick={handleClick}
+    onkeydown={handleKeyDown}
     class={`cursor-pointer text-b2 py-2 px-2.5  ${classList.common} ${
       isSelected
         ? classList.selected

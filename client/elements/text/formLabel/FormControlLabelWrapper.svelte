@@ -1,12 +1,20 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import view from "@21n/stores/view.store";
   import { Orientation } from "@21n/types/direction.enum";
   import type { InputLabel } from "@21n/types/input.type";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
   import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
-  export let props: InputLabel | undefined = undefined;
-  export let size: Size.md | Size.sm = Size.md;
+  let {
+    props = undefined,
+    size = Size.md,
+    children = undefined
+  }: {
+    props?: InputLabel | undefined;
+    size?: Size.md | Size.sm;
+    children?: Snippet | undefined;
+  } = $props();
 </script>
 
 <div
@@ -36,5 +44,5 @@
   {#if props?.label}
     <FormControlLabel {props} />
   {/if}
-  <slot />
+  {@render children?.()}
 </div>

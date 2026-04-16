@@ -12,28 +12,46 @@
   import Badge from "@21n/elements/text/Badge.svelte";
   import ExternalLogo from "@21n/branding/external/ExternalLogo.svelte";
   import ContemporarySelectorPopover from "@21n/components/featureWheel/options/ContemporarySelectorPopover.svelte";
-  import { createEventDispatcher } from "svelte";
   import FwCategoryLegend from "@21n/components/featureWheel/options/FwCategoryLegend.svelte";
   import FeatureSelectorPopover from "@21n/components/featureWheel/options/FeatureSelectorPopover.svelte";
-  import Button from "@21n/landing/shared/elements/Button.svelte";
+  import Button from "@21n/elements/button/Button.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import type { ISelectValue } from "@21n/types/select.type";
-  const dispatch = createEventDispatcher();
-  export let mode: FeatureWheelMode;
-  export let title: string | undefined = undefined;
-  export let categories: IFwCategory[];
-  export let features: IFwFeature[];
-  export let contemporaries: IContemporary[];
-  export let selectedCategories: string[] | undefined = undefined;
-  export let selectedFeatures: string[] | undefined = undefined;
-  export let selectedCompare: string[] | undefined = undefined;
-  export let includePlannedFeatures: boolean = false;
-  export let isHorizontal = false;
-  let isFeatureSelectorOpen = false;
-  let isCompareWithSelectorOpen = false;
+  import { Size } from "@21n/types/size.enum";
+  let {
+    mode,
+    title = undefined,
+    categories,
+    features,
+    contemporaries,
+    selectedCategories = $bindable(),
+    selectedFeatures = $bindable(),
+    selectedCompare = $bindable(),
+    includePlannedFeatures = $bindable(false),
+    isHorizontal = false,
+    onHowToUse = () => {},
+    onReport = () => {},
+    onChange = (_value?: string[] | boolean) => {}
+  }: {
+    mode: FeatureWheelMode;
+    title?: string | undefined;
+    categories: IFwCategory[];
+    features: IFwFeature[];
+    contemporaries: IContemporary[];
+    selectedCategories?: string[] | undefined;
+    selectedFeatures?: string[] | undefined;
+    selectedCompare?: string[] | undefined;
+    includePlannedFeatures?: boolean;
+    isHorizontal?: boolean;
+    onHowToUse?: () => void;
+    onReport?: () => void;
+    onChange?: (value?: string[] | boolean) => void;
+  } = $props();
+  let isFeatureSelectorOpen = $state(false);
+  let isCompareWithSelectorOpen = $state(false);
   const dev_IsEnableFeatureSelector = false;
   const dev_IsEnablePlannedFeaturesToggle = false;
-  let ref: HTMLButtonElement | null = null;
+  let ref: HTMLButtonElement | null = $state(null);
   // $: contemporariesList = features
   //   .map((feature) => feature.contemporaries)
   //   .flat()
@@ -59,7 +77,7 @@
 
   function handleCompareSelect(selected: ISelectValue[]) {
     selectedCompare = selected.map(String);
-    dispatch("change", selectedCompare);
+    onChange(selectedCompare);
   }
 
   function handleComparePopoverChange(event: Event) {
@@ -69,7 +87,7 @@
 
   function handleFeatureSelect(selected: string[]) {
     selectedFeatures = selected;
-    dispatch("change", selectedFeatures);
+    onChange(selectedFeatures);
   }
 
   function handleFeaturePopoverChange(event: Event) {
@@ -126,11 +144,11 @@
               onSelect: handleCompareSelect,
               onSeeComparisonReport: () => {
                 hidePopover();
-                dispatch("report");
+                onReport();
               }
             }
           }}
-          on:change={handleComparePopoverChange}
+          onchange={handleComparePopoverChange}
         >
           <div class="flex items-center gap-2 h-6">
             {#if selectedCompare && selectedCompare.length > 0}
@@ -165,9 +183,9 @@
           {categories}
           {selectedCategories}
           {isHorizontal}
-          on:categoryClick={(e) => {
-            if (!e.detail?.label) return;
-            const newCategory = e.detail.label;
+          onCategoryClick={(category) => {
+            if (!category?.label) return;
+            const newCategory = category.label;
             if (selectedCategories?.includes(newCategory)) {
               selectedCategories = selectedCategories.filter(
                 (category) => category !== newCategory
@@ -175,7 +193,7 @@
             } else {
               selectedCategories = [...(selectedCategories || []), newCategory];
             }
-            dispatch("change", selectedCategories);
+            onChange(selectedCategories);
           }}
         />
       </div>
@@ -197,7 +215,7 @@
                 onSelect: handleFeatureSelect
               }
             }}
-            on:change={handleFeaturePopoverChange}
+            onchange={handleFeaturePopoverChange}
           >
             <div class="flex items-center gap-2">
               <span> Choose features</span>
@@ -217,9 +235,11 @@
         <div class="flex justify-center">
           <Button
             type="secondary"
+            size={Size.sm}
+            isPreventMinWidth={true}
             label="See comparison report"
-            on:click={() => {
-              dispatch("report");
+            onclick={() => {
+              onReport();
             }}
           />
         </div>
@@ -232,7 +252,7 @@
             <input
               type="checkbox"
               bind:checked={includePlannedFeatures}
-              on:change={() => dispatch("change", includePlannedFeatures)}
+              onchange={() => onChange(includePlannedFeatures)}
               class="accent-aps1"
             />
             <span>Include planned features</span>
@@ -242,8 +262,8 @@
       <div class="flex justify-center">
         <button
           class="flex items-center gap-1 text-b3 text-fgs2 p-2 rounded-md hover:bg-bgs3"
-          on:click={() => {
-            dispatch("howToUse");
+          onclick={() => {
+            onHowToUse();
           }}
         >
           <Icon icon="question" />

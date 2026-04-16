@@ -12,28 +12,48 @@
   import FwOptionsPanel from "@21n/components/featureWheel/options/FwOptionsPanel.svelte";
   import FwSidePanel from "@21n/components/featureWheel/sidePanel/FwSidePanel.svelte";
   import { cn } from "@21n/utils/ui.utils";
-  export let product: string;
-  export let title: string | undefined = undefined;
-  export let features: IFwFeature[];
-  export let categories: IFwCategory[];
-  export let contemporaries: IContemporary[];
-  export let mode: FeatureWheelMode;
-  let wheel: IFeatureWheel;
-  let selectedCategories: string[] | undefined = undefined;
-  let selectedFeatures: string[] | undefined = undefined;
-  let includePlannedFeatures: boolean = false;
+  let {
+    product,
+    title = undefined,
+    features,
+    categories,
+    contemporaries,
+    mode
+  }: {
+    product: string;
+    title?: string | undefined;
+    features: IFwFeature[];
+    categories: IFwCategory[];
+    contemporaries: IContemporary[];
+    mode: FeatureWheelMode;
+  } = $props();
+  let wheel: IFeatureWheel | undefined = $state(undefined);
+  let selectedCategories = $state<string[] | undefined>(undefined);
+  let selectedFeatures = $state<string[] | undefined>(undefined);
+  let includePlannedFeatures = $state(false);
   /**
    * Selected contemporaries to be compared with
    */
-  let selectedCompare: string[] | undefined = undefined;
+  let selectedCompare = $state<string[] | undefined>(undefined);
   /**
    * Feature that is clicked to view
    */
-  let featureView: string | undefined = undefined;
-  let refreshId: number = new Date().getTime();
-  let isShowSidePanel: boolean = false;
-  let isShowGoBack: boolean = false;
-  refreshWheel();
+  let featureView = $state<string | undefined>(undefined);
+  let refreshId = $state(new Date().getTime());
+  let isShowSidePanel = $state(false);
+  let isShowGoBack = $state(false);
+
+  $effect(() => {
+    product;
+    categories;
+    features;
+    contemporaries;
+    mode;
+    selectedCategories;
+    selectedCompare;
+    includePlannedFeatures;
+    refreshWheel();
+  });
 
   function hydrateContemporary(
     contemporary: IFeatureWheelContemporary
@@ -50,7 +70,7 @@
     const groups: IFeatureWheelGroup[] = [];
     let filteredCategories = categories;
     if (selectedCategories && selectedCategories.length > 0) {
-      filteredCategories = categories?.filter((category) =>
+      filteredCategories = categories?.filter((category: IFwCategory) =>
         selectedCategories?.includes(category.label)
       );
     }
@@ -60,36 +80,40 @@
         color: category.color,
         spokes: features
           .filter(
-            (feature) =>
+            (feature: IFwFeature) =>
               feature.category === category.label &&
               (mode === FeatureWheelMode.COMPARER
                 ? (includePlannedFeatures || !feature.isPlanned) &&
                   !feature.isHideForComparer
                 : true)
           )
-          .map((feature) => ({
+          .map((feature: IFwFeature) => ({
             ...feature,
             label: feature.label,
             shortLabel: feature.shortLabel,
             contemporaries:
               selectedCompare && selectedCompare.length > 0
-                ? feature.contemporaries.filter((contemporary) => {
-                    const contemporaryDetail = contemporaries.find(
-                      (c) => c.label === contemporary.label
-                    );
+                ? feature.contemporaries.filter(
+                    (contemporary: IFeatureWheelContemporary) => {
+                      const contemporaryDetail = contemporaries.find(
+                        (c) => c.label === contemporary.label
+                      );
                     return (
                       !contemporaryDetail?.isHideForComparer &&
                       selectedCompare?.includes(contemporary.label)
                     );
-                  })
-                : feature.contemporaries.filter((contemporary) => {
-                    const contemporaryDetail = contemporaries.find(
-                      (c) => c.label === contemporary.label
-                    );
-                    return !contemporaryDetail?.isHideForComparer;
-                  })
+                    }
+                  )
+                : feature.contemporaries.filter(
+                    (contemporary: IFeatureWheelContemporary) => {
+                      const contemporaryDetail = contemporaries.find(
+                        (c) => c.label === contemporary.label
+                      );
+                      return !contemporaryDetail?.isHideForComparer;
+                    }
+                  )
           }))
-          .map((spoke) => ({
+          .map((spoke: IFwFeature) => ({
             ...spoke,
             contemporaries: spoke.contemporaries.map(hydrateContemporary)
           }))
@@ -148,15 +172,12 @@
         bind:selectedFeatures
         bind:selectedCompare
         bind:includePlannedFeatures
-        on:change={() => {
-          refreshWheel();
-        }}
-        on:howToUse={() => {
+        onHowToUse={() => {
           featureView = "howToUse";
           selectedCompare = undefined;
           isShowSidePanel = true;
         }}
-        on:report={() => {
+        onReport={() => {
           isShowSidePanel = true;
         }}
       />
@@ -173,18 +194,16 @@
             {mode}
             {wheel}
             selectedSpoke={featureView}
-            on:spokeClick={(e) => {
-              const detail = e.detail;
+            onSpokeClick={(detail) => {
               if (detail.spoke.includes("+")) {
                 selectedCategories = [detail.group];
-                refreshWheel();
               } else {
                 onFeatureClick(detail.spoke);
               }
             }}
-            on:contemporary={(e) => {
-              if (!e.detail.spoke) return;
-              onFeatureClick(e.detail.spoke);
+            onContemporary={(detail) => {
+              if (!detail.spoke) return;
+              onFeatureClick(detail.spoke);
             }}
           />
         {/key}
@@ -203,15 +222,15 @@
         {selectedCategories}
         {selectedFeatures}
         {isShowGoBack}
-        on:close={() => {
+        onClose={() => {
           isShowSidePanel = false;
           featureView = undefined;
         }}
-        on:feature={(e) => {
-          featureView = e.detail;
+        onFeature={(value) => {
+          featureView = value;
           isShowGoBack = true;
         }}
-        on:goBack={() => {
+        onGoBack={() => {
           isShowGoBack = false;
           featureView = undefined;
         }}

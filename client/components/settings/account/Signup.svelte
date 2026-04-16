@@ -20,11 +20,11 @@
   import { ButtonStyle } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
   import view from "@21n/stores/view.store";
-  let isSignup = true;
-  let message: string | undefined = undefined;
-  let currentProgress: string | undefined = undefined;
-  let isSigningIn = false;
-  let isLoginFromExtension = false;
+  let isSignup = $state(true);
+  let authMode = $state("Sign up");
+  let currentProgress = $state<string | undefined>(undefined);
+  let isSigningIn = $state(false);
+  let isLoginFromExtension = $state(false);
   const managedSyncHosts = [
     "localhost",
     "21n.dev",
@@ -35,19 +35,23 @@
   ];
   let isSelfHosted =
     typeof window !== "undefined" ? resolveIfSelfHostedInstance() : false;
-  let messageParam = $page.url.searchParams.get(AppSearchParam.MSG);
-  $: productName = properCase($appStore.product);
-  if (messageParam) {
+  const messageParam = $derived($page.url.searchParams.get(AppSearchParam.MSG));
+  const productName = $derived(properCase($appStore.product));
+  const messageText = $derived.by(() => {
     if (messageParam === "deleted") {
-      message = "Your account has been deleted.";
-    } else if (messageParam === "signedout") {
-      message = "You have been signed out.";
-    } else if (messageParam === "expired") {
-      message = "Your session has expired. Please login again.";
-    } else if (messageParam === "notfound") {
-      message = "User not found. Please login again.";
+      return "Your account has been deleted.";
     }
-  }
+    if (messageParam === "signedout") {
+      return "You have been signed out.";
+    }
+    if (messageParam === "expired") {
+      return "Your session has expired. Please login again.";
+    }
+    if (messageParam === "notfound") {
+      return "User not found. Please login again.";
+    }
+    return undefined;
+  });
 
   onMount(async () => {
     const isLoginFromExtensionParam = $page.url.searchParams.get(
@@ -65,6 +69,14 @@
       return;
     }
     appStore.gotoPath("/");
+  });
+
+  $effect(() => {
+    authMode = isSignup ? "Sign up" : "Sign in";
+  });
+
+  $effect(() => {
+    isSignup = authMode === "Sign up";
   });
 
   function resolveIfSelfHostedInstance() {
@@ -117,15 +129,8 @@
         {#if $appStore.isDebugMode}
           <PanelSwitcher
             items={["Sign up", "Sign in"]}
-            value="Sign up"
+            bind:value={authMode}
             style={PanelSwitcherStyle.BAR}
-            on:switch={(e) => {
-              if (e.detail === "Sign up") {
-                isSignup = true;
-              } else {
-                isSignup = false;
-              }
-            }}
           />
         {:else}
           <div
@@ -137,9 +142,9 @@
             </div>
           </div>
         {/if}
-        {#if message}
+        {#if messageText}
           <div class="font-medium px-4 text-center text-ass1 text-b2 -mb-4">
-            {message}
+            {messageText}
           </div>
         {/if}
       </div>
@@ -195,7 +200,7 @@
                   style={ButtonStyle.PLAIN}
                   icon="weblink-two"
                   size={Size.sm}
-                  on:click={() => {
+                  onclick={() => {
                     if ($appStore.appData?.urls?.git)
                       appStore.openLink($appStore.appData?.urls?.git);
                   }}
@@ -206,7 +211,7 @@
                 style={ButtonStyle.PLAIN}
                 icon="weblink-two"
                 size={Size.sm}
-                on:click={() => {
+                onclick={() => {
                   if ($appStore.appData?.urls?.pricing)
                     appStore.openLink($appStore.appData?.urls?.pricing);
                   else if ($appStore.appData?.urls?.landing)
@@ -220,7 +225,7 @@
                 icon="weblink-two"
                 style={ButtonStyle.PLAIN}
                 size={Size.sm}
-                on:click={() => {
+                onclick={() => {
                   if ($appStore.appData?.urls?.docs)
                     appStore.openLink($appStore.appData?.urls?.docs);
                 }}
@@ -230,7 +235,7 @@
                 icon="weblink-two"
                 style={ButtonStyle.PLAIN}
                 size={Size.sm}
-                on:click={() => {
+                onclick={() => {
                   if ($appStore.appData?.urls?.discord)
                     appStore.openLink($appStore.appData?.urls?.discord);
                 }}
@@ -243,4 +248,4 @@
   </div>
 {/if}
 
-<svelte:window on:message={handleMessageFromParent} />
+<svelte:window onmessage={handleMessageFromParent} />

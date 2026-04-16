@@ -5,7 +5,11 @@
   import { cn } from "@21n/utils/ui.utils";
   import type { IGridItem } from "@21n/landing/shared/landing.type";
 
-  export let item: IGridItem;
+  let {
+    item,
+  }: {
+    item: IGridItem;
+  } = $props();
 
   let isHovered = false;
   function onMouseEnter() {
@@ -20,8 +24,8 @@
   class="flex flex-col items-start justify--center gap-[14px] w-[480px] mo:w-[342px] max-w-full"
   href={item.href}
   target="_blank"
-  on:mouseenter={onMouseEnter}
-  on:mouseleave={onMouseLeave}
+  onmouseenter={onMouseEnter}
+  onmouseleave={onMouseLeave}
 >
   <div
     class={cn(

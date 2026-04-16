@@ -41,7 +41,7 @@
   import { UIState } from "@21n/stores/uiState/uiState.type";
   import CalendarColumnTasksPanel from "@21n/components/calendar/column/CalendarColumnTasksPanel.svelte";
   import { reorderList } from "@21n/actions/rearrange.action";
-  export let isInEditMode: boolean = false;
+  let { isInEditMode = false }: { isInEditMode?: boolean } = $props();
   let isFocusingAddGoal: boolean = false;
   let focusItems: IFocusItem[] = [];
   let goals: IGoalThumb[] = [];
@@ -262,10 +262,10 @@
             {focusItem}
             {tasks}
             {goals}
-            on:createNew={onCreateNewGoalTask}
-            on:select={onSelect}
-            on:remove={onRemove}
-            on:reorderTasks={onReorderTasksInGoal}
+            onCreateNew={onCreateNewGoalTask}
+            onSelect={onSelect}
+            onRemove={onRemove}
+            onReorderTasks={onReorderTasksInGoal}
             isFocusAddTask={$lastActiveGoalIdForEditing
               ? $lastActiveGoalIdForEditing === focusItem.id
               : index === $focusItemsStore.items.length - 1}
@@ -283,11 +283,11 @@
           : 'border-brs3'}"
       >
         <AddFocusItem
-          on:blur={onBlur}
-          on:focus={onfocus}
-          on:select={onSelect}
-          on:createGoal={onCreateGoal}
-          on:createTask={onCreateStandaloneTask}
+          onBlur={onBlur}
+          onFocus={onfocus}
+          onSelect={onSelect}
+          onCreateGoal={onCreateGoal}
+          onCreateTask={onCreateStandaloneTask}
         />
       </div>
     </div>
@@ -313,7 +313,7 @@
           style={PanelSwitcherStyle.BAR}
           barStyle={BarStyle.DOT}
           size={Size.xs}
-          on:switch={() => {
+          onSwitch={() => {
             uiState.setState(
               UIState.focusItemsPickFromPanel,
               selectedPickFromPanel

@@ -8,7 +8,6 @@
   import { onMount } from "svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { isExtensionEnvironment } from "@21n/utils/browser.utils";
-  import { createEventDispatcher } from "svelte";
   import view from "@21n/stores/view.store";
   import { nodeStore } from "@21n/products/memotron/node/node.store";
   import { NodeType } from "@21n/products/memotron/node/node.type";
@@ -19,24 +18,43 @@
   import context from "@21n/stores/context.store";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { generateResourceId } from "@21n/components/flux/flux.utils";
-  const dispatch = createEventDispatcher();
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CAPTURE;
-  export let isCollectionsLane: boolean = false;
-  export let resultsPlacement: Placement = Placement.BottomCenter;
-  export let searchQuery: string;
-  export let onSelectCallback: ((item: any) => void) | undefined = undefined;
-  export let onHideCallback: (() => void) | undefined = undefined;
-  export let excludeFromSearch: IRecordId[] = [];
-  let popoverOptions: IPopoverOptions;
-  let inputStyle: InputStyle = InputStyle.PLAIN;
-  let placeholder: string =
-    "Start typing to link to a node or add to a curation";
-  let icon: string = "";
-  let label: InputLabel | undefined = undefined;
-  let searchInputRef: TextSearchInput;
-  let isCreationInProgress = false;
+  let {
+    accessPoint = ResourceAccessPoint.CAPTURE,
+    isCollectionsLane = false,
+    resultsPlacement = Placement.BottomCenter,
+    searchQuery = $bindable(""),
+    onSelectCallback = undefined,
+    onHideCallback = undefined,
+    excludeFromSearch = [],
+    onFocus = undefined,
+    onHide = undefined,
+    onSelect = undefined
+  }: {
+    accessPoint?: ResourceAccessPoint;
+    isCollectionsLane?: boolean;
+    resultsPlacement?: Placement;
+    searchQuery?: string;
+    onSelectCallback?: ((item: any) => void) | undefined;
+    onHideCallback?: (() => void) | undefined;
+    excludeFromSearch?: IRecordId[];
+    onFocus?: ((event: CustomEvent<void>) => void) | undefined;
+    onHide?: ((event: CustomEvent<void>) => void) | undefined;
+    onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
+  let popoverOptions = $state<IPopoverOptions | undefined>(undefined);
+  let inputStyle = $state<InputStyle>(InputStyle.PLAIN);
+  let placeholder = $state("Start typing to link to a node or add to a curation");
+  let icon = $state("");
+  let label = $state<InputLabel | undefined>(undefined);
+  let searchInputRef = $state<TextSearchInput | undefined>(undefined);
+  let isCreationInProgress = $state(false);
 
-  $: (accessPoint, isCollectionsLane, resultsPlacement, resolveOptions());
+  $effect(() => {
+    accessPoint;
+    isCollectionsLane;
+    resultsPlacement;
+    resolveOptions();
+  });
 
   export function focus() {
     searchInputRef?.focus();
@@ -117,16 +135,22 @@
     });
   }
 
-  function onSelect(e: CustomEvent) {
+  function handleSelect(e: CustomEvent) {
+    onSelect?.(e);
     onSelectCallback?.(e.detail.item);
-    dispatch("select", e.detail);
     if (searchInputRef && typeof searchInputRef.reset === "function")
       searchInputRef.reset();
   }
 
-  function onHide() {
+  function handleHide() {
+    const hideEvent = new CustomEvent<void>("hide");
+    onHide?.(hideEvent);
     onHideCallback?.();
-    dispatch("hide");
+  }
+
+  function handleFocus() {
+    const focusEvent = new CustomEvent<void>("focus");
+    onFocus?.(focusEvent);
   }
 
   function resolveResourceForCreation(
@@ -178,7 +202,7 @@
       });
     }
     if (result && isValidArrayWithData(result)) {
-      onSelect({ detail: { item: result[0] } } as CustomEvent);
+      handleSelect({ detail: { item: result[0] } } as CustomEvent);
       if (searchInputRef && typeof searchInputRef.reset === "function")
         searchInputRef.reset();
     } else {
@@ -232,10 +256,10 @@
   }}
   {popoverOptions}
   emptyStateLabel={resolveEmptyStateLabel(searchQuery, isCreationInProgress)}
-  on:select={onSelect}
-  on:hide={onHide}
-  on:empty-enter={onEmptyEnter}
-  on:focus
+  onSelect={handleSelect}
+  onHide={handleHide}
+  onEmptyEnter={onEmptyEnter}
+  onFocus={handleFocus}
   searchCallback={onsearch}
   {placeholder}
   isShowPopoverOnFocus={true}

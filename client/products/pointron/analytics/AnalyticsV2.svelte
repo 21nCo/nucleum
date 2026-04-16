@@ -31,19 +31,20 @@
   import { Product } from "@21n/products/product.type";
 
   const bgIndex = 2;
-  const isNucleusContext = $appStore.product === Product.NUCLEUS;
+  const isNucleusContext = $derived($appStore.product === Product.NUCLEUS);
   $selectedPageId = resolvePageSelection();
   onMount(async () => {
     if (!$selectedPageId) {
       $selectedPageId = $analyticsConfigStore.pages[0]?.id;
     }
   });
-  $: pages =
+  let pages = $derived(
     $analyticsConfigStore.pages.length > 0
       ? $analyticsConfigStore.pages?.map((page) => {
           return { label: page.label, value: page.id };
         })
-      : [];
+      : []
+  );
 
   function onPageSwitch(e: CustomEvent<string>) {
     uiState.setState(UIState.analyticsPage, e.detail, {
@@ -86,7 +87,7 @@
                 parentBgIndex={bgIndex}
                 icon="pencil-square"
                 style={ButtonStyle.OUTLINED}
-                on:click={() =>
+                onclick={() =>
                   appStore.runAction(
                     PointronAction.ANALYTICS_VIEWS_PAGE_EDIT_MOBILE
                   )}
@@ -108,38 +109,40 @@
               parentBgIndex={bgIndex}
               tempTitleWithActionDisabled={true}
               bind:value={$selectedPageId}
-              on:switch={onPageSwitch}
-              on:add={onAddPageClicked}
-              on:remove={onRemovePageClicked}
-              on:debouncedChange={onPagelabelChange}
-              on:rearrange={onPageRearrange}
+              onSwitch={onPageSwitch}
+              onAdd={onAddPageClicked}
+              onRemove={onRemovePageClicked}
+              onDebouncedChange={onPagelabelChange}
+              onRearrange={onPageRearrange}
             >
-              <div class="flex items-center gap-2 mr-3" slot="right">
-                {#if $isInEditMode}
-                  <Button
-                    icon="sync"
-                    label="reset"
-                    isPreventMinWidth={true}
-                    size={Size.xs}
-                    on:click={() => {
-                      confirmationNotification.notify({
-                        title: "Reset analytics",
-                        message:
-                          "Are you sure you want to reset analytics? This will remove all pages and cards.",
-                        confirmAction: {
-                          label: "Reset",
-                          variant: ButtonVariant.DANGER,
-                          callback: async () => {
-                            await analyticsConfigStore.reset();
-                            return true;
+              {#snippet right()}
+                <div class="flex items-center gap-2 mr-3">
+                  {#if $isInEditMode}
+                    <Button
+                      icon="sync"
+                      label="reset"
+                      isPreventMinWidth={true}
+                      size={Size.xs}
+                      onclick={() => {
+                        confirmationNotification.notify({
+                          title: "Reset analytics",
+                          message:
+                            "Are you sure you want to reset analytics? This will remove all pages and cards.",
+                          confirmAction: {
+                            label: "Reset",
+                            variant: ButtonVariant.DANGER,
+                            callback: async () => {
+                              await analyticsConfigStore.reset();
+                              return true;
+                            }
                           }
-                        }
-                      });
-                    }}
-                  />
-                {/if}
-                <EditModeToggle />
-              </div>
+                        });
+                      }}
+                    />
+                  {/if}
+                  <EditModeToggle />
+                </div>
+              {/snippet}
             </PanelSwitcher>
           </div>
         </div>

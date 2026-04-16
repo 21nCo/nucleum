@@ -9,15 +9,27 @@
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { toasts } from "@21n/stores/notification.store";
   import { ErrorMessage } from "@21n/components/error/error.type";
-  import { createEventDispatcher } from "svelte";
 
-  export let goalId: IRecordId;
-  export let placeholder: string = "+ add a task";
+  let {
+    goalId,
+    placeholder = "+ add a task",
+    onCreateNew = undefined,
+    onSelect = undefined,
+    onBlur = undefined,
+    onFocus = undefined
+  }: {
+    goalId: IRecordId;
+    placeholder?: string;
+    onCreateNew?:
+      | ((event: CustomEvent<{ label: string; goalId: IRecordId }>) => void)
+      | undefined;
+    onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+    onBlur?: ((event: CustomEvent<void>) => void) | undefined;
+    onFocus?: ((event: CustomEvent<void>) => void) | undefined;
+  } = $props();
   let label: string = "";
   let inputRef: TextSearchInput;
   const searchStore = new SearchStore(Resource.task);
-  const dispatch = createEventDispatcher();
-
   export function focus() {
     inputRef.focus();
   }
@@ -26,10 +38,16 @@
     if (!label) return;
     const labelCopy = label;
     reset();
-    dispatch("createNew", {
-      label: labelCopy,
-      goalId
-    });
+    const createNewEvent = new CustomEvent<{ label: string; goalId: IRecordId }>(
+      "createNew",
+      {
+        detail: {
+          label: labelCopy,
+          goalId
+        }
+      }
+    );
+    onCreateNew?.(createNewEvent);
     // if (goalId) await focusItemsStore.addNewTask(labelCopy, goalId);
   }
 
@@ -49,11 +67,12 @@
     });
   }
 
-  async function onSelect(event: any) {
+  async function handleSelect(event: any) {
     try {
       if (!event.detail.item) return;
       const task = event.detail.item;
-      dispatch("select", task);
+      const selectEvent = new CustomEvent("select", { detail: task });
+      onSelect?.(selectEvent);
     } catch (error: any) {
       toasts.error(error.message ?? ErrorMessage.DEFAULT);
     }
@@ -65,10 +84,10 @@
     <Check isChecked={false} size={Size.sm} />
   </div> -->
   <TextSearchInput
-    on:select={onSelect}
-    on:empty-enter={createNew}
-    on:focus
-    on:blur
+    onSelect={handleSelect}
+    onEmptyEnter={createNew}
+    {onFocus}
+    {onBlur}
     bind:value={label}
     bind:this={inputRef}
     {searchCallback}
@@ -85,7 +104,7 @@
       <div class="flex gap-2 items-center">
         {#if label}
           <Button
-            on:click={createNew}
+            onclick={createNew}
             size={Size.xs}
             icon="plus"
             tooltip="Add"
@@ -93,7 +112,7 @@
           />
         {/if}
         <Button
-          on:click={reset}
+          onclick={reset}
           icon="cross"
           size={Size.xs}
           tooltip="Clear"

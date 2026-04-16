@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import { searchStore } from "@21n/components/search/search.store";
   import { InputStyle } from "@21n/types/input.type";
   import { cn } from "@21n/utils/ui.utils";
@@ -12,30 +12,42 @@
   import { properCase } from "@21n/shared-utils/text.utils";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
-
-  export let style: InputStyle = InputStyle.PLAIN;
-
-  export let isAutoFocus: boolean = false;
-  $: placeholder =
+  let {
+    style = InputStyle.PLAIN,
+    isAutoFocus = false,
+    onBlur = undefined,
+    onChange = undefined,
+    onFocus = undefined
+  }: {
+    style?: InputStyle;
+    isAutoFocus?: boolean;
+    onBlur?: ((event: CustomEvent<void>) => void) | undefined;
+    onChange?: ((event: CustomEvent<string>) => void) | undefined;
+    onFocus?: ((event: CustomEvent<void>) => void) | undefined;
+  } = $props();
+  const placeholder = $derived(
     $searchStore.resourceType === Resource.everything
       ? "Start typing to search or press : to filter"
-      : `Type here to search ${$searchStore.resourceType + "s"}`;
-  const dispatch = createEventDispatcher();
+      : `Type here to search ${$searchStore.resourceType + "s"}`
+  );
+  let inputRef = $state<HTMLInputElement | undefined>();
+  let searchQuery = $state("");
+  let isShowingResourcePicker = $state(false);
+  let resourcePickerQuery = $state("");
+  let availableResources = $state<Resource[]>([]);
+  let selectedResourceIndex = $state(0);
 
-  let inputRef: HTMLInputElement;
-  let searchQuery: string = "";
-  let isShowingResourcePicker: boolean = false;
-  let resourcePickerQuery: string = "";
-  let availableResources: Resource[] = [];
-  let selectedResourceIndex: number = 0;
+  $effect(() => {
+    if (inputRef && !isShowingResourcePicker) {
+      searchQuery = $searchStore.query;
+    }
+  });
 
-  $: if (inputRef && !isShowingResourcePicker) {
-    searchQuery = $searchStore.query;
-  }
-
-  $: if (isShowingResourcePicker) {
-    selectedResourceIndex = 0;
-  }
+  $effect(() => {
+    if (isShowingResourcePicker) {
+      selectedResourceIndex = 0;
+    }
+  });
 
   onMount(() => {
     const resources = resolveProductResources($appStore.product, "search");
@@ -54,6 +66,21 @@
 
   export function blur() {
     inputRef?.blur();
+  }
+
+  function emitChange(value: string) {
+    const changeEvent = new CustomEvent<string>("change", { detail: value });
+    onChange?.(changeEvent);
+  }
+
+  function emitBlur() {
+    const blurEvent = new CustomEvent<void>("blur");
+    onBlur?.(blurEvent);
+  }
+
+  function emitFocus() {
+    const focusEvent = new CustomEvent<void>("focus");
+    onFocus?.(focusEvent);
   }
 
   function handleInput(e: Event) {
@@ -79,7 +106,7 @@
     } else {
       searchQuery = value;
       searchStore.setQuery(value);
-      dispatch("change", value);
+      emitChange(value);
     }
   }
 
@@ -161,13 +188,17 @@
     inputRef?.focus();
   }
 
-  $: filteredResources = availableResources.filter((r) =>
-    r.toLowerCase().includes(resourcePickerQuery.toLowerCase())
+  const filteredResources = $derived(
+    availableResources.filter((r) =>
+      r.toLowerCase().includes(resourcePickerQuery.toLowerCase())
+    )
   );
 
-  $: displayValue = isShowingResourcePicker
-    ? `${searchQuery}:${resourcePickerQuery}`
-    : searchQuery;
+  const displayValue = $derived(
+    isShowingResourcePicker
+      ? `${searchQuery}:${resourcePickerQuery}`
+      : searchQuery
+  );
 </script>
 
 <div class="relative w-full flex items-center gap-2">
@@ -182,7 +213,7 @@
       <span>{properCase($searchStore.resourceType)}s</span>
       <button
         class="ml-1 hover:text-fgs1 flex items-center"
-        on:click={removeResourceType}
+        onclick={removeResourceType}
         tabindex="-1"
       >
         <Icon icon="cross" size={Size.sm} />
@@ -193,12 +224,12 @@
   <div class="relative flex-1">
     <input
       bind:this={inputRef}
-      bind:value={displayValue}
-      on:input={handleInput}
-      on:keydown={handleKeyDown}
-      on:keyup={handleKeyUp}
-      on:blur={() => dispatch("blur")}
-      on:focus={() => dispatch("focus")}
+      value={displayValue}
+      oninput={handleInput}
+      onkeydown={handleKeyDown}
+      onkeyup={handleKeyUp}
+      onblur={() => emitBlur()}
+      onfocus={() => emitFocus()}
       type="text"
       {placeholder}
       class={cn("w-full bg-transparent focus:outline-none focus:border-none", {
@@ -220,9 +251,9 @@
                 "hover:bg-bgs3": index !== selectedResourceIndex
               }
             )}
-            on:click={() => selectResourceType(resource)}
-            on:mousedown={(e) => e.preventDefault()}
-            on:mouseenter={() => (selectedResourceIndex = index)}
+            onclick={() => selectResourceType(resource)}
+            onmousedown={(e) => e.preventDefault()}
+            onmouseenter={() => (selectedResourceIndex = index)}
           >
             <Icon icon={resolveResourceIcon(resource)} size={Size.sm} />
             <span>{properCase(resource)}s</span>

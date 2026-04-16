@@ -6,10 +6,10 @@
   import RedditWidgetScript from "@21n/products/memotron/node/content/web/social/RedditWidgetScript.svelte";
   import SocialPostLoadingInfo from "@21n/products/memotron/node/content/web/social/SocialPostLoadingInfo.svelte";
 
-  export let postUrl: string;
-  let embedHtml: string = "";
-  let loading: boolean = true;
-  let error: string = "";
+  let { postUrl }: { postUrl: string } = $props();
+  let embedHtml = $state("");
+  let loading = $state(true);
+  let error = $state("");
 
   onMount(async () => {
     await loadRedditEmbed();

@@ -18,6 +18,7 @@ import {
   determineResourceAccessMode,
   determineResourceType,
   isSameResource,
+  resolveBulkSelectionAccessPointId,
   resolveResourceActionIcon,
   resourceInList
 } from "@21n/components/flux/resourceStores/resource.utils";
@@ -181,10 +182,14 @@ export class ResourceActions<T extends IActionableResource> {
     accessPoint: ResourceAccessPoint,
     accessPointId?: IRecordId
   ): IContextMenuItem {
-    let multiSelectContext = {
-      resource: determineResourceType(this.resource.id),
+    const resolvedAccessPointId = resolveBulkSelectionAccessPointId(
       accessPoint,
       accessPointId
+    );
+    const multiSelectContext = {
+      resource: determineResourceType(this.resource.id),
+      accessPoint,
+      accessPointId: resolvedAccessPointId
     };
 
     const resolveEditor = () => {
@@ -198,16 +203,18 @@ export class ResourceActions<T extends IActionableResource> {
             bulkEditor.run(action, data);
           },
           onSelectAll: () => bulkEditStore.getState().selectedIds,
-          subContext: accessPointId?.toString()
+          subContext: resolvedAccessPointId?.toString()
         });
       }
     };
 
-    resolveEditor();
     const state = bulkEditStore.getState();
     const selectedItems = state.selectedIds;
+    const isSameSelectionContext = bulkEditStore.matchesContext(multiSelectContext);
     return {
-      label: selectedItems.some(resourceInList(this.resource.id))
+      label:
+        isSameSelectionContext &&
+        selectedItems.some(resourceInList(this.resource.id))
         ? "Unselect"
         : "Select",
       value: ResourceActionType.SELECT,

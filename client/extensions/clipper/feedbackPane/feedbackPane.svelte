@@ -28,8 +28,11 @@
   import { ResourceError } from "@21n/components/error/errors";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import NodeThumbnailSocialPostPreview from "@21n/products/memotron/node/thumbnail/NodeThumbnailSocialPostPreview.svelte";
-
-  export let pageContentType: NodeType | undefined = undefined;
+  let {
+    pageContentType = undefined
+  }: {
+    pageContentType?: NodeType | undefined;
+  } = $props();
 
   let notes: string =
     ($feedbackPane.focusedClip
@@ -51,15 +54,18 @@
     linkBoxRef?.focus();
   }
 
-  $: contentTypeStr = resolveContentTypeString(
-    $feedbackPane.focusedClip?.contentType ?? pageContentType ?? null
+  let contentTypeStr = $derived(
+    resolveContentTypeString(
+      $feedbackPane.focusedClip?.contentType ?? pageContentType ?? null
+    )
   );
 
-  $: linkItems = resolveLinkItems($webpage.links, $feedbackPane.focusedClip);
+  let linkItems = $derived(
+    resolveLinkItems($webpage.links, $feedbackPane.focusedClip)
+  );
 
-  $: propertyValues = resolvePropertyValues(
-    $webpage,
-    $feedbackPane.focusedClip?.id
+  let propertyValues = $derived(
+    resolvePropertyValues($webpage, $feedbackPane.focusedClip?.id)
   );
 
   function resolvePropertyValues(
@@ -212,8 +218,9 @@
       : { message: "Unlinking failed", type: AlertType.ERROR };
   }
   let nowTimer: ReturnType<typeof setInterval>;
-  $: countdown =
-    autoCloseDuration - 1 - Math.floor((now - closeActionTimestamp) / 1000);
+  let countdown = $derived(
+    autoCloseDuration - 1 - Math.floor((now - closeActionTimestamp) / 1000)
+  );
   function onLinkClick(e: CustomEvent) {
     console.log("link click", e.detail);
   }
@@ -261,7 +268,7 @@
   }
 </script>
 
-<FeedbackPaneBase bind:isHovering on:hover={onHover}>
+<FeedbackPaneBase bind:isHovering {onHover}>
   {#if !$feedbackPane.isShowStatusOnly}
     <div class="flex flex-col w-full gap-2">
       <div class="flex w-full justify-between items-center">
@@ -281,7 +288,7 @@
             <Button
               icon="ph:x-circle-light"
               tooltip="Close"
-              on:click={closePane}
+              onclick={closePane}
             />
           {:else if $feedbackPane.isShown && countdown > 0 && !Number.isNaN(countdown)}
             <!-- TODO closing animation circle -->
@@ -294,9 +301,9 @@
         </span>
       </div>
       <LinkBoxOnClipper
-        on:link={onLink}
+        onLink={onLink}
         bind:this={linkBoxRef}
-        on:focus={() => {
+        onFocus={() => {
           $feedbackPane.isUserInitiated = true;
         }}
       />
@@ -305,10 +312,10 @@
         {propertyValues}
         nodeId={$feedbackPane.focusedClip?.id ?? $webpage.id}
         isExpandable={true}
-        on:propertyChange={onPropertyUpdate}
-        on:click={onLinkClick}
-        on:unlink={onUnlink}
-        on:expansion={onExpansion}
+        onPropertyChange={onPropertyUpdate}
+        onClick={onLinkClick}
+        onUnlink={onUnlink}
+        onExpansion={onExpansion}
         isWrapItems={true}
       />
     </div>
@@ -321,8 +328,8 @@
           placeholder="Add notes"
           bind:content={notes}
           bind:this={notesRef}
-          on:debouncedChange={onNotesChange}
-          on:focus={() => {
+          onDebouncedChange={onNotesChange}
+          onFocus={() => {
             $feedbackPane.isUserInitiated = true;
           }}
         />

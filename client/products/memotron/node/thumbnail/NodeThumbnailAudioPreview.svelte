@@ -6,13 +6,12 @@
   import { parseBlob } from "music-metadata";
   import { onDestroy } from "svelte";
   import context from "@21n/stores/context.store";
-  export let url: string = "";
+  let { url = "" }: { url?: string } = $props();
   let imageUrl: string | null = null;
   let showWaveform = true;
   let dev_isTryArtworkFallback = false;
 
   onMount(async () => {
-    // await tryLoadArtwork();
     if (!$context.isEmbed && dev_isTryArtworkFallback) {
       await loadArtworkUsingMetadata();
     }
@@ -71,11 +70,11 @@
         const response = await fetch(url);
         const blob = await response.blob();
         imageUrl = URL.createObjectURL(blob);
-        showWaveform = false; // Hide waveform if we have artwork
+        showWaveform = false;
       }
     } catch (error) {
       console.error("Error loading artwork:", error);
-      showWaveform = true; // Show waveform as fallback
+      showWaveform = true;
     }
   }
 

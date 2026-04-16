@@ -16,7 +16,7 @@
   import { PlanType } from "@21n/components/subscription/userPlan.type";
   let pageAction: IAction | null = null;
   let updatedDate: string | undefined = resolveUpdatedDate();
-  $: config = $appStore?.appData?.help;
+  let config = $derived($appStore?.appData?.help);
   async function runAction(slug: string) {
     if (!slug) return;
     const result = await appStore.runAction(slug, {
@@ -81,7 +81,7 @@
                     orientation={Orientation.Vertical}
                     action={"chat"}
                     width="w-40"
-                    on:click={() => {
+                    onclick={() => {
                       runAction("chat");
                     }}
                   />
@@ -92,7 +92,7 @@
                       orientation={Orientation.Vertical}
                       action={item}
                       width="w-40"
-                      on:click={() => {
+                      onclick={() => {
                         runAction(item);
                       }}
                     />

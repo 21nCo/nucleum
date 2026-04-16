@@ -2,23 +2,46 @@
   import type { ISelectItem, ISelectValue } from "@21n/types/select.type";
   import Icon from "../Icon.svelte";
   import { bg, cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
   import { Size } from "@21n/types/size.enum";
   import { onMount } from "svelte";
   import { tooltip } from "@21n/actions/popover.action";
-  export let options: ISelectItem[];
-  export let selected: ISelectValue | undefined = undefined;
-  export let isIconOnlyMode: boolean = false;
-  export let isExpandOnActiveForIcon = false;
-  export let parentBgIndex: number = 1;
-  export let isAccentColor: boolean = false;
-  export let size: Size.sm | Size.md = Size.sm;
-  export let isActiveIndicatorOnTop: boolean = false;
-  if (selected === undefined) selected = options[0]?.value;
-  const dispatch = createEventDispatcher();
 
-  let containerWidth = 0;
-  let containerEl: HTMLDivElement;
+  let {
+    options,
+    selected = $bindable<ISelectValue | undefined>(undefined),
+    isTablist = false,
+    isIconOnlyMode = false,
+    isExpandOnActiveForIcon = false,
+    parentBgIndex = 1,
+    isAccentColor = false,
+    size = Size.sm,
+    isActiveIndicatorOnTop = false,
+    onSelect = undefined
+  }: {
+    options: ISelectItem[];
+    selected?: ISelectValue | undefined;
+    isTablist?: boolean;
+    isIconOnlyMode?: boolean;
+    isExpandOnActiveForIcon?: boolean;
+    parentBgIndex?: number;
+    isAccentColor?: boolean;
+    size?: Size.sm | Size.md;
+    isActiveIndicatorOnTop?: boolean;
+    onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
+  $effect(() => {
+    if (selected === undefined) selected = options[0]?.value;
+  });
+
+  let containerWidth = $state(0);
+  let containerEl = $state<HTMLDivElement | undefined>();
+
+  function emitSelect(nextSelected: ISelectValue) {
+    const selectEvent = new CustomEvent<any>("select", {
+      detail: nextSelected
+    });
+    onSelect?.(selectEvent);
+  }
 
   onMount(() => {
     if (isExpandOnActiveForIcon && containerEl) {
@@ -50,6 +73,7 @@
 </script>
 
 <div
+  role={isTablist ? "tablist" : undefined}
   bind:this={containerEl}
   class={cn("grid grid-flow-col h-full", {
     "auto-cols-max w-full": !isExpandOnActiveForIcon || isIconOnlyMode
@@ -64,6 +88,9 @@
   {#each options as option (option.value)}
     {@const isSelected = selected === option.value}
     <button
+      type="button"
+      role={isTablist ? "tab" : undefined}
+      aria-selected={isTablist ? isSelected : undefined}
       class={cn(
         "flex items-center justify-center gap-1 h-full text-b2 transition-all duration-300",
         {
@@ -78,9 +105,9 @@
           [`hover:${bg(parentBgIndex)}-striped`]: !isSelected
         }
       )}
-      on:click={() => {
+      onclick={() => {
         selected = option.value;
-        dispatch("select", option.value);
+        emitSelect(option.value);
       }}
       use:tooltip={{
         text: option.label,

@@ -4,7 +4,8 @@
   import Zone from "@21n/components/calendar/birdView/Zone.svelte";
   import {
     type ProgrammedHorizontalWheelEvent,
-    type ProgrammedVerticalWheelEvent
+    type ProgrammedVerticalWheelEvent,
+    type YearPhase
   } from "@21n/components/calendar/birdView/Birdview.type";
   import {
     currentMonthIndex,
@@ -21,8 +22,22 @@
   import { debouncer } from "@21n/utils/utils";
   import { TimeScaleUnit } from "@21n/types/time.type";
 
-  let startX: number;
-  let instaceId = new Date().getTime();
+  let {
+    mode = TimeScaleUnit.DAY,
+    selectedDate = new Date(),
+    birthdate = new Date(1995, 3, 10),
+    groupByBirthdate = true,
+    yearPhases = []
+  }: {
+    mode?: TimeScaleUnit;
+    selectedDate?: Date;
+    birthdate?: Date | string;
+    groupByBirthdate?: boolean;
+    yearPhases?: YearPhase[];
+  } = $props();
+
+  let startX = $state(0);
+  let instaceId = $state(new Date().getTime());
   let handleDaysWheelEvent = (
     e: WheelEvent | ProgrammedVerticalWheelEvent
   ) => {};
@@ -32,23 +47,23 @@
   let handleYearsWheelEvent = (
     e: WheelEvent | ProgrammedVerticalWheelEvent
   ) => {};
-  let reverseScrollInAction: boolean = false;
+  let reverseScrollInAction = $state(false);
   let reverseScrollCheckInterval: ReturnType<typeof setInterval> | null = null;
-  let isNotToday: boolean = false;
-  let isMouseWheelMoveEnabled: boolean = false;
-  let prevScrollLeft: number = 0;
-  let prevScrollWidth: number = 0;
+  let isNotToday = $state(false);
+  let isMouseWheelMoveEnabled = $state(false);
+  let prevScrollLeft = $state(0);
+  let prevScrollWidth = $state(0);
   let panelsContainer: HTMLDivElement;
-  let dateInViewForward: string = "";
-  let dateInViewReverse: string = "";
-  let prevDateInViewReverse: string | null = null;
-  let prevDateInViewForward: string | null = null;
-  let engadged: boolean = false;
-  let startPoint: any = null;
-  let thresholdCrossed = false;
-  let cursorDirection: "right" | "left" | "bidirectional" | "default" =
-    "default";
-  export let mode: TimeScaleUnit = TimeScaleUnit.DAY;
+  let dateInViewForward = $state("");
+  let dateInViewReverse = $state("");
+  let prevDateInViewReverse = $state<string | null>(null);
+  let prevDateInViewForward = $state<string | null>(null);
+  let engadged = $state(false);
+  let startPoint = $state<any>(null);
+  let thresholdCrossed = $state(false);
+  let cursorDirection = $state<"right" | "left" | "bidirectional" | "default">(
+    "default"
+  );
   const zones = [
     "6am-9am",
     "9am-12pm",
@@ -57,11 +72,57 @@
     "6pm-9pm",
     "9pm-12am"
   ];
-  let zonesData: { date: string; data: string[] }[] = [];
+  let zonesData = $state([] as { date: string; data: string[] }[]);
   zonesData = generateZonesData(new Date().toISOString());
-  let daysData = generateDaysData(currentYear, currentMonthIndex);
-  let monthsData = generateMonthsData(currentYear);
-  let yearsData = generateYearsData(currentYear);
+  let daysData = $state(generateDaysData(currentYear, currentMonthIndex));
+  let monthsData = $state(generateMonthsData(currentYear));
+  let yearsData = $state(generateYearsData(currentYear));
+
+  function resolveSelectedDateKey(date: Date) {
+    return Number.isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
+  }
+
+  async function syncToSelectedDate(date: Date) {
+    if (!panelsContainer) return;
+    const isoDate = resolveSelectedDateKey(date);
+    if (!isoDate) return;
+    if (mode === TimeScaleUnit.PART) {
+      zonesData = generateZonesData(date.toISOString());
+      await tick();
+      scrollDateSlotIntoView(`${isoDate}-0`);
+      return;
+    }
+    if (mode === TimeScaleUnit.DAY) {
+      daysData = generateDaysData(date.getFullYear(), date.getMonth());
+      await tick();
+      scrollDateSlotIntoView(isoDate);
+      return;
+    }
+    if (mode === TimeScaleUnit.MONTH) {
+      monthsData = generateMonthsData(date.getFullYear());
+      await tick();
+      scrollDateSlotIntoView(
+        `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
+      );
+      return;
+    }
+    if (mode === TimeScaleUnit.YEAR) {
+      yearsData = generateYearsData(date.getFullYear());
+      await tick();
+      scrollDateSlotIntoView(`${date.getFullYear()}`);
+    }
+  }
+
+  let lastSyncedDateKey = $state("");
+
+  $effect(() => {
+    const dateKey = resolveSelectedDateKey(selectedDate);
+    if (!panelsContainer || !dateKey) return;
+    const syncKey = `${mode}-${dateKey}`;
+    if (syncKey === lastSyncedDateKey) return;
+    lastSyncedDateKey = syncKey;
+    void syncToSelectedDate(selectedDate);
+  });
 
   function generateYearsData(centerYear: number) {
     try {
@@ -170,8 +231,6 @@
     // }
     panelsContainer.scrollBy({ left: offset, behavior: "smooth" });
   }
-
-  let i = 0;
 
   const addZoneDataEnd = (): Promise<void> =>
     new Promise(async (resolve, reject) => {
@@ -668,7 +727,7 @@
     waitUntilDisenganged({ deltaX: deltaX, isWheelEvent: true });
     startX = moveX;
   }
-  let itemsInView: any[] = [];
+  let itemsInView = $state([] as any[]);
 
   function checkVisibility() {
     if (!panelsContainer) return;
@@ -760,49 +819,39 @@
 <div
   class="relative flex flex-col max-w--[800px] max-h--[800px] w-full h-full min-h-[600px]"
 >
-  <!-- <div class="p-2 flex">
-    <PanelSwitcher
-      size={Size.sm}
-      style={PanelSwitcherStyle.TRAIN}
-      items={["Bird", "Classic", "Heatmap"]}
-      value={"Bird"}
-      on:switch={(e) => {
-        console.log(e.detail);
-      }}
-    />
-    {#if isNotToday}
-      <TodayButton on:click={goToToday} />
-    {/if}
-  </div> -->
   <div class="flex h-full w-full overflow-auto">
-    {#key mode && instaceId}
+    {#key `${mode}-${resolveSelectedDateKey(selectedDate)}-${instaceId}`}
       {#if mode != TimeScaleUnit.YEAR}
         <RollerPicker
           {mode}
-          on:selectedDateReset={async (e) => {
-            const date = getISOfromDateString(e.detail);
+          initialDate={selectedDate}
+          {birthdate}
+          {groupByBirthdate}
+          {yearPhases}
+          onSelectedDateReset={async (selectedDate) => {
+            const date = getISOfromDateString(selectedDate);
             zonesData = generateZonesData(date);
             await tick();
             const dateToView = date.split("T")[0] + "-0";
             scrollDateSlotIntoView(dateToView);
           }}
-          on:selectedDateChange={async (e) => {
+          onSelectedDateChange={async (detail) => {
             let date;
-            if (typeof e.detail === "object" && "isPostive" in e.detail) {
-              date = e.detail.selectedDate;
-              if (e.detail.isPostive) {
+            if (typeof detail === "object" && "isPostive" in detail) {
+              date = detail.selectedDate;
+              if (detail.isPostive) {
                 await addZoneDataEnd();
               } else {
                 await addZoneDataStart();
               }
             } else {
-              date = e.detail;
+              date = detail;
             }
             const dateToView = getISOfromDateString(date).split("T")[0] + "-0";
             scrollDateSlotIntoView(dateToView);
           }}
-          on:selectedMonthReset={async (e) => {
-            let date = e.detail;
+          onSelectedMonthReset={async (selectedMonth) => {
+            let date = selectedMonth;
             const month = monthNames.indexOf(date.slice(-3));
             const fistAlphIndex = getFirstAlphabetPosition(date);
             const year = Number(date.slice(0, fistAlphIndex));
@@ -813,27 +862,27 @@
               .split("T")[0];
             scrollDateSlotIntoView(dateToView);
           }}
-          on:selectedMonthChange={async (e) => {
+          onSelectedMonthChange={async (detail) => {
             let date;
-            if (typeof e.detail === "object" && "isPostive" in e.detail) {
-              date = e.detail.selectedMonth + "01";
-              if (e.detail.isPostive) {
+            if (typeof detail === "object" && "isPostive" in detail) {
+              date = detail.selectedMonth + "01";
+              if (detail.isPostive) {
                 await addFewDaysToEnd(31);
               } else {
                 await addFewDaysToStart(31);
               }
             } else {
-              date = e.detail + "01";
+              date = detail + "01";
             }
             const dateToView = getISOfromDateString(date).split("T")[0];
             scrollDateSlotIntoView(dateToView);
             checkVisibility();
           }}
-          on:selectedYearChange={async (e) => {
+          onSelectedYearChange={async (detail) => {
             let date;
-            if (typeof e.detail === "object" && "isPostive" in e.detail) {
-              date = e.detail.selectedYear + "-01";
-              if (e.detail.isPostive) {
+            if (typeof detail === "object" && "isPostive" in detail) {
+              date = detail.selectedYear + "-01";
+              if (detail.isPostive) {
                 monthsData = [
                   ...monthsData,
                   monthsData[monthsData.length - 1] + 1
@@ -843,14 +892,14 @@
                 await tick();
               }
             } else {
-              date = e.detail + "-01";
+              date = detail + "-01";
             }
             scrollDateSlotIntoView(date);
           }}
-          on:mount={async (e) => {
-            handleDaysWheelEvent = e.detail.handleDaysWheelEvent;
-            handleMonthsWheelEvent = e.detail.handleMonthsWheelEvent;
-            handleYearsWheelEvent = e.detail.handleYearsWheelEvent;
+          onMount={async (detail) => {
+            handleDaysWheelEvent = detail.handleDaysWheelEvent;
+            handleMonthsWheelEvent = detail.handleMonthsWheelEvent;
+            handleYearsWheelEvent = detail.handleYearsWheelEvent;
             await tick();
             checkVisibility();
           }}
@@ -900,18 +949,6 @@
   <div
     class="absolute w-full p-4 bottom-0 flex items-center justify-center pointer-events-none"
   >
-    <div class="pointer-events-auto">
-      <!-- <PanelSwitcher
-        style={PanelSwitcherStyle.TRAIN}
-        items={Object.values(TimeScaleUnit)}
-        size={Size.sm}
-        value={mode}
-        on:switch={async (e) => {
-          mode = e.detail;
-          await tick();
-          goToToday();
-        }}
-      /> -->
-    </div>
+    <div class="pointer-events-auto"></div>
   </div>
 </div>

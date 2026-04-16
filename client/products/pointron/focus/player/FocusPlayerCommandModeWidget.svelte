@@ -8,7 +8,7 @@
 
 <button
   class="flex flex-col gap-2 items-start justify-center w-80 rounded-md p-2 hover:bg-bgs2"
-  on:click={() => {
+  onclick={() => {
     fullScreen.show(PointronAction.FULL_SCREEN_FOCUS);
   }}
 >

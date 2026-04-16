@@ -3,11 +3,24 @@
   import SyncStatusListener from "@21n/elements/listeners/SyncStatusListener.svelte";
   import InlineSyncingFeedbackBase from "@21n/elements/feedback/InlineSyncingFeedbackBase.svelte";
 
-  export let resource: Resource;
-  export let isShorter: boolean = false;
-  export let text: string | undefined = undefined;
-  export let padding: string = "";
-  export let isDisableOutTransition: boolean = false;
+    let {
+    resource,
+    isShorter = false,
+    text = undefined,
+    padding = "",
+    isDisableOutTransition = false,
+  }: {
+    resource: Resource;
+    isShorter?: boolean;
+    text?: string | undefined;
+    padding?: string;
+    isDisableOutTransition?: boolean;
+  } = $props();
+
+  
+  
+  
+  
   let isSyncing: boolean = false;
   let syncStatusPropagatorRef: SyncStatusListener | null = null;
 

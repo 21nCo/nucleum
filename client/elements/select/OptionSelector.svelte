@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import { Size } from "@21n/types/size.enum";
   import OptionSelectorItem from "@21n/elements/select/OptionSelectorItem.svelte";
   import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
@@ -13,19 +12,42 @@
   import type { InputLabel } from "@21n/types/input.type";
   import context from "@21n/stores/context.store";
   import { OperatingSystem } from "@21n/types/context.type";
-  const dispatch = createEventDispatcher();
-  export let options: ISelectItem[];
-  export let labelProps: InputLabel | undefined = undefined;
-  export let selected: ISelectValue | undefined = undefined;
-  export let parentBgIndex: number = 1;
-  export let size: Size.lg | Size.md | Size.sm = Size.md;
-  export let style: OptionSelectorStyle = OptionSelectorStyle.OUTLINE;
-  export let iconOrientation: Orientation = Orientation.Horizontal;
-  export let isPreventWrap: boolean = false;
-  export let isShowExpandFeedbackOnActive = false;
-  export let isExpandOnActiveForIcon = false;
-  let classList: string = "flex w-full";
-  if (selected === undefined) selected = options[0]?.value;
+  let {
+    options,
+    labelProps = undefined,
+    selected = $bindable<ISelectValue | undefined>(undefined),
+    parentBgIndex = 1,
+    size = Size.md,
+    style = OptionSelectorStyle.OUTLINE,
+    iconOrientation = Orientation.Horizontal,
+    isPreventWrap = false,
+    isShowExpandFeedbackOnActive = false,
+    isExpandOnActiveForIcon = false,
+    onSelect = undefined
+  }: {
+    options: ISelectItem[];
+    labelProps?: InputLabel | undefined;
+    selected?: ISelectValue | undefined;
+    parentBgIndex?: number;
+    size?: Size.lg | Size.md | Size.sm;
+    style?: OptionSelectorStyle;
+    iconOrientation?: Orientation;
+    isPreventWrap?: boolean;
+    isShowExpandFeedbackOnActive?: boolean;
+    isExpandOnActiveForIcon?: boolean;
+    onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
+  const classList = "flex w-full";
+  $effect(() => {
+    if (selected === undefined) selected = options[0]?.value;
+  });
+
+  function emitSelect(nextSelected: ISelectValue) {
+    const selectEvent = new CustomEvent<any>("select", {
+      detail: nextSelected
+    });
+    onSelect?.(selectEvent);
+  }
 </script>
 
 <FormControlLabelWrapper props={labelProps}
@@ -75,10 +97,10 @@
           {isExpandOnActiveForIcon}
           {iconOrientation}
           isActive={selected === item.value}
-          on:click={() => {
+          onclick={() => {
             if (item.isDisabled) return;
             selected = item.value;
-            dispatch("select", item.value);
+            emitSelect(item.value);
           }}
         />
       {/each}

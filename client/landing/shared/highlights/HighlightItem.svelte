@@ -6,8 +6,14 @@
   import VisualRender from "@21n/landing/shared/VisualRender.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import view from "@21n/stores/view.store";
-  export let highlight: IHighlight;
-  export let isFullWidth: boolean = false;
+  let {
+    highlight,
+    isFullWidth = false,
+  }: {
+    highlight: IHighlight;
+    isFullWidth?: boolean;
+  } = $props();
+
 </script>
 
 <a

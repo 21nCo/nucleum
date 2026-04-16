@@ -1,7 +1,12 @@
 <script lang="ts">
   // @ts-nocheck
   import { onMount } from "svelte";
-  export let text: string;
+    let {
+    text,
+  }: {
+    text: string;
+  } = $props();
+
   let visible = true;
   let timer: any;
 

@@ -5,10 +5,17 @@
   } from "@21n/types/pointron/sessionComposition.type";
   import { formatSeconds } from "@21n/utils/time.utils";
   import { bg, cn } from "@21n/utils/ui.utils";
-  export let preset: SessionComposition;
-  export let isExpandedVariant: boolean;
-  export let parentBackgroundIndex: number;
-  export let isActive: boolean;
+  let {
+    preset,
+    isExpandedVariant,
+    parentBackgroundIndex,
+    isActive
+  }: {
+    preset: SessionComposition;
+    isExpandedVariant: boolean;
+    parentBackgroundIndex: number;
+    isActive: boolean;
+  } = $props();
 </script>
 
 {#if preset.type === SessionCompositionType.POMODORO && preset.numberOfFocusRounds}

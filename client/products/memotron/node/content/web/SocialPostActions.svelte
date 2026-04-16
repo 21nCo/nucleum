@@ -7,8 +7,8 @@
   import { resolveContentPreview } from "@21n/products/memotron/node/node.utils";
   import { properCase } from "@21n/shared-utils/text.utils";
   import { toasts } from "@21n/stores/notification.store";
-  export let node: INode;
-  let hasPermanentCopy = false;
+  let { node }: { node: INode } = $props();
+  let hasPermanentCopy = $derived(!!resolveContentPreview(node));
 
   function resolveOpenInButtonLabel() {
     let suffix = "";
@@ -30,9 +30,7 @@
     }
   }
 
-  $: hasPermanentCopy = !!resolveContentPreview(node);
-
-  $: buttons = [
+  let buttons = $derived([
     ...(hasPermanentCopy
       ? [
           {
@@ -55,7 +53,7 @@
         appStore.openLink(node.url);
       }
     } as IButtonParams
-  ];
+  ]);
 </script>
 
 <ButtonGroup size={Size.xs} {buttons} isFooter={true} />

@@ -61,7 +61,7 @@ function resolveBaseProductStructuredData(product: string) {
           priceCurrency: "USD",
           billingDuration: "P1M"
         },
-        name: `${product} Nucleus Monthly`,
+        name: `${product} Nucleum Monthly`,
         description: "Premium features with advanced analytics and management"
       },
       {
@@ -74,7 +74,7 @@ function resolveBaseProductStructuredData(product: string) {
           priceCurrency: "USD",
           billingDuration: "P1Y"
         },
-        name: `${product} Nucleus Yearly`,
+        name: `${product} Nucleum Yearly`,
         description:
           "Premium features with advanced analytics and management - yearly plan"
       }

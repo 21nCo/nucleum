@@ -53,7 +53,7 @@
         isEnabled={backPath !== null}
         {parentBgIndex}
         isPreventDefault={true}
-        on:click={() => {
+        onclick={() => {
           if (backPath) appStore.gotoPath(backPath);
         }}
       >
@@ -67,7 +67,7 @@
       <ProfileCpSection
         context="modal"
         parentBackgroundIndex={2}
-        on:click={() => {
+        onclick={() => {
           appStore.toggleSearchParam({
             [AppSearchParam.SETTING]: Action.ACCOUNT
           });
@@ -97,7 +97,7 @@
                       action={item}
                       isActive={selected === item}
                       width="w-40"
-                      on:click={() => {
+                      onclick={() => {
                         appStore.toggleSearchParam({
                           [AppSearchParam.SETTING]: item
                         });

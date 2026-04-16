@@ -4,10 +4,11 @@
   import type { TimeScale } from "@21n/types/time.type";
   import { getCorrespoingHorizonFrequencyLabel } from "@21n/utils/time.utils";
   import { onMount } from "svelte";
-  export let item: TimeScale;
-  let value: number;
-  function onInput(event: any) {
-    console.log({ event });
+
+  let { item }: { item: TimeScale } = $props();
+  let value = $state(0);
+
+  function onInput(event: CustomEvent<{ value: number }>) {
     if (!$pointronPreferences.horizonTargets)
       $pointronPreferences.horizonTargets = [];
     let targets = $pointronPreferences.horizonTargets?.filter(
@@ -26,5 +27,5 @@
 <DurationInput
   bind:value
   label={{ label: getCorrespoingHorizonFrequencyLabel(item) + " focus target" }}
-  on:change={onInput}
+  onChange={onInput}
 />

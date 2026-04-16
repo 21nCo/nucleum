@@ -41,7 +41,7 @@
   </div> -->
   <QuickAddDurationsEditor
     values={$pointronPreferences.manualEntryQuickDurations}
-    on:change={onManualEntryQuickDurationsChange}
+    onChange={onManualEntryQuickDurationsChange}
   />
   <div>
     <DurationInput
@@ -53,7 +53,7 @@
         orientation: Orientation.Vertical
       }}
       value={$pointronPreferences.breakReminder ?? 60 * 30}
-      on:change={onBreakReminderChange}
+      onChange={onBreakReminderChange}
     />
   </div>
   {#if !$context.isEmbed}
@@ -65,7 +65,7 @@
         }
       }}
       checked={$pointronPreferences.isEnableAutoPiP ?? false}
-      on:change={onPiPChange}
+      onChange={onPiPChange}
       isExpanded={true}
     />
   {/if}

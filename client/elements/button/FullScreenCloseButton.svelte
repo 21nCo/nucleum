@@ -8,13 +8,24 @@
   import { Placement } from "@21n/types/direction.enum";
   import { cn } from "@21n/utils/ui.utils";
   import Icon from "@21n/elements/Icon.svelte";
-  export let path: string | undefined = undefined;
-  export let accessMode: AccessMode = AccessMode.FULL;
+    let {
+    path = undefined,
+    accessMode = AccessMode.FULL,
+    isFloat = false,
+    style = ButtonVariant.SECONDARY,
+  }: {
+    path?: string | undefined;
+    accessMode?: AccessMode;
+    isFloat?: boolean;
+    style?: ButtonVariant;
+  } = $props();
+
+  
   /**
    * If true, the button will be fully rounded and floating with a margin from the edges. Otherwise, it will stick to the top right corner.
    */
-  export let isFloat: boolean = false;
-  export let style: ButtonVariant = ButtonVariant.SECONDARY;
+  
+  
 </script>
 
 <!-- TODO - watch - changing z-[1000] to z-40 as this is showing close button on top of resource modal when something is in split screen inline -->
@@ -29,7 +40,7 @@
     }
   )}
   use:tooltip={{ text: "Close", direction: Placement.Left }}
-  on:click={() => {
+  onclick={() => {
     if ($view.isConstrainedWidth && !path) appStore.goBack();
     appStore.closeResource({ accessMode });
     if (path) modalEvent.hide(path, "ModalCloseButton.svelte");

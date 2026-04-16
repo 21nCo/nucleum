@@ -1,10 +1,17 @@
 <script lang="ts">
   import type { TimeUnit } from "@21n/types/time.type";
   import TimeUnitItem from "@21n/elements/input/durationInput/TimeUnitItem.svelte";
-  export let units: TimeUnit[];
-  export let currentTimeUnit: TimeUnit;
-  export let selectedIndex: number;
-  export let handleTimeUnitItemClick: (unit: TimeUnit) => void;
+  let {
+    units,
+    currentTimeUnit,
+    selectedIndex,
+    handleTimeUnitItemClick
+  }: {
+    units: TimeUnit[];
+    currentTimeUnit: TimeUnit;
+    selectedIndex: number;
+    handleTimeUnitItemClick: (unit: TimeUnit) => void;
+  } = $props();
 </script>
 
 <div class="bg-bgs1 w-40 rounded-md flex flex-col">
@@ -13,7 +20,7 @@
       <TimeUnitItem
         isActive={currentTimeUnit === unit || selectedIndex === index}
         {unit}
-        on:click={() => handleTimeUnitItemClick(unit)}
+        onclick={() => handleTimeUnitItemClick(unit)}
       />
     {/each}
   {/if}

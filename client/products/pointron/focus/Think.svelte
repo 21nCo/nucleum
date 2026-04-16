@@ -24,7 +24,7 @@
             icon="undo"
             style={ButtonStyle.PLAIN}
             size={Size.sm}
-            on:click={() => {
+            onclick={() => {
               modalEvent.hide(PointronAction.THINK_MODE);
             }}
           />
@@ -40,7 +40,7 @@
             icon="undo"
             style={ButtonStyle.PLAIN}
             size={Size.sm}
-            on:click={() => {
+            onclick={() => {
               modalEvent.hide(PointronAction.THINK_MODE);
             }}
           />

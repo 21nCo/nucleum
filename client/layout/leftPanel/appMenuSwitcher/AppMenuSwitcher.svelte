@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { LayoutContext } from "@21n/types/layout.type";
   import { onMount } from "svelte";
@@ -19,15 +21,20 @@
   import { resolveProductConfig } from "@21n/products/product.config";
   import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { hTrail, vTrail } from "@21n/layout/topNav/tabs/tabs.store";
-
-  export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
-  export let parentBackgroundIndex: number;
-  export let isHovered: boolean = false;
-  $: isHovered;
-  let allPages: IAction[] = [];
-  let defaultPages: IAction[] = [];
-  let userPinnedPages: IAction[] = [];
-  let current: string;
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  let {
+    layoutContext = LayoutContext.DEFAULT,
+    parentBackgroundIndex,
+    isHovered = false
+  }: {
+    layoutContext?: LayoutContext;
+    parentBackgroundIndex: number;
+    isHovered?: boolean;
+  } = $props();
+  let allPages = $state<IAction[]>([]);
+  let defaultPages = $state<IAction[]>([]);
+  let userPinnedPages = $state<IAction[]>([]);
+  let current = $state("");
   const productConfig = resolveProductConfig();
 
   refresh(appMenuStore.get());
@@ -90,11 +97,20 @@
     isInEditMode.set(false);
     hTrail.clear();
     vTrail.clear();
-    // console.log({ item, selected: current });
+    const currentPath = window.location.pathname.replace("/", "");
+    const resolvedCurrent =
+      allPages.find((pageItem) =>
+        currentPath.includes(pageItem.path ?? pageItem.action)
+      )?.action ?? "";
+    const isActivePageWithRightPanel =
+      resolvedCurrent === item.action &&
+      item.type === ActionType.PAGE &&
+      Boolean(new URL(window.location.href).searchParams.get(AccessMode.RIGHT));
     if (
-      current !== item.action ||
+      resolvedCurrent !== item.action ||
       window.location.pathname.includes("/tab") ||
-      item.type !== ActionType.PAGE
+      item.type !== ActionType.PAGE ||
+      isActivePageWithRightPanel
     ) {
       appStore.runAction(item.action);
     }
@@ -121,7 +137,7 @@
       <AppMenuSwitcherItem
         {parentBackgroundIndex}
         {layoutContext}
-        on:click={() => onClick(item)}
+        onClick={() => onClick(item)}
         {item}
       />
     {/each}
@@ -138,7 +154,7 @@
       {parentBackgroundIndex}
       {layoutContext}
       items={defaultPages}
-      on:click={onClickFromGroup}
+      onClick={onClick}
     />
     {#if userPinnedPages.length > 0}
       <div
@@ -156,7 +172,7 @@
           {parentBackgroundIndex}
           {layoutContext}
           items={userPinnedPages}
-          on:click={onClickFromGroup}
+          onClick={onClick}
         />
       </div>
     {/if}

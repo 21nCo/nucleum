@@ -2,8 +2,11 @@
   import { Placement } from "@21n/types/direction.enum";
   import { cn } from "@21n/utils/ui.utils";
   import { toolbarState } from "@21n/extensions/clipper/contentScripts/store";
-  export let position: Placement.Bottom | Placement.Left | Placement.Right =
-    Placement.Bottom;
+  let {
+    position = Placement.Bottom
+  }: {
+    position?: Placement.Bottom | Placement.Left | Placement.Right;
+  } = $props();
   let isDraggedOver: boolean = false;
 </script>
 
@@ -25,16 +28,16 @@
         "border-dashed border-fgs1 bg-fgs3 bg-opacity-70": !isDraggedOver
       }
     )}
-    on:dragover={(event) => {
+    ondragover={(event) => {
       event.preventDefault();
       isDraggedOver = true;
     }}
-    on:dragleave={() => {
+    ondragleave={() => {
       isDraggedOver = false;
     }}
-    on:drop={() => {
+    ondrop={() => {
       isDraggedOver = false;
-      console.log({ at: "on:drop", position });
+      console.log({ at: "ondrop", position });
       if (position) {
         toolbarState.changePosition(position);
       }

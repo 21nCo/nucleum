@@ -18,17 +18,20 @@
   import { resolveProductResources } from "@21n/components/flux/resourceStores/resource.utils";
   import { rootNodeTypeList } from "@21n/products/memotron/node/node.type";
 
-  export let date: Date;
-  let isLoading: boolean = false;
-  let logs: {
+  let { date }: { date: Date } = $props();
+  let isLoading = $state(false);
+  let logs = $state<{
     action: string;
     timestamp: Date;
     resourceLabel?: string;
     resourceId?: IRecordId | IRecordId[];
-  }[] = [];
-  $: if (date) {
-    refresh(date);
-  }
+  }[]>([]);
+
+  $effect(() => {
+    if (date) {
+      refresh(date);
+    }
+  });
 
   async function refresh(date: Date) {
     try {
@@ -123,7 +126,7 @@
     {#each logs as log}
       <button
         class="flex flex-row items-start gap-2 p-2 hover:bg-bgs2 rounded-md"
-        on:click={() => {
+        onclick={() => {
           let id = log.resourceId;
           if (!id) return;
           if (Array.isArray(id)) {

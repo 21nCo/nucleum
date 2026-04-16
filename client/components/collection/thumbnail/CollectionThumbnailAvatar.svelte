@@ -3,11 +3,16 @@
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import { CollectionType, type ICollectionThumb } from "@21n/components/collection/collection.type";
-  export let item: ICollectionThumb;
-  export let isShowFallbackIcons: boolean = false;
-  export let size: Size.sm | Size.md | Size.lg = Size.sm;
-  let avatar: ICollectionThumb["avatar"] | undefined = undefined;
-  $: avatar = item.avatar ?? item.typeToExtend?.avatar;
+  let {
+    item,
+    isShowFallbackIcons = false,
+    size = Size.sm
+  }: {
+    item: ICollectionThumb;
+    isShowFallbackIcons?: boolean;
+    size?: Size.sm | Size.md | Size.lg;
+  } = $props();
+  let avatar = $derived(item.avatar ?? item.typeToExtend?.avatar);
 </script>
 
 {#if item.type === CollectionType.TYPED && avatar}

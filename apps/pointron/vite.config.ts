@@ -6,6 +6,7 @@ import { buildViteAliases, loadAliasMap } from "../../tools/alias-utils.mjs";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 const aliasConfig = buildViteAliases(loadAliasMap());
+process.env.VITE_PRODUCT ||= "pointron";
 
 export default defineConfig({
   server: {

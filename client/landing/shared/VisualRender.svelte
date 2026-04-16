@@ -17,7 +17,11 @@
   import ClipFeature from "@21n/landing/shared/features/visuals/ClipFeature.svelte";
   import SynthesizeFeature from "@21n/landing/shared/features/visuals/SynthesizeFeature.svelte";
   import OrganizeFeature from "@21n/landing/shared/features/visuals/OrganizeFeature.svelte";
-  export let name: string;
+  let {
+    name,
+  }: {
+    name: string;
+  } = $props();
 
   const componentMap: Record<string, any> = {
     last: BuildToLast,
@@ -42,7 +46,8 @@
 </script>
 
 {#if name in componentMap}
-  <svelte:component this={componentMap[name]} />
+  {@const Component = componentMap[name]}
+  <Component />
 {:else}
   <div class="text-sm text-fgs4">-</div>
 {/if}

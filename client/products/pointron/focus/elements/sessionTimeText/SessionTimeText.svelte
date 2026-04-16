@@ -9,14 +9,14 @@
   import { deepCopy } from "@21n/shared-utils/obj.utils";
   import { SessionCompositionType } from "@21n/types/pointron/sessionComposition.type";
   import { resolveSessionSplitFromIntervals } from "@21n/products/pointron/pointron.utils";
-  export let parentBackgroundIndex: number = 1;
-  export let size: Size = Size.md;
-  $: splits = resolveSessionSplitFromIntervals($activeSession.intervals);
-  // $: console.log({
-  //   splits,
-  //   timeElapsed: $sessionStore.timeElapsed,
-  //   intervals: deepCopy($sessionStore.intervals)
-  // });
+  let {
+    parentBackgroundIndex = 1,
+    size = Size.md
+  }: {
+    parentBackgroundIndex?: number;
+    size?: Size;
+  } = $props();
+  let splits = $derived(resolveSessionSplitFromIntervals($activeSession.intervals));
 </script>
 
 <div class="flex w-full flex-col items-center gap-3">

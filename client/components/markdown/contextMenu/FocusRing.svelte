@@ -1,7 +1,14 @@
 <script lang="ts">
   import { cn } from "@21n/utils/ui.utils";
-  export let isFocusing: boolean = false;
-  export let isHint: boolean = false;
+  let {
+    isFocusing = false,
+    isHint = false,
+    onclick = undefined
+  }: {
+    isFocusing?: boolean;
+    isHint?: boolean;
+    onclick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
 </script>
 
 {#if isHint}
@@ -16,6 +23,9 @@
         "border-fgs3": !isFocusing
       }
     )}
-    on:click|stopPropagation
+    onclick={(event) => {
+      event.stopPropagation();
+      onclick?.(event);
+    }}
   />
 {/if}

@@ -1,7 +1,13 @@
 <script lang="ts">
   import { IconVariant } from "@21n/types/icon.type";
-  export let variant: IconVariant = IconVariant.Outline;
-  export let style: string = "normal";
+
+  let {
+    variant = IconVariant.Outline,
+    style = "normal"
+  }: {
+    variant?: IconVariant;
+    style?: string;
+  } = $props();
 </script>
 
 {#if style === "normal"}

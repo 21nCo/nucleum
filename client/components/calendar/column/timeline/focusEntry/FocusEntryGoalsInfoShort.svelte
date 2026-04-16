@@ -1,7 +1,7 @@
 <script lang="ts">
   import Badge from "@21n/elements/text/Badge.svelte";
   import type { ISessionThumb } from "@21n/products/pointron/logs/log.type";
-  export let item: ISessionThumb;
+  let { item }: { item: ISessionThumb } = $props();
 </script>
 
 {#if item.expandedItems && item.expandedItems.length > 0}

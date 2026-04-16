@@ -1,12 +1,94 @@
 <script lang="ts">
-  import SvelteMarkdown from "svelte-markdown";
-  import Link from "@21n/landing/shared/elements/markdownRenderer/Link.svelte";
+  import MarkdownIt from "markdown-it";
+  import { sanitizeUrl } from "@21n/landing/shared/utils/url-sanitizer";
 
-  export let text: string = "";
+  let {
+    text = "",
+  }: {
+    text?: string;
+  } = $props();
+
+  const markdown = new MarkdownIt({
+    html: false,
+    linkify: true
+  });
+
+  const fallbackLinkOpenRenderer =
+    markdown.renderer.rules.link_open ??
+    ((tokens: any, idx: number, options: any, _: any, self: any) =>
+      self.renderToken(tokens, idx, options));
+  const fallbackLinkCloseRenderer =
+    markdown.renderer.rules.link_close ??
+    ((tokens: any, idx: number, options: any, _: any, self: any) =>
+      self.renderToken(tokens, idx, options));
+
+  markdown.validateLink = (url: string) => Boolean(sanitizeUrl(url));
+  markdown.normalizeLink = (url: string) => sanitizeUrl(url) ?? url;
+  markdown.renderer.rules.link_open = (
+    tokens: any,
+    idx: number,
+    options: any,
+    env: any,
+    self: any
+  ) => {
+    const hrefIndex = tokens[idx].attrIndex("href");
+    const href =
+      hrefIndex >= 0 ? (tokens[idx].attrs?.[hrefIndex]?.[1] ?? "") : "";
+    const sanitizedHref = href ? sanitizeUrl(href) : "";
+
+    if (!sanitizedHref) {
+      tokens[idx].tag = "span";
+      if (hrefIndex >= 0) {
+        tokens[idx].attrs?.splice(hrefIndex, 1);
+      }
+    } else {
+      tokens[idx].attrSet("href", sanitizedHref);
+      tokens[idx].attrSet("class", "text-aps1 hover:underline");
+      const isExternal = sanitizedHref.startsWith("http");
+      tokens[idx].attrSet("target", isExternal ? "_blank" : "_self");
+      if (isExternal) {
+        tokens[idx].attrSet("rel", "noopener noreferrer");
+      }
+    }
+
+    return fallbackLinkOpenRenderer(tokens, idx, options, env, self);
+  };
+  markdown.renderer.rules.link_close = (
+    tokens: any,
+    idx: number,
+    options: any,
+    env: any,
+    self: any
+  ) => {
+    if (tokens[idx - 1]?.tag === "span") {
+      tokens[idx].tag = "span";
+    }
+
+    return fallbackLinkCloseRenderer(tokens, idx, options, env, self);
+  };
+
+  const renderedText = $derived(markdown.render(text ?? ""));
+
+  function stopLinkPropagation(node: HTMLElement) {
+    const handleClick = (event: MouseEvent) => {
+      const target = event.target;
+      if (target instanceof Element && target.closest("a")) {
+        event.stopPropagation();
+      }
+    };
+
+    node.addEventListener("click", handleClick);
+
+    return {
+      destroy() {
+        node.removeEventListener("click", handleClick);
+      }
+    };
+  }
 </script>
 
-<div class="markdown-renderer flex flex-col w-full">
-  <SvelteMarkdown source={text} renderers={{ link: Link }} />
+<div class="markdown-renderer flex flex-col w-full" use:stopLinkPropagation>
+  {@html renderedText}
 </div>
 
 <style>

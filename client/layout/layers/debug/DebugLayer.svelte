@@ -17,7 +17,7 @@
   import { Action } from "@21n/types/action.enum";
   import { FallbackTracker } from "@21n/utils/fallbackTracker.utils";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
-  export let isShowAsPage: boolean = false;
+  let { isShowAsPage = false }: { isShowAsPage?: boolean } = $props();
   let isShowDebugOverlay: boolean = false;
   let environment: string = $appStore.env;
   let isShowLogs: boolean = false;
@@ -83,7 +83,7 @@
     {#if !isShowAsPage}
       <button
         class="absolute top-0 right-0 flex flex-col p-1 bg-bgs3 text-fgs1 rounded-lg z-50"
-        on:click={() => (isShowDebugOverlay = false)}
+        onclick={() => (isShowDebugOverlay = false)}
       >
         <Icon icon="minus-circle" />
       </button>
@@ -140,7 +140,7 @@
         <Button
           size={Size.xs}
           icon="reload"
-          on:click={loadFallbackStatuses}
+          onclick={loadFallbackStatuses}
           label="Refresh"
         />
         <Button
@@ -148,7 +148,7 @@
           type={ButtonVariant.DANGER}
           style={ButtonStyle.OUTLINED}
           icon="trash"
-          on:click={resetAllFallbacks}
+          onclick={resetAllFallbacks}
           label="Reset All"
         />
       </div>
@@ -171,7 +171,7 @@
     <div class="flex flex-wrap gap-2 w-full justify-center items-center">
       <Button
         type={ButtonVariant.PRIMARY}
-        on:click={() => {
+        onclick={() => {
           appStore.runAction("dexie-console");
         }}
         size={Size.sm}
@@ -179,7 +179,7 @@
         label="Dexie console"
       />
       <Button
-        on:click={toggleTraceLogging}
+        onclick={toggleTraceLogging}
         size={Size.sm}
         icon={isTraceLoggingEnabled ? "check" : "terminal"}
         label={isTraceLoggingEnabled
@@ -191,12 +191,12 @@
         size={Size.sm}
         type={ButtonVariant.DANGER}
         style={ButtonStyle.OUTLINED}
-        on:click={clearCache}
+        onclick={clearCache}
         label="Clear cache and logout"
       />
       {#if !isShowAsPage}
         <Button
-          on:click={() => {
+          onclick={() => {
             isShowDebugOverlay = false;
           }}
           label="Close"
@@ -207,7 +207,7 @@
 {:else}
   <button
     class="absolute bottom-20 right-0 flex flex-col p-4 bg-bgs3 opacity-50 text-fgs1 rounded-lg z-50"
-    on:click={() => (isShowDebugOverlay = true)}
+    onclick={() => (isShowDebugOverlay = true)}
   >
     <Icon icon="code" />
   </button>
@@ -218,7 +218,7 @@
   >
     <button
       class="absolute top-0 right-0 flex flex-col p-1 text-fgs1 rounded-lg z-50"
-      on:click={() => (isShowLogs = false)}
+      onclick={() => (isShowLogs = false)}
     >
       <Icon icon="minus-circle" size={Size.lg} />
     </button>

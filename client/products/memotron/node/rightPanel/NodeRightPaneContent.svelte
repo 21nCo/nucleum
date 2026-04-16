@@ -13,9 +13,15 @@
   import NodeMetadataPane from "@21n/products/memotron/node/metadata/NodeMetadataPane.svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  export let node: IActiveNodeStore;
-  export let mdId: string | undefined = undefined;
-  export let renderingDetails: any = undefined;
+  let {
+    node,
+    mdId = undefined,
+    renderingDetails = undefined
+  }: {
+    node: IActiveNodeStore;
+    mdId?: string | undefined;
+    renderingDetails?: any;
+  } = $props();
 </script>
 
 <div
@@ -29,7 +35,7 @@
     <Button
       icon="x-circle"
       tooltip="Close"
-      on:click={() => {
+      onclick={() => {
         node.switchPanel($node.defaultPanel);
       }}
     />

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { Arrangement } from "@21n/types/direction.enum";
   import {
     headingNodeTypes,
@@ -46,75 +47,102 @@
   import Icon from "@21n/elements/Icon.svelte";
   import NodeThumbnailSocialPostPreview from "@21n/products/memotron/node/thumbnail/NodeThumbnailSocialPostPreview.svelte";
   import CoverRenderer from "@21n/elements/coverPicker/CoverRenderer.svelte";
-  export let item: INode | INodeThumb;
-  export let arrangement: Arrangement = Arrangement.LIST;
-  export let isHidePreview: boolean = false;
-  export let isHideTitle: boolean = false;
-  export let visibleProps: IProperty[] = [];
-  export let size: Size.sm | Size.md = Size.md;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
-  export let accessPointContext: string | undefined = undefined;
-  export let accessPointId: IRecordId;
-  export let collectionContext: "board" | "default" | undefined = undefined;
-  export let isApplyCustomColor: boolean = false;
-  export let parentBgIndex = 1;
-  export let isDraggable: boolean = false;
-  export let refreshId: number = new Date().getTime();
-  export let isAlwaysShowContextMenuOnTouchDevice: boolean = false;
+  let {
+    item = $bindable(),
+    arrangement = Arrangement.LIST,
+    isHidePreview = false,
+    isHideTitle = false,
+    visibleProps = [],
+    size = Size.md,
+    accessPoint = ResourceAccessPoint.BROWSER,
+    accessPointContext = undefined,
+    accessPointId,
+    collectionContext = undefined,
+    isApplyCustomColor = false,
+    parentBgIndex = 1,
+    isDraggable = false,
+    refreshId = new Date().getTime(),
+    isAlwaysShowContextMenuOnTouchDevice = false,
+    isHovering = $bindable(false),
+    onAction = undefined,
+    onClick = undefined,
+    onLoad = undefined,
+    right: rightContent = undefined,
+    bottom: bottomContent = undefined
+  }: {
+    item: INode | INodeThumb;
+    arrangement?: Arrangement;
+    isHidePreview?: boolean;
+    isHideTitle?: boolean;
+    visibleProps?: IProperty[];
+    size?: Size.sm | Size.md;
+    accessPoint?: ResourceAccessPoint;
+    accessPointContext?: string | undefined;
+    accessPointId: IRecordId;
+    collectionContext?: "board" | "default" | undefined;
+    isApplyCustomColor?: boolean;
+    parentBgIndex?: number;
+    isDraggable?: boolean;
+    refreshId?: number;
+    isAlwaysShowContextMenuOnTouchDevice?: boolean;
+    isHovering?: boolean;
+    onAction?: ((event: CustomEvent<any>) => void) | undefined;
+    onClick?: ((event: MouseEvent) => void) | undefined;
+    onLoad?: ((event: CustomEvent<Event>) => void) | undefined;
+    right?: Snippet | undefined;
+    bottom?: Snippet | undefined;
+  } = $props();
 
-  let isHovering: boolean = false;
-  let _url: string;
-  let filePreview: IFile | IRecordId | undefined;
-  let hasFullFileDetails = false;
-  let resolvedFilePreview: IFile | undefined;
-  let resolvedFilePreviewId: IRecordId | undefined;
-  let youtubeTimestamp: number | undefined;
-  $: void size;
-  $: void collectionContext;
-  $: void parentBgIndex;
-  $: filePreview = resolveFilePreview(item);
-  $: hasFullFileDetails =
-    !!filePreview && typeof filePreview === "object";
-  $: resolvedFilePreview = hasFullFileDetails
-    ? (filePreview as IFile)
-    : undefined;
-  $: resolvedFilePreviewId =
-    typeof filePreview === "string" ? filePreview : undefined;
-  $: urlPreview = resolveUrlPreview(item);
-  $: contentPreview = resolveContentPreview(item);
-  $: youtubeTimestamp =
+  let _url = $state<string | undefined>(undefined);
+  let filePreview = $derived(resolveFilePreview(item) as IFile | IRecordId | undefined);
+  let hasFullFileDetails = $derived(!!filePreview && typeof filePreview === "object");
+  let resolvedFilePreview = $derived(
+    hasFullFileDetails ? (filePreview as IFile) : undefined
+  );
+  let resolvedFilePreviewId = $derived(
+    typeof filePreview === "string" ? filePreview : undefined
+  );
+  let urlPreview = $derived(resolveUrlPreview(item));
+  let contentPreview = $derived(resolveContentPreview(item));
+  let youtubeTimestamp = $derived(
     item.contentType === NodeType.YOUTUBE_BOOKMARK &&
-    item.body &&
-    typeof item.body !== "string" &&
-    "timestamp" in item.body &&
-    typeof item.body.timestamp === "number"
+      item.body &&
+      typeof item.body !== "string" &&
+      "timestamp" in item.body &&
+      typeof item.body.timestamp === "number"
       ? item.body.timestamp
-      : undefined;
-  $: isTextClip =
+      : undefined
+  );
+  let isTextClip = $derived(
     item.contentType === NodeType.WEB_TEXT_BOOKMARK ||
-    item.contentType === NodeType.KINDLE_HIGHLIGHT;
-  $: isFullExpand =
+      item.contentType === NodeType.KINDLE_HIGHLIGHT
+  );
+  let isFullExpand = $derived(
     isTextClip ||
-    socialPostNodeTypeList.has(item.contentType) ||
-    (accessPoint === ResourceAccessPoint.NODE_TRACES &&
-      item.contentType !== NodeType.YOUTUBE_BOOKMARK);
-  $: isShouldContainImage = resolveIfImageShouldContain(item.contentType);
-
-  $: isLinkContext =
+      socialPostNodeTypeList.has(item.contentType) ||
+      (accessPoint === ResourceAccessPoint.NODE_TRACES &&
+        item.contentType !== NodeType.YOUTUBE_BOOKMARK)
+  );
+  let isShouldContainImage = $derived(
+    resolveIfImageShouldContain(item.contentType)
+  );
+  let isLinkContext = $derived(
     accessPoint === ResourceAccessPoint.NODE_LINKS ||
-    accessPoint === ResourceAccessPoint.DEFAULT_RIGHT_PANE_LINKS;
-
-  $: socialFallbackText =
+      accessPoint === ResourceAccessPoint.DEFAULT_RIGHT_PANE_LINKS
+  );
+  let socialFallbackText = $derived(
     socialPostNodeTypeList.has(item.contentType) &&
-    !isValidString(contentPreview)
+      !isValidString(contentPreview)
       ? `Unknown ${enumToString(item.contentType)}`
-      : undefined;
-
-  $: socialPreviewText = socialPostNodeTypeList.has(item.contentType)
-    ? isValidString(contentPreview)
-      ? contentPreview
-      : socialFallbackText
-    : undefined;
+      : undefined
+  );
+  let socialPreviewText = $derived(
+    socialPostNodeTypeList.has(item.contentType)
+      ? isValidString(contentPreview)
+        ? contentPreview
+        : socialFallbackText
+      : undefined
+  );
 
   onMount(async () => {
     await resolveUrl();
@@ -134,6 +162,25 @@
       refreshId = new Date().getTime();
     }
   }
+
+  function propagateClick(event: MouseEvent) {
+    onClick?.(event);
+  }
+
+  function propagateAction(event: CustomEvent<any>) {
+    onAction?.(event);
+  }
+
+  function propagateLoad(event: CustomEvent<Event>) {
+    onLoad?.(event);
+  }
+
+  function propagateDomLoad(event: Event) {
+    const loadEvent = new CustomEvent<Event>("load", {
+      detail: event
+    });
+    propagateLoad(loadEvent);
+  }
 </script>
 
 <ResourceThumbnailBase
@@ -147,7 +194,8 @@
   {isHidePreview}
   {isAlwaysShowContextMenuOnTouchDevice}
   bind:isHovering
-  on:action
+  onAction={propagateAction}
+  right={rightContent}
 >
   {#if arrangement === Arrangement.LIST}
     <div
@@ -167,14 +215,12 @@
         class={cn(
           "flex w-full items-center border- rounded--md truncate",
           !isFullExpand && {
-            "h-16":
+          "h-16":
               (!isLinkContext || isFullExpand) &&
               (!visibleProps || visibleProps.length === 0)
-            // "bg-ccs5 hover:bg-ccs4 border-ccs2": isApplyCustomColor,
-            // "bg-bgs2 border-brs3 hover:border-fgs4": !isApplyCustomColor
           }
         )}
-        on:click
+        onclick={propagateClick}
       >
         {#if item.cover || item.previewImage || (item.contentType !== NodeType.NODULAR_MARKDOWN && !headingNodeTypes.includes(item.contentType))}
           <div
@@ -187,7 +233,6 @@
                 "h-10": !visibleProps || visibleProps.length === 0,
                 "border-r": !isLinkContext && isApplyCustomColor,
                 "border-ccs2": isApplyCustomColor
-                // "border-brs3": !isApplyCustomColor
               }
             )}
           >
@@ -200,10 +245,7 @@
                 isHideControls={true}
                 isLazyLoad={true}
                 isUseThumbnailIfAvailable={true}
-                class={cn("object-cover h-full w-full rounded-md", {
-                  // "rounded-md": isLinkContext,
-                  // "rounded-full": !isLinkContext
-                })}
+                class="object-cover h-full w-full rounded-md"
               />
             {:else if item.cover}
               <CoverRenderer
@@ -214,18 +256,12 @@
               <ImagePreview
                 src={urlPreview}
                 {arrangement}
-                class={cn("object-cover h-full w-full rounded-md", {
-                  // "rounded-md": isLinkContext
-                })}
+                class="object-cover h-full w-full rounded-md"
               />
             {:else if item.contentType === NodeType.AUDIO && _url}
               <span class="w-full h-full overflow-clip">
                 <NodeThumbnailAudioPreview url={_url} />
               </span>
-              <!-- {:else if item.contentType === NodeType.PDF && _url}
-              <span class="w-full h-full overflow-clip relative z-0">
-                <NodeThumbnailPdfPreview url={_url} />
-              </span> -->
             {:else}
               <div
                 class={cn("h-full text-wrap text-left text-b3 overflow-clip", {
@@ -302,12 +338,12 @@
           {formatSeconds(youtubeTimestamp ?? 0, TimeFormat.CLOCK)}
         </span>
       {/if}
-      <slot name="bottom" />
+      {@render bottomContent?.()}
     </div>
   {:else if arrangement === Arrangement.GRID}
     <ResourceGridThumbnail
       {item}
-      on:click
+      onclick={propagateClick}
       {isHidePreview}
       {isApplyCustomColor}
       size={accessPoint === ResourceAccessPoint.BROWSER ? Size.sm : Size.md}
@@ -380,7 +416,8 @@
           {/if}
         </div>
       {/if}
-      <div slot="bottom" class="flex flex-col w-full h--5">
+      {#snippet bottom()}
+      <div class="flex flex-col w-full h--5">
         {#key refreshId}
           <NodeThumbnailTitle node={item} />
         {/key}
@@ -394,7 +431,9 @@
             />
           </div>
         {/if}
+        {@render bottomContent?.()}
       </div>
+      {/snippet}
     </ResourceGridThumbnail>
   {:else if arrangement === Arrangement.MASONRY}
     {#if item.cover}
@@ -413,7 +452,7 @@
           "rounded-md": isHideTitle,
           "rounded-t-md": !isHideTitle
         })}
-        on:load
+        onLoad={propagateLoad}
       />
     {:else if urlPreview && socialProfileNodeTypeList.has(item.contentType) && !socialProfileWithImageUnavailable.has(item.contentType)}
       <div class="relative h-20">
@@ -423,7 +462,7 @@
       <ImagePreview
         src={urlPreview}
         {arrangement}
-        on:load
+        onLoad={propagateDomLoad}
         class={cn("w-full h-auto", {
           "rounded-md": isHideTitle,
           "rounded-t-md": !isHideTitle
@@ -496,9 +535,6 @@
       </div>
     {/if}
   {/if}
-  <slot slot="right" name="right">
-    <slot name="right" />
-  </slot>
 </ResourceThumbnailBase>
 
-<ComponentBaseLayer subscribeToRecords={[item.id]} on:change={onNodeChange} />
+<ComponentBaseLayer subscribeToRecords={[item.id]} onChange={onNodeChange} />

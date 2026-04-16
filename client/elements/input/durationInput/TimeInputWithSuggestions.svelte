@@ -1,21 +1,29 @@
 <script lang="ts">
   import { TimeUnit } from "@21n/types/time.type";
-  import { createEventDispatcher } from "svelte";
   import { cn } from "@21n/utils/ui.utils";
   import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
   import { InputStyle } from "@21n/types/input.type";
-  const dispatch = createEventDispatcher();
-  export let units: TimeUnit[];
-  export let duration: number;
-  export let currentUnit: TimeUnit;
-  export let hoursLimit: number | undefined = undefined;
-  /**
-   * Suggestions are temporarily disabled due to lack of reliability.
-   */
-  export let isSuggestionsDisabled: boolean = true;
-  let isFocusing: boolean = false;
-  let value = "";
-  $: {
+
+  let {
+    units,
+    duration = $bindable(0),
+    currentUnit = $bindable(TimeUnit.MINUTES),
+    hoursLimit = undefined,
+    isSuggestionsDisabled = true,
+    onChange = undefined
+  }: {
+    units: TimeUnit[];
+    duration?: number;
+    currentUnit?: TimeUnit;
+    hoursLimit?: number | undefined;
+    isSuggestionsDisabled?: boolean;
+    onChange?:
+      | ((event: CustomEvent<{ value: number; unit: TimeUnit }>) => void)
+      | undefined;
+  } = $props();
+  let isFocusing = $state(false);
+  let value = $state("");
+  $effect(() => {
     if (currentUnit === TimeUnit.HOURS) {
       value = `${duration / 3600}`;
     } else if (currentUnit === TimeUnit.MINUTES) {
@@ -23,18 +31,10 @@
     } else {
       value = `${duration}`;
     }
-  }
+  });
 
-  /**
-   * Generate suggestions based on the search
-   * Examples: 1h, 1h 30m, 1m, 1m 30s
-   *
-   * @param searchQuery
-   */
   function generateSuggestions(searchQuery: string) {
     const input = parseFloat(searchQuery);
-    if (!isNaN(input)) {
-    }
     let suggestions: any[] = [];
     const hasLetter = /[a-z]/i.test(searchQuery);
 
@@ -77,12 +77,10 @@
     return suggestions;
   }
   function onsearch(searchQuery: string) {
-    console.log({ value: searchQuery });
     let suggestions: { label: string; value: number; unit: TimeUnit }[] = [];
     if (searchQuery.length > 0 && !isSuggestionsDisabled) {
       suggestions = generateSuggestions(searchQuery);
     }
-    console.log({ suggestions });
     return suggestions;
   }
   function onselect(
@@ -92,7 +90,7 @@
   ) {
     duration = event.detail.item.value;
     currentUnit = event.detail.item.unit;
-    dispatch("change", { value: duration, unit: currentUnit });
+    propagateChange();
   }
   function onkeyup(
     x: CustomEvent<{
@@ -101,7 +99,6 @@
       isShowSearchResults: boolean;
     }>
   ) {
-    console.log("onkeyup", x);
     const event = x.detail.event;
     if (x.detail.isShowSearchResults) return;
     if (!/^\d+$/.test(x.detail.value)) return;
@@ -117,10 +114,10 @@
         : currentUnit === TimeUnit.MINUTES
           ? 60
           : 1);
-    dispatch("change", { value: duration, unit: currentUnit });
+    propagateChange();
     event.preventDefault();
   }
-  function onChange(event: any) {
+  function handleChange(event: any) {
     if (!event.detail?.value) return;
     if (!/^\d+$/.test(value)) return;
     duration =
@@ -130,7 +127,14 @@
         : currentUnit === TimeUnit.MINUTES
           ? 60
           : 1);
-    dispatch("change", { value: duration, unit: currentUnit });
+    propagateChange();
+  }
+
+  function propagateChange() {
+    const changeEvent = new CustomEvent("change", {
+      detail: { value: duration, unit: currentUnit }
+    });
+    onChange?.(changeEvent);
   }
 </script>
 
@@ -142,14 +146,14 @@
 >
   <TextSearchInput
     bind:value
-    on:keyup={onkeyup}
-    on:focus={() => (isFocusing = true)}
-    on:blur={() => (isFocusing = false)}
-    on:change={onChange}
+    onKeyup={onkeyup}
+    onFocus={() => (isFocusing = true)}
+    onBlur={() => (isFocusing = false)}
+    onChange={handleChange}
     style={InputStyle.PLAIN}
     placeholder="Duration"
     searchCallback={isSuggestionsDisabled ? undefined : onsearch}
-    on:select={onselect}
+    onSelect={onselect}
     popoverOptions={{ offsetInPx: 10 }}
   />
 </div>

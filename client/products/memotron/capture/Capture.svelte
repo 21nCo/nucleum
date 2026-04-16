@@ -43,23 +43,35 @@
   import { Context } from "@21n/types/appStore.type";
   import EdgeButton from "@21n/elements/button/EdgeButton.svelte";
 
-  export let captureId: IRecordId = generateResourceId(Resource.capture);
-  export let isWindowDnD = false;
+  let {
+    captureId = generateResourceId(Resource.capture),
+    isWindowDnD = false
+  }: {
+    captureId?: IRecordId;
+    isWindowDnD?: boolean;
+  } = $props();
   const captureContext = {
     id: captureId
   };
 
   setContext(Context.CAPTURE, captureContext);
-  let captureStore: IActiveCaptureStore;
-  if (captureId) captureStore = ActiveCaptureStore.resolve(captureId);
+  let captureStore = $state<IActiveCaptureStore>(
+    ActiveCaptureStore.resolve(captureId)
+  );
   isInEditMode.set(true);
   let writerRef: Writer | undefined = undefined;
   let subs: any[] = [];
-  let isWebModalOpen = false;
+  let isWebModalOpen = $state(false);
   let captureTopBarRef: CaptureTopBar | undefined = undefined;
 
-  $: isShowBottomCloseButton =
-    !$view.isConstrainedWidth && $captureStore?.isEmpty;
+  const isShowBottomCloseButton = $derived(
+    !$view.isConstrainedWidth && $captureStore?.isEmpty
+  );
+
+  $effect(() => {
+    captureContext.id = captureId;
+    captureStore = ActiveCaptureStore.resolve(captureId);
+  });
 
   onMount(async () => {
     const appEventSub = appEvents.subscribe(async (x: IEvent) => {
@@ -88,9 +100,6 @@
     });
   });
 
-  /**
-   * Note: a timeout is added to remove query params - since without timeout, it is interfering with removal of pop query param for capture thus the capture modal keeps opening
-   */
   onDestroy(() => {
     subs.forEach((x) => x());
     setTimeout(() => {
@@ -102,8 +111,7 @@
     }, 100);
   });
 
-  async function onTypeSelect(e: CustomEvent) {
-    const selected = e.detail;
+  async function onTypeSelect(selected: string) {
     await captureStore.onTypeSelect(selected);
     if (selected === CaptureMethod.WEB) {
       isWebModalOpen = true;
@@ -125,19 +133,22 @@
     reset();
   }
 
-  function handleWebArtifactAdd(
-    event: CustomEvent<{ item: WebArtifact; tab: string }>
-  ) {
-    const artifact = event.detail?.item;
+  function handleWebArtifactAdd({
+    item: artifact
+  }: {
+    item: WebArtifact;
+    tab: string;
+  }) {
     if (!artifact) return;
-    //TODO - complete web artifact integration
     isWebModalOpen = false;
   }
 
-  function handleWebArtifactPreview(
-    event: CustomEvent<{ item: WebArtifact; tab: string }>
-  ) {
-    const artifact = event.detail?.item;
+  function handleWebArtifactPreview({
+    item: artifact
+  }: {
+    item: WebArtifact;
+    tab: string;
+  }) {
     if (!artifact) return;
     const url =
       artifact.externalUrl ??
@@ -156,9 +167,11 @@
     }
   }
 
-  $: if ($captureStore.method !== CaptureMethod.WEB && isWebModalOpen) {
-    isWebModalOpen = false;
-  }
+  $effect(() => {
+    if ($captureStore.method !== CaptureMethod.WEB && isWebModalOpen) {
+      isWebModalOpen = false;
+    }
+  });
 </script>
 
 {#if $captureStore.isSaving && $captureStore.method !== CaptureMethod.UPLOAD}
@@ -178,9 +191,9 @@
           <CaptureTopBar
             bind:this={captureTopBarRef}
             {captureStore}
-            on:focusBody={() => writerRef?.focus()}
-            on:clear={reset}
-            on:save={onSave}
+            onFocusBody={() => writerRef?.focus()}
+            onClear={reset}
+            {onSave}
           />
         {/if}
         <main class="flex flex-col gap-6 w-full flex-grow">
@@ -191,7 +204,7 @@
             })}
           >
             {#if $captureStore.method === CaptureMethod.UPLOAD && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
-              <FileUploader {captureStore} on:clear={reset} />
+              <FileUploader {captureStore} onClear={reset} />
             {:else if $captureStore.method === CaptureMethod.WEB}
               <div
                 class="flex h-full w-full flex-col items-center justify-center gap-4 rounded-3xl border border-dashed border-brs3 bg-bgs2/60 px-6 text-center"
@@ -205,7 +218,7 @@
                   label="Open Add from Web"
                   type={ButtonVariant.PRIMARY}
                   size={Size.md}
-                  on:click={() => {
+                  onclick={() => {
                     isWebModalOpen = true;
                   }}
                 />
@@ -214,10 +227,10 @@
               <Writer
                 {captureStore}
                 bind:this={writerRef}
-                on:change={(e) => {
+                onChange={(e) => {
                   captureStore.onMdContentChanges(e);
                 }}
-                on:clear={reset}
+                onClear={reset}
               />
             {/if}
           </div>
@@ -226,16 +239,14 @@
               <TypeSelector
                 selected={$captureStore.method}
                 isHideTypeShortcuts={$captureStore.isCaptureFromCollectionPage}
-                on:select={onTypeSelect}
-                on:capture={(e) => {
-                  captureStore.handleCapture(e.detail);
-                }}
+                onSelect={onTypeSelect}
+                onCapture={captureStore.handleCapture}
               />
               <CaptureDraftsAction
-                on:select={(e) => {
-                  captureId = e.detail.id;
+                onSelect={(draft) => {
+                  captureId = draft.id;
                   captureStore = ActiveCaptureStore.resolve(captureId);
-                  captureStore.load(e.detail);
+                  captureStore.load(draft);
                 }}
               />
               {#if $view.isConstrainedWidth}
@@ -252,7 +263,7 @@
           >
             <button
               class="flex w-12 h-12 text-fgs3 hover:bg-bgs3 bg-bgs2 rounded-full items-center justify-center"
-              on:click={reset}
+              onclick={reset}
             >
               <Icon icon="cross" />
             </button>
@@ -264,7 +275,7 @@
               icon="cross"
               tooltip="Close capture"
               label="Close"
-              on:click={() => {
+              onclick={() => {
                 appStore.closeResource({ accessMode: AccessMode.MAIN });
               }}
             />
@@ -277,11 +288,11 @@
 
 <WebCaptureModal
   open={isWebModalOpen}
-  on:close={() => {
+  onClose={() => {
     isWebModalOpen = false;
   }}
-  on:add={handleWebArtifactAdd}
-  on:preview={handleWebArtifactPreview}
+  onAdd={handleWebArtifactAdd}
+  onPreview={handleWebArtifactPreview}
 />
 
 <ComponentBaseLayer hasDragAndDrop={!isWindowDnD} />

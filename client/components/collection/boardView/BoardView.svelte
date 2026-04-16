@@ -27,17 +27,26 @@
   } from "@21n/components/collection/properties/property.type";
   import { nodeStore } from "@21n/products/memotron/node/node.store";
 
-  export let collection: IActiveCollectionStore;
-  export let view: ICollectionView;
-  export let data: ICollectionItem[] = [];
-  export let isBoardOverflow = false;
+  let {
+    collection,
+    view,
+    data = $bindable([]),
+    isBoardOverflow = false
+  }: {
+    collection: IActiveCollectionStore;
+    view: ICollectionView;
+    data?: ICollectionItem[];
+    isBoardOverflow?: boolean;
+  } = $props();
 
-  $: boardCounts = calculateGroupingCounts(data, view.groupBy);
-  $: groups = resolveOptionsForGrouping(
-    view.groupBy,
-    $collection.properties ?? [],
-    boardCounts,
-    { isBoardView: true }
+  let boardCounts = $derived(calculateGroupingCounts(data, view.groupBy));
+  let groups = $derived(
+    resolveOptionsForGrouping(
+      view.groupBy,
+      $collection.properties ?? [],
+      boardCounts,
+      { isBoardView: true }
+    )
   );
 
   async function handleDropItem(e: any) {
@@ -153,7 +162,7 @@
         {group}
         {isBoardOverflow}
         {data}
-        on:dropItem={handleDropItem}
+        onDropItem={handleDropItem}
       />
     {/each}
   </div>

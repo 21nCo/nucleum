@@ -9,14 +9,20 @@
     [key: string]: unknown;
   };
 
-  export let url: string;
-  export let timestamp: number | null = null;
-  let videoId: string | null = null;
+  let {
+    url,
+    timestamp: initialTimestamp = null
+  }: {
+    url: string;
+    timestamp?: number | null;
+  } = $props();
+  let timestamp = $state<number | null>(initialTimestamp);
+  let videoId = $derived(url ? extractVideoId(url) : null);
 
   const instanceId = Math.random().toString(36).substring(2, 15);
   let player: any;
-  let playerReady = false;
-  let errorMessage = "";
+  let playerReady = $state(false);
+  let errorMessage = $state("");
 
   onMount(() => {
     if (url) {

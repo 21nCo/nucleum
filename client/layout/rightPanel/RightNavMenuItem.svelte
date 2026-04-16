@@ -7,9 +7,17 @@
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
   import { cn } from "@21n/utils/ui.utils";
   import { Size } from "@21n/types/size.enum";
-  export let icon: string;
-  export let tooltip: string;
-  export let shortcut: string | undefined = undefined;
+  let {
+    icon,
+    tooltip,
+    shortcut = undefined,
+    onClick = undefined
+  }: {
+    icon: string;
+    tooltip: string;
+    shortcut?: string;
+    onClick?: (event: MouseEvent) => void;
+  } = $props();
   let isHovered: boolean = false;
 </script>
 
@@ -36,7 +44,7 @@
         }
       : {}
   }}
-  on:click
+  onclick={onClick}
 >
   <Icon {icon} isFilled={isHovered} class={cn({ "text-fgs3": isHovered })} />
   <!-- <span class="text-b5 text-fgs2">

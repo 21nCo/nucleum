@@ -2,9 +2,15 @@
   import Rating from "@21n/components/collection/properties/ratingProperty/Rating.svelte";
   import { InputStyle } from "@21n/types/input.type";
   import EndText from "@21n/components/collection/properties/propertyConfig/EndText.svelte";
-  export let avatar: string;
-  export let value: number = 0;
-  export let count: number = 5;
+  let {
+    avatar,
+    value = $bindable(0),
+    count = $bindable(5)
+  }: {
+    avatar: string;
+    value?: number;
+    count?: number;
+  } = $props();
   let experimentalCountIncrementor = false;
 </script>
 
@@ -12,7 +18,7 @@
   <span class="flex items-center gap-1 h-full">
     {#if experimentalCountIncrementor}
       <button
-        on:click={() => {
+        onclick={() => {
           count = Math.max(3, count - 1);
         }}
         class="flex items-center h-full px-1 py-[0.06rem] rounded-full border border-brs3"
@@ -24,7 +30,7 @@
   </span>
   {#if experimentalCountIncrementor}
     <button
-      on:click={() => {
+      onclick={() => {
         count = Math.min(10, count + 1);
       }}
       class="flex items-center h-full px-1 py-[0.06rem] rounded-full border border-brs3"

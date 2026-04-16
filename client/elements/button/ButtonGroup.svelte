@@ -4,11 +4,24 @@
   import { cn } from "@21n/utils/ui.utils";
   import Button from "@21n/elements/button/Button.svelte";
   import BoxButton from "./BoxButton.svelte";
-  export let buttons: IButtonParams[] = [];
-  export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
-  export let isFooter: boolean = false;
-  export let parentBgIndex: number = 1;
-  export let width: string = "";
+    let {
+    buttons = [],
+    size = Size.md,
+    isFooter = false,
+    parentBgIndex = 1,
+    width = "",
+  }: {
+    buttons?: IButtonParams[];
+    size?: Size.xs | Size.sm | Size.md | Size.lg;
+    isFooter?: boolean;
+    parentBgIndex?: number;
+    width?: string;
+  } = $props();
+
+  
+  
+  
+  
 </script>
 
 <div
@@ -45,7 +58,7 @@
           {...button}
           style={button.style ?? ButtonStyle.OUTLINED}
           isBoxed={true}
-          on:click={(e) => button.callback?.(e)}
+          onclick={(e) => button.callback?.(e)}
         />
       </div>
     {/each}
@@ -58,7 +71,7 @@
           size={button.size ?? Size.md}
           tooltip={button.tooltip}
           {parentBgIndex}
-          on:click={(e) => button.callback?.(e)}
+          onclick={(e) => button.callback?.(e)}
         />
       </div>
     {/each}

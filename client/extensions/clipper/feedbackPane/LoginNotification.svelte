@@ -4,13 +4,20 @@
   import { ButtonVariant } from "@21n/types/button.type";
   import { extractProduct } from "@21n/shared-utils/utils";
   import FeedbackPaneBase from "@21n/extensions/clipper/feedbackPane/FeedbackPaneBase.svelte";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let code: number;
-  export let isWithoutToolbarContext: boolean = false;
-
-  $: product = extractProduct(window.location.hostname);
-  $: isSelfPage = product.product === "memotron";
+  let {
+    code,
+    isWithoutToolbarContext = false,
+    onclick = undefined,
+    onLater = undefined
+  }: {
+    code: number;
+    isWithoutToolbarContext?: boolean;
+    onclick?: ((event: MouseEvent) => void) | undefined;
+    onLater?: (() => void) | undefined;
+  } = $props();
+  const product = extractProduct(window.location.hostname);
+  const isSelfPage = product.product === "memotron";
+  void isSelfPage;
 </script>
 
 <FeedbackPaneBase {isWithoutToolbarContext}>
@@ -36,13 +43,13 @@
           icon="log-in"
           label="Login"
           type={ButtonVariant.PRIMARY}
-          on:click
+          {onclick}
         />
         <Button
           icon="clock"
           label="I'll login later"
-          on:click={() => {
-            dispatch("later");
+          onclick={() => {
+            onLater?.();
           }}
         />
       </div>

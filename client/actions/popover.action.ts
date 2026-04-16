@@ -1,4 +1,10 @@
-import { SvelteComponent, tick, type ComponentType } from "svelte";
+import {
+  mount,
+  tick,
+  unmount,
+  type Component,
+  type ComponentType
+} from "svelte";
 import { Placement } from "@21n/types/direction.enum";
 import { PopoverTriggerMethod } from "@21n/types/popover.type";
 import { detectTouchDevice, getEventPath } from "@21n/utils/browser.utils";
@@ -36,7 +42,7 @@ type TooltipPlacement =
   | Placement.Left
   | Placement.Right;
 
-type PopoverComponentConstructor = ComponentType<SvelteComponent>;
+type PopoverComponentConstructor = ComponentType | Component<any>;
 
 function propagateNavEvent(id: string) {
   window.dispatchEvent(
@@ -368,7 +374,7 @@ interface PopoverParams {
 
 export function popover(node: HTMLElement, params: PopoverParams) {
   let popoverElement: HTMLElement | null = null;
-  let component: SvelteComponent | null = null;
+  let component: Record<string, any> | null = null;
   let {
     placement = Placement.BottomCenter,
     isSpanToTriggerWidth = false,
@@ -432,7 +438,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
     } else if (content instanceof HTMLElement) {
       popoverElement.appendChild(content);
     } else if (typeof content === "function") {
-      component = new content({
+      component = mount(content, {
         target: popoverElement,
         props: { ...componentProps, isPopoverContext: true }
       });
@@ -751,7 +757,7 @@ export function popover(node: HTMLElement, params: PopoverParams) {
       }
       popoverElement = null;
       if (component) {
-        component.$destroy();
+        void unmount(component);
         component = null;
       }
     }

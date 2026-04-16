@@ -23,7 +23,7 @@ const customPath = assetPath('my-custom-asset.png');
   import { assets } from 'static';
 </script>
 
-<img src={assets.nucleusLogo} alt="Nucleus Logo" />
+<img src={assets.nucleusLogo} alt="Nucleum Logo" />
 <audio src={assets.sounds.upchime} />
 <img src={assets.icons.arrowBack} alt="Back Arrow" />
 ```

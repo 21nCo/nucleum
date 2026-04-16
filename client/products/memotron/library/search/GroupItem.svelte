@@ -5,7 +5,6 @@
   import { Size } from "@21n/types/size.enum";
   import LinkSearchResultItem from "@21n/products/memotron/common/linkbox/LinkSearchResultItem.svelte";
   import SearchResultsPopover from "@21n/elements/input/SearchResultsPopover.svelte";
-  import { createEventDispatcher } from "svelte";
   import { cn } from "@21n/utils/ui.utils";
   import Button from "@21n/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
@@ -13,14 +12,25 @@
   import { isValidNumber } from "@21n/shared-utils/text.utils";
   import { Display } from "@21n/types/view.type";
   import view from "@21n/stores/view.store";
-  const dispatch = createEventDispatcher();
-  export let group: any;
-  export let index: number;
-  export let isActive: boolean = false;
-  export let isDefaultState: boolean = false;
-  export let searchCallback: (query: string) => void;
+  let {
+    group,
+    index,
+    isActive = false,
+    isDefaultState = false,
+    searchCallback,
+    onExpand = undefined,
+    onSelect = undefined
+  }: {
+    group: any;
+    index: number;
+    isActive?: boolean;
+    isDefaultState?: boolean;
+    searchCallback: (query: string) => void;
+    onExpand?: ((event: CustomEvent<{ group: any }>) => void) | undefined;
+    onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
   let searchResultsPopover: SearchResultsPopover;
-  let count: number | undefined = undefined;
+  let count = $state<number | undefined>(undefined);
   export function keydown(event: KeyboardEvent) {
     searchResultsPopover?.keydown(event);
   }
@@ -87,7 +97,9 @@
         tooltip="Expand results"
         style={isActive ? ButtonStyle.OUTLINED : ButtonStyle.DEFAULT}
         size={isActive ? Size.sm : Size.md}
-        on:click={() => dispatch("expand", { group })}
+        onclick={() => {
+          onExpand?.(new CustomEvent("expand", { detail: { group } }));
+        }}
       />
     {/if}
   </div>
@@ -100,17 +112,14 @@
       searchResultComponent={LinkSearchResultItem}
       isInlineContext={true}
       isAlwaysShowSearchFeedback={true}
-      on:count={(e) => {
+      onCount={(e) => {
         if (isValidNumber(e?.detail?.count)) {
           count = +e?.detail?.count;
         }
       }}
-      on:select={(e) => {
-        dispatch("select", { ...e.detail, group });
+      onSelect={(e: CustomEvent<any>) => {
+        onSelect?.(new CustomEvent("select", { detail: { ...e.detail, group } }));
       }}
-      on:empty-enter
-      on:reset
-      on:hide
     />
   </div>
 </div>

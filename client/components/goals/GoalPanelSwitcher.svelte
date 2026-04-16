@@ -15,11 +15,19 @@
   import type { ResourcePanelType } from "../resource/resourcePanel.type";
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
+  import type { ISelectValue } from "@21n/types/select.type";
 
-  export let goal: IActiveGoalStore;
-  export let panels: IToggleItem[];
-  export let isConstrainedWidth: boolean = false;
-  export let isThreeColumned: boolean = false;
+  let {
+    goal,
+    panels,
+    isConstrainedWidth = false,
+    isThreeColumned = false
+  }: {
+    goal: IActiveGoalStore;
+    panels: IToggleItem[];
+    isConstrainedWidth?: boolean;
+    isThreeColumned?: boolean;
+  } = $props();
 
   const adaptedStore = derived(
     goal,
@@ -44,9 +52,7 @@
     })
   );
 
-  function onContextMenuAction(
-    e: CustomEvent<ResourcePanelType | ResourceActionType>
-  ) {
+  function onContextMenuAction(detail: ISelectValue) {
     // TODO - custom actions
   }
 
@@ -62,5 +68,5 @@
   {isConstrainedWidth}
   contextMenuResolver={() =>
     resolveGoalContextMenu(resolveGoalThumb(), ResourceAccessPoint.SELF)}
-  on:action={onContextMenuAction}
+  onAction={onContextMenuAction}
 />

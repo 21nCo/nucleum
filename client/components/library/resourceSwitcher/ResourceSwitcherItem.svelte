@@ -25,18 +25,31 @@
   import { cache } from "@21n/layout/layers/cache/cache.store";
   import { CacheKey } from "@21n/layout/layers/cache/cache.type";
 
-  export let item: IResourceSwitchItem;
-  export let isActive: boolean = false;
-  export let parentBgIndex: number = 1;
-  export let isShowCount: boolean = false;
-  let isHovering: boolean = false;
-  let count: number = 0;
+  let {
+    item,
+    isActive = false,
+    parentBgIndex = 1,
+    isShowCount = false,
+    onClick = undefined
+  }: {
+    item: IResourceSwitchItem;
+    isActive?: boolean;
+    parentBgIndex?: number;
+    isShowCount?: boolean;
+    onClick?: (() => void) | undefined;
+  } = $props();
+  let isHovering = $state(false);
+  let count = $state(0);
   let popRef: HTMLButtonElement;
-  const resource = item.value as Resource;
-  const cacheKey = resourceCacheKey(resource, CacheKey.COUNT);
-  $: isConstrainedWidth = $view.isConstrainedWidth;
+  let resource = $derived(item.value as Resource);
+  let cacheKey = $derived(resourceCacheKey(resource, CacheKey.COUNT));
+  let isConstrainedWidth = $derived($view.isConstrainedWidth);
 
-  refreshCount();
+  $effect(() => {
+    cacheKey;
+    isShowCount;
+    refreshCount();
+  });
 
   function refreshCount() {
     if (!isShowCount) return;
@@ -116,7 +129,7 @@
         !item.isDisabled
     }
   )}
-  on:click
+  onclick={() => onClick?.()}
 >
   <div
     class={cn("flex flex-col items-start", {
@@ -184,7 +197,7 @@
 
 <ComponentBaseLayer
   subscribeToCacheUpdate={[cacheKey]}
-  on:change={() => {
+  onChange={() => {
     refreshCount();
   }}
 />

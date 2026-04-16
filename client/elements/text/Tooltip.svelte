@@ -6,10 +6,21 @@
   import { cn } from "@21n/utils/ui.utils";
   import Button from "@21n/elements/button/Button.svelte";
   import Icon from "@21n/elements/Icon.svelte";
-  export let tooltip: string | undefined = undefined;
-  export let info: FormLabelInfoTooltip | undefined = undefined;
-  export let variant: "v1" | "v2" = "v1";
-  export let onClose: () => void = () => {};
+    let {
+    tooltip = undefined,
+    info = undefined,
+    variant = "v1",
+    onClose = () => {},
+  }: {
+    tooltip?: string | undefined;
+    info?: FormLabelInfoTooltip | undefined;
+    variant?: "v1" | "v2";
+    onClose?: () => void;
+  } = $props();
+
+  
+  
+  
 </script>
 
 {#if variant === "v1" && info}
@@ -27,7 +38,7 @@
             <Icon icon="info" size={Size.sm} class="text-fgs3" />
             <span class="text-b2 font-medium"> Information </span>
           </div>
-          <Button icon="cross" size={Size.sm} on:click={onClose} />
+          <Button icon="cross" size={Size.sm} onclick={onClose} />
         </div>
       {/if}
       <div>

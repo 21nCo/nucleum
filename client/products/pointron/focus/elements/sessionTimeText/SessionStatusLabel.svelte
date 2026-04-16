@@ -5,24 +5,32 @@
   import { SessionType } from "@21n/products/pointron/logs/log.type";
   import { Size } from "@21n/types/size.enum";
   import { formatSeconds } from "@21n/utils/time.utils";
-  export let size: Size = Size.md;
-  export let isDefaultColor: boolean = false;
-  $: extentionElapsed =
+  let {
+    size = Size.md,
+    isDefaultColor = false
+  }: {
+    size?: Size;
+    isDefaultColor?: boolean;
+  } = $props();
+
+  let extentionElapsed = $derived(
     $activeSession.type === SessionType.COUNTDOWN &&
-    $activeSession.plannedDuration
+      $activeSession.plannedDuration
       ? $activeSession.totalElapsed -
-        ($activeSession.plannedDuration - $activeSession.totalExtended)
-      : 0;
-  $: labelClasses =
+          ($activeSession.plannedDuration - $activeSession.totalExtended)
+      : 0
+  );
+  let labelClasses = $derived(
     `${size === Size.md ? "font-medium p-3 text-h5 dp:text-h3" : "text-b2"} ` +
-    (!isDefaultColor
-      ? $activeSession.state === SessionState.FOCUS_RUNNING
-        ? "text-aps1"
-        : $activeSession.state === SessionState.BREAK_RUNNING
-          ? "text-ass1"
-          : "text-accent3"
-      : "");
-  $: sessionLabel =
+      (!isDefaultColor
+        ? $activeSession.state === SessionState.FOCUS_RUNNING
+          ? "text-aps1"
+          : $activeSession.state === SessionState.BREAK_RUNNING
+            ? "text-ass1"
+            : "text-accent3"
+        : "")
+  );
+  let sessionLabel = $derived(
     $activeSession.state === SessionState.FINISHED
       ? "SESSION FINISHED"
       : $activeSession.state === SessionState.TIME_IS_UP
@@ -30,10 +38,11 @@
         : $activeSession.state === SessionState.FOCUS_COMPLETED
           ? "INTERVAL COMPLETED"
           : $activeSession.state === SessionState.BREAK_COMPLETED
-            ? "BREAK COMPLETED"
-            : $activeSession.state === SessionState.BREAK_RUNNING
-              ? "CURRENT BREAK"
-              : "CURRENT FOCUS";
+          ? "BREAK COMPLETED"
+          : $activeSession.state === SessionState.BREAK_RUNNING
+            ? "CURRENT BREAK"
+            : "CURRENT FOCUS"
+  );
 </script>
 
 <div class={labelClasses}>

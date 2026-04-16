@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import Divider from "@21n/elements/Divider.svelte";
   import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
@@ -26,8 +27,9 @@
   import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
   import type { IRecordId } from "@21n/types/data.type";
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
+  let { children }: { children?: Snippet } = $props();
   let isInFocusMode = false;
-  let pinnedItems: IRecordId[] = tabs.get() ?? [];
+  let pinnedItems = $state<IRecordId[]>(tabs.get() ?? []);
 
   function handleFocusMode(e: CustomEvent<boolean>) {
     if (typeof e.detail === "boolean") {
@@ -42,9 +44,8 @@
       if (unsubscribe) unsubscribe();
     };
   });
-  let isCmdHome = true;
-
-  $: activeTab = $page.url.searchParams.get(AccessMode.TAB);
+  let isCmdHome = $state(true);
+  let activeTab = $derived($page.url.searchParams.get(AccessMode.TAB));
 </script>
 
 <div class="flex flex-col w-full h-full">
@@ -53,8 +54,8 @@
       {pinnedItems}
       isShowHome={true}
       {activeTab}
-      on:home={(e) => {
-        isCmdHome = e.detail;
+      onHome={(value) => {
+        isCmdHome = value;
         if (isCmdHome) appStore.toggleSearchParam([AccessMode.TAB]);
       }}
     />
@@ -73,7 +74,7 @@
         <ProfilePicture context="cmd-page" />
         <button
           class="flex flex-col gap-1 items-start"
-          on:click={() => {
+          onclick={() => {
             appStore.runAction(Action.SETTINGS);
           }}
         >
@@ -119,7 +120,7 @@
         <Button
           label="Exit Command Mode"
           size={Size.sm}
-          on:click={() => {
+          onclick={() => {
             uiState.setState(
               Action.MODE_OF_INTERACTION,
               InteractionMode.DEFAULT,
@@ -132,6 +133,6 @@
       </div>
     </footer>
   {:else}
-    <slot />
+    {@render children?.()}
   {/if}
 </div>

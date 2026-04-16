@@ -1,7 +1,7 @@
 <script lang="ts">
   import MarkdownRenderer from "@21n/landing/shared/elements/MarkdownRenderer.svelte";
 
-  export let notes: string;
+  let { notes }: { notes: string } = $props();
 </script>
 
 <div class="h-full flex flex-col justify-between w-96 p-4 space-y-4">

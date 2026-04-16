@@ -8,16 +8,20 @@
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { appStore } from "@21n/stores/app.store";
   import ComponentEmbedLayer from "@21n/layout/layers/ComponentEmbedLayer.svelte";
-  $: route = $page.url.searchParams.get(AppSearchParam.SETTING);
-  const backPath = $page.url.searchParams.get(AppSearchParam.RETURN_TO);
+  const route = $derived($page.url.searchParams.get(AppSearchParam.SETTING));
+  const backPath = $derived(
+    $page.url.searchParams.get(AppSearchParam.RETURN_TO)
+  );
+
+  function handleBack() {
+    if (backPath) appStore.gotoPath(backPath);
+  }
 </script>
 
 {#if $view.isConstrainedWidth}
   <SettingsAsPageLayout
     isShowBackButton={backPath !== null}
-    on:back={() => {
-      if (backPath) appStore.gotoPath(backPath);
-    }}
+    onBack={handleBack}
   >
     {#if route}
       <ComponentResolver path={route} />

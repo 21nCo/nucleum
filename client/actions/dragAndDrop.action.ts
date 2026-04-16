@@ -1,5 +1,3 @@
-import { createEventDispatcher } from "svelte";
-
 interface DropzoneOptions {
   duringDragoverClasses?: string;
   itemRequirement?: string;
@@ -21,7 +19,6 @@ export function dropzone(
   node: HTMLElement,
   options: DropzoneOptions = {}
 ): DropzoneActionReturn {
-  const dispatch = createEventDispatcher<{ drop: DroppedNodeDetails }>();
   let {
     duringDragoverClasses = "",
     itemRequirement = "",
@@ -74,7 +71,13 @@ export function dropzone(
       };
 
       onDrop(nodeDetails);
-      dispatch("drop", nodeDetails);
+      node.dispatchEvent(
+        new CustomEvent<DroppedNodeDetails>("dropzone:drop", {
+          detail: nodeDetails,
+          bubbles: true,
+          composed: true
+        })
+      );
     }
 
     draggedElement = null;

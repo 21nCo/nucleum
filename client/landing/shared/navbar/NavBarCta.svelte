@@ -1,7 +1,11 @@
 <script lang="ts">
   import type { IButton } from "@21n/landing/shared/landing.type";
   import Button from "@21n/landing/shared/elements/Button.svelte";
-  export let cta: IButton[] = [];
+  let {
+    cta = [],
+  }: {
+    cta?: IButton[];
+  } = $props();
 </script>
 
 {#if cta.length > 0}

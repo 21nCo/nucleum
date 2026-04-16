@@ -1,12 +1,26 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-  export let item: any;
-  export let size: Size.sm | Size.md = Size.md;
-  export let isApplyCustomColor: boolean = false;
-  export let isMasonry: boolean = false;
-  export let isHidePreview: boolean = false;
-  $: item;
+  let {
+    item,
+    size = Size.md,
+    isApplyCustomColor = false,
+    isMasonry = false,
+    isHidePreview = false,
+    children,
+    bottom,
+    onclick = undefined
+  }: {
+    item: any;
+    size?: Size.sm | Size.md;
+    isApplyCustomColor?: boolean;
+    isMasonry?: boolean;
+    isHidePreview?: boolean;
+    children?: Snippet;
+    bottom?: Snippet;
+    onclick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
 </script>
 
 <button
@@ -20,9 +34,9 @@
     "border-brs2 notouch:hover:border-brs4 active:border-brs4":
       !isApplyCustomColor && !isHidePreview
   })}
-  on:click
+  {onclick}
 >
-  <slot />
+  {@render children?.()}
   {#if !isMasonry}
     <div
       class={cn(
@@ -35,7 +49,7 @@
         }
       )}
     >
-      <slot name="bottom" />
+      {@render bottom?.()}
     </div>
   {/if}
 </button>

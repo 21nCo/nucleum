@@ -4,30 +4,31 @@
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
   import type { ICommandAction } from "@21n/components/commandBar/cmd.type";
   import ResultItem from "@21n/components/commandBar/ResultItem.svelte";
-  export let search: string = "";
-  export let action: ICommandAction;
-  export let isActive: boolean = false;
-  export let index: number;
+  let {
+    search = "",
+    action,
+    isActive = false,
+    index,
+    onclick = void 0
+  }: {
+    search?: string;
+    action: ICommandAction;
+    isActive?: boolean;
+    index: number;
+    onclick?: (event: MouseEvent) => void;
+  } = $props();
 
-  $: label =
+  const label = $derived.by(() =>
     search && action?.cmdLabel?.toLowerCase()?.includes(search.toLowerCase())
-      ? action?.cmdLabel
-          // .replace(
-          //   new RegExp(` ${search}`, "gi"),
-          //   (matched: string) => `&nbsp;${matched}`
-          // )
-          // .replace(
-          //   new RegExp(`${search} `, "gi"),
-          //   (matched: string) => `${matched}&nbsp;`
-          // )
-          .replace(
-            new RegExp(search, "gi"),
-            (matched: string) => `**${matched}**`
-          )
-      : action?.cmdLabel;
+      ? action?.cmdLabel.replace(
+          new RegExp(search, "gi"),
+          (matched: string) => `**${matched}**`
+        )
+      : action?.cmdLabel
+  );
 </script>
 
-<ResultItem {isActive} {index} on:click>
+<ResultItem {isActive} {index} {onclick}>
   <div class="flex min-w-0 flex-1">
     {#if action.type === ActionType.PAGE}
       Go to{#if search}&nbsp;{/if}

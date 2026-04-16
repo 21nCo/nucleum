@@ -1,10 +1,27 @@
 <script lang="ts">
   import Markdown from "@21n/components/markdown/Markdown.svelte";
   import type { IMarkdown } from "@21n/components/markdown/md.type";
-  export let md: IMarkdown;
-  export let parentBgIndex: number = 1;
-  export let isHideTitle: boolean = false;
-  export let placeholder: string = "Start typing...";
+  import type { Snippet } from "svelte";
+
+  let {
+    md = $bindable(),
+    parentBgIndex = 1,
+    isHideTitle = false,
+    placeholder = "Start typing...",
+    onChange = undefined,
+    onDebouncedChange = undefined,
+    title = undefined
+  }: {
+    md: IMarkdown;
+    parentBgIndex?: number;
+    isHideTitle?: boolean;
+    placeholder?: string;
+    onChange?: ((event: CustomEvent<any>) => void) | undefined;
+    onDebouncedChange?:
+      | ((event: CustomEvent<IMarkdown | undefined>) => void)
+      | undefined;
+    title?: Snippet | undefined;
+  } = $props();
 </script>
 
 <Markdown
@@ -17,8 +34,7 @@
     isReadOnly: false,
     canUseSlashShortcut: false
   }}
-  on:change
-  on:debouncedChange
->
-  <slot name="title" slot="title"></slot>
-</Markdown>
+  {onChange}
+  {onDebouncedChange}
+  {title}
+/>

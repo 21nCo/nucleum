@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import "@21n/client/app.css";
   import BlankLandingLayout from "@21n/landing/shared/BlankLandingLayout.svelte";
   import type {
@@ -63,9 +64,10 @@
     roadmapUrl: urls.roadmap,
     changelogUrl: urls.changelog
   };
+  let { children }: { children?: Snippet } = $props();
   landing.load(urls);
 </script>
 
 <BlankLandingLayout {topNavBarValues} {footerValues} isProduct={true}>
-  <slot />
+  {@render children?.()}
 </BlankLandingLayout>

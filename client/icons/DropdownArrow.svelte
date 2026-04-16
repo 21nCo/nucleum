@@ -1,6 +1,12 @@
 <script lang="ts">
-  export let width: number = 20;
-  export let direction: "up" | "down" = "down";
+  let {
+    width = 20,
+    direction = "down"
+  }: {
+    width?: number;
+    direction?: "up" | "down";
+  } = $props();
+
 </script>
 
 <svg

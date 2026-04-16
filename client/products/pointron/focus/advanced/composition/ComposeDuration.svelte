@@ -17,7 +17,6 @@
   import { Orientation } from "@21n/types/direction.enum";
   import PomodoroUnitView from "@21n/products/pointron/focus/advanced/presets/PomodoroUnitView.svelte";
   import ComposeBreak from "@21n/products/pointron/focus/advanced/composition/ComposeBreak.svelte";
-  import { createEventDispatcher } from "svelte";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   import { Size } from "@21n/types/size.enum";
   import { ButtonStyle } from "@21n/types/button.type";
@@ -26,10 +25,17 @@
   import Divider from "@21n/elements/Divider.svelte";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  const dispatch = createEventDispatcher();
-  export let composition: SessionComposition;
-  export let isShowSave: boolean = false;
-  export let parentBgIndex: number = 1;
+  let {
+    composition = $bindable(),
+    isShowSave = false,
+    parentBgIndex = 1,
+    onChange = undefined
+  }: {
+    composition: SessionComposition;
+    isShowSave?: boolean;
+    parentBgIndex?: number;
+    onChange?: ((event: CustomEvent<SessionComposition>) => void) | undefined;
+  } = $props();
   let isTargetFocus: boolean =
     composition.type === SessionCompositionType.TARGET_FOCUS;
 
@@ -39,13 +45,6 @@
       : composition.type === SessionCompositionType.COUNTUP
         ? "Countup"
         : "Countdown";
-  //let method: SessionCompositionType = composition.type ?? 0;
-  //console.log({ method });
-  // $: {
-  //   if ($sessionStore.composition?.type === SessionCompositionType.SLIDER) {
-  //     method = SessionCompositionType.TOTAL_DURATION;
-  //   }
-  // }
   if (composition.type === SessionCompositionType.SLIDER)
     composition.type = SessionCompositionType.TOTAL_DURATION;
 
@@ -64,21 +63,27 @@
     };
   }
 
-  let totals = getTotalsFromComposition({ composition });
-  // $: console.log({ composition });
+  let totals = $derived(getTotalsFromComposition({ composition }));
+
+  function emitChange() {
+    const changeEvent = new CustomEvent<SessionComposition>("change", {
+      detail: composition
+    });
+    onChange?.(changeEvent);
+  }
 
   function removeAdditionalHandler(event: any) {
     composition.additional = composition.additional?.filter(
       (x) => x.id !== event?.detail?.preset?.id
     );
-    dispatch("change", composition);
+    emitChange();
   }
   function onAddAdditionalClicked() {
     composition.additional = [
       ...(composition.additional ?? []),
       generateSeedPomodoroRound()
     ];
-    dispatch("change", composition);
+    emitChange();
   }
   function onEachAdditionalEdit(item: SessionComposition) {
     if (!item) return;
@@ -91,7 +96,7 @@
         ...(composition.additional ?? []),
         presetToBeSaved
       ];
-      dispatch("change", composition);
+      emitChange();
     }
   }
   function saveHandler() {
@@ -116,7 +121,7 @@
     isExpandToFullWidth={isShowSave}
     barStyle={BarStyle.EXACT}
     {parentBgIndex}
-    on:switch={() => {
+    onSwitch={() => {
       if (selectedType === "Pomodoro") {
         composition.type = SessionCompositionType.POMODORO;
         if (!composition.numberOfFocusRounds) {
@@ -136,39 +141,38 @@
         composition.type = SessionCompositionType.COUNTUP;
         composition.breakType = BreakCompositionType.REMINDER;
       }
-      dispatch("change", composition);
+      emitChange();
     }}
   >
-    <slot name="right" slot="right">
+    {#snippet right()}
       {#if isShowSave}
         <Button
           icon="bookmark"
-          on:click={() => {
+          onclick={() => {
             appStore.runAction(PointronAction.SAVE_PRESET_MODAL);
           }}
           tooltip="Save as preset"
         />
       {/if}
-    </slot>
+    {/snippet}
   </PanelSwitcher>
   <div class="flex flex-col w-full flex-grow gap-8">
     {#if composition.type === SessionCompositionType.POMODORO}
       <div class="flex flex-col gap-6 items-center h-96 overflow-y-auto">
-        <PomodoroUnitView bind:composition on:change />
+        <PomodoroUnitView bind:composition onChange={emitChange} />
         {#if composition.additional && composition.additional.length > 0}
           {#each composition.additional as item}
-            <!-- TODO - testing - on:change doesn't emit present in detail -->
             <PomodoroUnitView
               composition={item}
-              on:remove={removeAdditionalHandler}
-              on:change={() => onEachAdditionalEdit(item)}
+              onRemove={removeAdditionalHandler}
+              onChange={() => onEachAdditionalEdit(item)}
               isShowRemove={true}
             />
           {/each}
         {/if}
         <div class="mb-40">
           <Button
-            on:click={onAddAdditionalClicked}
+            onclick={onAddAdditionalClicked}
             style={ButtonStyle.OUTLINED}
             size={Size.sm}
             icon="plus"
@@ -186,7 +190,7 @@
                 label: "Total duration",
                 orientation: Orientation.Vertical
               }}
-              on:change
+              onChange={emitChange}
             />
           {:else if composition.type === SessionCompositionType.TARGET_FOCUS}
             <DurationInput
@@ -195,7 +199,7 @@
                 label: "Focus target duration",
                 orientation: Orientation.Vertical
               }}
-              on:change
+              onChange={emitChange}
             />{/if}
           <SwitchInput
             bind:checked={isTargetFocus}
@@ -206,14 +210,14 @@
                 body: "Once you start the session, if you take breaks in between, the end time will be auto adjusted until you reach the target duration entered above. Turn this off to keep the end time fixed."
               }
             }}
-            on:change={(e) => {
+            onChange={(e) => {
               if (e?.detail) {
                 composition.type = SessionCompositionType.TARGET_FOCUS;
                 composition.focusDuration = composition.totalDuration;
               } else {
                 composition.type = SessionCompositionType.TOTAL_DURATION;
               }
-              dispatch("change", composition);
+              emitChange();
             }}
           />
           <Divider />
@@ -222,7 +226,7 @@
           {composition}
           isDisablePredefined={composition.type ===
             SessionCompositionType.COUNTUP}
-          on:change
+          onChange={emitChange}
         />
         <ScrollViewBottomSpacer />
       </div>

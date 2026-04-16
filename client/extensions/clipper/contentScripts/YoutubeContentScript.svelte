@@ -19,7 +19,11 @@
   import { cn } from "@21n/utils/ui.utils";
   import { formatSeconds } from "@21n/utils/time.utils";
   import { TimeFormat } from "@21n/types/time.type";
-  export let isRenderedAsOverlay: boolean = false;
+  let {
+    isRenderedAsOverlay = false
+  }: {
+    isRenderedAsOverlay?: boolean;
+  } = $props();
   let clipCount = 0;
   let isClipInProgress = false;
   const channel = getPort("channel");
@@ -312,7 +316,7 @@
 >
   <button
     class="flex items-center justify-center rounded-md bg-bgs1 h-8"
-    on:click={() => {
+    onclick={() => {
       relayToBackgroundScript({
         event: ExtensionEvent.RUN,
         data: { action: ExtensionEvent.TOGGLE_SIDEPANEL }
@@ -324,11 +328,14 @@
       {clipCount} clips
     </span>
     <button
-      on:click|stopPropagation={onClick}
+      onclick={(event) => {
+        event.stopPropagation();
+        onClick();
+      }}
       class="bg-aps3 hover:bg-aps2 border border-aps2 flex w-12 justify-center items-center h-full rounded-r-md"
     >
       <Icon icon={isClipInProgress ? "svg-spinners:3-dots-fade" : "plus"} />
     </button>
   </button>
 </div>
-<svelte:window on:resize={resizeEventListener} />
+<svelte:window onresize={resizeEventListener} />

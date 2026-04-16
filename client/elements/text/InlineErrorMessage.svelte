@@ -1,13 +1,20 @@
 <script lang="ts">
-  export let error: string | null = null;
-  export let isDissappear: boolean = true;
-  let timer: any;
-  $: if (error && isDissappear) {
+  let {
+    error = $bindable(null),
+    isDissappear = true
+  }: {
+    error?: string | null;
+    isDissappear?: boolean;
+  } = $props();
+  let timer: ReturnType<typeof setTimeout> | undefined = undefined;
+  $effect(() => {
+    if (!error || !isDissappear) return;
     clearTimeout(timer);
     timer = setTimeout(() => {
       error = null;
     }, 4000);
-  }
+    return () => clearTimeout(timer);
+  });
 </script>
 
 <div class="h-6 w-full flex justify-center">

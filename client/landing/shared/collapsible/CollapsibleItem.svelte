@@ -3,14 +3,21 @@
   import { cubicOut } from "svelte/easing";
   import SvgIcon from "@21n/elements/SVGIcon.svelte";
   import MarkdownRenderer from "@21n/landing/shared/elements/MarkdownRenderer.svelte";
-  export let title: string = "";
-  export let body: string = "";
-  export let isExpanded: boolean = false;
-  export let onToggle: () => void;
+  let {
+    title = "",
+    body = "",
+    isExpanded = false,
+    onToggle,
+  }: {
+    title?: string;
+    body?: string;
+    isExpanded?: boolean;
+    onToggle: () => void;
+  } = $props();
 </script>
 
 <button
-  on:click={onToggle}
+  onclick={onToggle}
   class="w-full flex gap-3 py-4 focus:outline-none border-b border-brs3 last:border-b-0"
 >
   <div class="">

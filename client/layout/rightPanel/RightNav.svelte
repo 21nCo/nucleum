@@ -16,14 +16,14 @@
         icon="terminal-window"
         tooltip="Command"
         shortcut={Action.CMD}
-        on:click={() => appStore.runAction(Action.CMD)}
+        onClick={() => appStore.runAction(Action.CMD)}
       />
     </div>
     <div>
       <RightNavMenuItem
         icon="question"
         tooltip="Help"
-        on:click={() => appStore.runAction(Action.HELP)}
+        onClick={() => appStore.runAction(Action.HELP)}
       />
       <InlineSyncingFeedback
         resource={Resource.everything}

@@ -15,47 +15,40 @@
   import { cn } from "@21n/utils/ui.utils";
   import HoverableElement from "@21n/elements/HoverableElement.svelte";
   import LogThumbnailGoalsInfo from "@21n/products/pointron/logs/LogThumbnailGoalsInfo.svelte";
-  export let session: ISessionThumb & {
-    splits: { focus: number; brek: number };
-  };
-  export let context: "journal" | "logs" = "logs";
-  export let isLast: boolean = false;
-  export let variant: "v1" | "v2" = "v1";
+
+  let {
+    session,
+    context = "logs",
+    isLast = false,
+    variant = "v1",
+    onclick = undefined
+  }: {
+    session: ISessionThumb & {
+      splits: { focus: number; brek: number };
+    };
+    context?: "journal" | "logs";
+    isLast?: boolean;
+    variant?: "v1" | "v2";
+    onclick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
   let isEnableVariableHeight: boolean = true;
   let isHovering: boolean = false;
-  let height = 120;
-  let minHeight = 60;
-  $: total = session.splits.focus + session.splits.brek;
-
-  if (isEnableVariableHeight) {
-    // let baseHeight = 110;
-    // let heightPerUnit = 1 / 300;
-    // height = baseHeight + total * heightPerUnit;
-    // height = Math.min(height, 200);
-    if (total <= 60) {
-      height = minHeight;
-    } else if (total <= 600) {
-      height = minHeight + 10;
-    } else if (total <= 1200) {
-      height = minHeight + 20;
-    } else if (total <= 1800) {
-      height = minHeight + 30;
-    } else if (total <= 2400) {
-      height = minHeight + 40;
-    } else if (total <= 3000) {
-      height = minHeight + 50;
-    } else if (total <= 3600) {
-      height = minHeight + 60;
-    } else if (total <= 7200) {
-      height = minHeight + 70;
-    } else if (total <= 10800) {
-      height = minHeight + 80;
-    } else if (total <= 14400) {
-      height = minHeight + 90;
-    } else {
-      height = minHeight + 100;
-    }
-  }
+  const minHeight = 60;
+  let total = $derived(session.splits.focus + session.splits.brek);
+  let height = $derived.by(() => {
+    if (!isEnableVariableHeight) return 120;
+    if (total <= 60) return minHeight;
+    if (total <= 600) return minHeight + 10;
+    if (total <= 1200) return minHeight + 20;
+    if (total <= 1800) return minHeight + 30;
+    if (total <= 2400) return minHeight + 40;
+    if (total <= 3000) return minHeight + 50;
+    if (total <= 3600) return minHeight + 60;
+    if (total <= 7200) return minHeight + 70;
+    if (total <= 10800) return minHeight + 80;
+    if (total <= 14400) return minHeight + 90;
+    return minHeight + 100;
+  });
 
   async function handleDelete(event: MouseEvent) {
     appStore.runAction(PointronAction.DELETE_SESSION, {
@@ -68,7 +61,6 @@
   };
 </script>
 
-<!-- TODO - Svelte 5 snippets - time label -->
 <HoverableElement
   bind:isHovering
   id="log-item"
@@ -79,7 +71,7 @@
     }
   )}
   style="min-height: {height}px;"
-  on:click
+  {onclick}
 >
   <div
     class={cn(
@@ -100,7 +92,6 @@
       {formatTime($userPreferences, new Date(session.startUnix))}
     </div>
     <div class="flex h-full gap-2">
-      <!-- <div class="bg-bgs3 h-full w-0.5 flex-grow rounded-full" /> -->
       <Divider
         orientation={Orientation.Vertical}
         colorStrength={ColorStrength.Strong}
@@ -114,12 +105,10 @@
               </div>
             {:else}
               <div class="min-w-fit text-aps1 text-b3">
-                <!-- {$windowObject.isInPortraitMode ? "F:" : "Focus:"} -->
                 F:
                 {formatSeconds(session.splits.focus)}
               </div>
               <div class="min-w-fit text-ass1 text-b3">
-                <!-- {$windowObject.isInPortraitMode ? "B:" : "Break:"} -->
                 B:
                 {formatSeconds(session.splits.brek)}
               </div>
@@ -145,22 +134,9 @@
   >
     <div class="flex-grow flex flex-col items-start gap-2 overflow-y-auto">
       {#if variant === "v1"}
-        <!-- <div class="text-start text-b4 text-fgs2 font-medium">GOALS</div> -->
         <Text content="Goals" style={TextStyle.SECTION_HEADING} />
       {/if}
       <LogThumbnailGoalsInfo {session} />
-      <!-- {#if isValidMarkdown(log.notes)}
-        <Button
-          label="copy notes"
-          size={Size.xs}
-          parentBackgroundIndex={2}
-          on:click={(e) => {
-            e.stopPropagation();
-            const markdownText = generateMarkdownText(log.notes.blocks);
-            navigator.clipboard.writeText(markdownText);
-          }}
-        />
-      {/if} -->
     </div>
     {#if variant === "v2"}
       <div

@@ -13,6 +13,12 @@
   import { Arrangement } from "@21n/types/direction.enum";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
 
+  let {
+    onSelect = undefined
+  }: {
+    onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
+
   const searchStore = new SearchStore(Resource.node);
   let isLoading = false;
   let searchQuery = "";
@@ -56,7 +62,7 @@
       style={InputStyle.BORDERED}
       size={Size.sm}
       placeholder="Search Image nodes from library..."
-      on:debouncedChange={handleSearch}
+      onDebouncedChange={handleSearch}
     />
     {#if isLoading}
       <Icon icon="svg-spinners:90-ring-with-bg" class="stroke-fgs1" />
@@ -70,7 +76,7 @@
         arrangement={Arrangement.GRID}
         data={imageNodes}
         isPreventDefault={true}
-        on:click
+        onClick={onSelect}
       />
     </div>
   {:else}

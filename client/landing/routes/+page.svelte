@@ -15,7 +15,7 @@
   import TileItemsSection from "@21n/landing/shared/tile/TileItemsSection.svelte";
   import type { IGridItem, ITileItem } from "@21n/landing/shared/landing.type";
 
-  export let data;
+  let { data }: { data: any } = $props();
   const whitePaperUrl = org.whitepaper;
   let corePrinciples: IGridItem[] = [
     {

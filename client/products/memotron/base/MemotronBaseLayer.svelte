@@ -1,4 +1,7 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { appLoadingState } from "@21n/stores/app.store";
   import { toasts } from "@21n/stores/notification.store";
   import context from "@21n/stores/context.store";
@@ -22,8 +25,8 @@
   import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
-
-  let isLiteMode = $context.isEmbed && $context.isSheet;
+  let { children }: { children?: Snippet } = $props();
+  let isLiteMode = $state($context.isEmbed && $context.isSheet);
   const isDebug = import.meta.env?.DEV;
 
   async function onUserBaseLayerReady() {
@@ -72,13 +75,15 @@
   }
 </script>
 
-<UserBaseLayer on:ready={onUserBaseLayerReady}>
-  <div slot="topnav" class="flex items-center h-full">
-    <TopNavLeftMenuItem
-      action={resourceAction(Resource.node, ResourceActionType.CREATE)}
-    />
-  </div>
-  <slot />
+<UserBaseLayer onReady={onUserBaseLayerReady}>
+  {#snippet topnav()}
+    <div class="flex items-center h-full">
+      <TopNavLeftMenuItem
+        action={resourceAction(Resource.node, ResourceActionType.CREATE)}
+      />
+    </div>
+  {/snippet}
+  {@render children?.()}
   <MemotronNotifications />
 </UserBaseLayer>
 <MemoryBase />

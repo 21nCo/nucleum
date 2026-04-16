@@ -7,9 +7,16 @@
   import { formatSeconds } from "@21n/utils/time.utils";
   import { cn } from "@21n/utils/ui.utils";
   import type { IRecordId } from "@21n/types/data.type";
-  export let goalId: IRecordId;
-  export let session: ISessionThumb;
-  export let logs: ISessionLogThumb[] = [];
+
+  let {
+    goalId,
+    session,
+    logs = []
+  }: {
+    goalId: IRecordId;
+    session: ISessionThumb;
+    logs?: ISessionLogThumb[];
+  } = $props();
 
   function formatTime(date: Date) {
     return date.toLocaleTimeString("en-US", {
@@ -22,7 +29,7 @@
 
 <button
   class="relative flex items-start pl-6"
-  on:click={(e) => {
+  onclick={(e) => {
     appStore.resourceClickHandler(e, session.id, {
       origin: goalId
     });
@@ -74,7 +81,7 @@
           </div>
               {#if log.task}
                 <button
-                  on:click={(e) => {
+                  onclick={(e) => {
                     const taskId = log.task?.id;
                     if (!taskId) return;
                     e.stopPropagation();

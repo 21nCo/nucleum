@@ -1,26 +1,32 @@
 <script lang="ts">
   import { cn } from "@21n/utils/ui.utils";
-  // import {
-  //   easeBackIn,
-  //   easeBackOut,
-  //   easeBounceIn,
-  //   easeExpIn,
-  //   easeQuadIn
-  // } from "d3";
+  import type { Snippet } from "svelte";
   import { quintOut } from "svelte/easing";
   import { fly } from "svelte/transition";
-  export let index: number = 0;
-  export let isActive: boolean = false;
-  export let isSearchAction: boolean = false;
-  let ref: HTMLElement;
-  $: if (isActive && ref) {
-    ref.scrollIntoView({ behavior: "smooth", block: "end" });
-  }
+  let {
+    index = 0,
+    isActive = false,
+    isSearchAction = false,
+    children,
+    onclick = void 0
+  }: {
+    index?: number;
+    isActive?: boolean;
+    isSearchAction?: boolean;
+    children?: Snippet;
+    onclick?: (event: MouseEvent) => void;
+  } = $props();
+  let ref = $state<HTMLElement | undefined>();
+  $effect(() => {
+    if (isActive && ref) {
+      ref.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  });
 </script>
 
 <button
   bind:this={ref}
-  on:click
+  onclick={(event) => onclick?.(event)}
   class={cn("w-full flex items-center px-3 py-2 truncate border-l-[3px]", {
     "bg-bgs2 border-fgs1": isActive,
     "hover:bg-bgs2-striped border-transparent text-fgs2": !isActive,
@@ -35,5 +41,5 @@
     opacity: 0
   }}
 >
-  <slot />
+  {@render children?.()}
 </button>

@@ -1,11 +1,26 @@
 <script lang="ts">
+  import type { EventHandler } from "svelte/elements";
   import { ButtonVariant } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
   import Button from "@21n/elements/button/Button.svelte";
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
-  export let type: ButtonVariant = ButtonVariant.PRIMARY;
-  export let parentBackgroundIndex: number = 1;
-  export let accept: string = "image/*";
+
+  let {
+    size = Size.md,
+    type = ButtonVariant.PRIMARY,
+    parentBackgroundIndex = 1,
+    accept = "image/*",
+    oninput = undefined,
+  }: {
+    size?: Size.sm | Size.md | Size.lg;
+    type?: ButtonVariant;
+    parentBackgroundIndex?: number;
+    accept?: string;
+    oninput?: EventHandler<Event, HTMLInputElement> | undefined;
+  } = $props();
+
+  
+  
+  
   let inputElement: HTMLInputElement;
   function triggerFileInput() {
     // const inputElement = document.getElementById("myFile");
@@ -19,7 +34,9 @@
   bind:this={inputElement}
   name="filename"
   {accept}
-  on:input
+  oninput={(event) => {
+    oninput?.(event);
+  }}
 />
 <Button
   icon="upload"
@@ -27,5 +44,5 @@
   {size}
   {type}
   parentBgIndex={parentBackgroundIndex}
-  on:click={triggerFileInput}
+  onclick={triggerFileInput}
 />

@@ -8,12 +8,15 @@
   import Records from "@21n/components/record/Records.svelte";
   import { tzStore } from "@21n/components/settings/timezone/tz.store";
 
-  export let date: Date;
-  let isLoading: boolean;
-  let data: INodeThumb[] = [];
-  $: if (date) {
-    refresh(date);
-  }
+  let { date }: { date: Date } = $props();
+  let isLoading = $state(false);
+  let data = $state<INodeThumb[]>([]);
+
+  $effect(() => {
+    if (date) {
+      refresh(date);
+    }
+  });
 
   async function refresh(date: Date) {
     isLoading = true;

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import "@21n/client/app.css";
   import ThemeLayer from "@21n/layout/layers/themeLayer/ThemeLayer.svelte";
   import { cn } from "@21n/utils/ui.utils";
@@ -21,7 +22,13 @@
   import { Size } from "@21n/types/size.enum";
   import view from "@21n/stores/view.store";
 
-  export let extension: Extension;
+  let {
+    extension,
+    children = undefined
+  }: {
+    extension: Extension;
+    children?: Snippet | undefined;
+  } = $props();
   let isInitialized: boolean = false;
   let isAuthenticating: boolean = false;
   let error: string | undefined = undefined;
@@ -180,7 +187,7 @@
     {#if error}
       <EmptyStatusView subText={error} size={Size.sm} />
     {:else if isInitialized}
-      <slot />
+      {@render children?.()}
     {:else}
       <EmptyStatusView isLoadingState={true} loadingText="Authenticating..." />
     {/if}
@@ -190,4 +197,4 @@
     <div id="toolbars"></div>
   </ThemeLayer>
 </div>
-<svelte:window on:message={handleMessageFromParent} />
+<svelte:window onmessage={handleMessageFromParent} />

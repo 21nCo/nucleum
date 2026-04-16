@@ -85,6 +85,6 @@
 <ResourceCache resource={Resource.collection} />
 <ComponentBaseLayer
   subscribeToResource={new Set([Resource.collection, Resource.link])}
-  on:change={refresh}
-  on:syncDown={refresh}
+  onChange={refresh}
+  onSyncDown={refresh}
 />

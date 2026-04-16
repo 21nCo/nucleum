@@ -1,4 +1,7 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { onMount, onDestroy } from "svelte";
   import { page } from "$app/stores";
   import { goto } from "$app/navigation";
@@ -34,8 +37,10 @@
   import { productData } from "@21n/products/product.resolver";
   import { product, resolveProductConfig } from "@21n/products/product.config";
   import view from "@21n/stores/view.store";
+
+  let { children }: { children?: Snippet } = $props();
   let timer: any;
-  let isMounted = false;
+  let isMounted = $state(false);
   let lastOrientation: "portrait" | "landscape" | null = null;
   const productConfig = resolveProductConfig();
 
@@ -439,6 +444,7 @@
   function addWindowEventListeners() {
     // setupGlobalErrorHandler();
     // window.addEventListener("unhandledrejection", handleUnhandledRejection);
+    document.addEventListener("visibilitychange", visibilityChangeListener);
     window.addEventListener(
       GlobalEvent.CUSTOM_NAVIGATION,
       handleCustomNavigation
@@ -453,6 +459,8 @@
     };
     window.addEventListener("online", updateOnlineStatus);
     window.addEventListener("offline", updateOnlineStatus);
+    window.addEventListener("resize", windowResizeListener);
+    window.addEventListener("click", handlePlaceholderClick as EventListener);
     // try {
     //   //@ts-ignore
     //   window.chrome.webview.addEventListener(
@@ -480,6 +488,7 @@
   }
   function removeWindowEventListeners() {
     // window.removeEventListener("unhandledrejection", handleUnhandledRejection);
+    document.removeEventListener("visibilitychange", visibilityChangeListener);
     window.removeEventListener(
       GlobalEvent.CUSTOM_NAVIGATION,
       handleCustomNavigation
@@ -492,6 +501,8 @@
     window.onpopstate = null;
     window.removeEventListener("online", updateOnlineStatus);
     window.removeEventListener("offline", updateOnlineStatus);
+    window.removeEventListener("resize", windowResizeListener);
+    window.removeEventListener("click", handlePlaceholderClick as EventListener);
     if ("visualViewport" in window) {
       const viewport = window.visualViewport;
       viewport?.removeEventListener("resize", handleViewportChange);
@@ -517,6 +528,13 @@
       );
     }
   }
+
+  function handlePlaceholderClick(event: Event) {
+    const target = event.target as HTMLElement | null;
+    if (target?.tagName === "PLACEHOLDER" && target.dataset?.href) {
+      appStore.openLink(target.dataset.href);
+    }
+  }
   onDestroy(() => {
     removeWindowEventListeners();
   });
@@ -533,7 +551,7 @@
   <MetadataLayer />
   <ThemeLayer>
     {#if isMounted}
-      <slot />
+      {@render children?.()}
     {/if}
     <div id="popovers"></div>
     <div id="secondary-popovers"></div>
@@ -544,13 +562,3 @@
   </ThemeLayer>
 </div>
 <PosthogTelemetry />
-<svelte:document on:visibilitychange={visibilityChangeListener} />
-<!-- Fallback for md links click handling -->
-<svelte:window
-  on:resize={windowResizeListener}
-  on:click={(e) => {
-    if (e?.target?.tagName === "PLACEHOLDER" && e?.target?.dataset?.href) {
-      appStore.openLink(e.target.dataset.href);
-    }
-  }}
-/>

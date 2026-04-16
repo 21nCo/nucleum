@@ -1,16 +1,26 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import { TimeScaleUnit } from "@21n/types/time.type";
   import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import BoxButton from "@21n/elements/button/BoxButton.svelte";
 
-  const dispatch = createEventDispatcher();
-
-  export let selectedDate: Date;
-  export let selectedView: TimeScaleUnit = TimeScaleUnit.MONTH;
-  export let visibleWeekDates: Date[] | undefined = undefined;
-  export let parentBgIndex: number = 2;
+  let {
+    selectedDate = $bindable(new Date()),
+    selectedView = $bindable(TimeScaleUnit.MONTH),
+    visibleWeekDates = undefined,
+    parentBgIndex = 2,
+    onDateChange = undefined,
+    onGoToPrevious = undefined,
+    onGoToNext = undefined
+  }: {
+    selectedDate?: Date;
+    selectedView?: TimeScaleUnit;
+    visibleWeekDates?: Date[];
+    parentBgIndex?: number;
+    onDateChange?: (() => void) | undefined;
+    onGoToPrevious?: (() => void) | undefined;
+    onGoToNext?: (() => void) | undefined;
+  } = $props();
 
   const monthNames = [
     "January",
@@ -32,7 +42,7 @@
       selectedView === TimeScaleUnit.YEAR ||
       selectedView === TimeScaleUnit.WEEK
     ) {
-      dispatch("goToPrevious");
+      onGoToPrevious?.();
     } else {
       const date = new Date(selectedDate);
       switch (selectedView) {
@@ -44,7 +54,7 @@
           break;
       }
       selectedDate = date;
-      dispatch("dateChange");
+      onDateChange?.();
     }
   }
 
@@ -53,7 +63,7 @@
       selectedView === TimeScaleUnit.YEAR ||
       selectedView === TimeScaleUnit.WEEK
     ) {
-      dispatch("goToNext");
+      onGoToNext?.();
     } else {
       const date = new Date(selectedDate);
       switch (selectedView) {
@@ -65,7 +75,7 @@
           break;
       }
       selectedDate = date;
-      dispatch("dateChange");
+      onDateChange?.();
     }
   }
 
@@ -81,14 +91,14 @@
     return week;
   }
 
-  $: weekDates = getWeekDates(selectedDate);
-  $: currentMonth = monthNames[selectedDate.getMonth()];
-  $: currentYear = selectedDate.getFullYear();
+  const weekDates = $derived(getWeekDates(selectedDate));
+  const currentMonth = $derived(monthNames[selectedDate.getMonth()]);
+  const currentYear = $derived(selectedDate.getFullYear());
 </script>
 
 <div class="flex items-center justify-center">
   <div class="h-full w-10">
-    <BoxButton icon="chevron-left" on:click={goToPrevious} />
+    <BoxButton icon="chevron-left" onclick={goToPrevious} />
   </div>
   <h2
     class={cn("text-h4 h-full  flex items-center justify-center px-3", {
@@ -116,6 +126,6 @@
     {/if}
   </h2>
   <div class="h-full w-10">
-    <BoxButton icon="chevron-right" on:click={goToNext} />
+    <BoxButton icon="chevron-right" onclick={goToNext} />
   </div>
 </div>

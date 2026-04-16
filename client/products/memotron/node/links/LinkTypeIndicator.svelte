@@ -6,10 +6,17 @@
   import { tooltip } from "$lib/client/actions/popover.action";
   import { resolveLinkTypeConfig } from "$lib/client/products/memotron/linking/link.utils";
 
-  export let linkType: LinkType;
-  export let direction: "incoming" | "outgoing" | undefined = undefined;
+  let {
+    linkType,
+    direction = undefined,
+    onclick = undefined
+  }: {
+    linkType: LinkType;
+    direction?: "incoming" | "outgoing" | undefined;
+    onclick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
 
-  $: linkConfig = resolveLinkTypeConfig(linkType, direction);
+  let linkConfig = $derived(resolveLinkTypeConfig(linkType, direction));
 </script>
 
 <button
@@ -19,7 +26,7 @@
   use:tooltip={{
     text: linkConfig.label
   }}
-  on:click
+  {onclick}
 >
   <Icon icon={linkConfig.icon} size={Size.sm} />
 </button>

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import { parseAndFormatDate } from "@21n/utils/time.utils";
@@ -8,20 +7,30 @@
   import { cn } from "@21n/utils/ui.utils";
   import { popover } from "@21n/actions/popover.action";
   import AbsoluteTimeRangePopoverV2 from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
-  const dispatch = createEventDispatcher();
-  export let parentBackgroundIndex: number = 1;
-  export let initialStartDate: Date | null = null;
-  export let initialEndDate: Date | null = null;
-  export let style: InputStyle = InputStyle.BORDERED;
-  export let label: InputLabel | undefined = undefined;
-  let isPopoverVisible: boolean = false;
+  let {
+    parentBackgroundIndex = 1,
+    initialStartDate = null,
+    initialEndDate = null,
+    style = InputStyle.BORDERED,
+    label = undefined,
+    onChange
+  }: {
+    parentBackgroundIndex?: number;
+    initialStartDate?: Date | null;
+    initialEndDate?: Date | null;
+    style?: InputStyle;
+    label?: InputLabel | undefined;
+    onChange?: ((val: { start: string; end: string }) => void) | undefined;
+  } = $props();
+  let isPopoverVisible = $state(false);
+  void parentBackgroundIndex;
 
   function isValidDate(date: Date | null): boolean {
     return date instanceof Date && !isNaN(date.getTime());
   }
 
   function handleRangeChange(val: { start: string; end: string }) {
-    dispatch("change", val);
+    onChange?.(val);
   }
 </script>
 
@@ -38,7 +47,7 @@
         onRangeChange: handleRangeChange
       }
     }}
-    on:change={(e) => {
+    onchange={(e) => {
       isPopoverVisible = e.detail?.open;
     }}
   >

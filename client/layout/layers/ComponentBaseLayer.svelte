@@ -13,57 +13,63 @@
     PersistenceActionType,
     type IRecordId
   } from "@21n/types/data.type";
-  import { createEventDispatcher, onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
 
-  const dispatch = createEventDispatcher();
-
-  /**
-   * This component or page has drag and drop functionality to it. Dragging external files into the app while this component or page is active will not trigger global drag and drop catcher.
-   */
-  export let hasDragAndDrop = false;
-
-  /**
-   * Required for change subscriptions.
-   * Works along with {@link subscribeToContext} for further filtering of change events.
-   *
-   * Resources to subscribe to - a change event will be dispatched if any mutation happens to these resources from anywhere else in the app so that derived or dependant stores can be reloaded or pages/components can be refreshed
-   *
-   */
-  export let subscribeToResource: Set<Resource> = new Set();
-
-  /**
-   * Change event will only trigger if the specified record is mutated. If undefined, change event will trigger as per {@link subscribeToResource} and {@link subscribeToContext} combination. {@link subscribeToResource} is not required if this is set.
-   * Note: only Merge actions will be triggered for record based subscriptions
-   */
-  export let subscribeToRecords: IRecordId[] | undefined = undefined;
-
-  /**
-   * Context in which the change event should trigger for given {@link subscribeToResource} resources. If not set, change event will trigger for all contexts for the given resources.
-   */
-  export let subscribeToContext: Set<string> | undefined = undefined;
-
-  /**
-   * If set, only the properties in this array will be subscribed to for merge action. If empty array is passed, Merge action will not be subscribed to. If not set, merge action will be subscribed to all properties.
-   */
-  export let subscriptionPropsForMergeAction: string[] | undefined = undefined;
-
-  /**
-   * Performs sync down action on mount if the user is a cloud user and if this flag is set to true
-   */
-  export let syncDownOnMount = false;
-
-  /**
-   * If set, the change event will be dispatched if the cache update event is triggered for the given key
-   */
-  export let subscribeToCacheUpdate: string[] | undefined = undefined;
+  let {
+    hasDragAndDrop = false,
+    subscribeToResource = new Set<Resource>(),
+    subscribeToRecords = undefined,
+    subscribeToContext = undefined,
+    subscriptionPropsForMergeAction = undefined,
+    syncDownOnMount = false,
+    subscribeToCacheUpdate = undefined,
+    onChange = undefined,
+    onAppear = undefined,
+    onSyncDown = undefined
+  }: {
+    hasDragAndDrop?: boolean;
+    subscribeToResource?: Set<Resource>;
+    subscribeToRecords?: IRecordId[] | undefined;
+    subscribeToContext?: Set<string> | undefined;
+    subscriptionPropsForMergeAction?: string[] | undefined;
+    syncDownOnMount?: boolean;
+    subscribeToCacheUpdate?: string[] | undefined;
+    onChange?:
+      | ((
+          detail:
+            | { resource?: Resource; params?: any; context?: string }
+            | { key: string }
+        ) => void)
+      | undefined;
+    onAppear?: (() => void) | undefined;
+    onSyncDown?: (() => void) | undefined;
+  } = $props();
+  const normalizedSubscribeToResource = $derived.by(() => {
+    if (subscribeToResource && typeof subscribeToResource.has === "function") {
+      return subscribeToResource;
+    }
+    if (Array.isArray(subscribeToResource)) {
+      return new Set<Resource>(subscribeToResource);
+    }
+    return new Set<Resource>();
+  });
+  const normalizedSubscribeToContext = $derived.by(() => {
+    if (subscribeToContext && typeof subscribeToContext.has === "function") {
+      return subscribeToContext;
+    }
+    if (Array.isArray(subscribeToContext)) {
+      return new Set<string>(subscribeToContext);
+    }
+    return undefined;
+  });
 
   function visibilityChangeListener() {
-    dispatch("appear");
+    onAppear?.();
   }
 
   onMount(() => {
     const syncDownHandler = () => {
-      dispatch("syncDown");
+      onSyncDown?.();
     };
     const cacheUpdateHandler = (event: Event) => {
       onCacheUpdate(event as CustomEvent<{ key: string }>);
@@ -82,7 +88,6 @@
     if (syncDownOnMount) {
       if ($account.dataMode !== UserDataMode.CLOUD || $context.isInOfflineMode)
         return;
-      //TODO avoid duplicate syncDown if already triggered by global syncDown on appear
       flux.syncDown({ src: "ComponentBaseLayer" });
     }
     return () => {
@@ -97,18 +102,12 @@
       $appStore.isDnDPageActive = false;
     }
   });
-  /**
-   *
-   * @param e
-   */
   function onMutation(
     e: CustomEvent<{ resource: Resource; params: any; context: string }>
   ) {
     const data = e.detail;
     const mutation = data.params;
     if (!data || !mutation) return;
-    //console.log({ at: "onMutation", data, mutation });
-
     const isMergeAction = [
       PersistenceActionType.MERGE,
       PersistenceActionType.BULK_MERGE
@@ -124,18 +123,22 @@
           mutation?.recordIds?.some(resourceInList(x))
         );
       if (isPresentInMerge || isPresentInBulkMerge) {
-        dispatch("change", data);
+        onChange?.(data);
       }
       return;
     }
-    if (!subscribeToResource.has(data.resource)) return;
-    if (subscribeToContext && !subscribeToContext.has(data.context)) return;
+    if (!normalizedSubscribeToResource.has(data.resource)) return;
+    if (
+      normalizedSubscribeToContext &&
+      !normalizedSubscribeToContext.has(data.context)
+    )
+      return;
 
     if (
       (isMergeAction && subscriptionPropsForMergeAction === undefined) ||
       !isMergeAction
     ) {
-      dispatch("change", data);
+      onChange?.(data);
     }
     if (
       subscriptionPropsForMergeAction &&
@@ -151,16 +154,16 @@
         (x) => mutation?.changes?.[x] !== undefined
       );
     if (isSubscribedMergePropCase) {
-      dispatch("change", data);
+      onChange?.(data);
     }
   }
 
   function onCacheUpdate(e: CustomEvent<{ key: string }>) {
     const data = e.detail;
     if (subscribeToCacheUpdate && subscribeToCacheUpdate.includes(data.key)) {
-      dispatch("change", data);
+      onChange?.(data);
     }
   }
 </script>
 
-<svelte:window on:focus={visibilityChangeListener} />
+<svelte:window onfocus={visibilityChangeListener} />

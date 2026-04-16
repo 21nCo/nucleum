@@ -27,7 +27,7 @@
     <div class="h-full w-10">
       <BoxButton
         icon="cross"
-        on:click={() => {
+        onclick={() => {
           appStore.toggleSearchParam([AccessMode.RIGHT]);
         }}
       />
@@ -44,7 +44,7 @@
               <TopBarResourceItem
                 item={$vTrail.base}
                 isInterimTab={true}
-                on:click={() => {
+                onClick={() => {
                   if (!$vTrail.base) return;
                   handleClick($vTrail.base);
                 }}
@@ -60,10 +60,10 @@
             >
               <TopBarResourceItem
                 item={parts[parts.length - 1]}
-                on:click={() => handleClick(item)}
+                onClick={() => handleClick(item)}
                 isInterimTab={true}
                 isTrail
-                on:close={() => {
+                onClose={() => {
                   vTrail.remove(item);
                 }}
               />

@@ -1,11 +1,20 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { startTouch } from "@21n/utils/touchGesture";
   import MonthsHeader from "@21n/components/calendar/calendarHeatmap/MonthsHeader.svelte";
   import WeekDays from "@21n/components/calendar/calendarHeatmap/WeekDays.svelte";
   import { TileScale } from "@21n/components/calendar/calendarHeatmap/calendarHeatmap.types";
-  export let data: any;
-  export let scale: TileScale;
-  export let numberOfColumns: number = 3;
+  let {
+    data,
+    scale,
+    numberOfColumns = 3,
+    children = undefined
+  }: {
+    data: any;
+    scale: TileScale;
+    numberOfColumns?: number;
+    children?: Snippet<[any]> | undefined;
+  } = $props();
 </script>
 
 <div
@@ -18,8 +27,7 @@
     : scale === TileScale.MONTHS
       ? "30px"
       : undefined}
-  on:touchstart={startTouch}
-  on:touchmove
+  ontouchstart={startTouch}
 >
   {#if scale === TileScale.MONTHS}
     <MonthsHeader />
@@ -28,7 +36,7 @@
     {#if scale === TileScale.DAYS && (index == 0 || index % numberOfColumns == 0)}
       <WeekDays />
     {/if}
-    <slot datum={[slot, slotData, index]} />
+    {@render children?.([slot, slotData, index])}
   {/each}
 </div>
 

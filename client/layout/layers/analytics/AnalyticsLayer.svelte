@@ -2,7 +2,7 @@
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { onMount } from "svelte";
   import AnalyticsTags from "@21n/layout/layers/analytics/AnalyticsTags.svelte";
-  export let isLanding: boolean = false;
+  let { isLanding = false }: { isLanding?: boolean } = $props();
   let isAnalyticsTagsMapped = false;
   onMount(() => {
     if ($userPreferences?.isAnonymousAnalyticsEnabled || isLanding) {

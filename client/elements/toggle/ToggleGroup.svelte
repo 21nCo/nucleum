@@ -2,18 +2,28 @@
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
   import Toggle from "@21n/elements/toggle/Toggle.svelte";
-  import { createEventDispatcher } from "svelte";
   import type { IToggleItem } from "@21n/elements/toggle/toggle.type";
   import { enumToString } from "@21n/shared-utils/text.utils";
-  const dispatch = createEventDispatcher();
 
-  export let items: IToggleItem[] = [];
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
-  export let bgSize: Size.sm | Size.md | Size.lg = Size.md;
-  export let parentBgIndex: number = 1;
-  export let selected: string | undefined = undefined;
-  let classList: string = "";
-  export { classList as class };
+  let {
+    items = [],
+    size = Size.md,
+    bgSize = Size.md,
+    parentBgIndex = 1,
+    selected = $bindable(),
+    onChange = undefined,
+    onNone = undefined,
+    class: classList = ""
+  }: {
+    items?: IToggleItem[];
+    size?: Size.sm | Size.md | Size.lg;
+    bgSize?: Size.sm | Size.md | Size.lg;
+    parentBgIndex?: number;
+    selected?: string | undefined;
+    onChange?: ((event: CustomEvent<string>) => void) | undefined;
+    onNone?: ((event: CustomEvent<string>) => void) | undefined;
+    class?: string;
+  } = $props();
 
   export function reset() {
     selected = undefined;
@@ -30,14 +40,14 @@
       count={item.count}
       on={selected === item.value}
       tooltip={item.tooltip ?? enumToString(item.value)}
-      on:change={(e) => {
-        if (e.detail === false) {
-          dispatch("none", item.value);
+      onChange={(event) => {
+        if (event.detail === false) {
+          onNone?.(new CustomEvent("none", { detail: item.value }));
           selected = undefined;
           return;
         }
         selected = item.value;
-        dispatch("change", item.value);
+        onChange?.(new CustomEvent("change", { detail: item.value }));
       }}
     />
   {/each}

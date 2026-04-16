@@ -1,10 +1,20 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import Button from "@21n/elements/button/Button.svelte";
   import { appStore } from "@21n/stores/app.store";
   import { Size } from "@21n/types/size.enum";
-  export let item: string;
-  export let isActive: boolean = false;
-  export let isShowLabel: boolean = false;
+  let {
+    item,
+    isActive = false,
+    isShowLabel = false,
+    onClick
+  }: {
+    item: string;
+    isActive?: boolean;
+    isShowLabel?: boolean;
+    onClick?: (event: MouseEvent) => void;
+  } = $props();
   let component = appStore.resolveAction(item);
 </script>
 
@@ -13,7 +23,9 @@
     icon={component?.icon}
     tooltip={component?.label}
     isStayActive={isActive}
-    on:click
+    onclick={(event) => {
+      onClick?.(event);
+    }}
     size={isShowLabel ? Size.sm : Size.md}
   />
   {#if isShowLabel}

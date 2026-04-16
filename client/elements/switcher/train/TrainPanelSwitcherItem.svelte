@@ -5,25 +5,57 @@
     PanelSwitcherActiveItemStrength,
     PanelSwitcherStyle
   } from "@21n/types/switcher.enum";
-  import { createEventDispatcher } from "svelte";
   import { bg, cn } from "@21n/utils/ui.utils";
   import type { ISelectItem } from "@21n/types/select.type";
   import PanelSwitcherItemLabel from "@21n/elements/switcher/PanelSwitcherItemLabel.svelte";
-  const dispatch = createEventDispatcher();
-  export let item: ISelectItem;
-  export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
-  export let isActive: boolean = false;
-  export let isDisabled: boolean = false;
-  export let parentBgIndex: number = 1;
-  export let index: number = 0;
-  export let activeItemStrength: PanelSwitcherActiveItemStrength =
-    PanelSwitcherActiveItemStrength.DEFAULT;
-  $: index;
+  let {
+    item,
+    size = Size.md,
+    isActive = false,
+    isDisabled = false,
+    parentBgIndex = 1,
+    index = 0,
+    activeItemStrength = PanelSwitcherActiveItemStrength.DEFAULT,
+    onChange = undefined,
+    onClick = undefined,
+    onDebouncedChange = undefined,
+    onRemove = undefined
+  }: {
+    item: ISelectItem;
+    size?: Size.xs | Size.sm | Size.md | Size.lg;
+    isActive?: boolean;
+    isDisabled?: boolean;
+    parentBgIndex?: number;
+    index?: number;
+    activeItemStrength?: PanelSwitcherActiveItemStrength;
+    onChange?: ((event: CustomEvent<any>) => void) | undefined;
+    onClick?: ((event: CustomEvent<any>) => void) | undefined;
+    onDebouncedChange?: ((event: CustomEvent<any>) => void) | undefined;
+    onRemove?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
 
   const dev_isApplyBorderForDefaultActive = false;
 
-  function onClick() {
-    dispatch("click", item.value);
+  function emitClick() {
+    const clickEvent = new CustomEvent<any>("click", { detail: item.value });
+    onClick?.(clickEvent);
+  }
+
+  function emitRemove(detail: any) {
+    const removeEvent = new CustomEvent<any>("remove", { detail });
+    onRemove?.(removeEvent);
+  }
+
+  function emitChange(detail: any) {
+    const changeEvent = new CustomEvent<any>("change", { detail });
+    onChange?.(changeEvent);
+  }
+
+  function emitDebouncedChange(detail: any) {
+    const debouncedChangeEvent = new CustomEvent<any>("debouncedChange", {
+      detail
+    });
+    onDebouncedChange?.(debouncedChangeEvent);
   }
 </script>
 
@@ -54,7 +86,7 @@
         "border-ccs2": isActive
       }
   )}
-  on:click={onClick}
+  onclick={emitClick}
   disabled={isDisabled}
 >
   <div
@@ -71,9 +103,9 @@
       {isDisabled}
       {parentBgIndex}
       {activeItemStrength}
-      on:remove
-      on:change
-      on:debouncedChange
+      onRemove={(event) => emitRemove(event.detail)}
+      onChange={(event) => emitChange(event.detail)}
+      onDebouncedChange={(event) => emitDebouncedChange(event.detail)}
     />
   </div>
 </button>

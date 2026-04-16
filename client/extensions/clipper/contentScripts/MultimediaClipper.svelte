@@ -1,7 +1,11 @@
 <!-- @deprecated - using MultimediaClipperContentScript instead -->
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  export let colors: string[];
+  let {
+    colors = []
+  }: {
+    colors?: string[];
+  } = $props();
   function isMultimedia(element) {
     return (
       element.tagName === "IMG" ||
@@ -72,4 +76,4 @@
   });
 </script>
 
-<svelte:window on:scroll={removeAll} on:mouseup={removeAll} />
+<svelte:window onscroll={removeAll} onmouseup={removeAll} />

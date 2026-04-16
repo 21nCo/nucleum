@@ -1,18 +1,25 @@
 <script lang="ts">
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
+  import { onMount } from "svelte";
 
-  const dispatch = createEventDispatcher();
-
-  export let selectedDate: Date;
-  export let events: any[] = [];
+  let {
+    selectedDate = $bindable(new Date()),
+    events = [],
+    onMonthChange = void 0,
+    onVisibleDatesChange = void 0
+  }: {
+    selectedDate?: Date;
+    events?: any[];
+    onMonthChange?: (date: Date) => void;
+    onVisibleDatesChange?: (payload: { dates: Date[] }) => void;
+  } = $props();
 
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
   const INITIAL_RANGE = 10; // Initial number of weeks to show
-  let weeks: ReturnType<typeof getWeekData>[] = [];
+  let weeks = $state<ReturnType<typeof getWeekData>[]>(loadInitialWeeks(selectedDate));
   let containerRef: HTMLDivElement;
   let headerRef: HTMLDivElement;
   let lastScrollLeft = 0;
@@ -104,10 +111,10 @@
       const visibleWeekIndex = Math.round(scrollLeft / clientWidth);
       const visibleWeek = weeks[visibleWeekIndex];
       if (visibleWeek) {
-        dispatch("visibleDatesChange", { dates: visibleWeek.dates });
+        onVisibleDatesChange?.({ dates: visibleWeek.dates });
         // Also update selectedDate to match the visible week
         selectedDate = new Date(visibleWeek.startDate);
-        dispatch("monthChange", selectedDate);
+        onMonthChange?.(selectedDate);
       }
 
       // Load more weeks when scrolling near the edges
@@ -173,26 +180,21 @@
     headerRef.scrollLeft = containerRef.scrollLeft;
   }
 
-  $: {
-    // Initialize weeks when selectedDate changes
-    if (!weeks.length) {
-      weeks = loadInitialWeeks(selectedDate);
-      // Emit initial visible dates
-      const initialWeek = weeks[Math.floor(INITIAL_RANGE / 2)];
-      if (initialWeek) {
-        dispatch("visibleDatesChange", { dates: initialWeek.dates });
-      }
+  onMount(() => {
+    const initialWeek = weeks[Math.floor(INITIAL_RANGE / 2)];
+    if (initialWeek) {
+      onVisibleDatesChange?.({ dates: initialWeek.dates });
     }
-  }
+  });
 
-  $: isToday = (date: Date) => {
+  function isToday(date: Date) {
     const today = new Date();
     return (
       date.getDate() === today.getDate() &&
       date.getMonth() === today.getMonth() &&
       date.getFullYear() === today.getFullYear()
     );
-  };
+  }
 
   export function scrollToPrevWeek() {
     navigateWeek("previous");
@@ -254,7 +256,7 @@
     <div
       class="flex overflow-x-auto flex-1"
       bind:this={containerRef}
-      on:scroll={onScroll}
+      onscroll={onScroll}
     >
       {#each weeks as week}
         <div class="grid grid-cols-7 min-w-full">

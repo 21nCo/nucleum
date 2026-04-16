@@ -47,15 +47,17 @@
   import { ClientStorageKey } from "@21n/persistence/persistence.type";
   import { parse } from "@21n/shared-utils/json.utils";
   import NewAccountDebugInfo from "./NewAccountDebugInfo.svelte";
-  let name = "";
-  let emailParts: EmailParts | undefined = undefined;
-  let isEditing = false;
-  let isSaveInProgress = false;
-  let profilePicture: IRecordId | undefined = $userPreferences.profilePicture;
-  let user: any;
-  $: isActivePlan = $account.plan
-    ? determineIfPlanIsActive($account.plan)
-    : false;
+  let name = $state("");
+  let emailParts = $state<EmailParts | undefined>(undefined);
+  let isEditing = $state(false);
+  let isSaveInProgress = $state(false);
+  let profilePicture = $state<IRecordId | undefined>(
+    $userPreferences.profilePicture
+  );
+  let user = $state<any>(undefined);
+  const isActivePlan = $derived(
+    $account.plan ? determineIfPlanIsActive($account.plan) : false
+  );
 
   onMount(() => {
     const unsubscribeAccount = account.subscribe((value) => {
@@ -81,6 +83,13 @@
   function onSave() {
     userPreferences.updateUserProfile({ name, profilePicture });
     isEditing = false;
+  }
+
+  function handleNameInputKeydown(event: KeyboardEvent) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      onSave();
+    }
   }
 
   async function handleDrop(
@@ -166,11 +175,13 @@
         class="flex flex-col min-h-12 items-center justify-center gap-1 w-full"
       >
         {#if isEditing}
-          <TextInput bind:value={name} on:enter={onSave} />
+          <div class="w-full" onkeydown={handleNameInputKeydown}>
+            <TextInput bind:value={name} />
+          </div>
         {:else}
           <button
             class="text-b2 text-fgs3"
-            on:click={() => {
+            onclick={() => {
               isEditing = true;
             }}
           >
@@ -185,7 +196,7 @@
             size={Size.sm}
             isPreventMinWidth={true}
             label="Edit"
-            on:click={() => {
+            onclick={() => {
               isEditing = true;
             }}
           />
@@ -196,14 +207,14 @@
             type={ButtonVariant.PRIMARY}
             style={ButtonStyle.OUTLINED}
             tooltip="Save"
-            on:click={onSave}
+            onclick={onSave}
           />
           <Button
             icon="cross"
             size={Size.sm}
             style={ButtonStyle.OUTLINED}
             tooltip="Cancel"
-            on:click={() => {
+            onclick={() => {
               isEditing = false;
               profilePicture = $userPreferences.profilePicture;
               name = $userPreferences.name || $account.userInfo?.nickName || "";
@@ -259,7 +270,7 @@
           <Button
             label="Go to billing"
             icon="wallet"
-            on:click={() => {
+            onclick={() => {
               appStore.toggleSearchParam({
                 [AppSearchParam.SETTING]: Action.USER_BILLING
               });
@@ -274,7 +285,7 @@
     <Button
       icon="log-out"
       label="Sign out"
-      on:click={async () => {
+      onclick={async () => {
         await account.signOut();
       }}
     />
@@ -282,7 +293,7 @@
       icon="trash"
       label="Delete account"
       type={ButtonVariant.DANGER}
-      on:click={async () => {
+      onclick={async () => {
         await account.delete();
       }}
     />

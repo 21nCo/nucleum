@@ -1,7 +1,7 @@
 <script lang="ts">
   import SubAtomLogo from "@21n/branding/SubAtomLogo.svelte";
-
-  export let status: string = "";
+  let { status = "" }: { status?: string } = $props();
+  void status;
 </script>
 
 <div class="flex flex-col w-full h-full justify-center items-center">

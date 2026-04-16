@@ -27,25 +27,26 @@
   import PoliciesFooter from "@21n/elements/PoliciesFooter.svelte";
   import { Size } from "@21n/types/size.enum";
 
-  let currentPlanFeatures: Array<{ icon: string; label: string }> = [];
-  $: renewalDate = $account.plan
-    ? resolveNextRenewalDate($account.plan)
-    : undefined;
-
-  $: if ($account.plan) {
+  let currentPlanFeatures = $state<Array<{ icon: string; label: string }>>([]);
+  const renewalDate = $derived(
+    $account.plan ? resolveNextRenewalDate($account.plan) : undefined
+  );
+  $effect(() => {
+    if (!$account.plan) {
+      currentPlanFeatures = [];
+      return;
+    }
     const selectedPlan = SUBSCRIPTION_PLANS.find(
       (p) => p.type === $account.plan?.plan
     );
-    if (selectedPlan) {
-      currentPlanFeatures = selectedPlan.features;
-    }
-  }
-  $: canCancel = resolveCanCancel($account.plan);
-
-  $: isAppleContext =
+    currentPlanFeatures = selectedPlan ? selectedPlan.features : [];
+  });
+  const canCancel = $derived(resolveCanCancel($account.plan));
+  const isAppleContext = $derived(
     $context.isEmbed &&
     ($context.os === OperatingSystem.IOS ||
-      $context.os === OperatingSystem.MACOS);
+      $context.os === OperatingSystem.MACOS)
+  );
 
   function resolveCanCancel(plan: IUserPlan | undefined) {
     if (!plan) return false;
@@ -126,7 +127,7 @@
               icon="sparkle"
               label="Upgrade"
               type={ButtonVariant.PRIMARY}
-              on:click={() => {
+              onclick={() => {
                 appStore.runAction(Action.USER_PLAN);
               }}
             />
@@ -145,7 +146,7 @@
               icon="reload"
               label="Reactivate"
               type={ButtonVariant.PRIMARY}
-              on:click={() => {
+              onclick={() => {
                 appStore.runAction(Action.USER_PLAN);
               }}
             />
@@ -155,20 +156,10 @@
               style={ButtonStyle.OUTLINED}
               icon="cross"
               label="Cancel Subscription"
-              on:click={() => {
+              onclick={() => {
                 appStore.runAction(Action.USER_PLAN_CANCELATION);
               }}
             />
-            <!-- {#if $account.plan?.cycle !== BillingCycle.LIFETIME}
-            <Button
-              icon="proceed"
-              parentBgIndex={2}
-              label="Change Plan"
-              on:click={() => {
-                appStore.runAction(Action.USER_PLAN);
-              }}
-            />
-          {/if} -->
           {/if}
         </div>
       {/if}

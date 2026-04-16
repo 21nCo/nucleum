@@ -1,72 +1,59 @@
 <script lang="ts">
-  import Icon from "@21n/elements/Icon.svelte";
-  import { createEventDispatcher } from "svelte";
   import TextHiglighter from "@21n/products/memotron/pdfAnnotator/TextHiglighter.svelte";
   import { AnnotationType } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
 
-  export let rects: any;
-  export let rect: any;
-  export let id: string;
-  export let color: string;
-  export let annotType = AnnotationType.COMMENT;
-  export let comment = "";
-  export let showIcon = true;
-  console.log("rect", rect);
-  let svgheight = 24;
-  let svgwidth = 24;
-  let x1, x2, y1, y2;
-  let left: any, top: any, width: any, height: any, scale: any;
-  if (rects != undefined) {
-    x1 = rects[0].x1;
-    x2 = rects[0].x2;
-    y1 = rects[0].y1;
-    y2 = rects[0].y2;
-    left = x1;
-    top = y1;
-    width = Math.abs(x2 - left);
-    height = Math.abs(y2 - top);
-    scale = 2;
-    left -= scale;
-    top -= scale;
-    width += scale * 2;
-    height += scale * 2;
+  let {
+    rects,
+    rect,
+    id,
+    color,
+    annotType = AnnotationType.COMMENT,
+    comment = "",
+    showIcon = true
+  }: {
+    rects?: any;
+    rect?: any;
+    id: string;
+    color: string;
+    annotType?: AnnotationType;
+    comment?: string;
+    showIcon?: boolean;
+    onClick?: ((id: string) => void) | undefined;
+  } = $props();
+
+  const svgheight = 24;
+  const svgwidth = 24;
+  function resolveTop() {
+    if (rects == undefined) return (rect?.top ?? 0) - svgheight;
+    return (rects?.[0]?.y1 ?? 0) - 15;
   }
-  const dispatchEvent = createEventDispatcher();
+
+  function resolveLeft() {
+    if (rects == undefined) return (rect?.left ?? 0) - svgwidth;
+    return 0;
+  }
+
+  function emitClick() {
+    onClick?.(id);
+  }
+
+  function handleKeydown(e: KeyboardEvent) {
+    if (e.key === "Enter" || e.key === " ") {
+      emitClick();
+    }
+  }
 </script>
 
-<!-- <div
-  {id}
-  class={id}
-  data-color={color}
-  data-annotType={annotType}
-  data-comment={comment}
-  on:click={() => {
-    dispatchEvent("click", id);
-    console.log("comment clicked");
-  }}
-  on:keydown={() => {}}
-  style="position: absolute; left: {left}px; top: {top}px; width: {width}px; height: {height}px; border: 3px solid {color};"
-> -->
 <div
   class={id}
+  role="button"
+  tabindex="0"
   data-color={color}
   data-annotType={annotType}
   data-comment={comment}
-  style="position: absolute; left: {rects == undefined
-    ? rect.left - svgwidth
-    : 0}px; top: {rects == undefined
-    ? rect.top - svgheight
-    : top - 15}px; opacity: 0.5;"
-  on:click={() => {
-    dispatchEvent("click", id);
-    console.log("comment clicked");
-  }}
-  on:keydown={(e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      dispatchEvent("click", id);
-      console.log("comment clicked");
-    }
-  }}
+  style="position: absolute; left: {resolveLeft()}px; top: {resolveTop()}px; opacity: 0.5;"
+  onclick={emitClick}
+  onkeydown={handleKeydown}
 >
   {#if showIcon && annotType === AnnotationType.COMMENT}
     <svg
@@ -89,20 +76,13 @@
       /></svg
     >
   {/if}
-
-  <!-- <Icon icon="flag"></Icon> -->
-  <!-- <span class="material-symbols-rounded">{@html "&#Xe0b9"}</span> -->
 </div>
-<!-- </div> -->
 {#if rects != undefined}
   <TextHiglighter
-    {color}
+    highlighter={color}
     annotType={AnnotationType.HIGHLIGHT}
     {id}
     {rects}
-    on:click={() => {
-      dispatchEvent("click", id);
-      console.log("comment clicked");
-    }}
+    onClick={emitClick}
   />
 {/if}

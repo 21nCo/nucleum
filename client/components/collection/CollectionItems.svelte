@@ -9,20 +9,37 @@
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import Records from "@21n/components/record/Records.svelte";
 
-  export let items: ICollectionItem[] = [];
-  export let resource: Resource | undefined = undefined;
-  export let arrangement: Arrangement = Arrangement.LIST;
-  export let density = 1;
-  export let isHidePreview: boolean = false;
-  export let isHideTitle: boolean = false;
-  export let parentBgIndex = 1;
-  export let isApplyCustomColor: boolean = false;
-  export let isDraggable: boolean = false;
-  export let accessPointId: IRecordId | undefined = undefined;
-  export let accessPoint: ResourceAccessPoint | undefined = undefined;
-  export let visibleProps: IProperty[] = [];
+  let {
+    items = [],
+    resource = undefined,
+    arrangement = Arrangement.LIST,
+    density = 1,
+    isHidePreview = false,
+    isHideTitle = false,
+    parentBgIndex = 1,
+    isApplyCustomColor = false,
+    isDraggable = false,
+    accessPointId = undefined,
+    accessPoint = undefined,
+    visibleProps = []
+  }: {
+    items?: ICollectionItem[];
+    resource?: Resource | undefined;
+    arrangement?: Arrangement;
+    density?: number;
+    isHidePreview?: boolean;
+    isHideTitle?: boolean;
+    parentBgIndex?: number;
+    isApplyCustomColor?: boolean;
+    isDraggable?: boolean;
+    accessPointId?: IRecordId | undefined;
+    accessPoint?: ResourceAccessPoint | undefined;
+    visibleProps?: IProperty[];
+  } = $props();
 
-  $: isMasonryAvailable = !resource || [Resource.node].includes(resource);
+  let isMasonryAvailable = $derived(
+    !resource || [Resource.node].includes(resource)
+  );
 
   function resolveNodeItems() {
     return items as unknown as INodeThumb[];

@@ -290,13 +290,13 @@
         size={Size.sm}
         isLoading={isReindexing}
         icon="reload"
-        on:click={reIndexDatabase}
+        onclick={reIndexDatabase}
         label="Reindex"
       />
       <Button
         size={Size.sm}
         icon="refresh"
-        on:click={loadDatabaseInfo}
+        onclick={loadDatabaseInfo}
         label="Refresh"
       />
     </div>
@@ -369,13 +369,13 @@
               type={ButtonVariant.PRIMARY}
               label={isQuerying ? "Querying..." : "Query records"}
               isDisabled={isQuerying || !queryTable || !queryIds.trim()}
-              on:click={queryRecordsByIds}
+              onclick={queryRecordsByIds}
             />
             <Button
               size={Size.sm}
               label={isQuerying ? "Querying..." : "Query all"}
               isDisabled={isQuerying || !queryTable}
-              on:click={queryAllRecords}
+              onclick={queryAllRecords}
             />
             {#if queryResults.length > 0}
               <Button
@@ -383,7 +383,7 @@
                 type={ButtonVariant.SECONDARY}
                 icon="copy"
                 label="Copy Results"
-                on:click={copyResultsToClipboard}
+                onclick={copyResultsToClipboard}
               />
             {/if}
           </div>

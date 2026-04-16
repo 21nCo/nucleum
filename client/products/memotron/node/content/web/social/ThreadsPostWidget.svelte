@@ -1,19 +1,23 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  import { createEventDispatcher } from "svelte";
   import { Persistence } from "@21n/persistence/persistence";
   import { parse } from "@21n/shared-utils/json.utils";
   import SocialPostLoadingInfo from "@21n/products/memotron/node/content/web/social/SocialPostLoadingInfo.svelte";
-
-  const dispatch = createEventDispatcher();
-
-  export let postUrl: string;
+  let {
+    postUrl,
+    onError = undefined,
+    onFallback = undefined
+  }: {
+    postUrl: string;
+    onError?: ((message: string) => void) | undefined;
+    onFallback?: ((message: string) => void) | undefined;
+  } = $props();
 
   let id: string = generateSimpleRandomId();
-  let embedHtml: string = "";
-  let loading: boolean = true;
-  let error: string = "";
+  let embedHtml = $state("");
+  let loading = $state(true);
+  let error = $state("");
   let postId = extractThreadsPostId(postUrl) || "";
   let dev_isUseOEmbedAPI = false;
 
@@ -38,7 +42,8 @@
       await tryOEmbedApproach();
       if (!embedHtml) {
         error = "Unable to load Threads post";
-        dispatch("error", "Unable to load Threads post");
+        onError?.("Unable to load Threads post");
+        onFallback?.("Unable to load Threads post");
       }
     } catch (err) {
       console.error("Threads embed error:", err);
@@ -58,7 +63,7 @@
       if (urlData) {
         const data = parse(urlData.text);
         if (data && data.error) {
-          dispatch("error", data.error);
+          onError?.(data.error);
           return false;
         } else if (data && data.html) {
           embedHtml = data.html;

@@ -6,21 +6,27 @@
   import { propertyEditorStore } from "@21n/components/collection/properties/property.store";
   import Icon from "@21n/elements/Icon.svelte";
   import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
-  import { createEventDispatcher } from "svelte";
   import { type IActiveCollectionStore } from "@21n/components/collection/collection.store";
   import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
-  const dispatch = createEventDispatcher();
-  export let isCaptureShortcutEnabled: boolean = false;
-  export let collection: IActiveCollectionStore | undefined = undefined;
-  export let resource: Resource | undefined = undefined;
+  let {
+    isCaptureShortcutEnabled = $bindable(false),
+    collection = undefined,
+    resource = undefined,
+    onShortcutChange = undefined
+  }: {
+    isCaptureShortcutEnabled?: boolean;
+    collection?: IActiveCollectionStore | undefined;
+    resource?: Resource | undefined;
+    onShortcutChange?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
   const formLabelConfig = {
     orientation: Orientation.Vertical
   };
 
   function onCaptureShortcutChange(e: CustomEvent) {
-    dispatch("shortcutChange", e.detail);
+    onShortcutChange?.(e);
   }
 </script>
 
@@ -28,7 +34,7 @@
   <FormControlLabel props={{ label: "Properties" }} />
   <button
     class="flex justify-center items-center w-full border border-brs3 rounded-md h-11 text-base"
-    on:click={() => {
+    onclick={() => {
       appStore.runAction(
         resourceAction(Resource.property, ResourceActionType.EDIT),
         {
@@ -66,6 +72,6 @@
     }}
     bind:checked={isCaptureShortcutEnabled}
     isExpanded={true}
-    on:change={onCaptureShortcutChange}
+    onChange={onCaptureShortcutChange}
   />
 {/if}

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Size } from "@21n/types/size.enum";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import SearchResultItem from "@21n/elements/input/SearchResultItem.svelte";
   import { debouncer } from "@21n/utils/utils";
   import { cn } from "@21n/utils/ui.utils";
@@ -12,45 +12,74 @@
   import { appStore } from "@21n/stores/app.store";
   import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
   import { KeyboardKey, ModifierKey } from "@21n/types/keyboard.type";
-  export let searchCallback: Function | undefined = undefined;
-  export let searchStoreId: string | undefined = undefined;
-  export let searchResultComponent: any = undefined;
-  export let searchResultComponentProps: Record<string, unknown> = {};
-  /**
-   * @deprecated use shortcutTriggers instead
-   */
-  export let shortcutTrigger: string | undefined = undefined;
-  export let shortcutTriggers: string[] = [];
-  export let emptyStateLabel: string | { mainText?: string; subText?: string } =
-    "No results found";
-  export let isPreventDefaultResults: boolean = false;
-  export let isInlineContext: boolean = false;
-  export let isAlwaysShowSearchFeedback: boolean = false;
-  export let bottomMessage: string | undefined = undefined;
-  export let onSelect: Function | undefined = undefined;
-  export let onReset: Function | undefined = undefined;
-  export let isApplyPopoverStyling: boolean = false;
-  export let id: string = generateSimpleRandomId();
-  export let isPreventAutoSelectZeroIndex: boolean = false;
-  $: void searchStoreId;
-
-  let value: string;
   type SearchItem = Partial<IResource & Record<string, unknown>>;
+
+  let {
+    searchCallback = undefined,
+    searchStoreId = undefined,
+    searchResultComponent = undefined,
+    searchResultComponentProps = {},
+    shortcutTrigger = undefined,
+    shortcutTriggers = [],
+    emptyStateLabel = "No results found",
+    isPreventDefaultResults = false,
+    isInlineContext = false,
+    isAlwaysShowSearchFeedback = false,
+    bottomMessage = undefined,
+    onSelect = undefined,
+    onReset = undefined,
+    onHide = undefined,
+    onShow = undefined,
+    onCount = undefined,
+    onBlur = undefined,
+    onEmptyEnter = undefined,
+    isApplyPopoverStyling = false,
+    id = generateSimpleRandomId(),
+    isPreventAutoSelectZeroIndex = false
+  }: {
+    searchCallback?: Function | undefined;
+    searchStoreId?: string | undefined;
+    searchResultComponent?: any;
+    searchResultComponentProps?: Record<string, unknown>;
+    shortcutTrigger?: string | undefined;
+    shortcutTriggers?: string[];
+    emptyStateLabel?:
+      | string
+      | { mainText?: string; subText?: string };
+    isPreventDefaultResults?: boolean;
+    isInlineContext?: boolean;
+    isAlwaysShowSearchFeedback?: boolean;
+    bottomMessage?: string | undefined;
+    onSelect?: Function | undefined;
+    onReset?: Function | undefined;
+    onHide?: ((event: CustomEvent<void>) => void) | undefined;
+    onShow?: ((event: CustomEvent<void>) => void) | undefined;
+    onCount?: ((event: CustomEvent<{ count: number }>) => void) | undefined;
+    onBlur?: ((event: CustomEvent<void>) => void) | undefined;
+    onEmptyEnter?:
+      | ((event: CustomEvent<{ event: KeyboardEvent; value: string }>) => void)
+      | undefined;
+    isApplyPopoverStyling?: boolean;
+    id?: string;
+    isPreventAutoSelectZeroIndex?: boolean;
+  } = $props();
+
+  let value = $state("");
   interface SearchResultWindowEventDetail {
     id: string;
     event: KeyboardEvent;
   }
-  let results: SearchItem[] = [];
-  let selectedIndex: number = resolveDefaultIndexSelection();
-  let previousValue: string = "";
-  let currentValue: string;
-  let isSearchInProgress: boolean = !isPreventDefaultResults;
+  let results = $state<SearchItem[]>([]);
+  let selectedIndex = $state(resolveDefaultIndexSelection());
+  let previousValue = $state("");
+  let currentValue = $state("");
+  let isSearchInProgress = $state(false);
 
   export function reset() {
     resetSearch();
     value = "";
-    dispatch("reset");
-    if (onReset) onReset();
+    const resetEvent = new CustomEvent("reset");
+    onReset?.(resetEvent);
   }
 
   export function resetSelectedIndex() {
@@ -61,11 +90,9 @@
     return isPreventAutoSelectZeroIndex ? -1 : 0;
   }
 
-  const dispatch = createEventDispatcher();
-
   function onSearchResultSelection(item: SearchItem, e?: MouseEvent) {
-    dispatch("select", { item, event: e });
-    if (onSelect) onSelect({ detail: { item, event: e } });
+    const selectEvent = new CustomEvent("select", { detail: { item, event: e } });
+    onSelect?.(selectEvent);
     if (item?.id) {
       const type = determineResourceType(item.id);
       appStore.addToRecents({
@@ -118,6 +145,7 @@
   }
 
   onMount(() => {
+    isSearchInProgress = !isPreventDefaultResults;
     window.addEventListener(
       "searchresultkeyup",
       onWindowSearchResultKeyup as EventListener
@@ -167,7 +195,6 @@
     if (shortcutTrigger && value?.includes(shortcutTrigger)) {
       value = value.split(shortcutTrigger)[1].split(" ")[0];
     }
-    // console.log({ shortcutTriggers, value });
     if (
       shortcutTriggers.length > 0 &&
       shortcutTriggers.some((trigger) => value.includes(trigger))
@@ -177,27 +204,22 @@
         value = value.split(trigger)[1].split("\u200b")[0];
       }
     }
-    // console.log("keyup - search results popover", { event, value });
     if (event.key === KeyboardKey.ESCAPE) {
       resetSearch();
-      // inputRef.blur();
-      dispatch("blur");
+      const blurEvent = new CustomEvent<void>("blur");
+      onBlur?.(blurEvent);
     } else if (event.key === KeyboardKey.BACKSPACE) {
       previousValue = currentValue;
       currentValue = value;
-      if (previousValue?.length > currentValue?.length) {
-        const deletedChar = previousValue.charAt(previousValue.length - 1);
-        if (deletedChar === "#") {
-          //
-        }
-      }
       debouncedSearch();
     } else if (event.key === KeyboardKey.ENTER) {
       if (results && results.length > 0) {
         onSearchResultSelection(results[selectedIndex]);
       } else {
-        //save();
-        dispatch("empty-enter", { event, value });
+        const emptyEnterEvent = new CustomEvent("empty-enter", {
+          detail: { event, value }
+        });
+        onEmptyEnter?.(emptyEnterEvent);
       }
     } else if (
       event.key !== KeyboardKey.ARROW_DOWN &&
@@ -206,7 +228,6 @@
       currentValue = value;
       debouncedSearch();
     }
-    // dispatch("keyup", { value, event });
   }
 
   let debouncedSearch = debouncer(search, 500);
@@ -229,7 +250,10 @@
       if (results.length > 0) {
         show();
       }
-      dispatch("count", { count: results?.length });
+      const countEvent = new CustomEvent("count", {
+        detail: { count: results?.length }
+      });
+      onCount?.(countEvent);
       return;
     }
 
@@ -237,15 +261,20 @@
     if (results?.length > 0) {
       show();
     }
-    dispatch("count", { count: results?.length });
+    const countEvent = new CustomEvent("count", {
+      detail: { count: results?.length }
+    });
+    onCount?.(countEvent);
   }
 
   function show() {
-    dispatch("show");
+    const showEvent = new CustomEvent<void>("show");
+    onShow?.(showEvent);
   }
 
   function hide() {
-    dispatch("hide");
+    const hideEvent = new CustomEvent<void>("hide");
+    onHide?.(hideEvent);
   }
 </script>
 
@@ -268,13 +297,13 @@
         <SearchResultItem
           label={resolveSearchItemLabel(item)}
           isActive={selectedIndex === index}
-          on:click={(e) => {
+          onclick={(e) => {
             onSearchResultSelection(item, e);
           }}
         >
           {#if searchResultComponent}
-            <svelte:component
-              this={searchResultComponent}
+            {@const SearchResultComponent = searchResultComponent}
+            <SearchResultComponent
               {item}
               {...searchResultComponentProps}
               isActive={selectedIndex === index}
@@ -326,7 +355,7 @@
       {/if}
       <button
         class="flex items-center gap-1 active:bg-bgs2 notouch:hover:bg-bgs2 px-1 rounded-md"
-        on:click={reset}
+        onclick={reset}
       >
         <Icon icon="cross" size={Size.sm} class="text-fgs3" />
         <span class="text-fgs3 text-b2">Close</span>

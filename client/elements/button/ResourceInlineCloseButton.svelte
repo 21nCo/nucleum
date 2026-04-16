@@ -5,13 +5,22 @@
   import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import { Size } from "@21n/types/size.enum";
-  export let id: string;
-  export let accessMode: AccessMode;
-  export let parentBgIndex: number = 1;
-  export let additionalAccessModes: AccessMode[] = [];
-  const elementId = id + "-closeButton-" + generateSimpleRandomId();
-
-  $: tooltip = accessMode === AccessMode.FULL ? "Close full screen" : "Close";
+  let {
+    id,
+    accessMode,
+    parentBgIndex = 1,
+    additionalAccessModes = [],
+  }: {
+    id: string;
+    accessMode: AccessMode;
+    parentBgIndex?: number;
+    additionalAccessModes?: AccessMode[];
+  } = $props();
+  const elementIdSuffix = generateSimpleRandomId();
+  const elementId = $derived(`${id}-closeButton-${elementIdSuffix}`);
+  const tooltip = $derived(
+    accessMode === AccessMode.FULL ? "Close full screen" : "Close"
+  );
 </script>
 
 {#if accessMode === AccessMode.SPLIT || accessMode === AccessMode.FULL || accessMode === AccessMode.FSPLIT || accessMode === AccessMode.SHEET || additionalAccessModes.includes(accessMode)}
@@ -22,12 +31,13 @@
   >
     <Button
       icon="cross"
+      ariaLabel="Close"
       {tooltip}
       style={ButtonStyle.OUTLINED}
       type={ButtonVariant.DANGER}
       {parentBgIndex}
       size={Size.sm}
-      on:click={() => {
+      onclick={() => {
         if (accessMode === AccessMode.FULL) {
           appStore.toggleFullScreen(accessMode, id);
         } else {

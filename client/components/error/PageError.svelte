@@ -11,15 +11,22 @@
   import { Size } from "@21n/types/size.enum";
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
   import SystemStatus from "@21n/components/settings/about/SystemStatus.svelte";
-  export let message: string | undefined = undefined;
-  export let actions: IButtonParams[] = [];
-  export let isNotFoundPage: boolean = false;
-  $: is404 =
+  let {
+    message = undefined,
+    actions = [],
+    isNotFoundPage = false
+  }: {
+    message?: string | undefined;
+    actions?: IButtonParams[];
+    isNotFoundPage?: boolean;
+  } = $props();
+  const is404 = $derived(
     isNotFoundPage ||
     $page?.url.pathname === "/404" ||
-    $page?.url.pathname === "/404/";
-  $: erroredPath = $page?.url?.searchParams?.get("path");
-  $: errorParam = $page?.url?.searchParams?.get("error");
+    $page?.url.pathname === "/404/"
+  );
+  const erroredPath = $derived($page?.url?.searchParams?.get("path"));
+  const errorParam = $derived($page?.url?.searchParams?.get("error"));
   const titles = ["Yikes", "Uh-oh", "Oops", "Oh no", "Whoops", "Dang", "Shoot"];
 </script>
 
@@ -51,7 +58,7 @@
           <Button
             {...action}
             type={action.variant}
-            on:click={() => action.callback?.()}
+            onclick={() => action.callback?.()}
           />
         {/each}
       {:else}
@@ -59,7 +66,7 @@
           size={Size.sm}
           style={ButtonStyle.OUTLINED}
           label={is404 ? "Go back home" : "Try again"}
-          on:click={() => {
+          onclick={() => {
             appStore.gotoPath("/");
           }}
         />
@@ -68,7 +75,7 @@
             size={Size.sm}
             type={ButtonVariant.PRIMARY}
             label="Chat with us"
-            on:click={() => {
+            onclick={() => {
               appStore.runAction("discord");
             }}
           />

@@ -1,26 +1,29 @@
 <script lang="ts">
   import type {
-    IAnalyticsCard,
     AnalyticsDataRecord
   } from "@21n/products/pointron/analytics/analytics.types";
   import MetricItem from "@21n/products/pointron/analytics/cards/metrics/MetricItem.svelte";
-  export let card: IAnalyticsCard;
-  export let data: AnalyticsDataRecord[];
-  export let goalColors: { label: string; color: number }[] = [];
-  export let previousTimePeriodData: AnalyticsDataRecord[] = [];
-  $: [card, goalColors];
-  $: totalFocus = data.reduce((acc, curr) => acc + curr.focus, 0);
-  $: totalBreak = data.reduce((acc, curr) => acc + curr.brek, 0);
-  $: total = totalFocus + totalBreak;
-  $: previousFocus = previousTimePeriodData.reduce(
-    (acc, curr) => acc + curr.focus,
-    0
+
+  let {
+    data,
+    previousTimePeriodData = []
+  }: {
+    data: AnalyticsDataRecord[];
+    previousTimePeriodData?: AnalyticsDataRecord[];
+  } = $props();
+
+  let totalFocus = $derived(data.reduce((acc, curr) => acc + curr.focus, 0));
+  let totalBreak = $derived(
+    data.reduce((acc, curr) => acc + curr.brek, 0)
   );
-  $: previousBreak = previousTimePeriodData.reduce(
-    (acc, curr) => acc + curr.brek,
-    0
+  let total = $derived(totalFocus + totalBreak);
+  let previousFocus = $derived(
+    previousTimePeriodData.reduce((acc, curr) => acc + curr.focus, 0)
   );
-  $: previousTotal = previousFocus + previousBreak;
+  let previousBreak = $derived(
+    previousTimePeriodData.reduce((acc, curr) => acc + curr.brek, 0)
+  );
+  let previousTotal = $derived(previousFocus + previousBreak);
 </script>
 
 <div

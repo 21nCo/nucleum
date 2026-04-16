@@ -14,17 +14,25 @@
   import RestorePurchaseAction from "@21n/components/subscription/RestorePurchaseAction.svelte";
   import { PlanType } from "@21n/components/subscription/userPlan.type";
 
-  $: trialExpiry =
-    $account.plan?.plan === PlanType.TRIAL && $account.plan?.trialPlan?.expiry
+  function resolveTrialExpiry() {
+    return $account.plan?.plan === PlanType.TRIAL &&
+      $account.plan?.trialPlan?.expiry
       ? new Date($account.plan.trialPlan.expiry)
       : null;
-  $: isTrialExpired = trialExpiry ? new Date() > trialExpiry : false;
+  }
 
-  // TODO - use different component for billing issue as actions are not the same
-  $: isBillingIssue =
-    ($account.plan?.plan === PlanType.CLOUD_SYNC ||
-      $account.plan?.plan === PlanType.NUCLEUS) &&
-    $account.plan?.billingErrors;
+  function resolveIsTrialExpired() {
+    const trialExpiry = resolveTrialExpiry();
+    return trialExpiry ? new Date() > trialExpiry : false;
+  }
+
+  function resolveIsBillingIssue() {
+    return (
+      ($account.plan?.plan === PlanType.CLOUD_SYNC ||
+        $account.plan?.plan === PlanType.NUCLEUS) &&
+      $account.plan?.billingErrors
+    );
+  }
 
   if (window.location.href.includes("/pay?")) {
     modalEvent.hide(Action.INACTIVE_PLAN);
@@ -55,9 +63,9 @@
     </div>
     <div class="flex flex-col gap-2">
       <h1 class="text-h1 font-bold text-ars1">
-        {#if isTrialExpired}
+        {#if resolveIsTrialExpired()}
           Your free trial has expired
-        {:else if isBillingIssue}
+        {:else if resolveIsBillingIssue()}
           Your billing information is incorrect
         {:else}
           Your plan is inactive
@@ -65,17 +73,19 @@
       </h1>
 
       <p class="text-fgs2">
-        {#if trialExpiry}
-          {#if isTrialExpired}
+        {#if resolveTrialExpiry()}
+          {#if resolveIsTrialExpired()}
             Your free trial ended on <b>
-              {parseAndFormatDate(trialExpiry)}.
+              {parseAndFormatDate(resolveTrialExpiry())}.
             </b>
             Upgrade now to continue using all features.
           {:else}
-            Your free trial will expire on {parseAndFormatDate(trialExpiry)}.
+            Your free trial will expire on {parseAndFormatDate(
+              resolveTrialExpiry()
+            )}.
             Upgrade now to ensure uninterrupted access.
           {/if}
-        {:else if isBillingIssue}
+        {:else if resolveIsBillingIssue()}
           Please update your billing information to continue using sync
           features.
         {:else}
@@ -85,7 +95,7 @@
         {/if}
       </p>
     </div>
-    {#if !isBillingIssue}
+    {#if !resolveIsBillingIssue()}
       <div
         class="flex flex-col gap-4 p-6 bg-bgs2 rounded-lg border border-brs3"
       >
@@ -109,7 +119,7 @@
         icon="chat-three"
         size={Size.sm}
         style={ButtonStyle.PLAIN}
-        on:click={async () => {
+        onclick={async () => {
           appStore.runAction("chat");
         }}
       />
@@ -119,7 +129,7 @@
         size={Size.sm}
         style={ButtonStyle.PLAIN}
         type={ButtonVariant.DANGER}
-        on:click={async () => {
+        onclick={async () => {
           await account.signOut();
         }}
       />

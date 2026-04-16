@@ -1,15 +1,18 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import Badge from "@21n/elements/text/Badge.svelte";
   import type { IQuickAccessItem } from "@21n/components/home/home.type";
-  const dispatch = createEventDispatcher();
-
-  export let items: IQuickAccessItem[] = [];
+  let {
+    items = [],
+    onItemClick = undefined
+  }: {
+    items?: IQuickAccessItem[];
+    onItemClick?: ((item: IQuickAccessItem) => void) | undefined;
+  } = $props();
 
   function handleItemClick(item: IQuickAccessItem) {
-    dispatch("itemClick", item);
+    onItemClick?.(item);
   }
 
   function formatCount(count: number): string {
@@ -25,7 +28,7 @@
     {#each items as item}
       <button
         class="flex items-center justify-between gap-2 px-2 bg-bgs1 hover:bg-bgs3 rounded-lg transition-colors h-11"
-        on:click={() => handleItemClick(item)}
+        onclick={() => handleItemClick(item)}
       >
         <div class="flex items-center gap-1">
           <Icon icon={item.icon} size={Size.sm} class="text-fgs2" />

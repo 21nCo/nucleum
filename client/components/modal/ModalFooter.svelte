@@ -5,7 +5,7 @@
     ButtonVariant,
     type IButtonParams
   } from "@21n/types/button.type";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import modalEvent, {
     isPrimaryActionDisabled
   } from "@21n/components/modal/modal.store";
@@ -21,20 +21,37 @@
   import { Action } from "@21n/types/action.enum";
   import ButtonGroup from "@21n/elements/button/ButtonGroup.svelte";
   import view from "@21n/stores/view.store";
-  const dispatch = createEventDispatcher();
-  export let action: string;
-  export let isShowClose: boolean = false;
-  export let isPreventAutoClose: boolean = false;
-  export let primaryAction: IButtonParams | undefined = undefined;
-  export let secondaryAction: IButtonParams | undefined = undefined;
-  export let buttons: IButtonParams[] | undefined = undefined;
-  export let isDelegateClose: boolean = false;
-  export let orientation: Orientation = Orientation.Horizontal;
-  export let isHideSecondaryShortcut: boolean = false;
-  export let error: string | undefined = undefined;
-  export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
-  const dev_isUseExpandedButtons = !$view.isConstrainedWidth;
-  let isPrimaryActionInProgress = false;
+  let {
+    action,
+    isShowClose = false,
+    isPreventAutoClose = false,
+    primaryAction = undefined,
+    secondaryAction = undefined,
+    buttons = undefined,
+    isDelegateClose = false,
+    orientation = Orientation.Horizontal,
+    isHideSecondaryShortcut = false,
+    error = $bindable(),
+    size = Size.md,
+    onClose = undefined
+  }: {
+    action: string;
+    isShowClose?: boolean;
+    isPreventAutoClose?: boolean;
+    primaryAction?: IButtonParams | undefined;
+    secondaryAction?: IButtonParams | undefined;
+    buttons?: IButtonParams[] | undefined;
+    isDelegateClose?: boolean;
+    orientation?: Orientation;
+    isHideSecondaryShortcut?: boolean;
+    error?: string | undefined;
+    size?: Size.xs | Size.sm | Size.md | Size.lg;
+    onClose?:
+      | ((event: CustomEvent<"primary" | "secondary" | "close">) => void)
+      | undefined;
+  } = $props();
+  const isUseExpandedButtons = $derived(!$view.isConstrainedWidth);
+  let isPrimaryActionInProgress = $state(false);
 
   function resolveButtons() {
     let _buttons = buttons;
@@ -103,8 +120,15 @@
   export async function close(
     from: "primary" | "secondary" | "close" = "close"
   ) {
-    if (isDelegateClose) dispatch("close", from);
-    else modalEvent.hide(action);
+    if (isDelegateClose) {
+      const closeEvent = new CustomEvent<"primary" | "secondary" | "close">(
+        "close",
+        { detail: from }
+      );
+      onClose?.(closeEvent);
+      return;
+    }
+    modalEvent.hide(action);
   }
   async function onPrimaryClick(event?: any) {
     logger.log({ at: "onPrimaryClick", action });
@@ -134,8 +158,8 @@
 
 <footer
   class={cn("flex flex-col w-full gap-2 justify-center mo:pb-8", {
-    "p-4": !dev_isUseExpandedButtons,
-    "rounded-b-md overflow-clip": dev_isUseExpandedButtons
+    "p-4": !isUseExpandedButtons,
+    "rounded-b-md overflow-clip": isUseExpandedButtons
   })}
 >
   {#if error}
@@ -144,10 +168,10 @@
   <div
     class={cn("flex w-full gap-2", {
       "flex-col mx-auto": orientation === Orientation.Vertical,
-      "justify-center": !dev_isUseExpandedButtons
+      "justify-center": !isUseExpandedButtons
     })}
   >
-    {#if dev_isUseExpandedButtons}
+    {#if isUseExpandedButtons}
       {#key `${$isPrimaryActionDisabled}-${isPrimaryActionInProgress}`}
         <ButtonGroup buttons={resolveButtons()} {size} isFooter={true} />
       {/key}
@@ -160,7 +184,7 @@
           isLoading={isPrimaryActionInProgress}
           isDisabled={$isPrimaryActionDisabled}
           size={primaryAction.size ?? Size.md}
-          on:click={onPrimaryClick}
+          onclick={onPrimaryClick}
           label={primaryAction.label}
           shortcut={primaryAction.shortcut ?? {
             key: KeyboardKey.ENTER,
@@ -174,7 +198,7 @@
           icon={secondaryAction.icon}
           size={secondaryAction.size ?? Size.md}
           style={ButtonStyle.OUTLINED}
-          on:click={onSecondaryClick}
+          onclick={onSecondaryClick}
           label={secondaryAction?.label}
           shortcut={!isHideSecondaryShortcut &&
           (!secondaryAction.variant ||
@@ -184,7 +208,7 @@
         />
       {:else if isShowClose}
         <Button
-          on:click={() => close("close")}
+          onclick={() => close("close")}
           style={ButtonStyle.OUTLINED}
           label="Close"
           shortcut={Action.CLOSE}

@@ -1,14 +1,22 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { cn } from "@21n/utils/ui.utils";
   import { LayoutContext } from "@21n/types/layout.type";
   import AppMenuSwitcherItem from "@21n/layout/leftPanel/appMenuSwitcher/AppMenuSwitcherItem.svelte";
   import type { IAction } from "@21n/types/action.type";
-  import { createEventDispatcher } from "svelte";
   import { appStore } from "@21n/stores/app.store";
-  const dispatch = createEventDispatcher();
-  export let items: IAction[];
-  export let layoutContext: LayoutContext;
-  export let parentBackgroundIndex: number;
+  let {
+    items,
+    layoutContext,
+    parentBackgroundIndex,
+    onClick
+  }: {
+    items: IAction[];
+    layoutContext: LayoutContext;
+    parentBackgroundIndex: number;
+    onClick?: (item: IAction) => void;
+  } = $props();
 </script>
 
 <div
@@ -25,7 +33,7 @@
       {parentBackgroundIndex}
       {layoutContext}
       {item}
-      on:click={() => dispatch("click", item)}
+      onClick={() => onClick?.(item)}
     />
   {/each}
 </div>

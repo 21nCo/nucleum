@@ -4,7 +4,7 @@
   import { UserDataMode } from "@21n/types/account.type";
   import { ButtonStyle } from "@21n/types/button.type";
   import ProductInfoFooter from "@21n/components/settings/about/ProductInfoFooter.svelte";
-  export let parentBgIndex: number = 1;
+  let { parentBgIndex = 1 }: { parentBgIndex?: number } = $props();
 </script>
 
 <div class="flex w-full justify-center">
@@ -15,7 +15,7 @@
         label="Sign out"
         style={ButtonStyle.OUTLINED}
         {parentBgIndex}
-        on:click={async () => {
+        onclick={async () => {
           await account.signOut();
         }}
       />

@@ -4,11 +4,22 @@
   import Icon from "@21n/elements/Icon.svelte";
   import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
   import { bg, cn } from "@21n/utils/ui.utils";
-  export let parentBackgroundIndex: number = 1;
-  export let infoParams: FormLabelInfoTooltip | undefined = undefined;
-  export let label: string = "";
-  export let text: string = "";
-  let copied = false;
+    let {
+    parentBackgroundIndex = 1,
+    infoParams = undefined,
+    label = "",
+    text = "",
+  }: {
+    parentBackgroundIndex?: number;
+    infoParams?: FormLabelInfoTooltip | undefined;
+    label?: string;
+    text?: string;
+  } = $props();
+
+  
+  
+  
+  let copied = $state(false);
   const copyText = () => {
     copyToClipboard(text);
     copied = true;
@@ -19,7 +30,7 @@
 </script>
 
 <FormControlLabelWrapper props={{ label, tooltip: infoParams }}>
-  <button class="relative text-b2 cursor-pointer w-full" on:click={copyText}>
+  <button class="relative text-b2 cursor-pointer w-full" onclick={copyText}>
     <div
       class={cn(
         "flex justify-between w-full px-3 py-2 text-fgs3 rounded-md border-none outline-none",

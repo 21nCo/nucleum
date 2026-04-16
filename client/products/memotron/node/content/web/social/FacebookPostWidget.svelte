@@ -1,12 +1,19 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-
-  export let postUrl: string;
+  let {
+    postUrl,
+    onError = undefined,
+    onFallback = undefined
+  }: {
+    postUrl: string;
+    onError?: ((message: string) => void) | undefined;
+    onFallback?: ((message: string) => void) | undefined;
+  } = $props();
 
   let id: string = generateSimpleRandomId();
-  let loading: boolean = true;
-  let error: string = "";
+  let loading = $state(true);
+  let error = $state("");
 
   type FacebookWindow = Window & {
     FB?: {
@@ -42,6 +49,8 @@
     } catch (err) {
       console.error("Facebook widget error:", err);
       error = "Failed to load Facebook post";
+      onError?.(error);
+      onFallback?.(error);
       loading = false;
     }
   }
@@ -75,6 +84,8 @@
               });
             } else {
               error = "Facebook SDK failed to load";
+              onError?.(error);
+              onFallback?.(error);
               loading = false;
             }
           }, 2000);
@@ -83,6 +94,8 @@
     } catch (err) {
       console.error("Facebook embed creation error:", err);
       error = "Unable to load Facebook post";
+      onError?.(error);
+      onFallback?.(error);
       loading = false;
     }
   }

@@ -6,9 +6,16 @@
   import { Size } from "@21n/types/size.enum";
   import { type IAnalyticsCard } from "@21n/products/pointron/analytics/analytics.types";
   import GroupingAndFiltersPopover from "@21n/products/pointron/analytics/page/GroupingAndFiltersPopover.svelte";
-  export let card: IAnalyticsCard;
-  export let onGroupByChange: (e: CustomEvent) => void;
-  export let parentBgIndex: number = 1;
+
+  let {
+    card,
+    onGroupByChange,
+    parentBgIndex = 1
+  }: {
+    card: IAnalyticsCard;
+    onGroupByChange: (e: CustomEvent) => void;
+    parentBgIndex?: number;
+  } = $props();
 </script>
 
 <div

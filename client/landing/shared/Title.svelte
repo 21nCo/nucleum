@@ -1,8 +1,14 @@
 <script lang="ts">
   import { fly } from "svelte/transition";
 
-  export let title: string;
-  export let subtitle: string | undefined = undefined;
+  let {
+    title,
+    subtitle = undefined,
+  }: {
+    title: string;
+    subtitle?: string | undefined;
+  } = $props();
+
 </script>
 
 <div class="flex flex-col gap-3 items-center" in:fly={{ y: 10, duration: 500 }}>

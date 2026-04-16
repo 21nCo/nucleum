@@ -7,21 +7,23 @@
   import { cn } from "@21n/utils/ui.utils";
   import "@fontsource/noto-color-emoji";
   import Icon from "@21n/elements/Icon.svelte";
-  export let avatar: IAvatar;
-  export let isHoverDisabled = true;
-  export let isHoverEnabled = false;
-  export let size: Size | number;
-  export let dev_iOSTempRatingFallback = false;
-  $: fontSize =
+  let {
+    avatar,
+    isHoverDisabled = true,
+    isHoverEnabled = false,
+    size,
+    dev_iOSTempRatingFallback = false
+  }: any = $props();
+  const fontSize = $derived.by(() =>
     typeof size === "number"
       ? `${size}px`
       : size === Size.lg
         ? "1.5rem"
         : size === Size.md
           ? "1.25rem"
-          : "1rem";
+          : "1rem"
+  );
 
-  //@Arv Finlize whether to use on:mouseenter and on:mouseleave or hover, hover's inherent action appears laggy, if current hover action itself is good enough please remove this as unused
   function handleMouseEnter(e: any) {
     if (isHoverDisabled) return;
     const target = e.target as HTMLElement;

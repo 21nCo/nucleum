@@ -1,16 +1,24 @@
 <script lang="ts">
   import { TimeScale } from "@21n/types/time.type";
 
-  export let startDate: Date;
-  export let endDate: Date;
-  export let spanScale: TimeScale = TimeScale.DAYS;
+  let {
+    startDate,
+    endDate,
+    spanScale = TimeScale.DAYS
+  }: {
+    startDate: Date;
+    endDate: Date;
+    spanScale?: TimeScale;
+  } = $props();
 
-  let currentDate = new Date();
-  $: totalDays = Math.ceil(
+  const currentDate = new Date();
+  const totalDays = $derived(
+    Math.ceil(
     (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+    )
   );
 
-  $: points = getMajorAxisPoints(startDate, endDate, spanScale);
+  const points = $derived(getMajorAxisPoints(startDate, endDate, spanScale));
 
   function getMajorAxisPoints(
     startDate: Date,

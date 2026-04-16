@@ -1,4 +1,7 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { onMount } from "svelte";
   import { appLoadingState, appStore } from "@21n/stores/app.store";
   import {
@@ -29,14 +32,24 @@
   import ResourceResolver from "../paint/ResourceResolver.svelte";
   import { GlobalEvent } from "@21n/types/event.enum";
   import ComponentResolver from "../paint/ComponentResolver.svelte";
-  let isHideLeftNavBar: boolean = refreshSidebarState();
+  let {
+    children,
+    topnav: topnavContent,
+    main
+  }: {
+    children?: Snippet;
+    topnav?: Snippet;
+    main?: Snippet;
+  } = $props();
+  let isHideLeftNavBar = $state(refreshSidebarState());
 
-  let isMaxMode: boolean =
+  let isMaxMode = $state(
     new URLSearchParams(window.location.search).get(AppSearchParam.MAX) ===
-    "true";
-  let rightPanel: IAction | undefined = undefined;
-  let pop: { id: IRecordId; action: IAction } | undefined = undefined;
-  let main: string | undefined = undefined;
+      "true"
+  );
+  let rightPanel = $state<IAction | undefined>(undefined);
+  let pop = $state<{ id: IRecordId; action: IAction } | undefined>(undefined);
+  let mainPath = $state<string | undefined>(undefined);
 
   onMount(() => {
     const uiStateSub = uiState.subscribe(() => {
@@ -57,7 +70,7 @@
       } else {
         pop = undefined;
       }
-      main = p.url.searchParams.get(AccessMode.MAIN) ?? undefined;
+      mainPath = p.url.searchParams.get(AccessMode.MAIN) ?? undefined;
     });
     const appEventSub = appEvents.subscribe((x) => {
       if (x.event === GlobalEvent.ESCAPE) {
@@ -111,7 +124,7 @@
 {#if $appLoadingState.isBaseLoaded && $appLoadingState.isLocalLoaded}
   {#if $appStore.interactionMode === InteractionMode.AGENT && $context.embed !== Embed.HANDSET}
     <CommandModePage>
-      <slot />
+      {@render children?.()}
     </CommandModePage>
   {:else}
     <div class="flex flex-col w-full h-full">
@@ -121,18 +134,16 @@
         {/if}
         <div class="flex flex-col h-full w-full">
           {#if !$view.isPortrait && !isMaxMode}
-            <TopNav>
-              <slot name="topnav" slot="topnav" />
-            </TopNav>
+            <TopNav topnav={topnavContent} />
           {/if}
           <div class="flex w-full flex-grow">
             {#if $context.embed !== Embed.HANDSET && !isHideLeftNavBar && !isMaxMode}
-              <LeftNav variant="fixed" isHidePanel={!!pop || !!main} />
+              <LeftNav variant="fixed" isHidePanel={!!pop || !!mainPath} />
             {/if}
             <div class="min-w-0 flex-grow relative">
-              {#if main}
+              {#if mainPath}
                 <div class="absolute inset-0 w-full h-full bg-bgs1 z-40">
-                  <ComponentResolver path={main} params={{ isInline: true }} />
+                  <ComponentResolver path={mainPath} params={{ isInline: true }} />
                 </div>
               {/if}
               {#if pop}
@@ -148,9 +159,10 @@
                 <TrailContent /> -->
               {:else}
                 <AppSplitView>
-                  <slot name="main" slot="main">
-                    <slot />
-                  </slot>
+                  {@render main?.()}
+                  {#if !main}
+                    {@render children?.()}
+                  {/if}
                 </AppSplitView>
               {/if}
             </div>
@@ -166,4 +178,3 @@
     </div>
   {/if}
 {/if}
-<svelte:document on:visibilitychange={handleVisibilityChange} />

@@ -28,26 +28,37 @@
   import { Orientation } from "@21n/types/direction.enum";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "@21n/types/size.enum";
-  export let variant: CalendarHmVariant = CalendarHmVariant.PLAIN;
-  export let orientation: Orientation;
-  export let touchDevice: boolean;
-  export let provider: ICalendarHeatMapDataProvider;
-  export let options: CalendarHeatmapOptions = {};
-  // export let context: string;
+
+  let {
+    variant = CalendarHmVariant.PLAIN,
+    orientation,
+    touchDevice,
+    provider,
+    options = {},
+    tileScale = $bindable(TileScale.DAYS)
+  }: {
+    variant?: CalendarHmVariant;
+    orientation: Orientation;
+    touchDevice: boolean;
+    provider: ICalendarHeatMapDataProvider;
+    options?: CalendarHeatmapOptions;
+    tileScale?: TileScale;
+  } = $props();
+
   let heatmapDataManager = new CalendarHeatmapDataManager(provider, options);
-  let data: any;
-  let isLoading = false;
+  let data = $state<any>(undefined);
+  let isLoading = $state(false);
   const currentYear = new Date().getFullYear();
   const endYear = currentYear;
-  export let tileScale: TileScale = TileScale.DAYS;
-  $: {
+  $effect(() => {
     $CalendarHeatMapLayout = orientation;
-  }
-  $: $isTouchDevice = touchDevice;
+  });
+  $effect(() => {
+    $isTouchDevice = touchDevice;
+  });
 
-  function viewChangeHandler(e: any) {
-    console.log("viewChangeHandler", e.detail);
-    tileScale = e.detail;
+  function viewChangeHandler(scale: TileScale) {
+    tileScale = scale;
     refreshData();
   }
   function refreshSelectedTile() {
@@ -110,15 +121,14 @@
 
 <div class="flex h-full w-full flex-col gap-2 items-center">
   {#if variant === CalendarHmVariant.PLAIN}
-    <!-- <Icon icon="chevron-up" on:click={prev} /> -->
   {:else if variant === CalendarHmVariant.YEARS_SWITCH}
     <HeaderV1 {provider} {options} />
   {:else if variant === CalendarHmVariant.SCALE_SWITCH}
     <HeaderV2
-      on:switch={viewChangeHandler}
       {orientation}
-      on:prev={prev}
-      on:next={next}
+      onSwitch={viewChangeHandler}
+      onPrev={prev}
+      onNext={next}
     />
   {/if}
   <div class="h-full w-full">
@@ -131,7 +141,8 @@
       />
     {:else if data}
       {#if orientation === Orientation.Horizontal}
-        <HorizontalCalendarLayout let:datum {data} scale={tileScale}>
+        <HorizontalCalendarLayout {data} scale={tileScale}>
+          {#snippet children(datum)}
           {#if tileScale === TileScale.DAYS}
             <MonthsLayout data={datum} />
           {:else if tileScale === TileScale.MONTHS}
@@ -139,9 +150,11 @@
           {:else}
             <QuadrennialLayout data={datum} />
           {/if}
+          {/snippet}
         </HorizontalCalendarLayout>
       {:else}
-        <VerticalCalendarLayout let:datum {data} scale={tileScale}>
+        <VerticalCalendarLayout {data} scale={tileScale}>
+          {#snippet children(datum)}
           {#if tileScale === TileScale.DAYS}
             <MonthsLayout data={datum} />
           {:else if tileScale === TileScale.MONTHS}
@@ -149,12 +162,12 @@
           {:else}
             <VerticalQuadrennialLayout data={datum} />
           {/if}
+          {/snippet}
         </VerticalCalendarLayout>
       {/if}
     {/if}
   </div>
   {#if variant === CalendarHmVariant.PLAIN}
-    <!-- <Icon icon="chevron-down" on:click={next} /> -->
   {:else}
     <Footer />
   {/if}

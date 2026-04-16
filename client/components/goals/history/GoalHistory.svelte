@@ -6,9 +6,10 @@
   import { Size } from "@21n/types/size.enum";
   import GoalAllActivityPanel from "@21n/components/goals/history/GoalAllActivityPanel.svelte";
   import GoalFocusSessions from "@21n/components/goals/history/GoalFocusSessions.svelte";
-  export let goal: IActiveGoalStore;
-  let selectedOption = "all";
-  let isIncludeSubGoals = false;
+
+  let { goal }: { goal: IActiveGoalStore } = $props();
+  let selectedOption = $state("all");
+  let isIncludeSubGoals = $state(false);
 </script>
 
 <div class="flex flex-col w-full h-full gap-2 overflow-auto">

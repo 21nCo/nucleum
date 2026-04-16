@@ -1,29 +1,49 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
+  import type { MouseEventHandler } from "svelte/elements";
   import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { Size } from "@21n/types/size.enum";
   import { bg, cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import view from "@21n/stores/view.store";
   import { appStore } from "@21n/stores/app.store";
   import modalEvent from "@21n/components/modal/modal.store";
   import { haptic } from "@21n/utils/embed.utils";
-  const dispatch = createEventDispatcher();
-  export let text: string | undefined = undefined;
-  export let parentBgIndex: number = 1;
-  export let isEnabled: boolean = true;
-  export let path: string | undefined = undefined;
-  export let accessMode: AccessMode = AccessMode.FULL;
-  export let isPreventDefault: boolean = false;
-  let classList: string = "";
-  export { classList as class };
 
-  function onBack() {
+  let {
+    text = undefined,
+    parentBgIndex = 1,
+    isEnabled = true,
+    path = undefined,
+    accessMode = AccessMode.FULL,
+    isPreventDefault = false,
+    class: classList = "",
+    children = undefined,
+    onclick = undefined,
+    onback = undefined
+  }: {
+    text?: string | undefined;
+    parentBgIndex?: number;
+    isEnabled?: boolean;
+    path?: string | undefined;
+    accessMode?: AccessMode;
+    isPreventDefault?: boolean;
+    class?: string;
+    children?: Snippet | undefined;
+    onclick?: MouseEventHandler<HTMLButtonElement> | undefined;
+    onback?: (() => void) | undefined;
+  } = $props();
+  const hasDefaultContent = $derived(!!children);
+
+  function onBack(event: MouseEvent) {
     if (!isEnabled) return;
     haptic();
+    const buttonEvent = event as MouseEvent & {
+      currentTarget: EventTarget & HTMLButtonElement;
+    };
     if (isPreventDefault) {
-      dispatch("click");
-      dispatch("back");
+      onclick?.(buttonEvent);
+      onback?.();
       return;
     }
     if ($view.isConstrainedWidth && !path) {
@@ -32,34 +52,35 @@
       appStore.closeResource({ accessMode });
     }
     if (path) modalEvent.hide(path, "BackButton.svelte");
+    onclick?.(buttonEvent);
   }
 </script>
 
 <button
   class={cn(
     "flex items-center rounded-md",
-    $$slots.default
+    hasDefaultContent
       ? "gap-2 px-1"
       : "gap-0 p-1 rounded-r-md rounded-l-full active:bg-bgs2 notouch:hover:bg-bgs2",
     classList,
     {
       "cursor-pointer": isEnabled,
       "cursor-default": !isEnabled,
-      [`active:${bg(parentBgIndex)}`]: isEnabled && $$slots.default
+      [`active:${bg(parentBgIndex)}`]: isEnabled && hasDefaultContent
     }
   )}
   type="button"
   tabindex={isEnabled ? 0 : -1}
   aria-disabled={!isEnabled}
   disabled={!isEnabled}
-  aria-label={$$slots.default ? undefined : (text ?? "Back")}
-  on:click={onBack}
+  aria-label={hasDefaultContent ? undefined : (text ?? "Back")}
+  onclick={onBack}
 >
-  {#if $$slots.default}
+  {#if hasDefaultContent}
     {#if isEnabled}
       <Icon icon="chevron-left" size={Size.lg} />
     {/if}
-    <slot />
+    {@render children?.()}
   {:else}
     <Icon icon="chevron-left" size={Size.sm} />
     <div class="pr-1 text-fgs1">{text ?? "Back"}</div>

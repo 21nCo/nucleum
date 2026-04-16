@@ -1,7 +1,16 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { cn } from "@21n/utils/ui.utils";
-  export let backgroundImage: string = "";
-  export let expansion: "horizontal" | "vertical" | undefined = undefined;
+  let {
+    backgroundImage = "",
+    expansion = undefined,
+    children
+  }: {
+    backgroundImage?: string;
+    expansion?: "horizontal" | "vertical" | undefined;
+    children?: Snippet;
+  } = $props();
+
 </script>
 
 <div
@@ -18,5 +27,5 @@
   {#if backgroundImage}
     <div class="absolute inset-0 bg-fgs1 opacity-40 rounded-[20px]"></div>
   {/if}
-  <slot />
+  {@render children?.()}
 </div>

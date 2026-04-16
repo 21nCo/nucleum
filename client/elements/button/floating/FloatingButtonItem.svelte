@@ -4,9 +4,18 @@
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
   import Icon from "@21n/elements/Icon.svelte";
-  export let param: IButtonParams;
-  export let index: number;
-  export let length: number;
+    let {
+    param,
+    index,
+    length,
+  }: {
+    param: IButtonParams;
+    index: number;
+    length: number;
+  } = $props();
+
+  
+  
 
   let contextMenuRef: HTMLElement;
 
@@ -26,7 +35,7 @@
     }
   )}
   bind:this={contextMenuRef}
-  on:click={async () => {
+  onclick={async () => {
     if (param.callback) await param?.callback();
   }}
   use:popover={{

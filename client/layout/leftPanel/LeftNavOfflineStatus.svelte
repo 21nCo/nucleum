@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import account from "@21n/stores/account.store";
   import { appStore } from "@21n/stores/app.store";
@@ -6,7 +8,7 @@
   import { Action } from "@21n/types/action.enum";
   import { cn } from "@21n/utils/ui.utils";
 
-  export let isInThinMode = false;
+  let { isInThinMode = false }: { isInThinMode?: boolean } = $props();
 </script>
 
 {#if $account.dataMode === UserDataMode.LOCAL || $context.isInOfflineMode}
@@ -18,7 +20,7 @@
         "text-b3": !isInThinMode
       }
     )}
-    on:click={() => {
+    onclick={() => {
       if ($account.dataMode === UserDataMode.LOCAL) {
         appStore.runAction(Action.SETTINGS);
       } else {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, createEventDispatcher } from "svelte";
+  import { onMount } from "svelte";
   import type { ICodeBlockBody } from "@21n/components/markdown/md.type";
   import * as monaco from "monaco-editor";
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
@@ -10,11 +10,17 @@
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import type { MdStoreType } from "@21n/components/markdown/markdown.store";
   import { hoverable } from "@21n/actions/hover.action";
-
-  export let mdStore: MdStoreType;
-  export let body: ICodeBlockBody;
-  
-  const dispatch = createEventDispatcher();
+  let {
+    mdStore,
+    body,
+    onUpdate = undefined,
+    onDelete = undefined
+  }: {
+    mdStore: MdStoreType;
+    body: ICodeBlockBody;
+    onUpdate?: ((event: CustomEvent<any>) => void) | undefined;
+    onDelete?: (() => void) | undefined;
+  } = $props();
 
   let language = body?.language ?? "javascript";
   let code = body?.text ?? "";
@@ -132,9 +138,7 @@
 
     editor.getModel()?.onDidChangeContent(() => {
       code = editor!.getValue();
-      dispatch("update", {
-        text: code
-      });
+      onUpdate?.(new CustomEvent("update", { detail: { text: code } }));
     });
 
     const darkModeMediaQuery = window.matchMedia(
@@ -157,9 +161,7 @@
     if (editor) {
       monaco.editor.setModelLanguage(editor.getModel()!, language);
     }
-    dispatch("update", {
-      language
-    });
+    onUpdate?.(new CustomEvent("update", { detail: { language } }));
   }
 
   function handleCopyCode() {
@@ -167,12 +169,13 @@
   }
 
   function handleDeleteCode() {
-    dispatch("delete");
+    onDelete?.();
   }
 
-  $: if (editor && $mdStore.params?.isReadOnly !== undefined) {
+  $effect(() => {
+    if (!editor || $mdStore.params?.isReadOnly === undefined) return;
     editor.updateOptions({ readOnly: $mdStore.params.isReadOnly });
-  }
+  });
 </script>
 
 <div
@@ -196,7 +199,7 @@
           size={Size.sm}
           popoverWidth="w-60"
           bind:value={language}
-          on:select={handleLanguageChange}
+          onSelect={handleLanguageChange}
         />
       </div>
       {#if isHovering}
@@ -206,7 +209,7 @@
             size={Size.sm}
             tooltip="Copy code"
             style={ButtonStyle.OUTLINED}
-            on:click={handleCopyCode}
+            onclick={handleCopyCode}
           />
           <Button
             icon="trash"
@@ -214,7 +217,7 @@
             type={ButtonVariant.DANGER}
             style={ButtonStyle.OUTLINED}
             tooltip="Delete block"
-            on:click={handleDeleteCode}
+            onclick={handleDeleteCode}
           />
         </div>
       {/if}

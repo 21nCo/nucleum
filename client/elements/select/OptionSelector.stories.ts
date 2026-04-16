@@ -1,10 +1,11 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
 import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
 import { Size } from "@21n/types/size.enum";
-import { OptionSelectorStyle } from "@21n/types/switcher.enum";
+import { OptionSelectorStyle } from "@21n/types/select.type";
 import { Orientation } from "@21n/types/direction.enum";
 
 const meta = {
+  title: "Elements/Select/OptionSelector",
   component: OptionSelector,
   argTypes: {
     size: {
@@ -14,21 +15,24 @@ const meta = {
   },
 
   args: {
-    items: [
-      { label: "chevup", icon: "chevup", isDisabled: false },
-      { label: "chevdown", icon: "chevdown", isDisabled: false },
-      { label: "cross", icon: "cross", isDisabled: false }
+    options: [
+      { value: "chevup", label: "chevup", icon: "chevup", isDisabled: false },
+      {
+        value: "chevdown",
+        label: "chevdown",
+        icon: "chevdown",
+        isDisabled: false
+      },
+      { value: "cross", label: "cross", icon: "cross", isDisabled: false }
     ],
-    label: "sample items",
     selected: "chevup",
     size: Size.md,
-    parentBackgroundIndex: 2,
-    info: {
-      body: "This is a sample info text",
-      link: "https://app.pointron.io/signup",
-      linkText: "Learn more"
+    parentBgIndex: 2,
+    labelProps: {
+      label: "sample items",
+      orientation: Orientation.Vertical
     },
-    labelOrientation: Orientation.Vertical
+    iconOrientation: Orientation.Horizontal
   }
 } satisfies Meta<OptionSelector>;
 

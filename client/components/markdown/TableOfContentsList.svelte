@@ -6,10 +6,17 @@
   } from "@21n/components/flux/resourceStores/resource.utils";
   import { tooltip } from "@21n/actions/popover.action";
 
-  export let headingBlocks: any[];
-  export let mdStore: any;
-  export let scrollToHeading: (e: MouseEvent, id: string) => void;
-  export let dev_isShowFocusState: boolean = false;
+  let {
+    headingBlocks,
+    mdStore,
+    scrollToHeading,
+    dev_isShowFocusState = false
+  }: {
+    headingBlocks: any[];
+    mdStore: any;
+    scrollToHeading: (e: MouseEvent, id: string) => void;
+    dev_isShowFocusState?: boolean;
+  } = $props();
 </script>
 
 {#each headingBlocks as block}
@@ -31,7 +38,7 @@
     isSameResource($mdStore.activeHeading, block)}
   <a
     href="#{block.id}"
-    on:click={(e) => scrollToHeading(e, block.id)}
+    onclick={(e) => scrollToHeading(e, block.id)}
     class={cn(
       "flex items-center gap-1 text-b2 truncate py-1.5",
       {

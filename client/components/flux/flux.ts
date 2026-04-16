@@ -1654,7 +1654,8 @@ class Flux {
   }
 }
 
-export let flux = Flux._instance as any as Flux;
+let flux = Flux._instance as any as Flux;
+export { flux };
 
 export async function initFlux(
   persistence: IPersistence,

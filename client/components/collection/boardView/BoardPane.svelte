@@ -17,43 +17,60 @@
   import TabCountBadge from "@21n/components/collection/counts/TabCountBadge.svelte";
   import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
   import { logger } from "@21n/components/debug/logger.client";
-  import { createEventDispatcher } from "svelte";
   import { dropzone } from "@21n/actions/dragAndDrop.action";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import type { IActiveCollectionStore } from "@21n/components/collection/collection.store";
   import CollectionItems from "@21n/components/collection/CollectionItems.svelte";
-  const dispatch = createEventDispatcher();
-
-  export let collection: IActiveCollectionStore;
-  export let view: ICollectionView;
-  export let group: any;
-  export let data: any;
-  export let isBoardOverflow = false;
+  let {
+    collection,
+    view,
+    group,
+    data,
+    isBoardOverflow = false,
+    onDropItem = undefined
+  }: {
+    collection: IActiveCollectionStore;
+    view: ICollectionView;
+    group: any;
+    data: any;
+    isBoardOverflow?: boolean;
+    onDropItem?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
   let dev_isRenderColors = true;
 
-  $: boardCounts = calculateGroupingCounts(data, view.subGroupBy);
-  $: subGroups = resolveOptionsForGrouping(
-    view.subGroupBy,
-    $collection.properties ?? [],
-    boardCounts,
-    { isBoardView: true }
+  let boardCounts = $derived(calculateGroupingCounts(data, view.subGroupBy));
+  let subGroups = $derived(
+    resolveOptionsForGrouping(
+      view.subGroupBy,
+      $collection.properties ?? [],
+      boardCounts,
+      { isBoardView: true }
+    )
   );
-  $: _groupData = filterNodesByPropertyValue(data, view.groupBy, group.value);
+  let _groupData = $derived(filterNodesByPropertyValue(data, view.groupBy, group.value));
 
   function handleDropForSubGroup(e: any) {
-    dispatch("dropItem", {
-      subGroup: e.detail.subGroup,
-      item: e.detail.id,
-      group: group.value
-    });
+    onDropItem?.(
+      new CustomEvent("dropItem", {
+        detail: {
+          subGroup: e.detail.subGroup,
+          item: e.detail.id,
+          group: group.value
+        }
+      })
+    );
   }
 
   function handleDrop(e: any) {
     if (!e.id) return;
-    dispatch("dropItem", {
-      item: e.id,
-      group: group.value
-    });
+    onDropItem?.(
+      new CustomEvent("dropItem", {
+        detail: {
+          item: e.id,
+          group: group.value
+        }
+      })
+    );
   }
 </script>
 
@@ -107,7 +124,7 @@
             arrangement={view.arrangement}
             density={1}
             isApplyCustomColor={group.color}
-            on:dropItem={handleDropForSubGroup}
+            onDropItem={handleDropForSubGroup}
           />
         {/each}
       {:else if isValidArrayWithData(_groupData)}

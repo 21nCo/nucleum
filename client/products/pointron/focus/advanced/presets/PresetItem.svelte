@@ -3,7 +3,6 @@
     SessionCompositionType,
     type SessionComposition
   } from "@21n/types/pointron/sessionComposition.type";
-  import { createEventDispatcher } from "svelte";
   import { Size } from "@21n/types/size.enum";
   import { SelectionItemActiveStyle } from "@21n/types/switcher.enum";
   import { getTotalsFromComposition } from "@21n/products/pointron/pointron.utils";
@@ -14,18 +13,33 @@
   import { abg, cn } from "@21n/utils/ui.utils";
   import Button from "@21n/elements/button/Button.svelte";
   import TextWithHoverTooltip from "@21n/elements/text/TextWithHoverTooltip.svelte";
-  const dispatch = createEventDispatcher();
-  export let preset: SessionComposition;
-  export let isActive: boolean = false;
-  export let parentBackgroundIndex = 1;
-  export let isExpandedVariant: boolean = false;
-  export let isInEditMode: boolean = false;
-  export let isSettingsContext: boolean = false;
+  let {
+    preset,
+    isActive = false,
+    parentBackgroundIndex = 1,
+    isExpandedVariant = false,
+    isInEditMode = false,
+    isSettingsContext = false,
+    onClick = undefined
+  }: {
+    preset: SessionComposition;
+    isActive?: boolean;
+    parentBackgroundIndex?: number;
+    isExpandedVariant?: boolean;
+    isInEditMode?: boolean;
+    isSettingsContext?: boolean;
+    onClick?:
+      | ((event: CustomEvent<{ preset: SessionComposition }>) => void)
+      | undefined;
+  } = $props();
 
   // let isHovering: boolean = false;
-  $: totals = getTotalsFromComposition({ composition: preset });
+  let totals = $derived(getTotalsFromComposition({ composition: preset }));
   function handleClick() {
-    dispatch("click", { preset });
+    const clickEvent = new CustomEvent<{ preset: SessionComposition }>("click", {
+      detail: { preset }
+    });
+    onClick?.(clickEvent);
   }
   function deleteHandler(event: any) {
     if (preset && preset.id) pointronPreferences.removePreset(preset.id);
@@ -47,7 +61,7 @@
         "max-w-md": isExpandedVariant && !isSettingsContext
       }
     )}
-    on:click={handleClick}
+    onclick={handleClick}
   >
     <span class="flex items-center gap-1 h-full min-w-0 flex-1">
       <Icon
@@ -97,7 +111,7 @@
       >
         <Button
           icon="trash"
-          on:click={deleteHandler}
+          onclick={deleteHandler}
           tooltip="Delete preset"
         />
       </span>

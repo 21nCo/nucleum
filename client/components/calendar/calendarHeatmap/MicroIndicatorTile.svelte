@@ -13,26 +13,34 @@
   import HoverableElement from "@21n/elements/HoverableElement.svelte";
   import { cn } from "@21n/utils/ui.utils";
 
-  export let data: DailyData | MonthlyData;
-  export let classList: string = "";
-  export let tileValue: string = "";
-  tileValue =
+  let {
+    data,
+    classList = "",
+    tileValue = ""
+  }: {
+    data: DailyData | MonthlyData;
+    classList?: string;
+    tileValue?: string;
+  } = $props();
+  const initialTileValue = $derived(
     data.display == TileAppearance.FTile || data.display == TileAppearance.LTile
       ? "🔥"
-      : tileValue;
-  $: colors = heatMapColorRange($appearance, "aps1", 6);
+      : tileValue
+  );
+  const colors = $derived(heatMapColorRange($appearance, "aps1", 6));
   let tileRef: HTMLSpanElement;
-  $: tooltip = resolveToolTip(data.date);
-  $: isActive =
+  const tooltip = $derived(resolveToolTip(data.date));
+  const isActive = $derived(
     ("date" in data &&
       data.date == parseAndFormatDate($selectedTimePeriod, "iso-short")) ||
-    ("month" in data &&
-      data.month ==
-        parseAndFormatDate($selectedTimePeriod, "iso-short")
-          .split("-")
-          .slice(0, 2)
-          .join("-"));
-  let monthTitles = [
+      ("month" in data &&
+        data.month ==
+          parseAndFormatDate($selectedTimePeriod, "iso-short")
+            .split("-")
+            .slice(0, 2)
+            .join("-"))
+  );
+  const monthTitles = [
     "J",
     "F",
     "M",
@@ -46,18 +54,15 @@
     "N",
     "D"
   ];
-  $: if (tileValue == "") {
-    if ("date" in data) {
-      // tooltip = data.date;
-      tileValue = data.date.split("-")[2];
-    } else if (
-      $CalendarHeatMapLayout == Orientation.Horizontal &&
-      "month" in data
-    ) {
-      let month: number = Number(data.month.split("-")[1]) - 1;
-      tileValue = monthTitles[month];
+  const resolvedTileValue = $derived.by(() => {
+    if (initialTileValue !== "") return initialTileValue;
+    if ("date" in data) return data.date.split("-")[2];
+    if ($CalendarHeatMapLayout == Orientation.Horizontal && "month" in data) {
+      const month = Number(data.month.split("-")[1]) - 1;
+      return monthTitles[month];
     }
-  }
+    return "";
+  });
   function resolveToolTip(date: string | undefined) {
     if (!date) return;
     if ("date" in data) {
@@ -90,8 +95,7 @@
       "border-2 border-bgs1 outline outline-ass1 shadow-outline": isActive
     })}
     style={`background-color: ${colors[data.color]};`}
-    on:click={() => {
-      //TODO - date.date and date.month to be in Date type approach
+    onclick={() => {
       let val;
       if ("date" in data) {
         val = new Date(data.date);
@@ -101,20 +105,7 @@
       selectedTimePeriod.set(val ?? new Date());
     }}
   >
-    <!--on:click dispatch required event along with data/data.day/data.month available here-->
-    <!-- {typeof +tileValue == "number" ? "" : tileValue} -->
-    <!-- {tileValue} -->
-    <!-- {tileValue === "🔥" ? tileValue : ""} -->
-    {#if tileValue === "🔥"}
-      <!-- 🔥 -->
-      <!-- <div class="w-full h-full flex justify-center items-center">
-        <Icon
-          icon="bolt-micro"
-          size={Size.xxs}
-          selectionStyle={SelectionItemActiveStyle.ACCENT_BACKGROUND}
-          isActive={true}
-        />
-      </div> -->
+    {#if resolvedTileValue === "🔥"}
     {/if}
   </HoverableElement>
 </span>

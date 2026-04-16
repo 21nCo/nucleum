@@ -2,8 +2,13 @@
   import type { IAudioMetadata } from "@21n/products/memotron/node/node.type";
   import { formatSeconds } from "@21n/utils/time.utils";
   import BasicInfoItem from "@21n/products/memotron/node/metadata/BasicInfoItem.svelte";
-  export let metadata: IAudioMetadata;
-  export let duration: number | undefined = undefined;
+  let {
+    metadata,
+    duration = undefined
+  }: {
+    metadata: IAudioMetadata;
+    duration?: number | undefined;
+  } = $props();
 </script>
 
 <div class="flex flex-col gap-3 rounded-md mo:p-2 p-4 w-full bg-bgs2">

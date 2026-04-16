@@ -13,19 +13,26 @@
   import { dragSelection } from "@21n/actions/dragSelection.action";
   import { bulkEditStore } from "@21n/components/record/bulkedit.store";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
-  export let date: Date;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.CALENDAR;
-  let isRefreshing = false;
-  let tasks: ITaskThumb[] = [];
-  let isInSelectionMode = false;
+
+  let {
+    date,
+    accessPoint = ResourceAccessPoint.CALENDAR
+  }: {
+    date: Date;
+    accessPoint?: ResourceAccessPoint;
+  } = $props();
+
+  let isRefreshing = $state(false);
+  let tasks = $state<ITaskThumb[]>([]);
+  let isInSelectionMode = $state(false);
   onMount(async () => {
     await refreshTimeline();
   });
 
-  $: multiSelectContext = {
+  const multiSelectContext = $derived({
     resource: Resource.task,
     accessPoint
-  };
+  });
 
   onDestroy(() => {
     if (bulkEditStore.matchesContext(multiSelectContext)) {
@@ -55,7 +62,7 @@
     });
   }
 
-  function onResourceMutation(event: CustomEvent) {
+  function onResourceMutation() {
     refreshTimeline();
   }
 
@@ -106,7 +113,7 @@
       {accessPoint}
       {isRefreshing}
       {date}
-      on:create={handleCreateTask}
+      onCreate={handleCreateTask}
     />
   </div>
 
@@ -131,8 +138,8 @@
     "isChecked",
     "goalId"
   ]}
-  on:syncDown={() => {
+  onSyncDown={() => {
     refreshTimeline();
   }}
-  on:change={onResourceMutation}
+  onChange={onResourceMutation}
 />

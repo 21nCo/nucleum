@@ -9,10 +9,15 @@
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
   import { Orientation } from "@21n/types/direction.enum";
   import { OptionSelectorStyle } from "@21n/types/select.type";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let composition: SessionComposition;
-  export let isDisablePredefined: boolean = false;
+  let {
+    composition = $bindable(),
+    isDisablePredefined = false,
+    onChange = undefined
+  }: {
+    composition: SessionComposition;
+    isDisablePredefined?: boolean;
+    onChange?: ((event: CustomEvent<void>) => void) | undefined;
+  } = $props();
   const labelProps = { orientation: Orientation.Vertical };
   if (!composition.breakReminder || composition.breakReminder == 0)
     composition.breakReminder = $pointronPreferences.breakReminder;
@@ -20,6 +25,11 @@
     composition.breakDuration = 5 * 60;
   if (!composition.numberOfBreaks || composition.numberOfBreaks == 0)
     composition.numberOfBreaks = 2;
+
+  function emitChange() {
+    const changeEvent = new CustomEvent<void>("change");
+    onChange?.(changeEvent);
+  }
 </script>
 
 <div class="flex flex-col w-full gap-2 items-start">
@@ -42,31 +52,31 @@
           body: `Choose **Reminder** to recieve a break notification every certain time, or **Predefined** to have a fixed number of breaks with a fixed duration.`
         }
       }}
-      on:select={(e) => {
+      onSelect={(e) => {
         console.log({ e });
         composition.breakType = e.detail;
-        dispatch("change");
+        emitChange();
       }}
       style={OptionSelectorStyle.CHECK_CIRCLE}
       selected={composition.breakType}
     />
     {#if composition.breakType == BreakCompositionType.PREDEFINED}
-      <TextInput
-        bind:value={composition.numberOfBreaks}
-        placeholder="No. of breaks"
-        on:change
-        label={{ ...labelProps, label: "No. of breaks" }}
-        type="number"
-      />
+        <TextInput
+          bind:value={composition.numberOfBreaks}
+          placeholder="No. of breaks"
+          onChange={emitChange}
+          label={{ ...labelProps, label: "No. of breaks" }}
+          type="number"
+        />
       <DurationInput
         bind:value={composition.breakDuration}
-        on:change
+        onChange={emitChange}
         label={{ ...labelProps, label: "Break duration" }}
       />
     {:else}
       <DurationInput
         bind:value={composition.breakReminder}
-        on:change
+        onChange={emitChange}
         label={{ ...labelProps, label: "Remind every" }}
       />
     {/if}

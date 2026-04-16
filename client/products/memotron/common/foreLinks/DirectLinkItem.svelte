@@ -2,16 +2,21 @@
   import Icon from "@21n/elements/Icon.svelte";
   import type { LinkThumbnail } from "@21n/products/memotron/node/node.type";
   import { cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let link: LinkThumbnail;
-  let isHovering: boolean = false;
-  export let context: "capture" | "nodethumbnail" | "nodepage";
+  let {
+    link,
+    context,
+    onRemove = undefined
+  }: {
+    link: LinkThumbnail;
+    context: "capture" | "nodethumbnail" | "nodepage";
+    onRemove?: ((link: LinkThumbnail) => void) | undefined;
+  } = $props();
+  let isHovering = $state(false);
 </script>
 
 <span
-  on:pointerenter={() => (isHovering = true)}
-  on:pointerleave={() => (isHovering = false)}
+  onpointerenter={() => (isHovering = true)}
+  onpointerleave={() => (isHovering = false)}
   class={cn(
     "relative flex items-center gap-1 border border-brs3 rounded-full min-w-fit",
     {
@@ -27,8 +32,8 @@
     >
       <Icon
         icon="cross"
-        on:click={() => {
-          dispatch("remove", link);
+        onclick={() => {
+          onRemove?.(link);
         }}
       />
     </div>

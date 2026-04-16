@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { hoverable } from "@21n/actions/hover.action";
   import { popover } from "@21n/actions/popover.action";
@@ -9,34 +11,46 @@
   import { Size } from "@21n/types/size.enum";
   import { Action } from "@21n/types/action.enum";
   import { page } from "$app/stores";
-  import { onMount, createEventDispatcher } from "svelte";
+  import { onMount } from "svelte";
   import type { IAction } from "@21n/types/action.type";
   import { appStore } from "@21n/stores/app.store";
   import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { keyboardShortcuts } from "@21n/components/shortcuts/shortcuts.store";
-  const dispatch = createEventDispatcher();
 
-  export let action: Action | string;
-  export let isLastItem: boolean = false;
-  export let isFirstItem: boolean = false;
-  export let label: string | undefined = undefined;
-  export let icon: string | undefined = undefined;
-  export let tooltip: string | undefined = undefined;
-  export let isPreventDefault: boolean = false;
-  let isHovered: boolean = false;
-  let data: IAction | null = null;
+  let {
+    action,
+    isLastItem = false,
+    isFirstItem = false,
+    label = undefined,
+    icon = undefined,
+    tooltip = undefined,
+    isPreventDefault = false,
+    onClick
+  }: {
+    action: Action | string;
+    isLastItem?: boolean;
+    isFirstItem?: boolean;
+    label?: string;
+    icon?: string;
+    tooltip?: string;
+    isPreventDefault?: boolean;
+    onClick?: (event: MouseEvent) => void;
+  } = $props();
+  let isHovered = $state(false);
+  let data = $state<IAction | null>(null);
 
-  $: isActive =
+  let isActive = $derived(
     action === $page.url.searchParams.get(AccessMode.RIGHT) ||
-    action === $page.url.searchParams.get(AccessMode.MAIN);
+      action === $page.url.searchParams.get(AccessMode.MAIN)
+  );
 
   onMount(() => {
     data = appStore.resolveAction(action);
   });
 
-  function handleClick() {
+  function handleClick(event: MouseEvent) {
     if (isPreventDefault) {
-      dispatch("click");
+      onClick?.(event);
       return;
     }
     appStore.runAction(action);
@@ -65,7 +79,9 @@
     )}
     use:hoverable={{
       onHover: (val) => {
-        isHovered = val;
+        queueMicrotask(() => {
+          isHovered = val;
+        });
       }
     }}
     use:popover={{
@@ -84,7 +100,7 @@
           }
         : {}
     }}
-    on:click={handleClick}
+    onclick={handleClick}
   >
     <Icon
       icon={icon ?? data.icon}

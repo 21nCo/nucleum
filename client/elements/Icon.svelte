@@ -136,41 +136,20 @@
   import SvgSpinnerIcon from "@21n/icons-v2/svgSpinners/SvgSpinnerIcon.svelte";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 
-  export let icon: string | undefined = undefined;
-  export let id: string = generateSimpleRandomId();
-  export let size:
-    | Size.xs
-    | Size.sm
-    | Size.md
-    | Size.lg
-    | Size.xl
-    | Size.xxl
-    | Size.xxs = Size.md;
-  /**
-   * When an icon context switches between normal and accent bg as its parent.
-   * If undefined, the icon will not change its appearance based on the context.
-   * If true, the icon will have fill considering the accent bg is active on the parent.
-   * If false, the icon will have stroke considering the accent bg is not active on the parent.
-   */
-  export let isAccentBgContext: boolean | undefined = undefined;
-  /**
-   * Similar to accent color context, this is for custom bg context.
-   */
-  export let isCustomBgContext: boolean | undefined = undefined;
-  /**
-   * Whether the icon is tabbable or not. Default is false as icons are used in buttons and other elements that are tabbable by default.
-   */
-  export let isTabbable: boolean = false;
-
-  /**
-   * Used for iconify icons to determine if the icon should be filled or not.
-   */
-  export let isFilled: boolean = false;
-
-  $: resolvedIcon = icon ? resolveIconName(icon) : undefined;
-  $: renderedIconifyIcon = resolveRenderedIconForIconify(
-    resolvedIcon,
-    isFilled
+  let {
+    icon = undefined,
+    id = generateSimpleRandomId(),
+    size = Size.md,
+    isAccentBgContext = undefined,
+    isCustomBgContext = undefined,
+    isTabbable = false,
+    isFilled = false,
+    onclick = void 0,
+    class: classListParam = ""
+  }: any = $props();
+  const resolvedIcon = $derived(icon ? resolveIconName(icon) : undefined);
+  const renderedIconifyIcon = $derived(
+    resolveRenderedIconForIconify(resolvedIcon, isFilled)
   );
 
   function resolveIconName(iconName: string): string {
@@ -183,12 +162,12 @@
     return iconName;
   }
 
-  let classListParam = "";
   let dev_useIconifyTailwind = false;
   let isUseIconifySprite = true;
-  export { classListParam as class };
-  let _classList = "";
-  let variant: IconVariant = IconVariant.Outline;
+  const _classList = $derived(
+    resolveClasses(classListParam, isAccentBgContext, isCustomBgContext)
+  );
+  const variant = $derived(resolveVariant(resolvedIcon, _classList, size));
   const solidOnlyIcons = [
     "chevdoubleleft",
     "chevdoubleright",
@@ -207,12 +186,6 @@
     "capture",
     "highlight"
   ];
-
-  $: _classList = resolveClasses(
-    classListParam,
-    isAccentBgContext,
-    isCustomBgContext
-  );
 
   function resolveClasses(
     clParam: string,
@@ -259,8 +232,6 @@
       return "";
     }
   }
-  $: variant = resolveVariant(resolvedIcon, _classList, size);
-
   function resolveVariant(icon: string | undefined, cls: string, size: Size) {
     if (
       (icon && solidOnlyIcons.includes(icon)) ||
@@ -357,12 +328,7 @@
   }
 </script>
 
-<button
-  {id}
-  class={cn("relative inline-flex items-center justify-center")}
-  tabindex={isTabbable ? 0 : -1}
-  on:click
->
+{#snippet iconContent()}
   {#if resolvedIcon?.includes(":") && renderedIconifyIcon}
     {@const sizeClass =
       size === Size.xxl
@@ -786,7 +752,26 @@
       {/if}
     </svg>
   {/if}
-</button>
+{/snippet}
+
+{#if onclick || isTabbable}
+  <button
+    {id}
+    class={cn("relative inline-flex items-center justify-center")}
+    tabindex={isTabbable ? 0 : -1}
+    {onclick}
+  >
+    {@render iconContent()}
+  </button>
+{:else}
+  <span
+    {id}
+    class={cn("relative inline-flex items-center justify-center")}
+    aria-hidden="true"
+  >
+    {@render iconContent()}
+  </span>
+{/if}
 
 <style>
   :global(.iconifysvg *) {

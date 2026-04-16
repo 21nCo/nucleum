@@ -1,7 +1,11 @@
 <script lang="ts">
   import { cn } from "@21n/utils/ui.utils";
   import type { PricingToggleOption } from "@21n/landing/shared/pricing/pricing.types";
-  export let unit: PricingToggleOption;
+  let {
+    unit = $bindable(),
+  }: {
+    unit?: PricingToggleOption;
+  } = $props();
 
   let options: { value: PricingToggleOption; label: string }[] = [
     { value: "monthly", label: "Monthly" },
@@ -24,7 +28,7 @@
         "bg-bgs1 shadow-sm": unit === option.value,
         "text-fgs3 hover:text-fgs2": unit !== option.value
       })}
-      on:click={() => selectOption(option.value)}
+      onclick={() => selectOption(option.value)}
     >
       {option.label}
       {#if option.value === "yearly"}

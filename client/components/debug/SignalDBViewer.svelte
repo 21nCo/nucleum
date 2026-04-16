@@ -147,7 +147,7 @@
     <Button
       size={Size.sm}
       icon="refresh"
-      on:click={loadCollections}
+      onclick={loadCollections}
       label="Refresh"
       {isLoading}
     />
@@ -181,7 +181,7 @@
               class="flex justify-between items-center p-2 rounded hover:bg-bgs2 text-left border border-transparent hover:border-brs1 transition-colors"
               class:bg-bgs2={selectedCollection === collection.name}
               class:border-brs1={selectedCollection === collection.name}
-              on:click={() => loadSampleData(collection.name)}
+              onclick={() => loadSampleData(collection.name)}
             >
               <span class="font-mono text-sm truncate">{collection.name}</span>
               <span class="text-xs text-fgs2 bg-bgs3 px-2 py-1 rounded">

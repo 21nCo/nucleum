@@ -13,10 +13,17 @@
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
 
-  export let clip: IVideoTimestampClip;
-  export let index: number;
-  export let currentVideoTime: number;
-  export let seek: (timestamp: number) => void;
+  let {
+    clip,
+    index,
+    currentVideoTime,
+    seek
+  }: {
+    clip: IVideoTimestampClip;
+    index: number;
+    currentVideoTime: number;
+    seek: (timestamp: number) => void;
+  } = $props();
   let elementRef: HTMLElement;
   export function scrollIntoView(timelineElement: HTMLElement) {
     try {
@@ -62,7 +69,7 @@
     }
   )}
   bind:this={elementRef}
-  on:click={() => {
+  onclick={() => {
     seek(clip.body.timestamp);
   }}
   title="Click to seek"
@@ -104,7 +111,8 @@
       {/if}
       <button
         class="open-btn group-hover:opacity-100 opacity-0 transition-all duration-300 hover:bg-bgs1 w-fit h-fit px-1 py-0.5 rounded-md text-b3 border border-brs3"
-        on:click|stopPropagation={(e) => {
+        onclick={(e) => {
+          e.stopPropagation();
           const isExplicitPause = checkIfVideoPaused();
           if (!isExplicitPause) pauseVideo();
           webpage.openInModal(clip.id, {

@@ -4,13 +4,19 @@
     monthNames
   } from "@21n/components/calendar/birdView/Birdview.utils";
 
-  export let date: string;
-  let dayMonth = date.split("-")[1];
-  let dayDate = date.split("-")[2];
-  if (date.split("-")[2] == "01") {
-    dayDate = monthNames[Number(dayMonth) - 1] + " - " + dayDate;
-  }
-  let day = new Date(date).getDay();
+  let { date }: { date: string } = $props();
+  const dayMonth = $derived(date.split("-")[1]);
+  const dayDate = $derived.by(() => {
+    const splitDate = date.split("-");
+    if (splitDate[2] == "01") {
+      return monthNames[Number(splitDate[1]) - 1] + " - " + splitDate[2];
+    }
+    return splitDate[2];
+  });
+  const day = $derived.by(() => {
+    const [year, month, dayOfMonth] = date.split("-").map(Number);
+    return new Date(year, month - 1, dayOfMonth).getDay();
+  });
 </script>
 
 <div

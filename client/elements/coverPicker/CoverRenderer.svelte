@@ -8,21 +8,37 @@
   import { cn } from "@21n/utils/ui.utils";
   import { gradientsList } from "@21n/elements/colorPicker/gradients/gradients";
   import { debouncer } from "@21n/utils/utils";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let cover: string;
-  let classList: string = "";
-  export { classList as class };
-  export let repositionParams: IImageRepositionerOptions | undefined =
-    undefined;
-  export let isLazyLoad: boolean = false;
+  let {
+    cover,
+    class: classList = "",
+    repositionParams = undefined,
+    isLazyLoad = false,
+    onReposition = undefined,
+    onRepositionDebounced = undefined
+  }: {
+    cover: string;
+    class?: string;
+    repositionParams?: IImageRepositionerOptions | undefined;
+    isLazyLoad?: boolean;
+    onReposition?: ((event: CustomEvent<number>) => void) | undefined;
+    onRepositionDebounced?: ((event: CustomEvent<number>) => void) | undefined;
+  } = $props();
+  const noopReposition = (_event: CustomEvent<number>) => {};
 
   function handlePositionChange(newPosition: number) {
-    dispatch("reposition", newPosition);
+    onReposition?.(
+      new CustomEvent("reposition", {
+        detail: newPosition
+      })
+    );
     debouncedRepositionPropagation(newPosition);
   }
   const debouncedRepositionPropagation = debouncer((newPosition: number) => {
-    dispatch("repositionDebounced", newPosition);
+    onRepositionDebounced?.(
+      new CustomEvent("repositionDebounced", {
+        detail: newPosition
+      })
+    );
   }, 1000);
 </script>
 
@@ -61,7 +77,7 @@
     {isLazyLoad}
     type={FileType.IMAGE}
     class={cn("h-full w-full object-cover", classList)}
-    on:reposition
-    on:repositionDebounced
+    onReposition={onReposition ?? noopReposition}
+    onRepositionDebounced={onRepositionDebounced ?? noopReposition}
   />
 {/if}

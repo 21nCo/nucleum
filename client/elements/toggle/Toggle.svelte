@@ -3,7 +3,6 @@
   import { bg, cn } from "@21n/utils/ui.utils";
   import HoverableElement from "@21n/elements/HoverableElement.svelte";
   import Icon from "@21n/elements/Icon.svelte";
-  import { createEventDispatcher } from "svelte";
   import type { IToolTipOptions } from "@21n/elements/text/text.type";
   import Badge from "@21n/elements/text/Badge.svelte";
   import { hoverable } from "@21n/actions/hover.action";
@@ -11,29 +10,56 @@
   import { Placement } from "@21n/types/direction.enum";
   import type { IKeyboardShortcut } from "@21n/components/shortcuts/shortcut.type";
   import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
-  const dispatch = createEventDispatcher();
-  export let icon: string;
-  export let on: boolean = false;
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
-  export let parentBgIndex: number = 1;
-  export let tooltip: string | undefined = undefined;
-  export let tooltipOptions: IToolTipOptions | undefined = undefined;
-  export let isPreventFillOnActive: boolean = false;
-  export let count: number | undefined = undefined;
-  export let bgSize: Size.sm | Size.md | Size.lg = Size.md;
-  export let shortcut: string | IKeyboardShortcut | undefined = undefined;
-  export let isBoxed: boolean = false;
-  let isHovering: boolean = false;
+  let {
+    icon,
+    on = $bindable(false),
+    size = Size.md,
+    parentBgIndex = 1,
+    tooltip = undefined,
+    tooltipOptions = undefined,
+    isPreventFillOnActive = false,
+    count = undefined,
+    bgSize = Size.md,
+    shortcut = undefined,
+    isBoxed = false,
+    isRenderAsDiv = false,
+    isPassive = false,
+    onChange = undefined,
+    onMouseDown = undefined
+  }: {
+    icon: string;
+    on?: boolean;
+    size?: Size.sm | Size.md | Size.lg;
+    parentBgIndex?: number;
+    tooltip?: string | undefined;
+    tooltipOptions?: IToolTipOptions | undefined;
+    isPreventFillOnActive?: boolean;
+    count?: number | undefined;
+    bgSize?: Size.sm | Size.md | Size.lg;
+    shortcut?: string | IKeyboardShortcut | undefined;
+    isBoxed?: boolean;
+    isRenderAsDiv?: boolean;
+    isPassive?: boolean;
+    onChange?: ((event: CustomEvent<boolean>) => void) | undefined;
+    onMouseDown?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
+  let isHovering = $state(false);
   function onclick() {
+    if (isPassive) return;
     on = !on;
-    dispatch("change", on);
+    onChange?.(new CustomEvent("change", { detail: on }));
   }
-  $: shortcutSize = size === Size.lg ? Size.md : size;
+  const shortcutSize = $derived(size === Size.lg ? Size.md : size);
 </script>
 
-<button
-  on:click={onclick}
-  on:mousedown
+<svelte:element
+  this={isRenderAsDiv ? "div" : "button"}
+  onclick={onclick}
+  onmousedown={(event) => {
+    onMouseDown?.(event);
+  }}
+  role={isRenderAsDiv && !isPassive ? "button" : undefined}
+  tabindex={isRenderAsDiv && !isPassive ? 0 : undefined}
   use:hoverable={{
     onHover: (value) => {
       isHovering = value;
@@ -67,7 +93,6 @@
       "text-aps1": on,
       "text-fgs2": !on
     })}
-    on:click
   />
   {#if count}
     <div
@@ -82,4 +107,4 @@
   {#if shortcut}
     <ShortcutText {shortcut} size={shortcutSize} {parentBgIndex} />
   {/if}
-</button>
+</svelte:element>

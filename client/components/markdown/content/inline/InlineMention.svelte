@@ -10,15 +10,21 @@
   import { isValidString } from "@21n/shared-utils/text.utils";
   import { onMount } from "svelte";
 
-  export let id: string;
-  export let label: string | null = null;
+  let {
+    id,
+    label = null
+  }: {
+    id: string;
+    label?: string | null;
+  } = $props();
   let resource: any;
   let isLoading: boolean = true;
   let isHovering: boolean = false;
 
-  $: hasAvatar =
+  const hasAvatar = $derived(
     (resource?.collections && resource.collections.length > 0) ||
-    webNodeTypeList.includes(resource?.contentType);
+      webNodeTypeList.includes(resource?.contentType)
+  );
 
   onMount(async () => {
     try {
@@ -77,7 +83,7 @@
     {#if isLoading}
       {label ?? "Loading..."}
     {:else}
-      {isValidString(resolveNodeLabelString(resource)) ?? "Unknown"}
+      {resolveNodeLabelString(resource) ?? label ?? "Unknown"}
     {/if}
   </span>
 </a>

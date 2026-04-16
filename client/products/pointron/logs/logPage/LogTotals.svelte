@@ -1,8 +1,9 @@
 <script lang="ts">
   import { resolveSessionTimeSplit } from "@21n/products/pointron/pointron.utils";
   import LogTotalCard from "@21n/products/pointron/logs/logPage/LogTotalCard.svelte";
-  export let log: any;
-  $: totals = resolveSessionTimeSplit(log);
+
+  let { log }: { log: any } = $props();
+  let totals = $derived(resolveSessionTimeSplit(log));
 </script>
 
 <div class="flex flex-wrap gap-2 justify-between w-full">

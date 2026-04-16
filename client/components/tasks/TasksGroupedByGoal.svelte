@@ -10,16 +10,27 @@
   import CreateTaskInlineWizard from "./CreateTaskInlineWizard.svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import { truncateString } from "@21n/shared-utils/text.utils";
-  export let tasks: ITaskThumb[];
-  export let accessPoint: ResourceAccessPoint;
-  export let accessPointId: IRecordId | undefined = undefined;
-  export let parentBgIndex: number;
-  export let arrangement: Arrangement;
-  export let isDisableGrouping: boolean = false;
-  export let date: Date | undefined = undefined;
-  let createTaskWizardForGoal: IRecordId | undefined = undefined;
 
-  $: tasksByGoal = isDisableGrouping ? null : groupTasksByGoal(tasks);
+  let {
+    tasks,
+    accessPoint,
+    accessPointId = undefined,
+    parentBgIndex,
+    arrangement,
+    isDisableGrouping = false,
+    date = undefined
+  }: {
+    tasks: ITaskThumb[];
+    accessPoint: ResourceAccessPoint;
+    accessPointId?: IRecordId | undefined;
+    parentBgIndex: number;
+    arrangement: Arrangement;
+    isDisableGrouping?: boolean;
+    date?: Date | undefined;
+  } = $props();
+
+  let createTaskWizardForGoal = $state<IRecordId | undefined>(undefined);
+  const tasksByGoal = $derived(isDisableGrouping ? null : groupTasksByGoal(tasks));
 
   function resolveSize(accessPoint: ResourceAccessPoint) {
     if (
@@ -79,7 +90,6 @@
         {arrangement}
         isShowGoal={accessPoint !== ResourceAccessPoint.GOAL}
         size={resolveSize(accessPoint)}
-        on:click
       />
     {/each}
   </div>
@@ -97,7 +107,7 @@
             icon="plus"
             tooltip={`Create task for ${truncateString(group.goal.label, 20)}`}
             size={Size.sm}
-            on:click={() => (createTaskWizardForGoal = goalId)}
+            onclick={() => (createTaskWizardForGoal = goalId)}
           />
         </div>
         {#if createTaskWizardForGoal === goalId}
@@ -105,7 +115,7 @@
             <CreateTaskInlineWizard
               {goalId}
               {date}
-              on:close={() => (createTaskWizardForGoal = undefined)}
+              onClose={() => (createTaskWizardForGoal = undefined)}
             />
           </div>
         {/if}
@@ -117,7 +127,6 @@
             {parentBgIndex}
             {arrangement}
             size={resolveSize(accessPoint)}
-            on:click
           />
         {/each}
       </div>
@@ -131,7 +140,6 @@
         {arrangement}
         isShowGoal={true}
         size={resolveSize(accessPoint)}
-        on:click
       />
     {/each}
   </div>

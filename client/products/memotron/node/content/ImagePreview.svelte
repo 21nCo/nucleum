@@ -5,13 +5,19 @@
   import { cn } from "@21n/utils/ui.utils";
   import { isValidUrl } from "@21n/shared-utils/utils";
   import { resolveFallbackIconForUrl } from "@21n/products/memotron/node/node.utils";
-
-  export let src: string;
-  export let arrangement: Arrangement | undefined = undefined;
-  export let isApplyBgColor = false;
-
-  let classList = "";
-  export { classList as class };
+  let {
+    src,
+    arrangement = undefined,
+    isApplyBgColor = false,
+    class: classList = "",
+    onLoad = undefined
+  }: {
+    src: string;
+    arrangement?: Arrangement | undefined;
+    isApplyBgColor?: boolean;
+    class?: string;
+    onLoad?: ((event: Event) => void) | undefined;
+  } = $props();
 
   function handleImageError(event: Event) {
     const target = event.currentTarget as HTMLImageElement;
@@ -24,8 +30,8 @@
   alt="..."
   class={classList}
   use:fileLoaderv2={{ source: src, isApplyBgColorFromImage: isApplyBgColor }}
-  on:load
-  on:error={handleImageError}
+  onload={onLoad}
+  onerror={handleImageError}
 />
 <div
   class={cn("hidden w-full h-full bg-bgs3 flex items-center justify-center", {

@@ -8,9 +8,18 @@
   import { fly } from "svelte/transition";
   import { GoalStatus } from "@21n/components/goals/goal.type";
   import { resolveGoalStatusIcon } from "@21n/components/goals/goal.utils";
-  export let status: GoalStatus;
-  export let isActive = false;
-  export let isAccent = false;
+
+  let {
+    status,
+    isActive = false,
+    isAccent = false,
+    onClick = undefined
+  }: {
+    status: GoalStatus;
+    isActive?: boolean;
+    isAccent?: boolean;
+    onClick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
 </script>
 
 <button
@@ -22,7 +31,7 @@
     disabled: isActive,
     text: `Change to **${enumToString(status)}**`
   }}
-  on:click
+  onclick={onClick}
 >
   <Icon
     icon={status === GoalStatus.COMPLETED

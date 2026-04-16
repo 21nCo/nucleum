@@ -5,7 +5,7 @@
   import type { IRecordId } from "@21n/types/data.type";
   import { InputStyle } from "@21n/types/input.type";
   import { Size } from "@21n/types/size.enum";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
     ResourceAccessPoint,
@@ -30,19 +30,29 @@
   import Button from "@21n/elements/button/Button.svelte";
   import { ButtonStyle } from "@21n/types/button.type";
   import { GlobalEvent } from "@21n/types/event.enum";
-  export let date: Date | undefined = undefined;
-  export let goalId: IRecordId | undefined = undefined;
+
+  let {
+    date: initialDate = undefined,
+    goalId: initialGoalId = undefined,
+    onClose = undefined
+  }: {
+    date?: Date | undefined;
+    goalId?: IRecordId | undefined;
+    onClose?: ((event: CustomEvent<void>) => void) | undefined;
+  } = $props();
+
   const action = resourceAction(Resource.task, ResourceActionType.CREATE);
-  let label = "";
-  let inputRef: TextInput | undefined;
-  let isShowGoalPicker = false;
-  let goalSearchQuery = "";
-  let goalSearchInput: TextSearchInput | undefined;
+  let date = $state<Date | undefined>(initialDate);
+  let goalId = $state<IRecordId | undefined>(initialGoalId);
+  let label = $state("");
+  let inputRef = $state<TextInput | undefined>(undefined);
+  let isShowGoalPicker = $state(false);
+  let goalSearchQuery = $state("");
+  let goalSearchInput = $state<TextSearchInput | undefined>(undefined);
   let searchStore = new SearchStore(Resource.goal);
-  let goal: IGoal | undefined = undefined;
-  let isFocusing = false;
-  let isCreateInProgress = false;
-  const dispatch = createEventDispatcher();
+  let goal = $state<IGoal | undefined>(undefined);
+  let isFocusing = $state(false);
+  let isCreateInProgress = $state(false);
   onMount(() => {
     const appEventSub = appEvents.subscribe((x) => {
       if (x.event === GlobalEvent.ENTER && isFocusing) {
@@ -64,9 +74,7 @@
     };
   });
 
-  function handleKeydown(event: CustomEvent<KeyboardEvent>) {
-    const keyboardEvent = event.detail;
-    if (!(keyboardEvent instanceof KeyboardEvent)) return;
+  function handleKeydown(keyboardEvent: KeyboardEvent) {
     if (keyboardEvent.key === "ArrowDown") {
       keyboardEvent.preventDefault();
       isShowGoalPicker = true;
@@ -77,9 +85,7 @@
     }
   }
 
-  function handleKeydownFromGoalSearch(event: CustomEvent<any>) {
-    const keyboardEvent = event?.detail?.event ?? event?.detail;
-    if (!(keyboardEvent instanceof KeyboardEvent)) return;
+  function handleKeydownFromGoalSearch(keyboardEvent: KeyboardEvent) {
     if (keyboardEvent.key === "ArrowUp") {
       keyboardEvent.preventDefault();
       isShowGoalPicker = false;
@@ -91,6 +97,11 @@
 
   function resolveGoalThumb(goal: IGoal) {
     return goal as unknown as IGoalThumb;
+  }
+
+  function emitClose() {
+    const closeEvent = new CustomEvent<void>("close");
+    onClose?.(closeEvent);
   }
 
   async function handleCreate(event?: any) {
@@ -113,7 +124,7 @@
           toasts.success("Task created successfully");
           return;
         } else {
-          dispatch("close");
+          emitClose();
         }
       }
       return result;
@@ -148,27 +159,27 @@
       <TextInput
         bind:value={label}
         bind:this={inputRef}
-        on:mount={() => {
+        onMount={() => {
           inputRef?.focus();
         }}
-        on:focus={() => (isFocusing = true)}
-        on:blur={() => (isFocusing = false)}
-        on:keydown={handleKeydown}
+        onFocus={() => (isFocusing = true)}
+        onBlur={() => (isFocusing = false)}
+        onKeydown={(event) => handleKeydown(event.detail.event ?? event.detail)}
         placeholder="Enter task name"
         testId="task-name-input"
         style={InputStyle.PLAIN}
-        on:enter={handleCreateOnEnter}
+        onEnter={handleCreateOnEnter}
       />
     </div>
     <div class="flex items-center gap-1">
       <Button
         icon="save"
-        on:click={handleCreate}
+        onclick={handleCreate}
         size={Size.sm}
         tooltip="Create task"
         shortcut={GlobalEvent.ENTER}
       />
-      <Button icon="cross" on:click={() => dispatch("close")} size={Size.sm} />
+      <Button icon="cross" onclick={emitClose} size={Size.sm} />
     </div>
   </div>
   <div class="w-full flex items-center justify-between">
@@ -181,9 +192,9 @@
           bind:this={goalSearchInput}
           searchCallback={searchGoalCallback}
           searchResultComponent={GoalSearchResultItem}
-          on:keydown={handleKeydownFromGoalSearch}
+          onKeydown={handleKeydownFromGoalSearch}
           placeholder="Search to assign a goal"
-          on:select={(e) => {
+          onSelect={(e) => {
             goal = e.detail.item;
             isShowGoalPicker = false;
           }}
@@ -192,14 +203,14 @@
         <Button
           icon="cross"
           size={Size.sm}
-          on:click={() => (isShowGoalPicker = false)}
+          onclick={() => (isShowGoalPicker = false)}
         />
       </div>
     {:else if goal}
       <div class="min-w-0 flex-1 transition-all duration-200">
         <TaskThumbnailGoalLabel
           goal={resolveGoalThumb(goal)}
-          on:clearGoal={() => {
+          onClearGoal={() => {
             isShowGoalPicker = true;
             goal = undefined;
           }}
@@ -213,7 +224,7 @@
           label="Assign goal"
           size={Size.xs}
           style={ButtonStyle.OUTLINED}
-          on:click={() => (isShowGoalPicker = true)}
+          onclick={() => (isShowGoalPicker = true)}
         />
       {/if}
       <span class="flex items-center shrink-0">

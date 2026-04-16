@@ -1,7 +1,11 @@
 <script lang="ts">
   import type { ISEOMetadata } from "@21n/landing/shared/seo/seo.type";
 
-  export let data: ISEOMetadata;
+  let {
+    data,
+  }: {
+    data: ISEOMetadata;
+  } = $props();
 </script>
 
 <svelte:head>

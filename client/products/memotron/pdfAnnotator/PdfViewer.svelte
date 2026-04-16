@@ -1,14 +1,6 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import * as pdfjs from "pdfjs-dist";
-  // import pdfjsWorker from "pdfjs-dist/build/pdf.worker.min.js?url";
-  // import * as pdfjsWorker from "pdfjs-dist/legacy/build/pdf.worker.min.mjs";
-  // import downloadsvg from "./images/toolbarDownload.svg?url";
-  // import printsvg from "./images/toolbarPrint.svg?url";
-  // import zoominsvg from "./images/toolbarZoomIn.svg?url";
-  // import zoomoutsvg from "./images/toolbarZoomOut.svg?url";
-  // import spreadsvg from "./images/toolbarPageView.svg?url";
-  // import gapsvg from "./images/toolbarPageGap.svg?url";
   import "@21n/products/memotron/pdfAnnotator/pdfviewer.css";
   import context from "@21n/stores/context.store";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
@@ -16,61 +8,41 @@
   import { OperatingSystem } from "@21n/types/context.type";
   import { pdfCache } from "@21n/utils/pdfCache.utils";
 
-  // pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
-  // pdfjs.GlobalWorkerOptions.workerSrc =
-  //   "../../../../node_modules/pdfjs-dist/build/pdf.worker.mjs";
+  let {
+    pdfViewer = $bindable(undefined),
+    pdfDocument = $bindable(undefined),
+    url,
+    scale = $bindable(1),
+    display_mode = "",
+    style = "",
+    children,
+    onReady = undefined
+  }: {
+    pdfViewer?: any;
+    pdfDocument?: any;
+    url: string | URL;
+    scale?: number;
+    display_mode?: string;
+    style?: string;
+    children?: any;
+    onReady?: (() => void) | undefined;
+  } = $props();
+
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(
     "pdfjs-dist/build/pdf.worker.mjs",
     import.meta.url
   ).toString();
-  const eventDispatcher = createEventDispatcher();
-  //variables for Annotation
-  export let pdfViewer: any;
-  export let pdfDocument: any;
-  export let url: string | URL; //url of pdf.
-  const INTERNAL_URL = url.toString();
-  let currentPGNumber: number = 1;
-  let embed_message_id = generateSimpleRandomId();
-  let dataViaEmbed: any;
-  $: isDataViaEmbed =
-    $context.isEmbed && $context.os !== OperatingSystem.WINDOWS;
-  let pdfData: Uint8Array;
-  // let classname = ""; //allows component to recieve classes
-  // export { classname as class };
 
-  let styles = ""; //allows component to recieve classes
-  export { styles as style };
-
-  export let scale = 1;
+  const embed_message_id = generateSimpleRandomId();
   const MIN_SCALE = 0.5;
   const MAX_SCALE = 2.3;
 
   enum SpreadModes {
-    //init display modes.
-    "NONE",
-    "ODD",
-    "EVEN"
-  }
-  export let display_mode = "";
-  let _spread_mode = SpreadModes.NONE;
-  if (display_mode in SpreadModes) {
-    _spread_mode = SpreadModes[display_mode as "NONE" | "ODD" | "EVEN"];
+    NONE,
+    ODD,
+    EVEN
   }
 
-  //internal variables.
-  let component_container: HTMLDivElement;
-  let container: HTMLDivElement;
-  let password = "";
-  let password_error = false;
-  let load_error_messge: string | null = null;
-  let _prev_gap_top = "8px";
-  let _prev_gap_bottom = "8px";
-  let loadingProgress = 0;
-  let isLoading = false;
-  let loadingTask: any = null;
-  let fetchController: AbortController | null = null;
-  let pageChangeHandler: ((event: any) => void) | null = null;
-  let renderToken = 0;
   const pdfViewerL10n = {
     getLanguage() {
       return "en-us";
@@ -85,6 +57,37 @@
     pause() {},
     resume() {}
   };
+
+  let password = $state("");
+  let passwordError = $state(false);
+  let loadErrorMessage = $state<string | null>(null);
+  let loadingProgress = $state(0);
+  let isLoading = $state(false);
+  let spreadMode = $state(resolveSpreadMode(display_mode));
+
+  let container: HTMLDivElement;
+  let dataViaEmbed: any;
+  let pdfData: Uint8Array | undefined;
+  let loadingTask: any = null;
+  let fetchController: AbortController | null = null;
+  let pageChangeHandler: ((event: any) => void) | null = null;
+  let renderToken = 0;
+
+  function resolveSpreadMode(mode: string) {
+    if (mode in SpreadModes) {
+      return SpreadModes[mode as keyof typeof SpreadModes];
+    }
+
+    return SpreadModes.NONE;
+  }
+
+  function resolveIsDataViaEmbed() {
+    return $context.isEmbed && $context.os !== OperatingSystem.WINDOWS;
+  }
+
+  function resolveUrl() {
+    return url.toString();
+  }
 
   const abortOngoingFetch = () => {
     if (fetchController) {
@@ -107,11 +110,10 @@
     if (pdfViewer?.cleanup) {
       try {
         pdfViewer.cleanup();
-      } catch (_) {
-        // no-op: cleanup failures should not break unmount flow
-      }
+      } catch {}
     }
-    pdfViewer = null;
+
+    pdfViewer = undefined;
 
     const destroyers: Promise<unknown>[] = [];
 
@@ -121,7 +123,7 @@
       destroyers.push(loadingTask.destroy().catch(() => undefined));
     }
 
-    pdfDocument = null;
+    pdfDocument = undefined;
 
     if (destroyers.length > 0) {
       await Promise.allSettled(destroyers);
@@ -132,62 +134,24 @@
     loadingProgress = 0;
   };
 
-  //Init button handlers (some require hydration on mount)
-  let onPasswordSubmit: () => void;
-  let onZoomIn: () => void;
-  let onZoomOut: () => void;
-  let onPageDisplay: () => void;
-
-  const printPdf = (url: string) => {
-    const iframe = document.createElement("iframe");
-    document.body.appendChild(iframe);
-
-    iframe.style.display = "none";
-    iframe.onload = function () {
-      setTimeout(function () {
-        iframe.focus();
-        iframe.contentWindow?.print();
-      }, 1);
-    };
-
-    iframe.src = url;
-  };
-
-  const onPageGap = () => {
-    const pages = component_container.getElementsByClassName("page");
-    if (pages.length === 0) {
-      return;
-    }
-    const current_styles = getComputedStyle(pages[0] as HTMLDivElement);
-    const current_gap_bottom = current_styles.marginBottom;
-    const current_gap_top = current_styles.marginTop;
-    for (const page of pages) {
-      (page as HTMLDivElement).style.marginBottom = _prev_gap_bottom;
-      (page as HTMLDivElement).style.marginTop = _prev_gap_top;
-    }
-    _prev_gap_bottom = current_gap_bottom;
-    _prev_gap_top = current_gap_top;
-  };
-  onMount(() => {
-    onPasswordSubmit = () => {
-      void renderDocument("onPasswordSubmit");
-    };
-
-    const initialize = async () => {
-      if (isDataViaEmbed) {
-        try {
-          dataViaEmbed = await fileEmbedChannel.fetch(
-            url.toString(),
-            embed_message_id
-          );
-        } catch (error) {
-          load_error_messge = "Error loading PDF. Please try again.";
-          return;
-        }
+  async function initialize() {
+    if (resolveIsDataViaEmbed()) {
+      try {
+        dataViaEmbed = await fileEmbedChannel.fetch(resolveUrl(), embed_message_id);
+      } catch {
+        loadErrorMessage = "Error loading PDF. Please try again.";
+        return;
       }
-      await renderDocument("onMount");
-    };
+    }
 
+    await renderDocument("onMount");
+  }
+
+  function onPasswordSubmit() {
+    void renderDocument("onPasswordSubmit");
+  }
+
+  onMount(() => {
     void initialize();
 
     return () => {
@@ -195,44 +159,44 @@
     };
   });
 
-  const renderDocument = async (from: string) => {
+  const renderDocument = async (_from: string) => {
     const currentToken = ++renderToken;
     await cleanupPdfResources();
-    password_error = false;
-    load_error_messge = null;
+    passwordError = false;
+    loadErrorMessage = null;
 
-    const init_promise = import("pdfjs-dist/web/pdf_viewer.mjs").then(
-      (pdfjs_viewer) => {
-        const event_bus = new pdfjs_viewer.EventBus();
-
-        const pdf_link_service = new pdfjs_viewer.PDFLinkService({
-          eventBus: event_bus
+    const initPromise = import("pdfjs-dist/web/pdf_viewer.mjs").then(
+      (pdfjsViewer) => {
+        const eventBus = new pdfjsViewer.EventBus();
+        const pdfLinkService = new pdfjsViewer.PDFLinkService({
+          eventBus
         });
-
-        const pdf_find_controller = new pdfjs_viewer.PDFFindController({
-          eventBus: event_bus,
-          linkService: pdf_link_service
+        const pdfFindController = new pdfjsViewer.PDFFindController({
+          eventBus,
+          linkService: pdfLinkService
         });
-        const pdf_viewer = new pdfjs_viewer.PDFViewer({
+        const viewer = new pdfjsViewer.PDFViewer({
           container,
-          eventBus: event_bus,
-          linkService: pdf_link_service,
-          findController: pdf_find_controller,
+          eventBus,
+          linkService: pdfLinkService,
+          findController: pdfFindController,
           l10n: pdfViewerL10n
         });
-        pdf_link_service.setViewer(pdf_viewer);
 
-        return { pdf_viewer, pdf_link_service };
+        pdfLinkService.setViewer(viewer);
+
+        return { viewer, pdfLinkService };
       }
     );
 
-    const { pdf_viewer, pdf_link_service } = await init_promise;
+    const { viewer, pdfLinkService } = await initPromise;
+
     try {
-      if (isDataViaEmbed) {
+      if (resolveIsDataViaEmbed()) {
         if (!dataViaEmbed) return;
         pdfData = fileEmbedChannel.base64ToUint8Array(dataViaEmbed);
       } else {
-        const cachedData = await pdfCache.get(url.toString());
+        const cachedData = await pdfCache.get(resolveUrl());
 
         if (cachedData) {
           pdfData = cachedData;
@@ -240,16 +204,18 @@
           isLoading = true;
           loadingProgress = 0;
           fetchController = new AbortController();
-          const response = await fetch(url.toString(), {
+          const response = await fetch(resolveUrl(), {
             signal: fetchController.signal
           });
+
           if (!response.ok) {
             throw new Error(
               `Failed to fetch PDF: ${response.status} ${response.statusText}`
             );
           }
-          const ct = response.headers.get("content-type") || "";
-          if (!ct.toLowerCase().includes("application/pdf")) {
+
+          const contentType = response.headers.get("content-type") || "";
+          if (!contentType.toLowerCase().includes("application/pdf")) {
             throw new Error("Fetched content is not a PDF");
           }
 
@@ -262,7 +228,6 @@
 
             while (true) {
               const { done, value } = await reader.read();
-
               if (done) break;
 
               chunks.push(value);
@@ -283,7 +248,7 @@
             pdfData = new Uint8Array(arrayBuffer);
           }
 
-          await pdfCache.set(url.toString(), pdfData);
+          await pdfCache.set(resolveUrl(), pdfData);
           isLoading = false;
         }
       }
@@ -292,163 +257,77 @@
         isLoading = false;
         return;
       }
+
       console.error("Error loading PDF:", error);
       isLoading = false;
-      load_error_messge = "Error loading PDF. Please try again.";
+      loadErrorMessage = "Error loading PDF. Please try again.";
       return;
     } finally {
       fetchController = null;
     }
+
     if (!pdfData) return;
+
     loadingTask = pdfjs.getDocument({
       data: pdfData,
       password,
       isEvalSupported: false
     });
+
     try {
-      const pdf_document = await loadingTask.promise;
+      const documentResult = await loadingTask.promise;
 
       if (currentToken !== renderToken) {
-        await pdf_document.destroy().catch(() => undefined);
-        return pdf_viewer;
+        await documentResult.destroy().catch(() => undefined);
+        return viewer;
       }
 
-      pdf_viewer.setDocument(pdf_document);
-      pdf_link_service.setDocument(pdf_document, null);
-      pdf_viewer.currentScale = scale;
-      pdf_viewer.spreadMode = _spread_mode;
-      pdfDocument = pdf_document;
+      viewer.setDocument(documentResult);
+      pdfLinkService.setDocument(documentResult, null);
+      viewer.currentScale = scale;
+      viewer.spreadMode = spreadMode;
+      pdfDocument = documentResult;
       loadingTask = null;
 
-      pageChangeHandler = (eventt: any) => {
-        currentPGNumber = eventt.pageNumber;
-      };
-      pdf_viewer.eventBus.on("pagechanging", pageChangeHandler);
-      pdfViewer = pdf_viewer;
-      eventDispatcher("ready");
+      pageChangeHandler = () => {};
+      viewer.eventBus.on("pagechanging", pageChangeHandler);
+      pdfViewer = viewer;
+      onReady?.();
     } catch (error: unknown) {
       const normalizedError =
         error instanceof Error ? error : new Error(String(error ?? ""));
       const name = normalizedError.name || normalizedError.toString();
       const message = normalizedError.message || String(error ?? "");
-      const isPwd = typeof name === "string" && name.includes("Password");
-      password_error = isPwd;
-      load_error_messge = message;
+      const isPasswordError =
+        typeof name === "string" && name.includes("Password");
+
+      passwordError = isPasswordError;
+      loadErrorMessage = message;
       await cleanupPdfResources();
-      return pdf_viewer;
+
+      return viewer;
     }
 
-    onZoomIn = () => {
-      if (scale <= MAX_SCALE) {
-        scale = scale + 0.1;
-        pdf_viewer.currentScale = scale;
-        eventDispatcher("zoomIn");
-      }
-    };
-    onZoomOut = () => {
-      if (scale >= MIN_SCALE) {
-        scale = scale - 0.1;
-        pdf_viewer.currentScale = scale;
-        eventDispatcher("zoomOut");
-      }
-    };
-    onPageDisplay = () => {
-      _spread_mode = (_spread_mode + 1) % 3;
-      pdf_viewer.spreadMode = _spread_mode;
-    };
-    pdfViewer = pdf_viewer;
-    return pdf_viewer;
+    return viewer;
   };
-
-  function download(url: string) {
-    const a = document.createElement("a");
-    if (!a.click) {
-      throw new Error('DownloadManager: "a.click()" is not supported.');
-    }
-    a.href = url;
-    a.target = "_parent";
-    // Use a.download if available. This increases the likelihood that
-    // the file is downloaded instead of opened by another PDF plugin.
-    if ("download" in a) {
-      a.download = url.substring(url.lastIndexOf("/") + 1);
-    }
-    // <a> must be in the document for recent Firefox versions,
-    // otherwise .click() is ignored.
-    (document.body || document.documentElement).append(a);
-    a.click();
-    a.remove();
-  }
 </script>
 
-<!-- <div class="flex w-8/10"> -->
-
-<div
-  class="relative w-full h-full"
-  style={styles}
-  bind:this={component_container}
->
+<div class="relative w-full h-full" {style}>
   <div id="viewer-parent" class="w-full h-full">
-    {#if load_error_messge}
+    {#if loadErrorMessage}
       <div class="spdfinner">
-        {#if password_error}
+        {#if passwordError}
           <p>This document requires a password to open:</p>
           <div>
             <input type="password" bind:value={password} />
-            <button on:click={onPasswordSubmit} class="password-button">
+            <button onclick={onPasswordSubmit} class="password-button">
               Submit
             </button>
           </div>
         {/if}
-        <p>{load_error_messge}</p>
+        <p>{loadErrorMessage}</p>
       </div>
     {:else}
-      <!-- <div class="spdfbanner">
-        <span class="toolbarbutton" on:click={onZoomIn}>
-          <img
-            title="Zoom In"
-            src={zoominsvg}
-            alt="zoom in"
-            class="spdfbutton"
-          />
-        </span>
-        <span class="toolbarbutton" on:click={onZoomOut}>
-          <img
-            title="Zoom Out"
-            src={zoomoutsvg}
-            alt="zoom out"
-            class="spdfbutton"
-          />
-        </span>
-        <span class="toolbarbutton" on:click={onPageGap}>
-          <img
-            title="Toggle Page Display"
-            src={gapsvg}
-            alt="toggle page gap"
-            class="spdfbutton"
-          />
-        </span>
-        <span class="toolbarbutton" style="color:white">{currentPGNumber}</span>
-        <span class="toolbarbutton" on:click={onPageDisplay}>
-          <img
-            title="Toggle Page Display"
-            src={spreadsvg}
-            alt="toggle page display"
-            class="spdfbutton"
-          />
-        </span>
-        <span class="toolbarbutton" on:click={() => printPdf(INTERNAL_URL)}>
-          <img title="Print" src={printsvg} alt="print" class="spdfbutton" />
-        </span>
-        <span class="toolbarbutton" on:click={() => download(INTERNAL_URL)}>
-          <img
-            title="Download"
-            src={downloadsvg}
-            alt="download"
-            class="spdfbutton"
-          />
-        </span>
-      </div> -->
-      <!-- <div class="spdfinner"> -->
       {#if isLoading}
         <div
           class="bg-bgs1 absolute inset-0 z-50 flex flex-col items-center justify-center w-full h-full gap-4"
@@ -458,45 +337,9 @@
         </div>
       {/if}
       <div id="viewerContainer" bind:this={container}>
-        <div id="viewer" class="pdfViewer" />
-        <!-- <slot /> -->
-        <slot />
+        <div id="viewer" class="pdfViewer"></div>
+        {@render children?.()}
       </div>
-      <!-- </div> -->
     {/if}
   </div>
 </div>
-
-<!-- </div> -->
-
-<!-- <style>
-  .spdfbanner {
-    position: absolute;
-    z-index: 10;
-    top: 0px;
-    height: 2.75rem;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    align-items: center;
-    background-color: rgb(41 37 36);
-    box-shadow: 1rem;
-  }
-  .spdfbutton {
-    width: 25px;
-  }
-  .spdfinner {
-    position: absolute;
-    top: 0px;
-    bottom: 0px;
-    width: 100%;
-  }
-  .toolbarbutton:hover {
-    background-color: rgb(87 83 78);
-  }
-  .toolbarbutton {
-    border-radius: 2px;
-    padding: 4px;
-  }
-</style> -->

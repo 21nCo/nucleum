@@ -8,10 +8,19 @@
     IFwFeature
   } from "@21n/types/featureWheel.type";
   import { properCase } from "@21n/shared-utils/text.utils";
-  export let notes: string | Record<string, string> | undefined = undefined;
-  export let isShort: boolean = false;
-  export let contemporary: IContemporary | undefined = undefined;
-  export let feature: IFwFeature;
+
+  let {
+    notes = undefined,
+    isShort = false,
+    contemporary = undefined,
+    feature
+  }: {
+    notes?: string | Record<string, string>;
+    isShort?: boolean;
+    contemporary?: IContemporary;
+    feature: IFwFeature;
+  } = $props();
+
   function resolveNotesText() {
     if (typeof notes === "string") {
       return notes;
@@ -36,7 +45,7 @@
       "underline-dotted": !isShort,
       "flex justify-center items-center": isShort
     })}
-    on:click={() => {
+    onclick={() => {
       bottomModal.open("notes", {
         notes: resolveNotesText(),
         title: `Notes for ${properCase(contemporary?.label ?? "app")}`

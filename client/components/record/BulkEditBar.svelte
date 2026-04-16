@@ -8,7 +8,6 @@
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
   import { LinkType } from "@21n/products/memotron/linking/link.type";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import appearance from "@21n/stores/appearance.store";
@@ -18,32 +17,40 @@
   import { isSameDay } from "@21n/utils/time.utils";
   import DatePicker from "@21n/elements/datetime/DatePicker.svelte";
   import { tooltip } from "@21n/actions/popover.action";
-
-  const dispatch = createEventDispatcher();
-  export let count: number = 0;
-  export let context: IMultiSelectContext;
-  export let subContext: string = "";
-  export let isExpandedMode: boolean = true;
+  let {
+    count = 0,
+    context,
+    subContext = "",
+    isExpandedMode = true,
+    onAction = undefined,
+    onSelectAll = undefined,
+    onClear = undefined
+  }: {
+    count?: number;
+    context: IMultiSelectContext;
+    subContext?: string;
+    isExpandedMode?: boolean;
+    onAction?: ((detail: { action: string; data?: any }) => void) | undefined;
+    onSelectAll?: (() => void) | undefined;
+    onClear?: (() => void) | undefined;
+  } = $props();
   type Action = {
     action: string;
     label: string;
     icon: string;
   };
-  let actions: Action[] = [];
-  let rightActions: Action[] = [];
-
-  const isHideStar = [Resource.task, Resource.session].includes(
+  let isHideStar = $derived([Resource.task, Resource.session].includes(
     context.resource
-  );
-  const isHideArchive = [Resource.task, Resource.session].includes(
+  ));
+  let isHideArchive = $derived([Resource.task, Resource.session].includes(
     context.resource
-  );
+  ));
   const buttonProps = {
     size: Size.sm,
     style: ButtonStyle.OUTLINED,
     isPreventMinWidth: true
   } as const;
-  $: parentBgIndex = $appearance.theme === Theme.LIGHT ? 1 : 3;
+  let parentBgIndex = $derived($appearance.theme === Theme.LIGHT ? 1 : 3);
 
   const selectAllAction = {
     action: "selectAll",
@@ -106,9 +113,9 @@
     };
   }
 
-  resolveItems();
-
   function resolveItems() {
+    const actions: Action[] = [];
+    const rightActions: Action[] = [];
     if (
       context.accessPoint === ResourceAccessPoint.NODE_LINKS &&
       subContext === LinkType.DIRECT
@@ -160,7 +167,12 @@
     }
 
     rightActions.push(selectAllAction, clearSelectionAction);
+    return { actions, rightActions };
   }
+
+  let resolvedItems = $derived.by(resolveItems);
+  let actions = $derived(resolvedItems.actions);
+  let rightActions = $derived(resolvedItems.rightActions);
 
   function resolveCountLabel(count: number) {
     if (count === 0) return 0;
@@ -171,6 +183,18 @@
         : context.resource;
     if (count === 1) return `1 ${itemLabel}`;
     return `${count} ${itemLabel}s`;
+  }
+
+  function emitAction(detail: { action: string; data?: any }) {
+    onAction?.(detail);
+  }
+
+  function emitSelectAll() {
+    onSelectAll?.();
+  }
+
+  function emitClear() {
+    onClear?.();
   }
 </script>
 
@@ -193,8 +217,12 @@
         >
           <DatePicker
             variant="inline-with-icon"
-            on:change={(e) => {
-              dispatch("action", {
+            onChange={(e) => {
+              onAction?.({
+                action: action.action,
+                data: e.detail
+              });
+              emitAction({
                 action: action.action,
                 data: e.detail
               });
@@ -212,8 +240,11 @@
             : ButtonVariant.SECONDARY}
           {parentBgIndex}
           {...buttonProps}
-          on:click={() => {
-            dispatch("action", {
+          onclick={() => {
+            onAction?.({
+              action: action.action
+            });
+            emitAction({
               action: action.action
             });
           }}
@@ -230,13 +261,18 @@
         icon={action.icon}
         {parentBgIndex}
         {...buttonProps}
-        on:click={() => {
+        onclick={() => {
           if (action.action === "selectAll") {
-            dispatch("selectAll");
+            onSelectAll?.();
+            emitSelectAll();
           } else if (action.action === "clearSelection") {
-            dispatch("clear");
+            onClear?.();
+            emitClear();
           } else {
-            dispatch("action", {
+            onAction?.({
+              action: action.action
+            });
+            emitAction({
               action: action.action
             });
           }

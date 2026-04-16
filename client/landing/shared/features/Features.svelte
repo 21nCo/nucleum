@@ -3,9 +3,16 @@
   import type { IFeature } from "@21n/landing/shared/landing.type";
   import Title from "@21n/landing/shared/Title.svelte";
   import FeatureItem from "@21n/landing/shared/features/FeatureItem.svelte";
-  export let title: string = "";
-  export let subtitle: string = "";
-  export let features: IFeature[] = [];
+  let {
+    title = "",
+    subtitle = "",
+    features = [],
+  }: {
+    title?: string;
+    subtitle?: string;
+    features?: IFeature[];
+  } = $props();
+
 </script>
 
 <section class={cn("w-full flex flex-col gap-20 mo:gap-10")}>

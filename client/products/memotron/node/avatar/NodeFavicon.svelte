@@ -7,8 +7,13 @@
   import { cn } from "@21n/utils/ui.utils";
   import { resolveFallbackIconForUrl, resolveNodeFavicon } from "@21n/products/memotron/node/node.utils";
   import { isValidUrl } from "@21n/shared-utils/utils";
-  export let node: INode;
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
+  let {
+    node,
+    size = Size.md
+  }: {
+    node: INode;
+    size?: Size.sm | Size.md | Size.lg;
+  } = $props();
   let favicon: string | undefined = undefined;
   onMount(() => {
     favicon = resolveNodeFavicon(node);

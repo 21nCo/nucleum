@@ -1,10 +1,12 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
 import VerticalSwitcher from "@21n/elements/switcher/VerticalSwitcher.svelte";
+import VerticalSwitcherBoundStory from "@21n/elements/switcher/VerticalSwitcherBoundStory.svelte";
 import { VerticalSwitcherStyle } from "@21n/types/switcher.enum";
 import { Size } from "@21n/types/size.enum";
 import { Placement } from "@21n/types/direction.enum";
 
 const meta = {
+  title: "Elements/Switcher/VerticalSwitcher",
   component: VerticalSwitcher,
   argTypes: {
     items: {
@@ -125,4 +127,10 @@ export const RightWithoutLabels: Story = {
       isHideLabel: true
     }
   }
+};
+
+export const BoundState: Story = {
+  render: () => ({
+    Component: VerticalSwitcherBoundStory
+  })
 };

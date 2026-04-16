@@ -1,32 +1,44 @@
 <script lang="ts">
   import type { IBreadcrumbItem } from "@21n/elements/breadcrumbsV2/breadcrumbItem.type";
   import { appStore } from "@21n/stores/app.store";
-  import { createEventDispatcher } from "svelte";
   import BreadcrumbItem from "@21n/elements/breadcrumbsV2/BreadcrumbItem.svelte";
   import { popover } from "@21n/actions/popover.action";
   import BreadcrumbsOverflowPopover from "@21n/elements/breadcrumbsV2/BreadcrumbsOverflowPopover.svelte";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
   import { cn } from "@21n/utils/ui.utils";
-  const dispatch = createEventDispatcher();
-  export let items: IBreadcrumbItem[] = [];
+  let {
+    items = [],
+    isPreventDefault = false,
+    limit = 3,
+    onClick = undefined
+  }: {
+    items?: IBreadcrumbItem[];
+    isPreventDefault?: boolean;
+    limit?: number;
+    onClick?:
+      | ((event: CustomEvent<{ event: MouseEvent | KeyboardEvent; item: IBreadcrumbItem }>) => void)
+      | undefined;
+  } = $props();
   /**
    * Delegates click event when set to `true` instead of defaulting to resource click handler
    */
-  export let isPreventDefault: boolean = false;
-  export let limit: number = 3;
 
-  function onClick(e: MouseEvent, item: IBreadcrumbItem) {
+  function handleClick(e: MouseEvent | KeyboardEvent, item: IBreadcrumbItem) {
     if (isPreventDefault) {
-      dispatch("click", { event: e, item });
+      onClick?.(new CustomEvent("click", { detail: { event: e, item } }));
       return;
     }
     if (item.path) appStore.gotoPath(item.path);
     else if (item.resourceId) {
       const lastItem = items[items.length - 1];
       const replaceId = lastItem.id ?? lastItem.resourceId;
-      appStore.resourceClickHandler(e, item.resourceId, {
+      appStore.resourceClickHandler(
+        e instanceof MouseEvent ? e : undefined,
+        item.resourceId,
+        {
         replaceId
-      });
+        }
+      );
     }
   }
 </script>
@@ -37,8 +49,8 @@
       <div class="flex-shrink-0">
         <BreadcrumbItem
           label={items[0].label}
-          on:click={(e) => {
-            onClick(e, items[0]);
+          onClick={(e) => {
+            handleClick(e, items[0]);
           }}
         />
       </div>
@@ -63,8 +75,8 @@
             label={item.label}
             isDisabled={item.disabled}
             isLast={index === 0}
-            on:click={(e) => {
-              onClick(e, item);
+            onClick={(e) => {
+              handleClick(e, item);
             }}
           />
         {/each}
@@ -80,8 +92,8 @@
             label={item.label}
             isDisabled={item.disabled}
             isLast={index === items.length - 1}
-            on:click={(e) => {
-              onClick(e, item);
+            onClick={(e) => {
+              handleClick(e, item);
             }}
           />
         </div>

@@ -3,11 +3,21 @@
   import type { IRecordId } from "@21n/types/data.type";
   import type { MdStoreType } from "@21n/components/markdown/markdown.store";
   import TextContent from "@21n/components/markdown/content/TextContent.svelte";
-  export let id: IRecordId;
-  export let text: string = "";
-  export let contentType: NodeType;
-  export let mdStore: MdStoreType;
-  export let isFocusing: boolean = false;
+  let {
+    id,
+    text = $bindable(""),
+    contentType,
+    mdStore,
+    isFocusing = $bindable(false),
+    onUpdate = undefined
+  }: {
+    id: IRecordId;
+    text?: string;
+    contentType: NodeType;
+    mdStore: MdStoreType;
+    isFocusing?: boolean;
+    onUpdate?: ((event: CustomEvent<string>) => void) | undefined;
+  } = $props();
 </script>
 
-<TextContent bind:text bind:isFocusing on:update {id} {contentType} {mdStore} />
+<TextContent bind:text bind:isFocusing {id} {contentType} {mdStore} {onUpdate} />

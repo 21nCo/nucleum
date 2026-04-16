@@ -5,11 +5,24 @@
   import Link from "@21n/elements/text/Link.svelte";
   import { Action } from "@21n/types/action.enum";
   import ComingSoon from "@21n/illustrations/pixelsmarket/ComingSoon.svelte";
-  export let mainText: string | undefined = undefined;
-  export let subText: string | undefined = undefined;
-  export let size: Size = Size.md;
-  export let isHideRoadmap: boolean = false;
-  export let style: 1 | 2 = 1;
+    let {
+    mainText = undefined,
+    subText = undefined,
+    size = Size.md,
+    isHideRoadmap = false,
+    style = 1,
+  }: {
+    mainText?: string | undefined;
+    subText?: string | undefined;
+    size?: Size;
+    isHideRoadmap?: boolean;
+    style?: 1 | 2;
+  } = $props();
+
+  
+  
+  
+  
   if (!mainText && !subText) {
     mainText = "Coming Soon";
     subText = "We are working on this feature. Stay tuned!";

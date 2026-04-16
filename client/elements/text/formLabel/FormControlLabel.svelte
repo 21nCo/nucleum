@@ -4,10 +4,21 @@
   import { cn } from "@21n/utils/ui.utils";
   import Badge from "@21n/elements/text/Badge.svelte";
   import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
-  export let props: InputLabel;
-  export let forId: string = "";
-  export let isCursorPointer: boolean = false;
-  export let isWrapText: boolean = false;
+    let {
+    props,
+    forId = "",
+    isCursorPointer = false,
+    isWrapText = false,
+  }: {
+    props: InputLabel;
+    forId?: string;
+    isCursorPointer?: boolean;
+    isWrapText?: boolean;
+  } = $props();
+
+  
+  
+  
 </script>
 
 <label

@@ -4,15 +4,21 @@
   import type { ISelectValue } from "@21n/types/select.type";
   import { cn } from "@21n/utils/ui.utils";
   import type { IViewTab } from "@21n/components/collection/tabSwitcher/viewTab.type";
-  import { createEventDispatcher } from "svelte";
   import TabCountBadge from "@21n/components/collection/counts/TabCountBadge.svelte";
 
-  const dispatch = createEventDispatcher();
-
-  export let tabs: IViewTab[];
-  export let selected: ISelectValue | undefined = undefined;
-  export let hoveredItem: ISelectValue | undefined = undefined;
-  export let tabCounts: Map<string, number> = new Map();
+  let {
+    tabs,
+    selected = $bindable(),
+    hoveredItem = $bindable(),
+    tabCounts = new Map(),
+    onSelect = undefined
+  }: {
+    tabs: IViewTab[];
+    selected?: ISelectValue | undefined;
+    hoveredItem?: ISelectValue | undefined;
+    tabCounts?: Map<string, number>;
+    onSelect?: ((event: CustomEvent<ISelectValue>) => void) | undefined;
+  } = $props();
   if (!selected) selected = tabs[0].value;
 
   function resolveCountKey(value: ISelectValue) {
@@ -45,9 +51,13 @@
         use:hoverable={{
           onHover: (isHovered) => onTabHover(option.value, isHovered)
         }}
-        on:click={() => {
+        onclick={() => {
           selected = option.value;
-          dispatch("select", option.value);
+          onSelect?.(
+            new CustomEvent<ISelectValue>("select", {
+              detail: option.value
+            })
+          );
         }}
       >
         <span class="flex items-center gap-2">

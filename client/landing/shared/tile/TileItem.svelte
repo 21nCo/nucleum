@@ -5,9 +5,15 @@
   import { cn } from "@21n/utils/ui.utils";
   import type { ITileItem } from "@21n/landing/shared/landing.type";
 
-  export let item: ITileItem;
-  export let isPanelView: Boolean = false;
-  export let isEnableBackground: Boolean = false;
+  let {
+    item,
+    isPanelView = false,
+    isEnableBackground = false,
+  }: {
+    item: ITileItem;
+    isPanelView?: Boolean;
+    isEnableBackground?: Boolean;
+  } = $props();
 
   let className: string = "";
   export { className as class };
@@ -39,8 +45,8 @@
   )}
   href={item.href}
   target="_blank"
-  on:mouseenter={onMouseEnter}
-  on:mouseleave={onMouseLeave}
+  onmouseenter={onMouseEnter}
+  onmouseleave={onMouseLeave}
 >
   {#if item?.title}
     {@const title = item.title}

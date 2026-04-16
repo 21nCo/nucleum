@@ -1,23 +1,32 @@
 <script lang="ts">
   import { cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
   import TextWithHoverTooltip from "@21n/elements/text/TextWithHoverTooltip.svelte";
-  const dispatch = createEventDispatcher();
-  export let label: string = "";
-  export let isCollapse: boolean = false;
-  export let isDisabled: boolean = false;
-  export let isLast: boolean = false;
-  export let truncateLength: number | undefined = undefined;
-  export let isSubtleContext: boolean = false;
+  let {
+    label = "",
+    isCollapse = false,
+    isDisabled = false,
+    isLast = false,
+    truncateLength = undefined,
+    isSubtleContext = false,
+    onActivate = (_event: MouseEvent | KeyboardEvent) => {}
+  }: {
+    label?: string;
+    isCollapse?: boolean;
+    isDisabled?: boolean;
+    isLast?: boolean;
+    truncateLength?: number | undefined;
+    isSubtleContext?: boolean;
+    onActivate?: (event: MouseEvent | KeyboardEvent) => void;
+  } = $props();
 
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key === "Enter") {
-      dispatch("enter");
+      onActivate(e);
     }
   }
 </script>
 
-<button
+<div
   class={cn(
     "flex items-center justify-center w-fit whitespace-nowrap text-fgs2",
     {
@@ -25,10 +34,11 @@
     }
   )}
 >
-  <!-- <div class="triangle bg-fgs2 w-[8px] h-[7px] mr-1" /> -->
   <button
-    on:click
-    on:keydown={handleKeyDown}
+    onclick={(event) => {
+      onActivate(event);
+    }}
+    onkeydown={handleKeyDown}
     id="breadcrumb-item-label"
     class={cn("cursor-pointer", {
       "opacity-50 cursor-not-allowed": isDisabled,
@@ -53,7 +63,7 @@
       /
     </div>
   {/if}
-</button>
+</div>
 
 <style>
   .triangle {

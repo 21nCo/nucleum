@@ -13,21 +13,27 @@
   import { cn } from "@21n/utils/ui.utils";
   import { Size } from "@21n/types/size.enum";
 
-  export let property: ISelectProperty;
-  export let isPopoverOpen: boolean = false;
+  let {
+    property,
+    isPopoverOpen = $bindable(false)
+  }: {
+    property: ISelectProperty;
+    isPopoverOpen?: boolean;
+  } = $props();
   let dev_isEnableDefaultSelection: boolean = false;
   let popoverOptions: IPopoverOptions = {
     id: "select-property-config-popover",
     class: "h-96",
     isSpanToTriggerWidth: true
   };
-  let ref: any;
-  if (!property.config) {
-    property.config = {
-      options: [],
-      groups: []
-    };
-  }
+  $effect(() => {
+    if (!property.config) {
+      property.config = {
+        options: [],
+        groups: []
+      };
+    }
+  });
 </script>
 
 {#if property.config}
@@ -52,7 +58,7 @@
           }
         }
       }}
-      on:change={(e) => {
+      onchange={(e) => {
         isPopoverOpen = e.detail?.open;
       }}
     >

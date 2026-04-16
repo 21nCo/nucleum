@@ -1,9 +1,14 @@
 <script lang="ts">
   import { Placement } from "@21n/types/direction.enum";
   import { IconVariant } from "@21n/types/icon.type";
-  export let variant: IconVariant = IconVariant.Outline;
-  export let direction: Placement = Placement.Left;
-  $: variant;
+
+  let {
+    variant = IconVariant.Outline,
+    direction = Placement.Left
+  }: {
+    variant?: IconVariant;
+    direction?: Placement;
+  } = $props();
 </script>
 
 {#if direction === Placement.Bottom}

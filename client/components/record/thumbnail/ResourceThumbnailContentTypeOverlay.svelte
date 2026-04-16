@@ -4,8 +4,13 @@
   import { enumToString, properCase } from "@21n/shared-utils/text.utils";
   import { CollectionType } from "@21n/components/collection/collection.type";
   import { NodeType } from "@21n/products/memotron/node/node.type";
-  export let contentType: CollectionType | NodeType | undefined = undefined;
-  export let placement: Placement = Placement.TopLeft;
+  let {
+    contentType = undefined,
+    placement = Placement.TopLeft
+  }: {
+    contentType?: CollectionType | NodeType | undefined;
+    placement?: Placement;
+  } = $props();
 
   function isNodeContentType(
     value: CollectionType | NodeType

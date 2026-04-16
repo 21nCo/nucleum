@@ -41,7 +41,11 @@
   import { tooltip } from "@21n/actions/popover.action";
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
 
-  export let context: ResourceAccessPoint | undefined = undefined;
+  let {
+    context = undefined
+  }: {
+    context?: ResourceAccessPoint | undefined;
+  } = $props();
   let title: string;
   let description: string;
   let isStarred: boolean = false;

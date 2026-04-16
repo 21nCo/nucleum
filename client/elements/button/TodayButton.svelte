@@ -1,10 +1,19 @@
 <script lang="ts">
+  import type { MouseEventHandler } from "svelte/elements";
   import Button from "@21n/elements/button/Button.svelte";
   import { selectedTimePeriod } from "@21n/stores/app.store";
   import { ButtonStyle } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
   import { isSameDay } from "@21n/utils/time.utils";
-  export let parentBackgroundIndex: number = 1;
+
+  let {
+    parentBackgroundIndex = 1,
+    onclick = undefined
+  }: {
+    parentBackgroundIndex?: number;
+    onclick?: MouseEventHandler<HTMLButtonElement> | undefined;
+  } = $props();
+
 </script>
 
 {#if !isSameDay($selectedTimePeriod, new Date())}
@@ -13,8 +22,9 @@
     parentBgIndex={parentBackgroundIndex}
     size={Size.xs}
     style={ButtonStyle.OUTLINED}
-    on:click={() => {
+    onclick={(event) => {
       selectedTimePeriod.set(new Date());
+      onclick?.(event);
     }}
   />
 {/if}

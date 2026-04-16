@@ -1,15 +1,28 @@
 <script lang="ts">
   import { AnnotationType } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.type";
-  import { createEventDispatcher } from "svelte";
   import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
-  export let id = "";
-  export let highlighter: string = "";
-  export let rects: any = [];
-  export let annotType: AnnotationType = AnnotationType.HIGHLIGHT;
-  let color = highlightStore.resolveColor(highlighter);
+  let {
+    id = "",
+    highlighter = "",
+    rects = [],
+    annotType = AnnotationType.HIGHLIGHT,
+    onClick = undefined
+  }: {
+    id?: string;
+    highlighter?: string;
+    rects?: any;
+    annotType?: AnnotationType;
+    onClick?: ((id: string) => void) | undefined;
+  } = $props();
 
-  let topValue = annotType == AnnotationType.UNDERLINE ? "100%" : "40%";
-  let dispatchEvent = createEventDispatcher();
+  function resolveColor() {
+    return highlightStore.resolveColor(highlighter);
+  }
+
+  function resolveUnderlineTop() {
+    return annotType === AnnotationType.UNDERLINE ? "100%" : "40%";
+  }
+
   function calculateStyle(rect: any) {
     let bg = "";
     let { x1: left, x2, y1: top, y2 } = rect;
@@ -25,12 +38,12 @@
       annotType === AnnotationType.COMMENT ||
       annotType === AnnotationType.TASK
     )
-      bg = `background-color:${color};opacity:0.3;`;
+      bg = `background-color:${resolveColor()};opacity:0.3;`;
     return `position:absolute;left: ${left}px;top: ${top}px;width: ${width}px;height: ${height}px;${bg};-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;`;
   }
 
   function handleClick() {
-    dispatchEvent("click", id);
+    onClick?.(id);
   }
 
   function handleKeydown(event: KeyboardEvent) {
@@ -47,34 +60,24 @@
     class={id}
     role="button"
     tabindex="0"
-    data-color={color}
+    data-color={resolveColor()}
     data-highlighter={highlighter}
     data-annotType={annotType}
     style={calculateStyle(rect)}
-    on:click|stopPropagation={handleClick}
-    on:keydown={handleKeydown}
-    on:mousedown|stopPropagation
+    onclick={(event) => {
+      event.stopPropagation();
+      handleClick();
+    }}
+    onkeydown={handleKeydown}
+    onmousedown={(event) => event.stopPropagation()}
   >
     {#if annotType == AnnotationType.UNDERLINE || annotType == AnnotationType.LINETHROUGH}<div
         style="position: absolute;
-    top: {topValue};
+    top: {resolveUnderlineTop()};
     left: 0;
-    border-bottom: 3px solid {color};
+    border-bottom: 3px solid {resolveColor()};
     width: 100%;"
       ></div>
     {/if}
   </div>
 {/each}
-
-<!-- {#if annotType !== "HIGHLIGHT"}
-  <style>
-  div:before {
-    content: "";
-    position: absolute;
-    top: {topValue};
-    left: 0;
-    border-bottom: 1px solid red;
-    width: 100%;
-  }
-  </style>
-{/if} -->

@@ -1,7 +1,7 @@
 <script lang="ts">
   import RefundPolicy from "@21n/landing/shared/RefundPolicy.svelte";
   import PageSeo from "@21n/landing/shared/seo/PageSEO.svelte";
-  export let data;
+  let { data }: { data: any } = $props();
   const productName = data.product ?? "";
 </script>
 

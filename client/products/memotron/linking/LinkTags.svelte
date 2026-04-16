@@ -4,15 +4,22 @@
   import { Size } from "@21n/types/size.enum";
   import type { INodeLinkThumb } from "@21n/products/memotron/node/node.type";
   import { linker, linkTagStore } from "@21n/products/memotron/linking/link.store";
-  import { createEventDispatcher } from "svelte";
   import { linkTagLabelMapper } from "@21n/products/memotron/linking/link.utils";
   import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
-  const dispatch = createEventDispatcher();
-  export let link: INodeLinkThumb;
-  $: _tags =
-    $linkTagStore
-      ?.filter((x) => link.tags?.some(resourceInList(x)))
-      ?.map(linkTagLabelMapper) ?? [];
+
+  let {
+    link = $bindable(),
+    onTagClick = undefined
+  }: {
+    link: INodeLinkThumb;
+    onTagClick?: ((event: CustomEvent<IRecordId>) => void) | undefined;
+  } = $props();
+  const tags = $derived.by(
+    () =>
+      $linkTagStore
+        ?.filter((x) => link.tags?.some(resourceInList(x)))
+        ?.map(linkTagLabelMapper) ?? []
+  );
 
   async function onRemove(tagId: IRecordId) {
     link.tags = link.tags?.filter((x) => x.toString() !== tagId.toString());
@@ -31,20 +38,23 @@
       });
     }
   }
-  function onTagClick(tagId: IRecordId, e: MouseEvent) {
-    dispatch("tagClick", tagId);
+  function handleTagClick(tagId: IRecordId, e: MouseEvent) {
+    const tagClickEvent = new CustomEvent<IRecordId>("tagClick", {
+      detail: tagId
+    });
+    onTagClick?.(tagClickEvent);
     e.stopPropagation();
   }
 </script>
 
 <div class="flex gap-2 flex-wrap userdata">
-  {#each _tags as tag}
+  {#each tags as tag}
     <Tag
       label={tag.label}
       size={Size.sm}
       icon="relation"
-      on:click={(e) => onTagClick(tag.id, e)}
-      on:remove={() => onRemove(tag.id)}
+      onclick={(e) => handleTagClick(tag.id, e)}
+      onRemove={() => onRemove(tag.id)}
     />
   {/each}
 </div>

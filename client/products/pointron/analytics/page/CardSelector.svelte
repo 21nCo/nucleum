@@ -6,8 +6,17 @@
   import { InputStyle } from "@21n/types/input.type";
   import { Size } from "@21n/types/size.enum";
   import { AnalyticsCardType } from "@21n/products/pointron/analytics/analytics.types";
-  export let accessPoint: ResourceAccessPoint;
-  export let selected: AnalyticsCardType;
+
+  let {
+    accessPoint,
+    selected = $bindable(),
+    onSelect = undefined
+  }: {
+    accessPoint: ResourceAccessPoint;
+    selected: AnalyticsCardType;
+    onSelect?: ((event: CustomEvent<AnalyticsCardType>) => void) | undefined;
+  } = $props();
+
   let chartTypes: DropdownItem[] = [
     {
       label: "Pie chart",
@@ -139,6 +148,14 @@
         return "chart";
     }
   }
+
+  function handleSelect(nextValue: AnalyticsCardType) {
+    selected = nextValue;
+    const selectEvent = new CustomEvent<AnalyticsCardType>("select", {
+      detail: nextValue
+    });
+    onSelect?.(selectEvent);
+  }
 </script>
 
 {#if accessPoint === ResourceAccessPoint.GOAL}
@@ -154,20 +171,20 @@
       ];
     }}
     actionBgSize={Size.sm}
-    on:action={(event) => {
+    onAction={(event) => {
       const val = event.detail;
       if (!val) return;
-      selected = val;
+      handleSelect(val);
     }}
   />
 {:else}
   <DropDown
     parentBackgroundIndex={1}
-    on:select
     bind:value={selected}
     items={chartTypes}
     {groups}
     style={InputStyle.BORDERED}
     isDisableSearch={true}
+    onSelect={(event) => handleSelect(event.detail)}
   />
 {/if}

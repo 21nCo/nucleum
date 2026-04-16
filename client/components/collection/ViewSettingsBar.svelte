@@ -9,13 +9,18 @@
   } from "@21n/components/collection/collection.type";
   import { Size } from "@21n/types/size.enum";
   import { collectionLayoutOptions } from "@21n/components/collection/collection.store";
-  import { createEventDispatcher } from "svelte";
   import Badge from "@21n/elements/text/Badge.svelte";
   import MultiselectDropdown from "@21n/elements/dropdown/MultiselectDropdown.svelte";
-  const dispatch = createEventDispatcher();
 
-  export let view: ICollectionView;
-  export let properties: DropdownItem[];
+  let {
+    view,
+    properties,
+    onChange = undefined
+  }: {
+    view: ICollectionView;
+    properties: DropdownItem[];
+    onChange?: ((event: CustomEvent<{ key: string; value: unknown }>) => void) | undefined;
+  } = $props();
   const dropdownSettings: {
     isDisableSearch: boolean;
     width: string;
@@ -31,10 +36,34 @@
     orientation: Orientation.Vertical
   };
   function onSelect(key: string, e: CustomEvent) {
-    dispatch("change", {
-      key,
-      value: e.detail
-    });
+    onChange?.(
+      new CustomEvent("change", {
+        detail: {
+          key,
+          value: e.detail
+        }
+      })
+    );
+  }
+
+  function onLayoutSelect(event: CustomEvent) {
+    onSelect("layout", event);
+  }
+
+  function onPropertiesSelect(event: CustomEvent) {
+    onSelect("properties", event);
+  }
+
+  function onTabBySelect(event: CustomEvent) {
+    onSelect("tabBy", event);
+  }
+
+  function onGroupBySelect(event: CustomEvent) {
+    onSelect("groupBy", event);
+  }
+
+  function onSubGroupBySelect(event: CustomEvent) {
+    onSelect("subGroupBy", event);
   }
 </script>
 
@@ -47,7 +76,7 @@
       {...dropdownSettings}
       items={collectionLayoutOptions}
       bind:value={view.layout}
-      on:select={(e) => onSelect("layout", e)}
+      onSelect={onLayoutSelect}
     /> -->
     <div class="w-60">
       <MultiselectDropdown
@@ -57,7 +86,7 @@
           ...dropdownLabelConfig,
           label: "Properties shown"
         }}
-        on:select={(e) => onSelect("properties", e)}
+        onSelect={onPropertiesSelect}
       />
     </div>
     <DropDown
@@ -65,7 +94,7 @@
       {...dropdownSettings}
       items={properties}
       value={view.tabBy.toString()}
-      on:select={(e) => onSelect("tabBy", e)}
+      onSelect={onTabBySelect}
     />
     {#if view.layout === CollectionLayout.BOARD}
       <DropDown
@@ -73,14 +102,14 @@
         {...dropdownSettings}
         items={properties}
         value={view.groupBy.toString()}
-        on:select={(e) => onSelect("groupBy", e)}
+        onSelect={onGroupBySelect}
       />
       <DropDown
         label={{ ...dropdownLabelConfig, label: "Sub group by" }}
         {...dropdownSettings}
         items={properties}
         value={view.subGroupBy.toString()}
-        on:select={(e) => onSelect("subGroupBy", e)}
+        onSelect={onSubGroupBySelect}
       />
     {/if}
   </div>

@@ -2,19 +2,35 @@
   import { InputStyle, type InputLabel } from "@21n/types/input.type";
   import { cn } from "@21n/utils/ui.utils";
   import InputBaseElement from "@21n/elements/InputBaseElement.svelte";
-  import { createEventDispatcher } from "svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import TextInput from "@21n/elements/input/TextInput.svelte";
-  const dispatch = createEventDispatcher();
-  export let avatar: string = "star";
-  export let count: number;
-  export let value: number;
-  export let style: InputStyle = InputStyle.BORDERED;
-  export let label: InputLabel | undefined = undefined;
-  export let isReadOnlyMode: boolean = false;
-  export let parentBgIndex: number = 1;
-  if (typeof avatar !== "string") {
-    avatar = "star";
+  let {
+    avatar = "star",
+    count = $bindable(5),
+    value = $bindable(0),
+    style = InputStyle.BORDERED,
+    label = undefined,
+    isReadOnlyMode = false,
+    parentBgIndex = 1,
+    onChange = undefined
+  }: {
+    avatar?: string;
+    count?: number;
+    value?: number;
+    style?: InputStyle;
+    label?: InputLabel | undefined;
+    isReadOnlyMode?: boolean;
+    parentBgIndex?: number;
+    onChange?: ((event: CustomEvent<number>) => void) | undefined;
+  } = $props();
+  const resolvedAvatar = $derived(typeof avatar === "string" ? avatar : "star");
+
+  function emitChange(nextValue: number) {
+    onChange?.(
+      new CustomEvent("change", {
+        detail: nextValue
+      })
+    );
   }
 </script>
 
@@ -22,13 +38,13 @@
   {#if count <= 6}
     <div class={cn("flex gap-1")}>
       {#each Array(count) as _, item}
-        {@const _icon = +item + 1 <= value ? avatar + "-fill" : avatar}
+        {@const _icon = +item + 1 <= value ? resolvedAvatar + "-fill" : resolvedAvatar}
         <Icon icon={`ph:${_icon}`} />
       {/each}
     </div>
   {:else}
     <span class="flex items-center gap-1">
-      <Icon icon={`ph:${avatar}-fill`} />
+      <Icon icon={`ph:${resolvedAvatar}-fill`} />
       <span>{value} / {count}</span>
     </span>
   {/if}
@@ -37,11 +53,11 @@
     {#if typeof count === "number" && count <= 6}
       <div class={cn("flex gap-2")}>
         {#each Array(count) as _, item}
-          {@const _icon = +item + 1 <= value ? avatar + "-fill" : avatar}
+          {@const _icon = +item + 1 <= value ? resolvedAvatar + "-fill" : resolvedAvatar}
           <button
-            on:click={() => {
+            onclick={() => {
               value = +item + 1;
-              dispatch("change", value);
+              emitChange(value);
             }}
             class="flex items-center h-full"
           >
@@ -52,15 +68,15 @@
     {:else}
       <div class="flex items-center justify-between gap-1 w-full">
         <div class="flex items-center gap-1">
-          <Icon icon={`ph:${avatar}-fill`} />
+          <Icon icon={`ph:${resolvedAvatar}-fill`} />
           <TextInput
             {value}
             type="number"
-            on:change={(e) => {
+            onChange={(e) => {
               if (e.detail) value = e.detail;
             }}
-            on:debouncedChange={() => {
-              dispatch("change", value);
+            onDebouncedChange={() => {
+              emitChange(value);
             }}
             style={InputStyle.PLAIN}
             numberInputParams={{ min: 1, max: count, step: 1 }}

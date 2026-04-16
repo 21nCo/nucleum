@@ -1,15 +1,23 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let label: string;
-  export let isActive: boolean = false;
+  let {
+    label,
+    isActive = false,
+    onclick = undefined
+  }: {
+    label: string;
+    isActive?: boolean;
+    onclick?: ((event: CustomEvent<{ label: string }>) => void) | undefined;
+  } = $props();
   function handleClick() {
-    dispatch("click", { label });
+    const clickEvent = new CustomEvent<{ label: string }>("click", {
+      detail: { label }
+    });
+    onclick?.(clickEvent);
   }
 </script>
 
 <button
-  on:click={handleClick}
+  onclick={handleClick}
   class={isActive
     ? "bg-bgs3 flex flex-row p-4 rounded-md gap-4"
     : "bg-bgs2 flex flex-row p-4 rounded-md gap-4"}

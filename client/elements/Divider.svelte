@@ -2,10 +2,21 @@
   import { Orientation } from "@21n/types/direction.enum";
   import { ColorStrength } from "@21n/types/appearance.type";
   import { cn } from "@21n/utils/ui.utils";
-  export let colorStrength: ColorStrength = ColorStrength.Normal;
-  export let orientation: Orientation = Orientation.Horizontal;
-  export let thickness: number = 1;
-  export let text: string | undefined = undefined;
+    let {
+    colorStrength = ColorStrength.Normal,
+    orientation = Orientation.Horizontal,
+    thickness = 1,
+    text = undefined,
+  }: {
+    colorStrength?: ColorStrength;
+    orientation?: Orientation;
+    thickness?: number;
+    text?: string | undefined;
+  } = $props();
+
+  
+  
+  
 </script>
 
 {#if text}

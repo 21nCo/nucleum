@@ -50,12 +50,12 @@
   import { LoadingAnimationType } from "@21n/types/feedback.type";
   import Tag from "@21n/elements/text/Tag.svelte";
   import { resolveLinkTypeConfig } from "@21n/products/memotron/linking/link.utils";
-  export let node: IActiveNodeStore;
-  $: multiSelectContext = {
+  let { node }: { node: IActiveNodeStore } = $props();
+  let multiSelectContext = $derived({
     resource: Resource.node,
     accessPoint: ResourceAccessPoint.NODE_LINKS,
     accessPointId: node.id
-  };
+  });
   let bulkEditUnsub: (() => void) | undefined;
   let bulkSelection: IRecordId[] = [];
 
@@ -97,11 +97,11 @@
     }
   }
 
-  $: {
+  $effect(() => {
     multiSelectContext;
     filtered;
     resolveBulkEditorInstance();
-  }
+  });
   let _links: INodeLinkThumb[] = [];
   let all: { link: INodeLinkThumb; node: INode }[] = [];
   let outgoingMentions: { link: INodeLinkThumb; node: INode }[] = [];
@@ -373,15 +373,13 @@
     selectedLinkType = e.detail;
     applyFilters();
   }
-
-  // $: console.log({ all, _links, filtered, nodeLinks: $node.links });
 </script>
 
 <div class="relative flex flex-col gap-3 pt-1 flex-grow w-full">
   <div class="flex flex-col w-full">
     <LinkSearch
       accessPoint={ResourceAccessPoint.NODE_LINKS}
-      on:select={onSelect}
+      onSelect={onSelect}
       bind:searchQuery
       excludeFromSearch={_links.map((x) => x.linkedTo).concat(node.id)}
     />
@@ -416,11 +414,11 @@
           size={Size.md}
           isActive={true}
           isRemovable={true}
-          on:remove={() => {
+          onRemove={() => {
             selectedLinkType = undefined;
             applyFilters();
           }}
-          on:click={(e) => {
+          onclick={() => {
             selectedLinkType = undefined;
             applyFilters();
           }}
@@ -432,7 +430,7 @@
         <LinkTagFilter
           links={filtered.map((x) => x.link)}
           bind:selected={selectedLinkTags}
-          on:change={applyFilters}
+          onChange={applyFilters}
         />
       </div>
     {/if}
@@ -443,13 +441,13 @@
         <LinkThumbnailItems
           links={filtered}
           accessPointId={node.id}
-          on:click={onClick}
-          on:action={onAction}
-          on:tagClick={onTagClick}
-          on:tag={() => {
+          onClick={onClick}
+          onAction={onAction}
+          onTagClick={onTagClick}
+          onTag={() => {
             applyFilters();
           }}
-          on:linkTypeSelect={onLinkTypeSelect}
+          onLinkTypeSelect={onLinkTypeSelect}
         />
         <ScrollViewBottomSpacer />
       </div>

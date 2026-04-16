@@ -8,19 +8,30 @@
     type EdgeData,
     CanvasEvent
   } from "@antv/g6";
-  import { onMount, createEventDispatcher } from "svelte";
+  import { onMount } from "svelte";
   import { truncateString } from "@21n/shared-utils/text.utils";
   import appearance from "@21n/stores/appearance.store";
   import { resizeListener } from "@21n/actions/resize.action";
-  const dispatch = createEventDispatcher();
 
-  export let data: {
-    nodes: any[];
-    edges: any[];
-    combos: any[];
-  } = { nodes: [], edges: [], combos: [] };
-  export let centerNodeId: string;
-  export let layout: string;
+  let {
+    data = { nodes: [], edges: [], combos: [] },
+    centerNodeId,
+    layout,
+    onCanvasClick = undefined,
+    onRender = undefined,
+    onSelect = undefined
+  }: {
+    data?: {
+      nodes: any[];
+      edges: any[];
+      combos: any[];
+    };
+    centerNodeId: string;
+    layout: string;
+    onCanvasClick?: (() => void) | undefined;
+    onRender?: (() => void) | undefined;
+    onSelect?: ((event: any) => void) | undefined;
+  } = $props();
   let graph: Graph;
   let _data: GraphData = {
     nodes: [],
@@ -244,27 +255,27 @@
     });
 
     graph.render();
-    graph.on(GraphEvent.AFTER_RENDER, onAfterRender);
-    graph.on(NodeEvent.CLICK, onNodeClick);
-    graph.on(CanvasEvent.CLICK, onCanvasClick);
+    graph.on(GraphEvent.AFTER_RENDER, handleAfterRender);
+    graph.on(NodeEvent.CLICK, handleNodeClick);
+    graph.on(CanvasEvent.CLICK, handleCanvasClick);
   }
 
-  function onCanvasClick(event: any) {
-    dispatch("canvasClick");
+  function handleCanvasClick() {
+    onCanvasClick?.();
   }
 
-  function onAfterRender() {
-    dispatch("render");
+  function handleAfterRender() {
+    onRender?.();
   }
 
-  function onNodeClick(event: any) {
-    dispatch("select", event);
+  function handleNodeClick(event: any) {
+    onSelect?.(event);
   }
 </script>
 
 <div
   id={centerNodeId + "_graph"}
-  use:resizeListener={(e) => {
+  use:resizeListener={() => {
     if (graph) {
       graph.resize();
     }

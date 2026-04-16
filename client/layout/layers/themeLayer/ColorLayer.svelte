@@ -1,11 +1,16 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import appearance from "@21n/stores/appearance.store";
   import {
     resolveIfActiveFgFg,
     retrieveCurrentColors
   } from "@21n/utils/theme.utils";
-  $: isActiveFgFg = resolveIfActiveFgFg(undefined, $appearance);
-  $: currentColors = retrieveCurrentColors($appearance);
+
+  let { children }: { children?: Snippet } = $props();
+  const isActiveFgFg = $derived(resolveIfActiveFgFg(undefined, $appearance));
+  const currentColors = $derived(retrieveCurrentColors($appearance));
 </script>
 
 <div
@@ -14,7 +19,7 @@
     ? currentColors.fgs1
     : currentColors.bgs1}
 >
-  <slot />
+  {@render children?.()}
 </div>
 
 <style>

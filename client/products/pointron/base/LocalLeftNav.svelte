@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { onMount } from "svelte";
   import {
@@ -22,17 +24,9 @@
 </script>
 
 <LeftNavExpandable>
-  <slot name="header" slot="header">
+  {#snippet header()}
     <div class="flex flex-col w-full justify-center items-center gap-4">
       <ProfileLeftPanelSection />
     </div>
-  </slot>
-  <!-- <div slot="header" class="flex flex-col gap-1 items-center">
-    <div class="text-title">
-      {$userPreferences.nickName ?? ""}
-    </div>
-    {#if $userLocalPreferences.isEnableAgeCounter}
-      <AgeTimer />
-    {/if}
-  </div> -->
+  {/snippet}
 </LeftNavExpandable>

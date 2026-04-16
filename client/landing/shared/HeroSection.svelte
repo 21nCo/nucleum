@@ -8,8 +8,14 @@
   import HeroBackground from "@21n/landing/shared/hero/HeroBackground.svelte";
   import Pulldown from "@21n/landing/shared/play/Pulldown.svelte";
   import { isProductPage, isProductsPanelOpen } from "@21n/landing/shared/store/shared.store";
-  export let isComingSoon = false;
-  export let heroInputs: IHeroInputs;
+  let {
+    isComingSoon = false,
+    heroInputs,
+  }: {
+    isComingSoon?: boolean;
+    heroInputs: IHeroInputs;
+  } = $props();
+
 </script>
 
 <section
@@ -55,7 +61,7 @@
       {#if $view.isPortrait && !$isProductPage}
         <ButtonAsLink
           label="See our products"
-          on:click={() => ($isProductsPanelOpen = true)}
+          onclick={() => ($isProductsPanelOpen = true)}
         />
       {/if}
     </div>

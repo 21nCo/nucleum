@@ -1,14 +1,25 @@
 <script lang="ts">
+  import type { MouseEventHandler } from "svelte/elements";
   import { Size } from "@21n/types/size.enum";
   import Icon from "../Icon.svelte";
   import { Placement } from "@21n/types/direction.enum";
   import { cn } from "@21n/utils/ui.utils";
   import { hoverable } from "@21n/actions/hover.action";
-  export let edge: Placement = Placement.Bottom;
-  export let label: string | undefined = undefined;
-  export let icon: string | undefined = undefined;
-  export let tooltip: string | undefined = undefined;
-  $: tooltip;
+
+  let {
+    edge = Placement.Bottom,
+    label = undefined,
+    icon = undefined,
+    tooltip = undefined,
+    onclick = undefined,
+  }: {
+    edge?: Placement;
+    label?: string | undefined;
+    icon?: string | undefined;
+    tooltip?: string | undefined;
+    onclick?: MouseEventHandler<HTMLButtonElement> | undefined;
+  } = $props();
+  void tooltip;
   let isHovering: boolean = false;
 </script>
 
@@ -33,7 +44,9 @@
       isHovering = val;
     }
   }}
-  on:click
+  onclick={(event) => {
+    onclick?.(event);
+  }}
 >
   {#if icon}
     <Icon

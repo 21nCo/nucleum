@@ -4,25 +4,39 @@
     codeBrowserItem,
     quoteBrowserItem
   } from "@21n/components/markdown/blockBrowser/blockBrowser.utils";
+  import type { IBlockBrowserItem } from "@21n/components/markdown/blockBrowser/blockBrowser.type";
   import { Size } from "@21n/types/size.enum";
   import { NodeType } from "@21n/products/memotron/node/node.type";
   import BlockBrowserKeyboardItem from "@21n/components/markdown/blockBrowser/BlockBrowserKeyboardItem.svelte";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { fly } from "svelte/transition";
 
-  export let configData: any;
-  export let selectedSection: string;
+  let {
+    configData,
+    selectedSection,
+    onSelect = undefined
+  }: {
+    configData: any;
+    selectedSection: string;
+    onSelect?: ((type: NodeType) => void) | undefined;
+  } = $props();
   const notAvailableOnMobile = [NodeType.CODE];
   const itemsClass =
     "w-full grid gap-3 grid-cols-[repeat(auto-fill,minmax(100px,1fr))]";
   const shorterItemsClass =
     "w-full grid gap-3 grid-cols-[repeat(auto-fill,minmax(80px,1fr))]";
 
-  $: items = configData.config
-    .find((section: any) => section.section === selectedSection)
-    ?.children?.filter(
-      (c: any) => !c.isDisabled && !notAvailableOnMobile.includes(c.type)
-    );
+  function handleSelect(type: IBlockBrowserItem["type"]) {
+    onSelect?.(type as NodeType);
+  }
+
+  const items = $derived(
+    configData.config
+      .find((section: any) => section.section === selectedSection)
+      ?.children?.filter(
+        (c: any) => !c.isDisabled && !notAvailableOnMobile.includes(c.type)
+      )
+  );
 </script>
 
 <div
@@ -31,21 +45,21 @@
 >
   <div class="w-full overflow-y-auto min-h-0 flex-1">
     {#if selectedSection === "text"}
-      <!--  -->
+        <!--  -->
       <div class="flex flex-col gap-3 w-full">
         <div class={itemsClass}>
-          <BlockBrowserKeyboardItem item={quoteBrowserItem} on:select />
-          <BlockBrowserKeyboardItem item={calloutBrowserItem} on:select />
-          <BlockBrowserKeyboardItem item={codeBrowserItem} on:select />
+          <BlockBrowserKeyboardItem item={quoteBrowserItem} onSelect={handleSelect} />
+          <BlockBrowserKeyboardItem item={calloutBrowserItem} onSelect={handleSelect} />
+          <BlockBrowserKeyboardItem item={codeBrowserItem} onSelect={handleSelect} />
         </div>
         <div class={shorterItemsClass}>
           {#each configData.headingsSection.children as item}
-            <BlockBrowserKeyboardItem {item} on:select />
+            <BlockBrowserKeyboardItem {item} onSelect={handleSelect} />
           {/each}
         </div>
         <div class={itemsClass}>
           {#each configData.listsSection.children as item}
-            <BlockBrowserKeyboardItem {item} on:select />
+            <BlockBrowserKeyboardItem {item} onSelect={handleSelect} />
           {/each}
         </div>
       </div>
@@ -53,7 +67,7 @@
       <div class={itemsClass}>
         {#if items && items.length > 0}
           {#each items as item}
-            <BlockBrowserKeyboardItem {item} on:select />
+            <BlockBrowserKeyboardItem {item} onSelect={handleSelect} />
           {/each}
         {/if}
       </div>

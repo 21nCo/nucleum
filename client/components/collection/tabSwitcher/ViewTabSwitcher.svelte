@@ -18,15 +18,23 @@
   import type { IProperty } from "@21n/components/collection/properties/property.type";
   import ViewTabs from "@21n/components/collection/tabSwitcher/ViewTabs.svelte";
 
-  export let view: ICollectionView;
-  export let properties: IProperty[] = [];
-  export let value: ISelectValue | undefined = undefined;
-  let tabs: ISelectItem[] = [];
-  $: viewData =
-    (view as ICollectionView & { data?: ICollectionItem[] }).data ?? [];
-  $: label = resolveLabel(view.tabBy);
-  $: tabCounts = calculateGroupingCounts(viewData, view.tabBy);
-  $: tabs = resolveTabs(view.tabBy);
+  let {
+    view,
+    properties = [],
+    value = $bindable(),
+    onSelect = undefined
+  }: {
+    view: ICollectionView;
+    properties?: IProperty[];
+    value?: ISelectValue | undefined;
+    onSelect?: ((event: CustomEvent<ISelectValue>) => void) | undefined;
+  } = $props();
+  let viewData = $derived(
+    (view as ICollectionView & { data?: ICollectionItem[] }).data ?? []
+  );
+  let label = $derived(resolveLabel(view.tabBy));
+  let tabCounts = $derived(calculateGroupingCounts(viewData, view.tabBy));
+  let tabs = $derived.by(() => resolveTabs(view.tabBy));
 
   function resolveTabs(tabBy: string) {
     if (isNoneResource(tabBy)) return [];
@@ -51,7 +59,7 @@
   >
     <span class="text-fgs2 text-b2 min-w-fit whitespace-nowrap">{label}</span>
     {#if tabs && tabs.length > 0}
-      <ViewTabs {tabs} bind:selected={value} {tabCounts} on:select />
+      <ViewTabs {tabs} bind:selected={value} {tabCounts} {onSelect} />
     {/if}
   </div>
 {/if}

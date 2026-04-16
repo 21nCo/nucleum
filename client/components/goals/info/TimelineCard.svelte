@@ -11,19 +11,23 @@
     resolveDefaultSpanScale
   } from "@21n/elements/datetime/datetime.utils";
 
-  export let goal: IActiveGoalStore;
+  let { goal }: { goal: IActiveGoalStore } = $props();
 
-  $: startDate = $goal.startDate ? new Date($goal.startDate) : new Date();
-  $: endDate = $goal.endDate ? new Date($goal.endDate) : new Date();
+  const startDate = $derived(
+    $goal.startDate ? new Date($goal.startDate) : new Date()
+  );
+  const endDate = $derived($goal.endDate ? new Date($goal.endDate) : new Date());
 
-  $: if (!$goal.spanScale && $goal.startDate && $goal.endDate) {
+  $effect(() => {
+    if (!$goal.spanScale && $goal.startDate && $goal.endDate) {
     const spanScale = resolveDefaultSpanScale(startDate, endDate, activeScales);
     if (spanScale) {
       goal.modify({
         spanScale
       });
     }
-  }
+    }
+  });
 
   function handleStartDateChange(e: CustomEvent) {
     $goal.startDate = e.detail;
@@ -54,13 +58,13 @@
       date={startDate}
       style={InputStyle.PLAIN}
       variant="inline"
-      on:change={handleStartDateChange}
+      onChange={handleStartDateChange}
     />
     <DatePicker
       date={endDate}
       style={InputStyle.PLAIN}
       variant="inline"
-      on:change={handleEndDateChange}
+      onChange={handleEndDateChange}
     />
   </div>
   <Divider />
@@ -82,7 +86,7 @@
         start={new Date($goal.startDate)}
         end={new Date($goal.endDate)}
         spanScale={$goal.spanScale}
-        on:change={handleSpanChange}
+        onChange={handleSpanChange}
       />
     </div>
   {/if}

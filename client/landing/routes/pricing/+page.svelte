@@ -5,19 +5,20 @@
   import PricingSection from "@21n/landing/shared/pricing/PricingSection.svelte";
   import { landing } from "@21n/landing/shared/store/shared.store";
 
-  export let data: {
+  let { data }: {
     product?: string;
     pricingPlans?: any[];
     faqItems?: any[];
     bottomCta?: { title?: string; body?: string };
     website: string;
     urls?: { downloads?: { all?: string } };
-  };
+  } = $props();
 
   const productName = data?.product ?? "";
 
-  $: downloadsUrl =
-    data?.urls?.downloads?.all || ($landing?.urls?.downloads?.all ?? "");
+  let downloadsUrl = $derived(
+    data?.urls?.downloads?.all || ($landing?.urls?.downloads?.all ?? "")
+  );
 </script>
 
 <PricingSection

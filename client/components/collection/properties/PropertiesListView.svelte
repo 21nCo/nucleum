@@ -12,7 +12,6 @@
   import { Size } from "@21n/types/size.enum";
   import Badge from "@21n/elements/text/Badge.svelte";
   import { ButtonStyle } from "@21n/types/button.type";
-  import { createEventDispatcher } from "svelte";
   import type {
     ICollectionExpanded,
     ICollectionItem,
@@ -30,24 +29,41 @@
   import { propertyStore } from "@21n/components/collection/properties/property.store";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { NodeType } from "@21n/products/memotron/node/node.type";
-  const dispatch = createEventDispatcher();
-  export let types: ICollectionExpanded[] | undefined = undefined;
-  export let isIncludeExtendedProperties: boolean = true;
-  export let values: ICollectionItemPropertyValue[] = [];
-  export let item: ICollectionItem | null = null;
-  export let resource: Resource;
-  export let parentBgIndex: number = 1;
-  export let context: "capture" | "clip" | "mainpanel" | "rightpanel" =
-    "capture";
-  export let isReadOnlyMode: boolean = false;
-  export let isCollapsed: boolean = false;
-  let properties: IProperty[] = [];
+  let {
+    types = undefined,
+    isIncludeExtendedProperties = true,
+    values = $bindable([]),
+    item = null,
+    resource,
+    parentBgIndex = 1,
+    context = "capture",
+    isReadOnlyMode = false,
+    isCollapsed = $bindable(false),
+    onChange = undefined,
+    onPropertyCount = undefined,
+    onShowAll = undefined
+  }: {
+    types?: ICollectionExpanded[] | undefined;
+    isIncludeExtendedProperties?: boolean;
+    values?: ICollectionItemPropertyValue[];
+    item?: ICollectionItem | null;
+    resource: Resource;
+    parentBgIndex?: number;
+    context?: "capture" | "clip" | "mainpanel" | "rightpanel";
+    isReadOnlyMode?: boolean;
+    isCollapsed?: boolean;
+    onChange?: ((event: CustomEvent<{ id: string; value: any }>) => void) | undefined;
+    onPropertyCount?: ((count: number) => void) | undefined;
+    onShowAll?: (() => void) | undefined;
+  } = $props();
+  let properties = $state<IProperty[]>([]);
   /**
    * Renders properties as column
    */
-  let isRenderAsColumn: boolean =
-    context === "rightpanel" || context === "clip";
-  let isCollapserHovered: boolean = false;
+  let isRenderAsColumn = $derived(
+    context === "rightpanel" || context === "clip"
+  );
+  let isCollapserHovered = $state(false);
 
   function isProperty(value: IProperty | undefined): value is IProperty {
     return Boolean(value);
@@ -83,7 +99,7 @@
     else if (context === "mainpanel")
       properties = resolvePropertiesForNodePage(propertyConfig);
     else if (context === "rightpanel") properties = propertyConfig;
-    dispatch("propertyCount", properties.length);
+    onPropertyCount?.(properties.length);
   }
 
   async function onNewOption(e: CustomEvent) {
@@ -99,10 +115,14 @@
     const result = await propertyStore.modify(property.id, {
       config: property.config
     });
-    dispatch("change", {
+    onChange?.(
+      new CustomEvent("change", {
+        detail: {
       id: property.id,
       value: newOption.id
-    });
+        }
+      })
+    );
   }
 
   async function onConfigChange(e: CustomEvent) {
@@ -153,7 +173,7 @@
             "px-4 py-2": isCollapsed,
             "mo:px-0 p-4": !isCollapsed
           })}
-          on:click={() => {
+          onclick={() => {
             isCollapsed = !isCollapsed;
           }}
           use:hoverable={{
@@ -175,8 +195,8 @@
                   icon="proceed"
                   size={Size.sm}
                   style={ButtonStyle.PLAIN}
-                  on:click={(e) => {
-                    dispatch("showAll");
+                  onclick={(e) => {
+                    onShowAll?.();
                     if (e) e.stopPropagation();
                   }}
                 />
@@ -207,14 +227,18 @@
               isPropertiesPaneContext={isRenderAsColumn}
               {isReadOnlyMode}
               {parentBgIndex}
-              on:change={(e) => {
-                dispatch("change", {
+              onChange={(e) => {
+                onChange?.(
+                  new CustomEvent("change", {
+                    detail: {
                   id: property.id,
                   value: e.detail
-                });
+                    }
+                  })
+                );
               }}
-              on:newOption={onNewOption}
-              on:configChange={onConfigChange}
+              onNewOption={onNewOption}
+              onConfigChange={onConfigChange}
             />
           {/each}
         </div>

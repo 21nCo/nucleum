@@ -16,26 +16,36 @@
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import CollectionThumbnailLabel from "@21n/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
   import CollectionThumbnailAvatar from "@21n/components/collection/thumbnail/CollectionThumbnailAvatar.svelte";
-  export let item: ICollectionThumb;
-  export let arrangement: Arrangement = Arrangement.LIST;
-  export let size: Size.sm | Size.md = Size.md;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
-  export let accessPointState: ResourceAccessPointState =
-    ResourceAccessPointState.DEFAULT;
+  let {
+    item = $bindable(),
+    arrangement = Arrangement.LIST,
+    size = Size.md,
+    accessPoint = ResourceAccessPoint.BROWSER,
+    accessPointState = ResourceAccessPointState.DEFAULT,
+    onClick = undefined
+  }: {
+    item?: ICollectionThumb;
+    arrangement?: Arrangement;
+    size?: Size.sm | Size.md;
+    accessPoint?: ResourceAccessPoint;
+    accessPointState?: ResourceAccessPointState;
+    onClick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
 
   function onCollectionChange(e: any) {
     const data = e.detail?.params?.record;
-    if (data) {
+    if (data && item) {
       item = { ...item, ...data };
     }
   }
 </script>
 
-<ResourceThumbnailBase bind:item {accessPoint} {arrangement}>
+{#if item}
+  <ResourceThumbnailBase bind:item {accessPoint} {arrangement}>
   {#if arrangement === Arrangement.LIST}
     <button
       class="flex items-center h-16 gap-3 w-full rounded-md bg-bgs2 border border-transparent hover:border-bgs2 p-3"
-      on:click
+      onclick={onClick}
     >
       <CollectionThumbnailAvatar {item} size={Size.lg} />
       <div class="flex flex-col gap-1 flex-grow">
@@ -60,7 +70,7 @@
       </div>
     </button>
   {:else if arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY}
-    <ResourceGridThumbnail {item} {size} on:click>
+    <ResourceGridThumbnail {item} {size} onclick={onClick}>
       <!-- {#if item.type === CollectionType.TYPED || item.type === CollectionType.QUERY}
         <div
           class="absolute top-0 left-0 flex bg-bgs2 rounded-md px-2 py-1 m-2 text-b3"
@@ -70,20 +80,21 @@
       {/if} -->
       <!-- <ResourceThumbnailContentTypeOverlay contentType={item.type} /> -->
       <Cover {item} {arrangement} />
-      <slot slot="bottom" name="bottom">
-        <CollectionThumbnailLabelRow {item} {arrangement} {accessPoint} />
+      {#snippet bottom()}
+        <CollectionThumbnailLabelRow item={item!} {arrangement} {accessPoint} />
         <span class="flex gap-2">
           {#if accessPointState === ResourceAccessPointState.DEFAULT}
-            <CollectionNodeCount {item} isShowLabel={true} />
+            <CollectionNodeCount item={item!} isShowLabel={true} />
           {/if}
-          <CollectionPropertyCount {item} isShowLabel={size === Size.md} />
+          <CollectionPropertyCount item={item!} isShowLabel={size === Size.md} />
         </span>
-      </slot>
+      {/snippet}
     </ResourceGridThumbnail>
   {/if}
-</ResourceThumbnailBase>
+  </ResourceThumbnailBase>
 
-<ComponentBaseLayer
-  subscribeToRecords={[item.id]}
-  on:change={onCollectionChange}
-/>
+  <ComponentBaseLayer
+    subscribeToRecords={[item.id]}
+    onChange={onCollectionChange}
+  />
+{/if}

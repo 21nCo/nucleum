@@ -1,4 +1,7 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { page } from "$app/stores";
   import { PlanType } from "@21n/components/subscription/userPlan.type";
   import { ClientStorageKey } from "@21n/persistence/persistence.type";
@@ -18,7 +21,8 @@
   import { wait } from "@21n/utils/time.utils";
   import { onMount } from "svelte";
 
-  let isLoggedIn: boolean = false;
+  let { children }: { children?: Snippet<[boolean]> } = $props();
+  let isLoggedIn = $state(false);
 
   onMount(async () => {
     if (
@@ -98,4 +102,4 @@
   }
 </script>
 
-<slot {isLoggedIn} />
+{@render children?.(isLoggedIn)}

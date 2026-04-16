@@ -4,12 +4,14 @@
   import { GlobalEvent } from "@21n/types/event.enum";
   import { postDataToParent } from "@21n/utils/embed.utils";
   import { onMount } from "svelte";
-  /**
-   * @deprecated
-   */
-  export let bg: number | undefined = undefined;
-  export let isBackNavigable: boolean = false;
-  $: bg;
+  let {
+    bg = undefined,
+    isBackNavigable = false
+  }: {
+    bg?: number | undefined;
+    isBackNavigable?: boolean;
+  } = $props();
+  void bg;
 
   onMount(() => {
     postDataToParent(
@@ -22,8 +24,7 @@
     };
   });
 
-  function onNav(event: CustomEvent) {
-    const path = event.detail.path;
+  function onNav() {
     setTimeout(
       () =>
         postDataToParent(
@@ -35,4 +36,4 @@
   }
 </script>
 
-<NotificationListener event={[GlobalEvent.NAV]} on:nav={onNav} />
+<NotificationListener event={[GlobalEvent.NAV]} {onNav} />

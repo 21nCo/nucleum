@@ -16,12 +16,17 @@
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import GistPreview from "@21n/products/memotron/node/content/web/GistPreview.svelte";
   import SocialSubContent from "@21n/products/memotron/node/content/web/social/SocialSubContent.svelte";
-  export let node: IClip | IWebPage;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  let youtubeVideoRef: YoutubeVideoPreview;
+  let {
+    node,
+    accessPoint = ResourceAccessPoint.SELF
+  }: {
+    node: IClip | IWebPage;
+    accessPoint?: ResourceAccessPoint;
+  } = $props();
+  let youtubeVideoRef = $state<YoutubeVideoPreview | undefined>(undefined);
 
   export function onTrace(e: any) {
-    youtubeVideoRef.onTrace(e);
+    youtubeVideoRef?.onTrace(e);
   }
 </script>
 

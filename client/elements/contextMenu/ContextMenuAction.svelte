@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { popover } from "@21n/actions/popover.action";
   import { logger } from "@21n/components/debug/logger.client";
   import { createEventPropagator } from "@21n/components/events/event.utils";
@@ -10,39 +11,58 @@
   } from "@21n/types/popover.type";
   import type { IContextMenuItem } from "@21n/types/select.type";
   import { Size } from "@21n/types/size.enum";
-  import Popover from "@21n/elements/popover/Popover.svelte";
   import Toggle from "@21n/elements/toggle/Toggle.svelte";
   import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let id: string;
-  export let menuResolver: () => { group: string; items: IContextMenuItem[] }[];
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
-  export let actionSize: Size.sm | Size.md | Size.lg = Size.md;
-  export let actionBgSize: Size.sm | Size.md | Size.lg | undefined = undefined;
-  export let tooltip: string | undefined = undefined;
-  export let tooltipOptions: IPopoverRenderBaseParams | undefined = undefined;
-  $: void tooltipOptions;
-  export let parentBgIndex: number = 1;
-  export let triggerMethod: PopoverTriggerMethod | undefined = undefined;
-  export let position: Placement | undefined = undefined;
-  export let offsetInPx: number | undefined = undefined;
-  export let isBoxed: boolean = false;
-  export let heading: string | undefined = undefined;
-  /**
-   * Export only for read-only purpose to check if the context menu is visible.
-   */
-  export let isPopoverVisible = false;
-  /**
-   * If set to true, the context menu will be rendered as a sibling of the trigger button. By default, popovers are rendered in popovers container to avoid z-index issues with other elements in the DOM.
-   */
-  export let isRenderAsSibling = false;
-  export let icon: string = $view.isConstrainedWidth
-    ? "more-outline-horizontal"
-    : "more";
-  let classList: string = "";
-  export { classList as class };
-  let contextMenuPopoverRef: any;
+  let {
+    id,
+    menuResolver,
+    size = Size.md,
+    actionSize = Size.md,
+    actionBgSize = undefined,
+    tooltip = undefined,
+    tooltipOptions = undefined,
+    parentBgIndex = 1,
+    triggerMethod = undefined,
+    position = undefined,
+    offsetInPx = undefined,
+    isBoxed = false,
+    heading = undefined,
+    isPopoverVisible = $bindable(false),
+    isRenderAsSibling = false,
+    icon = undefined,
+    testId = undefined,
+    isStopPropagation = false,
+    class: className = "",
+    onAction = undefined,
+    children = undefined
+  }: {
+    id: string;
+    menuResolver: () => { group: string; items: IContextMenuItem[] }[];
+    size?: Size.sm | Size.md | Size.lg;
+    actionSize?: Size.sm | Size.md | Size.lg;
+    actionBgSize?: Size.sm | Size.md | Size.lg | undefined;
+    tooltip?: string | undefined;
+    tooltipOptions?: IPopoverRenderBaseParams | undefined;
+    parentBgIndex?: number;
+    triggerMethod?: PopoverTriggerMethod | undefined;
+    position?: Placement | undefined;
+    offsetInPx?: number | undefined;
+    isBoxed?: boolean;
+    heading?: string | undefined;
+    isPopoverVisible?: boolean;
+    isRenderAsSibling?: boolean;
+    icon?: string | undefined;
+    testId?: string | undefined;
+    isStopPropagation?: boolean;
+    class?: string;
+    onAction?: ((event: CustomEvent<any>) => void) | undefined;
+    children?: Snippet | undefined;
+  } = $props();
+  void tooltipOptions;
+  let contextMenuPopoverRef = $state<any>();
+  const resolvedIcon = $derived(
+    icon ?? ($view.isConstrainedWidth ? "more-outline-horizontal" : "more")
+  );
 
   export function hide() {
     logger.log({ at: "ContextMenuAction - hide" });
@@ -62,52 +82,18 @@
   }
 
   function onSelect(item: IContextMenuItem) {
-    dispatch("action", item.value);
+    const actionEvent = new CustomEvent<any>("action", {
+      detail: item.value
+    });
+    onAction?.(actionEvent);
     hide();
   }
 
   function onPopoverChange(e: Event) {
-    isPopoverVisible = (e as CustomEvent<{ open?: boolean }>).detail?.open ?? false;
+    isPopoverVisible =
+      (e as CustomEvent<{ open?: boolean }>).detail?.open ?? false;
   }
 </script>
-
-<!-- <Popover
-  bind:this={contextMenuPopoverRef}
-  bind:isPopoverVisible
-  triggerMethod={triggerMethod ??
-    ($$slots.default
-      ? PopoverTriggerMethod.RIGHT_CLICK
-      : PopoverTriggerMethod.CLICK)}
-  options={{
-    placement:
-      position ??
-      ($$slots.default ? Placement.BottomCenter : Placement.BottomRight),
-    offsetInPx,
-    groupId: "contextMenuPopover-" + id,
-    isOnlyOneVisiblePerGroup: true
-  }}
-  triggerClass={classList}
->
-  <slot>
-    <Toggle
-      icon="more"
-      {tooltip}
-      isPreventFillOnActive={true}
-      on={isPopoverVisible}
-    />
-  </slot>
-  <slot name="popover" slot="popover">
-    <ContextMenu
-      {size}
-      {heading}
-      menu={contextMenu}
-      on:action
-      on:select={() => {
-        contextMenuPopoverRef.hide();
-      }}
-    />
-  </slot>
-</Popover> -->
 
 <button
   use:popover={{
@@ -124,20 +110,28 @@
     id,
     isRenderAsSibling
   }}
-  class={classList}
-  on:change={onPopoverChange}
+  data-testid={testId}
+  class={className}
+  onclick={(event) => {
+    if (isStopPropagation) event.stopPropagation();
+  }}
+  onchange={onPopoverChange}
   bind:this={contextMenuPopoverRef}
 >
-  <slot>
+  {#if children}
+    {@render children?.()}
+  {:else}
     <Toggle
-      {icon}
+      icon={resolvedIcon}
       {tooltip}
       {isBoxed}
+      isRenderAsDiv={true}
+      isPassive={true}
       parentBgIndex={parentBgIndex + 1}
       isPreventFillOnActive={true}
       size={actionSize}
       bgSize={actionBgSize ?? actionSize}
       bind:on={isPopoverVisible}
     />
-  </slot>
+  {/if}
 </button>

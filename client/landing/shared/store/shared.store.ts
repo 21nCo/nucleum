@@ -67,7 +67,7 @@ export const microToolsStore = readable<ITileItem[]>([
 export const upcomingProductsStore = writable<ITileItem[]>([
   {
     icon: "nucleus",
-    title: "Nucleus",
+    title: "Nucleum",
     label: "Your life's digital harmony.",
     description: "",
     href: "https://docs.21n.org/21n/products/up-next"

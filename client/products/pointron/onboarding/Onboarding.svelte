@@ -21,7 +21,6 @@
   let currentStep = 0;
 
   let isPortraitModeInitialRender = true;
-  let videoDuration: number;
   let stepsJson = [
     {
       title: "Pointron",
@@ -57,13 +56,7 @@
     portrait: [...stepsJson]
   };
 
-  /**
-   * Handle the start tutorial button click
-   *
-   * TEMP - initializeTimeZoneForSignup here - as it is failing in BaseLayer on signup for embed iOS and macOS signup case
-   * @param e
-   */
-  async function handleStartTutorial(e: any) {
+  async function handleStartTutorial() {
     await userPreferences.initializeTimeZoneForSignup();
     onFinish();
   }
@@ -108,13 +101,6 @@
 </script>
 
 <section class="w-full h-full bg-bgs1 flex justify-center items-center">
-  <!-- <Header
-    isLastStep={$windowObject.isInPortraitMode
-      ? currentStep === steps.portrait.length - 1
-      : currentStep === steps.landscape.length - 1}
-    on:back={handleStepButtonClick("-")}
-    on:skip={onFinish}
-  /> -->
   {#if $view.isPortrait && isPortraitModeInitialRender}
     <AppLoadingView />
   {:else}
@@ -132,9 +118,9 @@
               ? steps.portrait.length
               : steps.landscape.length}
             {currentStep}
-            on:back={handleStepButtonClick("-")}
-            on:skip={onSkip}
-            on:finish={onFinish}
+            onBack={handleStepButtonClick("-")}
+            onSkip={onSkip}
+            onFinish={onFinish}
           />
         {/if}
       {:else}
@@ -143,9 +129,9 @@
             ? steps.portrait.length
             : steps.landscape.length}
           {currentStep}
-          on:back={handleStepButtonClick("-")}
-          on:skip={onSkip}
-          on:finish={onFinish}
+          onBack={handleStepButtonClick("-")}
+          onSkip={onSkip}
+          onFinish={onFinish}
         />
       {/if}
       <div class="w-full h-full">
@@ -222,47 +208,27 @@
                 </div>
                 <div class="flex flex-col buttons mt-8 h-32">
                   {#if currentStep === 0}
-                    <Button
-                      on:click={handleStepButtonClick("+")}
-                      type="primary"
-                    >
+                    <Button onclick={handleStepButtonClick("+")} type="primary">
                       Get Started
                     </Button>
                   {:else if currentStep !== steps.landscape.length - 1}
                     <div class="flex flex-col w-fit items-center gap-4">
-                      <Button
-                        on:click={handleStepButtonClick("+")}
-                        type="primary"
-                      >
+                      <Button onclick={handleStepButtonClick("+")} type="primary">
                         Next
                       </Button>
-                      <Button on:click={onSkip} style={ButtonStyle.PLAIN}>
+                      <Button onclick={onSkip} style={ButtonStyle.PLAIN}>
                         Skip
                       </Button>
-                      <!-- <Button
-                      on:click={handleStepButtonClick("-")}
-                      width="w-[12.5rem]"
-                      style={ButtonStyle.PLAIN}
-                    >
-                      Back
-                    </Button> -->
                     </div>
                   {:else}
                     <div class="flex flex-col w-fit items-center gap-4">
                       <Button
-                        on:click={handleStartTutorial}
+                        onclick={handleStartTutorial}
                         width="w-[12.5rem]"
                         type="primary"
                       >
                         Let's go
                       </Button>
-                      <!-- <Button
-                      on:click={onFinish}
-                      width="w-[12.5rem]"
-                      style={ButtonStyle.PLAIN}
-                    >
-                      I will explore my self
-                    </Button> -->
                     </div>
                   {/if}
                 </div>
@@ -284,8 +250,8 @@
       {#if $view.isPortrait}
         {#if !isPortraitModeInitialRender}
           <Footer
-            on:next={handleStepButtonClick("+")}
-            on:final={handleStartTutorial}
+            onNext={handleStepButtonClick("+")}
+            onFinal={handleStartTutorial}
             activeStep={currentStep}
             totalSteps={$view.isPortrait
               ? steps.portrait.length
@@ -294,8 +260,8 @@
         {/if}
       {:else}
         <Footer
-          on:next={handleStepButtonClick("+")}
-          on:final={handleStartTutorial}
+          onNext={handleStepButtonClick("+")}
+          onFinal={handleStartTutorial}
           activeStep={currentStep}
           totalSteps={$view.isPortrait
             ? steps.portrait.length
@@ -305,6 +271,3 @@
     </div>
   {/if}
 </section>
-<!-- 
-  Note: Current steps start from 0, while total Step is the actual count of steps
- -->

@@ -1,45 +1,34 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  export let variant: "accent-background" | "bg-background" | "accent" =
-    "accent-background";
-  let cssRoot: any;
-  let divParent: any;
-  let div: any;
-  let width: any;
-  let squareML: any;
-  let circleMT: any;
-  let ranOnce: boolean = false;
-  $: circleFill =
+  let {
+    variant = "accent-background",
+  }: {
+    variant?: "accent-background" | "bg-background" | "accent";
+  } = $props();
+
+  let cssRoot: HTMLDivElement | undefined = undefined;
+  const circleFill = $derived(
     variant === "accent"
       ? "fill-aps1"
       : variant === "accent-background"
         ? "fill-abg"
-        : "fill-fgs1";
-  $: squareBorder =
-    variant === "accent-background" ? "border-abg" : "border-fg1";
-  onMount(() => {
-    cssRoot = document.querySelector("#inlineLoadingAnim");
-    div = document.getElementById("inlineLoadingAnim");
-    divParent = document.getElementById("inlineLoadingAnim")?.parentElement;
+        : "fill-fgs1"
+  );
+  const squareBorder = $derived(
+    variant === "accent-background" ? "border-abg" : "border-fg1"
+  );
+
+  $effect(() => {
+    if (!cssRoot?.parentElement) return;
+    const calculatedWidth =
+      cssRoot.parentElement.offsetHeight - cssRoot.offsetHeight - 14;
+    const width = calculatedWidth < 18 ? 18 : calculatedWidth;
+    cssRoot.style.setProperty("--width", `${width}px`);
+    cssRoot.style.setProperty("--squareML", `${0 - width / 3}px`);
+    cssRoot.style.setProperty("--circleMT", `${0 - width / 9}px`);
   });
-  $: if (divParent && !ranOnce) {
-    ranOnce = true;
-    const calculatedWidth = divParent.offsetHeight - div.offsetHeight - 14;
-    width = calculatedWidth < 18 ? 18 : calculatedWidth;
-    squareML = 0 - width / 3;
-    circleMT = 0 - width / 9;
-    width += "px";
-    squareML += "px";
-    circleMT += "px";
-    cssRoot.style.setProperty("--width", width);
-    cssRoot.style.setProperty("--squareML", squareML);
-    cssRoot.style.setProperty("--circleMT", circleMT);
-    // let rs = getComputedStyle(cssRoot);
-    // console.log("--squareML is ",rs.getPropertyValue('--squareML'));
-  }
 </script>
 
-<div id="inlineLoadingAnim">
+<div id="inlineLoadingAnim" bind:this={cssRoot}>
   <svg
     class="square {squareBorder}"
     xmlns="http://www.w3.org/2000/svg"

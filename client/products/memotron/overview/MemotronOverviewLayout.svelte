@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { Size } from "@21n/types/size.enum";
   import view from "@21n/stores/view.store";
   import { resizeListener } from "@21n/actions/resize.action";
@@ -17,13 +18,24 @@
   import { appStore } from "@21n/stores/app.store";
   import { cn } from "@21n/utils/ui.utils";
 
-  export let isConstrainedWidth = false;
-  let selectedPanel: MemotronOverviewPanel =
-    resolveSavedState() ?? MemotronOverviewPanel.GRAPH;
-  const isNucleusContext = $appStore.product === Product.NUCLEUS;
+  let {
+    isConstrainedWidth = $bindable(false),
+    right: rightSnippet = undefined,
+    children = undefined
+  }: {
+    isConstrainedWidth?: boolean;
+    right?: Snippet | undefined;
+    children?: Snippet | undefined;
+  } = $props();
+  let selectedPanel = $state<MemotronOverviewPanel>(
+    resolveSavedState() ?? MemotronOverviewPanel.GRAPH
+  );
+  const isNucleusContext = $derived($appStore.product === Product.NUCLEUS);
 
   let containerWidth = 0;
-  $: isConstrainedWidth = containerWidth < 1000 || $view.isConstrainedWidth;
+  $effect(() => {
+    isConstrainedWidth = containerWidth < 1000 || $view.isConstrainedWidth;
+  });
 
   function resolveSavedState() {
     const savedPanel = uiState.getState(UIState.memotronOverviewPanel, {
@@ -74,15 +86,17 @@
       isExpandToFullWidth={true}
       size={Size.sm}
       bind:value={selectedPanel}
-      on:switch={onPanelSwitch}
+      onSwitch={onPanelSwitch}
       tempTitleWithActionDisabled={true}
     >
-      <div slot="right" class="mr-3">
-        <slot name="right" />
-      </div>
+      {#snippet right()}
+        <div class="mr-3">
+          {@render rightSnippet?.()}
+        </div>
+      {/snippet}
     </PanelSwitcher>
   </div>
   <div class="relative w-full h-full">
-    <slot />
+    {@render children?.()}
   </div>
 </div>

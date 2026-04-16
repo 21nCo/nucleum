@@ -1,19 +1,17 @@
 <script lang="ts">
   import MicroIndicatorTile from "@21n/components/calendar/calendarHeatmap/MicroIndicatorTile.svelte";
-  // export let view: "V1" | "V2";
-  // export const days = 30;
-  export let data: any;
-  let [monthName, monthData, index] = data;
-  let firstDay: any;
-  let year = "";
-  $: {
-    [monthName, monthData] = data;
-    // console.log("months layout", data[1][0].date, monthData[0].date);
-    firstDay = new Date(monthData[0].date).getDay();
-    firstDay = firstDay == 0 ? 7 : firstDay;
-    year = monthData[0].date.split("-")[0];
-    year = " " + year[2] + year[3];
-  }
+  let { data }: { data: any } = $props();
+  const monthName = $derived(data[0]);
+  const monthData = $derived(data[1]);
+  const index = $derived(data[2]);
+  const firstDay = $derived.by(() => {
+    const day = new Date(monthData[0].date).getDay();
+    return day == 0 ? 7 : day;
+  });
+  const year = $derived.by(() => {
+    const yearValue = monthData[0].date.split("-")[0];
+    return " " + yearValue[2] + yearValue[3];
+  });
 </script>
 
 <div class="py-2">

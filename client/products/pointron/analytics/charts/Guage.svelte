@@ -4,14 +4,24 @@
   import { Size } from "@21n/types/size.enum";
   import { formatSeconds } from "@21n/utils/time.utils";
   import { cn } from "@21n/utils/ui.utils";
-  import "@carbon/charts-svelte/styles.css";
-  export let size: Size = Size.md;
-  export let label: string;
-  export let total: number | undefined = undefined;
-  export let actual: number | undefined = undefined;
-  export let percentage: number | undefined = undefined;
-  export let guageType: string = "semi";
-  let options = {
+
+  let {
+    size = Size.md,
+    label,
+    total = undefined,
+    actual = undefined,
+    percentage = undefined,
+    guageType = "semi"
+  }: {
+    size?: Size;
+    label: string;
+    total?: number;
+    actual?: number;
+    percentage?: number;
+    guageType?: string;
+  } = $props();
+
+  let options = $derived({
     width:
       guageType == "semi"
         ? size == Size.sm
@@ -33,28 +43,17 @@
             ? "100px"
             : "120px",
     arcWidth: size == Size.sm ? 4 : size === Size.md ? 8 : 10,
-    valueFontSize: (val: any) => {
+    valueFontSize: (_val: any) => {
       return size == Size.sm ? 12 : size === Size.md ? 16 : 20;
     },
-    // valueFontSize: (v: any) => {
-    //         if (v < 10) {
-    //           return 2;
-    //         } else if (v < 100) {
-    //           return 12;
-    //         } else {
-    //           return 2;
-    //         }
-    //       }
-    deltaFontSize: (val: any) => {
+    deltaFontSize: (_val: any) => {
       return size == Size.sm ? 12 : size === Size.md ? 12 : 36;
     },
     guageType
-  };
-  let data: any;
-  initializeData();
-  function initializeData() {
+  });
+  let data = $derived.by(() => {
     try {
-      data = [
+      return [
         {
           group: "value",
           value: percentage ?? (actual && total ? (actual / total) * 100 : 0)
@@ -62,8 +61,9 @@
       ];
     } catch (e) {
       console.error(e);
+      return undefined;
     }
-  }
+  });
 </script>
 
 {#if data}

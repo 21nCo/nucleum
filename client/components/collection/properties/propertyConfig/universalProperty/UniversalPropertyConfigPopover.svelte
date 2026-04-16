@@ -5,8 +5,13 @@
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
   import { universalPropertyOptions } from "@21n/components/collection/properties/property.store";
-  export let config: IUniversalPropertyConfig;
-  export let onChange: (e: Partial<IUniversalPropertyConfig>) => void;
+  let {
+    config,
+    onChange
+  }: {
+    config: IUniversalPropertyConfig;
+    onChange: (e: Partial<IUniversalPropertyConfig>) => void;
+  } = $props();
 </script>
 
 <div
@@ -22,7 +27,7 @@
             "hover:bg-bgs2": config.type !== option.value
           }
         )}
-        on:click={() => {
+        onclick={() => {
           if (config.type === option.value) return;
           config.type = option.value;
           onChange({ type: option.value });
@@ -48,7 +53,7 @@
       isExpanded={true}
       size={Size.sm}
       bind:checked={config.isMultiSelect}
-      on:change={(e) => {
+      onChange={(e) => {
         onChange({ isMultiSelect: e.detail });
       }}
     />

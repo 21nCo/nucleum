@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount, onDestroy, tick } from "svelte";
+  import { onMount, onDestroy, tick } from "svelte";
   import { cn } from "@21n/utils/ui.utils";
   import { compareDates, isSameDay } from "@21n/utils/time.utils";
   import CalendarTileIndicator from "@21n/components/calendar/classic/indicator/CalendarTileIndicator.svelte";
@@ -8,13 +8,30 @@
   import { Preference } from "@21n/stores/preferences/preferences.type";
   import { TimeScaleUnit } from "@21n/types/time.type";
   import { logger } from "@21n/components/debug/logger.client";
+  import {
+    buildResolvedIndicatorDataByDayMap,
+    resolveIndicatorDayKey
+  } from "@21n/components/calendar/classic/indicator/resolveIndicatorDataByDay";
 
-  export let selectedDate: Date;
-  export let indicatorData: ICalendarIndicatorData[] = [];
-  export let indicatorRefreshId: number = 0;
-  export let selectedScale: TimeScaleUnit = TimeScaleUnit.DAY;
-
-  const dispatch = createEventDispatcher();
+  let {
+    selectedDate = $bindable(new Date()),
+    indicatorData = [],
+    indicatorRefreshId = 0,
+    selectedScale = TimeScaleUnit.DAY,
+    onDateChange = void 0,
+    onMonthSelect = void 0,
+    onYearChange = void 0,
+    onYearSelect = void 0
+  }: {
+    selectedDate?: Date;
+    indicatorData?: ICalendarIndicatorData[];
+    indicatorRefreshId?: number;
+    selectedScale?: TimeScaleUnit;
+    onDateChange?: (payload: { date: Date }) => void;
+    onMonthSelect?: (payload: { date: Date }) => void;
+    onYearChange?: (payload: { year: number }) => void;
+    onYearSelect?: (payload: { date: Date }) => void;
+  } = $props();
 
   const weekDays = ["S", "M", "T", "W", "T", "F", "S"];
   const monthNames = [
@@ -34,8 +51,8 @@
 
   const YEAR_RANGE = 200;
   const BASE_YEAR = new Date().getFullYear() - 100;
-  let YEAR_HEIGHT = 1200;
-  $: VIRTUAL_HEIGHT = YEAR_RANGE * YEAR_HEIGHT;
+  let yearHeight = $state(1200);
+  const virtualHeight = $derived(YEAR_RANGE * yearHeight);
 
   const getVisibleYears = () => {
     if (typeof window === "undefined") return 3;
@@ -45,24 +62,25 @@
   };
 
   const VISIBLE_YEARS = getVisibleYears();
-
-  let visibleYears: ReturnType<typeof getYearData>[] = [];
-  let visibleYear: number = selectedDate.getFullYear();
+  let visibleYears = $state<ReturnType<typeof getYearData>[]>([]);
+  let visibleYear = $state<number>(selectedDate.getFullYear());
   let scrollTimeout: ReturnType<typeof setTimeout> | undefined;
   let containerRef: HTMLDivElement;
   let isExplicitNavigation = false;
-  let virtualScrollTop = (selectedDate.getFullYear() - BASE_YEAR) * YEAR_HEIGHT;
-  let startYearIndex = 0;
-  let isMounted = false;
-  // Prevents onScroll from running while a programmatic scroll recalibration
-  // is in progress (avoids stale-YEAR_HEIGHT fallback giving wrong years).
+  let virtualScrollTop = $state(
+    (selectedDate.getFullYear() - BASE_YEAR) * yearHeight
+  );
+  let startYearIndex = $state(0);
+  let isMounted = $state(false);
   let isRecalibrating = false;
-  // The container width at the time YEAR_HEIGHT was last calibrated.  onScroll
-  // skips year updates when the live width differs (layout transition).
   let calibratedWidth = 0;
 
-  let showYearIndicators =
-    preferences.resolve(Preference.CALENDAR_TILE_INDICATORS_YEAR) ?? true;
+  let showYearIndicators = $state(
+    preferences.resolve(Preference.CALENDAR_TILE_INDICATORS_YEAR) ?? true
+  );
+  const resolvedIndicatorDataByDay = $derived.by(() =>
+    buildResolvedIndicatorDataByDayMap(indicatorData)
+  );
 
   const unsubscribe = preferences.subscribe((prefs) => {
     showYearIndicators =
@@ -120,8 +138,7 @@
     if (!yearElement) { isRecalibrating = false; return; }
     const actualHeight = yearElement.offsetHeight;
     if (actualHeight <= 0) { isRecalibrating = false; return; }
-
-    YEAR_HEIGHT = actualHeight;
+    yearHeight = actualHeight;
     virtualScrollTop = getVirtualPosition(targetYear);
     updateVisibleYears();
 
@@ -160,7 +177,7 @@
   }
 
   function updateVisibleYears() {
-    const centerIndex = Math.floor(virtualScrollTop / YEAR_HEIGHT);
+    const centerIndex = Math.floor(virtualScrollTop / yearHeight);
     startYearIndex = Math.max(0, centerIndex - Math.floor(VISIBLE_YEARS / 2));
 
     const maxStartIndex = Math.max(0, YEAR_RANGE - VISIBLE_YEARS);
@@ -175,7 +192,7 @@
 
   function getVirtualPosition(year: number): number {
     const index = getIndexFromYear(year);
-    return index * YEAR_HEIGHT;
+    return index * yearHeight;
   }
 
   function getDaysInMonth(year: number, month: number) {
@@ -274,7 +291,7 @@
         selectedDate.getMonth(),
         selectedDate.getDate()
       );
-      dispatch("yearChange", { year: newVisibleYear });
+      onYearChange?.({ year: newVisibleYear });
     }
 
     scrollTimeout = setTimeout(() => {
@@ -366,7 +383,7 @@
     );
     if (!props?.isPreventScroll)
       scrollToYear(targetYear, selectedDate.getMonth());
-    dispatch("yearChange", { year: targetYear });
+    onYearChange?.({ year: targetYear });
     isExplicitNavigation = false;
   }
 
@@ -384,27 +401,27 @@
     navigateToYear(targetYear);
   }
 
-  $: {
+  $effect(() => {
     if (visibleYears.length === 0) {
       const currentYear = selectedDate.getFullYear();
       virtualScrollTop = getVirtualPosition(currentYear);
       updateVisibleYears();
       visibleYear = currentYear;
-      dispatch("yearChange", { year: currentYear });
+      onYearChange?.({ year: currentYear });
     }
-  }
+  });
 
-  $: {
+  $effect(() => {
     if (containerRef && selectedDate && isExplicitNavigation) {
       scrollToYear(selectedDate.getFullYear(), selectedDate.getMonth());
     }
-  }
+  });
 
-  $: {
+  $effect(() => {
     if (selectedDate) {
       visibleYear = selectedDate.getFullYear();
     }
-  }
+  });
 
   function isToday(date: Date | null) {
     if (!date) return false;
@@ -436,24 +453,24 @@
 
   function handleMonthSelect(year: number, monthIndex: number) {
     const monthDate = new Date(year, monthIndex, 1);
-    dispatch("monthSelect", { date: monthDate });
+    onMonthSelect?.({ date: monthDate });
   }
 
   function handleYearSelect(year: number) {
     const yearDate = new Date(year, 0, 1);
-    dispatch("yearSelect", { date: yearDate });
+    onYearSelect?.({ date: yearDate });
   }
 </script>
 
 <div
   class="h-full overflow-y-auto px-6"
   bind:this={containerRef}
-  on:scroll={onScroll}
+  onscroll={onScroll}
 >
-  <div style="height: {VIRTUAL_HEIGHT}px; position: relative;">
+  <div style="height: {virtualHeight}px; position: relative;">
     <div
       style="position: absolute; top: {startYearIndex *
-        YEAR_HEIGHT}px; width: 100%;"
+        yearHeight}px; width: 100%;"
     >
       {#each visibleYears as { year, months }}
         {@const isFutureYear = year > new Date().getFullYear()}
@@ -471,7 +488,7 @@
         >
           <button
             class={cn("year-label pt-2 w-full text-start group cursor-pointer")}
-            on:click={() => handleYearSelect(year)}
+            onclick={() => handleYearSelect(year)}
           >
             <span
               class={cn("text-h2 font-medium ml-8 mr-2 group-hover:text-aps1", {
@@ -502,7 +519,7 @@
                   }
                 )}
                 id="month-{year}-{monthIndex}"
-                on:click={() => handleMonthSelect(year, monthIndex)}
+                onclick={() => handleMonthSelect(year, monthIndex)}
               >
                 <div
                   class={cn(
@@ -547,18 +564,19 @@
                               "text-fgs3": !isPastDay
                             }
                         )}
-                        on:click={(e) => {
+                        onclick={(e) => {
                           e.stopPropagation();
                           selectedDate = date;
-                          dispatch("dateChange", { date });
+                          onDateChange?.({ date });
                         }}
                       >
                         {date.getDate()}
                         {#if indicatorData.length > 0 && showYearIndicators}
                           <CalendarTileIndicator
                             {date}
-                            {indicatorRefreshId}
-                            data={indicatorData}
+                            resolvedData={resolvedIndicatorDataByDay.get(
+                              resolveIndicatorDayKey(date)
+                            )}
                             isActive={isSelected}
                           />
                         {/if}

@@ -8,7 +8,7 @@
   import { appStoreShuffleEmojis } from "@21n/stores/app.store";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { Size } from "@21n/types/size.enum";
-  import { createEventDispatcher, onMount, tick } from "svelte";
+  import { onMount, tick } from "svelte";
   import { debouncer } from "@21n/utils/utils";
   import {
     AvatarType,
@@ -30,18 +30,18 @@
   import { abg, cn } from "@21n/utils/ui.utils";
   import view from "@21n/stores/view.store";
 
-  export let mode: AvatarType.EMOJI | AvatarType.ICON = AvatarType.ICON;
-  export let context: AvatarPickerContext = AvatarPickerContext.DEFAULT;
-  export let avatarClickCallback: (
-    avatar: IAvatar | CustomUploadedAvatar
-  ) => void = () => {};
-  export let deleteCallback: () => void = () => {};
-  export let closeCallback: () => void = () => {};
-
-  $: isExpanded =
+  let {
+    mode = AvatarType.ICON,
+    context = AvatarPickerContext.DEFAULT,
+    avatarClickCallback = () => {},
+    deleteCallback = () => {},
+    closeCallback = () => {}
+  }: any = $props();
+  const isExpanded = $derived(
     (context === AvatarPickerContext.DEFAULT ||
       context === AvatarPickerContext.CALLOUT_AVATAR) &&
-    !$view.isConstrainedWidth;
+      !$view.isConstrainedWidth
+  );
 
   const isColorNotApplicable = context === AvatarPickerContext.CALLOUT_AVATAR;
 
@@ -67,13 +67,14 @@
    * A copy of the store avatars based on the mode. Whose items wont be modified except for the frequently used and custom as we add them later.
    * @summary To store the avatars based on the mode.
    */
-  let storeAvatars =
+  let storeAvatars = $state(
     mode == AvatarType.ICON
       ? materialSymbolsWithCategories
-      : emojisWithCategories;
+      : emojisWithCategories
+  );
 
-  let storeAvatarsKey = Object.keys(storeAvatars);
-  let storeAvatarsKV = Object.entries(storeAvatars);
+  let storeAvatarsKey = $state(Object.keys(storeAvatars));
+  let storeAvatarsKV = $state(Object.entries(storeAvatars));
 
   /**
    * To add the next set of emojis based on the previously added emojis
@@ -85,21 +86,23 @@
   /**
    * To store the avatars based on the mode. And load the additional avatars when scrolls happens.
    */
-  let lazyLoadedAvatars: any = {};
+  let lazyLoadedAvatars = $state<any>({});
   /**
    * Initially maintains the copy of lazyLoadedAvatars based on the mode. The primary utility of this variable is to diplay the avatars passed to it.
    * @summary Mutable Store Avatar for Search purpose.
    */
-  let avatars: any = {};
-  let avatarsParentContainer: HTMLDivElement;
+  let avatars = $state<any>({});
+  let avatarsParentContainer = $state<HTMLDivElement>();
+  $effect(() => {
+    if (!mode || !avatarsParentContainer) return;
+    avatarsParentContainer.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+  });
+  const avatarKeys = $derived(Object.keys(avatars));
 
-  $: if (mode && avatarsParentContainer)
-    avatarsParentContainer?.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  let avatarKeys: string[] = Object.keys(avatars);
-  $: avatarKeys = Object.keys(avatars);
-
-  let checked: boolean = $userPreferences.avatarPicker.filled;
-  $: $userPreferences.avatarPicker.filled = checked;
+  let checked = $state($userPreferences.avatarPicker.filled);
+  $effect(() => {
+    $userPreferences.avatarPicker.filled = checked;
+  });
   let skinTones = [
     "#FFCC22",
     "#FADCBC",
@@ -108,13 +111,16 @@
     "#8E562E",
     "#553319"
   ];
-  let skinIndex: number = $userPreferences.avatarPicker.skinIndex; //change to user preference store this also in db
-  $: $userPreferences.avatarPicker.skinIndex = skinIndex;
+  let skinIndex = $state($userPreferences.avatarPicker.skinIndex);
+  $effect(() => {
+    $userPreferences.avatarPicker.skinIndex = skinIndex;
+  });
   let colorPalate = ["bw", "#FFC107", "#FF6F61", "#00B7EB", "#63c99c"];
-  let iconColor = $userPreferences.avatarPicker.iconColor;
-  $: $userPreferences.avatarPicker.iconColor = iconColor;
-  let searchRef: HTMLInputElement;
-  let eventDispatcher = createEventDispatcher();
+  let iconColor = $state($userPreferences.avatarPicker.iconColor);
+  $effect(() => {
+    $userPreferences.avatarPicker.iconColor = iconColor;
+  });
+  let searchRef = $state<HTMLInputElement>();
   let shuffleEmojis = $appStoreShuffleEmojis;
 
   function resolvePreviewAvatar(emote: IAvatar[]) {
@@ -234,7 +240,6 @@
         ][0];
     }
     addToUsedList(avatar);
-    // eventDispatcher("close");
   }
 
   /**
@@ -244,17 +249,16 @@
    * @desc AVT - Avatar Category Containers Class
    */
   const handleScroll = debouncer(function () {
+    const container = avatarsParentContainer;
+    if (!container) return;
     const scrollBottom =
-      avatarsParentContainer.scrollTop + avatarsParentContainer.clientHeight;
+      container.scrollTop + container.clientHeight;
 
-    if (
-      scrollBottom + 100 >= avatarsParentContainer.scrollHeight &&
-      !isLoadingMore
-    ) {
+    if (scrollBottom + 100 >= container.scrollHeight && !isLoadingMore) {
       lazyLoadAvatars();
     }
 
-    const scrollTop = avatarsParentContainer.scrollTop;
+    const scrollTop = container.scrollTop;
     const avtContainers = document.querySelectorAll(".AVT");
 
     requestAnimationFrame(() => {
@@ -315,7 +319,9 @@
    * @summary To filter the avatars based on the search input
    */
   function onSearchInputHandler() {
-    let searchValue = searchRef.value.trim();
+    const input = searchRef;
+    if (!input) return;
+    let searchValue = input.value.trim();
     if (searchValue == "") {
       avatars = lazyLoadedAvatars;
       return;
@@ -402,7 +408,6 @@
       );
       $userPreferences.avatarPicker.usedEmojis = usedEmojis;
     }
-    eventDispatcher("avatarClicked", tempEmote);
     avatarClickCallback(tempEmote);
   }
   /**
@@ -411,13 +416,13 @@
    * @param emote - The clicked emoji or icon.
    * */
   function itemClickHandler(emote: any) {
-    if (searchRef.value) {
-      searchRef.value = "";
+    const input = searchRef;
+    if (input?.value) {
+      input.value = "";
       avatars = storeAvatars;
     }
     if (emote.length == 1) addToUsedList(emote[0]);
     else addToUsedList(emote[skinIndex]);
-    eventDispatcher("close");
     closeCallback();
   }
   /**
@@ -482,7 +487,6 @@
     mode = e.detail.toUpperCase();
     lazyLoadedAvatars = {};
     avatars = {};
-    avatarKeys = [];
     previousKVIndex = -1;
     previousIconIndex = 0;
     isLoadingMore = false;
@@ -528,7 +532,7 @@
           size={Size.sm}
           style={PanelSwitcherStyle.TRAIN}
           value={mode == AvatarType.ICON ? "Icon" : "Emoji"}
-          on:switch={handleModeSwitch}
+          onSwitch={handleModeSwitch}
         />
       {/if}
     </div>
@@ -545,26 +549,24 @@
             type="search"
             placeholder="Search"
             bind:this={searchRef}
-            on:input={debouncedSearch}
+            oninput={debouncedSearch}
             id="iconPickerSearch"
             class="w-full h-full p-0.5 pl-2 bg-transparent text-fgs1 text-b2 truncate outline-none rounded-md"
           />
         </div>
       {/if}
-      <Button icon="randomize" tooltip="Randomize" on:click={ShufflePick} />
+      <Button icon="randomize" tooltip="Randomize" onclick={ShufflePick} />
       <Button
         icon="trash"
         tooltip="Delete"
-        on:click={() => {
-          eventDispatcher("delete");
+        onclick={() => {
           deleteCallback();
         }}
       />
       {#if $view.isConstrainedWidth}
         <Button
           icon="cross"
-          on:click={() => {
-            eventDispatcher("close");
+          onclick={() => {
             closeCallback();
           }}
         />
@@ -576,7 +578,7 @@
       type="search"
       placeholder="Search"
       bind:this={searchRef}
-      on:input={debouncedSearch}
+      oninput={debouncedSearch}
       id="iconPickerSearch"
       class="w-full h-10 p-0.5 pl-2 bg-transparent text-fgs1 text-b2 truncate outline-none rounded-md"
     />
@@ -601,7 +603,7 @@
                     "hover:bg-bgs2": activeCategory != "AVT" + index
                   }
                 )}
-                on:click={panelItemClickHandler}
+                onclick={panelItemClickHandler}
               >
                 {key}
               </button>
@@ -613,7 +615,7 @@
           <SwitchInput label={{ label: "Fill" }} bind:checked size={Size.sm} />
         {/if}
         <div class="absolute bottom-3 -right-2 w-9/10">
-          <UploadButton size={Size.sm} on:input={customUploadHandler} />
+          <UploadButton size={Size.sm} oninput={customUploadHandler} />
         </div>
       </div>
     {/if}
@@ -637,7 +639,7 @@
               >
                 <button
                   id={"colPalateButton" + color}
-                  on:click={() => (iconColor = color)}
+                  onclick={() => (iconColor = color)}
                   class={cn("rounded-full w-5 h-5", {
                     "bg-fgs2": color === "bw"
                   })}
@@ -661,7 +663,8 @@
                   : ''}"
               >
                 <button
-                  on:click={() => (skinIndex = index)}
+                  onclick={() => (skinIndex = index)}
+                  aria-label={`Emoji skin tone ${index + 1}`}
                   class="rounded-full w-5 h-5"
                   style="background-color:{skin}"
                 ></button></span
@@ -672,7 +675,7 @@
       {/if}
       <div
         bind:this={avatarsParentContainer}
-        on:scroll={handleScroll}
+        onscroll={handleScroll}
         class="relative w-full h-8/10 overflow-auto mt-3"
       >
         {#each avatarKeys as key, index}
@@ -682,12 +685,12 @@
               <div class="flex flex-wrap">
                 {#each avatars[key] as emote, index (index)}
                   <button
-                    on:click={() => itemClickHandler(emote)}
-                    on:mouseenter={() => {
-                      searchRef.placeholder = emote[0].name;
+                    onclick={() => itemClickHandler(emote)}
+                    onmouseenter={() => {
+                      if (searchRef) searchRef.placeholder = emote[0].name;
                     }}
-                    on:mouseleave={() => {
-                      searchRef.placeholder = "Search";
+                    onmouseleave={() => {
+                      if (searchRef) searchRef.placeholder = "Search";
                     }}
                     class="flex justify-center items-center h-8 w-8 p-1 hover:bg-bgs2"
                   >

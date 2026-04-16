@@ -5,21 +5,26 @@
   import { InputStyle } from "@21n/types/input.type";
   import { AlertType } from "@21n/types/notification.type";
   import type { IActiveCollectionStore } from "@21n/components/collection/collection.store";
-  export let collection: IActiveCollectionStore;
+  let {
+    collection
+  }: {
+    collection: IActiveCollectionStore;
+  } = $props();
 
-  let status:
+  let status = $state<
     | {
         type: AlertType;
         message: string;
       }
-    | undefined = undefined;
+    | undefined
+  >(undefined);
 
-  async function onDescriptionChange(e: CustomEvent<any>) {
+  async function onDescriptionChange(value: string) {
     status = {
       type: AlertType.PROGRESS,
       message: "Updating description..."
     };
-    const result = await collection.modify({ description: e.detail });
+    const result = await collection.modify({ description: value });
     if (!result || result.error) {
       status = {
         type: AlertType.ERROR,
@@ -47,7 +52,7 @@
     style={InputStyle.FILLED}
     bind:value={$collection.description}
     rows={4}
-    on:debouncedChange={onDescriptionChange}
+    debouncedChangeCallback={onDescriptionChange}
   />
   <InlineFeedbackText bind:feedback={status} isRenderEmptyHeight={true} />
 </div>

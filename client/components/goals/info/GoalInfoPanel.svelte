@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import { type IActiveGoalStore } from "@21n/components/goals/goal.store";
   import GoalCollectionsRow from "@21n/components/goals/GoalCollectionsRow.svelte";
   import Markdown from "@21n/components/markdown/Markdown.svelte";
@@ -30,19 +29,24 @@
   import { AlertType, type IInlineStatus } from "@21n/types/notification.type";
   import { appStore } from "@21n/stores/app.store";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
-  export let goal: IActiveGoalStore;
-  export let isConstrainedWidth = false;
-  export let status: IInlineStatus | undefined = undefined;
-  const dispatch = createEventDispatcher();
+
+  let {
+    goal,
+    isConstrainedWidth = false,
+    status = $bindable()
+  }: {
+    goal: IActiveGoalStore;
+    isConstrainedWidth?: boolean;
+    status?: IInlineStatus | undefined;
+  } = $props();
   function handleStatusChange(e: CustomEvent<GoalStatus>) {
     $goal.status = e.detail;
     goal.modify({
       status: e.detail
     });
   }
-  $: isCurrentlyFocusing = activeSession.isCurrentFocusItem(
-    goal.id,
-    $currentFocusItem
+  const isCurrentlyFocusing = $derived(
+    activeSession.isCurrentFocusItem(goal.id, $currentFocusItem)
   );
 
   async function onDescriptionChange(e: CustomEvent) {
@@ -86,7 +90,7 @@
             placeholder: "Type...",
             isPreventFocusOnLoad: true
           }}
-          on:change={onDescriptionChange}
+          onChange={onDescriptionChange}
         />
       </div>
     </div>
@@ -112,7 +116,7 @@
   {#if isCurrentlyFocusing}
     <button
       class="flex items-center w-full justify-between gap-4 border border-brs3 p-3 rounded-md hover:bg-bgs2"
-      on:click={() => {
+      onclick={() => {
         appStore.runAction(PointronAction.FOCUS);
       }}
     >
@@ -125,7 +129,7 @@
       <span class="text-b2 text-fgs3">Status</span>
       <GoalStatusSwitcher
         status={$goal.status}
-        on:change={handleStatusChange}
+        onChange={handleStatusChange}
       />
     </div>
     {#if $goal.status === GoalStatus.COMPLETED}
@@ -145,9 +149,6 @@
       resource={Resource.goal}
       parentBgIndex={isConstrainedWidth ? 1 : 2}
       isVisibleProps={true}
-      on:showAll={() => {
-        dispatch("showAllProperties");
-      }}
     />
   {/if}
   <InlineFeedbackText bind:feedback={status} />

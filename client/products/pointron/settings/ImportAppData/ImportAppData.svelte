@@ -26,7 +26,8 @@
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
   import { parse } from "@21n/shared-utils/json.utils";
 
-  export let importSource: ImportSource = ImportSource.SELF;
+  let { importSource = ImportSource.SELF }: { importSource?: ImportSource } =
+    $props();
   let checked: boolean = false;
   let inputRef: HTMLInputElement;
   let accept = ".json";
@@ -51,7 +52,6 @@
   const filesLimit = 5;
   const maxFileSize = 10000000;
 
-  let isEverythingUploaded: boolean = false;
   let isUploading: boolean = false;
 
   const steps: any = {
@@ -190,7 +190,7 @@
   function keepIncreasingProgress() {
     const interval = setInterval(() => {
       if (tempFileList) {
-        tempFileList = tempFileList?.map((item) => {
+        tempFileList = tempFileList.map((item) => {
           if (item.uploadProgress < 90) {
             return {
               ...item,
@@ -200,15 +200,12 @@
           return item;
         });
 
-        if (isEverythingUploaded) {
+        const isUploadComplete =
+          tempFileList.every(
+            (item) => item.uploadStatus === UploadStatus.UPLOADED
+          ) ?? false;
+        if (isUploadComplete) {
           clearInterval(interval);
-          tempFileList = tempFileList.map((item) => {
-            return {
-              ...item,
-              uploadStatus: UploadStatus.UPLOADED,
-              uploadProgress: 100
-            };
-          });
         }
       }
     }, 500);
@@ -263,7 +260,13 @@
               //   fileName,
               //   fileSize
               // );
-              isEverythingUploaded = true;
+              tempFileList = tempFileList
+                ? tempFileList.map((item) => ({
+                    ...item,
+                    uploadStatus: UploadStatus.UPLOADED,
+                    uploadProgress: 100
+                  }))
+                : null;
               isUploading = false;
               $lastImportTime = Date.now();
             }
@@ -288,27 +291,23 @@
             region: region,
             isArchiveAll: checked
           };
-          isEverythingUploaded = true;
+          response = await performApiCall("pointron/import", "POST", body);
+          tempFileList = tempFileList
+            ? tempFileList.map((item) => ({
+                ...item,
+                uploadStatus: UploadStatus.UPLOADED,
+                uploadProgress: 100
+              }))
+            : null;
           isUploading = false;
           setTimeout(() => {
             $lastImportTime = Date.now();
           }, 5000);
-          // let jsonBody = JSON.stringify(body);
-          response = await performApiCall("pointron/import", "POST", body);
-          console.log({ response });
-          // response = await fetch("http://127.0.0.1:5000/upload", {
-          //   method: "POST",
-          //   headers: {
-          //     "Content-Type": "application/json"
-          //   },
-          //   body: jsonBody
-          // });
         } catch (e: any) {
+          isUploading = false;
           toasts.error("Something went wrong during Import", e);
         }
       }
-
-      // onClose();
     } else {
       toasts.error("Please upload a file");
     }
@@ -345,20 +344,21 @@
     return true;
   }
 
-  function handleLocallyUploadedFileChange(
+  function resolveTempFileList(
     locallyUploadedFiles?: FileList | null
   ) {
+    let nextTempFileList = tempFileList;
     if (locallyUploadedFiles) {
       if (!isFileCountInLimit(locallyUploadedFiles)) {
-        tempFileList = null;
+        nextTempFileList = null;
       } else {
         for (let i = 0; i < locallyUploadedFiles.length; i++) {
           const file = locallyUploadedFiles[i];
           if (!isFileValid(file)) {
-            tempFileList = null;
+            nextTempFileList = null;
             break;
           } else {
-            tempFileList = Array.from(locallyUploadedFiles).map((file) => {
+            nextTempFileList = Array.from(locallyUploadedFiles).map((file) => {
               return {
                 label: file.name,
                 size: file.size,
@@ -370,8 +370,10 @@
           }
         }
       }
+    } else {
+      nextTempFileList = null;
     }
-    return tempFileList;
+    return nextTempFileList;
   }
 
   function handleRemove(index: number) {
@@ -383,20 +385,17 @@
     };
   }
 
-  $: {
-    if (tempFileList && tempFileList.length > 0) {
-      isEverythingUploaded =
-        tempFileList?.every(
-          (item) => item.uploadStatus === UploadStatus.UPLOADED
-        ) ?? false;
-    } else {
-      isEverythingUploaded = false;
-    }
-  }
+  $effect(() => {
+    tempFileList = resolveTempFileList(locallyUploadedFiles);
+  });
 
-  $: {
-    tempFileList = handleLocallyUploadedFileChange(locallyUploadedFiles);
-  }
+  let isEverythingUploaded = $derived.by(() => {
+    const files = tempFileList ?? [];
+    return (
+      files.length > 0 &&
+      files.every((item) => item.uploadStatus === UploadStatus.UPLOADED)
+    );
+  });
 
   function resolveTitle(importSource: ImportSource) {
     if (importSource === ImportSource.SELF) return "Import from Pointron";
@@ -424,12 +423,12 @@
   {#if $view.display === Display.MO}
     <div class="header flex justify-between">
       {#if activeStepIndex !== 0}
-        <Icon size={Size.sm} on:click={onBack} icon={"chevron-left"} />
+        <Icon size={Size.sm} onclick={onBack} icon={"chevron-left"} />
       {/if}
       <div class="ml-auto">
         <Button
           size={$view.isPortrait ? Size.sm : Size.md}
-          on:click={onClose}
+          onclick={onClose}
           icon={"cross"}
         />
       </div>
@@ -535,7 +534,7 @@
           />
           <Button
             size={Size.sm}
-            on:click={() => {
+            onclick={() => {
               inputRef.click();
             }}
           >
@@ -553,7 +552,7 @@
               size={getSizeString(file.size)}
               uploadStatus={file.uploadStatus}
               uploadProgress={file.uploadProgress}
-              on:remove={handleRemove(index)}
+              onRemove={handleRemove(index)}
             />
           {/each}
         </div>
@@ -567,7 +566,7 @@
           class={`navigation-dot w-2 h-2 rounded-full  ${
             activeStepIndex === index ? "bg-aps1" : "bg-fgs2"
           }`}
-          on:click={() => {
+          onclick={() => {
             activeStepIndex = index;
           }}
         />
@@ -590,30 +589,30 @@
     <div class="flex mo:px-3 mo:py-2 p-4">
       {#if $view.isPortrait}
         {#if activeStepIndex !== steps[importSource]?.length - 1}
-          <Button size={Size.sm} on:click={onJumpToUpload}
+          <Button size={Size.sm} onclick={onJumpToUpload}
             >Jump to upload</Button
           >
         {:else}
-          <Button size={Size.sm} on:click={onClose}>Cancel</Button>
+          <Button size={Size.sm} onclick={onClose}>Cancel</Button>
         {/if}
       {:else if activeStepIndex !== 0}
-        <Button size={Size.sm} on:click={onBack}>Back</Button>
+        <Button size={Size.sm} onclick={onBack}>Back</Button>
       {/if}
       <div class="ml-auto flex gap-3">
         {#if !$view.isPortrait}
           {#if activeStepIndex !== steps[importSource]?.length - 1}
-            <Button size={Size.sm} on:click={onJumpToUpload}
+            <Button size={Size.sm} onclick={onJumpToUpload}
               >Jump to upload</Button
             >
           {:else if activeStepIndex === steps[importSource]?.length - 1}
-            <Button size={Size.sm} on:click={onClose}>Cancel</Button>
+            <Button size={Size.sm} onclick={onClose}>Cancel</Button>
           {/if}
         {/if}
 
         {#if activeStepIndex !== steps[importSource]?.length - 1}
           <Button
             size={Size.sm}
-            on:click={onNext}
+            onclick={onNext}
             type={ButtonVariant.PRIMARY}
             style={ButtonStyle.OUTLINED}>Next</Button
           >
@@ -621,11 +620,11 @@
           <Button
             isLoading={isUploading}
             size={Size.sm}
-            on:click={onUpload}
+            onclick={onUpload}
             type={ButtonVariant.PRIMARY}>Import</Button
           >
         {:else if activeStepIndex === steps[importSource]?.length - 1 && isEverythingUploaded}
-          <Button size={Size.sm} on:click={onClose}>Done</Button>
+          <Button size={Size.sm} onclick={onClose}>Done</Button>
         {/if}
       </div>
     </div>

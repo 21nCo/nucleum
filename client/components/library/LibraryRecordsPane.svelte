@@ -62,7 +62,6 @@
     resourceCacheKey
   } from "@21n/components/flux/resourceStores/resource.utils";
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
-  import { createEventDispatcher } from "svelte";
   import TaskLibrary from "@21n/components/tasks/TaskLibrary.svelte";
   import LibrarySubTypeSwitcher from "@21n/components/library/LibrarySubTypeSwitcher.svelte";
   import type { SubType } from "@21n/components/library/library.type";
@@ -74,51 +73,59 @@
   import { cache } from "@21n/layout/layers/cache/cache.store";
   import { CacheKey } from "@21n/layout/layers/cache/cache.type";
   import { dragSelection } from "@21n/actions/dragSelection.action";
-  const dispatch = createEventDispatcher();
 
   enum CacheSubKey {
     DATA = "data",
     STARRED = "starred"
   }
 
-  export let resource: Resource;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.LIBRARY;
-  export let accessPointState: ResourceAccessPointState =
-    ResourceAccessPointState.DEFAULT;
-  export let arrangement: Arrangement | null = null;
-  export let isConstrainedWidth: boolean = $view.isConstrainedWidth;
+  let {
+    resource,
+    accessPoint = ResourceAccessPoint.LIBRARY,
+    accessPointState = ResourceAccessPointState.DEFAULT,
+    arrangement: arrangementProp = null,
+    isConstrainedWidth = $view.isConstrainedWidth
+  }: {
+    resource: Resource;
+    accessPoint?: ResourceAccessPoint;
+    accessPointState?: ResourceAccessPointState;
+    arrangement?: Arrangement | null;
+    isConstrainedWidth?: boolean;
+  } = $props();
 
-  let searchQuery: string = "";
-  let isStarFilterSelected: boolean = false;
-  let isArchivedFilterSelected: boolean = false;
-  let data: any[] = [];
-  let starredData: any[] = [];
-  let searchStore = new SearchStore();
-  let QAsearchStore = new SearchStore();
-  // QAsearchStore.searchType = SearchType.SEMANTIC;
-  let selectedSubType: SubType = "all";
-  let isRefreshing: boolean = true;
-  let totalCountAfterFilter: number = 0;
-  let isRefreshingTotalCount: boolean = false;
+  let arrangement = $state<Arrangement | null>(arrangementProp);
+  let searchQuery = $state("");
+  let isStarFilterSelected = $state(false);
+  let isArchivedFilterSelected = $state(false);
+  let data = $state<any[]>([]);
+  let starredData = $state<any[]>([]);
+  const searchStore = new SearchStore();
+  const QAsearchStore = new SearchStore();
+  let selectedSubType = $state<SubType>("all");
+  let isRefreshing = $state(true);
+  let totalCountAfterFilter = $state(0);
+  let isRefreshingTotalCount = $state(false);
   let refreshResetTimeout: any;
   let searchInputRef: InlineSearchBar;
-  let isRefineShown = false;
+  let isRefineShown = $state(false);
   let subTypeSwitcherRef: LibrarySubTypeSwitcher;
   let abortController: AbortController | null = null;
-  let isInSelectionMode = false;
+  let isInSelectionMode = $state(false);
   let bulkEditChangeUnsub: (() => void) | undefined;
 
-  $: multiSelectContext = {
+  let multiSelectContext = $derived({
     resource,
     accessPoint
-  };
+  });
 
-  $: if (bulkEditStore.matchesContext(multiSelectContext)) {
-    resolveBulkEditorInstance();
-  }
+  $effect(() => {
+    if (bulkEditStore.matchesContext(multiSelectContext)) {
+      resolveBulkEditorInstance();
+    }
+  });
 
-  $: isCustom = isCustomLibrary(resource);
-  $: hasChildren = [Resource.node, Resource.goal].includes(resource);
+  let isCustom = $derived(isCustomLibrary(resource));
+  let hasChildren = $derived([Resource.node, Resource.goal].includes(resource));
 
   let pageSub: any;
   onMount(async () => {
@@ -158,7 +165,6 @@
 
   onDestroy(() => {
     if (pageSub) pageSub();
-    // Abort any ongoing operations when component unmounts
     if (abortController) {
       abortController.abort();
       abortController = null;
@@ -213,7 +219,6 @@
   async function refresh(isPagination?: boolean) {
     if (isCustom) return;
 
-    // Abort any previous operation and create new controller
     if (abortController) {
       abortController.abort();
     }
@@ -242,12 +247,6 @@
       );
       let orderBy: IResourceSelectOrderBy | undefined;
       let semanticSearchTopK: number | undefined;
-      // if (searchStore.searchType == SearchType.SEMANTIC) {
-      //   orderBy = {
-      //     dist: "desc",
-      //     createdAt: "desc"
-      //   };
-      // }
       subTypeSwitcherRef?.refresh();
       const isDefaultLoad = resolveIfDefaultLoad();
       if (!isPagination && isDefaultLoad) {
@@ -303,7 +302,6 @@
       console.timeEnd("LibraryRecordsPane - refresh");
     } catch (e) {
       isRefreshing = false;
-      // Don't log error if it was just an abort
       if (e instanceof Error && e.message === "Operation aborted") {
         logger.log({ at: "Library - refresh - aborted", e });
       } else {
@@ -361,7 +359,6 @@
 
   async function _refreshFilteredRecordsTotalCount(filters: any) {
     try {
-      // Check if operation was aborted before starting
       if (abortController?.signal?.aborted) {
         return;
       }
@@ -549,7 +546,7 @@
         bind:this={searchInputRef}
         bind:query={searchQuery}
         padding="px-2"
-        on:search={() => refresh()}
+        onSearch={() => refresh()}
         placeholder={"Search " + resource + "s"}
         testId={"search-" + resource + "s"}
         style={InputStyle.FILLED}
@@ -606,7 +603,7 @@
           isDisableSearch={true}
           size={Size.sm}
           value={arrangement ?? undefined}
-          on:select={(e) => {
+          onSelect={(e) => {
             if (!e?.detail) return;
             const newArrangement = e.detail;
             uiState.setResourceState(
@@ -623,25 +620,20 @@
           bind:checked={isArchivedFilterSelected}
           isExpanded={true}
           label={{ label: "Show archived items only" }}
-          on:change={() => refresh()}
+          onChange={() => refresh()}
         />
       </div>
     {/if}
   {:else}
-    <LibrarySearchBox
-      {selectedSubType}
-      {searchStore}
-      {resource}
-      bind:searchQuery
-      on:refresh={debouncedSearch}
-      on:semanticSearch={(e) => {
-        // if (e.detail) {
-        //   searchStore.searchType = SearchType.SEMANTIC;
-        // } else {
-        //   searchStore.searchType = SearchType.FULL_TEXT;
-        // }
-        refresh();
-      }}
+      <LibrarySearchBox
+        {selectedSubType}
+        {searchStore}
+        {resource}
+        bind:searchQuery
+        onRefresh={debouncedSearch}
+        onSemanticSearch={() => {
+          refresh();
+        }}
     />
     <LibrarySubTypeSwitcher
       {resource}
@@ -755,7 +747,7 @@
           : resource !== Resource.node
             ? "Create new " + resource
             : undefined}
-        on:click={() => {
+        onclick={() => {
           if (resource === Resource.node) {
             appStore.openLink(
               $appStore.appData?.urls?.chromeExtension ?? "https://memotron.app"
@@ -774,8 +766,18 @@
 <ComponentBaseLayer
   syncDownOnMount={true}
   subscribeToResource={new Set([resource])}
-  on:syncDown={() => {
+  onSyncDown={() => {
     refresh();
   }}
-  on:change={onResourceMutation}
+  onChange={(detail) => {
+    if ("key" in detail || !detail.resource || !detail.params) return;
+    onResourceMutation(
+      new CustomEvent("change", {
+        detail: {
+          resource: detail.resource,
+          params: detail.params
+        }
+      })
+    );
+  }}
 />

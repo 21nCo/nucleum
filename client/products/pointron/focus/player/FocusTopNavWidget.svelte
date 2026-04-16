@@ -24,7 +24,7 @@
           $activeSession.state === SessionState.BREAK_RUNNING
       }
     )}
-    on:click={() => {
+    onclick={() => {
       appStore.runAction(action);
     }}
     use:tooltip={{

@@ -3,7 +3,11 @@
   import type { ILandingProductUrls } from "@21n/landing/shared/landing.type";
   import { landing } from "@21n/landing/shared/store/shared.store";
 
-  export let type: "resources" | "compare";
+  let {
+    type,
+  }: {
+    type: "resources" | "compare";
+  } = $props();
   let urls: ILandingProductUrls = $landing.urls;
   const resources = [
     {
@@ -41,7 +45,7 @@
     {#each resources as item}
       <button
         class="flex flex-col justify-center items-center p-2 gap-1 bg-bgs1 rounded-md hover:bg-bgs2 border border-brs3"
-        on:click={() => landing.openLink(item.href ?? "")}
+        onclick={() => landing.openLink(item.href ?? "")}
       >
         <SvgIcon icon={item.icon} />
         <div class="text-b2 text-fgs2">{item.label}</div>

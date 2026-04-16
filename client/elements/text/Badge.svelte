@@ -1,15 +1,24 @@
 <script lang="ts">
   import { Size } from "@21n/types/size.enum";
   import { abg, bg, cn } from "@21n/utils/ui.utils";
-  export let size: Size = Size.md;
-  export let text: string | number;
-  export let parentBgIndex: number = 1;
-  export let isApplyCustomColor = false;
-  export let isAccentColor = false;
+  let {
+    size = Size.md,
+    text,
+    parentBgIndex = 1,
+    isApplyCustomColor = false,
+    isAccentColor = false
+  }: {
+    size?: Size;
+    text: string | number;
+    parentBgIndex?: number;
+    isApplyCustomColor?: boolean;
+    isAccentColor?: boolean;
+  } = $props();
 
-  $: isGeneric =
+  const isGeneric = $derived(
     typeof text === "string" &&
-    !["new", "soon", "planned", "beta", "trial"].includes(text.toLowerCase());
+    !["new", "soon", "planned", "beta", "trial"].includes(text.toLowerCase())
+  );
 </script>
 
 {#if typeof text === "number"}

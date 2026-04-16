@@ -3,9 +3,15 @@
   import AppNameWithVersion from "@21n/components/settings/about/AppNameWithVersion.svelte";
   import BlankLabsFooter from "@21n/components/settings/about/BlankLabsFooter.svelte";
   import SystemStatus from "@21n/components/settings/about/SystemStatus.svelte";
-  export let isHideAppVersion = false;
-  export let isComingSoon: boolean = false;
-  export let isShowSystemStatus: boolean = false;
+  let {
+    isHideAppVersion = false,
+    isComingSoon = false,
+    isShowSystemStatus = false
+  }: {
+    isHideAppVersion?: boolean;
+    isComingSoon?: boolean;
+    isShowSystemStatus?: boolean;
+  } = $props();
 </script>
 
 <div

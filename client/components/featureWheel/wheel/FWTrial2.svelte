@@ -5,11 +5,13 @@
     type IFeatureWheelGroup,
     type IFeatureWheelSpoke
   } from "@21n/types/featureWheel.type";
-  export let mode: FeatureWheelMode = FeatureWheelMode.DEFAULT;
-  let categoryColoringStyle: "bg" | "spoke" =
-    mode === FeatureWheelMode.PROGRESS ? "spoke" : "bg";
+  let { mode = FeatureWheelMode.DEFAULT }: { mode?: FeatureWheelMode } =
+    $props();
+  const categoryColoringStyle = $derived(
+    mode === FeatureWheelMode.PROGRESS ? "spoke" : "bg"
+  );
   let radius = 270;
-  let spokesTwo: IFeatureWheelGroup[] = [
+  const baseSpokesTwo: IFeatureWheelGroup[] = [
     {
       label: "Capture",
       color: "",
@@ -48,15 +50,15 @@
     contemporaries: [],
     isDivider: true
   };
-  if (categoryColoringStyle === "bg") {
-    spokesTwo = spokesTwo.map((group) => {
-      group.spokes = [emptyDividerSpoke, ...group.spokes];
-      return group;
-    });
-  }
-  let groupCount = spokesTwo.length;
-  let angle = (2 * Math.PI) / groupCount;
-  let spokeAngle = angle / 3;
+  const spokesTwo = $derived.by(() =>
+    categoryColoringStyle === "bg"
+      ? baseSpokesTwo.map((group) => ({
+          ...group,
+          spokes: [emptyDividerSpoke, ...group.spokes]
+        }))
+      : baseSpokesTwo
+  );
+  const angle = $derived((2 * Math.PI) / spokesTwo.length);
 </script>
 
 <svg class="wheel" viewBox="-300 -300 600 600">

@@ -118,14 +118,13 @@
         label="Backup"
         icon="download"
         type={ButtonVariant.PRIMARY}
-        on:click={handleBackup}
+        onclick={handleBackup}
         isLoading={isBackupInProgress}
       />
       <div use:fileDrop={{ accept: "application/json", onDrop: handleDrop }}>
         <Button
           label="Restore"
           icon="restore"
-          on:click
           isLoading={isRestoreInProgress}
         />
       </div>
@@ -148,7 +147,7 @@
         <Button
           label="Import from other apps"
           icon="download"
-          on:click={() => {
+          onclick={() => {
             appStore.runAction(Action.IMPORT_FROM_OTHER_APPS);
           }}
         />
@@ -162,19 +161,19 @@
         label="Resync data"
         icon="reload"
         isLoading={isResyncInProgress}
-        on:click={handleResync}
+        onclick={handleResync}
       />
       {#if !$context.isEmbed}
         <Button
           label="Reload"
           icon="reload"
-          on:click={() => window.location.reload()}
+          onclick={() => window.location.reload()}
         />
       {/if}
       <Button
         label="Clear local cache"
         icon="trash"
-        on:click={handleClear}
+        onclick={handleClear}
         type={ButtonVariant.DANGER}
       />
     </div>

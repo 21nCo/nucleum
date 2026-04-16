@@ -3,7 +3,6 @@
   import { cn } from "@21n/utils/ui.utils";
   import { truncateString } from "@21n/shared-utils/text.utils";
   import Icon from "@21n/elements/Icon.svelte";
-  import { createEventDispatcher } from "svelte";
   import { Size } from "@21n/types/size.enum";
   import Badge from "@21n/elements/text/Badge.svelte";
   import type { IAvatar } from "@21n/types/avatar.type";
@@ -13,28 +12,47 @@
   import context from "@21n/stores/context.store";
   import type { IKeyboardShortcut } from "@21n/components/shortcuts/shortcut.type";
   import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
-  const dispatch = createEventDispatcher();
-  export let label: string;
-  export let parentBgIndex: number = 1;
-  export let icon: string | IAvatar | undefined = undefined;
-  export let size: Size.sm | Size.md = Size.md;
-  export let isRemovable = true;
-  export let isActive = false;
-  export let count: number | undefined = undefined;
-  export let shortcut: string | IKeyboardShortcut | undefined = undefined;
-  export let id: IRecordId | undefined = undefined;
-  export let isShowExpandFeedbackOnActive = false;
-  export let expandFeedbackPosition:
-    | Placement.BottomCenter
+
+  let {
+    label,
+    parentBgIndex = 1,
+    icon = undefined,
+    size = Size.md,
+    isRemovable = true,
+    isActive = false,
+    count = undefined,
+    shortcut = undefined,
+    id = undefined,
+    isShowExpandFeedbackOnActive = false,
+    expandFeedbackPosition = Placement.BottomCenter,
+    removeStyle = "inline",
+    onclick = undefined,
+    onRemove = undefined
+  }: {
+    label: string;
+    parentBgIndex?: number;
+    icon?: string | IAvatar | undefined;
+    size?: Size.sm | Size.md;
+    isRemovable?: boolean;
+    isActive?: boolean;
+    count?: number | undefined;
+    shortcut?: string | IKeyboardShortcut | undefined;
+    id?: IRecordId | undefined;
+    isShowExpandFeedbackOnActive?: boolean;
+    expandFeedbackPosition?: | Placement.BottomCenter
     | Placement.BottomLeft
-    | Placement.BottomRight = Placement.BottomCenter;
-  export let removeStyle: "overlay" | "inline" | "always-show" = "inline";
+    | Placement.BottomRight;
+    removeStyle?: "overlay" | "inline" | "always-show";
+    onclick?: ((event: MouseEvent) => void) | undefined;
+    onRemove?: (() => void) | undefined;
+  } = $props();
   let isHovering = false;
-  $: isRemoveIconRenderedInline =
+  const isRemoveIconRenderedInline = $derived(
     isRemovable &&
     ($context.isTouchDevice ||
       removeStyle === "always-show" ||
-      (removeStyle === "inline" && isHovering));
+      (removeStyle === "inline" && isHovering))
+  );
 </script>
 
 <div class="overflow-hidden">
@@ -50,7 +68,9 @@
       }
     )}
     id={id?.toString()}
-    on:click
+    onclick={(event) => {
+      onclick?.(event);
+    }}
     use:hoverable={{
       onHover: (value) => (isHovering = value)
     }}
@@ -78,8 +98,8 @@
           "active:bg-bgs2 notouch:hover:bg-bgs2":
             removeStyle === "inline" || removeStyle === "always-show"
         })}
-        on:click={(e) => {
-          dispatch("remove");
+        onclick={(e) => {
+          onRemove?.();
           e.stopPropagation();
         }}
       >

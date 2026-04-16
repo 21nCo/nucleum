@@ -2,18 +2,31 @@
   import { Size } from "@21n/types/size.enum";
   import { bg, cn } from "@21n/utils/ui.utils";
   import Icon from "@21n/elements/Icon.svelte";
-  import { createEventDispatcher } from "svelte";
   import Badge from "@21n/elements/text/Badge.svelte";
   import type { IContextMenuItem } from "@21n/types/select.type";
   import { hoverable } from "@21n/actions/hover.action";
-  const dispatch = createEventDispatcher();
-  export let item: IContextMenuItem;
-  export let on: boolean = item.initialValue ?? false;
-  export let size: Size.sm | Size.md | Size.lg = Size.md;
-  export let parentBgIndex: number = 1;
-  export let isPreventFillOnActive: boolean = false;
-  export let count: number | undefined = undefined;
-  let isHovering: boolean = false;
+  let {
+    item,
+    on = $bindable(false),
+    size = Size.md,
+    parentBgIndex = 1,
+    isPreventFillOnActive = false,
+    count = undefined,
+    onChange = undefined
+  }: {
+    item: IContextMenuItem;
+    on?: boolean;
+    size?: Size.sm | Size.md | Size.lg;
+    parentBgIndex?: number;
+    isPreventFillOnActive?: boolean;
+    count?: number | undefined;
+    onChange?: ((event: CustomEvent<boolean>) => void) | undefined;
+  } = $props();
+  let isHovering = $state(false);
+
+  $effect(() => {
+    on = item.initialValue ?? false;
+  });
 
   function resolveIcon(icon: IContextMenuItem["icon"]) {
     return typeof icon === "string" ? icon : undefined;
@@ -21,12 +34,13 @@
 
   function onclick() {
     on = !on;
-    dispatch("change", on);
+    const changeEvent = new CustomEvent<boolean>("change", { detail: on });
+    onChange?.(changeEvent);
   }
 </script>
 
 <button
-  on:click={onclick}
+  onclick={onclick}
   use:hoverable={{
     onHover: (e) => {
       isHovering = e;
@@ -46,7 +60,7 @@
     }
   )}
 >
-<Icon
+  <Icon
     icon={resolveIcon(on ? item.activeIcon ?? item.icon : item.icon)}
     size={size === Size.lg ? Size.md : size}
     isFilled={on && !isPreventFillOnActive}
@@ -54,7 +68,6 @@
       "fill-aps1": on,
       "stroke-fgs1": !on
     })}
-    on:click
   />
   <span class="text-b3">{on ? item.activeLabel : item.label}</span>
   {#if count}

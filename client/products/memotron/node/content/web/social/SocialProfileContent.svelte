@@ -11,15 +11,13 @@
   import type { INode } from "@21n/products/memotron/node/node.type";
   import { resolveNodeIcon } from "@21n/products/memotron/node/node.utils";
 
-  export let node: INode;
+  let { node }: { node: INode } = $props();
 
-  let platformDisplay: string = "";
-
-  $: {
-    if (socialProfileNodeTypeList.has(node.contentType)) {
-      setPlatformInfo(node.contentType);
-    }
-  }
+  let platformDisplay = $derived(
+    socialProfileNodeTypeList.has(node.contentType)
+      ? resolvePlatformInfo(node.contentType)
+      : "Social"
+  );
 
   function isObject(value: unknown): value is Record<string, unknown> {
     return !!value && typeof value === "object";
@@ -38,7 +36,7 @@
     return isObject(metadata);
   }
 
-  function setPlatformInfo(contentType: NodeType) {
+  function resolvePlatformInfo(contentType: NodeType) {
     const platformMap: Partial<Record<NodeType, string>> = {
       [NodeType.TWITTER_PROFILE]: "X",
       [NodeType.MASTODON_PROFILE]: "Mastodon",
@@ -50,7 +48,7 @@
       [NodeType.REDDIT_PROFILE]: "Reddit"
     };
 
-    platformDisplay = platformMap[contentType] || "Social";
+    return platformMap[contentType] || "Social";
   }
 
   function resolveUsername() {
@@ -211,10 +209,18 @@
 </script>
 
 <div class="flex justify-center items-center h-full w-full">
-  <button
+  <div
     class="flex flex-col items-center gap-6 p-8 border border-fgs4 rounded-md hover:bg-bgs2 max-w-md"
-    on:click={() => {
+    role="button"
+    tabindex="0"
+    onclick={() => {
       if (node.url) appStore.openLink(node.url);
+    }}
+    onkeydown={(event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        if (node.url) appStore.openLink(node.url);
+      }
     }}
   >
     {#if getBannerImageUrl()}
@@ -263,7 +269,8 @@
       <button
         type="button"
         class="text-center text-b4 text-blue-500 hover:underline"
-        on:click|stopPropagation={() => {
+        onclick={(event) => {
+          event.stopPropagation();
           const websiteUrl = getWebsiteUrl();
           if (websiteUrl) appStore.openLink(websiteUrl);
         }}
@@ -295,5 +302,5 @@
         {/if}
       </div>
     {/if}
-  </button>
+  </div>
 </div>

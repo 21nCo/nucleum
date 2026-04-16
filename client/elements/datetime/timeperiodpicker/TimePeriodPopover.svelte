@@ -5,7 +5,6 @@
     TimePeriodType,
     type RelativeTimePeriodValue
   } from "@21n/types/time.type";
-  import { createEventDispatcher, onMount } from "svelte";
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
   import { Size } from "@21n/types/size.enum";
   import RelativeTimeRangeSelector from "@21n/elements/datetime/timeperiodpicker/RelativeTimeRangeSelector.svelte";
@@ -15,27 +14,26 @@
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import AbsoluteTimeRangePopoverV2 from "@21n/elements/datetime/absolute/AbsoluteTimeRangePopoverV2.svelte";
   import { Orientation } from "@21n/types/direction.enum";
-  const dispatch = createEventDispatcher();
-  export let period: TimePeriod;
-  export let onChange: (period: TimePeriod) => void;
+  let { period, onChange }: any = $props();
   type AbsoluteTimePeriodValue = Extract<
     TimePeriod["value"],
     { type: TimePeriodType.ABSOLUTE }
   >;
 
-  let selectedPeriodType =
-    period.value.type === TimePeriodType.ABSOLUTE ? "Absolute" : "Relative";
-  let previouslySelectedRelative: TimePeriod<RelativeTimePeriodValue> = {
+  let selectedPeriodType = $state(
+    period.value.type === TimePeriodType.ABSOLUTE ? "Absolute" : "Relative"
+  );
+  let previouslySelectedRelative = $state<TimePeriod<RelativeTimePeriodValue>>({
     scale: TimeScale.DAYS,
     value: { type: TimePeriodType.RELATIVE, param: 0 }
-  };
-  let previouslySelectedAbsolute: TimePeriod<AbsoluteTimePeriodValue> = {
+  });
+  let previouslySelectedAbsolute = $state<TimePeriod<AbsoluteTimePeriodValue>>({
     scale: TimeScale.DAYS,
     value: {
       type: TimePeriodType.ABSOLUTE,
       param: { start: new Date(), end: new Date() }
     }
-  };
+  });
 
   function isRelativePeriodValue(
     value: TimePeriod["value"]
@@ -81,30 +79,47 @@
       value: { type: period.value.type, param: period.value.param }
     };
   }
-  let scales = $userPreferences.timeScales ?? [
+  let scales = $state($userPreferences.timeScales ?? [
     TimeScale.DAYS,
     TimeScale.MONTHS,
     TimeScale.YEARS
-  ];
-  let selectedScale = period.scale;
+  ]);
+  let selectedScale = $state(period.scale);
 
   function dispatchChange(period: TimePeriod) {
     if (onChange) onChange(period);
-    dispatch("change", period);
+  }
+
+  function handleAbsoluteRangeChange(val: { start: string; end: string }) {
+    period = {
+      scale: selectedScale,
+      value: {
+        param: {
+          start: new Date(val.start),
+          end: new Date(val.end)
+        },
+        type: TimePeriodType.ABSOLUTE
+      }
+    };
+    previouslySelectedAbsolute = {
+      scale: selectedScale,
+      value: resolveAbsoluteValue()
+    };
+    dispatchChange(period);
   }
 </script>
 
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <button
   class="flex flex-col items-center gap-4 bg-bgs1 p-4 cw:w-full w-96 cw:h-[30rem] h-96 min-h-fit"
-  on:click|stopPropagation
+  onclick={(event) => event.stopPropagation()}
 >
   <PanelSwitcher
     items={["Relative", "Absolute"]}
     value={selectedPeriodType}
     style={PanelSwitcherStyle.TRAIN}
     size={Size.sm}
-    on:switch={(event) => {
+    onSwitch={(event) => {
       period =
         event.detail === "Relative"
           ? {
@@ -135,7 +150,7 @@
         value: scale
       }))}
       selected={selectedScale}
-      on:select={(event) => {
+      onSelect={(event) => {
         const selected = event.detail;
         period.scale = selected;
         if (selectedPeriodType === "Relative") {
@@ -154,7 +169,7 @@
       <RelativeTimeRangeSelector
         scale={selectedScale}
         value={resolveRelativeValue()}
-        on:change={(event) => {
+        onChange={(event: CustomEvent<any>) => {
           if (selectedPeriodType === "Relative") {
             previouslySelectedRelative = {
               scale: selectedScale,
@@ -176,23 +191,7 @@
         initialEndDate={resolveAbsoluteValue().param.end}
         isInline={true}
         onDateChange={() => undefined}
-        onRangeChange={(val) => {
-          period = {
-            scale: selectedScale,
-            value: {
-              param: {
-                start: new Date(val.start),
-                end: new Date(val.end)
-              },
-              type: TimePeriodType.ABSOLUTE
-            }
-          };
-          previouslySelectedAbsolute = {
-            scale: selectedScale,
-            value: resolveAbsoluteValue()
-          };
-          dispatchChange(period);
-        }}
+        onRangeChange={handleAbsoluteRangeChange}
       />
     {/if}
   {/key}

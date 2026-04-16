@@ -8,8 +8,13 @@
   import { CacheKey } from "@21n/layout/layers/cache/cache.type";
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
 
-  export let item: ICollectionThumb;
-  export let isShowLabel: boolean = false;
+  let {
+    item,
+    isShowLabel = false
+  }: {
+    item: ICollectionThumb;
+    isShowLabel?: boolean;
+  } = $props();
   let nodeCount: number | undefined = undefined;
   const cacheKey = resourceCacheKey(Resource.collection, CacheKey.ITEM_COUNTS);
   onMount(async () => {
@@ -33,5 +38,5 @@
 
 <ComponentBaseLayer
   subscribeToCacheUpdate={[cacheKey]}
-  on:change={refreshNodeCount}
+  onChange={refreshNodeCount}
 />

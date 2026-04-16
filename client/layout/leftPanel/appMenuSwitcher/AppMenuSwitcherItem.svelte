@@ -1,7 +1,9 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { page } from "$app/stores";
   import { LayoutContext } from "@21n/types/layout.type";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import view from "@21n/stores/view.store";
   import type { IAction } from "@21n/types/action.type";
@@ -24,19 +26,27 @@
   import { isHideCreateAction } from "@21n/components/library/library.utils";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import ButtonTooltip from "@21n/elements/button/ButtonTooltip.svelte";
-  const dispatch = createEventDispatcher();
-  export let item: IAction;
-  export let layoutContext: LayoutContext = LayoutContext.DEFAULT;
-  export let parentBackgroundIndex: number;
+  let {
+    item,
+    layoutContext = LayoutContext.DEFAULT,
+    parentBackgroundIndex,
+    onClick
+  }: {
+    item: IAction;
+    layoutContext?: LayoutContext;
+    parentBackgroundIndex: number;
+    onClick?: () => void;
+  } = $props();
   const dev_mixedPanel = false;
-  $: isShowHotKeyHint =
+  let hideMenuLabels = $state(false);
+  let isShowHotKeyHint = $derived(
     $uiStateDerived?.isShowHotKeyHints &&
-    (layoutContext === LayoutContext.DEFAULT || hideMenuLabels);
-  $: isActive =
+      (layoutContext === LayoutContext.DEFAULT || hideMenuLabels)
+  );
+  let isActive = $derived(
     $page.params.route?.includes(item.path ?? item.action) ||
-    $page.route.id?.includes(item.path ?? item.action);
-
-  let hideMenuLabels = false;
+      $page.route.id?.includes(item.path ?? item.action)
+  );
 
   onMount(() => {
     uiStateDerived.refreshShortcutHintsState();
@@ -57,25 +67,28 @@
       }) || false;
   }
 
-  $: isShowLabel =
+  let isShowLabel = $derived(
     layoutContext === LayoutContext.PORTRAIT ||
     layoutContext === LayoutContext.DEFAULT ||
-    (layoutContext === LayoutContext.THIN_WITH_LABEL && !hideMenuLabels);
-  let buttonRef: HTMLElement;
+      (layoutContext === LayoutContext.THIN_WITH_LABEL && !hideMenuLabels)
+  );
+  let buttonRef = $state<HTMLElement>();
   let popRef: HTMLButtonElement;
   let pad: number;
   let rive: any;
   let isOutlineStyle: boolean = false;
-  let isHovering: boolean = false;
-  $: if ($view.height) {
-    let rawPad = ($view.width / 10) * $view.scale;
-    pad = rawPad > 30 ? 30 : rawPad;
-  }
+  let isHovering = $state(false);
+  $effect(() => {
+    if ($view.height) {
+      let rawPad = ($view.width / 10) * $view.scale;
+      pad = rawPad > 30 ? 30 : rawPad;
+    }
+  });
 
-  function onClick() {
+  function handleClick(event: MouseEvent) {
     postMessageToParent(EmbedMessage.MENU_ITEM_SELECTED);
     rive?.fire();
-    dispatch("click", {});
+    onClick?.();
   }
 
   function onHover() {
@@ -214,7 +227,10 @@
         "rounded-r-md": dev_mixedPanel && $appStore.currentComponent?.panel
       }
     )}
-    on:click|stopPropagation={onClick}
+    onclick={(event) => {
+      event.stopPropagation();
+      handleClick(event);
+    }}
     use:hoverable={{
       onHover: (isHoveringParam) => {
         isHovering = isHoveringParam;

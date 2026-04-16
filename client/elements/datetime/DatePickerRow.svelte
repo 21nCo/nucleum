@@ -1,42 +1,48 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
 
-  export let isDateMode: boolean = true;
-  export let date: Date = new Date();
-  export let currentPage: number = 1;
-  export let density: Size = Size.md;
+  let {
+    isDateMode = true,
+    date = new Date(),
+    currentPage = 1,
+    density = Size.md,
+    onChange = undefined,
+    onPageChange = undefined
+  }: any = $props();
 
-  const dispatch = createEventDispatcher();
-  let containerWidth: number = 300;
-  let minItemWidth =
+  let containerWidth = $state(300);
+  const minItemWidth = $derived(
     density === Size.sm
       ? 50
       : density === Size.md
         ? 40
         : density === Size.lg
           ? 30
-          : 20;
-  let containerRef: HTMLDivElement;
-  let previousMode = isDateMode;
-  let previousDate: Date = new Date(date);
-  let resizeObserver: ResizeObserver;
-  let resizeTimeout: ReturnType<typeof setTimeout> | null = null;
-  let lastResizeWidth: number = 0;
+          : 20
+  );
+  let containerRef = $state<HTMLDivElement>();
+  let previousMode = $state(isDateMode);
+  let previousDate = $state<Date>(new Date(date));
+  let resizeObserver = $state<ResizeObserver>();
+  let resizeTimeout = $state<ReturnType<typeof setTimeout> | null>(null);
+  let lastResizeWidth = $state(0);
 
-  let viewDate = new Date(date);
-  let selectedDate: Date | null = new Date(date);
+  let viewDate = $state(new Date(date));
+  let selectedDate = $state<Date | null>(new Date(date));
 
-  let selectedValue: number | null = selectedDate
-    ? isDateMode
-      ? selectedDate.getDate()
-      : selectedDate.getMonth() + 1
-    : null;
+  let selectedValue = $state<number | null>(
+    selectedDate
+      ? isDateMode
+        ? selectedDate.getDate()
+        : selectedDate.getMonth() + 1
+      : null
+  );
 
-  $: year = viewDate.getFullYear();
-  $: month = viewDate.getMonth() + 1;
+  const year = $derived(viewDate.getFullYear());
+  const month = $derived(viewDate.getMonth() + 1);
 
   function updateSelectedValue() {
     if (selectedDate) {
@@ -48,27 +54,41 @@
     }
   }
 
-  $: isSelectedDateVisible =
+  const isSelectedDateVisible = $derived(
     selectedDate &&
-    selectedDate.getFullYear() === year &&
-    (isDateMode ? selectedDate.getMonth() + 1 === month : true);
+      selectedDate.getFullYear() === year &&
+      (isDateMode ? selectedDate.getMonth() + 1 === month : true)
+  );
 
   function getDaysInMonth(month: number, year: number): number {
     return new Date(year, month, 0).getDate();
   }
 
-  let maxValue = isDateMode ? 31 : 12;
-  let itemsPerPage = 7;
-  let totalPages = Math.ceil(maxValue / itemsPerPage);
-  let startValue = 1;
-  let endValue = Math.min(itemsPerPage, maxValue);
-  let actualItemWidth = minItemWidth;
-
-  let items: number[] = [];
-
-  for (let i = 0; i < Math.min(7, maxValue); i++) {
-    items.push(i + 1);
+  function emitChange(nextDate: Date) {
+    const changeEvent = new CustomEvent<Date>("change", {
+      detail: nextDate
+    });
+    onChange?.(changeEvent);
   }
+
+  function emitPageChange(detail: { page: number; viewDate: Date }) {
+    const pageChangeEvent = new CustomEvent<{ page: number; viewDate: Date }>(
+      "pageChange",
+      { detail }
+    );
+    onPageChange?.(pageChangeEvent);
+  }
+
+  let maxValue = $state(isDateMode ? 31 : 12);
+  let itemsPerPage = $state(7);
+  let totalPages = $state(Math.ceil(maxValue / itemsPerPage));
+  let startValue = $state(1);
+  let endValue = $state(Math.min(itemsPerPage, maxValue));
+  let actualItemWidth = $state(minItemWidth);
+
+  let items = $state<number[]>(
+    Array.from({ length: Math.min(7, maxValue) }, (_, index) => index + 1)
+  );
 
   function updateItems() {
     try {
@@ -169,14 +189,15 @@
     }
   }
 
-  $: {
+  $effect(() => {
     isDateMode;
     year;
     month;
     currentPage;
     containerWidth;
+    minItemWidth;
     updateItems();
-  }
+  });
 
   function findPageForValue(
     value: number,
@@ -203,7 +224,7 @@
     return targetPage;
   }
 
-  $: {
+  $effect(() => {
     if (date && previousDate && date.getTime() !== previousDate.getTime()) {
       viewDate = new Date(date);
       selectedDate = new Date(date);
@@ -221,9 +242,9 @@
       previousDate = new Date(date);
       updateItems();
     }
-  }
+  });
 
-  $: {
+  $effect(() => {
     if (previousMode !== isDateMode) {
       updateSelectedValue();
 
@@ -236,10 +257,10 @@
       }
 
       previousMode = isDateMode;
-      dispatch("change", date);
+      emitChange(date);
       updateItems();
     }
-  }
+  });
 
   onMount(() => {
     if (typeof ResizeObserver !== "undefined") {
@@ -320,18 +341,20 @@
     };
   });
 
-  $: canGoNext =
+  const canGoNext = $derived(
     currentPage < totalPages ||
-    (isDateMode && month < 12) ||
-    (isDateMode && month === 12 && year < 9999) ||
-    (!isDateMode && year < 9999);
-  $: canGoPrev =
+      (isDateMode && month < 12) ||
+      (isDateMode && month === 12 && year < 9999) ||
+      (!isDateMode && year < 9999)
+  );
+  const canGoPrev = $derived(
     currentPage > 1 ||
-    (isDateMode && month > 1) ||
-    (isDateMode && month === 1 && year > 1) ||
-    (!isDateMode && year > 1);
+      (isDateMode && month > 1) ||
+      (isDateMode && month === 1 && year > 1) ||
+      (!isDateMode && year > 1)
+  );
 
-  let isNavigating = false;
+  let isNavigating = $state(false);
 
   function handlePrevious() {
     if (canGoPrev) {
@@ -371,7 +394,7 @@
         updateItems();
       }
 
-      dispatch("pageChange", { page: currentPage, viewDate });
+      emitPageChange({ page: currentPage, viewDate });
       isNavigating = false;
       updateItems();
     }
@@ -412,7 +435,7 @@
         updateItems();
       }
 
-      dispatch("pageChange", { page: currentPage, viewDate });
+      emitPageChange({ page: currentPage, viewDate });
       isNavigating = false;
       updateItems();
     }
@@ -436,7 +459,7 @@
 
     selectedValue = value;
 
-    dispatch("change", date);
+    emitChange(date);
   }
 
   const months = [
@@ -467,7 +490,7 @@
         "hover:bg-bgs2 active:bg-bgs3",
         { "opacity-50 cursor-not-allowed": !canGoPrev }
       )}
-      on:click={handlePrevious}
+      onclick={handlePrevious}
       disabled={!canGoPrev}
     >
       <Icon icon="chevron-left" size={Size.sm} />
@@ -487,7 +510,7 @@
               }
             )}
             style="width: {actualItemWidth}px;"
-            on:click={() => handleSelect(item)}
+            onclick={() => handleSelect(item)}
           >
             {isDateMode ? item : months[item - 1]}
           </button>
@@ -503,7 +526,7 @@
         "hover:bg-bgs2 active:bg-bgs3",
         { "opacity-50 cursor-not-allowed": !canGoNext }
       )}
-      on:click={handleNext}
+      onclick={handleNext}
       disabled={!canGoNext}
     >
       <Icon icon="chevron-right" size={Size.sm} />

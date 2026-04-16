@@ -54,14 +54,14 @@
             label="Delete and create new account"
             type={ButtonVariant.DANGER}
             style={ButtonStyle.OUTLINED}
-            on:click={() => {
+            onclick={() => {
               account.delete();
             }}
           />
           <Button
             label="Go to home"
             type={ButtonVariant.PRIMARY}
-            on:click={() => {
+            onclick={() => {
               appStore.gotoPath("/");
             }}
           />
@@ -72,7 +72,7 @@
           isLoading={isBootstrapInProgress}
           type={ButtonVariant.PRIMARY}
           icon="rocket"
-          on:click={async () => {
+          onclick={async () => {
             try {
               isBootstrapInProgress = true;
               const result = await account.bootstrap(region);

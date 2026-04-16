@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { logger } from "@21n/components/debug/logger.client";
   import { Placement } from "@21n/types/direction.enum";
   import { GlobalEvent } from "@21n/types/event.enum";
@@ -13,20 +14,7 @@
   } from "@21n/utils/browser.utils";
   import { bg, cn } from "@21n/utils/ui.utils";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  import { createEventDispatcher, onMount } from "svelte";
-  const dispatch = createEventDispatcher();
-  /**
-   * @deprecated
-   * Use options instead.
-   */
-  export let placement: Placement = Placement.BottomCenter;
-  export let triggerClass: string = "";
-  /**
-   * @deprecated - use triggerMethod instead
-   */
-  export let isPreventDefault: boolean = false;
-  export let triggerMethod: PopoverTriggerMethod = PopoverTriggerMethod.CLICK;
-  export let isPreventDefaultStyling: boolean = false;
+  import { onMount } from "svelte";
 
   const defaultOptions: IPopoverOptions = {
     element: "div",
@@ -41,18 +29,41 @@
     groupId: undefined,
     isOnlyOneVisiblePerGroup: false
   };
-  export let options: IPopoverOptions = defaultOptions;
-  if (!options.id) options.id = defaultOptions.id;
-  if (!options.parentBgIndex)
-    options.parentBgIndex = defaultOptions.parentBgIndex;
-  let triggerRef: HTMLElement;
-  let popOverRef: HTMLElement;
-  /**
-   * Export only for read-only purpose to check if the popover is visible.
-   * Use toggle() to toggle the visibility. Use show() and hide() to show and hide the popover. Changing this value directly will not affect the popover visibility.
-   */
-  export let isPopoverVisible = false;
-  let containerId = generateSimpleRandomId();
+
+  let {
+    placement = Placement.BottomCenter,
+    triggerClass = "",
+    isPreventDefault = false,
+    triggerMethod = PopoverTriggerMethod.CLICK,
+    isPreventDefaultStyling = false,
+    options = undefined,
+    isPopoverVisible = $bindable(false),
+    children = undefined,
+    popover = undefined,
+    onShow = undefined,
+    onHide = undefined
+  }: {
+    placement?: Placement;
+    triggerClass?: string;
+    isPreventDefault?: boolean;
+    triggerMethod?: PopoverTriggerMethod;
+    isPreventDefaultStyling?: boolean;
+    options?: IPopoverOptions | undefined;
+    isPopoverVisible?: boolean;
+    children?: Snippet | undefined;
+    popover?: Snippet | undefined;
+    onShow?: (() => void) | undefined;
+    onHide?: (() => void) | undefined;
+  } = $props();
+  const resolvedOptions = $derived({
+    ...defaultOptions,
+    ...options,
+    id: options?.id ?? defaultOptions.id,
+    parentBgIndex: options?.parentBgIndex ?? defaultOptions.parentBgIndex
+  });
+  let triggerRef = $state<HTMLElement | undefined>();
+  let popOverRef = $state<HTMLElement | undefined>();
+  const containerId = generateSimpleRandomId();
 
   onMount(() => {
     window.addEventListener(GlobalEvent.HIDE_POPOVER, hidePopoverListener);
@@ -63,38 +74,43 @@
 
   function hidePopoverListener(e: any) {
     if (!e.detail || e.detail.source === containerId) return;
-    if (e.detail.group === options.groupId) hide();
+    if (e.detail.group === resolvedOptions.groupId) hide();
   }
 
   export function toggle() {
-    logger.log({ at: "Popover - toggle", id: options.id });
-    isPopoverVisible = !isPopoverVisible;
-    if (isPopoverVisible) {
-      show();
-      dispatch("show");
-    } else hide();
+    logger.log({ at: "Popover - toggle", id: resolvedOptions.id });
+    if (isPopoverVisible) hide();
+    else show();
   }
   export function show() {
-    if (options.groupId && options.isOnlyOneVisiblePerGroup) {
+    if (!triggerRef || !popOverRef) return;
+    const wasVisible = isPopoverVisible;
+    if (resolvedOptions.groupId && resolvedOptions.isOnlyOneVisiblePerGroup) {
       dispatchCustomEvent(GlobalEvent.HIDE_POPOVER, {
-        group: options.groupId,
+        group: resolvedOptions.groupId,
         source: containerId
       });
     }
     const config: IPopoverRenderParams = {
-      ...options,
-      triggerRef: triggerRef,
+      ...resolvedOptions,
+      triggerRef,
       popRef: popOverRef,
-      placement: options.placement ?? placement ?? Placement.BottomCenter
+      placement:
+        resolvedOptions.placement ?? placement ?? Placement.BottomCenter
     };
     renderPopover(config);
     if (!isPopoverVisible) isPopoverVisible = true;
+    if (!wasVisible) {
+      onShow?.();
+    }
   }
   export function hide() {
-    // logger.log({ at: "Popover - hide", id: options.id });
+    const wasVisible = isPopoverVisible;
     isPopoverVisible = false;
     if (popOverRef) popOverRef.style.display = "none";
-    dispatch("hide");
+    if (wasVisible) {
+      onHide?.();
+    }
   }
   export function onPopoverMount(node: HTMLElement) {
     node.style.display = "none";
@@ -103,12 +119,10 @@
     };
   }
 
-  onMount(() => {});
-
   function onWindowClick(x: MouseEvent) {
     // logger.log({ at: "Popover - onWindowClick", id: options.id });
-    if (!options?.id || !isPopoverVisible) return;
-    actIfClickedOutside(x, [containerId, options.id], hide);
+    if (!resolvedOptions.id || !isPopoverVisible) return;
+    actIfClickedOutside(x, [containerId, resolvedOptions.id], hide);
   }
 
   /**
@@ -142,7 +156,7 @@
     if (clickedOutsideAllTargets) {
       logger.log({
         at: "Popover - actIfClickedOutside - performing action",
-        id: options.id,
+        id: resolvedOptions.id,
         target: event.target
       });
       action();
@@ -153,15 +167,15 @@
 <button
   id={containerId}
   tabindex="-1"
-  data-group-id={options.groupId}
+  data-group-id={resolvedOptions.groupId}
   bind:this={triggerRef}
-  on:click={(e) => {
+  onclick={(e) => {
     if (triggerMethod === PopoverTriggerMethod.CLICK && !isPreventDefault) {
       toggle();
     }
     if (isPopoverVisible) e.stopPropagation();
   }}
-  on:contextmenu={(e) => {
+  oncontextmenu={(e) => {
     if (triggerMethod === PopoverTriggerMethod.RIGHT_CLICK) {
       toggle();
       e.stopPropagation();
@@ -170,15 +184,15 @@
   }}
   class={triggerClass}
 >
-  <slot />
+  {@render children?.()}
 </button>
 <svelte:element
-  this={options?.element ?? "div"}
-  id={options?.id}
+  this={resolvedOptions.element ?? "div"}
+  id={resolvedOptions.id}
   class={cn(
-    options?.class,
-    options?.placement,
-    bg(options?.parentBgIndex ? options?.parentBgIndex - 1 : 0),
+    resolvedOptions.class,
+    resolvedOptions.placement,
+    bg(resolvedOptions.parentBgIndex ? resolvedOptions.parentBgIndex - 1 : 0),
     {
       "popover shadow-md border border-brs2 rounded-md":
         !isPreventDefaultStyling
@@ -187,6 +201,6 @@
   bind:this={popOverRef}
   use:onPopoverMount
 >
-  <slot name="popover" />
+  {@render popover?.()}
 </svelte:element>
-<svelte:window on:click={onWindowClick} />
+<svelte:window onclick={onWindowClick} />

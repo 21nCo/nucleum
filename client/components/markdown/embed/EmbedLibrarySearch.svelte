@@ -6,12 +6,20 @@
   import { onMount } from "svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
-  export let subType: NodeType;
-  export let onSelect: (event: CustomEvent) => void;
-  export let onReset: () => void;
-  let searchQuery = "";
-  let searchRef: TextSearchInput;
+
+  let {
+    subType,
+    onSelect,
+    onReset
+  }: {
+    subType: NodeType;
+    onSelect: (event: CustomEvent) => void;
+    onReset: () => void;
+  } = $props();
+  let searchQuery = $state("");
+  let searchRef: TextSearchInput | undefined;
   const searchStore = new SearchStore();
+
   function searchCallback(searchQuery: string) {
     return searchStore.searchForLinking(searchQuery, {
       resource:
@@ -27,7 +35,8 @@
           : undefined
     });
   }
-  $: label = subType ? enumToString(subType) + "s" : "";
+  const label = $derived(subType ? enumToString(subType) + "s" : "");
+
   onMount(() => {
     setTimeout(() => {
       searchRef?.showDefaultResults();
@@ -48,7 +57,7 @@
     searchResultComponentProps={{
       isHideResourceType: true
     }}
-    on:select={onSelect}
-    on:reset={onReset}
+    {onSelect}
+    {onReset}
   />
 </div>

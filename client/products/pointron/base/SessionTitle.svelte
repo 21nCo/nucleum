@@ -6,7 +6,8 @@
   import { activeSession } from "@21n/products/pointron/focus/session.store";
   import { Product } from "@21n/products/product.type";
   import { resolveProductConfig } from "@21n/products/product.config";
-  export let ctx: Product = Product.NUCLEUS;
+
+  let { ctx = Product.NUCLEUS }: { ctx?: Product } = $props();
 </script>
 
 <svelte:head>

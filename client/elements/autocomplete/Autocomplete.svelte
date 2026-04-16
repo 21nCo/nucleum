@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import AutocompleteResultItem from "@21n/elements/autocomplete/AutocompleteResultItem.svelte";
   import type { AutocompleteListItemType } from "@21n/types/autocompleteListItem.type";
   import { generateUID } from "@21n/utils/utils";
@@ -9,49 +9,59 @@
   import { appEvents } from "@21n/stores/notification.store";
   import type { IEvent } from "@21n/types/event.type";
   import { GlobalEvent } from "@21n/types/event.enum";
-
-  export let wrapperClassList: string = "w-full";
-  export let wrapperStyle: string = "";
-  export let inputClassList: string = "text-bgs2";
-  export let inputStyle: string = "";
-  export let listContainerClassList: string = "bg-bgs2";
-  export let listContainerStyle: string = "";
-  export let listItemClassList: string = "hover:bg-bgs3";
-  export let listItemStyle: string = "";
-  export let activeListItemClassList: string = "bg-bgs3";
-  export let areOptionsVisible: boolean = false;
-
-  export let escapeDefaultClickBehaviour: boolean = false; // this is used to escape the default behaviour of the list item click, if this is true then the default behaviour of the list item click will not be performed, for example if you don't want to hide the list on list item click then set this to true
-
-  export let hideSearchIcon: boolean = false;
-  export let hideResetIcon: boolean = false;
-  export let icon: string = "";
-
-  export let options: AutocompleteListItemType[] = [];
-
-  export let placeholder: string = "";
-  export let inputValue: string;
-  export let value: AutocompleteListItemType | null = null;
-
-  const dispatch = createEventDispatcher();
+  let {
+    wrapperClassList = "w-full",
+    wrapperStyle = "",
+    inputClassList = "text-bgs2",
+    inputStyle = "",
+    listContainerClassList = "bg-bgs2",
+    listContainerStyle = "",
+    listItemClassList = "hover:bg-bgs3",
+    listItemStyle = "",
+    activeListItemClassList = "bg-bgs3",
+    areOptionsVisible = $bindable(false),
+    escapeDefaultClickBehaviour = false,
+    hideSearchIcon = false,
+    hideResetIcon = false,
+    icon = "",
+    options = [],
+    placeholder = "",
+    inputValue = $bindable(""),
+    value = $bindable(null),
+    onListItemClick = undefined,
+    onReset: onResetCallback = undefined,
+    onSearch: onSearchCallback = undefined
+  }: {
+    wrapperClassList?: string;
+    wrapperStyle?: string;
+    inputClassList?: string;
+    inputStyle?: string;
+    listContainerClassList?: string;
+    listContainerStyle?: string;
+    listItemClassList?: string;
+    listItemStyle?: string;
+    activeListItemClassList?: string;
+    areOptionsVisible?: boolean;
+    escapeDefaultClickBehaviour?: boolean;
+    hideSearchIcon?: boolean;
+    hideResetIcon?: boolean;
+    icon?: string;
+    options?: AutocompleteListItemType[];
+    placeholder?: string;
+    inputValue?: string;
+    value?: AutocompleteListItemType | null;
+    onListItemClick?: ((event: CustomEvent<AutocompleteListItemType>) => void) | undefined;
+    onReset?: ((event: CustomEvent<void>) => void) | undefined;
+    onSearch?: ((event: CustomEvent<void>) => void) | undefined;
+  } = $props();
   const containerId = generateUID();
 
-  let inputRef: HTMLInputElement | undefined;
-  // let iconComponent: typeof SvelteComponent | undefined;
-  let selectedListItemIndex: number = -1;
-
-  let tempOptions: AutocompleteListItemType[] = [];
-
-  // function hideList() {
-  //   selectedListItemIndex = -1;
-  //   if (options === undefined || options.length === 0) return;
-  //   options = [];
-
-  // }
+  let inputRef = $state<HTMLInputElement | undefined>();
+  let selectedListItemIndex = $state(-1);
+  let tempOptions = $state<AutocompleteListItemType[]>([]);
 
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
-      console.log({ x });
       if (x.event === GlobalEvent.ACTIVATE_SEARCH_BOX) {
         focus();
       }
@@ -77,16 +87,15 @@
   }
 
   function handleResultItemClick(detail: { label: string; id: string }) {
-    dispatch("list-item-click", detail);
+    onListItemClick?.(
+      new CustomEvent("list-item-click", {
+        detail
+      })
+    );
     updateValue(detail);
     if (!escapeDefaultClickBehaviour) {
       performDefaultClickActions();
-      // because since there are chips, we don't want to hide the list on click, because the user might want to select multiple items
     }
-  }
-
-  function handleResultItemClickViaCustomEvent({ detail }: CustomEvent) {
-    handleResultItemClick(detail);
   }
 
   export function focus() {
@@ -98,10 +107,10 @@
     tempOptions = options;
   }
 
-  function onReset() {
+  function handleReset() {
     inputValue = "";
     value = null;
-    dispatch("reset");
+    onResetCallback?.(new CustomEvent("reset"));
   }
 
   function updateListVisibility(value: boolean) {
@@ -128,8 +137,13 @@
     }
     if (event.key === "Enter") {
       if (selectedListItemIndex > -1) {
-        const { label: title, id } = tempOptions[selectedListItemIndex];
-        dispatch("list-item-click", { title, id });
+        const { label, id } = tempOptions[selectedListItemIndex];
+        onListItemClick?.(
+          new CustomEvent("list-item-click", {
+            detail: { label, id }
+          })
+        );
+        updateValue({ label, id });
         if (!escapeDefaultClickBehaviour) {
           performDefaultClickActions();
         }
@@ -137,23 +151,15 @@
     }
   }
 
-  // $: {
-  //   if (inputValue === "") {
-  //     tempOptions = options;
-  //   } else {
-  //     tempOptions = options.filter((goal: AutocompleteListItemType) => {
-  //       return goal.title.toLowerCase().includes(inputValue.toLowerCase());
-  //     });
-  //   }
-  // }
-
-  $: {
+  $effect(() => {
     selectedListItemIndex = -1;
     if (!inputValue) {
       tempOptions = options;
+      return;
     }
-    if (value) updateListVisibility(false);
-    else if (
+    if (value) {
+      updateListVisibility(false);
+    } else if (
       inputValue !== undefined &&
       inputValue !== null &&
       inputValue !== "" &&
@@ -164,7 +170,7 @@
         x.label.toLowerCase().includes(inputValue.toLowerCase())
       );
     }
-  }
+  });
 </script>
 
 <div
@@ -178,7 +184,6 @@
         class="absolute ml-2.5 min-w-[1rem] flex justify-center items-center w-4 h-4"
       >
         {#if icon}
-          <!-- <svelte:component this={iconComponent || Search} /> -->
           <Icon {icon} size={Size.sm} />
         {:else if !hideSearchIcon}
           <Icon size={Size.sm} icon="search" />
@@ -189,7 +194,7 @@
       <div
         class="absolute right-0 mr-2.5 min-w-[1rem] flex justify-center items-center w-4 h-4"
       >
-        <Icon on:click={onReset} size={Size.sm} icon="cross" />
+        <Icon onclick={handleReset} size={Size.sm} icon="cross" />
       </div>
     {/if}
 
@@ -198,10 +203,19 @@
       type="text"
       bind:this={inputRef}
       bind:value={inputValue}
-      on:input|stopPropagation={onInputChange}
-      on:focus={onFocus}
-      on:keydown|stopPropagation={handleKeyDownInDropdown}
-      on:keyup|stopPropagation={() => dispatch("search")}
+      oninput={(event) => {
+        event.stopPropagation();
+        onInputChange();
+      }}
+      onfocus={onFocus}
+      onkeydown={(event) => {
+        event.stopPropagation();
+        handleKeyDownInDropdown(event);
+      }}
+      onkeyup={(event) => {
+        event.stopPropagation();
+        onSearchCallback?.(new CustomEvent("search"));
+      }}
       class={cn(
         "outline-none w-full py-2 px-2.5 text-b2 bg-bgs2",
         inputClassList,
@@ -228,13 +242,9 @@
           }}
           isActive={selectedListItemIndex === index}
           style={listItemStyle}
-          on:click={handleResultItemClickViaCustomEvent}
+          onClick={handleResultItemClick}
         />
       {/each}
     </div>
   {/if}
 </div>
-
-<!-- 
-  Note: Just need to implement one thing, which is if we navigate in the list using arrow keys then the list should scroll automatically to the selected item
- -->

@@ -1,31 +1,27 @@
 <script lang="ts">
-  import { afterUpdate } from "svelte";
   import { IconVariant } from "@21n/types/icon.type";
 
-  export let color: string = "";
-  export let opacity: number = 1;
-  export let classList: string = "";
-  export let isActive: boolean = false;
-  export let activeColor: string = "";
+  let {
+    color = "",
+    opacity = 1,
+    classList = "",
+    isActive = false,
+    activeColor = "",
+    variant = IconVariant.Outline
+  }: {
+    color?: string;
+    opacity?: number;
+    classList?: string;
+    isActive?: boolean;
+    activeColor?: string;
+    variant?: IconVariant;
+  } = $props();
 
-  export let variant: IconVariant = IconVariant.Outline;
-
-  let iconFinalColor: string = "";
-
-  function setColor() {
-    iconFinalColor = isActive
-      ? activeColor
-        ? activeColor
-        : color
-          ? color
-          : `rgba(var(--colors-bgs1),${opacity})`
-      : color
-        ? color
-        : `rgba(var(--colors-fgs1),${opacity})`;
-  }
-  afterUpdate(() => {
-    setColor();
-  });
+  const iconFinalColor = $derived(
+    isActive
+      ? activeColor || color || `rgba(var(--colors-bgs1),${opacity})`
+      : color || `rgba(var(--colors-fgs1),${opacity})`
+  );
 </script>
 
 {#if variant === IconVariant.Outline}

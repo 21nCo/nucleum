@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import { BlockAction, InlineType } from "@21n/components/markdown/md.type";
   import {
     mdContentChangeEvent,
@@ -73,34 +73,99 @@
     blockContext.publish(event, data);
   }
 
-  const dispatch = createEventDispatcher();
-  export let mdStore: MdStoreType;
-  export let id: IRecordId;
-  export let text: string;
-  export let contentType: NodeType;
-  export let isHovering: boolean = false;
-  export let isFocusing: boolean = false;
+  let {
+    mdStore,
+    id,
+    text = $bindable(""),
+    contentType,
+    isHovering = false,
+    isFocusing = $bindable(false),
+    onBlur = undefined,
+    onUpdate = undefined
+  }: {
+    mdStore: MdStoreType;
+    id: IRecordId;
+    text?: string;
+    contentType: NodeType;
+    isHovering?: boolean;
+    isFocusing?: boolean;
+    onBlur?: ((event: CustomEvent<void>) => void) | undefined;
+    onUpdate?: ((event: CustomEvent<string>) => void) | undefined;
+  } = $props();
 
-  $: refreshPlaceholder(isHovering, blockSpecificPlaceholder);
-
-  let isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(id);
+  let isFirstBlockAndIsEmpty = $state(false);
   let textRef: InlineMarkdownTextInput;
-  let sizing = "";
-  let blockSpecificPlaceholder: string | undefined = undefined;
-  let placeholder: string;
-  let popoverRef: any;
-  let blockBrowserRef: any;
-  let isBlockBrowserRendered: boolean = false;
-  let isRenderMentionSearch: boolean = false;
-  let isRenderEmojiPicker: boolean = false;
-  let blockSearchQuery = "";
-  let mentionSearchQuery = "";
-  let emojiSearchQuery = "";
+  function refreshFirstBlockEmptyState() {
+    isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(id);
+  }
+  const resolvedBlockStyle = $derived.by(() => {
+    switch (contentType) {
+      case NodeType.HEADING1:
+        return {
+          sizing: "text-h1 font-bold",
+          blockSpecificPlaceholder: "Heading 1"
+        };
+      case NodeType.HEADING2:
+        return {
+          sizing: "text-h2 font-bold",
+          blockSpecificPlaceholder: "Heading 2"
+        };
+      case NodeType.HEADING3:
+        return {
+          sizing: "text-h3 font-bold",
+          blockSpecificPlaceholder: "Heading 3"
+        };
+      case NodeType.HEADING4:
+        return {
+          sizing: "text-h4 font-bold",
+          blockSpecificPlaceholder: "Heading 4"
+        };
+      case NodeType.HEADING5:
+        return {
+          sizing: "text-h5 font-bold",
+          blockSpecificPlaceholder: "Heading 5"
+        };
+      case NodeType.QUOTE:
+        return {
+          sizing: "font-medium",
+          blockSpecificPlaceholder: "Quote"
+        };
+      case NodeType.LIST:
+      case NodeType.ORDERED_LIST:
+        return {
+          sizing: "text-base",
+          blockSpecificPlaceholder: "List item"
+        };
+      case NodeType.CHECKLIST:
+        return {
+          sizing: "text-base",
+          blockSpecificPlaceholder: "Check item"
+        };
+      default:
+        return {
+          sizing: "text-base",
+          blockSpecificPlaceholder: undefined
+        };
+    }
+  });
+  const sizing = $derived(resolvedBlockStyle.sizing);
+  const blockSpecificPlaceholder = $derived(
+    resolvedBlockStyle.blockSpecificPlaceholder
+  );
+  let placeholder = $state<string | undefined>();
+  let popoverRef = $state<any>(undefined);
+  let blockBrowserRef = $state<any>(undefined);
+  let isBlockBrowserRendered = $state(false);
+  let isRenderMentionSearch = $state(false);
+  let isRenderEmojiPicker = $state(false);
+  let blockSearchQuery = $state("");
+  let mentionSearchQuery = $state("");
+  let emojiSearchQuery = $state("");
   let previousVal = text ? deepCopy(text) : "";
-  let mentionTriggerKey: string;
-  let mentionSearchPopoverId: string = generateSimpleRandomId();
-  let emojiPickerRef: any;
-  let isEmojiPickerDismissed: boolean = false;
+  let mentionTriggerKey = $state<string>("");
+  let mentionSearchPopoverId = $state<string>(generateSimpleRandomId());
+  let emojiPickerRef = $state<any>(undefined);
+  let isEmojiPickerDismissed = $state(false);
   let caretPositionT2:
     | {
         element?: any;
@@ -111,55 +176,11 @@
         endContainer?: any;
       }
     | undefined = undefined;
+  const isPreventInsertOnEnter = $derived(contentType === NodeType.CODE);
 
-  /**
-   * Checks if the block is of type code or quote and prevents the insertion of a new block on pressing enter - inserts a new line instead
-   */
-  $: isPreventInsertOnEnter = contentType === NodeType.CODE;
-  $: {
-    switch (contentType) {
-      case NodeType.HEADING1:
-        sizing = "text-h1 font-bold";
-        blockSpecificPlaceholder = "Heading 1";
-        break;
-      case NodeType.HEADING2:
-        sizing = "text-h2 font-bold";
-        blockSpecificPlaceholder = "Heading 2";
-        break;
-      case NodeType.HEADING3:
-        sizing = "text-h3 font-bold";
-        blockSpecificPlaceholder = "Heading 3";
-        break;
-      case NodeType.HEADING4:
-        sizing = "text-h4 font-bold";
-        blockSpecificPlaceholder = "Heading 4";
-        break;
-      case NodeType.HEADING5:
-        sizing = "text-h5 font-bold";
-        blockSpecificPlaceholder = "Heading 5";
-        break;
-      case NodeType.QUOTE:
-        sizing = "font-medium";
-        blockSpecificPlaceholder = "Quote";
-        break;
-      case NodeType.LIST:
-        sizing = "text-base";
-        blockSpecificPlaceholder = "List item";
-        break;
-      case NodeType.ORDERED_LIST:
-        sizing = "text-base";
-        blockSpecificPlaceholder = "List item";
-        break;
-      case NodeType.CHECKLIST:
-        sizing = "text-base";
-        blockSpecificPlaceholder = "Check item";
-        break;
-      default:
-        sizing = "text-base";
-        blockSpecificPlaceholder = undefined;
-        break;
-    }
-  }
+  $effect(() => {
+    refreshPlaceholder(isHovering, blockSpecificPlaceholder);
+  });
 
   /**
    *
@@ -612,9 +633,9 @@
       propagateToNodeContent("unmention", { location: id, id: mentionId });
     }
     if (previousVal === text) return;
-    dispatch("update", text);
+    const event = new CustomEvent<string>("update", { detail: text });
+    onUpdate?.(event);
     previousVal = deepCopy(text);
-    // relay(BlockAction.CHANGE, text);
   }
   /**
    * Handles keyup event to perform various actions like escape shortcuts, symbol and inline shortcut formatting, backspace event etc.
@@ -633,7 +654,7 @@
       position: any;
     }>
   ) {
-    isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(id);
+    refreshFirstBlockEmptyState();
     const event = e.detail.event;
     const caretPosition = e.detail.caretPosition;
     logger.log({
@@ -763,7 +784,7 @@
     if (isHoveringParam === undefined) isHoveringParam = isHovering;
     if (blockSpecificPlaceholderParam === undefined)
       blockSpecificPlaceholderParam = blockSpecificPlaceholder;
-    isFirstBlockAndIsEmpty = mdStore.isFirstBlockAndIsEmpty(id);
+    refreshFirstBlockEmptyState();
     if (
       isHoveringParam ||
       isFirstBlockAndIsEmpty ||
@@ -831,15 +852,16 @@
     dispatchChangeEvent();
   }
 
-  function onFocus() {
+  function handleFocus() {
     isFocusing = true;
     markdownContext({ event: "focus", id });
     refreshPlaceholder();
     mdStore.setActiveHeading(id);
   }
 
-  function onBlur() {
-    dispatch("blur");
+  function handleBlur() {
+    const event = new CustomEvent<void>("blur");
+    onBlur?.(event);
     isFocusing = false;
     markdownContext({ event: "blur", id });
     refreshPlaceholder();
@@ -849,21 +871,6 @@
     relay(BlockAction.PASTE, event.detail);
   }
 </script>
-
-{#if !text && !$mdStore.params?.isReadOnly}
-  <!-- <button
-    on:click={() => {
-      blockRef.focus();
-    }}
-    class="absolute top-0 left-0 cursor-text py-2 {sizing} {blockSpecificPlaceholder
-      ? 'text-bgs4'
-      : 'text-fgs3 ml-1'} {block.type === MdBlockType.QUOTE
-      ? 'px-2'
-      : 'px-1'}"
-  >
-    {blockSpecificPlaceholder ?? defaultPlaceholder}
-  </button> -->
-{/if}
 
 <Popover
   bind:this={popoverRef}
@@ -898,51 +905,53 @@
         dataType={contentType}
         isMarkdown={true}
         isReadOnly={$mdStore.params?.isReadOnly}
-        on:keydown={handleKeyDown}
-        on:keyup={handleKeyUp}
-        on:change={dispatchChangeEvent}
-        on:focus={onFocus}
-        on:blur={onBlur}
-        on:paste={handlePaste}
-        bind:placeholder
+        onKeydown={handleKeyDown}
+        onKeyup={handleKeyUp}
+        onChange={dispatchChangeEvent}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        onPaste={handlePaste}
+        placeholder={placeholder ?? ""}
       />
     </div>
     {#if contentType === NodeType.QUOTE}
       <div class="absolute top-0 left-0 h-full flex flex-col justify-center">
-        <span class="w-1 bg-aps1 h-full my-2 rounded-md" />
+        <span class="w-1 bg-aps1 h-full my-2 rounded-md"></span>
       </div>
     {/if}
   </div>
-  <slot slot="popover" name="popover">
-    {#if isBlockBrowserRendered}
-      <BlockBrowser
-        bind:this={blockBrowserRef}
-        on:select={onBlockSelect}
-        bind:searchQueryString={blockSearchQuery}
-      />
-    {:else if !$view.isConstrainedWidth && isRenderMentionSearch}
-      <SearchResultsPopover
-        searchResultComponent={LinkSearchResultItem}
-        id={mentionSearchPopoverId}
-        isAlwaysShowSearchFeedback={true}
-        searchCallback={onMentionSearch}
-        shortcutTriggers={["@", "["]}
-        on:select={onMentionSelect}
-        on:reset={() => {
-          hidePopover("mentionSearch");
-        }}
-      />
-    {:else if !$view.isConstrainedWidth && isRenderEmojiPicker}
-      <EmojiPicker
-        bind:this={emojiPickerRef}
-        bind:searchQuery={emojiSearchQuery}
-        on:select={onEmojiSelect}
-        on:noresults={() => {
-          hidePopover("emojiPicker");
-        }}
-      />
-    {/if}
-  </slot>
+  {#snippet popover()}
+    <div>
+      {#if isBlockBrowserRendered}
+        <BlockBrowser
+          bind:this={blockBrowserRef}
+          onSelect={onBlockSelect}
+          bind:searchQueryString={blockSearchQuery}
+        />
+      {:else if !$view.isConstrainedWidth && isRenderMentionSearch}
+        <SearchResultsPopover
+          searchResultComponent={LinkSearchResultItem}
+          id={mentionSearchPopoverId}
+          isAlwaysShowSearchFeedback={true}
+          searchCallback={onMentionSearch}
+          shortcutTriggers={["@", "["]}
+          onSelect={onMentionSelect}
+          onReset={() => {
+            hidePopover("mentionSearch");
+          }}
+        />
+      {:else if !$view.isConstrainedWidth && isRenderEmojiPicker}
+        <EmojiPicker
+          bind:this={emojiPickerRef}
+          bind:searchQuery={emojiSearchQuery}
+          onSelect={onEmojiSelect}
+          onNoresults={() => {
+            hidePopover("emojiPicker");
+          }}
+        />
+      {/if}
+    </div>
+  {/snippet}
 </Popover>
 {#if $view.isConstrainedWidth && isRenderMentionSearch}
   <div
@@ -964,7 +973,7 @@
         }
       }
     }}
-  />
+  ></div>
 {/if}
 {#if $view.isConstrainedWidth && isRenderEmojiPicker}
   <div
@@ -983,5 +992,5 @@
         isPopoverContext: true
       }
     }}
-  />
+  ></div>
 {/if}

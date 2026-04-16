@@ -44,9 +44,15 @@
   import Button from "@21n/elements/button/Button.svelte";
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
 
-  export let id: string;
-  export let log: any = undefined;
-  export let accessMode: AccessMode = AccessMode.POP;
+  let {
+    id,
+    log = $bindable(),
+    accessMode = AccessMode.POP
+  }: {
+    id: string;
+    log?: any;
+    accessMode?: AccessMode;
+  } = $props();
   let selectedTab: "Summary" | "Notes" = "Summary";
   let isLoadingState: boolean = false;
   let focusItems: IFocusItem[] = [];
@@ -119,7 +125,7 @@
             icon="cross"
             style={ButtonStyle.OUTLINED}
             tooltip="Close"
-            on:click={() => appStore.closeResource({ accessMode })}
+            onclick={() => appStore.closeResource({ accessMode })}
           />
         {/if}
       </div>

@@ -22,7 +22,7 @@
       <ShortcutItem
         action={shortcut.action}
         {shortcut}
-        on:error={(e) => {
+        onError={(e) => {
           console.log({ e });
           error = e.detail;
         }}
@@ -36,14 +36,14 @@
     <Button
       icon="keyboard"
       label="See hot keys"
-      on:click={() => {
+      onclick={() => {
         appStore.runAction(Action.HOT_KEYS);
       }}
     />
     <Button
       icon="markdown"
       label="See markdown shortcuts"
-      on:click={() => {
+      onclick={() => {
         appStore.runAction(Action.MARKDOWN_SHORTCUTS);
       }}
     />

@@ -7,24 +7,29 @@
   import { Display } from "@21n/types/view.type";
   import { cn } from "@21n/utils/ui.utils";
   import { activeSession } from "@21n/products/pointron/focus/session.store";
-  export let icon: string;
-  export let context: SessionUIContext = SessionUIContext.DEFAULT;
+  let {
+    icon,
+    context = SessionUIContext.DEFAULT
+  }: { icon: string; context?: SessionUIContext } = $props();
   let iconSize: Size.md | Size.lg | Size.xl = Size.xl;
-  $: iconSize =
+  let isBreakReminderMode = $derived(
+    $activeSession.timeRemainingToTakeBreak != undefined &&
+      $activeSession.timeRemainingToTakeBreak < 0
+  );
+
+  let iconSizeDerived = $derived(
     context === SessionUIContext.PIP
       ? Size.md
       : context === SessionUIContext.FOCUS_PLAYER ||
           $view.display === Display.MO
         ? Size.lg
-        : Size.xl;
-  $: isBreakReminderMode =
-    $activeSession.timeRemainingToTakeBreak != undefined &&
-    $activeSession.timeRemainingToTakeBreak < 0;
+        : Size.xl
+  );
 </script>
 
 <Icon
   {icon}
-  size={iconSize}
+  size={iconSizeDerived}
   class={cn(
     {
       "stroke-abg": context !== SessionUIContext.FOCUS_PLAYER

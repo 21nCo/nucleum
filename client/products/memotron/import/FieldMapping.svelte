@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
   import type { DropdownItem } from "@21n/types/dropdownItem.type";
   import type {
@@ -9,16 +8,21 @@
   } from "@21n/products/memotron/import/data.type";
   import { Size } from "@21n/types/size.enum";
 
-  export let fieldMappingConfig: FieldMappingConfig;
-  export let fieldMappings: Record<string, string> = {};
-
-  const dispatch = createEventDispatcher<{
-    mappingChange: { field: string; value: string };
-  }>();
+  let {
+    fieldMappingConfig,
+    fieldMappings = $bindable({}),
+    onMappingChange = undefined
+  }: {
+    fieldMappingConfig: FieldMappingConfig;
+    fieldMappings?: Record<string, string>;
+    onMappingChange?:
+      | ((detail: { field: string; value: string }) => void)
+      | undefined;
+  } = $props();
 
   function handleMappingChange(field: string, value: string) {
     fieldMappings[field] = value;
-    dispatch("mappingChange", { field, value });
+    onMappingChange?.({ field, value });
   }
 
   function getDropdownItems(options: FieldMappingValue[]): DropdownItem[] {
@@ -52,7 +56,7 @@
           items={getDropdownItems(fieldConfig.options)}
           isDisableSearch={true}
           size={Size.sm}
-          on:select={(e) => handleMappingChange(fieldKey, String(e.detail))}
+          onSelect={(e) => handleMappingChange(fieldKey, String(e.detail))}
           width="w-full"
         />
       </div>

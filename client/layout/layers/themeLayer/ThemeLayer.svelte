@@ -1,4 +1,7 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { onMount } from "svelte";
   import "@21n/fonts";
   import "@21n/fonts/styles.css";
@@ -21,17 +24,28 @@
   import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
   import { generateGoogleFontsUrl } from "@21n/layout/layers/themeLayer/fonts.config";
 
-  export let extensionContext: string | undefined = undefined;
-  export let isInlineExtensionContext: boolean = false;
-  export let isSheetContext: boolean = false;
-  let fontFamily: string = "Avenir";
-  let defaultRootFontSize: number = 16;
-  let rootFontSize: number = defaultRootFontSize + 0.6 * $view?.scale;
+  let {
+    children,
+    extensionContext = undefined,
+    isInlineExtensionContext = false,
+    isSheetContext = false
+  }: {
+    children?: Snippet;
+    extensionContext?: string;
+    isInlineExtensionContext?: boolean;
+    isSheetContext?: boolean;
+  } = $props();
+  let fontFamily = $state("Avenir");
+  let defaultRootFontSize = $state(16);
+  let rootFontSize = $state(defaultRootFontSize + 0.6 * $view?.scale);
   let ref: HTMLDivElement;
   const defaultTypeface = "Twenty One Native";
-  let typeface = $userPreferences?.appearance?.typeface ?? defaultTypeface;
-  let accessibilitySizingFactor =
-    $userPreferences?.accessibilitySizingFactor ?? 1;
+  let typeface = $state(
+    $userPreferences?.appearance?.typeface ?? defaultTypeface
+  );
+  let accessibilitySizingFactor = $state(
+    $userPreferences?.accessibilitySizingFactor ?? 1
+  );
 
   onMount(() => {
     refreshTailwind();
@@ -251,7 +265,7 @@
   style:--number-grid-typeface={resolveNumberGridTypeface(typeface)}
 >
   <ColorLayer>
-    <slot />
+    {@render children?.()}
   </ColorLayer>
   <GlassSkin />
 </div>

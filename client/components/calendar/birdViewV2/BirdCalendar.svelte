@@ -15,11 +15,35 @@
   import { resolveCalendarColumnPanels } from "../calendar.utils";
   import { appStore } from "@21n/stores/app.store";
 
-  export let panel: CalendarLayout = CalendarLayout.Bird;
-  let scale: TimeScaleUnit = TimeScaleUnit.DAY;
-  let selectedDate: Date = new Date();
+  let {
+    panel = $bindable(CalendarLayout.Bird)
+  }: {
+    panel?: CalendarLayout;
+  } = $props();
+  let scale = $state(TimeScaleUnit.DAY);
+  let selectedDate = $state(new Date());
   const isDev = import.meta.env?.DEV;
-  let selectedPanel: CalendarColumnPanel = CalendarColumnPanel.Timeline;
+  let selectedPanel = $state(CalendarColumnPanel.Timeline);
+
+  function goToPrevious() {
+    const date = new Date(selectedDate);
+    if (scale === TimeScaleUnit.YEAR) {
+      date.setFullYear(date.getFullYear() - 1);
+    } else if (scale === TimeScaleUnit.WEEK) {
+      date.setDate(date.getDate() - 7);
+    }
+    selectedDate = date;
+  }
+
+  function goToNext() {
+    const date = new Date(selectedDate);
+    if (scale === TimeScaleUnit.YEAR) {
+      date.setFullYear(date.getFullYear() + 1);
+    } else if (scale === TimeScaleUnit.WEEK) {
+      date.setDate(date.getDate() + 7);
+    }
+    selectedDate = date;
+  }
 
   const switchOptions = [
     {
@@ -51,7 +75,7 @@
 </script>
 
 <CalendarLayoutView bind:panel>
-  <slot name="header-left-options" slot="header-left-options">
+  {#snippet headerLeftOptions()}
     {#if isDev}
       <OptionSelector
         options={switchOptions}
@@ -62,17 +86,17 @@
         style={OptionSelectorStyle.ICON}
       />
     {/if}
-  </slot>
-  <slot name="header" slot="header">
+  {/snippet}
+  {#snippet header()}
     <CalendarHeader
       bind:selectedDate
       bind:selectedView={scale}
-      on:dateChange
-      on:goToPrevious={() => {}}
-      on:goToNext={() => {}}
+      onDateChange={() => {}}
+      onGoToPrevious={goToPrevious}
+      onGoToNext={goToNext}
     />
-  </slot>
-  <slot name="header-right-options" slot="header-right-options">
+  {/snippet}
+  {#snippet headerRightOptions()}
     <!-- This panel switcher won't be necessary as the column will have the necessary information for all aspects and upon click - expands to show content similar to classic mode with panels inside it -->
     <!-- <CalendarColumnPanelSelector
       panels={resolveCalendarColumnPanels(
@@ -82,8 +106,8 @@
       isBoxed={false}
       {selectedPanel}
     /> -->
-  </slot>
+  {/snippet}
   <div class="w-full h-full max-h-full">
-    <Birdview mode={scale} />
+    <Birdview mode={scale} {selectedDate} />
   </div>
 </CalendarLayoutView>

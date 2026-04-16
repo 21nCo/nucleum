@@ -5,10 +5,15 @@
   import { resolveShortcutText } from "@21n/components/shortcuts/shortcut.utils";
   import { BlockAction, InlineType } from "@21n/components/markdown/md.type";
 
-  export let row: any | undefined = undefined;
-  export let type: NodeType | InlineType | BlockAction | undefined = undefined;
+  let {
+    row = undefined,
+    type = undefined
+  }: {
+    row?: any | undefined;
+    type?: NodeType | InlineType | BlockAction | undefined;
+  } = $props();
 
-  $: _id = type ?? row.id;
+  const shortcutId = $derived(type ?? row?.id);
 
   const mdShortcutMap = [
     {
@@ -85,8 +90,8 @@
   ];
 
   function resolveShortcut() {
-    const shortcut = mdShortcutMap.find((x) => x.id === _id);
-    if (!shortcut) return _id;
+    const shortcut = mdShortcutMap.find((x) => x.id === shortcutId);
+    if (!shortcut) return shortcutId;
     if (!shortcut.modifiers) {
       return shortcut.key;
     }

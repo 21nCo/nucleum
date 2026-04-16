@@ -1,6 +1,5 @@
 <script lang="ts">
   import Button from "@21n/elements/button/Button.svelte";
-  import { createEventDispatcher } from "svelte";
   import NodularMarkdown from "@21n/components/markdown/NodularMarkdown.svelte";
   import { nodeStore } from "@21n/products/memotron/node/node.store";
   import { InputStyle } from "@21n/types/input.type";
@@ -26,17 +25,36 @@
   import { appStore } from "@21n/stores/app.store";
   import { generateMarkdownText } from "@21n/products/memotron/node/node.utils";
   import type { IAudioBody, IAudioMetadata } from "@21n/products/memotron/node/node.type";
-  const dispatch = createEventDispatcher();
 
-  export let body: IAudioBody;
-  export let nodeId: string;
-  export let metadata: IAudioMetadata;
-  export let selectedView: AudioView = AudioView.TRANSCRIPTION;
-  export let transcriptionStatus: IJobStatus | null = null;
-  export let transcriptionProgress: number = 0;
-  export let previewCountDown: number = 0;
-  export let errorMessage: string | null = null;
-  export let isTranscribeAvailable: boolean = false;
+  let {
+    body,
+    nodeId,
+    metadata,
+    selectedView = $bindable(AudioView.TRANSCRIPTION),
+    transcriptionStatus = null,
+    transcriptionProgress = 0,
+    previewCountDown = 0,
+    errorMessage = null,
+    isTranscribeAvailable = false,
+    onSeek = undefined,
+    onTranscribe = undefined,
+    onRetranscribe = undefined,
+    onReparse = undefined
+  }: {
+    body: IAudioBody;
+    nodeId: string;
+    metadata: IAudioMetadata;
+    selectedView?: AudioView;
+    transcriptionStatus?: IJobStatus | null;
+    transcriptionProgress?: number;
+    previewCountDown?: number;
+    errorMessage?: string | null;
+    isTranscribeAvailable?: boolean;
+    onSeek?: ((detail: { time: number }) => void) | undefined;
+    onTranscribe?: (() => void) | undefined;
+    onRetranscribe?: (() => void) | undefined;
+    onReparse?: (() => void) | undefined;
+  } = $props();
 
   const isEnableSummarization = import.meta.env?.DEV;
   const isShowTranscriptionProgress = import.meta.env?.DEV;
@@ -108,8 +126,8 @@
     return timestampRegex.test(transcription);
   }
 
-  function handleSeek(event: any) {
-    dispatch("seek", event.detail);
+  function handleSeek(detail: { time: number }) {
+    onSeek?.(detail);
   }
 
   function resolveViewItems() {
@@ -171,21 +189,21 @@
             style={InputStyle.PLAIN}
             icon="search"
             isShowClearControl={true}
-            on:cancel={toggleSearch}
+            onCancel={toggleSearch}
           />
         </div>
       {:else if selectedView === AudioView.TRANSCRIPTION && body?.transcription}
         <Button
           icon="search"
           tooltip="Search transcription"
-          on:click={toggleSearch}
+          onclick={toggleSearch}
         />
         {#if import.meta.env?.DEV}
           <Button
             icon="code"
             tooltip="Reparse markdown"
-            on:click={() => {
-              dispatch("reparse");
+            onclick={() => {
+              onReparse?.();
             }}
           />
         {/if}
@@ -193,8 +211,8 @@
           <Button
             icon="reload"
             tooltip="Retranscribe"
-            on:click={() => {
-              dispatch("retranscribe");
+            onclick={() => {
+              onRetranscribe?.();
             }}
           />
         {/if}
@@ -208,14 +226,14 @@
               : selectedView === AudioView.SUMMARY
                 ? "Copy summary"
                 : "Copy markdown"}
-            on:click={copyTranscription}
+            onclick={copyTranscription}
           />
         {/if}
         {#if isTranscribeAvailable}
           <Button
             icon="ph:sliders-light"
             tooltip="Transcription settings"
-            on:click={() => {
+            onclick={() => {
               appStore.runAction(Action.ARTIFICIAL_INTELLIGENCE);
             }}
           />
@@ -240,7 +258,7 @@
             mdId={generateSimpleRandomId()}
             isNodular={true}
             md={{ blocks: body?.mdBlocks }}
-            on:change={onMarkdownChange}
+            onChange={onMarkdownChange}
           />
         </div>
       {/if}
@@ -256,7 +274,7 @@
               groupSegments={true}
               maxGroupGapSeconds={3}
               minGroupDuration={8}
-              on:seek={handleSeek}
+              onSeek={handleSeek}
             />
           {:else if searchQuery && searchQuery.length > 1 && body.transcription}
             {@html renderMdAsHtml(
@@ -311,8 +329,8 @@
                 actionText={isTranscribeAvailable ? "Transcribe" : undefined}
                 size={Size.sm}
                 isNotAvailableContext={!isTranscribeAvailable}
-                on:click={() => {
-                  dispatch("transcribe");
+                onclick={() => {
+                  onTranscribe?.();
                 }}
               />
             {/if}

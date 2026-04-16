@@ -11,7 +11,7 @@
     type INodeHierarchyV1,
     type INodeStructure
   } from "@21n/products/memotron/node/node.type";
-  import { createEventDispatcher, onDestroy } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import Markdown from "@21n/components/markdown/Markdown.svelte";
   import {
     extractRootStructure,
@@ -28,17 +28,49 @@
   } from "@21n/components/flux/resourceStores/resource.utils";
   import Button from "@21n/elements/button/Button.svelte";
   import { ButtonStyle } from "@21n/types/button.type";
-  const dispatch = createEventDispatcher();
 
   /**
    * Markdown in node form i.e. each block of the markdown stored as node record and nested under each node
    */
-  export let node: IActiveNode | undefined = undefined;
+  let {
+    node = undefined,
+    md = $bindable(),
+    childrenWithStructure = $bindable([]),
+    focusedBlockChildrenWithStructure = $bindable([]),
+    rootStructure = $bindable(),
+    mdId,
+    isNodular = node != undefined,
+    params = undefined,
+    onAction = undefined,
+    onChange = undefined,
+    onFocus = undefined,
+    onReady = undefined,
+    onRestructure = undefined
+  }: {
+    node?: IActiveNode | undefined;
+    md: IMarkdown;
+    childrenWithStructure?: INodeStructure[];
+    focusedBlockChildrenWithStructure?: INodeStructure[];
+    rootStructure?: string[] | undefined;
+    mdId: string;
+    isNodular?: boolean;
+    params?: IMarkdownParams | undefined;
+    onAction?: ((event: CustomEvent<any>) => void) | undefined;
+    onChange?: ((event: CustomEvent<any>) => void) | undefined;
+    onFocus?: ((event: CustomEvent<any>) => void) | undefined;
+    onReady?: ((event: CustomEvent<void>) => void) | undefined;
+    onRestructure?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
 
   /**
    * Since node is undefined when NodularMarkdown is created from Writer we use this to decide if the media needs to be stored in temporary s3 storage or not
    */
-  if (node == undefined) $isReplaceableMd = true;
+  $effect(() => {
+    $isReplaceableMd = node == undefined;
+    return () => {
+      $isReplaceableMd = false;
+    };
+  });
   onDestroy(() => {
     $isReplaceableMd = false;
   });
@@ -51,37 +83,14 @@
    *
    * See {@link propagateChanges} and {@link onBlockContentChange} for more details on propagation.
    */
-  export let md: IMarkdown;
-
-  /**
-   * @readonly
-   * List of all blocks with their structure i.e. children parsed from the markdown
-   */
-  export let childrenWithStructure: INodeStructure[] = [];
-
-  /**
-   * @readonly
-   * List of all children blocks with their structure when a heading is focused i.e. children parsed from the focused heading markdown.
-   */
-  export let focusedBlockChildrenWithStructure: INodeStructure[] = [];
-
-  /**
-   * @readonly
-   * The list of block ids in the root of the markdown - to maintain the structure of the root markdown and propagate the changes back to the parent component.
-   *
-   * See {@link reCalculateStructure} and {@link extractRootStructure} for more details on how this is calculated.
-   */
-  export let rootStructure: string[] | undefined = undefined;
-  export let mdId: string;
-  export let isNodular: boolean = node != undefined;
-  let refreshId: number = new Date().getTime();
+  let refreshId = $state(new Date().getTime());
 
   /**
    * Scoped blocks from {@link md} which is used to render the markdown.
    *
    * This is used to render the markdown when a heading is focused.
    */
-  let _md: IMarkdown;
+  let _md = $state<IMarkdown>(md);
 
   /**
    * @deprecated - children structure determination trail 1
@@ -91,7 +100,7 @@
   /**
    * The heading block which is focused when nodularity is enabled via {@link isNodular}
    */
-  let focusedBlock: IRecordId | undefined = undefined;
+  let focusedBlock = $state<IRecordId | undefined>();
 
   /**
    * The block in main root markdown until which the blocks are clipped starting from focused heading block when a heading is focused.
@@ -100,24 +109,50 @@
    *
    * {@link md} and {@link childrenWithStructure} maintains the root blocks and structure of the markdown. Using this anchorBlock, {@link _md} and {@link focusedBlockChildrenWithStructure} - changes are propagated back to {@link md} and {@link childrenWithStructure}.
    */
-  let anchorBlock: IRecordId | undefined = undefined;
-  let mdRef: Markdown | undefined = undefined;
-  export let params: IMarkdownParams | undefined = undefined;
-  if (node) {
-    _md = {
-      blocks: recursivelyExtractAllChildrenIntoArray(node) as IBlock[]
-    };
-    reCalculateStructure(_md, true);
-    setTimeout(() => {
-      md = _md;
-      dispatch("ready");
-    }, 1000);
-    // dispatch("ready");
-  } else {
+  let anchorBlock = $state<IRecordId | undefined>();
+  let mdRef = $state<Markdown | undefined>();
+
+  function emitAction(detail: any) {
+    const event = new CustomEvent("action", { detail });
+    onAction?.(event);
+  }
+
+  function emitChange(detail: any) {
+    const event = new CustomEvent("change", { detail });
+    onChange?.(event);
+  }
+
+  function emitFocus(detail: any) {
+    const event = new CustomEvent("focus", { detail });
+    onFocus?.(event);
+  }
+
+  function emitReady() {
+    const event = new CustomEvent<void>("ready");
+    onReady?.(event);
+  }
+
+  function emitRestructure(detail: any) {
+    const event = new CustomEvent("restructure", { detail });
+    onRestructure?.(event);
+  }
+
+  onMount(() => {
+    if (node) {
+      _md = {
+        blocks: recursivelyExtractAllChildrenIntoArray(node) as IBlock[]
+      };
+      reCalculateStructure(_md, true);
+      setTimeout(() => {
+        md = _md;
+        emitReady();
+      }, 1000);
+      return;
+    }
     _md = md;
     reCalculateStructure(_md, true);
-    dispatch("ready");
-  }
+    emitReady();
+  });
   /**
    * @deprecated - used with v1 resolution of {@link hierarchyV1}
    * @param blockType
@@ -181,7 +216,7 @@
       ).map((x) => x.id);
     if (isInitCalculation) return;
     //TODO - if focused - propagate only children of the focusedNode
-    dispatch("restructure", {
+    emitRestructure({
       root: rootStructure,
       children: focusedBlock
         ? focusedBlockChildrenWithStructure
@@ -238,7 +273,7 @@
     logger.log({ at: "onBlockChanges", event });
     const detail = event.detail;
     propagateChanges(detail.md);
-    dispatch("change", {
+    emitChange({
       md,
       block: detail,
       root: rootStructure,
@@ -332,7 +367,7 @@
       focus(event.detail.id);
     } else {
       const parent = extractParent(event.detail.id);
-      dispatch("focus", { id: event.detail.id, parent });
+      emitFocus({ id: event.detail.id, parent });
       logger.log({ at: "onBlockFocus", event, parent, md });
     }
   }
@@ -344,7 +379,7 @@
 
   function onBlockAction(event: CustomEvent) {
     logger.log({ at: "onBlockAction", event });
-    dispatch("action", event.detail);
+    emitAction(event.detail);
     onBlockStructuralChanges(event);
   }
 
@@ -364,7 +399,7 @@
       icon="back-sm"
       label="Back"
       style={ButtonStyle.PLAIN}
-      on:click={() => {
+      onclick={() => {
         unFocus();
       }}
     />
@@ -378,9 +413,9 @@
       ...params
     }}
     bind:this={mdRef}
-    on:change={onBlockContentChange}
-    on:focus={onBlockFocus}
-    on:action={onBlockAction}
-    on:rearrange={onRearrange}
+    onChange={onBlockContentChange}
+    onFocus={onBlockFocus}
+    onAction={onBlockAction}
+    onRearrange={onRearrange}
   />
 {/key}

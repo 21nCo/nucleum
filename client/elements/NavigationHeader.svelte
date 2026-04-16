@@ -3,16 +3,27 @@
   import { haptic } from "@21n/utils/embed.utils";
   import BackButton from "@21n/elements/button/BackButton.svelte";
   import Text from "@21n/elements/text/Text.svelte";
-  export let label: string;
-  export let textStyle: TextStyle = TextStyle.PANEL_HEADING;
-  export let backCallback: () => void;
-  export let height = "h-16";
+    let {
+    label,
+    textStyle = TextStyle.PANEL_HEADING,
+    backCallback,
+    height = "h-16",
+  }: {
+    label: string;
+    textStyle?: TextStyle;
+    backCallback: () => void;
+    height?: string;
+  } = $props();
+
+  
+  
+  
 </script>
 
 <div class="flex justify-between items-center w-full {height}">
   <BackButton
     isPreventDefault={true}
-    on:click={() => {
+    onclick={() => {
       haptic();
       backCallback();
     }}

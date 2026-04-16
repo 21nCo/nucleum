@@ -14,21 +14,30 @@
   import { countNavItems } from "../combination.utils";
   import type { ISideNavCombination } from "../combination.type";
 
-  export let item: ISideNavCombination;
-  export let arrangement: Arrangement = Arrangement.LIST;
-  export let size: Size.sm | Size.md = Size.md;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.BROWSER;
-  export let accessPointState: ResourceAccessPointState =
-    ResourceAccessPointState.DEFAULT;
+  let {
+    item = $bindable(),
+    arrangement = Arrangement.LIST,
+    size = Size.md,
+    accessPoint = ResourceAccessPoint.BROWSER,
+    accessPointState = ResourceAccessPointState.DEFAULT,
+    onClick = undefined
+  }: {
+    item: ISideNavCombination;
+    arrangement?: Arrangement;
+    size?: Size.sm | Size.md;
+    accessPoint?: ResourceAccessPoint;
+    accessPointState?: ResourceAccessPointState;
+    onClick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
 
-  $: counts = countNavItems(item?.items ?? []);
-  $: title = item?.label ?? "Untitled combination";
+  let counts = $derived(countNavItems(item?.items ?? []));
+  let title = $derived(item?.label ?? "Untitled combination");
 
   const pluralize = (count: number, noun: string) =>
     `${count} ${noun}${count === 1 ? "" : "s"}`;
 
-  function onCombinationChange(e: CustomEvent) {
-    const data = e.detail?.params?.record;
+  function onCombinationChange(detail: { params?: { record?: Partial<ISideNavCombination> } } | { key: string }) {
+    const data = "params" in detail ? detail.params?.record : undefined;
     if (data) {
       item = { ...item, ...data } as ISideNavCombination;
     }
@@ -39,7 +48,7 @@
   {#if arrangement === Arrangement.LIST}
     <button
       class="flex items-center gap-3 w-full h-20 rounded-md bg-bgs2 border border-transparent hover:border-bgs3 p-3 text-left"
-      on:click
+      onclick={onClick}
     >
       {#if item?.avatar}
         <AvatarRenderer avatar={item.avatar} size={Size.lg} />
@@ -71,7 +80,7 @@
       </div>
     </button>
   {:else if arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY}
-    <ResourceGridThumbnail {item} {size} on:click>
+    <ResourceGridThumbnail {item} {size} onclick={onClick}>
       <div
         class="flex flex-1 items-center justify-center w-full h-full bg-bgs2 rounded-t-md"
       >
@@ -81,7 +90,8 @@
           <Icon icon="combination" size={Size.lg} class="stroke-fgs2" />
         {/if}
       </div>
-      <div slot="bottom" class="flex flex-col gap-1 w-full">
+      {#snippet bottom()}
+      <div class="flex flex-col gap-1 w-full">
         <span class="text-b2 font-medium truncate">{title}</span>
         {#if item?.description}
           <span class="text-b3 text-fgs3 truncate">{item.description}</span>
@@ -96,13 +106,12 @@
           {/if}
         </div>
       </div>
+      {/snippet}
     </ResourceGridThumbnail>
   {/if}
 </ResourceThumbnailBase>
 
 <ComponentBaseLayer
   subscribeToRecords={[item.id]}
-  on:change={onCombinationChange}
-  on:syncDown={onCombinationChange}
-  on:update={onCombinationChange}
+  onChange={onCombinationChange}
 />

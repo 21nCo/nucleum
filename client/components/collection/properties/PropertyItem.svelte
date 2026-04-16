@@ -35,34 +35,46 @@
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
   import { debouncer } from "@21n/utils/utils";
-  import { createEventDispatcher } from "svelte";
   import type { InputLabel } from "@21n/types/input.type";
   import type { ICollectionItem } from "@21n/components/collection/collection.type";
-  const dispatch = createEventDispatcher();
 
-  export let value: IPropertyValue | null = null;
-  export let property: IProperty;
-  export let item: ICollectionItem | null = null;
-  export let parentBgIndex: number = 1;
-  /**
-   * @deprecated - use context instead
-   */
-  export let isPropertiesPaneContext: boolean = false;
-  export let context: "default" | "propertiesPane" | "collectionView" =
-    "default";
-  export let isReadOnlyMode: boolean = false;
-  let _value: IPropertyValue | null = assignDefaultValue(value);
-  $: options =
+  let {
+    value = null,
+    property,
+    item = null,
+    parentBgIndex = 1,
+    isPropertiesPaneContext = false,
+    context = "default",
+    isReadOnlyMode = false,
+    onChange = undefined,
+    onNewOption = undefined,
+    onConfigChange = undefined
+  }: {
+    value?: IPropertyValue | null;
+    property: IProperty;
+    item?: ICollectionItem | null;
+    parentBgIndex?: number;
+    isPropertiesPaneContext?: boolean;
+    context?: "default" | "propertiesPane" | "collectionView";
+    isReadOnlyMode?: boolean;
+    onChange?: ((event: CustomEvent<any>) => void) | undefined;
+    onNewOption?: ((event: CustomEvent<any>) => void) | undefined;
+    onConfigChange?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
+  let _value = $state<IPropertyValue | null>(null);
+  let options = $derived.by(() =>
     property.type === PropertyType.SINGLE_SELECT ||
     property.type === PropertyType.MULTI_SELECT ||
     property.type === PropertyType.UNIVERSAL
       ? resolveOptionsForSelect(property)
-      : [];
+      : []
+  );
 
-  let style =
-    context === "collectionView" ? InputStyle.PLAIN : InputStyle.FILLED;
+  let style = $derived(
+    context === "collectionView" ? InputStyle.PLAIN : InputStyle.FILLED
+  );
 
-  let label: InputLabel | undefined =
+  let label = $derived.by<InputLabel | undefined>(() =>
     context === "collectionView" && property.type !== PropertyType.CHECKBOX
       ? undefined
       : {
@@ -71,7 +83,8 @@
             context === "collectionView"
               ? Orientation.Horizontal
               : Orientation.Vertical
-        };
+        }
+  );
 
   function assignDefaultValue(value: IPropertyValue | null) {
     if (property.type === PropertyType.DATE && typeof value === "string") {
@@ -99,6 +112,10 @@
     }
     return value;
   }
+
+  $effect(() => {
+    _value = assignDefaultValue(value);
+  });
 
   function formatValue(value: any) {
     if (value instanceof Date) {
@@ -130,7 +147,8 @@
   }
 
   function propagateChange() {
-    dispatch("change", _value);
+    const event = new CustomEvent<any>("change", { detail: _value });
+    onChange?.(event);
   }
 
   function resolveLabel(): InputLabel {
@@ -167,12 +185,21 @@
 
   function onSelectChange(e: CustomEvent<string | string[] | null>) {
     _value = e.detail;
-    dispatch("change", e.detail);
+    const event = new CustomEvent<any>("change", { detail: e.detail });
+    onChange?.(event);
   }
 
   function onDateChange(e: CustomEvent<Date | undefined>) {
     _value = e.detail ?? null;
-    dispatch("change", e.detail);
+    const event = new CustomEvent<any>("change", { detail: e.detail });
+    onChange?.(event);
+  }
+
+  function handleCheckboxChange(event: CustomEvent<boolean>) {
+    const changeEvent = new CustomEvent<any>("change", {
+      detail: event.detail
+    });
+    onChange?.(changeEvent);
   }
 
   const debouncedPropagateChange = debouncer(propagateChange, 1500);
@@ -200,7 +227,7 @@
             property.type === PropertyType.URL ||
             property.type === PropertyType.EMAIL
         })}
-        on:click={() => {
+        onclick={() => {
           if (property.type === PropertyType.URL) {
             const url = _value?.toString().includes("http")
               ? _value.toString()
@@ -239,7 +266,7 @@
       bind:value={_value}
       {label}
       placeholder="Enter text"
-      on:change={debouncedPropagateChange}
+      onChange={debouncedPropagateChange}
     />
   {:else if property.type === PropertyType.NUMBER || property.type === PropertyType.EMAIL || property.type === PropertyType.URL}
     <TextInput
@@ -248,7 +275,7 @@
       bind:value={_value}
       {label}
       placeholder={`Enter ${property.type}`}
-      on:change={debouncedPropagateChange}
+      onChange={debouncedPropagateChange}
       type={property.type}
     />
   {:else if property.type === PropertyType.CHECKBOX && typeof _value === "boolean"}
@@ -258,7 +285,7 @@
       bind:checked={_value}
       label={resolveLabel()}
       {style}
-      on:change
+      onChange={handleCheckboxChange}
     />
   {:else if property.type === PropertyType.RATING && typeof _value === "number"}
     <Rating
@@ -268,7 +295,7 @@
       avatar={property.config?.avatar}
       bind:value={_value}
       count={property.config?.scale ?? 5}
-      on:change
+      {onChange}
     />
   {:else if property.type === PropertyType.SINGLE_SELECT || property.type === PropertyType.MULTI_SELECT || property.type === PropertyType.UNIVERSAL}
     {#if context === "collectionView"}
@@ -292,9 +319,9 @@
         {options}
         parentBackgroundIndex={parentBgIndex}
         value={resolveSelectValue(_value)}
-        on:change={onSelectChange}
-        on:newOption
-        on:configChange
+        onChange={onSelectChange}
+        onNewOption={onNewOption}
+        onConfigChange={onConfigChange}
       />
     {/if}
   {:else if property.type === PropertyType.DATE}
@@ -303,7 +330,7 @@
       date={resolveDateValue(_value)}
       {label}
       {style}
-      on:change={onDateChange}
+      onChange={onDateChange}
     />
   {:else if item}
     <MetaPropertyItem {property} {item} />
@@ -315,6 +342,6 @@
   <ComponentBaseLayer
     subscribeToResource={new Set([Resource.node])}
     subscribeToRecords={[item.id]}
-    on:change={onChangesElsewhere}
+    onChange={onChangesElsewhere}
   />
 {/if}

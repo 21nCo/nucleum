@@ -4,8 +4,13 @@
   import type { IFeature } from "@21n/landing/shared/landing.type";
   import VisualRender from "@21n/landing/shared/VisualRender.svelte";
   import { sanitizeUrl } from "@21n/landing/shared/utils/url-sanitizer";
-  export let feature: IFeature;
-  export let isReversed: boolean = false;
+  let {
+    feature,
+    isReversed = false,
+  }: {
+    feature: IFeature;
+    isReversed?: boolean;
+  } = $props();
 
   function extractVideoId(url: string): string | null {
     const youtubeRegex =
@@ -18,10 +23,12 @@
     return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
   }
 
-  $: videoId = feature.videoElement?.url
-    ? extractVideoId(feature.videoElement.url)
-    : null;
-  $: thumbnailUrl = videoId ? getYoutubeThumbnail(videoId) : null;
+  const videoId = $derived(
+    feature.videoElement?.url ? extractVideoId(feature.videoElement.url) : null
+  );
+  const thumbnailUrl = $derived(
+    videoId ? getYoutubeThumbnail(videoId) : null
+  );
 </script>
 
 <div

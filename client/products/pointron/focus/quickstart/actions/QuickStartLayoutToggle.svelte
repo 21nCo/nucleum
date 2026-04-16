@@ -28,7 +28,7 @@
 <Button
   icon={layout === Layout.LIST ? "bars" : "grid"}
   size={Size.lg}
-  on:click={() => {
+  onclick={() => {
     uiState.setState(
       UIState.quickFocusLayout,
       layout === Layout.LIST || !layout ? Layout.GRID : Layout.LIST,

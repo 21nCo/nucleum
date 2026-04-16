@@ -9,11 +9,19 @@
   import { cn } from "@21n/utils/ui.utils";
   import QuickStartThumbnail from "@21n/products/pointron/focus/quickstart/QuickStartThumbnail.svelte";
 
-  export let items: any[];
-  export let layout: Layout;
-  export let isInEditMode: boolean;
-  export let title: string | undefined = undefined;
-  export let emptyStatusText: string | undefined = undefined;
+  let {
+    items = [],
+    layout,
+    isInEditMode,
+    title = undefined,
+    emptyStatusText = undefined
+  }: {
+    items?: any[];
+    layout: Layout;
+    isInEditMode: boolean;
+    title?: string;
+    emptyStatusText?: string;
+  } = $props();
 
   function onUnpin(e: CustomEvent<IRecordId>) {
     items = items.filter((x) => !isSameResource(x.id, e.detail));
@@ -39,7 +47,7 @@
           {item}
           {layout}
           {isInEditMode}
-          on:unpin={onUnpin}
+          onUnpin={onUnpin}
         />
       {/each}
     </div>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import { Size } from "@21n/types/size.enum";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
@@ -17,16 +17,22 @@
     ResourceActionType
   } from "@21n/components/flux/resourceStores/resource.type";
   import PlayerControl from "@21n/elements/player/controls/PlayerControl.svelte";
-  export let captureStore: IActiveCaptureStore;
+
+  let {
+    captureStore,
+    onClear = undefined
+  }: {
+    captureStore: IActiveCaptureStore;
+    onClear?: (() => void) | undefined;
+  } = $props();
   let videoElement: HTMLVideoElement;
   let canvasElement: HTMLCanvasElement;
-  let photoTaken = false;
-  let savedResource: IRecordId | null = null;
-  let containerHeight: number;
-  let containerWidth: number;
-  let isSaving = false;
-  const dispatch = createEventDispatcher();
-  let error: string | null = null;
+  let photoTaken = $state(false);
+  let savedResource = $state<IRecordId | null>(null);
+  let containerHeight = $state(0);
+  let containerWidth = $state(0);
+  let isSaving = $state(false);
+  let error = $state<string | null>(null);
   let stream: MediaStream | null = null;
 
   onMount(() => {
@@ -37,7 +43,7 @@
       stopCamera();
     };
   });
-  let deviceInfo: MediaDeviceInfo | null = null;
+  let deviceInfo = $state<MediaDeviceInfo | null>(null);
   async function startCamera() {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
@@ -59,12 +65,10 @@
         adjustVideoSize();
       };
     } catch (e) {
-      console.error("Error accessing the camera: ", e);
       error = "No Camera found.";
     }
   }
   function stopCamera() {
-    console.log("Stopping camera and cleaning up resources");
     if (stream) {
       const tracks = stream.getTracks();
       tracks.forEach((track) => {
@@ -120,16 +124,6 @@
     }
     try {
       isSaving = true;
-      // canvasElement.toBlob(async (blob) => {
-      //   if (blob) {
-      //     await captureStore.saveCameraCapture(blob, {
-      //       deviceInfo,
-      //       isMediaDeviceCapture: true
-      //     });
-      //     isSaving = false;
-      //   }
-      // }, "image/jpeg");
-
       const blob = await new Promise<Blob | null>((resolve) => {
         canvasElement.toBlob((b) => resolve(b), "image/jpeg");
       });
@@ -212,7 +206,7 @@
           label="Close"
           size={$view.isConstrainedWidth ? Size.sm : Size.md}
           isPreventMinWidth={true}
-          on:click={() => {
+          onclick={() => {
             const captureAction = resourceAction(
               Resource.node,
               ResourceActionType.CREATE
@@ -232,7 +226,7 @@
           type={ButtonVariant.DANGER}
           size={$view.isConstrainedWidth ? Size.sm : Size.md}
           isPreventMinWidth={true}
-          on:click={retakePhoto}
+          onclick={retakePhoto}
         />
       {/if}
       <Button
@@ -242,7 +236,7 @@
         size={$view.isConstrainedWidth ? Size.sm : Size.md}
         isLoading={isSaving}
         isPreventMinWidth={true}
-        on:click={savePhoto}
+        onclick={savePhoto}
       />
       {#if !isSaving}
         <Button
@@ -251,7 +245,7 @@
           size={$view.isConstrainedWidth ? Size.sm : Size.md}
           isPreventMinWidth={true}
           style={ButtonStyle.PLAIN}
-          on:click={() => dispatch("clear")}
+          onclick={() => onClear?.()}
         />
       {/if}
     {:else}
@@ -259,14 +253,14 @@
       <div class="col-span-1 flex justify-center">
         <button
           class="self-center w-16 h-16 rounded-full bg-aps1 border-none outline-none cursor-pointer relative"
-          on:click={capturePhoto}
+          onclick={capturePhoto}
         >
           <div class="absolute inset-1 rounded-full border-4 border-bgs1"></div>
         </button>
       </div>
       <div class="col-span-1 flex justify-center">
         <PlayerControl
-          on:click={() => dispatch("clear")}
+          onclick={() => onClear?.()}
           icon="back"
           tooltip={"Go back"}
           style={ButtonStyle.PLAIN}

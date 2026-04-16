@@ -254,8 +254,8 @@
     addToDebugLog("Content saved");
   }
 
-  function handleOpen(event: CustomEvent) {
-    addToDebugLog(`Open node: ${event.detail.nodeId}`);
+  function handleOpen(payload: { nodeId: string | undefined }) {
+    addToDebugLog(`Open node: ${payload.nodeId}`);
   }
 
   function handleClose() {
@@ -292,9 +292,9 @@
           {nodeType}
           {error}
           {isOffline}
-          on:saved={handleSaved}
-          on:open={handleOpen}
-          on:close={handleClose}
+          onSaved={handleSaved}
+          onOpen={handleOpen}
+          onClose={handleClose}
         />
       {:else}
         <EmptyStatusView
@@ -305,4 +305,4 @@
     </div>
   {/if}
 </div>
-<svelte:window on:message={handleMessageFromParent} />
+<svelte:window onmessage={handleMessageFromParent} />

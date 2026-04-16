@@ -1,20 +1,28 @@
 <script lang="ts">
   import { popover } from "@21n/actions/popover.action";
-  import type { TimeUnit } from "@21n/types/time.type";
+  import { TimeUnit } from "@21n/types/time.type";
   import TimeUnitDropdownPopover from "@21n/elements/input/durationInput/TimeUnitDropdownPopover.svelte";
-  import { createEventDispatcher } from "svelte";
 
-  export let units: TimeUnit[];
-  export let currentTimeUnit: TimeUnit;
+  let {
+    units,
+    currentTimeUnit = $bindable(TimeUnit.MINUTES),
+    onChange = undefined,
+    onKeyDown = undefined
+  }: {
+    units: TimeUnit[];
+    currentTimeUnit?: TimeUnit;
+    onChange?:
+      | ((event: CustomEvent<{ unit: { new: TimeUnit; old: TimeUnit } }>) => void)
+      | undefined;
+    onKeyDown?: ((event: KeyboardEvent) => void) | undefined;
+  } = $props();
 
-  let isUnitDropdownOpen: boolean;
-  let selectedIndex: number = -1; // -1 means no item is selected
-  let unitClasses: string =
+  let isUnitDropdownOpen = $state(false);
+  let selectedIndex = $state(-1);
+  const unitClasses: string =
     "border rounded-r-md py-2 px-4 min-w-[90px] cursor-pointer flex justify-center relative select-none border-brs3";
   const containerId = "units-dropdown-container";
   let popoverRef: HTMLElement;
-
-  const dispatch = createEventDispatcher();
 
   function closeUnitDropdown() {
     isUnitDropdownOpen = false;
@@ -34,18 +42,22 @@
 
   function timeUnitSelection(item: TimeUnit) {
     if (currentTimeUnit !== item) {
-      dispatch("change", {
-        unit: {
-          new: item,
-          old: currentTimeUnit
+      const changeEvent = new CustomEvent("change", {
+        detail: {
+          unit: {
+            new: item,
+            old: currentTimeUnit
+          }
         }
       });
+      onChange?.(changeEvent);
       currentTimeUnit = item;
     }
     closeUnitDropdown();
   }
 
   function handleKeyDownInDropdown(event: KeyboardEvent) {
+    onKeyDown?.(event);
     if (!isUnitDropdownOpen) return;
     if (event.key === "Enter") {
       timeUnitSelection(units[selectedIndex]);
@@ -57,7 +69,6 @@
       closeUnitDropdown();
     }
   }
-  //TODO - clicking outside scenario for unit dropdown
 </script>
 
 <button
@@ -75,8 +86,8 @@
       handleTimeUnitItemClick
     }
   }}
-  on:change={onPopoverChange}
-  on:keydown={handleKeyDownInDropdown}
+  onchange={onPopoverChange}
+  onkeydown={handleKeyDownInDropdown}
   class={unitClasses}
 >
   <div class="current-unit flex items-center gap-1">

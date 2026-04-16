@@ -4,29 +4,41 @@
     FeatureWheelMode,
     type IFeatureWheelGroup,
     type IFeatureWheelSpoke,
-    type IFeatureWheel
+    type IFeatureWheel,
+    type IFeatureWheelContemporary
   } from "@21n/types/featureWheel.type";
   import { Size } from "@21n/types/size.enum";
   import SpokeLabel from "@21n/components/featureWheel/labels/SpokeLabel.svelte";
   import SpokeProgressMarker from "@21n/components/featureWheel/SpokeProgressMarker.svelte";
   import SpokeContemporaries from "@21n/components/featureWheel/contemporaries/SpokeContemporaries.svelte";
   import { deepCopy } from "@21n/shared-utils/obj.utils";
-  import GroupLabel from "@21n/components/featureWheel/labels/GroupLabel.svelte";
-  import { onMount } from "svelte";
   import SvgIcon from "@21n/elements/SVGIcon.svelte";
-  import { createEventDispatcher } from "svelte";
   import { resizeListener } from "@21n/actions/resize.action";
-  const dispatch = createEventDispatcher();
-  export let wheel: IFeatureWheel;
-  export let mode: FeatureWheelMode = FeatureWheelMode.COMPARER;
-  export let selectedSpoke: string = "";
-  let groups: IFeatureWheelGroup[];
-  let categoryColoringStyle: "bg" | "spoke";
-  let groupInFocus: string = "";
-  let svgWidth: number;
-  onMount(() => {
-    refresh(mode, wheel);
-  });
+  let {
+    wheel,
+    mode = FeatureWheelMode.COMPARER,
+    selectedSpoke = "",
+    onSpokeClick = (_detail: { spoke: string; group: string }) => {},
+    onContemporary = (
+      _detail: {
+        spoke: string;
+        contemporaries: IFeatureWheelContemporary | IFeatureWheelContemporary[];
+      }
+    ) => {}
+  }: {
+    wheel: IFeatureWheel;
+    mode?: FeatureWheelMode;
+    selectedSpoke?: string;
+    onSpokeClick?: (detail: { spoke: string; group: string }) => void;
+    onContemporary?: (detail: {
+      spoke: string;
+      contemporaries: IFeatureWheelContemporary | IFeatureWheelContemporary[];
+    }) => void;
+  } = $props();
+  let groups: IFeatureWheelGroup[] = $state([]);
+  let categoryColoringStyle: "bg" | "spoke" = $state("bg");
+  let groupInFocus = $state("");
+  let svgWidth = $state(0);
 
   let radius = 220;
   const emptyDividerSpoke: IFeatureWheelSpoke = {
@@ -35,51 +47,57 @@
     isDivider: true
   };
 
-  let startAngles = [0];
-  let groupAngles: number[];
+  let startAngles: number[] = $state([0]);
+  let groupAngles: number[] = $state([]);
   let spokeLabelXDisplacementFactor = 10;
 
   let innerRadiusFactor = 0.4;
   let middleRadiusFactor = 0.8;
 
-  let innerRadius = radius * innerRadiusFactor;
-  let middleRadius = radius * middleRadiusFactor;
-  $: size = svgWidth < 1000 ? Size.md : Size.sm;
+  let innerRadius = $state(radius * innerRadiusFactor);
+  let middleRadius = $state(radius * middleRadiusFactor);
+  const size = $derived(svgWidth < 1000 ? Size.md : Size.sm);
+
+  $effect(() => {
+    mode;
+    wheel;
+    groupInFocus;
+    refresh(mode, wheel);
+  });
 
   function refresh(mode: FeatureWheelMode, wheel: IFeatureWheel) {
-    groups = deepCopy(wheel.groups);
+    let nextGroups = deepCopy(wheel.groups);
     if (groupInFocus) {
-      groups = groups.filter((group) => group.label === groupInFocus);
+      nextGroups = nextGroups.filter(
+        (group: IFeatureWheelGroup) => group.label === groupInFocus
+      );
     }
     categoryColoringStyle =
       mode === FeatureWheelMode.PROGRESS || mode === FeatureWheelMode.COMPARER
         ? "spoke"
         : "bg";
-    if (categoryColoringStyle === "bg" && groups.length > 1) {
-      groups = groups.map((group) => {
+    if (categoryColoringStyle === "bg" && nextGroups.length > 1) {
+      nextGroups = nextGroups.map((group: IFeatureWheelGroup) => {
         if (group.spokes.length > 0 && !group.spokes[0].isDivider)
           group.spokes = [emptyDividerSpoke, ...group.spokes];
         return group;
       });
     } else {
-      groups = groups.map((group) => {
-        group.spokes = group.spokes.filter((spoke) => !spoke.isDivider);
+      nextGroups = nextGroups.map((group: IFeatureWheelGroup) => {
+        group.spokes = group.spokes.filter(
+          (spoke: IFeatureWheelSpoke) => !spoke.isDivider
+        );
         return group;
       });
     }
-
-    let groupCount = groups.length;
-    //   let angle = (2 * Math.PI) / groupCount;
-    //   let spokeAngle = angle / 3;
-
-    let totalSpokes = groups.reduce(
-      (total, group) => total + group.spokes.length,
+    let totalSpokes = nextGroups.reduce(
+      (total: number, group: IFeatureWheelGroup) => total + group.spokes.length,
       0
     );
     let limitingSpokeCount =
       totalSpokes >= 30 ? 3 : totalSpokes >= 20 ? 4 : totalSpokes > 10 ? 5 : 20;
-    if (totalSpokes > limitingSpokeCount && groups.length > 1) {
-      groups = groups.map((group) => {
+    if (totalSpokes > limitingSpokeCount && nextGroups.length > 1) {
+      nextGroups = nextGroups.map((group: IFeatureWheelGroup) => {
         if (group.spokes.length > limitingSpokeCount) {
           const remainingCount = group.spokes.length - limitingSpokeCount;
           group.spokes = group.spokes.slice(0, limitingSpokeCount);
@@ -90,31 +108,30 @@
         }
         return group;
       });
-      totalSpokes = groups.reduce(
-        (total, group) => total + group.spokes.length,
+      totalSpokes = nextGroups.reduce(
+        (total: number, group: IFeatureWheelGroup) =>
+          total + group.spokes.length,
         0
       );
     }
 
-    for (let i = 1; i < groups.length; i++) {
-      startAngles[i] =
-        startAngles[i - 1] +
-        (2 * Math.PI * groups[i - 1].spokes.length) / totalSpokes;
+    const nextStartAngles = [0];
+    for (let i = 1; i < nextGroups.length; i++) {
+      nextStartAngles[i] =
+        nextStartAngles[i - 1] +
+        (2 * Math.PI * nextGroups[i - 1].spokes.length) / totalSpokes;
     }
 
-    groupAngles = groups.map(
-      (group) => (2 * Math.PI * group.spokes.length) / totalSpokes
+    groups = nextGroups;
+    startAngles = nextStartAngles;
+    groupAngles = nextGroups.map(
+      (group: IFeatureWheelGroup) =>
+        (2 * Math.PI * group.spokes.length) / totalSpokes
     );
     radius = totalSpokes > 1 ? 220 : 180;
     innerRadius = radius * innerRadiusFactor;
     middleRadius = radius * middleRadiusFactor;
     spokeLabelXDisplacementFactor = totalSpokes * 0.3;
-  }
-
-  function toggleGroupFocus(group: string) {
-    groupInFocus = groupInFocus === group ? "" : group;
-    // console.log("groupInFocus", { groupInFocus });
-    refresh(mode, wheel);
   }
 </script>
 
@@ -152,20 +169,6 @@
             : ""}
         />
       {/if}
-      <!-- <GroupLabel
-      label={group.label}
-      color={group.color}
-      xCoord={groups.length > 1
-        ? (radius + groupAngles[i] * 140) *
-          Math.cos(startAngles[i] + groupAngles[i] / 2)
-        : 0}
-      yCoord={groups.length > 1
-        ? (radius + 60) * Math.sin(startAngles[i] + groupAngles[i] / 2)
-        : radius + 60}
-      on:click={() => {
-        toggleGroupFocus(group.label);
-      }}
-    /> -->
       {#each group.spokes as spoke, j (spoke.label)}
         {@const isActive =
           selectedSpoke?.toLowerCase() === spoke.label.toLowerCase()}
@@ -248,10 +251,10 @@
             {j}
             groupSpokeLength={group.spokes.length}
             {selectedSpoke}
-            on:contemporary={(e) => {
-              dispatch("contemporary", {
+            onContemporary={(detail) => {
+              onContemporary({
                 spoke: spoke.label,
-                contemporaries: e.detail
+                contemporaries: detail
               });
             }}
           />
@@ -262,8 +265,8 @@
           {spoke}
           groupColor={group.color}
           {isActive}
-          on:click={() => {
-            dispatch("spokeClick", { spoke: spoke.label, group: group.label });
+          onclick={() => {
+            onSpokeClick({ spoke: spoke.label, group: group.label });
           }}
           xCoord={(radius + groupAngles[i] * spokeLabelXDisplacementFactor) *
             Math.cos(

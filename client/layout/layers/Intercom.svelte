@@ -6,19 +6,21 @@
   import { clientStorage } from "@21n/persistence/persistence.utils";
   import { ClientStorageKey } from "@21n/persistence/persistence.type";
   clientStorage.set(ClientStorageKey.INTERCOM_ID, intercomId);
-  $: if (!$view.isPortrait && $account.userInfo) {
-    (<any>window).intercomSettings = {
-      api_base: "https://api-iam.intercom.io",
-      app_id: intercomId,
-      name: isValidString($account.userInfo?.nickName) ?? "App user",
-      user_id: $account.userId ?? $account.userInfo?.id,
-      email: $account.userInfo?.email ?? ""
-    };
-    if ((<any>window).Intercom)
-      (<any>window).Intercom("update", {
-        hide_default_launcher: true
-      });
-  }
+  $effect(() => {
+    if (!$view.isPortrait && $account.userInfo) {
+      (<any>window).intercomSettings = {
+        api_base: "https://api-iam.intercom.io",
+        app_id: intercomId,
+        name: isValidString($account.userInfo?.nickName) ?? "App user",
+        user_id: $account.userId ?? $account.userInfo?.id,
+        email: $account.userInfo?.email ?? ""
+      };
+      if ((<any>window).Intercom)
+        (<any>window).Intercom("update", {
+          hide_default_launcher: true
+        });
+    }
+  });
 </script>
 
 <svelte:head>

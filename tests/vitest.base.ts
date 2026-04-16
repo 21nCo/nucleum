@@ -50,5 +50,5 @@ export const coverageConfig = (name: string) => ({
 
 export const clientPlugins = [
   ...basePlugins,
-  svelte({ compilerOptions: { hydratable: true } })
+  svelte()
 ];

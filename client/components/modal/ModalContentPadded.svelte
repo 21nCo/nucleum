@@ -1,9 +1,17 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { cn } from "@21n/utils/ui.utils";
-  export let isExtraSmall: boolean = false;
-  export let isDynamicSize: boolean = false;
-  let classList: string = "";
-  export { classList as class };
+  let {
+    isExtraSmall = false,
+    isDynamicSize = false,
+    class: classList = "",
+    children = undefined
+  }: {
+    isExtraSmall?: boolean;
+    isDynamicSize?: boolean;
+    class?: string;
+    children?: Snippet | undefined;
+  } = $props();
 </script>
 
 <div
@@ -13,5 +21,5 @@
     "w-full h-full": !isDynamicSize
   })}
 >
-  <slot />
+  {@render children?.()}
 </div>

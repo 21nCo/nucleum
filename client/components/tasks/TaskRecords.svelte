@@ -17,7 +17,6 @@
   import CreateTaskInlineWizard from "./CreateTaskInlineWizard.svelte";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { LoadingAnimationType } from "@21n/types/feedback.type";
-  import { createEventDispatcher } from "svelte";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import view from "@21n/stores/view.store";
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
@@ -25,42 +24,55 @@
   import ComponentShortcutListener from "../shortcuts/ComponentShortcutListener.svelte";
   import { Action } from "@21n/types/action.enum";
   import TasksGroupedByGoal from "./TasksGroupedByGoal.svelte";
-  const dispatch = createEventDispatcher();
+  let {
+    data,
+    arrangement = Arrangement.LIST,
+    accessPoint = ResourceAccessPoint.LIBRARY,
+    accessPointId = undefined,
+    parentBgIndex = 1,
+    subType = undefined,
+    isRefreshing = false,
+    searchQuery = "",
+    isPreventAddNew = false,
+    date = undefined,
+    onCreate = undefined
+  }: {
+    data: ITaskThumb[];
+    arrangement?: Arrangement;
+    accessPoint?: ResourceAccessPoint;
+    accessPointId?: IRecordId | undefined;
+    parentBgIndex?: number;
+    subType?: SubType | undefined;
+    isRefreshing?: boolean;
+    searchQuery?: string;
+    isPreventAddNew?: boolean;
+    date?: Date | undefined;
+    onCreate?: ((event: CustomEvent<void>) => void) | undefined;
+  } = $props();
 
-  export let data: ITaskThumb[];
-  export let arrangement: Arrangement = Arrangement.LIST;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.LIBRARY;
-  export let accessPointId: IRecordId | undefined = undefined;
-  export let parentBgIndex = 1;
-  export let subType: SubType | undefined = undefined;
-  export let isRefreshing: boolean = false;
-  export let searchQuery: string = "";
-  export let isPreventAddNew: boolean = false;
-  export let date: Date | undefined = undefined;
-  let isShowCreateTaskWizard: boolean = false;
-  let createTaskParams: any | undefined = undefined;
-  let completedTasksCount: number = 0;
-  let isShowCompletedTasks: boolean = refreshShowCompletedTasksState();
+  let isShowCreateTaskWizard = $state(false);
+  let createTaskParams = $state<any | undefined>(undefined);
+  let isShowCompletedTasks = $state(refreshShowCompletedTasksState());
   const inboxZeroIllustrations = ["inboxZero", "travel", "check", "globe"];
-  let selectedIllustration: string | undefined = undefined;
-  $: _data = applyFilters(data, { isShowCompletedTasks });
-  
-  $: {
+  let selectedIllustration = $state<string | undefined>(undefined);
+  const _data = $derived(applyFilters(data, { isShowCompletedTasks }));
+  const completedTasksCount = $derived(
+    data.filter((task: ITaskThumb) => task.isChecked).length
+  );
+
+  $effect(() => {
     if (accessPoint === ResourceAccessPoint.CALENDAR && completedTasksCount > 0 && !selectedIllustration) {
       selectedIllustration = inboxZeroIllustrations[Math.floor(Math.random() * 4)];
     } else if (completedTasksCount === 0) {
       selectedIllustration = undefined;
     }
-  }
+  });
 
-  $: tasksByDate =
+  const tasksByDate = $derived(
     subType === TaskSubTypeForSwitcher.BY_MONTH
       ? groupTasksByDate(_data)
-      : null;
-
-  $: completedTasksCount = data.filter(
-    (task: ITaskThumb) => task.isChecked
-  ).length;
+      : null
+  );
 
   onMount(() => {
     const appEventSub = appEvents.subscribe((x: IEvent) => {
@@ -151,11 +163,11 @@
     uiState.setState(UIState.showCompletedTasks, isShowCompletedTasks, {
       scope: UIStateScope.DEVICE
     });
-    //TODO - reapply filters
   }
 
   function handleCreateTask() {
-    dispatch("create");
+    const createEvent = new CustomEvent<void>("create");
+    onCreate?.(createEvent);
   }
 </script>
 
@@ -164,7 +176,7 @@
     <div class="flex w-full mb-2">
       <CreateTaskInlineWizard
         {...createTaskParams ?? {}}
-        on:close={() => (isShowCreateTaskWizard = false)}
+        onClose={() => (isShowCreateTaskWizard = false)}
       />
     </div>
   {/if}
@@ -180,7 +192,6 @@
               >
                 {date}
               </h3>
-              <!-- <Button icon="plus" size={Size.sm} tooltip="Add task" /> -->
             </div>
             <TasksGroupedByGoal
               {tasks}
@@ -226,7 +237,7 @@
         ? "Create task"
         : undefined}
       actionShortcut={Action.CREATE}
-      on:click={handleCreateTask}
+      onclick={handleCreateTask}
       emptyIllustration={selectedIllustration}
     >
       {#if completedTasksCount > 0}
@@ -239,7 +250,7 @@
             size={Size.sm}
             type={ButtonVariant.SECONDARY}
             style={ButtonStyle.PLAIN}
-            on:click={toggleCompletedTasks}
+            onclick={toggleCompletedTasks}
           />
         </div>
       {/if}
@@ -256,7 +267,7 @@
           size={Size.sm}
           type={ButtonVariant.SECONDARY}
           style={ButtonStyle.PLAIN}
-          on:click={toggleCompletedTasks}
+          onclick={toggleCompletedTasks}
         />
       {/if}
       {#if accessPoint === ResourceAccessPoint.PICKER}
@@ -267,7 +278,7 @@
           shortcut={Action.CREATE}
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
-          on:click={handleCreateTask}
+          onclick={handleCreateTask}
         />
       {/if}
     </div>

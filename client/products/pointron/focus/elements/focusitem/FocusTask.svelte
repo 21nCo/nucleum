@@ -28,15 +28,23 @@
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { popover } from "@21n/actions/popover.action";
   import FocusTaskEstimatedTimePopover from "@21n/products/pointron/focus/elements/focusitem/FocusTaskEstimatedTimePopover.svelte";
-  import type { TimeUnit } from "@21n/types/time.type";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let task: ITaskThumb;
-  export let focusItem: IFocusItem;
-  export let isInEditMode: boolean = false;
-  export let intervals: ISessionInterval[] = [];
-  export let context: "current" | "history" = "current";
-  export let isStandalone: boolean = false;
+  let {
+    task,
+    focusItem,
+    isInEditMode = false,
+    intervals = [],
+    context = "current",
+    isStandalone = false,
+    onRemove = undefined
+  }: {
+    task: ITaskThumb;
+    focusItem: IFocusItem;
+    isInEditMode?: boolean;
+    intervals?: ISessionInterval[];
+    context?: "current" | "history";
+    isStandalone?: boolean;
+    onRemove?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
   let workedTime: number = 0;
   let isInprogress: boolean = false;
   let labelInputElement: any;
@@ -56,13 +64,7 @@
       isInprogress && $currentFocusItem ? $currentFocusItem.start : undefined
     );
   }
-  $: workedTime = resolveWorkedTime();
-  // $: console.log({
-  //   workedTime,
-  //   task,
-  //   isInprogress,
-  //   currentTask: $sessionStore.currentTask
-  // });
+  let workedTimeDerived = $derived(resolveWorkedTime());
   onMount(() => {
     labelEntry = task.label ?? "";
     // workedTime = +task.worked;
@@ -80,8 +82,11 @@
     return () => sub();
   });
 
-  $: if (isInprogress && scrollToTask)
-    scrollToTask.scrollIntoView({ behavior: "smooth", block: "center" });
+  $effect(() => {
+    if (isInprogress && scrollToTask) {
+      scrollToTask.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  });
 
   async function onLabelChange() {
     task.label = labelEntry;
@@ -117,19 +122,27 @@
     }
   }
 
-  async function onRemove() {
-    dispatch("remove", focusItem.id);
+  async function handleRemove() {
+    const removeEvent = new CustomEvent("remove", {
+      detail: focusItem.id
+    });
+    onRemove?.(removeEvent);
   }
 
-  function onEstimatedTimeChange(
-    e: CustomEvent<{ value: number; unit: TimeUnit }>
-  ) {
+  function onEstimatedTimeChange(e: CustomEvent<{ value: number }>) {
     if (!e.detail?.value) return;
     const value = e.detail.value;
     task.estimated = value;
     taskStore.modify(task.id, {
       estimated: value
     });
+  }
+
+  function handleRootKeyDown(event: KeyboardEvent) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      void clickHandler();
+    }
   }
 </script>
 
@@ -138,7 +151,7 @@
     "border border-brs3 rounded-md": isStandalone
   })}
 >
-  <button
+  <div
     class={cn(
       "relative w-full flex gap-2 items-center justify-between px-4 h-12 rounded-md ",
       {
@@ -146,7 +159,10 @@
         "pl-8": isInEditMode
       }
     )}
-    on:click={clickHandler}
+    onclick={clickHandler}
+    role="button"
+    tabindex="0"
+    onkeydown={handleRootKeyDown}
   >
     {#if isInEditMode}
       <span class="absolute left-2 top-3.5">
@@ -163,18 +179,16 @@
       class="flex gap-2 flex-grow justify-start items-center truncate {task.isChecked &&
         'line-through'}"
     >
-      <TaskCheckbox
-        id={task.id}
-        bind:isChecked={task.isChecked}
-        accessPoint={ResourceAccessPoint.FOCUS}
-        on:toggle={onCheckClicked}
-        isAccentBg={isInprogress}
-      />
+        <TaskCheckbox
+          id={task.id}
+          bind:isChecked={task.isChecked}
+          accessPoint={ResourceAccessPoint.FOCUS}
+          onToggle={onCheckClicked}
+          isAccentBg={isInprogress}
+        />
       {#if isInEditMode || (context === "current" && !$activeSession.isSessionRunning)}
         <TextInput
-          on:focus
-          on:blur
-          on:debouncedChange={onLabelChange}
+          onDebouncedChange={onLabelChange}
           bind:this={labelInputElement}
           bind:value={labelEntry}
           placeholder="Enter task label"
@@ -189,7 +203,7 @@
     <div class="min-w-fit flex justify-center items-center">
       <button
         class="flex items-center gap-1 text-b3"
-        on:click|stopPropagation
+        onclick={(event) => event.stopPropagation()}
         use:popover={{
           content: FocusTaskEstimatedTimePopover,
           isRenderAsModalForCW: true,
@@ -209,19 +223,19 @@
         <div
           class={task.estimated == 0 || !task.estimated || isInprogress
             ? ""
-            : workedTime >= task.estimated
+            : workedTimeDerived >= task.estimated
               ? "text-ars1"
               : "text-ags1"}
         >
-          {formatSeconds(workedTime)}
+          {formatSeconds(workedTimeDerived)}
         </div>
         {task.estimated && task.estimated != 0
           ? "/ " + formatSeconds(task.estimated)
           : ""}
       </button>
     </div>
-  </button>
+  </div>
   {#if isInEditMode || (context === "current" && !$activeSession.isSessionRunning)}
-    <Button icon="cross" on:click={onRemove} tooltip="Remove" />
+    <Button icon="cross" onclick={handleRemove} tooltip="Remove" />
   {/if}
 </div>

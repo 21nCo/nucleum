@@ -1,6 +1,11 @@
 <script lang="ts">
   import { Placement } from "@21n/types/direction.enum";
-  export let direction: Placement = Placement.Left;
+
+  let {
+    direction = Placement.Left
+  }: {
+    direction?: Placement;
+  } = $props();
 </script>
 
 {#if direction === Placement.Left}

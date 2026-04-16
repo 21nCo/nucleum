@@ -12,14 +12,21 @@
   import NavMenu from "@21n/landing/shared/navbar/NavMenu.svelte";
   import NavBarCta from "@21n/landing/shared/navbar/NavBarCta.svelte";
   import NavBarLogo from "@21n/landing/shared/navbar/NavBarLogo.svelte";
-  export let topNavBarValues: ITopNavBar;
-  export let scrollY: number = 0;
-  export let isPreventSticky: boolean = false;
+  let {
+    topNavBarValues,
+    scrollY = 0,
+    isPreventSticky = false,
+  }: {
+    topNavBarValues: ITopNavBar;
+    scrollY?: number;
+    isPreventSticky?: boolean;
+  } = $props();
+
   let isExpandHamMenu: boolean = false;
   const id: string = "top-ham-menu";
   let icon = "ham-burger-menu";
-  let isStickied: boolean = false;
-  $: isStickied = scrollY > 20;
+  let initialScrollY = $state(0);
+  const isStickied = $derived(Math.max(scrollY, initialScrollY) > 20);
 
   async function onHamClick() {
     // await addAnimateClass("animate-slide-up", id);
@@ -37,9 +44,8 @@
 
   onMount(() => {
     setIcon();
-    // Initialize isStickied based on initial scroll position
     if (typeof window !== "undefined") {
-      isStickied = window.scrollY > 50;
+      initialScrollY = window.scrollY;
     }
   });
 </script>
@@ -59,7 +65,7 @@
           {#if !$view.isPortrait && $isProductPage}
             <DayAndNightToggle />
           {/if}
-          <SvgIcon {icon} size={Size.lg} on:click={onHamClick} />
+          <SvgIcon {icon} size={Size.lg} onclick={onHamClick} />
         {/if}
       </div>
     </div>
@@ -73,7 +79,7 @@
       <ButtonAsLink
         class="hidden mo:block"
         label="Explore more 21n products"
-        on:click={() => ($isProductsPanelOpen = true)}
+        onclick={() => ($isProductsPanelOpen = true)}
       />
       {#if $view.isPortrait}
         <DayAndNightToggle class="hidden mo:block mt-auto mb-10" />

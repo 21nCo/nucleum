@@ -5,7 +5,8 @@
   import { resolveGoalColor } from "@21n/components/goals/goal.utils";
   import type { IGoalThumb } from "@21n/components/goals/goal.type";
   import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
-  export let session: ISessionThumb;
+
+  let { session }: { session: ISessionThumb } = $props();
 
   function resolveExpandedGoal(item: ISessionThumb["expandedItems"][number]) {
     if (determineResourceType(item.id) !== Resource.goal) return undefined;
@@ -24,7 +25,6 @@
         >
           <div class="w-2 h-2 rounded-sm bg-ccs1" />
           <div class="text-left text-b2 text-ccs1 truncate w-4/5">
-            <!-- {truncateString(goal.label, $view.isPortrait ? 20 : 25)} -->
             {item.label}
           </div>
         </CustomColorPropagator>

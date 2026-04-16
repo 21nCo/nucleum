@@ -44,10 +44,17 @@
   import { ButtonVariant } from "@21n/types/button.type";
   import { NodeType } from "@21n/products/memotron/node/node.type";
 
-  export let node: IActiveNodeStore;
-  export let selectedView: NodeView = NodeView.CONTENT;
-  export let isConstrainedWidth: boolean = false;
-  export let isShowFloatingBar = true;
+  let {
+    node,
+    selectedView = NodeView.CONTENT,
+    isConstrainedWidth = false,
+    isShowFloatingBar = $bindable(true)
+  }: {
+    node: IActiveNodeStore;
+    selectedView?: NodeView;
+    isConstrainedWidth?: boolean;
+    isShowFloatingBar?: boolean;
+  } = $props();
   let lastScrollTop = 0;
   let mdId = generateSimpleRandomId();
   let isStickied = false;
@@ -55,15 +62,16 @@
   let scrollTimeout: NodeJS.Timeout;
   let isCoverPickerHovered = false;
   let dev_isShowFallbackFloatingBar = false;
-  $: mdStore = getMdStore(mdId);
-  $: cover = $node.cover;
-  $: isWidened = $node.config?.isWidened ?? false;
+  let mdStore = $derived(getMdStore(mdId));
+  let cover = $derived($node.cover);
+  let isWidened = $derived($node.config?.isWidened ?? false);
 
-  $: isReadOnlyMode =
+  let isReadOnlyMode = $derived(
     $node.isInReadOnlyMode ||
-    $node.isLocked ||
-    $node.isArchived ||
-    $node.trashInformation !== undefined;
+      $node.isLocked ||
+      $node.isArchived ||
+      $node.trashInformation !== undefined
+  );
 
   function onScroll(e: any) {
     const st = e.target?.scrollTop;
@@ -189,7 +197,7 @@
                         label="Replace"
                         icon="reset"
                         size={Size.sm}
-                        on:click={() => {
+                        onclick={() => {
                           node.toggleCoverPicker(true);
                         }}
                       />
@@ -198,7 +206,7 @@
                         icon="trash"
                         type={ButtonVariant.DANGER}
                         size={Size.sm}
-                        on:click={removeCoverPhoto}
+                        onclick={removeCoverPhoto}
                       />
                     </div>
                   {/if}
@@ -211,10 +219,10 @@
                       id={$node.id}
                       mdParent={$node.mdParent}
                       currentLabel={$node.label}
-                      on:click={(e) => {
+                      onClick={(event) => {
                         node.eventStore.set({
-                          event: e.detail.event,
-                          id: e.detail.item.resourceId
+                          event: event.detail.event,
+                          id: event.detail.item.resourceId
                         });
                       }}
                     />
@@ -225,9 +233,9 @@
                 <div class="h-full w-full overflow-auto">
                   <CoverPicker
                     value={cover}
-                    on:close={closeCoverPicker}
-                    on:change={handleCoverPhotoChange}
-                    on:select={handleCoverPhotoChange}
+                    onClose={closeCoverPicker}
+                    onChange={handleCoverPhotoChange}
+                    onSelect={handleCoverPhotoChange}
                   />
                 </div>
               {:else}
@@ -238,7 +246,7 @@
                       "cw:px-4": isRenderCover
                     }
                   )}
-                  on:scroll={onScroll}
+                  onscroll={onScroll}
                 >
                   {#if !$node.focusedBlock}
                     <div class="min-h-20" />
@@ -276,22 +284,22 @@
                           id={`title-${$node.id}`}
                           size={Size.xl}
                           bind:value={$node.label}
-                          isExperimentalMdInput={true}
-                          style={InputStyle.PLAIN}
-                          placeholder="Node title"
-                          width="w-full"
-                          on:debouncedChange={onLabelChange}
-                          on:keydown={(e) => {
-                            const event = e.detail;
-                            if (event.key === "ArrowDown") {
-                              event.preventDefault();
-                              if ($mdStore.blocks[0].id)
-                                mdStore.focus.set({
-                                  id: $mdStore.blocks[0].id
-                                });
-                            }
-                          }}
-                        />
+                        isExperimentalMdInput={true}
+                        style={InputStyle.PLAIN}
+                        placeholder="Node title"
+                        width="w-full"
+                        onDebouncedChange={onLabelChange}
+                        onKeydown={(e) => {
+                          const event = e.detail;
+                          if (event.key === "ArrowDown") {
+                            event.preventDefault();
+                            if ($mdStore.blocks[0].id)
+                              mdStore.focus.set({
+                                id: $mdStore.blocks[0].id
+                              });
+                          }
+                        }}
+                      />
                       {:else}
                         {$node.label ?? $node.body ?? ""}
                       {/if}
@@ -309,7 +317,7 @@
                       item={node}
                       resource={Resource.node}
                       isVisibleProps={true}
-                      on:showAll={() => {
+                      onShowAll={() => {
                         node.switchPanel(ResourcePanelType.PROPERTIES);
                       }}
                     />
@@ -342,7 +350,7 @@
       <BottomFloat margin={$context.embed === Embed.HANDSET ? "mb-8" : "mb-4"}>
         <button
           class="flex justify-center items-center gap-2 bg-bgs2 border border-brs3 rounded-md px-4 py-2 shadow-sm hover:bg-bgs3"
-          on:click={() => {
+          onclick={() => {
             nodeStore.toggleFocusMode($node.id, false);
           }}
         >

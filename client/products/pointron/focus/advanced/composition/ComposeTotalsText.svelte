@@ -7,14 +7,16 @@
   import { getTotalsFromComposition } from "@21n/products/pointron/pointron.utils";
   import { formatSeconds } from "@21n/utils/time.utils";
   import { bg, cn } from "@21n/utils/ui.utils";
-  // export let totals: { duration: number; focus: number; brek: number };
-  // export let compositionType: SessionCompositionType;
-  export let composition: SessionComposition;
-  export let parentBgIndex: number = 1;
-  // export let breakType: BreakCompositionType;
-  $: totals = getTotalsFromComposition({
+  let {
+    composition,
+    parentBgIndex = 1
+  }: {
+    composition: SessionComposition;
+    parentBgIndex?: number;
+  } = $props();
+  let totals = $derived(getTotalsFromComposition({
     composition
-  });
+  }));
 </script>
 
 <div

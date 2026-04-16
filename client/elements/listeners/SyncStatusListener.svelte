@@ -2,9 +2,14 @@
   import { observeAttributes } from "@21n/actions/observe.action";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import { onMount } from "svelte";
-  export let resource: Resource;
-  export let isSyncing: boolean = false;
-  let ref: HTMLElement;
+  let {
+    resource,
+    isSyncing = $bindable(false)
+  }: {
+    resource: Resource;
+    isSyncing?: boolean;
+  } = $props();
+  let ref = $state<HTMLElement>();
 
   onMount(() => {
     refreshFromGlobal();
@@ -12,7 +17,7 @@
 
   export function refresh(resourceParam?: Resource) {
     const syncstatusVal = ref?.getAttribute("data-syncstatus");
-    setStatus(syncstatusVal, resourceParam);
+    setStatus(syncstatusVal ?? null, resourceParam);
   }
 
   function refreshFromGlobal() {

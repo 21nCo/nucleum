@@ -1,4 +1,7 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { onMount } from "svelte";
   import type { IRecordId } from "@21n/types/data.type";
@@ -30,49 +33,64 @@
   import { AppSearchParam } from "@21n/types/appStore.type";
   import SearchInput from "@21n/components/search/SearchInput.svelte";
   import { searchStore } from "@21n/components/search/search.store";
-  let pinnedItems: IRecordId[] = tabs.get() ?? [];
-  let bulkEditCount = 0;
-  let bulkEditContext: any = null;
-  let bulkEditSubContext: string | undefined = undefined;
+  let { topnav }: { topnav?: Snippet } = $props();
+  let pinnedItems = $state<IRecordId[]>(tabs.get() ?? []);
+  let bulkEditCount = $state(0);
+  let bulkEditContext = $state<any>(null);
+  let bulkEditSubContext = $state<string | undefined>(undefined);
   const isDev = import.meta.env.DEV;
-  let searchInputRef: SearchInput;
-  let isSearchMode: boolean =
+  let searchInputRef = $state<SearchInput>();
+  let isSearchMode = $state(
     new URLSearchParams(window.location.search).get(AccessMode.MAIN) ===
-    Action.SEARCH;
-  let isShowBackToSearch: boolean =
+      Action.SEARCH
+  );
+  let isShowBackToSearch = $state(
     $vTrail.base === Action.SEARCH &&
-    new URLSearchParams(window.location.search).get(AccessMode.POP) !== null;
+      new URLSearchParams(window.location.search).get(AccessMode.POP) !== null
+  );
 
-  $: currentTab = $page.url.searchParams.get(AccessMode.TAB);
-  $: isInterimTab =
-    currentTab && !pinnedItems.some((x) => x.toString() === currentTab);
+  let currentTab = $derived($page.url.searchParams.get(AccessMode.TAB));
+  let isInterimTab = $derived(
+    !!currentTab && !pinnedItems.some((x) => x.toString() === currentTab)
+  );
 
-  $: isRightOverlayMode = isValidArrayWithData($toasts);
-  $: isFullOverlayMode = bulkEditCount > 0 || isSearchMode;
+  let isRightOverlayMode = $derived(isValidArrayWithData($toasts));
+  let isFullOverlayMode = $derived(bulkEditCount > 0 || isSearchMode);
 
   onMount(() => {
     const unsubscribe = uiState.subscribe((x) => {
-      pinnedItems = tabs.get() ?? [];
+      void x;
+      queueMicrotask(() => {
+        pinnedItems = tabs.get() ?? [];
+      });
     });
     const bulkEditCountUnsub = bulkEditStore.count.subscribe((count) => {
-      bulkEditCount = count;
+      queueMicrotask(() => {
+        bulkEditCount = count;
+      });
     });
     const bulkEditContextUnsub = bulkEditStore.context.subscribe((ctx) => {
-      bulkEditContext = ctx;
+      queueMicrotask(() => {
+        bulkEditContext = ctx;
+      });
     });
     const bulkEditSubContextUnsub = bulkEditStore.subContext.subscribe(
       (sub) => {
-        bulkEditSubContext = sub;
+        queueMicrotask(() => {
+          bulkEditSubContext = sub;
+        });
       }
     );
 
     const pageSub = page.subscribe((p) => {
-      isSearchMode =
-        p.url.searchParams.get(AccessMode.MAIN) === Action.SEARCH &&
-        !p.url.searchParams.get(AccessMode.POP);
-      isShowBackToSearch =
-        $vTrail.base === Action.SEARCH &&
-        p.url.searchParams.get(AccessMode.POP) !== null;
+      queueMicrotask(() => {
+        isSearchMode =
+          p.url.searchParams.get(AccessMode.MAIN) === Action.SEARCH &&
+          !p.url.searchParams.get(AccessMode.POP);
+        isShowBackToSearch =
+          $vTrail.base === Action.SEARCH &&
+          p.url.searchParams.get(AccessMode.POP) !== null;
+      });
     });
 
     return () => {
@@ -113,7 +131,7 @@
         icon={isShowBackToSearch ? "back" : "search"}
         isFirstItem={true}
         isPreventDefault={true}
-        on:click={() => {
+        onClick={() => {
           if (new URLSearchParams(window.location.search).get(AccessMode.POP)) {
             appStore.toggleSearchParam({
               [AccessMode.POP]: null,
@@ -175,7 +193,7 @@
             tooltip="Close search"
             isFirstItem={true}
             isPreventDefault={true}
-            on:click={() => {
+            onClick={() => {
               searchStore.reset();
             }}
           />
@@ -192,10 +210,10 @@
           count={bulkEditCount}
           context={bulkEditContext}
           subContext={bulkEditSubContext}
-          on:action={(e) =>
-            bulkEditStore.onAction(e.detail.action, e.detail.data)}
-          on:selectAll={() => bulkEditStore.onSelectAll()}
-          on:clear={() => bulkEditStore.reset()}
+          onAction={(detail: { action: string; data?: any }) =>
+            bulkEditStore.onAction(detail.action, detail.data)}
+          onSelectAll={() => bulkEditStore.onSelectAll()}
+          onClear={() => bulkEditStore.reset()}
         />
       {/if}
     </div>
@@ -208,9 +226,9 @@
         {#key currentTab}
           <TopBarResourceItem
             item={currentTab}
-            on:click
+            onClick={() => {}}
             isInterimTab
-            on:close={() => {
+            onClose={() => {
               appStore.goBack();
             }}
           />
@@ -223,7 +241,7 @@
         isShorter={true}
         text="Syncing..."
       />
-      <slot name="topnav" />
+      {@render topnav?.()}
       <TopNavLeftMenuItem action={Action.TODAY} />
       <TopNavLeftMenuItem action={Action.NAVIGATOR} />
       <TopNavLeftMenuItem action={Action.CMD} />

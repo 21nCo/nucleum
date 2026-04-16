@@ -10,19 +10,28 @@
   import { Size } from "@21n/types/size.enum";
   import MarkdownRenderer from "@21n/landing/shared/elements/MarkdownRenderer.svelte";
 
-  export let feature: IFwFeature;
-  export let contemporaries: IContemporary[] = [];
-  export let selectedCompare: string[] | undefined = undefined;
-  let featureContemporaries: IFeatureWheelContemporary[] =
-    feature.contemporaries
+  let {
+    feature,
+    contemporaries = [],
+    selectedCompare = undefined
+  }: {
+    feature: IFwFeature;
+    contemporaries?: IContemporary[];
+    selectedCompare?: string[];
+  } = $props();
+
+  const featureContemporaries = $derived.by<IFeatureWheelContemporary[]>(() =>
+    (feature.contemporaries
       ?.filter((fc) => {
         const contemporary = contemporaries.find((c) => fc.label === c.label);
         return !contemporary?.isHideForComparer;
       })
-      ?.sort((a, b) => (b.value ?? 0) - (a.value ?? 0)) ?? [];
+      ?.sort((a, b) => (b.value ?? 0) - (a.value ?? 0)) ?? []) as IFeatureWheelContemporary[]
+  );
 
-  $: isDataPresent =
-    featureContemporaries.filter((c) => isSelected(String(c.label))).length > 0;
+  const isDataPresent = $derived(
+    featureContemporaries.filter((c) => isSelected(String(c.label))).length > 0
+  );
 
   function isSelected(label: string): boolean {
     return (

@@ -1,14 +1,18 @@
-<script lang="ts">
+  <script lang="ts">
   import { cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
   import { gradientsList } from "@21n/elements/colorPicker/gradients/gradients";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
-  const dispatch = createEventDispatcher();
-  export let value: string;
+  let {
+    value = "",
+    onChange = undefined
+  }: {
+    value?: string;
+    onChange?: ((value: string) => void) | undefined;
+  } = $props();
   function handleGradientClick(id: string) {
     value = id;
-    dispatch("change", id);
+    onChange?.(id);
   }
 </script>
 
@@ -16,7 +20,7 @@
   {#each gradientsList as gradient}
     <button
       class={cn("relative h-40 rounded-md", gradient.gradient, {})}
-      on:click={() => handleGradientClick(gradient.id)}
+      onclick={() => handleGradientClick(gradient.id)}
     >
       {#if gradient.id === value}
         <div

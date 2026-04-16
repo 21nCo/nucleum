@@ -15,37 +15,45 @@
   import view from "@21n/stores/view.store";
   import ContextMenuAction from "@21n/elements/contextMenu/ContextMenuAction.svelte";
   import type { IContextMenuItem } from "@21n/types/select.type";
-  import { onMount } from "svelte";
   import { page } from "$app/stores";
   import Icon from "@21n/elements/Icon.svelte";
   import { AppSearchParam } from "@21n/types/appStore.type";
 
-  export let resourceStore: Readable<IResourcePageWithPanels>;
-  export let panels: IToggleItem[];
-  export let isConstrainedWidth: boolean = false;
-  export let accessMode: AccessMode;
-  export let contextMenuResolver:
-    | (() =>
-        | {
-            group: string;
-            items: IContextMenuItem[];
-          }[]
-        | undefined)
-    | undefined = undefined;
-  let isMaximized: boolean = false;
-
-  function resolveContextMenu() {
-    return contextMenuResolver?.() ?? [];
+interface Props {
+  resourceStore: Readable<IResourcePageWithPanels>;
+  panels: IToggleItem[];
+  isConstrainedWidth?: boolean;
+  accessMode: AccessMode;
+  onAction?: ((detail: IContextMenuItem["value"]) => void) | undefined;
+  contextMenuResolver?:
+      | (() =>
+          | {
+              group: string;
+              items: IContextMenuItem[];
+            }[]
+          | undefined)
+      | undefined;
   }
 
-  onMount(() => {
-    const pageSub = page.subscribe((p) => {
-      isMaximized = p.url.searchParams.get(AppSearchParam.MAX) === "true";
-    });
-    return () => {
-      if (pageSub) pageSub();
-    };
-  });
+  let {
+    resourceStore,
+    panels,
+    isConstrainedWidth = false,
+    accessMode,
+    onAction = undefined,
+    contextMenuResolver = undefined
+  }: Props = $props();
+  const isMaximized = $derived(
+    $page.url.searchParams.get(AppSearchParam.MAX) === "true"
+  );
+
+function resolveContextMenu() {
+  return contextMenuResolver?.() ?? [];
+}
+
+function handleContextMenuAction(event: CustomEvent<any>) {
+  onAction?.(event.detail);
+}
 </script>
 
 <div
@@ -74,7 +82,7 @@
             label="Close"
             width="px-2"
             parentBgIndex={3}
-            on:click={() => {
+            onclick={() => {
               $resourceStore.switchPanel();
             }}
           />
@@ -88,19 +96,20 @@
             size={Size.sm}
             type={ButtonVariant.DANGER}
             parentBgIndex={2}
-            on:click={() => {
+            onclick={() => {
               appStore.closeResource({ id: $resourceStore.id });
             }}
           />
         </div>
         <BoxSwitcher
+          isTablist={true}
           isExpandOnActiveForIcon={true}
           options={panels}
           size={$view.isConstrainedWidth ? Size.sm : Size.md}
           isAccentColor={true}
           isActiveIndicatorOnTop={true}
           selected={$resourceStore.panel}
-          on:select={(e) => $resourceStore.switchPanel(e.detail)}
+          onSelect={(e) => $resourceStore.switchPanel(e.detail)}
           isIconOnlyMode={$view.isConstrainedWidth}
         />
         <div
@@ -112,7 +121,7 @@
               tooltip="Go back"
               width="px-3"
               parentBgIndex={2}
-              on:click={() => {
+              onclick={() => {
                 if (accessMode === AccessMode.FULL) {
                   appStore.toggleFullScreen(accessMode, $resourceStore.id);
                 } else {
@@ -127,7 +136,7 @@
                 tooltip={isMaximized ? "Minimize" : "Maximize"}
                 width="px-3"
                 parentBgIndex={2}
-                on:click={() => {
+                onclick={() => {
                   appStore.toggleFullScreen(accessMode, $resourceStore.id);
                 }}
               />
@@ -138,14 +147,14 @@
                     size={Size.lg}
                     isBoxed={true}
                     parentBgIndex={1}
-                    class="h-full w-10"
-                    id="resourcePanelContextMenu"
-                    icon="more-outline-horizontal"
-                    heading="Actions"
-                    on:action
-                  />
-                </div>
-              {/if}
+                  class="h-full w-10"
+                  id="resourcePanelContextMenu"
+                  icon="more-outline-horizontal"
+                  heading="Actions"
+                  onAction={handleContextMenuAction}
+                />
+              </div>
+            {/if}
             </div>
           {/if}
         </div>
@@ -154,7 +163,7 @@
     {#if $resourceStore.isInEditMode}
       <button
         class="flex gap-1 w-full h-11 min-h-11 bg-ass1 text-abg items-center justify-center rounded-b-md hover:brightness-110"
-        on:click={() => {
+        onclick={() => {
           $resourceStore.closeEditMode();
         }}
       >

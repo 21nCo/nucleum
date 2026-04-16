@@ -13,13 +13,18 @@
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import Button from "@21n/elements/button/Button.svelte";
 
-  export let isActive: boolean = false;
-  export let isSearchFocused: boolean = false;
+  let {
+    isActive = false,
+    isSearchFocused = $bindable(false)
+  }: {
+    isActive?: boolean;
+    isSearchFocused?: boolean;
+  } = $props();
   let searchStore = new SearchStore();
-  let librarySearchQuery: string = "";
-  let searchData: any[] = [];
+  let librarySearchQuery = $state("");
+  let searchData = $state<any[]>([]);
   let searchRef: InlineSearchBar;
-  let height = "100%";
+  let height = $state("100%");
 
   function handleResize() {
     // Get the actual visible height
@@ -42,7 +47,7 @@
     }
   });
 
-  async function handleSearch(e: CustomEvent) {
+  async function handleSearch() {
     searchData = await searchStore.select({
       resource: Resource.everything,
       searchQuery: librarySearchQuery,
@@ -63,7 +68,7 @@
     {#if isSearchFocused}
       <button
         class="flex min-h-0 flex-1 w-full overflow-y-auto"
-        on:click={() => {
+        onclick={() => {
           searchRef.blur();
         }}
       >
@@ -96,8 +101,8 @@
         bind:query={librarySearchQuery}
         padding="px-4"
         placeholder="Search library"
-        on:search={handleSearch}
-        on:focus={() => {
+        onSearch={handleSearch}
+        onFocus={() => {
           isSearchFocused = true;
         }}
         style={InputStyle.FILLED}
@@ -105,7 +110,7 @@
       {#if isSearchFocused}
         <Button
           icon="cross"
-          on:click={() => {
+          onclick={() => {
             isSearchFocused = false;
           }}
         />

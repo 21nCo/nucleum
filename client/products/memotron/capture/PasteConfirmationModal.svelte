@@ -20,14 +20,14 @@
   import { appStore } from "@21n/stores/app.store";
   import ShareContentSaver from "@21n/products/memotron/capture/ShareContentSaver.svelte";
 
-  export let event: ClipboardEvent;
+  let { event }: { event: ClipboardEvent } = $props();
 
-  let id = generateResourceId(Resource.capture);
-  let nodeType: NodeType | undefined = undefined;
-  let error: string | undefined = undefined;
-  let data: IPasteCaptureData | undefined = undefined;
-  let saveAsNodeFilesCount: number = 0;
-  let isOffline: boolean = false;
+  const id = generateResourceId(Resource.capture);
+  let nodeType = $state<NodeType | undefined>(undefined);
+  let error = $state<string | undefined>(undefined);
+  let data = $state<IPasteCaptureData | undefined>(undefined);
+  let saveAsNodeFilesCount = $state(0);
+  let isOffline = $state(false);
 
   resolveV2(event);
 
@@ -75,8 +75,7 @@
     // modalEvent.hide(MemotronAction.PASTE_CONFIRMATION);
   }
 
-  function handleOpen(event: CustomEvent) {
-    const { nodeId } = event.detail;
+  function handleOpen({ nodeId }: { nodeId: string | undefined }) {
     if (nodeId) {
       appStore.openResource(nodeId, AccessMode.POP);
     }
@@ -96,9 +95,9 @@
     {isOffline}
     {saveAsNodeFilesCount}
     isShowInsertIntoMarkdown={true}
-    on:saved={handleSaved}
-    on:open={handleOpen}
-    on:close={handleClose}
-    on:insertIntoMarkdown={handleInsertIntoMarkdown}
+    onSaved={handleSaved}
+    onOpen={handleOpen}
+    onClose={handleClose}
+    onInsertIntoMarkdown={handleInsertIntoMarkdown}
   />
 {/if}

@@ -10,20 +10,22 @@
   import FocusNotes from "@21n/products/pointron/focus/notes/FocusNotes.svelte";
   import type { IMarkdown } from "@21n/components/markdown/md.type";
 
-  let feedback: IInlineStatus | undefined = undefined;
+  let feedback = $state<IInlineStatus | undefined>(undefined);
   const mountTs = new Date().getTime();
-  let notes: IMarkdown = { blocks: [] };
+  let notes = $state<IMarkdown>({ blocks: [] });
 
-  $: {
+  $effect(() => {
     const sessionNotes = $activeSession.notes;
     if (sessionNotes && sessionNotes !== notes) {
       notes = sessionNotes;
     }
-  }
+  });
 
-  $: if ($activeSession.notes !== notes) {
-    activeSession.update((session) => ({ ...session, notes }));
-  }
+  $effect(() => {
+    if ($activeSession.notes !== notes) {
+      activeSession.update((session) => ({ ...session, notes }));
+    }
+  });
 
   /**
    * Preventing the feedback on mount to avoid flickering
@@ -49,10 +51,12 @@
 <FocusNotes
   bind:md={notes}
   parentBgIndex={2}
-  on:debouncedChange={onChange}
+  onDebouncedChange={onChange}
 >
-  <div class="flex gap-2 items-center" slot="title">
-    <Text content="Notes" style={TextStyle.PANEL_HEADING} />
-    <InlineFeedbackText {feedback} />
-  </div>
+  {#snippet title()}
+    <div class="flex gap-2 items-center">
+      <Text content="Notes" style={TextStyle.PANEL_HEADING} />
+      <InlineFeedbackText {feedback} />
+    </div>
+  {/snippet}
 </FocusNotes>

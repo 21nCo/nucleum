@@ -4,9 +4,11 @@
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   import { focusItemsStore } from "@21n/products/pointron/focus/session.store";
   import { appStore } from "@21n/stores/app.store";
-  export let parentBgIndex = 1;
+  let { parentBgIndex = 1 }: { parentBgIndex?: number } = $props();
 
-  $: focusItemsCount = focusItemsStore.resolveCount($focusItemsStore.items);
+  let focusItemsCount = $derived(
+    focusItemsStore.resolveCount($focusItemsStore.items)
+  );
 </script>
 
 <div
@@ -18,7 +20,7 @@
   </div>
   <button
     class="flex flex-col items-center gap-1 cw:pb-40 pb-16"
-    on:click={() => appStore.runAction(PointronAction.SHOW_FOCUSITEMS_MODAL)}
+    onclick={() => appStore.runAction(PointronAction.SHOW_FOCUSITEMS_MODAL)}
   >
     <span class="underline-dotted">
       {focusItemsCount > 0

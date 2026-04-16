@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { appStore } from "@21n/stores/app.store";
   import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
   import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
@@ -48,10 +49,15 @@
       });
     }
   }
-</script>
 
-<svelte:document
-  on:dragenter={handleDragEnter}
-  on:dragleave={handleDragLeave}
-/>
-<svelte:window on:paste={handlePaste} />
+  onMount(() => {
+    document.addEventListener("dragenter", handleDragEnter);
+    document.addEventListener("dragleave", handleDragLeave);
+    window.addEventListener("paste", handlePaste);
+    return () => {
+      document.removeEventListener("dragenter", handleDragEnter);
+      document.removeEventListener("dragleave", handleDragLeave);
+      window.removeEventListener("paste", handlePaste);
+    };
+  });
+</script>

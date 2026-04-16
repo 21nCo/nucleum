@@ -11,11 +11,20 @@
   import TargetGuages from "@21n/products/pointron/analytics/targets/TargetGuages.svelte";
   import { Size } from "@21n/types/size.enum";
   import view from "@21n/stores/view.store";
-  export let card: IAnalyticsCard;
-  export let data: AnalyticsDataRecord[];
-  export let parentBgIndex: number = 1;
-  export let previousTimePeriodData: AnalyticsDataRecord[] = [];
-  export let goalColors: IAnalyticsLabelColor[];
+
+  let {
+    card,
+    data,
+    parentBgIndex = 1,
+    previousTimePeriodData = [],
+    goalColors
+  }: {
+    card: IAnalyticsCard;
+    data: AnalyticsDataRecord[];
+    parentBgIndex?: number;
+    previousTimePeriodData?: AnalyticsDataRecord[];
+    goalColors: IAnalyticsLabelColor[];
+  } = $props();
 </script>
 
 {#if card.type === AnalyticsCardType.TOP_N || card.type === AnalyticsCardType.TARGETS || card.type === AnalyticsCardType.METRICS}
@@ -33,7 +42,7 @@
         />
       </div>
     {:else if card.type === AnalyticsCardType.METRICS}
-      <MetricsCard {card} {data} {goalColors} {previousTimePeriodData} />
+      <MetricsCard {data} {previousTimePeriodData} />
     {/if}
   </div>
 {:else}

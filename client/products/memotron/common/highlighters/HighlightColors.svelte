@@ -3,10 +3,15 @@
   import HightlightColorItem from "@21n/products/memotron/common/highlighters/HightlightColorItem.svelte";
   import { Orientation } from "@21n/types/direction.enum";
   import { cn } from "@21n/utils/ui.utils";
-  import { createEventDispatcher } from "svelte";
-  export let selected: string | null = null;
-  export let orientation: Orientation = Orientation.Horizontal;
-  const dispatch = createEventDispatcher();
+  let {
+    selected = $bindable(null),
+    orientation = Orientation.Horizontal,
+    onColor = undefined
+  }: {
+    selected?: string | null;
+    orientation?: Orientation;
+    onColor?: ((highlighter: any) => void) | undefined;
+  } = $props();
 </script>
 
 {#if $highlightStore.highlighters.length > 0}
@@ -19,9 +24,9 @@
       <HightlightColorItem
         {highlighter}
         isActive={highlighter.id === selected}
-        on:click={() => {
+        onClick={() => {
           selected = highlighter.id;
-          dispatch("color", highlighter);
+          onColor?.(highlighter);
         }}
       />
     {/each}

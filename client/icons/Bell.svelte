@@ -1,7 +1,13 @@
 <script lang="ts">
   import { BellIconVariant, IconVariant } from "@21n/types/icon.type";
-  export let variant: IconVariant = IconVariant.Outline;
-  export let bellVariant: BellIconVariant = BellIconVariant.Default;
+
+  let {
+    variant = IconVariant.Outline,
+    bellVariant = BellIconVariant.Default
+  }: {
+    variant?: IconVariant;
+    bellVariant?: BellIconVariant;
+  } = $props();
 </script>
 
 {#if bellVariant === BellIconVariant.Default}

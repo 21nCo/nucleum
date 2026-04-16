@@ -51,7 +51,7 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
     ]
   },
   {
-    name: "Nucleus",
+    name: "Nucleum",
     type: PlanType.NUCLEUS,
     description: "Everything productivity, single plan",
     price: {
@@ -70,7 +70,7 @@ export const SUBSCRIPTION_PLANS: IPlan[] = [
       },
       {
         icon: "sparkle",
-        label: "Access to [Nucleus](https://nucleus.to) (Web app)"
+        label: "Access to [Nucleum](https://nucleus.to) (Web app)"
       },
       // {
       //   icon: "ph:brain-light",

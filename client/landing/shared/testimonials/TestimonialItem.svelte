@@ -3,9 +3,13 @@
   import { cn } from "@21n/utils/ui.utils";
   import type { ITestimonial } from "@21n/landing/shared/landing.type";
   import { sanitizeUrl } from "@21n/landing/shared/utils/url-sanitizer";
-  export let testimonial: ITestimonial;
+  let {
+    testimonial,
+  }: {
+    testimonial: ITestimonial;
+  } = $props();
 
-  $: sanitizedLink = sanitizeUrl(testimonial.link);
+  const sanitizedLink = $derived(sanitizeUrl(testimonial.link));
 </script>
 
 <a

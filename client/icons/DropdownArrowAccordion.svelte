@@ -1,11 +1,20 @@
 <script lang="ts">
   import { AccordionState } from "@21n/types/accordionState.enum";
 
-  export let width: number = 10;
-  export let height: number = 7;
-  export let state: AccordionState;
-  export let isActive: boolean = false;
-  export let opacity: number = 1;
+  let {
+    width = 10,
+    height = 7,
+    state,
+    isActive = false,
+    opacity = 1
+  }: {
+    width?: number;
+    height?: number;
+    state: AccordionState;
+    isActive?: boolean;
+    opacity?: number;
+  } = $props();
+
 </script>
 
 <svg

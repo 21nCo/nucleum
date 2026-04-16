@@ -11,7 +11,8 @@
   import MoreBarsInfo from "@21n/products/pointron/focus/elements/intervalbar/MoreBarsInfo.svelte";
   import { SessionState } from "@21n/types/pointron/sessionState.enum";
   import { deepCopy } from "@21n/shared-utils/obj.utils";
-  export let context: SessionUIContext = SessionUIContext.DEFAULT;
+  let { context = SessionUIContext.DEFAULT }: { context?: SessionUIContext } =
+    $props();
   let preceedingHiddenBars: ISessionInterval[] = [];
   let succeedingHiddenBars: ISessionInterval[] = [];
   function resolveCountupBarDuration(bar: ISessionInterval) {
@@ -25,9 +26,11 @@
       return bar.duration;
     }
   }
-  $: visibleLimit = $view.isPortrait ? 4 : 10;
-  $: isHideSomeBars = $activeSession.intervals.length > visibleLimit;
-  $: visibleBars = resolveVisibleBars($activeSession.intervals);
+  let visibleLimit = $derived($view.isPortrait ? 4 : 10);
+  let isHideSomeBars = $derived($activeSession.intervals.length > visibleLimit);
+  let visibleBars = $derived.by(() =>
+    resolveVisibleBars($activeSession.intervals)
+  );
 
   function resolveVisibleBars(blocks: ISessionInterval[]) {
     // console.log({
@@ -105,7 +108,6 @@
       80
     );
   }
-  // $: console.log({ visibleBars: deepCopy(visibleBars) });
 </script>
 
 <div class="flex w-full gap-4 pt-4 items-center h-12 min-h-[3rem]">

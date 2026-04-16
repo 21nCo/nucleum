@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import modalEvent from "@21n/components/modal/modal.store";
   import { confirmationNotification } from "@21n/stores/notification.store";
   import { fade } from "svelte/transition";
@@ -17,35 +18,45 @@
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import context from "@21n/stores/context.store";
   import { OperatingSystem } from "@21n/types/context.type";
-  export let index: number = 0;
-  export let show = true;
-  export let title: string = "";
-  export let isShowOverlay: boolean = true;
-  /**
-   * @deprecated - use alignment instead
-   */
-  export let isOnRight: boolean = false;
-  export let alignment: Placement = Placement.Center;
-  export let isDismissable: boolean = true;
-  export let isUseDialog: boolean = false;
-  export let size: Size = Size.md;
-  export let orientation: Orientation = Orientation.Vertical;
-  export let hasCantileverButtons: boolean = false;
-  export let isDynamicSize: boolean = false;
-  $: isOnRight;
-  let dialog: HTMLDialogElement;
-  /**
-   * Safari focuses the dialog element or a button present on the dialog when the dilaog is shown. This focusTrap is used to remove the focus from the dialog element or the button.
-   *
-   * TODO: This is a hack to remove focus from dialog element which is happening in safari - disabled for now as it is interfering with textbox focus - workaround - check if the document.activeElement is input and then proceed to remove focus
-   *
-   */
-  let focusTrap: HTMLDivElement;
-  export let id = generateUID();
-  $: if (show && dialog && !dialog.open) {
+  let {
+    index = 0,
+    show = $bindable(true),
+    title = "",
+    isShowOverlay = true,
+    isOnRight = false,
+    alignment = Placement.Center,
+    isDismissable = true,
+    isUseDialog = false,
+    size = Size.md,
+    orientation = Orientation.Vertical,
+    hasCantileverButtons = false,
+    isDynamicSize = false,
+    id = generateUID(),
+    children = undefined
+  }: {
+    index?: number;
+    show?: boolean;
+    title?: string;
+    isShowOverlay?: boolean;
+    isOnRight?: boolean;
+    alignment?: Placement;
+    isDismissable?: boolean;
+    isUseDialog?: boolean;
+    size?: Size;
+    orientation?: Orientation;
+    hasCantileverButtons?: boolean;
+    isDynamicSize?: boolean;
+    id?: string;
+    children?: Snippet | undefined;
+  } = $props();
+  void isOnRight;
+  let dialog = $state<HTMLDialogElement | undefined>();
+  let focusTrap = $state<HTMLDivElement | undefined>();
+  $effect(() => {
+    if (show && dialog && !dialog.open) {
     dialog.showModal();
-    // setTimeout(() => focusTrap?.focus(), 0);
-  }
+    }
+  });
 
   /**
    * This is triggered when the overlay is clicked.
@@ -81,7 +92,8 @@
    * @param e
    */
   function handleClose(e: any) {
-    dialog.showModal();
+    void e;
+    dialog?.showModal();
   }
 
   function resolveSizeClasses() {
@@ -124,14 +136,14 @@
       {#if title}
         <ModalHeader
           {title}
-          on:click={() => {
+          onClose={() => {
             show = false;
           }}
         />
       {/if}
       <div class="popover-body w-full overflow-y-auto">
         <ColorLayer>
-          <slot />
+          {@render children?.()}
         </ColorLayer>
       </div>
     </div>
@@ -164,16 +176,19 @@
       data-blank-modal={index}
       data-modal-size={size}
       transition:fade={{ duration: 100 }}
-      on:click={overlayClicked}
+      onclick={overlayClicked}
       role="button"
-      on:keydown
+      onkeydown={() => {}}
       tabindex="0"
     >
       {#if isUseDialog}
         <dialog
           bind:this={dialog}
           id={id + "-modal"}
-          on:close|preventDefault={handleClose}
+          onclose={(event) => {
+            event.preventDefault();
+            handleClose(event);
+          }}
           class={cn(
             "rounded-md flex flex-col p-0 text-fgs1 shadow--bgs4 shadow-xl cw:w-full ch:h-full max-h-full",
             {
@@ -187,7 +202,7 @@
         >
           <div bind:this={focusTrap} tabindex="-1" style="outline: none;"></div>
           <ColorLayer>
-            <slot />
+            {@render children?.()}
           </ColorLayer>
         </dialog>
       {:else}
@@ -216,11 +231,11 @@
               "mt-auto": alignment === Placement.BottomCenter
             }
           )}
-        >
-          <ColorLayer>
-            <slot />
-          </ColorLayer>
-        </div>
+          >
+            <ColorLayer>
+              {@render children?.()}
+            </ColorLayer>
+          </div>
       {/if}
     </div>
   {/if}

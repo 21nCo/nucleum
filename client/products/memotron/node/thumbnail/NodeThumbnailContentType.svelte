@@ -1,7 +1,7 @@
 <script lang="ts">
   import { properCase } from "@21n/shared-utils/text.utils";
   import { NodeType, type INode } from "@21n/products/memotron/node/node.type";
-  export let item: INode;
+  let { item }: { item: INode } = $props();
   function formatContentType(contentType: string) {
     if (
       contentType === NodeType.NODULAR_MARKDOWN ||

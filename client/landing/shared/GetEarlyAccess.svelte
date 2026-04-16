@@ -3,8 +3,13 @@
 
   import Button from "@21n/landing/shared/elements/Button.svelte";
 
-  export let email: string;
-  export let onSubscribe: () => void;
+  let {
+    email = $bindable(""),
+    onSubscribe,
+  }: {
+    email?: string;
+    onSubscribe: () => void;
+  } = $props();
 </script>
 
 <div
@@ -18,5 +23,5 @@
       class="w-full h-full bg-bgs1 text-fgs1 border border-brs3 p-4 rounded-lg text-[15px] focus:outline-none focus:border-aps1"
     />
   </div>
-  <Button isShort={true} label="Get early access" on:click={onSubscribe} />
+  <Button isShort={true} label="Get early access" onclick={onSubscribe} />
 </div>

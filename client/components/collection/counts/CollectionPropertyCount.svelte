@@ -2,8 +2,13 @@
   import CountBadge from "@21n/components/collection/counts/CountBadge.svelte";
   import { CollectionType } from "@21n/components/collection/collection.type";
   import type { ICollectionThumb } from "@21n/components/collection/collection.type";
-  export let item: ICollectionThumb;
-  export let isShowLabel: boolean = true;
+  let {
+    item,
+    isShowLabel = true
+  }: {
+    item: ICollectionThumb;
+    isShowLabel?: boolean;
+  } = $props();
 </script>
 
 {#if item.type === CollectionType.TYPED && item.properties && item.properties?.length > 0}

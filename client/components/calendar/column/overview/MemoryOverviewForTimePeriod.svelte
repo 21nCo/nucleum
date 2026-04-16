@@ -20,9 +20,16 @@
   import { tzStore } from "@21n/components/settings/timezone/tz.store";
   import { Size } from "@21n/types/size.enum";
 
-  export let date: Date;
-  export let scale: TimeScaleUnit = TimeScaleUnit.DAY;
-  export let isRewind: boolean = false;
+  let {
+    date,
+    scale = TimeScaleUnit.DAY,
+    isRewind = false
+  }: {
+    date: Date;
+    scale?: TimeScaleUnit;
+    isRewind?: boolean;
+  } = $props();
+
   const dev_isShowPreviousYearsData = false;
 
   async function fetchMemoryData(): Promise<{
@@ -178,7 +185,7 @@
                       arrangement={Arrangement.LIST}
                       accessPoint={ResourceAccessPoint.CALENDAR}
                       accessPointId={`calendar-${date.toISOString().split("T")[0]}`}
-                      on:click={() => handleNodeClick(node)}
+                      onClick={() => handleNodeClick(node)}
                     />
                   {/each}
 

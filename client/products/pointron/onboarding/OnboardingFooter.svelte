@@ -2,22 +2,19 @@
   import Button from "@21n/elements/button/Button.svelte";
   import view from "@21n/stores/view.store";
   import { ButtonStyle } from "@21n/types/button.type";
-  import { createEventDispatcher } from "svelte";
 
-  export let activeStep: number;
-  export let totalSteps: number;
-
-  const temp = Array.from({ length: totalSteps - 1 }, (_, i) => i + 1);
-
-  const dispatch = createEventDispatcher();
-
-  function handleNext() {
-    dispatch("next");
-  }
-
-  function handleStartTutorial() {
-    dispatch("final");
-  }
+  let {
+    activeStep,
+    totalSteps,
+    onNext,
+    onFinal
+  }: {
+    activeStep: number;
+    totalSteps: number;
+    onNext?: () => void;
+    onFinal?: () => void;
+  } = $props();
+  let temp = $derived(Array.from({ length: totalSteps - 1 }, (_, i) => i + 1));
 </script>
 
 <div
@@ -28,7 +25,7 @@
   {#if $view.isPortrait}
     <div class="button mb-4 w-full">
       {#if activeStep !== totalSteps - 1}
-        <Button isExpandToFullWidth={true} on:click={handleNext} type="primary">
+        <Button isExpandToFullWidth={true} onclick={onNext} type="primary">
           {#if activeStep === 0}
             Get Started
           {:else}
@@ -38,7 +35,7 @@
       {:else}
         <Button
           isExpandToFullWidth={true}
-          on:click={handleStartTutorial}
+          onclick={onFinal}
           type="primary"
         >
           Let's go
@@ -64,8 +61,3 @@
     {/if}
   </div>
 </div>
-
-<!-- 
-    Note :
-    activeStep === index + 1, because since we only want to indicate active step from 1(not 0), also since we only want to show case this indicator after step 0, we are using the above condition activeStep > 0, and reducing the totalSteps by 1, for the same reason we are using index + 1
- -->

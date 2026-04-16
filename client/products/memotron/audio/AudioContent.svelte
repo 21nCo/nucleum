@@ -6,7 +6,7 @@
   import { TimeFormat } from "@21n/types/time.type";
   import { retrieveCurrentColors } from "@21n/utils/theme.utils";
   import { formatSeconds } from "@21n/utils/time.utils";
-  import { createEventDispatcher, onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   import WaveSurfer from "wavesurfer.js";
   import TimelinePlugin from "wavesurfer.js/dist/plugins/timeline";
   import { nodeStore } from "@21n/products/memotron/node/node.store";
@@ -29,15 +29,24 @@
   import { Size } from "@21n/types/size.enum";
   import type { IAudioBody, IAudioMetadata } from "@21n/products/memotron/node/node.type";
 
-  export let body: IAudioBody = {};
-  export let url: string;
-  export let nodeId: string = "dummy";
-  export let metadata: IAudioMetadata = {};
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
+  let {
+    body = {},
+    url,
+    nodeId = "dummy",
+    metadata = {},
+    accessPoint = ResourceAccessPoint.SELF,
+    onRefresh = undefined
+  }: {
+    body?: IAudioBody;
+    url: string;
+    nodeId?: string;
+    metadata?: IAudioMetadata;
+    accessPoint?: ResourceAccessPoint;
+    onRefresh?: ((event: CustomEvent<void>) => void) | undefined;
+  } = $props();
 
   const _previewId = generateSimpleRandomId();
   const currentColors: any = retrieveCurrentColors($appearance);
-  const dispatch = createEventDispatcher();
   let wavesurferPreview: WaveSurfer;
   let previewCountDown: number = 0;
   let previewTotalDuration: number = metadata?.duration || 0;
@@ -54,11 +63,18 @@
   let isPreviewLoading: boolean = true;
   let selectedView: AudioView = AudioView.TRANSCRIPTION;
 
-  $: isTranscribeAvailable =
+  const isTranscribeAvailable =
+    $derived(
     accessPoint === ResourceAccessPoint.SELF &&
     $context.isEmbed &&
     !!metadata?.duration &&
-    metadata?.duration <= 15 * 60;
+    metadata?.duration <= 15 * 60
+  );
+
+  function emitRefresh() {
+    const refreshEvent = new CustomEvent<void>("refresh");
+    onRefresh?.(refreshEvent);
+  }
 
   /**
    * Initiates audio transcription using iOS ML service
@@ -139,7 +155,7 @@
           },
           text: transcription
         });
-        dispatch("refresh");
+        emitRefresh();
       } else if (jobResult.status === "failed") {
         errorMessage = defaultErrorMessage;
       } else if (jobResult.status === "running") {
@@ -316,7 +332,7 @@
     </audio> -->
       <div class="flex w-full justify-center gap-3">
         <Button
-          on:click={(e) => {
+          onclick={(e) => {
             e?.stopPropagation();
             wavesurferPreview.setTime(previewCountDown - 10);
           }}
@@ -326,7 +342,7 @@
         />
         {#if recordingState === PlayActionState.STOPPED}
           <Button
-            on:click={(e) => {
+            onclick={(e) => {
               e?.stopPropagation();
               recordingState = PlayActionState.PREVIEWING;
               wavesurferPreview.play();
@@ -339,7 +355,7 @@
         {:else if recordingState === PlayActionState.PREVIEWING}
           {#if previewingState === PlayActionState.RESUMEPREVIEWING}
             <Button
-              on:click={(e) => {
+              onclick={(e) => {
                 e?.stopPropagation();
                 wavesurferPreview.pause();
                 previewingState = PlayActionState.PAUSEPREVIEWING;
@@ -351,7 +367,7 @@
             />
           {:else}
             <Button
-              on:click={(e) => {
+              onclick={(e) => {
                 e?.stopPropagation();
                 wavesurferPreview.play();
                 previewingState = PlayActionState.RESUMEPREVIEWING;
@@ -364,7 +380,7 @@
           {/if}
         {/if}
         <Button
-          on:click={(e) => {
+          onclick={(e) => {
             e?.stopPropagation();
             wavesurferPreview.setTime(previewCountDown + 10);
           }}
@@ -387,10 +403,10 @@
       {isTranscribeAvailable}
       {metadata}
       {errorMessage}
-      on:seek={handleSeek}
-      on:transcribe={initiateTranscription}
-      on:retranscribe={initiateTranscription}
-      on:reparse={reParseMarkdown}
+      onSeek={handleSeek}
+      onTranscribe={initiateTranscription}
+      onRetranscribe={initiateTranscription}
+      onReparse={reParseMarkdown}
     />
   {/if}
 </div>

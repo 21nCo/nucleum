@@ -8,10 +8,11 @@
   import { OperatingSystem } from "@21n/types/context.type";
   import { EmbedMessage } from "@21n/types/embedMessage.enum";
   import { postMessageToParent } from "@21n/utils/embed.utils";
-  $: isAppleContext =
+  const isAppleContext = $derived(
     $context.isEmbed &&
     ($context.os === OperatingSystem.IOS ||
-      $context.os === OperatingSystem.MACOS);
+      $context.os === OperatingSystem.MACOS)
+  );
 
   async function restore() {
     if (isAppleContext) {
@@ -43,6 +44,6 @@
     icon="restore"
     style={ButtonStyle.PLAIN}
     size={Size.sm}
-    on:click={restore}
+    onclick={restore}
   />
 </div>

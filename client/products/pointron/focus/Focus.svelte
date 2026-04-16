@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { page } from "$app/stores";
   import { BarStyle, PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import { onMount } from "svelte";
@@ -36,9 +37,17 @@
     readable(undefined);
   const MIN_WIDTH_TO_EXPAND = resolveMinWidth(2);
 
-  export let accessMode: AccessMode = AccessMode.INLINE;
-  let mode: number = 0;
-  let isInlineEnabled: boolean = true;
+  let {
+    accessMode = AccessMode.INLINE,
+    nonPadded: nonPaddedContent = undefined,
+    right: rightContent = undefined
+  }: {
+    accessMode?: AccessMode;
+    nonPadded?: Snippet | undefined;
+    right?: Snippet | undefined;
+  } = $props();
+  let mode = $state(0);
+  let isInlineEnabled = $state(true);
   const manualLogHotKey = {
     key: "m"
   };
@@ -101,7 +110,7 @@
               barStyle={BarStyle.DOT}
               {parentBgIndex}
               isDisableEnabled={$activeSession.isSessionRunning}
-              on:switch={(e) => {
+              onSwitch={(e) => {
                 mode = e.detail === "Quick Focus" ? 0 : 1;
               }}
             />
@@ -142,22 +151,30 @@
           ? undefined
           : "simpleDigitalClock"}
       >
-        <slot name="nonpadded" slot="nonpadded">
-          <QuickStart />
-        </slot>
-        <slot:fragment slot="toprightactions">
+        {#snippet nonPadded()}
+          {#if nonPaddedContent}
+            {@render nonPaddedContent?.()}
+          {:else}
+            <QuickStart />
+          {/if}
+        {/snippet}
+        {#snippet topRightActions()}
           <span>
             <QuickStartLayoutToggle />
           </span>
-        </slot:fragment>
-        <slot name="right" slot="right">
-          {#if $activeSession.isSessionRunning}
-            <Zen isInline={true} />
+        {/snippet}
+        {#snippet right()}
+          {#if rightContent}
+            {@render rightContent?.()}
           {:else}
-            <Advanced />
-            <FloatingButton params={[startSessionButton]} />
+            {#if $activeSession.isSessionRunning}
+              <Zen isInline={true} />
+            {:else}
+              <Advanced />
+              <FloatingButton params={[startSessionButton]} />
+            {/if}
           {/if}
-        </slot>
+        {/snippet}
       </Panel>
     {/if}
   </div>

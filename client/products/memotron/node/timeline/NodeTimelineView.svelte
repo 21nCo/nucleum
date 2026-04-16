@@ -19,12 +19,16 @@
   import { linkTagStore } from "@21n/products/memotron/linking/link.store";
   import { linkTagLabelMapper } from "@21n/products/memotron/linking/link.utils";
 
-  export let node: INode & { links?: INodeLinkThumb[] };
+  let {
+    node
+  }: {
+    node: INode & { links?: INodeLinkThumb[] };
+  } = $props();
   let isLoading = false;
   let linkedNodes: INodeThumb[] = [];
   let groups: { date: string; nodes: INodeThumb[] }[] = [];
 
-  $: tags = $linkTagStore?.map(linkTagLabelMapper) || [];
+  let tags = $derived($linkTagStore?.map(linkTagLabelMapper) || []);
 
   async function loadTimelineData(links: INodeLinkThumb[] | undefined) {
     try {
@@ -122,7 +126,7 @@
                 {@const link = findLink(linkedNode)}
                 <button
                   class="flex flex-col gap-1 p-3 rounded-md bg-bgs2 hover:bg-bgs3 border border-brs3 text-left w-full userdata"
-                  on:click={(e) => handleNodeClick(linkedNode.id.toString(), e)}
+                  onclick={(e) => handleNodeClick(linkedNode.id.toString(), e)}
                 >
                   <div class="text-b2 text-fgs1">
                     {resolveNodeLabelString(linkedNode)}

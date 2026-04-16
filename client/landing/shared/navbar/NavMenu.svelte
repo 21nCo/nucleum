@@ -4,8 +4,14 @@
   import { popover } from "@21n/actions/popover.action";
   import NavBarExpandPopover from "@21n/landing/shared/navbar/NavBarExpandPopover.svelte";
 
-  export let topNavBarValues: ITopNavBar;
-  export let isStickedContext: boolean = false;
+  let {
+    topNavBarValues,
+    isStickedContext = false,
+  }: {
+    topNavBarValues: ITopNavBar;
+    isStickedContext?: boolean;
+  } = $props();
+
 </script>
 
 {#each topNavBarValues.items as item}

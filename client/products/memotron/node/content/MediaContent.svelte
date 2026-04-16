@@ -16,18 +16,22 @@
   import context from "@21n/stores/context.store";
   import { OperatingSystem } from "@21n/types/context.type";
   import { Context } from "@21n/types/appStore.type";
-
-  export let node: IActiveNodeStore;
-  export let isConstrainedWidth: boolean = false;
-  let renderingDetails: any;
-  let contentRef: MediaContentResolver;
+  let {
+    node,
+    isConstrainedWidth = false
+  }: {
+    node: IActiveNodeStore;
+    isConstrainedWidth?: boolean;
+  } = $props();
+  let renderingDetails = $state<any>(undefined);
+  let contentRef = $state<MediaContentResolver | undefined>(undefined);
 
   function contextEventListener(event: string, data: any) {
     if (event === "pdf-trace-click" || event === "yt-trace-click") {
       if ($view.isPortrait && isRecordId(data.id)) {
         appStore.openResource(data.id, AccessMode.POP);
       } else {
-        contentRef.onTraceClick(data);
+        contentRef?.onTraceClick(data);
       }
     }
   }
@@ -36,17 +40,21 @@
   };
   setContext(Context.CONTENT, contentContext);
 
-  function onAnnotation(e: CustomEvent<any[]>) {
-    if ($node.contentType === NodeType.PDF && e.detail)
-      $node.pdfAnnotations = e.detail;
+  function onAnnotation(annotations: any[]) {
+    if ($node.contentType === NodeType.PDF && annotations) {
+      node.update((current) => ({
+        ...current,
+        pdfAnnotations: annotations
+      }));
+    }
   }
 
-  function onConfigUpdate(e: CustomEvent<any>) {
-    if ($node.contentType === NodeType.PDF && e.detail?.config)
+  function onConfigUpdate(detail: any) {
+    if ($node.contentType === NodeType.PDF && detail?.config)
       node.modify({
         config: {
           ...($node.config ?? {}),
-          ...e.detail.config
+          ...detail.config
         }
       });
   }
@@ -72,11 +80,10 @@
     >
       <MediaContentResolver
         node={$node}
-        on:refresh
         bind:this={contentRef}
         bind:renderingDetails
-        on:annotation={onAnnotation}
-        on:configUpdate={onConfigUpdate}
+        {onAnnotation}
+        {onConfigUpdate}
       />
     </main>
   {/if}

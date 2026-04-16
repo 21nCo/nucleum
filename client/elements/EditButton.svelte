@@ -1,10 +1,18 @@
 <script lang="ts">
-  export let isInEditMode: boolean = false;
+    let {
+    isInEditMode = false,
+    onclick = void 0,
+  }: {
+    isInEditMode?: boolean;
+    onclick?: (() => void) | undefined;
+  } = $props();
+
 </script>
 
 <button
-  on:click={() => {
+  onclick={() => {
     isInEditMode = !isInEditMode;
+    onclick?.();
   }}
 >
   <div

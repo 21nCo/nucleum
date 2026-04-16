@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { createEventDispatcher } from "svelte";
   import type {
     IResourceSwitchItem,
     ISelectValue
@@ -13,22 +12,30 @@
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { properCase } from "@21n/shared-utils/text.utils";
   import { nextProductSectionsPre, nextProductSectionsPost } from "@21n/next/product.config";
-  const dispatch = createEventDispatcher();
-  export let resources: Resource[] = [];
-  export let selected: ISelectValue | undefined = undefined;
-  export let parentBgIndex: number = 1;
-  export let isShowCount: boolean = false;
+  let {
+    resources = [],
+    selected = undefined,
+    parentBgIndex = 1,
+    isShowCount = false,
+    onSelect = undefined
+  }: {
+    resources?: Resource[];
+    selected?: Resource | undefined;
+    parentBgIndex?: number;
+    isShowCount?: boolean;
+    onSelect?: ((value: Resource) => void) | undefined;
+  } = $props();
 
   const resourceList: IResourceSwitchItem[] = resolveResourceSwitcher();
 
-  let options: IResourceSwitchItem[] = [];
+  let selectedValue = $state<Resource | undefined>(undefined);
   const isDev = import.meta.env.DEV;
 
-  $: options = resources.map((x) => {
+  let options = $derived(resources.map((x) => {
     const resource = resourceList.find((y) => y.value === x);
     if (!resource) return { label: x, value: x, icon: "circle" };
     return resource;
-  });
+  }));
 
   const isProductSection = (value: string): value is Product =>
     Object.values(Product).includes(value as Product);
@@ -40,7 +47,9 @@
     Product.MEMOTRON,
     ...nextProductSectionsPost,
   ].filter(isProductSection);
-  if (selected === undefined) selected = options[0]?.value;
+  $effect(() => {
+    selectedValue = selected ?? (options[0]?.value as Resource | undefined);
+  });
   const nucleusResources = resolveProductConfig(Product.NUCLEUS).resources
     .browse;
   function resolveResourcesForSection(section: Product): IResourceSwitchItem[] {
@@ -79,11 +88,11 @@
               {item}
               {isShowCount}
               {parentBgIndex}
-              isActive={selected === item.value}
-              on:click={() => {
+              isActive={selectedValue === item.value}
+              onClick={() => {
                 if (item.isDisabled) return;
-                selected = item.value;
-                dispatch("select", item.value);
+                selectedValue = item.value as Resource;
+                onSelect?.(item.value as Resource);
               }}
             />
           {/each}
@@ -101,11 +110,11 @@
         {item}
         {isShowCount}
         {parentBgIndex}
-        isActive={selected === item.value}
-        on:click={() => {
+        isActive={selectedValue === item.value}
+        onClick={() => {
           if (item.isDisabled) return;
-          selected = item.value;
-          dispatch("select", item.value);
+          selectedValue = item.value as Resource;
+          onSelect?.(item.value as Resource);
         }}
       />
     {/each}

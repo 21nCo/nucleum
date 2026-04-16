@@ -1,16 +1,12 @@
 <script lang="ts">
   import { TimeScale } from "@21n/types/time.type";
   import { enumToString } from "@21n/shared-utils/text.utils";
-  import { createEventDispatcher } from "svelte";
-
-  export let scales: TimeScale[];
-  export let onSelect: (scale: TimeScale) => void;
-
-  const dispatch = createEventDispatcher();
+  let { scales, onSelect, onHide }: any = $props();
 
   function handleSelect(scale: TimeScale) {
-    onSelect(scale);
-    dispatch("hide");
+    onSelect?.(scale);
+    const hideEvent = new CustomEvent("hide");
+    onHide?.(hideEvent);
   }
 </script>
 
@@ -18,7 +14,7 @@
   {#each scales as scale}
     <button
       class="block w-full text-left px-2 py-1 hover:bg-bgs2 rounded-md"
-      on:click={() => handleSelect(scale)}
+      onclick={() => handleSelect(scale)}
     >
       {enumToString(scale)}
     </button>

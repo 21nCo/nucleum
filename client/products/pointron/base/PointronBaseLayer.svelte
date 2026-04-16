@@ -1,4 +1,7 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import Notifications from "@21n/products/pointron/base/Notifications.svelte";
   import { onMount } from "svelte";
   import {
@@ -23,14 +26,16 @@
   import { Product } from "@21n/products/product.type";
   import { defaultsMigrationTidy } from "@21n/components/migrations";
   import { defaultsMigrationFocus } from "@21n/products/pointron/migrations";
-
-  let isLiteMode = $context.isEmbed && $context.isSheet;
+  let { children }: { children?: Snippet } = $props();
+  let isLiteMode = $state($context.isEmbed && $context.isSheet);
   const isDebug = import.meta.env?.DEV;
 
   onMount(() => {
     initializeData();
+    window.addEventListener("focus", onAppear);
     return () => {
       activeSession.clearIntervals();
+      window.removeEventListener("focus", onAppear);
     };
   });
 
@@ -78,13 +83,14 @@
   }
 </script>
 
-<UserBaseLayer on:ready={onReady}>
-  <div slot="topnav" class="flex gap-1 items-center h-full">
-    <FocusTopNavWidget />
-  </div>
-  <slot />
+<UserBaseLayer onReady={onReady}>
+  {#snippet topnav()}
+    <div class="flex gap-1 items-center h-full">
+      <FocusTopNavWidget />
+    </div>
+  {/snippet}
+  {@render children?.()}
   <SessionTitle ctx={Product.POINTRON} />
   <Notifications />
   <BackgroundSoundPlayer />
 </UserBaseLayer>
-<svelte:window on:focus={onAppear} />

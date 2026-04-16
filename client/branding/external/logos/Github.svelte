@@ -1,7 +1,11 @@
 <script lang="ts">
-  export let style: string = "dark";
-  export let fg: string = "bgs3";
-  $: fg;
+  let {
+    style = "dark",
+    fg = "bgs3"
+  }: {
+    style?: string;
+    fg?: string;
+  } = $props();
 </script>
 
 {#if style === "light"}

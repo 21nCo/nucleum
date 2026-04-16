@@ -1,7 +1,5 @@
 <script lang="ts">
   import { Size } from "@21n/types/size.enum";
-  import Icon from "@21n/elements/Icon.svelte";
-  import { createEventDispatcher } from "svelte";
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
   import { TimeScaleUnit } from "@21n/types/time.type";
   import { uiState } from "@21n/stores/uiState/uiState.store";
@@ -12,11 +10,20 @@
   import { appStore } from "@21n/stores/app.store";
   import { Product } from "@21n/products/product.type";
   import Button from "@21n/elements/button/Button.svelte";
-  const dispatch = createEventDispatcher();
 
-  export let selectedView: TimeScaleUnit = TimeScaleUnit.MONTH;
-  export let isRefreshing: boolean = false;
-  export let parentBgIndex: number = 2;
+  let {
+    selectedView = $bindable(TimeScaleUnit.MONTH),
+    isRefreshing = false,
+    parentBgIndex = 2,
+    onScaleSelection = undefined
+  }: {
+    selectedView?: TimeScaleUnit;
+    isRefreshing?: boolean;
+    parentBgIndex?: number;
+    onScaleSelection?:
+      | ((event: CustomEvent<TimeScaleUnit>) => void)
+      | undefined;
+  } = $props();
   const isDev = import.meta.env?.DEV;
 
   const monthOption = {
@@ -55,13 +62,13 @@
           isDev && heatmapOption
         ].filter(Boolean);
 
-  function onScaleSelection(e: CustomEvent) {
+  function handleScaleSelection(e: CustomEvent<TimeScaleUnit>) {
     if (!e.detail) return;
     selectedView = e.detail;
     uiState.setState(UIState.classicCalendarScale, selectedView, {
       scope: UIStateScope.DAP
     });
-    dispatch("scaleSelection", selectedView);
+    onScaleSelection?.(e);
   }
 </script>
 
@@ -75,7 +82,7 @@
         width="min-w-32"
         size={Size.sm}
         isEnforceWidth={true}
-        on:select={onScaleSelection}
+        onSelect={handleScaleSelection}
       />
     {:else}
       <OptionSelector
@@ -85,7 +92,7 @@
         {parentBgIndex}
         isExpandOnActiveForIcon={true}
         style={OptionSelectorStyle.ICON}
-        on:select={onScaleSelection}
+        onSelect={handleScaleSelection}
       />
     {/if}
   </div>

@@ -1,9 +1,17 @@
 <script lang="ts">
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   import { appStore } from "@21n/stores/app.store";
-  export let label: string | undefined = undefined;
-  export let id: string | undefined = undefined;
-  export let isAddNew: boolean = false;
+
+  let {
+    label = undefined,
+    id = undefined,
+    isAddNew = false
+  }: {
+    label?: string;
+    id?: string;
+    isAddNew?: boolean;
+  } = $props();
+
   function onClick() {
     if (isAddNew) {
       appStore.runAction(PointronAction.ADD_TAG);
@@ -17,7 +25,7 @@
 
 <button
   class="px-2 py-1 rounded-md border border-brs3 hover:bg-bgs2"
-  on:click={onClick}
+  onclick={onClick}
 >
   {#if label}
     {label}

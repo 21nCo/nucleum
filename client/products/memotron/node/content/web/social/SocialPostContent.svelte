@@ -18,14 +18,19 @@
   import { Size } from "@21n/types/size.enum";
   import { Context } from "@21n/types/appStore.type";
 
-  export let node: INode;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  $: accessPoint;
+  let {
+    node,
+    accessPoint = ResourceAccessPoint.SELF
+  }: {
+    node: INode;
+    accessPoint?: ResourceAccessPoint;
+  } = $props();
+  void accessPoint;
 
   const nodeContext = getContext<any>(Context.NODE);
   let oembedHtml: string | null = null;
-  let error: string = "";
-  let isShowPermanentCopy: boolean = false;
+  let error = $state("");
+  let isShowPermanentCopy = $state(false);
   onMount(async () => {
     await resolveParent();
   });
@@ -64,8 +69,8 @@
     }
   }
 
-  function onError(event: CustomEvent) {
-    error = event.detail;
+  function onError(message: string) {
+    error = message;
   }
 </script>
 
@@ -82,7 +87,11 @@
       class="relative w-9/10 flex-grow flex flex-col items-center max-w-2xl px-4 py-6 z-10"
     >
       {#if $context.isEmbed}
-        <button class="absolute inset-0 z-20" on:click></button>
+        <button
+          class="absolute inset-0 z-20"
+          aria-label="Keep embed interaction inside the preview"
+          onclick={(event) => event.stopPropagation()}
+        ></button>
       {/if}
       {#if node.contentType === NodeType.TWEET}
         <TweetPreviewUsingWidget tweetUrl={node.url} />
@@ -95,22 +104,22 @@
       {:else if node.contentType === NodeType.FACEBOOK_POST}
         <FacebookPostWidget
           postUrl={node.url}
-          on:error={onError}
-          on:fallback={onError}
+          onError={onError}
+          onFallback={onError}
         />
       {:else if node.contentType === NodeType.MASTODON_POST}
         <MastodonPostWidget
           postUrl={node.url}
-          on:error={onError}
-          on:fallback={onError}
+          onError={onError}
+          onFallback={onError}
         />
       {:else if node.contentType === NodeType.BLUESKY_POST}
-        <BlueskyPostWidget postUrl={node.url} on:error={onError} />
+        <BlueskyPostWidget postUrl={node.url} onError={onError} />
       {:else if node.contentType === NodeType.THREADS_POST}
         <ThreadsPostWidget
           postUrl={node.url}
-          on:error={onError}
-          on:fallback={onError}
+          onError={onError}
+          onFallback={onError}
         />
       {/if}
     </div>
@@ -118,7 +127,7 @@
 {:else}
   <SocialPostContentFallback
     {node}
-    on:viewEmbed={() => {
+    onViewEmbed={() => {
       isShowPermanentCopy = !isShowPermanentCopy;
     }}
   />

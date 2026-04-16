@@ -35,18 +35,29 @@
   import { Embed } from "@21n/types/context.type";
   import GoalSearchResultItem from "@21n/components/goals/GoalSearchResultItem.svelte";
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
-  export let date: Date | undefined = undefined;
-  export let goalId: IRecordId | undefined = undefined;
+
+  let {
+    date: initialDate = undefined,
+    goalId: initialGoalId = undefined
+  }: {
+    date?: Date | undefined;
+    goalId?: IRecordId | undefined;
+  } = $props();
+
   const action = resourceAction(Resource.task, ResourceActionType.CREATE);
-  let label = "";
-  let inputRef: TextInput | undefined;
-  let isShowGoalPicker =
+  let date = $state<Date | undefined>(initialDate);
+  let goalId = $state<IRecordId | undefined>(initialGoalId);
+  let label = $state("");
+  let inputRef = $state<TextInput | undefined>(undefined);
+  let isShowGoalPicker = $state(
     $appStore.product === Product.POINTRON ||
-    $appStore.product === Product.NUCLEUS;
-  let goalSearchQuery = "";
-  let goalSearchInput: TextSearchInput | undefined;
+    $appStore.product === Product.NUCLEUS
+  );
+  let goalSearchQuery = $state("");
+  let goalSearchInput = $state<TextSearchInput | undefined>(undefined);
   let searchStore = new SearchStore(Resource.goal);
-  let goal: IGoal | undefined = undefined;
+  let goal = $state<IGoal | undefined>(undefined);
+
   onMount(async () => {
     if (goalId) {
       goal = await goalStore.select(goalId);
@@ -112,7 +123,7 @@
           searchCallback={searchGoalCallback}
           searchResultComponent={GoalSearchResultItem}
           placeholder="Assign to a goal"
-          on:select={(e) => {
+          onSelect={(e) => {
             goal = e.detail.item;
             isShowGoalPicker = false;
           }}
@@ -123,7 +134,7 @@
       <div class="transition-all duration-200">
         <TaskThumbnailGoalLabel
           goal={resolveGoalThumb(goal)}
-          on:clearGoal={() => {
+          onClearGoal={() => {
             isShowGoalPicker = true;
           }}
           accessPoint={ResourceAccessPoint.CAPTURE}
@@ -136,13 +147,13 @@
           bind:value={label}
           bind:this={inputRef}
           size={Size.lg}
-          on:mount={() => {
+          onMount={() => {
             inputRef?.focus();
           }}
           placeholder="Enter task name"
           testId="task-name-input"
           style={InputStyle.PLAIN}
-          on:enter={handleCreateOnEnter}
+          onEnter={handleCreateOnEnter}
         />
       </div>
       <span class="flex items-center shrink-0">

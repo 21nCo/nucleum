@@ -3,8 +3,13 @@
   import type { ICollectionThumb } from "@21n/components/collection/collection.type";
   import { Arrangement } from "@21n/types/direction.enum";
   import CoverRenderer from "@21n/elements/coverPicker/CoverRenderer.svelte";
-  export let item: ICollectionThumb;
-  export let arrangement: Arrangement = Arrangement.LIST;
+  let {
+    item,
+    arrangement = Arrangement.LIST
+  }: {
+    item: ICollectionThumb;
+    arrangement?: Arrangement;
+  } = $props();
 </script>
 
 <div class="relative grow w-full overflow-auto">

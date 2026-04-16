@@ -2,11 +2,19 @@
   import { formatSeconds } from "@21n/utils/time.utils";
   import { onMount } from "svelte";
 
-  export let value: number;
-  export let previousStop: number;
-  export let parentBgIndex: number = 1;
-  export let timeRemaining: number;
-  export let isMajorStop: boolean = false;
+  let {
+    value,
+    previousStop,
+    parentBgIndex = 1,
+    timeRemaining,
+    isMajorStop = false
+  }: {
+    value: number;
+    previousStop: number;
+    parentBgIndex?: number;
+    timeRemaining: number;
+    isMajorStop?: boolean;
+  } = $props();
   let markerRef: any;
   let activeMarkerRef: any;
   let leftOffset: number;
@@ -15,12 +23,15 @@
   /**
    * isActiveStop is true if the current time remaining is between the previous stop and the current stop i.e. the current stop is where time left indicator is
    */
-  $: isActiveStop = timeRemaining > previousStop && timeRemaining < value;
-  $: if (isActiveStop) {
+  let isActiveStop = $derived(
+    timeRemaining > previousStop && timeRemaining < value
+  );
+  $effect(() => {
+    if (!isActiveStop) return;
     setTimeout(() => {
       refreshMarkerPositioning();
     }, 1);
-  }
+  });
   onMount(() => {
     refreshMarkerPositioning();
   });

@@ -2,7 +2,8 @@
   import { page } from "$app/stores";
   import Node from "@21n/products/memotron/node/Node.svelte";
   import { onMount } from "svelte";
-  export let id: string = "";
+  let { id: initialId = "" }: { id?: string } = $props();
+  let id = $state(initialId);
   onMount(() => {
     const sub = page.subscribe((value) => {
       id = value.url.searchParams.get("doc") ?? "";

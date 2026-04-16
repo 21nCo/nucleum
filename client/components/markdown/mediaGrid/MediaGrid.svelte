@@ -1,10 +1,5 @@
 <script lang="ts">
-  import {
-    createEventDispatcher,
-    getContext,
-    onDestroy,
-    onMount
-  } from "svelte";
+  import { getContext, onDestroy, onMount } from "svelte";
 
   import MediaGridOptions from "@21n/components/markdown/mediaGrid/MediaGridOptions.svelte";
   import type { Config } from "@21n/components/markdown/mediaGrid/mediaGrid.type";
@@ -28,8 +23,6 @@
   import { cn } from "@21n/utils/ui.utils";
   import { Context } from "@21n/types/appStore.type";
 
-  // export let items: Item[] = $userPreferences.mediaGridTestitems;
-  // $: $userPreferences.mediaGridTestitems = items;
   const blockContext = getContext<any>(Context.BLOCK);
 
   /**
@@ -49,10 +42,23 @@
     blockContext.publish(event, data);
   }
 
-  export let block: IMediaGridNode;
-  export let mdStore: MdStoreType;
-  export let files: IFile[] = [];
-  let isUploadInProgress: boolean = false;
+  let {
+    block,
+    mdStore,
+    files: initialFiles = [],
+    onDelete = undefined,
+    onInsert = undefined
+  }: {
+    block: IMediaGridNode;
+    mdStore: MdStoreType;
+    files?: IFile[];
+    onDelete?: ((event?: CustomEvent<{ id: string }>) => void) | undefined;
+    onInsert?:
+      | ((event: CustomEvent<{ insertedAt: string; id: string }>) => void)
+      | undefined;
+  } = $props();
+  let files = $state<IFile[]>(initialFiles);
+  let isUploadInProgress = $state(false);
 
   if (!block.body || !Array.isArray(block.body.items)) {
     block.body = {
@@ -69,23 +75,22 @@
   if (!block.body.altText) block.body.altText = "media grid";
   if (!block.body.type) block.body.type = MediaGridType.AUTO;
   if (!block.body.noOfColumns) block.body.noOfColumns = 1;
-  let items: IMediaGridItem[] = block.body.items;
+  let items = $state<IMediaGridItem[]>(block.body.items);
 
-  const dispatch = createEventDispatcher();
-  $: {
+  $effect(() => {
     block.body.items = items;
     relay(BlockAction.CHANGE, { id: block.id, body: block.body });
-  }
-  $: if (config) {
+  });
+  $effect(() => {
     block.body.isWideLayout = config.isWideLayout;
     block.body.gap = config.gap;
     block.body.altText = config.altText;
     block.body.type = config.type;
     block.body.noOfColumns = config.noOfColumns;
     relay(BlockAction.CHANGE, { id: block.id, body: block.body });
-  }
+  });
 
-  let config: Config = {
+  let config = $state<Config>({
     isWideLayout: block.body.isWideLayout,
     gap: block.body.gap,
     altText: block.body.altText,
@@ -99,27 +104,49 @@
     isGapSliderEnabled: false,
     leastItemsInAColumn: 3,
     gridWidth: 740
-  };
+  });
 
-  let isDragging = false;
-  let typeURLFocused: boolean = false;
+  let isDragging = $state(false);
+  let typeURLFocused = $state(false);
   /**
    * To store the length of each column, used to sort items on chev up and down
    * @type {number[]}
    */
-  let columnArray: number[] = [];
-  let columnsGrid: HTMLButtonElement[] = [];
-  $: config.columns = Array(config.noOfColumns).fill("");
+  let columnArray = $state<number[]>([]);
+  let columnsGrid = $state<HTMLButtonElement[]>([]);
+  $effect(() => {
+    config.columns = Array(config.noOfColumns).fill("");
+  });
   let autoGrid: HTMLButtonElement;
   let autoGridNewItemIndex: number = 0;
   let dropHereHeight: number = 10;
-  let autoItems: any[] = [];
-  let unSubdragAndDropStore: () => void;
+  let autoItems = $state<any[]>([]);
+  let unSubdragAndDropStore: () => void = () => {};
+
+  function emitInsert(insertedAt: string, insertedId: string) {
+    const insertEvent = new CustomEvent<{ insertedAt: string; id: string }>(
+      "insert",
+      {
+        detail: {
+          insertedAt,
+          id: insertedId
+        }
+      }
+    );
+    onInsert?.(insertEvent);
+  }
+
+  function emitDelete() {
+    const deleteEvent = new CustomEvent<{ id: string }>("delete", {
+      detail: { id: block.id }
+    });
+    onDelete?.(deleteEvent);
+  }
 
   function handleKeyDown(e: KeyboardEvent) {
     if (e.key == "Enter" && block.id) {
       const newBlockId = mdStore.insert({ source: block.id });
-      dispatch("insert", { insertedAt: block.id, id: newBlockId });
+      emitInsert(block.id, newBlockId);
     }
   }
   /**
@@ -777,9 +804,9 @@
        */
       setTimeout(() => handleNewImageLoad(), 1);
   }
-  function onDelete() {
+  function handleDelete() {
     mdStore.deleteBlock(block.id);
-    dispatch("delete", { id: block.id });
+    emitDelete();
   }
 
   onMount(async () => {
@@ -809,9 +836,9 @@
 
 <!-- <div> -->
 <button
-  on:mouseenter={() => (config.isHovered = true)}
-  on:mouseleave={() => (config.isHovered = false)}
-  on:keydown={handleKeyDown}
+  onmouseenter={() => (config.isHovered = true)}
+  onmouseleave={() => (config.isHovered = false)}
+  onkeydown={handleKeyDown}
   class={"relative p-1 border border-brs3 rounded-md flex flex-col gap-1 w-full max-w-full"}
   style="width-:{config.gridWidth}px; height:{config.type == 'AUTO'
     ? '370px'
@@ -825,15 +852,15 @@
           "justify-center": items.length < 3
         }
       )}
-      on:dragover={preventDefault}
-      on:drop={preventDefault}
-      on:dragenter={highlight}
-      on:dragleave={unhighlight}
+      ondragover={preventDefault}
+      ondrop={preventDefault}
+      ondragenter={highlight}
+      ondragleave={unhighlight}
       bind:this={autoGrid}
     >
       {#if items.length == 0}
         <button
-          on:drop={handleFileUpload}
+          ondrop={handleFileUpload}
           class={cn(
             "absolute text-fgs3 w-full h-full border border-brs3 border-dashed flex items-center justify-center rounded-md",
             {
@@ -853,7 +880,7 @@
           {item}
           file={files.find((f) => isSameResource(f, item.file))}
           id={item.id}
-          on:load={() => handleNewImageLoad()}
+          onLoad={() => handleNewImageLoad()}
           bind:ref={autoItems[index]}
           bind:isDragging
           bind:gap={config.gap}
@@ -867,9 +894,9 @@
     >
       {#each config.columns as _, index}
         <button
-          on:dragover={preventDefault}
-          on:dragenter={(e) => highlight(e, index)}
-          on:dragleave={(e) => unhighlight(e, index)}
+          ondragover={preventDefault}
+          ondragenter={(e) => highlight(e, index)}
+          ondragleave={(e) => unhighlight(e, index)}
           bind:this={columnsGrid[index]}
           style="position:relative;width:100%;display:flex;flex-direction:column;gap:{config.gap}px;"
         >
@@ -916,7 +943,7 @@
       {isUploadInProgress}
       bind:config
       {columnArray}
-      on:delete={onDelete}
+      onDelete={handleDelete}
     />
   {/if}
 </button>

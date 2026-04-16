@@ -1,6 +1,6 @@
 <script lang="ts">
   import { monthNames } from "@21n/components/calendar/birdView/Birdview.utils";
-  export let year = 2024;
+  let { year = 2024 }: { year?: number } = $props();
 </script>
 
 <div

@@ -9,8 +9,13 @@
   import Indicator from "@21n/landing/shared/tile/Indicator.svelte";
   import view from "@21n/stores/view.store";
 
-  export let title: string;
-  export let items: ITileItem[];
+  let {
+    title,
+    items,
+  }: {
+    title: string;
+    items: ITileItem[];
+  } = $props();
 
   const dev_isShowSeeAllButton = false;
 
@@ -60,7 +65,7 @@
           <Indicator class="bg-fgs4" />
         {:else}
           <Indicator
-            on:click={() => {
+            onclick={() => {
               handleScroll(index);
             }}
             class="bg-bgs4"
@@ -73,7 +78,7 @@
     <Button
       label="See all products"
       icon="ph:arrow-right"
-      on:click={() => {
+      onclick={() => {
         setTimeout(() => {
           $isProductsPanelOpen = true;
         }, 100);

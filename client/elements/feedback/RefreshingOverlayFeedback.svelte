@@ -3,7 +3,12 @@
   import InlineLoadingAnimation from "@21n/elements/feedback/animations/InlineLoadingAnimation.svelte";
   import { Size } from "@21n/types/size.enum";
   import Icon from "@21n/elements/Icon.svelte";
-  export let loadingText: string = "Refreshing";
+    let {
+    loadingText = "Refreshing",
+  }: {
+    loadingText?: string;
+  } = $props();
+
 </script>
 
 <div

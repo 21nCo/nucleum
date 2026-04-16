@@ -1,7 +1,7 @@
 <script lang="ts">
   import TermsofService from "@21n/landing/shared/TermsofService.svelte";
   import PageSeo from "@21n/landing/shared/seo/PageSEO.svelte";
-  export let data;
+  let { data }: { data: any } = $props();
   const productName = data.product ?? "";
 </script>
 

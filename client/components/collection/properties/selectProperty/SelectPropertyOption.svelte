@@ -4,10 +4,19 @@
   import type { IPropertyConfigOption } from "@21n/components/collection/properties/property.type";
   import { isValidString } from "@21n/shared-utils/text.utils";
   import Icon from "@21n/elements/Icon.svelte";
-  export let item: IPropertyConfigOption;
-  export let isSelectedContext: boolean = false;
-  export let isSelected: boolean = false;
-  export let isPreventTagStyle: boolean = false;
+  let {
+    item,
+    isSelectedContext = false,
+    isSelected = false,
+    isPreventTagStyle = false,
+    onclick = undefined
+  }: {
+    item: IPropertyConfigOption;
+    isSelectedContext?: boolean;
+    isSelected?: boolean;
+    isPreventTagStyle?: boolean;
+    onclick?: ((event: MouseEvent) => void) | undefined;
+  } = $props();
 </script>
 
 <button
@@ -15,7 +24,7 @@
     "bg-bgs3": isSelected && !isSelectedContext,
     "py-1.5 hover:bg-bgs3 px-3 w-full": !isSelectedContext
   })}
-  on:click
+  {onclick}
 >
   {#if isPreventTagStyle}
     {item ? (isValidString(item?.label) ? item?.label : "Untitled") : "None"}

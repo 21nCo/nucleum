@@ -4,11 +4,13 @@
   import Popover from "@21n/elements/popover/Popover.svelte";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
-  import { createEventDispatcher } from "svelte";
-
-  export let variant: "minimal" | "default" | "strong" = "default";
-
-  const dispatch = createEventDispatcher();
+  let {
+    variant = "default",
+    onAdd = undefined
+  }: {
+    variant?: "minimal" | "default" | "strong";
+    onAdd?: ((event: CustomEvent<string>) => void) | undefined;
+  } = $props();
   const options = [
     {
       label: "Add existing",
@@ -48,15 +50,22 @@
     />
   {/if}
 
-  <div slot="popover" class="flex flex-col px-2 py-2 w-48">
-    {#each options as option}
-      <button
-        class="flex items-center gap-2 px-3 py-2 hover:bg-bgs2 rounded-md text-fgs2"
-        on:click={() => dispatch("add", option.value)}
-      >
-        <Icon icon={option.icon} size={Size.sm} />
-        <span class="text-b2"> {option.label}</span>
-      </button>
-    {/each}
-  </div>
+  {#snippet popover()}
+    <div class="flex flex-col px-2 py-2 w-48">
+      {#each options as option}
+        <button
+          class="flex items-center gap-2 px-3 py-2 hover:bg-bgs2 rounded-md text-fgs2"
+          onclick={() => {
+            const event = new CustomEvent<string>("add", {
+              detail: option.value
+            });
+            onAdd?.(event);
+          }}
+        >
+          <Icon icon={option.icon} size={Size.sm} />
+          <span class="text-b2"> {option.label}</span>
+        </button>
+      {/each}
+    </div>
+  {/snippet}
 </Popover>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount, type Snippet } from "svelte";
   import Panel from "@21n/layout/paint/Panel.svelte";
   import { ButtonStyle } from "@21n/types/button.type";
   import { Arrangement } from "@21n/types/direction.enum";
@@ -32,21 +32,39 @@
   import { bulkEditStore } from "@21n/components/record/bulkedit.store";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   import { Action } from "@21n/types/action.enum";
-  export let resource: Resource;
-  export let onBack: (() => void) | undefined = undefined;
-  export let isPreventCwPadding: boolean = false;
-  const backPath = $page.url.searchParams.get(AppSearchParam.RETURN_TO);
-  const hasBack = onBack !== undefined || backPath !== null;
+  let {
+    resource,
+    onBack = undefined,
+    isPreventCwPadding = false,
+    right: rightSnippet = undefined
+  }: {
+    resource: Resource;
+    onBack?: (() => void) | undefined;
+    isPreventCwPadding?: boolean;
+    right?: Snippet | undefined;
+  } = $props();
+  let backPath = $derived($page.url.searchParams.get(AppSearchParam.RETURN_TO));
+  let hasBack = $derived(onBack !== undefined || backPath !== null);
 
-  let searchQuery: string = "";
-  let id: string | null = null;
+  let id = $derived($page.url.searchParams.get(AccessMode.INLINE));
   let arrangement: Arrangement = resolveArrangement();
   let selectionCount = 0;
   let bulkEditCountUnsub: (() => void) | undefined;
 
-  $: tooltip = resolveResourceTooltip(resource);
-  $: id = $page.url.searchParams.get(AccessMode.INLINE);
-  $: floatingButton =
+  async function addAction() {
+    const action =
+      resource === Resource.task
+        ? PointronAction.CREATE_TASK_INLINE
+        : resourceAction(resource, ResourceActionType.CREATE);
+    appStore.runAction(action, {
+      componentParams: {
+        context: ResourceAccessPoint.BROWSER
+      }
+    });
+  }
+
+  let tooltip = $derived(resolveResourceTooltip(resource));
+  let floatingButton = $derived(
     selectionCount > 0 || isHideCreateAction(resource)
       ? undefined
       : {
@@ -55,13 +73,10 @@
           icon: "plus",
           shortcut: Action.CREATE,
           style: ButtonStyle.OUTLINED
-        };
+        }
+  );
 
-  $: state = isValidString(searchQuery)
-    ? ResourceAccessPointState.SEARCH
-    : ResourceAccessPointState.DEFAULT;
-
-  let recordsPaneRef: LibraryRecordsPane | null = null;
+  let state: ResourceAccessPointState = ResourceAccessPointState.DEFAULT;
 
   function resolveArrangement() {
     return (
@@ -72,18 +87,6 @@
       ) ?? Arrangement.LIST
     );
   }
-
-  const addAction = async () => {
-    const action =
-      resource === Resource.task
-        ? PointronAction.CREATE_TASK_INLINE
-        : resourceAction(resource, ResourceActionType.CREATE);
-    appStore.runAction(action, {
-      componentParams: {
-        context: ResourceAccessPoint.BROWSER
-      }
-    });
-  };
 
   function determineExpansionType(resource: Resource) {
     if (resource === Resource.relation) return true;
@@ -123,7 +126,7 @@
       : floatingButton}
     title={resource + "s"}
     isExpanded={determineExpansionType(resource)}
-    on:back={() => {
+    onBack={() => {
       if (onBack) onBack();
       else if (backPath) appStore.gotoPath(backPath);
     }}
@@ -132,32 +135,34 @@
     panelSize={determineSize(resource)}
     {isPreventCwPadding}
   >
-    <div
-      class="relative flex flex-col gap-4 h-full overflow-auto pt-3"
-      slot="nonpadded"
-    >
-      <LibraryRecordsPane
-        {resource}
-        {arrangement}
-        accessPoint={ResourceAccessPoint.BROWSER}
-        accessPointState={state}
-        bind:this={recordsPaneRef}
-        isConstrainedWidth={true}
-      />
-    </div>
-    <slot slot="right" name="right">
-      {#key id}
-        {#if id}
-          <ResourceResolver {id} accessMode={AccessMode.INLINE} />
-        {:else}
-          <EmptyStatusView
-            size={Size.lg}
-            mainText="Nothing selected."
-            subText={`Please select a ${resource} to view it here.`}
-          />
-        {/if}
-      {/key}
-    </slot>
+    {#snippet nonPadded()}
+      <div class="relative flex flex-col gap-4 h-full overflow-auto pt-3">
+        <LibraryRecordsPane
+          {resource}
+          {arrangement}
+          accessPoint={ResourceAccessPoint.BROWSER}
+          accessPointState={state}
+          isConstrainedWidth={true}
+        />
+      </div>
+    {/snippet}
+    {#snippet right()}
+      {#if rightSnippet}
+        {@render rightSnippet?.()}
+      {:else}
+        {#key id}
+          {#if id}
+            <ResourceResolver {id} accessMode={AccessMode.INLINE} />
+          {:else}
+            <EmptyStatusView
+              size={Size.lg}
+              mainText="Nothing selected."
+              subText={`Please select a ${resource} to view it here.`}
+            />
+          {/if}
+        {/key}
+      {/if}
+    {/snippet}
   </Panel>
 {/key}
 {#if resource !== Resource.task}

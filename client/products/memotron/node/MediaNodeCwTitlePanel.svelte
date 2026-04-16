@@ -6,7 +6,7 @@
   import ResourceStatusBanner from "@21n/components/record/RecordStatusBanner.svelte";
   import CollectionsLane from "@21n/products/memotron/node/floatingBar/CollectionsLane.svelte";
   import { isShowStatusBanner } from "@21n/components/flux/resourceStores/resource.utils";
-  export let node: IActiveNodeStore;
+  let { node }: { node: IActiveNodeStore } = $props();
 </script>
 
 <div
@@ -48,12 +48,12 @@
         <span class="flex items-center gap-4 flex-1 min-w-0">
           <NodeTitle
             node={$node}
-            on:labelChange={(e) => {
+            onLabelChange={() => {
               if ($node.label !== undefined)
                 node.modify({ label: $node.label });
             }}
-            on:editModeChange={(e) => {
-              node.toggleEditMode(e.detail);
+            onEditModeChange={(value) => {
+              node.toggleEditMode(value);
             }}
           />
         </span>

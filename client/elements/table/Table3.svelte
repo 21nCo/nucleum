@@ -14,18 +14,37 @@
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
   import Switch from "@21n/elements/toggle/Switch.svelte";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let columns: TableColumn[] = [];
-  export let data: any = [];
-  export let actions: { action: TableCellDefaultAction; index: number }[] = [];
-  export let isStyled: boolean = false;
-  export let addAction: string | undefined = undefined;
-  export let id: string = "table";
-  export let width: string = "";
+  let {
+    columns = [],
+    data = $bindable([]),
+    actions = [],
+    isStyled = false,
+    addAction = undefined,
+    id = "table",
+    width = "",
+    onAdd = undefined,
+    onReorder = undefined,
+    onSelect = undefined,
+    onMultiSelect = undefined
+  }: {
+    columns?: TableColumn[];
+    data?: any[];
+    actions?: { action: TableCellDefaultAction; index: number }[];
+    isStyled?: boolean;
+    addAction?: string | undefined;
+    id?: string;
+    width?: string;
+    onAdd?: (() => void) | undefined;
+    onReorder?:
+      | ((event: CustomEvent<{ from: number; to: number; listId: string }>) => void)
+      | undefined;
+    onSelect?: ((row: any) => void) | undefined;
+    onMultiSelect?: ((row: any) => void) | undefined;
+  } = $props();
 
-  $: renderColumns =
-    actions.length > 0 ? injectDefaultActions(columns, actions) : columns;
+  const renderColumns = $derived(
+    actions.length > 0 ? injectDefaultActions(columns, actions) : columns
+  );
 
   function injectDefaultActions(
     base: TableColumn[],
@@ -67,7 +86,7 @@
           key: "circle",
           type: TableCellType.ACTION,
           action: (row: any) => {
-            dispatch("select", row);
+            onSelect?.(row);
           }
         };
       case TableCellDefaultAction.MULTI_SELECT_ROW:
@@ -75,7 +94,7 @@
           key: "check",
           type: TableCellType.ACTION,
           action: (row: any) => {
-            dispatch("multiSelect", row);
+            onMultiSelect?.(row);
           }
         };
     }
@@ -121,7 +140,9 @@
         draggedOverClass: "!bg-bgs3",
         dragImage: "dragimage"
       }}
-      on:reorder
+      onreorder={(event) => {
+        onReorder?.(event as CustomEvent<{ from: number; to: number; listId: string }>);
+      }}
     >
       {#each data as row, i (row.id)}
         <div class="table-row" draggable="true" data-index={i}>
@@ -154,7 +175,7 @@
                 <Button
                   icon={column.key}
                   tooltip={column.actionTooltip?.body}
-                  on:click={() => resolveAction(column, row)}
+                  onclick={() => resolveAction(column, row)}
                 />
               {:else if column.type === TableCellType.CUSTOM && "component" in column}
                 {@const componentProps =
@@ -167,11 +188,8 @@
                     params={{ row, ...componentProps }}
                   />
                 {:else}
-                  <svelte:component
-                    this={column.component}
-                    {row}
-                    {...componentProps}
-                  />
+                  {@const CustomComponent = column.component}
+                  <CustomComponent {row} {...componentProps} />
                 {/if}
               {:else}
                 <div>{row[column.key] ?? "NA"}</div>
@@ -189,8 +207,8 @@
         icon="plus"
         style={ButtonStyle.PLAIN}
         type={ButtonVariant.SECONDARY}
-        on:click={() => {
-          dispatch("add");
+        onclick={() => {
+          onAdd?.();
         }}
       />
     </div>

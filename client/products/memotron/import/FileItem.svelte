@@ -2,20 +2,22 @@
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import { UploadStatus } from "@21n/types/uploadStatus.enum";
-  import { createEventDispatcher } from "svelte";
   import view from "@21n/stores/view.store";
   import { cn } from "@21n/utils/ui.utils";
 
-  export let label: string;
-  export let size: string;
-  export let uploadProgress: number = 100;
-  export let uploadStatus: UploadStatus = UploadStatus.NOT_STARTED;
-
-  const dispatch = createEventDispatcher();
-
-  function onRemove() {
-    dispatch("remove");
-  }
+  let {
+    label,
+    size,
+    uploadProgress = 100,
+    uploadStatus = UploadStatus.NOT_STARTED,
+    onRemove = undefined
+  }: {
+    label: string;
+    size: string;
+    uploadProgress?: number;
+    uploadStatus?: UploadStatus;
+    onRemove?: (() => void) | undefined;
+  } = $props();
 </script>
 
 <div
@@ -33,7 +35,9 @@
     <div class="flex text-b3 justify-between items-center w-full">
       <div class="text-fgs2">{label} ({size})</div>
       {#if uploadStatus === UploadStatus.NOT_STARTED}
-        <Icon size={Size.sm} icon="cross" on:click={onRemove} />
+        <button onclick={onRemove}>
+          <Icon size={Size.sm} icon="cross" />
+        </button>
       {:else if uploadStatus === UploadStatus.UPLOADING || uploadProgress !== 100}
         <span class="text-aps1">Uploading</span>
       {:else if uploadStatus === UploadStatus.UPLOADED && uploadProgress === 100}

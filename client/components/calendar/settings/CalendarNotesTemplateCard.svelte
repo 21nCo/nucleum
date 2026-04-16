@@ -5,16 +5,25 @@
   import { Size } from "@21n/types/size.enum";
   import { TextStyle } from "@21n/types/text.enum";
   import { TimeScaleUnit } from "@21n/types/time.type";
-  export let scale: TimeScaleUnit;
-  export let description: string | null = null;
-  export let onEdit: () => void;
-  const title =
+  let {
+    scale,
+    description = null,
+    onEdit
+  }: {
+    scale: TimeScaleUnit;
+    description?: string | null;
+    onEdit: () => void;
+  } = $props();
+  const title = $derived(
     scale === TimeScaleUnit.DAY
       ? "Daily notes"
       : scale === TimeScaleUnit.MONTH
         ? "Monthly notes"
-        : "Yearly notes";
-  const defaultDescription = `Customize the template used when creating new ${title.toLowerCase()}`;
+        : "Yearly notes"
+  );
+  const defaultDescription = $derived(
+    `Customize the template used when creating new ${title.toLowerCase()}`
+  );
 </script>
 
 <div
@@ -30,6 +39,6 @@
     label="Edit"
     isPreventMinWidth={true}
     icon="edit"
-    on:click={onEdit}
+    onclick={onEdit}
   />
 </div>

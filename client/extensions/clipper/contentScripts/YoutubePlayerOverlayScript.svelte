@@ -11,7 +11,11 @@
   import Icon from "@21n/elements/Icon.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import { checkIfAdPlaying } from "@21n/extensions/clipper/parsers/shared/video.utils";
-  export let isRenderedAsOverlay: boolean = false;
+  let {
+    isRenderedAsOverlay = false
+  }: {
+    isRenderedAsOverlay?: boolean;
+  } = $props();
   let clipCount = 0;
   let isClipInProgress = false;
   let _isAdPlaying = false;
@@ -229,7 +233,7 @@
 >
   <button
     class="flex items-center justify-center rounded-md bg-bgs1 h-8"
-    on:click={() => {
+    onclick={() => {
       relayToBackgroundScript({
         event: ExtensionEvent.RUN,
         data: { action: ExtensionEvent.TOGGLE_SIDEPANEL }
@@ -248,7 +252,10 @@
         {/if}
       </span>
       <button
-        on:click|stopPropagation={onClick}
+        onclick={(event) => {
+          event.stopPropagation();
+          onClick();
+        }}
         class="bg-aps3 hover:bg-aps2 border border-aps2 flex w-12 justify-center items-center h-full rounded-r-md"
       >
         <Icon
@@ -260,4 +267,4 @@
     {/if}
   </button>
 </div>
-<svelte:window on:resize={resizeEventListener} />
+<svelte:window onresize={resizeEventListener} />

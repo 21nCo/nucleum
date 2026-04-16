@@ -64,11 +64,11 @@
   import Table3 from "@21n/elements/table/Table3.svelte";
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
 
-  export let id: IRecordId | undefined = undefined;
-  let collection: IActiveCollectionStore | undefined = id
-    ? ActiveCollectionStore.resolve(id)
-    : undefined;
-  let derivedCollections: ICollection[] = [];
+  let { id = undefined }: { id?: IRecordId | undefined } = $props();
+  const collection = $derived<IActiveCollectionStore | undefined>(
+    id ? ActiveCollectionStore.resolve(id) : undefined
+  );
+  let derivedCollections = $state<ICollection[]>([]);
   let tableId = "properties-table";
   const propertiesEditAction = resourceAction(
     Resource.property,
@@ -127,9 +127,7 @@
       disabledCriteria: (row: any) => !manualPropertyTypes.includes(row.type)
     });
   }
-  let isTypeExtension: boolean = $propertyEditorStore?.typeToExtend
-    ? true
-    : false;
+  let isTypeExtension = $state(false);
   async function onAdd() {
     const newProperty: OmitForCaptureWithId<IProperty> = {
       id: generateResourceId(Resource.property),
@@ -158,11 +156,14 @@
         typeToExtend: $collection?.typeToExtend
       });
     }
-    isTypeExtension = $propertyEditorStore?.typeToExtend ? true : false;
     if (collection)
       derivedCollections = await collectionStore.fetchDerivedCollections(
         collection?.id
       );
+  });
+
+  $effect(() => {
+    isTypeExtension = Boolean($propertyEditorStore?.typeToExtend);
   });
 
   function onPropertyTypeChange(e: { id: IRecordId; type: PropertyType }) {
@@ -313,14 +314,14 @@
           }}
           isExpanded={true}
           bind:checked={isTypeExtension}
-          on:change={onTypeExtensionChange}
+          onChange={onTypeExtensionChange}
         />
         {#if isTypeExtension}
           <div class="flex flex-col items-start w-full gap-2">
             <SearchSingleSelect
               bind:selected={$propertyEditorStore.typeToExtend}
               searchCallback={searchForTypeExtension}
-              on:select={onTypeExtensionChange}
+              onSelect={onTypeExtensionChange}
               placeholder="Search for a collection to extend"
             />
             <div class="flex items-center gap-2">
@@ -334,7 +335,7 @@
                   size={Size.xs}
                   isUnderlined={true}
                   style={ButtonStyle.PLAIN}
-                  on:click={onGotoBase}
+                  onclick={onGotoBase}
                 />
               {/if}
             </div>
@@ -350,7 +351,7 @@
               {#each derivedCollections as collection}
                 <button
                   class="flex items-center gap-2 hover:text-aps1 px-2 py-0.5 border border-brs3 hover:border-aps1 rounded-md"
-                  on:click={() => {
+                  onclick={() => {
                     onGoto(collection.id, collection.label);
                   }}
                 >
@@ -374,8 +375,8 @@
           ]}
           {columns}
           bind:data={$propertyEditorStore.properties}
-          on:add={onAdd}
-          on:reorder={onReorder}
+          {onAdd}
+          {onReorder}
         />
       </div>
     </div>

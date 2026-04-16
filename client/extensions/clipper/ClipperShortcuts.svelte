@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { KeyboardShortcut } from "@21n/types/preferences.type";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
+  let { onCollapse = undefined }: { onCollapse?: (() => void) | undefined } =
+    $props();
   let defaultKeyMap: KeyboardShortcut[] = [
     // {
     //   key: "j",
@@ -47,9 +47,11 @@
       return s.modifiers.every((m: any) => modifiers.includes(m.toLowerCase()));
     });
     if (!shortcut) return;
-    dispatch(shortcut.action);
+    if (shortcut.action === "collapse") {
+      onCollapse?.();
+    }
     return true;
   }
 </script>
 
-<svelte:window on:keydown={shortcutListener} />
+<svelte:window onkeydown={shortcutListener} />

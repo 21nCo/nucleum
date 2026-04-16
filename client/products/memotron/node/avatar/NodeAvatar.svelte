@@ -21,12 +21,17 @@
   import { logger } from "@21n/components/debug/logger.client";
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { isValidAvatar } from "@21n/elements/avatarPicker/avatar.utils";
-  export let node: INode | IActiveNode | undefined = undefined;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  export let isExpandedContext: boolean = false;
+  let {
+    node = undefined,
+    accessPoint = ResourceAccessPoint.SELF,
+    isExpandedContext = false
+  }: {
+    node?: INode | IActiveNode | undefined;
+    accessPoint?: ResourceAccessPoint;
+    isExpandedContext?: boolean;
+  } = $props();
   let _avatars: IAvatar[] | undefined = undefined;
-  let size: Size = Size.md;
-  $: size = setSize(accessPoint, isExpandedContext);
+  let size = $derived(setSize(accessPoint, isExpandedContext));
 
   function hasResolvedTypes(
     node: INode | IActiveNode
@@ -139,6 +144,6 @@
 {#if node && !node.avatar && !hasResolvedTypes(node)}
   <ComponentBaseLayer
     subscribeToCacheUpdate={[CacheKey.TYPED_COLLECTION_CACHE]}
-    on:change={refreshAvatar}
+    onChange={refreshAvatar}
   />
 {/if}

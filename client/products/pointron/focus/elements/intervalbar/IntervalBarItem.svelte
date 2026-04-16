@@ -9,23 +9,31 @@
   import view from "@21n/stores/view.store";
   import { formatTime } from "@21n/utils/time.utils";
   import { cn } from "@21n/utils/ui.utils";
-  export let progress: number = 0;
-  export let color: string | undefined = undefined;
-  export let type: BlockType = BlockType.FOCUS;
-  export let context: SessionUIContext = SessionUIContext.DEFAULT;
+  let {
+    progress = 0,
+    color = undefined,
+    type = BlockType.FOCUS,
+    context = SessionUIContext.DEFAULT
+  }: {
+    progress?: number;
+    color?: string;
+    type?: BlockType;
+    context?: SessionUIContext;
+  } = $props();
   let isActiveProgress: boolean;
   let barClassList: string;
   let activeBarRef: any;
   let xPosition: any;
   let yPositon: any;
-  $: barClassList =
+  let barClassListDerived = $derived(
     "z-10 h-full rounded-full " +
-    (color
-      ? `bg-[${color}]`
-      : type === BlockType.FOCUS
-        ? "bg-aps1"
-        : "bg-ass1");
-  $: {
+      (color
+        ? `bg-[${color}]`
+        : type === BlockType.FOCUS
+          ? "bg-aps1"
+          : "bg-ass1")
+  );
+  $effect(() => {
     if (progress != 0 && progress != 1) {
       isActiveProgress = true;
       const rect = activeBarRef?.getBoundingClientRect();
@@ -34,7 +42,7 @@
     } else {
       isActiveProgress = false;
     }
-  }
+  });
 </script>
 
 <div
@@ -45,7 +53,7 @@
 >
   <!-- <div class="absolute bg-bgs4 w-full h-full" /> -->
   <div
-    class={barClassList}
+    class={barClassListDerived}
     style="width: {progress * 100}%"
     bind:this={activeBarRef}
   >

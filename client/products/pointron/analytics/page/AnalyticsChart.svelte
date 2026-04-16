@@ -27,33 +27,144 @@
   } from "@21n/products/pointron/analytics/analytics.types";
   import { cn } from "@21n/utils/ui.utils";
   import view from "@21n/stores/view.store";
-  export let chart: IAnalyticsCard;
-  export let rawData: AnalyticsDataRecord[];
-  export let goalColors: IAnalyticsLabelColor[];
-  export let showLegend: boolean = true;
-  let data: (ChartDataRecord & { topLevelGoal?: string })[];
-  let options: any;
-  let isLoadingState = true;
-  const colors = retrieveCurrentColors($appearance);
-  isLoadingState = false;
+  let {
+    chart,
+    rawData,
+    goalColors,
+    showLegend = true
+  }: {
+    chart: IAnalyticsCard;
+    rawData: AnalyticsDataRecord[];
+    goalColors: IAnalyticsLabelColor[];
+    showLegend?: boolean;
+  } = $props();
+  const colors = $derived(retrieveCurrentColors($appearance));
+  const data = $derived.by<(ChartDataRecord & { topLevelGoal?: string })[]>(
+    () => {
+      if (!rawData) return [];
 
-  initialize();
+      let nextData: (ChartDataRecord & { topLevelGoal?: string })[] =
+        rawData.map((r: any) => {
+        const focus = $pointronPreferences.isIncludeBreakInAnalytics
+          ? r.focus + r.brek
+          : r.focus;
+        const start = new Date(r.start);
+        const startOfDay = new Date(start);
+        startOfDay.setHours(0, 0, 0, 0);
 
-  function initialize() {
-    setBaseOptions();
-    initializeData();
-    setOptions();
-    setTargetLine();
-    postProcessData();
-  }
+          return {
+          topLevelGoal: r.topLevelGoal,
+          group:
+            r.goal === null
+              ? "Other"
+              : chart.isGroupByTopLevelGoals
+                ? r.topLevelGoal
+                : r.goal,
+          key:
+            chart.type == AnalyticsCardType.BAR
+              ? resolveXValueForStackedBarChart(start)
+              : chart.type == AnalyticsCardType.LINE ||
+                  chart.type === AnalyticsCardType.AREA
+                ? startOfDay
+                : chart.type === AnalyticsCardType.CALENDAR ||
+                    chart.type === AnalyticsCardType.HOURLY ||
+                    chart.type === AnalyticsCardType.HOURLY_HEATMAP
+                  ? start
+                  : r.start,
+          value: +(+focus / (60 * 60)).toFixed(2)
+          };
+        });
 
-  function setBaseOptions() {
-    options = {
+      if (
+        chart.type === AnalyticsCardType.PIE ||
+        chart.type === AnalyticsCardType.DONUT
+      ) {
+        const result = nextData.reduce((acc: Record<string, number>, entry) => {
+          acc[`${entry.group}`] = (acc[`${entry.group}`] || 0) + entry.value;
+          return acc;
+        }, {});
+        nextData = Object.keys(result).map((key) => ({
+          group: key,
+          key,
+          value: result[key]
+        }));
+      } else if (
+        chart.type === AnalyticsCardType.LINE ||
+        chart.type === AnalyticsCardType.AREA
+      ) {
+        const grouped = nextData.reduce((acc: Record<string, any>, entry) => {
+          const key = `${entry.group}-${entry.key}`;
+          if (acc[key]) {
+            acc[key].value += entry.value;
+          } else {
+            acc[key] = { ...entry };
+          }
+          return acc;
+        }, {});
+        nextData = Object.values(grouped) as (ChartDataRecord & {
+          topLevelGoal?: string;
+        })[];
+        nextData.sort(
+          (a: { key: string }, b: { key: string }) =>
+            new Date(a.key).getTime() - new Date(b.key).getTime()
+        );
+      } else if (
+        chart.type === AnalyticsCardType.CALENDAR ||
+        chart.type === AnalyticsCardType.HOURLY ||
+        chart.type === AnalyticsCardType.HOURLY_HEATMAP
+      ) {
+        const dayMap = nextData.reduce(
+          (acc: Record<string, number>, entry) => {
+            const date = new Date(entry.key);
+            const dateKey =
+              chart.type === AnalyticsCardType.CALENDAR
+                ? date.toISOString().split("T")[0]
+                : `${entry.key}`;
+            acc[dateKey] = (acc[dateKey] || 0) + entry.value;
+            return acc;
+          },
+          {}
+        );
+        nextData = Object.keys(dayMap).map((key) => ({
+          group: "Total",
+          key,
+          value: dayMap[key]
+        }));
+        nextData.sort(
+          (a: { key: string }, b: { key: string }) =>
+            new Date(a.key).getTime() - new Date(b.key).getTime()
+        );
+      } else if (
+        chart.type === AnalyticsCardType.SUNBURST ||
+        chart.type === AnalyticsCardType.TREEMAP
+      ) {
+        const hierarchicalMap = nextData.reduce(
+          (acc: Record<string, any>, entry) => {
+            const compositeKey = `${entry.topLevelGoal}-${entry.group}`;
+            if (acc[compositeKey]) {
+              acc[compositeKey].value += entry.value;
+            } else {
+              acc[compositeKey] = { ...entry };
+            }
+            return acc;
+          },
+          {}
+        );
+        nextData = Object.values(hierarchicalMap) as (ChartDataRecord & {
+          topLevelGoal?: string;
+        })[];
+      }
+
+      return nextData;
+    }
+  );
+  const options = $derived.by<any>(() => {
+    let nextOptions: any = {
       ...(chart.type === AnalyticsCardType.BAR
         ? { stackedBarMode: chart.stackedBarMode ?? "value" }
         : {}),
       color: {
-        scale: {}
+        scale: {} as Record<string, string>
       },
       donutLabel: "Total focus",
       donutFormatter: (value: any) => {
@@ -68,14 +179,13 @@
       },
       xScale: chart.type == AnalyticsCardType.BAR && "labels"
     };
-  }
-  function setTargetLine() {
+
     const targetValue = $pointronPreferences.horizonTargets?.find(
       (x) => x.scale === chart.period.scale
     )?.target;
     if (targetValue) {
-      options = {
-        ...options,
+      nextOptions = {
+        ...nextOptions,
         yThresholds: [
           {
             label:
@@ -87,133 +197,12 @@
         ]
       };
     }
-  }
-  function resolveXValueForStackedBarChart(begin: Date) {
-    if (chart.period.scale === TimeScale.DAYS) {
-      return parseAndFormatDate(begin, "mmm-dd");
-    } else if (chart.period.scale === TimeScale.MONTHS) {
-      return parseAndFormatDate(begin, "mmm-yy");
-    } else if (chart.period.scale === TimeScale.YEARS) {
-      return `${begin.getFullYear()}`;
-    }
-  }
-  function initializeData() {
-    if (!rawData) return;
-    data = rawData.map((r: any) => {
-      const focus = $pointronPreferences.isIncludeBreakInAnalytics
-        ? r.focus + r.brek
-        : r.focus;
-      return {
-        topLevelGoal: r.topLevelGoal,
-        group:
-          r.goal === null
-            ? "Other"
-            : chart.isGroupByTopLevelGoals
-              ? r.topLevelGoal
-              : r.goal,
-        key:
-          chart.type == AnalyticsCardType.BAR
-            ? resolveXValueForStackedBarChart(new Date(r.start))
-            : chart.type == AnalyticsCardType.LINE ||
-                chart.type === AnalyticsCardType.AREA
-              ? new Date(r.start.setHours(0, 0, 0, 0))
-              : chart.type === AnalyticsCardType.CALENDAR ||
-                  chart.type === AnalyticsCardType.HOURLY ||
-                  chart.type === AnalyticsCardType.HOURLY_HEATMAP
-                ? new Date(r.start)
-                : r.start,
-        value: +(+focus / (60 * 60)).toFixed(2)
-      };
-    });
-  }
-  /**
-   * This should be run towards the end of the steps since goal color resolution depends on data object.
-   */
-  function postProcessData() {
-    if (
-      chart.type === AnalyticsCardType.PIE ||
-      chart.type === AnalyticsCardType.DONUT
-    ) {
-      let result = data.reduce((r: any, x: any) => {
-        r[x.group] = (r[x.group] || 0) + x.value;
-        return r;
-      }, {});
-      data = Object.keys(result).map((key) => {
-        return {
-          group: key,
-          key,
-          value: result[key]
-        };
-      });
-    } else if (
-      chart.type === AnalyticsCardType.LINE ||
-      chart.type === AnalyticsCardType.AREA
-    ) {
-      const val = data.reduce((acc: { [key: string]: any }, cur) => {
-        const key = `${cur.group}-${cur.key}`;
-        if (acc[key]) {
-          acc[key].value += cur.value;
-        } else {
-          acc[key] = { ...cur };
-        }
-        return acc;
-      }, {});
-      data = Object.values(val);
-      data.sort(
-        (a: { key: string }, b) =>
-          new Date(a.key).getTime() - new Date(b.key).getTime()
-      );
-    } else if (
-      chart.type === AnalyticsCardType.CALENDAR ||
-      chart.type === AnalyticsCardType.HOURLY ||
-      chart.type === AnalyticsCardType.HOURLY_HEATMAP
-    ) {
-      const dayMap = data.reduce((acc: { [key: string]: number }, cur) => {
-        const date = new Date(cur.key);
-        const dateKey =
-          chart.type === AnalyticsCardType.CALENDAR
-            ? date.toISOString().split("T")[0]
-            : cur.key;
-        acc[dateKey] = (acc[dateKey] || 0) + cur.value;
-        return acc;
-      }, {});
-      data = Object.keys(dayMap).map((key) => ({
-        group: "Total",
-        key,
-        value: dayMap[key]
-      }));
-      data.sort(
-        (a: { key: string }, b: { key: string }) =>
-          new Date(a.key).getTime() - new Date(b.key).getTime()
-      );
-    } else if (
-      chart.type === AnalyticsCardType.SUNBURST ||
-      chart.type === AnalyticsCardType.TREEMAP
-    ) {
-      const hierarchicalMap = data.reduce(
-        (acc: { [key: string]: any }, cur) => {
-          const compositeKey = `${cur.topLevelGoal}-${cur.group}`;
-          if (acc[compositeKey]) {
-            acc[compositeKey].value += cur.value;
-          } else {
-            acc[compositeKey] = { ...cur };
-          }
-          return acc;
-        },
-        {}
-      );
-      data = Object.values(hierarchicalMap);
-    }
-  }
-  /**
-   * Set options for the chart like domain, color scale etc.
-   */
-  function setOptions() {
-    let period = determineTimePeriodv2(chart.period);
+
+    const period = determineTimePeriodv2(chart.period);
     if (chart.type == AnalyticsCardType.BAR) {
-      let xDomain = [];
-      let begin = new Date(period.begin);
-      let end = new Date(period.end);
+      const xDomain: string[] = [];
+      const begin = new Date(period.begin);
+      const end = new Date(period.end);
       while (begin <= end) {
         xDomain.push(resolveXValueForStackedBarChart(begin));
         if (chart.period.scale === TimeScale.DAYS) {
@@ -224,33 +213,48 @@
           begin.setFullYear(begin.getFullYear() + 1);
         }
       }
-      options = {
-        ...options,
-        xDomain: xDomain,
+      nextOptions = {
+        ...nextOptions,
+        xDomain,
         barsWidth: Math.round(450 / xDomain.length)
-        // barsWidth: xDomain.length > 20 ? 10 : xDomain.length > 10 ? 20 : 30
       };
     }
+
     if (goalColors) {
-      let values = resolveSaturationAndLightness($appearance);
-      if (!values) return;
-      for (let item of goalColors) {
+      const values = resolveSaturationAndLightness($appearance);
+      if (!values) return nextOptions;
+      for (const item of goalColors) {
         const hueForOther = 10;
-        options.color.scale["Other"] =
+        nextOptions.color.scale["Other"] =
           `hsl(${hueForOther}, ${values.saturation}%, ${values.lightness}%)`;
-        if (data.some((x: any) => x.group == item.label)) {
-          options.color.scale[item.label] =
+        if (data.some((entry: any) => entry.group == item.label)) {
+          nextOptions.color.scale[item.label] =
             `hsl(${item.color}, ${values.saturation}%, ${values.lightness}%)`;
         }
-        if (data.some((x: any) => x.topLevelGoal == item.label)) {
-          const x = data.filter((x: any) => x.topLevelGoal == item.label);
-          x.forEach((y: any) => {
-            options.color.scale[y.group] =
+        if (data.some((entry: any) => entry.topLevelGoal == item.label)) {
+          const matchingEntries = data.filter(
+            (entry: any) => entry.topLevelGoal == item.label
+          );
+          matchingEntries.forEach((entry: any) => {
+            nextOptions.color.scale[entry.group] =
               `hsl(${item.color}, ${values.saturation}%, ${values.lightness}%)`;
           });
         }
       }
     }
+
+    return nextOptions;
+  });
+  const isLoadingState = $derived(!rawData);
+  function resolveXValueForStackedBarChart(begin: Date): string {
+    if (chart.period.scale === TimeScale.DAYS) {
+      return parseAndFormatDate(begin, "mmm-dd");
+    } else if (chart.period.scale === TimeScale.MONTHS) {
+      return parseAndFormatDate(begin, "mmm-yy");
+    } else if (chart.period.scale === TimeScale.YEARS) {
+      return `${begin.getFullYear()}`;
+    }
+    return "";
   }
 </script>
 

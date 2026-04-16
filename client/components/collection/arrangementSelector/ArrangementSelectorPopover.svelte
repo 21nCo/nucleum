@@ -9,23 +9,51 @@
   import { Size } from "@21n/types/size.enum";
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  export let density: number;
-  export let arrangement: Arrangement;
-  export let isHideThumbnailPreview: boolean = false;
-  export let isHideThumbnailTitle: boolean = false;
-  export let allArrangements: {
-    value: Arrangement;
-    label: string;
-    icon: string;
-  }[];
-  export let resource: Resource;
-  export let onDensityChange: (density: number) => void;
-  export let onPreviewSettingChange: (event: CustomEvent) => void;
-  export let onTitleSettingChange: (event: CustomEvent) => void;
-  export let onArrangementChange: (event: CustomEvent) => void;
-  function onDensityChanges(event: Event) {
-    onDensityChange(density);
-  }
+  let {
+    density = $bindable(1),
+    arrangement = $bindable(Arrangement.LIST),
+    isHideThumbnailPreview = $bindable(false),
+    isHideThumbnailTitle = $bindable(false),
+    allArrangements,
+    resource,
+    onDensityChange,
+    onPreviewSettingChange,
+    onTitleSettingChange,
+    onArrangementChange
+  }: {
+    density?: number;
+    arrangement?: Arrangement;
+    isHideThumbnailPreview?: boolean;
+    isHideThumbnailTitle?: boolean;
+    allArrangements: {
+      value: Arrangement;
+      label: string;
+      icon: string;
+    }[];
+    resource: Resource;
+    onDensityChange: (density: number) => void;
+    onPreviewSettingChange: (event: CustomEvent) => void;
+    onTitleSettingChange: (event: CustomEvent) => void;
+    onArrangementChange: (event: CustomEvent) => void;
+  } = $props();
+  let initializedArrangement = $state(false);
+  let initializedDensity = $state(false);
+
+  $effect(() => {
+    if (!initializedArrangement) {
+      initializedArrangement = true;
+      return;
+    }
+    onArrangementChange(new CustomEvent("switch", { detail: arrangement }));
+  });
+
+  $effect(() => {
+    if (!initializedDensity) {
+      initializedDensity = true;
+      return;
+    }
+    onDensityChange(density ?? 1);
+  });
 </script>
 
 <div class="flex flex-col gap-2 p-2 py-4 w-56 bg-bgs1">
@@ -37,7 +65,6 @@
     style={VerticalSwitcherStyle.BG}
     items={allArrangements}
     bind:selected={arrangement}
-    on:switch={onArrangementChange}
   />
   {#if arrangement === Arrangement.MASONRY}
     <div class="flex flex-col w-full gap-4 mt-4">
@@ -47,7 +74,7 @@
           size={Size.sm}
           isExpanded={true}
           bind:checked={isHideThumbnailTitle}
-          on:change={onTitleSettingChange}
+          onChange={onTitleSettingChange}
         />
       </span>
       <div class="flex flex-col gap-1 px-2">
@@ -61,7 +88,6 @@
             { label: "xl", value: 1 }
           ]}
           bind:selected={density}
-          on:select={onDensityChanges}
         />
       </div>
     </div>
@@ -72,7 +98,7 @@
         size={Size.sm}
         isExpanded={true}
         bind:checked={isHideThumbnailPreview}
-        on:change={onPreviewSettingChange}
+        onChange={onPreviewSettingChange}
       />
     </span>
   {/if}

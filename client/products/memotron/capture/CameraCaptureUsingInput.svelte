@@ -1,13 +1,19 @@
 <script lang="ts">
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import { Size } from "@21n/types/size.enum";
   import { ButtonVariant } from "@21n/types/button.type";
   import type { IActiveCaptureStore } from "@21n/products/memotron/capture/capture.store";
-  export let captureStore: IActiveCaptureStore;
-  let photoTaken = false;
-  let imagePreview: string | null = null;
-  const dispatch = createEventDispatcher();
+
+  let {
+    captureStore,
+    onClose = undefined
+  }: {
+    captureStore: IActiveCaptureStore;
+    onClose?: (() => void) | undefined;
+  } = $props();
+  let photoTaken = $state(false);
+  let imagePreview = $state<string | null>(null);
   let fileInputRef: HTMLInputElement;
 
   function handleCapture(event: Event) {
@@ -17,7 +23,6 @@
       const reader = new FileReader();
       reader.onload = (e) => {
         imagePreview = e.target?.result as string;
-        // photoTaken = true;
         savePhoto();
       };
       reader.readAsDataURL(file);
@@ -64,19 +69,10 @@
             type="file"
             accept="image/*"
             capture="environment"
-            on:change={handleCapture}
+            onchange={handleCapture}
             id="cameraInput"
             class="hidden"
           />
-          <!-- <Button
-            icon="ph:camera"
-            label="Take Photo"
-            type={ButtonVariant.PRIMARY}
-            size={Size.lg}
-            on:click={() => {
-              fileInputRef.click();
-            }}
-          /> -->
           Capturing...
         </label>
       </div>
@@ -93,7 +89,7 @@
         type={ButtonVariant.DANGER}
         size={Size.sm}
         isPreventMinWidth={true}
-        on:click={retakePhoto}
+        onclick={retakePhoto}
       />
       <Button
         icon="save"
@@ -101,16 +97,16 @@
         type={ButtonVariant.PRIMARY}
         size={Size.sm}
         isPreventMinWidth={true}
-        on:click={savePhoto}
+        onclick={savePhoto}
       />
       <Button
         icon="cross"
         label="Cancel"
         size={Size.sm}
         isPreventMinWidth={true}
-        on:click={() => {
+        onclick={() => {
           captureStore.reset();
-          dispatch("close");
+          onClose?.();
         }}
       />
     {:else}
@@ -120,9 +116,9 @@
         label="Cancel"
         size={Size.sm}
         isPreventMinWidth={true}
-        on:click={() => {
+        onclick={() => {
           captureStore.reset();
-          dispatch("close");
+          onClose?.();
         }}
       />
     {/if}

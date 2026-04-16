@@ -3,10 +3,16 @@
   import { appStore } from "@21n/stores/app.store";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
-  export let context: "Roadmap" | "Changelog" | "Board";
-  $: baseUrl =
+  let {
+    context
+  }: {
+    context: "Roadmap" | "Changelog" | "Board";
+  } = $props();
+  const baseUrl = $derived(
     $appStore?.appData?.urls?.hashnode ??
-    `https://${$appStore.product}.hashnode.space`;
+    `https://${$appStore.product}.hashnode.space`
+  );
+  const url = $derived(`${baseUrl}/${context?.toLocaleLowerCase() ?? ""}`);
 </script>
 
 <!-- <SupaHubEmbedCode {context} /> -->
@@ -14,7 +20,7 @@
   <iframe
     title="Hashnode"
     class="rounded-md"
-    src="{baseUrl}/{context?.toLocaleLowerCase() ?? ''}"
+    src={url}
     width="100%"
     height="100%"
     frameBorder="0"
@@ -27,7 +33,7 @@
       size={Size.sm}
       type={ButtonVariant.PRIMARY}
       style={ButtonStyle.OUTLINED}
-      on:click={() => {
+      onclick={() => {
         appStore.openLink(baseUrl);
       }}
     />

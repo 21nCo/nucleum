@@ -1,9 +1,15 @@
 <script lang="ts">
   import { cn } from "@21n/utils/ui.utils";
 
-  export let loading: boolean;
-  export let error: string;
-  export let platform: string = "social";
+  let {
+    loading,
+    error,
+    platform = "social"
+  }: {
+    loading: boolean;
+    error: string;
+    platform?: string;
+  } = $props();
 </script>
 
 <div

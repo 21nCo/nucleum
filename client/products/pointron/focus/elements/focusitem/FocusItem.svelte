@@ -33,43 +33,60 @@
   import { appStore } from "@21n/stores/app.store";
   import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import { resolveGoalColor } from "@21n/components/goals/goal.utils";
-  import { createEventDispatcher } from "svelte";
   import { toasts } from "@21n/stores/notification.store";
   import { reorderList } from "@21n/actions/rearrange.action";
   import Icon from "@21n/elements/Icon.svelte";
-  const dispatch = createEventDispatcher();
 
-  export let focusItem: IFocusItem;
-  export let tasks: ITaskThumb[] = [];
-  export let goals: IGoalThumb[] = [];
-  export let isFocusAddTask: boolean = false;
-  export let isInEditMode: boolean = false;
-  export let contxt: "current" | "history" = "current";
+  let {
+    focusItem,
+    tasks = [],
+    goals = [],
+    isFocusAddTask = false,
+    isInEditMode = false,
+    contxt = "current",
+    intervals = [],
+    focusItemsList = [],
+    onCreateNew = undefined,
+    onSelect = undefined,
+    onRemove = undefined,
+    onReorderTasks = undefined
+  }: {
+    focusItem: IFocusItem;
+    tasks?: ITaskThumb[];
+    goals?: IGoalThumb[];
+    isFocusAddTask?: boolean;
+    isInEditMode?: boolean;
+    contxt?: "current" | "history";
+    intervals?: ISessionInterval[];
+    focusItemsList?: IFocusItem[];
+    onCreateNew?:
+      | ((event: CustomEvent<{ label: string; goalId: any }>) => void)
+      | undefined;
+    onSelect?: ((event: CustomEvent<any>) => void) | undefined;
+    onRemove?: ((event: CustomEvent<any>) => void) | undefined;
+    onReorderTasks?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
   /**
    * Needed if the contxt param is "history"
    */
-  export let intervals: ISessionInterval[] = [];
-  /**
-   * Needed if the contxt param is "history"
-   */
-  export let focusItemsList: IFocusItem[] = [];
-  $: goal = goals.find(resourceInList(focusItem.id));
-  $: color = resolveGoalColor(goal);
-  $: tasksUnderGoal = resolveTaskFocusItems(focusItem);
+  let goal = $derived(goals.find(resourceInList(focusItem.id)));
+  let color = $derived(resolveGoalColor(goal));
+  let tasksUnderGoal = $derived(resolveTaskFocusItems(focusItem));
 
   let parentHierarchy: string[] = [];
   let isInprogress: boolean = false;
   let addTaskInputRef: any;
   // let workedTime: number = 0;
-  $: isInprogress =
+  let isInprogressDerived = $derived(
     (contxt !== "history" &&
       $currentFocusItem &&
       isSameResource(focusItem, $currentFocusItem)) ??
-    false;
+      false
+  );
 
-  $: parentHierarchy = goal?.parent
-    ? goal.parent?.map((x: any) => x.label)
-    : [];
+  let parentHierarchyDerived = $derived(
+    goal?.parent ? goal.parent?.map((x: any) => x.label) : []
+  );
 
   onMount(() => {
     try {
@@ -111,7 +128,10 @@
     }
   }
   async function onRemoveClicked() {
-    dispatch("remove", focusItem.id);
+    const removeEvent = new CustomEvent("remove", {
+      detail: focusItem.id
+    });
+    onRemove?.(removeEvent);
   }
 
   function resolveTaskFocusItems(focusItem: IFocusItem) {
@@ -144,10 +164,13 @@
     );
   }
 
-  function onReorderTasks(event: any) {
+  function handleReorderTasks(event: any) {
     const { fromId, toId } = event;
     if (!goal || !focusItem.tasks) return;
-    dispatch("reorderTasks", { fromId, toId, goalId: focusItem.id });
+    const reorderTasksEvent = new CustomEvent("reorderTasks", {
+      detail: { fromId, toId, goalId: focusItem.id }
+    });
+    onReorderTasks?.(reorderTasksEvent);
   }
 </script>
 
@@ -178,14 +201,14 @@
         >
           <div>
             <BreadcrumbMini
-              hierarchy={parentHierarchy}
+              hierarchy={parentHierarchyDerived}
               slice={3}
               truncateLength={15}
             />
           </div>
           <button
             class="notouch:hover:underline active:underline"
-            on:click={(e) => {
+            onclick={(e) => {
               e.stopPropagation();
               appStore.openResource(goal.id, AccessMode.POP);
             }}
@@ -200,7 +223,7 @@
                 listId: `focus-tasks-${focusItem.id}`,
                 draggedOverClass: "outline outline-ass1",
                 dragImage: "dragimage",
-                onDrop: onReorderTasks
+                onDrop: handleReorderTasks
               }}
             >
               {#each tasksUnderGoal as taskFocusItem, index (taskFocusItem.id)}
@@ -219,7 +242,7 @@
                       {intervals}
                       {isInEditMode}
                       context={contxt}
-                      on:remove
+                      {onRemove}
                     />
                   </div>
                 {/if}
@@ -235,14 +258,13 @@
               goalId={focusItem.id}
               placeholder="Add a task"
               bind:this={addTaskInputRef}
-              on:createNew
-              on:select
+              {onCreateNew}
+              {onSelect}
             />
           {/if}
         </div>
       </div>
       {#if isInEditMode || (contxt === "current" && !$activeSession.isSessionRunning)}
-        <!-- <Button icon="trash" size={Size.sm} on:click={onDeleteClicked} /> -->
         <div class="absolute bg-bgs1 right-1 -top-3">
           <Button
             icon="minus-circle"
@@ -251,7 +273,7 @@
             style={ButtonStyle.OUTLINED}
             isPreventMinWidth={true}
             tooltip="Remove"
-            on:click={onRemoveClicked}
+            onclick={onRemoveClicked}
           />
         </div>
       {/if}
@@ -262,24 +284,24 @@
       class={cn(
         "flex h-16 gap-4 items-center border border-brs3 w-full p-3 rounded-md",
         {
-          "bg-ccs1 border-ccs1": isInprogress,
+          "bg-ccs1 border-ccs1": isInprogressDerived,
           "text-ccs1": !isInprogress
         }
       )}
       {color}
-      on:click={clickHandler}
+      onclick={clickHandler}
     >
       <div class="text-left truncate min-w-0 flex-1">
         <div>
           <BreadcrumbMini
-            hierarchy={parentHierarchy}
+            hierarchy={parentHierarchyDerived}
             slice={3}
             truncateLength={15}
           />
         </div>
         <button
           class="notouch:hover:underline active:underline"
-          on:click={(e) => {
+          onclick={(e) => {
             e.stopPropagation();
             appStore.openResource(goal.id, AccessMode.POP);
           }}
@@ -287,7 +309,7 @@
           {goal.label}
         </button>
       </div>
-      {#if isInprogress && contxt == "current" && $currentFocusItem}
+      {#if isInprogressDerived && contxt == "current" && $currentFocusItem}
         <div class="leading-none text-b3">
           <!-- TODO - test if worked time is correct -->
           {formatSeconds(
@@ -316,7 +338,7 @@
         {isInEditMode}
         context={contxt}
         isStandalone={true}
-        on:remove
+        {onRemove}
       />
     {/if}
   {/if}

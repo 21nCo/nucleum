@@ -1,16 +1,27 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { Orientation } from "@21n/types/direction.enum";
   import { InputStyle, type InputLabel } from "@21n/types/input.type";
   import { bg, cn } from "@21n/utils/ui.utils";
   import FormControlLabelWrapper from "@21n/elements/text/formLabel/FormControlLabelWrapper.svelte";
   import { Size } from "@21n/types/size.enum";
-  let classList = "";
-  export { classList as class };
-  export let style: InputStyle = InputStyle.BORDERED;
-  export let size: Size.md | Size.sm = Size.md;
-  export let label: InputLabel | undefined = undefined;
-  export let isFocused: boolean = false;
-  export let parentBgIndex: number = 1;
+  let {
+    style = InputStyle.BORDERED,
+    size = Size.md,
+    label = undefined,
+    isFocused = false,
+    parentBgIndex = 1,
+    class: classList = "",
+    children = undefined
+  }: {
+    style?: InputStyle;
+    size?: Size.md | Size.sm;
+    label?: InputLabel | undefined;
+    isFocused?: boolean;
+    parentBgIndex?: number;
+    class?: string;
+    children?: Snippet | undefined;
+  } = $props();
 </script>
 
 <FormControlLabelWrapper props={label} {size}>
@@ -28,6 +39,6 @@
       "border border-bgs2 ": style === InputStyle.FILLED && !isFocused
     })}
   >
-    <slot />
+    {@render children?.()}
   </div>
 </FormControlLabelWrapper>

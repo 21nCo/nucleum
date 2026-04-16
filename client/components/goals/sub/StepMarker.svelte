@@ -7,12 +7,20 @@
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { resolveGoalStatusIcon } from "@21n/components/goals/goal.utils";
 
-  export let item: IGoal | { label?: string; type: string; status: GoalStatus };
-  export let index: number;
-  export let totalLength: number;
-  export let accessPoint: ResourceAccessPoint | undefined = undefined;
-  let isHovering = false;
-  $: statusIcon = resolveGoalStatusIcon(item.status);
+  let {
+    item,
+    index,
+    totalLength,
+    accessPoint = undefined
+  }: {
+    item: IGoal | { label?: string; type: string; status: GoalStatus };
+    index: number;
+    totalLength: number;
+    accessPoint?: ResourceAccessPoint | undefined;
+  } = $props();
+
+  let isHovering = $state(false);
+  const statusIcon = $derived(resolveGoalStatusIcon(item.status));
 </script>
 
 <div class="flex flex-col items-center relative z-10">

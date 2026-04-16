@@ -1,6 +1,11 @@
 <script lang="ts">
   import { IconVariant } from "@21n/types/icon.type";
-  export let variant: IconVariant = IconVariant.Outline;
+
+  let {
+    variant = IconVariant.Outline
+  }: {
+    variant?: IconVariant;
+  } = $props();
 </script>
 
 <circle cx="26" cy="26" r="24.6" class="stroke-aps1" stroke-width="2.8" />

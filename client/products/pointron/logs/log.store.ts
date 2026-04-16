@@ -20,6 +20,7 @@ import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 import { generateResourceId } from "@21n/components/flux/flux.utils";
 import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
 import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
+import { deepCopy } from "@21n/shared-utils/obj.utils";
 
 const defaults = {
   goalId: "",
@@ -143,9 +144,11 @@ class ManualLogStore extends ObservableStore<IManualLogStore> {
             ]
           }
         ],
-        notes: entry.notes ?? {
-          blocks: []
-        },
+        notes: deepCopy(
+          entry.notes ?? {
+            blocks: []
+          }
+        ),
         type: SessionType.MANUAL_ENTRY,
         extended: 0
       };

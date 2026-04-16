@@ -4,9 +4,16 @@
   import Item from "@21n/landing/shared/grid/Item.svelte";
   import Title from "@21n/landing/shared/Title.svelte";
   import Button from "@21n/landing/shared/elements/Button.svelte";
-  export let title: string;
-  export let items: IGridItem[];
-  export let whitePaperUrl: string;
+  let {
+    title,
+    items,
+    whitePaperUrl,
+  }: {
+    title: string;
+    items: IGridItem[];
+    whitePaperUrl: string;
+  } = $props();
+
 </script>
 
 <Section>

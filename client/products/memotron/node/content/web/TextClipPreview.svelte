@@ -16,11 +16,19 @@
   import { appStore } from "@21n/stores/app.store";
   import { derived } from "svelte/store";
   import { Arrangement } from "@21n/types/direction.enum";
-  export let node: INode;
-  export let contentPreview: string;
-  export let truncateLength: number | undefined = undefined;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  export let arrangement: Arrangement = Arrangement.LIST;
+  let {
+    node,
+    contentPreview,
+    truncateLength = undefined,
+    accessPoint = ResourceAccessPoint.SELF,
+    arrangement = Arrangement.LIST
+  }: {
+    node: INode;
+    contentPreview: string;
+    truncateLength?: number | undefined;
+    accessPoint?: ResourceAccessPoint;
+    arrangement?: Arrangement;
+  } = $props();
 
   const hideHighlightColors = derived(
     [preferences, appStore],
@@ -30,9 +38,9 @@
     }
   );
 
-  $: textHightlightColor = $hideHighlightColors
-    ? undefined
-    : resolveTextHighlightColor(node);
+  let textHightlightColor = $derived(
+    $hideHighlightColors ? undefined : resolveTextHighlightColor(node)
+  );
 
   function getKindleHighlightRGBA(color: string, opacity: number) {
     const colorMap: Record<string, string> = {
@@ -106,7 +114,7 @@
         label="Copy text content"
         isUnderlined={true}
         size={Size.sm}
-        on:click={copyTextContent}
+        onclick={copyTextContent}
       />
     </div>
   {/if}

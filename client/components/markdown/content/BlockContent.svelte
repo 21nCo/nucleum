@@ -16,16 +16,29 @@
   import ListContent from "@21n/components/markdown/lists/ListContent.svelte";
   import HeadingContent from "@21n/components/markdown/content/HeadingContent.svelte";
   import { cn } from "@21n/utils/ui.utils";
-  export let mdStore: MdStoreType;
-  export let block: IBlock;
-  /**
-   * @deprecated - used with ListContent v1 approach
-   */
-  export let parentHierarchy: string[] = [];
-  export let isHovering: boolean = false;
-  export let isFocusing: boolean = false;
-  $: parentHierarchy;
-  $: mediaGridBlock = block as unknown as IMediaGridNode;
+  let {
+    mdStore,
+    block,
+    parentHierarchy = [],
+    isHovering = false,
+    isFocusing = $bindable(false),
+    onBlur = undefined,
+    onDelete = undefined,
+    onUpdate = undefined
+  }: {
+    mdStore: MdStoreType;
+    block: IBlock;
+    parentHierarchy?: string[];
+    isHovering?: boolean;
+    isFocusing?: boolean;
+    onBlur?: ((event?: CustomEvent<any>) => void) | undefined;
+    onDelete?: (() => void) | undefined;
+    onUpdate?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
+
+  void parentHierarchy;
+
+  const mediaGridBlock = $derived(block as unknown as IMediaGridNode);
 </script>
 
 <div
@@ -42,20 +55,20 @@
       <div class="h-px bg-bgs4"></div>
     </div>
   {:else if block.contentType === NodeType.MEDIA_GRID}
-    <MediaGrid block={mediaGridBlock} {mdStore} on:delete />
+    <MediaGrid block={mediaGridBlock} {mdStore} {onDelete} />
   {:else if block.contentType === NodeType.EMBED}
     <EmbedContent
       id={block.id}
       body={block.body}
       {mdStore}
       {isHovering}
-      on:update
-      on:delete
+      onUpdate={onUpdate}
+      onDelete={onDelete}
     />
   {:else if block.contentType === NodeType.CALLOUT}
-    <Callout id={block.id} body={block.body} {mdStore} {isHovering} on:update />
+    <Callout id={block.id} body={block.body} {mdStore} {isHovering} onUpdate={onUpdate} />
   {:else if block.contentType === NodeType.CODE}
-    <CodeContent body={block.body} {mdStore} on:update on:delete />
+    <CodeContent body={block.body} {mdStore} {onUpdate} {onDelete} />
   {:else if headingNodeTypes.includes(block.contentType)}
     <HeadingContent
       id={block.id}
@@ -63,7 +76,7 @@
       bind:isFocusing
       {mdStore}
       contentType={block.contentType}
-      on:update
+      {onUpdate}
     />
   {:else if listNodeTypes.includes(block.contentType) && typeof block.body === "object"}
     <ListContent
@@ -73,8 +86,8 @@
       {isHovering}
       {mdStore}
       bind:isFocusing
-      on:update
-      on:blur
+      {onUpdate}
+      {onBlur}
     />
   {:else if simpleTextNodeTypeList.includes(block.contentType) && typeof block.body === "string"}
     <TextContent
@@ -84,8 +97,8 @@
       {mdStore}
       {isHovering}
       bind:isFocusing
-      on:update
-      on:blur
+      {onUpdate}
+      {onBlur}
     />
   {:else}
     <span class="flex text-ars1 text-b2"

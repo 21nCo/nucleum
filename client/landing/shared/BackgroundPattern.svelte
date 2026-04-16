@@ -1,6 +1,10 @@
 <!-- Background pattern -->
 <script lang="ts">
-  export let mode: "light" | "dark" = "light";
+  let {
+    mode = "light",
+  }: {
+    mode?: "light" | "dark";
+  } = $props();
 </script>
 
 <div class="absolute inset-0 overflow-hidden">

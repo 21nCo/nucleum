@@ -4,9 +4,13 @@
   import { cn } from "@21n/utils/ui.utils";
   import type { IGoalThumb } from "@21n/components/goals/goal.type";
   import { resolveGoalColor } from "@21n/components/goals/goal.utils";
-  export let item: IGoalThumb;
-  $: parentLabels = item.parent ? item.parent.map((x) => x.label) : [];
-  $: color = resolveGoalColor(item);
+
+  let { item }: { item: IGoalThumb } = $props();
+
+  const parentLabels = $derived(
+    item.parent ? item.parent.map((x) => x.label) : []
+  );
+  const color = $derived(resolveGoalColor(item));
 </script>
 
 <CustomColorPropagator

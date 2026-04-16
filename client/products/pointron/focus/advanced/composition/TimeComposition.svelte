@@ -27,7 +27,7 @@
   import { logger } from "@21n/components/debug/logger.client";
   import { cn } from "@21n/utils/ui.utils";
 
-  export let parentBgIndex: number = 1;
+  let { parentBgIndex = 1 }: { parentBgIndex?: number } = $props();
   let selectedMode: number = refreshAdvancedModeState();
   let selectedDynamicDuration: number = 0;
   let isSliderVariant: boolean = false;
@@ -89,7 +89,7 @@
             {parentBgIndex}
             items={["Presets", "Custom"]}
             value={selectedMode === 0 ? "Presets" : "Custom"}
-            on:switch={onModeSwitch}
+            onSwitch={onModeSwitch}
             activeItemStrength={PanelSwitcherActiveItemStrength.SUBTLE}
           />
           <!-- <AdvancedFocusModeSwitcher bind:selectedMode /> -->
@@ -109,7 +109,7 @@
           label="Clear"
           size={Size.sm}
           icon="cross"
-          on:click={() => {
+          onclick={() => {
             activeSession.resetComposition();
           }}
         />
@@ -118,7 +118,7 @@
       <ComposeDuration
         {parentBgIndex}
         bind:composition={$activeSession.composition}
-        on:change={onCompositionChanges}
+        onChange={onCompositionChanges}
         isShowSave={true}
       />
     {/if}
@@ -131,14 +131,14 @@
           <div class="relative flex flex-col gap-2 max-w-[19rem]">
             <Slider
               parentBackgroundIndex={parentBgIndex}
-              on:time-change={onDynamicSliderChange}
+              onTimeChange={onDynamicSliderChange}
             />
             <div class="flex justify-center w-full">
               <Button
                 label="compose"
                 size={Size.xs}
                 parentBgIndex={2}
-                on:click={() => {
+                onclick={() => {
                   appStore.runAction(PointronAction.COMPOSE_TIME_MODAL);
                 }}
               />
@@ -148,6 +148,6 @@
         {/if}
       </div>
     </div>
-    <AdvancedFocusModeSwitcher {selectedMode} on:switch={onModeSwitch} />
+    <AdvancedFocusModeSwitcher {selectedMode} onSwitch={onModeSwitch} />
   {/if}
 </div>

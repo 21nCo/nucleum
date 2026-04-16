@@ -1,26 +1,35 @@
 <script lang="ts">
   import { Size } from "@21n/types/size.enum";
 
-  export let xCoord: number;
-  export let yCoord: number;
-  export let progress: number;
-  export let size: Size = Size.md;
-  let width =
+  let {
+    xCoord,
+    yCoord,
+    progress,
+    size = Size.md
+  }: {
+    xCoord: number;
+    yCoord: number;
+    progress: number;
+    size?: Size;
+  } = $props();
+  const width = $derived(
     size === Size.lg
       ? "22"
       : size === Size.md
         ? "18"
         : size === Size.sm
           ? "16"
-          : "14";
-  let height =
+          : "14"
+  );
+  const height = $derived(
     size === Size.lg
       ? "18"
       : size === Size.md
         ? "16"
         : size === Size.sm
           ? "10"
-          : "10";
+          : "10"
+  );
 </script>
 
 <rect x={xCoord} y={yCoord + 2} {width} {height} class="fill-bgs2" />

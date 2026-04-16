@@ -4,20 +4,23 @@
   import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
   import { ButtonStyle } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
-  import { createEventDispatcher } from "svelte";
-
-  const dispatch = createEventDispatcher();
-  export let label: string | undefined = undefined;
+  let {
+    label = $bindable<string | undefined>(undefined),
+    onSave = undefined
+  }: {
+    label?: string | undefined;
+    onSave?: ((label: string) => void) | undefined;
+  } = $props();
   let isSaving = false;
   let errorMessage: string | undefined = undefined;
 
-  function onSave() {
+  function handleSave() {
     if (!label) {
       errorMessage = "Collection name is required";
       return;
     }
     isSaving = true;
-    dispatch("save", label);
+    onSave?.(label);
   }
 </script>
 
@@ -27,13 +30,13 @@
       bind:value={label}
       size={Size.sm}
       placeholder="New collection name"
-      on:enter={onSave}
+      onEnter={handleSave}
     />
     <Button
       icon={isSaving ? "svg-spinners:3-dots-fade" : "save"}
       tooltip="Save collection"
       style={ButtonStyle.OUTLINED}
-      on:click={onSave}
+      onclick={handleSave}
     />
   </div>
   {#if errorMessage}

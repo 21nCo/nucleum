@@ -1,11 +1,10 @@
 import type { Meta, StoryObj } from "@storybook/svelte";
 
 import DropDown from "@21n/elements/dropdown/DropDown.svelte";
-import {
-  DropDownStyle,
-  type DropdownItem
-} from "@21n/types/dropdownItem.type";
+import { InputStyle } from "@21n/types/input.type";
+
 const meta = {
+  title: "Elements/Dropdown/DropDown",
   component: DropDown,
   argTypes: {
     parentBackgroundIndex: {
@@ -21,43 +20,44 @@ const meta = {
     ],
     value: "item2",
     parentBackgroundIndex: 2,
-    isActive: false
+    isActive: false,
+    style: InputStyle.BORDERED
   }
 } satisfies Meta<DropDown>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = {
+export const Bordered: Story = {
   args: {
-    style: DropDownStyle.DEFAULT
+    style: InputStyle.BORDERED
   }
 };
-export const Outlined: Story = {
+export const Plain: Story = {
   args: {
-    style: DropDownStyle.OUTLINED
+    style: InputStyle.PLAIN
   }
 };
-export const PanelSwitch: Story = {
+export const Filled: Story = {
   args: {
-    style: DropDownStyle.PANEL_SWITCH
+    style: InputStyle.FILLED
   }
 };
 export const isActive: Story = {
   args: {
-    style: DropDownStyle.DEFAULT,
+    style: InputStyle.BORDERED,
     isActive: true
   }
 };
-export const isActiveOutlined: Story = {
+export const isActivePlain: Story = {
   args: {
-    style: DropDownStyle.OUTLINED,
+    style: InputStyle.PLAIN,
     isActive: true
   }
 };
-export const isActivePanelSwitch: Story = {
+export const isActiveFilled: Story = {
   args: {
-    style: DropDownStyle.PANEL_SWITCH,
+    style: InputStyle.FILLED,
     isActive: true
   }
 };

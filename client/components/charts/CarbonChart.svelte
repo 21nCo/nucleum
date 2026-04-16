@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, tick } from "svelte";
-  import "@carbon/charts-svelte/styles.css";
+  import "@carbon/charts/styles.css";
   import { ChartType } from "@21n/types/analytics.type";
   import {
     AreaChart,
@@ -20,9 +20,11 @@
   import { determineCarbonChartTimeInterval } from "@21n/utils/carbon.utils";
   import { pieLabelFormatter } from "@21n/utils/carbon.utils";
   import appearance from "@21n/stores/appearance.store";
-  export let type: ChartType;
-  export let data: any;
-  export let additionalOptions: any;
+  let type: ChartType;
+  let data: any;
+  let additionalOptions: any;
+
+  export { type, data, additionalOptions };
 
   let isShow: boolean = false;
   let stackedBarChartRef: any;

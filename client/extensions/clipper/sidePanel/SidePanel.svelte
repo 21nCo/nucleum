@@ -78,9 +78,6 @@
   let isSaving = false;
   let feedbackTimeoutId: number | undefined = undefined;
 
-  $: contentType = resolveContentTypeForUrl(currentUrl);
-  $: contentTypeStr = resolveContentTypeString(contentType);
-
   const tooltipOptions = {
     placement: Placement.TopCenter
   };
@@ -119,12 +116,21 @@
   ];
   const channel = getPort("channel");
   const port = chrome.runtime.connect({ name: "sidePanel" });
+
+  function resolveCurrentContentType() {
+    return resolveContentTypeForUrl(currentUrl);
+  }
+
+  function resolveCurrentContentTypeString() {
+    return resolveContentTypeString(resolveCurrentContentType());
+  }
+
   async function onSavePageClick() {
     if (isSaving) return;
     isSaving = true;
     feedback = {
       type: AlertType.PROGRESS,
-      message: `Saving ${contentTypeStr.toLowerCase()}...`
+      message: `Saving ${resolveCurrentContentTypeString().toLowerCase()}...`
     };
     const result = await relayToContentScript({
       event: ClipperExtensionEvent.SAVE_WEBPAGE
@@ -147,7 +153,7 @@
       isPageSaved = true;
       feedback = {
         type: AlertType.SUCCESS,
-        message: `${contentTypeStr} saved!`
+        message: `${resolveCurrentContentTypeString()} saved!`
       };
       await relayToContentScript({
         event: ExtensionEvent.PAGE_STATE_TRIGGER
@@ -395,7 +401,7 @@
 <!-- svelte-ignore missing-declaration -->
 <ExtensionBaseLayer
   id="sidePanel"
-  on:mount={() => (isMounted = true)}
+  onMount={() => (isMounted = true)}
   extention={Extension.MEMOTRON_CLIPPER}
   product={{ product: Product.MEMOTRON, env: "live" }}
 >
@@ -410,8 +416,8 @@
           />
         {:else if isShowHelp}
           <ExtensionHelp
-            on:close={() => (isShowHelp = false)}
-            on:resync={resync}
+            onClose={() => (isShowHelp = false)}
+            onResync={resync}
           />
         {:else if isLoggedIn}
           <PanelSwitcher
@@ -419,7 +425,7 @@
             bind:value={mainPanel}
             style={PanelSwitcherStyle.BAR}
             isExpandToFullWidth={true}
-            on:switch={() => {
+            onSwitch={() => {
               refreshSyncStatus();
             }}
           />
@@ -440,7 +446,7 @@
                   icon="show"
                   size={Size.sm}
                   isPreventMinWidth={true}
-                  on:click={() => {
+                  onclick={() => {
                     relayToContentScript({
                       event: ClipperExtensionEvent.TOGGLE_TOOLBAR_VISIBILITY
                     });
@@ -466,9 +472,9 @@
                   {:else}
                     <button
                       class="min-w-fit bg-aps1 text-bgs1 px-3 py-1.5 rounded-md whitespace-nowrap"
-                      on:click={onSavePageClick}
+                      onclick={onSavePageClick}
                     >
-                      Save {contentTypeStr.toLowerCase()}</button
+                      Save {resolveCurrentContentTypeString().toLowerCase()}</button
                     >
                   {/if}
                 </span>
@@ -476,18 +482,6 @@
             </header>
             {#if !isBlankPage}
               <div class="flex w-full justify-center py-4">
-                <!-- <PanelSwitcher
-                items={panels}
-                bind:value={mode}
-                style={PanelSwitcherStyle.TRAIN}
-                size={Size.sm}
-                barStyle={BarStyle.DOT}
-                isExpandToFullWidth={true}
-              >
-                <div slot="right" class="flex text-b3 text-fgs2">
-
-                </div>
-                </PanelSwitcher> -->
                 <div class="flex w-full px-3 gap-2">
                   <div>
                     <OptionSelector
@@ -531,7 +525,7 @@
                       <InlineMarkdownTextInput
                         placeholder="Add notes"
                         bind:content={notes}
-                        on:debouncedChange={onNotesChange}
+                        onDebouncedChange={onNotesChange}
                       />
                     {/key}
                   {:else}
@@ -570,7 +564,7 @@
                 label="Login"
                 icon="log-in"
                 type={ButtonVariant.PRIMARY}
-                on:click={() => openAppPath("signup?ext=true")}
+                onclick={() => openAppPath("signup?ext=true")}
               />
             </div>
           </div>
@@ -592,7 +586,7 @@
               icon="hexagon"
               size={Size.sm}
               style={ButtonStyle.OUTLINED}
-              on:click={() => openAppPath("")}
+              onclick={() => openAppPath("")}
             />
             <Button
               tooltip="Help center"
@@ -603,7 +597,7 @@
                 ? ButtonVariant.PRIMARY
                 : ButtonVariant.SECONDARY}
               style={ButtonStyle.OUTLINED}
-              on:click={() => (isShowHelp = !isShowHelp)}
+              onclick={() => (isShowHelp = !isShowHelp)}
             />
             {#if isLoggedIn}
               <Button
@@ -614,7 +608,7 @@
                 size={Size.sm}
                 type={ButtonVariant.DANGER}
                 style={ButtonStyle.OUTLINED}
-                on:click={() => {
+                onclick={() => {
                   account.signOut();
                   clips = [];
                   isPageSaved = false;
@@ -631,7 +625,7 @@
                 type={ButtonVariant.PRIMARY}
                 size={Size.sm}
                 style={ButtonStyle.OUTLINED}
-                on:click={() => openAppPath("signup?ext=true")}
+                onclick={() => openAppPath("signup?ext=true")}
               />
             {/if}
           </span>
@@ -648,7 +642,7 @@
   {/if}
 </ExtensionBaseLayer>
 <svelte:window
-  on:focus={() => {
+  onfocus={() => {
     refreshSyncStatus();
   }}
 />

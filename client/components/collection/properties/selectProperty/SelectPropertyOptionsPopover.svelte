@@ -26,52 +26,65 @@
     UIStateScope
   } from "@21n/stores/uiState/uiState.type";
 
-  export let property: {
-    id: IRecordId;
-    type:
-      | PropertyType.SINGLE_SELECT
-      | PropertyType.MULTI_SELECT
-      | PropertyType.UNIVERSAL;
-    config: ISelectPropertyConfig | IUniversalPropertyConfig;
-    default: any;
-  };
-  export let isMultiSelect: boolean;
-  export let value: string | string[];
-  export let onSelect: (value: string | string[]) => void;
-  export let onNewOption: (option: { id: IRecordId; label: string }) => void;
-  export let onConfigChange: (config: any) => void;
-  let searchInputRef: any;
-  let search: string = "";
+  let {
+    property,
+    isMultiSelect,
+    value = $bindable(""),
+    onSelect,
+    onNewOption,
+    onConfigChange
+  }: {
+    property: {
+      id: IRecordId;
+      type:
+        | PropertyType.SINGLE_SELECT
+        | PropertyType.MULTI_SELECT
+        | PropertyType.UNIVERSAL;
+      config: ISelectPropertyConfig | IUniversalPropertyConfig;
+      default: any;
+    };
+    isMultiSelect: boolean;
+    value?: string | string[];
+    onSelect: (value: string | string[]) => void;
+    onNewOption: (option: { id: IRecordId; label: string }) => void;
+    onConfigChange: (config: any) => void;
+  } = $props();
+  let searchInputRef = $state<any>();
+  let search = $state("");
   let originalConfig:
     | ISelectPropertyConfig
     | IUniversalPropertyConfig
     | undefined;
-  let isEditing: boolean = false;
-
-  $: universalType =
+  let isEditing = $state(false);
+  let universalType = $derived(
     property.type === PropertyType.UNIVERSAL
       ? (property.config as IUniversalPropertyConfig)?.type
-      : undefined;
+      : undefined
+  );
 
-  $: allUniversalOptions =
+  let allUniversalOptions = $derived(
     property.type === PropertyType.UNIVERSAL && universalType
       ? resolveUniversalPropertyOptions(universalType)
-      : [];
+      : []
+  );
 
-  $: regularOptions =
+  let regularOptions = $derived(
     property.type !== PropertyType.UNIVERSAL
       ? ((property.config as ISelectPropertyConfig)?.options ?? [])
-      : [];
+      : []
+  );
 
-  $: selectConfig =
+  let selectConfig = $derived(
     property.type !== PropertyType.UNIVERSAL
       ? (property.config as ISelectPropertyConfig)
-      : undefined;
+      : undefined
+  );
 
-  $: isHighVolumeType =
+  let isHighVolumeType = $derived(
     property.type === PropertyType.UNIVERSAL &&
-    universalType &&
-    isHighVolumeUniversalType(universalType);
+      universalType &&
+      isHighVolumeUniversalType(universalType)
+  );
 
   function getRecentlySelectedOptions(type: UniversalPropertyType): string[] {
     if (!isHighVolumeUniversalType(type)) return [];
@@ -137,16 +150,20 @@
     return { recentOptions: filteredRecentOptions, filteredOptions };
   }
 
-  $: ({ recentOptions, filteredOptions } =
+  let recentOptionsAndFiltered = $derived.by(() =>
     property.type === PropertyType.UNIVERSAL && universalType
       ? getOptionsWithRecents(universalType, allUniversalOptions, search)
-      : { recentOptions: [], filteredOptions: [] });
-  $: options =
+      : { recentOptions: [], filteredOptions: [] }
+  );
+  let recentOptions = $derived(recentOptionsAndFiltered.recentOptions);
+  let filteredOptions = $derived(recentOptionsAndFiltered.filteredOptions);
+  let options = $derived(
     property.type === PropertyType.UNIVERSAL
       ? filteredOptions
       : regularOptions.filter((x) =>
           x.label?.toLowerCase()?.includes(search.toLowerCase())
-        );
+        )
+  );
 
   function onselect(e: CustomEvent<string>) {
     const val = e.detail;
@@ -211,7 +228,7 @@
       <TextInput
         bind:this={searchInputRef}
         bind:value={search}
-        on:enter={onenter}
+        onEnter={onenter}
         icon="search"
         placeholder={property.type === PropertyType.UNIVERSAL
           ? "Search options"
@@ -228,7 +245,7 @@
             {isMultiSelect}
             isPreventTagStyle={property.type === PropertyType.UNIVERSAL}
             groupLabel="Recently used"
-            on:select={onselect}
+            onSelect={onselect}
           />
         {/if}
 
@@ -241,7 +258,7 @@
               {value}
               {options}
               {isMultiSelect}
-              on:select={onselect}
+              onSelect={onselect}
             />
           {/each}
         {/if}
@@ -258,7 +275,7 @@
             (property.config &&
               "groups" in property.config &&
               property.config?.groups?.length === 0)}
-          on:select={onselect}
+          onSelect={onselect}
         />
         {#if search && !options.length && (!isHighVolumeType || !recentOptions.length)}
           <div class="text-b2 text-fgs3 px-3 py-2">
@@ -274,7 +291,7 @@
   {#if property.type !== PropertyType.UNIVERSAL}
     <button
       class="flex justify-center items-center h-12 min-h-12 bg--bgs2 w-full"
-      on:click={(e) => {
+      onclick={(e) => {
         e.stopPropagation();
       }}
     >
@@ -285,7 +302,7 @@
             icon="cross"
             style={ButtonStyle.PLAIN}
             size={Size.xs}
-            on:click={() => {
+            onclick={() => {
               if (originalConfig) {
                 property.config = originalConfig;
               }
@@ -298,7 +315,7 @@
             type={ButtonVariant.PRIMARY}
             style={ButtonStyle.DEFAULT}
             size={Size.xs}
-            on:click={onSave}
+            onclick={onSave}
           />
         </div>
       {:else}
@@ -307,7 +324,7 @@
           isUnderlined={true}
           style={ButtonStyle.PLAIN}
           size={Size.xs}
-          on:click={() => {
+          onclick={() => {
             originalConfig = deepCopy(property.config);
             isEditing = true;
           }}

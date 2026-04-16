@@ -12,16 +12,24 @@
     AccessMode,
     ResourceAccessPoint
   } from "@21n/components/flux/resourceStores/resource.type";
-  import { createEventDispatcher } from "svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { logger } from "@21n/components/debug/logger.client";
   import { resolveGoalColor } from "@21n/components/goals/goal.utils";
   import { Embed } from "@21n/types/context.type";
-  export let goal: IGoalThumb;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.SELF;
-  const color = resolveGoalColor(goal);
-  const dispatch = createEventDispatcher();
+
+  let {
+    goal: initialGoal,
+    accessPoint = ResourceAccessPoint.SELF,
+    onClearGoal = undefined
+  }: {
+    goal: IGoalThumb;
+    accessPoint?: ResourceAccessPoint;
+    onClearGoal?: (() => void) | undefined;
+  } = $props();
+
+  let goal = $state(initialGoal);
+  const color = $derived(resolveGoalColor(goal));
 
   function onGoalClick(e: MouseEvent) {
     if (
@@ -33,9 +41,13 @@
     }
   }
 
-  function onGoalChange(e: CustomEvent) {
+  function onGoalChange(
+    detail:
+      | { resource?: Resource; params?: any; context?: string }
+      | { key: string }
+  ) {
     try {
-      const record = e?.detail?.params?.record;
+      const record = "params" in detail ? detail.params?.record : undefined;
       if (!record) return;
       if ("label" in record && record.label !== goal.label) {
         goal = { ...goal, label: record.label };
@@ -57,7 +69,7 @@
       "notouch:hover:underline focus:underline":
         accessPoint !== ResourceAccessPoint.GOAL
     })}
-    on:click={onGoalClick}
+    onclick={onGoalClick}
   >
     {#if accessPoint === ResourceAccessPoint.CAPTURE}
       <Icon
@@ -78,12 +90,12 @@
       tooltip="Clear goal"
       size={Size.sm}
       parentBgIndex={2}
-      on:click={(e) => {
+      onclick={(e) => {
         e.stopPropagation();
-        dispatch("clearGoal");
+        onClearGoal?.();
       }}
     />
   {/if}
 </div>
 
-<ComponentBaseLayer subscribeToRecords={[goal.id]} on:change={onGoalChange} />
+<ComponentBaseLayer subscribeToRecords={[goal.id]} onChange={onGoalChange} />

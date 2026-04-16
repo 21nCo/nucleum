@@ -21,33 +21,41 @@
   import { findItemPath, getItemByPath } from "./combination.utils";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import ComponentBaseLayer from "@21n/client/layout/layers/ComponentBaseLayer.svelte";
-  export let id: IRecordId;
-  export let accessMode: AccessMode = AccessMode.INLINE;
-  export let isEmbedded: boolean = false;
-  export let visitedCombinationIds: Set<string> = new Set();
+  let {
+    id,
+    accessMode = AccessMode.INLINE,
+    isEmbedded = false,
+    visitedCombinationIds = new Set()
+  }: {
+    id: IRecordId;
+    accessMode?: AccessMode;
+    isEmbedded?: boolean;
+    visitedCombinationIds?: Set<string>;
+  } = $props();
 
   const combinationStore = ActiveCombinationStore.resolve(id);
-  let combination = $combinationStore;
-  let selectedItemId: string | null = null;
-  let editingItemId: string | null = null;
-  let collapsedItemIds: Set<string> = new Set();
-  let newSectionLabel = "";
-  let isInitializing = true;
-  let draggedItemId: string | null = null;
-  let isRootDragOver = false;
+  let selectedItemId = $state<string | null>(null);
+  let editingItemId = $state<string | null>(null);
+  let collapsedItemIds = $state(new Set<string>());
+  let newSectionLabel = $state("");
+  let isInitializing = $state(true);
+  let draggedItemId = $state<string | null>(null);
+  let isRootDragOver = $state(false);
 
-  $: combination = $combinationStore;
-  $: isEditMode = combination?.isInEditMode ?? false;
-  $: items = combination?.items ?? [];
-  $: selectedItem = resolveNavItem(selectedItemId);
-  $: selectedResourceId =
+  let combination = $derived($combinationStore);
+  let isEditMode = $derived(combination?.isInEditMode ?? false);
+  let items = $derived(combination?.items ?? []);
+  let selectedItem = $derived(resolveNavItem(selectedItemId));
+  let selectedResourceId = $derived(
     selectedItem?.type === CombinationNavItemType.RESOURCE
       ? selectedItem.resourceId
-      : undefined;
-  $: selectedResourceType =
+      : undefined
+  );
+  let selectedResourceType = $derived(
     selectedItem?.type === CombinationNavItemType.RESOURCE
       ? selectedItem.resourceType
-      : undefined;
+      : undefined
+  );
 
   onMount(async () => {
     await combinationStore.init(accessMode);
@@ -60,13 +68,14 @@
     }
   });
 
-  $: if (
-    !isInitializing &&
-    (!selectedItemId || !resolveNavItem(selectedItemId))
-  ) {
-    const first = findFirstResource(items);
-    selectedItemId = first?.id ?? null;
-  }
+  $effect(() => {
+    if (
+      !isInitializing &&
+      (!selectedItemId || !resolveNavItem(selectedItemId))
+    ) {
+      selectedItemId = findFirstResource(items)?.id ?? null;
+    }
+  });
 
   function resolveNavItem(itemId: string | null | undefined) {
     if (!itemId || !isValidArrayWithData(items)) return undefined;
@@ -188,11 +197,11 @@
     return parent?.id;
   }
 
-  $: visitedForRenderer = (() => {
+  let visitedForRenderer = $derived.by(() => {
     const next = new Set(visitedCombinationIds);
     next.add(id.toString());
     return next;
-  })();
+  });
 
   function onRootDragOver(event: DragEvent) {
     if (!isEditMode || !draggedItemId) return;
@@ -232,7 +241,7 @@
         <TextInput
           value={combination?.label ?? "Untitled combination"}
           size={Size.md}
-          on:debouncedChange={onLabelDebouncedChange}
+          onDebouncedChange={onLabelDebouncedChange}
         />
       {:else}
         <h1 class="text-h4 font-semibold truncate">
@@ -245,13 +254,13 @@
           icon={isEditMode ? "check" : "edit"}
           tooltip={isEditMode ? "Done" : "Edit"}
           type={isEditMode ? ButtonVariant.PRIMARY : ButtonVariant.SECONDARY}
-          on:click={toggleEditMode}
+          onclick={toggleEditMode}
         />
         <Button
           size={Size.sm}
           icon="refresh"
           tooltip="Refresh"
-          on:click={() => combinationStore.init(accessMode)}
+          onclick={() => combinationStore.init(accessMode)}
         />
       </div>
     </header>
@@ -277,14 +286,14 @@
               collapsedItems={collapsedItemIds}
               {editingItemId}
               {draggedItemId}
-              on:select={(e) => onSelectNavItem(e.detail)}
-              on:toggle={(e) => onToggleCollapse(e.detail)}
-              on:startEdit={(e) => onStartEdit(e.detail)}
-              on:edit={(e) => onEditLabel(e.detail)}
-              on:delete={(e) => onDelete(e.detail)}
-              on:dragstart={(e) => onNavDragStart(e.detail)}
-              on:dragend={() => onNavDragEnd()}
-              on:drop={(e) => onNavDrop(e.detail)}
+              onSelect={onSelectNavItem}
+              onToggle={onToggleCollapse}
+              onStartEdit={onStartEdit}
+              onEdit={onEditLabel}
+              onDelete={onDelete}
+              onDragStart={onNavDragStart}
+              onDragEnd={onNavDragEnd}
+              onDrop={onNavDrop}
             />
           {/each}
         </div>
@@ -299,9 +308,9 @@
                 "border-brs3 text-fgs3": !isRootDragOver
               }
             )}
-            on:dragover={onRootDragOver}
-            on:dragleave={onRootDragLeave}
-            on:drop={onRootDrop}
+            ondragover={onRootDragOver}
+            ondragleave={onRootDragLeave}
+            ondrop={onRootDrop}
           >
             Drop here to add to top level
           </div>
@@ -310,16 +319,15 @@
     </section>
     {#if isEditMode}
       <section class="flex flex-col gap-4 px-3 pb-3">
-        <SideNavCombinationResourcePicker on:select={addResource} />
+        <SideNavCombinationResourcePicker onSelect={addResource} />
         <TextInput
           bind:value={newSectionLabel}
           placeholder="Add new section"
           size={Size.sm}
           isShowSaveControl={Boolean(newSectionLabel)}
-          on:save={addSection}
-          on:enter={addSection}
-          on:cancel={() => (newSectionLabel = "")}
-          on:clear={() => (newSectionLabel = "")}
+          onSave={addSection}
+          onEnter={addSection}
+          onCancel={() => (newSectionLabel = "")}
         />
       </section>
     {/if}

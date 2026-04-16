@@ -6,16 +6,21 @@
   import { onMount } from "svelte";
   import DraftsPopover from "@21n/products/memotron/capture/draftSelector/DraftsPopover.svelte";
   import { Placement } from "@21n/types/direction.enum";
-  import { createEventDispatcher } from "svelte";
   import type { IRecordId } from "@21n/types/data.type";
   import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
   import { appEvents } from "@21n/stores/notification.store";
-  export let size: Size = Size.md;
-  const dispatch = createEventDispatcher();
-  let drafts: ICapture[] = [];
+
+  let {
+    size = Size.md,
+    onSelect = undefined
+  }: {
+    size?: Size;
+    onSelect?: ((draft: ICapture) => void) | undefined;
+  } = $props();
+  let drafts = $state<ICapture[]>([]);
   let ref: HTMLButtonElement;
   onMount(() => {
     refresh();
@@ -46,7 +51,7 @@
   }
 
   function onSelectDraft(draft: ICapture) {
-    dispatch("select", draft);
+    onSelect?.(draft);
     hidePopover();
   }
 </script>

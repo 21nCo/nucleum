@@ -6,12 +6,29 @@
   } from "@21n/products/memotron/node/node.type";
   import type { IRecordId } from "@21n/types/data.type";
   import LinkItem from "@21n/products/memotron/node/links/LinkItem.svelte";
-  import { createEventDispatcher } from "svelte";
-  const dispatch = createEventDispatcher();
-  export let links: { link: INodeLinkThumb; node: INode }[];
-  export let accessPointId: IRecordId;
-  export let accessPoint: ResourceAccessPoint = ResourceAccessPoint.NODE_LINKS;
-  export let accessPointContext: string | undefined = undefined;
+  let {
+    links,
+    accessPointId,
+    accessPoint = ResourceAccessPoint.NODE_LINKS,
+    accessPointContext = undefined,
+    onAction = undefined,
+    onClick = undefined,
+    onLinkTypeSelect = undefined,
+    onTag = undefined,
+    onTagClick = undefined
+  }: {
+    links: { link: INodeLinkThumb; node: INode }[];
+    accessPointId: IRecordId;
+    accessPoint?: ResourceAccessPoint;
+    accessPointContext?: string | undefined;
+    onAction?: ((event: CustomEvent<any>) => void) | undefined;
+    onClick?:
+      | ((event: CustomEvent<{ event: MouseEvent; id: IRecordId }>) => void)
+      | undefined;
+    onLinkTypeSelect?: ((event: CustomEvent<any>) => void) | undefined;
+    onTag?: ((event: CustomEvent<any>) => void) | undefined;
+    onTagClick?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
 </script>
 
 <div class="flex flex-col gap-3 w-full">
@@ -22,13 +39,27 @@
       {accessPointId}
       {accessPoint}
       {accessPointContext}
-      on:click={(e) => {
-        dispatch("click", { event: e, id: item.node.id });
+      onClick={(event) => {
+        const clickEvent = new CustomEvent<{ event: MouseEvent; id: IRecordId }>(
+          "click",
+          {
+            detail: { event, id: item.node.id }
+          }
+        );
+        onClick?.(clickEvent);
       }}
-      on:linkTypeSelect
-      on:action
-      on:tagClick
-      on:tag
+      onLinkTypeSelect={(event) => {
+        onLinkTypeSelect?.(event);
+      }}
+      onAction={(event) => {
+        onAction?.(event);
+      }}
+      onTagClick={(event) => {
+        onTagClick?.(event);
+      }}
+      onTag={(event) => {
+        onTag?.(event);
+      }}
     />
   {/each}
 </div>

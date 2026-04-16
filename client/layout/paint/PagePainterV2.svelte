@@ -1,5 +1,10 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
+  import { afterNavigate } from "$app/navigation";
   import { page } from "$app/stores";
+  import type { Page } from "@sveltejs/kit";
+  import { GlobalEvent } from "@21n/types/event.enum";
   import { appStore } from "@21n/stores/app.store";
   import context from "@21n/stores/context.store";
   import type { IAction } from "@21n/types/action.type";
@@ -7,36 +12,74 @@
   import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
   import { resolveProductConfig } from "@21n/products/product.config";
   import view from "@21n/stores/view.store";
-  export let prefix: string | undefined = undefined;
-  export let cmdPageLaunch: string | undefined = undefined;
 
-  let action: IAction | null = null;
+  let {
+    prefix = undefined,
+    cmdPageLaunch = undefined
+  }: {
+    prefix?: string;
+    cmdPageLaunch?: string;
+  } = $props();
+
+  let action = $state<IAction | null>(null);
   let pageSub: any;
+  let pendingRefreshes = $state<number[]>([]);
   const fileBasedRoutes = ["cparchived"];
   const productConfig = resolveProductConfig();
-  function resolvePath() {
+  function resolvePath(pageData?: Page) {
     if (cmdPageLaunch) {
       return cmdPageLaunch;
     }
     if ($context.isSheet) {
       return $appStore.sheetPath;
     }
-    let currentPath = $page?.params?.route;
+    let currentPath =
+      pageData?.url?.pathname ??
+      (typeof window !== "undefined" ? window.location.pathname : "");
+    currentPath = currentPath.replace(/^\/+|\/+$/g, "");
     if (prefix) {
       currentPath = prefix + "/" + currentPath;
     }
     return currentPath?.endsWith("/") ? currentPath.slice(0, -1) : currentPath;
   }
-  onMount(async () => {
-    pageSub = page.subscribe(async () => {
-      await refresh();
+
+  function queueRefresh() {
+    [0, 50, 200].forEach((delay) => {
+      const timeoutId = window.setTimeout(() => {
+        refresh();
+        pendingRefreshes = pendingRefreshes.filter((id) => id !== timeoutId);
+      }, delay);
+      pendingRefreshes = [...pendingRefreshes, timeoutId];
     });
+  }
+
+  afterNavigate(() => {
+    queueRefresh();
+  });
+
+  onMount(() => {
+    const refreshFromWindow = () => {
+      queueRefresh();
+    };
+    pageSub = page.subscribe(async (pageData) => {
+      await refresh(pageData);
+    });
+    window.addEventListener("popstate", refreshFromWindow);
+    window.addEventListener(GlobalEvent.CUSTOM_NAVIGATION, refreshFromWindow);
+    queueRefresh();
+    return () => {
+      pageSub?.();
+      window.removeEventListener("popstate", refreshFromWindow);
+      window.removeEventListener(GlobalEvent.CUSTOM_NAVIGATION, refreshFromWindow);
+      pendingRefreshes.forEach((id) => window.clearTimeout(id));
+      pendingRefreshes = [];
+    };
   });
   onDestroy(() => {
-    pageSub();
+    pageSub?.();
   });
-  async function refresh() {
-    const path = resolvePath();
+  async function refresh(pageData?: Page) {
+    const path = resolvePath(pageData);
     if (
       fileBasedRoutes.some((x) => window.location.pathname.startsWith("/" + x))
     ) {

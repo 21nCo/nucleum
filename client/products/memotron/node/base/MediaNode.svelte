@@ -6,9 +6,15 @@
   import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
   import NodeBirdView from "@21n/products/memotron/node/birdView/NodeBirdView.svelte";
   import MediaNodeCwTitlePanel from "../MediaNodeCwTitlePanel.svelte";
-  export let node: IActiveNodeStore;
-  export let nodeView: NodeView = NodeView.CONTENT;
-  export let isConstrainedWidth: boolean = false;
+  let {
+    node,
+    nodeView = NodeView.CONTENT,
+    isConstrainedWidth = false
+  }: {
+    node: IActiveNodeStore;
+    nodeView?: NodeView;
+    isConstrainedWidth?: boolean;
+  } = $props();
 </script>
 
 {#if $node}

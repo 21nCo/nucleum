@@ -8,9 +8,11 @@
   import { appStore } from "@21n/stores/app.store";
   import { cn } from "@21n/utils/ui.utils";
   import { SessionUIContext } from "@21n/types/pointron/session.type";
-  export let context: SessionUIContext = SessionUIContext.DEFAULT;
+
+  let { context = SessionUIContext.DEFAULT }: { context?: SessionUIContext } =
+    $props();
   let isOperationInProgress = false;
-  $: controlItemProps = { context };
+  let controlItemProps = $derived({ context });
   async function controlClickHandler(event: any) {
     if (isOperationInProgress) return;
     isOperationInProgress = true;
@@ -53,97 +55,97 @@
     <ControlItem
       control={Control.START}
       isProminent={true}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
   {:else if $activeSession.type === SessionType.PREDEFINED_INTERVALS}
     <ControlItem
       control={Control.ABANDON}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
     <ControlItem
       control={Control.FINISH}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
   {:else if $activeSession.state === SessionState.FOCUS_RUNNING}
     <ControlItem
       control={Control.BREAK}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
     <ControlItem
       control={Control.FINISH}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
   {:else if $activeSession.state === SessionState.FOCUS_COMPLETED}
     <ControlItem
       control={Control.SKIPBREAK}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
     <ControlItem
       control={Control.BREAK}
       isProminent={true}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
     <ControlItem
       control={Control.FINISH}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
   {:else if $activeSession.state === SessionState.BREAK_RUNNING}
     <ControlItem
       control={Control.RESUME}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
     <ControlItem
       control={Control.FINISH}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
   {:else if $activeSession.state === SessionState.BREAK_COMPLETED}
     <ControlItem
       control={Control.RESUME}
       isProminent={true}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
     <ControlItem
       control={Control.FINISH}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
   {:else if $activeSession.state === SessionState.TIME_IS_UP}
     <ControlItem
       control={Control.EXTEND}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
     <ControlItem
       control={Control.FINISH}
       isProminent={true}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
   {:else if $activeSession.state === SessionState.TIME_IS_RUNNING_OUT}
     <ControlItem
       control={Control.EXTEND}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
     <ControlItem
       control={Control.BREAK}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
     <ControlItem
       control={Control.FINISH}
-      on:click={controlClickHandler}
+      onClick={controlClickHandler}
       {...controlItemProps}
     />
   {/if}

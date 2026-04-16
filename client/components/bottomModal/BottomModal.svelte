@@ -14,11 +14,11 @@
     notes: NotesModal
   };
 
-  let state: IBottomModalState = {
+  let state = $state<IBottomModalState>({
     isOpen: false,
     componentKey: null,
     data: undefined
-  };
+  });
 
   const unsubscribe = bottomModal.subscribe((newState) => {
     state = newState;
@@ -32,18 +32,25 @@
     bottomModal.close();
   }
 
+  function handleOverlayKeydown(event: KeyboardEvent) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      bottomModal.close();
+    }
+  }
+
   function handleKeydown(event: KeyboardEvent) {
     if (event.key === "Escape") {
       bottomModal.close();
     }
   }
 
-  $: currentComponent = state.componentKey
-    ? componentMap[state.componentKey]
-    : null;
+  const CurrentComponent = $derived(
+    state.componentKey ? componentMap[state.componentKey] : null
+  );
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window onkeydown={handleKeydown} />
 
 {#if state.isOpen}
   <div
@@ -55,8 +62,8 @@
     <div
       class="fixed inset-0 bg-black/50 backdrop-blur-sm"
       transition:fade={{ duration: 200 }}
-      on:click={handleOverlayClick}
-      on:keydown={handleKeydown}
+      onclick={handleOverlayClick}
+      onkeydown={handleOverlayKeydown}
       role="button"
       tabindex="0"
     ></div>
@@ -71,7 +78,7 @@
           </h2>
           <button
             class="p-2 rounded-full hover:bg-bgs2 transition-colors"
-            on:click={handleOverlayClick}
+            onclick={handleOverlayClick}
             aria-label="Close modal"
           >
             <svg
@@ -87,8 +94,8 @@
         </div>
 
         <div class="grow overflow-y-auto max-h-[calc(100vh-4rem)]">
-          {#if currentComponent}
-            <svelte:component this={currentComponent} {...state.data} />
+          {#if CurrentComponent}
+            <CurrentComponent {...state.data} />
           {:else}
             <div class="p-4 text-center text-fgs2">
               Component "{state.componentKey}" not found

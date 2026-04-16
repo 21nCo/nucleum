@@ -8,14 +8,18 @@
   import context from "@21n/stores/context.store";
   import { mapTileStyles } from "@21n/components/maps/map.styles";
   import { mount } from "@21n/actions/mount.action";
-  export let location:
+  let {
+    location = undefined
+  }: {
+    location?:
     | {
         latitude?: number;
         longitude?: number;
       }
-    | undefined = undefined;
-  let address: string;
-  let mapContainerId: string = generateSimpleRandomId();
+    | undefined;
+  } = $props();
+  let address = $state<string | undefined>(undefined);
+  const mapContainerId = generateSimpleRandomId();
 
   async function load() {
     if (!location?.latitude || !location?.longitude) return;

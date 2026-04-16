@@ -6,46 +6,114 @@
     PanelSwitcherStyle,
     type PanelSwitcherEditModeOptions
   } from "@21n/types/switcher.enum";
-  import { createEventDispatcher } from "svelte";
   import { bg, cn } from "@21n/utils/ui.utils";
   import type { ISelectItem } from "@21n/types/select.type";
   import PanelSwitcherItemLabel from "@21n/elements/switcher/PanelSwitcherItemLabel.svelte";
   import { rearrangeOnAxis } from "@21n/actions/rearrange.action";
   import { scrollIntoViewOnFocus } from "@21n/actions/scroll.action";
-  const dispatch = createEventDispatcher();
-  export let item: ISelectItem;
-  export let size: Size.xs | Size.sm | Size.md | Size.lg = Size.md;
-  export let isActive: boolean = false;
-  export let isDisabled: boolean = false;
-  export let style: PanelSwitcherStyle;
-  export let isInEditMode: boolean = false;
-  export let barStyle: BarStyle = BarStyle.EXACT;
-  export let editModeOptions: PanelSwitcherEditModeOptions | undefined =
-    undefined;
-  export let triggerItemEdit: string | null = null;
-  export let isInversePlacement: boolean = false;
-  export let parentBgIndex: number = 1;
-  export let isRearrangeableByDefault: boolean = false;
-  function onClick() {
+  let {
+    item,
+    size = Size.md,
+    isActive = false,
+    isDisabled = false,
+    style,
+    isInEditMode = false,
+    barStyle = BarStyle.EXACT,
+    editModeOptions = undefined,
+    triggerItemEdit = $bindable(null),
+    isInversePlacement = false,
+    parentBgIndex = 1,
+    isRearrangeableByDefault = false,
+    onAdd = undefined,
+    onChange = undefined,
+    onClick = undefined,
+    onDebouncedChange = undefined,
+    onRearrange = undefined,
+    onRearranged = undefined,
+    onRemove = undefined
+  }: {
+    item: ISelectItem;
+    size?: Size.xs | Size.sm | Size.md | Size.lg;
+    isActive?: boolean;
+    isDisabled?: boolean;
+    style: PanelSwitcherStyle;
+    isInEditMode?: boolean;
+    barStyle?: BarStyle;
+    editModeOptions?: PanelSwitcherEditModeOptions | undefined;
+    triggerItemEdit?: string | null;
+    isInversePlacement?: boolean;
+    parentBgIndex?: number;
+    isRearrangeableByDefault?: boolean;
+    onAdd?: ((event: CustomEvent<void>) => void) | undefined;
+    onChange?: ((event: CustomEvent<any>) => void) | undefined;
+    onClick?: ((event: CustomEvent<any>) => void) | undefined;
+    onDebouncedChange?: ((event: CustomEvent<any>) => void) | undefined;
+    onRearrange?: ((event: CustomEvent<number>) => void) | undefined;
+    onRearranged?: ((event: CustomEvent<number>) => void) | undefined;
+    onRemove?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
+
+  function emitAdd() {
+    const addEvent = new CustomEvent<void>("add");
+    onAdd?.(addEvent);
+  }
+
+  function emitClick() {
+    const clickEvent = new CustomEvent<any>("click", { detail: item.value });
+    onClick?.(clickEvent);
+  }
+
+  function emitRearrange(displacement: number) {
+    const rearrangeEvent = new CustomEvent<number>("rearrange", {
+      detail: displacement
+    });
+    onRearrange?.(rearrangeEvent);
+  }
+
+  function emitRearranged(displacement: number) {
+    const rearrangedEvent = new CustomEvent<number>("rearranged", {
+      detail: displacement
+    });
+    onRearranged?.(rearrangedEvent);
+  }
+
+  function emitRemove(detail: any) {
+    const removeEvent = new CustomEvent<any>("remove", { detail });
+    onRemove?.(removeEvent);
+  }
+
+  function emitChange(detail: any) {
+    const changeEvent = new CustomEvent<any>("change", { detail });
+    onChange?.(changeEvent);
+  }
+
+  function emitDebouncedChange(detail: any) {
+    const debouncedChangeEvent = new CustomEvent<any>("debouncedChange", {
+      detail
+    });
+    onDebouncedChange?.(debouncedChangeEvent);
+  }
+
+  function handleClick() {
     if (item.value === "$add") {
-      dispatch("add");
+      emitAdd();
     } else {
-      dispatch("click", item.value);
+      emitClick();
     }
   }
 
   function handleRearrange(displacement: number) {
-    dispatch("rearrange", displacement);
+    emitRearrange(displacement);
   }
 
   function handleRearranged(displacement: number) {
-    dispatch("rearranged", displacement);
+    emitRearranged(displacement);
   }
 </script>
-
-<!-- TODO - svelte 5 snippets for PanelSwitcherItemLabel multiple references -->
 {#if style === PanelSwitcherStyle.BAR}
   <button
+    role="tab"
+    aria-selected={isActive}
     class={cn("relative group flex bg-transparent h-full", {
       "px-4":
         (size === Size.md || size === Size.lg) &&
@@ -60,7 +128,7 @@
       "border-ccs1": isActive && barStyle === BarStyle.OVERFLOW,
       "border-transparent": !isActive && barStyle === BarStyle.OVERFLOW
     })}
-    on:click={onClick}
+    onclick={handleClick}
     disabled={isDisabled}
     use:scrollIntoViewOnFocus
     use:rearrangeOnAxis={{
@@ -96,9 +164,9 @@
         {isDisabled}
         {parentBgIndex}
         bind:triggerItemEdit
-        on:remove
-        on:change
-        on:debouncedChange
+        onRemove={(event) => emitRemove(event.detail)}
+        onChange={(event) => emitChange(event.detail)}
+        onDebouncedChange={(event) => emitDebouncedChange(event.detail)}
       />
     </div>
     {#if isActive && (barStyle === BarStyle.UNDER || barStyle === BarStyle.DOT)}
@@ -109,11 +177,13 @@
           "bottom-0 border-b-2 border-ccs1 left-1/3 w-1/3":
             barStyle === BarStyle.UNDER
         })}
-      />
+      ></div>
     {/if}
   </button>
 {:else if style === PanelSwitcherStyle.SNAKE}
   <button
+    role="tab"
+    aria-selected={isActive}
     class={cn("relative group flex items-center gap-1 py-2", {
       "px-6": item.icon,
       "px-4": !item.icon,
@@ -122,7 +192,7 @@
       "border border-transparent text-fgs3": !isActive
     })}
     disabled={isDisabled}
-    on:click={onClick}
+    onclick={handleClick}
     use:rearrangeOnAxis={{
       enabled: isInEditMode,
       onRearrange: handleRearrange,
@@ -140,9 +210,9 @@
       {isDisabled}
       {parentBgIndex}
       bind:triggerItemEdit
-      on:remove
-      on:change
-      on:debouncedChange
+      onRemove={(event) => emitRemove(event.detail)}
+      onChange={(event) => emitChange(event.detail)}
+      onDebouncedChange={(event) => emitDebouncedChange(event.detail)}
     />
     {#if isActive}
       <div
@@ -150,7 +220,7 @@
           "absolute h-2 w-full -bottom-1 left-0",
           bg(parentBgIndex - 1)
         )}
-      />
+      ></div>
     {/if}
   </button>
 {/if}

@@ -42,9 +42,9 @@
   bind:innerHTML
   placeholder="type something here..."
   data-index="asdd"
-  on:keyup={handleKeyUp}
-  on:keydown={handleKeyDown}
-  on:keypress={handleKeyPress}
+  onkeyup={handleKeyUp}
+  onkeydown={handleKeyDown}
+  onkeypress={handleKeyPress}
 ></div>
 
 <style>

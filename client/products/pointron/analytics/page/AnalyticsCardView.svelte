@@ -14,7 +14,6 @@
     type IAnalyticsLabelColor
   } from "@21n/products/pointron/analytics/analytics.types";
   import { analyticsConfigStore } from "@21n/products/pointron/analytics/analytics.store";
-  import { createEventDispatcher } from "svelte";
   import CardSelector from "@21n/products/pointron/analytics/page/CardSelector.svelte";
   import { InputStyle } from "@21n/types/input.type";
   import GroupingAndFilters from "@21n/products/pointron/analytics/page/GroupingAndFilters.svelte";
@@ -32,23 +31,38 @@
   import { logger } from "@21n/components/debug/logger.client";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { ErrorMessage } from "@21n/components/error/error.type";
-  export let card: IAnalyticsCard;
-  export let position: { index: number; total: number };
-  export let pageId: string;
-  export let goals: IGoalThumb[] = [];
-  export let logs: ISessionLog[] = [];
-  export let timePeriod: ITimePeriodResolved;
-  export let isPageLoaded = false;
-  export let parentBgIndex: number = 1;
-  export let heightAdjuster: string = "2.85rem";
-  let cardBgIndex: number = parentBgIndex - 1;
-  let data: AnalyticsDataRecord[] = [];
-  let previousTimePeriodData: AnalyticsDataRecord[] = [];
-  let goalColors: IAnalyticsLabelColor[] = [];
-  const dispatch = createEventDispatcher();
-  let isRefreshing = false;
-  let refreshId = new Date().getTime();
-  let errorMessage: string | undefined = undefined;
+  let {
+    card,
+    position,
+    pageId,
+    goals = [],
+    logs = [],
+    timePeriod,
+    isPageLoaded = false,
+    parentBgIndex = 1,
+    heightAdjuster = "2.85rem",
+    onReload = undefined,
+    onRemoved = undefined
+  }: {
+    card: IAnalyticsCard;
+    position: { index: number; total: number };
+    pageId: string;
+    goals?: IGoalThumb[];
+    logs?: ISessionLog[];
+    timePeriod: ITimePeriodResolved;
+    isPageLoaded?: boolean;
+    parentBgIndex?: number;
+    heightAdjuster?: string;
+    onReload?: ((event: CustomEvent<void>) => void) | undefined;
+    onRemoved?: ((event: CustomEvent<IAnalyticsCard>) => void) | undefined;
+  } = $props();
+  let cardBgIndex = $derived(parentBgIndex - 1);
+  let data = $state<AnalyticsDataRecord[]>([]);
+  let previousTimePeriodData = $state<AnalyticsDataRecord[]>([]);
+  let goalColors = $state<IAnalyticsLabelColor[]>([]);
+  let isRefreshing = $state(false);
+  let refreshId = $state(new Date().getTime());
+  let errorMessage = $state<string | undefined>(undefined);
   const isCarbonChart = false;
   const isCanRenderInSmallerArea = [
     AnalyticsCardType.PIE,
@@ -58,12 +72,31 @@
     AnalyticsCardType.METRICS
   ];
 
-  $: if (isPageLoaded) {
-    refresh();
+  $effect(() => {
+    card;
+    logs;
+    goals;
+    timePeriod;
+    parentBgIndex;
+    if (isPageLoaded) {
+      void refresh();
+    }
+  });
+  function emitReload() {
+    const reloadEvent = new CustomEvent<void>("reload");
+    onReload?.(reloadEvent);
   }
+
+  function emitRemoved() {
+    const removedEvent = new CustomEvent<IAnalyticsCard>("removed", {
+      detail: card
+    });
+    onRemoved?.(removedEvent);
+  }
+
   function onRemoveClick() {
     analyticsConfigStore.removeCard(pageId, card.id);
-    dispatch("removed", card);
+    emitRemoved();
   }
 
   function onTimePeriodChange(e: CustomEvent) {
@@ -71,7 +104,7 @@
       ...card,
       period: e.detail
     });
-    dispatch("reload");
+    emitReload();
   }
 
   function onCardTypeChange(e: CustomEvent) {
@@ -271,7 +304,7 @@
             bind:value={card.label}
             placeholder="chart title"
             style={InputStyle.PLAIN}
-            on:debouncedChange={onCardLabelChange}
+            onDebouncedChange={onCardLabelChange}
           />
           <span class="flex gap-2 items-center">
             <GroupingAndFilters
@@ -290,7 +323,7 @@
                 ? ButtonStyle.DEFAULT
                 : ButtonStyle.OUTLINED}
               size={$view.isPortrait ? Size.lg : Size.xs}
-              on:click={onRemoveClick}
+              onclick={onRemoveClick}
             />
           </span>
         </span>
@@ -299,14 +332,14 @@
             <span class="w-1/2">
               <TimePeriodPicker
                 bind:period={card.period}
-                on:change={onTimePeriodChange}
+                onChange={onTimePeriodChange}
               />
             </span>
           {/if}
           <span class="w-1/2">
             <CardSelector
               bind:selected={card.type}
-              on:select={onCardTypeChange}
+              onSelect={onCardTypeChange}
               accessPoint={ResourceAccessPoint.ANALYTICS}
             />
           </span>
@@ -339,7 +372,7 @@
         mainText={errorMessage}
         actionText="Remove card"
         parentBgIndex={cardBgIndex}
-        on:click={onRemoveClick}
+        onclick={onRemoveClick}
       />
     </div>
   {:else}

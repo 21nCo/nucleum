@@ -12,7 +12,7 @@
     structuralNodeTypes,
     webNodeTypeList
   } from "@21n/products/memotron/node/node.type";
-  import { createEventDispatcher, onMount } from "svelte";
+  import { onMount } from "svelte";
   import type { MdStoreType } from "@21n/components/markdown/markdown.store";
   import { Size } from "@21n/types/size.enum";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
@@ -40,13 +40,30 @@
   import { hoverable } from "@21n/actions/hover.action";
   import { nodeStore } from "@21n/products/memotron/node/node.store";
   import { resolveResourceActionIcon } from "@21n/components/flux/resourceStores/resource.utils";
-  const dispatch = createEventDispatcher();
-  export let block: IBlock;
-  export let isFocusing: boolean = false;
-  export let isBlockHovering: boolean = false;
-  export let isDisableTooltip: boolean = false;
-  export let isSoleBlock: boolean = false;
-  export let isNodularizable: boolean = false;
+  import type { IRecordId } from "@21n/types/data.type";
+  let {
+    block,
+    isFocusing = false,
+    isBlockHovering = false,
+    isDisableTooltip = false,
+    isSoleBlock = false,
+    isNodularizable = false,
+    onAction = undefined,
+    onNodularize = undefined,
+    onPopoverVisibility = undefined
+  }: {
+    block: IBlock;
+    isFocusing?: boolean;
+    isBlockHovering?: boolean;
+    isDisableTooltip?: boolean;
+    isSoleBlock?: boolean;
+    isNodularizable?: boolean;
+    onAction?:
+      | ((event: CustomEvent<{ action: BlockAction; data?: any }>) => void)
+      | undefined;
+    onNodularize?: ((event: CustomEvent<{ id: IRecordId }>) => void) | undefined;
+    onPopoverVisibility?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
   let isHovering: boolean = false;
   let isPopoverVisible: boolean = false;
   let contextMenuRef: any;
@@ -55,7 +72,26 @@
     items: IContextMenuItem[];
   };
 
-  $: isDebugLeftControls = false;
+  const isDebugLeftControls = false;
+
+  function emitAction(detail: { action: BlockAction; data?: any }) {
+    const event = new CustomEvent<{ action: BlockAction; data?: any }>("action", {
+      detail
+    });
+    onAction?.(event);
+  }
+
+  function emitNodularize() {
+    const event = new CustomEvent<{ id: IRecordId }>("nodularize", {
+      detail: { id: block.id }
+    });
+    onNodularize?.(event);
+  }
+
+  function emitPopoverVisibility(detail: any) {
+    const event = new CustomEvent("popoverVisibility", { detail });
+    onPopoverVisibility?.(event);
+  }
 
   const actions: Record<string, IContextMenuItem> = {
     [BlockAction.CONVERT]: {
@@ -67,7 +103,7 @@
         props: {
           isSingleColumnMode: true,
           onSelect: async (props?: any) => {
-            dispatch("action", {
+            emitAction({
               action: BlockAction.CONVERT,
               data: {
                 toType: props?.type
@@ -82,7 +118,7 @@
       value: BlockAction.DUPLICATE,
       icon: resolveResourceActionIcon(ResourceActionType.DUPLICATE),
       callback: async () => {
-        dispatch("action", { action: BlockAction.DUPLICATE });
+        emitAction({ action: BlockAction.DUPLICATE });
       }
     },
     [BlockAction.LINK]: {
@@ -106,7 +142,7 @@
         props: {
           isSingleColumnMode: true,
           onSelect: async (props?: any) => {
-            dispatch("action", {
+            emitAction({
               action: BlockAction.INSERT,
               data: {
                 blockType: props?.type
@@ -131,21 +167,21 @@
       value: BlockAction.COPY_BLOCK_TEXT,
       icon: resolveResourceActionIcon(ResourceActionType.COPY_CONTENTS),
       callback: async () => {
-        dispatch("action", { action: BlockAction.COPY_BLOCK_TEXT });
+        emitAction({ action: BlockAction.COPY_BLOCK_TEXT });
       }
     },
     [BlockAction.GO_TO_EXTERNAL_LINK]: {
       value: BlockAction.GO_TO_EXTERNAL_LINK,
       icon: "weblink",
       callback: async () => {
-        dispatch("action", { action: BlockAction.GO_TO_EXTERNAL_LINK });
+        emitAction({ action: BlockAction.GO_TO_EXTERNAL_LINK });
       }
     },
     [BlockAction.DELETE]: {
       value: BlockAction.DELETE,
       icon: resolveResourceActionIcon(ResourceActionType.DELETE),
       callback: async () => {
-        dispatch("action", { action: BlockAction.DELETE });
+        emitAction({ action: BlockAction.DELETE });
       }
     },
     [BlockAction.FOCUS]: {
@@ -153,7 +189,7 @@
       label: "Zoom in to heading",
       icon: "circle",
       callback: async () => {
-        onNodularize();
+        emitNodularize();
       }
     },
     [BlockAction.OPEN_AS_SPLIT]: {
@@ -227,7 +263,7 @@
       type: ContextMenuType.SWITCH,
       initialValue: embedBody?.isHidePreview ?? false,
       callback: async (checked: boolean) => {
-        dispatch("action", {
+        emitAction({
           action: BlockAction.EMBED_PREVIEW_TOGGLE,
           data: {
             isHidePreview: checked
@@ -361,8 +397,8 @@
     return items;
   }
 
-  function onNodularize(e?: MouseEvent) {
-    dispatch("nodularize", { id: block.id });
+  function onNodularizeClick(e?: MouseEvent) {
+    emitNodularize();
     e?.stopPropagation();
   }
 
@@ -398,7 +434,7 @@
   function onPopoverChange(e: Event) {
     const detail = (e as CustomEvent<{ open?: boolean }>).detail;
     isPopoverVisible = detail?.open ?? false;
-    dispatch("popoverVisibility", isPopoverVisible);
+    emitPopoverVisibility(isPopoverVisible);
   }
 </script>
 
@@ -424,7 +460,7 @@
     groupId: "leftControlsGroup",
     offsetInPx: 8
   }}
-  on:change={onPopoverChange}
+  onchange={onPopoverChange}
   bind:this={contextMenuRef}
   use:hoverable={{
     onHover: (e) => {
@@ -448,9 +484,7 @@
     tabindex="-1"
   >
     {#if isNodularizable && (isBlockHovering || isDebugLeftControls || isPopoverVisible || isHovering || isFocusing)}
-      <FocusRing on:click={onNodularize} />
-      <!-- {:else if isNodularizable && isFocusing}
-      <FocusRing isFocusing={true} on:click={onNodularize} /> -->
+      <FocusRing onclick={onNodularizeClick} />
     {:else}
       <span
         class={cn("flex w-full h-full justify-center items-center", {

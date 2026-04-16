@@ -3,24 +3,22 @@
   import { NodeType, socialSubNodeTypeList } from "@21n/products/memotron/node/node.type";
   import type { INode } from "@21n/products/memotron/node/node.type";
 
-  export let node: INode;
+  let { node }: { node: INode } = $props();
 
-  let platformDisplay: string = "";
+  let platformDisplay = $derived(
+    socialSubNodeTypeList.has(node.contentType)
+      ? resolvePlatformInfo(node.contentType)
+      : "Social"
+  );
 
-  $: {
-    if (socialSubNodeTypeList.has(node.contentType)) {
-      setPlatformInfo(node.contentType);
-    }
-  }
-
-  function setPlatformInfo(contentType: NodeType) {
+  function resolvePlatformInfo(contentType: NodeType) {
     const platformMap: Partial<Record<NodeType, string>> = {
       [NodeType.LINKEDIN_GROUP]: "LinkedIn Group",
       [NodeType.FACEBOOK_GROUP]: "Facebook Group",
       [NodeType.REDDIT_SUB]: "Subreddit"
     };
 
-    platformDisplay = platformMap[contentType] || "Social";
+    return platformMap[contentType] || "Social";
   }
 
   function resolveUsername() {
@@ -73,10 +71,18 @@
 </script>
 
 <div class="flex justify-center items-center h-full w-full">
-  <button
+  <div
     class="flex flex-col items-center gap-6 p-8 border border-fgs4 rounded-md hover:bg-bgs2 max-w-md"
-    on:click={() => {
+    role="button"
+    tabindex="0"
+    onclick={() => {
       if (node.url) appStore.openLink(node.url);
+    }}
+    onkeydown={(event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        if (node.url) appStore.openLink(node.url);
+      }
     }}
   >
     <div class="flex flex-col gap-1 text-center">
@@ -88,5 +94,5 @@
     {#if getBio()}
       <div class="text-center text-b3 max-w-xs">{getBio()}</div>
     {/if}
-  </button>
+  </div>
 </div>

@@ -1,36 +1,45 @@
 <script lang="ts">
   import { GlobalEvent, type Event as AppEvent } from "@21n/types/event.enum";
-  import { createEventDispatcher, onMount } from "svelte";
-  const dispatch = createEventDispatcher();
+  import type { InlineToast } from "@21n/types/notification.type";
+  import { onMount } from "svelte";
+  let {
+    event,
+    inlineToastId = undefined,
+    onInlineToast = undefined,
+    onNav = undefined
+  }: {
+    event: AppEvent[];
+    inlineToastId?: string | undefined;
+    onInlineToast?:
+      | ((event: CustomEvent<InlineToast>) => void)
+      | undefined;
+    onNav?: ((event: CustomEvent<any>) => void) | undefined;
+  } = $props();
 
-  export let event: AppEvent[];
-  /**
-   * If set, the component will only listen to inline toast events with this specific ID
-   */
-  export let inlineToastId: string | undefined = undefined;
-
-  function onInlineToast(e: CustomEvent<{ id?: string }>) {
+  function handleInlineToast(e: CustomEvent<InlineToast>) {
     const toast = e.detail;
     if (
       event.includes(GlobalEvent.INLINE_TOAST) &&
       (!inlineToastId || toast.id === inlineToastId)
     ) {
-      dispatch("inlinetoast", toast);
+      onInlineToast?.(new CustomEvent("inlinetoast", { detail: toast }));
     }
   }
 
-  function onEvent(e: CustomEvent<{ event: AppEvent; value?: unknown }>) {
-    if (event.some((x) => x === e.detail.event)) {
-      dispatch(e.detail.event, e.detail.value);
+  function handleEvent(e: CustomEvent<{ event: AppEvent; value?: unknown }>) {
+    if (event.some((x: AppEvent) => x === e.detail.event)) {
+      if (e.detail.event === GlobalEvent.NAV) {
+        onNav?.(new CustomEvent("nav", { detail: e.detail.value }));
+      }
     }
   }
 
   onMount(() => {
     const inlineToastHandler: EventListener = (windowEvent) => {
-      onInlineToast(windowEvent as CustomEvent<{ id?: string }>);
+      handleInlineToast(windowEvent as CustomEvent<InlineToast>);
     };
     const eventHandler: EventListener = (windowEvent) => {
-      onEvent(windowEvent as CustomEvent<{ event: AppEvent; value?: unknown }>);
+      handleEvent(windowEvent as CustomEvent<{ event: AppEvent; value?: unknown }>);
     };
     window.addEventListener("inlinetoast", inlineToastHandler);
     window.addEventListener("event", eventHandler);

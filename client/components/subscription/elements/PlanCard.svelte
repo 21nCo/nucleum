@@ -10,41 +10,58 @@
     PlanType
   } from "@21n/components/subscription/userPlan.type";
   import account from "@21n/stores/account.store";
-  import { createEventDispatcher } from "svelte";
   import PlanIcon from "@21n/components/subscription/elements/PlanIcon.svelte";
   import Divider from "@21n/elements/Divider.svelte";
   import { PlanStatus, type IUserPlan } from "@21n/types/account.type";
   import { appStore } from "@21n/stores/app.store";
   import { properCase } from "@21n/shared-utils/text.utils";
   import view from "@21n/stores/view.store";
-  const dispatch = createEventDispatcher();
-
-  export let plans: IPlan[];
-  export let plan: IPlan;
-  export let period: BillingCycle;
-  export let currentPlan: IUserPlan | undefined = undefined;
-  export let isCurrentPage = false;
-  export let isPreventDiscounting = false;
-  let isCurrentPlan = currentPlan?.plan === plan.type;
-  let progressState:
+  let {
+    plans,
+    plan,
+    period,
+    currentPlan = undefined,
+    isCurrentPage = false,
+    isPreventDiscounting = false,
+    onCancel = undefined,
+    onChoose = undefined,
+    onSwitch = undefined
+  }: {
+    plans: IPlan[];
+    plan: IPlan;
+    period: BillingCycle;
+    currentPlan?: IUserPlan | undefined;
+    isCurrentPage?: boolean;
+    isPreventDiscounting?: boolean;
+    onCancel?: ((event: CustomEvent<void>) => void) | undefined;
+    onChoose?: ((event: CustomEvent<void>) => void) | undefined;
+    onSwitch?: ((event: CustomEvent<void>) => void) | undefined;
+  } = $props();
+  const isCurrentPlan = $derived(currentPlan?.plan === plan.type);
+  let progressState = $state<
     | "initiating"
     | "upgrading"
     | "downgrading"
     | "switching"
     | "cancelling"
-    | null = null;
-  $: actualPrice =
+    | null
+  >(null);
+  const actualPrice = $derived(
     period === BillingCycle.YEARLY
       ? plan.price[BillingCycle.YEARLY] / 12
-      : plan.price[period];
-  $: discountedPrice =
+      : plan.price[period]
+  );
+  const discountedPrice = $derived(
     !isPreventDiscounting && $account.plan?.discount
       ? resolveDiscountedPrice(actualPrice, $account.plan?.discount)
-      : null;
+      : null
+  );
 
-  $: if (period) {
-    resetLoadingState(period);
-  }
+  $effect(() => {
+    if (period) {
+      resetLoadingState(period);
+    }
+  });
 
   function resetLoadingState(period: BillingCycle) {
     progressState = null;
@@ -79,6 +96,21 @@
     const currentIndex = plans.findIndex((p) => p.type === currentPlan.plan);
     const newIndex = plans.findIndex((p) => p.type === plan.type);
     return newIndex < currentIndex;
+  }
+
+  function emitCancel() {
+    const cancelEvent = new CustomEvent<void>("cancel");
+    onCancel?.(cancelEvent);
+  }
+
+  function emitChoose() {
+    const chooseEvent = new CustomEvent<void>("choose");
+    onChoose?.(chooseEvent);
+  }
+
+  function emitSwitch() {
+    const switchEvent = new CustomEvent<void>("switch");
+    onSwitch?.(switchEvent);
   }
 </script>
 
@@ -175,9 +207,9 @@
             style={ButtonStyle.OUTLINED}
             isLoading={progressState === "cancelling"}
             size={$view.isConstrainedWidth ? Size.md : Size.lg}
-            on:click={() => {
+            onclick={() => {
               progressState = "cancelling";
-              dispatch("cancel");
+              emitCancel();
             }}
           />
           <p class="text-center text-sm text-fgs3">
@@ -192,9 +224,9 @@
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
           size={$view.isConstrainedWidth ? Size.md : Size.lg}
-          on:click={() => {
+          onclick={() => {
             progressState = "switching";
-            dispatch("switch");
+            emitSwitch();
           }}
         />
       {:else if isUpgrade(plan)}
@@ -204,9 +236,9 @@
           isLoading={progressState === "upgrading"}
           type={ButtonVariant.PRIMARY}
           size={$view.isConstrainedWidth ? Size.md : Size.lg}
-          on:click={() => {
+          onclick={() => {
             progressState = "upgrading";
-            dispatch("switch");
+            emitSwitch();
           }}
         />
       {:else if isDowngrade(plan)}
@@ -217,9 +249,9 @@
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
           size={$view.isConstrainedWidth ? Size.md : Size.lg}
-          on:click={() => {
+          onclick={() => {
             progressState = "downgrading";
-            dispatch("switch");
+            emitSwitch();
           }}
         />
       {:else}
@@ -230,9 +262,9 @@
           isLoading={progressState === "initiating"}
           style={plan.isPopular ? ButtonStyle.DEFAULT : ButtonStyle.OUTLINED}
           size={$view.isConstrainedWidth ? Size.md : Size.lg}
-          on:click={() => {
+          onclick={() => {
             progressState = "initiating";
-            dispatch("choose");
+            emitChoose();
           }}
         />
       {/if}

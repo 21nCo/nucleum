@@ -1,13 +1,21 @@
 <script lang="ts">
+  import type { Snippet } from "svelte";
   import { toolbarState } from "@21n/extensions/clipper/contentScripts/store";
   import { Placement } from "@21n/types/direction.enum";
   import { cn } from "@21n/utils/ui.utils";
   import { hoverable } from "@21n/actions/hover.action";
-  import { createEventDispatcher } from "svelte";
   import { fly, scale } from "svelte/transition";
-  const dispatch = createEventDispatcher();
-  export let isHovering = false;
-  export let isWithoutToolbarContext: boolean = false;
+  let {
+    isHovering = $bindable(false),
+    isWithoutToolbarContext = false,
+    onHover = undefined,
+    children
+  }: {
+    isHovering?: boolean;
+    isWithoutToolbarContext?: boolean;
+    onHover?: ((event: CustomEvent<boolean>) => void) | undefined;
+    children?: Snippet;
+  } = $props();
 
   /**
    * To prevent default shortcuts interfering with the feedback pane linking or notes.
@@ -43,11 +51,11 @@
   use:hoverable={{
     onHover: (e) => {
       isHovering = e;
-      dispatch("hover", e);
+      onHover?.(new CustomEvent<boolean>("hover", { detail: e }));
     }
   }}
-  on:keydown={onKey}
-  on:keyup={onKey}
+  onkeydown={onKey}
+  onkeyup={onKey}
   class={cn(
     "fixed w-96 min-h-80 h-fit max-h-[40rem] mo:max-h-full flex flex-col items-center justify-center gap-4 p-4 bg-bgs1 shadow-md rounded-md border border-brs2",
     {
@@ -72,5 +80,5 @@
   in:fly={resolveFlyParams($toolbarState.position)}
   out:scale
 >
-  <slot />
+  {@render children?.()}
 </button>

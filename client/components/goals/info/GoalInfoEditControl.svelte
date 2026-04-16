@@ -10,9 +10,17 @@
   import { resolveGoalSubTypesForSwitcher } from "@21n/components/goals/goal.utils";
   import { InputStyle } from "@21n/types/input.type";
   import type { GoalType } from "@21n/components/goals/goal.type";
-  export let goal: IActiveGoalStore;
-  export let control: "color" | "type";
-  export let status: IInlineStatus | undefined = undefined;
+
+  let {
+    goal,
+    control,
+    status = $bindable()
+  }: {
+    goal: IActiveGoalStore;
+    control: "color" | "type";
+    status?: IInlineStatus | undefined;
+  } = $props();
+
   async function handleColorChange(e: number | string) {
     status = {
       message: "Updating color...",
@@ -81,7 +89,7 @@
           value={$goal.type}
           isDisableSearch={true}
           style={InputStyle.PLAIN}
-          on:select={handleTypeChange}
+          onSelect={handleTypeChange}
         />
       </div>
     {/if}

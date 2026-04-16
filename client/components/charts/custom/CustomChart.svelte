@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { onMount, tick } from "svelte";
-  import "@carbon/charts-svelte/styles.css";
+  import { onMount } from "svelte";
+  import "@carbon/charts/styles.css";
   import { ChartType } from "@21n/types/analytics.type";
   import {
     ChartTheme,
@@ -13,9 +13,11 @@
   import { pieLabelFormatter } from "@21n/utils/carbon.utils";
   import { BarChartSimple, BarChartStacked } from "@21n/components/charts/custom/charts";
   import appearance from "@21n/stores/appearance.store";
-  export let type: ChartType;
-  export let data: any;
-  export let additionalOptions: any;
+  let type: ChartType;
+  let data: any;
+  let additionalOptions: any;
+
+  export { type, data, additionalOptions };
   let isShow: boolean = false;
   let stackedBarChartRef: any;
   let defaultOptions: ChartOptions = {
@@ -240,9 +242,9 @@
     : 'opacity-0'}"
 >
   {#if type === ChartType.BAR}
-    <BarChartSimple on:fetch-data {data} {options} />
+    <BarChartSimple {data} {options} />
   {:else if type === ChartType.STACKEDBAR}
-    <BarChartStacked on:fetch-data {data} {options} />
+    <BarChartStacked {data} {options} />
     <!-- {:else if type === ChartType.LINE}
     <LineChart {data} {options} />
   {:else if type === ChartType.STACKEDAREA}

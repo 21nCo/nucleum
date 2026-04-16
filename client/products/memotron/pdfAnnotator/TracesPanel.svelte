@@ -1,36 +1,38 @@
 <script lang="ts">
   import Button from "@21n/elements/button/Button.svelte";
   import { hexToRGBA } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.utils";
-  import { createEventDispatcher } from "svelte";
-  let dispatchEvent = createEventDispatcher();
-  // function hexToRGBA(hex: string, opacity: number) {
-  //   let r = parseInt(hex.slice(1, 3), 16),
-  //     g = parseInt(hex.slice(3, 5), 16),
-  //     b = parseInt(hex.slice(5, 7), 16);
 
-  //   return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-  // }
-  export let annots: any = [];
-  export let handleAnnotDelete: (e: any, id: string) => void;
+  let {
+    annots = [],
+    handleAnnotDelete,
+    onTraceClicked = undefined
+  }: {
+    annots?: any;
+    handleAnnotDelete: (e: any, id: string) => void;
+    onTraceClicked?: ((detail: { id: string; pageNumber: number }) => void) | undefined;
+  } = $props();
 </script>
 
 <div
   class="absolute h-full w-3/12 bg-bgs1 right-0 overflow-x-hidden overflow-y-hidden pb-2 text-fgs2"
 >
-  <div class="w-full h-8 p-2 bg-bgs2 z-10"><button>Notes</button></div>
+  <div class="w-full h-8 p-2 bg-bgs2 z-10"><Button label="Notes" /></div>
   <div class="px-2 h-full mt-8 overflow-y-scroll">
     {#each annots as trace, index}
       <button
         class="block relative w-full my-2 text-left border border-red"
-        on:click={() => {
-          dispatchEvent("traceclicked", {
+        onclick={() => {
+          onTraceClicked?.({
             id: trace.id,
             pageNumber: trace.pageNumber
           });
         }}
       >
         <button
-          on:click|stopPropagation={() => handleAnnotDelete(null, trace.id)}
+          onclick={(event) => {
+            event.stopPropagation();
+            handleAnnotDelete(null, trace.id);
+          }}
           class="absolute top-1 right-0 material-symbols-rounded text-base text-fgs4 hover:text-h4 hover:text-fgs2 z-40"
           >{@html "&#Xe92b"}</button
         >

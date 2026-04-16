@@ -2,7 +2,7 @@
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import { internalUrlNodeTypeList, type INode } from "@21n/products/memotron/node/node.type";
-  export let item: INode;
+  let { item }: { item: INode } = $props();
   function extractDomain(url: string) {
     const domain = new URL(url).hostname;
     return domain;
@@ -12,7 +12,7 @@
 {#if !internalUrlNodeTypeList.includes(item.contentType) && item.url}
   <button
     class="flex gap-0.5 items-center underline text-fgs3 text-b4"
-    on:click|stopPropagation
+    onclick={(event) => event.stopPropagation()}
   >
     <Icon icon="link-mini" size={Size.sm} />
     <a href={item.url} target="_blank" rel="noopener noreferrer">

@@ -8,9 +8,7 @@
   import { CacheKey } from "@21n/layout/layers/cache/cache.type";
   import { RemovalProperty } from "@21n/types/data.type";
 
-  export let resource: Resource;
-  const searchStore = new SearchStore(resource);
-
+  let { resource }: { resource: Resource } = $props();
   onMount(async () => {
     await refresh();
   });
@@ -20,6 +18,7 @@
   }
 
   async function refreshCounts() {
+    const searchStore = new SearchStore(resource);
     const result = await searchStore.resolveCount();
     cache.replace(resourceCacheKey(resource, CacheKey.COUNT), result);
     if (resource === Resource.node) {
@@ -35,6 +34,6 @@
 <ComponentBaseLayer
   subscribeToResource={new Set([resource])}
   subscriptionPropsForMergeAction={Object.values(RemovalProperty)}
-  on:change={refresh}
-  on:syncDown={refresh}
+  onChange={refresh}
+  onSyncDown={refresh}
 />
