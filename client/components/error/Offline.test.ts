@@ -1,5 +1,5 @@
 import Offline from "./Offline.svelte";
-import { render, fireEvent } from "@testing-library/svelte/svelte5";
+import { render, fireEvent } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
 import { expectAccessible } from "@tests/utils/accessibility";
