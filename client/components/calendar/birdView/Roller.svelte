@@ -217,7 +217,7 @@
   }
 
   function getDayAdornment(prefix: string, item: string) {
-    return isBirthday(prefix, item) ? "🎉" : undefined;
+    return isBirthday(prefix, item) ? "\u{1F389}" : undefined;
   }
 
   function resolveBaseWidth() {

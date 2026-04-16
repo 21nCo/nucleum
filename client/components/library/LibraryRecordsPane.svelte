@@ -101,7 +101,6 @@
   let starredData = $state<any[]>([]);
   const searchStore = new SearchStore();
   const QAsearchStore = new SearchStore();
-  // QAsearchStore.searchType = SearchType.SEMANTIC;
   let selectedSubType = $state<SubType>("all");
   let isRefreshing = $state(true);
   let totalCountAfterFilter = $state(0);
@@ -166,7 +165,6 @@
 
   onDestroy(() => {
     if (pageSub) pageSub();
-    // Abort any ongoing operations when component unmounts
     if (abortController) {
       abortController.abort();
       abortController = null;
@@ -221,7 +219,6 @@
   async function refresh(isPagination?: boolean) {
     if (isCustom) return;
 
-    // Abort any previous operation and create new controller
     if (abortController) {
       abortController.abort();
     }
@@ -250,12 +247,6 @@
       );
       let orderBy: IResourceSelectOrderBy | undefined;
       let semanticSearchTopK: number | undefined;
-      // if (searchStore.searchType == SearchType.SEMANTIC) {
-      //   orderBy = {
-      //     dist: "desc",
-      //     createdAt: "desc"
-      //   };
-      // }
       subTypeSwitcherRef?.refresh();
       const isDefaultLoad = resolveIfDefaultLoad();
       if (!isPagination && isDefaultLoad) {
@@ -311,7 +302,6 @@
       console.timeEnd("LibraryRecordsPane - refresh");
     } catch (e) {
       isRefreshing = false;
-      // Don't log error if it was just an abort
       if (e instanceof Error && e.message === "Operation aborted") {
         logger.log({ at: "Library - refresh - aborted", e });
       } else {
@@ -369,7 +359,6 @@
 
   async function _refreshFilteredRecordsTotalCount(filters: any) {
     try {
-      // Check if operation was aborted before starting
       if (abortController?.signal?.aborted) {
         return;
       }
@@ -642,14 +631,9 @@
         {resource}
         bind:searchQuery
         onRefresh={debouncedSearch}
-        onSemanticSearch={(e) => {
-          // if (e.detail) {
-          //   searchStore.searchType = SearchType.SEMANTIC;
-          // } else {
-        //   searchStore.searchType = SearchType.FULL_TEXT;
-        // }
-        refresh();
-      }}
+        onSemanticSearch={() => {
+          refresh();
+        }}
     />
     <LibrarySubTypeSwitcher
       {resource}

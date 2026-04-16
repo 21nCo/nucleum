@@ -21,11 +21,11 @@
   let containerTouchY = 0;
   let rem = 16;
   let captureButtonTop: number | undefined;
-  //1.37rem is half the height of the capture button
+  const captureButtonOffsetRem = 1.37;
   $effect(() => {
     if (!touchY || !touchAndHold) return;
     let [top, , ,] = getCurrentPosition("captureIconsHolder");
-    if (top) top += 1.37 * rem;
+    if (top) top += captureButtonOffsetRem * rem;
     if (touchY > (top ?? 10000)) {
       containerTouchY = touchY;
       let flag = false;
@@ -62,9 +62,8 @@
   function handleTouchEnd() {
     clearTimeout(timerId);
     touchAndHold = startedOnClick ? touchAndHold : false;
-    containerTouchY = (captureButtonTop ?? 0) + 1.37 * rem;
+    containerTouchY = (captureButtonTop ?? 0) + captureButtonOffsetRem * rem;
     if (IconsList.includes(fingerId)) {
-      // emit event for fingerId(i.e.,icon) here
       triggerAction(fingerId);
     }
     touchY = null;
@@ -101,7 +100,7 @@
   onMount(() => {
     rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
     [captureButtonTop, , ,] = getCurrentPosition("capture");
-    containerTouchY = (captureButtonTop ?? 0) + 1.37 * rem;
+    containerTouchY = (captureButtonTop ?? 0) + captureButtonOffsetRem * rem;
   });
 </script>
 
@@ -141,7 +140,7 @@
     id="highlightCircleForCapture"
     style={`position:absolute;margin-left:${0.4 * rem}px; ${
       touchAndHold && !startedOnClick
-        ? `top:-${(captureButtonTop ?? 0) - containerTouchY + 1.37 * rem}px;`
+        ? `top:-${(captureButtonTop ?? 0) - containerTouchY + captureButtonOffsetRem * rem}px;`
         : `visibility:hidden;`
     }`}
   >
