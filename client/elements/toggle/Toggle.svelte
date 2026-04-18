@@ -55,7 +55,7 @@
 <svelte:element
   this={isRenderAsDiv ? "div" : "button"}
   onclick={onclick}
-  onmousedown={(event) => {
+  onmousedown={(event: MouseEvent) => {
     onMouseDown?.(event);
   }}
   role={isRenderAsDiv && !isPassive ? "button" : undefined}

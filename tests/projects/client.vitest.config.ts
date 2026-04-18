@@ -13,7 +13,10 @@ import {
 export default defineConfig({
   root: repoRoot,
   plugins: clientPlugins,
-  resolve: { alias },
+  resolve: {
+    alias,
+    conditions: ["browser"]
+  },
   test: {
     dir: repoRoot,
     globals: true,
