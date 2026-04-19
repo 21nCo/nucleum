@@ -271,27 +271,6 @@ export class SearchStore {
     // console.log({ at: "record.store.ts - select - " + this.resource, data });
     // console.timeEnd("record.store.ts - select - " + this.resource);
     if (isValidArray(data)) {
-      if (this.resource === Resource.node) {
-        const nodularItems = data
-          .filter(
-            (item: any) => item?.contentType === NodeType.NODULAR_MARKDOWN
-          )
-          .slice(0, 5)
-          .map((item: any) => ({
-            id: item?.id,
-            label: item?.label,
-            text: item?.text,
-            bodySearch: item?.bodySearch,
-            labelSearch: item?.labelSearch
-          }));
-        console.log(
-          "SearchStore.select.nodes",
-          JSON.stringify({
-            count: data.length,
-            nodularItems
-          })
-        );
-      }
       if (isValidString(params.searchQuery)) {
         data = highlightSearchQuery(data, params.searchQuery!);
         if (params.isStrictSearch) {

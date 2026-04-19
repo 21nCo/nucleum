@@ -61,32 +61,6 @@ async function maybeWaitForDebounce(page: Page, ms: number = 1600) {
   await page.waitForTimeout(ms);
 }
 
-async function clickVisibleButtonByText(page: Page, text: string) {
-  const clicked = await page.evaluate((targetText) => {
-    const buttons = Array.from(document.querySelectorAll("button"));
-    let button: HTMLButtonElement | undefined;
-
-    for (const candidate of buttons) {
-      const label = candidate.textContent?.trim().replace(/\s+/g, " ") ?? "";
-      const rect = candidate.getBoundingClientRect();
-      const style = window.getComputedStyle(candidate);
-
-      if (label !== targetText) continue;
-      if (rect.width <= 0 || rect.height <= 0) continue;
-      if (style.display === "none" || style.visibility === "hidden") continue;
-
-      button = candidate as HTMLButtonElement;
-    }
-
-    button?.click();
-    return Boolean(button);
-  }, text);
-
-  if (!clicked) {
-    throw new Error(`Visible button not found: ${text}`);
-  }
-}
-
 async function closeIfVisible(page: Page, name: RegExp | string) {
   const button = page.getByRole("button", { name }).first();
   if (await button.isVisible().catch(() => false)) {
@@ -131,32 +105,6 @@ async function collectVisibleButtons(page: Page) {
       })
       .filter((entry) => entry.visible && entry.text);
   });
-}
-
-async function collectVisibleTexts(page: Page, selector: string) {
-  return page.evaluate((input) => {
-    return Array.from(document.querySelectorAll(input))
-      .map((element) => {
-        const html = element as HTMLElement;
-        const rect = html.getBoundingClientRect();
-        const style = window.getComputedStyle(html);
-        const text =
-          html.getAttribute("aria-label") ||
-          html.getAttribute("title") ||
-          html.textContent?.trim() ||
-          "";
-
-        return {
-          text,
-          visible:
-            rect.width > 0 &&
-            rect.height > 0 &&
-            style.display !== "none" &&
-            style.visibility !== "hidden"
-        };
-      })
-      .filter((entry) => entry.visible && entry.text);
-  }, selector);
 }
 
 async function collectCaptureDiagnostics(page: Page) {

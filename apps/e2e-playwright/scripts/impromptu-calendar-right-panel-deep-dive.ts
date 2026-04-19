@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { chromium, expect, type Page } from "@playwright/test";
+import { chromium, type Page } from "@playwright/test";
 import {
   captureConsole,
   ensureInAppOnHome,

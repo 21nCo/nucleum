@@ -213,12 +213,6 @@ async function focusBlock(page: Page, index: number) {
   return editor;
 }
 
-async function waitForBlockCount(page: Page, count: number) {
-  await expect
-    .poll(() => blockListLocator(page).count(), { timeout: 15_000 })
-    .toBeGreaterThanOrEqual(count);
-}
-
 async function waitForBlockType(page: Page, index: number, type: string) {
   await expect(blockLocator(page, index)).toHaveAttribute("data-content", type, {
     timeout: 15_000

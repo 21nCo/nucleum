@@ -47,6 +47,8 @@ coverage/
 # Playwright output
 test-results/
 artifacts/
+**/.logs/
+**/.logs/**
 
 .opencode
 .conduct

@@ -72,7 +72,7 @@ export function dropzone(
 
       onDrop(nodeDetails);
       node.dispatchEvent(
-        new CustomEvent<DroppedNodeDetails>("drop", {
+        new CustomEvent<DroppedNodeDetails>("dropzone-drop", {
           detail: nodeDetails
         })
       );

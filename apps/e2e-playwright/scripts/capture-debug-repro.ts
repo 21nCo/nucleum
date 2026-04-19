@@ -206,9 +206,12 @@ async function ensureInAppOnHome(
   const setOfflineSessionFallback = async () => {
     await debug(`setting offlineSessionId fallback on ${page.url()}`);
     await page.evaluate(() => {
-      const value =
-        globalThis.crypto?.randomUUID?.() ??
-        `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+      const fallback = () => {
+        const bytes = new Uint32Array(4);
+        globalThis.crypto?.getRandomValues(bytes);
+        return Array.from(bytes, (value) => value.toString(16)).join("-");
+      };
+      const value = globalThis.crypto?.randomUUID?.() ?? fallback();
       window.localStorage.setItem("offlineSessionId", value);
     });
   };
