@@ -21,19 +21,18 @@ interface LogEntry {
 
 interface DevLogCaptureOptions {
   product?: string;
-  endpoint?: string;
+  endpoint?: string | null;
   flushIntervalMs?: number;
   maxEntries?: number;
 }
 
-const DEFAULT_ENDPOINT = "/api/dev/logs";
 const DEFAULT_FLUSH_INTERVAL_MS = 2000;
 const DEFAULT_MAX_ENTRIES = 5000;
 
 let isInstalled = false;
 let flushTimer: ReturnType<typeof setInterval> | undefined;
 let maxEntries = DEFAULT_MAX_ENTRIES;
-let endpoint = DEFAULT_ENDPOINT;
+let endpoint: string | undefined;
 let productName: string | undefined;
 const buffer: LogEntry[] = [];
 
@@ -106,7 +105,7 @@ function pushEntry(level: LogLevel, args: unknown[]) {
 }
 
 async function flushEntries(entries: LogEntry[]) {
-  if (entries.length === 0) return;
+  if (!endpoint || entries.length === 0) return;
   try {
     await fetch(endpoint, {
       method: "POST",
@@ -120,13 +119,18 @@ async function flushEntries(entries: LogEntry[]) {
 }
 
 export async function flushNow() {
-  if (!browser || buffer.length === 0) return;
+  if (!browser || !endpoint || buffer.length === 0) return;
   const entries = buffer.splice(0, buffer.length);
   await flushEntries(entries);
 }
 
 function flushWithBeacon() {
-  if (!browser || buffer.length === 0 || typeof navigator.sendBeacon !== "function") {
+  if (
+    !browser ||
+    !endpoint ||
+    buffer.length === 0 ||
+    typeof navigator.sendBeacon !== "function"
+  ) {
     return;
   }
   const entries = buffer.splice(0, buffer.length);
@@ -137,7 +141,7 @@ function flushWithBeacon() {
 export function initDevLogCapture(options: DevLogCaptureOptions = {}) {
   if (!browser || !import.meta.env.DEV || isInstalled) return;
   isInstalled = true;
-  endpoint = options.endpoint ?? DEFAULT_ENDPOINT;
+  endpoint = options.endpoint ?? undefined;
   maxEntries = options.maxEntries ?? DEFAULT_MAX_ENTRIES;
   productName = options.product;
   const flushIntervalMs = options.flushIntervalMs ?? DEFAULT_FLUSH_INTERVAL_MS;
