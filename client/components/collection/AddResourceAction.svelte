@@ -11,6 +11,7 @@
     variant?: "minimal" | "default" | "strong";
     onAdd?: ((event: CustomEvent<string>) => void) | undefined;
   } = $props();
+  let popoverRef = $state<any>();
   const options = [
     {
       label: "Add existing",
@@ -32,7 +33,7 @@
   ];
 </script>
 
-<Popover>
+<Popover bind:this={popoverRef}>
   {#if variant === "minimal"}
     <button
       class="flex rounded-full p-2 hover:bg-aps2 hover:border-aps1 bg-aps3 text-aps1 border border-aps2"
@@ -60,6 +61,7 @@
               detail: option.value
             });
             onAdd?.(event);
+            popoverRef?.hide();
           }}
         >
           <Icon icon={option.icon} size={Size.sm} />

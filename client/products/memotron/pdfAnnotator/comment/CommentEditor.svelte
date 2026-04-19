@@ -56,6 +56,7 @@
 </script>
 
 <div
+  data-pdf-annotation-overlay
   {style}
   role="presentation"
   tabindex="-1"

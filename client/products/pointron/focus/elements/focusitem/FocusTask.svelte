@@ -46,7 +46,7 @@
     onRemove?: ((event: CustomEvent<any>) => void) | undefined;
   } = $props();
   let workedTime: number = 0;
-  let isInprogress: boolean = false;
+  let isInprogress = $state(false);
   let labelInputElement: any;
   let labelEntry: string;
   let scrollToTask: any = null;
@@ -159,6 +159,7 @@
         "pl-8": isInEditMode
       }
     )}
+    data-current-focus={isInprogress ? "true" : "false"}
     onclick={clickHandler}
     role="button"
     tabindex="0"

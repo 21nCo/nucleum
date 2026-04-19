@@ -7,17 +7,17 @@
     "test:watch": "vitest --workspace ./vitest.workspace.ts"
   },
   "devDependencies": {
-    "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "@sveltejs/vite-plugin-svelte": "^4.0.4",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.4.2",
-    "@testing-library/svelte": "^4.2.2",
+    "@testing-library/svelte": "^5.3.1",
     "@testing-library/user-event": "^14.5.2",
     "axe-core": "^4.9.1",
     "fast-check": "^3.14.0",
     "@vitest/coverage-istanbul": "^2.1.9",
     "@vitest/coverage-v8": "^2.1.9",
     "jsdom": "^24.0.0",
-    "svelte": "^4.2.7",
+    "svelte": "^5.55.0",
     "vite-tsconfig-paths": "^4.3.2"
   }
 }

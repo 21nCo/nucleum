@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { ensureInAppOnHome, runCommand } from "../../utils/helpers";
+import { ensureInAppOnHome, runCommand, getProductConfig } from "../../utils/helpers";
 import type { Page } from "@playwright/test";
 
 const runtimeEnv = (
@@ -31,7 +31,7 @@ async function fillManualLogEntryAndSave(page: Page, goalName: string) {
     .click({ timeout: 5_000 });
 }
 
-test.describe("calendar - all workflows (Logs, manual time, timeline) @regression", () => {
+test.describe("calendar - all workflows (Logs, manual time, timeline) @regression @smoke @calendar-smoke", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -47,8 +47,8 @@ test.describe("calendar - all workflows (Logs, manual time, timeline) @regressio
     page
   }, testInfo) => {
     test.skip(
-      testInfo.project.name === "memotron",
-      "Memotron does not ship the same manual focus log / Logs workflow as Nucleum/Pointron"
+      !getProductConfig(testInfo.project.name).capabilities.commands.manualTimeEntry,
+      "Manual time entry command is not part of this product contract"
     );
     test.setTimeout(60_000);
     await ensureInAppOnHome(page);
@@ -84,8 +84,8 @@ test.describe("calendar - all workflows (Logs, manual time, timeline) @regressio
     page
   }, testInfo) => {
     test.skip(
-      testInfo.project.name === "memotron",
-      "Memotron has no Focus page / Add manual log entry point used in this flow"
+      !getProductConfig(testInfo.project.name).capabilities.calendar.manualLogUiEntry,
+      "Focus manual-log entry UI is not part of this product contract"
     );
     test.setTimeout(60_000);
     await ensureInAppOnHome(page);
@@ -122,8 +122,12 @@ test.describe("calendar - all workflows (Logs, manual time, timeline) @regressio
 
   test("calendar: navigate dates (prev/next) and verify day content updates (or N/A if no date nav)", async ({
     page
-  }) => {
+  }, testInfo) => {
     test.setTimeout(90_000);
+    test.skip(
+      !getProductConfig(testInfo.project.name).capabilities.calendar.dateNavigation,
+      "Calendar date navigation is not part of this product contract"
+    );
     await ensureInAppOnHome(page);
 
     const todayBtn = page.getByRole("button", { name: /^Today$/i }).first();
@@ -134,12 +138,8 @@ test.describe("calendar - all workflows (Logs, manual time, timeline) @regressio
       .first();
     const nextBtn = page.getByRole("button", { name: /Next day|Next/i }).first();
 
-    const prevVisible = await prevBtn.isVisible().catch(() => false);
-    const nextVisible = await nextBtn.isVisible().catch(() => false);
-    if (!prevVisible || !nextVisible) {
-      test.skip(true, "Calendar date navigation controls not available (N/A)");
-      return;
-    }
+    await expect(prevBtn).toBeVisible({ timeout: 10_000 });
+    await expect(nextBtn).toBeVisible({ timeout: 10_000 });
 
     const getDayMarker = async () => {
       // Avoid matching the persistent "Today" nav button; use weekday/month-day labels that change with navigation.

@@ -241,7 +241,7 @@
 
         node.updateBlock(
           $node.id,
-          { children: e.detail.root },
+          { children: deepCopy(e.detail.root) },
           {
             isDebounced: true,
             debounceKey: "children"
@@ -271,7 +271,10 @@
           );
           node.updateBlock(
             child.id,
-            { children: child.children, mdParent: parent },
+            {
+              children: deepCopy(child.children),
+              mdParent: deepCopy(parent)
+            },
             {
               isDebounced: true,
               debounceKey: "children"

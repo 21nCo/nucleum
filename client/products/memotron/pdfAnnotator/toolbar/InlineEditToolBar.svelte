@@ -23,6 +23,7 @@
 </script>
 
 <button
+  data-pdf-annotation-overlay
   class="flex gap-1 min-h-fit h-10 items-center bg-bgs2 text-fgs1 rounded-md px-2 py-1 border border-brs3"
   {style}
   onclick={(event) => event.stopPropagation()}

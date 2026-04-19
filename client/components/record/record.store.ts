@@ -271,6 +271,27 @@ export class SearchStore {
     // console.log({ at: "record.store.ts - select - " + this.resource, data });
     // console.timeEnd("record.store.ts - select - " + this.resource);
     if (isValidArray(data)) {
+      if (this.resource === Resource.node) {
+        const nodularItems = data
+          .filter(
+            (item: any) => item?.contentType === NodeType.NODULAR_MARKDOWN
+          )
+          .slice(0, 5)
+          .map((item: any) => ({
+            id: item?.id,
+            label: item?.label,
+            text: item?.text,
+            bodySearch: item?.bodySearch,
+            labelSearch: item?.labelSearch
+          }));
+        console.log(
+          "SearchStore.select.nodes",
+          JSON.stringify({
+            count: data.length,
+            nodularItems
+          })
+        );
+      }
       if (isValidString(params.searchQuery)) {
         data = highlightSearchQuery(data, params.searchQuery!);
         if (params.isStrictSearch) {
@@ -318,7 +339,8 @@ export class SearchStore {
     }
   ) {
     logger.log({ at: "searchForLinking", query, params });
-    console.time("searchForLinking");
+    const timerLabel = `searchForLinking:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
+    console.time(timerLabel);
     const collectionResource =
       params?.collectionResource ?? this.collectibleResource;
     if (!isValidString(query)) {
@@ -347,6 +369,7 @@ export class SearchStore {
       if (params?.resource === Resource.collection && collectionResource) {
         items = items.filter((x) => collectionResource.includes(x.resource));
       }
+      console.timeEnd(timerLabel);
       return items;
     }
     let nodes: INode[] = [];
@@ -443,7 +466,7 @@ export class SearchStore {
     if (params?.exclude) {
       data = data.filter((x) => !params.exclude?.some(resourceInList(x.id)));
     }
-    console.timeEnd("searchForLinking");
+    console.timeEnd(timerLabel);
     return data;
   }
 

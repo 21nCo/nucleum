@@ -1,9 +1,11 @@
 export function mount(
   node: HTMLElement,
-  callback: (node: HTMLElement) => void
+  callback?: ((node: HTMLElement) => void) | undefined
 ) {
   queueMicrotask(() => {
-    callback(node);
+    if (typeof callback === "function") {
+      callback(node);
+    }
   });
 
   return {

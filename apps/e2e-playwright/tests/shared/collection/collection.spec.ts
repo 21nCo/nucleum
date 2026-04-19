@@ -3,9 +3,13 @@ import {
   ensureInAppOnHome,
   runCommand,
   openLibraryAndTab,
-  LibraryTab
+  LibraryTab,
+  getProductConfig
 } from "../../utils/helpers";
-import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+import {
+  getResourceContract,
+  requireResourceRecordContract
+} from "../../utils/resource-matrix";
 
 const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
@@ -16,7 +20,7 @@ test.skip(
   "E2E suite disabled by environment"
 );
 
-test.describe("collection - all workflows @regression", () => {
+test.describe("collection - all workflows @regression @smoke @library-smoke", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -91,30 +95,28 @@ test.describe("collection - all workflows @regression", () => {
   test.describe("browse from pinned resource browser", () => {
     test("pin Collections in resource browser (leftnav settings), then open Collections from pinned nav", async ({
       page
-    }) => {
-      test.setTimeout(120_000);
+    }, testInfo) => {
+    test.setTimeout(120_000);
+      const productConfig = getProductConfig(testInfo.project.name);
+      const collectionContract = getResourceContract(
+        testInfo.project.name,
+        "collection"
+      );
+      test.skip(
+        !collectionContract.pinnedBrowserEnabled,
+        "Collections cannot be pinned in this product"
+      );
       await ensureInAppOnHome(page);
 
       await page.getByTestId("leftnav-settings").click({ timeout: 5_000 });
-
-      const pinDialogVisible = await page
-        .getByText("Pin resources")
-        .first()
-        .waitFor({ state: "visible", timeout: 8_000 })
-        .then(() => true)
-        .catch(() => false);
-      if (!pinDialogVisible) test.skip(true, "Pinned resource browser not available in this product build");
+      await expect(page.getByText("Pin resources").first()).toBeVisible({
+        timeout: 8_000
+      });
 
       const collectionsRow = page
         .getByTestId("leftnav-pin-resource")
         .filter({ hasText: /Collections/i });
-
-      const hasCollectionsToggle = await collectionsRow
-        .first()
-        .waitFor({ state: "visible", timeout: 8_000 })
-        .then(() => true)
-        .catch(() => false);
-      if (!hasCollectionsToggle) test.skip(true, "Collections cannot be pinned (N/A)");
+      await expect(collectionsRow.first()).toBeVisible({ timeout: 8_000 });
 
       const toggle = collectionsRow.locator('input[type="checkbox"]').first();
       const checked = await toggle.isChecked().catch(() => false);
@@ -140,8 +142,15 @@ test.describe("collection - all workflows @regression", () => {
 
   test("open collection detail page from Library and verify content visible (or N/A if no detail page)", async ({
     page
-  }) => {
+  }, testInfo) => {
     test.setTimeout(120_000);
+    let hasCollectionRecord = true;
+    try {
+      requireResourceRecordContract(testInfo.project.name, "collection");
+    } catch {
+      hasCollectionRecord = false;
+    }
+    test.skip(!hasCollectionRecord, "Collection record page is not part of this product contract");
     await ensureInAppOnHome(page);
 
     const collectionName = `E2E collection open ${Date.now()}`;
@@ -163,23 +172,36 @@ test.describe("collection - all workflows @regression", () => {
     await thumb.click({ timeout: 5_000 });
     await page.waitForTimeout(1_500);
 
-    const hasClose = await page
-      .getByRole("button", { name: /Close/i })
-      .first()
-      .waitFor({ state: "visible", timeout: 10_000 })
-      .then(() => true)
-      .catch(() => false);
-    if (!hasClose) test.skip(true, "No collection detail/record page available (N/A)");
+    await expect
+      .poll(
+        () => {
+          const resource = new URL(page.url()).searchParams.get("r");
+          return resource?.startsWith("collection:") ?? false;
+        },
+        { timeout: 10_000 }
+      )
+      .toBe(true);
 
     await expect(page.getByText(collectionName).first()).toBeVisible({
       timeout: 15_000
+    });
+    await expect(page.getByRole("button", { name: /^Add$/i }).first()).toBeVisible({
+      timeout: 10_000
     });
   });
 
   test("rename collection from record UI (or N/A if no rename UI exposed)", async ({
     page
-  }) => {
+  }, testInfo) => {
     test.setTimeout(120_000);
+    const collectionContract = getResourceContract(
+      testInfo.project.name,
+      "collection"
+    );
+    test.skip(
+      !collectionContract.renameEnabled,
+      "Collection rename UI is not part of this product contract"
+    );
     await ensureInAppOnHome(page);
 
     const collectionName = `E2E collection edit ${Date.now()}`;
@@ -200,48 +222,23 @@ test.describe("collection - all workflows @regression", () => {
     await page.waitForTimeout(1_500);
 
     const updatedName = `${collectionName} updated`;
+    const editBtn = page
+      .locator("button")
+      .filter({
+        has: page.locator('use[href*="pencil-simple-line-light"]')
+      })
+      .first();
+    await expect(editBtn).toBeVisible({ timeout: 10_000 });
+    await editBtn.click({ timeout: 5_000 });
+    await page.waitForTimeout(500);
 
-    // Best-effort rename flow:
-    // 1) Look for an edit input already present (inline edit / edit modal).
-    // 2) Otherwise click an "Edit"/"Rename" button if present.
-    const existingEditInput = page.locator('input[placeholder="Name of the collection"]:visible').first();
-    const hasExistingEditInput = await existingEditInput
-      .waitFor({ state: "visible", timeout: 8_000 })
-      .then(() => true)
-      .catch(() => false);
-
-    if (!hasExistingEditInput) {
-      const editBtn = page
-        .getByRole("button", { name: /^(Edit|Rename|Edit collection|Rename collection)$/i })
-        .first();
-      const hasEditBtn = await editBtn
-        .waitFor({ state: "visible", timeout: 8_000 })
-        .then(() => true)
-        .catch(() => false);
-      if (hasEditBtn) {
-        await editBtn.click({ timeout: 5_000 });
-        await page.waitForTimeout(500);
-      } else {
-        test.skip(true, "Collection rename UI not exposed (N/A)");
-      }
-    }
-
-    const editInput = page.locator('input[placeholder="Name of the collection"]:visible').first();
+    const editInput = page.locator('input[placeholder="Collection title"]:visible').first();
     await expect(editInput).toBeVisible({ timeout: 10_000 });
     await editInput.fill(updatedName);
-
-    const saveCandidates = page.getByRole("button", { name: /Save.*Enter/i });
-    const saveCount = await saveCandidates.count();
-    let saveBtn = saveCandidates.first();
-    for (let i = 0; i < saveCount; i += 1) {
-      const candidate = saveCandidates.nth(i);
-      if (await candidate.isVisible().catch(() => false)) {
-        saveBtn = candidate;
-        break;
-      }
-    }
-
-    await saveBtn.click({ timeout: 8_000 });
+    await page.waitForTimeout(500);
+    await page.getByRole("button", { name: /^Close edit mode$/i }).first().click({
+      timeout: 8_000
+    });
     await editInput.waitFor({ state: "hidden", timeout: 10_000 }).catch(() => null);
 
     await openLibraryAndTab(page, LibraryTab.Collections);

@@ -10,8 +10,12 @@ class TimezoneStore extends ResourceStore<ITimezone, ITimezoneCapture> {
     super(Resource.tz);
   }
 
+  private resolveInputDate(day: Date | string | number) {
+    return day instanceof Date ? day : new Date(day);
+  }
+
   resolveTimePeriodFilter(
-    day: Date,
+    day: Date | string | number,
     params?: {
       scale?: TimeScaleUnit;
       isReturnAsDateObjectFilter?: boolean;
@@ -35,7 +39,8 @@ class TimezoneStore extends ResourceStore<ITimezone, ITimezoneCapture> {
     }
   }
 
-  resolveTimePeriodFilterForDay(day: Date) {
+  resolveTimePeriodFilterForDay(day: Date | string | number) {
+    day = this.resolveInputDate(day);
     const localDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
     const end = new Date(localDay.getTime() + 24 * 60 * 60 * 1000);
     return this.resolveCorrectedTimePeriodFilter({
@@ -44,7 +49,8 @@ class TimezoneStore extends ResourceStore<ITimezone, ITimezoneCapture> {
     });
   }
 
-  resolveTimePeriodFilterForMonth(day: Date) {
+  resolveTimePeriodFilterForMonth(day: Date | string | number) {
+    day = this.resolveInputDate(day);
     const localDay = new Date(day.getFullYear(), day.getMonth(), 1);
     const end = new Date(localDay.getFullYear(), localDay.getMonth() + 1, 1);
     return this.resolveCorrectedTimePeriodFilter({
@@ -53,7 +59,8 @@ class TimezoneStore extends ResourceStore<ITimezone, ITimezoneCapture> {
     });
   }
 
-  resolveTimePeriodFilterForYear(day: Date) {
+  resolveTimePeriodFilterForYear(day: Date | string | number) {
+    day = this.resolveInputDate(day);
     const localDay = new Date(day.getFullYear(), 0, 1);
     const end = new Date(day.getFullYear(), 11, 31);
     return this.resolveCorrectedTimePeriodFilter({

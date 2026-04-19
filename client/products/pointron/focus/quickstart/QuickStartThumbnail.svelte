@@ -39,11 +39,11 @@
     onUnpin?: ((event: CustomEvent<any>) => void) | undefined;
   } = $props();
   let isColorGoalTextExperimental = false;
-  let todayFocusDuration: number | undefined = item.focus;
-  let parentLabels: string[] = [];
-  let focusTime: number;
-  let isHovering = false;
-  let isFinishingState: boolean = false;
+  let todayFocusDuration = $state<number | undefined>(item.focus);
+  let parentLabels = $state<string[]>([]);
+  let focusTime = $state(0);
+  let isHovering = $state(false);
+  let isFinishingState = $state(false);
 
   let isActive = $derived(
     $currentFocusItem &&
@@ -53,12 +53,16 @@
       !isFinishingState
   );
   $effect(() => {
-    if (!isActive) return;
-    focusTime = resolveTaskFocus(
+    if (!isActive) {
+      focusTime = 0;
+      return;
+    }
+    const resolvedFocusTime = resolveTaskFocus(
       $activeSession.intervals,
       undefined,
       $currentFocusItem?.start
     );
+    focusTime = Number.isFinite(resolvedFocusTime) ? resolvedFocusTime : 0;
   });
 
   onMount(async () => {

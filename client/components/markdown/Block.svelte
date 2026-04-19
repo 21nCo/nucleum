@@ -373,6 +373,8 @@
       block.label = data.label;
       propagate(BlockAction.CHANGE, { label: data.label });
     }
+    block = { ...block };
+    refresh();
     insertBufferBlockIfRequired(block.id, data.toType);
     mdStore.focusBlock(block.id, { xOffset: 0 });
   }
@@ -645,6 +647,7 @@
       typeof detail === "string"
     ) {
       block.label = detail;
+      block = { ...block };
       propagate(BlockAction.CHANGE, { label: detail });
       return;
     }
@@ -661,6 +664,7 @@
     } else {
       block.body = detail as IBlockBody;
     }
+    block = { ...block };
     propagate(BlockAction.CHANGE, { body: block.body });
   }
 

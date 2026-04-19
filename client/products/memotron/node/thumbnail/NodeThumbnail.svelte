@@ -48,7 +48,7 @@
   import NodeThumbnailSocialPostPreview from "@21n/products/memotron/node/thumbnail/NodeThumbnailSocialPostPreview.svelte";
   import CoverRenderer from "@21n/elements/coverPicker/CoverRenderer.svelte";
   let {
-    item = $bindable(),
+    item: itemProp,
     arrangement = Arrangement.LIST,
     isHidePreview = false,
     isHideTitle = false,
@@ -92,6 +92,7 @@
     right?: Snippet | undefined;
     bottom?: Snippet | undefined;
   } = $props();
+  let item = $state<INode | INodeThumb>(itemProp);
 
   let _url = $state<string | undefined>(undefined);
   let filePreview = $derived(resolveFilePreview(item) as IFile | IRecordId | undefined);
@@ -144,6 +145,25 @@
       : undefined
   );
 
+  $effect(() => {
+    item = itemProp;
+  });
+
+  $effect(() => {
+    if (accessPoint !== ResourceAccessPoint.LIBRARY) return;
+    if (item.contentType !== NodeType.NODULAR_MARKDOWN) return;
+    console.log(
+      "NodeThumbnail.libraryItem",
+      JSON.stringify({
+        id: item.id,
+        label: item.label,
+        text: item.text,
+        bodySearch: item.bodySearch,
+        labelSearch: item.labelSearch
+      })
+    );
+  });
+
   onMount(async () => {
     await resolveUrl();
   });
@@ -184,7 +204,7 @@
 </script>
 
 <ResourceThumbnailBase
-  bind:item
+  {item}
   {accessPoint}
   {accessPointId}
   {accessPointContext}
@@ -419,7 +439,7 @@
       {#snippet bottom()}
       <div class="flex flex-col w-full h--5">
         {#key refreshId}
-          <NodeThumbnailTitle node={item} />
+          <NodeThumbnailTitle node={item} {accessPoint} />
         {/key}
         {#if visibleProps.length > 0}
           <div class="py-1">
@@ -519,7 +539,7 @@
           )}
         >
           {#key refreshId}
-            <NodeThumbnailTitle node={item} />
+            <NodeThumbnailTitle node={item} {accessPoint} />
           {/key}
         </div>
         {#if visibleProps.length > 0}

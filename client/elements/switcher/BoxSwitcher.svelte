@@ -91,6 +91,7 @@
       type="button"
       role={isTablist ? "tab" : undefined}
       aria-selected={isTablist ? isSelected : undefined}
+      aria-label={option.label}
       class={cn(
         "flex items-center justify-center gap-1 h-full text-b2 transition-all duration-300",
         {

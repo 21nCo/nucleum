@@ -9,8 +9,8 @@
   import { pdfCache } from "@21n/utils/pdfCache.utils";
 
   let {
-    pdfViewer = $bindable(undefined),
-    pdfDocument = $bindable(undefined),
+    pdfViewer = $bindable(),
+    pdfDocument = $bindable(),
     url,
     scale = $bindable(1),
     display_mode = "",

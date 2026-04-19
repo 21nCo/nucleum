@@ -70,8 +70,31 @@
       (!isMiniSearch || (isMiniSearch && !isSearchFocused))
   );
 
-  function onLabelChange(e: any) {
-    if ($collection.label) collection.modify({ label: $collection.label });
+  function onLabelChange(e: CustomEvent<string>) {
+    const label =
+      typeof e?.detail === "string" && e.detail.trim() !== ""
+        ? e.detail
+        : $collection.label;
+    if (!label) return;
+    console.log(
+      "[collection-rename]",
+      JSON.stringify({
+        at: "CollectionTitleBar.onLabelChange.start",
+        collectionId: collection.id,
+        label
+      })
+    );
+    collection.modify({ label }).then((result) => {
+      console.log(
+        "[collection-rename]",
+        JSON.stringify({
+          at: "CollectionTitleBar.onLabelChange.result",
+          collectionId: collection.id,
+          label,
+          result: result ?? null
+        })
+      );
+    });
   }
 
   function onAvatarChange() {

@@ -42,6 +42,7 @@
   let timeRangeForPage = $state<{ begin: number; end: number } | undefined>(
     undefined
   );
+  let cards = $derived(config?.cards ?? []);
 
   const heightAdjuster = "4.475rem";
 
@@ -52,7 +53,7 @@
 
   onMount(() => {
     refreshConfig();
-    refreshData();
+    void refreshData();
   });
 
   /**
@@ -61,12 +62,15 @@
    */
   async function refreshData() {
     isLoading = true;
-    console.time("refreshData");
     goals = await goalStore.selectMany(
       {},
       { isIncludeSubItems: true, isExpand: true }
     );
-    if (!timeRangeForPage) return;
+    if (!timeRangeForPage) {
+      logs = [];
+      isLoading = false;
+      return;
+    }
     logs = await sessionLogStore.selectMany({
       properties: {
         select: ["id", "startUnix", "goalId", "focus", "breakTime"]
@@ -81,16 +85,16 @@
         startUnix: "desc"
       }
     });
-    // console.log({ goals, logs });
-    console.timeEnd("refreshData");
     isLoading = false;
   }
 
   function refreshConfig() {
     try {
-      config = $analyticsConfigStore.pages.find((x) => x.id === id);
+      const pages = $analyticsConfigStore.pages ?? [];
+      config = pages.find((x) => x.id === id);
       if (!config) return;
-      cardsTimePeriods = config.cards.reduce(
+      const cards = Array.isArray(config.cards) ? config.cards : [];
+      cardsTimePeriods = cards.reduce(
         (acc, card) => {
           const timePeriod = determineTimePeriodv2(card.period);
           acc[card.id] = {
@@ -104,13 +108,13 @@
       );
       let previousPeriods: { [key: string]: number } = {};
       if (
-        config.cards.some(
+        cards.some(
           (x) =>
             x.type === AnalyticsCardType.TOP_N ||
             x.type === AnalyticsCardType.METRICS
         )
       ) {
-        const cardsWithPreviousPeriods = config.cards.filter(
+        const cardsWithPreviousPeriods = cards.filter(
           (x) =>
             x.type === AnalyticsCardType.TOP_N ||
             x.type === AnalyticsCardType.METRICS
@@ -119,6 +123,10 @@
           const timePeriod = determinePreviousTimePeriod(card.period);
           previousPeriods[card.id] = resolveUnixTimestamp(timePeriod);
         });
+      }
+      if (cards.length === 0) {
+        timeRangeForPage = undefined;
+        return;
       }
       timeRangeForPage = {
         begin: Math.min(
@@ -137,7 +145,7 @@
 
   function onReload() {
     refreshConfig();
-    refreshData();
+    void refreshData();
   }
 </script>
 
@@ -148,14 +156,14 @@
       "flex-wrap gap-2": !$view.isPortrait
     })}
   >
-    {#each config.cards as card, index (card.id)}
+    {#each cards as card, index (card.id)}
       <AnalyticsCardView
         {card}
         {goals}
         {logs}
         isPageLoaded={!isLoading}
         timePeriod={cardsTimePeriods[card.id]}
-        position={{ index, total: config.cards.length }}
+        position={{ index, total: cards.length }}
         pageId={id}
         {parentBgIndex}
         {heightAdjuster}
@@ -163,7 +171,7 @@
         onRemoved={() => refreshConfig()}
       />
     {/each}
-    {#if $isInEditMode && config.cards.length < 10}
+    {#if $isInEditMode && cards.length < 10}
       <div>
         <button
           class={cn(
@@ -175,7 +183,7 @@
             }
           )}
           style={!$view.isPortrait
-            ? config.cards.length === 1
+            ? cards.length === 1
               ? "height: calc(100vh - 8rem);"
               : $view.height < 900
                 ? `height: calc(70vh - ${heightAdjuster});`

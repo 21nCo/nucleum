@@ -57,8 +57,12 @@
   );
 
   let selectedMethod = $state<Method>(Method.COLOR);
-  let _value = $state<string | undefined>(transformValue(value));
+  let _value = $state<string>("#000000");
   let isUploadInProgress = $state(false);
+
+  $effect(() => {
+    _value = transformValue(value) ?? "#000000";
+  });
 
   onMount(async () => {
     if ($view.isConstrainedWidth) {
@@ -85,6 +89,7 @@
 
   function handleColorChange(value: number | string) {
     if (typeof value === "string") {
+      console.log("[CoverPicker.handleColorChange]", value);
       onChange?.(
         new CustomEvent("change", {
           detail: `hex_${value}`
@@ -95,6 +100,7 @@
 
   function handleColorChangeDebounced(value: number | string) {
     if (typeof value === "string") {
+      console.log("[CoverPicker.handleColorChangeDebounced]", value);
       onSelect?.(
         new CustomEvent("select", {
           detail: `hex_${value}`

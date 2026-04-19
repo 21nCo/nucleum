@@ -141,6 +141,29 @@
   const mdStore = $derived(getMdStore(mdId));
   const containerId = $derived(`mdcontainer-${mdId}`);
   load(md);
+  let lastExternalMdSignature = $state<string | undefined>(undefined);
+  $effect(() => {
+    if (!md?.blocks?.length) return;
+    const nextSignature = stringify(
+      md.blocks.map((block) => ({
+        id: block.id,
+        contentType: block.contentType,
+        body: block.body,
+        label: block.label
+      }))
+    );
+    if (nextSignature === lastExternalMdSignature) return;
+    const currentBlocks = $mdStore.blocks ?? [];
+    const isStoreSeededEmpty =
+      currentBlocks.length === 1 &&
+      currentBlocks[0]?.contentType === NodeType.SIMPLE_TEXT &&
+      !currentBlocks[0]?.body &&
+      currentBlocks[0]?.id !== md.blocks[0]?.id;
+    const isStoreMissingBlocks = currentBlocks.length === 0;
+    if (!isStoreSeededEmpty && !isStoreMissingBlocks) return;
+    lastExternalMdSignature = nextSignature;
+    load(md);
+  });
   let lastParamsSignature = $state<string | undefined>(undefined);
   $effect(() => {
     if (!params) {
@@ -554,7 +577,7 @@
       {#each $mdStore.blocks as block, index (block.id)}
         {@const isSelected = bulkSelection.some(resourceInList(block.id))}
         <Block
-          {block}
+          bind:block={$mdStore.blocks[index]}
           {mdStore}
           {index}
           {isSelected}

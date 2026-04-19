@@ -41,8 +41,15 @@
   let isPreventContentTypeRender = $derived(
     headingNodeTypes.includes($node.contentType)
   );
+
   async function onUnlink(e: CustomEvent) {
-    await node.unlinkCollection(e.detail);
+    try {
+      await node.unlinkCollection(e.detail);
+    } catch (error) {
+      logger.error({ at: "CollectionsLane.onUnlink", error });
+      toasts.error();
+      throw error;
+    }
   }
   async function onSelect(item: any) {
     try {

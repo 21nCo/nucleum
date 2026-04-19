@@ -5,9 +5,19 @@
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 
   let { node }: { node: IActiveNodeStore } = $props();
+  let notesContent = $state($node.notes ?? "");
   const inputId = generateSimpleRandomId();
-  function onChange(e: any) {
-    if ($node.notes) node.modify({ notes: $node.notes });
+
+  $effect(() => {
+    const nextNotes = $node.notes ?? "";
+    if (nextNotes !== notesContent) {
+      notesContent = nextNotes;
+    }
+  });
+
+  function onChange(event: CustomEvent<string | undefined>) {
+    notesContent = event.detail ?? "";
+    node.modify({ notes: notesContent });
   }
 </script>
 
@@ -19,7 +29,8 @@
     <InlineMarkdownTextInput
       id={inputId}
       placeholder="Add notes"
-      bind:content={$node.notes}
+      bind:content={notesContent}
+      onChange={onChange}
       onDebouncedChange={onChange}
     />
   </button>

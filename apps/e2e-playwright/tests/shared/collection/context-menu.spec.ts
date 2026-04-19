@@ -6,6 +6,7 @@ import {
   LibraryTab,
   runCommand
 } from "../../utils/helpers";
+import { requireResourceRecordContract } from "../../utils/resource-matrix";
 
 const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
@@ -48,13 +49,14 @@ async function openCollectionContextMenuFromLibrary(page: Page, name: string) {
 }
 
 async function openRecordPageContextMenu(page: Page) {
-  const panelRow = page
-    .locator("div.border-t.border-x.border-brs3")
-    .filter({ has: page.getByRole("button", { name: /Close/i }) })
+  const menuButton = page
+    .locator("button")
+    .filter({
+      has: page.locator('use[href*="dots-three-vertical-light"]')
+    })
     .first();
-  await panelRow.waitFor({ state: "visible", timeout: 10_000 });
-  const buttons = panelRow.getByRole("button");
-  await buttons.last().click({ timeout: 5_000 });
+  await expect(menuButton).toBeVisible({ timeout: 10_000 });
+  await menuButton.click({ timeout: 5_000 });
   await page.waitForTimeout(300);
 }
 
@@ -100,8 +102,15 @@ test.describe("collection - context menu (library + record page) @regression", (
 
   test("record page: context menu shows expected core actions (or N/A if no record page)", async ({
     page
-  }) => {
+  }, testInfo) => {
     test.setTimeout(120_000);
+    let hasCollectionRecord = true;
+    try {
+      requireResourceRecordContract(testInfo.project.name, "collection");
+    } catch {
+      hasCollectionRecord = false;
+    }
+    test.skip(!hasCollectionRecord, "Collection record page is not part of this product contract");
     await ensureInAppOnHome(page);
 
     const name = `E2E coll rec ctx ${Date.now()}`;
@@ -118,12 +127,18 @@ test.describe("collection - context menu (library + record page) @regression", (
     await thumb.click({ timeout: 5_000 });
     await page.waitForTimeout(1_500);
 
-    const hasClose = await page
-      .getByRole("button", { name: /Close/i })
-      .first()
-      .isVisible()
-      .catch(() => false);
-    if (!hasClose) test.skip(true, "No collection record page available (N/A)");
+    await expect
+      .poll(
+        () => {
+          const resource = new URL(page.url()).searchParams.get("r");
+          return resource?.startsWith("collection:") ?? false;
+        },
+        { timeout: 10_000 }
+      )
+      .toBe(true);
+    await expect(page.getByRole("button", { name: /^Add$/i }).first()).toBeVisible({
+      timeout: 10_000
+    });
 
     await openRecordPageContextMenu(page);
     const expectedRecordItems = [
@@ -151,4 +166,3 @@ test.describe("collection - context menu (library + record page) @regression", (
     await dismissAnyModals(page);
   });
 });
-

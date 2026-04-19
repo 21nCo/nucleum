@@ -778,7 +778,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
 
   async loader(savedSessionStore: IActiveSessionStore) {
     logger.log({ context: "session store loader", savedSessionStore });
-    savedSessionStore = { ...savedSessionStore };
+    savedSessionStore = normalizeSavedSessionStore(savedSessionStore);
     if (savedSessionStore.start && typeof savedSessionStore.start == "string") {
       savedSessionStore.start = new Date(savedSessionStore.start);
     }
@@ -1078,7 +1078,7 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
       { isPersist: false }
     );
     this._resumeTimer();
-    this.persist(undefined);
+    await this.persist(undefined);
     return true;
   }
 
@@ -1277,6 +1277,74 @@ class ActiveSessionStore extends KeyValueStore<IActiveSessionStore> {
 export const activeSession = ActiveSessionStore.resolve(
   Resource.pointSessionSnapshotv2
 );
+
+function normalizeSavedSessionStore(
+  savedSessionStore: IActiveSessionStore
+): IActiveSessionStore {
+  const normalized = { ...savedSessionStore };
+  normalized.intervals = Array.isArray(savedSessionStore.intervals)
+    ? savedSessionStore.intervals.map((interval) => ({
+        ...interval,
+        start: resolveSessionNumber(interval?.start),
+        duration: resolveSessionNumber(interval?.duration),
+        progress: resolveSessionNumber(interval?.progress)
+      }))
+    : [];
+  if (savedSessionStore.currentFocusItem) {
+    normalized.currentFocusItem = {
+      ...savedSessionStore.currentFocusItem,
+      start: resolveSessionNumber(savedSessionStore.currentFocusItem.start)
+    };
+  }
+  if (typeof savedSessionStore.timeElapsed !== "number") {
+    normalized.timeElapsed = resolveSessionNumber(savedSessionStore.timeElapsed);
+  }
+  if (typeof savedSessionStore.totalElapsed !== "number") {
+    normalized.totalElapsed = resolveSessionNumber(savedSessionStore.totalElapsed);
+  }
+  if (typeof savedSessionStore.plannedDuration !== "number") {
+    normalized.plannedDuration = resolveSessionNumber(
+      savedSessionStore.plannedDuration
+    );
+  }
+  if (typeof savedSessionStore.totalIdle !== "number") {
+    normalized.totalIdle = resolveSessionNumber(savedSessionStore.totalIdle);
+  }
+  if (typeof savedSessionStore.totalExtended !== "number") {
+    normalized.totalExtended = resolveSessionNumber(
+      savedSessionStore.totalExtended
+    );
+  }
+  if (typeof savedSessionStore.currentIdle !== "number") {
+    normalized.currentIdle = resolveSessionNumber(savedSessionStore.currentIdle);
+  }
+  if (
+    savedSessionStore.timeRemainingToTakeBreak !== undefined &&
+    typeof savedSessionStore.timeRemainingToTakeBreak !== "number"
+  ) {
+    normalized.timeRemainingToTakeBreak = resolveSessionNumber(
+      savedSessionStore.timeRemainingToTakeBreak
+    );
+  }
+  return normalized;
+}
+
+function resolveSessionNumber(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const numericValue = Number(value);
+    if (Number.isFinite(numericValue)) {
+      return numericValue;
+    }
+    const dateValue = new Date(value).getTime();
+    if (Number.isFinite(dateValue)) {
+      return dateValue;
+    }
+  }
+  return 0;
+}
 
 export const lastActiveGoalIdForEditing = writable<IRecordId | undefined>(
   undefined

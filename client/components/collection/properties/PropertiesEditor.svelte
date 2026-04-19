@@ -69,6 +69,7 @@
     id ? ActiveCollectionStore.resolve(id) : undefined
   );
   let derivedCollections = $state<ICollection[]>([]);
+  let properties = $state<IProperty[]>([]);
   let tableId = "properties-table";
   const propertiesEditAction = resourceAction(
     Resource.property,
@@ -135,12 +136,9 @@
       isShowOnNodePage: false,
       isShowOnCapture: false,
       type: PropertyType.TEXT,
-      order: $propertyEditorStore.properties.length
+      order: properties.length
     };
-    $propertyEditorStore.properties = [
-      ...$propertyEditorStore.properties,
-      newProperty
-    ];
+    properties = [...properties, newProperty];
     if (collection) {
       await propertyStore.create([newProperty]);
     }
@@ -156,6 +154,7 @@
         typeToExtend: $collection?.typeToExtend
       });
     }
+    properties = propertyEditorStore.get()?.properties ?? [];
     if (collection)
       derivedCollections = await collectionStore.fetchDerivedCollections(
         collection?.id
@@ -163,11 +162,18 @@
   });
 
   $effect(() => {
+    propertyEditorStore.set({
+      ...(propertyEditorStore.get() ?? { typeToExtend: undefined }),
+      properties
+    });
+  });
+
+  $effect(() => {
     isTypeExtension = Boolean($propertyEditorStore?.typeToExtend);
   });
 
   function onPropertyTypeChange(e: { id: IRecordId; type: PropertyType }) {
-    const existing = $propertyEditorStore.properties.find(resourceInList(e));
+    const existing = properties.find(resourceInList(e));
     if (!existing) return;
 
     if (
@@ -192,20 +198,17 @@
     }
 
     function convert(isResetConfig: boolean = false) {
-      $propertyEditorStore.properties = $propertyEditorStore.properties.map(
-        (property) =>
-          isSameResource(property, e)
-            ? {
-                ...property,
-                type: e.type,
-                config:
-                  isResetConfig ||
-                  !property.config ||
-                  objIsEmpty(property.config)
-                    ? resolvePropertyDefaultConfig(e.type)
-                    : property.config
-              }
-            : property
+      properties = properties.map((property) =>
+        isSameResource(property, e)
+          ? {
+              ...property,
+              type: e.type,
+              config:
+                isResetConfig || !property.config || objIsEmpty(property.config)
+                  ? resolvePropertyDefaultConfig(e.type)
+                  : property.config
+            }
+          : property
       );
     }
   }
@@ -222,11 +225,10 @@
     logger.log({ at: "PropertiesEditor.onReorder", event });
     const { from, to, listId } = event.detail;
     if (!listId || listId !== tableId) return;
-    const { properties } = $propertyEditorStore;
-    const [movedItem] = properties.splice(from, 1);
-    properties.splice(to, 0, movedItem);
-    $propertyEditorStore.properties = properties;
-    $propertyEditorStore = $propertyEditorStore;
+    const nextProperties = [...properties];
+    const [movedItem] = nextProperties.splice(from, 1);
+    nextProperties.splice(to, 0, movedItem);
+    properties = nextProperties;
   }
 
   async function onTypeExtensionChange(e: CustomEvent) {
@@ -283,7 +285,7 @@
 
   async function onSave() {
     if (
-      $propertyEditorStore.properties.some(
+      properties.some(
         (p) =>
           p.type === PropertyType.UNIVERSAL &&
           (!p.config?.type || p.config?.type === UniversalPropertyType.NONE)
@@ -293,7 +295,8 @@
         error: `Please select a sub type for all Universal properties`
       };
     }
-    return collection?.updateProperties();
+    const result = await collection?.updateProperties();
+    return result;
   }
 </script>
 
@@ -374,7 +377,7 @@
             { action: TableCellDefaultAction.REORDER, index: 1 }
           ]}
           {columns}
-          bind:data={$propertyEditorStore.properties}
+          bind:data={properties}
           {onAdd}
           {onReorder}
         />

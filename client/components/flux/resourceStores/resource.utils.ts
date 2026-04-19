@@ -69,7 +69,8 @@ export function determineResourceType(
 ): Resource {
   if (!id) return Resource.unknown;
   if (
-    typeof id !== "string" &&
+    typeof id === "object" &&
+    id !== null &&
     "tb" in id &&
     typeof id.tb === "string"
   ) {
@@ -96,7 +97,12 @@ export function isSameResource(
     if (!item1 || !item2) return false;
     if (typeof item1 === "string" && typeof item2 === "string") {
       return item1 === item2;
-    } else if (typeof item1 !== "string" && typeof item2 !== "string") {
+    } else if (
+      typeof item1 === "object" &&
+      item1 !== null &&
+      typeof item2 === "object" &&
+      item2 !== null
+    ) {
       if ("tb" in item1 && "tb" in item2) {
         return item1.tb === item2.tb && item1.id === item2.id;
       } else if ("tb" in item1) {
@@ -106,10 +112,18 @@ export function isSameResource(
       } else if (item1.id && item2.id) {
         return item1.id.toString() === item2.id.toString();
       }
-    } else if (typeof item1 === "string" && typeof item2 !== "string") {
+    } else if (
+      typeof item1 === "string" &&
+      typeof item2 === "object" &&
+      item2 !== null
+    ) {
       if ("tb" in item2) return item2.toString() === item1;
       return item2.id?.toString() === item1;
-    } else if (typeof item2 === "string" && typeof item1 !== "string") {
+    } else if (
+      typeof item2 === "string" &&
+      typeof item1 === "object" &&
+      item1 !== null
+    ) {
       if ("tb" in item1) return item1.toString() === item2;
       return item1.id?.toString() === item2;
     }
@@ -149,13 +163,13 @@ export function isRecordId(id: any, resource?: Resource) {
   if (resource) {
     let tb = "";
     if (typeof id === "string") tb = id.split(":")[0];
-    else if (typeof id === "object" && "tb" in id) tb = id.tb;
+    else if (typeof id === "object" && id !== null && "tb" in id) tb = id.tb;
     return tb === resource;
   }
   return (
     id &&
     ((typeof id === "string" && id.includes(":")) ||
-      (typeof id === "object" && "tb" in id))
+      (typeof id === "object" && id !== null && "tb" in id))
   );
 }
 

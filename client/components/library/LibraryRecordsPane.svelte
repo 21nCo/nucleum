@@ -273,16 +273,17 @@
         }
       }
       const filters = resolveFilters();
-      const newData = (await searchStore.select({
-        resource,
-        searchQuery,
-        filters,
-        orderBy,
-        semanticSearchTopK,
-        limit: 50,
-        offset: isPagination ? data.length : 0,
-        signal
-      })) ?? [];
+      const newData =
+        (await searchStore.select({
+          resource,
+          searchQuery,
+          filters,
+          orderBy,
+          semanticSearchTopK,
+          limit: 50,
+          offset: isPagination ? data.length : 0,
+          signal
+        })) ?? [];
       if (isPagination)
         data = [...data, ...newData]?.filter(removeDuplicatesFilter);
       else {
@@ -508,12 +509,35 @@
       }
       return;
     }
-    if (
-      mutation.action === PersistenceActionType.MERGE &&
-      resource === Resource.goal
-    ) {
-      if (!("children" in mutation.record)) return;
-    } else if (mutation.action === PersistenceActionType.MERGE) return;
+    if (mutation.action === PersistenceActionType.MERGE) {
+      if (resource === Resource.goal && "children" in mutation.record) {
+        await refresh();
+        return;
+      }
+      const id = mutation.record.id;
+      if (!id) return;
+      const updateRecord = (item: any) =>
+        isSameResource(item.id, id) ? { ...item, ...mutation.record } : item;
+      const hasDataMatch = data.some((item) => isSameResource(item.id, id));
+      const hasStarredMatch = starredData.some((item) =>
+        isSameResource(item.id, id)
+      );
+      if (hasDataMatch) {
+        data = data.map(updateRecord);
+      }
+      if (hasStarredMatch) {
+        starredData = starredData.map(updateRecord);
+      }
+      if (hasDataMatch || hasStarredMatch) {
+        const cacheKey = resourceCacheKey(
+          resource,
+          CacheKey.LIBRARY_DEFAULT_RECORDS
+        );
+        cache.replaceUsingSubKey(cacheKey, CacheSubKey.DATA, data);
+        cache.replaceUsingSubKey(cacheKey, CacheSubKey.STARRED, starredData);
+      }
+      return;
+    }
 
     const insertedRecord =
       mutation.action === PersistenceActionType.INSERT ||
@@ -636,16 +660,16 @@
       </div>
     {/if}
   {:else}
-      <LibrarySearchBox
-        {selectedSubType}
-        {searchStore}
-        {resource}
-        bind:searchQuery
-        onRefresh={debouncedSearch}
-        onSemanticSearch={(e) => {
-          // if (e.detail) {
-          //   searchStore.searchType = SearchType.SEMANTIC;
-          // } else {
+    <LibrarySearchBox
+      {selectedSubType}
+      {searchStore}
+      {resource}
+      bind:searchQuery
+      onRefresh={debouncedSearch}
+      onSemanticSearch={(e) => {
+        // if (e.detail) {
+        //   searchStore.searchType = SearchType.SEMANTIC;
+        // } else {
         //   searchStore.searchType = SearchType.FULL_TEXT;
         // }
         refresh();

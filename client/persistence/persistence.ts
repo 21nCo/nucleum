@@ -168,6 +168,14 @@ export class Persistence {
 
   async runAccountAction(action: string, params: any) {
     try {
+      const apiBaseUrl =
+        import.meta.env?.VITE_API_URL ??
+        (typeof process !== "undefined"
+          ? process.env?.PLASMO_PUBLIC_API_URL
+          : undefined);
+      if (!apiBaseUrl) {
+        return;
+      }
       const response = this.resolveJsonResponse(
         await performApiCall("account/n/action", "POST", {
           action,

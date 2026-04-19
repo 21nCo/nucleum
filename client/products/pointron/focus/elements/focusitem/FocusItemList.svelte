@@ -42,13 +42,14 @@
   import CalendarColumnTasksPanel from "@21n/components/calendar/column/CalendarColumnTasksPanel.svelte";
   import { reorderList } from "@21n/actions/rearrange.action";
   let { isInEditMode = false }: { isInEditMode?: boolean } = $props();
-  let isFocusingAddGoal: boolean = false;
-  let focusItems: IFocusItem[] = [];
-  let goals: IGoalThumb[] = [];
-  let tasks: ITaskThumb[] = [];
-  let isRefreshing: boolean = false;
-  let selectedPickFromPanel: "recents" | "calendar" =
-    uiState.getState(UIState.focusItemsPickFromPanel) ?? "recents";
+  let isFocusingAddGoal = $state(false);
+  let focusItems = $state<IFocusItem[]>([]);
+  let goals = $state<IGoalThumb[]>([]);
+  let tasks = $state<ITaskThumb[]>([]);
+  let isRefreshing = $state(false);
+  let selectedPickFromPanel = $state<"recents" | "calendar">(
+    uiState.getState(UIState.focusItemsPickFromPanel) ?? "recents"
+  );
 
   setContext("focus-item-context", {
     refreshList: () => refresh({ isShowLoadingPulse: true })
@@ -104,10 +105,10 @@
     while (!focusItemsStore.isInitialized) {
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
-    refresh({ isShowLoadingPulse: true });
+    void refresh({ isShowLoadingPulse: true });
     fullScreenSub = fullScreen.subscribe((x) => {
       if (!x.path) {
-        refresh();
+        void refresh();
       }
     });
     appEventSub = appEvents.subscribe((x) => {
@@ -115,7 +116,7 @@
         x.event === PointronEvent.SESSION_CLOSED ||
         x.event === PointronEvent.REFRESH_FOCUSITEMS
       ) {
-        refresh({ isShowLoadingPulse: true });
+        void refresh({ isShowLoadingPulse: true });
       }
     });
     const state = uiState.getState(UIState.recentFocusItems);
@@ -189,7 +190,7 @@
     });
     if (!goal) return;
     await focusItemsStore.addGoal(goal.id);
-    refresh();
+    await refresh();
   }
 
   async function onCreateStandaloneTask(event: any) {

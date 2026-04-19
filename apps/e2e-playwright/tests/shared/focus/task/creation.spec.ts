@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { ensureInAppOnHome, runCommand } from "../../../utils/helpers";
+import { ensureInAppOnHome, runCommand, openLibraryAndTab, LibraryTab } from "../../../utils/helpers";
 
 const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
@@ -67,29 +67,13 @@ test.describe("task - creation flows @regression", () => {
 
     const taskName = `E2E task ${Date.now()}`;
 
-    await page
-      .getByRole("button", { name: /^Library$/i })
-      .click({ timeout: 5_000 });
-    await page.waitForURL(
-      (u) => /^\/library(\/.*)?$/.test(new URL(u).pathname),
-      { timeout: 10_000 }
-    );
-    await page.getByRole("button", { name: /^Tasks(\s|$)/i }).click({
-      timeout: 5_000
-    });
+    await openLibraryAndTab(page, LibraryTab.Tasks);
     await page.waitForTimeout(1_000);
 
-    const taskListToolbar = page
-      .locator("div")
-      .filter({
-        has: page.getByRole("button", { name: /By month/i })
-      })
-      .filter({
-        hasNot: page.getByText("No tasks found")
-      })
+    const createTaskAction = page
+      .getByRole("button", { name: /^(New task|Create task)(\s|$)/i })
       .first();
-    const plusIconInHeader = taskListToolbar.getByRole("button").last();
-    await plusIconInHeader.click({ timeout: 8_000 });
+    await createTaskAction.click({ timeout: 8_000 });
 
     const taskNameInput = page.getByTestId("task-name-input");
     await taskNameInput.waitFor({ state: "visible", timeout: 10_000 });

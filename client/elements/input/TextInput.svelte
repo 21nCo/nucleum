@@ -173,9 +173,13 @@
 
   function createKeyboardEventDetail(event: KeyboardEvent): KeyboardEventDetail {
     return new Proxy(event as KeyboardEvent, {
-      get(target, prop, receiver) {
+      get(target, prop) {
         if (prop === "event") return target;
-        return Reflect.get(target, prop, receiver);
+        const value = Reflect.get(target, prop, target);
+        if (typeof value === "function") {
+          return value.bind(target);
+        }
+        return value;
       }
     }) as KeyboardEventDetail;
   }
@@ -475,7 +479,9 @@
           {...type ? { type } : {}}
           use:mount={() => {
             const mountEvent = new CustomEvent<void>("mount");
-            onMount?.(mountEvent);
+            if (typeof onMount === "function") {
+              onMount(mountEvent);
+            }
           }}
         />
       {/if}

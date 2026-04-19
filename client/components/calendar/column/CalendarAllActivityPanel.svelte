@@ -36,6 +36,12 @@
   async function refresh(date: Date) {
     try {
       isLoading = true;
+      let nextLogs: {
+        action: string;
+        timestamp: Date;
+        resourceLabel?: string;
+        resourceId?: IRecordId | IRecordId[];
+      }[] = [];
       date = new Date(date.getFullYear(), date.getMonth(), date.getDate());
       const resources = resolveProductResources($appStore.product);
       const mutations: IMutation[] = await flux.selectMany(
@@ -55,7 +61,7 @@
         }
       );
       if (isValidArrayWithData(mutations)) {
-        logs = [
+        nextLogs = [
           ...mutations.filter(rootNodeFilter).map((mutation: IMutation) => {
             const label = resolveMutationLabel(mutation);
             return {
@@ -80,7 +86,7 @@
           }
         });
         if (isValidArrayWithData(focusSessionsResult)) {
-          logs.push(
+          nextLogs.push(
             ...focusSessionsResult.map((session: any) => ({
               action: `○ Focus`,
               resourceLabel: formatSeconds(session.elapsed),
@@ -90,7 +96,7 @@
           );
         }
       }
-      logs = logs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      logs = nextLogs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
       isLoading = false;
     } catch (e) {
       logger.error({ at: "CalendarAllActivityPanel.refresh", e });

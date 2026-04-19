@@ -16,7 +16,7 @@
     isDraggable = false,
     isDragging = $bindable(false),
     id,
-    ref = $bindable<HTMLElement | undefined>(undefined),
+    ref = $bindable<HTMLElement | undefined>(),
     sizeProperty = "height",
     gap = $bindable(8),
     handleFileUpload,
@@ -53,8 +53,7 @@ cursor: pointer;${sizeProperty == "height" ? `margin:${gap / 2}px;` : ""}`);
   const dropId = $derived(id);
 
   async function resolveFile(fileId: IRecordId) {
-    const response = await fileStore.select(fileId);
-    return response?.url ? response : null;
+    return (await fileStore.refresh(fileId)) ?? null;
   }
 
   $effect(() => {

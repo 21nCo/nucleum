@@ -34,6 +34,20 @@
     onback?: (() => void) | undefined;
   } = $props();
   const hasDefaultContent = $derived(!!children);
+  const classes = $derived(
+    cn(
+      "flex items-center rounded-md",
+      hasDefaultContent
+        ? "gap-2 px-1"
+        : "gap-0 p-1 rounded-r-md rounded-l-full active:bg-bgs2 notouch:hover:bg-bgs2",
+      classList,
+      {
+        "cursor-pointer": isEnabled,
+        "cursor-default": !isEnabled,
+        [`active:${bg(parentBgIndex)}`]: isEnabled && hasDefaultContent
+      }
+    )
+  );
 
   function onBack(event: MouseEvent) {
     if (!isEnabled) return;
@@ -56,33 +70,28 @@
   }
 </script>
 
-<button
-  class={cn(
-    "flex items-center rounded-md",
-    hasDefaultContent
-      ? "gap-2 px-1"
-      : "gap-0 p-1 rounded-r-md rounded-l-full active:bg-bgs2 notouch:hover:bg-bgs2",
-    classList,
-    {
-      "cursor-pointer": isEnabled,
-      "cursor-default": !isEnabled,
-      [`active:${bg(parentBgIndex)}`]: isEnabled && hasDefaultContent
-    }
-  )}
-  type="button"
-  tabindex={isEnabled ? 0 : -1}
-  aria-disabled={!isEnabled}
-  disabled={!isEnabled}
-  aria-label={hasDefaultContent ? undefined : (text ?? "Back")}
-  onclick={onBack}
->
-  {#if hasDefaultContent}
-    {#if isEnabled}
-      <Icon icon="chevron-left" size={Size.lg} />
-    {/if}
+{#if hasDefaultContent && !isEnabled}
+  <div class={classes}>
     {@render children?.()}
-  {:else}
-    <Icon icon="chevron-left" size={Size.sm} />
-    <div class="pr-1 text-fgs1">{text ?? "Back"}</div>
-  {/if}
-</button>
+  </div>
+{:else}
+  <button
+    class={classes}
+    type="button"
+    tabindex={isEnabled ? 0 : -1}
+    aria-disabled={!isEnabled}
+    disabled={!isEnabled}
+    aria-label={hasDefaultContent ? undefined : (text ?? "Back")}
+    onclick={onBack}
+  >
+    {#if hasDefaultContent}
+      {#if isEnabled}
+        <Icon icon="chevron-left" size={Size.lg} />
+      {/if}
+      {@render children?.()}
+    {:else}
+      <Icon icon="chevron-left" size={Size.sm} />
+      <div class="pr-1 text-fgs1">{text ?? "Back"}</div>
+    {/if}
+  </button>
+{/if}

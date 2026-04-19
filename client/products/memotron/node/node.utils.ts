@@ -397,11 +397,18 @@ export function resolveNodeLabelString(item: INodeThumb): string {
 export function resolveNodeLabel(item: INodeThumb) {
   if (!item) return "";
 
-  if (item.label && !item.parent) return item.label;
+  const hasResolvedParent =
+    typeof item.parent === "object" &&
+    item.parent !== null &&
+    !Array.isArray(item.parent) &&
+    "id" in item.parent &&
+    !!item.parent.id &&
+    !isRecordId(item.parent);
+
+  if (item.label && !hasResolvedParent) return item.label;
 
   let parent;
-  if (item.parent && item.parent.id && !isRecordId(item.parent))
-    parent = item.parent;
+  if (hasResolvedParent) parent = item.parent;
   const defaultLabels = {
     [NodeType.WEB_TEXT_BOOKMARK]:
       "Clipped Text - " + (item.body as ITextClipBody)?.text,

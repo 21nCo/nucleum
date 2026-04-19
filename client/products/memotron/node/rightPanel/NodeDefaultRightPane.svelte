@@ -26,8 +26,9 @@
   let _notes = $state($node.notes ?? "");
   const notesInputId = generateSimpleRandomId();
 
-  function onNotesChange(e: any) {
-    node.modify({ notes: _notes }, { isPreventBackPropagation: true });
+  function onNotesChange(e: CustomEvent<string | undefined>) {
+    _notes = e.detail ?? "";
+    node.modify({ notes: _notes });
   }
 
   let _label = $derived(resolveNodeLabel($node));

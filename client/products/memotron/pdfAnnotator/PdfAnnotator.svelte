@@ -233,27 +233,32 @@
 
   async function annotate(event: any, editorValues: any = {}) {
     if (!pdfPersistence) return;
-    annotation.annotType = event.detail;
+    const annotationToPersist = $state.snapshot(annotation);
+    annotationToPersist.annotType = event.detail;
 
     if (
       event.detail === AnnotationType.COMMENT ||
       event.detail === AnnotationType.TASK
     ) {
-      annotation.comment = editorValues.comment;
+      annotationToPersist.comment = editorValues.comment;
       if (editorValues.dueDate) {
-        annotation.due = {};
-        annotation.due.date = new Date(editorValues.dueDate).toLocaleDateString(
+        annotationToPersist.due = {};
+        annotationToPersist.due.date = new Date(
+          editorValues.dueDate
+        ).toLocaleDateString(
           "en-CA"
         );
-        annotation.due.completed = false;
+        annotationToPersist.due.completed = false;
       }
     }
 
-    annotation.color = selectedColor;
-    annotation.date = new Date().toLocaleDateString("en-CA");
-    annotation.startPageNumber = startPageNumber;
-    annotation.endPageNumber = endPageNumber;
-    await pdfPersistence.saveClip(annotation);
+    annotationToPersist.color = selectedColor;
+    annotationToPersist.date = new Date().toLocaleDateString("en-CA");
+    annotationToPersist.startPageNumber =
+      startPageNumber ?? annotationToPersist.pageNumber;
+    annotationToPersist.endPageNumber =
+      endPageNumber ?? annotationToPersist.pageNumber;
+    await pdfPersistence.saveClip(annotationToPersist);
     await refreshAnnotations();
     renderHighlightLayers();
     removeAllRanges?.();
@@ -603,13 +608,20 @@
     event: MouseEvent,
     targetViewerContainerElement: HTMLElement
   ) {
+    const target = event.target as HTMLElement;
+    if (target?.closest("[data-pdf-annotation-overlay]")) {
+      return;
+    }
     targetViewerContainerElement?.addEventListener("mouseup", mouseUpHandler);
     falseAll();
     annotClickedComment = "";
-
-    const target = event.target as HTMLElement;
     const pageNode = asElement(target.closest(".page"));
-    startPageNumber = Number(pageNode.dataset.pageNumber);
+    startPageNumber = pageNode
+      ? Number(pageNode.dataset.pageNumber)
+      : undefined;
+    if (!pageNode) {
+      return;
+    }
     if (
       event.button == 2 ||
       (annotationMode !== AnnotationType.COMMENT &&
@@ -753,6 +765,11 @@
   async function refreshAnnotations() {
     if (!pdfPersistence) return;
     annots = (await pdfPersistence.fetchAllClips())
+      .map((annot: any) => ({
+        ...annot,
+        startPageNumber: annot.startPageNumber ?? annot.pageNumber,
+        endPageNumber: annot.endPageNumber ?? annot.pageNumber
+      }))
       .filter((annot: any) => annot.startPageNumber)
       .sort((a: any, b: any) => a.startPageNumber - b.startPageNumber);
     onAnnotation?.(annots);

@@ -487,7 +487,7 @@
       : undefined}
     bind:linkInputValue
     onSelect={onSelectFromLibrary}
-    onLinkInput={onLinkInput}
+    {onLinkInput}
   />
 {/if}
 {#if body?.id && embedResourceType === Resource.node}

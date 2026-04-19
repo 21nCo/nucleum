@@ -50,6 +50,10 @@
   let rightPanel = $state<IAction | undefined>(undefined);
   let pop = $state<{ id: IRecordId; action: IAction } | undefined>(undefined);
   let mainPath = $state<string | undefined>(undefined);
+  let popId = $derived.by(() => {
+    if (!pop || typeof pop !== "object") return undefined;
+    return typeof pop.id === "string" && pop.id.length > 0 ? pop.id : undefined;
+  });
 
   onMount(() => {
     const uiStateSub = uiState.subscribe(() => {
@@ -85,10 +89,16 @@
   });
 
   function resolvePop(resourceId: string) {
-    if (!resourceId) return;
+    if (!resourceId) {
+      pop = undefined;
+      return;
+    }
     const slug = resourceId.split(":")[0];
     const action = appStore.resolveAction(slug);
-    if (!action) return;
+    if (!action) {
+      pop = undefined;
+      return;
+    }
     pop = {
       id: resourceId,
       action
@@ -146,11 +156,11 @@
                   <ComponentResolver path={mainPath} params={{ isInline: true }} />
                 </div>
               {/if}
-              {#if pop}
+              {#if popId}
                 <div
                   class="absolute inset-0 flex justify-center w-full h-full bg-bgs1 z-50"
                 >
-                  <ResourceResolver id={pop.id} accessMode={AccessMode.POP} />
+                  <ResourceResolver id={popId} accessMode={AccessMode.POP} />
                 </div>
               {/if}
               {#if $hTrail.path.length > 0 && $hTrail.activated && (!$hTrail.isBaseNonRecord || ($hTrail.isBaseNonRecord && $hTrail.activated !== $hTrail.path[0]))}

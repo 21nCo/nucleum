@@ -3,6 +3,7 @@ import { ResourceActionType } from "@21n/components/flux/resourceStores/resource
 import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
 import {
   ensureInAppOnHome,
+  getProductConfig,
   goalResourcePattern,
   resolveGoalCommandLabel,
   runCommand
@@ -266,6 +267,7 @@ test.describe("goal – context menu (all actions) @regression", () => {
     test("Pin to quick focus toggle works", async ({ page }, testInfo) => {
       test.setTimeout(90_000);
       await ensureInAppOnHome(page);
+      const productConfig = getProductConfig(testInfo.project.name);
 
       const goalName = `E2E pin qf ${Date.now()}`;
       await createGoal(page, goalName);
@@ -290,10 +292,7 @@ test.describe("goal – context menu (all actions) @regression", () => {
         await page.waitForTimeout(500);
       }
 
-      // Pointron has Quick Focus panel (quick-focus-search); Nucleum does not.
-      // Navigate to Focus view via nav button so Quick Start panel with quick-focus-search is visible.
-      const isPointron = testInfo.project.name === "pointron";
-      if (isPointron) {
+      if (productConfig.ui.quickFocusPanel) {
         const focusNavBtn = page
           .locator("#app-menu")
           .getByRole("button", { name: /^Focus$/i })

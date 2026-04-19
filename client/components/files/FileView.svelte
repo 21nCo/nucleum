@@ -66,6 +66,12 @@
     onDragLeave?: ((event: DragEvent) => void) | undefined;
     onDrop?: ((event: DragEvent) => void) | undefined;
   } = $props();
+
+  function isCallable<T extends (...args: any[]) => any>(
+    value: unknown
+  ): value is T {
+    return typeof value === "function";
+  }
   /**
    * If true, then use the thumbnail if available
    */
@@ -113,7 +119,7 @@
     const repositionEvent = new CustomEvent<number>("reposition", {
       detail: newPosition
     });
-    onReposition?.(repositionEvent);
+    if (isCallable(onReposition)) onReposition(repositionEvent);
     debouncedRepositionPropagation(newPosition);
   }
   const debouncedRepositionPropagation = debouncer((newPosition: number) => {
@@ -121,7 +127,9 @@
       "repositionDebounced",
       { detail: newPosition }
     );
-    onRepositionDebounced?.(repositionDebouncedEvent);
+    if (isCallable(onRepositionDebounced)) {
+      onRepositionDebounced(repositionDebouncedEvent);
+    }
   }, 1000);
 
   function onImageLoad(e: Event) {
@@ -136,7 +144,7 @@
     const loadEvent = new CustomEvent<Event>("load", {
       detail: e
     });
-    onLoad?.(loadEvent);
+    if (isCallable(onLoad)) onLoad(loadEvent);
   }
 </script>
 

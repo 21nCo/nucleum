@@ -58,10 +58,10 @@
     }
   }
 
-  function handleLabelSave(e: CustomEvent<{ value?: string }>) {
+  async function handleLabelSave(e: CustomEvent<{ value?: string }>) {
     const nextLabel = e.detail?.value ?? labelEditVal;
     $goal.label = nextLabel;
-    goal.modify({
+    await goal.modify({
       label: nextLabel
     });
     labelEditVal = "";

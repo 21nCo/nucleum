@@ -2,11 +2,28 @@ import { expect, test, type Page } from "@playwright/test";
 import { nucleusProductConfig } from "../../config/nucleus-product.config";
 import { pointronProductConfig } from "../../config/pointron-product.config";
 import { memotronProductConfig } from "../../config/memotron-product.config";
+import type { ProductName, SurfaceKey } from "../../config/product-nav.config";
+import {
+  getCommandLabelOrThrow,
+  getCapabilitySkipReason,
+  requireCapability
+} from "./capabilities";
+import {
+  expectSurfaceVisible,
+  navigateToSurface as navigateToSurfaceContract
+} from "./surface-contracts";
 
 export function getProductConfig(projectName: string) {
   if (projectName === "pointron") return pointronProductConfig;
   if (projectName === "memotron") return memotronProductConfig;
   return nucleusProductConfig;
+}
+
+export function productHasBrowseResource(
+  projectName: string,
+  resource: string
+) {
+  return getProductConfig(projectName).resources.browse.includes(resource);
 }
 
 function resolveProductConfig() {
@@ -25,10 +42,34 @@ export const goalResourcePattern = /^(Goals|Objectives)(\s+\d+)?$/i;
 
 export function resolveGoalCommandLabel() {
   try {
-    return test.info().project.name === "nucleum" ? "Objectives" : "Goals";
+    return getCommandLabelOrThrow(test.info().project.name, "libraryGoals");
   } catch {
     return "Goals";
   }
+}
+
+export function getConfigCapabilitySkipReason(capabilityPath: string) {
+  return getCapabilitySkipReason(test.info().project.name, capabilityPath);
+}
+
+export function requireProjectCapability(capabilityPath: string) {
+  return requireCapability(test.info().project.name, capabilityPath);
+}
+
+export async function navigateToSurface(
+  page: Page,
+  surface: SurfaceKey,
+  projectName: ProductName = test.info().project.name as ProductName
+) {
+  await navigateToSurfaceContract(page, projectName, surface);
+}
+
+export async function expectCurrentSurfaceVisible(
+  page: Page,
+  surface: SurfaceKey,
+  projectName: ProductName = test.info().project.name as ProductName
+) {
+  await expectSurfaceVisible(page, projectName, surface);
 }
 
 /**
@@ -267,12 +308,39 @@ export async function openLibraryAndTab(
   page: Page,
   tabName: RegExp
 ): Promise<void> {
-  await page.getByRole("button", { name: /^Library$/i }).click({ timeout: 5_000 });
+  const leftNavLibraryButton = page
+    .getByTestId("leftnav-sidebar-toggle")
+    .getByRole("button", { name: /^Library$/i })
+    .first();
+  const visibleLeftNavLibraryButton = await leftNavLibraryButton
+    .isVisible()
+    .catch(() => false);
+  const libraryButton = visibleLeftNavLibraryButton
+    ? leftNavLibraryButton
+    : page.getByRole("button", { name: /^Library$/i }).first();
+  await libraryButton.click({ timeout: 5_000 });
   await page.waitForURL(
     (u) => /^\/library(\/.*)?$/.test(new URL(u).pathname),
     { timeout: 10_000, waitUntil: "domcontentloaded" }
   );
   const tabButton = page.getByRole("button", { name: tabName }).first();
+  const tabVisible = await tabButton
+    .waitFor({ state: "visible", timeout: 3_000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!tabVisible && tabName === LibraryTab.Collections) {
+    const collectionSearchInput = page.getByRole("textbox", {
+      name: /Search collections/i
+    });
+    const collectionBrowseVisible = await collectionSearchInput
+      .waitFor({ state: "visible", timeout: 10_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (collectionBrowseVisible) {
+      await page.waitForTimeout(1_000);
+      return;
+    }
+  }
   await tabButton.waitFor({ state: "visible", timeout: 10_000 });
   await tabButton.click({ timeout: 5_000 });
   await page.waitForTimeout(1_500);

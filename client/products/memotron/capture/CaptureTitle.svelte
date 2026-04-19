@@ -3,6 +3,7 @@
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import { InputStyle } from "@21n/types/input.type";
   import { cn } from "@21n/utils/ui.utils";
+  import { logger } from "@21n/components/debug/logger.client";
 
   let {
     captureStore,
@@ -20,6 +21,11 @@
 
   function persistLabel() {
     if ($captureStore.isSaving || $captureStore.isAvoidSaveLeaks) return;
+    logger.log({
+      at: "CaptureTitle.persistLabel",
+      captureId: $captureStore.id,
+      label: $captureStore.label
+    });
     captureStore.modify(
       { label: $captureStore.label },
       { isPreventBackPropagation: true }

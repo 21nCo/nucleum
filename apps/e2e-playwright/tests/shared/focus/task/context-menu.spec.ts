@@ -1,6 +1,18 @@
 import { test, expect, type Page } from "@playwright/test";
 import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
-import { ensureInAppOnHome, openLibraryAndTab, LibraryTab, runCommand } from "../../../utils/helpers";
+import {
+  ensureInAppOnHome,
+  openLibraryAndTab,
+  LibraryTab,
+  runCommand,
+  getProductConfig
+} from "../../../utils/helpers";
+
+function getResourceContainer(locator: ReturnType<Page["locator"]>) {
+  return locator.locator(
+    "xpath=ancestor-or-self::*[contains(concat(' ', normalize-space(@class), ' '), ' resource ')][1]"
+  );
+}
 
 /** Nucleum task list context menu: action rows use visible labels, not always data-context-menu-item-id. */
 const NUCLEUM_TASK_LIBRARY_MENU_LABELS = [
@@ -49,15 +61,29 @@ test.describe("task - context menu (all actions) @regression", () => {
       const list = page.locator(".resource").filter({ hasText: taskName }).first();
       const hasListRow = await list.isVisible().catch(() => false);
       if (!hasListRow) {
-        // Fallback: some builds render task cards without the name in the thumbnail text;
-        // use the first visible task card.
-        const container = page.locator("#task-library");
-        await expect(container).toBeVisible({ timeout: 15_000 });
-        const firstCard = container.locator('div[id^="thumbnail-"]').first();
-        await expect(firstCard).toBeVisible({ timeout: 20_000 });
-        await firstCard.hover();
+        const semanticTaskRow = page
+          .getByRole("button", { name: new RegExp(`^${taskName}$`) })
+          .first();
+        if (await semanticTaskRow.isVisible().catch(() => false)) {
+          const resourceContainer = getResourceContainer(semanticTaskRow);
+          await resourceContainer.hover();
+          await page.waitForTimeout(250);
+          const triggerWrapper = resourceContainer.getByTestId(
+            "thumbnail-context-menu-trigger"
+          );
+          await triggerWrapper.locator("button").first().click({ timeout: 5_000 });
+          await page.waitForTimeout(300);
+          return;
+        }
+
+        const taskTextbox = page.getByRole("textbox", { name: /Task name/i }).first();
+        await expect(taskTextbox).toBeVisible({ timeout: 20_000 });
+        const resourceContainer = getResourceContainer(taskTextbox);
+        await resourceContainer.hover();
         await page.waitForTimeout(250);
-        const triggerWrapper = firstCard.getByTestId("thumbnail-context-menu-trigger");
+        const triggerWrapper = resourceContainer.getByTestId(
+          "thumbnail-context-menu-trigger"
+        );
         await triggerWrapper.locator("button").first().click({ timeout: 5_000 });
         await page.waitForTimeout(300);
         return;
@@ -75,13 +101,18 @@ test.describe("task - context menu (all actions) @regression", () => {
       page
     }, testInfo) => {
       test.setTimeout(90_000);
+      const productConfig = getProductConfig(testInfo.project.name);
+      test.skip(
+        !productConfig.capabilities.records.task,
+        "Task browsing is not part of this product contract"
+      );
       await ensureInAppOnHome(page);
 
       const taskName = `E2E task ctx ${Date.now()}`;
       await createTask(page, taskName);
       await openTaskContextMenuFromLibrary(page, taskName);
 
-      if (testInfo.project.name === "nucleum") {
+      if (productConfig.ui.taskContextMenuVariant === "nucleum") {
         for (const name of NUCLEUM_TASK_LIBRARY_MENU_LABELS) {
           await expect(page.getByRole("button", { name }).first()).toBeVisible({
             timeout: 8_000
@@ -119,12 +150,14 @@ test.describe("task - context menu (all actions) @regression", () => {
   test.describe("from record page", () => {
     async function assertTaskRecordVisible(page: Page) {
       const taskInput = page.getByTestId("task-name-input");
+      const taskNameTextbox = page.getByRole("textbox", { name: /Task name/i }).first();
       const closeBtn = page.getByRole("button", { name: /Close/i }).first();
       const maxBtn = page.getByRole("button", { name: /Maximize|Minimize/i }).first();
       await expect
         .poll(
           async () =>
             (await taskInput.isVisible().catch(() => false)) ||
+            (await taskNameTextbox.isVisible().catch(() => false)) ||
             (await closeBtn.isVisible().catch(() => false)) ||
             (await maxBtn.isVisible().catch(() => false)),
           { timeout: 15_000 }
@@ -135,21 +168,63 @@ test.describe("task - context menu (all actions) @regression", () => {
     async function openRecordPageContextMenu(page: Page) {
       // Panel chrome may omit a "Close" label on constrained widths; target the resource header strip.
       const panelRow = page.locator("div.border-t.border-x.border-brs3").first();
-      await panelRow.waitFor({ state: "visible", timeout: 15_000 });
-      const moreMenu = panelRow.locator("#resourcePanelContextMenu button").first();
-      if (await moreMenu.isVisible().catch(() => false)) {
-        await moreMenu.click({ timeout: 5_000 });
-      } else {
-        const buttons = panelRow.getByRole("button");
-        await buttons.last().click({ timeout: 5_000 });
+      if (await panelRow.isVisible().catch(() => false)) {
+        const moreMenu = panelRow.locator("#resourcePanelContextMenu button").first();
+        if (await moreMenu.isVisible().catch(() => false)) {
+          await moreMenu.click({ timeout: 5_000 });
+        } else {
+          const buttons = panelRow.getByRole("button");
+          await buttons.last().click({ timeout: 5_000 });
+        }
+        await page.waitForTimeout(300);
+        return;
       }
+
+      const taskNameTextbox = page.getByRole("textbox", { name: /Task name/i }).first();
+      await expect(taskNameTextbox).toBeVisible({ timeout: 15_000 });
+      const inlineRecordRow = getResourceContainer(taskNameTextbox);
+      await inlineRecordRow.hover();
+      await page.waitForTimeout(250);
+      const triggerWrapper = inlineRecordRow
+        .getByTestId("thumbnail-context-menu-trigger")
+        .first();
+      await triggerWrapper.locator("button").first().click({ timeout: 5_000 });
       await page.waitForTimeout(300);
+    }
+
+    async function openTaskRecordFromLibrary(page: Page, taskName: string) {
+      await openLibraryAndTab(page, LibraryTab.Tasks);
+      const listRow = page.locator(".resource").filter({ hasText: taskName }).first();
+      if (await listRow.isVisible().catch(() => false)) {
+        await listRow.click({ timeout: 5_000 });
+        await page.waitForTimeout(1_500);
+        return;
+      }
+
+      const semanticTaskRow = page
+        .getByRole("button", { name: new RegExp(`^${taskName}$`) })
+        .first();
+      if (await semanticTaskRow.isVisible().catch(() => false)) {
+        await semanticTaskRow.click({ timeout: 5_000 });
+        await page.waitForTimeout(1_500);
+        return;
+      }
+
+      const taskTextbox = page.getByRole("textbox", { name: /Task name/i }).first();
+      await expect(taskTextbox).toBeVisible({ timeout: 20_000 });
+      await taskTextbox.click({ timeout: 5_000 });
+      await page.waitForTimeout(1_500);
     }
 
     test("context menu on record page shows expected core actions", async ({
       page
     }, testInfo) => {
       test.setTimeout(90_000);
+      const productConfig = getProductConfig(testInfo.project.name);
+      test.skip(
+        !productConfig.capabilities.records.task,
+        "Task record page is not part of this product contract"
+      );
       await ensureInAppOnHome(page);
 
       const taskName = `E2E task rec ctx ${Date.now()}`;
@@ -164,31 +239,13 @@ test.describe("task - context menu (all actions) @regression", () => {
       await page.keyboard.press("Escape").catch(() => null);
       await page.waitForTimeout(600);
 
-      await openLibraryAndTab(page, LibraryTab.Tasks);
-      const listRow = page.locator(".resource").filter({ hasText: taskName }).first();
-      const hasListRow = await listRow.isVisible().catch(() => false);
-      if (hasListRow) {
-        await listRow.click({ timeout: 5_000 });
-      } else {
-        const container = page.locator("#task-library");
-        await expect(container).toBeVisible({ timeout: 15_000 });
-        const matchingCard = container.locator('div[id^="thumbnail-"]').filter({ hasText: taskName }).first();
-        const hasMatchingCard = await matchingCard
-          .waitFor({ state: "visible", timeout: 20_000 })
-          .then(() => true)
-          .catch(() => false);
-        if (!hasMatchingCard) {
-          test.skip(true, "Created task is not visible in library list/cards (N/A)");
-        }
-        await matchingCard.click({ timeout: 5_000 });
-      }
-      await page.waitForTimeout(1_500);
+      await openTaskRecordFromLibrary(page, taskName);
 
       await assertTaskRecordVisible(page);
 
       await openRecordPageContextMenu(page);
 
-      if (testInfo.project.name === "nucleum") {
+      if (productConfig.ui.taskContextMenuVariant === "nucleum") {
         const nucleumRecordLabels = [/^Delete$/i, /^Select$/i, /^Copy link$/i];
         let anyDataAttr = false;
         for (const item of [
