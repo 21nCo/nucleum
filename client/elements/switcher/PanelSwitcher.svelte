@@ -31,6 +31,7 @@
   import Icon from "@21n/elements/Icon.svelte";
   import TrainPanelSwitcher from "@21n/elements/switcher/train/TrainPanelSwitcher.svelte";
   import { KeyboardKey } from "@21n/types/keyboard.type";
+  import { logger } from "@21n/components/debug/logger.client";
 
   const PANEL_SWITCHER_ATTR = "data-panel-switcher-id";
   let {

@@ -156,11 +156,12 @@
         isRefreshing = false;
         return;
       }
+      const resolvedTimePeriod = timePeriod;
       if (
-        !timePeriod.begin ||
-        !timePeriod.end ||
-        timePeriod.begin.toString() === "Invalid Date" ||
-        timePeriod.end.toString() === "Invalid Date"
+        !resolvedTimePeriod?.begin ||
+        !resolvedTimePeriod.end ||
+        resolvedTimePeriod.begin.toString() === "Invalid Date" ||
+        resolvedTimePeriod.end.toString() === "Invalid Date"
       ) {
         errorMessage = "Please select a valid time period.";
         isRefreshing = false;
@@ -168,8 +169,8 @@
       }
       const correctedTimePeriod = tzStore.resolveTimePeriodCorrectedByTz(
         {
-          begin: timePeriod.begin,
-          end: timePeriod.end
+          begin: resolvedTimePeriod.begin,
+          end: resolvedTimePeriod.end
         },
         { tzRecords: $tzStore }
       );

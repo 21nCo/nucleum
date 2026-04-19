@@ -60,6 +60,7 @@
           parentBgIndex={0}
           span="col-span-2"
           onclick={(e) => {
+            if (!_label?.parent.id) return;
             appStore.resourceClickHandler(e, _label?.parent.id, {
               origin: $node.id
             });

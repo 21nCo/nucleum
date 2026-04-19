@@ -956,13 +956,15 @@ export class DexiePersistence implements IPersistence {
 
     let ids: string[] = [];
     try {
-      ids = await searchEngine.search(search.query, {
-        limit: params?.limit ?? 50,
-        fields: search.properties,
-        mode: "auto",
-        fuzzy: false,
-        applyQueryNGrams: false
-      });
+      ids = (
+        await searchEngine.search(search.query, {
+          limit: params?.limit ?? 50,
+          fields: search.properties,
+          mode: "auto",
+          fuzzy: false,
+          applyQueryNGrams: false
+        })
+      ).map((value) => value.toString());
     } catch (error) {
       logger.error({
         at: "DexiePersistence.preSearchUsingIndex",

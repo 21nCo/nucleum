@@ -21,7 +21,7 @@
 
   let {
     isHovering = $bindable(false),
-    item: itemProp,
+    item: itemProp = $bindable(),
     isDraggable = false,
     accessPoint = ResourceAccessPoint.BROWSER,
     accessPointContext = undefined,

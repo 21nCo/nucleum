@@ -45,12 +45,18 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
         const data = await this.recents(resource);
         recents = [
           ...recents,
-          ...data.map((x) => ({
-            type: resource,
-            record: x,
-            timestamp: resolveTimestamp(x.modifiedAt)
-          }))
-        ].filter((x) => x.timestamp);
+          ...data.flatMap((x) => {
+            const timestamp = resolveTimestamp(x.modifiedAt);
+            if (!timestamp) return [];
+            return [
+              {
+                type: resource,
+                record: x,
+                timestamp
+              }
+            ];
+          })
+        ];
       } catch (error) {
         logger.error({ at: "recentsStore.refresh", resource }, error);
       }

@@ -1,5 +1,9 @@
 import { expect, test } from "@playwright/test";
 import { ensureInAppOnHome } from "../../../utils/helpers";
+import {
+  ensureOfflineSessionId,
+  resolveRepoFsImportPath
+} from "../../../../scripts/runtime";
 
 test.describe("advanced focus items @regression @feature @focus-feature", () => {
   test("render goal focus items in running focus view after session start", async ({
@@ -14,16 +18,7 @@ test.describe("advanced focus items @regression @feature @focus-feature", () => 
       "http://127.0.0.1:5051";
 
     const context = await browser.newContext();
-    await context.addInitScript(() => {
-      try {
-        if (!window.localStorage.getItem("offlineSessionId")) {
-          const value =
-            globalThis.crypto?.randomUUID?.() ??
-            `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-          window.localStorage.setItem("offlineSessionId", value);
-        }
-      } catch {}
-    });
+    await context.addInitScript(ensureOfflineSessionId);
     const page = await context.newPage();
 
     const pageErrors: string[] = [];
@@ -44,13 +39,9 @@ test.describe("advanced focus items @regression @feature @focus-feature", () => 
       timeout: 15_000
     });
 
-    const seededState = await page.evaluate(async (label) => {
-      const sessionMod = await import(
-        "/@fs/Users/serro/.codex/worktrees/0ac5/nucleus/client/products/pointron/focus/session.store.ts"
-      );
-      const goalMod = await import(
-        "/@fs/Users/serro/.codex/worktrees/0ac5/nucleus/client/components/goals/goal.store.ts"
-      );
+    const seededState = await page.evaluate(async ({ label, modulePaths }) => {
+      const sessionMod = await import(modulePaths.sessionStorePath);
+      const goalMod = await import(modulePaths.goalStorePath);
 
       await sessionMod.activeSession.close();
 
@@ -73,7 +64,17 @@ test.describe("advanced focus items @regression @feature @focus-feature", () => 
         })),
         activeSession: sessionMod.activeSession.get()
       };
-    }, goalLabel);
+    }, {
+      label: goalLabel,
+      modulePaths: {
+        sessionStorePath: resolveRepoFsImportPath(
+          "client/products/pointron/focus/session.store.ts"
+        ),
+        goalStorePath: resolveRepoFsImportPath(
+          "client/components/goals/goal.store.ts"
+        )
+      }
+    });
 
     await expect(page.getByText(goalLabel, { exact: true }).first()).toBeVisible({
       timeout: 15_000
@@ -113,16 +114,7 @@ test.describe("advanced focus items @regression @feature @focus-feature", () => 
       "http://127.0.0.1:5051";
 
     const context = await browser.newContext();
-    await context.addInitScript(() => {
-      try {
-        if (!window.localStorage.getItem("offlineSessionId")) {
-          const value =
-            globalThis.crypto?.randomUUID?.() ??
-            `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-          window.localStorage.setItem("offlineSessionId", value);
-        }
-      } catch {}
-    });
+    await context.addInitScript(ensureOfflineSessionId);
     const page = await context.newPage();
 
     const pageErrors: string[] = [];
@@ -145,13 +137,9 @@ test.describe("advanced focus items @regression @feature @focus-feature", () => 
     });
 
     const seededState = await page.evaluate(
-      async ({ goalLabel, taskLabel }) => {
-        const sessionMod = await import(
-          "/@fs/Users/serro/.codex/worktrees/0ac5/nucleus/client/products/pointron/focus/session.store.ts"
-        );
-        const goalMod = await import(
-          "/@fs/Users/serro/.codex/worktrees/0ac5/nucleus/client/components/goals/goal.store.ts"
-        );
+      async ({ goalLabel, taskLabel, modulePaths }) => {
+        const sessionMod = await import(modulePaths.sessionStorePath);
+        const goalMod = await import(modulePaths.goalStorePath);
 
         await sessionMod.activeSession.close();
 
@@ -188,7 +176,18 @@ test.describe("advanced focus items @regression @feature @focus-feature", () => 
           activeSession: sessionMod.activeSession.get()
         };
       },
-      { goalLabel, taskLabel }
+      {
+        goalLabel,
+        taskLabel,
+        modulePaths: {
+          sessionStorePath: resolveRepoFsImportPath(
+            "client/products/pointron/focus/session.store.ts"
+          ),
+          goalStorePath: resolveRepoFsImportPath(
+            "client/components/goals/goal.store.ts"
+          )
+        }
+      }
     );
 
     const currentTaskRow = page

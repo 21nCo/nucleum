@@ -1273,12 +1273,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         scope: UIStateScope.PRODUCT
       }) ??
       true;
-    const linkedCollectionId =
-      captureState.isCaptureFromCollectionPage &&
-      isValidString(captureState.linkQueryParam) &&
-      captureState.linkQueryParam.startsWith(`${Resource.collection}:`)
-        ? (captureState.linkQueryParam as IRecordId)
-        : undefined;
+    const linkedCollectionId = this.resolveLinkedCollectionId(captureState);
     const shouldReturnToLinkedCollection = Boolean(linkedCollectionId);
 
     const viewStore = get(view);
@@ -1288,50 +1283,98 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         type: Resource.node,
         timestamp: new Date()
       });
-      if (!viewStore.isConstrainedWidth && !params?.isEmbedContext)
-        toasts.success("Node saved successfully!");
-
-      if (!params?.isEmbedContext && !shouldOpenUponSave) {
-        inlineToasts.success({
-          id: "nodecapture",
-          message: "Node saved successfully",
-          data: node
-        });
-      }
-
-      if (shouldReturnToLinkedCollection && !params?.isEmbedContext) {
-        appStore.openResource(linkedCollectionId!, AccessMode.POP, {
-          searchParams: {
-            [AccessMode.MAIN]: null
-          }
-        });
-      } else if (shouldOpenUponSave && !params?.isEmbedContext)
-        appStore.openResource(node.id, AccessMode.POP, {
-          searchParams: {
-            [AccessMode.MAIN]: null
-          }
-        });
+      this.handleSingleNodePostSave({
+        node,
+        isEmbedContext: params?.isEmbedContext,
+        isConstrainedWidth: viewStore.isConstrainedWidth,
+        shouldOpenUponSave,
+        linkedCollectionId,
+        shouldReturnToLinkedCollection
+      });
     } else if (!viewStore.isConstrainedWidth && !params?.isEmbedContext) {
       toasts.success(`${result.length} nodes saved successfully!`);
     }
     if (params?.isEmbedContext) return;
-    if (!shouldOpenUponSave) {
-      appStore.closeResource({
-        id: captureAction,
-        accessMode: AccessMode.MAIN
-      });
-      appStore.closeResource({
-        id: MemotronAction.CAPTURE_DND,
-        accessMode: AccessMode.MAIN
-      });
-      appStore.closeResource({
-        id: MemotronAction.CAPTURE_SECONDARY,
-        accessMode: AccessMode.MAIN
-      });
-    }
+    this.closeCaptureAfterSave(shouldOpenUponSave);
     this.update((prev) => ({ ...prev, isAvoidSaveLeaks: true }));
     await this.deletePermanently();
     // this.modify({ ...generateSeedStore() }, { isPersist: false });
+  }
+
+  private resolveLinkedCollectionId(captureState: {
+    isCaptureFromCollectionPage?: boolean;
+    linkQueryParam?: string | null;
+  }) {
+    const linkQueryParam = captureState.linkQueryParam;
+    if (
+      !captureState.isCaptureFromCollectionPage ||
+      typeof linkQueryParam !== "string" ||
+      !isValidString(linkQueryParam) ||
+      !linkQueryParam.startsWith(`${Resource.collection}:`)
+    ) {
+      return undefined;
+    }
+    return linkQueryParam as IRecordId;
+  }
+
+  private handleSingleNodePostSave(params: {
+    node: { id: IRecordId };
+    isEmbedContext?: boolean;
+    isConstrainedWidth: boolean;
+    shouldOpenUponSave: boolean;
+    linkedCollectionId?: IRecordId;
+    shouldReturnToLinkedCollection: boolean;
+  }) {
+    if (!params.isConstrainedWidth && !params.isEmbedContext) {
+      toasts.success("Node saved successfully!");
+    }
+
+    if (!params.isEmbedContext && !params.shouldOpenUponSave) {
+      inlineToasts.success({
+        id: "nodecapture",
+        message: "Node saved successfully",
+        data: params.node
+      });
+    }
+
+    if (params.isEmbedContext) {
+      return;
+    }
+
+    if (params.shouldReturnToLinkedCollection && params.linkedCollectionId) {
+      appStore.openResource(params.linkedCollectionId, AccessMode.POP, {
+        searchParams: {
+          [AccessMode.MAIN]: null
+        }
+      });
+      return;
+    }
+
+    if (params.shouldOpenUponSave) {
+      appStore.openResource(params.node.id, AccessMode.POP, {
+        searchParams: {
+          [AccessMode.MAIN]: null
+        }
+      });
+    }
+  }
+
+  private closeCaptureAfterSave(shouldOpenUponSave: boolean) {
+    if (shouldOpenUponSave) {
+      return;
+    }
+    appStore.closeResource({
+      id: captureAction,
+      accessMode: AccessMode.MAIN
+    });
+    appStore.closeResource({
+      id: MemotronAction.CAPTURE_DND,
+      accessMode: AccessMode.MAIN
+    });
+    appStore.closeResource({
+      id: MemotronAction.CAPTURE_SECONDARY,
+      accessMode: AccessMode.MAIN
+    });
   }
 
   private async saveLinks(rootId: IRecordId) {

@@ -130,12 +130,13 @@
     );
 
     if (response) {
-      if (!response[0].id) return;
-      value = response[0].id;
-      _value = value;
+      const uploadedId = response[0]?.id;
+      if (!uploadedId) return;
+      value = uploadedId;
+      _value = uploadedId;
       onSelect?.(
         new CustomEvent("select", {
-          detail: value
+          detail: uploadedId
         })
       );
     }
@@ -270,11 +271,12 @@
               const _id = isRecordId(e.detail.file)
                 ? e.detail.file
                 : e.detail.file.id;
+              if (!_id) return;
               value = _id;
-              _value = value;
+              _value = _id;
               onSelect?.(
                 new CustomEvent("select", {
-                  detail: value
+                  detail: _id
                 })
               );
             }

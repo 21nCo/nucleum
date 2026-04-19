@@ -33,9 +33,10 @@
     | {
         label: string;
         parent: {
-          id: string;
+          id?: string;
           label: string;
         };
+        text?: string;
       }
     | undefined
   >(undefined);
@@ -60,7 +61,12 @@
 
   function onParentClick(e: MouseEvent) {
     const labelObject = resolveLabelObject();
-    if (!labelObject || accessPoint === ResourceAccessPoint.SEARCH_RESULT) return;
+    if (
+      !labelObject ||
+      !labelObject.parent.id ||
+      accessPoint === ResourceAccessPoint.SEARCH_RESULT
+    )
+      return;
     appStore.resourceClickHandler(e, labelObject.parent.id, {
       replaceId:
         accessPoint === ResourceAccessPoint.SELF ? item.id : undefined,
@@ -97,8 +103,10 @@
 
   function resolveTextFallback() {
     if (item.contentType !== NodeType.NODULAR_MARKDOWN) return undefined;
-    if (!isValidString(item.text)) return undefined;
-    const firstLine = item.text
+    if (typeof item.text !== "string") return undefined;
+    const itemText = item.text;
+    if (!isValidString(itemText)) return undefined;
+    const firstLine = itemText
       .split("\n")
       .map((line) => line.trim())
       .find((line) => isValidString(line));

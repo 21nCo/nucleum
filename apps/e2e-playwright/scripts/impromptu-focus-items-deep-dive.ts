@@ -3,11 +3,13 @@ import path from "node:path";
 import { chromium, expect, type Page } from "@playwright/test";
 import {
   captureConsole,
+  ensureOfflineSessionId,
   ensureInAppOnHome,
   flushAppLogs,
   getAuthPath,
   getBaseURL,
   parseProject,
+  resolveRepoFsImportPath,
   timestamp,
   type ProjectName
 } from "./runtime";
@@ -96,16 +98,10 @@ async function openFocusWithFallback(
 }
 
 async function readFocusState(page: Page) {
-  return page.evaluate(async () => {
-    const mod = await import(
-      "/@fs/Users/serro/.codex/worktrees/0ac5/nucleus/client/products/pointron/focus/session.store.ts"
-    );
-    const goalMod = await import(
-      "/@fs/Users/serro/.codex/worktrees/0ac5/nucleus/client/components/goals/goal.store.ts"
-    );
-    const taskMod = await import(
-      "/@fs/Users/serro/.codex/worktrees/0ac5/nucleus/client/components/tasks/task.store.ts"
-    );
+  return page.evaluate(async (modulePaths) => {
+    const mod = await import(modulePaths.sessionStorePath);
+    const goalMod = await import(modulePaths.goalStorePath);
+    const taskMod = await import(modulePaths.taskStorePath);
     let currentFocus: unknown = undefined;
     const unsubscribe = mod.currentFocusItem.subscribe((value: unknown) => {
       currentFocus = value;
@@ -150,6 +146,16 @@ async function readFocusState(page: Page) {
       })),
       bodyText: document.body.innerText.slice(0, 2000)
     };
+  }, {
+    sessionStorePath: resolveRepoFsImportPath(
+      "client/products/pointron/focus/session.store.ts"
+    ),
+    goalStorePath: resolveRepoFsImportPath(
+      "client/components/goals/goal.store.ts"
+    ),
+    taskStorePath: resolveRepoFsImportPath(
+      "client/components/tasks/task.store.ts"
+    )
   });
 }
 
@@ -191,17 +197,7 @@ async function main() {
       .then(() => getAuthPath(project))
       .catch(() => undefined)) as string | undefined
   });
-  await context.addInitScript(() => {
-    try {
-      const current = window.localStorage.getItem("offlineSessionId");
-      if (!current) {
-        const value =
-          globalThis.crypto?.randomUUID?.() ??
-          `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        window.localStorage.setItem("offlineSessionId", value);
-      }
-    } catch {}
-  });
+  await context.addInitScript(ensureOfflineSessionId);
   const page = await context.newPage();
 
   const browserConsole: ArtifactData["browserConsole"] = [];
@@ -349,13 +345,9 @@ async function main() {
 
     let taskScenarioState: unknown = null;
     try {
-      taskScenarioState = await page.evaluate(async (taskLabel) => {
-        const sessionMod = await import(
-          "/@fs/Users/serro/.codex/worktrees/0ac5/nucleus/client/products/pointron/focus/session.store.ts"
-        );
-        const goalMod = await import(
-          "/@fs/Users/serro/.codex/worktrees/0ac5/nucleus/client/components/goals/goal.store.ts"
-        );
+      taskScenarioState = await page.evaluate(async ({ taskLabel, modulePaths }) => {
+        const sessionMod = await import(modulePaths.sessionStorePath);
+        const goalMod = await import(modulePaths.goalStorePath);
 
         await sessionMod.activeSession.close();
         for (const item of sessionMod.focusItemsStore.get().items) {
@@ -389,7 +381,17 @@ async function main() {
           taskId: task.id.toString(),
           taskLabel: task.label
         };
-      }, taskFocusLabel);
+      }, {
+        taskLabel: taskFocusLabel,
+        modulePaths: {
+          sessionStorePath: resolveRepoFsImportPath(
+            "client/products/pointron/focus/session.store.ts"
+          ),
+          goalStorePath: resolveRepoFsImportPath(
+            "client/components/goals/goal.store.ts"
+          )
+        }
+      });
 
       await page.goto(new URL("/focus", baseURL).toString(), {
         waitUntil: "domcontentloaded"

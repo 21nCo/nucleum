@@ -53,6 +53,25 @@ export function getAuthPath(projectName: ProjectName): string {
   return path.join(authDir, fileName);
 }
 
+export function resolveRepoFsImportPath(relativePath: string) {
+  const path = require("node:path");
+  const repoRoot = path.resolve(__dirname, "..", "..", "..").replace(/\\/g, "/");
+  return `/@fs${repoRoot}/${relativePath}`;
+}
+
+export function ensureOfflineSessionId() {
+  try {
+    if (window.localStorage.getItem("offlineSessionId")) return;
+    const fallback = () => {
+      const bytes = new Uint32Array(4);
+      globalThis.crypto?.getRandomValues(bytes);
+      return Array.from(bytes, (value) => value.toString(16)).join("-");
+    };
+    const value = globalThis.crypto?.randomUUID?.() ?? fallback();
+    window.localStorage.setItem("offlineSessionId", value);
+  } catch {}
+}
+
 export async function flushAppLogs(page: Page) {
   try {
     return await page.evaluate(async () => {
@@ -132,12 +151,7 @@ export async function ensureInAppOnHome(
 
   const setOfflineSessionFallback = async () => {
     await debug(`setting offlineSessionId fallback on ${page.url()}`);
-    await page.evaluate(() => {
-      const value =
-        globalThis.crypto?.randomUUID?.() ??
-        `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-      window.localStorage.setItem("offlineSessionId", value);
-    });
+    await page.evaluate(ensureOfflineSessionId);
   };
 
   const goHomeWithOfflineSessionFallback = async (reason: string) => {
