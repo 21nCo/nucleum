@@ -133,9 +133,6 @@
           <LeftNav variant="fixed" />
         {/if}
         <div class="flex flex-col h-full w-full">
-          {#if !$view.isPortrait && !isMaxMode}
-            <TopNav topnav={topnavContent} />
-          {/if}
           <div class="flex w-full flex-grow">
             {#if $context.embed !== Embed.HANDSET && !isHideLeftNavBar && !isMaxMode}
               <LeftNav variant="fixed" isHidePanel={!!pop || !!mainPath} />
@@ -143,7 +140,10 @@
             <div class="min-w-0 flex-grow relative">
               {#if mainPath}
                 <div class="absolute inset-0 w-full h-full bg-bgs1 z-40">
-                  <ComponentResolver path={mainPath} params={{ isInline: true }} />
+                  <ComponentResolver
+                    path={mainPath}
+                    params={{ isInline: true }}
+                  />
                 </div>
               {/if}
               {#if pop}
@@ -170,6 +170,9 @@
               <RightPanel action={rightPanel} />
             {/if}
           </div>
+          {#if !$view.isPortrait && !isMaxMode}
+            <TopNav topnav={topnavContent} />
+          {/if}
           {#if $hTrail.path.length > 0}
             <BottomNav />
           {/if}

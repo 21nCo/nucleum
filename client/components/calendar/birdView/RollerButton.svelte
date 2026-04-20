@@ -11,7 +11,8 @@
     adornment,
     selectedItem = $bindable(),
     handleClick,
-    prefix = ""
+    prefix,
+    context = ""
   }: {
     config: any;
     item: any;
@@ -21,6 +22,7 @@
     selectedItem?: any;
     handleClick: (value: any) => void;
     prefix?: string;
+    context?: string;
   } = $props();
 
   const currYear = new Date().getFullYear();
@@ -41,7 +43,7 @@
   ];
   const currMonth = monthNames[currMonthIndex];
   const currDate = new Date().getDate();
-  const isSelected = $derived(selectedItem == prefix + item);
+  const isSelected = $derived(selectedItem == context + item);
   const state = $derived.by(() => {
     switch (config.itemType) {
       case Itemtype.YEAR:
@@ -51,25 +53,25 @@
         };
       case Itemtype.MONTH:
         return {
-          isToday: currYear == Number(prefix) && currMonth == item,
+          isToday: currYear == Number(context) && currMonth == item,
           isPast:
-            currYear > Number(prefix) ||
-            (currYear == Number(prefix) &&
+            currYear > Number(context) ||
+            (currYear == Number(context) &&
               currMonthIndex > monthNames.indexOf(item))
         };
       case Itemtype.DAY: {
-        const firstAlphIndex = getFirstAlphabetPosition(prefix);
+        const firstAlphIndex = getFirstAlphabetPosition(context);
         return {
           isToday:
-            currYear == Number(prefix.slice(0, firstAlphIndex)) &&
-            currMonth == prefix.slice(-3) &&
+            currYear == Number(context.slice(0, firstAlphIndex)) &&
+            currMonth == context.slice(-3) &&
             currDate == Number(item),
           isPast:
-            currYear > Number(prefix.slice(0, firstAlphIndex)) ||
-            (currYear == Number(prefix.slice(0, firstAlphIndex)) &&
-              currMonthIndex > monthNames.indexOf(prefix.slice(-3))) ||
-            (currYear == Number(prefix.slice(0, firstAlphIndex)) &&
-              currMonthIndex == monthNames.indexOf(prefix.slice(-3)) &&
+            currYear > Number(context.slice(0, firstAlphIndex)) ||
+            (currYear == Number(context.slice(0, firstAlphIndex)) &&
+              currMonthIndex > monthNames.indexOf(context.slice(-3))) ||
+            (currYear == Number(context.slice(0, firstAlphIndex)) &&
+              currMonthIndex == monthNames.indexOf(context.slice(-3)) &&
               currDate > Number(item))
         };
       }
@@ -90,24 +92,35 @@
   )}
   style="height:{config.itemHeight}px;"
   {...{
-    [`data-${config.itemType}`]: `${prefix}${item}`
+    [`data-${config.itemType}`]: `${context}${item}`
   }}
   onclick={() => {
-    handleClick(prefix + item);
+    handleClick(context + item);
   }}
   onkeydown={(event) => {
     if (event.key === "Enter") {
-      handleClick(prefix + item);
+      handleClick(context + item);
     }
   }}
 >
   <span class="flex w-full items-center justify-center">
     <span class="relative inline-flex items-center justify-center">
-      <span>{label ?? item}</span>
+      {#if prefix}
+        <span
+          class={cn(
+            "absolute right-full mr-1 top-1/2 -translate-y-1/2 rounded-md px-1 py-0.5 text-b5 leading-none tabular-nums",
+            { "bg-aps3 text-aps1": isSelected },
+            { "bg-bgs3 text-fgs3": !isSelected }
+          )}
+        >
+          {prefix}
+        </span>
+      {/if}
+      <span class="tabular-nums">{label ?? item}</span>
       {#if suffix}
         <span
           class={cn(
-            "absolute left-full ml-1 top-1/2 -translate-y-1/2 rounded-full px-1.5 py-0.5 text-b5 leading-none",
+            "absolute left-full ml-1 top-1/2 -translate-y-1/2 rounded-md px-1 py-0.5 text-b5 leading-none tabular-nums",
             { "bg-aps3 text-aps1": isSelected },
             { "bg-bgs3 text-fgs3": !isSelected }
           )}

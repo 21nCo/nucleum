@@ -49,21 +49,6 @@
   async function onReady() {
     if (isLiteMode) return;
     if (!isDebug) await runFallbacks();
-    if (isDebug) {
-      try {
-        const seed = await import(/* @vite-ignore */ "@21n/products/memotron/base/seed.local");
-        await seed.seedDemoNodes();
-      } catch (e: unknown) {
-        const msg = e instanceof Error ? e.message : String(e);
-        const isModuleNotFound =
-          msg.includes("Failed to fetch") ||
-          msg.includes("Unknown variable dynamic import") ||
-          msg.includes("Cannot find module");
-        if (!isModuleNotFound) {
-          console.warn("[seed.local]", e);
-        }
-      }
-    }
     // TODO
     $appLoadingState.isLocalLoaded = true;
   }
@@ -84,16 +69,16 @@
   }
 </script>
 
-<UserBaseLayer onReady={onReady}>
+<UserBaseLayer {onReady}>
   {#snippet topnav()}
     <div class="flex gap-1 items-center h-full">
       <TopNavLeftMenuItem
         action={resourceAction(Resource.node, ResourceActionType.CREATE)}
       />
       <FocusTopNavWidget />
-      {#if isDebug}
+      <!-- {#if isDebug}
         <TopNavLeftMenuItem action={Action.FEED} />
-      {/if}
+      {/if} -->
     </div>
   {/snippet}
   {@render children?.()}

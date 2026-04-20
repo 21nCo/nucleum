@@ -1,16 +1,24 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { uiState } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
-  import { OverviewPanel } from "@21n/products/product.type";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
+  import { OverviewPanel, Product } from "@21n/products/product.type";
   import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
   import AnalyticsV2 from "@21n/products/pointron/analytics/AnalyticsV2.svelte";
   import MemotronOverview from "@21n/products/memotron/overview/MemotronOverview.svelte";
+  import BoxSwitcher from "@21n/elements/switcher/BoxSwitcher.svelte";
+  import { resolveProductConfig } from "@21n/products/product.config";
 
-  let selectedPanel: OverviewPanel = resolveSavedState() ?? OverviewPanel.FOCUS;
+  let selectedPanel: OverviewPanel =
+    resolveSavedState() ?? OverviewPanel.DASHBOARD;
+  const items = [
+    ...(resolveProductConfig(Product.NUCLEUS).overviewPanelSwitcherItems ?? []),
+    {
+      label: "Map",
+      value: OverviewPanel.MAP,
+      icon: "ph:map-pin-light"
+    }
+  ];
 
   function resolveSavedState() {
     const savedPanel = uiState.getState(UIState.nucleusOverviewPanel, {
@@ -23,7 +31,7 @@
 
   onMount(() => {
     const uiStateUnsub = uiState.subscribe(() => {
-      selectedPanel = resolveSavedState() ?? OverviewPanel.FOCUS;
+      selectedPanel = resolveSavedState() ?? OverviewPanel.DASHBOARD;
     });
 
     return () => {
@@ -32,10 +40,21 @@
   });
 </script>
 
-{#if selectedPanel === OverviewPanel.FOCUS}
-  <AnalyticsV2 />
-{:else if selectedPanel === OverviewPanel.MEMORY}
-  <MemotronOverview />
-{:else}
-  <ComingSoonView />
-{/if}
+<div class="w-full h-full flex flex-col">
+  <div class="h-12 min-h-12 border-b border-brs3">
+    <BoxSwitcher options={items} bind:selected={selectedPanel} />
+  </div>
+  {#if selectedPanel === OverviewPanel.DASHBOARD}
+    <div class="w-full h-full flex">
+      <div class="w-80 h-full text-fgs3 text-b2 p-3 border-r border-brs3">
+        <!-- TODO -->
+        dashboard sidebar
+      </div>
+      <AnalyticsV2 />
+    </div>
+  {:else if selectedPanel === OverviewPanel.GRAPH || selectedPanel === OverviewPanel.MAP}
+    <MemotronOverview />
+  {:else}
+    <ComingSoonView />
+  {/if}
+</div>
