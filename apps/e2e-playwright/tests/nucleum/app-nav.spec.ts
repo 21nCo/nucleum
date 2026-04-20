@@ -49,7 +49,7 @@ test.describe("nucleum – app layout and menu @regression", () => {
     });
   });
 
-  test("open Logs via UI (Calendar → Activity → Focus), then assert Logs view visible", async ({
+  test("open Focus via UI (Calendar → Focus), then assert Focus view visible", async ({
     page
   }) => {
     await ensureInAppOnHome(page);
@@ -72,30 +72,12 @@ test.describe("nucleum – app layout and menu @regression", () => {
       .getByRole("button", { name: /^Focus$/i })
       .first()
       .click({ timeout: 5_000 });
-    const calendarColumn = page.locator("[id^='mdcontainer-']");
-    await calendarColumn.first().waitFor({ state: "visible", timeout: 10_000 });
-    const overviewInPanel = calendarColumn
-      .getByRole("button", { name: /Overview/i })
-      .first();
-    const timelineInPanel = calendarColumn
-      .getByRole("button", { name: /Timeline/i })
-      .first();
-    const hasOverview = await overviewInPanel.isVisible().catch(() => false);
-    const panelRow = hasOverview
-      ? overviewInPanel.locator("..").locator("..")
-      : timelineInPanel.locator("..").locator("..");
-    await panelRow.getByRole("button").last().click({ timeout: 8_000 });
-    await page.waitForTimeout(500);
-
     await page
-      .locator("[id^='mdcontainer-']")
-      .getByRole("button", { name: /^Focus$/i })
-      .click({ timeout: 5_000 });
-    await page.waitForTimeout(500);
-
-    await expect(
-      page.getByText("No sessions found").first()
-    ).toBeVisible({ timeout: 10_000 });
+      .getByTestId("quick-focus-search")
+      .waitFor({ state: "visible", timeout: 15_000 });
+    await expect(page.getByText("Quick focus").first()).toBeVisible({
+      timeout: 10_000
+    });
   });
 
   test("open Overview via command bar (Overview), then assert Overview page visible", async ({
@@ -172,7 +154,10 @@ test.describe("nucleum – app layout and menu @regression", () => {
   test("open Library via command bar (Goals), then assert Goals list visible", async ({
     page
   }) => {
-    test.skip(true, "Nucleus does not expose a direct Goals/Objectives command");
+    test.skip(
+      !nucleusProductConfig.capabilities.commands.directGoalLibraryCommand,
+      "Nucleum does not expose a direct Goals/Objectives command"
+    );
     await ensureInAppOnHome(page);
     await runCommand(page, resolveGoalCommandLabel());
     await expect(resolveGoalsListVisible(page)).toBeVisible({

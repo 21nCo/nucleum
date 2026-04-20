@@ -34,31 +34,30 @@ export async function settingsModalLikelyOpen(page: Page) {
 
 export async function assertSearchOrCommandBarInputVisible(page: Page) {
   const cmd = page.getByTestId("command-bar-input");
+  const searchByTestId = page.locator('[data-testid^="search-"]').first();
   const placeholder = page.getByPlaceholder(
     /Start typing to search|Type here to search|Search/i
   );
   const searchRole = page.getByRole("search");
 
+  const isVisibleAndFocused = async (locator: ReturnType<Page["locator"]>) => {
+    const visible = await locator.isVisible().catch(() => false);
+    if (!visible) return false;
+    return locator
+      .evaluate((el) => el === document.activeElement)
+      .catch(() => false);
+  };
+
   await expect
     .poll(
       async () => {
         if (await cmd.isVisible().catch(() => false)) return true;
-        if (await placeholder.isVisible().catch(() => false)) return true;
-        if (
-          await searchRole
-            .first()
-            .isVisible()
-            .catch(() => false)
-        )
+        if (await isVisibleAndFocused(searchByTestId)) return true;
+        if (await isVisibleAndFocused(placeholder.first())) return true;
+        const searchRoleTextbox = searchRole.first().getByRole("textbox").first();
+        if (await isVisibleAndFocused(searchRoleTextbox)) {
           return true;
-        if (
-          await page
-            .getByRole("textbox")
-            .first()
-            .isVisible()
-            .catch(() => false)
-        )
-          return true;
+        }
         return false;
       },
       { timeout: 15_000 }

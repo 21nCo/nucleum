@@ -27,6 +27,17 @@ class PdfCache {
     return new Request(url, { method: "GET" });
   }
 
+  private isCacheableUrl(url: string): boolean {
+    try {
+      const baseUrl =
+        typeof location !== "undefined" ? location.href : "http://localhost";
+      const protocol = new URL(url, baseUrl).protocol;
+      return protocol === "http:" || protocol === "https:";
+    } catch {
+      return false;
+    }
+  }
+
   private getMetadataKey(url: string): Request {
     const metadataUrl = new URL(url);
     metadataUrl.searchParams.set("_cache_metadata", "true");
@@ -34,6 +45,8 @@ class PdfCache {
   }
 
   private async getMetadata(url: string): Promise<ICacheMetadata | null> {
+    if (!this.isCacheableUrl(url)) return null;
+
     try {
       const cache = await caches.open(CACHE_NAME);
       const response = await cache.match(this.getMetadataKey(url));
@@ -51,6 +64,8 @@ class PdfCache {
     url: string,
     metadata: ICacheMetadata
   ): Promise<void> {
+    if (!this.isCacheableUrl(url)) return;
+
     try {
       const cache = await caches.open(CACHE_NAME);
       const response = new Response(JSON.stringify(metadata), {
@@ -65,6 +80,7 @@ class PdfCache {
 
   async get(url: string): Promise<Uint8Array | null> {
     if (!this.isSupported) return null;
+    if (!this.isCacheableUrl(url)) return null;
 
     try {
       const cache = await caches.open(CACHE_NAME);
@@ -109,6 +125,7 @@ class PdfCache {
 
   async set(url: string, data: Uint8Array): Promise<void> {
     if (!this.isSupported) return;
+    if (!this.isCacheableUrl(url)) return;
 
     try {
       const cache = await caches.open(CACHE_NAME);
@@ -147,6 +164,7 @@ class PdfCache {
 
   async delete(url: string): Promise<void> {
     if (!this.isSupported) return;
+    if (!this.isCacheableUrl(url)) return;
 
     try {
       const cache = await caches.open(CACHE_NAME);

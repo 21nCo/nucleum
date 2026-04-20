@@ -318,7 +318,8 @@ export class SearchStore {
     }
   ) {
     logger.log({ at: "searchForLinking", query, params });
-    console.time("searchForLinking");
+    const timerLabel = `searchForLinking:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`;
+    console.time(timerLabel);
     const collectionResource =
       params?.collectionResource ?? this.collectibleResource;
     if (!isValidString(query)) {
@@ -347,6 +348,7 @@ export class SearchStore {
       if (params?.resource === Resource.collection && collectionResource) {
         items = items.filter((x) => collectionResource.includes(x.resource));
       }
+      console.timeEnd(timerLabel);
       return items;
     }
     let nodes: INode[] = [];
@@ -443,7 +445,7 @@ export class SearchStore {
     if (params?.exclude) {
       data = data.filter((x) => !params.exclude?.some(resourceInList(x.id)));
     }
-    console.timeEnd("searchForLinking");
+    console.timeEnd(timerLabel);
     return data;
   }
 

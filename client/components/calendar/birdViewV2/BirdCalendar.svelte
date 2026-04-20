@@ -25,26 +25,6 @@
   const isDev = import.meta.env?.DEV;
   let selectedPanel = $state(CalendarColumnPanel.Timeline);
 
-  function goToPrevious() {
-    const date = new Date(selectedDate);
-    if (scale === TimeScaleUnit.YEAR) {
-      date.setFullYear(date.getFullYear() - 1);
-    } else if (scale === TimeScaleUnit.WEEK) {
-      date.setDate(date.getDate() - 7);
-    }
-    selectedDate = date;
-  }
-
-  function goToNext() {
-    const date = new Date(selectedDate);
-    if (scale === TimeScaleUnit.YEAR) {
-      date.setFullYear(date.getFullYear() + 1);
-    } else if (scale === TimeScaleUnit.WEEK) {
-      date.setDate(date.getDate() + 7);
-    }
-    selectedDate = date;
-  }
-
   const switchOptions = [
     {
       label: "Parts",
@@ -92,8 +72,8 @@
       bind:selectedDate
       bind:selectedView={scale}
       onDateChange={() => {}}
-      onGoToPrevious={goToPrevious}
-      onGoToNext={goToNext}
+      onGoToPrevious={() => {}}
+      onGoToNext={() => {}}
     />
   {/snippet}
   {#snippet headerRightOptions()}
@@ -108,6 +88,6 @@
     /> -->
   {/snippet}
   <div class="w-full h-full max-h-full">
-    <Birdview mode={scale} {selectedDate} />
+    <Birdview mode={scale} />
   </div>
 </CalendarLayoutView>

@@ -4,6 +4,7 @@ import {
   openLibraryAndTab,
   LibraryTab
 } from "../../../utils/helpers";
+import { getResourceContract } from "../../../utils/resource-matrix";
 
 const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
@@ -36,23 +37,24 @@ test.describe("node - browse flows (from library, from pinned) @regression", () 
   test.describe("from pinned resource browser", () => {
     test("pin Nodes in resource browser (leftnav settings), then open Nodes from pinned nav", async ({
       page
-    }) => {
+    }, testInfo) => {
       test.setTimeout(120_000);
+      const nodeContract = getResourceContract(testInfo.project.name, "node");
+      test.skip(
+        !nodeContract.pinnedBrowserEnabled,
+        "Nodes cannot be pinned in this product"
+      );
       await ensureInAppOnHome(page);
 
       await page.getByTestId("leftnav-settings").click({ timeout: 5_000 });
-      const pinDialogVisible = await page
-        .getByText("Pin resources")
-        .first()
-        .isVisible()
-        .catch(() => false);
-      if (!pinDialogVisible) test.skip(true, "Pinned resource browser not available in this product build");
+      await expect(page.getByText("Pin resources").first()).toBeVisible({
+        timeout: 8_000
+      });
 
       const nodesRow = page
         .getByTestId("leftnav-pin-resource")
         .filter({ hasText: /Nodes/i });
-      const hasNodesToggle = await nodesRow.first().isVisible().catch(() => false);
-      if (!hasNodesToggle) test.skip(true, "Nodes cannot be pinned (N/A)");
+      await expect(nodesRow.first()).toBeVisible({ timeout: 8_000 });
 
       const toggle = nodesRow.locator('input[type="checkbox"]').first();
       const checked = await toggle.isChecked().catch(() => false);

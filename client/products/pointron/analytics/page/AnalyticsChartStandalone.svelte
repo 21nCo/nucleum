@@ -13,7 +13,7 @@
   import CardSelector from "@21n/products/pointron/analytics/page/CardSelector.svelte";
   import { sessionLogStore } from "@21n/products/pointron/logs/log.store";
   import { resolveRelativeTimePeriodOptions } from "@21n/elements/datetime/datetime.utils";
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import type { ISessionLog } from "@21n/products/pointron/logs/log.type";
   import type { IRecordId } from "@21n/types/data.type";
   import {
@@ -57,10 +57,10 @@
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   let {
     accessPoint = ResourceAccessPoint.CALENDAR,
-    date = undefined,
+    date,
     showLegend = true,
-    scale = undefined,
-    goalId = undefined
+    scale,
+    goalId
   }: {
     accessPoint?: ResourceAccessPoint;
     date?: Date;
@@ -86,6 +86,7 @@
   let data = $state<AnalyticsDataRecord[]>([]);
   let chartType = $state(AnalyticsCardType.DONUT);
   let isRefreshing = $state(false);
+  let isMounted = $state(false);
   const scales = $userPreferences.timeScales ?? [
     TimeScale.DAYS,
     TimeScale.MONTHS,
@@ -116,7 +117,40 @@
   }
 
   onMount(() => {
-    refresh();
+    isMounted = true;
+  });
+
+  function resolveDateInput(value: unknown) {
+    if (value instanceof Date) return value;
+    if (typeof value === "string" || typeof value === "number") {
+      const resolved = new Date(value);
+      if (!Number.isNaN(resolved.getTime())) return resolved;
+    }
+    return undefined;
+  }
+
+  function resolveScaleInput(value: unknown) {
+    return Object.values(TimeScale).includes(value as TimeScale)
+      ? (value as TimeScale)
+      : TimeScale.DAYS;
+  }
+
+  function resolveGoalIdInput(value: unknown) {
+    return typeof value === "string" && value.length > 0 ? value : undefined;
+  }
+
+  $effect(() => {
+    date;
+    scale;
+    goalId;
+    isIncludeSubgoals;
+    if (!isMounted) return;
+    if (accessPoint === ResourceAccessPoint.CALENDAR && !resolveDateInput(date)) {
+      return;
+    }
+    untrack(() => {
+      void refresh();
+    });
   });
 
   async function refresh() {
@@ -130,13 +164,16 @@
         {},
         { isIncludeSubItems: true, isExpand: true }
       );
+      const resolvedScale = resolveScaleInput(scale);
+      const resolvedGoalId = resolveGoalIdInput(goalId);
       let startFilter = {};
-      if (date) {
-        startFilter = tzStore.resolveTimePeriodFilterForDay(date);
+      const resolvedDate = resolveDateInput(date);
+      if (resolvedDate) {
+        startFilter = tzStore.resolveTimePeriodFilterForDay(resolvedDate);
       } else {
         const result = tzStore.resolveTimePeriodCorrectedByTz(
           {
-            scale: scale ?? TimeScale.DAYS,
+            scale: resolvedScale,
             value: periodValue
           },
           { tzRecords: $tzStore }
@@ -148,14 +185,14 @@
         };
       }
       let goalIds: IRecordId[] = [];
-      if (goalId) {
-        goalIds.push(goalId);
+      if (resolvedGoalId) {
+        goalIds.push(resolvedGoalId);
         if (isIncludeSubgoals) {
           const subGoals = goals.filter(
             (x) =>
               x.parent &&
               Array.isArray(x.parent) &&
-              x.parent?.some(resourceInList(goalId))
+              x.parent?.some(resourceInList(resolvedGoalId))
           );
           if (subGoals) {
             goalIds.push(...subGoals.map((x) => x.id));
@@ -192,8 +229,8 @@
       );
       data = processedLogs;
       goalColors = [];
-      if (goalId && !isIncludeSubgoals) {
-        const currentGoal = resolveGoalFromId(goalId);
+      if (resolvedGoalId && !isIncludeSubgoals) {
+        const currentGoal = resolveGoalFromId(resolvedGoalId);
         const color = resolveGoalColor(currentGoal);
         if (currentGoal && color) {
           goalColors.push({

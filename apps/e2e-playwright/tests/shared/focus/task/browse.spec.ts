@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import {
   ensureInAppOnHome,
+  getProductConfig,
   runCommand,
   openLibraryAndTab,
   LibraryTab
@@ -49,9 +50,12 @@ test.describe("task - browse flows @regression", () => {
   });
 
   test.describe("from pinned resource browser", () => {
-    test.skip("pin task and see in pinned list", async ({ page }) => {
+    test("pin task and see in pinned list", async ({ page }, testInfo) => {
+      test.skip(
+        !getProductConfig(testInfo.project.name).ui.taskQuickPinning,
+        "Task quick-pin is not part of this product contract"
+      );
       await ensureInAppOnHome(page);
-      // App supports "Pin a goal to quick focus" only; tasks are not pinnable to a quick-focus list. N/A.
     });
   });
 });

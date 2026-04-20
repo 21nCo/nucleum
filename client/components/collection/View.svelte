@@ -12,7 +12,7 @@
   import type { IActiveCollectionStore } from "@21n/components/collection/collection.store";
   let {
     collection,
-    view,
+    view = $bindable(),
     data = [],
     isBoardOverflow = false
   }: {

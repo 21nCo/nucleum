@@ -80,6 +80,7 @@ export interface IProductE2ECapabilitiesConfig {
     collection: boolean;
     collectionTabs: boolean;
     collectionRename: boolean;
+    collectionEditor: boolean;
     goal: boolean;
     goalTabs: boolean;
     task: boolean;
@@ -165,7 +166,8 @@ export const productE2EConfigs = {
       records: {
         collection: true,
         collectionTabs: false,
-        collectionRename: false,
+        collectionRename: true,
+        collectionEditor: true,
         goal: true,
         goalTabs: true,
         task: true,
@@ -249,6 +251,7 @@ export const productE2EConfigs = {
         collection: true,
         collectionTabs: false,
         collectionRename: false,
+        collectionEditor: false,
         goal: false,
         goalTabs: false,
         task: false,
@@ -332,6 +335,7 @@ export const productE2EConfigs = {
         collection: true,
         collectionTabs: false,
         collectionRename: false,
+        collectionEditor: false,
         goal: true,
         goalTabs: true,
         task: true,

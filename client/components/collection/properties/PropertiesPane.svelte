@@ -43,6 +43,7 @@
   } = $props();
   let _types = $state<ICollectionExpanded[] | null>(null);
   let multipleTypesList = $state<ICollectionExpanded[]>([]);
+  let selectedTypeId = $state<string | undefined>(undefined);
   let refreshId = $state(new Date().getTime());
 
   function asCollectionItem(item: IActiveNode | IActiveGoal): ICollectionItem {
@@ -135,7 +136,18 @@
       multipleTypesList = multipleTypesList.filter(removeDuplicatesFilter);
     }
     if (multipleTypesList.length > 0) {
-      _types = [multipleTypesList[0]];
+      if (
+        !selectedTypeId ||
+        !multipleTypesList.some((x) => x.id.toString() === selectedTypeId)
+      ) {
+        selectedTypeId = multipleTypesList[0]?.id.toString();
+      }
+      const selectedType =
+        multipleTypesList.find((x) => x.id.toString() === selectedTypeId) ??
+        multipleTypesList[0];
+      _types = selectedType ? [selectedType] : null;
+    } else {
+      selectedTypeId = undefined;
     }
   }
 
@@ -143,6 +155,7 @@
     const type = multipleTypesList.find((x) => x.id.toString() === e.detail);
     if (type) {
       _types = [type];
+      selectedTypeId = type.id.toString();
       refreshId = new Date().getTime();
     }
   }
@@ -173,7 +186,7 @@
       }))}
       size={Size.sm}
       isShowExpandFeedbackOnActive={true}
-      selected={multipleTypesList[0].id.toString()}
+      selected={selectedTypeId}
       onSelect={handleTypeChange}
     />
   {/if}
@@ -184,7 +197,7 @@
     {#if _types && _types.length > 0}
       {#key refreshId}
         <PropertiesListView
-          bind:values={$item.properties}
+          values={$item.properties ?? []}
           types={_types}
           {resource}
           context={isVisibleProps ? "mainpanel" : "rightpanel"}

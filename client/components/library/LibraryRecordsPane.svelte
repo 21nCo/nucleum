@@ -101,6 +101,7 @@
   let starredData = $state<any[]>([]);
   const searchStore = new SearchStore();
   const QAsearchStore = new SearchStore();
+  // QAsearchStore.searchType = SearchType.SEMANTIC;
   let selectedSubType = $state<SubType>("all");
   let isRefreshing = $state(true);
   let totalCountAfterFilter = $state(0);
@@ -165,6 +166,7 @@
 
   onDestroy(() => {
     if (pageSub) pageSub();
+    // Abort any ongoing operations when component unmounts
     if (abortController) {
       abortController.abort();
       abortController = null;
@@ -219,6 +221,7 @@
   async function refresh(isPagination?: boolean) {
     if (isCustom) return;
 
+    // Abort any previous operation and create new controller
     if (abortController) {
       abortController.abort();
     }
@@ -247,6 +250,12 @@
       );
       let orderBy: IResourceSelectOrderBy | undefined;
       let semanticSearchTopK: number | undefined;
+      // if (searchStore.searchType == SearchType.SEMANTIC) {
+      //   orderBy = {
+      //     dist: "desc",
+      //     createdAt: "desc"
+      //   };
+      // }
       subTypeSwitcherRef?.refresh();
       const isDefaultLoad = resolveIfDefaultLoad();
       if (!isPagination && isDefaultLoad) {
@@ -264,16 +273,17 @@
         }
       }
       const filters = resolveFilters();
-      const newData = (await searchStore.select({
-        resource,
-        searchQuery,
-        filters,
-        orderBy,
-        semanticSearchTopK,
-        limit: 50,
-        offset: isPagination ? data.length : 0,
-        signal
-      })) ?? [];
+      const newData =
+        (await searchStore.select({
+          resource,
+          searchQuery,
+          filters,
+          orderBy,
+          semanticSearchTopK,
+          limit: 50,
+          offset: isPagination ? data.length : 0,
+          signal
+        })) ?? [];
       if (isPagination)
         data = [...data, ...newData]?.filter(removeDuplicatesFilter);
       else {
@@ -302,6 +312,7 @@
       console.timeEnd("LibraryRecordsPane - refresh");
     } catch (e) {
       isRefreshing = false;
+      // Don't log error if it was just an abort
       if (e instanceof Error && e.message === "Operation aborted") {
         logger.log({ at: "Library - refresh - aborted", e });
       } else {
@@ -359,6 +370,7 @@
 
   async function _refreshFilteredRecordsTotalCount(filters: any) {
     try {
+      // Check if operation was aborted before starting
       if (abortController?.signal?.aborted) {
         return;
       }
@@ -497,12 +509,35 @@
       }
       return;
     }
-    if (
-      mutation.action === PersistenceActionType.MERGE &&
-      resource === Resource.goal
-    ) {
-      if (!("children" in mutation.record)) return;
-    } else if (mutation.action === PersistenceActionType.MERGE) return;
+    if (mutation.action === PersistenceActionType.MERGE) {
+      if (resource === Resource.goal && "children" in mutation.record) {
+        await refresh();
+        return;
+      }
+      const id = mutation.record.id;
+      if (!id) return;
+      const updateRecord = (item: any) =>
+        isSameResource(item.id, id) ? { ...item, ...mutation.record } : item;
+      const hasDataMatch = data.some((item) => isSameResource(item.id, id));
+      const hasStarredMatch = starredData.some((item) =>
+        isSameResource(item.id, id)
+      );
+      if (hasDataMatch) {
+        data = data.map(updateRecord);
+      }
+      if (hasStarredMatch) {
+        starredData = starredData.map(updateRecord);
+      }
+      if (hasDataMatch || hasStarredMatch) {
+        const cacheKey = resourceCacheKey(
+          resource,
+          CacheKey.LIBRARY_DEFAULT_RECORDS
+        );
+        cache.replaceUsingSubKey(cacheKey, CacheSubKey.DATA, data);
+        cache.replaceUsingSubKey(cacheKey, CacheSubKey.STARRED, starredData);
+      }
+      return;
+    }
 
     const insertedRecord =
       mutation.action === PersistenceActionType.INSERT ||
@@ -625,15 +660,20 @@
       </div>
     {/if}
   {:else}
-      <LibrarySearchBox
-        {selectedSubType}
-        {searchStore}
-        {resource}
-        bind:searchQuery
-        onRefresh={debouncedSearch}
-        onSemanticSearch={() => {
-          refresh();
-        }}
+    <LibrarySearchBox
+      {selectedSubType}
+      {searchStore}
+      {resource}
+      bind:searchQuery
+      onRefresh={debouncedSearch}
+      onSemanticSearch={(e) => {
+        // if (e.detail) {
+        //   searchStore.searchType = SearchType.SEMANTIC;
+        // } else {
+        //   searchStore.searchType = SearchType.FULL_TEXT;
+        // }
+        refresh();
+      }}
     />
     <LibrarySubTypeSwitcher
       {resource}

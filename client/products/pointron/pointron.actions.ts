@@ -494,7 +494,7 @@ export const pointronActions: IAction[] = [
     label: "Pin a goal to quick focus",
     type: ActionType.SEARCH_CMD,
     searchActionParams: {
-      placeholder: "Select a task to pin",
+      placeholder: "Select a goal to pin",
       searchResultComponent: GoalSearchResultItem,
       searchCallback: async (searchQuery: string) => {
         const result = await new SearchStore(Resource.goal).select({

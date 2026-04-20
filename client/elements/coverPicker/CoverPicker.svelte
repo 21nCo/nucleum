@@ -57,8 +57,12 @@
   );
 
   let selectedMethod = $state<Method>(Method.COLOR);
-  let _value = $state<string | undefined>(transformValue(value));
+  let _value = $state<string>("#000000");
   let isUploadInProgress = $state(false);
+
+  $effect(() => {
+    _value = transformValue(value) ?? "#000000";
+  });
 
   onMount(async () => {
     if ($view.isConstrainedWidth) {
@@ -85,6 +89,7 @@
 
   function handleColorChange(value: number | string) {
     if (typeof value === "string") {
+      console.log("[CoverPicker.handleColorChange]", value);
       onChange?.(
         new CustomEvent("change", {
           detail: `hex_${value}`
@@ -95,6 +100,7 @@
 
   function handleColorChangeDebounced(value: number | string) {
     if (typeof value === "string") {
+      console.log("[CoverPicker.handleColorChangeDebounced]", value);
       onSelect?.(
         new CustomEvent("select", {
           detail: `hex_${value}`
@@ -124,12 +130,13 @@
     );
 
     if (response) {
-      if (!response[0].id) return;
-      value = response[0].id;
-      _value = value;
+      const uploadedId = response[0]?.id;
+      if (!uploadedId) return;
+      value = uploadedId;
+      _value = uploadedId;
       onSelect?.(
         new CustomEvent("select", {
-          detail: value
+          detail: uploadedId
         })
       );
     }
@@ -264,11 +271,12 @@
               const _id = isRecordId(e.detail.file)
                 ? e.detail.file
                 : e.detail.file.id;
+              if (!_id) return;
               value = _id;
-              _value = value;
+              _value = _id;
               onSelect?.(
                 new CustomEvent("select", {
-                  detail: value
+                  detail: _id
                 })
               );
             }

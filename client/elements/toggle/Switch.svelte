@@ -17,6 +17,15 @@
     ariaLabel?: string | undefined;
     onChange?: ((event: CustomEvent<boolean>) => void) | undefined;
   } = $props();
+
+  function handleChange(event: Event) {
+    const input = event.currentTarget as HTMLInputElement | null;
+    if (!input) return;
+    on = input.checked;
+    if (typeof onChange === "function") {
+      onChange(new CustomEvent("change", { detail: on }));
+    }
+  }
 </script>
 
 <label
@@ -30,13 +39,11 @@
     <input
       type="checkbox"
       {id}
-      bind:checked={on}
+      checked={on}
       aria-label={ariaLabel}
       class="absolute inset-0 z-10 m-0 h-full w-full cursor-pointer opacity-0"
       disabled={isDisabled}
-      onchange={() => {
-        onChange?.(new CustomEvent("change", { detail: on }));
-      }}
+      onchange={handleChange}
       onclick={(event) => {
         event.stopPropagation();
       }}

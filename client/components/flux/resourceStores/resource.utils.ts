@@ -67,19 +67,8 @@ export function resolveProductResources(
 export function determineResourceType(
   id: IRecordId | { tb: string } | null | undefined
 ): Resource {
-  if (!id) return Resource.unknown;
-  if (
-    typeof id !== "string" &&
-    "tb" in id &&
-    typeof id.tb === "string"
-  ) {
-    return id.tb as Resource;
-  }
-  if (typeof id === "string") {
-    const parts = id.split(":");
-    if (parts.length > 1) return parts[0] as Resource;
-  }
-  return Resource.unknown;
+  const tb = resolveResourceTable(id);
+  return (tb as Resource | null) ?? Resource.unknown;
 }
 
 /**
@@ -89,31 +78,13 @@ export function determineResourceType(
  * @returns True if the items are the same resource, false otherwise.
  */
 export function isSameResource(
-  item1: IRecordId | { id: IRecordId },
-  item2: IRecordId | { id: IRecordId }
+  item1: IRecordId | { tb: string; id: string } | { id: IRecordId },
+  item2: IRecordId | { tb: string; id: string } | { id: IRecordId }
 ) {
   try {
-    if (!item1 || !item2) return false;
-    if (typeof item1 === "string" && typeof item2 === "string") {
-      return item1 === item2;
-    } else if (typeof item1 !== "string" && typeof item2 !== "string") {
-      if ("tb" in item1 && "tb" in item2) {
-        return item1.tb === item2.tb && item1.id === item2.id;
-      } else if ("tb" in item1) {
-        return item1.toString() === item2.id?.toString();
-      } else if ("tb" in item2) {
-        return item1.id?.toString() === item2.toString();
-      } else if (item1.id && item2.id) {
-        return item1.id.toString() === item2.id.toString();
-      }
-    } else if (typeof item1 === "string" && typeof item2 !== "string") {
-      if ("tb" in item2) return item2.toString() === item1;
-      return item2.id?.toString() === item1;
-    } else if (typeof item2 === "string" && typeof item1 !== "string") {
-      if ("tb" in item1) return item1.toString() === item2;
-      return item1.id?.toString() === item2;
-    }
-    return false;
+    const normalized1 = normalizeResourceId(item1);
+    const normalized2 = normalizeResourceId(item2);
+    return Boolean(normalized1 && normalized2 && normalized1 === normalized2);
   } catch (e) {
     logger.error({ at: "isSameResource", item1, item2, error: e });
     return false;
@@ -145,18 +116,45 @@ export function isNoneResource(id: IRecordId | string | undefined) {
   return id.toString()?.split(":")?.pop() === "none";
 }
 
-export function isRecordId(id: any, resource?: Resource) {
-  if (resource) {
-    let tb = "";
-    if (typeof id === "string") tb = id.split(":")[0];
-    else if (typeof id === "object" && "tb" in id) tb = id.tb;
-    return tb === resource;
+function isObjectLike(value: unknown): value is Record<PropertyKey, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+function hasResourceTable(value: unknown): value is { tb: string } {
+  return isObjectLike(value) && "tb" in value && typeof value.tb === "string";
+}
+
+function hasStringId(value: unknown): value is { id: string } {
+  return isObjectLike(value) && "id" in value && typeof value.id === "string";
+}
+
+function resolveResourceTable(value: unknown): string | null {
+  if (typeof value === "string") {
+    const parts = value.split(":");
+    return parts.length > 1 ? parts[0] : null;
   }
-  return (
-    id &&
-    ((typeof id === "string" && id.includes(":")) ||
-      (typeof id === "object" && "tb" in id))
-  );
+  return hasResourceTable(value) ? value.tb : null;
+}
+
+function normalizeResourceId(value: unknown): string | null {
+  if (typeof value === "string") return value;
+  if (hasResourceTable(value) && hasStringId(value)) {
+    if (typeof value.toString === "function") {
+      const normalized = value.toString();
+      if (typeof normalized === "string" && normalized.length > 0) return normalized;
+    }
+    return `${value.tb}:${value.id}`;
+  }
+  if (hasStringId(value)) return value.id;
+  return null;
+}
+
+export function isRecordId(id: unknown, resource?: Resource) {
+  const normalized = normalizeResourceId(id);
+  if (resource) {
+    return resolveResourceTable(id) === resource;
+  }
+  return Boolean(normalized && normalized.includes(":"));
 }
 
 /**

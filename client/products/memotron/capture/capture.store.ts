@@ -524,6 +524,20 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   onMdContentChanges(e: CustomEvent) {
     const val = this.get();
     if (val.isSaving) return;
+    logger.log({
+      at: "CaptureStore.onMdContentChanges",
+      captureId: val.id,
+      blockCount:
+        val.body && "blocks" in val.body ? val.body.blocks.length : undefined,
+      rootStructureLength: val.rootStructure.length,
+      childrenWithStructureLength: val.childrenWithStructure.length,
+      detailRootLength: Array.isArray(e.detail?.root) ? e.detail.root.length : 0,
+      detailChildrenWithStructureLength: Array.isArray(
+        e.detail?.childrenWithStructure
+      )
+        ? e.detail.childrenWithStructure.length
+        : 0
+    });
     this.debouncedPersistContent();
     setTimeout(() => {
       this.refreshEmptyState();
@@ -1245,6 +1259,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
   ) {
     logger.debug({ at: "CaptureStore.postSave", result, params });
     const node = result?.[0];
+    const captureState = this.get();
     if (!result || result.error || !node || !node.id) {
       logger.error({ at: "CaptureStore.postSave", result });
       toasts.error("Something went wrong. Please try again later.");
@@ -1258,6 +1273,8 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         scope: UIStateScope.PRODUCT
       }) ??
       true;
+    const linkedCollectionId = this.resolveLinkedCollectionId(captureState);
+    const shouldReturnToLinkedCollection = Boolean(linkedCollectionId);
 
     const viewStore = get(view);
     if (result.length === 1) {
@@ -1266,44 +1283,98 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         type: Resource.node,
         timestamp: new Date()
       });
-      if (!viewStore.isConstrainedWidth && !params?.isEmbedContext)
-        toasts.success("Node saved successfully!");
-
-      if (!params?.isEmbedContext && !shouldOpenUponSave) {
-        inlineToasts.success({
-          id: "nodecapture",
-          message: "Node saved successfully",
-          data: node
-        });
-      }
-
-      if (shouldOpenUponSave && !params?.isEmbedContext)
-        appStore.openResource(node.id, AccessMode.POP, {
-          searchParams: {
-            [AccessMode.MAIN]: null
-          }
-        });
+      this.handleSingleNodePostSave({
+        node,
+        isEmbedContext: params?.isEmbedContext,
+        isConstrainedWidth: viewStore.isConstrainedWidth,
+        shouldOpenUponSave,
+        linkedCollectionId,
+        shouldReturnToLinkedCollection
+      });
     } else if (!viewStore.isConstrainedWidth && !params?.isEmbedContext) {
       toasts.success(`${result.length} nodes saved successfully!`);
     }
     if (params?.isEmbedContext) return;
-    if (!shouldOpenUponSave) {
-      appStore.closeResource({
-        id: captureAction,
-        accessMode: AccessMode.MAIN
-      });
-      appStore.closeResource({
-        id: MemotronAction.CAPTURE_DND,
-        accessMode: AccessMode.MAIN
-      });
-      appStore.closeResource({
-        id: MemotronAction.CAPTURE_SECONDARY,
-        accessMode: AccessMode.MAIN
-      });
-    }
+    this.closeCaptureAfterSave(shouldOpenUponSave);
     this.update((prev) => ({ ...prev, isAvoidSaveLeaks: true }));
     await this.deletePermanently();
     // this.modify({ ...generateSeedStore() }, { isPersist: false });
+  }
+
+  private resolveLinkedCollectionId(captureState: {
+    isCaptureFromCollectionPage?: boolean;
+    linkQueryParam?: string | null;
+  }) {
+    const linkQueryParam = captureState.linkQueryParam;
+    if (
+      !captureState.isCaptureFromCollectionPage ||
+      typeof linkQueryParam !== "string" ||
+      !isValidString(linkQueryParam) ||
+      !linkQueryParam.startsWith(`${Resource.collection}:`)
+    ) {
+      return undefined;
+    }
+    return linkQueryParam as IRecordId;
+  }
+
+  private handleSingleNodePostSave(params: {
+    node: { id: IRecordId };
+    isEmbedContext?: boolean;
+    isConstrainedWidth: boolean;
+    shouldOpenUponSave: boolean;
+    linkedCollectionId?: IRecordId;
+    shouldReturnToLinkedCollection: boolean;
+  }) {
+    if (!params.isConstrainedWidth && !params.isEmbedContext) {
+      toasts.success("Node saved successfully!");
+    }
+
+    if (!params.isEmbedContext && !params.shouldOpenUponSave) {
+      inlineToasts.success({
+        id: "nodecapture",
+        message: "Node saved successfully",
+        data: params.node
+      });
+    }
+
+    if (params.isEmbedContext) {
+      return;
+    }
+
+    if (params.shouldReturnToLinkedCollection && params.linkedCollectionId) {
+      appStore.openResource(params.linkedCollectionId, AccessMode.POP, {
+        searchParams: {
+          [AccessMode.MAIN]: null
+        }
+      });
+      return;
+    }
+
+    if (params.shouldOpenUponSave) {
+      appStore.openResource(params.node.id, AccessMode.POP, {
+        searchParams: {
+          [AccessMode.MAIN]: null
+        }
+      });
+    }
+  }
+
+  private closeCaptureAfterSave(shouldOpenUponSave: boolean) {
+    if (shouldOpenUponSave) {
+      return;
+    }
+    appStore.closeResource({
+      id: captureAction,
+      accessMode: AccessMode.MAIN
+    });
+    appStore.closeResource({
+      id: MemotronAction.CAPTURE_DND,
+      accessMode: AccessMode.MAIN
+    });
+    appStore.closeResource({
+      id: MemotronAction.CAPTURE_SECONDARY,
+      accessMode: AccessMode.MAIN
+    });
   }
 
   private async saveLinks(rootId: IRecordId) {
@@ -1416,6 +1487,26 @@ export class ActiveCaptureStore extends ActiveResourceStore<
 
     let remainingResources: INodeCapture<INode>[] = [];
     if (val.body && "blocks" in val.body) {
+      const resolvedChildrenWithStructure =
+        val.childrenWithStructure.length > 0
+          ? val.childrenWithStructure
+          : extractStructureForChildren(val.body.blocks);
+      const resolvedRootStructure =
+        val.rootStructure.length > 0
+          ? val.rootStructure
+          : extractRootStructure(
+              resolvedChildrenWithStructure,
+              hierarchyFactorLimit
+            ).map((x) => x.id);
+      logger.log({
+        at: "CaptureStore.saveMarkdownCapture.structure",
+        captureId: val.id,
+        label: val.label,
+        blockCount: val.body.blocks.length,
+        rootStructureLength: resolvedRootStructure.length,
+        childrenWithStructureLength: resolvedChildrenWithStructure.length,
+        firstBlock: val.body.blocks[0]
+      });
       let data;
       let contentType;
       let name;
@@ -1438,9 +1529,9 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         }
       }
       let mdText = "";
-      if (val.rootStructure.length > 0) {
+      if (resolvedRootStructure.length > 0) {
         const rootBlocks = val.body.blocks.filter((b) =>
-          val.rootStructure.some(resourceInList(b))
+          resolvedRootStructure.some(resourceInList(b))
         );
         console.time("generateMarkdownText");
         mdText = generateMarkdownText(rootBlocks);
@@ -1448,12 +1539,12 @@ export class ActiveCaptureStore extends ActiveResourceStore<
       }
       root = {
         ...root,
-        children: val.rootStructure,
+        children: resolvedRootStructure,
         text: mdText
       };
 
       console.time("children");
-      for (let block of val.childrenWithStructure) {
+      for (let block of resolvedChildrenWithStructure) {
         const correspondingContent = val.body.blocks.find(
           (b) => b.id === block.id
         );
@@ -1462,7 +1553,7 @@ export class ActiveCaptureStore extends ActiveResourceStore<
           correspondingContent?.contentType &&
           headingNodeTypes.includes(correspondingContent.contentType)
         ) {
-          parent = resolveHeadingParent(block.id, val.childrenWithStructure, [
+          parent = resolveHeadingParent(block.id, resolvedChildrenWithStructure, [
             id
           ]);
         }
@@ -1488,6 +1579,25 @@ export class ActiveCaptureStore extends ActiveResourceStore<
         });
       }
       console.timeEnd("children");
+      console.log(
+        "CaptureStore.saveMarkdownCapture.payload",
+        JSON.stringify({
+          captureId: val.id,
+          label: root.label,
+          rootChildren: root.children,
+          rootText: root.text,
+          firstRemainingResource: remainingResources[0]
+            ? {
+                id: remainingResources[0].id,
+                contentType: remainingResources[0].contentType,
+                body: remainingResources[0].body,
+                label: remainingResources[0].label,
+                children: remainingResources[0].children,
+                mdParent: remainingResources[0].mdParent
+              }
+            : null
+        })
+      );
     }
 
     let result: any = await nodeStore.create([root, ...remainingResources], {

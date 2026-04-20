@@ -286,7 +286,7 @@
     type: "keyup" | "keydown" = "keydown"
   ) {
     if (
-      !$mdStore.params?.canUseSlashShortcut ||
+      $mdStore.params?.canUseSlashShortcut === false ||
       ($context.isTouchDevice && $view.isConstrainedWidth)
     )
       return false;
@@ -319,17 +319,39 @@
     event: KeyboardEvent,
     type: "keyup" | "keydown" = "keydown"
   ) {
-    if (!$mdStore.params?.canUseSlashShortcut) return false;
+    if ($mdStore.params?.canUseSlashShortcut === false) return false;
+    const latestBracketTriggerIndex = text.lastIndexOf("[[");
+    const latestAtTriggerIndex = text.lastIndexOf("@");
+    const previousCharacter =
+      latestAtTriggerIndex > 0 ? text[latestAtTriggerIndex - 1] : "";
+    const mentionSuffix =
+      latestAtTriggerIndex !== -1 ? text.slice(latestAtTriggerIndex + 1) : "";
+    const hasAtMentionContext =
+      latestAtTriggerIndex !== -1 &&
+      (latestAtTriggerIndex === 0 ||
+        (/\s|\(|\[/.test(previousCharacter) && !/\s/.test(mentionSuffix)));
+    const mentionTriggerFromText =
+      latestBracketTriggerIndex !== -1 ? "[[" : hasAtMentionContext ? "@" : undefined;
     if (
       type === "keydown" &&
       (event.key === "@" || (event.key === "[" && text.endsWith("[")))
     ) {
-      logger.log({
-        at: "handleMentionShortcut - triggered",
-        key: event.key
-      });
       mentionTriggerKey = event.key === "[" ? "[[" : event.key;
       showPopover("mentionSearch");
+      return true;
+    } else if (
+      type === "keyup" &&
+      !isRenderMentionSearch &&
+      mentionTriggerFromText
+    ) {
+      mentionTriggerKey = mentionTriggerFromText;
+      showPopover("mentionSearch");
+      setTimeout(() => {
+        dispatchCustomEvent(GlobalEvent.SEARCH_RESULT_KEYUP, {
+          id: mentionSearchPopoverId,
+          event
+        });
+      }, 10);
       return true;
     } else if (!isRenderMentionSearch) {
       return false;
@@ -364,7 +386,7 @@
     event: KeyboardEvent,
     type: "keyup" | "keydown" = "keydown"
   ) {
-    if (!$mdStore.params?.canUseSlashShortcut) return false;
+    if ($mdStore.params?.canUseSlashShortcut === false) return false;
     const hasColon = text.includes(":");
 
     if (type === "keydown" && event.key === ":") {
@@ -817,6 +839,7 @@
     } else {
       text = "";
       textRef.set("");
+      dispatchChangeEvent();
       if (id) {
         convert(event.detail.type);
       }
@@ -832,7 +855,6 @@
 
   function onMentionSelect(event: CustomEvent) {
     const item = event.detail.item;
-    logger.log({ at: "onMentionSelect", item });
     textRef.addMention(item, mentionSearchQuery, mentionTriggerKey);
     hidePopover("mentionSearch");
     mentionSearchQuery = "";

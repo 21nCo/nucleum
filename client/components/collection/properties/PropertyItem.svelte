@@ -135,7 +135,9 @@
   }
 
   function onChangesElsewhere(e: any) {
-    const { action, record } = e.detail?.params;
+    const params = e?.detail?.params;
+    if (!params) return;
+    const { action, record } = params;
     if (action !== PersistenceActionType.MERGE || !record || !record.properties)
       return;
     const { properties } = record;

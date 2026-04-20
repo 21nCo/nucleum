@@ -20,6 +20,17 @@ function hasSelectMany(
   return Boolean(store && "selectMany" in store);
 }
 
+function resolveTimestamp(value: unknown): Date | null {
+  if (value instanceof Date) {
+    return isNaN(value.getTime()) ? null : value;
+  }
+  if (typeof value === "string" || typeof value === "number") {
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? null : date;
+  }
+  return null;
+}
+
 export class RecentsStore extends ObservableStore<IRecentsStore> {
   private readonly LIMIT = 20;
   constructor() {
@@ -34,11 +45,17 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
         const data = await this.recents(resource);
         recents = [
           ...recents,
-          ...data.map((x) => ({
-            type: resource,
-            record: x,
-            timestamp: x.modifiedAt
-          }))
+          ...data.flatMap((x) => {
+            const timestamp = resolveTimestamp(x.modifiedAt);
+            if (!timestamp) return [];
+            return [
+              {
+                type: resource,
+                record: x,
+                timestamp
+              }
+            ];
+          })
         ];
       } catch (error) {
         logger.error({ at: "recentsStore.refresh", resource }, error);
@@ -59,21 +76,27 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
   }
 
   resolve(params?: { type?: Resource; exclude?: IRecordId[] }) {
-    const recents = this.get().recents;
+    const recents = this.get().recents
+      .map((entry) => ({
+        ...entry,
+        timestamp: resolveTimestamp(entry.timestamp)
+      }))
+      .filter((entry) => entry.record && entry.timestamp);
     if (params?.type && params.type !== Resource.everything) {
       return recents
-        .filter((x) => x.type === params.type && x.timestamp)
-        .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+        .filter((x) => x.type === params.type)
+        .sort((a, b) => b.timestamp!.getTime() - a.timestamp!.getTime())
         .map((x) => x.record)
         .filter((x) => !params.exclude?.some(resourceInList(x.id)));
     }
     return recents
-      .filter((x) => x.record && x.timestamp)
-      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .sort((a, b) => b.timestamp!.getTime() - a.timestamp!.getTime())
       .map((x) => x.record);
   }
 
   add(record: any, params: { type: Resource; timestamp: Date }) {
+    const timestamp = resolveTimestamp(params.timestamp);
+    if (!timestamp) return;
     this.update((x) => {
       const filteredRecents = x.recents.filter(
         (y) => !isSameResource(y.record, record)
@@ -83,7 +106,7 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
         recents: [
           {
             type: params.type,
-            timestamp: params.timestamp,
+            timestamp,
             record
           },
           ...filteredRecents

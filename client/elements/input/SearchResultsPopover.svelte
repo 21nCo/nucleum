@@ -79,7 +79,9 @@
     resetSearch();
     value = "";
     const resetEvent = new CustomEvent("reset");
-    onReset?.(resetEvent);
+    if (typeof onReset === "function") {
+      onReset(resetEvent);
+    }
   }
 
   export function resetSelectedIndex() {
@@ -91,8 +93,17 @@
   }
 
   function onSearchResultSelection(item: SearchItem, e?: MouseEvent) {
+    logger.info({
+      at: "SearchResultsPopover.onSearchResultSelection",
+      selectedIndex,
+      item,
+      currentValue,
+      resultsCount: results.length
+    });
     const selectEvent = new CustomEvent("select", { detail: { item, event: e } });
-    onSelect?.(selectEvent);
+    if (typeof onSelect === "function") {
+      onSelect(selectEvent);
+    }
     if (item?.id) {
       const type = determineResourceType(item.id);
       appStore.addToRecents({
@@ -207,7 +218,9 @@
     if (event.key === KeyboardKey.ESCAPE) {
       resetSearch();
       const blurEvent = new CustomEvent<void>("blur");
-      onBlur?.(blurEvent);
+      if (typeof onBlur === "function") {
+        onBlur(blurEvent);
+      }
     } else if (event.key === KeyboardKey.BACKSPACE) {
       previousValue = currentValue;
       currentValue = value;
@@ -219,7 +232,9 @@
         const emptyEnterEvent = new CustomEvent("empty-enter", {
           detail: { event, value }
         });
-        onEmptyEnter?.(emptyEnterEvent);
+        if (typeof onEmptyEnter === "function") {
+          onEmptyEnter(emptyEnterEvent);
+        }
       }
     } else if (
       event.key !== KeyboardKey.ARROW_DOWN &&
@@ -244,16 +259,29 @@
       return;
     }
     if (searchCallback) {
-      let result = await searchCallback(val);
-      if (result) results = result;
-      isSearchInProgress = false;
-      if (results.length > 0) {
-        show();
+      try {
+        const result = await searchCallback(val);
+        if (result) results = result;
+        if (results.length > 0) {
+          show();
+        }
+      } catch (error) {
+        logger.error({
+          at: "SearchResultsPopover.search",
+          value: val,
+          searchStoreId,
+          error
+        });
+        results = [];
+      } finally {
+        isSearchInProgress = false;
+        const countEvent = new CustomEvent("count", {
+          detail: { count: results?.length }
+        });
+        if (typeof onCount === "function") {
+          onCount(countEvent);
+        }
       }
-      const countEvent = new CustomEvent("count", {
-        detail: { count: results?.length }
-      });
-      onCount?.(countEvent);
       return;
     }
 
@@ -264,17 +292,23 @@
     const countEvent = new CustomEvent("count", {
       detail: { count: results?.length }
     });
-    onCount?.(countEvent);
+    if (typeof onCount === "function") {
+      onCount(countEvent);
+    }
   }
 
   function show() {
     const showEvent = new CustomEvent<void>("show");
-    onShow?.(showEvent);
+    if (typeof onShow === "function") {
+      onShow(showEvent);
+    }
   }
 
   function hide() {
     const hideEvent = new CustomEvent<void>("hide");
-    onHide?.(hideEvent);
+    if (typeof onHide === "function") {
+      onHide(hideEvent);
+    }
   }
 </script>
 

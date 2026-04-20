@@ -17,6 +17,7 @@ import {
   type IResourceSelectProperties
 } from "@21n/types/data.type";
 import { parse } from "@21n/shared-utils/json.utils";
+import { deepCopy } from "@21n/shared-utils/obj.utils";
 import { isValidString } from "@21n/shared-utils/text.utils";
 import {
   ClientStorageKey,
@@ -45,8 +46,15 @@ export class DexiePersistence implements IPersistence {
   private indexingWorker: SharedWorker | undefined = undefined;
   private isIndexingInProgress: boolean = false;
   private indexingProgress: number = 0;
+  private isSearchRecoveryPending: boolean = false;
 
   constructor() {}
+
+  private sanitizeForStorage<T>(value: T): T {
+    if (value === undefined || value === null) return value;
+    if (typeof value !== "object") return value;
+    return deepCopy(value);
+  }
 
   async initialize(params: IPersistenceInitParams): Promise<number> {
     logger.info({ at: "DexiePersistence.initialize", params });
@@ -405,10 +413,10 @@ export class DexiePersistence implements IPersistence {
     switch (params.action) {
       case PersistenceActionType.INSERT:
         const records = params.records.map((record) => {
-          return {
+          return this.sanitizeForStorage({
             ...record,
             id: record.id?.toString()
-          };
+          });
         });
         const shouldSkipIndexing = (params as any).isSkipFlexSearchIndexing;
         const table = this.instance?.table(resource);
@@ -498,10 +506,19 @@ export class DexiePersistence implements IPersistence {
 
   async merge(resource: Resource, id: IRecordId, data: any) {
     try {
-      const result = await this.instance?.table(resource).update(id, data);
-      logger.log({ at: "DexiePersistence.merge", id, data, result, resource });
+      const sanitizedData = this.sanitizeForStorage(data);
+      const result = await this.instance?.table(resource).update(id, sanitizedData);
+      logger.log({
+        at: "DexiePersistence.merge",
+        id,
+        data: sanitizedData,
+        result,
+        resource
+      });
       if (result === 0) {
-        return this.instance?.table(resource).put({ ...data, id });
+        return this.instance
+          ?.table(resource)
+          .put({ ...sanitizedData, id });
       }
       return result;
     } catch (e) {
@@ -566,6 +583,7 @@ export class DexiePersistence implements IPersistence {
     try {
       const table = this.instance?.table(resource);
       if (!table) return;
+      const sanitizedChanges = this.sanitizeForStorage(changes);
 
       const stringIds = recordIds.map((id) => id.toString());
 
@@ -579,7 +597,9 @@ export class DexiePersistence implements IPersistence {
 
       const recordsToUpdate = stringIds.map((id) => {
         const existing = existingRecordsMap.get(id);
-        return existing ? { ...existing, ...changes } : { ...changes, id };
+        return existing
+          ? { ...existing, ...sanitizedChanges }
+          : { ...sanitizedChanges, id };
       });
 
       const result = await table.bulkPut(recordsToUpdate);
@@ -587,7 +607,7 @@ export class DexiePersistence implements IPersistence {
       logger.log({
         at: "DexiePersistence.bulkMerge",
         recordIds,
-        changes,
+        changes: sanitizedChanges,
         result,
         resource
       });
@@ -934,13 +954,29 @@ export class DexiePersistence implements IPersistence {
       return undefined;
     }
 
-    const ids = await searchEngine.search(search.query, {
-      limit: params?.limit ?? 50,
-      fields: search.properties,
-      mode: "auto",
-      fuzzy: false,
-      applyQueryNGrams: false
-    });
+    let ids: string[] = [];
+    try {
+      ids = (
+        await searchEngine.search(search.query, {
+          limit: params?.limit ?? 50,
+          fields: search.properties,
+          mode: "auto",
+          fuzzy: false,
+          applyQueryNGrams: false
+        })
+      ).map((value) => value.toString());
+    } catch (error) {
+      logger.error({
+        at: "DexiePersistence.preSearchUsingIndex",
+        resource,
+        search,
+        error,
+        message: "Search index query failed; falling back to collection scan"
+      });
+      void this.queueSearchIndexRecovery();
+      console.timeEnd(`preSearchUsingIndex - ${resource} - ${id}`);
+      return undefined;
+    }
 
     console.timeEnd(`preSearchUsingIndex - ${resource} - ${id}`);
     if (ids.length > 0) {
@@ -948,6 +984,21 @@ export class DexiePersistence implements IPersistence {
     }
 
     return undefined;
+  }
+
+  private async queueSearchIndexRecovery() {
+    if (this.isSearchRecoveryPending || this.isIndexingInProgress) return;
+    this.isSearchRecoveryPending = true;
+    try {
+      await this.triggerBackgroundIndexing(false);
+    } catch (error) {
+      logger.error({
+        at: "DexiePersistence.queueSearchIndexRecovery",
+        error
+      });
+    } finally {
+      this.isSearchRecoveryPending = false;
+    }
   }
 
   /**

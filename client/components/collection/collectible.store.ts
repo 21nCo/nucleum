@@ -17,6 +17,28 @@ import type {
   IResourceCaptureV2
 } from "@21n/components/flux/resourceStores/resource.type";
 
+function resolveResourceKey(item: unknown): string | undefined {
+  if (!item) return undefined;
+  if (typeof item === "string") return item;
+  if (typeof item === "object") {
+    if ("tb" in item && "id" in item) {
+      const tb = item.tb;
+      const id = item.id;
+      if (typeof tb === "string" && id !== undefined && id !== null) {
+        return `${tb}:${id}`;
+      }
+    }
+    if ("id" in item) {
+      return resolveResourceKey(item.id);
+    }
+  }
+  try {
+    return String(item);
+  } catch {
+    return undefined;
+  }
+}
+
 export class CollectibleStore<
   T extends IResource & ICollectible,
   S extends ResourceStore<T, IResourceCaptureV2<T>>,
@@ -37,11 +59,29 @@ export class CollectibleStore<
 
   async unlinkCollection(id: IRecordId, src?: IRecordId) {
     const resource = this.get();
-    await linker.unlink(src ?? resource.id, id);
-    this.modify({
-      collections: resource.collections?.filter((x) => !isSameResource(x, id))
-    } as Partial<T>);
+    const previousCollections = resource.collections ?? [];
+    const collectionId = resolveResourceKey(id);
+    const collections = previousCollections.filter(
+      (item) => resolveResourceKey(item) !== collectionId
+    );
+    this.update((prev) => ({ ...prev, collections }) as V);
     await this.refreshTypes();
+    try {
+      await linker.unlink(src ?? resource.id, id);
+      await this.resourceStore.modify(
+        this.id,
+        {
+          collections
+        } as Partial<T>,
+        {
+          isPreventBackPropagation: true
+        }
+      );
+    } catch (error) {
+      this.update((prev) => ({ ...prev, collections: previousCollections }) as V);
+      await this.refreshTypes();
+      throw error;
+    }
   }
 
   protected async refreshTypes() {

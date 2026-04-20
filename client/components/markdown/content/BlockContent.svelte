@@ -55,7 +55,7 @@
       <div class="h-px bg-bgs4"></div>
     </div>
   {:else if block.contentType === NodeType.MEDIA_GRID}
-    <MediaGrid block={mediaGridBlock} {mdStore} {onDelete} />
+    <MediaGrid block={mediaGridBlock} {mdStore} {onDelete} {onUpdate} />
   {:else if block.contentType === NodeType.EMBED}
     <EmbedContent
       id={block.id}
@@ -72,7 +72,7 @@
   {:else if headingNodeTypes.includes(block.contentType)}
     <HeadingContent
       id={block.id}
-      bind:text={block.label}
+      text={block.label}
       bind:isFocusing
       {mdStore}
       contentType={block.contentType}
@@ -91,7 +91,7 @@
     />
   {:else if simpleTextNodeTypeList.includes(block.contentType) && typeof block.body === "string"}
     <TextContent
-      bind:text={block.body}
+      text={block.body}
       id={block.id}
       contentType={block.contentType}
       {mdStore}

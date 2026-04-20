@@ -1,11 +1,9 @@
 <script lang="ts">
   import { Size } from "@21n/types/size.enum";
   import { bg, cn } from "@21n/utils/ui.utils";
-  import HoverableElement from "@21n/elements/HoverableElement.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import type { IToolTipOptions } from "@21n/elements/text/text.type";
   import Badge from "@21n/elements/text/Badge.svelte";
-  import { hoverable } from "@21n/actions/hover.action";
   import { tooltip as tooltipAction } from "@21n/actions/popover.action";
   import { Placement } from "@21n/types/direction.enum";
   import type { IKeyboardShortcut } from "@21n/components/shortcuts/shortcut.type";
@@ -49,6 +47,9 @@
     on = !on;
     onChange?.(new CustomEvent("change", { detail: on }));
   }
+  function handleHover(value: boolean) {
+    isHovering = value;
+  }
   const shortcutSize = $derived(size === Size.lg ? Size.md : size);
 </script>
 
@@ -60,11 +61,10 @@
   }}
   role={isRenderAsDiv && !isPassive ? "button" : undefined}
   tabindex={isRenderAsDiv && !isPassive ? 0 : undefined}
-  use:hoverable={{
-    onHover: (value) => {
-      isHovering = value;
-    }
-  }}
+  onmouseenter={() => handleHover(true)}
+  onmouseleave={() => handleHover(false)}
+  onfocus={() => handleHover(true)}
+  onblur={() => handleHover(false)}
   use:tooltipAction={{
     text: tooltip,
     direction: tooltipOptions?.placement ?? Placement.Bottom

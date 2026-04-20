@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import {
     headingNodeTypes,
     type INode,
@@ -17,6 +16,7 @@
   import { Size } from "@21n/types/size.enum";
   import { resolveNodeLabel } from "@21n/products/memotron/node/node.utils";
   import NodeTitleBreadcrumbs from "@21n/products/memotron/node/title/NodeTitleBreadcrumbs.svelte";
+  import { isValidString } from "@21n/shared-utils/text.utils";
   let {
     item,
     isNodePageContext = false,
@@ -28,16 +28,18 @@
     accessPoint?: ResourceAccessPoint;
     onClick?: (() => void) | undefined;
   } = $props();
-  let _label:
+  let _label = $state<
     | string
     | {
         label: string;
         parent: {
-          id: string;
+          id?: string;
           label: string;
         };
+        text?: string;
       }
-    | undefined = undefined;
+    | undefined
+  >(undefined);
   const dynamicLabelNodeTypes = [
     NodeType.TWEET,
     NodeType.TWITTER_PROFILE,
@@ -59,7 +61,12 @@
 
   function onParentClick(e: MouseEvent) {
     const labelObject = resolveLabelObject();
-    if (!labelObject || accessPoint === ResourceAccessPoint.SEARCH_RESULT) return;
+    if (
+      !labelObject ||
+      !labelObject.parent.id ||
+      accessPoint === ResourceAccessPoint.SEARCH_RESULT
+    )
+      return;
     appStore.resourceClickHandler(e, labelObject.parent.id, {
       replaceId:
         accessPoint === ResourceAccessPoint.SELF ? item.id : undefined,
@@ -67,8 +74,20 @@
     });
   }
 
-  onMount(async () => {
-    _label = await resolveNodeLabel(item as INodeThumb);
+  $effect(() => {
+    _label = resolveNodeLabel(item as INodeThumb);
+    if (accessPoint === ResourceAccessPoint.LIBRARY) {
+      console.log(
+        "NodeTitleLabelPart.resolve",
+        JSON.stringify({
+          id: item?.id,
+          contentType: item?.contentType,
+          itemLabel: item?.label,
+          itemText: item?.text,
+          resolvedLabel: _label
+        })
+      );
+    }
   });
 
   function handleRootClick() {
@@ -80,6 +99,26 @@
       event.preventDefault();
       handleRootClick();
     }
+  }
+
+  function resolveTextFallback() {
+    if (item.contentType !== NodeType.NODULAR_MARKDOWN) return undefined;
+    if (typeof item.text !== "string") return undefined;
+    const itemText = item.text;
+    if (!isValidString(itemText)) return undefined;
+    const firstLine = itemText
+      .split("\n")
+      .map((line) => line.trim())
+      .find((line) => isValidString(line));
+    if (!firstLine) return undefined;
+    const normalized = firstLine
+      .replace(/^#{1,6}\s+/, "")
+      .replace(/^>\s+/, "")
+      .replace(/^[-*+]\s+/, "")
+      .replace(/^\d+\.\s+/, "")
+      .replace(/^\[[ xX]\]\s+/, "")
+      .trim();
+    return isValidString(normalized) ? normalized : undefined;
   }
 </script>
 
@@ -130,6 +169,8 @@
           </button>
         </span>
       {/if}
+    {:else if resolveTextFallback()}
+      {resolveTextFallback()}
     {:else}
       {resolveEmptyLabel()}
     {/if}

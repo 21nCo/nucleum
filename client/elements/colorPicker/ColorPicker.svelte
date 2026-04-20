@@ -45,17 +45,21 @@
   });
 
   function onChange(value: number | string) {
-    onChangeCallback(value, {
-      saturation,
-      lightness
-    });
+    if (typeof onChangeCallback === "function") {
+      onChangeCallback(value, {
+        saturation,
+        lightness
+      });
+    }
   }
 
   function onDebouncedChange(value: number | string) {
-    onDebouncedChangeCallback(value, {
-      saturation,
-      lightness
-    });
+    if (typeof onDebouncedChangeCallback === "function") {
+      onDebouncedChangeCallback(value, {
+        saturation,
+        lightness
+      });
+    }
   }
 
   function onElementChange(payload: {
@@ -71,7 +75,7 @@
     hex: string;
   }) {
     hex = payload.hex;
-    debouncedChangePropagation(payload.hex);
+    onDebouncedChange(payload.hex);
   }
 
   const debouncedChangePropagation = debouncer(onDebouncedChange, 1000);

@@ -28,10 +28,10 @@
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
   import { InputStyle } from "@21n/types/input.type";
   import { isTextElement } from "@21n/utils/browser.utils";
-  import { logger } from "@21n/components/debug/logger.client";
   import Icon from "@21n/elements/Icon.svelte";
   import TrainPanelSwitcher from "@21n/elements/switcher/train/TrainPanelSwitcher.svelte";
   import { KeyboardKey } from "@21n/types/keyboard.type";
+  import { logger } from "@21n/components/debug/logger.client";
 
   const PANEL_SWITCHER_ATTR = "data-panel-switcher-id";
   let {
@@ -112,11 +112,21 @@
   }
 
   function emitChange(detail: any) {
+    if (detail?.value !== undefined && typeof detail?.label === "string") {
+      _items = _items.map((item) =>
+        item.value === detail.value ? { ...item, label: detail.label } : item
+      );
+    }
     const changeEvent = new CustomEvent<any>("change", { detail });
     onChange?.(changeEvent);
   }
 
   function emitDebouncedChange(detail: any) {
+    if (detail?.value !== undefined && typeof detail?.label === "string") {
+      _items = _items.map((item) =>
+        item.value === detail.value ? { ...item, label: detail.label } : item
+      );
+    }
     const debouncedChangeEvent = new CustomEvent<any>("debouncedChange", {
       detail
     });

@@ -17,7 +17,7 @@
   import CollectionThumbnailLabel from "@21n/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
   import CollectionThumbnailAvatar from "@21n/components/collection/thumbnail/CollectionThumbnailAvatar.svelte";
   let {
-    item = $bindable(),
+    item: itemProp,
     arrangement = Arrangement.LIST,
     size = Size.md,
     accessPoint = ResourceAccessPoint.BROWSER,
@@ -31,6 +31,11 @@
     accessPointState?: ResourceAccessPointState;
     onClick?: ((event: MouseEvent) => void) | undefined;
   } = $props();
+  let item = $state<ICollectionThumb | undefined>(itemProp);
+
+  $effect(() => {
+    item = itemProp;
+  });
 
   function onCollectionChange(e: any) {
     const data = e.detail?.params?.record;
@@ -41,56 +46,63 @@
 </script>
 
 {#if item}
-  <ResourceThumbnailBase bind:item {accessPoint} {arrangement}>
-  {#if arrangement === Arrangement.LIST}
-    <button
-      class="flex items-center h-16 gap-3 w-full rounded-md bg-bgs2 border border-transparent hover:border-bgs2 p-3"
-      onclick={onClick}
-    >
-      <CollectionThumbnailAvatar {item} size={Size.lg} />
-      <div class="flex flex-col gap-1 flex-grow">
-        <div class="flex items-center gap-2 text-b2">
-          <CollectionThumbnailLabel
-            {item}
-            isShowAvatar={false}
-            isShowStarStatus={accessPoint !== ResourceAccessPoint.BROWSER}
-          />
-          <span class="flex gap-1">
-            {#if accessPointState === ResourceAccessPointState.DEFAULT}
-              <CollectionNodeCount {item} isShowLabel={true} />
-            {/if}
-            <CollectionPropertyCount {item} isShowLabel={false} />
-          </span>
+  <ResourceThumbnailBase {item} {accessPoint} {arrangement}>
+    {#if arrangement === Arrangement.LIST}
+      <button
+        class="flex items-center h-16 gap-3 w-full rounded-md bg-bgs2 border border-transparent hover:border-bgs2 p-3"
+        onclick={onClick}
+      >
+        <CollectionThumbnailAvatar {item} size={Size.lg} />
+        <div class="flex flex-col gap-1 flex-grow">
+          <div class="flex items-center gap-2 text-b2">
+            <CollectionThumbnailLabel
+              {item}
+              isShowAvatar={false}
+              isShowStarStatus={accessPoint !== ResourceAccessPoint.BROWSER}
+            />
+            <span class="flex gap-1">
+              {#if accessPointState === ResourceAccessPointState.DEFAULT}
+                <CollectionNodeCount {item} isShowLabel={true} />
+              {/if}
+              <CollectionPropertyCount {item} isShowLabel={false} />
+            </span>
+          </div>
+          {#if item.description}
+            <span class="text-b3 text-fgs3 truncate text-left">
+              {item.description}
+            </span>
+          {/if}
         </div>
-        {#if item.description}
-          <span class="text-b3 text-fgs3 truncate text-left">
-            {item.description}
-          </span>
-        {/if}
-      </div>
-    </button>
-  {:else if arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY}
-    <ResourceGridThumbnail {item} {size} onclick={onClick}>
-      <!-- {#if item.type === CollectionType.TYPED || item.type === CollectionType.QUERY}
+      </button>
+    {:else if arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY}
+      <ResourceGridThumbnail {item} {size} onclick={onClick}>
+        <!-- {#if item.type === CollectionType.TYPED || item.type === CollectionType.QUERY}
         <div
           class="absolute top-0 left-0 flex bg-bgs2 rounded-md px-2 py-1 m-2 text-b3"
         >
           {properCase(item.type)} collection
         </div>
       {/if} -->
-      <!-- <ResourceThumbnailContentTypeOverlay contentType={item.type} /> -->
-      <Cover {item} {arrangement} />
-      {#snippet bottom()}
-        <CollectionThumbnailLabelRow item={item!} {arrangement} {accessPoint} />
-        <span class="flex gap-2">
-          {#if accessPointState === ResourceAccessPointState.DEFAULT}
-            <CollectionNodeCount item={item!} isShowLabel={true} />
-          {/if}
-          <CollectionPropertyCount item={item!} isShowLabel={size === Size.md} />
-        </span>
-      {/snippet}
-    </ResourceGridThumbnail>
-  {/if}
+        <!-- <ResourceThumbnailContentTypeOverlay contentType={item.type} /> -->
+        <Cover {item} {arrangement} />
+        {#snippet bottom()}
+          <CollectionThumbnailLabelRow
+            item={item!}
+            {arrangement}
+            {accessPoint}
+          />
+          <span class="flex gap-2">
+            {#if accessPointState === ResourceAccessPointState.DEFAULT}
+              <CollectionNodeCount item={item!} isShowLabel={true} />
+            {/if}
+            <CollectionPropertyCount
+              item={item!}
+              isShowLabel={size === Size.md}
+            />
+          </span>
+        {/snippet}
+      </ResourceGridThumbnail>
+    {/if}
   </ResourceThumbnailBase>
 
   <ComponentBaseLayer

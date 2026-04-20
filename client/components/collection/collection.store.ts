@@ -275,14 +275,15 @@ class CollectionStore extends ResourceStore<ICollection, ICollectionCapture> {
       uiState
         .getState(UIState.captureShortcutRecents)
         ?.map((x: IRecordId) => x.toString()) ?? [];
-    const _types: (ISelectItem & { value: string; isShortcut?: boolean })[] = data
-      .filter((x: ICollection) => !x.resource || x.resource === Resource.node)
-      .map((type: ICollection) => ({
-        value: type.id,
-        label: type.label,
-        icon: type.avatar,
-        isShortcut: true
-      }));
+    const _types: (ISelectItem & { value: string; isShortcut?: boolean })[] =
+      data
+        .filter((x: ICollection) => !x.resource || x.resource === Resource.node)
+        .map((type: ICollection) => ({
+          value: type.id,
+          label: type.label,
+          icon: type.avatar,
+          isShortcut: true
+        }));
     const types = _types.sort((a, b) => {
       const aIndex = recents.indexOf(a.value.toString());
       const bIndex = recents.indexOf(b.value.toString());
@@ -530,9 +531,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         isPreventBackPropagation: true
       }
     );
-    dispatchCustomEvent(GlobalEvent.RELOAD_RESOURCE, {
-      id: this.id
-    });
+    await this.refreshProperties();
     return result;
   }
 
@@ -578,11 +577,10 @@ export function resolveCollectionContextMenu(
     isConstrainedWidth?: boolean;
   }
 ): IContextMenu {
-  const resourceActions = new ResourceActions(
-    collection,
-    collectionStore,
-    { accessPoint, accessMode: params?.accessMode }
-  );
+  const resourceActions = new ResourceActions(collection, collectionStore, {
+    accessPoint,
+    accessMode: params?.accessMode
+  });
   const ctx = get(context);
   const viewStore = get(view);
   let commonGroups: { group: string; items: IContextMenuItem[] }[] = [];

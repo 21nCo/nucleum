@@ -1,5 +1,9 @@
 import { test, expect } from "@playwright/test";
 import { ensureInAppOnHome } from "../../utils/helpers";
+import {
+  getResourceContract,
+  requireResourceBrowseContract
+} from "../../utils/resource-matrix";
 
 const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
@@ -26,6 +30,12 @@ test.describe("session - resource coverage (browse/open) @regression", () => {
 
   test("Library has Sessions tab and can browse/open (or N/A)", async ({ page }) => {
     test.setTimeout(90_000);
+    const sessionContract = getResourceContract(test.info().project.name, "session");
+    test.skip(
+      !sessionContract.browseEnabled,
+      "Sessions are not browsable in this product"
+    );
+    requireResourceBrowseContract(test.info().project.name, "session");
     await ensureInAppOnHome(page);
 
     await page.getByRole("button", { name: /^Library$/i }).first().click({ timeout: 5_000 });
@@ -35,10 +45,9 @@ test.describe("session - resource coverage (browse/open) @regression", () => {
     await page.waitForTimeout(800);
 
     const sessionsBtn = page
-      .getByRole("button", { name: /^Sessions(\s+\d+)?$/i })
+      .getByRole("button", { name: sessionContract.browseLabelPattern ?? /^Sessions(\s+\d+)?$/i })
       .first();
-    const visible = await sessionsBtn.isVisible().catch(() => false);
-    if (!visible) test.skip(true, "No Sessions resource in Library (N/A)");
+    await expect(sessionsBtn).toBeVisible({ timeout: 10_000 });
 
     await sessionsBtn.click({ timeout: 5_000 });
     await page.waitForTimeout(1_000);
@@ -48,19 +57,15 @@ test.describe("session - resource coverage (browse/open) @regression", () => {
 
     // If there are any records, clicking the first should open a panel/record page.
     const first = recordsContainer.locator('div[id^="thumbnail-"]').first();
-    const hasAny = await first.isVisible().catch(() => false);
-    if (!hasAny) test.skip(true, "Sessions list is empty in this environment (N/A)");
+    await expect(first).toBeVisible({ timeout: 15_000 });
 
     await first.click({ timeout: 5_000 });
     await page.waitForTimeout(1_500);
 
-    const hasClose = await page
-      .getByRole("button", { name: /Close/i })
-      .first()
-      .waitFor({ state: "visible", timeout: 15_000 })
-      .then(() => true)
-      .catch(() => false);
-    if (!hasClose) test.skip(true, "No session record page UI available (N/A)");
+    await expect(
+      page.getByRole("button", { name: /Close/i }).first()
+    ).toBeVisible({
+      timeout: 15_000
+    });
   });
 });
-

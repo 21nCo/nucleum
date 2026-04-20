@@ -14,6 +14,7 @@ import {
   generateAnalyticsSeedPages,
   generateParamsForCards
 } from "@21n/products/pointron/analytics/analytics.utils";
+import { normalizeAnalyticsConfig } from "@21n/products/pointron/analytics/analytics.normalize";
 import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 import { sessionLogStore } from "@21n/products/pointron/logs/log.store";
@@ -48,19 +49,20 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
   }
 
   loader(data: IAnalyticsConfigStore) {
-    if (data.pages.length === 0) {
+    const normalized = normalizeAnalyticsConfig(data, generateAnalyticsSeedPages());
+    if (normalized.pages.length === 0) {
       this.loadSeedData();
     } else {
-      const val = { ...data, id: analyticsConfigStoreId };
+      const val = { ...normalized, id: analyticsConfigStoreId };
       this.modify(val, { isPersist: false });
     }
   }
 
   updateCardConfig(pageId: string, config: IAnalyticsCard) {
     let state = this.get();
-    const page = state.pages.find((p) => p.id === pageId);
+    const page = (state.pages ?? []).find((p) => p.id === pageId);
     if (!page) return;
-    const chart = page.cards.find((c) => c.id === config.id);
+    const chart = (page.cards ?? []).find((c) => c.id === config.id);
     if (!chart) return;
     Object.assign(chart, config);
     this.modify(state);
@@ -68,9 +70,9 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
 
   removeCard(pageId: string, chartId: string) {
     let state = this.get();
-    const page = state.pages.find((p) => p.id === pageId);
+    const page = (state.pages ?? []).find((p) => p.id === pageId);
     if (!page) return;
-    const index = page.cards.findIndex((c) => c.id === chartId);
+    const index = (page.cards ?? []).findIndex((c) => c.id === chartId);
     if (index > -1) {
       page.cards.splice(index, 1);
     }
@@ -79,8 +81,9 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
 
   addCard(pageId: string) {
     let state = this.get();
-    const page = state.pages.find((p) => p.id === pageId);
+    const page = (state.pages ?? []).find((p) => p.id === pageId);
     if (!page) return;
+    page.cards = page.cards ?? [];
     if (page.cards.length >= 10) {
       toasts.error("You can only have up to 10 cards on a page");
       return;
@@ -102,21 +105,25 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
   addPage() {
     let state = this.get();
     const newPage = generateAnalyticsSeedPage();
+    state.pages = state.pages ?? [];
     state.pages.push({ ...newPage, id: generateSimpleRandomId() });
     this.modify(state);
   }
 
   editPageLabel(id: string, label: string) {
-    let state = this.get();
-    const page = state.pages.find((p) => p.id === id);
-    if (!page) return;
-    page.label = label;
-    this.modify(state);
+    const state = this.get();
+    const pages = (state.pages ?? []).map((page) =>
+      page.id === id ? { ...page, label } : page
+    );
+    this.modify({
+      ...state,
+      pages
+    });
   }
 
   removePage(id: string) {
     let state = this.get();
-    const index = state.pages.findIndex((p) => p.id === id);
+    const index = (state.pages ?? []).findIndex((p) => p.id === id);
     if (index > -1) {
       state.pages.splice(index, 1);
     }
@@ -125,6 +132,7 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
 
   rearrangePages(ids: string[]) {
     let state = this.get();
+    state.pages = state.pages ?? [];
     state.pages = ids
       .map((id) => state.pages.find((p) => p.id === id))
       .filter((page): page is AnalyticsPage => Boolean(page));

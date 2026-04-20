@@ -4,26 +4,52 @@ End-to-end tests for Nucleum and its products (Pointron, Memotron).
 
 ## Running tests
 
+All commands below are runnable from the repository root.
+
+### Full matrix
+
+```bash
+npm run test --workspace=e2e-playwright -- --reporter=line
+```
+
+### Smoke and feature layers
+
+```bash
+npm run test --workspace=e2e-playwright -- --grep @smoke
+npm run test --workspace=e2e-playwright -- --grep @feature
+```
+
+### Coverage matrix artifact
+
+```bash
+npm run coverage:matrix --workspace=e2e-playwright
+```
+
+Artifacts are written to:
+
+- `apps/e2e-playwright/artifacts/coverage-matrix.md`
+- `apps/e2e-playwright/artifacts/coverage-matrix.json`
+
 **By product:**
 
 ```bash
-npx playwright test --project nucleum
-npx playwright test --project pointron
-npx playwright test --project memotron
+npm run test --workspace=e2e-playwright -- --project nucleum
+npm run test --workspace=e2e-playwright -- --project pointron
+npm run test --workspace=e2e-playwright -- --project memotron
 ```
 
 **By tag:**
 
 ```bash
-npx playwright test --grep @smoke
-npx playwright test --grep @regression
-npx playwright test --project pointron --grep @smoke
+npm run test --workspace=e2e-playwright -- --grep @smoke
+npm run test --workspace=e2e-playwright -- --grep @feature
+npm run test --workspace=e2e-playwright -- --project pointron --grep @smoke
 ```
 
 **All tests:**
 
 ```bash
-npx playwright test
+npm run test --workspace=e2e-playwright --
 ```
 
 ## Auth and session
@@ -45,5 +71,13 @@ npx playwright test
 - **`tests/pointron/`**, **`tests/memotron/`** – Product-only specs (app nav, settings per product)
 - **`tests/smoke/`** – Smoke (e.g. home load)
 - **`tests/utils/`** – Shared helpers
+
+## Shared area tags
+
+- `@calendar-smoke`, `@calendar-feature`
+- `@overview-smoke`, `@overview-feature`
+- `@focus-smoke`, `@focus-feature`
+- `@library-smoke`, `@library-feature`
+- `@settings-smoke`, `@settings-feature`
 
 Projects in `playwright.config.ts` control which specs run for each product. Pointron runs shared except `shared/memory/**`; Memotron runs shared except `shared/focus/**`.

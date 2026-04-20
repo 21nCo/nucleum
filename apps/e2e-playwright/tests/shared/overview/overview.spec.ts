@@ -1,6 +1,10 @@
-import { test, expect } from "@playwright/test";
-import { ensureInAppOnHome, runCommand, getProductConfig } from "../../utils/helpers";
-import { nucleusProductConfig } from "../../../config/nucleus-product.config";
+import { test, expect, type Locator, type Page } from "@playwright/test";
+import {
+  ensureInAppOnHome,
+  getProductConfig,
+  navigateToSurface,
+  expectCurrentSurfaceVisible
+} from "../../utils/helpers";
 
 const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
@@ -11,11 +15,7 @@ test.skip(
   "E2E suite disabled by environment"
 );
 
-/**
- * Overview page (Focus analytics): verify multiple elements per section.
- * Opening Overview via command bar or UI is already tested in app-nav.spec.ts.
- */
-test.describe("overview - Focus widgets and tabs (verify multiple elements) @regression", () => {
+test.describe("overview - Focus widgets and tabs (verify multiple elements) @regression @smoke @overview-smoke", () => {
   test.beforeEach(async ({ page }, testInfo) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -23,42 +23,24 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
       else route.continue();
     });
     test.skip(
-      testInfo.project.name === "memotron",
-      "Memotron Overview is not the Focus analytics dashboard (no All/Days/Months/Years tabs or Focus↔Memory switch)"
+      !getProductConfig(testInfo.project.name).capabilities.overview
+        .focusAnalyticsDashboard,
+      "Overview focus analytics dashboard is not part of this product contract"
     );
   });
 
   test("Overview Focus: time tabs (All, Days, Months, Years) and at least two period sections visible", async ({
     page
-  }) => {
+  }, testInfo) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    await runCommand(page, "Overview");
-
-    await page.waitForURL(
-      (u) =>
-        new RegExp(`^${nucleusProductConfig.pathByNavLabel.Overview}(\\/.*)?$`).test(
-          new URL(u).pathname
-        ),
-      { timeout: 10_000 }
-    );
-    await page.waitForTimeout(1_500);
+    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
 
     await expect(page.getByText("Overview").first()).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByRole("button", { name: /^Focus$/i }).first()).toBeVisible({ timeout: 5_000 });
-
-    await expect(page.getByRole("button", { name: /^All$/i }).first()).toBeVisible({
-      timeout: 5_000
-    });
-    await expect(page.getByRole("button", { name: /^Days$/i }).first()).toBeVisible({
-      timeout: 5_000
-    });
-    await expect(page.getByRole("button", { name: /^Months$/i }).first()).toBeVisible({
-      timeout: 5_000
-    });
-    await expect(page.getByRole("button", { name: /^Years$/i }).first()).toBeVisible({
-      timeout: 5_000
-    });
+    await expect(getOverviewTab(page, "All")).toBeVisible({ timeout: 5_000 });
+    await expect(getOverviewTab(page, "Days")).toBeVisible({ timeout: 5_000 });
+    await expect(getOverviewTab(page, "Months")).toBeVisible({ timeout: 5_000 });
+    await expect(getOverviewTab(page, "Years")).toBeVisible({ timeout: 5_000 });
 
     const todayHeading = page.getByText("Today", { exact: true }).first();
     await expect(todayHeading).toBeVisible({ timeout: 5_000 });
@@ -71,19 +53,10 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
 
   test("Overview Focus: empty state or metric cards (Total, Focus, Break) visible", async ({
     page
-  }) => {
+  }, testInfo) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    await runCommand(page, "Overview");
-
-    await page.waitForURL(
-      (u) =>
-        new RegExp(`^${nucleusProductConfig.pathByNavLabel.Overview}(\\/.*)?$`).test(
-          new URL(u).pathname
-        ),
-      { timeout: 10_000 }
-    );
-    await page.waitForTimeout(1_500);
+    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
 
     const hasEmptyState = await page
       .getByText("No data available")
@@ -108,22 +81,12 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
 
   test("Overview Focus: Days tab shows Today, Yesterday, Last 30 days and metric cards", async ({
     page
-  }) => {
+  }, testInfo) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    await runCommand(page, "Overview");
+    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
 
-    await page.waitForURL(
-      (u) =>
-        new RegExp(`^${nucleusProductConfig.pathByNavLabel.Overview}(\\/.*)?$`).test(
-          new URL(u).pathname
-        ),
-      { timeout: 10_000 }
-    );
-    await page.waitForTimeout(1_500);
-
-    await page.getByRole("button", { name: /^Days$/i }).first().click({ timeout: 5_000 });
-    await page.waitForTimeout(1_000);
+    await clickOverviewTab(page, "Days");
 
     await expect(page.getByText("Today", { exact: true }).first()).toBeVisible({
       timeout: 5_000
@@ -147,22 +110,12 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
 
   test("Overview Focus: Months tab shows This month, Last month, Last 3 months", async ({
     page
-  }) => {
+  }, testInfo) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    await runCommand(page, "Overview");
+    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
 
-    await page.waitForURL(
-      (u) =>
-        new RegExp(`^${nucleusProductConfig.pathByNavLabel.Overview}(\\/.*)?$`).test(
-          new URL(u).pathname
-        ),
-      { timeout: 10_000 }
-    );
-    await page.waitForTimeout(1_500);
-
-    await page.getByRole("button", { name: /^Months$/i }).first().click({ timeout: 5_000 });
-    await page.waitForTimeout(1_000);
+    await clickOverviewTab(page, "Months");
 
     await expect(page.getByText(/^This month$/i).first()).toBeVisible({
       timeout: 5_000
@@ -177,22 +130,12 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
 
   test("Overview Focus: Years tab shows This year and Last year", async ({
     page
-  }) => {
+  }, testInfo) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    await runCommand(page, "Overview");
+    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
 
-    await page.waitForURL(
-      (u) =>
-        new RegExp(`^${nucleusProductConfig.pathByNavLabel.Overview}(\\/.*)?$`).test(
-          new URL(u).pathname
-        ),
-      { timeout: 10_000 }
-    );
-    await page.waitForTimeout(1_500);
-
-    await page.getByRole("button", { name: /^Years$/i }).first().click({ timeout: 5_000 });
-    await page.waitForTimeout(1_000);
+    await clickOverviewTab(page, "Years");
 
     await expect(page.getByText(/^This year$/i).first()).toBeVisible({
       timeout: 5_000
@@ -204,22 +147,12 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
 
   test("Overview Focus: All tab shows period sections and table or chart area", async ({
     page
-  }) => {
+  }, testInfo) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    await runCommand(page, "Overview");
+    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
 
-    await page.waitForURL(
-      (u) =>
-        new RegExp(`^${nucleusProductConfig.pathByNavLabel.Overview}(\\/.*)?$`).test(
-          new URL(u).pathname
-        ),
-      { timeout: 10_000 }
-    );
-    await page.waitForTimeout(1_500);
-
-    await page.getByRole("button", { name: /^All$/i }).first().click({ timeout: 5_000 });
-    await page.waitForTimeout(1_000);
+    await clickOverviewTab(page, "All");
 
     await expect(page.getByText("Today", { exact: true }).first()).toBeVisible({
       timeout: 5_000
@@ -248,71 +181,115 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
     page
   }, testInfo) => {
     test.skip(
-      testInfo.project.name === "pointron",
-      "Pointron Overview does not expose Focus/Memory panel switcher"
+      !getProductConfig(testInfo.project.name).capabilities.overview
+        .memoryPanelSwitch,
+      "Overview memory switch is not part of this product contract"
     );
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    await runCommand(page, "Overview");
+    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
 
-    const productConfig = getProductConfig(testInfo.project.name);
-    await page.waitForURL(
-      (u) =>
-        new RegExp(`^${productConfig.pathByNavLabel.Overview}(\\/.*)?$`).test(
-          new URL(u).pathname
-        ),
-      { timeout: 10_000 }
+    await expectCurrentSurfaceVisible(
+      page,
+      "overview.focus",
+      testInfo.project.name as any
     );
-    await page.waitForTimeout(1_500);
+    await expectCurrentSurfaceVisible(
+      page,
+      "overview.memory",
+      testInfo.project.name as any
+    );
+  });
 
-    await expect(page.getByText("Focus").first()).toBeVisible({ timeout: 10_000 });
-    await expect(page.getByText("Memory").first()).toBeVisible({ timeout: 10_000 });
+  test("Overview panel switching stays responsive without page errors on repeated navigation", async ({
+    page
+  }, testInfo) => {
+    test.skip(
+      !getProductConfig(testInfo.project.name).capabilities.overview
+        .memoryPanelSwitch,
+      "Overview memory switch is not part of this product contract"
+    );
+    test.setTimeout(60_000);
+
+    const pageErrors: string[] = [];
+    page.on("pageerror", (error) => {
+      pageErrors.push(error.message);
+    });
+
+    await ensureInAppOnHome(page);
+    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
+
+    await navigateToSurface(page, "overview.memory", testInfo.project.name as any);
+    await expectCurrentSurfaceVisible(
+      page,
+      "overview.memory",
+      testInfo.project.name as any
+    );
+    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
+    await expectCurrentSurfaceVisible(
+      page,
+      "overview.focus",
+      testInfo.project.name as any
+    );
+    await navigateToSurface(page, "overview.memory", testInfo.project.name as any);
+    await expectCurrentSurfaceVisible(
+      page,
+      "overview.memory",
+      testInfo.project.name as any
+    );
+    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
+    await expectCurrentSurfaceVisible(
+      page,
+      "overview.focus",
+      testInfo.project.name as any
+    );
+
+    expect(pageErrors).toEqual([]);
   });
 
   test("Overview: switch Focus → Memory and verify content changes (or N/A if Memory view not available)", async ({
     page
   }, testInfo) => {
     test.setTimeout(60_000);
-    await ensureInAppOnHome(page);
-    await runCommand(page, "Overview");
-
-    const productConfig = getProductConfig(testInfo.project.name);
-    await page.waitForURL(
-      (u) =>
-        new RegExp(`^${productConfig.pathByNavLabel.Overview}(\\/.*)?$`).test(
-          new URL(u).pathname
-        ),
-      { timeout: 10_000 }
+    test.skip(
+      !getProductConfig(testInfo.project.name).capabilities.overview
+        .memoryPanelSwitch,
+      "Overview memory switch is not part of this product contract"
     );
-    await page.waitForTimeout(1_200);
+    await ensureInAppOnHome(page);
+    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
 
-    const focusBtn = page.getByRole("button", { name: /^Focus$/i }).first();
-    const memoryBtn = page.getByRole("button", { name: /^Memory$/i }).first();
-    await expect(focusBtn).toBeVisible({ timeout: 10_000 });
-
-    const hasMemorySwitch = await memoryBtn.isVisible().catch(() => false);
-    if (!hasMemorySwitch) test.skip(true, "Memory view switch not available on Overview (N/A)");
-
-    const focusSignature = page
-      .getByText(/Total focus|\bGoal\b/i)
-      .first();
-    const focusSigText = (await focusSignature.textContent().catch(() => "")) ?? "";
-
-    await memoryBtn.click({ timeout: 5_000 });
-    await page.waitForTimeout(1_200);
-
-    const memorySignature = page
-      .getByText(/Memory|Node|Nodes|Capture/i)
-      .first();
+    await expectCurrentSurfaceVisible(
+      page,
+      "overview.memory",
+      testInfo.project.name as any
+    );
+    await navigateToSurface(page, "overview.memory", testInfo.project.name as any);
+    await expectCurrentSurfaceVisible(
+      page,
+      "overview.memory",
+      testInfo.project.name as any
+    );
+    const memorySignature = page.getByText(/Memory|Node|Nodes|Capture/i).first();
     await expect(memorySignature).toBeVisible({ timeout: 10_000 });
-
-    const memorySigText = (await memorySignature.textContent().catch(() => "")) ?? "";
-    const memoryTabActive =
-      (await memoryBtn.getAttribute("aria-pressed")) === "true" ||
-      (await memoryBtn.getAttribute("data-state")) === "active";
-    expect(
-      memorySigText !== focusSigText || memoryTabActive,
-      "Expected Memory view content to differ from Focus or Memory tab to be active"
-    ).toBe(true);
+    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
+    await expectCurrentSurfaceVisible(
+      page,
+      "overview.focus",
+      testInfo.project.name as any
+    );
   });
 });
+
+function getOverviewTab(page: Page, label: string): Locator {
+  return page.getByRole("tab", { name: new RegExp(`^${label}$`, "i") }).first();
+}
+
+async function clickOverviewTab(page: Page, label: string) {
+  const tab = getOverviewTab(page, label);
+  await expect(tab).toBeVisible({ timeout: 10_000 });
+  await tab.click({ timeout: 5_000 });
+  await expect(tab).toHaveAttribute("aria-selected", "true", {
+    timeout: 10_000
+  });
+}

@@ -118,6 +118,12 @@
   let customCaret: HTMLElement | null = null;
   let typing = $state(false);
   let typingTimeout: any;
+
+  function isCallable<T extends (...args: any[]) => any>(
+    value: unknown
+  ): value is T {
+    return typeof value === "function";
+  }
   let innerHTML = $state<string>("");
 
   let newInlineSpanId: string;
@@ -1234,7 +1240,9 @@
     const changeEvent = new CustomEvent<string | undefined>("change", {
       detail: content
     });
-    onChange?.(changeEvent);
+    if (isCallable(onChange)) {
+      onChange(changeEvent);
+    }
     debouncedDispatchChange();
   }
   const debouncedDispatchChange = debouncer(
@@ -1245,7 +1253,9 @@
           detail: content
         }
       );
-      onDebouncedChange?.(debouncedChangeEvent);
+      if (isCallable(onDebouncedChange)) {
+        onDebouncedChange(debouncedChangeEvent);
+      }
     },
     1000
   );

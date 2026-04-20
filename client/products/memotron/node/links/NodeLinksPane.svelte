@@ -57,7 +57,7 @@
     accessPointId: node.id
   });
   let bulkEditUnsub: (() => void) | undefined;
-  let bulkSelection: IRecordId[] = [];
+  let bulkSelection = $state<IRecordId[]>([]);
 
   function resolveBulkEditorInstance() {
     bulkEditStore.activate(multiSelectContext, {
@@ -102,25 +102,25 @@
     filtered;
     resolveBulkEditorInstance();
   });
-  let _links: INodeLinkThumb[] = [];
-  let all: { link: INodeLinkThumb; node: INode }[] = [];
-  let outgoingMentions: { link: INodeLinkThumb; node: INode }[] = [];
-  let filtered: { link: INodeLinkThumb; node: INode }[] = [];
+  let _links = $state<INodeLinkThumb[]>([]);
+  let all = $state<{ link: INodeLinkThumb; node: INode }[]>([]);
+  let outgoingMentions = $state<{ link: INodeLinkThumb; node: INode }[]>([]);
+  let filtered = $state<{ link: INodeLinkThumb; node: INode }[]>([]);
 
-  let selectedLinkType:
-    | { linkType: LinkType; direction?: "incoming" | "outgoing" }
-    | undefined = undefined;
-  let selectedLinkTags: IRecordId[] = [];
-  let fetchError: string | undefined = undefined;
-  let linkStatus: { message: string; type: AlertType } = {
+  let selectedLinkType = $state<
+    { linkType: LinkType; direction?: "incoming" | "outgoing" } | undefined
+  >(undefined);
+  let selectedLinkTags = $state<IRecordId[]>([]);
+  let fetchError = $state<string | undefined>(undefined);
+  let linkStatus = $state<{ message: string; type: AlertType }>({
     message: "",
     type: AlertType.INFO
-  };
+  });
   let previousFocus: IRecordId;
-  let searchQuery: string = "";
-  let dev_linkTagFilter: "and" | "or" = "and";
-  let isRefreshing = false;
-  let availableLinkTags: IRecordId[] = [];
+  let searchQuery = $state("");
+  let dev_linkTagFilter = $state<"and" | "or">("and");
+  let isRefreshing = $state(false);
+  let availableLinkTags = $state<IRecordId[]>([]);
 
   onMount(() => {
     const unsubscribe = node.subscribe(async (x) => {
@@ -150,6 +150,7 @@
 
   async function onSelect(e: CustomEvent<any>) {
     try {
+      const linkSource = $node.focusedBlock ?? node.id;
       linkStatus = {
         message: "Linking...",
         type: AlertType.INFO
@@ -159,17 +160,20 @@
         linkStatus.type = AlertType.ERROR;
         return;
       }
-      if (filtered.some((x) => isSameResource(x.node, e.detail.item))) {
+      const isDuplicate = _links.some((x) =>
+        isSameResource(x.linkedTo, e.detail.item.id)
+      );
+      if (isDuplicate) {
         linkStatus.message = "Link already exists.";
         linkStatus.type = AlertType.ERROR;
         return;
       }
-      const result = await linker.link(
-        $node.focusedBlock ?? node.id,
-        e.detail.item.id
-      );
+      const result = await linker.link(linkSource, e.detail.item.id);
 
-      const addedLink = await flux.select(e.detail.item.id);
+      let addedLink = await flux.select(e.detail.item.id);
+      if (!addedLink && e.detail?.item?.id) {
+        addedLink = e.detail.item;
+      }
       if (!result || !addedLink) {
         linkStatus.message = ErrorMessage.DEFAULT;
         linkStatus.type = AlertType.ERROR;
@@ -195,13 +199,7 @@
           link
         }
       ];
-      filtered = [
-        ...(filtered ?? []),
-        {
-          node: addedLink,
-          link
-        }
-      ];
+      await applyFilters();
       searchQuery = "";
     } catch (e) {
       logger.error({ at: "NodeLinksPane.onSelect", error: e });

@@ -74,6 +74,8 @@
   import type { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
   import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
   import ComponentEmbedLayer from "@21n/layout/layers/ComponentEmbedLayer.svelte";
+  import { Product } from "@21n/products/product.type";
+  import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
 
   let {
     id = "",
@@ -348,6 +350,14 @@
     isStickied = positionFromTop !== undefined ? positionFromTop <= 0 : false;
   }
 
+  async function closeEditMode() {
+    const label = $collection.label?.trim();
+    if (label) {
+      await collection.modify({ label });
+    }
+    collection.toggleEditMode(false);
+  }
+
   async function onViewSwitch() {
     logger.log({ at: "onViewSwitch", selectedViewId });
     resetViewSelections();
@@ -451,15 +461,22 @@
     await refresh();
   }
 
-  /**
-   * Used only in case of color picker, for other cases, persistCoverChange is used to set the cover and persist. For color picker, the select event is triggered debounced, therefore onCoverChange is used to set the cover without persisting.
-   * @param e
-   */
+  function applyCover(nextCover: string | undefined) {
+    collection.update((val) => {
+      if (!val) return val;
+      val.cover = nextCover;
+      return val;
+    });
+  }
+
   function onCoverChange(e: CustomEvent) {
-    $collection.cover = e.detail;
+    logger.log({ at: "Collection.onCoverChange", detail: e.detail });
+    applyCover(e.detail);
   }
 
   function persistCoverChange(e: CustomEvent) {
+    logger.log({ at: "Collection.persistCoverChange", detail: e.detail });
+    applyCover(e.detail);
     collection.modify({ cover: e.detail });
   }
 
@@ -554,6 +571,15 @@
       }
       setTimeout(() => {
         const resource = $collection.resource ?? Resource.node;
+        const isSecondaryNodeCaptureContext =
+          resource === Resource.node &&
+          [Product.MEMOTRON, Product.NUCLEUS].includes($appStore.product);
+        if (isSecondaryNodeCaptureContext) {
+          appStore.runAction(MemotronAction.CAPTURE_SECONDARY, {
+            searchParams: params
+          });
+          return;
+        }
         appStore.runResourceAction(resource, ResourceActionType.CREATE, {
           searchParams: params
         });
@@ -638,9 +664,7 @@
         {#if $collection.isInEditMode && !isCoverPickerOpen}
           <button
             class="w-full min-h-12 bg-ass1 text-abg flex gap-2 items-center justify-center"
-            onclick={() => {
-              collection.toggleEditMode(false);
-            }}
+            onclick={closeEditMode}
           >
             <Icon icon="cross" size={Size.sm} class="text-abg" />
             <span> Close edit mode </span>
@@ -839,7 +863,7 @@
           {:else if !$collection.isViewDataLoading && activeView}
             <View
               {collection}
-              view={activeView}
+              bind:view={activeView}
               data={_filtered}
               isBoardOverflow={isStickied}
             />

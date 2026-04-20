@@ -31,6 +31,7 @@
   import { logger } from "@21n/components/debug/logger.client";
   import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
   import { ErrorMessage } from "@21n/components/error/error.type";
+  import { untrack } from "svelte";
   let {
     card,
     position,
@@ -49,7 +50,7 @@
     pageId: string;
     goals?: IGoalThumb[];
     logs?: ISessionLog[];
-    timePeriod: ITimePeriodResolved;
+    timePeriod?: ITimePeriodResolved;
     isPageLoaded?: boolean;
     parentBgIndex?: number;
     heightAdjuster?: string;
@@ -60,9 +61,10 @@
   let data = $state<AnalyticsDataRecord[]>([]);
   let previousTimePeriodData = $state<AnalyticsDataRecord[]>([]);
   let goalColors = $state<IAnalyticsLabelColor[]>([]);
-  let isRefreshing = $state(false);
+  let isRefreshing = $state(true);
   let refreshId = $state(new Date().getTime());
   let errorMessage = $state<string | undefined>(undefined);
+  let timePeriodTitle = $derived(timePeriod?.title ?? "");
   const isCarbonChart = false;
   const isCanRenderInSmallerArea = [
     AnalyticsCardType.PIE,
@@ -78,8 +80,11 @@
     goals;
     timePeriod;
     parentBgIndex;
+    isPageLoaded;
     if (isPageLoaded) {
-      void refresh();
+      untrack(() => {
+        void refresh();
+      });
     }
   });
   function emitReload() {
@@ -151,11 +156,12 @@
         isRefreshing = false;
         return;
       }
+      const resolvedTimePeriod = timePeriod;
       if (
-        !timePeriod.begin ||
-        !timePeriod.end ||
-        timePeriod.begin.toString() === "Invalid Date" ||
-        timePeriod.end.toString() === "Invalid Date"
+        !resolvedTimePeriod?.begin ||
+        !resolvedTimePeriod.end ||
+        resolvedTimePeriod.begin.toString() === "Invalid Date" ||
+        resolvedTimePeriod.end.toString() === "Invalid Date"
       ) {
         errorMessage = "Please select a valid time period.";
         isRefreshing = false;
@@ -163,8 +169,8 @@
       }
       const correctedTimePeriod = tzStore.resolveTimePeriodCorrectedByTz(
         {
-          begin: timePeriod.begin,
-          end: timePeriod.end
+          begin: resolvedTimePeriod.begin,
+          end: resolvedTimePeriod.end
         },
         { tzRecords: $tzStore }
       );
@@ -350,11 +356,11 @@
         <span class="font-medium">
           {card.type === AnalyticsCardType.TARGETS
             ? "Targets"
-            : (card.label ?? timePeriod.title)}
+            : (card.label ?? timePeriodTitle)}
         </span>
         {#if card.type != AnalyticsCardType.TARGETS && card.label}
           <span class="text-fgs2 text-b2">
-            {timePeriod.title}
+            {timePeriodTitle}
           </span>
         {/if}
       </div>

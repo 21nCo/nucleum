@@ -18,8 +18,12 @@
     onclick={() => isInEditMode.toggle()}
   />
 {:else}
-  <button class="rounded-full flex items-center gap-2 px-3 py-1">
+  <div class="rounded-full flex items-center gap-2 px-3 py-1">
     <span class="text-fgs3 text-b2"> edit: </span>
-    <Switch bind:on={$isInEditMode} size={Size.sm} />
-  </button>
+    <Switch
+      on={$isInEditMode}
+      size={Size.sm}
+      onChange={(event) => isInEditMode.toggle(event.detail)}
+    />
+  </div>
 {/if}

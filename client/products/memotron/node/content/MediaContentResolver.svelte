@@ -18,6 +18,7 @@
   import { Size } from "@21n/types/size.enum";
   import { formatBytes } from "@21n/shared-utils/text.utils";
   import { resolveFileIcon } from "@21n/products/memotron/node/node.utils";
+  import { logger } from "@21n/components/debug/logger.client";
   let {
     node,
     accessPoint = ResourceAccessPoint.SELF,
@@ -42,6 +43,10 @@
   let dataPromise = $state<Promise<void>>(Promise.resolve());
   let currentFileId = "";
 
+  function resolveFileSource() {
+    return node.file ?? (typeof node.body === "object" && node.body ? node.body.file : undefined);
+  }
+
   export function onTraceClick(details: any) {
     if (node.contentType === NodeType.PDF) {
       pdfContent?.scrollToAnnot(details.id, details.pageNumber);
@@ -54,15 +59,26 @@
   }
 
   async function resolveData() {
-    if (!node.file) return;
-    const result = await fileStore.refresh(node.file);
+    const fileSource = resolveFileSource();
+    if (!fileSource) return;
+    const result = await fileStore.refresh(fileSource);
     if (!result) return;
     _file = result;
     _url = _file.url ?? "";
+    if (node.contentType === NodeType.PDF) {
+      logger.log({
+        at: "MediaContentResolver.resolveData",
+        nodeId: node.id,
+        contentType: node.contentType,
+        fileId: _file.id,
+        fileType: _file.type,
+        url: _url
+      });
+    }
   }
 
   function resolveFileId() {
-    const file = node.file as string | { id?: string | number } | undefined;
+    const file = resolveFileSource() as string | { id?: string | number } | undefined;
     if (typeof file === "string") return file;
     if (file && typeof file === "object" && file.id != null) {
       return String(file.id);

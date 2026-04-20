@@ -397,11 +397,19 @@ export function resolveNodeLabelString(item: INodeThumb): string {
 export function resolveNodeLabel(item: INodeThumb) {
   if (!item) return "";
 
-  if (item.label && !item.parent) return item.label;
+  const resolvedParent =
+    typeof item.parent === "object" &&
+    item.parent !== null &&
+    !Array.isArray(item.parent) &&
+    !isRecordId(item.parent)
+      ? (item.parent as INode)
+      : undefined;
 
-  let parent;
-  if (item.parent && item.parent.id && !isRecordId(item.parent))
-    parent = item.parent;
+  const hasResolvedParent = Boolean(resolvedParent);
+
+  if (item.label && !hasResolvedParent) return item.label;
+
+  let parent: INode | undefined = resolvedParent;
   const defaultLabels = {
     [NodeType.WEB_TEXT_BOOKMARK]:
       "Clipped Text - " + (item.body as ITextClipBody)?.text,
@@ -414,16 +422,16 @@ export function resolveNodeLabel(item: INodeThumb) {
   };
 
   if (socialPostNodeTypeList.has(item.contentType)) {
-    parent = parent as ITwitterProfile;
+    const twitterParent = parent as ITwitterProfile | undefined;
     const twitterProfileLabel = isValidString(
-      parent?.label ?? parent?.body?.name
+      twitterParent?.label ?? twitterParent?.body?.name
     )
-      ? (parent.label ?? parent.body.name)
+      ? ((twitterParent?.label ?? twitterParent?.body?.name) as string)
       : "Unknown";
     const prefix = enumToString(item.contentType);
     return {
       label: ` ${item.label ? item.label + " - " : ""} ${prefix} by: `,
-      parent: { id: parent?.id, label: twitterProfileLabel },
+      parent: { id: twitterParent?.id, label: twitterProfileLabel },
       text: item.body?.content ?? item.text ?? `Tweet: ${twitterProfileLabel}`
     };
   }

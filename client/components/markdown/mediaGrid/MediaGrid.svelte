@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getContext, onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
 
   import MediaGridOptions from "@21n/components/markdown/mediaGrid/MediaGridOptions.svelte";
   import type { Config } from "@21n/components/markdown/mediaGrid/mediaGrid.type";
@@ -8,9 +8,7 @@
   import DraggableMediaGridElement from "@21n/components/markdown/mediaGrid/DraggableMediaGridElement.svelte";
   import type { DragAndDrop } from "@21n/types/draganddrop.type";
   import account from "@21n/stores/account.store";
-  import { BlockAction } from "@21n/components/markdown/md.type";
   import { isReplaceableMd, type MdStoreType } from "@21n/components/markdown/markdown.store";
-  import { logger } from "@21n/components/debug/logger.client";
   import {
     MediaGridType,
     type IMediaGridItem,
@@ -21,33 +19,14 @@
   import { fileStore } from "@21n/components/files/file.store";
   import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
   import { cn } from "@21n/utils/ui.utils";
-  import { Context } from "@21n/types/appStore.type";
-
-  const blockContext = getContext<any>(Context.BLOCK);
-
-  /**
-   * Relays an event to the block context.
-   * @param event event name
-   * @param data event data
-   */
-  function relay(event: BlockAction, data?: any) {
-    if (!blockContext.publish) {
-      logger.error({
-        at: "MediaGrid propagate",
-        error: "No block context found",
-        data
-      });
-      return;
-    }
-    blockContext.publish(event, data);
-  }
-
+  import { debouncer } from "@21n/utils/utils";
   let {
     block,
     mdStore,
     files: initialFiles = [],
     onDelete = undefined,
-    onInsert = undefined
+    onInsert = undefined,
+    onUpdate = undefined
   }: {
     block: IMediaGridNode;
     mdStore: MdStoreType;
@@ -56,46 +35,31 @@
     onInsert?:
       | ((event: CustomEvent<{ insertedAt: string; id: string }>) => void)
       | undefined;
+    onUpdate?: ((event: CustomEvent<IMediaGridNode["body"]>) => void) | undefined;
   } = $props();
   let files = $state<IFile[]>(initialFiles);
   let isUploadInProgress = $state(false);
 
-  if (!block.body || !Array.isArray(block.body.items)) {
-    block.body = {
-      items: [],
-      type: MediaGridType.AUTO,
-      gap: 0,
-      altText: "media grid",
-      noOfColumns: 1,
-      isWideLayout: false
+  function resolveInitialBody(body: IMediaGridNode["body"] | undefined) {
+    return {
+      items: Array.isArray(body?.items) ? body.items : [],
+      type: body?.type ?? MediaGridType.AUTO,
+      gap: body?.gap ?? 0,
+      altText: body?.altText ?? "media grid",
+      noOfColumns: body?.noOfColumns ?? 1,
+      isWideLayout: body?.isWideLayout ?? false
     };
   }
-  if (!block.body.isWideLayout) block.body.isWideLayout = false;
-  if (!block.body.gap) block.body.gap = 0;
-  if (!block.body.altText) block.body.altText = "media grid";
-  if (!block.body.type) block.body.type = MediaGridType.AUTO;
-  if (!block.body.noOfColumns) block.body.noOfColumns = 1;
-  let items = $state<IMediaGridItem[]>(block.body.items);
 
-  $effect(() => {
-    block.body.items = items;
-    relay(BlockAction.CHANGE, { id: block.id, body: block.body });
-  });
-  $effect(() => {
-    block.body.isWideLayout = config.isWideLayout;
-    block.body.gap = config.gap;
-    block.body.altText = config.altText;
-    block.body.type = config.type;
-    block.body.noOfColumns = config.noOfColumns;
-    relay(BlockAction.CHANGE, { id: block.id, body: block.body });
-  });
+  const initialBody = resolveInitialBody(block.body);
+  let items = $state<IMediaGridItem[]>(initialBody.items);
 
   let config = $state<Config>({
-    isWideLayout: block.body.isWideLayout,
-    gap: block.body.gap,
-    altText: block.body.altText,
-    type: block.body.type,
-    noOfColumns: block.body.noOfColumns,
+    isWideLayout: initialBody.isWideLayout,
+    gap: initialBody.gap,
+    altText: initialBody.altText,
+    type: initialBody.type,
+    noOfColumns: initialBody.noOfColumns,
     isHovered: false,
     isAutoHighlighted: false,
     isColumnHighlighted: Array(1).fill(false),
@@ -104,6 +68,29 @@
     isGapSliderEnabled: false,
     leastItemsInAColumn: 3,
     gridWidth: 740
+  });
+
+  function emitUpdate(body: IMediaGridNode["body"]) {
+    const updateEvent = new CustomEvent<IMediaGridNode["body"]>("update", {
+      detail: body
+    });
+    onUpdate?.(updateEvent);
+  }
+
+  const debouncedEmitUpdate = debouncer(
+    (body: IMediaGridNode["body"]) => emitUpdate(body),
+    0
+  );
+
+  $effect(() => {
+    debouncedEmitUpdate({
+      items: $state.snapshot(items),
+      isWideLayout: config.isWideLayout,
+      gap: config.gap,
+      altText: config.altText,
+      type: config.type,
+      noOfColumns: config.noOfColumns
+    });
   });
 
   let isDragging = $state(false);
@@ -824,7 +811,7 @@
   });
 
   async function fetchAllFiles() {
-    const fileIds = block.body.items.map((item) => item.file);
+    const fileIds = items.map((item) => item.file);
     const filesResult = await fileStore.selectMany({
       filters: {
         id: fileIds

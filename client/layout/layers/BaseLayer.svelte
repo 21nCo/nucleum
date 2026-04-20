@@ -37,6 +37,7 @@
   import { productData } from "@21n/products/product.resolver";
   import { product, resolveProductConfig } from "@21n/products/product.config";
   import view from "@21n/stores/view.store";
+  import { initDevLogCapture } from "@21n/components/debug/devLogCapture";
 
   let { children }: { children?: Snippet } = $props();
   let timer: any;
@@ -46,6 +47,7 @@
 
   onMount(async () => {
     if (browser) {
+      initDevLogCapture({ product });
       pingParent();
       addWindowEventListeners();
     }

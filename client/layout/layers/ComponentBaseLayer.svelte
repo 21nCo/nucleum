@@ -44,6 +44,30 @@
     onAppear?: (() => void) | undefined;
     onSyncDown?: (() => void) | undefined;
   } = $props();
+
+  function isCallable<T extends (...args: any[]) => any>(
+    value: unknown
+  ): value is T {
+    return typeof value === "function";
+  }
+
+  function emitChange(
+    detail:
+      | { resource?: Resource; params?: any; context?: string }
+      | { key: string }
+  ) {
+    if (isCallable(onChange)) onChange(detail);
+  }
+
+  function isComparableRecord(value: unknown): value is IRecordId | { id: IRecordId } {
+    return (
+      typeof value === "string" ||
+      (typeof value === "object" &&
+        value !== null &&
+        ("id" in value || "tb" in value))
+    );
+  }
+
   const normalizedSubscribeToResource = $derived.by(() => {
     if (subscribeToResource && typeof subscribeToResource.has === "function") {
       return subscribeToResource;
@@ -60,16 +84,62 @@
     if (Array.isArray(subscribeToContext)) {
       return new Set<string>(subscribeToContext);
     }
+    if (typeof subscribeToContext === "string") {
+      return new Set<string>([subscribeToContext]);
+    }
     return undefined;
+  });
+  const normalizedSubscribeToRecords = $derived.by(() => {
+    if (Array.isArray(subscribeToRecords)) {
+      return subscribeToRecords.filter(isComparableRecord);
+    }
+    if (typeof subscribeToRecords === "string") return [subscribeToRecords];
+    if (
+      subscribeToRecords &&
+      typeof subscribeToRecords[Symbol.iterator] === "function"
+    ) {
+      return Array.from(subscribeToRecords as Iterable<IRecordId>).filter(
+        isComparableRecord
+      );
+    }
+    if (isComparableRecord(subscribeToRecords)) return [subscribeToRecords];
+    return [] as IRecordId[];
+  });
+  const normalizedSubscriptionPropsForMergeAction = $derived.by(() => {
+    if (subscriptionPropsForMergeAction === undefined) return undefined;
+    if (Array.isArray(subscriptionPropsForMergeAction)) {
+      return subscriptionPropsForMergeAction;
+    }
+    if (typeof subscriptionPropsForMergeAction === "string") {
+      return [subscriptionPropsForMergeAction];
+    }
+    if (
+      subscriptionPropsForMergeAction &&
+      typeof subscriptionPropsForMergeAction[Symbol.iterator] === "function"
+    ) {
+      return Array.from(subscriptionPropsForMergeAction as Iterable<string>);
+    }
+    return [subscriptionPropsForMergeAction];
+  });
+  const normalizedSubscribeToCacheUpdate = $derived.by(() => {
+    if (!subscribeToCacheUpdate) return [] as string[];
+    if (Array.isArray(subscribeToCacheUpdate)) return subscribeToCacheUpdate;
+    if (typeof subscribeToCacheUpdate === "string") {
+      return [subscribeToCacheUpdate];
+    }
+    if (typeof subscribeToCacheUpdate[Symbol.iterator] === "function") {
+      return Array.from(subscribeToCacheUpdate as Iterable<string>);
+    }
+    return [subscribeToCacheUpdate];
   });
 
   function visibilityChangeListener() {
-    onAppear?.();
+    if (isCallable(onAppear)) onAppear();
   }
 
   onMount(() => {
     const syncDownHandler = () => {
-      onSyncDown?.();
+      if (isCallable(onSyncDown)) onSyncDown();
     };
     const cacheUpdateHandler = (event: Event) => {
       onCacheUpdate(event as CustomEvent<{ key: string }>);
@@ -113,17 +183,19 @@
       PersistenceActionType.BULK_MERGE
     ].includes(mutation?.action);
 
-    if (subscribeToRecords && isMergeAction) {
+    if (normalizedSubscribeToRecords.length > 0 && isMergeAction) {
       const isPresentInMerge =
         mutation?.action === PersistenceActionType.MERGE &&
-        subscribeToRecords.some((x) => isSameResource(mutation?.record?.id, x));
+        normalizedSubscribeToRecords.some((x) =>
+          isSameResource(mutation?.record?.id, x)
+        );
       const isPresentInBulkMerge =
         mutation?.action === PersistenceActionType.BULK_MERGE &&
-        subscribeToRecords.some((x) =>
+        normalizedSubscribeToRecords.some((x) =>
           mutation?.recordIds?.some(resourceInList(x))
         );
       if (isPresentInMerge || isPresentInBulkMerge) {
-        onChange?.(data);
+        emitChange(data);
       }
       return;
     }
@@ -135,33 +207,36 @@
       return;
 
     if (
-      (isMergeAction && subscriptionPropsForMergeAction === undefined) ||
+      (isMergeAction && normalizedSubscriptionPropsForMergeAction === undefined) ||
       !isMergeAction
     ) {
-      onChange?.(data);
+      emitChange(data);
     }
     if (
-      subscriptionPropsForMergeAction &&
-      subscriptionPropsForMergeAction.length === 0
+      normalizedSubscriptionPropsForMergeAction &&
+      normalizedSubscriptionPropsForMergeAction.length === 0
     )
       return;
 
     const isSubscribedMergePropCase =
-      subscriptionPropsForMergeAction?.some(
+      normalizedSubscriptionPropsForMergeAction?.some(
         (x) => mutation?.record?.[x] !== undefined
       ) ||
-      subscriptionPropsForMergeAction?.some(
+      normalizedSubscriptionPropsForMergeAction?.some(
         (x) => mutation?.changes?.[x] !== undefined
       );
     if (isSubscribedMergePropCase) {
-      onChange?.(data);
+      emitChange(data);
     }
   }
 
   function onCacheUpdate(e: CustomEvent<{ key: string }>) {
     const data = e.detail;
-    if (subscribeToCacheUpdate && subscribeToCacheUpdate.includes(data.key)) {
-      onChange?.(data);
+    if (
+      normalizedSubscribeToCacheUpdate.length > 0 &&
+      normalizedSubscribeToCacheUpdate.includes(data.key)
+    ) {
+      emitChange(data);
     }
   }
 </script>

@@ -23,12 +23,12 @@
   const monthMode = $derived(scale === TimeScale.MONTHS);
   const dayMode = $derived(scale === TimeScale.DAYS);
   const arrDays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-  let thisDay = +dayjs().format("D");
-  let thisMonth = +dayjs().format("M");
-  let thisYear = +dayjs().format("YYYY");
-  let mapDay = $state(+dayjs().format("D"));
-  let mapMonth = $state(+dayjs().format("M"));
-  let mapYear = $state(+dayjs().format("YYYY"));
+  let thisDay = +dayjs().format("D"); // 1..31
+  let thisMonth = +dayjs().format("M"); // 1..12
+  let thisYear = +dayjs().format("YYYY"); // 2021...
+  let mapDay = $state(+dayjs().format("D")); // 1..31
+  let mapMonth = $state(+dayjs().format("M")); // 1..12
+  let mapYear = $state(+dayjs().format("YYYY")); // 2021...
   let startDay = $state<number | undefined>(undefined);
   let startMonth = $state<number | undefined>(undefined);
   let startYear = $state<number | undefined>(undefined);
@@ -39,8 +39,15 @@
   let endString = $state("");
   let startSelected = $state(false);
   let endSelected = $state(false);
-  let selectedDecade = $state(Math.floor(mapYear / 10) * 10);
+  let selectedDecade = $state(Math.floor(mapYear / 10) * 10); // 2021...
   let rows = $state<any>();
+  // let monthPool: any[] = [
+  //   mapMonth - 2,
+  //   mapMonth - 1,
+  //   mapMonth,
+  //   mapMonth + 1,
+  //   mapMonth + 2
+  // ];
   let monthPool = $state<any[]>([...Array.from({ length: 12 }, (_, i) => i + 1)]);
   let yearPool = $state<any[]>([
     mapYear - 2,
@@ -74,7 +81,7 @@
     selectedDecade = Math.floor(mapYear / 10) * 10;
   };
   onMount(() => {
-    dayjs.locale("en");
+    dayjs.locale("en"); // use locale
     if (dayMode) {
       changeRows();
     } else if (monthMode) {
@@ -167,10 +174,10 @@
         dayjs(mapYear + "-" + mapMonth)
           .startOf("month")
           .format("ddd")
-      ).toUpperCase();
+      ).toUpperCase(); // 'Wed'
       const lastDayOfCurrentMonth = +dayjs(mapYear + "-" + mapMonth)
         .endOf("month")
-        .format("D");
+        .format("D"); // 31
       let iRow = 0;
       let iCol = 0;
       let start = false;
@@ -219,6 +226,7 @@
   function previousDecade() {
     selectedDecade--;
     previousYear(10);
+    // changeRows()
   }
 
   function previousMonth(decreaseConst: number) {
@@ -276,6 +284,7 @@
       startDay = +d;
       startMonth = +m;
       startYear = +y;
+      // endSelected = false;
       startString = dayMode
         ? dayjs(date).format("YYYY-MM-DD")
         : monthMode
@@ -288,12 +297,13 @@
       if (monthMode) {
         endDay = +dayjs(y + "-" + m)
           .endOf("month")
-          .format("D");
+          .format("D"); // 31
       }
       if (yearMode) {
         endDay = 31;
         endMonth = 12;
       }
+      // startSelected = false;
       endSelected = true;
 
       endString = dayMode
@@ -353,6 +363,7 @@
           label="Jump to Today"
           size={Size.xs}
           onclick={() => {
+            // selectDate(thisYear, thisMonth, thisDay);
             selectedDate = new Date();
           }}
         />
@@ -366,6 +377,13 @@
           size={Size.sm}
         />
         <div class="grow flex items-center justify-around">
+          <div
+            parentBgIndex={parentBgIndex + 1}
+            classList="focus:outline-none rounded-md px-2 py-1 text-center"
+            >{ucFirst(
+              dayjs(mapYear + "-" + mapMonth).format("YYYY")
+            )}</div
+          > -->
           {#each yearPool as year, index (year)}
             <button
               onclick={() => {

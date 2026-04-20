@@ -2,7 +2,6 @@
   import Button from "@21n/elements/button/Button.svelte";
   import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import Text from "@21n/elements/text/Text.svelte";
-  import EditModeToggle from "@21n/elements/toggle/EditModeToggle.svelte";
   import { appStore, isInEditMode } from "@21n/stores/app.store";
   import view from "@21n/stores/view.store";
   import { Size } from "@21n/types/size.enum";
@@ -29,22 +28,54 @@
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { bg, cn } from "@21n/utils/ui.utils";
   import { Product } from "@21n/products/product.type";
+  import Switch from "@21n/elements/toggle/Switch.svelte";
 
   const bgIndex = 2;
   const isNucleusContext = $derived($appStore.product === Product.NUCLEUS);
-  $selectedPageId = resolvePageSelection();
-  onMount(async () => {
-    if (!$selectedPageId) {
-      $selectedPageId = $analyticsConfigStore.pages[0]?.id;
-    }
-  });
+  const pagesList = $derived($analyticsConfigStore.pages ?? []);
+  let isAnalyticsEditMode = $state(false);
   let pages = $derived(
-    $analyticsConfigStore.pages.length > 0
-      ? $analyticsConfigStore.pages?.map((page) => {
+    pagesList.length > 0
+      ? pagesList.map((page) => {
           return { label: page.label, value: page.id };
         })
       : []
   );
+
+  function syncSelectedPage() {
+    const nextPageId = resolvePageSelection();
+    if ($selectedPageId !== nextPageId) {
+      $selectedPageId = nextPageId;
+    }
+  }
+
+  onMount(() => {
+    const unsubscribeEditMode = isInEditMode.subscribe((value) => {
+      isAnalyticsEditMode = value;
+    });
+    syncSelectedPage();
+    const unsubscribe = uiState.subscribe(() => {
+      syncSelectedPage();
+    });
+    return () => {
+      unsubscribeEditMode();
+      unsubscribe();
+    };
+  });
+
+  $effect(() => {
+    pagesList;
+    if (pagesList.length === 0) {
+      if ($selectedPageId !== undefined) {
+        $selectedPageId = undefined;
+      }
+      return;
+    }
+    const currentExists = pagesList.some((page) => page.id === $selectedPageId);
+    if (!currentExists) {
+      syncSelectedPage();
+    }
+  });
 
   function onPageSwitch(e: CustomEvent<string>) {
     uiState.setState(UIState.analyticsPage, e.detail, {
@@ -56,7 +87,18 @@
     const pageState = uiState.getState(UIState.analyticsPage, {
       scope: UIStateScope.DEVICE
     });
-    return pageState ?? $analyticsConfigStore.pages[0]?.id;
+    if (
+      typeof pageState === "string" &&
+      pagesList.some((page) => page.id === pageState)
+    ) {
+      return pageState;
+    }
+    return pagesList[0]?.id ?? undefined;
+  }
+
+  function setAnalyticsEditMode(nextValue: boolean) {
+    isAnalyticsEditMode = nextValue;
+    isInEditMode.toggle(nextValue);
   }
 </script>
 
@@ -69,7 +111,14 @@
         <div class="flex flex-col gap-3 w-full">
           <div class="flex justify-between w-full">
             <Text style={TextStyle.PAGE_HEADING_SUBTLE} content="Overview" />
-            <EditModeToggle />
+            <div class="rounded-full flex items-center gap-2 px-3 py-1">
+              <span class="text-fgs3 text-b2"> edit: </span>
+              <Switch
+                on={isAnalyticsEditMode}
+                size={Size.sm}
+                onChange={(event) => setAnalyticsEditMode(event.detail)}
+              />
+            </div>
           </div>
           <div class="flex w-full gap-2 items-center">
             <div class="overflow-x-auto">
@@ -78,9 +127,10 @@
                 size={Size.sm}
                 isPreventWrap={true}
                 bind:selected={$selectedPageId}
+                onSelect={onPageSwitch}
               />
             </div>
-            {#if $isInEditMode}
+            {#if isAnalyticsEditMode}
               <Button
                 class="min-w-fit"
                 size={Size.xs}
@@ -105,19 +155,20 @@
               style={PanelSwitcherStyle.BAR}
               isExpandToFullWidth={true}
               isEnableAnimationForTitle={false}
-              isInEditMode={$isInEditMode}
+              isInEditMode={isAnalyticsEditMode}
               parentBgIndex={bgIndex}
               tempTitleWithActionDisabled={true}
               bind:value={$selectedPageId}
               onSwitch={onPageSwitch}
               onAdd={onAddPageClicked}
+              onChange={onPagelabelChange}
               onRemove={onRemovePageClicked}
               onDebouncedChange={onPagelabelChange}
               onRearrange={onPageRearrange}
             >
               {#snippet right()}
                 <div class="flex items-center gap-2 mr-3">
-                  {#if $isInEditMode}
+                  {#if isAnalyticsEditMode}
                     <Button
                       icon="sync"
                       label="reset"
@@ -140,7 +191,14 @@
                       }}
                     />
                   {/if}
-                  <EditModeToggle />
+                  <div class="rounded-full flex items-center gap-2 px-3 py-1">
+                    <span class="text-fgs3 text-b2"> edit: </span>
+                    <Switch
+                      on={isAnalyticsEditMode}
+                      size={Size.sm}
+                      onChange={(event) => setAnalyticsEditMode(event.detail)}
+                    />
+                  </div>
                 </div>
               {/snippet}
             </PanelSwitcher>

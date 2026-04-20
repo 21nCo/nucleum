@@ -10,6 +10,7 @@
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import FocusMetricCards from "@21n/components/calendar/column/overview/FocusMetricCards.svelte";
+  import { onMount } from "svelte";
 
   let {
     date,
@@ -22,54 +23,72 @@
   let data = $state<ISessionLog[]>([]);
   let previousTimePeriodData = $state<ISessionLog[]>([]);
   let isRefreshing = $state(false);
+  let errorMessage = $state("");
   let dev_isUseCloud = false;
 
   async function refresh() {
     isRefreshing = true;
+    errorMessage = "";
+    const resolvedDate = date instanceof Date ? date : new Date(date);
     const isUseCloud = dev_isUseCloud && account.isCloudUserAndOnline();
-    [data, previousTimePeriodData] = await Promise.all([
-      sessionLogStore.selectMany(
-        {
-          filters: {
-            startUnix: tzStore.resolveTimePeriodFilterForDay(date)
-          }
-        },
-        {
-          isUseCloud
-        }
-      ),
-      sessionLogStore.selectMany(
-        {
-          filters: {
-            startUnix: tzStore.resolveTimePeriodFilterForDay(
-              new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1)
-            )
-          }
-        },
-        {
-          isUseCloud
-        }
+    const currentDayFilter = tzStore.resolveTimePeriodFilterForDay(resolvedDate);
+    const previousDayFilter = tzStore.resolveTimePeriodFilterForDay(
+      new Date(
+        resolvedDate.getFullYear(),
+        resolvedDate.getMonth(),
+        resolvedDate.getDate() - 1
       )
-    ]);
-    isRefreshing = false;
+    );
+    try {
+      [data, previousTimePeriodData] = await Promise.all([
+        sessionLogStore.selectMany(
+          {
+            filters: {
+              startUnix: currentDayFilter
+            }
+          },
+          {
+            isUseCloud
+          }
+        ),
+        sessionLogStore.selectMany(
+          {
+            filters: {
+              startUnix: previousDayFilter
+            }
+          },
+          {
+            isUseCloud
+          }
+        )
+      ]);
+      isRefreshing = false;
+    } catch (error) {
+      isRefreshing = false;
+      errorMessage = error instanceof Error ? error.message : String(error);
+    }
   }
+
+  onMount(() => {
+    refresh();
+  });
 </script>
 
-{#await refresh()}
+{#if isRefreshing}
   <EmptyStatusView
     isLoadingState={true}
     loadingAnimation={LoadingAnimationType.OVERVIEW_CARDS_PULSE}
   />
-{:then}
+{:else if errorMessage}
+  <EmptyStatusView mainText="Something went wrong." />
+{:else}
   <div class="flex flex-col gap-4 h-full w-full">
     <div class="flex flex-col gap-4">
       <FocusMetricCards {data} {previousTimePeriodData} />
       <AnalyticsChartStandalone {date} {scale} showLegend={false} />
     </div>
   </div>
-{:catch}
-  <EmptyStatusView mainText="Something went wrong." />
-{/await}
+{/if}
 
 <ComponentBaseLayer
   subscribeToResource={new Set([Resource.sessionLog])}

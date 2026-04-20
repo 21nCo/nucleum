@@ -23,6 +23,7 @@
 </script>
 
 <div
+  data-pdf-annotation-overlay
   class="flex gap-2 text-lg min-h-fit px-3 py-1 material-symbols-rounded bg-bgs2 rounded-md border border-brs3"
   {style}
   role="toolbar"

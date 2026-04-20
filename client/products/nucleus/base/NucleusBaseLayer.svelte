@@ -69,7 +69,7 @@
   }
 </script>
 
-<UserBaseLayer {onReady}>
+<UserBaseLayer onReady={onReady}>
   {#snippet topnav()}
     <div class="flex gap-1 items-center h-full">
       <TopNavLeftMenuItem

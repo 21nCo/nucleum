@@ -13,10 +13,7 @@
     }
     return splitDate[2];
   });
-  const day = $derived.by(() => {
-    const [year, month, dayOfMonth] = date.split("-").map(Number);
-    return new Date(year, month - 1, dayOfMonth).getDay();
-  });
+  const day = $derived(new Date(date).getDay());
 </script>
 
 <div

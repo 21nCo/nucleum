@@ -16,7 +16,6 @@ import {
 import type { UserAppearanceSettings } from "@21n/types/preferences.type";
 import { GlobalEvent } from "@21n/types/event.enum";
 import type { JsonValue } from "@21n/types/json.type";
-
 const defaultLightColorSchemeId = "colorscheme:clean_tidyblue_light";
 // const defaultDarkColorSchemeId = "colorscheme:clean_tidyblue_dark";
 const defaultDarkColorSchemeId = "colorscheme:clean_tidyblue_dark";
@@ -139,17 +138,13 @@ function initAppearanceStore() {
       let cs = colorSchemes.find((cs) => cs.id == colorSchemeId);
       if (!cs) return;
       update((a) => {
-        let modified;
-        if (a.isSyncWithSystem && a.systemTheme != a.userThemeSetting) {
-          modified = a;
-        } else {
-          modified = {
-            ...a,
-            colorScheme: cs as ColorScheme
-          };
-        }
+        let modified: AppearanceState = { ...a };
         if (!cs.isDark) modified.lightColorSchemeId = colorSchemeId;
         else modified.darkColorSchemeId = colorSchemeId;
+        const activeTheme = modified.isSyncWithSystem
+          ? modified.systemTheme
+          : modified.userThemeSetting;
+        modified = switchTheme(activeTheme, modified);
         persist(modified);
         return modified;
       });

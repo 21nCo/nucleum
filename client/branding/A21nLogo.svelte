@@ -8,7 +8,7 @@
     size?: Size;
   } = $props();
   const height = $derived(
-    size === Size.md ? 61 : size === Size.sm ? 40 : size === Size.xs ? 28 : 61
+    size === Size.md ? 61 : size === Size.sm ? 40 : Size.xs ? 28 : 61
   );
 </script>
 

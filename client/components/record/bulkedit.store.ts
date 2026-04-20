@@ -64,20 +64,30 @@ export const bulkEditStore = {
     }
   ) {
     const currentState = get(state);
+    const nextActionHandler = handlers?.onAction ?? null;
+    const nextSelectAllHandler = handlers?.onSelectAll ?? null;
+    const nextSubContext = handlers?.subContext;
     if (!isSameContext(currentState.context, context)) {
       state.set({
         selectedIds: [],
         context,
-        actionHandler: handlers?.onAction ?? null,
-        selectAllHandler: handlers?.onSelectAll ?? null,
-        subContext: handlers?.subContext
+        actionHandler: nextActionHandler,
+        selectAllHandler: nextSelectAllHandler,
+        subContext: nextSubContext
       });
     } else {
+      if (
+        currentState.actionHandler === nextActionHandler &&
+        currentState.selectAllHandler === nextSelectAllHandler &&
+        currentState.subContext === nextSubContext
+      ) {
+        return;
+      }
       state.update(($state) => ({
         ...$state,
-        actionHandler: handlers?.onAction ?? null,
-        selectAllHandler: handlers?.onSelectAll ?? null,
-        subContext: handlers?.subContext
+        actionHandler: nextActionHandler,
+        selectAllHandler: nextSelectAllHandler,
+        subContext: nextSubContext
       }));
     }
   },

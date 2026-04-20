@@ -21,7 +21,7 @@
 
   let {
     isHovering = $bindable(false),
-    item = $bindable(),
+    item: itemProp = $bindable(),
     isDraggable = false,
     accessPoint = ResourceAccessPoint.BROWSER,
     accessPointContext = undefined,
@@ -54,6 +54,7 @@
       | undefined;
     onClick?: ((event: MouseEvent) => void) | undefined;
   } = $props();
+  let item = $state(itemProp);
   let multiSelectContext = $derived({
     resource: determineResourceType(item.id),
     accessPoint,
@@ -66,6 +67,10 @@
   let hasSelection = $state(false);
   let isContextMenuVisible = $state(false);
   let currentSelectionCount = $derived($bulkEditStore?.length ?? 0);
+
+  $effect(() => {
+    item = itemProp;
+  });
 
   $effect(() => {
     currentSelectionCount;

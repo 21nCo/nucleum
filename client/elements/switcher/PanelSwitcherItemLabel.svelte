@@ -47,20 +47,31 @@
   const isAddNewItem = $derived(item.value === "$add");
   let labelEditPopoverRef = $state<any>();
   let inputRef = $state<any>();
+  let editableLabel = $state("");
 
   function emitChange() {
-    onChange?.(new CustomEvent<any>("change", { detail: { ...item } }));
+    onChange?.(
+      new CustomEvent<any>("change", {
+        detail: { ...item, label: editableLabel }
+      })
+    );
   }
 
   function emitDebouncedChange() {
     onDebouncedChange?.(
-      new CustomEvent<any>("debouncedChange", { detail: { ...item } })
+      new CustomEvent<any>("debouncedChange", {
+        detail: { ...item, label: editableLabel }
+      })
     );
   }
 
   function emitRemove() {
     onRemove?.(new CustomEvent<any>("remove", { detail: item.value }));
   }
+
+  $effect(() => {
+    editableLabel = item.label ?? "";
+  });
 
   $effect(() => {
     if (triggerItemEdit && triggerItemEdit === item.value.toString()) {
@@ -112,7 +123,7 @@
         >
           <TextInput
             bind:this={inputRef}
-            bind:value={item.label}
+            bind:value={editableLabel}
             placeholder="Label"
             onInput={() => emitChange()}
             onDebouncedChange={() => emitDebouncedChange()}

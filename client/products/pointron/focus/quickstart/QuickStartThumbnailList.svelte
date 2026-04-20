@@ -10,21 +10,29 @@
   import QuickStartThumbnail from "@21n/products/pointron/focus/quickstart/QuickStartThumbnail.svelte";
 
   let {
-    items = [],
+    items: initialItems = [],
     layout,
     isInEditMode,
     title = undefined,
-    emptyStatusText = undefined
+    emptyStatusText = undefined,
+    onUnpin = undefined
   }: {
     items?: any[];
     layout: Layout;
     isInEditMode: boolean;
     title?: string;
     emptyStatusText?: string;
+    onUnpin?: ((event: CustomEvent<IRecordId>) => void) | undefined;
   } = $props();
+  let items = $state(initialItems);
 
-  function onUnpin(e: CustomEvent<IRecordId>) {
+  $effect(() => {
+    items = initialItems;
+  });
+
+  function handleUnpin(e: CustomEvent<IRecordId>) {
     items = items.filter((x) => !isSameResource(x.id, e.detail));
+    onUnpin?.(e);
   }
 </script>
 
@@ -47,7 +55,7 @@
           {item}
           {layout}
           {isInEditMode}
-          onUnpin={onUnpin}
+          onUnpin={handleUnpin}
         />
       {/each}
     </div>

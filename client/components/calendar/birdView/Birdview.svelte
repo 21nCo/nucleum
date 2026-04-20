@@ -24,13 +24,11 @@
 
   let {
     mode = TimeScaleUnit.DAY,
-    selectedDate = new Date(),
     birthdate = new Date(1995, 3, 10),
     groupByBirthdate = true,
     yearPhases = []
   }: {
     mode?: TimeScaleUnit;
-    selectedDate?: Date;
     birthdate?: Date | string;
     groupByBirthdate?: boolean;
     yearPhases?: YearPhase[];
@@ -77,52 +75,6 @@
   let daysData = $state(generateDaysData(currentYear, currentMonthIndex));
   let monthsData = $state(generateMonthsData(currentYear));
   let yearsData = $state(generateYearsData(currentYear));
-
-  function resolveSelectedDateKey(date: Date) {
-    return Number.isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
-  }
-
-  async function syncToSelectedDate(date: Date) {
-    if (!panelsContainer) return;
-    const isoDate = resolveSelectedDateKey(date);
-    if (!isoDate) return;
-    if (mode === TimeScaleUnit.PART) {
-      zonesData = generateZonesData(date.toISOString());
-      await tick();
-      scrollDateSlotIntoView(`${isoDate}-0`);
-      return;
-    }
-    if (mode === TimeScaleUnit.DAY) {
-      daysData = generateDaysData(date.getFullYear(), date.getMonth());
-      await tick();
-      scrollDateSlotIntoView(isoDate);
-      return;
-    }
-    if (mode === TimeScaleUnit.MONTH) {
-      monthsData = generateMonthsData(date.getFullYear());
-      await tick();
-      scrollDateSlotIntoView(
-        `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`
-      );
-      return;
-    }
-    if (mode === TimeScaleUnit.YEAR) {
-      yearsData = generateYearsData(date.getFullYear());
-      await tick();
-      scrollDateSlotIntoView(`${date.getFullYear()}`);
-    }
-  }
-
-  let lastSyncedDateKey = $state("");
-
-  $effect(() => {
-    const dateKey = resolveSelectedDateKey(selectedDate);
-    if (!panelsContainer || !dateKey) return;
-    const syncKey = `${mode}-${dateKey}`;
-    if (syncKey === lastSyncedDateKey) return;
-    lastSyncedDateKey = syncKey;
-    void syncToSelectedDate(selectedDate);
-  });
 
   function generateYearsData(centerYear: number) {
     try {
@@ -820,11 +772,10 @@
   class="relative flex flex-col max-w--[800px] max-h--[800px] w-full h-full min-h-[600px]"
 >
   <div class="flex h-full w-full overflow-auto">
-    {#key `${mode}-${resolveSelectedDateKey(selectedDate)}-${instaceId}`}
+    {#key mode && instaceId}
       {#if mode != TimeScaleUnit.YEAR}
         <RollerPicker
           {mode}
-          initialDate={selectedDate}
           {birthdate}
           {groupByBirthdate}
           {yearPhases}

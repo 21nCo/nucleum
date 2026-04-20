@@ -104,26 +104,22 @@
   <span class="flex w-full items-center justify-center">
     <span class="relative inline-flex items-center justify-center">
       <span>{label ?? item}</span>
-      {#if suffix || adornment}
+      {#if suffix}
         <span
-          class="absolute left-full ml-1 top-1/2 inline-flex -translate-y-1/2 items-center gap-1"
+          class={cn(
+            "absolute left-full ml-1 top-1/2 -translate-y-1/2 rounded-full px-1.5 py-0.5 text-b5 leading-none",
+            { "bg-aps3 text-aps1": isSelected },
+            { "bg-bgs3 text-fgs3": !isSelected }
+          )}
         >
-          {#if suffix}
-            <span
-              class={cn(
-                "rounded-full px-1.5 py-0.5 text-b5 leading-none",
-                { "bg-aps3 text-aps1": isSelected },
-                { "bg-bgs3 text-fgs3": !isSelected }
-              )}
-            >
-              {suffix}
-            </span>
-          {/if}
-          {#if adornment}
-            <span class="text-b4 leading-none">
-              {adornment}
-            </span>
-          {/if}
+          {suffix}
+        </span>
+      {/if}
+      {#if adornment}
+        <span
+          class="absolute left-full ml-1 top-1/2 -translate-y-1/2 text-b4 leading-none"
+        >
+          {adornment}
         </span>
       {/if}
     </span>

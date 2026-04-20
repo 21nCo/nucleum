@@ -7,6 +7,8 @@
   } from "@21n/components/calendar/birdView/Birdview.type";
   import {
     currentDate,
+    currentMonth,
+    currentMonthEndDate,
     currentYear,
     getDaysInMonth,
     getLastAlphabetPosition,
@@ -66,7 +68,6 @@
   ];
   let {
     mode,
-    initialDate = currentDate,
     birthdate = undefined,
     groupByBirthdate = false,
     yearPhases = [],
@@ -78,7 +79,6 @@
     onMount = undefined
   }: {
     mode: TimeScaleUnit;
-    initialDate?: Date;
     birthdate?: Date | string;
     groupByBirthdate?: boolean;
     yearPhases?: YearPhase[];
@@ -90,14 +90,10 @@
     onMount?: ((detail: RollerPickerMountPayload) => void) | undefined;
   } = $props();
 
-  const initialMonthIndex = $derived(initialDate.getMonth());
-  const initialMonthLabel = $derived(monthNames[initialMonthIndex]);
-  let selectedYear = $state(initialDate.getFullYear());
-  let selectedMonth = $state(`${initialDate.getFullYear()}${initialMonthLabel}`);
-  let selectedMonthEndDate = $state(
-    getDaysInMonth(initialMonthIndex, initialDate.getFullYear())
-  );
-  let selectedDate = $state(`${selectedMonth}${initialDate.getDate()}`);
+  let selectedYear = $state(currentYear);
+  let selectedMonth = $state(currentYear + currentMonth);
+  let selectedMonthEndDate = $state(currentMonthEndDate);
+  let selectedDate = $state(selectedMonth + currentDate.getDate());
   const lowerYearLimit = currentYear - 25;
   let years = $state(Array.from({ length: 50 }, (_, i) => lowerYearLimit + i));
   let yearsForMonths = $state(getYearsForMonths());

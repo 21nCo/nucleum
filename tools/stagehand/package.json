@@ -1,0 +1,19 @@
+{
+  "name": "@21n/stagehand-debug",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "debug": "tsx ./run-debug.ts",
+    "debug:nucleus": "tsx ./run-debug.ts --product nucleus",
+    "debug:memotron": "tsx ./run-debug.ts --product memotron",
+    "debug:pointron": "tsx ./run-debug.ts --product pointron"
+  },
+  "dependencies": {
+    "@browserbasehq/stagehand": "^3.0.0",
+    "dotenv": "^16.6.1"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

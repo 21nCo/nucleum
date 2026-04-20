@@ -73,13 +73,9 @@ export function generateRandomIdv2(length = 16): string {
  * Generates a simple unique identifier.
  */
 export function generateSimpleRandomId(): string {
-  return (
-    Date.now().toString(36) +
-    Math.random().toString(36).slice(2, 10) +
-    Math.random().toString(36).slice(2, 10)
-  );
+  return Date.now().toString(36) + generateRandomId(8);
 }
 
 export function generateMiniRandomId(): string {
-  return Math.random().toString(36).slice(2, 10);
+  return generateRandomId(4);
 }

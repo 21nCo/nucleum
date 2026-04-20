@@ -74,9 +74,7 @@
   let tasksUnderGoal = $derived(resolveTaskFocusItems(focusItem));
 
   let parentHierarchy: string[] = [];
-  let isInprogress: boolean = false;
   let addTaskInputRef: any;
-  // let workedTime: number = 0;
   let isInprogressDerived = $derived(
     (contxt !== "history" &&
       $currentFocusItem &&
@@ -120,7 +118,7 @@
       return;
     }
     if ($activeSession.isSessionRunning) {
-      if (isInprogress) {
+      if (isInprogressDerived) {
         await activeSession.stopCurrentFocusItem();
       } else {
         await activeSession.startTask(focusItem.id);
@@ -179,14 +177,12 @@
     "cursor-move": isInEditMode
   })}
 >
-  {#if (goal && (!$activeSession.isSessionRunning || isInEditMode) && contxt === "current") || (goal && tasksUnderGoal.length > 0)}
+  {#if goal && tasksUnderGoal.length > 0}
     <CustomColorPropagator
       {color}
       class="relative flex items-center gap-2 w-full"
     >
-      <div
-        class="relative flex flex-col gap-2 w-full pb-2 border border-brs3 rounded-md"
-      >
+      <div class="relative flex flex-col gap-2 w-full pb-2 border border-brs3 rounded-md">
         {#if isInEditMode}
           <span class="absolute left-2 top-3">
             <Icon icon="rearrange" class="text-fgs2" />
@@ -285,7 +281,7 @@
         "flex h-16 gap-4 items-center border border-brs3 w-full p-3 rounded-md",
         {
           "bg-ccs1 border-ccs1": isInprogressDerived,
-          "text-ccs1": !isInprogress
+          "text-ccs1": !isInprogressDerived
         }
       )}
       {color}
@@ -311,7 +307,6 @@
       </div>
       {#if isInprogressDerived && contxt == "current" && $currentFocusItem}
         <div class="leading-none text-b3">
-          <!-- TODO - test if worked time is correct -->
           {formatSeconds(
             resolveTaskFocus(
               $activeSession.intervals,

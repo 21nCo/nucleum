@@ -57,6 +57,7 @@
 
 <div class="overflow-hidden">
   <button
+    type="button"
     class={cn(
       "relative flex gap-2 items-center justify-center whitespace-nowrap border min-w-20",
       {
@@ -88,7 +89,10 @@
       <ShortcutText {shortcut} {size} {parentBgIndex} />
     {/if}
     {#if isRemoveIconRenderedInline}
-      <button
+      <span
+        role="button"
+        tabindex="0"
+        aria-label="Remove"
         class={cn("rounded-full flex h-full items-center", {
           "from-bgs1 via-bgs1": parentBgIndex === 1,
           "from-bgs2 via-bgs2": parentBgIndex === 2,
@@ -98,13 +102,29 @@
           "active:bg-bgs2 notouch:hover:bg-bgs2":
             removeStyle === "inline" || removeStyle === "always-show"
         })}
-        onclick={(e) => {
-          onRemove?.();
+        onmousedown={(e) => {
+          e.preventDefault();
           e.stopPropagation();
+        }}
+        onpointerdown={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        onclick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onRemove?.();
+        }}
+        onkeydown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            e.stopPropagation();
+            onRemove?.();
+          }
         }}
       >
         <Icon icon="cross" />
-      </button>
+      </span>
     {/if}
     {#if isActive && isShowExpandFeedbackOnActive}
       <svg

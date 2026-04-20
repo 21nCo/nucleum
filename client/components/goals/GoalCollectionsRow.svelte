@@ -31,7 +31,13 @@
   let popoverRef = $state<any>(undefined);
 
   async function onUnlink(e: CustomEvent) {
-    await goal.unlinkCollection(e.detail);
+    try {
+      await goal.unlinkCollection(e.detail);
+    } catch (error) {
+      logger.error(error);
+      toasts.error();
+      throw error;
+    }
   }
 
   async function onSelect(item: any) {

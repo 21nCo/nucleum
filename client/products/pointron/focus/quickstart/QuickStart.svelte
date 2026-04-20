@@ -122,6 +122,16 @@
     isLoadingState = false;
   }
 
+  function handleUnpin(event: CustomEvent<string>) {
+    items = items.filter((x) => x.id?.toString() !== event.detail?.toString());
+    searchPinnedItems = searchPinnedItems.filter(
+      (x) => x.id?.toString() !== event.detail?.toString()
+    );
+    searchUnpinnedItems = searchUnpinnedItems.filter(
+      (x) => x.id?.toString() !== event.detail?.toString()
+    );
+  }
+
   function createNewGoal(isPreventOpenAfterCreate: boolean = true) {
     appStore.runAction(
       resourceAction(Resource.goal, ResourceActionType.CREATE),
@@ -137,7 +147,7 @@
   }
 </script>
 
-<div class="flex flex-col flex-grow gap-4 w-full">
+<div class="flex flex-col flex-grow gap-4 w-full" data-testid="quick-focus-panel">
   <InlineSearchBar
     query={searchQuery}
     isPadded={true}
@@ -164,6 +174,7 @@
           {isInEditMode}
           title="Pinned"
           emptyStatusText={`No pinned goals found with "${searchQuery}"`}
+          onUnpin={handleUnpin}
         />
         <QuickStartThumbnailList
           items={searchUnpinnedItems}
@@ -171,10 +182,16 @@
           {isInEditMode}
           title="Other goals"
           emptyStatusText={`No other goals found with "${searchQuery}"`}
+          onUnpin={handleUnpin}
         />
       </div>
     {:else}
-      <QuickStartThumbnailList {items} {layout} {isInEditMode} />
+      <QuickStartThumbnailList
+        {items}
+        {layout}
+        {isInEditMode}
+        onUnpin={handleUnpin}
+      />
     {/if}
     <div class="flex flex--col gap-2 w-full justify-center items-center">
       {#if isInEditMode}

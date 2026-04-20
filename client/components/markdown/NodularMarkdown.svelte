@@ -129,7 +129,9 @@
 
   function emitReady() {
     const event = new CustomEvent<void>("ready");
-    onReady?.(event);
+    if (typeof onReady === "function") {
+      onReady(event);
+    }
   }
 
   function emitRestructure(detail: any) {
