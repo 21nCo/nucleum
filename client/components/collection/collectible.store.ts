@@ -53,7 +53,6 @@ export class CollectibleStore<
         collections
       } as Partial<T>);
       await this.refreshTypes();
-      return result;
     }
     return result;
   }

@@ -65,6 +65,15 @@ function getBaseURL(projectName: ProjectName): string {
   return process.env[envKey] ?? process.env.APP_BASE_URL ?? defaultBaseURL;
 }
 
+function createOfflineSessionId() {
+  const randomUUID = globalThis.crypto?.randomUUID?.();
+  if (randomUUID) return randomUUID;
+
+  const values = new Uint32Array(4);
+  globalThis.crypto.getRandomValues(values);
+  return Array.from(values, (value) => value.toString(16)).join("-");
+}
+
 function getAuthPath(projectName: ProjectName): string {
   const authDir = path.join(__dirname, "..", ".auth");
   const fileName =
@@ -205,15 +214,10 @@ async function ensureInAppOnHome(
 
   const setOfflineSessionFallback = async () => {
     await debug(`setting offlineSessionId fallback on ${page.url()}`);
-    await page.evaluate(() => {
-      const fallback = () => {
-        const bytes = new Uint32Array(4);
-        globalThis.crypto?.getRandomValues(bytes);
-        return Array.from(bytes, (value) => value.toString(16)).join("-");
-      };
-      const value = globalThis.crypto?.randomUUID?.() ?? fallback();
+    const value = createOfflineSessionId();
+    await page.evaluate((value) => {
       window.localStorage.setItem("offlineSessionId", value);
-    });
+    }, value);
   };
 
   const goHomeWithOfflineSessionFallback = async (reason: string) => {
