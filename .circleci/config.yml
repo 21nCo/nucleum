@@ -1,0 +1,188 @@
+version: 2.1
+
+orbs:
+  node: circleci/node@6.3.0
+  browser-tools: circleci/browser-tools@1.4.8
+
+# ── Reusable executors ────────────────────────────────────────────────────────
+executors:
+  node-executor:
+    docker:
+      - image: cimg/node:20.19
+    resource_class: large
+    working_directory: ~/project
+  playwright-executor:
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.49.0-noble
+    resource_class: large
+    working_directory: ~/project
+    environment:
+      NODE_ENV: test
+
+# ── Reusable commands ─────────────────────────────────────────────────────────
+commands:
+  install-deps:
+    description: Install Node dependencies with npm (legacy-peer-deps) and restore cache
+    steps:
+      - restore_cache:
+          keys:
+            - npm-v1-{{ checksum "package-lock.json" }}
+            - npm-v1-
+      - run:
+          name: Install dependencies
+          command: npm install --legacy-peer-deps
+      - save_cache:
+          key: npm-v1-{{ checksum "package-lock.json" }}
+          paths:
+            - ~/.npm
+            - node_modules
+
+# ── Jobs ──────────────────────────────────────────────────────────────────────
+jobs:
+  install:
+    executor: node-executor
+    steps:
+      - checkout
+      - install-deps
+      - persist_to_workspace:
+          root: ~/project
+          paths:
+            - .
+
+  lint:
+    executor: node-executor
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Run ESLint
+          command: npm run lint
+      - run:
+          name: Run Prettier check
+          command: npx prettier --check "**/*.{ts,tsx,js,jsx,svelte,json,css,md}" --ignore-path .gitignore
+
+  type-check:
+    executor: node-executor
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Run app checks (type/schema validation)
+          command: npm run check:apps
+
+  test:
+    executor: node-executor
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Run Vitest unit tests with coverage
+          command: npm run test
+      - store_artifacts:
+          path: coverage
+          destination: coverage
+
+  build:
+    executor: node-executor
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Build all products via Turborepo
+          command: npm run build
+          environment:
+            NODE_OPTIONS: "--max-old-space-size=8192"
+            NODE_ENV: production
+      - store_artifacts:
+          path: apps/nucleus/build
+          destination: nucleus
+      - store_artifacts:
+          path: apps/memotron/build
+          destination: memotron
+      - store_artifacts:
+          path: apps/pointron/build
+          destination: pointron
+
+  playwright-tests:
+    executor: playwright-executor
+    steps:
+      - attach_workspace:
+          at: ~/project
+      - run:
+          name: Install Playwright dependencies
+          command: cd apps/e2e-playwright && npm install --legacy-peer-deps
+      - run:
+          name: Run full Playwright suite
+          command: cd apps/e2e-playwright && npm run test:ci
+      - store_test_results:
+          path: apps/e2e-playwright/artifacts/junit.xml
+      - store_artifacts:
+          path: apps/e2e-playwright/artifacts
+          destination: playwright-artifacts
+
+# ── Workflows ─────────────────────────────────────────────────────────────────
+workflows:
+  ci:
+    jobs:
+      - install
+
+      # lint and type-check run in parallel after install
+      - lint:
+          requires:
+            - install
+      - type-check:
+          requires:
+            - install
+
+      # tests run after lint and type-check pass
+      - test:
+          requires:
+            - lint
+            - type-check
+
+      # build runs after tests pass
+      - build:
+          requires:
+            - test
+
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - dev
+    jobs:
+      - install
+      - playwright-tests:
+          requires:
+            - install
+
+# ── Deploy stub (fill in manually) ───────────────────────────────────────────
+# deploy:
+#   executor: node-executor
+#   steps:
+#     - attach_workspace:
+#         at: ~/project
+#     - run:
+#         name: Deploy
+#         command: |
+#           # Add your deployment commands here.
+#           # Common options:
+#           #   - Vercel:  npx vercel --prod --token $VERCEL_TOKEN
+#           #   - AWS CDK: cd deployment/cdk/client && npx cdk deploy --require-approval never
+#           #   - Custom:  ./scripts/deploy.sh
+#         environment:
+#           NODE_ENV: production
+#           # VERCEL_TOKEN: set this in CircleCI project environment variables
+#
+# To add deploy to the workflow, append to the ci workflow jobs list:
+#   - deploy:
+#       requires:
+#         - build
+#       filters:
+#         branches:
+#           only:
+#             - main
+#             - dev
