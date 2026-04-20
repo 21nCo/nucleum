@@ -76,9 +76,7 @@
     config: RollerConfig;
     items: any[];
     selectedItem?: string | number;
-    handleWheelEvent: (
-      e: WheelEvent | ProgrammedVerticalWheelEvent
-    ) => void;
+    handleWheelEvent: (e: WheelEvent | ProgrammedVerticalWheelEvent) => void;
     container?: HTMLDivElement;
     onMount?: ((scrollToSelectedItem: () => void) => void) | undefined;
   } = $props();
@@ -154,23 +152,30 @@
     return year;
   }
 
-  function resolveYearSuffix(year: number) {
+  function resolveYearDecadeAgePrefix(year: number) {
     if (!isGroupedByBirthdate() || !shouldRenderYearDivider(year))
       return undefined;
-    return getAgeSuffix(year) || undefined;
+    const ageText = getAgeSuffix(year);
+    return ageText ? `${ageText}s` : undefined;
+  }
+
+  function resolveYearPrefix(year: number) {
+    const decadePrefix = resolveYearDecadeAgePrefix(year);
+    if (decadePrefix) return decadePrefix;
+    if (!isGroupedByBirthdate()) return undefined;
+    const y = Number(year);
+    const selectedYear = Number(selectedItem);
+    const matchesHighlight =
+      Number.isFinite(selectedYear) && y === selectedYear;
+    if (!matchesHighlight) return undefined;
+    const ageText = getAgeSuffix(year);
+    return ageText || undefined;
   }
 
   function resolveMonthLabel(year: number, month: string, index: number) {
     let label = month;
     if (index == 0) label += ` ${String(year).slice(-2)}`;
     return label;
-  }
-
-  function resolveMonthSuffix(year: number, index: number) {
-    if (!isGroupedByBirthdate() || index != birthdateParts.monthIndex) {
-      return undefined;
-    }
-    return getAgeSuffix(year) || undefined;
   }
 
   function isBirthday(prefix: string, item: string) {
@@ -211,9 +216,14 @@
   }
 
   function getDayLabel(prefix: string, item: string) {
-    return Number(item) == 1
-      ? `${prefix.slice(getFirstAlphabetPosition(prefix))} ${item}`
-      : item;
+    const n = Number(item);
+    if (n == 1) {
+      return `${prefix.slice(getFirstAlphabetPosition(prefix))} ${item}`;
+    }
+    if (Number.isFinite(n) && n >= 2 && n <= 9 && String(item).length == 1) {
+      return `0${item}`;
+    }
+    return item;
   }
 
   function getDayAdornment(prefix: string, item: string) {
@@ -503,8 +513,7 @@
               {config}
               item={month}
               label={resolveMonthLabel(item, month, index)}
-              suffix={resolveMonthSuffix(item, index)}
-              prefix={item}
+              context={item}
               bind:selectedItem
               {handleClick}
             />
@@ -512,7 +521,7 @@
         {:else}
           <RollerButton
             {config}
-            prefix={config.itemType == Itemtype.YEAR
+            context={config.itemType == Itemtype.YEAR
               ? ""
               : item.slice(0, getLastAlphabetPosition(item) + 1)}
             label={config.itemType == Itemtype.DAY
@@ -523,8 +532,8 @@
               : config.itemType == Itemtype.YEAR
                 ? resolveYearLabel(item)
                 : undefined}
-            suffix={config.itemType == Itemtype.YEAR
-              ? resolveYearSuffix(item)
+            prefix={config.itemType == Itemtype.YEAR
+              ? resolveYearPrefix(item)
               : undefined}
             adornment={config.itemType == Itemtype.DAY
               ? getDayAdornment(

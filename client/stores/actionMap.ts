@@ -608,14 +608,14 @@ export const globalActions: IAction[] = [
   {
     action: resourceAction(Resource.combination, ResourceActionType.CREATE),
     component: CreateCombination,
-    label: "Create a new combination",
+    label: "Create a new space",
     type: ActionType.MODAL,
     isInactive: false,
     modalParams: {
-      title: "Create a new combination",
+      title: "Create a new space",
       layout: {
-        size: Size.md,
-        orientation: Orientation.Horizontal,
+        size: Size.sm,
+        orientation: Orientation.Vertical,
         isOveriddenFooter: true
       }
     }

@@ -8,7 +8,11 @@ import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
 import LibraryPanelContentResolver from "@21n/components/library/LibraryPanelContentResolver.svelte";
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import NucleusOverviewPanel from "@21n/products/nucleus/overview/NucleusOverviewPanel.svelte";
-import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+import {
+  AccessMode,
+  ResourceActionType
+} from "@21n/components/flux/resourceStores/resource.type";
+import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
 
 const actionsToFilterInSub = [Action.LIBRARY, Action.OVERVIEW];
 
@@ -35,12 +39,12 @@ export const nucleusActions: IAction[] = [
     label: "Overview",
     icon: "overview",
     component: NucleusOverview,
-    panel: NucleusOverviewPanel,
+    // panel: NucleusOverviewPanel,
     type: ActionType.PAGE
   },
   {
     action: Action.HOME,
-    label: "Rhom",
+    label: "Rhombus",
     icon: "rhombus",
     component: ComingSoonView,
     type: ActionType.PAGE
@@ -55,5 +59,11 @@ export const nucleusActions: IAction[] = [
     liveActionParams: {
       isOpeningBehaviorConfigurable: true
     }
+  },
+  {
+    action: resourceAction(Resource.combination, ResourceActionType.BROWSE),
+    label: "Spaces",
+    icon: "combination",
+    type: ActionType.PAGE
   }
 ];

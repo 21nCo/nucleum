@@ -19,13 +19,13 @@
   import Icon from "@21n/elements/Icon.svelte";
   import { AppSearchParam } from "@21n/types/appStore.type";
 
-interface Props {
-  resourceStore: Readable<IResourcePageWithPanels>;
-  panels: IToggleItem[];
-  isConstrainedWidth?: boolean;
-  accessMode: AccessMode;
-  onAction?: ((detail: IContextMenuItem["value"]) => void) | undefined;
-  contextMenuResolver?:
+  interface Props {
+    resourceStore: Readable<IResourcePageWithPanels>;
+    panels: IToggleItem[];
+    isConstrainedWidth?: boolean;
+    accessMode: AccessMode;
+    onAction?: ((detail: IContextMenuItem["value"]) => void) | undefined;
+    contextMenuResolver?:
       | (() =>
           | {
               group: string;
@@ -47,36 +47,39 @@ interface Props {
     $page.url.searchParams.get(AppSearchParam.MAX) === "true"
   );
 
-function resolveContextMenu() {
-  return contextMenuResolver?.() ?? [];
-}
+  function resolveContextMenu() {
+    return contextMenuResolver?.() ?? [];
+  }
 
-function handleContextMenuAction(event: CustomEvent<any>) {
-  onAction?.(event.detail);
-}
+  function handleContextMenuAction(event: CustomEvent<any>) {
+    onAction?.(event.detail);
+  }
 </script>
 
 <div
-  class={cn("absolute bottom-0 inset-x-0 mx-auto w-fit z-10", {
-    "mb-3": $resourceStore.isInFocusMode,
-    "mb-4": !$resourceStore.isInFocusMode
+  class={cn("fixed bottom-0 inset-x-0 mx-auto w-fit z-10", {
+    // "mb-3": $resourceStore.isInFocusMode,
+    // "mb-4": !$resourceStore.isInFocusMode
   })}
 >
   <div
     class={cn(
-      "flex flex-col border-t border-x border-brs3 shadow-md rounded-md  overflow-hidden"
+      "flex flex-col border-t border-x border-brs3 border-t-bgs1 shadow--md rounded--md  overflow-hidden"
     )}
   >
     <div
       class={cn("flex cw:flex-row-reverse  overflow-hidden", {
         "h-8 bg-bgs3": $resourceStore.isInFocusMode,
-        "h-12 bg-bgs2": !$resourceStore.isInFocusMode,
-        "rounded-md": !$resourceStore.isInEditMode,
-        "rounded-t-md": $resourceStore.isInEditMode
+        "h-[50px] bg-bgs1": !$resourceStore.isInFocusMode,
+        "rounded--md": !$resourceStore.isInEditMode,
+        "rounded-t--md": $resourceStore.isInEditMode
       })}
     >
       {#if $resourceStore.isInFocusMode}
-        <div class="flex h-full" in:slide={{ duration: 300, axis: "x" }}>
+        <div
+          class="flex h-full border-t border-brs2"
+          in:slide={{ duration: 300, axis: "x" }}
+        >
           <BoxButton
             icon="cross"
             label="Close"
@@ -88,7 +91,9 @@ function handleContextMenuAction(event: CustomEvent<any>) {
           />
         </div>
       {:else}
-        <div class="flex cw:border-l border-r border-brs2 text-fgs2 mr-3">
+        <div
+          class="flex cw:border-l border-r border-t border-brs2 text-fgs2 mr-3"
+        >
           <BoxButton
             label="Close"
             icon="cross"
@@ -107,7 +112,7 @@ function handleContextMenuAction(event: CustomEvent<any>) {
           options={panels}
           size={$view.isConstrainedWidth ? Size.sm : Size.md}
           isAccentColor={true}
-          isActiveIndicatorOnTop={true}
+          isActiveIndicatorOnTop={false}
           selected={$resourceStore.panel}
           onSelect={(e) => $resourceStore.switchPanel(e.detail)}
           isIconOnlyMode={$view.isConstrainedWidth}
@@ -130,7 +135,7 @@ function handleContextMenuAction(event: CustomEvent<any>) {
               }}
             />
           {:else}
-            <div class="flex items-center bg--bgs3 h-full">
+            <div class="flex items-center bg--bgs3 border-t border-brs2 h-full">
               <BoxButton
                 icon={isMaximized ? "exitfullscreen" : "fullscreen"}
                 tooltip={isMaximized ? "Minimize" : "Maximize"}
@@ -147,14 +152,14 @@ function handleContextMenuAction(event: CustomEvent<any>) {
                     size={Size.lg}
                     isBoxed={true}
                     parentBgIndex={1}
-                  class="h-full w-10"
-                  id="resourcePanelContextMenu"
-                  icon="more-outline-horizontal"
-                  heading="Actions"
-                  onAction={handleContextMenuAction}
-                />
-              </div>
-            {/if}
+                    class="h-full w-10"
+                    id="resourcePanelContextMenu"
+                    icon="more-outline-horizontal"
+                    heading="Actions"
+                    onAction={handleContextMenuAction}
+                  />
+                </div>
+              {/if}
             </div>
           {/if}
         </div>

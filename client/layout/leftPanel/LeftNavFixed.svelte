@@ -83,8 +83,8 @@
       class={cn(
         "flex flex-col items-center justify-between overflow-auto bg-bgs2",
         {
-          "w-[5.5rem] min-w-[5.5rem] cursor-w-resize": !isHideMenuLabels,
-          "w-[3.5rem] min-w-[3.5rem] cursor-e-resize": isHideMenuLabels
+          "w-[5.5rem] min-w-[5.5rem] !cursor-w-resize": !isHideMenuLabels,
+          "w-[3.5rem] min-w-[3.5rem] !cursor-e-resize": isHideMenuLabels
         },
         (!dev_mixedPanel || !$appStore.currentComponent?.panel) && {
           "rounded-lg border-none": isRounded,

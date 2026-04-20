@@ -39,8 +39,18 @@ export interface IProductNavConfig {
 const productNavConfig = {
   [Product.NUCLEUS]: {
     appMenu: [Action.CALENDAR, Action.OVERVIEW, Action.LIBRARY] as const,
-    appMenuDev: [Action.HOME, Action.CALENDAR, Action.OVERVIEW, Action.LIBRARY] as const,
-    appMenuPt: [Action.CALENDAR, Action.LIBRARY_PORTRAIT, Action.OVERVIEW] as const,
+    appMenuDev: [
+      Action.HOME,
+      Action.CALENDAR,
+      Action.OVERVIEW,
+      resourceAction(Resource.combination, ResourceActionType.BROWSE),
+      Action.LIBRARY
+    ] as const,
+    appMenuPt: [
+      Action.CALENDAR,
+      Action.LIBRARY_PORTRAIT,
+      Action.OVERVIEW
+    ] as const,
     homePath: Action.CALENDAR,
     homePathPt: Action.LIBRARY_PORTRAIT,
     librarySectionLabel: "Nucleum",
@@ -55,7 +65,12 @@ const productNavConfig = {
     } as Record<string, string>
   },
   [Product.MEMOTRON]: {
-    appMenu: [resourceAction(Resource.node, ResourceActionType.CREATE), Action.CALENDAR, Action.OVERVIEW, Action.LIBRARY] as const,
+    appMenu: [
+      resourceAction(Resource.node, ResourceActionType.CREATE),
+      Action.CALENDAR,
+      Action.OVERVIEW,
+      Action.LIBRARY
+    ] as const,
     appMenuPt: [] as const,
     homePath: Action.CALENDAR,
     homePathPt: Action.MOBILEHOME,
@@ -71,8 +86,18 @@ const productNavConfig = {
     } as Record<string, string>
   },
   [Product.POINTRON]: {
-    appMenu: [PointronAction.FOCUS, Action.CALENDAR, Action.OVERVIEW, Action.LIBRARY] as const,
-    appMenuPt: [Action.OVERVIEW, Action.CALENDAR, PointronAction.FOCUS, Action.LIBRARY_PORTRAIT] as const,
+    appMenu: [
+      PointronAction.FOCUS,
+      Action.CALENDAR,
+      Action.OVERVIEW,
+      Action.LIBRARY
+    ] as const,
+    appMenuPt: [
+      Action.OVERVIEW,
+      Action.CALENDAR,
+      PointronAction.FOCUS,
+      Action.LIBRARY_PORTRAIT
+    ] as const,
     homePath: Action.CALENDAR,
     homePathPt: PointronAction.FOCUS,
     librarySectionLabel: "Focus",

@@ -69,16 +69,16 @@
   }
 </script>
 
-<UserBaseLayer onReady={onReady}>
+<UserBaseLayer {onReady}>
   {#snippet topnav()}
     <div class="flex gap-1 items-center h-full">
       <TopNavLeftMenuItem
         action={resourceAction(Resource.node, ResourceActionType.CREATE)}
       />
       <FocusTopNavWidget />
-      {#if isDebug}
+      <!-- {#if isDebug}
         <TopNavLeftMenuItem action={Action.FEED} />
-      {/if}
+      {/if} -->
     </div>
   {/snippet}
   {@render children?.()}

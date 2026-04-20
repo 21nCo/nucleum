@@ -16,35 +16,35 @@
   import { CombinationType } from "@21n/components/combination/combination.type";
 
   let label = "";
-  let type: CombinationType = CombinationType.SIDENAV;
+  let type: CombinationType = CombinationType.NOTEBOOK;
   let error: string | undefined = undefined;
   const typeOptions: ISelectItem[] = [
     {
-      label: "Side nav",
+      label: "Notebook",
       icon: "sidebar",
-      value: CombinationType.SIDENAV
+      value: CombinationType.NOTEBOOK
     },
-    {
-      label: "Wall",
-      icon: "widget",
-      value: CombinationType.WALL,
-      isDisabled: true,
-      badge: "planned"
-    },
+    // {
+    //   label: "Wall",
+    //   icon: "widget",
+    //   value: CombinationType.WALL,
+    //   isDisabled: true,
+    //   badge: "planned"
+    // },
     {
       label: "Canvas",
       icon: "canvas",
-      value: CombinationType.WHITEBOARD,
-      isDisabled: true,
-      badge: "planned"
-    },
-    {
-      label: "Mind map",
-      icon: "tree-view",
-      value: CombinationType.MINDMAP,
+      value: CombinationType.CANVAS,
       isDisabled: true,
       badge: "planned"
     }
+    // {
+    //   label: "Mind map",
+    //   icon: "tree-view",
+    //   value: CombinationType.MINDMAP,
+    //   isDisabled: true,
+    //   badge: "planned"
+    // }
   ];
 
   async function onSave() {
@@ -53,7 +53,7 @@
       error = "Name is required";
       return;
     }
-    if (type !== CombinationType.SIDENAV) {
+    if (type !== CombinationType.NOTEBOOK) {
       toasts.error("Only side nav combinations are supported currently");
       return;
     }
@@ -74,14 +74,17 @@
     <div class="flex flex-col gap-6 w-full h-full">
       <TextInput
         label={{
-          label: "Name of the combination",
+          label: "Name of the space",
           orientation: Orientation.Vertical
         }}
-        placeholder="Some combination"
+        placeholder="School, Project X, Work, etc."
         bind:value={label}
       />
       <OptionSelector
-        labelProps={{ label: "Type of combination" }}
+        labelProps={{
+          label: "Layout of the space",
+          orientation: Orientation.Vertical
+        }}
         style={OptionSelectorStyle.TRAIN}
         options={typeOptions}
         bind:selected={type}

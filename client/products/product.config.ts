@@ -7,7 +7,11 @@ import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
 import { resourceConfig } from "@21n/components/flux/resourceStores/resource.config";
 import type { IResourceTableConfig } from "@21n/components/flux/flux.type";
 import type { ISelectItem } from "@21n/types/select.type";
-import { nextProducts, nextResourceTableMap, nextNucleusOverviewPanelSwitcherItems } from "@21n/next/product.config";
+import {
+  nextProducts,
+  nextResourceTableMap,
+  nextNucleusOverviewPanelSwitcherItems
+} from "@21n/next/product.config";
 
 const isDev = import.meta.env?.DEV || false;
 
@@ -146,7 +150,7 @@ const resourceTableMap: Record<string, Resource[]> = {
     Resource.session,
     Resource.sessionLog
   ],
-  ...nextResourceTableMap,
+  ...nextResourceTableMap
 };
 
 const nucleusNav = getProductNavConfig(Product.NUCLEUS);
@@ -182,8 +186,8 @@ export const products: Record<string, IAppConfigBase> = {
       "ACTIVATE_LINK_BOX"
     ],
     overviewPanelSwitcherItems: [
-      { label: "Focus", value: OverviewPanel.FOCUS, icon: "circle" },
-      { label: "Memory", value: OverviewPanel.MEMORY, icon: "hexagon" },
+      { label: "Dashboard", value: OverviewPanel.DASHBOARD, icon: "overview" },
+      { label: "Graph", value: OverviewPanel.GRAPH, icon: "graph" },
       ...nextNucleusOverviewPanelSwitcherItems
     ],
     e2eCapabilities: productE2EConfigs.nucleus.capabilities,
@@ -354,7 +358,7 @@ export const products: Record<string, IAppConfigBase> = {
       }
     ]
   },
-  ...nextProducts,
+  ...nextProducts
 };
 
 const tableConfigMapper = (resource: Resource) => {
@@ -368,7 +372,9 @@ const tableConfigMapper = (resource: Resource) => {
 
 export const product =
   import.meta.env?.VITE_PRODUCT ||
-  (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_PRODUCT : undefined) ||
+  (typeof process !== "undefined"
+    ? process.env?.PLASMO_PUBLIC_PRODUCT
+    : undefined) ||
   Product.NUCLEUS;
 
 export const resolveProductConfig = (productOverride?: Product): IAppConfig => {

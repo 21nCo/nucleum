@@ -351,12 +351,9 @@
       itemHeight: rollerItemHeight,
       containerHeight: containerHeight
     };
-    if (mode == TimeScaleUnit.PART)
-      onSelectedDateChange?.(selectedDate);
-    else if (mode == TimeScaleUnit.DAY)
-      onSelectedMonthChange?.(selectedMonth);
-    else if (mode == TimeScaleUnit.MONTH)
-      onSelectedYearChange?.(selectedYear);
+    if (mode == TimeScaleUnit.PART) onSelectedDateChange?.(selectedDate);
+    else if (mode == TimeScaleUnit.DAY) onSelectedMonthChange?.(selectedMonth);
+    else if (mode == TimeScaleUnit.MONTH) onSelectedYearChange?.(selectedYear);
 
     onMount?.({
       handleDaysWheelEvent,
@@ -366,7 +363,10 @@
   });
 </script>
 
-<div class="relative flex bg-bgs2" bind:clientHeight={containerHeight}>
+<div
+  class="relative flex bg-bgs1 border-r border-brs2"
+  bind:clientHeight={containerHeight}
+>
   <Roller
     handleWheelEvent={handleYearsWheelEvent}
     items={years}
