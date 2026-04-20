@@ -41,7 +41,7 @@
       icon: "markdown"
     },
     {
-      value: CaptureMethod.MARKDOWN,
+      value: CaptureMethod.NOTE,
       label: "Note",
       icon: "note-blank"
     },
@@ -57,7 +57,8 @@
       ? [
           {
             icon: "ri:sketching",
-            value: CaptureMethod.SKETCH
+            value: CaptureMethod.SKETCH,
+            label: "Freehand"
           },
           {
             icon: "globe",

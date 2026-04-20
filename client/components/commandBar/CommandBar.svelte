@@ -45,7 +45,7 @@
   const defaultPlaceholder = $derived(
     isFullPageContext
       ? "Search for a command"
-      : "Search for a command or scroll to see full list"
+      : "Search anything, run a command or ask Rhombus"
   );
   let placeholder = $state("");
   $effect(() => {
@@ -115,7 +115,8 @@
     placeholder =
       typeof nextSearchAction.searchActionParams?.placeholder === "function"
         ? nextSearchAction.searchActionParams.placeholder(componentParams)
-        : (nextSearchAction.searchActionParams?.placeholder ?? "select an item");
+        : (nextSearchAction.searchActionParams?.placeholder ??
+          "select an item");
   }
   function close() {
     value = "";
@@ -127,7 +128,12 @@
   }
 
   function resolveSearchActionLabel() {
-    return componentParams?.label ?? searchAction?.cmdLabel ?? searchAction?.label ?? "";
+    return (
+      componentParams?.label ??
+      searchAction?.cmdLabel ??
+      searchAction?.label ??
+      ""
+    );
   }
   /**
    * Used in command-only mode.
@@ -156,7 +162,7 @@
 
 <div
   class={cn(
-    "flex flex-col cw:w-full cw:min-w-full w-[40rem] max-w-full overflow-auto",
+    "flex flex-col cw:w-full cw:min-w-full w-[50rem] max-w-full overflow-auto",
     {
       "border border-brs2 rounded-md": isFullPageContext,
       "cw:h-full h-[30rem]":
@@ -229,7 +235,7 @@
           {:else if isFullPageContext && isFocusing}
             Press <b>Esc</b> to close
           {:else}
-            Cmd bar
+            Super bar
           {/if}
         </div>
       </div>
@@ -252,7 +258,7 @@
       <CmdResults
         search={value}
         bind:this={resultsRef}
-        onSearchAction={onSearchAction}
+        {onSearchAction}
         onClose={close}
       />
     {/if}
@@ -268,6 +274,21 @@
       )}
     >
       <span class="inline-flex items-center gap-1">
+        Use <ShortcutText
+          shortcut={{
+            key: ">"
+          }}
+          parentBgIndex={2}
+          isAlwaysShown={true}
+        /> for commands, <ShortcutText
+          shortcut={{
+            key: "`"
+          }}
+          parentBgIndex={2}
+          isAlwaysShown={true}
+        /> for quick note
+      </span>
+      <span class="inline-flex items-center gap-1">
         Press
         <ShortcutText
           shortcut={Action.CLOSE}
@@ -276,11 +297,11 @@
         />
         to close
       </span>
-      <ShortcutText
+      <!-- <ShortcutText
         shortcut={Action.CMD}
         parentBgIndex={2}
         isAlwaysShown={true}
-      />
+      /> -->
     </div>
   {/if}
 </div>

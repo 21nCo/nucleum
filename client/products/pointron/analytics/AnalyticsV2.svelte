@@ -150,7 +150,7 @@
         <div class="flex overflow-hidden w-full">
           <div class="overflow-x-auto w-full">
             <PanelSwitcher
-              title={isNucleusContext ? "Focus" : "Overview"}
+              title={isNucleusContext ? "" : "Overview"}
               items={pages}
               style={PanelSwitcherStyle.BAR}
               isExpandToFullWidth={true}

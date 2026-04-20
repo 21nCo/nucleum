@@ -58,13 +58,36 @@ export interface IActiveCombination
 }
 
 export enum CombinationType {
+  /**
+   * @deprecated - use {@link CombinationType.NOTEBOOK} instead.
+   * Side nav is now a view type in notebook.
+   * 
+   * A markdown page can be inserted as a sub side nav (TOC becomes the hierarchy).
+   */
   SIDENAV = "sidenav",
+  /**
+   * @deprecated - use {@link CombinationType.CANVAS} instead.
+   */
   WHITEBOARD = "whiteboard",
+  /**
+   * @deprecated - use {@link CombinationType.CANVAS} instead.
+   * 
+   * A canvas can have option to insert a mind map.
+   * A markdown page can be inserted as a mind map (TOC becomes the hierarchy).
+   */
   MINDMAP = "mindmap",
+  /**
+   * @deprecated - use {@link CombinationType.NOTEBOOK} instead. WALL is now a view type in notebook.
+   * 
+   * Infinitely deep structured layout.
+   * A markdown page can be inserted as sub wall (TOC becomes the hierarchy).
+   */
   WALL = "wall",
   /**
    * @deprecated - use horizontal stack and vertical stack when Calendar scope is activated in Calendar instead.
    * Previous - Pyramid, Funnel views merged into regular timeline view.
    */
-  TIMELINE = "timeline"
+  TIMELINE = "timeline",
+  NOTEBOOK = "notebook",
+  CANVAS = "canvas"
 }

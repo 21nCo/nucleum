@@ -106,7 +106,7 @@
 <div class="hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
 <div
   class={cn(
-    "w-full h-11 max-h-11 min-h-11 bg-bgs2 border-b border-brs3 userdata grid",
+    "w-full h-12 max-h-12 min-h-11 bg-bgs2 border-t border-brs3 userdata grid",
     {
       "grid-cols-[auto_1fr]": isFullOverlayMode
     },
@@ -119,7 +119,7 @@
   {#if $context.embed !== Embed.HANDSET}
     <TopNavLeftLogo isRenderProfilePicture={true} />
   {/if}
-  {#if !isFullOverlayMode}
+  <!-- {#if !isFullOverlayMode}
     <div
       class={cn("flex h-full", {
         "border-r border-brs3": isShowBackToSearch
@@ -172,7 +172,7 @@
         </div>
       </div>
     {/if}
-  {/if}
+  {/if} -->
   {#if isRightOverlayMode || isFullOverlayMode}
     <!-- TODO - multiple toasts case -->
     <div
@@ -218,6 +218,10 @@
       {/if}
     </div>
   {:else}
+    <div class="flex items-center justify-start h-full text-b3 text-fgs3 px-3">
+      Toast, player, status, upcoming message, contextual action suggestions
+      area (Default current time)
+    </div>
     <div
       class="flex items-center justify-end h-full"
       in:fly={{ duration: 200, y: 10, easing: quadIn }}
@@ -242,14 +246,13 @@
         text="Syncing..."
       />
       {@render topnav?.()}
-      <TopNavLeftMenuItem action={Action.TODAY} />
-      <TopNavLeftMenuItem action={Action.NAVIGATOR} />
       <TopNavLeftMenuItem action={Action.CMD} />
-      <TopNavLeftMenuItem action={Action.SETTINGS} isLastItem={true} />
+      <TopNavLeftMenuItem action={Action.NAVIGATOR} isLastItem={true} />
+      <!-- <TopNavLeftMenuItem action={Action.SETTINGS} isLastItem={true} /> -->
       {#if isDev}
         <TopNavLeftMenuItem
           action={Action.RHOMBUS}
-          label="Rhom"
+          tooltip="Rhombus on the side"
           isLastItem={true}
         />
       {/if}

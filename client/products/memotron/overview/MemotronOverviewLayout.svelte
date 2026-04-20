@@ -5,14 +5,8 @@
   import { resizeListener } from "@21n/actions/resize.action";
   import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
-  import {
-    uiState,
-    uiStateDerived
-  } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { uiState, uiStateDerived } from "@21n/stores/uiState/uiState.store";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { MemotronOverviewPanel } from "@21n/products/memotron/overview/overview.type";
   import { Product } from "@21n/products/product.type";
   import { appStore } from "@21n/stores/app.store";
@@ -82,7 +76,7 @@
         }
       ]}
       style={PanelSwitcherStyle.BAR}
-      title={isNucleusContext ? "Memory" : "Overview"}
+      title={isNucleusContext ? "" : "Overview"}
       isExpandToFullWidth={true}
       size={Size.sm}
       bind:value={selectedPanel}
