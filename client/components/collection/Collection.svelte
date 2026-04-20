@@ -350,6 +350,14 @@
     isStickied = positionFromTop !== undefined ? positionFromTop <= 0 : false;
   }
 
+  async function closeEditMode() {
+    const label = $collection.label?.trim();
+    if (label) {
+      await collection.modify({ label });
+    }
+    collection.toggleEditMode(false);
+  }
+
   async function onViewSwitch() {
     logger.log({ at: "onViewSwitch", selectedViewId });
     resetViewSelections();
@@ -656,9 +664,7 @@
         {#if $collection.isInEditMode && !isCoverPickerOpen}
           <button
             class="w-full min-h-12 bg-ass1 text-abg flex gap-2 items-center justify-center"
-            onclick={() => {
-              collection.toggleEditMode(false);
-            }}
+            onclick={closeEditMode}
           >
             <Icon icon="cross" size={Size.sm} class="text-abg" />
             <span> Close edit mode </span>
