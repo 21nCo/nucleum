@@ -9,7 +9,10 @@ import { logger } from "@21n/components/debug/logger.client";
 import { properCase } from "@21n/shared-utils/text.utils";
 import type { IResourceSwitchItem } from "@21n/types/select.type";
 import { Product } from "@21n/products/product.type";
-import { nextResourceIcons, nextUncountableResources } from "@21n/next/resource.utils";
+import {
+  nextResourceIcons,
+  nextUncountableResources
+} from "@21n/next/resource.utils";
 
 export function resourceAction(resource: Resource, action: ResourceActionType) {
   return `${resource}_${action}`;
@@ -141,7 +144,8 @@ function normalizeResourceId(value: unknown): string | null {
   if (hasResourceTable(value) && hasStringId(value)) {
     if (typeof value.toString === "function") {
       const normalized = value.toString();
-      if (typeof normalized === "string" && normalized.length > 0) return normalized;
+      if (typeof normalized === "string" && normalized.length > 0)
+        return normalized;
     }
     return `${value.tb}:${value.id}`;
   }
@@ -217,7 +221,8 @@ export function resolveBulkSelectionAccessPointId(
   if (
     accessPoint === ResourceAccessPoint.BROWSER ||
     accessPoint === ResourceAccessPoint.LIBRARY
-  ) return undefined;
+  )
+    return undefined;
   return accessPointId;
 }
 
@@ -229,15 +234,15 @@ const baseResourceIcons: Record<string, string> = {
   [Resource.task]: "check-square",
   [Resource.todo]: "check-square-offset",
   [Resource.combination]: "combination",
-  [Resource.event]: "calendar",
+  [Resource.event]: "calendar-blank",
   [Resource.session]: "clock",
   [Resource.place]: "map-pin",
-  [Resource.input]: "incoming",
+  [Resource.input]: "incoming"
 };
 
 const resourceIconMap: Record<string, string> = {
   ...baseResourceIcons,
-  ...nextResourceIcons,
+  ...nextResourceIcons
 };
 
 export function resolveResourceIcon(resource: Resource): string {

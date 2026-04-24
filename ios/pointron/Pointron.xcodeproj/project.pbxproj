@@ -1,0 +1,1049 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0A0B54002D9175540062FDE2 /* SimpleWidgetText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0B53FF2D9175540062FDE2 /* SimpleWidgetText.swift */; };
+		0A0B54022D9177F00062FDE2 /* Defaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0B54012D9177F00062FDE2 /* Defaults.swift */; };
+		0A0B54032D9177F00062FDE2 /* Defaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0B54012D9177F00062FDE2 /* Defaults.swift */; };
+		0A0B54042D9177F00062FDE2 /* Defaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0B54012D9177F00062FDE2 /* Defaults.swift */; };
+		0A0B54052D9178790062FDE2 /* SimpleWidgetText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0B53FF2D9175540062FDE2 /* SimpleWidgetText.swift */; };
+		0A63F6DE2C469BE00000C634 /* ping.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22A6199A2B76114F00742B70 /* ping.wav */; };
+		0A63F6DF2C469BE30000C634 /* dingding.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 22A619982B76114F00742B70 /* dingding.mp3 */; };
+		0A63F6E02C469BE50000C634 /* upchime.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 22A619992B76114F00742B70 /* upchime.mp3 */; };
+		0A7369FB2D88643B00AC3423 /* StoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A7369F92D88643B00AC3423 /* StoreManager.swift */; };
+		0A7369FC2D88643B00AC3423 /* StoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A7369F92D88643B00AC3423 /* StoreManager.swift */; };
+		0A7369FE2D88647900AC3423 /* StoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A7369F92D88643B00AC3423 /* StoreManager.swift */; };
+		0AE1451D2DAA85580036CD7C /* WebAuthenticationViewForMac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE1451C2DAA85580036CD7C /* WebAuthenticationViewForMac.swift */; };
+		0AE145202DABBC0E0036CD7C /* MacContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE1451F2DABBC0E0036CD7C /* MacContent.swift */; };
+		0AE145212DABBC0E0036CD7C /* MacAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE1451E2DABBC0E0036CD7C /* MacAppDelegate.swift */; };
+		22123C7C2ADE742B003C7C65 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22C48B3C2ADE5BEF009B851E /* WidgetKit.framework */; };
+		22123C7D2ADE742B003C7C65 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 22C48B3E2ADE5BEF009B851E /* SwiftUI.framework */; };
+		22123C802ADE742B003C7C65 /* PointronWidgetExtensionBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22123C7F2ADE742B003C7C65 /* PointronWidgetExtensionBundle.swift */; };
+		22123C822ADE742B003C7C65 /* PointronWidgetExtensionLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22123C812ADE742B003C7C65 /* PointronWidgetExtensionLiveActivity.swift */; };
+		22123C842ADE742B003C7C65 /* PointronWidgetExtension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22123C832ADE742B003C7C65 /* PointronWidgetExtension.swift */; };
+		22123C862ADE742B003C7C65 /* AppIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22123C852ADE742B003C7C65 /* AppIntent.swift */; };
+		22123C882ADE742D003C7C65 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 22123C872ADE742D003C7C65 /* Assets.xcassets */; };
+		22123C8C2ADE742D003C7C65 /* PointronWidgetExtensionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 22123C7B2ADE742B003C7C65 /* PointronWidgetExtensionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		22123C942ADE74A6003C7C65 /* CurrentSessionWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22123C932ADE74A6003C7C65 /* CurrentSessionWidget.swift */; };
+		22123C952ADE74A6003C7C65 /* CurrentSessionWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22123C932ADE74A6003C7C65 /* CurrentSessionWidget.swift */; };
+		221916462C255422002D6E0E /* SafariWebview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 221916452C255422002D6E0E /* SafariWebview.swift */; };
+		221916482C255A16002D6E0E /* SafariViewModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 221916472C255A16002D6E0E /* SafariViewModal.swift */; };
+		222027DD2B917DAB0046C833 /* CameraTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 222027DC2B917DAB0046C833 /* CameraTestView.swift */; };
+		2228C2532E438303009651BD /* JobManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2228C2522E438303009651BD /* JobManager.swift */; };
+		2228C2542E438303009651BD /* JobManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2228C2522E438303009651BD /* JobManager.swift */; };
+		2228C2552E438303009651BD /* JobManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2228C2522E438303009651BD /* JobManager.swift */; };
+		2228C2582E43831C009651BD /* CoreDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2228C2562E43831C009651BD /* CoreDataStack.swift */; };
+		2228C2592E43831C009651BD /* Job.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2228C2572E43831C009651BD /* Job.swift */; };
+		2228C25A2E43831C009651BD /* CoreDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2228C2562E43831C009651BD /* CoreDataStack.swift */; };
+		2228C25B2E43831C009651BD /* Job.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2228C2572E43831C009651BD /* Job.swift */; };
+		2228C25C2E43831C009651BD /* CoreDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2228C2562E43831C009651BD /* CoreDataStack.swift */; };
+		2228C25D2E43831C009651BD /* Job.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2228C2572E43831C009651BD /* Job.swift */; };
+		2228C25F2E439B67009651BD /* AIServiceProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2228C25E2E439B67009651BD /* AIServiceProtocols.swift */; };
+		2228C2602E439B67009651BD /* AIServiceProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2228C25E2E439B67009651BD /* AIServiceProtocols.swift */; };
+		2228C2612E439B67009651BD /* AIServiceProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2228C25E2E439B67009651BD /* AIServiceProtocols.swift */; };
+		2235B6BA2B98B13300E72E5B /* Pointron_for_MacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2235B6B92B98B13300E72E5B /* Pointron_for_MacApp.swift */; };
+		2235B6BC2B98B13300E72E5B /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2235B6BB2B98B13300E72E5B /* ContentView.swift */; };
+		2235B6BE2B98B13500E72E5B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2235B6BD2B98B13500E72E5B /* Assets.xcassets */; };
+		2235B6C12B98B13500E72E5B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2235B6C02B98B13500E72E5B /* Preview Assets.xcassets */; };
+		2235B6C62B98B1EF00E72E5B /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A6199E2B76114F00742B70 /* AppStore.swift */; };
+		2235B6C82B98B20800E72E5B /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619932B76114F00742B70 /* Logger.swift */; };
+		2235B6CB2B98B23900E72E5B /* LoadingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619A12B76114F00742B70 /* LoadingOverlay.swift */; };
+		2235B6CC2B98B23D00E72E5B /* Offline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619A42B76114F00742B70 /* Offline.swift */; };
+		2235B6CE2B98B24D00E72E5B /* LocalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DBE6D82AEA436F0050D48E /* LocalConfig.swift */; };
+		2235B6D12B98B3BE00E72E5B /* SimpleText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619A32B76114F00742B70 /* SimpleText.swift */; };
+		2235B6D32B98B42400E72E5B /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A6199D2B76114F00742B70 /* Utils.swift */; };
+		2235B6D42B98B54000E72E5B /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619952B76114F00742B70 /* Extensions.swift */; };
+		2235B6D52B98B55A00E72E5B /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A6199B2B76114F00742B70 /* Models.swift */; };
+		227BBF072B0A684600195C2F /* TargetWidgetModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 227BBF062B0A684600195C2F /* TargetWidgetModel.swift */; };
+		227BBF082B0A684E00195C2F /* TargetWidgetModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 227BBF062B0A684600195C2F /* TargetWidgetModel.swift */; };
+		227BBF092B0A6DAF00195C2F /* TargetsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DBE6E32AEA58080050D48E /* TargetsWidget.swift */; };
+		228800BF2B9C067E007CEC2F /* WebViewForMac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2235B6CF2B98B36600E72E5B /* WebViewForMac.swift */; };
+		228800C12B9C0711007CEC2F /* WebViewCommon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 228800C02B9C0711007CEC2F /* WebViewCommon.swift */; };
+		228800C22B9C0711007CEC2F /* WebViewCommon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 228800C02B9C0711007CEC2F /* WebViewCommon.swift */; };
+		228800C52B9C0906007CEC2F /* BaseViewForMac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 228800C42B9C0906007CEC2F /* BaseViewForMac.swift */; };
+		228800C62B9C1858007CEC2F /* www in Resources */ = {isa = PBXBuildFile; fileRef = 22D0D6342B99776000C74D40 /* www */; };
+		22A619A62B76114F00742B70 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619932B76114F00742B70 /* Logger.swift */; };
+		22A619A72B76114F00742B70 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619932B76114F00742B70 /* Logger.swift */; };
+		22A619A82B76114F00742B70 /* WebViewTwo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619942B76114F00742B70 /* WebViewTwo.swift */; };
+		22A619AA2B76114F00742B70 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619952B76114F00742B70 /* Extensions.swift */; };
+		22A619AB2B76114F00742B70 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619952B76114F00742B70 /* Extensions.swift */; };
+		22A619AC2B76114F00742B70 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 22A619962B76114F00742B70 /* README.md */; };
+		22A619AD2B76114F00742B70 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 22A619962B76114F00742B70 /* README.md */; };
+		22A619AE2B76114F00742B70 /* dingding.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 22A619982B76114F00742B70 /* dingding.mp3 */; };
+		22A619AF2B76114F00742B70 /* dingding.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 22A619982B76114F00742B70 /* dingding.mp3 */; };
+		22A619B02B76114F00742B70 /* upchime.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 22A619992B76114F00742B70 /* upchime.mp3 */; };
+		22A619B12B76114F00742B70 /* upchime.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 22A619992B76114F00742B70 /* upchime.mp3 */; };
+		22A619B22B76114F00742B70 /* ping.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22A6199A2B76114F00742B70 /* ping.wav */; };
+		22A619B32B76114F00742B70 /* ping.wav in Resources */ = {isa = PBXBuildFile; fileRef = 22A6199A2B76114F00742B70 /* ping.wav */; };
+		22A619B42B76114F00742B70 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A6199B2B76114F00742B70 /* Models.swift */; };
+		22A619B52B76114F00742B70 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A6199B2B76114F00742B70 /* Models.swift */; };
+		22A619B62B76114F00742B70 /* CustomWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A6199C2B76114F00742B70 /* CustomWebView.swift */; };
+		22A619B82B76114F00742B70 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A6199D2B76114F00742B70 /* Utils.swift */; };
+		22A619B92B76114F00742B70 /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A6199D2B76114F00742B70 /* Utils.swift */; };
+		22A619BA2B76114F00742B70 /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A6199E2B76114F00742B70 /* AppStore.swift */; };
+		22A619BC2B76114F00742B70 /* Modal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619A02B76114F00742B70 /* Modal.swift */; };
+		22A619BE2B76114F00742B70 /* LoadingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619A12B76114F00742B70 /* LoadingOverlay.swift */; };
+		22A619C02B76114F00742B70 /* SimpleText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619A32B76114F00742B70 /* SimpleText.swift */; };
+		22A619C22B76114F00742B70 /* Offline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619A42B76114F00742B70 /* Offline.swift */; };
+		22A619C42B76114F00742B70 /* BaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619A52B76114F00742B70 /* BaseView.swift */; };
+		22A619C72B763DBD00742B70 /* SurrealModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619C62B763DBD00742B70 /* SurrealModels.swift */; };
+		22A619C82B763DBD00742B70 /* SurrealModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A619C62B763DBD00742B70 /* SurrealModels.swift */; };
+		22C0E1202BE4CE1700CBD6C6 /* sheet in Resources */ = {isa = PBXBuildFile; fileRef = 22C0E11F2BE4CE1700CBD6C6 /* sheet */; };
+		22C0E1212BE4CE1700CBD6C6 /* sheet in Resources */ = {isa = PBXBuildFile; fileRef = 22C0E11F2BE4CE1700CBD6C6 /* sheet */; };
+		22D0D6352B99776000C74D40 /* www in Resources */ = {isa = PBXBuildFile; fileRef = 22D0D6342B99776000C74D40 /* www */; };
+		22DBE6D92AEA436F0050D48E /* LocalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DBE6D82AEA436F0050D48E /* LocalConfig.swift */; };
+		22DBE6DC2AEA43A90050D48E /* CurrentSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DBE6DB2AEA43A90050D48E /* CurrentSession.swift */; };
+		22DBE6DD2AEA43A90050D48E /* CurrentSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DBE6DB2AEA43A90050D48E /* CurrentSession.swift */; };
+		22DBE6E12AEA44F00050D48E /* LocalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DBE6D82AEA436F0050D48E /* LocalConfig.swift */; };
+		22DBE6E42AEA58080050D48E /* TargetsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DBE6E32AEA58080050D48E /* TargetsWidget.swift */; };
+		22FFA8862AD3E45000103446 /* PointronApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22FFA8852AD3E45000103446 /* PointronApp.swift */; };
+		22FFA8882AD3E45000103446 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22FFA8872AD3E45000103446 /* ContentView.swift */; };
+		22FFA88A2AD3E45200103446 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 22FFA8892AD3E45200103446 /* Assets.xcassets */; };
+		22FFA88E2AD3E45200103446 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 22FFA88D2AD3E45200103446 /* Preview Assets.xcassets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		22123C8A2ADE742D003C7C65 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 22FFA87A2AD3E45000103446 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 22123C7A2ADE742B003C7C65;
+			remoteInfo = PointronWidgetExtensionExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		22C48B4F2ADE5BF2009B851E /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				22123C8C2ADE742D003C7C65 /* PointronWidgetExtensionExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0A0225602D8AFC5800C248D2 /* Pointron-for-Mac-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Pointron-for-Mac-Info.plist"; sourceTree = SOURCE_ROOT; };
+		0A0B53FF2D9175540062FDE2 /* SimpleWidgetText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleWidgetText.swift; sourceTree = "<group>"; };
+		0A0B54012D9177F00062FDE2 /* Defaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Defaults.swift; sourceTree = "<group>"; };
+		0A7369F92D88643B00AC3423 /* StoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreManager.swift; sourceTree = "<group>"; };
+		0AE1451C2DAA85580036CD7C /* WebAuthenticationViewForMac.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAuthenticationViewForMac.swift; sourceTree = "<group>"; };
+		0AE1451E2DABBC0E0036CD7C /* MacAppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAppDelegate.swift; sourceTree = "<group>"; };
+		0AE1451F2DABBC0E0036CD7C /* MacContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacContent.swift; sourceTree = "<group>"; };
+		22123C7B2ADE742B003C7C65 /* PointronWidgetExtensionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PointronWidgetExtensionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		22123C7F2ADE742B003C7C65 /* PointronWidgetExtensionBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointronWidgetExtensionBundle.swift; sourceTree = "<group>"; };
+		22123C812ADE742B003C7C65 /* PointronWidgetExtensionLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointronWidgetExtensionLiveActivity.swift; sourceTree = "<group>"; };
+		22123C832ADE742B003C7C65 /* PointronWidgetExtension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointronWidgetExtension.swift; sourceTree = "<group>"; };
+		22123C852ADE742B003C7C65 /* AppIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIntent.swift; sourceTree = "<group>"; };
+		22123C872ADE742D003C7C65 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		22123C892ADE742D003C7C65 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		22123C932ADE74A6003C7C65 /* CurrentSessionWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentSessionWidget.swift; sourceTree = "<group>"; };
+		221916452C255422002D6E0E /* SafariWebview.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SafariWebview.swift; sourceTree = "<group>"; };
+		221916472C255A16002D6E0E /* SafariViewModal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = SafariViewModal.swift; path = Views/SafariViewModal.swift; sourceTree = "<group>"; };
+		222027DC2B917DAB0046C833 /* CameraTestView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CameraTestView.swift; sourceTree = "<group>"; };
+		2228C2522E438303009651BD /* JobManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobManager.swift; sourceTree = "<group>"; };
+		2228C2562E43831C009651BD /* CoreDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStack.swift; sourceTree = "<group>"; };
+		2228C2572E43831C009651BD /* Job.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Job.swift; sourceTree = "<group>"; };
+		2228C25E2E439B67009651BD /* AIServiceProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIServiceProtocols.swift; sourceTree = "<group>"; };
+		2235B6B72B98B13300E72E5B /* Pointron.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pointron.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2235B6B92B98B13300E72E5B /* Pointron_for_MacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pointron_for_MacApp.swift; sourceTree = "<group>"; };
+		2235B6BB2B98B13300E72E5B /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		2235B6BD2B98B13500E72E5B /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		2235B6C02B98B13500E72E5B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		2235B6C22B98B13500E72E5B /* Pointron_for_Mac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Pointron_for_Mac.entitlements; sourceTree = "<group>"; };
+		2235B6CF2B98B36600E72E5B /* WebViewForMac.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebViewForMac.swift; sourceTree = "<group>"; };
+		227BBF062B0A684600195C2F /* TargetWidgetModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetWidgetModel.swift; sourceTree = "<group>"; };
+		228800C02B9C0711007CEC2F /* WebViewCommon.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebViewCommon.swift; sourceTree = "<group>"; };
+		228800C42B9C0906007CEC2F /* BaseViewForMac.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseViewForMac.swift; sourceTree = "<group>"; };
+		22937BC42B48443000E18F1E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		22A619932B76114F00742B70 /* Logger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
+		22A619942B76114F00742B70 /* WebViewTwo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebViewTwo.swift; sourceTree = "<group>"; };
+		22A619952B76114F00742B70 /* Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		22A619962B76114F00742B70 /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		22A619982B76114F00742B70 /* dingding.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = dingding.mp3; sourceTree = "<group>"; };
+		22A619992B76114F00742B70 /* upchime.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = upchime.mp3; sourceTree = "<group>"; };
+		22A6199A2B76114F00742B70 /* ping.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ping.wav; sourceTree = "<group>"; };
+		22A6199B2B76114F00742B70 /* Models.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		22A6199C2B76114F00742B70 /* CustomWebView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomWebView.swift; sourceTree = "<group>"; };
+		22A6199D2B76114F00742B70 /* Utils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		22A6199E2B76114F00742B70 /* AppStore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
+		22A619A02B76114F00742B70 /* Modal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Modal.swift; sourceTree = "<group>"; };
+		22A619A12B76114F00742B70 /* LoadingOverlay.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoadingOverlay.swift; sourceTree = "<group>"; };
+		22A619A32B76114F00742B70 /* SimpleText.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SimpleText.swift; sourceTree = "<group>"; };
+		22A619A42B76114F00742B70 /* Offline.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Offline.swift; sourceTree = "<group>"; };
+		22A619A52B76114F00742B70 /* BaseView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BaseView.swift; sourceTree = "<group>"; };
+		22A619C62B763DBD00742B70 /* SurrealModels.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SurrealModels.swift; sourceTree = "<group>"; };
+		22C0E11F2BE4CE1700CBD6C6 /* sheet */ = {isa = PBXFileReference; lastKnownFileType = folder; path = sheet; sourceTree = "<group>"; };
+		22C48B3C2ADE5BEF009B851E /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		22C48B3E2ADE5BEF009B851E /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		22D0D6342B99776000C74D40 /* www */ = {isa = PBXFileReference; lastKnownFileType = folder; path = www; sourceTree = "<group>"; };
+		22DBE6CA2AE959810050D48E /* PointronWidgetExtensionExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PointronWidgetExtensionExtension.entitlements; sourceTree = "<group>"; };
+		22DBE6D82AEA436F0050D48E /* LocalConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalConfig.swift; sourceTree = "<group>"; };
+		22DBE6DB2AEA43A90050D48E /* CurrentSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentSession.swift; sourceTree = "<group>"; };
+		22DBE6E32AEA58080050D48E /* TargetsWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TargetsWidget.swift; sourceTree = "<group>"; };
+		22FFA8822AD3E45000103446 /* Pointron.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pointron.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		22FFA8852AD3E45000103446 /* PointronApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PointronApp.swift; sourceTree = "<group>"; };
+		22FFA8872AD3E45000103446 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		22FFA8892AD3E45200103446 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		22FFA88B2AD3E45200103446 /* Pointron.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Pointron.entitlements; sourceTree = "<group>"; };
+		22FFA88D2AD3E45200103446 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		22123C782ADE742B003C7C65 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22123C7D2ADE742B003C7C65 /* SwiftUI.framework in Frameworks */,
+				22123C7C2ADE742B003C7C65 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2235B6B42B98B13300E72E5B /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		22FFA87F2AD3E45000103446 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		22123C7E2ADE742B003C7C65 /* PointronWidgetExtension */ = {
+			isa = PBXGroup;
+			children = (
+				22123C922ADE748B003C7C65 /* Widgets */,
+				22123C7F2ADE742B003C7C65 /* PointronWidgetExtensionBundle.swift */,
+				22123C812ADE742B003C7C65 /* PointronWidgetExtensionLiveActivity.swift */,
+				22123C832ADE742B003C7C65 /* PointronWidgetExtension.swift */,
+				22123C852ADE742B003C7C65 /* AppIntent.swift */,
+				22123C872ADE742D003C7C65 /* Assets.xcassets */,
+				22123C892ADE742D003C7C65 /* Info.plist */,
+			);
+			path = PointronWidgetExtension;
+			sourceTree = "<group>";
+		};
+		22123C922ADE748B003C7C65 /* Widgets */ = {
+			isa = PBXGroup;
+			children = (
+				22123C932ADE74A6003C7C65 /* CurrentSessionWidget.swift */,
+				22DBE6E32AEA58080050D48E /* TargetsWidget.swift */,
+			);
+			path = Widgets;
+			sourceTree = "<group>";
+		};
+		2235B6B82B98B13300E72E5B /* Pointron for Mac */ = {
+			isa = PBXGroup;
+			children = (
+				0A0225602D8AFC5800C248D2 /* Pointron-for-Mac-Info.plist */,
+				2235B6B92B98B13300E72E5B /* Pointron_for_MacApp.swift */,
+				2235B6BB2B98B13300E72E5B /* ContentView.swift */,
+				2235B6BD2B98B13500E72E5B /* Assets.xcassets */,
+				2235B6C22B98B13500E72E5B /* Pointron_for_Mac.entitlements */,
+				2235B6BF2B98B13500E72E5B /* Preview Content */,
+			);
+			path = "Pointron for Mac";
+			sourceTree = "<group>";
+		};
+		2235B6BF2B98B13500E72E5B /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				2235B6C02B98B13500E72E5B /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		228800BB2B9C0429007CEC2F /* WebView */ = {
+			isa = PBXGroup;
+			children = (
+				22A6199C2B76114F00742B70 /* CustomWebView.swift */,
+				2235B6CF2B98B36600E72E5B /* WebViewForMac.swift */,
+				22A619942B76114F00742B70 /* WebViewTwo.swift */,
+				228800C02B9C0711007CEC2F /* WebViewCommon.swift */,
+			);
+			path = WebView;
+			sourceTree = "<group>";
+		};
+		22A619922B76114F00742B70 /* tidy */ = {
+			isa = PBXGroup;
+			children = (
+				2228C25E2E439B67009651BD /* AIServiceProtocols.swift */,
+				2228C2562E43831C009651BD /* CoreDataStack.swift */,
+				2228C2572E43831C009651BD /* Job.swift */,
+				2228C2522E438303009651BD /* JobManager.swift */,
+				0AE1451E2DABBC0E0036CD7C /* MacAppDelegate.swift */,
+				0AE1451F2DABBC0E0036CD7C /* MacContent.swift */,
+				0A0B54012D9177F00062FDE2 /* Defaults.swift */,
+				0A7369F92D88643B00AC3423 /* StoreManager.swift */,
+				221916472C255A16002D6E0E /* SafariViewModal.swift */,
+				228800BB2B9C0429007CEC2F /* WebView */,
+				22A619932B76114F00742B70 /* Logger.swift */,
+				22A619952B76114F00742B70 /* Extensions.swift */,
+				22A619962B76114F00742B70 /* README.md */,
+				22A619972B76114F00742B70 /* Sounds */,
+				22A6199B2B76114F00742B70 /* Models.swift */,
+				22A6199D2B76114F00742B70 /* Utils.swift */,
+				22A6199E2B76114F00742B70 /* AppStore.swift */,
+				22A6199F2B76114F00742B70 /* Views */,
+			);
+			name = NucleumNativeKit;
+			path = "../../packages/NucleumNativeKit/Sources/NucleumNativeKit";
+			sourceTree = "<group>";
+		};
+		22A619972B76114F00742B70 /* Sounds */ = {
+			isa = PBXGroup;
+			children = (
+				22A619982B76114F00742B70 /* dingding.mp3 */,
+				22A619992B76114F00742B70 /* upchime.mp3 */,
+				22A6199A2B76114F00742B70 /* ping.wav */,
+			);
+			path = Sounds;
+			sourceTree = "<group>";
+		};
+		22A6199F2B76114F00742B70 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				0AE1451C2DAA85580036CD7C /* WebAuthenticationViewForMac.swift */,
+				221916452C255422002D6E0E /* SafariWebview.swift */,
+				222027DC2B917DAB0046C833 /* CameraTestView.swift */,
+				22A619A02B76114F00742B70 /* Modal.swift */,
+				22A619A12B76114F00742B70 /* LoadingOverlay.swift */,
+				22A619A22B76114F00742B70 /* elements */,
+				22A619A42B76114F00742B70 /* Offline.swift */,
+				22A619A52B76114F00742B70 /* BaseView.swift */,
+				228800C42B9C0906007CEC2F /* BaseViewForMac.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		22A619A22B76114F00742B70 /* elements */ = {
+			isa = PBXGroup;
+			children = (
+				0A0B53FF2D9175540062FDE2 /* SimpleWidgetText.swift */,
+				22A619A32B76114F00742B70 /* SimpleText.swift */,
+			);
+			path = elements;
+			sourceTree = "<group>";
+		};
+		22C48B3B2ADE5BEF009B851E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				22C48B3C2ADE5BEF009B851E /* WidgetKit.framework */,
+				22C48B3E2ADE5BEF009B851E /* SwiftUI.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		22DADAA52ADFBA9400FACD34 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		22DBE6DA2AEA438C0050D48E /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				22A619C62B763DBD00742B70 /* SurrealModels.swift */,
+				22DBE6DB2AEA43A90050D48E /* CurrentSession.swift */,
+				227BBF062B0A684600195C2F /* TargetWidgetModel.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		22DBE6E02AEA44CE0050D48E /* local */ = {
+			isa = PBXGroup;
+			children = (
+				22DBE6D82AEA436F0050D48E /* LocalConfig.swift */,
+				22DADAA52ADFBA9400FACD34 /* Views */,
+				22DBE6DA2AEA438C0050D48E /* Models */,
+			);
+			path = local;
+			sourceTree = "<group>";
+		};
+		22FFA8792AD3E45000103446 = {
+			isa = PBXGroup;
+			children = (
+				22C0E11F2BE4CE1700CBD6C6 /* sheet */,
+				22D0D6342B99776000C74D40 /* www */,
+				22DBE6CA2AE959810050D48E /* PointronWidgetExtensionExtension.entitlements */,
+				22FFA8842AD3E45000103446 /* Pointron */,
+				22123C7E2ADE742B003C7C65 /* PointronWidgetExtension */,
+				2235B6B82B98B13300E72E5B /* Pointron for Mac */,
+				22C48B3B2ADE5BEF009B851E /* Frameworks */,
+				22FFA8832AD3E45000103446 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		22FFA8832AD3E45000103446 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				22FFA8822AD3E45000103446 /* Pointron.app */,
+				22123C7B2ADE742B003C7C65 /* PointronWidgetExtensionExtension.appex */,
+				2235B6B72B98B13300E72E5B /* Pointron.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		22FFA8842AD3E45000103446 /* Pointron */ = {
+			isa = PBXGroup;
+			children = (
+				22A619922B76114F00742B70 /* tidy */,
+				22937BC42B48443000E18F1E /* Info.plist */,
+				22DBE6E02AEA44CE0050D48E /* local */,
+				22FFA8852AD3E45000103446 /* PointronApp.swift */,
+				22FFA8872AD3E45000103446 /* ContentView.swift */,
+				22FFA8892AD3E45200103446 /* Assets.xcassets */,
+				22FFA88B2AD3E45200103446 /* Pointron.entitlements */,
+				22FFA88C2AD3E45200103446 /* Preview Content */,
+			);
+			path = Pointron;
+			sourceTree = "<group>";
+		};
+		22FFA88C2AD3E45200103446 /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				22FFA88D2AD3E45200103446 /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		22123C7A2ADE742B003C7C65 /* PointronWidgetExtensionExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 22123C8D2ADE742D003C7C65 /* Build configuration list for PBXNativeTarget "PointronWidgetExtensionExtension" */;
+			buildPhases = (
+				22123C772ADE742B003C7C65 /* Sources */,
+				22123C782ADE742B003C7C65 /* Frameworks */,
+				22123C792ADE742B003C7C65 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PointronWidgetExtensionExtension;
+			productName = PointronWidgetExtensionExtension;
+			productReference = 22123C7B2ADE742B003C7C65 /* PointronWidgetExtensionExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		2235B6B62B98B13300E72E5B /* Pointron for Mac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2235B6C52B98B13500E72E5B /* Build configuration list for PBXNativeTarget "Pointron for Mac" */;
+			buildPhases = (
+				2235B6B32B98B13300E72E5B /* Sources */,
+				2235B6B42B98B13300E72E5B /* Frameworks */,
+				2235B6B52B98B13300E72E5B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Pointron for Mac";
+			productName = "Pointron for Mac";
+			productReference = 2235B6B72B98B13300E72E5B /* Pointron.app */;
+			productType = "com.apple.product-type.application";
+		};
+		22FFA8812AD3E45000103446 /* Pointron */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 22FFA8912AD3E45200103446 /* Build configuration list for PBXNativeTarget "Pointron" */;
+			buildPhases = (
+				22FFA87E2AD3E45000103446 /* Sources */,
+				22FFA87F2AD3E45000103446 /* Frameworks */,
+				22FFA8802AD3E45000103446 /* Resources */,
+				22C48B4F2ADE5BF2009B851E /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				22123C8B2ADE742D003C7C65 /* PBXTargetDependency */,
+			);
+			name = Pointron;
+			productName = Pointron;
+			productReference = 22FFA8822AD3E45000103446 /* Pointron.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		22FFA87A2AD3E45000103446 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1520;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					22123C7A2ADE742B003C7C65 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					2235B6B62B98B13300E72E5B = {
+						CreatedOnToolsVersion = 15.2;
+					};
+					22FFA8812AD3E45000103446 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 22FFA87D2AD3E45000103446 /* Build configuration list for PBXProject "Pointron" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 22FFA8792AD3E45000103446;
+			productRefGroup = 22FFA8832AD3E45000103446 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				22FFA8812AD3E45000103446 /* Pointron */,
+				22123C7A2ADE742B003C7C65 /* PointronWidgetExtensionExtension */,
+				2235B6B62B98B13300E72E5B /* Pointron for Mac */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		22123C792ADE742B003C7C65 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22A619B32B76114F00742B70 /* ping.wav in Resources */,
+				22A619B12B76114F00742B70 /* upchime.mp3 in Resources */,
+				22A619AF2B76114F00742B70 /* dingding.mp3 in Resources */,
+				22A619AD2B76114F00742B70 /* README.md in Resources */,
+				22123C882ADE742D003C7C65 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2235B6B52B98B13300E72E5B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0A63F6DF2C469BE30000C634 /* dingding.mp3 in Resources */,
+				0A63F6E02C469BE50000C634 /* upchime.mp3 in Resources */,
+				0A63F6DE2C469BE00000C634 /* ping.wav in Resources */,
+				22D0D6352B99776000C74D40 /* www in Resources */,
+				2235B6C12B98B13500E72E5B /* Preview Assets.xcassets in Resources */,
+				22C0E1212BE4CE1700CBD6C6 /* sheet in Resources */,
+				2235B6BE2B98B13500E72E5B /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		22FFA8802AD3E45000103446 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22A619B22B76114F00742B70 /* ping.wav in Resources */,
+				228800C62B9C1858007CEC2F /* www in Resources */,
+				22A619AC2B76114F00742B70 /* README.md in Resources */,
+				22FFA88E2AD3E45200103446 /* Preview Assets.xcassets in Resources */,
+				22A619AE2B76114F00742B70 /* dingding.mp3 in Resources */,
+				22FFA88A2AD3E45200103446 /* Assets.xcassets in Resources */,
+				22C0E1202BE4CE1700CBD6C6 /* sheet in Resources */,
+				22A619B02B76114F00742B70 /* upchime.mp3 in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		22123C772ADE742B003C7C65 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				22DBE6E42AEA58080050D48E /* TargetsWidget.swift in Sources */,
+				22A619A72B76114F00742B70 /* Logger.swift in Sources */,
+				22123C802ADE742B003C7C65 /* PointronWidgetExtensionBundle.swift in Sources */,
+				227BBF072B0A684600195C2F /* TargetWidgetModel.swift in Sources */,
+				22123C862ADE742B003C7C65 /* AppIntent.swift in Sources */,
+				0A0B54002D9175540062FDE2 /* SimpleWidgetText.swift in Sources */,
+				22123C952ADE74A6003C7C65 /* CurrentSessionWidget.swift in Sources */,
+				22A619B92B76114F00742B70 /* Utils.swift in Sources */,
+				22A619C82B763DBD00742B70 /* SurrealModels.swift in Sources */,
+				2228C2552E438303009651BD /* JobManager.swift in Sources */,
+				0A7369FE2D88647900AC3423 /* StoreManager.swift in Sources */,
+				22DBE6E12AEA44F00050D48E /* LocalConfig.swift in Sources */,
+				0A0B54032D9177F00062FDE2 /* Defaults.swift in Sources */,
+				22A619AB2B76114F00742B70 /* Extensions.swift in Sources */,
+				22123C842ADE742B003C7C65 /* PointronWidgetExtension.swift in Sources */,
+				22DBE6DD2AEA43A90050D48E /* CurrentSession.swift in Sources */,
+				22123C822ADE742B003C7C65 /* PointronWidgetExtensionLiveActivity.swift in Sources */,
+				22A619B52B76114F00742B70 /* Models.swift in Sources */,
+				2228C2582E43831C009651BD /* CoreDataStack.swift in Sources */,
+				2228C2602E439B67009651BD /* AIServiceProtocols.swift in Sources */,
+				2228C2592E43831C009651BD /* Job.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2235B6B32B98B13300E72E5B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2235B6C82B98B20800E72E5B /* Logger.swift in Sources */,
+				2228C2612E439B67009651BD /* AIServiceProtocols.swift in Sources */,
+				0A0B54042D9177F00062FDE2 /* Defaults.swift in Sources */,
+				228800BF2B9C067E007CEC2F /* WebViewForMac.swift in Sources */,
+				2235B6C62B98B1EF00E72E5B /* AppStore.swift in Sources */,
+				2235B6BC2B98B13300E72E5B /* ContentView.swift in Sources */,
+				2235B6CE2B98B24D00E72E5B /* LocalConfig.swift in Sources */,
+				228800C22B9C0711007CEC2F /* WebViewCommon.swift in Sources */,
+				0AE1451D2DAA85580036CD7C /* WebAuthenticationViewForMac.swift in Sources */,
+				2235B6D32B98B42400E72E5B /* Utils.swift in Sources */,
+				2235B6BA2B98B13300E72E5B /* Pointron_for_MacApp.swift in Sources */,
+				2235B6D42B98B54000E72E5B /* Extensions.swift in Sources */,
+				0AE145202DABBC0E0036CD7C /* MacContent.swift in Sources */,
+				0AE145212DABBC0E0036CD7C /* MacAppDelegate.swift in Sources */,
+				2235B6CC2B98B23D00E72E5B /* Offline.swift in Sources */,
+				2228C25A2E43831C009651BD /* CoreDataStack.swift in Sources */,
+				2228C25B2E43831C009651BD /* Job.swift in Sources */,
+				2235B6D12B98B3BE00E72E5B /* SimpleText.swift in Sources */,
+				228800C52B9C0906007CEC2F /* BaseViewForMac.swift in Sources */,
+				0A7369FB2D88643B00AC3423 /* StoreManager.swift in Sources */,
+				2228C2532E438303009651BD /* JobManager.swift in Sources */,
+				2235B6CB2B98B23900E72E5B /* LoadingOverlay.swift in Sources */,
+				2235B6D52B98B55A00E72E5B /* Models.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		22FFA87E2AD3E45000103446 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				228800C12B9C0711007CEC2F /* WebViewCommon.swift in Sources */,
+				0A0B54022D9177F00062FDE2 /* Defaults.swift in Sources */,
+				22A619C72B763DBD00742B70 /* SurrealModels.swift in Sources */,
+				0A7369FC2D88643B00AC3423 /* StoreManager.swift in Sources */,
+				2228C25C2E43831C009651BD /* CoreDataStack.swift in Sources */,
+				2228C25D2E43831C009651BD /* Job.swift in Sources */,
+				22FFA8882AD3E45000103446 /* ContentView.swift in Sources */,
+				2228C2542E438303009651BD /* JobManager.swift in Sources */,
+				22DBE6DC2AEA43A90050D48E /* CurrentSession.swift in Sources */,
+				0A0B54052D9178790062FDE2 /* SimpleWidgetText.swift in Sources */,
+				22123C942ADE74A6003C7C65 /* CurrentSessionWidget.swift in Sources */,
+				22A619BC2B76114F00742B70 /* Modal.swift in Sources */,
+				22A619B82B76114F00742B70 /* Utils.swift in Sources */,
+				22A619B42B76114F00742B70 /* Models.swift in Sources */,
+				22A619C02B76114F00742B70 /* SimpleText.swift in Sources */,
+				222027DD2B917DAB0046C833 /* CameraTestView.swift in Sources */,
+				22A619C42B76114F00742B70 /* BaseView.swift in Sources */,
+				227BBF092B0A6DAF00195C2F /* TargetsWidget.swift in Sources */,
+				22A619BA2B76114F00742B70 /* AppStore.swift in Sources */,
+				22A619A62B76114F00742B70 /* Logger.swift in Sources */,
+				2228C25F2E439B67009651BD /* AIServiceProtocols.swift in Sources */,
+				22A619BE2B76114F00742B70 /* LoadingOverlay.swift in Sources */,
+				22A619C22B76114F00742B70 /* Offline.swift in Sources */,
+				227BBF082B0A684E00195C2F /* TargetWidgetModel.swift in Sources */,
+				22A619A82B76114F00742B70 /* WebViewTwo.swift in Sources */,
+				22DBE6D92AEA436F0050D48E /* LocalConfig.swift in Sources */,
+				22FFA8862AD3E45000103446 /* PointronApp.swift in Sources */,
+				22A619B62B76114F00742B70 /* CustomWebView.swift in Sources */,
+				221916462C255422002D6E0E /* SafariWebview.swift in Sources */,
+				221916482C255A16002D6E0E /* SafariViewModal.swift in Sources */,
+				22A619AA2B76114F00742B70 /* Extensions.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		22123C8B2ADE742D003C7C65 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 22123C7A2ADE742B003C7C65 /* PointronWidgetExtensionExtension */;
+			targetProxy = 22123C8A2ADE742D003C7C65 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		22123C8E2ADE742D003C7C65 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = PointronWidgetExtensionExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PointronWidgetExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PointronWidgetExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron.PointronWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		22123C8F2ADE742D003C7C65 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = PointronWidgetExtensionExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PointronWidgetExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PointronWidgetExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron.PointronWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		2235B6C32B98B13500E72E5B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Pointron for Mac/Pointron_for_Mac.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 35;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Pointron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.83.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = Pointron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		2235B6C42B98B13500E72E5B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Pointron for Mac/Pointron_for_Mac.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 35;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Pointron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.83.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = Pointron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		22FFA88F2AD3E45200103446 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		22FFA8902AD3E45200103446 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		22FFA8922AD3E45200103446 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Pointron/Pointron.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Pointron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to your camera for capturing photos.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		22FFA8932AD3E45200103446 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Pointron/Pointron.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Pointron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to your camera for capturing photos.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		22123C8D2ADE742D003C7C65 /* Build configuration list for PBXNativeTarget "PointronWidgetExtensionExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				22123C8E2ADE742D003C7C65 /* Debug */,
+				22123C8F2ADE742D003C7C65 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2235B6C52B98B13500E72E5B /* Build configuration list for PBXNativeTarget "Pointron for Mac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2235B6C32B98B13500E72E5B /* Debug */,
+				2235B6C42B98B13500E72E5B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		22FFA87D2AD3E45000103446 /* Build configuration list for PBXProject "Pointron" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				22FFA88F2AD3E45200103446 /* Debug */,
+				22FFA8902AD3E45200103446 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		22FFA8912AD3E45200103446 /* Build configuration list for PBXNativeTarget "Pointron" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				22FFA8922AD3E45200103446 /* Debug */,
+				22FFA8932AD3E45200103446 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 22FFA87A2AD3E45000103446 /* Project object */;
+}

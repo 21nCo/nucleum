@@ -56,3 +56,14 @@ artifacts/
 # Local dev seed files — not for tracking
 **/seed.local.ts
 .claude
+
+# iOS local/generated artifacts
+ios/*/www/
+ios/**/.build/
+ios/**/build/
+ios/**/DerivedData/
+ios/**/Pods/
+ios/**/xcuserdata/
+ios/**/*.xcuserstate
+ios/**/whisper.cpp/
+ios/vendor/

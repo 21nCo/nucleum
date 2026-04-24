@@ -13,10 +13,10 @@
   import { Display } from "@21n/types/view.type";
   import { parse } from "@21n/shared-utils/json.utils";
   import { toasts } from "@21n/stores/notification.store";
-  let selectedMode: "signup" | "signin" | "offline" = "signup";
-  let currentProgress: string | undefined = undefined;
-  let cloudSyncLoginRef: CloudSyncLogin | undefined = undefined;
-  let isLoginFromExtension = false;
+  let selectedMode = $state<"signup" | "signin" | "offline">("signup");
+  let currentProgress = $state<string | undefined>(undefined);
+  let cloudSyncLoginRef = $state<CloudSyncLogin | undefined>(undefined);
+  let isLoginFromExtension = $state(false);
   const dev_isEnableCaptcha = false;
   const managedSyncHosts = [
     "localhost",
@@ -25,8 +25,9 @@
     "pointron.app",
     "nucleus.to"
   ];
-  let isSelfHosted =
-    typeof window !== "undefined" ? resolveIfSelfHostedInstance() : false;
+  let isSelfHosted = $state(
+    typeof window !== "undefined" ? resolveIfSelfHostedInstance() : false
+  );
 
   function resolveProductName() {
     return properCase($appStore.product);
@@ -55,13 +56,38 @@
     window.onTurnstileSuccess = onTurnstileSuccess;
     window.onTurnstileError = onTurnstileError;
     window.onTurnstileExpired = onTurnstileExpired;
+    window.addEventListener("message", handleMessageFromParent);
+    if (dev_isEnableCaptcha && import.meta.env.VITE_NATIVE_EMBED !== "true") {
+      loadTurnstileScript();
+    }
 
     return () => {
+      window.removeEventListener("message", handleMessageFromParent);
       delete window.onTurnstileSuccess;
       delete window.onTurnstileError;
       delete window.onTurnstileExpired;
     };
   });
+
+  function loadTurnstileScript() {
+    const preconnectId = "turnstile-preconnect";
+    const scriptId = "turnstile-script";
+    if (!document.getElementById(preconnectId)) {
+      const preconnect = document.createElement("link");
+      preconnect.id = preconnectId;
+      preconnect.rel = "preconnect";
+      preconnect.href = "https://challenges.cloudflare.com";
+      document.head.appendChild(preconnect);
+    }
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement("script");
+      script.id = scriptId;
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  }
 
   async function handleMessageFromParent(event: MessageEvent) {
     try {
@@ -260,13 +286,3 @@
     {/if}
   </div>
 </div>
-
-<svelte:head>
-  <link rel="preconnect" href="https://challenges.cloudflare.com" />
-  <script
-    src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-    async
-    defer
-  ></script>
-</svelte:head>
-<svelte:window onmessage={handleMessageFromParent} />

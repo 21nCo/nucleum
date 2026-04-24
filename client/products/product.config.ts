@@ -142,7 +142,7 @@ const linkabilityTables = [
 const filesAbilityTables = [Resource.file];
 
 const resourceTableMap: Record<string, Resource[]> = {
-  [Product.NUCLEUS]: [Resource.event, Resource.combination],
+  [Product.NUCLEUS]: [Resource.event],
   [Product.MEMOTRON]: [Resource.node, Resource.capture],
   [Product.POINTRON]: [
     Resource.goal,
@@ -168,7 +168,7 @@ export const products: Record<string, IAppConfigBase> = {
     homePathPt: nucleusNav.homePathPt,
     databaseName: "nativeone",
     resources: {
-      browse: [Resource.collection, Resource.combination, Resource.event],
+      browse: [Resource.collection, Resource.event],
       table: [
         ...commonTables,
         ...Array.from(Object.values(resourceTableMap)).flat(),
@@ -240,7 +240,7 @@ export const products: Record<string, IAppConfigBase> = {
     isShowCaptureOnMobile: true,
     databaseName: "nativeone",
     resources: {
-      browse: [Resource.node, Resource.collection, Resource.combination],
+      browse: [Resource.node, Resource.collection],
       table: [
         ...commonTables,
         ...resourceTableMap[Product.MEMOTRON],

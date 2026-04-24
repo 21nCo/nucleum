@@ -563,4 +563,6 @@
     ></span>
   </ThemeLayer>
 </div>
-<PosthogTelemetry />
+{#if import.meta.env.VITE_NATIVE_EMBED !== "true"}
+  <PosthogTelemetry />
+{/if}
