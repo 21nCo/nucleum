@@ -1,0 +1,29 @@
+info:
+  name: OTP Send 6 Rate Limited
+  type: http
+  seq: 6
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/otp/send"
+  headers:
+    - name: content-type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+settings:
+  expectedStatus: 429
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        req.body = JSON.stringify({
+          email: env.get("rateEmail"),
+          purpose: "sign-in"
+        });
+    - type: tests
+      code: |
+        test("sixth OTP send is rate limited", function() {
+          expect(res.status).to.equal(429);
+          expect(res.body.error.code).to.equal("AUTHFN_RATE_LIMITED");
+        });

@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { flux } from "@21n/components/flux/flux";
   import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";

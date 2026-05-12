@@ -1,43 +1,61 @@
 import { Agent } from "../account/account.type";
-import { log } from "$lib/server/logger";
-import { DatabaseProviderFactory } from "$lib/server/database/providers";
 import { frameNonSensitiveUserInfo } from "../account/account.utils";
 import { generateUserToken, validateToken } from "./auth.utils";
 import { IUserProfileInfo } from "$lib/shared/types/account.type";
 
-export function authorize(props: { token: string; host?: string }) {
+export async function authorize(props: { token: string; host?: string }) {
   try {
     //TODO - additional security checks
     const key = process.env.TOKEN_PRIVATE_KEY;
-    if (!props.token || !key) return false;
-    const decoded = validateToken(props);
-    return decoded;
+    if (!props.token) return false;
+    if (key) {
+      const decoded = validateToken(props);
+      if (decoded) return decoded;
+    }
+    return authorizeAuthFnSession(props);
   } catch (err) {
     console.log(err);
     return false;
   }
 }
 
-/**
- * Signs in a user with email and password.
- * @param body email and pass
- * @returns
- */
-export async function refreshToken(body: any, agent: Agent) {
-  const { context } = body;
-  const { id } = agent;
-  const provider = DatabaseProviderFactory.getProvider();
-  const response = await provider.getUserById(id);
-  if (response && !Array.isArray(response) && response.id) {
-    const userId = response.id.split("user:")[1];
-    await log(userId, { id, activity: "refreshToken" });
-    return await generateToken(userId, response, {
-      isTrusted: true,
-      host: context?.host
-    });
-  } else {
-    return response;
-  }
+async function authorizeAuthFnSession(props: {
+  token: string;
+  host?: string;
+}): Promise<Agent | false> {
+  const accountUrl = resolveAccountServiceUrl();
+  if (!accountUrl) return false;
+  const response = await fetch(`${accountUrl.replace(/\/$/, "")}/auth/session`, {
+    headers: {
+      Authorization: `Bearer ${props.token}`,
+      ...(props.host ? { "x-nucleus-host": props.host } : {})
+    }
+  });
+  if (!response.ok) return false;
+  const envelope = await response.json();
+  const session = envelope?.ok ? envelope.data?.session : null;
+  if (!session?.actorId) return false;
+  const actorId = String(session.actorId);
+  const userId = actorId.startsWith("user:") ? actorId.split("user:")[1] : actorId;
+  const region = session.regionId ?? session.subject?.regionId ?? "global";
+  return {
+    id: userId,
+    context: "USER",
+    db: userId,
+    region,
+    scope: "authfn",
+    ns: process.env.USER_NS,
+    tk: "authfn",
+    iss: accountUrl
+  };
+}
+
+function resolveAccountServiceUrl() {
+  return (
+    process.env.AUTHFN_ACCOUNT_URL ??
+    process.env.ACCOUNT_SERVICE_URL ??
+    process.env.NUCLEUS_ACCOUNT_URL
+  );
 }
 
 export async function generateToken(

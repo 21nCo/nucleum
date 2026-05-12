@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { backgroundSoundStore } from "@21n/products/pointron/pointron.store";
   import { activeSession } from "@21n/products/pointron/focus/session.store";
@@ -5,7 +7,7 @@
   import { onMount } from "svelte";
   import { SessionState } from "@21n/types/pointron/sessionState.enum";
   let audioRef: HTMLAudioElement;
-  let src: string | undefined = undefined;
+  let src = $state<string | undefined>(undefined);
   onMount(() => {
     // audioRef.volume = 0.1;
     //if ($backgroundSoundStore) audioRef.play();

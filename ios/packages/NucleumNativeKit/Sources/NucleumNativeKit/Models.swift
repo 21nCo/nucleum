@@ -145,8 +145,10 @@ struct DownloadRequest: Decodable {
 struct Account: Decodable {
   var isLoggedIn: Bool
   var token: String?
-  var refreshToken: String?
+  var widgetToken: String?
   var userId: String?
+  var regionId: String?
+  var accountUrl: String?
 }
 
 struct InAppNotification: Decodable {

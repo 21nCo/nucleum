@@ -20,12 +20,12 @@ struct BaseView: View {
   @StateObject var webViewModel = WebViewModel()
   @State var isShowInAppSafari = false
   @State var isShowOauthFlow = false
-  @State var appUrl: URL = URL(string: LocalConfig.appUrl)!
+  @State var webOrigin: URL = URL(string: LocalConfig.webOrigin)!
   @State private var src: WebViewTwo = WebViewTwo(
     urlType: .customProtocolUrl,
     // urlType: .publicUrl,
     refreshId: TimeUtils.getCurrentTimeInUTC(),
-    url: URL(string: LocalConfig.appUrl)!,
+    url: URL(string: LocalConfig.webOrigin)!,
     // params: ["debug": "true"],
     params: [:],
     isSheet: false,
@@ -59,16 +59,16 @@ struct BaseView: View {
           url: URL(string: appStore.oauthUrl)!, callbackURLScheme: LocalConfig.urlScheme
         ) {
           callbackURL, error in
-          DispatchQueue.main.async {
-            if let callbackURL = callbackURL {
-              print("Success: \(callbackURL)")
-              processOauthResponse(callbackURL)
-            } else if let error = error {
-              print("Error: \(error.localizedDescription)")
-            }
-            isShowOauthFlow = false
-          }
-        }
+	          DispatchQueue.main.async {
+	            if let callbackURL = callbackURL {
+	              Log.info("OAuth success callback: \(callbackURL)")
+	              processOauthResponse(callbackURL)
+	            } else if let error = error {
+	              Log.error(message: "OAuth failed: \(error.localizedDescription)")
+	            }
+	            isShowOauthFlow = false
+	          }
+	        }
       }
     }
     .edgesIgnoringSafeArea(.all)
@@ -164,14 +164,22 @@ struct BaseView: View {
     }
   }
   func openURLInSafari(_ urlString: String) {
-    if let url = URL(string: urlString) {
+    if URL(string: urlString) != nil {
       appStore.inAppSafariUrl = urlString
       // UIApplication.shared.open(url)
       self.isShowInAppSafari = true
     }
   }
   func openOauthFlow(_ urlString: String) {
-    if let url = URL(string: urlString) {
+    #if os(iOS)
+      Log.info("openOauthFlow evaluating native Apple intercept")
+      if appStore.startNativeAppleSignInFromAuthorizeUrl(urlString) {
+        Log.info("openOauthFlow handled Apple OAuth with native sign-in")
+        self.isShowOauthFlow = false
+        return
+      }
+    #endif
+    if URL(string: urlString) != nil {
       appStore.oauthUrl = urlString
       // UIApplication.shared.open(url)
       self.isShowOauthFlow = true
@@ -180,30 +188,67 @@ struct BaseView: View {
 
   func processOauthResponse(_ url: URL) {
     if url.absoluteString.contains("oauthsign") {
-      // Get the part of the URL string before any # character
-      let urlString = url.absoluteString.split(separator: "#")[0]
-
-      // Split by = to get the token
-      let token = urlString.split(separator: "=")[1]
-      let isSignup = url.absoluteString.contains("signup")
+      guard let token = oauthCallbackValue(url, name: "token") else {
+        Log.error(message: "OAuth response did not include a token")
+        appStore.sendMessageToApp(message: [
+          "oauth": oauthErrorPayload(url)
+        ])
+        return
+      }
+      let isSignup = oauthCallbackValue(url, name: "signup") == "true"
+      let regionId = oauthCallbackValue(url, name: "regionId")
       appStore.sendMessageToApp(message: [
-        "oauth": ["token": String(token), "signup": isSignup ? "true" : "false"]
+        "oauth": [
+          "token": token,
+          "signup": isSignup ? "true" : "false",
+          "regionId": regionId ?? ""
+        ]
       ])
     }
   }
 
   func processUrlScheme(_ url: URL) {
     Log.info("Url Scheme triggered: \(url.absoluteString)")
-    if url.absoluteString.contains("oauthsignarchived") {
-      let token = url.absoluteString.split(separator: "=")[1]
-      let isSignup = url.absoluteString.contains("signup")
-      // self.appUrl = URL(string: "\(LocalConfig.appUrl)/?token=\(token)&signup=\(isSignup)")!
-      self.src.params = ["token": String(token), "signup": isSignup ? "true" : "false"]
+    if url.absoluteString.contains("oauthsignin") {
+      processOauthResponse(url)
+      self.isShowInAppSafari = false
+      self.isShowOauthFlow = false
+    } else if url.absoluteString.contains("oauthsignarchived") {
+      let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+      guard let token = components?.queryItems?.first(where: { $0.name == "token" })?.value else {
+        Log.error(message: "OAuth URL scheme did not include a token")
+        return
+      }
+      let isSignup =
+        components?.queryItems?.first(where: { $0.name == "signup" })?.value == "true"
+      // self.webOrigin = URL(string: "\(LocalConfig.webOrigin)/?token=\(token)&signup=\(isSignup)")!
+      self.src.params = ["token": token, "signup": isSignup ? "true" : "false"]
       self.isShowInAppSafari = false
       self.isShowOauthFlow = false
     } else if url.absoluteString.contains("debug") {
       self.src.params = ["debug": "true"]
     }
+  }
+
+  func oauthCallbackValue(_ url: URL, name: String) -> String? {
+    let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+    if let value = components?.queryItems?.first(where: { $0.name == name })?.value {
+      return value
+    }
+    guard let fragment = components?.fragment, !fragment.isEmpty else {
+      return nil
+    }
+    let fragmentComponents = URLComponents(string: "authfn://callback?\(fragment)")
+    return fragmentComponents?.queryItems?.first(where: { $0.name == name })?.value
+  }
+
+  func oauthErrorPayload(_ url: URL) -> [String: String] {
+    return [
+      "error": oauthCallbackValue(url, name: "auth_error") ?? "oauth_callback_failed",
+      "errorCode": oauthCallbackValue(url, name: "auth_error_code") ?? "",
+      "provider": oauthCallbackValue(url, name: "auth_provider") ?? "",
+      "requestId": oauthCallbackValue(url, name: "auth_request_id") ?? ""
+    ]
   }
 
   func onWebviewReload() {
@@ -213,6 +258,7 @@ struct BaseView: View {
   func onActive() {
     self.src.viewModel.valuePublisher.send("appIsActive")
     var isLowSpeedInternet = false
+    appStore.refreshAuthFnWidgetTokenIfNeeded()
     appStore.refreshAllWidgets()
     appStore.refreshSpecificWidget(id: LocalConfig.currentSessionWidget.kind)
     monitor.cancel()

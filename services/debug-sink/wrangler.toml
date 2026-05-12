@@ -1,0 +1,12 @@
+name = "nucleus-debug-sink"
+main = "src/index.ts"
+compatibility_date = "2026-04-24"
+
+[vars]
+ALLOWED_ORIGINS = "https://dev.nucleum.app,https://local.nucleum.app,https://dev.memotron.app,https://dev.pointron.app"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "nucleus-debug-sink"
+database_id = "89690f2d-5ab5-4907-80b0-fc7ffc271781"
+migrations_dir = "migrations"

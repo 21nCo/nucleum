@@ -1,0 +1,155 @@
+{
+  "accountDomain": "nucleum.app",
+  "workerNamePrefix": "nucleus-account",
+  "main": "dist/worker.js",
+  "compatibilityDate": "2026-04-24",
+  "compatibilityFlags": ["nodejs_compat"],
+  "namespace": "nucleus_account",
+  "cookieDomain": ".nucleum.app",
+  "cookiePrefix": "nucleus",
+  "emailFrom": "Nucleum <no-reply@notifications.21n.co>",
+  "debugSinkUrl": "https://nucleus-debug-sink.21n.workers.dev",
+  "secretsStore": {
+    "storeId": "3bc19f61d4d8498d9fa50d7175085316",
+    "names": {
+      "RESEND_API_KEY": "NUCLEUS_ACCOUNT_{ENV}_RESEND_API_KEY",
+      "GOOGLE_OAUTH_CLIENT_ID": "NUCLEUS_ACCOUNT_{ENV}_GOOGLE_OAUTH_CLIENT_ID",
+      "GOOGLE_OAUTH_CLIENT_SECRET": "NUCLEUS_ACCOUNT_{ENV}_GOOGLE_OAUTH_CLIENT_SECRET",
+      "APPLE_OAUTH_CLIENT_ID": "NUCLEUS_ACCOUNT_{ENV}_APPLE_OAUTH_CLIENT_ID",
+      "APPLE_JWT": "NUCLEUS_ACCOUNT_{ENV}_APPLE_JWT",
+      "APPLE_OAUTH_CLIENT_SECRET": "NUCLEUS_ACCOUNT_{ENV}_APPLE_OAUTH_CLIENT_SECRET",
+      "APPLE_TEAM_ID": "NUCLEUS_ACCOUNT_{ENV}_APPLE_TEAM_ID",
+      "APPLE_KEY_ID": "NUCLEUS_ACCOUNT_{ENV}_APPLE_KEY_ID"
+    }
+  },
+  "productDomains": {
+    "nucleum": "nucleum.app",
+    "memotron": "memotron.app",
+    "pointron": "pointron.app"
+  },
+  "nativeOAuthSchemes": [
+    "nucleum://oauthsignin",
+    "memotron://oauthsignin",
+    "pointron://oauthsignin"
+  ],
+  "regions": {
+    "insouth": {
+      "localPort": 8787,
+      "placementRegion": "aws:ap-south-1"
+    },
+    "useast": {
+      "localPort": 8788,
+      "placementRegion": "aws:us-east-1"
+    },
+    "euwest": {
+      "localPort": 8789,
+      "placementRegion": "aws:eu-west-2"
+    }
+  },
+  "environments": {
+    "local": {
+      "urlSegment": "local",
+      "webSubdomain": "local",
+      "workersDev": true,
+      "lookupWorkerEnv": "dev-lookup",
+      "lookupWorkerName": "nucleus-account-dev-lookup",
+      "cacheKvNamespaceId": "0cad2abe3c97473cb481c11d960e7996",
+      "cachePrefix": "authfn:nucleus_account_dev:",
+      "cookiePrefix": "nucleus_local",
+      "latencyDebug": true,
+      "includeLocalWebOrigins": false,
+      "regions": {
+        "insouth": {
+          "wranglerEnv": "local-insouth",
+          "hyperdriveId": "9b2122770f74463e92e41da547bcf260"
+        },
+        "useast": {
+          "wranglerEnv": "local-useast",
+          "hyperdriveId": "b81e52666883484386ae507f1aa77571"
+        },
+        "euwest": {
+          "wranglerEnv": "local-euwest",
+          "hyperdriveId": "627c5625e5204efcb1ec0afea943b7b2"
+        }
+      }
+    },
+    "dev": {
+      "urlSegment": "dev",
+      "webSubdomain": "dev",
+      "workersDev": true,
+      "lookupWorkerEnv": "dev-lookup",
+      "lookupWorkerName": "nucleus-account-dev-lookup",
+      "cacheKvNamespaceId": "0cad2abe3c97473cb481c11d960e7996",
+      "cachePrefix": "authfn:nucleus_account_dev:",
+      "cookiePrefix": "nucleus",
+      "latencyDebug": false,
+      "includeLocalWebOrigins": true,
+      "regions": {
+        "insouth": {
+          "wranglerEnv": "dev-insouth",
+          "hyperdriveId": "9b2122770f74463e92e41da547bcf260"
+        },
+        "useast": {
+          "wranglerEnv": "dev-useast",
+          "hyperdriveId": "b81e52666883484386ae507f1aa77571"
+        },
+        "euwest": {
+          "wranglerEnv": "dev-euwest",
+          "hyperdriveId": "627c5625e5204efcb1ec0afea943b7b2"
+        }
+      }
+    },
+    "pre": {
+      "urlSegment": "pre",
+      "webSubdomain": "pre",
+      "workersDev": false,
+      "lookupWorkerEnv": "live-lookup",
+      "lookupWorkerName": "nucleus-account-live-lookup",
+      "cacheKvNamespaceId": "72bb56e048d941ec92aad94df99d9e36",
+      "cachePrefix": "authfn:nucleus_account_pre:",
+      "cookiePrefix": "nucleus_pre",
+      "latencyDebug": false,
+      "includeLocalWebOrigins": false,
+      "regions": {
+        "insouth": {
+          "wranglerEnv": "pre-insouth",
+          "hyperdriveId": "TODO_LIVE_INSOUTH_HYPERDRIVE_ID"
+        },
+        "useast": {
+          "wranglerEnv": "pre-useast",
+          "hyperdriveId": "TODO_LIVE_USEAST_HYPERDRIVE_ID"
+        },
+        "euwest": {
+          "wranglerEnv": "pre-euwest",
+          "hyperdriveId": "TODO_LIVE_EUWEST_HYPERDRIVE_ID"
+        }
+      }
+    },
+    "live": {
+      "urlSegment": "",
+      "webSubdomain": "web",
+      "workersDev": false,
+      "lookupWorkerEnv": "live-lookup",
+      "lookupWorkerName": "nucleus-account-live-lookup",
+      "cacheKvNamespaceId": "18a83200ea7542fa9b6929257711065b",
+      "cachePrefix": "authfn:nucleus_account_live:",
+      "cookiePrefix": "nucleus",
+      "latencyDebug": false,
+      "includeLocalWebOrigins": false,
+      "regions": {
+        "insouth": {
+          "wranglerEnv": "live-insouth",
+          "hyperdriveId": "TODO_LIVE_INSOUTH_HYPERDRIVE_ID"
+        },
+        "useast": {
+          "wranglerEnv": "live-useast",
+          "hyperdriveId": "TODO_LIVE_USEAST_HYPERDRIVE_ID"
+        },
+        "euwest": {
+          "wranglerEnv": "live-euwest",
+          "hyperdriveId": "TODO_LIVE_EUWEST_HYPERDRIVE_ID"
+        }
+      }
+    }
+  }
+}

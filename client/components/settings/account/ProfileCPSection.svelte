@@ -32,6 +32,11 @@
   const isActivePlan = $derived(
     $account.plan ? determineIfPlanIsActive($account.plan) : false
   );
+  const isSignedIn = $derived(
+    $account.dataMode === UserDataMode.CLOUD ||
+      Boolean($account.token) ||
+      Boolean($account.userInfo?.id)
+  );
   function determineLicense() {
     if (!$account.plan) return "Unknown";
     if ($account.plan?.plan === PlanType.TRIAL) {
@@ -51,7 +56,7 @@
     "w-full": context !== "page"
   })}
 >
-  {#if $account.dataMode === UserDataMode.CLOUD}
+  {#if isSignedIn}
     <button
       class="flex flex-col justify-between items-center w-full h-full"
       {onclick}
@@ -74,7 +79,7 @@
             <div class="text-b3 text-fgs3">
               {$account.userInfo?.emailParts
                 ? frameEmailFromParts($account.userInfo.emailParts)
-                : "NA"}
+                : $account.userInfo?.email || "NA"}
             </div>
           </div>
         </div>

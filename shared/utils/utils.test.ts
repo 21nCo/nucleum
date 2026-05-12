@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isValidUrl } from "@21n/shared-utils/utils";
+import { extractProduct, isValidUrl } from "@21n/shared-utils/utils";
 
 describe("isValidUrl", () => {
   it("should return true for valid URLs", () => {
@@ -29,6 +29,19 @@ describe("isValidUrl", () => {
 
     invalidUrls.forEach((url) => {
       expect(isValidUrl(url)).toBe(false);
+    });
+  });
+});
+
+describe("extractProduct", () => {
+  it("treats local app subdomains as the local environment", () => {
+    expect(extractProduct("local.nucleum.app")).toEqual({
+      env: "local",
+      product: "nucleum"
+    });
+    expect(extractProduct("local.memotron.app")).toEqual({
+      env: "local",
+      product: "memotron"
     });
   });
 });

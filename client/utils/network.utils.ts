@@ -207,12 +207,12 @@ function mapCountryToRegion(countryCode?: string): string | null {
 export async function detectUserRegion(): Promise<string> {
   const ipBasedRegion = await detectUserRegionFromIP();
   if (ipBasedRegion) {
-    console.log("Region detected from IP:", ipBasedRegion);
+    logger.debug({ at: "detectUserRegion.ip", region: ipBasedRegion });
     return ipBasedRegion;
   }
 
   const timezoneBasedRegion = resolveRegionalApiUrlStrategy();
-  console.log("Region detected from timezone (fallback):", timezoneBasedRegion);
+  logger.debug({ at: "detectUserRegion.timezone", region: timezoneBasedRegion });
   return timezoneBasedRegion;
 }
 
@@ -321,9 +321,16 @@ export async function performHttpNetworkOperation(params: {
       if (response.status === 401) {
         if (isExtEnv) {
           logoutOnExtention();
-        } else {
+        } else if (!token) {
           await signout();
           window.location.reload();
+        } else {
+          logger.log({
+            at: "API call unauthorized with AuthFn session",
+            message:
+              "Skipping automatic sign-out because AuthFn is the authentication source.",
+            url: params.url
+          });
         }
       }
       throw new Error(`API call failed with status: ${response.status}`);

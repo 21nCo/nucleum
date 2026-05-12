@@ -28,7 +28,10 @@ import {
 import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
 import { GlobalEvent } from "@21n/types/event.enum";
 import { ExtensionEvent } from "@21n/types/extension.type";
-import { resolveCurrentUserId } from "@21n/utils/account.utils";
+import {
+  hasLegacyCloudSession,
+  resolveCurrentUserId
+} from "@21n/utils/account.utils";
 import {
   dispatchCustomEvent,
   isExtensionEnvironment,
@@ -534,6 +537,21 @@ class Flux {
 
   async performSync(method: SyncMethod, data: any) {
     try {
+      if (!(await hasLegacyCloudSession())) {
+        logger.log({
+          at: "flux.performSync",
+          method,
+          message:
+            "Skipping legacy sync because no legacy cloud session token is present."
+        });
+        if (method === SyncMethod.SYNC_DOWN) {
+          return { syncDownData: [], counts: {} };
+        }
+        return {
+          response: { error: "LEGACY_SYNC_UNAVAILABLE" },
+          syncDownData: []
+        };
+      }
       const result = await performApiCall(`v2/sync/${method}`, "POST", data);
       let response;
       if (result?.ok) {

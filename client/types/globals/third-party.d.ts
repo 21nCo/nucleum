@@ -14,10 +14,21 @@ interface InstagramRuntimeLike {
   Embeds: InstagramEmbedsLike;
 }
 
+interface NucleumNativeConfig {
+  webOrigin?: string;
+  accountUrl?: string;
+  accountDomain?: string;
+  debugSinkUrl?: string;
+  defaultRegion?: string;
+  environment?: string;
+  product?: string;
+}
+
 declare var CryptoJS: CryptoJsLike;
 
 interface Window {
   instgrm?: InstagramRuntimeLike;
+  __NUCLEUM_NATIVE_CONFIG__?: NucleumNativeConfig;
 }
 
 declare module "qrcode" {
@@ -41,6 +52,11 @@ declare module "qrcode" {
   };
 
   export default QRCode;
+}
+
+declare module "node-fetch" {
+  const fetch: typeof globalThis.fetch;
+  export default fetch;
 }
 
 declare module "@carbon/charts-svelte" {

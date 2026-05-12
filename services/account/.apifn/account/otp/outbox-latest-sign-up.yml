@@ -1,0 +1,20 @@
+info:
+  name: OTP Sign Up Outbox Latest
+  type: http
+  seq: 11
+http:
+  method: GET
+  url: "{{baseUrl}}/__test/outbox/latest"
+  params:
+    query:
+      - name: identifier
+        value: "{{otpSignupEmail}}"
+runtime:
+  scripts:
+    - type: tests
+      code: |
+        test("test outbox exposes the sign-up OTP", function() {
+          expect(res.status).to.equal(200);
+          expect(Boolean(res.body.message.code)).to.equal(true);
+        });
+        env.set("otpSignupCode", res.body.message.code);

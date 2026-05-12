@@ -12,20 +12,26 @@
   let confirmationTextInput: string | undefined;
   let error: string | undefined;
   function resolvePrimaryAction() {
-    if ($confirmationNotification?.confirmAction) {
-      if ($confirmationNotification.askInputConfirmation) {
+    const notification = $confirmationNotification;
+    const confirmAction = notification?.confirmAction;
+    const confirmCallback = confirmAction?.callback;
+    const runConfirmCallback = async () => {
+      const result = (await confirmCallback?.()) ?? true;
+      if (result && !(typeof result === "object" && "error" in result)) {
+        confirmationNotification.reset();
+      }
+      return result;
+    };
+    if (confirmAction) {
+      if (notification?.askInputConfirmation) {
         return {
-          ...$confirmationNotification.confirmAction,
-          callback: () => {
+          ...confirmAction,
+          callback: async () => {
             if (
               confirmationTextInput ===
-              $confirmationNotification.askInputConfirmation
+              notification.askInputConfirmation
             ) {
-              confirmationNotification.reset();
-              return (
-                $confirmationNotification.confirmAction?.callback?.() ??
-                Promise.resolve(true)
-              );
+              return runConfirmCallback();
             } else {
               error = "Please enter input to confirm";
               return Promise.resolve(false);
@@ -34,16 +40,12 @@
         };
       }
       return {
-        ...$confirmationNotification.confirmAction,
+        ...confirmAction,
         callback: async () => {
-          confirmationNotification.reset();
-          return (
-            $confirmationNotification.confirmAction?.callback?.() ??
-            Promise.resolve(true)
-          );
+          return runConfirmCallback();
         }
       };
-    } else if ($confirmationNotification?.type === AlertType.ERROR) {
+    } else if (notification?.type === AlertType.ERROR) {
       return {
         label: "OK",
         callback: async () => {

@@ -14,17 +14,47 @@ struct LocalConfig {
   static let surrealUrl = ""
   static let urlScheme = "pointron"
 
-  //Live
-  static let appUrl = "https://web.pointron.app"
-  static let apiUrl = "https://api.pointron.app"
+  static var environment: String { infoString("NucleusAppEnvironment", fallback: "dev") }
+  static var defaultRegion: String { infoString("NucleusDefaultRegion", fallback: "insouth") }
+  static var product: String { infoString("NucleusProduct", fallback: "pointron.app") }
+  static var accountDomain: String { infoString("NucleusAccountDomain", fallback: "nucleum.app") }
+  static var debugSinkUrl: String {
+    infoString("NucleusDebugSinkUrl", fallback: "https://nucleus-debug-sink.21n.workers.dev")
+  }
 
-  //Dev devices
-  // static let appUrl = "https://dev.pointron.app"
-  // static let apiUrl = "https://api.tidigit.dev"
+  static var webOrigin: String {
+    switch environment {
+    case "local":
+      return "https://local.\(product)"
+    case "pre":
+      return "https://pre.\(product)"
+    case "live":
+      return "https://web.\(product)"
+    default:
+      return "https://dev.\(product)"
+    }
+  }
 
-  //Local testing
-  // static let appUrl = "http://localhost:4173"
-  // static let apiUrl = "https://api.tidigit.dev"
+  static var accountUrl: String {
+    accountUrl(for: defaultRegion)
+  }
+
+  static func accountUrl(for region: String?) -> String {
+    let resolvedRegion = region?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    let regionId = resolvedRegion?.isEmpty == false ? resolvedRegion! : defaultRegion
+    let environmentSuffix = environment == "live" ? "" : "-\(environment)"
+    return "https://account-\(regionId)\(environmentSuffix).\(accountDomain)"
+  }
+
+  static var widgetApiUrl: String { "\(accountUrl)/widget" }
+
+  private static func infoString(_ key: String, fallback: String) -> String {
+    guard let value = Bundle.main.object(forInfoDictionaryKey: key) as? String else {
+      return fallback
+    }
+    let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+    return trimmed.isEmpty ? fallback : trimmed
+  }
   init() {
     if let surrealUrl = ProcessInfo.processInfo.environment["surrealUrl"] {
       print("surrealUrl: \(surrealUrl)")

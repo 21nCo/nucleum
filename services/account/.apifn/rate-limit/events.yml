@@ -1,0 +1,17 @@
+info:
+  name: Rate Limit Events
+  type: http
+  seq: 7
+http:
+  method: GET
+  url: "{{baseUrl}}/__test/events"
+runtime:
+  scripts:
+    - type: tests
+      code: |
+        test("rate limit event is captured", function() {
+          expect(res.status).to.equal(200);
+          const rateEvents = res.body.events.filter((event) => event.type === "authfn.rate_limited");
+          expect(rateEvents.length).to.equal(1);
+          expect(rateEvents[0].metadata.scope).to.equal("otp-send");
+        });

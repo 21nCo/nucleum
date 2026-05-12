@@ -11,17 +11,20 @@
   import view from "@21n/stores/view.store";
   import { authClient } from "./auth";
   import Icon from "@21n/elements/Icon.svelte";
+  import { page } from "$app/stores";
 
-  let email = "";
-  let otp = "";
-  let newPassword = "";
-  let confirmPassword = "";
-  let error: string | null = null;
-  let info: string | null = null;
-  let actionInProgress = false;
-  let step: "email" | "otp" | "password" = "email";
-  let showNewPassword = false;
-  let showConfirmPassword = false;
+  let email = $state($page.url.searchParams.get("email") ?? "");
+  let otp = $state("");
+  let newPassword = $state("");
+  let confirmPassword = $state("");
+  let error = $state<string | null>(null);
+  let info = $state<string | null>(null);
+  let actionInProgress = $state(false);
+  let isPasswordUpdated = $state(false);
+  let step = $state<"email" | "otp" | "password">("email");
+  let showNewPassword = $state(false);
+  let showConfirmPassword = $state(false);
+  const flowMode = $derived($page.url.searchParams.get("mode") === "set" ? "set" : "reset");
 
   function resolveInlineFeedback() {
     return info
@@ -58,18 +61,18 @@
 
     actionInProgress = true;
     try {
-      const { data, error: otpError } = await (
+      const response = await (
         await authClient()
-      ).forgetPassword.emailOtp({
+      ).startPasswordReset({
         email: resolveTrimmedEmail()
       });
 
-      if (otpError) {
-        error = otpError.message ?? "Failed to send OTP. Please try again.";
+      if (!response.ok) {
+        error = response.error.message ?? "Failed to send OTP. Please try again.";
         return;
       }
 
-      if (data) {
+      if (response.data.sent) {
         info = "OTP sent to your email address. Please check your inbox.";
         step = "otp";
       }
@@ -92,25 +95,9 @@
       return;
     }
 
-    actionInProgress = true;
     try {
-      const { data, error: verifyError } = await (
-        await authClient()
-      ).emailOtp.checkVerificationOtp({
-        email: resolveTrimmedEmail(),
-        type: "forget-password",
-        otp
-      });
-
-      if (verifyError) {
-        error = verifyError.message ?? "Invalid OTP. Please try again.";
-        return;
-      }
-
-      if (data) {
-        info = "OTP verified. Please set your new password.";
-        step = "password";
-      }
+      info = "OTP entered. Please set your new password.";
+      step = "password";
     } catch (err) {
       console.error("Error verifying OTP:", err);
       error = "Failed to verify OTP. Please try again.";
@@ -121,7 +108,7 @@
 
   async function handleResetPassword(event?: Event) {
     event?.preventDefault();
-    if (actionInProgress) return;
+    if (actionInProgress || isPasswordUpdated) return;
 
     clearFeedback();
 
@@ -141,22 +128,25 @@
 
     actionInProgress = true;
     try {
-      const { data, error: resetError } = await (
+      const response = await (
         await authClient()
-      ).emailOtp.resetPassword({
+      ).completePasswordReset({
         email: resolveTrimmedEmail(),
-        otp,
-        password: newPassword
+        code: otp,
+        newPassword
       });
 
-      if (resetError) {
-        error =
-          resetError.message ?? "Failed to reset password. Please try again.";
+      if (!response.ok) {
+        error = response.error.message ?? "Failed to reset password. Please try again.";
         return;
       }
 
-      if (data) {
-        info = "Password reset successful. Redirecting to login...";
+      if (response.data.passwordUpdated) {
+        isPasswordUpdated = true;
+        info =
+          flowMode === "set"
+            ? "Password set successfully. Redirecting to login..."
+            : "Password reset successful. Redirecting to login...";
         setTimeout(() => {
           appStore.gotoPath("/account/login");
         }, 2000);
@@ -170,12 +160,8 @@
   }
 
   function isValidPassword(password: string): boolean {
-    if (password.length < 8) {
-      error = "Password must be at least 8 characters long.";
-      return false;
-    }
-    if (password.length > 16) {
-      error = "Password must be at most 16 characters long.";
+    if (password.length < 12) {
+      error = "Password must be at least 12 characters long.";
       return false;
     }
     if (!password.match(/[a-z]/)) {
@@ -211,11 +197,13 @@
 <div class="flex w-full h-full items-center justify-center px-6">
   <div class="flex flex-col w-80 {$view.scale > 0.6 ? 'gap-10' : 'gap-6'}">
     <div class="flex flex-col gap-2 text-center">
-      <h2 class="text-h4 font-medium">Forgot password?</h2>
+      <h2 class="text-h4 font-medium">
+        {flowMode === "set" ? "Set password" : "Forgot password?"}
+      </h2>
       <p class="text-fgs3 text-b2">
         {#if step === "email"}
           Enter the email linked to your account and we'll send you an OTP to
-          reset your password.
+          {flowMode === "set" ? "set your password." : "reset your password."}
         {:else if step === "otp"}
           Enter the OTP sent to your email address.
         {:else}
@@ -277,7 +265,7 @@
             label: "New Password",
             orientation: Orientation.Vertical,
             tooltip: {
-              body: "Password must be 8-16 characters long and contain at least one lowercase letter, one uppercase letter, one number and one special character."
+              body: "Password must be at least 12 characters long and contain at least one lowercase letter, one uppercase letter, one number and one special character."
             }
           }}
           placeholder="********"
@@ -285,7 +273,15 @@
         >
           <button
             type="button"
-            onclick={() => (showNewPassword = !showNewPassword)}
+            onclick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              showNewPassword = !showNewPassword;
+            }}
+            onmousedown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+            }}
             class="flex items-center justify-center"
           >
             <Icon
@@ -308,7 +304,15 @@
         >
           <button
             type="button"
-            onclick={() => (showConfirmPassword = !showConfirmPassword)}
+            onclick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              showConfirmPassword = !showConfirmPassword;
+            }}
+            onmousedown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+            }}
             class="flex items-center justify-center"
           >
             <Icon
@@ -334,15 +338,19 @@
             : "Send OTP"
           : step === "otp"
             ? actionInProgress
-              ? "Verifying..."
-              : "Verify OTP"
+              ? "Continuing..."
+              : "Continue"
             : actionInProgress
-              ? "Resetting password..."
-              : "Reset password"}
+              ? flowMode === "set"
+                ? "Setting password..."
+                : "Resetting password..."
+              : flowMode === "set"
+                ? "Set password"
+                : "Reset password"}
         type={ButtonVariant.PRIMARY}
         style={ButtonStyle.OUTLINED}
         isLoading={actionInProgress}
-        isDisabled={actionInProgress}
+        isDisabled={actionInProgress || isPasswordUpdated}
         onclick={step === "email"
           ? handleSendOTP
           : step === "otp"

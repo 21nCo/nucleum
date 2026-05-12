@@ -62,13 +62,16 @@ enum Log {
   }
   static func error(error: (any Error)? = nil, message: String = "", context: LogContext? = nil) {
     Log.log(
-      logType: .error, message: message ?? error?.localizedDescription ?? "", context: context)
+      logType: .error,
+      message: message.isEmpty ? (error?.localizedDescription ?? "") : message,
+      context: context)
   }
-  fileprivate static func log(logType: logType, message: String, context: LogContext? = nil) {
-    var log = logType.desc + " " + message
-    if let context {
-      log = log + " ➜ " + context.desc
-    }
+	  fileprivate static func log(logType: logType, message: String, context: LogContext? = nil) {
+	    let sanitizedMessage = sanitize(message)
+	    var log = logType.desc + " " + sanitizedMessage
+	    if let context {
+	      log = log + " ➜ " + context.desc
+	    }
     #if DEBUG
       if context?.isSaveToServer == true || context == nil { print(log) }
     #endif
@@ -88,34 +91,83 @@ enum Log {
       device = UIDevice.current.model
     #endif
     let osVersion = ProcessInfo.processInfo.operatingSystemVersion
-    #if DEBUG
-    if context?.isSaveToServer == true || context == nil {
-      Utils.performSurrealCall(
-        "insert into debugLog {message: $message, timestamp: $timestamp, src: $src, type: $type, app: $app, os: $os, osVersion: $osVersion, device: $device}",
-        [
-          "message": message, "timestamp": "\(TimeUtils.getCurrentTimeInUTC())",
-          "type": logType.shortDesc, "src": "embed", "context": context?.desc ?? "",
-          "app": LocalConfig.defaultAppName,
-          "osVersion":
-            "\(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)",
-          "os": os, "device": device,
-        ]
-      ) {
-        (response, err) in
-        if let response = response {
-          // print("response saving log to surreal: \(response)")
-          let context = LogContext(
-            file: #file, function: #function, line: #line, isSaveToServer: false)
-          Log.info("response saving log to surreal: \(response)", context: context)
-        }
-        if let err = err {
-          // print("error saving log to surreal: \(err)")
-          let context = LogContext(
-            file: #file, function: #function, line: #line, isSaveToServer: false)
-          Log.error(error: err, context: context)
-        }
+	    #if DEBUG
+	      if context?.isSaveToServer == true || context == nil {
+	        sendToDebugSink(
+	          logType: logType,
+	          message: sanitizedMessage,
+	          context: context,
+	          os: os,
+	          osVersion: "\(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)",
+	          device: device
+	        )
+	      }
+	    #endif
+	  }
+
+	  fileprivate static func sendToDebugSink(
+	    logType: logType,
+	    message: String,
+	    context: LogContext?,
+	    os: String,
+	    osVersion: String,
+	    device: String
+	  ) {
+	    let sinkUrl = LocalConfig.debugSinkUrl.trimmingCharacters(in: .whitespacesAndNewlines)
+	      .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+	    if sinkUrl.isEmpty { return }
+	    guard let url = URL(string: "\(sinkUrl)/v1/logs") else { return }
+	    let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String
+	    let payload: [String: Any] = [
+	      "level": logType.shortDesc.lowercased(),
+	      "source": "native",
+	      "app": LocalConfig.defaultAppName,
+	      "message": message,
+	      "payload": [
+	        "context": context?.desc ?? "",
+	        "timestamp": "\(TimeUtils.getCurrentTimeInUTC())",
+	      ],
+	      "os": os,
+	      "osVersion": osVersion,
+	      "device": device,
+	      "appVersion": version ?? "",
+	    ]
+	    guard JSONSerialization.isValidJSONObject(payload),
+	      let body = try? JSONSerialization.data(withJSONObject: payload)
+	    else { return }
+	    var request = URLRequest(url: url)
+	    request.httpMethod = "POST"
+	    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
+	    request.httpBody = body
+	    URLSession.shared.dataTask(with: request) { _, _, error in
+	      if let error = error {
+	        print("Debug sink log failed: \(error.localizedDescription)")
+	      }
+	    }.resume()
+	  }
+
+	  fileprivate static func sanitize(_ value: String) -> String {
+	    var result = value
+      let patterns: [(String, String)] = [
+        ("(?i)(token|authfnToken|authfnWidgetToken|refreshToken|surrealToken)=([^&\\s]+)", "$1=[REDACTED]"),
+        ("(?i)(code|state|id_token|access_token|refresh_token)=([^&\\s]+)", "$1=[REDACTED]"),
+        ("(?i)(challengeId|email|identifier)=([^&\\s]+)", "$1=[REDACTED]"),
+        (
+          "(?i)\"(token|authfnToken|authfnWidgetToken|refreshToken|surrealToken|password|otp|code|challengeId|email|identifier)\"\\s*:\\s*\"[^\"]+\"",
+          "\"$1\":\"[REDACTED]\""
+        ),
+        ("[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", "[REDACTED]"),
+      ]
+      for (pattern, replacement) in patterns {
+        result = result.replacingOccurrences(
+          of: pattern,
+          with: replacement,
+          options: .regularExpression
+        )
       }
-    }
-    #endif
-  }
-}
+	    if result.count > 12_000 {
+	      return String(result.prefix(12_000)) + "...<truncated>"
+	    }
+	    return result
+	  }
+	}

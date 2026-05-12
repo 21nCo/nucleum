@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import {
     resolveProductResources,
@@ -6,7 +8,7 @@
   import { appStore } from "@21n/stores/app.store";
   import { onMount } from "svelte";
   import { CacheKey } from "@21n/layout/layers/cache/cache.type";
-  let components: any[] = [];
+  let components = $state<any[]>([]);
   const globalCacheKeys: string[] = [CacheKey.CALENDAR_CACHE];
 
   onMount(() => {

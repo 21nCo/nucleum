@@ -491,6 +491,9 @@ struct WebViewTwo: UIViewRepresentable, WebViewHandlerDelegate {
     configuration.mediaPlaybackRequiresUserAction = false
 
     configuration.userContentController.add(self.makeCoordinator(), name: "iOSNative")
+    if let nativeConfigScript = makeNativeConfigUserScript() {
+      configuration.userContentController.addUserScript(nativeConfigScript)
+    }
     configuration.preferences = preferences
     if urlType == .customProtocolUrl {
       configuration.setURLSchemeHandler(
@@ -525,6 +528,31 @@ struct WebViewTwo: UIViewRepresentable, WebViewHandlerDelegate {
     //   webView, name: UIResponder.keyboardWillHideNotification, object: nil)
 
     return webView
+  }
+
+  private func makeNativeConfigUserScript() -> WKUserScript? {
+    let config: [String: String] = [
+      "webOrigin": LocalConfig.webOrigin,
+      "accountUrl": LocalConfig.accountUrl,
+      "accountDomain": LocalConfig.accountDomain,
+      "debugSinkUrl": LocalConfig.debugSinkUrl,
+      "defaultRegion": LocalConfig.defaultRegion,
+      "environment": LocalConfig.environment,
+      "product": LocalConfig.product,
+    ]
+    guard
+      let data = try? JSONSerialization.data(withJSONObject: config, options: []),
+      let json = String(data: data, encoding: .utf8)
+    else {
+      Log.error(message: "Unable to serialize native web config")
+      return nil
+    }
+    Log.info("Injecting native web config for \(LocalConfig.defaultAppName): webOrigin=\(LocalConfig.webOrigin), accountUrl=\(LocalConfig.accountUrl), nativeAppleIntercept=enabled")
+    return WKUserScript(
+      source: "window.__NUCLEUM_NATIVE_CONFIG__ = \(json);",
+      injectionTime: .atDocumentStart,
+      forMainFrameOnly: false
+    )
   }
 
   func updateUIView(_ webView: WKWebView, context: Context) {

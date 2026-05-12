@@ -17,5 +17,15 @@
 	</array>
 	<key>EULALink</key>
 	<string>https://www.apple.com/legal/internet-services/itunes/dev/stdeula/</string>
+	<key>NucleusAccountDomain</key>
+	<string>nucleum.app</string>
+	<key>NucleusAppEnvironment</key>
+	<string>dev</string>
+	<key>NucleusDebugSinkUrl</key>
+	<string>https://nucleus-debug-sink.21n.workers.dev</string>
+	<key>NucleusDefaultRegion</key>
+	<string>insouth</string>
+	<key>NucleusProduct</key>
+	<string>pointron.app</string>
 </dict>
 </plist>

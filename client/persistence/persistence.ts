@@ -30,28 +30,6 @@ export class Persistence {
     return response;
   }
 
-  refreshToken = async () => {
-    try {
-      const token = localStorage.getItem("refresh-token");
-      const response = this.resolveJsonResponse(
-        await performApiCall("account/refreshToken", "POST", {
-          token
-        })
-      );
-      if (!response?.ok) {
-        return;
-      }
-      const data = await response.json();
-      if (!data?.token) return;
-      if (!data.userInfo)
-        data.userInfo = parse(localStorage.getItem("userInfo") ?? "{}");
-      // TODO - perform singin at the source of the method - to remove circular dependency of persistance on account.store.
-      // account.signIn(data, { isFromSignup: false, isIgnoreRefresh: false });
-      return true;
-    } catch (err) {
-      logger.error({ at: "refreshToken", error: err });
-    }
-  };
   getUserInfo = async (token: string) => {
     try {
       const response = this.resolveJsonResponse(

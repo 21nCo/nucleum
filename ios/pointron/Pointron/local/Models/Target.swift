@@ -67,21 +67,20 @@ struct Targets: Decodable {
                     }
                 }
             }
-            var request = URLRequest(url: URL(string: "https://\(LocalConfig.surrealUrl)")!);
+            var request = URLRequest(url: URL(string: "\(LocalConfig.widgetApiUrl)/v2/embed/widget/focus")!);
             request.httpMethod = "POST";
-            var surrealToken: String? = nil;
-            if let token = sharedDefaults?.string(forKey: "surrealToken") {
-                surrealToken = token;
+            var widgetToken: String? = nil;
+            if let token = sharedDefaults?.string(forKey: "authfnWidgetToken") {
+                widgetToken = token;
             }
-            if(surrealToken == nil || userId == nil){
-                logs.append("surrealToken and userId not found")
+            if(widgetToken == nil || userId == nil){
+                logs.append("widget token and userId not found")
                 completion(nil, nil);
                 saveLogs(logs);
                 return;
             }
-            request.addValue("Bearer \(surrealToken!)", forHTTPHeaderField: "Authorization")
-            request.httpBody = "USE database \(userId!);  return fn::pointron::iOS::currentSessionWidget();".data(using: .utf8)
-            request.addValue("text/plain", forHTTPHeaderField: "Content-Type")
+            request.addValue("Bearer \(widgetToken!)", forHTTPHeaderField: "Authorization")
+            request.addValue("application/json", forHTTPHeaderField: "Content-Type")
             request.addValue("application/json", forHTTPHeaderField: "Accept")
     //        if let headers = request.allHTTPHeaderFields {
     //            for (headerField, value) in headers {
@@ -92,24 +91,19 @@ struct Targets: Decodable {
     //        }
             let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
                 if error != nil {
-                    print("URL session error: \(error)")
                     logs.append("error in data task: \(error)");
                     saveLogs(logs);
                     completion(nil, error);
                     return;
                 } else {
-                    // Print status code
                         if let httpResponse = response as? HTTPURLResponse {
                             logs.append("Status Code: \(httpResponse.statusCode)")
                         }
-                        // Print response body
-                        if let data = data {
-                            let responseBody = String(data: data, encoding: .utf8) ?? "Couldn't decode data"
-                            logs.append("Response Body: \(responseBody)")
+                        if data != nil {
+                            logs.append("Response received")
                         }
                     if let unwrappedData = data {
                         do {
-                            logs.append("JSON unwrappedData: \(unwrappedData)");
                             sharedDefaults?.set(logs, forKey: "widgetLogs")
                             let response = try decoder.decode([SurrealResult].self, from: unwrappedData)
                             if let currentSessions = response[1].result {

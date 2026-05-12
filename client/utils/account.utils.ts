@@ -1,14 +1,9 @@
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { logger } from "@21n/components/debug/logger.client";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
 import { goto, isExtensionEnvironment } from "@21n/utils/browser.utils";
-import {
-  clientStorage,
-  retrieveLocally
-} from "@21n/persistence/persistence.utils";
+import { clientStorage } from "@21n/persistence/persistence.utils";
 import { postDataToParent } from "@21n/utils/embed.utils";
 import { LicenseType, type IUserPlan } from "@21n/types/account.type";
-import jwt_decode from "jwt-decode";
 import {
   BillingCycle,
   PlanType
@@ -57,14 +52,25 @@ export function isUrlExpired(signedUrl: string) {
 export async function resolveToken(): Promise<string | null> {
   let token: string | null = null;
   if (isExtensionEnvironment()) {
-    return clientStorage.get(ClientStorageKey.STOKEN);
+    return await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
   } else {
-    const space = retrieveLocally(Resource.spaceInContext);
-    if (space?.id) {
-      token = localStorage?.getItem(`token-${space.id}`);
-    } else token = localStorage?.getItem("stoken");
+    const authFnToken = localStorage?.getItem(ClientStorageKey.AUTHFN_TOKEN);
+    if (authFnToken) return authFnToken;
   }
   return token;
+}
+
+export async function resolveLegacyToken(): Promise<string | null> {
+  if (isExtensionEnvironment()) {
+    return await clientStorage.get(ClientStorageKey.STOKEN);
+  }
+  return typeof window !== "undefined"
+    ? localStorage.getItem(ClientStorageKey.STOKEN)
+    : null;
+}
+
+export async function hasLegacyCloudSession(): Promise<boolean> {
+  return Boolean(await resolveLegacyToken());
 }
 
 export async function resolveCurrentUserId() {
@@ -89,11 +95,19 @@ export async function signout(
   ctx?: string
 ) {
   logger.log({ at: "signout", context: ctx, params });
+  try {
+    const { authClient } = await import("@21n/components/account/auth");
+    await (await authClient()).signOut({
+      allSessions: false
+    });
+  } catch (error) {
+    logger.error({ at: "authfn signout failed", error });
+  }
   postDataToParent(EmbedDataMessage.ACCOUNT, {
     isLoggedIn: false
   });
   await clearLocalStorage(params);
-  if (!params?.isPreventRedirect) goto("/signup?msg=signedout");
+  if (!params?.isPreventRedirect) goto("/account/login");
   async function clearLocalStorage(params?: { isPreventDapIdClear?: boolean }) {
     const env = await clientStorage.get(ClientStorageKey.ENV);
     const appData = await clientStorage.get(ClientStorageKey.APP_DATA);
@@ -110,8 +124,5 @@ export async function signout(
 }
 
 export function isTokenExpired(token: string) {
-  const decoded: any = jwt_decode(token);
-  const exp = decoded.exp ?? 0;
-  const currentTime = Math.floor(Date.now() / 1000);
-  return exp < currentTime;
+  return !token;
 }

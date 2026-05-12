@@ -5,15 +5,13 @@
   import { cn } from "@21n/utils/ui.utils";
   import Icon from "@21n/elements/Icon.svelte";
   import { authClient } from "./auth";
+  import { resolveAccountBaseUrl } from "../network";
   import context from "@21n/stores/context.store";
-  import {
-    peformAccountApiCall,
-    resolveAccountBaseUrl,
-    resolveHost
-  } from "../network";
   import { appStore } from "@21n/stores/app.store";
-  import { ClientStorageKey } from "@21n/persistence/persistence.type";
-  import { clientStorage } from "@21n/persistence/persistence.utils";
+  import { OperatingSystem } from "@21n/types/context.type";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
+  import { postDataToParent } from "@21n/utils/embed.utils";
   let {
     providers,
     isExpanded = false,
@@ -25,57 +23,94 @@
     currentProgress?: string | undefined;
     region?: string | undefined;
   } = $props();
-  const dev_isUseIntermediateApproach = true;
+  const resolveReturnTo = () => {
+    if (
+      $context.isEmbed &&
+      ($context.os === OperatingSystem.IOS ||
+        $context.os === OperatingSystem.MACOS)
+    ) {
+      return `${resolveNativeUrlScheme()}://oauthsignin`;
+    }
+
+    return `${window.location.origin}/account/login?oauth_callback=1`;
+  };
+  const resolveHandoffMode = () =>
+    $context.isEmbed &&
+    ($context.os === OperatingSystem.IOS ||
+      $context.os === OperatingSystem.MACOS)
+      ? "session-token"
+      : "none";
+  const resolveNativeUrlScheme = () => {
+    const product = $appStore.product.toLowerCase();
+    return product === "nucleus" ? "nucleum" : product;
+  };
   const signIn = async (provider: string) => {
-    await (
+    const response = await (
       await authClient({ region })
-    ).signIn.social({
-      provider,
-      callbackURL: window.location.origin
+    ).startSocialSignIn({
+      provider: provider as "apple" | "google" | "github",
+      returnTo: resolveReturnTo(),
+      callbackMode: "redirect",
+      handoffMode: resolveHandoffMode()
     });
+    if (response.ok) {
+      window.location.href = response.data.redirectTo;
+    } else {
+      throw new Error(response.error.message);
+    }
   };
 
   async function onClick(provider: string) {
     currentProgress = provider;
-    console.log({ isEmbed: $context.isEmbed, provider });
+    logger.info({
+      at: "OAuthOptions.onClick",
+      isEmbed: $context.isEmbed,
+      os: $context.os,
+      provider,
+      accountUrl: resolveAccountBaseUrl(region ?? "insouth"),
+      returnTo: resolveReturnTo(),
+      handoffMode: resolveHandoffMode()
+    });
     try {
       if ($context.isEmbed) {
-        const region = await clientStorage.get(ClientStorageKey.REGION);
-        const baseUrl = resolveAccountBaseUrl(region ?? "insouth");
-        const host = resolveHost();
-        const domain = host.split(".").slice(-2).join(".");
-        const product = $appStore.product.toLowerCase();
-        const link = `https://oauth.${domain}?provider=${provider}&callback=${product}&instance=${baseUrl}`;
-        if (dev_isUseIntermediateApproach) {
-          // if (provider === "apple") {
-          //   window.location.href = link + "&localRedirect=true";
-          // } else {
-          appStore.openLink(link, true);
-          // }
+        if (provider === "apple" && $context.os === OperatingSystem.IOS) {
+          postDataToParent(EmbedDataMessage.AUTHFN_NATIVE_APPLE_SIGN_IN, {
+            accountUrl: resolveAccountBaseUrl(region ?? "insouth"),
+            returnTo: resolveReturnTo(),
+            handoffMode: resolveHandoffMode()
+          });
+          return;
+        }
+
+        const response = await (
+          await authClient({ region })
+        ).startSocialSignIn({
+          provider: provider as "apple" | "google" | "github",
+          returnTo: resolveReturnTo(),
+          callbackMode: "redirect",
+          handoffMode: resolveHandoffMode()
+        });
+        if (response.ok) {
+          logger.info({
+            at: "OAuthOptions.startSocialSignIn.ok",
+            provider,
+            isEmbed: true,
+            redirectTo: response.data.redirectTo
+          });
+          appStore.openLink(response.data.redirectTo, true);
         } else {
-          const response = await peformAccountApiCall(
-            "api/auth/sign-in/social",
-            {
-              provider,
-              // callbackURL: `${baseUrl}/mobile-oauth-bridge?callback=memotron`
-              // callbackURL: `https://local.memotron.app/embed?callback=memotron`
-              callbackURL: `${product}://oauthsignembed`
-            }
-          );
-          if (response && response.ok) {
-            const json = await response.json();
-            if (json && json.url && json.redirect) {
-              appStore.openLink(json.url, true);
-            }
-          } else {
-            console.error("response is not ok");
-          }
+          logger.error({
+            at: "OAuthOptions.startSocialSignIn.failed",
+            provider,
+            error: response.error
+          });
+          throw new Error(response.error.message);
         }
       } else {
         await signIn(provider);
       }
     } catch (e) {
-      console.error(e);
+      logger.error({ at: "OAuthOptions.onClick.error", provider }, e);
     }
   }
 </script>

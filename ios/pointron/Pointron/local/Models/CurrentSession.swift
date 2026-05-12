@@ -121,35 +121,23 @@ struct CurrentSession: Decodable {
       } else {
         logs.append("userId not found. User not logged in")
       }
-      var surrealToken: String? = nil
-      if let token = sharedDefaults?.string(forKey: "surrealToken") {
-        surrealToken = token
-        if let payload = token.decodeJWT() {
-          if let userIdParsed = payload["id"] as? String {
-            logs.append("User ID from token: \(userIdParsed)")
-            userId = userIdParsed
-          }
-          if let userRegionParsed = payload["region"] as? String {
-            logs.append("User region from token: \(userRegionParsed)")
-            userRegion = userRegionParsed
-          }
-        } else {
-          logs.append("Failed to parse JWT token")
-        }
+      var widgetToken: String? = nil
+      if let token = sharedDefaults?.string(forKey: "authfnWidgetToken") {
+        widgetToken = token
+        userRegion = sharedDefaults?.string(forKey: "userRegion")
       } else {
-        logs.append("surrealToken not found. User not logged in")
+        logs.append("authfnWidgetToken not found. User not logged in")
       }
       let elapsed = Utils.resolveBackgroundElapsed()
       logs.append("background elapsed: \(elapsed)")
-      // if elapsed < 1 * 60 || surrealToken == nil || userId == nil {
-      if surrealToken == nil || userId == nil || userRegion == nil {
+      if widgetToken == nil || userId == nil || userRegion == nil {
         let sessionData = resolveWidgetDataFromUserDefaults()
         completion(sessionData, nil)
         saveLogs(logs)
         return
       }
 
-      guard let url = URL(string: "\(LocalConfig.apiUrl)/v2/embed/widget/focus") else {
+      guard let url = URL(string: "\(LocalConfig.widgetApiUrl)/v2/embed/widget/focus") else {
         let context = LogContext(
           file: #file, function: #function, line: #line, isSaveToServer: false)
         Log.error(message: "Invalid URL", context: context)
@@ -158,13 +146,13 @@ struct CurrentSession: Decodable {
 
       var request = URLRequest(url: url)
       request.httpMethod = "POST"
-      if surrealToken == nil || userId == nil {
-        logs.append("surrealToken and userId not found")
+      if widgetToken == nil || userId == nil {
+        logs.append("widget token and userId not found")
         completion(nil, nil)
         saveLogs(logs)
         return
       }
-      request.addValue("Bearer \(surrealToken!)", forHTTPHeaderField: "Authorization")
+      request.addValue("Bearer \(widgetToken!)", forHTTPHeaderField: "Authorization")
       request.addValue("application/json", forHTTPHeaderField: "Accept")
       //        if let headers = request.allHTTPHeaderFields {
       //            for (headerField, value) in headers {
@@ -175,22 +163,17 @@ struct CurrentSession: Decodable {
       //        }
       let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
         if error != nil {
-          print("URL session error: \(error)")
           logs.append("error in data task: \(error)")
           saveLogs(logs)
         } else {
-          // Print status code
           if let httpResponse = response as? HTTPURLResponse {
             logs.append("Status Code: \(httpResponse.statusCode)")
           }
-          // Print response body
-          if let data = data {
-            let responseBody = String(data: data, encoding: .utf8) ?? "Couldn't decode data"
-            logs.append("Response Body: \(responseBody)")
+          if data != nil {
+            logs.append("Response received")
           }
           if let unwrappedData = data {
             do {
-              logs.append("JSON unwrappedData: \(unwrappedData)")
               sharedDefaults?.set(logs, forKey: "widgetLogs")
               let response = try decoder().decode(
                 [CurrentSessionSurrealResult].self, from: unwrappedData)

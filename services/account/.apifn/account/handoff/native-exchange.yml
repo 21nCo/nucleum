@@ -1,0 +1,28 @@
+info:
+  name: Native Handoff Exchange
+  type: http
+  seq: 11
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/handoff/native/exchange"
+  headers:
+    - name: content-type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        req.body = JSON.stringify({
+          code: env.get("nativeHandoffCode"),
+          device: { platform: "apifn" }
+        });
+    - type: tests
+      code: |
+        test("native handoff code exchanges for bearer token", function() {
+          expect(res.status).to.equal(200);
+          expect(Boolean(res.body.data.token)).to.equal(true);
+        });
+        env.set("nativeToken", res.body.data.token);

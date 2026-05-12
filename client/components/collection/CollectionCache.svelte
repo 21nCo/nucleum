@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { linker } from "@21n/products/memotron/linking/link.store";

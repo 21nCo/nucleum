@@ -13,6 +13,11 @@
   import { Display } from "@21n/types/view.type";
   import { parse } from "@21n/shared-utils/json.utils";
   import { toasts } from "@21n/stores/notification.store";
+  import { page } from "$app/stores";
+  import account from "@21n/stores/account.store";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { clientStorage } from "@21n/persistence/persistence.utils";
+  import { ClientStorageKey } from "@21n/persistence/persistence.type";
   let selectedMode = $state<"signup" | "signin" | "offline">("signup");
   let currentProgress = $state<string | undefined>(undefined);
   let cloudSyncLoginRef = $state<CloudSyncLogin | undefined>(undefined);
@@ -42,8 +47,8 @@
     return !managedSyncHosts.some((h) => host === h || host.endsWith(`.${h}`));
   }
 
-  function onTurnstileSuccess(token) {
-    console.log("Turnstile success:", token);
+  function onTurnstileSuccess(_token) {
+    logger.debug({ at: "Login.turnstile.success" });
   }
   function onTurnstileError(errorCode) {
     console.error("Turnstile error:", errorCode);
@@ -57,6 +62,7 @@
     window.onTurnstileError = onTurnstileError;
     window.onTurnstileExpired = onTurnstileExpired;
     window.addEventListener("message", handleMessageFromParent);
+    void finishOAuthCallbackLogin();
     if (dev_isEnableCaptcha && import.meta.env.VITE_NATIVE_EMBED !== "true") {
       loadTurnstileScript();
     }
@@ -68,6 +74,30 @@
       delete window.onTurnstileExpired;
     };
   });
+
+  async function finishOAuthCallbackLogin() {
+    const isOAuthCallback = $page.url.searchParams.get("oauth_callback") === "1";
+    if ($page.url.searchParams.has("auth_error")) return;
+
+    if (isOAuthCallback) {
+      currentProgress = "oauth";
+    }
+    try {
+      const signedIn = await account.signInFromAuthFnSession();
+      if (!signedIn) {
+        if (isOAuthCallback) {
+          toasts.error("Authentication failed. Please try again.");
+          currentProgress = undefined;
+        }
+      }
+    } catch (error) {
+      console.error({ at: "Login.finishOAuthCallbackLogin", error });
+      if (isOAuthCallback) {
+        toasts.error("Authentication failed. Please try again.");
+      }
+      currentProgress = undefined;
+    }
+  }
 
   function loadTurnstileScript() {
     const preconnectId = "turnstile-preconnect";
@@ -103,6 +133,8 @@
       }
 
       if (event?.data?.type === "SWIFT_MESSAGE" && event?.data?.payload) {
+        if (typeof event.data.payload !== "string") return;
+        if (!event.data.payload.trim().startsWith("{")) return;
         const parsed = parse(event.data.payload);
         if (parsed.oauth) {
           currentProgress = undefined;
@@ -113,11 +145,40 @@
             }
           }
           if (!token) {
+            logger.error({
+              at: "Login.handleMessageFromParent.oauth.failed",
+              error: parsed.oauth.error,
+              errorCode: parsed.oauth.errorCode,
+              provider: parsed.oauth.provider,
+              requestId: parsed.oauth.requestId
+            });
             toasts.error("Authentication failed. Please try again.");
             return;
           }
           localStorage.setItem("embedToken", token);
-          appStore.gotoPath("/");
+          if (parsed.oauth.regionId) {
+            await clientStorage.set(ClientStorageKey.REGION, parsed.oauth.regionId);
+          }
+          logger.info({
+            at: "Login.handleMessageFromParent.oauth.token.received",
+            isSignup: parsed.oauth.signup === "true",
+            regionId: parsed.oauth.regionId
+          });
+          const signedIn = await account.signInFromAuthFnSession({
+            token,
+            regionId: parsed.oauth.regionId,
+            isNewUser: parsed.oauth.signup === "true",
+            isPreventRedirect: true
+          });
+          if (!signedIn) {
+            logger.error({
+              at: "Login.handleMessageFromParent.oauth.session.failed",
+              hasToken: true
+            });
+            toasts.error("Authentication failed. Please try again.");
+            return;
+          }
+          account.gotoPostAuthRoute({ isNewUser: parsed.oauth.signup === "true" });
         }
       }
     } catch (e) {

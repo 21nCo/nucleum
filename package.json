@@ -32,6 +32,8 @@
     "tests"
   ],
   "dependencies": {
+    "@authfn/client": "^0.0.1",
+    "@authfn/svelte": "^0.0.1",
     "@carbon/charts": "1.22.18",
     "@carbon/charts-svelte": "1.22.18",
     "@types/bcrypt": "^6.0.0",
@@ -39,10 +41,11 @@
     "better-auth": "1.3.34"
   },
   "devDependencies": {
+    "@tsconfig/svelte": "^5.0.5",
     "@types/cookie": "^0.6.0",
     "@types/markdown-it": "^14.1.2",
-    "@tsconfig/svelte": "^5.0.5",
     "cookie": "^0.6.0",
+    "jiti": "^2.6.1",
     "mrmime": "^2.0.1",
     "prettier": "^3.6.2",
     "prettier-plugin-svelte": "^3.4.0",
@@ -79,6 +82,10 @@
     "build:ios:nucleum": "node tools/ios/build-web-bundle.mjs nucleum",
     "build:ios:memotron": "node tools/ios/build-web-bundle.mjs memotron",
     "build:ios:pointron": "node tools/ios/build-web-bundle.mjs pointron",
+    "ios:env:local": "node ios/scripts/configure-environment.mjs local",
+    "ios:env:dev": "node ios/scripts/configure-environment.mjs dev",
+    "ios:env:pre": "node ios/scripts/configure-environment.mjs pre",
+    "ios:env:live": "node ios/scripts/configure-environment.mjs live",
     "setup:ios:whisper": "node tools/ios/setup-whisper.mjs",
     "build:memotron-share": "turbo run build --filter=memotron-share",
     "clean": "turbo run clean"

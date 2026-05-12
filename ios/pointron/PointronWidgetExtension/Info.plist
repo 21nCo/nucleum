@@ -7,5 +7,15 @@
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.widgetkit-extension</string>
 	</dict>
+	<key>NucleusAccountDomain</key>
+	<string>nucleum.app</string>
+	<key>NucleusAppEnvironment</key>
+	<string>dev</string>
+	<key>NucleusDebugSinkUrl</key>
+	<string>https://nucleus-debug-sink.21n.workers.dev</string>
+	<key>NucleusDefaultRegion</key>
+	<string>insouth</string>
+	<key>NucleusProduct</key>
+	<string>pointron.app</string>
 </dict>
 </plist>

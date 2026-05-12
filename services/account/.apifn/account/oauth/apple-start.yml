@@ -1,0 +1,30 @@
+info:
+  name: OAuth Apple Start
+  type: http
+  seq: 17
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/social/start"
+  headers:
+    - name: content-type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        req.body = JSON.stringify({
+          provider: "apple",
+          callbackMode: "json"
+        });
+    - type: tests
+      code: |
+        test("Apple OAuth start returns provider redirect", function() {
+          expect(res.status).to.equal(200);
+          expect(Boolean(res.body.data.redirectTo)).to.equal(true);
+        });
+        const redirect = new URL(res.body.data.redirectTo);
+        env.set("appleOauthState", redirect.searchParams.get("state"));
+        env.set("appleOauthCode", "apple-apifn");

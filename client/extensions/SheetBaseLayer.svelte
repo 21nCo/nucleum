@@ -85,6 +85,8 @@
     try {
       if (event?.data?.type === "SWIFT_MESSAGE") {
         if (event?.data?.payload) {
+          if (typeof event.data.payload !== "string") return;
+          if (!event.data.payload.trim().startsWith("{")) return;
           const parsed = JSON.parse(event.data.payload);
           if (parsed.type === "SHARE_EXTENSION_AUTH_TOKEN" && parsed.token) {
             addToDebugLog("Received auth token");
@@ -158,7 +160,7 @@
   }
 
   async function isSessionActive() {
-    const token = await clientStorage.get(ClientStorageKey.STOKEN);
+    const token = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
     if (!token) return false;
     return performSessionExpiryCheck();
   }

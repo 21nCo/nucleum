@@ -1,78 +1,171 @@
-import { createAuthClient } from "better-auth/svelte";
 import {
-  emailOTPClient,
-  twoFactorClient,
-  multiSessionClient,
-  apiKeyClient
-} from "better-auth/client/plugins";
+  createAuthFnRegionalClient,
+  type AuthFnCachedRegion,
+  type AuthFnClientRequestMetric,
+  type AuthFnRegionalClient,
+  type AuthFnRegionStorage
+} from "@authfn/client";
 import { clientStorage } from "@21n/persistence/persistence.utils";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
-import { resolveAccountBaseUrl } from "../network";
+import { resolveAccountBaseUrl, resolveAccountCookiePrefix } from "../network";
+import { logger } from "@21n/components/debug/logger.client";
 
-function createAuthClientWithPlugins(region: string) {
-  const baseURL = resolveAccountBaseUrl(region);
-  const embedToken =
-    typeof window !== "undefined" ? localStorage.getItem("embedToken") : null;
-  return createAuthClient({
-    baseURL,
-    fetchOptions: embedToken
-      ? {
-          auth: {
-            type: "Bearer",
-            token: embedToken
-          }
-        }
-      : {},
-    plugins: [
-      emailOTPClient(),
-      twoFactorClient(),
-      multiSessionClient(),
-      apiKeyClient()
-    ]
-  });
-}
+type StoredRegionValue = string | AuthFnCachedRegion;
 
-type AuthClient = ReturnType<typeof createAuthClientWithPlugins>;
-const authClientsMap: Map<string, AuthClient> = new Map();
+const authClientsMap: Map<string, AuthFnRegionalClient> = new Map();
+const REGION_CACHE_TTL_MS = 15 * 60 * 1000;
 
 export const authClient = async (params?: {
   region?: string;
   isPreventCachedInstance?: boolean;
-}): Promise<AuthClient> => {
-  let region = params?.region;
-  if (!region)
-    region = (await clientStorage.get(ClientStorageKey.REGION)) ?? "insouth";
-  if (authClientsMap.has(region) && !params?.isPreventCachedInstance) {
-    return authClientsMap.get(region) as AuthClient;
+}): Promise<AuthFnRegionalClient> => {
+  const region =
+    params?.region ??
+    (await clientStorage.get(ClientStorageKey.REGION)) ??
+    "insouth";
+  const cacheKey = "regional";
+  if (authClientsMap.has(cacheKey) && !params?.isPreventCachedInstance) {
+    const existing = authClientsMap.get(cacheKey) as AuthFnRegionalClient;
+    existing.setCurrentRegionId(region);
+    return existing;
   }
-  const client = createAuthClientWithPlugins(region);
-  authClientsMap.set(region, client);
+
+  const client = createAuthFnRegionalClient({
+    defaultRegionId: region,
+    resolveBaseUrl: resolveAuthFnBaseUrl,
+    storage: createNucleusRegionStorage(),
+    cacheTtlMs: REGION_CACHE_TTL_MS,
+    clientOptions: {
+      cookiePrefix: resolveAccountCookiePrefix(region),
+      credentials: "include",
+      bearerToken: async () =>
+        (await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)) ?? undefined,
+      onRequestMetric: emitAccountNetworkMetric
+    },
+    onRegionChanged: async (event) => {
+      await clientStorage.set(ClientStorageKey.REGION, event.toRegionId);
+    }
+  });
+  client.setCurrentRegionId(region);
+  authClientsMap.set(cacheKey, client);
   return client;
 };
 
-async function performCheckUsingSessionAPI() {
-  if (typeof window === "undefined") {
-    return false;
-  }
-  try {
-    const client = await authClient({ isPreventCachedInstance: true });
-    const session = await client.getSession();
-    if (session?.data?.user) {
-      await clientStorage.set(ClientStorageKey.USER, session.data.user);
-    }
-    return !!session?.data?.session;
-  } catch (error) {
-    console.error("Error checking better-auth session:", error);
-    return undefined;
-  }
+export function resolveAuthFnBaseUrl(region: string) {
+  return `${resolveAccountBaseUrl(region).replace(/\/$/, "")}/auth`;
+}
+
+function emitAccountNetworkMetric(metric: AuthFnClientRequestMetric) {
+  if (!shouldEmitAccountLatencyMetric()) return;
+  logger.debug({
+    at: "authfn.account.network",
+    method: metric.method,
+    path: metric.path,
+    status: metric.status,
+    ok: metric.ok,
+    durationMs: round(metric.durationMs),
+    requestId: metric.requestId,
+    serverTiming: metric.serverTiming,
+    dbDurationMs: metric.dbDurationMs,
+    dbCallCount: metric.dbCallCount,
+    dbMaxDurationMs: metric.serverTiming?.match(/dbmax;dur=([0-9.]+)/)?.[1],
+    cacheDurationMs: metric.cacheDurationMs,
+    cacheCallCount: metric.cacheCallCount,
+    lookupDurationMs: metric.lookupDurationMs,
+    lookupCallCount: metric.lookupCallCount,
+    workerColo: metric.workerColo,
+    accountRegion: metric.accountRegion,
+    error: metric.error
+  });
+}
+
+function shouldEmitAccountLatencyMetric(): boolean {
+  if (import.meta.env?.VITE_ACCOUNT_LATENCY_DEBUG === "true") return true;
+  if (typeof window === "undefined") return false;
+  return window.localStorage?.getItem("accountLatencyDebug") === "true";
+}
+
+function round(value: number): number {
+  return Math.round(value * 100) / 100;
 }
 
 export async function performSessionCheck(): Promise<boolean | undefined> {
   if (typeof window === "undefined") return false;
+  const authFnToken =
+    (await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)) ?? undefined;
   const offlineSessionId =
     (await clientStorage.get(ClientStorageKey.OFFLINE_SESSION_ID)) ?? undefined;
-  if (offlineSessionId) return true;
-  const cloudSession = await performCheckUsingSessionAPI();
-  if (cloudSession) return true;
-  return cloudSession;
+
+  try {
+    const client = await authClient({ isPreventCachedInstance: true });
+    const session = await client.getSession();
+    if (!session.ok) {
+      return Boolean(offlineSessionId && !authFnToken);
+    }
+    if (session.data.session) {
+      await clientStorage.set(ClientStorageKey.USER, session.data.session);
+      if (session.data.session.primaryEmail) {
+        await client.resolveRegion({
+          identifier: session.data.session.primaryEmail
+        });
+      }
+    }
+    return Boolean(session.data.session) || Boolean(offlineSessionId && !authFnToken);
+  } catch (error) {
+    console.error("Error checking AuthFn session:", error);
+    return offlineSessionId && !authFnToken ? true : undefined;
+  }
+}
+
+function createNucleusRegionStorage(): AuthFnRegionStorage {
+  return {
+    async get(identifier) {
+      const map = await readRegionMap();
+      const value = map[normalizeIdentifier(identifier)];
+      if (!value) return null;
+      return typeof value === "string"
+        ? regionValueFromLegacyString(identifier, value)
+        : value;
+    },
+    async set(identifier, value) {
+      const map = await readRegionMap();
+      map[normalizeIdentifier(identifier)] = value;
+      await clientStorage.set(ClientStorageKey.USER_REGION_MAP, map);
+    },
+    async delete(identifier) {
+      const map = await readRegionMap();
+      delete map[normalizeIdentifier(identifier)];
+      await clientStorage.set(ClientStorageKey.USER_REGION_MAP, map);
+    }
+  };
+}
+
+async function readRegionMap(): Promise<Record<string, StoredRegionValue>> {
+  const raw = (await clientStorage.get(ClientStorageKey.USER_REGION_MAP)) ?? "{}";
+  if (typeof raw === "object" && raw !== null) {
+    return raw as Record<string, StoredRegionValue>;
+  }
+  try {
+    return JSON.parse(raw) as Record<string, StoredRegionValue>;
+  } catch {
+    return {};
+  }
+}
+
+function regionValueFromLegacyString(
+  identifier: string,
+  regionId: string
+): AuthFnCachedRegion {
+  const normalized = normalizeIdentifier(identifier);
+  return {
+    identifier: normalized,
+    regionId,
+    authority: resolveAccountBaseUrl(regionId),
+    cachedAt: Date.now(),
+    expiresAt: Date.now() + REGION_CACHE_TTL_MS
+  };
+}
+
+function normalizeIdentifier(identifier: string) {
+  return identifier.trim().toLowerCase();
 }

@@ -90,24 +90,3 @@ public extension Color {
         return Color(red: r + m, green: g + m, blue: b + m)
     }
 }
-
-
-
-extension String {
-    func decodeJWT() -> [String: Any]? {
-        let segments = self.components(separatedBy: ".")
-        guard segments.count > 1 else { return nil }
-        
-        let base64String = segments[1]
-            .replacingOccurrences(of: "-", with: "+")
-            .replacingOccurrences(of: "_", with: "/")
-        
-        let padded = base64String.padding(toLength: ((base64String.count + 3) / 4) * 4, 
-                                          withPad: "=", 
-                                          startingAt: 0)
-        
-        guard let data = Data(base64Encoded: padded) else { return nil }
-        
-        return try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any]
-    }
-}

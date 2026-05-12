@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { onMount } from "svelte";
   import { uiState } from "@21n/stores/uiState/uiState.store";
@@ -9,8 +11,9 @@
   import BoxSwitcher from "@21n/elements/switcher/BoxSwitcher.svelte";
   import { resolveProductConfig } from "@21n/products/product.config";
 
-  let selectedPanel: OverviewPanel =
-    resolveSavedState() ?? OverviewPanel.DASHBOARD;
+  let selectedPanel = $state<OverviewPanel>(
+    resolveSavedState() ?? OverviewPanel.DASHBOARD
+  );
   const items = [
     ...(resolveProductConfig(Product.NUCLEUS).overviewPanelSwitcherItems ?? []),
     {

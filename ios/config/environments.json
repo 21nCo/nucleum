@@ -1,0 +1,29 @@
+{
+  "defaultRegion": "insouth",
+  "debugSinkUrl": "https://nucleus-debug-sink.21n.workers.dev",
+  "accountDomain": "nucleum.app",
+  "apps": {
+    "nucleum": {
+      "plistFiles": [
+        "ios/nucleum/Nucleum/Info.plist",
+        "ios/nucleum/Nucleum-for-Mac-Info.plist"
+      ],
+      "product": "nucleum.app"
+    },
+    "memotron": {
+      "plistFiles": [
+        "ios/memotron/Memotron/Info.plist",
+        "ios/memotron/Memotron-for-Mac-Info.plist"
+      ],
+      "product": "memotron.app"
+    },
+    "pointron": {
+      "plistFiles": [
+        "ios/pointron/Pointron/Info.plist",
+        "ios/pointron/Pointron-for-Mac-Info.plist",
+        "ios/pointron/PointronWidgetExtension/Info.plist"
+      ],
+      "product": "pointron.app"
+    }
+  }
+}

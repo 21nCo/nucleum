@@ -1,0 +1,30 @@
+info:
+  name: OTP Verify Sign In
+  type: http
+  seq: 8
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/otp/verify"
+  headers:
+    - name: content-type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        req.body = JSON.stringify({
+          email: env.get("email"),
+          purpose: "sign-in",
+          code: env.get("otp"),
+          sessionMode: "hybrid"
+        });
+    - type: tests
+      code: |
+        test("OTP sign-in issues a session token", function() {
+          expect(res.status).to.equal(200);
+          expect(Boolean(res.body.data.token)).to.equal(true);
+        });
+        env.set("otpSessionToken", res.body.data.token);

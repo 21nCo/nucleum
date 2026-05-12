@@ -15,7 +15,7 @@
   let {
     options,
     labelProps = undefined,
-    selected = $bindable<ISelectValue | undefined>(undefined),
+    selected = $bindable<ISelectValue | undefined>(),
     parentBgIndex = 1,
     size = Size.md,
     style = OptionSelectorStyle.OUTLINE,

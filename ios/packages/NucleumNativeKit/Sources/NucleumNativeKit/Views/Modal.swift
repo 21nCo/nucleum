@@ -28,7 +28,7 @@ struct Modal: View {
           WebViewTwo(
             urlType: .customProtocolUrl,
             refreshId: refreshId,
-            url: URL(string: LocalConfig.appUrl + "/" + appStore.popup.path)!,
+            url: URL(string: LocalConfig.webOrigin + "/" + appStore.popup.path)!,
             params: [
               "isSheet": "true", "spath": appStore.popup.path,
               "title": appStore.popup.title ?? "",

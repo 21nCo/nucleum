@@ -18,12 +18,12 @@ struct BaseViewForMac: View {
   @State var isOffline = false
   @State var isReloading = false
   @State private var needsRefresh = false
-  @State var appUrl: String = LocalConfig.appUrl
+  @State var webOrigin: String = LocalConfig.webOrigin
   @State var message = ""
   @State var isShowOauthFlow = false
   @State private var src: WebViewForMac = WebViewForMac(
     urlType: .customProtocolUrl,
-    url: URL(string: LocalConfig.appUrl)!,
+    url: URL(string: LocalConfig.webOrigin)!,
     // params: ["debug": "true"],
     params: [:],
     refreshId: TimeUtils.getCurrentTimeInUTC(),
@@ -166,10 +166,21 @@ struct BaseViewForMac: View {
 
   func processOauthResponse(_ url: URL) {
     if url.absoluteString.contains("oauthsign") {
-      let token = url.absoluteString.split(separator: "=")[1]
-      let isSignup = url.absoluteString.contains("signup")
+      guard let token = oauthCallbackValue(url, name: "token") else {
+        Log.error(message: "OAuth response did not include a token")
+        appStore.sendMessageToApp(message: [
+          "oauth": oauthErrorPayload(url)
+        ])
+        return
+      }
+      let isSignup = oauthCallbackValue(url, name: "signup") == "true"
+      let regionId = oauthCallbackValue(url, name: "regionId")
       appStore.sendMessageToApp(message: [
-        "oauth": ["token": String(token), "signup": isSignup ? "true" : "false"]
+        "oauth": [
+          "token": token,
+          "signup": isSignup ? "true" : "false",
+          "regionId": regionId ?? ""
+        ]
       ])
     }
   }
@@ -177,14 +188,40 @@ struct BaseViewForMac: View {
   func handleCustomURL(_ url: URL) {
     Log.info("Url Scheme triggered: \(url.absoluteString)")
     if url.absoluteString.contains("oauthsignarchived") {
-      let token = url.absoluteString.split(separator: "=")[1]
-      let isSignup = url.absoluteString.contains("signup")
-      self.src.params = ["token": String(token), "signup": isSignup ? "true" : "false"]
+      let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+      guard let token = components?.queryItems?.first(where: { $0.name == "token" })?.value else {
+        Log.error(message: "OAuth URL scheme did not include a token")
+        return
+      }
+      let isSignup =
+        components?.queryItems?.first(where: { $0.name == "signup" })?.value == "true"
+      self.src.params = ["token": token, "signup": isSignup ? "true" : "false"]
       isShowOauthFlow = false
       self.src.viewModel.valuePublisher.send("authResult:success")
     } else if url.absoluteString.contains("debug") {
       self.src.params = ["debug": "true"]
     }
+  }
+
+  func oauthCallbackValue(_ url: URL, name: String) -> String? {
+    let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+    if let value = components?.queryItems?.first(where: { $0.name == name })?.value {
+      return value
+    }
+    guard let fragment = components?.fragment, !fragment.isEmpty else {
+      return nil
+    }
+    let fragmentComponents = URLComponents(string: "authfn://callback?\(fragment)")
+    return fragmentComponents?.queryItems?.first(where: { $0.name == name })?.value
+  }
+
+  func oauthErrorPayload(_ url: URL) -> [String: String] {
+    return [
+      "error": oauthCallbackValue(url, name: "auth_error") ?? "oauth_callback_failed",
+      "errorCode": oauthCallbackValue(url, name: "auth_error_code") ?? "",
+      "provider": oauthCallbackValue(url, name: "auth_provider") ?? "",
+      "requestId": oauthCallbackValue(url, name: "auth_request_id") ?? ""
+    ]
   }
 
   func onActive() {

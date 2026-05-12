@@ -9,7 +9,6 @@ import {
 } from "@21n/types/account.type";
 import { postDataToParent } from "@21n/utils/embed.utils";
 import { Persistence } from "@21n/persistence/persistence";
-import { ButtonVariant } from "@21n/types/button.type";
 import {
   determineIfOffline,
   performApiCall
@@ -18,9 +17,13 @@ import {
   confirmationNotification,
   toasts
 } from "@21n/stores/notification.store";
+import { ButtonVariant } from "@21n/types/button.type";
 import { appStore } from "@21n/stores/app.store";
-import jwt_decode from "jwt-decode";
-import { getBucketNameandKey, signout } from "@21n/utils/account.utils";
+import {
+  getBucketNameandKey,
+  hasLegacyCloudSession,
+  signout
+} from "@21n/utils/account.utils";
 import {
   determineIfPlanIsActive,
   determineIfSubscriptionExpired
@@ -44,6 +47,7 @@ import { generateImagePreviewFromPdf } from "@21n/utils/pdf.utils";
 import { Action } from "@21n/types/action.enum";
 import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
 import { parse } from "@21n/shared-utils/json.utils";
+import { resolveAccountBaseUrl } from "@21n/components/network";
 
 export const isRefreshingToken = writable(false);
 
@@ -58,13 +62,17 @@ class AccountStore extends ObservableStore<UserAccount> {
       dataMode: UserDataMode.NONE,
       sessionType: UserSessionType.UNDETERMINED
     };
-    const token = await clientStorage.get(ClientStorageKey.STOKEN);
+    const authFnToken = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
     const offlineSessionId = await clientStorage.get(
       ClientStorageKey.OFFLINE_SESSION_ID
     );
-    if (token) {
-      seed.token = token;
-      seed.dataMode = UserDataMode.CLOUD;
+    const hasLegacySession = await hasLegacyCloudSession();
+    if (authFnToken) {
+      seed.token = authFnToken;
+      if (!offlineSessionId && !hasLegacySession) {
+        await this.ensureOfflineSession();
+      }
+      seed.dataMode = hasLegacySession ? UserDataMode.CLOUD : UserDataMode.LOCAL;
       seed.sessionType = UserSessionType.RETURNING;
     } else if (offlineSessionId) {
       seed.dataMode = UserDataMode.LOCAL;
@@ -81,7 +89,7 @@ class AccountStore extends ObservableStore<UserAccount> {
 
   async postToEmbed(data: any = null) {
     if (!data) {
-      const token = await clientStorage.get(ClientStorageKey.STOKEN);
+      const token = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
       const userInfo = parse(
         (await clientStorage.get(ClientStorageKey.USER_INFO)) ?? ""
       );
@@ -91,30 +99,34 @@ class AccountStore extends ObservableStore<UserAccount> {
     postDataToParent(EmbedDataMessage.ACCOUNT, {
       userId: data.userInfo?.id?.split("user:")[1],
       token: data.token,
-      refreshToken: data.refreshToken,
+      regionId: data.userInfo?.region,
+      accountUrl: data.userInfo?.region
+        ? resolveAccountBaseUrl(data.userInfo.region)
+        : undefined,
       isLoggedIn: true
     });
   }
 
-  signIn(
+  async signIn(
     data: {
       userInfo: UserInformation;
       token: string;
-      refreshToken?: string;
     },
     params: {
       isNewUser?: boolean;
     } = { isNewUser: false }
   ) {
-    clientStorage.set(ClientStorageKey.STOKEN, data.token);
-    clientStorage.set(ClientStorageKey.USER_INFO, data.userInfo);
-    // localStorage.setItem("refresh-token", data.refreshToken ?? "");
+    await clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, data.token);
+    await clientStorage.remove(ClientStorageKey.STOKEN);
+    await clientStorage.set(ClientStorageKey.USER_INFO, data.userInfo);
+    await this.ensureOfflineSession();
+    const hasLegacySession = await hasLegacyCloudSession();
     this.postToEmbed(data);
     const isBootstrapped = data.userInfo.isBootstrapped;
     this.update(() => {
       return {
         token: data.token,
-        dataMode: UserDataMode.CLOUD,
+        dataMode: hasLegacySession ? UserDataMode.CLOUD : UserDataMode.LOCAL,
         userId: data.userInfo.id.split("user:")[1],
         userInfo: data.userInfo,
         sessionType:
@@ -123,7 +135,16 @@ class AccountStore extends ObservableStore<UserAccount> {
             : UserSessionType.NEW
       };
     });
-    if (params.isNewUser && isBootstrapped) {
+    this.gotoPostAuthRoute({ isNewUser: params.isNewUser, userInfo: data.userInfo });
+  }
+
+  gotoPostAuthRoute(params?: {
+    isNewUser?: boolean;
+    userInfo?: Pick<UserInformation, "isBootstrapped">;
+  }) {
+    const userInfo = params?.userInfo ?? this.get()?.userInfo;
+    const isBootstrapped = userInfo?.isBootstrapped ?? true;
+    if (params?.isNewUser && isBootstrapped) {
       appStore.gotoPath("/onboarding");
     } else if (!isBootstrapped) {
       appStore.gotoPath("/bootstrap");
@@ -148,17 +169,134 @@ class AccountStore extends ObservableStore<UserAccount> {
     await signout(params, "signOut account.store");
   }
   async embedOAuthSignin(token: string) {
-    clientStorage.set(ClientStorageKey.STOKEN, token);
-    let response = await this.persistence.getUserInfo(token);
+    await clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, token);
+    await clientStorage.remove(ClientStorageKey.STOKEN);
+    await this.ensureOfflineSession();
+    const response = await this.resolveAuthFnSessionUserInfo();
     if (response?.userInfo) {
       this.signIn({
         userInfo: response?.userInfo,
-        token: token,
-        refreshToken: token
+        token
       });
     } else {
       console.log("error", response);
     }
+  }
+
+  async signInFromAuthFnSession(params?: {
+    token?: string;
+    session?: any;
+    regionId?: string;
+    isNewUser?: boolean;
+    isPreventRedirect?: boolean;
+  }) {
+    const previousAuthFnToken = await clientStorage.get(
+      ClientStorageKey.AUTHFN_TOKEN
+    );
+    const hasTokenFromResponse = Boolean(params?.token?.trim());
+    if (hasTokenFromResponse && params?.token) {
+      await clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, params.token);
+    }
+    if (params?.regionId) {
+      await clientStorage.set(ClientStorageKey.REGION, params.regionId);
+    }
+
+    let authSession = params?.session;
+    if (!authSession) {
+      const { authClient } = await import("@21n/components/account/auth");
+      const response = await (
+        await authClient({ isPreventCachedInstance: true })
+      ).getSession();
+      if (response.ok && response.data.session) {
+        authSession = response.data.session;
+      }
+      if (!response.ok || !response.data.session) {
+        logger.error({
+          at: "account.signInFromAuthFnSession.session.failed",
+          hasTokenFromResponse,
+          error: response.ok ? undefined : response.error
+        });
+      }
+    }
+
+    if (!authSession) {
+      if (hasTokenFromResponse) {
+        if (previousAuthFnToken) {
+          await clientStorage.set(
+            ClientStorageKey.AUTHFN_TOKEN,
+            previousAuthFnToken
+          );
+        } else {
+          await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
+        }
+      }
+      return false;
+    }
+
+    const sessionToken = params?.token ?? previousAuthFnToken ?? undefined;
+    if (sessionToken) {
+      await clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, sessionToken);
+    } else {
+      await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
+    }
+    await clientStorage.remove(ClientStorageKey.STOKEN);
+    await clientStorage.set(ClientStorageKey.USER, authSession);
+    await this.ensureOfflineSession();
+
+    const userInfo = this.resolveUserInfoFromAuthFnSession(authSession);
+    await clientStorage.set(ClientStorageKey.USER_INFO, userInfo);
+    const legacyCloudSession = await hasLegacyCloudSession();
+    this.postToEmbed({ token: sessionToken, userInfo });
+    this.update(() => ({
+      token: sessionToken,
+      dataMode: legacyCloudSession ? UserDataMode.CLOUD : UserDataMode.LOCAL,
+      sessionType:
+        userInfo.isBootstrapped && !params?.isNewUser
+          ? UserSessionType.RETURNING
+          : UserSessionType.NEW,
+      userId: userInfo.id.split("user:")[1],
+      userInfo
+    }));
+
+    if (params?.isPreventRedirect) return true;
+    this.gotoPostAuthRoute({ isNewUser: params?.isNewUser, userInfo });
+    return true;
+  }
+
+  private async resolveAuthFnSessionUserInfo(): Promise<{
+    userInfo: UserInformation;
+  } | null> {
+    const { authClient } = await import("@21n/components/account/auth");
+    const response = await (await authClient()).getSession();
+    if (!response.ok || !response.data.session) {
+      return null;
+    }
+    const session = response.data.session;
+    return { userInfo: this.resolveUserInfoFromAuthFnSession(session) };
+  }
+
+  private resolveUserInfoFromAuthFnSession(session: any): UserInformation {
+    const metadata = (session.metadata ?? {}) as {
+      nucleus?: {
+        isBootstrapped?: boolean;
+        nickName?: string;
+        profilePictureUrl?: string;
+      };
+    };
+    const email = session.primaryEmail ?? session.subject.email ?? "";
+    const id = session.actorId.startsWith("user:")
+      ? session.actorId
+      : `user:${session.actorId}`;
+    return {
+      id,
+      email,
+      nickName: metadata.nucleus?.nickName ?? email.split("@")[0] ?? "",
+      joinDate: new Date(),
+      lastLogin: new Date(),
+      profilePictureUrl: metadata.nucleus?.profilePictureUrl,
+      isBootstrapped: metadata.nucleus?.isBootstrapped ?? true,
+      region: session.regionId ?? session.subject.regionId
+    };
   }
 
   async delete() {
@@ -181,6 +319,18 @@ class AccountStore extends ObservableStore<UserAccount> {
       dispatchCustomEvent(GlobalEvent.APP_LOADING_STATUS, {
         message: `Deleting account...`
       });
+      const authFnDeleteStatus = await this.tryConfirmAuthFnDelete();
+      if (authFnDeleteStatus === "failed") {
+        return false;
+      }
+      if (authFnDeleteStatus === "deleted") {
+        await this.signOut({ isPreventRedirect: true });
+        await flux.clear();
+        appStore.gotoPath("/signup?msg=deleted");
+        isDeleted = true;
+        return true;
+      }
+
       const result = await performApiCall(
         "v2/account/deleteAccount",
         "POST",
@@ -213,13 +363,54 @@ class AccountStore extends ObservableStore<UserAccount> {
     }
   }
 
+  private async tryConfirmAuthFnDelete(): Promise<
+    "deleted" | "not-authfn" | "failed"
+  > {
+    try {
+      const { authClient } = await import("@21n/components/account/auth");
+      const response = await (await authClient({
+        isPreventCachedInstance: true
+      })).deleteAccount();
+      if (response.ok) {
+        return "deleted";
+      }
+      if (
+        response.error.code === "AUTHFN_UNAUTHENTICATED" &&
+        (await hasLegacyCloudSession())
+      ) {
+        return "not-authfn";
+      }
+      toasts.error(
+        response.error.message ??
+          "Failed to delete account. Please try again later."
+      );
+      return "failed";
+    } catch (error) {
+      logger.error({ at: "tryConfirmAuthFnDelete", error });
+      if (await hasLegacyCloudSession()) {
+        return "not-authfn";
+      }
+      toasts.error("Failed to delete account. Please try again later.");
+      return "failed";
+    }
+  }
+
   async ping(params?: { isLightMode?: boolean }) {
     this.postToEmbed();
     const isOffline = await determineIfOffline();
     if (isOffline) return;
+    const authFnToken = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
     let response = await this.persistence.ping();
     let user = Array.isArray(response) ? response?.[0]?.result?.[0] : undefined;
     if (!response) {
+      if (authFnToken) {
+        logger.log({
+          at: "account.ping",
+          message:
+            "Legacy account ping failed; keeping AuthFn session active."
+        });
+        return;
+      }
       const reTryResponse = await this.persistence.ping();
       if (!reTryResponse) {
         appStore.gotoErrorPage("Something went wrong.");
@@ -228,6 +419,14 @@ class AccountStore extends ObservableStore<UserAccount> {
       user = Array.isArray(response) ? response?.[0]?.result?.[0] : undefined;
     }
     if (response && !user) {
+      if (authFnToken) {
+        logger.log({
+          at: "account.ping",
+          message:
+            "Legacy account ping did not return a user; keeping AuthFn session active."
+        });
+        return response;
+      }
       await this.signOut({ isPreventRedirect: true });
       await flux.clear();
       appStore.gotoPath("/signup?msg=notfound");
@@ -356,10 +555,17 @@ class AccountStore extends ObservableStore<UserAccount> {
       n.dataMode = UserDataMode.LOCAL;
       return n;
     });
-    clientStorage.set(
-      ClientStorageKey.OFFLINE_SESSION_ID,
-      generateSimpleRandomId()
+    await this.ensureOfflineSession();
+  }
+
+  async ensureOfflineSession() {
+    const existingSessionId = await clientStorage.get(
+      ClientStorageKey.OFFLINE_SESSION_ID
     );
+    if (existingSessionId) return existingSessionId;
+    const sessionId = generateSimpleRandomId();
+    await clientStorage.set(ClientStorageKey.OFFLINE_SESSION_ID, sessionId);
+    return sessionId;
   }
 
   async bootstrap(region: string) {
@@ -580,48 +786,24 @@ class AccountStore extends ObservableStore<UserAccount> {
   }
 
   async checkIfSessionExpired() {
-    const token = await clientStorage.get(ClientStorageKey.STOKEN);
+    const authFnToken = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
     const offlineSessionId = await clientStorage.get(
       ClientStorageKey.OFFLINE_SESSION_ID
     );
-    if (!token && !offlineSessionId) {
-      return true;
-    }
-    if (offlineSessionId) {
+    if (offlineSessionId && !authFnToken) {
       return false;
     }
-    if (!token) return true;
-    let decodedToken: any = jwt_decode(token);
-    let exp = decodedToken?.exp ?? 0;
-    const currentTime = new Date().getTime() / 1000;
-    //console.log({ currentTime, exp });
-    if (currentTime < exp) {
-      return false;
-    }
-    clientStorage.remove(ClientStorageKey.STOKEN);
-    const refreshToken = localStorage.getItem("refresh-token");
-    if (!refreshToken) {
-      return true;
-    }
-    let decodedRefreshToken: any = jwt_decode(refreshToken);
-    let refreshExp = decodedRefreshToken?.exp ?? 0;
-    if (currentTime > refreshExp) {
-      return true;
-    }
-    if (!get(isRefreshingToken)) {
-      return true;
-      //TODO - not refreshing token as refresh token logic is not robust on the backend and also refreshToken - CORS config is not added on backend which is causing issues
-      console.log("refreshing token");
-      isRefreshingToken.set(true);
-      const response = await this.persistence.refreshToken();
-      if (response) {
-        isRefreshingToken.set(false);
+
+    try {
+      const { authClient } = await import("@21n/components/account/auth");
+      const session = await (await authClient()).getSession();
+      if (session.ok && session.data.session) {
+        await clientStorage.set(ClientStorageKey.USER, session.data.session);
         return false;
-      } else {
-        isRefreshingToken.set(false);
-        return true;
       }
-    } else {
+      return true;
+    } catch (error) {
+      logger.error({ at: "checkIfSessionExpired.authfn", error });
       return true;
     }
   }

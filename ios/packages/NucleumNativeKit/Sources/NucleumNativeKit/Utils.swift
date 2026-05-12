@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Security
 
 struct Utils {
   func hasKey(object: Any, key: String) -> Bool {
@@ -104,14 +105,12 @@ struct Utils {
       let context = LogContext(file: #file, function: #function, line: #line, isSaveToServer: false)
       Log.error(message: "userId not found.", context: context)
     }
-    var surrealToken: String? = nil
-    if let token = sharedDefaults.string(forKey: "surrealToken") {
-      surrealToken = token
-    } else {
+    let authFnToken = AuthFnCredentialStore.readSessionToken()
+    if authFnToken == nil {
       let context = LogContext(file: #file, function: #function, line: #line, isSaveToServer: false)
-      Log.error(message: "surrealToken not found.", context: context)
+      Log.error(message: "authfnToken not found.", context: context)
     }
-    if surrealToken == nil || userId == nil {
+    if authFnToken == nil || userId == nil {
       completion(
         nil,
         NSError(
@@ -119,9 +118,9 @@ struct Utils {
           userInfo: [NSLocalizedDescriptionKey: "User not logged in"]))
       return
     }
-    var request = URLRequest(url: URL(string: "\(LocalConfig.apiUrl)/account/n/run")!)
+    var request = URLRequest(url: URL(string: "\(LocalConfig.widgetApiUrl)/account/n/run")!)
     request.httpMethod = "POST"
-    request.addValue("Bearer \(surrealToken!)", forHTTPHeaderField: "Authorization")
+    request.addValue("Bearer \(authFnToken!)", forHTTPHeaderField: "Authorization")
     // request.httpBody =
     //   "USE database \(userId!);  \(query);".data(
     //     using: .utf8)
@@ -152,11 +151,10 @@ struct Utils {
             file: #file, function: #function, line: #line, isSaveToServer: false)
           Log.info("Status Code: \(httpResponse.statusCode)", context: context)
         }
-        if let data = data {
-          let responseBody = String(data: data, encoding: .utf8) ?? "Couldn't decode data"
+        if data != nil {
           let context = LogContext(
             file: #file, function: #function, line: #line, isSaveToServer: false)
-          Log.info("Response Body: \(responseBody)", context: context)
+          Log.info("Response received", context: context)
         }
         if let unwrappedData = data {
           do {}
@@ -172,22 +170,20 @@ struct Utils {
     method: String = "POST",
     completion: @escaping (Data?, Error?) -> Void
   ) {
-    Log.info("Performing API call to \(endpoint) with request: \(request)")
+    Log.info("Performing API call to \(endpoint)")
     guard let sharedDefaults = UserDefaults(suiteName: LocalConfig.appGroup) else {
       let context = LogContext(file: #file, function: #function, line: #line, isSaveToServer: false)
       Log.error(message: "Unable to get sharedDefaults", context: context)
       return
     }
 
-    var surrealToken: String? = nil
-    if let token = sharedDefaults.string(forKey: "surrealToken") {
-      surrealToken = token
-    } else {
+    let authFnToken = AuthFnCredentialStore.readSessionToken()
+    if authFnToken == nil {
       let context = LogContext(file: #file, function: #function, line: #line, isSaveToServer: false)
-      Log.error(message: "surrealToken not found.", context: context)
+      Log.error(message: "authfnToken not found.", context: context)
     }
 
-    if surrealToken == nil {
+    if authFnToken == nil {
       completion(
         nil,
         NSError(
@@ -196,7 +192,7 @@ struct Utils {
       return
     }
 
-    guard let url = URL(string: "\(LocalConfig.apiUrl)\(endpoint)") else {
+    guard let url = URL(string: "\(LocalConfig.widgetApiUrl)\(endpoint)") else {
       let context = LogContext(file: #file, function: #function, line: #line, isSaveToServer: false)
       Log.error(message: "Invalid URL", context: context)
       return
@@ -204,7 +200,7 @@ struct Utils {
 
     var urlRequest = URLRequest(url: url)
     urlRequest.httpMethod = method
-    urlRequest.addValue("Bearer \(surrealToken!)", forHTTPHeaderField: "Authorization")
+    urlRequest.addValue("Bearer \(authFnToken!)", forHTTPHeaderField: "Authorization")
     urlRequest.addValue("application/json", forHTTPHeaderField: "Content-Type")
     urlRequest.addValue("application/json", forHTTPHeaderField: "Accept")
 
@@ -232,16 +228,74 @@ struct Utils {
         Log.info("Status Code: \(httpResponse.statusCode)", context: context)
       }
 
-      if let data = data {
-        let responseBody = String(data: data, encoding: .utf8) ?? "Couldn't decode data"
+      if data != nil {
         let context = LogContext(
           file: #file, function: #function, line: #line, isSaveToServer: false)
-        Log.info("Response Body: \(responseBody)", context: context)
+        Log.info("Response received", context: context)
       }
 
       completion(data, nil)
     }
     task.resume()
+  }
+}
+
+enum AuthFnCredentialStore {
+  private static let service = "\(LocalConfig.appGroup).authfn"
+  private static let sessionTokenAccount = "session-token"
+
+  static func storeSessionToken(_ token: String) {
+    guard let data = token.data(using: .utf8) else { return }
+    deleteSessionToken()
+
+    var query = baseQuery()
+    query[kSecValueData as String] = data
+
+    let status = SecItemAdd(query as CFDictionary, nil)
+    if status != errSecSuccess {
+      Log.error(message: "Unable to store AuthFn session token in Keychain: \(status)")
+    }
+  }
+
+  static func readSessionToken() -> String? {
+    var query = baseQuery()
+    query[kSecReturnData as String] = true
+    query[kSecMatchLimit as String] = kSecMatchLimitOne
+
+    var result: AnyObject?
+    let status = SecItemCopyMatching(query as CFDictionary, &result)
+    guard status == errSecSuccess, let data = result as? Data else {
+      return migrateLegacySharedDefaultsToken()
+    }
+    return String(data: data, encoding: .utf8)
+  }
+
+  static func deleteSessionToken() {
+    let status = SecItemDelete(baseQuery() as CFDictionary)
+    if status != errSecSuccess && status != errSecItemNotFound {
+      Log.error(message: "Unable to delete AuthFn session token from Keychain: \(status)")
+    }
+  }
+
+  private static func baseQuery() -> [String: Any] {
+    return [
+      kSecClass as String: kSecClassGenericPassword,
+      kSecAttrService as String: service,
+      kSecAttrAccount as String: sessionTokenAccount,
+    ]
+  }
+
+  private static func migrateLegacySharedDefaultsToken() -> String? {
+    guard
+      let sharedDefaults = UserDefaults(suiteName: LocalConfig.appGroup),
+      let token = sharedDefaults.string(forKey: "authfnToken"),
+      !token.isEmpty
+    else {
+      return nil
+    }
+    storeSessionToken(token)
+    sharedDefaults.removeObject(forKey: "authfnToken")
+    return token
   }
 }
 

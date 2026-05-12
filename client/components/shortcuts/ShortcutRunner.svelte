@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { appStore } from "@21n/stores/app.store";
   import { isTextElement } from "@21n/utils/browser.utils";

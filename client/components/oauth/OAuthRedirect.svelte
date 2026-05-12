@@ -45,7 +45,6 @@
 
   async function handleOAuthCompletion(data: {
     token: string;
-    refreshToken?: string;
     userInfo?: any;
   }) {
     const isEmbedRedirection = await clientStorage.getForSession(

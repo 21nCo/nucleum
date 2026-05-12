@@ -4,11 +4,20 @@
   import { Size } from "@21n/types/size.enum";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import { properCase } from "@21n/shared-utils/text.utils";
+  import { authClient } from "@21n/components/account/auth";
+  import type { AuthFnSocialProviderId } from "@authfn/client";
   let {
     currentProgress = $bindable()
   }: {
     currentProgress?: string | undefined;
   } = $props();
+
+  function resolveAuthFnProvider(
+    slug: string
+  ): AuthFnSocialProviderId | undefined {
+    if (slug === "google" || slug === "apple") return slug;
+    return undefined;
+  }
 </script>
 
 <svelte:head>
@@ -37,9 +46,25 @@
         isLoading={currentProgress === provider.oauth_slug}
         label={"Continue with " + properCase(provider.oauth_slug)}
         onclick={async () => {
-          // if (provider.oauth_slug === "apple") return;
           currentProgress = provider.oauth_slug;
-          await appStore.initiateOAuth2Flow(provider.provider);
+          try {
+            const authProvider = resolveAuthFnProvider(provider.oauth_slug);
+            if (!authProvider) return;
+            const response = await (await authClient()).startSocialSignIn({
+              provider: authProvider,
+              returnTo: window.location.origin,
+              callbackMode: "redirect"
+            });
+            if (response.ok) {
+              if (window.self !== window.top) {
+                appStore.openLink(response.data.redirectTo, true);
+              } else {
+                window.location.href = response.data.redirectTo;
+              }
+            }
+          } finally {
+            currentProgress = undefined;
+          }
         }}
       />
     {/each}

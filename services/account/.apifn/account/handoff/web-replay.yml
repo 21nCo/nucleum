@@ -1,0 +1,20 @@
+info:
+  name: Web Handoff Replay
+  type: http
+  seq: 16
+http:
+  method: GET
+  url: "{{webConsumeUrl}}"
+settings:
+  followRedirects: false
+  expectedStatus:
+    - 400
+    - 409
+runtime:
+  scripts:
+    - type: tests
+      code: |
+        test("web handoff code cannot be replayed", function() {
+          expect([400, 409].includes(res.status)).to.equal(true);
+          expect(res.body.ok).to.equal(false);
+        });

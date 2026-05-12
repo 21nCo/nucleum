@@ -1,0 +1,27 @@
+info:
+  name: Region Lookup Miss
+  type: http
+  seq: 3
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/regions/lookup"
+  headers:
+    - name: content-type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        const email = "apifn-" + crypto.randomUUID() + "@example.test";
+        env.set("email", email);
+        env.set("password", "CorrectHorseBatteryStaple1!");
+        req.body = JSON.stringify({ identifier: email });
+    - type: tests
+      code: |
+        test("lookup returns routing guidance", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body.data.continueLocally).to.equal(true);
+        });

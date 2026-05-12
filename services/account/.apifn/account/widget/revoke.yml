@@ -1,0 +1,23 @@
+info:
+  name: Widget Token Revoke
+  type: http
+  seq: 16
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/widget-token/revoke"
+  headers:
+    - name: content-type
+      value: application/json
+    - name: authorization
+      value: "Bearer {{nativeToken}}"
+  body:
+    type: json
+    data: "{}"
+runtime:
+  scripts:
+    - type: tests
+      code: |
+        test("widget tokens can be revoked", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body.data.revoked).to.be.above(0);
+        });

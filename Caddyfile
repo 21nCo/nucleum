@@ -3,12 +3,9 @@
 # Setup Requirements:
 # 1. Install Caddy: https://caddyserver.com/docs/install
 # 2. Add entries to /etc/hosts:
-#    127.0.0.1 local.nucleum.app
-#    127.0.0.1 local.pointron.app
-#    127.0.0.1 local.memotron.app
-#    127.0.0.1 debug-pre.nucleum.app
-#    127.0.0.1 debug-pre.pointron.app
-#    127.0.0.1 debug-pre.memotron.app
+#    127.0.0.1 local.nucleum.app local.pointron.app local.memotron.app
+#    127.0.0.1 debug-pre.nucleum.app debug-pre.pointron.app debug-pre.memotron.app
+#    127.0.0.1 account-insouth-local.nucleum.app account-useast-local.nucleum.app account-euwest-local.nucleum.app
 # 3. Run: caddy run --config Caddyfile
 # 4. Trust the local CA: caddy trust
 #
@@ -42,4 +39,24 @@ debug-pre.pointron.app {
 debug-pre.memotron.app {
 	reverse_proxy localhost:5102
 	tls internal
+}
+
+
+account-insouth-local.nucleum.app {
+  handle_path /debug-sink/* {
+    reverse_proxy localhost:8790
+  }
+
+  reverse_proxy localhost:8787
+  tls internal
+}
+
+account-useast-local.nucleum.app {
+  reverse_proxy localhost:8788
+  tls internal
+}
+
+account-euwest-local.nucleum.app {
+  reverse_proxy localhost:8789
+  tls internal
 }

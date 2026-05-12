@@ -83,6 +83,8 @@ export function extractProduct(host: string) {
       slug === "io"
     ) {
       return "live";
+    } else if (slug === "local" || slug === "localhost") {
+      return "local";
     } else {
       return "landing";
     }

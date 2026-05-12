@@ -1,0 +1,25 @@
+info:
+  name: Native Handoff Start
+  type: http
+  seq: 10
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/handoff/native/start"
+  headers:
+    - name: content-type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        req.headers["x-authfn-csrf"] = cookies.get("nucleus.csrf", req.url);
+    - type: tests
+      code: |
+        test("web cookie session can create native handoff code", function() {
+          expect(res.status).to.equal(200);
+          expect(Boolean(res.body.data.code)).to.equal(true);
+        });
+        env.set("nativeHandoffCode", res.body.data.code);

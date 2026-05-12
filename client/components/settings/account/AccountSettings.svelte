@@ -4,7 +4,8 @@
   import { onMount } from "svelte";
   import {
     frameEmailFromParts,
-    isValidString
+    isValidString,
+    properCase
   } from "@21n/shared-utils/text.utils";
   import {
     PlanStatus,
@@ -43,25 +44,48 @@
   import view from "@21n/stores/view.store";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { Product } from "@21n/products/product.type";
+  import { hasLegacyCloudSession } from "@21n/utils/account.utils";
+  import { authClient } from "@21n/components/account/auth";
   import { clientStorage } from "@21n/persistence/persistence.utils";
   import { ClientStorageKey } from "@21n/persistence/persistence.type";
-  import { parse } from "@21n/shared-utils/json.utils";
-  import NewAccountDebugInfo from "./NewAccountDebugInfo.svelte";
+  import type {
+    AuthFnAccountDetails,
+    AuthFnSocialProviderId
+  } from "@authfn/client";
+
   let name = $state("");
   let emailParts = $state<EmailParts | undefined>(undefined);
   let isEditing = $state(false);
   let isSaveInProgress = $state(false);
+  let isAuthDetailsLoading = $state(false);
+  let isPasswordFormVisible = $state(false);
+  let isSettingPassword = $state(false);
+  let passwordValue = $state("");
+  let confirmPasswordValue = $state("");
+  let passwordError = $state<string | undefined>(undefined);
   let profilePicture = $state<IRecordId | undefined>(
     $userPreferences.profilePicture
   );
-  let user = $state<any>(undefined);
+  let accountDetails = $state<AuthFnAccountDetails | undefined>(undefined);
+  let authDetailsError = $state<string | undefined>(undefined);
+  const accountEmail = $derived(
+    accountDetails?.user.primaryEmail ??
+      $account.userInfo?.email ??
+      (emailParts ? frameEmailFromParts(emailParts) : undefined)
+  );
   const isActivePlan = $derived(
     $account.plan ? determineIfPlanIsActive($account.plan) : false
+  );
+  const isSignedIn = $derived(
+    $account.dataMode === UserDataMode.CLOUD ||
+      Boolean($account.token) ||
+      Boolean($account.userInfo?.id) ||
+      Boolean(accountDetails?.user.id)
   );
 
   onMount(() => {
     const unsubscribeAccount = account.subscribe((value) => {
-      if (value.dataMode === UserDataMode.CLOUD) {
+      if (value.dataMode === UserDataMode.CLOUD || value.token) {
         name = $userPreferences.name || value.userInfo?.nickName || "";
         emailParts = value.userInfo?.emailParts || undefined;
       }
@@ -69,17 +93,144 @@
     const unsubscribeUserPreferences = userPreferences.subscribe((value) => {
       name = value.name || $account.userInfo?.nickName || "";
     });
-    refreshUser();
-    account.refreshPlanData();
+    refreshAuthDetails();
+    refreshPlanDataIfLegacySessionExists();
     return () => {
       unsubscribeAccount();
       unsubscribeUserPreferences();
     };
   });
 
-  async function refreshUser() {
-    user = parse((await clientStorage.get(ClientStorageKey.USER)) ?? "{}");
+  async function refreshAuthDetails() {
+    isAuthDetailsLoading = true;
+    authDetailsError = undefined;
+    try {
+      const response = await (await authClient()).getAccountDetails();
+      if (response.ok) {
+        accountDetails = response.data;
+        return;
+      }
+      if (response.error.code !== "AUTHFN_UNAUTHENTICATED") {
+        authDetailsError = response.error.message;
+      }
+      accountDetails = undefined;
+    } catch (error) {
+      console.error("Failed to fetch AuthFn account details", error);
+      authDetailsError = "Unable to load account sign-in details.";
+      accountDetails = undefined;
+    } finally {
+      isAuthDetailsLoading = false;
+    }
   }
+
+  async function refreshPlanDataIfLegacySessionExists() {
+    if (await hasLegacyCloudSession()) {
+      account.refreshPlanData();
+    }
+  }
+
+  function gotoPasswordFlow() {
+    if (!accountDetails?.hasPassword) {
+      isPasswordFormVisible = true;
+      passwordError = undefined;
+      return;
+    }
+    appStore.gotoPath("/account/forgot-password", {
+      queryParams: {
+        ...(accountEmail ? { email: accountEmail } : {}),
+        mode: accountDetails?.hasPassword ? "reset" : "set"
+      }
+    });
+  }
+
+  function providerIcon(provider: AuthFnSocialProviderId) {
+    return provider === "github" ? "github-logo" : provider;
+  }
+
+  function providerLabel(provider: AuthFnSocialProviderId) {
+    return provider === "github" ? "GitHub" : properCase(provider);
+  }
+
+  function resetPasswordForm() {
+    passwordValue = "";
+    confirmPasswordValue = "";
+    passwordError = undefined;
+    isPasswordFormVisible = false;
+  }
+
+  function validatePassword() {
+    if (!passwordValue || !confirmPasswordValue) {
+      passwordError = "Please fill both password fields.";
+      return false;
+    }
+    if (passwordValue !== confirmPasswordValue) {
+      passwordError = "Passwords do not match.";
+      return false;
+    }
+    if (passwordValue.length < 12) {
+      passwordError = "Password must be at least 12 characters long.";
+      return false;
+    }
+    if (!passwordValue.match(/[a-z]/)) {
+      passwordError = "Password must contain at least one lowercase letter.";
+      return false;
+    }
+    if (!passwordValue.match(/[A-Z]/)) {
+      passwordError = "Password must contain at least one uppercase letter.";
+      return false;
+    }
+    if (!passwordValue.match(/[0-9]/)) {
+      passwordError = "Password must contain at least one number.";
+      return false;
+    }
+    if (!passwordValue.match(/[^a-zA-Z0-9]/)) {
+      passwordError = "Password must contain at least one special character.";
+      return false;
+    }
+    passwordError = undefined;
+    return true;
+  }
+
+  async function handleSetPassword() {
+    if (isSettingPassword) return;
+    if (!accountEmail) {
+      passwordError = "Account email is missing.";
+      return;
+    }
+    if (!validatePassword()) return;
+
+    isSettingPassword = true;
+    try {
+      const response = await (
+        await authClient()
+      ).signUpWithPassword({
+        email: accountEmail,
+        password: passwordValue,
+        sessionMode: "hybrid"
+      });
+
+      if (!response.ok) {
+        passwordError = response.error.message ?? "Failed to set password.";
+        return;
+      }
+
+      if (response.data.token) {
+        await clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, response.data.token);
+      }
+      if (response.data.session) {
+        await clientStorage.set(ClientStorageKey.USER, response.data.session);
+      }
+      resetPasswordForm();
+      await refreshAuthDetails();
+      toasts.success("Password sign-in is now enabled.");
+    } catch (error) {
+      console.error("Failed to set AuthFn password", error);
+      passwordError = "Failed to set password. Please try again.";
+    } finally {
+      isSettingPassword = false;
+    }
+  }
+
   function onSave() {
     userPreferences.updateUserProfile({ name, profilePicture });
     isEditing = false;
@@ -229,7 +380,14 @@
         <div class="flex flex-col gap-1 w-full items-start">
           <div class="text-b2 text-fgs3">Sign in method</div>
           <div class="flex items-center gap-2">
-            {#if emailParts && emailParts.emailDomain.includes("gmail.com")}
+            {#if accountDetails?.hasPassword}
+              Password
+            {:else if accountDetails?.oauthAccounts?.length}
+              <Icon icon={providerIcon(accountDetails.oauthAccounts[0].provider)} />
+              {providerLabel(accountDetails.oauthAccounts[0].provider)}
+            {:else if accountDetails?.methods.emailOtp || $account.token}
+              Email OTP
+            {:else if emailParts && emailParts.emailDomain.includes("gmail.com")}
               <Icon icon="google" />
               Google
             {:else if emailParts && emailParts.emailDomain.includes("apple.com")}
@@ -238,11 +396,115 @@
             {:else}
               Unknown
             {/if}
-            {#if emailParts}
-              - {frameEmailFromParts(emailParts)}
+            {#if accountEmail}
+              - {accountEmail}
             {/if}
           </div>
         </div>
+        {#if accountDetails}
+          <div class="flex flex-col gap-1 w-full items-start">
+            <div class="text-b2 text-fgs3">User</div>
+            <div class="flex flex-col gap-1">
+              <span>{accountDetails.user.primaryEmail ?? "No email"}</span>
+              <span class="text-fgs3 text-b3">User ID: {accountDetails.user.id}</span>
+              {#if accountDetails.regionId}
+                <span class="text-fgs3 text-b3">Region: {accountDetails.regionId}</span>
+              {/if}
+              <span class="text-fgs3 text-b3">
+                Email verified:
+                {accountDetails.user.emailVerifiedAt ? "Yes" : "No"}
+              </span>
+              <span class="text-fgs3 text-b3">
+                Two-factor authentication:
+                {accountDetails.twoFactorEnabled ? "Enabled" : "Not enabled"}
+              </span>
+            </div>
+          </div>
+          <div class="flex flex-col gap-2 w-full items-start">
+            <div class="text-b2 text-fgs3">Password</div>
+            <div class="flex items-center justify-between gap-4 w-full">
+              <span>
+                {accountDetails.hasPassword
+                  ? "Password sign-in is enabled."
+                  : "No password is set for this account."}
+              </span>
+              <Button
+                label={accountDetails.hasPassword
+                  ? "Reset password"
+                  : "Set password"}
+                size={Size.sm}
+                style={ButtonStyle.OUTLINED}
+                onclick={gotoPasswordFlow}
+              />
+            </div>
+            {#if !accountDetails.hasPassword && isPasswordFormVisible}
+              <div class="flex flex-col gap-3 w-full max-w-md bg-bgs2 rounded-md p-3">
+                <TextInput
+                  bind:value={passwordValue}
+                  type="password"
+                  label="Password"
+                  placeholder="********"
+                  onInput={() => {
+                    passwordError = undefined;
+                  }}
+                />
+                <TextInput
+                  bind:value={confirmPasswordValue}
+                  type="password"
+                  label="Confirm password"
+                  placeholder="********"
+                  onInput={() => {
+                    passwordError = undefined;
+                  }}
+                  onEnter={handleSetPassword}
+                />
+                {#if passwordError}
+                  <div class="text-ars1 text-b3">{passwordError}</div>
+                {/if}
+                <div class="flex gap-2">
+                  <Button
+                    label={isSettingPassword ? "Setting password..." : "Set password"}
+                    size={Size.sm}
+                    type={ButtonVariant.PRIMARY}
+                    style={ButtonStyle.OUTLINED}
+                    isLoading={isSettingPassword}
+                    isDisabled={isSettingPassword}
+                    onclick={handleSetPassword}
+                  />
+                  <Button
+                    label="Cancel"
+                    size={Size.sm}
+                    style={ButtonStyle.PLAIN}
+                    isDisabled={isSettingPassword}
+                    onclick={resetPasswordForm}
+                  />
+                </div>
+              </div>
+            {/if}
+          </div>
+          <div class="flex flex-col gap-2 w-full items-start">
+            <div class="text-b2 text-fgs3">Associated OAuth methods</div>
+            {#if accountDetails.oauthAccounts.length}
+              <div class="flex flex-col gap-2">
+                {#each accountDetails.oauthAccounts as oauthAccount}
+                  <div class="flex items-center gap-2">
+                    <Icon icon={providerIcon(oauthAccount.provider)} />
+                    <span>{providerLabel(oauthAccount.provider)}</span>
+                    {#if oauthAccount.email}
+                      <span class="text-fgs3">- {oauthAccount.email}</span>
+                    {/if}
+                  </div>
+                {/each}
+              </div>
+            {:else}
+              <div class="text-fgs3">No OAuth sign-in methods are connected.</div>
+            {/if}
+          </div>
+        {:else if isAuthDetailsLoading}
+          <div class="text-fgs3">Loading account sign-in details...</div>
+        {:else if authDetailsError}
+          <div class="text-ars1">{authDetailsError}</div>
+        {/if}
         <div class="flex flex-col gap-1 w-full items-start">
           <div class="text-b2 text-fgs3">Plan</div>
           <div
@@ -263,10 +525,7 @@
             </div>
           {/if}
         </div>
-        {#if user}
-          <NewAccountDebugInfo {user} />
-        {/if}
-        {#if !$view.isConstrainedWidth}
+        {#if !$view.isConstrainedWidth && $account.dataMode === UserDataMode.CLOUD}
           <Button
             label="Go to billing"
             icon="wallet"
@@ -282,21 +541,26 @@
   </div>
 
   <div class="flex justify-center w-full gap-4">
-    <Button
-      icon="log-out"
-      label="Sign out"
-      onclick={async () => {
-        await account.signOut();
-      }}
-    />
-    <Button
-      icon="trash"
-      label="Delete account"
-      type={ButtonVariant.DANGER}
-      onclick={async () => {
-        await account.delete();
-      }}
-    />
+    {#if isSignedIn}
+      <Button
+        icon="log-out"
+        label="Sign out"
+        testId="account-settings-sign-out"
+        onclick={async () => {
+          await account.signOut();
+        }}
+      />
+    {/if}
+    {#if isSignedIn}
+      <Button
+        icon="trash"
+        label="Delete account"
+        type={ButtonVariant.DANGER}
+        onclick={async () => {
+          await account.delete();
+        }}
+      />
+    {/if}
   </div>
   <ScrollViewBottomSpacer />
 </div>

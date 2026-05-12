@@ -1,0 +1,22 @@
+info:
+  name: OAuth Apple Callback
+  type: http
+  seq: 18
+http:
+  method: GET
+  url: "{{baseUrl}}/auth/social/callback/apple"
+  params:
+    query:
+      - name: state
+        value: "{{appleOauthState}}"
+      - name: code
+        value: "{{appleOauthCode}}"
+runtime:
+  scripts:
+    - type: tests
+      code: |
+        test("mock Apple OAuth callback signs in", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body.data.provider).to.equal("apple");
+          expect(Boolean(res.body.data.session.id)).to.equal(true);
+        });

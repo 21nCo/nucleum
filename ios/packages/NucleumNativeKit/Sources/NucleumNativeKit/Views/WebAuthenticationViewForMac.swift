@@ -1,4 +1,5 @@
 import AuthenticationServices
+import Foundation
 import SwiftUI
 
 struct WebAuthenticationView: NSViewRepresentable {
@@ -9,60 +10,95 @@ struct WebAuthenticationView: NSViewRepresentable {
   // Store the authentication session to prevent it from being deallocated
   class AuthSessionContainer {
     var session: ASWebAuthenticationSession?
+    var sessionId: UUID?
+    var sessionKey: String?
     var isCompleting = false
+    var cancelledSessionIds = Set<UUID>()
   }
 
   // Use a static variable to maintain the session across view updates
   private static var authSessionContainer = AuthSessionContainer()
 
   func makeNSView(context: Context) -> NSView {
-    Log.info("AuthSessionContainer.makeNSView - \(url)")
+    Log.info("WebAuthenticationViewForMac.makeNSView - \(redactOAuthUrl(url))")
     return NSView()
   }
 
   func updateNSView(_ nsView: NSView, context: Context) {
-    Log.info("AuthSessionContainer.updateNSView - \(url)")
+    let sessionKey = "\(callbackURLScheme)|\(url.absoluteString)"
+    Log.info("WebAuthenticationViewForMac.updateNSView - \(redactOAuthUrl(url))")
 
-    // Skip creating a new session if we're in the completion phase
-    // or if we already have an active session
-    if WebAuthenticationView.authSessionContainer.isCompleting
-      || WebAuthenticationView.authSessionContainer.session != nil
-    {
+    if WebAuthenticationView.authSessionContainer.isCompleting {
       return
     }
 
-    // Create and configure the new auth session
+    if let activeSession = WebAuthenticationView.authSessionContainer.session {
+      if WebAuthenticationView.authSessionContainer.sessionKey == sessionKey {
+        return
+      }
+
+      if let activeSessionId = WebAuthenticationView.authSessionContainer.sessionId {
+        WebAuthenticationView.authSessionContainer.cancelledSessionIds.insert(activeSessionId)
+      }
+      Log.info(
+        "WebAuthenticationViewForMac.cancelStaleSession - old=\(WebAuthenticationView.authSessionContainer.sessionKey ?? "unknown") new=\(sessionKey)"
+      )
+      activeSession.cancel()
+      WebAuthenticationView.authSessionContainer.session = nil
+      WebAuthenticationView.authSessionContainer.sessionId = nil
+      WebAuthenticationView.authSessionContainer.sessionKey = nil
+      WebAuthenticationView.authSessionContainer.isCompleting = false
+    }
+
+    let sessionId = UUID()
     let authSession = ASWebAuthenticationSession(
       url: url,
       callbackURLScheme: callbackURLScheme,
       completionHandler: { url, error in
-        // Mark as completing to prevent new sessions during state updates
-        WebAuthenticationView.authSessionContainer.isCompleting = true
-
-        // Handle the completion
-        self.completionHandler(url, error)
-
-        // Clear the session after completion
-        WebAuthenticationView.authSessionContainer.session = nil
-
-        // Reset the completing flag after a short delay to allow any pending updates to process
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-          WebAuthenticationView.authSessionContainer.isCompleting = false
+        if WebAuthenticationView.authSessionContainer.cancelledSessionIds.remove(sessionId) != nil {
+          Log.info("WebAuthenticationViewForMac.completion.ignoredCancelledSession - id=\(sessionId)")
+          return
         }
 
-        Log.info("AuthSessionContainer.updateNSView - \(url) - completionHandler")
+        WebAuthenticationView.authSessionContainer.isCompleting = true
+        let callbackDescription = url.map { redactOAuthUrl($0) } ?? "nil"
+        Log.info(
+          "WebAuthenticationViewForMac.completion - id=\(sessionId) url=\(callbackDescription) error=\(describeAuthenticationError(error))"
+        )
+
+        self.completionHandler(url, error)
+
+        if WebAuthenticationView.authSessionContainer.sessionId == sessionId {
+          WebAuthenticationView.authSessionContainer.session = nil
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+          if WebAuthenticationView.authSessionContainer.session == nil {
+            WebAuthenticationView.authSessionContainer.sessionId = nil
+            WebAuthenticationView.authSessionContainer.sessionKey = nil
+            WebAuthenticationView.authSessionContainer.isCompleting = false
+          }
+        }
       }
     )
 
-    // Configure the session
     authSession.prefersEphemeralWebBrowserSession = false
     authSession.presentationContextProvider = context.coordinator
 
-    // Store the session
     WebAuthenticationView.authSessionContainer.session = authSession
+    WebAuthenticationView.authSessionContainer.sessionId = sessionId
+    WebAuthenticationView.authSessionContainer.sessionKey = sessionKey
+    WebAuthenticationView.authSessionContainer.isCompleting = false
 
-    // Start the session
-    authSession.start()
+    let didStart = authSession.start()
+    Log.info(
+      "WebAuthenticationViewForMac.start - id=\(sessionId) didStart=\(didStart) callbackURLScheme=\(callbackURLScheme) url=\(redactOAuthUrl(url))"
+    )
+    if !didStart {
+      WebAuthenticationView.authSessionContainer.session = nil
+      WebAuthenticationView.authSessionContainer.sessionId = nil
+      WebAuthenticationView.authSessionContainer.sessionKey = nil
+    }
   }
 
   func makeCoordinator() -> Coordinator {
@@ -85,4 +121,69 @@ struct WebAuthenticationView: NSViewRepresentable {
       return NSApplication.shared.windows.first ?? ASPresentationAnchor()
     }
   }
+}
+
+private func describeAuthenticationError(_ error: Error?) -> String {
+  guard let error = error else { return "nil" }
+  let nsError = error as NSError
+  var parts = [
+    "domain=\(nsError.domain)",
+    "code=\(nsError.code)",
+    "message=\(nsError.localizedDescription)"
+  ]
+  if let failureReason = nsError.localizedFailureReason {
+    parts.append("failureReason=\(failureReason)")
+  }
+  if let recoverySuggestion = nsError.localizedRecoverySuggestion {
+    parts.append("recoverySuggestion=\(recoverySuggestion)")
+  }
+  let filteredUserInfo = nsError.userInfo
+    .filter { key, _ in
+      let normalized = key.lowercased()
+      return !normalized.contains("token")
+        && !normalized.contains("secret")
+        && !normalized.contains("password")
+        && !normalized.contains("code")
+    }
+    .map { "\($0.key)=\($0.value)" }
+    .joined(separator: ",")
+  if !filteredUserInfo.isEmpty {
+    parts.append("userInfo={\(filteredUserInfo)}")
+  }
+  return parts.joined(separator: " ")
+}
+
+private func redactOAuthUrl(_ url: URL) -> String {
+  guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+    return url.absoluteString
+  }
+
+  guard let query = components.percentEncodedQuery else {
+    return url.absoluteString
+  }
+
+  let redactedQuery = query
+    .split(separator: "&", omittingEmptySubsequences: false)
+    .map { pair -> String in
+      let parts = pair.split(separator: "=", maxSplits: 1, omittingEmptySubsequences: false)
+      guard let encodedName = parts.first else {
+        return String(pair)
+      }
+      let name = String(encodedName).removingPercentEncoding ?? String(encodedName)
+      let normalized = name.lowercased()
+
+      if normalized.contains("state")
+        || normalized.contains("nonce")
+        || normalized.contains("token")
+        || normalized.contains("secret")
+        || normalized.contains("code")
+      {
+        return "\(encodedName)=%5BREDACTED%5D"
+      }
+      return String(pair)
+    }
+    .joined(separator: "&")
+
+  components.percentEncodedQuery = redactedQuery
+  return components.string ?? url.absoluteString
 }
