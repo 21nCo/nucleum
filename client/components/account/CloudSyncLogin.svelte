@@ -334,6 +334,12 @@
     } catch (err) {
       logger.warn({ at: "CloudSyncLogin.nativeHandoff.unavailable", err });
     }
+    logger.info({
+      at: "CloudSyncLogin.finishAuthFnLogin.redirect.requested",
+      isSignup,
+      regionId: client.getCurrentRegionId(),
+      currentPath: window.location.pathname
+    });
     account.gotoPostAuthRoute({ isNewUser: isSignup });
     return true;
   }

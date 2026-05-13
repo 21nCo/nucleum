@@ -100,6 +100,13 @@ export async function performSessionCheck(): Promise<boolean | undefined> {
     const client = await authClient({ isPreventCachedInstance: true });
     const session = await client.getSession();
     if (!session.ok) {
+      logger.warn({
+        at: "performSessionCheck.session.failed",
+        hasAuthFnToken: Boolean(authFnToken),
+        hasOfflineSession: Boolean(offlineSessionId),
+        error: session.error,
+        currentPath: window.location.pathname
+      });
       return Boolean(offlineSessionId && !authFnToken);
     }
     if (session.data.session) {
@@ -110,9 +117,17 @@ export async function performSessionCheck(): Promise<boolean | undefined> {
         });
       }
     }
+    logger.info({
+      at: "performSessionCheck.session.result",
+      hasAuthFnToken: Boolean(authFnToken),
+      hasOfflineSession: Boolean(offlineSessionId),
+      hasSession: Boolean(session.data.session),
+      regionId: session.data.session?.regionId,
+      currentPath: window.location.pathname
+    });
     return Boolean(session.data.session) || Boolean(offlineSessionId && !authFnToken);
   } catch (error) {
-    console.error("Error checking AuthFn session:", error);
+    logger.error({ at: "performSessionCheck.exception", error });
     return offlineSessionId && !authFnToken ? true : undefined;
   }
 }

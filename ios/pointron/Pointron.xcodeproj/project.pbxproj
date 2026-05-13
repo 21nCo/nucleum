@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AFA2AF148DF683F34D4961 /* AuthFnClient in Frameworks */ = {isa = PBXBuildFile; productRef = AFA100000000000000000002 /* AuthFnClient */; };
+		AFA2CF977281C7133E7230 /* AuthFnClient in Frameworks */ = {isa = PBXBuildFile; productRef = AFA100000000000000000002 /* AuthFnClient */; };
+		AFA298A683D4D3755BF890 /* AuthFnClient in Frameworks */ = {isa = PBXBuildFile; productRef = AFA100000000000000000002 /* AuthFnClient */; };
 		0A0B54002D9175540062FDE2 /* SimpleWidgetText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0B53FF2D9175540062FDE2 /* SimpleWidgetText.swift */; };
 		0A0B54022D9177F00062FDE2 /* Defaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0B54012D9177F00062FDE2 /* Defaults.swift */; };
 		0A0B54032D9177F00062FDE2 /* Defaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0B54012D9177F00062FDE2 /* Defaults.swift */; };
@@ -203,6 +206,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFA298A683D4D3755BF890 /* AuthFnClient in Frameworks */,
 				22123C7D2ADE742B003C7C65 /* SwiftUI.framework in Frameworks */,
 				22123C7C2ADE742B003C7C65 /* WidgetKit.framework in Frameworks */,
 			);
@@ -212,6 +216,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFA2CF977281C7133E7230 /* AuthFnClient in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -219,6 +224,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFA2AF148DF683F34D4961 /* AuthFnClient in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -440,6 +446,9 @@
 			dependencies = (
 			);
 			name = PointronWidgetExtensionExtension;
+			packageProductDependencies = (
+				AFA100000000000000000002 /* AuthFnClient */,
+			);
 			productName = PointronWidgetExtensionExtension;
 			productReference = 22123C7B2ADE742B003C7C65 /* PointronWidgetExtensionExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
@@ -457,6 +466,9 @@
 			dependencies = (
 			);
 			name = "Pointron for Mac";
+			packageProductDependencies = (
+				AFA100000000000000000002 /* AuthFnClient */,
+			);
 			productName = "Pointron for Mac";
 			productReference = 2235B6B72B98B13300E72E5B /* Pointron.app */;
 			productType = "com.apple.product-type.application";
@@ -476,6 +488,9 @@
 				22123C8B2ADE742D003C7C65 /* PBXTargetDependency */,
 			);
 			name = Pointron;
+			packageProductDependencies = (
+				AFA100000000000000000002 /* AuthFnClient */,
+			);
 			productName = Pointron;
 			productReference = 22FFA8822AD3E45000103446 /* Pointron.app */;
 			productType = "com.apple.product-type.application";
@@ -485,6 +500,9 @@
 /* Begin PBXProject section */
 		22FFA87A2AD3E45000103446 /* Project object */ = {
 			isa = PBXProject;
+			packageReferences = (
+				AFA100000000000000000001 /* XCRemoteSwiftPackageReference \"super-functions\" */,
+			);
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1520;
@@ -672,10 +690,34 @@
 		};
 /* End PBXTargetDependency section */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		AFA100000000000000000001 /* XCRemoteSwiftPackageReference "super-functions" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/21nCo/super-functions.git";
+			requirement = {
+				branch = "SF-33";
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AFA100000000000000000002 /* AuthFnClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AFA100000000000000000001 /* XCRemoteSwiftPackageReference "super-functions" */;
+			productName = AuthFnClient;
+		};
+/* End XCSwiftPackageProductDependency section */
+
 /* Begin XCBuildConfiguration section */
 		22123C8E2ADE742D003C7C65 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = PointronWidgetExtensionExtension.entitlements;
@@ -692,7 +734,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.832;
 				PRODUCT_BUNDLE_IDENTIFIER = io.pointron.PointronWidgetExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -706,6 +748,11 @@
 		22123C8F2ADE742D003C7C65 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = PointronWidgetExtensionExtension.entitlements;
@@ -722,7 +769,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.832;
 				PRODUCT_BUNDLE_IDENTIFIER = io.pointron.PointronWidgetExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
@@ -737,6 +784,11 @@
 		2235B6C32B98B13500E72E5B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Pointron for Mac/Pointron_for_Mac.entitlements";
@@ -769,6 +821,11 @@
 		2235B6C42B98B13500E72E5B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = "Pointron for Mac/Pointron_for_Mac.entitlements";
@@ -801,6 +858,11 @@
 		22FFA88F2AD3E45200103446 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -862,6 +924,11 @@
 		22FFA8902AD3E45200103446 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
@@ -915,6 +982,11 @@
 		22FFA8922AD3E45200103446 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -943,7 +1015,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
@@ -961,6 +1033,11 @@
 		22FFA8932AD3E45200103446 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -989,7 +1066,7 @@
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
@@ -1004,6 +1081,1490 @@
 			};
 			name = Release;
 		};
+		AFC03711CD4A918BF5D85 /* Local Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = local;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = PointronWidgetExtensionExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PointronWidgetExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PointronWidgetExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron.PointronWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Local Debug";
+		};
+		AFCDEC6527B61DE810D5C /* Local Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = local;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = PointronWidgetExtensionExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PointronWidgetExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PointronWidgetExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron.PointronWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = "Local Release";
+		};
+		AFCCB179662C8B77068C8 /* Dev Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = PointronWidgetExtensionExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PointronWidgetExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PointronWidgetExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron.PointronWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Dev Debug";
+		};
+		AFC7D337773195C84BDE0 /* Dev Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = PointronWidgetExtensionExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PointronWidgetExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PointronWidgetExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron.PointronWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = "Dev Release";
+		};
+		AFC3A37AD04A646EA6FF9 /* Pre Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = pre;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = PointronWidgetExtensionExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PointronWidgetExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PointronWidgetExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron.PointronWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Pre Debug";
+		};
+		AFC450E55DE2C82A4FE7A /* Pre Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = pre;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = PointronWidgetExtensionExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PointronWidgetExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PointronWidgetExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron.PointronWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = "Pre Release";
+		};
+		AFC10856ABDE69F043867 /* Live Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = live;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = PointronWidgetExtensionExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PointronWidgetExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PointronWidgetExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron.PointronWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Live Debug";
+		};
+		AFCE7F1C0E07F816A7C5C /* Live Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = live;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = PointronWidgetExtensionExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = PointronWidgetExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PointronWidgetExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron.PointronWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = "Live Release";
+		};
+		AFC5C7B11A84159216720 /* Local Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = local;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Pointron for Mac/Pointron_for_Mac.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 35;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Pointron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.83.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = Pointron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = "Local Debug";
+		};
+		AFCA973BCBF2714854C96 /* Local Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = local;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Pointron for Mac/Pointron_for_Mac.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 35;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Pointron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.83.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = Pointron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = "Local Release";
+		};
+		AFC0E1F1269C4D1E211E8 /* Dev Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Pointron for Mac/Pointron_for_Mac.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 35;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Pointron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.83.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = Pointron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = "Dev Debug";
+		};
+		AFCFF0D29D8125AE631F2 /* Dev Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Pointron for Mac/Pointron_for_Mac.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 35;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Pointron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.83.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = Pointron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = "Dev Release";
+		};
+		AFC7DA22DC5B508C789B4 /* Pre Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = pre;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Pointron for Mac/Pointron_for_Mac.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 35;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Pointron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.83.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = Pointron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = "Pre Debug";
+		};
+		AFCAE6D65F55E56764B56 /* Pre Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = pre;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Pointron for Mac/Pointron_for_Mac.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 35;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Pointron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.83.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = Pointron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = "Pre Release";
+		};
+		AFC12F4C1E460EC11BFD3 /* Live Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = live;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Pointron for Mac/Pointron_for_Mac.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 35;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Pointron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.83.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = Pointron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = "Live Debug";
+		};
+		AFC7D354E1BC305EE475B /* Live Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = live;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Pointron for Mac/Pointron_for_Mac.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 35;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Pointron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.83.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = Pointron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = "Live Release";
+		};
+		AFC721FABB28979D7E5E0 /* Local Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = local;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = "Local Debug";
+		};
+		AFCDA0E1C8AB19A921895 /* Local Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = local;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = "Local Release";
+		};
+		AFCC483D6EEEA267D0300 /* Dev Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = "Dev Debug";
+		};
+		AFC1FD2AA33D8D74CB7B0 /* Dev Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = "Dev Release";
+		};
+		AFC60EFA7A2E87A6FE70E /* Pre Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = pre;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = "Pre Debug";
+		};
+		AFC84E43D9F371DC5FCE8 /* Pre Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = pre;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = "Pre Release";
+		};
+		AFC151778FA4AB6235561 /* Live Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = live;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = "Live Debug";
+		};
+		AFC20CF1F4E3C51D9E343 /* Live Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = live;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = "Live Release";
+		};
+		AFCC612C7B9677F69C74A /* Local Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = local;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Pointron/Pointron.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Pointron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to your camera for capturing photos.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Local Debug";
+		};
+		AFC0D20C021CF4E0BE3F1 /* Local Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = local;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Pointron/Pointron.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Pointron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to your camera for capturing photos.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Local Release";
+		};
+		AFC3F7E863468AE74C0AC /* Dev Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Pointron/Pointron.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Pointron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to your camera for capturing photos.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Dev Debug";
+		};
+		AFC7216C4F6A9D009A1EE /* Dev Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Pointron/Pointron.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Pointron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to your camera for capturing photos.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Dev Release";
+		};
+		AFC0FAB268137D24DD274 /* Pre Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = pre;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Pointron/Pointron.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Pointron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to your camera for capturing photos.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Pre Debug";
+		};
+		AFC6868BE858EF72F12E5 /* Pre Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = pre;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Pointron/Pointron.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Pointron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to your camera for capturing photos.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Pre Release";
+		};
+		AFC9A447FA19BC3FF3AD1 /* Live Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = live;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Pointron/Pointron.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Pointron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to your camera for capturing photos.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Live Debug";
+		};
+		AFC4281D8252DF045C35E /* Live Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = live;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = pointron.app;
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Pointron/Pointron.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Pointron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Pointron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Pointron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "We need access to your camera for capturing photos.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UIStatusBarStyle = "";
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.832;
+				PRODUCT_BUNDLE_IDENTIFIER = io.pointron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Live Release";
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1012,6 +2573,14 @@
 			buildConfigurations = (
 				22123C8E2ADE742D003C7C65 /* Debug */,
 				22123C8F2ADE742D003C7C65 /* Release */,
+				AFC03711CD4A918BF5D85 /* Local Debug */,
+				AFCDEC6527B61DE810D5C /* Local Release */,
+				AFCCB179662C8B77068C8 /* Dev Debug */,
+				AFC7D337773195C84BDE0 /* Dev Release */,
+				AFC3A37AD04A646EA6FF9 /* Pre Debug */,
+				AFC450E55DE2C82A4FE7A /* Pre Release */,
+				AFC10856ABDE69F043867 /* Live Debug */,
+				AFCE7F1C0E07F816A7C5C /* Live Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -1021,6 +2590,14 @@
 			buildConfigurations = (
 				2235B6C32B98B13500E72E5B /* Debug */,
 				2235B6C42B98B13500E72E5B /* Release */,
+				AFC5C7B11A84159216720 /* Local Debug */,
+				AFCA973BCBF2714854C96 /* Local Release */,
+				AFC0E1F1269C4D1E211E8 /* Dev Debug */,
+				AFCFF0D29D8125AE631F2 /* Dev Release */,
+				AFC7DA22DC5B508C789B4 /* Pre Debug */,
+				AFCAE6D65F55E56764B56 /* Pre Release */,
+				AFC12F4C1E460EC11BFD3 /* Live Debug */,
+				AFC7D354E1BC305EE475B /* Live Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -1030,6 +2607,14 @@
 			buildConfigurations = (
 				22FFA88F2AD3E45200103446 /* Debug */,
 				22FFA8902AD3E45200103446 /* Release */,
+				AFC721FABB28979D7E5E0 /* Local Debug */,
+				AFCDA0E1C8AB19A921895 /* Local Release */,
+				AFCC483D6EEEA267D0300 /* Dev Debug */,
+				AFC1FD2AA33D8D74CB7B0 /* Dev Release */,
+				AFC60EFA7A2E87A6FE70E /* Pre Debug */,
+				AFC84E43D9F371DC5FCE8 /* Pre Release */,
+				AFC151778FA4AB6235561 /* Live Debug */,
+				AFC20CF1F4E3C51D9E343 /* Live Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -1039,6 +2624,14 @@
 			buildConfigurations = (
 				22FFA8922AD3E45200103446 /* Debug */,
 				22FFA8932AD3E45200103446 /* Release */,
+				AFCC612C7B9677F69C74A /* Local Debug */,
+				AFC0D20C021CF4E0BE3F1 /* Local Release */,
+				AFC3F7E863468AE74C0AC /* Dev Debug */,
+				AFC7216C4F6A9D009A1EE /* Dev Release */,
+				AFC0FAB268137D24DD274 /* Pre Debug */,
+				AFC6868BE858EF72F12E5 /* Pre Release */,
+				AFC9A447FA19BC3FF3AD1 /* Live Debug */,
+				AFC4281D8252DF045C35E /* Live Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

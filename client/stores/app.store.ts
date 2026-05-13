@@ -230,6 +230,13 @@ export const appStore = {
     }
   ) => {
     logger.log({ method: "gotoPath", path });
+    logger.info({
+      at: "appStore.gotoPath",
+      path,
+      replaceState: props?.replaceState,
+      currentPath:
+        typeof window !== "undefined" ? window.location.pathname : undefined
+    });
     //TODO
     // appStore.hideFullScreenPlayer();
     if (props?.queryParams) {

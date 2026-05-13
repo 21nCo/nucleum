@@ -7,6 +7,7 @@
 
 import AVFoundation
 import AuthenticationServices
+import AuthFnClient
 import Network
 import SwiftUI
 import WidgetKit
@@ -208,24 +209,11 @@ struct BaseViewForMac: View {
   }
 
   func oauthCallbackValue(_ url: URL, name: String) -> String? {
-    let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-    if let value = components?.queryItems?.first(where: { $0.name == name })?.value {
-      return value
-    }
-    guard let fragment = components?.fragment, !fragment.isEmpty else {
-      return nil
-    }
-    let fragmentComponents = URLComponents(string: "authfn://callback?\(fragment)")
-    return fragmentComponents?.queryItems?.first(where: { $0.name == name })?.value
+    AuthFnOAuthCoordinator().callbackValue(url, name: name)
   }
 
   func oauthErrorPayload(_ url: URL) -> [String: String] {
-    return [
-      "error": oauthCallbackValue(url, name: "auth_error") ?? "oauth_callback_failed",
-      "errorCode": oauthCallbackValue(url, name: "auth_error_code") ?? "",
-      "provider": oauthCallbackValue(url, name: "auth_provider") ?? "",
-      "requestId": oauthCallbackValue(url, name: "auth_request_id") ?? ""
-    ]
+    AuthFnOAuthCoordinator().callbackErrorPayload(url)
   }
 
   func onActive() {

@@ -18,6 +18,7 @@
   import { onMount } from "svelte";
   import { authClient } from "@21n/components/account/auth";
   import { hasLegacyCloudSession } from "@21n/utils/account.utils";
+  import { logger } from "@21n/components/debug/logger.client";
 
   let { children }: { children?: Snippet<[boolean]> } = $props();
   let isLoggedIn = $state(false);
@@ -86,12 +87,18 @@
     try {
       session = await (await authClient()).getSession();
     } catch (error) {
-      console.error({ at: "AuthGuard.performLoginStatusCheck.getSession", error });
+      logger.error({ at: "AuthGuard.performLoginStatusCheck.getSession", error });
       return Boolean(offlineSessionId && !authFnToken);
     }
     if (!session.ok || !session.data.session) {
       if (offlineSessionId && !authFnToken) return true;
-      console.log("AuthFn session not found. Redirecting to signup");
+      logger.warn({
+        at: "AuthGuard.performLoginStatusCheck.session.missing",
+        hasAuthFnToken: Boolean(authFnToken),
+        hasOfflineSession: Boolean(offlineSessionId),
+        error: session.ok ? undefined : session.error,
+        currentPath: window.location.pathname
+      });
       appStore.gotoPath("/signup");
       return false;
     }
@@ -106,6 +113,14 @@
       await account.ensureOfflineSession();
     }
     await clientStorage.set(ClientStorageKey.USER, authSession);
+    logger.info({
+      at: "AuthGuard.performLoginStatusCheck.session.ok",
+      hasAuthFnToken: Boolean(authFnToken),
+      hasOfflineSession: Boolean(offlineSessionId),
+      sessionId: authSession.id,
+      regionId: authSession.regionId ?? subject.regionId,
+      currentPath: window.location.pathname
+    });
     account.update((current) => ({
       ...current,
       token: authFnToken,

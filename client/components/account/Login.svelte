@@ -137,6 +137,13 @@
         if (!event.data.payload.trim().startsWith("{")) return;
         const parsed = parse(event.data.payload);
         if (parsed.oauth) {
+          logger.info({
+            at: "Login.handleMessageFromParent.oauth.received",
+            hasToken: Boolean(parsed.oauth.token),
+            hasError: Boolean(parsed.oauth.error || parsed.oauth.errorCode),
+            isSignup: parsed.oauth.signup === "true",
+            regionId: parsed.oauth.regionId
+          });
           currentProgress = undefined;
           let { token } = parsed.oauth;
           if (token) {
@@ -179,10 +186,15 @@
             return;
           }
           account.gotoPostAuthRoute({ isNewUser: parsed.oauth.signup === "true" });
+          logger.info({
+            at: "Login.handleMessageFromParent.oauth.redirect.requested",
+            isSignup: parsed.oauth.signup === "true",
+            currentPath: window.location.pathname
+          });
         }
       }
     } catch (e) {
-      console.error({ at: "Signup - handleMessageFromParent", error: e });
+      logger.error({ at: "Login.handleMessageFromParent", error: e });
     }
   }
 

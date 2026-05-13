@@ -156,11 +156,12 @@ class Logger {
   private sendToDebugSink(message: unknown, type: LogType) {
     const sinkUrl = resolveDebugSinkUrl();
     if (!sinkUrl || typeof fetch === "undefined") return;
+    const nativeConfig = resolveNativeConfig();
     const payload = redact({
       level: LOG_METHODS[type],
       source: "web",
-      product: import.meta.env?.VITE_PRODUCT,
-      environment: import.meta.env?.VITE_ENV,
+      product: import.meta.env?.VITE_PRODUCT ?? nativeConfig?.product,
+      environment: import.meta.env?.VITE_ENV ?? nativeConfig?.environment,
       route:
         typeof window !== "undefined"
           ? `${window.location.pathname}${window.location.search}`
@@ -193,7 +194,8 @@ function resolveDebugSinkUrl() {
   const value =
     DEBUG_SINK_URL ??
     (typeof window !== "undefined"
-      ? window.localStorage?.getItem("debugSinkUrl")
+      ? window.localStorage?.getItem("debugSinkUrl") ??
+        window.__NUCLEUM_NATIVE_CONFIG__?.debugSinkUrl
       : undefined);
   return value?.trim().replace(/\/$/, "");
 }
@@ -205,6 +207,12 @@ function resolveDebugSinkToken() {
       ? window.localStorage?.getItem("debugSinkToken")
       : undefined)
   )?.trim();
+}
+
+function resolveNativeConfig() {
+  return typeof window !== "undefined"
+    ? window.__NUCLEUM_NATIVE_CONFIG__
+    : undefined;
 }
 
 function redact(value: unknown, depth = 0): unknown {

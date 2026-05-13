@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import Security
+import AuthFnClient
 
 struct Utils {
   func hasKey(object: Any, key: String) -> Bool {
@@ -112,7 +112,7 @@ struct Utils {
       let context = LogContext(file: #file, function: #function, line: #line, isSaveToServer: false)
       Log.error(message: "userId not found.", context: context)
     }
-    let authFnToken = AuthFnCredentialStore.readSessionToken()
+    let authFnToken = NucleumAuthFnCredentialStore.readSessionToken()
     if authFnToken == nil {
       let context = LogContext(file: #file, function: #function, line: #line, isSaveToServer: false)
       Log.error(message: "authfnToken not found.", context: context)
@@ -196,13 +196,13 @@ struct Utils {
     completion: @escaping (Data?, Error?) -> Void
   ) {
     Log.info("Performing API call to \(endpoint)")
-    guard let sharedDefaults = UserDefaults(suiteName: LocalConfig.appGroup) else {
+    guard UserDefaults(suiteName: LocalConfig.appGroup) != nil else {
       let context = LogContext(file: #file, function: #function, line: #line, isSaveToServer: false)
       Log.error(message: "Unable to get sharedDefaults", context: context)
       return
     }
 
-    let authFnToken = AuthFnCredentialStore.readSessionToken()
+    let authFnToken = NucleumAuthFnCredentialStore.readSessionToken()
     if authFnToken == nil {
       let context = LogContext(file: #file, function: #function, line: #line, isSaveToServer: false)
       Log.error(message: "authfnToken not found.", context: context)
@@ -265,49 +265,38 @@ struct Utils {
   }
 }
 
-enum AuthFnCredentialStore {
-  private static let service = "\(LocalConfig.appGroup).authfn"
-  private static let sessionTokenAccount = "session-token"
+enum NucleumAuthFnCredentialStore {
+  private static let tokenStore = AuthFnKeychainBearerTokenStore(
+    service: "\(LocalConfig.appGroup).authfn",
+    account: "session-token"
+  )
 
   static func storeSessionToken(_ token: String) {
-    guard let data = token.data(using: .utf8) else { return }
-    deleteSessionToken()
-
-    var query = baseQuery()
-    query[kSecValueData as String] = data
-
-    let status = SecItemAdd(query as CFDictionary, nil)
-    if status != errSecSuccess {
-      Log.error(message: "Unable to store AuthFn session token in Keychain: \(status)")
+    do {
+      try tokenStore.saveToken(token)
+    } catch {
+      Log.error(message: "Unable to store AuthFn session token in Keychain: \(error.localizedDescription)")
     }
   }
 
   static func readSessionToken() -> String? {
-    var query = baseQuery()
-    query[kSecReturnData as String] = true
-    query[kSecMatchLimit as String] = kSecMatchLimitOne
-
-    var result: AnyObject?
-    let status = SecItemCopyMatching(query as CFDictionary, &result)
-    guard status == errSecSuccess, let data = result as? Data else {
+    do {
+      if let token = try tokenStore.readToken() {
+        return token
+      }
+      return migrateLegacySharedDefaultsToken()
+    } catch {
+      Log.error(message: "Unable to read AuthFn session token from Keychain: \(error.localizedDescription)")
       return migrateLegacySharedDefaultsToken()
     }
-    return String(data: data, encoding: .utf8)
   }
 
   static func deleteSessionToken() {
-    let status = SecItemDelete(baseQuery() as CFDictionary)
-    if status != errSecSuccess && status != errSecItemNotFound {
-      Log.error(message: "Unable to delete AuthFn session token from Keychain: \(status)")
+    do {
+      try tokenStore.deleteToken()
+    } catch {
+      Log.error(message: "Unable to delete AuthFn session token from Keychain: \(error.localizedDescription)")
     }
-  }
-
-  private static func baseQuery() -> [String: Any] {
-    return [
-      kSecClass as String: kSecClassGenericPassword,
-      kSecAttrService as String: service,
-      kSecAttrAccount as String: sessionTokenAccount,
-    ]
   }
 
   private static func migrateLegacySharedDefaultsToken() -> String? {

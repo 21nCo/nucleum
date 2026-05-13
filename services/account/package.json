@@ -36,9 +36,9 @@
     "test:e2e:apifn:dynamodb": "test -n \"$ACCOUNT_E2E_BASE_URL\" && NODE_OPTIONS=\"${NODE_OPTIONS:-} --preserve-symlinks\" apifn test .apifn/account --env memory --env-var baseUrl=$ACCOUNT_E2E_BASE_URL --output .apifn/results/dynamodb.json"
   },
   "dependencies": {
-    "@authfn/core": "^0.0.1",
-    "@authfn/lookup-cloudflare-do": "^0.0.1",
-    "@authfn/lookup-dynamodb": "^0.0.1",
+    "@authfn/core": "^0.1.0",
+    "@authfn/lookup-cloudflare-do": "^0.1.0",
+    "@authfn/lookup-dynamodb": "^0.1.0",
     "@aws-sdk/client-dynamodb": "^3.1037.0",
     "@aws-sdk/lib-dynamodb": "^3.1037.0",
     "@hono/node-server": "^1.14.1",

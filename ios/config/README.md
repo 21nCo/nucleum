@@ -1,7 +1,9 @@
 # iOS Environment Config
 
-`environments.json` drives `npm run ios:env:<env>` and writes small scalar
-values into each app target's `Info.plist`.
+`environments.json` documents the iOS environment matrix used by the Xcode
+build configurations. The app `Info.plist` files keep build-setting
+substitutions such as `$(NUCLEUS_APP_ENVIRONMENT)` and Xcode resolves them from
+the selected build configuration.
 
 - `product` is the full product web domain, for example `nucleum.app`.
 - `NucleusAppEnvironment` is `local`, `dev`, `pre`, or `live`.
@@ -15,3 +17,32 @@ values into each app target's `Info.plist`.
   provide a more specific region authority.
 - `widgetApiUrl` is computed in Swift as `accountUrl + "/widget"` as a
   temporary placeholder until the account service widget API is implemented.
+
+Available Xcode build configurations:
+
+- `Local Debug` / `Local Release`
+- `Dev Debug` / `Dev Release`
+- `Pre Debug` / `Pre Release`
+- `Live Debug` / `Live Release`
+
+`Debug` and `Release` remain as compatibility defaults and point at the dev
+environment.
+
+Embedded iOS web bundles are generated separately because the WebView loads the
+static files from `ios/<app>/www` and Vite resolves environment values at build
+time. Use the matching npm command before building the native app:
+
+- `npm run build:ios:local`
+- `npm run build:ios:dev`
+- `npm run build:ios:pre`
+- `npm run build:ios:live`
+
+Per-app variants are also available, for example:
+
+- `npm run build:ios:nucleum:pre`
+- `npm run build:ios:memotron:pre`
+- `npm run build:ios:pointron:pre`
+
+For a full pre test, run `npm run build:ios:pre`, then select `Pre Debug` in
+Xcode. For a single app, run that app's `build:ios:<app>:pre` command and select
+the same `Pre Debug` native build configuration.

@@ -374,6 +374,15 @@
       event,
       path: event.detail?.path
     });
+    logger.info({
+      at: "BaseLayer.handleCustomNavigation",
+      path: event.detail?.path,
+      isReload: event.detail?.isReload,
+      replaceState: event.detail?.replaceState,
+      currentPath: window.location.pathname,
+      protocol: window.location.protocol,
+      isEmbed: $context.isEmbed
+    });
     if (event.detail?.isReload) {
       if (!$context.isEmbed) window.location.reload();
       else {

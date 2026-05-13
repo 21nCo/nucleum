@@ -6,6 +6,7 @@
 //
 
 import AVFoundation
+import AuthFnClient
 import CoreData
 import CoreLocation
 import Foundation
@@ -13,7 +14,6 @@ import SwiftUI
 import WidgetKit
 
 #if os(iOS)
-  import AuthenticationServices
   import UIKit
 #elseif os(macOS)
   import AppKit
@@ -45,9 +45,16 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
   @Published var appData: AppData = AppData(colorschemes: [], name: LocalConfig.defaultAppName)
   let sharedDefaults = UserDefaults(suiteName: LocalConfig.appGroup)
   private let widgetTokenRefreshLeewaySeconds: TimeInterval = 5 * 60
+  private let authFnClient = AuthFnClient(
+    configuration: AuthFnConfiguration(
+      defaultRegionId: LocalConfig.defaultRegion,
+      resolveBaseURL: { regionId in
+        URL(string: LocalConfig.accountUrl(for: regionId)) ?? URL(string: LocalConfig.accountUrl)!
+      }
+    )
+  )
   #if os(iOS)
-    private var nativeAppleSignInStateId: String?
-    private var nativeAppleSignInAccountUrl: String?
+    private let nativeAppleSignInCoordinator = AuthFnNativeAppleSignInCoordinator()
   #endif
 
   // Model download progress tracking
@@ -365,7 +372,7 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
     {
       return
     }
-    guard let sessionToken = AuthFnCredentialStore.readSessionToken() else {
+    guard let sessionToken = NucleumAuthFnCredentialStore.readSessionToken() else {
       return
     }
     requestAuthFnWidgetToken(sessionToken: sessionToken)
@@ -382,7 +389,7 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
       sharedDefaults?.set(regionId, forKey: "userRegion")
     }
     if let token = token {
-      AuthFnCredentialStore.storeSessionToken(token)
+      NucleumAuthFnCredentialStore.storeSessionToken(token)
     }
     if let accountUrl = accountUrl {
       sharedDefaults?.set(accountUrl, forKey: "authfnAccountUrl")
@@ -396,7 +403,7 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
   }
 
   private func clearAuthFnSession() {
-    AuthFnCredentialStore.deleteSessionToken()
+    NucleumAuthFnCredentialStore.deleteSessionToken()
     sharedDefaults?.removeObject(forKey: "authfnToken")
     sharedDefaults?.removeObject(forKey: "authfnWidgetToken")
     sharedDefaults?.removeObject(forKey: "authfnWidgetTokenExpiresAt")
@@ -418,87 +425,74 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
 
   private func exchangeAuthFnNativeHandoff(code: String, accountUrl: String? = nil) {
     let resolvedAccountUrl = resolveAuthFnAccountUrl(accountUrl)
-    guard let url = URL(string: "\(resolvedAccountUrl)/auth/handoff/native/exchange") else {
+    guard let accountBaseURL = URL(string: resolvedAccountUrl) else {
       Log.error(message: "Invalid AuthFn native handoff URL")
       return
     }
-    var request = URLRequest(url: url)
-    request.httpMethod = "POST"
-    request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.addValue("application/json", forHTTPHeaderField: "Accept")
-    request.httpBody = try? JSONSerialization.data(withJSONObject: [
-      "code": code,
-      "device": [
-        "platform": "apple",
-        "app": LocalConfig.defaultAppName,
-      ],
-    ])
-    URLSession.shared.dataTask(with: request) { data, _, error in
-      if let error = error {
-        Log.error(message: "AuthFn native handoff exchange failed: \(error.localizedDescription)")
-        return
-      }
-      guard
-        let data,
-        let envelope = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-        let payload = envelope["data"] as? [String: Any],
-        let token = payload["token"] as? String
-      else {
-        Log.error(message: "AuthFn native handoff exchange returned an invalid response")
-        return
-      }
-      let session = payload["session"] as? [String: Any]
-      let actorId = session?["actorId"] as? String
-      let userId = actorId?.replacingOccurrences(of: "user:", with: "")
-      let regionId = session?["regionId"] as? String
-      DispatchQueue.main.async {
-        self.storeAuthFnSession(
-          token: token,
-          userId: userId,
-          regionId: regionId,
-          accountUrl: resolvedAccountUrl
+
+    Task {
+      do {
+        let credential = try await authFnClient.exchangeNativeHandoff(
+          code: code,
+          accountBaseURL: accountBaseURL,
+          device: [
+            "platform": "apple",
+            "app": LocalConfig.defaultAppName,
+          ]
         )
-        self.requestAuthFnWidgetToken(sessionToken: token, accountUrl: resolvedAccountUrl)
-        self.sendMessageToApp(message: [
-          "authfn": ["nativeAuthenticated": true]
-        ])
-        self.refreshAllWidgets()
+        let userId = credential.session.actorId.replacingOccurrences(of: "user:", with: "")
+        let widgetToken = try? await authFnClient.requestWidgetToken(
+          sessionToken: credential.token,
+          accountBaseURL: accountBaseURL
+        )
+        DispatchQueue.main.async {
+          self.storeAuthFnSession(
+            token: credential.token,
+            userId: userId,
+            regionId: credential.session.regionId,
+            accountUrl: resolvedAccountUrl,
+            widgetToken: widgetToken?.token
+          )
+          if let expiresAt = widgetToken?.expiresAt {
+            self.sharedDefaults?.set(expiresAt, forKey: "authfnWidgetTokenExpiresAt")
+          }
+          self.sendMessageToApp(message: [
+            "authfn": ["nativeAuthenticated": true]
+          ])
+          self.refreshAllWidgets()
+        }
+      } catch {
+        Log.error(message: "AuthFn native handoff exchange failed: \(error.localizedDescription)")
       }
-    }.resume()
+    }
   }
 
   private func requestAuthFnWidgetToken(sessionToken: String, accountUrl: String? = nil) {
     let resolvedAccountUrl = resolveAuthFnAccountUrl(
       accountUrl ?? sharedDefaults?.string(forKey: "authfnAccountUrl")
     )
-    guard let url = URL(string: "\(resolvedAccountUrl)/auth/widget-token") else {
+    guard let accountBaseURL = URL(string: resolvedAccountUrl) else {
       Log.error(message: "Invalid AuthFn widget token URL")
       return
     }
-    var request = URLRequest(url: url)
-    request.httpMethod = "POST"
-    request.addValue("Bearer \(sessionToken)", forHTTPHeaderField: "Authorization")
-    request.addValue("application/json", forHTTPHeaderField: "Accept")
-    URLSession.shared.dataTask(with: request) { data, _, error in
-      if let error = error {
+
+    Task {
+      do {
+        let widgetToken = try await authFnClient.requestWidgetToken(
+          sessionToken: sessionToken,
+          accountBaseURL: accountBaseURL
+        )
+        DispatchQueue.main.async {
+          self.sharedDefaults?.set(widgetToken.token, forKey: "authfnWidgetToken")
+          if let expiresAt = widgetToken.expiresAt {
+            self.sharedDefaults?.set(expiresAt, forKey: "authfnWidgetTokenExpiresAt")
+          }
+          self.refreshAllWidgets()
+        }
+      } catch {
         Log.error(message: "AuthFn widget token request failed: \(error.localizedDescription)")
-        return
       }
-      guard
-        let data,
-        let envelope = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-        let payload = envelope["data"] as? [String: Any],
-        let token = payload["token"] as? String
-      else {
-        Log.error(message: "AuthFn widget token response was invalid")
-        return
-      }
-      self.sharedDefaults?.set(token, forKey: "authfnWidgetToken")
-      if let expiresAt = payload["expiresAt"] as? String {
-        self.sharedDefaults?.set(expiresAt, forKey: "authfnWidgetTokenExpiresAt")
-      }
-      self.refreshAllWidgets()
-    }.resume()
+    }
   }
 
   private func readAuthFnWidgetTokenExpiresAt() -> Date? {
@@ -509,14 +503,8 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
   }
 
   private func handleAuthFnNativeHandoff(value: Any?) {
-    if let payload = value as? [String: Any], let code = payload["code"] as? String {
-      exchangeAuthFnNativeHandoff(code: code, accountUrl: payload["accountUrl"] as? String)
-      return
-    }
     guard
-      let stringValue = value as? String,
-      let data = stringValue.data(using: .utf8),
-      let payload = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+      let payload = parseAuthFnDictionaryPayload(value),
       let code = payload["code"] as? String
     else {
       Log.error(message: "Unable to parse AuthFn native handoff payload")
@@ -525,212 +513,112 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
     exchangeAuthFnNativeHandoff(code: code, accountUrl: payload["accountUrl"] as? String)
   }
 
+  private func parseAuthFnDictionaryPayload(_ value: Any?) -> [String: Any]? {
+    if let payload = value as? [String: Any] {
+      return payload
+    }
+    guard
+      let stringValue = value as? String,
+      let data = stringValue.data(using: .utf8)
+    else {
+      return nil
+    }
+    return try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+  }
+
   #if os(iOS)
     private func handleAuthFnNativeAppleSignIn(value: Any?) {
-      let payload = parseDictionaryPayload(value)
-      let accountUrl = resolveAuthFnAccountUrl(payload?["accountUrl"] as? String)
-      guard let url = URL(string: "\(accountUrl)/auth/social/native/apple/start") else {
+      let payload = parseAuthFnDictionaryPayload(value)
+      let resolvedAccountUrl = resolveAuthFnAccountUrl(payload?["accountUrl"] as? String)
+      guard let accountBaseURL = URL(string: resolvedAccountUrl) else {
         sendNativeAppleSignInError("invalid_start_url")
         return
       }
 
-      var request = URLRequest(url: url)
-      request.httpMethod = "POST"
-      request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-      request.addValue("application/json", forHTTPHeaderField: "Accept")
-      request.httpBody = try? JSONSerialization.data(withJSONObject: [
-        "returnTo": payload?["returnTo"] as? String ?? "\(LocalConfig.urlScheme)://oauthsignin",
-        "handoffMode": payload?["handoffMode"] as? String ?? "session-token",
-      ])
-
-      URLSession.shared.dataTask(with: request) { data, _, error in
-        if let error = error {
-          Log.error(message: "Native Apple sign-in start failed: \(error.localizedDescription)")
-          DispatchQueue.main.async {
-            self.sendNativeAppleSignInError("start_failed")
-          }
-          return
+      nativeAppleSignInCoordinator.start(
+        client: authFnClient,
+        accountBaseURL: accountBaseURL,
+        returnTo: payload?["returnTo"] as? String ?? "\(LocalConfig.urlScheme)://oauthsignin",
+        handoffMode: payload?["handoffMode"] as? String ?? "session-token",
+        device: [
+          "platform": "apple",
+          "app": LocalConfig.defaultAppName,
+        ],
+        presentationAnchor: {
+          let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene
+          return scene?.windows.first
+        },
+        completion: { result in
+          self.handleNativeAppleSignInResult(result, accountUrl: resolvedAccountUrl)
         }
-        guard
-          let data,
-          let envelope = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-          let response = envelope["data"] as? [String: Any],
-          let stateId = response["stateId"] as? String,
-          let nonce = response["nonce"] as? String
-        else {
-          Log.error(message: "Native Apple sign-in start returned an invalid response")
-          DispatchQueue.main.async {
-            self.sendNativeAppleSignInError("invalid_start_response")
-          }
-          return
-        }
-
-        DispatchQueue.main.async {
-          self.nativeAppleSignInStateId = stateId
-          self.nativeAppleSignInAccountUrl = accountUrl
-          self.startNativeAppleAuthorization(nonce: nonce)
-        }
-      }.resume()
+      )
     }
 
     func startNativeAppleSignInFromAuthorizeUrl(_ urlString: String) -> Bool {
-      guard
-        let url = URL(string: urlString),
-        url.host == "appleid.apple.com",
-        url.path.contains("/auth/authorize")
-      else {
+      guard let url = URL(string: urlString) else {
+        return false
+      }
+      let oauthCoordinator = AuthFnOAuthCoordinator()
+      guard let context = oauthCoordinator.appleAuthorizeContext(from: url) else {
         Log.info("Apple native authorize intercept skipped for non-Apple OAuth URL")
         return false
       }
 
-      let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-      guard
-        let stateId = components?.queryItems?.first(where: { $0.name == "state" })?.value,
-        let nonce = components?.queryItems?.first(where: { $0.name == "nonce" })?.value
-      else {
-        Log.error(message: "Apple authorize URL did not include AuthFn state or nonce")
-        sendNativeAppleSignInError("missing_authorize_state")
+      let fallbackAccountUrl = resolveAuthFnAccountUrl(nil)
+      guard let fallbackAccountBaseURL = URL(string: fallbackAccountUrl) else {
+        sendNativeAppleSignInError("invalid_authorize_url")
         return true
       }
-
-      let redirectUri = components?.queryItems?.first(where: { $0.name == "redirect_uri" })?.value
-      let accountUrl = resolveAccountUrlFromRedirectUri(redirectUri)
-        ?? resolveAuthFnAccountUrl(nil)
-
-      nativeAppleSignInStateId = stateId
-      nativeAppleSignInAccountUrl = accountUrl
-      Log.info("Starting native Apple sign-in from AuthFn web authorize state accountUrl=\(accountUrl)")
-      startNativeAppleAuthorization(nonce: nonce)
-      return true
-    }
-
-    private func resolveAccountUrlFromRedirectUri(_ redirectUri: String?) -> String? {
-      guard
-        let redirectUri,
-        let url = URL(string: redirectUri),
-        let scheme = url.scheme,
-        let host = url.host
-      else {
-        return nil
-      }
-      var components = URLComponents()
-      components.scheme = scheme
-      components.host = host
-      components.port = url.port
-      return components.url?.absoluteString.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-    }
-
-    private func startNativeAppleAuthorization(nonce: String) {
-      let provider = ASAuthorizationAppleIDProvider()
-      let request = provider.createRequest()
-      request.requestedScopes = [.fullName, .email]
-      request.nonce = nonce
-
-      let controller = ASAuthorizationController(authorizationRequests: [request])
-      controller.delegate = self
-      controller.presentationContextProvider = self
-      controller.performRequests()
-    }
-
-    private func completeNativeAppleSignIn(
-      identityToken: String,
-      authorizationCode: String?,
-      credential: ASAuthorizationAppleIDCredential
-    ) {
-      guard
-        let stateId = nativeAppleSignInStateId,
-        let accountUrl = nativeAppleSignInAccountUrl,
-        let url = URL(string: "\(accountUrl)/auth/social/native/apple/complete")
-      else {
-        sendNativeAppleSignInError("missing_state")
-        return
-      }
-
-      var user: [String: Any] = [:]
-      if let email = credential.email {
-        user["email"] = email
-      }
-      var name: [String: Any] = [:]
-      if let firstName = credential.fullName?.givenName {
-        name["firstName"] = firstName
-      }
-      if let lastName = credential.fullName?.familyName {
-        name["lastName"] = lastName
-      }
-      if !name.isEmpty {
-        user["name"] = name
-      }
-
-      var body: [String: Any] = [
-        "stateId": stateId,
-        "identityToken": identityToken,
-        "device": [
+      let resolvedAccountUrl = (context.accountBaseURL ?? fallbackAccountBaseURL)
+        .absoluteString
+        .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+      Log.info("Starting native Apple sign-in from AuthFn web authorize state accountUrl=\(resolvedAccountUrl)")
+      return nativeAppleSignInCoordinator.startFromAuthorizeURL(
+        url,
+        client: authFnClient,
+        fallbackAccountBaseURL: fallbackAccountBaseURL,
+        device: [
           "platform": "apple",
           "app": LocalConfig.defaultAppName,
         ],
-      ]
-      if let authorizationCode {
-        body["authorizationCode"] = authorizationCode
+        presentationAnchor: {
+          let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene
+          return scene?.windows.first
+        },
+        completion: { result in
+          self.handleNativeAppleSignInResult(result, accountUrl: resolvedAccountUrl)
+        }
+      )
+    }
+
+    private func handleNativeAppleSignInResult(
+      _ result: Result<AuthFnNativeAppleSignInResult, AuthFnNativeAppleSignInFailure>,
+      accountUrl: String
+    ) {
+      switch result {
+      case .success(let response):
+        storeAuthFnSession(
+          token: response.token,
+          userId: response.userId,
+          regionId: response.regionId,
+          accountUrl: accountUrl
+        )
+        requestAuthFnWidgetToken(sessionToken: response.token, accountUrl: accountUrl)
+        sendMessageToApp(message: [
+          "oauth": [
+            "token": response.token,
+            "signup": response.isNewUser == true ? "true" : "false",
+            "regionId": response.regionId ?? "",
+          ]
+        ])
+        refreshAllWidgets()
+      case .failure(let error):
+        Log.error(message: "Native Apple sign-in failed: \(error.code) \(error.message ?? "")")
+        sendNativeAppleSignInError(error.code)
       }
-      if !user.isEmpty {
-        body["user"] = user
-      }
-
-      var request = URLRequest(url: url)
-      request.httpMethod = "POST"
-      request.addValue("application/json", forHTTPHeaderField: "Content-Type")
-      request.addValue("application/json", forHTTPHeaderField: "Accept")
-      request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-
-      URLSession.shared.dataTask(with: request) { data, _, error in
-        if let error = error {
-          Log.error(message: "Native Apple sign-in complete failed: \(error.localizedDescription)")
-          DispatchQueue.main.async {
-            self.sendNativeAppleSignInError("complete_failed")
-          }
-          return
-        }
-        guard
-          let data,
-          let envelope = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-          let response = envelope["data"] as? [String: Any],
-          let token = response["token"] as? String
-        else {
-          Log.error(message: "Native Apple sign-in complete returned an invalid response")
-          DispatchQueue.main.async {
-            self.sendNativeAppleSignInError("invalid_complete_response")
-          }
-          return
-        }
-
-        let userId = response["userId"] as? String
-        let regionId = response["regionId"] as? String
-        let isNewUser = response["isNewUser"] as? Bool ?? false
-        DispatchQueue.main.async {
-          self.storeAuthFnSession(
-            token: token,
-            userId: userId,
-            regionId: regionId,
-            accountUrl: accountUrl
-          )
-          self.requestAuthFnWidgetToken(sessionToken: token, accountUrl: accountUrl)
-          self.sendMessageToApp(message: [
-            "oauth": [
-              "token": token,
-              "signup": isNewUser ? "true" : "false",
-              "regionId": regionId ?? "",
-            ]
-          ])
-          self.refreshAllWidgets()
-          self.nativeAppleSignInStateId = nil
-          self.nativeAppleSignInAccountUrl = nil
-        }
-      }.resume()
     }
 
     private func sendNativeAppleSignInError(_ code: String) {
-      nativeAppleSignInStateId = nil
-      nativeAppleSignInAccountUrl = nil
       sendMessageToApp(message: [
         "oauth": [
           "error": "apple_native_signin_failed",
@@ -738,19 +626,6 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
           "provider": "apple",
         ]
       ])
-    }
-
-    private func parseDictionaryPayload(_ value: Any?) -> [String: Any]? {
-      if let payload = value as? [String: Any] {
-        return payload
-      }
-      guard
-        let stringValue = value as? String,
-        let data = stringValue.data(using: .utf8)
-      else {
-        return nil
-      }
-      return try? JSONSerialization.jsonObject(with: data) as? [String: Any]
     }
   #endif
 
@@ -1989,45 +1864,6 @@ class SoundPlayer {
 }
 
 #if os(iOS)
-  extension AppStore: ASAuthorizationControllerDelegate,
-    ASAuthorizationControllerPresentationContextProviding
-  {
-    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-      let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene
-      return scene?.windows.first ?? ASPresentationAnchor()
-    }
-
-    func authorizationController(
-      controller: ASAuthorizationController,
-      didCompleteWithAuthorization authorization: ASAuthorization
-    ) {
-      guard
-        let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
-        let identityTokenData = credential.identityToken,
-        let identityToken = String(data: identityTokenData, encoding: .utf8)
-      else {
-        sendNativeAppleSignInError("missing_identity_token")
-        return
-      }
-
-      let authorizationCode = credential.authorizationCode
-        .flatMap { String(data: $0, encoding: .utf8) }
-      completeNativeAppleSignIn(
-        identityToken: identityToken,
-        authorizationCode: authorizationCode,
-        credential: credential
-      )
-    }
-
-    func authorizationController(
-      controller: ASAuthorizationController,
-      didCompleteWithError error: Error
-    ) {
-      Log.error(message: "Native Apple sign-in failed: \(error.localizedDescription)")
-      sendNativeAppleSignInError("authorization_failed")
-    }
-  }
-
   // Add UIDocumentPickerDelegate conformance through an extension
   extension AppStore: UIDocumentPickerDelegate {
     func documentPicker(

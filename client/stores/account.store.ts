@@ -144,6 +144,21 @@ class AccountStore extends ObservableStore<UserAccount> {
   }) {
     const userInfo = params?.userInfo ?? this.get()?.userInfo;
     const isBootstrapped = userInfo?.isBootstrapped ?? true;
+    const targetPath =
+      params?.isNewUser && isBootstrapped
+        ? "/onboarding"
+        : !isBootstrapped
+          ? "/bootstrap"
+          : "/";
+    logger.info({
+      at: "account.gotoPostAuthRoute",
+      targetPath,
+      isNewUser: params?.isNewUser,
+      isBootstrapped,
+      hasUserInfo: Boolean(userInfo),
+      currentPath:
+        typeof window !== "undefined" ? window.location.pathname : undefined
+    });
     if (params?.isNewUser && isBootstrapped) {
       appStore.gotoPath("/onboarding");
     } else if (!isBootstrapped) {
@@ -257,6 +272,19 @@ class AccountStore extends ObservableStore<UserAccount> {
       userId: userInfo.id.split("user:")[1],
       userInfo
     }));
+
+    logger.info({
+      at: "account.signInFromAuthFnSession.ok",
+      hasSessionToken: Boolean(sessionToken),
+      isNewUser: params?.isNewUser,
+      isPreventRedirect: params?.isPreventRedirect,
+      userId: userInfo.id,
+      region: userInfo.region,
+      isBootstrapped: userInfo.isBootstrapped,
+      dataMode: legacyCloudSession ? UserDataMode.CLOUD : UserDataMode.LOCAL,
+      currentPath:
+        typeof window !== "undefined" ? window.location.pathname : undefined
+    });
 
     if (params?.isPreventRedirect) return true;
     this.gotoPostAuthRoute({ isNewUser: params?.isNewUser, userInfo });
@@ -569,7 +597,54 @@ class AccountStore extends ObservableStore<UserAccount> {
   }
 
   async bootstrap(region: string) {
+    const authFnResult = await this.bootstrapAuthFn(region);
+    if (authFnResult !== "not-authfn") {
+      return authFnResult;
+    }
     return this.bootstrapRemote(region);
+  }
+
+  private async bootstrapAuthFn(region: string): Promise<boolean | "not-authfn"> {
+    const token = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
+    if (!token) {
+      return "not-authfn";
+    }
+    try {
+      const response = await fetch(
+        `${resolveAccountBaseUrl(region).replace(/\/$/, "")}/auth/nucleus/bootstrap`,
+        {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "content-type": "application/json",
+            authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ region })
+        }
+      );
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.ok || !result.data?.session) {
+        logger.error({
+          at: "account.bootstrapAuthFn.failed",
+          status: response.status,
+          error: result?.error
+        });
+        return false;
+      }
+
+      await this.signInFromAuthFnSession({
+        token,
+        session: result.data.session,
+        regionId: result.data.session.regionId ?? region,
+        isNewUser: true,
+        isPreventRedirect: true
+      });
+      this.gotoPostAuthRoute({ isNewUser: true });
+      return true;
+    } catch (error) {
+      logger.error({ at: "account.bootstrapAuthFn.exception", error });
+      return false;
+    }
   }
 
   async bootstrapRemote(region: string) {

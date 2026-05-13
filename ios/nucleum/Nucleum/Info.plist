@@ -15,34 +15,34 @@
 			</array>
 		</dict>
 	</array>
-		<key>NSAppTransportSecurity</key>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+		<key>NSExceptionDomains</key>
 		<dict>
-			<key>NSAllowsLocalNetworking</key>
-			<true/>
-			<key>NSExceptionDomains</key>
+			<key>127.0.0.1</key>
 			<dict>
-				<key>localhost</key>
-				<dict>
-					<key>NSExceptionAllowsInsecureHTTPLoads</key>
-					<true/>
-				</dict>
-				<key>127.0.0.1</key>
-				<dict>
-					<key>NSExceptionAllowsInsecureHTTPLoads</key>
-					<true/>
-				</dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+			<key>localhost</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
 			</dict>
 		</dict>
+	</dict>
 	<key>NucleusAccountDomain</key>
-	<string>nucleum.app</string>
+	<string>$(NUCLEUS_ACCOUNT_DOMAIN)</string>
 	<key>NucleusAppEnvironment</key>
-	<string>dev</string>
+	<string>$(NUCLEUS_APP_ENVIRONMENT)</string>
 	<key>NucleusDebugSinkUrl</key>
-	<string>https://nucleus-debug-sink.21n.workers.dev</string>
+	<string>$(NUCLEUS_DEBUG_SINK_URL)</string>
 	<key>NucleusDefaultRegion</key>
-	<string>insouth</string>
+	<string>$(NUCLEUS_DEFAULT_REGION)</string>
 	<key>NucleusProduct</key>
-	<string>nucleum.app</string>
+	<string>$(NUCLEUS_PRODUCT)</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
