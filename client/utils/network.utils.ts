@@ -1,7 +1,7 @@
 import { logger } from "@21n/components/debug/logger.client";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
 import { GlobalEvent } from "@21n/types/event.enum";
-import { resolveToken, signout } from "@21n/utils/account.utils";
+import { resolveLegacyToken, signout } from "@21n/utils/account.utils";
 import {
   dispatchCustomEvent,
   generateFingerprint,
@@ -299,7 +299,7 @@ export async function performHttpNetworkOperation(params: {
   try {
     const isOffline = await determineIfOffline();
     if (isOffline) return;
-    let token = await resolveToken();
+    let token = await resolveLegacyToken();
     const isExtEnv = isExtensionEnvironment();
     if (!token && isExtEnv) {
       logoutOnExtention();

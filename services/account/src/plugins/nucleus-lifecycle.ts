@@ -85,9 +85,10 @@ function createNucleusLifecycleRoutes(ctx: AuthFnPluginRuntimeContext): NucleusL
         }
 
         const body = await readJsonBody(request);
-        const requestedRegion = typeof body.region === 'string'
+        const requestedRegionInput = typeof body.region === 'string'
           ? body.region.trim().toLowerCase()
-          : undefined;
+          : '';
+        const requestedRegion = requestedRegionInput.length > 0 ? requestedRegionInput : undefined;
         const regionId = requestedRegion ?? session.regionId;
         const now = new Date();
         const user = await ctx.config.database.findOne<AuthFnUserRecord>({

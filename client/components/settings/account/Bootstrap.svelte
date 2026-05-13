@@ -52,7 +52,7 @@
         action={{ label: "Chat with us", action: "chat" }}
       />
     {/if}
-    <InlineErrorMessage {error} />
+    <InlineErrorMessage bind:error />
     <div class="flex w-full justify-center">
       {#if isAlreadyBootstrapped}
         <div class="flex gap-2 mo:flex-col">

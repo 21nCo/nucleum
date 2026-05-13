@@ -19,9 +19,17 @@ struct LocalConfig {
   static var debugSinkUrl: String {
     infoString("NucleusDebugSinkUrl", fallback: "https://nucleus-debug-sink.21n.workers.dev")
   }
+  static var normalizedEnvironment: String {
+    switch environment.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() {
+    case "local", "pre", "live":
+      return environment.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    default:
+      return "dev"
+    }
+  }
 
   static var webOrigin: String {
-    switch environment {
+    switch normalizedEnvironment {
     case "local":
       return "https://local.\(product)"
     case "pre":
@@ -40,7 +48,7 @@ struct LocalConfig {
   static func accountUrl(for region: String?) -> String {
     let resolvedRegion = region?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     let regionId = resolvedRegion?.isEmpty == false ? resolvedRegion! : defaultRegion
-    let environmentSuffix = environment == "live" ? "" : "-\(environment)"
+    let environmentSuffix = normalizedEnvironment == "live" ? "" : "-\(normalizedEnvironment)"
     return "https://account-\(regionId)\(environmentSuffix).\(accountDomain)"
   }
 

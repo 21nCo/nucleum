@@ -55,6 +55,45 @@ export function resolveAuthFnBaseUrl(region: string) {
   return `${resolveAccountBaseUrl(region).replace(/\/$/, "")}/auth`;
 }
 
+export async function bootstrapNucleusAccount(region: string) {
+  const token = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
+  if (!token) {
+    return { kind: "not-authfn" as const };
+  }
+
+  try {
+    const response = await fetch(`${resolveAuthFnBaseUrl(region)}/nucleus/bootstrap`, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        "content-type": "application/json",
+        authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ region })
+    });
+    const result = await response.json().catch(() => null);
+    if (!response.ok || !result?.ok || !result.data?.session) {
+      return {
+        kind: "failed" as const,
+        status: response.status,
+        error: result?.error
+      };
+    }
+
+    return {
+      kind: "success" as const,
+      token,
+      session: result.data.session
+    };
+  } catch (error) {
+    return {
+      kind: "failed" as const,
+      status: 0,
+      error
+    };
+  }
+}
+
 function emitAccountNetworkMetric(metric: AuthFnClientRequestMetric) {
   if (!shouldEmitAccountLatencyMetric()) return;
   logger.debug({

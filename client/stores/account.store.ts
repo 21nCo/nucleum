@@ -47,6 +47,7 @@ import { generateImagePreviewFromPdf } from "@21n/utils/pdf.utils";
 import { Action } from "@21n/types/action.enum";
 import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
 import { parse } from "@21n/shared-utils/json.utils";
+import { bootstrapNucleusAccount } from "@21n/components/account/auth";
 import { resolveAccountBaseUrl } from "@21n/components/network";
 
 export const isRefreshingToken = writable(false);
@@ -605,46 +606,28 @@ class AccountStore extends ObservableStore<UserAccount> {
   }
 
   private async bootstrapAuthFn(region: string): Promise<boolean | "not-authfn"> {
-    const token = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
-    if (!token) {
+    const result = await bootstrapNucleusAccount(region);
+    if (result.kind === "not-authfn") {
       return "not-authfn";
     }
-    try {
-      const response = await fetch(
-        `${resolveAccountBaseUrl(region).replace(/\/$/, "")}/auth/nucleus/bootstrap`,
-        {
-          method: "POST",
-          credentials: "include",
-          headers: {
-            "content-type": "application/json",
-            authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify({ region })
-        }
-      );
-      const result = await response.json().catch(() => null);
-      if (!response.ok || !result?.ok || !result.data?.session) {
-        logger.error({
-          at: "account.bootstrapAuthFn.failed",
-          status: response.status,
-          error: result?.error
-        });
-        return false;
-      }
-
-      await this.signInFromAuthFnSession({
-        token,
-        session: result.data.session,
-        regionId: result.data.session.regionId ?? region,
-        isNewUser: true,
-        isPreventRedirect: true
+    if (result.kind === "failed") {
+      logger.error({
+        at: "account.bootstrapAuthFn.failed",
+        status: result.status,
+        error: result.error
       });
-      this.gotoPostAuthRoute({ isNewUser: true });
-      return true;
-    } catch (error) {
-      logger.error({ at: "account.bootstrapAuthFn.exception", error });
       return false;
     }
+
+    await this.signInFromAuthFnSession({
+      token: result.token,
+      session: result.session,
+      regionId: result.session.regionId ?? region,
+      isNewUser: true,
+      isPreventRedirect: true
+    });
+    this.gotoPostAuthRoute({ isNewUser: true });
+    return true;
   }
 
   async bootstrapRemote(region: string) {

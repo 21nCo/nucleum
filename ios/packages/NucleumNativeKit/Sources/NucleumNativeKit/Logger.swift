@@ -45,8 +45,8 @@ func redactUrlForLog(_ url: URL) -> String {
   }
   let sensitiveNames = Set([
     "token",
-    "authfnToken",
-    "authfnWidgetToken",
+    "authfntoken",
+    "authfnwidgettoken",
     "code",
     "state",
     "nonce",

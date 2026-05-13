@@ -35,7 +35,7 @@ extension String {
 
 public extension Color {
     init(hex: String) {
-        var str = hex;
+        var str = hex
         if str.hasPrefix("#") {
             str.removeFirst()
         }
@@ -54,7 +54,7 @@ public extension Color {
 
 public extension Color {
     static func hsl(_ hsl: String) -> Color {
-        let pattern = #"^hsla?\(\s*([+-]?(?:\d+(?:\.\d+)?|\.\d+))(?:deg)?[\s,]+([+-]?(?:\d+(?:\.\d+)?|\.\d+))%[\s,]+([+-]?(?:\d+(?:\.\d+)?|\.\d+))%(?:[\s,/]+[+-]?(?:\d+(?:\.\d+)?|\.\d+)%?)?\s*\)$"#
+        let pattern = #"^hsla?\(\s*([+-]?(?:\d+(?:\.\d+)?|\.\d+))(?:deg)?[\s,]+([+-]?(?:\d+(?:\.\d+)?|\.\d+))%[\s,]+([+-]?(?:\d+(?:\.\d+)?|\.\d+))%(?:[\s,/]+([+-]?(?:\d+(?:\.\d+)?|\.\d+))%?)?\s*\)$"#
         guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
               let match = regex.firstMatch(in: hsl, range: NSRange(hsl.startIndex..., in: hsl)),
               let hRange = Range(match.range(at: 1), in: hsl),
@@ -70,6 +70,14 @@ public extension Color {
             : rawH.truncatingRemainder(dividingBy: 360)
         let s = min(max(rawS, 0), 100)
         let l = min(max(rawL, 0), 100)
+        let alpha: Double
+        if match.range(at: 4).location != NSNotFound,
+           let alphaRange = Range(match.range(at: 4), in: hsl),
+           let rawAlpha = Double(hsl[alphaRange]) {
+            alpha = rawAlpha > 1 ? min(max(rawAlpha / 100, 0), 1) : min(max(rawAlpha, 0), 1)
+        } else {
+            alpha = 1
+        }
 
         // Convert HSL to RGB using the formula.
         let c = (1.0 - abs(2.0 * l / 100.0 - 1.0)) * s / 100.0
@@ -94,6 +102,6 @@ public extension Color {
             break
         }
 
-        return Color(red: r + m, green: g + m, blue: b + m)
+        return Color(red: r + m, green: g + m, blue: b + m, opacity: alpha)
     }
 }

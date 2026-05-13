@@ -11,7 +11,7 @@ const moduleMocks = vi.hoisted(() => ({
     log: vi.fn()
   },
   account: {
-    resolveToken: vi.fn(),
+    resolveLegacyToken: vi.fn(),
     signout: vi.fn()
   },
   browser: {
@@ -87,7 +87,7 @@ describe("client/utils/network.utils", () => {
     moduleMocks.browser.isExtensionEnvironment.mockReturnValue(false);
     moduleMocks.browser.isContentScript.mockReturnValue(false);
     moduleMocks.browser.generateFingerprint.mockResolvedValue("fingerprint");
-    moduleMocks.account.resolveToken.mockResolvedValue("token");
+    moduleMocks.account.resolveLegacyToken.mockResolvedValue("token");
     moduleMocks.time.detectTimeZone.mockReturnValue("UTC");
     moduleMocks.storage.get.mockResolvedValue(null);
     (globalThis as any).fetch = vi.fn();
@@ -215,7 +215,7 @@ describe("client/utils/network.utils", () => {
 
   it("logs out extension when token missing", async () => {
     moduleMocks.browser.isExtensionEnvironment.mockReturnValue(true);
-    moduleMocks.account.resolveToken.mockResolvedValueOnce(null);
+    moduleMocks.account.resolveLegacyToken.mockResolvedValueOnce(null);
     (fetch as any).mockResolvedValue({
       ok: false,
       status: 401,
@@ -259,7 +259,7 @@ describe("client/utils/network.utils", () => {
 
   it("signs out web users without a local AuthFn token on unauthorized response", async () => {
     moduleMocks.browser.isExtensionEnvironment.mockReturnValue(false);
-    moduleMocks.account.resolveToken.mockResolvedValueOnce(null);
+    moduleMocks.account.resolveLegacyToken.mockResolvedValueOnce(null);
     (fetch as any).mockResolvedValue({
       ok: false,
       status: 401,

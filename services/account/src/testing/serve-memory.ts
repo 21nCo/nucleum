@@ -22,7 +22,7 @@ const server = serve({
   port
 });
 
-console.log(`Nucleus account memory service listening on ${hostname}:${port}`);
+console.log('Nucleus account memory service listening');
 console.log(`Allowed CORS origins configured: ${corsOrigins.length}`);
 
 async function close() {
