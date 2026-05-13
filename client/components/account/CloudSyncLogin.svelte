@@ -233,20 +233,28 @@
     if (response.data.sent) {
       logger.info({
         at: "CloudSyncLogin.sendOTP.sent",
-        email,
+        identifierHash: await sha256(email.trim().toLowerCase()),
         region,
         challengeId: response.data.challengeId
       });
       showInfo("OTP sent to your email address. Please check your inbox.");
       return true;
     }
-    logger.warn({
-      at: "CloudSyncLogin.sendOTP.notSent",
-      email,
-      region,
-      response
-    });
+      logger.warn({
+        at: "CloudSyncLogin.sendOTP.notSent",
+        identifierHash: await sha256(email.trim().toLowerCase()),
+        region,
+        response
+      });
     return false;
+  }
+
+  async function sha256(value: string) {
+    const data = new TextEncoder().encode(value);
+    const digest = await crypto.subtle.digest("SHA-256", data);
+    return Array.from(new Uint8Array(digest))
+      .map((byte) => byte.toString(16).padStart(2, "0"))
+      .join("");
   }
 
   async function emailProceedOptionSelection(mode: "password" | "otp") {

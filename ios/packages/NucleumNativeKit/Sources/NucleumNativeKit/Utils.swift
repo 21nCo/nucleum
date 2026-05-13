@@ -36,7 +36,7 @@ struct Utils {
 
   static func parseJWT(token: String) -> [String: Any]? {
     let parts = token.components(separatedBy: ".")
-    guard parts.count > 1 else { return nil }
+    guard parts.count == 3 else { return nil }
 
     var base64 = parts[1]
     if base64.count % 4 != 0 {
@@ -88,9 +88,16 @@ struct Utils {
     var query = rawQuery
     if let params = params {
       for (key, value) in params {
-        // let replacedValue = "\\$\(key)"
+        guard key.range(of: #"^[A-Za-z_][A-Za-z0-9_]*$"#, options: .regularExpression) != nil else {
+          completion(
+            nil,
+            NSError(
+              domain: LocalConfig.appGroup, code: 400,
+              userInfo: [NSLocalizedDescriptionKey: "Invalid query parameter name"]))
+          return
+        }
         query = query.replacingOccurrences(
-          of: "$\(key)", with: "'\(value)'")
+          of: "$\(key)", with: "'\(escapeSurrealString(value))'")
       }
     }
     var userId: String? = nil
@@ -118,7 +125,15 @@ struct Utils {
           userInfo: [NSLocalizedDescriptionKey: "User not logged in"]))
       return
     }
-    var request = URLRequest(url: URL(string: "\(LocalConfig.widgetApiUrl)/account/n/run")!)
+    guard let url = URL(string: "\(LocalConfig.widgetApiUrl)/account/n/run") else {
+      completion(
+        nil,
+        NSError(
+          domain: LocalConfig.appGroup, code: 400,
+          userInfo: [NSLocalizedDescriptionKey: "Invalid widget API URL"]))
+      return
+    }
+    var request = URLRequest(url: url)
     request.httpMethod = "POST"
     request.addValue("Bearer \(authFnToken!)", forHTTPHeaderField: "Authorization")
     // request.httpBody =
@@ -141,10 +156,12 @@ struct Utils {
     //            print("No headers set for this request.")
     //        }
     let task = URLSession.shared.dataTask(with: request) { (data, response, error) in
-      if error != nil {
+      if let error {
         let context = LogContext(
           file: #file, function: #function, line: #line, isSaveToServer: false)
         Log.error(error: error, context: context)
+        completion(nil, error)
+        return
       } else {
         if let httpResponse = response as? HTTPURLResponse {
           let context = LogContext(
@@ -157,11 +174,19 @@ struct Utils {
           Log.info("Response received", context: context)
         }
         if let unwrappedData = data {
-          do {}
+          completion(String(data: unwrappedData, encoding: .utf8), nil)
+          return
         }
       }
+      completion(nil, nil)
     }
     task.resume()
+  }
+
+  private static func escapeSurrealString(_ value: String) -> String {
+    value
+      .replacingOccurrences(of: "\\", with: "\\\\")
+      .replacingOccurrences(of: "'", with: "\\'")
   }
 
   static func performApiCall(

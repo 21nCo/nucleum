@@ -2,8 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const repoRoot = path.resolve(import.meta.dirname, '../..');
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(scriptDir, '../..');
 const configPath = path.join(repoRoot, 'ios/config/environments.json');
 const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
 

@@ -13,7 +13,9 @@ struct SafariViewModal: View {
     ZStack {
       Color.white.opacity(0)
       VStack {
-        SafariView(url: URL(string: appStore.inAppSafariUrl)!)
+        if let url = URL(string: appStore.inAppSafariUrl), isAllowedExternalUrl(url) {
+          SafariView(url: url)
+        }
       }
       //   .background(appStore.bg)
     }
@@ -22,4 +24,5 @@ struct SafariViewModal: View {
 
 #Preview {
   SafariViewModal()
+    .environmentObject(AppStore.shared)
 }

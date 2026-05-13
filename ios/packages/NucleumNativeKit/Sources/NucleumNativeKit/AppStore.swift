@@ -235,7 +235,11 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
     printWidgetLogs()
   }
   func fetchAppData() {
-    var request = URLRequest(url: LocalConfig.appDataUrl!)
+    guard let appDataUrl = LocalConfig.appDataUrl else {
+      Log.error(message: "Invalid app data URL")
+      return
+    }
+    var request = URLRequest(url: appDataUrl)
     request.httpMethod = "POST"
     let reqDict = ["app": LocalConfig.defaultAppName.lowercased()]
     do {
@@ -989,8 +993,15 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
       {
         // Optional parameters
         let offerToken = purchaseData["offerToken"] as? String
-        let nonce = purchaseData["nonce"] as? String
-        handlePurchase(productId: productId, nonce: nonce!, offerToken: offerToken)
+        guard let nonce = purchaseData["nonce"] as? String, !nonce.isEmpty else {
+          Log.error(message: "Invalid purchase request: missing nonce")
+          self.sendMessageToApp(message: [
+            "type": "PURCHASE_ERROR",
+            "error": "Invalid purchase request: missing nonce",
+          ])
+          return
+        }
+        handlePurchase(productId: productId, nonce: nonce, offerToken: offerToken)
       } else if let purchaseString = value["purchase"] as? String {
         // Try to parse the purchase data as a JSON string
         do {
@@ -1000,8 +1011,15 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
           {
             // Optional parameters
             let offerToken = purchaseDict["offerToken"] as? String
-            let nonce = purchaseDict["nonce"] as? String
-            handlePurchase(productId: productId, nonce: nonce!, offerToken: offerToken)
+            guard let nonce = purchaseDict["nonce"] as? String, !nonce.isEmpty else {
+              Log.error(message: "Invalid purchase request: missing nonce")
+              self.sendMessageToApp(message: [
+                "type": "PURCHASE_ERROR",
+                "error": "Invalid purchase request: missing nonce",
+              ])
+              return
+            }
+            handlePurchase(productId: productId, nonce: nonce, offerToken: offerToken)
           } else {
             Log.error(
               message: "Invalid purchase request: missing or invalid productId in JSON string")
@@ -1236,8 +1254,8 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
   }
 
   func downloadFileWithFolderSelection(_ urlString: String, fileName: String?) {
-    guard let url = URL(string: urlString) else {
-      Log.error(message: "Invalid URL: \(urlString)")
+    guard let url = URL(string: urlString), isAllowedExternalUrl(url) else {
+      Log.error(message: "Rejected download URL: \(redactUrlForLog(urlString))")
       return
     }
 
@@ -1323,8 +1341,8 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
   }
 
   func fetchData(from urlString: String, id: String, completion: @escaping (String) -> Void) {
-    guard let url = URL(string: urlString) else {
-      Log.error(message: "Invalid URL: \(urlString)")
+    guard let url = URL(string: urlString), isAllowedExternalUrl(url) else {
+      Log.error(message: "Rejected fetch URL: \(redactUrlForLog(urlString))")
       let errorMessage = """
             {
                 "type": "FETCH_ERROR",
@@ -1411,8 +1429,8 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
   }
 
   func downloadFile(_ urlString: String, fileName: String?) {
-    guard let url = URL(string: urlString) else {
-      Log.error(message: "Invalid URL: \(urlString)")
+    guard let url = URL(string: urlString), isAllowedExternalUrl(url) else {
+      Log.error(message: "Rejected download URL: \(redactUrlForLog(urlString))")
       return
     }
 

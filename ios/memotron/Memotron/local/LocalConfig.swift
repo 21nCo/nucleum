@@ -10,7 +10,6 @@ import Foundation
 struct LocalConfig {
   static let defaultAppName = "Memotron"
   static let appGroup = "group.io.memotron"
-  static let appDataUrl = URL(string: "")
   static let urlScheme = "memotron"
 
   static var environment: String { infoString("NucleusAppEnvironment", fallback: "dev") }
@@ -46,6 +45,7 @@ struct LocalConfig {
   }
 
   static var widgetApiUrl: String { "\(accountUrl)/widget" }
+  static var appDataUrl: URL? { URL(string: "\(webOrigin)/app-data") }
 
   private static func infoString(_ key: String, fallback: String) -> String {
     guard let value = Bundle.main.object(forInfoDictionaryKey: key) as? String else {

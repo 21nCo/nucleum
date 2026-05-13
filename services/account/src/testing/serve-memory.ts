@@ -22,8 +22,8 @@ const server = serve({
   port
 });
 
-console.log(`Nucleus account memory service listening at ${authority}`);
-console.log(`Allowed CORS origins: ${corsOrigins.join(', ') || '(none)'}`);
+console.log(`Nucleus account memory service listening on ${hostname}:${port}`);
+console.log(`Allowed CORS origins configured: ${corsOrigins.length}`);
 
 async function close() {
   await new Promise<void>((resolve, reject) => {

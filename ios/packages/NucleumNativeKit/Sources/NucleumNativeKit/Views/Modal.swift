@@ -25,25 +25,26 @@ struct Modal: View {
           }
         }
         #if os(iOS)
-          WebViewTwo(
-            urlType: .customProtocolUrl,
-            refreshId: refreshId,
-            url: URL(string: LocalConfig.webOrigin + "/" + appStore.popup.path)!,
-            params: [
-              "isSheet": "true", "spath": appStore.popup.path,
-              "title": appStore.popup.title ?? "",
-            ],
-            isSheet: false,
-            viewModel: popViewModel
-          )
-          .onReceive(self.popViewModel.messageFromSource.receive(on: RunLoop.main)) { value in
-            appStore.incomingMessageHandler(value: value)
-          }.onReceive(self.popViewModel.showLoader.receive(on: RunLoop.main)) { value in
-            Log.info("showLoader for modal: \(value)")
-            appStore.isShowLoadingOverlay = value
+          if let popupUrl = URL(string: LocalConfig.webOrigin + "/" + appStore.popup.path) {
+            WebViewTwo(
+              urlType: .customProtocolUrl,
+              refreshId: refreshId,
+              url: popupUrl,
+              params: [
+                "isSheet": "true", "spath": appStore.popup.path,
+                "title": appStore.popup.title ?? "",
+              ],
+              isSheet: false,
+              viewModel: popViewModel
+            )
+            .onReceive(self.popViewModel.messageFromSource.receive(on: RunLoop.main)) { value in
+              appStore.incomingMessageHandler(value: value)
+            }.onReceive(self.popViewModel.showLoader.receive(on: RunLoop.main)) { value in
+              Log.info("showLoader for modal: \(value)")
+              appStore.isShowLoadingOverlay = value
+            }
+            .padding()
           }
-          // .padding(.top, 40) - required if the webview has scrollable area - to have enough area for swiftUI gesture to work to close the sheet
-          .padding()
         #endif
       }
       .background(appStore.bg)
@@ -56,4 +57,5 @@ struct Modal: View {
 
 #Preview {
   Modal()
+    .environmentObject(AppStore.shared)
 }

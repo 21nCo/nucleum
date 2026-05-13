@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct SimpleText: View {
-  @State var content: String
-  @State var fontSize: CGFloat
-  @State var color: Color?
+  let content: String
+  let fontSize: CGFloat
+  let color: Color?
   @EnvironmentObject var appStore: AppStore
   init(_ content: String, color: Color? = nil, fontSize: CGFloat = 16) {
     self.content = content
@@ -32,4 +32,5 @@ struct SimpleText: View {
 
 #Preview {
   SimpleText("Simple content")
+    .environmentObject(AppStore.shared)
 }

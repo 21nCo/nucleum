@@ -28,6 +28,12 @@ struct WebAuthenticationView: NSViewRepresentable {
     let sessionKey = "\(callbackURLScheme)|\(url.absoluteString)"
     Log.info("WebAuthenticationViewForMac.updateNSView - \(redactOAuthUrl(url))")
 
+    guard isAllowedExternalUrl(url) else {
+      Log.error(message: "Refusing to start authentication with an insecure URL")
+      completionHandler(nil, nil)
+      return
+    }
+
     if WebAuthenticationView.authSessionContainer.isCompleting {
       return
     }

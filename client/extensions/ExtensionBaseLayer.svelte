@@ -78,6 +78,7 @@
           ClientStorageKey.AUTHFN_TOKEN,
           event.data.token.token
         );
+        await clientStorage.remove(ClientStorageKey.STOKEN);
         await clientStorage.set(
           ClientStorageKey.USER_INFO,
           event.data.token.userInfo

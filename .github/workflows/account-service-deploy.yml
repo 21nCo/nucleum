@@ -1,5 +1,8 @@
 name: Account Service Deploy
 
+permissions:
+  contents: read
+
 on:
   push:
     branches:
@@ -35,20 +38,55 @@ jobs:
       regions: ${{ steps.detect.outputs.regions }}
     steps:
       - id: detect
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_ENVIRONMENT: ${{ github.event.inputs.environment }}
+          INPUT_REGIONS: ${{ github.event.inputs.regions }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "environment=${{ github.event.inputs.environment }}" >> "$GITHUB_OUTPUT"
-            echo "regions=${{ github.event.inputs.regions || 'insouth,useast,euwest' }}" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+
+          default_regions="insouth,useast,euwest"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            environment="${INPUT_ENVIRONMENT:-dev}"
+            regions="${INPUT_REGIONS:-$default_regions}"
           elif [[ "${GITHUB_REF_NAME}" == backend-pre-* ]]; then
-            echo "environment=pre" >> "$GITHUB_OUTPUT"
-            echo "regions=insouth,useast,euwest" >> "$GITHUB_OUTPUT"
+            environment="pre"
+            regions="$default_regions"
           elif [[ "${GITHUB_REF_NAME}" == backend-live-* ]]; then
-            echo "environment=live" >> "$GITHUB_OUTPUT"
-            echo "regions=insouth,useast,euwest" >> "$GITHUB_OUTPUT"
+            environment="live"
+            regions="$default_regions"
           else
-            echo "environment=dev" >> "$GITHUB_OUTPUT"
-            echo "regions=insouth,useast,euwest" >> "$GITHUB_OUTPUT"
+            environment="dev"
+            regions="$default_regions"
           fi
+
+          case "$environment" in
+            dev|pre|live) ;;
+            *) echo "Invalid environment: $environment" >&2; exit 1 ;;
+          esac
+
+          sanitized_regions=""
+          IFS=',' read -ra requested_regions <<< "$regions"
+          for region in "${requested_regions[@]}"; do
+            region="$(echo "$region" | xargs)"
+            case "$region" in
+              insouth|useast|euwest) ;;
+              *) echo "Invalid region: $region" >&2; exit 1 ;;
+            esac
+            if [ -z "$sanitized_regions" ]; then
+              sanitized_regions="$region"
+            else
+              sanitized_regions="$sanitized_regions,$region"
+            fi
+          done
+
+          if [ -z "$sanitized_regions" ]; then
+            echo "At least one region is required" >&2
+            exit 1
+          fi
+
+          echo "environment=$environment" >> "$GITHUB_OUTPUT"
+          echo "regions=$sanitized_regions" >> "$GITHUB_OUTPUT"
 
   deploy:
     runs-on: ubuntu-latest
@@ -56,12 +94,6 @@ jobs:
     environment: ${{ needs.detect.outputs.environment }}
     permissions:
       contents: read
-    env:
-      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      TODO_LIVE_INSOUTH_HYPERDRIVE_ID: ${{ vars.TODO_LIVE_INSOUTH_HYPERDRIVE_ID }}
-      TODO_LIVE_USEAST_HYPERDRIVE_ID: ${{ vars.TODO_LIVE_USEAST_HYPERDRIVE_ID }}
-      TODO_LIVE_EUWEST_HYPERDRIVE_ID: ${{ vars.TODO_LIVE_EUWEST_HYPERDRIVE_ID }}
     steps:
       - name: Checkout Nucleus
         uses: actions/checkout@v4
@@ -82,4 +114,10 @@ jobs:
         run: npm --workspace @21n/account-service run test:e2e:apifn:memory
 
       - name: Deploy account service
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          TODO_LIVE_INSOUTH_HYPERDRIVE_ID: ${{ vars.TODO_LIVE_INSOUTH_HYPERDRIVE_ID }}
+          TODO_LIVE_USEAST_HYPERDRIVE_ID: ${{ vars.TODO_LIVE_USEAST_HYPERDRIVE_ID }}
+          TODO_LIVE_EUWEST_HYPERDRIVE_ID: ${{ vars.TODO_LIVE_EUWEST_HYPERDRIVE_ID }}
         run: npm --workspace @21n/account-service run deploy:${{ needs.detect.outputs.environment }} -- --regions=${{ needs.detect.outputs.regions }}

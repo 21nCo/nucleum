@@ -18,6 +18,12 @@
     if (slug === "google" || slug === "apple") return slug;
     return undefined;
   }
+
+  const authFnProviders = $derived(
+    ($appStore?.appData?.oAuthConfig ?? []).filter((provider) =>
+      Boolean(resolveAuthFnProvider(provider.oauth_slug))
+    )
+  );
 </script>
 
 <svelte:head>
@@ -34,8 +40,8 @@
 </svelte:head>
 
 <div class="flex flex-col w-full gap-4">
-  {#if isValidArrayWithData($appStore?.appData?.oAuthConfig)}
-    {#each $appStore.appData.oAuthConfig as provider}
+  {#if isValidArrayWithData(authFnProviders)}
+    {#each authFnProviders as provider}
       <Button
         size={Size.lg}
         id={provider.oauth_slug === "apple"

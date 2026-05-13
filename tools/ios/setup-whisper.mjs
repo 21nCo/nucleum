@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { access, stat } from "node:fs/promises";
+import { access, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
@@ -10,6 +10,7 @@ const repoRoot = path.resolve(__dirname, "../..");
 const vendorRoot = path.join(repoRoot, "ios", "vendor");
 const whisperDir = path.join(vendorRoot, "whisper.cpp");
 const xcframeworkPath = path.join(whisperDir, "build-apple", "whisper.xcframework");
+const buildRefPath = path.join(whisperDir, "build-apple", ".nucleus-whisper-ref");
 const repoUrl = "https://github.com/21nOrg/whisper.cpp";
 const defaultRef = "032697b9a850dc2615555e2a93a683cc3dd58559";
 const ref = process.env.WHISPER_CPP_REF || defaultRef;
@@ -29,6 +30,28 @@ function run(command, args, options = {}) {
         return;
       }
 
+      reject(new Error(`${command} ${args.join(" ")} exited with code ${code}`));
+    });
+  });
+}
+
+function runOutput(command, args, options = {}) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(command, args, {
+      stdio: ["ignore", "pipe", "inherit"],
+      shell: false,
+      ...options
+    });
+    let output = "";
+    child.stdout.on("data", (chunk) => {
+      output += chunk.toString();
+    });
+    child.on("error", reject);
+    child.on("close", (code) => {
+      if (code === 0) {
+        resolve(output.trim());
+        return;
+      }
       reject(new Error(`${command} ${args.join(" ")} exited with code ${code}`));
     });
   });
@@ -56,9 +79,19 @@ if (!(await exists(whisperDir))) {
 
 await run("git", ["fetch", "--tags", "origin"], { cwd: whisperDir });
 await run("git", ["checkout", ref], { cwd: whisperDir });
+const checkedOutRef = await runOutput("git", ["rev-parse", "HEAD"], { cwd: whisperDir });
 
-if (!(await exists(xcframeworkPath))) {
+let builtRef = "";
+try {
+  builtRef = (await readFile(buildRefPath, "utf8")).trim();
+} catch {
+  builtRef = "";
+}
+
+if (!(await exists(xcframeworkPath)) || builtRef !== checkedOutRef) {
+  await rm(xcframeworkPath, { recursive: true, force: true });
   await run("./build-xcframework.sh", [], { cwd: whisperDir });
+  await writeFile(buildRefPath, `${checkedOutRef}\n`, "utf8");
 }
 
 await assertDirectory(xcframeworkPath, "Whisper XCFramework");

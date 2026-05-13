@@ -91,7 +91,7 @@
         }
       }
     } catch (error) {
-      console.error({ at: "Login.finishOAuthCallbackLogin", error });
+      logger.error({ at: "Login.finishOAuthCallbackLogin", error });
       if (isOAuthCallback) {
         toasts.error("Authentication failed. Please try again.");
       }

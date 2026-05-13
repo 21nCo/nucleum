@@ -20,7 +20,9 @@ struct SafariTestView: View {
     }
     // summon the Safari sheet
     .sheet(isPresented: $showSafari) {
-      SafariView(url: URL(string: self.urlString)!)
+      if let url = URL(string: self.urlString), isAllowedExternalUrl(url) {
+        SafariView(url: url)
+      }
     }
   }
 }
@@ -53,15 +55,15 @@ struct AuthenticationTestView: View {
       isPresented = true
     }
     .sheet(isPresented: $isPresented) {
-      WebAuthenticationView(url: URL(string: urlString)!, callbackURLScheme: "tauri") {
-        callbackURL, error in
-        isPresented = false
-        if let callbackURL = callbackURL {
-          // Handle successful authentication
-          print("Success: \(callbackURL)")
-        } else if let error = error {
-          // Handle error
-          print("Error: \(error.localizedDescription)")
+      if let url = URL(string: urlString), isAllowedExternalUrl(url) {
+        WebAuthenticationView(url: url, callbackURLScheme: "tauri") {
+          callbackURL, error in
+          isPresented = false
+          if let callbackURL = callbackURL {
+            Log.info("Success: \(redactOAuthUrl(callbackURL))")
+          } else if let error = error {
+            Log.error(message: error.localizedDescription)
+          }
         }
       }
     }
@@ -91,6 +93,12 @@ struct WebAuthenticationView: UIViewControllerRepresentable {
   func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
     let sessionKey = "\(callbackURLScheme)|\(url.absoluteString)"
     Log.info("WebAuthenticationView.updateUIViewController - \(redactOAuthUrl(url))")
+
+    guard isAllowedExternalUrl(url) else {
+      Log.error(message: "Refusing to start authentication with an insecure URL")
+      completionHandler(nil, nil)
+      return
+    }
 
     if WebAuthenticationView.authSessionContainer.isCompleting {
       return

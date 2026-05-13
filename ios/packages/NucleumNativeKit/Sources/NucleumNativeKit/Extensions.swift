@@ -54,15 +54,22 @@ public extension Color {
 
 public extension Color {
     static func hsl(_ hsl: String) -> Color {
-        // Remove the 'hsl' and parentheses, then split into components.
-        let trimmedString = hsl.trimmingCharacters(in: CharacterSet(charactersIn: "hsl()% "))
-        let components = trimmedString.components(separatedBy: " ")
-        guard components.count == 3,
-              let h = Double(components[0]),
-              let s = Double(components[1].trimmingCharacters(in: CharacterSet(charactersIn: "%"))),
-              let l = Double(components[2].trimmingCharacters(in: CharacterSet(charactersIn: "%"))) else {
+        let pattern = #"^hsla?\(\s*([+-]?(?:\d+(?:\.\d+)?|\.\d+))(?:deg)?[\s,]+([+-]?(?:\d+(?:\.\d+)?|\.\d+))%[\s,]+([+-]?(?:\d+(?:\.\d+)?|\.\d+))%(?:[\s,/]+[+-]?(?:\d+(?:\.\d+)?|\.\d+)%?)?\s*\)$"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
+              let match = regex.firstMatch(in: hsl, range: NSRange(hsl.startIndex..., in: hsl)),
+              let hRange = Range(match.range(at: 1), in: hsl),
+              let sRange = Range(match.range(at: 2), in: hsl),
+              let lRange = Range(match.range(at: 3), in: hsl),
+              let rawH = Double(hsl[hRange]),
+              let rawS = Double(hsl[sRange]),
+              let rawL = Double(hsl[lRange]) else {
             return Color.black // Return black if parsing fails.
         }
+        let h = rawH.truncatingRemainder(dividingBy: 360) < 0
+            ? rawH.truncatingRemainder(dividingBy: 360) + 360
+            : rawH.truncatingRemainder(dividingBy: 360)
+        let s = min(max(rawS, 0), 100)
+        let l = min(max(rawL, 0), 100)
 
         // Convert HSL to RGB using the formula.
         let c = (1.0 - abs(2.0 * l / 100.0 - 1.0)) * s / 100.0

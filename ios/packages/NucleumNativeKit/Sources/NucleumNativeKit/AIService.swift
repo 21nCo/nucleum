@@ -423,18 +423,23 @@ class AIService: NSObject, ObservableObject, AIServiceProvider {
       guard let self = self else { return }
 
       do {
-        var transcriptionError: NSError?
-        let result = self.whisperWrapper?.transcribeAudio(
-          atPath: fileURLToTranscribe.path, error: &transcriptionError)
+        let result = try self.whisperWrapper?.transcribeAudio(atPath: fileURLToTranscribe.path)
 
         DispatchQueue.main.async {
           self.isTranscribing = false
 
           if let result = result, !result.isEmpty {
             self.transcription = result
-          } else if let error = transcriptionError {
+          } else {
+            self.error = "Transcription failed with unknown error"
+          }
+        }
+      } catch {
+        DispatchQueue.main.async {
+          self.isTranscribing = false
+          let nsError = error as NSError
             // Check if it's a CoreML error
-            if error.localizedDescription.contains("Core ML model") && self.useCoreML {
+          if nsError.localizedDescription.contains("Core ML model") && self.useCoreML {
               // Reset the wrapper to force re-initialization
               self.whisperWrapper = nil
               // Turn off CoreML for next attempt
@@ -443,18 +448,15 @@ class AIService: NSObject, ObservableObject, AIServiceProvider {
               self.error = "CoreML error, retrying with standard model..."
               self.transcribeAudio()
             } else {
-              self.error = "Transcription failed: \(error.localizedDescription)"
+            self.error = "Transcription failed: \(nsError.localizedDescription)"
 
               // If we get the bit depth error, try to diagnose the audio file
-              if error.localizedDescription.contains("bit depth")
-                || error.localizedDescription.contains("input is too short")
+            if nsError.localizedDescription.contains("bit depth")
+              || nsError.localizedDescription.contains("input is too short")
               {
                 self.diagnoseAudioFile(fileURLToTranscribe)
               }
             }
-          } else {
-            self.error = "Transcription failed with unknown error"
-          }
         }
       }
     }
@@ -1076,21 +1078,13 @@ class WhisperWrapper {
         userInfo: [NSLocalizedDescriptionKey: "Whisper context not initialized"])
     }
 
-    var error: NSError?
-    let result = whisperContext.transcribeAudio(atPath: audioURL.path, error: &error)
-
-    if let error = error {
+    do {
+      let result = try whisperContext.transcribeAudio(atPath: audioURL.path)
+      return result
+    } catch {
       Log.error(message: "Whisper transcription failed: \(error.localizedDescription)")
       throw error
     }
-
-    //    guard let transcription = result else {
-    //      throw NSError(
-    //        domain: "WhisperWrapper", code: 2,
-    //        userInfo: [NSLocalizedDescriptionKey: "Failed to get transcription result"])
-    //    }
-
-    return result
   }
 
   func isUsingCoreMLAcceleration() -> Bool {
@@ -2127,8 +2121,6 @@ extension AIService {
         self.saveTranscriptionTask(task)
 
         Log.info("Starting Whisper transcription on entire file...")
-        var transcriptionError: NSError?
-
         // Extract parameters from request
         let language = self.pendingRequest?.body["language"]?.value as? String
         let enableDiarization =
@@ -2138,18 +2130,13 @@ extension AIService {
         let enableImprovedFormat =
           self.pendingRequest?.body["enableImprovedFormatting"]?.value as? Bool ?? false
 
-        let result = whisperWrapper.transcribeAudio(
+        let result = try whisperWrapper.transcribeAudio(
           atPath: convertedAudioURL.path,
           language: language,
           enableDiarization: enableDiarization,
           enableTimestamps: enableTimestamps,
-          enableImprovedFormat: enableImprovedFormat,
-          error: &transcriptionError
+          enableImprovedFormat: enableImprovedFormat
         )
-
-        if let error = transcriptionError {
-          throw error
-        }
 
         guard !result.isEmpty else {
           throw NSError(
@@ -2362,21 +2349,15 @@ extension AIService {
         let enableImprovedFormat =
           self.pendingRequest?.body["enableImprovedFormatting"]?.value as? Bool ?? false
 
-        var transcriptionError: NSError?
-        let finalTranscription = whisperWrapper.transcribeAudio(
+        let finalTranscription = try whisperWrapper.transcribeAudio(
           fromPCMData: targetBuffer.floatChannelData![0],
           sampleCount: Int32(targetBuffer.frameLength),
           sampleRate: Int32(16000),
           language: language,
           enableDiarization: enableDiarization,
           enableTimestamps: enableTimestamps,
-          enableImprovedFormat: enableImprovedFormat,
-          error: &transcriptionError
+          enableImprovedFormat: enableImprovedFormat
         )
-
-        if let error = transcriptionError {
-          throw error
-        }
 
         guard !finalTranscription.isEmpty else {
           throw NSError(
@@ -2545,19 +2526,13 @@ extension AIService {
         for (index, chunkURL) in audioChunks.enumerated() {
           Log.info("Processing chunk \(index + 1)/\(audioChunks.count): \(chunkURL.path)")
 
-          var chunkError: NSError?
-          let chunkText = whisperWrapper.transcribeAudio(
+          let chunkText = try whisperWrapper.transcribeAudio(
             atPath: chunkURL.path,
             language: language,
             enableDiarization: enableDiarization,
             enableTimestamps: enableTimestamps,
-            enableImprovedFormat: enableImprovedFormat,
-            error: &chunkError
+            enableImprovedFormat: enableImprovedFormat
           )
-
-          if let error = chunkError {
-            throw error
-          }
 
           // Update chunk
           if index < task.chunks.count {

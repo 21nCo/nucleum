@@ -55,20 +55,22 @@ struct BaseView: View {
         LoadingOverlay()
       }
       if isShowOauthFlow {
-        WebAuthenticationView(
-          url: URL(string: appStore.oauthUrl)!, callbackURLScheme: LocalConfig.urlScheme
-        ) {
-          callbackURL, error in
-	          DispatchQueue.main.async {
-	            if let callbackURL = callbackURL {
-	              Log.info("OAuth success callback: \(callbackURL)")
-	              processOauthResponse(callbackURL)
-	            } else if let error = error {
-	              Log.error(message: "OAuth failed: \(error.localizedDescription)")
-	            }
-	            isShowOauthFlow = false
-	          }
-	        }
+        if let oauthUrl = URL(string: appStore.oauthUrl), isAllowedExternalUrl(oauthUrl) {
+          WebAuthenticationView(
+            url: oauthUrl, callbackURLScheme: LocalConfig.urlScheme
+          ) {
+            callbackURL, error in
+            DispatchQueue.main.async {
+              if let callbackURL = callbackURL {
+                Log.info("OAuth success callback: \(redactUrlForLog(callbackURL))")
+                processOauthResponse(callbackURL)
+              } else if let error = error {
+                Log.error(message: "OAuth failed: \(error.localizedDescription)")
+              }
+              isShowOauthFlow = false
+            }
+          }
+        }
       }
     }
     .edgesIgnoringSafeArea(.all)
@@ -117,7 +119,7 @@ struct BaseView: View {
   func localMessageHandler(value: [String: Any?]) {
     if value.keys.contains("session") {
       if let sessionDataString = value["session"] as? String {
-        Log.info("Setting sessionDataString: \(sessionDataString)")
+        Log.info("Received session data message")
         appStore.sharedDefaults?.set(sessionDataString, forKey: "sessionData")
         appStore.refreshAllWidgets()
       } else {
@@ -126,14 +128,14 @@ struct BaseView: View {
       appStore.incomingMessageWrapper(value: value)
     } else if value.keys.contains("link") {
       if let url = value["link"] as? String {
-        Log.info("link - url: \(url)")
+        Log.info("link - url: \(redactUrlForLog(url))")
         openURLInSafari(url)
       } else {
         Log.error(message: "Unable to parse link message")
       }
       appStore.incomingMessageWrapper(value: value)
     } else if value.keys.contains("fetch") {
-      Log.info("fetch: \(value)")
+      Log.info("Received fetch message")
       if let fetchString = value["fetch"] as? String {
         let jsonData = Data(fetchString.utf8)
         let decoder = JSONDecoder()
@@ -150,7 +152,7 @@ struct BaseView: View {
       }
     } else if value.keys.contains("oauth") {
       if let url = value["oauth"] as? String {
-        Log.info("oauth - url: \(url)")
+        Log.info("oauth - url: \(redactUrlForLog(url))")
         openOauthFlow(url)
       } else {
         Log.error(message: "Unable to parse oauth message")
@@ -208,7 +210,7 @@ struct BaseView: View {
   }
 
   func processUrlScheme(_ url: URL) {
-    Log.info("Url Scheme triggered: \(url.absoluteString)")
+    Log.info("Url Scheme triggered: \(redactUrlForLog(url))")
     if url.absoluteString.contains("oauthsignin") {
       processOauthResponse(url)
       self.isShowInAppSafari = false

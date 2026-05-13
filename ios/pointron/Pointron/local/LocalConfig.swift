@@ -10,7 +10,6 @@ import Foundation
 struct LocalConfig {
   static let defaultAppName = "Pointron"
   static let appGroup = "group.io.pointron"
-  static let appDataUrl = URL(string: "")
   static let surrealUrl = ""
   static let urlScheme = "pointron"
 
@@ -47,6 +46,7 @@ struct LocalConfig {
   }
 
   static var widgetApiUrl: String { "\(accountUrl)/widget" }
+  static var appDataUrl: URL? { URL(string: "\(webOrigin)/app-data") }
 
   private static func infoString(_ key: String, fallback: String) -> String {
     guard let value = Bundle.main.object(forInfoDictionaryKey: key) as? String else {

@@ -10,8 +10,11 @@ import SwiftUI
 struct ContentView: View {
   @EnvironmentObject var appStore: AppStore
   @State private var showTranscriptionView = false
-  @StateObject private var aiService = AIService.shared
-  @State private var isShowTranscriptionDebugger = false
+  #if DEBUG
+    @State private var isShowTranscriptionDebugger = true
+  #else
+    @State private var isShowTranscriptionDebugger = false
+  #endif
 
   var body: some View {
     ZStack {

@@ -113,7 +113,7 @@ class CameraManager: NSObject, ObservableObject {
     }
   }
   private func setupSession() {
-    DispatchQueue.main.async {
+    DispatchQueue.global(qos: .userInitiated).async {
       self.configure()
     }
   }
@@ -127,7 +127,9 @@ class CameraManager: NSObject, ObservableObject {
     if session.canAddInput(input) && session.canAddOutput(output) {
       session.addInput(input)
       session.addOutput(output)
-      previewLayer.session = session
+      DispatchQueue.main.async {
+        self.previewLayer.session = self.session
+      }
       session.startRunning()
     }
   }

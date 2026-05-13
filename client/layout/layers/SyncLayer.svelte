@@ -20,7 +20,7 @@
 
   onMount(() => {
     interval = setInterval(() => {
-      // proceedSync();
+      void proceedSync();
     }, SYNC_INTERVAL);
 
     document.addEventListener("visibilitychange", handleVisibilityChange);

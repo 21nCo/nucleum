@@ -22,7 +22,11 @@ class CustomURLSchemeHandler: NSObject, WKURLSchemeHandler {
     self.isSheet = isSheet
   }
   func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
-    var url = urlSchemeTask.request.url!
+    guard let url = urlSchemeTask.request.url else {
+      urlSchemeTask.didFailWithError(
+        NSError(domain: NSURLErrorDomain, code: NSURLErrorBadURL, userInfo: nil))
+      return
+    }
 
     // Remove '@' symbol if present at the beginning of the URL
     // if url.absoluteString.hasPrefix("@") {
@@ -30,7 +34,7 @@ class CustomURLSchemeHandler: NSObject, WKURLSchemeHandler {
     //   url = URL(string: urlString) ?? url
     // }
 
-    let path = url.path
+    let path = url.path == "/" ? "/index.html" : url.path
     let host = url.host
     let customProtocolInContext = url.scheme
     print(
@@ -41,7 +45,16 @@ class CustomURLSchemeHandler: NSObject, WKURLSchemeHandler {
       return
     }
     let directoryPath = isSheet ? "/sheet" : "/www"
-    let filePath = resourcePath + directoryPath + path
+    guard let fileURL = bundledWebFileURL(
+      resourcePath: resourcePath,
+      directoryPath: directoryPath,
+      requestPath: path
+    ) else {
+      urlSchemeTask.didFailWithError(
+        NSError(domain: NSURLErrorDomain, code: NSURLErrorNoPermissionsToReadFile, userInfo: nil))
+      return
+    }
+    let filePath = fileURL.path
     //    print("CustomURLSchemeHandler - filePath: \(filePath), path: \(path), host: \(host)")
     do {
       if customProtocolInContext != customProtocol {
@@ -52,7 +65,7 @@ class CustomURLSchemeHandler: NSObject, WKURLSchemeHandler {
       }
       let mimeType = mimeTypeForPath(path: filePath)
       // Read the file data.
-      let data = try Data(contentsOf: URL(fileURLWithPath: filePath))
+      let data = try Data(contentsOf: fileURL)
       let headers = [
         "Content-Type": mimeType,
         "Access-Control-Allow-Origin": "*",
@@ -109,15 +122,53 @@ class CustomURLSchemeHandler: NSObject, WKURLSchemeHandler {
 }
 
 func createUrlForCustomProtocol(with parameters: [String: String]) -> URL {
-  var components = URLComponents(string: "\(customProtocol)://localhost/index.html")!
+  guard var components = URLComponents(string: "\(customProtocol)://localhost/index.html") else {
+    preconditionFailure("Invalid bundled custom protocol base URL")
+  }
   components.queryItems = parameters.map { URLQueryItem(name: $0.key, value: $0.value) }
-  return components.url!
+  guard let url = components.url else {
+    preconditionFailure("Invalid bundled custom protocol URL parameters")
+  }
+  return url
 }
 
 func createUrlForPublicProtocol(url: String, with parameters: [String: String]) -> URL {
-  var components = URLComponents(string: url)!
+  guard var components = URLComponents(string: url),
+    let baseUrl = components.url,
+    isAllowedExternalUrl(baseUrl)
+  else {
+    return createUrlForCustomProtocol(with: parameters)
+  }
   components.queryItems = parameters.map { URLQueryItem(name: $0.key, value: $0.value) }
-  return components.url!
+  return components.url ?? baseUrl
+}
+
+func isAllowedExternalUrl(_ url: URL, allowLocalHttp: Bool = true) -> Bool {
+  guard let scheme = url.scheme?.lowercased() else { return false }
+  if scheme == "https" { return true }
+  if scheme == customProtocol { return true }
+  guard allowLocalHttp, scheme == "http" else { return false }
+  let host = url.host?.lowercased()
+  return host == "localhost" || host == "127.0.0.1" || host == "::1"
+}
+
+private func bundledWebFileURL(
+  resourcePath: String,
+  directoryPath: String,
+  requestPath: String
+) -> URL? {
+  let trimmedPath = requestPath.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+  if trimmedPath.isEmpty || trimmedPath.contains("..") || trimmedPath.contains("\0") {
+    return nil
+  }
+
+  let rootURL = URL(fileURLWithPath: resourcePath)
+    .appendingPathComponent(directoryPath.trimmingCharacters(in: CharacterSet(charactersIn: "/")))
+    .standardizedFileURL
+  let fileURL = rootURL.appendingPathComponent(trimmedPath).standardizedFileURL
+  let rootPath = rootURL.path.hasSuffix("/") ? rootURL.path : rootURL.path + "/"
+  guard fileURL.path.hasPrefix(rootPath) else { return nil }
+  return fileURL
 }
 
 protocol WebViewHandlerDelegate {

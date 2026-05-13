@@ -98,7 +98,7 @@ public class JobManager: NSObject, ObservableObject {
     updateJobStatus(jobId, status: .running)
 
     backgroundQueue.async { [weak self] in
-      self?.executeJob(job)
+      self?.executeJob(jobId)
     }
   }
 
@@ -202,7 +202,11 @@ public class JobManager: NSObject, ObservableObject {
     coreDataStack.save()
   }
 
-  private func executeJob(_ job: Job) {
+  private func executeJob(_ jobId: String) {
+    guard let job = fetchJob(jobId) else {
+      Log.error(message: "Job not found: \(jobId)")
+      return
+    }
     guard let jobType = JobType(rawValue: job.type) else {
       setJobError(job.id, error: "Unknown job type: \(job.type)")
       updateJobStatus(job.id, status: .failed)

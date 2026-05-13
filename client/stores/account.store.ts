@@ -283,10 +283,10 @@ class AccountStore extends ObservableStore<UserAccount> {
         profilePictureUrl?: string;
       };
     };
-    const email = session.primaryEmail ?? session.subject.email ?? "";
-    const id = session.actorId.startsWith("user:")
-      ? session.actorId
-      : `user:${session.actorId}`;
+    const subject = session.subject ?? {};
+    const email = session.primaryEmail ?? subject.email ?? "";
+    const actorId = String(session.actorId ?? "");
+    const id = actorId.startsWith("user:") ? actorId : `user:${actorId}`;
     return {
       id,
       email,
@@ -294,8 +294,8 @@ class AccountStore extends ObservableStore<UserAccount> {
       joinDate: new Date(),
       lastLogin: new Date(),
       profilePictureUrl: metadata.nucleus?.profilePictureUrl,
-      isBootstrapped: metadata.nucleus?.isBootstrapped ?? true,
-      region: session.regionId ?? session.subject.regionId
+      isBootstrapped: metadata.nucleus?.isBootstrapped ?? false,
+      region: session.regionId ?? subject.regionId
     };
   }
 

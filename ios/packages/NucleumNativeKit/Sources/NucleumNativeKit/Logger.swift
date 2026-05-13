@@ -39,6 +39,39 @@ struct LogContext {
   }
 }
 
+func redactUrlForLog(_ url: URL) -> String {
+  guard var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
+    return "[invalid-url]"
+  }
+  let sensitiveNames = Set([
+    "token",
+    "authfnToken",
+    "authfnWidgetToken",
+    "code",
+    "state",
+    "nonce",
+    "id_token",
+    "access_token",
+    "refresh_token",
+    "email",
+    "identifier",
+    "otp"
+  ])
+  components.queryItems = components.queryItems?.map { item in
+    let name = item.name.lowercased()
+    return sensitiveNames.contains(name)
+      ? URLQueryItem(name: item.name, value: "[REDACTED]")
+      : item
+  }
+  components.fragment = nil
+  return components.string ?? "[redacted-url]"
+}
+
+func redactUrlForLog(_ urlString: String) -> String {
+  guard let url = URL(string: urlString) else { return "[invalid-url]" }
+  return redactUrlForLog(url)
+}
+
 enum Log {
   enum logType {
     case info
@@ -61,9 +94,12 @@ enum Log {
     Log.log(logType: .info, message: message, context: context)
   }
   static func error(error: (any Error)? = nil, message: String = "", context: LogContext? = nil) {
+    let resolvedMessage = message.isEmpty
+      ? (error?.localizedDescription ?? "Unknown error")
+      : message
     Log.log(
       logType: .error,
-      message: message.isEmpty ? (error?.localizedDescription ?? "") : message,
+      message: resolvedMessage,
       context: context)
   }
 	  fileprivate static func log(logType: logType, message: String, context: LogContext? = nil) {
@@ -156,7 +192,7 @@ enum Log {
           "(?i)\"(token|authfnToken|authfnWidgetToken|refreshToken|surrealToken|password|otp|code|challengeId|email|identifier)\"\\s*:\\s*\"[^\"]+\"",
           "\"$1\":\"[REDACTED]\""
         ),
-        ("[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", "[REDACTED]"),
+        ("(?i)[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}", "[REDACTED]"),
       ]
       for (pattern, replacement) in patterns {
         result = result.replacingOccurrences(

@@ -28,12 +28,16 @@ struct CustomWebView: UIViewRepresentable {
     let webView = WKWebView(frame: .zero, configuration: config)
     context.coordinator.navigationState = navigationState
     webView.navigationDelegate = context.coordinator
-    webView.load(URLRequest(url: url))
+    if isAllowedExternalUrl(url) {
+      webView.load(URLRequest(url: url))
+    }
     return webView
   }
   func updateUIView(_ uiView: WKWebView, context: Self.Context) {
-    let request = URLRequest(url: url)
-    uiView.load(request)
+    guard isAllowedExternalUrl(url) else { return }
+    if uiView.url != url {
+      uiView.load(URLRequest(url: url))
+    }
   }
   class Coordinator: NSObject, WKNavigationDelegate {
     var navigationState: NavigationState?

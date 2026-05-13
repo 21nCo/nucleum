@@ -12,37 +12,37 @@ NS_ASSUME_NONNULL_BEGIN
 @interface WhisperCppWrapper : NSObject
 
 // Initialize with a model path
-- (instancetype)initWithModelPath:(NSString *)modelPath;
+- (nullable instancetype)initWithModelPath:(NSString *)modelPath;
 
 // Initialize with a model path and optional Core ML model path
-- (instancetype)initWithModelPath:(NSString *)modelPath coreMLModelPath:(nullable NSString *)coreMLModelPath;
+- (nullable instancetype)initWithModelPath:(NSString *)modelPath coreMLModelPath:(nullable NSString *)coreMLModelPath;
 
 // Transcribe audio file at the specified path
-- (NSString *)transcribeAudioAtPath:(NSString *)audioPath error:(NSError **)error;
+- (nullable NSString *)transcribeAudioAtPath:(NSString *)audioPath error:(NSError * _Nullable * _Nullable)error;
 
 // Transcribe audio file with advanced parameters
-- (NSString *)transcribeAudioAtPath:(NSString *)audioPath 
+- (nullable NSString *)transcribeAudioAtPath:(NSString *)audioPath
                            language:(nullable NSString *)language
                  enableDiarization:(BOOL)enableDiarization
                    enableTimestamps:(BOOL)enableTimestamps
               enableImprovedFormat:(BOOL)enableImprovedFormat
-                             error:(NSError **)error;
+                             error:(NSError * _Nullable * _Nullable)error;
 
 // Transcribe audio from raw PCM float data (more efficient for non-WAV formats)
-- (NSString *)transcribeAudioFromPCMData:(const float *)pcmData 
-                              sampleCount:(int)sampleCount 
-                               sampleRate:(int)sampleRate 
-                                    error:(NSError **)error;
+- (nullable NSString *)transcribeAudioFromPCMData:(const float *)pcmData
+                              sampleCount:(int)sampleCount
+                               sampleRate:(int)sampleRate
+                                    error:(NSError * _Nullable * _Nullable)error;
 
 // Transcribe audio from raw PCM float data with advanced parameters
-- (NSString *)transcribeAudioFromPCMData:(const float *)pcmData 
-                              sampleCount:(int)sampleCount 
+- (nullable NSString *)transcribeAudioFromPCMData:(const float *)pcmData
+                              sampleCount:(int)sampleCount
                                sampleRate:(int)sampleRate
                                  language:(nullable NSString *)language
                        enableDiarization:(BOOL)enableDiarization
                          enableTimestamps:(BOOL)enableTimestamps
                     enableImprovedFormat:(BOOL)enableImprovedFormat
-                                   error:(NSError **)error;
+                                   error:(NSError * _Nullable * _Nullable)error;
 
 // Get library version
 + (NSString *)version;
@@ -52,4 +52,4 @@ NS_ASSUME_NONNULL_BEGIN
 
 @end
 
-NS_ASSUME_NONNULL_END 
+NS_ASSUME_NONNULL_END

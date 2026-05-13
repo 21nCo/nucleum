@@ -522,6 +522,7 @@
 
   async function handleMessageFromParent(event: any) {
     try {
+      if (!isTrustedNativeMessage(event)) return;
       if (event?.data?.type === "SWIFT_MESSAGE" && event?.data?.payload) {
         if (typeof event.data.payload !== "string") return;
         if (!event.data.payload.trim().startsWith("{")) return;
@@ -566,6 +567,12 @@
         origin: event?.origin
       });
     }
+  }
+
+  function isTrustedNativeMessage(event: MessageEvent) {
+    if (event?.data?.type !== "SWIFT_MESSAGE") return true;
+    if (event.source !== window) return false;
+    return event.origin === window.location.origin || event.origin === "null";
   }
 
   function addWindowEventListeners() {

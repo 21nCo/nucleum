@@ -15,7 +15,10 @@ import SwiftUI
 
 struct LoadingOverlay: View {
   @EnvironmentObject var appStore: AppStore
-  @State var isSheet: Bool = false
+  let isSheet: Bool
+  init(isSheet: Bool = false) {
+    self.isSheet = isSheet
+  }
   var body: some View {
     ZStack {
       appStore.bg.edgesIgnoringSafeArea(.all)

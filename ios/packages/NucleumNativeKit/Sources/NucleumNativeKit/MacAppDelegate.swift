@@ -17,10 +17,9 @@ class MacAppDelegate: NSObject, NSApplicationDelegate {
   }
 
   func application(_ application: NSApplication, open urls: [URL]) {
-    guard let url = urls.first else { return }
-    // Handle the custom URL
-    print("URL received in application(_:open:): \(url)")
-    handleURL(url)
+    for url in urls {
+      handleURL(url)
+    }
   }
 
   @objc func handleURLEvent(
@@ -33,13 +32,12 @@ class MacAppDelegate: NSObject, NSApplicationDelegate {
       return
     }
 
-    print("URL received in handleURLEvent: \(url)")
     handleURL(url)
   }
 
   private func handleURL(_ url: URL) {
     DispatchQueue.main.async {
-      print("Posting URL notification: \(url)")
+      Log.info("Posting URL notification: \(redactUrlForLog(url))")
       NotificationCenter.default.post(name: .didReceiveCustomURL, object: url)
     }
   }

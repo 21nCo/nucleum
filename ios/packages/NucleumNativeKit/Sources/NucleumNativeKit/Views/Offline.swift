@@ -20,4 +20,5 @@ struct Offline: View {
 
 #Preview {
     Offline()
+      .environmentObject(AppStore.shared)
 }

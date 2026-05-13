@@ -82,7 +82,13 @@
       ClientStorageKey.OFFLINE_SESSION_ID
     );
 
-    const session = await (await authClient()).getSession();
+    let session;
+    try {
+      session = await (await authClient()).getSession();
+    } catch (error) {
+      console.error({ at: "AuthGuard.performLoginStatusCheck.getSession", error });
+      return Boolean(offlineSessionId && !authFnToken);
+    }
     if (!session.ok || !session.data.session) {
       if (offlineSessionId && !authFnToken) return true;
       console.log("AuthFn session not found. Redirecting to signup");
@@ -91,6 +97,10 @@
     }
 
     const authSession = session.data.session;
+    const subject = authSession.subject ?? {};
+    const actorId = String(authSession.actorId ?? "");
+    const normalizedActorId = actorId.startsWith("user:") ? actorId : `user:${actorId}`;
+    const unprefixedActorId = normalizedActorId.slice("user:".length);
     const legacyCloudSession = await hasLegacyCloudSession();
     if (!legacyCloudSession) {
       await account.ensureOfflineSession();
@@ -101,24 +111,22 @@
       token: authFnToken,
       dataMode: legacyCloudSession ? UserDataMode.CLOUD : UserDataMode.LOCAL,
       sessionType: UserSessionType.RETURNING,
-      userId: authSession.actorId,
+      userId: unprefixedActorId,
       userInfo: {
         ...(current.userInfo ?? {}),
-        id: authSession.actorId.startsWith("user:")
-          ? authSession.actorId
-          : `user:${authSession.actorId}`,
-        email: authSession.primaryEmail ?? authSession.subject.email ?? "",
+        id: normalizedActorId,
+        email: authSession.primaryEmail ?? subject.email ?? "",
         isBootstrapped:
           (authSession.metadata?.nucleus as { isBootstrapped?: boolean } | undefined)
-            ?.isBootstrapped ?? true,
+            ?.isBootstrapped ?? false,
         nickName:
           current.userInfo?.nickName ??
           authSession.primaryEmail?.split("@")[0] ??
-          authSession.subject.email?.split("@")[0] ??
+          subject.email?.split("@")[0] ??
           "App user",
         joinDate: current.userInfo?.joinDate ?? new Date(),
         lastLogin: new Date(),
-        region: authSession.regionId ?? authSession.subject.regionId
+        region: authSession.regionId ?? subject.regionId
       } as any
     }));
     return true;

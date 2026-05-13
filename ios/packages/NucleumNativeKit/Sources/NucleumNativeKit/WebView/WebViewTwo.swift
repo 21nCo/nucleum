@@ -490,7 +490,7 @@ struct WebViewTwo: UIViewRepresentable, WebViewHandlerDelegate {
     configuration.mediaTypesRequiringUserActionForPlayback = []
     configuration.mediaPlaybackRequiresUserAction = false
 
-    configuration.userContentController.add(self.makeCoordinator(), name: "iOSNative")
+    configuration.userContentController.add(context.coordinator, name: "iOSNative")
     if let nativeConfigScript = makeNativeConfigUserScript() {
       configuration.userContentController.addUserScript(nativeConfigScript)
     }

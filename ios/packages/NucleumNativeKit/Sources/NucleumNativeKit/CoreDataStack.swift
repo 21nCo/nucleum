@@ -11,7 +11,7 @@ class CoreDataStack {
       name: "JobDataModel", managedObjectModel: createJobDataModel())
     container.loadPersistentStores { _, error in
       if let error = error {
-        Log.error(message: "Core Data error: \(error)")
+        fatalError("Core Data persistent store failed to load: \(error)")
       }
     }
     return container
@@ -97,15 +97,19 @@ class CoreDataStack {
     return persistentContainer.viewContext
   }
 
-  func save() {
+  @discardableResult
+  func save() -> Bool {
     let context = persistentContainer.viewContext
 
     if context.hasChanges {
       do {
         try context.save()
+        return true
       } catch {
         Log.error(message: "Save error: \(error)")
+        return false
       }
     }
+    return true
   }
 }

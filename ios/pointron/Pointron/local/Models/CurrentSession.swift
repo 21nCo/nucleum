@@ -112,7 +112,7 @@ struct CurrentSession: Decodable {
     let sharedDefaults = UserDefaults(suiteName: LocalConfig.appGroup)
     var logs: [String] = []
     logs.append("refreshSessionInformation - app group \(LocalConfig.appGroup)")
-    logs.append("sharedDefaults: \(sharedDefaults?.dictionaryRepresentation())")
+    logs.append("sharedDefaults available: \(sharedDefaults != nil)")
     do {
       var userId: String? = nil
       var userRegion: String? = nil
@@ -177,7 +177,7 @@ struct CurrentSession: Decodable {
               sharedDefaults?.set(logs, forKey: "widgetLogs")
               let response = try decoder().decode(
                 [CurrentSessionSurrealResult].self, from: unwrappedData)
-              if let currentSession = response[1].result {
+              if response.indices.contains(1), let currentSession = response[1].result {
                 // logs.append("parsed currentsessions: \(currentSessions.count)")
                 saveLogs(logs)
                 completion(currentSession, nil)

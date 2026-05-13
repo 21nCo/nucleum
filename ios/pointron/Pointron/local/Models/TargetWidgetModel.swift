@@ -23,12 +23,6 @@ struct TargetWidgetModel: Decodable {
         let sharedDefaults = UserDefaults(suiteName: LocalConfig.appGroup);
         var logs: [String] = [];
         do {
-            var userId: String? = nil;
-            if let user = sharedDefaults?.string(forKey: "userId") {
-                userId = user;
-            } else{
-                logs.append("userId not found. User not logged in")
-            }
             let dateFormatter = DateFormatter()
             dateFormatter.locale = Locale(identifier: "en_US_POSIX")
             dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
@@ -52,14 +46,20 @@ struct TargetWidgetModel: Decodable {
                     logs.append("No targets data found in defaults");
                 }
             }
-            var request = URLRequest(url: URL(string: "\(LocalConfig.widgetApiUrl)/v2/embed/widget/targets")!);
+            guard let url = URL(string: "\(LocalConfig.widgetApiUrl)/v2/embed/widget/targets") else {
+                logs.append("invalid widget API URL")
+                saveLogs(logs);
+                completion(nil, nil);
+                return;
+            }
+            var request = URLRequest(url: url);
             request.httpMethod = "POST";
             var widgetToken: String? = nil;
             if let token = sharedDefaults?.string(forKey: "authfnWidgetToken") {
                 widgetToken = token;
             }
-            if(widgetToken == nil || userId == nil){
-                logs.append("widget token and userId not found")
+            if(widgetToken == nil){
+                logs.append("widget token not found")
                 completion(nil, nil);
                 saveLogs(logs);
                 return;
@@ -91,12 +91,16 @@ struct TargetWidgetModel: Decodable {
                         do {
                             sharedDefaults?.set(logs, forKey: "widgetLogs")
                             let response = try decoder.decode([TargetsSurrealResult].self, from: unwrappedData)
-                            if let currentSessions = response[1].result {
+                            if response.indices.contains(1), let currentSessions = response[1].result, !currentSessions.isEmpty {
                                 logs.append("parsed currentsessions: \(currentSessions.count)");
                                 saveLogs(logs);
                                 completion(currentSessions[0], nil);
                                 return;
                             }
+                            logs.append("targets response did not include result data")
+                            saveLogs(logs);
+                            completion(nil, nil);
+                            return;
                         } catch {
                             logs.append("parse error in Json: \(error)");
                             saveLogs(logs);

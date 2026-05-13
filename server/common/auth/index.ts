@@ -9,7 +9,7 @@ export async function authorize(props: { token: string; host?: string }) {
     const key = process.env.TOKEN_PRIVATE_KEY;
     if (!props.token) return false;
     if (key) {
-      const decoded = validateToken(props);
+      const decoded = await validateToken(props);
       if (decoded) return decoded;
     }
     return authorizeAuthFnSession(props);

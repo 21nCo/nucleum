@@ -82,6 +82,7 @@
 
   async function handleMessageFromParent(event: MessageEvent) {
     try {
+      if (!isTrustedNativeMessage(event)) return;
       if (event?.data?.type === "SWIFT_MESSAGE" && event?.data?.payload) {
         if (typeof event.data.payload !== "string") return;
         if (!event.data.payload.trim().startsWith("{")) return;
@@ -97,17 +98,26 @@
             toasts.error();
             return;
           }
-          isSigningIn = true;
-          if (parsed.oauth.regionId) {
-            await clientStorage.set(ClientStorageKey.REGION, parsed.oauth.regionId);
+          try {
+            isSigningIn = true;
+            if (parsed.oauth.regionId) {
+              await clientStorage.set(ClientStorageKey.REGION, parsed.oauth.regionId);
+            }
+            await account.embedOAuthSignin(token);
+          } finally {
+            isSigningIn = false;
           }
-          await account.embedOAuthSignin(token);
-          isSigningIn = false;
         }
       }
     } catch (e) {
       console.error({ at: "Signup - handleMessageFromParent", error: e });
     }
+  }
+
+  function isTrustedNativeMessage(event: MessageEvent) {
+    if (event?.data?.type !== "SWIFT_MESSAGE") return true;
+    if (event.source !== window) return false;
+    return event.origin === window.location.origin || event.origin === "null";
   }
 </script>
 

@@ -21,6 +21,7 @@ struct BaseViewForMac: View {
   @State var webOrigin: String = LocalConfig.webOrigin
   @State var message = ""
   @State var isShowOauthFlow = false
+  @State private var customURLObserver: NSObjectProtocol?
   @State private var src: WebViewForMac = WebViewForMac(
     urlType: .customProtocolUrl,
     url: URL(string: LocalConfig.webOrigin)!,
@@ -41,17 +42,19 @@ struct BaseViewForMac: View {
         LoadingOverlay()
       }
       if isShowOauthFlow {
-        WebAuthenticationView(
-          url: URL(string: appStore.oauthUrl)!, callbackURLScheme: LocalConfig.urlScheme
-        ) {
-          callbackURL, error in
-          DispatchQueue.main.async {
-            isShowOauthFlow = false
-            if let callbackURL = callbackURL {
-              print("Success: \(callbackURL)")
-              processOauthResponse(callbackURL)
-            } else if let error = error {
-              print("Error: \(error.localizedDescription)")
+        if let oauthUrl = URL(string: appStore.oauthUrl), isAllowedExternalUrl(oauthUrl) {
+          WebAuthenticationView(
+            url: oauthUrl, callbackURLScheme: LocalConfig.urlScheme
+          ) {
+            callbackURL, error in
+            DispatchQueue.main.async {
+              isShowOauthFlow = false
+              if let callbackURL = callbackURL {
+                Log.info("Success: \(redactUrlForLog(callbackURL))")
+                processOauthResponse(callbackURL)
+              } else if let error = error {
+                Log.error(message: error.localizedDescription)
+              }
             }
           }
         }
@@ -59,6 +62,7 @@ struct BaseViewForMac: View {
     }
     .edgesIgnoringSafeArea(.bottom)
     .onAppear(perform: onActive)
+    .onDisappear(perform: removeCustomURLObserver)
     .onOpenURL { url in
       handleCustomURL(url)
     }
@@ -102,7 +106,7 @@ struct BaseViewForMac: View {
       appStore.incomingMessageWrapper(value: value)
     } else if value.keys.contains("link") {
       if let url = value["link"] as? String {
-        Log.info("link - url: \(url)")
+        Log.info("link - url: \(redactUrlForLog(url))")
         openURLInSafari(url)
         // showPIP()
       } else {
@@ -110,7 +114,7 @@ struct BaseViewForMac: View {
       }
       appStore.incomingMessageWrapper(value: value)
     } else if value.keys.contains("fetch") {
-      Log.info("fetch: \(value)")
+      Log.info("Received fetch message")
       if let fetchString = value["fetch"] as? String {
         let jsonData = Data(fetchString.utf8)
         let decoder = JSONDecoder()
@@ -127,7 +131,7 @@ struct BaseViewForMac: View {
       }
     } else if value.keys.contains("oauth") {
       if let url = value["oauth"] as? String {
-        Log.info("oauth - url: \(url)")
+        Log.info("oauth - url: \(redactUrlForLog(url))")
         openOauthFlow(url)
       } else {
         Log.error(message: "Unable to parse oauth message")
@@ -186,7 +190,7 @@ struct BaseViewForMac: View {
   }
 
   func handleCustomURL(_ url: URL) {
-    Log.info("Url Scheme triggered: \(url.absoluteString)")
+    Log.info("Url Scheme triggered: \(redactUrlForLog(url))")
     if url.absoluteString.contains("oauthsignarchived") {
       let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
       guard let token = components?.queryItems?.first(where: { $0.name == "token" })?.value else {
@@ -229,11 +233,21 @@ struct BaseViewForMac: View {
     // requestAudioPermission()
     self.src.viewModel.valuePublisher.send("appIsActive")
     isShowOauthFlow = false
-    NotificationCenter.default.addObserver(forName: .didReceiveCustomURL, object: nil, queue: .main)
-    { notification in
-      if let url = notification.object as? URL {
-        handleCustomURL(url)
+    if customURLObserver == nil {
+      customURLObserver = NotificationCenter.default.addObserver(
+        forName: .didReceiveCustomURL, object: nil, queue: .main
+      ) { notification in
+        if let url = notification.object as? URL {
+          handleCustomURL(url)
+        }
       }
+    }
+  }
+
+  func removeCustomURLObserver() {
+    if let customURLObserver {
+      NotificationCenter.default.removeObserver(customURLObserver)
+      self.customURLObserver = nil
     }
   }
 

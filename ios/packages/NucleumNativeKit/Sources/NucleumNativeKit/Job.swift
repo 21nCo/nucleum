@@ -41,13 +41,13 @@ public enum JobType: String, CaseIterable {
 }
 
 public struct JobResult {
-  let id: String
-  let status: JobStatus
-  let progress: Double
-  let output: [String: Any]?
-  let errorMessage: String?
-  let createdAt: Date
-  let updatedAt: Date
+  public let id: String
+  public let status: JobStatus
+  public let progress: Double
+  public let output: [String: Any]?
+  public let errorMessage: String?
+  public let createdAt: Date
+  public let updatedAt: Date
 }
 
 public struct JobMetadata: Codable {

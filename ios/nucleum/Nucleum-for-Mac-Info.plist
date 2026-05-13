@@ -23,7 +23,13 @@
 	<string>https://nucleus-debug-sink.21n.workers.dev</string>
 	<key>NucleusDefaultRegion</key>
 	<string>insouth</string>
-	<key>NucleusProduct</key>
-	<string>nucleum.app</string>
-</dict>
+		<key>NucleusProduct</key>
+		<string>nucleum.app</string>
+		<key>NSCameraUsageDescription</key>
+		<string>Nucleum uses the camera only when you choose camera-powered capture features.</string>
+		<key>NSLocationUsageDescription</key>
+		<string>Nucleum uses location only for features that need your explicit location context.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>Nucleum uses the microphone only when you choose audio capture or transcription features.</string>
+	</dict>
 </plist>

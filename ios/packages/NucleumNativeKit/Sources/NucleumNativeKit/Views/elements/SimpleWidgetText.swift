@@ -1,8 +1,8 @@
 import SwiftUI
 
 struct SimpleWidgetText: View {
-  @State var content: String
-  @State var color: Color
+  let content: String
+  let color: Color
   init(_ content: String, color: Color) {
     self.content = content
     self.color = color
