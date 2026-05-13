@@ -12,6 +12,7 @@ const moduleMocks = vi.hoisted(() => ({
   },
   account: {
     resolveLegacyToken: vi.fn(),
+    resolveToken: vi.fn(),
     signout: vi.fn()
   },
   browser: {
@@ -87,7 +88,8 @@ describe("client/utils/network.utils", () => {
     moduleMocks.browser.isExtensionEnvironment.mockReturnValue(false);
     moduleMocks.browser.isContentScript.mockReturnValue(false);
     moduleMocks.browser.generateFingerprint.mockResolvedValue("fingerprint");
-    moduleMocks.account.resolveLegacyToken.mockResolvedValue("token");
+    moduleMocks.account.resolveLegacyToken.mockResolvedValue("legacy-token");
+    moduleMocks.account.resolveToken.mockResolvedValue("token");
     moduleMocks.time.detectTimeZone.mockReturnValue("UTC");
     moduleMocks.storage.get.mockResolvedValue(null);
     (globalThis as any).fetch = vi.fn();
@@ -161,6 +163,9 @@ describe("client/utils/network.utils", () => {
     );
     const [, requestInit] = (fetch as any).mock.calls[0] as [string, RequestInit];
     const payload = JSON.parse(requestInit.body as string);
+    expect(requestInit.headers).toMatchObject({
+      Authorization: "Bearer legacy-token"
+    });
     expect(payload.context).toMatchObject({
       deviceFingerprint: "fingerprint",
       origin: "https://app.memotron.test"
@@ -215,7 +220,7 @@ describe("client/utils/network.utils", () => {
 
   it("logs out extension when token missing", async () => {
     moduleMocks.browser.isExtensionEnvironment.mockReturnValue(true);
-    moduleMocks.account.resolveLegacyToken.mockResolvedValueOnce(null);
+    moduleMocks.account.resolveToken.mockResolvedValueOnce(null);
     (fetch as any).mockResolvedValue({
       ok: false,
       status: 401,
@@ -259,7 +264,7 @@ describe("client/utils/network.utils", () => {
 
   it("signs out web users without a local AuthFn token on unauthorized response", async () => {
     moduleMocks.browser.isExtensionEnvironment.mockReturnValue(false);
-    moduleMocks.account.resolveLegacyToken.mockResolvedValueOnce(null);
+    moduleMocks.account.resolveToken.mockResolvedValueOnce(null);
     (fetch as any).mockResolvedValue({
       ok: false,
       status: 401,

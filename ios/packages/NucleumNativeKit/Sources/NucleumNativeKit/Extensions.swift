@@ -54,7 +54,7 @@ public extension Color {
 
 public extension Color {
     static func hsl(_ hsl: String) -> Color {
-        let pattern = #"^hsla?\(\s*([+-]?(?:\d+(?:\.\d+)?|\.\d+))(?:deg)?[\s,]+([+-]?(?:\d+(?:\.\d+)?|\.\d+))%[\s,]+([+-]?(?:\d+(?:\.\d+)?|\.\d+))%(?:[\s,/]+([+-]?(?:\d+(?:\.\d+)?|\.\d+))%?)?\s*\)$"#
+        let pattern = #"^hsla?\(\s*([+-]?(?:\d+(?:\.\d+)?|\.\d+))(?:deg)?[\s,]+([+-]?(?:\d+(?:\.\d+)?|\.\d+))%[\s,]+([+-]?(?:\d+(?:\.\d+)?|\.\d+))%(?:[\s,/]+([+-]?(?:\d+(?:\.\d+)?|\.\d+))(%?)\s*)?\)$"#
         guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]),
               let match = regex.firstMatch(in: hsl, range: NSRange(hsl.startIndex..., in: hsl)),
               let hRange = Range(match.range(at: 1), in: hsl),
@@ -74,7 +74,8 @@ public extension Color {
         if match.range(at: 4).location != NSNotFound,
            let alphaRange = Range(match.range(at: 4), in: hsl),
            let rawAlpha = Double(hsl[alphaRange]) {
-            alpha = rawAlpha > 1 ? min(max(rawAlpha / 100, 0), 1) : min(max(rawAlpha, 0), 1)
+            let alphaIsPercent = match.range(at: 5).location != NSNotFound && match.range(at: 5).length > 0
+            alpha = alphaIsPercent ? min(max(rawAlpha / 100, 0), 1) : min(max(rawAlpha, 0), 1)
         } else {
             alpha = 1
         }

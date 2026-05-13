@@ -38,6 +38,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           INPUT_ENVIRONMENT: ${{ github.event.inputs.environment }}
           INPUT_REGIONS: ${{ github.event.inputs.regions }}
+          REF_TYPE: ${{ github.ref_type }}
         run: |
           set -euo pipefail
 
@@ -47,13 +48,13 @@ jobs:
             regions="${INPUT_REGIONS:-$default_regions}"
             case "$environment" in
               pre)
-                [[ "${GITHUB_REF_NAME}" == backend-pre-* ]] || {
+                [[ "$REF_TYPE" == "tag" && "${GITHUB_REF_NAME}" == backend-pre-* ]] || {
                   echo "Pre deploys must run from a backend-pre-* tag" >&2
                   exit 1
                 }
                 ;;
               live)
-                [[ "${GITHUB_REF_NAME}" == backend-live-* ]] || {
+                [[ "$REF_TYPE" == "tag" && "${GITHUB_REF_NAME}" == backend-live-* ]] || {
                   echo "Live deploys must run from a backend-live-* tag" >&2
                   exit 1
                 }

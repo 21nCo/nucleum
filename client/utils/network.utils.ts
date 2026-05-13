@@ -1,7 +1,7 @@
 import { logger } from "@21n/components/debug/logger.client";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
 import { GlobalEvent } from "@21n/types/event.enum";
-import { resolveLegacyToken, signout } from "@21n/utils/account.utils";
+import { resolveLegacyToken, resolveToken, signout } from "@21n/utils/account.utils";
 import {
   dispatchCustomEvent,
   generateFingerprint,
@@ -241,11 +241,13 @@ export async function performApiCall(
       import.meta.env?.VITE_FILE_API_URL ??
       (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_FILE_API_URL : undefined);
   }
+  const legacyToken = await resolveLegacyToken();
   return performHttpNetworkOperation({
     url: baseUrl + "/" + endpoint,
     method,
     headers: {},
-    body: stringify({ ...body, context: await getAppLoadContext() })
+    body: stringify({ ...body, context: await getAppLoadContext() }),
+    authToken: legacyToken
   });
   async function getAppLoadContext() {
     const deviceFingerprint = await generateFingerprint();
@@ -295,22 +297,24 @@ export async function performHttpNetworkOperation(params: {
   method: "POST" | "GET" | "PUT" | "DELETE";
   headers: any;
   body: any;
+  authToken?: string | null;
 }) {
   try {
     const isOffline = await determineIfOffline();
     if (isOffline) return;
-    let token = await resolveLegacyToken();
+    let token = params.authToken === undefined ? await resolveToken() : params.authToken;
     const isExtEnv = isExtensionEnvironment();
     if (!token && isExtEnv) {
       logoutOnExtention();
     }
     const headers = params.headers ?? {};
+    const authorizationHeaders = token ? { Authorization: "Bearer " + token } : {};
     const body = params.body ?? "";
     const response = await fetch(params.url, {
       method: params.method,
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer " + token,
+        ...authorizationHeaders,
         ...headers
       },
       body
