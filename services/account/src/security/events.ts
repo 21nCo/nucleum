@@ -1,4 +1,3 @@
-import { createSecurityLoggerSink } from '@secfn/server/audit';
 import type { AuthFnEvent } from '@authfn/core';
 import type { Logger } from 'logfn';
 import { sendAccountDebugLog } from '../debug-sink.js';
@@ -82,4 +81,21 @@ function securityEventTypeForAuthEvent(type: string): SecurityEventType {
     return 'unauthorized_access';
   }
   return 'suspicious_activity';
+}
+
+function createSecurityLoggerSink(logger: Logger) {
+  return async (event: {
+    id: string;
+    timestamp: string;
+    type: SecurityEventType;
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    actorId?: string;
+    resource: string;
+    action: string;
+    requestId?: string;
+    metadata: Record<string, unknown>;
+    resolved: boolean;
+  }) => {
+    logger.warn('security event', event);
+  };
 }
