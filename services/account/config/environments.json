@@ -113,15 +113,15 @@
       "regions": {
         "insouth": {
           "wranglerEnv": "pre-insouth",
-          "hyperdriveId": "TODO_PRE_INSOUTH_HYPERDRIVE_ID"
+          "hyperdriveId": "TODO_LIVE_INSOUTH_HYPERDRIVE_ID"
         },
         "useast": {
           "wranglerEnv": "pre-useast",
-          "hyperdriveId": "TODO_PRE_USEAST_HYPERDRIVE_ID"
+          "hyperdriveId": "TODO_LIVE_USEAST_HYPERDRIVE_ID"
         },
         "euwest": {
           "wranglerEnv": "pre-euwest",
-          "hyperdriveId": "TODO_PRE_EUWEST_HYPERDRIVE_ID"
+          "hyperdriveId": "TODO_LIVE_EUWEST_HYPERDRIVE_ID"
         }
       }
     },
