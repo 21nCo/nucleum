@@ -16,7 +16,7 @@ import {
   type SocialOAuthPluginConfig
 } from '@authfn/core';
 import type { Adapter, KVStoreAdapter } from '@superfunctions/db';
-import type { Logger } from 'logfn';
+import type { Logger } from '@logfn/core';
 import { createAccountLookupStore } from './lookup/dynamodb.js';
 import { createAuthSecurityEmitter } from './security/events.js';
 import { nucleusLifecyclePlugin } from './plugins/nucleus-lifecycle.js';

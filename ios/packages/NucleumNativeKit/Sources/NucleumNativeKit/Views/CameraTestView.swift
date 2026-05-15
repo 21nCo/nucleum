@@ -10,7 +10,7 @@ import Foundation
 import SwiftUI
 
 struct CameraView: View {
-  @StateObject var cameraManager = CameraManager()
+  @StateObject private var cameraManager = CameraManager()
 
   var body: some View {
     ZStack {
@@ -18,11 +18,11 @@ struct CameraView: View {
         ImagePreviewView(image: image, cameraManager: cameraManager)
       } else {
         CameraPreview(cameraManager: cameraManager)
-          .onAppear {
-            cameraManager.configure()
-          }
         CaptureButton(cameraManager: cameraManager)
       }
+    }
+    .onDisappear {
+      cameraManager.cleanup()
     }
   }
 }
@@ -38,8 +38,7 @@ struct ImagePreviewView: View {
         .scaledToFit()
 
       Button("Retake") {
-        cameraManager.capturedImage = nil
-        cameraManager.session.startRunning()
+        cameraManager.restartCapture()
       }
       .padding()
       .frame(height: 50)
@@ -78,13 +77,14 @@ struct CameraPreview: UIViewRepresentable {
   @ObservedObject var cameraManager: CameraManager
 
   func makeUIView(context: Context) -> UIView {
-    let view = UIView(frame: UIScreen.main.bounds)
-    cameraManager.previewLayer.frame = view.frame
+    let view = UIView()
     view.layer.addSublayer(cameraManager.previewLayer)
     return view
   }
 
-  func updateUIView(_ uiView: UIView, context: Context) {}
+  func updateUIView(_ uiView: UIView, context: Context) {
+    cameraManager.previewLayer.frame = uiView.bounds
+  }
 }
 
 class CameraManager: NSObject, ObservableObject {
@@ -92,6 +92,8 @@ class CameraManager: NSObject, ObservableObject {
   let output = AVCapturePhotoOutput()
   let previewLayer = AVCaptureVideoPreviewLayer()
   @Published var capturedImage: UIImage?
+  private let sessionQueue = DispatchQueue(label: "com.nucleum.camera.session", qos: .userInitiated)
+  private var isConfigured = false
 
   override init() {
     super.init()
@@ -108,29 +110,59 @@ class CameraManager: NSObject, ObservableObject {
         }
       }
     default:
-      // Handle denied access
+      Log.error(message: "Camera access denied or restricted")
       break
     }
   }
   private func setupSession() {
-    DispatchQueue.global(qos: .userInitiated).async {
+    sessionQueue.async {
       self.configure()
     }
   }
 
   func configure() {
+    guard !isConfigured else { return }
     guard
       let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
       let input = try? AVCaptureDeviceInput(device: device)
-    else { return }
+    else {
+      Log.error(message: "Failed to configure camera input")
+      return
+    }
 
-    if session.canAddInput(input) && session.canAddOutput(output) {
-      session.addInput(input)
-      session.addOutput(output)
-      DispatchQueue.main.async {
-        self.previewLayer.session = self.session
+    guard session.canAddInput(input), session.canAddOutput(output) else {
+      Log.error(message: "Failed to configure camera session")
+      return
+    }
+
+    session.beginConfiguration()
+    session.addInput(input)
+    session.addOutput(output)
+    session.commitConfiguration()
+    isConfigured = true
+
+    DispatchQueue.main.async {
+      self.previewLayer.session = self.session
+    }
+    session.startRunning()
+  }
+
+  func restartCapture() {
+    DispatchQueue.main.async {
+      self.capturedImage = nil
+    }
+    sessionQueue.async {
+      if !self.session.isRunning {
+        self.session.startRunning()
       }
-      session.startRunning()
+    }
+  }
+
+  func cleanup() {
+    sessionQueue.async {
+      if self.session.isRunning {
+        self.session.stopRunning()
+      }
     }
   }
 
@@ -149,7 +181,9 @@ extension CameraManager: AVCapturePhotoCaptureDelegate {
       let image = UIImage(data: imageData)
     else { return }
 
-    self.capturedImage = image
+    DispatchQueue.main.async {
+      self.capturedImage = image
+    }
   }
 }
 

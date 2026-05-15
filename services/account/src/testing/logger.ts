@@ -1,4 +1,4 @@
-import { Logger, type LogEvent } from 'logfn';
+import { Logger, type LogEvent } from '@logfn/core';
 
 export interface CapturedLogger {
   logger: Logger;

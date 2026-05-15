@@ -42,7 +42,10 @@ public extension Color {
         let scanner = Scanner(string: str)
         scanner.scanLocation = 0
         var rgbValue: UInt64 = 0
-        scanner.scanHexInt64(&rgbValue)
+        guard str.count == 6, scanner.scanHexInt64(&rgbValue), scanner.isAtEnd else {
+            self.init(red: 0, green: 0, blue: 0)
+            return
+        }
         
         let r = (rgbValue & 0xff0000) >> 16
         let g = (rgbValue & 0xff00) >> 8

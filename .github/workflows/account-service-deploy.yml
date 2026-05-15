@@ -60,10 +60,10 @@ jobs:
                 }
                 ;;
             esac
-          elif [[ "${GITHUB_REF_NAME}" == backend-pre-* ]]; then
+          elif [[ "$REF_TYPE" == "tag" && "${GITHUB_REF_NAME}" == backend-pre-* ]]; then
             environment="pre"
             regions="$default_regions"
-          elif [[ "${GITHUB_REF_NAME}" == backend-live-* ]]; then
+          elif [[ "$REF_TYPE" == "tag" && "${GITHUB_REF_NAME}" == backend-live-* ]]; then
             environment="live"
             regions="$default_regions"
           else

@@ -1,4 +1,4 @@
-import { serverLogger } from 'logfn';
+import { serverLogger } from '@logfn/core';
 
 export function createAccountLogger() {
   return serverLogger({

@@ -24,6 +24,12 @@ public class JobManager: NSObject, ObservableObject {
 
   private var aiServiceProvider: AIServiceProvider?
 
+  private struct JobExecutionSnapshot {
+    let id: String
+    let type: String
+    let input: Data?
+  }
+
   private override init() {
     super.init()
     setupNotifications()
@@ -61,36 +67,38 @@ public class JobManager: NSObject, ObservableObject {
     input: [String: Any],
     metadata: JobMetadata? = nil
   ) -> String {
-    let jobId = UUID().uuidString
-    let now = Date()
+    return runOnMain {
+      let jobId = UUID().uuidString
+      let now = Date()
 
-    let context = coreDataStack.context
-    let job = Job(context: context)
-    job.id = jobId
-    job.type = type.rawValue
-    job.status = JobStatus.pending.rawValue
-    job.progress = 0.0
-    job.createdAt = now
-    job.updatedAt = now
+      let context = coreDataStack.context
+      let job = Job(context: context)
+      job.id = jobId
+      job.type = type.rawValue
+      job.status = JobStatus.pending.rawValue
+      job.progress = 0.0
+      job.createdAt = now
+      job.updatedAt = now
 
-    if let inputData = try? JSONSerialization.data(withJSONObject: input) {
-      job.input = inputData
+      if let inputData = try? JSONSerialization.data(withJSONObject: input) {
+        job.input = inputData
+      }
+
+      if let metadata = metadata,
+        let metadataData = try? JSONEncoder().encode(metadata)
+      {
+        job.metadata = metadataData
+      }
+
+      coreDataStack.save()
+
+      Log.info("Created job with ID: \(jobId) of type: \(type.rawValue)")
+      return jobId
     }
-
-    if let metadata = metadata,
-      let metadataData = try? JSONEncoder().encode(metadata)
-    {
-      job.metadata = metadataData
-    }
-
-    coreDataStack.save()
-
-    Log.info("Created job with ID: \(jobId) of type: \(type.rawValue)")
-    return jobId
   }
 
   public func startJob(_ jobId: String) {
-    guard let job = fetchJob(jobId) else {
+    guard runOnMain({ fetchJob(jobId) != nil }) else {
       Log.error(message: "Job not found: \(jobId)")
       return
     }
@@ -103,26 +111,28 @@ public class JobManager: NSObject, ObservableObject {
   }
 
   public func getJobResult(_ jobId: String) -> JobResult? {
-    guard let job = fetchJob(jobId) else {
-      return nil
-    }
+    runOnMain {
+      guard let job = fetchJob(jobId) else {
+        return nil
+      }
 
-    let output: [String: Any]?
-    if let outputData = job.output {
-      output = try? JSONSerialization.jsonObject(with: outputData) as? [String: Any]
-    } else {
-      output = nil
-    }
+      let output: [String: Any]?
+      if let outputData = job.output {
+        output = try? JSONSerialization.jsonObject(with: outputData) as? [String: Any]
+      } else {
+        output = nil
+      }
 
-    return JobResult(
-      id: job.id,
-      status: JobStatus(rawValue: job.status) ?? .pending,
-      progress: job.progress,
-      output: output,
-      errorMessage: job.errorMessage,
-      createdAt: job.createdAt,
-      updatedAt: job.updatedAt
-    )
+      return JobResult(
+        id: job.id,
+        status: JobStatus(rawValue: job.status) ?? .pending,
+        progress: job.progress,
+        output: output,
+        errorMessage: job.errorMessage,
+        createdAt: job.createdAt,
+        updatedAt: job.updatedAt
+      )
+    }
   }
 
   public func cancelJob(_ jobId: String) {
@@ -150,11 +160,14 @@ public class JobManager: NSObject, ObservableObject {
   }
 
   private func updateJobStatus(_ jobId: String, status: JobStatus) {
-    guard let job = fetchJob(jobId) else { return }
-
-    job.status = status.rawValue
-    job.updatedAt = Date()
-    coreDataStack.save()
+    let errorMessage = runOnMain { () -> String? in
+      guard let job = fetchJob(jobId) else { return nil }
+      job.status = status.rawValue
+      job.updatedAt = Date()
+      let errorMessage = job.errorMessage
+      coreDataStack.save()
+      return errorMessage
+    }
 
     DispatchQueue.main.async { [weak self] in
       if let result = self?.getJobResult(jobId) {
@@ -164,7 +177,7 @@ public class JobManager: NSObject, ObservableObject {
           let error = NSError(
             domain: "JobManager",
             code: 1,
-            userInfo: [NSLocalizedDescriptionKey: job.errorMessage ?? "Job failed"]
+            userInfo: [NSLocalizedDescriptionKey: errorMessage ?? "Job failed"]
           )
           self?.delegate?.jobDidFail(jobId, error: error)
         }
@@ -173,11 +186,12 @@ public class JobManager: NSObject, ObservableObject {
   }
 
   private func updateJobProgress(_ jobId: String, progress: Double) {
-    guard let job = fetchJob(jobId) else { return }
-
-    job.progress = progress
-    job.updatedAt = Date()
-    coreDataStack.save()
+    runOnMain {
+      guard let job = fetchJob(jobId) else { return }
+      job.progress = progress
+      job.updatedAt = Date()
+      coreDataStack.save()
+    }
 
     DispatchQueue.main.async { [weak self] in
       self?.delegate?.jobDidUpdateProgress(jobId, progress: progress)
@@ -185,87 +199,103 @@ public class JobManager: NSObject, ObservableObject {
   }
 
   private func setJobOutput(_ jobId: String, output: [String: Any]) {
-    guard let job = fetchJob(jobId) else { return }
+    runOnMain {
+      guard let job = fetchJob(jobId) else { return }
+      if let outputData = try? JSONSerialization.data(withJSONObject: output) {
+        job.output = outputData
+        job.updatedAt = Date()
+        coreDataStack.save()
+      }
+    }
+  }
 
-    if let outputData = try? JSONSerialization.data(withJSONObject: output) {
-      job.output = outputData
+  private func setJobError(_ jobId: String, error: String) {
+    runOnMain {
+      guard let job = fetchJob(jobId) else { return }
+      job.errorMessage = error
       job.updatedAt = Date()
       coreDataStack.save()
     }
   }
 
-  private func setJobError(_ jobId: String, error: String) {
-    guard let job = fetchJob(jobId) else { return }
-
-    job.errorMessage = error
-    job.updatedAt = Date()
-    coreDataStack.save()
-  }
-
   private func executeJob(_ jobId: String) {
-    guard let job = fetchJob(jobId) else {
+    guard let snapshot = runOnMain({ () -> JobExecutionSnapshot? in
+      guard let job = fetchJob(jobId) else { return nil }
+      return JobExecutionSnapshot(id: job.id, type: job.type, input: job.input)
+    }) else {
       Log.error(message: "Job not found: \(jobId)")
       return
     }
-    guard let jobType = JobType(rawValue: job.type) else {
-      setJobError(job.id, error: "Unknown job type: \(job.type)")
-      updateJobStatus(job.id, status: .failed)
+    guard let jobType = JobType(rawValue: snapshot.type) else {
+      setJobError(snapshot.id, error: "Unknown job type: \(snapshot.type)")
+      updateJobStatus(snapshot.id, status: .failed)
       return
     }
 
     switch jobType {
     case .transcribeAudio:
-      executeTranscriptionJob(job)
+      executeTranscriptionJob(jobId: snapshot.id, inputData: snapshot.input)
     case .customTask:
-      executeCustomTask(job)
+      executeCustomTask(jobId: snapshot.id)
     }
   }
 
-  private func executeTranscriptionJob(_ job: Job) {
+  private func executeTranscriptionJob(jobId: String, inputData: Data?) {
     guard let aiServiceProvider = self.aiServiceProvider else {
-      setJobError(job.id, error: "AIService not available")
-      updateJobStatus(job.id, status: .failed)
+      setJobError(jobId, error: "AIService not available")
+      updateJobStatus(jobId, status: .failed)
       return
     }
 
-    guard let inputData = job.input,
+    guard let inputData,
       let input = try? JSONSerialization.jsonObject(with: inputData) as? [String: Any]
     else {
-      setJobError(job.id, error: "Invalid input data")
-      updateJobStatus(job.id, status: .failed)
+      setJobError(jobId, error: "Invalid input data")
+      updateJobStatus(jobId, status: .failed)
       return
     }
 
     let dataRequest = DataRequest(
-      id: job.id,
+      id: jobId,
       type: IncomingMessage.TRANSCRIBE_AUDIO,
       body: input.mapValues { AnyCodable($0) }
     )
 
-    updateJobProgress(job.id, progress: 0.1)
+    updateJobProgress(jobId, progress: 0.1)
 
     aiServiceProvider.transcribeAudio(request: dataRequest) { [weak self] result in
       switch result {
       case .success(let transcription):
-        self?.setJobOutput(job.id, output: ["transcription": transcription])
-        self?.updateJobProgress(job.id, progress: 1.0)
-        self?.updateJobStatus(job.id, status: .completed)
+        self?.setJobOutput(jobId, output: ["transcription": transcription])
+        self?.updateJobProgress(jobId, progress: 1.0)
+        self?.updateJobStatus(jobId, status: .completed)
 
       case .failure(let error):
-        self?.setJobError(job.id, error: error.localizedDescription)
-        self?.updateJobStatus(job.id, status: .failed)
+        self?.setJobError(jobId, error: error.localizedDescription)
+        self?.updateJobStatus(jobId, status: .failed)
       }
     }
   }
 
-  private func executeCustomTask(_ job: Job) {
-    updateJobProgress(job.id, progress: 0.5)
+  private func executeCustomTask(jobId: String) {
+    updateJobProgress(jobId, progress: 0.5)
 
     DispatchQueue.global().asyncAfter(deadline: .now() + 2.0) { [weak self] in
-      self?.setJobOutput(job.id, output: ["result": "Custom task completed"])
-      self?.updateJobProgress(job.id, progress: 1.0)
-      self?.updateJobStatus(job.id, status: .completed)
+      self?.setJobOutput(jobId, output: ["result": "Custom task completed"])
+      self?.updateJobProgress(jobId, progress: 1.0)
+      self?.updateJobStatus(jobId, status: .completed)
     }
+  }
+
+  private func runOnMain<T>(_ work: () -> T) -> T {
+    if Thread.isMainThread {
+      return work()
+    }
+    var result: T!
+    DispatchQueue.main.sync {
+      result = work()
+    }
+    return result
   }
 
   private func resumeIncompleteJobs() {

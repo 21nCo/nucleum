@@ -103,8 +103,8 @@
       "urlSegment": "pre",
       "webSubdomain": "pre",
       "workersDev": false,
-      "lookupWorkerEnv": "live-lookup",
-      "lookupWorkerName": "nucleus-account-live-lookup",
+      "lookupWorkerEnv": "pre-lookup",
+      "lookupWorkerName": "nucleus-account-pre-lookup",
       "cacheKvNamespaceId": "72bb56e048d941ec92aad94df99d9e36",
       "cachePrefix": "authfn:nucleus_account_pre:",
       "cookiePrefix": "nucleus_pre",
@@ -113,15 +113,15 @@
       "regions": {
         "insouth": {
           "wranglerEnv": "pre-insouth",
-          "hyperdriveId": "TODO_LIVE_INSOUTH_HYPERDRIVE_ID"
+          "hyperdriveId": "TODO_PRE_INSOUTH_HYPERDRIVE_ID"
         },
         "useast": {
           "wranglerEnv": "pre-useast",
-          "hyperdriveId": "TODO_LIVE_USEAST_HYPERDRIVE_ID"
+          "hyperdriveId": "TODO_PRE_USEAST_HYPERDRIVE_ID"
         },
         "euwest": {
           "wranglerEnv": "pre-euwest",
-          "hyperdriveId": "TODO_LIVE_EUWEST_HYPERDRIVE_ID"
+          "hyperdriveId": "TODO_PRE_EUWEST_HYPERDRIVE_ID"
         }
       }
     },

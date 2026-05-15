@@ -110,7 +110,6 @@
 		0A46787D2DACDC700050BA98 /* WhisperCppWrapper.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WhisperCppWrapper.mm; sourceTree = "<group>"; };
 		0A4678832DACFD080050BA98 /* AIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIService.swift; sourceTree = "<group>"; };
 		0A46788A2DACFD080050BA98 /* AIServiceProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIServiceProtocols.swift; sourceTree = "<group>"; };
-		0A4678862DACFD440050BA98 /* WhisperCppWrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WhisperCppWrapper.h; sourceTree = "<group>"; };
 		0A4678872DAD01050050BA98 /* AudioTranscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioTranscriptionView.swift; sourceTree = "<group>"; };
 		0A59977D2CC223DB00021919 /* SafariWebview.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SafariWebview.swift; sourceTree = "<group>"; };
 		0A59977E2CC223DB00021919 /* SafariViewModal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SafariViewModal.swift; sourceTree = "<group>"; };
@@ -227,7 +226,6 @@
 		2203DA512B74BEE30015509D /* Memotron */ = {
 			isa = PBXGroup;
 			children = (
-				0A4678862DACFD440050BA98 /* WhisperCppWrapper.h */,
 				22A6193D2B750DA900742B70 /* Info.plist */,
 				2203DA832B74C0A60015509D /* local */,
 				2203DA612B74C0460015509D /* tidy */,

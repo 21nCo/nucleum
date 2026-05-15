@@ -1,7 +1,7 @@
 import type { Adapter } from '@superfunctions/db';
 import type { AuthFnDeliveryProvider, AuthFnDeliveryRequest, AuthFnDeliveryResult } from '@authfn/core';
 import { createSendFn, resendAdapter } from 'sendfn/edge';
-import type { Logger } from 'logfn';
+import type { Logger } from '@logfn/core';
 
 export function createSendFnDeliveryProvider(input: {
   database: Adapter;

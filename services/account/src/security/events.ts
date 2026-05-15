@@ -1,6 +1,6 @@
 import { createSecurityLoggerSink } from '@secfn/server/audit';
 import type { AuthFnEvent } from '@authfn/core';
-import type { Logger } from 'logfn';
+import type { Logger } from '@logfn/core';
 import { sendAccountDebugLog } from '../debug-sink.js';
 
 type SecurityEventType =

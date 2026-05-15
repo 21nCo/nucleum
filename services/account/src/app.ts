@@ -9,7 +9,7 @@ import type {
   AuthFnSocialProviderConfig,
   SocialOAuthPluginConfig
 } from '@authfn/core';
-import type { Logger } from 'logfn';
+import type { Logger } from '@logfn/core';
 import { createAccountAuth } from './auth.js';
 import { createSendFnDeliveryProvider } from './email/sendfn.js';
 import { createAccountRateLimitMiddleware } from './security/rate-limit.js';

@@ -1233,6 +1233,19 @@ class DownloadManager {
         return
       }
 
+      guard let httpResponse = response as? HTTPURLResponse,
+        (200...299).contains(httpResponse.statusCode)
+      else {
+        let error = NSError(
+          domain: "AIService", code: (response as? HTTPURLResponse)?.statusCode ?? 0,
+          userInfo: [NSLocalizedDescriptionKey: "Server error"]
+        )
+        Log.error(message: "Server error")
+        completion(.failure(error))
+        self.completionHandlers[url] = nil
+        return
+      }
+
       // Process successful download - same as in downloadFile
       guard let tempURL = tempURL else {
         let error = NSError(

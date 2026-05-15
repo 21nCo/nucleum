@@ -12,12 +12,7 @@ struct Nucleum_for_MacApp: App {
   @NSApplicationDelegateAdaptor(MacAppDelegate.self) private var appDelegate: MacAppDelegate
 
   init() {
-    DispatchQueue.global(qos: .utility).async {
-      let aiService = AIService.shared
-      DispatchQueue.main.async {
-        AppStore.shared.setAIServiceProvider(aiService)
-      }
-    }
+    AppStore.shared.setAIServiceProvider(AIService.shared)
   }
 
   var body: some Scene {

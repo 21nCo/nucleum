@@ -11,7 +11,7 @@ class CoreDataStack {
       name: "JobDataModel", managedObjectModel: createJobDataModel())
     container.loadPersistentStores { _, error in
       if let error = error {
-        fatalError("Core Data persistent store failed to load: \(error)")
+        Log.error(message: "Core Data persistent store failed to load: \(error)")
       }
     }
     return container
