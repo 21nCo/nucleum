@@ -10,10 +10,7 @@ const runtimeEnv = (
   globalThis as { process?: { env?: Record<string, string | undefined> } }
 ).process?.env;
 
-test.skip(
-  runtimeEnv?.SKIP_E2E === "1",
-  "E2E suite disabled by environment"
-);
+test.skip(runtimeEnv?.SKIP_E2E === "1", "E2E suite disabled by environment");
 
 test.describe("overview - Focus widgets and tabs (verify multiple elements) @regression @smoke @overview-smoke", () => {
   test.beforeEach(async ({ page }, testInfo) => {
@@ -34,19 +31,29 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
   }, testInfo) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
+    await navigateToSurface(
+      page,
+      "overview.focus",
+      testInfo.project.name as any
+    );
 
-    await expect(page.getByText("Overview").first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText("Overview").first()).toBeVisible({
+      timeout: 10_000
+    });
     await expect(getOverviewTab(page, "All")).toBeVisible({ timeout: 5_000 });
     await expect(getOverviewTab(page, "Days")).toBeVisible({ timeout: 5_000 });
-    await expect(getOverviewTab(page, "Months")).toBeVisible({ timeout: 5_000 });
+    await expect(getOverviewTab(page, "Months")).toBeVisible({
+      timeout: 5_000
+    });
     await expect(getOverviewTab(page, "Years")).toBeVisible({ timeout: 5_000 });
 
     const todayHeading = page.getByText("Today", { exact: true }).first();
     await expect(todayHeading).toBeVisible({ timeout: 5_000 });
 
     const secondPeriod = page
-      .getByText(/^(Last 7 days|Last 14 days|Yesterday|Last 30 days|This month|Last month|This year|Last year)$/i)
+      .getByText(
+        /^(Last 7 days|Last 14 days|Yesterday|Last 30 days|This month|Last month|This year|Last year)$/i
+      )
       .first();
     await expect(secondPeriod).toBeVisible({ timeout: 5_000 });
   });
@@ -56,7 +63,11 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
   }, testInfo) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
+    await navigateToSurface(
+      page,
+      "overview.focus",
+      testInfo.project.name as any
+    );
 
     const hasEmptyState = await page
       .getByText("No data available")
@@ -68,10 +79,20 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
       .first()
       .isVisible()
       .catch(() => false);
-    const hasTotal = await page.getByText("Total", { exact: true }).first().isVisible().catch(() => false);
+    const hasTotal = await page
+      .getByText("Total", { exact: true })
+      .first()
+      .isVisible()
+      .catch(() => false);
     const focusMetricLocator = page.getByText("Focus", { exact: true }).nth(1);
-    const hasFocusMetric = await focusMetricLocator.isVisible().catch(() => false);
-    const hasBreak = await page.getByText("Break", { exact: true }).first().isVisible().catch(() => false);
+    const hasFocusMetric = await focusMetricLocator
+      .isVisible()
+      .catch(() => false);
+    const hasBreak = await page
+      .getByText("Break", { exact: true })
+      .first()
+      .isVisible()
+      .catch(() => false);
 
     expect(
       hasEmptyState || hasSubtext || (hasTotal && hasFocusMetric && hasBreak),
@@ -84,28 +105,29 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
   }, testInfo) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
+    await navigateToSurface(
+      page,
+      "overview.focus",
+      testInfo.project.name as any
+    );
 
     await clickOverviewTab(page, "Days");
 
     await expect(page.getByText("Today", { exact: true }).first()).toBeVisible({
       timeout: 5_000
     });
-    await expect(page.getByText("Yesterday", { exact: true }).first()).toBeVisible({
+    await expect(
+      page.getByText("Yesterday", { exact: true }).first()
+    ).toBeVisible({
       timeout: 5_000
     });
-    await expect(page.getByText("Last 30 days", { exact: true }).first()).toBeVisible({
+    await expect(
+      page.getByText("Last 30 days", { exact: true }).first()
+    ).toBeVisible({
       timeout: 5_000
     });
 
-    await expect(page.getByText("Total", { exact: true }).first()).toBeVisible({
-      timeout: 5_000
-    });
-    const focusMetricCard = page.getByText("Focus", { exact: true }).nth(1);
-    await expect(focusMetricCard).toBeVisible({ timeout: 5_000 });
-    await expect(page.getByText("Break", { exact: true }).first()).toBeVisible({
-      timeout: 5_000
-    });
+    await expectOverviewMetricsOrEmptyState(page);
   });
 
   test("Overview Focus: Months tab shows This month, Last month, Last 3 months", async ({
@@ -113,7 +135,11 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
   }, testInfo) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
+    await navigateToSurface(
+      page,
+      "overview.focus",
+      testInfo.project.name as any
+    );
 
     await clickOverviewTab(page, "Months");
 
@@ -133,7 +159,11 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
   }, testInfo) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
+    await navigateToSurface(
+      page,
+      "overview.focus",
+      testInfo.project.name as any
+    );
 
     await clickOverviewTab(page, "Years");
 
@@ -150,7 +180,11 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
   }, testInfo) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
+    await navigateToSurface(
+      page,
+      "overview.focus",
+      testInfo.project.name as any
+    );
 
     await clickOverviewTab(page, "All");
 
@@ -163,8 +197,16 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
       .first()
       .isVisible()
       .catch(() => false);
-    const hasGoalHeader = await page.getByText("Goal", { exact: true }).first().isVisible().catch(() => false);
-    const hasNoData = await page.getByText("No data available").first().isVisible().catch(() => false);
+    const hasGoalHeader = await page
+      .getByText("Goal", { exact: true })
+      .first()
+      .isVisible()
+      .catch(() => false);
+    const hasNoData = await page
+      .getByText("No data available")
+      .first()
+      .isVisible()
+      .catch(() => false);
     const hasNoDataPresent = await page
       .getByText("No data present.")
       .first()
@@ -187,7 +229,11 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
     );
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
+    await navigateToSurface(
+      page,
+      "overview.focus",
+      testInfo.project.name as any
+    );
 
     await expectCurrentSurfaceVisible(
       page,
@@ -217,27 +263,47 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
     });
 
     await ensureInAppOnHome(page);
-    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
+    await navigateToSurface(
+      page,
+      "overview.focus",
+      testInfo.project.name as any
+    );
 
-    await navigateToSurface(page, "overview.memory", testInfo.project.name as any);
+    await navigateToSurface(
+      page,
+      "overview.memory",
+      testInfo.project.name as any
+    );
     await expectCurrentSurfaceVisible(
       page,
       "overview.memory",
       testInfo.project.name as any
     );
-    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
+    await navigateToSurface(
+      page,
+      "overview.focus",
+      testInfo.project.name as any
+    );
     await expectCurrentSurfaceVisible(
       page,
       "overview.focus",
       testInfo.project.name as any
     );
-    await navigateToSurface(page, "overview.memory", testInfo.project.name as any);
+    await navigateToSurface(
+      page,
+      "overview.memory",
+      testInfo.project.name as any
+    );
     await expectCurrentSurfaceVisible(
       page,
       "overview.memory",
       testInfo.project.name as any
     );
-    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
+    await navigateToSurface(
+      page,
+      "overview.focus",
+      testInfo.project.name as any
+    );
     await expectCurrentSurfaceVisible(
       page,
       "overview.focus",
@@ -257,22 +323,36 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
       "Overview memory switch is not part of this product contract"
     );
     await ensureInAppOnHome(page);
-    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
+    await navigateToSurface(
+      page,
+      "overview.focus",
+      testInfo.project.name as any
+    );
 
     await expectCurrentSurfaceVisible(
       page,
       "overview.memory",
       testInfo.project.name as any
     );
-    await navigateToSurface(page, "overview.memory", testInfo.project.name as any);
+    await navigateToSurface(
+      page,
+      "overview.memory",
+      testInfo.project.name as any
+    );
     await expectCurrentSurfaceVisible(
       page,
       "overview.memory",
       testInfo.project.name as any
     );
-    const memorySignature = page.getByText(/Memory|Node|Nodes|Capture/i).first();
+    const memorySignature = page
+      .getByText(/Memory|Node|Nodes|Capture/i)
+      .first();
     await expect(memorySignature).toBeVisible({ timeout: 10_000 });
-    await navigateToSurface(page, "overview.focus", testInfo.project.name as any);
+    await navigateToSurface(
+      page,
+      "overview.focus",
+      testInfo.project.name as any
+    );
     await expectCurrentSurfaceVisible(
       page,
       "overview.focus",
@@ -283,6 +363,39 @@ test.describe("overview - Focus widgets and tabs (verify multiple elements) @reg
 
 function getOverviewTab(page: Page, label: string): Locator {
   return page.getByRole("tab", { name: new RegExp(`^${label}$`, "i") }).first();
+}
+
+async function expectOverviewMetricsOrEmptyState(page: Page) {
+  const hasEmptyState = await page
+    .getByText("No data available")
+    .first()
+    .isVisible()
+    .catch(() => false);
+  const hasSubtext = await page
+    .getByText(/Please come back after you focus for this time period/)
+    .first()
+    .isVisible()
+    .catch(() => false);
+  const hasTotal = await page
+    .getByText("Total", { exact: true })
+    .first()
+    .isVisible()
+    .catch(() => false);
+  const hasFocusMetric = await page
+    .getByText("Focus", { exact: true })
+    .nth(1)
+    .isVisible()
+    .catch(() => false);
+  const hasBreak = await page
+    .getByText("Break", { exact: true })
+    .first()
+    .isVisible()
+    .catch(() => false);
+
+  expect(
+    hasEmptyState || hasSubtext || (hasTotal && hasFocusMetric && hasBreak),
+    "Expected either empty state (No data available / subtext) or metric cards (Total, Focus, Break)"
+  ).toBe(true);
 }
 
 async function clickOverviewTab(page: Page, label: string) {

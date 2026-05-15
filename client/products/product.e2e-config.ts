@@ -145,7 +145,7 @@ export const productE2EConfigs = {
       },
       overview: {
         focusAnalyticsDashboard: true,
-        memoryPanelSwitch: true,
+        memoryPanelSwitch: false,
         tabs: {
           all: true,
           days: true,

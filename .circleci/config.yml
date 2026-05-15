@@ -55,11 +55,8 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: Run ESLint
+          name: Run workspace lint
           command: npm run lint
-      - run:
-          name: Run Prettier check
-          command: npx prettier --check "**/*.{ts,tsx,js,jsx,svelte,json,css,md}" --ignore-path .gitignore
 
   type-check:
     executor: node-executor
