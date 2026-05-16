@@ -50,7 +50,7 @@
     "drizzle-orm": "^0.45.2",
     "hono": "^4.7.10",
     "postgres": "^3.4.8",
-    "sendfn": "0.0.1"
+    "sendfn": "0.0.2"
   },
   "devDependencies": {
     "@apidevtools/swagger-parser": "^12.1.0",
