@@ -47,7 +47,10 @@ import { generateImagePreviewFromPdf } from "@21n/utils/pdf.utils";
 import { Action } from "@21n/types/action.enum";
 import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
 import { parse } from "@21n/shared-utils/json.utils";
-import { bootstrapNucleusAccount } from "@21n/components/account/auth";
+import {
+  bootstrapNucleusAccount,
+  shouldUseAuthFnBearerSession
+} from "@21n/components/account/auth";
 import { resolveAccountBaseUrl } from "@21n/components/network";
 
 export const isRefreshingToken = writable(false);
@@ -63,10 +66,16 @@ class AccountStore extends ObservableStore<UserAccount> {
       dataMode: UserDataMode.NONE,
       sessionType: UserSessionType.UNDETERMINED
     };
-    const authFnToken = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
+    const shouldUseBearerSession = shouldUseAuthFnBearerSession();
+    const authFnToken = shouldUseBearerSession
+      ? await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)
+      : null;
     const offlineSessionId = await clientStorage.get(
       ClientStorageKey.OFFLINE_SESSION_ID
     );
+    if (!shouldUseBearerSession) {
+      await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
+    }
     const hasLegacySession = await hasLegacyCloudSession();
     if (authFnToken) {
       seed.token = authFnToken;
@@ -90,7 +99,9 @@ class AccountStore extends ObservableStore<UserAccount> {
 
   async postToEmbed(data: any = null) {
     if (!data) {
-      const token = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
+      const token = shouldUseAuthFnBearerSession()
+        ? await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)
+        : undefined;
       const userInfo = parse(
         (await clientStorage.get(ClientStorageKey.USER_INFO)) ?? ""
       );
@@ -115,18 +126,28 @@ class AccountStore extends ObservableStore<UserAccount> {
     },
     params: {
       isNewUser?: boolean;
+      persistToken?: boolean;
     } = { isNewUser: false }
   ) {
-    await clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, data.token);
+    const shouldPersistToken =
+      params.persistToken ?? shouldUseAuthFnBearerSession();
+    if (shouldPersistToken) {
+      await clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, data.token);
+    } else {
+      await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
+    }
     await clientStorage.remove(ClientStorageKey.STOKEN);
     await clientStorage.set(ClientStorageKey.USER_INFO, data.userInfo);
     await this.ensureOfflineSession();
     const hasLegacySession = await hasLegacyCloudSession();
-    this.postToEmbed(data);
+    this.postToEmbed({
+      token: shouldPersistToken ? data.token : undefined,
+      userInfo: data.userInfo
+    });
     const isBootstrapped = data.userInfo.isBootstrapped;
     this.update(() => {
       return {
-        token: data.token,
+        token: shouldPersistToken ? data.token : undefined,
         dataMode: hasLegacySession ? UserDataMode.CLOUD : UserDataMode.LOCAL,
         userId: data.userInfo.id.split("user:")[1],
         userInfo: data.userInfo,
@@ -205,13 +226,18 @@ class AccountStore extends ObservableStore<UserAccount> {
     regionId?: string;
     isNewUser?: boolean;
     isPreventRedirect?: boolean;
+    persistToken?: boolean;
   }) {
-    const previousAuthFnToken = await clientStorage.get(
-      ClientStorageKey.AUTHFN_TOKEN
-    );
+    const shouldPersistToken =
+      params?.persistToken ?? shouldUseAuthFnBearerSession();
+    const previousAuthFnToken = shouldPersistToken
+      ? await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)
+      : undefined;
     const hasTokenFromResponse = Boolean(params?.token?.trim());
-    if (hasTokenFromResponse && params?.token) {
+    if (shouldPersistToken && hasTokenFromResponse && params?.token) {
       await clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, params.token);
+    } else if (!shouldPersistToken) {
+      await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
     }
     if (params?.regionId) {
       await clientStorage.set(ClientStorageKey.REGION, params.regionId);
@@ -236,7 +262,7 @@ class AccountStore extends ObservableStore<UserAccount> {
     }
 
     if (!authSession) {
-      if (hasTokenFromResponse) {
+      if (shouldPersistToken && hasTokenFromResponse) {
         if (previousAuthFnToken) {
           await clientStorage.set(
             ClientStorageKey.AUTHFN_TOKEN,
@@ -249,8 +275,10 @@ class AccountStore extends ObservableStore<UserAccount> {
       return false;
     }
 
-    const sessionToken = params?.token ?? previousAuthFnToken ?? undefined;
-    if (sessionToken) {
+    const sessionToken = shouldPersistToken
+      ? params?.token ?? previousAuthFnToken ?? undefined
+      : undefined;
+    if (shouldPersistToken && sessionToken) {
       await clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, sessionToken);
     } else {
       await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
@@ -428,7 +456,9 @@ class AccountStore extends ObservableStore<UserAccount> {
     this.postToEmbed();
     const isOffline = await determineIfOffline();
     if (isOffline) return;
-    const authFnToken = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
+    const authFnToken = shouldUseAuthFnBearerSession()
+      ? await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)
+      : null;
     let response = await this.persistence.ping();
     let user = Array.isArray(response) ? response?.[0]?.result?.[0] : undefined;
     if (!response) {
@@ -844,7 +874,9 @@ class AccountStore extends ObservableStore<UserAccount> {
   }
 
   async checkIfSessionExpired() {
-    const authFnToken = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
+    const authFnToken = shouldUseAuthFnBearerSession()
+      ? await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)
+      : null;
     const offlineSessionId = await clientStorage.get(
       ClientStorageKey.OFFLINE_SESSION_ID
     );

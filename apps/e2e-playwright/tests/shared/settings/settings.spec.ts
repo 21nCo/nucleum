@@ -33,25 +33,10 @@ test.describe("settings - open, close, navigate (shared) @regression @smoke @set
     });
   });
 
-  test("open Settings and assert modal visible", async ({ page }, testInfo) => {
+  test("open Settings and assert modal visible", async ({ page }) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    const productConfig = getProductConfig(testInfo.project.name);
-
-    if (productConfig.ui.settingsEntryPoint === "topnav-account-settings") {
-      await page
-        .getByTestId("topnav-account-settings")
-        .waitFor({ state: "visible", timeout: 10_000 });
-      await page
-        .getByTestId("topnav-account-settings")
-        .click({ timeout: 5_000 });
-    } else {
-      const settingsBtn = page
-        .getByRole("button", { name: /^Settings$/i })
-        .first();
-      await settingsBtn.waitFor({ state: "visible", timeout: 10_000 });
-      await settingsBtn.click({ timeout: 5_000 });
-    }
+    await openSettings(page);
     await assertSettingsShellVisible(page);
   });
 

@@ -16,7 +16,10 @@
   import { Product } from "@21n/products/product.type";
   import { postTokenToExtension } from "@21n/utils/embed.utils";
   import { onMount } from "svelte";
-  import { authClient } from "@21n/components/account/auth";
+  import {
+    authClient,
+    shouldUseAuthFnBearerSession
+  } from "@21n/components/account/auth";
   import { hasLegacyCloudSession } from "@21n/utils/account.utils";
   import { logger } from "@21n/components/debug/logger.client";
 
@@ -46,7 +49,9 @@
       if (isLoginFromExtension) {
         clientStorage.removeForSession(ClientStorageKey.IS_EXTENSION_LOGIN);
         const userInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
-        const token = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
+        const token = shouldUseAuthFnBearerSession()
+          ? await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)
+          : undefined;
         postTokenToExtension({ token, userInfo });
         // appStore.runAction(Action.EXTENSTION_LOGIN);
         appStore.gotoPath("/ext/login");
@@ -78,7 +83,9 @@
    * TODO - all {@link excludedPathsForRedirectionCheck} should be defined in routes as dynamic route [...route] is guarded by AuthGuard
    */
   async function performLoginStatusCheck() {
-    const authFnToken = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
+    const authFnToken = shouldUseAuthFnBearerSession()
+      ? await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)
+      : undefined;
     const offlineSessionId = await clientStorage.get(
       ClientStorageKey.OFFLINE_SESSION_ID
     );

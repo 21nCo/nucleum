@@ -169,9 +169,22 @@ describe("client/utils/account.utils", () => {
     await expect(resolveToken()).rejects.toThrow("boom");
   });
 
-  it("resolves AuthFn token from local storage in web environment", async () => {
+  it("does not resolve AuthFn token from local storage in normal web environment", async () => {
     isExtensionEnvironmentMock.mockReturnValue(false);
     retrieveLocallyMock.mockReturnValue({ id: "space-1" });
+    mockLocalStorage.setItem(ClientStorageKey.AUTHFN_TOKEN, "token-value");
+
+    const token = await resolveToken();
+
+    expect(token).toBeNull();
+    expect(mockLocalStorage.getItem).not.toHaveBeenCalledWith(
+      ClientStorageKey.AUTHFN_TOKEN
+    );
+  });
+
+  it("resolves AuthFn token from local storage in native embed builds", async () => {
+    isExtensionEnvironmentMock.mockReturnValue(false);
+    import.meta.env.VITE_NATIVE_EMBED = "true";
     mockLocalStorage.setItem(ClientStorageKey.AUTHFN_TOKEN, "token-value");
 
     const token = await resolveToken();
@@ -180,6 +193,7 @@ describe("client/utils/account.utils", () => {
     expect(mockLocalStorage.getItem).toHaveBeenCalledWith(
       ClientStorageKey.AUTHFN_TOKEN
     );
+    delete import.meta.env.VITE_NATIVE_EMBED;
   });
 
   it("returns null when no AuthFn token exists", async () => {
@@ -190,7 +204,7 @@ describe("client/utils/account.utils", () => {
     const token = await resolveToken();
 
     expect(token).toBeNull();
-    expect(mockLocalStorage.getItem).toHaveBeenCalledWith(
+    expect(mockLocalStorage.getItem).not.toHaveBeenCalledWith(
       ClientStorageKey.AUTHFN_TOKEN
     );
   });

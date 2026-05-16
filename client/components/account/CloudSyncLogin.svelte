@@ -12,7 +12,11 @@
   import OAuthOptions from "./OAuthOptions.svelte";
   import { resolveProductConfig } from "@21n/products/product.config";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
-  import { authClient } from "./auth";
+  import {
+    authClient,
+    resolveAuthFnSessionMode,
+    shouldUseAuthFnBearerSession
+  } from "./auth";
   import { Size } from "@21n/types/size.enum";
   import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
   import { AlertType } from "@21n/types/notification.type";
@@ -103,11 +107,12 @@
     let response;
     let errorMessage: string | null = null;
     const client = await authClient({ region });
+    const sessionMode = resolveAuthFnSessionMode();
     if (isSignup && passwordMode === "password") {
       response = await client.signUpWithPassword({
         email,
         password: pass,
-        sessionMode: "hybrid",
+        sessionMode,
         profile: {
           name: ""
         }
@@ -116,7 +121,7 @@
       response = await client.signInWithPassword({
         email,
         password: pass,
-        sessionMode: "hybrid"
+        sessionMode
       });
     } else if (passwordMode === "otp") {
       response = await client.verifyOtp({
@@ -128,7 +133,7 @@
               name: ""
             }
           : undefined,
-        sessionMode: "hybrid"
+        sessionMode
       });
     }
     if (!response || !response.ok) {
@@ -289,10 +294,11 @@
     data: { token?: string }
   ) {
     const signedIn = await account.signInFromAuthFnSession({
-      token: data.token,
+      token: shouldUseAuthFnBearerSession() ? data.token : undefined,
       session: "session" in data ? data.session : undefined,
       isNewUser: isSignup,
-      isPreventRedirect: true
+      isPreventRedirect: true,
+      persistToken: shouldUseAuthFnBearerSession()
     });
     if (!signedIn) {
       logger.error({

@@ -21,7 +21,10 @@
   import { cn } from "@21n/utils/ui.utils";
   import { ButtonStyle } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
-  import { authClient } from "@21n/components/account/auth";
+  import {
+    authClient,
+    resolveAuthFnSessionMode
+  } from "@21n/components/account/auth";
   import type { AuthFnSession } from "@authfn/client";
   let {
     isSignup: initialIsSignup = false,
@@ -68,17 +71,18 @@
     if (!isValidFormData()) return;
     actionInProgress = true;
     const client = await authClient();
+    const sessionMode = isLoginFromExtension ? "hybrid" : resolveAuthFnSessionMode();
     const response = isSignup
       ? await client.signUpWithPassword({
           email: email.toLowerCase(),
           password: pass,
           profile: { nickName },
-          sessionMode: "hybrid"
+          sessionMode
         })
       : await client.signInWithPassword({
           email: email.toLowerCase(),
           password: pass,
-          sessionMode: "hybrid"
+          sessionMode
         });
     if (!response.ok) {
       if (response.error.code === "AUTHFN_REGION_MISMATCH") {
@@ -95,7 +99,7 @@
     }
     const token = response.data.token;
     const session = response.data.session;
-    if (!token || !session) {
+    if (!session || (isLoginFromExtension && !token)) {
       showError();
       actionInProgress = false;
       return;
@@ -107,7 +111,13 @@
     if (isLoginFromExtension) {
       postTokenToExtension(json);
       appStore.runAction(Action.EXTENSTION_LOGIN);
-    } else await account.signIn(json, { isNewUser: isSignup });
+    } else {
+      await account.signInFromAuthFnSession({
+        session,
+        isNewUser: isSignup,
+        persistToken: false
+      });
+    }
     actionInProgress = false;
   }
   function isValidFormData() {

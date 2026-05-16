@@ -87,7 +87,7 @@ async function main() {
       : hostname.includes(".")
         ? hostname.split(".").slice(-2).join(".")
         : hostname; // e.g. local.nucleum.app -> nucleum.app
-  const sessionCookieName = "__Secure-21n.session_token";
+  const legacySessionCookieName = "__Secure-21n.session_token";
 
   try {
     const logStep = (message: string) => {
@@ -354,37 +354,21 @@ async function main() {
 
     const hasSessionCookie = async () => {
       const cookies = await context.cookies();
-      return cookies.some(
-        (c) =>
-          (c.name === sessionCookieName || c.name?.includes("session_token")) &&
-          (c.domain === parentDomain || c.domain === `.${parentDomain}`)
-      );
-    };
-    const hasAuthFnBrowserSession = async () => {
-      return await page
-        .evaluate(() => {
-          const authfnToken = window.localStorage.getItem("authfnToken");
-          const user = window.localStorage.getItem("user");
-          if (!authfnToken || !user) return false;
-
-          try {
-            const parsed = JSON.parse(user) as {
-              type?: string;
-              actorId?: string;
-              regionId?: string;
-              expiresAt?: string;
-            };
-            return (
-              parsed.type === "session" &&
-              Boolean(parsed.actorId) &&
-              Boolean(parsed.regionId) &&
-              (!parsed.expiresAt || Date.parse(parsed.expiresAt) > Date.now())
-            );
-          } catch {
-            return false;
-          }
-        })
-        .catch(() => false);
+      return cookies.some((c) => {
+        const isSessionCookie =
+          c.name === legacySessionCookieName ||
+          c.name?.includes("session_token") ||
+          c.name === "__Secure-nucleus.session" ||
+          c.name === "nucleus.session" ||
+          c.name?.endsWith(".session");
+        if (!isSessionCookie) return false;
+        return (
+          c.domain === parentDomain ||
+          c.domain === `.${parentDomain}` ||
+          c.domain.endsWith(".nucleum.app") ||
+          c.domain === "nucleum.app"
+        );
+      });
     };
 
     // Avoid clicking the "Log in" tab again; target the form submit button.
@@ -444,14 +428,12 @@ async function main() {
       `preserving post-login landing page at ${new URL(page.url()).pathname}`
     );
 
-    // Wait until either cookie auth or the current AuthFn browser bearer session is present.
-    // Local product domains consume AuthFn into localStorage, while web handoff/cookie flows may
-    // produce an HttpOnly cookie on domains that can share it.
+    // Browser auth must be represented by cookies. A bearer token in localStorage is only valid
+    // for explicit native/extension bridge paths and should not make web E2E state look logged in.
     const deadline = Date.now() + 15_000;
     let hasSavedAuthSession = false;
     while (Date.now() < deadline) {
-      const hasSession =
-        (await hasSessionCookie()) || (await hasAuthFnBrowserSession());
+      const hasSession = await hasSessionCookie();
       if (hasSession) {
         logStep("confirmed AuthFn session in browser context");
         hasSavedAuthSession = true;

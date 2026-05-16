@@ -53,7 +53,7 @@ export async function resolveToken(): Promise<string | null> {
   let token: string | null = null;
   if (isExtensionEnvironment()) {
     return await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
-  } else {
+  } else if (import.meta.env?.VITE_NATIVE_EMBED === "true") {
     const authFnToken = localStorage?.getItem(ClientStorageKey.AUTHFN_TOKEN);
     if (authFnToken) return authFnToken;
   }

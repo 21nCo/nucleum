@@ -85,8 +85,10 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: Build all products via Turborepo
-          command: npm run build
+          name: Build account service and app products
+          command: |
+            npm --workspace @21n/account-service run build
+            npm run build:products
           environment:
             NODE_OPTIONS: "--max-old-space-size=8192"
             NODE_ENV: production

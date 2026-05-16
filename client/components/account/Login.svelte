@@ -175,7 +175,8 @@
             token,
             regionId: parsed.oauth.regionId,
             isNewUser: parsed.oauth.signup === "true",
-            isPreventRedirect: true
+            isPreventRedirect: true,
+            persistToken: true
           });
           if (!signedIn) {
             logger.error({

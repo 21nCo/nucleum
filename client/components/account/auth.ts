@@ -9,6 +9,7 @@ import { clientStorage } from "@21n/persistence/persistence.utils";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
 import { resolveAccountBaseUrl, resolveAccountCookiePrefix } from "../network";
 import { logger } from "@21n/components/debug/logger.client";
+import { isExtensionEnvironment } from "@21n/utils/browser.utils";
 
 type StoredRegionValue = string | AuthFnCachedRegion;
 
@@ -38,8 +39,10 @@ export const authClient = async (params?: {
     clientOptions: {
       cookiePrefix: resolveAccountCookiePrefix(region),
       credentials: "include",
-      bearerToken: async () =>
-        (await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)) ?? undefined,
+      bearerToken: shouldUseAuthFnBearerSession()
+        ? async () =>
+            (await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)) ?? undefined
+        : undefined,
       onRequestMetric: emitAccountNetworkMetric
     },
     onRegionChanged: async (event) => {
@@ -55,7 +58,19 @@ export function resolveAuthFnBaseUrl(region: string) {
   return `${resolveAccountBaseUrl(region).replace(/\/$/, "")}/auth`;
 }
 
+export function shouldUseAuthFnBearerSession(): boolean {
+  if (typeof window === "undefined") return false;
+  return import.meta.env?.VITE_NATIVE_EMBED === "true" || isExtensionEnvironment();
+}
+
+export function resolveAuthFnSessionMode(): "cookie" | "hybrid" {
+  return shouldUseAuthFnBearerSession() ? "hybrid" : "cookie";
+}
+
 export async function bootstrapNucleusAccount(region: string) {
+  if (!shouldUseAuthFnBearerSession()) {
+    return { kind: "not-authfn" as const };
+  }
   const token = await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN);
   if (!token) {
     return { kind: "not-authfn" as const };
@@ -130,10 +145,15 @@ function round(value: number): number {
 
 export async function performSessionCheck(): Promise<boolean | undefined> {
   if (typeof window === "undefined") return false;
-  const authFnToken =
-    (await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)) ?? undefined;
+  const shouldUseBearerSession = shouldUseAuthFnBearerSession();
+  const authFnToken = shouldUseBearerSession
+    ? (await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)) ?? undefined
+    : undefined;
   const offlineSessionId =
     (await clientStorage.get(ClientStorageKey.OFFLINE_SESSION_ID)) ?? undefined;
+  if (!shouldUseBearerSession) {
+    await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
+  }
 
   try {
     const client = await authClient({ isPreventCachedInstance: true });

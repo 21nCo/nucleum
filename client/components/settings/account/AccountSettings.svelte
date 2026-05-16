@@ -45,7 +45,11 @@
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { Product } from "@21n/products/product.type";
   import { hasLegacyCloudSession } from "@21n/utils/account.utils";
-  import { authClient } from "@21n/components/account/auth";
+  import {
+    authClient,
+    resolveAuthFnSessionMode,
+    shouldUseAuthFnBearerSession
+  } from "@21n/components/account/auth";
   import { clientStorage } from "@21n/persistence/persistence.utils";
   import { ClientStorageKey } from "@21n/persistence/persistence.type";
   import type {
@@ -206,7 +210,7 @@
       ).signUpWithPassword({
         email: accountEmail,
         password: passwordValue,
-        sessionMode: "hybrid"
+        sessionMode: resolveAuthFnSessionMode()
       });
 
       if (!response.ok) {
@@ -214,8 +218,10 @@
         return;
       }
 
-      if (response.data.token) {
+      if (shouldUseAuthFnBearerSession() && response.data.token) {
         await clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, response.data.token);
+      } else {
+        await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
       }
       if (response.data.session) {
         await clientStorage.set(ClientStorageKey.USER, response.data.session);
