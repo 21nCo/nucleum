@@ -23,7 +23,7 @@
 [![Discord](https://img.shields.io/discord/831815510563749889?logo=discord&amp;logoColor=white)](https://discord.com/invite/9HJqKYTZKg)
 [![YouTube](https://img.shields.io/youtube/channel/views/UCEE8Uvy4krxIGXAGy2q5wrA?style=flat&logo=youtube&logoColor=white&color=FF0000&label=@21nCo)](https://www.youtube.com/@21nCo)
 [![Reddit](https://img.shields.io/reddit/subreddit-subscribers/nucleus?style=flat&logo=reddit&logoColor=white&color=FF4500&label=r/nucleus)](https://reddit.com/r/nucleus)
-[![Twitter Follow](https://img.shields.io/twitter/follow/21nCompany?style=flat&logo=twitter&logoColor=white&color=1DA1F2&label=X%20@toNucleus)](https://twitter.com/toNucleus)
+[![Twitter Follow](https://img.shields.io/twitter/follow/21nCompany?style=flat&logo=twitter&logoColor=white&color=1DA1F2&label=X%20@nucleumApp)](https://twitter.com/nucleumApp)
 
 
 </div>
@@ -31,15 +31,13 @@
 
 # Applications
 
-| App      | Website                          | Description                                                                 | Topics                                    |
-|----------|----------------------------------|-----------------------------------------------------------------------------|-------------------------------------------|
-| Nucleum  | [nucleum.app](https://nucleum.app)     | **Your digital harmony**, a super app that combines all of the tools listed below in a cohesive manner.    | Digital life, Personal productivity       |
-| Memotron | [memotron.app](https://memotron.app) | **Your memory atlas**, a tool for managing your digital memory and personal knowledge.                  | Digital memory, PKM, Note‑taking, Knowledge management    |
-| Pointron | [pointron.app](https://pointron.app) | **Your focus haven**, a tool for tracking your goals and managing your time.     | Focus, Time management, Goal tracking                    |
+| App      | Website                          | Description                                                                 |
+|----------|----------------------------------|-----------------------------------------------------------------------------|
+| Nucleum  | [nucleum.app](https://nucleum.app)     | **Your digital harmony**, a super app that combines all of the apps listed below in a cohesive manner.    |
+| Memotron | [memotron.app](https://memotron.app) | **Your memory atlas**, a tool for managing your digital memory and personal knowledge.<br><br>Tags: Digital memory, PKM, Note‑taking, Knowledge management.                  |
+| Pointron | [pointron.app](https://pointron.app) | **Your focus haven**, a tool for tracking your goals and managing your time.<br><br>Topics: Focus, Time management, Goal tracking.     |
 
 **Note:** All of the above tools are designed for personal use and lack team/group features like collaboration, sharing, etc.
-
-*More tools coming soon...*
 
 
 # Self hosting
@@ -60,7 +58,10 @@ VITE_STATIC_URL=https://cdn.21n.co
 # Contributing
 We welcome contributions! Please see the [CONTRIBUTING](https://github.com/21nOrg/nucleus?tab=contributing-ov-file) file for details.
 
-The project is built with [SvelteKit](https://kit.svelte.dev/) and [TailwindCSS](https://tailwindcss.com/) for the frontend client, and [Node.js](https://nodejs.org/) for the backend.
+The project is built with 
+- [SvelteKit](https://kit.svelte.dev/) and [TailwindCSS](https://tailwindcss.com/) for the frontend clients
+- [Node.js](https://nodejs.org/) for the backend
+- [Super functions](https://superfunctions.com) for Authentication, billing, communication and more
 
 ---
 ### License
