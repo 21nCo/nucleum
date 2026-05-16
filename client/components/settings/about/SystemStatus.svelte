@@ -1,9 +1,14 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { appStore } from "@21n/stores/app.store";
   import { cn } from "@21n/utils/ui.utils";
   import { onMount } from "svelte";
-  let status: "UP" | "HASISSUES" | "UNDERMAINTENANCE" | undefined = undefined;
-  let statusPageUrl: string | undefined = $appStore.appData?.urls?.statusPage;
+  let status: "UP" | "HASISSUES" | "UNDERMAINTENANCE" | undefined =
+    $state(undefined);
+  let statusPageUrl: string | undefined = $state(
+    $appStore.appData?.urls?.statusPage
+  );
   onMount(async () => {
     if (!$appStore.appData?.urls?.systemStatusJson) return;
     const data = await fetch($appStore.appData?.urls?.systemStatusJson);

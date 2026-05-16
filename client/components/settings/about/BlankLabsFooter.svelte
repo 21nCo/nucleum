@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import A21nLogo from "@21n/branding/A21nLogo.svelte";
   import { Size } from "@21n/types/size.enum";

@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import Text from "@21n/elements/text/Text.svelte";
   import { Orientation } from "@21n/types/direction.enum";
@@ -15,11 +17,13 @@
   import { page } from "$app/stores";
   import { resolveProductConfig } from "@21n/products/product.config";
   import BackButton from "@21n/elements/button/BackButton.svelte";
-  let selected: string = "";
+  let selected: string = $state("");
   let parentBgIndex: number = 2;
   // resolveAction("theme");
-  let pageAction: IAction | null = null;
-  const backPath = $page.url.searchParams.get(AppSearchParam.RETURN_TO);
+  let pageAction: IAction | null = $state(null);
+  const backPath = $derived(
+    $page.url.searchParams.get(AppSearchParam.RETURN_TO)
+  );
   const config = resolveProductConfig().settings;
   onMount(() => {
     const pageSub = page.subscribe((x) => {

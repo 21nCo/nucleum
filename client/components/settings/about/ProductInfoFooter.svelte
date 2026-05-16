@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { cn } from "@21n/utils/ui.utils";
   import AppNameWithVersion from "@21n/components/settings/about/AppNameWithVersion.svelte";
