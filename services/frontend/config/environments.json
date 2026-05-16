@@ -1,38 +1,102 @@
 {
   "workerNamePrefix": "nucleus-web",
   "compatibilityDate": "2026-05-16",
+  "defaultBuildEnv": {
+    "VITE_STATIC_URL": "https://cdn.nucleum.app",
+    "VITE_CUSTOM_PROTOCOL": "tauri",
+    "VITE_LOG_LEVEL": "2",
+    "VITE_PLANS": "7,60,200,15,144,450",
+    "VITE_ISDEBUG": "false",
+    "VITE_ISEXPERIMENTAL": "false",
+    "VITE_IS_DEBUG_EMBED": "false",
+    "VITE_POSTHOG_PROJECT_KEY": "phc_NHkCFy76a1lKyj6ufkxFIdUGMx2FAAPH4g1ktYhLZBa"
+  },
   "products": {
     "nucleum": {
       "appPath": "apps/nucleus",
       "workspace": "nucleus-app",
-      "domain": "nucleum.app"
+      "domain": "nucleum.app",
+      "viteProduct": "nucleus",
+      "env": {
+        "pre": {
+          "VITE_API_URL": "https://api.nucleus.website",
+          "VITE_FILE_API_URL": "https://files.21n.xyz"
+        },
+        "live": {
+          "VITE_API_URL": "https://api.nucleus.website",
+          "VITE_FILE_API_URL": "https://files.21n.xyz",
+          "VITE_POSTHOG_PROJECT_KEY": "phc_dahLyEOHtz1B5jBK1qxUr2bqNZ7KgbK3PkKYqJcfMix"
+        }
+      }
     },
     "memotron": {
       "appPath": "apps/memotron",
       "workspace": "memotron-app",
-      "domain": "memotron.app"
+      "domain": "memotron.app",
+      "viteProduct": "memotron",
+      "env": {
+        "pre": {
+          "VITE_API_URL": "https://api.memotron.xyz",
+          "VITE_FILE_API_URL": "https://files.21n.xyz",
+          "VITE_POSTHOG_PROJECT_KEY": "phc_wBbKRmbqo6OQYpEjzk7v7Kg3kRHsi927DTiRlz7tuFe"
+        },
+        "live": {
+          "VITE_API_URL": "https://api.memotron.app",
+          "VITE_FILE_API_URL": "https://files.21n.xyz",
+          "VITE_POSTHOG_PROJECT_KEY": "phc_dahLyEOHtz1B5jBK1qxUr2bqNZ7KgbK3PkKYqJcfMix"
+        }
+      }
     },
     "pointron": {
       "appPath": "apps/pointron",
       "workspace": "pointron-app",
-      "domain": "pointron.app"
+      "domain": "pointron.app",
+      "viteProduct": "pointron",
+      "env": {
+        "pre": {
+          "VITE_API_URL": "https://api.nucleus.website",
+          "VITE_FILE_API_URL": "https://files.21n.xyz"
+        },
+        "live": {
+          "VITE_API_URL": "https://api.nucleus.website",
+          "VITE_FILE_API_URL": "https://files.21n.xyz",
+          "VITE_POSTHOG_PROJECT_KEY": "phc_dahLyEOHtz1B5jBK1qxUr2bqNZ7KgbK3PkKYqJcfMix"
+        }
+      }
     }
   },
   "environments": {
     "dev": {
       "webSubdomain": "dev",
       "buildScript": "build",
-      "workersDev": true
+      "workersDev": true,
+      "accountBaseUrlTemplate": "https://account-{region}-dev.{domain}",
+      "buildEnv": {
+        "VITE_ENV": "dev",
+        "VITE_API_URL": "https://api.21n.dev",
+        "VITE_FILE_API_URL": "https://files.21n.dev",
+        "VITE_IPINFO_TOKEN": "8b7af6433568ef"
+      }
     },
     "pre": {
       "webSubdomain": "pre",
       "buildScript": "build-pre",
-      "workersDev": false
+      "workersDev": false,
+      "accountBaseUrlTemplate": "https://account-{region}-pre.{domain}",
+      "buildEnv": {
+        "VITE_ENV": "pre",
+        "VITE_CLONE_DOWN_LIMIT": "300"
+      }
     },
     "live": {
       "webSubdomain": "web",
       "buildScript": "build-live",
-      "workersDev": false
+      "workersDev": false,
+      "accountBaseUrlTemplate": "https://account-{region}.{domain}",
+      "buildEnv": {
+        "VITE_ENV": "live",
+        "VITE_CLONE_DOWN_LIMIT": "300"
+      }
     }
   }
 }

@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   import { appStore } from "@21n/stores/app.store";

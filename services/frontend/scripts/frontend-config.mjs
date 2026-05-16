@@ -55,6 +55,24 @@ export function webHost(config, environment, productId) {
   return `${envConfig.webSubdomain}.${product.domain}`;
 }
 
+export function buildEnv(config, environment, productId) {
+  const envConfig = readEnvironment(config, environment);
+  const product = config.products[productId];
+  if (!product) {
+    throw new Error(`Unknown frontend product: ${productId}`);
+  }
+
+  const accountBaseUrlTemplate = envConfig.accountBaseUrlTemplate?.replaceAll('{domain}', product.domain);
+  return removeUndefinedValues({
+    ...config.defaultBuildEnv,
+    ...envConfig.buildEnv,
+    ...product.env?.[environment],
+    VITE_PRODUCT: product.viteProduct ?? productId,
+    VITE_HOST: webHost(config, environment, productId),
+    VITE_ACCOUNT_BASE_URL_TEMPLATE: accountBaseUrlTemplate
+  });
+}
+
 export function routeDefinitions(config, environment, products = Object.keys(config.products)) {
   readEnvironment(config, environment);
   return products.map((productId) => ({
@@ -104,4 +122,8 @@ export function assertBuildOutput(repoRoot, config, productId) {
 
 function toPosixPath(value) {
   return value.split(path.sep).join('/');
+}
+
+function removeUndefinedValues(value) {
+  return Object.fromEntries(Object.entries(value).filter((entry) => entry[1] !== undefined));
 }

@@ -4,6 +4,7 @@ import process from 'node:process';
 import { spawnSync } from 'node:child_process';
 import {
   assertBuildOutput,
+  buildEnv,
   getArgValue,
   hasFlag,
   normalizeEnvironment,
@@ -31,7 +32,10 @@ const envConfig = readEnvironment(config, environment);
 for (const productId of products) {
   const product = config.products[productId];
   if (!skipBuild) {
-    run('npm', ['--workspace', product.workspace, 'run', envConfig.buildScript], { cwd: repoRoot });
+    run('npm', ['--workspace', product.workspace, 'run', envConfig.buildScript], {
+      cwd: repoRoot,
+      env: buildEnv(config, environment, productId)
+    });
   }
 
   assertBuildOutput(repoRoot, config, productId);
@@ -53,7 +57,10 @@ function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd ?? serviceRoot,
     stdio: 'inherit',
-    env: process.env,
+    env: {
+      ...process.env,
+      ...(options.env ?? {})
+    },
     shell: process.platform === 'win32'
   });
   if (result.status !== 0) {
