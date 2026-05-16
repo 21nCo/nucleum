@@ -95,8 +95,16 @@ describe("sanitize", () => {
     ).toEqual({
       embed: "https://example.com/embed"
     });
+    expect(sanitize('<embed src="https://example.com/embed">')).toEqual({
+      embed: "https://example.com/embed"
+    });
     expect(() => sanitize('<iframe src="vbscript:alert(1)"></iframe>')).toThrow(
       "Invalid URL"
     );
+    expect(
+      sanitize(
+        '<iframe src="https://example.com/embed"></iframe><script>alert(1)</script>'
+      )
+    ).toBe("alert(1)");
   });
 });

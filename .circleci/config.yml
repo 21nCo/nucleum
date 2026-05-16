@@ -88,7 +88,9 @@ jobs:
           name: Build account service and app products
           command: |
             npm --workspace @21n/account-service run build
-            npm run build:products
+            npm run build:nucleus
+            npm run build:memotron
+            npm run build:pointron
           environment:
             NODE_OPTIONS: "--max-old-space-size=8192"
             NODE_ENV: production

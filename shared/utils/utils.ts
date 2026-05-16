@@ -221,46 +221,31 @@ function parseTrustedScriptEmbed(text: string) {
 
 function extractSingleScriptSrc(text: string) {
   const trimmed = text.trim();
-  const lower = trimmed.toLowerCase();
-  if (!lower.startsWith("<script") || !lower.endsWith("</script>")) return null;
-
-  const parser =
-    typeof DOMParser === "undefined"
-      ? null
-      : new DOMParser().parseFromString(trimmed, "text/html");
-  const scripts = parser ? Array.from(parser.querySelectorAll("script")) : [];
-  if (scripts.length === 1 && parser?.body.children.length === 1) {
-    return scripts[0].getAttribute("src");
+  const openTag = readOpeningTag(trimmed);
+  if (!openTag || openTag.tagName !== "script") return null;
+  if (!hasOnlyMatchingCloseTag(trimmed, openTag.openTagEnd, "script")) {
+    return null;
   }
-
-  const openTagEnd = trimmed.indexOf(">");
-  if (openTagEnd < 0) return null;
-  return readAttributeValue(trimmed.slice(0, openTagEnd + 1), "src");
+  return readAttributeValue(openTag.tag, "src");
 }
 
 function parseAllowedMediaEmbed(text: string) {
   const trimmed = text.trim();
-  const parser =
-    typeof DOMParser === "undefined"
-      ? null
-      : new DOMParser().parseFromString(trimmed, "text/html");
   const allowedTags = new Set(["iframe", "video", "audio", "object", "embed"]);
-  let tagName = "";
-  let src: string | null = null;
+  const openTag = readOpeningTag(trimmed);
+  if (!openTag) return null;
 
-  if (parser && parser.body.children.length === 1) {
-    const child = parser.body.firstElementChild;
-    tagName = child?.tagName.toLowerCase() ?? "";
-    src = child?.getAttribute("src") ?? null;
-  } else {
-    const openTagEnd = trimmed.indexOf(">");
-    if (!trimmed.startsWith("<") || openTagEnd < 0) return null;
-    const tagEnd = findTagNameEnd(trimmed);
-    tagName = trimmed.slice(1, tagEnd).toLowerCase();
-    src = readAttributeValue(trimmed.slice(0, openTagEnd + 1), "src");
+  if (!allowedTags.has(openTag.tagName)) return null;
+  if (
+    !hasOnlyMatchingCloseTag(trimmed, openTag.openTagEnd, openTag.tagName, {
+      allowEmptyTrailingContent: true
+    })
+  ) {
+    return null;
   }
 
-  if (!allowedTags.has(tagName) || !src) return null;
+  const src = readAttributeValue(openTag.tag, "src");
+  if (!src) return null;
 
   try {
     const parsedUrl = new URL(src);
@@ -271,6 +256,39 @@ function parseAllowedMediaEmbed(text: string) {
   } catch {
     throw new Error("Invalid URL");
   }
+}
+
+function readOpeningTag(text: string) {
+  if (!text.startsWith("<") || text.startsWith("</") || text.startsWith("<!")) {
+    return null;
+  }
+
+  const openTagEnd = text.indexOf(">");
+  if (openTagEnd < 0) return null;
+
+  const tagEnd = findTagNameEnd(text);
+  if (tagEnd <= 1 || tagEnd > openTagEnd) return null;
+
+  const tagName = text.slice(1, tagEnd).toLowerCase();
+  return {
+    tag: text.slice(0, openTagEnd + 1),
+    tagName,
+    openTagEnd
+  };
+}
+
+function hasOnlyMatchingCloseTag(
+  text: string,
+  openTagEnd: number,
+  tagName: string,
+  options: { allowEmptyTrailingContent?: boolean } = {}
+) {
+  const openTag = text.slice(0, openTagEnd + 1).trimEnd();
+  const trailingContent = text.slice(openTagEnd + 1).trim();
+  if (openTag.endsWith("/>")) return trailingContent === "";
+  if (options.allowEmptyTrailingContent && trailingContent === "") return true;
+
+  return trailingContent.toLowerCase() === `</${tagName}>`;
 }
 
 function stripHtmlTags(text: string) {
