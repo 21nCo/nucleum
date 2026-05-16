@@ -1,0 +1,2148 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AFA29F2577897DC43E77F7 /* AuthFnClient in Frameworks */ = {isa = PBXBuildFile; productRef = AFA100000000000000000002 /* AuthFnClient */; };
+		AFA293E13857291A816284 /* AuthFnClient in Frameworks */ = {isa = PBXBuildFile; productRef = AFA100000000000000000002 /* AuthFnClient */; };
+		0A06BF752E1D993200429B60 /* AIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A4678832DACFD080050BA98 /* AIService.swift */; };
+		0A06BF772E1D993200429B60 /* AIServiceProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A46788A2DACFD080050BA98 /* AIServiceProtocols.swift */; };
+		0A06BF762E1D995000429B60 /* WhisperCppWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0A46787D2DACDC700050BA98 /* WhisperCppWrapper.mm */; };
+		0A0B54102D9186250062FDE2 /* Defaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0B540F2D9186250062FDE2 /* Defaults.swift */; };
+		0A0B54112D9186250062FDE2 /* Defaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A0B540F2D9186250062FDE2 /* Defaults.swift */; };
+		0A42F7932E1EAB39002DBB6C /* whisper.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A4678732DACDBA50050BA98 /* whisper.xcframework */; };
+		0A42F7942E1EAB39002DBB6C /* whisper.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 0A4678732DACDBA50050BA98 /* whisper.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		0A4678742DACDBA50050BA98 /* whisper.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A4678732DACDBA50050BA98 /* whisper.xcframework */; };
+		0A4678752DACDBA50050BA98 /* whisper.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 0A4678732DACDBA50050BA98 /* whisper.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		0A4678802DACDC700050BA98 /* WhisperCppWrapper.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0A46787D2DACDC700050BA98 /* WhisperCppWrapper.mm */; };
+		0A4678842DACFD080050BA98 /* AIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A4678832DACFD080050BA98 /* AIService.swift */; };
+		0A46788B2DACFD080050BA98 /* AIServiceProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A46788A2DACFD080050BA98 /* AIServiceProtocols.swift */; };
+		0A4678892DAD01050050BA98 /* AudioTranscriptionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A4678872DAD01050050BA98 /* AudioTranscriptionView.swift */; };
+		0A59977F2CC223DB00021919 /* SafariWebview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A59977D2CC223DB00021919 /* SafariWebview.swift */; };
+		0A5997802CC223DB00021919 /* SafariViewModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A59977E2CC223DB00021919 /* SafariViewModal.swift */; };
+		0AD92ADE2D816A4900E77E0F /* StoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD92ADD2D816A4500E77E0F /* StoreManager.swift */; };
+		0AD92ADF2D816A4900E77E0F /* StoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AD92ADD2D816A4500E77E0F /* StoreManager.swift */; };
+		0AD92AE22D81A1C200E77E0F /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0AD92AE12D81A1C200E77E0F /* StoreKit.framework */; };
+		0ADD3F4F2E17B81800B21753 /* JobManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADD3F4E2E17B81800B21753 /* JobManager.swift */; };
+		0ADD3F502E17B81800B21753 /* CoreDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADD3F4C2E17B81800B21753 /* CoreDataStack.swift */; };
+		0ADD3F512E17B81800B21753 /* Job.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADD3F4D2E17B81800B21753 /* Job.swift */; };
+		0ADD3F522E17B81800B21753 /* JobManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADD3F4E2E17B81800B21753 /* JobManager.swift */; };
+		0ADD3F532E17B81800B21753 /* CoreDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADD3F4C2E17B81800B21753 /* CoreDataStack.swift */; };
+		0ADD3F542E17B81800B21753 /* Job.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0ADD3F4D2E17B81800B21753 /* Job.swift */; };
+		0AE145242DABC0FF0036CD7C /* MacAppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE145222DABC0FF0036CD7C /* MacAppDelegate.swift */; };
+		0AE145252DABC0FF0036CD7C /* MacContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE145232DABC0FF0036CD7C /* MacContent.swift */; };
+		0AE145272DABC11E0036CD7C /* WebAuthenticationViewForMac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AE145262DABC11E0036CD7C /* WebAuthenticationViewForMac.swift */; };
+		0AE145282DABE38D0036CD7C /* LoadingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA702B74C0460015509D /* LoadingOverlay.swift */; };
+		2203DA532B74BEE30015509D /* MemotronApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA522B74BEE30015509D /* MemotronApp.swift */; };
+		2203DA552B74BEE30015509D /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA542B74BEE30015509D /* ContentView.swift */; };
+		2203DA572B74BEE70015509D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2203DA562B74BEE70015509D /* Assets.xcassets */; };
+		2203DA5B2B74BEE70015509D /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2203DA5A2B74BEE70015509D /* Preview Assets.xcassets */; };
+		2203DA742B74C0480015509D /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA622B74C0460015509D /* Logger.swift */; };
+		2203DA762B74C0480015509D /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA642B74C0460015509D /* Extensions.swift */; };
+		2203DA772B74C0480015509D /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 2203DA652B74C0460015509D /* README.md */; };
+		2203DA782B74C0480015509D /* dingding.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 2203DA672B74C0460015509D /* dingding.mp3 */; };
+		2203DA792B74C0480015509D /* upchime.mp3 in Resources */ = {isa = PBXBuildFile; fileRef = 2203DA682B74C0460015509D /* upchime.mp3 */; };
+		2203DA7A2B74C0480015509D /* ping.wav in Resources */ = {isa = PBXBuildFile; fileRef = 2203DA692B74C0460015509D /* ping.wav */; };
+		2203DA7B2B74C0480015509D /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA6A2B74C0460015509D /* Models.swift */; };
+		2203DA7D2B74C0480015509D /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA6C2B74C0460015509D /* Utils.swift */; };
+		2203DA7E2B74C0480015509D /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA6D2B74C0460015509D /* AppStore.swift */; };
+		2203DA7F2B74C0480015509D /* Modal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA6F2B74C0460015509D /* Modal.swift */; };
+		2203DA802B74C0480015509D /* LoadingOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA702B74C0460015509D /* LoadingOverlay.swift */; };
+		2203DA812B74C0480015509D /* SimpleText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA722B74C0460015509D /* SimpleText.swift */; };
+		2203DA822B74C0480015509D /* Offline.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA732B74C0460015509D /* Offline.swift */; };
+		2203DA852B74C0B80015509D /* LocalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA842B74C0B80015509D /* LocalConfig.swift */; };
+		228800D62B9C70A4007CEC2F /* CustomWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 228800D12B9C70A4007CEC2F /* CustomWebView.swift */; };
+		228800D72B9C70A4007CEC2F /* WebViewCommon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 228800D22B9C70A4007CEC2F /* WebViewCommon.swift */; };
+		228800D92B9C70A4007CEC2F /* WebViewTwo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 228800D42B9C70A4007CEC2F /* WebViewTwo.swift */; };
+		228800E12B9C732B007CEC2F /* Memotron_for_MacApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 228800E02B9C732B007CEC2F /* Memotron_for_MacApp.swift */; };
+		228800E32B9C732B007CEC2F /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 228800E22B9C732B007CEC2F /* ContentView.swift */; };
+		228800E52B9C732E007CEC2F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 228800E42B9C732E007CEC2F /* Assets.xcassets */; };
+		228800E82B9C732E007CEC2F /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 228800E72B9C732E007CEC2F /* Preview Assets.xcassets */; };
+		228800EE2B9C739B007CEC2F /* www in Resources */ = {isa = PBXBuildFile; fileRef = 228800ED2B9C739A007CEC2F /* www */; };
+		228800EF2B9C739B007CEC2F /* www in Resources */ = {isa = PBXBuildFile; fileRef = 228800ED2B9C739A007CEC2F /* www */; };
+		228800F02B9C7411007CEC2F /* BaseViewForMac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 228800CF2B9C6F83007CEC2F /* BaseViewForMac.swift */; };
+		228800F12B9C7414007CEC2F /* WebViewForMac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 228800D32B9C70A4007CEC2F /* WebViewForMac.swift */; };
+		228800F22B9C7421007CEC2F /* WebViewCommon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 228800D22B9C70A4007CEC2F /* WebViewCommon.swift */; };
+		228800F32B9C743D007CEC2F /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA6D2B74C0460015509D /* AppStore.swift */; };
+		228800F42B9C7447007CEC2F /* LocalConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA842B74C0B80015509D /* LocalConfig.swift */; };
+		228800F52B9C7452007CEC2F /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA6A2B74C0460015509D /* Models.swift */; };
+		228800F62B9C7455007CEC2F /* Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA6C2B74C0460015509D /* Utils.swift */; };
+		228800F72B9C7459007CEC2F /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA622B74C0460015509D /* Logger.swift */; };
+		228800F82B9C7462007CEC2F /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2203DA642B74C0460015509D /* Extensions.swift */; };
+		22A6193C2B7508A600742B70 /* BaseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22A6193B2B7508A600742B70 /* BaseView.swift */; };
+		22C602D32B81F05A00C5D5D2 /* CameraTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22C602D22B81F05A00C5D5D2 /* CameraTestView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		0A42F7952E1EAB39002DBB6C /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				0A42F7942E1EAB39002DBB6C /* whisper.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0A4678762DACDBA50050BA98 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				0A4678752DACDBA50050BA98 /* whisper.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0A0B540F2D9186250062FDE2 /* Defaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Defaults.swift; sourceTree = "<group>"; };
+		0A4678732DACDBA50050BA98 /* whisper.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = whisper.xcframework; path = "../vendor/whisper.cpp/build-apple/whisper.xcframework"; sourceTree = "<group>"; };
+		0A46787A2DACDC700050BA98 /* Memotron-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Memotron-Bridging-Header.h"; sourceTree = "<group>"; };
+		0A46787C2DACDC700050BA98 /* WhisperCppWrapper.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WhisperCppWrapper.h; sourceTree = "<group>"; };
+		0A46787D2DACDC700050BA98 /* WhisperCppWrapper.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WhisperCppWrapper.mm; sourceTree = "<group>"; };
+		0A4678832DACFD080050BA98 /* AIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIService.swift; sourceTree = "<group>"; };
+		0A46788A2DACFD080050BA98 /* AIServiceProtocols.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIServiceProtocols.swift; sourceTree = "<group>"; };
+		0A4678872DAD01050050BA98 /* AudioTranscriptionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioTranscriptionView.swift; sourceTree = "<group>"; };
+		0A59977D2CC223DB00021919 /* SafariWebview.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SafariWebview.swift; sourceTree = "<group>"; };
+		0A59977E2CC223DB00021919 /* SafariViewModal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SafariViewModal.swift; sourceTree = "<group>"; };
+		0ACCE0202CF7163400D1F0A7 /* Memotron-for-Mac-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Memotron-for-Mac-Info.plist"; sourceTree = SOURCE_ROOT; };
+		0AD92ADD2D816A4500E77E0F /* StoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StoreManager.swift; sourceTree = "<group>"; };
+		0AD92AE12D81A1C200E77E0F /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		0ADD3F4C2E17B81800B21753 /* CoreDataStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStack.swift; sourceTree = "<group>"; };
+		0ADD3F4D2E17B81800B21753 /* Job.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Job.swift; sourceTree = "<group>"; };
+		0ADD3F4E2E17B81800B21753 /* JobManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobManager.swift; sourceTree = "<group>"; };
+		0AE145222DABC0FF0036CD7C /* MacAppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacAppDelegate.swift; sourceTree = "<group>"; };
+		0AE145232DABC0FF0036CD7C /* MacContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacContent.swift; sourceTree = "<group>"; };
+		0AE145262DABC11E0036CD7C /* WebAuthenticationViewForMac.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAuthenticationViewForMac.swift; sourceTree = "<group>"; };
+		2203DA4F2B74BEE30015509D /* Memotron.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Memotron.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2203DA522B74BEE30015509D /* MemotronApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemotronApp.swift; sourceTree = "<group>"; };
+		2203DA542B74BEE30015509D /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		2203DA562B74BEE70015509D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		2203DA582B74BEE70015509D /* Memotron.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Memotron.entitlements; sourceTree = "<group>"; };
+		2203DA5A2B74BEE70015509D /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		2203DA622B74C0460015509D /* Logger.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
+		2203DA642B74C0460015509D /* Extensions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
+		2203DA652B74C0460015509D /* README.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		2203DA672B74C0460015509D /* dingding.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = dingding.mp3; sourceTree = "<group>"; };
+		2203DA682B74C0460015509D /* upchime.mp3 */ = {isa = PBXFileReference; lastKnownFileType = audio.mp3; path = upchime.mp3; sourceTree = "<group>"; };
+		2203DA692B74C0460015509D /* ping.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = ping.wav; sourceTree = "<group>"; };
+		2203DA6A2B74C0460015509D /* Models.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		2203DA6C2B74C0460015509D /* Utils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Utils.swift; sourceTree = "<group>"; };
+		2203DA6D2B74C0460015509D /* AppStore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
+		2203DA6F2B74C0460015509D /* Modal.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Modal.swift; sourceTree = "<group>"; };
+		2203DA702B74C0460015509D /* LoadingOverlay.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LoadingOverlay.swift; sourceTree = "<group>"; };
+		2203DA722B74C0460015509D /* SimpleText.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SimpleText.swift; sourceTree = "<group>"; };
+		2203DA732B74C0460015509D /* Offline.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Offline.swift; sourceTree = "<group>"; };
+		2203DA842B74C0B80015509D /* LocalConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalConfig.swift; sourceTree = "<group>"; };
+		228800CF2B9C6F83007CEC2F /* BaseViewForMac.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BaseViewForMac.swift; sourceTree = "<group>"; };
+		228800D12B9C70A4007CEC2F /* CustomWebView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CustomWebView.swift; sourceTree = "<group>"; };
+		228800D22B9C70A4007CEC2F /* WebViewCommon.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebViewCommon.swift; sourceTree = "<group>"; };
+		228800D32B9C70A4007CEC2F /* WebViewForMac.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebViewForMac.swift; sourceTree = "<group>"; };
+		228800D42B9C70A4007CEC2F /* WebViewTwo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebViewTwo.swift; sourceTree = "<group>"; };
+		228800DE2B9C732B007CEC2F /* Memotron.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Memotron.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		228800E02B9C732B007CEC2F /* Memotron_for_MacApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Memotron_for_MacApp.swift; sourceTree = "<group>"; };
+		228800E22B9C732B007CEC2F /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		228800E42B9C732E007CEC2F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		228800E72B9C732E007CEC2F /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		228800E92B9C732E007CEC2F /* Memotron_for_Mac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Memotron_for_Mac.entitlements; sourceTree = "<group>"; };
+		228800ED2B9C739A007CEC2F /* www */ = {isa = PBXFileReference; lastKnownFileType = folder; path = www; sourceTree = "<group>"; };
+		22A6193B2B7508A600742B70 /* BaseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseView.swift; sourceTree = "<group>"; };
+		22A6193D2B750DA900742B70 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		22C602D22B81F05A00C5D5D2 /* CameraTestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CameraTestView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		2203DA4C2B74BEE30015509D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFA29F2577897DC43E77F7 /* AuthFnClient in Frameworks */,
+				0A4678742DACDBA50050BA98 /* whisper.xcframework in Frameworks */,
+				0AD92AE22D81A1C200E77E0F /* StoreKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		228800DB2B9C732B007CEC2F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFA293E13857291A816284 /* AuthFnClient in Frameworks */,
+				0A42F7932E1EAB39002DBB6C /* whisper.xcframework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0A46787E2DACDC700050BA98 /* whisper */ = {
+			isa = PBXGroup;
+			children = (
+				0A46787A2DACDC700050BA98 /* Memotron-Bridging-Header.h */,
+				0A46787C2DACDC700050BA98 /* WhisperCppWrapper.h */,
+				0A46787D2DACDC700050BA98 /* WhisperCppWrapper.mm */,
+			);
+			name = whisper;
+			path = Memotron/whisper;
+			sourceTree = "<group>";
+		};
+		0AD92AE02D81A1C200E77E0F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				0A4678732DACDBA50050BA98 /* whisper.xcframework */,
+				0AD92AE12D81A1C200E77E0F /* StoreKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		2203DA462B74BEE30015509D = {
+			isa = PBXGroup;
+			children = (
+				0A46787E2DACDC700050BA98 /* whisper */,
+				228800ED2B9C739A007CEC2F /* www */,
+				2203DA512B74BEE30015509D /* Memotron */,
+				228800DF2B9C732B007CEC2F /* Memotron for Mac */,
+				0AD92AE02D81A1C200E77E0F /* Frameworks */,
+				2203DA502B74BEE30015509D /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		2203DA502B74BEE30015509D /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				2203DA4F2B74BEE30015509D /* Memotron.app */,
+				228800DE2B9C732B007CEC2F /* Memotron.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2203DA512B74BEE30015509D /* Memotron */ = {
+			isa = PBXGroup;
+			children = (
+				22A6193D2B750DA900742B70 /* Info.plist */,
+				2203DA832B74C0A60015509D /* local */,
+				2203DA612B74C0460015509D /* tidy */,
+				2203DA522B74BEE30015509D /* MemotronApp.swift */,
+				2203DA542B74BEE30015509D /* ContentView.swift */,
+				2203DA562B74BEE70015509D /* Assets.xcassets */,
+				2203DA582B74BEE70015509D /* Memotron.entitlements */,
+				2203DA592B74BEE70015509D /* Preview Content */,
+			);
+			path = Memotron;
+			sourceTree = "<group>";
+		};
+		2203DA592B74BEE70015509D /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				2203DA5A2B74BEE70015509D /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		2203DA612B74C0460015509D /* tidy */ = {
+			isa = PBXGroup;
+			children = (
+				0ADD3F4C2E17B81800B21753 /* CoreDataStack.swift */,
+				0ADD3F4D2E17B81800B21753 /* Job.swift */,
+				0ADD3F4E2E17B81800B21753 /* JobManager.swift */,
+				0A4678832DACFD080050BA98 /* AIService.swift */,
+				0A46788A2DACFD080050BA98 /* AIServiceProtocols.swift */,
+				0AE145222DABC0FF0036CD7C /* MacAppDelegate.swift */,
+				0AE145232DABC0FF0036CD7C /* MacContent.swift */,
+				0A0B540F2D9186250062FDE2 /* Defaults.swift */,
+				0AD92ADD2D816A4500E77E0F /* StoreManager.swift */,
+				228800D52B9C70A4007CEC2F /* WebView */,
+				2203DA622B74C0460015509D /* Logger.swift */,
+				2203DA642B74C0460015509D /* Extensions.swift */,
+				2203DA652B74C0460015509D /* README.md */,
+				2203DA662B74C0460015509D /* Sounds */,
+				2203DA6A2B74C0460015509D /* Models.swift */,
+				2203DA6C2B74C0460015509D /* Utils.swift */,
+				2203DA6D2B74C0460015509D /* AppStore.swift */,
+				2203DA6E2B74C0460015509D /* Views */,
+			);
+			name = NucleumNativeKit;
+			path = "../../packages/NucleumNativeKit/Sources/NucleumNativeKit";
+			sourceTree = "<group>";
+		};
+		2203DA662B74C0460015509D /* Sounds */ = {
+			isa = PBXGroup;
+			children = (
+				2203DA672B74C0460015509D /* dingding.mp3 */,
+				2203DA682B74C0460015509D /* upchime.mp3 */,
+				2203DA692B74C0460015509D /* ping.wav */,
+			);
+			path = Sounds;
+			sourceTree = "<group>";
+		};
+		2203DA6E2B74C0460015509D /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				0A4678872DAD01050050BA98 /* AudioTranscriptionView.swift */,
+				0AE145262DABC11E0036CD7C /* WebAuthenticationViewForMac.swift */,
+				0A59977E2CC223DB00021919 /* SafariViewModal.swift */,
+				0A59977D2CC223DB00021919 /* SafariWebview.swift */,
+				228800CF2B9C6F83007CEC2F /* BaseViewForMac.swift */,
+				2203DA6F2B74C0460015509D /* Modal.swift */,
+				2203DA702B74C0460015509D /* LoadingOverlay.swift */,
+				2203DA712B74C0460015509D /* elements */,
+				2203DA732B74C0460015509D /* Offline.swift */,
+				22A6193B2B7508A600742B70 /* BaseView.swift */,
+				22C602D22B81F05A00C5D5D2 /* CameraTestView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		2203DA712B74C0460015509D /* elements */ = {
+			isa = PBXGroup;
+			children = (
+				2203DA722B74C0460015509D /* SimpleText.swift */,
+			);
+			path = elements;
+			sourceTree = "<group>";
+		};
+		2203DA832B74C0A60015509D /* local */ = {
+			isa = PBXGroup;
+			children = (
+				2203DA842B74C0B80015509D /* LocalConfig.swift */,
+			);
+			path = local;
+			sourceTree = "<group>";
+		};
+		228800D52B9C70A4007CEC2F /* WebView */ = {
+			isa = PBXGroup;
+			children = (
+				228800D12B9C70A4007CEC2F /* CustomWebView.swift */,
+				228800D22B9C70A4007CEC2F /* WebViewCommon.swift */,
+				228800D32B9C70A4007CEC2F /* WebViewForMac.swift */,
+				228800D42B9C70A4007CEC2F /* WebViewTwo.swift */,
+			);
+			path = WebView;
+			sourceTree = "<group>";
+		};
+		228800DF2B9C732B007CEC2F /* Memotron for Mac */ = {
+			isa = PBXGroup;
+			children = (
+				0ACCE0202CF7163400D1F0A7 /* Memotron-for-Mac-Info.plist */,
+				228800E02B9C732B007CEC2F /* Memotron_for_MacApp.swift */,
+				228800E22B9C732B007CEC2F /* ContentView.swift */,
+				228800E42B9C732E007CEC2F /* Assets.xcassets */,
+				228800E92B9C732E007CEC2F /* Memotron_for_Mac.entitlements */,
+				228800E62B9C732E007CEC2F /* Preview Content */,
+			);
+			path = "Memotron for Mac";
+			sourceTree = "<group>";
+		};
+		228800E62B9C732E007CEC2F /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				228800E72B9C732E007CEC2F /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2203DA4E2B74BEE30015509D /* Memotron */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2203DA5E2B74BEE70015509D /* Build configuration list for PBXNativeTarget "Memotron" */;
+			buildPhases = (
+				2203DA4B2B74BEE30015509D /* Sources */,
+				2203DA4C2B74BEE30015509D /* Frameworks */,
+				2203DA4D2B74BEE30015509D /* Resources */,
+				0A4678762DACDBA50050BA98 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Memotron;
+			packageProductDependencies = (
+				AFA100000000000000000002 /* AuthFnClient */,
+			);
+			productName = Memotron;
+			productReference = 2203DA4F2B74BEE30015509D /* Memotron.app */;
+			productType = "com.apple.product-type.application";
+		};
+		228800DD2B9C732B007CEC2F /* Memotron for Mac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 228800EA2B9C732E007CEC2F /* Build configuration list for PBXNativeTarget "Memotron for Mac" */;
+			buildPhases = (
+				228800DA2B9C732B007CEC2F /* Sources */,
+				228800DB2B9C732B007CEC2F /* Frameworks */,
+				228800DC2B9C732B007CEC2F /* Resources */,
+				0A42F7952E1EAB39002DBB6C /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Memotron for Mac";
+			packageProductDependencies = (
+				AFA100000000000000000002 /* AuthFnClient */,
+			);
+			productName = "Memotron for Mac";
+			productReference = 228800DE2B9C732B007CEC2F /* Memotron.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		2203DA472B74BEE30015509D /* Project object */ = {
+			isa = PBXProject;
+			packageReferences = (
+				AFA100000000000000000001 /* XCRemoteSwiftPackageReference \"super-functions\" */,
+			);
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1530;
+				LastUpgradeCheck = 1520;
+				TargetAttributes = {
+					2203DA4E2B74BEE30015509D = {
+						CreatedOnToolsVersion = 15.2;
+					};
+					228800DD2B9C732B007CEC2F = {
+						CreatedOnToolsVersion = 15.3;
+					};
+				};
+			};
+			buildConfigurationList = 2203DA4A2B74BEE30015509D /* Build configuration list for PBXProject "Memotron" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 2203DA462B74BEE30015509D;
+			productRefGroup = 2203DA502B74BEE30015509D /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2203DA4E2B74BEE30015509D /* Memotron */,
+				228800DD2B9C732B007CEC2F /* Memotron for Mac */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2203DA4D2B74BEE30015509D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2203DA7A2B74C0480015509D /* ping.wav in Resources */,
+				228800EE2B9C739B007CEC2F /* www in Resources */,
+				2203DA772B74C0480015509D /* README.md in Resources */,
+				2203DA5B2B74BEE70015509D /* Preview Assets.xcassets in Resources */,
+				2203DA782B74C0480015509D /* dingding.mp3 in Resources */,
+				2203DA572B74BEE70015509D /* Assets.xcassets in Resources */,
+				2203DA792B74C0480015509D /* upchime.mp3 in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		228800DC2B9C732B007CEC2F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				228800EF2B9C739B007CEC2F /* www in Resources */,
+				228800E82B9C732E007CEC2F /* Preview Assets.xcassets in Resources */,
+				228800E52B9C732E007CEC2F /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		2203DA4B2B74BEE30015509D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0A4678802DACDC700050BA98 /* WhisperCppWrapper.mm in Sources */,
+				0A5997802CC223DB00021919 /* SafariViewModal.swift in Sources */,
+				2203DA762B74C0480015509D /* Extensions.swift in Sources */,
+				2203DA7F2B74C0480015509D /* Modal.swift in Sources */,
+				228800D62B9C70A4007CEC2F /* CustomWebView.swift in Sources */,
+				2203DA552B74BEE30015509D /* ContentView.swift in Sources */,
+				22C602D32B81F05A00C5D5D2 /* CameraTestView.swift in Sources */,
+				2203DA802B74C0480015509D /* LoadingOverlay.swift in Sources */,
+				2203DA742B74C0480015509D /* Logger.swift in Sources */,
+				2203DA7B2B74C0480015509D /* Models.swift in Sources */,
+				2203DA812B74C0480015509D /* SimpleText.swift in Sources */,
+				2203DA822B74C0480015509D /* Offline.swift in Sources */,
+				0A4678892DAD01050050BA98 /* AudioTranscriptionView.swift in Sources */,
+				0ADD3F4F2E17B81800B21753 /* JobManager.swift in Sources */,
+				0ADD3F502E17B81800B21753 /* CoreDataStack.swift in Sources */,
+				0ADD3F512E17B81800B21753 /* Job.swift in Sources */,
+				0A4678842DACFD080050BA98 /* AIService.swift in Sources */,
+				0A46788B2DACFD080050BA98 /* AIServiceProtocols.swift in Sources */,
+				2203DA7E2B74C0480015509D /* AppStore.swift in Sources */,
+				0A59977F2CC223DB00021919 /* SafariWebview.swift in Sources */,
+				228800D72B9C70A4007CEC2F /* WebViewCommon.swift in Sources */,
+				2203DA532B74BEE30015509D /* MemotronApp.swift in Sources */,
+				0A0B54112D9186250062FDE2 /* Defaults.swift in Sources */,
+				228800D92B9C70A4007CEC2F /* WebViewTwo.swift in Sources */,
+				22A6193C2B7508A600742B70 /* BaseView.swift in Sources */,
+				0AD92ADE2D816A4900E77E0F /* StoreManager.swift in Sources */,
+				2203DA7D2B74C0480015509D /* Utils.swift in Sources */,
+				2203DA852B74C0B80015509D /* LocalConfig.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		228800DA2B9C732B007CEC2F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0A06BF762E1D995000429B60 /* WhisperCppWrapper.mm in Sources */,
+				228800F22B9C7421007CEC2F /* WebViewCommon.swift in Sources */,
+				0A0B54102D9186250062FDE2 /* Defaults.swift in Sources */,
+				228800E32B9C732B007CEC2F /* ContentView.swift in Sources */,
+				228800F62B9C7455007CEC2F /* Utils.swift in Sources */,
+				228800F02B9C7411007CEC2F /* BaseViewForMac.swift in Sources */,
+				228800F52B9C7452007CEC2F /* Models.swift in Sources */,
+				228800F72B9C7459007CEC2F /* Logger.swift in Sources */,
+				0A06BF752E1D993200429B60 /* AIService.swift in Sources */,
+				0A06BF772E1D993200429B60 /* AIServiceProtocols.swift in Sources */,
+				0AE145272DABC11E0036CD7C /* WebAuthenticationViewForMac.swift in Sources */,
+				0AE145242DABC0FF0036CD7C /* MacAppDelegate.swift in Sources */,
+				0AE145282DABE38D0036CD7C /* LoadingOverlay.swift in Sources */,
+				0AE145252DABC0FF0036CD7C /* MacContent.swift in Sources */,
+				228800F32B9C743D007CEC2F /* AppStore.swift in Sources */,
+				228800E12B9C732B007CEC2F /* Memotron_for_MacApp.swift in Sources */,
+				228800F12B9C7414007CEC2F /* WebViewForMac.swift in Sources */,
+				0AD92ADF2D816A4900E77E0F /* StoreManager.swift in Sources */,
+				228800F82B9C7462007CEC2F /* Extensions.swift in Sources */,
+				228800F42B9C7447007CEC2F /* LocalConfig.swift in Sources */,
+				0ADD3F522E17B81800B21753 /* JobManager.swift in Sources */,
+				0ADD3F532E17B81800B21753 /* CoreDataStack.swift in Sources */,
+				0ADD3F542E17B81800B21753 /* Job.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AFA100000000000000000001 /* XCRemoteSwiftPackageReference "super-functions" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/21nCo/super-functions.git";
+			requirement = {
+				branch = "SF-33";
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AFA100000000000000000002 /* AuthFnClient */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AFA100000000000000000001 /* XCRemoteSwiftPackageReference "super-functions" */;
+			productName = AuthFnClient;
+		};
+/* End XCSwiftPackageProductDependency section */
+
+/* Begin XCBuildConfiguration section */
+		2203DA5C2B74BEE70015509D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		2203DA5D2B74BEE70015509D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		2203DA5F2B74BEE70015509D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Memotron/Memotron.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Memotron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in\n\t\t\tcollections in the app";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WWe need access to your microphone for recording audio notes.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2203DA602B74BEE70015509D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Memotron/Memotron.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Memotron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in\n\t\t\tcollections in the app";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WWe need access to your microphone for recording audio notes.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		228800EB2B9C732E007CEC2F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Memotron for Mac/Memotron_for_Mac.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 34;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Memotron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in collections in the app";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocationUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need access to your microphone for recording audio notes.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = Memotron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		228800EC2B9C732E007CEC2F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Memotron for Mac/Memotron_for_Mac.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 34;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Memotron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in collections in the app";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocationUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need access to your microphone for recording audio notes.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = Memotron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		AFC899731DA0CAADDD6D9 /* Local Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = local;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = "Local Debug";
+		};
+		AFC48EBC6E73E88699EF2 /* Local Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = local;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = "Local Release";
+		};
+		AFC1FD4674E69A8B37F30 /* Dev Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = "Dev Debug";
+		};
+		AFC93F36DAC968C85F583 /* Dev Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = "Dev Release";
+		};
+		AFC6124A6D7EA5CB6F117 /* Pre Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = pre;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = "Pre Debug";
+		};
+		AFCFE0D33BAFBA0551A93 /* Pre Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = pre;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = "Pre Release";
+		};
+		AFC4D80A89A561BFEEFB1 /* Live Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = live;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = "Live Debug";
+		};
+		AFC2DA3C4FF51B54AAD6C /* Live Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = live;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = "Live Release";
+		};
+		AFCCEDC59B4E426EC7D8F /* Local Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = local;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Memotron/Memotron.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Memotron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in\n\t\t\tcollections in the app";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WWe need access to your microphone for recording audio notes.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Local Debug";
+		};
+		AFC080136264322F57BBE /* Local Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = local;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Memotron/Memotron.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Memotron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in\n\t\t\tcollections in the app";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WWe need access to your microphone for recording audio notes.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Local Release";
+		};
+		AFC4B0CF60EFDF119CD28 /* Dev Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Memotron/Memotron.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Memotron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in\n\t\t\tcollections in the app";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WWe need access to your microphone for recording audio notes.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Dev Debug";
+		};
+		AFC8AF7720666F0048F43 /* Dev Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Memotron/Memotron.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Memotron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in\n\t\t\tcollections in the app";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WWe need access to your microphone for recording audio notes.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Dev Release";
+		};
+		AFC1AD9E2814FF977AF72 /* Pre Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = pre;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Memotron/Memotron.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Memotron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in\n\t\t\tcollections in the app";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WWe need access to your microphone for recording audio notes.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Pre Debug";
+		};
+		AFCE6A870C87CFD8CF002 /* Pre Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = pre;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Memotron/Memotron.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Memotron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in\n\t\t\tcollections in the app";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WWe need access to your microphone for recording audio notes.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Pre Release";
+		};
+		AFC082F7B788587ACF7E0 /* Live Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = live;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Memotron/Memotron.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Memotron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in\n\t\t\tcollections in the app";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WWe need access to your microphone for recording audio notes.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Live Debug";
+		};
+		AFC6F82F397CC350D7EE5 /* Live Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = live;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Memotron/Memotron.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Memotron/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in\n\t\t\tcollections in the app";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WWe need access to your microphone for recording audio notes.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = "Live Release";
+		};
+		AFCFB33272D54D1781641 /* Local Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = local;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Memotron for Mac/Memotron_for_Mac.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 34;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Memotron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in collections in the app";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocationUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need access to your microphone for recording audio notes.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = Memotron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = "Local Debug";
+		};
+		AFC8469B567B24465AEEF /* Local Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = local;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Memotron for Mac/Memotron_for_Mac.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 34;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Memotron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in collections in the app";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocationUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need access to your microphone for recording audio notes.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = Memotron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = "Local Release";
+		};
+		AFCED41DC3F95B4B80400 /* Dev Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Memotron for Mac/Memotron_for_Mac.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 34;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Memotron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in collections in the app";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocationUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need access to your microphone for recording audio notes.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = Memotron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = "Dev Debug";
+		};
+		AFC4663533B5CCE82CCB7 /* Dev Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = dev;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Memotron for Mac/Memotron_for_Mac.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 34;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Memotron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in collections in the app";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocationUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need access to your microphone for recording audio notes.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = Memotron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = "Dev Release";
+		};
+		AFC4A0172CF34272DECB7 /* Pre Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = pre;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Memotron for Mac/Memotron_for_Mac.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 34;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Memotron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in collections in the app";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocationUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need access to your microphone for recording audio notes.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = Memotron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = "Pre Debug";
+		};
+		AFC578B8A43DA09C98C23 /* Pre Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = pre;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Memotron for Mac/Memotron_for_Mac.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 34;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Memotron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in collections in the app";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocationUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need access to your microphone for recording audio notes.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = Memotron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = "Pre Release";
+		};
+		AFC7575ED62C855D3B04B /* Live Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = live;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Memotron for Mac/Memotron_for_Mac.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 34;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Memotron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in collections in the app";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocationUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need access to your microphone for recording audio notes.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = Memotron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = "Live Debug";
+		};
+		AFC77189A033D9CDF6E03 /* Live Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_APP_ENVIRONMENT = live;
+				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
+				NUCLEUS_DEFAULT_REGION = insouth;
+				NUCLEUS_PRODUCT = memotron.app;
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Memotron for Mac/Memotron_for_Mac.entitlements";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 34;
+				DEVELOPMENT_ASSET_PATHS = "\"Memotron for Mac/Preview Content\"";
+				DEVELOPMENT_TEAM = SAZVPX4CAA;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Memotron-for-Mac-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = Memotron;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Camera will be used to capture image or video nodes to be linked or saved in collections in the app";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSLocationUsageDescription = "We need access to your location for recording your location while taking notes.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "We need access to your microphone for recording audio notes.";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.1;
+				MARKETING_VERSION = 0.60.2;
+				PRODUCT_BUNDLE_IDENTIFIER = io.memotron;
+				PRODUCT_NAME = Memotron;
+				SDKROOT = macosx;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "Memotron/whisper/Memotron-Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+			};
+			name = "Live Release";
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		2203DA4A2B74BEE30015509D /* Build configuration list for PBXProject "Memotron" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2203DA5C2B74BEE70015509D /* Debug */,
+				2203DA5D2B74BEE70015509D /* Release */,
+				AFC899731DA0CAADDD6D9 /* Local Debug */,
+				AFC48EBC6E73E88699EF2 /* Local Release */,
+				AFC1FD4674E69A8B37F30 /* Dev Debug */,
+				AFC93F36DAC968C85F583 /* Dev Release */,
+				AFC6124A6D7EA5CB6F117 /* Pre Debug */,
+				AFCFE0D33BAFBA0551A93 /* Pre Release */,
+				AFC4D80A89A561BFEEFB1 /* Live Debug */,
+				AFC2DA3C4FF51B54AAD6C /* Live Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2203DA5E2B74BEE70015509D /* Build configuration list for PBXNativeTarget "Memotron" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2203DA5F2B74BEE70015509D /* Debug */,
+				2203DA602B74BEE70015509D /* Release */,
+				AFCCEDC59B4E426EC7D8F /* Local Debug */,
+				AFC080136264322F57BBE /* Local Release */,
+				AFC4B0CF60EFDF119CD28 /* Dev Debug */,
+				AFC8AF7720666F0048F43 /* Dev Release */,
+				AFC1AD9E2814FF977AF72 /* Pre Debug */,
+				AFCE6A870C87CFD8CF002 /* Pre Release */,
+				AFC082F7B788587ACF7E0 /* Live Debug */,
+				AFC6F82F397CC350D7EE5 /* Live Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		228800EA2B9C732E007CEC2F /* Build configuration list for PBXNativeTarget "Memotron for Mac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				228800EB2B9C732E007CEC2F /* Debug */,
+				228800EC2B9C732E007CEC2F /* Release */,
+				AFCFB33272D54D1781641 /* Local Debug */,
+				AFC8469B567B24465AEEF /* Local Release */,
+				AFCED41DC3F95B4B80400 /* Dev Debug */,
+				AFC4663533B5CCE82CCB7 /* Dev Release */,
+				AFC4A0172CF34272DECB7 /* Pre Debug */,
+				AFC578B8A43DA09C98C23 /* Pre Release */,
+				AFC7575ED62C855D3B04B /* Live Debug */,
+				AFC77189A033D9CDF6E03 /* Live Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 2203DA472B74BEE30015509D /* Project object */;
+}

@@ -19,6 +19,8 @@
     "debug:markdown-url-embed-deep-dive": "npx tsx scripts/impromptu-markdown-url-embed-deep-dive.ts",
     "debug:node-collections-lane-deep-dive": "npx tsx scripts/impromptu-node-collections-lane-deep-dive.ts",
     "debug:quick-focus-deep-dive": "npx tsx scripts/impromptu-quick-focus-deep-dive.ts",
+    "debug:authfn-account-flow": "npx tsx scripts/impromptu-authfn-account-flow.ts",
+    "debug:authfn-settings-logout": "npx tsx scripts/impromptu-authfn-settings-logout.ts",
     "debug:capture-repro": "npx tsx scripts/capture-debug-repro.ts",
     "e2e:save-auth": "npx tsx scripts/save-google-auth-state.ts",
     "e2e:save-auth:nucleum": "PRODUCT=nucleum APP_BASE_URL=https://local.nucleum.app npx tsx scripts/save-google-auth-state.ts",

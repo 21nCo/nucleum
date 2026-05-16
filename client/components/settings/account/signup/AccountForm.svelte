@@ -16,12 +16,16 @@
   import account from "@21n/stores/account.store";
   import view from "@21n/stores/view.store";
   import { Orientation } from "@21n/types/direction.enum";
-  import { performApiCall } from "@21n/utils/network.utils";
   import { Action } from "@21n/types/action.enum";
   import Icon from "@21n/elements/Icon.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import { ButtonStyle } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
+  import {
+    authClient,
+    resolveAuthFnSessionMode
+  } from "@21n/components/account/auth";
+  import type { AuthFnSession } from "@authfn/client";
   let {
     isSignup: initialIsSignup = false,
     currentProgress = $bindable(),
@@ -38,7 +42,6 @@
   let pass = $state("");
   let nickName = $state("");
   let error = $state<string | null>(null);
-  let isTrusted = true;
   let actionInProgress = $state(false);
   const mode = $derived(resolveMode(isLoginFromExtension, isSelfHosted));
 
@@ -67,40 +70,54 @@
   async function handleClick() {
     if (!isValidFormData()) return;
     actionInProgress = true;
-    const response = await performApiCall(
-      "account/n/" + (isSignup ? "signup" : "signin"),
-      "POST",
-      {
-        email: email.toLowerCase(),
-        pass,
-        isTrusted,
-        nickName
+    const client = await authClient();
+    const sessionMode = isLoginFromExtension ? "hybrid" : resolveAuthFnSessionMode();
+    const response = isSignup
+      ? await client.signUpWithPassword({
+          email: email.toLowerCase(),
+          password: pass,
+          profile: { nickName },
+          sessionMode
+        })
+      : await client.signInWithPassword({
+          email: email.toLowerCase(),
+          password: pass,
+          sessionMode
+        });
+    if (!response.ok) {
+      if (response.error.code === "AUTHFN_REGION_MISMATCH") {
+        showError("This account belongs to another region. Please sign in again.");
+      } else if (response.error.code === "AUTHFN_INVALID_CREDENTIALS") {
+        showError("Invalid email or password.");
+      } else if (response.error.code === "AUTHFN_DUPLICATE_IDENTITY") {
+        showError("User already exists. Please signin instead.");
+      } else {
+        showError(response.error.message);
       }
-    );
-    if (!response || !response.ok) {
+      actionInProgress = false;
+      return;
+    }
+    const token = response.data.token;
+    const session = response.data.session;
+    if (!session || (isLoginFromExtension && !token)) {
       showError();
       actionInProgress = false;
       return;
     }
-    const json = await response.json();
-    console.log({ json });
-    if (!json || !json.token) {
-      if (json > 0) {
-        showError("User already exists. Please signin instead");
-      } else if (json === 0) {
-        showError("User not found. Please signup instead.");
-      } else if (json === -1) {
-        showError("Invalid password.");
-      } else {
-        showError();
-      }
-      actionInProgress = false;
-      return;
-    }
+    const json = {
+      token,
+      userInfo: userInfoFromSession(session)
+    };
     if (isLoginFromExtension) {
       postTokenToExtension(json);
       appStore.runAction(Action.EXTENSTION_LOGIN);
-    } else await account.signIn(json, { isNewUser: isSignup });
+    } else {
+      await account.signInFromAuthFnSession({
+        session,
+        isNewUser: isSignup,
+        persistToken: false
+      });
+    }
     actionInProgress = false;
   }
   function isValidFormData() {
@@ -116,12 +133,8 @@
     return true;
   }
   function isValidPasswordChoice() {
-    if (pass.length < 8) {
-      showError("Password must be at least 8 characters long.");
-      return false;
-    }
-    if (pass.length > 16) {
-      showError("Password must be at most 16 characters long.");
+    if (pass.length < 12) {
+      showError("Password must be at least 12 characters long.");
       return false;
     }
     if (!pass.match(/[a-z]/)) {
@@ -146,6 +159,23 @@
   function showError(message: string | null = null) {
     actionInProgress = false;
     error = message ?? "Something went wrong. Please try again later.";
+  }
+
+  function userInfoFromSession(session: AuthFnSession) {
+    const email = session.primaryEmail ?? session.subject.email ?? "";
+    return {
+      id: session.actorId.startsWith("user:")
+        ? session.actorId
+        : `user:${session.actorId}`,
+      email,
+      nickName: nickName || email.split("@")[0] || "",
+      joinDate: new Date(),
+      lastLogin: new Date(),
+      isBootstrapped:
+        (session.metadata?.nucleus as { isBootstrapped?: boolean } | undefined)
+          ?.isBootstrapped ?? true,
+      region: session.regionId ?? session.subject.regionId
+    };
   }
 
   async function onOfflineClick() {
@@ -184,7 +214,7 @@
             orientation: Orientation.Vertical,
             tooltip: isSignup
               ? {
-                  body: "Password must be 8-16 characters long and contain at least one lowercase letter, one uppercase letter, one number and one special character."
+                  body: "Password must be at least 12 characters long and contain at least one lowercase letter, one uppercase letter, one number and one special character."
                 }
               : undefined
           }}

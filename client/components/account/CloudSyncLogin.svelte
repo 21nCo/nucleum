@@ -3,8 +3,8 @@
   import Button from "@21n/elements/button/Button.svelte";
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import { appStore } from "@21n/stores/app.store";
-  import { EmbedMessage } from "@21n/types/embedMessage.enum";
-  import { postMessageToParent } from "@21n/utils/embed.utils";
+  import { EmbedDataMessage, EmbedMessage } from "@21n/types/embedMessage.enum";
+  import { postDataToParent, postMessageToParent } from "@21n/utils/embed.utils";
   import { isValidEmail } from "@21n/shared-utils/text.utils";
   import { onMount } from "svelte";
   import view from "@21n/stores/view.store";
@@ -12,17 +12,22 @@
   import OAuthOptions from "./OAuthOptions.svelte";
   import { resolveProductConfig } from "@21n/products/product.config";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
-  import { authClient } from "./auth";
+  import {
+    authClient,
+    resolveAuthFnSessionMode,
+    shouldUseAuthFnBearerSession
+  } from "./auth";
   import { Size } from "@21n/types/size.enum";
   import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
   import { AlertType } from "@21n/types/notification.type";
   import Icon from "@21n/elements/Icon.svelte";
   import { clientStorage } from "@21n/persistence/persistence.utils";
   import { ClientStorageKey } from "@21n/persistence/persistence.type";
-  import { parse } from "@21n/shared-utils/json.utils";
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
   import { detectUserRegion } from "@21n/utils/network.utils";
-  import { peformAccountApiCall } from "../network";
+  import account from "@21n/stores/account.store";
+  import { resolveAccountBaseUrl } from "../network";
+  import { logger } from "@21n/components/debug/logger.client";
   let {
     isSignup = $bindable(false),
     currentProgress = undefined,
@@ -41,7 +46,6 @@
   let isTrusted = $state(true);
   let actionInProgress = $state(false);
   let showPassword = $state(false);
-  let userRegionMap = $state<Record<string, string>>({});
   let region = $state("useast");
   const dev_isShowTrustOption = false;
   const oAuthProviders = resolveProductConfig().oAuthProviders;
@@ -59,15 +63,8 @@
     postMessageToParent(EmbedMessage.MOUNT);
     const isSignupQueryParam = $page.url.searchParams.get("signup");
     if (isSignupQueryParam && isSignupQueryParam === "true") isSignup = true;
-    userRegionMap = await resolveUserRegionMap();
     region = await resolveDefaultRegion();
   });
-
-  async function resolveUserRegionMap() {
-    return parse(
-      (await clientStorage.get(ClientStorageKey.USER_REGION_MAP)) ?? "{}"
-    );
-  }
 
   async function resolveDefaultRegion() {
     const cachedRegion = await clientStorage.get(ClientStorageKey.REGION);
@@ -108,97 +105,56 @@
     }
     actionInProgress = true;
     let response;
-    let errorMessage = null;
-    const resolvedRegion = userRegionMap[email] ?? region;
+    let errorMessage: string | null = null;
+    const client = await authClient({ region });
+    const sessionMode = resolveAuthFnSessionMode();
     if (isSignup && passwordMode === "password") {
-      response = await (
-        await authClient({ region: resolvedRegion })
-      ).signUp.email(
-        {
-          email,
-          password: pass,
-          name: ""
-        },
-        {
-          onError: (error) => {
-            errorMessage = error?.error?.message;
-          }
-        }
-      );
-    } else if (passwordMode === "password") {
-      response = await (
-        await authClient({ region: resolvedRegion })
-      ).signIn.email(
-        {
-          email,
-          password: pass,
-          fetchOptions: {
-            // headers: {
-            //   // "x-captcha-response": turnstileToken,
-            // }
-          }
-        },
-        {
-          onError: (error) => {
-            errorMessage = error?.error?.message;
-          }
-        }
-      );
-    } else if (passwordMode === "otp") {
-      response = await (
-        await authClient({ region: resolvedRegion })
-      ).signIn.emailOtp({
+      response = await client.signUpWithPassword({
         email,
-        otp
+        password: pass,
+        sessionMode,
+        profile: {
+          name: ""
+        }
+      });
+    } else if (passwordMode === "password") {
+      response = await client.signInWithPassword({
+        email,
+        password: pass,
+        sessionMode
+      });
+    } else if (passwordMode === "otp") {
+      response = await client.verifyOtp({
+        email,
+        code: otp,
+        purpose: isSignup ? "sign-up" : "sign-in",
+        profile: isSignup
+          ? {
+              name: ""
+            }
+          : undefined,
+        sessionMode
       });
     }
-    if (!response || response.error) {
-      if (response?.error?.details) {
-        const errorName = response.error.details.name;
-        if (errorName === "RegionMismatchError") {
-          const detectedRegion = response.error.details.region;
-          if (isSignup) {
-            await handleAlreadyExistsCase(detectedRegion);
-            return;
-          } else {
-            errorMessage = null;
-            const client = await authClient({ region: detectedRegion });
-            if (passwordMode === "password")
-              response = await client.signIn.email({
-                email,
-                password: pass
-              });
-            else if (passwordMode === "otp")
-              response = await client.signIn.emailOtp({
-                email,
-                otp
-              });
-          }
-        }
-      }
-      if (!response || response.error || errorMessage) {
+    if (!response || !response.ok) {
+      errorMessage = response?.error?.message ?? errorMessage;
+      if (!response || !response.ok || errorMessage) {
         showError(errorMessage);
         actionInProgress = false;
         return;
       }
     }
     const json = response.data;
-    //TODO - different error cases - user messages
     if (!json) {
-      // if (json > 0) {
-      //   showError("User already exists. Please signin instead");
-      // } else if (json === 0) {
-      //   showError("User not found. Please signup instead.");
-      // } else if (json === -1) {
-      //   showError("Invalid password.");
-      // } else {
-      //   showError();
-      // }
       showError();
       actionInProgress = false;
       return;
     } else {
-      appStore.gotoPath("/");
+      const signedIn = await finishAuthFnLogin(client, json);
+      if (!signedIn) {
+        showError("Authentication completed, but session setup failed. Please try again.");
+        return;
+      }
     }
     //TODO - login from extension case
     // if (isLoginFromExtension) {
@@ -206,20 +162,6 @@
     //   appStore.runAction(Action.EXTENSTION_LOGIN);
     // } else await account.signIn(json, { isNewUser: isSignup });
     actionInProgress = false;
-  }
-
-  async function handleAlreadyExistsCase(region?: string) {
-    const errorMessage = "Account already exists. Please sign in instead";
-    if (email && region) await updateUserRegionMap(email, region);
-    showError(errorMessage);
-    actionInProgress = false;
-  }
-
-  async function updateUserRegionMap(email: string, region: string) {
-    const map: Record<string, string> = { ...(userRegionMap ?? {}) };
-    map[email] = region;
-    userRegionMap = { ...map };
-    await clientStorage.set(ClientStorageKey.USER_REGION_MAP, map);
   }
 
   function isValidFormData() {
@@ -235,12 +177,8 @@
     return true;
   }
   function isValidPasswordChoice() {
-    if (pass.length < 8) {
-      showError("Password must be at least 8 characters long.");
-      return false;
-    }
-    if (pass.length > 16) {
-      showError("Password must be at most 16 characters long.");
+    if (pass.length < 12) {
+      showError("Password must be at least 12 characters long.");
       return false;
     }
     if (!pass.match(/[a-z]/)) {
@@ -275,22 +213,53 @@
   }
 
   async function sendOTP() {
-    const resolvedRegion = userRegionMap[email] ?? region;
-    const { data, error } = await (
-      await authClient({ region: resolvedRegion })
-    ).emailOtp.sendVerificationOtp({
+    logger.info({
+      at: "CloudSyncLogin.sendOTP.start",
       email,
-      type: "sign-in"
+      purpose: isSignup ? "sign-up" : "sign-in",
+      region,
+      accountUrl: resolveAccountBaseUrl(region)
     });
-    if (error) {
-      showError(error.message);
+    const client = await authClient({ region });
+    const response = await client.sendOtp({
+      email,
+      purpose: isSignup ? "sign-up" : "sign-in"
+    });
+    if (!response.ok) {
+      logger.error({
+        at: "CloudSyncLogin.sendOTP.failed",
+        email,
+        region,
+        error: response.error
+      });
+      showError(response.error.message);
       return false;
     }
-    if (data) {
+    if (response.data.sent) {
+      logger.info({
+        at: "CloudSyncLogin.sendOTP.sent",
+        identifierHash: await sha256(email.trim().toLowerCase()),
+        region,
+        challengeId: response.data.challengeId
+      });
       showInfo("OTP sent to your email address. Please check your inbox.");
       return true;
     }
+      logger.warn({
+        at: "CloudSyncLogin.sendOTP.notSent",
+        identifierHash: await sha256(email.trim().toLowerCase()),
+        region,
+        response
+      });
     return false;
+  }
+
+  async function sha256(value: string) {
+    const data = new TextEncoder().encode(value);
+    const digest = await crypto.subtle.digest("SHA-256", data);
+    return Array.from(new Uint8Array(digest))
+      .map((byte) => byte.toString(16).padStart(2, "0"))
+      .join("");
   }
 
   async function emailProceedOptionSelection(mode: "password" | "otp") {
@@ -299,20 +268,86 @@
       return false;
     }
 
-    try {
-      const response = await peformAccountApiCall("lookup", { email });
-      if (response && response.ok) {
-        const json = await response.json();
-        if (json.region) {
-          updateUserRegionMap(email, json.region);
-        }
-      }
-    } catch (err) {
-      console.warn("Region lookup failed, using default region:", err);
-    }
+    if (!(await prepareEmailAuthMode())) return false;
 
     passwordMode = mode;
     if (mode === "otp") await sendOTP();
+  }
+
+  async function prepareEmailAuthMode() {
+    const client = await authClient({ region });
+    const prepared = await client.prepareEmailAuth({
+      email,
+      flow: isSignup ? "sign-up" : "sign-in",
+      preferredRegionId: region
+    });
+    if (!prepared.ok) {
+      showError(prepared.error.message);
+      return false;
+    }
+    region = prepared.data.regionId;
+    return true;
+  }
+
+  async function finishAuthFnLogin(
+    client: Awaited<ReturnType<typeof authClient>>,
+    data: { token?: string }
+  ) {
+    const signedIn = await account.signInFromAuthFnSession({
+      token: shouldUseAuthFnBearerSession() ? data.token : undefined,
+      session: "session" in data ? data.session : undefined,
+      isNewUser: isSignup,
+      isPreventRedirect: true,
+      persistToken: shouldUseAuthFnBearerSession()
+    });
+    if (!signedIn) {
+      logger.error({
+        at: "CloudSyncLogin.finishAuthFnLogin.session.failed",
+        hasToken: Boolean(data.token),
+        regionId: client.getCurrentRegionId(),
+        accountUrl: resolveAccountBaseUrl(client.getCurrentRegionId())
+      });
+      return false;
+    }
+
+    logger.info({
+      at: "CloudSyncLogin.finishAuthFnLogin.session.ok",
+      hasToken: Boolean(data.token),
+      regionId: client.getCurrentRegionId(),
+      accountUrl: resolveAccountBaseUrl(client.getCurrentRegionId())
+    });
+
+    try {
+      const handoff = await client.startNativeHandoff();
+      if (handoff.ok) {
+        logger.info({
+          at: "CloudSyncLogin.nativeHandoff.start.ok",
+          regionId: client.getCurrentRegionId(),
+          accountUrl: resolveAccountBaseUrl(client.getCurrentRegionId())
+        });
+        postDataToParent(EmbedDataMessage.AUTHFN_NATIVE_HANDOFF, {
+          code: handoff.data.code,
+          expiresAt: handoff.data.expiresAt,
+          regionId: client.getCurrentRegionId(),
+          accountUrl: resolveAccountBaseUrl(client.getCurrentRegionId())
+        });
+      } else {
+        logger.warn({
+          at: "CloudSyncLogin.nativeHandoff.start.failed",
+          error: handoff.error
+        });
+      }
+    } catch (err) {
+      logger.warn({ at: "CloudSyncLogin.nativeHandoff.unavailable", err });
+    }
+    logger.info({
+      at: "CloudSyncLogin.finishAuthFnLogin.redirect.requested",
+      isSignup,
+      regionId: client.getCurrentRegionId(),
+      currentPath: window.location.pathname
+    });
+    account.gotoPostAuthRoute({ isNewUser: isSignup });
+    return true;
   }
 </script>
 
@@ -379,7 +414,7 @@
             orientation: Orientation.Vertical,
             tooltip: isSignup
               ? {
-                  body: "Password must be 8-16 characters long and contain at least one lowercase letter, one uppercase letter, one number and one special character."
+                  body: "Password must be at least 12 characters long and contain at least one lowercase letter, one uppercase letter, one number and one special character."
                 }
               : undefined
           }}

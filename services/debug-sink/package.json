@@ -1,0 +1,19 @@
+{
+  "name": "@21n/debug-sink",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "d1:create": "wrangler d1 create nucleus-debug-sink",
+    "d1:migrate:local": "wrangler d1 migrations apply nucleus-debug-sink --local",
+    "d1:migrate:remote": "wrangler d1 migrations apply nucleus-debug-sink --remote"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260423.0",
+    "typescript": "^5.6.0",
+    "wrangler": "^3.114.15"
+  }
+}

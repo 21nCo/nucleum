@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { onMount } from "svelte";
   import { appStore } from "@21n/stores/app.store";

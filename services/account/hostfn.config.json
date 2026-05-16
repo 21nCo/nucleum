@@ -1,0 +1,9 @@
+{
+  "name": "nucleus-account",
+  "runtime": "nodejs",
+  "entry": "dist/node.js",
+  "healthcheck": "/health",
+  "env": {
+    "NODE_ENV": "production"
+  }
+}

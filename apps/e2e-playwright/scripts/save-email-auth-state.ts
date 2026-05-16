@@ -19,7 +19,8 @@ import net from "node:net";
 const authDir = path.join(__dirname, "..", ".auth");
 const artifactsDir = path.join(__dirname, "..", "artifacts");
 const product = (process.env.PRODUCT ?? "nucleum").toLowerCase();
-const authFileName = product === "nucleum" ? "user.json" : `user-${product}.json`;
+const authFileName =
+  product === "nucleum" ? "user.json" : `user-${product}.json`;
 const authStatePath = path.join(authDir, authFileName);
 
 function getBaseURL(): string {
@@ -42,7 +43,9 @@ async function main() {
   const password = process.env.E2E_LOGIN_PASSWORD;
 
   if (!email || !password) {
-    throw new Error("E2E_LOGIN_EMAIL and E2E_LOGIN_PASSWORD must be set in .env or environment.");
+    throw new Error(
+      "E2E_LOGIN_EMAIL and E2E_LOGIN_PASSWORD must be set in .env or environment."
+    );
   }
 
   const baseURL = getBaseURL();
@@ -84,7 +87,7 @@ async function main() {
       : hostname.includes(".")
         ? hostname.split(".").slice(-2).join(".")
         : hostname; // e.g. local.nucleum.app -> nucleum.app
-  const sessionCookieName = "__Secure-21n.session_token";
+  const legacySessionCookieName = "__Secure-21n.session_token";
 
   try {
     const logStep = (message: string) => {
@@ -158,7 +161,9 @@ async function main() {
           cookies.map((c) => ({ name: c.name, domain: c.domain }))
         )}`
       );
-      await page.screenshot({ path: screenshotPath, fullPage: true }).catch(() => null);
+      await page
+        .screenshot({ path: screenshotPath, fullPage: true })
+        .catch(() => null);
       console.log(`[auth-save][debug:${label}] screenshot=${screenshotPath}`);
     };
 
@@ -178,7 +183,12 @@ async function main() {
     const passwordInput = page.locator("#password");
 
     const isLoginSurfaceVisible = async (timeout: number) => {
-      const locators = [logInTab, emailInput.first(), enterPasswordBtn.first(), googleButton];
+      const locators = [
+        logInTab,
+        emailInput.first(),
+        enterPasswordBtn.first(),
+        googleButton
+      ];
       for (const locator of locators) {
         const visible = await locator
           .waitFor({ state: "visible", timeout })
@@ -205,9 +215,11 @@ async function main() {
       await page.waitForLoadState("domcontentloaded");
       await page.waitForTimeout(2_000);
 
-      const loginSignupBtn = page.getByRole("button", {
-        name: /login|signup/i
-      }).first();
+      const loginSignupBtn = page
+        .getByRole("button", {
+          name: /login|signup/i
+        })
+        .first();
       const hasLoginBtn = await loginSignupBtn
         .waitFor({ state: "visible", timeout: 15_000 })
         .then(() => true)
@@ -216,9 +228,13 @@ async function main() {
         for (let i = 0; i < 5; i += 1) {
           logStep(`clicking Login/Signup button attempt ${i + 1}`);
           await loginSignupBtn.scrollIntoViewIfNeeded().catch(() => null);
-          await loginSignupBtn.click({ timeout: 10_000, force: true }).catch(() => null);
+          await loginSignupBtn
+            .click({ timeout: 10_000, force: true })
+            .catch(() => null);
           const loginUiReady = await isLoginSurfaceVisible(5_000);
-          const reachedLoginPath = /\/account\/login/.test(new URL(page.url()).pathname);
+          const reachedLoginPath = /\/account\/login/.test(
+            new URL(page.url()).pathname
+          );
           if (loginUiReady || reachedLoginPath) {
             logStep(
               `login surface became reachable after Login/Signup click; url=${page.url()}`
@@ -282,10 +298,15 @@ async function main() {
       .catch(() => false);
     if (haveEnterPassword) {
       logStep("clicking Enter password");
-      await enterPasswordBtn.first().click({ timeout: 10_000 }).catch(() => null);
+      await enterPasswordBtn
+        .first()
+        .click({ timeout: 10_000 })
+        .catch(() => null);
       await page.waitForTimeout(500);
     } else {
-      logStep("Enter password button not shown; password input expected directly");
+      logStep(
+        "Enter password button not shown; password input expected directly"
+      );
     }
 
     logStep("waiting for password input");
@@ -298,16 +319,18 @@ async function main() {
     const isAccountRelated = (url: string) => {
       try {
         const u = new URL(url);
-        return u.pathname.startsWith("/account") || /(^|\.)account\./i.test(u.hostname);
+        return (
+          u.pathname.startsWith("/account") ||
+          /(^|\.)account\./i.test(u.hostname)
+        );
       } catch {
         return /account/i.test(url);
       }
     };
     const responsePromise = page
-      .waitForResponse(
-        (res) => isAccountRelated(res.url()),
-        { timeout: 25_000 }
-      )
+      .waitForResponse((res) => isAccountRelated(res.url()), {
+        timeout: 25_000
+      })
       .catch(() => null);
 
     // Wait for response that sets session cookie. Playwright's response.headers() does NOT expose Set-Cookie,
@@ -317,8 +340,13 @@ async function main() {
         async (res) => {
           const h = await res.allHeaders();
           const setCookie = h["set-cookie"] ?? h["Set-Cookie"];
-          const value = Array.isArray(setCookie) ? setCookie.join(" ") : setCookie;
-          return typeof value === "string" && /session_token|session_data/i.test(value);
+          const value = Array.isArray(setCookie)
+            ? setCookie.join(" ")
+            : setCookie;
+          return (
+            typeof value === "string" &&
+            /session_token|session_data/i.test(value)
+          );
         },
         { timeout: 25_000 }
       )
@@ -326,11 +354,21 @@ async function main() {
 
     const hasSessionCookie = async () => {
       const cookies = await context.cookies();
-      return cookies.some(
-        (c) =>
-          (c.name === sessionCookieName || c.name?.includes("session_token")) &&
-          (c.domain === parentDomain || c.domain === `.${parentDomain}`)
-      );
+      return cookies.some((c) => {
+        const isSessionCookie =
+          c.name === legacySessionCookieName ||
+          c.name?.includes("session_token") ||
+          c.name === "__Secure-nucleus.session" ||
+          c.name === "nucleus.session" ||
+          c.name?.endsWith(".session");
+        if (!isSessionCookie) return false;
+        return (
+          c.domain === parentDomain ||
+          c.domain === `.${parentDomain}` ||
+          c.domain.endsWith(".nucleum.app") ||
+          c.domain === "nucleum.app"
+        );
+      });
     };
 
     // Avoid clicking the "Log in" tab again; target the form submit button.
@@ -361,8 +399,11 @@ async function main() {
       await page.waitForTimeout(500);
     }
 
-    if (!leftLogin && (await hasSessionCookie())) {
-      logStep("forcing navigation to / after session cookie detection");
+    if (
+      !leftLogin &&
+      ((await hasSessionCookie()) || (await hasAuthFnBrowserSession()))
+    ) {
+      logStep("forcing navigation to / after auth session detection");
       await page.goto("/", { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("domcontentloaded");
       leftLogin = new URL(page.url()).pathname !== "/account/login";
@@ -371,7 +412,9 @@ async function main() {
 
     if (!leftLogin) {
       await dumpDebugState("login-did-not-complete");
-      throw new Error("Login did not complete (still on login page). Check credentials and app.");
+      throw new Error(
+        "Login did not complete (still on login page). Check credentials and app."
+      );
     }
 
     logStep(`post-login path is ${new URL(page.url()).pathname}`);
@@ -381,24 +424,29 @@ async function main() {
 
     // Save the state exactly where login lands (typically /signup for this flow).
     // Tests will handle the follow-up "Continue offline" step.
-    logStep(`preserving post-login landing page at ${new URL(page.url()).pathname}`);
+    logStep(
+      `preserving post-login landing page at ${new URL(page.url()).pathname}`
+    );
 
-    // Wait until the session cookie is actually in the context (Playwright may not expose Set-Cookie in headers).
+    // Browser auth must be represented by cookies. A bearer token in localStorage is only valid
+    // for explicit native/extension bridge paths and should not make web E2E state look logged in.
     const deadline = Date.now() + 15_000;
-    let hasSessionCookieInContext = false;
+    let hasSavedAuthSession = false;
     while (Date.now() < deadline) {
       const hasSession = await hasSessionCookie();
       if (hasSession) {
-        logStep("confirmed session cookie in browser context");
-        hasSessionCookieInContext = true;
+        logStep("confirmed AuthFn session in browser context");
+        hasSavedAuthSession = true;
         break;
       }
       await page.waitForTimeout(500);
     }
 
-    if (!hasSessionCookieInContext) {
-      await dumpDebugState("session-cookie-not-detected");
-      throw new Error("Session cookie was not detected; refusing to save unauthenticated storageState.");
+    if (!hasSavedAuthSession) {
+      await dumpDebugState("auth-session-not-detected");
+      throw new Error(
+        "AuthFn session was not detected; refusing to save unauthenticated storageState."
+      );
     }
 
     // Save after login success so session cookie is in context. Do NOT click "Continue offline" — tests will do that.

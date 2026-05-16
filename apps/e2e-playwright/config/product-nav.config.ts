@@ -154,16 +154,9 @@ const e2eProductConfigs = {
         triggerRole: "button",
         triggerName: /^Overview$/i,
         anchorTestIds: [],
-        anchorRoles: [
-          { role: "tablist" },
-          { role: "tab", name: /^All$/i }
-        ]
+        anchorRoles: [{ role: "tablist" }, { role: "tab", name: /^All$/i }]
       },
-      "overview.memory": {
-        route: "/overview",
-        anchorTestIds: [],
-        anchorRoles: [{ role: "button", name: /^Memory$/i }]
-      },
+      "overview.memory": null,
       "focus.quickFocus": {
         route: "/focus",
         triggerRole: "button",

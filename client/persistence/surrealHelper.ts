@@ -1,11 +1,10 @@
-import jwt_decode from "jwt-decode";
 import { Surreal } from "surrealdb";
 import type { MergeRecord, QueryParams } from "@21n/types/persistance.type";
-import { resolveToken } from "@21n/utils/account.utils";
 import {
-  performApiCall,
-  performHttpNetworkOperation
-} from "@21n/utils/network.utils";
+  resolveCurrentUserId,
+  resolveLegacyToken
+} from "@21n/utils/account.utils";
+import { performApiCall } from "@21n/utils/network.utils";
 import {
   replaceParams,
   resolveMutationQuery
@@ -16,17 +15,12 @@ import type { IResourceBase } from "@21n/components/flux/resourceStores/resource
 import { clientStorage } from "@21n/persistence/persistence.utils";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
 
-const isUseSurrealSDK = import.meta?.env?.VITE_IS_USE_SURREAL_SDK ?? true;
+const isUseSurrealSDK = import.meta?.env?.VITE_IS_USE_SURREAL_SDK ?? false;
 
 export class SurrealDatabaseUsingRest {
   token: string | null = null;
   db: string | undefined;
   constructor(private instance: string = "") {
-    // this.token = resolveToken();
-    // if (this.token) {
-    //   let decodedToken: any = jwt_decode(this.token);
-    //   this.db = decodedToken?.db ?? "";
-    // }
   }
   async connect(instance: string, options: any) {
     this.instance = instance;
@@ -106,35 +100,16 @@ export class SurrealDatabaseUsingRest {
     try {
       // const isValid = await performLoginStatusCheck();
       // if (!isValid) return null;
-      const token = await resolveToken();
+      const token = await resolveLegacyToken();
       if (!token) return null;
       this.token = token;
-      // console.log("query", { query, params, token });
-      let decodedToken: any = jwt_decode(this.token!);
-      this.db = decodedToken?.db ?? "";
-      const instance =
-        decodedToken?.region && decodedToken?.region != "global"
-          ? decodedToken?.region + "." + this.instance
-          : this.instance;
+      this.db = await resolveUserDatabase();
       query = replaceParams(query, params);
-      let response;
-      if (isReadOperation) {
-        response = await performHttpNetworkOperation({
-          url: "https://" + instance + "/sql",
-          method: "POST",
-          headers: {
-            "Content-Type": "text/plain",
-            Accept: "application/json",
-            Authorization: "Bearer " + this.token
-          },
-          body: `USE database ${this.db}; ${query}`
-        });
-      } else {
-        response = await performApiCall("account/n/run", "POST", {
-          query: `USE database ${this.db}; ${query}`,
-          db: this.db
-        });
-      }
+      const response = await performApiCall("account/n/run", "POST", {
+        query,
+        db: this.db,
+        isReadOperation
+      });
       if (response?.ok) {
         let result = await response.json();
         if (result.length > 0) {
@@ -158,11 +133,6 @@ export class SurrealDatabaseUsingSdk {
   constructor(private instance: string = "") {
     // this.token = resolveToken();
     this.surreal = new Surreal();
-    // if (this.token) {
-    //   let decodedToken: any = jwt_decode(this.token);
-    //   this.db = decodedToken?.db ?? "";
-    //   this.connect();
-    // }
   }
   async close() {
     //todo urgent - maintaining persistant connection vs closing connection
@@ -171,16 +141,10 @@ export class SurrealDatabaseUsingSdk {
   }
   async connect() {
     try {
-      // this.token = resolveToken();
-      if (!this.token) throw new Error("User not logged in");
-      let decodedToken: any = jwt_decode(this.token);
-      this.db = decodedToken?.db ?? "";
-      this.surreal.strategy = "http";
-      await this.surreal.connect(`${this.instance}/rpc`, {
-        namespace: import.meta.env?.VITE_SURREAL_USER_NS ?? "user",
-        database: this.db ?? ""
-      });
-      return await this.surreal.authenticate(this.token ?? "");
+      console.warn(
+        "Surreal SDK auth is disabled for AuthFn opaque sessions. Use the backend REST proxy instead."
+      );
+      return null;
     } catch (error) {
       console.error("Error in Surreal connect", JSON.stringify(error));
       return null;
@@ -313,10 +277,6 @@ export class SurrealDatabase implements ISurrealDatabase {
     if (isUseSurrealSDK == "true")
       this.surreal = new SurrealDatabaseUsingSdk(this.instance);
     else this.surreal = new SurrealDatabaseUsingRest(this.instance);
-    // if (this.token) {
-    //   let decodedToken: any = jwt_decode(this.token);
-    //   this.db = decodedToken?.db ?? "";
-    // }
   }
   //todo - add strong types
   create(recordId: string, data: any) {
@@ -353,4 +313,10 @@ export class SurrealDatabase implements ISurrealDatabase {
   ) {
     return this.surreal.query(query, params);
   }
+}
+
+async function resolveUserDatabase(): Promise<string | undefined> {
+  const userId = await resolveCurrentUserId();
+  if (!userId) return undefined;
+  return userId.includes("user:") ? userId.split("user:")[1] : userId;
 }

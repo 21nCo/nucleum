@@ -1,0 +1,35 @@
+info:
+  name: OTP Verify Sign Up
+  type: http
+  seq: 12
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/otp/verify"
+  headers:
+    - name: content-type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        req.body = JSON.stringify({
+          email: env.get("otpSignupEmail"),
+          purpose: "sign-up",
+          code: env.get("otpSignupCode"),
+          profile: {
+            name: "OTP Signup"
+          },
+          sessionMode: "hybrid"
+        });
+    - type: tests
+      code: |
+        test("OTP sign-up creates a verified user and issues a session token", function() {
+          expect(res.status).to.equal(200);
+          expect(Boolean(res.body.data.token)).to.equal(true);
+          expect(res.body.data.session.methods).to.deep.equal(["email-otp"]);
+          expect(res.body.data.session.primaryEmail).to.equal(env.get("otpSignupEmail"));
+        });
+        env.set("otpSignupSessionToken", res.body.data.token);

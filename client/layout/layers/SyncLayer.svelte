@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { flux } from "@21n/components/flux/flux";
   import account from "@21n/stores/account.store";
@@ -5,7 +7,7 @@
   import { UserDataMode } from "@21n/types/account.type";
   import { onMount, onDestroy } from "svelte";
   let interval: ReturnType<typeof setInterval> | null = null;
-  let isSyncing = false;
+  let isSyncing = $state(false);
   let isDestroyed = false;
   let lastSyncTimestamp = 0;
   let visibilityDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -18,7 +20,7 @@
 
   onMount(() => {
     interval = setInterval(() => {
-      proceedSync();
+      void proceedSync();
     }, SYNC_INTERVAL);
 
     document.addEventListener("visibilitychange", handleVisibilityChange);

@@ -1,0 +1,49 @@
+//
+//  Nucleum_for_MacApp.swift
+//  Nucleum for Mac
+//
+//  Created by Ar on 3/9/24.
+//
+import Cocoa
+import SwiftUI
+
+@main
+struct Nucleum_for_MacApp: App {
+  @NSApplicationDelegateAdaptor(MacAppDelegate.self) private var appDelegate: MacAppDelegate
+
+  init() {
+    AppStore.shared.setAIServiceProvider(AIService.shared)
+  }
+
+  var body: some Scene {
+    WindowGroup {
+
+      // DraggableWindowAdapter()
+      // UsingDraggableArea()
+      ContentView().environmentObject(AppStore.shared)
+        // .toolbar {
+        //   Button(action: {}) {
+        //     Image(systemName: "arrow.triangle.turn.up.right.diamond")
+        //     Text("Button 1")
+        //   }
+        // }
+        .edgesIgnoringSafeArea(.top)
+      //   .frame(minWidth: 800, maxWidth: .infinity, minHeight: 600, maxHeight: .infinity)
+    }
+    // .windowStyle(.hiddenTitleBar)
+    .handlesExternalEvents(matching: [])
+    // .windowStyle(HiddenTitleBarWindowStyle())
+    // .windowToolbarStyle(UnifiedCompactWindowToolbarStyle())
+    // .commands {
+    //   CommandGroup(replacing: .windowList) {
+    //     Button(action: {}) {
+    //       Image(systemName: "minus")
+    //     }
+    //   }
+    // }
+    // .commands {
+    //   CommandGroup(replacing: .windowArrangement) {}
+    // }
+
+  }
+}

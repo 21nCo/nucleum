@@ -1,0 +1,17 @@
+info:
+  name: Web Handoff Consume
+  type: http
+  seq: 14
+http:
+  method: GET
+  url: "{{webConsumeUrl}}"
+settings:
+  followRedirects: false
+  expectedStatus: 302
+runtime:
+  scripts:
+    - type: tests
+      code: |
+        test("web handoff consume redirects after setting cookies", function() {
+          expect(res.status).to.equal(302);
+        });

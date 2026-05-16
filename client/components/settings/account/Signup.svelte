@@ -9,7 +9,6 @@
   import { properCase } from "@21n/shared-utils/text.utils";
   import { ClientStorageKey } from "@21n/persistence/persistence.type";
   import { clientStorage } from "@21n/persistence/persistence.utils";
-  import { isTokenExpired } from "@21n/utils/account.utils";
   import PoliciesFooter from "@21n/elements/PoliciesFooter.svelte";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import account from "@21n/stores/account.store";
@@ -20,6 +19,7 @@
   import { ButtonStyle } from "@21n/types/button.type";
   import { Size } from "@21n/types/size.enum";
   import view from "@21n/stores/view.store";
+  import { authClient } from "@21n/components/account/auth";
   let isSignup = $state(true);
   let authMode = $state("Sign up");
   let currentProgress = $state<string | undefined>(undefined);
@@ -61,14 +61,10 @@
       isLoginFromExtension = true;
       clientStorage.setForSession(ClientStorageKey.IS_EXTENSION_LOGIN, true);
     }
-    const token = await clientStorage.get(ClientStorageKey.STOKEN);
-    if (!token) return;
-    const isExpired = isTokenExpired(token);
-    if (isExpired) {
-      clientStorage.remove(ClientStorageKey.STOKEN);
-      return;
+    const session = await (await authClient()).getSession();
+    if (session.ok && session.data.session) {
+      appStore.gotoPath("/");
     }
-    appStore.gotoPath("/");
   });
 
   $effect(() => {
@@ -86,7 +82,10 @@
 
   async function handleMessageFromParent(event: MessageEvent) {
     try {
+      if (!isTrustedNativeMessage(event)) return;
       if (event?.data?.type === "SWIFT_MESSAGE" && event?.data?.payload) {
+        if (typeof event.data.payload !== "string") return;
+        if (!event.data.payload.trim().startsWith("{")) return;
         const parsed = parse(event.data.payload);
         console.log({
           at: "Signup - handleMessageFromParent - SWIFT_MESSAGE",
@@ -99,14 +98,26 @@
             toasts.error();
             return;
           }
-          isSigningIn = true;
-          await account.embedOAuthSignin(token);
-          isSigningIn = false;
+          try {
+            isSigningIn = true;
+            if (parsed.oauth.regionId) {
+              await clientStorage.set(ClientStorageKey.REGION, parsed.oauth.regionId);
+            }
+            await account.embedOAuthSignin(token);
+          } finally {
+            isSigningIn = false;
+          }
         }
       }
     } catch (e) {
       console.error({ at: "Signup - handleMessageFromParent", error: e });
     }
+  }
+
+  function isTrustedNativeMessage(event: MessageEvent) {
+    if (event?.data?.type !== "SWIFT_MESSAGE") return true;
+    if (event.source !== window) return false;
+    return event.origin === window.location.origin || event.origin === "null";
   }
 </script>
 

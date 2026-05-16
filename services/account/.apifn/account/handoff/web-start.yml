@@ -1,0 +1,31 @@
+info:
+  name: Web Handoff Start
+  type: http
+  seq: 13
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/handoff/web/start"
+  headers:
+    - name: content-type
+      value: application/json
+    - name: authorization
+      value: "Bearer {{nativeToken}}"
+  body:
+    type: json
+    data: "{}"
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        req.body = JSON.stringify({
+          returnTo: env.get("baseUrl") + "/health"
+        });
+    - type: tests
+      code: |
+        test("native bearer can create web handoff URL", function() {
+          expect(res.status).to.equal(200);
+          expect(Boolean(res.body.data.consumeUrl)).to.equal(true);
+          expect(Boolean(res.body.data.code)).to.equal(true);
+        });
+        env.set("webConsumeUrl", res.body.data.consumeUrl);
+        env.set("webHandoffCode", res.body.data.code);

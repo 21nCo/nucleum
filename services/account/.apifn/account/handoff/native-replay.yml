@@ -1,0 +1,25 @@
+info:
+  name: Native Handoff Replay
+  type: http
+  seq: 12
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/handoff/native/exchange"
+  headers:
+    - name: content-type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+settings:
+  expectedStatus: 409
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        req.body = JSON.stringify({ code: env.get("nativeHandoffCode") });
+    - type: tests
+      code: |
+        test("handoff code cannot be replayed", function() {
+          expect(res.status).to.equal(409);
+        });

@@ -1,9 +1,11 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { onMount } from "svelte";
   import AnalyticsTags from "@21n/layout/layers/analytics/AnalyticsTags.svelte";
   let { isLanding = false }: { isLanding?: boolean } = $props();
-  let isAnalyticsTagsMapped = false;
+  let isAnalyticsTagsMapped = $state(false);
   onMount(() => {
     if ($userPreferences?.isAnonymousAnalyticsEnabled || isLanding) {
       localStorage.removeItem("gaTag");

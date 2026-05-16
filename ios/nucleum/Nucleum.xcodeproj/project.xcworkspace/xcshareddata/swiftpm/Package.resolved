@@ -1,0 +1,15 @@
+{
+  "originHash" : "b51547585e8b431479e8b7c67391ef4b8706804b7f2d21a4583354ca7865cc8f",
+  "pins" : [
+    {
+      "identity" : "super-functions",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/21nCo/super-functions.git",
+      "state" : {
+        "branch" : "SF-33",
+        "revision" : "be6ace5fcb7308a6156935789e5cf71d4bc30b31"
+      }
+    }
+  ],
+  "version" : 3
+}

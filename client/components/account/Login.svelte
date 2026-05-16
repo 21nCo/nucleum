@@ -13,10 +13,15 @@
   import { Display } from "@21n/types/view.type";
   import { parse } from "@21n/shared-utils/json.utils";
   import { toasts } from "@21n/stores/notification.store";
-  let selectedMode: "signup" | "signin" | "offline" = "signup";
-  let currentProgress: string | undefined = undefined;
-  let cloudSyncLoginRef: CloudSyncLogin | undefined = undefined;
-  let isLoginFromExtension = false;
+  import { page } from "$app/stores";
+  import account from "@21n/stores/account.store";
+  import { logger } from "@21n/components/debug/logger.client";
+  import { clientStorage } from "@21n/persistence/persistence.utils";
+  import { ClientStorageKey } from "@21n/persistence/persistence.type";
+  let selectedMode = $state<"signup" | "signin" | "offline">("signup");
+  let currentProgress = $state<string | undefined>(undefined);
+  let cloudSyncLoginRef = $state<CloudSyncLogin | undefined>(undefined);
+  let isLoginFromExtension = $state(false);
   const dev_isEnableCaptcha = false;
   const managedSyncHosts = [
     "localhost",
@@ -25,8 +30,9 @@
     "pointron.app",
     "nucleus.to"
   ];
-  let isSelfHosted =
-    typeof window !== "undefined" ? resolveIfSelfHostedInstance() : false;
+  let isSelfHosted = $state(
+    typeof window !== "undefined" ? resolveIfSelfHostedInstance() : false
+  );
 
   function resolveProductName() {
     return properCase($appStore.product);
@@ -41,8 +47,8 @@
     return !managedSyncHosts.some((h) => host === h || host.endsWith(`.${h}`));
   }
 
-  function onTurnstileSuccess(token) {
-    console.log("Turnstile success:", token);
+  function onTurnstileSuccess(_token) {
+    logger.debug({ at: "Login.turnstile.success" });
   }
   function onTurnstileError(errorCode) {
     console.error("Turnstile error:", errorCode);
@@ -55,13 +61,63 @@
     window.onTurnstileSuccess = onTurnstileSuccess;
     window.onTurnstileError = onTurnstileError;
     window.onTurnstileExpired = onTurnstileExpired;
+    window.addEventListener("message", handleMessageFromParent);
+    void finishOAuthCallbackLogin();
+    if (dev_isEnableCaptcha && import.meta.env.VITE_NATIVE_EMBED !== "true") {
+      loadTurnstileScript();
+    }
 
     return () => {
+      window.removeEventListener("message", handleMessageFromParent);
       delete window.onTurnstileSuccess;
       delete window.onTurnstileError;
       delete window.onTurnstileExpired;
     };
   });
+
+  async function finishOAuthCallbackLogin() {
+    const isOAuthCallback = $page.url.searchParams.get("oauth_callback") === "1";
+    if ($page.url.searchParams.has("auth_error")) return;
+
+    if (isOAuthCallback) {
+      currentProgress = "oauth";
+    }
+    try {
+      const signedIn = await account.signInFromAuthFnSession();
+      if (!signedIn) {
+        if (isOAuthCallback) {
+          toasts.error("Authentication failed. Please try again.");
+          currentProgress = undefined;
+        }
+      }
+    } catch (error) {
+      logger.error({ at: "Login.finishOAuthCallbackLogin", error });
+      if (isOAuthCallback) {
+        toasts.error("Authentication failed. Please try again.");
+      }
+      currentProgress = undefined;
+    }
+  }
+
+  function loadTurnstileScript() {
+    const preconnectId = "turnstile-preconnect";
+    const scriptId = "turnstile-script";
+    if (!document.getElementById(preconnectId)) {
+      const preconnect = document.createElement("link");
+      preconnect.id = preconnectId;
+      preconnect.rel = "preconnect";
+      preconnect.href = "https://challenges.cloudflare.com";
+      document.head.appendChild(preconnect);
+    }
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement("script");
+      script.id = scriptId;
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    }
+  }
 
   async function handleMessageFromParent(event: MessageEvent) {
     try {
@@ -77,8 +133,17 @@
       }
 
       if (event?.data?.type === "SWIFT_MESSAGE" && event?.data?.payload) {
+        if (typeof event.data.payload !== "string") return;
+        if (!event.data.payload.trim().startsWith("{")) return;
         const parsed = parse(event.data.payload);
         if (parsed.oauth) {
+          logger.info({
+            at: "Login.handleMessageFromParent.oauth.received",
+            hasToken: Boolean(parsed.oauth.token),
+            hasError: Boolean(parsed.oauth.error || parsed.oauth.errorCode),
+            isSignup: parsed.oauth.signup === "true",
+            regionId: parsed.oauth.regionId
+          });
           currentProgress = undefined;
           let { token } = parsed.oauth;
           if (token) {
@@ -87,15 +152,50 @@
             }
           }
           if (!token) {
+            logger.error({
+              at: "Login.handleMessageFromParent.oauth.failed",
+              error: parsed.oauth.error,
+              errorCode: parsed.oauth.errorCode,
+              provider: parsed.oauth.provider,
+              requestId: parsed.oauth.requestId
+            });
             toasts.error("Authentication failed. Please try again.");
             return;
           }
           localStorage.setItem("embedToken", token);
-          appStore.gotoPath("/");
+          if (parsed.oauth.regionId) {
+            await clientStorage.set(ClientStorageKey.REGION, parsed.oauth.regionId);
+          }
+          logger.info({
+            at: "Login.handleMessageFromParent.oauth.token.received",
+            isSignup: parsed.oauth.signup === "true",
+            regionId: parsed.oauth.regionId
+          });
+          const signedIn = await account.signInFromAuthFnSession({
+            token,
+            regionId: parsed.oauth.regionId,
+            isNewUser: parsed.oauth.signup === "true",
+            isPreventRedirect: true,
+            persistToken: true
+          });
+          if (!signedIn) {
+            logger.error({
+              at: "Login.handleMessageFromParent.oauth.session.failed",
+              hasToken: true
+            });
+            toasts.error("Authentication failed. Please try again.");
+            return;
+          }
+          account.gotoPostAuthRoute({ isNewUser: parsed.oauth.signup === "true" });
+          logger.info({
+            at: "Login.handleMessageFromParent.oauth.redirect.requested",
+            isSignup: parsed.oauth.signup === "true",
+            currentPath: window.location.pathname
+          });
         }
       }
     } catch (e) {
-      console.error({ at: "Signup - handleMessageFromParent", error: e });
+      logger.error({ at: "Login.handleMessageFromParent", error: e });
     }
   }
 
@@ -260,13 +360,3 @@
     {/if}
   </div>
 </div>
-
-<svelte:head>
-  <link rel="preconnect" href="https://challenges.cloudflare.com" />
-  <script
-    src="https://challenges.cloudflare.com/turnstile/v0/api.js"
-    async
-    defer
-  ></script>
-</svelte:head>
-<svelte:window onmessage={handleMessageFromParent} />

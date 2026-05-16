@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>io.nucleum.urlscheme</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>nucleum</string>
+			</array>
+		</dict>
+	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Nucleum uses the camera only when you choose camera-powered capture features.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>Nucleum uses location only for features that need your explicit location context.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Nucleum uses the microphone only when you choose audio capture or transcription features.</string>
+	<key>NucleusAccountDomain</key>
+	<string>$(NUCLEUS_ACCOUNT_DOMAIN)</string>
+	<key>NucleusAppEnvironment</key>
+	<string>$(NUCLEUS_APP_ENVIRONMENT)</string>
+	<key>NucleusDebugSinkUrl</key>
+	<string>$(NUCLEUS_DEBUG_SINK_URL)</string>
+	<key>NucleusDefaultRegion</key>
+	<string>$(NUCLEUS_DEFAULT_REGION)</string>
+	<key>NucleusProduct</key>
+	<string>$(NUCLEUS_PRODUCT)</string>
+</dict>
+</plist>

@@ -1,0 +1,19 @@
+info:
+  name: Widget Rejects Full Session Token
+  type: http
+  seq: 15
+http:
+  method: GET
+  url: "{{baseUrl}}/auth/widget-token/session"
+  headers:
+    - name: authorization
+      value: "Bearer {{nativeToken}}"
+settings:
+  expectedStatus: 401
+runtime:
+  scripts:
+    - type: tests
+      code: |
+        test("full native session token is not a widget token", function() {
+          expect(res.status).to.equal(401);
+        });

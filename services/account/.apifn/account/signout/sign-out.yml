@@ -1,0 +1,25 @@
+info:
+  name: Sign Out Current Cookie Session
+  type: http
+  seq: 1
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/sign-out"
+  headers:
+    - name: content-type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        req.headers["x-authfn-csrf"] = cookies.get("nucleus.csrf", req.url);
+        req.body = JSON.stringify({});
+    - type: tests
+      code: |
+        test("current cookie session signs out", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body.data.revoked).to.equal(true);
+        });

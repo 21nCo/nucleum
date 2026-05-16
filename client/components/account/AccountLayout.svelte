@@ -11,6 +11,11 @@
   let { children }: { children?: Snippet } = $props();
   const productName = $derived(properCase($appStore.product));
   const message = $derived.by(() => {
+    const authError = $page.url.searchParams.get("auth_error");
+    if (authError === "oauth_callback_failed") {
+      const provider = $page.url.searchParams.get("auth_provider");
+      return `${provider ? properCase(provider) : "OAuth"} sign-in failed. Please try again.`;
+    }
     const messageParam = $page.url.searchParams.get(AppSearchParam.MSG);
     if (messageParam === "deleted") {
       return "Your account has been deleted.";

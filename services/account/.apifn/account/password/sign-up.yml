@@ -1,0 +1,30 @@
+info:
+  name: Password Sign Up
+  type: http
+  seq: 4
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/sign-up/password"
+  headers:
+    - name: content-type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        req.body = JSON.stringify({
+          email: env.get("email"),
+          password: env.get("password"),
+          sessionMode: "hybrid"
+        });
+    - type: tests
+      code: |
+        test("sign-up creates a session and token", function() {
+          expect(res.status).to.equal(200);
+          expect(Boolean(res.body.data.session.id)).to.equal(true);
+          expect(Boolean(res.body.data.token)).to.equal(true);
+        });
+        env.set("sessionToken", res.body.data.token);

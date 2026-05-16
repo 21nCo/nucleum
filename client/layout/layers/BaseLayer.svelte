@@ -145,11 +145,7 @@
     try {
       const dapId = await getDapId();
       $context.dapId = dapId;
-      const appDataFromUrl = extractProduct(
-        import.meta.env?.VITE_HOST ??
-          (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_APP_URL : undefined) ??
-          window.location.host
-      );
+      const appDataFromUrl = extractProduct(resolveLaunchHost());
       const appDetails = {
         product,
         env: appDataFromUrl.env ?? "live"
@@ -289,7 +285,9 @@
       clientStorage.set(ClientStorageKey.ENV, $appStore.env);
       return;
     }
-    if (envCachedOnMachine && $appStore.env !== envCachedOnMachine) {
+    const cachedEnv = normalizeEnvForComparison(envCachedOnMachine);
+    const currentEnv = normalizeEnvForComparison($appStore.env);
+    if (envCachedOnMachine && currentEnv !== cachedEnv) {
       clientStorage.set(ClientStorageKey.ENV, $appStore.env);
       logger.log(
         {
@@ -301,7 +299,47 @@
         LogType.INFO
       );
       await account.signOut();
+      return;
     }
+    if (envCachedOnMachine !== $appStore.env) {
+      clientStorage.set(ClientStorageKey.ENV, $appStore.env);
+    }
+  }
+
+  function resolveLaunchHost() {
+    if (isHttpBrowserLocation()) {
+      return window.location.host;
+    }
+    return (
+      import.meta.env?.VITE_HOST ??
+      (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_APP_URL : undefined) ??
+      window.location.host
+    );
+  }
+
+  function isHttpBrowserLocation() {
+    return (
+      typeof window !== "undefined" &&
+      (window.location.protocol === "http:" ||
+        window.location.protocol === "https:")
+    );
+  }
+
+  function normalizeEnvForComparison(env: string | null | undefined) {
+    if (isLocalDevelopmentHost() && (env === "landing" || env === "local")) {
+      return "local";
+    }
+    return env;
+  }
+
+  function isLocalDevelopmentHost() {
+    const host = window.location.hostname;
+    return (
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host.endsWith(".localhost") ||
+      host.startsWith("local.")
+    );
   }
 
   function handleUnhandledRejection(event: any) {
@@ -335,6 +373,15 @@
       at: "handleCustomNavigation",
       event,
       path: event.detail?.path
+    });
+    logger.info({
+      at: "BaseLayer.handleCustomNavigation",
+      path: event.detail?.path,
+      isReload: event.detail?.isReload,
+      replaceState: event.detail?.replaceState,
+      currentPath: window.location.pathname,
+      protocol: window.location.protocol,
+      isEmbed: $context.isEmbed
     });
     if (event.detail?.isReload) {
       if (!$context.isEmbed) window.location.reload();
@@ -563,4 +610,6 @@
     ></span>
   </ThemeLayer>
 </div>
-<PosthogTelemetry />
+{#if import.meta.env.VITE_NATIVE_EMBED !== "true"}
+  <PosthogTelemetry />
+{/if}

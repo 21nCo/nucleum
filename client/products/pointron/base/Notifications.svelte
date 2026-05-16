@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { onMount } from "svelte";
   import { appStore } from "@21n/stores/app.store";
@@ -11,7 +13,7 @@
   import context from "@21n/stores/context.store";
   import { GlobalEvent } from "@21n/types/event.enum";
 
-  let src: string | null = null;
+  let src = $state<string | null>(null);
   let body: string = "";
   let audio: any;
 

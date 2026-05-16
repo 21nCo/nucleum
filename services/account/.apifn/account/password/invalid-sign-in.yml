@@ -1,0 +1,30 @@
+info:
+  name: Password Invalid Sign In
+  type: http
+  seq: 6
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/sign-in/password"
+  headers:
+    - name: content-type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+settings:
+  expectedStatus: 401
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        req.body = JSON.stringify({
+          email: env.get("email"),
+          password: "wrong-" + env.get("password"),
+          sessionMode: "hybrid"
+        });
+    - type: tests
+      code: |
+        test("wrong password is rejected", function() {
+          expect(res.status).to.equal(401);
+          expect(res.body.error.code).to.equal("AUTHFN_INVALID_CREDENTIALS");
+        });

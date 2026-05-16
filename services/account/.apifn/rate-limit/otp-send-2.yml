@@ -1,0 +1,26 @@
+info:
+  name: OTP Send 2
+  type: http
+  seq: 2
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/otp/send"
+  headers:
+    - name: content-type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        req.body = JSON.stringify({
+          email: env.get("rateEmail"),
+          purpose: "sign-in"
+        });
+    - type: tests
+      code: |
+        test("second OTP send is allowed", function() {
+          expect(res.status).to.equal(200);
+        });

@@ -24,7 +24,7 @@ const mocks = vi.hoisted(() => {
     postDataToParentMock: vi.fn(),
     loggerLogMock: vi.fn(),
     parseMock: vi.fn(),
-    jwtDecodeMock: vi.fn()
+    authSignOutMock: vi.fn()
   };
 });
 
@@ -36,7 +36,7 @@ const {
   postDataToParentMock,
   loggerLogMock,
   parseMock,
-  jwtDecodeMock
+  authSignOutMock
 } = mocks;
 
 vi.mock("@21n/utils/browser.utils", () => ({
@@ -64,8 +64,10 @@ vi.mock("@21n/shared-utils/json.utils", () => ({
   parse: mocks.parseMock
 }));
 
-vi.mock("jwt-decode", () => ({
-  default: mocks.jwtDecodeMock
+vi.mock("@21n/components/account/auth", () => ({
+  authClient: async () => ({
+    signOut: mocks.authSignOutMock
+  })
 }));
 
 function createStorage() {
@@ -86,13 +88,16 @@ function createStorage() {
 
 let originalChrome: any;
 let originalLocalStorage: Storage | undefined;
+let originalWindow: Window | undefined;
 let mockLocalStorage: Storage;
 
 beforeEach(() => {
   originalChrome = (globalThis as any).chrome;
   originalLocalStorage = (globalThis as any).localStorage;
+  originalWindow = (globalThis as any).window;
   mockLocalStorage = createStorage();
   (globalThis as any).localStorage = mockLocalStorage;
+  (globalThis as any).window = { localStorage: mockLocalStorage };
   vi.clearAllMocks();
 });
 
@@ -107,6 +112,12 @@ afterEach(() => {
     (globalThis as any).localStorage = originalLocalStorage;
   } else {
     delete (globalThis as any).localStorage;
+  }
+
+  if (originalWindow) {
+    (globalThis as any).window = originalWindow;
+  } else {
+    delete (globalThis as any).window;
   }
 });
 
@@ -146,7 +157,9 @@ describe("client/utils/account.utils", () => {
     const token = await resolveToken();
 
     expect(token).toBe("abc");
-    expect(clientStorageMock.get).toHaveBeenCalledWith(ClientStorageKey.STOKEN);
+    expect(clientStorageMock.get).toHaveBeenCalledWith(
+      ClientStorageKey.AUTHFN_TOKEN
+    );
   });
 
   it("rejects when extension storage errors", async () => {
@@ -156,26 +169,44 @@ describe("client/utils/account.utils", () => {
     await expect(resolveToken()).rejects.toThrow("boom");
   });
 
-  it("resolves token from local storage when in web environment with space", async () => {
+  it("does not resolve AuthFn token from local storage in normal web environment", async () => {
     isExtensionEnvironmentMock.mockReturnValue(false);
     retrieveLocallyMock.mockReturnValue({ id: "space-1" });
-    mockLocalStorage.setItem(`token-space-1`, "token-value");
+    mockLocalStorage.setItem(ClientStorageKey.AUTHFN_TOKEN, "token-value");
+
+    const token = await resolveToken();
+
+    expect(token).toBeNull();
+    expect(mockLocalStorage.getItem).not.toHaveBeenCalledWith(
+      ClientStorageKey.AUTHFN_TOKEN
+    );
+  });
+
+  it("resolves AuthFn token from local storage in native embed builds", async () => {
+    isExtensionEnvironmentMock.mockReturnValue(false);
+    import.meta.env.VITE_NATIVE_EMBED = "true";
+    mockLocalStorage.setItem(ClientStorageKey.AUTHFN_TOKEN, "token-value");
 
     const token = await resolveToken();
 
     expect(token).toBe("token-value");
-    expect(mockLocalStorage.getItem).toHaveBeenCalledWith("token-space-1");
+    expect(mockLocalStorage.getItem).toHaveBeenCalledWith(
+      ClientStorageKey.AUTHFN_TOKEN
+    );
+    delete import.meta.env.VITE_NATIVE_EMBED;
   });
 
-  it("resolves fallback token when no space present", async () => {
+  it("returns null when no AuthFn token exists", async () => {
     isExtensionEnvironmentMock.mockReturnValue(false);
     retrieveLocallyMock.mockReturnValue(null);
     mockLocalStorage.setItem("stoken", "fallback-token");
 
     const token = await resolveToken();
 
-    expect(token).toBe("fallback-token");
-    expect(mockLocalStorage.getItem).toHaveBeenCalledWith("stoken");
+    expect(token).toBeNull();
+    expect(mockLocalStorage.getItem).not.toHaveBeenCalledWith(
+      ClientStorageKey.AUTHFN_TOKEN
+    );
   });
 
   it("resolves current user id in extension environment", async () => {
@@ -255,7 +286,7 @@ describe("client/utils/account.utils", () => {
       ClientStorageKey.DAP_ID,
       expect.anything()
     );
-    expect(gotoMock).toHaveBeenCalledWith("/signup?msg=signedout");
+    expect(gotoMock).toHaveBeenCalledWith("/account/login");
   });
 
   it("skips redirect and preserves dap when requested", async () => {
@@ -286,13 +317,8 @@ describe("client/utils/account.utils", () => {
     );
   });
 
-  it("determines token expiry status", () => {
-    const nowSeconds = 1700000000;
-    vi.spyOn(Date, "now").mockReturnValue(nowSeconds * 1000);
-    jwtDecodeMock.mockReturnValue({ exp: nowSeconds + 60 });
+  it("treats opaque AuthFn tokens as present or absent", () => {
     expect(isTokenExpired("token")).toBe(false);
-
-    jwtDecodeMock.mockReturnValue({ exp: nowSeconds - 60 });
-    expect(isTokenExpired("token")).toBe(true);
+    expect(isTokenExpired("")).toBe(true);
   });
 });

@@ -1,0 +1,30 @@
+info:
+  name: OTP Replay Used Code
+  type: http
+  seq: 9
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/otp/verify"
+  headers:
+    - name: content-type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+settings:
+  expectedStatus: 409
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        req.body = JSON.stringify({
+          email: env.get("email"),
+          purpose: "sign-in",
+          code: env.get("otp")
+        });
+    - type: tests
+      code: |
+        test("used OTP cannot be replayed", function() {
+          expect(res.status).to.equal(409);
+          expect(res.body.ok).to.equal(false);
+        });

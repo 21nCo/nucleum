@@ -1,0 +1,4 @@
+name: Nucleus Account Multi-Region E2E
+type: collection
+version: 0.0.1
+description: AuthFn multi-region lookup and duplicate isolation checks.

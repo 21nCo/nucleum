@@ -1,0 +1,15 @@
+info:
+  name: AuthFn Runtime
+  type: http
+  seq: 2
+http:
+  method: GET
+  url: "{{baseUrl}}/auth/runtime"
+runtime:
+  scripts:
+    - type: tests
+      code: |
+        test("runtime resolves local region", function() {
+          expect(res.status).to.equal(200);
+          expect(Boolean(res.body.data.regionId)).to.equal(true);
+        });

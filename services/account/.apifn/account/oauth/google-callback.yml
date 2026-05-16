@@ -1,0 +1,22 @@
+info:
+  name: OAuth Google Callback
+  type: http
+  seq: 16
+http:
+  method: GET
+  url: "{{baseUrl}}/auth/social/callback/google"
+  params:
+    query:
+      - name: state
+        value: "{{oauthState}}"
+      - name: code
+        value: "{{oauthCode}}"
+runtime:
+  scripts:
+    - type: tests
+      code: |
+        test("mock Google OAuth callback signs in", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body.data.provider).to.equal("google");
+          expect(Boolean(res.body.data.session.id)).to.equal(true);
+        });

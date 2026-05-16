@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import DatePickerRow from "@21n/elements/datetime/DatePickerRow.svelte";
   import Text from "@21n/elements/text/Text.svelte";
@@ -5,8 +7,8 @@
   import { TextStyle } from "@21n/types/text.enum";
   import { TimeScaleUnit } from "@21n/types/time.type";
   import CalendarColumn from "@21n/components/calendar/column/CalendarColumn.svelte";
-  let selectedDate = new Date();
-  let viewDate = new Date();
+  let selectedDate = $state(new Date());
+  let viewDate = $state(new Date());
 </script>
 
 <main class="flex flex-col gap-6 w-full p-4 cw:pt-16">

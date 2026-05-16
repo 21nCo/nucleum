@@ -1,22 +1,29 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import Button from "@21n/elements/button/Button.svelte";
   import account from "@21n/stores/account.store";
   import { appStore } from "@21n/stores/app.store";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { properCase } from "@21n/shared-utils/text.utils";
-  import { onMount } from "svelte";
   import RegionSetting from "@21n/components/settings/account/RegionSetting.svelte";
   import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
   import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
   import { InfoTextType } from "@21n/types/text.type";
-  let region: string = "useast";
-  let isBootstrapInProgress: boolean = false;
-  let isAlreadyBootstrapped: boolean = false;
-  let error: string | undefined = undefined;
-  onMount(() => {
-    if ($account.userInfo?.isBootstrapped && $account.userInfo?.region) {
-      isAlreadyBootstrapped = true;
-      region = $account.userInfo?.region;
+
+  let region = $state("useast");
+  let isBootstrapInProgress = $state(false);
+  let error = $state<string | null>(null);
+
+  const productName = $derived(properCase($appStore?.product ?? "nucleus"));
+  const currentUserInfo = $derived($account?.userInfo);
+  const isAlreadyBootstrapped = $derived(
+    Boolean(currentUserInfo?.isBootstrapped && currentUserInfo?.region),
+  );
+
+  $effect(() => {
+    if (currentUserInfo?.region) {
+      region = currentUserInfo.region;
     }
   });
 </script>
@@ -27,12 +34,11 @@
   >
     <div class="flex flex-col gap-2">
       <div class="text-xl text-fgs3 userdata">
-        Hi {$account.userInfo?.nickName ?? "there"}!
+        Hi {currentUserInfo?.nickName ?? "there"}!
       </div>
       <div class="text-b2 text-fgs3">
-        Thanks for taking your time to try <b>
-          {properCase($appStore.product)}.
-        </b> One last step before you can start using the app.
+        Thanks for taking your time to try {productName}. One last step before
+        you can start using the app.
       </div>
     </div>
     <RegionSetting

@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { isTextElement } from "@21n/utils/browser.utils";
   import type { IKeyboardShortcut } from "@21n/components/shortcuts/shortcut.type";

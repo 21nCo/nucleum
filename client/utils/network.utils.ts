@@ -1,7 +1,7 @@
 import { logger } from "@21n/components/debug/logger.client";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
 import { GlobalEvent } from "@21n/types/event.enum";
-import { resolveToken, signout } from "@21n/utils/account.utils";
+import { resolveLegacyToken, resolveToken, signout } from "@21n/utils/account.utils";
 import {
   dispatchCustomEvent,
   generateFingerprint,
@@ -207,12 +207,12 @@ function mapCountryToRegion(countryCode?: string): string | null {
 export async function detectUserRegion(): Promise<string> {
   const ipBasedRegion = await detectUserRegionFromIP();
   if (ipBasedRegion) {
-    console.log("Region detected from IP:", ipBasedRegion);
+    logger.debug({ at: "detectUserRegion.ip", region: ipBasedRegion });
     return ipBasedRegion;
   }
 
   const timezoneBasedRegion = resolveRegionalApiUrlStrategy();
-  console.log("Region detected from timezone (fallback):", timezoneBasedRegion);
+  logger.debug({ at: "detectUserRegion.timezone", region: timezoneBasedRegion });
   return timezoneBasedRegion;
 }
 
@@ -241,11 +241,13 @@ export async function performApiCall(
       import.meta.env?.VITE_FILE_API_URL ??
       (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_FILE_API_URL : undefined);
   }
+  const legacyToken = await resolveLegacyToken();
   return performHttpNetworkOperation({
     url: baseUrl + "/" + endpoint,
     method,
     headers: {},
-    body: stringify({ ...body, context: await getAppLoadContext() })
+    body: stringify({ ...body, context: await getAppLoadContext() }),
+    authToken: legacyToken
   });
   async function getAppLoadContext() {
     const deviceFingerprint = await generateFingerprint();
@@ -295,22 +297,24 @@ export async function performHttpNetworkOperation(params: {
   method: "POST" | "GET" | "PUT" | "DELETE";
   headers: any;
   body: any;
+  authToken?: string | null;
 }) {
   try {
     const isOffline = await determineIfOffline();
     if (isOffline) return;
-    let token = await resolveToken();
+    let token = params.authToken === undefined ? await resolveToken() : params.authToken;
     const isExtEnv = isExtensionEnvironment();
     if (!token && isExtEnv) {
       logoutOnExtention();
     }
     const headers = params.headers ?? {};
+    const authorizationHeaders = token ? { Authorization: "Bearer " + token } : {};
     const body = params.body ?? "";
     const response = await fetch(params.url, {
       method: params.method,
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer " + token,
+        ...authorizationHeaders,
         ...headers
       },
       body
@@ -321,9 +325,16 @@ export async function performHttpNetworkOperation(params: {
       if (response.status === 401) {
         if (isExtEnv) {
           logoutOnExtention();
-        } else {
+        } else if (!token) {
           await signout();
           window.location.reload();
+        } else {
+          logger.log({
+            at: "API call unauthorized with AuthFn session",
+            message:
+              "Skipping automatic sign-out because AuthFn is the authentication source.",
+            url: params.url
+          });
         }
       }
       throw new Error(`API call failed with status: ${response.status}`);

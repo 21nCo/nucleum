@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSExtension</key>
+	<dict>
+		<key>NSExtensionPointIdentifier</key>
+		<string>com.apple.widgetkit-extension</string>
+	</dict>
+	<key>NucleusAccountDomain</key>
+	<string>$(NUCLEUS_ACCOUNT_DOMAIN)</string>
+	<key>NucleusAppEnvironment</key>
+	<string>$(NUCLEUS_APP_ENVIRONMENT)</string>
+	<key>NucleusDebugSinkUrl</key>
+	<string>$(NUCLEUS_DEBUG_SINK_URL)</string>
+	<key>NucleusDefaultRegion</key>
+	<string>$(NUCLEUS_DEFAULT_REGION)</string>
+	<key>NucleusProduct</key>
+	<string>$(NUCLEUS_PRODUCT)</string>
+</dict>
+</plist>

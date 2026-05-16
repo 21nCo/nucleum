@@ -1,0 +1,28 @@
+info:
+  name: Password Reset Complete
+  type: http
+  seq: 9
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/password/reset/complete"
+  headers:
+    - name: content-type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        req.body = JSON.stringify({
+          email: env.get("email"),
+          code: env.get("resetOtp"),
+          newPassword: env.get("newPassword")
+        });
+    - type: tests
+      code: |
+        test("password reset updates the credential", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body.data.passwordUpdated).to.equal(true);
+        });

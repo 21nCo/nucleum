@@ -1,0 +1,19 @@
+name = "nucleus-account"
+main = "dist/worker.js"
+compatibility_date = "2026-04-24"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+# The full regional Wrangler configs are generated from:
+#   services/account/config/environments.json
+#
+# Normal deploys intentionally omit routes because custom-domain routes are
+# one-time infrastructure setup:
+#   npm --workspace @21n/account-service run deploy:dev
+#
+# Sync or repair custom-domain routes separately with a token that has zone
+# Workers Routes permissions:
+#   npm --workspace @21n/account-service run routes:dev
+
+[vars]
+NODE_ENV = "production"

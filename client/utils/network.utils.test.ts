@@ -6,10 +6,12 @@ import * as networkUtils from "./network.utils";
 
 const moduleMocks = vi.hoisted(() => ({
   logger: {
+    debug: vi.fn(),
     error: vi.fn(),
     log: vi.fn()
   },
   account: {
+    resolveLegacyToken: vi.fn(),
     resolveToken: vi.fn(),
     signout: vi.fn()
   },
@@ -56,9 +58,37 @@ const {
 describe("client/utils/network.utils", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    Object.defineProperty(globalThis, "navigator", {
+      value: {
+        onLine: true,
+        userAgent: "vitest"
+      },
+      writable: true,
+      configurable: true
+    });
+    Object.defineProperty(globalThis, "window", {
+      value: {
+        location: {
+          origin: "https://app.memotron.test",
+          href: "https://app.memotron.test/path?query=1",
+          host: "app.memotron.test",
+          reload: vi.fn()
+        }
+      },
+      writable: true,
+      configurable: true
+    });
+    Object.defineProperty(globalThis, "document", {
+      value: {
+        referrer: "https://referrer.test"
+      },
+      writable: true,
+      configurable: true
+    });
     moduleMocks.browser.isExtensionEnvironment.mockReturnValue(false);
     moduleMocks.browser.isContentScript.mockReturnValue(false);
     moduleMocks.browser.generateFingerprint.mockResolvedValue("fingerprint");
+    moduleMocks.account.resolveLegacyToken.mockResolvedValue("legacy-token");
     moduleMocks.account.resolveToken.mockResolvedValue("token");
     moduleMocks.time.detectTimeZone.mockReturnValue("UTC");
     moduleMocks.storage.get.mockResolvedValue(null);
@@ -79,20 +109,6 @@ describe("client/utils/network.utils", () => {
       PLASMO_PUBLIC_FILE_API_URL: "https://plasmo.files.test"
     });
     Object.defineProperty(navigator, "onLine", { value: true, configurable: true });
-    Object.defineProperty(window, "location", {
-      value: {
-        origin: "https://app.memotron.test",
-        href: "https://app.memotron.test/path?query=1",
-        host: "app.memotron.test",
-        reload: vi.fn()
-      },
-      writable: true,
-      configurable: true
-    });
-    Object.defineProperty(document, "referrer", {
-      value: "https://referrer.test",
-      configurable: true
-    });
   });
 
   afterEach(() => {
@@ -147,6 +163,9 @@ describe("client/utils/network.utils", () => {
     );
     const [, requestInit] = (fetch as any).mock.calls[0] as [string, RequestInit];
     const payload = JSON.parse(requestInit.body as string);
+    expect(requestInit.headers).toMatchObject({
+      Authorization: "Bearer legacy-token"
+    });
     expect(payload.context).toMatchObject({
       deviceFingerprint: "fingerprint",
       origin: "https://app.memotron.test"
@@ -222,8 +241,30 @@ describe("client/utils/network.utils", () => {
     expect(moduleMocks.account.signout).not.toHaveBeenCalled();
   });
 
-  it("signs out web users on unauthorized response", async () => {
+  it("does not sign out AuthFn web users on legacy unauthorized response", async () => {
     moduleMocks.browser.isExtensionEnvironment.mockReturnValue(false);
+    (fetch as any).mockResolvedValue({
+      ok: false,
+      status: 401,
+      text: vi.fn().mockResolvedValue("unauthorized")
+    });
+
+    await expect(
+      performHttpNetworkOperation({
+        url: "https://api.memotron.test/private",
+        method: "GET",
+        headers: {},
+        body: undefined
+      })
+    ).rejects.toThrow("API call failed with status: 401");
+
+    expect(moduleMocks.account.signout).not.toHaveBeenCalled();
+    expect(window.location.reload).not.toHaveBeenCalled();
+  });
+
+  it("signs out web users without a local AuthFn token on unauthorized response", async () => {
+    moduleMocks.browser.isExtensionEnvironment.mockReturnValue(false);
+    moduleMocks.account.resolveToken.mockResolvedValueOnce(null);
     (fetch as any).mockResolvedValue({
       ok: false,
       status: 401,

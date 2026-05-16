@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import Modal from "@21n/components/modal/Modal.svelte";
   import { appStore } from "@21n/stores/app.store";

@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { cache } from "@21n/layout/layers/cache/cache.store";

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount as onComponentMount, type Snippet } from "svelte";
-  import { isTokenExpired, resolveToken } from "@21n/utils/account.utils";
+  import { resolveToken } from "@21n/utils/account.utils";
   import account from "@21n/stores/account.store";
   import ExtensionThemeBase from "@21n/extensions/ExtensionThemeBase.svelte";
   import { ClientStorageKey } from "@21n/persistence/persistence.type";
@@ -75,9 +75,10 @@
       if (event.source != window || !isSelfPage) return;
       if (event.data.type && event.data.type == "signin") {
         await clientStorage.set(
-          ClientStorageKey.STOKEN,
+          ClientStorageKey.AUTHFN_TOKEN,
           event.data.token.token
         );
+        await clientStorage.remove(ClientStorageKey.STOKEN);
         await clientStorage.set(
           ClientStorageKey.USER_INFO,
           event.data.token.userInfo
@@ -132,9 +133,9 @@
 
   async function checkIfSessionExpired(token: string) {
     logger.log({ at: "checkIfSessionExpired" });
-    const isExpired = isTokenExpired(token);
+    const isExpired = await account.checkIfSessionExpired();
     if (isExpired) {
-      await clientStorage.remove(ClientStorageKey.STOKEN);
+      await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
       return true;
     }
     return false;

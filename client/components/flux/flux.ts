@@ -28,7 +28,10 @@ import {
 import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
 import { GlobalEvent } from "@21n/types/event.enum";
 import { ExtensionEvent } from "@21n/types/extension.type";
-import { resolveCurrentUserId } from "@21n/utils/account.utils";
+import {
+  hasLegacyCloudSession,
+  resolveCurrentUserId
+} from "@21n/utils/account.utils";
 import {
   dispatchCustomEvent,
   isExtensionEnvironment,
@@ -534,6 +537,18 @@ class Flux {
 
   async performSync(method: SyncMethod, data: any) {
     try {
+      if (!(await hasLegacyCloudSession())) {
+        logger.log({
+          at: "flux.performSync",
+          method,
+          message:
+            "Skipping legacy sync because no legacy cloud session token is present."
+        });
+        if (method === SyncMethod.SYNC_DOWN) {
+          return { syncDownData: [], counts: {} };
+        }
+        return this.emptyLegacySyncResult(method);
+      }
       const result = await performApiCall(`v2/sync/${method}`, "POST", data);
       let response;
       if (result?.ok) {
@@ -575,6 +590,25 @@ class Flux {
       return response;
     } catch (e) {
       logger.error({ at: "flux.performSync", method, data, error: e });
+    }
+  }
+
+  private emptyLegacySyncResult(method: SyncMethod) {
+    const error = "LEGACY_SYNC_UNAVAILABLE";
+    switch (method) {
+      case SyncMethod.SYNC_UP:
+        return { response: { error }, syncDownData: [] };
+      case SyncMethod.CLONE_DOWN:
+      case SyncMethod.CLONE_DOWN_PAGINATE:
+        return [];
+      case SyncMethod.CLONE_DOWN_V2:
+        return { data: {}, cursors: {} };
+      case SyncMethod.CLONE_DOWN_PAGINATE_V2:
+        return { data: [], cursor: null };
+      case SyncMethod.CLONE_UP:
+      case SyncMethod.RECONCILE:
+      default:
+        return { response: { error }, data: [] };
     }
   }
 
@@ -1110,8 +1144,9 @@ class Flux {
         limit: _limit,
         isExtension: this.isExtensionEnvironment
       });
+      const resultData = result?.data ?? {};
       for (let [index, resource] of resources.entries()) {
-        const records = result.data[resource] ?? result.data[index];
+        const records = resultData[resource] ?? resultData[index];
         if (!records || !isValidArrayWithData(records)) continue;
         await this.processCloneDown(resource, records, {
           isReconciliation: params?.isReconciliation,

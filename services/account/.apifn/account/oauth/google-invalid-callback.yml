@@ -1,0 +1,25 @@
+info:
+  name: OAuth Google Invalid Callback
+  type: http
+  seq: 19
+http:
+  method: GET
+  url: "{{baseUrl}}/auth/social/callback/google"
+  params:
+    query:
+      - name: state
+        value: "invalid-state"
+      - name: code
+        value: "invalid-code"
+settings:
+  expectedStatus:
+    - 400
+    - 401
+runtime:
+  scripts:
+    - type: tests
+      code: |
+        test("invalid OAuth callback is rejected", function() {
+          expect([400, 401].includes(res.status)).to.equal(true);
+          expect(res.body.ok).to.equal(false);
+        });

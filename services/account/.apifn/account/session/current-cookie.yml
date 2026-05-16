@@ -1,0 +1,15 @@
+info:
+  name: Current Cookie Session
+  type: http
+  seq: 5
+http:
+  method: GET
+  url: "{{baseUrl}}/auth/session"
+runtime:
+  scripts:
+    - type: tests
+      code: |
+        test("cookie jar authenticates current session", function() {
+          expect(res.status).to.equal(200);
+          expect(Boolean(res.body.data.session.id)).to.equal(true);
+        });

@@ -1,0 +1,52 @@
+//
+//  ContentView.swift
+//  Memotron
+//
+//  Created by Ar on 2/8/24.
+//
+
+import SwiftUI
+
+struct ContentView: View {
+  @EnvironmentObject var appStore: AppStore
+  @State private var showTranscriptionView = false
+  #if DEBUG
+    @State private var isShowTranscriptionDebugger = true
+  #else
+    @State private var isShowTranscriptionDebugger = false
+  #endif
+
+  var body: some View {
+    ZStack {
+      BaseView().environmentObject(appStore)
+      if isShowTranscriptionDebugger {
+        VStack {
+          Spacer()
+
+          HStack {
+            Spacer()
+
+            Button(action: {
+              showTranscriptionView = true
+            }) {
+              Image(systemName: "waveform.circle.fill")
+                .font(.system(size: 24))
+                .padding()
+                .background(Circle().fill(Color.blue))
+                .foregroundColor(.white)
+            }
+            .padding(.trailing, 20)
+            .padding(.bottom, 40)
+            .sheet(isPresented: $showTranscriptionView) {
+              AudioTranscriptionView()
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+#Preview {
+  ContentView().environmentObject(AppStore())
+}

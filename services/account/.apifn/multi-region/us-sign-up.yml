@@ -1,0 +1,31 @@
+info:
+  name: US Password Sign Up
+  type: http
+  seq: 1
+http:
+  method: POST
+  url: "{{usBaseUrl}}/auth/sign-up/password"
+  headers:
+    - name: content-type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        const email = "mr-" + crypto.randomUUID() + "@example.test";
+        env.set("mrEmail", email);
+        env.set("mrPassword", "CorrectHorseBatteryStaple1!");
+        req.body = JSON.stringify({
+          email,
+          password: env.get("mrPassword"),
+          sessionMode: "bearer"
+        });
+    - type: tests
+      code: |
+        test("US region creates the user", function() {
+          expect(res.status).to.equal(200);
+          expect(res.body.data.session.regionId).to.equal("us");
+        });

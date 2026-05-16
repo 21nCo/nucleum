@@ -197,6 +197,7 @@
    * @param isSignup - If the user is signing up
    */
   function refreshTimeZone() {
+    if (!isFluxReady()) return;
     if (!$tzStore || (Array.isArray($tzStore) && $tzStore.length === 0)) {
       userPreferences.setTimeZone();
     }
@@ -222,6 +223,7 @@
 
   async function onAppear() {
     try {
+      if (!isFluxReady()) return;
       refreshTimeZone();
       const isCloudUser = $account.dataMode === UserDataMode.CLOUD;
       if (isCloudUser && !dev_isDisableSyncOnAppear) {
@@ -235,6 +237,10 @@
     } catch (e) {
       logger.error({ at: "onAppear", error: e });
     }
+  }
+
+  function isFluxReady() {
+    return Boolean(flux?.persistence);
   }
 
   /**
@@ -516,7 +522,10 @@
 
   async function handleMessageFromParent(event: any) {
     try {
+      if (!isTrustedNativeMessage(event)) return;
       if (event?.data?.type === "SWIFT_MESSAGE" && event?.data?.payload) {
+        if (typeof event.data.payload !== "string") return;
+        if (!event.data.payload.trim().startsWith("{")) return;
         const parsed = parse(event.data.payload);
         console.log({
           at: "handleMessageFromParent - SWIFT_MESSAGE",
@@ -558,6 +567,12 @@
         origin: event?.origin
       });
     }
+  }
+
+  function isTrustedNativeMessage(event: MessageEvent) {
+    if (event?.data?.type !== "SWIFT_MESSAGE") return true;
+    if (event.source !== window) return false;
+    return event.origin === window.location.origin || event.origin === "null";
   }
 
   function addWindowEventListeners() {

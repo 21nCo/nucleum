@@ -1,0 +1,28 @@
+info:
+  name: OTP Send 1
+  type: http
+  seq: 1
+http:
+  method: POST
+  url: "{{baseUrl}}/auth/otp/send"
+  headers:
+    - name: content-type
+      value: application/json
+  body:
+    type: json
+    data: "{}"
+runtime:
+  scripts:
+    - type: pre-request
+      code: |
+        const email = "ratelimit-" + crypto.randomUUID() + "@example.test";
+        env.set("rateEmail", email);
+        req.body = JSON.stringify({
+          email,
+          purpose: "sign-in"
+        });
+    - type: tests
+      code: |
+        test("first OTP send is allowed", function() {
+          expect(res.status).to.equal(200);
+        });

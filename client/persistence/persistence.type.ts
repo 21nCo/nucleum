@@ -21,6 +21,8 @@ export enum ClientStorageKey {
    */
   STOKEN = "stoken",
   USER = "user",
+  AUTHFN_TOKEN = "authfnToken",
+  AUTHFN_WIDGET_TOKEN = "authfnWidgetToken",
   REGION = "region",
   USER_REGION_MAP = "userRegionMap",
   USER_INFO = "userInfo",
