@@ -193,11 +193,9 @@ jobs:
         run: |
           npm ci --legacy-peer-deps
 
-      - name: Install CDK client dependencies
+      - name: Build CDK client
         working-directory: ./deployment/cdk/client
-        run: |
-          npm ci --legacy-peer-deps
-          npm run build
+        run: ../../node_modules/.bin/tsc -p tsconfig.json
 
       - name: Set CDK environment variables with fallback
         run: |
@@ -224,7 +222,7 @@ jobs:
 
       - name: Deploy with CDK
         working-directory: ./deployment/cdk/client
-        run: cdk deploy --all --require-approval never
+        run: ../../node_modules/.bin/cdk deploy --all --require-approval never
         env:
           PROJECT_NAME: ${{ matrix.project }}
           ENVIRONMENT: ${{ needs.detect-config.outputs.environment }}
