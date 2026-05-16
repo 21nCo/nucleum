@@ -35,7 +35,11 @@
 |----------|----------------------------------|-----------------------------------------------------------------------------|
 | Nucleum  | [nucleum.app](https://nucleum.app)     | **Your digital harmony**, a super app that combines all of the apps listed below in a cohesive manner.    |
 | Memotron | [memotron.app](https://memotron.app) | **Your memory atlas**, a tool for managing your digital memory and personal knowledge.<br><br>Tags: Digital memory, PKM, Note‑taking, Knowledge management.                  |
-| Pointron | [pointron.app](https://pointron.app) | **Your focus haven**, a tool for tracking your goals and managing your time.<br><br>Topics: Focus, Time management, Goal tracking.     |
+| Pointron | [pointron.app](https://pointron.app) | **Your focus haven**, a tool for tracking your goals and managing your time.<br><br>Tags: Focus, Time tracking, Goals, Events and Task management.     |
+| Fellotron | soon* | **Your communication manager**, a tool for managing your email and all of your communication in one place.     |
+| Finatron | soon* | **Your money matters**, a tool for everything finance in your life.     |
+
+*For early access to our new products - please join our Discord [here](https://discord.com/invite/9HJqKYTZKg).
 
 **Note:** All of the above tools are designed for personal use and lack team/group features like collaboration, sharing, etc.
 
