@@ -1,0 +1,58 @@
+name: Frontend Cloudflare Routes
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      product:
+        description: Product routes to sync
+        required: true
+        type: choice
+        default: all
+        options:
+          - all
+          - nucleum
+          - memotron
+          - pointron
+      environment:
+        description: Frontend route environment
+        required: true
+        type: choice
+        default: dev
+        options:
+          - dev
+          - pre
+          - live
+
+jobs:
+  routes:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    concurrency:
+      group: frontend-cloudflare-routes-${{ github.event.inputs.environment }}
+      cancel-in-progress: false
+    steps:
+      - name: Checkout Nucleus
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Validate frontend Cloudflare config
+        run: npm --workspace @21n/frontend-deploy run check
+
+      - name: Sync frontend routes
+        env:
+          CLOUDFLARE_ROUTES_TOKEN: ${{ secrets.CLOUDFLARE_ROUTES_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_ID_NUCLEUM_APP: ${{ vars.CLOUDFLARE_ZONE_ID_NUCLEUM_APP }}
+          CLOUDFLARE_ZONE_ID_MEMOTRON_APP: ${{ vars.CLOUDFLARE_ZONE_ID_MEMOTRON_APP }}
+          CLOUDFLARE_ZONE_ID_POINTRON_APP: ${{ vars.CLOUDFLARE_ZONE_ID_POINTRON_APP }}
+        run: npm --workspace @21n/frontend-deploy run routes:${{ github.event.inputs.environment }} -- --products=${{ github.event.inputs.product }}

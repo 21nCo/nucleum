@@ -1,0 +1,20 @@
+{
+  "name": "@21n/frontend-deploy",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "deploy": "node scripts/deploy.mjs",
+    "deploy:dev": "node scripts/deploy.mjs dev",
+    "deploy:pre": "node scripts/deploy.mjs pre",
+    "deploy:live": "node scripts/deploy.mjs live",
+    "routes": "node scripts/sync-routes.mjs",
+    "routes:dev": "node scripts/sync-routes.mjs dev",
+    "routes:pre": "node scripts/sync-routes.mjs pre",
+    "routes:live": "node scripts/sync-routes.mjs live"
+  },
+  "devDependencies": {
+    "wrangler": "^4.85.0"
+  }
+}

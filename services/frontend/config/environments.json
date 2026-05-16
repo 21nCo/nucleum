@@ -1,0 +1,38 @@
+{
+  "workerNamePrefix": "nucleus-web",
+  "compatibilityDate": "2026-05-16",
+  "products": {
+    "nucleum": {
+      "appPath": "apps/nucleus",
+      "workspace": "nucleus-app",
+      "domain": "nucleum.app"
+    },
+    "memotron": {
+      "appPath": "apps/memotron",
+      "workspace": "memotron-app",
+      "domain": "memotron.app"
+    },
+    "pointron": {
+      "appPath": "apps/pointron",
+      "workspace": "pointron-app",
+      "domain": "pointron.app"
+    }
+  },
+  "environments": {
+    "dev": {
+      "webSubdomain": "dev",
+      "buildScript": "build",
+      "workersDev": true
+    },
+    "pre": {
+      "webSubdomain": "pre",
+      "buildScript": "build-pre",
+      "workersDev": false
+    },
+    "live": {
+      "webSubdomain": "web",
+      "buildScript": "build-live",
+      "workersDev": false
+    }
+  }
+}
