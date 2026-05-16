@@ -22,37 +22,63 @@ if (!token) {
   process.exit(1);
 }
 
-const zoneId = process.env.CLOUDFLARE_ZONE_ID ?? await resolveZoneId(config.accountDomain, token);
-const existingRoutes = await cloudflare(`/zones/${zoneId}/workers/routes`, token);
-const existingByPattern = new Map(existingRoutes.map((route) => [route.pattern, route]));
+const routesByZone = groupRoutesByZone(routeDefinitions(config, environment, regions));
 
-for (const route of routeDefinitions(config, environment, regions)) {
-  const existing = existingByPattern.get(route.pattern);
-  if (!existing) {
-    const created = await cloudflare(`/zones/${zoneId}/workers/routes`, token, {
-      method: 'POST',
+for (const [zoneName, routes] of routesByZone) {
+  const zoneId = await resolveZoneIdForRouteZone(zoneName, token);
+  const existingRoutes = await cloudflare(`/zones/${zoneId}/workers/routes`, token);
+  const existingByPattern = new Map(existingRoutes.map((route) => [route.pattern, route]));
+
+  for (const route of routes) {
+    const existing = existingByPattern.get(route.pattern);
+    if (!existing) {
+      const created = await cloudflare(`/zones/${zoneId}/workers/routes`, token, {
+        method: 'POST',
+        body: {
+          pattern: route.pattern,
+          script: route.script
+        }
+      });
+      console.log(`created ${created.pattern} -> ${created.script} (${zoneName})`);
+      continue;
+    }
+
+    if (existing.script === route.script) {
+      console.log(`ok ${existing.pattern} -> ${existing.script} (${zoneName})`);
+      continue;
+    }
+
+    const updated = await cloudflare(`/zones/${zoneId}/workers/routes/${existing.id}`, token, {
+      method: 'PUT',
       body: {
         pattern: route.pattern,
         script: route.script
       }
     });
-    console.log(`created ${created.pattern} -> ${created.script}`);
-    continue;
+    console.log(`updated ${updated.pattern} -> ${updated.script} (${zoneName})`);
+  }
+}
+
+function groupRoutesByZone(routes) {
+  const grouped = new Map();
+  for (const route of routes) {
+    const entries = grouped.get(route.zoneName) ?? [];
+    entries.push(route);
+    grouped.set(route.zoneName, entries);
+  }
+  return grouped;
+}
+
+async function resolveZoneIdForRouteZone(zoneName, token) {
+  const specificEnvName = `CLOUDFLARE_ZONE_ID_${zoneName.toUpperCase().replace(/[^A-Z0-9]+/g, '_')}`;
+  const specificZoneId = process.env[specificEnvName];
+  if (specificZoneId) return specificZoneId;
+
+  if (zoneName === config.accountDomain && process.env.CLOUDFLARE_ZONE_ID) {
+    return process.env.CLOUDFLARE_ZONE_ID;
   }
 
-  if (existing.script === route.script) {
-    console.log(`ok ${existing.pattern} -> ${existing.script}`);
-    continue;
-  }
-
-  const updated = await cloudflare(`/zones/${zoneId}/workers/routes/${existing.id}`, token, {
-    method: 'PUT',
-    body: {
-      pattern: route.pattern,
-      script: route.script
-    }
-  });
-  console.log(`updated ${updated.pattern} -> ${updated.script}`);
+  return resolveZoneId(zoneName, token);
 }
 
 async function resolveZoneId(zoneName, token) {

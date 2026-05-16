@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { resolveAccountBaseUrl, resolveAccountCookiePrefix, resolveAccountEnvironment } from ".";
+import { resolveAccountBaseUrl, resolveAccountCookiePrefix, resolveAccountDomain, resolveAccountEnvironment } from ".";
 
 describe("client/components/network account URL resolution", () => {
   const originalEnv = { ...import.meta.env };
@@ -65,7 +65,6 @@ describe("client/components/network account URL resolution", () => {
 
   it("supports env/domain placeholders when the current host should drive account environment", () => {
     import.meta.env.VITE_ACCOUNT_BASE_URL_TEMPLATE = "https://account-{region}{envSuffix}.{domain}";
-    import.meta.env.VITE_ACCOUNT_DOMAIN = "nucleum.app";
 
     expect(resolveAccountBaseUrl("insouth")).toBe("https://account-insouth-local.nucleum.app");
 
@@ -74,6 +73,28 @@ describe("client/components/network account URL resolution", () => {
 
     setWindowHost("web.nucleum.app");
     expect(resolveAccountBaseUrl("euwest")).toBe("https://account-euwest.nucleum.app");
+  });
+
+  it("derives the account domain from the current product host by default", () => {
+    setWindowHost("dev.memotron.app");
+    expect(resolveAccountDomain()).toBe("memotron.app");
+    expect(resolveAccountBaseUrl("useast")).toBe("https://account-useast-dev.memotron.app");
+
+    setWindowHost("pre.pointron.app");
+    expect(resolveAccountDomain()).toBe("pointron.app");
+    expect(resolveAccountBaseUrl("euwest")).toBe("https://account-euwest-pre.pointron.app");
+
+    setWindowHost("web.nucleum.app");
+    expect(resolveAccountDomain()).toBe("nucleum.app");
+    expect(resolveAccountBaseUrl("insouth")).toBe("https://account-insouth.nucleum.app");
+  });
+
+  it("keeps VITE_ACCOUNT_DOMAIN as an explicit account-domain override", () => {
+    setWindowHost("dev.memotron.app");
+    import.meta.env.VITE_ACCOUNT_DOMAIN = "nucleum.app";
+
+    expect(resolveAccountDomain()).toBe("nucleum.app");
+    expect(resolveAccountBaseUrl("useast")).toBe("https://account-useast-dev.nucleum.app");
   });
 
   it("derives local multi-region account domains when no override is set", () => {

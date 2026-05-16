@@ -551,7 +551,7 @@
 		2203DA5C2B74BEE70015509D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -617,7 +617,7 @@
 		2203DA5D2B74BEE70015509D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -675,7 +675,7 @@
 		2203DA5F2B74BEE70015509D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -725,7 +725,7 @@
 		2203DA602B74BEE70015509D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -775,7 +775,7 @@
 		228800EB2B9C732E007CEC2F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -817,7 +817,7 @@
 		228800EC2B9C732E007CEC2F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -859,7 +859,7 @@
 		AFC899731DA0CAADDD6D9 /* Local Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -925,7 +925,7 @@
 		AFC48EBC6E73E88699EF2 /* Local Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -983,7 +983,7 @@
 		AFC1FD4674E69A8B37F30 /* Dev Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1049,7 +1049,7 @@
 		AFC93F36DAC968C85F583 /* Dev Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1107,7 +1107,7 @@
 		AFC6124A6D7EA5CB6F117 /* Pre Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = pre;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1173,7 +1173,7 @@
 		AFCFE0D33BAFBA0551A93 /* Pre Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = pre;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1231,7 +1231,7 @@
 		AFC4D80A89A561BFEEFB1 /* Live Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = live;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1297,7 +1297,7 @@
 		AFC2DA3C4FF51B54AAD6C /* Live Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = live;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1355,7 +1355,7 @@
 		AFCCEDC59B4E426EC7D8F /* Local Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1405,7 +1405,7 @@
 		AFC080136264322F57BBE /* Local Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1455,7 +1455,7 @@
 		AFC4B0CF60EFDF119CD28 /* Dev Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1505,7 +1505,7 @@
 		AFC8AF7720666F0048F43 /* Dev Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1555,7 +1555,7 @@
 		AFC1AD9E2814FF977AF72 /* Pre Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = pre;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1605,7 +1605,7 @@
 		AFCE6A870C87CFD8CF002 /* Pre Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = pre;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1655,7 +1655,7 @@
 		AFC082F7B788587ACF7E0 /* Live Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = live;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1705,7 +1705,7 @@
 		AFC6F82F397CC350D7EE5 /* Live Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = live;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1755,7 +1755,7 @@
 		AFCFB33272D54D1781641 /* Local Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1797,7 +1797,7 @@
 		AFC8469B567B24465AEEF /* Local Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1839,7 +1839,7 @@
 		AFCED41DC3F95B4B80400 /* Dev Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1881,7 +1881,7 @@
 		AFC4663533B5CCE82CCB7 /* Dev Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1923,7 +1923,7 @@
 		AFC4A0172CF34272DECB7 /* Pre Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = pre;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1965,7 +1965,7 @@
 		AFC578B8A43DA09C98C23 /* Pre Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = pre;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -2007,7 +2007,7 @@
 		AFC7575ED62C855D3B04B /* Live Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = live;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -2049,7 +2049,7 @@
 		AFC77189A033D9CDF6E03 /* Live Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = memotron.app;
 				NUCLEUS_APP_ENVIRONMENT = live;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;

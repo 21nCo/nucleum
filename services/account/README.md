@@ -2,14 +2,22 @@
 
 ## Environments
 
-Account API domains use one shared account domain across Nucleum, Memotron, and Pointron:
+Account API domains are product-owned so browser and WKWebView cookies stay
+first-party for each app. The same regional Worker deployment is routed from
+each product account hostname.
 
 | Environment | Domain pattern |
 | --- | --- |
-| local | `https://account-{region}-local.nucleum.app` |
-| dev | `https://account-{region}-dev.nucleum.app` |
-| pre | `https://account-{region}-pre.nucleum.app` |
-| live | `https://account-{region}.nucleum.app` |
+| local | `https://account-{region}-local.<product-domain>` |
+| dev | `https://account-{region}-dev.<product-domain>` |
+| pre | `https://account-{region}-pre.<product-domain>` |
+| live | `https://account-{region}.<product-domain>` |
+
+Current product domains:
+
+- `nucleum.app`
+- `memotron.app`
+- `pointron.app`
 
 Regions:
 
@@ -41,11 +49,15 @@ Useful local app domains:
 Use this when the frontend is local but account auth should hit the deployed dev
 Cloudflare Workers.
 
-Do not start a local account service. Start the app with a regional account URL
-template:
+Do not start a local account service. By default, the app derives the account
+domain from the current product host. For example, `https://local.memotron.app`
+uses `https://account-{region}-local.memotron.app`.
+
+To force a deployed account environment from a local app, start the app with a
+regional account URL template:
 
 ```bash
-VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.nucleum.app npm --workspace nucleus-app run debug
+VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.{domain} npm --workspace nucleus-app run debug
 ```
 
 Then open:
@@ -57,8 +69,8 @@ https://local.nucleum.app
 Equivalent app commands:
 
 ```bash
-VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.nucleum.app npm --workspace memotron-app run debug
-VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.nucleum.app npm --workspace pointron-app run debug
+VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.{domain} npm --workspace memotron-app run debug
+VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.{domain} npm --workspace pointron-app run debug
 ```
 
 Notes:
@@ -75,11 +87,11 @@ Notes:
 
 | Local frontend target | Account env vars | Region behavior |
 | --- | --- | --- |
-| Dev Workers | `VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.nucleum.app` | Multi-region |
-| Pre Workers | `VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-pre.nucleum.app` | Multi-region |
-| Live Workers | `VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}.nucleum.app` | Multi-region |
-| Local single backend | `VITE_ACCOUNT_BASE_URL=https://account-insouth-local.nucleum.app` | Single backend by design |
-| Local multi-region backends | no account URL override while using `https://local.<product>` | Multi-region via `account-{region}-local.nucleum.app` |
+| Dev Workers | `VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-dev.{domain}` | Multi-region |
+| Pre Workers | `VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}-pre.{domain}` | Multi-region |
+| Live Workers | `VITE_ACCOUNT_BASE_URL_TEMPLATE=https://account-{region}.{domain}` | Multi-region |
+| Local single backend | `VITE_ACCOUNT_BASE_URL=https://account-insouth-local.<product-domain>` | Single backend by design |
+| Local multi-region backends | no account URL override while using `https://local.<product-domain>` | Multi-region via `account-{region}-local.<product-domain>` |
 
 Templates also support `{env}`, `{envSuffix}`, and `{domain}` for host-derived
 environments. Example:
@@ -116,7 +128,7 @@ With a `local.*` app host, the frontend resolves account URLs to local account
 domains. For the default `insouth` region:
 
 ```text
-https://account-insouth-local.nucleum.app -> localhost:8787
+https://account-insouth-local.<product-domain> -> localhost:8787
 ```
 
 `dev:local` reads `services/account/.env.local`. For OTP testing, keep
@@ -146,11 +158,11 @@ Then open:
 https://local.nucleum.app
 ```
 
-Caddy routes each local regional account authority:
+Caddy routes each local regional account authority for each product domain:
 
-- `https://account-insouth-local.nucleum.app` -> `localhost:8787`
-- `https://account-useast-local.nucleum.app` -> `localhost:8788`
-- `https://account-euwest-local.nucleum.app` -> `localhost:8789`
+- `https://account-insouth-local.<product-domain>` -> `localhost:8787`
+- `https://account-useast-local.<product-domain>` -> `localhost:8788`
+- `https://account-euwest-local.<product-domain>` -> `localhost:8789`
 
 The local Worker setup uses local account-service code with Cloudflare Worker
 runtime behavior. It is configured to use the dev Hyperdrive IDs, dev KV cache,
@@ -186,6 +198,8 @@ regional account-service infrastructure config:
 `wrangler.toml` is intentionally minimal. Deploy and local Worker scripts
 generate `.wrangler/wrangler.<env>.deploy.toml` from `environments.json`.
 Generated deploy configs do not contain routes.
+Run the route sync scripts when adding a product domain so Cloudflare maps the
+product account hostnames to the existing regional Workers.
 
 ## Cloudflare Setup Needed
 
@@ -282,7 +296,8 @@ secrets. It does not need Workers Route edit permissions.
 ## Route Setup
 
 Custom-domain Worker routes are one-time zone infrastructure. They need a token
-with zone Workers Routes permissions and are managed separately:
+with zone Workers Routes permissions on every product domain zone and are
+managed separately:
 
 ```bash
 npm --workspace @21n/account-service run routes:dev
@@ -296,21 +311,40 @@ Token precedence:
 2. `CLOUDFLARE_USER_TOKEN`
 3. `CLOUDFLARE_API_TOKEN`
 
+The route script resolves the Cloudflare zone for each product domain in
+`config/environments.json`. You can optionally provide zone IDs explicitly with
+environment variables like `CLOUDFLARE_ZONE_ID_NUCLEUM_APP`,
+`CLOUDFLARE_ZONE_ID_MEMOTRON_APP`, and `CLOUDFLARE_ZONE_ID_POINTRON_APP`.
+`CLOUDFLARE_ZONE_ID` is only used as the fallback for the canonical
+`nucleum.app` account domain.
+
+Each product account hostname also needs DNS in that product's Cloudflare zone
+to be proxied by Cloudflare. For example, `account-insouth-dev.memotron.app`
+must resolve through the `memotron.app` Cloudflare zone before the Worker route
+can serve it.
+
 Normal CI deploys do not need route permissions once routes exist.
 
 ## iOS Endpoint Switching
 
-From repo root:
+The iOS native layer reads `NUCLEUS_APP_ENVIRONMENT`, `NUCLEUS_PRODUCT`, and
+`NUCLEUS_ACCOUNT_DOMAIN` from Xcode build settings. The web bundle inside
+`www/` also needs to be generated for the same environment because Vite bakes
+mode-specific values at build time.
+
+From repo root, generate app web bundles for the target environment:
 
 ```bash
-npm run ios:env:local
-npm run ios:env:dev
-npm run ios:env:pre
-npm run ios:env:live
+npm run build:ios:local
+npm run build:ios:dev
+npm run build:ios:pre
+npm run build:ios:live
 ```
 
-Optional region override:
+Or generate only one product:
 
 ```bash
-node ios/scripts/configure-environment.mjs dev useast
+npm run build:ios:nucleum:dev
+npm run build:ios:memotron:dev
+npm run build:ios:pointron:dev
 ```

@@ -1,6 +1,3 @@
-import { ClientStorageKey } from "@21n/persistence/persistence.type";
-import { clientStorage } from "@21n/persistence/persistence.utils";
-
 export function resolveHost() {
   const nativeWebOrigin = resolveNativeConfigUrl("webOrigin");
   if (nativeWebOrigin) return nativeWebOrigin.hostname;
@@ -40,7 +37,7 @@ export function resolveAccountBaseUrl(region: string) {
   }
 
   const accountEnv = resolveAccountEnvironment(host);
-  const accountDomain = import.meta.env?.VITE_ACCOUNT_DOMAIN ?? "nucleum.app";
+  const accountDomain = resolveAccountDomain(host);
   const normalizedRegion = normalizeAccountRegion(region);
   const envSuffix = accountEnv === "live" ? "" : `-${accountEnv}`;
   return `https://account-${normalizedRegion}${envSuffix}.${accountDomain}`;
@@ -66,6 +63,10 @@ export async function peformAccountApiCall(
     headers?: any;
   }
 ) {
+  const [{ ClientStorageKey }, { clientStorage }] = await Promise.all([
+    import("@21n/persistence/persistence.type"),
+    import("@21n/persistence/persistence.utils")
+  ]);
   const region =
     params?.region ?? (await clientStorage.get(ClientStorageKey.REGION));
   const baseUrl = resolveAccountBaseUrl(region ?? "insouth");
@@ -98,11 +99,12 @@ function resolveNativeConfigUrl(key: "webOrigin" | "accountUrl") {
 
 function resolveNativeAccountBaseUrl(region: string) {
   const nativeConfig = typeof window === "undefined" ? null : window.__NUCLEUM_NATIVE_CONFIG__;
-  if (nativeConfig?.environment && nativeConfig.accountDomain) {
+  if (nativeConfig?.environment) {
     const environment = nativeConfig.environment.trim().toLowerCase();
     const normalizedRegion = normalizeAccountRegion(region || nativeConfig.defaultRegion);
+    const accountDomain = nativeConfig.accountDomain?.trim() || resolveAccountDomainFromProduct(nativeConfig.product);
     const suffix = environment === "live" ? "" : `-${environment}`;
-    return `https://account-${normalizedRegion}${suffix}.${nativeConfig.accountDomain}`;
+    return `https://account-${normalizedRegion}${suffix}.${accountDomain}`;
   }
 
   const nativeAccountUrl = resolveNativeConfigUrl("accountUrl");
@@ -114,7 +116,7 @@ function resolveNativeAccountBaseUrl(region: string) {
 function renderAccountBaseUrlTemplate(template: string, region: string) {
   const normalizedRegion = normalizeAccountRegion(region);
   const accountEnv = resolveAccountEnvironment();
-  const accountDomain = import.meta.env?.VITE_ACCOUNT_DOMAIN ?? "nucleum.app";
+  const accountDomain = resolveAccountDomain();
   const envSuffix = accountEnv === "live" ? "" : `-${accountEnv}`;
 
   return template
@@ -166,6 +168,37 @@ export function resolveAccountEnvironment(host = resolveHost()): AccountEnvironm
     return configured;
   }
   return "dev";
+}
+
+export function resolveAccountDomain(host = resolveHost()): string {
+  const configured = import.meta.env?.VITE_ACCOUNT_DOMAIN?.trim();
+  if (configured) return configured.replace(/^\./, "");
+
+  return resolveProductDomainFromHost(host) ?? "nucleum.app";
+}
+
+function resolveProductDomainFromHost(host: string): string | null {
+  const normalized = host.toLowerCase().replace(/:\d+$/, "");
+  if (isLoopbackHost(normalized)) return null;
+
+  const labels = normalized.split(".").filter(Boolean);
+  if (labels.length < 2) return null;
+
+  const first = labels[0];
+  if (["local", "dev", "pre", "web", "app"].includes(first)) {
+    return labels.slice(1).join(".");
+  }
+
+  if (first.startsWith("account-")) {
+    return labels.slice(1).join(".");
+  }
+
+  return labels.slice(-2).join(".");
+}
+
+function resolveAccountDomainFromProduct(product: string | undefined): string {
+  const normalized = product?.trim().toLowerCase().replace(/^\./, "");
+  return normalized || "nucleum.app";
 }
 
 function normalizeAccountRegion(region: string | undefined): string {

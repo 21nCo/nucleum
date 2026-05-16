@@ -713,7 +713,7 @@
 		22123C8E2ADE742D003C7C65 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -748,7 +748,7 @@
 		22123C8F2ADE742D003C7C65 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -784,7 +784,7 @@
 		2235B6C32B98B13500E72E5B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -821,7 +821,7 @@
 		2235B6C42B98B13500E72E5B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -858,7 +858,7 @@
 		22FFA88F2AD3E45200103446 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -924,7 +924,7 @@
 		22FFA8902AD3E45200103446 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -982,7 +982,7 @@
 		22FFA8922AD3E45200103446 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1033,7 +1033,7 @@
 		22FFA8932AD3E45200103446 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1084,7 +1084,7 @@
 		AFC03711CD4A918BF5D85 /* Local Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1119,7 +1119,7 @@
 		AFCDEC6527B61DE810D5C /* Local Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1155,7 +1155,7 @@
 		AFCCB179662C8B77068C8 /* Dev Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1190,7 +1190,7 @@
 		AFC7D337773195C84BDE0 /* Dev Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1226,7 +1226,7 @@
 		AFC3A37AD04A646EA6FF9 /* Pre Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = pre;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1261,7 +1261,7 @@
 		AFC450E55DE2C82A4FE7A /* Pre Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = pre;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1297,7 +1297,7 @@
 		AFC10856ABDE69F043867 /* Live Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = live;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1332,7 +1332,7 @@
 		AFCE7F1C0E07F816A7C5C /* Live Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = live;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1368,7 +1368,7 @@
 		AFC5C7B11A84159216720 /* Local Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1405,7 +1405,7 @@
 		AFCA973BCBF2714854C96 /* Local Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1442,7 +1442,7 @@
 		AFC0E1F1269C4D1E211E8 /* Dev Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1479,7 +1479,7 @@
 		AFCFF0D29D8125AE631F2 /* Dev Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1516,7 +1516,7 @@
 		AFC7DA22DC5B508C789B4 /* Pre Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = pre;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1553,7 +1553,7 @@
 		AFCAE6D65F55E56764B56 /* Pre Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = pre;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1590,7 +1590,7 @@
 		AFC12F4C1E460EC11BFD3 /* Live Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = live;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1627,7 +1627,7 @@
 		AFC7D354E1BC305EE475B /* Live Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = live;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1664,7 +1664,7 @@
 		AFC721FABB28979D7E5E0 /* Local Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1730,7 +1730,7 @@
 		AFCDA0E1C8AB19A921895 /* Local Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1788,7 +1788,7 @@
 		AFCC483D6EEEA267D0300 /* Dev Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1854,7 +1854,7 @@
 		AFC1FD2AA33D8D74CB7B0 /* Dev Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1912,7 +1912,7 @@
 		AFC60EFA7A2E87A6FE70E /* Pre Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = pre;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -1978,7 +1978,7 @@
 		AFC84E43D9F371DC5FCE8 /* Pre Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = pre;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -2036,7 +2036,7 @@
 		AFC151778FA4AB6235561 /* Live Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = live;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -2102,7 +2102,7 @@
 		AFC20CF1F4E3C51D9E343 /* Live Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = live;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -2160,7 +2160,7 @@
 		AFCC612C7B9677F69C74A /* Local Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -2211,7 +2211,7 @@
 		AFC0D20C021CF4E0BE3F1 /* Local Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = local;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -2262,7 +2262,7 @@
 		AFC3F7E863468AE74C0AC /* Dev Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -2313,7 +2313,7 @@
 		AFC7216C4F6A9D009A1EE /* Dev Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = dev;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -2364,7 +2364,7 @@
 		AFC0FAB268137D24DD274 /* Pre Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = pre;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -2415,7 +2415,7 @@
 		AFC6868BE858EF72F12E5 /* Pre Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = pre;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -2466,7 +2466,7 @@
 		AFC9A447FA19BC3FF3AD1 /* Live Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = live;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;
@@ -2517,7 +2517,7 @@
 		AFC4281D8252DF045C35E /* Live Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				NUCLEUS_ACCOUNT_DOMAIN = nucleum.app;
+				NUCLEUS_ACCOUNT_DOMAIN = pointron.app;
 				NUCLEUS_APP_ENVIRONMENT = live;
 				NUCLEUS_DEBUG_SINK_URL = https://nucleus-debug-sink.21n.workers.dev;
 				NUCLEUS_DEFAULT_REGION = insouth;

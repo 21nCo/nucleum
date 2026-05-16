@@ -16,7 +16,7 @@ struct LocalConfig {
   static var environment: String { infoString("NucleusAppEnvironment", fallback: "dev") }
   static var defaultRegion: String { infoString("NucleusDefaultRegion", fallback: "insouth") }
   static var product: String { infoString("NucleusProduct", fallback: "pointron.app") }
-  static var accountDomain: String { infoString("NucleusAccountDomain", fallback: "nucleum.app") }
+  static var accountDomain: String { infoString("NucleusAccountDomain", fallback: product) }
   static var debugSinkUrl: String {
     infoString("NucleusDebugSinkUrl", fallback: "https://nucleus-debug-sink.21n.workers.dev")
   }

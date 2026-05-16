@@ -45,16 +45,16 @@ export function renderConfig(config, environment, options = {}) {
 
 export function routeDefinitions(config, environment, regions = Object.keys(config.regions)) {
   const envConfig = readEnvironment(config, environment);
-  return regions.map((regionId) => {
+  return regions.flatMap((regionId) => {
     const regionConfig = envConfig.regions[regionId];
     if (!regionConfig) {
       throw new Error(`Unknown ${environment} region: ${regionId}`);
     }
-    return {
-      pattern: `${accountHost(config, environment, regionId)}/*`,
+    return productDomains(config).map((domain) => ({
+      pattern: `${accountHost(config, environment, regionId, domain)}/*`,
       script: workerName(config, environment, regionId),
-      zoneName: config.accountDomain
-    };
+      zoneName: domain
+    }));
   });
 }
 
@@ -105,18 +105,26 @@ function renderRegionalEnvironment(config, environment, regionId, options) {
   const regionConfig = envConfig.regions[regionId];
   const wranglerEnv = regionConfig.wranglerEnv;
   const region = config.regions[regionId];
-  const regionRecords = Object.keys(config.regions).map((id) => ({
-    regionId: id,
-    authority: accountAuthority(config, environment, id),
-    hosts: [accountHost(config, environment, id)],
-    domain: config.cookieDomain,
-    cookie: { domain: config.cookieDomain }
-  }));
+  const regionRecords = Object.keys(config.regions).flatMap((id) =>
+    productDomains(config).map((domain) => ({
+      regionId: id,
+      authority: accountAuthority(config, environment, id, domain),
+      hosts: [accountHost(config, environment, id, domain)],
+      domain: cookieDomainForProductDomain(domain),
+      cookie: { domain: cookieDomainForProductDomain(domain) }
+    }))
+  );
   const corsOrigins = webOrigins(config, environment, envConfig);
   const oauthReturnTo = [...corsOrigins, ...(config.nativeOAuthSchemes ?? [])];
   const oauthRedirectUris = ['google', 'apple'].map((provider) => [
     provider,
-    Object.keys(config.regions).map((id) => `${accountAuthority(config, environment, id)}/auth/social/callback/${provider}`).join(',')
+    Object.keys(config.regions)
+      .flatMap((id) =>
+        productDomains(config).map((domain) =>
+          `${accountAuthority(config, environment, id, domain)}/auth/social/callback/${provider}`
+        )
+      )
+      .join(',')
   ]);
 
   const lines = [
@@ -136,7 +144,7 @@ function renderRegionalEnvironment(config, environment, regionId, options) {
     kv('DEBUG_SINK_URL', config.debugSinkUrl),
     kv('ACCOUNT_REGION_ID', regionId),
     kv('ACCOUNT_AUTHORITY', accountAuthority(config, environment, regionId)),
-    kv('ACCOUNT_COOKIE_DOMAIN', config.cookieDomain),
+    kv('ACCOUNT_COOKIE_DOMAIN', cookieDomainForProductDomain(config.accountDomain)),
     kv('ACCOUNT_CORS_ORIGINS', corsOrigins.join(',')),
     kv('ACCOUNT_REGIONS_JSON', JSON.stringify(regionRecords)),
     kv('ACCOUNT_EMAIL_FROM', config.emailFrom)
@@ -156,10 +164,12 @@ function renderRegionalEnvironment(config, environment, regionId, options) {
   }
 
   if (options.includeRoutes) {
-    lines.push(arrayHeader(`env.${wranglerEnv}.routes`));
-    lines.push(kv('pattern', `${accountHost(config, environment, regionId)}/*`));
-    lines.push(kv('zone_name', config.accountDomain));
-    lines.push('');
+    for (const domain of productDomains(config)) {
+      lines.push(arrayHeader(`env.${wranglerEnv}.routes`));
+      lines.push(kv('pattern', `${accountHost(config, environment, regionId, domain)}/*`));
+      lines.push(kv('zone_name', domain));
+      lines.push('');
+    }
   }
 
   lines.push(arrayHeader(`env.${wranglerEnv}.hyperdrive`));
@@ -226,17 +236,21 @@ function webOrigins(config, environment, envConfig) {
 }
 
 function productDomains(config) {
-  return Object.values(config.productDomains ?? {});
+  return Array.from(new Set(Object.values(config.productDomains ?? { default: config.accountDomain }).filter(Boolean)));
 }
 
-function accountAuthority(config, environment, regionId) {
-  return `https://${accountHost(config, environment, regionId)}`;
+function accountAuthority(config, environment, regionId, domain = config.accountDomain) {
+  return `https://${accountHost(config, environment, regionId, domain)}`;
 }
 
-function accountHost(config, environment, regionId) {
+function accountHost(config, environment, regionId, domain = config.accountDomain) {
   const envConfig = readEnvironment(config, environment);
   const suffix = envConfig.urlSegment ? `-${envConfig.urlSegment}` : '';
-  return `account-${regionId}${suffix}.${config.accountDomain}`;
+  return `account-${regionId}${suffix}.${domain}`;
+}
+
+function cookieDomainForProductDomain(domain) {
+  return `.${domain.replace(/^\./, '')}`;
 }
 
 function workerName(config, environment, regionId) {

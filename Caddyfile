@@ -6,6 +6,8 @@
 #    127.0.0.1 local.nucleum.app local.pointron.app local.memotron.app
 #    127.0.0.1 debug-pre.nucleum.app debug-pre.pointron.app debug-pre.memotron.app
 #    127.0.0.1 account-insouth-local.nucleum.app account-useast-local.nucleum.app account-euwest-local.nucleum.app
+#    127.0.0.1 account-insouth-local.memotron.app account-useast-local.memotron.app account-euwest-local.memotron.app
+#    127.0.0.1 account-insouth-local.pointron.app account-useast-local.pointron.app account-euwest-local.pointron.app
 # 3. Run: caddy run --config Caddyfile
 # 4. Trust the local CA: caddy trust
 #
@@ -41,22 +43,21 @@ debug-pre.memotron.app {
 	tls internal
 }
 
+account-insouth-local.nucleum.app, account-insouth-local.memotron.app, account-insouth-local.pointron.app {
+	handle_path /debug-sink/* {
+		reverse_proxy localhost:8790
+	}
 
-account-insouth-local.nucleum.app {
-  handle_path /debug-sink/* {
-    reverse_proxy localhost:8790
-  }
-
-  reverse_proxy localhost:8787
-  tls internal
+	reverse_proxy localhost:8787
+	tls internal
 }
 
-account-useast-local.nucleum.app {
-  reverse_proxy localhost:8788
-  tls internal
+account-useast-local.nucleum.app, account-useast-local.memotron.app, account-useast-local.pointron.app {
+	reverse_proxy localhost:8788
+	tls internal
 }
 
-account-euwest-local.nucleum.app {
-  reverse_proxy localhost:8789
-  tls internal
+account-euwest-local.nucleum.app, account-euwest-local.memotron.app, account-euwest-local.pointron.app {
+	reverse_proxy localhost:8789
+	tls internal
 }
