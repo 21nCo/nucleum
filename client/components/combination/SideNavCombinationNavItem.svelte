@@ -7,6 +7,7 @@
   import { cn } from "@21n/client/utils/ui.utils";
   import { resolveResourceIcon } from "@21n/client/components/flux/resourceStores/resource.utils";
   import type { IAvatar } from "@21n/client/types/avatar.type";
+  import SideNavCombinationNavItem from "./SideNavCombinationNavItem.svelte";
   import {
     CombinationNavItemType,
     type ICombinationNavItem
@@ -69,7 +70,7 @@
   );
   $effect(() => {
     if (!isEditing) {
-    editLabel = item.label;
+      editLabel = item.label;
     }
   });
 
@@ -277,7 +278,7 @@
   {#if item.children && item.children.length > 0 && !isCollapsed}
     <div class="flex flex-col">
       {#each item.children as child}
-        <svelte:self
+        <SideNavCombinationNavItem
           item={child}
           depth={depth + 1}
           {activeItemId}

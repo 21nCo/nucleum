@@ -43,7 +43,7 @@
     };
   };
   let options = $derived(resolveOptions($node?.contentType));
-  let selectedType: string | undefined = undefined;
+  let selectedType = $state("tasks");
   let searchQuery: string = "";
   const hideHighlightColors = derived(
     [preferences, appStore],
@@ -104,6 +104,13 @@
       return [tasks, comments];
     }
   }
+
+  $effect(() => {
+    if (!options?.length) return;
+    if (!options.some((option) => option.value === selectedType)) {
+      selectedType = options[0]?.value ?? "tasks";
+    }
+  });
 
   let pdfAnnotations = $derived.by(() => {
     const baseAnnots = ($node?.pdfAnnotations ?? []) as PdfTrace[];

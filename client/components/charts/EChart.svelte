@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { beforeUpdate, onDestroy, onMount } from "svelte";
+  import { onDestroy } from "svelte";
   import * as echarts from "echarts";
   import type { ECharts, EChartsOption } from "echarts";
   import { ChartType } from "@21n/types/analytics.type";
@@ -15,13 +15,19 @@
   } from "./chart.utils";
   import { userPreferences } from "../settings/userPreferences.store";
 
-  let type: ChartType;
-  let data: any;
-  let options: any;
-  let showLegend: boolean = true;
-  let isConstrainedWidth: boolean = false;
-
-  export { type, data, options, showLegend, isConstrainedWidth };
+  let {
+    type,
+    data,
+    options,
+    showLegend = true,
+    isConstrainedWidth = false
+  }: {
+    type: ChartType;
+    data: any;
+    options: any;
+    showLegend?: boolean;
+    isConstrainedWidth?: boolean;
+  } = $props();
 
   const supportedTypes = new Set([
     ChartType.BAR,
@@ -38,15 +44,15 @@
     ChartType.HOURLY_HEATMAP
   ]);
 
-  let container: HTMLDivElement | undefined;
+  let container = $state<HTMLDivElement | undefined>();
   let chart: ECharts | undefined;
   let resizeObserver: ResizeObserver | undefined;
 
-  let currentAppearance = $appearance;
-  let currentColors = currentAppearance
-    ? retrieveCurrentColors(currentAppearance)
-    : undefined;
-  let shouldRenderChart = supportedTypes.has(type);
+  let currentAppearance = $state<typeof $appearance | undefined>(undefined);
+  let currentColors = $state<ReturnType<typeof retrieveCurrentColors> | undefined>(
+    undefined
+  );
+  let shouldRenderChart = $state(false);
 
   const defaultPaletteKeys = [
     "aps1",
@@ -1501,13 +1507,7 @@
     shouldRenderChart = supportedTypes.has(type);
   }
 
-  onMount(() => {
-    refreshDerivedState();
-    ensureChart();
-    updateChart();
-  });
-
-  beforeUpdate(() => {
+  $effect(() => {
     refreshDerivedState();
     if (shouldRenderChart) {
       ensureChart();

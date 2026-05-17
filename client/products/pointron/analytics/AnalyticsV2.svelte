@@ -122,13 +122,15 @@
           </div>
           <div class="flex w-full gap-2 items-center">
             <div class="overflow-x-auto">
-              <OptionSelector
-                options={pages}
-                size={Size.sm}
-                isPreventWrap={true}
-                bind:selected={$selectedPageId}
-                onSelect={onPageSwitch}
-              />
+              {#if pages.length > 0 && $selectedPageId !== undefined}
+                <OptionSelector
+                  options={pages}
+                  size={Size.sm}
+                  isPreventWrap={true}
+                  bind:selected={$selectedPageId}
+                  onSelect={onPageSwitch}
+                />
+              {/if}
             </div>
             {#if isAnalyticsEditMode}
               <Button

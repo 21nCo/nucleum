@@ -1,6 +1,7 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
+  import { browser } from "$app/environment";
   import type { IMetadata } from "@21n/layout/metadata.type";
   let { metadata = {
     title: "",
@@ -10,10 +11,17 @@
     image: "",
     twitterCard: ""
   } }: { metadata?: IMetadata } = $props();
+
+  const pageTitle = $derived(metadata?.title ?? "21n");
+  const windowTitle = $derived(
+    import.meta.env.DEV && browser
+      ? `${pageTitle} (${window.location.host})`
+      : pageTitle
+  );
 </script>
 
 <svelte:head>
-  <title>{metadata?.title ?? "21n"}</title>
+  <title>{windowTitle}</title>
   <meta name="description" content={metadata?.description ?? ""} />
   <meta name="keywords" content={metadata?.keywords ?? ""} />
 
