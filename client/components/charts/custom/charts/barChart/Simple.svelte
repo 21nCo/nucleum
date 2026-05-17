@@ -57,6 +57,7 @@
 
   let BARS_AND_AXIS_SVG: any = null;
   let FIXED_AXIS_GROUP: any = null;
+  let isMounted = false;
 
   let colors = $state<Record<string, string>>({});
 
@@ -178,10 +179,7 @@
       "filteredData for id ",
       id + " is " + filteredData.map((d) => d.key)
     );
-    BARS_AND_AXIS_SVG.remove();
-    FIXED_AXIS_GROUP.remove();
-    paintGraph();
-    handleEventListeningForBars();
+    repaintGraph();
     previouslyCheckedItem = currentlyCheckedItem;
   }
 
@@ -211,8 +209,15 @@
     //         return selectedGroups.includes(d.group);
     //       });//*this is done so that the chart is rendered with the data that is present at the time of mounting
 
-    BARS_AND_AXIS_SVG.remove();
-    FIXED_AXIS_GROUP.remove();
+    repaintGraph();
+  }
+
+  function repaintGraph() {
+    if (!isMounted) return;
+    BARS_AND_AXIS_SVG?.remove();
+    FIXED_AXIS_GROUP?.remove();
+    BARS_AND_AXIS_SVG = null;
+    FIXED_AXIS_GROUP = null;
     paintGraph();
     handleEventListeningForBars();
   }
@@ -769,6 +774,7 @@
     }
 
     paintGraph();
+    isMounted = true;
 
     if (scrollableElementContainerRef) {
       scrollableElementContainerRef.addEventListener("scroll", detectScrollEnd);
@@ -778,6 +784,12 @@
 
   $effect.pre(() => {
     refreshDerivedState();
+    if (isMounted) {
+      filteredData = previouslyCheckedItem
+        ? data.filter((d) => d.group === previouslyCheckedItem.value)
+        : data;
+      repaintGraph();
+    }
   });
 
   onDestroy(() => {

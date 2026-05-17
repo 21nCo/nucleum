@@ -57,6 +57,7 @@
 
   let BARS_AND_AXIS_SVG: any = null;
   let FIXED_AXIS_GROUP: any = null;
+  let isMounted = false;
 
   let colors = $state<Record<string, string>>({});
 
@@ -328,9 +329,15 @@
     groups = tempGroups;
     groupsBasedOnKey = tempGroupingBasedOnKey;
 
-    //remove the existing graph and repaint it by calling the paintGraph function
-    BARS_AND_AXIS_SVG.remove();
-    FIXED_AXIS_GROUP.remove();
+    repaintGraph();
+  }
+
+  function repaintGraph() {
+    if (!isMounted) return;
+    BARS_AND_AXIS_SVG?.remove();
+    FIXED_AXIS_GROUP?.remove();
+    BARS_AND_AXIS_SVG = null;
+    FIXED_AXIS_GROUP = null;
     paintGraph();
     handleEventListeningForBars();
   }
@@ -932,6 +939,7 @@
       });
     }
     paintGraph();
+    isMounted = true;
     updateGraph();
     if (scrollableElementContainerRef) {
       scrollableElementContainerRef.addEventListener("scroll", detectScrollEnd);
@@ -946,6 +954,7 @@
       previousData = data;
       previousXDomain = currentXDomain;
       refreshSanitizedData();
+      repaintGraph();
     }
   });
 

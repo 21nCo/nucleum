@@ -162,9 +162,10 @@ function upsertManagedHeadersBlock(existing, block) {
   const end = '# END 21N_FRONTEND_CACHE_HEADERS';
   const pattern = new RegExp(`${escapeRegExp(start)}[\\s\\S]*?${escapeRegExp(end)}`, 'm');
   const trimmedExisting = existing.trim();
+  const withTrailingNewline = (value) => value.replace(/\s*$/, '\n');
 
   if (pattern.test(existing)) {
-    return `${existing.replace(pattern, normalizedBlock).trim()}\n`;
+    return withTrailingNewline(existing.replace(pattern, normalizedBlock));
   }
 
   if (!trimmedExisting) {

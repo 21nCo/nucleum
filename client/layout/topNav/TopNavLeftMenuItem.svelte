@@ -24,6 +24,7 @@
     label = undefined,
     icon = undefined,
     tooltip = undefined,
+    ariaLabel = undefined,
     isPreventDefault = false,
     onClick
   }: {
@@ -33,6 +34,7 @@
     label?: string;
     icon?: string;
     tooltip?: string;
+    ariaLabel?: string;
     isPreventDefault?: boolean;
     onClick?: (event: MouseEvent) => void;
   } = $props();
@@ -59,9 +61,10 @@
 
 {#if data}
   {@const hasTooltip = data.label || tooltip || label}
+  {@const accessibleLabel = ariaLabel ?? (tooltip ?? label ?? data.label)}
   {@const shortcut = keyboardShortcuts.resolveShortcutForAction(action)}
   <button
-    aria-label={hasTooltip ? (tooltip ?? label ?? data.label) : undefined}
+    aria-label={accessibleLabel}
     class={cn(
       "flex items-center justify-center gap-1 h-full px-3.5 transition-colors",
       {

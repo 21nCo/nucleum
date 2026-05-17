@@ -44,5 +44,5 @@
     {formatSeconds($activeSession.timeElapsed, TimeFormat.CLOCK)}
   </button>
 {:else}
-  <TopNavLeftMenuItem {action} tooltip="Open focus" />
+  <TopNavLeftMenuItem {action} tooltip="Open focus" ariaLabel="Focus" />
 {/if}

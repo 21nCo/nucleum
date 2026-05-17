@@ -56,12 +56,18 @@ function parseArgs(argv) {
 }
 
 function validateArgs(args, config) {
-  const product = args.product?.trim() ?? "nucleum";
+  const requestedProduct = args.product?.trim() ?? "nucleum";
   const environment = args.environment?.trim() ?? "dev";
   const suite = args.suite?.trim() ?? "all";
+  const products = parseProducts(config, requestedProduct);
+
+  if (products.length !== 1) {
+    throw new Error("Expected --product to be exactly one product id");
+  }
+
+  const [product] = products;
   const port = Number(args.port ?? defaultPort(product));
 
-  parseProducts(config, product);
   readEnvironment(config, environment);
 
   if (!new Set(["app-smoke", "smoke", "regression", "all"]).has(suite)) {
@@ -120,6 +126,9 @@ function run(command, args, options = {}) {
 }
 
 function createStaticServer(buildDir) {
+  const buildRoot = path.resolve(buildDir);
+  const fallbackPath = path.join(buildRoot, "index.html");
+
   const server = http.createServer((request, response) => {
     if (!request.url) {
       response.writeHead(400);
@@ -127,21 +136,49 @@ function createStaticServer(buildDir) {
       return;
     }
 
-    const url = new URL(request.url, "http://127.0.0.1");
-    const pathname = decodeURIComponent(url.pathname);
-    const candidate = path.normalize(path.join(buildDir, pathname));
-    const isInsideBuild =
-      candidate === buildDir || candidate.startsWith(`${buildDir}${path.sep}`);
-    const assetPath = isInsideBuild && fs.existsSync(candidate) && fs.statSync(candidate).isFile()
-      ? candidate
-      : path.join(buildDir, "index.html");
+    let pathname;
 
-    const body = fs.readFileSync(assetPath);
-    response.writeHead(200, {
-      "content-type": lookup(assetPath) ?? "application/octet-stream",
-      "cache-control": "no-store"
-    });
-    response.end(body);
+    try {
+      const url = new URL(request.url, "http://127.0.0.1");
+      pathname = decodeURIComponent(url.pathname);
+    } catch {
+      response.writeHead(400);
+      response.end("Bad request");
+      return;
+    }
+
+    const relativePath = pathname.replace(/^\/+/, "");
+    const candidate = path.resolve(buildRoot, relativePath);
+    const isInsideBuild =
+      candidate === buildRoot || candidate.startsWith(`${buildRoot}${path.sep}`);
+
+    if (!isInsideBuild) {
+      response.writeHead(403);
+      response.end("Forbidden");
+      return;
+    }
+
+    const assetPath = fs.existsSync(candidate) && fs.statSync(candidate).isFile()
+      ? candidate
+      : fallbackPath;
+
+    if (!fs.existsSync(assetPath)) {
+      response.writeHead(404);
+      response.end("Not found");
+      return;
+    }
+
+    try {
+      const body = fs.readFileSync(assetPath);
+      response.writeHead(200, {
+        "content-type": lookup(assetPath) ?? "application/octet-stream",
+        "cache-control": "no-store"
+      });
+      response.end(body);
+    } catch {
+      response.writeHead(500);
+      response.end("Internal server error");
+    }
   });
 
   return {
