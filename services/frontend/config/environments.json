@@ -1,6 +1,14 @@
 {
   "workerNamePrefix": "nucleus-web",
   "compatibilityDate": "2026-05-16",
+  "waf": {
+    "staticFrontend": {
+      "methods": ["GET", "HEAD"],
+      "rules": {
+        "4814384a9e5d4991b9815dcfc25d2f1f": ["6179ae15870a4bb7b2d480d4843b323c"]
+      }
+    }
+  },
   "defaultBuildEnv": {
     "VITE_STATIC_URL": "https://cdn.nucleum.app",
     "VITE_CUSTOM_PROTOCOL": "tauri",

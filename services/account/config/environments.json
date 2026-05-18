@@ -9,6 +9,15 @@
   "cookiePrefix": "nucleus",
   "emailFrom": "Nucleum <no-reply@notifications.21n.co>",
   "debugSinkUrl": "https://nucleus-debug-sink.21n.workers.dev",
+  "waf": {
+    "browserAuthRoutes": {
+      "pathPrefix": "/auth/",
+      "methods": ["GET", "POST", "OPTIONS"],
+      "rules": {
+        "4814384a9e5d4991b9815dcfc25d2f1f": ["6179ae15870a4bb7b2d480d4843b323c"]
+      }
+    }
+  },
   "secretsStore": {
     "storeId": "3bc19f61d4d8498d9fa50d7175085316",
     "names": {

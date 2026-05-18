@@ -325,6 +325,25 @@ can serve it.
 
 Normal CI deploys do not need route permissions once routes exist.
 
+## WAF Exceptions
+
+Account browser auth routes can trip Cloudflare managed WAF anomaly rule
+`949110: Inbound Anomaly Score Exceeded`, especially OAuth callbacks, session
+checks, and region lookups following redirects. Sync path-scoped exceptions
+separately from Worker deploys:
+
+```bash
+npm --workspace @21n/account-service run waf:dev -- --regions=insouth --products=nucleum
+npm --workspace @21n/account-service run waf:pre
+npm --workspace @21n/account-service run waf:live
+```
+
+The exception applies only to configured account hosts, browser auth methods,
+and the `/auth/` namespace. It skips only the managed rule configured there;
+other WAF rules and non-auth account routes remain unchanged. Provide a token
+with zone read and zone WAF write access through `CLOUDFLARE_WAF_TOKEN`, or via
+the route-token fallback variables.
+
 ## iOS Endpoint Switching
 
 The iOS native layer reads `NUCLEUS_APP_ENVIRONMENT`, `NUCLEUS_PRODUCT`, and

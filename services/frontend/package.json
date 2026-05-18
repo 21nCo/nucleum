@@ -12,7 +12,11 @@
     "routes": "node scripts/sync-routes.mjs",
     "routes:dev": "node scripts/sync-routes.mjs dev",
     "routes:pre": "node scripts/sync-routes.mjs pre",
-    "routes:live": "node scripts/sync-routes.mjs live"
+    "routes:live": "node scripts/sync-routes.mjs live",
+    "waf": "node scripts/sync-waf-exceptions.mjs",
+    "waf:dev": "node scripts/sync-waf-exceptions.mjs dev",
+    "waf:pre": "node scripts/sync-waf-exceptions.mjs pre",
+    "waf:live": "node scripts/sync-waf-exceptions.mjs live"
   },
   "devDependencies": {
     "wrangler": "^4.85.0"

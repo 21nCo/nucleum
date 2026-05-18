@@ -82,6 +82,37 @@ export function routeDefinitions(config, environment, products = Object.keys(con
   }));
 }
 
+export function wafExceptionDefinitions(config, environment, products = Object.keys(config.products)) {
+  readEnvironment(config, environment);
+  const staticFrontend = config.waf?.staticFrontend;
+  if (!staticFrontend?.rules) {
+    throw new Error('Missing static frontend WAF exception config.');
+  }
+
+  return products.map((productId) => {
+    const host = webHost(config, environment, productId);
+    return {
+      zoneName: config.products[productId].domain,
+      rule: {
+        ref: `21n_frontend_worker_asset_${environment}_${productId}`,
+        description: `21n static frontend WAF exception: ${environment}/${productId}`,
+        expression: [
+          `http.host eq ${quoteCloudflareString(host)}`,
+          `http.request.method in ${cloudflareStringSet(staticFrontend.methods ?? ['GET'])}`
+        ].join(' and '),
+        action: 'skip',
+        action_parameters: {
+          rules: staticFrontend.rules
+        },
+        logging: {
+          enabled: true
+        },
+        enabled: true
+      }
+    };
+  });
+}
+
 export function renderWranglerConfig(serviceRoot, repoRoot, config, environment, productId) {
   const envConfig = readEnvironment(config, environment);
   const product = config.products[productId];
@@ -140,6 +171,14 @@ function toPosixPath(value) {
 
 function removeUndefinedValues(value) {
   return Object.fromEntries(Object.entries(value).filter((entry) => entry[1] !== undefined));
+}
+
+function cloudflareStringSet(values) {
+  return `{${values.map(quoteCloudflareString).join(' ')}}`;
+}
+
+function quoteCloudflareString(value) {
+  return `"${String(value).replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`;
 }
 
 function managedCacheHeadersBlock() {
