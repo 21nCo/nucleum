@@ -66,6 +66,27 @@ Optional zone ID overrides:
 - `CLOUDFLARE_ZONE_ID_MEMOTRON_APP`
 - `CLOUDFLARE_ZONE_ID_POINTRON_APP`
 
+## WAF Exceptions
+
+The product frontend hosts serve static Worker assets and the SvelteKit app
+shell. Cloudflare managed WAF can false-positive on normal `GET`/`HEAD`
+navigation and asset requests with OWASP rule `949110: Inbound Anomaly Score
+Exceeded`. Sync a host-scoped managed-rules exception for the selected
+product/environment:
+
+```sh
+npm --workspace @21n/frontend-deploy run waf:dev -- --products=nucleum
+npm --workspace @21n/frontend-deploy run waf:pre -- --products=all
+npm --workspace @21n/frontend-deploy run waf:live -- --products=all
+```
+
+The exception skips only the anomaly block rule configured in
+`config/environments.json`; other WAF rules and non-frontend hosts remain
+unchanged. Use `--dry-run` to print the rule without Cloudflare credentials.
+Remote sync requires a token with zone read and zone WAF write access. The token
+can be provided as `CLOUDFLARE_WAF_TOKEN`, or via the same fallback variables
+used by route sync.
+
 ## GitHub Workflows
 
 - `frontend-cloudflare-deploy.yml`

@@ -1,3 +1,5 @@
+<svelte:options runes={true} />
+
 <script lang="ts">
   import { vTrail } from "../topNav/tabs/tabs.store";
   import TopBarResourceItem from "../topNav/tabs/TopBarResourceItem.svelte";

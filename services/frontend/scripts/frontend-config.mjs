@@ -82,6 +82,37 @@ export function routeDefinitions(config, environment, products = Object.keys(con
   }));
 }
 
+export function wafExceptionDefinitions(config, environment, products = Object.keys(config.products)) {
+  readEnvironment(config, environment);
+  const staticFrontend = config.waf?.staticFrontend;
+  if (!staticFrontend?.rules) {
+    throw new Error('Missing static frontend WAF exception config.');
+  }
+
+  return products.map((productId) => {
+    const host = webHost(config, environment, productId);
+    return {
+      zoneName: config.products[productId].domain,
+      rule: {
+        ref: `21n_frontend_worker_asset_${environment}_${productId}`,
+        description: `21n static frontend WAF exception: ${environment}/${productId}`,
+        expression: [
+          `http.host eq ${quoteCloudflareString(host)}`,
+          `http.request.method in ${cloudflareStringSet(staticFrontend.methods ?? ['GET'])}`
+        ].join(' and '),
+        action: 'skip',
+        action_parameters: {
+          rules: staticFrontend.rules
+        },
+        logging: {
+          enabled: true
+        },
+        enabled: true
+      }
+    };
+  });
+}
+
 export function renderWranglerConfig(serviceRoot, repoRoot, config, environment, productId) {
   const envConfig = readEnvironment(config, environment);
   const product = config.products[productId];
@@ -112,6 +143,20 @@ export function renderWranglerConfig(serviceRoot, repoRoot, config, environment,
   return outputPath;
 }
 
+export function writeCloudflareAssetHeaders(repoRoot, config, productId) {
+  const product = config.products[productId];
+  if (!product) {
+    throw new Error(`Unknown frontend product: ${productId}`);
+  }
+
+  const buildDir = path.join(repoRoot, product.appPath, 'build');
+  const headersPath = path.join(buildDir, '_headers');
+  const existing = fs.existsSync(headersPath) ? fs.readFileSync(headersPath, 'utf8') : '';
+  const next = upsertManagedHeadersBlock(existing, managedCacheHeadersBlock());
+  fs.writeFileSync(headersPath, next);
+  return headersPath;
+}
+
 export function assertBuildOutput(repoRoot, config, productId) {
   const product = config.products[productId];
   const indexPath = path.join(repoRoot, product.appPath, 'build/index.html');
@@ -126,4 +171,49 @@ function toPosixPath(value) {
 
 function removeUndefinedValues(value) {
   return Object.fromEntries(Object.entries(value).filter((entry) => entry[1] !== undefined));
+}
+
+function cloudflareStringSet(values) {
+  return `{${values.map(quoteCloudflareString).join(' ')}}`;
+}
+
+function quoteCloudflareString(value) {
+  return `"${String(value).replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`;
+}
+
+function managedCacheHeadersBlock() {
+  return [
+    '# BEGIN 21N_FRONTEND_CACHE_HEADERS',
+    '# Versioned assets can be cached in the browser without revalidation.',
+    '# Keep app shell files on Cloudflare Workers Static Assets defaults so update checks stay fresh.',
+    '/_app/immutable/*',
+    '  Cache-Control: public, max-age=31536000, immutable',
+    '',
+    '/static/icons/sprite-:sprite.svg',
+    '  Cache-Control: public, max-age=31536000, immutable',
+    '# END 21N_FRONTEND_CACHE_HEADERS'
+  ].join('\n');
+}
+
+function upsertManagedHeadersBlock(existing, block) {
+  const normalizedBlock = block.trim();
+  const start = '# BEGIN 21N_FRONTEND_CACHE_HEADERS';
+  const end = '# END 21N_FRONTEND_CACHE_HEADERS';
+  const pattern = new RegExp(`${escapeRegExp(start)}[\\s\\S]*?${escapeRegExp(end)}`, 'm');
+  const trimmedExisting = existing.trim();
+  const withTrailingNewline = (value) => value.replace(/\s*$/, '\n');
+
+  if (pattern.test(existing)) {
+    return withTrailingNewline(existing.replace(pattern, normalizedBlock));
+  }
+
+  if (!trimmedExisting) {
+    return `${normalizedBlock}\n`;
+  }
+
+  return `${trimmedExisting}\n\n${normalizedBlock}\n`;
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

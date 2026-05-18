@@ -61,6 +61,15 @@
     if (isCallable(onChange)) onChange(detail);
   }
 
+  function hasSetValue<T>(collection: unknown, value: T) {
+    return (
+      collection !== undefined &&
+      collection !== null &&
+      typeof (collection as { has?: unknown }).has === "function" &&
+      (collection as Set<T>).has(value)
+    );
+  }
+
   function isComparableRecord(value: unknown): value is IRecordId | { id: IRecordId } {
     return (
       typeof value === "string" ||
@@ -201,10 +210,10 @@
       }
       return;
     }
-    if (!normalizedSubscribeToResource.has(data.resource)) return;
+    if (!hasSetValue(normalizedSubscribeToResource, data.resource)) return;
     if (
       normalizedSubscribeToContext &&
-      !normalizedSubscribeToContext.has(data.context)
+      !hasSetValue(normalizedSubscribeToContext, data.context)
     )
       return;
 

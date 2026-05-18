@@ -1,10 +1,16 @@
-import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { routeDefinitions } from './wrangler-config.mjs';
+import {
+  cloudflare,
+  groupByZoneName,
+  normalizeEnvironment,
+  readAccountConfig,
+  resolveZoneIdForRouteZone
+} from './cloudflare-sync.mjs';
 
 const serviceRoot = path.resolve(import.meta.dirname, '..');
-const config = JSON.parse(fs.readFileSync(path.join(serviceRoot, 'config/environments.json'), 'utf8'));
+const config = readAccountConfig(serviceRoot);
 const environment = normalizeEnvironment(process.argv[2] ?? 'dev');
 const regionsArg = process.argv.find((arg) => arg.startsWith('--regions='))?.split('=')[1];
 const regions = regionsArg ? regionsArg.split(',').map((entry) => entry.trim()).filter(Boolean) : Object.keys(config.regions);
@@ -22,10 +28,10 @@ if (!token) {
   process.exit(1);
 }
 
-const routesByZone = groupRoutesByZone(routeDefinitions(config, environment, regions));
+const routesByZone = groupByZoneName(routeDefinitions(config, environment, regions));
 
 for (const [zoneName, routes] of routesByZone) {
-  const zoneId = await resolveZoneIdForRouteZone(zoneName, token);
+  const zoneId = await resolveZoneIdForRouteZone(config, zoneName, token);
   const existingRoutes = await cloudflare(`/zones/${zoneId}/workers/routes`, token);
   const existingByPattern = new Map(existingRoutes.map((route) => [route.pattern, route]));
 
@@ -57,57 +63,4 @@ for (const [zoneName, routes] of routesByZone) {
     });
     console.log(`updated ${updated.pattern} -> ${updated.script} (${zoneName})`);
   }
-}
-
-function groupRoutesByZone(routes) {
-  const grouped = new Map();
-  for (const route of routes) {
-    const entries = grouped.get(route.zoneName) ?? [];
-    entries.push(route);
-    grouped.set(route.zoneName, entries);
-  }
-  return grouped;
-}
-
-async function resolveZoneIdForRouteZone(zoneName, token) {
-  const specificEnvName = `CLOUDFLARE_ZONE_ID_${zoneName.toUpperCase().replace(/[^A-Z0-9]+/g, '_')}`;
-  const specificZoneId = process.env[specificEnvName];
-  if (specificZoneId) return specificZoneId;
-
-  if (zoneName === config.accountDomain && process.env.CLOUDFLARE_ZONE_ID) {
-    return process.env.CLOUDFLARE_ZONE_ID;
-  }
-
-  return resolveZoneId(zoneName, token);
-}
-
-async function resolveZoneId(zoneName, token) {
-  const zones = await cloudflare(`/zones?name=${encodeURIComponent(zoneName)}`, token);
-  const zone = zones.find((entry) => entry.name === zoneName);
-  if (!zone) {
-    throw new Error(`Cloudflare zone not found: ${zoneName}`);
-  }
-  return zone.id;
-}
-
-async function cloudflare(pathname, token, options = {}) {
-  const response = await fetch(`https://api.cloudflare.com/client/v4${pathname}`, {
-    method: options.method ?? 'GET',
-    headers: {
-      authorization: `Bearer ${token}`,
-      'content-type': 'application/json'
-    },
-    body: options.body ? JSON.stringify(options.body) : undefined
-  });
-  const payload = await response.json();
-  if (!payload.success) {
-    throw new Error(`Cloudflare API failed: ${JSON.stringify(payload.errors)}`);
-  }
-  return payload.result;
-}
-
-function normalizeEnvironment(value) {
-  const normalized = value.trim().toLowerCase();
-  if (['dev', 'pre', 'live'].includes(normalized)) return normalized;
-  return null;
 }

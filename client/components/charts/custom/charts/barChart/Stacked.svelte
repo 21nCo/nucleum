@@ -9,7 +9,7 @@
     axisLeft,
     axisBottom
   } from "d3";
-  import { beforeUpdate, onDestroy, onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
   //TODO - import dependency on local
   import { roundOffToNdigitsAfterDecimal } from "@21n/products/pointron/pointron.utils";
   import {
@@ -22,21 +22,26 @@
   import appearance from "@21n/stores/appearance.store";
   import view from "@21n/stores/view.store";
 
-  let data: ChartDataPoint[] = [];
-  let options: any;
-  let orientation: Orientation = Orientation.Vertical;
-  let themeColors = retrieveCurrentColors($appearance);
+  let {
+    data = [],
+    options,
+    orientation = Orientation.Vertical
+  }: {
+    data?: ChartDataPoint[];
+    options: any;
+    orientation?: Orientation;
+  } = $props();
+
+  let themeColors = $state(retrieveCurrentColors($appearance));
   const chartID = generateUID();
 
-  export { data, options, orientation };
-
-  let containerRef: any = null;
-  let scrollableElementContainerRef: any = null;
-  let fixedXAxisRef: any = null;
-  let fixedYAxisRef: any = null;
-  let legendContainerRef: any = null;
-  let wrapperRef: any = null;
-  let informationModal: any = null;
+  let containerRef = $state<any>(null);
+  let scrollableElementContainerRef = $state<any>(null);
+  let fixedXAxisRef = $state<any>(null);
+  let fixedYAxisRef = $state<any>(null);
+  let legendContainerRef = $state<any>(null);
+  let wrapperRef = $state<any>(null);
+  let informationModal = $state<any>(null);
 
 
   let SVGScrollableDimensionLength: number = 0;
@@ -45,17 +50,22 @@
   let sanitizedData: ChartDataPoint[] = [];
   // in sanitizedData we will be modifying the data so that if there are multiple data items present with same key and group then we will merge them into one data item with the value being the sum of all the values of the data items with same key and group
 
-  let groups: ChartDataPoint[][] = [];
-  let groupsBasedOnKey: ChartDataPoint[][] = [];
+  let groups = $state<ChartDataPoint[][]>([]);
+  let groupsBasedOnKey = $state<ChartDataPoint[][]>([]);
 
-  let selectedGroups: string[] = [];
+  let selectedGroups = $state<string[]>([]);
 
   let BARS_AND_AXIS_SVG: any = null;
   let FIXED_AXIS_GROUP: any = null;
+  let isMounted = false;
 
-  let colors: { [key: string]: string }[] = [];
+  let colors = $state<Record<string, string>>({});
 
-  let mouseHoverData: ChartDataPoint = { key: "", value: 0, group: "" };
+  let mouseHoverData = $state<ChartDataPoint>({
+    key: "",
+    value: 0,
+    group: ""
+  });
 
   // Please write these values along with their units
   const DEFAULT_CONTAINER_DIMENSIONS = {
@@ -319,9 +329,15 @@
     groups = tempGroups;
     groupsBasedOnKey = tempGroupingBasedOnKey;
 
-    //remove the existing graph and repaint it by calling the paintGraph function
-    BARS_AND_AXIS_SVG.remove();
-    FIXED_AXIS_GROUP.remove();
+    repaintGraph();
+  }
+
+  function repaintGraph() {
+    if (!isMounted) return;
+    BARS_AND_AXIS_SVG?.remove();
+    FIXED_AXIS_GROUP?.remove();
+    BARS_AND_AXIS_SVG = null;
+    FIXED_AXIS_GROUP = null;
     paintGraph();
     handleEventListeningForBars();
   }
@@ -923,6 +939,7 @@
       });
     }
     paintGraph();
+    isMounted = true;
     updateGraph();
     if (scrollableElementContainerRef) {
       scrollableElementContainerRef.addEventListener("scroll", detectScrollEnd);
@@ -930,13 +947,14 @@
     handleEventListeningForBars();
   });
 
-  beforeUpdate(() => {
+  $effect.pre(() => {
     refreshDimensions();
     const currentXDomain = JSON.stringify(options?.xDomain ?? null);
     if (previousData !== data || previousXDomain !== currentXDomain) {
       previousData = data;
       previousXDomain = currentXDomain;
       refreshSanitizedData();
+      repaintGraph();
     }
   });
 

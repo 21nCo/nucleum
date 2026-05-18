@@ -154,3 +154,38 @@ jobs:
         with:
           name: playwright-smoke-${{ matrix.product }}
           path: apps/e2e-playwright/artifacts
+
+  playwright-static-nucleum-smoke:
+    runs-on: ubuntu-latest
+    needs:
+      - app-checks
+      - vitest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm install --legacy-peer-deps
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+        working-directory: apps/e2e-playwright
+      - name: Run Nucleum Playwright smoke against generated build
+        env:
+          E2E_LOGIN_EMAIL: ${{ secrets.E2E_LOGIN_EMAIL }}
+          E2E_LOGIN_PASSWORD: ${{ secrets.E2E_LOGIN_PASSWORD }}
+          VITE_ACCOUNT_BASE_URL_TEMPLATE: https://account-{region}-dev.nucleum.app
+        run: npm --workspace e2e-playwright run test:static:nucleum:app-smoke
+      - name: Upload static Playwright artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-static-nucleum-smoke
+          path: apps/e2e-playwright/artifacts

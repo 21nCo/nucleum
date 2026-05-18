@@ -28,12 +28,15 @@ type IFocusLogAggregate = {
   focus: number;
 };
 
-export const selectedPageId = writable<string | undefined>();
 const analyticsConfigStoreId = Resource.pointAnalyticsConfig;
 
 const seedAnalyticsConfig: IAnalyticsConfigStore = {
   pages: generateAnalyticsSeedPages()
 };
+
+export const selectedPageId = writable<string | undefined>(
+  seedAnalyticsConfig.pages[0]?.id
+);
 
 class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
   constructor() {

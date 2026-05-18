@@ -11,7 +11,8 @@ import {
   parseProducts,
   readConfig,
   readEnvironment,
-  renderWranglerConfig
+  renderWranglerConfig,
+  writeCloudflareAssetHeaders
 } from './frontend-config.mjs';
 
 const serviceRoot = path.resolve(import.meta.dirname, '..');
@@ -39,6 +40,7 @@ for (const productId of products) {
   }
 
   assertBuildOutput(repoRoot, config, productId);
+  writeCloudflareAssetHeaders(repoRoot, config, productId);
   const wranglerConfig = renderWranglerConfig(serviceRoot, repoRoot, config, environment, productId);
   run(resolveWranglerBin(), ['deploy', '--config', wranglerConfig, ...(dryRun ? ['--dry-run'] : [])], {
     cwd: serviceRoot

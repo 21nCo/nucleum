@@ -1313,16 +1313,16 @@
       onmousedown={handleMouseDown}
       onpaste={handlePaste}
       onblur={(event) => {
-        onBlur?.(event);
+        if (isCallable(onBlur)) onBlur(event);
       }}
       onfocus={(event) => {
-        onFocus?.(event);
+        if (isCallable(onFocus)) onFocus(event);
       }}
       onpointerenter={(event) => {
-        onPointerenter?.(event);
+        if (isCallable(onPointerenter)) onPointerenter(event);
       }}
       onpointerleave={(event) => {
-        onPointerleave?.(event);
+        if (isCallable(onPointerleave)) onPointerleave(event);
       }}
       bind:innerHTML
       contenteditable
