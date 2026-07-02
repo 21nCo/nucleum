@@ -42,7 +42,7 @@
   }
   let socials = [
     {
-      href: footerValues.gitUrl ?? "https://github.com/21nOrg",
+      href: footerValues.gitUrl ?? "https://github.com/21nCo",
       icon: "gitfooter",
       primary: "hsla(0, 0%, 0%, 1)",
       isHovered: false
@@ -244,6 +244,8 @@
         </a>
       {/each}
     </div>
-    <p class="text-fgs3">{org.incorporation}</p>
+    <p class="text-fgs3">
+      <a href="https://21n.co" target="_blank"> 21n.co </a>| {org.incorporation}
+    </p>
   </div>
 </footer>

@@ -9,13 +9,14 @@
   import "@fontsource-variable/hanken-grotesk";
   import "@fontsource-variable/sen";
   import "@fontsource/noto-color-emoji";
+  import "@21n/fonts/styles.css";
 
   export let extensionContext: string | undefined = undefined;
   let fontFamily: string = "Avenir";
   let defaultRootFontSize: number = 16;
   let rootFontSize: number = defaultRootFontSize + 0.6 * $view?.scale;
   let ref: HTMLDivElement;
-  let typeface = "Sen";
+  let typeface = "Twenty One Native, Sen";
 
   onMount(() => {
     refreshTailwind();

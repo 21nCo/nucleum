@@ -7,18 +7,18 @@ import type {
 
 export const staticUrl = import.meta.env.VITE_STATIC_URL;
 export const org = {
-  website: "https://21n.org",
+  website: "https://21n.co",
   phone: "+91 9985563939",
-  email: "contact@21n.org",
+  email: "contact@21n.co",
   address: "Hyderabad, India",
   incorporation: "Phinative soft pvt ltd.",
   discord: "https://discord.com/invite/9HJqKYTZKg",
-  twitter: "https://x.com/21nOrg",
-  youtube: "https://www.youtube.com/@21nOrg",
+  twitter: "https://x.com/21nCompany",
+  youtube: "https://www.youtube.com/@21nCo",
   blog: "https://blog.21n.org",
   docs: "https://docs.21n.org",
   whitepaper: "https://papers.21n.org/soft",
-  github: "https://github.com/21nOrg"
+  github: "https://github.com/21nCo"
 };
 
 export const currentProductsStore = readable<ITileItem[]>([

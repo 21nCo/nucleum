@@ -71,7 +71,7 @@ const memotronTopNavBarValues: ITopNavBar = {
   cta: [
     {
       label: "",
-      href: "https://github.com/21nOrg/nucleus",
+      href: "https://github.com/21nCo/nucleum",
       icon: "ph:github-logo",
       type: "secondary"
     },
@@ -122,7 +122,7 @@ let pointronTopNavBarValues: ITopNavBar = {
   cta: [
     {
       label: "",
-      href: "https://github.com/21nOrg/nucleus",
+      href: "https://github.com/21nCo/nucleum",
       icon: "ph:github-logo",
       type: "secondary"
     },
@@ -146,7 +146,7 @@ function resolveProductData(product: string) {
   switch (product) {
     case "21n":
       return {
-        website: "https://21n.org",
+        website: "https://21n.co",
         urls: nUrls,
         topNavBarValues: nTopNavBarValues,
         footerValues: nFooterValues
@@ -167,7 +167,7 @@ function resolveProductData(product: string) {
       };
     default:
       return {
-        website: "https://21n.org",
+        website: "https://21n.co",
         urls: nUrls,
         topNavBarValues: nTopNavBarValues,
         footerValues: nFooterValues
