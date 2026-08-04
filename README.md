@@ -4,26 +4,14 @@
   <h1>Nucleum</h1>
   <p>Meticulously crafted super apps to help you manage your digital life efficiently.</p>
 </div>
-  <p align="center">
-    <a href="https://nucleum.app">Website</a>
-    ·
-    <a href="https://docs.nucleus.to">Documentation</a>
-    ·
-    <a href="https://docs.nucleus.to/roadmap">Roadmap</a>
-  </p>
 <div align="center">
+  
 <br />
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](/LICENSE)
 [![Tests](https://github.com/21nOrg/nucleus/actions/workflows/tests.yml/badge.svg)](https://github.com/21nOrg/nucleus/actions/workflows/tests.yml)
-</div>
-
-<div align="center">
-
 [![Discord](https://img.shields.io/discord/831815510563749889?logo=discord&amp;logoColor=white)](https://discord.com/invite/9HJqKYTZKg)
 [![YouTube](https://img.shields.io/youtube/channel/views/UCEE8Uvy4krxIGXAGy2q5wrA?style=flat&logo=youtube&logoColor=white&color=FF0000&label=@21nCo)](https://www.youtube.com/@21nCo)
-[![Reddit](https://img.shields.io/reddit/subreddit-subscribers/nucleus?style=flat&logo=reddit&logoColor=white&color=FF4500&label=r/nucleus)](https://reddit.com/r/nucleus)
-[![Twitter Follow](https://img.shields.io/twitter/follow/21nCompany?style=flat&logo=twitter&logoColor=white&color=1DA1F2&label=X%20@nucleumApp)](https://twitter.com/nucleumApp)
 
 
 </div>
@@ -33,7 +21,6 @@
 
 | App      | Website                          | Description                                                                 |
 |----------|----------------------------------|-----------------------------------------------------------------------------|
-| Nucleum  | [nucleum.app](https://nucleum.app)     | **Your digital harmony**, a super app that combines all of the apps listed below in a cohesive manner.    |
 | Memotron | [memotron.app](https://memotron.app) | **Your memory atlas**, a tool for managing your digital memory and personal knowledge.<br><br>Tags: Digital memory, PKM, Note‑taking, Knowledge management.                  |
 | Pointron | [pointron.app](https://pointron.app) | **Your focus haven**, a tool for tracking your goals and managing your time.<br><br>Tags: Focus, Time tracking, Goals, Events and Task management.     |
 
