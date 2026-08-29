@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import Button from "@21n/elements/button/Button.svelte";
   import Divider from "@21n/elements/Divider.svelte";
   import { ColorStrength } from "@21n/types/appearance.type";
@@ -18,14 +18,14 @@
   let {
     resource,
     searchQuery = $bindable(""),
-    searchStore,
+    searchType = SearchType.FULL_TEXT,
     selectedSubType,
     onRefresh = undefined,
     onSemanticSearch = undefined
   }: {
     resource: Resource;
     searchQuery?: string;
-    searchStore: any;
+    searchType?: SearchType;
     selectedSubType: any;
     onRefresh?: ((event: CustomEvent<void>) => void) | undefined;
     onSemanticSearch?: ((event: CustomEvent<boolean>) => void) | undefined;
@@ -73,6 +73,7 @@
       type="text"
       bind:this={searchInputRef}
       bind:value={searchQuery}
+      oninput={refresh}
       onkeydown={onKeydown}
       onkeyup={onKeyup}
       onfocus={() => (isSearchFocused = true)}
@@ -92,7 +93,7 @@
           size={Size.sm}
           style={InputStyle.PLAIN}
           onChange={(e) => emitSemanticSearch(e.detail)}
-          checked={searchStore.searchType === SearchType.SEMANTIC}
+          checked={searchType === SearchType.SEMANTIC}
         />
       {/if}
       {#if isFiltersVisible}

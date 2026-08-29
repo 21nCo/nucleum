@@ -1,27 +1,18 @@
-import { get } from "svelte/store";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-import {
-  ActiveResourceStore,
-  ResourceStore
-} from "@21n/components/flux/resourceStores/resource.store";
+import { get, writable } from "svelte/store";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import {
   AccessMode,
   ResourceAccessPoint
-} from "@21n/components/flux/resourceStores/resource.type";
+} from "@21n/data/datafn/resource.type";
 import type { IRecordId } from "@21n/types/data.type";
-import { StoreDataType } from "@21n/types/data.type";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
 import { appStore } from "@21n/stores/app.store";
-import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
 import { logger } from "@21n/components/debug/logger.client";
-import type { IAvatar } from "@21n/types/avatar.type";
-  import {
-    CombinationNavItemType,
-    type ICombination,
-    CombinationType,
-    type IActiveCombination,
-    type ICombinationNavItem,
-    type ISideNavCombination
+import {
+  CombinationNavItemType,
+  type IActiveCombination,
+  type ICombinationNavItem,
+  type ISideNavCombination
 } from "@21n/components/combination/combination.type";
 import {
   cloneNavItems,
@@ -34,51 +25,32 @@ import {
   removeItemById,
   updateItemLabel
 } from "./combination.utils";
-import { determineResourceType } from "../flux/resourceStores/resource.utils";
+import { determineResourceType } from "@21n/data/datafn/resource.utils";
+import { datafn } from "@21n/stores/datafn.store";
 
-export type ICombinationCapture = {
-  label: string;
-  description?: string;
-  avatar?: IAvatar;
-  type?: CombinationType;
-  items?: ICombinationNavItem[];
-};
+const activeCombinationStores = new Map<string, ActiveCombinationStore>();
 
-const defaults: Partial<ISideNavCombination> = {
-  type: CombinationType.SIDENAV,
-  items: []
-};
+export class ActiveCombinationStore {
+  id: IRecordId;
+  protected subject = writable<IActiveCombination>();
+  subscribe = this.subject.subscribe;
+  set = this.subject.set;
+  update = this.subject.update;
 
-class CombinationStore extends ResourceStore<
-  ISideNavCombination,
-  ICombinationCapture
-> {
-  constructor() {
-    super(Resource.combination, {
-      dataType: StoreDataType.FIR,
-      defaultProps: defaults
-    });
-  }
-
-  createSideNavCombination(input: ICombinationCapture) {
-    return super.create({
-      ...defaults,
-      ...input,
-      type: input.type ?? CombinationType.SIDENAV,
-      items: input.items ?? []
-    });
-  }
-}
-
-export const combinationStore = CombinationStore.resolve(Resource.combination);
-
-export class ActiveCombinationStore extends ActiveResourceStore<
-  ISideNavCombination,
-  CombinationStore,
-  IActiveCombination
-> {
   constructor(combinationId: IRecordId) {
-    super(combinationId, combinationStore);
+    this.id = combinationId;
+  }
+
+  static resolve(id: IRecordId) {
+    const idString = id.toString();
+    if (!activeCombinationStores.has(idString)) {
+      activeCombinationStores.set(idString, new ActiveCombinationStore(id));
+    }
+    return activeCombinationStores.get(idString)!;
+  }
+
+  toggleEditMode(val: boolean) {
+    return this.update((prev) => ({ ...prev, isInEditMode: val }));
   }
 
   private readItems() {
@@ -94,21 +66,26 @@ export class ActiveCombinationStore extends ActiveResourceStore<
         items
       };
     });
-    await this.resourceStore.modify(
-      this.id,
-      { items },
-      {
-        context: ResourceAccessPoint.COMBINATION
-      }
-    );
+    await datafn.space.mutate({
+      operation: "merge",
+      id: this.id.toString(),
+      record: { items },
+      context: ResourceAccessPoint.COMBINATION
+    });
   }
 
   private async resolveResourceSnapshot(resourceId: IRecordId) {
     try {
       const resourceType = determineResourceType(resourceId);
-      const store = resolveResourceStore(resourceType);
-      if (!store || !("select" in store)) return undefined;
-      const record = await store.select(resourceId);
+      const result = await datafn.table(resourceType).query({
+        filters: { id: resourceId.toString() },
+        select: ["id", "label", "name", "avatar"],
+        metadata: {
+          includeTrashed: true,
+          includeArchived: true
+        }
+      } as any);
+      const record = result.data?.[0] as Record<string, any> | undefined;
       if (!record) return undefined;
       return {
         label: record.label ?? record.name ?? "Untitled",
@@ -129,7 +106,12 @@ export class ActiveCombinationStore extends ActiveResourceStore<
       isPageLoading: true,
       accessMode
     }));
-    const result = await this.resourceStore.select(this.id);
+    const result = (await datafn.space.select(this.id.toString(), {
+      metadata: {
+        includeTrashed: true,
+        includeArchived: true
+      }
+    })) as ISideNavCombination | undefined;
     if (!result) return;
     const record: IActiveCombination = {
       ...result,
@@ -140,7 +122,7 @@ export class ActiveCombinationStore extends ActiveResourceStore<
     this.set(record);
     appStore.addToRecents({
       record: result,
-      type: Resource.combination,
+      type: Resource.space,
       timestamp: new Date()
     });
   }
@@ -153,13 +135,12 @@ export class ActiveCombinationStore extends ActiveResourceStore<
         label
       };
     });
-    await this.resourceStore.modify(
-      this.id,
-      { label },
-      {
-        context: ResourceAccessPoint.COMBINATION
-      }
-    );
+    await datafn.space.mutate({
+      operation: "merge",
+      id: this.id.toString(),
+      record: { label },
+      context: ResourceAccessPoint.COMBINATION
+    });
   }
 
   async addSection(params: {

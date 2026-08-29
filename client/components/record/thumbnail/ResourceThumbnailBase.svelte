@@ -1,14 +1,14 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
   import { hoverable } from "@21n/actions/hover.action";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import {
     determineResourceType,
     resolveBulkSelectionAccessPointId,
     resourceIdToElementId,
     resourceInList,
     isSameResource
-  } from "@21n/components/flux/resourceStores/resource.utils";
+  } from "@21n/data/datafn/resource.utils";
   import { bulkEditStore } from "@21n/components/record/bulkedit.store";
   import Check from "@21n/icons/Check.svelte";
   import context from "@21n/stores/context.store";
@@ -55,18 +55,29 @@
     onClick?: ((event: MouseEvent) => void) | undefined;
   } = $props();
   let item = $state(itemProp);
+  let isLocalHovering = $state(false);
   let multiSelectContext = $derived({
     resource: determineResourceType(item.id),
     accessPoint,
-    accessPointId: resolveBulkSelectionAccessPointId(
-      accessPoint,
-      accessPointId
-    )
+    accessPointId: resolveBulkSelectionAccessPointId(accessPoint, accessPointId)
   });
   let isSelected = $state(false);
   let hasSelection = $state(false);
   let isContextMenuVisible = $state(false);
   let currentSelectionCount = $derived($bulkEditStore?.length ?? 0);
+  let canShowContextMenu = $derived(
+    accessPoint !== ResourceAccessPoint.PICKER &&
+      accessPoint !== ResourceAccessPoint.MAP &&
+      !isPreventDefaultContextMenu
+  );
+  let isContextMenuInteractive = $derived(
+    isLocalHovering ||
+      isHovering ||
+      (isAlwaysShowContextMenuOnTouchDevice && $context.isTouchDevice)
+  );
+  let shouldRenderContextMenu = $derived(
+    canShowContextMenu && isContextMenuInteractive
+  );
 
   $effect(() => {
     item = itemProp;
@@ -105,27 +116,37 @@
     }
     if (state.selectedIds.some(resourceInList(item.id))) {
       bulkEditStore.select(
-        state.selectedIds.filter((selection) => !isSameResource(selection, item.id))
+        state.selectedIds.filter(
+          (selection) => !isSameResource(selection, item.id)
+        )
       );
     }
   }
 </script>
 
 <div
-  class={cn("relative flex flex-col w-full resource", {
+  class={cn("relative flex flex-col w-full resource group/resource-thumbnail", {
     "h-full": arrangement === Arrangement.MASONRY
   })}
+  data-testid={`resource-thumbnail:${item.id}`}
   id={resourceIdToElementId("thumbnail", item.id, accessPoint, accessPointId)}
   data-id={item.id}
   draggable={isDraggable}
   onclick={onClick}
   use:hoverable={{
-    onHover: (e) => (isHovering = e)
+    onHover: (e) => {
+      isLocalHovering = e;
+      isHovering = e;
+    }
   }}
 >
   {@render children?.()}
   {#if isSelected || hasSelection}
     <button
+      aria-label={isSelected
+        ? `Deselect ${item.label || "resource"}`
+        : `Select ${item.label || "resource"}`}
+      data-testid={`resource-selection-toggle:${item.id}`}
       class="absolute inset-x-0 top-0 w-6 h-6 gap-2 bg-bgs2 border border-brs3 rounded-full m-2 flex items-center justify-center"
       onclick={(event) => event.stopPropagation()}
     >
@@ -150,7 +171,7 @@
       {/if}
     </button>
   {/if}
-  {#if ((isHovering || isContextMenuVisible) && accessPoint !== ResourceAccessPoint.PICKER && accessPoint !== ResourceAccessPoint.MAP && !isPreventDefaultContextMenu) || (isAlwaysShowContextMenuOnTouchDevice && $context.isTouchDevice)}
+  {#if shouldRenderContextMenu}
     <ResourceThumbnailContextMenu
       bind:item
       bind:isPopoverVisible={isContextMenuVisible}
@@ -162,7 +183,12 @@
       {isApplyCustomColor}
       {onAction}
       {right}
-    >
-    </ResourceThumbnailContextMenu>
+      class={cn(
+        "transition-opacity",
+        isContextMenuInteractive
+          ? "opacity-100 pointer-events-auto"
+          : "opacity-0 pointer-events-none group-hover/resource-thumbnail:opacity-100 group-hover/resource-thumbnail:pointer-events-auto focus-within:opacity-100 focus-within:pointer-events-auto"
+      )}
+    ></ResourceThumbnailContextMenu>
   {/if}
 </div>
