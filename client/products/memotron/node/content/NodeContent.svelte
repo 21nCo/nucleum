@@ -28,11 +28,11 @@
   import { setContext, getContext } from "svelte";
   import { BlockAction } from "@21n/components/markdown/md.type";
   import { wordCounter } from "@21n/actions/counter.action";
-  import { generateResourceId } from "@21n/components/flux/flux.utils";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { generateResourceId } from "@21n/data/datafn/id.utils";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import { Size } from "@21n/types/size.enum";
   import type { IRecordId } from "@21n/types/data.type";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import view from "@21n/stores/view.store";
   import context from "@21n/stores/context.store";
   import {
@@ -42,9 +42,18 @@
   import {
     determineResourceAccessMode,
     resourceInList
-  } from "@21n/components/flux/resourceStores/resource.utils";
+  } from "@21n/data/datafn/resource.utils";
   import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
   import { Context } from "@21n/types/appStore.type";
+
+  type BlockCreateInput = {
+    id: IRecordId;
+    contentType: NodeType;
+    body: any;
+    label?: string;
+    mdParent?: IRecordId[];
+  };
+
   let {
     node,
     mdId,
@@ -57,6 +66,7 @@
   let previousRootStructure: string[] = [];
   let refreshId = $state<number | undefined>(undefined);
   let markdownRef = $state<any>(undefined);
+  let isInitialContentReady = $state(false);
   const dev_isEnableBottomDivider = false;
 
   const calendarContentContext = getContext<any>(Context.CALENDAR_CONTENT);
@@ -90,7 +100,10 @@
   let focusEventSub: any;
 
   onMount(async () => {
-    if ($node.children && $node.children.length < 1) {
+    if (
+      $node.contentType === NodeType.NODULAR_MARKDOWN &&
+      (!Array.isArray($node.mdChildOrder) || $node.mdChildOrder.length < 1)
+    ) {
       const id = generateResourceId(Resource.node);
       const createdBlock = await node.createBlock(id, NodeType.SIMPLE_TEXT, {
         body: ""
@@ -98,15 +111,18 @@
       if (createdBlock?.[0]) {
         await node.modify(
           {
-            children: [createdBlock[0].id]
+            mdChildOrder: [createdBlock[0].id]
           },
           {
             isPreventBackPropagation: true
           }
         );
-        $node.children = [createdBlock[0] as typeof $node.children[number]];
+        $node.mdChildOrder = [createdBlock[0].id];
+        $node.children = [createdBlock[0]] as unknown as typeof $node.children;
       }
     }
+    isInitialContentReady = true;
+    if (!node.eventStore?.subscribe) return;
     focusEventSub = node.eventStore.subscribe((x: any) => {
       logger.debug({
         at: "Node content - nodeFocusEvent listener",
@@ -125,16 +141,6 @@
       temp_Focus(x.id, { currentAccessMode, accessMode: clickedAccessMode });
       node.eventStore.set(undefined);
       return;
-      const result = markdownRef?.focus(x.id);
-      console.log({ result, id: x.id });
-      if (result?.status === 1) {
-        node.onFocus(x.id, result.parent);
-      } else if (result?.status === 0) {
-        node.unFocus();
-      } else if (result?.status === -1) {
-        appStore.openResource(x.id, currentAccessMode);
-      }
-      node.eventStore.set(undefined);
     });
 
     refreshId = Date.now();
@@ -235,16 +241,15 @@
     logger.log({ at: "NodeContent - onReStructure", ...e.detail });
     try {
       const differences = shallowDiff(previousRootStructure, e.detail.root);
-      // console.log({ at: "NodeContent - onReStructure", differences });
       if (isValidArrayWithData(differences)) {
         propagateSavingFeedback("start");
 
         node.updateBlock(
           $node.id,
-          { children: deepCopy(e.detail.root) },
+          { mdChildOrder: deepCopy(e.detail.root) },
           {
             isDebounced: true,
-            debounceKey: "children"
+            debounceKey: "mdChildOrder"
           }
         );
 
@@ -261,26 +266,32 @@
             ? $node.mdParent
             : [];
       if (!structure) return;
-      structure
-        .filter((x: INodeStructure) => x.factor <= hierarchyFactorLimit)
-        .forEach((child: INodeStructure) => {
-          const parent = resolveHeadingParent(
-            child.id,
-            structure,
-            scopedParent
-          );
+      structure.forEach((child: INodeStructure, sortOrder: number) => {
+        if (child.factor > hierarchyFactorLimit) {
           node.updateBlock(
             child.id,
-            {
-              children: deepCopy(child.children),
-              mdParent: deepCopy(parent)
-            },
+            { sortOrder },
             {
               isDebounced: true,
-              debounceKey: "children"
+              debounceKey: "structure"
             }
           );
-        });
+          return;
+        }
+        const parent = resolveHeadingParent(child.id, structure, scopedParent);
+        node.updateBlock(
+          child.id,
+          {
+            mdChildOrder: deepCopy(child.children),
+            mdParent: deepCopy(parent),
+            sortOrder
+          },
+          {
+            isDebounced: true,
+            debounceKey: "structure"
+          }
+        );
+      });
     } catch (e) {
       logger.error({
         at: "NodeContent - onReStructure - error",
@@ -299,6 +310,15 @@
       temp_Focus(e.detail.id);
       // node.onFocus(e.detail.id, e.detail.parent);
     }
+  }
+
+  function resolveBlockMdParent(detail: {
+    mdParent?: IRecordId[];
+    parent?: IRecordId[];
+  }) {
+    if (Array.isArray(detail.mdParent)) return deepCopy(detail.mdParent);
+    if (Array.isArray(detail.parent)) return deepCopy(detail.parent);
+    return [$node.id];
   }
 
   function onBlockAction(e: CustomEvent) {
@@ -333,7 +353,8 @@
       if (!detail?.id) return;
       const blockType = detail.blockType ?? NodeType.SIMPLE_TEXT;
       const result = await node.createBlock(detail.id, blockType, {
-        body: detail.body ?? (blockType === NodeType.SIMPLE_TEXT ? "" : null)
+        body: detail.body ?? (blockType === NodeType.SIMPLE_TEXT ? "" : null),
+        mdParent: resolveBlockMdParent(detail)
       });
     }
 
@@ -341,7 +362,13 @@
       logger.log({ at: "NodeContent - onInsertMany", ...e.detail });
       const detail = e.detail;
       if (!detail?.blocks) return;
-      const result = await node.createBlocks(detail.blocks);
+      const mdParent = resolveBlockMdParent(detail);
+      const result = await node.createBlocks(
+        detail.blocks.map((block: BlockCreateInput) => ({
+          ...block,
+          mdParent: block.mdParent ?? mdParent
+        }))
+      );
     }
 
     /**
@@ -354,7 +381,7 @@
         if (headingNodeTypes.includes(e.detail.fromType)) {
           node.updateBlock(e.detail.source, {
             contentType: e.detail.toType,
-            children: [],
+            mdChildOrder: [],
             body: undefined
           });
         } else {
@@ -371,7 +398,8 @@
       const block = e.detail;
       if (!block.id) return;
       const result = await node.createBlock(block.id, block.contentType, {
-        body: block.body
+        body: block.body,
+        mdParent: resolveBlockMdParent(block)
       });
     }
 
@@ -395,7 +423,7 @@
       class="flex flex-col h--full grow pt-2"
       use:wordCounter={{ onUpdate: refreshCounts }}
     >
-      {#if $node && ($node.contentType === NodeType.NODULAR_MARKDOWN || ($node.contentType === NodeType.NON_NODULAR_MARKDOWN && "body" in $node) || (headingNodeTypes.includes($node.contentType) && "children" in $node))}
+      {#if isInitialContentReady && $node && ($node.contentType === NodeType.NODULAR_MARKDOWN || ($node.contentType === NodeType.NON_NODULAR_MARKDOWN && "body" in $node) || (headingNodeTypes.includes($node.contentType) && "mdChildOrder" in $node))}
         <NodularMarkdown
           node={$node}
           {mdId}
@@ -407,7 +435,7 @@
           bind:this={markdownRef}
           onChange={onMarkdownContentChange}
           onRestructure={onReStructure}
-          onFocus={onFocus}
+          {onFocus}
           onAction={onBlockAction}
         />
         {#if !$view.isConstrainedWidth && dev_isEnableBottomDivider}
@@ -423,7 +451,7 @@
                 <div class="min-w-fit whitespace-nowrap">
                   Modified: {formatDatetime(
                     $userPreferences,
-                    new Date($node.modifiedAt)
+                    new Date($node.updatedAt)
                   )}
                 </div>
               </div>
@@ -431,11 +459,11 @@
           </div>
         {/if}
         <ScrollViewBottomSpacer size={Size.xl} />
-      {:else if $node?.contentType === NodeType.WEB_PAGE && $node.children && $node.children.length > 0}
+      {:else if $node?.contentType === NodeType.WEB_PAGE && $node.clips && $node.clips.length > 0}
         <div class="flex flex-col items-start gap-4">
           <Text content="Clips" style={TextStyle.SECTION_HEADING} />
           <div class="flex flex-col items-start gap-2 overflow-auto">
-            {#each $node.children as clip}
+            {#each $node.clips as clip}
               <div class="bg-bgs2 rounded-md p-2">
                 {clip?.body?.text}
               </div>

@@ -1,8 +1,8 @@
 import { logger } from "@21n/components/debug/logger.client";
 import type { IFile } from "@21n/components/files/file.type";
-import { generateResourceId } from "@21n/components/flux/flux.utils";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
+import { generateResourceId } from "@21n/data/datafn/id.utils";
+import { Resource } from "@21n/data/datafn/resource.enum";
+import { isRecordId } from "@21n/data/datafn/resource.utils";
 import type { IBlock } from "@21n/components/markdown/md.type";
 import {
   NodeType,
@@ -40,6 +40,15 @@ function hasStringProperty<K extends string>(
 ): value is Record<K, string> {
   return isObject(value) && typeof value[key] === "string";
 }
+
+/** Data shape required to resolve a node favicon without requiring a full node record. */
+export type INodeFaviconSource = {
+  contentType: NodeType;
+  body?: unknown;
+  metadata?: unknown;
+  parent?: unknown;
+  url?: string;
+};
 
 function hasNumberProperty<K extends string>(
   value: unknown,
@@ -444,7 +453,10 @@ export function resolveNodeLabel(item: INodeThumb) {
       const weburl = item.url?.split("://").pop()?.split("/")[0];
       return {
         label: item.label ? item.label + " - " : "Clipped from - ",
-        parent,
+        parent: {
+          id: parent.id,
+          label: parent.label ?? ""
+        },
         text:
           (hasStringProperty(item.body, "text") ? item.body.text : undefined) ??
           item.text ??
@@ -460,7 +472,10 @@ export function resolveNodeLabel(item: INodeThumb) {
           : `At - ${timestamp}`;
       return {
         label: `${item.label ? item.label + " - " : "At "}${timestamp}: `,
-        parent,
+        parent: {
+          id: parent.id,
+          label: parent.label ?? ""
+        },
         text: timestamp
       };
     case NodeType.TWITTER_PROFILE:
@@ -482,7 +497,8 @@ export function resolveNodeLabel(item: INodeThumb) {
   }
 }
 
-export function resolveNodeFavicon(node: INode | INodeThumb) {
+/** Resolves the best favicon-like image URL for web and social node thumbnails. */
+export function resolveNodeFavicon(node: INodeFaviconSource) {
   try {
     if (
       socialProfileNodeTypeList.has(node.contentType) &&
@@ -495,22 +511,13 @@ export function resolveNodeFavicon(node: INode | INodeThumb) {
       hasStringProperty(node.body, "imageUrl")
     ) {
       return node.body.imageUrl;
-    } else if (node.metadata?.faviconLink) {
+    } else if (hasStringProperty(node.metadata, "faviconLink")) {
       return node.metadata.faviconLink;
-    } else if (node.parent) {
-      //TODO - resolve using context API
-      // const parent = await dexie.node.get(node.parent);
-      // if (parent && parent.metadata?.faviconLink)
-      //   return parent.metadata.faviconLink;
     }
 
     if (!("url" in node) || !node.url || !node.url.includes("https://")) return;
-    const hostPart = new URL(node.url).host;
     let favicon = resolveUrlData(node.url)?.faviconUrl;
     if (favicon) return favicon;
-    //TODO - testing
-    // favicon = `https://t0.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=https://${hostPart}&size=128"`;
-    // return favicon;
   } catch (e) {
     logger.error({ at: "resolveNodeFavicon", e });
     return;

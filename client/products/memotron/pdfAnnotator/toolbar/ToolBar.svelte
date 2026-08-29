@@ -12,7 +12,7 @@
   import { resolveAnnotationModes } from "@21n/products/memotron/pdfAnnotator/pdfAnnotator.utils";
   import HighlightColors from "@21n/products/memotron/common/highlighters/HighlightColors.svelte";
   import type { IToggleItem } from "@21n/elements/toggle/toggle.type";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import context from "@21n/stores/context.store";
   import { Embed, OperatingSystem } from "@21n/types/context.type";
   import view from "@21n/stores/view.store";
@@ -164,12 +164,12 @@
       colorStrength={ColorStrength.Strong}
     />
     <span class="flex portrait:flex-row flex-col items-center py-2">
-  <HighlightColors
-    bind:selected={selectedColor}
-    orientation={$view.isPortrait
-      ? Orientation.Horizontal
-      : Orientation.Vertical}
-  />
+      <HighlightColors
+        bind:selected={selectedColor}
+        orientation={$view.isPortrait
+          ? Orientation.Horizontal
+          : Orientation.Vertical}
+      />
     </span>
   {/if}
 </div>

@@ -13,7 +13,7 @@
   import WebClipPreview from "@21n/products/memotron/node/content/web/WebClipPreview.svelte";
   import YoutubeVideoPreview from "@21n/products/memotron/node/content/web/YoutubeVideoPreview.svelte";
   import KindleBookPreview from "@21n/products/memotron/node/content/web/KindleBookPreview.svelte";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import GistPreview from "@21n/products/memotron/node/content/web/GistPreview.svelte";
   import SocialSubContent from "@21n/products/memotron/node/content/web/social/SocialSubContent.svelte";
   let {
