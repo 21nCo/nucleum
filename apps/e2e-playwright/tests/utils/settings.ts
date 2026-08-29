@@ -1,35 +1,19 @@
 import { expect, type Page } from "@playwright/test";
 import { runCommand } from "./helpers";
+import {
+  expectAnyLocatorVisible,
+  getAnyVisibleLocator
+} from "./locator-assertions";
 
 export async function assertSettingsShellVisible(page: Page) {
   const sidebar = page.getByTestId("settings-sidebar");
   const modalClose = page.getByTestId("modal-close");
   const title = page.getByText("Settings", { exact: true }).first();
 
-  await expect
-    .poll(
-      async () => {
-        if (await sidebar.isVisible().catch(() => false)) return true;
-        if (await modalClose.isVisible().catch(() => false)) return true;
-        if (await title.isVisible().catch(() => false)) return true;
-        return false;
-      },
-      { timeout: 12_000 }
-    )
-    .toBe(true);
-}
-
-export async function settingsModalLikelyOpen(page: Page) {
-  return (
-    (await page
-      .getByTestId("settings-sidebar")
-      .isVisible()
-      .catch(() => false)) ||
-    (await page
-      .getByTestId("modal-close")
-      .isVisible()
-      .catch(() => false))
-  );
+  await expectAnyLocatorVisible([sidebar, modalClose, title], {
+    message: "settings shell exposes a visible semantic anchor",
+    timeout: 12_000
+  });
 }
 
 export async function assertSearchOrCommandBarInputVisible(page: Page) {
@@ -40,45 +24,53 @@ export async function assertSearchOrCommandBarInputVisible(page: Page) {
   );
   const searchRole = page.getByRole("search");
 
-  const isVisibleAndFocused = async (locator: ReturnType<Page["locator"]>) => {
-    const visible = await locator.isVisible().catch(() => false);
-    if (!visible) return false;
-    return locator
-      .evaluate((el) => el === document.activeElement)
-      .catch(() => false);
-  };
-
-  await expect
-    .poll(
-      async () => {
-        if (await cmd.isVisible().catch(() => false)) return true;
-        if (await isVisibleAndFocused(searchByTestId)) return true;
-        if (await isVisibleAndFocused(placeholder.first())) return true;
-        const searchRoleTextbox = searchRole.first().getByRole("textbox").first();
-        if (await isVisibleAndFocused(searchRoleTextbox)) {
-          return true;
-        }
-        return false;
-      },
-      { timeout: 15_000 }
-    )
-    .toBe(true);
+  const searchInputs = [
+    searchByTestId,
+    placeholder.first(),
+    searchRole.first().getByRole("textbox").first()
+  ];
+  const focusedSearchInput = getAnyVisibleLocator(
+    searchInputs.map((locator) => locator.and(page.locator(":focus")))
+  );
+  await expect(async () => {
+    if (await cmd.isVisible().catch(() => false)) {
+      await expect(cmd).toBeVisible({ timeout: 500 });
+      return;
+    }
+    await expect(focusedSearchInput).toBeVisible({ timeout: 500 });
+  }, "command bar or focused search input is visible").toPass({
+    timeout: 15_000
+  });
 }
 
 export async function openSettings(page: Page) {
   const overlay = page.locator("#cp");
   if (await overlay.isVisible().catch(() => false)) {
     await page.keyboard.press("Escape").catch(() => null);
-    await page.waitForTimeout(250);
-    await page.keyboard.press("Escape").catch(() => null);
-    await page.waitForTimeout(250);
+    const closed = await overlay
+      .waitFor({ state: "hidden", timeout: 2_000 })
+      .then(() => true)
+      .catch(() => false);
+    if (!closed) {
+      await page.keyboard.press("Escape").catch(() => null);
+      await expect(overlay).toBeHidden({ timeout: 5_000 });
+    }
   }
 
   const profileBtn = page.getByTestId("topnav-account-settings");
   const profileVisible = await profileBtn.isVisible().catch(() => false);
   if (profileVisible) {
     await profileBtn.click({ timeout: 8_000, force: true }).catch(() => null);
-    if (await settingsModalLikelyOpen(page)) {
+    const opened = await expectAnyLocatorVisible(
+      [page.getByTestId("settings-sidebar"), page.getByTestId("modal-close")],
+      {
+        message: "account settings action opens the settings shell",
+        timeout: 4_000
+      }
+    )
+      .then(() => true)
+      .catch(() => false);
+    if (opened) {
       await assertSettingsShellVisible(page);
       return;
     }
@@ -90,7 +82,16 @@ export async function openSettings(page: Page) {
   const iconVisible = await settingsIconBtn.isVisible().catch(() => false);
   if (iconVisible) {
     await settingsIconBtn.click({ timeout: 5_000 }).catch(() => null);
-    if (await settingsModalLikelyOpen(page)) {
+    const opened = await expectAnyLocatorVisible(
+      [page.getByTestId("settings-sidebar"), page.getByTestId("modal-close")],
+      {
+        message: "settings button opens the settings shell",
+        timeout: 4_000
+      }
+    )
+      .then(() => true)
+      .catch(() => false);
+    if (opened) {
       await assertSettingsShellVisible(page);
       return;
     }

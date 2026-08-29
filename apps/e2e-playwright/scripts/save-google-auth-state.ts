@@ -12,10 +12,12 @@ import "dotenv/config";
 import { chromium } from "@playwright/test";
 import path from "node:path";
 import fs from "node:fs";
+import { Product } from "@21n/products/product.type";
 
 const authDir = path.join(__dirname, "..", ".auth");
-const product = (process.env.PRODUCT ?? "nucleum").toLowerCase();
-const authFileName = product === "nucleum" ? "user.json" : `user-${product}.json`;
+const product = (process.env.PRODUCT ?? Product.NUCLEUM).toLowerCase();
+const authFileName =
+  product === Product.NUCLEUM ? "user.json" : `user-${product}.json`;
 const authStatePath = path.join(authDir, authFileName);
 const baseURL = process.env.APP_BASE_URL ?? "http://127.0.0.1:4173";
 const waitForRedirectBackMs = 120_000;
@@ -40,6 +42,35 @@ const allowedOrigins = [
 ];
 const allowedOriginsSet = new Set(allowedOrigins);
 
+function resolveAccountBaseUrl(appBaseUrl: string, region = "insouth") {
+  const url = new URL(appBaseUrl);
+  const host = url.hostname.toLowerCase();
+  if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0") {
+    return null;
+  }
+  const labels = host.split(".").filter(Boolean);
+  const subdomain = labels[0] ?? "";
+  const env =
+    subdomain === "local" || subdomain === "dev" || subdomain === "pre"
+      ? subdomain
+      : subdomain === "web" || subdomain === "app"
+        ? "live"
+      : "dev";
+  const domain = ["local", "dev", "pre", "web", "app"].includes(subdomain)
+    ? labels.slice(1).join(".")
+    : labels.slice(-2).join(".");
+  const envSuffix = env === "live" ? "" : `-${env}`;
+  return `https://account-${region}${envSuffix}.${domain}`;
+}
+
+function resolveParentDomain(appBaseUrl: string) {
+  const hostname = new URL(appBaseUrl).hostname;
+  if (hostname === "localhost" || hostname === "127.0.0.1") return hostname;
+  return hostname.includes(".")
+    ? hostname.split(".").slice(-2).join(".")
+    : hostname;
+}
+
 async function main() {
   if (!fs.existsSync(authDir)) {
     fs.mkdirSync(authDir, { recursive: true });
@@ -57,7 +88,8 @@ async function main() {
     args: ["--disable-blink-features=AutomationControlled", "--no-sandbox"]
   });
   const context = await browser.newContext({
-    viewport: { width: 1280, height: 720 },
+    viewport: { width: 1512, height: 982 },
+    ignoreHTTPSErrors: true,
     userAgent:
       "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
   });
@@ -96,8 +128,53 @@ async function main() {
       timeout: waitForRedirectBackMs
     });
     const landedOrigin = new URL(page.url()).origin;
+    const parentDomain = resolveParentDomain(baseURL);
+    const hasSessionCookie = async () => {
+      const cookies = await context.cookies();
+      return cookies.some((cookie) => {
+        if (cookie.expires > 0 && cookie.expires <= Date.now() / 1000 + 60) {
+          return false;
+        }
+        const isSessionCookie =
+          cookie.name.includes("session_token") ||
+          cookie.name.endsWith(".session");
+        if (!isSessionCookie) return false;
+        return (
+          cookie.domain === parentDomain ||
+          cookie.domain === `.${parentDomain}` ||
+          cookie.domain.endsWith(`.${parentDomain}`)
+        );
+      });
+    };
+    const hasAuthFnBrowserSession = async () => {
+      const accountBaseUrl = resolveAccountBaseUrl(baseURL);
+      if (!accountBaseUrl) return false;
+      return page
+        .evaluate(async (url) => {
+          const response = await fetch(`${url}/auth/session`, {
+            credentials: "include"
+          });
+          const json = await response.json().catch(() => null);
+          return Boolean(response.ok && json?.data?.session);
+        }, accountBaseUrl)
+        .catch(() => false);
+    };
+    const deadline = Date.now() + 30_000;
+    let hasSavedAuthSession = false;
+    while (Date.now() < deadline) {
+      if ((await hasSessionCookie()) && (await hasAuthFnBrowserSession())) {
+        hasSavedAuthSession = true;
+        break;
+      }
+      await page.waitForTimeout(500);
+    }
+    if (!hasSavedAuthSession) {
+      throw new Error(
+        "AuthFn session was not detected; refusing to save unauthenticated storageState."
+      );
+    }
 
-    await context.storageState({ path: authStatePath });
+    await context.storageState({ path: authStatePath, indexedDB: true });
     console.log("Back on app. Saved auth state to", authStatePath);
     console.log("Done. Run tests with: npx playwright test --project=" + product);
     if (landedOrigin !== new URL(baseURL).origin) {
