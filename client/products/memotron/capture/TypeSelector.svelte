@@ -5,18 +5,24 @@
   import type { ISelectItem } from "@21n/types/select.type";
   import { Size } from "@21n/types/size.enum";
   import { appStore } from "@21n/stores/app.store";
-  import { collectionStore } from "@21n/components/collection/collection.store";
 
   import TypeSelectorItem from "@21n/products/memotron/capture/typeSelector/TypeSelectorItem.svelte";
   import Text from "@21n/elements/text/Text.svelte";
   import { TextStyle } from "@21n/types/text.enum";
   import { ButtonStyle } from "@21n/types/button.type";
   import Icon from "@21n/elements/Icon.svelte";
-  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { CollectionObjectKey } from "@21n/components/collection/collection.type";
+  import { Resource } from "@21n/data/datafn/resource.enum";
+  import {
+    CollectionObjectKey,
+    type ICollectionThumb
+  } from "@21n/components/collection/collection.type";
   import context from "@21n/stores/context.store";
   import { cn } from "@21n/utils/ui.utils";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { toSvelteStore } from "@datafn/svelte";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import { UIState } from "@21n/stores/uiState/uiState.type";
+  import type { IRecordId } from "@21n/types/data.type";
 
   let {
     selected,
@@ -30,9 +36,30 @@
     onCapture?: ((event: Event) => void) | undefined;
   } = $props();
   let dev_isEnableEditShortcuts: boolean = true;
-  let refreshId = $state(new Date().getTime());
   const isDev = import.meta.env.DEV;
   const dev_isBoxed: boolean = true;
+  const shortcutStore = $derived.by(() => {
+    if (isHideTypeShortcuts) return undefined;
+    return toSvelteStore<ICollectionThumb[]>(
+      datafn.collection.signal({
+        select: [
+          "id",
+          "label",
+          "avatar",
+          "resource",
+          "updatedAt",
+          CollectionObjectKey.isCaptureShortcutEnabled
+        ],
+        filters: {
+          [CollectionObjectKey.isCaptureShortcutEnabled]: true
+        }
+      }),
+      { initialData: [] }
+    );
+  });
+  const shortcutRecords = $derived(shortcutStore ? $shortcutStore!.data : []);
+  const types = $derived(resolveTypes(shortcutRecords));
+  const isLoading = $derived(Boolean(shortcutStore && $shortcutStore!.loading));
 
   const contentTypes: (ISelectItem & { value: string })[] = [
     {
@@ -56,6 +83,11 @@
     ...(isDev
       ? [
           {
+            icon: "canvas",
+            value: CaptureMethod.CANVAS,
+            label: "Canvas"
+          },
+          {
             icon: "ri:sketching",
             value: CaptureMethod.SKETCH,
             label: "Freehand"
@@ -63,7 +95,7 @@
           {
             icon: "globe",
             value: CaptureMethod.WEB,
-            label: "Add from Web"
+            label: "Web artifact"
           }
         ]
       : []),
@@ -81,9 +113,27 @@
       : [])
   ];
 
-  async function refreshTypes() {
-    if (isHideTypeShortcuts) return [];
-    const types = await collectionStore.resolveCaptureShortcuts();
+  function resolveTypes(shortcuts: ICollectionThumb[]) {
+    const recents =
+      uiState
+        .getState(UIState.captureShortcutRecents)
+        ?.map((x: IRecordId) => x.toString()) ?? [];
+    const types = shortcuts
+      .filter((type: any) => !type.resource || type.resource === Resource.node)
+      .map((type: any) => ({
+        value: type.id,
+        label: type.label,
+        icon: type.avatar,
+        isShortcut: true
+      }))
+      .sort((a: any, b: any) => {
+        const aIndex = recents.indexOf(a.value.toString());
+        const bIndex = recents.indexOf(b.value.toString());
+        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+        if (aIndex !== -1) return -1;
+        if (bIndex !== -1) return 1;
+        return 0;
+      });
     return [...contentTypes, ...(isHideTypeShortcuts ? [] : types)];
   }
 </script>
@@ -94,62 +144,56 @@
       <Text content="Select a type" style={TextStyle.SECTION_HEADING} />
     </div>
   {/if}
-  {#key refreshId}
-    {#await refreshTypes()}
-      <div
-        class="flex justify-center bg-bgs1"
-        role="status"
-        aria-label="Loading"
-      >
-        <Icon icon="svg-spinners:3-dots-fade" />
-      </div>
-    {:then types}
-      <div
-        class={cn(
-          "grid mo:grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] w-full",
-          {
-            "gap-2 dp:gap-4 grid-cols-[repeat(auto-fill,minmax(12rem,1fr))]":
-              !dev_isBoxed,
-            "gap-0.5 bg-bgs2 rounded-md border-2 border-bgs2 overflow-hidden grid-cols-4":
-              dev_isBoxed
-          }
-        )}
-      >
-        {#each types as item, index}
-          <div
-            class={cn({
-              "col-span-3": types.length % 4 === 1 && index === types.length - 1
-            })}
-          >
-            <TypeSelectorItem
-              {item}
-              isActive={selected === item.value}
-              isBoxed={true}
-              {onSelect}
-              {onCapture}
-            />
-          </div>
-        {/each}
-        {#if dev_isEnableEditShortcuts && dev_isBoxed}
-          <button
-            class={cn(
-              "flex justify-center items-center bg-bgs1 min-h-12 notouch:hover:bg-bgs1-striped active:bg-bgs2",
-              {
-                "col-span-4": types.length % 4 === 0,
-                "col-span-2": types.length % 4 === 2,
-                "w-full h-full col-span-1": types.length % 4 !== 0
-              }
-            )}
-            onclick={() => {
-              appStore.runAction(MemotronAction.CAPTURE_SETTINGS);
-            }}
-          >
-            <Icon icon="more-outline-horizontal" />
-          </button>
-        {/if}
-      </div>
-    {/await}
-  {/key}
+  {#if isLoading}
+    <div class="flex justify-center bg-bgs1" role="status" aria-label="Loading">
+      <Icon icon="svg-spinners:3-dots-fade" />
+    </div>
+  {:else}
+    <div
+      class={cn(
+        "grid mo:grid-cols-[repeat(auto-fill,minmax(8rem,1fr))] w-full",
+        {
+          "gap-2 dp:gap-4 grid-cols-[repeat(auto-fill,minmax(12rem,1fr))]":
+            !dev_isBoxed,
+          "gap-0.5 bg-bgs2 rounded-md border-2 border-bgs2 overflow-hidden grid-cols-4":
+            dev_isBoxed
+        }
+      )}
+    >
+      {#each types as item, index}
+        <div
+          class={cn({
+            "col-span-3": types.length % 4 === 1 && index === types.length - 1
+          })}
+        >
+          <TypeSelectorItem
+            {item}
+            isActive={selected === item.value}
+            isBoxed={true}
+            {onSelect}
+            {onCapture}
+          />
+        </div>
+      {/each}
+      {#if dev_isEnableEditShortcuts && dev_isBoxed}
+        <button
+          class={cn(
+            "flex justify-center items-center bg-bgs1 min-h-12 notouch:hover:bg-bgs1-striped active:bg-bgs2",
+            {
+              "col-span-4": types.length % 4 === 0,
+              "col-span-2": types.length % 4 === 2,
+              "w-full h-full col-span-1": types.length % 4 !== 0
+            }
+          )}
+          onclick={() => {
+            appStore.runAction(MemotronAction.CAPTURE_SETTINGS);
+          }}
+        >
+          <Icon icon="more-outline-horizontal" />
+        </button>
+      {/if}
+    </div>
+  {/if}
   {#if !dev_isBoxed && dev_isEnableEditShortcuts}
     <Button
       label="Edit shortcuts"
@@ -162,13 +206,3 @@
     />
   {/if}
 </div>
-
-<ComponentBaseLayer
-  subscribeToResource={new Set([Resource.collection])}
-  subscriptionPropsForMergeAction={[
-    CollectionObjectKey.isCaptureShortcutEnabled
-  ]}
-  onChange={() => {
-    refreshId = new Date().getTime();
-  }}
-/>

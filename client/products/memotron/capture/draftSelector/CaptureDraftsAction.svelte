@@ -1,17 +1,17 @@
 <script lang="ts">
   import { popover } from "@21n/actions/popover.action";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import { captureStore } from "@21n/products/memotron/capture/capture.store";
   import type { ICapture } from "@21n/products/memotron/capture/capture.type";
   import { onMount } from "svelte";
   import DraftsPopover from "@21n/products/memotron/capture/draftSelector/DraftsPopover.svelte";
   import { Placement } from "@21n/types/direction.enum";
   import type { IRecordId } from "@21n/types/data.type";
-  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { isSameResource } from "@21n/data/datafn/resource.utils";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
   import { appEvents } from "@21n/stores/notification.store";
+  import { datafn } from "@21n/stores/datafn.store";
 
   let {
     size = Size.md,
@@ -26,11 +26,14 @@
     refresh();
   });
   async function refresh() {
-    const result = await captureStore.selectMany();
+    const response = await datafn.capture.query({
+      sort: [{ field: "updatedAt", direction: "desc" }]
+    } as any);
+    const result = response.data as ICapture[];
     if (isValidArrayWithData(result)) {
       result.sort((a: ICapture, b: ICapture) => {
         return (
-          new Date(b.modifiedAt).getTime() - new Date(a.modifiedAt).getTime()
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
         );
       });
       drafts = result;
@@ -38,7 +41,10 @@
   }
 
   async function onDelete(id: IRecordId) {
-    await captureStore.delete(id);
+    await datafn.capture.mutate({
+      operation: "delete",
+      id
+    });
     const filteredDrafts = drafts.filter((draft) => !isSameResource(draft, id));
     if (filteredDrafts.length === 0) {
       hidePopover();

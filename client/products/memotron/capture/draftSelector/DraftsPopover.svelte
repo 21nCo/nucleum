@@ -4,7 +4,7 @@
   import { TextStyle } from "@21n/types/text.enum";
   import type { ICapture } from "@21n/products/memotron/capture/capture.type";
   import DraftItem from "@21n/products/memotron/capture/draftSelector/DraftItem.svelte";
-  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { isSameResource } from "@21n/data/datafn/resource.utils";
   import EdgeButton from "@21n/elements/button/EdgeButton.svelte";
 
   let {
