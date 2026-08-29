@@ -24,7 +24,7 @@
 
   let {
     mode = TimeScaleUnit.DAY,
-    birthdate = undefined,
+    birthdate = new Date(1995, 3, 10),
     groupByBirthdate = true,
     yearPhases = []
   }: {

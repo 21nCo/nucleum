@@ -4,7 +4,8 @@
   import { page } from "$app/stores";
   let {
     date = new Date(
-      $page.url.searchParams.get(AppSearchParam.DATE) ?? new Date().toISOString()
+      $page.url?.searchParams?.get(AppSearchParam.DATE) ??
+        new Date().toISOString()
     )
   }: {
     date?: Date;

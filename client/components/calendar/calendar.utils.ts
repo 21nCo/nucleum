@@ -1,6 +1,6 @@
 import { TimeScaleUnit } from "@21n/types/time.type";
-import { generateResourceId } from "@21n/components/flux/flux.utils";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { generateResourceId } from "@21n/data/datafn/id.utils";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import { CalendarColumnLayout, CalendarColumnPanel } from "./calendar.type";
 import { Product } from "@21n/products/product.type";
 
