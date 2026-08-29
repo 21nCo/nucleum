@@ -1,5 +1,10 @@
 import type { Adapter } from '@superfunctions/db';
-import type { AuthFnDeliveryProvider, AuthFnDeliveryRequest, AuthFnDeliveryResult } from '@authfn/core';
+import type {
+  AuthFnDeliveryMessage,
+  AuthFnDeliveryProvider,
+  AuthFnDeliveryRequest,
+  AuthFnDeliveryResult
+} from 'authfn';
 import { createSendFn, resendAdapter } from 'sendfn/edge';
 import type { Logger } from '@logfn/core';
 
@@ -9,7 +14,7 @@ export function createSendFnDeliveryProvider(input: {
 }): AuthFnDeliveryProvider {
   const sender = resolveAccountEmailSender();
   const resendApiKey = process.env.RESEND_API_KEY;
-  const sendfn = resendApiKey
+  const delivery = resendApiKey
     ? createSendFn({
         email: {
           from: sender.header
@@ -22,11 +27,7 @@ export function createSendFnDeliveryProvider(input: {
 
   return {
     async send(request: AuthFnDeliveryRequest): Promise<AuthFnDeliveryResult> {
-      const subject = subjectForPurpose(request.purpose);
-      const text = `Your Nucleus verification code is ${request.code}. It expires shortly.`;
-      const html = `<p>Your Nucleus verification code is <strong>${escapeHtml(request.code)}</strong>.</p><p>It expires shortly.</p>`;
-
-      if (!sendfn) {
+      if (!delivery) {
         if (!allowsLocalDelivery()) {
           input.logger.error('authfn otp delivery is not configured for production', {
             purpose: request.purpose,
@@ -55,25 +56,46 @@ export function createSendFnDeliveryProvider(input: {
         };
       }
 
-      const result = await sendfn.email({
-        userId: request.challengeId,
-        to: request.email,
-        subject,
-        text,
-        html,
-        metadata: {
-          purpose: request.purpose,
-          challengeId: request.challengeId
-        }
+      const result = await delivery.email({
+        userId: request.userId ?? 'delivery',
+        to: request.to,
+        cc: request.cc,
+        bcc: request.bcc,
+        subject: request.subject,
+        html: request.html,
+        text: request.text,
+        attachments: request.attachments,
+        metadata: request.metadata,
+        tags: request.tags
       });
-
+      const metadata: Record<string, unknown> = {
+        provider: result.provider,
+        transactionId: result.id
+      };
+      if (result.providerMessageId) {
+        metadata.providerMessageId = result.providerMessageId;
+      }
       return {
         sent: true,
-        metadata: {
-          provider: 'sendfn',
-          transactionId: result.id
-        }
+        metadata
       };
+    }
+  };
+}
+
+/**
+ * Builds account-service OTP email content before the shared delivery provider sends it.
+ */
+export function createAccountOtpDeliveryMessage(
+  request: AuthFnDeliveryRequest
+): AuthFnDeliveryMessage {
+  return {
+    subject: subjectForPurpose(request.purpose),
+    text: `Your Nucleus verification code is ${request.code}. It expires shortly.`,
+    html: `<p>Your Nucleus verification code is <strong>${escapeHtml(request.code)}</strong>.</p><p>It expires shortly.</p>`,
+    metadata: {
+      purpose: request.purpose,
+      challengeId: request.challengeId
     }
   };
 }
