@@ -85,7 +85,7 @@
           }
         ];
       }
-      $userPreferences.recentCommands = recentCommands;
+      userPreferences.setRecentCommands(recentCommands);
     }
   }
 
