@@ -8,23 +8,22 @@ import {
   AnalyticsCardType
 } from "@21n/products/pointron/analytics/analytics.types";
 import { TimePeriodType, TimeScale } from "@21n/types/time.type";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import {
   generateAnalyticsSeedPage,
   generateAnalyticsSeedPages,
   generateParamsForCards
 } from "@21n/products/pointron/analytics/analytics.utils";
 import { normalizeAnalyticsConfig } from "@21n/products/pointron/analytics/analytics.normalize";
-import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-import { sessionLogStore } from "@21n/products/pointron/logs/log.store";
+import { datafn } from "@21n/stores/datafn.store";
 import type { IRecordId } from "@21n/types/data.type";
-import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
-import { tzStore } from "@21n/components/settings/timezone/tz.store";
+import { isSameResource } from "@21n/data/datafn/resource.utils";
 import { toasts } from "@21n/stores/notification.store";
+import { time } from "@datafn/client";
 
 type IFocusLogAggregate = {
-  goalId?: IRecordId;
+  objectiveId?: IRecordId;
   focus: number;
 };
 
@@ -38,31 +37,49 @@ export const selectedPageId = writable<string | undefined>(
   seedAnalyticsConfig.pages[0]?.id
 );
 
-class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
-  constructor() {
-    super(Resource.pointAnalyticsConfig, { ...seedAnalyticsConfig });
-  }
+const analyticsConfigSignal = datafn.kv.signal<IAnalyticsConfigStore>(
+  Resource.pointAnalyticsConfig,
+  { defaultValue: { ...seedAnalyticsConfig } }
+);
+const analyticsConfigLocal = writable<IAnalyticsConfigStore>(
+  resolveAnalyticsConfig(seedAnalyticsConfig)
+);
 
+function resolveAnalyticsConfig(data?: IAnalyticsConfigStore) {
+  const normalized = normalizeAnalyticsConfig(
+    data ?? seedAnalyticsConfig,
+    generateAnalyticsSeedPages()
+  );
+  return normalized.pages.length === 0
+    ? { ...seedAnalyticsConfig }
+    : { ...normalized, id: analyticsConfigStoreId };
+}
+
+analyticsConfigSignal.subscribe((value) => {
+  analyticsConfigLocal.set(resolveAnalyticsConfig(value));
+});
+
+export const analyticsConfigStore = {
+  subscribe: analyticsConfigLocal.subscribe,
+  get() {
+    return get(analyticsConfigLocal);
+  },
   reset() {
     const val = {
       ...seedAnalyticsConfig,
       pages: [generateAnalyticsSeedPage()]
     };
-    return this.modify(val);
-  }
+    analyticsConfigLocal.set(resolveAnalyticsConfig(val));
+    return datafn.kv.set(Resource.pointAnalyticsConfig, val);
+  },
 
   loader(data: IAnalyticsConfigStore) {
-    const normalized = normalizeAnalyticsConfig(
-      data,
-      generateAnalyticsSeedPages()
+    analyticsConfigLocal.set(resolveAnalyticsConfig(data));
+    return datafn.kv.set(
+      Resource.pointAnalyticsConfig,
+      resolveAnalyticsConfig(data)
     );
-    if (normalized.pages.length === 0) {
-      this.loadSeedData();
-    } else {
-      const val = { ...normalized, id: analyticsConfigStoreId };
-      this.modify(val, { isPersist: false });
-    }
-  }
+  },
 
   updateCardConfig(pageId: string, config: IAnalyticsCard) {
     let state = this.get();
@@ -72,7 +89,7 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
     if (!chart) return;
     Object.assign(chart, config);
     this.modify(state);
-  }
+  },
 
   removeCard(pageId: string, chartId: string) {
     let state = this.get();
@@ -83,7 +100,7 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
       page.cards.splice(index, 1);
     }
     this.modify(state);
-  }
+  },
 
   addCard(pageId: string) {
     let state = this.get();
@@ -106,7 +123,7 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
       }
     });
     this.modify(state);
-  }
+  },
 
   addPage() {
     let state = this.get();
@@ -114,7 +131,7 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
     state.pages = state.pages ?? [];
     state.pages.push({ ...newPage, id: generateSimpleRandomId() });
     this.modify(state);
-  }
+  },
 
   editPageLabel(id: string, label: string) {
     const state = this.get();
@@ -125,7 +142,7 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
       ...state,
       pages
     });
-  }
+  },
 
   removePage(id: string) {
     let state = this.get();
@@ -134,7 +151,7 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
       state.pages.splice(index, 1);
     }
     this.modify(state);
-  }
+  },
 
   rearrangePages(ids: string[]) {
     let state = this.get();
@@ -143,13 +160,19 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
       .map((id) => state.pages.find((p) => p.id === id))
       .filter((page): page is AnalyticsPage => Boolean(page));
     this.modify(state);
-  }
-}
+  },
 
-// export const analyticsConfigStore = initAnalyticsConfigStore();
-export const analyticsConfigStore = AnalyticsConfigStore.resolve(
-  analyticsConfigStoreId
-);
+  modify(n: Partial<IAnalyticsConfigStore>) {
+    analyticsConfigLocal.update((current) =>
+      resolveAnalyticsConfig({ ...current, ...n })
+    );
+    return datafn.kv.merge(Resource.pointAnalyticsConfig, n);
+  },
+
+  destroy() {
+    analyticsConfigSignal.dispose();
+  }
+};
 
 class FocusAggregates {
   /**
@@ -158,36 +181,35 @@ class FocusAggregates {
    * @returns
    */
   async aggregateFocusForCurrentDay(params: {
-    goalIds?: IRecordId[];
-    goalId?: IRecordId;
+    objectiveIds?: IRecordId[];
+    objectiveId?: IRecordId;
   }) {
-    const dayFilter = tzStore.resolveTimePeriodFilterForDay(new Date());
-    const logs = await sessionLogStore.selectMany({
+    const logsResult = await datafn.sessionLog.query({
       filters: {
-        startUnix: {
-          greaterThanOrEqual: dayFilter.$gte,
-          lessThanOrEqual: dayFilter.$lte
-        },
-        goalId: params.goalIds ?? params.goalId?.toString()
-      }
+        objectiveId: params.objectiveIds
+          ? { $in: params.objectiveIds }
+          : params.objectiveId?.toString()
+      },
+      temporal: time.day("startUnix", new Date())
     });
+    const logs = logsResult.data ?? [];
     if (!logs) return 0;
     const focusLogs = logs as IFocusLogAggregate[];
-    if (params.goalIds) {
+    if (params.objectiveIds) {
       let data: {
         id: IRecordId;
         focus: number;
       }[] = [];
-      params.goalIds.forEach((goalId) => {
-        const goalLogs = focusLogs.filter((log: IFocusLogAggregate) =>
-          log.goalId ? isSameResource(log.goalId, goalId) : false
+      params.objectiveIds.forEach((objectiveId) => {
+        const objectiveLogs = focusLogs.filter((log: IFocusLogAggregate) =>
+          log.objectiveId ? isSameResource(log.objectiveId, objectiveId) : false
         );
-        const focus = goalLogs.reduce(
+        const focus = objectiveLogs.reduce(
           (acc: number, log: IFocusLogAggregate) => acc + log.focus,
           0
         );
         data.push({
-          id: goalId,
+          id: objectiveId,
           focus
         });
       });
