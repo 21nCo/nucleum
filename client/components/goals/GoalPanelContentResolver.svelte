@@ -1,69 +1,71 @@
 <script lang="ts">
-  import type { IActiveGoalStore } from "./goal.store";
-  import GoalInfoPanel from "./info/GoalInfoPanel.svelte";
-  import SubGoalsPanel from "./sub/SubGoalsPanel.svelte";
-  import GoalHistory from "./history/GoalHistory.svelte";
-  import GoalTasks from "./tasks/GoalTasks.svelte";
-  import GoalAnalytics from "./GoalAnalytics.svelte";
+  import type { IActiveObjectiveStore } from "./goal.store";
+  import ObjectiveInfoPanel from "./info/GoalInfoPanel.svelte";
+  import SubObjectivesPanel from "./sub/SubGoalsPanel.svelte";
+  import ObjectiveHistory from "./history/GoalHistory.svelte";
+  import ObjectiveTasks from "./tasks/GoalTasks.svelte";
+  import ObjectiveAnalytics from "./GoalAnalytics.svelte";
   import PropertiesPane from "@21n/components/collection/properties/PropertiesPane.svelte";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import { ResourcePanelType } from "@21n/components/resource/resourcePanel.type";
   import type { IInlineStatus } from "@21n/types/notification.type";
 
   let {
-    goal,
+    objective,
     isConstrainedWidth = false,
     isThreeColumned = false,
     status = $bindable()
   }: {
-    goal: IActiveGoalStore;
+    objective: IActiveObjectiveStore;
     isConstrainedWidth?: boolean;
     isThreeColumned?: boolean;
     status?: IInlineStatus | undefined;
   } = $props();
 
-  const goalPanel = $derived($goal?.panel);
-  const goalId = $derived($goal?.id);
+  const objectivePanel = $derived($objective?.panel);
+  const objectiveId = $derived($objective?.id);
   const isActiveResource = $derived(
-    !$goal?.isArchived && !$goal?.trashInformation && !$goal?.isParentInactive
+    !$objective?.isArchived &&
+      $objective?.trashedAt == null &&
+      !$objective?.isAncestorInactive
   );
 </script>
 
 <div class="cw:w-full h-full transition-all flex">
-  {#if goalPanel === ResourcePanelType.OVERVIEW}
+  {#if objectivePanel === ResourcePanelType.OVERVIEW}
     <div class="flex flex-col min-w-96 grow gap-4 p-2 h-full">
-      {#if goalId}
-        <GoalTasks id={goalId} {isActiveResource} />
+      {#if objectiveId}
+        <ObjectiveTasks id={objectiveId} {isActiveResource} />
       {/if}
     </div>
   {:else}
     <div class="cw:p-0 p-4 grow cw:w-full">
-      {#if goalPanel === ResourcePanelType.DEFAULT}
-        <GoalInfoPanel {goal} {isConstrainedWidth} bind:status />
-      {:else if goalPanel === ResourcePanelType.SUB}
-        <SubGoalsPanel {goal} {isActiveResource} />
-      {:else if goalPanel === ResourcePanelType.ACTIVITY}
-        <GoalHistory {goal} />
-      {:else if goalPanel === ResourcePanelType.TASKS}
-        {#if goalId}
-          <GoalTasks id={goalId} {isActiveResource} />
+      {#if objectivePanel === ResourcePanelType.DEFAULT}
+        <ObjectiveInfoPanel {objective} {isConstrainedWidth} bind:status />
+      {:else if objectivePanel === ResourcePanelType.SUB}
+        <SubObjectivesPanel {objective} {isActiveResource} />
+      {:else if objectivePanel === ResourcePanelType.ACTIVITY}
+        <ObjectiveHistory {objective} />
+      {:else if objectivePanel === ResourcePanelType.TASKS}
+        {#if objectiveId}
+          <ObjectiveTasks id={objectiveId} {isActiveResource} />
         {/if}
-      {:else if goalPanel === ResourcePanelType.ANALYTICS}
-        {#if goalId}
-          <GoalAnalytics id={goalId} />
+      {:else if objectivePanel === ResourcePanelType.ANALYTICS}
+        {#if objectiveId}
+          <ObjectiveAnalytics id={objectiveId} />
         {/if}
-      {:else if goalPanel === ResourcePanelType.PROPERTIES}
+      {:else if objectivePanel === ResourcePanelType.PROPERTIES}
         <div class="flex w-full justify-center">
           <div class="w-96">
-            <PropertiesPane item={goal} resource={Resource.goal} />
+            <PropertiesPane item={objective} resource={Resource.objective} />
           </div>
         </div>
       {/if}
     </div>
   {/if}
-  {#if isThreeColumned && goalPanel === ResourcePanelType.OVERVIEW}
+  {#if isThreeColumned && objectivePanel === ResourcePanelType.OVERVIEW}
     <div class="flex flex-col bg-bgs2 border-l border-brs2 min-w-96 w-96 p-4">
-      <GoalInfoPanel {goal} />
+      <ObjectiveInfoPanel {objective} />
     </div>
   {/if}
 </div>
