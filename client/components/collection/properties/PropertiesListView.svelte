@@ -5,9 +5,9 @@
   import PropertyItem from "@21n/components/collection/properties/PropertyItem.svelte";
   import {
     resolvePropertiesForCapture,
-    resolvePropertiesForNodePage
+    resolvePropertiesForNodePage,
+    resolveIsMultiSelectProperty
   } from "@21n/components/collection/properties/property.utils";
-  import { onMount } from "svelte";
   import { hoverable } from "@21n/actions/hover.action";
   import { Size } from "@21n/types/size.enum";
   import Badge from "@21n/elements/text/Badge.svelte";
@@ -24,11 +24,11 @@
   import {
     removeDuplicatesFilter,
     resourceInList
-  } from "@21n/components/flux/resourceStores/resource.utils";
+  } from "@21n/data/datafn/resource.utils";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  import { propertyStore } from "@21n/components/collection/properties/property.store";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import { NodeType } from "@21n/products/memotron/node/node.type";
+  import { datafn } from "@21n/stores/datafn.store";
   let {
     types = undefined,
     isIncludeExtendedProperties = true,
@@ -52,14 +52,13 @@
     context?: "capture" | "clip" | "mainpanel" | "rightpanel";
     isReadOnlyMode?: boolean;
     isCollapsed?: boolean;
-    onChange?: ((event: CustomEvent<{ id: string; value: any }>) => void) | undefined;
+    onChange?:
+      | ((event: CustomEvent<ICollectionItemPropertyValue>) => void)
+      | undefined;
     onPropertyCount?: ((count: number) => void) | undefined;
     onShowAll?: (() => void) | undefined;
   } = $props();
-  let properties = $state<IProperty[]>([]);
-  /**
-   * Renders properties as column
-   */
+  const properties = $derived(resolveProperties(types));
   let isRenderAsColumn = $derived(
     context === "rightpanel" || context === "clip"
   );
@@ -75,12 +74,12 @@
     return Boolean(value && "contentType" in value);
   }
 
-  onMount(async () => {
-    if (types) await refresh();
+  $effect(() => {
+    onPropertyCount?.(properties.length);
   });
 
-  async function refresh() {
-    if (!types) return;
+  function resolveProperties(types: ICollectionExpanded[] | undefined) {
+    if (!types) return [];
     let propertyConfig = types
       .map((x) => x.properties)
       .flat()
@@ -93,13 +92,13 @@
       propertyConfig = propertyConfig.concat(extendedProps);
       propertyConfig = propertyConfig.filter(removeDuplicatesFilter);
     }
-    if (propertyConfig.length === 0) return;
+    if (propertyConfig.length === 0) return [];
     if (context === "capture" || context === "clip")
-      properties = resolvePropertiesForCapture(propertyConfig);
+      return resolvePropertiesForCapture(propertyConfig);
     else if (context === "mainpanel")
-      properties = resolvePropertiesForNodePage(propertyConfig);
-    else if (context === "rightpanel") properties = propertyConfig;
-    onPropertyCount?.(properties.length);
+      return resolvePropertiesForNodePage(propertyConfig);
+    else if (context === "rightpanel") return propertyConfig;
+    return [];
   }
 
   async function onNewOption(e: CustomEvent) {
@@ -112,28 +111,67 @@
     };
     if (!property.config || !("options" in property.config)) return;
     property.config.options = [...(property.config.options ?? []), newOption];
-    const result = await propertyStore.modify(property.id, {
-      config: property.config
-    });
-    onChange?.(
-      new CustomEvent("change", {
-        detail: {
+    await datafn.property.mutate({
+      operation: "merge",
       id: property.id,
-      value: newOption.id
-        }
-      })
-    );
+      record: {
+        id: property.id,
+        config: property.config
+      }
+    });
+    const currentValue = values?.find(resourceInList(property))?.value;
+    const nextValue = resolveIsMultiSelectProperty(property)
+      ? [
+          ...new Set([
+            ...(Array.isArray(currentValue)
+              ? currentValue
+              : currentValue
+                ? [currentValue.toString()]
+                : []),
+            newOption.id
+          ])
+        ]
+      : newOption.id;
+    emitPropertyValue(property.id, nextValue);
   }
 
   async function onConfigChange(e: CustomEvent) {
     const property = properties.find(resourceInList(e.detail.id));
     if (!property) return;
-    const result = await propertyStore.modify(property.id, {
-      config: e.detail.config,
-      default: e.detail.default
+    await datafn.property.mutate({
+      operation: "merge",
+      id: property.id,
+      record: {
+        id: property.id,
+        config: e.detail.config,
+        defaultValue: e.detail.defaultValue
+      }
     });
     property.config = e.detail.config;
-    property.default = e.detail.default;
+    property.defaultValue = e.detail.defaultValue;
+  }
+
+  function resolveCollectionIdForProperty(propertyId: string) {
+    const directType = types?.find((type) =>
+      type.properties?.some(resourceInList(propertyId))
+    );
+    if (directType?.id) return directType.id;
+    const extendedType = types?.find((type) =>
+      type.extendProperties?.some(resourceInList(propertyId))
+    );
+    return extendedType?.typeToExtend?.id ?? extendedType?.id;
+  }
+
+  function emitPropertyValue(propertyId: string, value: any) {
+    onChange?.(
+      new CustomEvent("change", {
+        detail: {
+          id: propertyId,
+          value,
+          collectionId: resolveCollectionIdForProperty(propertyId)
+        }
+      })
+    );
   }
 </script>
 
@@ -141,7 +179,7 @@
   <div
     class={cn(
       "w-full userdata",
-        !isRenderAsColumn &&
+      !isRenderAsColumn &&
         !$view.isConstrainedWidth &&
         resource === Resource.node &&
         isNodeItem(item) &&
@@ -159,11 +197,11 @@
           "border-brs3":
             isCollapsed ||
             isCollapserHovered ||
-            (resource === Resource.goal && !$view.isConstrainedWidth),
+            (resource === Resource.objective && !$view.isConstrainedWidth),
           "border-transparent":
             !isCollapsed &&
             !isCollapserHovered &&
-            !(resource === Resource.goal && !$view.isConstrainedWidth)
+            !(resource === Resource.objective && !$view.isConstrainedWidth)
         }
       )}
     >
@@ -181,7 +219,6 @@
           }}
         >
           <span class="flex items-center gap-2">
-            <!-- <Icon icon="widget" size={Size.sm} /> -->
             <span class="text-b2 text-fgs3"> Properties </span>
             {#if isCollapsed}
               <Badge text={properties.length} />
@@ -228,17 +265,10 @@
               {isReadOnlyMode}
               {parentBgIndex}
               onChange={(e) => {
-                onChange?.(
-                  new CustomEvent("change", {
-                    detail: {
-                  id: property.id,
-                  value: e.detail
-                    }
-                  })
-                );
+                emitPropertyValue(property.id, e.detail);
               }}
-              onNewOption={onNewOption}
-              onConfigChange={onConfigChange}
+              {onNewOption}
+              {onConfigChange}
             />
           {/each}
         </div>

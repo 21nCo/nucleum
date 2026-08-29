@@ -5,7 +5,7 @@
   import AvatarRenderer from "@21n/client/elements/avatarPicker/AvatarRenderer.svelte";
   import { Size } from "@21n/client/types/size.enum";
   import { cn } from "@21n/client/utils/ui.utils";
-  import { resolveResourceIcon } from "@21n/client/components/flux/resourceStores/resource.utils";
+  import { resolveResourceIcon } from "@21n/data/datafn/resource.utils";
   import type { IAvatar } from "@21n/client/types/avatar.type";
   import SideNavCombinationNavItem from "./SideNavCombinationNavItem.svelte";
   import {
@@ -39,9 +39,7 @@
     draggedItemId?: string | null;
     onSelect?: ((item: ICombinationNavItem) => void) | undefined;
     onToggle?: ((id: string) => void) | undefined;
-    onEdit?:
-      | ((detail: { id: string; label: string }) => void)
-      | undefined;
+    onEdit?: ((detail: { id: string; label: string }) => void) | undefined;
     onStartEdit?: ((id: string) => void) | undefined;
     onDelete?: ((id: string) => void) | undefined;
     onDragStart?: ((id: string) => void) | undefined;
@@ -202,7 +200,7 @@
       : dropPosition === "after"
         ? "box-shadow: inset 0 -2px 0 0 var(--aps1);"
         : dropPosition === "inside"
-        ? "box-shadow: inset 0 0 0 2px var(--aps1);"
+          ? "box-shadow: inset 0 0 0 2px var(--aps1);"
           : undefined}
     onclick={handleSelectClick}
     onkeydown={handleItemKeydown}

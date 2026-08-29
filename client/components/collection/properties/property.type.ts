@@ -2,9 +2,9 @@ import type {
   IResource,
   IResourceShareable,
   OmitForCaptureWithId
-} from "@21n/components/flux/resourceStores/resource.type";
+} from "@21n/data/datafn/resource.type";
 import type { AvatarWithCode, IconAvatar } from "@21n/types/avatar.type";
-import type { ICollection } from "@21n/components/collection/collection.type";
+import type { ICollectionExpanded } from "@21n/components/collection/collection.type";
 
 /**
  * @deprecated Use IProperty instead
@@ -44,9 +44,10 @@ interface IPropertyInterface<TType = PropertyType, TConfig = IPropertyConfig> {
   label: string;
   type: TType;
   config?: TConfig;
-  default?: boolean | string | number | string[];
+  defaultValue?: boolean | string | number | string[];
   isShowOnNodePage?: boolean;
   isShowOnCapture?: boolean;
+  order?: number;
 }
 
 export type ISelectPropertyConfig = {
@@ -157,7 +158,7 @@ export enum PropertyType {
   /**
    * @deprecated - in favor of synced collections, links
    */
-  GOAL = "goal",
+  OBJECTIVE = "objective",
   /**
    * @deprecated - in favor of synced collections, links
    */
@@ -222,7 +223,7 @@ export type IPropertyValue =
 
 export type IPropertyEditorStore = {
   properties: OmitForCaptureWithId<IProperty>[];
-  typeToExtend?: ICollection;
+  typeToExtend?: ICollectionExpanded;
 };
 
 export const iconSelectPropertyTypes = [

@@ -3,10 +3,11 @@ import type {
   IResource,
   IResourceLabeled,
   IResourceShareable
-} from "@21n/components/flux/resourceStores/resource.type";
+} from "@21n/data/datafn/resource.type";
 
 type IFileBase = IResourceLabeled & {
   type: string;
+  name?: string;
   size: number;
   duration?: number;
   url?: string | null;

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import { page } from "$app/stores";
   import view from "@21n/stores/view.store";
   import LibraryRecordsPane from "@21n/components/library/LibraryRecordsPane.svelte";
