@@ -1,17 +1,22 @@
 import { Extension, OverviewPanel, Product } from "@21n/products/product.type";
 import { getProductNavConfig } from "./product-nav.config";
-import { productE2EConfigs } from "./product.e2e-config";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import { Action } from "@21n/types/action.enum";
 import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
-import { resourceConfig } from "@21n/components/flux/resourceStores/resource.config";
-import type { IResourceTableConfig } from "@21n/components/flux/flux.type";
 import type { ISelectItem } from "@21n/types/select.type";
 import {
   nextProducts,
   nextResourceTableMap,
   nextNucleusOverviewPanelSwitcherItems
 } from "@21n/next/product.config";
+import {
+  resolveProductResourceConfig,
+  sharedExtensions,
+  productRegistry
+} from "@21n/shared-config/product.config";
+import type {
+  IProductConfigBase as ISharedProductConfigBase
+} from "@21n/shared-config/product.config";
 
 const isDev = import.meta.env?.DEV || false;
 
@@ -22,59 +27,7 @@ interface SettingsSection {
   section: string;
 }
 
-export interface IProductE2ECapabilities {
-  ui?: {
-    pinnedResourceBrowser?: boolean;
-  };
-  commands?: {
-    directGoalLibraryCommand?: boolean;
-    focus?: boolean;
-    manualTimeEntry?: boolean;
-  };
-  calendar?: {
-    manualLogUiEntry?: boolean;
-    dateNavigation?: boolean;
-  };
-  overview?: {
-    focusAnalyticsDashboard?: boolean;
-    memoryPanelSwitch?: boolean;
-  };
-  settings?: {
-    focusPanel?: boolean;
-    nodeSettingsPanel?: boolean;
-    sharedSidebarSmoke?: boolean;
-    sharedModeOfInteraction?: boolean;
-    sharedHotKeyMatrix?: boolean;
-    sharedShortcutCustomization?: boolean;
-    focusPipToggle?: boolean;
-  };
-  records?: {
-    collection?: boolean;
-    collectionTabs?: boolean;
-    collectionRename?: boolean;
-    goal?: boolean;
-    goalTabs?: boolean;
-    task?: boolean;
-    taskTabs?: boolean;
-    node?: boolean;
-    nodeTabs?: boolean;
-    session?: boolean;
-  };
-}
-
-interface IProductConfigBase {
-  name: string;
-  resources: {
-    /**
-     * Resources that are visible to user and browsable from Library, searchable from Search.
-     */
-    browse: Resource[];
-    table: Resource[];
-  };
-  displayName: string;
-  tagline: string;
-  e2eCapabilities?: IProductE2ECapabilities;
-}
+type IProductConfigBase = ISharedProductConfigBase;
 
 export interface IAppConfigBase extends IProductConfigBase {
   /**
@@ -103,9 +56,6 @@ export interface IAppConfigBase extends IProductConfigBase {
   homePathPt: string;
   isShowCaptureOnMobile?: boolean;
   settings?: SettingsSection[];
-  /**
-   * Used in cases like Surreal persistence
-   */
   databaseName?: string;
   librarySectionLabel?: string;
   configurableShortcuts?: string[];
@@ -113,13 +63,9 @@ export interface IAppConfigBase extends IProductConfigBase {
   overviewPanelSwitcherItems?: ISelectItem[];
 }
 
-interface IAppConfig extends IAppConfigBase {
-  tableConfig: IResourceTableConfig[];
-}
+type IAppConfig = IAppConfigBase;
 
-interface IExtensionConfig extends IProductConfigBase {
-  tableConfig: IResourceTableConfig[];
-}
+type IExtensionConfig = IProductConfigBase;
 
 const commonConfigurableShortcuts = [
   Action.EDIT_MODE,
@@ -129,57 +75,44 @@ const commonConfigurableShortcuts = [
   Action.GO_FORWARD
 ];
 
-const commonTables = [Resource.accessLog, Resource.tz];
-
-const linkabilityTables = [
-  Resource.collection,
-  Resource.property,
-  Resource.view,
-  Resource.link,
-  Resource.linkTag
-];
-
-const filesAbilityTables = [Resource.file];
-
-const resourceTableMap: Record<string, Resource[]> = {
-  [Product.NUCLEUS]: [Resource.event],
-  [Product.MEMOTRON]: [Resource.node, Resource.capture],
-  [Product.POINTRON]: [
-    Resource.goal,
-    Resource.task,
-    Resource.session,
-    Resource.sessionLog
-  ],
-  ...nextResourceTableMap
-};
-
-const nucleusNav = getProductNavConfig(Product.NUCLEUS);
+const nucleusNav = getProductNavConfig(Product.NUCLEUM);
 const memotronNav = getProductNavConfig(Product.MEMOTRON);
 const pointronNav = getProductNavConfig(Product.POINTRON);
 
+const resolveBaseSharedProductConfig = (productName: Product) =>
+  productRegistry[productName.toString() as keyof typeof productRegistry];
+
+const uniqueResources = (resources: Resource[]) =>
+  Array.from(new Set(resources));
+
+const resolveClientProductResources = (productName: Product) => {
+  const sharedResources = resolveProductResourceConfig(productName, { isDev });
+  const nextTables =
+    productName === Product.NUCLEUM
+      ? Array.from(Object.values(nextResourceTableMap)).flat()
+      : (nextResourceTableMap[
+          productName as keyof typeof nextResourceTableMap
+        ] ?? []);
+  return {
+    browse: sharedResources.browse as Resource[],
+    table: uniqueResources([
+      ...(sharedResources.table as Resource[]),
+      ...(nextTables as Resource[])
+    ])
+  };
+};
+
 export const products: Record<string, IAppConfigBase> = {
-  [Product.NUCLEUS]: {
-    name: "Nucleum",
+  [Product.NUCLEUM]: {
+    ...resolveBaseSharedProductConfig(Product.NUCLEUM),
     appMenu: (isDev && nucleusNav.appMenuDev
       ? nucleusNav.appMenuDev
       : nucleusNav.appMenu) as string[],
     appMenuPt: [...nucleusNav.appMenuPt],
     homePath: nucleusNav.homePath,
     homePathPt: nucleusNav.homePathPt,
-    databaseName: "nativeone",
-    resources: {
-      browse: [Resource.collection, Resource.event],
-      table: [
-        ...commonTables,
-        ...Array.from(Object.values(resourceTableMap)).flat(),
-        ...linkabilityTables,
-        ...filesAbilityTables,
-        Resource.combination
-      ]
-    },
+    resources: resolveClientProductResources(Product.NUCLEUM),
     librarySectionLabel: nucleusNav.librarySectionLabel,
-    displayName: "Nucleum",
-    tagline: "Your digital harmony",
     configurableShortcuts: [
       ...commonConfigurableShortcuts,
       "SAVE_CAPTURE_SHORTCUT",
@@ -190,7 +123,6 @@ export const products: Record<string, IAppConfigBase> = {
       { label: "Graph", value: OverviewPanel.GRAPH, icon: "graph" },
       ...nextNucleusOverviewPanelSwitcherItems
     ],
-    e2eCapabilities: productE2EConfigs.nucleus.capabilities,
     settings: [
       {
         children: [
@@ -232,31 +164,19 @@ export const products: Record<string, IAppConfigBase> = {
     ]
   },
   [Product.MEMOTRON]: {
-    name: "Memotron",
+    ...resolveBaseSharedProductConfig(Product.MEMOTRON),
     appMenu: [...memotronNav.appMenu],
     appMenuPt: [...memotronNav.appMenuPt],
     homePath: memotronNav.homePath,
     homePathPt: memotronNav.homePathPt,
     isShowCaptureOnMobile: true,
-    databaseName: "nativeone",
-    resources: {
-      browse: [Resource.node, Resource.collection],
-      table: [
-        ...commonTables,
-        ...resourceTableMap[Product.MEMOTRON],
-        ...linkabilityTables,
-        ...filesAbilityTables
-      ]
-    },
+    resources: resolveClientProductResources(Product.MEMOTRON),
     librarySectionLabel: memotronNav.librarySectionLabel,
-    displayName: "Memotron",
-    tagline: "Your memory partner",
     configurableShortcuts: [
       ...commonConfigurableShortcuts,
       "SAVE_CAPTURE_SHORTCUT",
       "ACTIVATE_LINK_BOX"
     ],
-    e2eCapabilities: productE2EConfigs.memotron.capabilities,
     settings: [
       {
         children: [
@@ -297,29 +217,13 @@ export const products: Record<string, IAppConfigBase> = {
     ]
   },
   [Product.POINTRON]: {
-    name: "Pointron",
+    ...resolveBaseSharedProductConfig(Product.POINTRON),
     appMenu: [...pointronNav.appMenu],
     appMenuPt: [...pointronNav.appMenuPt],
     homePath: pointronNav.homePath,
     homePathPt: pointronNav.homePathPt,
-    databaseName: "pointone",
-    resources: {
-      browse: [
-        Resource.goal,
-        Resource.task,
-        Resource.collection,
-        Resource.event
-      ],
-      table: [
-        ...commonTables,
-        ...resourceTableMap[Product.POINTRON],
-        ...linkabilityTables
-      ]
-    },
+    resources: resolveClientProductResources(Product.POINTRON),
     librarySectionLabel: pointronNav.librarySectionLabel,
-    displayName: "Pointron",
-    tagline: "Your focus haven",
-    e2eCapabilities: productE2EConfigs.pointron.capabilities,
     settings: [
       {
         children: [
@@ -361,21 +265,12 @@ export const products: Record<string, IAppConfigBase> = {
   ...nextProducts
 };
 
-const tableConfigMapper = (resource: Resource) => {
-  const config = resourceConfig[resource];
-  if (!config) return null;
-  return {
-    ...config,
-    indices: ["id", "createdAt", "modifiedAt", ...(config.indices ?? [])]
-  };
-};
-
 export const product =
   import.meta.env?.VITE_PRODUCT ||
   (typeof process !== "undefined"
     ? process.env?.PLASMO_PUBLIC_PRODUCT
     : undefined) ||
-  Product.NUCLEUS;
+  Product.NUCLEUM;
 
 export const resolveProductConfig = (productOverride?: Product): IAppConfig => {
   const base = products[productOverride ?? (product as Product)];
@@ -384,10 +279,7 @@ export const resolveProductConfig = (productOverride?: Product): IAppConfig => {
   }
   return {
     ...base,
-    oAuthProviders: ["google", "apple", "github"],
-    tableConfig: base.resources.table
-      .map(tableConfigMapper)
-      .filter((x) => x != null)
+    oAuthProviders: ["google", "apple", "github"]
   };
 };
 
@@ -396,12 +288,8 @@ const extensions: Record<Extension, IProductConfigBase> = {
     name: "Memotron Clipper",
     resources: {
       browse: [],
-      table: [
-        ...commonTables,
-        ...resourceTableMap[Product.MEMOTRON],
-        ...linkabilityTables,
-        ...filesAbilityTables
-      ]
+      table: sharedExtensions[Extension.MEMOTRON_CLIPPER].resources
+        .table as Resource[]
     },
     displayName: "Memotron Clipper",
     tagline: ""
@@ -421,10 +309,5 @@ export const resolveExtensionConfig = (
   productOverride?: Extension
 ): IExtensionConfig => {
   const base = extensions[productOverride ?? (product as Extension)];
-  return {
-    ...base,
-    tableConfig: base.resources.table
-      .map(tableConfigMapper)
-      .filter((x) => x != null)
-  };
+  return base;
 };

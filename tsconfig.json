@@ -489,24 +489,24 @@
         "./shared/config/*"
       ],
       "@21n/next": [
-        "./client/next/index.ts",
-        "./client/next/index.tsx",
-        "./client/next/index.js",
-        "./client/next/index.mjs",
-        "./client/next/index.cjs",
-        "./client/next/index.svelte",
-        "./client/next/index.d.ts",
-        "./client/next/src/index.ts",
-        "./client/next/src/index.tsx",
-        "./client/next/src/index.js",
-        "./client/next/src/index.mjs",
-        "./client/next/src/index.cjs",
-        "./client/next/src/index.svelte",
-        "./client/next/src/index.d.ts",
-        "./client/next"
+        "./client/next/noop/index.ts",
+        "./client/next/noop/index.tsx",
+        "./client/next/noop/index.js",
+        "./client/next/noop/index.mjs",
+        "./client/next/noop/index.cjs",
+        "./client/next/noop/index.svelte",
+        "./client/next/noop/index.d.ts",
+        "./client/next/noop/src/index.ts",
+        "./client/next/noop/src/index.tsx",
+        "./client/next/noop/src/index.js",
+        "./client/next/noop/src/index.mjs",
+        "./client/next/noop/src/index.cjs",
+        "./client/next/noop/src/index.svelte",
+        "./client/next/noop/src/index.d.ts",
+        "./client/next/noop"
       ],
       "@21n/next/*": [
-        "./client/next/*"
+        "./client/next/noop/*"
       ]
     }
   },
