@@ -2,16 +2,20 @@
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import { onMount } from "svelte";
-  import { type INode, NodeType } from "@21n/products/memotron/node/node.type";
+  import { NodeType } from "@21n/products/memotron/node/node.type";
   import { lazyLoad } from "@21n/actions/lazyload.action";
   import { cn } from "@21n/utils/ui.utils";
-  import { resolveFallbackIconForUrl, resolveNodeFavicon } from "@21n/products/memotron/node/node.utils";
+  import {
+    resolveFallbackIconForUrl,
+    resolveNodeFavicon,
+    type INodeFaviconSource
+  } from "@21n/products/memotron/node/node.utils";
   import { isValidUrl } from "@21n/shared-utils/utils";
   let {
     node,
     size = Size.md
   }: {
-    node: INode;
+    node: INodeFaviconSource;
     size?: Size.sm | Size.md | Size.lg;
   } = $props();
   let favicon: string | undefined = undefined;

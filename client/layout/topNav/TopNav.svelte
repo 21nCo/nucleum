@@ -12,14 +12,14 @@
   import TrailLeftIndicator from "@21n/layout/topNav/TrailLeftIndicator.svelte";
   import { fly } from "svelte/transition";
   import { quadIn } from "svelte/easing";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import { page } from "$app/stores";
   import TopBarResourceItem from "@21n/layout/topNav/tabs/TopBarResourceItem.svelte";
   import { cn } from "@21n/utils/ui.utils";
 
   import TopNavLeftMenuItem from "@21n/layout/topNav/TopNavLeftMenuItem.svelte";
   import InlineSyncingFeedback from "@21n/elements/feedback/InlineSyncingFeedback.svelte";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import TopNavLeftLogo from "@21n/layout/topNav/TopNavLeftLogo.svelte";
   import { Embed } from "@21n/types/context.type";
   import context from "@21n/stores/context.store";
@@ -48,8 +48,9 @@
     $vTrail.base === Action.SEARCH &&
       new URLSearchParams(window.location.search).get(AccessMode.POP) !== null
   );
+  let currentSearchParams = $state(new URLSearchParams(window.location.search));
 
-  let currentTab = $derived($page.url.searchParams.get(AccessMode.TAB));
+  let currentTab = $derived(currentSearchParams.get(AccessMode.TAB));
   let isInterimTab = $derived(
     !!currentTab && !pinnedItems.some((x) => x.toString() === currentTab)
   );
@@ -84,12 +85,13 @@
 
     const pageSub = page.subscribe((p) => {
       queueMicrotask(() => {
+        currentSearchParams = p?.url?.searchParams ?? new URLSearchParams();
         isSearchMode =
-          p.url.searchParams.get(AccessMode.MAIN) === Action.SEARCH &&
-          !p.url.searchParams.get(AccessMode.POP);
+          currentSearchParams.get(AccessMode.MAIN) === Action.SEARCH &&
+          !currentSearchParams.get(AccessMode.POP);
         isShowBackToSearch =
           $vTrail.base === Action.SEARCH &&
-          p.url.searchParams.get(AccessMode.POP) !== null;
+          currentSearchParams.get(AccessMode.POP) !== null;
       });
     });
 
@@ -106,9 +108,10 @@
 <div class="hidden otopl:!block w-full min-h-6 h-6 bg-bgs2"></div>
 <div
   class={cn(
-    "w-full h-12 max-h-12 min-h-11 bg-bgs2 border-t border-brs3 userdata grid",
+    "w-full h-12 max-h-12 min-h-11 bg-bgs2 userdata grid transition-all duration-200",
     {
-      "grid-cols-[auto_1fr]": isFullOverlayMode
+      "grid-cols-[auto_1fr]": isFullOverlayMode,
+      "border-b border-brs3": !$context.experiments?.isEnableRoundedMain
     },
     !isFullOverlayMode && {
       "grid-cols-[auto_auto_1fr_auto]": pinnedItems.length > 0,
@@ -117,7 +120,7 @@
   )}
 >
   {#if $context.embed !== Embed.HANDSET}
-    <TopNavLeftLogo isRenderProfilePicture={true} />
+    <TopNavLeftLogo action={Action.SETTINGS} />
   {/if}
   <!-- {#if !isFullOverlayMode}
     <div
@@ -219,8 +222,8 @@
     </div>
   {:else}
     <div class="flex items-center justify-start h-full text-b3 text-fgs3 px-3">
-      Toast, player, status, upcoming message, contextual action suggestions
-      area (Default current time)
+      <!-- Toast, player, status, upcoming message, contextual action suggestions
+      area (Default current time) -->
     </div>
     <div
       class="flex items-center justify-end h-full"
@@ -238,20 +241,27 @@
           />
         {/key}
       {/if}
-      <TrailLeftIndicator />
-      <OfflineStatusMessage />
-      <InlineSyncingFeedback
-        resource={Resource.everything}
-        isShorter={true}
-        text="Syncing..."
-      />
+      <div class="flex items-center px-2">
+        <TrailLeftIndicator />
+        <OfflineStatusMessage />
+        <InlineSyncingFeedback
+          resource={Resource.everything}
+          isShorter={true}
+          text="Syncing..."
+        />
+      </div>
       {@render topnav?.()}
-      <TopNavLeftMenuItem action={Action.CMD} />
-      <TopNavLeftMenuItem action={Action.NAVIGATOR} isLastItem={true} />
+      <TopNavLeftMenuItem action={Action.CMD} ariaLabel="Command bar" />
+      <!-- <TopNavLeftMenuItem
+        action={Action.NAVIGATOR}
+        label="Navigator"
+        isLastItem={true}
+      /> -->
       <!-- <TopNavLeftMenuItem action={Action.SETTINGS} isLastItem={true} /> -->
       {#if isDev}
         <TopNavLeftMenuItem
           action={Action.RHOMBUS}
+          label="Rhombus"
           tooltip="Rhombus on the side"
           isLastItem={true}
         />

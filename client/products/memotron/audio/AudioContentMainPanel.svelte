@@ -1,7 +1,6 @@
 <script lang="ts">
   import Button from "@21n/elements/button/Button.svelte";
   import NodularMarkdown from "@21n/components/markdown/NodularMarkdown.svelte";
-  import { nodeStore } from "@21n/products/memotron/node/node.store";
   import { InputStyle } from "@21n/types/input.type";
   import view from "@21n/stores/view.store";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
@@ -25,6 +24,7 @@
   import { appStore } from "@21n/stores/app.store";
   import { generateMarkdownText } from "@21n/products/memotron/node/node.utils";
   import type { IAudioBody, IAudioMetadata } from "@21n/products/memotron/node/node.type";
+  import { datafn } from "@21n/stores/datafn.store";
 
   let {
     body,
@@ -108,16 +108,15 @@
 
   async function onMarkdownChange(event: any) {
     if (!event?.detail?.md?.blocks) return;
-    const resp = await nodeStore.modify(
-      nodeId,
-      {
+    await datafn.node.mutate({
+      operation: "merge",
+      id: nodeId,
+      record: {
         body: { mdBlocks: event.detail.md.blocks }
       },
-      {
-        isDebounced: true,
-        debounceKey: "audio-markdown-change"
-      }
-    );
+      debounceKey: "audio-markdown-change",
+      debounceMs: 1500
+    });
   }
 
   function hasTimestamps(transcription: string): boolean {

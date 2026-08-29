@@ -55,7 +55,7 @@
   {#if property.type === PropertyType.CREATED_TIME}
     {resolveItemDateLabel(item?.createdAt)}
   {:else if property.type === PropertyType.MODIFIED_TIME}
-    {resolveItemDateLabel(item?.modifiedAt)}
+    {resolveItemDateLabel(item?.updatedAt)}
   {:else if property.type === PropertyType.SYSTEM_ID}
     {item?.id?.toString()}
   {:else if property.type === PropertyType.LINKS_COUNT}

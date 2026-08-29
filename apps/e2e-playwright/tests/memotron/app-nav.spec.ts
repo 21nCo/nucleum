@@ -1,17 +1,14 @@
 import { test, expect } from "@playwright/test";
-import { memotronProductConfig } from "../../config/memotron-product.config";
-import { ensureInAppOnHome, runCommand } from "../utils/helpers";
+import { Product } from "@21n/products/product.type";
+import { Action } from "@21n/types/action.enum";
+import {
+  assertAppMenuVisible,
+  ensureInAppOnHome,
+  runCommand
+} from "../utils/helpers";
+import { expectSurfaceVisible } from "../utils/surface-contracts";
 
-const runtimeEnv = (
-  globalThis as { process?: { env?: Record<string, string | undefined> } }
-).process?.env;
-
-test.skip(
-  runtimeEnv?.SKIP_E2E === "1",
-  "E2E suite disabled by environment"
-);
-
-test.describe("memotron - app layout and menu @regression", () => {
+test.describe("memotron - app layout and menu", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -28,11 +25,7 @@ test.describe("memotron - app layout and menu @regression", () => {
   }) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    for (const label of memotronProductConfig.appMenuNavLabels) {
-      await expect(
-        page.getByRole("button", { name: new RegExp(`^${label}$`, "i") }).first()
-      ).toBeVisible({ timeout: 10_000 });
-    }
+    await assertAppMenuVisible(page, Product.MEMOTRON);
   });
 
   test("open Overview via command bar (Overview), then assert Overview page visible", async ({
@@ -42,11 +35,8 @@ test.describe("memotron - app layout and menu @regression", () => {
     await ensureInAppOnHome(page);
     await runCommand(page, "Overview");
 
-    const overviewPath = memotronProductConfig.pathByNavLabel.Overview;
-    await page.waitForURL(
-      (u) => new RegExp(`^${overviewPath}(\\/.*)?$`).test(new URL(u).pathname),
-      { timeout: 10_000 }
-    );
+    const overviewPath = `/${Action.OVERVIEW}`;
+    await page.waitForURL(overviewPath, { timeout: 10_000 });
     await expect(page.getByText("Overview").first()).toBeVisible({
       timeout: 10_000
     });
@@ -63,9 +53,12 @@ test.describe("memotron - app layout and menu @regression", () => {
       .first()
       .click({ timeout: 5_000 });
 
-    const overviewPath = memotronProductConfig.pathByNavLabel.Overview;
+    const overviewPath = `/${Action.OVERVIEW}`;
     await page.waitForURL(
-      (u) => new RegExp(`^${overviewPath}(\\/.*)?$`).test(new URL(u).pathname),
+      (u) =>
+        new RegExp(String.raw`^${overviewPath}(/.*)?$`).test(
+          new URL(u).pathname
+        ),
       { timeout: 10_000 }
     );
     await expect(page.getByText("Overview").first()).toBeVisible({
@@ -81,10 +74,11 @@ test.describe("memotron - app layout and menu @regression", () => {
 
     await runCommand(page, "Library");
 
-    const nodesCard = page
-      .getByRole("button", { name: /^Nodes(\s+\d+)?$/i })
-      .and(page.locator(":not([aria-disabled='true'])"));
+    const nodesCard = page.getByRole("button", {
+      name: /^Nodes(\s+\d+)?$/i
+    });
     await nodesCard.first().waitFor({ state: "visible", timeout: 10_000 });
+    await expect(nodesCard.first()).toBeEnabled();
     await nodesCard.first().click({ timeout: 5_000 });
     await page
       .getByTestId("search-nodes")
@@ -93,23 +87,15 @@ test.describe("memotron - app layout and menu @regression", () => {
       .first()
       .waitFor({ state: "visible", timeout: 15_000 });
 
-    const libraryPath = memotronProductConfig.pathByNavLabel.Library;
-    const onLibraryPage = () =>
-      new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(page.url()).pathname);
-    if (!onLibraryPage()) {
-      await page.goto(libraryPath, {
-        waitUntil: "load"
-      });
-      await page.waitForURL(
-        (u) =>
-          new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(u).pathname),
-        { timeout: 15_000 }
-      );
-      const nodesBtn = page.getByRole("button", { name: /^Nodes(\s+\d+)?$/i }).first();
-      await nodesBtn.waitFor({ state: "visible", timeout: 15_000 });
-      await nodesBtn.click({ timeout: 5_000 });
-      await page.waitForTimeout(600);
-    }
+    const libraryPath = `/${Action.LIBRARY}`;
+    await page.waitForURL(
+      (u) =>
+        new RegExp(String.raw`^${libraryPath}(/.*)?$`).test(
+          new URL(u).pathname
+        ),
+      { timeout: 15_000 }
+    );
+    await expectSurfaceVisible(page, Product.MEMOTRON, "library.nodes");
 
     const nodesListVisible = page
       .getByTestId("search-nodes")
@@ -125,22 +111,32 @@ test.describe("memotron - app layout and menu @regression", () => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
 
-    const libraryPath = memotronProductConfig.pathByNavLabel.Library;
+    const libraryPath = `/${Action.LIBRARY}`;
     await page
       .getByRole("button", { name: /^Library$/i })
       .click({ timeout: 5_000 });
     await page.waitForURL(
-      (u) => new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(u).pathname),
+      (u) =>
+        new RegExp(String.raw`^${libraryPath}(/.*)?$`).test(
+          new URL(u).pathname
+        ),
       { timeout: 10_000 }
     );
-    await page.getByRole("button", { name: /^Nodes(\s+\d+)?$/i }).first().click({
-      timeout: 5_000
-    });
+    await page
+      .getByRole("button", { name: /^Nodes(\s+\d+)?$/i })
+      .first()
+      .click({
+        timeout: 5_000
+      });
     await expect(
       page
         .getByTestId("search-nodes")
         .or(page.getByText(/No nodes/i).first())
-        .or(page.getByRole("button", { name: /Create new node|New node/i }).first())
+        .or(
+          page
+            .getByRole("button", { name: /Create new node|New node/i })
+            .first()
+        )
         .first()
     ).toBeVisible({ timeout: 10_000 });
   });

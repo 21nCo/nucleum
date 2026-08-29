@@ -1,34 +1,36 @@
-import { getAccountCacheStore } from './cache.js';
-import { createAccountApp } from './app.js';
+import { createAsyncLocalRequestContext } from "@superfunctions/observability/node";
+import { createApp } from "./app.js";
 import {
   createCloudflareDatabase,
   type AccountWorkerEnv,
   type CloudflareSecretsStoreBinding
-} from './db/cloudflare.js';
-import { createAccountCloudflareLookupStore } from './lookup/cloudflare-do.js';
-import { createAccountLogger } from './logging.js';
-import {
-  createAccountLatencyMetrics,
-  observeAdapter,
-  observeKVStore,
-  observeLookupStore
-} from './observability/latency.js';
+} from "./db/cloudflare.js";
+import { createCloudflareSyncDatabase } from "./db/sync-cloudflare.js";
+import { createAccountCloudflareLookupStore } from "./lookup/cloudflare-do.js";
+import { createLogger } from "./logging.js";
+import { createAccountObservability as createObservability } from "./observability/events.js";
+import { createAccountCloudflareRuntimeStores } from "./runtime-stores.js";
 
-export { AuthFnRegionLookupDurableObject } from './lookup/cloudflare-do.js';
+export { AuthFnRegionLookupDurableObject } from "./lookup/cloudflare-do.js";
+export { AccountRuntimeStoresDurableObject } from "./runtime-stores.js";
 
 const SECRETS_STORE_ENV_KEYS = new Set([
-  'RESEND_API_KEY',
-  'GOOGLE_OAUTH_CLIENT_ID',
-  'GOOGLE_OAUTH_CLIENT_SECRET',
-  'APPLE_OAUTH_CLIENT_ID',
-  'APPLE_JWT',
-  'APPLE_OAUTH_CLIENT_SECRET',
-  'APPLE_TEAM_ID',
-  'APPLE_KEY_ID'
+  "RESEND_API_KEY",
+  "GOOGLE_OAUTH_CLIENT_ID",
+  "GOOGLE_OAUTH_CLIENT_SECRET",
+  "APPLE_OAUTH_CLIENT_ID",
+  "APPLE_JWT",
+  "APPLE_OAUTH_CLIENT_SECRET",
+  "APPLE_TEAM_ID",
+  "APPLE_KEY_ID"
 ]);
 
 export default {
-  async fetch(request: Request, env: AccountWorkerEnv, ctx?: ExecutionContext): Promise<Response> {
+  async fetch(
+    request: Request,
+    env: AccountWorkerEnv,
+    ctx?: ExecutionContext
+  ): Promise<Response> {
     (globalThis as typeof globalThis & { ctx?: ExecutionContext }).ctx = ctx;
     const globalProcess = globalThis as unknown as {
       process?: {
@@ -40,25 +42,39 @@ export default {
     };
     await copyWorkerEnvToProcessEnv(env, globalProcess.process.env);
 
-    const logger = createAccountLogger();
+    const logger = createLogger();
     const database = createCloudflareDatabase(env);
-    const latencyMetrics = createAccountLatencyMetrics();
+    let syncDatabase:
+      | ReturnType<typeof createCloudflareSyncDatabase>
+      | undefined;
+    const observability = createObservability(logger, undefined, {
+      requestContext: createAsyncLocalRequestContext()
+    });
     const workerColo = readWorkerColo(request);
-    const lookupStore = env.AUTHFN_REGION_LOOKUP
-      ? observeLookupStore(createAccountCloudflareLookupStore(env.AUTHFN_REGION_LOOKUP), latencyMetrics)
+    const regionLookupStore = env.AUTHFN_REGION_LOOKUP
+      ? createAccountCloudflareLookupStore(env.AUTHFN_REGION_LOOKUP)
       : undefined;
-    const app = createAccountApp({
-      database: observeAdapter(database.adapter, latencyMetrics),
-      cacheStore: observeKVStore(getAccountCacheStore(env.ACCOUNT_CACHE ?? null), latencyMetrics),
-      lookupStore,
-      logger,
-      latencyMetrics,
-      workerColo
+    const app = createApp({
+      infra: {
+        database: database.adapter,
+        syncDatabase: () => {
+          syncDatabase ??= createCloudflareSyncDatabase(env);
+          return syncDatabase.adapter;
+        },
+        stores: createAccountCloudflareRuntimeStores(env),
+        logger
+      },
+      deployment: {
+        regionLookupStore,
+        observability,
+        workerColo
+      }
     });
 
     try {
       return await app.fetch(request, env);
     } finally {
+      await syncDatabase?.close();
       await database.close();
     }
   }
@@ -69,7 +85,7 @@ async function copyWorkerEnvToProcessEnv(
   target: Record<string, string>
 ): Promise<void> {
   for (const [key, value] of Object.entries(env)) {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       target[key] = value;
       continue;
     }
@@ -83,17 +99,23 @@ async function copyWorkerEnvToProcessEnv(
   }
 }
 
-function isSecretsStoreBinding(value: unknown): value is CloudflareSecretsStoreBinding {
-  return Boolean(value)
-    && typeof value === 'object'
-    && typeof (value as CloudflareSecretsStoreBinding).get === 'function';
+function isSecretsStoreBinding(
+  value: unknown
+): value is CloudflareSecretsStoreBinding {
+  return (
+    Boolean(value) &&
+    typeof value === "object" &&
+    typeof (value as CloudflareSecretsStoreBinding).get === "function"
+  );
 }
 
 function readWorkerColo(request: Request): string | undefined {
-  const cf = (request as Request & {
-    cf?: {
-      colo?: unknown;
-    };
-  }).cf;
-  return typeof cf?.colo === 'string' ? cf.colo : undefined;
+  const cf = (
+    request as Request & {
+      cf?: {
+        colo?: unknown;
+      };
+    }
+  ).cf;
+  return typeof cf?.colo === "string" ? cf.colo : undefined;
 }

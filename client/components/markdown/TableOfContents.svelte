@@ -16,7 +16,7 @@
   import {
     isSameResource,
     resourceInList
-  } from "@21n/components/flux/resourceStores/resource.utils";
+  } from "@21n/data/datafn/resource.utils";
   import TableOfContentsList from "@21n/components/markdown/TableOfContentsList.svelte";
   import { hoverable } from "@21n/actions/hover.action";
   let {

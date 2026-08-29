@@ -1,10 +1,12 @@
 // import { env, pipeline } from "@xenova/transformers";
 import { env, pipeline } from "@huggingface/transformers";
 import type { INodeCapture } from "@21n/products/memotron/node/node.type";
-import { generateResourceId } from "@21n/components/flux/flux.utils";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-import { resolveCurrentUserId } from "@21n/utils/account.utils";
-import { TacoActions, TranscriptionModel } from "@21n/products/memotron/taco/taco.types";
+import { generateResourceId } from "@21n/data/datafn/id.utils";
+import { Resource } from "@21n/data/datafn/resource.enum";
+import {
+  TacoActions,
+  TranscriptionModel
+} from "@21n/products/memotron/taco/taco.types";
 
 env.allowLocalModels = false;
 // let call = 0;
@@ -131,37 +133,25 @@ class FeatureExtractor {
     try {
       FeatureExtractor.isInternalCall = true;
       let vectorRecords: any[] = [];
-      let updatedNodes = [];
-      const userId = await resolveCurrentUserId();
       for (let node of nodes) {
         const data = (node?.label ? node.label + " " : "") + node?.mdText;
         let vector = await FeatureExtractor.generateVectorEmbeddings(data);
-        const commonProps = {
-          createdAt: new Date(),
-          modifiedAt: new Date(),
-          createdBy: userId,
-          modifiedBy: userId
-        };
         const vecotrId = generateResourceId(Resource.vector, {
           isAsString: true
         });
         vectorRecords.push({
           embedding: vector,
-          node: `${node.id.tb}:${node.id.id}`,
+          resourceId: resolveNodeId(node.id),
+          resource: Resource.node,
           id: vecotrId,
-          ...commonProps
-        });
-        updatedNodes.push({
-          id: node.id,
-          vector: vecotrId,
-          modifiedBy: userId,
-          modifiedAt: new Date()
+          metadata: {
+            source: "taco"
+          }
         });
       }
       postMessage({
         params: {
-          vectorRecords,
-          updatedNodes
+          vectorRecords
         }
       });
     } catch (error) {
@@ -200,6 +190,20 @@ class FeatureExtractor {
       throw error;
     }
   }
+}
+
+function resolveNodeId(id: unknown) {
+  if (typeof id === "string") return id;
+  if (
+    id &&
+    typeof id === "object" &&
+    "tb" in id &&
+    "id" in id &&
+    typeof (id as { tb?: unknown }).tb === "string"
+  ) {
+    return `${(id as { tb: string }).tb}:${(id as { id: unknown }).id}`;
+  }
+  return id?.toString() ?? "";
 }
 
 class QuestionAnswerer {

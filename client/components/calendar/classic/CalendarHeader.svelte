@@ -98,7 +98,11 @@
 
 <div class="flex items-center justify-center">
   <div class="h-full w-10">
-    <BoxButton icon="chevron-left" onclick={goToPrevious} />
+    <BoxButton
+      icon="chevron-left"
+      ariaLabel="Previous calendar period"
+      onclick={goToPrevious}
+    />
   </div>
   <h2
     class={cn("text-h4 h-full  flex items-center justify-center px-3", {
@@ -126,6 +130,10 @@
     {/if}
   </h2>
   <div class="h-full w-10">
-    <BoxButton icon="chevron-right" onclick={goToNext} />
+    <BoxButton
+      icon="chevron-right"
+      ariaLabel="Next calendar period"
+      onclick={goToNext}
+    />
   </div>
 </div>

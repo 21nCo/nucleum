@@ -1,10 +1,10 @@
-import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import { logger } from "@21n/components/debug/logger.client";
-import { get } from "svelte/store";
-import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+import { get, writable } from "svelte/store";
+import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
 import { appStore } from "@21n/stores/app.store";
 import { ObservableStore } from "@21n/stores/client.store";
+import { datafn } from "@21n/stores/datafn.store";
 import { Action } from "@21n/types/action.enum";
 import { InteractionMode } from "@21n/components/settings/interactionMode/interactionMode.type";
 import {
@@ -20,16 +20,46 @@ import { toasts } from "@21n/stores/notification.store";
 import {
   resourceInList,
   isSameResource
-} from "@21n/components/flux/resourceStores/resource.utils";
+} from "@21n/data/datafn/resource.utils";
 import { parse, stringify } from "@21n/shared-utils/json.utils";
 
-class UiStateStore extends KeyValueStore<IUIStateStore> {
-  constructor() {
-    super(Resource.uiState, {
-      $local: {}
-    });
+const uiStateSeed: IUIStateStore = {
+  $local: {}
+};
+const uiStateSignal = datafn.kv.signal<IUIStateStore>(Resource.uiState, {
+  defaultValue: uiStateSeed
+});
+const uiStateLocal = writable<IUIStateStore>(uiStateSeed);
+
+function resolveStoredLocalState() {
+  try {
+    if (typeof window === "undefined") return {};
+    const savedState = window.localStorage.getItem("uiState");
+    return savedState ? parse(savedState) : {};
+  } catch (error) {
+    logger.error({ context: "uiState.store - resolveStoredLocalState", error });
+    return {};
   }
-  private resolveKey(keyParam: string, params?: IUIStateParams) {
+}
+
+function refreshUiStateLocal() {
+  uiStateLocal.set({
+    ...uiStateSeed,
+    ...(uiStateSignal.get() ?? {}),
+    $local: resolveStoredLocalState()
+  });
+}
+
+uiStateSignal.subscribe(() => {
+  refreshUiStateLocal();
+});
+
+export const uiState = {
+  subscribe: uiStateLocal.subscribe,
+  get() {
+    return get(uiStateLocal);
+  },
+  resolveKey(keyParam: string, params?: IUIStateParams) {
     let key: string = keyParam;
     const product = get(appStore).product;
     const ctx = get(context);
@@ -48,7 +78,7 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
       });
     }
     return key;
-  }
+  },
 
   setState(
     keyParam: Action | UIState | ResourceAccessPoint,
@@ -59,19 +89,10 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
     if (params?.scope === UIStateScope.DAP) {
       try {
         if (typeof window !== "undefined") {
-          const savedState = window.localStorage.getItem("uiState");
-          const savedStateObj = savedState ? parse(savedState) : {};
+          const savedStateObj = resolveStoredLocalState();
           savedStateObj[key] = value;
           window.localStorage.setItem("uiState", stringify(savedStateObj));
-          this.update((x) => {
-            return {
-              ...x,
-              $local: {
-                ...x.$local,
-                [key]: value
-              }
-            };
-          });
+          refreshUiStateLocal();
         }
       } catch (error) {
         logger.error({
@@ -86,7 +107,7 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
       logger.log({ context: "uiState.store - setState", key, value });
     }
     uiStateDerived.refreshState();
-  }
+  },
 
   getState(
     keyParam: Action | UIState | ResourceAccessPoint,
@@ -108,7 +129,7 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
       }
     }
     return this.get()[key];
-  }
+  },
 
   getResourceState(
     resource: Resource,
@@ -117,7 +138,7 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
   ) {
     const key = `${resource}-${location}-${keyParam}`;
     return this.get()[key];
-  }
+  },
 
   setResourceState(
     resource: Resource,
@@ -128,7 +149,22 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
     const key = `${resource}-${location}-${keyParam}`;
     this.modify({ [key]: value });
     logger.log({ context: "uiState.store - setResourceState", key, value });
-  }
+  },
+
+  modify(n: Partial<IUIStateStore>) {
+    refreshUiStateLocal();
+    uiStateLocal.update((current) => ({ ...current, ...n }));
+    return datafn.kv.merge(Resource.uiState, n);
+  },
+
+  loader(data: IUIStateStore) {
+    uiStateLocal.set({
+      ...uiStateSeed,
+      ...data,
+      $local: resolveStoredLocalState()
+    });
+    return datafn.kv.set(Resource.uiState, data);
+  },
 
   addResourceToTabs(id: IRecordId) {
     const current = this.getState(ResourceAccessPoint.TABS, {
@@ -145,7 +181,7 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
         scope: UIStateScope.PRODUCT
       }
     );
-  }
+  },
 
   removeResourceFromTabs(id: IRecordId) {
     const current = this.getState(ResourceAccessPoint.TABS, {
@@ -159,7 +195,7 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
         scope: UIStateScope.PRODUCT
       }
     );
-  }
+  },
 
   toggleSidebar() {
     const isCompletelyHideLeftNavBar = this.getState(
@@ -181,10 +217,12 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
     this.setState(UIState.hideLeftNavMenuLabels, !labelsVal, {
       scope: UIStateScope.DAP
     });
-  }
-}
+  },
 
-export const uiState = UiStateStore.resolve(Resource.uiState);
+  destroy() {
+    uiStateSignal.dispose();
+  }
+};
 
 /**
  *

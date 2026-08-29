@@ -8,7 +8,7 @@
   import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
   import { Size } from "@21n/types/size.enum";
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   let {
     density = $bindable(1),
     arrangement = $bindable(Arrangement.LIST),

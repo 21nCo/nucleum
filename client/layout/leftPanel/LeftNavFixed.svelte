@@ -17,6 +17,13 @@
   import { onMount } from "svelte";
   import { appStore } from "@21n/stores/app.store";
   import OfflineStatusMessage from "@21n/elements/feedback/OfflineStatusMessage.svelte";
+  import context from "@21n/stores/context.store";
+  import { Action } from "@21n/types/action.enum";
+  import BoxButton from "@21n/elements/button/BoxButton.svelte";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
+  import { page } from "$app/stores";
+  import AppMenuSwitcherItem from "./appMenuSwitcher/AppMenuSwitcherItem.svelte";
+
   let {
     isRounded = false,
     panel
@@ -30,6 +37,13 @@
       scope: UIStateScope.DAP
     })
   );
+  const isEnableAppMenuCustomization = false;
+
+  let currentSearchParams = $state(new URLSearchParams(window.location.search));
+
+  let isNavigatorActive = $derived(
+    Action.NAVIGATOR === currentSearchParams.get(AccessMode.RIGHT)
+  );
 
   onMount(() => {
     const unsubscribe = uiState.subscribe(() => {
@@ -38,8 +52,13 @@
       });
     });
 
+    const unsubscribePage = page.subscribe((p) => {
+      currentSearchParams = p?.url?.searchParams ?? new URLSearchParams();
+    });
+
     return () => {
-      if (unsubscribe) unsubscribe();
+      unsubscribe?.();
+      unsubscribePage?.();
     };
   });
 
@@ -73,7 +92,8 @@
       "flex items-center justify-center h-full w-full bg-bgs2",
       $appStore.currentComponent?.panel && {
         "rounded-lg border-none": isRounded,
-        "border-r border-bgs4": !isRounded
+        "border-r border-bgs4":
+          !isRounded && !$context.experiments?.isEnableRoundedMain
       }
     )}
   >
@@ -81,14 +101,15 @@
       data-testid="leftnav-sidebar-toggle"
       aria-label="Toggle sidebar width"
       class={cn(
-        "flex flex-col items-center justify-between overflow-auto bg-bgs2",
+        "relative flex flex-col items-center justify-between overflow-auto bg-bgs2",
         {
           "w-[5.5rem] min-w-[5.5rem] !cursor-w-resize": !isHideMenuLabels,
           "w-[3.5rem] min-w-[3.5rem] !cursor-e-resize": isHideMenuLabels
         },
         (!dev_mixedPanel || !$appStore.currentComponent?.panel) && {
           "rounded-lg border-none": isRounded,
-          "border-r border-bgs4": !isRounded
+          "border-r border-bgs4":
+            !isRounded && !$context.experiments?.isEnableRoundedMain
         }
       )}
       role="button"
@@ -97,17 +118,48 @@
       onkeydown={handleLeftNavKeyDown}
       style={isRounded ? "height: calc(100% - 1rem);" : "height:100%"}
     >
+      <button
+        type="button"
+        aria-label="Toggle sidebar width"
+        tabindex="-1"
+        class={cn("absolute inset-y-0 right-0 z-10 w-3 bg-transparent", {
+          "cursor-w-resize": !isHideMenuLabels,
+          "cursor-e-resize": isHideMenuLabels
+        })}
+        onclick={(event) => {
+          event.stopPropagation();
+          handleToggleMenuLabels();
+        }}
+      ></button>
       <div class="w-full flex flex-col gap-8 overflow-auto">
         <div
-          class="w-full flex justify-center transition-opacity duration-200 py-2"
+          class="w-full flex justify-center transition-opacity duration-200 py--2"
         >
           <!--  -->
+          <div class="w-full h-16 {isNavigatorActive ? 'bg-bgs3' : ''}">
+            <BoxButton
+              icon={isNavigatorActive ? "cross" : "heroicons:slash"}
+              size={Size.md}
+              onclick={(e) => {
+                e.stopPropagation();
+                appStore.runAction(Action.NAVIGATOR);
+              }}
+            />
+            <!-- <AppMenuSwitcherItem
+              parentBackgroundIndex={2}
+              onClick={() => {
+                appStore.runAction(Action.NAVIGATOR);
+              }}
+              item={() => appStore.resolveAction(Action.NAVIGATOR)}
+            /> -->
+          </div>
         </div>
         <div
           class={cn(
-            "flex flex-col gap-3 items-center w-full overflow-auto cursor-default",
+            "flex flex-col gap-3 items-center w-full overflow-auto cursor-default transition-all duration-300",
             {
-              "p-2": !isHideMenuLabels
+              "p-2": !isHideMenuLabels,
+              "opacity-60": isNavigatorActive
             }
           )}
           role="group"
@@ -116,34 +168,36 @@
             parentBackgroundIndex={1}
             layoutContext={LayoutContext.THIN_WITH_LABEL}
           />
-          <div
-            class="flex justify-center items-center w-full mt-2"
-            use:tooltip={{
-              text: "Menu settings"
-            }}
-            role="presentation"
-          >
-            <button
-              data-testid="leftnav-settings"
-              class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-bgs3 transition-colors duration-200"
-              use:popover={{
-                content: LeftNavSettingsPopover,
-                id: "leftnav-settings-popover",
-                placement: Placement.Right,
-                triggerMethod: [PopoverTriggerMethod.CLICK],
-                offsetInPx: 10
+          {#if isEnableAppMenuCustomization}
+            <div
+              class="flex justify-center items-center w-full mt-2"
+              use:tooltip={{
+                text: "Menu settings"
               }}
-              onclick={(event) => {
-                event.stopPropagation();
-              }}
+              role="presentation"
             >
-              <Icon
-                icon="more-outline-horizontal"
-                size={Size.md}
-                class="text-fgs3"
-              />
-            </button>
-          </div>
+              <button
+                data-testid="leftnav-settings"
+                class="w-8 h-8 rounded-full flex items-center justify-center hover:bg-bgs3 transition-colors duration-200"
+                use:popover={{
+                  content: LeftNavSettingsPopover,
+                  id: "leftnav-settings-popover",
+                  placement: Placement.Right,
+                  triggerMethod: [PopoverTriggerMethod.CLICK],
+                  offsetInPx: 10
+                }}
+                onclick={(event) => {
+                  event.stopPropagation();
+                }}
+              >
+                <Icon
+                  icon="more-outline-horizontal"
+                  size={Size.md}
+                  class="text-fgs3"
+                />
+              </button>
+            </div>
+          {/if}
         </div>
       </div>
       <div class="w-full flex flex-col gap-2 items-center">

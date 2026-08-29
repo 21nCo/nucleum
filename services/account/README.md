@@ -25,6 +25,28 @@ Regions:
 - `useast` placed near `aws:us-east-1`
 - `euwest` placed near `aws:eu-west-2`
 
+## Sync Database
+
+The account service hosts DataFn under `/datafn/*`, but sync data must
+use a separate regional database from the AuthFn account database.
+
+Node entrypoints require:
+
+```bash
+DATAFN_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/nucleus_datafn_sync
+```
+
+Cloudflare Workers require either a `SYNC_DB` Hyperdrive binding or a
+`DATAFN_DATABASE_URL` secret. Do not point these at `DATABASE_URL` or
+`ACCOUNT_DB`; AuthFn tables and sync tables are intentionally separate.
+
+Optional sync settings:
+
+```bash
+DATAFN_DB_POOL_SIZE=5
+DATAFN_MAX_PAYLOAD_BYTES=5242880
+```
+
 ## Running Local Apps Against Account Backends
 
 All local browser flows should go through Caddy so cookies, OAuth redirects, and
@@ -208,12 +230,18 @@ Dev Hyperdrive is configured for all three regions:
 - `dev-insouth-nucleum`
 - `dev-useast-nucleum`
 - `dev-euwest-nucleum`
+- `dev-insouth-nucleum-sync`
+- `dev-useast-nucleum-sync`
+- `dev-euwest-nucleum-sync`
 
 These live Hyperdrive IDs still need to be created and added either to `services/account/config/environments.json` or as GitHub environment variables with the same placeholder names:
 
 - `TODO_LIVE_INSOUTH_HYPERDRIVE_ID`
 - `TODO_LIVE_USEAST_HYPERDRIVE_ID`
 - `TODO_LIVE_EUWEST_HYPERDRIVE_ID`
+- `TODO_LIVE_INSOUTH_SYNC_HYPERDRIVE_ID`
+- `TODO_LIVE_USEAST_SYNC_HYPERDRIVE_ID`
+- `TODO_LIVE_EUWEST_SYNC_HYPERDRIVE_ID`
 
 KV namespaces are already created:
 

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import {
     determineResourceType,
     resourceInList
-  } from "@21n/components/flux/resourceStores/resource.utils";
+  } from "@21n/data/datafn/resource.utils";
   import Button from "@21n/elements/button/Button.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import { appStore, isInEditMode } from "@21n/stores/app.store";
@@ -17,11 +17,6 @@
     currentFocusItem,
     focusItemsStore
   } from "@21n/products/pointron/focus/session.store";
-  import { getContext } from "svelte";
-
-  type FocusItemContext = {
-    refreshList: () => Promise<void>;
-  };
 
   let {
     isHovering = false,
@@ -31,36 +26,30 @@
     item: any;
   } = $props();
   let resourceType = $derived(determineResourceType(item.id));
-  const { refreshList } = getContext<FocusItemContext>("focus-item-context");
 
   let isAdded = $derived($focusItemsStore.items.some(resourceInList(item.id)));
 
   let isInprogress = $derived(
-    activeSession.isCurrentFocusItem(
-      item.id,
-      $currentFocusItem
-    )
+    activeSession.isCurrentFocusItem(item.id, $currentFocusItem)
   );
 
   async function onAdd(e: any) {
     e.stopPropagation();
     if (resourceType === Resource.task) {
-      await focusItemsStore.addTask(item.id, item.goalId);
-    } else if (resourceType === Resource.goal) {
-      await focusItemsStore.addGoal(item.id);
+      await focusItemsStore.addTask(item.id, item.objectiveId);
+    } else if (resourceType === Resource.objective) {
+      await focusItemsStore.addObjective(item.id);
     }
-    refreshList();
   }
 
   async function onStartFocusing(e: any) {
     e.stopPropagation();
     if (resourceType === Resource.task) {
-      await activeSession.focusTask(item.id, item.goalId);
-    } else if (resourceType === Resource.goal) {
-      await activeSession.focusGoal(item.id);
+      await activeSession.focusTask(item.id, item.objectiveId);
+    } else if (resourceType === Resource.objective) {
+      await activeSession.focusObjective(item.id);
     }
     isInEditMode.toggle(false);
-    refreshList();
   }
 </script>
 
@@ -95,6 +84,8 @@
           type={ButtonVariant.PRIMARY}
           style={ButtonStyle.OUTLINED}
           size={Size.sm}
+          ariaLabel={`Add ${item.label} to focus items`}
+          testId={`focus-item-picker-add:${item.id}`}
           onclick={onAdd}
         />
       {/if}

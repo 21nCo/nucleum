@@ -7,8 +7,11 @@
     "./*": "./*"
   },
   "dependencies": {
-    "@authfn/client": "0.1.1",
+    "@authfn/client": "file:../../../superfunctions-dev/authfn/client",
     "@authfn/svelte": "0.1.0",
+    "@datafn/client": "file:../../../superfunctions-dev/datafn/client",
+    "@datafn/svelte": "file:../../../superfunctions-dev/datafn/svelte",
+    "@superfunctions/http": "file:../../../superfunctions-dev/packages/http",
     "echarts": "^5.5.0"
   }
 }

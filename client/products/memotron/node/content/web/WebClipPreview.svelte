@@ -1,6 +1,6 @@
 <script lang="ts">
   import FileView from "@21n/components/files/FileView.svelte";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import { cn } from "@21n/utils/ui.utils";
   import {
     type IKindleHighlight,

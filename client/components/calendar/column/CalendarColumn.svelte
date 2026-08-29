@@ -28,7 +28,7 @@
     resolveCalendarColumnPanels,
     resolveCalendarNotesId
   } from "@21n/components/calendar/calendar.utils";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import DayTimeline from "./timeline/daytimeline/DayTimeline.svelte";
   import BoxButton from "@21n/elements/button/BoxButton.svelte";
@@ -51,7 +51,9 @@
     onDateChange?: ((event: CustomEvent<Date>) => void) | undefined;
   } = $props();
   let mdId = generateSimpleRandomId();
-  const backPath = $derived($page.url.searchParams.get(AppSearchParam.RETURN_TO));
+  const backPath = $derived(
+    $page.url?.searchParams?.get(AppSearchParam.RETURN_TO)
+  );
 
   let selectedPanel = $state<CalendarColumnPanel>(resolvePanelSelection());
 
@@ -69,7 +71,9 @@
 
   let containerWidth = $state(0);
   const layout = $derived(resolveLayout(containerWidth));
-  const panels = $derived(resolveCalendarColumnPanels($appStore.product, layout));
+  const panels = $derived(
+    resolveCalendarColumnPanels($appStore.product, layout)
+  );
 
   $effect(() => {
     if (panels.length === 1) {

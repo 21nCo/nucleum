@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
-  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { ResourceActionType } from "@21n/data/datafn/resource.type";
+  import { resourceAction } from "@21n/data/datafn/resource.utils";
   import ModalFooter from "@21n/components/modal/ModalFooter.svelte";
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
@@ -12,8 +12,9 @@
     type ISelectItem
   } from "@21n/types/select.type";
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
-  import { combinationStore } from "@21n/components/combination/combination.store";
   import { CombinationType } from "@21n/components/combination/combination.type";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { generateResourceId } from "@21n/data/datafn/id.utils";
 
   let label = "";
   let type: CombinationType = CombinationType.NOTEBOOK;
@@ -54,17 +55,25 @@
       return;
     }
     if (type !== CombinationType.NOTEBOOK) {
-      toasts.error("Only side nav combinations are supported currently");
+      toasts.error("Only side nav spaces are supported currently");
       return;
     }
-    const result = await combinationStore.createSideNavCombination({
-      label,
-      type
+    const id = generateResourceId(Resource.space);
+    const result = await datafn.space.mutate({
+      operation: "insert",
+      id,
+      record: {
+        id,
+        label,
+        type,
+        items: []
+      }
     });
-    if (result && result.length > 0) {
-      toasts.success("Combination created");
+    if (result) {
+      toasts.success("Space created");
+      return true;
     } else {
-      toasts.error("Failed to create combination");
+      toasts.error("Failed to create space");
     }
   }
 </script>
@@ -92,7 +101,7 @@
     </div>
   </ModalContentPadded>
   <ModalFooter
-    action={resourceAction(Resource.combination, ResourceActionType.CREATE)}
+    action={resourceAction(Resource.space, ResourceActionType.CREATE)}
     bind:error
     primaryAction={{
       label: "Save",

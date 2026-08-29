@@ -14,6 +14,8 @@
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { onMount } from "svelte";
+  import context from "@21n/stores/context.store";
+
   import Icon from "@21n/elements/Icon.svelte";
   let {
     action = undefined,
@@ -52,14 +54,16 @@
 <button
   data-testid="topnav-account-settings"
   class={cn(
-    "group flex items-center h-full w-fit border-r border-brs3 hover:bg-bgs3-striped",
+    "group flex items-center h-full w-fit hover:bg-bgs3-striped",
     !action && {
       "px-[0.72rem]": isHideMenuLabels,
-      "px-[1.72rem]": !isHideMenuLabels
+      "px-[1.72rem]": !isHideMenuLabels,
+      "border-r border-brs3": !$context.experiments?.isEnableRoundedMain
     },
     action && {
       "px-[1.08rem]": isHideMenuLabels,
-      "px-[2.08rem]": !isHideMenuLabels
+      "px-[2.08rem]": !isHideMenuLabels,
+      "border-r border-brs3": !$context.experiments?.isEnableRoundedMain
     }
   )}
   onclick={() => {
@@ -86,7 +90,7 @@
     </div>
   {:else if action}
     <div class="flex items-center justify-center">
-      <Icon icon={action} />
+      <Icon icon={"settings"} />
     </div>
   {:else}
     <div class="opacity-50">

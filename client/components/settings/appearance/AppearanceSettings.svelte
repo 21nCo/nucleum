@@ -18,7 +18,7 @@
   void parentBackgroundIndex;
   onMount(() => {
     if ($userPreferences.appearance.skin !== AppSkin.Clean) {
-      $userPreferences.appearance.skin = AppSkin.Clean;
+      userPreferences.setAppearance({ skin: AppSkin.Clean });
     }
   });
   function saveColorScheme(e: CustomEvent) {
@@ -30,7 +30,7 @@
   }
   function onTypefaceChange(e: CustomEvent) {
     const selectedTypeface = e.detail;
-    $userPreferences.appearance.typeface = selectedTypeface;
+    userPreferences.setAppearance({ typeface: selectedTypeface });
   }
 </script>
 
@@ -122,7 +122,12 @@
 
   {#if !$view.isConstrainedWidth}
     <SwitchInput
-      bind:checked={$userPreferences.appearance.isBlurredBgForPopups}
+      checked={$userPreferences.appearance.isBlurredBgForPopups}
+      onChange={(event) => {
+        userPreferences.setAppearance({
+          isBlurredBgForPopups: event.detail
+        });
+      }}
       isExpanded={true}
       label={{
         label: "Blurred background for popups",

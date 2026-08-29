@@ -1,12 +1,38 @@
-import { describe, it, expect, beforeEach, afterEach, beforeAll } from "vitest";
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  beforeAll,
+  vi
+} from "vitest";
 import { syncUp } from "./index";
 import { cloneUp } from "../cloneup";
+import { cloneDown } from "../clonedown";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { SyncProviderFactory, SyncProvider } from "../providers";
 import { ISyncUpBody, ICloneUpBody } from "$lib/shared/types/sync.type";
 import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
 import { PersistenceActionType } from "$lib/client/types/data.type";
 import { createMutation } from "$lib/tests/fixtures";
+
+async function waitForClonedRecords(
+  resources: Resource[],
+  expectedIds: string[]
+) {
+  await vi.waitFor(
+    async () => {
+      const result = await cloneDown(
+        { resources, isExtension: false },
+        global.testEnv.agent
+      );
+      const serialized = JSON.stringify(result);
+      expect(expectedIds.every((id) => serialized.includes(id))).toBe(true);
+    },
+    { interval: 250, timeout: 10_000 }
+  );
+}
 
 describe("SyncUp Integration Tests", () => {
   // Reset provider instance before each test to ensure clean state
@@ -319,8 +345,10 @@ describe("SyncUp Integration Tests", () => {
         global.testEnv.agent
       );
 
-      // Wait for eventual consistency
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await waitForClonedRecords(
+        [Resource.node],
+        testRecords.map((record) => record.id)
+      );
 
       // Create mutations to sync up
       const mutations = [
@@ -437,8 +465,10 @@ describe("SyncUp Integration Tests", () => {
         global.testEnv.agent
       );
 
-      // Wait for eventual consistency
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await waitForClonedRecords(
+        [Resource.node, Resource.kv],
+        [...nodeRecords, ...kvRecords].map((record) => record.id)
+      );
 
       // Create mutations for multiple resources
       const mutations = [
@@ -568,7 +598,10 @@ describe("SyncUp Integration Tests", () => {
         { resource: Resource.node, records: testRecords },
         global.testEnv.agent
       );
-      await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait for eventual consistency
+      await waitForClonedRecords(
+        [Resource.node],
+        testRecords.map((record) => record.id)
+      );
 
       const dynamoResult = await syncUp(body, global.testEnv.agent);
 

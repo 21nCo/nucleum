@@ -101,7 +101,7 @@
 
   let checked = $state($userPreferences.avatarPicker.filled);
   $effect(() => {
-    $userPreferences.avatarPicker.filled = checked;
+    userPreferences.setAvatarPicker({ filled: checked });
   });
   let skinTones = [
     "#FFCC22",
@@ -113,12 +113,12 @@
   ];
   let skinIndex = $state($userPreferences.avatarPicker.skinIndex);
   $effect(() => {
-    $userPreferences.avatarPicker.skinIndex = skinIndex;
+    userPreferences.setAvatarPicker({ skinIndex });
   });
   let colorPalate = ["bw", "#FFC107", "#FF6F61", "#00B7EB", "#63c99c"];
   let iconColor = $state($userPreferences.avatarPicker.iconColor);
   $effect(() => {
-    $userPreferences.avatarPicker.iconColor = iconColor;
+    userPreferences.setAvatarPicker({ iconColor });
   });
   let searchRef = $state<HTMLInputElement>();
   let shuffleEmojis = $appStoreShuffleEmojis;
@@ -380,7 +380,7 @@
       usedIcons.sort(
         (a, b) => (b[0].frequency ?? 0) - (a[0].frequency ?? 0)
       );
-      $userPreferences.avatarPicker.usedIcons = usedIcons;
+      userPreferences.setAvatarPicker({ usedIcons });
     } else {
       const usedEmojis = [...($userPreferences.avatarPicker?.usedEmojis ?? [])];
       let index = usedEmojis.findIndex((el) => {
@@ -406,7 +406,7 @@
       usedEmojis.sort(
         (a, b) => (b[0].frequency ?? 0) - (a[0].frequency ?? 0)
       );
-      $userPreferences.avatarPicker.usedEmojis = usedEmojis;
+      userPreferences.setAvatarPicker({ usedEmojis });
     }
     avatarClickCallback(tempEmote);
   }
@@ -464,10 +464,9 @@
         }
       }
       let emote = await uploadedImageToEmote(input);
-      $userPreferences.avatarPicker.usedIcons = [
-        ...$userPreferences.avatarPicker.usedIcons,
-        [emote]
-      ];
+      userPreferences.setAvatarPicker({
+        usedIcons: [...$userPreferences.avatarPicker.usedIcons, [emote]]
+      });
     } else {
       for (let emoji of $userPreferences.avatarPicker.usedEmojis ?? []) {
         if (emoji[0]?.name?.toLowerCase() == customName.toLowerCase()) {
@@ -476,10 +475,9 @@
         }
       }
       let emote = await uploadedImageToEmote(input);
-      $userPreferences.avatarPicker.usedEmojis = [
-        ...$userPreferences.avatarPicker.usedEmojis,
-        [emote]
-      ];
+      userPreferences.setAvatarPicker({
+        usedEmojis: [...$userPreferences.avatarPicker.usedEmojis, [emote]]
+      });
     }
   }
 

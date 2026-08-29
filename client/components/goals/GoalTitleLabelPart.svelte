@@ -1,9 +1,9 @@
 <script lang="ts">
   import { tooltip } from "@21n/actions/popover.action";
   import { isValidString } from "@21n/shared-utils/text.utils";
-  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import type { IObjectiveThumb } from "@21n/components/goals/goal.type";
 
-  let { item }: { item: IGoalThumb } = $props();
+  let { item }: { item: IObjectiveThumb } = $props();
 </script>
 
 <div class="flex items-center gap-2 min-w-0">

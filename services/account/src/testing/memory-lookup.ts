@@ -1,13 +1,11 @@
-import type {
-  AuthFnRegionLookupRecord,
-  AuthFnRegionLookupStore
-} from '@authfn/core';
+import type { AuthFnRegionLookupRecord } from '@authfn/multi-region';
+import type { ConditionalKVStoreAdapter } from '@superfunctions/db';
 
 function normalizeIdentifier(identifier: string): string {
   return identifier.trim().toLowerCase();
 }
 
-export interface InMemoryRegionLookupStore extends AuthFnRegionLookupStore {
+export interface InMemoryRegionLookupStore extends ConditionalKVStoreAdapter {
   clear(): void;
   records(): AuthFnRegionLookupRecord[];
 }
@@ -15,22 +13,25 @@ export interface InMemoryRegionLookupStore extends AuthFnRegionLookupStore {
 export function createInMemoryRegionLookupStore(
   initialRecords: AuthFnRegionLookupRecord[] = []
 ): InMemoryRegionLookupStore {
-  const records = new Map<string, AuthFnRegionLookupRecord>();
+  const records = new Map<string, string>();
 
   for (const record of initialRecords) {
-    records.set(normalizeIdentifier(record.identifier), {
+    const normalized = {
       ...record,
       identifier: normalizeIdentifier(record.identifier)
-    });
+    };
+    records.set(regionLookupStoreKey(normalized.identifier), JSON.stringify(normalized));
   }
 
   return {
-    async getByIdentifier(identifier) {
-      return records.get(normalizeIdentifier(identifier)) ?? null;
+    async get(key) {
+      return records.get(key) ?? null;
     },
-    async putIfAbsent(record) {
-      const normalized = normalizeIdentifier(record.identifier);
-      const existing = records.get(normalized);
+    async set(input) {
+      records.set(input.key, input.value);
+    },
+    async setIfAbsent(input) {
+      const existing = records.get(input.key);
       if (existing) {
         return {
           inserted: false,
@@ -38,32 +39,36 @@ export function createInMemoryRegionLookupStore(
         };
       }
 
-      records.set(normalized, {
-        ...record,
-        identifier: normalized
-      });
+      records.set(input.key, input.value);
       return {
         inserted: true
       };
     },
-    async update(record) {
-      const normalized = normalizeIdentifier(record.identifier);
-      const updated = {
-        ...record,
-        identifier: normalized,
-        updatedAt: record.updatedAt ?? new Date().toISOString()
-      };
-      records.set(normalized, updated);
-      return updated;
+    async compareAndSet(input) {
+      const existing = records.get(input.key) ?? null;
+      if (existing !== input.expected) {
+        return {
+          updated: false,
+          ...(existing === null ? {} : { existing })
+        };
+      }
+      records.set(input.key, input.value);
+      return { updated: true };
     },
-    async deleteByIdentifier(identifier) {
-      records.delete(normalizeIdentifier(identifier));
+    async delete(key) {
+      records.delete(key);
     },
     clear() {
       records.clear();
     },
     records() {
-      return Array.from(records.values()).map((record) => ({ ...record }));
+      return Array.from(records.values())
+        .map((value) => JSON.parse(value) as AuthFnRegionLookupRecord)
+        .map((record) => ({ ...record }));
     }
   };
+}
+
+function regionLookupStoreKey(identifier: string): string {
+  return `authfn:region:${identifier}`;
 }

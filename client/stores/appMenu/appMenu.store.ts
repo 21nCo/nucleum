@@ -1,15 +1,24 @@
-import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
 import type { IAppMenuStore } from "@21n/stores/appMenu/appMenu.type";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import { appStore } from "@21n/stores/app.store";
-import { get } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { logger } from "@21n/components/debug/logger.client";
+import { datafn } from "@21n/stores/datafn.store";
 
-class AppMenuStore extends KeyValueStore<IAppMenuStore> {
-  constructor() {
-    super(Resource.appMenu, {});
-  }
+const appMenuSignal = datafn.kv.signal<IAppMenuStore>(Resource.appMenu, {
+  defaultValue: {}
+});
+const appMenuLocal = writable<IAppMenuStore>({});
 
+appMenuSignal.subscribe((value) => {
+  appMenuLocal.set(value ?? {});
+});
+
+export const appMenuStore = {
+  subscribe: appMenuLocal.subscribe,
+  get() {
+    return get(appMenuLocal);
+  },
   setUserMenuItems(items: string[]) {
     const current = this.get();
     const context = get(appStore).product;
@@ -21,7 +30,7 @@ class AppMenuStore extends KeyValueStore<IAppMenuStore> {
         user: items
       }
     });
-  }
+  },
 
   addUserMenuItem(item: string) {
     const current = this.get();
@@ -35,7 +44,7 @@ class AppMenuStore extends KeyValueStore<IAppMenuStore> {
         user: [...(current[context]?.user ?? []), item]
       }
     });
-  }
+  },
   removeUserMenuItem(item: string) {
     const current = this.get();
     const context = get(appStore).product;
@@ -48,7 +57,16 @@ class AppMenuStore extends KeyValueStore<IAppMenuStore> {
         user: current[context]?.user?.filter((x) => x != item)
       }
     });
+  },
+  modify(n: Partial<IAppMenuStore>) {
+    appMenuLocal.update((current) => ({ ...current, ...n }) as IAppMenuStore);
+    return datafn.kv.merge(Resource.appMenu, n);
+  },
+  loader(data: IAppMenuStore) {
+    appMenuLocal.set(data);
+    return datafn.kv.set(Resource.appMenu, data);
+  },
+  destroy() {
+    appMenuSignal.dispose();
   }
-}
-
-export const appMenuStore = AppMenuStore.resolve(Resource.appMenu);
+};

@@ -1,22 +1,19 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import { feedbackPane } from "@21n/extensions/clipper/contentScripts/store";
   import LinkBoxOnClipper from "@21n/products/memotron/common/linkbox/LinkBoxOnClipper.svelte";
   import LinkItems from "@21n/products/memotron/common/linkbox/LinkItems.svelte";
-  import {
-    NodeType,
-    type IClip
-  } from "@21n/products/memotron/node/node.type";
+  import { NodeType, type IClip } from "@21n/products/memotron/node/node.type";
   import NodeTitle from "@21n/products/memotron/node/title/NodeTitle.svelte";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { fly } from "svelte/transition";
   import { resumeVideo } from "@21n/extensions/clipper/parsers/shared/video.utils";
   import InlineFeedbackText from "@21n/extensions/clipper/InlineFeedbackText.svelte";
   import { AlertType } from "@21n/types/notification.type";
-  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { determineResourceType } from "@21n/data/datafn/resource.utils";
+  import { Resource } from "@21n/data/datafn/resource.enum";
 
   let {
     clip,
@@ -124,7 +121,7 @@
       message: "Synced!",
       type: AlertType.SUCCESS
     };
-    if (result.clip.properties) clip.properties = result.clip.properties;
+    if (result.clip.propertyValues) clip.propertyValues = result.clip.propertyValues;
   }
 
   async function onNotesChange(e: CustomEvent) {
@@ -227,7 +224,7 @@
       <LinkItems
         links={_clip?.links}
         nodeId={_clip?.id}
-        propertyValues={_clip?.properties}
+        propertyValues={_clip?.propertyValues}
         isWrapItems={true}
         isExpandable={true}
         accessPoint={ResourceAccessPoint.CLIPPER}

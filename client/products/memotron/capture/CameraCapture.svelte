@@ -10,12 +10,12 @@
   import { appStore } from "@21n/stores/app.store";
   import type { IRecordId } from "@21n/types/data.type";
   import type { IActiveCaptureStore } from "@21n/products/memotron/capture/capture.store";
-  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { resourceAction } from "@21n/data/datafn/resource.utils";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import {
     AccessMode,
     ResourceActionType
-  } from "@21n/components/flux/resourceStores/resource.type";
+  } from "@21n/data/datafn/resource.type";
   import PlayerControl from "@21n/elements/player/controls/PlayerControl.svelte";
 
   let {

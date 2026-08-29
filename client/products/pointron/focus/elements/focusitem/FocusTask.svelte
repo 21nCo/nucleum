@@ -21,13 +21,13 @@
   import { cn } from "@21n/utils/ui.utils";
   import { SessionType } from "@21n/products/pointron/logs/log.type";
   import { resolveTaskFocus } from "@21n/products/pointron/focus/session.utils";
-  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { isSameResource } from "@21n/data/datafn/resource.utils";
   import type { ITaskThumb } from "@21n/components/tasks/task.type";
-  import { taskStore } from "@21n/components/tasks/task.store";
   import TaskCheckbox from "@21n/components/tasks/TaskCheckbox.svelte";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import { popover } from "@21n/actions/popover.action";
   import FocusTaskEstimatedTimePopover from "@21n/products/pointron/focus/elements/focusitem/FocusTaskEstimatedTimePopover.svelte";
+  import { datafn } from "@21n/stores/datafn.store";
   let {
     task,
     focusItem,
@@ -47,8 +47,9 @@
   } = $props();
   let workedTime: number = 0;
   let isInprogress = $state(false);
+  let isChecked = $state(false);
   let labelInputElement: any;
-  let labelEntry: string;
+  let labelEntry = $state("");
   let scrollToTask: any = null;
   function resolveWorkedTime() {
     if (
@@ -66,7 +67,6 @@
   }
   let workedTimeDerived = $derived(resolveWorkedTime());
   onMount(() => {
-    labelEntry = task.label ?? "";
     // workedTime = +task.worked;
     // estimateInMinutes = task.estimated;
     if (context === "history") return;
@@ -83,14 +83,30 @@
   });
 
   $effect(() => {
+    labelEntry = task.label ?? "";
+  });
+
+  $effect(() => {
+    isChecked = Boolean(task.isChecked);
+  });
+
+  $effect(() => {
     if (isInprogress && scrollToTask) {
       scrollToTask.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   });
 
-  async function onLabelChange() {
-    task.label = labelEntry;
-    await taskStore.modify(task.id, { label: labelEntry });
+  async function onLabelChange(event: CustomEvent<string>) {
+    task.label = event.detail;
+    await datafn.task.mutate({
+      operation: "merge",
+      id: task.id.toString(),
+      record: {
+        id: task.id.toString(),
+        label: event.detail
+      },
+      context: ResourceAccessPoint.FOCUS
+    });
   }
 
   async function onCheckClicked(event: CustomEvent<any>) {
@@ -114,7 +130,10 @@
       if (isInprogress) {
         await activeSession.stopCurrentFocusItem();
       } else {
-        if (task.isChecked) task.isChecked = false;
+        if (isChecked) {
+          isChecked = false;
+          task.isChecked = false;
+        }
         await activeSession.startTask(focusItem.id);
       }
     } else {
@@ -129,12 +148,18 @@
     onRemove?.(removeEvent);
   }
 
-  function onEstimatedTimeChange(e: CustomEvent<{ value: number }>) {
+  async function onEstimatedTimeChange(e: CustomEvent<{ value: number }>) {
     if (!e.detail?.value) return;
     const value = e.detail.value;
     task.estimated = value;
-    taskStore.modify(task.id, {
-      estimated: value
+    await datafn.task.mutate({
+      operation: "merge",
+      id: task.id.toString(),
+      record: {
+        id: task.id.toString(),
+        estimated: value
+      },
+      context: ResourceAccessPoint.FOCUS
     });
   }
 
@@ -177,16 +202,16 @@
       </span>
     {/if}
     <div
-      class="flex gap-2 flex-grow justify-start items-center truncate {task.isChecked &&
+      class="flex gap-2 flex-grow justify-start items-center truncate {isChecked &&
         'line-through'}"
     >
-        <TaskCheckbox
-          id={task.id}
-          bind:isChecked={task.isChecked}
-          accessPoint={ResourceAccessPoint.FOCUS}
-          onToggle={onCheckClicked}
-          isAccentBg={isInprogress}
-        />
+      <TaskCheckbox
+        id={task.id}
+        bind:isChecked
+        accessPoint={ResourceAccessPoint.FOCUS}
+        onToggle={onCheckClicked}
+        isAccentBg={isInprogress}
+      />
       {#if isInEditMode || (context === "current" && !$activeSession.isSessionRunning)}
         <TextInput
           onDebouncedChange={onLabelChange}
@@ -237,6 +262,12 @@
     </div>
   </div>
   {#if isInEditMode || (context === "current" && !$activeSession.isSessionRunning)}
-    <Button icon="cross" onclick={handleRemove} tooltip="Remove" />
+    <Button
+      icon="cross"
+      onclick={handleRemove}
+      tooltip="Remove"
+      ariaLabel={`Remove ${task.label}`}
+      testId={`focus-session-remove:${focusItem.id}`}
+    />
   {/if}
 </div>

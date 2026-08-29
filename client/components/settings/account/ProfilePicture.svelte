@@ -32,7 +32,7 @@
   const Emojis: string[] = ["🚀", "😁", "✌️", "👓", "⭐️", "🔥", "⚽️", "🛵"];
   const renderFileBasedProfilePicture = $derived(
     $appStore.product === Product.MEMOTRON ||
-      $appStore.product === Product.NUCLEUS
+      $appStore.product === Product.NUCLEUM
   );
 
   function pickRandomEmoji() {

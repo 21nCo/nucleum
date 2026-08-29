@@ -403,7 +403,8 @@ const heroiconsIcons = [
   "rectangle-stack",
   "bookmark",
   "copy",
-  "calendar"
+  "calendar",
+  "slash"
 ];
 const heroiconsSolid = heroiconsIcons.map((icon) => icon + "-solid");
 
@@ -489,4 +490,4 @@ export const solarIconsForBundling = {
   "bold-duotone": solarBoldDuotoneIcons
 };
 
-export const bundleNumber = 65;
+export const bundleNumber = 66;
