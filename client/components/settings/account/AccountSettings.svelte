@@ -25,8 +25,8 @@
   import { fileDrop } from "@21n/actions/fileDrop.action";
   import { toasts } from "@21n/stores/notification.store";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { isRecordId } from "@21n/data/datafn/resource.utils";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import type { IRecordId } from "@21n/types/data.type";
   import { appStore } from "@21n/stores/app.store";
   import { Action } from "@21n/types/action.enum";
@@ -219,7 +219,10 @@
       }
 
       if (shouldUseAuthFnBearerSession() && response.data.token) {
-        await clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, response.data.token);
+        await clientStorage.set(
+          ClientStorageKey.AUTHFN_TOKEN,
+          response.data.token
+        );
       } else {
         await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
       }
@@ -389,7 +392,9 @@
             {#if accountDetails?.hasPassword}
               Password
             {:else if accountDetails?.oauthAccounts?.length}
-              <Icon icon={providerIcon(accountDetails.oauthAccounts[0].provider)} />
+              <Icon
+                icon={providerIcon(accountDetails.oauthAccounts[0].provider)}
+              />
               {providerLabel(accountDetails.oauthAccounts[0].provider)}
             {:else if accountDetails?.methods.emailOtp || $account.token}
               Email OTP
@@ -412,9 +417,13 @@
             <div class="text-b2 text-fgs3">User</div>
             <div class="flex flex-col gap-1">
               <span>{accountDetails.user.primaryEmail ?? "No email"}</span>
-              <span class="text-fgs3 text-b3">User ID: {accountDetails.user.id}</span>
+              <span class="text-fgs3 text-b3"
+                >User ID: {accountDetails.user.id}</span
+              >
               {#if accountDetails.regionId}
-                <span class="text-fgs3 text-b3">Region: {accountDetails.regionId}</span>
+                <span class="text-fgs3 text-b3"
+                  >Region: {accountDetails.regionId}</span
+                >
               {/if}
               <span class="text-fgs3 text-b3">
                 Email verified:
@@ -444,7 +453,9 @@
               />
             </div>
             {#if !accountDetails.hasPassword && isPasswordFormVisible}
-              <div class="flex flex-col gap-3 w-full max-w-md bg-bgs2 rounded-md p-3">
+              <div
+                class="flex flex-col gap-3 w-full max-w-md bg-bgs2 rounded-md p-3"
+              >
                 <TextInput
                   bind:value={passwordValue}
                   type="password"
@@ -469,7 +480,9 @@
                 {/if}
                 <div class="flex gap-2">
                   <Button
-                    label={isSettingPassword ? "Setting password..." : "Set password"}
+                    label={isSettingPassword
+                      ? "Setting password..."
+                      : "Set password"}
                     size={Size.sm}
                     type={ButtonVariant.PRIMARY}
                     style={ButtonStyle.OUTLINED}
@@ -503,7 +516,9 @@
                 {/each}
               </div>
             {:else}
-              <div class="text-fgs3">No OAuth sign-in methods are connected.</div>
+              <div class="text-fgs3">
+                No OAuth sign-in methods are connected.
+              </div>
             {/if}
           </div>
         {:else if isAuthDetailsLoading}
