@@ -1,4 +1,4 @@
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "$lib/client/data/datafn/resource.enum";
 
 export const mockResources = {
   node: {
