@@ -24,7 +24,7 @@
       >
     {:else if $focusItemsStore.items.length > 0}
       <span class="text-b3">
-        Tap on a goal/task to start or stop focusing it.
+        Tap on a objective/task to start or stop focusing it.
       </span>
     {/if}
   </div>

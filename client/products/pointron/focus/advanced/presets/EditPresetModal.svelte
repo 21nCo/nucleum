@@ -15,17 +15,17 @@
   import ComposeTotalsText from "@21n/products/pointron/focus/advanced/composition/ComposeTotalsText.svelte";
   import { Orientation } from "@21n/types/direction.enum";
   import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
-  import { goalStore } from "@21n/components/goals/goal.store";
-  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import type { IObjectiveThumb } from "@21n/components/goals/goal.type";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-  import PresetGoalsSelector from "@21n/products/pointron/focus/advanced/presets/PresetGoalsSelector.svelte";
+  import PresetObjectivesSelector from "@21n/products/pointron/focus/advanced/presets/PresetGoalsSelector.svelte";
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
+  import { datafn } from "@21n/stores/datafn.store";
 
   let { id = "" }: { id?: string } = $props();
-  let composition: SessionComposition;
-  let selectedGoals: IGoalThumb[] = [];
+  let composition = $state<SessionComposition | undefined>();
+  let selectedObjectives = $state<IObjectiveThumb[]>([]);
 
-  let seedPreset: SessionComposition = {
+  const seedPreset: SessionComposition = {
     id: generateSimpleRandomId(),
     numberOfFocusRounds: 2,
     focusDuration: 28 * 60,
@@ -35,7 +35,7 @@
     breakType: BreakCompositionType.PREDEFINED,
     numberOfBreaks: 1,
     breakReminder: $pointronPreferences.breakReminder,
-    goals: []
+    objectives: []
   };
 
   onMount(async () => {
@@ -43,19 +43,16 @@
       composition = deepCopy(
         $pointronPreferences.presets.find((x) => x.id === id)!
       );
-      if (composition.goals?.length) {
-        const goals = await goalStore.selectMany(
-          {
-            filters: {
-              id: composition.goals
-            }
-          },
-          {
-            isExpand: true
+      const loadedComposition = composition;
+      if (loadedComposition?.objectives?.length) {
+        const objectives = await datafn.objective.query({
+          select: ["*", "children.*", "tasks.*"],
+          filters: {
+            id: { $in: loadedComposition.objectives }
           }
-        );
-        if (goals) {
-          selectedGoals = goals;
+        });
+        if (objectives.data) {
+          selectedObjectives = objectives.data as IObjectiveThumb[];
         }
       }
     } else {
@@ -64,7 +61,8 @@
   });
 
   async function saveHandler() {
-    composition.goals = selectedGoals.map((g) => g.id);
+    if (!composition) return false;
+    composition.objectives = selectedObjectives.map((g) => g.id);
     if (id) {
       pointronPreferences.updatePreset(composition);
     } else {
@@ -90,10 +88,13 @@
       />
       <ComposeTotalsText {composition} />
       <ComposeDuration
-        bind:composition
-        onChange={() => (composition = composition)}
+        {composition}
+        startInConfig={Boolean(id)}
+        compositionChangeHandler={(event) => {
+          composition = event.detail;
+        }}
       />
-      <PresetGoalsSelector bind:selectedGoals />
+      <PresetObjectivesSelector bind:selectedObjectives />
     </ModalContentPadded>
     <ModalFooter
       action={PointronAction.EDIT_PRESET}

@@ -20,7 +20,7 @@
   import { cn } from "@21n/utils/ui.utils";
   import { fullScreen } from "@21n/components/modal/modal.store";
   import { page } from "$app/stores";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
   import { getContext } from "svelte";

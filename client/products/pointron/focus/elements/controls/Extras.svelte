@@ -10,10 +10,8 @@
   import { Size } from "@21n/types/size.enum";
   import view from "@21n/stores/view.store";
   import { Display } from "@21n/types/view.type";
-  import modalEvent, {
-    fullScreen,
-    player
-  } from "@21n/components/modal/modal.store";
+  import { dispatchFocusPlayerPipRequest } from "@21n/products/pointron/focus/player/focusPlayer.events";
+  import modalEvent, { fullScreen } from "@21n/components/modal/modal.store";
   let {
     isInFullScreen = false,
     parentBgIndex = 1
@@ -73,8 +71,8 @@
       icon="pip"
       tooltip="Picture in picture"
       {...buttonProps}
-      onclick={() => {
-        player.togglePip(PointronAction.FOCUS_PLAYER);
+      onclick={(event) => {
+        dispatchFocusPlayerPipRequest(event);
       }}
     />
   {/if}

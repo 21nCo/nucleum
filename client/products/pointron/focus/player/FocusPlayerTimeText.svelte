@@ -9,44 +9,47 @@
   import { TimeFormat } from "@21n/types/time.type";
   import { formatSeconds } from "@21n/utils/time.utils";
   import { cn } from "@21n/utils/ui.utils";
-  import { onMount } from "svelte";
   import SessionStatusLabel from "@21n/products/pointron/focus/elements/sessionTimeText/SessionStatusLabel.svelte";
-  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
-  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { determineResourceType } from "@21n/data/datafn/resource.utils";
   import type { IRecordId } from "@21n/types/data.type";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { toSvelteStore } from "@datafn/svelte";
 
   let { context = SessionUIContext.DEFAULT }: { context?: SessionUIContext } =
     $props();
-  let currentTask: { id: IRecordId; label: string } | undefined = undefined;
-  onMount(() => {
-    const sub = currentFocusItem.subscribe(async (s) => {
-      if (
-        (s && currentTask && !isSameResource(currentTask, s)) ||
-        !s ||
-        (s && !currentTask)
-      ) {
-        refreshCurrentTask();
-      }
-    });
-    return () => {
-      sub();
-    };
-  });
-  async function refreshCurrentTask() {
-    const focusItem = $currentFocusItem;
-    if (focusItem) {
-      currentTask = await activeSession.resolveCurrentFocusItemData({
-        item: focusItem
-      });
-    } else {
-      currentTask = undefined;
-    }
-  }
 
   let isBreakReminderMode = $derived(
     $activeSession.timeRemainingToTakeBreak != undefined &&
       $activeSession.timeRemainingToTakeBreak < 0
   );
+
+  const currentTaskRecordStore = $derived.by(() => {
+    const focusItem = $currentFocusItem;
+    if (!focusItem?.id) return undefined;
+    const resource = determineResourceType(focusItem.id);
+    return toSvelteStore<Array<{ id: IRecordId; label?: string }>>(
+      datafn.table(resource).signal({
+        filters: { id: focusItem.id },
+        select: ["id", "label"],
+        limit: 1,
+        metadata: {
+          includeTrashed: true,
+          includeArchived: true
+        }
+      }),
+      { initialData: [] }
+    );
+  });
+
+  const currentTask = $derived.by(() => {
+    if (!currentTaskRecordStore) return undefined;
+    const record = $currentTaskRecordStore!.data[0];
+    if (!record) return undefined;
+    return {
+      id: record.id,
+      label: record.label ?? ""
+    };
+  });
 </script>
 
 <div class="flex flex-col items-start w-full">
@@ -58,10 +61,10 @@
         class={cn("text-left truncate text-b2 dp:text-base userdata", {
           "text-ccs1":
             context === SessionUIContext.PIP ||
-            context === SessionUIContext.GOAL_PAGE
+            context === SessionUIContext.OBJECTIVE_PAGE
         })}
       >
-        {context === SessionUIContext.GOAL_PAGE
+        {context === SessionUIContext.OBJECTIVE_PAGE
           ? "Focusing now..."
           : (currentTask?.label ?? "")}
       </div>
@@ -76,9 +79,3 @@
     {formatSeconds($activeSession.timeElapsed, TimeFormat.CLOCK)}
   </div>
 </div>
-{#if currentTask}
-  <ComponentBaseLayer
-    subscribeToRecords={[currentTask?.id]}
-    onChange={() => refreshCurrentTask()}
-  />
-{/if}
