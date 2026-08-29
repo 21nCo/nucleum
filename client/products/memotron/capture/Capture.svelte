@@ -9,16 +9,15 @@
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { CaptureMethod } from "@21n/products/memotron/capture/capture.type";
   import FileUploader from "@21n/products/memotron/capture/FileUploader.svelte";
-  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { onDestroy, onMount, setContext } from "svelte";
   import { page } from "$app/stores";
   import Icon from "@21n/elements/Icon.svelte";
   import view from "@21n/stores/view.store";
   import context from "@21n/stores/context.store";
   import { OperatingSystem } from "@21n/types/context.type";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { generateResourceId } from "@21n/components/flux/flux.utils";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
+  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { generateResourceId } from "@21n/data/datafn/id.utils";
   import { postMessageToParent } from "@21n/utils/embed.utils";
   import { EmbedMessage } from "@21n/types/embedMessage.enum";
   import { appEvents } from "@21n/stores/notification.store";
@@ -74,6 +73,9 @@
   });
 
   onMount(async () => {
+    if (!isWindowDnD) {
+      $appStore.isDnDPageActive = true;
+    }
     const appEventSub = appEvents.subscribe(async (x: IEvent) => {
       if (x.event === GlobalEvent.ENTER && x.value.metaKey === true) {
         await captureStore.save();
@@ -101,6 +103,9 @@
   });
 
   onDestroy(() => {
+    if (!isWindowDnD) {
+      $appStore.isDnDPageActive = false;
+    }
     subs.forEach((x) => x());
     setTimeout(() => {
       appStore.toggleSearchParam([
@@ -295,7 +300,6 @@
   onPreview={handleWebArtifactPreview}
 />
 
-<ComponentBaseLayer hasDragAndDrop={!isWindowDnD} />
 <ComponentShortcutListener
   isAllowFromTextInput={true}
   shortcuts={[
