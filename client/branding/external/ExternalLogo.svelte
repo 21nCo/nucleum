@@ -25,7 +25,6 @@
   import Dynalist from "@21n/branding/external/logos/Dynalist.svelte";
   import Ideaflow from "@21n/branding/external/logos/Ideaflow.svelte";
   import Default from "@21n/branding/external/logos/Default.svelte";
-  import type { IContemporary } from "@21n/types/featureWheel.type";
   import Icon from "@21n/elements/Icon.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import Mymind from "@21n/branding/external/logos/Mymind.svelte";
@@ -45,13 +44,19 @@
   import Raindrop from "@21n/branding/external/logos/Raindrop.svelte";
 
   import SvgIcon from "@21n/elements/SVGIcon.svelte";
+
+  type ExternalLogoProvider = {
+    icon?: string;
+    label?: string;
+  };
+
   let {
     provider = undefined,
     url = undefined,
     width = 20,
     class: className = ""
   }: {
-    provider?: IdentityProvider | string | IContemporary | undefined;
+    provider?: IdentityProvider | string | ExternalLogoProvider | undefined;
     url?: string | undefined;
     width?: number;
     class?: string;
@@ -86,7 +91,6 @@
         : undefined
   );
   const SelectedLogo = $derived(selected);
-  // $: console.log({ provider });
 </script>
 
 {#if icon && icon.includes(":") && !icon.includes("svg:")}

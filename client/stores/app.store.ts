@@ -70,7 +70,6 @@ export const excludedPathsForRedirectionCheck = [
   "error",
   "welcome",
   "play",
-  "fw",
   Action.EXTENSTION_LOGIN,
   "oauth"
 ];

@@ -25,7 +25,6 @@ import NodeTitleLabelPart from "@21n/products/memotron/node/title/NodeTitleLabel
 import MemotronGreenUse from "@21n/products/memotron/base/MemotronGreenUse.svelte";
 import CalloutSettings from "@21n/components/markdown/callout/CalloutSettings.svelte";
 import ResourceBrowser from "@21n/components/library/resourceBrowser/ResourceBrowser.svelte";
-import FeatureWheel from "@21n/components/featureWheel/FeatureWheel.svelte";
 import ResourceCache from "@21n/components/record/ResourceCache.svelte";
 import MemotronOverview from "@21n/products/memotron/overview/MemotronOverview.svelte";
 import { Action } from "@21n/types/action.enum";
@@ -196,20 +195,6 @@ export const memotronActions: IAction[] = [
     isInactive: true,
     icon: "light-bulb",
     component: ComingSoonView
-  },
-  {
-    action: "fw",
-    label: "Feature Wheel",
-    type: ActionType.PAGE,
-    isMenuHidden: true,
-    isMeta: true,
-    component: FeatureWheel,
-    modalParams: {
-      layout: {
-        size: Size.full,
-        ignoreSafeArea: true
-      }
-    }
   },
   {
     action: MemotronAction.PASTE_CONFIRMATION,
