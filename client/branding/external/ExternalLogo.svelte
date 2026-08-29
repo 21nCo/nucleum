@@ -25,7 +25,6 @@
   import Dynalist from "@21n/branding/external/logos/Dynalist.svelte";
   import Ideaflow from "@21n/branding/external/logos/Ideaflow.svelte";
   import Default from "@21n/branding/external/logos/Default.svelte";
-  import type { IContemporary } from "@21n/types/featureWheel.type";
   import Icon from "@21n/elements/Icon.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import Mymind from "@21n/branding/external/logos/Mymind.svelte";
@@ -51,7 +50,7 @@
     width = 20,
     class: className = ""
   }: {
-    provider?: IdentityProvider | string | IContemporary | undefined;
+    provider?: IdentityProvider | string | undefined;
     url?: string | undefined;
     width?: number;
     class?: string;
@@ -78,13 +77,7 @@
     else if (provider === IdentityProvider.Spotify) selected = Spotify;
     else selected = Default;
   });
-  const icon = $derived(
-    typeof provider === "string"
-      ? provider
-      : provider
-        ? provider?.icon || provider?.label?.toLowerCase()
-        : undefined
-  );
+  const icon = $derived(provider);
   const SelectedLogo = $derived(selected);
   // $: console.log({ provider });
 </script>

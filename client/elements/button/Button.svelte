@@ -14,6 +14,7 @@
   import type { IKeyboardShortcut } from "@21n/components/shortcuts/shortcut.type";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
   import ButtonTooltip from "@21n/elements/button/ButtonTooltip.svelte";
+  import context from "@21n/stores/context.store";
 
   let {
     parentBgIndex = 1,
@@ -77,7 +78,11 @@
   let buttonRef: any;
   const hasDefaultContent = $derived(!!children);
   const type = $derived(
-    (buttonType ?? variant) as "primary" | "secondary" | "danger" | ButtonVariant
+    (buttonType ?? variant) as
+      | "primary"
+      | "secondary"
+      | "danger"
+      | ButtonVariant
   );
   const isIconOnlyButton = $derived(!label && !hasDefaultContent);
   const shortcutSize = $derived(size === Size.xs ? Size.sm : Size.md);
@@ -136,7 +141,8 @@
       "gap-1 text-b4 dp:text-b3": size === Size.xs,
       "p-1.5 rounded-md": isIconOnlyButton && !isBoxed,
       "w-full h-full": isBoxed,
-      "rounded-full": !isBoxed,
+      "rounded-md": !isBoxed && !$context.experiments?.isEnableRoundedMain,
+      "rounded-full": !isBoxed && $context.experiments?.isEnableRoundedMain,
       [bg(parentBgIndex)]:
         isHovering && isIconOnlyButton && style !== ButtonStyle.PLAIN,
       "underline-dotted hover:underline-dotted-primary":

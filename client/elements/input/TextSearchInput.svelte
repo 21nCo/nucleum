@@ -181,6 +181,21 @@
     emitKeyup(event);
   }
 
+  function onInputValueChange() {
+    if (!searchCallback && !searchStoreId) {
+      hide();
+      return;
+    }
+    show();
+    searchResultsPopover?.search(value);
+    const changeEvent = new CustomEvent<{ value: any }>("change", {
+      detail: { value }
+    });
+    if (typeof onChange === "function") {
+      onChange(changeEvent);
+    }
+  }
+
   export function reset() {
     onResetInput();
     searchResultsPopover?.reset();
@@ -316,6 +331,10 @@
       onkeyup={(event) => {
         event.stopPropagation();
         onInputKeyup(event);
+      }}
+      oninput={(event) => {
+        event.stopPropagation();
+        onInputValueChange();
       }}
       onclick={(event) => {
         event.stopPropagation();

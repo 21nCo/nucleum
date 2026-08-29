@@ -103,6 +103,24 @@
     if (!("action" in column)) return;
     return column.action(row);
   }
+
+  function resolveToggleValue(row: any, key: string) {
+    return Boolean(row[key]);
+  }
+
+  function commitDataChange() {
+    data = [...data];
+  }
+
+  function setToggleValue(row: any, key: string, value: boolean) {
+    row[key] = value;
+    commitDataChange();
+  }
+
+  function patchRow(row: any, patch: Record<string, unknown>) {
+    Object.assign(row, patch);
+    commitDataChange();
+  }
 </script>
 
 <div
@@ -151,6 +169,7 @@
               {#if column.type === TableCellType.TEXT_INPUT}
                 <TextInput
                   bind:value={row[column.key]}
+                  onChange={commitDataChange}
                   placeholder={"placeholder" in column &&
                   typeof column.placeholder === "string"
                     ? column.placeholder
@@ -161,7 +180,9 @@
                 />
               {:else if column.type === TableCellType.TOGGLE}
                 <Switch
-                  bind:on={row[column.key]}
+                  on={resolveToggleValue(row, column.key)}
+                  onChange={(event) =>
+                    setToggleValue(row, column.key, event.detail)}
                   isDisabled={column.disabledCriteria?.(row) ?? false}
                 />
               {:else if column.type === TableCellType.DROPDOWN && "options" in column}
@@ -185,7 +206,12 @@
                 {#if typeof column.component === "string"}
                   <ComponentResolver
                     path={column.component}
-                    params={{ row, ...componentProps }}
+                    params={{
+                      row,
+                      onRowPatch: (patch: Record<string, unknown>) =>
+                        patchRow(row, patch),
+                      ...componentProps
+                    }}
                   />
                 {:else}
                   {@const CustomComponent = column.component}
