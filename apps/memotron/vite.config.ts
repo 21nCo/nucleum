@@ -66,7 +66,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000
   },
   optimizeDeps: {
-    exclude: ["@surrealdb/wasm", "surrealql.wasm"],
+    exclude: [],
     include: [
       "@antv/g6",
       "@carbon/charts-svelte",
