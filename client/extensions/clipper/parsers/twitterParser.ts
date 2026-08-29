@@ -1,5 +1,5 @@
 import { logger } from "@21n/components/debug/logger.client";
-import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
+import type { OmitForCapture } from "@21n/data/datafn/resource.type";
 import { ClipperElementIdentifier } from "@21n/products/memotron/common/clip.type";
 import {
   NodeType,
@@ -8,7 +8,10 @@ import {
 } from "@21n/products/memotron/node/node.type";
 import { contentTypeMap } from "@21n/products/memotron/node/url.utils";
 import type { ISocialPost } from "@21n/extensions/clipper/clipper.type";
-import { findAncestorOrSelf, resolveOgData } from "@21n/extensions/clipper/parsers/shared/domUtils";
+import {
+  findAncestorOrSelf,
+  resolveOgData
+} from "@21n/extensions/clipper/parsers/shared/domUtils";
 
 /**
  *
