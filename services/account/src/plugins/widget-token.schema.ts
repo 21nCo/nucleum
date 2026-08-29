@@ -1,19 +1,6 @@
-import {
-  authFnApiKeyPlugin,
-  authFnEmailOtpPlugin,
-  authFnMultiRegionPlugin,
-  authFnNativeHandoffPlugin,
-  authFnPasswordPlugin,
-  authFnSchemaPlugin,
-  authFnSocialOAuthPlugin,
-  authFnTwoFactorPlugin,
-  createAuthFn
-} from '@authfn/core';
-import type { Adapter, TableSchema } from '@superfunctions/db';
+import type { TableSchema } from '@superfunctions/db';
 
-export const ACCOUNT_AUTH_NAMESPACE = 'nucleus_account';
-
-const nucleusWidgetTokenTables: TableSchema[] = [
+export const nucleusWidgetTokenTables: TableSchema[] = [
   {
     modelName: 'widget_tokens',
     fields: {
@@ -40,23 +27,3 @@ const nucleusWidgetTokenTables: TableSchema[] = [
     ]
   }
 ];
-
-export const accountAuthSchemaSource = createAuthFn({
-  database: {} as Adapter,
-  namespace: ACCOUNT_AUTH_NAMESPACE,
-  plugins: [
-    authFnPasswordPlugin(),
-    authFnEmailOtpPlugin(),
-    authFnSocialOAuthPlugin(),
-    authFnApiKeyPlugin(),
-    authFnTwoFactorPlugin(),
-    authFnMultiRegionPlugin(),
-    authFnNativeHandoffPlugin(),
-    authFnSchemaPlugin({
-      name: 'nucleusWidgetTokens',
-      schema: nucleusWidgetTokenTables
-    })
-  ]
-});
-
-export const accountAuthSchema = accountAuthSchemaSource.getSchema();
