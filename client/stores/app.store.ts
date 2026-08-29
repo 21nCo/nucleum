@@ -5,7 +5,7 @@ import type { DragAndDrop } from "@21n/types/draganddrop.type";
 import { DragStatus } from "@21n/types/dragstatus.enum";
 import blankJson from "@21n/data/blank.json";
 import colorSchemes from "@21n/theme/colorschemes.json";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import { shuffleEmojis } from "@21n/data/avatars";
 import { ActionType, type IAction } from "@21n/types/action.type";
 import { IdentityProvider } from "@21n/types/oauth.type";
@@ -20,11 +20,7 @@ import {
   confirmationNotification
 } from "@21n/stores/notification.store";
 import { Embed, OperatingSystem } from "@21n/types/context.type";
-import { accessLogStore } from "@21n/components/accessLogging/accesslog.store";
-import {
-  AccessMode,
-  ResourceActionType
-} from "@21n/components/flux/resourceStores/resource.type";
+import { AccessMode, ResourceActionType } from "@21n/data/datafn/resource.type";
 import { InteractionMode } from "@21n/components/settings/interactionMode/interactionMode.type";
 import { Action } from "@21n/types/action.enum";
 import { GlobalEvent, type Event } from "@21n/types/event.enum";
@@ -36,9 +32,11 @@ import { tabs, vTrail } from "@21n/layout/topNav/tabs/tabs.store";
 import {
   determineResourceAccessMode,
   resourceAction
-} from "@21n/components/flux/resourceStores/resource.utils";
+} from "@21n/data/datafn/resource.utils";
 import { Product } from "@21n/products/product.type";
 import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
+import { datafn, datafnRuntime } from "@21n/stores/datafn.store";
+import { generateResourceId } from "@21n/data/datafn/id.utils";
 
 // export const app = writable<{ product: string; env: string }>({
 //   product: "tidy",
@@ -70,7 +68,6 @@ export const excludedPathsForRedirectionCheck = [
   "error",
   "welcome",
   "play",
-  "fw",
   Action.EXTENSTION_LOGIN,
   "oauth"
 ];
@@ -167,7 +164,7 @@ const recordSpecificSearchParams = [
 
 // export const appStore = initAppStore();
 const { subscribe, set, update } = writable<IAppStore>({
-  product: Product.NUCLEUS,
+  product: Product.NUCLEUM,
   env: "dev",
   isDebugMode,
   isExperimentalMode,
@@ -204,7 +201,7 @@ export const appStore = {
       if (component?.isMenuHidden) return true;
     }
     const listOfPathsToHideMenu = {
-      portrait: ["/goal/*", "/cp/*"],
+      portrait: ["/objective/*", "/cp/*"],
       landscape: []
     };
     if (!path) return false;
@@ -376,6 +373,12 @@ export const appStore = {
         appStore.toggleSearchParam([mode]);
       } else {
         appStore.toggleSearchParam({
+          ...(mode === AccessMode.MAIN
+            ? {
+                [AccessMode.POP]: null,
+                [AccessMode.FSPLIT]: null
+              }
+            : {}),
           [mode]: slug
         });
       }
@@ -526,7 +529,8 @@ export const appStore = {
     }
   ) => {
     const prefix = appStore.resolveRecordSpecificSearchParamPrefix(id);
-    let modified: Record<string, string | boolean | number | null> | string[] = {};
+    let modified: Record<string, string | boolean | number | null> | string[] =
+      {};
     if (Array.isArray(params)) {
       modified = params.map((p) => `${prefix}-${p}`);
     } else {
@@ -655,12 +659,22 @@ export const appStore = {
         }) ?? url;
     }
     const timestamp = new Date();
-    accessLogStore.create({
-      resource: id.toString()?.split(":")[0],
-      action: ResourceActionType.OPEN,
-      resourceId: id,
-      timestamp: timestamp.toISOString()
-    } as any);
+    const runtime = get(datafnRuntime);
+    if (runtime?.remoteUrl)
+      void datafn.accessLog
+        .mutate({
+          operation: "insert",
+          record: {
+            id: generateResourceId(Resource.accessLog),
+            resource: id.toString()?.split(":")[0],
+            action: ResourceActionType.OPEN,
+            resourceId: id,
+            timestamp
+          }
+        })
+        .catch((error) =>
+          logger.error({ at: "openResource.accessLog", error })
+        );
     if (accessMode === AccessMode.TAB) {
       if (params?.replaceId) tabs.replace(id, params.replaceId);
       else tabs.open(id);
@@ -683,7 +697,7 @@ export const appStore = {
     let isOpenNavigator = false;
     let isCloseNavigator = false;
     if (accessMode === AccessMode.POP && params?.origin) {
-      isOpenNavigator = vTrail.add(params.origin, id);
+      // isOpenNavigator = vTrail.add(params.origin, id);
     } else if (accessMode === AccessMode.POP) {
       vTrail.clear();
       isCloseNavigator =

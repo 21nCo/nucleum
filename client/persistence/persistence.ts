@@ -2,7 +2,6 @@ import {
   performApiCall,
   performStaticDataOperation
 } from "@21n/utils/network.utils";
-import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
 import { logger } from "@21n/components/debug/logger.client";
 import { clientStorage } from "@21n/persistence/persistence.utils";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
@@ -47,21 +46,6 @@ export class Persistence {
       logger.error({ at: "getUserInfo", error: err });
     }
   };
-  ping = async () => {
-    try {
-      const response = this.resolveJsonResponse(
-        await performApiCall("v2/account/ping", "POST", {})
-      );
-      if (!response?.ok) {
-        return;
-      }
-      const data = await response.json();
-      return isValidArrayWithData(data);
-    } catch (err) {
-      logger.error({ at: "ping", error: err });
-    }
-  };
-
   getUserPlan = async () => {
     try {
       const response = this.resolveJsonResponse(

@@ -35,7 +35,10 @@ export const FONT_FAMILIES = [
   "IBM+Plex+Sans:ital,wght@0,100..700;1,100..700",
   "Rubik:ital,wght@0,300..900;1,300..900",
   "Funnel+Sans:ital,wght@0,300..800;1,300..800",
-  "Arvo:ital,wght@0,400;0,700;1,400;1,700"
+  "Arvo:ital,wght@0,400;0,700;1,400;1,700",
+  "Climate+Crisis:YEAR@1979..2050",
+  "Cabin:ital,wght@0,400..700;1,400..700",
+  "Albert+Sans:ital,wght@0,100..900;1,100..900"
 ];
 
 export function generateGoogleFontsUrl(): string {
