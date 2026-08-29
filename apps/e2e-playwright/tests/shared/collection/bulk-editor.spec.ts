@@ -1,24 +1,79 @@
-import { test, expect } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { expect, test, type E2ESeed } from "../../fixtures/e2e-test";
 import {
   ensureInAppOnHome,
-  openLibraryAndTab,
-  LibraryTab,
   selectFirstTwoViaContextMenu,
-  createTwoCollections,
   getBulkEditBar
 } from "../../utils/helpers";
+import { resolveRepoFsImportPath } from "../../utils/repo-fs";
+import {
+  getResourceRecordsContainer,
+  getResourceThumbnail,
+  getResourceThumbnails,
+  openResourceBrowser,
+  openResourceQueryState,
+  requireResourceBrowseContract
+} from "../../utils/resource-matrix";
 
-const runtimeEnv = (
-  globalThis as { process?: { env?: Record<string, string | undefined> } }
-).process?.env;
+let e2eSeed: E2ESeed;
 
-test.skip(
-  runtimeEnv?.SKIP_E2E === "1",
-  "E2E suite disabled by environment"
-);
+function getCollectionRecords(page: Page) {
+  const contract = requireResourceBrowseContract(
+    test.info().project.name,
+    "collection"
+  );
+  return getResourceRecordsContainer(page, contract);
+}
 
-test.describe("collection - bulk editor @regression", () => {
-  test.beforeEach(async ({ page }) => {
+function getCollectionThumbnails(page: Page) {
+  return getResourceThumbnails(page);
+}
+
+async function getSelectedCollectionIds(page: Page) {
+  return page.evaluate(
+    async ({ modulePaths }) => {
+      const bulkEditMod = await import(modulePaths.bulkEditStorePath);
+      return bulkEditMod.bulkEditStore.getState().selectedIds as string[];
+    },
+    {
+      modulePaths: {
+        bulkEditStorePath: resolveRepoFsImportPath(
+          "client/components/record/bulkedit.store.ts"
+        )
+      }
+    }
+  );
+}
+
+async function queryCollectionState(page: Page, ids: string[]) {
+  return page.evaluate(
+    async ({ modulePaths, ids }) => {
+      const datafnMod = await import(modulePaths.datafnStorePath);
+      const { datafn } = datafnMod;
+      const result = await datafn.collection.query({
+        filters: { id: { $in: ids } },
+        metadata: {
+          includeArchived: true,
+          includeTrashed: true
+        }
+      });
+      const rows = result.data ?? [];
+      return ids.map((id) => rows.find((row: { id: string }) => row.id === id));
+    },
+    {
+      ids,
+      modulePaths: {
+        datafnStorePath: resolveRepoFsImportPath(
+          "client/stores/datafn.store.ts"
+        )
+      }
+    }
+  );
+}
+
+test.describe("collection - bulk editor @bulk-editor", () => {
+  test.beforeEach(async ({ page, seed }) => {
+    e2eSeed = seed;
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
       if (/accounts\.google\.com/i.test(reqUrl)) route.abort();
@@ -31,14 +86,16 @@ test.describe("collection - bulk editor @regression", () => {
   }) => {
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
-    await createTwoCollections(page);
-    await openLibraryAndTab(page, LibraryTab.Collections);
+    await e2eSeed.collections.collections(2, {
+      prefix: "E2E bulk collection"
+    });
+    await openResourceBrowser(page, test.info().project.name, "collection");
 
-    await selectFirstTwoViaContextMenu(page, "records-container");
+    await selectFirstTwoViaContextMenu(page, "collection");
 
-    await expect(
-      page.getByText(/Selected: 2 collections?/i)
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/Selected: 2 collections?/i)).toBeVisible({
+      timeout: 10_000
+    });
     const bar = getBulkEditBar(page);
     await expect(bar).toBeVisible({ timeout: 5_000 });
     await expect(bar.getByRole("button", { name: /^Star$/i })).toBeVisible();
@@ -51,20 +108,22 @@ test.describe("collection - bulk editor @regression", () => {
   }) => {
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
-    await createTwoCollections(page);
-    await openLibraryAndTab(page, LibraryTab.Collections);
+    await e2eSeed.collections.collections(2, {
+      prefix: "E2E bulk collection"
+    });
+    await openResourceBrowser(page, test.info().project.name, "collection");
 
-    await selectFirstTwoViaContextMenu(page, "records-container");
-    await expect(
-      page.getByText(/Selected: 2 collections?/i)
-    ).toBeVisible({ timeout: 10_000 });
+    await selectFirstTwoViaContextMenu(page, "collection");
+    await expect(page.getByText(/Selected: 2 collections?/i)).toBeVisible({
+      timeout: 10_000
+    });
 
     await getBulkEditBar(page)
       .getByRole("button", { name: /Clear selection/i })
       .click({ timeout: 5_000 });
-    await expect(
-      page.getByText(/Selected: 2 collections?/i)
-    ).toBeHidden({ timeout: 5_000 });
+    await expect(page.getByText(/Selected: 2 collections?/i)).toBeHidden({
+      timeout: 5_000
+    });
   });
 
   test("select multiple collections - Star shows success toast, clears selection, and collections are starred", async ({
@@ -72,27 +131,36 @@ test.describe("collection - bulk editor @regression", () => {
   }) => {
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
-    await createTwoCollections(page);
-    await openLibraryAndTab(page, LibraryTab.Collections);
+    await e2eSeed.collections.collections(2, {
+      prefix: "E2E bulk collection"
+    });
+    await openResourceBrowser(page, test.info().project.name, "collection");
 
-    const urlStarred = new URL(page.url());
-    urlStarred.searchParams.set("starred", "1");
-    await page.goto(urlStarred.toString(), { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(1_500);
-    const starredThumbnailsBefore = page.locator(
-      "#records-container div[id^='thumbnail-']"
+    await openResourceQueryState(
+      page,
+      test.info().project.name,
+      "collection",
+      "starred"
     );
-    await page.locator("#records-container").waitFor({ state: "visible", timeout: 10_000 });
+    const starredThumbnailsBefore = getCollectionThumbnails(page);
+    await getCollectionRecords(page).waitFor({
+      state: "visible",
+      timeout: 10_000
+    });
     const starredCountBefore = await starredThumbnailsBefore.count();
-    const urlCollections = new URL(page.url());
-    urlCollections.searchParams.delete("starred");
-    await page.goto(urlCollections.toString(), { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(1_500);
+    await openResourceQueryState(
+      page,
+      test.info().project.name,
+      "collection",
+      "active"
+    );
 
-    await selectFirstTwoViaContextMenu(page, "records-container");
-    await expect(
-      page.getByText(/Selected: 2 collections?/i)
-    ).toBeVisible({ timeout: 10_000 });
+    await selectFirstTwoViaContextMenu(page, "collection");
+    await expect(page.getByText(/Selected: 2 collections?/i)).toBeVisible({
+      timeout: 10_000
+    });
+    const selectedIds = await getSelectedCollectionIds(page);
+    expect(selectedIds).toHaveLength(2);
 
     await getBulkEditBar(page)
       .getByRole("button", { name: /^Star$/i })
@@ -100,24 +168,50 @@ test.describe("collection - bulk editor @regression", () => {
     await expect(
       page.getByText(/Starred 2 collections? successfully/i)
     ).toBeVisible({ timeout: 10_000 });
-    await expect(
-      page.getByText(/Selected: 2 collections?/i)
-    ).toBeHidden({ timeout: 5_000 });
+    await expect(page.getByText(/Selected: 2 collections?/i)).toBeHidden({
+      timeout: 5_000
+    });
+    await expect
+      .poll(async () => queryCollectionState(page, selectedIds), {
+        message:
+          "select multiple collections - Star shows success toast, clear...: toEqual [ expect.objectContaining({ id: selectedIds[0], isStarred: true }), expect.objectContaining(",
+        timeout: 10_000
+      })
+      .toEqual([
+        expect.objectContaining({ id: selectedIds[0], isStarred: true }),
+        expect.objectContaining({ id: selectedIds[1], isStarred: true })
+      ]);
 
-    await page.goto(urlStarred.toString(), { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(1_500);
-    const thumbnails = page.locator("#records-container div[id^='thumbnail-']");
+    await openResourceQueryState(
+      page,
+      test.info().project.name,
+      "collection",
+      "starred"
+    );
+    const thumbnails = getCollectionThumbnails(page);
     await expect(thumbnails.first()).toBeVisible({ timeout: 10_000 });
     await expect(thumbnails).toHaveCount(starredCountBefore + 2, {
       timeout: 5_000
     });
+    for (const selectedId of selectedIds) {
+      await expect(getResourceThumbnail(page, selectedId)).toBeVisible({
+        timeout: 10_000
+      });
+    }
 
-    const starIconsInStarredView = page.locator(
-      "#records-container div[id^='thumbnail-'] .text-yellow-400"
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await ensureInAppOnHome(page);
+    await openResourceQueryState(
+      page,
+      test.info().project.name,
+      "collection",
+      "starred"
     );
-    await expect(starIconsInStarredView).toHaveCount(starredCountBefore + 2, {
-      timeout: 5_000
-    });
+    for (const selectedId of selectedIds) {
+      await expect(getResourceThumbnail(page, selectedId)).toBeVisible({
+        timeout: 10_000
+      });
+    }
   });
 
   test("select multiple collections - Select all keeps bar visible with count", async ({
@@ -125,18 +219,19 @@ test.describe("collection - bulk editor @regression", () => {
   }) => {
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
-    await createTwoCollections(page);
-    await openLibraryAndTab(page, LibraryTab.Collections);
+    await e2eSeed.collections.collections(2, {
+      prefix: "E2E bulk collection"
+    });
+    await openResourceBrowser(page, test.info().project.name, "collection");
 
-    const container = page.locator("#records-container");
-    const thumbnails = container.locator('div[id^="thumbnail-"]');
+    const thumbnails = getCollectionThumbnails(page);
     await expect(thumbnails.first()).toBeVisible({ timeout: 10_000 });
     const totalCount = await thumbnails.count();
 
-    await selectFirstTwoViaContextMenu(page, "records-container");
-    await expect(
-      page.getByText(/Selected: 2 collections?/i)
-    ).toBeVisible({ timeout: 10_000 });
+    await selectFirstTwoViaContextMenu(page, "collection");
+    await expect(page.getByText(/Selected: 2 collections?/i)).toBeVisible({
+      timeout: 10_000
+    });
 
     await getBulkEditBar(page)
       .getByRole("button", { name: /Select all/i })
@@ -151,27 +246,36 @@ test.describe("collection - bulk editor @regression", () => {
   }) => {
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
-    await createTwoCollections(page);
-    await openLibraryAndTab(page, LibraryTab.Collections);
+    await e2eSeed.collections.collections(2, {
+      prefix: "E2E bulk collection"
+    });
+    await openResourceBrowser(page, test.info().project.name, "collection");
 
-    const urlArchived = new URL(page.url());
-    urlArchived.searchParams.set("archived", "1");
-    await page.goto(urlArchived.toString(), { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(1_500);
-    const archivedThumbnailsBefore = page.locator(
-      "#records-container div[id^='thumbnail-']"
+    await openResourceQueryState(
+      page,
+      test.info().project.name,
+      "collection",
+      "archived"
     );
-    await page.locator("#records-container").waitFor({ state: "visible", timeout: 10_000 });
+    const archivedThumbnailsBefore = getCollectionThumbnails(page);
+    await getCollectionRecords(page).waitFor({
+      state: "visible",
+      timeout: 10_000
+    });
     const archivedCountBefore = await archivedThumbnailsBefore.count();
-    const urlCollections = new URL(page.url());
-    urlCollections.searchParams.delete("archived");
-    await page.goto(urlCollections.toString(), { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(1_500);
+    await openResourceQueryState(
+      page,
+      test.info().project.name,
+      "collection",
+      "active"
+    );
 
-    await selectFirstTwoViaContextMenu(page, "records-container");
-    await expect(
-      page.getByText(/Selected: 2 collections?/i)
-    ).toBeVisible({ timeout: 10_000 });
+    await selectFirstTwoViaContextMenu(page, "collection");
+    await expect(page.getByText(/Selected: 2 collections?/i)).toBeVisible({
+      timeout: 10_000
+    });
+    const selectedIds = await getSelectedCollectionIds(page);
+    expect(selectedIds).toHaveLength(2);
 
     await getBulkEditBar(page)
       .getByRole("button", { name: /^Archive$/i })
@@ -179,17 +283,50 @@ test.describe("collection - bulk editor @regression", () => {
     await expect(
       page.getByText(/Archived 2 collections? successfully/i)
     ).toBeVisible({ timeout: 10_000 });
-    await expect(
-      page.getByText(/Selected: 2 collections?/i)
-    ).toBeHidden({ timeout: 5_000 });
+    await expect(page.getByText(/Selected: 2 collections?/i)).toBeHidden({
+      timeout: 5_000
+    });
+    await expect
+      .poll(async () => queryCollectionState(page, selectedIds), {
+        message:
+          "select multiple collections - Archive shows success toast, cl...: toEqual [ expect.objectContaining({ id: selectedIds[0], isArchived: true }), expect.objectContaining",
+        timeout: 10_000
+      })
+      .toEqual([
+        expect.objectContaining({ id: selectedIds[0], isArchived: true }),
+        expect.objectContaining({ id: selectedIds[1], isArchived: true })
+      ]);
 
-    await page.goto(urlArchived.toString(), { waitUntil: "domcontentloaded" });
-    await page.waitForTimeout(1_500);
-    const thumbnails = page.locator("#records-container div[id^='thumbnail-']");
+    await openResourceQueryState(
+      page,
+      test.info().project.name,
+      "collection",
+      "archived"
+    );
+    const thumbnails = getCollectionThumbnails(page);
     await expect(thumbnails.first()).toBeVisible({ timeout: 10_000 });
     await expect(thumbnails).toHaveCount(archivedCountBefore + 2, {
       timeout: 5_000
     });
+    for (const selectedId of selectedIds) {
+      await expect(getResourceThumbnail(page, selectedId)).toBeVisible({
+        timeout: 10_000
+      });
+    }
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await ensureInAppOnHome(page);
+    await openResourceQueryState(
+      page,
+      test.info().project.name,
+      "collection",
+      "archived"
+    );
+    for (const selectedId of selectedIds) {
+      await expect(getResourceThumbnail(page, selectedId)).toBeVisible({
+        timeout: 10_000
+      });
+    }
   });
 
   test("select multiple collections - Delete shows success toast and clears selection", async ({
@@ -197,19 +334,23 @@ test.describe("collection - bulk editor @regression", () => {
   }) => {
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
-    await createTwoCollections(page);
-    await openLibraryAndTab(page, LibraryTab.Collections);
+    await e2eSeed.collections.collections(2, {
+      prefix: "E2E bulk collection"
+    });
+    await openResourceBrowser(page, test.info().project.name, "collection");
 
-    const recordsContainer = page.locator("#records-container");
+    const recordsContainer = getCollectionRecords(page);
     await recordsContainer.waitFor({ state: "visible", timeout: 10_000 });
-    const thumbnailsBefore = recordsContainer.locator("div[id^='thumbnail-']");
+    const thumbnailsBefore = getCollectionThumbnails(page);
     await expect(thumbnailsBefore.first()).toBeVisible({ timeout: 10_000 });
     const countBefore = await thumbnailsBefore.count();
 
-    await selectFirstTwoViaContextMenu(page, "records-container");
-    await expect(
-      page.getByText(/Selected: 2 collections?/i)
-    ).toBeVisible({ timeout: 10_000 });
+    await selectFirstTwoViaContextMenu(page, "collection");
+    await expect(page.getByText(/Selected: 2 collections?/i)).toBeVisible({
+      timeout: 10_000
+    });
+    const selectedIds = await getSelectedCollectionIds(page);
+    expect(selectedIds).toHaveLength(2);
 
     await getBulkEditBar(page)
       .getByRole("button", { name: /^Delete$/i })
@@ -217,12 +358,48 @@ test.describe("collection - bulk editor @regression", () => {
     await expect(
       page.getByText(/Deleted 2 collections? successfully/i)
     ).toBeVisible({ timeout: 10_000 });
-    await expect(
-      page.getByText(/Selected: 2 collections?/i)
-    ).toBeHidden({ timeout: 5_000 });
+    await expect(page.getByText(/Selected: 2 collections?/i)).toBeHidden({
+      timeout: 5_000
+    });
+    await expect
+      .poll(async () => queryCollectionState(page, selectedIds), {
+        message:
+          "select multiple collections - Delete shows success toast and...: toEqual [ expect.objectContaining({ id: selectedIds[0], trashedAt: expect.anything() }), expect.obje",
+        timeout: 10_000
+      })
+      .toEqual([
+        expect.objectContaining({
+          id: selectedIds[0],
+          trashedAt: expect.anything()
+        }),
+        expect.objectContaining({
+          id: selectedIds[1],
+          trashedAt: expect.anything()
+        })
+      ]);
 
-    await page.waitForTimeout(1_500);
-    const thumbnailsAfter = recordsContainer.locator("div[id^='thumbnail-']");
-    await expect(thumbnailsAfter).toHaveCount(countBefore - 2, { timeout: 10_000 });
+    const thumbnailsAfter = getCollectionThumbnails(page);
+    await expect(thumbnailsAfter).toHaveCount(countBefore - 2, {
+      timeout: 10_000
+    });
+    for (const selectedId of selectedIds) {
+      await expect(getResourceThumbnail(page, selectedId)).toBeHidden({
+        timeout: 10_000
+      });
+    }
+
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await ensureInAppOnHome(page);
+    await openResourceQueryState(
+      page,
+      test.info().project.name,
+      "collection",
+      "active"
+    );
+    for (const selectedId of selectedIds) {
+      await expect(getResourceThumbnail(page, selectedId)).toBeHidden({
+        timeout: 10_000
+      });
+    }
   });
 });

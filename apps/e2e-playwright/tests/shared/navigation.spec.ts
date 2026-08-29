@@ -1,16 +1,13 @@
 import { test, expect } from "@playwright/test";
-import { ensureInAppOnHome, getProductConfig } from "../utils/helpers";
+import { Action } from "@21n/types/action.enum";
+import { ensureInAppOnHome, isCloudAuthModeActive } from "../utils/helpers";
 
-const runtimeEnv = (
-  globalThis as { process?: { env?: Record<string, string | undefined> } }
-).process?.env;
+test.describe("shared - auth and nav @auth", () => {
+  test.skip(
+    !isCloudAuthModeActive(),
+    "Auth smoke runs only in cloud auth modes"
+  );
 
-test.skip(
-  runtimeEnv?.SKIP_E2E === "1",
-  "E2E suite disabled by environment"
-);
-
-test.describe("shared - auth and nav @regression", () => {
   test("already logged in (Google auth state): handle old page if present, then verify in app @smoke", async ({
     page
   }) => {
@@ -24,7 +21,6 @@ test.describe("shared - auth and nav @regression", () => {
       route.continue();
     });
 
-    const productConfig = getProductConfig(test.info().project.name);
     await ensureInAppOnHome(page);
 
     const testNavLabel = "Overview";
@@ -36,10 +32,7 @@ test.describe("shared - auth and nav @regression", () => {
       .first();
     await expect(navAction).toBeVisible({ timeout: 20_000 });
     await navAction.click({ timeout: 5_000, force: true });
-    const expectedPath =
-      productConfig.pathByNavLabel[
-        testNavLabel as keyof typeof productConfig.pathByNavLabel
-      ];
+    const expectedPath = `/${Action.OVERVIEW}`;
     await page.waitForURL(
       (u) => new RegExp(`^${expectedPath}(\\/.*)?$`).test(new URL(u).pathname),
       { timeout: 20_000 }

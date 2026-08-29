@@ -1,9 +1,8 @@
 import { test, expect } from "@playwright/test";
-import {
-  ensureInAppOnHome,
-  getProductConfig,
-  goalResourcePattern
-} from "../../utils/helpers";
+import { Product } from "@21n/products/product.type";
+import { ensureInAppOnHome } from "../../utils/helpers";
+import { expectAnyLocatorVisible } from "../../utils/locator-assertions";
+import { resolveRepoFsImportPath } from "../../utils/repo-fs";
 import {
   assertSearchOrCommandBarInputVisible,
   assertSettingsShellVisible,
@@ -14,17 +13,94 @@ import {
   openDeclaredSettingsPanel
 } from "../../utils/settings-contracts";
 
-const runtimeEnv = (
-  globalThis as { process?: { env?: Record<string, string | undefined> } }
-).process?.env;
+const appStorePath = resolveRepoFsImportPath("client/stores/app.store.ts");
+const interactionModePath = resolveRepoFsImportPath(
+  "client/components/settings/interactionMode/interactionMode.type.ts"
+);
+const actionEnumPath = resolveRepoFsImportPath("client/types/action.enum.ts");
+const uiStateStorePath = resolveRepoFsImportPath(
+  "client/stores/uiState/uiState.store.ts"
+);
+const uiStateTypePath = resolveRepoFsImportPath(
+  "client/stores/uiState/uiState.type.ts"
+);
 
-test.skip(runtimeEnv?.SKIP_E2E === "1", "E2E suite disabled by environment");
-
-function getCapabilities(projectName: string) {
-  return getProductConfig(projectName).capabilities;
+async function readGlobalEditMode(page: import("@playwright/test").Page) {
+  return page.evaluate(
+    async ({ modulePath }) => {
+      const { isInEditMode } = await import(modulePath);
+      let value = false;
+      const unsubscribe = isInEditMode.subscribe((next: boolean) => {
+        value = next;
+      });
+      unsubscribe();
+      return value;
+    },
+    { modulePath: appStorePath }
+  );
 }
 
-test.describe("settings - open, close, navigate (shared) @regression @smoke @settings-smoke", () => {
+/** Restores the interaction-mode precondition without relying on hidden app chrome. */
+async function resetInteractionModeToDefault(
+  page: import("@playwright/test").Page
+) {
+  await page.evaluate(
+    async ({ modulePaths }) => {
+      const { InteractionMode } = await import(modulePaths.interactionModePath);
+      const { Action } = await import(modulePaths.actionEnumPath);
+      const { uiState } = await import(modulePaths.uiStateStorePath);
+      const { UIStateScope } = await import(modulePaths.uiStateTypePath);
+      uiState.setState(Action.MODE_OF_INTERACTION, InteractionMode.DEFAULT, {
+        scope: UIStateScope.PRODUCT
+      });
+    },
+    {
+      modulePaths: {
+        actionEnumPath,
+        interactionModePath,
+        uiStateStorePath,
+        uiStateTypePath
+      }
+    }
+  );
+  await page.reload({ waitUntil: "domcontentloaded" });
+  await ensureInAppOnHome(page);
+}
+
+function isNucleumProject(projectName: string) {
+  return projectName === Product.NUCLEUM;
+}
+
+function isMemorySettingsProject(projectName: string) {
+  return isNucleumProject(projectName) || projectName === Product.MEMOTRON;
+}
+
+function isFocusProject(projectName: string) {
+  return isNucleumProject(projectName) || projectName === Product.POINTRON;
+}
+
+async function expectLibrarySurfaceVisible(
+  page: import("@playwright/test").Page,
+  timeout: number
+) {
+  await expectAnyLocatorVisible(
+    [
+      page.getByRole("button", { name: /^Objectives(\s+\d+)?$/i }).first(),
+      page.getByText(/Library/i).first()
+    ],
+    {
+      message: "library shortcut opens a visible library surface",
+      timeout
+    }
+  );
+}
+
+async function closeSettings(page: import("@playwright/test").Page) {
+  await page.getByTestId("modal-close").click({ timeout: 5_000 });
+  await expect(page.getByRole("dialog")).toBeHidden({ timeout: 5_000 });
+}
+
+test.describe("settings - open, close, navigate (shared) @settings @smoke", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -54,7 +130,6 @@ test.describe("settings - open, close, navigate (shared) @regression @smoke @set
     });
 
     await page.getByTestId("modal-close").click({ timeout: 5_000 });
-    await page.waitForTimeout(500);
     await expect(page.getByTestId("modal-close")).toBeHidden({
       timeout: 5_000
     });
@@ -74,9 +149,7 @@ test.describe("settings - open, close, navigate (shared) @regression @smoke @set
     });
 
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(300);
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(500);
     await expect(page.getByRole("dialog")).toBeHidden({ timeout: 5_000 });
   });
 
@@ -84,20 +157,11 @@ test.describe("settings - open, close, navigate (shared) @regression @smoke @set
     page
   }, testInfo) => {
     test.skip(
-      !getCapabilities(testInfo.project.name).settings.sharedSidebarSmoke,
+      !isNucleumProject(testInfo.project.name),
       "Shared settings-sidebar smoke flow is not part of this product contract"
     );
     test.setTimeout(90_000);
     await ensureInAppOnHome(page);
-    const continueOffline = page
-      .getByRole("button", { name: /Continue (using )?offline/i })
-      .first();
-    if (await continueOffline.isVisible().catch(() => false)) {
-      await continueOffline.click({ timeout: 5_000 });
-      await page.waitForLoadState("domcontentloaded").catch(() => null);
-      await ensureInAppOnHome(page);
-    }
-
     await openSettings(page);
     await assertSettingsShellVisible(page);
 
@@ -117,7 +181,7 @@ test.describe("settings - open, close, navigate (shared) @regression @smoke @set
   });
 });
 
-test.describe("settings - Mode of interaction (comprehensive) @regression", () => {
+test.describe("settings - Mode of interaction (comprehensive) @settings", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -137,10 +201,27 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
       .getByTestId("settings-sidebar")
       .getByRole("button", { name: /^Mode of interaction$/i })
       .click({ timeout: 5_000 });
-    await page.waitForTimeout(500);
     const panel = page.getByTestId("mode-of-interaction-settings");
     await expect(panel).toBeVisible({ timeout: 10_000 });
     await panel.scrollIntoViewIfNeeded();
+  }
+
+  async function reopenModeOfInteractionPanel(
+    page: import("@playwright/test").Page
+  ) {
+    const sidebar = page.getByTestId("settings-sidebar");
+    await sidebar
+      .getByRole("button", { name: /^Appearance$/i })
+      .click({ timeout: 5_000 });
+    await expect(page.getByTestId("mode-of-interaction-settings")).toBeHidden({
+      timeout: 5_000
+    });
+    await sidebar
+      .getByRole("button", { name: /^Mode of interaction$/i })
+      .click({ timeout: 5_000 });
+    await expect(page.getByTestId("mode-of-interaction-settings")).toBeVisible({
+      timeout: 5_000
+    });
   }
 
   async function openKeyboardShortcuts(page: import("@playwright/test").Page) {
@@ -154,7 +235,6 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
       .getByTestId("settings-sidebar")
       .getByRole("button", { name: /^Keyboard shortcuts$/i })
       .click({ timeout: 5_000 });
-    await page.waitForTimeout(400);
   }
 
   async function assertKeyboardShortcutsContentVisible(
@@ -209,7 +289,6 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
       .getByTestId("settings-sidebar")
       .getByRole("button", { name: /^Appearance$/i })
       .click({ timeout: 5_000 });
-    await page.waitForTimeout(500);
     await expect(
       page.getByText("Sync theme with system", { exact: true }).first()
     ).toBeVisible({
@@ -242,7 +321,6 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
         .first()
         .locator("xpath=ancestor::*[.//label][1]//label");
       await syncToggle.click({ timeout: 5_000 });
-      await page.waitForTimeout(600);
     }
 
     await expect(
@@ -268,7 +346,6 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
         .first();
       await btn.scrollIntoViewIfNeeded();
       await btn.click({ timeout: 5_000 });
-      await page.waitForTimeout(600);
       await expect(
         page.getByRole("button", { name: theme.name, exact: true }).first()
       ).toHaveAttribute("data-selected", "true", { timeout: 5_000 });
@@ -278,12 +355,15 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
       .getByRole("button", { name: "Blue", exact: true })
       .first()
       .click({ timeout: 5_000 });
-    await page.waitForTimeout(400);
+    await expect(
+      page.getByRole("button", { name: "Blue", exact: true }).first()
+    ).toHaveAttribute("data-selected", "true", { timeout: 5_000 });
 
-    await page
-      .locator("#cp")
-      .getByTestId("modal-close")
-      .click({ timeout: 5_000 });
+    await closeSettings(page);
+    await openAppearance(page);
+    await expect(
+      page.getByRole("button", { name: "Blue", exact: true }).first()
+    ).toHaveAttribute("data-selected", "true", { timeout: 5_000 });
   });
 
   test("Appearance: switch between light and dark themes and verify theme layer updates", async ({
@@ -304,7 +384,6 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
         .getByRole("button", { name: "Sync theme with system", exact: true })
         .first();
       await syncToggle.click({ timeout: 5_000 });
-      await page.waitForTimeout(600);
     }
 
     const themeGroup = page.getByText("Theme", { exact: true }).first();
@@ -313,16 +392,24 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     const themeRoot = page.locator("#ntheme").first();
     await expect(themeRoot).toBeVisible({ timeout: 10_000 });
 
-    const darkButton = page.getByRole("button", { name: "Dark", exact: true }).first();
+    const darkButton = page
+      .getByRole("button", { name: "Dark", exact: true })
+      .first();
     await darkButton.click({ timeout: 5_000 });
-    await page.waitForTimeout(600);
+    await expect(themeRoot).toHaveClass(/dark/, { timeout: 5_000 });
+
+    await closeSettings(page);
+    await openAppearance(page);
     await expect(themeRoot).toHaveClass(/dark/, { timeout: 5_000 });
 
     const lightButton = page
       .getByRole("button", { name: "Light", exact: true })
       .first();
     await lightButton.click({ timeout: 5_000 });
-    await page.waitForTimeout(600);
+    await expect(themeRoot).not.toHaveClass(/dark/, { timeout: 5_000 });
+
+    await closeSettings(page);
+    await openAppearance(page);
     await expect(themeRoot).not.toHaveClass(/dark/, { timeout: 5_000 });
   });
 
@@ -330,7 +417,7 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     page
   }, testInfo) => {
     test.skip(
-      !getCapabilities(testInfo.project.name).settings.sharedModeOfInteraction,
+      !isMemorySettingsProject(testInfo.project.name),
       "Shared mode-of-interaction panel is not part of this product contract"
     );
     test.setTimeout(45_000);
@@ -349,7 +436,7 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
       page.getByRole("button", { name: /^Default$/i }).first()
     ).toBeVisible({ timeout: 5_000 });
     await expect(
-      page.getByRole("button", { name: /^Agent$/i }).first()
+      page.getByRole("button", { name: /^Home only$/i }).first()
     ).toBeVisible({ timeout: 5_000 });
 
     await expect(
@@ -368,7 +455,7 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     page
   }, testInfo) => {
     test.skip(
-      !getCapabilities(testInfo.project.name).settings.sharedModeOfInteraction,
+      !isMemorySettingsProject(testInfo.project.name),
       "Shared keyboard-shortcuts panel is not part of this product contract"
     );
     test.setTimeout(45_000);
@@ -377,19 +464,27 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     await assertKeyboardShortcutsContentVisible(page);
   });
 
-  test("Mode of interaction: switch Default → Agent, toggles hidden; switch back to Default", async ({
+  test("Mode of interaction: switch Default → Home only, toggles hidden; switch back to Default", async ({
     page
   }) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
+    await resetInteractionModeToDefault(page);
     await openModeOfInteraction(page);
 
     await page
-      .getByRole("button", { name: /^Agent$/i })
+      .getByRole("button", { name: /^Home only$/i })
       .first()
       .click({ timeout: 5_000 });
-    await page.waitForTimeout(400);
 
+    await expect(page.getByTestId("toggle-hide-shortcut-hints")).toBeHidden({
+      timeout: 3_000
+    });
+    await expect(page.getByTestId("toggle-hide-menu-bar")).toBeHidden({
+      timeout: 3_000
+    });
+
+    await reopenModeOfInteractionPanel(page);
     await expect(page.getByTestId("toggle-hide-shortcut-hints")).toBeHidden({
       timeout: 3_000
     });
@@ -401,7 +496,6 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
       .getByRole("button", { name: /^Default$/i })
       .first()
       .click({ timeout: 5_000 });
-    await page.waitForTimeout(400);
 
     await expect(page.getByTestId("toggle-hide-shortcut-hints")).toBeVisible({
       timeout: 5_000
@@ -409,6 +503,15 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     await expect(page.getByTestId("toggle-hide-menu-bar")).toBeVisible({
       timeout: 5_000
     });
+
+    await reopenModeOfInteractionPanel(page);
+    await expect(page.getByTestId("toggle-hide-shortcut-hints")).toBeVisible({
+      timeout: 5_000
+    });
+    await expect(page.getByTestId("toggle-hide-menu-bar")).toBeVisible({
+      timeout: 5_000
+    });
+    await closeSettings(page);
   });
 
   test("Mode of interaction: enable Hide shortcut hints, verify setting persists and toggle reflects it, then disable", async ({
@@ -424,12 +527,11 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     await checkbox.waitFor({ state: "visible", timeout: 3_000 });
     const wasChecked = await checkbox.isChecked().catch(() => false);
     if (!wasChecked) {
-      await checkbox.click({ force: true });
-      await page.waitForTimeout(500);
+      await checkbox.setChecked(true, { force: true });
     }
+    await expect(checkbox).toBeChecked({ timeout: 5_000 });
 
     await page.getByTestId("modal-close").click({ timeout: 5_000 });
-    await page.waitForTimeout(500);
     await expect(page.getByRole("dialog")).toBeHidden({ timeout: 5_000 });
 
     await openModeOfInteraction(page);
@@ -440,10 +542,12 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
 
     if (!wasChecked) {
       await checkboxAfter.click({ force: true });
-      await page.waitForTimeout(300);
     }
+    await expect(checkboxAfter).toBeChecked({
+      checked: wasChecked,
+      timeout: 5_000
+    });
     await page.getByTestId("modal-close").click({ timeout: 5_000 });
-    await page.waitForTimeout(500);
     await openModeOfInteraction(page);
     const checkboxRestored = page
       .getByTestId("toggle-hide-shortcut-hints")
@@ -461,7 +565,7 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     test.setTimeout(60_000);
     await ensureInAppOnHome(page);
 
-    await expect(page.getByTestId("leftnav-settings")).toBeVisible({
+    await expect(page.getByTestId("leftnav-sidebar-toggle")).toBeVisible({
       timeout: 10_000
     });
 
@@ -473,26 +577,28 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     const wasChecked = await checkbox.isChecked().catch(() => false);
     if (!wasChecked) {
       await checkbox.click({ force: true });
-      await page.waitForTimeout(500);
     }
+    await expect(checkbox).toBeChecked({ timeout: 5_000 });
 
-    await page.getByTestId("modal-close").click({ timeout: 5_000 });
-    await page.waitForTimeout(500);
-    await expect(page.getByRole("dialog")).toBeHidden({ timeout: 5_000 });
+    await closeSettings(page);
 
-    await expect(page.getByTestId("leftnav-settings")).toBeVisible({
+    await openModeOfInteraction(page);
+    await expect(
+      page.getByTestId("toggle-hide-menu-bar").locator('input[type="checkbox"]')
+    ).toBeChecked({ timeout: 5_000 });
+    await closeSettings(page);
+
+    await expect(page.getByTestId("leftnav-sidebar-toggle")).toBeVisible({
       timeout: 5_000
     });
 
     await page.keyboard.press("q");
-    await page.waitForTimeout(400);
-    await expect(page.getByTestId("leftnav-settings")).toBeHidden({
+    await expect(page.getByTestId("leftnav-sidebar-toggle")).toBeHidden({
       timeout: 5_000
     });
 
     await page.keyboard.press("q");
-    await page.waitForTimeout(400);
-    await expect(page.getByTestId("leftnav-settings")).toBeVisible({
+    await expect(page.getByTestId("leftnav-sidebar-toggle")).toBeVisible({
       timeout: 5_000
     });
 
@@ -500,16 +606,24 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     const checkbox2 = page
       .getByTestId("toggle-hide-menu-bar")
       .locator('input[type="checkbox"]');
-    if (!wasChecked) await checkbox2.click({ force: true });
-    await page.waitForTimeout(300);
-    await page.getByTestId("modal-close").click({ timeout: 5_000 });
+    await checkbox2.setChecked(wasChecked, { force: true });
+    await expect(checkbox2).toBeChecked({
+      checked: wasChecked,
+      timeout: 5_000
+    });
+    await closeSettings(page);
+    await openModeOfInteraction(page);
+    await expect(
+      page.getByTestId("toggle-hide-menu-bar").locator('input[type="checkbox"]')
+    ).toBeChecked({ checked: wasChecked, timeout: 5_000 });
+    await closeSettings(page);
   });
 
   test("Mode of interaction: See hot keys - open, verify list, close modals, then run each hot key and verify", async ({
     page
   }, testInfo) => {
     test.skip(
-      !getCapabilities(testInfo.project.name).settings.sharedHotKeyMatrix,
+      !isNucleumProject(testInfo.project.name),
       "Shared hot-key matrix is not part of this product contract"
     );
     test.setTimeout(90_000);
@@ -521,14 +635,12 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
       .first();
     if (await defaultModeBtn.isVisible().catch(() => false)) {
       await defaultModeBtn.click({ timeout: 5_000 }).catch(() => null);
-      await page.waitForTimeout(250);
     }
 
     await page
       .getByRole("button", { name: /^See hot keys$/i })
       .first()
       .click({ timeout: 5_000 });
-    await page.waitForTimeout(800);
 
     await expect(
       page.getByText("Hot key shortcuts", { exact: true }).first()
@@ -575,13 +687,11 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
       .locator("#HOT_KEYS")
       .evaluate((el) => (el as HTMLElement).click());
     await expect(page.locator("#HOT_KEYS")).toBeHidden({ timeout: 10_000 });
-    await page.waitForTimeout(400);
 
     await page
       .locator("#cp")
       .getByTestId("modal-close")
       .click({ timeout: 5_000 });
-    await page.waitForTimeout(600);
     await expect(
       page.getByText("Settings", { exact: true }).first()
     ).toBeHidden({
@@ -589,12 +699,9 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     });
     await page.keyboard.press("Escape");
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(200);
     await page.locator("body").click({ position: { x: 100, y: 300 } });
-    await page.waitForTimeout(400);
 
     await page.keyboard.press("c");
-    await page.waitForTimeout(600);
     await expect(
       page.getByRole("button", { name: /^Today$/i }).first()
     ).toBeVisible({
@@ -602,63 +709,27 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     });
 
     await page.keyboard.press("l");
-    await page.waitForTimeout(600);
-    await expect
-      .poll(
-        async () =>
-          (await page
-            .getByRole("button", { name: goalResourcePattern })
-            .first()
-            .isVisible()
-            .catch(() => false)) ||
-          (await page
-            .getByText(/Library/i)
-            .first()
-            .isVisible()
-            .catch(() => false)),
-        { timeout: 10_000 }
-      )
-      .toBe(true);
+    await expectLibrarySurfaceVisible(page, 10_000);
 
     await page.keyboard.press("o");
-    await page.waitForTimeout(600);
     await expect(page.getByText(/Overview|Focus|Memory/i).first()).toBeVisible({
       timeout: 10_000
     });
 
     await page.keyboard.press("l");
-    await page.waitForTimeout(600);
-    await expect
-      .poll(
-        async () =>
-          (await page
-            .getByRole("button", { name: goalResourcePattern })
-            .first()
-            .isVisible()
-            .catch(() => false)) ||
-          (await page
-            .getByText(/Library/i)
-            .first()
-            .isVisible()
-            .catch(() => false)),
-        { timeout: 10_000 }
-      )
-      .toBe(true);
+    await expectLibrarySurfaceVisible(page, 10_000);
 
     await page.locator("body").click({ position: { x: 120, y: 240 } });
-    await page.waitForTimeout(150);
     await page.keyboard.press("Space");
-    await page.waitForTimeout(600);
     await assertSearchOrCommandBarInputVisible(page);
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(200);
   });
 
   test("Mode of interaction: See hot keys opens, verify each shortcut listed, then verify C/L/F/O/P/Q/Space trigger actions", async ({
     page
   }, testInfo) => {
     test.skip(
-      !getCapabilities(testInfo.project.name).settings.sharedHotKeyMatrix,
+      !isNucleumProject(testInfo.project.name),
       "Shared hot-key matrix is not part of this product contract"
     );
     test.setTimeout(90_000);
@@ -675,14 +746,13 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
       await menuBarContainer
         .locator("label:has(input[type='checkbox'])")
         .click({ timeout: 5_000 });
-      await page.waitForTimeout(800);
     }
+    await expect(menuBarCheckbox).toBeChecked({ timeout: 5_000 });
 
     await page
       .getByRole("button", { name: /^See hot keys$/i })
       .first()
       .click({ timeout: 5_000 });
-    await page.waitForTimeout(800);
 
     await expect(
       page.getByText("Hot key shortcuts", { exact: true }).first()
@@ -731,13 +801,11 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
       .locator("#HOT_KEYS")
       .evaluate((el) => (el as HTMLElement).click());
     await expect(page.locator("#HOT_KEYS")).toBeHidden({ timeout: 10_000 });
-    await page.waitForTimeout(300);
 
     await page
       .locator("#cp")
       .getByTestId("modal-close")
       .click({ timeout: 5_000 });
-    await page.waitForTimeout(500);
     await expect(page.getByText("Settings", { exact: true }).first())
       .toBeHidden({
         timeout: 5_000
@@ -746,58 +814,40 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
 
     await page.keyboard.press("Escape");
     await page.locator("body").click({ position: { x: 10, y: 10 } });
-    await page.waitForTimeout(200);
 
     await page.keyboard.press("c");
-    await page.waitForTimeout(500);
     await expect(
       page.getByRole("button", { name: /^Today$/i }).first()
     ).toBeVisible({
       timeout: 8_000
     });
 
-    if (getCapabilities(testInfo.project.name).commands.focus) {
+    if (isFocusProject(testInfo.project.name)) {
       await page.keyboard.press("f");
-      await page.waitForTimeout(500);
       await expect(
         page.getByText(/Focus|Quick focus|Focus session/i).first()
       ).toBeVisible({ timeout: 8_000 });
     }
 
     await page.keyboard.press("l");
-    await page.waitForTimeout(500);
-    await expect
-      .poll(
-        async () =>
-          (await page
-            .getByRole("button", { name: goalResourcePattern })
-            .first()
-            .isVisible()
-            .catch(() => false)) ||
-          (await page
-            .getByText(/Library/i)
-            .first()
-            .isVisible()
-            .catch(() => false)),
-        { timeout: 8_000 }
-      )
-      .toBe(true);
+    await expectLibrarySurfaceVisible(page, 8_000);
 
     await page.keyboard.press("o");
-    await page.waitForTimeout(500);
     await expect(page.getByText(/Overview|Focus|Memory/i).first()).toBeVisible({
       timeout: 8_000
     });
 
     await page.keyboard.press("p");
-    await page.waitForTimeout(500);
+    await expect(page.getByTestId("capture-editor")).toBeVisible({
+      timeout: 8_000
+    });
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(200);
+    await expect(page.getByTestId("capture-editor")).toBeHidden({
+      timeout: 8_000
+    });
 
     await page.locator("body").click({ position: { x: 100, y: 200 } });
-    await page.waitForTimeout(150);
     await page.keyboard.press("q");
-    await page.waitForTimeout(800);
     const leftNavExists =
       (await page.getByTestId("leftnav-settings").count()) > 0;
     if (leftNavExists) {
@@ -807,7 +857,6 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     }
 
     await page.keyboard.press("q");
-    await page.waitForTimeout(600);
     if (leftNavExists) {
       await expect(page.getByTestId("leftnav-settings")).toBeVisible({
         timeout: 8_000
@@ -815,31 +864,12 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     }
 
     await page.keyboard.press("l");
-    await page.waitForTimeout(500);
-    await expect
-      .poll(
-        async () =>
-          (await page
-            .getByRole("button", { name: goalResourcePattern })
-            .first()
-            .isVisible()
-            .catch(() => false)) ||
-          (await page
-            .getByText(/Library/i)
-            .first()
-            .isVisible()
-            .catch(() => false)),
-        { timeout: 8_000 }
-      )
-      .toBe(true);
+    await expectLibrarySurfaceVisible(page, 8_000);
 
     await page.locator("body").click({ position: { x: 120, y: 240 } });
-    await page.waitForTimeout(150);
     await page.keyboard.press("Space");
-    await page.waitForTimeout(500);
     await assertSearchOrCommandBarInputVisible(page);
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(200);
 
     if (!menuBarWasChecked) {
       await openModeOfInteraction(page);
@@ -847,7 +877,11 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
         .getByTestId("toggle-hide-menu-bar")
         .locator("label:has(input[type='checkbox'])")
         .click({ timeout: 5_000 });
-      await page.waitForTimeout(300);
+      await expect(
+        page
+          .getByTestId("toggle-hide-menu-bar")
+          .locator('input[type="checkbox"]')
+      ).not.toBeChecked({ timeout: 5_000 });
       await page
         .locator("#cp")
         .getByTestId("modal-close")
@@ -866,27 +900,21 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
       .getByRole("button", { name: /^See markdown shortcuts$/i })
       .first()
       .click({ timeout: 5_000 });
-    await page.waitForTimeout(500);
 
     const markdownDialog = page.getByRole("dialog");
     const markdownFallback = page.getByText(/markdown|shortcut/i).first();
-    await expect
-      .poll(
-        async () =>
-          (await markdownDialog.isVisible().catch(() => false)) ||
-          (await markdownFallback.isVisible().catch(() => false)),
-        { timeout: 5_000 }
-      )
-      .toBe(true);
+    await expectAnyLocatorVisible([markdownDialog, markdownFallback], {
+      message: "markdown shortcuts action opens its dialog",
+      timeout: 5_000
+    });
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(300);
   });
 
   test("Mode of interaction: shortcut rows have editable key (Command bar, Edit mode, Search, Go back, Go forward)", async ({
     page
   }, testInfo) => {
     test.skip(
-      !getCapabilities(testInfo.project.name).settings.sharedShortcutCustomization,
+      !isMemorySettingsProject(testInfo.project.name),
       "Shared shortcut-customization panel is not part of this product contract"
     );
     test.setTimeout(45_000);
@@ -895,7 +923,6 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
 
     const panel = page.getByTestId("mode-of-interaction-settings");
     await panel.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(300);
     for (const label of [
       "Command bar",
       "Edit mode",
@@ -923,25 +950,36 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     newCombo: string
   ) {
     await panel.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(200);
     const row = panel.getByText(rowLabel, { exact: true }).locator("..");
     await expect(row).toBeVisible({ timeout: 8_000 });
     await row.locator("button").first().click({ timeout: 5_000 });
-    await page.waitForTimeout(400);
     const input = row.locator('input[placeholder="record shortcut"]');
     await input.waitFor({ state: "visible", timeout: 3_000 });
     await input.focus();
     await page.keyboard.press(newCombo);
-    await page.waitForTimeout(200);
-    await row
+    const expectedKey = newCombo.split("+").at(-1)?.replace(/^Key/, "");
+    await expect(input).toHaveValue(new RegExp(`${expectedKey}$`, "i"), {
+      timeout: 5_000
+    });
+    const savedValue = await input.inputValue();
+    const acceptButton = row
       .getByTestId("shortcut-accept")
       .locator("button")
-      .first()
-      .click({ timeout: 5_000 });
-    await page.waitForTimeout(500);
-    await page.getByTestId("modal-close").click({ timeout: 5_000 });
-    await page.waitForTimeout(300);
-    await expect(page.getByRole("dialog")).toBeHidden({ timeout: 5_000 });
+      .first();
+    await acceptButton.click({ timeout: 5_000 });
+    await expect(acceptButton).toBeHidden({ timeout: 5_000 });
+    expect(savedValue).not.toBe("");
+    await closeSettings(page);
+
+    await openModeOfInteraction(page);
+    const reopenedRow = page
+      .getByTestId("mode-of-interaction-settings")
+      .getByText(rowLabel, { exact: true })
+      .locator("..");
+    await expect(
+      reopenedRow.locator('input[placeholder="record shortcut"]')
+    ).toHaveValue(savedValue, { timeout: 5_000 });
+    await closeSettings(page);
   }
 
   async function resetShortcutAndClose(
@@ -952,28 +990,41 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     await openModeOfInteraction(page);
     const panel2 = page.getByTestId("mode-of-interaction-settings");
     await panel2.scrollIntoViewIfNeeded();
-    await page.waitForTimeout(200);
     const row2 = panel2.getByText(rowLabel, { exact: true }).locator("..");
     await row2.locator("button").first().click({ timeout: 5_000 });
-    await page.waitForTimeout(400);
     const input2 = row2.locator('input[placeholder="record shortcut"]');
     await input2.focus();
     await page.keyboard.press(defaultCombo);
-    await page.waitForTimeout(200);
-    await row2
+    const expectedKey = defaultCombo.split("+").at(-1)?.replace(/^Key/, "");
+    await expect(input2).toHaveValue(new RegExp(`${expectedKey}$`, "i"), {
+      timeout: 5_000
+    });
+    const restoredValue = await input2.inputValue();
+    const acceptButton = row2
       .getByTestId("shortcut-accept")
       .locator("button")
-      .first()
-      .click({ timeout: 5_000 });
-    await page.waitForTimeout(300);
-    await page.getByTestId("modal-close").click({ timeout: 5_000 });
+      .first();
+    await acceptButton.click({ timeout: 5_000 });
+    await expect(acceptButton).toBeHidden({ timeout: 5_000 });
+    expect(restoredValue).not.toBe("");
+    await closeSettings(page);
+
+    await openModeOfInteraction(page);
+    const reopenedRow = page
+      .getByTestId("mode-of-interaction-settings")
+      .getByText(rowLabel, { exact: true })
+      .locator("..");
+    await expect(
+      reopenedRow.locator('input[placeholder="record shortcut"]')
+    ).toHaveValue(restoredValue, { timeout: 5_000 });
+    await closeSettings(page);
   }
 
   test("Mode of interaction: change Command bar shortcut, verify it opens command bar, then reset to default", async ({
     page
   }, testInfo) => {
     test.skip(
-      !getCapabilities(testInfo.project.name).settings.sharedShortcutCustomization,
+      !isMemorySettingsProject(testInfo.project.name),
       "Shared shortcut-customization flow is not part of this product contract"
     );
     test.setTimeout(90_000);
@@ -988,14 +1039,11 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     await changeShortcutAndClose(page, panel, "Command bar", newCombo);
 
     await page.keyboard.press(newCombo);
-    await page.waitForTimeout(500);
     await expect(page.getByTestId("command-bar-input")).toBeVisible({
       timeout: 10_000
     });
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(300);
     await page.keyboard.press(`${modifier}+Escape`);
-    await page.waitForTimeout(300);
     await expect(page.locator("#CMD")).toBeHidden({ timeout: 10_000 });
 
     await resetShortcutAndClose(page, "Command bar", defaultCombo);
@@ -1005,7 +1053,7 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     page
   }, testInfo) => {
     test.skip(
-      !getCapabilities(testInfo.project.name).settings.sharedShortcutCustomization,
+      !isMemorySettingsProject(testInfo.project.name),
       "Shared shortcut-customization flow is not part of this product contract"
     );
     test.setTimeout(90_000);
@@ -1019,12 +1067,10 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     await changeShortcutAndClose(page, panel, "Search", newCombo);
 
     await page.keyboard.press(newCombo);
-    await page.waitForTimeout(600);
     await expect(
       page.getByPlaceholder(/Start typing to search|Type here to search/i)
     ).toBeVisible({ timeout: 10_000 });
     await page.keyboard.press("Escape");
-    await page.waitForTimeout(300);
 
     await resetShortcutAndClose(page, "Search", defaultCombo);
   });
@@ -1033,7 +1079,7 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     page
   }, testInfo) => {
     test.skip(
-      !getCapabilities(testInfo.project.name).settings.sharedShortcutCustomization,
+      !isMemorySettingsProject(testInfo.project.name),
       "Shared shortcut-customization flow is not part of this product contract"
     );
     test.setTimeout(90_000);
@@ -1047,9 +1093,19 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     await changeShortcutAndClose(page, panel, "Edit mode", newCombo);
 
     await page.keyboard.press(newCombo);
-    await page.waitForTimeout(400);
+    await expect
+      .poll(() => readGlobalEditMode(page), {
+        message:
+          "Mode of interaction: change Edit mode shortcut, verify it tri...: toBe true"
+      })
+      .toBe(true);
     await page.keyboard.press(newCombo);
-    await page.waitForTimeout(200);
+    await expect
+      .poll(() => readGlobalEditMode(page), {
+        message:
+          "Mode of interaction: change Edit mode shortcut, verify it tri...: toBe false"
+      })
+      .toBe(false);
 
     await resetShortcutAndClose(page, "Edit mode", defaultCombo);
   });
@@ -1058,7 +1114,7 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     page
   }, testInfo) => {
     test.skip(
-      !getCapabilities(testInfo.project.name).settings.sharedShortcutCustomization,
+      !isMemorySettingsProject(testInfo.project.name),
       "Shared shortcut-customization flow is not part of this product contract"
     );
     test.setTimeout(90_000);
@@ -1067,7 +1123,6 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
       .getByRole("button", { name: /^Overview$/i })
       .first()
       .click({ timeout: 8_000 });
-    await page.waitForTimeout(1_000);
     await expect(page.getByText(/Overview|Focus|Memory/i).first()).toBeVisible({
       timeout: 10_000
     });
@@ -1081,7 +1136,6 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     await changeShortcutAndClose(page, panel, "Go back", newCombo);
 
     await page.keyboard.press(newCombo);
-    await page.waitForTimeout(500);
     await expect(
       page.getByRole("button", { name: /^Today$/i }).first()
     ).toBeVisible({
@@ -1095,7 +1149,7 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     page
   }, testInfo) => {
     test.skip(
-      !getCapabilities(testInfo.project.name).settings.sharedShortcutCustomization,
+      !isMemorySettingsProject(testInfo.project.name),
       "Shared shortcut-customization flow is not part of this product contract"
     );
     test.setTimeout(90_000);
@@ -1104,7 +1158,6 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
       .getByRole("button", { name: /^Overview$/i })
       .first()
       .click({ timeout: 8_000 });
-    await page.waitForTimeout(1_000);
     await expect(page.getByText(/Overview|Focus|Memory/i).first()).toBeVisible({
       timeout: 10_000
     });
@@ -1112,7 +1165,6 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     await page.keyboard.press(
       process.platform === "darwin" ? "Meta+Shift+KeyB" : "Control+Shift+KeyB"
     );
-    await page.waitForTimeout(500);
     await expect(
       page.getByRole("button", { name: /^Today$/i }).first()
     ).toBeVisible({
@@ -1128,7 +1180,6 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
     await changeShortcutAndClose(page, panel, "Go forward", newCombo);
 
     await page.keyboard.press(newCombo);
-    await page.waitForTimeout(500);
     await expect(page.getByText(/Overview|Focus|Memory/i).first()).toBeVisible({
       timeout: 10_000
     });
@@ -1137,7 +1188,7 @@ test.describe("settings - Mode of interaction (comprehensive) @regression", () =
   });
 });
 
-test.describe("settings - Accessibility (shared) @regression", () => {
+test.describe("settings - Accessibility (shared) @settings", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -1157,7 +1208,6 @@ test.describe("settings - Accessibility (shared) @regression", () => {
       .getByTestId("settings-sidebar")
       .getByRole("button", { name: /^Accessibility$/i })
       .click({ timeout: 5_000 });
-    await page.waitForTimeout(400);
   }
 
   function getBlockSizingOptionButton(
@@ -1219,16 +1269,19 @@ test.describe("settings - Accessibility (shared) @regression", () => {
     const largerBtn = getBlockSizingOptionButton(page, "larger");
 
     await smallerBtn.click({ timeout: 5_000 });
-    await page.waitForTimeout(300);
     await expect(smallerBtn).toHaveClass(/bg-aps1/);
 
     await largerBtn.click({ timeout: 5_000 });
-    await page.waitForTimeout(300);
     await expect(largerBtn).toHaveClass(/bg-aps1/);
 
     await defaultBtn.click({ timeout: 5_000 });
-    await page.waitForTimeout(300);
     await expect(defaultBtn).toHaveClass(/bg-aps1/);
+
+    await closeSettings(page);
+    await openAccessibility(page);
+    await expect(getBlockSizingOptionButton(page, "default")).toHaveClass(
+      /bg-aps1/
+    );
   });
 
   test("Accessibility: change Block sizing to larger, close and reopen, verify persistence", async ({
@@ -1240,11 +1293,9 @@ test.describe("settings - Accessibility (shared) @regression", () => {
 
     const largerBtn = getBlockSizingOptionButton(page, "larger");
     await largerBtn.click({ timeout: 5_000 });
-    await page.waitForTimeout(300);
     await expect(largerBtn).toHaveClass(/bg-aps1/);
 
     await page.getByTestId("modal-close").click({ timeout: 5_000 });
-    await page.waitForTimeout(500);
     await expect(page.getByRole("dialog")).toBeHidden({ timeout: 5_000 });
 
     await openAccessibility(page);
@@ -1256,8 +1307,8 @@ test.describe("settings - Accessibility (shared) @regression", () => {
     page
   }, testInfo) => {
     test.skip(
-      testInfo.project.name === "nucleum" ||
-        testInfo.project.name === "pointron",
+      testInfo.project.name === Product.NUCLEUM ||
+        testInfo.project.name === Product.POINTRON,
       "Known bug: sizing visually stays the same on Nucleum and Pointron"
     );
     test.setTimeout(60_000);
@@ -1277,38 +1328,56 @@ test.describe("settings - Accessibility (shared) @regression", () => {
       predicate: (size: number) => boolean,
       timeoutMs = 8_000
     ) => {
-      const deadline = Date.now() + timeoutMs;
       let last = 0;
-      while (Date.now() < deadline) {
-        last = await getTodayButtonFontSizePx();
-        if (predicate(last)) return last;
-        await page.waitForTimeout(200);
-      }
+      await expect
+        .poll(
+          async () => {
+            last = await getTodayButtonFontSizePx();
+            return predicate(last);
+          },
+          { message: "waitForFontSizeToBe: toBe true", timeout: timeoutMs }
+        )
+        .toBe(true);
       return last;
     };
 
     await openAccessibility(page);
-    await getBlockSizingOptionButton(page, "default").click({ timeout: 5_000 });
-    await page.waitForTimeout(400);
-    await page.getByTestId("modal-close").click({ timeout: 5_000 });
-    await expect(page.getByRole("dialog")).toBeHidden({ timeout: 5_000 });
+    const defaultButton = getBlockSizingOptionButton(page, "default");
+    await defaultButton.click({ timeout: 5_000 });
+    await expect(defaultButton).toHaveClass(/bg-aps1/);
+    await closeSettings(page);
+    await openAccessibility(page);
+    await expect(getBlockSizingOptionButton(page, "default")).toHaveClass(
+      /bg-aps1/
+    );
+    await closeSettings(page);
     const fontSizeDefault = await getTodayButtonFontSizePx();
 
     await openAccessibility(page);
-    await getBlockSizingOptionButton(page, "larger").click({ timeout: 5_000 });
-    await page.waitForTimeout(400);
-    await page.getByTestId("modal-close").click({ timeout: 5_000 });
-    await expect(page.getByRole("dialog")).toBeHidden({ timeout: 5_000 });
+    const largerButton = getBlockSizingOptionButton(page, "larger");
+    await largerButton.click({ timeout: 5_000 });
+    await expect(largerButton).toHaveClass(/bg-aps1/);
+    await closeSettings(page);
+    await openAccessibility(page);
+    await expect(getBlockSizingOptionButton(page, "larger")).toHaveClass(
+      /bg-aps1/
+    );
+    await closeSettings(page);
     const fontSizeLarger = await waitForFontSizeToBe(
       (s) => s > fontSizeDefault
     );
     expect(fontSizeLarger).toBeGreaterThan(fontSizeDefault);
 
     await openAccessibility(page);
-    await getBlockSizingOptionButton(page, "smaller").click({ timeout: 5_000 });
-    await page.waitForTimeout(400);
-    await page.getByTestId("modal-close").click({ timeout: 5_000 });
-    await expect(page.getByRole("dialog")).toBeHidden({ timeout: 5_000 });
+    const smallerButton = getBlockSizingOptionButton(page, "smaller");
+    await smallerButton.click({ timeout: 5_000 });
+    await expect(smallerButton).toHaveClass(/bg-aps1/);
+    await closeSettings(page);
+    await openAccessibility(page);
+    await expect(getBlockSizingOptionButton(page, "smaller")).toHaveClass(
+      /bg-aps1/
+    );
+    await closeSettings(page);
     const fontSizeSmaller = await waitForFontSizeToBe(
       (s) => s < fontSizeDefault
     );

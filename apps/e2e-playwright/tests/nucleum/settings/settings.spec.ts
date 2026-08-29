@@ -1,17 +1,8 @@
 import { test, expect } from "@playwright/test";
 import { ensureInAppOnHome, runCommand } from "../../utils/helpers";
 
-const runtimeEnv = (
-  globalThis as { process?: { env?: Record<string, string | undefined> } }
-).process?.env;
-
-test.skip(
-  runtimeEnv?.SKIP_E2E === "1",
-  "E2E suite disabled by environment"
-);
-
 /** Nucleum-only settings: footer app version. Open/close/navigate and Mode of interaction are in shared/settings. */
-test.describe("nucleum – settings (product-specific) @regression", () => {
+test.describe("nucleum – settings (product-specific) @settings", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -28,7 +19,6 @@ test.describe("nucleum – settings (product-specific) @regression", () => {
     } else {
       await runCommand(page, "Settings");
     }
-    await page.waitForTimeout(500);
   }
 
   test("Settings footer shows app version (Nucleum)", async ({ page }) => {
@@ -36,7 +26,9 @@ test.describe("nucleum – settings (product-specific) @regression", () => {
     await ensureInAppOnHome(page);
 
     await openSettings(page);
-    await expect(page.getByText("Settings", { exact: true }).first()).toBeVisible({
+    await expect(
+      page.getByText("Settings", { exact: true }).first()
+    ).toBeVisible({
       timeout: 10_000
     });
 
