@@ -30,48 +30,48 @@
   let {
     chart,
     rawData,
-    goalColors,
+    objectiveColors,
     showLegend = true
   }: {
     chart: IAnalyticsCard;
     rawData: AnalyticsDataRecord[];
-    goalColors: IAnalyticsLabelColor[];
+    objectiveColors: IAnalyticsLabelColor[];
     showLegend?: boolean;
   } = $props();
   const colors = $derived(retrieveCurrentColors($appearance));
-  const data = $derived.by<(ChartDataRecord & { topLevelGoal?: string })[]>(
+  const data = $derived.by<(ChartDataRecord & { parentGroup?: string })[]>(
     () => {
       if (!rawData) return [];
 
-      let nextData: (ChartDataRecord & { topLevelGoal?: string })[] =
+      let nextData: (ChartDataRecord & { parentGroup?: string })[] =
         rawData.map((r: any) => {
-        const focus = $pointronPreferences.isIncludeBreakInAnalytics
-          ? r.focus + r.brek
-          : r.focus;
-        const start = new Date(r.start);
-        const startOfDay = new Date(start);
-        startOfDay.setHours(0, 0, 0, 0);
+          const focus = $pointronPreferences.isIncludeBreakInAnalytics
+            ? r.focus + r.brek
+            : r.focus;
+          const start = new Date(r.start);
+          const startOfDay = new Date(start);
+          startOfDay.setHours(0, 0, 0, 0);
 
           return {
-          topLevelGoal: r.topLevelGoal,
-          group:
-            r.goal === null
-              ? "Other"
-              : chart.isGroupByTopLevelGoals
-                ? r.topLevelGoal
-                : r.goal,
-          key:
-            chart.type == AnalyticsCardType.BAR
-              ? resolveXValueForStackedBarChart(start)
-              : chart.type == AnalyticsCardType.LINE ||
-                  chart.type === AnalyticsCardType.AREA
-                ? startOfDay
-                : chart.type === AnalyticsCardType.CALENDAR ||
-                    chart.type === AnalyticsCardType.HOURLY ||
-                    chart.type === AnalyticsCardType.HOURLY_HEATMAP
-                  ? start
-                  : r.start,
-          value: +(+focus / (60 * 60)).toFixed(2)
+            parentGroup: r.topLevelObjectiveLabel,
+            group:
+              r.objectiveLabel === null
+                ? "Other"
+                : chart.isGroupByTopLevelObjectives
+                  ? r.topLevelObjectiveLabel
+                  : r.objectiveLabel,
+            key:
+              chart.type == AnalyticsCardType.BAR
+                ? resolveXValueForStackedBarChart(start)
+                : chart.type == AnalyticsCardType.LINE ||
+                    chart.type === AnalyticsCardType.AREA
+                  ? startOfDay
+                  : chart.type === AnalyticsCardType.CALENDAR ||
+                      chart.type === AnalyticsCardType.HOURLY ||
+                      chart.type === AnalyticsCardType.HOURLY_HEATMAP
+                    ? start
+                    : r.start,
+            value: +(+focus / (60 * 60)).toFixed(2)
           };
         });
 
@@ -102,7 +102,7 @@
           return acc;
         }, {});
         nextData = Object.values(grouped) as (ChartDataRecord & {
-          topLevelGoal?: string;
+          parentGroup?: string;
         })[];
         nextData.sort(
           (a: { key: string }, b: { key: string }) =>
@@ -140,7 +140,7 @@
       ) {
         const hierarchicalMap = nextData.reduce(
           (acc: Record<string, any>, entry) => {
-            const compositeKey = `${entry.topLevelGoal}-${entry.group}`;
+            const compositeKey = `${entry.parentGroup}-${entry.group}`;
             if (acc[compositeKey]) {
               acc[compositeKey].value += entry.value;
             } else {
@@ -151,7 +151,7 @@
           {}
         );
         nextData = Object.values(hierarchicalMap) as (ChartDataRecord & {
-          topLevelGoal?: string;
+          parentGroup?: string;
         })[];
       }
 
@@ -166,6 +166,9 @@
       color: {
         scale: {} as Record<string, string>
       },
+      valueLabel: "Focus",
+      primarySeriesName: "Focus",
+      yAxisName: "Focus Time",
       donutLabel: "Total focus",
       donutFormatter: (value: any) => {
         return formatSeconds(value * 60 * 60);
@@ -220,10 +223,10 @@
       };
     }
 
-    if (goalColors) {
+    if (objectiveColors) {
       const values = resolveSaturationAndLightness($appearance);
       if (!values) return nextOptions;
-      for (const item of goalColors) {
+      for (const item of objectiveColors) {
         const hueForOther = 10;
         nextOptions.color.scale["Other"] =
           `hsl(${hueForOther}, ${values.saturation}%, ${values.lightness}%)`;
@@ -231,9 +234,13 @@
           nextOptions.color.scale[item.label] =
             `hsl(${item.color}, ${values.saturation}%, ${values.lightness}%)`;
         }
-        if (data.some((entry: any) => entry.topLevelGoal == item.label)) {
+        if (
+          data.some(
+            (entry: any) => entry.parentGroup == item.label
+          )
+        ) {
           const matchingEntries = data.filter(
-            (entry: any) => entry.topLevelGoal == item.label
+            (entry: any) => entry.parentGroup == item.label
           );
           matchingEntries.forEach((entry: any) => {
             nextOptions.color.scale[entry.group] =
