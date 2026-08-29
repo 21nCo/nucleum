@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import Icon from "@21n/elements/Icon.svelte";
   import { appStore } from "@21n/stores/app.store";
   import { Action } from "@21n/types/action.enum";
@@ -11,12 +11,12 @@
     date,
     title,
     totalFocus,
-    goals = []
+    objectives = []
   }: {
     date: Date;
     title: string;
     totalFocus: number;
-    goals?: string[];
+    objectives?: string[];
   } = $props();
 </script>
 
