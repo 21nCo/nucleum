@@ -8,10 +8,8 @@
   },
   "exports": {
     "./datafn": "./datafn/index.ts",
-    "./datafn/resource.config": "./datafn/resource.config.ts",
     "./datafn/schema.datafn": "./datafn/schema.datafn.ts",
     "./datafn/resource.enum": "./datafn/resource.enum.ts",
-    "./datafn/resource.type": "./datafn/resource.type.ts",
     "./*": "./*"
   }
 }

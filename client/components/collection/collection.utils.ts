@@ -186,7 +186,7 @@ export function resolveCollectionResource(product: Product): Resource[] {
       return [Resource.goal];
     case Product.MEMOTRON:
       return [Resource.node];
-    case Product.NUCLEUS:
+    case Product.NUCLEUM:
       return [Resource.node, Resource.goal];
     default:
       return [];

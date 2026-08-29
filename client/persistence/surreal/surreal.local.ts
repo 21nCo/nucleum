@@ -56,7 +56,7 @@ function resolveDatabaseId(product: Product) {
 export class SurrealPersistence implements IPersistence {
   instance: Surreal | undefined = undefined;
   userId: string = "";
-  product: Product = Product.NUCLEUS;
+  product: Product = Product.NUCLEUM;
   private isProcessingOperation: boolean = false;
   private processId: string = "";
   private isReloadRequested: boolean = false;

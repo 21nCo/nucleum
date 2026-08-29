@@ -46,7 +46,7 @@ export function resolveProductResources(
           Resource.combination,
           Resource.relation
         ];
-    case Product.NUCLEUS:
+    case Product.NUCLEUM:
       if (context === "search")
         return [
           Resource.node,

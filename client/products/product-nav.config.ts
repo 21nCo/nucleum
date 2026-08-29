@@ -24,7 +24,7 @@ const resourceActionId = (resource: string, action: string) =>
 
 const appMenuActionIds = {
   nodeCreate: resourceActionId("node", "create"),
-  spaceBrowse: resourceActionId("space", "browse")
+  spaceBrowse: resourceActionId("combination", "browse")
 } as const;
 
 /** Labels used by app menu actions and derived E2E navigation expectations. */
@@ -79,7 +79,7 @@ const productNavConfig = {
       Action.LIBRARY_PORTRAIT,
       Action.OVERVIEW
     ] as const,
-    homePath: Action.HOME,
+    homePath: Action.CALENDAR,
     homePathPt: Action.LIBRARY_PORTRAIT,
     librarySectionLabel: "Nucleum"
   },

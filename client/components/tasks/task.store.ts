@@ -202,7 +202,7 @@ export function resolveTaskContextMenu(
       ? [taskActions.openTask()]
       : []),
     resourceActions.select(accessPoint, params?.accessPointId),
-    ...(product === Product.POINTRON || product === Product.NUCLEUS
+    ...(product === Product.POINTRON || product === Product.NUCLEUM
       ? [taskActions.editGoal()]
       : []),
     ...(viewStore.isConstrainedWidth ? [taskActions.editDate] : []),

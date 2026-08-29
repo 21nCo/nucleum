@@ -78,7 +78,7 @@
       resolvePointronData();
     } else if (product === Product.MEMOTRON) {
       resolveMemotronData();
-    } else if (product === Product.NUCLEUS) {
+    } else if (product === Product.NUCLEUM) {
       resolvePointronData();
       resolveMemotronData();
     }

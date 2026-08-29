@@ -59,7 +59,7 @@
       }
       if (
         $account?.dataMode === UserDataMode.CLOUD &&
-        $appStore.product === Product.NUCLEUS
+        $appStore.product === Product.NUCLEUM
       ) {
         await account.ping({ isLightMode: true });
         if ($account.plan && $account.plan.plan !== PlanType.NUCLEUS) {

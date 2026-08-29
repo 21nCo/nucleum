@@ -9,11 +9,12 @@ import type { IRecordId } from "@21n/types/data.type";
 import { logger } from "@21n/components/debug/logger.client";
 import { properCase } from "@21n/shared-utils/text.utils";
 import type { IResourceSwitchItem } from "@21n/types/select.type";
-import { Product } from "@21n/products/product.type";
+import { Product } from "@21n/shared-config/product.type";
 import {
   nextResourceIcons,
   nextUncountableResources
 } from "@21n/next/resource.utils";
+import { nucleumDatafnSchema } from "@21n/shared-data/datafn/schema.datafn";
 
 export function resourceAction(resource: Resource, action: ResourceActionType) {
   return `${resource}_${action}`;
@@ -145,11 +146,6 @@ function resolveResourceTable(value: unknown): string | null {
 function normalizeResourceId(value: unknown): string | null {
   if (typeof value === "string") return value;
   if (hasResourceTable(value) && hasStringId(value)) {
-    if (typeof value.toString === "function") {
-      const normalized = value.toString();
-      if (typeof normalized === "string" && normalized.length > 0)
-        return normalized;
-    }
     return `${value.tb}:${value.id}`;
   }
   if (hasStringId(value)) return value.id;
@@ -189,7 +185,8 @@ export function shiftResourceInArray(
       newArray.splice(toIndex + 1, 0, newArray.splice(fromIndex, 1)[0]);
     }
   } else {
-    newArray.splice(toIndex, 0, newArray.splice(fromIndex, 1)[0]);
+    const insertionIndex = fromIndex < toIndex ? toIndex - 1 : toIndex;
+    newArray.splice(insertionIndex, 0, newArray.splice(fromIndex, 1)[0]);
   }
   return newArray;
 }
@@ -252,7 +249,9 @@ export function resolveResourceIcon(resource: Resource): string {
   return resourceIconMap[resource] ?? "question";
 }
 
-export const availableResources = new Set(Object.values(Resource));
+export const availableResources = new Set<Resource>(
+  nucleumDatafnSchema.resources.map((resource) => resource.name as Resource)
+);
 
 export function resolveResourceLabel(resource: Resource) {
   if (resource === Resource.objective) return "Objectives";

@@ -64,7 +64,7 @@ export class RxDBPersistence implements IPersistence {
   private database: any = undefined;
   private collections: Map<string, any> = new Map();
   userId: string = "";
-  product: Product = Product.NUCLEUS;
+  product: Product = Product.NUCLEUM;
 
   constructor() {}
 

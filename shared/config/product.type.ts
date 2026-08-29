@@ -1,5 +1,3 @@
-import { NextOverviewPanel, NextProduct } from "@21n/next/product.type";
-
 enum ProductBase {
   NUCLEUM = "nucleum",
   POINTRON = "pointron",
@@ -26,14 +24,13 @@ enum OverviewPanelBase {
   DASHBOARD = "dashboard"
 }
 
-export const Product = { ...ProductBase, ...NextProduct } as const;
-export type Product = ProductBase | NextProduct;
+export const BaseProduct = ProductBase;
+export const Product = ProductBase;
+export type Product = ProductBase;
 
-export const OverviewPanel = {
-  ...OverviewPanelBase,
-  ...NextOverviewPanel
-} as const;
-export type OverviewPanel = OverviewPanelBase | NextOverviewPanel;
+export const BaseOverviewPanel = OverviewPanelBase;
+export const OverviewPanel = OverviewPanelBase;
+export type OverviewPanel = OverviewPanelBase;
 
 export enum Extension {
   MEMOTRON_CLIPPER = "memotron-clipper",

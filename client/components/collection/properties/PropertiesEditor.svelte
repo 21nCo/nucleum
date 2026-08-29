@@ -114,7 +114,7 @@
   ];
   if (
     $appStore.product === Product.MEMOTRON ||
-    $appStore.product === Product.NUCLEUS
+    $appStore.product === Product.NUCLEUM
   ) {
     columns.push({
       label: "Capture",

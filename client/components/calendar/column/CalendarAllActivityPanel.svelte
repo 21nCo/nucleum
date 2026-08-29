@@ -75,7 +75,7 @@
       }
       if (
         $appStore.product === Product.POINTRON ||
-        $appStore.product === Product.NUCLEUS
+        $appStore.product === Product.NUCLEUM
       ) {
         const dayFilter = tzStore.resolveTimePeriodFilterForDay(date);
         const focusSessionsResult = await new SearchStore(

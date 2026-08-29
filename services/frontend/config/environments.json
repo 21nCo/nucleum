@@ -24,7 +24,7 @@
       "appPath": "apps/nucleus",
       "workspace": "nucleus-app",
       "domain": "nucleum.app",
-      "viteProduct": "nucleus",
+      "viteProduct": "nucleum",
       "env": {
         "pre": {
           "VITE_API_URL": "https://api.nucleus.website",

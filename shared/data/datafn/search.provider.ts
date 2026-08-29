@@ -28,25 +28,11 @@ export const nucleumDatafnSearchPipeline = {
 
 /** Search indexing disclosure for local and server-side resource fields. */
 export const nucleumDatafnSensitiveSearchReview = {
-  localIndexedFields: {
-    node: ["label", "text", "notes"],
-    collection: ["label"],
-    space: ["label"],
-    file: ["label"],
-    objective: ["label"],
-    task: ["label"]
-  },
+  localIndexedFields: resolveNucleumDatafnSearchResourceFields(),
   serverIndexedFields: {
     mode: "account-service-opensearch",
     externalProviderEgress: true,
-    fields: {
-      node: ["label", "text", "notes"],
-      collection: ["label"],
-      space: ["label"],
-      file: ["label"],
-      objective: ["label"],
-      task: ["label"]
-    }
+    fields: resolveNucleumDatafnSearchResourceFields()
   }
 } as const;
 
@@ -71,9 +57,9 @@ export function resolveNucleumDatafnSearchResourceFields(): NucleumDatafnSearchR
   for (const resource of nucleumDatafnSchema.resources) {
     const searchFields = Array.isArray(resource.indices)
       ? []
-      : (resource.indices && "search" in resource.indices
+      : ((resource.indices && "search" in resource.indices
           ? resource.indices.search
-          : []) ?? [];
+          : []) ?? []);
     if (searchFields.length > 0) {
       fields[resource.name] = [...searchFields];
     }

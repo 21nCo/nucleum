@@ -18,6 +18,7 @@ export const linkabilityTables = [
   Resource.collection,
   Resource.property,
   Resource.view,
+  Resource.link,
   Resource.linkTag
 ];
 

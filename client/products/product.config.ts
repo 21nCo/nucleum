@@ -1,22 +1,18 @@
 import { Extension, OverviewPanel, Product } from "@21n/products/product.type";
 import { getProductNavConfig } from "./product-nav.config";
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { Action } from "@21n/types/action.enum";
 import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
+import { resourceConfig } from "@21n/components/flux/resourceStores/resource.config";
+import type { IResourceTableConfig } from "@21n/components/flux/flux.type";
 import type { ISelectItem } from "@21n/types/select.type";
 import {
   nextProducts,
   nextResourceTableMap,
   nextNucleusOverviewPanelSwitcherItems
 } from "@21n/next/product.config";
-import {
-  resolveProductResourceConfig,
-  sharedExtensions,
-  productRegistry
-} from "@21n/shared-config/product.config";
-import type {
-  IProductConfigBase as ISharedProductConfigBase
-} from "@21n/shared-config/product.config";
+import { productRegistry } from "@21n/shared-config/product.config";
+import type { IProductConfigBase as ISharedProductConfigBase } from "@21n/shared-config/product.config";
 
 const isDev = import.meta.env?.DEV || false;
 
@@ -27,7 +23,12 @@ interface SettingsSection {
   section: string;
 }
 
-type IProductConfigBase = ISharedProductConfigBase;
+type IProductConfigBase = Omit<ISharedProductConfigBase, "resources"> & {
+  resources: {
+    browse: Resource[];
+    table: Resource[];
+  };
+};
 
 export interface IAppConfigBase extends IProductConfigBase {
   /**
@@ -63,9 +64,13 @@ export interface IAppConfigBase extends IProductConfigBase {
   overviewPanelSwitcherItems?: ISelectItem[];
 }
 
-type IAppConfig = IAppConfigBase;
+interface IAppConfig extends IAppConfigBase {
+  tableConfig: IResourceTableConfig[];
+}
 
-type IExtensionConfig = IProductConfigBase;
+interface IExtensionConfig extends IProductConfigBase {
+  tableConfig: IResourceTableConfig[];
+}
 
 const commonConfigurableShortcuts = [
   Action.EDIT_MODE,
@@ -75,32 +80,36 @@ const commonConfigurableShortcuts = [
   Action.GO_FORWARD
 ];
 
+const commonTables = [Resource.accessLog, Resource.tz];
+
+const linkabilityTables = [
+  Resource.collection,
+  Resource.property,
+  Resource.view,
+  Resource.link,
+  Resource.linkTag
+];
+
+const filesAbilityTables = [Resource.file];
+
+const resourceTableMap: Record<string, Resource[]> = {
+  [Product.NUCLEUM]: [Resource.event],
+  [Product.MEMOTRON]: [Resource.node, Resource.capture],
+  [Product.POINTRON]: [
+    Resource.goal,
+    Resource.task,
+    Resource.session,
+    Resource.sessionLog
+  ],
+  ...nextResourceTableMap
+};
+
 const nucleusNav = getProductNavConfig(Product.NUCLEUM);
 const memotronNav = getProductNavConfig(Product.MEMOTRON);
 const pointronNav = getProductNavConfig(Product.POINTRON);
 
 const resolveBaseSharedProductConfig = (productName: Product) =>
   productRegistry[productName.toString() as keyof typeof productRegistry];
-
-const uniqueResources = (resources: Resource[]) =>
-  Array.from(new Set(resources));
-
-const resolveClientProductResources = (productName: Product) => {
-  const sharedResources = resolveProductResourceConfig(productName, { isDev });
-  const nextTables =
-    productName === Product.NUCLEUM
-      ? Array.from(Object.values(nextResourceTableMap)).flat()
-      : (nextResourceTableMap[
-          productName as keyof typeof nextResourceTableMap
-        ] ?? []);
-  return {
-    browse: sharedResources.browse as Resource[],
-    table: uniqueResources([
-      ...(sharedResources.table as Resource[]),
-      ...(nextTables as Resource[])
-    ])
-  };
-};
 
 export const products: Record<string, IAppConfigBase> = {
   [Product.NUCLEUM]: {
@@ -111,7 +120,16 @@ export const products: Record<string, IAppConfigBase> = {
     appMenuPt: [...nucleusNav.appMenuPt],
     homePath: nucleusNav.homePath,
     homePathPt: nucleusNav.homePathPt,
-    resources: resolveClientProductResources(Product.NUCLEUM),
+    resources: {
+      browse: [Resource.collection, Resource.event],
+      table: [
+        ...commonTables,
+        ...Array.from(Object.values(resourceTableMap)).flat(),
+        ...linkabilityTables,
+        ...filesAbilityTables,
+        Resource.combination
+      ]
+    },
     librarySectionLabel: nucleusNav.librarySectionLabel,
     configurableShortcuts: [
       ...commonConfigurableShortcuts,
@@ -170,7 +188,15 @@ export const products: Record<string, IAppConfigBase> = {
     homePath: memotronNav.homePath,
     homePathPt: memotronNav.homePathPt,
     isShowCaptureOnMobile: true,
-    resources: resolveClientProductResources(Product.MEMOTRON),
+    resources: {
+      browse: [Resource.node, Resource.collection],
+      table: [
+        ...commonTables,
+        ...resourceTableMap[Product.MEMOTRON],
+        ...linkabilityTables,
+        ...filesAbilityTables
+      ]
+    },
     librarySectionLabel: memotronNav.librarySectionLabel,
     configurableShortcuts: [
       ...commonConfigurableShortcuts,
@@ -222,7 +248,19 @@ export const products: Record<string, IAppConfigBase> = {
     appMenuPt: [...pointronNav.appMenuPt],
     homePath: pointronNav.homePath,
     homePathPt: pointronNav.homePathPt,
-    resources: resolveClientProductResources(Product.POINTRON),
+    resources: {
+      browse: [
+        Resource.goal,
+        Resource.task,
+        Resource.collection,
+        Resource.event
+      ],
+      table: [
+        ...commonTables,
+        ...resourceTableMap[Product.POINTRON],
+        ...linkabilityTables
+      ]
+    },
     librarySectionLabel: pointronNav.librarySectionLabel,
     settings: [
       {
@@ -265,6 +303,15 @@ export const products: Record<string, IAppConfigBase> = {
   ...nextProducts
 };
 
+const tableConfigMapper = (resource: Resource) => {
+  const config = resourceConfig[resource];
+  if (!config) return null;
+  return {
+    ...config,
+    indices: ["id", "createdAt", "modifiedAt", ...(config.indices ?? [])]
+  };
+};
+
 export const product =
   import.meta.env?.VITE_PRODUCT ||
   (typeof process !== "undefined"
@@ -279,7 +326,10 @@ export const resolveProductConfig = (productOverride?: Product): IAppConfig => {
   }
   return {
     ...base,
-    oAuthProviders: ["google", "apple", "github"]
+    oAuthProviders: ["google", "apple", "github"],
+    tableConfig: base.resources.table
+      .map(tableConfigMapper)
+      .filter((item) => item != null)
   };
 };
 
@@ -288,8 +338,12 @@ const extensions: Record<Extension, IProductConfigBase> = {
     name: "Memotron Clipper",
     resources: {
       browse: [],
-      table: sharedExtensions[Extension.MEMOTRON_CLIPPER].resources
-        .table as Resource[]
+      table: [
+        ...commonTables,
+        ...resourceTableMap[Product.MEMOTRON],
+        ...linkabilityTables,
+        ...filesAbilityTables
+      ]
     },
     displayName: "Memotron Clipper",
     tagline: ""
@@ -308,6 +362,15 @@ const extensions: Record<Extension, IProductConfigBase> = {
 export const resolveExtensionConfig = (
   productOverride?: Extension
 ): IExtensionConfig => {
-  const base = extensions[productOverride ?? (product as Extension)];
-  return base;
+  const resolvedProduct = productOverride ?? (product as Extension);
+  const base = extensions[resolvedProduct];
+  if (!base) {
+    throw new Error(`Unknown extension: ${resolvedProduct}`);
+  }
+  return {
+    ...base,
+    tableConfig: base.resources.table
+      .map(tableConfigMapper)
+      .filter((item) => item != null)
+  };
 };

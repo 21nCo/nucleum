@@ -54,7 +54,7 @@
   <div class="flex items-center gap-4 border-b border-brs3 h-12 px-4">
     <header class="grid grid-cols-3 w-full sticky top-0 z-10 h-full">
       <div class="flex items-center gap-4 h-full">
-        {#if $appStore.product === Product.NUCLEUS && dev_enableBirdView}
+        {#if $appStore.product === Product.NUCLEUM && dev_enableBirdView}
           <div class="h-full">
             <BoxSwitcher
               options={panelOptions}

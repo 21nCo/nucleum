@@ -148,7 +148,7 @@
     </div>
   {:else}
     <div class="flex flex-col gap-12">
-      {#if [Product.NUCLEUS, Product.MEMOTRON].includes($appStore.product)}
+      {#if [Product.NUCLEUM, Product.MEMOTRON].includes($appStore.product)}
         <div class="flex flex-col gap-3">
           <Text content="Templates" style={TextStyle.SECTION_HEADING} />
 

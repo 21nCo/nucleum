@@ -51,7 +51,7 @@
   let inputRef = $state<TextInput | undefined>(undefined);
   let isShowGoalPicker = $state(
     $appStore.product === Product.POINTRON ||
-    $appStore.product === Product.NUCLEUS
+    $appStore.product === Product.NUCLEUM
   );
   let goalSearchQuery = $state("");
   let goalSearchInput = $state<TextSearchInput | undefined>(undefined);

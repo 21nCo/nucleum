@@ -66,7 +66,7 @@
     style="clip-path: url(#{subatom}-logoClip);"
   >
     {#if isShowAnimation}
-      {#if subatom == "nucleus"}
+      {#if subatom == "nucleum"}
         <NucleusAnimation />
       {:else}
         <div class="section section-horizontal"></div>
@@ -80,7 +80,7 @@
         xmlns="http://www.w3.org/2000/svg"
         class="absolute"
       >
-        {#if subatom === "nucleus"}
+        {#if subatom === "nucleum"}
           <NucleusLogo {width} />
         {:else if subatom === "pointron"}
           <PointronLogo {width} />
@@ -90,7 +90,7 @@
       </svg>
     {/if}
   </div>
-  {#if subatom != "nucleus" && isShowAnimation}
+  {#if subatom != "nucleum" && isShowAnimation}
     <svg
       viewBox="0 0 462 462"
       fill="none"
@@ -103,7 +103,7 @@
           clipPathUnits="objectBoundingBox"
           transform="scale(0.002165 0.002165)"
         >
-          {#if subatom === "nucleus"}
+          {#if subatom === "nucleum"}
             <NucleusLogo {width} />
           {:else if subatom === "pointron"}
             <PointronLogo {width} />

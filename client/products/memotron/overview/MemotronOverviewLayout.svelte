@@ -24,7 +24,7 @@
   let selectedPanel = $state<MemotronOverviewPanel>(
     resolveSavedState() ?? MemotronOverviewPanel.GRAPH
   );
-  const isNucleusContext = $derived($appStore.product === Product.NUCLEUS);
+  const isNucleusContext = $derived($appStore.product === Product.NUCLEUM);
 
   let containerWidth = 0;
   $effect(() => {

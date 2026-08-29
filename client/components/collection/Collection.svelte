@@ -573,7 +573,7 @@
         const resource = $collection.resource ?? Resource.node;
         const isSecondaryNodeCaptureContext =
           resource === Resource.node &&
-          [Product.MEMOTRON, Product.NUCLEUS].includes($appStore.product);
+          [Product.MEMOTRON, Product.NUCLEUM].includes($appStore.product);
         if (isSecondaryNodeCaptureContext) {
           appStore.runAction(MemotronAction.CAPTURE_SECONDARY, {
             searchParams: params
