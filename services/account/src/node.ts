@@ -1,15 +1,31 @@
-import { serve } from '@hono/node-server';
-import { getAccountCacheStore } from './cache.js';
-import { createAccountApp } from './app.js';
-import { createNodeDatabase } from './db/node.js';
-import { createAccountLogger } from './logging.js';
+import { serve } from "@hono/node-server";
+import { createAsyncLocalRequestContext } from "@superfunctions/observability/node";
+import { createApp } from "./app.js";
+import { createNodeDatabase } from "./db/node.js";
+import { createNodeSyncDatabase } from "./db/datafn-node.js";
+import { createLogger } from "./logging.js";
+import { createAccountObservability } from "./observability/events.js";
+import { createAccountNodeRuntimeStores } from "./runtime-stores.js";
 
-const logger = createAccountLogger();
+const logger = createLogger();
 const database = createNodeDatabase();
-const app = createAccountApp({
-  database: database.adapter,
-  cacheStore: getAccountCacheStore(),
-  logger
+let syncDatabase: ReturnType<typeof createNodeSyncDatabase> | undefined;
+const observability = createAccountObservability(logger, undefined, {
+  requestContext: createAsyncLocalRequestContext()
+});
+const app = createApp({
+  infra: {
+    database: database.adapter,
+    syncDatabase: () => {
+      syncDatabase ??= createNodeSyncDatabase();
+      return syncDatabase.adapter;
+    },
+    stores: createAccountNodeRuntimeStores(),
+    logger
+  },
+  deployment: {
+    observability
+  }
 });
 const port = Number(process.env.PORT ?? 8787);
 
@@ -18,15 +34,16 @@ serve({
   port
 });
 
-logger.info('nucleus account service started', {
+logger.info("nucleus account service started", {
   port
 });
 
 const shutdown = async () => {
-  logger.info('nucleus account service shutting down');
+  logger.info("nucleus account service shutting down");
+  await syncDatabase?.close();
   await database.close();
   process.exit(0);
 };
 
-process.once('SIGINT', () => void shutdown());
-process.once('SIGTERM', () => void shutdown());
+process.once("SIGINT", () => void shutdown());
+process.once("SIGTERM", () => void shutdown());
