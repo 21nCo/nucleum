@@ -1,12 +1,30 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { paginate } from "./index";
 import { cloneUp } from "../cloneup";
+import { cloneDown } from "../clonedown";
 import {
   ICloneUpBody,
   ICloneDownPaginateBody
 } from "$lib/shared/types/sync.type";
 import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
 import { SyncProvider, SyncProviderFactory } from "../providers";
+
+async function waitForClonedRecords(
+  resources: Resource[],
+  expectedIds: string[]
+) {
+  await vi.waitFor(
+    async () => {
+      const result = await cloneDown(
+        { resources, isExtension: false },
+        global.testEnv.agent
+      );
+      const serialized = JSON.stringify(result);
+      expect(expectedIds.every((id) => serialized.includes(id))).toBe(true);
+    },
+    { interval: 250, timeout: 10_000 }
+  );
+}
 
 describe("Paginate Integration Tests", () => {
   beforeAll(async () => {
@@ -210,8 +228,10 @@ describe("Paginate Integration Tests", () => {
 
       await cloneUp(cloneUpBody, global.testEnv.agent);
 
-      // Wait for eventual consistency
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await waitForClonedRecords(
+        [Resource.node],
+        testRecords.map((record) => record.id)
+      );
 
       // Test pagination
       const paginateBody: ICloneDownPaginateBody = {
@@ -253,8 +273,10 @@ describe("Paginate Integration Tests", () => {
         global.testEnv.agent
       );
 
-      // Wait for eventual consistency
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await waitForClonedRecords(
+        [Resource.node],
+        testRecords.map((record) => record.id)
+      );
 
       // Test non-extension client (should include id field and result wrapper)
       const nonExtensionBody: ICloneDownPaginateBody = {
@@ -346,8 +368,10 @@ describe("Paginate Integration Tests", () => {
         global.testEnv.agent
       );
 
-      // Wait for eventual consistency
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await waitForClonedRecords(
+        [Resource.node],
+        testRecords.map((record) => record.id)
+      );
 
       const dynamoResult = await paginate(paginateBody, global.testEnv.agent);
 

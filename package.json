@@ -62,6 +62,8 @@
   "scripts": {
     "build": "turbo run build",
     "check:apps": "node tools/check/run-app-checks.mjs --format=json",
+    "check:no-fixed-test-waits": "node tools/check/no-fixed-test-waits.mjs",
+    "check:no-legacy-runtime": "node tools/check/no-legacy-runtime.mjs",
     "dev": "turbo run dev --parallel",
     "dev:nucleus": "turbo run dev --filter=nucleus-app",
     "dev:memotron": "turbo run dev --filter=memotron-app",
@@ -70,7 +72,7 @@
     "dev:memotron-share": "turbo run dev --filter=memotron-share",
     "dev:memotron-clipper": "turbo run dev --filter=memotron-clipper",
     "codemod:alias": "tsx tools/codemods/alias-migration/index.ts",
-    "lint": "turbo run lint",
+    "lint": "npm run check:no-fixed-test-waits && turbo run lint",
     "test": "turbo run test --filter=tidigit-tests",
     "build:packages": "turbo run build --filter='./packages/*'",
     "build:products": "turbo run build --filter='./apps/*'",
