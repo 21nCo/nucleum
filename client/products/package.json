@@ -4,9 +4,8 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@datafn/client": "0.1.0",
-    "@datafn/core": "0.1.0",
-    "@datafn/svelte": "0.1.0"
+    "@21n/data": "*",
+    "@21n/shared-config": "*"
   },
   "exports": {
     "./*": "./*"

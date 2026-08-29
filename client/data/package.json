@@ -4,8 +4,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@21n/shared-data": "*",
-    "@datafn/core": "0.1.0"
+    "@21n/shared-data": "*"
   },
   "exports": {
     ".": {
