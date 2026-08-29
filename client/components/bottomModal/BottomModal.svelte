@@ -3,16 +3,13 @@
   import { onDestroy } from "svelte";
   import { fly, fade } from "svelte/transition";
   import type { ComponentType } from "svelte";
-  import NotesModal from "@21n/components/featureWheel/sidePanel/NotesModal.svelte";
   import { properCase } from "@21n/shared-utils/text.utils";
 
   interface ComponentMap {
     [key: string]: ComponentType;
   }
 
-  const componentMap: ComponentMap = {
-    notes: NotesModal
-  };
+  const componentMap: ComponentMap = {};
 
   let state = $state<IBottomModalState>({
     isOpen: false,

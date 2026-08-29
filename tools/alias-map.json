@@ -9,7 +9,6 @@
   "@21n/static": "client/static",
   "@21n/layout": "client/layout",
   "@21n/persistence": "client/persistence",
-  "@21n/landing": "client/landing",
   "@21n/extensions": "client/extensions",
   "@21n/branding": "client/branding",
   "@21n/icons": "client/icons",

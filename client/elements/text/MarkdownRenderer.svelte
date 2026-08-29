@@ -1,9 +1,9 @@
 <script lang="ts">
   import MarkdownIt from "markdown-it";
-  import { sanitizeUrl } from "@21n/landing/shared/utils/url-sanitizer";
+  import { sanitizeUrl } from "@21n/shared-utils/url.utils";
 
   let {
-    text = "",
+    text = ""
   }: {
     text?: string;
   } = $props();
@@ -69,6 +69,7 @@
 
   const renderedText = $derived(markdown.render(text ?? ""));
 
+  /** Prevents rendered links from triggering parent click handlers. */
   function stopLinkPropagation(node: HTMLElement) {
     const handleClick = (event: MouseEvent) => {
       const target = event.target;

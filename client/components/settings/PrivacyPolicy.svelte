@@ -1,25 +1,3 @@
-<script lang="ts">
-  import PageSeo from "@21n/landing/shared/seo/PageSEO.svelte";
-  let {
-    productName,
-  }: {
-    productName: string;
-  } = $props();
-</script>
-
-<PageSeo
-  data={{
-    title: `Privacy Policy - ${productName}`,
-    description: `Privacy Policy for ${productName} - learn how we collect, use, and protect your personal information while using Memotron's knowledge management services.`,
-    keywords: [
-      "privacy policy",
-      "privacy",
-      "data protection",
-      "personal information"
-    ],
-    canonicalUrl: "https://21n.org/privacy"
-  }}
-/>
 <div
   class="relative flex flex-col justify-start items-start text-start w-full h-auto p-8"
 >
@@ -489,10 +467,10 @@
                 class="text-aps1">contact@21n.org</a
               ><span id="lqtkgpfuworgd">​</span> to request access to, correct or
               delete any personal information that you have provided to us. We cannot
-              delete your personal information except by also deleting your user
-              account. We may not accommodate a request to change information if
-              we believe the change would violate any law or legal requirement or
-              cause the information to be incorrect.</span
+              delete your personal information except by also deleting your user account.
+              We may not accommodate a request to change information if we believe
+              the change would violate any law or legal requirement or cause the information
+              to be incorrect.</span
             >
           </div>
         </div>

@@ -27,7 +27,7 @@ import MdShortcuts from "@21n/components/markdown/shortcuts/MdShortcuts.svelte";
 import CoverPicker from "@21n/elements/coverPicker/CoverPicker.svelte";
 import SurrealLocalViewer from "@21n/components/debug/SurrealLocalViewer.svelte";
 import SignalDBViewer from "@21n/components/debug/SignalDBViewer.svelte";
-import PrivacyPolicy from "@21n/landing/shared/PrivacyPolicy.svelte";
+import PrivacyPolicy from "@21n/components/settings/PrivacyPolicy.svelte";
 import CalendarSettings from "@21n/components/calendar/settings/CalendarSettings.svelte";
 import { Embed } from "@21n/types/context.type";
 import {

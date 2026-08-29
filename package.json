@@ -16,7 +16,6 @@
     "client/static",
     "client/layout",
     "client/persistence",
-    "client/landing",
     "client/extensions",
     "client/branding",
     "client/icons",

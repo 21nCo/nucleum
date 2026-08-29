@@ -19,17 +19,6 @@ npm run test --workspace=e2e-playwright -- --grep @smoke
 npm run test --workspace=e2e-playwright -- --grep @feature
 ```
 
-### Coverage matrix artifact
-
-```bash
-npm run coverage:matrix --workspace=e2e-playwright
-```
-
-Artifacts are written to:
-
-- `apps/e2e-playwright/artifacts/coverage-matrix.md`
-- `apps/e2e-playwright/artifacts/coverage-matrix.json`
-
 **By product:**
 
 ```bash

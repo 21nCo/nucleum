@@ -1,7 +1,4 @@
-/**
- * Sanitizes URLs to prevent XSS attacks
- * Only allows safe protocols: https, http, mailto, tel, and relative paths
- */
+/** Returns a URL only when it uses a safe protocol or a relative form. */
 export function sanitizeUrl(
   url: string | undefined | null
 ): string | undefined {
@@ -24,16 +21,16 @@ export function sanitizeUrl(
     return trimmedUrl;
   }
 
-  // Check for safe protocols
   const safeProtocols = ["https:", "http:", "mailto:", "tel:"];
 
   try {
-    const urlObj = new URL(trimmedUrl);
-    if (safeProtocols.includes(urlObj.protocol)) {
+    const urlObject = new URL(trimmedUrl);
+    if (safeProtocols.includes(urlObject.protocol)) {
       return trimmedUrl;
     }
-  } catch (e) {
+  } catch {
     return undefined;
   }
+
   return undefined;
 }
