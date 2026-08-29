@@ -15,7 +15,7 @@
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { logger } from "@21n/components/debug/logger.client";
   import type { IRecordId } from "@21n/types/data.type";
-  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { isSameResource } from "@21n/data/datafn/resource.utils";
 
   let {
     clips = [],

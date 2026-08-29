@@ -1,31 +1,111 @@
-import {
-  FluxMethod,
-  type IFluxMethod,
-  type IResourceTableConfig
-} from "$lib/client/components/flux/flux.type";
+import { get } from "svelte/store";
 import { ExtensionEvent } from "$lib/client/types/extension.type";
-import {
-  relayToBackgroundScript,
-  relayToSidePanel
-} from "$lib/client/utils/extension.utils";
+import { relayToSidePanel } from "$lib/client/utils/extension.utils";
 import { ClientStorageKey } from "$lib/client/persistence/persistence.type";
 import { clientStorage } from "$lib/client/persistence/persistence.utils";
 import { getDapId } from "$lib/client/persistence/persistence.utils";
-import { resolveCurrentUserId } from "$lib/client/utils/account.utils";
 import { logger } from "$lib/client/components/debug/logger.client";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { resourceStores } from "$lib/client/components/flux/resourceStores/resource.store";
-import { kvStores } from "$lib/client/components/flux/resourceStores/kv.store";
+import { Resource } from "$lib/client/data/datafn/resource.enum";
 import type { Extension } from "$lib/client/products/product.type";
-import { resolveExtensionConfig } from "$lib/client/products/product.config";
+import { appStore } from "$lib/client/stores/app.store";
+import account from "$lib/client/stores/account.store";
+import {
+  datafn,
+  datafnRuntime,
+  initializeNucleumDatafn,
+  pullDatafnNow,
+  reconcileDatafnNow
+} from "$lib/client/stores/datafn.store";
+import { determineResourceType } from "$lib/client/data/datafn/resource.utils";
+import type { IRecordId } from "$lib/client/types/data.type";
+
+type DatafnExtensionSearchParams = {
+  query: string;
+  fields?: string[];
+  type?: string;
+};
+
+type DatafnExtensionSelectParams = {
+  filters?: Record<string, unknown>;
+  limit?: number;
+  offset?: number;
+  search?: DatafnExtensionSearchParams;
+  select?: string[];
+  sort?: string[];
+};
+
+type DatafnExtensionMutationFragment = {
+  operation: string;
+  id?: IRecordId;
+  record?: Record<string, unknown>;
+  relations?: Record<string, unknown>;
+  context?: string;
+};
+
+type DatafnExtensionMutation =
+  | DatafnExtensionMutationFragment
+  | DatafnExtensionMutationFragment[];
+
+export enum DatafnExtensionMethod {
+  PULL = "pull",
+  RECONCILE = "reconcile",
+  SELECT_MANY = "selectMany",
+  SELECT = "select",
+  MUTATION = "mutation",
+  KV_MERGE = "kvMerge"
+}
+
+export type IDatafnExtensionMethod =
+  | {
+      method: DatafnExtensionMethod.SELECT_MANY;
+      args: {
+        resource: Resource;
+        params?: DatafnExtensionSelectParams;
+        signal?: AbortSignal;
+      };
+    }
+  | {
+      method: DatafnExtensionMethod.SELECT;
+      args: {
+        resourceId: IRecordId;
+        select?: string[];
+        signal?: AbortSignal;
+      };
+    }
+  | {
+      method: DatafnExtensionMethod.MUTATION;
+      args: {
+        resource: Resource;
+        params: DatafnExtensionMutation;
+        additionalParams?: {
+          context?: string;
+        };
+      };
+    }
+  | {
+      method: DatafnExtensionMethod.KV_MERGE;
+      args: {
+        resource: Resource;
+        data: Record<string, unknown>;
+      };
+    }
+  | {
+      method: DatafnExtensionMethod.PULL;
+      args?: {
+        isReturnCount?: boolean;
+      };
+    }
+  | {
+      method: DatafnExtensionMethod.RECONCILE;
+      args?: {
+        counts?: Record<string, number>;
+      };
+    };
 
 export class ExtensionStore {
   static _extension: ExtensionStore | null = null;
-  private tableConfig: IResourceTableConfig[] = [];
 
-  private constructor(product?: Extension) {
-    this.tableConfig = resolveExtensionConfig(product).tableConfig;
-  }
+  private constructor(_product?: Extension) {}
 
   static getInstance(product?: Extension) {
     if (ExtensionStore._extension) return ExtensionStore._extension;
@@ -35,25 +115,19 @@ export class ExtensionStore {
 
   async bootup(extension: Extension) {
     try {
-      const initResult = await this.initFlux();
-      // logger.log({ at: "initFlux", initResult });
+      await this.initializeDatafn();
       await clientStorage.set(ClientStorageKey.EXTENSION_BOOTUP, {
         inProgress: true
       });
       await clientStorage.set(ClientStorageKey.PRODUCT, extension);
-      if (initResult === 0) {
-        await this.delegateFlux({ method: FluxMethod.CLONE_DOWN });
-      } else {
-        await this.syncDown();
-      }
-      await this.loadInMemoryStores();
+      await this.pullLatest();
       relayToSidePanel({
         event: ExtensionEvent.BOOTUP
       });
-    } catch (e) {
+    } catch (error) {
       logger.error({
         at: "ExtensionStore.bootup",
-        error: e
+        error
       });
     } finally {
       await clientStorage.set(ClientStorageKey.EXTENSION_BOOTUP, {
@@ -62,148 +136,144 @@ export class ExtensionStore {
     }
   }
 
-  async initFlux() {
+  async initializeDatafn() {
     const dapId = await getDapId();
-    const currentUserId = await resolveCurrentUserId();
-    return this.delegateFlux({
-      method: FluxMethod.INIT_FLUX,
-      args: {
-        tables: this.tableConfig,
-        params: {
-          dapId,
-          userId: currentUserId
-        }
-      }
+    await initializeNucleumDatafn({
+      product: get(appStore).product,
+      account: get(account),
+      dapId: dapId ?? undefined,
+      env: import.meta.env.MODE
     });
   }
 
-  syncDown() {
-    return this.delegateFlux({
-      method: FluxMethod.SYNC_DOWN,
-      args: { isReturnCount: false }
-    });
+  pullLatest() {
+    return pullDatafnNow();
   }
 
-  loaderCallback(resource: string, data: any) {
-    const allStores = [...resourceStores.values(), ...kvStores.values()];
-    const store = allStores.find(
-      (s) => s.id === resource || `kv:${s.id}` === resource
+  reconcile() {
+    return reconcileDatafnNow();
+  }
+
+  async delegateDatafn(method: IDatafnExtensionMethod) {
+    const runtime = get(datafnRuntime);
+    if (!runtime) {
+      await this.initializeDatafn();
+    }
+    switch (method.method) {
+      case DatafnExtensionMethod.PULL:
+        await pullDatafnNow();
+        return { counts: {} };
+      case DatafnExtensionMethod.RECONCILE:
+        await reconcileDatafnNow();
+        return true;
+      case DatafnExtensionMethod.SELECT_MANY:
+        return this.selectMany(
+          method.args.resource,
+          method.args.params,
+          method.args.signal
+        );
+      case DatafnExtensionMethod.SELECT:
+        return this.select(
+          method.args.resourceId,
+          method.args.select,
+          method.args.signal
+        );
+      case DatafnExtensionMethod.MUTATION:
+        return this.mutation(
+          method.args.resource,
+          method.args.params,
+          method.args.additionalParams
+        );
+      case DatafnExtensionMethod.KV_MERGE:
+        return this.kvMerge(method.args.resource, method.args.data);
+    }
+  }
+
+  private async selectMany(
+    resource: Resource,
+    params?: DatafnExtensionSelectParams,
+    signal?: AbortSignal
+  ) {
+    const searchQuery = params?.search?.query?.trim();
+    if (params && searchQuery) {
+      const selectParams = params;
+      const search = params.search;
+      if (!search) return [];
+      const result = (await datafn.search({
+        query: searchQuery,
+        resources: [resource],
+        fields: search.fields,
+        filters: selectParams.filters
+          ? { [resource]: selectParams.filters }
+          : undefined,
+        limit: selectParams.limit ?? 100,
+        limitPerResource: selectParams.limit ?? 100,
+        select: selectParams.select,
+        prefix: true,
+        fuzzy: 0.2,
+        source: "local",
+        signal
+      })) as { results?: { data: unknown }[] };
+      return (result.results ?? []).map((entry: any) => entry.data);
+    }
+    const result = await datafn.table(resource).query({
+      filters: params?.filters as any,
+      select: params?.select,
+      limit: params?.limit,
+      offset: params?.offset,
+      sort: params?.sort,
+      signal
+    });
+    return result.data ?? [];
+  }
+
+  private async select(
+    resourceId: IRecordId,
+    select?: string[],
+    signal?: AbortSignal
+  ) {
+    if (typeof resourceId === "string" && resourceId.startsWith("kv:")) {
+      return datafn.kv.get(resourceId.replace(/^kv:/, ""));
+    }
+    const resource = determineResourceType(resourceId);
+    const result = await datafn.table(resource).query({
+      filters: { id: resourceId },
+      select,
+      signal
+    });
+    return result?.data?.[0];
+  }
+
+  private async mutation(
+    resource: Resource,
+    params: DatafnExtensionMutation,
+    additionalParams?: { context?: string }
+  ) {
+    return this.tableMutation(resource, params, additionalParams);
+  }
+
+  private async tableMutation(
+    resource: Resource,
+    params: DatafnExtensionMutation,
+    additionalParams?: { context?: string }
+  ) {
+    const table = datafn.table(resource);
+    const resolveContext = (mutation: DatafnExtensionMutationFragment) => ({
+      ...mutation,
+      context: mutation.context ?? additionalParams?.context
+    });
+    return table.mutate(
+      (Array.isArray(params)
+        ? params.map(resolveContext)
+        : resolveContext(params)) as any
     );
-    if (store?.loader) {
-      store.loader(data);
-    } else {
-      logger.error({
-        at: "ExtensionStore.loaderCallback",
-        message: `No matching store found for resource "${resource}"`,
-        data
-      });
-    }
   }
 
-  async loadInMemoryResourceStore(id: string) {
-    logger.log({
-      at: "loadInMemoryResourceStore",
-      id
-    });
-    const table = this.tableConfig.find((x) => x.name === id);
-    if (!table) {
-      logger.warn({
-        at: "loadInMemoryResourceStore",
-        id,
-        message: "Table not found in tableConfig, skipping in-memory load."
-      });
-      return;
-    }
-    if (!table.isInMemory) {
-      logger.warn({
-        at: "loadInMemoryResourceStore",
-        id,
-        message: "Table is not marked as in-memory, skipping in-memory load."
-      });
-      return;
-    }
-    const data = await this.delegateFlux({
-      method: FluxMethod.SELECT_MANY,
-      args: { resource: table.name as Resource }
-    });
-    this.loaderCallback(id, data);
+  private kvMerge(resource: Resource, data: Record<string, unknown>) {
+    return datafn.kv.merge(resource.toString(), data);
   }
+}
 
-  async loadInMemoryStores() {
-    try {
-      const data = await this.delegateFlux({
-        method: FluxMethod.SELECT_MANY,
-        args: {
-          resource: Resource.kv
-        }
-      });
-      logger.log({
-        at: "fluxExtentionMediator.loadInMemoryStores",
-        data
-      });
-      if (!data || !Array.isArray(data)) return;
-      data.forEach((record: any) => {
-        this.loaderCallback(record.id.toString(), record);
-      });
-      const inMemoryResouceStores = this.tableConfig.filter(
-        (x) => x.isInMemory
-      );
-      logger.debug({
-        at: "fluxExtentionMediator.loadInMemoryStores - resource stores",
-        inMemoryResouceStores
-      });
-      if (!inMemoryResouceStores.length) return;
-      for (const store of inMemoryResouceStores) {
-        const data = await this.delegateFlux({
-          method: FluxMethod.SELECT_MANY,
-          args: {
-            resource: store.name as Resource
-          }
-        });
-        if (data && Array.isArray(data)) {
-          logger.log({
-            at: "fluxExtentionMediator.loadInMemoryStores - loading resource store",
-            id: store.name,
-            data
-          });
-          this.loaderCallback(store.name as Resource, data);
-        }
-      }
-    } catch (e) {
-      logger.error({
-        at: "fluxExtentionMediator.loadInMemoryStores",
-        error: e
-      });
-    }
-  }
-
-  async delegateFlux(method: IFluxMethod) {
-    const result = await relayToBackgroundScript({
-      event: ExtensionEvent.FLUX_DELEGATION,
-      data: {
-        method
-      }
-    });
-    if (result && result.init === -1) {
-      if (method.method === FluxMethod.INIT_FLUX) {
-        logger.error({
-          at: "extensionStore.delegateFlux",
-          message: "Flux initialization failed, not retrying."
-        });
-        return result;
-      }
-      logger.debug({
-        at: "extensionStore.delegateFlux",
-        message: "reinit flux"
-      });
-      await this.initFlux();
-      return relayToBackgroundScript({
-        event: ExtensionEvent.FLUX_DELEGATION,
-        data: {
-          method
-        }
-      });
-    }
-    return result;
-  }
+export function extensionDatafn(method: IDatafnExtensionMethod) {
+  return ExtensionStore.getInstance().delegateDatafn(method);
 }
