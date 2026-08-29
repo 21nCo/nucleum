@@ -225,26 +225,6 @@
       "@21n/persistence/*": [
         "./persistence/*"
       ],
-      "@21n/landing": [
-        "./landing/index.ts",
-        "./landing/index.tsx",
-        "./landing/index.js",
-        "./landing/index.mjs",
-        "./landing/index.cjs",
-        "./landing/index.svelte",
-        "./landing/index.d.ts",
-        "./landing/src/index.ts",
-        "./landing/src/index.tsx",
-        "./landing/src/index.js",
-        "./landing/src/index.mjs",
-        "./landing/src/index.cjs",
-        "./landing/src/index.svelte",
-        "./landing/src/index.d.ts",
-        "./landing"
-      ],
-      "@21n/landing/*": [
-        "./landing/*"
-      ],
       "@21n/extensions": [
         "./extensions/index.ts",
         "./extensions/index.tsx",

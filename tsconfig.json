@@ -214,26 +214,6 @@
       "@21n/persistence/*": [
         "./client/persistence/*"
       ],
-      "@21n/landing": [
-        "./client/landing/index.ts",
-        "./client/landing/index.tsx",
-        "./client/landing/index.js",
-        "./client/landing/index.mjs",
-        "./client/landing/index.cjs",
-        "./client/landing/index.svelte",
-        "./client/landing/index.d.ts",
-        "./client/landing/src/index.ts",
-        "./client/landing/src/index.tsx",
-        "./client/landing/src/index.js",
-        "./client/landing/src/index.mjs",
-        "./client/landing/src/index.cjs",
-        "./client/landing/src/index.svelte",
-        "./client/landing/src/index.d.ts",
-        "./client/landing"
-      ],
-      "@21n/landing/*": [
-        "./client/landing/*"
-      ],
       "@21n/extensions": [
         "./client/extensions/index.ts",
         "./client/extensions/index.tsx",
