@@ -1,15 +1,15 @@
 <script lang="ts">
-  import type { IActiveGoalStore } from "@21n/components/goals/goal.store";
+  import type { IActiveObjectiveStore } from "@21n/components/goals/goal.store";
   import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
   import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
   import { Size } from "@21n/types/size.enum";
-  import GoalAllActivityPanel from "@21n/components/goals/history/GoalAllActivityPanel.svelte";
-  import GoalFocusSessions from "@21n/components/goals/history/GoalFocusSessions.svelte";
+  import ObjectiveAllActivityPanel from "@21n/components/goals/history/GoalAllActivityPanel.svelte";
+  import ObjectiveFocusSessions from "@21n/components/goals/history/GoalFocusSessions.svelte";
 
-  let { goal }: { goal: IActiveGoalStore } = $props();
+  let { objective }: { objective: IActiveObjectiveStore } = $props();
   let selectedOption = $state("all");
-  let isIncludeSubGoals = $state(false);
+  let isIncludeSubObjectives = $state(false);
 </script>
 
 <div class="flex flex-col w-full h-full gap-2 overflow-auto">
@@ -32,20 +32,20 @@
     />
     {#if selectedOption === "focus"}
       <SwitchInput
-        label={{ label: "Include sub goals" }}
+        label={{ label: "Include sub objectives" }}
         size={Size.sm}
-        bind:checked={isIncludeSubGoals}
+        bind:checked={isIncludeSubObjectives}
       />
     {/if}
   </div>
   {#if selectedOption === "focus"}
-    {#key isIncludeSubGoals}
-      <GoalFocusSessions id={$goal.id} {isIncludeSubGoals} />
+    {#key isIncludeSubObjectives}
+      <ObjectiveFocusSessions id={$objective.id} {isIncludeSubObjectives} />
     {/key}
   {:else if selectedOption === "all"}
-    <GoalAllActivityPanel
-      goalId={$goal.id}
-      createdAt={$goal.createdAt.toISOString()}
+    <ObjectiveAllActivityPanel
+      objectiveId={$objective.id}
+      createdAt={new Date($objective.createdAt).toISOString()}
     />
   {/if}
 </div>
