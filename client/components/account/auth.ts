@@ -2,14 +2,18 @@ import {
   createAuthFnRegionalClient,
   type AuthFnCachedRegion,
   type AuthFnClientRequestMetric,
+  type AuthFnSession,
   type AuthFnRegionalClient,
-  type AuthFnRegionStorage
+  type AuthFnRegionStorage,
+  type AuthFnTransportAuthOptions
 } from "@authfn/client";
+import type { HttpTransportAuthProvider } from "@superfunctions/http";
 import { clientStorage } from "@21n/persistence/persistence.utils";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
 import { resolveAccountBaseUrl, resolveAccountCookiePrefix } from "../network";
 import { logger } from "@21n/components/debug/logger.client";
 import { isExtensionEnvironment } from "@21n/utils/browser.utils";
+import { determineIfOffline } from "@21n/utils/network.utils";
 
 type StoredRegionValue = string | AuthFnCachedRegion;
 
@@ -41,7 +45,8 @@ export const authClient = async (params?: {
       credentials: "include",
       bearerToken: shouldUseAuthFnBearerSession()
         ? async () =>
-            (await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)) ?? undefined
+            (await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)) ??
+            undefined
         : undefined,
       onRequestMetric: emitAccountNetworkMetric
     },
@@ -60,13 +65,28 @@ export function resolveAuthFnBaseUrl(region: string) {
 
 export function shouldUseAuthFnBearerSession(): boolean {
   if (typeof window === "undefined") return false;
-  return import.meta.env?.VITE_NATIVE_EMBED === "true" || isExtensionEnvironment();
+  return (
+    import.meta.env?.VITE_NATIVE_EMBED === "true" || isExtensionEnvironment()
+  );
 }
 
 export function resolveAuthFnSessionMode(): "cookie" | "hybrid" {
   return shouldUseAuthFnBearerSession() ? "hybrid" : "cookie";
 }
 
+/**
+ * Creates a transport auth provider backed by the configured Nucleum AuthFn client.
+ */
+export async function createNucleumAuthFnTransportAuth(
+  input: AuthFnTransportAuthOptions = {}
+): Promise<HttpTransportAuthProvider> {
+  return (await authClient()).createTransportAuth(input);
+}
+
+/**
+ * @deprecated Nucleus account bootstrap is no longer part of post-auth
+ * routing. Kept for the legacy bootstrap screen and account metadata repair.
+ */
 export async function bootstrapNucleusAccount(region: string) {
   if (!shouldUseAuthFnBearerSession()) {
     return { kind: "not-authfn" as const };
@@ -77,15 +97,18 @@ export async function bootstrapNucleusAccount(region: string) {
   }
 
   try {
-    const response = await fetch(`${resolveAuthFnBaseUrl(region)}/nucleus/bootstrap`, {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "content-type": "application/json",
-        authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ region })
-    });
+    const response = await fetch(
+      `${resolveAuthFnBaseUrl(region)}/nucleus/bootstrap`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ region })
+      }
+    );
     const result = await response.json().catch(() => null);
     if (!response.ok || !result?.ok || !result.data?.session) {
       return {
@@ -143,30 +166,192 @@ function round(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-export async function performSessionCheck(): Promise<boolean | undefined> {
-  if (typeof window === "undefined") return false;
+export type StoredAuthSessionState = {
+  shouldUseBearerSession: boolean;
+  authFnToken?: string;
+  offlineSessionId?: string;
+  hasStoredUserInfo: boolean;
+  hasStoredCloudIdentity: boolean;
+  hasOfflineOnlySession: boolean;
+  isDatafnOfflinabilityEnabled: boolean;
+  isOffline: boolean;
+};
+
+export type AuthSessionResolution =
+  | {
+      status: "authenticated";
+      storedState: StoredAuthSessionState;
+      session: AuthFnSession;
+    }
+  | {
+      status: "offline-only";
+      storedState: StoredAuthSessionState;
+    }
+  | {
+      status: "cached-cloud";
+      storedState: StoredAuthSessionState;
+      error?: unknown;
+    }
+  | {
+      status: "expired";
+      storedState: StoredAuthSessionState;
+    }
+  | {
+      status: "signed-out";
+      storedState: StoredAuthSessionState;
+    }
+  | {
+      status: "unavailable";
+      storedState: StoredAuthSessionState;
+      error: unknown;
+    };
+
+/**
+ * Resolves local auth markers without treating cloud offlinability as an
+ * offline-only account.
+ */
+export async function resolveStoredAuthSessionState(): Promise<StoredAuthSessionState> {
   const shouldUseBearerSession = shouldUseAuthFnBearerSession();
   const authFnToken = shouldUseBearerSession
-    ? (await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)) ?? undefined
+    ? ((await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)) ?? undefined)
     : undefined;
-  const offlineSessionId =
-    (await clientStorage.get(ClientStorageKey.OFFLINE_SESSION_ID)) ?? undefined;
   if (!shouldUseBearerSession) {
     await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
+  }
+  const [
+    offlineSessionId,
+    storedUserInfo,
+    storedUser,
+    datafnOfflinability,
+    isOffline
+  ] = await Promise.all([
+    clientStorage.get(ClientStorageKey.OFFLINE_SESSION_ID),
+    clientStorage.get(ClientStorageKey.USER_INFO),
+    clientStorage.get(ClientStorageKey.USER),
+    clientStorage.get(ClientStorageKey.DATAFN_OFFLINABILITY),
+    determineIfOffline()
+  ]);
+  const hasStoredUserInfo = Boolean(storedUserInfo);
+  const hasStoredCloudIdentity = Boolean(
+    authFnToken || storedUserInfo || storedUser
+  );
+  return {
+    shouldUseBearerSession,
+    authFnToken,
+    offlineSessionId: offlineSessionId ?? undefined,
+    hasStoredUserInfo,
+    hasStoredCloudIdentity,
+    hasOfflineOnlySession: Boolean(offlineSessionId && !hasStoredCloudIdentity),
+    isDatafnOfflinabilityEnabled: datafnOfflinability !== "false",
+    isOffline
+  };
+}
+
+export function canUseStoredCloudSession(
+  state: StoredAuthSessionState,
+  error?: unknown,
+  isException = false
+) {
+  return Boolean(
+    state.hasStoredUserInfo &&
+    state.isDatafnOfflinabilityEnabled &&
+    (state.isOffline || isException || isRetryableAuthFnError(error))
+  );
+}
+
+export function isRetryableAuthFnError(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+  const candidate = error as { code?: unknown; retryable?: unknown };
+  return (
+    candidate.retryable === true || candidate.code === "AUTHFN_NETWORK_ERROR"
+  );
+}
+
+/**
+ * Removes stored cloud identity that is no longer backed by an AuthFn session.
+ */
+export async function clearStoredCloudAuthState(): Promise<void> {
+  authClientsMap.clear();
+  await Promise.all([
+    clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN),
+    clientStorage.remove(ClientStorageKey.AUTHFN_WIDGET_TOKEN),
+    clientStorage.remove(ClientStorageKey.STOKEN),
+    clientStorage.remove(ClientStorageKey.USER),
+    clientStorage.remove(ClientStorageKey.USER_INFO),
+    clientStorage.remove(ClientStorageKey.USER_REGION_MAP)
+  ]);
+}
+
+/**
+ * Resolves the current AuthFn session without conflating expired sessions with
+ * backend availability failures.
+ */
+export async function resolveAuthSession(): Promise<AuthSessionResolution> {
+  const storedState = await resolveStoredAuthSessionState();
+  if (typeof window === "undefined") {
+    return {
+      status: "signed-out",
+      storedState
+    };
+  }
+  if (storedState.hasOfflineOnlySession) {
+    return {
+      status: "offline-only",
+      storedState
+    };
+  }
+  if (canUseStoredCloudSession(storedState)) {
+    return {
+      status: "cached-cloud",
+      storedState
+    };
   }
 
   try {
     const client = await authClient({ isPreventCachedInstance: true });
     const session = await client.getSession();
     if (!session.ok) {
+      const canUseCachedCloudSession = canUseStoredCloudSession(
+        storedState,
+        session.error
+      );
       logger.warn({
-        at: "performSessionCheck.session.failed",
-        hasAuthFnToken: Boolean(authFnToken),
-        hasOfflineSession: Boolean(offlineSessionId),
+        at: "resolveAuthSession.session.failed",
+        hasAuthFnToken: Boolean(storedState.authFnToken),
+        hasOfflineSession: Boolean(storedState.offlineSessionId),
+        hasOfflineOnlySession: storedState.hasOfflineOnlySession,
+        canUseStoredCloudSession: canUseCachedCloudSession,
         error: session.error,
         currentPath: window.location.pathname
       });
-      return Boolean(offlineSessionId && !authFnToken);
+      if (canUseCachedCloudSession) {
+        return {
+          status: "cached-cloud",
+          storedState,
+          error: session.error
+        };
+      }
+      return {
+        status: "unavailable",
+        storedState,
+        error: session.error
+      };
+    }
+    if (!session.data.session) {
+      if (storedState.hasStoredCloudIdentity) {
+        await clearStoredCloudAuthState();
+      }
+      logger.warn({
+        at: "resolveAuthSession.session.missing",
+        hasStoredCloudIdentity: storedState.hasStoredCloudIdentity,
+        hasAuthFnToken: Boolean(storedState.authFnToken),
+        hasOfflineSession: Boolean(storedState.offlineSessionId),
+        currentPath: window.location.pathname
+      });
+      return {
+        status: storedState.hasStoredCloudIdentity ? "expired" : "signed-out",
+        storedState
+      };
     }
     if (session.data.session) {
       await clientStorage.set(ClientStorageKey.USER, session.data.session);
@@ -177,18 +362,59 @@ export async function performSessionCheck(): Promise<boolean | undefined> {
       }
     }
     logger.info({
-      at: "performSessionCheck.session.result",
-      hasAuthFnToken: Boolean(authFnToken),
-      hasOfflineSession: Boolean(offlineSessionId),
-      hasSession: Boolean(session.data.session),
-      regionId: session.data.session?.regionId,
+      at: "resolveAuthSession.session.result",
+      hasAuthFnToken: Boolean(storedState.authFnToken),
+      hasOfflineSession: Boolean(storedState.offlineSessionId),
+      hasOfflineOnlySession: storedState.hasOfflineOnlySession,
+      canUseStoredCloudSession: canUseStoredCloudSession(storedState),
+      hasSession: true,
+      regionId: session.data.session.regionId,
       currentPath: window.location.pathname
     });
-    return Boolean(session.data.session) || Boolean(offlineSessionId && !authFnToken);
+    return {
+      status: "authenticated",
+      storedState,
+      session: session.data.session
+    };
   } catch (error) {
-    logger.error({ at: "performSessionCheck.exception", error });
-    return offlineSessionId && !authFnToken ? true : undefined;
+    const canUseCachedCloudSession = canUseStoredCloudSession(
+      storedState,
+      error,
+      true
+    );
+    logger.error({
+      at: "resolveAuthSession.exception",
+      error,
+      canUseStoredCloudSession: canUseCachedCloudSession
+    });
+    if (canUseCachedCloudSession) {
+      return {
+        status: "cached-cloud",
+        storedState,
+        error
+      };
+    }
+    return {
+      status: "unavailable",
+      storedState,
+      error
+    };
   }
+}
+
+export async function performSessionCheck(): Promise<boolean | undefined> {
+  const resolution = await resolveAuthSession();
+  if (
+    resolution.status === "authenticated" ||
+    resolution.status === "offline-only" ||
+    resolution.status === "cached-cloud"
+  ) {
+    return true;
+  }
+  if (resolution.status === "unavailable") {
+    return undefined;
+  }
+  return false;
 }
 
 function createNucleusRegionStorage(): AuthFnRegionStorage {
@@ -215,7 +441,8 @@ function createNucleusRegionStorage(): AuthFnRegionStorage {
 }
 
 async function readRegionMap(): Promise<Record<string, StoredRegionValue>> {
-  const raw = (await clientStorage.get(ClientStorageKey.USER_REGION_MAP)) ?? "{}";
+  const raw =
+    (await clientStorage.get(ClientStorageKey.USER_REGION_MAP)) ?? "{}";
   if (typeof raw === "object" && raw !== null) {
     return raw as Record<string, StoredRegionValue>;
   }

@@ -22,13 +22,13 @@ export type IAnalyticsCard = {
   filter?: string[];
   type: AnalyticsCardType;
   period: TimePeriod;
-  isGroupByTopLevelGoals?: boolean;
+  isGroupByTopLevelObjectives?: boolean;
   stackedBarMode?: "value" | "percentage";
 };
 
 export enum AnalyticsCardGrouping {
   DEFAULT = "DEFAULT",
-  TOP_LEVEL_GOALS = "TOP_LEVEL_GOALS",
+  TOP_LEVEL_OBJECTIVES = "TOP_LEVEL_OBJECTIVES",
   /**
    * @deprecated
    */
@@ -61,10 +61,10 @@ export enum AnalyticsCardType {
 export type AnalyticsDataRecord = {
   brek: number;
   focus: number;
-  goal: string;
-  goalId: string;
+  objectiveLabel: string;
+  objectiveId: string;
   start: string;
-  topLevelGoal: string;
+  topLevelObjectiveLabel: string;
 };
 
 export type ChartDataRecord = {

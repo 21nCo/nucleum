@@ -18,16 +18,14 @@
     DaySummary,
     ISessionThumb
   } from "@21n/products/pointron/logs/log.type";
-  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
-  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
-  import { sessionStore } from "@21n/products/pointron/focus/session.store";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
+  import { resourceInList } from "@21n/data/datafn/resource.utils";
   import { resolveSessionTimeSplit } from "@21n/products/pointron/pointron.utils";
-  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
-  import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { tzStore } from "@21n/components/settings/timezone/tz.store";
   import { generateSummary } from "@21n/products/pointron/focus/session.utils";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { time } from "@datafn/client";
+  import { toSvelteStore } from "@datafn/svelte";
+  import { resolveExpandedSessionItems } from "@21n/products/pointron/logs/session-items.utils";
 
   let {
     date = $bindable(new Date()),
@@ -37,52 +35,33 @@
     context?: "journal" | "logs";
   } = $props();
   let selectedId = $state<string | undefined>(undefined);
-  let isRefreshing = $state(false);
-  let sessions = $state<
-    (ISessionThumb & {
-      splits: { focus: number; brek: number };
-    })[]
-  >([]);
-  let summary = $state<DaySummary>({ focus: 0, break: 0 });
-  let dateString = $derived(date.toISOString().split("T")[0]);
+  const sessionStore = $derived.by(() =>
+    toSvelteStore<ISessionThumb[]>(
+      datafn.session.signal({
+        select: ["*", "items.*#"],
+        temporal: time.day("startUnix", date),
+        sort: ["startUnix"],
+        metadata: {
+          includeTrashed: true,
+          includeArchived: true
+        }
+      }),
+      { initialData: [] }
+    )
+  );
+  const sessions = $derived.by(() =>
+    $sessionStore.data.map((session) => ({
+      ...session,
+      expandedItems: resolveExpandedSessionItems(session.items),
+      splits: resolveSessionTimeSplit(session)
+    }))
+  );
+  const summary: DaySummary = $derived(generateSummary(sessions));
+  const isLoading = $derived($sessionStore.loading || $sessionStore.refreshing);
 
-  $effect(() => {
-    if (dateString) {
-      void refresh();
-    }
-  });
   onMount(() => {
     postMessageToParent(EmbedMessage.SHEET_MOUNTED);
   });
-  async function refresh() {
-    isRefreshing = true;
-    const dayFilter = tzStore.resolveTimePeriodFilterForDay(date);
-    const result = await sessionStore.selectManyWithItemsExpansion(
-      {
-        filters: {
-          startUnix: dayFilter
-        },
-        orderBy: {
-          startUnix: "asc"
-        }
-      },
-      {
-        isExpand: true
-      }
-    );
-    if (isValidArrayWithData(result)) {
-      sessions = result!.map((session: ISessionThumb) => ({
-        ...session,
-        splits: resolveSessionTimeSplit(session)
-      }));
-      summary = generateSummary(sessions);
-    }
-    isRefreshing = false;
-  }
-
-  function onChangesSubscription(event: any) {
-    refresh();
-  }
 </script>
 
 {#if selectedId}
@@ -135,7 +114,7 @@
         </div>
       </div>
     {/if}
-    {#if !isRefreshing && sessions.length > 0}
+    {#if !isLoading && sessions.length > 0}
       <DaySummaryPart {summary} />
       <ScrollView
         class={{
@@ -165,19 +144,10 @@
         loadingAnimation={LoadingAnimationType.LOGS_PULSE}
         isSearchContext={true}
         pulseCount={2}
-        isLoadingState={isRefreshing}
+        isLoadingState={isLoading}
         mainText="No sessions found"
         subText="Please select a different date to see focus sessions"
       />
     {/if}
   </div>
 {/if}
-
-<ComponentBaseLayer
-  subscribeToResource={new Set([Resource.session])}
-  subscribeToContext={new Set([
-    PointronAction.DELETE_SESSION,
-    PointronAction.MANUAL_FOCUS_ENTRY
-  ])}
-  onChange={onChangesSubscription}
-/>

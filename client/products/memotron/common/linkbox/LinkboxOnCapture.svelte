@@ -4,8 +4,8 @@
   import LinkSearch from "@21n/products/memotron/common/linkbox/LinkSearch.svelte";
   import { LinkType } from "@21n/products/memotron/linking/link.type";
   import type { IRecordId } from "@21n/types/data.type";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
-  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { isSameResource } from "@21n/data/datafn/resource.utils";
   import type { IActiveCaptureStore } from "@21n/products/memotron/capture/capture.store";
   import { cn } from "@21n/utils/ui.utils";
   let {
@@ -72,7 +72,7 @@
           ?.filter((x) => x.linkType !== LinkType.MENTION)
           ?.map((x) => x.to) ?? []}
         nodeId={$captureStore.nodeId}
-        propertyValues={$captureStore.properties}
+        propertyValues={$captureStore.propertyValues}
         onUnlink={(e) => {
           if (expand && isSameResource(expand, e.detail)) {
             expand = null;

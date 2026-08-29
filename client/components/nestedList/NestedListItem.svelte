@@ -3,10 +3,13 @@
   import view from "@21n/stores/view.store";
   import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
   import { cn } from "@21n/utils/ui.utils";
-  import { NestedListStyle, type NestedItemContent } from "@21n/components/nestedList/nestedList.type";
+  import {
+    NestedListStyle,
+    type NestedItemContent
+  } from "@21n/components/nestedList/nestedList.type";
   import TextInput from "@21n/elements/input/TextInput.svelte";
   import { InputStyle } from "@21n/types/input.type";
-  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { isSameResource } from "@21n/data/datafn/resource.utils";
   import type { IRecordId } from "@21n/types/data.type";
   import { hoverable } from "@21n/actions/hover.action";
   import { tooltip } from "@21n/actions/popover.action";
@@ -46,10 +49,7 @@
         }) => void)
       | undefined;
     onClick?:
-      | ((payload: {
-          id: string;
-          event: MouseEvent;
-        }) => void)
+      | ((payload: { id: string; event: MouseEvent }) => void)
       | undefined;
     onExpand?: ((id: IRecordId) => void) | undefined;
   } = $props();
@@ -101,7 +101,7 @@
 
 {#if content}
   <button
-    onclick={onclick}
+    {onclick}
     class="relative flex flex-col w-full border border-transparent"
     data-id={id}
     data-index={index}
@@ -182,7 +182,7 @@
             {expandedItem}
             nestingLevel={nestingLevel + 1}
             {onClick}
-            onAddSubAction={onAddSubAction}
+            {onAddSubAction}
             {onExpand}
           />
         {/each}

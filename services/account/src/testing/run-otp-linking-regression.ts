@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { ACCOUNT_AUTH_NAMESPACE } from '../db/schema.js';
+import { ACCOUNT_AUTH_NAMESPACE } from '../auth/constants.js';
 import { createAccountTestHarness } from './harness.js';
 
 const authority = 'http://127.0.0.1:18787';

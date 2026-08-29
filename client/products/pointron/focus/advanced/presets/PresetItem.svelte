@@ -85,11 +85,13 @@
           {formatSeconds(totals.duration)}
         {/if}
       </span>
-      {#if preset.goals && preset.goals.length > 0}
+      {#if preset.objectives && preset.objectives.length > 0}
         <span
           class="text-b3 border border-brs3 rounded-md px-1 ml-1 whitespace-nowrap"
         >
-          {preset.goals.length} goal{preset.goals.length > 1 ? "s" : ""}
+          {preset.objectives.length} objective{preset.objectives.length > 1
+            ? "s"
+            : ""}
         </span>
       {/if}
     </span>

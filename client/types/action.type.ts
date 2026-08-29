@@ -1,5 +1,5 @@
-import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-import type { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+import type { Resource } from "@21n/data/datafn/resource.enum";
+import type { AccessMode } from "@21n/data/datafn/resource.type";
 import type { UserDataMode } from "@21n/types/account.type";
 import {
   Embed,

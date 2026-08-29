@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "dependencies": {
+    "@datafn/client": "file:../../../superfunctions-dev/datafn/client",
+    "@datafn/core": "file:../../../superfunctions-dev/datafn/core",
+    "@datafn/svelte": "file:../../../superfunctions-dev/datafn/svelte"
+  },
   "exports": {
     "./*": "./*"
   }

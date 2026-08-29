@@ -606,8 +606,6 @@
     <div id="secondary-popovers"></div>
     <div id="tooltips"></div>
     <div id="toolbars"></div>
-    <span id="global-sync-status" data-syncstatus="" data-syncfeedback="true"
-    ></span>
   </ThemeLayer>
 </div>
 {#if import.meta.env.VITE_NATIVE_EMBED !== "true"}

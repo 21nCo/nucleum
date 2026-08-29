@@ -308,6 +308,16 @@ export function resolveUrlData(url: string) {
   return item;
 }
 
+export function resolveWebpageLabel(url: string) {
+  try {
+    const parsed = new URL(url);
+    const path = parsed.pathname === "/" ? "" : parsed.pathname;
+    return `${parsed.hostname}${path}`.replace(/^www\./, "") || url;
+  } catch {
+    return url.split("://").pop() ?? url;
+  }
+}
+
 export function sanitizeAndResolve(
   text: string
 ): { contentType: NodeType; url: string; isEmbed?: boolean } | string {

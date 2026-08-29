@@ -4,7 +4,7 @@ info:
   seq: 2
 http:
   method: GET
-  url: "{{baseUrl}}/auth/runtime"
+  url: "{{baseUrl}}/auth/environment"
 runtime:
   scripts:
     - type: tests

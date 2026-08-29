@@ -1,16 +1,14 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import Toggle from "@21n/elements/toggle/Toggle.svelte";
   import { Size } from "@21n/types/size.enum";
   import { PanelSwitcherStyle } from "@21n/types/switcher.enum";
-  import { SearchStore } from "@21n/components/record/record.store";
   import { recentsStore } from "@21n/components/record/recent.store";
   import { onMount, onDestroy } from "svelte";
   import { isValidString, properCase } from "@21n/shared-utils/text.utils";
   import Button from "@21n/elements/button/Button.svelte";
-  import { type IResourceSelectOrderBy } from "@21n/types/data.type";
   import { ButtonStyle } from "@21n/types/button.type";
   import { logger } from "@21n/components/debug/logger.client";
   import SearchResultsPopover from "@21n/elements/input/SearchResultsPopover.svelte";
@@ -21,15 +19,22 @@
   import {
     resolveProductResources,
     resolveResourceIcon
-  } from "@21n/components/flux/resourceStores/resource.utils";
+  } from "@21n/data/datafn/resource.utils";
   import { KeyboardKey, ModifierKey } from "@21n/types/keyboard.type";
   import ShortcutText from "@21n/elements/text/ShortcutText.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import context from "@21n/stores/context.store";
   import { Embed } from "@21n/types/context.type";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import { Action } from "@21n/types/action.enum";
   import { searchStore } from "@21n/components/search";
+  import { datafn } from "@21n/stores/datafn.store";
+  import {
+    highlightSearchQuery,
+    searchSort
+  } from "@21n/products/memotron/memotron.utils";
+  import { contentTypeSort } from "@21n/products/memotron/node/node.utils";
+  import { activeResourceFilter, debouncer } from "@21n/utils/utils";
 
   let {
     children,
@@ -50,11 +55,15 @@
   let isFiltersVisible = $state(false);
   let data = $state<any[]>([]);
   let recents = $state<any[]>([]);
-  let resourceSearch = new SearchStore();
   let isRefreshing = $state(false);
-  let searchResultsPopover = $state<SearchResultsPopover | undefined>(undefined);
+  let searchResultsPopover = $state<SearchResultsPopover | undefined>(
+    undefined
+  );
   let groupedSearchRef = $state<GroupedSearchResults | undefined>(undefined);
-  const resources = $derived(resolveProductResources($appStore.product, "search"));
+  let lastSearchSignature = $state("");
+  const resources = $derived(
+    resolveProductResources($appStore.product, "search")
+  );
   const switchItems = $derived([
     {
       label: "Everything",
@@ -72,6 +81,31 @@
       $searchStore.resourceType === Resource.everything
   );
 
+  const resolveSearchPriority = (item: any) => {
+    if (isValidString(item?.labelSearch)) return 0;
+    if (isValidString(item?.bodySearch)) return 1;
+    return 2;
+  };
+
+  const combinedSearchSort = (a: any, b: any) => {
+    const priorityDiff = resolveSearchPriority(a) - resolveSearchPriority(b);
+    if (priorityDiff !== 0) return priorityDiff;
+    const contentTypeDiff = contentTypeSort(a, b);
+    if (contentTypeDiff !== 0) return contentTypeDiff;
+    return searchSort(a, b);
+  };
+
+  function resolveSearchFields(resource: Resource) {
+    switch (resource) {
+      case Resource.node:
+        return ["label", "text", "notes"];
+      case Resource.event:
+        return ["label", "event"];
+      default:
+        return ["label"];
+    }
+  }
+
   onMount(async () => {
     searchStore.setKeyboardHandlers({
       keyup: (event) => keyup(event),
@@ -88,11 +122,28 @@
     searchStore.clearKeyboardHandlers();
   });
 
-  export function search() {
+  const debouncedStoreSearch = debouncer((query: string) => {
+    search(query);
+  }, 250);
+
+  $effect(() => {
+    if (!isExpanded) return;
+    const query = $searchStore.query ?? "";
+    const signature = [
+      isGroupedResultsMode ? "grouped" : "single",
+      $searchStore.resourceType,
+      query
+    ].join(":");
+    if (signature === lastSearchSignature) return;
+    lastSearchSignature = signature;
+    debouncedStoreSearch(query);
+  });
+
+  export function search(query = $searchStore.query) {
     if (isGroupedResultsMode) {
-      groupedSearchRef?.search();
+      groupedSearchRef?.search(query);
     } else {
-      searchResultsPopover?.search();
+      searchResultsPopover?.search(query);
     }
   }
 
@@ -115,22 +166,33 @@
   async function refresh(searchQuery?: string, resourceType?: Resource) {
     try {
       if (isValidString(searchQuery)) {
+        const query = (searchQuery ?? "").trim();
         isRefreshing = true;
-        let orderBy: IResourceSelectOrderBy | undefined;
-        let semanticSearchTopK: number | undefined;
-        // if (searchStore.searchType == SearchType.SEMANTIC) {
-        //   orderBy = {
-        //     dist: "desc",
-        //     createdAt: "desc"
-        //   };
-        // }
-        data = await resourceSearch.select({
-          resource: resourceType ?? $searchStore.resourceType,
-          searchQuery,
-          orderBy,
-          semanticSearchTopK,
-          limit: 150
+        const selectedResource = resourceType ?? $searchStore.resourceType;
+        const searchResources =
+          selectedResource === Resource.everything
+            ? (resources ?? [])
+            : [selectedResource];
+        const result = await datafn.search({
+          query,
+          resources: searchResources,
+          fields:
+            selectedResource === Resource.everything
+              ? undefined
+              : resolveSearchFields(selectedResource),
+          limit: 150,
+          limitPerResource: 150,
+          source: "local",
+          prefix: true,
+          fuzzy: 0.2
         });
+        data = (result.results?.map((entry: any) => entry.data) ?? []).filter(
+          activeResourceFilter
+        );
+        data = highlightSearchQuery(data, query);
+        data = data
+          .filter((x) => x.labelSearch || x.bodySearch)
+          .sort(combinedSearchSort);
       } else {
         data = [];
         recents = recentsStore.resolve({

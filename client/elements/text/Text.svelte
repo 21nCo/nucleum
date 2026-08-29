@@ -3,14 +3,14 @@
   import view from "@21n/stores/view.store";
   import { TextStyle } from "@21n/types/text.enum";
   import { properCase } from "@21n/shared-utils/text.utils";
-  import MarkdownRenderer from "@21n/landing/shared/elements/MarkdownRenderer.svelte";
+  import MarkdownRenderer from "@21n/elements/text/MarkdownRenderer.svelte";
   import { onMount } from "svelte";
-    let {
+  let {
     content,
     style,
     customStyle = "",
     width = "",
-    isPreventProperCasing = false,
+    isPreventProperCasing = false
   }: {
     content: string;
     style: TextStyle;
@@ -19,11 +19,7 @@
     isPreventProperCasing?: boolean;
   } = $props();
 
-  
-  
-  
-  
-  let classList: string = "";
+  let classList: string = $state("");
   onMount(() => {
     switch (style) {
       case TextStyle.PAGE_HEADING:

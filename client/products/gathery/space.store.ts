@@ -1,5 +1,5 @@
 import { get, writable } from "svelte/store";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import { StoreDataType } from "@21n/types/data.type";
 import type { Space, SpaceStore } from "@21n/types/space.type";
 import { performApiCall } from "@21n/utils/network.utils";

@@ -9,6 +9,6 @@ export default defineConfig({
         ?? 'postgres://postgres:postgres@127.0.0.1:5432/nucleus_account'
     }
   },
-  libraries: ['./src/db/schema.ts'],
+  libraries: ['./src/auth.ts'],
   migrationsDir: './drizzle'
 });

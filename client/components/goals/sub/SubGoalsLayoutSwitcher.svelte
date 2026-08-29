@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { SubGoalsLayout } from "@21n/components/goals/goal.type";
+  import {
+    SubObjectivesLayout,
+    type SubObjectivesLayoutValue
+  } from "@21n/components/goals/goal.type";
   import DropDown from "@21n/elements/dropdown/DropDown.svelte";
   import { InputStyle } from "@21n/types/input.type";
 
@@ -7,7 +10,7 @@
     layout = $bindable(),
     onSelect = undefined
   }: {
-    layout?: SubGoalsLayout | undefined;
+    layout?: SubObjectivesLayoutValue | undefined;
     onSelect?: ((event: CustomEvent<any>) => void) | undefined;
   } = $props();
 </script>
@@ -20,12 +23,12 @@
     isDisableSearch={true}
     items={[
       {
-        value: SubGoalsLayout.DEFAULT,
+        value: SubObjectivesLayout.DEFAULT,
         icon: "circle-dashed",
         label: "Default"
       },
       {
-        value: SubGoalsLayout.STEPS,
+        value: SubObjectivesLayout.STEPS,
         icon: "ph:steps-light",
         label: "Steps"
       }

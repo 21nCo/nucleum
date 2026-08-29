@@ -1,18 +1,15 @@
-import type { IResource } from "@21n/components/flux/resourceStores/resource.type";
+import type { DatafnTimezoneChangeRecord } from "@datafn/client";
 
-interface ITimezoneBase {
-  offset: number;
-  label: string;
-  /**
-   * @deprecated - use {@link dateUnix} instead
-   */
+export interface ITimezoneCapture {
+  timezone?: string;
+  zone?: string;
+  label?: string;
+  offset?: number;
   date?: Date;
-  /**
-   * The unix timestamp of the date
-   */
-  dateUnix: number;
+  dateUnix?: number;
+  effectiveFrom?: number | string | Date;
+  recordedAt?: number | string | Date;
+  source?: string;
 }
 
-export interface ITimezoneCapture extends ITimezoneBase {}
-
-export interface ITimezone extends ITimezoneBase, IResource {}
+export type ITimezone = DatafnTimezoneChangeRecord;

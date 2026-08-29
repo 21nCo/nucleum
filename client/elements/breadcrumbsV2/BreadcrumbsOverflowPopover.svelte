@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import { appStore } from "@21n/stores/app.store";
   import type { IRecordId } from "@21n/types/data.type";
   import BreadcrumbItem from "@21n/elements/breadcrumbsV2/BreadcrumbItem.svelte";

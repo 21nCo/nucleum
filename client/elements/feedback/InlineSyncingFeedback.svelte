@@ -1,14 +1,14 @@
 <script lang="ts">
-  import type { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import SyncStatusListener from "@21n/elements/listeners/SyncStatusListener.svelte";
+  import { nucleumDatafnStatus } from "@21n/stores/datafn.store";
+  import type { Resource } from "@21n/data/datafn/resource.enum";
   import InlineSyncingFeedbackBase from "@21n/elements/feedback/InlineSyncingFeedbackBase.svelte";
 
-    let {
+  let {
     resource,
     isShorter = false,
     text = undefined,
     padding = "",
-    isDisableOutTransition = false,
+    isDisableOutTransition = false
   }: {
     resource: Resource;
     isShorter?: boolean;
@@ -17,15 +17,19 @@
     isDisableOutTransition?: boolean;
   } = $props();
 
-  
-  
-  
-  
-  let isSyncing: boolean = false;
-  let syncStatusPropagatorRef: SyncStatusListener | null = null;
+  let currentResource = $state(resource);
+  const isSyncing = $derived(
+    Boolean(currentResource) &&
+      ($nucleumDatafnStatus.status === "syncing" ||
+        $nucleumDatafnStatus.status === "starting")
+  );
+
+  $effect(() => {
+    currentResource = resource;
+  });
 
   export function refresh(resourceParam?: Resource) {
-    syncStatusPropagatorRef?.refresh(resourceParam);
+    currentResource = resourceParam ?? resource;
   }
 </script>
 
@@ -35,9 +39,4 @@
   {padding}
   {isSyncing}
   {isDisableOutTransition}
-/>
-<SyncStatusListener
-  bind:this={syncStatusPropagatorRef}
-  {resource}
-  bind:isSyncing
 />

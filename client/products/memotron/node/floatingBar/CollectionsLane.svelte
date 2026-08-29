@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import Button from "@21n/elements/button/Button.svelte";
   import Divider from "@21n/elements/Divider.svelte";
   import Icon from "@21n/elements/Icon.svelte";
@@ -11,20 +11,27 @@
   import LinkItems from "@21n/products/memotron/common/linkbox/LinkItems.svelte";
   import LinkSearch from "@21n/products/memotron/common/linkbox/LinkSearch.svelte";
   import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
-  import { resolveNodeContentLabel, resolveNodeIcon } from "@21n/products/memotron/node/node.utils";
+  import {
+    resolveNodeContentLabel,
+    resolveNodeIcon
+  } from "@21n/products/memotron/node/node.utils";
   import {
     resourceAction,
     resourceInList
-  } from "@21n/components/flux/resourceStores/resource.utils";
+  } from "@21n/data/datafn/resource.utils";
   import { popover, tooltip } from "@21n/actions/popover.action";
-  import { headingNodeTypes, NodeType } from "@21n/products/memotron/node/node.type";
+  import {
+    headingNodeTypes,
+    NodeType
+  } from "@21n/products/memotron/node/node.type";
   import { logger } from "@21n/components/debug/logger.client";
   import { ResourceError } from "@21n/components/error/errors";
   import { ResourceErrorCode } from "@21n/components/error/error.type";
   import {
+    AccessMode,
     ResourceAccessPoint,
     ResourceActionType
-  } from "@21n/components/flux/resourceStores/resource.type";
+  } from "@21n/data/datafn/resource.type";
   import view from "@21n/stores/view.store";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { resolveProductConfig } from "@21n/products/product.config";
@@ -83,14 +90,36 @@
   }
 
   function onClick(e: CustomEvent) {
-    appStore.resourceClickHandler(e.detail.event, e.detail.item);
+    if (appStore.determineClickAccessMode(e.detail.event)) {
+      appStore.resourceClickHandler(e.detail.event, e.detail.item, {
+        searchParams: {
+          [AppSearchParam.RESOURCE]: Resource.collection,
+          [AppSearchParam.TYPE]: "all"
+        }
+      });
+      return;
+    }
+    const queryParams = {
+      [AppSearchParam.RESOURCE]: Resource.collection,
+      [AppSearchParam.TYPE]: "all",
+      [AccessMode.POP]: e.detail.item.toString(),
+      [`${AccessMode.POP}At`]: new Date().getTime()
+    };
+    appStore.closeResource({ accessMode: AccessMode.POP });
+    setTimeout(() => {
+      appStore.gotoPath("/library", { queryParams });
+    }, 0);
   }
+
   function hidePopover() {
     popoverRef?.dispatchEvent(new CustomEvent("hide"));
   }
 </script>
 
-<div class="flex gap-2 items-center h-full w-full overflow-x-auto mo:pr-4">
+<div
+  class="flex gap-2 items-center h-full w-full overflow-x-auto mo:pr-4"
+  data-testid="collections-lane"
+>
   {#if !isPreventContentTypeRender}
     <button
       class="flex items-center gap-2 h-full border border-bgs4 hover:border-fgs3 rounded-full px-2 py-0.5 text-b2 whitespace-nowrap bg-bgs2 text-fgs1"
@@ -136,8 +165,8 @@
         accessPoint={ResourceAccessPoint.SELF}
         links={$node.collections}
         {isReadOnlyMode}
-        onUnlink={onUnlink}
-        onClick={onClick}
+        {onUnlink}
+        {onClick}
       />
     </span>
   {/if}
@@ -160,7 +189,13 @@
         }
       }}
     >
-      <Button icon="plus" size={Size.sm} tooltip="Add to a collection" />
+      <Button
+        icon="plus"
+        size={Size.sm}
+        tooltip="Add to a collection"
+        ariaLabel="Add to a collection"
+        testId="collections-lane-add"
+      />
     </div>
   {/if}
 </div>

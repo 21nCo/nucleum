@@ -35,11 +35,11 @@ export enum UIState {
   journalYearSelection = "journalYearSelection",
   analyticsPage = "analyticsPage",
   manualLogQuickDuration = "manualLogQuickDuration",
-  manualLogRecentGoals = "manualLogRecentGoals",
+  manualLogRecentObjectives = "manualLogRecentObjectives",
   manualLogDurationMethod = "manualLogDurationMethod",
   recentFocusItems = "recentFocusItems",
   focusItemsPickFromPanel = "focusItemsPickFromPanel",
-  goalPanelSelection = "goalPanelSelection",
+  objectivePanelSelection = "objectivePanelSelection",
   //Memotron
   /**
    * List of recently used capture shortcuts on capture page

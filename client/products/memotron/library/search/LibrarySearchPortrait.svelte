@@ -5,13 +5,15 @@
   import { fly } from "svelte/transition";
   import { recentsStore } from "@21n/components/record/recent.store";
   import Records from "@21n/components/record/Records.svelte";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import { Size } from "@21n/types/size.enum";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { onMount, onDestroy } from "svelte";
-  import { SearchStore } from "@21n/components/record/record.store";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import Button from "@21n/elements/button/Button.svelte";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { appStore } from "@21n/stores/app.store";
+  import { resolveProductResources } from "@21n/data/datafn/resource.utils";
 
   let {
     isActive = false,
@@ -20,7 +22,6 @@
     isActive?: boolean;
     isSearchFocused?: boolean;
   } = $props();
-  let searchStore = new SearchStore();
   let librarySearchQuery = $state("");
   let searchData = $state<any[]>([]);
   let searchRef: InlineSearchBar;
@@ -48,11 +49,21 @@
   });
 
   async function handleSearch() {
-    searchData = await searchStore.select({
-      resource: Resource.everything,
-      searchQuery: librarySearchQuery,
-      limit: 150
+    if (!librarySearchQuery.trim()) {
+      searchData = [];
+      return;
+    }
+    const result = await datafn.search({
+      query: librarySearchQuery,
+      resources: resolveProductResources($appStore.product, "search") ?? [
+        Resource.node,
+        Resource.collection
+      ],
+      limit: 150,
+      limitPerResource: 150,
+      source: "local"
     });
+    searchData = result.results?.map((entry: any) => entry.data) ?? [];
   }
 </script>
 

@@ -1,5 +1,5 @@
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+import { Resource } from "$lib/client/data/datafn/resource.enum";
+import { ResourceActionType } from "$lib/client/data/datafn/resource.type";
 import { IMutation, PersistenceActionType } from "$lib/client/types/data.type";
 
 export function createMutation(overrides = {}): IMutation {
@@ -16,7 +16,7 @@ export const mockMutations: IMutation[] = [
     createdAt: "2024-12-05T12:50:43.452Z",
     dapId: "m3g2lakvtcj1wzyaf98lj49x",
     id: "cb1d0fed33cc4d83b27060c84caa593a",
-    modifiedAt: "2024-12-05T12:50:43.452Z",
+    updatedAt: "2024-12-05T12:50:43.452Z",
     params: {
       action: PersistenceActionType.MERGE,
       record: {
@@ -41,7 +41,7 @@ export const mockMutations: IMutation[] = [
     createdAt: "2024-12-05T12:50:43.452Z",
     dapId: "m3g2lakvtcj1wzyaf98lj49x",
     id: "mutation:cb1d0fed33cc4d83b27060c84caa593a",
-    modifiedAt: "2024-12-05T12:50:43.452Z",
+    updatedAt: "2024-12-05T12:50:43.452Z",
     params: {
       action: PersistenceActionType.MERGE,
       record: {
@@ -66,7 +66,7 @@ export const mockMutations: IMutation[] = [
     createdAt: "2024-12-05T12:50:43.282Z",
     dapId: "m3g2lakvtcj1wzyaf98lj49x",
     id: "mutation:b1c0852bce6e5d58158e6924e33969a8",
-    modifiedAt: "2024-12-05T12:50:43.282Z",
+    updatedAt: "2024-12-05T12:50:43.282Z",
     params: {
       action: PersistenceActionType.MERGE,
       record: {
@@ -91,7 +91,7 @@ export const mockMutations: IMutation[] = [
     createdAt: "2024-12-05T12:50:43.191Z",
     dapId: "m3g2lakvtcj1wzyaf98lj49x",
     id: "mutation:7d3c52b5bb443ff9ed6e93df9342627e",
-    modifiedAt: "2024-12-05T12:50:43.191Z",
+    updatedAt: "2024-12-05T12:50:43.191Z",
     params: {
       action: PersistenceActionType.MERGE,
       record: {
@@ -116,7 +116,7 @@ export const mockMutations: IMutation[] = [
     createdAt: "2024-12-05T12:50:42.999Z",
     dapId: "m3g2lakvtcj1wzyaf98lj49x",
     id: "mutation:3151c7a6c6eaf798e05cf56a89f30222",
-    modifiedAt: "2024-12-05T12:50:42.999Z",
+    updatedAt: "2024-12-05T12:50:42.999Z",
     params: {
       action: PersistenceActionType.MERGE,
       record: {
@@ -141,7 +141,7 @@ export const mockMutations: IMutation[] = [
     createdAt: "2024-12-05T12:50:42.728Z",
     dapId: "m4au0qy5ra9al26pc2jxs318",
     id: "mutation:c118294fba04085fd7e9b7d334aa22fc",
-    modifiedAt: "2024-12-05T12:50:42.729Z",
+    updatedAt: "2024-12-05T12:50:42.729Z",
     params: {
       action: PersistenceActionType.MERGE,
       record: {
@@ -166,7 +166,7 @@ export const mockMutations: IMutation[] = [
     createdAt: "2024-12-05T12:50:42.633Z",
     dapId: "m4au0qy5ra9al26pc2jxs318",
     id: "mutation:9fcb6ccbc0958d661dbe5985d1a1c236",
-    modifiedAt: "2024-12-05T12:50:42.633Z",
+    updatedAt: "2024-12-05T12:50:42.633Z",
     params: {
       action: PersistenceActionType.MERGE,
       record: {
@@ -194,7 +194,7 @@ export const mockMutationWithLargeData: IMutation = {
   createdAt: "2024-12-05T12:50:43.452Z",
   dapId: "m3g2lakvtcj1wzyaf98lj49x",
   id: "mutation:cb1d0fed33cc4d83b27060c84caa593a",
-  modifiedAt: "2024-12-05T12:50:43.452Z",
+  updatedAt: "2024-12-05T12:50:43.452Z",
   params: {
     action: PersistenceActionType.BULK_MERGE,
     records: [{ data: new Array(51).fill("a") }]

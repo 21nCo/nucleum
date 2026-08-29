@@ -3,7 +3,7 @@
   import { cn } from "@21n/utils/ui.utils";
   import type { IActiveNodeStore } from "@21n/products/memotron/node/node.store";
   import NodeRightPanelContent from "@21n/products/memotron/node/rightPanel/NodeRightPaneContent.svelte";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import view from "@21n/stores/view.store";
   import { Display } from "@21n/types/view.type";
   let {

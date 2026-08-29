@@ -2,24 +2,26 @@
   import {
     ResourceAccessPoint,
     ResourceAccessPointState
-  } from "@21n/components/flux/resourceStores/resource.type";
+  } from "@21n/data/datafn/resource.type";
   import Icon from "@21n/elements/Icon.svelte";
   import { Arrangement } from "@21n/types/direction.enum";
   import { cn } from "@21n/utils/ui.utils";
   import { type ICollectionThumb } from "@21n/components/collection/collection.type";
   import CollectionThumbnailLabel from "@21n/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
-  import CollectionNodeCount from "@21n/components/collection/counts/CollectionItemCount.svelte";
+  import CollectionItemCount from "@21n/components/collection/counts/CollectionItemCount.svelte";
   import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
   let {
     item,
     arrangement = Arrangement.LIST,
     accessPoint = ResourceAccessPoint.BROWSER,
-    accessPointState = ResourceAccessPointState.DEFAULT
+    accessPointState = ResourceAccessPointState.DEFAULT,
+    itemCount = undefined
   }: {
     item: ICollectionThumb;
     arrangement?: Arrangement;
     accessPoint?: ResourceAccessPoint;
     accessPointState?: ResourceAccessPointState;
+    itemCount?: number | undefined;
   } = $props();
 </script>
 
@@ -31,7 +33,7 @@
   })}
 >
   <div
-    class={cn("text-b2",{
+    class={cn("text-b2", {
       "flex items-center gap-3 min-w-0": arrangement === Arrangement.LIST,
       "flex w-full justify-between":
         arrangement === Arrangement.GRID || arrangement === Arrangement.MASONRY
@@ -43,6 +45,6 @@
     {/if}
   </div>
   {#if arrangement === Arrangement.LIST && accessPoint === ResourceAccessPoint.BROWSER && accessPointState === ResourceAccessPointState.DEFAULT}
-    <CollectionNodeCount {item} />
+    <CollectionItemCount {item} count={itemCount} />
   {/if}
 </div>

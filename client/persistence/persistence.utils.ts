@@ -1,5 +1,5 @@
 import type { JsonValue } from "@21n/types/json.type";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
 import { isExtensionEnvironment } from "@21n/utils/browser.utils";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
@@ -7,12 +7,22 @@ import { parse, stringify } from "@21n/shared-utils/json.utils";
 
 type ClientStoragePayload = Partial<Record<ClientStorageKey, string | null>>;
 
+function getBrowserStorage(type: "localStorage" | "sessionStorage") {
+  if (typeof window === "undefined") return null;
+  try {
+    return window[type] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export function resetLocalStorage() {
-  if (import.meta.env?.SSR || !import.meta.env || !window?.localStorage) {
+  const storage = getBrowserStorage("localStorage");
+  if (import.meta.env?.SSR || !import.meta.env || !storage) {
     return;
   }
-  window?.localStorage.clear();
-  window?.location.reload();
+  storage.clear();
+  window.location.reload();
 }
 
 export function persistLocally<T extends JsonValue>(
@@ -22,14 +32,17 @@ export function persistLocally<T extends JsonValue>(
   if (import.meta.env?.SSR || !import.meta.env) {
     return;
   }
-  window?.localStorage.setItem(Resource[itemType], stringify(item));
+  getBrowserStorage("localStorage")?.setItem(
+    Resource[itemType],
+    stringify(item)
+  );
 }
 export function retrieveLocally(itemType: Resource) {
   try {
     if (import.meta.env?.SSR || !import.meta.env) {
       return null;
     }
-    let value = window?.localStorage.getItem(Resource[itemType]);
+    let value = getBrowserStorage("localStorage")?.getItem(Resource[itemType]);
     if (value) {
       return parse(value);
     } else {
@@ -63,7 +76,9 @@ class ClientKeyValueStorage {
         });
       });
     } else {
-      return Promise.resolve(window?.localStorage.getItem(key));
+      return Promise.resolve(
+        getBrowserStorage("localStorage")?.getItem(key) ?? null
+      );
     }
   }
 
@@ -82,7 +97,7 @@ class ClientKeyValueStorage {
         });
       });
     } else {
-      window?.localStorage.setItem(key, value);
+      getBrowserStorage("localStorage")?.setItem(key, value);
       return Promise.resolve(value);
     }
   }
@@ -99,7 +114,7 @@ class ClientKeyValueStorage {
         });
       });
     } else {
-      window?.localStorage.removeItem(key);
+      getBrowserStorage("localStorage")?.removeItem(key);
       return Promise.resolve(key);
     }
   }
@@ -115,7 +130,9 @@ class ClientKeyValueStorage {
         });
       });
     } else {
-      return Promise.resolve(window?.sessionStorage.getItem(key));
+      return Promise.resolve(
+        getBrowserStorage("sessionStorage")?.getItem(key) ?? null
+      );
     }
   }
 
@@ -131,7 +148,7 @@ class ClientKeyValueStorage {
         });
       });
     } else {
-      window?.sessionStorage.setItem(key, value);
+      getBrowserStorage("sessionStorage")?.setItem(key, value);
       return Promise.resolve(value);
     }
   }
@@ -148,7 +165,7 @@ class ClientKeyValueStorage {
         });
       });
     } else {
-      window?.sessionStorage.removeItem(key);
+      getBrowserStorage("sessionStorage")?.removeItem(key);
       return Promise.resolve(key);
     }
   }
@@ -164,8 +181,8 @@ class ClientKeyValueStorage {
         });
       });
     } else {
-      window?.localStorage.clear();
-      window?.sessionStorage.clear();
+      getBrowserStorage("localStorage")?.clear();
+      getBrowserStorage("sessionStorage")?.clear();
       return Promise.resolve(null);
     }
   }
@@ -173,11 +190,19 @@ class ClientKeyValueStorage {
 
 export const clientStorage = new ClientKeyValueStorage();
 
+let dapIdPromise: Promise<string> | null = null;
+
 export async function getDapId() {
-  let dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
-  if (!dapId) {
-    dapId = generateSimpleRandomId();
-    clientStorage.set(ClientStorageKey.DAP_ID, dapId);
-  }
-  return dapId;
+  dapIdPromise ??= resolveDapId().finally(() => {
+    dapIdPromise = null;
+  });
+  return dapIdPromise;
+}
+
+async function resolveDapId() {
+  const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
+  if (dapId) return dapId;
+  const generatedDapId = generateSimpleRandomId();
+  await clientStorage.set(ClientStorageKey.DAP_ID, generatedDapId);
+  return generatedDapId;
 }

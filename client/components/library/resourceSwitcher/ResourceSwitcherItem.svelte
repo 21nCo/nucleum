@@ -7,12 +7,9 @@
   import Icon from "@21n/elements/Icon.svelte";
   import AvatarRenderer from "@21n/elements/avatarPicker/AvatarRenderer.svelte";
   import { appStore } from "@21n/stores/app.store";
-  import {
-    resourceAction,
-    resourceCacheKey
-  } from "@21n/components/flux/resourceStores/resource.utils";
-  import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { resourceAction } from "@21n/data/datafn/resource.utils";
+  import { ResourceActionType } from "@21n/data/datafn/resource.type";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import { appMenuStore } from "@21n/stores/appMenu/appMenu.store";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
   import { hoverable } from "@21n/actions/hover.action";
@@ -20,46 +17,32 @@
   import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
   import Badge from "@21n/elements/text/Badge.svelte";
   import view from "@21n/stores/view.store";
-  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { isHideCreateAction } from "@21n/components/library/library.utils";
-  import { cache } from "@21n/layout/layers/cache/cache.store";
-  import { CacheKey } from "@21n/layout/layers/cache/cache.type";
 
   let {
     item,
     isActive = false,
     parentBgIndex = 1,
     isShowCount = false,
+    count = 0,
     onClick = undefined
   }: {
     item: IResourceSwitchItem;
     isActive?: boolean;
     parentBgIndex?: number;
     isShowCount?: boolean;
+    count?: number;
     onClick?: (() => void) | undefined;
   } = $props();
   let isHovering = $state(false);
-  let count = $state(0);
   let popRef: HTMLButtonElement;
   let resource = $derived(item.value as Resource);
-  let cacheKey = $derived(resourceCacheKey(resource, CacheKey.COUNT));
   let isConstrainedWidth = $derived($view.isConstrainedWidth);
-
-  $effect(() => {
-    cacheKey;
-    isShowCount;
-    refreshCount();
-  });
-
-  function refreshCount() {
-    if (!isShowCount) return;
-    count = cache.retrieve(cacheKey) || 0;
-  }
 
   function resolveContextMenu() {
     const isCurrentResourcePinned =
       $appMenuStore[$appStore.product]?.user?.includes(resource);
-    if (resource === Resource.combination) {
+    if (resource === Resource.space) {
       return [];
     }
     const pinAction = {
@@ -194,10 +177,3 @@
     </span>
   {/if}
 </button>
-
-<ComponentBaseLayer
-  subscribeToCacheUpdate={[cacheKey]}
-  onChange={() => {
-    refreshCount();
-  }}
-/>

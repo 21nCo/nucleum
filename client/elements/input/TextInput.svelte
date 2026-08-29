@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { tick, type Snippet } from "svelte";
+  import { onDestroy, tick, type Snippet } from "svelte";
   import { Size } from "@21n/types/size.enum";
   import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
   import Icon from "@21n/elements/Icon.svelte";
@@ -109,6 +109,16 @@
   let isFocused = $state(false);
   let inputRef = $state<any>();
   let isValidLink = $state(false);
+  let isDestroyed = false;
+  let onBlurCallback = onBlur;
+
+  $effect(() => {
+    onBlurCallback = onBlur;
+  });
+
+  onDestroy(() => {
+    isDestroyed = true;
+  });
 
   export async function focus() {
     await tick();
@@ -202,9 +212,10 @@
 
   function emitBlur() {
     const blurEvent = new CustomEvent<void>("blur");
-    if (typeof onBlur === "function") {
-      onBlur(blurEvent);
-    }
+    setTimeout(() => {
+      if (isDestroyed || typeof onBlurCallback !== "function") return;
+      onBlurCallback(blurEvent);
+    }, 0);
   }
 
   function emitSave(event: MouseEvent) {

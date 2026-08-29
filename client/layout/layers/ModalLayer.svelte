@@ -29,7 +29,7 @@
   import context from "@21n/stores/context.store";
   import { Embed } from "@21n/types/context.type";
   import { page } from "$app/stores";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import SplitView from "@21n/layout/SplitView.svelte";
   import { Orientation } from "@21n/types/direction.enum";
   import ColorLayer from "@21n/layout/layers/themeLayer/ColorLayer.svelte";
@@ -42,8 +42,7 @@
   let isShowAppearancePreview = $state(false);
   let fullscreen = $state<string | undefined>(undefined);
   let pop = $state<
-    | { path: string; resource: string; modalParams: ModalParams }
-    | undefined
+    { path: string; resource: string; modalParams: ModalParams } | undefined
   >(undefined);
   const activePopModalPaths = $derived(
     pop ? new Set([pop.path, `${pop.path}-resource`]) : undefined
@@ -63,9 +62,10 @@
       }
     });
     const pageSub = page.subscribe((value) => {
-      fullscreen = value.url.searchParams.get(AccessMode.FULL) ?? undefined;
+      const searchParams = value?.url?.searchParams ?? new URLSearchParams();
+      fullscreen = searchParams.get(AccessMode.FULL) ?? undefined;
       if (isRenderPopAsModal) {
-        const popParam = value.url.searchParams.get(AccessMode.POP) ?? undefined;
+        const popParam = searchParams.get(AccessMode.POP) ?? undefined;
         if (popParam) {
           resolvePop(popParam);
         } else {
@@ -272,9 +272,7 @@
     </Modal>
   {/if}
 {/key}
-{#each modals.filter((modal) => modal?.path && !activePopModalPaths?.has(modal.path)) as modal, index (modal.path === Action.CMD
-    ? `${modal.path}-${modal.componentParams?.command ?? "default"}-${modal.componentParams?.commandType ?? "default"}`
-    : modal.path)}
+{#each modals.filter((modal) => modal?.path && !activePopModalPaths?.has(modal.path)) as modal, index (modal.path === Action.CMD ? `${modal.path}-${modal.componentParams?.command ?? "default"}-${modal.componentParams?.commandType ?? "default"}` : modal.path)}
   <Modal
     show={modal.isShow}
     id={modal.path}

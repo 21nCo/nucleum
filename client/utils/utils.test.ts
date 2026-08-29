@@ -6,13 +6,12 @@ import type { UserDate } from "@21n/types/userDate.type";
 
 import {
   activeResourceFilter,
-  activeResourceFilterIgnoreParentInactive,
+  activeResourceFilterIgnoreAncestorInactive,
   activeResourceFilterV2,
   archivedResourceFilter,
   checkDay,
   checkIsToday,
   checkIsTodayUsingTimestamp,
-  checkSurrealResponse,
   compareUserDay,
   convertDateStringToArray,
   convertFileSize,
@@ -29,7 +28,6 @@ import {
   getOneDayEarlier,
   getOneDayLater,
   getUserDate,
-  interceptSurrealResponse,
   nonTrashFilter,
   padToTwo,
   textTruncateMapper
@@ -217,27 +215,6 @@ describe("client/utils/utils", () => {
     }
   });
 
-  describe("surreal response helpers", () => {
-    it("returns null when response is falsy", () => {
-      expect(interceptSurrealResponse(null as any)).toBeNull();
-      expect(interceptSurrealResponse([])).toBeNull();
-    });
-
-    it("unwraps first surreal response", () => {
-      const payload = [{ status: "OK", result: { id: 1 } }];
-      expect(interceptSurrealResponse(payload)).toEqual({ id: 1 });
-    });
-
-    it("handles surreal error patterns", () => {
-      expect(
-        checkSurrealResponse({ status: "ERR", result: "Database record `foo` already exists" })
-      ).toBe("Record already exists");
-      expect(checkSurrealResponse({ status: "ERR", result: "Some other error" })).toBeNull();
-      expect(checkSurrealResponse({ status: "OK", result: 42 })).toBe(42);
-      expect(checkSurrealResponse({ status: "OK" })).toEqual({ status: "OK" });
-    });
-  });
-
   it("debounces rapid calls", () => {
     vi.useFakeTimers();
     const fn = vi.fn();
@@ -256,23 +233,25 @@ describe("client/utils/utils", () => {
   });
 
   it("filters active and archived resources", () => {
-    const base = { isArchived: false, trashInformation: false, isParentInactive: false };
+    const base = { isArchived: false, trashedAt: null, isAncestorInactive: false };
     expect(activeResourceFilter({ ...base })).toBe(true);
     expect(activeResourceFilter({ ...base, isArchived: true })).toBe(false);
+    expect(activeResourceFilter({ ...base, trashedAt: 123 })).toBe(false);
 
-    expect(activeResourceFilterIgnoreParentInactive({ ...base })).toBe(true);
-    expect(activeResourceFilterIgnoreParentInactive({ ...base, isArchived: true })).toBe(false);
+    expect(activeResourceFilterIgnoreAncestorInactive({ ...base })).toBe(true);
+    expect(activeResourceFilterIgnoreAncestorInactive({ ...base, isArchived: true })).toBe(false);
+    expect(activeResourceFilterIgnoreAncestorInactive({ ...base, trashedAt: 123 })).toBe(false);
 
     expect(activeResourceFilterV2).toEqual({
       isArchived: false,
-      trashInformation: false,
-      isParentInactive: false
+      trashedAt: { $is_null: true },
+      isAncestorInactive: false
     });
 
     expect(archivedResourceFilter({ ...base, isArchived: true })).toBe(true);
-    expect(archivedResourceFilter({ ...base, trashInformation: true })).toBe(false);
-    expect(nonTrashFilter({ trashInformation: null })).toBe(true);
-    expect(nonTrashFilter({ trashInformation: {} })).toBe(false);
+    expect(archivedResourceFilter({ ...base, isArchived: true, trashedAt: 123 })).toBe(false);
+    expect(nonTrashFilter({ trashedAt: null })).toBe(true);
+    expect(nonTrashFilter({ trashedAt: 123 })).toBe(false);
   });
 
   it("truncates text when exceeding length", () => {

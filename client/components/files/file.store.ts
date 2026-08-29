@@ -2,30 +2,33 @@ import { persistenceInstance } from "@21n/persistence/persistence";
 import context from "@21n/stores/context.store";
 import { toasts } from "@21n/stores/notification.store";
 import type { IRecordId } from "@21n/types/data.type";
-import {
-  getBucketNameandKey,
-  isUrlExpired
-} from "@21n/utils/account.utils";
+import { getBucketNameandKey, isUrlExpired } from "@21n/utils/account.utils";
 import { get } from "svelte/store";
 import { logger } from "@21n/components/debug/logger.client";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
-import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
+import { isRecordId } from "@21n/data/datafn/resource.utils";
 import type { IFile, IFileCapture } from "@21n/components/files/file.type";
 import { fileEmbedChannel } from "@21n/components/files/fileEmbedChannel.store";
 import { OperatingSystem } from "@21n/types/context.type";
 import account from "@21n/stores/account.store";
+import { datafn } from "@21n/stores/datafn.store";
 
 function resolveBlobPart(data: Uint8Array<ArrayBufferLike>) {
   return Uint8Array.from(data).buffer;
 }
 
-class FileStore extends ResourceStore<IFile, IFileCapture> {
-  constructor() {
-    super(Resource.file, {
-      defaultProps: {
-        type: ""
-      }
+class FileStore {
+  private async select(fileId: IRecordId) {
+    const result = await datafn.file.query({
+      filters: { id: fileId }
+    });
+    return result.data?.[0] as IFile | undefined;
+  }
+
+  private async merge(fileId: IRecordId, record: Partial<IFileCapture>) {
+    return datafn.file.mutate({
+      operation: "merge",
+      id: fileId,
+      record
     });
   }
 
@@ -33,7 +36,7 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
     logger.log({ at: "fileStore - download", file });
     const defaultErrMessage = "Error downloading file. Please try again.";
     try {
-      let _file;
+      let _file: IFile | string | undefined;
       if (typeof file === "object" && ("url" in file || "data" in file))
         _file = file;
       else if (typeof file === "string" && file.includes("http")) _file = file;
@@ -41,10 +44,23 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
         _file = await this.select(file as IRecordId);
         if (!_file) return;
       }
+      if (!_file) return;
+      if (typeof _file === "string") {
+        const response = await fetch(_file);
+        const blob = await response.blob();
+        this.downloadFromBlob(blob, {
+          fileName: "download"
+        });
+        return;
+      }
       const contextStore = get(context);
       if (contextStore.isEmbed) {
         //TODO - handle offline user case
-        fileEmbedChannel.downloadFromUrl(_file.url, _file.label.split(".")[0]);
+        if (!_file.url) return;
+        fileEmbedChannel.downloadFromUrl(
+          _file.url,
+          (_file.label ?? _file.name ?? _file.id).split(".")[0]
+        );
         if (contextStore.os === OperatingSystem.MACOS) {
           toasts.success("File downloaded to Downloads folder");
         }
@@ -53,8 +69,9 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
       let blob;
       try {
         if (_file.data) {
-          blob = new Blob([_file.data], { type: _file.type });
+          blob = new Blob([resolveBlobPart(_file.data)], { type: _file.type });
         } else {
+          if (!_file.url) return;
           const response = await fetch(_file.url);
           blob = await response.blob();
         }
@@ -125,28 +142,16 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
     ) {
       let key = getBucketNameandKey(file.thumbnailUrl);
       let signedUrl = await persistenceInstance.fetchSignedUrlForGet(key);
-      const result = await this.modify(
-        file.id,
-        {
-          thumbnailUrl: signedUrl?.getUrl
-        },
-        {
-          isPreventCloudPersistence: true
-        }
-      );
+      await this.merge(file.id, {
+        thumbnailUrl: signedUrl?.getUrl
+      });
       return { ...file, thumbnailUrl: signedUrl?.getUrl };
     } else if (isUrlExpired(file.url)) {
       let key = getBucketNameandKey(file.url);
       let signedUrl = await persistenceInstance.fetchSignedUrlForGet(key);
-      const result = await this.modify(
-        file.id,
-        {
-          url: signedUrl?.getUrl
-        },
-        {
-          isPreventCloudPersistence: true
-        }
-      );
+      await this.merge(file.id, {
+        url: signedUrl?.getUrl
+      });
       return { ...file, url: signedUrl?.getUrl };
     } else return file;
   }
@@ -165,7 +170,7 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
     try {
       logger.log({ at: "fileStore - refresh", file });
       if (!file) return;
-      if (isRecordId(file)) {
+      if (typeof file === "string" && isRecordId(file)) {
         const _file = await this.select(file as IRecordId);
         if (!_file) return;
         file = _file;
@@ -204,4 +209,4 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
   }
 }
 
-export const fileStore = FileStore.resolve(Resource.file);
+export const fileStore = new FileStore();

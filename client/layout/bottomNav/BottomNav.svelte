@@ -4,14 +4,20 @@
   import TopBarResourceItem from "../topNav/tabs/TopBarResourceItem.svelte";
   import TopNavLeftLogo from "../topNav/TopNavLeftLogo.svelte";
   import type { Action } from "@21n/types/action.enum";
-  import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
+  import { isRecordId } from "@21n/data/datafn/resource.utils";
+  import context from "@21n/stores/context.store";
+  import { cn } from "@21n/utils/ui.utils";
 
   function handleClick(item: Action | IRecordId) {
     hTrail.activate(item);
   }
 </script>
 
-<div class="relative flex w-full min-h-11 h-11 bg-bgs2 border-t border-brs3">
+<div
+  class={cn("relative flex w-full min-h-11 h-11 bg-bgs2", {
+    "border-t border-brs3": !$context.experiments?.isEnableRoundedMain
+  })}
+>
   <TopNavLeftLogo
     action={"cross"}
     callback={() => {

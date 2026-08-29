@@ -6,7 +6,8 @@
     type IListBlockBody,
     type INonSimpleTextBlockBody
   } from "@21n/components/markdown/md.type";
-  import { getContext, onMount } from "svelte";
+  import { getContext, onMount, tick } from "svelte";
+  import { get } from "svelte/store";
   import BlockContent from "@21n/components/markdown/content/BlockContent.svelte";
   import LeftControls from "@21n/components/markdown/contextMenu/LeftControls.svelte";
   import type { MdStoreType } from "@21n/components/markdown/markdown.store";
@@ -35,7 +36,7 @@
   import { hoverable } from "@21n/actions/hover.action";
   import view from "@21n/stores/view.store";
   import type { IRecordId } from "@21n/types/data.type";
-  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { isSameResource } from "@21n/data/datafn/resource.utils";
   import {
     resolveDefaultBodyForBlock,
     resolvePlainOffsetForMdEnd,
@@ -48,8 +49,8 @@
   import { fileDrop } from "@21n/actions/fileDrop.action";
   import { MAX_FILE_SIZE_MB } from "@21n/components/record/record.store";
   import { resolveFileUploadErrorMessage } from "@21n/products/memotron/memotron.utils";
-  import { generateResourceId } from "@21n/components/flux/flux.utils";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { generateResourceId } from "@21n/data/datafn/id.utils";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import {
     resolveMultipleFilesData,
     resolvePasteContents
@@ -61,7 +62,6 @@
   import { UserDataMode } from "@21n/types/account.type";
   import { Persistence } from "@21n/persistence/persistence";
   import { wait } from "@21n/utils/time.utils";
-  import { nodeStore } from "@21n/products/memotron/node/node.store";
   import { appStore } from "@21n/stores/app.store";
   import type { IMultiFileCaptureData } from "@21n/products/memotron/capture/capture.type";
   import { AlertType } from "@21n/types/notification.type";
@@ -78,6 +78,7 @@
   } from "@21n/products/memotron/capture/capture.store";
   import Check from "@21n/icons/Check.svelte";
   import { Context } from "@21n/types/appStore.type";
+  import { datafn } from "@21n/stores/datafn.store";
 
   let {
     block = $bindable(),
@@ -96,7 +97,9 @@
     isSelected?: boolean;
     isRearrangeBlockInSelectionMode?: boolean;
     isInSelectionMode?: boolean;
-    onNodularize?: ((event: CustomEvent<{ id: IRecordId }>) => void) | undefined;
+    onNodularize?:
+      | ((event: CustomEvent<{ id: IRecordId }>) => void)
+      | undefined;
     onPopoverVisibility?: ((event: CustomEvent<any>) => void) | undefined;
     onSelect?: ((event: CustomEvent<void>) => void) | undefined;
   } = $props();
@@ -287,7 +290,16 @@
   async function handleGoToExternalLink() {
     if (!block.body || typeof block.body !== "object" || !("id" in block.body))
       return;
-    const node = await nodeStore.select((block.body as any).id);
+    const result = await datafn.node.query({
+      select: ["id", "url"],
+      filters: { id: (block.body as any).id },
+      limit: 1,
+      metadata: {
+        includeTrashed: true,
+        includeArchived: true
+      }
+    });
+    const node = result.data?.[0];
     if (!node || !node.url) return;
     appStore.openLink(node.url);
   }
@@ -335,10 +347,10 @@
       data.toType = NodeType.EMBED;
       data.body = { subType };
     } else if (simpleTextNodeTypeList.includes(data.toType)) {
-      const text = resolveBodyText() ?? "";
+      const text = data.bodyText ?? resolveBodyText() ?? "";
       data.body = text;
     } else if (nonSimpleTextNodeTypeList.includes(data.toType)) {
-      const text: string = resolveBodyText() ?? "";
+      const text: string = data.bodyText ?? resolveBodyText() ?? "";
       let body = resolveDefaultBodyForBlock(data.toType, text);
       if (
         data.params?.indentLevel ||
@@ -355,8 +367,8 @@
       }
       data.body = body;
     } else if (headingNodeTypes.includes(data.toType)) {
-      const text: string = resolveBodyText() ?? "";
-      // block.body = null;
+      const text: string = data.bodyText ?? resolveBodyText() ?? "";
+      Reflect.deleteProperty(block, "body");
       data.label = text;
     } else if (data.toType === NodeType.EMBED) {
       data.body = { subType: NodeType.UNKNOWN };
@@ -376,7 +388,12 @@
     block = { ...block };
     refresh();
     insertBufferBlockIfRequired(block.id, data.toType);
-    mdStore.focusBlock(block.id, { xOffset: 0 });
+    const blockId = block.id;
+    void tick().then(() => {
+      const focusTarget = get(mdStore.focus);
+      if (focusTarget?.id && !isSameResource(focusTarget.id, blockId)) return;
+      mdStore.focusBlock(blockId, { isBottom: true });
+    });
   }
 
   /**
@@ -652,14 +669,19 @@
       return;
     }
 
-    if (block.body) {
-      if (typeof detail === "object" && typeof block.body === "object") {
+    if (block.body !== undefined && block.body !== null) {
+      if (
+        typeof detail === "object" &&
+        detail !== null &&
+        typeof block.body === "object" &&
+        block.body !== null
+      ) {
         block.body = {
           ...block.body,
           ...detail
         };
-      } else if (typeof block.body === "string" && typeof detail === "string") {
-        block.body = detail;
+      } else {
+        block.body = detail as IBlockBody;
       }
     } else {
       block.body = detail as IBlockBody;
@@ -1030,9 +1052,9 @@
     {#if isInSelectionMode}
       <button
         class="flex items-center justify-center"
-          onclick={() => {
-            emitSelect();
-          }}
+        onclick={() => {
+          emitSelect();
+        }}
       >
         {#if isRearrangeBlockInSelectionMode}
           <div

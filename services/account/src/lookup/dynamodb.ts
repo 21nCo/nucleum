@@ -1,13 +1,13 @@
-import { createDynamoDbRegionLookupStore } from '@authfn/lookup-dynamodb';
-import type { AuthFnRegionLookupStore } from '@authfn/core';
+import { createDynamoDbAtomicKVStore } from '@superfunctions/db/adapters/dynamodb';
+import type { ConditionalKVStoreAdapter } from '@superfunctions/db';
 
-export function createAccountLookupStore(): AuthFnRegionLookupStore | undefined {
+export function createAccountLookupStore(): ConditionalKVStoreAdapter | undefined {
   const tableName = process.env.AUTHFN_REGION_LOOKUP_TABLE;
   if (!tableName) {
     return undefined;
   }
 
-  return createDynamoDbRegionLookupStore({
+  return createDynamoDbAtomicKVStore({
     tableName,
     region: process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? 'us-east-1',
     endpoint: process.env.DYNAMODB_ENDPOINT,

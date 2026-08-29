@@ -17,6 +17,7 @@ export type SurfaceKey =
   | "calendar.view.year"
   | "overview.focus"
   | "focus.quickFocus"
+  | "library"
   | "library.collections"
   | "library.objectives"
   | "library.tasks"
@@ -126,38 +127,47 @@ const QUICK_FOCUS_SURFACE_WITH_TAB: SurfaceContract = {
   ]
 };
 
+const LIBRARY_SURFACE: SurfaceContract = {
+  route: "/library",
+  triggerRole: "button",
+  triggerName: /^Library$/i,
+  anchorTestIds: ["resource-records-container", "task-library"],
+  anchorRoles: [
+    { role: "button", name: /^Collections(?:\s+\d+)?$/i },
+    { role: "textbox", name: /Search (?:collections|objectives|nodes)/i }
+  ]
+};
+
 function makeLibrarySurface(
   resourceLabel: string,
   searchLabel: string,
-  trigger?: { triggerRole: "button"; triggerName: RegExp }
+  anchorTestIds: readonly string[] = []
 ): SurfaceContract {
   return {
     route: "/library",
-    ...trigger,
-    anchorTestIds: [],
-    anchorRoles: [
-      {
-        role: "button",
-        name: new RegExp(String.raw`^(${resourceLabel})(\s+\d+)?$`, "i")
-      },
-      { role: "textbox", name: new RegExp(`Search ${searchLabel}`, "i") }
-    ]
+    triggerRole: "button",
+    triggerName: new RegExp(String.raw`^(${resourceLabel})(\s+\d+)?$`, "i"),
+    anchorTestIds,
+    anchorRoles: searchLabel
+      ? [
+          {
+            role: "textbox",
+            name: new RegExp(`Search ${searchLabel}`, "i")
+          }
+        ]
+      : []
   };
 }
 
 const LIBRARY_COLLECTIONS_SURFACE = makeLibrarySurface(
   "Collections",
-  "collections",
-  {
-    triggerRole: "button",
-    triggerName: /^Library$/i
-  }
+  "collections"
 );
 const LIBRARY_OBJECTIVES_SURFACE = makeLibrarySurface(
   "Objectives",
   "objectives"
 );
-const LIBRARY_TASKS_SURFACE = makeLibrarySurface("Tasks", "tasks");
+const LIBRARY_TASKS_SURFACE = makeLibrarySurface("Tasks", "", ["task-library"]);
 const LIBRARY_NODES_SURFACE = makeLibrarySurface("Nodes", "nodes");
 
 type SurfaceResolver = (product: E2EProduct) => SurfaceContract | null;
@@ -189,6 +199,7 @@ const surfaceResolvers: Record<SurfaceKey, SurfaceResolver> = {
       ? QUICK_FOCUS_SURFACE_WITH_TAB
       : QUICK_FOCUS_SURFACE;
   },
+  library: () => LIBRARY_SURFACE,
   "library.collections": () => LIBRARY_COLLECTIONS_SURFACE,
   "library.objectives": (product) =>
     isFocusProduct(product) ? LIBRARY_OBJECTIVES_SURFACE : null,

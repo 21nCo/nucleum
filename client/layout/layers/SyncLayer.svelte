@@ -1,39 +1,29 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import { flux } from "@21n/components/flux/flux";
-  import account from "@21n/stores/account.store";
   import context from "@21n/stores/context.store";
-  import { UserDataMode } from "@21n/types/account.type";
+  import {
+    nucleumDatafnStatus,
+    pullDatafnNow,
+    refreshNucleumDatafnStatus
+  } from "@21n/stores/datafn.store";
   import { onMount, onDestroy } from "svelte";
-  let interval: ReturnType<typeof setInterval> | null = null;
   let isSyncing = $state(false);
   let isDestroyed = false;
   let lastSyncTimestamp = 0;
   let visibilityDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
   let currentSyncTimeout: ReturnType<typeof setTimeout> | null = null;
 
-  const SYNC_INTERVAL = 3500;
   const MIN_SYNC_GAP = 2000;
   const VISIBILITY_DEBOUNCE = 1000;
   const MAX_SYNC_DURATION = 30000;
 
   onMount(() => {
-    interval = setInterval(() => {
-      void proceedSync();
-    }, SYNC_INTERVAL);
-
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("beforeunload", handleBeforeUnload);
   });
 
   onDestroy(() => {
     isDestroyed = true;
-
-    if (interval) {
-      clearInterval(interval);
-      interval = null;
-    }
 
     if (visibilityDebounceTimeout) {
       clearTimeout(visibilityDebounceTimeout);
@@ -46,13 +36,12 @@
     }
 
     document.removeEventListener("visibilitychange", handleVisibilityChange);
-    window.removeEventListener("beforeunload", handleBeforeUnload);
   });
 
   async function proceedSync() {
     if (isDestroyed || isSyncing) return;
-    if ($account.dataMode !== UserDataMode.CLOUD || $context.isInOfflineMode)
-      return;
+    if ($context.isInOfflineMode) return;
+    if ($nucleumDatafnStatus.nucleumMode !== "sync") return;
 
     const now = Date.now();
     if (now - lastSyncTimestamp < MIN_SYNC_GAP) return;
@@ -72,7 +61,8 @@
     }, MAX_SYNC_DURATION);
 
     try {
-      await flux?.sync();
+      await pullDatafnNow();
+      await refreshNucleumDatafnStatus();
     } catch (error) {
       console.error("Sync failed:", error);
     } finally {
@@ -103,12 +93,4 @@
     }
   }
 
-  /**
-   * TODO - use navigator.sendBeacon and beacon endpoint on sync server with in memory mutations readily available for sync
-   */
-  function handleBeforeUnload() {
-    if (!isDestroyed && !isSyncing) {
-      proceedSync();
-    }
-  }
 </script>

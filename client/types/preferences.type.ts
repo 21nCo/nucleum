@@ -19,6 +19,7 @@ export type IUserGlobalPreferences = {
   timeFormat: string;
   timeZoneOffset: number;
   timeZoneLabel: string;
+  timeZone?: string;
   timeScales?: TimeScale[];
   recentCommands?: { action: string; variant?: string }[];
   avatarPicker: {

@@ -24,6 +24,8 @@
 </script>
 
 <div
+  data-testid="predefined-interval-notifier"
+  role="status"
   class={cn("flex w-full h-full items-center justify-center p-4 text-abg", {
     "bg-ass1": $activeSession.state === SessionState.BREAK_RUNNING,
     "bg-aps1": $activeSession.state === SessionState.FOCUS_RUNNING

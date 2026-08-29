@@ -6,24 +6,25 @@
     determineResourceType,
     isSameResource,
     removeDuplicatesFilter
-  } from "@21n/components/flux/resourceStores/resource.utils";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { collectionStore } from "@21n/components/collection/collection.store";
+  } from "@21n/data/datafn/resource.utils";
+  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { resolveCollectionTypes } from "@21n/components/collection/collection.utils";
   import PropertiesListView from "@21n/components/collection/properties/PropertiesListView.svelte";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import LinkTagger from "@21n/products/memotron/linking/LinkTagger.svelte";
   import type { INodeLinkThumb } from "@21n/products/memotron/node/node.type";
-  import { linker } from "@21n/products/memotron/linking/link.store";
   import LinkTags from "@21n/products/memotron/linking/LinkTags.svelte";
   import Text from "@21n/elements/text/Text.svelte";
   import { TextStyle } from "@21n/types/text.enum";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import context from "@21n/stores/context.store";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import type { ICollectionItemPropertyValue } from "@21n/components/collection/collection.type";
   import { fly } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   import view from "@21n/stores/view.store";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { toSvelteDataStore, toSvelteStore } from "@datafn/svelte";
   let {
     links = [],
     propertyValues = [],
@@ -51,76 +52,166 @@
     accessPoint?: ResourceAccessPoint;
     subContext?: "clipper-modal" | undefined;
     onClick?:
-      | ((event: CustomEvent<{ item: IRecordId; event: MouseEvent | Event }>) => void)
+      | ((
+          event: CustomEvent<{ item: IRecordId; event: MouseEvent | Event }>
+        ) => void)
       | undefined;
     onExpansion?:
-      | ((event: CustomEvent<
-          | "not-type"
-          | "node"
-          | "no-props"
-          | "has-props"
-          | "loading"
-          | "error"
-          | null
-        >) => void)
+      | ((
+          event: CustomEvent<
+            | "not-type"
+            | "node"
+            | "no-props"
+            | "has-props"
+            | "loading"
+            | "error"
+            | null
+          >
+        ) => void)
       | undefined;
     onPropertyChange?: ((event: CustomEvent<any>) => void) | undefined;
     onUnlink?: ((event: CustomEvent<IRecordId>) => void) | undefined;
   } = $props();
   let expansionState = $state<
-    | "not-type"
-    | "node"
-    | "no-props"
-    | "has-props"
-    | "loading"
-    | "error"
+    "not-type" | "node" | "no-props" | "has-props" | "loading" | "error"
   >("loading");
   let types = $state<any[]>([]);
   let link = $state({} as INodeLinkThumb);
   let propertyCount = $state<number | undefined>(undefined);
   const _links = $derived(links?.filter(removeDuplicatesFilter) ?? []);
+  const linkedRecordsStore = $derived.by(() =>
+    toSvelteDataStore(
+      datafn.recordsByIdsSignal({
+        ids: _links,
+        selectByResource: {
+          [Resource.node]: [
+            "id",
+            "label",
+            "text",
+            "avatar",
+            "contentType",
+            "url",
+            "metadata"
+          ],
+          [Resource.collection]: ["id", "label", "avatar", "typeToExtend.*"]
+        },
+        metadata: {
+          includeTrashed: true,
+          includeArchived: true
+        }
+      }),
+      { initialData: {} }
+    )
+  );
+  let collectionExpansionRequest = 0;
+
+  const expandedResource = $derived(
+    expand ? determineResourceType(expand) : undefined
+  );
+
+  const expandedNodeLinkStore = $derived.by(() =>
+    toSvelteStore<Array<{ links?: Record<string, any>[] }>>(
+      datafn.node.signal({
+        select: ["id", "links.#"],
+        filters: {
+          id:
+            nodeId && expand && expandedResource === Resource.node
+              ? nodeId.toString()
+              : "__datafn_empty_link_expansion__"
+        },
+        limit: 1,
+        metadata: {
+          includeTrashed: true,
+          includeArchived: true
+        }
+      }),
+      { initialData: [] }
+    )
+  );
+
+  const expandedNodeLinks = $derived.by(() => {
+    if (!expand || expandedResource !== Resource.node) return [];
+    const expandedId = expand.toString();
+    return ($expandedNodeLinkStore.data[0]?.links ?? [])
+      .filter((row: any) => row.to?.toString() === expandedId)
+      .map((row: any) => ({
+        id: `${row.from}|${row.to}`,
+        in: row.from,
+        out: row.to,
+        linkType: row.linkType,
+        tags: row.tags ?? [],
+        location: row.location,
+        metadata: row.metadata,
+        createdAt: row.createdAt,
+        updatedAt: row.updatedAt,
+        createdBy: row.createdBy,
+        updatedBy: row.updatedBy
+      }));
+  });
 
   $effect(() => {
-    if (expand) {
-      refreshExpansion(expand);
+    if (!expand) {
+      collectionExpansionRequest += 1;
+      types = [];
+      link = {} as INodeLinkThumb;
+      propertyCount = undefined;
+      propagateExpansionState();
+      return;
+    }
+    if (expandedResource === Resource.collection) {
+      refreshCollectionExpansion(expand);
+      return;
+    }
+    if (expandedResource === Resource.node) {
+      collectionExpansionRequest += 1;
+      types = [];
+      propertyCount = undefined;
+      if (!nodeId) {
+        link = {} as INodeLinkThumb;
+        expansionState = "error";
+        propagateExpansionState();
+        return;
+      }
+      if ($expandedNodeLinkStore.loading && !expandedNodeLinks.length) {
+        link = {} as INodeLinkThumb;
+        expansionState = "loading";
+        propagateExpansionState();
+        return;
+      }
+      if (isValidArrayWithData(expandedNodeLinks)) {
+        link = { links: expandedNodeLinks, linkedTo: nodeId };
+        expansionState = "node";
+      } else {
+        link = {} as INodeLinkThumb;
+        expansionState = "error";
+      }
+      propagateExpansionState();
     }
   });
 
-  async function refreshExpansion(item: IRecordId) {
+  async function refreshCollectionExpansion(item: IRecordId) {
+    const requestId = ++collectionExpansionRequest;
     try {
       expansionState = "loading";
       propertyCount = undefined;
-      const type = determineResourceType(item);
-      if (type === Resource.collection) {
-        const result = await collectionStore.resolveTypes([item], true);
-        if (result && isValidArrayWithData(result)) {
-          types = result;
-          if (
-            types[0]?.properties?.length > 0 ||
-            types[0]?.extendProperties?.length > 0
-          )
-            expansionState = "has-props";
-          else expansionState = "no-props";
-        } else {
-          expansionState = "not-type";
-        }
-      } else if (type === Resource.node) {
-        if (!nodeId) {
-          expansionState = "error";
-          return;
-        }
-        const linkResult = await linker.selectMany({
-          filters: {
-            in: nodeId.toString(),
-            out: item.toString()
-          }
-        });
-        if (linkResult && isValidArrayWithData(linkResult)) {
-          link = { links: linkResult, linkedTo: nodeId };
-          expansionState = "node";
-        } else {
-          expansionState = "error";
-        }
+      const result = await resolveCollectionTypes([item], true);
+      if (
+        requestId !== collectionExpansionRequest ||
+        !expand ||
+        !isSameResource(item, expand)
+      ) {
+        return;
+      }
+      if (result && isValidArrayWithData(result)) {
+        types = result;
+        if (
+          types[0]?.properties?.length > 0 ||
+          types[0]?.extendProperties?.length > 0
+        )
+          expansionState = "has-props";
+        else expansionState = "no-props";
+      } else {
+        expansionState = "not-type";
       }
       propagateExpansionState();
     } catch (e) {
@@ -147,7 +238,10 @@
   function onClickItem(item: IRecordId, e: any) {
     if (isExpandable) {
       expand = expand && isSameResource(expand, item) ? null : item;
-      if (expand) refreshExpansion(item);
+      if (expand) {
+        expansionState = "loading";
+        propertyCount = undefined;
+      }
       propagateExpansionState();
       e.stopPropagation();
     } else {
@@ -175,6 +269,7 @@
     {#each _links as item (item.toString())}
       <LinkItem
         id={item}
+        record={$linkedRecordsStore[item.toString()]}
         {parentBgIndex}
         {accessPoint}
         isAlwaysShowRemove={accessPoint === ResourceAccessPoint.CAPTURE ||

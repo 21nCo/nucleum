@@ -1,17 +1,14 @@
 import { test, expect } from "@playwright/test";
-import { pointronProductConfig } from "../../config/pointron-product.config";
-import { ensureInAppOnHome, runCommand } from "../utils/helpers";
+import { Product } from "@21n/products/product.type";
+import { Action } from "@21n/types/action.enum";
+import {
+  assertAppMenuVisible,
+  ensureInAppOnHome,
+  runCommand
+} from "../utils/helpers";
+import { expectSurfaceVisible } from "../utils/surface-contracts";
 
-const runtimeEnv = (
-  globalThis as { process?: { env?: Record<string, string | undefined> } }
-).process?.env;
-
-test.skip(
-  runtimeEnv?.SKIP_E2E === "1",
-  "E2E suite disabled by environment"
-);
-
-test.describe("pointron - app layout and menu @regression", () => {
+test.describe("pointron - app layout and menu", () => {
   test.beforeEach(async ({ page }) => {
     await page.route("**/*", (route) => {
       const reqUrl = route.request().url();
@@ -28,11 +25,7 @@ test.describe("pointron - app layout and menu @regression", () => {
   }) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
-    for (const label of pointronProductConfig.appMenuNavLabels) {
-      await expect(
-        page.getByRole("button", { name: new RegExp(`^${label}$`, "i") }).first()
-      ).toBeVisible({ timeout: 10_000 });
-    }
+    await assertAppMenuVisible(page, Product.POINTRON);
   });
 
   test("open Overview via command bar (Overview), then assert Overview page visible", async ({
@@ -42,9 +35,12 @@ test.describe("pointron - app layout and menu @regression", () => {
     await ensureInAppOnHome(page);
     await runCommand(page, "Overview");
 
-    const overviewPath = pointronProductConfig.pathByNavLabel.Overview;
+    const overviewPath = `/${Action.OVERVIEW}`;
     await page.waitForURL(
-      (u) => new RegExp(`^${overviewPath}(\\/.*)?$`).test(new URL(u).pathname),
+      (u) =>
+        new RegExp(String.raw`^${overviewPath}(/.*)?$`).test(
+          new URL(u).pathname
+        ),
       { timeout: 10_000 }
     );
     await expect(page.getByText("Overview").first()).toBeVisible({
@@ -63,9 +59,12 @@ test.describe("pointron - app layout and menu @regression", () => {
       .first()
       .click({ timeout: 5_000 });
 
-    const overviewPath = pointronProductConfig.pathByNavLabel.Overview;
+    const overviewPath = `/${Action.OVERVIEW}`;
     await page.waitForURL(
-      (u) => new RegExp(`^${overviewPath}(\\/.*)?$`).test(new URL(u).pathname),
+      (u) =>
+        new RegExp(String.raw`^${overviewPath}(/.*)?$`).test(
+          new URL(u).pathname
+        ),
       { timeout: 10_000 }
     );
     await expect(page.getByText("Overview").first()).toBeVisible({
@@ -73,7 +72,7 @@ test.describe("pointron - app layout and menu @regression", () => {
     });
   });
 
-  test("open Library via command bar (Library), then assert Library and Goals list visible", async ({
+  test("open Library via command bar (Library), then assert Library and Objectives list visible", async ({
     page
   }) => {
     test.setTimeout(45_000);
@@ -81,62 +80,58 @@ test.describe("pointron - app layout and menu @regression", () => {
 
     await runCommand(page, "Library");
 
-    const goalsCard = page
-      .getByRole("button", { name: /^(Goals|Objectives)(\s+\d+)?$/i })
-      .and(page.locator(":not([aria-disabled='true'])"));
-    await goalsCard.first().waitFor({ state: "visible", timeout: 10_000 });
-    await goalsCard.first().click({ timeout: 5_000 });
-    await page.getByTestId("search-goals").waitFor({ state: "visible", timeout: 15_000 });
+    const objectivesCard = page.getByRole("button", {
+      name: /^(Objectives)(\s+\d+)?$/i
+    });
+    await objectivesCard.first().waitFor({ state: "visible", timeout: 10_000 });
+    await expect(objectivesCard.first()).toBeEnabled();
+    await objectivesCard.first().click({ timeout: 5_000 });
+    await page
+      .getByTestId("search-objectives")
+      .waitFor({ state: "visible", timeout: 15_000 });
 
-    const libraryPath = pointronProductConfig.pathByNavLabel.Library;
-    const onLibraryPage = () =>
-      new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(page.url()).pathname);
-    if (!onLibraryPage()) {
-      await page.goto(libraryPath, {
-        waitUntil: "load"
-      });
-      await page.waitForURL(
-        (u) =>
-          new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(u).pathname),
-        { timeout: 15_000 }
-      );
-      const goalsBtn = page
-        .getByRole("button", { name: /^(Goals|Objectives)(\s+\d+)?$/i })
-        .first();
-      await goalsBtn.waitFor({ state: "visible", timeout: 15_000 });
-      await goalsBtn.click({ timeout: 5_000 });
-      await page.waitForTimeout(600);
-    }
+    const libraryPath = `/${Action.LIBRARY}`;
+    await page.waitForURL(
+      (u) =>
+        new RegExp(String.raw`^${libraryPath}(/.*)?$`).test(
+          new URL(u).pathname
+        ),
+      { timeout: 15_000 }
+    );
+    await expectSurfaceVisible(page, Product.POINTRON, "library.objectives");
 
-    const goalsListVisible = page
-      .getByTestId("search-goals")
-      .or(page.getByRole("button", { name: /Create new goal/i }))
-      .or(page.getByText(/Looks like you don't have any goals/i))
+    const objectivesListVisible = page
+      .getByTestId("search-objectives")
+      .or(page.getByRole("button", { name: /Create new objective/i }))
+      .or(page.getByText(/Looks like you don't have any objectives/i))
       .first();
-    await expect(goalsListVisible).toBeVisible({ timeout: 10_000 });
+    await expect(objectivesListVisible).toBeVisible({ timeout: 10_000 });
   });
 
-  test("open Library via UI (click Library in nav, then Goals), then assert Goals list visible", async ({
+  test("open Library via UI (click Library in nav, then Objectives), then assert Objectives list visible", async ({
     page
   }) => {
     test.setTimeout(45_000);
     await ensureInAppOnHome(page);
 
-    const libraryPath = pointronProductConfig.pathByNavLabel.Library;
+    const libraryPath = `/${Action.LIBRARY}`;
     await page
       .getByRole("button", { name: /^Library$/i })
       .click({ timeout: 5_000 });
     await page.waitForURL(
-      (u) => new RegExp(`^${libraryPath}(\\/.*)?$`).test(new URL(u).pathname),
+      (u) =>
+        new RegExp(String.raw`^${libraryPath}(/.*)?$`).test(
+          new URL(u).pathname
+        ),
       { timeout: 10_000 }
     );
     await page
-      .getByRole("button", { name: /^(Goals|Objectives)(\s+\d+)?$/i })
+      .getByRole("button", { name: /^(Objectives)(\s+\d+)?$/i })
       .first()
       .click({
         timeout: 5_000
       });
-    await expect(page.getByTestId("search-goals")).toBeVisible({
+    await expect(page.getByTestId("search-objectives")).toBeVisible({
       timeout: 10_000
     });
   });

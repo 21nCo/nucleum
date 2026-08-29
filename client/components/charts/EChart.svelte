@@ -48,11 +48,11 @@
   let chart: ECharts | undefined;
   let resizeObserver: ResizeObserver | undefined;
 
-  let currentAppearance = $state<typeof $appearance | undefined>(undefined);
-  let currentColors = $state<ReturnType<typeof retrieveCurrentColors> | undefined>(
-    undefined
+  const currentAppearance = $derived($appearance);
+  const currentColors = $derived(
+    currentAppearance ? retrieveCurrentColors(currentAppearance) : undefined
   );
-  let shouldRenderChart = $state(false);
+  const shouldRenderChart = $derived(supportedTypes.has(type));
 
   const defaultPaletteKeys = [
     "aps1",
@@ -118,6 +118,26 @@
       return normalizeColor(provided) ?? palette[index % palette.length];
     }
     return palette[index % palette.length];
+  }
+
+  function resolveMetricLabel() {
+    return String(options?.valueLabel ?? options?.metricLabel ?? "Value");
+  }
+
+  function resolvePrimarySeriesName() {
+    return String(options?.primarySeriesName ?? resolveMetricLabel());
+  }
+
+  function resolveYAxisName() {
+    return String(options?.yAxisName ?? resolveMetricLabel());
+  }
+
+  function resolveHierarchyParentGroup(item: any) {
+    return String(item?.parentGroup ?? item?.group ?? "Other");
+  }
+
+  function resolveHierarchyGroup(item: any) {
+    return String(item?.group ?? item?.label ?? "Other");
   }
 
   function formatTooltipValue(value: number | string) {
@@ -629,7 +649,7 @@
           const date = params.data[0];
           const value = roundToTwoDecimals(params.data[1]);
           const formattedValue = formatTooltipValue(value);
-          return `<strong>${date}</strong><br/>Focus: ${formattedValue}`;
+          return `<strong>${date}</strong><br/>${escapeHtml(resolveMetricLabel())}: ${formattedValue}`;
         }
       },
       visualMap: {
@@ -696,11 +716,7 @@
     const labelColor = resolveAxisLabelColor();
     const palette = resolvePalette(
       Array.from(
-        new Set(
-          dataset.map((item: any) =>
-            String(item?.topLevelGoal ?? item?.group ?? "Other")
-          )
-        )
+        new Set(dataset.map((item: any) => resolveHierarchyParentGroup(item)))
       )
     );
 
@@ -711,8 +727,8 @@
     const topLevelMap = new Map<string, number>();
 
     dataset.forEach((item: any) => {
-      const topLevel = String(item?.topLevelGoal ?? "Other");
-      const subGoal = String(item?.group ?? item?.goal ?? "Other");
+      const topLevel = resolveHierarchyParentGroup(item);
+      const subGroup = resolveHierarchyGroup(item);
       const value = Number(item?.value ?? 0);
 
       if (!hierarchyMap.has(topLevel)) {
@@ -726,13 +742,15 @@
       const parent = hierarchyMap.get(topLevel)!;
       parent.value += value;
 
-      if (topLevel !== subGoal) {
-        const existingChild = parent.children.find((c) => c.name === subGoal);
+      if (topLevel !== subGroup) {
+        const existingChild = parent.children.find(
+          (c) => c.name === subGroup
+        );
         if (existingChild) {
           existingChild.value += value;
         } else {
           parent.children.push({
-            name: subGoal,
+            name: subGroup,
             value
           });
         }
@@ -777,7 +795,7 @@
           const name = escapeHtml(params.name ?? "");
           const percent =
             total > 0 ? ((params.value / total) * 100).toFixed(1) : "0";
-          return `${params.marker} ${name}<br/>Focus: ${formattedValue} (${percent}%)`;
+          return `${params.marker} ${name}<br/>${escapeHtml(resolveMetricLabel())}: ${formattedValue} (${percent}%)`;
         }
       },
       series: [
@@ -843,11 +861,7 @@
     const labelColor = resolveAxisLabelColor();
     const palette = resolvePalette(
       Array.from(
-        new Set(
-          dataset.map((item: any) =>
-            String(item?.topLevelGoal ?? item?.group ?? "Other")
-          )
-        )
+        new Set(dataset.map((item: any) => resolveHierarchyParentGroup(item)))
       )
     );
 
@@ -857,8 +871,8 @@
     >();
 
     dataset.forEach((item: any) => {
-      const topLevel = String(item?.topLevelGoal ?? "Other");
-      const subGoal = String(item?.group ?? item?.goal ?? "Other");
+      const topLevel = resolveHierarchyParentGroup(item);
+      const subGroup = resolveHierarchyGroup(item);
       const value = Number(item?.value ?? 0);
 
       if (!hierarchyMap.has(topLevel)) {
@@ -872,13 +886,15 @@
       const parent = hierarchyMap.get(topLevel)!;
       parent.value += value;
 
-      if (topLevel !== subGoal) {
-        const existingChild = parent.children.find((c) => c.name === subGoal);
+      if (topLevel !== subGroup) {
+        const existingChild = parent.children.find(
+          (c) => c.name === subGroup
+        );
         if (existingChild) {
           existingChild.value += value;
         } else {
           parent.children.push({
-            name: subGoal,
+            name: subGroup,
             value
           });
         }
@@ -927,7 +943,7 @@
         formatter: (params: any) => {
           const value = roundToTwoDecimals(params.value ?? 0);
           const formattedValue = formatTooltipValue(value);
-          return `${params.marker} ${params.name}<br/>Focus: ${formattedValue}`;
+          return `${params.marker} ${params.name}<br/>${escapeHtml(resolveMetricLabel())}: ${formattedValue}`;
         }
       },
       series: [
@@ -1079,7 +1095,7 @@
         formatter: (params: any) => {
           const [hourIdx, dayIdx, value] = params.data;
           const formattedValue = formatTooltipValue(value);
-          return `${days[dayIdx]}, ${hours[hourIdx]}<br/>Focus: ${formattedValue}`;
+          return `${days[dayIdx]}, ${hours[hourIdx]}<br/>${escapeHtml(resolveMetricLabel())}: ${formattedValue}`;
         }
       },
       grid: {
@@ -1150,7 +1166,7 @@
       },
       series: [
         {
-          name: "Focus Time",
+          name: resolveYAxisName(),
           type: "heatmap",
           data: chartData,
           label: {
@@ -1200,7 +1216,7 @@
       sessions: data.count
     }));
 
-    const palette = resolvePalette(["Focus"]);
+    const palette = resolvePalette([resolvePrimarySeriesName()]);
     const mainColor = palette[0];
 
     return {
@@ -1255,7 +1271,7 @@
       },
       yAxis: {
         type: "value",
-        name: "Focus Time",
+        name: resolveYAxisName(),
         nameTextStyle: {
           color: axisLabelColor
         },
@@ -1276,7 +1292,7 @@
       },
       series: [
         {
-          name: "Focus",
+          name: resolvePrimarySeriesName(),
           type: "bar",
           data: chartData.map((d) => d.value),
           itemStyle: {
@@ -1499,16 +1515,7 @@
     chart?.resize();
   }
 
-  function refreshDerivedState() {
-    currentAppearance = $appearance;
-    currentColors = currentAppearance
-      ? retrieveCurrentColors(currentAppearance)
-      : undefined;
-    shouldRenderChart = supportedTypes.has(type);
-  }
-
   $effect(() => {
-    refreshDerivedState();
     if (shouldRenderChart) {
       ensureChart();
       updateChart();

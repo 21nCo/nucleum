@@ -135,6 +135,22 @@ describe("client/utils/browser.utils", () => {
     expect(detectSystemOS()).toContain("MAC");
   });
 
+  it("rejects geolocation when the browser callback does not settle", async () => {
+    vi.useFakeTimers();
+    const getCurrentPosition = vi.fn();
+    Object.defineProperty(navigator, "geolocation", {
+      value: { getCurrentPosition },
+      configurable: true
+    });
+
+    const result = expect(getGeoLocation()).rejects.toThrow(
+      "Geolocation request timed out."
+    );
+    await vi.advanceTimersByTimeAsync(3000);
+    await result;
+    vi.useRealTimers();
+  });
+
   it("resolves geolocation with caching", async () => {
     const getCurrentPosition = vi.fn((success: any) => success({ coords: { latitude: 0, longitude: 0 } }));
     Object.defineProperty(navigator, "geolocation", {

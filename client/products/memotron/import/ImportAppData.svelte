@@ -9,14 +9,18 @@
   import { convertFileSize } from "@21n/utils/utils";
   import { FileSizeMeasurement } from "@21n/types/fileSizeMeasurement.enum";
   import { toasts } from "@21n/stores/notification.store";
-  import { ImportSource, StepType, type ImportHistoryItem } from "@21n/products/memotron/import/data.type";
+  import {
+    ImportSource,
+    StepType,
+    type ImportHistoryItem
+  } from "@21n/products/memotron/import/data.type";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import Divider from "@21n/elements/Divider.svelte";
   import { Display } from "@21n/types/view.type";
   import { enumToString, properCase } from "@21n/shared-utils/text.utils";
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
-  import { generateResourceId } from "@21n/shared-utils/surreal.utils";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { generateResourceId } from "@21n/data/datafn/id.utils";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import { preferences } from "@21n/stores/preferences/preferences.store";
   import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
   import { Preference } from "@21n/stores/preferences/preferences.type";
@@ -392,8 +396,9 @@
   $effect(() => {
     if (tempFileList && tempFileList.length > 0) {
       isEverythingUploaded =
-        tempFileList.every((item) => item.uploadStatus === UploadStatus.UPLOADED) ??
-        false;
+        tempFileList.every(
+          (item) => item.uploadStatus === UploadStatus.UPLOADED
+        ) ?? false;
     } else {
       isEverythingUploaded = false;
     }
@@ -691,8 +696,7 @@
     <div class="flex mo:px-3 mo:py-2 p-4">
       {#if $view.isPortrait}
         {#if activeStepIndex !== config.steps.length - 1}
-          <Button size={Size.sm} onclick={onJumpToUpload}
-            >Jump to upload</Button
+          <Button size={Size.sm} onclick={onJumpToUpload}>Jump to upload</Button
           >
         {:else}
           <Button size={Size.sm} onclick={onClose}>Cancel</Button>

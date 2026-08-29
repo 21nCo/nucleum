@@ -20,8 +20,7 @@
   import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import { BarStyle, PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import InlineMarkdownTextInput from "@21n/components/markdown/content/InlineMarkdownTextInput.svelte";
-  import { extensionFlux } from "@21n/components/flux/fluxExtentionMediator";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { extensionDatafn } from "@21n/extensions/extension.store";
   import {
     blankUrls,
     memotronUrlsList,
@@ -41,9 +40,7 @@
   import { fly } from "svelte/transition";
   import { Extension, Product } from "@21n/products/product.type";
   import ExtensionHelp from "@21n/extensions/shared/ExtensionHelp.svelte";
-  import { FluxMethod } from "@21n/components/flux/flux.type";
-  import { clipperCacheableStores } from "@21n/extensions/clipper/clipper.config";
-  import ClipperInMemoryCache from "@21n/extensions/clipper/ClipperInMemoryCache.svelte";
+  import { DatafnExtensionMethod } from "@21n/extensions/extension.store";
   import SidePanelCollections from "@21n/extensions/clipper/sidePanel/collectionsOnClipper/SidePanelCollections.svelte";
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
   import { clientStorage } from "@21n/persistence/persistence.utils";
@@ -195,8 +192,8 @@
       logger.log({ at: "onMessage - BOOTUP", message });
       onBootup();
     } else if (message.event === ExtensionEvent.MUTATION) {
-      logger.log({ at: "SidePanel - RELOAD_INMEMORY_STORE", message });
-      loadInMemoryResourceStoreDelegate(message.data?.resource);
+      logger.log({ at: "SidePanel - MUTATION", message });
+      refreshSyncStatus();
     } else if (message.event === ExtensionEvent.TOKEN_NOT_FOUND) {
       isLoggedIn = false;
     } else if (message.event === ExtensionEvent.TAB_UPDATE) {
@@ -319,27 +316,11 @@
     }, 100);
   }
 
-  async function loadInMemoryResourceStoreDelegate(resource: Resource) {
-    logger.log({
-      at: "SidePanel.loadInMemoryResourceStoreDelegate",
-      resource
-    });
-    if (!resource) return;
-    const ext = ExtensionStore.getInstance();
-    if (ext) {
-      await ext.loadInMemoryResourceStore(resource);
-    }
-  }
-
   async function onBootup() {
     logger.log({ at: "SidePanel - onBootup" });
     await relayToContentScript({
       event: ExtensionEvent.PAGE_STATE_TRIGGER
     });
-    const ext = ExtensionStore.getInstance();
-    if (ext) {
-      await ext.loadInMemoryStores();
-    }
     await refreshSyncStatus();
   }
 
@@ -382,15 +363,15 @@
 
   async function resync() {
     isResyncing = true;
-    const result = await extensionFlux({
-      method: FluxMethod.SYNC_DOWN,
+    const result = await extensionDatafn({
+      method: DatafnExtensionMethod.PULL,
       args: {
         isReturnCount: true
       }
     });
     if (result?.counts) {
-      await extensionFlux({
-        method: FluxMethod.RECONCILE,
+      await extensionDatafn({
+        method: DatafnExtensionMethod.RECONCILE,
         args: { counts: result.counts }
       });
     }
@@ -406,7 +387,6 @@
   product={{ product: Product.MEMOTRON, env: "live" }}
 >
   {#if isMounted}
-    <ClipperInMemoryCache />
     <div class="w-full h-screen">
       <div class="flex flex-col w-full h-full bg-bgs1 text-b2 text-fgs1 pt-1">
         {#if isResyncing}

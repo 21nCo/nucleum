@@ -9,13 +9,13 @@
   import type { IPasteCaptureData } from "@21n/products/memotron/capture/capture.type";
   import { resolvePasteContents } from "@21n/products/memotron/capture/capture.utils";
   import account from "@21n/stores/account.store";
-  import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { resourceAction } from "@21n/data/datafn/resource.utils";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import {
     AccessMode,
     ResourceActionType
-  } from "@21n/components/flux/resourceStores/resource.type";
-  import { generateResourceId } from "@21n/shared-utils/surreal.utils";
+  } from "@21n/data/datafn/resource.type";
+  import { generateResourceId } from "@21n/data/datafn/id.utils";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { appStore } from "@21n/stores/app.store";
   import ShareContentSaver from "@21n/products/memotron/capture/ShareContentSaver.svelte";

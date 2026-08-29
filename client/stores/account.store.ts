@@ -9,10 +9,7 @@ import {
 } from "@21n/types/account.type";
 import { postDataToParent } from "@21n/utils/embed.utils";
 import { Persistence } from "@21n/persistence/persistence";
-import {
-  determineIfOffline,
-  performApiCall
-} from "@21n/utils/network.utils";
+import { determineIfOffline, performApiCall } from "@21n/utils/network.utils";
 import {
   confirmationNotification,
   toasts
@@ -29,15 +26,18 @@ import {
   determineIfSubscriptionExpired
 } from "@21n/components/subscription/userPlan.utils";
 import { ObservableStore } from "@21n/stores/client.store";
-import { StoreDataType } from "@21n/types/data.type";
+import { StoreDataType, type IRecordId } from "@21n/types/data.type";
 import { clientStorage } from "@21n/persistence/persistence.utils";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
 import { logger } from "@21n/components/debug/logger.client";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
-import { fileStore } from "@21n/components/files/file.store";
-import { flux } from "@21n/components/flux/flux";
-import { generateResourceId } from "@21n/components/flux/flux.utils";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import {
+  clearDatafnLocalData,
+  datafn,
+  destroyNucleumDatafn
+} from "@21n/stores/datafn.store";
+import { generateResourceId } from "@21n/data/datafn/id.utils";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import { dispatchCustomEvent } from "@21n/utils/browser.utils";
 import { GlobalEvent } from "@21n/types/event.enum";
 import context from "@21n/stores/context.store";
@@ -49,6 +49,7 @@ import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
 import { parse } from "@21n/shared-utils/json.utils";
 import {
   bootstrapNucleusAccount,
+  resolveAuthSession,
   shouldUseAuthFnBearerSession
 } from "@21n/components/account/auth";
 import { resolveAccountBaseUrl } from "@21n/components/network";
@@ -73,25 +74,27 @@ class AccountStore extends ObservableStore<UserAccount> {
     const offlineSessionId = await clientStorage.get(
       ClientStorageKey.OFFLINE_SESSION_ID
     );
+    const userInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
+    const storedUser = await clientStorage.get(ClientStorageKey.USER);
+    const hasStoredCloudIdentity = Boolean(
+      authFnToken || userInfo || storedUser
+    );
     if (!shouldUseBearerSession) {
       await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
     }
-    const hasLegacySession = await hasLegacyCloudSession();
     if (authFnToken) {
       seed.token = authFnToken;
-      if (!offlineSessionId && !hasLegacySession) {
-        await this.ensureOfflineSession();
-      }
-      seed.dataMode = hasLegacySession ? UserDataMode.CLOUD : UserDataMode.LOCAL;
+      seed.dataMode = UserDataMode.CLOUD;
       seed.sessionType = UserSessionType.RETURNING;
-    } else if (offlineSessionId) {
+    } else if (offlineSessionId && !hasStoredCloudIdentity) {
       seed.dataMode = UserDataMode.LOCAL;
       seed.sessionType = UserSessionType.RETURNING;
     }
-    const userInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
     if (userInfo) {
       seed.userInfo = parse(userInfo ?? "");
       seed.userId = seed.userInfo?.id.split("user:")[1];
+      seed.dataMode = UserDataMode.CLOUD;
+      seed.sessionType = UserSessionType.RETURNING;
     }
     this.set(seed);
     this.postToEmbed(seed);
@@ -138,53 +141,35 @@ class AccountStore extends ObservableStore<UserAccount> {
     }
     await clientStorage.remove(ClientStorageKey.STOKEN);
     await clientStorage.set(ClientStorageKey.USER_INFO, data.userInfo);
-    await this.ensureOfflineSession();
-    const hasLegacySession = await hasLegacyCloudSession();
     this.postToEmbed({
       token: shouldPersistToken ? data.token : undefined,
       userInfo: data.userInfo
     });
-    const isBootstrapped = data.userInfo.isBootstrapped;
     this.update(() => {
       return {
         token: shouldPersistToken ? data.token : undefined,
-        dataMode: hasLegacySession ? UserDataMode.CLOUD : UserDataMode.LOCAL,
+        dataMode: UserDataMode.CLOUD,
         userId: data.userInfo.id.split("user:")[1],
         userInfo: data.userInfo,
-        sessionType:
-          isBootstrapped && !params.isNewUser
-            ? UserSessionType.RETURNING
-            : UserSessionType.NEW
+        sessionType: params.isNewUser
+          ? UserSessionType.NEW
+          : UserSessionType.RETURNING
       };
     });
-    this.gotoPostAuthRoute({ isNewUser: params.isNewUser, userInfo: data.userInfo });
+    this.gotoPostAuthRoute({ isNewUser: params.isNewUser });
   }
 
-  gotoPostAuthRoute(params?: {
-    isNewUser?: boolean;
-    userInfo?: Pick<UserInformation, "isBootstrapped">;
-  }) {
-    const userInfo = params?.userInfo ?? this.get()?.userInfo;
-    const isBootstrapped = userInfo?.isBootstrapped ?? true;
-    const targetPath =
-      params?.isNewUser && isBootstrapped
-        ? "/onboarding"
-        : !isBootstrapped
-          ? "/bootstrap"
-          : "/";
+  gotoPostAuthRoute(params?: { isNewUser?: boolean }) {
+    const targetPath = params?.isNewUser ? "/onboarding" : "/";
     logger.info({
       at: "account.gotoPostAuthRoute",
       targetPath,
       isNewUser: params?.isNewUser,
-      isBootstrapped,
-      hasUserInfo: Boolean(userInfo),
       currentPath:
         typeof window !== "undefined" ? window.location.pathname : undefined
     });
-    if (params?.isNewUser && isBootstrapped) {
+    if (params?.isNewUser) {
       appStore.gotoPath("/onboarding");
-    } else if (!isBootstrapped) {
-      appStore.gotoPath("/bootstrap");
     } else {
       appStore.gotoPath("/");
     }
@@ -194,6 +179,11 @@ class AccountStore extends ObservableStore<UserAccount> {
     isPreventDapIdClear?: boolean;
     isPreventRedirect?: boolean;
   }) {
+    try {
+      await destroyNucleumDatafn();
+    } catch (error) {
+      logger.error({ at: "account.signOut.destroyDatafn", error });
+    }
     this.update(() => {
       const n = {
         sessionType: UserSessionType.UNDETERMINED,
@@ -208,7 +198,6 @@ class AccountStore extends ObservableStore<UserAccount> {
   async embedOAuthSignin(token: string) {
     await clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, token);
     await clientStorage.remove(ClientStorageKey.STOKEN);
-    await this.ensureOfflineSession();
     const response = await this.resolveAuthFnSessionUserInfo();
     if (response?.userInfo) {
       this.signIn({
@@ -216,7 +205,7 @@ class AccountStore extends ObservableStore<UserAccount> {
         token
       });
     } else {
-      console.log("error", response);
+      logger.error({ at: "account.embedOAuthSignin", response });
     }
   }
 
@@ -276,7 +265,7 @@ class AccountStore extends ObservableStore<UserAccount> {
     }
 
     const sessionToken = shouldPersistToken
-      ? params?.token ?? previousAuthFnToken ?? undefined
+      ? (params?.token ?? previousAuthFnToken ?? undefined)
       : undefined;
     if (shouldPersistToken && sessionToken) {
       await clientStorage.set(ClientStorageKey.AUTHFN_TOKEN, sessionToken);
@@ -285,19 +274,16 @@ class AccountStore extends ObservableStore<UserAccount> {
     }
     await clientStorage.remove(ClientStorageKey.STOKEN);
     await clientStorage.set(ClientStorageKey.USER, authSession);
-    await this.ensureOfflineSession();
 
     const userInfo = this.resolveUserInfoFromAuthFnSession(authSession);
     await clientStorage.set(ClientStorageKey.USER_INFO, userInfo);
-    const legacyCloudSession = await hasLegacyCloudSession();
     this.postToEmbed({ token: sessionToken, userInfo });
     this.update(() => ({
       token: sessionToken,
-      dataMode: legacyCloudSession ? UserDataMode.CLOUD : UserDataMode.LOCAL,
-      sessionType:
-        userInfo.isBootstrapped && !params?.isNewUser
-          ? UserSessionType.RETURNING
-          : UserSessionType.NEW,
+      dataMode: UserDataMode.CLOUD,
+      sessionType: params?.isNewUser
+        ? UserSessionType.NEW
+        : UserSessionType.RETURNING,
       userId: userInfo.id.split("user:")[1],
       userInfo
     }));
@@ -309,14 +295,13 @@ class AccountStore extends ObservableStore<UserAccount> {
       isPreventRedirect: params?.isPreventRedirect,
       userId: userInfo.id,
       region: userInfo.region,
-      isBootstrapped: userInfo.isBootstrapped,
-      dataMode: legacyCloudSession ? UserDataMode.CLOUD : UserDataMode.LOCAL,
+      dataMode: UserDataMode.CLOUD,
       currentPath:
         typeof window !== "undefined" ? window.location.pathname : undefined
     });
 
     if (params?.isPreventRedirect) return true;
-    this.gotoPostAuthRoute({ isNewUser: params?.isNewUser, userInfo });
+    this.gotoPostAuthRoute({ isNewUser: params?.isNewUser });
     return true;
   }
 
@@ -382,7 +367,7 @@ class AccountStore extends ObservableStore<UserAccount> {
       }
       if (authFnDeleteStatus === "deleted") {
         await this.signOut({ isPreventRedirect: true });
-        await flux.clear();
+        await clearDatafnLocalData();
         appStore.gotoPath("/signup?msg=deleted");
         isDeleted = true;
         return true;
@@ -403,7 +388,7 @@ class AccountStore extends ObservableStore<UserAccount> {
         return false;
       }
       await this.signOut({ isPreventRedirect: true });
-      await flux.clear();
+      await clearDatafnLocalData();
       appStore.gotoPath("/signup?msg=deleted");
       isDeleted = true;
       return true;
@@ -425,9 +410,11 @@ class AccountStore extends ObservableStore<UserAccount> {
   > {
     try {
       const { authClient } = await import("@21n/components/account/auth");
-      const response = await (await authClient({
-        isPreventCachedInstance: true
-      })).deleteAccount();
+      const response = await (
+        await authClient({
+          isPreventCachedInstance: true
+        })
+      ).deleteAccount();
       if (response.ok) {
         return "deleted";
       }
@@ -450,56 +437,6 @@ class AccountStore extends ObservableStore<UserAccount> {
       toasts.error("Failed to delete account. Please try again later.");
       return "failed";
     }
-  }
-
-  async ping(params?: { isLightMode?: boolean }) {
-    this.postToEmbed();
-    const isOffline = await determineIfOffline();
-    if (isOffline) return;
-    const authFnToken = shouldUseAuthFnBearerSession()
-      ? await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)
-      : null;
-    let response = await this.persistence.ping();
-    let user = Array.isArray(response) ? response?.[0]?.result?.[0] : undefined;
-    if (!response) {
-      if (authFnToken) {
-        logger.log({
-          at: "account.ping",
-          message:
-            "Legacy account ping failed; keeping AuthFn session active."
-        });
-        return;
-      }
-      const reTryResponse = await this.persistence.ping();
-      if (!reTryResponse) {
-        appStore.gotoErrorPage("Something went wrong.");
-      }
-      response = reTryResponse;
-      user = Array.isArray(response) ? response?.[0]?.result?.[0] : undefined;
-    }
-    if (response && !user) {
-      if (authFnToken) {
-        logger.log({
-          at: "account.ping",
-          message:
-            "Legacy account ping did not return a user; keeping AuthFn session active."
-        });
-        return response;
-      }
-      await this.signOut({ isPreventRedirect: true });
-      await flux.clear();
-      appStore.gotoPath("/signup?msg=notfound");
-    }
-    if (user?.userPlan) {
-      this.update((n) => {
-        n.plan = user.userPlan;
-        return n;
-      });
-      if (!params?.isLightMode) {
-        await this.handlePlanStatus(user.userPlan);
-      }
-    }
-    return response;
   }
 
   async handlePlanStatus(plan: IUserPlan) {
@@ -545,7 +482,6 @@ class AccountStore extends ObservableStore<UserAccount> {
       const isOffline = await determineIfOffline();
       if (isOffline) return;
       const response = await this.persistence.initiateSubscription(params);
-      console.log({ at: "initiateSubscription", response });
       return response;
     } catch (e) {
       logger.error({ at: "initiateSubscription", error: e });
@@ -611,9 +547,17 @@ class AccountStore extends ObservableStore<UserAccount> {
 
   async startOfflineSession() {
     this.update((n) => {
+      n.token = undefined;
+      n.userId = undefined;
+      n.userInfo = undefined;
       n.dataMode = UserDataMode.LOCAL;
+      n.sessionType = UserSessionType.RETURNING;
       return n;
     });
+    await clientStorage.remove(ClientStorageKey.AUTHFN_TOKEN);
+    await clientStorage.remove(ClientStorageKey.STOKEN);
+    await clientStorage.remove(ClientStorageKey.USER);
+    await clientStorage.remove(ClientStorageKey.USER_INFO);
     await this.ensureOfflineSession();
   }
 
@@ -627,6 +571,10 @@ class AccountStore extends ObservableStore<UserAccount> {
     return sessionId;
   }
 
+  /**
+   * @deprecated Nucleus account bootstrap is no longer part of post-auth
+   * routing. Kept for the legacy bootstrap screen and account metadata repair.
+   */
   async bootstrap(region: string) {
     const authFnResult = await this.bootstrapAuthFn(region);
     if (authFnResult !== "not-authfn") {
@@ -635,7 +583,13 @@ class AccountStore extends ObservableStore<UserAccount> {
     return this.bootstrapRemote(region);
   }
 
-  private async bootstrapAuthFn(region: string): Promise<boolean | "not-authfn"> {
+  /**
+   * @deprecated Nucleus account bootstrap is no longer part of post-auth
+   * routing. Kept for the legacy bootstrap screen and account metadata repair.
+   */
+  private async bootstrapAuthFn(
+    region: string
+  ): Promise<boolean | "not-authfn"> {
     const result = await bootstrapNucleusAccount(region);
     if (result.kind === "not-authfn") {
       return "not-authfn";
@@ -660,6 +614,10 @@ class AccountStore extends ObservableStore<UserAccount> {
     return true;
   }
 
+  /**
+   * @deprecated Nucleus account bootstrap is no longer part of post-auth
+   * routing. Kept for the legacy bootstrap screen and account metadata repair.
+   */
   async bootstrapRemote(region: string) {
     const id = this.get()?.userInfo?.id?.split("user:")[1];
     if (!id) return;
@@ -778,32 +736,34 @@ class AccountStore extends ObservableStore<UserAccount> {
         }
       }
       if (account.dataMode === UserDataMode.LOCAL || params.isPreventSync) {
-        const arrayBuffer = await blob.arrayBuffer();
-        const uint8Array = new Uint8Array(arrayBuffer);
-        let thumbnailUint8Array: Uint8Array | undefined;
-        if (thumbnailBlob) {
-          const thumbnailArrayBuffer = await thumbnailBlob?.arrayBuffer();
-          thumbnailUint8Array = new Uint8Array(thumbnailArrayBuffer);
-        }
-        const response = await fileStore.create([
-          {
-            id,
-            label: fileName,
-            type: contentType,
-            data: uint8Array,
-            size: uint8Array.length,
-            isMeta: params.isMeta,
-            thumbnailData: thumbnailUint8Array
-          }
-        ]);
-        return response;
+        return await this.saveLocalFile({
+          id,
+          fileName,
+          contentType,
+          blob,
+          thumbnailBlob,
+          isMeta: params.isMeta,
+          isExtensionEnv: params.isExtensionEnv,
+          isReturnUrl: params.isReturnUrl
+        });
       } else {
         const signedUrlResponse = await this.getSignedUrl(
           contentType,
           fileName,
           params.isTemp ?? false
         );
-        if (!signedUrlResponse || !signedUrlResponse.uploadURL) return null;
+        if (!signedUrlResponse || !signedUrlResponse.uploadURL) {
+          return await this.saveLocalFile({
+            id,
+            fileName,
+            contentType,
+            blob,
+            thumbnailBlob,
+            isMeta: params.isMeta,
+            isExtensionEnv: params.isExtensionEnv,
+            isReturnUrl: params.isReturnUrl
+          });
+        }
 
         await this.persistence.uploadFile(
           signedUrlResponse.uploadURL,
@@ -848,12 +808,57 @@ class AccountStore extends ObservableStore<UserAccount> {
         } else if (params.isExtensionEnv) {
           return file;
         }
-        const response = await fileStore.create([file]);
-        return response;
+        await datafn.file.mutate({
+          operation: "insert",
+          id,
+          record: file
+        });
+        return [file];
       }
     } catch (e) {
       logger.error({ at: "uploadFileV2", error: e });
     }
+  }
+
+  private async saveLocalFile(params: {
+    id: IRecordId;
+    fileName: string;
+    contentType: string;
+    blob: Blob;
+    thumbnailBlob?: Blob;
+    isMeta?: boolean;
+    isExtensionEnv?: boolean;
+    isReturnUrl?: boolean;
+  }) {
+    const arrayBuffer = await params.blob.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    let thumbnailUint8Array: Uint8Array | undefined;
+    if (params.thumbnailBlob) {
+      const thumbnailArrayBuffer = await params.thumbnailBlob.arrayBuffer();
+      thumbnailUint8Array = new Uint8Array(thumbnailArrayBuffer);
+    }
+    const file = {
+      id: params.id,
+      label: params.fileName,
+      name: params.fileName,
+      type: params.contentType,
+      data: uint8Array,
+      size: uint8Array.length,
+      isMeta: params.isMeta,
+      thumbnailData: thumbnailUint8Array
+    };
+    if (params.isReturnUrl) {
+      return URL.createObjectURL(params.blob);
+    }
+    if (params.isExtensionEnv) {
+      return file;
+    }
+    await datafn.file.mutate({
+      operation: "insert",
+      id: params.id,
+      record: file
+    });
+    return [file];
   }
 
   /**
@@ -874,28 +879,8 @@ class AccountStore extends ObservableStore<UserAccount> {
   }
 
   async checkIfSessionExpired() {
-    const authFnToken = shouldUseAuthFnBearerSession()
-      ? await clientStorage.get(ClientStorageKey.AUTHFN_TOKEN)
-      : null;
-    const offlineSessionId = await clientStorage.get(
-      ClientStorageKey.OFFLINE_SESSION_ID
-    );
-    if (offlineSessionId && !authFnToken) {
-      return false;
-    }
-
-    try {
-      const { authClient } = await import("@21n/components/account/auth");
-      const session = await (await authClient()).getSession();
-      if (session.ok && session.data.session) {
-        await clientStorage.set(ClientStorageKey.USER, session.data.session);
-        return false;
-      }
-      return true;
-    } catch (error) {
-      logger.error({ at: "checkIfSessionExpired.authfn", error });
-      return true;
-    }
+    const resolution = await resolveAuthSession();
+    return resolution.status === "expired";
   }
 
   isCloudUserAndOffline() {

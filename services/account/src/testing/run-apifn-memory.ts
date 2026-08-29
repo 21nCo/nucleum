@@ -1,12 +1,14 @@
 import { serve } from '@hono/node-server';
 import { runCli } from '@apifn/cli';
 import { createAccountTestHarness } from './harness.js';
+import { runDatafnSmokeTests } from './datafn-smoke.js';
 
 const port = Number(process.env.ACCOUNT_E2E_PORT ?? 18787);
 const baseUrl = `http://127.0.0.1:${port}`;
 const harness = createAccountTestHarness({
   authority: baseUrl,
-  enableRateLimit: false
+  enableRateLimit: false,
+  corsOrigins: [baseUrl]
 });
 
 const server = serve({
@@ -30,6 +32,9 @@ try {
   ], {
     cwd: process.cwd()
   });
+  if (exitCode === 0) {
+    await runDatafnSmokeTests(harness, baseUrl);
+  }
   process.exitCode = exitCode;
 } finally {
   await new Promise<void>((resolve, reject) => {

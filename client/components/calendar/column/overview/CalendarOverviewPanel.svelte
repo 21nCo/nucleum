@@ -19,7 +19,7 @@
 <div class="w-full h-full flex flex-grow">
   {#if product === Product.POINTRON}
     <CalendarOverviewPanelPointron {date} {isRewind} />
-  {:else if product === Product.NUCLEUS}
+  {:else if product === Product.NUCLEUM}
     <CalendarOverviewPanelNucleus {date} {isRewind} />
   {:else}
     <ComingSoonView />

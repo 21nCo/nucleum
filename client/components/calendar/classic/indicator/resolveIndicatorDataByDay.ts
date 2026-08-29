@@ -1,12 +1,12 @@
 import type { ICalendarIndicatorData } from "@21n/components/calendar/calendar.type";
-import {
-  MetaResource,
-  Resource
-} from "@21n/components/flux/resourceStores/resource.enum";
-import { tzStore } from "@21n/components/settings/timezone/tz.store";
+import { MetaResource, Resource } from "@21n/data/datafn/resource.enum";
+import { datafn } from "@21n/stores/datafn.store";
 import { resolveSessionTimeSplit } from "@21n/products/pointron/pointron.utils";
 import { generateSummary } from "@21n/products/pointron/focus/session.utils";
-import type { DaySummary, ISessionThumb } from "@21n/products/pointron/logs/log.type";
+import type {
+  DaySummary,
+  ISessionThumb
+} from "@21n/products/pointron/logs/log.type";
 import type { ITaskThumb } from "@21n/components/tasks/task.type";
 
 export type ResolvedCalendarTileIndicatorDay = {
@@ -19,18 +19,19 @@ export type ResolvedCalendarTileIndicatorDay = {
   summary: DaySummary;
 };
 
-type DayBucketResolver = (input: Date | string | number) => ResolvedCalendarTileIndicatorDay;
+type DayBucketResolver = (
+  input: Date | string | number
+) => ResolvedCalendarTileIndicatorDay;
 
 export function resolveIndicatorDayKey(date: Date): number {
-  return tzStore.resolveTimePeriodFilterForDay(date).greaterThanOrEqual;
+  return resolveDayBucketKey(date);
 }
 
 function createDayBucketResolver(
   dayMap: Map<number, ResolvedCalendarTileIndicatorDay>
 ): DayBucketResolver {
   return (input: Date | string | number) => {
-    const key = tzStore.resolveTimePeriodFilterForDay(new Date(input))
-      .greaterThanOrEqual;
+    const key = resolveDayBucketKey(input);
     const existing = dayMap.get(key);
     if (existing) return existing;
     const next: ResolvedCalendarTileIndicatorDay = {
@@ -45,19 +46,28 @@ function createDayBucketResolver(
   };
 }
 
-function bucketTasks(
-  data: any[],
-  resolveBucket: DayBucketResolver
-) {
+function resolveDayBucketKey(input: Date | string | number): number {
+  const key = datafn.temporal.resolveBucketSync({
+    value: input,
+    scale: "day",
+    output: "unix-ms"
+  });
+  if (typeof key === "number") return key;
+  if (key instanceof Date) return key.getTime();
+  if (typeof key === "string") {
+    const parsed = Date.parse(key);
+    if (!Number.isNaN(parsed)) return parsed;
+  }
+  return new Date(input).setHours(0, 0, 0, 0);
+}
+
+function bucketTasks(data: any[], resolveBucket: DayBucketResolver) {
   for (const task of data) {
     resolveBucket(task.dateUnix).tasks.push(task);
   }
 }
 
-function bucketSessions(
-  data: any[],
-  resolveBucket: DayBucketResolver
-) {
+function bucketSessions(data: any[], resolveBucket: DayBucketResolver) {
   for (const session of data) {
     if (!session?.startUnix) continue;
     resolveBucket(session.startUnix).focusSessions.push({
@@ -74,10 +84,7 @@ function bucketNodes(data: any[], resolveBucket: DayBucketResolver) {
   }
 }
 
-function bucketCalendarNotes(
-  data: any[],
-  resolveBucket: DayBucketResolver
-) {
+function bucketCalendarNotes(data: any[], resolveBucket: DayBucketResolver) {
   for (const note of data) {
     if (!note?.date || !note?.text) continue;
     resolveBucket(note.date).calendarNotes.push(note);

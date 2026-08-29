@@ -123,6 +123,13 @@ describe("client/utils/time.utils", () => {
     expect(formatSeconds(45, TimeFormat.DECIMALS)).toBe("45s");
   });
 
+  it("formats non-finite seconds as zero", () => {
+    expect(formatSeconds(Number.NaN, TimeFormat.VERBOSE)).toBe("0 s");
+    expect(formatSeconds(Number.POSITIVE_INFINITY, TimeFormat.CLOCK)).toBe(
+      "00:00"
+    );
+  });
+
   it("converts seconds to decimal durations", () => {
     expect(formatSecondsToTimeInDecimals(7200)).toBe("2.00 hr");
     expect(formatSecondsToTimeInDecimals(180, 1, "min")).toBe("3.0 m");
@@ -240,11 +247,16 @@ describe("client/utils/time.utils", () => {
     const shifted = offsetDate(base, 2);
     expect(shifted.getUTCDate()).toBe(3);
     const attached = attachTimeToDate(new Date(base), "15:45");
-    expect(attached.getUTCHours()).toBe(15);
+    expect(attached.getHours()).toBe(15);
   });
 
   it("formats complete datetime string", () => {
     const result = formatDatetime(preferences, new Date(Date.UTC(2024, 0, 1, 8, 0, 0)));
+    expect(result).toMatch(/Jan/);
+  });
+
+  it("formats numeric datetime values", () => {
+    const result = formatDatetime(preferences, Date.UTC(2024, 0, 1, 8, 0, 0));
     expect(result).toMatch(/Jan/);
   });
 

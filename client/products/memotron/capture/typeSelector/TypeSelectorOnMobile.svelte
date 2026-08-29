@@ -5,15 +5,21 @@
   import { cn } from "@21n/utils/ui.utils";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import TypeSelectorItem from "@21n/products/memotron/capture/typeSelector/TypeSelectorItem.svelte";
-  import { collectionStore } from "@21n/components/collection/collection.store";
   import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import { appStore } from "@21n/stores/app.store";
-  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
-  import { CollectionObjectKey } from "@21n/components/collection/collection.type";
+  import {
+    CollectionObjectKey,
+    type ICollectionThumb
+  } from "@21n/components/collection/collection.type";
   import context from "@21n/stores/context.store";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { toSvelteStore } from "@datafn/svelte";
+  import { uiState } from "@21n/stores/uiState/uiState.store";
+  import { UIState } from "@21n/stores/uiState/uiState.type";
+  import type { IRecordId } from "@21n/types/data.type";
   type IBaseType = {
     icon: string;
     label: string;
@@ -34,8 +40,23 @@
     onCancel?: (() => void) | undefined;
     onDraftSelect?: ((draft: any) => void) | undefined;
   } = $props();
-  let types = $state<any[]>([]);
   const isDev = import.meta.env.DEV;
+  const shortcutStore = toSvelteStore<ICollectionThumb[]>(
+    datafn.collection.signal({
+      select: [
+        "id",
+        "label",
+        "avatar",
+        "resource",
+        "updatedAt",
+        CollectionObjectKey.isCaptureShortcutEnabled
+      ],
+      filters: {
+        [CollectionObjectKey.isCaptureShortcutEnabled]: true
+      }
+    }),
+    { initialData: [] }
+  );
   const baseTypes = [
     { icon: "microphone", label: "Record", value: CaptureMethod.AUDIO },
     { icon: "camera", label: "Camera", value: CaptureMethod.CAMERA },
@@ -65,10 +86,30 @@
       value: CaptureMethod.PASTE
     }
   ].filter((item): item is IBaseType => Boolean(item));
+  const types = $derived(resolveTypes($shortcutStore.data));
 
-  async function refreshTypes() {
-    const typesResult = await collectionStore.resolveCaptureShortcuts();
-    types = [
+  function resolveTypes(shortcuts: ICollectionThumb[]) {
+    const recents =
+      uiState
+        .getState(UIState.captureShortcutRecents)
+        ?.map((x: IRecordId) => x.toString()) ?? [];
+    const typesResult = shortcuts
+      .filter((type: any) => !type.resource || type.resource === Resource.node)
+      .map((type: any) => ({
+        value: type.id,
+        label: type.label,
+        icon: type.avatar,
+        isShortcut: true
+      }))
+      .sort((a: any, b: any) => {
+        const aIndex = recents.indexOf(a.value.toString());
+        const bIndex = recents.indexOf(b.value.toString());
+        if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+        if (aIndex !== -1) return -1;
+        if (bIndex !== -1) return 1;
+        return 0;
+      });
+    return [
       ...baseTypes,
       ...(typesResult && Array.isArray(typesResult) ? typesResult : [])
     ];
@@ -86,11 +127,25 @@
       "gap-3": !isBoxedLayout
     })}
   >
-    {#await refreshTypes()}
+    {#if $shortcutStore.loading}
       <div class="col-span-3 flex justify-center bg-bgs1">
         <Icon icon="svg-spinners:3-dots-fade" />
       </div>
-    {:then}
+    {:else if $shortcutStore.error}
+      {#each baseTypes as item}
+        <TypeSelectorItem
+          {item}
+          isActive={selected === item.value}
+          {onSelect}
+          {onCapture}
+          {onCancel}
+          isBoxed={isBoxedLayout}
+        />
+      {/each}
+      <div class="col-span-3 bg-bgs1 py-2">
+        <InlineErrorMessage error="Error loading types." isDissappear={false} />
+      </div>
+    {:else}
       {#each types as item, index (item.value)}
         <div
           class={cn({
@@ -122,31 +177,10 @@
       >
         <Icon icon="more-outline-horizontal" />
       </button>
-    {:catch}
-      {#each baseTypes as item}
-        <TypeSelectorItem
-          {item}
-          isActive={selected === item.value}
-          {onSelect}
-          {onCapture}
-          {onCancel}
-          isBoxed={isBoxedLayout}
-        />
-      {/each}
-      <div class="col-span-3 bg-bgs1 py-2">
-        <InlineErrorMessage error="Error loading types." isDissappear={false} />
-      </div>
-    {/await}
+    {/if}
   </div>
   <div class="mt-6">
     <CaptureDraftsAction onSelect={handleDraftSelect} size={Size.sm} />
   </div>
   <ScrollViewBottomSpacer />
 </div>
-<ComponentBaseLayer
-  subscribeToResource={new Set([Resource.collection])}
-  subscriptionPropsForMergeAction={[
-    CollectionObjectKey.isCaptureShortcutEnabled
-  ]}
-  onChange={refreshTypes}
-/>

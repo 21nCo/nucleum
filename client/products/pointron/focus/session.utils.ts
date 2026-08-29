@@ -1,9 +1,9 @@
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import {
   determineResourceType,
   isSameResource,
   resourceInList
-} from "@21n/components/flux/resourceStores/resource.utils";
+} from "@21n/data/datafn/resource.utils";
 import type { IRecordId } from "@21n/types/data.type";
 import {
   BlockType,
@@ -12,14 +12,17 @@ import {
   type ISessionInterval
 } from "@21n/types/pointron/session.type";
 import { sortArrayByOrder } from "@21n/shared-utils/obj.utils";
-import type { DaySummary, ISessionThumb } from "@21n/products/pointron/logs/log.type";
+import type {
+  DaySummary,
+  ISessionThumb
+} from "@21n/products/pointron/logs/log.type";
 
 export function transformFocusItemsV1(rawItems: any[]) {
   let items: any[] = [];
   rawItems.forEach((item: any) => {
-    if (item.goalId && !item.taskId) {
+    if (item.objectiveId && !item.taskId) {
       let tasks = rawItems.filter(
-        (x: any) => x.goalId === item.goalId && x.taskId
+        (x: any) => x.objectiveId === item.objectiveId && x.taskId
       );
       if (tasks && tasks.length > 0) {
         tasks = sortArrayByOrder(tasks);
@@ -29,7 +32,7 @@ export function transformFocusItemsV1(rawItems: any[]) {
         });
         items = items.concat({ ...item, tasks });
       } else items = items.concat(item);
-    } else if (!item.goalId && item.taskId) {
+    } else if (!item.objectiveId && item.taskId) {
       items = items.concat(item);
     }
   });
@@ -199,7 +202,7 @@ export function resolveIfCurrentFocusItem(
   const resourceTypeOfCurrentFocus = determineResourceType(currentFocusItem.id);
   const resourceTypeOfItem = determineResourceType(id);
   if (
-    resourceTypeOfCurrentFocus === Resource.goal ||
+    resourceTypeOfCurrentFocus === Resource.objective ||
     resourceTypeOfItem === Resource.task
   ) {
     return isSameResource(id, currentFocusItem);

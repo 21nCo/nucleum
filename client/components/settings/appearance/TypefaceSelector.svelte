@@ -29,8 +29,10 @@
   };
 
   const fontOptions: FontOption[] = [
+    { label: "Albert Sans", value: "Albert Sans" },
     { label: "AR One Sans", value: "AR One Sans" },
     { label: "Arvo", value: "Arvo" },
+    { label: "Cabin", value: "Cabin" },
     { label: "Comic Neue", value: "Comic Neue" },
     { label: "Didact Gothic", value: "Didact Gothic" },
     { label: "DM Sans", value: "DM Sans" },

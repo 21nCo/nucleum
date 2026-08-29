@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import { cn } from "@21n/utils/ui.utils";
   import type {
     INode,
@@ -33,10 +33,12 @@
     onAction?: ((event: CustomEvent<any>) => void) | undefined;
     onClick?: ((event: MouseEvent) => void) | undefined;
     onLinkTypeSelect?:
-      | ((event: CustomEvent<{
-          linkType: LinkType;
-          direction: "incoming" | "outgoing" | undefined;
-        }>) => void)
+      | ((
+          event: CustomEvent<{
+            linkType: LinkType;
+            direction: "incoming" | "outgoing" | undefined;
+          }>
+        ) => void)
       | undefined;
     onTag?: ((event: CustomEvent<any>) => void) | undefined;
     onTagClick?: ((event: CustomEvent<any>) => void) | undefined;
@@ -63,6 +65,7 @@
 <!-- TODO - add parent breadcrumbs  and avatar in below component - moving from LinkSuggestionItem.svelte -->
 
 <button
+  data-testid={`node-link-item:${item.id}`}
   onclick={(event) => {
     onClick?.(event);
   }}

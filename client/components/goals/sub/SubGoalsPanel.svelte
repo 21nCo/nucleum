@@ -4,7 +4,6 @@
     type DragDropEvent
   } from "@21n/actions/rearrange.action";
   import Button from "@21n/elements/button/Button.svelte";
-  import DropDown from "@21n/elements/dropdown/DropDown.svelte";
   import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
   import Text from "@21n/elements/text/Text.svelte";
   import { appStore } from "@21n/stores/app.store";
@@ -14,212 +13,256 @@
   import { TextStyle } from "@21n/types/text.enum";
   import { cn } from "@21n/utils/ui.utils";
   import {
-    activeResourceFilterIgnoreParentInactive,
+    activeResourceFilterIgnoreAncestorInactive,
     archivedResourceFilter
   } from "@21n/utils/utils";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { datafn } from "@21n/stores/datafn.store";
 
   import {
     resourceInList,
     shiftResourceInArray
-  } from "@21n/components/flux/resourceStores/resource.utils";
+  } from "@21n/data/datafn/resource.utils";
   import NestedList from "@21n/components/nestedList/NestedList.svelte";
   import { NestedListStyle } from "@21n/components/nestedList/nestedList.type";
+  import type { IActiveObjectiveStore } from "@21n/components/goals/goal.store";
   import {
-    goalStore,
-    type IActiveGoalStore
-  } from "@21n/components/goals/goal.store";
-  import {
-    GoalStatus,
-    SubGoalsLayout,
-    type IGoal
+    ObjectiveStatus,
+    SubObjectivesLayout,
+    type IObjective,
+    ObjectiveType
   } from "@21n/components/goals/goal.type";
-  import { resolveGoalStatusIcon } from "@21n/components/goals/goal.utils";
-  import SubGoalItem from "@21n/components/goals/sub/SubGoalItem.svelte";
-  import SubGoalsLayoutSwitcher from "@21n/components/goals/sub/SubGoalsLayoutSwitcher.svelte";
+  import { resolveObjectiveStatusIcon } from "@21n/components/goals/goal.utils";
+  import SubObjectiveItem from "@21n/components/goals/sub/SubGoalItem.svelte";
+  import SubObjectivesLayoutSwitcher from "@21n/components/goals/sub/SubGoalsLayoutSwitcher.svelte";
+  import { generateResourceId } from "@21n/data/datafn/id.utils";
+  import { Resource } from "@21n/data/datafn/resource.enum";
 
-  type IAddSubGoalItem = {
+  type IAddSubObjectiveItem = {
     label?: string;
     type: "add";
   };
 
-  type IRenderedSubGoal = IGoal & {
+  type IRenderedSubObjective = IObjective & {
     icon: string;
     isIconFilled: boolean;
   };
 
-  type ISubGoalListItem = IRenderedSubGoal | IAddSubGoalItem;
+  type ISubObjectiveListItem = IRenderedSubObjective | IAddSubObjectiveItem;
 
   let {
-    goal,
+    objective,
     isActiveResource = true
   }: {
-    goal: IActiveGoalStore;
+    objective: IActiveObjectiveStore;
     isActiveResource?: boolean;
   } = $props();
 
-  let isExpandArchiveSubGoals = $state(false);
-  let isHideCompleted = $state($goal.uiState?.isHideCompleted ?? false);
+  let isExpandArchiveSubObjectives = $state(false);
+  let isHideCompleted = $state($objective.uiState?.isHideCompleted ?? false);
 
-  function isSavedSubGoal(item: ISubGoalListItem): item is IRenderedSubGoal {
+  function isSavedSubObjective(
+    item: ISubObjectiveListItem
+  ): item is IRenderedSubObjective {
     return "id" in item;
   }
 
-  const _subGoals = $derived(
-    [
-    ...($goal.children
-      ? $goal.children
-          .filter(activeResourceFilterIgnoreParentInactive)
+  const _subObjectives = $derived([
+    ...($objective.children
+      ? $objective.children
+          .filter(activeResourceFilterIgnoreAncestorInactive)
           .filter(
             isHideCompleted
-              ? (t: IGoal) => t.status !== GoalStatus.COMPLETED
-              : (t: IGoal) => t
+              ? (t: IObjective) => t.status !== ObjectiveStatus.COMPLETED
+              : (t: IObjective) => t
           )
           .map(
-            (t: IGoal) =>
+            (t: IObjective) =>
               ({
                 ...t,
-                icon: resolveGoalStatusIcon(t.status),
-                isIconFilled: t.status === GoalStatus.COMPLETED
-              }) as IRenderedSubGoal
+                icon: resolveObjectiveStatusIcon(t.status),
+                isIconFilled: t.status === ObjectiveStatus.COMPLETED
+              }) as IRenderedSubObjective
           )
       : []),
-    ...($goal.subGoalsLayout === SubGoalsLayout.STEPS && isActiveResource
+    ...($objective.subObjectivesLayout === SubObjectivesLayout.STEPS && isActiveResource
       ? [
           {
             label: undefined,
             type: "add"
-          } as IAddSubGoalItem
+          } as IAddSubObjectiveItem
         ]
       : [])
-  ]
+  ]);
+
+  const archivedSubObjectivesCount = $derived(
+    $objective.children?.filter(archivedResourceFilter).length
   );
 
-  const archiveSubgoalsCount = $derived(
-    $goal.children?.filter(archivedResourceFilter).length
-  );
-
-  const completedSubgoalsCount = $derived(
-    $goal.children?.filter((t: IGoal) => t.status === GoalStatus.COMPLETED)
+  const completedSubObjectivesCount = $derived(
+    $objective.children?.filter((t: IObjective) => t.status === ObjectiveStatus.COMPLETED)
       .length
   );
 
-  function onSubGoalClick(id: IRecordId, event?: MouseEvent) {
+  function onSubObjectiveClick(id: IRecordId, event?: MouseEvent) {
     appStore.resourceClickHandler(event, id, {
-      replaceId: $goal.id
+      replaceId: $objective.id
     });
   }
 
-  function resolveAddSubGoalLabel(
+  function resolveAddSubObjectiveLabel(
     payload: { label?: string } | CustomEvent<{ label: string }>
   ) {
-    return payload instanceof CustomEvent ? payload.detail.label : payload.label;
+    return payload instanceof CustomEvent
+      ? payload.detail.label
+      : payload.label;
   }
 
-  async function onAddSubGoal(
+  function resolveObjectiveParentPath(parent?: Pick<IObjective, "id" | "parentPath">) {
+    if (!parent?.id) return "";
+    return parent.parentPath
+      ? `${parent.parentPath}-${parent.id}`
+      : parent.id.toString();
+  }
+
+  async function createSubObjective(label: string, parent: IObjective) {
+    const newObjective = {
+      id: generateResourceId(Resource.objective),
+      label,
+      type: ObjectiveType.INDEFINITE,
+      status: ObjectiveStatus.NOT_STARTED,
+      isPinnedForQuickFocus: false,
+      parentId: parent.id,
+      parentPath: resolveObjectiveParentPath(parent),
+      sortOrder: parent.children?.length ?? 0
+    } as IObjective;
+    await datafn.objective.mutate({
+      operation: "insert",
+      id: newObjective.id.toString(),
+      record: newObjective
+    });
+    return newObjective;
+  }
+
+  async function onAddSubObjective(
     payload: { label?: string } | CustomEvent<{ label: string }>
   ) {
-    const label = resolveAddSubGoalLabel(payload);
-    const result = await goalStore.addSubGoal(
-      {
-        label: label ?? ""
-      },
-      $goal.id,
-      {
-        srcExpanded: $goal
-      }
-    );
-    if (result && Array.isArray(result)) {
-      const newGoal = result[0];
-      $goal.children = [...($goal.children || []), newGoal];
-    }
+    const label = resolveAddSubObjectiveLabel(payload);
+    const newObjective = await createSubObjective(label ?? "", $objective);
+    $objective.children = [...($objective.children || []), newObjective];
   }
-  async function onAddSubGoalFromNestedList({
+
+  async function onAddSubObjectiveFromNestedList({
     id,
     label
   }: {
     id: IRecordId;
     label?: string;
   }) {
-    await goalStore.addSubGoal(
-      {
-        label: label ?? ""
+    const parentResult = await datafn.objective.query({
+      select: ["*", "children.*"],
+      filters: {
+        id: id.toString()
       },
-      id
-    );
+      limit: 1
+    });
+    const parent = parentResult.data[0] as IObjective | undefined;
+    if (parent) await createSubObjective(label ?? "", parent);
   }
 
-  async function resolveSubGoals(id: IRecordId) {
-    const result = await goalStore.selectMany(
-      {
-        properties: {
-          expand: ["children"]
-        },
-        filters: {
-          id: id.toString()
-        }
-      },
-      {
-        isIncludeSubItems: true
+  async function resolveSubObjectives(id: IRecordId) {
+    const result = await datafn.objective.query({
+      select: ["children.*"],
+      filters: {
+        id: id.toString()
       }
-    );
-    if (!result || !isValidArrayWithData(result)) return [];
-    const children = result[0].children;
+    });
+    if (!isValidArrayWithData(result.data)) return [];
+    const children = (result.data[0] as IObjective | undefined)?.children;
     if (children)
       return (
         children
-          ?.filter(activeResourceFilterIgnoreParentInactive)
-          ?.map((t: IGoal) => t.id) ?? []
+          ?.filter(activeResourceFilterIgnoreAncestorInactive)
+          ?.map((t: IObjective) => t.id) ?? []
       );
     else return [];
   }
 
   async function resolveContent(id: IRecordId) {
-    const item = _subGoals.find(
-      (subGoal): subGoal is IRenderedSubGoal =>
-        isSavedSubGoal(subGoal) && resourceInList(id)(subGoal)
+    const item = _subObjectives.find(
+      (subObjective): subObjective is IRenderedSubObjective =>
+        isSavedSubObjective(subObjective) && resourceInList(id)(subObjective)
     );
-    if (item) return item;
-    const result = await goalStore.select(id);
-    if (result)
+    if (item)
       return {
-        ...result,
-        icon: resolveGoalStatusIcon(result.status)
+        label: item.label ?? "",
+        childrenCount: item.children?.length ?? 0,
+        color: item.color,
+        icon: item.icon,
+        isIconFilled: item.isIconFilled
       };
-    else return "";
+    const result = await datafn.objective.query({
+      filters: {
+        id: id.toString()
+      },
+      limit: 1
+    });
+    const objective = result.data[0] as IObjective | undefined;
+    if (objective)
+      return {
+        label: objective.label ?? "",
+        childrenCount: objective.children?.length ?? 0,
+        color: objective.color,
+        icon: resolveObjectiveStatusIcon(objective.status),
+        isIconFilled: objective.status === ObjectiveStatus.COMPLETED
+      };
+    return {
+      label: "",
+      childrenCount: 0,
+      icon: resolveObjectiveStatusIcon(ObjectiveStatus.NOT_STARTED),
+      isIconFilled: false
+    };
   }
 
-  async function onReorderSubGoals(event: DragDropEvent) {
+  async function onReorderSubObjectives(event: DragDropEvent) {
     const { fromId, toId } = event;
-    if (!fromId || !toId || fromId === toId || !$goal.children) return;
-    $goal.children = shiftResourceInArray($goal.children, fromId, toId);
-    const reorderedSubGoals = shiftResourceInArray(_subGoals, fromId, toId);
-    const subGoals = reorderedSubGoals
-      .filter(isSavedSubGoal)
+    if (!fromId || !toId || fromId === toId || !$objective.children) return;
+    $objective.children = shiftResourceInArray($objective.children, fromId, toId);
+    const reorderedSubObjectives = shiftResourceInArray(
+      _subObjectives,
+      fromId,
+      toId
+    );
+    const subObjectives = reorderedSubObjectives
+      .filter(isSavedSubObjective)
       .map((t) => t.id)
       .filter((id): id is IRecordId => Boolean(id));
-    await goal.modify(
-      {
-        children: subGoals
-      },
-      {
-        isPreventBackPropagation: true
-      }
+    await Promise.all(
+      subObjectives.map((id, sortOrder) =>
+        datafn.objective.mutate({
+          operation: "merge",
+          id: id.toString(),
+          record: {
+            id: id.toString(),
+            sortOrder
+          }
+        })
+      )
     );
   }
 
-  function onSubGoalsMethodChange(e: any) {
+  function onSubObjectivesMethodChange(e: any) {
     void e;
-    goal.modify({
-      subGoalsLayout: $goal.subGoalsLayout
+    objective.modify({
+      subObjectivesLayout: $objective.subObjectivesLayout
     });
   }
 
   function onHideCompletedChange(e: any) {
     isHideCompleted = !isHideCompleted;
-    goal.modify({
+    objective.modify({
       uiState: {
-        ...($goal.uiState ?? {}),
+        ...($objective.uiState ?? {}),
         isHideCompleted
       }
     });
@@ -229,102 +272,105 @@
 {#if !isActiveResource}
   <div class="flex w-full pt-2 pb-4 justify-center">
     <InlineInfoBanner
-      content="You can't add subgoals to this goal when it is archived/deleted/inactive."
+      content="You can't add sub-objectives to this objective when it is archived/deleted/inactive."
       icon="warning"
     />
   </div>
 {/if}
-{#if _subGoals}
+{#if _subObjectives}
   <div class="flex items-center justify-end gap-4 w-full px-3">
-    {#if $goal.subGoalsLayout !== SubGoalsLayout.STEPS && completedSubgoalsCount}
+    {#if $objective.subObjectivesLayout !== SubObjectivesLayout.STEPS && completedSubObjectivesCount}
       <Button
         icon={isHideCompleted ? "show" : "hide"}
-        tooltip={`${isHideCompleted ? "Show" : "Hide"} completed (${completedSubgoalsCount})`}
+        tooltip={`${isHideCompleted ? "Show" : "Hide"} completed (${completedSubObjectivesCount})`}
         size={Size.sm}
         style={ButtonStyle.PLAIN}
         onclick={onHideCompletedChange}
       />
     {/if}
-    <SubGoalsLayoutSwitcher
-      bind:layout={$goal.subGoalsLayout}
-      onSelect={onSubGoalsMethodChange}
+    <SubObjectivesLayoutSwitcher
+      bind:layout={$objective.subObjectivesLayout}
+      onSelect={onSubObjectivesMethodChange}
     />
   </div>
   <div
     class={cn("flex flex-col cw:px-2 userdata text-b2", {
-      "gap-6": $goal.subGoalsLayout === SubGoalsLayout.STEPS,
-      "gap-2": $goal.subGoalsLayout === SubGoalsLayout.DEFAULT
+      "gap-6": $objective.subObjectivesLayout === SubObjectivesLayout.STEPS,
+      "gap-2": $objective.subObjectivesLayout === SubObjectivesLayout.DEFAULT
     })}
     use:reorderList={{
-      listId: "subGoals",
+      listId: "subObjectives",
       draggedOverClass: "!border-ccs1",
-      onDrop: onReorderSubGoals,
+      onDrop: onReorderSubObjectives,
       dragImage: "dragimage"
     }}
   >
-    {#if !$goal.subGoalsLayout || $goal.subGoalsLayout === SubGoalsLayout.DEFAULT}
+    {#if !$objective.subObjectivesLayout || $objective.subObjectivesLayout === SubObjectivesLayout.DEFAULT}
       <NestedList
-        items={_subGoals.filter(isSavedSubGoal).map((t) => t.id)}
+        items={_subObjectives.filter(isSavedSubObjective).map((t) => t.id)}
         contentCallback={resolveContent}
-        childrenCallback={resolveSubGoals}
+        childrenCallback={resolveSubObjectives}
         style={NestedListStyle.DEFAULT}
         isShowAddTextInput={isActiveResource}
         onClick={({ id, event }) => {
-          onSubGoalClick(id, event);
+          onSubObjectiveClick(id, event);
         }}
-        onAddAction={onAddSubGoal}
-        onAddSub={onAddSubGoalFromNestedList}
-        addPlaceholder="Add new subgoal"
+        onAddAction={onAddSubObjective}
+        onAddSub={onAddSubObjectiveFromNestedList}
+        addPlaceholder="Add new sub-objective"
       />
     {:else}
-      {#each _subGoals as subGoal, index (isSavedSubGoal(subGoal) ? subGoal.id : subGoal.type)}
-        <SubGoalItem
-          {subGoal}
+      {#each _subObjectives as subObjective, index (isSavedSubObjective(subObjective) ? subObjective.id : subObjective.type)}
+        <SubObjectiveItem
+          {subObjective}
           {index}
-          totalLength={_subGoals.length}
-          method={$goal.subGoalsLayout}
+          totalLength={_subObjectives.length}
+          method={$objective.subObjectivesLayout}
           onClick={(e) => {
-            if (isSavedSubGoal(subGoal)) {
-              onSubGoalClick(subGoal.id, e);
+            if (isSavedSubObjective(subObjective)) {
+              onSubObjectiveClick(subObjective.id, e);
             }
           }}
-          onAdd={onAddSubGoal}
+          onAdd={onAddSubObjective}
         />
       {/each}
     {/if}
   </div>
 {/if}
-{#if archiveSubgoalsCount}
+{#if archivedSubObjectivesCount}
   <div class="flex w-full justify-center">
     <button
       class={cn(
         "flex items-center justify-center gap-2 text-b3 text-fgs3 rounded-md p-2",
         {
-          "notouch:hover:bg-bgs2 active:bg-bgs2": !isExpandArchiveSubGoals,
-          "bg-bgs2": isExpandArchiveSubGoals
+          "notouch:hover:bg-bgs2 active:bg-bgs2": !isExpandArchiveSubObjectives,
+          "bg-bgs2": isExpandArchiveSubObjectives
         }
       )}
       onclick={() => {
-        isExpandArchiveSubGoals = !isExpandArchiveSubGoals;
+        isExpandArchiveSubObjectives = !isExpandArchiveSubObjectives;
       }}
     >
-      + {archiveSubgoalsCount} archived sub goals
+      + {archivedSubObjectivesCount} archived sub-objectives
     </button>
   </div>
 
-  {#if isExpandArchiveSubGoals}
-    {@const archiveSubGoals = $goal.children?.filter(archivedResourceFilter)}
-    {#if archiveSubGoals && isValidArrayWithData(archiveSubGoals)}
+  {#if isExpandArchiveSubObjectives}
+    {@const archiveSubObjectives = $objective.children?.filter(archivedResourceFilter)}
+    {#if archiveSubObjectives && isValidArrayWithData(archiveSubObjectives)}
       <div class="flex flex-col gap-2 p-4">
-        <Text content="Archived sub goals" style={TextStyle.SECTION_HEADING} />
+        <Text
+          content="Archived sub-objectives"
+          style={TextStyle.SECTION_HEADING}
+        />
         <div class="flex flex-col userdata">
-          {#each archiveSubGoals as child, index}
-            <SubGoalItem
-              subGoal={child}
+          {#each archiveSubObjectives as child, index}
+            <SubObjectiveItem
+              subObjective={child}
               {index}
-              totalLength={archiveSubGoals.length}
+              totalLength={archiveSubObjectives.length}
               onClick={(e) => {
-                onSubGoalClick(child.id, e);
+                onSubObjectiveClick(child.id, e);
               }}
             />
           {/each}

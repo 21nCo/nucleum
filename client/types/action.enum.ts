@@ -46,7 +46,7 @@ export enum Action {
   MOBILEHOME = "mobilehome",
   CALENDAR = "calendar",
   BULK_LINK = "bulk-link",
-  EDIT_TASK_GOAL = "edit-task-goal",
+  EDIT_TASK_OBJECTIVE = "edit-task-objective",
   CALENDAR_DAY = "calendar-day",
   HISTORY = "history",
   CREDITS = "credits",

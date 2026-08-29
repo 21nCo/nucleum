@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Arrangement } from "@21n/types/direction.enum";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import {
     TaskSubTypeForSwitcher,
     type ITaskThumb
@@ -23,7 +23,7 @@
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import ComponentShortcutListener from "../shortcuts/ComponentShortcutListener.svelte";
   import { Action } from "@21n/types/action.enum";
-  import TasksGroupedByGoal from "./TasksGroupedByGoal.svelte";
+  import TasksGroupedByObjective from "./TasksGroupedByGoal.svelte";
   let {
     data,
     arrangement = Arrangement.LIST,
@@ -61,17 +61,20 @@
   );
 
   $effect(() => {
-    if (accessPoint === ResourceAccessPoint.CALENDAR && completedTasksCount > 0 && !selectedIllustration) {
-      selectedIllustration = inboxZeroIllustrations[Math.floor(Math.random() * 4)];
+    if (
+      accessPoint === ResourceAccessPoint.CALENDAR &&
+      completedTasksCount > 0 &&
+      !selectedIllustration
+    ) {
+      selectedIllustration =
+        inboxZeroIllustrations[Math.floor(Math.random() * 4)];
     } else if (completedTasksCount === 0) {
       selectedIllustration = undefined;
     }
   });
 
   const tasksByDate = $derived(
-    subType === TaskSubTypeForSwitcher.BY_MONTH
-      ? groupTasksByDate(_data)
-      : null
+    subType === TaskSubTypeForSwitcher.BY_MONTH ? groupTasksByDate(_data) : null
   );
 
   onMount(() => {
@@ -193,7 +196,7 @@
                 {date}
               </h3>
             </div>
-            <TasksGroupedByGoal
+            <TasksGroupedByObjective
               {tasks}
               date={new Date(date)}
               {accessPoint}
@@ -205,14 +208,14 @@
         {/each}
       </div>
     {:else}
-      <TasksGroupedByGoal
+      <TasksGroupedByObjective
         tasks={_data}
         {accessPoint}
         {accessPointId}
         {parentBgIndex}
         {arrangement}
         {date}
-        isDisableGrouping={accessPoint === ResourceAccessPoint.GOAL ||
+        isDisableGrouping={accessPoint === ResourceAccessPoint.OBJECTIVE ||
           accessPoint === ResourceAccessPoint.LIBRARY ||
           accessPoint === ResourceAccessPoint.BROWSER}
       />
@@ -229,7 +232,7 @@
         : completedTasksCount > 0
           ? `You completed ${completedTasksCount > 1 ? "all your" : "your"} ${completedTasksCount} task${completedTasksCount > 1 ? "s" : ""}!`
           : isPreventAddNew
-            ? "You can't add tasks to this goal when it is archived/deleted."
+            ? "You can't add tasks to this objective when it is archived/deleted."
             : "Choose a different filters or create a task"}
       actionText={accessPoint !== ResourceAccessPoint.CALENDAR &&
       !isPreventAddNew &&

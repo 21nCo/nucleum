@@ -1,8 +1,8 @@
 import type {
   AuthFnSocialProfile,
   AuthFnSocialProviderConfig,
-  SocialOAuthPluginConfig
-} from '@authfn/core';
+  SocialOAuthPluginRuntimeConfig
+} from '@authfn/social-oauth';
 
 export interface MockOAuthUser {
   providerAccountId: string;
@@ -13,7 +13,7 @@ export interface MockOAuthUser {
 
 export interface MockOAuthConfig {
   oauthProviders: Partial<Record<'google' | 'apple', AuthFnSocialProviderConfig>>;
-  oauthPlugin: Omit<SocialOAuthPluginConfig, 'providers'>;
+  oauthPlugin: Omit<SocialOAuthPluginRuntimeConfig, 'providers'>;
   setUser(provider: 'google' | 'apple', code: string, user: MockOAuthUser): void;
   clear(): void;
 }

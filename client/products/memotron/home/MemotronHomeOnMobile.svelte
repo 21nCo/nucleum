@@ -3,13 +3,12 @@
   import { Action } from "@21n/types/action.enum";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { SearchStore } from "@21n/components/record/record.store";
-  import { resolveResourceIcon } from "@21n/components/flux/resourceStores/resource.utils";
+  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { resolveResourceIcon } from "@21n/data/datafn/resource.utils";
   import {
     AccessMode,
     ResourceActionType
-  } from "@21n/components/flux/resourceStores/resource.type";
+  } from "@21n/data/datafn/resource.type";
   import Icon from "@21n/elements/Icon.svelte";
   import Writer from "@21n/products/memotron/capture/Writer.svelte";
   import { CaptureMethod } from "@21n/products/memotron/capture/capture.type";
@@ -17,7 +16,7 @@
     ActiveCaptureStore,
     type IActiveCaptureStore
   } from "@21n/products/memotron/capture/capture.store";
-  import { generateResourceId } from "@21n/components/flux/flux.utils";
+  import { generateResourceId } from "@21n/data/datafn/id.utils";
   import HomeTopNav from "@21n/products/memotron/home/mobile/HomeTopNav.svelte";
   import { haptic } from "@21n/utils/embed.utils";
   import TypeSelectorOnMobile from "@21n/products/memotron/capture/typeSelector/TypeSelectorOnMobile.svelte";
@@ -49,62 +48,81 @@
   import { resolveProductConfig } from "@21n/products/product.config";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import { searchStore } from "@21n/components/search";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { rootNodeTypeList } from "@21n/products/memotron/node/node.type";
+  import { resolveCollectionResource } from "@21n/components/collection/collection.utils";
+  import { toSvelteStore } from "@datafn/svelte";
+  import { datafnHeavyComputedSignalOptions } from "@21n/data/datafn/signalCache";
   let {
     captureId = $bindable(generateResourceId(Resource.capture))
   }: {
     captureId?: IRecordId;
   } = $props();
-  let mode: "search" | "capture" | undefined = undefined;
-  let captureStore: IActiveCaptureStore;
-  let writerRef: Writer | null = null;
+  let mode = $state<"search" | "capture" | undefined>(undefined);
+  let captureStore = $state<IActiveCaptureStore>(
+    ActiveCaptureStore.resolve(captureId)
+  );
+  let writerRef = $state<Writer | null>(null);
   const isBoxedLayout = true;
-  let inlineToast: InlineToast | null = null;
+  let inlineToast = $state<InlineToast | null>(null);
   const dev_isExpandableCaptureSection = false;
   let dev_iosCameraCaptureMethod: "input" | "swift-relay" = "input";
-  let cameraCaptureRef: HTMLInputElement;
+  let cameraCaptureRef = $state<HTMLInputElement>();
   const transitionDuration = 250;
   initializeCaptureStore();
-  const resourceSearch = new SearchStore();
-  let searchBaseRef: ResourceSearchBase;
+  let searchBaseRef = $state<ResourceSearchBase>();
   const homePathPt = resolveProductConfig().homePathPt;
+  const quickAccessCountStore = $derived.by(() =>
+    toSvelteStore(
+      () =>
+        datafn.resourceCountsSignal(
+          {
+            resources: [Resource.node, Resource.collection],
+            queriesByResource: {
+              [Resource.node]: {
+                filters: {
+                  contentType: { $in: [...rootNodeTypeList] },
+                  metaType: { $is_empty: true },
+                  creationContext: { $is_empty: true }
+                }
+              },
+              [Resource.collection]: {
+                filters: {
+                  resource: {
+                    $in: resolveCollectionResource($appStore.product)
+                  }
+                }
+              }
+            }
+          },
+          datafnHeavyComputedSignalOptions
+        ),
+      { initialData: {}, defer: { strategy: "idle", delayMs: 300 } }
+    )
+  );
+  const quickAccessItems = $derived.by((): IQuickAccessItem[] => [
+    {
+      id: "nodes",
+      label: "Nodes",
+      icon: resolveResourceIcon(Resource.node),
+      count: $quickAccessCountStore.data?.[Resource.node]
+    },
+    {
+      id: "collections",
+      label: "Collections",
+      icon: resolveResourceIcon(Resource.collection),
+      count: $quickAccessCountStore.data?.[Resource.collection]
+    },
+    {
+      id: "calendar",
+      label: "Calendar",
+      icon: "calendar"
+    }
+  ]);
 
   function initializeCaptureStore() {
     captureId = generateResourceId(Resource.capture);
     captureStore = ActiveCaptureStore.resolve(captureId);
-  }
-
-  async function loadQuickAccessData(): Promise<IQuickAccessItem[]> {
-    let nodeCounts: number | undefined = undefined;
-    let collectionCounts: number | undefined = undefined;
-    try {
-      const [nodes, collections] = await Promise.all([
-        resourceSearch.resolveCount({ resource: Resource.node }),
-        resourceSearch.resolveCount({ resource: Resource.collection })
-      ]);
-      nodeCounts = nodes;
-      collectionCounts = collections;
-    } catch (error) {
-      console.error("Failed to load counts:", error);
-    }
-    return [
-      {
-        id: "nodes",
-        label: "Nodes",
-        icon: resolveResourceIcon(Resource.node),
-        count: nodeCounts
-      },
-      {
-        id: "collections",
-        label: "Collections",
-        icon: resolveResourceIcon(Resource.collection),
-        count: collectionCounts
-      },
-      {
-        id: "calendar",
-        label: "Calendar",
-        icon: "calendar"
-      }
-    ];
   }
 
   const commonActionParams = {
@@ -307,25 +325,19 @@
       </div>
     {/if}
     {#if !mode}
-      {#await loadQuickAccessData()}
-        <!-- promise is pending -->
-      {:then items}
-        <div
-          class="flex-shrink-0"
-          transition:fly={{
-            y: -30,
-            duration: transitionDuration,
-            easing: quintOut
-          }}
-        >
-          <HomeQuickAccess
-            {items}
-            onItemClick={handleQuickAccessClick}
-          />
-        </div>
-      {:catch error}
-        <!-- promise was rejected -->
-      {/await}
+      <div
+        class="flex-shrink-0"
+        transition:fly={{
+          y: -30,
+          duration: transitionDuration,
+          easing: quintOut
+        }}
+      >
+        <HomeQuickAccess
+          items={quickAccessItems}
+          onItemClick={handleQuickAccessClick}
+        />
+      </div>
     {/if}
     {#if inlineToast}
       {@const isError = inlineToast.type === AlertType.ERROR}
@@ -417,7 +429,7 @@
                   class="hidden"
                 />
               {:else if $captureStore.method === CaptureMethod.UPLOAD && !($context.isEmbed && $context.os === OperatingSystem.IOS)}
-                <FileUploader {captureStore} onClear={onClear} />
+                <FileUploader {captureStore} {onClear} />
               {:else}
                 {#key $captureStore.refreshId}
                   <Writer
@@ -426,7 +438,7 @@
                     onChange={(e) => {
                       captureStore.onMdContentChanges(e);
                     }}
-                    onClear={onClear}
+                    {onClear}
                   />
                 {/key}
               {/if}

@@ -50,9 +50,7 @@
       | ((event: CustomEvent<"primary" | "secondary" | "close">) => void)
       | undefined;
   } = $props();
-  const isUseExpandedButtons = $derived(
-    !$view.isConstrainedWidth && action !== Action.CONFIRMATION
-  );
+  const isUseExpandedButtons = $derived(!$view.isConstrainedWidth);
   let isPrimaryActionInProgress = $state(false);
 
   function resolveButtons() {

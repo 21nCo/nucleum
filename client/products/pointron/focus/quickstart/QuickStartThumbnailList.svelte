@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { isSameResource } from "@21n/data/datafn/resource.utils";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import Text from "@21n/elements/text/Text.svelte";
   import type { IRecordId } from "@21n/types/data.type";

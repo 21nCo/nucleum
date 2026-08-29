@@ -3,7 +3,6 @@ import type { Adapter } from '@superfunctions/db';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as authSchema from './generated/authfn-schema.js';
-import { accountAuthSchema } from './schema.js';
 
 export interface AccountDatabase {
   adapter: Adapter;
@@ -23,8 +22,7 @@ export function createNodeDatabase(databaseUrl = process.env.DATABASE_URL): Acco
   });
   const adapter = drizzleAdapter({
     db,
-    dialect: 'postgres',
-    adapterSchema: accountAuthSchema
+    dialect: 'postgres'
   });
 
   return {

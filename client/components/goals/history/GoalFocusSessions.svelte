@@ -1,81 +1,88 @@
 <script lang="ts">
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { sessionLogStore } from "@21n/products/pointron/logs/log.store";
+  import { datafn } from "@21n/stores/datafn.store";
   import type {
     ISessionLogThumb,
     ISessionThumb
   } from "@21n/products/pointron/logs/log.type";
   import type { IRecordId } from "@21n/types/data.type";
-  import {
-    isValidArray,
-    isValidArrayWithData
-  } from "@21n/shared-utils/obj.utils";
-  import { onMount } from "svelte";
-  import { goalStore } from "@21n/components/goals/goal.store";
-  import { sessionStore } from "@21n/products/pointron/focus/session.store";
-  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
-  import GoalFocusSessionThumbnail from "@21n/components/goals/history/GoalFocusSessionThumbnail.svelte";
+  import { isSameResource } from "@21n/data/datafn/resource.utils";
+  import ObjectiveFocusSessionThumbnail from "@21n/components/goals/history/GoalFocusSessionThumbnail.svelte";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
+  import { toSvelteStore } from "@datafn/svelte";
 
   let {
     id,
-    isIncludeSubGoals = false
+    isIncludeSubObjectives = false
   }: {
     id: IRecordId;
-    isIncludeSubGoals?: boolean;
+    isIncludeSubObjectives?: boolean;
   } = $props();
 
-  let sessions = $state<ISessionThumb[]>([]);
-  let sessionLogs = $state<ISessionLogThumb[]>([]);
-  let isLoading = $state(true);
-
-  async function refresh() {
-    isLoading = true;
-    let subGoals: IRecordId[] = [];
-    if (isIncludeSubGoals) {
-      const subGoalsResult = await goalStore.selectMany({
-        properties: {
-          select: ["id"]
-        },
-        filters: {
-          parent: {
-            contains: id.toString()
-          }
-        }
-      });
-      if (isValidArrayWithData(subGoalsResult)) {
-        subGoals = subGoalsResult.map((goal: { id: IRecordId }) =>
-          goal.id.toString()
-        );
-      }
+  const objectiveStore = $derived.by(() =>
+    toSvelteStore<{ id: IRecordId; children?: { id: IRecordId }[] }[]>(
+      isIncludeSubObjectives
+        ? datafn.objective.signal({
+            select: ["id", "children.**"],
+            filters: {
+              id: id.toString()
+            },
+            limit: 1
+          })
+        : datafn.emptySignal([]),
+      { initialData: [] }
+    )
+  );
+  const objective = $derived.by(() =>
+    $objectiveStore.data.find((objective) => isSameResource(objective.id, id))
+  );
+  const objectiveIds = $derived.by(() => {
+    const ids = [id.toString()];
+    if (isIncludeSubObjectives) {
+      ids.push(
+        ...((objective?.children ?? []).map((objective) => objective.id.toString()) ?? [])
+      );
     }
-    const result = await sessionLogStore.selectMany({
-      properties: {
-        expand: ["taskId"]
-      },
-      filters: {
-        goalId: [...subGoals, id.toString()]
-      }
-    });
-    if (isValidArray(result)) {
-      sessionLogs = result;
-      const sessionsResult = await sessionStore.selectMany({
-        filters: {
-          id: sessionLogs.map((log) => log.sessionId)
-        }
-      });
-      if (isValidArray(sessionsResult)) {
-        sessions = sessionsResult;
-      }
-    } else {
-      sessionLogs = [];
-    }
-    isLoading = false;
-  }
-
-  onMount(() => {
-    refresh();
+    return ids;
   });
+  const sessionLogStore = $derived.by(() =>
+    toSvelteStore<ISessionLogThumb[]>(
+      datafn.sessionLog.signal({
+        select: ["task.*"],
+        filters: {
+          objectiveId: { $in: objectiveIds }
+        }
+      }),
+      { initialData: [] }
+    )
+  );
+  const sessionLogs = $derived($sessionLogStore.data);
+  const sessionIds = $derived.by(() => [
+    ...new Set(
+      sessionLogs
+        .map((log) => log.sessionId?.toString())
+        .filter((sessionId): sessionId is string => Boolean(sessionId))
+    )
+  ]);
+  const sessionStore = $derived.by(() =>
+    toSvelteStore<ISessionThumb[]>(
+      datafn.session.signal({
+        filters: {
+          id: { $in: sessionIds }
+        }
+      }),
+      { initialData: [] }
+    )
+  );
+  const sessions = $derived($sessionStore.data);
+  const isLoading = $derived(
+    $objectiveStore.loading ||
+      $objectiveStore.refreshing ||
+      $sessionLogStore.loading ||
+      $sessionLogStore.refreshing ||
+      $sessionStore.loading ||
+      $sessionStore.refreshing
+  );
 
   function groupSessionsByDay(sessions: ISessionThumb[]) {
     const groups = new Map<string, ISessionThumb[]>();
@@ -126,11 +133,11 @@
 
           <div class="flex flex-col gap-4 ml-[5px]">
             {#each daySessions as session}
-              <GoalFocusSessionThumbnail
-                goalId={id}
+              <ObjectiveFocusSessionThumbnail
+                objectiveId={id}
                 {session}
                 logs={sessionLogs.filter((x) =>
-                  isSameResource(x.sessionId, session)
+                  x.sessionId ? isSameResource(x.sessionId, session) : false
                 )}
               />
             {/each}

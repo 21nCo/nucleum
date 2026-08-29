@@ -1,4 +1,4 @@
-import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
+import type { OmitForCapture } from "@21n/data/datafn/resource.type";
 import {
   NodeType,
   type IThreadsPost,
@@ -7,8 +7,14 @@ import {
 import { createUrlFilter } from "@21n/products/memotron/node/url.utils";
 import { generateRandomIdv2 } from "@21n/shared-utils/crypto.utils";
 import { csuiSelector } from "@21n/extensions/clipper/clipper.constants";
-import type { ISocialPost, ISocialPostBase } from "@21n/extensions/clipper/clipper.type";
-import { findAncestorOrSelf, resolveParentNLevel } from "@21n/extensions/clipper/parsers/shared/domUtils";
+import type {
+  ISocialPost,
+  ISocialPostBase
+} from "@21n/extensions/clipper/clipper.type";
+import {
+  findAncestorOrSelf,
+  resolveParentNLevel
+} from "@21n/extensions/clipper/parsers/shared/domUtils";
 
 export function extractThreadsPostFromPage():
   | ISocialPost<IThreadsPost, IThreadsProfile>

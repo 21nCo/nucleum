@@ -13,7 +13,7 @@
   import { getTimeZonesWithOffsets } from "@21n/utils/time.utils";
   import { InputStyle } from "@21n/types/input.type";
   import { Orientation } from "@21n/types/direction.enum";
-  let timeZones: { label: string; offset: number }[] = [];
+  let timeZones: { label: string; offset: number; zone: string }[] = [];
   let timeZoneDropdownItems: (Omit<DropdownItem, "value"> & {
     value: string;
   })[];
@@ -27,31 +27,42 @@
     };
   });
   onMount(() => {
+    void initializeTimezoneSettings();
+  });
+
+  async function initializeTimezoneSettings() {
     timeZones = getTimeZonesWithOffsets();
-    if ($userPreferences.timeZoneOffset) {
+    if ($userPreferences.timeZone) {
+      selectedTimezone = $userPreferences.timeZone;
+    } else if ($userPreferences.timeZoneOffset) {
       const savedSetting = timeZones.find(
         (zone) => zone.offset * 60 === $userPreferences.timeZoneOffset
-      )?.label;
+      )?.zone;
       if (savedSetting === undefined) {
-        const { offset, label } = userPreferences.setTimeZone();
-        selectedTimezone = label!;
+        const { timezone } = await userPreferences.setTimeZone();
+        selectedTimezone = timezone!;
       } else {
         selectedTimezone = savedSetting;
       }
+    } else {
+      const { timezone } = await userPreferences.setTimeZone();
+      selectedTimezone = timezone!;
     }
     timeZoneDropdownItems = timeZones.map((zone) => {
       return {
         label: zone.label,
-        value: zone.label
+        value: zone.zone
       };
     });
     isTimezoneReady = true;
-  });
+  }
 
   $effect(() => {
     if (!isTimezoneReady || !selectedTimezone) return;
-    const zone = timeZones.find((z) => z.label === selectedTimezone);
-    if (zone) userPreferences.setTimeZone(zone.offset * 60, zone.label);
+    const zone = timeZones.find((z) => z.zone === selectedTimezone);
+    if (zone) {
+      userPreferences.setTimeZone(zone.offset * 60, zone.label, zone.zone);
+    }
   });
 </script>
 

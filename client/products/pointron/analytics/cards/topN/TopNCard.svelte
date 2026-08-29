@@ -21,25 +21,29 @@
     card,
     data,
     previousTimePeriodData = [],
-    goalColors = []
+    objectiveColors = []
   }: {
     card: IAnalyticsCard;
     data: AnalyticsDataRecord[];
     previousTimePeriodData?: AnalyticsDataRecord[];
-    goalColors?: { label: string; color: number }[];
+    objectiveColors?: { label: string; color: number }[];
   } = $props();
 
   function resolveKey(record: AnalyticsDataRecord) {
-    return card.isGroupByTopLevelGoals ? record.topLevelGoal : record.goal;
+    return card.isGroupByTopLevelObjectives
+      ? record.topLevelObjectiveLabel
+      : record.objectiveLabel;
   }
 
-  function resolveGoalColor(goal: string) {
-    const color = goalColors.find((x) => x.label === goal);
+  function resolveObjectiveColor(objectiveLabel: string) {
+    const color = objectiveColors.find((x) => x.label === objectiveLabel);
     if (color) {
       return color.color;
     }
-    const parent = data.find((x) => x.goal === goal)?.topLevelGoal;
-    const parentColor = goalColors.find((x) => x.label === parent);
+    const parent = data.find(
+      (x) => x.objectiveLabel === objectiveLabel
+    )?.topLevelObjectiveLabel;
+    const parentColor = objectiveColors.find((x) => x.label === parent);
     if (parentColor) {
       return parentColor.color;
     }
@@ -47,53 +51,55 @@
   }
 
   let top = $derived.by(() => {
-    let sumFocusByGoal: { [goal: string]: number } = {};
+    let sumFocusByObjective: { [objectiveLabel: string]: number } = {};
     for (let record of data) {
-      if (sumFocusByGoal[resolveKey(record)]) {
-        sumFocusByGoal[resolveKey(record)] += record.focus;
+      if (sumFocusByObjective[resolveKey(record)]) {
+        sumFocusByObjective[resolveKey(record)] += record.focus;
       } else {
-        sumFocusByGoal[resolveKey(record)] = record.focus;
+        sumFocusByObjective[resolveKey(record)] = record.focus;
       }
     }
-    return Object.entries(sumFocusByGoal)
+    return Object.entries(sumFocusByObjective)
       .sort(([, focusA], [, focusB]) => focusB - focusA)
-      .map(([goal, focus]) => {
+      .map(([objectiveLabel, focus]) => {
         return {
-          label: !isValidString(goal) ? "No goal" : goal,
-          id: goal,
+          label: !isValidString(objectiveLabel)
+            ? "No objective"
+            : objectiveLabel,
+          id: objectiveLabel,
           value: focus,
-          previousValue: calculatePrevious(goal)?.focus ?? 0,
-          color: resolveGoalColor(goal)
+          previousValue: calculatePrevious(objectiveLabel)?.focus ?? 0,
+          color: resolveObjectiveColor(objectiveLabel)
         };
       })
       .slice(0, 10);
   });
 
-  function calculatePrevious(goal: string) {
-    let sumFocusByGoal: { [goal: string]: number } = {};
+  function calculatePrevious(objectiveLabel: string) {
+    let sumFocusByObjective: { [objectiveLabel: string]: number } = {};
     for (let record of previousTimePeriodData) {
-      if (sumFocusByGoal[resolveKey(record)]) {
-        sumFocusByGoal[resolveKey(record)] += record.focus;
+      if (sumFocusByObjective[resolveKey(record)]) {
+        sumFocusByObjective[resolveKey(record)] += record.focus;
       } else {
-        sumFocusByGoal[resolveKey(record)] = record.focus;
+        sumFocusByObjective[resolveKey(record)] = record.focus;
       }
     }
 
-    let previousEntry = Object.entries(sumFocusByGoal)
-      .map(([goal, focus]) => {
+    let previousEntry = Object.entries(sumFocusByObjective)
+      .map(([objectiveLabel, focus]) => {
         return {
-          goal,
+          objectiveLabel,
           focus
         };
       })
-      .find((entry) => entry.goal === goal);
+      .find((entry) => entry.objectiveLabel === objectiveLabel);
     return previousEntry;
   }
   let columns = $derived.by(() => {
     const nextColumns: TableColumn[] = [
       {
         key: "label",
-        label: "Goal",
+        label: "Objective",
         type: TableCellType.CUSTOM,
         component:
           LabelColumnCell as unknown as ConstructorOfATypedSvelteComponent,

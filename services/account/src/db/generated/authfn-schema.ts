@@ -188,28 +188,6 @@ export const oauth_accounts = pgTable(
 );
 
 
-export const api_keys = pgTable(
-  'nucleus_account_api_keys',
-  {
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
-  expiresAt: timestamp('expires_at', { withTimezone: true }),
-  id: text('id').primaryKey().notNull(),
-  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
-  metadata: json('metadata'),
-  name: text('name'),
-  revokedAt: timestamp('revoked_at', { withTimezone: true }),
-  scopes: json('scopes'),
-  secretHash: text('secret_hash').notNull(),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
-  userId: text('user_id'),
-  },
-  (table) => ({
-    idx_authfn_api_keys_secret_hash: uniqueIndex('idx_authfn_api_keys_secret_hash').on(table.secretHash),
-    idx_authfn_api_keys_user_id_created_at: index('idx_authfn_api_keys_user_id_created_at').on(table.userId, table.createdAt)
-  })
-);
-
-
 export const two_factor_enrollments = pgTable(
   'nucleus_account_two_factor_enrollments',
   {
@@ -257,6 +235,28 @@ export const two_factor_challenges = pgTable(
   (table) => ({
     idx_authfn_two_factor_challenges_expires_at: index('idx_authfn_two_factor_challenges_expires_at').on(table.expiresAt),
     idx_authfn_two_factor_challenges_user_id: index('idx_authfn_two_factor_challenges_user_id').on(table.userId)
+  })
+);
+
+
+export const api_keys = pgTable(
+  'nucleus_account_api_keys',
+  {
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
+  id: text('id').primaryKey().notNull(),
+  lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+  metadata: json('metadata'),
+  name: text('name'),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  scopes: json('scopes'),
+  secretHash: text('secret_hash').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull(),
+  userId: text('user_id'),
+  },
+  (table) => ({
+    idx_authfn_api_keys_secret_hash: uniqueIndex('idx_authfn_api_keys_secret_hash').on(table.secretHash),
+    idx_authfn_api_keys_user_id_created_at: index('idx_authfn_api_keys_user_id_created_at').on(table.userId, table.createdAt)
   })
 );
 

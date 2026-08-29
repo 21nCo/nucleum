@@ -22,7 +22,7 @@ import BackgroundMusic from "@21n/products/pointron/focus/backgroundMusic/Backgr
 import { Size } from "@21n/types/size.enum";
 import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
 import { get } from "svelte/store";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import {
   toasts,
   confirmationNotification
@@ -30,10 +30,8 @@ import {
 import FocusItemsModal from "@21n/products/pointron/focus/advanced/FocusItemsModal.svelte";
 import BreakReminderModal from "@21n/products/pointron/focus/elements/BreakReminderModal.svelte";
 import PredefinedIntervalNotifierOverlay from "@21n/products/pointron/focus/elements/PredefinedIntervalNotifierOverlay.svelte";
-import {
-  manualLogStore,
-  sessionLogStore
-} from "@21n/products/pointron/logs/log.store";
+import { manualLogStore } from "@21n/products/pointron/logs/log.store";
+import { datafn } from "@21n/stores/datafn.store";
 import ControlPanelLogsPane from "@21n/products/pointron/logs/ControlPanelLogsPane.svelte";
 import SessionLogPage from "@21n/products/pointron/logs/logPage/SessionLogPage.svelte";
 import ManualLogPane from "@21n/products/pointron/logs/manualLog/ManualLogPane.svelte";
@@ -41,10 +39,7 @@ import LogsPane from "@21n/products/pointron/logs/LogsPane.svelte";
 import AnalyticsV2 from "@21n/products/pointron/analytics/AnalyticsV2.svelte";
 import { Orientation, Placement } from "@21n/types/direction.enum";
 import PresetSettings from "@21n/products/pointron/focus/advanced/presets/PresetSettings.svelte";
-import {
-  sessionStore,
-  activeSession
-} from "@21n/products/pointron/focus/session.store";
+import { activeSession } from "@21n/products/pointron/focus/session.store";
 import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
 import { PointronEvent } from "@21n/types/pointron/pointronEvent.enum";
 import AnalyticsViewsPageEditMobile from "@21n/products/pointron/analytics/AnalyticsViewsPageEditMobile.svelte";
@@ -54,53 +49,134 @@ import ImportOnboarding from "@21n/products/pointron/settings/data/ImportOnboard
 import { Action } from "@21n/types/action.enum";
 import FocusPlayerCommandModeWidget from "@21n/products/pointron/focus/player/FocusPlayerCommandModeWidget.svelte";
 import PointronLibrary from "@21n/products/pointron/library/PointronLibrary.svelte";
-import { SearchStore } from "@21n/components/record/record.store";
-import { goalStore } from "@21n/components/goals/goal.store";
-import GoalSearchResultItem from "@21n/components/goals/GoalSearchResultItem.svelte";
+import ObjectiveSearchResultItem from "@21n/components/goals/GoalSearchResultItem.svelte";
 import { SessionState } from "@21n/types/pointron/sessionState.enum";
 import {
   isSameResource,
   resolveResourceIcon,
   resourceAction,
-  resourceCacheComponentKey,
   resourceInList
-} from "@21n/components/flux/resourceStores/resource.utils";
-import ResourceCache from "@21n/components/record/ResourceCache.svelte";
+} from "@21n/data/datafn/resource.utils";
 import ResourceBrowser from "@21n/components/library/resourceBrowser/ResourceBrowser.svelte";
-import {
-  AccessMode,
-  ResourceActionType
-} from "@21n/components/flux/resourceStores/resource.type";
+import { AccessMode, ResourceActionType } from "@21n/data/datafn/resource.type";
 import NodeLoadingPulse from "@21n/elements/feedback/animations/NodeLoadingPulse.svelte";
+import { appMenuActionLabelsByAction } from "@21n/products/product-nav.config";
 //TODO - use dummy task if this causes any issues - like earlier
 import Task from "@21n/components/tasks/Task.svelte";
 import CreateTask from "@21n/components/tasks/CreateTask.svelte";
-import { taskStore } from "@21n/components/tasks/task.store";
-import Goal from "@21n/components/goals/Goal.svelte";
-import GoalTitleLabelPart from "@21n/components/goals/GoalTitleLabelPart.svelte";
+import Objective from "@21n/components/goals/Goal.svelte";
+import ObjectiveTitleLabelPart from "@21n/components/goals/GoalTitleLabelPart.svelte";
 import { AppSearchParam } from "@21n/types/appStore.type";
-import type { IGoal } from "@21n/components/goals/goal.type";
+import {
+  ObjectiveStatus,
+  ObjectiveType,
+  type IObjective
+} from "@21n/components/goals/goal.type";
+import { updateObjectiveParent } from "@21n/components/goals/goal.utils";
 import LibraryPanelContentResolver from "@21n/components/library/LibraryPanelContentResolver.svelte";
-import type { IRecordId } from "@21n/types/data.type";
+import { generateResourceId } from "@21n/data/datafn/id.utils";
 
 const isSessionRunningPreCondition = () => get(activeSession).isSessionRunning;
 
-const deleteSessionCascade = async (sessionId: IRecordId) => {
-  await sessionStore.delete(sessionId, {
-    context: PointronAction.DELETE_SESSION
+function pruneUndefined(input: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(input).filter(([, value]) => value !== undefined)
+  );
+}
+
+async function queryObjectives(
+  searchQuery: string,
+  filters?: Record<string, unknown>,
+  limit = 50
+) {
+  const baseQuery = {
+    select: ["*", "parent.*"],
+    search: searchQuery
+      ? {
+          query: searchQuery,
+          fields: ["label"]
+        }
+      : undefined,
+    filters,
+    limit
+  };
+  const [searchResult, labelResult] = await Promise.all([
+    datafn.objective.query(baseQuery),
+    searchQuery
+      ? datafn.objective.query({
+          select: ["*", "parent.*"],
+          filters: pruneUndefined({
+            ...(filters ?? {}),
+            label: { $contains: searchQuery }
+          }),
+          limit
+        })
+      : Promise.resolve({ data: [] })
+  ]);
+  return rankObjectiveResults(
+    [...(labelResult.data ?? []), ...(searchResult.data ?? [])] as IObjective[],
+    searchQuery
+  );
+}
+
+function rankObjectiveResults(items: IObjective[], searchQuery: string) {
+  const query = searchQuery.trim().toLowerCase();
+  const seen = new Set<string>();
+  const deduped = items.filter((item) => {
+    const id = item.id?.toString();
+    if (!id || seen.has(id)) return false;
+    seen.add(id);
+    return true;
   });
-  const sessionLogs = await sessionLogStore.selectMany({
-    properties: {
-      select: ["id"]
-    },
-    filters: {
-      sessionId: String(sessionId)
+  if (!query) return deduped;
+  return deduped.sort((a, b) => {
+    const aRank = resolveObjectiveSearchRank(a, query);
+    const bRank = resolveObjectiveSearchRank(b, query);
+    if (aRank !== bRank) return aRank - bRank;
+    return (a.label ?? "").localeCompare(b.label ?? "");
+  });
+}
+
+function resolveObjectiveSearchRank(item: IObjective, query: string) {
+  const label = (item.label ?? "").toLowerCase();
+  if (label === query) return 0;
+  if (label.startsWith(query)) return 1;
+  if (label.includes(query)) return 2;
+  return 3;
+}
+
+async function createObjective(params?: {
+  label?: string;
+  isQuickFocus?: boolean;
+  context?: string;
+  isPreventOpenAfterCreate?: boolean;
+  linkSearchParam?: string;
+}) {
+  const objective = {
+    id: generateResourceId(Resource.objective),
+    label: params?.label ?? "",
+    type: ObjectiveType.INDEFINITE,
+    status: ObjectiveStatus.NOT_STARTED,
+    isPinnedForQuickFocus: params?.isQuickFocus ?? false
+  } as IObjective;
+  await datafn.objective.mutate({
+    operation: "insert",
+    id: objective.id.toString(),
+    record: objective,
+    context:
+      params?.context ??
+      resourceAction(Resource.objective, ResourceActionType.CREATE)
+  });
+  toasts.success("New objective created successfully");
+  if (params?.isPreventOpenAfterCreate) return objective;
+  appStore.openResource(objective.id, AccessMode.POP, {
+    searchParams: {
+      [AppSearchParam.EDIT]: true,
+      [AppSearchParam.LINK]: params?.linkSearchParam ?? null
     }
   });
-  if (sessionLogs?.length) {
-    await sessionLogStore.deleteMany(sessionLogs.map((log: any) => log.id));
-  }
-};
+  return objective;
+}
 
 export const pointronActions: IAction[] = [
   {
@@ -351,7 +427,7 @@ export const pointronActions: IAction[] = [
     component: Focus,
     icon: "focus",
     type: ActionType.LIVE,
-    label: "Focus",
+    label: appMenuActionLabelsByAction[PointronAction.FOCUS],
     accessMode: AccessMode.RIGHT,
     liveActionParams: {
       isOpeningBehaviorConfigurable: true
@@ -365,15 +441,8 @@ export const pointronActions: IAction[] = [
     // icon: "chart-line-up",
     // icon: "heroicons:rectangle-group",
     icon: "overview",
-    label: "Overview"
+    label: appMenuActionLabelsByAction[Action.OVERVIEW]
   },
-  // {
-  //   action: "goal",
-  //   component: Goals,
-  //   icon: "goals",
-  //   type: ActionType.PAGE,
-  //   label: "Goals"
-  // },
   {
     action: "alerts",
     cmdLabel: "Alert Settings",
@@ -491,33 +560,35 @@ export const pointronActions: IAction[] = [
   },
   {
     action: PointronAction.PIN_TO_QUICK_FOCUS,
-    label: "Pin a goal to quick focus",
+    label: "Pin an objective to quick focus",
     type: ActionType.SEARCH_CMD,
     searchActionParams: {
-      placeholder: "Select a goal to pin",
-      searchResultComponent: GoalSearchResultItem,
+      placeholder: "Select an objective to pin",
+      searchResultComponent: ObjectiveSearchResultItem,
       searchCallback: async (searchQuery: string) => {
-        const result = await new SearchStore(Resource.goal).select({
-          searchQuery,
-          filters: {
-            isPinnedForQuickFocus: false
-          }
+        return queryObjectives(searchQuery, {
+          isPinnedForQuickFocus: false
         });
-        return result;
       },
       callback: async (item: any) => {
-        const result = await goalStore.modify(
-          item.id,
-          {
-            isPinnedForQuickFocus: true
-          },
-          {
+        try {
+          const result = await datafn.objective.mutate({
+            operation: "merge",
+            id: item.id.toString(),
+            record: {
+              id: item.id.toString(),
+              isPinnedForQuickFocus: true
+            },
             context: PointronAction.PIN_TO_QUICK_FOCUS
+          });
+          if (!(result as { ok?: boolean } | undefined)?.ok) {
+            toasts.error("Failed to pin objective to quick focus");
+            return;
           }
-        );
-        if (result)
-          toasts.success(`Goal **${item.label}** pinned to quick focus`);
-        else toasts.error("Failed to pin goal to quick focus");
+          toasts.success(`Objective **${item.label}** pinned to quick focus`);
+        } catch {
+          toasts.error("Failed to pin objective to quick focus");
+        }
       }
     }
   },
@@ -526,15 +597,13 @@ export const pointronActions: IAction[] = [
     label: "Quick focus",
     type: ActionType.SEARCH_CMD,
     searchActionParams: {
-      searchResultComponent: GoalSearchResultItem,
+      searchResultComponent: ObjectiveSearchResultItem,
       searchCallback: async (searchQuery: string) => {
-        const result = await new SearchStore(Resource.goal).select({
-          searchQuery,
-          isIncludeSubItems: true
+        return queryObjectives(searchQuery, {
+          id: { $ne: "" }
         });
-        return result;
       },
-      placeholder: "Select a goal to focus",
+      placeholder: "Select an objective to focus",
       callback: (item: any) => {
         activeSession.quickStart(item.id);
       }
@@ -624,13 +693,19 @@ export const pointronActions: IAction[] = [
           icon: "trash",
           variant: ButtonVariant.DANGER,
           callback: async () => {
-            const sessionId = params?.componentParams?.id;
+            const sessionId =
+              params?.componentParams?.id ??
+              new URLSearchParams(window.location.search).get("r");
             if (sessionId == null) {
               toasts.error("Missing session id. Aborting delete.");
               return false;
             }
             try {
-              await deleteSessionCascade(sessionId);
+              await datafn.session.mutate({
+                operation: "delete",
+                id: sessionId,
+                context: PointronAction.DELETE_SESSION
+              });
               toasts.success("Session log deleted successfully");
               appStore.closeResource({ id: sessionId });
               return true;
@@ -660,13 +735,13 @@ export const pointronActions: IAction[] = [
   },
   {
     action: Action.LIBRARY,
-    label: "Library",
+    label: appMenuActionLabelsByAction[Action.LIBRARY],
     icon: "library",
     panel: PointronLibrary,
     component: LibraryPanelContentResolver,
     type: ActionType.PAGE,
     componentParams: {
-      defaultResource: Resource.goal
+      defaultResource: Resource.objective
     },
     modalParams: {
       layout: {
@@ -677,54 +752,38 @@ export const pointronActions: IAction[] = [
   },
   {
     action: Action.LIBRARY_PORTRAIT,
-    label: "Library",
+    label: appMenuActionLabelsByAction[Action.LIBRARY_PORTRAIT],
     icon: "library",
     component: PointronLibrary,
     type: ActionType.PAGE
   },
   {
-    action: resourceCacheComponentKey(Resource.goal),
-    type: ActionType.CACHE,
-    component: ResourceCache,
-    componentParams: {
-      resource: Resource.goal
-    }
-  },
-  {
-    action: resourceCacheComponentKey(Resource.task),
-    type: ActionType.CACHE,
-    component: ResourceCache,
-    componentParams: {
-      resource: Resource.task
-    }
-  },
-  {
-    action: resourceAction(Resource.goal, ResourceActionType.BROWSE),
+    action: resourceAction(Resource.objective, ResourceActionType.BROWSE),
     component: ResourceBrowser,
-    label: "Goals",
-    icon: resolveResourceIcon(Resource.goal),
+    label: "Objectives",
+    icon: resolveResourceIcon(Resource.objective),
     type: ActionType.PAGE,
     componentParams: {
-      resource: Resource.goal
+      resource: Resource.objective
     },
     loadingComponent: NodeLoadingPulse
   },
   {
-    action: resourceAction(Resource.goal, ResourceActionType.CREATE),
-    label: "Create a new goal",
+    action: resourceAction(Resource.objective, ResourceActionType.CREATE),
+    label: "Create a new objective",
     type: ActionType.FUNCTION,
     fn: async (props?: IActionFnParams) => {
-      await goalStore.save({
+      await createObjective({
         ...props?.componentParams,
         linkSearchParam: props?.searchParams?.[AppSearchParam.LINK]
       });
     }
   },
   {
-    action: Resource.goal,
+    action: Resource.objective,
     type: ActionType.MODAL,
-    component: Goal,
-    resourceLabelRenderer: GoalTitleLabelPart,
+    component: Objective,
+    resourceLabelRenderer: ObjectiveTitleLabelPart,
     modalParams: {
       layout: {
         size: Size.xxl,
@@ -736,31 +795,27 @@ export const pointronActions: IAction[] = [
     }
   },
   {
-    action: Action.EDIT_TASK_GOAL,
+    action: Action.EDIT_TASK_OBJECTIVE,
     type: ActionType.SEARCH_CMD,
-    cmdLabel: "Edit goal for task",
+    cmdLabel: "Edit objective for task",
     isMeta: true,
     searchActionParams: {
-      placeholder: "select a goal",
-      searchResultComponent: GoalSearchResultItem,
+      placeholder: "select an objective",
+      searchResultComponent: ObjectiveSearchResultItem,
       searchCallback: async (query: string, componentParams?: any) => {
-        return new SearchStore(Resource.goal).select({
-          resource: Resource.goal,
-          searchQuery: query,
-          limit: 50
-        });
+        return queryObjectives(query, undefined, 50);
       },
       callback: async (item: any, componentParams?: any) => {
-        await taskStore.modify(
-          componentParams.taskId,
-          {
-            goalId: item.id
+        await datafn.task.mutate({
+          operation: "merge",
+          id: componentParams.taskId.toString(),
+          record: {
+            id: componentParams.taskId.toString(),
+            objectiveId: item.id
           },
-          {
-            context: componentParams?.context
-          }
-        );
-        toasts.success(`Goal updated for task`);
+          context: componentParams?.context
+        });
+        toasts.success(`Objective updated for task`);
       }
     }
   },
@@ -805,31 +860,30 @@ export const pointronActions: IAction[] = [
     loadingComponent: NodeLoadingPulse
   },
   {
-    action: PointronAction.SELECT_PARENT_GOAL,
+    action: PointronAction.SELECT_PARENT_OBJECTIVE,
     isMeta: true,
-    cmdLabel: "Select parent goal",
+    cmdLabel: "Select parent objective",
     type: ActionType.SEARCH_CMD,
     searchActionParams: {
-      searchResultComponent: GoalSearchResultItem,
+      searchResultComponent: ObjectiveSearchResultItem,
       searchCallback: async (searchQuery: string, componentParams?: any) => {
-        const result = await new SearchStore(Resource.goal).select({
-          searchQuery,
-          isIncludeSubItems: true
+        const result = await queryObjectives(searchQuery, {
+          id: { $ne: "" }
         });
         return result.filter(
-          (goal: IGoal) =>
+          (objective: IObjective) =>
             !(
-              goal.parent &&
-              goal.parent.some(resourceInList(componentParams.src))
-            ) && !isSameResource(goal, componentParams.src)
+              objective.parent &&
+              objective.parent.some(resourceInList(componentParams.src))
+            ) && !isSameResource(objective, componentParams.src)
         );
       },
-      placeholder: "Select a goal",
+      placeholder: "Select an objective",
       callback: (item: any, componentParams?: any) => {
-        if (componentParams.action === PointronAction.CONVERT_TO_SUBGOAL) {
-          goalStore.convertToSubGoal(componentParams.src, item);
+        if (componentParams.action === PointronAction.CONVERT_TO_SUBOBJECTIVE) {
+          updateObjectiveParent(componentParams.src, item);
         } else if (componentParams.action === ResourceActionType.MOVE) {
-          goalStore.moveSubgoal(componentParams.src, item);
+          updateObjectiveParent(componentParams.src, item);
         }
       }
     }

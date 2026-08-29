@@ -6,9 +6,9 @@ import { handleDragNDrop, handleFocusItemsDND } from "./dragDrop";
 
 const createDragContext = () => {
   const items = [
-    { taskId: "1", goalId: "g1", order: 1 },
-    { taskId: "2", goalId: "g1", order: 2 },
-    { taskId: "3", goalId: "g1", order: 3 }
+    { taskId: "1", objectiveId: "g1", order: 1 },
+    { taskId: "2", objectiveId: "g1", order: 2 },
+    { taskId: "3", objectiveId: "g1", order: 3 }
   ];
 
   return {
@@ -46,7 +46,7 @@ describe("client/utils/dragDrop", () => {
       handleDragNDrop(
         {
           ...dragAndDrop,
-          dropItem: { ...dragAndDrop.dropItem, goalId: "other" }
+          dropItem: { ...dragAndDrop.dropItem, objectiveId: "other" }
         },
         items
       )
@@ -55,9 +55,9 @@ describe("client/utils/dragDrop", () => {
 
   it("normalises focus orders when dragging tasks", () => {
     const items = [
-      { taskId: "1", goalId: "g1", order: 10 },
-      { taskId: "2", goalId: "g1", order: 20 },
-      { taskId: "3", goalId: "g1", order: 30 }
+      { taskId: "1", objectiveId: "g1", order: 10 },
+      { taskId: "2", objectiveId: "g1", order: 20 },
+      { taskId: "3", objectiveId: "g1", order: 30 }
     ];
     const result = handleFocusItemsDND(
       {

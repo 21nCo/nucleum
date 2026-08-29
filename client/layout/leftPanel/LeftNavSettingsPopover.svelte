@@ -3,7 +3,7 @@
 <script lang="ts">
   import { appMenuStore } from "@21n/stores/appMenu/appMenu.store";
   import { appStore } from "@21n/stores/app.store";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import {
@@ -13,20 +13,17 @@
   import {
     resolveProductResources,
     shiftResourceInArray
-  } from "@21n/components/flux/resourceStores/resource.utils";
+  } from "@21n/data/datafn/resource.utils";
   import { cn } from "@21n/utils/ui.utils";
   import SwitchInput from "@21n/elements/toggle/SwitchInput.svelte";
   import Text from "@21n/elements/text/Text.svelte";
   import { TextStyle } from "@21n/types/text.enum";
   import { uiState } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { properCase } from "@21n/shared-utils/text.utils";
-  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
   import { InfoTextType } from "@21n/types/text.type";
+  import { onDestroy, onMount } from "svelte";
   let { onUpdate }: { onUpdate?: () => void } = $props();
 
   interface ResourceItem {
@@ -79,6 +76,14 @@
     });
     onUpdate?.();
   }
+
+  onMount(() => {
+    $appStore.isDnDPageActive = true;
+  });
+
+  onDestroy(() => {
+    $appStore.isDnDPageActive = false;
+  });
 </script>
 
 <div class="w-96 bg-bgs1 p-3 flex flex-col gap-6 border border-brs2 rounded-md">
@@ -117,14 +122,14 @@
               <span class="text-fgs2">{resource.name}</span>
             </div>
             <label class="relative inline-block w-10 h-5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  class="opacity-0 w-0 h-0"
-                  checked={resource.isPinned}
-                  onchange={() => {
-                    resource.isPinned = !resource.isPinned;
-                    persistChanges();
-                  }}
+              <input
+                type="checkbox"
+                class="opacity-0 w-0 h-0"
+                checked={resource.isPinned}
+                onchange={() => {
+                  resource.isPinned = !resource.isPinned;
+                  persistChanges();
+                }}
               />
               <span
                 class={cn(
@@ -160,5 +165,3 @@
     </div>
   </div>
 </div>
-
-<ComponentBaseLayer hasDragAndDrop={true} />

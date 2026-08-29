@@ -1,150 +1,195 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { accessLogStore } from "@21n/components/accessLogging/accesslog.store";
+  import { get } from "svelte/store";
+  import type { DatafnChangelogEntry } from "@datafn/client";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import type { IAccessLog } from "@21n/components/accessLogging/accessLog.type";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { flux } from "@21n/components/flux/flux";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import { logger } from "@21n/components/debug/logger.client";
-  import { PersistenceActionType, type IMutation } from "@21n/types/data.type";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { resolveMutationAction } from "@21n/components/flux/flux.utils";
-  import { sessionStore } from "@21n/products/pointron/focus/session.store";
-  import { sessionLogStore } from "@21n/products/pointron/logs/log.store";
   import type {
     ISessionThumb,
     ISessionLog
   } from "@21n/products/pointron/logs/log.type";
-  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { isSameResource } from "@21n/data/datafn/resource.utils";
   import { formatSeconds } from "@21n/utils/time.utils";
   import { appStore } from "@21n/stores/app.store";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import { cn } from "@21n/utils/ui.utils";
+  import { datafn, datafnRuntime } from "@21n/stores/datafn.store";
+  import { toSvelteStore } from "@datafn/svelte";
 
-  let {
-    goalId,
-    createdAt
-  }: {
-    goalId: string;
-    createdAt: string;
-  } = $props();
-
-  let accessLogs = $state<{
+  type ActivityLog = {
     action: string;
     timestamp: Date;
     type: "activity" | "focus";
     session?: ISessionThumb;
     logs?: ISessionLog[];
-  }[]>([]);
-  let isLoading = $state(false);
+  };
 
-  onMount(() => {
-    refresh();
+  let {
+    objectiveId,
+    createdAt
+  }: {
+    objectiveId: string;
+    createdAt: string;
+  } = $props();
+
+  let changelogLogs = $state<ActivityLog[]>([]);
+  let isChangelogLoading = $state(false);
+  const accessLogStore = $derived.by(() =>
+    toSvelteStore<IAccessLog[]>(
+      objectiveId
+        ? datafn.accessLog.signal({
+            filters: {
+              resourceId: objectiveId.toString()
+            }
+          })
+        : datafn.emptySignal([]),
+      { initialData: [] }
+    )
+  );
+  const sessionLogStore = $derived.by(() =>
+    toSvelteStore<ISessionLog[]>(
+      objectiveId
+        ? datafn.sessionLog.signal({
+            filters: {
+              objectiveId: objectiveId.toString()
+            }
+          })
+        : datafn.emptySignal([]),
+      { initialData: [] }
+    )
+  );
+  const sessionLogs = $derived($sessionLogStore.data);
+  const sessionIds = $derived.by(() => [
+    ...new Set(
+      sessionLogs
+        .map((log) => log.sessionId?.toString())
+        .filter((sessionId): sessionId is string => Boolean(sessionId))
+    )
+  ]);
+  const sessionStore = $derived.by(() =>
+    toSvelteStore<ISessionThumb[]>(
+      datafn.session.signal({
+        filters: {
+          id: { $in: sessionIds }
+        }
+      }),
+      { initialData: [] }
+    )
+  );
+  const accessLogs = $derived.by(() => {
+    const createdLogs: ActivityLog[] = createdAt
+      ? [
+          {
+            action: "Created",
+            timestamp: new Date(createdAt),
+            type: "activity"
+          }
+        ]
+      : [];
+    const openLogs: ActivityLog[] = $accessLogStore.data.map((log) => ({
+      action: "Opened",
+      timestamp: new Date(log.createdAt),
+      type: "activity"
+    }));
+    const focusLogs: ActivityLog[] = $sessionStore.data.map((session) => ({
+      action: `Focus session - ${formatSeconds(session.elapsed)}`,
+      timestamp: new Date(session.startUnix),
+      type: "focus",
+      session,
+      logs: sessionLogs.filter((log) =>
+        log.sessionId ? isSameResource(log.sessionId, session) : false
+      )
+    }));
+    return [...createdLogs, ...openLogs, ...changelogLogs, ...focusLogs].sort(
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+    );
+  });
+  const isLoading = $derived(
+    isChangelogLoading ||
+      $accessLogStore.loading ||
+      $accessLogStore.refreshing ||
+      $sessionLogStore.loading ||
+      $sessionLogStore.refreshing ||
+      $sessionStore.loading ||
+      $sessionStore.refreshing
+  );
+
+  $effect(() => {
+    if (objectiveId) void refreshChangelog(objectiveId.toString());
+    else changelogLogs = [];
   });
 
-  async function refresh() {
+  async function refreshChangelog(objectiveId: string) {
     try {
-      isLoading = true;
-      accessLogs = [];
-
-      // Add creation event
-      if (createdAt) {
-        accessLogs.push({
-          action: "Created",
-          timestamp: new Date(createdAt),
-          type: "activity"
-        });
-      }
-
-      if (!goalId) return;
-
-      // Get access logs
-      const result = await accessLogStore.selectMany({
-        filters: {
-          resourceId: goalId.toString()
-        }
+      isChangelogLoading = true;
+      const mutations = await get(datafnRuntime)?.storage?.changelogList({
+        limit: 500
       });
-
-      if (isValidArrayWithData(result)) {
-        const openActions = result.map((log: IAccessLog) => ({
-          action: "Opened",
-          timestamp: new Date(log.createdAt),
-          type: "activity"
-        }));
-        accessLogs = [...accessLogs, ...openActions];
-      }
-
-      // Get mutations
-      const mutations = await flux.selectMany(
-        Resource.mutation,
-        {
-          filters: {
-            resource: Resource.goal,
-            resourceId: goalId.toString()
-          }
-        },
-        {
-          isUseCloud: true
-        }
-      );
-      console.log({ mutations });
 
       if (isValidArrayWithData(mutations)) {
-        const _mutations = mutations.filter(
-          (m: IMutation) =>
-            m.params.action !== PersistenceActionType.MERGE ||
-            (m.params.action === PersistenceActionType.MERGE &&
-              m.params.record.modifiedAt)
+        const objectiveMutations = (mutations ?? []).filter((mutation) =>
+          isObjectiveMutation(mutation, objectiveId)
         );
-        accessLogs = [
-          ...accessLogs,
-          ..._mutations.map((mutation: IMutation) => ({
-            action: resolveMutationAction(mutation),
-            timestamp: new Date(mutation.createdAt),
-            type: "activity"
+        changelogLogs = [
+          ...objectiveMutations.map((mutation) => ({
+            action: resolveDatafnAction(
+              mutation.mutation.operation?.toString()
+            ),
+            timestamp: resolveDatafnTimestamp(mutation),
+            type: "activity" as const
           }))
         ];
-      }
-
-      const sessionLogs = await sessionLogStore.selectMany({
-        filters: {
-          goalId: goalId.toString()
-        }
-      });
-
-      if (isValidArrayWithData(sessionLogs)) {
-        const sessionsResult = await sessionStore.selectMany({
-          filters: {
-            id: sessionLogs.map((log: ISessionLog) => log.sessionId)
-          }
-        });
-
-        if (isValidArrayWithData(sessionsResult)) {
-          const focusSessions = sessionsResult.map(
-            (session: ISessionThumb) => ({
-              action: `Focus session - ${formatSeconds(session.elapsed)}`,
-              timestamp: new Date(session.startUnix),
-              type: "focus",
-              session,
-              logs: sessionLogs.filter((log: ISessionLog) =>
-                isSameResource(log.sessionId, session)
-              )
-            })
-          );
-          accessLogs = [...accessLogs, ...focusSessions];
-        }
-      }
-
-      // Sort all activities by timestamp
-      accessLogs = accessLogs.sort(
-        (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
-      );
+      } else changelogLogs = [];
     } catch (e) {
-      logger.error({ at: "GoalAllActivityPanel.refresh", e });
+      logger.error({ at: "ObjectiveAllActivityPanel.refreshChangelog", e });
+      changelogLogs = [];
     } finally {
-      isLoading = false;
+      isChangelogLoading = false;
     }
+  }
+
+  function isObjectiveMutation(entry: DatafnChangelogEntry, objectiveId: string) {
+    const mutation = entry.mutation;
+    if (mutation.resource !== Resource.objective) return false;
+    const mutationIds = Array.isArray(mutation.id)
+      ? mutation.id
+      : [mutation.id, (mutation.record as Record<string, unknown>)?.id];
+    return mutationIds
+      .filter(Boolean)
+      .some((id) => id?.toString() === objectiveId);
+  }
+
+  function resolveDatafnAction(operation?: string) {
+    switch (operation) {
+      case "insert":
+        return "Created";
+      case "merge":
+      case "replace":
+        return "Updated";
+      case "trash":
+        return "Deleted";
+      case "archive":
+        return "Archived";
+      case "restore":
+      case "unarchive":
+        return "Restored";
+      case "delete":
+        return "Removed";
+      default:
+        return operation ?? "Updated";
+    }
+  }
+
+  function resolveDatafnTimestamp(entry: DatafnChangelogEntry) {
+    if (entry.timestampMs) return new Date(entry.timestampMs);
+    if (entry.timestamp) return new Date(entry.timestamp);
+    const record = entry.mutation.record as Record<string, unknown> | undefined;
+    const recordTimestamp = record?.updatedAt ?? record?.createdAt;
+    if (recordTimestamp) return new Date(recordTimestamp as string | number);
+    return new Date();
   }
 </script>
 
@@ -164,7 +209,7 @@
           onclick={() => {
             if (accessLog.type === "focus" && accessLog.session?.id) {
               appStore.openResource(accessLog.session.id, AccessMode.POP, {
-                origin: goalId
+                origin: objectiveId
               });
             }
           }}

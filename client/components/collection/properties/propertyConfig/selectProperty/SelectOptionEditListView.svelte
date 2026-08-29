@@ -18,6 +18,7 @@
     onRemove = undefined,
     onDefault = undefined,
     onEnter = undefined,
+    onOptionChange = undefined,
     onChange = undefined
   }: {
     options: IPropertyConfigOption[];
@@ -33,6 +34,9 @@
     onRemove?: ((event: CustomEvent<string>) => void) | undefined;
     onDefault?: ((event: CustomEvent<string | null>) => void) | undefined;
     onEnter?: ((event: CustomEvent<string>) => void) | undefined;
+    onOptionChange?:
+      | ((event: CustomEvent<Partial<IPropertyConfigOption> & { id: string }>) => void)
+      | undefined;
     onChange?: ((event?: CustomEvent<void>) => void) | undefined;
   } = $props();
   let isEditingGroupLabel = $state(false);
@@ -164,7 +168,11 @@
       onRemove={onRemove}
       onDefault={onDefault}
       onEnter={onEnter}
-      onChange={onChange}
+      onChange={(event) => {
+        onOptionChange?.(
+          event as CustomEvent<Partial<IPropertyConfigOption> & { id: string }>
+        );
+      }}
     />
   {/each}
   <div class="flex justify-center mt-1">

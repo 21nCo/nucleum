@@ -117,7 +117,8 @@
   }
 
   function addToUsedList(emoji: AvatarWithCode<EmojiAvatar>) {
-    let index = $userPreferences.avatarPicker.usedEmojis?.findIndex((el: EmojiEntry) => {
+    const usedEmojis = [...($userPreferences.avatarPicker.usedEmojis ?? [])];
+    let index = usedEmojis.findIndex((el: EmojiEntry) => {
       const usedEmoji = resolveEmojiData(el);
       return (
         usedEmoji?.name === emoji.name &&
@@ -128,22 +129,20 @@
       let tempEmoji = { ...emoji } as AvatarWithCode<EmojiAvatar>;
       tempEmoji.type = AvatarType.EMOJI;
       tempEmoji.frequency = 1;
-      $userPreferences.avatarPicker.usedEmojis = [
-        ...$userPreferences.avatarPicker.usedEmojis,
-        [tempEmoji]
-      ];
+      usedEmojis.push([tempEmoji]);
     } else {
-      const usedEmoji = resolveEmojiData($userPreferences.avatarPicker.usedEmojis[index]);
+      const usedEmoji = resolveEmojiData(usedEmojis[index]);
       if (usedEmoji) {
         usedEmoji.frequency = (usedEmoji.frequency ?? 0) + 1;
       }
     }
 
-    $userPreferences.avatarPicker.usedEmojis.sort(
+    usedEmojis.sort(
       (a: EmojiEntry, b: EmojiEntry) =>
         (resolveEmojiData(b)?.frequency ?? 0) -
         (resolveEmojiData(a)?.frequency ?? 0)
     );
+    userPreferences.setAvatarPicker({ usedEmojis });
   }
 
   function itemClickHandler(emoji: EmojiEntry) {

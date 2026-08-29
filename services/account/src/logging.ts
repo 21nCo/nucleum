@@ -1,8 +1,8 @@
-import { serverLogger } from '@logfn/core';
+import { serverLogger } from "@logfn/core";
 
-export function createAccountLogger() {
+export function createLogger() {
   return serverLogger({
-    name: 'nucleus-account',
-    level: process.env.LOG_LEVEL as never ?? 'info'
+    name: "nucleus-account",
+    level: (process.env.LOG_LEVEL as never) ?? "info"
   });
 }

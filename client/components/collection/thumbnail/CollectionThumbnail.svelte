@@ -7,13 +7,12 @@
   import {
     ResourceAccessPoint,
     ResourceAccessPointState
-  } from "@21n/components/flux/resourceStores/resource.type";
+  } from "@21n/data/datafn/resource.type";
   import ResourceThumbnailBase from "@21n/components/record/thumbnail/ResourceThumbnailBase.svelte";
   import CollectionThumbnailLabelRow from "@21n/components/collection/thumbnail/CollectionThumbnailLabelRow.svelte";
   import ResourceThumbnailContentTypeOverlay from "@21n/components/record/thumbnail/ResourceThumbnailContentTypeOverlay.svelte";
   import CollectionPropertyCount from "@21n/components/collection/counts/CollectionPropertyCount.svelte";
-  import CollectionNodeCount from "@21n/components/collection/counts/CollectionItemCount.svelte";
-  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import CollectionItemCount from "@21n/components/collection/counts/CollectionItemCount.svelte";
   import CollectionThumbnailLabel from "@21n/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
   import CollectionThumbnailAvatar from "@21n/components/collection/thumbnail/CollectionThumbnailAvatar.svelte";
   let {
@@ -22,6 +21,7 @@
     size = Size.md,
     accessPoint = ResourceAccessPoint.BROWSER,
     accessPointState = ResourceAccessPointState.DEFAULT,
+    itemCount = undefined,
     onClick = undefined
   }: {
     item?: ICollectionThumb;
@@ -29,6 +29,7 @@
     size?: Size.sm | Size.md;
     accessPoint?: ResourceAccessPoint;
     accessPointState?: ResourceAccessPointState;
+    itemCount?: number | undefined;
     onClick?: ((event: MouseEvent) => void) | undefined;
   } = $props();
   let item = $state<ICollectionThumb | undefined>(itemProp);
@@ -36,13 +37,6 @@
   $effect(() => {
     item = itemProp;
   });
-
-  function onCollectionChange(e: any) {
-    const data = e.detail?.params?.record;
-    if (data && item) {
-      item = { ...item, ...data };
-    }
-  }
 </script>
 
 {#if item}
@@ -62,7 +56,11 @@
             />
             <span class="flex gap-1">
               {#if accessPointState === ResourceAccessPointState.DEFAULT}
-                <CollectionNodeCount {item} isShowLabel={true} />
+                <CollectionItemCount
+                  {item}
+                  count={itemCount}
+                  isShowLabel={true}
+                />
               {/if}
               <CollectionPropertyCount {item} isShowLabel={false} />
             </span>
@@ -90,10 +88,15 @@
             item={item!}
             {arrangement}
             {accessPoint}
+            {itemCount}
           />
           <span class="flex gap-2">
             {#if accessPointState === ResourceAccessPointState.DEFAULT}
-              <CollectionNodeCount item={item!} isShowLabel={true} />
+              <CollectionItemCount
+                item={item!}
+                count={itemCount}
+                isShowLabel={true}
+              />
             {/if}
             <CollectionPropertyCount
               item={item!}
@@ -104,9 +107,4 @@
       </ResourceGridThumbnail>
     {/if}
   </ResourceThumbnailBase>
-
-  <ComponentBaseLayer
-    subscribeToRecords={[item.id]}
-    onChange={onCollectionChange}
-  />
 {/if}

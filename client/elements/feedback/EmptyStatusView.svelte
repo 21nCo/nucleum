@@ -5,6 +5,7 @@
   import { LoadingAnimationType } from "@21n/types/feedback.type";
   import { Size } from "@21n/types/size.enum";
   import Button from "@21n/elements/button/Button.svelte";
+  import { ButtonStyle } from "@21n/types/button.type";
   import PageLoadingPulse from "@21n/elements/feedback/animations/PageLoadingPulse.svelte";
   import LogsLoadingPulse from "@21n/elements/feedback/animations/LogsPulse/LogsLoadingPulse.svelte";
   import DashboardLoadingPulse from "@21n/elements/feedback/animations/DashboardPulse/DashboardLoadingPulse.svelte";
@@ -34,6 +35,7 @@
     isNotAvailableContext = false,
     actionText = undefined,
     actionShortcut = undefined,
+    secondaryActionText = undefined,
     loadingText = undefined,
     loadingAnimation = LoadingAnimationType.SPINNER,
     pulseCount = 0,
@@ -43,6 +45,7 @@
     children = undefined,
     subtext = undefined,
     onclick = undefined,
+    onSecondaryClick = undefined,
   }: {
     mainText?: string | undefined;
     subText?: string | undefined;
@@ -52,6 +55,7 @@
     isNotAvailableContext?: boolean;
     actionText?: string | undefined;
     actionShortcut?: string | IKeyboardShortcut | undefined;
+    secondaryActionText?: string | undefined;
     loadingText?: string | undefined;
     loadingAnimation?: LoadingAnimationType;
     pulseCount?: number;
@@ -61,6 +65,7 @@
     children?: Snippet | undefined;
     subtext?: Snippet | undefined;
     onclick?: ((event: MouseEvent) => void) | undefined;
+    onSecondaryClick?: ((event: MouseEvent) => void) | undefined;
   } = $props();
   void isFullPage;
 </script>
@@ -142,17 +147,30 @@
         {/if}
       </div>
       {@render children?.()}
-      {#if actionText}
-        <div class="mt-4">
-          <Button
-            label={actionText}
-            size={Size.xs}
-            onclick={(event) => {
-              onclick?.(event);
-            }}
-            {parentBgIndex}
-            shortcut={actionShortcut}
-          />
+      {#if actionText || secondaryActionText}
+        <div class="mt-4 flex flex-col gap-2 justify-center items-center">
+          {#if actionText}
+            <Button
+              label={actionText}
+              size={Size.xs}
+              onclick={(event) => {
+                onclick?.(event);
+              }}
+              {parentBgIndex}
+              shortcut={actionShortcut}
+            />
+          {/if}
+          {#if secondaryActionText}
+            <Button
+              label={secondaryActionText}
+              size={Size.xs}
+              style={ButtonStyle.OUTLINED}
+              onclick={(event) => {
+                onSecondaryClick?.(event);
+              }}
+              {parentBgIndex}
+            />
+          {/if}
         </div>
       {/if}
     </div>

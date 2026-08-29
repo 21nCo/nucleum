@@ -1,13 +1,16 @@
 <script lang="ts">
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
-  import type { INode, INodeThumb } from "@21n/products/memotron/node/node.type";
+  import type {
+    INode,
+    INodeThumb
+  } from "@21n/products/memotron/node/node.type";
   import NodeTitleLabelPart from "@21n/products/memotron/node/title/NodeTitleLabelPart.svelte";
   import { hoverable } from "@21n/actions/hover.action";
   import { cn } from "@21n/utils/ui.utils";
   import { appStore } from "@21n/stores/app.store";
   import { tooltip } from "@21n/actions/popover.action";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import view from "@21n/stores/view.store";
   import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
   let {

@@ -6,7 +6,7 @@
   import { Display } from "@21n/types/view.type";
   import { determineTruncateLength } from "@21n/shared-utils/text.utils";
   import { appStore } from "@21n/stores/app.store";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import { Size } from "@21n/types/size.enum";
   let {
     items = [],
@@ -19,7 +19,10 @@
     isPreventDefault?: boolean;
     spaceAvailable?: Size.sm | Size.md | Size.lg;
     isSubtleContext?: boolean;
-    onItemClick?: (payload: { event: MouseEvent | KeyboardEvent; item: IBreadcrumbItem }) => void;
+    onItemClick?: (payload: {
+      event: MouseEvent | KeyboardEvent;
+      item: IBreadcrumbItem;
+    }) => void;
   } = $props();
   const slice = $derived(resolveSlice($view.display));
   const truncateLength = $derived(
@@ -44,7 +47,7 @@
             : []),
           ...items.slice(-Math.ceil(slice / 2))
         ]
-      : items;
+      : items
   );
 
   function resolveSlice(display: Display) {

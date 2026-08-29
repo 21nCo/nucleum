@@ -27,11 +27,12 @@
   import { hTrail } from "../topNav/tabs/tabs.store";
   import Trail from "../trail/Trail.svelte";
   import type { IAction } from "@21n/types/action.type";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import type { IRecordId } from "@21n/types/data.type";
   import ResourceResolver from "../paint/ResourceResolver.svelte";
   import { GlobalEvent } from "@21n/types/event.enum";
   import ComponentResolver from "../paint/ComponentResolver.svelte";
+  import { cn } from "@21n/utils/ui.utils";
   let {
     children,
     topnav: topnavContent,
@@ -47,6 +48,7 @@
     new URLSearchParams(window.location.search).get(AppSearchParam.MAX) ===
       "true"
   );
+  let isHomePage = $state(window.location.href.includes("home"));
   let rightPanel = $state<IAction | undefined>(undefined);
   let pop = $state<{ id: IRecordId; action: IAction } | undefined>(undefined);
   let mainPath = $state<string | undefined>(undefined);
@@ -61,20 +63,22 @@
     });
     $appLoadingState.isLocalLoaded = true;
     const pageSub = page.subscribe((p) => {
-      isMaxMode = p.url.searchParams.get(AppSearchParam.MAX) === "true";
-      const rightPanelParam = p.url.searchParams.get(AccessMode.RIGHT);
+      const searchParams = p?.url?.searchParams ?? new URLSearchParams();
+      isMaxMode = searchParams.get(AppSearchParam.MAX) === "true";
+      isHomePage = Boolean(p?.url?.href?.includes("home"));
+      const rightPanelParam = searchParams.get(AccessMode.RIGHT);
       if (rightPanelParam) {
         rightPanel = appStore.resolveAction(rightPanelParam) ?? undefined;
       } else {
         rightPanel = undefined;
       }
-      const popParam = p.url.searchParams.get(AccessMode.POP) ?? undefined;
+      const popParam = searchParams.get(AccessMode.POP) ?? undefined;
       if (popParam) {
         resolvePop(popParam);
       } else {
         pop = undefined;
       }
-      mainPath = p.url.searchParams.get(AccessMode.MAIN) ?? undefined;
+      mainPath = searchParams.get(AccessMode.MAIN) ?? undefined;
     });
     const appEventSub = appEvents.subscribe((x) => {
       if (x.event === GlobalEvent.ESCAPE) {
@@ -138,14 +142,24 @@
     </CommandModePage>
   {:else}
     <div class="flex flex-col w-full h-full">
-      <div class="flex w-full flex-grow">
+      <div
+        class={cn("flex w-full flex-grow", {
+          "bg-bgs2": $context.experiments?.isEnableRoundedMain
+        })}
+      >
         {#if $context.embed === Embed.HANDSET}
           <LeftNav variant="fixed" />
         {/if}
         <div class="flex flex-col h-full w-full">
+          {#if !$view.isPortrait && !isMaxMode}
+            <TopNav topnav={topnavContent} />
+          {/if}
           <div class="flex w-full flex-grow">
             {#if $context.embed !== Embed.HANDSET && !isHideLeftNavBar && !isMaxMode}
               <LeftNav variant="fixed" isHidePanel={!!pop || !!mainPath} />
+            {/if}
+            {#if !$view.isConstrainedWidth && rightPanel}
+              <RightPanel action={rightPanel} />
             {/if}
             <div class="min-w-0 flex-grow relative">
               {#if mainPath}
@@ -159,6 +173,7 @@
               {#if popId}
                 <div
                   class="absolute inset-0 flex justify-center w-full h-full bg-bgs1 z-50"
+                  data-testid="resource-record-surface"
                 >
                   <ResourceResolver id={popId} accessMode={AccessMode.POP} />
                 </div>
@@ -168,7 +183,7 @@
                 <!-- {:else if $vTrail.items.length > 0 && $vTrail.activated && (!isRecordId($vTrail.base) || (isRecordId($vTrail.base) && $vTrail.activated !== $vTrail.base))}
                 <TrailContent /> -->
               {:else}
-                <AppSplitView>
+                <AppSplitView isBottomBarAbsent={isHomePage}>
                   {@render main?.()}
                   {#if !main}
                     {@render children?.()}
@@ -176,13 +191,12 @@
                 </AppSplitView>
               {/if}
             </div>
-            {#if !$view.isConstrainedWidth && rightPanel}
-              <RightPanel action={rightPanel} />
-            {/if}
           </div>
-          {#if !$view.isPortrait && !isMaxMode}
+          <!-- TODO: Re-enable this hiding of bottom nav when home page is built and all tests that depend on command bar button being visible are updated. -->
+          <!-- {#if !$view.isPortrait && !isHomePage && !isMaxMode}
             <TopNav topnav={topnavContent} />
-          {/if}
+          {/if} -->
+
           {#if $hTrail.path.length > 0}
             <BottomNav />
           {/if}

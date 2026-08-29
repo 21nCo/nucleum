@@ -1,141 +1,118 @@
 <script lang="ts">
   import {
     focusItemsStore,
-    lastActiveGoalIdForEditing,
+    lastActiveObjectiveIdForEditing,
     activeSession,
     currentFocusItem
   } from "@21n/products/pointron/focus/session.store";
-  import { setContext } from "svelte";
   import FocusItem from "@21n/products/pointron/focus/elements/focusitem/FocusItem.svelte";
   import AddFocusItem from "@21n/products/pointron/focus/elements/focusitem/AddFocusItem.svelte";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-  import type { IGoalThumb } from "@21n/components/goals/goal.type";
-  import { onDestroy, onMount } from "svelte";
+  import {
+    ObjectiveStatus,
+    ObjectiveType,
+    type IObjectiveThumb
+  } from "@21n/components/goals/goal.type";
+  import { onMount } from "svelte";
   import {
     isSameResource,
-    removeDuplicatesFilter,
-    resourceInList,
-    shiftResourceInArray
-  } from "@21n/components/flux/resourceStores/resource.utils";
+    resourceInList
+  } from "@21n/data/datafn/resource.utils";
   import type { ITaskThumb } from "@21n/components/tasks/task.type";
-  import type { IFocusItem } from "@21n/types/pointron/session.type";
-  import { goalStore } from "@21n/components/goals/goal.store";
-  import { taskStore } from "@21n/components/tasks/task.store";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import { appEvents, toasts } from "@21n/stores/notification.store";
+  import { toasts } from "@21n/stores/notification.store";
   import { ErrorMessage } from "@21n/components/error/error.type";
   import type { IRecordId } from "@21n/types/data.type";
   import { LoadingAnimationType } from "@21n/types/feedback.type";
-  import { fullScreen } from "@21n/components/modal/modal.store";
-  import { PointronEvent } from "@21n/types/pointron/pointronEvent.enum";
   import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
   import { BarStyle, PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import Records from "@21n/components/record/Records.svelte";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import Text from "@21n/elements/text/Text.svelte";
   import { TextStyle } from "@21n/types/text.enum";
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { UIState } from "@21n/stores/uiState/uiState.type";
   import CalendarColumnTasksPanel from "@21n/components/calendar/column/CalendarColumnTasksPanel.svelte";
   import { reorderList } from "@21n/actions/rearrange.action";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { generateResourceId } from "@21n/data/datafn/id.utils";
+  import { toSvelteStore } from "@datafn/svelte";
   let { isInEditMode = false }: { isInEditMode?: boolean } = $props();
-  let isFocusingAddGoal = $state(false);
-  let focusItems = $state<IFocusItem[]>([]);
-  let goals = $state<IGoalThumb[]>([]);
-  let tasks = $state<ITaskThumb[]>([]);
-  let isRefreshing = $state(false);
+  let isFocusingAddObjective = $state(false);
+  let isRefreshing = $state(true);
   let selectedPickFromPanel = $state<"recents" | "calendar">(
     uiState.getState(UIState.focusItemsPickFromPanel) ?? "recents"
   );
 
-  setContext("focus-item-context", {
-    refreshList: () => refresh({ isShowLoadingPulse: true })
+  const focusItemIds = $derived(
+    $focusItemsStore.items.map((item) => item.id.toString())
+  );
+  const tasksWithObjective = $derived.by(() =>
+    $focusItemsStore.items
+      .map((item) => item.tasks)
+      .flat()
+      .filter((id): id is IRecordId => Boolean(id))
+  );
+  const focusItems = $derived.by(() => {
+    return [
+      ...($focusItemsStore.items.filter(
+        (item) => !tasksWithObjective.some(resourceInList(item))
+      ) ?? [])
+    ];
   });
+  const objectiveStore = $derived.by(() => {
+    return toSvelteStore<IObjectiveThumb[]>(
+      datafn.objective.signal({
+        select: ["*", "children.*", "tasks.*"],
+        filters: {
+          id: { $in: focusItemIds }
+        }
+      }),
+      { initialData: [] }
+    );
+  });
+  const taskStore = $derived.by(() => {
+    return toSvelteStore<ITaskThumb[]>(
+      datafn.task.signal({
+        select: ["*", "objective.*"],
+        filters: {
+          id: { $in: focusItemIds }
+        }
+      }),
+      { initialData: [] }
+    );
+  });
+  const objectives = $derived($objectiveStore.data);
+  const tasks = $derived($taskStore.data);
 
   function onBlur() {
-    isFocusingAddGoal = false;
+    isFocusingAddObjective = false;
   }
 
   function onfocus() {
-    isFocusingAddGoal = true;
+    isFocusingAddObjective = true;
   }
-
-  async function refresh(params?: { isShowLoadingPulse?: boolean }) {
-    if (params?.isShowLoadingPulse) isRefreshing = true;
-    const tasksWithGoal = $focusItemsStore.items
-      .map((x) => x.tasks)
-      .flat()
-      .filter((x): x is IRecordId => Boolean(x));
-    focusItems = [
-      ...($focusItemsStore.items.filter(
-        (x) => !tasksWithGoal.some(resourceInList(x))
-      ) ?? [])
-    ];
-    goals = await goalStore.selectMany(
-      {
-        filters: {
-          id: $focusItemsStore.items.map((x) => x.id.toString())
-        }
-      },
-      {
-        isIncludeSubItems: true,
-        isExpand: true
-      }
-    );
-    tasks = await taskStore.selectMany(
-      {
-        filters: {
-          id: $focusItemsStore.items.map((x) => x.id.toString())
-        }
-      },
-      {
-        isExpand: true
-      }
-    );
-    isRefreshing = false;
-  }
-
-  let fullScreenSub: () => void;
-  let appEventSub: () => void;
 
   onMount(async () => {
     while (!focusItemsStore.isInitialized) {
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
-    void refresh({ isShowLoadingPulse: true });
-    fullScreenSub = fullScreen.subscribe((x) => {
-      if (!x.path) {
-        void refresh();
-      }
-    });
-    appEventSub = appEvents.subscribe((x) => {
-      if (
-        x.event === PointronEvent.SESSION_CLOSED ||
-        x.event === PointronEvent.REFRESH_FOCUSITEMS
-      ) {
-        void refresh({ isShowLoadingPulse: true });
-      }
-    });
     const state = uiState.getState(UIState.recentFocusItems);
     if (state) {
       await focusItemsStore.refreshRecents(state);
     }
+    isRefreshing = false;
   });
 
-  onDestroy(() => {
-    if (fullScreenSub) fullScreenSub();
-    if (appEventSub) appEventSub();
-  });
-
-  async function onCreateNewGoalTask(event: any) {
+  async function onCreateNewObjectiveTask(event: any) {
     try {
-      const { label, goalId } = event.detail;
-      const result = await focusItemsStore.addNewTask(label, goalId);
+      const { label, objectiveId } = event.detail;
+      const result = await focusItemsStore.addNewTask(label, objectiveId);
       if (isValidArrayWithData(result)) {
-        addTask(result![0], goalId);
+        return;
       } else {
         toasts.error(ErrorMessage.DEFAULT);
       }
@@ -147,30 +124,12 @@
   async function onSelect(event: any) {
     const item = event.detail;
     if (!item || !item.id) return;
-    if (item.goal || item.goalId) {
-      const goalId = item.goal?.id ?? item.goalId;
-      await focusItemsStore.addTask(item.id, goalId);
-      addTask(item, goalId);
-      if (!goals.some(resourceInList(goalId))) {
-        refresh();
-      }
+    if (item.objective || item.objectiveId) {
+      const objectiveId = item.objective?.id ?? item.objectiveId;
+      await focusItemsStore.addTask(item.id, objectiveId);
     } else {
-      await focusItemsStore.addGoal(item.id);
-      refresh();
+      await focusItemsStore.addObjective(item.id);
     }
-  }
-
-  function addTask(task: ITaskThumb, goalId?: IRecordId) {
-    tasks = [...tasks, task];
-    focusItems = focusItems.map((x) => {
-      if (goalId && isSameResource(x.id, goalId)) {
-        return {
-          ...x,
-          tasks: [...(x.tasks ?? []), task.id].filter(removeDuplicatesFilter)
-        };
-      }
-      return x;
-    });
   }
 
   async function onRemove(event: any) {
@@ -179,44 +138,39 @@
     if ($currentFocusItem && isSameResource($currentFocusItem, id)) {
       await activeSession.stopCurrentFocusItem();
     }
-    refresh();
   }
 
-  async function onCreateGoal(event: any) {
+  async function onCreateObjective(event: any) {
     const label = event.detail;
-    let goal = await goalStore.save({
+    const objective = {
+      id: generateResourceId(Resource.objective),
       label,
-      isPreventOpenAfterCreate: true
+      type: ObjectiveType.INDEFINITE,
+      status: ObjectiveStatus.NOT_STARTED,
+      isPinnedForQuickFocus: false
+    };
+    await datafn.objective.mutate({
+      operation: "insert",
+      id: objective.id,
+      record: objective
     });
-    if (!goal) return;
-    await focusItemsStore.addGoal(goal.id);
-    await refresh();
+    toasts.success("New objective created successfully");
+    await focusItemsStore.addObjective(objective.id);
   }
 
   async function onCreateStandaloneTask(event: any) {
     const label = event.detail;
     await focusItemsStore.addNewTask(label);
-    refresh();
   }
 
   function onReorderFocusItems(event: any) {
     const { fromId, toId } = event;
     focusItemsStore.rearrangeFocusItems(fromId, toId);
-    focusItems = shiftResourceInArray(focusItems, fromId, toId);
   }
 
-  function onReorderTasksInGoal(event: any) {
-    const { fromId, toId, goalId } = event.detail;
-    focusItemsStore.rearrangeTasksInGoal(goalId, fromId, toId);
-    focusItems = focusItems.map((item) => {
-      if (isSameResource(item.id, goalId) && item.tasks) {
-        return {
-          ...item,
-          tasks: shiftResourceInArray(item.tasks, fromId, toId)
-        };
-      }
-      return item;
-    });
+  function onReorderTasksInObjective(event: any) {
+    const { fromId, toId, objectiveId } = event.detail;
+    focusItemsStore.rearrangeTasksInObjective(objectiveId, fromId, toId);
   }
 </script>
 
@@ -256,19 +210,24 @@
         <div
           data-index={index}
           data-id={focusItem.id}
+          data-testid={`focus-session-item:${focusItem.id}`}
+          data-current-focus={$currentFocusItem &&
+          isSameResource(focusItem, $currentFocusItem)
+            ? "true"
+            : "false"}
           draggable={!$activeSession.isSessionRunning || isInEditMode}
         >
           <FocusItem
             {isInEditMode}
             {focusItem}
             {tasks}
-            {goals}
-            onCreateNew={onCreateNewGoalTask}
-            onSelect={onSelect}
-            onRemove={onRemove}
-            onReorderTasks={onReorderTasksInGoal}
-            isFocusAddTask={$lastActiveGoalIdForEditing
-              ? $lastActiveGoalIdForEditing === focusItem.id
+            {objectives}
+            onCreateNew={onCreateNewObjectiveTask}
+            {onSelect}
+            {onRemove}
+            onReorderTasks={onReorderTasksInObjective}
+            isFocusAddTask={$lastActiveObjectiveIdForEditing
+              ? $lastActiveObjectiveIdForEditing === focusItem.id
               : index === $focusItemsStore.items.length - 1}
           />
         </div>
@@ -279,15 +238,15 @@
   {#if !isRefreshing && (!$activeSession.isSessionRunning || isInEditMode)}
     <div class="flex flex-col gap-2 w-full pt-4">
       <div
-        class="flex items-center w-full border rounded-md {isFocusingAddGoal
+        class="flex items-center w-full border rounded-md {isFocusingAddObjective
           ? 'border-aps1'
           : 'border-brs3'}"
       >
         <AddFocusItem
-          onBlur={onBlur}
+          {onBlur}
           onFocus={onfocus}
-          onSelect={onSelect}
-          onCreateGoal={onCreateGoal}
+          {onSelect}
+          {onCreateObjective}
           onCreateTask={onCreateStandaloneTask}
         />
       </div>

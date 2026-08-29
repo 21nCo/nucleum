@@ -1,10 +1,13 @@
-import type { OmitForCapture } from "@21n/components/flux/resourceStores/resource.type";
+import type { OmitForCapture } from "@21n/data/datafn/resource.type";
 import {
   NodeType,
   type IBlueskyPost,
   type IBlueskyProfile
 } from "@21n/products/memotron/node/node.type";
-import type { ISocialPost, ISocialPostBase } from "@21n/extensions/clipper/clipper.type";
+import type {
+  ISocialPost,
+  ISocialPostBase
+} from "@21n/extensions/clipper/clipper.type";
 import {
   findAncestorOrSelf,
   parseFullDateTimeString,

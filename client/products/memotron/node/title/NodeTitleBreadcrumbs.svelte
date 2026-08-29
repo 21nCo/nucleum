@@ -1,12 +1,16 @@
 <script lang="ts">
   import type { IBreadcrumbItem } from "@21n/elements/breadcrumbsV2/breadcrumbItem.type";
-  import { onMount } from "svelte";
   import type { IRecordId } from "@21n/types/data.type";
-  import { nodeStore } from "@21n/products/memotron/node/node.store";
   import Breadcrumbs from "@21n/elements/breadcrumbsV2/Breadcrumbs.svelte";
-  import { headingNodeTypes, NodeType, type INode } from "@21n/products/memotron/node/node.type";
-  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+  import {
+    headingNodeTypes,
+    NodeType,
+    type INode
+  } from "@21n/products/memotron/node/node.type";
+  import { resourceInList } from "@21n/data/datafn/resource.utils";
   import BreadcrumbMini from "@21n/elements/breadcrumb/BreadcrumbMini.svelte";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { toSvelteStore } from "@datafn/svelte";
   let {
     mdParent = undefined,
     id = undefined,
@@ -19,56 +23,69 @@
     currentLabel?: string | undefined;
     isThumbnailContext?: boolean;
     onClick?:
-      | ((event: CustomEvent<{ event: MouseEvent; item: IBreadcrumbItem }>) => void)
+      | ((
+          event: CustomEvent<{ event: MouseEvent; item: IBreadcrumbItem }>
+        ) => void)
       | undefined;
   } = $props();
 
-  let breadcrumbs: IBreadcrumbItem[] | undefined = undefined;
-  onMount(async () => {
-    breadcrumbs = await refreshBreadcrumbs();
-    if (
-      breadcrumbs &&
-      breadcrumbs.length > 0 &&
-      !isThumbnailContext &&
-      currentLabel
-    ) {
-      breadcrumbs.push({
-        label: currentLabel,
-        resourceId: id?.toString()
-      });
-    }
-  });
+  function isResolvedNode(item: IRecordId | INode): item is INode {
+    return typeof item === "object" && "label" in item;
+  }
 
-  async function refreshBreadcrumbs() {
-    let parentItems = [];
+  const parentIds = $derived.by(() => {
     if (
       mdParent &&
       Array.isArray(mdParent) &&
-      mdParent.some((x) => typeof x === "object" && "label" in x)
+      mdParent.some(isResolvedNode)
     ) {
-      parentItems = mdParent;
-    } else if (mdParent) {
-      parentItems = await nodeStore.selectMany({
-        properties: {
-          select: ["label", "id", "body"]
-        },
-        filters: {
-          contentType: [...headingNodeTypes, NodeType.NODULAR_MARKDOWN],
-          id: mdParent?.map((x) => x.toString())
-        }
-      });
+      return [];
     }
+    return mdParent?.map((x) => x.toString()) ?? [];
+  });
+  const parentNodeStore = $derived.by(() =>
+    toSvelteStore(
+      datafn.node.signal({
+        select: ["label", "id", "body"],
+        filters: {
+          contentType: {
+            $in: [...headingNodeTypes, NodeType.NODULAR_MARKDOWN]
+          },
+          id: { $in: parentIds }
+        }
+      }),
+      { initialData: [] }
+    )
+  );
+  const parentItems = $derived.by(() => {
+    if (
+      mdParent &&
+      Array.isArray(mdParent) &&
+      mdParent.some(isResolvedNode)
+    ) {
+      return mdParent as INode[];
+    }
+    return $parentNodeStore.data as INode[];
+  });
+  const breadcrumbs = $derived.by(() => {
     if (!mdParent || !parentItems || parentItems.length === 0) return [];
-    return mdParent
+    const items = mdParent
       .map((x) => {
         const item = parentItems.find(resourceInList(x));
         return {
-          label: item?.label ?? item?.body,
+          label: item?.label ?? item?.body ?? "",
           resourceId: item?.id
         };
       })
       .filter((x) => x);
-  }
+    if (items.length > 0 && !isThumbnailContext && currentLabel) {
+      items.push({
+        label: currentLabel,
+        resourceId: id?.toString()
+      });
+    }
+    return items;
+  });
   function onBreadcrumbClick(e: CustomEvent) {
     if (!e.detail.item.resourceId) return;
     onClick?.(e as CustomEvent<{ event: MouseEvent; item: IBreadcrumbItem }>);

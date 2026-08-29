@@ -3,9 +3,17 @@
   import type { IRecordId } from "@21n/types/data.type";
   import { Size } from "@21n/types/size.enum";
   import type { INodeLinkThumb } from "@21n/products/memotron/node/node.type";
-  import { linker, linkTagStore } from "@21n/products/memotron/linking/link.store";
   import { linkTagLabelMapper } from "@21n/products/memotron/linking/link.utils";
-  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
+  import {
+    determineResourceType,
+    resourceInList
+  } from "@21n/data/datafn/resource.utils";
+  import {
+    LinkType,
+    type ILinkTag
+  } from "@21n/products/memotron/linking/link.type";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { toSvelteStore } from "@datafn/svelte";
 
   let {
     link = $bindable(),
@@ -14,12 +22,48 @@
     link: INodeLinkThumb;
     onTagClick?: ((event: CustomEvent<IRecordId>) => void) | undefined;
   } = $props();
+  const linkTagStore = toSvelteStore<ILinkTag[]>(
+    datafn.linkTag.signal({
+      select: ["id", "label", "group"]
+    }),
+    { initialData: [] }
+  );
+  const linkTags = $derived($linkTagStore.data);
   const tags = $derived.by(
     () =>
-      $linkTagStore
+      linkTags
         ?.filter((x) => link.tags?.some(resourceInList(x)))
         ?.map(linkTagLabelMapper) ?? []
   );
+  function parseLinkId(id: IRecordId) {
+    const [from, to] = id.toString().split("|");
+    return from && to ? { from, to } : undefined;
+  }
+
+  async function updateRelationTags(
+    row: NonNullable<INodeLinkThumb["links"]>[number],
+    tags: IRecordId[] = []
+  ) {
+    const parsed = parseLinkId(row.id);
+    if (!parsed) return;
+    const fromResource = determineResourceType(parsed.from);
+    const toResource = determineResourceType(parsed.to);
+    await datafn.table(fromResource).mutate({
+      operation: "modifyRelation",
+      id: parsed.from,
+      relations: {
+        links: [
+          {
+            $ref: parsed.to,
+            fromResource: fromResource.toString(),
+            toResource: toResource.toString(),
+            linkType: row.linkType ?? LinkType.DIRECT,
+            tags
+          }
+        ]
+      }
+    } as any);
+  }
 
   async function onRemove(tagId: IRecordId) {
     link.tags = link.tags?.filter((x) => x.toString() !== tagId.toString());
@@ -32,9 +76,10 @@
         tags: x.tags?.filter((y) => y.toString() !== tagId.toString())
       }));
       linksWithThisTag.forEach(async (x) => {
-        await linker.modify(x.id, {
-          tags: x.tags?.filter((y) => y.toString() !== tagId.toString())
-        });
+        await updateRelationTags(
+          x,
+          x.tags?.filter((y) => y.toString() !== tagId.toString())
+        );
       });
     }
   }

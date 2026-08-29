@@ -5,6 +5,10 @@ export type IUserProfileInfo = {
   joinDate: string;
   profilePictureUrl?: string;
   emailParts?: EmailParts;
+  /**
+   * @deprecated Nucleus no longer routes users through bootstrap. This is kept
+   * for legacy account/session metadata only.
+   */
   isBootstrapped?: boolean;
   region?: string;
   isOAuth?: boolean;

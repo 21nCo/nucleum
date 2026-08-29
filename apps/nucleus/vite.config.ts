@@ -7,7 +7,7 @@ import { staticPlugin } from "@21n/static/vite-plugin.js";
 import { buildViteAliases, loadAliasMap } from "../../tools/alias-utils.mjs";
 
 const aliasConfig = buildViteAliases(loadAliasMap());
-process.env.VITE_PRODUCT ||= "nucleus";
+process.env.VITE_PRODUCT ||= "nucleum";
 
 export default defineConfig({
   resolve: {
@@ -68,7 +68,7 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000
   },
   optimizeDeps: {
-    exclude: ["@authfn/client", "@surrealdb/wasm", "surrealql.wasm"],
+    exclude: ["@authfn/client"],
     include: [
       "@antv/g6",
       "@carbon/charts-svelte",

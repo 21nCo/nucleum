@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import { highlightStore } from "@21n/products/memotron/common/highlighters/highlight.store";
   import { type INode, NodeType } from "@21n/products/memotron/node/node.type";
   import { cn, convertToRGBA } from "@21n/utils/ui.utils";

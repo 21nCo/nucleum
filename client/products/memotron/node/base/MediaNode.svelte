@@ -1,7 +1,7 @@
 <script lang="ts">
   import { type IActiveNodeStore } from "@21n/products/memotron/node/node.store";
   import MediaContent from "@21n/products/memotron/node/content/MediaContent.svelte";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import { NodeView } from "@21n/products/memotron/node/node.type";
   import FullScreenCloseButton from "@21n/elements/button/FullScreenCloseButton.svelte";
   import NodeBirdView from "@21n/products/memotron/node/birdView/NodeBirdView.svelte";

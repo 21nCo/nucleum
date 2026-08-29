@@ -2,7 +2,7 @@
   import { toolbarState } from "@21n/extensions/clipper/contentScripts/store";
   import { Placement } from "@21n/types/direction.enum";
   import LinkSearch from "@21n/products/memotron/common/linkbox/LinkSearch.svelte";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import type { IRecordId } from "@21n/types/data.type";
   let {
     onFocus = undefined,

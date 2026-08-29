@@ -12,6 +12,7 @@ export type IAppContext = {
    * Cases like share sheets on mobile devices, iframe embeds on web pages etc.
    */
   isStandaloneSheet?: boolean;
+  experiments?: Record<string, unknown>;
 };
 
 /**

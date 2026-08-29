@@ -1,15 +1,12 @@
 <script lang="ts">
   import type { IRecordId } from "@21n/types/data.type";
   import Tag from "@21n/elements/text/Tag.svelte";
-  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { collectionStore } from "@21n/components/collection/collection.store";
-  import { nodeStore } from "@21n/products/memotron/node/node.store";
   import { popover } from "@21n/actions/popover.action";
   import context from "@21n/stores/context.store";
   import { PopoverTriggerMethod } from "@21n/types/popover.type";
   import ContextMenu from "@21n/elements/contextMenu/ContextMenu.svelte";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import type { IAvatar } from "@21n/types/avatar.type";
 
   let {
     id,
@@ -20,7 +17,8 @@
     accessPoint = ResourceAccessPoint.CLIPPER,
     onclick = undefined,
     onGoToResource = undefined,
-    onRemove = undefined
+    onRemove = undefined,
+    record = undefined
   }: {
     id: IRecordId;
     parentBgIndex?: number;
@@ -31,23 +29,24 @@
     onclick?: ((event: MouseEvent) => void) | undefined;
     onGoToResource?: ((event: CustomEvent<IRecordId>) => void) | undefined;
     onRemove?: ((event: CustomEvent<IRecordId>) => void) | undefined;
+    record?: LinkItemRecord | undefined;
   } = $props();
-  let item = $state<any>(undefined);
-
-  async function resolveItem() {
-    const resource = determineResourceType(id);
-    if (resource === Resource.collection) {
-      item = await collectionStore.select(id, { expand: ["typeToExtend"] });
-    } else {
-      item = await nodeStore.select(id);
-    }
-    if (!item) throw new Error("Item not found");
-  }
+  type LinkItemRecord = {
+    avatar?: string | IAvatar;
+    typeToExtend?: { avatar?: string | IAvatar } | string;
+    label?: string;
+    text?: string;
+  };
+  const item = $derived(record);
 
   function resovleIcon() {
-    if (item.avatar) {
+    if (item?.avatar) {
       return item.avatar;
-    } else if (item.typeToExtend?.avatar) {
+    } else if (
+      item?.typeToExtend &&
+      typeof item.typeToExtend === "object" &&
+      item.typeToExtend.avatar
+    ) {
       return item.typeToExtend.avatar;
     }
     return undefined;
@@ -101,10 +100,9 @@
   }
 </script>
 
-{#await resolveItem()}
-  <span />
-{:then}
+{#if item}
   <div
+    data-testid={`link-item:${id}`}
     use:popover={{
       content: ContextMenu,
       triggerMethod:
@@ -136,4 +134,6 @@
       }}
     />
   </div>
-{/await}
+{:else}
+  <span></span>
+{/if}

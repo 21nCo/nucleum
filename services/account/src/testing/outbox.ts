@@ -2,7 +2,7 @@ import type {
   AuthFnDeliveryProvider,
   AuthFnDeliveryRequest,
   AuthFnDeliveryResult
-} from '@authfn/core';
+} from 'authfn';
 
 export interface AccountOutboxMessage extends AuthFnDeliveryRequest {
   sentAt: string;

@@ -96,6 +96,7 @@
 </script>
 
 <button
+  aria-label={tooltip ?? heading ?? "Actions"}
   use:popover={{
     placement: position,
     isSpanToTriggerWidth: false,

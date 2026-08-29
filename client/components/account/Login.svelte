@@ -76,7 +76,8 @@
   });
 
   async function finishOAuthCallbackLogin() {
-    const isOAuthCallback = $page.url.searchParams.get("oauth_callback") === "1";
+    const isOAuthCallback =
+      $page.url.searchParams.get("oauth_callback") === "1";
     if ($page.url.searchParams.has("auth_error")) return;
 
     if (isOAuthCallback) {
@@ -164,7 +165,10 @@
           }
           localStorage.setItem("embedToken", token);
           if (parsed.oauth.regionId) {
-            await clientStorage.set(ClientStorageKey.REGION, parsed.oauth.regionId);
+            await clientStorage.set(
+              ClientStorageKey.REGION,
+              parsed.oauth.regionId
+            );
           }
           logger.info({
             at: "Login.handleMessageFromParent.oauth.token.received",
@@ -186,7 +190,9 @@
             toasts.error("Authentication failed. Please try again.");
             return;
           }
-          account.gotoPostAuthRoute({ isNewUser: parsed.oauth.signup === "true" });
+          account.gotoPostAuthRoute({
+            isNewUser: parsed.oauth.signup === "true"
+          });
           logger.info({
             at: "Login.handleMessageFromParent.oauth.redirect.requested",
             isSignup: parsed.oauth.signup === "true",
@@ -199,6 +205,10 @@
     }
   }
 
+  async function onOfflineClick() {
+    await account.startOfflineSession();
+    appStore.gotoPath("/");
+  }
 </script>
 
 <div
@@ -276,7 +286,7 @@
           <Button
             label="Continue using offline"
             icon="proceed"
-            onclick={() => {}}
+            onclick={onOfflineClick}
           />
         {/if}
         <div

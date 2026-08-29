@@ -15,10 +15,19 @@
 
   let {
     property,
-    isPopoverOpen = $bindable(false)
+    isPopoverOpen = $bindable(false),
+    onConfigChange = undefined
   }: {
     property: ISelectProperty;
     isPopoverOpen?: boolean;
+    onConfigChange?:
+      | ((
+          event: CustomEvent<{
+            config: ISelectProperty["config"];
+            defaultValue: ISelectProperty["defaultValue"];
+          }>
+        ) => void)
+      | undefined;
   } = $props();
   let dev_isEnableDefaultSelection: boolean = false;
   let popoverOptions: IPopoverOptions = {
@@ -28,12 +37,23 @@
   };
   $effect(() => {
     if (!property.config) {
-      property.config = {
-        options: [],
-        groups: []
-      };
+      emitConfigChange({ options: [], groups: [] }, property.defaultValue);
     }
   });
+
+  function emitConfigChange(
+    config: ISelectProperty["config"],
+    defaultValue: ISelectProperty["defaultValue"]
+  ) {
+    onConfigChange?.(
+      new CustomEvent("configChange", {
+        detail: {
+          config,
+          defaultValue
+        }
+      })
+    );
+  }
 </script>
 
 {#if property.config}
@@ -49,12 +69,12 @@
         id: `select-property-config-popover-${property.id || "default"}`,
         componentProps: {
           config: property.config,
-          defaultOptionId: property.default,
+          defaultOptionId: property.defaultValue,
           onChange: (e) => {
-            property.config = e;
+            emitConfigChange(e, property.defaultValue);
           },
           onDefault: (e) => {
-            property.default = e;
+            emitConfigChange(property.config, e);
           }
         }
       }}
@@ -82,11 +102,11 @@
           colorStrength={ColorStrength.Strong}
         />
         <span class="flex w-full justify-between items-center">
-          {#if property.default}
+          {#if property.defaultValue}
             <span>
               <SelectPropertyOption
                 item={property.config.options?.find(
-                  (x) => x.id === property.default
+                  (x) => x.id === property.defaultValue
                 )}
                 isSelectedContext={true}
               />

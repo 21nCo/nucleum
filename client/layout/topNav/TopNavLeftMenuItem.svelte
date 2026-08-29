@@ -14,8 +14,9 @@
   import { onMount } from "svelte";
   import type { IAction } from "@21n/types/action.type";
   import { appStore } from "@21n/stores/app.store";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import { keyboardShortcuts } from "@21n/components/shortcuts/shortcuts.store";
+  import context from "@21n/stores/context.store";
 
   let {
     action,
@@ -40,14 +41,20 @@
   } = $props();
   let isHovered = $state(false);
   let data = $state<IAction | null>(null);
+  let currentSearchParams = $state(new URLSearchParams(window.location.search));
 
   let isActive = $derived(
-    action === $page.url.searchParams.get(AccessMode.RIGHT) ||
-      action === $page.url.searchParams.get(AccessMode.MAIN)
+    action === currentSearchParams.get(AccessMode.RIGHT) ||
+      action === currentSearchParams.get(AccessMode.MAIN)
   );
 
   onMount(() => {
     data = appStore.resolveAction(action);
+    const unsubscribe = page.subscribe((p) => {
+      currentSearchParams = p?.url?.searchParams ?? new URLSearchParams();
+    });
+
+    return () => unsubscribe?.();
   });
 
   function handleClick(event: MouseEvent) {
@@ -61,7 +68,7 @@
 
 {#if data}
   {@const hasTooltip = data.label || tooltip || label}
-  {@const accessibleLabel = ariaLabel ?? (tooltip ?? label ?? data.label)}
+  {@const accessibleLabel = ariaLabel ?? tooltip ?? label ?? data.label}
   {@const shortcut = keyboardShortcuts.resolveShortcutForAction(action)}
   <button
     aria-label={accessibleLabel}
@@ -71,13 +78,14 @@
         "hover:border-brs3 hover:bg-bgs3-striped hover:text-fgs3 text-fgs2":
           !isActive,
         "bg-aps3 text-aps1 border-aps2": isActive,
-        "border-l": isLastItem,
+        "border-l": isLastItem && !$context.experiments?.isEnableRoundedMain,
         "border-x": !isLastItem && !isFirstItem,
-        "border-r": isFirstItem
+        "border-r": isFirstItem && !$context.experiments?.isEnableRoundedMain
       },
       !isActive && {
-        "border-brs3": action === Action.RHOMBUS,
-        "border-transparent": action !== Action.RHOMBUS
+        "border-brs3": action === Action.RHOMBUS || action === Action.NAVIGATOR,
+        "border-transparent":
+          action !== Action.RHOMBUS && action !== Action.NAVIGATOR
       }
     )}
     use:hoverable={{

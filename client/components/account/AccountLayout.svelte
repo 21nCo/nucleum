@@ -23,6 +23,8 @@
       return "You have been signed out.";
     } else if (messageParam === "expired") {
       return "Your session has expired. Please login again.";
+    } else if (messageParam === "unavailable") {
+      return "Account service is unavailable. Please try again once it is running.";
     } else if (messageParam === "notfound") {
       return "User not found. Please login again.";
     }

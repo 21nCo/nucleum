@@ -3,31 +3,26 @@
   import Button from "@21n/elements/button/Button.svelte";
   import { toasts } from "@21n/stores/notification.store";
   import { ButtonVariant } from "@21n/types/button.type";
-  import { AlertType } from "@21n/types/notification.type";
   import { Size } from "@21n/types/size.enum";
-  import { isEmptyArray, isValidArray } from "@21n/shared-utils/obj.utils";
   import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
   import { parse } from "@21n/shared-utils/json.utils";
+  import {
+    datafn,
+    datafnRuntime,
+    refreshNucleumDatafnStatus
+  } from "@21n/stores/datafn.store";
+  import { lastImportTime } from "@21n/products/pointron/pointron.store";
+  import {
+    isPointronDatafnBackup,
+    resolveDatafnImportErrorCount
+  } from "@21n/products/pointron/settings/data/pointronDatafnBackup.utils";
+  import { logger } from "@21n/components/debug/logger.client";
+
   let fileInput: HTMLInputElement;
   let isProcessingImport: boolean = false;
   let fileName: string = "";
-  let fileSize: number = 0;
-  let jsonData: any;
-  function isValidImportData(rawJson: any) {
-    return (
-      rawJson &&
-      isValidArray(rawJson.goals) &&
-      isValidArray(rawJson.tags) &&
-      isValidArray(rawJson.logs) &&
-      isValidArray(rawJson.sessions) &&
-      !(
-        isEmptyArray(rawJson.goals) &&
-        isEmptyArray(rawJson.tags) &&
-        isEmptyArray(rawJson.logs) &&
-        isEmptyArray(rawJson.sessions)
-      )
-    );
-  }
+  let jsonData: unknown;
+
   async function importData() {
     if (!fileInput.files) return;
     const file = fileInput.files[0];
@@ -37,15 +32,16 @@
       try {
         const importedData = event.target?.result;
         if (!importedData) return;
-        jsonData = parse(importedData as string);
-        console.log({ jsonData });
-        if (isValidImportData(jsonData)) {
-          fileName = file.name;
-          fileSize = file.size;
-          console.log({ fileName, fileSize });
+        const parsedData = parse(importedData as string);
+        if (!isPointronDatafnBackup(parsedData)) {
+          resetFile();
+          toasts.error("Invalid Pointron DataFn backup file");
+          return;
         }
+        jsonData = parsedData;
+        fileName = file.name;
       } catch (error) {
-        console.error("Error parsing JSON file:", error);
+        logger.error({ at: "PointronImportData.importData.parse", error });
         isProcessingImport = false;
         toasts.error("Invalid file selected");
       }
@@ -53,17 +49,41 @@
     reader.readAsText(file);
   }
   async function processImport() {
-    isProcessingImport = true;
-    if (!jsonData) {
-      toasts.error("Please select a valid file");
-      isProcessingImport = false;
+    if (isProcessingImport) return;
+    if (!$datafnRuntime?.storage) {
+      toasts.error("Pointron import is not available in cloud direct mode");
       return;
     }
-    isProcessingImport = false;
+    if (!isPointronDatafnBackup(jsonData)) {
+      toasts.error("Please select a valid file");
+      return;
+    }
+    isProcessingImport = true;
+    try {
+      const result = await datafn.importData(jsonData, {
+        triggerCloneUp: true
+      });
+      await refreshNucleumDatafnStatus();
+      const errorCount = resolveDatafnImportErrorCount(result);
+      if (errorCount > 0) {
+        toasts.error(
+          `Pointron data imported with ${errorCount} skipped records`
+        );
+      } else {
+        toasts.success("Pointron data imported successfully");
+      }
+      $lastImportTime = Date.now();
+      resetFile();
+    } catch (error) {
+      logger.error({ at: "PointronImportData.processImport", error });
+      toasts.error("Unable to import Pointron data");
+    } finally {
+      isProcessingImport = false;
+    }
   }
 
   function resetFile() {
-    fileInput.value = "";
+    if (fileInput) fileInput.value = "";
     fileName = "";
     jsonData = null;
   }
@@ -98,10 +118,11 @@
       type={ButtonVariant.PRIMARY}
       label={isProcessingImport ? "Uploading..." : "Import"}
       isLoading={isProcessingImport}
+      isDisabled={!fileName || isProcessingImport || !$datafnRuntime?.storage}
     />
   </div>
   <div class="self-start text-b3">
-    <b>Note:</b> Only Pointron exported <i>.json</i> is currently accepted
+    <b>Note:</b> Only Pointron DataFn export <i>.json</i> is currently accepted
   </div>
 </div>
 {#if isProcessingImport}

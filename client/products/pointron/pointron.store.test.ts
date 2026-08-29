@@ -1,11 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@21n/components/flux/flux", () => ({
-  flux: {
-    kvMerge: vi.fn()
-  }
-}));
-
 vi.mock("@21n/utils/browser.utils", async () => {
   const actual = await vi.importActual<
     typeof import("@21n/utils/browser.utils")

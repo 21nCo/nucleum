@@ -39,9 +39,10 @@
     shortcut?: string | IKeyboardShortcut | undefined;
     id?: IRecordId | undefined;
     isShowExpandFeedbackOnActive?: boolean;
-    expandFeedbackPosition?: | Placement.BottomCenter
-    | Placement.BottomLeft
-    | Placement.BottomRight;
+    expandFeedbackPosition?:
+      | Placement.BottomCenter
+      | Placement.BottomLeft
+      | Placement.BottomRight;
     removeStyle?: "overlay" | "inline" | "always-show";
     onclick?: ((event: MouseEvent) => void) | undefined;
     onRemove?: (() => void) | undefined;
@@ -49,15 +50,17 @@
   let isHovering = false;
   const isRemoveIconRenderedInline = $derived(
     isRemovable &&
-    ($context.isTouchDevice ||
-      removeStyle === "always-show" ||
-      (removeStyle === "inline" && isHovering))
+      ($context.isTouchDevice ||
+        removeStyle === "always-show" ||
+        (removeStyle === "inline" && isHovering))
   );
 </script>
 
 <div class="overflow-hidden">
   <button
     type="button"
+    aria-label={label}
+    data-testid={`tag:${id}`}
     class={cn(
       "relative flex gap-2 items-center justify-center whitespace-nowrap border min-w-20",
       {
@@ -93,6 +96,7 @@
         role="button"
         tabindex="0"
         aria-label="Remove"
+        data-testid={`tag-remove:${id}`}
         class={cn("rounded-full flex h-full items-center", {
           "from-bgs1 via-bgs1": parentBgIndex === 1,
           "from-bgs2 via-bgs2": parentBgIndex === 2,

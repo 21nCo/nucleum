@@ -19,11 +19,21 @@
     onSelect?: ((event: CustomEvent<IBlockBrowserItem>) => void) | undefined;
   } = $props();
   let ref = $state<HTMLElement>();
+  let hasSelected = false;
   $effect(() => {
     if (isFocused && ref) {
       ref.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   });
+
+  function selectBlock() {
+    if (block.isDisabled || hasSelected) return;
+    hasSelected = true;
+    const event = new CustomEvent<IBlockBrowserItem>("select", {
+      detail: block
+    });
+    onSelect?.(event);
+  }
 </script>
 
 <button
@@ -36,12 +46,14 @@
       "opacity-70 cursor-not-allowed": block.isDisabled
     }
   )}
-  onclick={() => {
-    if (block.isDisabled) return;
-    const event = new CustomEvent<IBlockBrowserItem>("select", {
-      detail: block
-    });
-    onSelect?.(event);
+  onpointerdown={(event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    selectBlock();
+  }}
+  onclick={(event) => {
+    event.stopPropagation();
+    selectBlock();
   }}
   use:tooltip={{
     disabled: !block.tooltip,

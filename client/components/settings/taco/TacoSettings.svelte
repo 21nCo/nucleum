@@ -63,7 +63,7 @@
     if (e.data.status == "ready") {
       isDisabled = false;
       if (currentToggle == TacoLocalAIOptions.SEMANTIC_SEARCH) {
-        $userPreferences.localAI.vectorGenerationInProgress = true;
+        userPreferences.setLocalAI({ vectorGenerationInProgress: true });
         runVectorGeneration();
       }
     }
@@ -287,7 +287,7 @@
       <Button
         label="Regenerate-Vectors-For-All-MDs"
         onclick={() => {
-          $userPreferences.localAI.vectorGenerationInProgress = true;
+          userPreferences.setLocalAI({ vectorGenerationInProgress: true });
           runVectorGeneration(true);
         }}
       />

@@ -14,13 +14,3 @@ export const createDatabaseProvider = (overrides: Partial<MockDatabaseProvider> 
     ...overrides
   } satisfies MockDatabaseProvider;
 };
-
-export const createSurrealQuery = () => {
-  const queries: string[] = [];
-  return {
-    queries,
-    push(query: string) {
-      queries.push(query);
-    }
-  };
-};

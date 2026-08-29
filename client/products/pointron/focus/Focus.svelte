@@ -25,7 +25,7 @@
   import { cn } from "@21n/utils/ui.utils";
   import { AppSearchParam } from "@21n/types/appStore.type";
   import ComponentShortcutListener from "@21n/components/shortcuts/ComponentShortcutListener.svelte";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import { getContext } from "svelte";
   import { readable, type Writable } from "svelte/store";
   import { Context } from "@21n/types/appStore.type";
@@ -141,7 +141,7 @@
       <Panel
         title="Quick Focus"
         info={{
-          body: "Tap on a goal to start a focus session."
+          body: "Tap on an objective to start a focus session."
         }}
         floatingButton={addManualLogButton}
         titleStyle={TextStyle.PANEL_HEADING}
@@ -166,13 +166,11 @@
         {#snippet right()}
           {#if rightContent}
             {@render rightContent?.()}
+          {:else if $activeSession.isSessionRunning}
+            <Zen isInline={true} />
           {:else}
-            {#if $activeSession.isSessionRunning}
-              <Zen isInline={true} />
-            {:else}
-              <Advanced />
-              <FloatingButton params={[startSessionButton]} />
-            {/if}
+            <Advanced />
+            <FloatingButton params={[startSessionButton]} />
           {/if}
         {/snippet}
       </Panel>

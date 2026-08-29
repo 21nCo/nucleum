@@ -58,7 +58,7 @@
         return [all, focusSessions];
       case Product.MEMOTRON:
         return [all, nodes];
-      case Product.NUCLEUS:
+      case Product.NUCLEUM:
         return [all, nodes, focusSessions];
       default:
         return [all, focusSessions];

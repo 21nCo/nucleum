@@ -3,8 +3,9 @@
   import type { IRecordId } from "@21n/types/data.type";
   import { Size } from "@21n/types/size.enum";
   import { cn } from "@21n/utils/ui.utils";
-  import { taskStore } from "@21n/components/tasks/task.store";
-  import type { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import type { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
 
   let {
     isChecked = $bindable(false),
@@ -25,7 +26,14 @@
   function handleToggle(event: MouseEvent) {
     event.stopPropagation();
     isChecked = !isChecked;
-    taskStore.toggle(id, {
+    datafn.task.mutate({
+      operation: "merge",
+      id,
+      record: {
+        id,
+        isChecked,
+        completedAtUnix: isChecked ? resolveUnixTimestamp() : null
+      },
       context: accessPoint
     });
     const toggleEvent = new CustomEvent<IRecordId>("toggle", { detail: id });
@@ -33,7 +41,11 @@
   }
 </script>
 
-<button onclick={handleToggle}>
+<button
+  aria-label={isChecked ? "Mark task incomplete" : "Mark task complete"}
+  data-testid={`task-checkbox:${id}`}
+  onclick={handleToggle}
+>
   <div
     class={cn("rounded-md flex items-center justify-center border", {
       "bg-aps1 border-transparent": isChecked && !isAccentBg,

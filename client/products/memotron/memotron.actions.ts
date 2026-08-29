@@ -6,17 +6,11 @@ import Node from "@21n/products/memotron/node/Node.svelte";
 import NodeLoadingPulse from "@21n/elements/feedback/animations/NodeLoadingPulse.svelte";
 import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
 import SideNavCombination from "@21n/components/combination/SideNavCombination.svelte";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import MemotronLibrary from "@21n/products/memotron/library/MemotronLibrary.svelte";
 import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
-import {
-  AccessMode,
-  ResourceActionType
-} from "@21n/components/flux/resourceStores/resource.type";
-import {
-  resourceAction,
-  resourceCacheComponentKey
-} from "@21n/components/flux/resourceStores/resource.utils";
+import { AccessMode, ResourceActionType } from "@21n/data/datafn/resource.type";
+import { resourceAction } from "@21n/data/datafn/resource.utils";
 import PasteConfirmationModal from "@21n/products/memotron/capture/PasteConfirmationModal.svelte";
 import Chat from "@21n/products/memotron/taco/Chat.svelte";
 import CaptureDnD from "@21n/products/memotron/capture/CaptureDnD.svelte";
@@ -25,8 +19,6 @@ import NodeTitleLabelPart from "@21n/products/memotron/node/title/NodeTitleLabel
 import MemotronGreenUse from "@21n/products/memotron/base/MemotronGreenUse.svelte";
 import CalloutSettings from "@21n/components/markdown/callout/CalloutSettings.svelte";
 import ResourceBrowser from "@21n/components/library/resourceBrowser/ResourceBrowser.svelte";
-import FeatureWheel from "@21n/components/featureWheel/FeatureWheel.svelte";
-import ResourceCache from "@21n/components/record/ResourceCache.svelte";
 import MemotronOverview from "@21n/products/memotron/overview/MemotronOverview.svelte";
 import { Action } from "@21n/types/action.enum";
 import ImportAppData from "@21n/products/memotron/import/ImportAppData.svelte";
@@ -38,6 +30,7 @@ import LinkTagsControlPanel from "@21n/products/memotron/linking/LinkTagsControl
 import LibraryPanelContentResolver from "@21n/components/library/LibraryPanelContentResolver.svelte";
 import PreviewImageUploader from "@21n/products/memotron/node/PreviewImageUploader.svelte";
 import NodeSettings from "@21n/products/memotron/node/NodeSettings.svelte";
+import { appMenuActionLabelsByAction } from "@21n/products/product-nav.config";
 
 export const memotronActions: IAction[] = [
   {
@@ -79,7 +72,10 @@ export const memotronActions: IAction[] = [
   {
     action: resourceAction(Resource.node, ResourceActionType.CREATE),
     component: Capture,
-    label: "Capture",
+    label:
+      appMenuActionLabelsByAction[
+        resourceAction(Resource.node, ResourceActionType.CREATE)
+      ],
     icon: "mynaui:plus-hexagon",
     type: ActionType.LIVE,
     accessMode: AccessMode.MAIN
@@ -158,7 +154,7 @@ export const memotronActions: IAction[] = [
     }
   },
   {
-    action: Resource.combination,
+    action: Resource.space,
     type: ActionType.MODAL,
     component: SideNavCombination,
     accessMode: AccessMode.POP,
@@ -174,7 +170,7 @@ export const memotronActions: IAction[] = [
   },
   {
     action: MemotronAction.LIBRARY,
-    label: "Library",
+    label: appMenuActionLabelsByAction[Action.LIBRARY],
     icon: "library",
     component: LibraryPanelContentResolver,
     panel: MemotronLibrary,
@@ -196,20 +192,6 @@ export const memotronActions: IAction[] = [
     isInactive: true,
     icon: "light-bulb",
     component: ComingSoonView
-  },
-  {
-    action: "fw",
-    label: "Feature Wheel",
-    type: ActionType.PAGE,
-    isMenuHidden: true,
-    isMeta: true,
-    component: FeatureWheel,
-    modalParams: {
-      layout: {
-        size: Size.full,
-        ignoreSafeArea: true
-      }
-    }
   },
   {
     action: MemotronAction.PASTE_CONFIRMATION,
@@ -244,7 +226,7 @@ export const memotronActions: IAction[] = [
   {
     action: Action.OVERVIEW,
     type: ActionType.PAGE,
-    label: "Overview",
+    label: appMenuActionLabelsByAction[Action.OVERVIEW],
     icon: "overview",
     component: MemotronOverview
   },
@@ -277,22 +259,6 @@ export const memotronActions: IAction[] = [
         size: Size.lg,
         isOveriddenFooter: true
       }
-    }
-  },
-  {
-    action: resourceCacheComponentKey(Resource.node),
-    type: ActionType.CACHE,
-    component: ResourceCache,
-    componentParams: {
-      resource: Resource.node
-    }
-  },
-  {
-    action: resourceCacheComponentKey(Resource.relation),
-    type: ActionType.CACHE,
-    component: ResourceCache,
-    componentParams: {
-      resource: Resource.relation
     }
   },
   {

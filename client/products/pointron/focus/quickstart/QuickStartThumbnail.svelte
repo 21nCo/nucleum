@@ -8,22 +8,19 @@
   import { Layout } from "@21n/types/layout.type";
   import { TimeFormat } from "@21n/types/time.type";
   import { formatTime, formatSeconds } from "@21n/utils/time.utils";
-  import { onMount } from "svelte";
   import BreadcrumbMini from "@21n/elements/breadcrumb/BreadcrumbMini.svelte";
   import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
   import { cn } from "@21n/utils/ui.utils";
   import { resolveTaskFocus } from "@21n/products/pointron/focus/session.utils";
   import UnpinAction from "@21n/products/pointron/focus/quickstart/actions/UnpinAction.svelte";
   import { toasts } from "@21n/stores/notification.store";
-  import type { IGoalThumb } from "@21n/components/goals/goal.type";
+  import type { IObjectiveThumb } from "@21n/components/goals/goal.type";
   import { hoverable } from "@21n/actions/hover.action";
-  import { goalStore } from "@21n/components/goals/goal.store";
-  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
-  import { focusAggregates } from "@21n/products/pointron/analytics/analytics.store";
-  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
+  import { isSameResource } from "@21n/data/datafn/resource.utils";
   import { appStore } from "@21n/stores/app.store";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import context from "@21n/stores/context.store";
+  import { datafn } from "@21n/stores/datafn.store";
 
   let {
     item,
@@ -31,16 +28,20 @@
     isInEditMode = false,
     onUnpin = undefined
   }: {
-    item: Pick<IGoalThumb, "id" | "label" | "color" | "parent"> & {
+    item: Pick<IObjectiveThumb, "id" | "label" | "color" | "parent"> & {
       focus?: number;
     };
     layout: Layout;
     isInEditMode?: boolean;
     onUnpin?: ((event: CustomEvent<any>) => void) | undefined;
   } = $props();
-  let isColorGoalTextExperimental = false;
-  let todayFocusDuration = $state<number | undefined>(item.focus);
-  let parentLabels = $state<string[]>([]);
+  let isColorObjectiveTextExperimental = false;
+  let todayFocusDuration = $derived(item.focus);
+  let parentLabels = $derived(
+    item.parent && item.parent.length > 0
+      ? (item.parent.map((x: any) => x.label) ?? [])
+      : []
+  );
   let focusTime = $state(0);
   let isHovering = $state(false);
   let isFinishingState = $state(false);
@@ -65,11 +66,6 @@
     focusTime = Number.isFinite(resolvedFocusTime) ? resolvedFocusTime : 0;
   });
 
-  onMount(async () => {
-    if (item.parent && item.parent?.length > 0)
-      parentLabels = item.parent.map((x: any) => x.label) ?? [];
-  });
-
   async function toggleSession(e: MouseEvent) {
     if (isInEditMode || e.altKey) {
       appStore.openResource(item.id, AccessMode.POP);
@@ -78,44 +74,27 @@
     if (isActive) {
       isFinishingState = true;
       await activeSession.finishSession({ isClose: true });
-      await refreshFocus();
       isFinishingState = false;
     } else {
       await activeSession.quickStart(item.id);
     }
   }
 
-  async function refreshFocus() {
-    const focus = await focusAggregates.aggregateFocusForCurrentDay({
-      goalId: item.id
-    });
-    todayFocusDuration = typeof focus === "number" ? focus : undefined;
-  }
-
   async function unPin(e: any) {
     e.stopPropagation();
-    await goalStore.modify(item.id, { isPinnedForQuickFocus: false });
-    toasts.success(`Goal **${item.label}** unpinned from quick focus`);
+    await datafn.objective.mutate({
+      operation: "merge",
+      id: item.id.toString(),
+      record: {
+        id: item.id.toString(),
+        isPinnedForQuickFocus: false
+      }
+    });
+    toasts.success(`Objective **${item.label}** unpinned from quick focus`);
     const unpinEvent = new CustomEvent("unpin", {
       detail: item.id
     });
     onUnpin?.(unpinEvent);
-  }
-
-  async function onGoalChanges() {
-    const goal = await goalStore.selectMany(
-      {
-        filters: {
-          id: item.id?.toString()
-        }
-      },
-      {
-        isExpand: true
-      }
-    );
-    if (goal?.[0]) {
-      item = { ...goal[0], focus: item.focus };
-    }
   }
 
   function onTitleClick(e: MouseEvent) {
@@ -162,7 +141,7 @@
         {/if}
         <div
           class={cn("flex flex-col items-start flex-1 min-w-0", {
-            "text-ccs1": !isActive && isColorGoalTextExperimental,
+            "text-ccs1": !isActive && isColorObjectiveTextExperimental,
             "text-fgs1": !isActive
           })}
         >
@@ -282,4 +261,3 @@
     {/if}
   </CustomColorPropagator>
 {/if}
-<ComponentBaseLayer subscribeToRecords={[item.id]} onChange={onGoalChanges} />

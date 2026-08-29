@@ -6,8 +6,8 @@
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
   import { preferences } from "@21n/stores/preferences/preferences.store";
   import { NodeType } from "@21n/products/memotron/node/node.type";
-  import { generateResourceId } from "@21n/components/flux/flux.utils";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { generateResourceId } from "@21n/data/datafn/id.utils";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import { toasts } from "@21n/stores/notification.store";
   import NodularMarkdown from "@21n/components/markdown/NodularMarkdown.svelte";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
@@ -148,7 +148,7 @@
     </div>
   {:else}
     <div class="flex flex-col gap-12">
-      {#if [Product.NUCLEUS, Product.MEMOTRON].includes($appStore.product)}
+      {#if [Product.NUCLEUM, Product.MEMOTRON].includes($appStore.product)}
         <div class="flex flex-col gap-3">
           <Text content="Templates" style={TextStyle.SECTION_HEADING} />
 

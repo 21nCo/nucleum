@@ -5,7 +5,7 @@
   import Icon from "@21n/elements/Icon.svelte";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
-  import { removeDuplicatesFilter } from "@21n/components/flux/resourceStores/resource.utils";
+  import { removeDuplicatesFilter } from "@21n/data/datafn/resource.utils";
   import { appStore } from "@21n/stores/app.store";
   import { persistenceInstance } from "@21n/persistence/persistence";
   import { safeRequestIdleCallback } from "@21n/utils/browser.utils";

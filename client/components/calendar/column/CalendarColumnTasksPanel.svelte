@@ -1,18 +1,19 @@
 <script lang="ts">
-  import { onDestroy, onMount } from "svelte";
+  import { onDestroy } from "svelte";
   import type { ITaskThumb } from "@21n/components/tasks/task.type";
   import TaskRecords from "@21n/components/tasks/TaskRecords.svelte";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { BulkEditor, SearchStore } from "@21n/components/record/record.store";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
+  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { BulkEditor } from "@21n/components/record/record.store";
   import { appStore } from "@21n/stores/app.store";
-  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
-  import { RemovalProperty, type IRecordId } from "@21n/types/data.type";
-  import { tzStore } from "@21n/components/settings/timezone/tz.store";
+  import type { IRecordId } from "@21n/types/data.type";
   import { toasts } from "@21n/stores/notification.store";
   import { dragSelection } from "@21n/actions/dragSelection.action";
   import { bulkEditStore } from "@21n/components/record/bulkedit.store";
   import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { toSvelteStore } from "@datafn/svelte";
+  import { time } from "@datafn/client";
 
   let {
     date,
@@ -22,12 +23,17 @@
     accessPoint?: ResourceAccessPoint;
   } = $props();
 
-  let isRefreshing = $state(false);
-  let tasks = $state<ITaskThumb[]>([]);
   let isInSelectionMode = $state(false);
-  onMount(async () => {
-    await refreshTimeline();
-  });
+
+  const taskStore = $derived.by(() =>
+    toSvelteStore(
+      datafn.task.signal({
+        temporal: time.day("dateUnix", date),
+        select: ["*", "objective.*"]
+      }),
+      { initialData: [] }
+    )
+  );
 
   const multiSelectContext = $derived({
     resource: Resource.task,
@@ -40,34 +46,14 @@
     }
   });
 
-  async function refreshTimeline() {
-    isRefreshing = true;
-    await loadTasks();
-    isRefreshing = false;
-  }
-
-  async function loadTasks() {
-    const dateFilter = tzStore.resolveTimePeriodFilterForDay(date);
-    const allTasks = await new SearchStore(Resource.task).select({
-      filters: {
-        dateUnix: dateFilter
-      }
-    });
-    tasks = [...(allTasks ?? [])];
-  }
-
   async function handleCreateTask() {
     appStore.runAction(PointronAction.CREATE_TASK_INLINE, {
       componentParams: { date }
     });
   }
 
-  function onResourceMutation() {
-    refreshTimeline();
-  }
-
   function onSelectAll() {
-    return tasks.map((x) => x.id);
+    return $taskStore.data.map((x) => x.id);
   }
 
   async function onBulkAction(
@@ -78,7 +64,6 @@
     try {
       const editor = new BulkEditor(Resource.task, bulkEditStore);
       await editor.run(action, data);
-      refreshTimeline();
     } catch (e) {
       toasts.error("Failed to perform bulk action");
     }
@@ -109,9 +94,9 @@
 >
   <div class="flex py-3 w-full flex-grow styledscroll">
     <TaskRecords
-      data={tasks}
+      data={$taskStore.data}
       {accessPoint}
-      {isRefreshing}
+      isRefreshing={$taskStore.loading || $taskStore.refreshing}
       {date}
       onCreate={handleCreateTask}
     />
@@ -129,17 +114,3 @@
       ]}
     /> -->
 </div>
-<ComponentBaseLayer
-  subscribeToResource={new Set([Resource.task])}
-  subscriptionPropsForMergeAction={[
-    RemovalProperty.IS_ARCHIVED,
-    RemovalProperty.TRASH_INFORMATION,
-    "dateUnix",
-    "isChecked",
-    "goalId"
-  ]}
-  onSyncDown={() => {
-    refreshTimeline();
-  }}
-  onChange={onResourceMutation}
-/>

@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ExtensionEvent } from "@21n/types/extension.type";
 
 import {
-  interceptSurrealResponse,
   openAppPath,
   openLink,
   relayToBackgroundScript,
@@ -53,19 +52,6 @@ describe("client/utils/extension.utils", () => {
     vi.useRealTimers();
     vi.clearAllMocks();
     delete (globalThis as any).chrome;
-  });
-
-  it("intercepts surreal responses", () => {
-    expect(interceptSurrealResponse([], "ctx")).toBeNull();
-    expect(
-      interceptSurrealResponse([{ status: "OK", result: 42 }], "ctx")
-    ).toBe(42);
-    expect(
-      interceptSurrealResponse(
-        [{ status: "ERR", result: "Database record `foo` already exists" }],
-        "ctx"
-      )
-    ).toBe("Record already exists");
   });
 
   it("relays messages to content scripts using stored tab id", async () => {

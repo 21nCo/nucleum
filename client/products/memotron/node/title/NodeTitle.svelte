@@ -5,7 +5,7 @@
   import Icon from "@21n/elements/Icon.svelte";
   import NodeTitleLabelPart from "@21n/products/memotron/node/title/NodeTitleLabelPart.svelte";
   import type { IActiveNode } from "@21n/products/memotron/node/node.type";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import context from "@21n/stores/context.store";
   import TextInputOnKeyboardToolbar from "@21n/elements/input/TextInputOnKeyboardToolbar.svelte";
   import RecordStarStatusFeedback from "@21n/components/record/RecordStarStatusFeedback.svelte";
@@ -59,7 +59,7 @@
           onCancel={() => {
             node.label = previousLabel;
             isKeyboardEditorMounted = false;
-            propagateLabelChange(node.label);
+            propagateLabelChange(node.label ?? "");
             propagateEditModeChange(false);
           }}
         />
@@ -77,16 +77,16 @@
         isPreserveKeyboardToolbar={isKeyboardEditorMounted}
         isShowSaveControl={true}
         onEnter={() => {
-          propagateLabelChange(node.label);
+          propagateLabelChange(node.label ?? "");
           propagateEditModeChange(false);
         }}
         onSave={() => {
-          propagateLabelChange(node.label);
+          propagateLabelChange(node.label ?? "");
           propagateEditModeChange(false);
         }}
         onCancel={() => {
           node.label = previousLabel;
-          propagateLabelChange(node.label);
+          propagateLabelChange(node.label ?? "");
           propagateEditModeChange(false);
         }}
       />

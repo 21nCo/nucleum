@@ -1,11 +1,11 @@
 <script lang="ts">
   import { logger } from "@21n/components/debug/logger.client";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import {
     determineResourceType,
     isSameResource
-  } from "@21n/components/flux/resourceStores/resource.utils";
+  } from "@21n/data/datafn/resource.utils";
   import { appStore } from "@21n/stores/app.store";
   import ComponentResolver from "@21n/layout/paint/ComponentResolver.svelte";
   import { onMount } from "svelte";

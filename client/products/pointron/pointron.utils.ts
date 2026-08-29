@@ -161,29 +161,44 @@ function generateIntervals(composition: SessionComposition) {
     focusDuration = composition.focusDuration;
     numberOfFocusRounds = 1;
   }
-  if (!focusDuration || !numberOfFocusRounds) return [];
+  if (
+    typeof focusDuration !== "number" ||
+    typeof numberOfFocusRounds !== "number" ||
+    !Number.isFinite(focusDuration) ||
+    !Number.isFinite(numberOfFocusRounds) ||
+    focusDuration <= 0 ||
+    numberOfFocusRounds <= 0
+  )
+    return [];
+  const focusBlockDuration = focusDuration;
+  const focusRoundCount = numberOfFocusRounds;
   let bars: Omit<ISessionInterval, "start">[] = [];
-  for (let i = 0; i < numberOfFocusRounds; i++) {
+  for (let i = 0; i < focusRoundCount; i++) {
     bars = [
       ...bars,
       {
         id: generateSimpleRandomId(),
-        duration: focusDuration,
+        duration: focusBlockDuration,
         progress: 0,
         type: BlockType.FOCUS
       }
     ];
+    const shouldAddTrailingBreak =
+      composition.type === SessionCompositionType.POMODORO
+        ? !(
+            i === focusRoundCount - 1 &&
+            (composition.additional === undefined ||
+              composition.additional.length < 1)
+          )
+        : [
+            SessionCompositionType.TARGET_FOCUS,
+            SessionCompositionType.TOTAL_DURATION,
+            SessionCompositionType.END_TIME_FIXED
+          ].includes(composition.type) && i !== focusRoundCount - 1;
     if (
       composition.breakType === BreakCompositionType.PREDEFINED &&
       composition.breakDuration > 0 &&
-      ((composition.type === SessionCompositionType.POMODORO &&
-        !(
-          i === numberOfFocusRounds - 1 &&
-          (composition.additional === undefined ||
-            composition.additional.length < 1)
-        )) ||
-        (composition.type === SessionCompositionType.TOTAL_DURATION &&
-          i !== numberOfFocusRounds - 1))
+      shouldAddTrailingBreak
     ) {
       bars = [
         ...bars,

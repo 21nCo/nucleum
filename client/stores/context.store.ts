@@ -14,7 +14,10 @@ const context = initContextStore({
   embed: Embed.NONE,
   os: OperatingSystem.MACOS,
   isTouchDevice: false,
-  dapId: ""
+  dapId: "",
+  experiments: {
+    isEnableRoundedMain: false
+  }
 });
 
 function initContextStore(val: IAppContext) {

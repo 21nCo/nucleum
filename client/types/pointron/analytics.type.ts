@@ -1,7 +1,7 @@
 export type AnalyticsFilters = {
-  goals: string[];
+  objectives: string[];
   tags: string[];
-  isAggregateSubgoals: boolean;
+  isAggregateSubObjectives: boolean;
   isShowTargetLines: boolean;
 };
 
@@ -11,8 +11,8 @@ export type AnalyticsFilters = {
 export type HorizonChartDataRecord = {
   brek: number;
   focus: number;
-  goal: string;
-  goalId: string;
+  objectiveLabel: string;
+  objectiveId: string;
   start: string;
-  topLevelGoal: string;
+  topLevelObjectiveLabel: string;
 };

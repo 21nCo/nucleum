@@ -17,7 +17,7 @@ export const iconMappings: Record<string, IconMapping> = {
     solar: "bolt"
   },
   settings: {
-    phosphor: "gear",
+    phosphor: "gear-fine",
     lucide: "settings",
     solar: "settings"
   },

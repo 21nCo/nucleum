@@ -25,7 +25,7 @@
   import {
     isSameResource,
     resourceInList
-  } from "@21n/components/flux/resourceStores/resource.utils";
+  } from "@21n/data/datafn/resource.utils";
   import Button from "@21n/elements/button/Button.svelte";
   import { ButtonStyle } from "@21n/types/button.type";
 
@@ -85,12 +85,18 @@
    */
   let refreshId = $state(new Date().getTime());
 
+  function resolveNodeMarkdown() {
+    return {
+      blocks: node ? (recursivelyExtractAllChildrenIntoArray(node) as IBlock[]) : []
+    };
+  }
+
   /**
    * Scoped blocks from {@link md} which is used to render the markdown.
    *
    * This is used to render the markdown when a heading is focused.
    */
-  let _md = $state<IMarkdown>(md);
+  let _md = $state<IMarkdown>(node ? resolveNodeMarkdown() : md);
 
   /**
    * @deprecated - children structure determination trail 1
@@ -141,14 +147,10 @@
 
   onMount(() => {
     if (node) {
-      _md = {
-        blocks: recursivelyExtractAllChildrenIntoArray(node) as IBlock[]
-      };
+      _md = resolveNodeMarkdown();
       reCalculateStructure(_md, true);
-      setTimeout(() => {
-        md = _md;
-        emitReady();
-      }, 1000);
+      md = _md;
+      emitReady();
       return;
     }
     _md = md;
@@ -361,7 +363,6 @@
     propagateChanges(event.detail.md);
     if (!event.detail.id) return;
     if (!node) {
-      console.log({ focusedBlock, event });
       if (focusedBlock && isSameResource(event.detail.id, focusedBlock)) {
         unFocus();
         return;
@@ -418,6 +419,6 @@
     onChange={onBlockContentChange}
     onFocus={onBlockFocus}
     onAction={onBlockAction}
-    onRearrange={onRearrange}
+    {onRearrange}
   />
 {/key}

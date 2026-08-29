@@ -5,50 +5,50 @@
   import { Size } from "@21n/types/size.enum";
   import type { IRecordId } from "@21n/types/data.type";
   import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
-  import { SearchStore } from "@21n/components/record/record.store";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import { toasts } from "@21n/stores/notification.store";
   import { ErrorMessage } from "@21n/components/error/error.type";
+  import { datafn } from "@21n/stores/datafn.store";
 
   let {
-    goalId,
+    objectiveId,
     placeholder = "+ add a task",
     onCreateNew = undefined,
     onSelect = undefined,
     onBlur = undefined,
     onFocus = undefined
   }: {
-    goalId: IRecordId;
+    objectiveId: IRecordId;
     placeholder?: string;
     onCreateNew?:
-      | ((event: CustomEvent<{ label: string; goalId: IRecordId }>) => void)
+      | ((
+          event: CustomEvent<{ label: string; objectiveId: IRecordId }>
+        ) => void)
       | undefined;
     onSelect?: ((event: CustomEvent<any>) => void) | undefined;
     onBlur?: ((event: CustomEvent<void>) => void) | undefined;
     onFocus?: ((event: CustomEvent<void>) => void) | undefined;
   } = $props();
-  let label: string = "";
-  let inputRef: TextSearchInput;
-  const searchStore = new SearchStore(Resource.task);
+  let label = $state("");
+  let inputRef = $state<TextSearchInput | undefined>();
   export function focus() {
-    inputRef.focus();
+    inputRef?.focus();
   }
 
   async function createNew() {
     if (!label) return;
     const labelCopy = label;
     reset();
-    const createNewEvent = new CustomEvent<{ label: string; goalId: IRecordId }>(
-      "createNew",
-      {
-        detail: {
-          label: labelCopy,
-          goalId
-        }
+    const createNewEvent = new CustomEvent<{
+      label: string;
+      objectiveId: IRecordId;
+    }>("createNew", {
+      detail: {
+        label: labelCopy,
+        objectiveId
       }
-    );
+    });
     onCreateNew?.(createNewEvent);
-    // if (goalId) await focusItemsStore.addNewTask(labelCopy, goalId);
   }
 
   function reset() {
@@ -56,15 +56,34 @@
     inputRef?.reset();
   }
 
-  function searchCallback(search: string) {
-    return searchStore.select({
-      searchQuery: search,
+  async function searchCallback(search: string) {
+    const trimmedSearch = search?.trim();
+    if (!trimmedSearch) {
+      const result = await datafn.task.query({
+        filters: {
+          objectiveId: objectiveId.toString(),
+          isChecked: false
+        },
+        limit: 50,
+        sort: ["-updatedAt"]
+      });
+      return result.data ?? [];
+    }
+    const result = await datafn.search({
+      query: trimmedSearch,
+      resources: [Resource.task],
+      fields: ["label"],
       filters: {
-        goalId: goalId.toString(),
-        isChecked: false
+        [Resource.task]: {
+          objectiveId: objectiveId.toString(),
+          isChecked: false
+        }
       },
-      isStrictSearch: true
+      source: "local",
+      prefix: true,
+      fuzzy: 0.2
     });
+    return result.results?.map((entry: any) => entry.data) ?? [];
   }
 
   async function handleSelect(event: any) {
@@ -79,10 +98,9 @@
   }
 </script>
 
-<div class="flex items-center gap-1 w-full pl-3 {goalId ? 'h-12' : 'h-14'}">
-  <!-- <div class="flex justify-center items-center">
-    <Check isChecked={false} size={Size.sm} />
-  </div> -->
+<div
+  class="flex items-center gap-1 w-full pl-3 {objectiveId ? 'h-12' : 'h-14'}"
+>
   <TextSearchInput
     onSelect={handleSelect}
     onEmptyEnter={createNew}
@@ -108,6 +126,8 @@
             size={Size.xs}
             icon="plus"
             tooltip="Add"
+            ariaLabel="Add task"
+            testId={`focus-add-task:${objectiveId}`}
             isPreventMinWidth={true}
           />
         {/if}

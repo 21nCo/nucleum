@@ -18,7 +18,7 @@
   import { resolveProductConfig } from "@21n/products/product.config";
 
   const overviewPanelSwitcherItems =
-    resolveProductConfig(Product.NUCLEUS).overviewPanelSwitcherItems ?? [];
+    resolveProductConfig(Product.NUCLEUM).overviewPanelSwitcherItems ?? [];
 
   let {
     isConstrainedWidth = $bindable(false),

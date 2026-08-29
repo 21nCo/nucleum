@@ -1,5 +1,5 @@
 import { get, writable } from "svelte/store";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import {
   AppSkin,
   Theme,

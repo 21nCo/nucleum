@@ -14,7 +14,7 @@ export type SessionComposition = {
   units?: TimeUnit;
   name?: string;
   numberOfFocusRounds?: number;
-  goals?: IRecordId[];
+  objectives?: IRecordId[];
 };
 
 export enum SessionCompositionType {

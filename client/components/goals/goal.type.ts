@@ -4,12 +4,12 @@ import type {
   IActiveResource,
   IResource,
   IResourceArchivable,
-  IResourceInActivableFromParent,
+  IResourceInActivableFromAncestor,
   IResourceLabeled,
   IResourcePageWithPanels,
   IResourceStarrable,
   IResourceShareable
-} from "@21n/components/flux/resourceStores/resource.type";
+} from "@21n/data/datafn/resource.type";
 import type {
   ICollectible,
   ICollectionExpanded
@@ -17,7 +17,7 @@ import type {
 import type { TimeScale } from "@21n/types/time.type";
 import type { ITask } from "@21n/components/tasks/task.type";
 
-export enum GoalType {
+export enum ObjectiveType {
   INDEFINITE = "INDEFINITE",
   DEFINITE = "DEFINITE",
   /**
@@ -25,22 +25,33 @@ export enum GoalType {
    */
   ROUTINE = "ROUTINE"
 }
-export enum SubGoalsLayout {
+export type ObjectiveTypeValue = `${ObjectiveType}`;
+export enum SubObjectivesLayout {
   DEFAULT = "DEFAULT",
   TREE = "TREE",
   STEPS = "STEPS",
   TABS = "TABS",
   BOARDS = "BOARDS"
 }
-export interface IGoalBase extends IResourceLabeled, ICollectible {
-  type?: GoalType;
+export type SubObjectivesLayoutValue = `${SubObjectivesLayout}`;
+
+export enum ObjectiveStatus {
+  NOT_STARTED = "NOT_STARTED",
+  IN_PROGRESS = "IN_PROGRESS",
+  COMPLETED = "COMPLETED"
+}
+export type ObjectiveStatusValue = `${ObjectiveStatus}`;
+
+export interface IObjectiveBase extends IResourceLabeled, ICollectible {
+  type?: ObjectiveTypeValue;
   description?: IMarkdown;
   startDate?: Date;
   endDate?: Date;
   spanScale?: TimeScale;
-  subGoalsLayout?: SubGoalsLayout;
-  status?: GoalStatus;
+  subObjectivesLayout?: SubObjectivesLayoutValue;
+  status?: ObjectiveStatusValue;
   color?: number;
+  sortOrder?: number;
   isPinnedForQuickFocus?: boolean;
   /**
    * @deprecated - use uiState.tabsOrder instead
@@ -48,61 +59,61 @@ export interface IGoalBase extends IResourceLabeled, ICollectible {
   tabsOrder?: string[];
   uiState?: {
     /**
-     * Order of tabs on goal page.
+     * Order of tabs on objective page.
      */
     tabsOrder?: string[];
     isHideCompleted?: boolean;
   };
 }
-export interface IGoalCapture extends IGoalBase {
+export interface IObjectiveCapture extends IObjectiveBase {
   id?: IRecordId;
-  parent?: IRecordId[];
-  children?: IRecordId[];
+  parentId?: IRecordId | null;
+  parentPath?: string;
 }
 
-type IResourcePropertiesForGoal = IResource &
+type IResourcePropertiesForObjective = IResource &
   IResourceShareable &
   IResourceStarrable &
   IResourceArchivable &
-  IResourceInActivableFromParent;
+  IResourceInActivableFromAncestor;
 
-export type IGoal = IResourcePropertiesForGoal &
-  IGoalBase & {
+export type IObjective = IResourcePropertiesForObjective &
+  IObjectiveBase & {
     /**
      * Has index
      */
-    type: GoalType;
+    type: ObjectiveTypeValue;
     /**
      * Has index
      */
-    status: GoalStatus;
+    status: ObjectiveStatusValue;
     /**
      * Has index
      */
-    parent: IRecordId[] | 0;
-    children?: IRecordId[];
+    parentId?: IRecordId | null;
+    parentPath?: string;
+    parent?: IObjectiveThumb[];
+    children?: IObjectiveThumb[];
   };
 
-export type IGoalThumb = IResourcePropertiesForGoal &
-  IGoalBase & {
-    parent?: IGoal[];
-    children?: IRecordId[];
+export type IObjectiveThumb = IResourcePropertiesForObjective &
+  IObjectiveBase & {
+    type: ObjectiveTypeValue;
+    status: ObjectiveStatusValue;
+    parentId?: IRecordId | null;
+    parentPath?: string;
+    parent?: IObjectiveThumb[];
+    children?: IObjectiveThumb[];
   };
 
-export type IActiveGoal = IActiveResource &
+export type IActiveObjective = IActiveResource &
   IResourcePageWithPanels &
-  Omit<IGoal, "parent" | "children"> & {
-    type: GoalType;
-    parent?: IGoalThumb[];
-    children?: IGoal[];
+  Omit<IObjective, "parent" | "children"> & {
+    type: ObjectiveTypeValue;
+    parent?: IObjectiveThumb[];
+    children?: IObjectiveThumb[];
     isPageLoading: boolean;
     collections?: IRecordId[];
     types?: ICollectionExpanded[];
     taskCount?: number;
   };
-
-export enum GoalStatus {
-  NOT_STARTED = "NOT_STARTED",
-  IN_PROGRESS = "IN_PROGRESS",
-  COMPLETED = "COMPLETED"
-}

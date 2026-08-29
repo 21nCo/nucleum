@@ -76,3 +76,9 @@ deployment/**/*.js
 
 # Cloudflare local state
 **/.wrangler/
+
+# Riptide artifacts (cloud-synced)
+.humanlayer/tasks/
+
+# Exponential space data
+.exponential/

@@ -7,7 +7,7 @@
   import { Product } from "@21n/products/product.type";
   import { resolveProductConfig } from "@21n/products/product.config";
 
-  let { ctx = Product.NUCLEUS }: { ctx?: Product } = $props();
+  let { ctx = Product.NUCLEUM }: { ctx?: Product } = $props();
 </script>
 
 <svelte:head>
