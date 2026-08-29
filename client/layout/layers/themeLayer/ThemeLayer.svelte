@@ -52,8 +52,10 @@
     refreshSizing();
     const userPreferencesSub = userPreferences.subscribe((x) => {
       if (!userPreferences.isInitialized) return;
-      if (x.appearance.typeface !== typeface) {
-        typeface = x.appearance.typeface ?? defaultTypeface;
+      const preferenceAppearance =
+        x.appearance ?? userPreferences.seed.appearance;
+      if ((preferenceAppearance.typeface ?? defaultTypeface) !== typeface) {
+        typeface = preferenceAppearance.typeface ?? defaultTypeface;
         refreshTailwind();
       }
       if (x.accessibilitySizingFactor !== accessibilitySizingFactor) {
@@ -61,12 +63,15 @@
         refreshSizing();
       }
       if (
-        $appearance.lightColorSchemeId !== x.appearance.lightColorSchemeId ||
-        $appearance.darkColorSchemeId !== x.appearance.darkColorSchemeId ||
-        $appearance.userThemeSetting !== x.appearance.userThemeSetting ||
-        $appearance.isSyncWithSystem !== x.appearance.isSyncWithSystem
+        $appearance.lightColorSchemeId !==
+          preferenceAppearance.lightColorSchemeId ||
+        $appearance.darkColorSchemeId !==
+          preferenceAppearance.darkColorSchemeId ||
+        $appearance.userThemeSetting !==
+          preferenceAppearance.userThemeSetting ||
+        $appearance.isSyncWithSystem !== preferenceAppearance.isSyncWithSystem
       ) {
-        appearance.syncAppearanceFromCloud(x.appearance);
+        appearance.syncAppearanceFromCloud(preferenceAppearance);
       }
     });
     const appearanceSub = appearance.subscribe(() => {
@@ -96,7 +101,7 @@
    * visibility is set to visible with important to handle cases where the web pages override extension styles like on Reddit website.
    *
    *Note: Setting default root font size (16) as root size for Sheet context as regular calculation is yiedling 14.xx as root size which is resulting in smaller and hard to read text.
-   TODO - test other $view.scale cases and the need for having less defaultRootFontSize for $view.scale < 0.55 
+   TODO - test other $view.scale cases and the need for having less defaultRootFontSize for $view.scale < 0.55
    *
    */
   function refreshSizing() {
@@ -202,6 +207,7 @@
   }
 
   const fontsWithoutTabularSupport = [
+    "Albert Sans",
     "Arvo",
     "Comic Neue",
     "Didact Gothic",
@@ -214,7 +220,7 @@
     "Quicksand"
   ];
   const fontsToEnlargeNumbersForGrid = ["Sen"];
-  const fontsWithNoisyGridNumbers = ["Space Grotesk", "Twenty One Native"];
+  const fontsWithNoisyGridNumbers = ["Albert Sans","DM Sans","Space Grotesk", "Twenty One Native"];
 
   function resolveNumberTypeface(typeface: string) {
     if (fontsWithoutTabularSupport.includes(typeface))

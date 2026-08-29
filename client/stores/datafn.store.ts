@@ -1,0 +1,865 @@
+import {
+  createDatafnPublicLinkAuthPlugin,
+  createDatafnClient,
+  IndexedDbStorageAdapter,
+  type DatafnClient,
+  type DatafnE2eeConfig,
+  type DatafnHttpTransportOptions,
+  type DatafnSyncStatus,
+  type DatafnStorageAdapter
+} from "@datafn/client";
+import {
+  nucleumDatafnSchema,
+  nucleumDatafnSearchDefaults,
+  nucleumDatafnSearchPipeline,
+  resolveNucleumDatafnSearchIndexVersion,
+  resolveNucleumDatafnSearchResourceFields,
+  type NucleumDatafnResource,
+  type NucleumDatafnSchema
+} from "@21n/shared-data/datafn";
+import { createSearchProvider } from "@searchfn/datafn-provider";
+import { IndexedDbAdapter } from "@searchfn/adapter-indexeddb";
+import { resolveProductResourceConfig } from "@21n/shared-config/product.config";
+import { resolveAccountBaseUrl } from "@21n/components/network";
+import { createNucleumAuthFnTransportAuth } from "@21n/components/account/auth";
+import type { Product } from "@21n/products/product.type";
+import { ClientStorageKey } from "@21n/persistence/persistence.type";
+import { clientStorage, getDapId } from "@21n/persistence/persistence.utils";
+import type { UserAccount } from "@21n/types/account.type";
+import { UserDataMode } from "@21n/types/account.type";
+import { get, writable } from "svelte/store";
+import { logger } from "@21n/components/debug/logger.client";
+import {
+  DATAFN_E2EE_KV_KEY,
+  createDisabledDatafnE2eeSettings,
+  createDatafnE2eeSetup,
+  datafnE2eeState,
+  disableLocalDatafnE2ee,
+  getCachedDatafnE2eeProvider,
+  getLocalDatafnE2eeSettings,
+  persistDatafnE2eeSettings,
+  rewrapCachedDatafnE2eeKey,
+  unlockDatafnE2eeSettings,
+  type NucleumDatafnE2eeSettings
+} from "@21n/stores/datafnE2ee.store";
+
+export type NucleumDatafnMode = "local-only" | "sync" | "sync-direct";
+
+export type NucleumDatafnStatus = DatafnSyncStatus & {
+  namespace: string | null;
+  storageDbName: string | null;
+  product: Product | null;
+  nucleumMode: NucleumDatafnMode | null;
+  remoteUrl: string | null;
+  bootResources: string[];
+  backgroundResources: string[];
+};
+
+type SearchProvider = {
+  readonly name: string;
+  search(params: {
+    resource: string;
+    query: string;
+    type?: "fullText" | "semantic";
+    fields?: string[];
+    limit?: number;
+    prefix?: boolean;
+    fuzzy?: boolean | number;
+    fieldBoosts?: Record<string, number>;
+    namespaceFilter?: string[];
+    regionFilter?: string[];
+    signal?: AbortSignal;
+  }): Promise<string[]>;
+  searchAll?(params: {
+    query: string;
+    resources?: string[];
+    fields?: string[];
+    limit?: number;
+    limitPerResource?: number;
+    prefix?: boolean;
+    fuzzy?: boolean | number;
+    fieldBoosts?: Record<string, number>;
+    namespaceFilter?: string[];
+    regionFilter?: string[];
+    signal?: AbortSignal;
+  }): Promise<Array<{ resource: string; id: string; score: number }>>;
+  updateIndices(params: {
+    resource: string;
+    records: Record<string, unknown>[];
+    operation: "upsert" | "delete";
+  }): Promise<void>;
+  initialize?(config: {
+    resources: Array<{ name: string; searchFields: string[] }>;
+  }): Promise<void>;
+  dispose?(): Promise<void>;
+};
+
+export type NucleumDatafnRuntime = {
+  storage?: DatafnStorageAdapter;
+  namespace: string;
+  storageDbName: string | null;
+  product: Product;
+  mode: NucleumDatafnMode;
+  remoteUrl: string | null;
+  bootResources: string[];
+  backgroundResources: string[];
+  e2eeKeyRef?: string | null;
+  destroy: () => Promise<void>;
+};
+
+export type InitializeNucleumDatafnInput = {
+  product: Product;
+  account: Pick<UserAccount, "dataMode" | "userId" | "userInfo">;
+  env?: string;
+  appVersion?: string;
+  dapId?: string;
+  isOffline?: boolean;
+  isOfflinabilityEnabled?: boolean;
+};
+
+const datafnOfflinabilityDefault = true;
+
+const initialStatus: NucleumDatafnStatus = {
+  status: "idle",
+  mode: "local-only",
+  phase: null,
+  online: typeof navigator === "undefined" ? true : navigator.onLine,
+  pendingChanges: 0,
+  lastSyncAt: null,
+  lastError: null,
+  namespace: null,
+  storageDbName: null,
+  product: null,
+  nucleumMode: null,
+  remoteUrl: null,
+  bootResources: [],
+  backgroundResources: []
+};
+
+const runtimeStore = writable<NucleumDatafnRuntime | null>(null);
+export const datafnRuntime = runtimeStore;
+export const nucleumDatafnStatus =
+  writable<NucleumDatafnStatus>(initialStatus);
+let datafnSearchProvider: SearchProvider | undefined;
+let lastInitializeInput: InitializeNucleumDatafnInput | null = null;
+let datafnStatusUnsubscribe: (() => void) | null = null;
+const generateDatafnId = ({
+  resource,
+  idPrefix
+}: {
+  resource: string;
+  idPrefix?: string;
+}) => {
+  const prefix = idPrefix || resource;
+  return `${prefix}:${crypto.randomUUID()}`;
+};
+
+type NucleumDatafnSchemaResource =
+  (typeof nucleumDatafnSchema.resources)[number];
+
+const isRemoteOnlySchemaResource = (resource: NucleumDatafnSchemaResource) =>
+  "isRemoteOnly" in resource && resource.isRemoteOnly === true;
+
+const isValidDatafnSchemaResourceName = (
+  resource: unknown,
+  resources: Set<NucleumDatafnResource>
+): resource is NucleumDatafnResource =>
+  typeof resource === "string" &&
+  resources.has(resource as NucleumDatafnResource);
+
+function createNucleumClientSearchProvider(input: {
+  dbName: string;
+}): SearchProvider | undefined {
+  if (typeof indexedDB === "undefined") return undefined;
+  return createSearchProvider(
+    new IndexedDbAdapter({
+      dbName: input.dbName,
+      pipeline: nucleumDatafnSearchPipeline,
+      defaults: nucleumDatafnSearchDefaults,
+      cache: {
+        terms: 4096,
+        vectors: 1024
+      }
+    }),
+    {
+      resourceFields: resolveNucleumDatafnSearchResourceFields()
+    }
+  );
+}
+
+export const datafn: DatafnClient<NucleumDatafnSchema> = createDatafnClient({
+  schema: nucleumDatafnSchema,
+  clientId: "nucleum-bootstrap",
+  searchProvider: datafnSearchProvider,
+  searchIndexVersion: resolveNucleumDatafnSearchIndexVersion(),
+  sync: { mode: "local-only" },
+  temporal: { timezone: "user" },
+  generateId: generateDatafnId
+});
+
+function resolveNucleumDatafnStatus(
+  datafnStatus: DatafnSyncStatus,
+  runtime: NucleumDatafnRuntime | null
+): NucleumDatafnStatus {
+  if (!runtime) return { ...initialStatus, ...datafnStatus };
+  return {
+    ...datafnStatus,
+    namespace: runtime.namespace,
+    storageDbName: runtime.storageDbName,
+    product: runtime.product,
+    nucleumMode: runtime.mode,
+    remoteUrl: runtime.remoteUrl,
+    bootResources: runtime.bootResources,
+    backgroundResources: runtime.backgroundResources
+  };
+}
+
+function bindNucleumDatafnStatus(runtime: NucleumDatafnRuntime) {
+  datafnStatusUnsubscribe?.();
+  datafnStatusUnsubscribe = datafn.sync
+    .statusSignal()
+    .subscribe((status) => {
+      nucleumDatafnStatus.set(resolveNucleumDatafnStatus(status, runtime));
+    });
+  nucleumDatafnStatus.set(
+    resolveNucleumDatafnStatus(datafn.sync.getStatus(), runtime)
+  );
+}
+
+function clearNucleumDatafnStatusBinding() {
+  datafnStatusUnsubscribe?.();
+  datafnStatusUnsubscribe = null;
+}
+
+/**
+ * Resolves the full set of local DataFn resources that belong to a product.
+ *
+ * The list is derived from shared product config, includes both browsable and
+ * supporting table resources, excludes remote-only schema resources, and is
+ * used to scope product-specific local storage and sync hydration.
+ */
+export function resolveDatafnProductResources(
+  product: Product
+): NucleumDatafnResource[] {
+  const cloneableResources = new Set(
+    nucleumDatafnSchema.resources
+      .filter((resource) => !isRemoteOnlySchemaResource(resource))
+      .map((resource) => resource.name)
+  );
+  const configuredResources = resolveProductResourceConfig(product, {
+    isDev: import.meta.env?.DEV
+  });
+  const configuredResourceNames = [
+    ...configuredResources.table,
+    ...configuredResources.browse
+  ].map((resource) => resource.toString());
+  const productResources: NucleumDatafnResource[] = [];
+  for (const resource of configuredResourceNames) {
+    if (
+      !productResources.includes(resource as NucleumDatafnResource) &&
+      isValidDatafnSchemaResourceName(resource, cloneableResources)
+    ) {
+      productResources.push(resource);
+    }
+  }
+  return productResources;
+}
+
+/**
+ * Resolves the product resources that should be hydrated first during startup.
+ *
+ * Boot resources are limited to the product's browsable surfaces so the app can
+ * render primary navigation and resource-browser pages before slower background
+ * hydration completes.
+ */
+export function resolveDatafnBootResources(product: Product): string[] {
+  const cloneableResources = new Set(
+    nucleumDatafnSchema.resources
+      .filter((resource) => !isRemoteOnlySchemaResource(resource))
+      .map((resource) => resource.name)
+  );
+  return resolveProductResourceConfig(product, {
+    isDev: import.meta.env?.DEV
+  })
+    .browse.map((resource) => resource.toString())
+    .filter((resource) =>
+      isValidDatafnSchemaResourceName(resource, cloneableResources)
+    );
+}
+
+/**
+ * Resolves product resources that can hydrate after the boot resources.
+ *
+ * This includes supporting product tables that are needed for full behavior but
+ * are not required to render the first browsable surfaces immediately.
+ */
+export function resolveDatafnBackgroundResources(product: Product): string[] {
+  const boot = new Set(resolveDatafnBootResources(product));
+  return resolveDatafnProductResources(product).filter(
+    (resource) => !boot.has(resource)
+  );
+}
+
+export function resolveDatafnNamespace(input: {
+  account: Pick<UserAccount, "userId" | "userInfo">;
+  dapId: string;
+}) {
+  const userId =
+    input.account.userInfo?.id?.replace(/^user:/, "") ??
+    input.account.userId?.replace(/^user:/, "");
+  if (userId) return `user:${userId}`;
+  return `guest:${input.dapId}`;
+}
+
+export function resolveDatafnBaseDbName(input: {
+  product: Product;
+  env?: string;
+}) {
+  const product = input.product.toString().trim().toLowerCase();
+  const env = input.env?.toString().trim().toLowerCase() || "dev";
+  return `nucleum-datafn-${env}-${product}`;
+}
+
+export function resolveDatafnStorageDbName(input: {
+  product: Product;
+  namespace: string;
+  env?: string;
+}) {
+  return `${resolveDatafnBaseDbName(input)}_${input.namespace.replace(/:/g, "_")}`;
+}
+
+export function createDatafnStorage(input: {
+  product: Product;
+  namespace: string;
+  env?: string;
+}) {
+  const storage = IndexedDbStorageAdapter.createForNamespace(
+    resolveDatafnBaseDbName(input),
+    input.namespace,
+    undefined,
+    nucleumDatafnSchema
+  );
+  return {
+    storage,
+    dbName: storage.dbName
+  };
+}
+
+const nodeMdChildOrderMigrationId = "kv:migration:node-md-child-order-v1";
+
+export async function migrateDatafnNodeMdChildOrder(
+  storage?: DatafnStorageAdapter | null
+) {
+  if (!storage) return;
+  const marker = await storage
+    .getRecord("kv", nodeMdChildOrderMigrationId)
+    .catch(() => null);
+  if (marker) return;
+  const records = await storage.listRecords("node").catch(() => []);
+  let migratedCount = 0;
+  for (const record of records) {
+    if (!("children" in record)) continue;
+    const { children, ...nextRecord } = record;
+    if (
+      !Array.isArray(nextRecord.mdChildOrder) &&
+      Array.isArray(children)
+    ) {
+      nextRecord.mdChildOrder = children;
+      migratedCount++;
+    }
+    await storage.upsertRecord("node", nextRecord);
+  }
+  await storage.upsertRecord("kv", {
+    id: nodeMdChildOrderMigrationId,
+    value: true,
+    migratedCount,
+    migratedAt: new Date().toISOString()
+  });
+}
+
+export function resolveDatafnMode(input: InitializeNucleumDatafnInput) {
+  if (input.isOffline) return "local-only";
+  const hasUserSpace = Boolean(
+    input.account.userId || input.account.userInfo?.id
+  );
+  const isSyncEligible =
+    hasUserSpace && input.account.dataMode !== UserDataMode.LOCAL;
+  if (!isSyncEligible) return "local-only";
+  if (input.isOfflinabilityEnabled === false) return "sync-direct";
+  return "sync";
+}
+
+export async function resolveDatafnOfflinabilityPreference() {
+  if (typeof window === "undefined" && typeof chrome === "undefined") {
+    return datafnOfflinabilityDefault;
+  }
+  const value = await clientStorage.get(ClientStorageKey.DATAFN_OFFLINABILITY);
+  if (value === null) return datafnOfflinabilityDefault;
+  return value !== "false";
+}
+
+export async function setDatafnOfflinabilityPreference(isEnabled: boolean) {
+  await clientStorage.set(
+    ClientStorageKey.DATAFN_OFFLINABILITY,
+    isEnabled.toString()
+  );
+  return isEnabled;
+}
+
+function isSyncEligibleAccount(input: InitializeNucleumDatafnInput) {
+  const hasUserSpace = Boolean(
+    input.account.userId || input.account.userInfo?.id
+  );
+  return hasUserSpace && input.account.dataMode !== UserDataMode.LOCAL;
+}
+
+function isDatafnE2eeSettings(
+  value: unknown
+): value is NucleumDatafnE2eeSettings {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value) &&
+    (value as { version?: unknown }).version === 1 &&
+    typeof (value as { enabled?: unknown }).enabled === "boolean"
+  );
+}
+
+function requestDatafnE2eePassword(message: string) {
+  if (typeof window === "undefined" || typeof window.prompt !== "function") {
+    throw new Error("E2EE password is required");
+  }
+  const password = window.prompt(message);
+  if (!password) throw new Error("E2EE password is required");
+  return password;
+}
+
+async function readRemoteDatafnE2eeSettings(input: {
+  dapId: string;
+  namespace: string;
+  remoteUrl: string;
+  http: DatafnHttpTransportOptions;
+}) {
+  await datafn.switchContext({
+    clientId: input.dapId,
+    namespace: input.namespace,
+    storage: null,
+    searchProvider: null,
+    e2ee: null,
+    sync: {
+      mode: "sync",
+      remote: input.remoteUrl,
+      http: input.http,
+      offlinability: false,
+      crossTab: false,
+      ws: false
+    }
+  });
+  const settings = await datafn.kv.get<NucleumDatafnE2eeSettings>(
+    DATAFN_E2EE_KV_KEY
+  );
+  return isDatafnE2eeSettings(settings) ? settings : null;
+}
+
+async function writeRemoteDatafnE2eeSettings(
+  settings: NucleumDatafnE2eeSettings
+) {
+  const result = await datafn.kv.set(DATAFN_E2EE_KV_KEY, settings);
+  if (!result.ok) {
+    throw result.error;
+  }
+}
+
+async function resolveDatafnE2eeConfig(input: {
+  remoteSettings: NucleumDatafnE2eeSettings | null;
+}): Promise<{
+  settings: NucleumDatafnE2eeSettings | null;
+  config?: DatafnE2eeConfig;
+}> {
+  const localSettings = await getLocalDatafnE2eeSettings();
+  const settings =
+    input.remoteSettings?.enabled === true
+      ? input.remoteSettings
+      : localSettings?.enabled === true
+        ? localSettings
+        : (input.remoteSettings ?? localSettings);
+
+  if (!settings?.enabled) {
+    datafnE2eeState.set({ enabled: false, unlocked: false, keyRef: null });
+    return { settings: settings ?? null };
+  }
+
+  const cachedProvider = await getCachedDatafnE2eeProvider(settings);
+  if (cachedProvider) {
+    await persistDatafnE2eeSettings(settings);
+    return {
+      settings,
+      config: { enabled: true, provider: cachedProvider }
+    };
+  }
+
+  const password = requestDatafnE2eePassword("Enter your E2EE password");
+  const provider = await unlockDatafnE2eeSettings(settings, password);
+  if (!provider) throw new Error("Unable to unlock E2EE");
+  return {
+    settings,
+    config: { enabled: true, provider }
+  };
+}
+
+export async function initializeNucleumDatafn(
+  input: InitializeNucleumDatafnInput
+): Promise<NucleumDatafnRuntime> {
+  lastInitializeInput = input;
+  const existing = get(runtimeStore);
+  const dapId = input.dapId ?? (await getDapId()) ?? "unknown";
+  const namespace = resolveDatafnNamespace({ account: input.account, dapId });
+  const isOfflinabilityEnabled =
+    input.isOfflinabilityEnabled ??
+    (await resolveDatafnOfflinabilityPreference());
+  const syncEligible = isSyncEligibleAccount(input);
+  const candidateRemoteUrl =
+    syncEligible && !input.isOffline
+      ? await resolveDatafnRemoteUrl(input.account)
+      : null;
+  const candidateHttp = candidateRemoteUrl
+    ? await createNucleumDatafnHttpOptions()
+    : undefined;
+  const remoteE2eeSettings =
+    candidateRemoteUrl && candidateHttp && !existing
+      ? await readRemoteDatafnE2eeSettings({
+          dapId,
+          namespace,
+          remoteUrl: candidateRemoteUrl,
+          http: candidateHttp
+        }).catch((error) => {
+          logger.error({ at: "datafn.e2ee.readRemoteSettings", error });
+          return null;
+        })
+      : null;
+  const e2ee = await resolveDatafnE2eeConfig({
+    remoteSettings: remoteE2eeSettings
+  });
+  const isE2eeEnabled = e2ee.settings?.enabled === true;
+  const mode = resolveDatafnMode({
+    ...input,
+    isOfflinabilityEnabled: isE2eeEnabled ? true : isOfflinabilityEnabled
+  });
+  const isStorageBacked = mode !== "sync-direct";
+  const storageDbName = isStorageBacked
+    ? resolveDatafnStorageDbName({
+        product: input.product,
+        namespace,
+        env: input.env
+      })
+    : null;
+  const runtimeKey = `${input.product}:${namespace}:${mode}:${storageDbName ?? "direct"}:${e2ee.settings?.keyRef ?? "no-e2ee"}`;
+
+  if (
+    existing &&
+    `${existing.product}:${existing.namespace}:${existing.mode}:${existing.storageDbName ?? "direct"}:${existing.e2eeKeyRef ?? "no-e2ee"}` ===
+      runtimeKey
+  ) {
+    await refreshNucleumDatafnStatus();
+    return existing;
+  }
+
+  if (existing) {
+    await existing.destroy();
+  }
+
+  const bootResources = resolveDatafnBootResources(input.product);
+  const backgroundResources = resolveDatafnBackgroundResources(input.product);
+  nucleumDatafnStatus.set({
+    ...initialStatus,
+    status: "starting",
+    mode: mode === "local-only" ? "local-only" : "sync",
+    namespace,
+    storageDbName,
+    product: input.product,
+    nucleumMode: mode,
+    bootResources,
+    backgroundResources
+  });
+
+  const storageContext = isStorageBacked
+    ? createDatafnStorage({
+        product: input.product,
+        namespace,
+        env: input.env
+      })
+    : null;
+  const storage = storageContext?.storage;
+  await migrateDatafnNodeMdChildOrder(storage);
+  const remoteUrl =
+    mode === "sync" || mode === "sync-direct" ? candidateRemoteUrl : null;
+  const http =
+    mode === "sync" || mode === "sync-direct" ? candidateHttp : undefined;
+
+  datafnSearchProvider = isStorageBacked
+    ? createNucleumClientSearchProvider({
+        dbName: `${storageDbName ?? runtimeKey}-search`
+      })
+    : undefined;
+  await datafn.switchContext({
+    clientId: dapId,
+    searchProvider: datafnSearchProvider ?? null,
+    searchIndexVersion: resolveNucleumDatafnSearchIndexVersion(),
+    namespace,
+    storage: storage ?? null,
+    e2ee: e2ee.config ?? null,
+    sync:
+      mode === "sync"
+        ? {
+            mode,
+            remote: remoteUrl as string,
+            http,
+            offlinability: true,
+            crossTab: true,
+            ws: false,
+            hydration: {
+              bootResources,
+              backgroundResources,
+              clonePageSize: 500
+            }
+          }
+        : mode === "sync-direct"
+          ? {
+              mode: "sync",
+              remote: remoteUrl as string,
+              http,
+              offlinability: false,
+              crossTab: false,
+              ws: false
+            }
+          : { mode }
+  });
+  let isDestroyed = false;
+
+  const runtime: NucleumDatafnRuntime = {
+    storage,
+    namespace,
+    storageDbName,
+    product: input.product,
+    mode,
+    remoteUrl,
+    bootResources,
+    backgroundResources,
+    e2eeKeyRef: e2ee.settings?.keyRef ?? null,
+    destroy: async () => {
+      if (isDestroyed) return;
+      isDestroyed = true;
+      if (get(runtimeStore) === runtime) {
+        clearNucleumDatafnStatusBinding();
+      }
+      await flushNucleumDatafnMutations();
+      stopNucleumDatafnSync();
+      await closeNucleumDatafnRuntimeStorage(storage);
+      const searchProvider = datafnSearchProvider;
+      try {
+        await disposeNucleumDatafnSearchProvider(searchProvider);
+      } finally {
+        if (datafnSearchProvider === searchProvider) {
+          datafnSearchProvider = undefined;
+        }
+      }
+    }
+  };
+
+  runtimeStore.set(runtime);
+  bindNucleumDatafnStatus(runtime);
+  await refreshNucleumDatafnStatus();
+  return runtime;
+}
+
+export async function destroyNucleumDatafn() {
+  const existing = get(runtimeStore);
+  if (!existing) return;
+  try {
+    await existing.destroy();
+  } finally {
+    if (get(runtimeStore) === existing) {
+      runtimeStore.set(null);
+    }
+    clearNucleumDatafnStatusBinding();
+    nucleumDatafnStatus.set(initialStatus);
+  }
+}
+
+function requireLastInitializeInput() {
+  if (!lastInitializeInput) {
+    throw new Error("DataFn runtime is not initialized");
+  }
+  return lastInitializeInput;
+}
+
+async function cloneUpAllDatafnData() {
+  await datafn.sync.cloneUp({
+    recordOperation: "replace",
+    clearChangelogOnSuccess: true,
+    setGlobalCursorOnSuccess: true,
+    pullAfter: false
+  });
+  await refreshNucleumDatafnStatus();
+}
+
+export async function enableNucleumDatafnE2ee(password: string) {
+  const initInput = requireLastInitializeInput();
+  const setup = await createDatafnE2eeSetup(password);
+  await initializeNucleumDatafn({
+    ...initInput,
+    isOfflinabilityEnabled: true
+  });
+  await writeRemoteDatafnE2eeSettings(setup.settings);
+  await cloneUpAllDatafnData();
+  datafnE2eeState.set({
+    enabled: true,
+    unlocked: true,
+    keyRef: setup.settings.keyRef ?? null
+  });
+  return setup.settings;
+}
+
+export async function changeNucleumDatafnE2eePassword(password: string) {
+  const settings = await getLocalDatafnE2eeSettings();
+  if (!settings?.enabled) {
+    throw new Error("E2EE is not enabled");
+  }
+  const next = await rewrapCachedDatafnE2eeKey(settings, password);
+  await initializeNucleumDatafn({
+    ...requireLastInitializeInput(),
+    isOfflinabilityEnabled: true
+  });
+  await writeRemoteDatafnE2eeSettings(next.settings);
+  await cloneUpAllDatafnData();
+  return next.settings;
+}
+
+export async function disableNucleumDatafnE2ee() {
+  const initInput = requireLastInitializeInput();
+  const settings = await getLocalDatafnE2eeSettings();
+  const disabled = createDisabledDatafnE2eeSettings();
+  await datafn.switchContext({ e2ee: null });
+  try {
+    await writeRemoteDatafnE2eeSettings(disabled);
+    await cloneUpAllDatafnData();
+    await disableLocalDatafnE2ee(settings, disabled);
+  } catch (error) {
+    if (settings) {
+      await writeRemoteDatafnE2eeSettings(settings).catch((restoreError) => {
+        logger.error({
+          at: "datafn.e2ee.disable.restoreSettings",
+          error: restoreError
+        });
+      });
+      await initializeNucleumDatafn({
+        ...initInput,
+        isOfflinabilityEnabled: true
+      }).catch((restoreError) => {
+        logger.error({
+          at: "datafn.e2ee.disable.restoreRuntime",
+          error: restoreError
+        });
+      });
+    }
+    throw error;
+  }
+  await initializeNucleumDatafn(initInput);
+  return disabled;
+}
+
+export async function refreshNucleumDatafnStatus() {
+  const runtime = get(runtimeStore);
+  if (!runtime) {
+    nucleumDatafnStatus.set(initialStatus);
+    return initialStatus;
+  }
+  const status = await datafn.sync.refreshStatus();
+  const next = resolveNucleumDatafnStatus(status, runtime);
+  nucleumDatafnStatus.set(next);
+  return next;
+}
+
+export async function pullDatafnNow() {
+  const runtime = get(runtimeStore);
+  if (!runtime || runtime.mode !== "sync") return;
+  await datafn.sync.pullNow();
+  await refreshNucleumDatafnStatus();
+}
+
+export async function reconcileDatafnNow() {
+  const runtime = get(runtimeStore);
+  if (!runtime || runtime.mode !== "sync") return;
+  await datafn.sync.reconcileNow();
+  await refreshNucleumDatafnStatus();
+}
+
+export async function clearDatafnLocalData() {
+  const runtime = get(runtimeStore);
+  if (!runtime?.storage) return;
+  await datafn.clear();
+  await refreshNucleumDatafnStatus();
+}
+
+async function flushNucleumDatafnMutations() {
+  try {
+    await datafn.flushAll();
+  } catch (error) {
+    logger.error({ at: "datafn.runtime.flushAll", error });
+  }
+}
+
+function stopNucleumDatafnSync() {
+  try {
+    datafn.sync.stop();
+  } catch (error) {
+    logger.error({ at: "datafn.runtime.stopSync", error });
+  }
+}
+
+async function closeNucleumDatafnRuntimeStorage(
+  storage: DatafnStorageAdapter | undefined
+) {
+  if (!storage) return;
+  await storage.close();
+}
+
+async function disposeNucleumDatafnSearchProvider(
+  provider: SearchProvider | undefined
+) {
+  if (!provider?.dispose) return;
+  await provider.dispose();
+}
+
+async function resolveDatafnRemoteUrl(account: Pick<UserAccount, "userInfo">) {
+  const region =
+    account.userInfo?.region ??
+    (await clientStorage.get(ClientStorageKey.REGION)) ??
+    "insouth";
+  return `${resolveAccountBaseUrl(region).replace(/\/$/, "")}/datafn`;
+}
+
+/**
+ * Creates DataFn HTTP transport options backed by the Nucleum AuthFn session.
+ */
+export async function createNucleumDatafnHttpOptions(
+  input: {
+    publicLinkToken?: string;
+  } = {}
+): Promise<DatafnHttpTransportOptions> {
+  return {
+    auth: await createNucleumAuthFnTransportAuth({
+      plugins: input.publicLinkToken
+        ? [createDatafnPublicLinkAuthPlugin(input.publicLinkToken)]
+        : []
+    }),
+    onError: ({ endpoint, status, result }) => {
+      logger.error({
+        at: "datafn.remote.error",
+        endpoint,
+        status,
+        result
+      });
+    }
+  };
+}
