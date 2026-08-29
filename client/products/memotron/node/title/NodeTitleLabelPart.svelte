@@ -11,7 +11,7 @@
   import {
     AccessMode,
     ResourceAccessPoint
-  } from "@21n/components/flux/resourceStores/resource.type";
+  } from "@21n/data/datafn/resource.type";
   import NodeAvatar from "@21n/products/memotron/node/avatar/NodeAvatar.svelte";
   import { Size } from "@21n/types/size.enum";
   import { resolveNodeLabel } from "@21n/products/memotron/node/node.utils";
@@ -68,8 +68,7 @@
     )
       return;
     appStore.resourceClickHandler(e, labelObject.parent.id, {
-      replaceId:
-        accessPoint === ResourceAccessPoint.SELF ? item.id : undefined,
+      replaceId: accessPoint === ResourceAccessPoint.SELF ? item.id : undefined,
       defaultTo: AccessMode.POP
     });
   }

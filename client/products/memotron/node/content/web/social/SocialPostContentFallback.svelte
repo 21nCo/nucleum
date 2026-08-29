@@ -11,7 +11,7 @@
   } from "@21n/products/memotron/node/node.type";
   import type { INode } from "@21n/products/memotron/node/node.type";
   import InlineInfoBanner from "@21n/elements/text/InlineInfoBanner.svelte";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import { Persistence } from "@21n/persistence/persistence";
   import { InfoTextType } from "@21n/types/text.type";
   import { parse } from "@21n/shared-utils/json.utils";
@@ -69,7 +69,9 @@
   });
 
   function resolvePlatformInfo(contentType: NodeType) {
-    const platformMap: Partial<Record<NodeType, { name: string; display: string }>> = {
+    const platformMap: Partial<
+      Record<NodeType, { name: string; display: string }>
+    > = {
       [NodeType.TWEET]: { name: "twitter", display: "X" },
       [NodeType.MASTODON_POST]: { name: "mastodon", display: "Mastodon" },
       [NodeType.BLUESKY_POST]: { name: "bluesky", display: "Bluesky" },
@@ -152,9 +154,10 @@
       isReturnRawData: true
     });
     const parsed = parse(urlData.text);
-    oembedHtml = isObject(parsed) && hasStringProperty(parsed, "html")
-      ? parsed.html
-      : null;
+    oembedHtml =
+      isObject(parsed) && hasStringProperty(parsed, "html")
+        ? parsed.html
+        : null;
   }
 
   function getPostedAtTime() {
