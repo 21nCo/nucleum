@@ -1,6 +1,5 @@
-import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-import { get } from "svelte/store";
+import { Resource } from "@21n/data/datafn/resource.enum";
+import { get, writable } from "svelte/store";
 import type {
   IKeyboardShortcut,
   IKeyboardShortcutsStore
@@ -12,17 +11,38 @@ import { OperatingSystem } from "@21n/types/context.type";
 import { shortcutsConfig } from "@21n/components/shortcuts/shortcuts.config";
 import { replacer } from "@21n/shared-utils/json.utils";
 import { resolveProductConfig } from "@21n/products/product.config";
+import { datafn } from "@21n/stores/datafn.store";
 
-export type KeyboardShortcutsStoreType = InstanceType<typeof KeyboardShortcuts>;
+const keyboardShortcutsSignal = datafn.kv.signal<IKeyboardShortcutsStore>(
+  Resource.keyboardShortcuts,
+  { defaultValue: {} }
+);
+const keyboardShortcutsLocal = writable<IKeyboardShortcutsStore>({});
 
-class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
-  constructor() {
-    super(Resource.keyboardShortcuts, {});
-  }
+keyboardShortcutsSignal.subscribe((value) => {
+  keyboardShortcutsLocal.set(value ?? {});
+});
 
+export const keyboardShortcuts = {
+  subscribe: keyboardShortcutsLocal.subscribe,
+  get() {
+    return get(keyboardShortcutsLocal);
+  },
   saveShortcut(action: string, shortcut: IKeyboardShortcut) {
     return this.modify({ [action]: shortcut });
-  }
+  },
+
+  loader(data: IKeyboardShortcutsStore) {
+    keyboardShortcutsLocal.set(data);
+    return datafn.kv.set(Resource.keyboardShortcuts, data);
+  },
+
+  modify(n: Partial<IKeyboardShortcutsStore>) {
+    keyboardShortcutsLocal.update(
+      (current) => ({ ...current, ...n }) as IKeyboardShortcutsStore
+    );
+    return datafn.kv.merge(Resource.keyboardShortcuts, n);
+  },
 
   fetchKeyMap(): (IKeyboardShortcut & { action: string })[] {
     let defaultKeyMap = shortcutsConfig;
@@ -38,7 +58,7 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
         modifiers: shortcut?.modifiers
       }))
       .filter((x: any) => x.key);
-  }
+  },
 
   fetchConfiguratbleShortcuts() {
     const config = resolveProductConfig();
@@ -46,13 +66,13 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
     return this.fetchKeyMap().filter((x) =>
       configurableShortcuts?.includes(x.action)
     );
-  }
+  },
 
   resolveShortcutForAction(action: string) {
     const keyMap = this.fetchKeyMap();
     const shortcut = keyMap.find((s: any) => s.action === action);
     return shortcut;
-  }
+  },
 
   /**
    * Resolves the shortcut for the given key and modifiers.
@@ -68,7 +88,7 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
     });
     logger.log({ event, modifiers, shortcut, keyMap });
     return { shortcut, modifiers };
-  }
+  },
 
   checkShortcut(event: KeyboardEvent, shortcut: string | IKeyboardShortcut) {
     try {
@@ -95,9 +115,11 @@ class KeyboardShortcuts extends KeyValueStore<IKeyboardShortcutsStore> {
       logger.error({ error, shortcut, event });
       return false;
     }
-  }
-}
+  },
 
-export const keyboardShortcuts = KeyboardShortcuts.resolve(
-  Resource.keyboardShortcuts
-);
+  destroy() {
+    keyboardShortcutsSignal.dispose();
+  }
+};
+
+export type KeyboardShortcutsStoreType = typeof keyboardShortcuts;
