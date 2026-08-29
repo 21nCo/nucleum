@@ -22,7 +22,7 @@
   import Tabs from "@21n/layout/topNav/tabs/Tabs.svelte";
   import { page } from "$app/stores";
   import PagePainterV2 from "@21n/layout/paint/PagePainterV2.svelte";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import { onMount } from "svelte";
   import { tabs } from "@21n/layout/topNav/tabs/tabs.store";
   import type { IRecordId } from "@21n/types/data.type";

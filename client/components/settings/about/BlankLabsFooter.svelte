@@ -1,8 +1,7 @@
 <svelte:options runes={true} />
 
 <script lang="ts">
-  import A21nLogo from "@21n/branding/A21nLogo.svelte";
-  import { Size } from "@21n/types/size.enum";
+  import TwentyOneNative from "@21n/branding/TwentyOneNative.svelte";
   let { isComingSoon = false }: { isComingSoon?: boolean } = $props();
 </script>
 
@@ -13,7 +12,7 @@
 
   <a href="https://21n.org" target="_blank" rel="noopener noreferrer">
     <div class="flex items-center gap-2">
-      <A21nLogo size={Size.xs} fill="fgs2" />
+      <TwentyOneNative />
     </div></a
   >
 </div>
