@@ -474,6 +474,20 @@
       "@21n/shared-dbo/*": [
         "./shared/dbo/*"
       ],
+      "@21n/shared-data": [
+        "./shared/data/index.ts",
+        "./shared/data"
+      ],
+      "@21n/shared-data/*": [
+        "./shared/data/*"
+      ],
+      "@21n/shared-config": [
+        "./shared/config/index.ts",
+        "./shared/config"
+      ],
+      "@21n/shared-config/*": [
+        "./shared/config/*"
+      ],
       "@21n/next": [
         "./client/next/index.ts",
         "./client/next/index.tsx",
