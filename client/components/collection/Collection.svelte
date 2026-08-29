@@ -20,14 +20,14 @@
     type IProperty
   } from "@21n/components/collection/properties/property.type";
   import { activeResourceFilter } from "@21n/utils/utils";
-  import { onDestroy, untrack } from "svelte";
+  import { onDestroy, onMount, untrack } from "svelte";
   import type { DropdownItem } from "@21n/types/dropdownItem.type";
   import type { ISelectItem, ISelectValue } from "@21n/types/select.type";
   import {
     AccessMode,
     ResourceAccessPoint,
     ResourceActionType
-  } from "@21n/components/flux/resourceStores/resource.type";
+  } from "@21n/data/datafn/resource.type";
   import { isValidString } from "@21n/shared-utils/text.utils";
   import {
     CollectionLayout,
@@ -44,7 +44,6 @@
   import { logger } from "@21n/components/debug/logger.client";
   import CoverPicker from "@21n/elements/coverPicker/CoverPicker.svelte";
   import OptionSelector from "@21n/elements/select/OptionSelector.svelte";
-  import ComponentBaseLayer from "@21n/layout/layers/ComponentBaseLayer.svelte";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
   import ArrangementSelector from "@21n/components/collection/arrangementSelector/ArrangementSelector.svelte";
   import ToggleGroup from "@21n/elements/toggle/ToggleGroup.svelte";
@@ -56,8 +55,8 @@
     isNoneResource,
     resourceAction,
     resourceInList
-  } from "@21n/components/flux/resourceStores/resource.utils";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  } from "@21n/data/datafn/resource.utils";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import view from "@21n/stores/view.store";
   import Button from "@21n/elements/button/Button.svelte";
   import {
@@ -71,11 +70,11 @@
   import InlineSearchBar from "@21n/elements/InlineSearchBar.svelte";
   import Icon from "@21n/elements/Icon.svelte";
   import { AppSearchParam } from "@21n/types/appStore.type";
-  import type { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
-  import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
   import ComponentEmbedLayer from "@21n/layout/layers/ComponentEmbedLayer.svelte";
   import { Product } from "@21n/products/product.type";
   import { MemotronAction } from "@21n/products/memotron/memotronAction.enum";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { toSvelteStore } from "@datafn/svelte";
 
   let {
     id = "",
@@ -88,12 +87,6 @@
     parentBgIndex?: number;
     accessMode?: AccessMode;
   } = $props();
-
-  function hasSelectMany(
-    store: ReturnType<typeof resolveResourceStore>
-  ): store is ResourceStore<any, any> {
-    return Boolean(store && "selectMany" in store);
-  }
 
   function resolveParentLabel(parent: unknown) {
     if (Array.isArray(parent)) {
@@ -132,8 +125,6 @@
     ActiveCollectionStore.resolve(id)
   );
   let activeView = $state<ICollectionViewWithData | null>(null);
-  let viewData = $state<ICollectionItem[]>([]);
-  let _filtered = $state<ICollectionItem[]>([]);
   let selectedViewId = $state<string>("");
   let selectedTab = $state<ISelectValue | undefined>(undefined);
   let dev_isRoundedCover = false;
@@ -158,6 +149,58 @@
   let searchQuery = $state("");
   let containerWidth = $state(0);
   let initializedKey = $state("");
+  const itemRecordsStore = $derived.by(() => {
+    const collectionId = id.toString();
+    if (!collectionId || !$collection) return undefined;
+    const itemResource = $collection.resource ?? Resource.node;
+    if (!itemResource || itemResource === Resource.node) {
+      return toSvelteStore(
+        datafn.node.signal({
+          filters: {
+            collections: { $any: { id: collectionId } }
+          },
+          sort: ["-updatedAt"],
+          select: ["*", "parent.*", "file.*", "propertyValues.*#"]
+        }),
+        { initialData: [] }
+      );
+    }
+    if (itemResource === Resource.objective) {
+      return toSvelteStore(
+        datafn.objective.signal({
+          filters: {
+            collections: { $any: { id: collectionId } }
+          },
+          sort: ["-updatedAt"],
+          select: ["*", "parent.*", "children.*", "tasks.*", "propertyValues.*#"]
+        }),
+        { initialData: [] }
+      );
+    }
+    return undefined;
+  });
+  const itemRecords = $derived(
+    itemRecordsStore
+      ? (($itemRecordsStore!.data ?? []) as unknown as ICollectionItem[]).filter(
+          activeResourceFilter
+        )
+      : []
+  );
+  const totalItemCount = $derived(itemRecords.length);
+  const viewData = $derived(resolveViewData(itemRecords));
+  const _filtered = $derived(resolveFilteredViewData(viewData));
+  const isViewDataLoading = $derived(
+    Boolean(itemRecordsStore && $itemRecordsStore!.loading)
+  );
+
+  $effect(() => {
+    if (!$collection || $collection.totalItemCount === totalItemCount) return;
+    collection.update((val) => {
+      if (!val) return val;
+      val.totalItemCount = totalItemCount;
+      return val;
+    });
+  });
 
   let isConstrainedWidth = $derived(
     $view.isConstrainedWidth ||
@@ -195,7 +238,12 @@
     });
   });
 
+  onMount(() => {
+    $appStore.isDnDPageActive = true;
+  });
+
   onDestroy(() => {
+    $appStore.isDnDPageActive = false;
     ActiveCollectionStore.destroy(id, accessMode);
   });
 
@@ -204,8 +252,6 @@
     isInitializing = true;
     isReady = false;
     activeView = null;
-    viewData = [];
-    _filtered = [];
     selectedTab = undefined;
     try {
       const viewQueryParam = new URLSearchParams(location.search).get(
@@ -222,7 +268,7 @@
       }
       properties = await resolvePropertyList();
       refreshViewsLane();
-      await refresh({ isNewView: true });
+      refresh();
     } catch (error) {
       logger.error({ at: "Collection.initialize", error, id, accessMode });
     } finally {
@@ -363,7 +409,7 @@
     resetViewSelections();
     const view = loadActiveView();
     if (!view) return;
-    await refresh({ isNewView: true });
+    refresh();
   }
 
   function resetViewSelections() {
@@ -403,62 +449,39 @@
     return view;
   }
 
-  async function refresh(
-    props: { isNewView?: boolean } = {
-      isNewView: false
-    }
-  ) {
-    if (!activeView || !$collection) return;
-    const tabBy = activeView.tabBy;
-    const resourceStore = resolveResourceStore(
-      $collection.resource ?? Resource.node
-    );
-    if (!hasSelectMany(resourceStore)) return;
-    await collection.loadViewData(
-      activeView.id,
-      resourceStore,
-      props.isNewView
-    );
+  function refresh() {
     loadActiveView();
-    if (!activeView) return;
-    logger.log({ at: "refresh", activeView, searchQuery });
-    activeView.data = activeView.data.filter(activeResourceFilter);
+  }
+
+  function resolveViewData(items: ICollectionItem[]) {
+    if (!activeView) return [];
+    const tabBy = activeView.tabBy;
     if (!tabBy || (tabBy && selectedTab === "all")) {
-      viewData = activeView.data ?? [];
-    } else if (tabBy && selectedTab !== undefined) {
-      viewData =
-        activeView.data?.filter((x) => {
-          const prop = x.properties?.find(resourceInList(tabBy))?.value;
-          const selectedTabValue = selectedTab?.toString();
-          if (!selectedTabValue) return false;
-          return Array.isArray(prop)
-            ? prop.some((value) => value?.toString() === selectedTabValue)
-            : prop?.toString() === selectedTabValue;
-        }) ?? [];
-    } else {
-      viewData = activeView.data ?? [];
+      return items;
     }
-    _filtered = viewData;
+    if (tabBy && selectedTab !== undefined) {
+      return items.filter((x) => {
+        const prop = x.propertyValues?.find(resourceInList(tabBy))?.value;
+        const selectedTabValue = selectedTab?.toString();
+        if (!selectedTabValue) return false;
+        return Array.isArray(prop)
+          ? prop.some((value) => value?.toString() === selectedTabValue)
+          : prop?.toString() === selectedTabValue;
+      });
+    }
+    return items;
   }
 
-  async function onSearch() {
-    try {
-      logger.log({ at: "onSearch", searchQuery, viewData });
-      if (searchQuery) {
-        const searchTerm = searchQuery.toLowerCase();
-        _filtered = viewData.filter((x) => {
-          return resolveSearchHaystack(x).includes(searchTerm);
-        });
-      } else {
-        _filtered = viewData;
-      }
-    } catch (e) {
-      logger.error({ at: "onSearch", error: e });
-    }
+  function resolveFilteredViewData(items: ICollectionItem[]) {
+    if (!searchQuery) return items;
+    const searchTerm = searchQuery.toLowerCase();
+    return items.filter((x) => resolveSearchHaystack(x).includes(searchTerm));
   }
 
-  async function onTabSwitch(e: CustomEvent) {
-    await refresh();
+  function onSearch() {}
+
+  function onTabSwitch(e: CustomEvent) {
+    refresh();
   }
 
   function applyCover(nextCover: string | undefined) {
@@ -598,7 +621,7 @@
         { isPreventBackPropagation: true }
       );
     } else if (e.detail === false) {
-      collection.modify({ typeToExtend: undefined });
+      collection.modify({ typeToExtend: null });
     }
   }
 </script>
@@ -691,7 +714,7 @@
             {isConstrainedWidth}
             bind:searchQuery
             bind:isShowMetaViews
-            onSearch={onSearch}
+            {onSearch}
             onAdd={onAddResource}
           >
             {#snippet additionalContent()}
@@ -704,10 +727,10 @@
                     density={activeView?.density}
                     isHideThumbnailPreview={activeView?.isHideThumbnailPreview}
                     isHideThumbnailTitle={activeView?.isHideThumbnailTitle}
-                    onArrangementChange={onArrangementChange}
-                    onDensityChange={onDensityChange}
-                    onPreviewSettingChange={onPreviewSettingChange}
-                    onTitleSettingChange={onTitleSettingChange}
+                    {onArrangementChange}
+                    {onDensityChange}
+                    {onPreviewSettingChange}
+                    {onTitleSettingChange}
                   />
                 {/if}
               </span>
@@ -730,7 +753,7 @@
               <InlineSearchBar
                 bind:query={searchQuery}
                 style={InputStyle.FILLED}
-                onSearch={onSearch}
+                {onSearch}
                 placeholder={$collection.totalItemCount
                   ? `Search this collection (${$collection.totalItemCount ?? 0} items)`
                   : "No items found"}
@@ -809,10 +832,10 @@
                       density={activeView?.density}
                       isHideThumbnailPreview={activeView?.isHideThumbnailPreview}
                       isHideThumbnailTitle={activeView?.isHideThumbnailTitle}
-                      onArrangementChange={onArrangementChange}
-                      onDensityChange={onDensityChange}
-                      onPreviewSettingChange={onPreviewSettingChange}
-                      onTitleSettingChange={onTitleSettingChange}
+                      {onArrangementChange}
+                      {onDensityChange}
+                      {onPreviewSettingChange}
+                      {onTitleSettingChange}
                     />
                     {#if !$collection.isInEditMode && !isConstrainedWidth}
                       <AddResourceAction
@@ -843,6 +866,7 @@
                 {#if activeView.tabBy}
                   <ViewTabSwitcher
                     view={activeView}
+                    data={itemRecords}
                     bind:value={selectedTab}
                     properties={$collection?.properties}
                     onSelect={onTabSwitch}
@@ -858,9 +882,9 @@
           })}
         >
           <ResourceStatusBanner resource={collection} />
-          {#if $collection.isViewDataLoading}
+          {#if isViewDataLoading}
             <PageLoadingPulse />
-          {:else if !$collection.isViewDataLoading && activeView}
+          {:else if !isViewDataLoading && activeView}
             <View
               {collection}
               bind:view={activeView}
@@ -893,11 +917,4 @@
     {/if}
   </div>
 {/if}
-<ComponentBaseLayer
-  hasDragAndDrop={true}
-  onSyncDown={() => refresh()}
-  subscribeToResource={new Set([Resource.link])}
-  subscribeToContext={new Set([id.toString()])}
-  onChange={() => refresh()}
-/>
 <ComponentEmbedLayer isBackNavigable={true} />

@@ -44,15 +44,30 @@
   let isColorPickerOpen = $state(false);
   let colorPickerPopoverRef: any;
   let dev_isEnableDefaultSelection: boolean = false;
+  let optionLabel = $state("");
+  let optionColor = $state(0);
   $effect(() => {
     if (isFocusing) textInputRef?.focus();
   });
   $effect(() => {
-    if (option && !option.color) option.color = Math.random() * 360;
+    optionLabel = option.label ?? "";
+    optionColor = option.color ?? Math.random() * 360;
   });
 
   function onHoverChange(isHovered: boolean) {
     isHovering = isHovered;
+  }
+
+  function propagateOptionChange() {
+    onChange?.(
+      new CustomEvent("change", {
+        detail: {
+          id: option.id,
+          label: optionLabel,
+          color: optionColor
+        }
+      })
+    );
   }
 
   function onOptionKeydown(event: CustomEvent<KeyboardEvent>) {
@@ -94,7 +109,7 @@
     }}
   >
     <CustomColorPropagator
-      color={option.color}
+      color={optionColor}
       class="relative rounded-full h-5 w-5 bg-ccs1"
     >
       <div
@@ -104,10 +119,8 @@
     {#snippet popover()}
       <div class="flex flex-col items-center justify-center gap-8">
         <ColorPicker
-          bind:hue={option.color}
-          onChangeCallback={() => {
-            onChange?.();
-          }}
+          bind:hue={optionColor}
+          onChangeCallback={propagateOptionChange}
           isShowPreview={false}
           label={{ label: "Choose color", orientation: Orientation.Vertical }}
         />
@@ -124,12 +137,10 @@
   </Popover>
   <TextInput
     bind:this={textInputRef}
-    bind:value={option.label}
+    bind:value={optionLabel}
     style={InputStyle.PLAIN}
     placeholder="option..."
-    onChange={() => {
-      onChange?.();
-    }}
+    onChange={propagateOptionChange}
     onEnter={() => {
       onEnter?.(
         new CustomEvent("enter", {

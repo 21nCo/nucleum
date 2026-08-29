@@ -5,18 +5,22 @@
   import { formatDatetime } from "@21n/utils/time.utils";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
-  import type { ActiveResourceStore } from "@21n/components/flux/resourceStores/resource.store";
+  import type { ActiveResourceStore } from "@21n/data/datafn/resource.store";
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
-  import { isShowStatusBanner } from "@21n/components/flux/resourceStores/resource.utils";
+  import {
+    isShowStatusBanner,
+    resolveTrashedAtDate
+  } from "@21n/data/datafn/resource.utils";
   import RecordTrashBanner from "@21n/components/record/RecordTrashBanner.svelte";
-  let { resource }: { resource: ActiveResourceStore<any, any, any> } = $props();
+  let { resource }: { resource: ActiveResourceStore<any, any> } = $props();
+  const trashedAt = $derived(resolveTrashedAtDate($resource));
 </script>
 
 {#if isShowStatusBanner($resource)}
   <div class="flex flex-col gap-4">
-    {#if $resource.trashInformation}
+    {#if trashedAt}
       <RecordTrashBanner
-        deletedAt={$resource.trashInformation.deletedAt.toISOString()}
+        deletedAt={trashedAt.toISOString()}
         onRestore={() => {
           resource.restore();
         }}
@@ -27,7 +31,7 @@
         type={InfoTextType.INFO}
         icon="archive"
         content={"This resource was archived on: *" +
-          formatDatetime($userPreferences, new Date($resource.modifiedAt)) +
+          formatDatetime($userPreferences, new Date($resource.updatedAt)) +
           "*"}
         action={{
           label: "Unarchive",
@@ -37,11 +41,11 @@
         }}
       />
     {/if}
-    {#if $resource.isParentInactive}
+    {#if $resource.isAncestorInactive}
       <InlineInfoBanner
         type={InfoTextType.INFO}
         icon="cross"
-        content={`This resource is inactive because its parent is either archived or deleted`}
+        content={`This resource is inactive because an ancestor is either archived or deleted`}
       />
     {/if}
     {#if $resource.isLocked}
@@ -56,7 +60,7 @@
               "*" +
                 formatDatetime(
                   $userPreferences,
-                  new Date($resource.modifiedAt)
+                  new Date($resource.updatedAt)
                 ) +
                 "*"
             )}

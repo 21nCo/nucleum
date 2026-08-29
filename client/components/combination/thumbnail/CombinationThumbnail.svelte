@@ -6,11 +6,10 @@
   import {
     ResourceAccessPoint,
     ResourceAccessPointState
-  } from "@21n/client/components/flux/resourceStores/resource.type";
+  } from "@21n/data/datafn/resource.type";
   import { Arrangement } from "@21n/client/types/direction.enum";
   import { Size } from "@21n/client/types/size.enum";
   import { cn } from "@21n/client/utils/ui.utils";
-  import ComponentBaseLayer from "@21n/client/layout/layers/ComponentBaseLayer.svelte";
   import { countNavItems } from "../combination.utils";
   import type { ISideNavCombination } from "../combination.type";
 
@@ -31,20 +30,13 @@
   } = $props();
 
   let counts = $derived(countNavItems(item?.items ?? []));
-  let title = $derived(item?.label ?? "Untitled combination");
+  let title = $derived(item?.label ?? "Untitled space");
 
   const pluralize = (count: number, noun: string) =>
     `${count} ${noun}${count === 1 ? "" : "s"}`;
-
-  function onCombinationChange(detail: { params?: { record?: Partial<ISideNavCombination> } } | { key: string }) {
-    const data = "params" in detail ? detail.params?.record : undefined;
-    if (data) {
-      item = { ...item, ...data } as ISideNavCombination;
-    }
-  }
 </script>
 
-<ResourceThumbnailBase bind:item {accessPoint} {arrangement}>
+<ResourceThumbnailBase {item} {accessPoint} {arrangement}>
   {#if arrangement === Arrangement.LIST}
     <button
       class="flex items-center gap-3 w-full h-20 rounded-md bg-bgs2 border border-transparent hover:border-bgs3 p-3 text-left"
@@ -91,27 +83,22 @@
         {/if}
       </div>
       {#snippet bottom()}
-      <div class="flex flex-col gap-1 w-full">
-        <span class="text-b2 font-medium truncate">{title}</span>
-        {#if item?.description}
-          <span class="text-b3 text-fgs3 truncate">{item.description}</span>
-        {/if}
-        <div
-          class="flex gap-2 text-b3 text-fgs3"
-          data-access-point-state={accessPointState}
-        >
-          <span>{pluralize(counts.resources, "resource")}</span>
-          {#if counts.sections > 0}
-            <span>{pluralize(counts.sections, "section")}</span>
+        <div class="flex flex-col gap-1 w-full">
+          <span class="text-b2 font-medium truncate">{title}</span>
+          {#if item?.description}
+            <span class="text-b3 text-fgs3 truncate">{item.description}</span>
           {/if}
+          <div
+            class="flex gap-2 text-b3 text-fgs3"
+            data-access-point-state={accessPointState}
+          >
+            <span>{pluralize(counts.resources, "resource")}</span>
+            {#if counts.sections > 0}
+              <span>{pluralize(counts.sections, "section")}</span>
+            {/if}
+          </div>
         </div>
-      </div>
       {/snippet}
     </ResourceGridThumbnail>
   {/if}
 </ResourceThumbnailBase>
-
-<ComponentBaseLayer
-  subscribeToRecords={[item.id]}
-  onChange={onCombinationChange}
-/>

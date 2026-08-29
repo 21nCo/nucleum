@@ -5,7 +5,6 @@
   import { Orientation } from "@21n/types/direction.enum";
   import { Size } from "@21n/types/size.enum";
   import { TextStyle } from "@21n/types/text.enum";
-  import { collectionStore } from "@21n/components/collection/collection.store";
   import Toggle from "@21n/elements/toggle/Toggle.svelte";
   import { OptionSelectorStyle } from "@21n/types/select.type";
   import FormControlLabel from "@21n/elements/text/formLabel/FormControlLabel.svelte";
@@ -13,7 +12,7 @@
     CollectionLayout,
     CollectionType
   } from "@21n/components/collection/collection.type";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import type { IProperty } from "@21n/components/collection/properties/property.type";
   import Avatar from "@21n/elements/avatarPicker/Avatar.svelte";
   import { propertyEditorStore } from "@21n/components/collection/properties/property.store";
@@ -22,11 +21,11 @@
   import {
     resolveResourceIcon,
     resourceAction
-  } from "@21n/components/flux/resourceStores/resource.utils";
+  } from "@21n/data/datafn/resource.utils";
   import {
     ResourceAccessPoint,
     ResourceActionType
-  } from "@21n/components/flux/resourceStores/resource.type";
+  } from "@21n/data/datafn/resource.type";
   import { logger } from "@21n/components/debug/logger.client";
   import {
     resolveCollectionResource,
@@ -40,30 +39,43 @@
   import { toasts } from "@21n/stores/notification.store";
   import { tooltip } from "@21n/actions/popover.action";
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { generateResourceId } from "@21n/data/datafn/id.utils";
+  import {
+    assignDefaultLabelAsFallback,
+    serializePropertyForDatafn
+  } from "@21n/components/collection/properties/property.utils";
 
   let {
     context = undefined
   }: {
     context?: ResourceAccessPoint | undefined;
   } = $props();
-  let title: string;
-  let description: string;
-  let isStarred: boolean = false;
-  let selectedType: CollectionType = CollectionType.TYPED;
-  let selectedView: CollectionLayout = CollectionLayout.BOARD;
-  let isCaptureShortcutEnabled: boolean = true;
-  let properties: IProperty[] = [];
-  let avatar: any;
-  let coverPhoto: any;
-  let collectibleResources: Resource[] = resolveCollectionResource(
-    $appStore.product
+  let title = $state<string>();
+  let description = $state<string>();
+  let isStarred = $state(false);
+  let selectedType = $state(CollectionType.TYPED);
+  let selectedView = $state(CollectionLayout.BOARD);
+  let isCaptureShortcutEnabled = $state(true);
+  let properties = $state<IProperty[]>([]);
+  let avatar = $state<any>();
+  let coverPhoto = $state<any>();
+  let collectibleResources = $derived(
+    resolveCollectionResource($appStore.product)
   );
-  let resource: Resource = collectibleResources[0];
+  let resource = $state<Resource>(Resource.node);
   const dev_isShowTypeSelector: boolean = false;
 
   const formLabelConfig = {
     orientation: Orientation.Vertical
   };
+
+  $effect(() => {
+    const defaultResource = collectibleResources[0];
+    if (defaultResource && !collectibleResources.includes(resource)) {
+      resource = defaultResource;
+    }
+  });
 
   onMount(() => {
     propertyEditorStore.reset();
@@ -92,6 +104,103 @@
     }
   }
 
+  async function createCollection(context: string) {
+    const propertyEditor = propertyEditorStore.get();
+    const collectionId = generateResourceId(Resource.collection);
+    const viewId = generateResourceId(Resource.view);
+    let propertyRecords =
+      selectedType === CollectionType.TYPED
+        ? (propertyEditor?.properties ?? []).map(assignDefaultLabelAsFallback)
+        : [];
+    propertyRecords = propertyRecords.map((property) => ({
+      ...property,
+      id: property.id ?? generateResourceId(Resource.property)
+    }));
+    if (propertyRecords.length > 0) {
+      await datafn.property.mutate(
+        propertyRecords.map((property) => ({
+          operation: "insert",
+          id: property.id,
+          record: serializePropertyForDatafn(property),
+          context
+        }))
+      );
+    }
+    await datafn.view.mutate({
+      operation: "insert",
+      id: viewId,
+      record: {
+        id: viewId,
+        layout: selectedView,
+        label: "Default",
+        tabBy: "none",
+        groupBy: "none",
+        subGroupBy: "none"
+      },
+      context
+    });
+    const record = {
+      id: collectionId,
+      label: title ?? "",
+      description,
+      isStarred,
+      isCaptureShortcutEnabled:
+        selectedType === CollectionType.TYPED
+          ? isCaptureShortcutEnabled
+          : undefined,
+      typeToExtend: propertyEditor?.typeToExtend?.id ?? "",
+      type: selectedType,
+      resource,
+      ...(avatar
+        ? {
+            avatar: {
+              code: avatar.code,
+              color: avatar.color,
+              file: avatar.file,
+              isFilled: avatar.isFilled,
+              type: avatar.type
+            }
+          }
+        : {}),
+      ...(coverPhoto ? { cover: coverPhoto } : {})
+    };
+    await datafn.collection.mutate([
+      {
+        operation: "insert",
+        id: collectionId,
+        record,
+        context
+      },
+      {
+        operation: "relate",
+        id: collectionId,
+        relations: {
+          views: [{ $ref: viewId, sortOrder: 0 }],
+          ...(propertyRecords.length > 0
+            ? {
+                properties: propertyRecords.map((property, sortOrder) => ({
+                  $ref: property.id,
+                  sortOrder
+                }))
+              }
+            : {})
+        },
+        context
+      }
+    ]);
+    const created = {
+      ...record,
+      views: [viewId],
+      properties: propertyRecords.map((property) => property.id)
+    };
+    appStore.addToRecents({
+      record: created,
+      type: Resource.collection,
+      timestamp: new Date()
+    });
+    return [created];
+  }
+
   async function onSave() {
     try {
       logger.log({
@@ -99,34 +208,8 @@
         title,
         selectedType
       });
-      const result = await collectionStore.save(
-        {
-          label: title,
-          description,
-          type: selectedType,
-          defaultLayout: selectedView,
-          isStarred,
-          cover: coverPhoto,
-          resource: resource,
-          isCaptureShortcutEnabled:
-            selectedType === CollectionType.TYPED
-              ? isCaptureShortcutEnabled
-              : undefined,
-          avatar: avatar
-            ? {
-                code: avatar.code,
-                color: avatar.color,
-                file: avatar.file,
-                isFilled: avatar.isFilled,
-                type: avatar.type
-              }
-            : undefined
-        },
-        {
-          context:
-            context ??
-            resourceAction(Resource.collection, ResourceActionType.CREATE)
-        }
+      const result = await createCollection(
+        context ?? resourceAction(Resource.collection, ResourceActionType.CREATE)
       );
       if (!result) {
         toasts.error("Error creating collection. Please try again.");
