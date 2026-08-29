@@ -1,29 +1,31 @@
 <script lang="ts">
   import { focusItemsStore } from "@21n/products/pointron/focus/session.store";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import { toasts } from "@21n/stores/notification.store";
   import Button from "@21n/elements/button/Button.svelte";
   import { Placement } from "@21n/types/direction.enum";
   import { InputStyle } from "@21n/types/input.type";
   import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
-  import { resourceInList } from "@21n/components/flux/resourceStores/resource.utils";
-  import { SearchStore } from "@21n/components/record/record.store";
+  import {
+    determineResourceType,
+    resourceInList
+  } from "@21n/data/datafn/resource.utils";
   import FocusItemSearchResultItem from "@21n/products/pointron/focus/elements/focusitem/FocusItemSearchResultItem.svelte";
-  import { GoalStatus } from "@21n/components/goals/goal.type";
-  let label: string = "";
-  let inputRef: any;
-  let searchStore = new SearchStore();
+  import { ObjectiveStatus } from "@21n/components/goals/goal.type";
+  import { datafn } from "@21n/stores/datafn.store";
+  let label = $state("");
+  let inputRef = $state<any>();
   let {
     onBlur = undefined,
     onFocus = undefined,
     onSelect = undefined,
-    onCreateGoal = undefined,
+    onCreateObjective = undefined,
     onCreateTask = undefined
   }: {
     onBlur?: ((event: CustomEvent<void>) => void) | undefined;
     onFocus?: ((event: CustomEvent<void>) => void) | undefined;
     onSelect?: ((event: CustomEvent<any>) => void) | undefined;
-    onCreateGoal?: ((event: CustomEvent<string>) => void) | undefined;
+    onCreateObjective?: ((event: CustomEvent<string>) => void) | undefined;
     onCreateTask?: ((event: CustomEvent<string>) => void) | undefined;
   } = $props();
   async function handleSelect(event: any) {
@@ -47,10 +49,10 @@
     e: CustomEvent<{ event: KeyboardEvent; value: string }>
   ) {
     if (e.detail.event.shiftKey) {
-      const createGoalEvent = new CustomEvent<string>("createGoal", {
+      const createObjectiveEvent = new CustomEvent<string>("createObjective", {
         detail: e.detail.value
       });
-      onCreateGoal?.(createGoalEvent);
+      onCreateObjective?.(createObjectiveEvent);
       setTimeout(() => {
         reset();
       }, 500);
@@ -64,26 +66,59 @@
   }
 
   async function searchCallback(searchQuery: string) {
-    const goals = await searchStore.select({
-      resource: Resource.goal,
-      searchQuery,
+    const trimmedSearch = searchQuery?.trim();
+    if (!trimmedSearch) {
+      const [objectivesResult, tasksResult] = (await datafn.query([
+        {
+          resource: Resource.objective,
+          filters: {
+            id: { $ne: "" },
+            status: {
+              $ne: ObjectiveStatus.COMPLETED
+            }
+          },
+          limit: 50,
+          sort: ["-updatedAt"]
+        },
+        {
+          resource: Resource.task,
+          filters: {
+            isChecked: false
+          },
+          limit: 50,
+          sort: ["-updatedAt"]
+        }
+      ])) as Array<{ data?: any[] }>;
+      return [...(objectivesResult.data ?? []), ...(tasksResult.data ?? [])];
+    }
+    const result = await datafn.search({
+      query: trimmedSearch,
+      resources: [Resource.objective, Resource.task],
+      fields: ["label"],
       filters: {
-        status: {
-          notEquals: GoalStatus.COMPLETED
+        [Resource.objective]: {
+          id: { $ne: "" },
+          status: {
+            $ne: ObjectiveStatus.COMPLETED
+          }
+        },
+        [Resource.task]: {
+          isChecked: false
         }
       },
-      isStrictSearch: true,
-      isIncludeSubItems: true
+      source: "local",
+      prefix: true,
+      fuzzy: 0.2
     });
-    const tasks = await searchStore.select({
-      resource: Resource.task,
-      searchQuery,
-      filters: {
-        isChecked: false
-      },
-      isStrictSearch: true
-    });
-    return [...goals, ...tasks];
+    const results = result.results?.map((entry: any) => entry.data) ?? [];
+    return [
+      ...results.filter(
+        (item: any) => determineResourceType(item.id) === Resource.objective
+      ),
+      ...results.filter(
+        (item: any) => determineResourceType(item.id) === Resource.task
+      )
+    ];
   }
 </script>
 
@@ -97,15 +132,15 @@
     bind:this={inputRef}
     icon="plus"
     emptyStateLabel={{
-      mainText: "No goals or tasks found.",
+      mainText: "No objectives or tasks found.",
       subText:
-        "Press **Enter** to create a new task or **Shift+Enter** to create a new goal."
+        "Press **Enter** to create a new task or **Shift+Enter** to create a new objective."
     }}
     searchResultComponent={FocusItemSearchResultItem}
     {searchCallback}
     style={InputStyle.PLAIN}
     popoverOptions={{ offsetInPx: 16 }}
-    placeholder="start typing a goal or task name..."
+    placeholder="start typing an objective or task name..."
   />
 
   <div class=" justify-end items-center">

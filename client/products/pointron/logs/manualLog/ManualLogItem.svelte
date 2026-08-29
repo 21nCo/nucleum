@@ -1,6 +1,5 @@
 <script lang="ts">
   import { pointronPreferences } from "@21n/products/pointron/pointron.store";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
   import { formatTime } from "@21n/utils/time.utils";
@@ -14,41 +13,37 @@
   import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
   import { manualLogStore } from "@21n/products/pointron/logs/log.store";
   import TimeInput from "@21n/elements/datetime/TimeInput.svelte";
-  import { LastActionPerformed, type IManualSessionLogForm } from "@21n/products/pointron/logs/log.type";
+  import {
+    LastActionPerformed,
+    type IManualSessionLogForm
+  } from "@21n/products/pointron/logs/log.type";
   import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
   import { InputStyle } from "@21n/types/input.type";
   import { Orientation } from "@21n/types/direction.enum";
   import FocusNotes from "@21n/products/pointron/focus/notes/FocusNotes.svelte";
   import InlineErrorMessage from "@21n/elements/text/InlineErrorMessage.svelte";
   import { isPrimaryActionDisabled } from "@21n/components/modal/modal.store";
-  import { SearchStore } from "@21n/components/record/record.store";
-  import GoalSearchResultItem from "@21n/components/goals/GoalSearchResultItem.svelte";
+  import ObjectiveSearchResultItem from "@21n/components/goals/GoalSearchResultItem.svelte";
   import { uiState } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import {
-    BarStyle,
-    PanelSwitcherStyle
-  } from "@21n/types/switcher.enum";
+  import { BarStyle, PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import Divider from "@21n/elements/Divider.svelte";
   import {
-    GoalStatus,
-    type IGoal,
-    type IGoalThumb
+    ObjectiveStatus,
+    type IObjective,
+    type IObjectiveThumb
   } from "@21n/components/goals/goal.type";
-  import { goalStore } from "@21n/components/goals/goal.store";
   import CustomColorPropagator from "@21n/elements/style/CustomColorPropagator.svelte";
-  import { resolveGoalColor } from "@21n/components/goals/goal.utils";
+  import { resolveObjectiveColor } from "@21n/components/goals/goal.utils";
   import {
     removeDuplicatesFilter,
     resourceInList
-  } from "@21n/components/flux/resourceStores/resource.utils";
+  } from "@21n/data/datafn/resource.utils";
   import view from "@21n/stores/view.store";
   import { cn } from "@21n/utils/ui.utils";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
+  import { datafn } from "@21n/stores/datafn.store";
 
   let { item }: { item: IManualSessionLogForm } = $props();
 
@@ -58,7 +53,7 @@
   let previousEndTime = $state<string>("");
   let lastActionPerformed = $state<LastActionPerformed | null>(null);
   let label = $state<string>("");
-  let selectedGoal = $state<any>(undefined);
+  let selectedObjective = $state<any>(undefined);
   let inputRef = $state<any>(undefined);
   let selectedQuickAddItem = $state<number>(resolveQuickAddSelection());
   let error = $state<string>("");
@@ -69,8 +64,7 @@
       scope: UIStateScope.DEVICE
     }) ?? "duration"
   );
-  const searchStore = new SearchStore(Resource.goal);
-  let recentGoals = $state<IGoal[]>([]);
+  let recentObjectives = $state<IObjective[]>([]);
 
   $effect(() => {
     item.notes = notes;
@@ -82,7 +76,7 @@
     previousStartTime = item.startTime;
     previousEndTime = item.endTime;
     notes = item.notes ?? { blocks: [] };
-    resolveRecentGoals();
+    resolveRecentObjectives();
     onQuickDurationSelectDelegate(selectedQuickAddItem, true);
     setTimeout(() => {
       if (inputRef) inputRef.focus();
@@ -92,30 +86,26 @@
     };
   });
 
-  async function resolveRecentGoals() {
-    const state = uiState.getState(UIState.manualLogRecentGoals);
+  async function resolveRecentObjectives() {
+    const state = uiState.getState(UIState.manualLogRecentObjectives);
     if (state) {
-      const result = await goalStore.selectMany(
-        {
-          filters: {
-            id: state
-          }
-        },
-        {
-          isExpand: true
+      const result = await datafn.objective.query({
+        select: ["*", "children.*", "tasks.*"],
+        filters: {
+          id: { $in: state }
         }
-      );
-      if (isValidArrayWithData(result)) {
-        recentGoals = state
-          .map((x: string) => result.find(resourceInList(x)))
-          .filter((goal: IGoal | undefined): goal is IGoal => Boolean(goal))
+      });
+      if (isValidArrayWithData(result.data)) {
+        recentObjectives = state
+          .map((x: string) => result.data.find(resourceInList(x)))
+          .filter((objective: IObjective | undefined): objective is IObjective => Boolean(objective))
           .slice(0, $view.isConstrainedWidth ? 3 : 5);
       }
     }
   }
 
-  function resolveGoalThumb(goal: IGoal) {
-    return goal as unknown as IGoalThumb;
+  function resolveObjectiveThumb(objective: IObjective) {
+    return objective as unknown as IObjectiveThumb;
   }
 
   function resolveQuickAddSelection() {
@@ -125,18 +115,18 @@
     return state ?? $pointronPreferences?.manualEntryQuickDurations?.[0] ?? 10;
   }
 
-  function onGoalSelect(goal: IGoal) {
-    selectedGoal = goal;
-    addToRecentGoals(goal);
-    item.goalId = goal.id;
+  function onObjectiveSelect(objective: IObjective) {
+    selectedObjective = objective;
+    addToRecentObjectives(objective);
+    item.objectiveId = objective.id;
     label = "";
     performValidationChecks();
   }
 
-  function addToRecentGoals(goal: IGoal) {
+  function addToRecentObjectives(objective: IObjective) {
     uiState.setState(
-      UIState.manualLogRecentGoals,
-      [goal.id, ...(uiState.getState(UIState.manualLogRecentGoals) ?? [])]
+      UIState.manualLogRecentObjectives,
+      [objective.id, ...(uiState.getState(UIState.manualLogRecentObjectives) ?? [])]
         .filter(removeDuplicatesFilter)
         .slice(0, 5)
     );
@@ -160,9 +150,9 @@
       performValidationChecks("onQuickDurationSelected");
   }
 
-  function onGoalClicked() {
-    selectedGoal = undefined;
-    resolveRecentGoals();
+  function onObjectiveClicked() {
+    selectedObjective = undefined;
+    resolveRecentObjectives();
     setTimeout(() => {
       inputRef.focus();
     }, 100);
@@ -295,8 +285,8 @@
       }
     }
 
-    if (selectedGoal === undefined) {
-      error = "Please select a goal";
+    if (selectedObjective === undefined) {
+      error = "Please select an objective";
       $isPrimaryActionDisabled = true;
       return;
     }
@@ -305,16 +295,17 @@
   }
 
   async function searchCallback(searchQuery: string) {
-    const result = await searchStore.select({
-      searchQuery,
-      isIncludeSubItems: true,
+    const result = await datafn.objective.query({
+      select: ["*", "parent.*"],
+      search: searchQuery ? { query: searchQuery, fields: ["label"] } : undefined,
       filters: {
+        id: { $ne: "" },
         status: {
-          notEquals: GoalStatus.COMPLETED
+          $ne: ObjectiveStatus.COMPLETED
         }
       }
     });
-    return result;
+    return result.data;
   }
 </script>
 
@@ -342,41 +333,41 @@
   {/if}
 
   <div class="flex flex-col gap-4 px-4 xl:px-4">
-    {#if selectedGoal}
+    {#if selectedObjective}
       <div
         class="flex justify-start w-full py-2 border border-bgs4 px-2 rounded-md userdata"
       >
         <CustomColorPropagator
-          color={resolveGoalColor(selectedGoal)}
+          color={resolveObjectiveColor(selectedObjective)}
           class="flex justify-between items-center w-full text-ccs1"
-          onclick={onGoalClicked}
+          onclick={onObjectiveClicked}
         >
-          {selectedGoal.label || "Untitled"}
+          {selectedObjective.label || "Untitled"}
           <Button icon="cross" />
         </CustomColorPropagator>
       </div>
     {:else}
       <TextSearchInput
-        onSelect={(e) => onGoalSelect(e?.detail?.item)}
+        onSelect={(e) => onObjectiveSelect(e?.detail?.item)}
         bind:value={label}
         bind:this={inputRef}
-        searchResultComponent={GoalSearchResultItem}
+        searchResultComponent={ObjectiveSearchResultItem}
         {searchCallback}
         style={InputStyle.BORDERED}
-        placeholder="Start typing to select goal"
+        placeholder="Start typing to select objective"
       />
-      {#if recentGoals && recentGoals.length > 0}
+      {#if recentObjectives && recentObjectives.length > 0}
         <div class="flex items-center flex-wrap gap-3">
           <span class="text-b2 text-fgs3"> Recently used: </span>
-          {#each recentGoals as goal}
+          {#each recentObjectives as objective}
             <CustomColorPropagator
-              color={resolveGoalColor(resolveGoalThumb(goal))}
+              color={resolveObjectiveColor(resolveObjectiveThumb(objective))}
               class="flex items-center gap-2 border border-ccs1 rounded-md px-2 py-1 text-ccs1 bg-ccs5 hover:bg-ccs4 userdata"
               onclick={() => {
-                onGoalSelect(goal);
+                onObjectiveSelect(objective);
               }}
             >
-              {goal.label || "Untitled"}
+              {objective.label || "Untitled"}
             </CustomColorPropagator>
           {/each}
         </div>
@@ -388,7 +379,7 @@
   {/if}
   <div class="flex flex-col gap-6">
     <div class="flex justify-start">
-        <PanelSwitcher
+      <PanelSwitcher
         items={[
           { label: "Duration", value: "duration" },
           { label: "Start and End", value: "startEnd" }
@@ -446,11 +437,7 @@
   <div class="flex flex-col">
     <Divider />
     <div class="px-4 xl:px-4 py-3">
-      <FocusNotes
-        bind:md={notes}
-        isHideTitle={true}
-        placeholder="Add notes"
-      />
+      <FocusNotes bind:md={notes} isHideTitle={true} placeholder="Add notes" />
     </div>
   </div>
 </div>

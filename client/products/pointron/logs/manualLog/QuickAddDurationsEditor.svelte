@@ -47,7 +47,12 @@
 
   function addValue() {
     if (currentValue > 0 && values) {
-      const newValues = [...values, currentValue / 60];
+      const nextValue = currentValue / 60;
+      if (values.some((value) => Math.abs(value - nextValue) < 0.0001)) {
+        currentValue = 0;
+        return;
+      }
+      const newValues = [...values, nextValue];
       values = newValues;
       currentValue = 0;
       emitChange(newValues);
@@ -91,7 +96,7 @@
         />
       </div>
       <div class="flex flex-wrap gap-2">
-        {#each values || [] as value, index (value)}
+        {#each values || [] as value, index (`${value}-${index}`)}
           <div
             class={cn(
               "flex items-center gap-1 px-2 py-1 rounded-md",
