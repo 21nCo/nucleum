@@ -7,7 +7,10 @@ import { staticPlugin } from "@21n/static/vite-plugin.js";
 import { buildViteAliases, loadAliasMap } from "../../tools/alias-utils.mjs";
 
 const aliasConfig = buildViteAliases(loadAliasMap());
-process.env.VITE_PRODUCT ||= "nucleum";
+process.env.VITE_PRODUCT =
+  process.env.VITE_PRODUCT === "nucleus"
+    ? "nucleum"
+    : process.env.VITE_PRODUCT || "nucleum";
 
 export default defineConfig({
   resolve: {

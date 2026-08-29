@@ -29,22 +29,20 @@ export function resolveMutationAction(mutation: IMutation): string {
   ) {
     const mutationChangedProperties = mutation.params.record;
     if (RemovalProperty.IS_ARCHIVED in mutationChangedProperties) {
-      return mutationChangedProperties.isArchived
-        ? "🗃️ Archived"
-        : "↵ Unarchived";
+      return mutationChangedProperties.isArchived ? "Archived" : "Unarchived";
     }
     if (RemovalProperty.TRASHED_AT in mutationChangedProperties) {
-      return mutationChangedProperties.trashedAt ? "⌫ Deleted" : "↵ Restored";
+      return mutationChangedProperties.trashedAt ? "Deleted" : "Restored";
     }
     if ("isLocked" in mutationChangedProperties) {
-      return mutationChangedProperties.isLocked ? "🔒 Locked" : "🔑 Unlocked";
+      return mutationChangedProperties.isLocked ? "Locked" : "Unlocked";
     }
   } else if (mutationAction === PersistenceActionType.INSERT) {
     return "Created";
   } else if (mutationAction === PersistenceActionType.DELETE) {
-    return "🗑️ Deleted";
+    return "Deleted";
   }
-  return "📝 Edited";
+  return "Edited";
 }
 
 export function resolveMutationLabel(mutation: IMutation): {

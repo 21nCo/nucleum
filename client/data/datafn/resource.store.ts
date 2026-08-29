@@ -1,9 +1,9 @@
 import { get, writable } from "svelte/store";
 import { type IRecordId } from "@21n/types/data.type";
-import type {
+import {
   AccessMode,
-  IActiveResource,
-  IResource
+  type IActiveResource,
+  type IResource
 } from "./resource.type";
 import {
   determineResourceAccessMode,
@@ -29,16 +29,19 @@ export function copyActiveResourceContents(id: IRecordId) {
   const activeResource = activeResources.get(id.toString());
   if (!activeResource) return;
   const content = activeResource.resolveExportContent();
-  logger.log({
-    at: "copyActiveResourceContents",
-    content,
-    activeResource
-  });
-  if (content) {
-    navigator.clipboard.writeText(content);
-  } else {
-    toasts.error("Something went wrong. Please try again.");
+  if (!content) {
+    toasts.error("This resource has no content to copy.");
+    return;
   }
+  const clipboard = navigator.clipboard;
+  if (!clipboard) {
+    toasts.error("Could not copy to the clipboard.");
+    return;
+  }
+  clipboard.writeText(content).catch((error) => {
+    logger.error({ at: "copyActiveResourceContents", id, error });
+    toasts.error("Could not copy to the clipboard.");
+  });
 }
 
 export class ActiveResourceStore<
@@ -47,15 +50,16 @@ export class ActiveResourceStore<
 > {
   id: IRecordId;
   protected subject = writable<V>();
-  protected currentUserId?: string;
+  protected currentUserIdPromise: Promise<string | null>;
   subscribe = this.subject.subscribe;
   set = this.subject.set;
   update = this.subject.update;
 
   constructor(id: IRecordId) {
     this.id = id;
-    resolveCurrentUserId().then((value) => {
-      this.currentUserId = value;
+    this.currentUserIdPromise = resolveCurrentUserId().catch((error) => {
+      logger.error({ at: "ActiveResourceStore.currentUserId", id, error });
+      return null;
     });
   }
 
@@ -75,6 +79,7 @@ export class ActiveResourceStore<
   }
 
   async delete() {
+    const currentUserId = await this.currentUserIdPromise;
     await this.table().mutate({
       operation: "trash",
       id: this.id.toString()
@@ -84,7 +89,7 @@ export class ActiveResourceStore<
         ({
           ...(prev ?? ({} as V)),
           trashedAt: new Date(),
-          trashedBy: this.currentUserId ?? null
+          trashedBy: currentUserId
         }) as V
     );
   }
@@ -195,9 +200,9 @@ export class ActiveResourceStore<
   }
 
   static destroy(id: IRecordId, accessMode?: AccessMode) {
-    if (accessMode === "full") {
+    if (accessMode === AccessMode.FULL) {
       const resolvedAccessMode = determineResourceAccessMode(id);
-      if (resolvedAccessMode !== "full") {
+      if (resolvedAccessMode !== AccessMode.FULL) {
         const resource = activeResources.get(id.toString());
         if (resource) {
           resource.update((prev) => ({

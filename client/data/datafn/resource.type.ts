@@ -86,7 +86,9 @@ export interface IActiveResource extends IResource {
   isInFocusMode?: boolean;
 }
 
-export type IUnlabeledResource = Omit<IResource, "label">;
+export type IUnlabeledResource<
+  T extends IResource & IResourceLabeled = IResource & IResourceLabeled
+> = Omit<T, "label">;
 
 export enum AccessMode {
   INLINE = "inline",
@@ -266,7 +268,7 @@ export type IResourceCapture<T extends IResource> = Omit<
   | "id"
 >;
 
-export type IResourceCaptureV2<T extends IResource> = Omit<T, keyof T>;
+export type IResourceCaptureV2<T extends IResource> = OmitForCapture<T>;
 
 /**
  * @deprecated - doesn't help with type inference if nested type intersections. Use {@link OmitForCaptureWithId} or {@link OmitFields} instead.
