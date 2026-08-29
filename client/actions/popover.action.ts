@@ -731,8 +731,14 @@ export function popover(node: HTMLElement, params: PopoverParams) {
   async function showPopover(e?: any): Promise<void> {
     try {
       clearHoverDelayTimeout();
-      const element = document.getElementById(id);
-      if (!element) await createPopover();
+      if (popoverElement && !popoverElement.isConnected) {
+        popoverElement = null;
+        if (component) {
+          void unmount(component);
+          component = null;
+        }
+      }
+      if (!popoverElement) await createPopover();
       positionPopover();
       isShown = true;
       triggerChangeEvent();

@@ -41,6 +41,7 @@
 {#if style === OptionSelectorStyle.TRAIN || style === OptionSelectorStyle.OUTLINE || style === OptionSelectorStyle.ICON}
   {@const bgShade = `bg-bgs${parentBgIndex + 1}`}
   <button
+    data-option-value={item.value}
     class={cn(
       "relative rounded-md min-w-fit whitespace-nowrap border",
       {
@@ -156,6 +157,7 @@
   </button>
 {:else if style === OptionSelectorStyle.CHECK_CIRCLE}
   <button
+    data-option-value={item.value}
     onclick={(event) => onclick?.(event)}
     class="flex gap-2 items-center {item.isDisabled && 'cursor-not-allowed'}"
   >
