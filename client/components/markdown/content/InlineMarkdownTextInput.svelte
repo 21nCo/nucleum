@@ -87,7 +87,12 @@
     onPointerenter?: ((event: PointerEvent) => void) | undefined;
     onPointerleave?: ((event: PointerEvent) => void) | undefined;
   } = $props();
+  let onBlurCallback = onBlur;
+  $effect(() => {
+    onBlurCallback = onBlur;
+  });
   let blockRef = $state<any>(undefined);
+  let isAllSelectedByKeyboard = false;
 
   enum InlineCaretResolutionMethod {
     T1 = "t1",
@@ -804,6 +809,32 @@
     clearTimeout(keyboardTimeout);
     isKeyboardInput = true;
     typing = true;
+    if (
+      isAllSelectedByKeyboard &&
+      (event.key === "Backspace" || event.key === "Delete")
+    ) {
+      blockRef.innerHTML = "";
+      content = "";
+      dispatchChangeEvent();
+      event.preventDefault();
+      isAllSelectedByKeyboard = false;
+      return;
+    }
+    if (
+      blockRef &&
+      (event.metaKey || event.ctrlKey) &&
+      event.key.toLowerCase() === "a"
+    ) {
+      const range = document.createRange();
+      const selection = window.getSelection();
+      range.selectNodeContents(blockRef);
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      event.preventDefault();
+      isAllSelectedByKeyboard = true;
+      return;
+    }
+    isAllSelectedByKeyboard = false;
     if (isMarkdown) {
       const position = resolveCaretPosition();
       const keydownEvent = new CustomEvent("keydown", {
@@ -1176,6 +1207,7 @@
     // console.log("mousedown", event, block);
   }
   async function handlePaste(event: ClipboardEvent) {
+    event?.preventDefault();
     const data = await resolvePasteContents(event, {
       maxFileSizeInMb: MAX_FILE_SIZE_MB
     });
@@ -1220,7 +1252,6 @@
     pasteText();
 
     function pasteText(text?: string) {
-      event?.preventDefault();
       if (!text) text = event.clipboardData?.getData("text/plain") ?? "";
       // document.execCommand("insertText", false, text);
       const selection = window.getSelection();
@@ -1274,6 +1305,11 @@
     if (event.target.innerHTML === "<br>" || event.target.innerHTML === "") {
       event.target.innerHTML = "";
     }
+    if (isMarkdown) {
+      const parsedMdContent = extractInlineMarkdownFromHtml(blockRef.innerHTML);
+      content = parsedMdContent ?? "";
+      dispatchChangeEvent();
+    }
     onInput?.(event);
   }
 </script>
@@ -1313,7 +1349,8 @@
       onmousedown={handleMouseDown}
       onpaste={handlePaste}
       onblur={(event) => {
-        if (isCallable(onBlur)) onBlur(event);
+        const callback = onBlurCallback;
+        if (isCallable(callback)) setTimeout(() => callback(event), 0);
       }}
       onfocus={(event) => {
         if (isCallable(onFocus)) onFocus(event);
