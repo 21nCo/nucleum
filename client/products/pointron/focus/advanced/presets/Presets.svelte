@@ -4,41 +4,43 @@
   import { pointronPreferences } from "@21n/products/pointron/pointron.store";
   import { onMount } from "svelte";
   import { activeSession } from "@21n/products/pointron/focus/session.store";
-  import { compareObjects } from "@21n/shared-utils/obj.utils";
+  import { compareObjects, deepCopy } from "@21n/shared-utils/obj.utils";
+  import { advancedCompositionDraft } from "@21n/products/pointron/focus/advanced/composition/advancedCompositionDraft.store";
   let {
     parentBackgroundIndex = 1,
     isExpandedVariant = true,
     isInEditMode = false,
     isSettingsContext = false,
     onEdit = undefined,
-    onSelect = undefined
+    onPresetSelect = undefined
   }: {
     parentBackgroundIndex?: number;
     isExpandedVariant?: boolean;
     isInEditMode?: boolean;
     isSettingsContext?: boolean;
     onEdit?: ((event: CustomEvent<SessionComposition>) => void) | undefined;
-    onSelect?:
+    onPresetSelect?:
       | ((event: CustomEvent<{ preset: SessionComposition }>) => void)
       | undefined;
   } = $props();
-  let selectedPresetIndex: number = -1;
-  let selectedPreset: SessionComposition;
-  function presetClickHandler(event: any) {
-    selectedPreset = event.detail.preset;
-    selectedPresetIndex = resolveSelectedPresetIndex(selectedPreset);
+  let selectedPresetIndex = $state(-1);
+  async function presetClickHandler(event: any) {
+    const preset = event.detail.preset as SessionComposition;
+    selectedPresetIndex = resolveSelectedPresetIndex(preset);
     if (!isInEditMode) {
+      advancedCompositionDraft.set(deepCopy(preset));
+      await activeSession.onPresetSelection(preset);
       const selectEvent = new CustomEvent<{ preset: SessionComposition }>(
         "select",
         {
-          detail: { preset: event.detail.preset }
+          detail: { preset }
         }
       );
-      onSelect?.(selectEvent);
+      onPresetSelect?.(selectEvent);
       return;
     }
     const editEvent = new CustomEvent<SessionComposition>("edit", {
-      detail: selectedPreset
+      detail: preset
     });
     onEdit?.(editEvent);
   }
@@ -63,12 +65,6 @@
   }
 </script>
 
-<!-- <div
-  class={cn("flex flex-grow w-full", {
-    "flex-col items-center gap-3 overflow-y-auto": isExpandedVariant,
-    "flex-row gap-2 overflow-x-auto": !isExpandedVariant
-  })}
-> -->
 {#each $pointronPreferences.presets as preset, index (preset.id)}
   <PresetItem
     preset={{ ...preset }}
@@ -80,4 +76,3 @@
     onClick={presetClickHandler}
   />
 {/each}
-<!-- </div> -->

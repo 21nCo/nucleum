@@ -10,11 +10,11 @@ export enum PointronEvent {
   BREAK_REMINDER = "BREAK_REMINDER",
   REFRESH_FOCUSITEMS = "REFRESH_FOCUSITEMS",
   /**
-   * @deprecated - use resource subscription via ComponentBaseLayer instead
+   * @deprecated - use DataFn resource subscriptions instead
    */
   REFRESH_QUICK_FOCUS = "REFRESH_QUICK_FOCUS",
   /**
-   * @deprecated - use resource subscription via ComponentBaseLayer instead
+   * @deprecated - use DataFn resource subscriptions instead
    */
   REFRESH_LOGS = "REFRESH_LOGS"
 }

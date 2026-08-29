@@ -1,16 +1,14 @@
-import type {
-  IFocusItem,
-  ISessionInterval
-} from "@21n/types/pointron/session.type";
+import type { ISessionInterval } from "@21n/types/pointron/session.type";
 import type { IRecordId } from "@21n/types/data.type";
 import type { IMarkdown } from "@21n/components/markdown/md.type";
 import type { TimeScale } from "@21n/types/time.type";
 import type {
   IResource,
   IResourceShareable
-} from "@21n/components/flux/resourceStores/resource.type";
-import type { IGoal } from "@21n/components/goals/goal.type";
+} from "@21n/data/datafn/resource.type";
+import type { IObjective } from "@21n/components/goals/goal.type";
 import type { ITask } from "@21n/components/tasks/task.type";
+import type { SessionRelatedItem } from "@21n/products/pointron/logs/session-items.utils";
 
 export enum SessionType {
   PREDEFINED_INTERVALS = "PREDEFINED_INTERVALS",
@@ -18,9 +16,10 @@ export enum SessionType {
   COUNTUP = "COUNTUP",
   MANUAL_ENTRY = "MANUAL_ENTRY"
 }
+export type SessionTypeValue = `${SessionType}`;
 
 export type ISessionBase = {
-  type: SessionType;
+  type: SessionTypeValue;
   //TODO - check the need for below
   // logs: FocusLog[];
   blocks: ISessionInterval[];
@@ -29,11 +28,11 @@ export type ISessionBase = {
   /**
    * @deprecated - older UTC version datetime - use {@link startUnix} instead
    */
-  start?: number | string;
+  start?: number | string | null;
   /**
    * @deprecated - older UTC version datetime - use {@link endUnix} instead
    */
-  end?: number | string;
+  end?: number | string | null;
   /**
    * The unix timestamp of the start datetime
    */
@@ -45,28 +44,18 @@ export type ISessionBase = {
   /**
    * @deprecated - use {@link plannedEndUnix} instead
    */
-  plannedEnd?: number | string;
+  plannedEnd?: number | string | null;
   /**
    * The unix timestamp of the planned end datetime
    */
   plannedEndUnix?: number;
   id: string;
-  /**
-   * @deprecated
-   * Previously used pre v0.82.0
-   */
-  focusItems?: any;
-  /**
-   * @deprecated
-   * Previously used pre v0.82.0
-   */
-  goals?: any;
-  items: IFocusItem[];
-  manualEntryId?: string;
+  items?: SessionRelatedItem[];
+  manualEntryId?: string | null;
   notes?: IMarkdown;
 };
 
-export type ISessionCapture = ISessionBase;
+export type ISessionCapture = Omit<ISessionBase, "items">;
 
 type IResourcePropertiesForSession = IResource & IResourceShareable;
 export type ISession = ISessionBase & IResourcePropertiesForSession;
@@ -75,7 +64,7 @@ export type ISessionLogBase = {
   /**
    * @deprecated - older UTC version datetime - use {@link startUnix} instead
    */
-  start?: string;
+  start?: string | null;
   /**
    * The unix timestamp of the start date
    */
@@ -83,21 +72,21 @@ export type ISessionLogBase = {
   /**
    * @deprecated - older UTC version datetime - use {@link endUnix} instead
    */
-  end?: string;
+  end?: string | null;
   /**
    * The unix timestamp of the end date
    */
-  endUnix: number;
-  sessionId: IRecordId;
+  endUnix?: number;
+  sessionId?: IRecordId;
   /**
    * @deprecated
    */
   taskName?: string;
   focus?: number;
   breakTime?: number;
-  goalId?: IRecordId;
-  taskId?: IRecordId;
-  manualEntryId?: string;
+  objectiveId?: IRecordId | null;
+  taskId?: IRecordId | null;
+  manualEntryId?: string | null;
   tzOffset?: number;
   targets?: { scale: TimeScale; target: number }[];
 };
@@ -111,7 +100,7 @@ type IResourcePropertiesForSessionLog = IResource & IResourceShareable;
 export type ISessionLog = ISessionLogBase & IResourcePropertiesForSessionLog;
 
 export type ISessionLogThumb = ISessionLog & {
-  goal?: IGoal;
+  objective?: IObjective;
   session?: ISession;
   task?: ITask;
 };
@@ -127,7 +116,7 @@ export type IManualSessionLogForm = {
   startDate: Date;
   endTime: string;
   endDate: Date;
-  goalId: IRecordId;
+  objectiveId: IRecordId;
   duration: number;
   notes?: IMarkdown;
 };
@@ -142,7 +131,7 @@ export interface ILogsPaneStore {
 }
 
 export type ISessionThumb = ISession & {
-  expandedItems: (IGoal | ITask)[];
+  expandedItems?: (IObjective | ITask)[];
 };
 
 export type DaySummary = {

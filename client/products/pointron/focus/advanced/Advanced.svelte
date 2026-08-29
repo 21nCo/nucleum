@@ -12,6 +12,7 @@
   import { SessionUIContext } from "@21n/types/pointron/session.type";
   import FormLabelTooltip from "@21n/elements/text/formLabel/FormLabelTooltip.svelte";
   import { Size } from "@21n/types/size.enum";
+  import { advancedCompositionDraft } from "@21n/products/pointron/focus/advanced/composition/advancedCompositionDraft.store";
 
   let isExpandedMode = $derived(
     ($view.landscapiness > 1.4 && $view.scale > 1) || $view.scale > 1.3
@@ -24,7 +25,7 @@
     <FormLabelTooltip
       icon="ph:info"
       info={{
-        body: "Use advanced focus to start a focus session with more granular control. \n 1. Start by adding goals/tasks that you want to focus. \n 2. Then, set the duration/intervals using presets or custom methods. \n 3. Finally, click on **Start focus** to begin."
+        body: "Use advanced focus to start a focus session with more granular control. \n 1. Start by adding objectives/tasks that you want to focus. \n 2. Then, set the duration/intervals using presets or custom methods. \n 3. Finally, click on **Start focus** to begin."
       }}
     />
   </div>
@@ -33,7 +34,10 @@
   {:else}
     <div class="flex flex-col w-full flex-grow pb-10">
       <div class="flex pt-4 pb-2">
-        <IntervalBar context={SessionUIContext.THIN_ON_DESKTOP} />
+        <IntervalBar
+          context={SessionUIContext.THIN_ON_DESKTOP}
+          composition={$advancedCompositionDraft}
+        />
       </div>
       <div class="flex gap-4 py-4 flex-grow">
         <div class="flex flex-col gap-8 w-1/2 h-full">
