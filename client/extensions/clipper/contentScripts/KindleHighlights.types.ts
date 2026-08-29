@@ -62,7 +62,7 @@ export type SavedBookNode = {
   body: Book;
   contentType: contentType.BookNode;
   createdAt: string;
-  modifiedAt: string;
+  updatedAt: string;
   isArchived: boolean;
   isStarred: boolean;
 };

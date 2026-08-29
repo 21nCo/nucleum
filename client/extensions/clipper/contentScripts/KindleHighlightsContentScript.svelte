@@ -16,7 +16,7 @@
   import { logger } from "@21n/components/debug/logger.client";
   import { ClipperExtensionEvent } from "@21n/products/memotron/common/clip.type";
   import { SyncStatus } from "@21n/extensions/clipper/contentScripts/types";
-  import type { OmitForCaptureWithId } from "@21n/components/flux/resourceStores/resource.type";
+  import type { OmitForCaptureWithId } from "@21n/data/datafn/resource.type";
   import { generateHash } from "@21n/shared-utils/crypto.utils";
   import { generateSyncedResourceId } from "@21n/products/memotron/memotron.utils";
   let region: AmazonAccount;
