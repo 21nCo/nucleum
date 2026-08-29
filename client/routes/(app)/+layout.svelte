@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import type { Snippet } from "svelte";
-  import { performSessionCheck } from "@21n/components/account/auth";
+  import { resolveAuthSession } from "@21n/components/account/auth";
   import AppLoadingView from "@21n/layout/paint/AppLoadingView.svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import { appStore } from "../../stores/app.store";
@@ -20,12 +20,42 @@
     const token = localStorage.getItem("embedToken");
     isEmbedTokenPresent = token ? true : false;
   });
+
+  type RouteAuthState =
+    | "authenticated"
+    | "expired"
+    | "signed-out"
+    | "unavailable";
+
+  async function resolveRouteAuthState(): Promise<RouteAuthState> {
+    const resolution = await resolveAuthSession();
+    if (
+      resolution.status === "authenticated" ||
+      resolution.status === "offline-only" ||
+      resolution.status === "cached-cloud"
+    ) {
+      return "authenticated";
+    }
+    if (resolution.status === "expired") return "expired";
+    if (resolution.status === "unavailable") return "unavailable";
+    return "signed-out";
+  }
+
+  function goToAuthRoute(authState: RouteAuthState) {
+    if (authState === "unavailable") {
+      window.location.reload();
+      return;
+    }
+    appStore.gotoPath("/account/login", {
+      queryParams: authState === "expired" ? { msg: "expired" } : undefined
+    });
+  }
 </script>
 
-{#await performSessionCheck()}
+{#await resolveRouteAuthState()}
   <AppLoadingView />
-{:then value}
-  {#if value}
+{:then authState}
+  {#if authState === "authenticated"}
     {#if dev_isDebugAccountMode}
       <AccountDebugInfo />
     {:else}
@@ -42,11 +72,18 @@
     {/if}
   {:else}
     <div class="h-full flex flex-col justify-center items-center">
-      Embed token: {isEmbedTokenPresent}
+      {#if authState === "expired"}
+        <div class="text-ass1 text-b2 mb-4">Your session has expired. Please login again.</div>
+      {:else if authState === "unavailable"}
+        <div class="text-ass1 text-b2 mb-4">
+          Account service is unavailable. Please try again once it is running.
+        </div>
+      {/if}
+      <div>Embed token: {isEmbedTokenPresent}</div>
       <Button
-        label="Login/Signup"
+        label={authState === "unavailable" ? "Retry" : "Login/Signup"}
         onclick={() => {
-          appStore.gotoPath("/account/login");
+          goToAuthRoute(authState);
         }}
       />
     </div>
