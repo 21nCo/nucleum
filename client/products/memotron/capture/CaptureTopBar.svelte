@@ -30,7 +30,7 @@
   }: {
     captureStore: IActiveCaptureStore;
     isHomeContext?: boolean;
-    onSave?: (() => void) | undefined;
+    onSave?: (() => void | Promise<void>) | undefined;
     onClear?: (() => void) | undefined;
     onFocusBody?: (() => void) | undefined;
   } = $props();
@@ -52,9 +52,9 @@
     return undefined;
   }
 
-  function handleSave() {
+  async function handleSave() {
     haptic();
-    onSave?.();
+    await onSave?.();
   }
 
   function handleClear() {
@@ -129,6 +129,7 @@
             size={isHomeContext ? Size.md : Size.sm}
             style={ButtonStyle.OUTLINED}
             isPreventMinWidth={true}
+            isLoading={$captureStore.isSaving}
             shortcut={{
               key: KeyboardKey.ENTER,
               modifiers: [ModifierKey.META]
