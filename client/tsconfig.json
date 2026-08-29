@@ -486,24 +486,24 @@
         "../shared/dbo/*"
       ],
       "@21n/next": [
-        "./next/index.ts",
-        "./next/index.tsx",
-        "./next/index.js",
-        "./next/index.mjs",
-        "./next/index.cjs",
-        "./next/index.svelte",
-        "./next/index.d.ts",
-        "./next/src/index.ts",
-        "./next/src/index.tsx",
-        "./next/src/index.js",
-        "./next/src/index.mjs",
-        "./next/src/index.cjs",
-        "./next/src/index.svelte",
-        "./next/src/index.d.ts",
-        "./next"
+        "./next/noop/index.ts",
+        "./next/noop/index.tsx",
+        "./next/noop/index.js",
+        "./next/noop/index.mjs",
+        "./next/noop/index.cjs",
+        "./next/noop/index.svelte",
+        "./next/noop/index.d.ts",
+        "./next/noop/src/index.ts",
+        "./next/noop/src/index.tsx",
+        "./next/noop/src/index.js",
+        "./next/noop/src/index.mjs",
+        "./next/noop/src/index.cjs",
+        "./next/noop/src/index.svelte",
+        "./next/noop/src/index.d.ts",
+        "./next/noop"
       ],
       "@21n/next/*": [
-        "./next/*"
+        "./next/noop/*"
       ]
     }
   },
