@@ -1,4 +1,4 @@
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 
 export function isCustomLibrary(resource: Resource) {
   return [Resource.relation, Resource.task].includes(resource);

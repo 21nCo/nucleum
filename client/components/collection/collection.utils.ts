@@ -13,11 +13,12 @@ import {
 import {
   isNoneResource,
   resourceInList
-} from "@21n/components/flux/resourceStores/resource.utils";
+} from "@21n/data/datafn/resource.utils";
 import type { ISelectItem } from "@21n/types/select.type";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import { Product } from "@21n/products/product.type";
 import type { IAvatar } from "@21n/types/avatar.type";
+import { datafn } from "@21n/stores/datafn.store";
 
 export const UNASSIGNED_VALUE = "unassigned";
 export const UNASSIGNED_LABEL = "Unassigned";
@@ -73,7 +74,7 @@ export function calculateGroupingCounts(
 
   if (propertyId) {
     data.forEach((node) => {
-      const prop = node.properties?.find(resourceInList(propertyId))?.value;
+      const prop = node.propertyValues?.find(resourceInList(propertyId))?.value;
       if (!prop || prop === UNASSIGNED_VALUE) {
         counts.set(UNASSIGNED_VALUE, (counts.get(UNASSIGNED_VALUE) || 0) + 1);
       } else if (Array.isArray(prop)) {
@@ -97,7 +98,7 @@ export function filterNodesByPropertyValue(
 ): ICollectionItem[] {
   if (value === UNASSIGNED_VALUE) {
     return data?.filter((node: ICollectionItem) => {
-      const propValue = node.properties?.find(resourceInList(propertyId));
+      const propValue = node.propertyValues?.find(resourceInList(propertyId));
       return (
         !propValue ||
         propValue.value === UNASSIGNED_VALUE ||
@@ -106,7 +107,7 @@ export function filterNodesByPropertyValue(
     });
   }
   return data?.filter((node: ICollectionItem) => {
-    const prop = node.properties?.find(resourceInList(propertyId));
+    const prop = node.propertyValues?.find(resourceInList(propertyId));
     if (!prop?.value) return false;
     if (Array.isArray(prop.value)) {
       return prop.value.includes(value);
@@ -180,17 +181,134 @@ export function resolveCollectionSubTypesForSwitcher() {
   return collectionTypes;
 }
 
+/**
+ * TODO - resolve from product config instead
+ * @param product
+ * @returns
+ */
 export function resolveCollectionResource(product: Product): Resource[] {
   switch (product) {
     case Product.POINTRON:
-      return [Resource.goal];
+      return [Resource.objective];
     case Product.MEMOTRON:
       return [Resource.node];
-    case Product.NUCLEUS:
-      return [Resource.node, Resource.goal];
+    case Product.NUCLEUM:
+      return [Resource.node, Resource.objective];
     default:
       return [];
   }
+}
+
+export async function resolveCollectionTypes(
+  collections: IRecordId[],
+  isFromExtension: boolean = false
+): Promise<ICollectionExpanded[]> {
+  if (!collections || collections.length === 0) return [];
+
+  if (isFromExtension) {
+    const collectionResult = await datafn.collection.query({
+      select: ["*", "properties.*", "typeToExtend.*"],
+      filters: {
+        id: collections[0].toString()
+      },
+      limit: 1
+    } as any);
+    const result = collectionResult.data?.[0] as
+      | (ICollectionExpanded & {
+          properties?: (IRecordId | IProperty)[];
+          typeToExtend?: IRecordId | ICollectionExpanded;
+        })
+      | undefined;
+    if (!result || result.type !== CollectionType.TYPED) return [];
+    if (!result.properties && !result.typeToExtend) return [result];
+
+    let typeToExtend: ICollectionExpanded | undefined;
+    const typeToExtendId = result.typeToExtend;
+    if (typeof typeToExtendId === "string") {
+      const extensionResult = await datafn.collection.query({
+        select: ["*", "properties.*"],
+        filters: {
+          id: typeToExtendId.toString()
+        },
+        limit: 1
+      } as any);
+      typeToExtend = extensionResult.data?.[0] as
+        | ICollectionExpanded
+        | undefined;
+    } else if (result.typeToExtend && typeof result.typeToExtend === "object") {
+      typeToExtend = result.typeToExtend as ICollectionExpanded;
+    }
+
+    const propertyIds = (result.properties ?? []).map((property) =>
+      typeof property === "string" ? property : property.id
+    );
+    const extendedPropertyIds = (typeToExtend?.properties ?? []).map(
+      (property) => (typeof property === "string" ? property : property.id)
+    ) as IRecordId[];
+    const propertiesResult = await datafn.property.query({
+      filters: {
+        id: { $in: [...propertyIds, ...extendedPropertyIds] }
+      }
+    });
+    const properties = (propertiesResult.data ?? []) as IProperty[];
+    if (!typeToExtend) return [{ ...result, properties }];
+    const mainProps = result.properties
+      ?.map((propertyRef) => {
+        const id =
+          typeof propertyRef === "string" ? propertyRef : propertyRef.id;
+        const resolvedProperty = properties.find(resourceInList(id));
+        return resolvedProperty ? { ...resolvedProperty } : undefined;
+      })
+      .filter(Boolean) as IProperty[] | undefined;
+    const extendedProps = typeToExtend.properties
+      ?.map((propertyRef) => {
+        const id =
+          typeof propertyRef === "string" ? propertyRef : propertyRef.id;
+        const property = properties.find(resourceInList(id));
+        return property ? { ...property } : undefined;
+      })
+      .filter(Boolean) as IProperty[] | undefined;
+    return [
+      {
+        ...result,
+        properties: mainProps,
+        typeToExtend,
+        extendProperties: extendedProps
+      }
+    ];
+  }
+
+  const result = await datafn.collection.query({
+    select: ["*", "properties.*", "typeToExtend.*"],
+    filters: {
+      id: { $in: collections.map((id) => id.toString()) }
+    }
+  } as any);
+  const types = ((result.data ?? []) as ICollectionExpanded[]).filter(
+    (collection) => collection.type === CollectionType.TYPED
+  );
+  if (types.length === 0) return [];
+  const extendPropertyIds = types
+    .flatMap((collection) => collection.typeToExtend?.properties ?? [])
+    .map((property) => (typeof property === "string" ? property : property.id))
+    .filter((id): id is IRecordId => Boolean(id));
+  if (extendPropertyIds.length > 0) {
+    const extendPropertiesResult = await datafn.property.query({
+      filters: {
+        id: {
+          $in: extendPropertyIds
+        }
+      }
+    });
+    const extendProperties = (extendPropertiesResult.data ?? []) as IProperty[];
+    types.forEach((collection) => {
+      if (!collection.typeToExtend) return;
+      collection.extendProperties = extendProperties.filter((property) =>
+        collection.typeToExtend?.properties?.some(resourceInList(property.id))
+      );
+    });
+  }
+  return types;
 }
 
 export function resolveAvatar(types: ICollectionExpanded[]) {

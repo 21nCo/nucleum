@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import type { IRecordId } from "@21n/client/types/data.type";
-  import { Resource } from "@21n/client/components/flux/resourceStores/resource.enum";
-  import { AccessMode } from "@21n/client/components/flux/resourceStores/resource.type";
+  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import { Size } from "@21n/client/types/size.enum";
   import { cn } from "@21n/client/utils/ui.utils";
   import Button from "@21n/client/elements/button/Button.svelte";
@@ -20,7 +20,7 @@
   import CombinationTOC from "./CombinationTOC.svelte";
   import { findItemPath, getItemByPath } from "./combination.utils";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import ComponentBaseLayer from "@21n/client/layout/layers/ComponentBaseLayer.svelte";
+  import { appStore } from "@21n/client/stores/app.store";
   let {
     id,
     accessMode = AccessMode.INLINE,
@@ -58,11 +58,13 @@
   );
 
   onMount(async () => {
+    $appStore.isDnDPageActive = true;
     await combinationStore.init(accessMode);
     isInitializing = false;
   });
 
   onDestroy(() => {
+    $appStore.isDnDPageActive = false;
     if (isEditMode) {
       combinationStore.toggleEditMode(false);
     }
@@ -239,13 +241,13 @@
     <header class="flex flex-col gap-2 px-3 pt-3 w-full">
       {#if isEditMode}
         <TextInput
-          value={combination?.label ?? "Untitled combination"}
+          value={combination?.label ?? "Untitled space"}
           size={Size.md}
           onDebouncedChange={onLabelDebouncedChange}
         />
       {:else}
         <h1 class="text-h4 font-semibold truncate">
-          {combination?.label ?? "Untitled combination"}
+          {combination?.label ?? "Untitled space"}
         </h1>
       {/if}
       <div class="flex items-center gap-2">
@@ -271,7 +273,7 @@
             mainText="No items yet"
             subText={isEditMode
               ? "Add resources or sections to build the navigation"
-              : "Switch to edit mode to start building this combination"}
+              : "Switch to edit mode to start building this space"}
             isSearchContext={false}
           />
         </div>
@@ -288,9 +290,9 @@
               {draggedItemId}
               onSelect={onSelectNavItem}
               onToggle={onToggleCollapse}
-              onStartEdit={onStartEdit}
+              {onStartEdit}
               onEdit={onEditLabel}
-              onDelete={onDelete}
+              {onDelete}
               onDragStart={onNavDragStart}
               onDragEnd={onNavDragEnd}
               onDrop={onNavDrop}
@@ -350,4 +352,3 @@
     />
   </aside>
 </div>
-<ComponentBaseLayer hasDragAndDrop={true} />
