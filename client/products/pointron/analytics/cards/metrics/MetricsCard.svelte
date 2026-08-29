@@ -12,17 +12,28 @@
     previousTimePeriodData?: AnalyticsDataRecord[];
   } = $props();
 
-  let totalFocus = $derived(data.reduce((acc, curr) => acc + curr.focus, 0));
-  let totalBreak = $derived(
-    data.reduce((acc, curr) => acc + curr.brek, 0)
-  );
+  function resolveMetricSeconds(value: unknown) {
+    const numericValue = typeof value === "number" ? value : Number(value);
+    return Number.isFinite(numericValue) ? numericValue : 0;
+  }
+
+  function sumMetricSeconds(
+    records: AnalyticsDataRecord[],
+    field: keyof Pick<AnalyticsDataRecord, "focus" | "brek">
+  ) {
+    return records.reduce(
+      (acc, curr) => acc + resolveMetricSeconds(curr[field]),
+      0
+    );
+  }
+
+  let totalFocus = $derived(sumMetricSeconds(data, "focus"));
+  let totalBreak = $derived(sumMetricSeconds(data, "brek"));
   let total = $derived(totalFocus + totalBreak);
   let previousFocus = $derived(
-    previousTimePeriodData.reduce((acc, curr) => acc + curr.focus, 0)
+    sumMetricSeconds(previousTimePeriodData, "focus")
   );
-  let previousBreak = $derived(
-    previousTimePeriodData.reduce((acc, curr) => acc + curr.brek, 0)
-  );
+  let previousBreak = $derived(sumMetricSeconds(previousTimePeriodData, "brek"));
   let previousTotal = $derived(previousFocus + previousBreak);
 </script>
 
