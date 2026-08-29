@@ -1,35 +1,43 @@
 <script lang="ts">
-  import { tzStore } from "@21n/components/settings/timezone/tz.store";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { sessionLogStore } from "@21n/products/pointron/logs/log.store";
   import type { ISessionLog } from "@21n/products/pointron/logs/log.type";
-  import account from "@21n/stores/account.store";
   import { Size } from "@21n/types/size.enum";
   import { LoadingAnimationType } from "@21n/types/feedback.type";
-  import { onMount } from "svelte";
   import HistoricalMetrics from "@21n/components/calendar/column/overview/HistoricalMetrics.svelte";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { time } from "@datafn/client";
+  import { toSvelteStore } from "@datafn/svelte";
 
   let {
-    date,
-    isRefreshing = $bindable(false)
+    date
   }: {
     date: Date;
-    isRefreshing?: boolean;
   } = $props();
 
-  let lastMonthData = $state<ISessionLog[]>([]);
-  let lastYearData = $state<ISessionLog[]>([]);
-  let twoYearsAgoData = $state<ISessionLog[]>([]);
-  let dev_isUseCloud = false;
+  const lastMonthDate = $derived(getLastMonthDate(date));
+  const lastYearDate = $derived(getLastYearDate(date));
+  const twoYearsAgoDate = $derived(getTwoYearsAgoDate(date));
+  const lastMonthStore = $derived.by(() => createSessionLogStore(lastMonthDate));
+  const lastYearStore = $derived.by(() => createSessionLogStore(lastYearDate));
+  const twoYearsAgoStore = $derived.by(() =>
+    createSessionLogStore(twoYearsAgoDate)
+  );
+  const lastMonthData = $derived($lastMonthStore.data);
+  const lastYearData = $derived($lastYearStore.data);
+  const twoYearsAgoData = $derived($twoYearsAgoStore.data);
   const hasData = $derived(
     lastMonthData.length > 0 ||
       lastYearData.length > 0 ||
       twoYearsAgoData.length > 0
   );
-
-  let lastMonthDate = $state<Date | null>(null);
-  let lastYearDate = $state<Date | null>(null);
-  let twoYearsAgoDate = $state<Date | null>(null);
+  const isRefreshing = $derived(
+    $lastMonthStore.loading ||
+      $lastMonthStore.refreshing ||
+      $lastYearStore.loading ||
+      $lastYearStore.refreshing ||
+      $twoYearsAgoStore.loading ||
+      $twoYearsAgoStore.refreshing
+  );
 
   const lastMonthFocusHours = $derived(
     lastMonthData.reduce((acc, curr) => acc + (curr.focus ?? 0), 0)
@@ -41,10 +49,6 @@
     twoYearsAgoData.reduce((acc, curr) => acc + (curr.focus ?? 0), 0)
   );
 
-  onMount(() => {
-    refresh();
-  });
-
   function isValidDate(year: number, month: number, day: number): boolean {
     const date = new Date(year, month, day);
     return (
@@ -52,17 +56,6 @@
       date.getMonth() === month &&
       date.getDate() === day
     );
-  }
-
-  function getLastWeekDate(currentDate: Date): Date | null {
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const day = currentDate.getDate() - 7;
-
-    if (isValidDate(year, month, day)) {
-      return new Date(year, month, day);
-    }
-    return null;
   }
 
   function getLastMonthDate(currentDate: Date): Date | null {
@@ -98,78 +91,18 @@
     return null;
   }
 
-  async function refresh() {
-    isRefreshing = true;
-    const isUseCloud = dev_isUseCloud && account.isCloudUserAndOnline();
-
-    lastMonthDate = getLastMonthDate(date);
-    lastYearDate = getLastYearDate(date);
-    twoYearsAgoDate = getTwoYearsAgoDate(date);
-
-    // Array to store our promises
-    const promises = [];
-    const results = [];
-
-    // Only fetch last month data if we have a valid date
-    if (lastMonthDate) {
-      promises.push(
-        sessionLogStore.selectMany(
-          {
-            filters: {
-              startUnix: resolveLegacyDayFilter(lastMonthDate)
-            }
-          },
-          {
-            isUseCloud
-          }
-        )
-      );
-    } else {
-      promises.push(Promise.resolve([]));
+  function createSessionLogStore(day: Date | null) {
+    if (!day) {
+      return toSvelteStore<ISessionLog[]>(datafn.emptySignal([]), {
+        initialData: []
+      });
     }
-
-    // Only fetch last year data if we have a valid date
-    if (lastYearDate) {
-      promises.push(
-        sessionLogStore.selectMany(
-          {
-            filters: {
-              startUnix: resolveLegacyDayFilter(lastYearDate)
-            }
-          },
-          {
-            isUseCloud
-          }
-        )
-      );
-    } else {
-      promises.push(Promise.resolve([]));
-    }
-
-    // Only fetch two years ago data if we have a valid date
-    if (twoYearsAgoDate) {
-      promises.push(
-        sessionLogStore.selectMany(
-          {
-            filters: {
-              startUnix: resolveLegacyDayFilter(twoYearsAgoDate)
-            }
-          },
-          {
-            isUseCloud
-          }
-        )
-      );
-    } else {
-      promises.push(Promise.resolve([]));
-    }
-
-    // Execute all promises
-    results.push(...(await Promise.all(promises)));
-    // Assign results to reactive variables
-    [lastMonthData, lastYearData, twoYearsAgoData] = results;
-
-    isRefreshing = false;
+    return toSvelteStore<ISessionLog[]>(
+      datafn.sessionLog.signal({
+        temporal: time.day("startUnix", day)
+      }),
+      { initialData: [] }
+    );
   }
 
   function resolveLegacyDayFilter(date: Date) {
