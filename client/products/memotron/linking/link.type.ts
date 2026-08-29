@@ -2,13 +2,11 @@ import type {
   IResource,
   IResourceLabeled,
   IResourceShareable
-} from "@21n/components/flux/resourceStores/resource.type";
+} from "@21n/data/datafn/resource.type";
 import type { IRecordId } from "@21n/types/data.type";
 
 export interface ILinkTag
-  extends IResource,
-    IResourceLabeled,
-    IResourceShareable {
+  extends IResource, IResourceLabeled, IResourceShareable {
   group?: string;
 }
 
