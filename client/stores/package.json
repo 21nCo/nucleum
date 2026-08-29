@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "dependencies": {
+    "@21n/data": "*",
+    "@21n/shared-data": "*",
+    "@21n/shared-config": "*",
+    "@datafn/client": "0.1.0",
+    "@datafn/core": "0.1.0",
+    "@searchfn/adapter-indexeddb": "0.1.0",
+    "@searchfn/datafn-provider": "0.4.0"
+  },
   "exports": {
     "./app.store": "./app.store.ts",
     "./view.store": "./view.store.ts",
