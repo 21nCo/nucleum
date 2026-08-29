@@ -1,130 +1,261 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { flux } from "@21n/components/flux/flux";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import { type IMutation, type IRecordId } from "@21n/types/data.type";
-  import { logger } from "@21n/components/debug/logger.client";
-  import { resolveMutationLabel } from "@21n/components/flux/flux.utils";
+  import { combineSignals, time } from "@datafn/client";
+  import { Resource } from "@21n/data/datafn/resource.enum";
+  import { type IRecordId } from "@21n/types/data.type";
   import { formatSeconds, formatTime } from "@21n/utils/time.utils";
   import { userPreferences } from "@21n/components/settings/userPreferences.store";
-  import { SearchStore } from "@21n/components/record/record.store";
   import { appStore } from "@21n/stores/app.store";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import ScrollViewBottomSpacer from "@21n/layout/scrollView/ScrollViewBottomSpacer.svelte";
   import { Product } from "@21n/products/product.type";
-  import { tzStore } from "@21n/components/settings/timezone/tz.store";
-  import { resolveProductResources } from "@21n/components/flux/resourceStores/resource.utils";
+  import {
+    determineResourceType,
+    resolveProductResources
+  } from "@21n/data/datafn/resource.utils";
   import { rootNodeTypeList } from "@21n/products/memotron/node/node.type";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { toSvelteDataStore, toSvelteStore } from "@datafn/svelte";
+  import { properCase } from "@21n/shared-utils/text.utils";
+
+  type ActivityLog = {
+    action: string;
+    timestamp: Date;
+    resourceLabel?: string;
+    resourceId?: IRecordId;
+  };
+
+  type AccessLogRecord = {
+    action?: string;
+    createdAt?: Date | string | number;
+    resource?: string;
+    resourceId?: IRecordId;
+    timestamp?: Date | string | number;
+  };
+
+  type LabelRecord = {
+    event?: unknown;
+    id?: string;
+    label?: unknown;
+  };
+
+  type LabelRecordById = Record<string, LabelRecord>;
 
   let { date }: { date: Date } = $props();
-  let isLoading = $state(false);
-  let logs = $state<
-    {
-      action: string;
-      timestamp: Date;
-      resourceLabel?: string;
-      resourceId?: IRecordId | IRecordId[];
-    }[]
-  >([]);
-
-  $effect(() => {
-    if (date) {
-      refresh(date);
-    }
-  });
-
-  async function refresh(date: Date) {
-    try {
-      isLoading = true;
-      let nextLogs: {
-        action: string;
-        timestamp: Date;
-        resourceLabel?: string;
-        resourceId?: IRecordId | IRecordId[];
-      }[] = [];
-      date = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-      const resources = resolveProductResources($appStore.product);
-      const mutations: IMutation[] = await flux.selectMany(
-        Resource.mutation,
-        {
-          filters: {
-            action: ["create", "delete"],
-            resource: [...(resources ?? [])],
-            timestamp: {
-              greaterThanOrEqual: date.getTime(),
-              lessThanOrEqual: date.getTime() + 24 * 60 * 60 * 1000
-            }
-          }
-        },
-        {
-          isUseCloud: true
-        }
-      );
-      if (isValidArrayWithData(mutations)) {
-        nextLogs = [
-          ...mutations.filter(rootNodeFilter).map((mutation: IMutation) => {
-            const label = resolveMutationLabel(mutation);
-            return {
-              action: label.action,
-              resourceLabel: label.resourceLabel,
-              timestamp: new Date(mutation.createdAt),
-              resourceId: mutation.resourceId
-            };
+  const dayDate = $derived(
+    new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  );
+  const isFocusProduct = $derived(
+    $appStore.product === Product.POINTRON ||
+      $appStore.product === Product.NUCLEUM
+  );
+  const focusSessionStore = $derived.by(() =>
+    toSvelteStore<any[]>(
+      isFocusProduct
+        ? datafn.sessionLog.signal({
+            temporal: time.day("startUnix", dayDate),
+            select: ["*", "objective.*", "task.*", "session.*"],
+            sort: ["-startUnix"]
           })
-        ];
-      }
-      if (
-        $appStore.product === Product.POINTRON ||
-        $appStore.product === Product.NUCLEUM
-      ) {
-        const dayFilter = tzStore.resolveTimePeriodFilterForDay(date);
-        const focusSessionsResult = await new SearchStore(
-          Resource.session
-        ).select({
-          filters: {
-            startUnix: {
-              greaterThanOrEqual: dayFilter.$gte,
-              lessThanOrEqual: dayFilter.$lte
-            }
-          }
-        });
-        if (isValidArrayWithData(focusSessionsResult)) {
-          nextLogs.push(
-            ...focusSessionsResult.map((session: any) => ({
-              action: `○ Focus`,
-              resourceLabel: formatSeconds(session.elapsed),
-              timestamp: new Date(session.startUnix),
-              resourceId: [session.id]
-            }))
-          );
+        : datafn.emptySignal([]),
+      { initialData: [] }
+    )
+  );
+  const createdActivityStore = $derived.by(() =>
+    toSvelteStore(createCreatedActivitySignal(dayDate), { initialData: [] })
+  );
+  const accessLogStore = $derived.by(() =>
+    toSvelteStore<AccessLogRecord[]>(
+      datafn.accessLog.signal({
+        temporal: time.day("createdAt", dayDate),
+        sort: ["-createdAt"]
+      }),
+      { initialData: [] }
+    )
+  );
+  const accessLogLabelStore = $derived.by(() =>
+    toSvelteDataStore(
+      datafn.recordsByIdsSignal({
+        ids: resolveAccessLogResourceIds($accessLogStore.data),
+        selectByResource: {
+          [Resource.collection]: ["id", "label"],
+          [Resource.event]: ["id", "label", "event"],
+          [Resource.node]: ["id", "label"],
+          [Resource.objective]: ["id", "label"],
+          [Resource.space]: ["id", "label"],
+          [Resource.task]: ["id", "label"]
+        },
+        metadata: {
+          includeArchived: true,
+          includeTrashed: true
         }
-      }
-      logs = nextLogs.sort(
-        (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
-      );
-      isLoading = false;
-    } catch (e) {
-      logger.error({ at: "CalendarAllActivityPanel.refresh", e });
-      isLoading = false;
-    }
+      }),
+      { initialData: {} as LabelRecordById }
+    )
+  );
+  const focusLogs = $derived.by(() =>
+    $focusSessionStore.data.map((log: any) => ({
+      action: `○ Focus`,
+      resourceLabel: resolveFocusLogLabel(log),
+      timestamp: new Date(log.startUnix),
+      resourceId: resolveFocusLogResourceId(log)
+    }))
+  );
+  const accessLogs = $derived.by(() =>
+    $accessLogStore.data.map((log) => ({
+      action: resolveAccessLogAction(log.action),
+      resourceLabel: resolveAccessLogResourceLabel(log, $accessLogLabelStore),
+      timestamp: new Date(log.timestamp ?? log.createdAt),
+      resourceId: log.resourceId
+    }))
+  );
+  const logs = $derived.by(() =>
+    [...$createdActivityStore.data, ...accessLogs, ...focusLogs].sort(
+      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+    )
+  );
+  const isLoading = $derived(
+    $accessLogStore.loading ||
+      $accessLogStore.refreshing ||
+      $focusSessionStore.loading ||
+      $focusSessionStore.refreshing ||
+      $createdActivityStore.loading ||
+      $createdActivityStore.refreshing
+  );
+
+  function createCreatedActivitySignal(date: Date) {
+    const resources = resolveCreatedActivityResources();
+    const signals = resources.map((resource) =>
+      datafn.table(resource).signal({
+        select: ["id", "label", "event", "createdAt", "contentType"],
+        filters: resolveCreatedActivityFilters(resource),
+        temporal: time.day("createdAt", date),
+        sort: ["-createdAt"],
+        limit: 200
+      })
+    );
+    return combineSignals(signals, () =>
+      signals.flatMap((signal, index) => {
+        const resource = resources[index];
+        const records = signal.get();
+        if (!Array.isArray(records)) return [];
+        return records.map((record: any) => ({
+          action: "Created",
+          resourceLabel: resolveCreatedResourceLabel(resource, record),
+          timestamp: new Date(record.createdAt),
+          resourceId: record.id
+        }));
+      })
+    );
   }
 
-  function rootNodeFilter(x: IMutation) {
-    if (!x.resourceId) return false;
-    if (x.resource !== Resource.node) return true;
-    if (
-      Array.isArray(x.resourceId) &&
-      x.resourceId.length === 1 &&
-      "records" in x.params &&
-      x.params.records.length === 1
-    ) {
-      const record = x.params.records[0];
-      if (!record) return false;
-      return rootNodeTypeList.includes(record.contentType);
-    }
-    return true;
+  function resolveAccessLogResourceIds(logs: AccessLogRecord[]) {
+    return Array.from(
+      new Set(logs.map(resolveAccessLogResourceId).filter(isRecordIdString))
+    );
+  }
+
+  function resolveAccessLogResource(log: AccessLogRecord) {
+    const resource = determineResourceType(log.resourceId);
+    if (resource !== Resource.unknown) return resource;
+    return isResource(log.resource) ? log.resource : undefined;
+  }
+
+  function isResource(value: unknown): value is Resource {
+    return (
+      typeof value === "string" &&
+      (Object.values(Resource) as string[]).includes(value)
+    );
+  }
+
+  function resolveAccessLogResourceId(log: AccessLogRecord) {
+    return isRecordIdString(log.resourceId) ? log.resourceId : undefined;
+  }
+
+  function isRecordIdString(id: unknown): id is IRecordId {
+    return typeof id === "string" && id.includes(":");
+  }
+
+  function resolveCreatedActivityResources() {
+    return (resolveProductResources($appStore.product, "search") ?? []).filter(
+      (resource) =>
+        [
+          Resource.collection,
+          Resource.event,
+          Resource.node,
+          Resource.objective,
+          Resource.space,
+          Resource.task
+        ].includes(resource)
+    );
+  }
+
+  function resolveCreatedActivityFilters(resource: Resource) {
+    if (resource !== Resource.node) return undefined;
+    return {
+      contentType: { $in: [...rootNodeTypeList] },
+      metaType: { $is_empty: true },
+      creationContext: { $is_empty: true }
+    };
+  }
+
+  function resolveAccessLogAction(action?: string) {
+    if (action === "open") return "Opened";
+    return action ?? "Opened";
+  }
+
+  function resolveCreatedResourceLabel(resource: Resource, record: any) {
+    return resolveResourceRecordLabel(resource, record);
+  }
+
+  function resolveResourceRecordLabel(
+    resource: Resource | undefined,
+    record: LabelRecord
+  ) {
+    return (
+      resolveDisplayText(record.label) ??
+      resolveDisplayText(record.event) ??
+      resolveResourceDisplayLabel(resource)
+    );
+  }
+
+  function resolveAccessLogResourceLabel(
+    log: AccessLogRecord,
+    recordsById: LabelRecordById
+  ) {
+    const resource = resolveAccessLogResource(log);
+    const id = resolveAccessLogResourceId(log);
+    const record = id ? recordsById[id] : undefined;
+    if (record) return resolveResourceRecordLabel(resource, record);
+    return resolveResourceDisplayLabel(resource);
+  }
+
+  function resolveDisplayText(value: unknown) {
+    if (typeof value !== "string") return undefined;
+    const text = value.trim();
+    return text.length > 0 ? text : undefined;
+  }
+
+  function resolveResourceDisplayLabel(resource: Resource | undefined) {
+    if (!resource || resource === Resource.unknown) return undefined;
+    return resource === Resource.objective ? "Objective" : properCase(resource);
+  }
+
+  function resolveFocusLogLabel(log: any) {
+    const focusText = formatSeconds(log.focus ?? 0);
+    const label =
+      log.task?.label ??
+      log.objective?.label ??
+      log.taskName ??
+      log.session?.label ??
+      "";
+    return label ? `${label} · ${focusText}` : focusText;
+  }
+
+  function resolveFocusLogResourceId(log: any) {
+    return [log.taskId, log.objectiveId, log.sessionId, log.id].find(
+      (id) => typeof id === "string" && id.length > 0
+    );
   }
 </script>
 
@@ -141,10 +272,6 @@
         class="flex flex-row items-start gap-2 p-2 hover:bg-bgs2 rounded-md"
         onclick={() => {
           let id = log.resourceId;
-          if (!id) return;
-          if (Array.isArray(id)) {
-            id = id[0];
-          }
           if (!id) return;
           appStore.openResource(id, AccessMode.POP);
         }}

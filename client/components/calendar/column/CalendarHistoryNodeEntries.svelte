@@ -1,54 +1,32 @@
 <script lang="ts">
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
-  import { nodeStore } from "@21n/products/memotron/node/node.store";
   import type { INodeThumb } from "@21n/products/memotron/node/node.type";
   import { Arrangement } from "@21n/types/direction.enum";
-  import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import Records from "@21n/components/record/Records.svelte";
-  import { tzStore } from "@21n/components/settings/timezone/tz.store";
+  import { datafn } from "@21n/stores/datafn.store";
+  import { time } from "@datafn/client";
+  import { toSvelteStore } from "@datafn/svelte";
 
   let { date }: { date: Date } = $props();
-  let isLoading = $state(false);
-  let data = $state<INodeThumb[]>([]);
-
-  $effect(() => {
+  const nodeStore = $derived.by(() => {
     if (date) {
-      refresh(date);
-    }
-  });
-
-  async function refresh(date: Date) {
-    isLoading = true;
-    try {
-      const dateFilter = tzStore.resolveTimePeriodFilter(date, {
-        isReturnAsDateObjectFilter: true
-      });
-      const legacyDateFilter = {
-        greaterThanOrEqual: dateFilter.$gte,
-        lessThanOrEqual: dateFilter.$lte
-      };
-      const result = await nodeStore.selectMany(
-        {
-          filters: {
-            createdAt: legacyDateFilter
-          }
-        },
-        {
-          isExpand: true
-        }
+      return toSvelteStore<INodeThumb[]>(
+        datafn.node.signal({
+          select: ["*", "parent.*", "file.*"],
+          temporal: time.day("createdAt", date, { storage: "date" })
+        }),
+        { initialData: [] }
       );
-      if (isValidArrayWithData(result)) {
-        data = [...result].sort((a, b) => b.createdAt - a.createdAt);
-      } else {
-        data = [];
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      isLoading = false;
     }
-  }
+    return toSvelteStore<INodeThumb[]>(datafn.emptySignal([]), {
+      initialData: []
+    });
+  });
+  const data = $derived.by(() =>
+    [...$nodeStore.data].sort((a, b) => b.createdAt - a.createdAt)
+  );
+  const isLoading = $derived($nodeStore.loading || $nodeStore.refreshing);
 </script>
 
 {#if data.length > 0}
