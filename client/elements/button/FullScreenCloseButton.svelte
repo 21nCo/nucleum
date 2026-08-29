@@ -1,6 +1,6 @@
 <script lang="ts">
   import { tooltip } from "@21n/actions/popover.action";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import modalEvent from "@21n/components/modal/modal.store";
   import { appStore } from "@21n/stores/app.store";
   import view from "@21n/stores/view.store";
@@ -8,11 +8,11 @@
   import { Placement } from "@21n/types/direction.enum";
   import { cn } from "@21n/utils/ui.utils";
   import Icon from "@21n/elements/Icon.svelte";
-    let {
+  let {
     path = undefined,
     accessMode = AccessMode.FULL,
     isFloat = false,
-    style = ButtonVariant.SECONDARY,
+    style = ButtonVariant.SECONDARY
   }: {
     path?: string | undefined;
     accessMode?: AccessMode;
@@ -20,12 +20,9 @@
     style?: ButtonVariant;
   } = $props();
 
-  
   /**
    * If true, the button will be fully rounded and floating with a margin from the edges. Otherwise, it will stick to the top right corner.
    */
-  
-  
 </script>
 
 <!-- TODO - watch - changing z-[1000] to z-40 as this is showing close button on top of resource modal when something is in split screen inline -->

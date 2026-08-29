@@ -56,7 +56,7 @@
     width = 20,
     class: className = ""
   }: {
-    provider?: IdentityProvider | string | ExternalLogoProvider | undefined;
+    provider?: IdentityProvider | string | undefined;
     url?: string | undefined;
     width?: number;
     class?: string;
@@ -83,13 +83,7 @@
     else if (provider === IdentityProvider.Spotify) selected = Spotify;
     else selected = Default;
   });
-  const icon = $derived(
-    typeof provider === "string"
-      ? provider
-      : provider
-        ? provider?.icon || provider?.label?.toLowerCase()
-        : undefined
-  );
+  const icon = $derived(provider);
   const SelectedLogo = $derived(selected);
 </script>
 

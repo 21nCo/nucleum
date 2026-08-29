@@ -60,7 +60,7 @@
   >
     <div
       class={cn(classList, {
-        "border border-brs3 rounded-md":
+        "border border-brs3 rounded-lg":
           style === OptionSelectorStyle.TRAIN ||
           style === OptionSelectorStyle.ICON,
         "flex-wrap overflow-y-auto":
