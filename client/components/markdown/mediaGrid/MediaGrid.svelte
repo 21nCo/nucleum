@@ -8,7 +8,10 @@
   import DraggableMediaGridElement from "@21n/components/markdown/mediaGrid/DraggableMediaGridElement.svelte";
   import type { DragAndDrop } from "@21n/types/draganddrop.type";
   import account from "@21n/stores/account.store";
-  import { isReplaceableMd, type MdStoreType } from "@21n/components/markdown/markdown.store";
+  import {
+    isReplaceableMd,
+    type MdStoreType
+  } from "@21n/components/markdown/markdown.store";
   import {
     MediaGridType,
     type IMediaGridItem,
@@ -16,10 +19,10 @@
   } from "@21n/products/memotron/node/node.type";
   import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
   import type { IFile } from "@21n/components/files/file.type";
-  import { fileStore } from "@21n/components/files/file.store";
-  import { isSameResource } from "@21n/components/flux/resourceStores/resource.utils";
+  import { isSameResource } from "@21n/data/datafn/resource.utils";
   import { cn } from "@21n/utils/ui.utils";
   import { debouncer } from "@21n/utils/utils";
+  import { datafn } from "@21n/stores/datafn.store";
   let {
     block,
     mdStore,
@@ -35,7 +38,9 @@
     onInsert?:
       | ((event: CustomEvent<{ insertedAt: string; id: string }>) => void)
       | undefined;
-    onUpdate?: ((event: CustomEvent<IMediaGridNode["body"]>) => void) | undefined;
+    onUpdate?:
+      | ((event: CustomEvent<IMediaGridNode["body"]>) => void)
+      | undefined;
   } = $props();
   let files = $state<IFile[]>(initialFiles);
   let isUploadInProgress = $state(false);
@@ -812,12 +817,12 @@
 
   async function fetchAllFiles() {
     const fileIds = items.map((item) => item.file);
-    const filesResult = await fileStore.selectMany({
+    const filesResult = await datafn.file.query({
       filters: {
         id: fileIds
       }
     });
-    if (filesResult && filesResult.length > 0) files = filesResult;
+    if (filesResult.data.length > 0) files = filesResult.data as IFile[];
   }
 </script>
 
@@ -888,18 +893,18 @@
           style="position:relative;width:100%;display:flex;flex-direction:column;gap:{config.gap}px;"
         >
           {#if columnArray[index] == undefined}
-                <DraggableMediaGridElement
-                  bind:isDragging
-                  {handleFileUpload}
-                  isGridItem={false}
-                  item={{
-                    id: generateSimpleRandomId(),
-                    file: "",
-                    position: {
-                      columns: { columnNo: index, index: 0 },
-                      auto: 0
-                    }
-                  }}
+            <DraggableMediaGridElement
+              bind:isDragging
+              {handleFileUpload}
+              isGridItem={false}
+              item={{
+                id: generateSimpleRandomId(),
+                file: "",
+                position: {
+                  columns: { columnNo: index, index: 0 },
+                  auto: 0
+                }
+              }}
               id="dummmyDropArea01"
             />
           {/if}
