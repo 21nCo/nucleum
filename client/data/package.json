@@ -2,6 +2,11 @@
   "name": "@21n/data",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
+  "dependencies": {
+    "@21n/shared-data": "*",
+    "@datafn/core": "0.1.0"
+  },
   "exports": {
     ".": {
       "import": "./index.js",
