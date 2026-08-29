@@ -1,10 +1,10 @@
 <script lang="ts">
   import { appStore } from "@21n/stores/app.store";
   import type { IRecordId } from "@21n/types/data.type";
-  import { determineResourceType } from "@21n/components/flux/resourceStores/resource.utils";
-  import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+  import { determineResourceType } from "@21n/data/datafn/resource.utils";
+  import { Resource } from "@21n/data/datafn/resource.enum";
   import NodeThumbnail from "@21n/products/memotron/node/thumbnail/NodeThumbnail.svelte";
-  import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
+  import { ResourceAccessPoint } from "@21n/data/datafn/resource.type";
   import type { INodeThumb } from "@21n/products/memotron/node/node.type";
 
   interface MapItemData {

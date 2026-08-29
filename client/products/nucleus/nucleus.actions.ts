@@ -6,13 +6,11 @@ import NucleusLibrary from "@21n/products/nucleus/NucleusLibrary.svelte";
 import NucleusOverview from "@21n/products/nucleus/overview/NucleusOverview.svelte";
 import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
 import LibraryPanelContentResolver from "@21n/components/library/LibraryPanelContentResolver.svelte";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 import NucleusOverviewPanel from "@21n/products/nucleus/overview/NucleusOverviewPanel.svelte";
-import {
-  AccessMode,
-  ResourceActionType
-} from "@21n/components/flux/resourceStores/resource.type";
-import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
+import { AccessMode, ResourceActionType } from "@21n/data/datafn/resource.type";
+import { resourceAction } from "@21n/data/datafn/resource.utils";
+import { appMenuActionLabelsByAction } from "@21n/products/product-nav.config";
 
 const actionsToFilterInSub = [Action.LIBRARY, Action.OVERVIEW];
 
@@ -25,7 +23,7 @@ export const nucleusActions: IAction[] = [
   ),
   {
     action: Action.LIBRARY,
-    label: "Library",
+    label: appMenuActionLabelsByAction[Action.LIBRARY],
     icon: "library",
     component: LibraryPanelContentResolver,
     panel: NucleusLibrary,
@@ -36,7 +34,7 @@ export const nucleusActions: IAction[] = [
   },
   {
     action: Action.OVERVIEW,
-    label: "Overview",
+    label: appMenuActionLabelsByAction[Action.OVERVIEW],
     icon: "overview",
     component: NucleusOverview,
     // panel: NucleusOverviewPanel,
@@ -44,8 +42,8 @@ export const nucleusActions: IAction[] = [
   },
   {
     action: Action.HOME,
-    label: "Rhombus",
-    icon: "rhombus",
+    label: appMenuActionLabelsByAction[Action.HOME],
+    icon: "home",
     component: ComingSoonView,
     type: ActionType.PAGE
   },
@@ -61,8 +59,11 @@ export const nucleusActions: IAction[] = [
     }
   },
   {
-    action: resourceAction(Resource.combination, ResourceActionType.BROWSE),
-    label: "Spaces",
+    action: resourceAction(Resource.space, ResourceActionType.BROWSE),
+    label:
+      appMenuActionLabelsByAction[
+        resourceAction(Resource.space, ResourceActionType.BROWSE)
+      ],
     icon: "combination",
     type: ActionType.PAGE
   }

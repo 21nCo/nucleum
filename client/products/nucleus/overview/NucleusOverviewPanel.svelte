@@ -15,7 +15,7 @@
   import { resolveProductConfig } from "@21n/products/product.config";
 
   const items =
-    resolveProductConfig(Product.NUCLEUS).overviewPanelSwitcherItems ?? [];
+    resolveProductConfig(Product.NUCLEUM).overviewPanelSwitcherItems ?? [];
 
   let selectedPanel: OverviewPanel = resolveSavedState() ?? OverviewPanel.FOCUS;
 

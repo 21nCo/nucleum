@@ -16,7 +16,6 @@
   let {
     selectedDate = $bindable(new Date()),
     indicatorData = [],
-    indicatorRefreshId = 0,
     selectedScale = TimeScaleUnit.DAY,
     onDateChange = void 0,
     onMonthSelect = void 0,
@@ -25,7 +24,6 @@
   }: {
     selectedDate?: Date;
     indicatorData?: ICalendarIndicatorData[];
-    indicatorRefreshId?: number;
     selectedScale?: TimeScaleUnit;
     onDateChange?: (payload: { date: Date }) => void;
     onMonthSelect?: (payload: { date: Date }) => void;
@@ -573,7 +571,6 @@
                         {date.getDate()}
                         {#if indicatorData.length > 0 && showYearIndicators}
                           <CalendarTileIndicator
-                            {date}
                             resolvedData={resolvedIndicatorDataByDay.get(
                               resolveIndicatorDayKey(date)
                             )}
