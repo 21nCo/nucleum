@@ -1,6 +1,6 @@
 <svelte:options runes={true} />
 
-<script>
+<script lang="ts">
   import { page } from "$app/stores";
   import { AccessMode } from "@21n/data/datafn/resource.type";
   import ResourceResolver from "@21n/layout/paint/ResourceResolver.svelte";

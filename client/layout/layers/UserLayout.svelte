@@ -48,7 +48,7 @@
     new URLSearchParams(window.location.search).get(AppSearchParam.MAX) ===
       "true"
   );
-  let isHomePage = $state(window.location.href.includes("home"));
+  let isHomePage = $state(isHomeRoute(new URL(window.location.href)));
   let rightPanel = $state<IAction | undefined>(undefined);
   let pop = $state<{ id: IRecordId; action: IAction } | undefined>(undefined);
   let mainPath = $state<string | undefined>(undefined);
@@ -65,7 +65,7 @@
     const pageSub = page.subscribe((p) => {
       const searchParams = p?.url?.searchParams ?? new URLSearchParams();
       isMaxMode = searchParams.get(AppSearchParam.MAX) === "true";
-      isHomePage = Boolean(p?.url?.href?.includes("home"));
+      isHomePage = p?.url ? isHomeRoute(p.url) : false;
       const rightPanelParam = searchParams.get(AccessMode.RIGHT);
       if (rightPanelParam) {
         rightPanel = appStore.resolveAction(rightPanelParam) ?? undefined;
@@ -111,6 +111,10 @@
 
   function refreshSidebarState() {
     return uiState.getState(UIState.isHideLeftNavBar);
+  }
+
+  function isHomeRoute(url: URL) {
+    return url.pathname.split("/").filter(Boolean).at(-1) === "home";
   }
 
   async function handleVisibilityChange() {

@@ -57,6 +57,26 @@ import { clearCachedDatafnE2eeState } from "@21n/stores/datafnE2ee.store";
 
 export const isRefreshingToken = writable(false);
 
+function resolveStoredUserInformation(
+  value: string | null
+): UserInformation | undefined {
+  if (!value) return undefined;
+  try {
+    const parsed = parse(value) as unknown;
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      typeof (parsed as { id?: unknown }).id !== "string" ||
+      !(parsed as { id: string }).id
+    ) {
+      return undefined;
+    }
+    return parsed as UserInformation;
+  } catch {
+    return undefined;
+  }
+}
+
 class AccountStore extends ObservableStore<UserAccount> {
   persistence = new Persistence();
   constructor() {
@@ -75,7 +95,8 @@ class AccountStore extends ObservableStore<UserAccount> {
     const offlineSessionId = await clientStorage.get(
       ClientStorageKey.OFFLINE_SESSION_ID
     );
-    const userInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
+    const storedUserInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
+    const userInfo = resolveStoredUserInformation(storedUserInfo);
     const storedUser = await clientStorage.get(ClientStorageKey.USER);
     const hasStoredCloudIdentity = Boolean(
       authFnToken || userInfo || storedUser
@@ -92,8 +113,8 @@ class AccountStore extends ObservableStore<UserAccount> {
       seed.sessionType = UserSessionType.RETURNING;
     }
     if (userInfo) {
-      seed.userInfo = parse(userInfo ?? "");
-      seed.userId = seed.userInfo?.id.split("user:")[1];
+      seed.userInfo = userInfo;
+      seed.userId = userInfo.id.split("user:")[1];
       seed.dataMode = UserDataMode.CLOUD;
       seed.sessionType = UserSessionType.RETURNING;
     }

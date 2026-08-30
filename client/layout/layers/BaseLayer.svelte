@@ -451,9 +451,13 @@
   }
 
   async function updateOnlineStatus() {
-    const isOffline = !navigator.onLine;
-    $context.isInOfflineMode = isOffline;
     try {
+      const storedOfflineMode = await clientStorage.get(
+        ClientStorageKey.OFFLINE_MODE
+      );
+      const isOffline =
+        String(storedOfflineMode) === "true" || !navigator.onLine;
+      $context.isInOfflineMode = isOffline;
       await updateNucleumDatafnConnectivity(isOffline);
     } catch (error) {
       logger.error({ at: "BaseLayer.updateOnlineStatus", error });

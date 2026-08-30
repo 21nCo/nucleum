@@ -704,7 +704,14 @@ export async function initializeNucleumDatafn(
   return runtime;
 }
 
+let connectivityGeneration = 0;
+let connectivityTransition = Promise.resolve<
+  NucleumDatafnRuntime | null | undefined
+>(undefined);
+
 export async function destroyNucleumDatafn() {
+  connectivityGeneration += 1;
+  await connectivityTransition.catch(() => undefined);
   const existing = get(runtimeStore);
   if (!existing) return;
   try {
@@ -885,7 +892,7 @@ export async function reconcileDatafnNow() {
   await refreshNucleumDatafnStatus();
 }
 
-export async function updateNucleumDatafnConnectivity(isOffline: boolean) {
+async function applyNucleumDatafnConnectivity(isOffline: boolean) {
   const runtime = get(runtimeStore);
   const input = lastInitializeInput;
   if (!runtime || !input) return runtime;
@@ -902,6 +909,17 @@ export async function updateNucleumDatafnConnectivity(isOffline: boolean) {
     return runtime;
   }
   return initializeNucleumDatafn(nextInput);
+}
+
+/** Applies only the latest queued browser or manual connectivity transition. */
+export function updateNucleumDatafnConnectivity(isOffline: boolean) {
+  const generation = ++connectivityGeneration;
+  const transition = connectivityTransition.then(() => {
+    if (generation !== connectivityGeneration) return get(runtimeStore);
+    return applyNucleumDatafnConnectivity(isOffline);
+  });
+  connectivityTransition = transition.catch(() => get(runtimeStore));
+  return transition;
 }
 
 export async function clearDatafnLocalData() {

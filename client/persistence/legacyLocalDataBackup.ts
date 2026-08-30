@@ -955,7 +955,8 @@ function normalizeRecordId(value: unknown): string | undefined {
   const table = value.tb ?? value.table ?? value.resource;
   const id = value.id ?? value.value;
   if (typeof table === "string" && id !== undefined && id !== null) {
-    return `${table}:${normalizeRecordId(id) ?? String(id)}`;
+    const normalizedId = normalizeRecordId(id);
+    return normalizedId ? `${table}:${normalizedId}` : undefined;
   }
   return normalizeRecordId(id);
 }

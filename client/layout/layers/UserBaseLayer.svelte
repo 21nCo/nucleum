@@ -193,6 +193,9 @@
     if (typeof onReady === "function") {
       await onReady();
     }
+    if ($context.isEmbed && $context.isSheet) {
+      $appLoadingState.isLocalLoaded = true;
+    }
     scheduleIdleMaintenance();
   }
 

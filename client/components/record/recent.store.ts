@@ -127,6 +127,10 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
     const datafnResource =
       resource === Resource.goal ? "objective" : resource.toString();
     const result = await datafn.table(datafnResource).query({
+      filters: {
+        trashedAt: null,
+        isArchived: false
+      },
       sort: ["-updatedAt"],
       limit: this.LIMIT
     });

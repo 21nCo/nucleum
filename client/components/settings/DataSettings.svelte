@@ -45,6 +45,15 @@
   } from "@21n/persistence/legacyLocalDataBackup";
   import { onMount } from "svelte";
 
+  type DatafnImportResult = {
+    ok?: boolean;
+    errors?: Array<{ message?: string }>;
+    stats?: {
+      resources?: Record<string, { skipped?: number }>;
+      joins?: Record<string, { skipped?: number }>;
+    };
+  };
+
   let isBackupInProgress = $state(false);
   let isRestoreInProgress = $state(false);
   let isResyncInProgress = $state(false);
@@ -116,14 +125,24 @@
       const data = await all[0].text();
       if (data) {
         if (!$datafnRuntime) return;
-        await datafn.importData(parse(data), {
+        const result = (await datafn.importData(parse(data), {
           triggerCloneUp: true
-        });
+        })) as DatafnImportResult;
+        const skipped = [
+          ...Object.values(result?.stats?.resources ?? {}),
+          ...Object.values(result?.stats?.joins ?? {})
+        ].reduce((total, stats) => total + (stats.skipped ?? 0), 0);
+        if (result?.ok !== true || skipped > 0) {
+          throw new Error(
+            result?.errors?.[0]?.message ?? "DataFn restore failed"
+          );
+        }
         await refreshNucleumDatafnStatus();
         toasts.success("Data restored successfully");
       }
     } catch (e) {
-      console.error(e);
+      logger.error({ at: "DataSettings.handleDrop", error: e });
+      toasts.error("Unable to restore data");
     } finally {
       isRestoreInProgress = false;
     }

@@ -59,36 +59,77 @@ export async function relateDatafnRecords(input: {
     throw new Error("The selection contains records that cannot be linked");
   }
 
-  const results = await Promise.all(
-    sources.map((source) =>
-      datafn.table(source.resource).mutate({
-        operation: "relate",
-        id: source.id,
-        relations:
-          targetResource === Resource.collection
-            ? {
-                collections: [
-                  {
-                    $ref: input.targetId.toString(),
-                    fromResource: source.resource.toString()
-                  }
-                ]
+  const relationName =
+    targetResource === Resource.collection ? "collections" : "links";
+  const targetId = input.targetId.toString();
+  const resolveMutation = (
+    source: (typeof sources)[number],
+    operation: "relate" | "unrelate"
+  ) => ({
+    operation,
+    id: source.id,
+    relations:
+      targetResource === Resource.collection
+        ? {
+            collections: [
+              {
+                $ref: targetId,
+                fromResource: source.resource.toString()
               }
-            : {
-                links: [
-                  {
-                    $ref: input.targetId.toString(),
-                    fromResource: source.resource.toString(),
-                    toResource: targetResource.toString()
-                  }
-                ]
-              },
-        context: input.context
-      } as any)
-    )
-  );
-  results.forEach(assertMutationSucceeded);
-  return results.length;
+            ]
+          }
+        : {
+            links: [
+              {
+                $ref: targetId,
+                fromResource: source.resource.toString(),
+                toResource: targetResource.toString()
+              }
+            ]
+          },
+    context: input.context
+  });
+  const pendingSources: typeof sources = [];
+  for (const source of sources) {
+    const existing = await datafn
+      .table(source.resource)
+      .relation(relationName)
+      .query(source.id, { select: ["id"] });
+    if (!existing.data.some((record) => record.id === targetId)) {
+      pendingSources.push(source);
+    }
+  }
+
+  const appliedSources: typeof sources = [];
+  try {
+    for (const source of pendingSources) {
+      const result = await datafn
+        .table(source.resource)
+        .mutate(resolveMutation(source, "relate") as any);
+      assertMutationSucceeded(result);
+      appliedSources.push(source);
+    }
+  } catch (error) {
+    const rollbackErrors: unknown[] = [];
+    for (const source of appliedSources.reverse()) {
+      try {
+        const result = await datafn
+          .table(source.resource)
+          .mutate(resolveMutation(source, "unrelate") as any);
+        assertMutationSucceeded(result);
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError);
+      }
+    }
+    if (rollbackErrors.length > 0) {
+      throw new AggregateError(
+        [error, ...rollbackErrors],
+        "DataFn relation mutation and rollback failed"
+      );
+    }
+    throw error;
+  }
+  return sources.length;
 }
 
 /**

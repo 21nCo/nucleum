@@ -2,7 +2,6 @@ import {
   createAuthFnRegionalClient,
   type AuthFnCachedRegion,
   type AuthFnClientRequestMetric,
-  type AuthFnSession,
   type AuthFnRegionalClient,
   type AuthFnRegionStorage,
   type AuthFnTransportAuthOptions
@@ -14,6 +13,10 @@ import { resolveAccountBaseUrl, resolveAccountCookiePrefix } from "../network";
 import { logger } from "@21n/components/debug/logger.client";
 import { isExtensionEnvironment } from "@21n/utils/browser.utils";
 import { determineIfOffline } from "@21n/utils/network.utils";
+import type {
+  AuthSessionResolution,
+  StoredAuthSessionState
+} from "@21n/types/auth.type";
 
 type StoredRegionValue = string | AuthFnCachedRegion;
 
@@ -166,46 +169,6 @@ function round(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-export type StoredAuthSessionState = {
-  shouldUseBearerSession: boolean;
-  authFnToken?: string;
-  offlineSessionId?: string;
-  hasStoredUserInfo: boolean;
-  hasStoredCloudIdentity: boolean;
-  hasOfflineOnlySession: boolean;
-  isDatafnOfflinabilityEnabled: boolean;
-  isOffline: boolean;
-};
-
-export type AuthSessionResolution =
-  | {
-      status: "authenticated";
-      storedState: StoredAuthSessionState;
-      session: AuthFnSession;
-    }
-  | {
-      status: "offline-only";
-      storedState: StoredAuthSessionState;
-    }
-  | {
-      status: "cached-cloud";
-      storedState: StoredAuthSessionState;
-      error?: unknown;
-    }
-  | {
-      status: "expired";
-      storedState: StoredAuthSessionState;
-    }
-  | {
-      status: "signed-out";
-      storedState: StoredAuthSessionState;
-    }
-  | {
-      status: "unavailable";
-      storedState: StoredAuthSessionState;
-      error: unknown;
-    };
-
 /**
  * Resolves local auth markers without treating cloud offlinability as an
  * offline-only account.
@@ -283,6 +246,44 @@ export async function clearStoredCloudAuthState(): Promise<void> {
   ]);
 }
 
+function resolveFailedAuthSession(
+  storedState: StoredAuthSessionState,
+  error: unknown
+): AuthSessionResolution {
+  const canUseCachedCloudSession = canUseStoredCloudSession(storedState, error);
+  logger.warn({
+    at: "resolveAuthSession.session.failed",
+    hasAuthFnToken: Boolean(storedState.authFnToken),
+    hasOfflineSession: Boolean(storedState.offlineSessionId),
+    hasOfflineOnlySession: storedState.hasOfflineOnlySession,
+    canUseStoredCloudSession: canUseCachedCloudSession,
+    error,
+    currentPath: window.location.pathname
+  });
+  return canUseCachedCloudSession
+    ? { status: "cached-cloud", storedState, error }
+    : { status: "unavailable", storedState, error };
+}
+
+async function resolveMissingAuthSession(
+  storedState: StoredAuthSessionState
+): Promise<AuthSessionResolution> {
+  if (storedState.hasStoredCloudIdentity) {
+    await clearStoredCloudAuthState();
+  }
+  logger.warn({
+    at: "resolveAuthSession.session.missing",
+    hasStoredCloudIdentity: storedState.hasStoredCloudIdentity,
+    hasAuthFnToken: Boolean(storedState.authFnToken),
+    hasOfflineSession: Boolean(storedState.offlineSessionId),
+    currentPath: window.location.pathname
+  });
+  return {
+    status: storedState.hasStoredCloudIdentity ? "expired" : "signed-out",
+    storedState
+  };
+}
+
 /**
  * Resolves the current AuthFn session without conflating expired sessions with
  * backend availability failures.
@@ -312,55 +313,17 @@ export async function resolveAuthSession(): Promise<AuthSessionResolution> {
     const client = await authClient({ isPreventCachedInstance: true });
     const session = await client.getSession();
     if (!session.ok) {
-      const canUseCachedCloudSession = canUseStoredCloudSession(
-        storedState,
-        session.error
-      );
-      logger.warn({
-        at: "resolveAuthSession.session.failed",
-        hasAuthFnToken: Boolean(storedState.authFnToken),
-        hasOfflineSession: Boolean(storedState.offlineSessionId),
-        hasOfflineOnlySession: storedState.hasOfflineOnlySession,
-        canUseStoredCloudSession: canUseCachedCloudSession,
-        error: session.error,
-        currentPath: window.location.pathname
-      });
-      if (canUseCachedCloudSession) {
-        return {
-          status: "cached-cloud",
-          storedState,
-          error: session.error
-        };
-      }
-      return {
-        status: "unavailable",
-        storedState,
-        error: session.error
-      };
+      return resolveFailedAuthSession(storedState, session.error);
     }
     if (!session.data.session) {
-      if (storedState.hasStoredCloudIdentity) {
-        await clearStoredCloudAuthState();
-      }
-      logger.warn({
-        at: "resolveAuthSession.session.missing",
-        hasStoredCloudIdentity: storedState.hasStoredCloudIdentity,
-        hasAuthFnToken: Boolean(storedState.authFnToken),
-        hasOfflineSession: Boolean(storedState.offlineSessionId),
-        currentPath: window.location.pathname
-      });
-      return {
-        status: storedState.hasStoredCloudIdentity ? "expired" : "signed-out",
-        storedState
-      };
+      return resolveMissingAuthSession(storedState);
     }
-    if (session.data.session) {
-      await clientStorage.set(ClientStorageKey.USER, session.data.session);
-      if (session.data.session.primaryEmail) {
-        await client.resolveRegion({
-          identifier: session.data.session.primaryEmail
-        });
-      }
+    const activeSession = session.data.session;
+    await clientStorage.set(ClientStorageKey.USER, activeSession);
+    if (activeSession.primaryEmail) {
+      await client.resolveRegion({
+        identifier: activeSession.primaryEmail
+      });
     }
     logger.info({
       at: "resolveAuthSession.session.result",
@@ -369,13 +332,13 @@ export async function resolveAuthSession(): Promise<AuthSessionResolution> {
       hasOfflineOnlySession: storedState.hasOfflineOnlySession,
       canUseStoredCloudSession: canUseStoredCloudSession(storedState),
       hasSession: true,
-      regionId: session.data.session.regionId,
+      regionId: activeSession.regionId,
       currentPath: window.location.pathname
     });
     return {
       status: "authenticated",
       storedState,
-      session: session.data.session
+      session: activeSession
     };
   } catch (error) {
     const canUseCachedCloudSession = canUseStoredCloudSession(

@@ -88,12 +88,16 @@ import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
 import Today from "@21n/components/calendar/Today.svelte";
 import { activeResourceFilter } from "@21n/utils/utils";
 import DatafnSharePanel from "@21n/components/share/DatafnSharePanel.svelte";
-import { datafn } from "@21n/stores/datafn.store";
+import {
+  datafn,
+  updateNucleumDatafnConnectivity
+} from "@21n/stores/datafn.store";
 import { appMenuActionLabelsByAction } from "@21n/products/product-nav.config";
 import {
   addDatafnRecordToCollection,
   relateDatafnRecords
 } from "@21n/stores/datafn-linking.store";
+import { get } from "svelte/store";
 
 export const globalActions: IAction[] = [
   {
@@ -820,6 +824,9 @@ export const globalActions: IAction[] = [
           variant: ButtonVariant.SECONDARY,
           callback: async () => {
             await context.toggleOfflineMode(true);
+            await updateNucleumDatafnConnectivity(
+              get(context).isInOfflineMode ?? false
+            );
             modalEvent.hide(Action.INACTIVE_PLAN);
           }
         }

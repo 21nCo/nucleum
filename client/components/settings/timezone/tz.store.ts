@@ -28,6 +28,7 @@ export type DfqlRangeFilter<T = number> = {
 class TimezoneStore {
   private records = writable<ITimezone[]>([]);
   private unsubscribers: Unsubscriber[] = [];
+  private refreshGeneration = 0;
 
   constructor() {
     this.ensureSubscriptions();
@@ -47,6 +48,7 @@ class TimezoneStore {
   }
 
   destroy() {
+    this.refreshGeneration += 1;
     for (const unsubscribe of this.unsubscribers) {
       unsubscribe();
     }
@@ -74,8 +76,11 @@ class TimezoneStore {
     if (!params?.isSkipEnsureSubscriptions) {
       this.ensureSubscriptions();
     }
+    const generation = ++this.refreshGeneration;
     const records = await datafn.temporal.listTimezoneChanges().catch(() => []);
-    this.records.set(records);
+    if (generation === this.refreshGeneration) {
+      this.records.set(records);
+    }
     return records;
   }
 
@@ -291,10 +296,14 @@ class TimezoneStore {
       tzRecords?: ITimezone[];
     }
   ) {
-    const timezone = this.resolveTimezone(timestamp, params?.tzRecords);
+    const historicalTimezone = this.resolveTimezone(
+      timestamp,
+      params?.tzRecords
+    );
+    const currentTimezone = this.resolveTimezone(Date.now(), params?.tzRecords);
     return resolveTemporalLocalTime(
-      resolveTemporalDateParts(timestamp, timezone),
-      timezone
+      resolveTemporalDateParts(timestamp, historicalTimezone),
+      currentTimezone
     );
   }
 }

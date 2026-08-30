@@ -11,13 +11,15 @@
     nucleumDatafnStatus,
     initializeNucleumDatafn,
     resolveDatafnOfflinabilityPreference,
-    setDatafnOfflinabilityPreference
+    setDatafnOfflinabilityPreference,
+    updateNucleumDatafnConnectivity
   } from "@21n/stores/datafn.store";
   import { getDapId } from "@21n/persistence/persistence.utils";
   import { UserDataMode } from "@21n/types/account.type";
   import { onMount } from "svelte";
   let isInOfflineMode = $state(false);
   let isOfflinabilityEnabled = $state(true);
+  let isOfflinabilityInitialized = $state(false);
   let isSwitchingOfflinability = $state(false);
   const isNetworkInducedOfflineMode = !navigator.onLine;
   const isLocalDataMode = $derived($account.dataMode === UserDataMode.LOCAL);
@@ -25,6 +27,7 @@
     isNetworkInducedOfflineMode ||
       isInOfflineMode ||
       isLocalDataMode ||
+      !isOfflinabilityInitialized ||
       isSwitchingOfflinability
   );
   const trialExpiry = $derived(
@@ -41,9 +44,14 @@
   });
 
   onMount(() => {
-    void resolveDatafnOfflinabilityPreference().then((value) => {
-      isOfflinabilityEnabled = value;
-    });
+    void resolveDatafnOfflinabilityPreference()
+      .then((value) => {
+        isOfflinabilityEnabled = value;
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        isOfflinabilityInitialized = true;
+      });
   });
 
   async function handleOfflinabilityChange() {
@@ -103,8 +111,20 @@
         );
         return;
       }
-      isInOfflineMode = !isInOfflineMode;
-      await context.toggleOfflineMode(isInOfflineMode);
+      const previousValue = isInOfflineMode;
+      const nextValue = !previousValue;
+      await context.toggleOfflineMode(nextValue);
+      isInOfflineMode = $context.isInOfflineMode;
+      try {
+        await updateNucleumDatafnConnectivity($context.isInOfflineMode);
+      } catch {
+        await context.toggleOfflineMode(previousValue);
+        isInOfflineMode = $context.isInOfflineMode;
+        await updateNucleumDatafnConnectivity(previousValue).catch(
+          () => undefined
+        );
+        window.alert("Unable to change offline mode. Please try again.");
+      }
     }}
   />
   <InlineInfoBanner
