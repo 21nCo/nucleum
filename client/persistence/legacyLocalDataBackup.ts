@@ -208,13 +208,15 @@ const schemaFieldsByResource: ReadonlyMap<
 export async function detectLegacyLocalData(
   product: Product
 ): Promise<LegacyLocalDataSummary> {
-  const descriptors = await listExistingIndexedDatabases();
-  if (!descriptors) {
+  if (typeof indexedDB === "undefined") {
     return { isSupported: false, databases: [] };
   }
 
   const databases: LegacyLocalDatabaseSummary[] = [];
   const identity = await resolveActiveLegacyLocalDataIdentity();
+  const descriptors =
+    (await listExistingIndexedDatabases()) ??
+    resolveLegacyIndexedDbFallbackDescriptors(product, identity);
   for (const descriptor of descriptors) {
     const name = descriptor.name;
     if (!name || shouldIgnoreDatabase(name)) continue;
@@ -502,11 +504,28 @@ function isActiveIdentityDexieDatabase(
   return candidates.some((value) => name === `${value}-1`);
 }
 
+function resolveLegacyIndexedDbFallbackDescriptors(
+  product: Product,
+  identity: LegacyLocalDataIdentity
+): IndexedDbDescriptor[] {
+  const databaseName =
+    productRegistry[product]?.databaseName ?? fallbackLegacyDatabaseName;
+  const identityIds = [identity.userId, identity.dapId].filter(
+    (value): value is string => Boolean(value)
+  );
+  const names = new Set([
+    databaseName,
+    ...identityIds.map((value) => `${databaseName}_${value}`),
+    ...identityIds.map((value) => `${value}-1`)
+  ]);
+  return Array.from(names, (name) => ({ name }));
+}
+
 async function listExistingIndexedDatabases() {
   if (typeof indexedDB === "undefined") return undefined;
   const indexedDb = indexedDB as IndexedDbWithDatabases;
   if (typeof indexedDb.databases !== "function") return undefined;
-  return indexedDb.databases();
+  return indexedDb.databases().catch(() => undefined);
 }
 
 function openExistingIndexedDatabase(name: string): Promise<IDBDatabase> {
@@ -774,8 +793,8 @@ async function resolveActiveLegacyLocalDataIdentity(): Promise<LegacyLocalDataId
     clientStorage.get(ClientStorageKey.USER),
     clientStorage.get(ClientStorageKey.DAP_ID)
   ]);
-  const userInfo = isPlainObject(storedUserInfo) ? storedUserInfo : undefined;
-  const user = isPlainObject(storedUser) ? storedUser : undefined;
+  const userInfo = parseStoredPlainObject(storedUserInfo);
+  const user = parseStoredPlainObject(storedUser);
   const userId = resolveRecordId(
     userInfo?.id,
     user?.actorId,
@@ -936,6 +955,16 @@ function addLegacyKvRecords(
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function parseStoredPlainObject(value: string | null) {
+  if (!value) return undefined;
+  try {
+    const parsed = parse(value) as unknown;
+    return isPlainObject(parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 function resolveRecordId(...values: unknown[]) {

@@ -57,7 +57,8 @@ import { clearCachedDatafnE2eeState } from "@21n/stores/datafnE2ee.store";
 
 export const isRefreshingToken = writable(false);
 
-function resolveStoredUserInformation(
+/** Parses persisted user information after validating its required identity. */
+export function resolveStoredUserInformation(
   value: string | null
 ): UserInformation | undefined {
   if (!value) return undefined;

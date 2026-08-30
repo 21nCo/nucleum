@@ -503,7 +503,7 @@ async function resolveDatafnE2eeConfig(input: {
 }> {
   const localSettings = await getLocalDatafnE2eeSettings(input.namespace);
   const settings = input.hasRemoteSettingsAuthority
-    ? input.remoteSettings
+    ? (input.remoteSettings ?? (localSettings?.enabled ? localSettings : null))
     : localSettings;
 
   if (!settings?.enabled) {
@@ -580,6 +580,8 @@ export async function initializeNucleumDatafn(
         env: input.env
       })
     : null;
+  const retiredStorageDbName =
+    mode === "sync-direct" ? (existing?.storageDbName ?? null) : null;
   const runtimeKey = `${input.product}:${namespace}:${mode}:${storageDbName ?? "direct"}:${e2ee.settings?.keyRef ?? "no-e2ee"}`;
 
   if (
@@ -665,6 +667,9 @@ export async function initializeNucleumDatafn(
             }
           : { mode }
   });
+  if (retiredStorageDbName) {
+    await deleteDatafnLocalClone(retiredStorageDbName);
+  }
   let isDestroyed = false;
 
   const runtime: NucleumDatafnRuntime = {
@@ -950,6 +955,24 @@ async function closeNucleumDatafnRuntimeStorage(
 ) {
   if (!storage) return;
   await storage.close();
+}
+
+async function deleteDatafnLocalClone(storageDbName: string) {
+  await Promise.all([
+    deleteIndexedDbDatabase(storageDbName),
+    deleteIndexedDbDatabase(`${storageDbName}-search`)
+  ]);
+}
+
+function deleteIndexedDbDatabase(name: string) {
+  if (typeof indexedDB === "undefined") return Promise.resolve();
+  return new Promise<void>((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(name);
+    request.onsuccess = () => resolve();
+    request.onerror = () =>
+      reject(request.error ?? new Error(`Unable to delete ${name}`));
+    request.onblocked = () => reject(new Error(`Deletion blocked for ${name}`));
+  });
 }
 
 async function disposeNucleumDatafnSearchProvider(

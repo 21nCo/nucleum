@@ -3,6 +3,11 @@ import { determineResourceType } from "@21n/data/datafn/resource.utils";
 import { datafn } from "@21n/stores/datafn.store";
 import type { IRecordId } from "@21n/types/data.type";
 
+type DatafnRelationSource = {
+  id: string;
+  resource: Resource;
+};
+
 function isCollectionItemResource(resource: Resource) {
   return resource === Resource.node || resource === Resource.objective;
 }
@@ -30,6 +35,78 @@ function assertMutationSucceeded(result: unknown) {
   }
 }
 
+function assertRelationSelection(
+  targetResource: Resource,
+  sources: DatafnRelationSource[]
+) {
+  if (targetResource === Resource.collection) {
+    if (sources.some((source) => !isCollectionItemResource(source.resource))) {
+      throw new Error(
+        "The selection contains records that cannot be collected"
+      );
+    }
+    return;
+  }
+  if (
+    !isLinkableResource(targetResource) ||
+    sources.some((source) => !isLinkableResource(source.resource))
+  ) {
+    throw new Error("The selection contains records that cannot be linked");
+  }
+}
+
+function resolveRelationMutation(input: {
+  source: DatafnRelationSource;
+  targetId: string;
+  targetResource: Resource;
+  context?: unknown;
+}) {
+  return {
+    resource: input.source.resource.toString(),
+    version: 1,
+    operation: "relate",
+    id: input.source.id,
+    relations:
+      input.targetResource === Resource.collection
+        ? {
+            collections: [
+              {
+                $ref: input.targetId,
+                fromResource: input.source.resource.toString()
+              }
+            ]
+          }
+        : {
+            links: [
+              {
+                $ref: input.targetId,
+                fromResource: input.source.resource.toString(),
+                toResource: input.targetResource.toString()
+              }
+            ]
+          },
+    context: input.context
+  };
+}
+
+async function resolvePendingRelationSources(input: {
+  sources: DatafnRelationSource[];
+  targetId: string;
+  relationName: string;
+}) {
+  const pendingSources: DatafnRelationSource[] = [];
+  for (const source of input.sources) {
+    const existing = await datafn
+      .table(source.resource)
+      .relation(input.relationName)
+      .query(source.id, { select: ["id"] });
+    if (!existing.data.some((record) => record.id === input.targetId)) {
+      pendingSources.push(source);
+    }
+  }
+  return pendingSources;
+}
+
 /**
  * Relates validated records through the DataFn schema and rejects partial batches.
  */
@@ -46,88 +123,29 @@ export async function relateDatafnRecords(input: {
     id: sourceId.toString(),
     resource: determineResourceType(sourceId)
   }));
-  if (targetResource === Resource.collection) {
-    if (sources.some((source) => !isCollectionItemResource(source.resource))) {
-      throw new Error(
-        "The selection contains records that cannot be collected"
-      );
-    }
-  } else if (
-    !isLinkableResource(targetResource) ||
-    sources.some((source) => !isLinkableResource(source.resource))
-  ) {
-    throw new Error("The selection contains records that cannot be linked");
-  }
+  assertRelationSelection(targetResource, sources);
 
   const relationName =
     targetResource === Resource.collection ? "collections" : "links";
   const targetId = input.targetId.toString();
-  const resolveMutation = (
-    source: (typeof sources)[number],
-    operation: "relate" | "unrelate"
-  ) => ({
-    operation,
-    id: source.id,
-    relations:
-      targetResource === Resource.collection
-        ? {
-            collections: [
-              {
-                $ref: targetId,
-                fromResource: source.resource.toString()
-              }
-            ]
-          }
-        : {
-            links: [
-              {
-                $ref: targetId,
-                fromResource: source.resource.toString(),
-                toResource: targetResource.toString()
-              }
-            ]
-          },
-    context: input.context
+  const pendingSources = await resolvePendingRelationSources({
+    sources,
+    targetId,
+    relationName
   });
-  const pendingSources: typeof sources = [];
-  for (const source of sources) {
-    const existing = await datafn
-      .table(source.resource)
-      .relation(relationName)
-      .query(source.id, { select: ["id"] });
-    if (!existing.data.some((record) => record.id === targetId)) {
-      pendingSources.push(source);
-    }
-  }
-
-  const appliedSources: typeof sources = [];
-  try {
-    for (const source of pendingSources) {
-      const result = await datafn
-        .table(source.resource)
-        .mutate(resolveMutation(source, "relate") as any);
-      assertMutationSucceeded(result);
-      appliedSources.push(source);
-    }
-  } catch (error) {
-    const rollbackErrors: unknown[] = [];
-    for (const source of appliedSources.reverse()) {
-      try {
-        const result = await datafn
-          .table(source.resource)
-          .mutate(resolveMutation(source, "unrelate") as any);
-        assertMutationSucceeded(result);
-      } catch (rollbackError) {
-        rollbackErrors.push(rollbackError);
-      }
-    }
-    if (rollbackErrors.length > 0) {
-      throw new AggregateError(
-        [error, ...rollbackErrors],
-        "DataFn relation mutation and rollback failed"
-      );
-    }
-    throw error;
+  if (pendingSources.length > 0) {
+    const result = await datafn.transact({
+      atomic: true,
+      steps: pendingSources.map((source) => ({
+        mutation: resolveRelationMutation({
+          source,
+          targetId,
+          targetResource,
+          context: input.context
+        })
+      }))
+    });
+    assertMutationSucceeded(result);
   }
   return sources.length;
 }

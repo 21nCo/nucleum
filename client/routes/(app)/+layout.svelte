@@ -2,6 +2,7 @@
 
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import { page } from "$app/stores";
   import { resolveAuthSession } from "@21n/components/account/auth";
   import AppLoadingView from "@21n/layout/paint/AppLoadingView.svelte";
   import Button from "@21n/elements/button/Button.svelte";

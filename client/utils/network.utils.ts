@@ -455,6 +455,7 @@ export async function performHttpNetworkOperation(params: {
     }
     if (isSessionValid !== true) return;
     const refreshedToken = await resolveToken();
+    if (!refreshedToken) return;
     token = refreshedToken;
     const retryResponse = await fetchWithToken(token);
     if (retryResponse.status === 401) {

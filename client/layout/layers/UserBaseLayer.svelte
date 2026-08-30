@@ -72,6 +72,7 @@
     type LegacyLocalDataBackup,
     type LegacyLocalDataSummary
   } from "@21n/persistence/legacyLocalDataBackup";
+  import type { DatafnImportResult } from "@21n/types/datafn.type";
   let {
     children,
     topnav: topnavContent,
@@ -94,15 +95,6 @@
     }
   };
   type LegacyRecoveryMode = "required" | "importing" | "downloading";
-  type DatafnImportResultLike = {
-    ok?: boolean;
-    stats?: {
-      resources?: Record<string, { imported?: number; skipped?: number }>;
-      joins?: Record<string, { imported?: number; skipped?: number }>;
-    };
-    errors?: Array<{ message?: string }>;
-  };
-
   let loadingMessage = $state<{
     message: string;
     subMessage?: string;
@@ -298,14 +290,20 @@
     const hasStructuredRows =
       Object.values(payload.resources).some((records) => records.length > 0) ||
       Object.values(payload.joins ?? {}).some((records) => records.length > 0);
-    let result: DatafnImportResultLike = { ok: true };
+    let result: DatafnImportResult = { ok: true };
     if (hasStructuredRows) {
       result = (await datafn.importData(payload, {
         triggerCloneUp: runtime.mode === "sync"
-      })) as DatafnImportResultLike;
-      if (!result?.ok) {
+      })) as DatafnImportResult;
+      const skipped =
+        countDatafnImportRows(result.stats?.resources, "skipped") +
+        countDatafnImportRows(result.stats?.joins, "skipped");
+      if (!result?.ok || skipped > 0) {
         throw new Error(
-          result?.errors?.[0]?.message ?? "DataFn legacy import failed"
+          result?.errors?.[0]?.message ??
+            (skipped > 0
+              ? "DataFn legacy import skipped records"
+              : "DataFn legacy import failed")
         );
       }
     }
@@ -316,18 +314,19 @@
     await refreshNucleumDatafnStatus();
     return {
       resources:
-        countImportedDatafnRows(result.stats?.resources) +
+        countDatafnImportRows(result.stats?.resources, "imported") +
         Object.keys(kv).length,
-      joins: countImportedDatafnRows(result.stats?.joins)
+      joins: countDatafnImportRows(result.stats?.joins, "imported")
     };
   }
 
-  function countImportedDatafnRows(
-    stats: Record<string, { imported?: number; skipped?: number }> | undefined
+  function countDatafnImportRows(
+    stats: Record<string, { imported?: number; skipped?: number }> | undefined,
+    field: "imported" | "skipped"
   ) {
     return (
       Object.values(stats ?? {}).reduce(
-        (total, item) => total + (item.imported ?? 0),
+        (total, item) => total + (item[field] ?? 0),
         0
       ) ?? 0
     );

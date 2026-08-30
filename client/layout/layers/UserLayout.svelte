@@ -196,11 +196,6 @@
               <RightPanel action={rightPanel} />
             {/if}
           </div>
-          <!-- TODO: Re-enable this hiding of bottom nav when home page is built and all tests that depend on command bar button being visible are updated. -->
-          <!-- {#if !$view.isPortrait && !isHomePage && !isMaxMode}
-            <TopNav topnav={topnavContent} />
-          {/if} -->
-
           {#if $hTrail.path.length > 0 && !isHomePage}
             <BottomNav />
           {/if}

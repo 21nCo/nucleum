@@ -33,6 +33,7 @@
   import { TextStyle } from "@21n/types/text.enum";
   import { InfoTextType } from "@21n/types/text.type";
   import { AlertType } from "@21n/types/notification.type";
+  import type { DatafnImportResult } from "@21n/types/datafn.type";
   import { parseAndFormatDate } from "@21n/utils/time.utils";
   import { parse, stringify } from "@21n/shared-utils/json.utils";
   import { logger } from "@21n/components/debug/logger.client";
@@ -44,15 +45,6 @@
     type LegacyLocalDataSummary
   } from "@21n/persistence/legacyLocalDataBackup";
   import { onMount } from "svelte";
-
-  type DatafnImportResult = {
-    ok?: boolean;
-    errors?: Array<{ message?: string }>;
-    stats?: {
-      resources?: Record<string, { skipped?: number }>;
-      joins?: Record<string, { skipped?: number }>;
-    };
-  };
 
   let isBackupInProgress = $state(false);
   let isRestoreInProgress = $state(false);

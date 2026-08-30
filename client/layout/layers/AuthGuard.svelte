@@ -5,7 +5,9 @@
   import { page } from "$app/stores";
   import { ClientStorageKey } from "@21n/persistence/persistence.type";
   import { clientStorage } from "@21n/persistence/persistence.utils";
-  import account from "@21n/stores/account.store";
+  import account, {
+    resolveStoredUserInformation
+  } from "@21n/stores/account.store";
   import { appStore } from "@21n/stores/app.store";
   import context from "@21n/stores/context.store";
   import { UserDataMode, UserSessionType } from "@21n/types/account.type";
@@ -107,12 +109,10 @@
       ? actorId
       : `user:${actorId}`;
     const unprefixedActorId = normalizedActorId.slice("user:".length);
-    const storedUserInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
-    const currentUserInfo =
-      account.get()?.userInfo ??
-      (storedUserInfo && typeof storedUserInfo === "object"
-        ? storedUserInfo
-        : undefined);
+    const storedUserInfo = resolveStoredUserInformation(
+      await clientStorage.get(ClientStorageKey.USER_INFO)
+    );
+    const currentUserInfo = account.get()?.userInfo ?? storedUserInfo;
     const userInfo = {
       ...currentUserInfo,
       id: normalizedActorId,
