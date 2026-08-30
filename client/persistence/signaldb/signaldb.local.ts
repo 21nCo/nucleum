@@ -40,7 +40,7 @@ export class SignalDBPersistence implements IPersistence {
   private collections: Map<string, any> = new Map();
   private adapter: any = undefined;
   userId: string = "";
-  product: Product = Product.NUCLEUS;
+  product: Product = Product.NUCLEUM;
 
   constructor() {}
 

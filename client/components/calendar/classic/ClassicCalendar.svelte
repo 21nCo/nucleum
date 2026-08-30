@@ -133,7 +133,7 @@
         return [Resource.task, Resource.session];
       case Product.MEMOTRON:
         return [Resource.node, MetaResource.calendarNotes];
-      case Product.NUCLEUS:
+      case Product.NUCLEUM:
         return [
           Resource.task,
           Resource.session,
@@ -406,7 +406,7 @@
         }}
       >
         {#key selectedDate.toISOString()}
-          {#if $appStore.product === Product.MEMOTRON || (selectedScale !== TimeScaleUnit.DAY && $appStore.product === Product.NUCLEUS)}
+          {#if $appStore.product === Product.MEMOTRON || (selectedScale !== TimeScaleUnit.DAY && $appStore.product === Product.NUCLEUM)}
             <MemotronTempCalendarColumn
               date={selectedDate}
               scale={selectedScale}

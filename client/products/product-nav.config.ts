@@ -3,18 +3,9 @@
  * Used by both the app (product.config.ts) and E2E tests so menu changes
  * are made in one place only.
  */
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
-import { resourceAction } from "@21n/components/flux/resourceStores/resource.utils";
 import { Product } from "@21n/products/product.type";
 import { Action } from "@21n/types/action.enum";
 import { PointronAction } from "@21n/types/pointron/pointronAction.enum";
-
-/** Nav labels shown in the app menu (for E2E getByRole('button', { name: ... })). */
-export type AppMenuNavLabels = readonly string[];
-
-/** Path by nav label for E2E assertions. */
-export type PathByNavLabel = Record<string, string>;
 
 export interface IProductNavConfig {
   /** App menu action IDs for landscape (used by app). */
@@ -26,24 +17,61 @@ export interface IProductNavConfig {
   homePath: string;
   homePathPt: string;
   librarySectionLabel: string;
-  /** E2E: nav button labels in order. */
-  appMenuNavLabels: AppMenuNavLabels;
-  /** E2E: which nav item is the timeline page. */
-  timelinePageLabel: string;
-  /** E2E: path for each nav label. */
-  pathByNavLabel: PathByNavLabel;
-  /** E2E: whether "Home" can appear in nav (Nucleum dev). */
-  includeHomeInNav?: boolean;
 }
 
+const resourceActionId = (resource: string, action: string) =>
+  `${resource}_${action}`;
+
+const appMenuActionIds = {
+  nodeCreate: resourceActionId("node", "create"),
+  spaceBrowse: resourceActionId("combination", "browse")
+} as const;
+
+/** Labels used by app menu actions and derived E2E navigation expectations. */
+export const appMenuActionLabelsByAction: Record<string, string> = {
+  [Action.CALENDAR]: "Calendar",
+  [Action.OVERVIEW]: "Overview",
+  [Action.LIBRARY]: "Library",
+  [Action.LIBRARY_PORTRAIT]: "Library",
+  [Action.HOME]: "Home",
+  [appMenuActionIds.nodeCreate]: "Capture",
+  [appMenuActionIds.spaceBrowse]: "Spaces",
+  [PointronAction.FOCUS]: "Focus"
+};
+
+const appMenuActionLabelsByProduct = {
+  [Product.NUCLEUM]: appMenuActionLabelsByAction,
+  [Product.MEMOTRON]: appMenuActionLabelsByAction,
+  [Product.POINTRON]: appMenuActionLabelsByAction
+} satisfies Partial<Record<Product, Record<string, string>>>;
+
+const resolveAppMenuActionLabel = (
+  product: Product,
+  action: string
+): string => {
+  const label = appMenuActionLabelsByProduct[product]?.[action];
+  if (!label) {
+    throw new Error(
+      `Missing app menu action label for action "${action}" in product "${product}"`
+    );
+  }
+  return label;
+};
+
+const resolveAppMenuNavLabels = (
+  product: Product,
+  appMenu: readonly string[]
+): readonly string[] =>
+  appMenu.map((action) => resolveAppMenuActionLabel(product, action));
+
 const productNavConfig = {
-  [Product.NUCLEUS]: {
+  [Product.NUCLEUM]: {
     appMenu: [Action.CALENDAR, Action.OVERVIEW, Action.LIBRARY] as const,
     appMenuDev: [
       Action.HOME,
       Action.CALENDAR,
       Action.OVERVIEW,
-      resourceAction(Resource.combination, ResourceActionType.BROWSE),
+      appMenuActionIds.spaceBrowse,
       Action.LIBRARY
     ] as const,
     appMenuPt: [
@@ -53,20 +81,11 @@ const productNavConfig = {
     ] as const,
     homePath: Action.CALENDAR,
     homePathPt: Action.LIBRARY_PORTRAIT,
-    librarySectionLabel: "Nucleum",
-    appMenuNavLabels: ["Calendar", "Overview", "Library"] as const,
-    includeHomeInNav: false,
-    timelinePageLabel: "Calendar",
-    pathByNavLabel: {
-      Calendar: "/calendar",
-      Overview: "/overview",
-      Library: "/library",
-      Home: "/"
-    } as Record<string, string>
+    librarySectionLabel: "Nucleum"
   },
   [Product.MEMOTRON]: {
     appMenu: [
-      resourceAction(Resource.node, ResourceActionType.CREATE),
+      appMenuActionIds.nodeCreate,
       Action.CALENDAR,
       Action.OVERVIEW,
       Action.LIBRARY
@@ -74,16 +93,7 @@ const productNavConfig = {
     appMenuPt: [] as const,
     homePath: Action.CALENDAR,
     homePathPt: Action.MOBILEHOME,
-    librarySectionLabel: "Memory",
-    appMenuNavLabels: ["Capture", "Calendar", "Overview", "Library"] as const,
-    timelinePageLabel: "Calendar",
-    pathByNavLabel: {
-      Capture: "/capture",
-      Calendar: "/calendar",
-      Overview: "/overview",
-      Library: "/library",
-      Home: "/"
-    } as Record<string, string>
+    librarySectionLabel: "Memory"
   },
   [Product.POINTRON]: {
     appMenu: [
@@ -100,60 +110,19 @@ const productNavConfig = {
     ] as const,
     homePath: Action.CALENDAR,
     homePathPt: PointronAction.FOCUS,
-    librarySectionLabel: "Focus",
-    appMenuNavLabels: ["Focus", "Calendar", "Overview", "Library"] as const,
-    timelinePageLabel: "Calendar",
-    pathByNavLabel: {
-      Focus: "/focus",
-      Calendar: "/calendar",
-      Overview: "/overview",
-      Library: "/library",
-      Home: "/"
-    } as Record<string, string>
+    librarySectionLabel: "Focus"
   }
 } satisfies Partial<Record<Product, IProductNavConfig>>;
 
-const resolveNavConfig = (product: Product): IProductNavConfig => {
+export const getProductNavConfig = (product: Product): IProductNavConfig => {
   const nav = productNavConfig[product];
   if (!nav) throw new Error(`Missing nav config for product: ${product}`);
   return nav;
 };
 
-/** Get nav config for the app (product.config.ts). */
-export function getProductNavConfig(product: Product): IProductNavConfig {
-  return resolveNavConfig(product);
-}
-
-/** E2E shape: homePath, appMenuNavLabels, pathByNavLabel, timelinePageLabel, librarySectionLabel, etc. */
-export interface IE2EProductConfig {
-  homePath: string;
-  appMenuNavLabels: readonly string[];
-  timelinePageLabel: string;
-  pathByNavLabel: PathByNavLabel;
-  librarySectionLabel: string;
-  includeHomeInNav?: boolean;
-}
-
-/** Get config in the shape E2E tests expect. */
-export function getE2EProductConfig(product: Product): IE2EProductConfig {
-  const nav = resolveNavConfig(product);
-  const config: IE2EProductConfig = {
-    homePath: nav.homePath,
-    appMenuNavLabels: nav.appMenuNavLabels,
-    timelinePageLabel: nav.timelinePageLabel,
-    pathByNavLabel: nav.pathByNavLabel,
-    librarySectionLabel: nav.librarySectionLabel
-  };
-  if ("includeHomeInNav" in nav) config.includeHomeInNav = nav.includeHomeInNav;
-  return config;
-}
-
-/** Resolve Product from E2E project name. */
-export function productFromProjectName(projectName: string): Product {
-  if (projectName === "pointron") return Product.POINTRON;
-  if (projectName === "memotron") return Product.MEMOTRON;
-  return Product.NUCLEUS;
-}
-
-export type NucleusAppMenuLabel =
-  (typeof productNavConfig)[typeof Product.NUCLEUS]["appMenuNavLabels"][number];
+/** E2E: nav button labels for the landscape app menu, in order. */
+export const getAppMenuNavLabels = (product: Product): readonly string[] => {
+  const nav = productNavConfig[product];
+  if (!nav) throw new Error(`Missing nav config for product: ${product}`);
+  return resolveAppMenuNavLabels(product, nav.appMenu);
+};

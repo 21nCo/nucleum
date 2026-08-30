@@ -78,7 +78,7 @@ export function resolveCalendarColumnPanels(
     case Product.MEMOTRON:
       items = [notes, activity];
       break;
-    case Product.NUCLEUS:
+    case Product.NUCLEUM:
       items = [overview, notes, activity];
       break;
     default:

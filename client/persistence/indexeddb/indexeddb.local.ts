@@ -34,7 +34,7 @@ export class IndexedDBPersistence implements IPersistence {
   private database: IDBDatabase | undefined = undefined;
   private stores: Map<string, IndexedDBStore> = new Map();
   userId: string = "";
-  product: Product = Product.NUCLEUS;
+  product: Product = Product.NUCLEUM;
   private dbName: string = "";
 
   constructor() {}

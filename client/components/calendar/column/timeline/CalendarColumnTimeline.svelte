@@ -76,7 +76,7 @@
     switch (product) {
       case Product.POINTRON:
         return [events, tasks];
-      case Product.NUCLEUS:
+      case Product.NUCLEUM:
         return [events, tasks];
       default:
         return [];

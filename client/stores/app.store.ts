@@ -166,7 +166,7 @@ const recordSpecificSearchParams = [
 
 // export const appStore = initAppStore();
 const { subscribe, set, update } = writable<IAppStore>({
-  product: Product.NUCLEUS,
+  product: Product.NUCLEUM,
   env: "dev",
   isDebugMode,
   isExperimentalMode,

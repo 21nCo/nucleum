@@ -15,7 +15,7 @@
   let isBootstrapInProgress = $state(false);
   let error = $state<string | null>(null);
 
-  const productName = $derived(properCase($appStore?.product ?? "nucleus"));
+  const productName = $derived(properCase($appStore?.product ?? "nucleum"));
   const currentUserInfo = $derived($account?.userInfo);
   const isAlreadyBootstrapped = $derived(
     Boolean(currentUserInfo?.isBootstrapped && currentUserInfo?.region),

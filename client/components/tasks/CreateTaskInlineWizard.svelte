@@ -219,7 +219,7 @@
       </div>
     {/if}
     <div class="flex gap-2 items-center">
-      {#if !isShowGoalPicker && !goal && ($appStore.product === Product.POINTRON || $appStore.product === Product.NUCLEUS)}
+      {#if !isShowGoalPicker && !goal && ($appStore.product === Product.POINTRON || $appStore.product === Product.NUCLEUM)}
         <Button
           label="Assign goal"
           size={Size.xs}

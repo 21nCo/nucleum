@@ -9,10 +9,16 @@ import {
   type IPreferencesParams,
   type IPreferencesStore
 } from "@21n/stores/preferences/preferences.type";
+import { migrateLegacyNucleusProductKeys } from "@21n/stores/productKeyMigration.utils";
 
 class PreferencesStore extends KeyValueStore<IPreferencesStore> {
   constructor() {
     super(Resource.preferences, {});
+  }
+
+  loader(data: IPreferencesStore) {
+    if (!data || typeof data !== "object") return;
+    super.loader(migrateLegacyNucleusProductKeys(data));
   }
 
   private resolveKey(keyParam: string, params?: IPreferencesParams) {

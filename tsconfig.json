@@ -474,25 +474,65 @@
       "@21n/shared-dbo/*": [
         "./shared/dbo/*"
       ],
+      "@21n/shared-data": [
+        "./shared/data/index.ts",
+        "./shared/data/index.tsx",
+        "./shared/data/index.js",
+        "./shared/data/index.mjs",
+        "./shared/data/index.cjs",
+        "./shared/data/index.svelte",
+        "./shared/data/index.d.ts",
+        "./shared/data/src/index.ts",
+        "./shared/data/src/index.tsx",
+        "./shared/data/src/index.js",
+        "./shared/data/src/index.mjs",
+        "./shared/data/src/index.cjs",
+        "./shared/data/src/index.svelte",
+        "./shared/data/src/index.d.ts",
+        "./shared/data"
+      ],
+      "@21n/shared-data/*": [
+        "./shared/data/*"
+      ],
+      "@21n/shared-config": [
+        "./shared/config/index.ts",
+        "./shared/config/index.tsx",
+        "./shared/config/index.js",
+        "./shared/config/index.mjs",
+        "./shared/config/index.cjs",
+        "./shared/config/index.svelte",
+        "./shared/config/index.d.ts",
+        "./shared/config/src/index.ts",
+        "./shared/config/src/index.tsx",
+        "./shared/config/src/index.js",
+        "./shared/config/src/index.mjs",
+        "./shared/config/src/index.cjs",
+        "./shared/config/src/index.svelte",
+        "./shared/config/src/index.d.ts",
+        "./shared/config"
+      ],
+      "@21n/shared-config/*": [
+        "./shared/config/*"
+      ],
       "@21n/next": [
-        "./client/next/index.ts",
-        "./client/next/index.tsx",
-        "./client/next/index.js",
-        "./client/next/index.mjs",
-        "./client/next/index.cjs",
-        "./client/next/index.svelte",
-        "./client/next/index.d.ts",
-        "./client/next/src/index.ts",
-        "./client/next/src/index.tsx",
-        "./client/next/src/index.js",
-        "./client/next/src/index.mjs",
-        "./client/next/src/index.cjs",
-        "./client/next/src/index.svelte",
-        "./client/next/src/index.d.ts",
-        "./client/next"
+        "./client/next/noop/index.ts",
+        "./client/next/noop/index.tsx",
+        "./client/next/noop/index.js",
+        "./client/next/noop/index.mjs",
+        "./client/next/noop/index.cjs",
+        "./client/next/noop/index.svelte",
+        "./client/next/noop/index.d.ts",
+        "./client/next/noop/src/index.ts",
+        "./client/next/noop/src/index.tsx",
+        "./client/next/noop/src/index.js",
+        "./client/next/noop/src/index.mjs",
+        "./client/next/noop/src/index.cjs",
+        "./client/next/noop/src/index.svelte",
+        "./client/next/noop/src/index.d.ts",
+        "./client/next/noop"
       ],
       "@21n/next/*": [
-        "./client/next/*"
+        "./client/next/noop/*"
       ]
     }
   },

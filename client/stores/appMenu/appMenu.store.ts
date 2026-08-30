@@ -4,10 +4,23 @@ import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
 import { appStore } from "@21n/stores/app.store";
 import { get } from "svelte/store";
 import { logger } from "@21n/components/debug/logger.client";
+import { Product } from "@21n/products/product.type";
 
 class AppMenuStore extends KeyValueStore<IAppMenuStore> {
   constructor() {
     super(Resource.appMenu, {});
+  }
+
+  loader(data: IAppMenuStore) {
+    if (!data || typeof data !== "object") return;
+    if (data.nucleus && !data[Product.NUCLEUM]) {
+      super.loader({
+        ...data,
+        [Product.NUCLEUM]: { ...data.nucleus }
+      });
+      return;
+    }
+    super.loader(data);
   }
 
   setUserMenuItems(items: string[]) {

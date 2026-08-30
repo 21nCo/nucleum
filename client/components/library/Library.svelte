@@ -137,7 +137,7 @@
       case Product.MEMOTRON:
         resources = [Resource.node, Resource.collection];
         break;
-      case Product.NUCLEUS:
+      case Product.NUCLEUM:
         resources = [
           Resource.node,
           Resource.task,

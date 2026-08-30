@@ -15,7 +15,7 @@
     resolveSavedState() ?? OverviewPanel.DASHBOARD
   );
   const items = [
-    ...(resolveProductConfig(Product.NUCLEUS).overviewPanelSwitcherItems ?? []),
+    ...(resolveProductConfig(Product.NUCLEUM).overviewPanelSwitcherItems ?? []),
     {
       label: "Map",
       value: OverviewPanel.MAP,

@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "dependencies": {
+    "@21n/data": "*",
+    "@21n/shared-config": "*"
+  },
   "exports": {
     "./*": "./*"
   }

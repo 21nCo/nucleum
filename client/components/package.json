@@ -7,8 +7,7 @@
     "./*": "./*"
   },
   "dependencies": {
-    "@authfn/client": "0.1.1",
-    "@authfn/svelte": "0.1.0",
+    "@authfn/client": "0.2.0",
     "echarts": "^5.5.0"
   }
 }

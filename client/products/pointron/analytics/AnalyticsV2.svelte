@@ -31,7 +31,7 @@
   import Switch from "@21n/elements/toggle/Switch.svelte";
 
   const bgIndex = 2;
-  const isNucleusContext = $derived($appStore.product === Product.NUCLEUS);
+  const isNucleusContext = $derived($appStore.product === Product.NUCLEUM);
   const pagesList = $derived($analyticsConfigStore.pages ?? []);
   let isAnalyticsEditMode = $state(false);
   let pages = $derived(

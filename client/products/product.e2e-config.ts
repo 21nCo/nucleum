@@ -347,4 +347,7 @@ export const productE2EConfigs = {
       }
     }
   }
-} as const satisfies Record<"nucleus" | "memotron" | "pointron", IProductE2EConfig>;
+} as const satisfies Record<
+  "nucleus" | "memotron" | "pointron",
+  IProductE2EConfig
+>;

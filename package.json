@@ -28,6 +28,8 @@
     "shared/types",
     "shared/utils",
     "shared/dbo",
+    "shared/data",
+    "shared/config",
     "tests"
   ],
   "dependencies": {

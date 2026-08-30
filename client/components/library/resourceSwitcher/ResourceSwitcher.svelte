@@ -41,7 +41,7 @@
     Object.values(Product).includes(value as Product);
 
   let sections = [
-    Product.NUCLEUS,
+    Product.NUCLEUM,
     Product.POINTRON,
     ...nextProductSectionsPre,
     Product.MEMOTRON,
@@ -50,7 +50,7 @@
   $effect(() => {
     selectedValue = selected ?? (options[0]?.value as Resource | undefined);
   });
-  const nucleusResources = resolveProductConfig(Product.NUCLEUS).resources
+  const nucleusResources = resolveProductConfig(Product.NUCLEUM).resources
     .browse;
   function resolveResourcesForSection(section: Product): IResourceSwitchItem[] {
     const resources = resolveProductConfig(section).resources.browse;
@@ -59,7 +59,7 @@
       .filter((x) => isDev || !x?.isDisabled)
       .filter(
         (x) =>
-          section === Product.NUCLEUS ||
+          section === Product.NUCLEUM ||
           !nucleusResources.includes(x?.value as Resource)
       )
       .filter((x) => x !== undefined);
@@ -70,12 +70,12 @@
   }
 </script>
 
-{#if $appStore.product === Product.NUCLEUS}
+{#if $appStore.product === Product.NUCLEUM}
   <div class="flex flex-col gap-12 w-full overflow-y-auto">
     {#each sections as section (section)}
       {@const items = resolveResourcesForSection(section)}
       <div class="flex flex-col gap-2">
-        {#if section !== Product.NUCLEUS && items.length > 0}
+        {#if section !== Product.NUCLEUM && items.length > 0}
           <div class="text-fgs3 text-b2">
             {resolveSectionLabel(section)}
           </div>
