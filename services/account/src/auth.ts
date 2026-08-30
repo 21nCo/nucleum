@@ -42,8 +42,9 @@ export interface CreateAccountAuthInput {
 /**
  * Creates the account-service AuthFn app definition for codegen and runtime use.
  */
-export function accountAuthfn() {
-  const regions = resolveRegions();
+export function accountAuthfn(
+  regions: AuthFnMultiRegionRegionConfig[] = resolveRegions()
+) {
   const defaultRegion = regions[0];
   const config = {
     namespace: process.env.AUTHFN_NAMESPACE ?? ACCOUNT_AUTH_NAMESPACE,
@@ -86,7 +87,7 @@ export function createAccountAuth(input: CreateAccountAuthInput): AuthFnServer {
     lookupStore: input.regionLookupStore ?? createAccountLookupStore(),
     observability: input.observability
   };
-  return accountAuthfn().createServer({
+  return accountAuthfn(regions).createServer({
     database: input.database,
     stores: input.stores,
     rateLimit:

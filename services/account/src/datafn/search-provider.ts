@@ -73,9 +73,16 @@ function requireSecureOpenSearchUrl(value: string): void {
   try {
     url = new URL(value);
   } catch {
-    throw new Error('DATAFN_OPENSEARCH_URL must be a valid HTTPS URL');
+    throw new Error('DATAFN_OPENSEARCH_URL must be a valid URL');
   }
-  if (url.protocol !== 'https:') {
-    throw new Error('DATAFN_OPENSEARCH_URL must use HTTPS');
+  if (url.protocol !== 'https:' && !isLoopbackHttpUrl(url)) {
+    throw new Error(
+      'DATAFN_OPENSEARCH_URL must use HTTPS unless it targets local loopback'
+    );
   }
+}
+
+function isLoopbackHttpUrl(url: URL): boolean {
+  return url.protocol === 'http:'
+    && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
 }

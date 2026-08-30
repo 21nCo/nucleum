@@ -104,9 +104,17 @@ function renderLookupEnvironment(config, lookupEnv) {
     kv('name', 'AUTHFN_REGION_LOOKUP'),
     kv('class_name', 'AuthFnRegionLookupDurableObject'),
     '',
+    arrayHeader(`env.${lookupEnv.id}.durable_objects.bindings`),
+    kv('name', 'ACCOUNT_RUNTIME_STORES'),
+    kv('class_name', 'AccountRuntimeStoresDurableObject'),
+    '',
     arrayHeader(`env.${lookupEnv.id}.migrations`),
     kv('tag', 'v1-authfn-region-lookup'),
-    array('new_sqlite_classes', ['AuthFnRegionLookupDurableObject'])
+    array('new_sqlite_classes', ['AuthFnRegionLookupDurableObject']),
+    '',
+    arrayHeader(`env.${lookupEnv.id}.migrations`),
+    kv('tag', 'v2-account-runtime-stores'),
+    array('new_sqlite_classes', ['AccountRuntimeStoresDurableObject'])
   ];
 }
 
@@ -153,6 +161,7 @@ function renderRegionalEnvironment(config, environment, regionId, options) {
     kv('ACCOUNT_LATENCY_DEBUG', String(envConfig.latencyDebug === true)),
     kv('DEBUG_SINK_URL', config.debugSinkUrl),
     kv('ACCOUNT_REGION_ID', regionId),
+    kv('DATAFN_OPENSEARCH_INDEX_PREFIX', `nucleum_${environment}_${regionId}`),
     kv('ACCOUNT_AUTHORITY', accountAuthority(config, environment, regionId)),
     kv('ACCOUNT_COOKIE_DOMAIN', cookieDomainForProductDomain(config.accountDomain)),
     kv('ACCOUNT_CORS_ORIGINS', corsOrigins.join(',')),
@@ -201,10 +210,7 @@ function renderRegionalEnvironment(config, environment, regionId, options) {
   lines.push(arrayHeader(`env.${wranglerEnv}.durable_objects.bindings`));
   lines.push(kv('name', 'ACCOUNT_RUNTIME_STORES'));
   lines.push(kv('class_name', 'AccountRuntimeStoresDurableObject'));
-  lines.push('');
-  lines.push(arrayHeader(`env.${wranglerEnv}.migrations`));
-  lines.push(kv('tag', 'v1-account-runtime-stores'));
-  lines.push(array('new_sqlite_classes', ['AccountRuntimeStoresDurableObject']));
+  lines.push(kv('script_name', envConfig.lookupWorkerName));
   const secretsStoreBindings = secretStoreBindingsForEnvironment(config, environment);
   for (const binding of secretsStoreBindings) {
     lines.push('');
