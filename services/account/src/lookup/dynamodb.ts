@@ -1,4 +1,4 @@
-import { createDynamoDbAtomicKVStore } from '@superfunctions/db/adapters/dynamodb';
+import { createDynamoDbRegionLookupStore } from '@authfn/lookup-dynamodb';
 import type { ConditionalKVStoreAdapter } from '@superfunctions/db';
 
 export function createAccountLookupStore(): ConditionalKVStoreAdapter | undefined {
@@ -7,7 +7,7 @@ export function createAccountLookupStore(): ConditionalKVStoreAdapter | undefine
     return undefined;
   }
 
-  return createDynamoDbAtomicKVStore({
+  return createDynamoDbRegionLookupStore({
     tableName,
     region: process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? 'us-east-1',
     endpoint: process.env.DYNAMODB_ENDPOINT,

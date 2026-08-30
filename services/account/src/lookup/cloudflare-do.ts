@@ -1,15 +1,14 @@
 import {
-  createCloudflareDurableObjectAtomicKVStore,
-  SuperfunctionsStoresDurableObject,
+  createCloudflareRegionLookupStore,
   type CloudflareDurableObjectNamespace,
-} from '@superfunctions/db/adapters/cloudflare-do';
+} from '@authfn/lookup-cloudflare-do';
 
-export { SuperfunctionsStoresDurableObject as AuthFnRegionLookupDurableObject };
+export { AuthFnRegionLookupDurableObject } from '@authfn/lookup-cloudflare-do';
 
 export function createAccountCloudflareLookupStore(
   namespace: CloudflareDurableObjectNamespace,
 ) {
-  return createCloudflareDurableObjectAtomicKVStore(namespace, {
+  return createCloudflareRegionLookupStore(namespace, {
     objectNamePrefix: `${process.env.AUTHFN_NAMESPACE ?? 'nucleus_account'}:`,
   });
 }

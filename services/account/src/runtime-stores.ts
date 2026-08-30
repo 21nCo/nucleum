@@ -6,7 +6,7 @@ import {
 } from "@superfunctions/db/adapters/cloudflare-do";
 import { createMemoryRuntimeStores } from "@superfunctions/db/adapters/memory";
 import { getAccountCacheStore } from "./cache.js";
-import type { AccountWorkerEnv } from "./db/cloudflare.js";
+import type { AccountWorkerEnv } from "./worker-env.js";
 
 export { SuperfunctionsStoresDurableObject as AccountRuntimeStoresDurableObject };
 

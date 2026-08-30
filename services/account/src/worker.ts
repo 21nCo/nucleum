@@ -1,16 +1,16 @@
 import { createAsyncLocalRequestContext } from "@superfunctions/observability/node";
 import { Hono } from "hono";
 import { buildAccountServices, registerCoreRoutes } from "./app.js";
-import {
-  createCloudflareDatabase,
-  type AccountWorkerEnv,
-  type CloudflareSecretsStoreBinding
-} from "./db/cloudflare.js";
+import { createCloudflareDatabase } from "./db/cloudflare.js";
 import { createCloudflareSyncDatabase } from "./db/sync-cloudflare.js";
 import { createAccountCloudflareLookupStore } from "./lookup/cloudflare-do.js";
 import { createLogger } from "./logging.js";
 import { createAccountObservability as createObservability } from "./observability/events.js";
 import { createAccountCloudflareRuntimeStores } from "./runtime-stores.js";
+import type {
+  AccountWorkerEnv,
+  CloudflareSecretsStoreBinding
+} from "./worker-env.js";
 
 export { AuthFnRegionLookupDurableObject } from "./lookup/cloudflare-do.js";
 export { AccountRuntimeStoresDurableObject } from "./runtime-stores.js";
@@ -23,7 +23,9 @@ const SECRETS_STORE_ENV_KEYS = new Set([
   "APPLE_JWT",
   "APPLE_OAUTH_CLIENT_SECRET",
   "APPLE_TEAM_ID",
-  "APPLE_KEY_ID"
+  "APPLE_KEY_ID",
+  "DATAFN_OPENSEARCH_URL",
+  "DATAFN_OPENSEARCH_API_KEY"
 ]);
 
 export default {

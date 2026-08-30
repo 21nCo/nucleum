@@ -3,26 +3,7 @@ import type { Adapter } from '@superfunctions/db';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as authSchema from './generated/authfn-schema.js';
-
-export interface AccountWorkerEnv {
-  ACCOUNT_DB?: {
-    connectionString: string;
-  };
-  SYNC_DB?: {
-    connectionString: string;
-  };
-  ACCOUNT_CACHE?: KVNamespace;
-  AUTHFN_REGION_LOOKUP?: DurableObjectNamespace;
-  ACCOUNT_RUNTIME_STORES?: DurableObjectNamespace;
-  DATABASE_URL?: string;
-  DATAFN_DATABASE_URL?: string;
-  [key: string]: unknown;
-}
-
-export interface CloudflareSecretsStoreBinding {
-  get(): Promise<string>;
-  [key: string]: unknown;
-}
+import type { AccountWorkerEnv } from '../worker-env.js';
 
 export function createCloudflareDatabase(env: AccountWorkerEnv): { adapter: Adapter; close(): Promise<void> } {
   const connectionString = env.ACCOUNT_DB?.connectionString ?? env.DATABASE_URL;

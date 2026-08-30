@@ -15,6 +15,7 @@ const SECURITY_EVENT_TYPES = new Set<AuthFnEvent['type']>([
   'authfn.otp.signup.rollback_failed',
   'authfn.oauth.failed',
   'authfn.api_key.revoked',
+  'authfn.2fa.challenged',
   'authfn.region.lookup.conflict',
   'authfn.routing.mismatch',
   'authfn.routing.assertion_rejected',

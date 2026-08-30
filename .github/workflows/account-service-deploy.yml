@@ -137,4 +137,7 @@ jobs:
           TODO_LIVE_INSOUTH_SYNC_HYPERDRIVE_ID: ${{ vars.TODO_LIVE_INSOUTH_SYNC_HYPERDRIVE_ID }}
           TODO_LIVE_USEAST_SYNC_HYPERDRIVE_ID: ${{ vars.TODO_LIVE_USEAST_SYNC_HYPERDRIVE_ID }}
           TODO_LIVE_EUWEST_SYNC_HYPERDRIVE_ID: ${{ vars.TODO_LIVE_EUWEST_SYNC_HYPERDRIVE_ID }}
+          DATAFN_INSOUTH_DATABASE_URL: ${{ secrets.DATAFN_INSOUTH_DATABASE_URL }}
+          DATAFN_USEAST_DATABASE_URL: ${{ secrets.DATAFN_USEAST_DATABASE_URL }}
+          DATAFN_EUWEST_DATABASE_URL: ${{ secrets.DATAFN_EUWEST_DATABASE_URL }}
         run: npm --workspace @21n/account-service run deploy:${{ needs.detect.outputs.environment }} -- --regions=${{ needs.detect.outputs.regions }}
