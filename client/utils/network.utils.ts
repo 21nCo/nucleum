@@ -455,10 +455,12 @@ export async function performHttpNetworkOperation(params: {
     }
     if (isSessionValid !== true) return;
     const refreshedToken = await resolveToken();
-    if (!refreshedToken) return;
+    const isCookieSessionRetry =
+      !refreshedToken && !params.authToken && !params.legacyApi;
+    if (!refreshedToken && !isCookieSessionRetry) return;
     token = refreshedToken;
     const retryResponse = await fetchWithToken(token);
-    if (retryResponse.status === 401) {
+    if (retryResponse.status === 401 && !isCookieSessionRetry) {
       await signoutAndReload();
     }
     return retryResponse;

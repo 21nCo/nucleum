@@ -192,7 +192,7 @@ export async function resolveStoredAuthSessionState(): Promise<StoredAuthSession
     clientStorage.get(ClientStorageKey.USER_INFO),
     clientStorage.get(ClientStorageKey.USER),
     clientStorage.get(ClientStorageKey.DATAFN_OFFLINABILITY),
-    typeof navigator === "undefined" ? false : determineIfOffline()
+    typeof window === "undefined" ? false : determineIfOffline()
   ]);
   const hasStoredUserInfo = Boolean(storedUserInfo);
   const hasStoredCloudIdentity = Boolean(

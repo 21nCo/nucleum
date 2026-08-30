@@ -1,7 +1,8 @@
 import { Resource } from "@21n/data/datafn/resource.enum";
 import { determineResourceType } from "@21n/data/datafn/resource.utils";
-import { datafn } from "@21n/stores/datafn.store";
+import { datafn, datafnRuntime } from "@21n/stores/datafn.store";
 import type { IRecordId } from "@21n/types/data.type";
+import { get } from "svelte/store";
 
 type DatafnRelationSource = {
   id: string;
@@ -134,18 +135,29 @@ export async function relateDatafnRecords(input: {
     relationName
   });
   if (pendingSources.length > 0) {
-    const result = await datafn.transact({
-      atomic: true,
-      steps: pendingSources.map((source) => ({
-        mutation: resolveRelationMutation({
-          source,
-          targetId,
-          targetResource,
-          context: input.context
-        })
-      }))
-    });
-    assertMutationSucceeded(result);
+    const mutations = pendingSources.map((source) =>
+      resolveRelationMutation({
+        source,
+        targetId,
+        targetResource,
+        context: input.context
+      })
+    );
+    const runtime = get(datafnRuntime);
+    if (!runtime) throw new Error("DataFn runtime is not initialized");
+    if (runtime.mode === "local-only") {
+      const results = await datafn.mutate(mutations);
+      if (!Array.isArray(results) || results.length !== mutations.length) {
+        throw new Error("DataFn relation mutation batch failed");
+      }
+      results.forEach(assertMutationSucceeded);
+    } else {
+      const result = await datafn.transact({
+        atomic: true,
+        steps: mutations.map((mutation) => ({ mutation }))
+      });
+      assertMutationSucceeded(result);
+    }
   }
   return sources.length;
 }

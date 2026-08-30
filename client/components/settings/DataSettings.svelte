@@ -118,7 +118,7 @@
       if (data) {
         if (!$datafnRuntime) return;
         const result = (await datafn.importData(parse(data), {
-          triggerCloneUp: true
+          triggerCloneUp: $datafnRuntime.mode === "sync"
         })) as DatafnImportResult;
         const skipped = [
           ...Object.values(result?.stats?.resources ?? {}),

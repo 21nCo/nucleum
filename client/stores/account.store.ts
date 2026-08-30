@@ -489,7 +489,7 @@ class AccountStore extends ObservableStore<UserAccount> {
       const response = await this.persistence.getUserPlan();
       const data = Array.isArray(response)
         ? response[0]?.result?.[0]
-        : undefined;
+        : response;
       if (data?.userPlan) {
         this.update((n) => {
           n.plan = data.userPlan;

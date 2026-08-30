@@ -5,7 +5,8 @@ import type { DragAndDrop } from "@21n/types/draganddrop.type";
 import { DragStatus } from "@21n/types/dragstatus.enum";
 import blankJson from "@21n/data/blank.json";
 import colorSchemes from "@21n/theme/colorschemes.json";
-import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource as DatafnResource } from "@21n/data/datafn/resource.enum";
+import { Resource as LegacyResource } from "@21n/components/flux/resourceStores/resource.enum";
 import { shuffleEmojis } from "@21n/data/avatars";
 import { ActionType, type IAction } from "@21n/types/action.type";
 import { IdentityProvider } from "@21n/types/oauth.type";
@@ -20,7 +21,11 @@ import {
   confirmationNotification
 } from "@21n/stores/notification.store";
 import { Embed, OperatingSystem } from "@21n/types/context.type";
-import { AccessMode, ResourceActionType } from "@21n/data/datafn/resource.type";
+import {
+  AccessMode,
+  ResourceActionType as DatafnResourceActionType
+} from "@21n/data/datafn/resource.type";
+import { ResourceActionType as LegacyResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
 import { InteractionMode } from "@21n/components/settings/interactionMode/interactionMode.type";
 import { Action } from "@21n/types/action.enum";
 import { GlobalEvent, type Event } from "@21n/types/event.enum";
@@ -29,10 +34,8 @@ import { Size } from "@21n/types/size.enum";
 import type { IRecordId } from "@21n/types/data.type";
 import account from "@21n/stores/account.store";
 import { tabs, vTrail } from "@21n/layout/topNav/tabs/tabs.store";
-import {
-  determineResourceAccessMode,
-  resourceAction
-} from "@21n/data/datafn/resource.utils";
+import { determineResourceAccessMode } from "@21n/data/datafn/resource.utils";
+import { resourceAction as legacyResourceAction } from "@21n/components/flux/resourceStores/resource.utils";
 import { Product } from "@21n/products/product.type";
 import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
 import { datafn, datafnRuntime } from "@21n/stores/datafn.store";
@@ -262,7 +265,11 @@ export const appStore = {
    * @param id
    * @param params
    */
-  gotoResource: async (item: Resource, id: string, params: any = null) => {
+  gotoResource: async (
+    item: LegacyResource,
+    id: string,
+    params: any = null
+  ) => {
     const path = `/${item}/${id}`;
     update((n: IAppStore) => {
       n = {
@@ -663,9 +670,9 @@ export const appStore = {
         .mutate({
           operation: "insert",
           record: {
-            id: generateResourceId(Resource.accessLog),
+            id: generateResourceId(DatafnResource.accessLog),
             resource: id.toString()?.split(":")[0],
-            action: ResourceActionType.OPEN,
+            action: DatafnResourceActionType.OPEN,
             resourceId: id,
             timestamp
           }
@@ -921,7 +928,7 @@ export const appStore = {
         n.appData = data;
       }
       if (!params?.isDefaultData) {
-        persistLocally(Resource.appData, data);
+        persistLocally(DatafnResource.appData, data);
       }
       return n;
     });
@@ -973,14 +980,18 @@ export const appStore = {
   },
 
   runResourceAction: (
-    resource: Resource,
-    action: ResourceActionType,
+    resource: LegacyResource,
+    action: LegacyResourceActionType,
     params?: any
   ) => {
-    return appStore.runAction(resourceAction(resource, action), params);
+    return appStore.runAction(legacyResourceAction(resource, action), params);
   },
 
-  addToRecents: (data: { record: any; type: Resource; timestamp: Date }) => {
+  addToRecents: (data: {
+    record: any;
+    type: LegacyResource;
+    timestamp: Date;
+  }) => {
     dispatchCustomEvent(GlobalEvent.ADD_TO_RECENTS, data);
   }
 };

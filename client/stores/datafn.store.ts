@@ -372,7 +372,6 @@ export async function migrateDatafnNodeMdChildOrder(
 }
 
 export function resolveDatafnMode(input: InitializeNucleumDatafnInput) {
-  if (input.isOffline) return "local-only";
   const hasUserSpace = Boolean(
     input.account.userId || input.account.userInfo?.id
   );
@@ -380,6 +379,7 @@ export function resolveDatafnMode(input: InitializeNucleumDatafnInput) {
     hasUserSpace && input.account.dataMode !== UserDataMode.LOCAL;
   if (!isSyncEligible) return "local-only";
   if (input.isOfflinabilityEnabled === false) return "sync-direct";
+  if (input.isOffline) return "local-only";
   return "sync";
 }
 
@@ -543,18 +543,19 @@ export async function initializeNucleumDatafn(
     input.isOfflinabilityEnabled ??
     (await resolveDatafnOfflinabilityPreference());
   const syncEligible = isSyncEligibleAccount(input);
-  const candidateRemoteUrl =
-    syncEligible && !input.isOffline
-      ? await resolveDatafnRemoteUrl(input.account)
-      : null;
+  const shouldConfigureRemote =
+    syncEligible && (!input.isOffline || isOfflinabilityEnabled === false);
+  const candidateRemoteUrl = shouldConfigureRemote
+    ? await resolveDatafnRemoteUrl(input.account)
+    : null;
   const candidateHttp = candidateRemoteUrl
     ? await createNucleumDatafnHttpOptions()
     : undefined;
   const hasRemoteSettingsAuthority = Boolean(
-    candidateRemoteUrl && candidateHttp
+    candidateRemoteUrl && candidateHttp && !input.isOffline
   );
   const remoteE2eeSettings =
-    candidateRemoteUrl && candidateHttp
+    hasRemoteSettingsAuthority && candidateRemoteUrl && candidateHttp
       ? await readRemoteDatafnE2eeSettings({
           dapId,
           namespace,
@@ -595,6 +596,9 @@ export async function initializeNucleumDatafn(
   }
 
   if (existing) {
+    if (retiredStorageDbName) {
+      await assertDatafnLocalCloneCanBeRetired(existing);
+    }
     await existing.destroy();
     if (get(runtimeStore) === existing) {
       runtimeStore.set(null);
@@ -940,6 +944,30 @@ async function flushNucleumDatafnMutations() {
   } catch (error) {
     logger.error({ at: "datafn.runtime.flushAll", error });
   }
+}
+
+async function assertDatafnLocalCloneCanBeRetired(
+  runtime: NucleumDatafnRuntime
+) {
+  if (runtime.mode !== "sync") {
+    throw new Error(
+      "Local DataFn data cannot be retired before synchronization"
+    );
+  }
+  await datafn.flushAll();
+  const attempts = 40;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    const status = await datafn.sync.refreshStatus();
+    if (status.pendingChanges === 0) return;
+    if (!status.online || status.status === "error") {
+      throw new Error(
+        status.lastError ?? "Local DataFn changes are not synchronized"
+      );
+    }
+    await datafn.sync.schedulePush();
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  throw new Error("Timed out while synchronizing local DataFn changes");
 }
 
 function stopNucleumDatafnSync() {

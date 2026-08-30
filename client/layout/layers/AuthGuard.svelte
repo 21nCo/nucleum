@@ -11,6 +11,8 @@
   import { appStore } from "@21n/stores/app.store";
   import context from "@21n/stores/context.store";
   import { UserDataMode, UserSessionType } from "@21n/types/account.type";
+  import { Product } from "@21n/products/product.type";
+  import { PlanType } from "@21n/components/subscription/userPlan.type";
   import { postTokenToExtension } from "@21n/utils/embed.utils";
   import { onMount } from "svelte";
   import {
@@ -149,6 +151,13 @@
       userId: unprefixedActorId,
       userInfo: userInfo as any
     }));
+    if ($appStore.product === Product.NUCLEUM) {
+      await account.refreshPlanData();
+      if ($account.plan && $account.plan.plan !== PlanType.NUCLEUS) {
+        appStore.gotoPath("/error/access-denied");
+        return false;
+      }
+    }
     return true;
   }
 

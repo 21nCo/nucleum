@@ -27,6 +27,7 @@
   import AppLoadingView from "@21n/layout/paint/AppLoadingView.svelte";
   import DynamicMetadataLayer from "@21n/layout/layers/DynamicMetadataLayer.svelte";
   import { logger } from "@21n/components/debug/logger.client";
+  import { flux, initFlux } from "@21n/components/flux/flux";
   import { UserDataMode } from "@21n/types/account.type";
   import { getDapId } from "@21n/persistence/persistence.utils";
   import PageError from "@21n/components/error/PageError.svelte";
@@ -51,6 +52,10 @@
   import { parseAndFormatDate } from "@21n/utils/time.utils";
   import { recentsStore } from "@21n/components/record/recent.store";
   import { resolveProductResources } from "@21n/components/flux/resourceStores/resource.utils";
+  import { resolveProductConfig } from "@21n/products/product.config";
+  import { resourceStores } from "@21n/components/flux/resourceStores/resource.store";
+  import { kvStores } from "@21n/components/flux/resourceStores/kv.store";
+  import { DexiePersistence } from "@21n/persistence/dexie/dexie.local";
   import InMemoryCache from "@21n/layout/layers/cache/InMemoryCache.svelte";
   import {
     datafn,
@@ -168,8 +173,39 @@
     if (isStartupCompleted) return;
     const runtime = await initializeDatabase(options);
     if (runtime) {
+      await initializeLegacyFlux();
       await completeApplicationStartup();
     }
+  }
+
+  async function initializeLegacyFlux() {
+    const dapId = await getDapId();
+    if (!dapId) throw new Error("Device access point is unavailable");
+    const stores = [...resourceStores.values(), ...kvStores.values()];
+    const initState = await initFlux(new DexiePersistence(), {
+      dapId,
+      userId:
+        $account.dataMode === UserDataMode.CLOUD ? $account.userId : undefined,
+      appVersion: $appStore.version + "." + $appStore.build,
+      product: $appStore.product,
+      tables: resolveProductConfig().tableConfig,
+      loaderCallback: (resource, data) => {
+        const store = stores.find(
+          (candidate) =>
+            candidate.id === resource || `kv:${candidate.id}` === resource
+        );
+        store?.loader?.(data);
+      }
+    });
+    if (initState === 0) {
+      await flux.kvSeed(
+        Array.from(kvStores.values()).map((store) => ({
+          id: `kv:${store.id}`,
+          ...store.seed
+        }))
+      );
+    }
+    await flux.loadInMemoryStores();
   }
 
   async function completeApplicationStartup() {

@@ -41,8 +41,6 @@ import {
 } from "@21n/data/datafn/resource.utils";
 import { Resource } from "@21n/data/datafn/resource.enum";
 import CreateCollection from "@21n/components/collection/CreateCollection.svelte";
-import CreateEvent from "@21n/components/events/CreateEvent.svelte";
-import Event from "@21n/components/events/Event.svelte";
 import PropertiesEditor from "@21n/components/collection/properties/PropertiesEditor.svelte";
 import CreateCombination from "@21n/components/combination/CreateCombination.svelte";
 import { ResourceError } from "@21n/components/error/errors";
@@ -53,7 +51,7 @@ import { logger } from "@21n/components/debug/logger.client";
 import { toasts } from "@21n/stores/notification.store";
 import NodeLoadingPulse from "@21n/elements/feedback/animations/NodeLoadingPulse.svelte";
 import LinkSearchResultItem from "@21n/products/memotron/common/linkbox/LinkSearchResultItemDummy.svelte";
-import { queryLinkingSearchResults } from "@21n/products/memotron/linking/link-search";
+import { SearchStore } from "@21n/components/record/record.store";
 import { recentsStore } from "@21n/components/record/recent.store";
 import { isValidString } from "@21n/shared-utils/text.utils";
 import ResourceBrowser from "@21n/components/library/resourceBrowser/ResourceBrowser.svelte";
@@ -87,7 +85,6 @@ import Navigator from "@21n/layout/navigator/Navigator.svelte";
 import ComingSoonView from "@21n/elements/ComingSoonView.svelte";
 import Today from "@21n/components/calendar/Today.svelte";
 import { activeResourceFilter } from "@21n/utils/utils";
-import DatafnSharePanel from "@21n/components/share/DatafnSharePanel.svelte";
 import {
   datafn,
   updateNucleumDatafnConnectivity
@@ -590,20 +587,6 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: resourceAction(Resource.event, ResourceActionType.CREATE),
-    component: CreateEvent,
-    label: "Create a new event",
-    type: ActionType.MODAL,
-    modalParams: {
-      title: "Create event",
-      layout: {
-        size: Size.md,
-        orientation: Orientation.Vertical,
-        ignoreSafeArea: true
-      }
-    }
-  },
-  {
     action: resourceAction(Resource.property, ResourceActionType.EDIT),
     component: PropertiesEditor,
     type: ActionType.MODAL,
@@ -631,33 +614,6 @@ export const globalActions: IAction[] = [
       }
     }
   },
-  ...[
-    Resource.collection,
-    Resource.node,
-    Resource.objective,
-    Resource.task,
-    Resource.session,
-    Resource.event,
-    Resource.file,
-    Resource.space
-  ].map((resource) => ({
-    action: resourceAction(resource, ResourceActionType.SHARE),
-    component: DatafnSharePanel,
-    label: "Share",
-    icon: "share",
-    type: ActionType.MODAL,
-    componentParams: {
-      resource
-    },
-    modalParams: {
-      title: "Share",
-      layout: {
-        size: Size.md,
-        orientation: Orientation.Vertical,
-        ignoreSafeArea: true
-      }
-    }
-  })),
   {
     action: Resource.collection,
     type: ActionType.MODAL,
@@ -674,20 +630,6 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: Resource.event,
-    type: ActionType.MODAL,
-    component: Event,
-    modalParams: {
-      layout: {
-        size: Size.lg,
-        orientation: Orientation.Vertical,
-        ignoreSafeArea: true,
-        isShowCantileverClose: true,
-        isShowBackButton: true
-      }
-    }
-  },
-  {
     action: resourceAction(Resource.collection, ResourceActionType.BROWSE),
     component: ResourceBrowser,
     label: "Collections",
@@ -695,17 +637,6 @@ export const globalActions: IAction[] = [
     type: ActionType.PAGE,
     componentParams: {
       resource: Resource.collection
-    },
-    loadingComponent: NodeLoadingPulse
-  },
-  {
-    action: resourceAction(Resource.event, ResourceActionType.BROWSE),
-    component: ResourceBrowser,
-    label: "Events",
-    icon: "calendar-blank",
-    type: ActionType.PAGE,
-    componentParams: {
-      resource: Resource.event
     },
     loadingComponent: NodeLoadingPulse
   },
@@ -885,7 +816,7 @@ export const globalActions: IAction[] = [
         const collectionResource = componentParams?.items?.[0]
           ? [determineResourceType(componentParams.items[0])]
           : [];
-        return await queryLinkingSearchResults(search, {
+        return await new SearchStore().searchForLinking(search, {
           resource: componentParams?.resource,
           collectionResource:
             componentParams?.collectionResource ?? collectionResource

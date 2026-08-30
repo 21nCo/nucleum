@@ -416,7 +416,11 @@ export function convertLegacyLocalDataBackupToDatafnImport(
         const id = resolveRecordId(record.id, item.key);
         if (!id) continue;
         record.id = id;
-        const converted = convertLegacyResourceRecord(targetResource, record);
+        const converted = convertLegacyResourceRecord(
+          targetResource,
+          record,
+          store.name
+        );
         if (converted) {
           addResourceRecord(resources, targetResource, converted);
         }
@@ -992,9 +996,10 @@ function normalizeRecordId(value: unknown): string | undefined {
 
 function convertLegacyResourceRecord(
   resource: SchemaResourceName,
-  record: Record<string, unknown>
+  record: Record<string, unknown>,
+  sourceStore: string
 ) {
-  const transformed = transformLegacyRecord(resource, record);
+  const transformed = transformLegacyRecord(resource, record, sourceStore);
   const allowedFields = schemaFieldsByResource.get(resource);
   if (!allowedFields) return undefined;
   const result: Record<string, unknown> = {};
@@ -1008,7 +1013,8 @@ function convertLegacyResourceRecord(
 
 function transformLegacyRecord(
   resource: string,
-  record: Record<string, unknown>
+  record: Record<string, unknown>,
+  sourceStore: string
 ) {
   const result: Record<string, unknown> = { ...record };
   if (record.modifiedAt !== undefined && result.updatedAt === undefined) {
@@ -1049,6 +1055,9 @@ function transformLegacyRecord(
   if (resource === "sessionLog") {
     result.objectiveId =
       result.objectiveId ?? resolveRecordId(record.goalId, record.objectiveId);
+    if (sourceStore === "PointLog") {
+      transformLegacyPointLog(result, record);
+    }
   }
 
   if (resource === "collection" && typeof result.resource === "string") {
@@ -1057,6 +1066,75 @@ function transformLegacyRecord(
   }
 
   return result;
+}
+
+function transformLegacyPointLog(
+  result: Record<string, unknown>,
+  record: Record<string, unknown>
+) {
+  const logId = resolveLegacyTargetId(record.id, "sessionLog");
+  const startUnix = resolveLegacyTimestamp(record.startUnix ?? record.start);
+  const focus = resolveFiniteNumber(record.focus ?? record.totalFocus) ?? 0;
+  const breakTime =
+    resolveFiniteNumber(record.breakTime ?? record.totalBreak) ?? 0;
+  const explicitEndUnix = resolveLegacyTimestamp(record.endUnix ?? record.end);
+  const endUnix =
+    explicitEndUnix ??
+    (startUnix === undefined
+      ? undefined
+      : startUnix + Math.max(0, focus + breakTime) * 1000);
+  const sessionId =
+    resolveLegacyTargetId(record.sessionId, "session") ??
+    (logId ? resolveLegacyTargetId(logId, "session") : undefined);
+  result.id = logId;
+  result.startUnix = startUnix;
+  result.endUnix = endUnix;
+  result.sessionId = sessionId;
+  result.focus = focus;
+  result.breakTime = breakTime;
+  result.objectiveId = resolveLegacyTargetId(
+    record.objectiveId ?? record.goalId,
+    "objective"
+  );
+  result.taskId = resolveLegacyTargetId(record.taskId, "task");
+  result.start =
+    typeof record.start === "string"
+      ? record.start
+      : startUnix === undefined
+        ? undefined
+        : new Date(startUnix).toISOString();
+  result.end =
+    typeof record.end === "string"
+      ? record.end
+      : endUnix === undefined
+        ? undefined
+        : new Date(endUnix).toISOString();
+}
+
+function resolveLegacyTargetId(value: unknown, resource: string) {
+  const id = normalizeRecordId(value);
+  if (!id) return undefined;
+  const separator = id.indexOf(":");
+  const suffix = separator >= 0 ? id.slice(separator + 1) : id;
+  return suffix ? `${resource}:${suffix}` : undefined;
+}
+
+function resolveLegacyTimestamp(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value < 100_000_000_000 ? value * 1000 : value;
+  }
+  if (typeof value !== "string" || !value.trim()) return undefined;
+  const numeric = Number(value);
+  if (Number.isFinite(numeric)) {
+    return numeric < 100_000_000_000 ? numeric * 1000 : numeric;
+  }
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : undefined;
+}
+
+function resolveFiniteNumber(value: unknown) {
+  const number = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(number) ? number : undefined;
 }
 
 function resolveLegacyResourceName(value: unknown) {
