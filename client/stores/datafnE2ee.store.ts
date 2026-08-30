@@ -25,6 +25,7 @@ export type NucleumDatafnE2eeState = {
 
 const iterations = 250000;
 const textEncoder = new TextEncoder();
+const localKeys = new Map<string, Uint8Array>();
 
 export const datafnE2eeState = writable<NucleumDatafnE2eeState>({
   enabled: false,
@@ -45,7 +46,9 @@ function randomBytes(length: number) {
 }
 
 function bytesToBase64(bytes: Uint8Array) {
-  const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join("");
+  const binary = Array.from(bytes, (byte) => String.fromCharCode(byte)).join(
+    ""
+  );
   if (typeof btoa === "function") return btoa(binary);
   return (globalThis as any).Buffer.from(bytes).toString("base64");
 }
@@ -198,32 +201,19 @@ async function unwrapDek(
   return new Uint8Array(raw);
 }
 
-async function getLocalKeyMap() {
-  const raw = await clientStorage.get(ClientStorageKey.DATAFN_E2EE_LOCAL_KEYS);
-  if (!raw) return {} as Record<string, string>;
-  return (parse(raw) ?? {}) as Record<string, string>;
-}
-
 async function setLocalKey(keyRef: string, rawKey: Uint8Array) {
-  const keyMap = await getLocalKeyMap();
-  keyMap[keyRef] = bytesToBase64(rawKey);
-  await clientStorage.set(
-    ClientStorageKey.DATAFN_E2EE_LOCAL_KEYS,
-    stringify(keyMap)
-  );
+  localKeys.set(keyRef, new Uint8Array(rawKey));
 }
 
 async function removeLocalKey(keyRef: string | undefined) {
   if (!keyRef) return;
-  const keyMap = await getLocalKeyMap();
-  delete keyMap[keyRef];
-  await clientStorage.set(
-    ClientStorageKey.DATAFN_E2EE_LOCAL_KEYS,
-    stringify(keyMap)
-  );
+  localKeys.delete(keyRef);
 }
 
-function createProvider(keyRef: string, rawKey: Uint8Array): DatafnE2eeProvider {
+function createProvider(
+  keyRef: string,
+  rawKey: Uint8Array
+): DatafnE2eeProvider {
   const keyPromise = importDek(rawKey);
   return {
     keyRef,
@@ -264,18 +254,31 @@ function createProvider(keyRef: string, rawKey: Uint8Array): DatafnE2eeProvider 
   };
 }
 
-export async function getLocalDatafnE2eeSettings() {
+async function getLocalDatafnE2eeSettingsMap() {
+  await clientStorage.remove(ClientStorageKey.DATAFN_E2EE_LOCAL_KEYS);
   const raw = await clientStorage.get(ClientStorageKey.DATAFN_E2EE_SETTINGS);
-  if (!raw) return null;
-  return parse(raw) as NucleumDatafnE2eeSettings | null;
+  if (!raw) return {} as Record<string, NucleumDatafnE2eeSettings>;
+  const parsed = typeof raw === "string" ? parse(raw) : raw;
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return {} as Record<string, NucleumDatafnE2eeSettings>;
+  }
+  return parsed as Record<string, NucleumDatafnE2eeSettings>;
+}
+
+export async function getLocalDatafnE2eeSettings(namespace: string) {
+  const settings = await getLocalDatafnE2eeSettingsMap();
+  return settings[namespace] ?? null;
 }
 
 export async function persistDatafnE2eeSettings(
+  namespace: string,
   settings: NucleumDatafnE2eeSettings
 ) {
+  const settingsMap = await getLocalDatafnE2eeSettingsMap();
+  settingsMap[namespace] = settings;
   await clientStorage.set(
     ClientStorageKey.DATAFN_E2EE_SETTINGS,
-    stringify(settings)
+    stringify(settingsMap)
   );
   datafnE2eeState.set({
     enabled: settings.enabled,
@@ -288,18 +291,20 @@ export async function getCachedDatafnE2eeProvider(
   settings: NucleumDatafnE2eeSettings | null | undefined
 ) {
   if (!settings?.enabled || !settings.keyRef) return null;
-  const keyMap = await getLocalKeyMap();
-  const rawKey = keyMap[settings.keyRef];
+  const rawKey = localKeys.get(settings.keyRef);
   if (!rawKey) return null;
   datafnE2eeState.set({
     enabled: true,
     unlocked: true,
     keyRef: settings.keyRef
   });
-  return createProvider(settings.keyRef, base64ToBytes(rawKey));
+  return createProvider(settings.keyRef, rawKey);
 }
 
-export async function createDatafnE2eeSetup(password: string) {
+export async function createDatafnE2eeSetup(
+  password: string,
+  namespace: string
+) {
   assertStrongPassword(password);
   const rawKey = randomBytes(32);
   const keyRef = `e2ee:${Date.now()}:${bytesToBase64(randomBytes(8))}`;
@@ -313,7 +318,7 @@ export async function createDatafnE2eeSetup(password: string) {
     ...wrapped
   };
   await setLocalKey(keyRef, rawKey);
-  await persistDatafnE2eeSettings(settings);
+  await persistDatafnE2eeSettings(namespace, settings);
   return {
     settings,
     provider: createProvider(keyRef, rawKey)
@@ -322,27 +327,28 @@ export async function createDatafnE2eeSetup(password: string) {
 
 export async function unlockDatafnE2eeSettings(
   settings: NucleumDatafnE2eeSettings,
-  password: string
+  password: string,
+  namespace: string
 ) {
   if (!settings.enabled || !settings.keyRef) return null;
   const rawKey = await unwrapDek(settings, password);
   await setLocalKey(settings.keyRef, rawKey);
-  await persistDatafnE2eeSettings(settings);
+  await persistDatafnE2eeSettings(namespace, settings);
   return createProvider(settings.keyRef, rawKey);
 }
 
 export async function rewrapCachedDatafnE2eeKey(
   settings: NucleumDatafnE2eeSettings,
-  password: string
+  password: string,
+  namespace: string
 ) {
   assertStrongPassword(password);
   if (!settings.enabled || !settings.keyRef) {
     throw new Error("E2EE is not enabled");
   }
-  const keyMap = await getLocalKeyMap();
-  const cached = keyMap[settings.keyRef];
+  const cached = localKeys.get(settings.keyRef);
   if (!cached) throw new Error("Unlock E2EE before changing the password");
-  const rawKey = base64ToBytes(cached);
+  const rawKey = cached;
   const wrapped = await wrapDek(rawKey, password);
   const nextSettings: NucleumDatafnE2eeSettings = {
     version: 1,
@@ -352,7 +358,7 @@ export async function rewrapCachedDatafnE2eeKey(
     updatedAt: Date.now(),
     ...wrapped
   };
-  await persistDatafnE2eeSettings(nextSettings);
+  await persistDatafnE2eeSettings(namespace, nextSettings);
   return {
     settings: nextSettings,
     provider: createProvider(settings.keyRef, rawKey)
@@ -369,10 +375,17 @@ export function createDisabledDatafnE2eeSettings() {
 
 export async function disableLocalDatafnE2ee(
   settings: NucleumDatafnE2eeSettings | null | undefined,
+  namespace: string,
   disabled: NucleumDatafnE2eeSettings = createDisabledDatafnE2eeSettings()
 ) {
   await removeLocalKey(settings?.keyRef);
-  await persistDatafnE2eeSettings(disabled);
+  await persistDatafnE2eeSettings(namespace, disabled);
   datafnE2eeState.set({ enabled: false, unlocked: false, keyRef: null });
   return disabled;
+}
+
+export async function clearCachedDatafnE2eeState() {
+  localKeys.clear();
+  await clientStorage.remove(ClientStorageKey.DATAFN_E2EE_LOCAL_KEYS);
+  datafnE2eeState.set({ enabled: false, unlocked: false, keyRef: null });
 }

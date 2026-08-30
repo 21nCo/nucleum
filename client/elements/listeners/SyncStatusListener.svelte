@@ -1,7 +1,7 @@
 <script lang="ts">
   import { observeAttributes } from "@21n/actions/observe.action";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-  import { onMount } from "svelte";
+  import { nucleumDatafnStatus } from "@21n/stores/datafn.store";
   let {
     resource,
     isSyncing = $bindable(false)
@@ -11,20 +11,15 @@
   } = $props();
   let ref = $state<HTMLElement>();
 
-  onMount(() => {
-    refreshFromGlobal();
+  $effect(() => {
+    isSyncing =
+      $nucleumDatafnStatus.status === "starting" ||
+      $nucleumDatafnStatus.status === "syncing";
   });
 
   export function refresh(resourceParam?: Resource) {
     const syncstatusVal = ref?.getAttribute("data-syncstatus");
     setStatus(syncstatusVal ?? null, resourceParam);
-  }
-
-  function refreshFromGlobal() {
-    const syncstatusVal = document
-      .getElementById("global-sync-status")
-      ?.getAttribute("data-syncstatus");
-    if (syncstatusVal) setStatus(syncstatusVal);
   }
 
   function handleAttributeChange(

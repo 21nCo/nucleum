@@ -107,15 +107,20 @@
       ? actorId
       : `user:${actorId}`;
     const unprefixedActorId = normalizedActorId.slice("user:".length);
-    const currentUserInfo = account.get()?.userInfo;
+    const storedUserInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
+    const currentUserInfo =
+      account.get()?.userInfo ??
+      (storedUserInfo && typeof storedUserInfo === "object"
+        ? storedUserInfo
+        : undefined);
     const userInfo = {
+      ...currentUserInfo,
       id: normalizedActorId,
       email: authSession.primaryEmail ?? subject.email ?? "",
       isBootstrapped:
         (
           authSession.metadata?.nucleus as
-            | { isBootstrapped?: boolean }
-            | undefined
+            { isBootstrapped?: boolean } | undefined
         )?.isBootstrapped ?? false,
       nickName:
         currentUserInfo?.nickName ??

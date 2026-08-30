@@ -50,7 +50,10 @@
     const dateFilter = tzStore.resolveTimePeriodFilterForDay(date);
     const allTasks = await new SearchStore(Resource.task).select({
       filters: {
-        dateUnix: dateFilter
+        dateUnix: {
+          greaterThanOrEqual: dateFilter.$gte,
+          lessThanOrEqual: dateFilter.$lte
+        }
       }
     });
     tasks = [...(allTasks ?? [])];

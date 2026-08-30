@@ -33,6 +33,7 @@
   import { getSettingsAsModal } from "@21n/layout/settingsActionMap";
   import { globalActions } from "@21n/stores/actionMap";
   import { EmbedDataMessage } from "@21n/types/embedMessage.enum";
+  import { updateNucleumDatafnConnectivity } from "@21n/stores/datafn.store";
   import { parse } from "@21n/shared-utils/json.utils";
   import { productData } from "@21n/products/product.resolver";
   import { product, resolveProductConfig } from "@21n/products/product.config";
@@ -312,7 +313,9 @@
     }
     return (
       import.meta.env?.VITE_HOST ??
-      (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_APP_URL : undefined) ??
+      (typeof process !== "undefined"
+        ? process.env?.PLASMO_PUBLIC_APP_URL
+        : undefined) ??
       window.location.host
     );
   }
@@ -447,8 +450,14 @@
     appStore.toggleSearchParam(event.detail);
   }
 
-  function updateOnlineStatus() {
-    $context.isInOfflineMode = !navigator.onLine;
+  async function updateOnlineStatus() {
+    const isOffline = !navigator.onLine;
+    $context.isInOfflineMode = isOffline;
+    try {
+      await updateNucleumDatafnConnectivity(isOffline);
+    } catch (error) {
+      logger.error({ at: "BaseLayer.updateOnlineStatus", error });
+    }
   }
 
   function handleMessageFromChromeWebview(event: any) {
@@ -551,7 +560,10 @@
     window.removeEventListener("online", updateOnlineStatus);
     window.removeEventListener("offline", updateOnlineStatus);
     window.removeEventListener("resize", windowResizeListener);
-    window.removeEventListener("click", handlePlaceholderClick as EventListener);
+    window.removeEventListener(
+      "click",
+      handlePlaceholderClick as EventListener
+    );
     if ("visualViewport" in window) {
       const viewport = window.visualViewport;
       viewport?.removeEventListener("resize", handleViewportChange);

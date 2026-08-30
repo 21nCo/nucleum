@@ -229,7 +229,7 @@ export async function resolveStoredAuthSessionState(): Promise<StoredAuthSession
     clientStorage.get(ClientStorageKey.USER_INFO),
     clientStorage.get(ClientStorageKey.USER),
     clientStorage.get(ClientStorageKey.DATAFN_OFFLINABILITY),
-    determineIfOffline()
+    typeof navigator === "undefined" ? false : determineIfOffline()
   ]);
   const hasStoredUserInfo = Boolean(storedUserInfo);
   const hasStoredCloudIdentity = Boolean(
@@ -278,7 +278,8 @@ export async function clearStoredCloudAuthState(): Promise<void> {
     clientStorage.remove(ClientStorageKey.STOKEN),
     clientStorage.remove(ClientStorageKey.USER),
     clientStorage.remove(ClientStorageKey.USER_INFO),
-    clientStorage.remove(ClientStorageKey.USER_REGION_MAP)
+    clientStorage.remove(ClientStorageKey.USER_REGION_MAP),
+    clientStorage.remove(ClientStorageKey.OFFLINE_SESSION_ID)
   ]);
 }
 

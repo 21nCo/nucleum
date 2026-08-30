@@ -71,6 +71,16 @@
     } catch {
       isOfflinabilityEnabled = !nextValue;
       await setDatafnOfflinabilityPreference(!nextValue);
+      const dapId = await getDapId();
+      await initializeNucleumDatafn({
+        product: $appStore.product,
+        account: $account,
+        env: $appStore.env,
+        appVersion: $appStore.version + "." + $appStore.build,
+        dapId: dapId ?? undefined,
+        isOffline: $context.isInOfflineMode,
+        isOfflinabilityEnabled: !nextValue
+      }).catch(() => undefined);
       window.alert("Unable to change offline availability. Please try again.");
     } finally {
       isSwitchingOfflinability = false;

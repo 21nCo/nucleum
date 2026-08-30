@@ -29,28 +29,25 @@
     isThreeColumned?: boolean;
   } = $props();
 
-  const adaptedStore = derived(
-    goal,
-    ($goal): IResourcePageWithPanels => ({
-      id: $goal.id,
-      panel: $goal.panel,
-      defaultPanel: $goal.defaultPanel ?? $goal.panel,
-      isInFocusMode: $goal.isInFocusMode,
-      isInEditMode: $goal.isInEditMode,
-      switchPanel: (panel?: string) => {
-        if (!panel) return;
-        uiState.setState(UIState.goalPanelSelection, panel, {
-          scope: UIStateScope.DEVICE,
-          subVariables: [
-            isConstrainedWidth.toString(),
-            isThreeColumned.toString()
-          ]
-        });
-        goal.switchPanel(panel);
-      },
-      closeEditMode: () => goal.toggleEditMode(false)
-    })
-  );
+  const adaptedStore = derived(goal, ($goal): IResourcePageWithPanels => ({
+    id: $goal.id,
+    panel: $goal.panel,
+    defaultPanel: $goal.defaultPanel ?? $goal.panel,
+    isInFocusMode: $goal.isInFocusMode,
+    isInEditMode: $goal.isInEditMode,
+    switchPanel: (panel?: string) => {
+      if (!panel) return;
+      uiState.setState(UIState.objectivePanelSelection, panel, {
+        scope: UIStateScope.DEVICE,
+        subVariables: [
+          isConstrainedWidth.toString(),
+          isThreeColumned.toString()
+        ]
+      });
+      goal.switchPanel(panel);
+    },
+    closeEditMode: () => goal.toggleEditMode(false)
+  }));
 
   function onContextMenuAction(detail: ISelectValue) {
     // TODO - custom actions

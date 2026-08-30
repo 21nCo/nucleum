@@ -445,13 +445,17 @@ export async function performHttpNetworkOperation(params: {
       await signoutAndReload();
       return;
     }
+    if (params.legacyApi && params.authToken) {
+      return;
+    }
     const isSessionValid = await revalidateAuthFnSession();
-    if (!isSessionValid) {
+    if (isSessionValid === false) {
       await signoutAndReload();
       return;
     }
+    if (isSessionValid !== true) return;
     const refreshedToken = await resolveToken();
-    token = refreshedToken ?? params.authToken;
+    token = refreshedToken;
     const retryResponse = await fetchWithToken(token);
     if (retryResponse.status === 401) {
       await signoutAndReload();
@@ -468,14 +472,14 @@ export async function performHttpNetworkOperation(params: {
     try {
       const { performSessionCheck } =
         await import("@21n/components/account/auth");
-      return (await performSessionCheck()) === true;
+      return await performSessionCheck();
     } catch (error) {
       logger.error({
         at: "API call unauthorized AuthFn session revalidation failed",
         error,
         url: params.url
       });
-      return false;
+      return undefined;
     }
   }
 

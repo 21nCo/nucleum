@@ -62,12 +62,13 @@ export type LegacyLocalRecordBackup = {
 };
 
 export type LegacyLocalDataRecoveryAction =
-  | "import_old_data"
-  | "download_backup_continue";
+  "import_old_data" | "download_backup_continue";
 
 export type LegacyLocalDataRecoveryDecision = {
   version: 1;
   product: Product;
+  identity: string;
+  sourceDatabases: string[];
   action: LegacyLocalDataRecoveryAction;
   decidedAt: string;
   sourceRecordCount: number;
@@ -82,6 +83,12 @@ export type LegacyDatafnImportPayload = {
   schema: Array<{ name: string; version: number }>;
   resources: Record<string, Array<Record<string, unknown>>>;
   joins?: Record<string, Array<Record<string, unknown>>>;
+  kv?: Record<string, unknown>;
+};
+
+type LegacyLocalDataIdentity = {
+  userId?: string;
+  dapId?: string;
 };
 
 type IndexedDbDescriptor = {
@@ -207,6 +214,7 @@ export async function detectLegacyLocalData(
   }
 
   const databases: LegacyLocalDatabaseSummary[] = [];
+  const identity = await resolveActiveLegacyLocalDataIdentity();
   for (const descriptor of descriptors) {
     const name = descriptor.name;
     if (!name || shouldIgnoreDatabase(name)) continue;
@@ -217,7 +225,8 @@ export async function detectLegacyLocalData(
       const provider = resolveLegacyLocalDataProvider(
         product,
         name,
-        storeNames
+        storeNames,
+        identity
       );
       if (!provider) continue;
       const stores = await readStoreSummaries(database, storeNames);
@@ -295,31 +304,70 @@ export function resolveLegacyLocalDataRecordCount(
   );
 }
 
+export function resolveLegacyImportableRecordCount(
+  summary: LegacyLocalDataSummary | LegacyLocalDataBackup | undefined
+) {
+  return (
+    summary?.databases.reduce(
+      (databaseTotal, database) =>
+        databaseTotal +
+        database.stores.reduce((storeTotal, store) => {
+          if (!isImportableLegacyStore(store.name) || store.error) {
+            return storeTotal;
+          }
+          return (
+            storeTotal + ("count" in store ? store.count : store.records.length)
+          );
+        }, 0),
+      0
+    ) ?? 0
+  );
+}
+
 /**
  * Returns true when a legacy data summary contains records that can be offered for recovery.
  */
 export function hasRecoverableLegacyLocalData(
   summary: LegacyLocalDataSummary | undefined
 ) {
-  return resolveLegacyLocalDataRecordCount(summary) > 0;
+  return resolveLegacyImportableRecordCount(summary) > 0;
 }
 
 /**
  * Reads the durable per-product decision that suppresses the startup recovery prompt.
  */
-export async function getLegacyLocalDataRecoveryDecision(product: Product) {
+export async function getLegacyLocalDataRecoveryDecision(
+  product: Product,
+  source?: LegacyLocalDataSummary | LegacyLocalDataBackup
+) {
   const decisions = await readLegacyLocalDataRecoveryDecisions();
-  return decisions[product];
+  const key = await resolveLegacyLocalDataRecoveryDecisionKey(product, source);
+  return decisions[key];
 }
 
 /**
  * Persists a per-product decision after a legacy import or explicit backup download succeeds.
  */
 export async function saveLegacyLocalDataRecoveryDecision(
-  decision: LegacyLocalDataRecoveryDecision
+  decision: Omit<
+    LegacyLocalDataRecoveryDecision,
+    "identity" | "sourceDatabases"
+  >,
+  source?: LegacyLocalDataSummary | LegacyLocalDataBackup
 ) {
   const decisions = await readLegacyLocalDataRecoveryDecisions();
-  decisions[decision.product] = decision;
+  const identity = await resolveActiveLegacyLocalDataIdentity();
+  const sourceDatabases = resolveLegacySourceDatabaseNames(source);
+  const key = resolveLegacyLocalDataRecoveryDecisionKeyFromParts(
+    decision.product,
+    identity,
+    sourceDatabases
+  );
+  decisions[key] = {
+    ...decision,
+    identity: resolveLegacyIdentityScope(identity),
+    sourceDatabases
+  };
   await clientStorage.set(
     ClientStorageKey.LEGACY_LOCAL_DATA_RECOVERY,
     decisions
@@ -334,11 +382,20 @@ export function convertLegacyLocalDataBackupToDatafnImport(
 ): LegacyDatafnImportPayload {
   const resources = new Map<string, Map<string, Record<string, unknown>>>();
   const joins = new Map<string, Map<string, Record<string, unknown>>>();
+  const kv: Record<string, unknown> = {};
   const knownResourceById = collectKnownLegacyResources(backup);
 
   for (const database of backup.databases) {
     for (const store of database.stores) {
-      if (store.error) continue;
+      if (store.error) {
+        throw new Error(
+          `Unable to import legacy store ${store.name}: ${store.error}`
+        );
+      }
+      if (store.name === "kv") {
+        addLegacyKvRecords(kv, store.records);
+        continue;
+      }
       if (store.name === "link" || store.name === "nodelinks") {
         for (const item of store.records) {
           const record = normalizeLegacyRecord(item.value);
@@ -366,6 +423,18 @@ export function convertLegacyLocalDataBackupToDatafnImport(
     }
   }
 
+  const resourceRows = Array.from(resources.values()).reduce(
+    (total, records) => total + records.size,
+    0
+  );
+  const joinRows = Array.from(joins.values()).reduce(
+    (total, records) => total + records.size,
+    0
+  );
+  if (resourceRows + joinRows + Object.keys(kv).length === 0) {
+    throw new Error("Legacy backup does not contain importable records");
+  }
+
   return {
     version: 1,
     exportedAt: new Date().toISOString(),
@@ -374,7 +443,8 @@ export function convertLegacyLocalDataBackupToDatafnImport(
       version: resource.version
     })),
     resources: mapRecordCollectionsToObject(resources),
-    joins: mapRecordCollectionsToObject(joins)
+    joins: mapRecordCollectionsToObject(joins),
+    kv
   };
 }
 
@@ -387,13 +457,19 @@ function shouldIgnoreDatabase(name: string) {
 function resolveLegacyLocalDataProvider(
   product: Product,
   name: string,
-  storeNames: string[]
+  storeNames: string[],
+  identity: LegacyLocalDataIdentity
 ): LegacyLocalDataProvider | undefined {
   const databaseName =
     productRegistry[product]?.databaseName ?? fallbackLegacyDatabaseName;
   if (name === databaseName) return "surreal";
   if (name.startsWith(`${databaseName}_`)) return "indexeddb";
-  if (name.endsWith("-1") && hasLegacyResourceStore(storeNames)) return "dexie";
+  if (
+    isActiveIdentityDexieDatabase(name, identity) &&
+    hasLegacyResourceStore(storeNames)
+  ) {
+    return "dexie";
+  }
   if (
     name.toLowerCase().includes("surreal") &&
     hasLegacyResourceStore(storeNames)
@@ -405,6 +481,25 @@ function resolveLegacyLocalDataProvider(
 
 function hasLegacyResourceStore(storeNames: string[]) {
   return storeNames.some((storeName) => legacyResourceStores.has(storeName));
+}
+
+function isImportableLegacyStore(storeName: string) {
+  return (
+    storeName === "kv" ||
+    storeName === "link" ||
+    storeName === "nodelinks" ||
+    Boolean(resolveLegacyStoreResource(storeName))
+  );
+}
+
+function isActiveIdentityDexieDatabase(
+  name: string,
+  identity: LegacyLocalDataIdentity
+) {
+  const candidates = [identity.userId, identity.dapId].filter(
+    (value): value is string => Boolean(value)
+  );
+  return candidates.some((value) => name === `${value}-1`);
 }
 
 async function listExistingIndexedDatabases() {
@@ -657,7 +752,7 @@ function getJoinStoreKey(from: string, relation: string, to: string) {
 }
 
 async function readLegacyLocalDataRecoveryDecisions(): Promise<
-  Partial<Record<Product, LegacyLocalDataRecoveryDecision>>
+  Record<string, LegacyLocalDataRecoveryDecision>
 > {
   const value = await clientStorage.get(
     ClientStorageKey.LEGACY_LOCAL_DATA_RECOVERY
@@ -666,11 +761,61 @@ async function readLegacyLocalDataRecoveryDecisions(): Promise<
   try {
     const parsed = typeof value === "string" ? parse(value) : value;
     return parsed && typeof parsed === "object"
-      ? (parsed as Partial<Record<Product, LegacyLocalDataRecoveryDecision>>)
+      ? (parsed as Record<string, LegacyLocalDataRecoveryDecision>)
       : {};
   } catch {
     return {};
   }
+}
+
+async function resolveActiveLegacyLocalDataIdentity(): Promise<LegacyLocalDataIdentity> {
+  const [storedUserInfo, storedUser, dapId] = await Promise.all([
+    clientStorage.get(ClientStorageKey.USER_INFO),
+    clientStorage.get(ClientStorageKey.USER),
+    clientStorage.get(ClientStorageKey.DAP_ID)
+  ]);
+  const userInfo = isPlainObject(storedUserInfo) ? storedUserInfo : undefined;
+  const user = isPlainObject(storedUser) ? storedUser : undefined;
+  const userId = resolveRecordId(
+    userInfo?.id,
+    user?.actorId,
+    isPlainObject(user?.subject) ? user.subject.id : undefined
+  )?.replace(/^user:/, "");
+  return {
+    userId,
+    dapId: typeof dapId === "string" ? dapId.trim() || undefined : undefined
+  };
+}
+
+async function resolveLegacyLocalDataRecoveryDecisionKey(
+  product: Product,
+  source?: LegacyLocalDataSummary | LegacyLocalDataBackup
+) {
+  return resolveLegacyLocalDataRecoveryDecisionKeyFromParts(
+    product,
+    await resolveActiveLegacyLocalDataIdentity(),
+    resolveLegacySourceDatabaseNames(source)
+  );
+}
+
+function resolveLegacyLocalDataRecoveryDecisionKeyFromParts(
+  product: Product,
+  identity: LegacyLocalDataIdentity,
+  sourceDatabases: string[]
+) {
+  return `${product}:${resolveLegacyIdentityScope(identity)}:${sourceDatabases.join("|")}`;
+}
+
+function resolveLegacyIdentityScope(identity: LegacyLocalDataIdentity) {
+  if (identity.userId) return `user:${identity.userId}`;
+  if (identity.dapId) return `guest:${identity.dapId}`;
+  return "unknown";
+}
+
+function resolveLegacySourceDatabaseNames(
+  source?: LegacyLocalDataSummary | LegacyLocalDataBackup
+) {
+  return (source?.databases.map((database) => database.name) ?? []).sort();
 }
 
 function collectKnownLegacyResources(backup: LegacyLocalDataBackup) {
@@ -739,6 +884,24 @@ function normalizeSerializedLegacyValue(
   }
   if (marker === "Map") return normalizeLegacyValue(value.entries);
   if (marker === "Set") return normalizeLegacyValue(value.values);
+  if (
+    marker === "ArrayBuffer" ||
+    marker === "Uint8Array" ||
+    marker === "Uint8ClampedArray" ||
+    marker === "Int8Array" ||
+    marker === "Uint16Array" ||
+    marker === "Int16Array" ||
+    marker === "Uint32Array" ||
+    marker === "Int32Array" ||
+    marker === "Float32Array" ||
+    marker === "Float64Array" ||
+    marker === "Blob" ||
+    marker === "File"
+  ) {
+    return typeof value.dataBase64 === "string"
+      ? base64ToBytes(value.dataBase64)
+      : undefined;
+  }
   const result: Record<string, unknown> = {};
   for (const [key, item] of Object.entries(value)) {
     const normalized = normalizeLegacyValue(item);
@@ -747,6 +910,28 @@ function normalizeSerializedLegacyValue(
     }
   }
   return result;
+}
+
+function base64ToBytes(value: string) {
+  const binary = atob(value);
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+
+function addLegacyKvRecords(
+  kv: Record<string, unknown>,
+  records: LegacyLocalRecordBackup[]
+) {
+  for (const item of records) {
+    const record = normalizeLegacyRecord(item.value);
+    if (!record) continue;
+    const id = resolveRecordId(record.id, item.key);
+    if (!id) continue;
+    const key = id.replace(/^kv:/, "");
+    if (!key || key === "local") continue;
+    const { id: _id, ...value } = record;
+    kv[key] =
+      Object.keys(value).length === 1 && "value" in value ? value.value : value;
+  }
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {

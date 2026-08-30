@@ -53,6 +53,7 @@ import {
   shouldUseAuthFnBearerSession
 } from "@21n/components/account/auth";
 import { resolveAccountBaseUrl } from "@21n/components/network";
+import { clearCachedDatafnE2eeState } from "@21n/stores/datafnE2ee.store";
 
 export const isRefreshingToken = writable(false);
 
@@ -184,6 +185,7 @@ class AccountStore extends ObservableStore<UserAccount> {
     } catch (error) {
       logger.error({ at: "account.signOut.destroyDatafn", error });
     }
+    await clearCachedDatafnE2eeState();
     this.update(() => {
       const n = {
         sessionType: UserSessionType.UNDETERMINED,
@@ -366,8 +368,8 @@ class AccountStore extends ObservableStore<UserAccount> {
         return false;
       }
       if (authFnDeleteStatus === "deleted") {
-        await this.signOut({ isPreventRedirect: true });
         await clearDatafnLocalData();
+        await this.signOut({ isPreventRedirect: true });
         appStore.gotoPath("/signup?msg=deleted");
         isDeleted = true;
         return true;
@@ -387,8 +389,8 @@ class AccountStore extends ObservableStore<UserAccount> {
         toasts.error(data.error);
         return false;
       }
-      await this.signOut({ isPreventRedirect: true });
       await clearDatafnLocalData();
+      await this.signOut({ isPreventRedirect: true });
       appStore.gotoPath("/signup?msg=deleted");
       isDeleted = true;
       return true;
@@ -830,6 +832,9 @@ class AccountStore extends ObservableStore<UserAccount> {
     isExtensionEnv?: boolean;
     isReturnUrl?: boolean;
   }) {
+    if (params.isReturnUrl) {
+      return URL.createObjectURL(params.blob);
+    }
     const arrayBuffer = await params.blob.arrayBuffer();
     const uint8Array = new Uint8Array(arrayBuffer);
     let thumbnailUint8Array: Uint8Array | undefined;
@@ -847,9 +852,6 @@ class AccountStore extends ObservableStore<UserAccount> {
       isMeta: params.isMeta,
       thumbnailData: thumbnailUint8Array
     };
-    if (params.isReturnUrl) {
-      return URL.createObjectURL(params.blob);
-    }
     if (params.isExtensionEnv) {
       return file;
     }

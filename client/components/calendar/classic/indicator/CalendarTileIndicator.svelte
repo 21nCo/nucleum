@@ -89,24 +89,22 @@
       const tasksData = data.find((x) => x.resource === Resource.task);
       if (tasksData) {
         fallbackTasks = tasksData.data.filter(
-          (x) =>
-            x.dateUnix >= dayFilter.greaterThanOrEqual &&
-            x.dateUnix <= dayFilter.lessThanOrEqual
+          (x) => x.dateUnix >= dayFilter.$gte && x.dateUnix <= dayFilter.$lte
         );
       }
       const sessionsData = data.find((x) => x.resource === Resource.session);
       if (sessionsData) {
         fallbackFocusSessions = sessionsData.data.filter(
           (x) =>
-            x &&
-            x.startUnix >= dayFilter.greaterThanOrEqual &&
-            x.startUnix <= dayFilter.lessThanOrEqual
+            x && x.startUnix >= dayFilter.$gte && x.startUnix <= dayFilter.$lte
         );
 
-        fallbackFocusSessions = fallbackFocusSessions.map((session: ISessionThumb) => ({
-          ...session,
-          splits: resolveSessionTimeSplit(session)
-        }));
+        fallbackFocusSessions = fallbackFocusSessions.map(
+          (session: ISessionThumb) => ({
+            ...session,
+            splits: resolveSessionTimeSplit(session)
+          })
+        );
         fallbackSummary = generateSummary(fallbackFocusSessions);
       }
     } catch (e) {
@@ -120,8 +118,8 @@
       if (nodesData) {
         fallbackNodes = nodesData.data.filter(
           (x) =>
-            new Date(x.createdAt).getTime() >= dayFilter.greaterThanOrEqual &&
-            new Date(x.createdAt).getTime() <= dayFilter.lessThanOrEqual
+            new Date(x.createdAt).getTime() >= dayFilter.$gte &&
+            new Date(x.createdAt).getTime() <= dayFilter.$lte
         );
       }
       const calendarNotesData = data.find(
@@ -130,8 +128,8 @@
       if (calendarNotesData) {
         fallbackCalendarNotes = calendarNotesData.data.filter(
           (x) =>
-            new Date(x.date).getTime() >= dayFilter.greaterThanOrEqual &&
-            new Date(x.date).getTime() <= dayFilter.lessThanOrEqual &&
+            new Date(x.date).getTime() >= dayFilter.$gte &&
+            new Date(x.date).getTime() <= dayFilter.$lte &&
             x.text
         );
       }
@@ -143,8 +141,12 @@
   function getColor(resource: Resource) {
     if (resolvedData) {
       if (resource === Resource.task && tasks.length > 0) return "fgs4";
-      if (resource === Resource.session && focusSessions.length > 0) return "aps1";
-      if (resource === Resource.node && (nodes.length > 0 || calendarNotes.length > 0)) {
+      if (resource === Resource.session && focusSessions.length > 0)
+        return "aps1";
+      if (
+        resource === Resource.node &&
+        (nodes.length > 0 || calendarNotes.length > 0)
+      ) {
         return "aps1";
       }
     }

@@ -90,19 +90,10 @@ import { activeResourceFilter } from "@21n/utils/utils";
 import DatafnSharePanel from "@21n/components/share/DatafnSharePanel.svelte";
 import { datafn } from "@21n/stores/datafn.store";
 import { appMenuActionLabelsByAction } from "@21n/products/product-nav.config";
-
-function isCollectionItemResource(resource: Resource) {
-  return resource === Resource.node || resource === Resource.objective;
-}
-
-function isLinkableResource(resource: Resource) {
-  return (
-    resource === Resource.node ||
-    resource === Resource.objective ||
-    resource === Resource.task ||
-    resource === Resource.event
-  );
-}
+import {
+  addDatafnRecordToCollection,
+  relateDatafnRecords
+} from "@21n/stores/datafn-linking.store";
 
 export const globalActions: IAction[] = [
   {
@@ -758,24 +749,11 @@ export const globalActions: IAction[] = [
             toasts.error();
             return;
           }
-          const resource = determineResourceType(item.id);
-          if (!isCollectionItemResource(resource)) {
-            toasts.error();
-            return;
-          }
-          const result = await datafn.table(resource).mutate({
-            operation: "relate",
-            id: item.id.toString(),
-            relations: {
-              collections: [
-                {
-                  $ref: componentParams.id.toString(),
-                  fromResource: resource.toString()
-                }
-              ]
-            },
+          const result = await addDatafnRecordToCollection({
+            sourceId: item.id,
+            collectionId: componentParams.id,
             context: componentParams.id.toString()
-          } as any);
+          });
           logger.log({
             at: "addNodeToCollection",
             id: item.id,
@@ -783,10 +761,6 @@ export const globalActions: IAction[] = [
             componentParams,
             result
           });
-          if (!result) {
-            toasts.error();
-            return;
-          }
           toasts.success(`**${item.label}** added to collection`);
         } catch (e) {
           logger.error({ at: "addNodeToCollection", error: e });
@@ -929,7 +903,7 @@ export const globalActions: IAction[] = [
           const items =
             componentParams?.multiSelectStore?.get() ?? componentParams?.items;
           const context = componentParams?.multiSelectStore?.context;
-          if (!items) {
+          if (!items?.length) {
             toasts.error(undefined, {
               closeProgressId: "bulklink"
             });
@@ -942,47 +916,11 @@ export const globalActions: IAction[] = [
               ? "Adding to collection"
               : "Linking to node"
           );
-          const result = await Promise.all(
-            items.map((sourceId) => {
-              const sourceResource = determineResourceType(sourceId);
-              if (resourceType === Resource.collection) {
-                if (!isCollectionItemResource(sourceResource)) return undefined;
-                return datafn.table(sourceResource).mutate({
-                  operation: "relate",
-                  id: sourceId.toString(),
-                  relations: {
-                    collections: [
-                      {
-                        $ref: item.id.toString(),
-                        fromResource: sourceResource.toString()
-                      }
-                    ]
-                  },
-                  context: context?.accessPoint
-                } as any);
-              }
-              if (
-                !isLinkableResource(sourceResource) ||
-                !isLinkableResource(resourceType)
-              ) {
-                return undefined;
-              }
-              return datafn.table(sourceResource).mutate({
-                operation: "relate",
-                id: sourceId.toString(),
-                relations: {
-                  links: [
-                    {
-                      $ref: item.id.toString(),
-                      fromResource: sourceResource.toString(),
-                      toResource: resourceType.toString()
-                    }
-                  ]
-                },
-                context: context?.accessPoint
-              } as any);
-            })
-          );
+          const result = await relateDatafnRecords({
+            sourceIds: items,
+            targetId: item.id,
+            context: context?.accessPoint
+          });
           logger.log({
             at: "bulkLink",
             id: item.id,
@@ -991,17 +929,11 @@ export const globalActions: IAction[] = [
             items,
             result
           });
-          if (!result) {
-            toasts.error(undefined, {
-              closeProgressId: "bulklink"
-            });
-            return;
-          }
           componentParams?.multiSelectStore?.reset();
           if (resourceType === Resource.collection) {
             toasts.success(
-              `**${items.length}** ${
-                items.length > 1 ? "items" : "item"
+              `**${result}** ${
+                result > 1 ? "items" : "item"
               } added to collection ${item.label ? `**${item.label}**` : ""}`,
               {
                 closeProgressId: "bulklink"
@@ -1009,8 +941,8 @@ export const globalActions: IAction[] = [
             );
           } else {
             toasts.success(
-              `**${items.length}** ${
-                items.length > 1 ? "items" : "item"
+              `**${result}** ${
+                result > 1 ? "items" : "item"
               } linked to node ${item.label ? `**${item.label}**` : ""}`,
               {
                 closeProgressId: "bulklink"

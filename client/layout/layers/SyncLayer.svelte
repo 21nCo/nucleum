@@ -2,11 +2,7 @@
 
 <script lang="ts">
   import context from "@21n/stores/context.store";
-  import {
-    nucleumDatafnStatus,
-    pullDatafnNow,
-    refreshNucleumDatafnStatus
-  } from "@21n/stores/datafn.store";
+  import { nucleumDatafnStatus, pullDatafnNow } from "@21n/stores/datafn.store";
   import { onMount, onDestroy } from "svelte";
   let isSyncing = $state(false);
   let isDestroyed = false;
@@ -62,7 +58,6 @@
 
     try {
       await pullDatafnNow();
-      await refreshNucleumDatafnStatus();
     } catch (error) {
       console.error("Sync failed:", error);
     } finally {
@@ -92,5 +87,4 @@
       }, VISIBILITY_DEBOUNCE);
     }
   }
-
 </script>

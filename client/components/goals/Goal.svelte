@@ -87,7 +87,7 @@
   });
 
   function resolvePreviouslySelectedView() {
-    const panelState = uiState.getState(UIState.goalPanelSelection, {
+    const panelState = uiState.getState(UIState.objectivePanelSelection, {
       scope: UIStateScope.DEVICE,
       subVariables: [
         isConstrainedWidth?.toString(),
@@ -234,7 +234,11 @@
       subscribeToRecords={[id]}
       onChange={(e) => {
         try {
-          if ("params" in e && e.params?.record && "parent" in e.params.record) {
+          if (
+            "params" in e &&
+            e.params?.record &&
+            "parent" in e.params.record
+          ) {
             isReady = false;
             initPromise = initialize();
           }

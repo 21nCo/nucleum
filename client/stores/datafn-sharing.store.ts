@@ -20,7 +20,10 @@ export type DatafnPermissionGrant = {
 };
 
 export function resolveDatafnUserPrincipal(userId: string): string {
-  const normalized = userId.trim().replace(/^user:/, "");
+  const normalized = userId
+    .trim()
+    .replace(/^user:/, "")
+    .trim();
   if (!normalized) {
     throw new Error("User id is required");
   }

@@ -6,7 +6,10 @@ import {
 import { tzStore } from "@21n/components/settings/timezone/tz.store";
 import { resolveSessionTimeSplit } from "@21n/products/pointron/pointron.utils";
 import { generateSummary } from "@21n/products/pointron/focus/session.utils";
-import type { DaySummary, ISessionThumb } from "@21n/products/pointron/logs/log.type";
+import type {
+  DaySummary,
+  ISessionThumb
+} from "@21n/products/pointron/logs/log.type";
 import type { ITaskThumb } from "@21n/components/tasks/task.type";
 
 export type ResolvedCalendarTileIndicatorDay = {
@@ -19,18 +22,19 @@ export type ResolvedCalendarTileIndicatorDay = {
   summary: DaySummary;
 };
 
-type DayBucketResolver = (input: Date | string | number) => ResolvedCalendarTileIndicatorDay;
+type DayBucketResolver = (
+  input: Date | string | number
+) => ResolvedCalendarTileIndicatorDay;
 
 export function resolveIndicatorDayKey(date: Date): number {
-  return tzStore.resolveTimePeriodFilterForDay(date).greaterThanOrEqual;
+  return tzStore.resolveTimePeriodFilterForDay(date).$gte;
 }
 
 function createDayBucketResolver(
   dayMap: Map<number, ResolvedCalendarTileIndicatorDay>
 ): DayBucketResolver {
   return (input: Date | string | number) => {
-    const key = tzStore.resolveTimePeriodFilterForDay(new Date(input))
-      .greaterThanOrEqual;
+    const key = tzStore.resolveTimePeriodFilterForDay(new Date(input)).$gte;
     const existing = dayMap.get(key);
     if (existing) return existing;
     const next: ResolvedCalendarTileIndicatorDay = {
@@ -45,19 +49,13 @@ function createDayBucketResolver(
   };
 }
 
-function bucketTasks(
-  data: any[],
-  resolveBucket: DayBucketResolver
-) {
+function bucketTasks(data: any[], resolveBucket: DayBucketResolver) {
   for (const task of data) {
     resolveBucket(task.dateUnix).tasks.push(task);
   }
 }
 
-function bucketSessions(
-  data: any[],
-  resolveBucket: DayBucketResolver
-) {
+function bucketSessions(data: any[], resolveBucket: DayBucketResolver) {
   for (const session of data) {
     if (!session?.startUnix) continue;
     resolveBucket(session.startUnix).focusSessions.push({
@@ -74,10 +72,7 @@ function bucketNodes(data: any[], resolveBucket: DayBucketResolver) {
   }
 }
 
-function bucketCalendarNotes(
-  data: any[],
-  resolveBucket: DayBucketResolver
-) {
+function bucketCalendarNotes(data: any[], resolveBucket: DayBucketResolver) {
   for (const note of data) {
     if (!note?.date || !note?.text) continue;
     resolveBucket(note.date).calendarNotes.push(note);

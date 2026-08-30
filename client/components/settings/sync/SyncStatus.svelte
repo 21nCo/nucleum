@@ -1,6 +1,8 @@
 <script lang="ts">
   import { cn } from "@21n/utils/ui.utils";
   import { nucleumDatafnStatus } from "@21n/stores/datafn.store";
+  import { formatDatetime } from "@21n/utils/time.utils";
+  import { userPreferences } from "@21n/components/settings/userPreferences.store";
   const status = $derived(
     $nucleumDatafnStatus.nucleumMode === "sync-direct"
       ? "DIRECT"
@@ -30,7 +32,7 @@
   {#if lastSyncedAt}
     <span class="text-b3 text-fgs3 text-end"
       >- Last synced at:
-      {new Date(lastSyncedAt).toLocaleString()}</span
+      {formatDatetime($userPreferences, new Date(lastSyncedAt))}</span
     >
   {/if}
 </div>

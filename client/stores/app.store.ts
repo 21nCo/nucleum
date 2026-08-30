@@ -521,8 +521,7 @@ export const appStore = {
   toggleSearchParamRecordSpecific: (
     id: IRecordId,
     params:
-      | Record<string, string | boolean | number | null>
-      | (string | RegExp)[],
+      Record<string, string | boolean | number | null> | (string | RegExp)[],
     additional?: {
       isPreventRefresh?: boolean;
       url?: URL;
@@ -552,8 +551,7 @@ export const appStore = {
    */
   toggleSearchParam: (
     params:
-      | Record<string, string | boolean | number | null>
-      | (string | RegExp)[],
+      Record<string, string | boolean | number | null> | (string | RegExp)[],
     additional?: {
       isPreventRefresh?: boolean;
       url?: URL;
@@ -697,7 +695,7 @@ export const appStore = {
     let isOpenNavigator = false;
     let isCloseNavigator = false;
     if (accessMode === AccessMode.POP && params?.origin) {
-      // isOpenNavigator = vTrail.add(params.origin, id);
+      isOpenNavigator = vTrail.add(params.origin, id);
     } else if (accessMode === AccessMode.POP) {
       vTrail.clear();
       isCloseNavigator =

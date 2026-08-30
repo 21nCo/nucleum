@@ -2,10 +2,7 @@ import { persistenceInstance } from "@21n/persistence/persistence";
 import context from "@21n/stores/context.store";
 import { toasts } from "@21n/stores/notification.store";
 import type { IRecordId } from "@21n/types/data.type";
-import {
-  getBucketNameandKey,
-  isUrlExpired
-} from "@21n/utils/account.utils";
+import { getBucketNameandKey, isUrlExpired } from "@21n/utils/account.utils";
 import { get } from "svelte/store";
 import { logger } from "@21n/components/debug/logger.client";
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
@@ -97,6 +94,7 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
       );
       if (url) {
         fileEmbedChannel.downloadFromUrl(url);
+        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
       }
       return;
     }

@@ -138,8 +138,7 @@ const initialStatus: NucleumDatafnStatus = {
 
 const runtimeStore = writable<NucleumDatafnRuntime | null>(null);
 export const datafnRuntime = runtimeStore;
-export const nucleumDatafnStatus =
-  writable<NucleumDatafnStatus>(initialStatus);
+export const nucleumDatafnStatus = writable<NucleumDatafnStatus>(initialStatus);
 let datafnSearchProvider: SearchProvider | undefined;
 let lastInitializeInput: InitializeNucleumDatafnInput | null = null;
 let datafnStatusUnsubscribe: (() => void) | null = null;
@@ -216,11 +215,9 @@ function resolveNucleumDatafnStatus(
 
 function bindNucleumDatafnStatus(runtime: NucleumDatafnRuntime) {
   datafnStatusUnsubscribe?.();
-  datafnStatusUnsubscribe = datafn.sync
-    .statusSignal()
-    .subscribe((status) => {
-      nucleumDatafnStatus.set(resolveNucleumDatafnStatus(status, runtime));
-    });
+  datafnStatusUnsubscribe = datafn.sync.statusSignal().subscribe((status) => {
+    nucleumDatafnStatus.set(resolveNucleumDatafnStatus(status, runtime));
+  });
   nucleumDatafnStatus.set(
     resolveNucleumDatafnStatus(datafn.sync.getStatus(), runtime)
   );
@@ -355,15 +352,12 @@ export async function migrateDatafnNodeMdChildOrder(
     .getRecord("kv", nodeMdChildOrderMigrationId)
     .catch(() => null);
   if (marker) return;
-  const records = await storage.listRecords("node").catch(() => []);
+  const records = await storage.listRecords("node");
   let migratedCount = 0;
   for (const record of records) {
     if (!("children" in record)) continue;
     const { children, ...nextRecord } = record;
-    if (
-      !Array.isArray(nextRecord.mdChildOrder) &&
-      Array.isArray(children)
-    ) {
+    if (!Array.isArray(nextRecord.mdChildOrder) && Array.isArray(children)) {
       nextRecord.mdChildOrder = children;
       migratedCount++;
     }
@@ -399,6 +393,9 @@ export async function resolveDatafnOfflinabilityPreference() {
 }
 
 export async function setDatafnOfflinabilityPreference(isEnabled: boolean) {
+  if (!isEnabled && get(datafnE2eeState).enabled) {
+    throw new Error("Offline storage is required while E2EE is enabled");
+  }
   await clientStorage.set(
     ClientStorageKey.DATAFN_OFFLINABILITY,
     isEnabled.toString()
@@ -440,12 +437,10 @@ async function readRemoteDatafnE2eeSettings(input: {
   remoteUrl: string;
   http: DatafnHttpTransportOptions;
 }) {
-  await datafn.switchContext({
+  const metadataClient = createDatafnClient({
+    schema: nucleumDatafnSchema,
     clientId: input.dapId,
     namespace: input.namespace,
-    storage: null,
-    searchProvider: null,
-    e2ee: null,
     sync: {
       mode: "sync",
       remote: input.remoteUrl,
@@ -453,36 +448,63 @@ async function readRemoteDatafnE2eeSettings(input: {
       offlinability: false,
       crossTab: false,
       ws: false
-    }
+    },
+    temporal: { timezone: "user" },
+    generateId: generateDatafnId
   });
-  const settings = await datafn.kv.get<NucleumDatafnE2eeSettings>(
-    DATAFN_E2EE_KV_KEY
-  );
-  return isDatafnE2eeSettings(settings) ? settings : null;
+  try {
+    const settings =
+      await metadataClient.kv.get<NucleumDatafnE2eeSettings>(
+        DATAFN_E2EE_KV_KEY
+      );
+    return isDatafnE2eeSettings(settings) ? settings : null;
+  } finally {
+    await metadataClient.destroy();
+  }
 }
 
 async function writeRemoteDatafnE2eeSettings(
   settings: NucleumDatafnE2eeSettings
 ) {
-  const result = await datafn.kv.set(DATAFN_E2EE_KV_KEY, settings);
-  if (!result.ok) {
-    throw result.error;
+  const runtime = get(runtimeStore);
+  if (!runtime?.remoteUrl) {
+    throw new Error("DataFn remote is not available");
+  }
+  const metadataClient = createDatafnClient({
+    schema: nucleumDatafnSchema,
+    clientId: (await getDapId()) ?? "unknown",
+    namespace: runtime.namespace,
+    sync: {
+      mode: "sync",
+      remote: runtime.remoteUrl,
+      http: await createNucleumDatafnHttpOptions(),
+      offlinability: false,
+      crossTab: false,
+      ws: false
+    },
+    temporal: { timezone: "user" },
+    generateId: generateDatafnId
+  });
+  try {
+    const result = await metadataClient.kv.set(DATAFN_E2EE_KV_KEY, settings);
+    if (!result.ok) throw result.error;
+  } finally {
+    await metadataClient.destroy();
   }
 }
 
 async function resolveDatafnE2eeConfig(input: {
+  namespace: string;
   remoteSettings: NucleumDatafnE2eeSettings | null;
+  hasRemoteSettingsAuthority: boolean;
 }): Promise<{
   settings: NucleumDatafnE2eeSettings | null;
   config?: DatafnE2eeConfig;
 }> {
-  const localSettings = await getLocalDatafnE2eeSettings();
-  const settings =
-    input.remoteSettings?.enabled === true
-      ? input.remoteSettings
-      : localSettings?.enabled === true
-        ? localSettings
-        : (input.remoteSettings ?? localSettings);
+  const localSettings = await getLocalDatafnE2eeSettings(input.namespace);
+  const settings = input.hasRemoteSettingsAuthority
+    ? input.remoteSettings
+    : localSettings;
 
   if (!settings?.enabled) {
     datafnE2eeState.set({ enabled: false, unlocked: false, keyRef: null });
@@ -491,7 +513,7 @@ async function resolveDatafnE2eeConfig(input: {
 
   const cachedProvider = await getCachedDatafnE2eeProvider(settings);
   if (cachedProvider) {
-    await persistDatafnE2eeSettings(settings);
+    await persistDatafnE2eeSettings(input.namespace, settings);
     return {
       settings,
       config: { enabled: true, provider: cachedProvider }
@@ -499,7 +521,11 @@ async function resolveDatafnE2eeConfig(input: {
   }
 
   const password = requestDatafnE2eePassword("Enter your E2EE password");
-  const provider = await unlockDatafnE2eeSettings(settings, password);
+  const provider = await unlockDatafnE2eeSettings(
+    settings,
+    password,
+    input.namespace
+  );
   if (!provider) throw new Error("Unable to unlock E2EE");
   return {
     settings,
@@ -510,7 +536,6 @@ async function resolveDatafnE2eeConfig(input: {
 export async function initializeNucleumDatafn(
   input: InitializeNucleumDatafnInput
 ): Promise<NucleumDatafnRuntime> {
-  lastInitializeInput = input;
   const existing = get(runtimeStore);
   const dapId = input.dapId ?? (await getDapId()) ?? "unknown";
   const namespace = resolveDatafnNamespace({ account: input.account, dapId });
@@ -525,20 +550,22 @@ export async function initializeNucleumDatafn(
   const candidateHttp = candidateRemoteUrl
     ? await createNucleumDatafnHttpOptions()
     : undefined;
+  const hasRemoteSettingsAuthority = Boolean(
+    candidateRemoteUrl && candidateHttp
+  );
   const remoteE2eeSettings =
-    candidateRemoteUrl && candidateHttp && !existing
+    candidateRemoteUrl && candidateHttp
       ? await readRemoteDatafnE2eeSettings({
           dapId,
           namespace,
           remoteUrl: candidateRemoteUrl,
           http: candidateHttp
-        }).catch((error) => {
-          logger.error({ at: "datafn.e2ee.readRemoteSettings", error });
-          return null;
         })
       : null;
   const e2ee = await resolveDatafnE2eeConfig({
-    remoteSettings: remoteE2eeSettings
+    namespace,
+    remoteSettings: remoteE2eeSettings,
+    hasRemoteSettingsAuthority
   });
   const isE2eeEnabled = e2ee.settings?.enabled === true;
   const mode = resolveDatafnMode({
@@ -561,11 +588,15 @@ export async function initializeNucleumDatafn(
       runtimeKey
   ) {
     await refreshNucleumDatafnStatus();
+    lastInitializeInput = input;
     return existing;
   }
 
   if (existing) {
     await existing.destroy();
+    if (get(runtimeStore) === existing) {
+      runtimeStore.set(null);
+    }
   }
 
   const bootResources = resolveDatafnBootResources(input.product);
@@ -669,6 +700,7 @@ export async function initializeNucleumDatafn(
   runtimeStore.set(runtime);
   bindNucleumDatafnStatus(runtime);
   await refreshNucleumDatafnStatus();
+  lastInitializeInput = input;
   return runtime;
 }
 
@@ -705,13 +737,44 @@ async function cloneUpAllDatafnData() {
 
 export async function enableNucleumDatafnE2ee(password: string) {
   const initInput = requireLastInitializeInput();
-  const setup = await createDatafnE2eeSetup(password);
-  await initializeNucleumDatafn({
-    ...initInput,
-    isOfflinabilityEnabled: true
-  });
-  await writeRemoteDatafnE2eeSettings(setup.settings);
-  await cloneUpAllDatafnData();
+  const runtime = get(runtimeStore);
+  if (!runtime) throw new Error("DataFn runtime is not initialized");
+  if (runtime.mode === "sync-direct") {
+    throw new Error("Enable offline storage before turning on E2EE");
+  }
+  const previousSettings = await getLocalDatafnE2eeSettings(runtime.namespace);
+  const setup = await createDatafnE2eeSetup(password, runtime.namespace);
+  try {
+    await writeRemoteDatafnE2eeSettings(setup.settings);
+    await initializeNucleumDatafn({
+      ...initInput,
+      isOfflinabilityEnabled: true
+    });
+    await cloneUpAllDatafnData();
+  } catch (error) {
+    const restoredSettings =
+      previousSettings ?? createDisabledDatafnE2eeSettings();
+    await writeRemoteDatafnE2eeSettings(restoredSettings).catch(
+      (restoreError) => {
+        logger.error({
+          at: "datafn.e2ee.enable.restoreRemoteSettings",
+          error: restoreError
+        });
+      }
+    );
+    await disableLocalDatafnE2ee(
+      setup.settings,
+      runtime.namespace,
+      restoredSettings
+    );
+    await initializeNucleumDatafn(initInput).catch((restoreError) => {
+      logger.error({
+        at: "datafn.e2ee.enable.restoreRuntime",
+        error: restoreError
+      });
+    });
+    throw error;
+  }
   datafnE2eeState.set({
     enabled: true,
     unlocked: true,
@@ -721,29 +784,57 @@ export async function enableNucleumDatafnE2ee(password: string) {
 }
 
 export async function changeNucleumDatafnE2eePassword(password: string) {
-  const settings = await getLocalDatafnE2eeSettings();
+  const runtime = get(runtimeStore);
+  if (!runtime) throw new Error("DataFn runtime is not initialized");
+  const settings = await getLocalDatafnE2eeSettings(runtime.namespace);
   if (!settings?.enabled) {
     throw new Error("E2EE is not enabled");
   }
-  const next = await rewrapCachedDatafnE2eeKey(settings, password);
-  await initializeNucleumDatafn({
-    ...requireLastInitializeInput(),
-    isOfflinabilityEnabled: true
-  });
-  await writeRemoteDatafnE2eeSettings(next.settings);
-  await cloneUpAllDatafnData();
+  const next = await rewrapCachedDatafnE2eeKey(
+    settings,
+    password,
+    runtime.namespace
+  );
+  try {
+    await writeRemoteDatafnE2eeSettings(next.settings);
+    await initializeNucleumDatafn({
+      ...requireLastInitializeInput(),
+      isOfflinabilityEnabled: true
+    });
+    await cloneUpAllDatafnData();
+  } catch (error) {
+    await writeRemoteDatafnE2eeSettings(settings).catch((restoreError) => {
+      logger.error({
+        at: "datafn.e2ee.password.restoreRemoteSettings",
+        error: restoreError
+      });
+    });
+    await persistDatafnE2eeSettings(runtime.namespace, settings);
+    await initializeNucleumDatafn({
+      ...requireLastInitializeInput(),
+      isOfflinabilityEnabled: true
+    }).catch((restoreError) => {
+      logger.error({
+        at: "datafn.e2ee.password.restoreRuntime",
+        error: restoreError
+      });
+    });
+    throw error;
+  }
   return next.settings;
 }
 
 export async function disableNucleumDatafnE2ee() {
   const initInput = requireLastInitializeInput();
-  const settings = await getLocalDatafnE2eeSettings();
+  const runtime = get(runtimeStore);
+  if (!runtime) throw new Error("DataFn runtime is not initialized");
+  const settings = await getLocalDatafnE2eeSettings(runtime.namespace);
   const disabled = createDisabledDatafnE2eeSettings();
   await datafn.switchContext({ e2ee: null });
   try {
     await writeRemoteDatafnE2eeSettings(disabled);
     await cloneUpAllDatafnData();
-    await disableLocalDatafnE2ee(settings, disabled);
+    await disableLocalDatafnE2ee(settings, runtime.namespace, disabled);
   } catch (error) {
     if (settings) {
       await writeRemoteDatafnE2eeSettings(settings).catch((restoreError) => {
@@ -792,6 +883,25 @@ export async function reconcileDatafnNow() {
   if (!runtime || runtime.mode !== "sync") return;
   await datafn.sync.reconcileNow();
   await refreshNucleumDatafnStatus();
+}
+
+export async function updateNucleumDatafnConnectivity(isOffline: boolean) {
+  const runtime = get(runtimeStore);
+  const input = lastInitializeInput;
+  if (!runtime || !input) return runtime;
+  const nextInput = { ...input, isOffline };
+  const isE2eeEnabled = get(datafnE2eeState).enabled;
+  const nextMode = resolveDatafnMode({
+    ...nextInput,
+    isOfflinabilityEnabled: isE2eeEnabled
+      ? true
+      : nextInput.isOfflinabilityEnabled
+  });
+  if (nextMode === runtime.mode) {
+    lastInitializeInput = nextInput;
+    return runtime;
+  }
+  return initializeNucleumDatafn(nextInput);
 }
 
 export async function clearDatafnLocalData() {

@@ -31,6 +31,24 @@ const uiStateSignal = datafn.kv.signal<IUIStateStore>(Resource.uiState, {
   defaultValue: uiStateSeed
 });
 const uiStateLocal = writable<IUIStateStore>(uiStateSeed);
+const legacyUiStateKeys = new Map([
+  ["manualLogRecentGoals", UIState.manualLogRecentObjectives],
+  ["goalPanelSelection", UIState.objectivePanelSelection]
+]);
+
+function migrateLegacyUiStateKeys(data: IUIStateStore): IUIStateStore {
+  const migrated = migrateLegacyNucleusProductKeys(data);
+  Object.entries(migrated).forEach(([key, value]) => {
+    legacyUiStateKeys.forEach((currentKey, legacyKey) => {
+      if (!key.includes(legacyKey)) return;
+      const nextKey = key.replace(legacyKey, currentKey);
+      if (!Object.prototype.hasOwnProperty.call(migrated, nextKey)) {
+        migrated[nextKey] = value;
+      }
+    });
+  });
+  return migrated;
+}
 
 function resolveStoredLocalState() {
   try {
@@ -44,9 +62,7 @@ function resolveStoredLocalState() {
 }
 
 function refreshUiStateLocal() {
-  const migrated = migrateLegacyNucleusProductKeys(
-    uiStateSignal.get() ?? uiStateSeed
-  );
+  const migrated = migrateLegacyUiStateKeys(uiStateSignal.get() ?? uiStateSeed);
   uiStateLocal.set({
     ...uiStateSeed,
     ...migrated,
@@ -163,7 +179,7 @@ export const uiState = {
 
   loader(data: IUIStateStore) {
     if (!data || typeof data !== "object") return;
-    const migrated = migrateLegacyNucleusProductKeys(data);
+    const migrated = migrateLegacyUiStateKeys(data);
     uiStateLocal.set({
       ...uiStateSeed,
       ...migrated,

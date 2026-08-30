@@ -14,7 +14,10 @@
   import DurationInput from "@21n/elements/input/durationInput/DurationInput.svelte";
   import { manualLogStore } from "@21n/products/pointron/logs/log.store";
   import TimeInput from "@21n/elements/datetime/TimeInput.svelte";
-  import { LastActionPerformed, type IManualSessionLogForm } from "@21n/products/pointron/logs/log.type";
+  import {
+    LastActionPerformed,
+    type IManualSessionLogForm
+  } from "@21n/products/pointron/logs/log.type";
   import TextSearchInput from "@21n/elements/input/TextSearchInput.svelte";
   import { InputStyle } from "@21n/types/input.type";
   import { Orientation } from "@21n/types/direction.enum";
@@ -24,15 +27,9 @@
   import { SearchStore } from "@21n/components/record/record.store";
   import GoalSearchResultItem from "@21n/components/goals/GoalSearchResultItem.svelte";
   import { uiState } from "@21n/stores/uiState/uiState.store";
-  import {
-    UIState,
-    UIStateScope
-  } from "@21n/stores/uiState/uiState.type";
+  import { UIState, UIStateScope } from "@21n/stores/uiState/uiState.type";
   import PanelSwitcher from "@21n/elements/switcher/PanelSwitcher.svelte";
-  import {
-    BarStyle,
-    PanelSwitcherStyle
-  } from "@21n/types/switcher.enum";
+  import { BarStyle, PanelSwitcherStyle } from "@21n/types/switcher.enum";
   import Divider from "@21n/elements/Divider.svelte";
   import {
     GoalStatus,
@@ -93,7 +90,7 @@
   });
 
   async function resolveRecentGoals() {
-    const state = uiState.getState(UIState.manualLogRecentGoals);
+    const state = uiState.getState(UIState.manualLogRecentObjectives);
     if (state) {
       const result = await goalStore.selectMany(
         {
@@ -135,8 +132,8 @@
 
   function addToRecentGoals(goal: IGoal) {
     uiState.setState(
-      UIState.manualLogRecentGoals,
-      [goal.id, ...(uiState.getState(UIState.manualLogRecentGoals) ?? [])]
+      UIState.manualLogRecentObjectives,
+      [goal.id, ...(uiState.getState(UIState.manualLogRecentObjectives) ?? [])]
         .filter(removeDuplicatesFilter)
         .slice(0, 5)
     );
@@ -388,7 +385,7 @@
   {/if}
   <div class="flex flex-col gap-6">
     <div class="flex justify-start">
-        <PanelSwitcher
+      <PanelSwitcher
         items={[
           { label: "Duration", value: "duration" },
           { label: "Start and End", value: "startEnd" }
@@ -446,11 +443,7 @@
   <div class="flex flex-col">
     <Divider />
     <div class="px-4 xl:px-4 py-3">
-      <FocusNotes
-        bind:md={notes}
-        isHideTitle={true}
-        placeholder="Add notes"
-      />
+      <FocusNotes bind:md={notes} isHideTitle={true} placeholder="Add notes" />
     </div>
   </div>
 </div>

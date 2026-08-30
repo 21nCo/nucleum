@@ -9,16 +9,9 @@ import { resourceInList } from "@21n/components/flux/resourceStores/resource.uti
 import type { IRecentsStore } from "@21n/components/record/record.type";
 import { rootNodeTypeList } from "@21n/products/memotron/node/node.type";
 import { logger } from "@21n/components/debug/logger.client";
-import type { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
-import { resolveResourceStore } from "@21n/components/flux/resourceStores/store.resolver";
 import { appStore } from "@21n/stores/app.store";
+import { datafn } from "@21n/stores/datafn.store";
 import { get } from "svelte/store";
-
-function hasSelectMany(
-  store: ReturnType<typeof resolveResourceStore>
-): store is ResourceStore<any, any> {
-  return Boolean(store && "selectMany" in store);
-}
 
 function resolveTimestamp(value: unknown): Date | null {
   if (value instanceof Date) {
@@ -46,7 +39,7 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
         recents = [
           ...recents,
           ...data.flatMap((x) => {
-            const timestamp = resolveTimestamp(x.modifiedAt);
+            const timestamp = resolveTimestamp(x.updatedAt ?? x.modifiedAt);
             if (!timestamp) return [];
             return [
               {
@@ -76,8 +69,8 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
   }
 
   resolve(params?: { type?: Resource; exclude?: IRecordId[] }) {
-    const recents = this.get().recents
-      .map((entry) => ({
+    const recents = this.get()
+      .recents.map((entry) => ({
         ...entry,
         timestamp: resolveTimestamp(entry.timestamp)
       }))
@@ -131,23 +124,14 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
   }
 
   private async recentResources(resource: Resource) {
-    const resourceStore = resolveResourceStore(resource);
-    if (!hasSelectMany(resourceStore)) {
-      return [];
-    }
-    const result = await resourceStore.selectMany(
-      {
-        orderBy: {
-          modifiedAt: "desc"
-        },
-        limit: this.LIMIT
-      },
-      {
-        isExpand: true
-      }
-    );
+    const datafnResource =
+      resource === Resource.goal ? "objective" : resource.toString();
+    const result = await datafn.table(datafnResource).query({
+      sort: ["-updatedAt"],
+      limit: this.LIMIT
+    });
     logger.log({ at: "recentResources", resource, result });
-    return result;
+    return result.data;
   }
 }
 

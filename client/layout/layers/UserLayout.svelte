@@ -27,7 +27,7 @@
   import { hTrail } from "../topNav/tabs/tabs.store";
   import Trail from "../trail/Trail.svelte";
   import type { IAction } from "@21n/types/action.type";
-  import { AccessMode } from "@21n/data/datafn/resource.type";
+  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
   import type { IRecordId } from "@21n/types/data.type";
   import ResourceResolver from "../paint/ResourceResolver.svelte";
   import { GlobalEvent } from "@21n/types/event.enum";
@@ -158,9 +158,6 @@
             {#if $context.embed !== Embed.HANDSET && !isHideLeftNavBar && !isMaxMode}
               <LeftNav variant="fixed" isHidePanel={!!pop || !!mainPath} />
             {/if}
-            {#if !$view.isConstrainedWidth && rightPanel}
-              <RightPanel action={rightPanel} />
-            {/if}
             <div class="min-w-0 flex-grow relative">
               {#if mainPath}
                 <div class="absolute inset-0 w-full h-full bg-bgs1 z-40">
@@ -183,7 +180,7 @@
                 <!-- {:else if $vTrail.items.length > 0 && $vTrail.activated && (!isRecordId($vTrail.base) || (isRecordId($vTrail.base) && $vTrail.activated !== $vTrail.base))}
                 <TrailContent /> -->
               {:else}
-                <AppSplitView isBottomBarAbsent={isHomePage}>
+                <AppSplitView>
                   {@render main?.()}
                   {#if !main}
                     {@render children?.()}
@@ -191,13 +188,16 @@
                 </AppSplitView>
               {/if}
             </div>
+            {#if !$view.isConstrainedWidth && rightPanel}
+              <RightPanel action={rightPanel} />
+            {/if}
           </div>
           <!-- TODO: Re-enable this hiding of bottom nav when home page is built and all tests that depend on command bar button being visible are updated. -->
           <!-- {#if !$view.isPortrait && !isHomePage && !isMaxMode}
             <TopNav topnav={topnavContent} />
           {/if} -->
 
-          {#if $hTrail.path.length > 0}
+          {#if $hTrail.path.length > 0 && !isHomePage}
             <BottomNav />
           {/if}
         </div>

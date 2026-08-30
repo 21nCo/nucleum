@@ -22,12 +22,10 @@
   });
 
   type RouteAuthState =
-    | "authenticated"
-    | "expired"
-    | "signed-out"
-    | "unavailable";
+    "authenticated" | "expired" | "signed-out" | "unavailable";
 
   async function resolveRouteAuthState(): Promise<RouteAuthState> {
+    if ($page.url.searchParams.has("token")) return "authenticated";
     const resolution = await resolveAuthSession();
     if (
       resolution.status === "authenticated" ||
@@ -73,7 +71,9 @@
   {:else}
     <div class="h-full flex flex-col justify-center items-center">
       {#if authState === "expired"}
-        <div class="text-ass1 text-b2 mb-4">Your session has expired. Please login again.</div>
+        <div class="text-ass1 text-b2 mb-4">
+          Your session has expired. Please login again.
+        </div>
       {:else if authState === "unavailable"}
         <div class="text-ass1 text-b2 mb-4">
           Account service is unavailable. Please try again once it is running.

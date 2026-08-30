@@ -20,12 +20,14 @@
 
   let { date }: { date: Date } = $props();
   let isLoading = $state(false);
-  let logs = $state<{
-    action: string;
-    timestamp: Date;
-    resourceLabel?: string;
-    resourceId?: IRecordId | IRecordId[];
-  }[]>([]);
+  let logs = $state<
+    {
+      action: string;
+      timestamp: Date;
+      resourceLabel?: string;
+      resourceId?: IRecordId | IRecordId[];
+    }[]
+  >([]);
 
   $effect(() => {
     if (date) {
@@ -82,7 +84,10 @@
           Resource.session
         ).select({
           filters: {
-            startUnix: dayFilter
+            startUnix: {
+              greaterThanOrEqual: dayFilter.$gte,
+              lessThanOrEqual: dayFilter.$lte
+            }
           }
         });
         if (isValidArrayWithData(focusSessionsResult)) {
@@ -96,7 +101,9 @@
           );
         }
       }
-      logs = nextLogs.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      logs = nextLogs.sort(
+        (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+      );
       isLoading = false;
     } catch (e) {
       logger.error({ at: "CalendarAllActivityPanel.refresh", e });

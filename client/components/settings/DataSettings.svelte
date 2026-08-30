@@ -40,6 +40,7 @@
   import {
     detectLegacyLocalData,
     exportLegacyLocalData,
+    resolveLegacyImportableRecordCount,
     type LegacyLocalDataSummary
   } from "@21n/persistence/legacyLocalDataBackup";
   import { onMount } from "svelte";
@@ -62,20 +63,10 @@
   const canManageE2ee = $derived(
     $datafnRuntime?.mode === "sync" || $datafnRuntime?.mode === "sync-direct"
   );
-  const hasLegacyLocalData = $derived(
-    Boolean(legacyLocalDataSummary?.databases.length)
-  );
   const legacyLocalRecordCount = $derived(
-    legacyLocalDataSummary?.databases.reduce(
-      (databaseTotal, database) =>
-        databaseTotal +
-        database.stores.reduce(
-          (storeTotal, store) => storeTotal + store.count,
-          0
-        ),
-      0
-    ) ?? 0
+    resolveLegacyImportableRecordCount(legacyLocalDataSummary)
   );
+  const hasLegacyLocalData = $derived(legacyLocalRecordCount > 0);
 
   onMount(() => {
     void refreshLegacyLocalDataSummary();

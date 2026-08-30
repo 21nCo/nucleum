@@ -49,6 +49,9 @@
   import { UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { parse, stringify } from "@21n/shared-utils/json.utils";
   import { parseAndFormatDate } from "@21n/utils/time.utils";
+  import { recentsStore } from "@21n/components/record/recent.store";
+  import { resolveProductResources } from "@21n/components/flux/resourceStores/resource.utils";
+  import InMemoryCache from "@21n/layout/layers/cache/InMemoryCache.svelte";
   import {
     datafn,
     nucleumDatafnStatus,
@@ -148,15 +151,16 @@
 
   async function prepareLegacyLocalDataRecoveryGate() {
     if ($context.isSheet || isExtensionEnvironment()) return false;
-    const decision = await getLegacyLocalDataRecoveryDecision(
-      $appStore.product
-    );
-    if (decision) return false;
     try {
       const summary = await detectLegacyLocalData($appStore.product);
       if (!summary.isSupported || !hasRecoverableLegacyLocalData(summary)) {
         return false;
       }
+      const decision = await getLegacyLocalDataRecoveryDecision(
+        $appStore.product,
+        summary
+      );
+      if (decision) return false;
       legacyLocalDataSummary = summary;
       legacyRecoveryMode = "required";
       return true;
@@ -178,7 +182,12 @@
 
   async function completeApplicationStartup() {
     if (isStartupCompleted) return;
-    await initializeUserConfig();
+    await Promise.all([
+      initializeUserConfig(),
+      recentsStore.refresh(
+        resolveProductResources($appStore.product, "search") ?? []
+      )
+    ]);
     $appLoadingState.isBaseLoaded = true;
     isStartupCompleted = true;
     if (typeof onReady === "function") {
@@ -208,6 +217,7 @@
     try {
       const backup = await exportLegacyLocalData($appStore.product);
       if (!backup?.databases.length) {
+        legacyRecoveryMode = null;
         const runtime = await initializeDatabase();
         if (runtime) {
           await completeApplicationStartup();
@@ -219,16 +229,19 @@
       });
       if (!runtime) return;
       const importStats = await importLegacyLocalDataBackup(runtime, backup);
-      await saveLegacyLocalDataRecoveryDecision({
-        version: 1,
-        product: $appStore.product,
-        action: "import_old_data",
-        decidedAt: new Date().toISOString(),
-        backupExportedAt: backup.exportedAt,
-        sourceRecordCount: resolveLegacyLocalDataRecordCount(backup),
-        importedResourceCount: importStats.resources,
-        importedJoinCount: importStats.joins
-      });
+      await saveLegacyLocalDataRecoveryDecision(
+        {
+          version: 1,
+          product: $appStore.product,
+          action: "import_old_data",
+          decidedAt: new Date().toISOString(),
+          backupExportedAt: backup.exportedAt,
+          sourceRecordCount: resolveLegacyLocalDataRecordCount(backup),
+          importedResourceCount: importStats.resources,
+          importedJoinCount: importStats.joins
+        },
+        backup
+      );
       legacyRecoveryMode = null;
       toasts.success("Old local data imported successfully");
       await completeApplicationStartup();
@@ -248,14 +261,17 @@
       const backup = await exportLegacyLocalData($appStore.product);
       if (backup?.databases.length) {
         downloadLegacyLocalBackup(backup);
-        await saveLegacyLocalDataRecoveryDecision({
-          version: 1,
-          product: $appStore.product,
-          action: "download_backup_continue",
-          decidedAt: new Date().toISOString(),
-          backupExportedAt: backup.exportedAt,
-          sourceRecordCount: resolveLegacyLocalDataRecordCount(backup)
-        });
+        await saveLegacyLocalDataRecoveryDecision(
+          {
+            version: 1,
+            product: $appStore.product,
+            action: "download_backup_continue",
+            decidedAt: new Date().toISOString(),
+            backupExportedAt: backup.exportedAt,
+            sourceRecordCount: resolveLegacyLocalDataRecordCount(backup)
+          },
+          backup
+        );
         toasts.success("Legacy local backup downloaded successfully");
       }
       legacyRecoveryMode = null;
@@ -274,18 +290,31 @@
     if (!runtime.storage) {
       throw new Error("Local DataFn storage is required for legacy import");
     }
-    const payload = convertLegacyLocalDataBackupToDatafnImport(backup);
-    const result = (await datafn.importData(payload, {
-      triggerCloneUp: runtime.mode === "sync"
-    })) as DatafnImportResultLike;
-    if (!result?.ok) {
-      throw new Error(
-        result?.errors?.[0]?.message ?? "DataFn legacy import failed"
-      );
+    const { kv = {}, ...payload } =
+      convertLegacyLocalDataBackupToDatafnImport(backup);
+    const hasStructuredRows =
+      Object.values(payload.resources).some((records) => records.length > 0) ||
+      Object.values(payload.joins ?? {}).some((records) => records.length > 0);
+    let result: DatafnImportResultLike = { ok: true };
+    if (hasStructuredRows) {
+      result = (await datafn.importData(payload, {
+        triggerCloneUp: runtime.mode === "sync"
+      })) as DatafnImportResultLike;
+      if (!result?.ok) {
+        throw new Error(
+          result?.errors?.[0]?.message ?? "DataFn legacy import failed"
+        );
+      }
+    }
+    for (const [key, value] of Object.entries(kv)) {
+      const kvResult = await datafn.kv.set(key, value);
+      if (!kvResult.ok) throw kvResult.error;
     }
     await refreshNucleumDatafnStatus();
     return {
-      resources: countImportedDatafnRows(result.stats?.resources),
+      resources:
+        countImportedDatafnRows(result.stats?.resources) +
+        Object.keys(kv).length,
       joins: countImportedDatafnRows(result.stats?.joins)
     };
   }
@@ -535,6 +564,8 @@
 
   function handleAddToRecents(event: any) {
     logger.log({ at: "handleAddToRecents", event });
+    const { record, type, timestamp } = event.detail;
+    recentsStore.add(record, { type, timestamp });
   }
 
   async function handleMessageFromParent(event: any) {
@@ -691,5 +722,8 @@
   <ModalLayer />
   <ShortcutRunner />
   <SyncLayer />
+  {#if $appLoadingState.isLocalLoaded}
+    <InMemoryCache />
+  {/if}
 {/if}
 <Intercom />
