@@ -70,6 +70,7 @@ export function createAccountEventSink(logger: Logger): AccountEventSink {
       message: `${event.domain} event`,
       payload: debugPayload,
       requestId: event.requestId,
+      userId: event.userId,
       tags: [event.domain, event.type]
     });
 

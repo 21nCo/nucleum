@@ -8,6 +8,30 @@ type SecurityEventType =
   | 'unauthorized_access'
   | 'suspicious_activity';
 
+const SECURITY_EVENT_TYPES = new Set<AuthFnEvent['type']>([
+  'authfn.account_linking.conflict',
+  'authfn.password.signup.rollback_failed',
+  'authfn.session.revoked',
+  'authfn.otp.signup.rollback_failed',
+  'authfn.oauth.failed',
+  'authfn.api_key.revoked',
+  'authfn.region.lookup.conflict',
+  'authfn.routing.mismatch',
+  'authfn.routing.assertion_rejected',
+  'authfn.handoff.failed',
+  'authfn.rate_limited',
+  'authfn.request.failed',
+  'authfn.plugin.failed'
+]);
+
+const HIGH_SEVERITY_EVENT_TYPES = new Set<AuthFnEvent['type']>([
+  'authfn.account_linking.conflict',
+  'authfn.region.lookup.conflict',
+  'authfn.routing.mismatch',
+  'authfn.routing.assertion_rejected',
+  'authfn.handoff.failed'
+]);
+
 export type AccountSecurityAuditSink = (
   event: AuthFnEvent
 ) => Promise<void> | void;
@@ -36,16 +60,13 @@ export function createAccountSecurityAuditSink(logger: Logger): AccountSecurityA
 }
 
 export function isAuthFnSecurityEvent(event: AuthFnEvent): boolean {
-  return event.type.includes('failed')
-    || event.type.includes('revoked')
-    || event.type.includes('rate')
-    || event.type.includes('region')
-    || event.type.includes('handoff')
-    || event.type.includes('otp');
+  return SECURITY_EVENT_TYPES.has(event.type);
 }
 
-function severityForAuthEvent(type: string): 'low' | 'medium' | 'high' | 'critical' {
-  if (type.includes('handoff.failed') || type.includes('region.lookup.conflict')) {
+function severityForAuthEvent(
+  type: AuthFnEvent['type']
+): 'low' | 'medium' | 'high' | 'critical' {
+  if (HIGH_SEVERITY_EVENT_TYPES.has(type)) {
     return 'high';
   }
   if (type.includes('failed') || type.includes('revoked')) {
@@ -54,7 +75,9 @@ function severityForAuthEvent(type: string): 'low' | 'medium' | 'high' | 'critic
   return 'low';
 }
 
-function securityEventTypeForAuthEvent(type: string): SecurityEventType {
+function securityEventTypeForAuthEvent(
+  type: AuthFnEvent['type']
+): SecurityEventType {
   if (type.includes('rate')) {
     return 'rate_limit_exceeded';
   }

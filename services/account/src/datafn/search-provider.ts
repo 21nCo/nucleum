@@ -20,6 +20,7 @@ export function createSyncSearchProvider(
   if (!node) {
     return undefined;
   }
+  requireSecureOpenSearchUrl(node);
   const apiKey = process.env.DATAFN_OPENSEARCH_API_KEY;
   const username = process.env.DATAFN_OPENSEARCH_USERNAME;
   const password = process.env.DATAFN_OPENSEARCH_PASSWORD;
@@ -65,4 +66,16 @@ export function createSyncSearchProvider(
       observability: input.observability
     }
   );
+}
+
+function requireSecureOpenSearchUrl(value: string): void {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error('DATAFN_OPENSEARCH_URL must be a valid HTTPS URL');
+  }
+  if (url.protocol !== 'https:') {
+    throw new Error('DATAFN_OPENSEARCH_URL must use HTTPS');
+  }
 }

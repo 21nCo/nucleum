@@ -6,7 +6,7 @@ import type { Hono } from "hono";
  * and reset in-memory state between cases.
  */
 export interface AccountTestControlSurface {
-  getOutboxMessages(): unknown[];
+  getLatestOutboxMessage(identifier?: string): unknown | null;
   getEvents(): unknown[];
   reset(): Promise<void> | void;
 }
@@ -22,29 +22,10 @@ export function registerTestRoutes(
 ): void {
   app.get("/__test/outbox/latest", (c) => {
     const identifier = c.req.query("identifier")?.trim().toLowerCase();
-    const messages = control?.getOutboxMessages() ?? [];
-    const matched = identifier
-      ? messages.filter((message) => {
-          const record = message as {
-            email?: unknown;
-            to?: unknown;
-            identifier?: unknown;
-          };
-          const value =
-            typeof record.email === "string"
-              ? record.email
-              : typeof record.to === "string"
-                ? record.to
-                : typeof record.identifier === "string"
-                  ? record.identifier
-                  : undefined;
-          return value?.trim().toLowerCase() === identifier;
-        })
-      : messages;
 
     return c.json({
       ok: true,
-      message: matched.at(-1) ?? null
+      message: control?.getLatestOutboxMessage(identifier) ?? null
     });
   });
 

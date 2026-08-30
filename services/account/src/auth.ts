@@ -86,7 +86,7 @@ export function createAccountAuth(input: CreateAccountAuthInput): AuthFnServer {
     lookupStore: input.regionLookupStore ?? createAccountLookupStore(),
     observability: input.observability
   };
-  return accountAuthApp.createServer({
+  return accountAuthfn().createServer({
     database: input.database,
     stores: input.stores,
     rateLimit:
@@ -120,8 +120,6 @@ export function createAccountAuth(input: CreateAccountAuthInput): AuthFnServer {
     }
   });
 }
-
-export const accountAuthApp = accountAuthfn();
 
 function resolveCookieSecure(authority: string): boolean {
   const explicit = readBoolean(process.env.AUTHFN_COOKIE_SECURE);

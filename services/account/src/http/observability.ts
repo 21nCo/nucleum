@@ -112,7 +112,7 @@ export function createAccountRequestObservationMiddleware(
                     },
               workerColo: options.workerColo
             },
-            requestId: c.res.headers.get("x-request-id") ?? undefined,
+            requestId: request.headers.get("x-request-id") ?? undefined,
             tags: ["account-request"]
           });
         }

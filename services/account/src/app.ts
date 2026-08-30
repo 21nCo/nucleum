@@ -50,10 +50,12 @@ export interface AccountInfra {
 
 /** Deployment-specific configuration that varies per runtime (node, worker, tests). */
 export interface AccountDeployment {
+  regionId?: string;
   regions?: AuthFnMultiRegionRegionConfig[];
   regionLookupStore?: ConditionalKVStoreAdapter;
   corsOrigins?: string[];
   observability?: SuperfunctionObservability<AccountObservationEvent>;
+  resolveClientIp?: AuthFnRateLimitConfig["resolveClientIp"];
   workerColo?: string;
 }
 
@@ -86,6 +88,7 @@ export interface AccountServices {
   infra: AccountInfra;
   deployment: AccountDeployment;
   integrations: AccountIntegrations;
+  close(): Promise<void>;
 }
 
 /**
@@ -105,7 +108,24 @@ export function buildAccountServices(
   const observability =
     deployment.observability ??
     createObservability(infra.logger, integrations.eventSink);
-  const regionId = process.env.ACCOUNT_REGION_ID ?? "local";
+  const regionId =
+    deployment.regionId ??
+    process.env.ACCOUNT_REGION_ID ??
+    deployment.regions?.[0]?.regionId ??
+    "local";
+  const authRateLimit: AuthFnRateLimitConfig =
+    integrations.authRateLimit === false
+      ? { enabled: false }
+      : {
+          enabled: true,
+          mode: infra.stores.atomicKv
+            ? "strict"
+            : infra.stores.kv
+              ? "best-effort"
+              : "local",
+          resolveClientIp: deployment.resolveClientIp,
+          ...integrations.authRateLimit
+        };
   const auth = createAccountAuth({
     database: infra.database,
     stores: infra.stores,
@@ -121,10 +141,7 @@ export function buildAccountServices(
     regionLookupStore: deployment.regionLookupStore,
     oauthProviders: integrations.oauthProviders,
     oauthPlugin: integrations.oauthPlugin,
-    rateLimit:
-      integrations.authRateLimit === false
-        ? { enabled: false }
-        : integrations.authRateLimit,
+    rateLimit: authRateLimit,
     observability
   });
   let syncServer: Promise<SyncServer> | undefined;
@@ -132,7 +149,10 @@ export function buildAccountServices(
     syncServer ??= resolveSyncDatabase(infra.syncDatabase)
       .then((syncDatabase) =>
         createSyncServer({
-          auth: auth.provider,
+          auth: {
+            authenticate: (request) => auth.provider.authenticate(request),
+            authorizeMutation: (request) => auth.authorizeMutation(request)
+          },
           database: syncDatabase,
           stores: infra.stores,
           regionId,
@@ -147,6 +167,15 @@ export function buildAccountServices(
       });
     return syncServer;
   };
+  const close = async (): Promise<void> => {
+    const current = syncServer;
+    syncServer = undefined;
+    if (!current) {
+      return;
+    }
+    const server = await current.catch(() => undefined);
+    await server?.close();
+  };
 
   return {
     auth,
@@ -156,7 +185,8 @@ export function buildAccountServices(
     observability,
     infra,
     deployment,
-    integrations
+    integrations,
+    close
   };
 }
 

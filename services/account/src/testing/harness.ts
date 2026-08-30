@@ -90,7 +90,7 @@ export function createAccountTestHarness(
   const authEvents: AuthFnEvent[] = [];
 
   const control: AccountTestControlSurface = {
-    getOutboxMessages: () => delivery.messages(),
+    getLatestOutboxMessage: (identifier) => delivery.latest(identifier),
     getEvents: () => [...authEvents, ...logger.events()],
     reset: async () => {
       delivery.clear();
@@ -124,6 +124,7 @@ export function createAccountTestHarness(
       })
     },
     deployment: {
+      regionId,
       regionLookupStore,
       regions,
       corsOrigins: input.corsOrigins

@@ -30,6 +30,7 @@ export interface AccountDebugSinkLog {
   message?: unknown;
   payload?: unknown;
   requestId?: string;
+  userId?: string;
   tags?: unknown;
 }
 
@@ -51,6 +52,7 @@ export function sendAccountDebugLog(log: AccountDebugSinkLog): void {
     message: log.message,
     payload: log.payload ?? log.message,
     requestId: log.requestId,
+    userId: log.userId,
     route: log.route,
     tags: log.tags
   }));

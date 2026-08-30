@@ -3,6 +3,7 @@ import {
   datafnMultiRegionPlugin,
   datafn,
   type DatafnApp,
+  type DataFnAction,
   type DatafnPublicLinksPlugin,
   type DatafnPublicLinkPrincipal,
   type RateLimitConfig,
@@ -30,6 +31,7 @@ export interface SyncContext {
 
 export interface SyncAuthProvider {
   authenticate(request: Request): Promise<AuthFnSession | null> | AuthFnSession | null;
+  authorizeMutation(request: Request): Promise<AuthFnSession>;
 }
 
 export interface CreateSyncServerInput {
@@ -72,7 +74,7 @@ export function createSyncServer(
 ): Promise<SyncServer> {
   const app = syncApp;
   const runtimePublicLinks = createDatafnPublicLinksPlugin<AuthFnSession>({
-    authenticateOwner: (request) => input.auth.authenticate(request),
+    authenticateOwner: (request) => authorizeMutationRequest(input.auth, request),
     getOwnerActorId: (session) => session.actorId,
     getOwnerNamespace: (actorId) => resolveAccountUserNamespace(actorId),
     directory: input.stores?.directory,
@@ -100,10 +102,13 @@ export function createSyncServer(
     }),
     allowUnknownResources: false,
     context: async (request) => {
-      const session = await input.auth.authenticate(request);
-      const publicLink = session
+      const publicLinkToken = publicLinks.readToken(request);
+      const publicLink = publicLinkToken
+        ? await publicLinks.resolve(input.database, publicLinkToken)
+        : null;
+      const session = publicLinkToken
         ? null
-        : await publicLinks.resolve(input.database, publicLinks.readToken(request));
+        : await input.auth.authenticate(request);
       return {
         request,
         session,
@@ -111,8 +116,11 @@ export function createSyncServer(
         regionId: input.regionId ?? process.env.ACCOUNT_REGION_ID
       };
     },
-    authorize: (ctx) => {
-      if (ctx.session) return true;
+    authorize: async (ctx, action) => {
+      if (ctx.session) {
+        if (!MUTATING_DATAFN_ACTIONS.has(action)) return true;
+        return Boolean(await authorizeMutationRequest(input.auth, ctx.request));
+      }
       if (!ctx.publicLink) return false;
       return true;
     },
@@ -127,7 +135,8 @@ export function createSyncServer(
       getActorId: (ctx) => ctx.publicLink?.actorId ?? requireActorId(ctx)
     },
     limits: {
-      maxPayloadBytes: Number(process.env.DATAFN_MAX_PAYLOAD_BYTES ?? 5_242_880)
+      maxPayloadBytes:
+        readPositiveIntegerEnv('DATAFN_MAX_PAYLOAD_BYTES') ?? 5_242_880
     },
     rateLimit: input.rateLimit === false
       ? undefined
@@ -176,9 +185,10 @@ function createDefaultRateLimit(
 function readPositiveIntegerEnv(name: string): number | undefined {
   const value = process.env[name]?.trim();
   if (!value) return undefined;
+  if (!/^\d+$/.test(value)) return undefined;
   const parsed = Number(value);
-  if (!Number.isFinite(parsed) || parsed <= 0) return undefined;
-  return Math.floor(parsed);
+  if (!Number.isSafeInteger(parsed) || parsed <= 0) return undefined;
+  return parsed;
 }
 
 export default syncApp;
@@ -189,4 +199,23 @@ function requireActorId(ctx: SyncContext): string {
     throw new Error('AuthFn session actor is required');
   }
   return actorId;
+}
+
+const MUTATING_DATAFN_ACTIONS = new Set<DataFnAction>([
+  'mutation',
+  'transact',
+  'seed',
+  'push',
+  'reconcile'
+]);
+
+async function authorizeMutationRequest(
+  auth: SyncAuthProvider,
+  request: Request
+): Promise<AuthFnSession | null> {
+  try {
+    return await auth.authorizeMutation(request);
+  } catch {
+    return null;
+  }
 }

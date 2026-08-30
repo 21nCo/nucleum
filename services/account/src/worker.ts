@@ -1,5 +1,6 @@
 import { createAsyncLocalRequestContext } from "@superfunctions/observability/node";
-import { createApp } from "./app.js";
+import { Hono } from "hono";
+import { buildAccountServices, registerCoreRoutes } from "./app.js";
 import {
   createCloudflareDatabase,
   type AccountWorkerEnv,
@@ -54,7 +55,7 @@ export default {
     const regionLookupStore = env.AUTHFN_REGION_LOOKUP
       ? createAccountCloudflareLookupStore(env.AUTHFN_REGION_LOOKUP)
       : undefined;
-    const app = createApp({
+    const services = buildAccountServices({
       infra: {
         database: database.adapter,
         syncDatabase: () => {
@@ -67,15 +68,25 @@ export default {
       deployment: {
         regionLookupStore,
         observability,
+        resolveClientIp: readCloudflareClientIp,
         workerColo
       }
     });
+    const app = new Hono();
+    registerCoreRoutes(app, services);
 
     try {
       return await app.fetch(request, env);
     } finally {
-      await syncDatabase?.close();
-      await database.close();
+      try {
+        await services.close();
+      } finally {
+        try {
+          await syncDatabase?.close();
+        } finally {
+          await database.close();
+        }
+      }
     }
   }
 };
@@ -118,4 +129,8 @@ function readWorkerColo(request: Request): string | undefined {
     }
   ).cf;
   return typeof cf?.colo === "string" ? cf.colo : undefined;
+}
+
+function readCloudflareClientIp(request: Request): string | undefined {
+  return request.headers.get("cf-connecting-ip")?.trim() || undefined;
 }
