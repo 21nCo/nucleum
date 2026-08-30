@@ -3,6 +3,7 @@ import type { Adapter } from "@superfunctions/db";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as datafnSchema from "./generated/datafn/datafn-schema.drizzle.js";
+import { requireSecureRemotePostgresUrl } from "./postgres-security.js";
 
 interface DatafnSyncDatabase {
   adapter: Adapter;
@@ -17,6 +18,7 @@ export function createNodeSyncDatabase(
       "DATAFN_DATABASE_URL is required for services/account sync"
     );
   }
+  requireSecureRemotePostgresUrl(databaseUrl);
 
   const sql = postgres(databaseUrl, {
     max: Number(

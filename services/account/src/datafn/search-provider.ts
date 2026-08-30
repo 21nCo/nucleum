@@ -5,6 +5,10 @@ import {
   nucleumDatafnSearchDefaults,
   resolveNucleumDatafnSearchResourceFields
 } from '@21n/shared-data/datafn';
+import {
+  readNonNegativeIntegerEnv,
+  readPositiveIntegerEnv
+} from './env.js';
 
 /** Dependencies used to create account-service search integration. */
 export interface CreateSyncSearchProviderInput {
@@ -45,13 +49,16 @@ export function createSyncSearchProvider(
       auth,
       indexPrefix,
       defaults: nucleumDatafnSearchDefaults,
-      requestTimeoutMs: Number(
-        process.env.DATAFN_OPENSEARCH_REQUEST_TIMEOUT_MS ?? 30_000
-      ),
+      requestTimeoutMs:
+        readPositiveIntegerEnv('DATAFN_OPENSEARCH_REQUEST_TIMEOUT_MS') ??
+        30_000,
       retry: {
-        maxRetries: Number(process.env.DATAFN_OPENSEARCH_MAX_RETRIES ?? 2),
-        baseDelayMs: Number(process.env.DATAFN_OPENSEARCH_RETRY_BASE_MS ?? 100),
-        maxDelayMs: Number(process.env.DATAFN_OPENSEARCH_RETRY_MAX_MS ?? 5_000)
+        maxRetries:
+          readNonNegativeIntegerEnv('DATAFN_OPENSEARCH_MAX_RETRIES') ?? 2,
+        baseDelayMs:
+          readPositiveIntegerEnv('DATAFN_OPENSEARCH_RETRY_BASE_MS') ?? 100,
+        maxDelayMs:
+          readPositiveIntegerEnv('DATAFN_OPENSEARCH_RETRY_MAX_MS') ?? 5_000
       },
       logger: logger
         ? {

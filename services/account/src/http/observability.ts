@@ -9,21 +9,20 @@ import {
   roundObservationMs
 } from "@superfunctions/observability";
 import type { Logger } from "@logfn/core";
+import type { AccountDebugSinkLog } from "../debug-sink.js";
 import type { AccountObservationEvent } from "../observability/events.js";
+
+type AccountRequestDebugLog = Required<
+  Pick<AccountDebugSinkLog, "level" | "route" | "message" | "payload" | "tags">
+> &
+  Pick<AccountDebugSinkLog, "requestId">;
 
 export interface AccountRequestObservationOptions {
   observability: SuperfunctionObservability<AccountObservationEvent>;
   logger: Logger;
   regionId: string;
   workerColo?: string;
-  sendDebugLog(input: {
-    level: "info" | "warn" | "error";
-    route: string;
-    message: string;
-    payload: Record<string, unknown>;
-    requestId?: string;
-    tags: string[];
-  }): void | Promise<void>;
+  sendDebugLog(input: AccountRequestDebugLog): void | Promise<void>;
 }
 
 /** Creates account-service request observation, latency headers, and request logging middleware. */

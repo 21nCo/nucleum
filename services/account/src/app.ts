@@ -11,7 +11,7 @@ import type {
 import type {
   AuthFnMultiRegionRegionConfig
 } from "@authfn/multi-region";
-import type { RateLimitConfig } from "@datafn/server";
+import type { RateLimitConfig, SearchProvider } from "@datafn/server";
 import type {
   AuthFnSocialProviderConfig,
   SocialOAuthPluginRuntimeConfig
@@ -30,7 +30,6 @@ import {
 } from "./observability/events.js";
 import { sendAccountDebugLog } from "./debug-sink.js";
 import { createSyncServer } from "./datafn/server.js";
-import type { SearchProvider } from "@datafn/server";
 import type { SyncServer } from "./datafn/server.js";
 import { registerAccountDatafnRoutes } from "./datafn/routes.js";
 import { createAccountRequestObservationMiddleware } from "./http/observability.js";

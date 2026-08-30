@@ -48,11 +48,26 @@ const shutdown = async () => {
   }
   shuttingDown = true;
   logger.info("nucleus account service shutting down");
-  await closeServer(server);
-  await services.close();
-  await syncDatabase?.close();
-  await database.close();
-  process.exit(0);
+  try {
+    try {
+      await closeServer(server);
+    } catch (error) {
+      logger.error("nucleus account server close failed", { error });
+    }
+    try {
+      await services.close();
+    } finally {
+      try {
+        await syncDatabase?.close();
+      } finally {
+        await database.close();
+      }
+    }
+  } catch (error) {
+    logger.error("nucleus account shutdown cleanup failed", { error });
+  } finally {
+    process.exit(0);
+  }
 };
 
 process.once("SIGINT", () => void shutdown());

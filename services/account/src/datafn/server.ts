@@ -16,6 +16,7 @@ import type { SuperfunctionObservability } from '@superfunctions/observability';
 import { nucleumDatafnSchema } from '@21n/shared-data/datafn/schema.datafn';
 import { createSyncSearchProvider } from './search-provider.js';
 import { resolveAccountUserNamespace } from './namespace.js';
+import { readPositiveIntegerEnv } from './env.js';
 
 export {
   resolveAccountUserNamespace,
@@ -180,15 +181,6 @@ function createDefaultRateLimit(
       seed: { maxRequests: 10, windowSeconds: 60 }
     }
   };
-}
-
-function readPositiveIntegerEnv(name: string): number | undefined {
-  const value = process.env[name]?.trim();
-  if (!value) return undefined;
-  if (!/^\d+$/.test(value)) return undefined;
-  const parsed = Number(value);
-  if (!Number.isSafeInteger(parsed) || parsed <= 0) return undefined;
-  return parsed;
 }
 
 export default syncApp;
