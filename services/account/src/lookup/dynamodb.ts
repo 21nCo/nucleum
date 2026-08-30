@@ -1,7 +1,7 @@
 import { createDynamoDbRegionLookupStore } from '@authfn/lookup-dynamodb';
-import type { AuthFnRegionLookupStore } from '@authfn/core';
+import type { ConditionalKVStoreAdapter } from '@superfunctions/db';
 
-export function createAccountLookupStore(): AuthFnRegionLookupStore | undefined {
+export function createAccountLookupStore(): ConditionalKVStoreAdapter | undefined {
   const tableName = process.env.AUTHFN_REGION_LOOKUP_TABLE;
   if (!tableName) {
     return undefined;

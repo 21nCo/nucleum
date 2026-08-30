@@ -30,6 +30,12 @@ if (missing.length > 0) {
 
 const wranglerConfig = renderWranglerConfig(serviceRoot, config, environment);
 
+if (!dryRun) {
+  for (const region of regions) {
+    migrateDatafnDatabase(region);
+  }
+}
+
 run('npm', ['run', 'build']);
 run('wrangler', ['deploy', '--config', wranglerConfig, '--env', envConfig.lookupWorkerEnv, ...(dryRun ? ['--dry-run'] : [])]);
 
@@ -38,12 +44,29 @@ for (const region of regions) {
   run('wrangler', ['deploy', '--config', wranglerConfig, '--env', wranglerEnv, ...(dryRun ? ['--dry-run'] : [])]);
 }
 
-function run(command, args) {
+function migrateDatafnDatabase(region) {
+  const variable = `DATAFN_${region}_DATABASE_URL`
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '_');
+  const databaseUrl = process.env[variable]?.trim();
+  if (!databaseUrl) {
+    console.error(`Cannot deploy ${environment}/${region}; set the ${variable} secret.`);
+    process.exit(1);
+  }
+  run('npm', ['run', 'datafn:migrate'], {
+    DATAFN_DATABASE_URL: databaseUrl
+  });
+}
+
+function run(command, args, env = {}) {
   console.log(`\n$ ${command} ${args.join(' ')}`);
   const result = spawnSync(command, args, {
     cwd: serviceRoot,
     stdio: 'inherit',
-    env: process.env,
+    env: {
+      ...process.env,
+      ...env
+    },
     shell: process.platform === 'win32'
   });
   if (result.status !== 0) {

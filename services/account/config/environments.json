@@ -28,7 +28,9 @@
       "APPLE_JWT": "NUCLEUS_ACCOUNT_{ENV}_APPLE_JWT",
       "APPLE_OAUTH_CLIENT_SECRET": "NUCLEUS_ACCOUNT_{ENV}_APPLE_OAUTH_CLIENT_SECRET",
       "APPLE_TEAM_ID": "NUCLEUS_ACCOUNT_{ENV}_APPLE_TEAM_ID",
-      "APPLE_KEY_ID": "NUCLEUS_ACCOUNT_{ENV}_APPLE_KEY_ID"
+      "APPLE_KEY_ID": "NUCLEUS_ACCOUNT_{ENV}_APPLE_KEY_ID",
+      "DATAFN_OPENSEARCH_URL": "NUCLEUS_ACCOUNT_{ENV}_DATAFN_OPENSEARCH_URL",
+      "DATAFN_OPENSEARCH_API_KEY": "NUCLEUS_ACCOUNT_{ENV}_DATAFN_OPENSEARCH_API_KEY"
     }
   },
   "productDomains": {
@@ -70,15 +72,18 @@
       "regions": {
         "insouth": {
           "wranglerEnv": "local-insouth",
-          "hyperdriveId": "9b2122770f74463e92e41da547bcf260"
+          "hyperdriveId": "9b2122770f74463e92e41da547bcf260",
+          "syncHyperdriveId": "2807e6c0d0aa4fa081d7b3d579fedf6e"
         },
         "useast": {
           "wranglerEnv": "local-useast",
-          "hyperdriveId": "b81e52666883484386ae507f1aa77571"
+          "hyperdriveId": "b81e52666883484386ae507f1aa77571",
+          "syncHyperdriveId": "6544ab082a3341228608b1044e172c8a"
         },
         "euwest": {
           "wranglerEnv": "local-euwest",
-          "hyperdriveId": "627c5625e5204efcb1ec0afea943b7b2"
+          "hyperdriveId": "627c5625e5204efcb1ec0afea943b7b2",
+          "syncHyperdriveId": "890b1dc6d9ff44cc91b4c22995ee85a5"
         }
       }
     },
@@ -96,15 +101,18 @@
       "regions": {
         "insouth": {
           "wranglerEnv": "dev-insouth",
-          "hyperdriveId": "9b2122770f74463e92e41da547bcf260"
+          "hyperdriveId": "9b2122770f74463e92e41da547bcf260",
+          "syncHyperdriveId": "2807e6c0d0aa4fa081d7b3d579fedf6e"
         },
         "useast": {
           "wranglerEnv": "dev-useast",
-          "hyperdriveId": "b81e52666883484386ae507f1aa77571"
+          "hyperdriveId": "b81e52666883484386ae507f1aa77571",
+          "syncHyperdriveId": "6544ab082a3341228608b1044e172c8a"
         },
         "euwest": {
           "wranglerEnv": "dev-euwest",
-          "hyperdriveId": "627c5625e5204efcb1ec0afea943b7b2"
+          "hyperdriveId": "627c5625e5204efcb1ec0afea943b7b2",
+          "syncHyperdriveId": "890b1dc6d9ff44cc91b4c22995ee85a5"
         }
       }
     },
@@ -122,15 +130,18 @@
       "regions": {
         "insouth": {
           "wranglerEnv": "pre-insouth",
-          "hyperdriveId": "TODO_LIVE_INSOUTH_HYPERDRIVE_ID"
+          "hyperdriveId": "TODO_LIVE_INSOUTH_HYPERDRIVE_ID",
+          "syncHyperdriveId": "TODO_LIVE_INSOUTH_SYNC_HYPERDRIVE_ID"
         },
         "useast": {
           "wranglerEnv": "pre-useast",
-          "hyperdriveId": "TODO_LIVE_USEAST_HYPERDRIVE_ID"
+          "hyperdriveId": "TODO_LIVE_USEAST_HYPERDRIVE_ID",
+          "syncHyperdriveId": "TODO_LIVE_USEAST_SYNC_HYPERDRIVE_ID"
         },
         "euwest": {
           "wranglerEnv": "pre-euwest",
-          "hyperdriveId": "TODO_LIVE_EUWEST_HYPERDRIVE_ID"
+          "hyperdriveId": "TODO_LIVE_EUWEST_HYPERDRIVE_ID",
+          "syncHyperdriveId": "TODO_LIVE_EUWEST_SYNC_HYPERDRIVE_ID"
         }
       }
     },
@@ -148,15 +159,18 @@
       "regions": {
         "insouth": {
           "wranglerEnv": "live-insouth",
-          "hyperdriveId": "TODO_LIVE_INSOUTH_HYPERDRIVE_ID"
+          "hyperdriveId": "TODO_LIVE_INSOUTH_HYPERDRIVE_ID",
+          "syncHyperdriveId": "TODO_LIVE_INSOUTH_SYNC_HYPERDRIVE_ID"
         },
         "useast": {
           "wranglerEnv": "live-useast",
-          "hyperdriveId": "TODO_LIVE_USEAST_HYPERDRIVE_ID"
+          "hyperdriveId": "TODO_LIVE_USEAST_HYPERDRIVE_ID",
+          "syncHyperdriveId": "TODO_LIVE_USEAST_SYNC_HYPERDRIVE_ID"
         },
         "euwest": {
           "wranglerEnv": "live-euwest",
-          "hyperdriveId": "TODO_LIVE_EUWEST_HYPERDRIVE_ID"
+          "hyperdriveId": "TODO_LIVE_EUWEST_HYPERDRIVE_ID",
+          "syncHyperdriveId": "TODO_LIVE_EUWEST_SYNC_HYPERDRIVE_ID"
         }
       }
     }

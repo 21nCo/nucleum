@@ -67,17 +67,27 @@ export function missingHyperdriveIds(config, environment, regions) {
       missing.push(`${environment}/${region}: missing region config`);
       continue;
     }
-    const value = resolveHyperdriveId(environment, region, regionConfig.hyperdriveId);
-    if (isPlaceholder(value)) {
-      missing.push(`${environment}/${region}: set ${hyperdriveOverrideName(environment, region, regionConfig.hyperdriveId)} or update services/account/config/environments.json`);
+    for (const binding of hyperdriveBindings()) {
+      const configuredValue = regionConfig[binding.configKey];
+      const value = resolveHyperdriveId(environment, region, configuredValue, binding.kind);
+      if (isPlaceholder(value)) {
+        missing.push(`${environment}/${region}/${binding.name}: set ${hyperdriveOverrideName(environment, region, configuredValue, binding.kind)} or update services/account/config/environments.json`);
+      }
     }
   }
   return missing;
 }
 
-export function resolveHyperdriveId(environment, region, configuredValue) {
-  const overrideName = hyperdriveOverrideName(environment, region, configuredValue);
+export function resolveHyperdriveId(environment, region, configuredValue, kind = 'account') {
+  const overrideName = hyperdriveOverrideName(environment, region, configuredValue, kind);
   return process.env[overrideName]?.trim() || configuredValue;
+}
+
+function hyperdriveBindings() {
+  return [
+    { name: 'ACCOUNT_DB', configKey: 'hyperdriveId', kind: 'account' },
+    { name: 'SYNC_DB', configKey: 'syncHyperdriveId', kind: 'sync' }
+  ];
 }
 
 function renderLookupEnvironment(config, lookupEnv) {
@@ -94,9 +104,17 @@ function renderLookupEnvironment(config, lookupEnv) {
     kv('name', 'AUTHFN_REGION_LOOKUP'),
     kv('class_name', 'AuthFnRegionLookupDurableObject'),
     '',
+    arrayHeader(`env.${lookupEnv.id}.durable_objects.bindings`),
+    kv('name', 'ACCOUNT_RUNTIME_STORES'),
+    kv('class_name', 'AccountRuntimeStoresDurableObject'),
+    '',
     arrayHeader(`env.${lookupEnv.id}.migrations`),
     kv('tag', 'v1-authfn-region-lookup'),
-    array('new_sqlite_classes', ['AuthFnRegionLookupDurableObject'])
+    array('new_sqlite_classes', ['AuthFnRegionLookupDurableObject']),
+    '',
+    arrayHeader(`env.${lookupEnv.id}.migrations`),
+    kv('tag', 'v2-account-runtime-stores'),
+    array('new_sqlite_classes', ['AccountRuntimeStoresDurableObject'])
   ];
 }
 
@@ -143,6 +161,7 @@ function renderRegionalEnvironment(config, environment, regionId, options) {
     kv('ACCOUNT_LATENCY_DEBUG', String(envConfig.latencyDebug === true)),
     kv('DEBUG_SINK_URL', config.debugSinkUrl),
     kv('ACCOUNT_REGION_ID', regionId),
+    kv('DATAFN_OPENSEARCH_INDEX_PREFIX', `nucleum_${environment}_${regionId}`),
     kv('ACCOUNT_AUTHORITY', accountAuthority(config, environment, regionId)),
     kv('ACCOUNT_COOKIE_DOMAIN', cookieDomainForProductDomain(config.accountDomain)),
     kv('ACCOUNT_CORS_ORIGINS', corsOrigins.join(',')),
@@ -172,10 +191,12 @@ function renderRegionalEnvironment(config, environment, regionId, options) {
     }
   }
 
-  lines.push(arrayHeader(`env.${wranglerEnv}.hyperdrive`));
-  lines.push(kv('binding', 'ACCOUNT_DB'));
-  lines.push(kv('id', resolveHyperdriveId(environment, regionId, regionConfig.hyperdriveId)));
-  lines.push('');
+  for (const binding of hyperdriveBindings()) {
+    lines.push(arrayHeader(`env.${wranglerEnv}.hyperdrive`));
+    lines.push(kv('binding', binding.name));
+    lines.push(kv('id', resolveHyperdriveId(environment, regionId, regionConfig[binding.configKey], binding.kind)));
+    lines.push('');
+  }
   lines.push(arrayHeader(`env.${wranglerEnv}.kv_namespaces`));
   lines.push(kv('binding', 'ACCOUNT_CACHE'));
   lines.push(kv('id', envConfig.cacheKvNamespaceId));
@@ -184,6 +205,11 @@ function renderRegionalEnvironment(config, environment, regionId, options) {
   lines.push(arrayHeader(`env.${wranglerEnv}.durable_objects.bindings`));
   lines.push(kv('name', 'AUTHFN_REGION_LOOKUP'));
   lines.push(kv('class_name', 'AuthFnRegionLookupDurableObject'));
+  lines.push(kv('script_name', envConfig.lookupWorkerName));
+  lines.push('');
+  lines.push(arrayHeader(`env.${wranglerEnv}.durable_objects.bindings`));
+  lines.push(kv('name', 'ACCOUNT_RUNTIME_STORES'));
+  lines.push(kv('class_name', 'AccountRuntimeStoresDurableObject'));
   lines.push(kv('script_name', envConfig.lookupWorkerName));
   const secretsStoreBindings = secretStoreBindingsForEnvironment(config, environment);
   for (const binding of secretsStoreBindings) {
@@ -265,11 +291,12 @@ function readEnvironment(config, environment) {
   return envConfig;
 }
 
-function hyperdriveOverrideName(environment, region, configuredValue) {
+function hyperdriveOverrideName(environment, region, configuredValue, kind = 'account') {
   if (configuredValue?.startsWith('TODO_') || configuredValue?.startsWith('REPLACE_')) {
     return configuredValue;
   }
-  return `ACCOUNT_${environment}_${region}_HYPERDRIVE_ID`
+  const suffix = kind === 'sync' ? '_SYNC' : '';
+  return `ACCOUNT_${environment}_${region}${suffix}_HYPERDRIVE_ID`
     .toUpperCase()
     .replace(/[^A-Z0-9]+/g, '_');
 }

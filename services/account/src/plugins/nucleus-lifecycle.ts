@@ -1,14 +1,14 @@
 import {
   AuthFnUnauthenticatedError,
   AuthFnValidationError,
-  authenticateRequest,
-  createAuthFnRouteMeta,
-  jsonSuccess,
   type AuthFnPlugin,
   type AuthFnPluginRuntimeContext,
   type AuthFnSession,
   type AuthFnUserRecord
-} from '@authfn/core';
+} from 'authfn';
+import { authenticateRequest } from 'authfn/core/sessions';
+import { createAuthFnRouteMeta } from 'authfn/http/router';
+import { jsonSuccess } from 'authfn/http/envelopes';
 
 type NucleusLifecycleRoute = ReturnType<NonNullable<AuthFnPlugin['routes']>>[number];
 
@@ -31,11 +31,12 @@ export function nucleusLifecyclePlugin(): AuthFnPlugin {
         return input;
       },
       afterUserCreate: async (ctx, user) => {
-        await ctx.config?.observability?.emit?.({
+        await ctx.config?.observability?.events.emit({
+          domain: 'authfn',
           type: 'authfn.user.created',
           requestId: requestId(ctx.request),
           userId: typeof user.id === 'string' ? user.id : undefined,
-          regionId: ctx.runtime?.regionId,
+          regionId: ctx.environment?.regionId,
           outcome: 'nucleus-profile-bootstrap',
           metadata: {
             product: 'nucleus'
@@ -59,11 +60,11 @@ export function nucleusLifecyclePlugin(): AuthFnPlugin {
             ...(isRecord(input.metadata) ? input.metadata : {}),
             nucleus: {
               ...userNucleus,
-              regionId: ctx.runtime?.regionId,
+              regionId: ctx.environment?.regionId,
               product: 'nucleus'
             }
           },
-          regionId: typeof input.regionId === 'string' ? input.regionId : ctx.runtime?.regionId
+          regionId: typeof input.regionId === 'string' ? input.regionId : ctx.environment?.regionId
         };
       }
     }

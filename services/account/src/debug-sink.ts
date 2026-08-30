@@ -30,11 +30,15 @@ export interface AccountDebugSinkLog {
   message?: unknown;
   payload?: unknown;
   requestId?: string;
+  userId?: string;
   tags?: unknown;
 }
 
 export function sendAccountDebugLog(log: AccountDebugSinkLog): void {
-  const sinkUrl = readProcessEnv('DEBUG_SINK_URL')?.trim().replace(/\/$/, '');
+  const sinkUrl = resolveDebugSinkUrl(
+    readProcessEnv('DEBUG_SINK_URL'),
+    readProcessEnv('NODE_ENV')
+  );
   if (!sinkUrl || typeof fetch === 'undefined') {
     return;
   }
@@ -51,6 +55,7 @@ export function sendAccountDebugLog(log: AccountDebugSinkLog): void {
     message: log.message,
     payload: log.payload ?? log.message,
     requestId: log.requestId,
+    userId: log.userId,
     route: log.route,
     tags: log.tags
   }));
@@ -68,11 +73,33 @@ export function sendAccountDebugLog(log: AccountDebugSinkLog): void {
     method: 'POST',
     headers,
     body
-  }).catch(() => {
-    // Diagnostics must never affect auth behavior.
-  });
+  }).catch(() => undefined);
 
   context.ctx?.waitUntil?.(promise);
+}
+
+function resolveDebugSinkUrl(
+  value: string | undefined,
+  environment: string | undefined
+): string | undefined {
+  if (!value?.trim()) {
+    return undefined;
+  }
+  let url: URL;
+  try {
+    url = new URL(value.trim());
+  } catch {
+    return undefined;
+  }
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    return undefined;
+  }
+  if (environment === 'production' && url.protocol !== 'https:') {
+    return undefined;
+  }
+  url.hash = '';
+  url.search = '';
+  return url.toString().replace(/\/$/, '');
 }
 
 function readProcessEnv(key: string): string | undefined {

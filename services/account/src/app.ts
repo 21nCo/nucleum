@@ -1,268 +1,299 @@
-import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-import type { Adapter, KVStoreAdapter } from '@superfunctions/db';
+import { Hono } from "hono";
+import { cors } from "hono/cors";
+import type { Adapter, ConditionalKVStoreAdapter, RuntimeStores } from "@superfunctions/db";
+import type { SuperfunctionObservability } from "@superfunctions/observability";
 import type {
+  AuthFnDeliveryMessageResolver,
   AuthFnDeliveryProvider,
-  AuthFnEvent,
-  AuthFnMultiRegionRegionConfig,
-  AuthFnRegionLookupStore,
+  AuthFnRateLimitConfig,
+  AuthFnServer
+} from "authfn";
+import type {
+  AuthFnMultiRegionRegionConfig
+} from "@authfn/multi-region";
+import type { RateLimitConfig, SearchProvider } from "@datafn/server";
+import type {
   AuthFnSocialProviderConfig,
-  SocialOAuthPluginConfig
-} from '@authfn/core';
-import type { Logger } from '@logfn/core';
-import { createAccountAuth } from './auth.js';
-import { createSendFnDeliveryProvider } from './email/sendfn.js';
-import { createAccountRateLimitMiddleware } from './security/rate-limit.js';
-import { sendAccountDebugLog } from './debug-sink.js';
-import type { AccountLatencyMetrics, AccountLatencySnapshot } from './observability/latency.js';
+  SocialOAuthPluginRuntimeConfig
+} from "@authfn/social-oauth";
+import type { Logger } from "@logfn/core";
+import { createAccountAuth } from "./auth.js";
+import { registerAccountAuthRoutes } from "./auth/routes.js";
+import {
+  createAccountOtpDeliveryMessage,
+  createSendFnDeliveryProvider
+} from "./email/sendfn.js";
+import {
+  createAccountObservability as createObservability,
+  type AccountEventSink,
+  type AccountObservationEvent
+} from "./observability/events.js";
+import { sendAccountDebugLog } from "./debug-sink.js";
+import { createSyncServer } from "./datafn/server.js";
+import type { SyncServer } from "./datafn/server.js";
+import { registerAccountDatafnRoutes } from "./datafn/routes.js";
+import { createAccountRequestObservationMiddleware } from "./http/observability.js";
 
-export interface AccountTestControlSurface {
-  getOutboxMessages(): unknown[];
-  getEvents(): unknown[];
-  reset(): Promise<void> | void;
+/** Required infrastructure dependencies for the account app. */
+export type AccountSyncDatabaseProvider =
+  | Adapter
+  | (() => Adapter | Promise<Adapter>);
+
+export interface AccountInfra {
+  database: Adapter;
+  syncDatabase: AccountSyncDatabaseProvider;
+  stores: RuntimeStores;
+  logger: Logger;
+  syncSearchProvider?: SearchProvider;
 }
 
-export interface CreateAccountAppInput {
-  database: Adapter;
-  cacheStore: KVStoreAdapter;
-  logger: Logger;
-  delivery?: AuthFnDeliveryProvider;
-  lookupStore?: AuthFnRegionLookupStore;
+/** Deployment-specific configuration that varies per runtime (node, worker, tests). */
+export interface AccountDeployment {
+  regionId?: string;
   regions?: AuthFnMultiRegionRegionConfig[];
-  oauthProviders?: Partial<Record<'google' | 'apple', AuthFnSocialProviderConfig | undefined>>;
-  oauthPlugin?: Omit<SocialOAuthPluginConfig, 'providers'>;
-  rateLimiter?: false | ReturnType<typeof createAccountRateLimitMiddleware>;
-  securityEventSink?: (event: AuthFnEvent) => Promise<void> | void;
+  regionLookupStore?: ConditionalKVStoreAdapter;
   corsOrigins?: string[];
-  enableTestControlRoutes?: boolean;
-  testControl?: AccountTestControlSurface;
-  latencyMetrics?: AccountLatencyMetrics;
+  observability?: SuperfunctionObservability<AccountObservationEvent>;
+  resolveClientIp?: AuthFnRateLimitConfig["resolveClientIp"];
   workerColo?: string;
 }
 
-export function createAccountApp(input: CreateAccountAppInput): Hono {
-  const app = new Hono();
-  const corsOrigins = withNativeEmbedOrigins(input.corsOrigins ?? readCsv(process.env.ACCOUNT_CORS_ORIGINS));
-  const auth = createAccountAuth({
-    database: input.database,
-    cacheStore: input.cacheStore,
-    delivery: input.delivery ?? createSendFnDeliveryProvider({
-      database: input.database,
-      logger: input.logger
-    }),
-    logger: input.logger,
-    regions: input.regions,
-    lookupStore: input.lookupStore,
-    oauthProviders: input.oauthProviders,
-    oauthPlugin: input.oauthPlugin,
-    securityEventSink: input.securityEventSink
-  });
-
-  if (corsOrigins.length > 0) {
-    app.use('*', cors({
-      origin: (origin) => corsOrigins.includes(origin) ? origin : null,
-      allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-      allowHeaders: ['content-type', 'authorization', 'x-authfn-csrf', 'x-request-id'],
-      exposeHeaders: [
-        'x-request-id',
-        'server-timing',
-        'x-account-db-call-count',
-        'x-account-db-duration-ms',
-        'x-account-db-max-duration-ms',
-        'x-account-cache-call-count',
-        'x-account-cache-duration-ms',
-        'x-account-lookup-call-count',
-        'x-account-lookup-duration-ms',
-        'x-account-region',
-        'x-account-worker-colo',
-      ],
-      credentials: true,
-      maxAge: 600
-    }));
-  }
-
-  app.use('*', async (c, next) => {
-    const start = now();
-    await next();
-    const path = new URL(c.req.url).pathname;
-    const durationMs = now() - start;
-    const latency = input.latencyMetrics?.finish(durationMs);
-    attachLatencyHeaders(c.res.headers, latency, input);
-    input.logger.info('account request', {
-      method: c.req.method,
-      path,
-      status: c.res.status,
-      durationMs,
-      dbCallCount: latency?.dbCallCount,
-      dbDurationMs: latency?.dbDurationMs,
-      dbMaxDurationMs: latency?.dbMaxDurationMs,
-      cacheCallCount: latency?.cacheCallCount,
-      cacheDurationMs: latency?.cacheDurationMs,
-      lookupCallCount: latency?.lookupCallCount,
-      lookupDurationMs: latency?.lookupDurationMs,
-      workerColo: input.workerColo
-    });
-    if (
-      c.res.status >= 400
-      || path.includes('/auth/social/callback/')
-      || process.env.ACCOUNT_LATENCY_DEBUG === 'true'
-    ) {
-      sendAccountDebugLog({
-        level: c.res.status >= 500 ? 'error' : c.res.status >= 400 ? 'warn' : 'info',
-        route: path,
-        message: 'account request',
-        payload: {
-          method: c.req.method,
-          path,
-          status: c.res.status,
-          durationMs,
-          latency: process.env.ACCOUNT_LATENCY_DEBUG === 'true'
-            ? redactLatencyDetails(latency)
-            : latency
-              ? {
-                  dbCallCount: latency.dbCallCount,
-                  dbDurationMs: round(latency.dbDurationMs),
-                  dbMaxDurationMs: round(latency.dbMaxDurationMs),
-                  cacheCallCount: latency.cacheCallCount,
-                  cacheDurationMs: round(latency.cacheDurationMs),
-                  lookupCallCount: latency.lookupCallCount,
-                  lookupDurationMs: round(latency.lookupDurationMs)
-                }
-              : undefined,
-          workerColo: input.workerColo
-        },
-        requestId: c.res.headers.get('x-request-id') ?? undefined,
-        tags: ['account-request']
-      });
-    }
-  });
-
-  if (input.rateLimiter !== false) {
-    app.use('/auth/*', input.rateLimiter ?? createAccountRateLimitMiddleware(input.cacheStore, {
-      emit: input.securityEventSink
-    }));
-  }
-
-  app.get('/health', (c) => c.json({
-    ok: true,
-    service: 'nucleus-account'
-  }));
-
-  app.get('/openapi.json', (c) => c.json(auth.openApi?.() ?? {}));
-
-  if (input.enableTestControlRoutes) {
-    installTestControlRoutes(app, input.testControl);
-  }
-
-  app.all('/auth/*', async (c) => auth.router.handle(c.req.raw));
-
-  return app;
+/** Pluggable integrations and observability hooks. */
+export interface AccountIntegrations {
+  delivery?: AuthFnDeliveryProvider;
+  deliveryMessage?: AuthFnDeliveryMessageResolver;
+  oauthProviders?: Partial<
+    Record<"google" | "apple", AuthFnSocialProviderConfig | undefined>
+  >;
+  oauthPlugin?: Omit<SocialOAuthPluginRuntimeConfig, "providers">;
+  authRateLimit?: false | AuthFnRateLimitConfig;
+  syncRateLimit?: false | RateLimitConfig;
+  eventSink?: AccountEventSink;
 }
 
-function attachLatencyHeaders(
-  headers: Headers,
-  latency: AccountLatencySnapshot | undefined,
+export interface CreateAccountAppInput {
+  infra: AccountInfra;
+  deployment?: AccountDeployment;
+  integrations?: AccountIntegrations;
+}
+
+/** Fully wired account service graph produced by {@link buildAccountServices}. */
+export interface AccountServices {
+  auth: AuthFnServer;
+  getSyncServer: () => Promise<SyncServer>;
+  regionId: string;
+  corsOrigins: string[];
+  observability: SuperfunctionObservability<AccountObservationEvent>;
+  infra: AccountInfra;
+  deployment: AccountDeployment;
+  integrations: AccountIntegrations;
+  close(): Promise<void>;
+}
+
+/**
+ * Resolves the complete account service graph (auth, sync, observability)
+ * without registering any HTTP routes. This is the composition root shared by
+ * production entrypoints and the test harness.
+ */
+export function buildAccountServices(
   input: CreateAccountAppInput
-): void {
-  if (!latency) {
-    return;
-  }
-
-  headers.set('server-timing', [
-    `app;dur=${round(latency.totalDurationMs)}`,
-    `db;dur=${round(latency.dbDurationMs)}`,
-    `dbmax;dur=${round(latency.dbMaxDurationMs)}`,
-    `dbcount;desc="${latency.dbCallCount}"`,
-    `cache;dur=${round(latency.cacheDurationMs)}`,
-    `lookup;dur=${round(latency.lookupDurationMs)}`
-  ].join(', '));
-  headers.set('x-account-db-call-count', String(latency.dbCallCount));
-  headers.set('x-account-db-duration-ms', String(round(latency.dbDurationMs)));
-  headers.set('x-account-db-max-duration-ms', String(round(latency.dbMaxDurationMs)));
-  headers.set('x-account-cache-call-count', String(latency.cacheCallCount));
-  headers.set('x-account-cache-duration-ms', String(round(latency.cacheDurationMs)));
-  headers.set('x-account-lookup-call-count', String(latency.lookupCallCount));
-  headers.set('x-account-lookup-duration-ms', String(round(latency.lookupDurationMs)));
-  headers.set('x-account-region', process.env.ACCOUNT_REGION_ID ?? '');
-  if (input.workerColo) {
-    headers.set('x-account-worker-colo', input.workerColo);
-  }
-}
-
-function redactLatencyDetails(latency: AccountLatencySnapshot | undefined): AccountLatencySnapshot | undefined {
-  if (!latency) {
-    return undefined;
-  }
+): AccountServices {
+  const { infra } = input;
+  const deployment = input.deployment ?? {};
+  const integrations = input.integrations ?? {};
+  const corsOrigins = withNativeEmbedOrigins(
+    deployment.corsOrigins ?? readCsv(process.env.ACCOUNT_CORS_ORIGINS)
+  );
+  const observability =
+    deployment.observability ??
+    createObservability(infra.logger, integrations.eventSink);
+  const regionId =
+    deployment.regionId ??
+    process.env.ACCOUNT_REGION_ID ??
+    deployment.regions?.[0]?.regionId ??
+    "local";
+  const authRateLimit: AuthFnRateLimitConfig =
+    integrations.authRateLimit === false
+      ? { enabled: false }
+      : {
+          enabled: true,
+          mode: infra.stores.atomicKv
+            ? "strict"
+            : infra.stores.kv
+              ? "best-effort"
+              : "local",
+          resolveClientIp: deployment.resolveClientIp,
+          ...integrations.authRateLimit
+        };
+  const auth = createAccountAuth({
+    database: infra.database,
+    stores: infra.stores,
+    delivery:
+      integrations.delivery ??
+      createSendFnDeliveryProvider({
+        database: infra.database,
+        logger: infra.logger
+      }),
+    deliveryMessage:
+      integrations.deliveryMessage ?? createAccountOtpDeliveryMessage,
+    regions: deployment.regions,
+    regionLookupStore: deployment.regionLookupStore,
+    oauthProviders: integrations.oauthProviders,
+    oauthPlugin: integrations.oauthPlugin,
+    rateLimit: authRateLimit,
+    observability
+  });
+  let syncServer: Promise<SyncServer> | undefined;
+  const getSyncServer = () => {
+    syncServer ??= resolveSyncDatabase(infra.syncDatabase)
+      .then((syncDatabase) =>
+        createSyncServer({
+          auth: {
+            authenticate: (request) => auth.provider.authenticate(request),
+            authorizeMutation: (request) => auth.authorizeMutation(request)
+          },
+          database: syncDatabase,
+          stores: infra.stores,
+          regionId,
+          observability,
+          searchProvider: infra.syncSearchProvider,
+          rateLimit: integrations.syncRateLimit
+        })
+      )
+      .catch((error) => {
+        syncServer = undefined;
+        throw error;
+      });
+    return syncServer;
+  };
+  const close = async (): Promise<void> => {
+    const current = syncServer;
+    syncServer = undefined;
+    if (!current) {
+      return;
+    }
+    const server = await current.catch(() => undefined);
+    await server?.close();
+  };
 
   return {
-    ...latency,
-    totalDurationMs: round(latency.totalDurationMs),
-    dbDurationMs: round(latency.dbDurationMs),
-    dbMaxDurationMs: round(latency.dbMaxDurationMs),
-    storageCalls: latency.storageCalls.map((call) => ({
-      ...call,
-      durationMs: round(call.durationMs)
-    }))
+    auth,
+    getSyncServer,
+    regionId,
+    corsOrigins,
+    observability,
+    infra,
+    deployment,
+    integrations,
+    close
   };
 }
 
-function now(): number {
-  return typeof performance !== 'undefined' && typeof performance.now === 'function'
-    ? performance.now()
-    : Date.now();
+/**
+ * Registers the production HTTP surface (CORS, latency logging, health,
+ * OpenAPI, sync, and auth routes) onto an app for the given services.
+ */
+export function registerCoreRoutes(app: Hono, services: AccountServices): void {
+  const { auth, getSyncServer, regionId, corsOrigins, observability } =
+    services;
+  const { logger } = services.infra;
+  const { workerColo } = services.deployment;
+
+  if (corsOrigins.length > 0) {
+    app.use("*", async (c, next) => {
+      const origin = c.req.header("origin");
+      const isAllowedOrigin = !origin || corsOrigins.includes(origin);
+      if (!isAllowedOrigin && c.req.method === "OPTIONS") {
+        return c.body(null, 403);
+      }
+      await next();
+      if (!isAllowedOrigin) {
+        c.res.headers.delete("access-control-allow-credentials");
+      }
+      return undefined;
+    });
+    app.use(
+      "*",
+      cors({
+        origin: (origin) => (corsOrigins.includes(origin) ? origin : null),
+        allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowHeaders: [
+          "content-type",
+          "authorization",
+          "x-authfn-csrf",
+          "x-request-id",
+          "x-datafn-client-id",
+          "x-datafn-mutation-id",
+          "x-datafn-public-link-token",
+          "x-datafn-schema-hash",
+          "x-datafn-sync-cursor"
+        ],
+        exposeHeaders: [
+          "x-request-id",
+          "server-timing",
+          "x-account-db-call-count",
+          "x-account-db-duration-ms",
+          "x-account-db-max-duration-ms",
+          "x-account-cache-call-count",
+          "x-account-cache-duration-ms",
+          "x-account-lookup-call-count",
+          "x-account-lookup-duration-ms",
+          "x-account-region",
+          "x-account-worker-colo",
+          "x-datafn-region"
+        ],
+        credentials: true,
+        maxAge: 600
+      })
+    );
+  }
+
+  app.use(
+    "*",
+    createAccountRequestObservationMiddleware({
+      observability,
+      logger,
+      regionId,
+      workerColo,
+      sendDebugLog: sendAccountDebugLog
+    })
+  );
+
+  app.get("/health", (c) =>
+    c.json({
+      ok: true,
+      service: "nucleus-account"
+    })
+  );
+
+  app.get("/openapi.json", (c) => c.json(auth.openApi?.() ?? {}));
+
+  registerAccountDatafnRoutes({
+    app,
+    getSyncServer
+  });
+  registerAccountAuthRoutes({ app, auth });
 }
 
-function round(value: number): number {
-  return Math.round(value * 100) / 100;
+export function createApp(input: CreateAccountAppInput): Hono {
+  const app = new Hono();
+  registerCoreRoutes(app, buildAccountServices(input));
+  return app;
+}
+
+async function resolveSyncDatabase(
+  provider: AccountSyncDatabaseProvider
+): Promise<Adapter> {
+  return typeof provider === "function" ? await provider() : provider;
 }
 
 function withNativeEmbedOrigins(origins: string[]): string[] {
-  return Array.from(new Set([
-    ...origins,
-    'tauri://localhost'
-  ]));
+  return Array.from(new Set([...origins, "tauri://localhost"]));
 }
 
 function readCsv(value: string | undefined): string[] {
-  return (value ?? '')
-    .split(',')
+  return (value ?? "")
+    .split(",")
     .map((entry) => entry.trim())
     .filter(Boolean);
-}
-
-function installTestControlRoutes(app: Hono, control: AccountTestControlSurface | undefined): void {
-  app.get('/__test/outbox/latest', (c) => {
-    const identifier = c.req.query('identifier')?.trim().toLowerCase();
-    const messages = control?.getOutboxMessages() ?? [];
-    const matched = identifier
-      ? messages.filter((message) => {
-          const record = message as { email?: unknown; to?: unknown; identifier?: unknown };
-          const value = typeof record.email === 'string'
-            ? record.email
-            : typeof record.to === 'string'
-              ? record.to
-              : typeof record.identifier === 'string'
-                ? record.identifier
-                : undefined;
-          return value?.trim().toLowerCase() === identifier;
-        })
-      : messages;
-
-    return c.json({
-      ok: true,
-      message: matched.at(-1) ?? null
-    });
-  });
-
-  app.get('/__test/events', (c) => c.json({
-    ok: true,
-    events: control?.getEvents() ?? []
-  }));
-
-  app.post('/__test/reset', async (c) => {
-    await control?.reset();
-    return c.json({
-      ok: true
-    });
-  });
 }

@@ -25,6 +25,37 @@ Regions:
 - `useast` placed near `aws:us-east-1`
 - `euwest` placed near `aws:eu-west-2`
 
+## Sync Database
+
+The account service hosts DataFn under `/datafn/*`, but sync data must
+use a separate regional database from the AuthFn account database.
+
+Node entrypoints require:
+
+```bash
+DATAFN_DATABASE_URL=postgres://postgres:postgres@127.0.0.1:5432/nucleus_datafn_sync
+```
+
+Cloudflare Workers require either a `SYNC_DB` Hyperdrive binding or a
+`DATAFN_DATABASE_URL` secret. Do not point these at `DATABASE_URL` or
+`ACCOUNT_DB`; AuthFn tables and sync tables are intentionally separate.
+
+Deployments apply the committed Drizzle migrations in `drizzle/datafn` to each
+selected regional sync database before deploying any Worker. Configure these
+environment-scoped GitHub secrets with direct Postgres URLs that verify the
+server certificate:
+
+- `DATAFN_INSOUTH_DATABASE_URL`
+- `DATAFN_USEAST_DATABASE_URL`
+- `DATAFN_EUWEST_DATABASE_URL`
+
+Optional sync settings:
+
+```bash
+DATAFN_DB_POOL_SIZE=5
+DATAFN_MAX_PAYLOAD_BYTES=5242880
+```
+
 ## Running Local Apps Against Account Backends
 
 All local browser flows should go through Caddy so cookies, OAuth redirects, and
@@ -208,12 +239,18 @@ Dev Hyperdrive is configured for all three regions:
 - `dev-insouth-nucleum`
 - `dev-useast-nucleum`
 - `dev-euwest-nucleum`
+- `dev-insouth-nucleum-sync`
+- `dev-useast-nucleum-sync`
+- `dev-euwest-nucleum-sync`
 
 These live Hyperdrive IDs still need to be created and added either to `services/account/config/environments.json` or as GitHub environment variables with the same placeholder names:
 
 - `TODO_LIVE_INSOUTH_HYPERDRIVE_ID`
 - `TODO_LIVE_USEAST_HYPERDRIVE_ID`
 - `TODO_LIVE_EUWEST_HYPERDRIVE_ID`
+- `TODO_LIVE_INSOUTH_SYNC_HYPERDRIVE_ID`
+- `TODO_LIVE_USEAST_SYNC_HYPERDRIVE_ID`
+- `TODO_LIVE_EUWEST_SYNC_HYPERDRIVE_ID`
 
 KV namespaces are already created:
 
@@ -242,6 +279,8 @@ Secret names are generated from `services/account/config/environments.json`:
 - `NUCLEUS_ACCOUNT_{ENV}_APPLE_OAUTH_CLIENT_SECRET`
 - `NUCLEUS_ACCOUNT_{ENV}_APPLE_TEAM_ID`
 - `NUCLEUS_ACCOUNT_{ENV}_APPLE_KEY_ID`
+- `NUCLEUS_ACCOUNT_{ENV}_DATAFN_OPENSEARCH_URL`
+- `NUCLEUS_ACCOUNT_{ENV}_DATAFN_OPENSEARCH_API_KEY`
 
 Sync missing secrets from local env files:
 
@@ -265,8 +304,9 @@ precedence. It requires `CLOUDFLARE_ACCOUNT_ID` plus one token in this order:
 2. `CLOUDFLARE_API_TOKEN`
 3. `CLOUDFLARE_USER_TOKEN`
 
-Dev Secrets Store values have been created. Pre/live values still need to be
-synced before deploying those environments.
+Sync the OpenSearch URL and API key for every environment before deploying the
+account DataFn search surface. Pre/live account and search values still need to
+be synced before deploying those environments.
 
 ## Deployments
 
@@ -280,8 +320,9 @@ npm --workspace @21n/account-service run deploy:pre
 npm --workspace @21n/account-service run deploy:live
 ```
 
-Deployments update Worker code, vars, bindings, placement, and Durable Object
-migrations. They intentionally do not create or mutate custom-domain routes.
+Deployments apply regional DataFn database migrations, then update Worker code,
+vars, bindings, placement, and Durable Object migrations. They intentionally do
+not create or mutate custom-domain routes.
 
 CI deploys:
 
