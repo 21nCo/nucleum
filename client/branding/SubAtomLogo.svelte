@@ -19,6 +19,7 @@
     isShowAnimation?: boolean;
     variant?: "accent" | "subtle" | "primary";
   } = $props();
+  const resolvedSubatom = $derived(subatom === "nucleus" ? "nucleum" : subatom);
   let cssRoot = $state<HTMLElement | null>(null);
   let logoRoot = $state<HTMLElement | null>(null);
 
@@ -63,10 +64,10 @@
       "w-8 h-8": size === Size.sm,
       "w-6 h-6": size === Size.xs
     })}
-    style="clip-path: url(#{subatom}-logoClip);"
+    style="clip-path: url(#{resolvedSubatom}-logoClip);"
   >
     {#if isShowAnimation}
-      {#if subatom == "nucleum"}
+      {#if resolvedSubatom === "nucleum"}
         <NucleusAnimation />
       {:else}
         <div class="section section-horizontal"></div>
@@ -80,17 +81,17 @@
         xmlns="http://www.w3.org/2000/svg"
         class="absolute"
       >
-        {#if subatom === "nucleum"}
+        {#if resolvedSubatom === "nucleum"}
           <NucleusLogo {width} />
-        {:else if subatom === "pointron"}
+        {:else if resolvedSubatom === "pointron"}
           <PointronLogo {width} />
-        {:else if subatom === "memotron"}
+        {:else if resolvedSubatom === "memotron"}
           <MemotronLogo {width} />
         {/if}
       </svg>
     {/if}
   </div>
-  {#if subatom != "nucleum" && isShowAnimation}
+  {#if resolvedSubatom !== "nucleum" && isShowAnimation}
     <svg
       viewBox="0 0 462 462"
       fill="none"
@@ -99,15 +100,15 @@
     >
       <defs>
         <clipPath
-          id={`${subatom}-logoClip`}
+          id={`${resolvedSubatom}-logoClip`}
           clipPathUnits="objectBoundingBox"
           transform="scale(0.002165 0.002165)"
         >
-          {#if subatom === "nucleum"}
+          {#if resolvedSubatom === "nucleum"}
             <NucleusLogo {width} />
-          {:else if subatom === "pointron"}
+          {:else if resolvedSubatom === "pointron"}
             <PointronLogo {width} />
-          {:else if subatom === "memotron"}
+          {:else if resolvedSubatom === "memotron"}
             <MemotronLogo {width} />
           {/if}
         </clipPath>

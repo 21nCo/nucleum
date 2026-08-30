@@ -41,7 +41,8 @@
       ? "session-token"
       : "none";
   const resolveNativeUrlScheme = () => {
-    return $appStore.product.toLowerCase();
+    const product = $appStore.product.toLowerCase();
+    return product === "nucleus" ? "nucleum" : product;
   };
   const signIn = async (provider: string) => {
     const response = await (

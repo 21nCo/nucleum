@@ -22,6 +22,7 @@ import {
   isSameResource
 } from "@21n/components/flux/resourceStores/resource.utils";
 import { parse, stringify } from "@21n/shared-utils/json.utils";
+import { migrateLegacyNucleusProductKeys } from "@21n/stores/productKeyMigration.utils";
 
 class UiStateStore extends KeyValueStore<IUIStateStore> {
   constructor() {
@@ -29,6 +30,12 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
       $local: {}
     });
   }
+
+  loader(data: IUIStateStore) {
+    if (!data || typeof data !== "object") return;
+    super.loader(migrateLegacyNucleusProductKeys(data));
+  }
+
   private resolveKey(keyParam: string, params?: IUIStateParams) {
     let key: string = keyParam;
     const product = get(appStore).product;
