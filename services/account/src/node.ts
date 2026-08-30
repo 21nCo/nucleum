@@ -25,7 +25,8 @@ const services = buildAccountServices({
     logger
   },
   deployment: {
-    observability
+    observability,
+    resolveClientIp: readNodeClientIp
   }
 });
 const app = new Hono();
@@ -72,6 +73,16 @@ const shutdown = async () => {
 
 process.once("SIGINT", () => void shutdown());
 process.once("SIGTERM", () => void shutdown());
+
+function readNodeClientIp(request: Request): string | undefined {
+  const cloudflareIp = request.headers.get("cf-connecting-ip")?.trim();
+  if (cloudflareIp) {
+    return cloudflareIp;
+  }
+  return (
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || undefined
+  );
+}
 
 function closeServer(serverInstance: ReturnType<typeof serve>): Promise<void> {
   return new Promise((resolve, reject) => {

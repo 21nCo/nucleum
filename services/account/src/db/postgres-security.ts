@@ -14,12 +14,20 @@ export function requireSecureRemotePostgresUrl(value: string): void {
       "Postgres connection string must use the postgres protocol"
     );
   }
+
+  const sslModes = url.searchParams.getAll("sslmode");
+  const sslRootCerts = url.searchParams.getAll("sslrootcert");
+  if (sslModes.length > 1 || sslRootCerts.length > 1) {
+    throw new Error(
+      "Postgres connection string must not repeat TLS parameters"
+    );
+  }
   if (LOOPBACK_HOSTS.has(url.hostname)) {
     return;
   }
 
-  const sslMode = url.searchParams.get("sslmode")?.toLowerCase();
-  const sslRootCert = url.searchParams.get("sslrootcert")?.toLowerCase();
+  const sslMode = sslModes[0]?.toLowerCase();
+  const sslRootCert = sslRootCerts[0]?.toLowerCase();
   if (sslMode !== "verify-full" && sslRootCert !== "system") {
     throw new Error(
       "Remote Postgres connection string must use sslmode=verify-full or sslrootcert=system"
