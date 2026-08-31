@@ -19,6 +19,15 @@ import { parse } from "@21n/shared-utils/json.utils";
 import { datafn } from "@21n/stores/datafn.store";
 import type { IRecordId } from "@21n/types/data.type";
 
+function isYoutubeUrl(url: string) {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+    return hostname === "youtube.com" || hostname.endsWith(".youtube.com");
+  } catch {
+    return false;
+  }
+}
+
 export class PocketImporter {
   private processedUrls: Map<string, string> = new Map();
   private collectionItemsMap: Map<string, string[]> = new Map();
@@ -302,7 +311,7 @@ export class PocketImporter {
                 responseNode.description ?? responseNode.ogDescription;
               const title = responseNode.title ?? responseNode.ogTitle;
               node.body.description = desc ?? node.body.description;
-              if (!node.url.includes("www.youtube.com")) {
+              if (!isYoutubeUrl(node.url)) {
                 node.label = title ?? node.label;
               }
               node.metadata = {

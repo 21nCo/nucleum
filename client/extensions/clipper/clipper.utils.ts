@@ -220,7 +220,8 @@ export async function extractYoutubeVideoData() {
 export function resolveUrl(url?: string) {
   if (!url) url = window.location.href;
   url = url.split("#")[0];
-  if (url.includes("youtube.com")) {
+  const hostname = new URL(url, window.location.href).hostname.toLowerCase();
+  if (hostname === "youtube.com" || hostname.endsWith(".youtube.com")) {
     return url.split("&")[0];
   }
   return url;
