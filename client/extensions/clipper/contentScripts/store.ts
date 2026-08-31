@@ -244,18 +244,13 @@ async function insertNodeRecords(
     args: {
       resource: Resource.node,
       params: nodes.map((node) => {
-        const {
-          children,
-          collections,
-          links,
-          propertyValues,
-          ...record
-        } = node as OmitForCaptureWithId<INode> & {
-          children?: IRecordId[];
-          collections?: IRecordId[];
-          links?: IRecordId[];
-          propertyValues?: INodePropertyValue[];
-        };
+        const { children, collections, links, propertyValues, ...record } =
+          node as OmitForCaptureWithId<INode> & {
+            children?: IRecordId[];
+            collections?: IRecordId[];
+            links?: IRecordId[];
+            propertyValues?: INodePropertyValue[];
+          };
         if (typeof record.parent !== "string") {
           delete record.parent;
         }
@@ -277,7 +272,8 @@ async function insertNodeRecords(
         (node as { collections?: IRecordId[] }).collections ?? [];
       const links = (node as { links?: IRecordId[] }).links ?? [];
       const propertyValues =
-        (node as { propertyValues?: INodePropertyValue[] }).propertyValues ?? [];
+        (node as { propertyValues?: INodePropertyValue[] }).propertyValues ??
+        [];
       if (collections.length > 0) {
         relations.collections = collections.map((id) => ({
           $ref: id.toString(),
@@ -1694,38 +1690,28 @@ class SyncStore extends ObservableStore<ISyncStore> {
   async save(items: OmitForCaptureWithId<IKindleBook | IKindleHighlight>[]) {
     logger.log({ at: "syncStore save", items });
     if (!items || items.length < 1) return;
-    // items = items.slice(0, 800);
     const limitCount = 300;
-    let response;
     this.update((n) => {
       n.progress = 0;
       return n;
     });
     if (items.length > limitCount) {
-      // response = await Promise.all(resolveChunks());
       const chunks = resolveChunks();
       logger.log({ at: "syncStore save", chunks });
       for (const chunk of chunks) {
-        response = await chunk();
+        await chunk();
         this.update((n) => {
           n.progress = (chunks.indexOf(chunk) / chunks.length) * 100;
           return n;
         });
       }
     } else {
-      response = await insertNodeRecords(items);
+      await insertNodeRecords(items);
     }
     this.update((n) => {
       n.progress = 100;
       return n;
     });
-    // function resolveChunks() {
-    //   const promises = [];
-    //   for (let i = 0; i < items.length; i += limitCount) {
-    //     promises.push(insertNodeRecords(items.slice(i, i + limitCount)));
-    //   }
-    //   return promises;
-    // }
     function resolveChunks(): (() => Promise<any>)[] {
       const chunks: (() => Promise<any>)[] = [];
       for (let i = 0; i < items.length; i += limitCount) {
