@@ -574,15 +574,16 @@ export async function initializeNucleumDatafn(
     isOfflinabilityEnabled: isE2eeEnabled ? true : isOfflinabilityEnabled
   });
   const isStorageBacked = mode !== "sync-direct";
-  const storageDbName = isStorageBacked
-    ? resolveDatafnStorageDbName({
-        product: input.product,
-        namespace,
-        env: input.env
-      })
-    : null;
+  const expectedStorageDbName = resolveDatafnStorageDbName({
+    product: input.product,
+    namespace,
+    env: input.env
+  });
+  const storageDbName = isStorageBacked ? expectedStorageDbName : null;
   const retiredStorageDbName =
-    mode === "sync-direct" ? (existing?.storageDbName ?? null) : null;
+    mode === "sync-direct" && existing?.storageDbName === expectedStorageDbName
+      ? existing.storageDbName
+      : null;
   const runtimeKey = `${input.product}:${namespace}:${mode}:${storageDbName ?? "direct"}:${e2ee.settings?.keyRef ?? "no-e2ee"}`;
 
   if (

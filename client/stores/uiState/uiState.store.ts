@@ -51,11 +51,16 @@ function migrateLegacyUiStateKeys(data: IUIStateStore): IUIStateStore {
   return migrated;
 }
 
-function resolveStoredLocalState() {
+function resolveStoredLocalState(): IUIStateStore["$local"] {
   try {
     if (typeof window === "undefined") return {};
     const savedState = window.localStorage.getItem("uiState");
-    return savedState ? parse(savedState) : {};
+    if (!savedState) return {};
+    const parsed = parse(savedState);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+    return migrateLegacyUiStateKeys(parsed as IUIStateStore);
   } catch (error) {
     logger.error({ context: "uiState.store - resolveStoredLocalState", error });
     return {};
@@ -173,13 +178,12 @@ export const uiState = {
   },
 
   modify(n: Partial<IUIStateStore>) {
-    refreshUiStateLocal();
     uiStateLocal.update((current) => ({ ...current, ...n }));
     return datafn.kv.merge(DatafnResource.uiState, n);
   },
 
   loader(data: IUIStateStore) {
-    if (!data || typeof data !== "object") return;
+    if (!data || typeof data !== "object" || Array.isArray(data)) return;
     const migrated = migrateLegacyUiStateKeys(data);
     uiStateLocal.set({
       ...uiStateSeed,

@@ -1,4 +1,6 @@
 import { ObservableStore } from "@21n/stores/client.store";
+import { GlobalEvent } from "@21n/types/event.enum";
+import { dispatchCustomEvent } from "@21n/utils/browser.utils";
 
 class CacheStore extends ObservableStore<{ [key: string]: any }> {
   constructor() {
@@ -11,6 +13,7 @@ class CacheStore extends ObservableStore<{ [key: string]: any }> {
       x[key] = value;
       return x;
     });
+    dispatchCustomEvent(GlobalEvent.CACHE_UPDATE, { key });
   }
 
   replaceUsingSubKey(key: string, subKey: string, value: any) {

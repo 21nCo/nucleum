@@ -195,8 +195,13 @@
     if (isStartupCompleted) return;
     const runtime = await initializeDatabase(options);
     if (runtime) {
-      await initializeLegacyFlux();
-      await completeApplicationStartup();
+      try {
+        await initializeLegacyFlux();
+        await completeApplicationStartup();
+      } catch (startupError) {
+        error = "Unable to initialize local data. Please try again later.";
+        logger.error({ at: "startApplication", error: startupError });
+      }
     }
   }
 

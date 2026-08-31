@@ -506,24 +506,36 @@ export function convertLegacyLocalDataBackupToDatafnImport(
 export function normalizeLegacyDatafnImportIds(
   payload: LegacyDatafnImportPayload
 ): LegacyDatafnImportPayload {
-  const resources = Object.fromEntries(
-    Object.entries(payload.resources).map(([resource, records]) => [
-      resource,
-      records.map((record) =>
+  const normalizedResources = new Map<
+    string,
+    Map<string, Record<string, unknown>>
+  >();
+  Object.entries(payload.resources).forEach(([resource, records]) => {
+    records.forEach((record) => {
+      addResourceRecord(
+        normalizedResources,
+        resource,
         normalizeLegacyDatafnResourceIds(resource, record)
-      )
-    ])
-  );
-  const joins = Object.fromEntries(
-    Object.entries(payload.joins ?? {}).map(([storeName, records]) => [
-      storeName,
-      records.map(normalizeLegacyDatafnJoinIds)
-    ])
-  );
+      );
+    });
+  });
+  const normalizedJoins = new Map<
+    string,
+    Map<string, Record<string, unknown>>
+  >();
+  Object.entries(payload.joins ?? {}).forEach(([storeName, records]) => {
+    records.forEach((record) => {
+      addJoinRecord(
+        normalizedJoins,
+        storeName,
+        normalizeLegacyDatafnJoinIds(record)
+      );
+    });
+  });
   return {
     ...payload,
-    resources,
-    joins
+    resources: mapRecordCollectionsToObject(normalizedResources),
+    joins: mapRecordCollectionsToObject(normalizedJoins)
   };
 }
 
@@ -930,7 +942,9 @@ function resolveLegacyIdentityScope(identity: LegacyLocalDataIdentity) {
 function resolveLegacySourceDatabaseNames(
   source?: LegacyLocalDataSummary | LegacyLocalDataBackup
 ) {
-  return (source?.databases.map((database) => database.name) ?? []).sort();
+  return (source?.databases.map((database) => database.name) ?? []).sort(
+    (left, right) => left.localeCompare(right)
+  );
 }
 
 function collectKnownLegacyResources(backup: LegacyLocalDataBackup) {

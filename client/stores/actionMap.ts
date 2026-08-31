@@ -40,7 +40,10 @@ import {
   resourceAction
 } from "@21n/data/datafn/resource.utils";
 import { Resource } from "@21n/data/datafn/resource.enum";
+import { Resource as LegacyResource } from "@21n/components/flux/resourceStores/resource.enum";
+import { resourceCacheComponentKey } from "@21n/components/flux/resourceStores/resource.utils";
 import CreateCollection from "@21n/components/collection/CreateCollection.svelte";
+import CollectionCache from "@21n/components/collection/CollectionCache.svelte";
 import PropertiesEditor from "@21n/components/collection/properties/PropertiesEditor.svelte";
 import CreateCombination from "@21n/components/combination/CreateCombination.svelte";
 import { ResourceError } from "@21n/components/error/errors";
@@ -989,6 +992,11 @@ export const globalActions: IAction[] = [
         isShowCantileverClose: true
       }
     }
+  },
+  {
+    action: resourceCacheComponentKey(LegacyResource.collection),
+    type: ActionType.CACHE,
+    component: CollectionCache
   },
   {
     action: Action.DATA_SETTINGS,

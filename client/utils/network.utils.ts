@@ -448,6 +448,7 @@ export async function performHttpNetworkOperation(params: {
     if (params.legacyApi && params.authToken) {
       return;
     }
+    const hadOriginalToken = Boolean(token);
     const isSessionValid = await revalidateAuthFnSession();
     if (isSessionValid === false) {
       await signoutAndReload();
@@ -456,7 +457,10 @@ export async function performHttpNetworkOperation(params: {
     if (isSessionValid !== true) return;
     const refreshedToken = await resolveToken();
     const isCookieSessionRetry =
-      !refreshedToken && !params.authToken && !params.legacyApi;
+      !hadOriginalToken &&
+      !refreshedToken &&
+      !params.authToken &&
+      !params.legacyApi;
     if (!refreshedToken && !isCookieSessionRetry) return;
     token = refreshedToken;
     const retryResponse = await fetchWithToken(token);

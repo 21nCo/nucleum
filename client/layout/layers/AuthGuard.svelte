@@ -33,6 +33,18 @@
       await parseEmbedToken();
     }
     const result = await performLoginStatusCheck();
+    if (
+      result &&
+      $account.dataMode === UserDataMode.CLOUD &&
+      !$account.userInfo?.isBootstrapped
+    ) {
+      account.update((current) => ({
+        ...current,
+        sessionType: UserSessionType.NEW
+      }));
+      appStore.gotoPath("/bootstrap");
+      return;
+    }
     if (result) {
       const isLoginFromExtension = await clientStorage.getForSession(
         ClientStorageKey.IS_EXTENSION_LOGIN
@@ -65,10 +77,15 @@
    */
   async function performLoginStatusCheck() {
     const resolution = await resolveAuthSession();
-    if (
-      resolution.status === "offline-only" ||
-      resolution.status === "cached-cloud"
-    ) {
+    if (resolution.status === "offline-only") {
+      return true;
+    }
+
+    if (resolution.status === "cached-cloud") {
+      if ($appStore.product === Product.NUCLEUM) {
+        appStore.gotoPath("/error/access-denied");
+        return false;
+      }
       return true;
     }
 
@@ -149,11 +166,12 @@
       dataMode: UserDataMode.CLOUD,
       sessionType: UserSessionType.RETURNING,
       userId: unprefixedActorId,
-      userInfo: userInfo as any
+      userInfo: userInfo as any,
+      plan: $appStore.product === Product.NUCLEUM ? undefined : current.plan
     }));
     if ($appStore.product === Product.NUCLEUM) {
       await account.refreshPlanData();
-      if ($account.plan && $account.plan.plan !== PlanType.NUCLEUS) {
+      if ($account.plan?.plan !== PlanType.NUCLEUS) {
         appStore.gotoPath("/error/access-denied");
         return false;
       }

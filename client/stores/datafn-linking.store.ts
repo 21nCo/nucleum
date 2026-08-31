@@ -159,7 +159,7 @@ export async function relateDatafnRecords(input: {
       assertMutationSucceeded(result);
     }
   }
-  return sources.length;
+  return pendingSources.length;
 }
 
 /**

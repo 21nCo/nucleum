@@ -5,14 +5,20 @@
   import { onMount } from "svelte";
   import { CacheKey } from "@21n/layout/layers/cache/cache.type";
   import { cache } from "@21n/layout/layers/cache/cache.store";
-  import { resourceCacheKey } from "@21n/components/flux/resourceStores/resource.utils";
+  import {
+    resourceCacheComponentKey,
+    resourceCacheKey
+  } from "@21n/components/flux/resourceStores/resource.utils";
   import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
   import {
     datafn,
     resolveDatafnProductResources
   } from "@21n/stores/datafn.store";
   let components = $state<any[]>([]);
-  const globalCacheKeys: string[] = [CacheKey.CALENDAR_CACHE];
+  const globalCacheKeys: string[] = [
+    CacheKey.CALENDAR_CACHE,
+    resourceCacheComponentKey(Resource.collection)
+  ];
 
   onMount(() => {
     globalCacheKeys.forEach((key) => {
