@@ -1,6 +1,5 @@
 import type { AuthFnSession } from "@authfn/client";
 
-/** Locally persisted markers used to decide how an AuthFn session can resume. */
 export type StoredAuthSessionState = {
   shouldUseBearerSession: boolean;
   authFnToken?: string;
@@ -12,7 +11,6 @@ export type StoredAuthSessionState = {
   isOffline: boolean;
 };
 
-/** Result of resolving the active AuthFn session and its offline fallbacks. */
 export type AuthSessionResolution =
   | {
       status: "authenticated";

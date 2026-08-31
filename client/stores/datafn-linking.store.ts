@@ -141,9 +141,6 @@ async function applyLocalRelationBatchWithRollback(
   }
 }
 
-/**
- * Relates validated records through the DataFn schema and rejects partial batches.
- */
 export async function relateDatafnRecords(input: {
   sourceIds: IRecordId[];
   targetId: IRecordId;
@@ -191,9 +188,6 @@ export async function relateDatafnRecords(input: {
   return pendingSources.length;
 }
 
-/**
- * Adds one supported record to a collection through the shared linking policy.
- */
 export async function addDatafnRecordToCollection(input: {
   sourceId: IRecordId;
   collectionId: IRecordId;

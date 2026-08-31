@@ -28,7 +28,10 @@ import {
 import { PlanType } from "@21n/components/subscription/userPlan.type";
 import { ObservableStore } from "@21n/stores/client.store";
 import { StoreDataType, type IRecordId } from "@21n/types/data.type";
-import { clientStorage } from "@21n/persistence/persistence.utils";
+import {
+  clientStorage,
+  deleteIndexedDbDatabase
+} from "@21n/persistence/persistence.utils";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
 import { logger } from "@21n/components/debug/logger.client";
 import { generateSimpleRandomId } from "@21n/shared-utils/crypto.utils";
@@ -55,10 +58,10 @@ import {
 } from "@21n/components/account/auth";
 import { resolveAccountBaseUrl } from "@21n/components/network";
 import { clearCachedDatafnE2eeState } from "@21n/stores/datafnE2ee.store";
+import { flux } from "@21n/components/flux/flux";
 
 export const isRefreshingToken = writable(false);
 
-/** Parses persisted user information after validating its required identity. */
 export function resolveStoredUserInformation(
   value: string | null
 ): UserInformation | undefined {
@@ -79,7 +82,6 @@ export function resolveStoredUserInformation(
   }
 }
 
-/** Parses a persisted plan after validating its entitlement type. */
 export function resolveStoredUserPlan(
   value: string | null
 ): IUserPlan | undefined {
@@ -418,6 +420,7 @@ class AccountStore extends ObservableStore<UserAccount> {
       }
       if (authFnDeleteStatus === "deleted") {
         await clearDatafnLocalData();
+        await this.clearLegacyFluxLocalData();
         await this.signOut({ isPreventRedirect: true });
         appStore.gotoPath("/signup?msg=deleted");
         isDeleted = true;
@@ -439,6 +442,7 @@ class AccountStore extends ObservableStore<UserAccount> {
         return false;
       }
       await clearDatafnLocalData();
+      await this.clearLegacyFluxLocalData();
       await this.signOut({ isPreventRedirect: true });
       appStore.gotoPath("/signup?msg=deleted");
       isDeleted = true;
@@ -454,6 +458,22 @@ class AccountStore extends ObservableStore<UserAccount> {
         isFinished: true
       });
     }
+  }
+
+  private async clearLegacyFluxLocalData() {
+    const account = this.get();
+    const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
+    const identities = new Set(
+      [account.userId, dapId]
+        .filter((value): value is string => Boolean(value))
+        .map((value) => value.replace(/^user:/, ""))
+    );
+    if (flux?.persistence) await flux.terminate();
+    await Promise.all(
+      Array.from(identities, (identity) =>
+        deleteIndexedDbDatabase(`${identity}-1`)
+      )
+    );
   }
 
   private async tryConfirmAuthFnDelete(): Promise<
@@ -634,10 +654,6 @@ class AccountStore extends ObservableStore<UserAccount> {
     return sessionId;
   }
 
-  /**
-   * @deprecated Nucleus account bootstrap is no longer part of post-auth
-   * routing. Kept for the legacy bootstrap screen and account metadata repair.
-   */
   async bootstrap(region: string) {
     const authFnResult = await this.bootstrapAuthFn(region);
     if (authFnResult !== "not-authfn") {
@@ -646,10 +662,6 @@ class AccountStore extends ObservableStore<UserAccount> {
     return this.bootstrapRemote(region);
   }
 
-  /**
-   * @deprecated Nucleus account bootstrap is no longer part of post-auth
-   * routing. Kept for the legacy bootstrap screen and account metadata repair.
-   */
   private async bootstrapAuthFn(
     region: string
   ): Promise<boolean | "not-authfn"> {
@@ -677,10 +689,6 @@ class AccountStore extends ObservableStore<UserAccount> {
     return true;
   }
 
-  /**
-   * @deprecated Nucleus account bootstrap is no longer part of post-auth
-   * routing. Kept for the legacy bootstrap screen and account metadata repair.
-   */
   async bootstrapRemote(region: string) {
     const id = this.get()?.userInfo?.id?.split("user:")[1];
     if (!id) return;

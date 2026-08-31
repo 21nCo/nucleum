@@ -5,5 +5,9 @@
   "type": "module",
   "exports": {
     "./*": "./*"
+  },
+  "dependencies": {
+    "@surrealdb/wasm": "1.4.1",
+    "surrealdb": "1.3.2"
   }
 }

@@ -26,10 +26,6 @@ export type UserInformation = {
   profilePictureUrl?: string;
   emailParts?: EmailParts;
   licenseType?: LicenseType;
-  /**
-   * @deprecated Nucleus no longer routes users through bootstrap. This is kept
-   * for legacy account/session metadata only.
-   */
   isBootstrapped?: boolean;
   region?: string;
 };

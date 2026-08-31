@@ -18,6 +18,7 @@ const appMenuSignal = datafn.kv.signal<IAppMenuStore>(Resource.appMenu, {
 });
 const appMenuLocal = writable<IAppMenuStore>({});
 const pendingAppMenuValues: OptimisticKvEntries = new Map();
+let appMenuNamespace = datafn.currentNamespace();
 
 function migrateLegacyNucleusAppMenu(data: IAppMenuStore): IAppMenuStore {
   if (data.nucleus && !data[Product.NUCLEUM]) {
@@ -30,6 +31,11 @@ function migrateLegacyNucleusAppMenu(data: IAppMenuStore): IAppMenuStore {
 }
 
 appMenuSignal.subscribe((value) => {
+  const namespace = datafn.currentNamespace();
+  if (namespace !== appMenuNamespace) {
+    pendingAppMenuValues.clear();
+    appMenuNamespace = namespace;
+  }
   const migrated = migrateLegacyNucleusAppMenu(value ?? {});
   acknowledgeOptimisticKvEntries(pendingAppMenuValues, migrated);
   appMenuLocal.set(applyOptimisticKvEntries(migrated, pendingAppMenuValues));

@@ -24,7 +24,11 @@ import { resolveAccountBaseUrl } from "@21n/components/network";
 import { createNucleumAuthFnTransportAuth } from "@21n/components/account/auth";
 import type { Product } from "@21n/products/product.type";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
-import { clientStorage, getDapId } from "@21n/persistence/persistence.utils";
+import {
+  clientStorage,
+  deleteIndexedDbDatabase,
+  getDapId
+} from "@21n/persistence/persistence.utils";
 import type { UserAccount } from "@21n/types/account.type";
 import type { NucleumDatafnE2eeSettings } from "@21n/types/datafn.type";
 import { UserDataMode } from "@21n/types/account.type";
@@ -229,13 +233,6 @@ function clearNucleumDatafnStatusBinding() {
   datafnStatusUnsubscribe = null;
 }
 
-/**
- * Resolves the full set of local DataFn resources that belong to a product.
- *
- * The list is derived from shared product config, includes both browsable and
- * supporting table resources, excludes remote-only schema resources, and is
- * used to scope product-specific local storage and sync hydration.
- */
 export function resolveDatafnProductResources(
   product: Product
 ): NucleumDatafnResource[] {
@@ -263,13 +260,6 @@ export function resolveDatafnProductResources(
   return productResources;
 }
 
-/**
- * Resolves the product resources that should be hydrated first during startup.
- *
- * Boot resources are limited to the product's browsable surfaces so the app can
- * render primary navigation and resource-browser pages before slower background
- * hydration completes.
- */
 export function resolveDatafnBootResources(product: Product): string[] {
   const cloneableResources = new Set(
     nucleumDatafnSchema.resources
@@ -285,12 +275,6 @@ export function resolveDatafnBootResources(product: Product): string[] {
     );
 }
 
-/**
- * Resolves product resources that can hydrate after the boot resources.
- *
- * This includes supporting product tables that are needed for full behavior but
- * are not required to render the first browsable surfaces immediately.
- */
 export function resolveDatafnBackgroundResources(product: Product): string[] {
   const boot = new Set(resolveDatafnBootResources(product));
   return resolveDatafnProductResources(product).filter(
@@ -800,7 +784,6 @@ function requireLastInitializeInput() {
   return lastInitializeInput;
 }
 
-/** Uploads the complete local DataFn clone through the active sync runtime. */
 export async function cloneUpAllDatafnData() {
   const runtime = get(runtimeStore);
   if (!runtime || runtime.mode !== "sync") {
@@ -1006,7 +989,6 @@ async function applyNucleumDatafnConnectivity(isOffline: boolean) {
   return initializeNucleumDatafn(nextInput);
 }
 
-/** Applies only the latest queued browser or manual connectivity transition. */
 export function updateNucleumDatafnConnectivity(isOffline: boolean) {
   const generation = ++connectivityGeneration;
   const transition = connectivityTransition.then(() => {
@@ -1078,17 +1060,6 @@ async function deleteDatafnLocalClone(storageDbName: string) {
   ]);
 }
 
-function deleteIndexedDbDatabase(name: string) {
-  if (typeof indexedDB === "undefined") return Promise.resolve();
-  return new Promise<void>((resolve, reject) => {
-    const request = indexedDB.deleteDatabase(name);
-    request.onsuccess = () => resolve();
-    request.onerror = () =>
-      reject(request.error ?? new Error(`Unable to delete ${name}`));
-    request.onblocked = () => reject(new Error(`Deletion blocked for ${name}`));
-  });
-}
-
 async function disposeNucleumDatafnSearchProvider(
   provider: SearchProvider | undefined
 ) {
@@ -1104,9 +1075,6 @@ async function resolveDatafnRemoteUrl(account: Pick<UserAccount, "userInfo">) {
   return `${resolveAccountBaseUrl(region).replace(/\/$/, "")}/datafn`;
 }
 
-/**
- * Creates DataFn HTTP transport options backed by the Nucleum AuthFn session.
- */
 export async function createNucleumDatafnHttpOptions(
   input: {
     publicLinkToken?: string;

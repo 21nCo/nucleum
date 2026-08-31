@@ -718,6 +718,15 @@
             type: "sync",
             embedTransaction: parsed.embedTransaction
           });
+        } else if (
+          (parsed.type === "DOWNLOAD_SUCCESS" ||
+            parsed.type === "DOWNLOAD_ERROR") &&
+          parsed.id
+        ) {
+          fileEmbedChannel.setDownloadResult(
+            parsed.id,
+            parsed.type === "DOWNLOAD_SUCCESS"
+          );
         } else if (parsed?.type && parsed?.id && parsed?.data) {
           embedBridge.setData(parsed.id, parsed.type, parsed.data);
         } else if (parsed?.id && parsed?.data) {

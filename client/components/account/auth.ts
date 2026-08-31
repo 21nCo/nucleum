@@ -77,19 +77,12 @@ export function resolveAuthFnSessionMode(): "cookie" | "hybrid" {
   return shouldUseAuthFnBearerSession() ? "hybrid" : "cookie";
 }
 
-/**
- * Creates a transport auth provider backed by the configured Nucleum AuthFn client.
- */
 export async function createNucleumAuthFnTransportAuth(
   input: AuthFnTransportAuthOptions = {}
 ): Promise<HttpTransportAuthProvider> {
   return (await authClient()).createTransportAuth(input);
 }
 
-/**
- * @deprecated Nucleus account bootstrap is no longer part of post-auth
- * routing. Kept for the legacy bootstrap screen and account metadata repair.
- */
 export async function bootstrapNucleusAccount(region: string) {
   if (!shouldUseAuthFnBearerSession()) {
     return { kind: "not-authfn" as const };
@@ -169,10 +162,6 @@ function round(value: number): number {
   return Math.round(value * 100) / 100;
 }
 
-/**
- * Resolves local auth markers without treating cloud offlinability as an
- * offline-only account.
- */
 export async function resolveStoredAuthSessionState(): Promise<StoredAuthSessionState> {
   const shouldUseBearerSession = shouldUseAuthFnBearerSession();
   const authFnToken = shouldUseBearerSession
@@ -230,9 +219,6 @@ export function isRetryableAuthFnError(error: unknown) {
   );
 }
 
-/**
- * Removes stored cloud identity that is no longer backed by an AuthFn session.
- */
 export async function clearStoredCloudAuthState(): Promise<void> {
   authClientsMap.clear();
   await Promise.all([
@@ -285,10 +271,6 @@ async function resolveMissingAuthSession(
   };
 }
 
-/**
- * Resolves the current AuthFn session without conflating expired sessions with
- * backend availability failures.
- */
 export async function resolveAuthSession(): Promise<AuthSessionResolution> {
   const storedState = await resolveStoredAuthSessionState();
   if (typeof window === "undefined") {

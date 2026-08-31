@@ -190,6 +190,17 @@ class ClientKeyValueStorage {
 
 export const clientStorage = new ClientKeyValueStorage();
 
+export function deleteIndexedDbDatabase(name: string) {
+  if (typeof indexedDB === "undefined") return Promise.resolve();
+  return new Promise<void>((resolve, reject) => {
+    const request = indexedDB.deleteDatabase(name);
+    request.onsuccess = () => resolve();
+    request.onerror = () =>
+      reject(request.error ?? new Error(`Unable to delete ${name}`));
+    request.onblocked = () => reject(new Error(`Deletion blocked for ${name}`));
+  });
+}
+
 let dapIdPromise: Promise<string> | null = null;
 
 export async function getDapId() {

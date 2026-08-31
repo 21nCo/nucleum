@@ -1,7 +1,6 @@
 import { compareObjects } from "@21n/shared-utils/obj.utils";
 import type { OptimisticKvEntries } from "@21n/types/datafn.type";
 
-/** Adds one identity-tracked optimistic entry for every value in a KV merge. */
 export function addOptimisticKvEntries(
   pending: OptimisticKvEntries,
   values: Record<string, unknown>
@@ -16,7 +15,6 @@ export function addOptimisticKvEntries(
   return tokens;
 }
 
-/** Removes only the entries owned by one failed KV merge. */
 export function removeOptimisticKvEntries(
   pending: OptimisticKvEntries,
   tokens: Map<string, symbol>
@@ -28,7 +26,6 @@ export function removeOptimisticKvEntries(
   });
 }
 
-/** Reconciles ordered optimistic entries against the latest authoritative KV state. */
 export function acknowledgeOptimisticKvEntries(
   pending: OptimisticKvEntries,
   authoritative: Record<string, unknown>
@@ -44,7 +41,6 @@ export function acknowledgeOptimisticKvEntries(
   });
 }
 
-/** Applies the newest pending entry for each key over authoritative KV state. */
 export function applyOptimisticKvEntries<T extends Record<string, unknown>>(
   authoritative: T,
   pending: OptimisticKvEntries

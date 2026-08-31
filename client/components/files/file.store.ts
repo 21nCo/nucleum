@@ -130,7 +130,10 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
       const contextStore = get(context);
       if (contextStore.isEmbed) {
         //TODO - handle offline user case
-        fileEmbedChannel.downloadFromUrl(_file.url, _file.label.split(".")[0]);
+        void fileEmbedChannel.downloadFromUrl(
+          _file.url,
+          _file.label.split(".")[0]
+        );
         if (contextStore.os === OperatingSystem.MACOS) {
           toasts.success("File downloaded to Downloads folder");
         }
@@ -182,9 +185,12 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
         }
       );
       if (url) {
-        fileEmbedChannel.downloadFromUrl(url, params?.fileNameForEmbed);
-        window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
-        return true;
+        const result = await fileEmbedChannel.downloadFromUrl(
+          url,
+          params?.fileNameForEmbed
+        );
+        if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+        return result;
       }
       return false;
     }

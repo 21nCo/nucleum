@@ -207,9 +207,6 @@ const schemaFieldsByResource: ReadonlyMap<
   ])
 );
 
-/**
- * Detects legacy local IndexedDB databases without creating new databases.
- */
 export async function detectLegacyLocalData(
   product: Product
 ): Promise<LegacyLocalDataSummary> {
@@ -236,6 +233,33 @@ export async function detectLegacyLocalData(
         identity
       );
       if (!provider) continue;
+      if (provider === "surreal") {
+        database.close();
+        const surrealStores = await readSurrealStoreBackups(
+          name,
+          identity
+        ).catch((error) => [
+          {
+            name: "surreal",
+            keyPath: null,
+            autoIncrement: false,
+            indexes: [],
+            records: [],
+            error: error instanceof Error ? error.message : String(error)
+          }
+        ]);
+        databases.push({
+          name,
+          version: database.version,
+          provider,
+          stores: surrealStores.map((store) => ({
+            name: store.name,
+            count: store.records.length,
+            error: store.error
+          }))
+        });
+        continue;
+      }
       const stores = await readStoreSummaries(database, storeNames);
       databases.push({
         name,
@@ -251,9 +275,6 @@ export async function detectLegacyLocalData(
   return { isSupported: true, databases };
 }
 
-/**
- * Exports raw legacy local IndexedDB data for later manual recovery/import.
- */
 export async function exportLegacyLocalData(
   product: Product
 ): Promise<LegacyLocalDataBackup | undefined> {
@@ -261,7 +282,17 @@ export async function exportLegacyLocalData(
   if (!summary.databases.length) return undefined;
 
   const databases: LegacyLocalDatabaseBackup[] = [];
+  const identity = await resolveActiveLegacyLocalDataIdentity();
   for (const item of summary.databases) {
+    if (item.provider === "surreal") {
+      databases.push({
+        name: item.name,
+        version: item.version,
+        provider: item.provider,
+        stores: await readSurrealStoreBackups(item.name, identity)
+      });
+      continue;
+    }
     const database = await openExistingIndexedDatabase(item.name).catch(
       () => null
     );
@@ -290,9 +321,6 @@ export async function exportLegacyLocalData(
   };
 }
 
-/**
- * Returns the total number of legacy records visible in a detection summary.
- */
 export function resolveLegacyLocalDataRecordCount(
   summary: LegacyLocalDataSummary | LegacyLocalDataBackup | undefined
 ) {
@@ -331,18 +359,12 @@ export function resolveLegacyImportableRecordCount(
   );
 }
 
-/**
- * Returns true when a legacy data summary contains records that can be offered for recovery.
- */
 export function hasRecoverableLegacyLocalData(
   summary: LegacyLocalDataSummary | undefined
 ) {
   return resolveLegacyImportableRecordCount(summary) > 0;
 }
 
-/**
- * Reads the durable per-product decision that suppresses the startup recovery prompt.
- */
 export async function getLegacyLocalDataRecoveryDecision(
   product: Product,
   source?: LegacyLocalDataSummary | LegacyLocalDataBackup
@@ -352,9 +374,6 @@ export async function getLegacyLocalDataRecoveryDecision(
   return decisions[key];
 }
 
-/**
- * Persists a per-product decision after a legacy import or explicit backup download succeeds.
- */
 export async function saveLegacyLocalDataRecoveryDecision(
   decision: Omit<
     LegacyLocalDataRecoveryDecision,
@@ -381,7 +400,6 @@ export async function saveLegacyLocalDataRecoveryDecision(
   );
 }
 
-/** Clears pending cloud-upload state after the imported local clone is uploaded. */
 export async function completeLegacyLocalDataCloudUpload(product: Product) {
   const { decisions, pending } =
     await resolvePendingLegacyLocalDataRecoveryDecisions(product);
@@ -396,16 +414,12 @@ export async function completeLegacyLocalDataCloudUpload(product: Product) {
   }
 }
 
-/** Returns whether the active identity has a recovered clone awaiting upload. */
 export async function hasPendingLegacyLocalDataCloudUpload(product: Product) {
   const { pending } =
     await resolvePendingLegacyLocalDataRecoveryDecisions(product);
   return pending.length > 0;
 }
 
-/**
- * Converts a raw legacy local backup into the structured DataFn import payload.
- */
 export function convertLegacyLocalDataBackupToDatafnImport(
   backup: LegacyLocalDataBackup
 ): LegacyDatafnImportPayload {
@@ -508,7 +522,6 @@ export function convertLegacyLocalDataBackupToDatafnImport(
   };
 }
 
-/** Canonicalizes resource and foreign-key IDs before a converted backup is imported. */
 export function normalizeLegacyDatafnImportIds(
   payload: LegacyDatafnImportPayload
 ): LegacyDatafnImportPayload {
@@ -696,6 +709,75 @@ async function readStoreBackups(
   );
 }
 
+async function readSurrealStoreBackups(
+  databaseName: string,
+  identity: LegacyLocalDataIdentity
+): Promise<LegacyLocalStoreBackup[]> {
+  const databaseIdentity = identity.userId ?? identity.dapId;
+  if (!databaseIdentity) {
+    throw new Error("Legacy Surreal database identity is unavailable");
+  }
+  const [{ Surreal }, { surrealdbWasmEngines }] = await Promise.all([
+    import("surrealdb"),
+    import("@surrealdb/wasm")
+  ]);
+  const surreal = new Surreal({
+    engines: surrealdbWasmEngines({
+      strict: false,
+      capabilities: {
+        guest_access: true,
+        functions: true,
+        network_targets: true
+      }
+    })
+  });
+  try {
+    await surreal.connect(`indxdb://${databaseName}`);
+    await surreal.use({ namespace: "user", database: databaseIdentity });
+    const storeNames = Array.from(legacyResourceStores);
+    const statements = (await surreal.queryRaw(
+      storeNames.map((name) => `SELECT * FROM ${name};`).join("\n")
+    )) as Array<{ status?: string; result?: unknown }>;
+    const stores = await Promise.all(
+      storeNames.map(async (name, index) => {
+        const statement = statements[index];
+        if (statement?.status === "ERR") {
+          return {
+            name,
+            keyPath: "id",
+            autoIncrement: false,
+            indexes: [],
+            records: [],
+            error: String(statement.result ?? `Unable to read ${name}`)
+          };
+        }
+        const values = Array.isArray(statement?.result) ? statement.result : [];
+        const records = await Promise.all(
+          values.map(async (value) => {
+            const record = isPlainObject(value) ? value : {};
+            return {
+              key: normalizeRecordId(record.id),
+              value: await serializeIndexedDbValue(value)
+            };
+          })
+        );
+        return {
+          name,
+          keyPath: "id",
+          autoIncrement: false,
+          indexes: [],
+          records
+        };
+      })
+    );
+    return stores.filter(
+      (store) => store.records.length > 0 || Boolean(store.error)
+    );
+  } finally {
+    await surreal.close();
+  }
+}
+
 function countStoreRecords(store: IDBObjectStore): Promise<number> {
   return new Promise((resolve, reject) => {
     const request = store.count();
@@ -769,6 +851,15 @@ async function serializeIndexedDbValue(
       value: value.toISOString()
     };
   }
+  const constructorName = value.constructor?.name;
+  if (constructorName === "RecordId") return String(value);
+  if (constructorName === "Datetime") {
+    return {
+      [serializationTypeKey]: "Date",
+      value: String(value)
+    };
+  }
+  if (constructorName === "Duration") return String(value);
   if (typeof File !== "undefined" && value instanceof File) {
     return {
       [serializationTypeKey]: "File",
