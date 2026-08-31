@@ -83,7 +83,7 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
     }
   ) {
     if (get(context).isEmbed) {
-      if (!params?.isHandleEmbedCase) return;
+      if (!params?.isHandleEmbedCase) return false;
       const url = await account.uploadFileV2(
         params?.contentType || "text/plain",
         params?.fileNameForEmbed || params?.fileName || "download",
@@ -93,10 +93,11 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
         }
       );
       if (url) {
-        fileEmbedChannel.downloadFromUrl(url);
+        fileEmbedChannel.downloadFromUrl(url, params?.fileNameForEmbed);
         window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        return true;
       }
-      return;
+      return false;
     }
     const blobUrl = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -106,6 +107,7 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(blobUrl);
+    return true;
   }
 
   private async updateUrlIfExpired(

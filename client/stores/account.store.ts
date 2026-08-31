@@ -871,15 +871,19 @@ class AccountStore extends ObservableStore<UserAccount> {
         } else if (params.isExtensionEnv) {
           return file;
         }
-        await datafn.file.mutate({
+        const mutationResult = (await datafn.file.mutate({
           operation: "insert",
           id,
           record: file
-        });
+        })) as { ok?: boolean; error?: unknown };
+        if (mutationResult.ok === false) {
+          throw mutationResult.error ?? new Error("File metadata save failed");
+        }
         return [file];
       }
     } catch (e) {
       logger.error({ at: "uploadFileV2", error: e });
+      throw e;
     }
   }
 
@@ -916,11 +920,14 @@ class AccountStore extends ObservableStore<UserAccount> {
     if (params.isExtensionEnv) {
       return file;
     }
-    await datafn.file.mutate({
+    const mutationResult = (await datafn.file.mutate({
       operation: "insert",
       id: params.id,
       record: file
-    });
+    })) as { ok?: boolean; error?: unknown };
+    if (mutationResult.ok === false) {
+      throw mutationResult.error ?? new Error("File metadata save failed");
+    }
     return [file];
   }
 
@@ -943,7 +950,9 @@ class AccountStore extends ObservableStore<UserAccount> {
 
   async checkIfSessionExpired() {
     const resolution = await resolveAuthSession();
-    return resolution.status === "expired";
+    return !["authenticated", "offline-only", "cached-cloud"].includes(
+      resolution.status
+    );
   }
 
   isCloudUserAndOffline() {

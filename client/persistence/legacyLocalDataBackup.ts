@@ -1245,23 +1245,21 @@ function transformLegacyPointLog(
   result.sessionId = sessionId;
   result.focus = focus;
   result.breakTime = breakTime;
-  result.objectiveId = resolveLegacyTargetId(
+  const objectiveId = resolveLegacyTargetId(
     record.objectiveId ?? record.goalId,
     "objective"
   );
+  result.objectiveId =
+    objectiveId === "objective:Empty" ? undefined : objectiveId;
   result.taskId = resolveLegacyTargetId(record.taskId, "task");
   result.start =
     typeof record.start === "string"
       ? record.start
-      : startUnix === undefined
-        ? undefined
-        : new Date(startUnix).toISOString();
+      : new Date(startUnix).toISOString();
   result.end =
     typeof record.end === "string"
       ? record.end
-      : endUnix === undefined
-        ? undefined
-        : new Date(endUnix).toISOString();
+      : new Date(endUnix).toISOString();
   return true;
 }
 

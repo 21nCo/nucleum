@@ -49,7 +49,7 @@
   import { compareVersions } from "@21n/shared-utils/utils";
   import { UIStateScope } from "@21n/stores/uiState/uiState.type";
   import { parse, stringify } from "@21n/shared-utils/json.utils";
-  import { parseAndFormatDate } from "@21n/utils/time.utils";
+  import { detectTimeZone, parseAndFormatDate } from "@21n/utils/time.utils";
   import { recentsStore } from "@21n/components/record/recent.store";
   import { resolveProductResources } from "@21n/components/flux/resourceStores/resource.utils";
   import { resolveProductConfig } from "@21n/products/product.config";
@@ -326,7 +326,7 @@
     try {
       const backup = await exportLegacyLocalData($appStore.product);
       if (backup?.databases.length) {
-        downloadLegacyLocalBackup(backup);
+        await downloadLegacyLocalBackup(backup);
         await saveLegacyLocalDataRecoveryDecision(
           {
             version: 1,
@@ -404,18 +404,21 @@
     );
   }
 
-  function downloadLegacyLocalBackup(backup: LegacyLocalDataBackup) {
+  async function downloadLegacyLocalBackup(backup: LegacyLocalDataBackup) {
     const product = $appStore.product;
     const fileName = `${product}-legacy-local-backup-${parseAndFormatDate(new Date(), "iso-short")}.json`;
     const blob = new Blob([stringify(backup, { isPreventReplacer: true })], {
       type: "application/json"
     });
-    fileStore.downloadFromBlob(blob, {
+    const isDelivered = await fileStore.downloadFromBlob(blob, {
       fileName,
       fileNameForEmbed: `${product}_legacy_local_backup`,
       contentType: "application/json",
       isHandleEmbedCase: true
     });
+    if (!isDelivered) {
+      throw new Error("Legacy local backup delivery failed");
+    }
   }
 
   /**
@@ -430,6 +433,7 @@
   async function onAppear() {
     try {
       await uploadPendingLegacyCloudData();
+      await refreshTimeZone();
       const isCloudUser = $nucleumDatafnStatus.nucleumMode === "sync";
       if (isCloudUser && !dev_isDisableSyncOnAppear) {
         await pullDatafnNow();
@@ -440,6 +444,24 @@
     } catch (e) {
       logger.error({ at: "onAppear", error: e });
     }
+  }
+
+  async function refreshTimeZone() {
+    if ($nucleumDatafnStatus.nucleumMode === null) return;
+    const timeZone = detectTimeZone();
+    if (!timeZone || !$userPreferences) return;
+    const offset = timeZone.offset * 60;
+    if (
+      $userPreferences.timeZoneOffset === offset &&
+      $userPreferences.timeZone === timeZone.zone
+    ) {
+      return;
+    }
+    logger.info({
+      at: "refreshTimeZone - timezone change detected",
+      timeZone
+    });
+    await userPreferences.setTimeZone(offset, timeZone.label, timeZone.zone);
   }
 
   async function uploadPendingLegacyCloudData() {
