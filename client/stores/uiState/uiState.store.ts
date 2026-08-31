@@ -24,6 +24,13 @@ import {
 } from "@21n/data/datafn/resource.utils";
 import { parse, stringify } from "@21n/shared-utils/json.utils";
 import { migrateLegacyNucleusProductKeys } from "@21n/stores/productKeyMigration.utils";
+import {
+  acknowledgeOptimisticKvEntries,
+  addOptimisticKvEntries,
+  applyOptimisticKvEntries,
+  removeOptimisticKvEntries,
+  type OptimisticKvEntries
+} from "@21n/stores/optimisticKv.utils";
 
 const uiStateSeed: IUIStateStore = {
   $local: {}
@@ -32,6 +39,7 @@ const uiStateSignal = datafn.kv.signal<IUIStateStore>(DatafnResource.uiState, {
   defaultValue: uiStateSeed
 });
 const uiStateLocal = writable<IUIStateStore>(uiStateSeed);
+const pendingUiStateValues: OptimisticKvEntries = new Map();
 const legacyUiStateKeys = new Map([
   ["manualLogRecentGoals", UIState.manualLogRecentObjectives],
   ["goalPanelSelection", UIState.objectivePanelSelection]
@@ -69,14 +77,19 @@ function resolveStoredLocalState(): IUIStateStore["$local"] {
 
 function refreshUiStateLocal() {
   const migrated = migrateLegacyUiStateKeys(uiStateSignal.get() ?? uiStateSeed);
+  const optimistic = applyOptimisticKvEntries(migrated, pendingUiStateValues);
   uiStateLocal.set({
     ...uiStateSeed,
-    ...migrated,
+    ...optimistic,
     $local: resolveStoredLocalState()
   });
 }
 
-uiStateSignal.subscribe(() => {
+uiStateSignal.subscribe((value) => {
+  acknowledgeOptimisticKvEntries(
+    pendingUiStateValues,
+    migrateLegacyUiStateKeys(value ?? uiStateSeed)
+  );
   refreshUiStateLocal();
 });
 
@@ -178,8 +191,17 @@ export const uiState = {
   },
 
   modify(n: Partial<IUIStateStore>) {
+    const mutationTokens = addOptimisticKvEntries(pendingUiStateValues, n);
     uiStateLocal.update((current) => ({ ...current, ...n }));
-    return datafn.kv.merge(DatafnResource.uiState, n);
+    const mutation = datafn.kv.merge(DatafnResource.uiState, n);
+    const rollbackPendingValues = () => {
+      removeOptimisticKvEntries(pendingUiStateValues, mutationTokens);
+      refreshUiStateLocal();
+    };
+    void mutation.then((result) => {
+      if (!result.ok) rollbackPendingValues();
+    }, rollbackPendingValues);
+    return mutation;
   },
 
   loader(data: IUIStateStore) {

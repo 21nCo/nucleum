@@ -21,7 +21,7 @@
   let isOfflinabilityEnabled = $state(true);
   let isOfflinabilityInitialized = $state(false);
   let isSwitchingOfflinability = $state(false);
-  const isNetworkInducedOfflineMode = !navigator.onLine;
+  let isNetworkInducedOfflineMode = $state(!navigator.onLine);
   const isLocalDataMode = $derived($account.dataMode === UserDataMode.LOCAL);
   const isOfflinabilityToggleDisabled = $derived(
     isNetworkInducedOfflineMode ||
@@ -44,6 +44,11 @@
   });
 
   onMount(() => {
+    const refreshNetworkState = () => {
+      isNetworkInducedOfflineMode = !navigator.onLine;
+    };
+    window.addEventListener("online", refreshNetworkState);
+    window.addEventListener("offline", refreshNetworkState);
     void resolveDatafnOfflinabilityPreference()
       .then((value) => {
         isOfflinabilityEnabled = value;
@@ -52,6 +57,10 @@
       .finally(() => {
         isOfflinabilityInitialized = true;
       });
+    return () => {
+      window.removeEventListener("online", refreshNetworkState);
+      window.removeEventListener("offline", refreshNetworkState);
+    };
   });
 
   async function handleOfflinabilityChange() {

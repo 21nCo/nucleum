@@ -61,9 +61,7 @@
   let isLegacyLocalBackupInProgress = $state(false);
   const hasLocalDatafnStorage = $derived(Boolean($datafnRuntime?.storage));
   const canResyncData = $derived($datafnRuntime?.mode === "sync");
-  const canManageE2ee = $derived(
-    $datafnRuntime?.mode === "sync" || $datafnRuntime?.mode === "sync-direct"
-  );
+  const canManageE2ee = $derived($datafnRuntime?.mode === "sync");
   const legacyLocalRecordCount = $derived(
     resolveLegacyImportableRecordCount(legacyLocalDataSummary)
   );

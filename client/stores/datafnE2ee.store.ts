@@ -9,6 +9,7 @@ export const DATAFN_E2EE_KV_KEY = "nucleum:e2ee";
 export type NucleumDatafnE2eeSettings = {
   version: 1;
   enabled: boolean;
+  recoveryRequired?: "restore-remote";
   keyRef?: string;
   salt?: string;
   iterations?: number;

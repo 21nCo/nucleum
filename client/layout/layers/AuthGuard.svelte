@@ -136,6 +136,10 @@
       await clientStorage.get(ClientStorageKey.USER_INFO)
     );
     const currentUserInfo = account.get()?.userInfo ?? storedUserInfo;
+    const cachedPlan =
+      currentUserInfo?.id === normalizedActorId
+        ? account.get()?.plan
+        : undefined;
     const userInfo = {
       ...currentUserInfo,
       id: normalizedActorId,
@@ -171,10 +175,12 @@
       sessionType: UserSessionType.RETURNING,
       userId: unprefixedActorId,
       userInfo: userInfo as any,
-      plan: $appStore.product === Product.NUCLEUM ? undefined : current.plan
+      plan: $appStore.product === Product.NUCLEUM ? cachedPlan : current.plan
     }));
     if ($appStore.product === Product.NUCLEUM) {
-      const plan = await account.refreshPlanData();
+      const planResolution = await account.refreshPlanData();
+      const plan =
+        planResolution.status === "resolved" ? planResolution.plan : cachedPlan;
       if (plan?.plan !== PlanType.NUCLEUS) {
         appStore.gotoPath("/error/access-denied");
         return false;

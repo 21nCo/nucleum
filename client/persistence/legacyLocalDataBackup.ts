@@ -466,6 +466,12 @@ export function convertLegacyLocalDataBackupToDatafnImport(
         );
         if (converted) {
           addResourceRecord(resources, targetResource, converted);
+          if (
+            store.name === "PointLog" &&
+            !resolveLegacyTargetId(record.sessionId, "session")
+          ) {
+            addLegacyPointLogSession(resources, converted);
+          }
         }
         addLegacyEmbeddedJoinRows(joins, targetResource, record, id);
       }
@@ -1229,7 +1235,7 @@ function transformLegacyPointLog(
     (startUnix === undefined
       ? undefined
       : startUnix + Math.max(0, focus + breakTime) * 1000);
-  if (!logId) return false;
+  if (!logId || startUnix === undefined || endUnix === undefined) return false;
   const sessionId =
     resolveLegacyTargetId(record.sessionId, "session") ??
     `session:legacy-${logId.slice("sessionLog:".length)}`;
@@ -1257,6 +1263,31 @@ function transformLegacyPointLog(
         ? undefined
         : new Date(endUnix).toISOString();
   return true;
+}
+
+function addLegacyPointLogSession(
+  resources: Map<string, Map<string, Record<string, unknown>>>,
+  sessionLog: Record<string, unknown>
+) {
+  if (
+    typeof sessionLog.sessionId !== "string" ||
+    typeof sessionLog.startUnix !== "number" ||
+    typeof sessionLog.endUnix !== "number"
+  ) {
+    return;
+  }
+  addResourceRecord(resources, "session", {
+    id: sessionLog.sessionId,
+    type: "MANUAL_ENTRY",
+    blocks: [],
+    elapsed: typeof sessionLog.focus === "number" ? sessionLog.focus : 0,
+    extended: 0,
+    start: sessionLog.start,
+    startUnix: sessionLog.startUnix,
+    end: sessionLog.end,
+    endUnix: sessionLog.endUnix,
+    manualEntryId: sessionLog.id
+  });
 }
 
 function normalizeLegacyDatafnResourceIds(

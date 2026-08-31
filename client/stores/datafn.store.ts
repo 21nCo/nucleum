@@ -464,20 +464,28 @@ async function readRemoteDatafnE2eeSettings(input: {
 }
 
 async function writeRemoteDatafnE2eeSettings(
-  settings: NucleumDatafnE2eeSettings
+  settings: NucleumDatafnE2eeSettings,
+  context?: {
+    clientId: string;
+    namespace: string;
+    remoteUrl: string;
+    http: DatafnHttpTransportOptions;
+  }
 ) {
   const runtime = get(runtimeStore);
-  if (!runtime?.remoteUrl) {
+  const remoteUrl = context?.remoteUrl ?? runtime?.remoteUrl;
+  const namespace = context?.namespace ?? runtime?.namespace;
+  if (!remoteUrl || !namespace) {
     throw new Error("DataFn remote is not available");
   }
   const metadataClient = createDatafnClient({
     schema: nucleumDatafnSchema,
-    clientId: (await getDapId()) ?? "unknown",
-    namespace: runtime.namespace,
+    clientId: context?.clientId ?? (await getDapId()) ?? "unknown",
+    namespace,
     sync: {
       mode: "sync",
-      remote: runtime.remoteUrl,
-      http: await createNucleumDatafnHttpOptions(),
+      remote: remoteUrl,
+      http: context?.http ?? (await createNucleumDatafnHttpOptions()),
       offlinability: false,
       crossTab: false,
       ws: false
@@ -493,6 +501,14 @@ async function writeRemoteDatafnE2eeSettings(
   }
 }
 
+function clearDatafnE2eeRecovery(
+  settings: NucleumDatafnE2eeSettings
+): NucleumDatafnE2eeSettings {
+  const restored = { ...settings };
+  delete restored.recoveryRequired;
+  return restored;
+}
+
 async function resolveDatafnE2eeConfig(input: {
   namespace: string;
   remoteSettings: NucleumDatafnE2eeSettings | null;
@@ -502,6 +518,13 @@ async function resolveDatafnE2eeConfig(input: {
   config?: DatafnE2eeConfig;
 }> {
   const localSettings = await getLocalDatafnE2eeSettings(input.namespace);
+  if (
+    input.hasRemoteSettingsAuthority &&
+    input.remoteSettings?.enabled === false &&
+    localSettings?.enabled
+  ) {
+    throw new Error("Local and remote E2EE settings are inconsistent");
+  }
   const settings = input.hasRemoteSettingsAuthority
     ? (input.remoteSettings ?? (localSettings?.enabled ? localSettings : null))
     : localSettings;
@@ -554,7 +577,7 @@ export async function initializeNucleumDatafn(
   const hasRemoteSettingsAuthority = Boolean(
     candidateRemoteUrl && candidateHttp && !input.isOffline
   );
-  const remoteE2eeSettings =
+  let remoteE2eeSettings =
     hasRemoteSettingsAuthority && candidateRemoteUrl && candidateHttp
       ? await readRemoteDatafnE2eeSettings({
           dapId,
@@ -563,6 +586,24 @@ export async function initializeNucleumDatafn(
           http: candidateHttp
         })
       : null;
+  const recoverySettings = await getLocalDatafnE2eeSettings(namespace);
+  if (
+    recoverySettings?.enabled &&
+    recoverySettings.recoveryRequired === "restore-remote" &&
+    hasRemoteSettingsAuthority &&
+    candidateRemoteUrl &&
+    candidateHttp
+  ) {
+    const restoredSettings = clearDatafnE2eeRecovery(recoverySettings);
+    await writeRemoteDatafnE2eeSettings(restoredSettings, {
+      clientId: dapId,
+      namespace,
+      remoteUrl: candidateRemoteUrl,
+      http: candidateHttp
+    });
+    await persistDatafnE2eeSettings(namespace, restoredSettings);
+    remoteE2eeSettings = restoredSettings;
+  }
   const e2ee = await resolveDatafnE2eeConfig({
     namespace,
     remoteSettings: remoteE2eeSettings,
@@ -864,12 +905,27 @@ export async function disableNucleumDatafnE2ee() {
   } catch (error) {
     if (settings?.enabled && restoreProvider) {
       try {
-        await datafn.switchContext({
-          e2ee: { enabled: true, provider: restoreProvider }
-        });
-        await persistDatafnE2eeSettings(runtime.namespace, settings);
         await writeRemoteDatafnE2eeSettings(settings);
       } catch (restoreError) {
+        const recoverySettings: NucleumDatafnE2eeSettings = {
+          ...settings,
+          recoveryRequired: "restore-remote"
+        };
+        await datafn.switchContext({
+          e2ee: { enabled: true, provider: restoreProvider },
+          sync: { mode: "local-only" }
+        });
+        await persistDatafnE2eeSettings(runtime.namespace, recoverySettings);
+        await initializeNucleumDatafn({
+          ...initInput,
+          isOffline: true,
+          isOfflinabilityEnabled: true
+        }).catch((recoveryError) => {
+          logger.error({
+            at: "datafn.e2ee.disable.enterRecoveryMode",
+            error: recoveryError
+          });
+        });
         logger.error({
           at: "datafn.e2ee.disable.restoreSettings",
           error,
@@ -877,6 +933,10 @@ export async function disableNucleumDatafnE2ee() {
         });
         throw restoreError;
       }
+      await datafn.switchContext({
+        e2ee: { enabled: true, provider: restoreProvider }
+      });
+      await persistDatafnE2eeSettings(runtime.namespace, settings);
     }
     throw error;
   }

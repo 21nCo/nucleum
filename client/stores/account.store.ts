@@ -512,8 +512,11 @@ class AccountStore extends ObservableStore<UserAccount> {
   async refreshPlanData() {
     try {
       const isOffline = await determineIfOffline();
-      if (isOffline) return;
+      if (isOffline) return { status: "unavailable" as const };
       const response = await this.persistence.getUserPlan();
+      if (response === undefined) {
+        return { status: "unavailable" as const };
+      }
       const data = Array.isArray(response)
         ? response[0]?.result?.[0]
         : response;
@@ -523,10 +526,17 @@ class AccountStore extends ObservableStore<UserAccount> {
           n.plan = data.userPlan;
           return n;
         });
-        return data.userPlan as IUserPlan;
+        return {
+          status: "resolved" as const,
+          plan: data.userPlan as IUserPlan
+        };
       }
+      await clientStorage.remove(ClientStorageKey.USER_PLAN);
+      this.update((n) => ({ ...n, plan: undefined }));
+      return { status: "resolved" as const, plan: undefined };
     } catch (e) {
       logger.error({ at: "refreshPlanData", error: e });
+      return { status: "unavailable" as const, error: e };
     }
   }
 

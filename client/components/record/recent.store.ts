@@ -125,7 +125,11 @@ export class RecentsStore extends ObservableStore<IRecentsStore> {
 
   private async recentResources(resource: Resource) {
     const datafnResource =
-      resource === Resource.goal ? "objective" : resource.toString();
+      resource === Resource.goal
+        ? "objective"
+        : resource === Resource.combination
+          ? "space"
+          : resource.toString();
     const result = await datafn.table(datafnResource).query({
       filters: {
         trashedAt: null,
