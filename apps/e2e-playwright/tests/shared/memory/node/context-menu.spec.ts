@@ -1,5 +1,5 @@
 import { test, expect, type Page } from "@playwright/test";
-import { ResourceActionType } from "@21n/components/flux/resourceStores/resource.type";
+import { ResourceActionType } from "@21n/data/datafn/resource.type";
 import { ensureInAppOnHome, runCommand } from "../../../utils/helpers";
 
 const runtimeEnv = (

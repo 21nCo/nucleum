@@ -2,7 +2,7 @@ import { ICloneDownPaginateBody } from "$lib/shared/types/sync.type";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { paginate as cloneDownPaginate } from "./index";
 import { performQueryOnBehalfOfUser } from "../../user/user";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 
 describe("cloneDownPaginate", () => {
   beforeEach(() => {
