@@ -14,6 +14,7 @@
     setDatafnOfflinabilityPreference,
     updateNucleumDatafnConnectivity
   } from "@21n/stores/datafn.store";
+  import { datafnE2eeState } from "@21n/stores/datafnE2ee.store";
   import { getDapId } from "@21n/persistence/persistence.utils";
   import { UserDataMode } from "@21n/types/account.type";
   import { onMount } from "svelte";
@@ -27,6 +28,7 @@
     isNetworkInducedOfflineMode ||
       isInOfflineMode ||
       isLocalDataMode ||
+      $datafnE2eeState.enabled ||
       !isOfflinabilityInitialized ||
       isSwitchingOfflinability
   );

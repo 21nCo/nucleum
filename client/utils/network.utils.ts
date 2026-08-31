@@ -536,6 +536,8 @@ type LegacyApiInventoryEntry = LegacyApiInventoryContext & {
   t: string;
 };
 
+const legacyApiInventory: LegacyApiInventoryEntry[] = [];
+
 function resolveLegacyApiInventoryContext(
   params: {
     url: string;
@@ -571,18 +573,13 @@ function recordLegacyApiInventory(
   if (!entry) return;
   const timestampedEntry = { ...entry, t: new Date().toISOString() };
   logger.debug(timestampedEntry);
-  if (typeof window === "undefined") return;
+  legacyApiInventory.push(timestampedEntry);
+  legacyApiInventory.splice(0, Math.max(0, legacyApiInventory.length - 500));
+  if (typeof window === "undefined" || import.meta.env.MODE !== "test") return;
   const inventoryWindow = window as Window & {
-    __legacyApiInventory?: LegacyApiInventoryEntry[];
     __getLegacyApiInventory?: () => LegacyApiInventoryEntry[];
   };
-  inventoryWindow.__legacyApiInventory = [
-    ...(inventoryWindow.__legacyApiInventory ?? []),
-    timestampedEntry
-  ].slice(-500);
-  inventoryWindow.__getLegacyApiInventory = () => [
-    ...(inventoryWindow.__legacyApiInventory ?? [])
-  ];
+  inventoryWindow.__getLegacyApiInventory = () => [...legacyApiInventory];
 }
 
 function resolveLegacyOperation(body: any) {

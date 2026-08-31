@@ -181,8 +181,6 @@
               {/if}
               {#if $hTrail.path.length > 0 && $hTrail.activated && (!$hTrail.isBaseNonRecord || ($hTrail.isBaseNonRecord && $hTrail.activated !== $hTrail.path[0]))}
                 <Trail />
-                <!-- {:else if $vTrail.items.length > 0 && $vTrail.activated && (!isRecordId($vTrail.base) || (isRecordId($vTrail.base) && $vTrail.activated !== $vTrail.base))}
-                <TrailContent /> -->
               {:else}
                 <AppSplitView>
                   {@render main?.()}

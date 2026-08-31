@@ -18,7 +18,6 @@ import {
 } from "@21n/stores/optimisticKv.utils";
 import type { OptimisticKvEntries } from "@21n/types/datafn.type";
 
-// const userPreferencesId = Item.globalPreferences;
 const defaultColorSchemeId = "colorscheme:clean_tidyblue_light";
 const defaultDarkColorSchemeId = "colorscheme:clean_tidyblue_dark";
 const defaultTimeZone = detectTimeZone();

@@ -108,6 +108,39 @@ async function resolvePendingRelationSources(input: {
   return pendingSources;
 }
 
+async function applyLocalRelationBatchWithRollback(
+  mutations: ReturnType<typeof resolveRelationMutation>[]
+) {
+  const appliedMutations: ReturnType<typeof resolveRelationMutation>[] = [];
+  try {
+    for (const mutation of mutations) {
+      const result = await datafn.mutate(mutation);
+      assertMutationSucceeded(result);
+      appliedMutations.push(mutation);
+    }
+  } catch (error) {
+    const rollbackErrors: unknown[] = [];
+    for (const mutation of appliedMutations.reverse()) {
+      try {
+        const result = await datafn.mutate({
+          ...mutation,
+          operation: "unrelate"
+        });
+        assertMutationSucceeded(result);
+      } catch (rollbackError) {
+        rollbackErrors.push(rollbackError);
+      }
+    }
+    if (rollbackErrors.length > 0) {
+      throw new AggregateError(
+        [error, ...rollbackErrors],
+        "DataFn relation mutation rollback failed"
+      );
+    }
+    throw error;
+  }
+}
+
 /**
  * Relates validated records through the DataFn schema and rejects partial batches.
  */
@@ -146,11 +179,7 @@ export async function relateDatafnRecords(input: {
     const runtime = get(datafnRuntime);
     if (!runtime) throw new Error("DataFn runtime is not initialized");
     if (runtime.mode === "local-only") {
-      const results = await datafn.mutate(mutations);
-      if (!Array.isArray(results) || results.length !== mutations.length) {
-        throw new Error("DataFn relation mutation batch failed");
-      }
-      results.forEach(assertMutationSucceeded);
+      await applyLocalRelationBatchWithRollback(mutations);
     } else {
       const result = await datafn.transact({
         atomic: true,
