@@ -61,6 +61,7 @@
     datafn,
     nucleumDatafnStatus,
     initializeNucleumDatafn,
+    cloneUpAllDatafnData,
     pullDatafnNow,
     reconcileDatafnNow,
     refreshNucleumDatafnStatus,
@@ -68,10 +69,13 @@
   } from "@21n/stores/datafn.store";
   import {
     convertLegacyLocalDataBackupToDatafnImport,
+    completeLegacyLocalDataCloudUpload,
     detectLegacyLocalData,
     exportLegacyLocalData,
     getLegacyLocalDataRecoveryDecision,
     hasRecoverableLegacyLocalData,
+    hasPendingLegacyLocalDataCloudUpload,
+    normalizeLegacyDatafnImportIds,
     resolveLegacyLocalDataRecordCount,
     saveLegacyLocalDataRecoveryDecision,
     type LegacyLocalDataBackup,
@@ -115,10 +119,21 @@
   let legacyLocalDataSummary = $state<LegacyLocalDataSummary | undefined>(
     undefined
   );
+  let isLegacyCloudUploadPending = $state(false);
+  let isLegacyCloudUploadInProgress = false;
   let dev_isDisableSyncOnAppear = false;
   let subs: any[] = [];
   let isStartupCompleted = false;
   const isDebug = import.meta.env?.DEV;
+
+  $effect(() => {
+    if (
+      $nucleumDatafnStatus.nucleumMode === "sync" &&
+      isLegacyCloudUploadPending
+    ) {
+      void uploadPendingLegacyCloudData();
+    }
+  });
 
   onMount(async () => {
     postMessageToParent(EmbedMessage.MOUNT);
@@ -149,6 +164,9 @@
   async function prepareLegacyLocalDataRecoveryGate() {
     if ($context.isSheet || isExtensionEnvironment()) return false;
     try {
+      isLegacyCloudUploadPending = await hasPendingLegacyLocalDataCloudUpload(
+        $appStore.product
+      );
       const summary = await detectLegacyLocalData($appStore.product);
       if (!summary.isSupported || !hasRecoverableLegacyLocalData(summary)) {
         return false;
@@ -157,7 +175,10 @@
         $appStore.product,
         summary
       );
-      if (decision) return false;
+      if (decision) {
+        isLegacyCloudUploadPending = Boolean(decision.isCloudUploadPending);
+        return false;
+      }
       legacyLocalDataSummary = summary;
       legacyRecoveryMode = "required";
       return true;
@@ -251,6 +272,7 @@
         legacyRecoveryMode = null;
         const runtime = await initializeDatabase();
         if (runtime) {
+          await initializeLegacyFlux();
           await completeApplicationStartup();
         }
         return;
@@ -260,6 +282,9 @@
       });
       if (!runtime) return;
       const importStats = await importLegacyLocalDataBackup(runtime, backup);
+      const isCloudUploadPending =
+        $account.dataMode === UserDataMode.CLOUD &&
+        runtime.mode === "local-only";
       await saveLegacyLocalDataRecoveryDecision(
         {
           version: 1,
@@ -269,12 +294,15 @@
           backupExportedAt: backup.exportedAt,
           sourceRecordCount: resolveLegacyLocalDataRecordCount(backup),
           importedResourceCount: importStats.resources,
-          importedJoinCount: importStats.joins
+          importedJoinCount: importStats.joins,
+          isCloudUploadPending
         },
         backup
       );
+      isLegacyCloudUploadPending = isCloudUploadPending;
       legacyRecoveryMode = null;
       toasts.success("Old local data imported successfully");
+      await initializeLegacyFlux();
       await completeApplicationStartup();
     } catch (error) {
       logger.error({ at: "handleImportLegacyLocalData", error });
@@ -321,8 +349,9 @@
     if (!runtime.storage) {
       throw new Error("Local DataFn storage is required for legacy import");
     }
-    const { kv = {}, ...payload } =
-      convertLegacyLocalDataBackupToDatafnImport(backup);
+    const { kv = {}, ...payload } = normalizeLegacyDatafnImportIds(
+      convertLegacyLocalDataBackupToDatafnImport(backup)
+    );
     const hasStructuredRows =
       Object.values(payload.resources).some((records) => records.length > 0) ||
       Object.values(payload.joins ?? {}).some((records) => records.length > 0);
@@ -393,6 +422,7 @@
 
   async function onAppear() {
     try {
+      await uploadPendingLegacyCloudData();
       const isCloudUser = $nucleumDatafnStatus.nucleumMode === "sync";
       if (isCloudUser && !dev_isDisableSyncOnAppear) {
         await pullDatafnNow();
@@ -402,6 +432,26 @@
       await refreshNucleumDatafnStatus();
     } catch (e) {
       logger.error({ at: "onAppear", error: e });
+    }
+  }
+
+  async function uploadPendingLegacyCloudData() {
+    if (
+      !isLegacyCloudUploadPending ||
+      isLegacyCloudUploadInProgress ||
+      $nucleumDatafnStatus.nucleumMode !== "sync"
+    ) {
+      return;
+    }
+    isLegacyCloudUploadInProgress = true;
+    try {
+      await cloneUpAllDatafnData();
+      await completeLegacyLocalDataCloudUpload($appStore.product);
+      isLegacyCloudUploadPending = false;
+    } catch (error) {
+      logger.error({ at: "uploadPendingLegacyCloudData", error });
+    } finally {
+      isLegacyCloudUploadInProgress = false;
     }
   }
 

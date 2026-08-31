@@ -741,7 +741,12 @@ function requireLastInitializeInput() {
   return lastInitializeInput;
 }
 
-async function cloneUpAllDatafnData() {
+/** Uploads the complete local DataFn clone through the active sync runtime. */
+export async function cloneUpAllDatafnData() {
+  const runtime = get(runtimeStore);
+  if (!runtime || runtime.mode !== "sync") {
+    throw new Error("A synchronized DataFn runtime is required for clone-up");
+  }
   await datafn.sync.cloneUp({
     recordOperation: "replace",
     clearChangelogOnSuccess: true,

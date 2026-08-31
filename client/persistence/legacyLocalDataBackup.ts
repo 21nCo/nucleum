@@ -75,6 +75,7 @@ export type LegacyLocalDataRecoveryDecision = {
   backupExportedAt?: string;
   importedResourceCount?: number;
   importedJoinCount?: number;
+  isCloudUploadPending?: boolean;
 };
 
 export type LegacyDatafnImportPayload = {
@@ -376,6 +377,28 @@ export async function saveLegacyLocalDataRecoveryDecision(
   );
 }
 
+/** Clears pending cloud-upload state after the imported local clone is uploaded. */
+export async function completeLegacyLocalDataCloudUpload(product: Product) {
+  const { decisions, pending } =
+    await resolvePendingLegacyLocalDataRecoveryDecisions(product);
+  for (const decision of pending) {
+    decision.isCloudUploadPending = false;
+  }
+  if (pending.length > 0) {
+    await clientStorage.set(
+      ClientStorageKey.LEGACY_LOCAL_DATA_RECOVERY,
+      decisions
+    );
+  }
+}
+
+/** Returns whether the active identity has a recovered clone awaiting upload. */
+export async function hasPendingLegacyLocalDataCloudUpload(product: Product) {
+  const { pending } =
+    await resolvePendingLegacyLocalDataRecoveryDecisions(product);
+  return pending.length > 0;
+}
+
 /**
  * Converts a raw legacy local backup into the structured DataFn import payload.
  */
@@ -451,6 +474,31 @@ export function convertLegacyLocalDataBackupToDatafnImport(
     resources: mapRecordCollectionsToObject(resources),
     joins: mapRecordCollectionsToObject(joins),
     kv
+  };
+}
+
+/** Canonicalizes resource and foreign-key IDs before a converted backup is imported. */
+export function normalizeLegacyDatafnImportIds(
+  payload: LegacyDatafnImportPayload
+): LegacyDatafnImportPayload {
+  const resources = Object.fromEntries(
+    Object.entries(payload.resources).map(([resource, records]) => [
+      resource,
+      records.map((record) =>
+        normalizeLegacyDatafnResourceIds(resource, record)
+      )
+    ])
+  );
+  const joins = Object.fromEntries(
+    Object.entries(payload.joins ?? {}).map(([storeName, records]) => [
+      storeName,
+      records.map(normalizeLegacyDatafnJoinIds)
+    ])
+  );
+  return {
+    ...payload,
+    resources,
+    joins
   };
 }
 
@@ -791,6 +839,24 @@ async function readLegacyLocalDataRecoveryDecisions(): Promise<
   }
 }
 
+async function resolvePendingLegacyLocalDataRecoveryDecisions(
+  product: Product
+) {
+  const decisions = await readLegacyLocalDataRecoveryDecisions();
+  const identity = resolveLegacyIdentityScope(
+    await resolveActiveLegacyLocalDataIdentity()
+  );
+  return {
+    decisions,
+    pending: Object.values(decisions).filter(
+      (decision) =>
+        decision.product === product &&
+        decision.identity === identity &&
+        decision.isCloudUploadPending === true
+    )
+  };
+}
+
 async function resolveActiveLegacyLocalDataIdentity(): Promise<LegacyLocalDataIdentity> {
   const [storedUserInfo, storedUser, dapId] = await Promise.all([
     clientStorage.get(ClientStorageKey.USER_INFO),
@@ -1000,6 +1066,7 @@ function convertLegacyResourceRecord(
   sourceStore: string
 ) {
   const transformed = transformLegacyRecord(resource, record, sourceStore);
+  if (!transformed) return undefined;
   const allowedFields = schemaFieldsByResource.get(resource);
   if (!allowedFields) return undefined;
   const result: Record<string, unknown> = {};
@@ -1056,7 +1123,7 @@ function transformLegacyRecord(
     result.objectiveId =
       result.objectiveId ?? resolveRecordId(record.goalId, record.objectiveId);
     if (sourceStore === "PointLog") {
-      transformLegacyPointLog(result, record);
+      if (!transformLegacyPointLog(result, record)) return undefined;
     }
   }
 
@@ -1083,9 +1150,8 @@ function transformLegacyPointLog(
     (startUnix === undefined
       ? undefined
       : startUnix + Math.max(0, focus + breakTime) * 1000);
-  const sessionId =
-    resolveLegacyTargetId(record.sessionId, "session") ??
-    (logId ? resolveLegacyTargetId(logId, "session") : undefined);
+  const sessionId = resolveLegacyTargetId(record.sessionId, "session");
+  if (!logId || !sessionId) return false;
   result.id = logId;
   result.startUnix = startUnix;
   result.endUnix = endUnix;
@@ -1109,6 +1175,69 @@ function transformLegacyPointLog(
       : endUnix === undefined
         ? undefined
         : new Date(endUnix).toISOString();
+  return true;
+}
+
+function normalizeLegacyDatafnResourceIds(
+  resource: string,
+  record: Record<string, unknown>
+) {
+  const result = { ...record };
+  result.id = resolveLegacyTargetId(record.id, resource);
+  if (resource === "objective") {
+    result.parentId = resolveLegacyTargetId(record.parentId, "objective");
+    if (typeof record.parentPath === "string") {
+      result.parentPath = normalizeLegacyObjectivePath(record.parentPath);
+    }
+  } else if (resource === "task") {
+    result.objectiveId = resolveLegacyTargetId(record.objectiveId, "objective");
+  } else if (resource === "sessionLog") {
+    result.sessionId = resolveLegacyTargetId(record.sessionId, "session");
+    result.objectiveId = resolveLegacyTargetId(record.objectiveId, "objective");
+    result.taskId = resolveLegacyTargetId(record.taskId, "task");
+  }
+  return Object.fromEntries(
+    Object.entries(result).filter(([, value]) => value !== undefined)
+  );
+}
+
+function normalizeLegacyDatafnJoinIds(record: Record<string, unknown>) {
+  const fromResource = resolveLegacyResourceName(record.fromResource);
+  const toResource = resolveLegacyResourceName(record.toResource);
+  const result: Record<string, unknown> = {
+    ...record,
+    from:
+      typeof fromResource === "string"
+        ? resolveLegacyTargetId(record.from, fromResource)
+        : record.from,
+    to:
+      typeof toResource === "string"
+        ? resolveLegacyTargetId(record.to, toResource)
+        : record.to,
+    fromResource,
+    toResource
+  };
+  if (record.collectionId !== undefined) {
+    result.collectionId = resolveLegacyTargetId(
+      record.collectionId,
+      "collection"
+    );
+  }
+  if (record.parentObjectiveId !== undefined) {
+    result.parentObjectiveId = resolveLegacyTargetId(
+      record.parentObjectiveId,
+      "objective"
+    );
+  }
+  return Object.fromEntries(
+    Object.entries(result).filter(([, value]) => value !== undefined)
+  );
+}
+
+function normalizeLegacyObjectivePath(value: string) {
+  return value
+    .replaceAll("PointGoal:", "objective:")
+    .replaceAll("goal:", "objective:");
 }
 
 function resolveLegacyTargetId(value: unknown, resource: string) {
