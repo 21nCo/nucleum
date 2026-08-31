@@ -10,6 +10,13 @@ import { TranscriptionModel } from "@21n/products/memotron/taco/taco.types";
 import { tzStore } from "@21n/components/settings/timezone/tz.store";
 import { datafn } from "@21n/stores/datafn.store";
 import { get, writable } from "svelte/store";
+import {
+  acknowledgeOptimisticKvEntries,
+  addOptimisticKvEntries,
+  applyOptimisticKvEntries,
+  removeOptimisticKvEntries,
+  type OptimisticKvEntries
+} from "@21n/stores/optimisticKv.utils";
 
 // const userPreferencesId = Item.globalPreferences;
 const defaultColorSchemeId = "colorscheme:clean_tidyblue_light";
@@ -68,6 +75,7 @@ const userPreferencesSignal = datafn.kv.signal<IUserGlobalPreferences>(
 const userPreferencesLocal = writable<IUserGlobalPreferences>(
   normalizeUserPreferences(seedUserPreferences)
 );
+const pendingUserPreferenceValues: OptimisticKvEntries = new Map();
 let userPreferencesIsInitialized = false;
 
 function normalizeUserPreferences(data?: Partial<IUserGlobalPreferences>) {
@@ -94,14 +102,17 @@ function normalizeUserPreferences(data?: Partial<IUserGlobalPreferences>) {
     annotations: value.annotations ?? seedUserPreferences.annotations,
     mediaGridTestitems:
       value.mediaGridTestitems ?? seedUserPreferences.mediaGridTestitems,
-    isAnonymousAnalyticsEnabled:
-      value.isAnonymousAnalyticsEnabled ?? true
+    isAnonymousAnalyticsEnabled: value.isAnonymousAnalyticsEnabled ?? true
   };
 }
 
 userPreferencesSignal.subscribe((value) => {
   userPreferencesIsInitialized = true;
-  userPreferencesLocal.set(normalizeUserPreferences(value));
+  const normalized = normalizeUserPreferences(value);
+  acknowledgeOptimisticKvEntries(pendingUserPreferenceValues, normalized);
+  userPreferencesLocal.set(
+    applyOptimisticKvEntries(normalized, pendingUserPreferenceValues)
+  );
 });
 
 export const userPreferences = {
@@ -112,6 +123,9 @@ export const userPreferences = {
   subscribe: userPreferencesLocal.subscribe,
   get() {
     return get(userPreferencesLocal);
+  },
+  set(value: IUserGlobalPreferences) {
+    return this.modify(normalizeUserPreferences(value));
   },
   loader(data: Partial<IUserGlobalPreferences>) {
     userPreferencesLocal.set(normalizeUserPreferences(data));
@@ -187,10 +201,27 @@ export const userPreferences = {
   },
 
   modify(n: Partial<IUserGlobalPreferences>) {
+    const mutationTokens = addOptimisticKvEntries(
+      pendingUserPreferenceValues,
+      n
+    );
     userPreferencesLocal.update((current) =>
       normalizeUserPreferences({ ...current, ...n })
     );
-    return datafn.kv.merge(Resource.globalPreferences, n);
+    const mutation = datafn.kv.merge(Resource.globalPreferences, n);
+    const rollbackPendingValues = () => {
+      removeOptimisticKvEntries(pendingUserPreferenceValues, mutationTokens);
+      const current = normalizeUserPreferences(
+        userPreferencesSignal.get() ?? seedUserPreferences
+      );
+      userPreferencesLocal.set(
+        applyOptimisticKvEntries(current, pendingUserPreferenceValues)
+      );
+    };
+    void mutation.then((result) => {
+      if (!result.ok) rollbackPendingValues();
+    }, rollbackPendingValues);
+    return mutation;
   },
 
   destroy() {

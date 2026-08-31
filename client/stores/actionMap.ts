@@ -603,7 +603,7 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: "combination-create",
+    action: "combination_create",
     component: CreateCombination,
     label: "Create a new space",
     type: ActionType.MODAL,
