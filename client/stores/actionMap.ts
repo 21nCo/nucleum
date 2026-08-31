@@ -600,7 +600,7 @@ export const globalActions: IAction[] = [
     }
   },
   {
-    action: resourceAction(Resource.space, ResourceActionType.CREATE),
+    action: "combination-create",
     component: CreateCombination,
     label: "Create a new space",
     type: ActionType.MODAL,

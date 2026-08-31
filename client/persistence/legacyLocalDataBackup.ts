@@ -4,6 +4,10 @@ import { nucleumDatafnSchema } from "@21n/shared-data/datafn/schema.datafn";
 import { parse } from "@21n/shared-utils/json.utils";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
 import { clientStorage } from "@21n/persistence/persistence.utils";
+import {
+  TIMEZONE_CHANGE_RESOURCE_NAME,
+  timezoneChangeId
+} from "@datafn/client";
 
 export type LegacyLocalDataProvider = "dexie" | "indexeddb" | "surreal";
 
@@ -430,6 +434,22 @@ export function convertLegacyLocalDataBackupToDatafnImport(
         }
         continue;
       }
+      if (store.name === "tz") {
+        for (const item of store.records) {
+          const record = normalizeLegacyRecord(item.value);
+          const converted = record
+            ? convertLegacyTimezoneChangeRecord(record, item.key)
+            : undefined;
+          if (converted) {
+            addResourceRecord(
+              resources,
+              TIMEZONE_CHANGE_RESOURCE_NAME,
+              converted
+            );
+          }
+        }
+        continue;
+      }
 
       const targetResource = resolveLegacyStoreResource(store.name);
       if (!targetResource) continue;
@@ -467,10 +487,15 @@ export function convertLegacyLocalDataBackupToDatafnImport(
   return {
     version: 1,
     exportedAt: new Date().toISOString(),
-    schema: schemaResources.map((resource) => ({
-      name: resource.name,
-      version: resource.version
-    })),
+    schema: [
+      ...schemaResources.map((resource) => ({
+        name: resource.name,
+        version: resource.version
+      })),
+      ...(resources.has(TIMEZONE_CHANGE_RESOURCE_NAME)
+        ? [{ name: TIMEZONE_CHANGE_RESOURCE_NAME, version: 1 }]
+        : [])
+    ],
     resources: mapRecordCollectionsToObject(resources),
     joins: mapRecordCollectionsToObject(joins),
     kv
@@ -540,6 +565,7 @@ function hasLegacyResourceStore(storeNames: string[]) {
 function isImportableLegacyStore(storeName: string) {
   return (
     storeName === "kv" ||
+    storeName === "tz" ||
     storeName === "link" ||
     storeName === "nodelinks" ||
     Boolean(resolveLegacyStoreResource(storeName))
@@ -1078,6 +1104,45 @@ function convertLegacyResourceRecord(
   return typeof result.id === "string" ? result : undefined;
 }
 
+function convertLegacyTimezoneChangeRecord(
+  record: Record<string, unknown>,
+  key: unknown
+) {
+  const timezone = resolveLegacyTimezone(record);
+  const effectiveFrom = resolveLegacyTimestamp(
+    record.effectiveFrom ?? record.dateUnix ?? record.date
+  );
+  if (!timezone || effectiveFrom === undefined) return undefined;
+  const recordedAt =
+    resolveLegacyTimestamp(
+      record.recordedAt ?? record.updatedAt ?? record.createdAt
+    ) ?? effectiveFrom;
+  const sourceId = resolveRecordId(record.id, key) ?? "legacy";
+  return {
+    id: timezoneChangeId(effectiveFrom, timezone, sourceId),
+    timezone,
+    effectiveFrom,
+    recordedAt,
+    source: typeof record.source === "string" ? record.source : "import"
+  };
+}
+
+function resolveLegacyTimezone(record: Record<string, unknown>) {
+  const values = [record.timezone, record.zone, record.label];
+  for (const value of values) {
+    if (typeof value !== "string" || !value.trim()) continue;
+    const marker = value.indexOf(" (UTC");
+    const timezone = (marker >= 0 ? value.slice(0, marker) : value).trim();
+    try {
+      new Intl.DateTimeFormat(undefined, { timeZone: timezone }).format();
+      return timezone;
+    } catch {
+      continue;
+    }
+  }
+  return undefined;
+}
+
 function transformLegacyRecord(
   resource: string,
   record: Record<string, unknown>,
@@ -1183,6 +1248,11 @@ function normalizeLegacyDatafnResourceIds(
   record: Record<string, unknown>
 ) {
   const result = { ...record };
+  if (resource === TIMEZONE_CHANGE_RESOURCE_NAME) {
+    return Object.fromEntries(
+      Object.entries(result).filter(([, value]) => value !== undefined)
+    );
+  }
   result.id = resolveLegacyTargetId(record.id, resource);
   if (resource === "objective") {
     result.parentId = resolveLegacyTargetId(record.parentId, "objective");

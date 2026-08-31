@@ -176,7 +176,8 @@
         summary
       );
       if (decision) {
-        isLegacyCloudUploadPending = Boolean(decision.isCloudUploadPending);
+        isLegacyCloudUploadPending =
+          isLegacyCloudUploadPending || Boolean(decision.isCloudUploadPending);
         return false;
       }
       legacyLocalDataSummary = summary;
@@ -299,7 +300,8 @@
         },
         backup
       );
-      isLegacyCloudUploadPending = isCloudUploadPending;
+      isLegacyCloudUploadPending =
+        isLegacyCloudUploadPending || isCloudUploadPending;
       legacyRecoveryMode = null;
       toasts.success("Old local data imported successfully");
       await initializeLegacyFlux();
