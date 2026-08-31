@@ -43,6 +43,7 @@
 
   $effect(() => {
     isInOfflineMode = $context.isInOfflineMode;
+    if ($datafnE2eeState.enabled) isOfflinabilityEnabled = true;
   });
 
   onMount(() => {
@@ -53,7 +54,7 @@
     window.addEventListener("offline", refreshNetworkState);
     void resolveDatafnOfflinabilityPreference()
       .then((value) => {
-        isOfflinabilityEnabled = value;
+        isOfflinabilityEnabled = $datafnE2eeState.enabled ? true : value;
       })
       .catch(() => undefined)
       .finally(() => {

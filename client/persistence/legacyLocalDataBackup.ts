@@ -1196,6 +1196,20 @@ function transformLegacyRecord(
     }
     result.subObjectivesLayout =
       result.subObjectivesLayout ?? record.subGoalsLayout;
+    if (sourceStore === "PointGoal") {
+      result.type = result.type ?? "INDEFINITE";
+      result.status =
+        result.status ??
+        (record.isCompleted === true ? "COMPLETED" : "NOT_STARTED");
+    }
+  }
+
+  if (
+    resource === "node" &&
+    !Array.isArray(result.mdChildOrder) &&
+    Array.isArray(record.children)
+  ) {
+    result.mdChildOrder = record.children;
   }
 
   if (resource === "task") {

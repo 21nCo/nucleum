@@ -5,11 +5,19 @@ import { get, writable } from "svelte/store";
 import { logger } from "@21n/components/debug/logger.client";
 import { Product } from "@21n/products/product.type";
 import { datafn } from "@21n/stores/datafn.store";
+import {
+  acknowledgeOptimisticKvEntries,
+  addOptimisticKvEntries,
+  applyOptimisticKvEntries,
+  removeOptimisticKvEntries
+} from "@21n/stores/optimisticKv.utils";
+import type { OptimisticKvEntries } from "@21n/types/datafn.type";
 
 const appMenuSignal = datafn.kv.signal<IAppMenuStore>(Resource.appMenu, {
   defaultValue: {}
 });
 const appMenuLocal = writable<IAppMenuStore>({});
+const pendingAppMenuValues: OptimisticKvEntries = new Map();
 
 function migrateLegacyNucleusAppMenu(data: IAppMenuStore): IAppMenuStore {
   if (data.nucleus && !data[Product.NUCLEUM]) {
@@ -22,7 +30,9 @@ function migrateLegacyNucleusAppMenu(data: IAppMenuStore): IAppMenuStore {
 }
 
 appMenuSignal.subscribe((value) => {
-  appMenuLocal.set(migrateLegacyNucleusAppMenu(value ?? {}));
+  const migrated = migrateLegacyNucleusAppMenu(value ?? {});
+  acknowledgeOptimisticKvEntries(pendingAppMenuValues, migrated);
+  appMenuLocal.set(applyOptimisticKvEntries(migrated, pendingAppMenuValues));
 });
 
 export const appMenuStore = {
@@ -70,8 +80,18 @@ export const appMenuStore = {
     });
   },
   modify(n: Partial<IAppMenuStore>) {
+    const mutationTokens = addOptimisticKvEntries(pendingAppMenuValues, n);
     appMenuLocal.update((current) => ({ ...current, ...n }) as IAppMenuStore);
-    return datafn.kv.merge(Resource.appMenu, n);
+    const mutation = datafn.kv.merge(Resource.appMenu, n);
+    const rollbackPendingValues = () => {
+      removeOptimisticKvEntries(pendingAppMenuValues, mutationTokens);
+      const current = migrateLegacyNucleusAppMenu(appMenuSignal.get() ?? {});
+      appMenuLocal.set(applyOptimisticKvEntries(current, pendingAppMenuValues));
+    };
+    void mutation.then((result) => {
+      if (!result.ok) rollbackPendingValues();
+    }, rollbackPendingValues);
+    return mutation;
   },
   loader(data: IAppMenuStore) {
     if (!data || typeof data !== "object") return;

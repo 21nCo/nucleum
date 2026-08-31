@@ -573,7 +573,7 @@ export async function initializeNucleumDatafn(
   const existing = get(runtimeStore);
   const dapId = input.dapId ?? (await getDapId()) ?? "unknown";
   const namespace = resolveDatafnNamespace({ account: input.account, dapId });
-  const isOfflinabilityEnabled =
+  let isOfflinabilityEnabled =
     input.isOfflinabilityEnabled ??
     (await resolveDatafnOfflinabilityPreference());
   const syncEligible = isSyncEligibleAccount(input);
@@ -622,10 +622,15 @@ export async function initializeNucleumDatafn(
     hasRemoteSettingsAuthority
   });
   const isE2eeEnabled = e2ee.settings?.enabled === true;
-  const mode = resolveDatafnMode({
+  if (isE2eeEnabled && !isOfflinabilityEnabled) {
+    await setDatafnOfflinabilityPreference(true);
+    isOfflinabilityEnabled = true;
+  }
+  const effectiveInput = {
     ...input,
-    isOfflinabilityEnabled: isE2eeEnabled ? true : isOfflinabilityEnabled
-  });
+    isOfflinabilityEnabled
+  };
+  const mode = resolveDatafnMode(effectiveInput);
   const isStorageBacked = mode !== "sync-direct";
   const expectedStorageDbName = resolveDatafnStorageDbName({
     product: input.product,
@@ -645,7 +650,7 @@ export async function initializeNucleumDatafn(
       runtimeKey
   ) {
     await refreshNucleumDatafnStatus();
-    lastInitializeInput = input;
+    lastInitializeInput = effectiveInput;
     return existing;
   }
 
@@ -763,7 +768,7 @@ export async function initializeNucleumDatafn(
   runtimeStore.set(runtime);
   bindNucleumDatafnStatus(runtime);
   await refreshNucleumDatafnStatus();
-  lastInitializeInput = input;
+  lastInitializeInput = effectiveInput;
   return runtime;
 }
 

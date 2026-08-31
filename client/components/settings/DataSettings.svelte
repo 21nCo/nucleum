@@ -84,12 +84,13 @@
       const blob = new Blob([stringify(data, { isPreventReplacer: true })], {
         type: "application/json"
       });
-      fileStore.downloadFromBlob(blob, {
+      const isDelivered = await fileStore.downloadFromBlob(blob, {
         fileName: fileName,
         fileNameForEmbed: `${product}_backup`,
         contentType: "application/json",
         isHandleEmbedCase: true
       });
+      if (!isDelivered) throw new Error("Backup delivery failed");
       if ($context.isEmbed) {
         toasts.success("Backup file downloaded successfully");
         return;
@@ -290,12 +291,13 @@
       const blob = new Blob([stringify(data, { isPreventReplacer: true })], {
         type: "application/json"
       });
-      fileStore.downloadFromBlob(blob, {
+      const isDelivered = await fileStore.downloadFromBlob(blob, {
         fileName,
         fileNameForEmbed: `${product}_legacy_local_backup`,
         contentType: "application/json",
         isHandleEmbedCase: true
       });
+      if (!isDelivered) throw new Error("Legacy backup delivery failed");
       toasts.success("Legacy local backup downloaded successfully");
       await refreshLegacyLocalDataSummary();
     } catch (error) {
