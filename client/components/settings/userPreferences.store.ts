@@ -14,9 +14,9 @@ import {
   acknowledgeOptimisticKvEntries,
   addOptimisticKvEntries,
   applyOptimisticKvEntries,
-  removeOptimisticKvEntries,
-  type OptimisticKvEntries
+  removeOptimisticKvEntries
 } from "@21n/stores/optimisticKv.utils";
+import type { OptimisticKvEntries } from "@21n/types/datafn.type";
 
 // const userPreferencesId = Item.globalPreferences;
 const defaultColorSchemeId = "colorscheme:clean_tidyblue_light";
@@ -76,6 +76,7 @@ const userPreferencesLocal = writable<IUserGlobalPreferences>(
   normalizeUserPreferences(seedUserPreferences)
 );
 const pendingUserPreferenceValues: OptimisticKvEntries = new Map();
+let userPreferencesNamespace = datafn.currentNamespace();
 let userPreferencesIsInitialized = false;
 
 function normalizeUserPreferences(data?: Partial<IUserGlobalPreferences>) {
@@ -108,6 +109,11 @@ function normalizeUserPreferences(data?: Partial<IUserGlobalPreferences>) {
 
 userPreferencesSignal.subscribe((value) => {
   userPreferencesIsInitialized = true;
+  const namespace = datafn.currentNamespace();
+  if (namespace !== userPreferencesNamespace) {
+    pendingUserPreferenceValues.clear();
+    userPreferencesNamespace = namespace;
+  }
   const normalized = normalizeUserPreferences(value);
   acknowledgeOptimisticKvEntries(pendingUserPreferenceValues, normalized);
   userPreferencesLocal.set(

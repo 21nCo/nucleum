@@ -1,11 +1,5 @@
 import { compareObjects } from "@21n/shared-utils/obj.utils";
-
-export type OptimisticKvEntry = {
-  token: symbol;
-  value: unknown;
-};
-
-export type OptimisticKvEntries = Map<string, OptimisticKvEntry[]>;
+import type { OptimisticKvEntries } from "@21n/types/datafn.type";
 
 /** Adds one identity-tracked optimistic entry for every value in a KV merge. */
 export function addOptimisticKvEntries(

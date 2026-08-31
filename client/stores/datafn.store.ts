@@ -26,9 +26,11 @@ import type { Product } from "@21n/products/product.type";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
 import { clientStorage, getDapId } from "@21n/persistence/persistence.utils";
 import type { UserAccount } from "@21n/types/account.type";
+import type { NucleumDatafnE2eeSettings } from "@21n/types/datafn.type";
 import { UserDataMode } from "@21n/types/account.type";
 import { get, writable } from "svelte/store";
 import { logger } from "@21n/components/debug/logger.client";
+import { compareObjects } from "@21n/shared-utils/obj.utils";
 import {
   DATAFN_E2EE_KV_KEY,
   createDisabledDatafnE2eeSettings,
@@ -39,8 +41,7 @@ import {
   getLocalDatafnE2eeSettings,
   persistDatafnE2eeSettings,
   rewrapCachedDatafnE2eeKey,
-  unlockDatafnE2eeSettings,
-  type NucleumDatafnE2eeSettings
+  unlockDatafnE2eeSettings
 } from "@21n/stores/datafnE2ee.store";
 
 export type NucleumDatafnMode = "local-only" | "sync" | "sync-direct";
@@ -470,6 +471,7 @@ async function writeRemoteDatafnE2eeSettings(
     namespace: string;
     remoteUrl: string;
     http: DatafnHttpTransportOptions;
+    expectedSettings?: NucleumDatafnE2eeSettings | null;
   }
 ) {
   const runtime = get(runtimeStore);
@@ -494,6 +496,15 @@ async function writeRemoteDatafnE2eeSettings(
     generateId: generateDatafnId
   });
   try {
+    if (context && "expectedSettings" in context) {
+      const currentSettings =
+        await metadataClient.kv.get<NucleumDatafnE2eeSettings>(
+          DATAFN_E2EE_KV_KEY
+        );
+      if (!compareObjects(currentSettings, context.expectedSettings)) {
+        throw new Error("Remote DataFn E2EE settings changed during recovery");
+      }
+    }
     const result = await metadataClient.kv.set(DATAFN_E2EE_KV_KEY, settings);
     if (!result.ok) throw result.error;
   } finally {
@@ -599,7 +610,8 @@ export async function initializeNucleumDatafn(
       clientId: dapId,
       namespace,
       remoteUrl: candidateRemoteUrl,
-      http: candidateHttp
+      http: candidateHttp,
+      expectedSettings: remoteE2eeSettings
     });
     await persistDatafnE2eeSettings(namespace, restoredSettings);
     remoteE2eeSettings = restoredSettings;

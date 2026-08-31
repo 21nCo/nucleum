@@ -664,10 +664,12 @@ export const globalActions: IAction[] = [
       searchResultComponent: LinkSearchResultItem,
       searchCallback: async (query: string, componentParams?: any) => {
         const resource = componentParams?.resource ?? Resource.node;
+        const searchResource =
+          resource === LegacyResource.goal ? Resource.objective : resource;
         if (isValidString(query)) {
           const result = await datafn.search({
             query,
-            resources: [resource],
+            resources: [searchResource],
             limit: 50,
             limitPerResource: 50,
             source: "local",
@@ -692,6 +694,10 @@ export const globalActions: IAction[] = [
             collectionId: componentParams.id,
             context: componentParams.id.toString()
           });
+          if (result === 0) {
+            toasts.error("Already added to collection");
+            return;
+          }
           logger.log({
             at: "addNodeToCollection",
             id: item.id,

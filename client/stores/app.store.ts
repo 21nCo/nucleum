@@ -204,7 +204,7 @@ export const appStore = {
       if (component?.isMenuHidden) return true;
     }
     const listOfPathsToHideMenu = {
-      portrait: ["/objective/*", "/cp/*"],
+      portrait: ["/objective/*", "/goal/*", "/cp/*"],
       landscape: []
     };
     if (!path) return false;

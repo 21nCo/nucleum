@@ -2,27 +2,13 @@ import type { DatafnE2eeProvider } from "@datafn/client";
 import { clientStorage } from "@21n/persistence/persistence.utils";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
 import { parse, stringify } from "@21n/shared-utils/json.utils";
+import type {
+  NucleumDatafnE2eeSettings,
+  NucleumDatafnE2eeState
+} from "@21n/types/datafn.type";
 import { writable } from "svelte/store";
 
 export const DATAFN_E2EE_KV_KEY = "nucleum:e2ee";
-
-export type NucleumDatafnE2eeSettings = {
-  version: 1;
-  enabled: boolean;
-  recoveryRequired?: "restore-remote";
-  keyRef?: string;
-  salt?: string;
-  iterations?: number;
-  wrapIv?: string;
-  wrappedDek?: string;
-  updatedAt: number;
-};
-
-export type NucleumDatafnE2eeState = {
-  enabled: boolean;
-  unlocked: boolean;
-  keyRef: string | null;
-};
 
 const iterations = 250000;
 const textEncoder = new TextEncoder();
