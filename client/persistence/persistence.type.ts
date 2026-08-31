@@ -16,9 +16,6 @@ export enum ClientStorageKey {
   IS_EXTENSION_LOGIN = "isExtensionLogin",
   EMBED_OAUTH = "embedOAuth",
   APP_DATA = "appData",
-  /**
-   * Surreal token
-   */
   STOKEN = "stoken",
   USER = "user",
   AUTHFN_TOKEN = "authfnToken",
@@ -26,20 +23,13 @@ export enum ClientStorageKey {
   REGION = "region",
   USER_REGION_MAP = "userRegionMap",
   USER_INFO = "userInfo",
+  USER_PLAN = "userPlan",
   /**
    * @deprecated - use userId instead
    */
   GUEST = "guest",
   SPACE_IN_CONTEXT = "spaceInContext",
   OFFLINE_SESSION_ID = "offlineSessionId",
-  /**
-   * @deprecated - moved to storing on db.
-   */
-  LAST_SYNC_UP = "lastSyncUp",
-  /**
-   * @deprecated - moved to storing on db.
-   */
-  LAST_SYNC_DOWN = "lastSyncDown",
   /**
    * Device access point id. This id will be unique for each access point on a given device. Ex: different broswer logins, macOS app login etc.
    *
@@ -50,6 +40,10 @@ export enum ClientStorageKey {
 
   INTERCOM_ID = "intercomId",
   OFFLINE_MODE = "offlineMode",
+  DATAFN_OFFLINABILITY = "datafnOfflinability",
+  DATAFN_E2EE_SETTINGS = "datafnE2eeSettings",
+  DATAFN_E2EE_LOCAL_KEYS = "datafnE2eeLocalKeys",
+  LEGACY_LOCAL_DATA_RECOVERY = "legacyLocalDataRecovery",
   LOW_DATA_MODE = "lowDataMode",
   /**
    * Clipper extension toolbar state for guest users.

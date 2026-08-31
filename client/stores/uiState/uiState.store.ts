@@ -1,10 +1,11 @@
-import { KeyValueStore } from "@21n/components/flux/resourceStores/kv.store";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
+import { Resource as DatafnResource } from "@21n/data/datafn/resource.enum";
+import { Resource as LegacyResource } from "@21n/components/flux/resourceStores/resource.enum";
 import { logger } from "@21n/components/debug/logger.client";
-import { get } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { ResourceAccessPoint } from "@21n/components/flux/resourceStores/resource.type";
 import { appStore } from "@21n/stores/app.store";
 import { ObservableStore } from "@21n/stores/client.store";
+import { datafn } from "@21n/stores/datafn.store";
 import { Action } from "@21n/types/action.enum";
 import { InteractionMode } from "@21n/components/settings/interactionMode/interactionMode.type";
 import {
@@ -20,23 +21,84 @@ import { toasts } from "@21n/stores/notification.store";
 import {
   resourceInList,
   isSameResource
-} from "@21n/components/flux/resourceStores/resource.utils";
+} from "@21n/data/datafn/resource.utils";
 import { parse, stringify } from "@21n/shared-utils/json.utils";
 import { migrateLegacyNucleusProductKeys } from "@21n/stores/productKeyMigration.utils";
+import {
+  acknowledgeOptimisticKvEntries,
+  addOptimisticKvEntries,
+  applyOptimisticKvEntries,
+  removeOptimisticKvEntries
+} from "@21n/stores/optimisticKv.utils";
+import type { OptimisticKvEntries } from "@21n/types/datafn.type";
 
-class UiStateStore extends KeyValueStore<IUIStateStore> {
-  constructor() {
-    super(Resource.uiState, {
-      $local: {}
+const uiStateSeed: IUIStateStore = {
+  $local: {}
+};
+const uiStateSignal = datafn.kv.signal<IUIStateStore>(DatafnResource.uiState, {
+  defaultValue: uiStateSeed
+});
+const uiStateLocal = writable<IUIStateStore>(uiStateSeed);
+const pendingUiStateValues: OptimisticKvEntries = new Map();
+const legacyUiStateKeys = new Map([
+  ["manualLogRecentGoals", UIState.manualLogRecentObjectives],
+  ["goalPanelSelection", UIState.objectivePanelSelection]
+]);
+
+function migrateLegacyUiStateKeys(data: IUIStateStore): IUIStateStore {
+  const migrated = migrateLegacyNucleusProductKeys(data);
+  Object.entries(migrated).forEach(([key, value]) => {
+    legacyUiStateKeys.forEach((currentKey, legacyKey) => {
+      if (!key.includes(legacyKey)) return;
+      const nextKey = key.replace(legacyKey, currentKey);
+      if (!Object.prototype.hasOwnProperty.call(migrated, nextKey)) {
+        migrated[nextKey] = value;
+      }
     });
-  }
+  });
+  return migrated;
+}
 
-  loader(data: IUIStateStore) {
-    if (!data || typeof data !== "object") return;
-    super.loader(migrateLegacyNucleusProductKeys(data));
+function resolveStoredLocalState(): IUIStateStore["$local"] {
+  try {
+    if (typeof window === "undefined") return {};
+    const savedState = window.localStorage.getItem("uiState");
+    if (!savedState) return {};
+    const parsed = parse(savedState);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return {};
+    }
+    return migrateLegacyUiStateKeys(parsed as IUIStateStore);
+  } catch (error) {
+    logger.error({ context: "uiState.store - resolveStoredLocalState", error });
+    return {};
   }
+}
 
-  private resolveKey(keyParam: string, params?: IUIStateParams) {
+function refreshUiStateLocal() {
+  const migrated = migrateLegacyUiStateKeys(uiStateSignal.get() ?? uiStateSeed);
+  const optimistic = applyOptimisticKvEntries(migrated, pendingUiStateValues);
+  uiStateLocal.set({
+    ...uiStateSeed,
+    ...optimistic,
+    $local: resolveStoredLocalState()
+  });
+}
+
+uiStateSignal.subscribe((value) => {
+  acknowledgeOptimisticKvEntries(
+    pendingUiStateValues,
+    migrateLegacyUiStateKeys(value ?? uiStateSeed)
+  );
+  refreshUiStateLocal();
+});
+
+export const uiState = {
+  subscribe: uiStateLocal.subscribe,
+  get() {
+    return get(uiStateLocal);
+  },
+  resolveKey(keyParam: string, params?: IUIStateParams) {
     let key: string = keyParam;
     const product = get(appStore).product;
     const ctx = get(context);
@@ -55,7 +117,7 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
       });
     }
     return key;
-  }
+  },
 
   setState(
     keyParam: Action | UIState | ResourceAccessPoint,
@@ -66,19 +128,10 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
     if (params?.scope === UIStateScope.DAP) {
       try {
         if (typeof window !== "undefined") {
-          const savedState = window.localStorage.getItem("uiState");
-          const savedStateObj = savedState ? parse(savedState) : {};
+          const savedStateObj = resolveStoredLocalState();
           savedStateObj[key] = value;
           window.localStorage.setItem("uiState", stringify(savedStateObj));
-          this.update((x) => {
-            return {
-              ...x,
-              $local: {
-                ...x.$local,
-                [key]: value
-              }
-            };
-          });
+          refreshUiStateLocal();
         }
       } catch (error) {
         logger.error({
@@ -93,7 +146,7 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
       logger.log({ context: "uiState.store - setState", key, value });
     }
     uiStateDerived.refreshState();
-  }
+  },
 
   getState(
     keyParam: Action | UIState | ResourceAccessPoint,
@@ -115,19 +168,19 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
       }
     }
     return this.get()[key];
-  }
+  },
 
   getResourceState(
-    resource: Resource,
+    resource: LegacyResource,
     location: ResourceAccessPoint,
     keyParam: UIState
   ) {
     const key = `${resource}-${location}-${keyParam}`;
     return this.get()[key];
-  }
+  },
 
   setResourceState(
-    resource: Resource,
+    resource: LegacyResource,
     location: ResourceAccessPoint,
     keyParam: UIState,
     value: any
@@ -135,7 +188,32 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
     const key = `${resource}-${location}-${keyParam}`;
     this.modify({ [key]: value });
     logger.log({ context: "uiState.store - setResourceState", key, value });
-  }
+  },
+
+  modify(n: Partial<IUIStateStore>) {
+    const mutationTokens = addOptimisticKvEntries(pendingUiStateValues, n);
+    uiStateLocal.update((current) => ({ ...current, ...n }));
+    const mutation = datafn.kv.merge(DatafnResource.uiState, n);
+    const rollbackPendingValues = () => {
+      removeOptimisticKvEntries(pendingUiStateValues, mutationTokens);
+      refreshUiStateLocal();
+    };
+    void mutation.then((result) => {
+      if (!result.ok) rollbackPendingValues();
+    }, rollbackPendingValues);
+    return mutation;
+  },
+
+  loader(data: IUIStateStore) {
+    if (!data || typeof data !== "object" || Array.isArray(data)) return;
+    const migrated = migrateLegacyUiStateKeys(data);
+    uiStateLocal.set({
+      ...uiStateSeed,
+      ...migrated,
+      $local: resolveStoredLocalState()
+    });
+    return datafn.kv.set(DatafnResource.uiState, migrated);
+  },
 
   addResourceToTabs(id: IRecordId) {
     const current = this.getState(ResourceAccessPoint.TABS, {
@@ -152,7 +230,7 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
         scope: UIStateScope.PRODUCT
       }
     );
-  }
+  },
 
   removeResourceFromTabs(id: IRecordId) {
     const current = this.getState(ResourceAccessPoint.TABS, {
@@ -166,7 +244,7 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
         scope: UIStateScope.PRODUCT
       }
     );
-  }
+  },
 
   toggleSidebar() {
     const isCompletelyHideLeftNavBar = this.getState(
@@ -188,10 +266,12 @@ class UiStateStore extends KeyValueStore<IUIStateStore> {
     this.setState(UIState.hideLeftNavMenuLabels, !labelsVal, {
       scope: UIStateScope.DAP
     });
-  }
-}
+  },
 
-export const uiState = UiStateStore.resolve(Resource.uiState);
+  destroy() {
+    uiStateSignal.dispose();
+  }
+};
 
 /**
  *

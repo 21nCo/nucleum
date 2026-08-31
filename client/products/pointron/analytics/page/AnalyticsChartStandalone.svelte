@@ -145,7 +145,10 @@
     goalId;
     isIncludeSubgoals;
     if (!isMounted) return;
-    if (accessPoint === ResourceAccessPoint.CALENDAR && !resolveDateInput(date)) {
+    if (
+      accessPoint === ResourceAccessPoint.CALENDAR &&
+      !resolveDateInput(date)
+    ) {
       return;
     }
     untrack(() => {
@@ -169,7 +172,11 @@
       let startFilter = {};
       const resolvedDate = resolveDateInput(date);
       if (resolvedDate) {
-        startFilter = tzStore.resolveTimePeriodFilterForDay(resolvedDate);
+        const range = tzStore.resolveTimePeriodFilterForDay(resolvedDate);
+        startFilter = {
+          greaterThanOrEqual: range.$gte,
+          lessThanOrEqual: range.$lte
+        };
       } else {
         const result = tzStore.resolveTimePeriodCorrectedByTz(
           {

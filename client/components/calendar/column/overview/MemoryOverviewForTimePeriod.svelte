@@ -40,11 +40,15 @@
       scale,
       isReturnAsDateObjectFilter: true
     });
+    const legacyDateFilter = {
+      greaterThanOrEqual: dateFilter.$gte,
+      lessThanOrEqual: dateFilter.$lte
+    };
     const [todayNodesResult, todayLinksResult] = await Promise.all([
       nodeStore.selectMany(
         {
           filters: {
-            createdAt: dateFilter
+            createdAt: legacyDateFilter
           },
           orderBy: {
             createdAt: "desc"
@@ -57,7 +61,7 @@
       ),
       linker.selectMany({
         filters: {
-          createdAt: dateFilter
+          createdAt: legacyDateFilter
         },
         orderBy: {
           createdAt: "desc"
@@ -80,6 +84,10 @@
           isReturnAsDateObjectFilter: true
         }
       );
+      const legacyDateFilterForMemoryDate = {
+        greaterThanOrEqual: dateFilterForMemoryDate.$gte,
+        lessThanOrEqual: dateFilterForMemoryDate.$lte
+      };
 
       if (memoryDate > new Date()) continue;
 
@@ -87,7 +95,7 @@
         nodeStore.selectMany(
           {
             filters: {
-              createdAt: dateFilterForMemoryDate
+              createdAt: legacyDateFilterForMemoryDate
             },
             orderBy: {
               createdAt: "desc"
@@ -100,7 +108,7 @@
         ),
         linker.selectMany({
           filters: {
-            createdAt: dateFilterForMemoryDate
+            createdAt: legacyDateFilterForMemoryDate
           },
           orderBy: {
             createdAt: "desc"

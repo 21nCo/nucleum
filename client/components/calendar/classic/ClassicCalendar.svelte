@@ -79,11 +79,7 @@
   function handleYearChange(payload?: { year: number }) {
     if (!payload) return;
     setDate(
-      new Date(
-        payload.year,
-        selectedDate.getMonth(),
-        selectedDate.getDate()
-      )
+      new Date(payload.year, selectedDate.getMonth(), selectedDate.getDate())
     );
   }
 
@@ -187,6 +183,10 @@
         isRefreshing = true;
       }
       currentDateFilterForIndicatorData = dateFilter;
+      const legacyDateFilter = {
+        greaterThanOrEqual: dateFilter.$gte,
+        lessThanOrEqual: dateFilter.$lte
+      };
       const promises = filteredResourcesForIndicators.map((resource) => {
         let filters: any = {};
         let properties: string[] = [
@@ -198,19 +198,19 @@
         if (resource === Resource.task) {
           properties.push("dateUnix");
           filters = {
-            dateUnix: dateFilter
+            dateUnix: legacyDateFilter
           };
         } else if (resource === Resource.session) {
           properties.push("startUnix", "blocks", "start");
           filters = {
-            startUnix: dateFilter
+            startUnix: legacyDateFilter
           };
         } else if (resource === Resource.node) {
           properties.push("createdAt");
           filters = {
             createdAt: {
-              greaterThanOrEqual: new Date(dateFilter.greaterThanOrEqual),
-              lessThanOrEqual: new Date(dateFilter.lessThanOrEqual)
+              greaterThanOrEqual: new Date(dateFilter.$gte),
+              lessThanOrEqual: new Date(dateFilter.$lte)
             }
           };
         } else if (resource === MetaResource.calendarNotes) {
@@ -218,8 +218,8 @@
           filters = {
             metaType: NodeMetaType.CALENDAR_NOTES,
             date: {
-              greaterThanOrEqual: new Date(dateFilter.greaterThanOrEqual),
-              lessThanOrEqual: new Date(dateFilter.lessThanOrEqual)
+              greaterThanOrEqual: new Date(dateFilter.$gte),
+              lessThanOrEqual: new Date(dateFilter.$lte)
             }
           };
         }
@@ -327,7 +327,7 @@
       bind:selectedDate
       bind:selectedView
       {visibleWeekDates}
-      onDateChange={onDateChange}
+      {onDateChange}
       onGoToPrevious={() => {
         if (selectedView === TimeScaleUnit.YEAR) {
           yearViewRef?.navigatePrevYear();

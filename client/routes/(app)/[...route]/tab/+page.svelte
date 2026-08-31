@@ -1,8 +1,8 @@
 <svelte:options runes={true} />
 
-<script>
+<script lang="ts">
   import { page } from "$app/stores";
-  import { AccessMode } from "@21n/components/flux/resourceStores/resource.type";
+  import { AccessMode } from "@21n/data/datafn/resource.type";
   import ResourceResolver from "@21n/layout/paint/ResourceResolver.svelte";
 
   let tab = $derived($page.url.searchParams.get(AccessMode.TAB));

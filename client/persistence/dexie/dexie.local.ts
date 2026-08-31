@@ -369,6 +369,13 @@ export class DexiePersistence implements IPersistence {
     return true;
   }
 
+  async destroySearchIndices() {
+    await Promise.all(
+      Array.from(this.searchIndices.values(), (engine) => engine.destroy())
+    );
+    this.searchIndices.clear();
+  }
+
   async terminate() {
     logger.info({ at: "DexiePersistence.terminate" });
     await this.instance?.close();
@@ -507,7 +514,9 @@ export class DexiePersistence implements IPersistence {
   async merge(resource: Resource, id: IRecordId, data: any) {
     try {
       const sanitizedData = this.sanitizeForStorage(data);
-      const result = await this.instance?.table(resource).update(id, sanitizedData);
+      const result = await this.instance
+        ?.table(resource)
+        .update(id, sanitizedData);
       logger.log({
         at: "DexiePersistence.merge",
         id,
@@ -516,9 +525,7 @@ export class DexiePersistence implements IPersistence {
         resource
       });
       if (result === 0) {
-        return this.instance
-          ?.table(resource)
-          .put({ ...sanitizedData, id });
+        return this.instance?.table(resource).put({ ...sanitizedData, id });
       }
       return result;
     } catch (e) {

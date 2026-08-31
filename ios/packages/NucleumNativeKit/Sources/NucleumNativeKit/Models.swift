@@ -136,6 +136,7 @@ struct AnyCodable: Codable {
 }
 
 struct DownloadRequest: Decodable {
+  var id: String?
   var url: String?
   var data: String?
   var contentType: String?

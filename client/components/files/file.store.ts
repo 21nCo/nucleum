@@ -1,11 +1,14 @@
 import { persistenceInstance } from "@21n/persistence/persistence";
 import context from "@21n/stores/context.store";
 import { toasts } from "@21n/stores/notification.store";
-import type { IRecordId } from "@21n/types/data.type";
-import {
-  getBucketNameandKey,
-  isUrlExpired
-} from "@21n/utils/account.utils";
+import type {
+  IRecordId,
+  IResourceFilterValue,
+  IResourceSelectAdditionalParams,
+  IResourceSelectParams,
+  IResourceSelectProperties
+} from "@21n/types/data.type";
+import { getBucketNameandKey, isUrlExpired } from "@21n/utils/account.utils";
 import { get } from "svelte/store";
 import { logger } from "@21n/components/debug/logger.client";
 import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
@@ -14,10 +17,41 @@ import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
 import type { IFile, IFileCapture } from "@21n/components/files/file.type";
 import { fileEmbedChannel } from "@21n/components/files/fileEmbedChannel.store";
 import { OperatingSystem } from "@21n/types/context.type";
-import account from "@21n/stores/account.store";
+import { datafn } from "@21n/stores/datafn.store";
+import { isExtensionEnvironment } from "@21n/utils/browser.utils";
 
 function resolveBlobPart(data: Uint8Array<ArrayBufferLike>) {
   return Uint8Array.from(data).buffer;
+}
+
+function resolveDatafnFilterValue(value: IResourceFilterValue) {
+  if (Array.isArray(value)) return { $in: value };
+  if (!value || typeof value !== "object" || value instanceof Date) {
+    return value;
+  }
+  const operators = {
+    $gt: value.greaterThan,
+    $lt: value.lessThan,
+    $gte: value.greaterThanOrEqual,
+    $lte: value.lessThanOrEqual,
+    $nin: value.notIn,
+    $contains: value.contains,
+    $ne: value.notEquals
+  };
+  return Object.fromEntries(
+    Object.entries(operators).filter(
+      ([, operatorValue]) => operatorValue !== undefined
+    )
+  );
+}
+
+function resolveDatafnFilters(filters: IResourceSelectParams["filters"]) {
+  if (!filters) return undefined;
+  return Object.fromEntries(
+    Object.entries(filters)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => [key, resolveDatafnFilterValue(value)])
+  );
 }
 
 class FileStore extends ResourceStore<IFile, IFileCapture> {
@@ -27,6 +61,57 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
         type: ""
       }
     });
+  }
+
+  async select(
+    resourceId: IRecordId,
+    properties?: IResourceSelectProperties,
+    params?: { signal?: AbortSignal }
+  ) {
+    if (isExtensionEnvironment()) {
+      return super.select(resourceId, properties, params);
+    }
+    return datafn.file.select(resourceId.toString(), {
+      select:
+        properties?.select && properties.select.length > 0
+          ? properties.select
+          : undefined,
+      signal: params?.signal
+    }) as Promise<IFile | undefined>;
+  }
+
+  async selectMany(
+    params?: IResourceSelectParams,
+    additionalParams?: IResourceSelectAdditionalParams
+  ) {
+    if (isExtensionEnvironment()) {
+      return super.selectMany(params, additionalParams);
+    }
+    const sort = Object.entries(params?.orderBy ?? {}).map(
+      ([field, direction]) => (direction === "desc" ? `-${field}` : field)
+    );
+    const result = await datafn.file.query({
+      filters: resolveDatafnFilters(params?.filters),
+      select:
+        params?.properties?.select && params.properties.select.length > 0
+          ? params.properties.select
+          : undefined,
+      omit:
+        params?.properties?.omit && params.properties.omit.length > 0
+          ? params.properties.omit
+          : undefined,
+      sort: sort.length > 0 ? sort : undefined,
+      limit: params?.limit,
+      offset: params?.offset,
+      signal: additionalParams?.signal,
+      metadata: {
+        includeArchived:
+          additionalParams?.isIncludeInactiveItems === true ||
+          params?.filters?.isArchived === true,
+        includeTrashed: additionalParams?.isIncludeInactiveItems === true
+      }
+    });
+    return result.data as unknown as IFile[];
   }
 
   async download(file: IFile | IRecordId | string) {
@@ -44,7 +129,10 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
       const contextStore = get(context);
       if (contextStore.isEmbed) {
         //TODO - handle offline user case
-        fileEmbedChannel.downloadFromUrl(_file.url, _file.label.split(".")[0]);
+        void fileEmbedChannel.downloadFromUrl(
+          _file.url,
+          _file.label.split(".")[0]
+        );
         if (contextStore.os === OperatingSystem.MACOS) {
           toasts.success("File downloaded to Downloads folder");
         }
@@ -86,19 +174,12 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
     }
   ) {
     if (get(context).isEmbed) {
-      if (!params?.isHandleEmbedCase) return;
-      const url = await account.uploadFileV2(
-        params?.contentType || "text/plain",
-        params?.fileNameForEmbed || params?.fileName || "download",
+      if (!params?.isHandleEmbedCase) return false;
+      return fileEmbedChannel.downloadFromBlob(
         blob,
-        {
-          isReturnUrl: true
-        }
+        params?.fileName || params?.fileNameForEmbed || "download",
+        params?.contentType || blob.type || "application/octet-stream"
       );
-      if (url) {
-        fileEmbedChannel.downloadFromUrl(url);
-      }
-      return;
     }
     const blobUrl = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -108,6 +189,7 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(blobUrl);
+    return true;
   }
 
   private async updateUrlIfExpired(
@@ -125,28 +207,32 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
     ) {
       let key = getBucketNameandKey(file.thumbnailUrl);
       let signedUrl = await persistenceInstance.fetchSignedUrlForGet(key);
-      const result = await this.modify(
-        file.id,
-        {
-          thumbnailUrl: signedUrl?.getUrl
-        },
-        {
-          isPreventCloudPersistence: true
-        }
-      );
+      if (isExtensionEnvironment()) {
+        await super.modify(
+          file.id,
+          {
+            thumbnailUrl: signedUrl?.getUrl
+          },
+          {
+            isPreventCloudPersistence: true
+          }
+        );
+      }
       return { ...file, thumbnailUrl: signedUrl?.getUrl };
     } else if (isUrlExpired(file.url)) {
       let key = getBucketNameandKey(file.url);
       let signedUrl = await persistenceInstance.fetchSignedUrlForGet(key);
-      const result = await this.modify(
-        file.id,
-        {
-          url: signedUrl?.getUrl
-        },
-        {
-          isPreventCloudPersistence: true
-        }
-      );
+      if (isExtensionEnvironment()) {
+        await super.modify(
+          file.id,
+          {
+            url: signedUrl?.getUrl
+          },
+          {
+            isPreventCloudPersistence: true
+          }
+        );
+      }
       return { ...file, url: signedUrl?.getUrl };
     } else return file;
   }

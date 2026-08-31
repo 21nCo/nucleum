@@ -1,7 +1,11 @@
 import { logger } from "@21n/components/debug/logger.client";
 import { ClientStorageKey } from "@21n/persistence/persistence.type";
 import { GlobalEvent } from "@21n/types/event.enum";
-import { resolveLegacyToken, resolveToken, signout } from "@21n/utils/account.utils";
+import {
+  resolveLegacyToken,
+  resolveToken,
+  signout
+} from "@21n/utils/account.utils";
 import {
   dispatchCustomEvent,
   generateFingerprint,
@@ -24,17 +28,23 @@ export function resolveRegionalApiUrl() {
     if (tzOffset < -10800) {
       return (
         import.meta.env?.VITE_API_US_URL ??
-        (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_API_US_URL : undefined)
+        (typeof process !== "undefined"
+          ? process.env?.PLASMO_PUBLIC_API_US_URL
+          : undefined)
       );
     } else if (tzOffset > -10800 && tzOffset < 10800) {
       return (
         import.meta.env?.VITE_API_EU_URL ??
-        (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_API_EU_URL : undefined)
+        (typeof process !== "undefined"
+          ? process.env?.PLASMO_PUBLIC_API_EU_URL
+          : undefined)
       );
     } else {
       return (
         import.meta.env?.VITE_API_AS_URL ??
-        (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_API_AS_URL : undefined)
+        (typeof process !== "undefined"
+          ? process.env?.PLASMO_PUBLIC_API_AS_URL
+          : undefined)
       );
     }
   } catch (e) {
@@ -212,7 +222,10 @@ export async function detectUserRegion(): Promise<string> {
   }
 
   const timezoneBasedRegion = resolveRegionalApiUrlStrategy();
-  logger.debug({ at: "detectUserRegion.timezone", region: timezoneBasedRegion });
+  logger.debug({
+    at: "detectUserRegion.timezone",
+    region: timezoneBasedRegion
+  });
   return timezoneBasedRegion;
 }
 
@@ -235,11 +248,15 @@ export async function performApiCall(
   }
   let baseUrl =
     import.meta.env?.VITE_API_URL ??
-    (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_API_URL : undefined);
+    (typeof process !== "undefined"
+      ? process.env?.PLASMO_PUBLIC_API_URL
+      : undefined);
   if (params?.isFileApi) {
     baseUrl =
       import.meta.env?.VITE_FILE_API_URL ??
-      (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_FILE_API_URL : undefined);
+      (typeof process !== "undefined"
+        ? process.env?.PLASMO_PUBLIC_FILE_API_URL
+        : undefined);
   }
   const legacyToken = await resolveLegacyToken();
   return performHttpNetworkOperation({
@@ -247,7 +264,11 @@ export async function performApiCall(
     method,
     headers: {},
     body: stringify({ ...body, context: await getAppLoadContext() }),
-    authToken: legacyToken
+    authToken: legacyToken,
+    legacyApi: {
+      endpoint,
+      isFileApi: Boolean(params?.isFileApi)
+    }
   });
   async function getAppLoadContext() {
     const deviceFingerprint = await generateFingerprint();
@@ -273,7 +294,9 @@ export async function performApiCall(
       deviceFingerprint,
       host:
         import.meta.env?.VITE_HOST ??
-        (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_APP_URL : undefined) ??
+        (typeof process !== "undefined"
+          ? process.env?.PLASMO_PUBLIC_APP_URL
+          : undefined) ??
         host,
       href,
       timezone: detectTimeZone(),
@@ -298,49 +321,60 @@ export async function performHttpNetworkOperation(params: {
   headers: any;
   body: any;
   authToken?: string | null;
+  legacyApi?: {
+    endpoint?: string;
+    isFileApi?: boolean;
+  };
 }) {
+  const startedAt = Date.now();
+  let inventoryContext: LegacyApiInventoryContext | undefined;
+  let inventoryResponseRecorded = false;
+  let token: string | null | undefined;
+  let isExtEnv = false;
   try {
     const isOffline = await determineIfOffline();
     if (isOffline) return;
-    let token = params.authToken === undefined ? await resolveToken() : params.authToken;
-    const isExtEnv = isExtensionEnvironment();
+    token =
+      params.authToken === undefined ? await resolveToken() : params.authToken;
+    inventoryContext = resolveLegacyApiInventoryContext(params, token);
+    recordLegacyApiInventory(
+      inventoryContext
+        ? {
+            ...inventoryContext,
+            event: "request",
+            durationMs: 0
+          }
+        : undefined
+    );
+    isExtEnv = isExtensionEnvironment();
     if (!token && isExtEnv) {
       logoutOnExtention();
     }
-    const headers = params.headers ?? {};
-    const authorizationHeaders = token ? { Authorization: "Bearer " + token } : {};
-    const body = params.body ?? "";
-    const response = await fetch(params.url, {
-      method: params.method,
-      headers: {
-        "Content-Type": "application/json",
-        ...authorizationHeaders,
-        ...headers
-      },
-      body
-    });
+    const response = await fetchWithToken(token);
+    recordResponse(response);
     if (!response.ok) {
-      const errorText = await response.text();
-      logger.error({ at: "API call failed with status", response, errorText });
       if (response.status === 401) {
-        if (isExtEnv) {
-          logoutOnExtention();
-        } else if (!token) {
-          await signout();
-          window.location.reload();
-        } else {
-          logger.log({
-            at: "API call unauthorized with AuthFn session",
-            message:
-              "Skipping automatic sign-out because AuthFn is the authentication source.",
-            url: params.url
-          });
+        const recoveryResponse = await recoverFromUnauthorizedResponse();
+        if (recoveryResponse) {
+          recordResponse(recoveryResponse);
+          if (recoveryResponse.ok) {
+            return recoveryResponse;
+          }
+          await handleFailedResponse(recoveryResponse);
         }
       }
-      throw new Error(`API call failed with status: ${response.status}`);
+      await handleFailedResponse(response);
     }
     return response;
   } catch (error) {
+    if (inventoryContext && !inventoryResponseRecorded) {
+      recordLegacyApiInventory({
+        ...inventoryContext,
+        event: "error",
+        durationMs: Date.now() - startedAt,
+        error: serializeInventoryError(error)
+      });
+    }
     if (error instanceof TypeError) {
       let errorMessage = error.message;
       if (error.message === "Failed to fetch") {
@@ -364,6 +398,109 @@ export async function performHttpNetworkOperation(params: {
     }
   }
 
+  async function fetchWithToken(currentToken: string | null | undefined) {
+    const headers = params.headers ?? {};
+    const authorizationHeaders = currentToken
+      ? { Authorization: "Bearer " + currentToken }
+      : {};
+    const body = params.body ?? "";
+    return fetch(params.url, {
+      method: params.method,
+      headers: {
+        "Content-Type": "application/json",
+        ...authorizationHeaders,
+        ...headers
+      },
+      body
+    });
+  }
+
+  function recordResponse(response: Response) {
+    recordLegacyApiInventory(
+      inventoryContext
+        ? {
+            ...inventoryContext,
+            event: "response",
+            status: response.status,
+            ok: response.ok,
+            durationMs: Date.now() - startedAt
+          }
+        : undefined
+    );
+    inventoryResponseRecorded = true;
+  }
+
+  async function handleFailedResponse(response: Response) {
+    const errorText = await response.text();
+    logger.error({ at: "API call failed with status", response, errorText });
+    throw new Error(`API call failed with status: ${response.status}`);
+  }
+
+  async function recoverFromUnauthorizedResponse() {
+    if (isExtEnv) {
+      logoutOnExtention();
+      return;
+    }
+    if (!token && !(await hasStoredAuthFnSession())) {
+      await signoutAndReload();
+      return;
+    }
+    if (params.legacyApi && params.authToken) {
+      return;
+    }
+    const hadOriginalToken = Boolean(token);
+    const isSessionValid = await revalidateAuthFnSession();
+    if (isSessionValid === false) {
+      await signoutAndReload();
+      return;
+    }
+    if (isSessionValid !== true) return;
+    const refreshedToken = await resolveToken();
+    const isCookieSessionRetry =
+      !hadOriginalToken &&
+      !refreshedToken &&
+      !params.authToken &&
+      !params.legacyApi;
+    if (!refreshedToken && !isCookieSessionRetry) return;
+    token = refreshedToken;
+    const retryResponse = await fetchWithToken(token);
+    if (retryResponse.status === 401 && !isCookieSessionRetry) {
+      await signoutAndReload();
+    }
+    return retryResponse;
+  }
+
+  async function revalidateAuthFnSession() {
+    logger.log({
+      at: "API call unauthorized with AuthFn session",
+      message: "Revalidating AuthFn session before retrying request.",
+      url: params.url
+    });
+    try {
+      const { performSessionCheck } =
+        await import("@21n/components/account/auth");
+      return await performSessionCheck();
+    } catch (error) {
+      logger.error({
+        at: "API call unauthorized AuthFn session revalidation failed",
+        error,
+        url: params.url
+      });
+      return undefined;
+    }
+  }
+
+  async function signoutAndReload() {
+    await signout();
+    window.location.reload();
+  }
+
+  async function hasStoredAuthFnSession() {
+    const authSession = await clientStorage.get(ClientStorageKey.USER);
+    const userInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
+    return Boolean(authSession || userInfo);
+  }
+
   function logoutOnExtention() {
     const message = {
       event: ExtensionEvent.TOKEN_NOT_FOUND,
@@ -372,6 +509,136 @@ export async function performHttpNetworkOperation(params: {
     relayToSidePanel(message);
     relayToContentScript(message);
   }
+}
+
+type LegacyApiInventoryContext = {
+  at: "legacyApi.inventory";
+  endpoint?: string;
+  operation?: string;
+  method: "POST" | "GET" | "PUT" | "DELETE";
+  urlOrigin?: string;
+  urlHost?: string;
+  urlPath?: string;
+  isFileApi: boolean;
+  hasAuthToken: boolean;
+  callsite?: string;
+};
+
+type LegacyApiInventoryEntry = LegacyApiInventoryContext & {
+  event: "request" | "response" | "error";
+  durationMs: number;
+  status?: number;
+  ok?: boolean;
+  error?: {
+    name?: string;
+    message: string;
+  };
+  t: string;
+};
+
+const legacyApiInventory: LegacyApiInventoryEntry[] = [];
+
+function resolveLegacyApiInventoryContext(
+  params: {
+    url: string;
+    method: "POST" | "GET" | "PUT" | "DELETE";
+    body: any;
+    authToken?: string | null;
+    legacyApi?: {
+      endpoint?: string;
+      isFileApi?: boolean;
+    };
+  },
+  token: string | null | undefined
+): LegacyApiInventoryContext | undefined {
+  if (!params.legacyApi) return;
+  const urlParts = resolveInventoryUrlParts(params.url);
+  return {
+    at: "legacyApi.inventory",
+    endpoint: params.legacyApi.endpoint,
+    operation: resolveLegacyOperation(params.body),
+    method: params.method,
+    urlOrigin: urlParts.origin,
+    urlHost: urlParts.host,
+    urlPath: urlParts.pathname,
+    isFileApi: Boolean(params.legacyApi.isFileApi),
+    hasAuthToken: Boolean(token),
+    callsite: resolveInventoryCallsite()
+  };
+}
+
+function recordLegacyApiInventory(
+  entry: Omit<LegacyApiInventoryEntry, "t"> | undefined
+) {
+  if (!entry) return;
+  const timestampedEntry = { ...entry, t: new Date().toISOString() };
+  logger.debug(timestampedEntry);
+  legacyApiInventory.push(timestampedEntry);
+  legacyApiInventory.splice(0, Math.max(0, legacyApiInventory.length - 500));
+  if (typeof window === "undefined" || import.meta.env.MODE !== "test") return;
+  const inventoryWindow = window as Window & {
+    __getLegacyApiInventory?: () => LegacyApiInventoryEntry[];
+  };
+  inventoryWindow.__getLegacyApiInventory = () => [...legacyApiInventory];
+}
+
+function resolveLegacyOperation(body: any) {
+  const parsedBody = typeof body === "string" ? parseInventoryBody(body) : body;
+  if (!parsedBody || typeof parsedBody !== "object") return undefined;
+  const bodyRecord = parsedBody as Record<string, unknown>;
+  const value = bodyRecord.action ?? bodyRecord.method;
+  return typeof value === "string" ? value : undefined;
+}
+
+function parseInventoryBody(body: string) {
+  try {
+    return JSON.parse(body);
+  } catch {
+    return undefined;
+  }
+}
+
+function resolveInventoryUrlParts(url: string) {
+  try {
+    const parsedUrl = new URL(url);
+    return {
+      origin: parsedUrl.origin,
+      host: parsedUrl.host,
+      pathname: parsedUrl.pathname
+    };
+  } catch {
+    return {
+      origin: undefined,
+      host: undefined,
+      pathname: url.split("?")[0]
+    };
+  }
+}
+
+function resolveInventoryCallsite() {
+  const stack = new Error().stack;
+  if (!stack) return undefined;
+  return stack
+    .split("\n")
+    .map((line) => line.trim())
+    .find(
+      (line) =>
+        line &&
+        !line.includes("resolveInventoryCallsite") &&
+        !line.includes("resolveLegacyApiInventoryContext") &&
+        !line.includes("performHttpNetworkOperation") &&
+        !line.includes("performApiCall")
+    );
+}
+
+function serializeInventoryError(error: unknown) {
+  if (error instanceof Error) {
+    return {
+      name: error.name,
+      message: error.message
+    };
+  }
+  return { message: String(error) };
 }
 
 export async function determineIfOffline() {

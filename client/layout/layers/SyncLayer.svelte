@@ -4,12 +4,14 @@
   import { flux } from "@21n/components/flux/flux";
   import account from "@21n/stores/account.store";
   import context from "@21n/stores/context.store";
+  import { nucleumDatafnStatus, pullDatafnNow } from "@21n/stores/datafn.store";
   import { UserDataMode } from "@21n/types/account.type";
   import { onMount, onDestroy } from "svelte";
   let interval: ReturnType<typeof setInterval> | null = null;
   let isSyncing = $state(false);
   let isDestroyed = false;
-  let lastSyncTimestamp = 0;
+  let lastDatafnSyncTimestamp = 0;
+  let lastFluxSyncTimestamp = 0;
   let visibilityDebounceTimeout: ReturnType<typeof setTimeout> | null = null;
   let currentSyncTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -20,11 +22,10 @@
 
   onMount(() => {
     interval = setInterval(() => {
-      void proceedSync();
+      void proceedSync({ isPullDatafn: false });
     }, SYNC_INTERVAL);
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("beforeunload", handleBeforeUnload);
   });
 
   onDestroy(() => {
@@ -46,19 +47,25 @@
     }
 
     document.removeEventListener("visibilitychange", handleVisibilityChange);
-    window.removeEventListener("beforeunload", handleBeforeUnload);
   });
 
-  async function proceedSync() {
+  async function proceedSync(options: { isPullDatafn?: boolean } = {}) {
     if (isDestroyed || isSyncing) return;
-    if ($account.dataMode !== UserDataMode.CLOUD || $context.isInOfflineMode)
-      return;
-
+    if ($context.isInOfflineMode) return;
     const now = Date.now();
-    if (now - lastSyncTimestamp < MIN_SYNC_GAP) return;
+    const shouldSyncDatafn =
+      options.isPullDatafn !== false &&
+      $nucleumDatafnStatus.nucleumMode === "sync" &&
+      now - lastDatafnSyncTimestamp >= MIN_SYNC_GAP;
+    const shouldSyncFlux =
+      $account.dataMode === UserDataMode.CLOUD &&
+      Boolean(flux?.persistence) &&
+      now - lastFluxSyncTimestamp >= MIN_SYNC_GAP;
+    if (!shouldSyncDatafn && !shouldSyncFlux) return;
 
     isSyncing = true;
-    lastSyncTimestamp = now;
+    if (shouldSyncDatafn) lastDatafnSyncTimestamp = now;
+    if (shouldSyncFlux) lastFluxSyncTimestamp = now;
 
     let syncCompleted = false;
     currentSyncTimeout = setTimeout(() => {
@@ -72,7 +79,10 @@
     }, MAX_SYNC_DURATION);
 
     try {
-      await flux?.sync();
+      await Promise.all([
+        shouldSyncDatafn ? pullDatafnNow() : Promise.resolve(),
+        shouldSyncFlux ? flux.sync() : Promise.resolve()
+      ]);
     } catch (error) {
       console.error("Sync failed:", error);
     } finally {
@@ -100,15 +110,6 @@
           proceedSync();
         }
       }, VISIBILITY_DEBOUNCE);
-    }
-  }
-
-  /**
-   * TODO - use navigator.sendBeacon and beacon endpoint on sync server with in memory mutations readily available for sync
-   */
-  function handleBeforeUnload() {
-    if (!isDestroyed && !isSyncing) {
-      proceedSync();
     }
   }
 </script>

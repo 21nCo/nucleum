@@ -60,7 +60,10 @@
     const result = await sessionStore.selectManyWithItemsExpansion(
       {
         filters: {
-          startUnix: dayFilter
+          startUnix: {
+            greaterThanOrEqual: dayFilter.$gte,
+            lessThanOrEqual: dayFilter.$lte
+          }
         },
         orderBy: {
           startUnix: "asc"

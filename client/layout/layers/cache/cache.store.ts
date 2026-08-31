@@ -13,7 +13,7 @@ class CacheStore extends ObservableStore<{ [key: string]: any }> {
       x[key] = value;
       return x;
     });
-    this.triggerCacheUpdateEvent(key);
+    dispatchCustomEvent(GlobalEvent.CACHE_UPDATE, { key });
   }
 
   replaceUsingSubKey(key: string, subKey: string, value: any) {
@@ -26,10 +26,6 @@ class CacheStore extends ObservableStore<{ [key: string]: any }> {
 
   retrieve(key: string) {
     return this.get()[key];
-  }
-
-  private triggerCacheUpdateEvent(key: string) {
-    dispatchCustomEvent(GlobalEvent.CACHE_UPDATE, { key });
   }
 }
 

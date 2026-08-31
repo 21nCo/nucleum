@@ -1,90 +1,241 @@
-import { ResourceStore } from "@21n/components/flux/resourceStores/resource.store";
-import { Resource } from "@21n/components/flux/resourceStores/resource.enum";
-import type { ITimezone, ITimezoneCapture } from "@21n/components/settings/timezone/tz.type";
-import { TimeScaleUnit, type TimePeriod } from "@21n/types/time.type";
+import type {
+  ITimezone,
+  ITimezoneCapture
+} from "@21n/components/settings/timezone/tz.type";
+import { TimeScale, TimeScaleUnit, type TimePeriod } from "@21n/types/time.type";
 import { determineTimePeriodv2 } from "@21n/utils/time.utils";
 import { resolveUnixTimestamp } from "@21n/shared-utils/time.utils";
+import { datafn, datafnRuntime } from "@21n/stores/datafn.store";
+import {
+  createTimezoneResolver,
+  resolveTemporalDateParts,
+  resolveTemporalLocalTime,
+  resolveTemporalPeriodRange,
+  type DatafnTemporalScale
+} from "@datafn/client";
+import {
+  get,
+  writable,
+  type Subscriber,
+  type Unsubscriber
+} from "svelte/store";
 
-class TimezoneStore extends ResourceStore<ITimezone, ITimezoneCapture> {
+export type DfqlRangeFilter<T = number> = {
+  $gte: T;
+  $lte: T;
+};
+
+class TimezoneStore {
+  private records = writable<ITimezone[]>([]);
+  private unsubscribers: Unsubscriber[] = [];
+  private refreshGeneration = 0;
+
   constructor() {
-    super(Resource.tz);
+    this.ensureSubscriptions();
   }
 
-  private resolveInputDate(day: Date | string | number) {
+  subscribe = (
+    run: Subscriber<ITimezone[]>,
+    invalidate?: () => void
+  ) => {
+    this.ensureSubscriptions();
+    return this.records.subscribe(run, invalidate);
+  };
+
+  get() {
+    this.ensureSubscriptions();
+    return get(this.records);
+  }
+
+  destroy() {
+    this.refreshGeneration += 1;
+    for (const unsubscribe of this.unsubscribers) {
+      unsubscribe();
+    }
+    this.unsubscribers = [];
+  }
+
+  private ensureSubscriptions() {
+    if (this.unsubscribers.length > 0) return;
+    this.unsubscribers = [
+      datafnRuntime.subscribe(() => {
+        void this.refresh({ isSkipEnsureSubscriptions: true });
+      }),
+      datafn.subscribe((event) => {
+        if (
+          event.type === "mutation_applied" ||
+          event.type === "sync_applied"
+        ) {
+          void this.refresh({ isSkipEnsureSubscriptions: true });
+        }
+      })
+    ];
+  }
+
+  async refresh(params?: { isSkipEnsureSubscriptions?: boolean }) {
+    if (!params?.isSkipEnsureSubscriptions) {
+      this.ensureSubscriptions();
+    }
+    const generation = ++this.refreshGeneration;
+    const records = await datafn.temporal.listTimezoneChanges().catch(() => []);
+    if (generation === this.refreshGeneration) {
+      this.records.set(records);
+    }
+    return records;
+  }
+
+  async create(input: ITimezoneCapture | ITimezoneCapture[]) {
+    const values = Array.isArray(input) ? input : [input];
+    const records: ITimezone[] = [];
+    for (const value of values) {
+      const timezone =
+        value.timezone ??
+        value.zone ??
+        this.resolveTimezoneFromLabel(value.label) ??
+        datafn.temporal.detectTimezone() ??
+        "UTC";
+      const result = await datafn.temporal.recordTimezoneChange({
+        timezone,
+        effectiveFrom:
+          value.effectiveFrom ??
+          value.dateUnix ??
+          (value.date ? resolveUnixTimestamp(value.date) : undefined),
+        recordedAt: value.recordedAt,
+        source: value.source ?? "manual"
+      });
+      if (result.ok) records.push(result.record);
+    }
+    await this.refresh();
+    return records;
+  }
+
+  async setTimezone(timezone: string, source = "manual") {
+    const result = await datafn.temporal.setTimezone(timezone, { source });
+    await this.refresh();
+    return result;
+  }
+
+  resolveTimezone(instant = Date.now(), records?: ITimezone[]) {
+    const resolver = createTimezoneResolver(records ?? this.get(), {
+      defaultTimezone: () => datafn.temporal.detectTimezone() ?? "UTC"
+    });
+    return (
+      resolver({
+        instant,
+        field: "timezone"
+      }) ?? datafn.temporal.detectTimezone() ?? "UTC"
+    );
+  }
+
+  private resolveInputDate(day: Date | string | number): Date {
     return day instanceof Date ? day : new Date(day);
   }
 
+  private resolveTimezoneFromLabel(label?: string) {
+    return label?.split(" (UTC")[0] || undefined;
+  }
+
+  private resolveTemporalScale(scale: TimeScaleUnit): DatafnTemporalScale {
+    if (scale === TimeScaleUnit.WEEK) return "week";
+    if (scale === TimeScaleUnit.MONTH) return "month";
+    if (scale === TimeScaleUnit.QUARTER) return "quarter";
+    if (scale === TimeScaleUnit.YEAR) return "year";
+    return "day";
+  }
+
+  private resolveScaleFromTimePeriod(period: TimePeriod): TimeScaleUnit {
+    if (period.scale === TimeScale.WEEKS) return TimeScaleUnit.WEEK;
+    if (period.scale === TimeScale.MONTHS) return TimeScaleUnit.MONTH;
+    if (period.scale === TimeScale.QUARTERS) return TimeScaleUnit.QUARTER;
+    if (period.scale === TimeScale.YEARS) return TimeScaleUnit.YEAR;
+    return TimeScaleUnit.DAY;
+  }
+
+  private resolveDateParts(date: Date) {
+    return {
+      year: date.getFullYear(),
+      month: date.getMonth() + 1,
+      day: date.getDate(),
+      hour: date.getHours(),
+      minute: date.getMinutes(),
+      second: date.getSeconds(),
+      millisecond: date.getMilliseconds()
+    };
+  }
+
+  private resolveCalendarPeriodFilter(
+    day: Date | string | number,
+    scale: TimeScaleUnit
+  ): DfqlRangeFilter<number> {
+    const date = this.resolveInputDate(day);
+    const timezone = this.resolveTimezone(date.getTime());
+    const at = resolveTemporalLocalTime(
+      {
+        year: date.getFullYear(),
+        month: date.getMonth() + 1,
+        day: date.getDate(),
+        hour: 12
+      },
+      timezone
+    );
+    const range = resolveTemporalPeriodRange(
+      { scale: this.resolveTemporalScale(scale), at },
+      timezone
+    );
+    return {
+      $gte: range.start,
+      $lte: range.end
+    };
+  }
+
+  resolveTimePeriodFilter(
+    day: Date | string | number,
+    params: {
+      scale?: TimeScaleUnit;
+      isReturnAsDateObjectFilter: true;
+    }
+  ): DfqlRangeFilter<Date>;
+  resolveTimePeriodFilter(
+    day: Date | string | number,
+    params?: {
+      scale?: TimeScaleUnit;
+      isReturnAsDateObjectFilter?: false;
+    }
+  ): DfqlRangeFilter<number>;
   resolveTimePeriodFilter(
     day: Date | string | number,
     params?: {
       scale?: TimeScaleUnit;
       isReturnAsDateObjectFilter?: boolean;
     }
-  ) {
+  ): DfqlRangeFilter<number> | DfqlRangeFilter<Date> {
     const scale = params?.scale ?? TimeScaleUnit.DAY;
-    let result: any;
-    if (scale === TimeScaleUnit.DAY) {
-      result = this.resolveTimePeriodFilterForDay(day);
-    } else if (scale === TimeScaleUnit.MONTH) {
-      result = this.resolveTimePeriodFilterForMonth(day);
-    } else if (scale === TimeScaleUnit.YEAR) {
-      result = this.resolveTimePeriodFilterForYear(day);
-    }
+    const result = this.resolveCalendarPeriodFilter(day, scale);
     if (!params?.isReturnAsDateObjectFilter) return result;
-    else {
-      return {
-        greaterThanOrEqual: new Date(result.greaterThanOrEqual),
-        lessThanOrEqual: new Date(result.lessThanOrEqual)
-      };
-    }
-  }
-
-  resolveTimePeriodFilterForDay(day: Date | string | number) {
-    day = this.resolveInputDate(day);
-    const localDay = new Date(day.getFullYear(), day.getMonth(), day.getDate());
-    const end = new Date(localDay.getTime() + 24 * 60 * 60 * 1000);
-    return this.resolveCorrectedTimePeriodFilter({
-      begin: resolveUnixTimestamp(localDay),
-      end: resolveUnixTimestamp(end)
-    });
-  }
-
-  resolveTimePeriodFilterForMonth(day: Date | string | number) {
-    day = this.resolveInputDate(day);
-    const localDay = new Date(day.getFullYear(), day.getMonth(), 1);
-    const end = new Date(localDay.getFullYear(), localDay.getMonth() + 1, 1);
-    return this.resolveCorrectedTimePeriodFilter({
-      begin: resolveUnixTimestamp(localDay),
-      end: resolveUnixTimestamp(end)
-    });
-  }
-
-  resolveTimePeriodFilterForYear(day: Date | string | number) {
-    day = this.resolveInputDate(day);
-    const localDay = new Date(day.getFullYear(), 0, 1);
-    const end = new Date(day.getFullYear(), 11, 31);
-    return this.resolveCorrectedTimePeriodFilter({
-      begin: resolveUnixTimestamp(localDay),
-      end: resolveUnixTimestamp(end)
-    });
-  }
-
-  private resolveCorrectedTimePeriodFilter(period: {
-    begin: number;
-    end: number;
-  }) {
-    const corrected = this.resolveTimePeriodCorrectedByTz(period);
     return {
-      greaterThanOrEqual: corrected.begin,
-      lessThanOrEqual: corrected.end
+      $gte: new Date(result.$gte),
+      $lte: new Date(result.$lte)
     };
   }
-  /**
-   * Resolves the timezone corrected time period
-   * @param period - The period to resolve
-   * @param params - The parameters
-   * @returns The timezone corrected time period
-   */
+
+  resolveTimePeriodFilterForDay(
+    day: Date | string | number
+  ): DfqlRangeFilter<number> {
+    return this.resolveCalendarPeriodFilter(day, TimeScaleUnit.DAY);
+  }
+
+  resolveTimePeriodFilterForMonth(
+    day: Date | string | number
+  ): DfqlRangeFilter<number> {
+    return this.resolveCalendarPeriodFilter(day, TimeScaleUnit.MONTH);
+  }
+
+  resolveTimePeriodFilterForYear(
+    day: Date | string | number
+  ): DfqlRangeFilter<number> {
+    return this.resolveCalendarPeriodFilter(day, TimeScaleUnit.YEAR);
+  }
+
   resolveTimePeriodCorrectedByTz(
     period: { begin: number; end: number } | TimePeriod,
     params?: {
@@ -93,7 +244,7 @@ class TimezoneStore extends ResourceStore<ITimezone, ITimezoneCapture> {
   ) {
     let begin = 0;
     let end = 0;
-    let resolvedTimePeriod: any;
+    let resolvedTimePeriod: ReturnType<typeof determineTimePeriodv2> | undefined;
     if ("value" in period) {
       resolvedTimePeriod = determineTimePeriodv2(period);
       begin = resolveUnixTimestamp(resolvedTimePeriod.begin);
@@ -112,38 +263,49 @@ class TimezoneStore extends ResourceStore<ITimezone, ITimezoneCapture> {
       end,
       resolvedTimePeriod,
       correctedBegin,
-      correctedEnd
+      correctedEnd,
+      filter: {
+        $gte: correctedBegin,
+        $lte: correctedEnd
+      }
     };
   }
 
-  /**
-   * Resolves the timezone corrected timestamp
-   * @param timestamp - The timestamp to resolve (in milliseconds)
-   * @param params - The parameters
-   * @returns The timezone corrected timestamp (in milliseconds)
-   */
+  resolveTimePeriodFilterForPeriod(
+    period: TimePeriod,
+    params?: {
+      tzRecords?: ITimezone[];
+    }
+  ): DfqlRangeFilter<number> {
+    if (
+      period.value.type !== "ABSOLUTE" &&
+      (period.value.param === 0 || period.value.param === undefined)
+    ) {
+      const resolved = determineTimePeriodv2(period);
+      return this.resolveCalendarPeriodFilter(
+        resolved.begin,
+        this.resolveScaleFromTimePeriod(period)
+      );
+    }
+    return this.resolveTimePeriodCorrectedByTz(period, params).filter;
+  }
+
   resolveTimezoneCorrectedTimestamp(
     timestamp: number,
     params?: {
       tzRecords?: ITimezone[];
     }
   ) {
-    let tzRecords = params?.tzRecords ?? this.get();
-    if (!tzRecords) return timestamp;
-    tzRecords = tzRecords.filter((x) => x.dateUnix);
-    const tzStoreSorted = tzRecords.sort((a, b) => b.dateUnix - a.dateUnix);
-    const currentTzOffset = tzStoreSorted[0]?.offset;
-    let timezoneOffset = tzStoreSorted.find((x) => x.dateUnix < timestamp);
-    if (!timezoneOffset) {
-      const tzStoreSortedAsc = tzRecords.sort(
-        (a, b) => a.dateUnix - b.dateUnix
-      );
-      timezoneOffset = tzStoreSortedAsc.find((x) => x.dateUnix > timestamp);
-    }
-    return (
-      timestamp + (timezoneOffset?.offset ?? 0) * 1000 - currentTzOffset * 1000
+    const historicalTimezone = this.resolveTimezone(
+      timestamp,
+      params?.tzRecords
+    );
+    const currentTimezone = this.resolveTimezone(Date.now(), params?.tzRecords);
+    return resolveTemporalLocalTime(
+      resolveTemporalDateParts(timestamp, historicalTimezone),
+      currentTimezone
     );
   }
 }
 
-export const tzStore = TimezoneStore.resolve(Resource.tz);
+export const tzStore = new TimezoneStore();

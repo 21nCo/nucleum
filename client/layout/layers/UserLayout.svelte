@@ -32,6 +32,7 @@
   import ResourceResolver from "../paint/ResourceResolver.svelte";
   import { GlobalEvent } from "@21n/types/event.enum";
   import ComponentResolver from "../paint/ComponentResolver.svelte";
+  import { cn } from "@21n/utils/ui.utils";
   let {
     children,
     topnav: topnavContent,
@@ -47,6 +48,7 @@
     new URLSearchParams(window.location.search).get(AppSearchParam.MAX) ===
       "true"
   );
+  let isHomePage = $state(isHomeRoute(new URL(window.location.href)));
   let rightPanel = $state<IAction | undefined>(undefined);
   let pop = $state<{ id: IRecordId; action: IAction } | undefined>(undefined);
   let mainPath = $state<string | undefined>(undefined);
@@ -61,20 +63,22 @@
     });
     $appLoadingState.isLocalLoaded = true;
     const pageSub = page.subscribe((p) => {
-      isMaxMode = p.url.searchParams.get(AppSearchParam.MAX) === "true";
-      const rightPanelParam = p.url.searchParams.get(AccessMode.RIGHT);
+      const searchParams = p?.url?.searchParams ?? new URLSearchParams();
+      isMaxMode = searchParams.get(AppSearchParam.MAX) === "true";
+      isHomePage = p?.url ? isHomeRoute(p.url) : false;
+      const rightPanelParam = searchParams.get(AccessMode.RIGHT);
       if (rightPanelParam) {
         rightPanel = appStore.resolveAction(rightPanelParam) ?? undefined;
       } else {
         rightPanel = undefined;
       }
-      const popParam = p.url.searchParams.get(AccessMode.POP) ?? undefined;
+      const popParam = searchParams.get(AccessMode.POP) ?? undefined;
       if (popParam) {
         resolvePop(popParam);
       } else {
         pop = undefined;
       }
-      mainPath = p.url.searchParams.get(AccessMode.MAIN) ?? undefined;
+      mainPath = searchParams.get(AccessMode.MAIN) ?? undefined;
     });
     const appEventSub = appEvents.subscribe((x) => {
       if (x.event === GlobalEvent.ESCAPE) {
@@ -109,6 +113,10 @@
     return uiState.getState(UIState.isHideLeftNavBar);
   }
 
+  function isHomeRoute(url: URL) {
+    return url.pathname.split("/").filter(Boolean).at(-1) === "home";
+  }
+
   async function handleVisibilityChange() {
     if (document?.hidden) {
       const registration = await navigator?.serviceWorker?.ready;
@@ -138,11 +146,18 @@
     </CommandModePage>
   {:else}
     <div class="flex flex-col w-full h-full">
-      <div class="flex w-full flex-grow">
+      <div
+        class={cn("flex w-full flex-grow", {
+          "bg-bgs2": $context.experiments?.isEnableRoundedMain
+        })}
+      >
         {#if $context.embed === Embed.HANDSET}
           <LeftNav variant="fixed" />
         {/if}
         <div class="flex flex-col h-full w-full">
+          {#if !$view.isPortrait && !isMaxMode}
+            <TopNav topnav={topnavContent} />
+          {/if}
           <div class="flex w-full flex-grow">
             {#if $context.embed !== Embed.HANDSET && !isHideLeftNavBar && !isMaxMode}
               <LeftNav variant="fixed" isHidePanel={!!pop || !!mainPath} />
@@ -159,14 +174,13 @@
               {#if popId}
                 <div
                   class="absolute inset-0 flex justify-center w-full h-full bg-bgs1 z-50"
+                  data-testid="resource-record-surface"
                 >
                   <ResourceResolver id={popId} accessMode={AccessMode.POP} />
                 </div>
               {/if}
               {#if $hTrail.path.length > 0 && $hTrail.activated && (!$hTrail.isBaseNonRecord || ($hTrail.isBaseNonRecord && $hTrail.activated !== $hTrail.path[0]))}
                 <Trail />
-                <!-- {:else if $vTrail.items.length > 0 && $vTrail.activated && (!isRecordId($vTrail.base) || (isRecordId($vTrail.base) && $vTrail.activated !== $vTrail.base))}
-                <TrailContent /> -->
               {:else}
                 <AppSplitView>
                   {@render main?.()}
@@ -180,10 +194,7 @@
               <RightPanel action={rightPanel} />
             {/if}
           </div>
-          {#if !$view.isPortrait && !isMaxMode}
-            <TopNav topnav={topnavContent} />
-          {/if}
-          {#if $hTrail.path.length > 0}
+          {#if $hTrail.path.length > 0 && !isHomePage}
             <BottomNav />
           {/if}
         </div>

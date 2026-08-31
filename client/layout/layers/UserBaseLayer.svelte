@@ -4,7 +4,6 @@
   import type { Snippet } from "svelte";
   import { onDestroy, onMount } from "svelte";
   import { GlobalEvent } from "@21n/types/event.enum";
-  import { detectTimeZone } from "@21n/utils/time.utils";
   import { Persistence } from "@21n/persistence/persistence";
   import account from "@21n/stores/account.store";
   import { appLoadingState, appStore } from "@21n/stores/app.store";
@@ -21,7 +20,6 @@
   import Intercom from "@21n/layout/layers/Intercom.svelte";
   import SyncLayer from "@21n/layout/layers/SyncLayer.svelte";
   import {
-    dispatchCustomEvent,
     isExtensionEnvironment,
     safeRequestIdleCallback
   } from "@21n/utils/browser.utils";
@@ -30,37 +28,60 @@
   import DynamicMetadataLayer from "@21n/layout/layers/DynamicMetadataLayer.svelte";
   import { logger } from "@21n/components/debug/logger.client";
   import { flux, initFlux } from "@21n/components/flux/flux";
-  import { UserDataMode, UserSessionType } from "@21n/types/account.type";
-  import {
-    ClientStorageKey,
-    PersistenceProvider
-  } from "@21n/persistence/persistence.type";
-  import { clientStorage, getDapId } from "@21n/persistence/persistence.utils";
+  import { UserDataMode } from "@21n/types/account.type";
+  import { getDapId } from "@21n/persistence/persistence.utils";
   import PageError from "@21n/components/error/PageError.svelte";
   import posthog from "posthog-js";
-  import { recentsStore } from "@21n/components/record/recent.store";
   import { uiState } from "@21n/stores/uiState/uiState.store";
   import { Action } from "@21n/types/action.enum";
   import { BillingCycle } from "@21n/components/subscription/userPlan.type";
   import { fileEmbedChannel } from "@21n/components/files/fileEmbedChannel.store";
+  import { fileStore } from "@21n/components/files/file.store";
   import { ErrorMessage } from "@21n/components/error/error.type";
   import modalEvent from "@21n/components/modal/modal.store";
   import { PaymentProvider } from "@21n/shared-types/plan.type";
   import { embedBridge } from "@21n/components/embed/embed.store";
   import { postMessageToParent } from "@21n/utils/embed.utils";
   import { EmbedMessage } from "@21n/types/embedMessage.enum";
-  import { tzStore } from "@21n/components/settings/timezone/tz.store";
   import { OperatingSystem } from "@21n/types/context.type";
-  import InMemoryCache from "@21n/layout/layers/cache/InMemoryCache.svelte";
-  import { resolveProductResources } from "@21n/components/flux/resourceStores/resource.utils";
   import UserLayout from "@21n/layout/layers/UserLayout.svelte";
+  import LegacyLocalDataRecoveryGate from "@21n/layout/layers/LegacyLocalDataRecoveryGate.svelte";
   import { compareVersions } from "@21n/shared-utils/utils";
   import { UIStateScope } from "@21n/stores/uiState/uiState.type";
-  import { DexiePersistence } from "@21n/persistence/dexie/dexie.local";
-  import { parse } from "@21n/shared-utils/json.utils";
+  import { parse, stringify } from "@21n/shared-utils/json.utils";
+  import { detectTimeZone, parseAndFormatDate } from "@21n/utils/time.utils";
+  import { recentsStore } from "@21n/components/record/recent.store";
+  import { resolveProductResources } from "@21n/components/flux/resourceStores/resource.utils";
   import { resolveProductConfig } from "@21n/products/product.config";
   import { resourceStores } from "@21n/components/flux/resourceStores/resource.store";
   import { kvStores } from "@21n/components/flux/resourceStores/kv.store";
+  import { DexiePersistence } from "@21n/persistence/dexie/dexie.local";
+  import InMemoryCache from "@21n/layout/layers/cache/InMemoryCache.svelte";
+  import {
+    datafn,
+    nucleumDatafnStatus,
+    initializeNucleumDatafn,
+    cloneUpAllDatafnData,
+    pullDatafnNow,
+    reconcileDatafnNow,
+    refreshNucleumDatafnStatus,
+    type NucleumDatafnRuntime
+  } from "@21n/stores/datafn.store";
+  import {
+    convertLegacyLocalDataBackupToDatafnImport,
+    completeLegacyLocalDataCloudUpload,
+    detectLegacyLocalData,
+    exportLegacyLocalData,
+    getLegacyLocalDataRecoveryDecision,
+    hasRecoverableLegacyLocalData,
+    hasPendingLegacyLocalDataCloudUpload,
+    normalizeLegacyDatafnImportIds,
+    resolveLegacyLocalDataRecordCount,
+    saveLegacyLocalDataRecoveryDecision,
+    type LegacyLocalDataBackup,
+    type LegacyLocalDataSummary
+  } from "@21n/persistence/legacyLocalDataBackup";
+  import type { DatafnImportResult } from "@21n/types/datafn.type";
   let {
     children,
     topnav: topnavContent,
@@ -75,16 +96,14 @@
       message: "Syncing your local data with the cloud...",
       subMessage: "This might take a while."
     },
-    syncDown: {
+    pull: {
       message: "Syncing your data from cloud..."
     },
     cloneDown: {
       message: "First login detected. Syncing your data..."
     }
   };
-
-  const ONE_WEEK_IN_MS = 7 * 24 * 60 * 60 * 1000;
-
+  type LegacyRecoveryMode = "required" | "importing" | "downloading";
   let loadingMessage = $state<{
     message: string;
     subMessage?: string;
@@ -95,32 +114,26 @@
   });
   let isAppLoading = $state(false);
   let error = $state<string | null>(null);
+  let legacyRecoveryMode = $state<LegacyRecoveryMode | null>(null);
+  let legacyRecoveryError = $state<string | undefined>(undefined);
+  let legacyLocalDataSummary = $state<LegacyLocalDataSummary | undefined>(
+    undefined
+  );
+  let isLegacyCloudUploadPending = $state(false);
+  let isLegacyCloudUploadInProgress = false;
   let dev_isDisableSyncOnAppear = false;
   let subs: any[] = [];
+  let isStartupCompleted = false;
   const isDebug = import.meta.env?.DEV;
-  let searcheableResources = $derived(
-    resolveProductResources($appStore.product, "search") ?? []
-  );
 
-  async function shouldRunFluxIndex() {
-    const lastIndexedAt = await clientStorage.get(
-      ClientStorageKey.LAST_INDEXED_AT
-    );
-    if (!lastIndexedAt) return true;
-
-    const lastIndexedTimestamp = Number(lastIndexedAt);
-    if (Number.isNaN(lastIndexedTimestamp)) return true;
-
-    return Date.now() - lastIndexedTimestamp >= ONE_WEEK_IN_MS;
-  }
-
-  async function runFluxIndexWithTracking() {
-    await flux.index();
-    await clientStorage.set(
-      ClientStorageKey.LAST_INDEXED_AT,
-      Date.now().toString()
-    );
-  }
+  $effect(() => {
+    if (
+      $nucleumDatafnStatus.nucleumMode === "sync" &&
+      isLegacyCloudUploadPending
+    ) {
+      void uploadPendingLegacyCloudData();
+    }
+  });
 
   onMount(async () => {
     postMessageToParent(EmbedMessage.MOUNT);
@@ -135,52 +148,10 @@
     });
     subs.push(uiStateSub);
 
-    console.time("init");
-    const initState = await initializeDatabase();
-    if (initState === 1) {
-      $appLoadingState.isBaseLoaded = true;
-      await onReady?.();
+    const isLegacyRecoveryRequired = await prepareLegacyLocalDataRecoveryGate();
+    if (!isLegacyRecoveryRequired) {
+      await startApplication();
     }
-    let userDataState: any;
-    if (initState !== undefined)
-      userDataState = await initializeEssentialUserData(initState);
-    if (userDataState?.paginateResources) {
-      // loadingMessage.duration = userDataState.paginateResources.length * 2;
-      //TODO - calculate estimated time to paginate using total length of records for each resource and resource type
-      await flux.paginateResources(
-        userDataState.paginateResources,
-        100,
-        userDataState.isFirstInitialLoad
-      );
-    } else if (userDataState?.cursors) {
-      await flux.paginateResourcesV2(
-        userDataState.cursors,
-        userDataState.isFirstInitialLoad
-      );
-    }
-    const shouldTriggerIndex = await shouldRunFluxIndex();
-    const initializationTasks = [
-      recentsStore.refresh(searcheableResources),
-      initializeUserConfig()
-    ];
-    if (shouldTriggerIndex) {
-      initializationTasks.push(runFluxIndexWithTracking());
-    }
-    await Promise.all(initializationTasks);
-    if (initState !== 1) {
-      $appLoadingState.isBaseLoaded = true;
-      await onReady?.();
-    }
-    console.timeEnd("init");
-
-    safeRequestIdleCallback(async () => {
-      if (userDataState?.counts && !isDebug) {
-        await flux.reconcile({ counts: userDataState.counts });
-        dispatchCustomEvent(GlobalEvent.SYNC_DOWN);
-      }
-      await recentsStore.refresh(searcheableResources);
-      await syncAccountPaidPlanFromExternalProvider();
-    });
   });
 
   function refreshUIStateDerived() {
@@ -189,26 +160,264 @@
     });
     $appStore.interactionMode = interactionMode;
   }
-  /**
-   * Refreshes the timezone of the user. If the user is signing up, it will set & persist the timezone to the detected timezone. If the user is logged in, it will set the timezone to the detected timezone only if the timezone is different from the saved timezone.
-   *
-   * TODO - Prompt user if timezone change detected before directly setting the timezone.
-   *
-   * @param isSignup - If the user is signing up
-   */
-  function refreshTimeZone() {
-    if (!isFluxReady()) return;
-    if (!$tzStore || (Array.isArray($tzStore) && $tzStore.length === 0)) {
-      userPreferences.setTimeZone();
+
+  async function prepareLegacyLocalDataRecoveryGate() {
+    if ($context.isSheet || isExtensionEnvironment()) return false;
+    try {
+      isLegacyCloudUploadPending = await hasPendingLegacyLocalDataCloudUpload(
+        $appStore.product
+      );
+      const summary = await detectLegacyLocalData($appStore.product);
+      if (!summary.isSupported || !hasRecoverableLegacyLocalData(summary)) {
+        return false;
+      }
+      const decision = await getLegacyLocalDataRecoveryDecision(
+        $appStore.product,
+        summary
+      );
+      if (decision) {
+        isLegacyCloudUploadPending =
+          isLegacyCloudUploadPending || Boolean(decision.isCloudUploadPending);
+        return false;
+      }
+      legacyLocalDataSummary = summary;
+      legacyRecoveryMode = "required";
+      return true;
+    } catch (error) {
+      logger.error({ at: "prepareLegacyLocalDataRecoveryGate", error });
+      return false;
     }
-    const timeZone = detectTimeZone();
-    if (!timeZone || !$userPreferences) return;
-    if ($userPreferences.timeZoneOffset !== timeZone.offset * 60) {
-      logger.info({
-        at: "refreshTimeZone - timezone change detected",
-        timeZone
+  }
+
+  async function startApplication(options?: {
+    isOfflinabilityEnabled?: boolean;
+  }) {
+    if (isStartupCompleted) return;
+    const runtime = await initializeDatabase(options);
+    if (runtime) {
+      try {
+        await initializeLegacyFlux();
+        await completeApplicationStartup();
+      } catch (startupError) {
+        error = "Unable to initialize local data. Please try again later.";
+        logger.error({ at: "startApplication", error: startupError });
+      }
+    }
+  }
+
+  async function initializeLegacyFlux() {
+    const dapId = await getDapId();
+    if (!dapId) throw new Error("Device access point is unavailable");
+    const stores = [...resourceStores.values(), ...kvStores.values()];
+    const initState = await initFlux(new DexiePersistence(), {
+      dapId,
+      userId:
+        $account.dataMode === UserDataMode.CLOUD ? $account.userId : undefined,
+      appVersion: $appStore.version + "." + $appStore.build,
+      product: $appStore.product,
+      tables: resolveProductConfig().tableConfig,
+      loaderCallback: (resource, data) => {
+        const store = stores.find(
+          (candidate) =>
+            candidate.id === resource || `kv:${candidate.id}` === resource
+        );
+        store?.loader?.(data);
+      }
+    });
+    if (initState === 0) {
+      await flux.kvSeed(
+        Array.from(kvStores.values()).map((store) => ({
+          id: `kv:${store.id}`,
+          ...store.seed
+        }))
+      );
+    }
+    await flux.loadInMemoryStores();
+  }
+
+  async function completeApplicationStartup() {
+    if (isStartupCompleted) return;
+    await Promise.all([
+      initializeUserConfig(),
+      recentsStore.refresh(
+        resolveProductResources($appStore.product, "search") ?? []
+      )
+    ]);
+    $appLoadingState.isBaseLoaded = true;
+    isStartupCompleted = true;
+    if (typeof onReady === "function") {
+      await onReady();
+    }
+    if ($context.isEmbed && $context.isSheet) {
+      $appLoadingState.isLocalLoaded = true;
+    }
+    scheduleIdleMaintenance();
+  }
+
+  function scheduleIdleMaintenance() {
+    safeRequestIdleCallback(async () => {
+      if ($nucleumDatafnStatus.nucleumMode === "sync" && !isDebug) {
+        await reconcileDatafnNow();
+      }
+      await refreshNucleumDatafnStatus();
+      await syncAccountPaidPlanFromExternalProvider();
+    });
+  }
+
+  async function handleImportLegacyLocalData() {
+    if (!legacyLocalDataSummary || legacyRecoveryMode !== "required") return;
+    legacyRecoveryMode = "importing";
+    legacyRecoveryError = undefined;
+    loadingMessage = {
+      message: "Importing old local data...",
+      subMessage: "Preparing a local backup first."
+    };
+    try {
+      const backup = await exportLegacyLocalData($appStore.product);
+      if (!backup?.databases.length) {
+        legacyRecoveryMode = null;
+        const runtime = await initializeDatabase();
+        if (runtime) {
+          await initializeLegacyFlux();
+          await completeApplicationStartup();
+        }
+        return;
+      }
+      const runtime = await initializeDatabase({
+        isOfflinabilityEnabled: true
       });
-      return userPreferences.setTimeZone(timeZone.offset * 60, timeZone.label);
+      if (!runtime) return;
+      const importStats = await importLegacyLocalDataBackup(runtime, backup);
+      const isCloudUploadPending =
+        $account.dataMode === UserDataMode.CLOUD &&
+        runtime.mode === "local-only";
+      await saveLegacyLocalDataRecoveryDecision(
+        {
+          version: 1,
+          product: $appStore.product,
+          action: "import_old_data",
+          decidedAt: new Date().toISOString(),
+          backupExportedAt: backup.exportedAt,
+          sourceRecordCount: resolveLegacyLocalDataRecordCount(backup),
+          importedResourceCount: importStats.resources,
+          importedJoinCount: importStats.joins,
+          isCloudUploadPending
+        },
+        backup
+      );
+      isLegacyCloudUploadPending =
+        isLegacyCloudUploadPending || isCloudUploadPending;
+      legacyRecoveryMode = null;
+      toasts.success("Old local data imported successfully");
+      await initializeLegacyFlux();
+      await completeApplicationStartup();
+    } catch (error) {
+      logger.error({ at: "handleImportLegacyLocalData", error });
+      legacyRecoveryError =
+        "Unable to import old local data. Download backup and continue is still available.";
+      legacyRecoveryMode = "required";
+    }
+  }
+
+  async function handleDownloadLegacyBackupAndContinue() {
+    if (!legacyLocalDataSummary || legacyRecoveryMode === "importing") return;
+    legacyRecoveryMode = "downloading";
+    legacyRecoveryError = undefined;
+    try {
+      const backup = await exportLegacyLocalData($appStore.product);
+      if (backup?.databases.length) {
+        await downloadLegacyLocalBackup(backup);
+        await saveLegacyLocalDataRecoveryDecision(
+          {
+            version: 1,
+            product: $appStore.product,
+            action: "download_backup_continue",
+            decidedAt: new Date().toISOString(),
+            backupExportedAt: backup.exportedAt,
+            sourceRecordCount: resolveLegacyLocalDataRecordCount(backup)
+          },
+          backup
+        );
+        toasts.success("Legacy local backup downloaded successfully");
+      }
+      legacyRecoveryMode = null;
+      await startApplication();
+    } catch (error) {
+      logger.error({ at: "handleDownloadLegacyBackupAndContinue", error });
+      legacyRecoveryError = "Unable to download legacy local backup.";
+      legacyRecoveryMode = "required";
+    }
+  }
+
+  async function importLegacyLocalDataBackup(
+    runtime: NucleumDatafnRuntime,
+    backup: LegacyLocalDataBackup
+  ) {
+    if (!runtime.storage) {
+      throw new Error("Local DataFn storage is required for legacy import");
+    }
+    const { kv = {}, ...payload } = normalizeLegacyDatafnImportIds(
+      convertLegacyLocalDataBackupToDatafnImport(backup)
+    );
+    const hasStructuredRows =
+      Object.values(payload.resources).some((records) => records.length > 0) ||
+      Object.values(payload.joins ?? {}).some((records) => records.length > 0);
+    let result: DatafnImportResult = { ok: true };
+    if (hasStructuredRows) {
+      result = (await datafn.importData(payload, {
+        triggerCloneUp: runtime.mode === "sync"
+      })) as DatafnImportResult;
+      const skipped =
+        countDatafnImportRows(result.stats?.resources, "skipped") +
+        countDatafnImportRows(result.stats?.joins, "skipped");
+      if (!result?.ok || skipped > 0) {
+        throw new Error(
+          result?.errors?.[0]?.message ??
+            (skipped > 0
+              ? "DataFn legacy import skipped records"
+              : "DataFn legacy import failed")
+        );
+      }
+    }
+    for (const [key, value] of Object.entries(kv)) {
+      const kvResult = await datafn.kv.set(key, value);
+      if (!kvResult.ok) throw kvResult.error;
+    }
+    await refreshNucleumDatafnStatus();
+    return {
+      resources:
+        countDatafnImportRows(result.stats?.resources, "imported") +
+        Object.keys(kv).length,
+      joins: countDatafnImportRows(result.stats?.joins, "imported")
+    };
+  }
+
+  function countDatafnImportRows(
+    stats: Record<string, { imported?: number; skipped?: number }> | undefined,
+    field: "imported" | "skipped"
+  ) {
+    return (
+      Object.values(stats ?? {}).reduce(
+        (total, item) => total + (item[field] ?? 0),
+        0
+      ) ?? 0
+    );
+  }
+
+  async function downloadLegacyLocalBackup(backup: LegacyLocalDataBackup) {
+    const product = $appStore.product;
+    const fileName = `${product}-legacy-local-backup-${parseAndFormatDate(new Date(), "iso-short")}.json`;
+    const blob = new Blob([stringify(backup, { isPreventReplacer: true })], {
+      type: "application/json"
+    });
+    const isDelivered = await fileStore.downloadFromBlob(blob, {
+      fileName,
+      fileNameForEmbed: `${product}_legacy_local_backup`,
+      contentType: "application/json",
+      isHandleEmbedCase: true
+    });
+    if (!isDelivered) {
+      throw new Error("Legacy local backup delivery failed");
     }
   }
 
@@ -223,24 +432,56 @@
 
   async function onAppear() {
     try {
-      if (!isFluxReady()) return;
-      refreshTimeZone();
-      const isCloudUser = $account.dataMode === UserDataMode.CLOUD;
+      await uploadPendingLegacyCloudData();
+      await refreshTimeZone();
+      const isCloudUser = $nucleumDatafnStatus.nucleumMode === "sync";
       if (isCloudUser && !dev_isDisableSyncOnAppear) {
-        await flux.syncDown({ src: "onAppear" });
-        await recentsStore.refresh(searcheableResources);
-        await account.ping();
+        await pullDatafnNow();
       }
       if (isExtensionEnvironment() || isDebug) return;
       performAppUpdateCheck();
-      await flux.reinitializeIfRequired();
+      await refreshNucleumDatafnStatus();
     } catch (e) {
       logger.error({ at: "onAppear", error: e });
     }
   }
 
-  function isFluxReady() {
-    return Boolean(flux?.persistence);
+  async function refreshTimeZone() {
+    if ($nucleumDatafnStatus.nucleumMode === null) return;
+    const timeZone = detectTimeZone();
+    if (!timeZone || !$userPreferences) return;
+    const offset = timeZone.offset * 60;
+    if (
+      $userPreferences.timeZoneOffset === offset &&
+      $userPreferences.timeZone === timeZone.zone
+    ) {
+      return;
+    }
+    logger.info({
+      at: "refreshTimeZone - timezone change detected",
+      timeZone
+    });
+    await userPreferences.setTimeZone(offset, timeZone.label, timeZone.zone);
+  }
+
+  async function uploadPendingLegacyCloudData() {
+    if (
+      !isLegacyCloudUploadPending ||
+      isLegacyCloudUploadInProgress ||
+      $nucleumDatafnStatus.nucleumMode !== "sync"
+    ) {
+      return;
+    }
+    isLegacyCloudUploadInProgress = true;
+    try {
+      await cloneUpAllDatafnData();
+      await completeLegacyLocalDataCloudUpload($appStore.product);
+      isLegacyCloudUploadPending = false;
+    } catch (error) {
+      logger.error({ at: "uploadPendingLegacyCloudData", error });
+    } finally {
+      isLegacyCloudUploadInProgress = false;
+    }
   }
 
   /**
@@ -311,13 +552,9 @@
     }
   }
 
-  /**
-   * Initializes the app with necessary data and runs dbo update. For this, the app should have already mounted and all stores should be available.
-   *
-   * Note: The order of operations is important as later operations rely on earlier ones.
-   * @param isLiteMode
-   */
-  async function initializeDatabase(): Promise<number | undefined> {
+  async function initializeDatabase(options?: {
+    isOfflinabilityEnabled?: boolean;
+  }) {
     try {
       const isLiteMode = $context.isSheet;
       logger.log({
@@ -330,116 +567,47 @@
       }
       const dapId = await getDapId();
 
-      if ($account.dataMode === UserDataMode.LOCAL) {
-        // loadingMessage = "Initializing...";
-        await account.logGuest(dapId!);
-        const initState = await initializeFlux({
-          dapId: dapId!
-        });
-        logger.log({
-          at: "UserBaseLayer.initializeData - local",
-          initState
-        });
-        if (initState === 0) await kvSeedDelegate();
-        else await flux.loadInMemoryStores();
-        return initState;
-      }
-      if (!$account.userId) {
+      const hasUserSpace = Boolean($account.userId || $account.userInfo?.id);
+      if ($account.dataMode !== UserDataMode.LOCAL && !hasUserSpace) {
         error = "User id not found. Please try again later.";
         return;
       }
-      let initState = await initializeFlux({
-        userId: $account.userId,
-        dapId: dapId!
+      loadingMessage = loadingMessages.cloneDown;
+      const runtime = await initializeNucleumDatafn({
+        product: $appStore.product,
+        account: $account,
+        env: $appStore.env,
+        appVersion: $appStore.version + "." + $appStore.build,
+        dapId: dapId!,
+        isOffline: $context.isInOfflineMode,
+        isOfflinabilityEnabled: options?.isOfflinabilityEnabled
       });
-      await flux.seed();
       logger.log({
-        at: "UserBaseLayer.initializeData - cloud",
-        initState,
+        at: "UserBaseLayer.initializeData - datafn",
+        mode: runtime.mode,
+        namespace: runtime.namespace,
+        storageDbName: runtime.storageDbName,
         os: $context.os,
         isEmbed: $context.isEmbed,
         embed: $context.embed,
         userAgent: navigator.userAgent
       });
-      return initState;
+      return runtime;
     } catch (e) {
+      error = "Unable to initialize local data. Please try again later.";
       logger.error({ at: "initializeDatabase", error: e });
-    }
-  }
-
-  async function kvSeedDelegate() {
-    const data = Array.from(kvStores.values()).map((x) => {
-      return { id: `kv:${x.id}`, ...x.seed };
-    });
-    await flux.kvSeed(data);
-    await flux.loadInMemoryStores();
-  }
-
-  async function initializeFlux(params: { dapId: string; userId?: string }) {
-    const tables = resolveProductConfig().tableConfig;
-    const allStores = [...resourceStores.values(), ...kvStores.values()];
-    const loaderCallback = (resource: string, data: any) => {
-      const store = allStores.find(
-        (s) => s.id === resource || `kv:${s.id}` === resource
-      );
-      if (store?.loader) {
-        store.loader(data);
-      }
-    };
-
-    const initParams = {
-      ...params,
-      appVersion: $appStore.version + "." + $appStore.build,
-      product: $appStore.product,
-      tables,
-      loaderCallback
-    };
-
-    return initFlux(new DexiePersistence(), initParams);
-  }
-
-  async function initializeEssentialUserData(initState: number): Promise<
-    | {
-        paginateResources?: any;
-        counts?: any;
-      }
-    | { cursors?: any }
-    | undefined
-  > {
-    if ($account.dataMode === UserDataMode.LOCAL) {
-      return;
-    }
-    if ($account.sessionType === UserSessionType.NEW) {
-      if (initState === 2) {
-        loadingMessage = loadingMessages.cloneUp;
-        await flux.cloneUp();
-      } else {
-        await kvSeedDelegate();
-      }
-    } else if ($account.sessionType === UserSessionType.RETURNING) {
-      if (initState === 0) {
-        loadingMessage = loadingMessages.cloneDown;
-        const result = await flux.initializeEssentialDataForCloudUserV2();
-        if (typeof result === "object" && result?.cursors) {
-          return result;
-        }
-        // const result = await flux.initializeEssentialDataForCloudUser();
-        // if (typeof result === "object" && result?.ifrCloneResult) {
-        //   return result.ifrCloneResult;
-        // }
-      } else {
-        return flux.initialSyncDown();
-      }
     }
   }
 
   async function initializeUserConfig() {
     console.time("initializeUserConfig");
     const isLiteMode = $context.isSheet;
-    if ($account.dataMode === UserDataMode.CLOUD && !isLiteMode) {
-      refreshTimeZone();
+    if (
+      ($nucleumDatafnStatus.nucleumMode === "sync" ||
+        $nucleumDatafnStatus.nucleumMode === "sync-direct") &&
+      !isLiteMode
+    ) {
       setAnalyticsUserIdentity();
-      await account.ping();
     }
     console.timeEnd("initializeUserConfig");
     function setAnalyticsUserIdentity() {
@@ -514,10 +682,7 @@
   function handleAddToRecents(event: any) {
     logger.log({ at: "handleAddToRecents", event });
     const { record, type, timestamp } = event.detail;
-    recentsStore.add(record, {
-      type,
-      timestamp
-    });
+    recentsStore.add(record, { type, timestamp });
   }
 
   async function handleMessageFromParent(event: any) {
@@ -553,6 +718,15 @@
             type: "sync",
             embedTransaction: parsed.embedTransaction
           });
+        } else if (
+          (parsed.type === "DOWNLOAD_SUCCESS" ||
+            parsed.type === "DOWNLOAD_ERROR") &&
+          parsed.id
+        ) {
+          fileEmbedChannel.setDownloadResult(
+            parsed.id,
+            parsed.type === "DOWNLOAD_SUCCESS"
+          );
         } else if (parsed?.type && parsed?.id && parsed?.data) {
           embedBridge.setData(parsed.id, parsed.type, parsed.data);
         } else if (parsed?.id && parsed?.data) {
@@ -638,15 +812,23 @@
   <AnalyticsLayer />
 {/if}
 <div class="flex w-screen h-screen">
-  {#if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded || isAppLoading}
+  {#if error}
+    <PageError />
+  {:else if legacyLocalDataSummary && legacyRecoveryMode}
+    <LegacyLocalDataRecoveryGate
+      summary={legacyLocalDataSummary}
+      mode={legacyRecoveryMode}
+      errorMessage={legacyRecoveryError}
+      onImport={handleImportLegacyLocalData}
+      onDownloadAndContinue={handleDownloadLegacyBackupAndContinue}
+    />
+  {:else if !$appLoadingState.isBaseLoaded || !$appLoadingState.isLocalLoaded || isAppLoading}
     <AppLoadingView
       message={loadingMessage.message}
       subMessage={loadingMessage.subMessage}
       duration={loadingMessage.duration}
       percentage={loadingMessage.percentage}
     />
-  {:else if error}
-    <PageError />
   {:else}
     <UserLayout topnav={topnavContent}>
       {@render children?.()}

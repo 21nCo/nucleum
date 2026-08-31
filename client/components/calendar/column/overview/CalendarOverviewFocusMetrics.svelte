@@ -31,7 +31,8 @@
     errorMessage = "";
     const resolvedDate = date instanceof Date ? date : new Date(date);
     const isUseCloud = dev_isUseCloud && account.isCloudUserAndOnline();
-    const currentDayFilter = tzStore.resolveTimePeriodFilterForDay(resolvedDate);
+    const currentDayFilter =
+      tzStore.resolveTimePeriodFilterForDay(resolvedDate);
     const previousDayFilter = tzStore.resolveTimePeriodFilterForDay(
       new Date(
         resolvedDate.getFullYear(),
@@ -44,7 +45,10 @@
         sessionLogStore.selectMany(
           {
             filters: {
-              startUnix: currentDayFilter
+              startUnix: {
+                greaterThanOrEqual: currentDayFilter.$gte,
+                lessThanOrEqual: currentDayFilter.$lte
+              }
             }
           },
           {
@@ -54,7 +58,10 @@
         sessionLogStore.selectMany(
           {
             filters: {
-              startUnix: previousDayFilter
+              startUnix: {
+                greaterThanOrEqual: previousDayFilter.$gte,
+                lessThanOrEqual: previousDayFilter.$lte
+              }
             }
           },
           {

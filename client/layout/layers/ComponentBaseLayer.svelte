@@ -11,10 +11,7 @@
   import { appStore } from "@21n/stores/app.store";
   import context from "@21n/stores/context.store";
   import { UserDataMode } from "@21n/types/account.type";
-  import {
-    PersistenceActionType,
-    type IRecordId
-  } from "@21n/types/data.type";
+  import { PersistenceActionType, type IRecordId } from "@21n/types/data.type";
   import { onDestroy, onMount } from "svelte";
 
   let {
@@ -55,8 +52,7 @@
 
   function emitChange(
     detail:
-      | { resource?: Resource; params?: any; context?: string }
-      | { key: string }
+      { resource?: Resource; params?: any; context?: string } | { key: string }
   ) {
     if (isCallable(onChange)) onChange(detail);
   }
@@ -70,7 +66,9 @@
     );
   }
 
-  function isComparableRecord(value: unknown): value is IRecordId | { id: IRecordId } {
+  function isComparableRecord(
+    value: unknown
+  ): value is IRecordId | { id: IRecordId } {
     return (
       typeof value === "string" ||
       (typeof value === "object" &&
@@ -157,7 +155,11 @@
     };
     const mutationHandler = (event: Event) => {
       onMutation(
-        event as CustomEvent<{ resource: Resource; params: any; context: string }>
+        event as CustomEvent<{
+          resource: Resource;
+          params: any;
+          context: string;
+        }>
       );
     };
     window.addEventListener("syncDown", syncDownHandler);
@@ -218,7 +220,8 @@
       return;
 
     if (
-      (isMergeAction && normalizedSubscriptionPropsForMergeAction === undefined) ||
+      (isMergeAction &&
+        normalizedSubscriptionPropsForMergeAction === undefined) ||
       !isMergeAction
     ) {
       emitChange(data);

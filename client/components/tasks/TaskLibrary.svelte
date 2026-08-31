@@ -97,7 +97,9 @@
   let selectedDate = $state(new Date());
   let viewDate = $state(new Date());
   let taskRecordsRef = $state<TaskRecords | undefined>(undefined);
-  let dateSelectionPopoverRef = $state<HTMLButtonElement | undefined>(undefined);
+  let dateSelectionPopoverRef = $state<HTMLButtonElement | undefined>(
+    undefined
+  );
   let isRefreshing = $state(false);
   let isInSelectionMode = $state(false);
   let isShowSearchBar = $state(false);
@@ -260,9 +262,13 @@
     }
     let dateFilter: any = undefined;
     if (selectedSubType === TaskSubTypeForSwitcher.BY_DATE) {
-      dateFilter = tzStore.resolveTimePeriodFilterForDay(selectedDate);
+      dateFilter = resolveLegacyDateFilter(
+        tzStore.resolveTimePeriodFilterForDay(selectedDate)
+      );
     } else if (selectedSubType === TaskSubTypeForSwitcher.BY_MONTH) {
-      dateFilter = tzStore.resolveTimePeriodFilterForMonth(selectedDate);
+      dateFilter = resolveLegacyDateFilter(
+        tzStore.resolveTimePeriodFilterForMonth(selectedDate)
+      );
     } else {
       dateFilter = resolveDateFilter();
     }
@@ -273,10 +279,17 @@
       else if (dueDateFilter === TaskDueDateFilter.OVERDUE) {
         const dayFilter = tzStore.resolveTimePeriodFilterForDay(new Date());
         return {
-          lessThanOrEqual: dayFilter.greaterThanOrEqual
+          lessThanOrEqual: dayFilter.$gte
         };
       } else if (dueDateFilter === TaskDueDateFilter.WITHOUT_DUE_DATE)
         return false;
+    }
+
+    function resolveLegacyDateFilter(filter: { $gte: number; $lte: number }) {
+      return {
+        greaterThanOrEqual: filter.$gte,
+        lessThanOrEqual: filter.$lte
+      };
     }
   }
 

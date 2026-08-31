@@ -24,10 +24,14 @@
       const dateFilter = tzStore.resolveTimePeriodFilter(date, {
         isReturnAsDateObjectFilter: true
       });
+      const legacyDateFilter = {
+        greaterThanOrEqual: dateFilter.$gte,
+        lessThanOrEqual: dateFilter.$lte
+      };
       const result = await nodeStore.selectMany(
         {
           filters: {
-            createdAt: dateFilter
+            createdAt: legacyDateFilter
           }
         },
         {

@@ -52,7 +52,10 @@ class AnalyticsConfigStore extends KeyValueStore<IAnalyticsConfigStore> {
   }
 
   loader(data: IAnalyticsConfigStore) {
-    const normalized = normalizeAnalyticsConfig(data, generateAnalyticsSeedPages());
+    const normalized = normalizeAnalyticsConfig(
+      data,
+      generateAnalyticsSeedPages()
+    );
     if (normalized.pages.length === 0) {
       this.loadSeedData();
     } else {
@@ -161,7 +164,10 @@ class FocusAggregates {
     const dayFilter = tzStore.resolveTimePeriodFilterForDay(new Date());
     const logs = await sessionLogStore.selectMany({
       filters: {
-        startUnix: dayFilter,
+        startUnix: {
+          greaterThanOrEqual: dayFilter.$gte,
+          lessThanOrEqual: dayFilter.$lte
+        },
         goalId: params.goalIds ?? params.goalId?.toString()
       }
     });

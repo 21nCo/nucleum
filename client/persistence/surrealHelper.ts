@@ -20,8 +20,7 @@ const isUseSurrealSDK = import.meta?.env?.VITE_IS_USE_SURREAL_SDK ?? false;
 export class SurrealDatabaseUsingRest {
   token: string | null = null;
   db: string | undefined;
-  constructor(private instance: string = "") {
-  }
+  constructor(private instance: string = "") {}
   async connect(instance: string, options: any) {
     this.instance = instance;
     this.token =
@@ -271,7 +270,9 @@ export class SurrealDatabase implements ISurrealDatabase {
   constructor(private instance: string = "") {
     const instanceDefault =
       import.meta.env?.VITE_DB ??
-      (typeof process !== "undefined" ? process.env?.PLASMO_PUBLIC_DB : undefined);
+      (typeof process !== "undefined"
+        ? process.env?.PLASMO_PUBLIC_DB
+        : undefined);
     this.instance = instanceDefault ?? instance;
     // this.token = resolveToken();
     if (isUseSurrealSDK == "true")

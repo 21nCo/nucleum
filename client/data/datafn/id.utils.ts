@@ -31,7 +31,7 @@ export function resolveMutationAction(mutation: IMutation): string {
     if (RemovalProperty.IS_ARCHIVED in mutationChangedProperties) {
       return mutationChangedProperties.isArchived ? "Archived" : "Unarchived";
     }
-    if (RemovalProperty.TRASHED_AT in mutationChangedProperties) {
+    if ("trashedAt" in mutationChangedProperties) {
       return mutationChangedProperties.trashedAt ? "Deleted" : "Restored";
     }
     if ("isLocked" in mutationChangedProperties) {

@@ -31,18 +31,15 @@
   let lastYearDate = $state<Date | null>(null);
   let twoYearsAgoDate = $state<Date | null>(null);
 
-  const lastMonthFocusHours = $derived(lastMonthData.reduce(
-    (acc, curr) => acc + (curr.focus ?? 0),
-    0
-  ));
-  const lastYearFocusHours = $derived(lastYearData.reduce(
-    (acc, curr) => acc + (curr.focus ?? 0),
-    0
-  ));
-  const twoYearsAgoFocusHours = $derived(twoYearsAgoData.reduce(
-    (acc, curr) => acc + (curr.focus ?? 0),
-    0
-  ));
+  const lastMonthFocusHours = $derived(
+    lastMonthData.reduce((acc, curr) => acc + (curr.focus ?? 0), 0)
+  );
+  const lastYearFocusHours = $derived(
+    lastYearData.reduce((acc, curr) => acc + (curr.focus ?? 0), 0)
+  );
+  const twoYearsAgoFocusHours = $derived(
+    twoYearsAgoData.reduce((acc, curr) => acc + (curr.focus ?? 0), 0)
+  );
 
   onMount(() => {
     refresh();
@@ -119,7 +116,7 @@
         sessionLogStore.selectMany(
           {
             filters: {
-              startUnix: tzStore.resolveTimePeriodFilterForDay(lastMonthDate)
+              startUnix: resolveLegacyDayFilter(lastMonthDate)
             }
           },
           {
@@ -137,7 +134,7 @@
         sessionLogStore.selectMany(
           {
             filters: {
-              startUnix: tzStore.resolveTimePeriodFilterForDay(lastYearDate)
+              startUnix: resolveLegacyDayFilter(lastYearDate)
             }
           },
           {
@@ -155,7 +152,7 @@
         sessionLogStore.selectMany(
           {
             filters: {
-              startUnix: tzStore.resolveTimePeriodFilterForDay(twoYearsAgoDate)
+              startUnix: resolveLegacyDayFilter(twoYearsAgoDate)
             }
           },
           {
@@ -173,6 +170,14 @@
     [lastMonthData, lastYearData, twoYearsAgoData] = results;
 
     isRefreshing = false;
+  }
+
+  function resolveLegacyDayFilter(date: Date) {
+    const range = tzStore.resolveTimePeriodFilterForDay(date);
+    return {
+      greaterThanOrEqual: range.$gte,
+      lessThanOrEqual: range.$lte
+    };
   }
 </script>
 

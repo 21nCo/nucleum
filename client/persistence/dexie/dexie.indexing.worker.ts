@@ -274,7 +274,10 @@ async function indexWithSearchfn(
       if (!record?.id || !fields) return null;
       return { id: record.id, fields };
     })
-    .filter((doc): doc is { id: string; fields: Record<string, string> } => doc !== null);
+    .filter(
+      (doc): doc is { id: string; fields: Record<string, string> } =>
+        doc !== null
+    );
 
   // Use bulk indexing API for better performance
   // BatchSize controls parallel processing batch size (default: 100 for memory efficiency)
