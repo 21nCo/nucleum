@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { reconcile } from ".";
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
+import { Resource } from "@21n/data/datafn/resource.enum";
 
 describe("reconcile", () => {
   beforeEach(async () => {

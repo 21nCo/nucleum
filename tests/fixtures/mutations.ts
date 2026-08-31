@@ -1,5 +1,5 @@
-import { Resource } from "$lib/client/components/flux/resourceStores/resource.enum";
-import { ResourceActionType } from "$lib/client/components/flux/resourceStores/resource.type";
+import { Resource } from "@21n/data/datafn/resource.enum";
+import { ResourceActionType } from "@21n/data/datafn/resource.type";
 import { IMutation, PersistenceActionType } from "$lib/client/types/data.type";
 
 export function createMutation(overrides = {}): IMutation {
