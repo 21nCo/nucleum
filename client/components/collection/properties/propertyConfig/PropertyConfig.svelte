@@ -1,7 +1,10 @@
 <script lang="ts">
   import CheckboxInput from "@21n/elements/toggle/CheckboxInput.svelte";
   import { cn } from "@21n/utils/ui.utils";
-  import { type IProperty, PropertyType } from "@21n/components/collection/properties/property.type";
+  import {
+    type IProperty,
+    PropertyType
+  } from "@21n/components/collection/properties/property.type";
   import EndText from "@21n/components/collection/properties/propertyConfig/EndText.svelte";
   import RatingPropertyConfig from "@21n/components/collection/properties/ratingProperty/config/RatingPropertyConfig.svelte";
   import SelectPropertyConfig from "@21n/components/collection/properties/propertyConfig/selectProperty/SelectPropertyConfig.svelte";
@@ -35,10 +38,12 @@
         property={row}
         bind:isPopoverOpen
         onConfigChange={(event) => {
-          onRowPatch?.({
+          const patch = {
             config: event.detail.config,
             defaultValue: event.detail.defaultValue
-          });
+          };
+          Object.assign(row, patch);
+          onRowPatch?.(patch);
         }}
       />
     {:else if row.type === PropertyType.UNIVERSAL}

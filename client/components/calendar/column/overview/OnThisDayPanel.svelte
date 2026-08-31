@@ -17,7 +17,9 @@
   const lastMonthDate = $derived(getLastMonthDate(date));
   const lastYearDate = $derived(getLastYearDate(date));
   const twoYearsAgoDate = $derived(getTwoYearsAgoDate(date));
-  const lastMonthStore = $derived.by(() => createSessionLogStore(lastMonthDate));
+  const lastMonthStore = $derived.by(() =>
+    createSessionLogStore(lastMonthDate)
+  );
   const lastYearStore = $derived.by(() => createSessionLogStore(lastYearDate));
   const twoYearsAgoStore = $derived.by(() =>
     createSessionLogStore(twoYearsAgoDate)
@@ -103,14 +105,6 @@
       }),
       { initialData: [] }
     );
-  }
-
-  function resolveLegacyDayFilter(date: Date) {
-    const range = tzStore.resolveTimePeriodFilterForDay(date);
-    return {
-      greaterThanOrEqual: range.$gte,
-      lessThanOrEqual: range.$lte
-    };
   }
 </script>
 

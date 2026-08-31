@@ -6,7 +6,7 @@
   import Cover from "@21n/components/collection/Cover.svelte";
   import CollectionTitleBar from "@21n/components/collection/CollectionTitleBar.svelte";
   import View from "@21n/components/collection/View.svelte";
-  import { appStore } from "@21n/stores/app.store";
+  import { acquireDnDPage, appStore } from "@21n/stores/app.store";
   import ViewSettingsBar from "@21n/components/collection/ViewSettingsBar.svelte";
   import PageLoadingPulse from "@21n/elements/feedback/animations/PageLoadingPulse.svelte";
   import { bg, cn } from "@21n/utils/ui.utils";
@@ -149,10 +149,11 @@
   let searchQuery = $state("");
   let containerWidth = $state(0);
   let initializedKey = $state("");
+  let releaseDnDPage: (() => void) | undefined;
+  let itemResource = $state<Resource | undefined>(undefined);
   const itemRecordsStore = $derived.by(() => {
     const collectionId = id.toString();
-    if (!collectionId || !$collection) return undefined;
-    const itemResource = $collection.resource ?? Resource.node;
+    if (!collectionId || !itemResource) return undefined;
     if (!itemResource || itemResource === Resource.node) {
       return toSvelteStore(
         datafn.node.signal({
@@ -172,7 +173,13 @@
             collections: { $any: { id: collectionId } }
           },
           sort: ["-updatedAt"],
-          select: ["*", "parent.*", "children.*", "tasks.*", "propertyValues.*#"]
+          select: [
+            "*",
+            "parent.*",
+            "children.*",
+            "tasks.*",
+            "propertyValues.*#"
+          ]
         }),
         { initialData: [] }
       );
@@ -181,9 +188,9 @@
   });
   const itemRecords = $derived(
     itemRecordsStore
-      ? (($itemRecordsStore!.data ?? []) as unknown as ICollectionItem[]).filter(
-          activeResourceFilter
-        )
+      ? (
+          ($itemRecordsStore!.data ?? []) as unknown as ICollectionItem[]
+        ).filter(activeResourceFilter)
       : []
   );
   const totalItemCount = $derived(itemRecords.length);
@@ -233,17 +240,18 @@
     const nextKey = id ? `${id}:${accessMode}` : "";
     if (!nextKey || initializedKey === nextKey) return;
     initializedKey = nextKey;
+    itemResource = undefined;
     untrack(() => {
       initialize();
     });
   });
 
   onMount(() => {
-    $appStore.isDnDPageActive = true;
+    releaseDnDPage = acquireDnDPage();
   });
 
   onDestroy(() => {
-    $appStore.isDnDPageActive = false;
+    releaseDnDPage?.();
     ActiveCollectionStore.destroy(id, accessMode);
   });
 
@@ -259,6 +267,7 @@
       );
       selectedViewId = viewQueryParam ?? "";
       await collection.init(accessMode);
+      itemResource = $collection?.resource ?? Resource.node;
       loadActiveView();
       if (!activeView) {
         activeView = $collection?.views

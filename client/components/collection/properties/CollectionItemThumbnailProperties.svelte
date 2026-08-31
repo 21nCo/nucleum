@@ -22,13 +22,16 @@
     item,
     values = [],
     properties = [],
-    accessPoint = ResourceAccessPoint.BROWSER
+    accessPoint = ResourceAccessPoint.BROWSER,
+    collectionId = undefined
   }: {
-    item: ICollectionItem;
+    item: { id: IRecordId };
     values?: ICollectionItemPropertyValue[];
     properties?: IProperty[];
     accessPoint?: ResourceAccessPoint;
+    collectionId?: IRecordId | undefined;
   } = $props();
+  const propertyItem = $derived(item as unknown as ICollectionItem);
 
   async function propagateChanges(
     propertyId: IRecordId,
@@ -37,6 +40,7 @@
     values = values?.filter((x) => !isSameResource(x, propertyId)) ?? [];
     const property = {
       id: propertyId,
+      collectionId,
       value
     };
     values = [...values, property];
@@ -50,6 +54,7 @@
           {
             $ref: propertyId.toString(),
             fromResource: resourceType.toString(),
+            ...(collectionId ? { collectionId: collectionId.toString() } : {}),
             value
           }
         ]
@@ -68,7 +73,7 @@
     <PropertyItem
       value={values?.find(resourceInList(property))?.value}
       {property}
-      {item}
+      item={propertyItem}
       onChange={(e) => {
         propagateChanges(property.id, e.detail);
       }}

@@ -78,6 +78,13 @@
   async function persist() {
     if (!event?.id) return;
     const startUnix = date?.getTime();
+    const previousStartUnix = event.startUnix ?? event.value?.startUnix;
+    const previousEndUnix = event.endUnix ?? event.value?.endUnix;
+    const duration =
+      previousStartUnix != null && previousEndUnix != null
+        ? previousEndUnix - previousStartUnix
+        : 60 * 60 * 1000;
+    const endUnix = startUnix == null ? undefined : startUnix + duration;
     await datafn.event.mutate({
       operation: "merge",
       id: event.id,
@@ -86,12 +93,12 @@
         label,
         event: label,
         startUnix,
-        endUnix: startUnix ? startUnix + 60 * 60 * 1000 : undefined,
+        endUnix,
         value: {
           ...(event.value ?? {}),
           notes,
           startUnix,
-          endUnix: startUnix ? startUnix + 60 * 60 * 1000 : undefined
+          endUnix
         }
       }),
       context: accessPoint
@@ -123,7 +130,7 @@
         label={{ label: "Event name", orientation: Orientation.Vertical }}
         style={InputStyle.PLAIN}
         size={Size.lg}
-        onChange={persist}
+        onDebouncedChange={persist}
       />
       <DatePicker bind:date variant="inline-with-icon" onChange={persist} />
       <TextArea

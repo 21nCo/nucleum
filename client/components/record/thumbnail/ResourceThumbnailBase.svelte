@@ -76,7 +76,7 @@
       (isAlwaysShowContextMenuOnTouchDevice && $context.isTouchDevice)
   );
   let shouldRenderContextMenu = $derived(
-    canShowContextMenu && isContextMenuInteractive
+    canShowContextMenu && (isContextMenuInteractive || isContextMenuVisible)
   );
 
   $effect(() => {

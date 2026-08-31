@@ -435,8 +435,9 @@ export class ResourceActions<T extends IActionableResource> {
           },
           context: contextId.toString()
         } as any);
-        if (determineResourceType(contextId) === Resource.node) {
-          await datafn.node.mutate({
+        const contextResource = determineResourceType(contextId);
+        if (contextResource !== Resource.unknown) {
+          await datafn.table(contextResource).mutate({
             operation: "unrelate",
             id: contextId.toString(),
             relations: {

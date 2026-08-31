@@ -11,6 +11,7 @@ import NucleusOverviewPanel from "@21n/products/nucleus/overview/NucleusOverview
 import { AccessMode, ResourceActionType } from "@21n/data/datafn/resource.type";
 import { resourceAction } from "@21n/data/datafn/resource.utils";
 import { appMenuActionLabelsByAction } from "@21n/products/product-nav.config";
+import ResourceBrowser from "@21n/components/library/resourceBrowser/ResourceBrowser.svelte";
 
 const actionsToFilterInSub = [Action.LIBRARY, Action.OVERVIEW];
 
@@ -65,6 +66,10 @@ export const nucleusActions: IAction[] = [
         resourceAction(Resource.space, ResourceActionType.BROWSE)
       ],
     icon: "combination",
-    type: ActionType.PAGE
+    component: ResourceBrowser,
+    type: ActionType.PAGE,
+    componentParams: {
+      resource: Resource.space
+    }
   }
 ];

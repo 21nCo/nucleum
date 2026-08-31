@@ -53,11 +53,12 @@ export class CollectibleStore<
     const previousCollections = resource.collections ?? [];
     const collections = [...previousCollections, id];
     this.update((prev) => ({ ...prev, collections }) as V);
+    const sourceId = src ?? resource.id;
+    const resourceType = determineResourceType(sourceId);
+    if (resourceType === Resource.unknown) return undefined;
+    let result;
     try {
-      const sourceId = src ?? resource.id;
-      const resourceType = determineResourceType(sourceId);
-      if (resourceType === Resource.unknown) return undefined;
-      const result = await datafn.table(resourceType).mutate({
+      result = await datafn.table(resourceType).mutate({
         operation: "relate",
         id: sourceId.toString(),
         relations: {
@@ -69,8 +70,6 @@ export class CollectibleStore<
           ]
         }
       });
-      await this.refreshTypes();
-      return result;
     } catch (error) {
       this.update(
         (prev) => ({ ...prev, collections: previousCollections }) as V
@@ -78,6 +77,15 @@ export class CollectibleStore<
       await this.refreshTypes();
       throw error;
     }
+    try {
+      await this.refreshTypes();
+    } catch (error) {
+      logger.error({
+        at: "CollectibleStore.linkCollection.refreshTypes",
+        error
+      });
+    }
+    return result;
   }
 
   async unlinkCollection(id: IRecordId, src?: IRecordId) {
@@ -88,7 +96,6 @@ export class CollectibleStore<
       (item) => resolveResourceKey(item) !== collectionId
     );
     this.update((prev) => ({ ...prev, collections }) as V);
-    await this.refreshTypes();
     try {
       const sourceId = src ?? resource.id;
       const resourceType = determineResourceType(sourceId);
@@ -107,6 +114,14 @@ export class CollectibleStore<
       );
       await this.refreshTypes();
       throw error;
+    }
+    try {
+      await this.refreshTypes();
+    } catch (error) {
+      logger.error({
+        at: "CollectibleStore.unlinkCollection.refreshTypes",
+        error
+      });
     }
   }
 

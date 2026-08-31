@@ -2,10 +2,10 @@ import { Resource } from "@21n/data/datafn/resource.enum";
 import { ActiveResourceStore } from "@21n/data/datafn/resource.store";
 import {
   CollectionLayout,
+  CollectionType,
   type IActiveCollection,
   type ICollectionItem,
   type ICollectionView,
-  CollectionType,
   type ICollection,
   type ICollectionExpanded,
   type ICollectionViewCapture
@@ -39,6 +39,7 @@ import { Embed } from "@21n/types/context.type";
 import { appStore } from "@21n/stores/app.store";
 import { datafn } from "@21n/stores/datafn.store";
 import view from "@21n/stores/view.store";
+import type { IProperty } from "@21n/components/collection/properties/property.type";
 
 const viewDefaults = {
   layout: CollectionLayout.BOARD,
@@ -58,6 +59,118 @@ function relationRefs(ids: IRecordId[]) {
     $ref: id.toString(),
     sortOrder
   }));
+}
+
+/**
+ * Creates a collection and its owned property and view records atomically at the workflow level.
+ */
+export async function createDatafnCollection(input: {
+  title?: string;
+  description?: string;
+  isStarred: boolean;
+  isCaptureShortcutEnabled: boolean;
+  selectedType: CollectionType;
+  selectedView: CollectionLayout;
+  resource: Resource;
+  properties: IProperty[];
+  typeToExtendId?: IRecordId;
+  avatar?: any;
+  coverPhoto?: any;
+  context: string;
+}) {
+  const collectionId = generateResourceId(Resource.collection);
+  const viewId = generateResourceId(Resource.view);
+  let propertyRecords =
+    input.selectedType === CollectionType.TYPED
+      ? input.properties.map(assignDefaultLabelAsFallback)
+      : [];
+  propertyRecords = propertyRecords.map((property) => ({
+    ...property,
+    id: property.id ?? generateResourceId(Resource.property)
+  }));
+  if (propertyRecords.length > 0) {
+    await datafn.property.mutate(
+      propertyRecords.map((property) => ({
+        operation: "insert",
+        id: property.id,
+        record: serializePropertyForDatafn(property),
+        context: input.context
+      }))
+    );
+  }
+  await datafn.view.mutate({
+    operation: "insert",
+    id: viewId,
+    record: {
+      id: viewId,
+      layout: input.selectedView,
+      label: "Default",
+      tabBy: "none",
+      groupBy: "none",
+      subGroupBy: "none"
+    },
+    context: input.context
+  });
+  const record = {
+    id: collectionId,
+    label: input.title ?? "",
+    description: input.description,
+    isStarred: input.isStarred,
+    isCaptureShortcutEnabled:
+      input.selectedType === CollectionType.TYPED
+        ? input.isCaptureShortcutEnabled
+        : undefined,
+    typeToExtend: input.typeToExtendId ?? null,
+    type: input.selectedType,
+    resource: input.resource,
+    ...(input.avatar
+      ? {
+          avatar: {
+            code: input.avatar.code,
+            color: input.avatar.color,
+            file: input.avatar.file,
+            isFilled: input.avatar.isFilled,
+            type: input.avatar.type
+          }
+        }
+      : {}),
+    ...(input.coverPhoto ? { cover: input.coverPhoto } : {})
+  };
+  await datafn.collection.mutate([
+    {
+      operation: "insert",
+      id: collectionId,
+      record,
+      context: input.context
+    },
+    {
+      operation: "relate",
+      id: collectionId,
+      relations: {
+        views: [{ $ref: viewId, sortOrder: 0 }],
+        ...(propertyRecords.length > 0
+          ? {
+              properties: propertyRecords.map((property, sortOrder) => ({
+                $ref: property.id,
+                sortOrder
+              }))
+            }
+          : {})
+      },
+      context: input.context
+    }
+  ]);
+  const created = {
+    ...record,
+    views: [viewId],
+    properties: propertyRecords.map((property) => property.id)
+  };
+  appStore.addToRecents({
+    record: created,
+    type: Resource.collection,
+    timestamp: new Date()
+  });
+  return [created];
 }
 
 export type IActiveCollectionStore = InstanceType<typeof ActiveCollectionStore>;
@@ -191,8 +304,11 @@ export class ActiveCollectionStore extends ActiveResourceStore<
         (v) => v.id == viewToDuplicate
       );
       if (!viewToBeDuplicated) return;
-      const { id: _id, data: _data, ...duplicatedView } =
-        viewToBeDuplicated as ICollectionView & { data?: unknown };
+      const {
+        id: _id,
+        data: _data,
+        ...duplicatedView
+      } = viewToBeDuplicated as ICollectionView & { data?: unknown };
       view = duplicatedView;
     } else {
       view = {
@@ -202,7 +318,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
     if (!view) return;
     const viewId = viewToDuplicate
       ? generateResourceId(Resource.view)
-      : view.id ?? generateResourceId(Resource.view);
+      : (view.id ?? generateResourceId(Resource.view));
     const record = {
       ...viewDefaults,
       ...view,
@@ -239,7 +355,6 @@ export class ActiveCollectionStore extends ActiveResourceStore<
       const viewToBeDeleted = val.views.find((v) => v.id == id);
       if (!viewToBeDeleted) return val;
       viewToBeDeleted.trashedAt = new Date();
-      viewToBeDeleted.trashedBy = this.currentUserId ?? null;
       return val;
     });
     return datafn.view.mutate({
@@ -305,6 +420,7 @@ export class ActiveCollectionStore extends ActiveResourceStore<
   async selectItem(itemId: IRecordId) {
     const resource = itemId.split(":")[0];
     const result = await datafn.table(resource).query({
+      select: ["*", "propertyValues.*#"],
       filters: { id: itemId },
       limit: 1,
       metadata: {

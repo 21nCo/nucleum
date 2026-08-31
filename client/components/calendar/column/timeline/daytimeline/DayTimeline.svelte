@@ -80,7 +80,11 @@
         startUnix: event.startUnix ?? date.getTime(),
         endUnix:
           event.endUnix ?? (event.startUnix ?? date.getTime()) + 60 * 60 * 1000,
-        item: event
+        item: {
+          ...event,
+          label: event.label ?? event.event ?? "New event",
+          event: event.event ?? event.label ?? "New event"
+        }
       }));
     }
     return [];

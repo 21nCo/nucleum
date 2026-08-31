@@ -2,7 +2,7 @@
 
 <script lang="ts">
   import { appMenuStore } from "@21n/stores/appMenu/appMenu.store";
-  import { appStore } from "@21n/stores/app.store";
+  import { acquireDnDPage, appStore } from "@21n/stores/app.store";
   import { Resource } from "@21n/data/datafn/resource.enum";
   import Icon from "@21n/elements/Icon.svelte";
   import { Size } from "@21n/types/size.enum";
@@ -77,12 +77,14 @@
     onUpdate?.();
   }
 
+  let releaseDnDPage: (() => void) | undefined;
+
   onMount(() => {
-    $appStore.isDnDPageActive = true;
+    releaseDnDPage = acquireDnDPage();
   });
 
   onDestroy(() => {
-    $appStore.isDnDPageActive = false;
+    releaseDnDPage?.();
   });
 </script>
 

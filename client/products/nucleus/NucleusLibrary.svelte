@@ -4,17 +4,13 @@
   import { Resource } from "@21n/data/datafn/resource.enum";
   import Library from "@21n/components/library/Library.svelte";
   import { Product } from "@21n/products/product.type";
-  import { resolveProductResources } from "@21n/data/datafn/resource.utils";
+  import { resolveProductConfig } from "@21n/products/product.config";
 
-  const isDev = import.meta.env.DEV;
   function resolveLibraryItems() {
-    const items = resolveProductResources(Product.NUCLEUM, "library") ?? [
+    const items = resolveProductConfig(Product.NUCLEUM).resources?.browse ?? [
       Resource.collection
     ];
-    if (isDev) {
-      items.push(Resource.space);
-    }
-    return [...new Set(items)];
+    return [...new Set(items)] as Resource[];
   }
 
   const libraryResources = resolveLibraryItems();

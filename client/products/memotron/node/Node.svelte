@@ -20,7 +20,7 @@
   import { Resource } from "@21n/data/datafn/resource.enum";
   import { debouncer } from "@21n/utils/utils";
   import { logger } from "@21n/components/debug/logger.client";
-  import { appStore } from "@21n/stores/app.store";
+  import { acquireDnDPage, appStore } from "@21n/stores/app.store";
   import EmptyStatusView from "@21n/elements/feedback/EmptyStatusView.svelte";
   import { page } from "$app/stores";
   import { AppSearchParam } from "@21n/types/appStore.type";
@@ -113,12 +113,14 @@
 
   setContext(Context.NODE, nodeContext);
 
+  let releaseDnDPage: (() => void) | undefined;
+
   onMount(() => {
-    $appStore.isDnDPageActive = true;
+    releaseDnDPage = acquireDnDPage();
   });
 
   onDestroy(() => {
-    $appStore.isDnDPageActive = false;
+    releaseDnDPage?.();
     ActiveNodeStore.destroy(id, accessMode);
   });
 

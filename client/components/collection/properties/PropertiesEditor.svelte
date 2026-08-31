@@ -45,7 +45,7 @@
   import { AlertType } from "@21n/types/notification.type";
   import Button from "@21n/elements/button/Button.svelte";
   import { ButtonStyle } from "@21n/types/button.type";
-  import { appStore } from "@21n/stores/app.store";
+  import { acquireDnDPage, appStore } from "@21n/stores/app.store";
   import modalEvent from "@21n/components/modal/modal.store";
   import PropertyTypeSelector from "@21n/components/collection/properties/propertyTypeSelector/PropertyTypeSelector.svelte";
   import {
@@ -53,9 +53,7 @@
     resourceAction,
     resourceInList
   } from "@21n/data/datafn/resource.utils";
-  import {
-    resolvePropertyDefaultConfig
-  } from "@21n/components/collection/properties/property.utils";
+  import { resolvePropertyDefaultConfig } from "@21n/components/collection/properties/property.utils";
   import { objIsEmpty } from "@21n/shared-utils/obj.utils";
   import CollectionTitleLabelPart from "@21n/components/collection/thumbnail/CollectionThumbnailLabel.svelte";
   import { Product } from "@21n/products/product.type";
@@ -139,8 +137,10 @@
     properties = [...properties, newProperty];
   }
 
+  let releaseDnDPage: (() => void) | undefined;
+
   onMount(async () => {
-    $appStore.isDnDPageActive = true;
+    releaseDnDPage = acquireDnDPage();
     if (collection && (!$collection || !$collection.label)) {
       await collection.init(AccessMode.POP);
     } else if (collection) {
@@ -162,7 +162,7 @@
   });
 
   onDestroy(() => {
-    $appStore.isDnDPageActive = false;
+    releaseDnDPage?.();
   });
 
   $effect(() => {
@@ -251,8 +251,8 @@
   }
 
   function searchForTypeExtension(searchQuery: string) {
-    return datafn
-      .collection.query({
+    return datafn.collection
+      .query({
         filters: {
           type: CollectionType.TYPED
         },

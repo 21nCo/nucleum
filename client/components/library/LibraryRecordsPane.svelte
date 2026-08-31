@@ -452,16 +452,23 @@
     offset?: number;
     signal?: AbortSignal;
   }) {
+    const query = resolveLibraryQuery({
+      filters: params.filters,
+      subType: resolveSelectedSubType()
+    });
     if (params.searchQuery?.trim()) {
+      const offset = params.offset ?? 0;
+      const limit = params.limit ?? 50;
+      const searchLimit = offset + limit;
       const result = await datafn.search({
         query: params.searchQuery.trim(),
-        resources: [resource],
-        fields: resolveSearchFields(resource),
+        resources: [query.resource],
+        fields: resolveSearchFields(query.resource),
         filters: {
-          [resource]: params.filters
+          [query.resource]: query.filters
         },
-        limit: params.limit,
-        limitPerResource: params.limit,
+        limit: searchLimit,
+        limitPerResource: searchLimit,
         source: "local",
         prefix: true,
         fuzzy: 0.2,
@@ -469,13 +476,13 @@
       });
       return normalizeLibraryRecords(
         result.results?.map((entry: any) => entry.data) ?? []
-      );
+      ).slice(offset, searchLimit);
     }
-    const result = await datafn.table(resource).query({
-      select: resolveExpandedSelect(resource),
-      filters: params.filters,
+    const result = await datafn.table(query.resource).query({
+      select: resolveExpandedSelect(query.resource),
+      filters: query.filters,
       metadata: resolveQueryMetadata(),
-      sort: resolveSort(resource),
+      sort: resolveSort(query.resource),
       limit: params.limit,
       offset: params.offset,
       signal: params.signal

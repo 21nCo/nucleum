@@ -37,7 +37,8 @@
   };
   $effect(() => {
     if (!property.config) {
-      emitConfigChange({ options: [], groups: [] }, property.defaultValue);
+      property.config = { options: [], groups: [] };
+      emitConfigChange(property.config, property.defaultValue);
     }
   });
 

@@ -64,6 +64,9 @@
   const createdActivityStore = $derived.by(() =>
     toSvelteStore(createCreatedActivitySignal(dayDate), { initialData: [] })
   );
+  const deletedActivityStore = $derived.by(() =>
+    toSvelteStore(createDeletedActivitySignal(dayDate), { initialData: [] })
+  );
   const accessLogStore = $derived.by(() =>
     toSvelteStore<AccessLogRecord[]>(
       datafn.accessLog.signal({
@@ -110,9 +113,12 @@
     }))
   );
   const logs = $derived.by(() =>
-    [...$createdActivityStore.data, ...accessLogs, ...focusLogs].sort(
-      (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
-    )
+    [
+      ...$createdActivityStore.data,
+      ...$deletedActivityStore.data,
+      ...accessLogs,
+      ...focusLogs
+    ].sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
   );
   const isLoading = $derived(
     $accessLogStore.loading ||
@@ -120,7 +126,9 @@
       $focusSessionStore.loading ||
       $focusSessionStore.refreshing ||
       $createdActivityStore.loading ||
-      $createdActivityStore.refreshing
+      $createdActivityStore.refreshing ||
+      $deletedActivityStore.loading ||
+      $deletedActivityStore.refreshing
   );
 
   function createCreatedActivitySignal(date: Date) {
@@ -143,6 +151,33 @@
           action: "Created",
           resourceLabel: resolveCreatedResourceLabel(resource, record),
           timestamp: new Date(record.createdAt),
+          resourceId: record.id
+        }));
+      })
+    );
+  }
+
+  function createDeletedActivitySignal(date: Date) {
+    const resources = resolveCreatedActivityResources();
+    const signals = resources.map((resource) =>
+      datafn.table(resource).signal({
+        select: ["id", "label", "event", "trashedAt", "contentType"],
+        filters: resolveCreatedActivityFilters(resource),
+        metadata: { includeTrashed: true },
+        temporal: time.day("trashedAt", date),
+        sort: ["-trashedAt"],
+        limit: 200
+      })
+    );
+    return combineSignals(signals, () =>
+      signals.flatMap((signal, index) => {
+        const resource = resources[index];
+        const records = signal.get();
+        if (!Array.isArray(records)) return [];
+        return records.map((record: any) => ({
+          action: "Deleted",
+          resourceLabel: resolveCreatedResourceLabel(resource, record),
+          timestamp: new Date(record.trashedAt),
           resourceId: record.id
         }));
       })

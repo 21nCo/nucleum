@@ -6,10 +6,9 @@ import { getBucketNameandKey, isUrlExpired } from "@21n/utils/account.utils";
 import { get } from "svelte/store";
 import { logger } from "@21n/components/debug/logger.client";
 import { isRecordId } from "@21n/data/datafn/resource.utils";
-import type { IFile, IFileCapture } from "@21n/components/files/file.type";
+import type { IFile } from "@21n/components/files/file.type";
 import { fileEmbedChannel } from "@21n/components/files/fileEmbedChannel.store";
 import { OperatingSystem } from "@21n/types/context.type";
-import account from "@21n/stores/account.store";
 import { datafn } from "@21n/stores/datafn.store";
 
 function resolveBlobPart(data: Uint8Array<ArrayBufferLike>) {
@@ -22,65 +21,6 @@ class FileStore {
       filters: { id: fileId }
     });
     return result.data?.[0] as IFile | undefined;
-  }
-
-  private async merge(fileId: IRecordId, record: Partial<IFileCapture>) {
-    return datafn.file.mutate({
-      operation: "merge",
-      id: fileId,
-      record
-    });
-  }
-
-  async select(
-    resourceId: IRecordId,
-    properties?: IResourceSelectProperties,
-    params?: { signal?: AbortSignal }
-  ) {
-    if (isExtensionEnvironment()) {
-      return super.select(resourceId, properties, params);
-    }
-    return datafn.file.select(resourceId.toString(), {
-      select:
-        properties?.select && properties.select.length > 0
-          ? properties.select
-          : undefined,
-      signal: params?.signal
-    }) as Promise<IFile | undefined>;
-  }
-
-  async selectMany(
-    params?: IResourceSelectParams,
-    additionalParams?: IResourceSelectAdditionalParams
-  ) {
-    if (isExtensionEnvironment()) {
-      return super.selectMany(params, additionalParams);
-    }
-    const sort = Object.entries(params?.orderBy ?? {}).map(
-      ([field, direction]) => (direction === "desc" ? `-${field}` : field)
-    );
-    const result = await datafn.file.query({
-      filters: resolveDatafnFilters(params?.filters),
-      select:
-        params?.properties?.select && params.properties.select.length > 0
-          ? params.properties.select
-          : undefined,
-      omit:
-        params?.properties?.omit && params.properties.omit.length > 0
-          ? params.properties.omit
-          : undefined,
-      sort: sort.length > 0 ? sort : undefined,
-      limit: params?.limit,
-      offset: params?.offset,
-      signal: additionalParams?.signal,
-      metadata: {
-        includeArchived:
-          additionalParams?.isIncludeInactiveItems === true ||
-          params?.filters?.isArchived === true,
-        includeTrashed: additionalParams?.isIncludeInactiveItems === true
-      }
-    });
-    return result.data as unknown as IFile[];
   }
 
   async download(file: IFile | IRecordId | string) {
@@ -187,16 +127,10 @@ class FileStore {
     ) {
       let key = getBucketNameandKey(file.thumbnailUrl);
       let signedUrl = await persistenceInstance.fetchSignedUrlForGet(key);
-      await this.merge(file.id, {
-        thumbnailUrl: signedUrl?.getUrl
-      });
       return { ...file, thumbnailUrl: signedUrl?.getUrl };
     } else if (isUrlExpired(file.url)) {
       let key = getBucketNameandKey(file.url);
       let signedUrl = await persistenceInstance.fetchSignedUrlForGet(key);
-      await this.merge(file.id, {
-        url: signedUrl?.getUrl
-      });
       return { ...file, url: signedUrl?.getUrl };
     } else return file;
   }
