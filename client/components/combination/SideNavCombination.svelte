@@ -20,7 +20,7 @@
   import CombinationTOC from "./CombinationTOC.svelte";
   import { findItemPath, getItemByPath } from "./combination.utils";
   import { isValidArrayWithData } from "@21n/shared-utils/obj.utils";
-  import { appStore } from "@21n/client/stores/app.store";
+  import { acquireDnDPage, appStore } from "@21n/client/stores/app.store";
   let {
     id,
     accessMode = AccessMode.INLINE,
@@ -41,6 +41,7 @@
   let isInitializing = $state(true);
   let draggedItemId = $state<string | null>(null);
   let isRootDragOver = $state(false);
+  let releaseDnDPage: (() => void) | undefined;
 
   let combination = $derived($combinationStore);
   let isEditMode = $derived(combination?.isInEditMode ?? false);
@@ -58,13 +59,13 @@
   );
 
   onMount(async () => {
-    $appStore.isDnDPageActive = true;
+    releaseDnDPage = acquireDnDPage();
     await combinationStore.init(accessMode);
     isInitializing = false;
   });
 
   onDestroy(() => {
-    $appStore.isDnDPageActive = false;
+    releaseDnDPage?.();
     if (isEditMode) {
       combinationStore.toggleEditMode(false);
     }

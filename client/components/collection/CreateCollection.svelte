@@ -39,12 +39,7 @@
   import { toasts } from "@21n/stores/notification.store";
   import { tooltip } from "@21n/actions/popover.action";
   import ModalContentPadded from "@21n/components/modal/ModalContentPadded.svelte";
-  import { datafn } from "@21n/stores/datafn.store";
-  import { generateResourceId } from "@21n/data/datafn/id.utils";
-  import {
-    assignDefaultLabelAsFallback,
-    serializePropertyForDatafn
-  } from "@21n/components/collection/properties/property.utils";
+  import { createDatafnCollection } from "@21n/components/collection/collection.store";
 
   let {
     context = undefined
@@ -104,103 +99,6 @@
     }
   }
 
-  async function createCollection(context: string) {
-    const propertyEditor = propertyEditorStore.get();
-    const collectionId = generateResourceId(Resource.collection);
-    const viewId = generateResourceId(Resource.view);
-    let propertyRecords =
-      selectedType === CollectionType.TYPED
-        ? (propertyEditor?.properties ?? []).map(assignDefaultLabelAsFallback)
-        : [];
-    propertyRecords = propertyRecords.map((property) => ({
-      ...property,
-      id: property.id ?? generateResourceId(Resource.property)
-    }));
-    if (propertyRecords.length > 0) {
-      await datafn.property.mutate(
-        propertyRecords.map((property) => ({
-          operation: "insert",
-          id: property.id,
-          record: serializePropertyForDatafn(property),
-          context
-        }))
-      );
-    }
-    await datafn.view.mutate({
-      operation: "insert",
-      id: viewId,
-      record: {
-        id: viewId,
-        layout: selectedView,
-        label: "Default",
-        tabBy: "none",
-        groupBy: "none",
-        subGroupBy: "none"
-      },
-      context
-    });
-    const record = {
-      id: collectionId,
-      label: title ?? "",
-      description,
-      isStarred,
-      isCaptureShortcutEnabled:
-        selectedType === CollectionType.TYPED
-          ? isCaptureShortcutEnabled
-          : undefined,
-      typeToExtend: propertyEditor?.typeToExtend?.id ?? "",
-      type: selectedType,
-      resource,
-      ...(avatar
-        ? {
-            avatar: {
-              code: avatar.code,
-              color: avatar.color,
-              file: avatar.file,
-              isFilled: avatar.isFilled,
-              type: avatar.type
-            }
-          }
-        : {}),
-      ...(coverPhoto ? { cover: coverPhoto } : {})
-    };
-    await datafn.collection.mutate([
-      {
-        operation: "insert",
-        id: collectionId,
-        record,
-        context
-      },
-      {
-        operation: "relate",
-        id: collectionId,
-        relations: {
-          views: [{ $ref: viewId, sortOrder: 0 }],
-          ...(propertyRecords.length > 0
-            ? {
-                properties: propertyRecords.map((property, sortOrder) => ({
-                  $ref: property.id,
-                  sortOrder
-                }))
-              }
-            : {})
-        },
-        context
-      }
-    ]);
-    const created = {
-      ...record,
-      views: [viewId],
-      properties: propertyRecords.map((property) => property.id)
-    };
-    appStore.addToRecents({
-      record: created,
-      type: Resource.collection,
-      timestamp: new Date()
-    });
-    return [created];
-  }
-
   async function onSave() {
     try {
       logger.log({
@@ -208,9 +106,23 @@
         title,
         selectedType
       });
-      const result = await createCollection(
-        context ?? resourceAction(Resource.collection, ResourceActionType.CREATE)
-      );
+      const propertyEditor = propertyEditorStore.get();
+      const result = await createDatafnCollection({
+        title,
+        description,
+        isStarred,
+        isCaptureShortcutEnabled,
+        selectedType,
+        selectedView,
+        resource,
+        properties: propertyEditor?.properties ?? [],
+        typeToExtendId: propertyEditor?.typeToExtend?.id,
+        avatar,
+        coverPhoto,
+        context:
+          context ??
+          resourceAction(Resource.collection, ResourceActionType.CREATE)
+      });
       if (!result) {
         toasts.error("Error creating collection. Please try again.");
         return;

@@ -40,9 +40,7 @@
     },
     { value: CalendarLayout.Classic, label: "Classic" }
   ];
-  let backPath = $state(
-    new URLSearchParams(window.location.search).get(AppSearchParam.RETURN_TO)
-  );
+  let backPath = $state<string | null>(null);
   const dev_enableBirdView = import.meta.env?.DEV;
 
   onMount(() => {

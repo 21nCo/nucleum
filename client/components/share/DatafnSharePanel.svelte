@@ -15,6 +15,7 @@
     createDatafnPublicLink,
     getDatafnPermissions,
     resolveDatafnUserPrincipal,
+    resolveDatafnPublicLinkUrl,
     revokeDatafnPublicLink,
     shareDatafnRecord,
     shareDatafnResourceScope,
@@ -24,20 +25,22 @@
     type DatafnShareLevel,
     type DatafnShareScope
   } from "@21n/stores/datafn-sharing.store";
+  import account from "@21n/stores/account.store";
+  import { get } from "svelte/store";
 
   let {
     resource,
-    id = undefined
+    id
   }: {
     resource: string;
-    id?: string | undefined;
+    id: string;
   } = $props();
 
   let principalInput = $state("");
   let level = $state<ISelectValue>("viewer");
-  let scope = $state<ISelectValue>(id ? "record" : "resource");
+  let scope = $state<ISelectValue>("record");
   let permissions = $state<DatafnPermissionGrant[]>([]);
-  let publicLinkToken = $state("");
+  let publicLinkUrl = $state("");
   let isLoading = $state(false);
   let isPublicLinkLoading = $state(false);
   let errorMessage = $state("");
@@ -47,14 +50,14 @@
     { label: "Edit", value: "editor" },
     { label: "Own", value: "owner" }
   ];
-  const scopeOptions = $derived([
-    ...(id ? [{ label: "Record", value: "record" }] : []),
+  const scopeOptions = [
+    { label: "Record", value: "record" },
     { label: "Resource", value: "resource" }
-  ]);
+  ];
   const selectedLevel = $derived(level as DatafnShareLevel);
   const selectedScope = $derived(scope as DatafnShareScope);
   const isRecordScope = $derived(selectedScope === "record");
-  const canUseRecordScope = $derived(!isRecordScope || Boolean(id));
+  const canUseSharing = $derived(Boolean(id));
 
   $effect(() => {
     void loadPermissions();
@@ -63,6 +66,7 @@
   async function loadPermissions() {
     if (!id) {
       permissions = [];
+      errorMessage = "Open sharing from a specific record.";
       return;
     }
     try {
@@ -73,25 +77,24 @@
   }
 
   async function shareWithUser() {
-    if (!canUseRecordScope) return;
+    if (!canUseSharing) return;
     isLoading = true;
     errorMessage = "";
     try {
       const principalId = resolveDatafnUserPrincipal(principalInput);
-      permissions =
-        isRecordScope && id
-          ? await shareDatafnRecord({
-              resource,
-              id,
-              principalId,
-              level: selectedLevel
-            })
-          : await shareDatafnResourceScope({
-              resource,
-              principalId,
-              level: selectedLevel,
-              permissionsRecordId: id
-            });
+      permissions = isRecordScope
+        ? await shareDatafnRecord({
+            resource,
+            id,
+            principalId,
+            level: selectedLevel
+          })
+        : await shareDatafnResourceScope({
+            resource,
+            principalId,
+            level: selectedLevel,
+            permissionsRecordId: id
+          });
       principalInput = "";
       toasts.success("Permission updated");
     } catch (error) {
@@ -103,7 +106,7 @@
   }
 
   async function createPublicLink() {
-    if (!canUseRecordScope) return;
+    if (!canUseSharing) return;
     isPublicLinkLoading = true;
     errorMessage = "";
     try {
@@ -113,8 +116,13 @@
         scope: selectedScope,
         level: selectedLevel
       });
-      publicLinkToken = link.token;
-      permissions = id ? await getDatafnPermissions({ resource, id }) : [];
+      publicLinkUrl = resolveDatafnPublicLinkUrl({
+        token: link.token,
+        resource,
+        recordId: id,
+        region: get(account).userInfo?.region ?? "insouth"
+      });
+      permissions = await getDatafnPermissions({ resource, id });
       toasts.success("Public link created");
     } catch (error) {
       errorMessage = resolveErrorMessage(error);
@@ -125,7 +133,7 @@
   }
 
   async function revokePermission(permission: DatafnPermissionGrant) {
-    if (!canUseRecordScope) return;
+    if (!canUseSharing) return;
     isLoading = true;
     errorMessage = "";
     try {
@@ -196,7 +204,7 @@
         size={Size.sm}
         variant={ButtonVariant.PRIMARY}
         {isLoading}
-        isDisabled={!principalInput.trim() || !canUseRecordScope}
+        isDisabled={!principalInput.trim() || !canUseSharing}
         onclick={shareWithUser}
       />
     </div>
@@ -205,13 +213,13 @@
       icon="link"
       size={Size.sm}
       isLoading={isPublicLinkLoading}
-      isDisabled={!canUseRecordScope}
+      isDisabled={!canUseSharing}
       onclick={createPublicLink}
     />
   </div>
 
-  {#if publicLinkToken}
-    <CopyableText parentBackgroundIndex={1} text={publicLinkToken} />
+  {#if publicLinkUrl}
+    <CopyableText parentBackgroundIndex={1} text={publicLinkUrl} />
   {/if}
 
   {#if errorMessage}

@@ -104,7 +104,7 @@
         propertyValues: itemPropertyValues.map((propertyValue) => ({
           $ref: propertyValue.id.toString(),
           fromResource: resourceType.toString(),
-          collectionId: propertyValue.collectionId,
+          collectionId: propertyValue.collectionId ?? collection.id,
           value: propertyValue.value
         }))
       },
@@ -140,6 +140,7 @@
           );
           nodePropValues.push({
             id: propertyId,
+            collectionId: collection.id,
             value:
               propertyConfig?.type === PropertyType.MULTI_SELECT
                 ? [newValue]
@@ -161,6 +162,7 @@
                 : newValue;
           nodePropValues.push({
             id: propertyId,
+            collectionId: collection.id,
             value: newValToBeAssigned
           });
           return nodePropValues;

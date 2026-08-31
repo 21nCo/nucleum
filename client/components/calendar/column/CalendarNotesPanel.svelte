@@ -40,7 +40,7 @@
   import { page } from "$app/stores";
   import { Context } from "@21n/types/appStore.type";
   import { datafn, nucleumDatafnStatus } from "@21n/stores/datafn.store";
-  import { appStore } from "@21n/stores/app.store";
+  import { acquireDnDPage, appStore } from "@21n/stores/app.store";
 
   let {
     date,
@@ -104,12 +104,14 @@
 
   setContext(Context.NODE, nodeContext);
 
+  let releaseDnDPage: (() => void) | undefined;
+
   onMount(() => {
-    $appStore.isDnDPageActive = true;
+    releaseDnDPage = acquireDnDPage();
   });
 
   onDestroy(() => {
-    $appStore.isDnDPageActive = false;
+    releaseDnDPage?.();
   });
 </script>
 

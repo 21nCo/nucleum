@@ -2,7 +2,11 @@
   import Writer from "@21n/products/memotron/capture/Writer.svelte";
   import Button from "@21n/elements/button/Button.svelte";
   import { ButtonStyle, ButtonVariant } from "@21n/types/button.type";
-  import { appStore, isInEditMode } from "@21n/stores/app.store";
+  import {
+    acquireDnDPage,
+    appStore,
+    isInEditMode
+  } from "@21n/stores/app.store";
   import { cn } from "@21n/utils/ui.utils";
   import TypeSelector from "@21n/products/memotron/capture/TypeSelector.svelte";
   import { Size } from "@21n/types/size.enum";
@@ -60,6 +64,7 @@
   isInEditMode.set(true);
   let writerRef: Writer | undefined = undefined;
   let subs: any[] = [];
+  let releaseDnDPage: (() => void) | undefined;
   let isWebModalOpen = $state(false);
   let captureTopBarRef: CaptureTopBar | undefined = undefined;
 
@@ -74,7 +79,7 @@
 
   onMount(async () => {
     if (!isWindowDnD) {
-      $appStore.isDnDPageActive = true;
+      releaseDnDPage = acquireDnDPage();
     }
     const appEventSub = appEvents.subscribe(async (x: IEvent) => {
       if (x.event === GlobalEvent.ENTER && x.value.metaKey === true) {
@@ -104,7 +109,7 @@
 
   onDestroy(() => {
     if (!isWindowDnD) {
-      $appStore.isDnDPageActive = false;
+      releaseDnDPage?.();
     }
     subs.forEach((x) => x());
     setTimeout(() => {

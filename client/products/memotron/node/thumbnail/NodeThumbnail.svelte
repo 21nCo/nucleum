@@ -37,7 +37,7 @@
   import { fileStore } from "@21n/components/files/file.store";
   import type { IFile } from "@21n/components/files/file.type";
   import { renderMdAsHtml } from "@21n/components/markdown/markdown.utils";
-  import NodeThumbnailProperties from "@21n/products/memotron/node/thumbnail/NodeThumbnailProperties.svelte";
+  import CollectionItemThumbnailProperties from "@21n/components/collection/properties/CollectionItemThumbnailProperties.svelte";
   import type { IProperty } from "@21n/components/collection/properties/property.type";
   import { enumToString, isValidString } from "@21n/shared-utils/text.utils";
   import ImagePreview from "@21n/products/memotron/node/content/ImagePreview.svelte";
@@ -332,10 +332,13 @@
             {/if}
             {#if visibleProps.length > 0 && !isLinkContext}
               <div class="py-1">
-                <NodeThumbnailProperties
+                <CollectionItemThumbnailProperties
+                  {item}
                   values={item.propertyValues}
                   properties={visibleProps}
-                  nodeId={item.id}
+                  collectionId={accessPoint === ResourceAccessPoint.COLLECTION
+                    ? accessPointId
+                    : undefined}
                   {accessPoint}
                 />
               </div>
@@ -438,10 +441,13 @@
           {/key}
           {#if visibleProps.length > 0}
             <div class="py-1">
-              <NodeThumbnailProperties
+              <CollectionItemThumbnailProperties
+                {item}
                 values={item.propertyValues}
                 properties={visibleProps}
-                nodeId={item.id}
+                collectionId={accessPoint === ResourceAccessPoint.COLLECTION
+                  ? accessPointId
+                  : undefined}
                 {accessPoint}
               />
             </div>
@@ -539,10 +545,13 @@
         </div>
         {#if visibleProps.length > 0}
           <div class="py-1">
-            <NodeThumbnailProperties
+            <CollectionItemThumbnailProperties
+              {item}
               values={item.propertyValues}
               properties={visibleProps}
-              nodeId={item.id}
+              collectionId={accessPoint === ResourceAccessPoint.COLLECTION
+                ? accessPointId
+                : undefined}
               {accessPoint}
             />
           </div>
