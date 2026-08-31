@@ -321,6 +321,40 @@ export async function exportLegacyLocalData(
   };
 }
 
+export async function clearLegacySurrealLocalData(
+  product: Product,
+  identityValues: string[]
+) {
+  if (typeof indexedDB === "undefined") return;
+  const databaseName =
+    productRegistry[product]?.databaseName ?? fallbackLegacyDatabaseName;
+  const database = await openExistingIndexedDatabase(databaseName).catch(
+    () => null
+  );
+  if (!database) return;
+  database.close();
+  const identities = normalizeLegacySurrealIdentities(identityValues);
+  if (!identities.length) return;
+  const { surreal, escapeIdent } = await createLegacySurrealClient();
+  try {
+    await surreal.connect(`indxdb://${databaseName}`);
+    await surreal.use({ namespace: "user", database: null });
+    const statements = (await surreal.queryRaw(
+      identities
+        .map(
+          (identity) => `REMOVE DATABASE IF EXISTS ${escapeIdent(identity)};`
+        )
+        .join("\n")
+    )) as Array<{ status?: string; result?: unknown }>;
+    const failed = statements.find((statement) => statement.status === "ERR");
+    if (failed) {
+      throw new Error(String(failed.result ?? "Unable to clear legacy data"));
+    }
+  } finally {
+    await surreal.close();
+  }
+}
+
 export function resolveLegacyLocalDataRecordCount(
   summary: LegacyLocalDataSummary | LegacyLocalDataBackup | undefined
 ) {
@@ -713,69 +747,104 @@ async function readSurrealStoreBackups(
   databaseName: string,
   identity: LegacyLocalDataIdentity
 ): Promise<LegacyLocalStoreBackup[]> {
-  const databaseIdentity = identity.userId ?? identity.dapId;
-  if (!databaseIdentity) {
+  const databaseIdentities = resolveLegacySurrealIdentities(identity);
+  if (!databaseIdentities.length) {
     throw new Error("Legacy Surreal database identity is unavailable");
   }
-  const [{ Surreal }, { surrealdbWasmEngines }] = await Promise.all([
-    import("surrealdb"),
-    import("@surrealdb/wasm")
-  ]);
-  const surreal = new Surreal({
-    engines: surrealdbWasmEngines({
-      strict: false,
-      capabilities: {
-        guest_access: true,
-        functions: true,
-        network_targets: true
-      }
-    })
-  });
+  const { surreal } = await createLegacySurrealClient();
   try {
     await surreal.connect(`indxdb://${databaseName}`);
-    await surreal.use({ namespace: "user", database: databaseIdentity });
     const storeNames = Array.from(legacyResourceStores);
-    const statements = (await surreal.queryRaw(
-      storeNames.map((name) => `SELECT * FROM ${name};`).join("\n")
-    )) as Array<{ status?: string; result?: unknown }>;
-    const stores = await Promise.all(
-      storeNames.map(async (name, index) => {
-        const statement = statements[index];
-        if (statement?.status === "ERR") {
-          return {
-            name,
-            keyPath: "id",
-            autoIncrement: false,
-            indexes: [],
-            records: [],
-            error: String(statement.result ?? `Unable to read ${name}`)
-          };
-        }
-        const values = Array.isArray(statement?.result) ? statement.result : [];
-        const records = await Promise.all(
-          values.map(async (value) => {
-            const record = isPlainObject(value) ? value : {};
-            return {
-              key: normalizeRecordId(record.id),
-              value: await serializeIndexedDbValue(value)
-            };
-          })
-        );
+    const recordsByStore = new Map<
+      string,
+      Map<string, LegacyLocalRecordBackup>
+    >();
+    const errorsByStore = new Map<string, string[]>();
+    for (const databaseIdentity of databaseIdentities) {
+      await surreal.use({ namespace: "user", database: databaseIdentity });
+      const statements = (await surreal.queryRaw(
+        storeNames.map((name) => `SELECT * FROM ${name};`).join("\n")
+      )) as Array<{ status?: string; result?: unknown }>;
+      await Promise.all(
+        storeNames.map(async (name, statementIndex) => {
+          const statement = statements[statementIndex];
+          if (statement?.status === "ERR") {
+            const errors = errorsByStore.get(name) ?? [];
+            errors.push(
+              `${databaseIdentity}: ${String(statement.result ?? `Unable to read ${name}`)}`
+            );
+            errorsByStore.set(name, errors);
+            return;
+          }
+          const values = Array.isArray(statement?.result)
+            ? statement.result
+            : [];
+          const records =
+            recordsByStore.get(name) ??
+            new Map<string, LegacyLocalRecordBackup>();
+          await Promise.all(
+            values.map(async (value, recordIndex) => {
+              const record = isPlainObject(value) ? value : {};
+              const key = normalizeRecordId(record.id);
+              records.set(key ?? `${databaseIdentity}:${recordIndex}`, {
+                key,
+                value: await serializeIndexedDbValue(value)
+              });
+            })
+          );
+          recordsByStore.set(name, records);
+        })
+      );
+    }
+    return storeNames
+      .map((name) => {
+        const errors = errorsByStore.get(name);
+        const records = Array.from(recordsByStore.get(name)?.values() ?? []);
         return {
           name,
           keyPath: "id",
           autoIncrement: false,
           indexes: [],
-          records
+          records,
+          error: errors?.join("; ")
         };
       })
-    );
-    return stores.filter(
-      (store) => store.records.length > 0 || Boolean(store.error)
-    );
+      .filter((store) => store.records.length > 0 || Boolean(store.error));
   } finally {
     await surreal.close();
   }
+}
+
+function resolveLegacySurrealIdentities(identity: LegacyLocalDataIdentity) {
+  return normalizeLegacySurrealIdentities([identity.dapId, identity.userId]);
+}
+
+function normalizeLegacySurrealIdentities(values: Array<string | undefined>) {
+  return Array.from(
+    new Set(
+      values
+        .filter((value): value is string => Boolean(value))
+        .map((value) => value.replace(/^user:/, ""))
+    )
+  );
+}
+
+async function createLegacySurrealClient() {
+  const [{ Surreal, escapeIdent }, { surrealdbWasmEngines }] =
+    await Promise.all([import("surrealdb"), import("@surrealdb/wasm")]);
+  return {
+    escapeIdent,
+    surreal: new Surreal({
+      engines: surrealdbWasmEngines({
+        strict: false,
+        capabilities: {
+          guest_access: true,
+          functions: true,
+          network_targets: true
+        }
+      })
+    })
+  };
 }
 
 function countStoreRecords(store: IDBObjectStore): Promise<number> {

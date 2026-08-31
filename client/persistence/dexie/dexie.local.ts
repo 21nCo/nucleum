@@ -369,6 +369,13 @@ export class DexiePersistence implements IPersistence {
     return true;
   }
 
+  async destroySearchIndices() {
+    await Promise.all(
+      Array.from(this.searchIndices.values(), (engine) => engine.destroy())
+    );
+    this.searchIndices.clear();
+  }
+
   async terminate() {
     logger.info({ at: "DexiePersistence.terminate" });
     await this.instance?.close();

@@ -17,7 +17,6 @@ import { isRecordId } from "@21n/components/flux/resourceStores/resource.utils";
 import type { IFile, IFileCapture } from "@21n/components/files/file.type";
 import { fileEmbedChannel } from "@21n/components/files/fileEmbedChannel.store";
 import { OperatingSystem } from "@21n/types/context.type";
-import account from "@21n/stores/account.store";
 import { datafn } from "@21n/stores/datafn.store";
 import { isExtensionEnvironment } from "@21n/utils/browser.utils";
 
@@ -176,23 +175,11 @@ class FileStore extends ResourceStore<IFile, IFileCapture> {
   ) {
     if (get(context).isEmbed) {
       if (!params?.isHandleEmbedCase) return false;
-      const url = await account.uploadFileV2(
-        params?.contentType || "text/plain",
-        params?.fileNameForEmbed || params?.fileName || "download",
+      return fileEmbedChannel.downloadFromBlob(
         blob,
-        {
-          isReturnUrl: true
-        }
+        params?.fileName || params?.fileNameForEmbed || "download",
+        params?.contentType || blob.type || "application/octet-stream"
       );
-      if (url) {
-        const result = await fileEmbedChannel.downloadFromUrl(
-          url,
-          params?.fileNameForEmbed
-        );
-        if (url.startsWith("blob:")) URL.revokeObjectURL(url);
-        return result;
-      }
-      return false;
     }
     const blobUrl = URL.createObjectURL(blob);
     const a = document.createElement("a");

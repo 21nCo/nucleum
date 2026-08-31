@@ -11,6 +11,32 @@ const pendingDownloads = new Map<
   { resolve: (value: boolean) => void; timeout: ReturnType<typeof setTimeout> }
 >();
 
+function requestDownload(payload: {
+  url?: string;
+  data?: string;
+  contentType?: string;
+  filename?: string;
+}) {
+  const id = generateSimpleRandomId();
+  return new Promise<boolean>((resolve) => {
+    const timeout = setTimeout(() => {
+      pendingDownloads.delete(id);
+      resolve(false);
+    }, 300_000);
+    pendingDownloads.set(id, { resolve, timeout });
+    postDataToParent(EmbedDataMessage.DOWNLOAD, { id, ...payload });
+  });
+}
+
+function uint8ArrayToBase64(bytes: Uint8Array) {
+  const chunkSize = 32768;
+  let binary = "";
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+  }
+  return btoa(binary);
+}
+
 const base64ToUint8Array = (base64: string): Uint8Array => {
   const binaryString = atob(base64);
   const bytes = new Uint8Array(binaryString.length);
@@ -57,18 +83,18 @@ export const fileEmbedChannel = {
   },
 
   downloadFromUrl(url: string, fileName?: string) {
-    const id = generateSimpleRandomId();
-    return new Promise<boolean>((resolve) => {
-      const timeout = setTimeout(() => {
-        pendingDownloads.delete(id);
-        resolve(false);
-      }, 300_000);
-      pendingDownloads.set(id, { resolve, timeout });
-      postDataToParent(EmbedDataMessage.DOWNLOAD, {
-        id,
-        url: url.toString(),
-        filename: fileName
-      });
+    return requestDownload({
+      url: url.toString(),
+      filename: fileName
+    });
+  },
+
+  async downloadFromBlob(blob: Blob, fileName?: string, contentType?: string) {
+    const data = uint8ArrayToBase64(new Uint8Array(await blob.arrayBuffer()));
+    return requestDownload({
+      data,
+      contentType: contentType ?? blob.type,
+      filename: fileName
     });
   },
 

@@ -56,6 +56,7 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
   #if os(iOS)
     private let nativeAppleSignInCoordinator = AuthFnNativeAppleSignInCoordinator()
     private var pendingDownloadRequestIds: [ObjectIdentifier: String] = [:]
+    private var pendingDownloadCleanupUrls: [ObjectIdentifier: URL] = [:]
   #endif
 
   // Model download progress tracking
@@ -962,13 +963,13 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
         }
       }
     } else if value.keys.contains("download") {
-      Log.info("download: \(value)")
+      Log.info("Download message received")
       if let downloadString = value["download"] as? String {
         let jsonData = Data(downloadString.utf8)
         let decoder = JSONDecoder()
         do {
           let req = try decoder.decode(DownloadRequest.self, from: jsonData)
-          Log.info("Download request: \(req)")
+          Log.info("Download request received")
           if let path = req.url {
             #if os(iOS)
               self.downloadFileWithFolderSelection(
@@ -976,6 +977,8 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
             #elseif os(macOS)
               self.downloadFile(path, fileName: req.filename, requestId: req.id)
             #endif
+          } else if let data = req.data {
+            self.downloadData(data, fileName: req.filename, requestId: req.id)
           } else {
             self.sendDownloadResult(requestId: req.id, success: false)
           }
@@ -1162,71 +1165,15 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
         return
       }
 
-      // Get the original file name and create a new URL with proper extension
-      let fileName = httpResponse.suggestedFilename ?? url.lastPathComponent
+      let fileName = resolveDownloadFileName(
+        fileName ?? httpResponse.suggestedFilename ?? url.lastPathComponent)
       let properFileUrl = tempLocalUrl.deletingPathExtension().appendingPathExtension(
         fileName.components(separatedBy: ".").last ?? "")
 
       do {
         try FileManager.default.moveItem(at: tempLocalUrl, to: properFileUrl)
-
-        DispatchQueue.main.async {
-          #if os(macOS)
-            let savePanel = NSSavePanel()
-            savePanel.title = "Save File"
-            savePanel.nameFieldStringValue = fileName
-            savePanel.canCreateDirectories = true
-            savePanel.showsTagField = false
-            savePanel.isExtensionHidden = false
-            savePanel.message = "Choose where to save \(fileName)"
-
-            if savePanel.runModal() == .OK {
-              guard let destinationUrl = savePanel.url else { return }
-
-              do {
-                // Remove existing file if it exists
-                if FileManager.default.fileExists(atPath: destinationUrl.path) {
-                  try FileManager.default.removeItem(at: destinationUrl)
-                }
-
-                // Copy downloaded file to selected location
-                try FileManager.default.copyItem(at: properFileUrl, to: destinationUrl)
-                Log.info("File downloaded successfully to: \(destinationUrl.path)")
-                self.sendDownloadResult(requestId: requestId, success: true)
-              } catch {
-                Log.error(message: "File copy error: \(error.localizedDescription)")
-                self.sendDownloadResult(requestId: requestId, success: false)
-              }
-            } else {
-              self.sendDownloadResult(requestId: requestId, success: false)
-            }
-          #elseif os(iOS)
-            let documentPicker = UIDocumentPickerViewController(forExporting: [properFileUrl])
-            documentPicker.delegate = self
-            documentPicker.modalPresentationStyle = .formSheet
-            documentPicker.shouldShowFileExtensions = true
-            if let requestId = requestId {
-              self.pendingDownloadRequestIds[ObjectIdentifier(documentPicker)] = requestId
-            }
-
-            // Change the button title to "Save"
-            if #available(iOS 13.0, *) {
-              documentPicker.directoryURL =
-                FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
-            }
-
-            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-              let rootVC = windowScene.windows.first?.rootViewController
-            {
-              rootVC.present(documentPicker, animated: true)
-            } else {
-              Log.error(message: "Could not find root view controller")
-              self.pendingDownloadRequestIds.removeValue(
-                forKey: ObjectIdentifier(documentPicker))
-              self.sendDownloadResult(requestId: requestId, success: false)
-            }
-          #endif
-        }
+        self.deliverDownloadedFile(
+          properFileUrl, fileName: fileName, requestId: requestId, cleanupUrl: properFileUrl)
       } catch {
         Log.error(message: "Error preparing file: \(error.localizedDescription)")
         self.sendDownloadResult(requestId: requestId, success: false)
@@ -1350,31 +1297,100 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
         return
       }
 
-      // Get the original file name
-      let fileName = response.suggestedFilename ?? url.lastPathComponent
-      let fileManager = FileManager.default
-
-      // Determine destination URL
-      let documentsDirectory = fileManager.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
-      let destinationUrl = documentsDirectory.appendingPathComponent(fileName)
-
-      // Remove existing file if necessary
-      try? fileManager.removeItem(at: destinationUrl)
-
-      do {
-        // Move the file from temp location to the desired location
-        try fileManager.copyItem(at: tempLocalUrl, to: destinationUrl)
-        DispatchQueue.main.async {
-          Log.info("File downloaded successfully to: \(destinationUrl.path)")
-          self.sendDownloadResult(requestId: requestId, success: true)
-        }
-      } catch {
-        Log.error(message: "File copy error: \(error.localizedDescription)")
-        self.sendDownloadResult(requestId: requestId, success: false)
-      }
+      let fileName = self.resolveDownloadFileName(
+        fileName ?? response.suggestedFilename ?? url.lastPathComponent)
+      self.deliverDownloadedFile(
+        tempLocalUrl, fileName: fileName, requestId: requestId, cleanupUrl: nil)
     }
 
     task.resume()
+  }
+
+  func downloadData(_ encodedData: String, fileName: String?, requestId: String?) {
+    guard let data = Data(base64Encoded: encodedData) else {
+      sendDownloadResult(requestId: requestId, success: false)
+      return
+    }
+    let resolvedFileName = resolveDownloadFileName(fileName)
+    let temporaryDirectory = FileManager.default.temporaryDirectory.appendingPathComponent(
+      UUID().uuidString, isDirectory: true)
+    let temporaryUrl = temporaryDirectory.appendingPathComponent(resolvedFileName)
+    do {
+      try FileManager.default.createDirectory(
+        at: temporaryDirectory, withIntermediateDirectories: true)
+      try data.write(to: temporaryUrl, options: .atomic)
+      deliverDownloadedFile(
+        temporaryUrl, fileName: resolvedFileName, requestId: requestId,
+        cleanupUrl: temporaryDirectory)
+    } catch {
+      try? FileManager.default.removeItem(at: temporaryDirectory)
+      sendDownloadResult(requestId: requestId, success: false)
+    }
+  }
+
+  private func resolveDownloadFileName(_ fileName: String?) -> String {
+    guard let fileName = fileName?.trimmingCharacters(in: .whitespacesAndNewlines),
+      !fileName.isEmpty
+    else {
+      return "download"
+    }
+    let resolvedFileName = URL(fileURLWithPath: fileName).lastPathComponent
+    return resolvedFileName.isEmpty ? "download" : resolvedFileName
+  }
+
+  private func deliverDownloadedFile(
+    _ sourceUrl: URL, fileName: String, requestId: String?, cleanupUrl: URL?
+  ) {
+    #if os(macOS)
+      let fileManager = FileManager.default
+      let downloadsDirectory = fileManager.urls(for: .downloadsDirectory, in: .userDomainMask)[0]
+      let destinationUrl = downloadsDirectory.appendingPathComponent(fileName)
+      do {
+        try? fileManager.removeItem(at: destinationUrl)
+        try fileManager.copyItem(at: sourceUrl, to: destinationUrl)
+        if let cleanupUrl = cleanupUrl {
+          try? fileManager.removeItem(at: cleanupUrl)
+        }
+        Log.info("File downloaded successfully to: \(destinationUrl.path)")
+        sendDownloadResult(requestId: requestId, success: true)
+      } catch {
+        if let cleanupUrl = cleanupUrl {
+          try? fileManager.removeItem(at: cleanupUrl)
+        }
+        Log.error(message: "File copy error: \(error.localizedDescription)")
+        sendDownloadResult(requestId: requestId, success: false)
+      }
+    #elseif os(iOS)
+      DispatchQueue.main.async {
+        let documentPicker = UIDocumentPickerViewController(forExporting: [sourceUrl])
+        documentPicker.delegate = self
+        documentPicker.modalPresentationStyle = .formSheet
+        documentPicker.shouldShowFileExtensions = true
+        let pickerId = ObjectIdentifier(documentPicker)
+        if let requestId = requestId {
+          self.pendingDownloadRequestIds[pickerId] = requestId
+        }
+        if let cleanupUrl = cleanupUrl {
+          self.pendingDownloadCleanupUrls[pickerId] = cleanupUrl
+        }
+        if #available(iOS 13.0, *) {
+          documentPicker.directoryURL =
+            FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        }
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+          let rootVC = windowScene.windows.first?.rootViewController
+        {
+          rootVC.present(documentPicker, animated: true)
+        } else {
+          Log.error(message: "Could not find root view controller")
+          self.pendingDownloadRequestIds.removeValue(forKey: pickerId)
+          if let cleanupUrl = self.pendingDownloadCleanupUrls.removeValue(forKey: pickerId) {
+            try? FileManager.default.removeItem(at: cleanupUrl)
+          }
+          self.sendDownloadResult(requestId: requestId, success: false)
+        }
+      }
+    #endif
   }
 
   func sendMessageToApp(message: [String: Any]) {
@@ -1396,10 +1412,12 @@ class AppStore: NSObject, ObservableObject, CLLocationManagerDelegate, JobManage
 
   private func sendDownloadResult(requestId: String?, success: Bool) {
     guard let requestId = requestId else { return }
-    sendMessageToApp(message: [
-      "type": success ? "DOWNLOAD_SUCCESS" : "DOWNLOAD_ERROR",
-      "id": requestId,
-    ])
+    DispatchQueue.main.async {
+      self.sendMessageToApp(message: [
+        "type": success ? "DOWNLOAD_SUCCESS" : "DOWNLOAD_ERROR",
+        "id": requestId,
+      ])
+    }
   }
 
   func sendPaymentMessageToApi(
@@ -1903,8 +1921,11 @@ class SoundPlayer {
     func documentPicker(
       _ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]
     ) {
-      let requestId = pendingDownloadRequestIds.removeValue(
-        forKey: ObjectIdentifier(controller))
+      let pickerId = ObjectIdentifier(controller)
+      let requestId = pendingDownloadRequestIds.removeValue(forKey: pickerId)
+      if let cleanupUrl = pendingDownloadCleanupUrls.removeValue(forKey: pickerId) {
+        try? FileManager.default.removeItem(at: cleanupUrl)
+      }
       if let selectedURL = urls.first {
         Log.info("File saved to: \(selectedURL.path)")
         sendDownloadResult(requestId: requestId, success: true)
@@ -1915,8 +1936,11 @@ class SoundPlayer {
 
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
       Log.info("Document picker was cancelled")
-      let requestId = pendingDownloadRequestIds.removeValue(
-        forKey: ObjectIdentifier(controller))
+      let pickerId = ObjectIdentifier(controller)
+      let requestId = pendingDownloadRequestIds.removeValue(forKey: pickerId)
+      if let cleanupUrl = pendingDownloadCleanupUrls.removeValue(forKey: pickerId) {
+        try? FileManager.default.removeItem(at: cleanupUrl)
+      }
       sendDownloadResult(requestId: requestId, success: false)
     }
   }

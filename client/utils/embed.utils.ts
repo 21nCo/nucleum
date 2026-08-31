@@ -78,7 +78,8 @@ function isParentOriginTrusted(origin: string): boolean {
 function postToParent(message: any) {
   logger.log({
     at: "posting message to parent",
-    ...message
+    messageKeys:
+      message && typeof message === "object" ? Object.keys(message) : []
   });
 
   const parentOrigin = getParentOrigin();

@@ -59,6 +59,8 @@ import {
 import { resolveAccountBaseUrl } from "@21n/components/network";
 import { clearCachedDatafnE2eeState } from "@21n/stores/datafnE2ee.store";
 import { flux } from "@21n/components/flux/flux";
+import { resolveProductConfig } from "@21n/products/product.config";
+import { clearLegacySurrealLocalData } from "@21n/persistence/legacyLocalDataBackup";
 
 export const isRefreshingToken = writable(false);
 
@@ -419,10 +421,7 @@ class AccountStore extends ObservableStore<UserAccount> {
         return false;
       }
       if (authFnDeleteStatus === "deleted") {
-        await clearDatafnLocalData();
-        await this.clearLegacyFluxLocalData();
-        await this.signOut({ isPreventRedirect: true });
-        appStore.gotoPath("/signup?msg=deleted");
+        await this.completeConfirmedAccountDeletion();
         isDeleted = true;
         return true;
       }
@@ -441,10 +440,7 @@ class AccountStore extends ObservableStore<UserAccount> {
         toasts.error(data.error);
         return false;
       }
-      await clearDatafnLocalData();
-      await this.clearLegacyFluxLocalData();
-      await this.signOut({ isPreventRedirect: true });
-      appStore.gotoPath("/signup?msg=deleted");
+      await this.completeConfirmedAccountDeletion();
       isDeleted = true;
       return true;
     } catch (e) {
@@ -460,20 +456,108 @@ class AccountStore extends ObservableStore<UserAccount> {
     }
   }
 
+  private async completeConfirmedAccountDeletion() {
+    const cleanupOperations = [
+      ["datafn", () => clearDatafnLocalData()],
+      ["legacy", () => this.clearLegacyFluxLocalData()]
+    ] as const;
+    for (const [name, operation] of cleanupOperations) {
+      try {
+        await operation();
+      } catch (error) {
+        logger.error({ at: `account.delete.cleanup.${name}`, error });
+      }
+    }
+    await this.signOut({ isPreventRedirect: true });
+    appStore.gotoPath("/signup?msg=deleted");
+  }
+
   private async clearLegacyFluxLocalData() {
     const account = this.get();
     const dapId = await clientStorage.get(ClientStorageKey.DAP_ID);
+    const cleanupErrors: unknown[] = [];
     const identities = new Set(
-      [account.userId, dapId]
+      [account.userId, account.userInfo?.id, dapId]
         .filter((value): value is string => Boolean(value))
         .map((value) => value.replace(/^user:/, ""))
     );
-    if (flux?.persistence) await flux.terminate();
-    await Promise.all(
-      Array.from(identities, (identity) =>
-        deleteIndexedDbDatabase(`${identity}-1`)
-      )
+    const persistence = flux?.persistence as
+      { destroySearchIndices?: () => Promise<void> } | undefined;
+    if (persistence?.destroySearchIndices) {
+      try {
+        await persistence.destroySearchIndices();
+      } catch (error) {
+        cleanupErrors.push(error);
+      }
+    }
+    if (flux?.persistence) {
+      try {
+        await flux.terminate();
+      } catch (error) {
+        cleanupErrors.push(error);
+      }
+    }
+    const product = get(appStore).product;
+    const databaseNames = new Set<string>();
+    for (const identity of identities) {
+      const prefix = `${identity}-1`;
+      databaseNames.add(prefix);
+      for (const table of resolveProductConfig(product).tableConfig) {
+        if (!table.searchIndices?.length) continue;
+        databaseNames.add(`searchfn-${prefix}-${table.name}-search`);
+        databaseNames.add(`${prefix}-${table.name}-search`);
+      }
+    }
+    const indexedDb = indexedDB as IDBFactory & {
+      databases?: () => Promise<Array<{ name?: string }>>;
+    };
+    const listedDatabases =
+      typeof indexedDb.databases === "function"
+        ? await indexedDb.databases().catch(() => [])
+        : [];
+    for (const database of listedDatabases ?? []) {
+      const databaseName = database.name;
+      if (
+        databaseName &&
+        Array.from(identities).some((identity) => {
+          const prefix = `${identity}-1-`;
+          return (
+            databaseName === `${identity}-1` ||
+            (databaseName.startsWith(prefix) &&
+              databaseName.endsWith("-search")) ||
+            (databaseName.startsWith(`searchfn-${prefix}`) &&
+              databaseName.endsWith("-search"))
+          );
+        })
+      ) {
+        databaseNames.add(databaseName);
+      }
+    }
+    const deletionResults = await Promise.allSettled(
+      Array.from(databaseNames, (name) => deleteIndexedDbDatabase(name))
     );
+    cleanupErrors.push(
+      ...deletionResults
+        .filter(
+          (result): result is PromiseRejectedResult =>
+            result.status === "rejected"
+        )
+        .map((result) => result.reason)
+    );
+    try {
+      await clearLegacySurrealLocalData(product, Array.from(identities));
+    } catch (error) {
+      cleanupErrors.push(error);
+    }
+    if (cleanupErrors.length) {
+      throw new Error(
+        cleanupErrors
+          .map((error) =>
+            error instanceof Error ? error.message : String(error)
+          )
+          .join("; ")
+      );
+    }
   }
 
   private async tryConfirmAuthFnDelete(): Promise<
