@@ -1229,8 +1229,10 @@ function transformLegacyPointLog(
     (startUnix === undefined
       ? undefined
       : startUnix + Math.max(0, focus + breakTime) * 1000);
-  const sessionId = resolveLegacyTargetId(record.sessionId, "session");
-  if (!logId || !sessionId) return false;
+  if (!logId) return false;
+  const sessionId =
+    resolveLegacyTargetId(record.sessionId, "session") ??
+    `session:legacy-${logId.slice("sessionLog:".length)}`;
   result.id = logId;
   result.startUnix = startUnix;
   result.endUnix = endUnix;

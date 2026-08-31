@@ -10,15 +10,26 @@ import {
   type IPreferencesStore
 } from "@21n/stores/preferences/preferences.type";
 import { migrateLegacyNucleusProductKeys } from "@21n/stores/productKeyMigration.utils";
+import { compareObjects } from "@21n/shared-utils/obj.utils";
 
 const preferencesSignal = datafn.kv.signal<IPreferencesStore>(
   Resource.preferences,
   { defaultValue: {} }
 );
 const preferencesLocal = writable<IPreferencesStore>({});
+const pendingPreferenceValues = new Map<string, unknown>();
 
 preferencesSignal.subscribe((value) => {
-  preferencesLocal.set(migrateLegacyNucleusProductKeys(value ?? {}));
+  const migrated = migrateLegacyNucleusProductKeys(value ?? {});
+  pendingPreferenceValues.forEach((pendingValue, key) => {
+    if (compareObjects(migrated[key], pendingValue)) {
+      pendingPreferenceValues.delete(key);
+    }
+  });
+  preferencesLocal.set({
+    ...migrated,
+    ...Object.fromEntries(pendingPreferenceValues)
+  });
 });
 
 function resolveKey(keyParam: string, params?: IPreferencesParams) {
@@ -53,8 +64,29 @@ export const preferences = {
     return this.get()[key];
   },
   modify(n: Partial<IPreferencesStore>) {
+    Object.entries(n).forEach(([key, value]) => {
+      pendingPreferenceValues.set(key, value);
+    });
     preferencesLocal.update((current) => ({ ...current, ...n }));
-    return datafn.kv.merge(Resource.preferences, n);
+    const mutation = datafn.kv.merge(Resource.preferences, n);
+    const rollbackPendingValues = () => {
+      Object.entries(n).forEach(([key, value]) => {
+        if (compareObjects(pendingPreferenceValues.get(key), value)) {
+          pendingPreferenceValues.delete(key);
+        }
+      });
+      const current = migrateLegacyNucleusProductKeys(
+        preferencesSignal.get() ?? {}
+      );
+      preferencesLocal.set({
+        ...current,
+        ...Object.fromEntries(pendingPreferenceValues)
+      });
+    };
+    void mutation.then((result) => {
+      if (!result.ok) rollbackPendingValues();
+    }, rollbackPendingValues);
+    return mutation;
   },
   loader(data: IPreferencesStore) {
     if (!data || typeof data !== "object") return;

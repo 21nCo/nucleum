@@ -241,6 +241,7 @@ export async function clearStoredCloudAuthState(): Promise<void> {
     clientStorage.remove(ClientStorageKey.STOKEN),
     clientStorage.remove(ClientStorageKey.USER),
     clientStorage.remove(ClientStorageKey.USER_INFO),
+    clientStorage.remove(ClientStorageKey.USER_PLAN),
     clientStorage.remove(ClientStorageKey.USER_REGION_MAP),
     clientStorage.remove(ClientStorageKey.OFFLINE_SESSION_ID)
   ]);

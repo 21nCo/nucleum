@@ -25,6 +25,7 @@ import {
   determineIfPlanIsActive,
   determineIfSubscriptionExpired
 } from "@21n/components/subscription/userPlan.utils";
+import { PlanType } from "@21n/components/subscription/userPlan.type";
 import { ObservableStore } from "@21n/stores/client.store";
 import { StoreDataType, type IRecordId } from "@21n/types/data.type";
 import { clientStorage } from "@21n/persistence/persistence.utils";
@@ -78,6 +79,28 @@ export function resolveStoredUserInformation(
   }
 }
 
+/** Parses a persisted plan after validating its entitlement type. */
+export function resolveStoredUserPlan(
+  value: string | null
+): IUserPlan | undefined {
+  if (!value) return undefined;
+  try {
+    const parsed = parse(value) as unknown;
+    if (
+      !parsed ||
+      typeof parsed !== "object" ||
+      !Object.values(PlanType).includes(
+        (parsed as { plan?: PlanType }).plan as PlanType
+      )
+    ) {
+      return undefined;
+    }
+    return parsed as IUserPlan;
+  } catch {
+    return undefined;
+  }
+}
+
 class AccountStore extends ObservableStore<UserAccount> {
   persistence = new Persistence();
   constructor() {
@@ -98,6 +121,9 @@ class AccountStore extends ObservableStore<UserAccount> {
     );
     const storedUserInfo = await clientStorage.get(ClientStorageKey.USER_INFO);
     const userInfo = resolveStoredUserInformation(storedUserInfo);
+    const storedPlan = resolveStoredUserPlan(
+      await clientStorage.get(ClientStorageKey.USER_PLAN)
+    );
     const storedUser = await clientStorage.get(ClientStorageKey.USER);
     const hasStoredCloudIdentity = Boolean(
       authFnToken || userInfo || storedUser
@@ -116,6 +142,7 @@ class AccountStore extends ObservableStore<UserAccount> {
     if (userInfo) {
       seed.userInfo = userInfo;
       seed.userId = userInfo.id.split("user:")[1];
+      seed.plan = storedPlan;
       seed.dataMode = UserDataMode.CLOUD;
       seed.sessionType = UserSessionType.RETURNING;
     }
@@ -491,10 +518,12 @@ class AccountStore extends ObservableStore<UserAccount> {
         ? response[0]?.result?.[0]
         : response;
       if (data?.userPlan) {
+        await clientStorage.set(ClientStorageKey.USER_PLAN, data.userPlan);
         this.update((n) => {
           n.plan = data.userPlan;
           return n;
         });
+        return data.userPlan as IUserPlan;
       }
     } catch (e) {
       logger.error({ at: "refreshPlanData", error: e });

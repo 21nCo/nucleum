@@ -82,7 +82,11 @@
     }
 
     if (resolution.status === "cached-cloud") {
-      if ($appStore.product === Product.NUCLEUM) {
+      if (
+        $appStore.product === Product.NUCLEUM &&
+        $account.plan &&
+        $account.plan.plan !== PlanType.NUCLEUS
+      ) {
         appStore.gotoPath("/error/access-denied");
         return false;
       }
@@ -170,8 +174,8 @@
       plan: $appStore.product === Product.NUCLEUM ? undefined : current.plan
     }));
     if ($appStore.product === Product.NUCLEUM) {
-      await account.refreshPlanData();
-      if ($account.plan?.plan !== PlanType.NUCLEUS) {
+      const plan = await account.refreshPlanData();
+      if (plan?.plan !== PlanType.NUCLEUS) {
         appStore.gotoPath("/error/access-denied");
         return false;
       }

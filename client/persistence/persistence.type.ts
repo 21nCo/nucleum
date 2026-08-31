@@ -23,6 +23,7 @@ export enum ClientStorageKey {
   REGION = "region",
   USER_REGION_MAP = "userRegionMap",
   USER_INFO = "userInfo",
+  USER_PLAN = "userPlan",
   /**
    * @deprecated - use userId instead
    */

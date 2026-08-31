@@ -378,8 +378,8 @@ export async function disableLocalDatafnE2ee(
   namespace: string,
   disabled: NucleumDatafnE2eeSettings = createDisabledDatafnE2eeSettings()
 ) {
-  await removeLocalKey(settings?.keyRef);
   await persistDatafnE2eeSettings(namespace, disabled);
+  await removeLocalKey(settings?.keyRef);
   datafnE2eeState.set({ enabled: false, unlocked: false, keyRef: null });
   return disabled;
 }

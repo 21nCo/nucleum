@@ -851,6 +851,10 @@ export async function disableNucleumDatafnE2ee() {
   const runtime = get(runtimeStore);
   if (!runtime) throw new Error("DataFn runtime is not initialized");
   const settings = await getLocalDatafnE2eeSettings(runtime.namespace);
+  const restoreProvider = await getCachedDatafnE2eeProvider(settings);
+  if (settings?.enabled && !restoreProvider) {
+    throw new Error("Unlock E2EE before disabling it");
+  }
   const disabled = createDisabledDatafnE2eeSettings();
   await datafn.switchContext({ e2ee: null });
   try {
@@ -858,22 +862,21 @@ export async function disableNucleumDatafnE2ee() {
     await cloneUpAllDatafnData();
     await disableLocalDatafnE2ee(settings, runtime.namespace, disabled);
   } catch (error) {
-    if (settings) {
-      await writeRemoteDatafnE2eeSettings(settings).catch((restoreError) => {
+    if (settings?.enabled && restoreProvider) {
+      try {
+        await datafn.switchContext({
+          e2ee: { enabled: true, provider: restoreProvider }
+        });
+        await persistDatafnE2eeSettings(runtime.namespace, settings);
+        await writeRemoteDatafnE2eeSettings(settings);
+      } catch (restoreError) {
         logger.error({
           at: "datafn.e2ee.disable.restoreSettings",
-          error: restoreError
+          error,
+          restoreError
         });
-      });
-      await initializeNucleumDatafn({
-        ...initInput,
-        isOfflinabilityEnabled: true
-      }).catch((restoreError) => {
-        logger.error({
-          at: "datafn.e2ee.disable.restoreRuntime",
-          error: restoreError
-        });
-      });
+        throw restoreError;
+      }
     }
     throw error;
   }
